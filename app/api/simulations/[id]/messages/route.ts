@@ -8,7 +8,7 @@ import { nextStageForRole } from "@/lib/modules/simulations/simulation-labels";
 export const dynamic = "force-dynamic";
 
 const messageSchema = z.object({
-  role: z.enum(["القاضي الافتراضي", "المدعي", "المدعى عليه", "النظام"]),
+  role: z.enum(["القاضي الافتراضي", "المدعي", "المدعى عليه", "وكيل المدعي", "وكيل المدعى عليه", "النظام"]),
   content: z.string().min(2, "نص الرسالة مطلوب.")
 });
 
