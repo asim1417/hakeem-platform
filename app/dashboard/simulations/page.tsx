@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function SimulationsPage() {
-  const [sessions, cases] = await Promise.all([
+  const [sessions, cases, attachments] = await Promise.all([
     prisma.simulation
       .findMany({
         orderBy: { updatedAt: "desc" },
@@ -50,18 +50,26 @@ export default async function SimulationsPage() {
         take: 25,
         select: { id: true, title: true }
       })
+      .catch(() => []),
+    prisma.attachment
+      .findMany({
+        orderBy: { createdAt: "desc" },
+        take: 25,
+        select: { id: true, fileName: true, mimeType: true, createdAt: true }
+      })
+      .then((items) => items.map((item) => ({ ...item, createdAt: item.createdAt.toISOString() })))
       .catch(() => [])
   ]);
 
   return (
     <div>
-      <p className="text-sm font-semibold text-gold">محاكاة قضائية تدريبية</p>
-      <h1 className="mt-2 text-3xl font-bold text-olive">المحاكاة</h1>
+      <p className="font-display-ar text-sm font-semibold text-[#C09B5A]">القاضي حكيم</p>
+      <h1 className="font-judicial mt-2 text-4xl font-bold text-[#0B1F3A]">المحاكاة القضائية التدريبية</h1>
       <p className="mt-3 max-w-3xl leading-8 text-gray-700">
-        أنشئ جلسة محاكاة قضائية تدريبية، وسجل مداخلات الأطراف والقرارات الإجرائية، ثم أصدر حكمًا تدريبيًا غير ملزم.
+        قاضٍ افتراضي تدريبي متعدد المراحل لتقييد الدعوى، توليد الصحيفة، ضبط الجلسة، إدارة المرافعة، إصدار القرارات، وحكم تدريبي غير ملزم.
       </p>
       <div className="mt-6">
-        <SimulationWorkspace initialSessions={sessions} cases={cases} />
+        <SimulationWorkspace initialSessions={sessions} cases={cases} attachments={attachments} />
       </div>
     </div>
   );
