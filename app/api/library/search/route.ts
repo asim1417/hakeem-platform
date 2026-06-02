@@ -6,12 +6,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q") ?? "";
-  const articles = await searchLegalArticles(query, 20);
+  const lawName = request.nextUrl.searchParams.get("lawName") ?? undefined;
+  const articles = await searchLegalArticles(query, 50, lawName);
 
   await auditEvent({
     subject: "LIBRARY",
     action: "SEARCH",
-    metadata: { query, results: articles.length }
+    metadata: { query, lawName, results: articles.length }
   });
 
   return NextResponse.json({
