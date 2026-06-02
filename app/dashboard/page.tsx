@@ -1,11 +1,27 @@
-import { BookOpen, Briefcase, GraduationCap, Scale, ShieldCheck } from "lucide-react";
+import { BookOpen, Briefcase, GraduationCap, Paperclip, Scale, ShieldCheck, Users } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
+import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 
 export const dynamic = "force-dynamic";
 
 async function getDashboardStats() {
-  const [legalSystems, legalArticles, consultations, simulations, auditLogs, cases, recentActivities, recentConsultations, recentCases, recentSimulations] =
+  const [
+    legalSystems,
+    legalArticles,
+    consultations,
+    simulations,
+    auditLogs,
+    cases,
+    users,
+    attachments,
+    recentActivities,
+    recentConsultations,
+    recentCases,
+    recentSimulations,
+    recentAttachments,
+    recentUsers
+  ] =
     await Promise.all([
     prisma.legalSystem.count(),
     prisma.legalArticle.count(),
@@ -13,6 +29,8 @@ async function getDashboardStats() {
     prisma.simulation.count(),
     prisma.auditEvent.count(),
     prisma.caseFile.count(),
+    prisma.user.count(),
+    prisma.attachment.count(),
     prisma.auditEvent.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -32,10 +50,35 @@ async function getDashboardStats() {
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: { id: true, title: true, stage: true, updatedAt: true }
+    }),
+    prisma.attachment.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, fileName: true, mimeType: true, extractedText: true, createdAt: true }
+    }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, name: true, email: true, role: true, createdAt: true }
     })
   ]);
 
-  return { legalSystems, legalArticles, consultations, simulations, auditLogs, cases, recentActivities, recentConsultations, recentCases, recentSimulations };
+  return {
+    legalSystems,
+    legalArticles,
+    consultations,
+    simulations,
+    auditLogs,
+    cases,
+    users,
+    attachments,
+    recentActivities,
+    recentConsultations,
+    recentCases,
+    recentSimulations,
+    recentAttachments,
+    recentUsers
+  };
 }
 
 export default async function DashboardPage() {
@@ -63,6 +106,8 @@ export default async function DashboardPage() {
           <StatCard label="جلسات المحاكاة" value={stats.simulations} />
           <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
           <StatCard label="القضايا" value={stats.cases} />
+          <StatCard label="المستخدمون" value={stats.users} />
+          <StatCard label="المرفقات" value={stats.attachments} />
         </section>
       )}
 
@@ -102,6 +147,20 @@ export default async function DashboardPage() {
           icon={GraduationCap}
           description="تمارين، اختبارات، شارات، نقاط، ومتابعة تقدم."
         />
+        <ModuleCard
+          href="/dashboard/attachments"
+          title="المرفقات"
+          metric={`${(stats?.attachments ?? 0).toLocaleString("ar-SA")} مرفق`}
+          icon={Paperclip}
+          description="تسجيل metadata للمرفقات والبينات إلى حين تفعيل التخزين الدائم."
+        />
+        <ModuleCard
+          href="/admin/users"
+          title="المستخدمون"
+          metric={`${(stats?.users ?? 0).toLocaleString("ar-SA")} مستخدم`}
+          icon={Users}
+          description="إدارة تنظيمية مبدئية للمستخدمين والأدوار."
+        />
       </section>
 
       {stats ? (
@@ -140,6 +199,27 @@ export default async function DashboardPage() {
               id: item.id,
               title: item.title,
               meta: `${stageLabel(item.stage)} · ${item.updatedAt.toLocaleString("ar-SA")}`
+            }))}
+          />
+          <RecentList
+            title="آخر 5 مرفقات"
+            empty="لا توجد مرفقات حديثة."
+            items={stats.recentAttachments.map((item) => {
+              const metadata = parseAttachmentMetadata(item.extractedText);
+              return {
+                id: item.id,
+                title: item.fileName,
+                meta: `${item.mimeType} · ${formatFileSize(metadata.size)} · ${item.createdAt.toLocaleString("ar-SA")}`
+              };
+            })}
+          />
+          <RecentList
+            title="آخر 5 مستخدمين"
+            empty="لا توجد إضافات مستخدمين حديثة."
+            items={stats.recentUsers.map((item) => ({
+              id: item.id,
+              title: item.name,
+              meta: `${roleLabel(item.role)} · ${item.createdAt.toLocaleString("ar-SA")}`
             }))}
           />
         </section>
@@ -214,4 +294,14 @@ function stageLabel(stage: string) {
     OBJECTION: "الاعتراض"
   };
   return labels[stage] ?? stage;
+}
+
+function roleLabel(role: string) {
+  const labels: Record<string, string> = {
+    SYSTEM_ADMIN: "مدير النظام",
+    LAWYER: "محامٍ",
+    TRAINER: "مدرب / مشرف",
+    TRAINEE: "متدرب"
+  };
+  return labels[role] ?? role;
 }
