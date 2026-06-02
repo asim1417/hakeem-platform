@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SYSTEM_ADMIN
+  LAWYER
+  TRAINER
+  TRAINEE
+}
+
+enum AuditSubject {
+  AUTH
+  LIBRARY
+  CASE
+  CONSULTATION
+  SIMULATION
+  TRAINING
+  AI_GATEWAY
+  ADMIN
+}
+
+enum CaseStatus {
+  OPEN
+  UNDER_REVIEW
+  CLOSED
+}
+
+enum SimulationStage {
+  CLAIM_FILING
+  INITIAL_ADMISSIBILITY
+  HEARING_RECORD
+  PLAINTIFF_STATEMENT
+  DEFENDANT_RESPONSE
+  PROCEDURAL_DECISION
+  PLEADING
+  SETTLEMENT
+  CLOSE_PLEADING
+  TRAINING_JUDGMENT
+  OBJECTION
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  passwordHash  String
+  role          UserRole        @default(TRAINEE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  cases         CaseFile[]
+  consultations Consultation[]
+  simulations   Simulation[]
+  auditEvents   AuditEvent[]
+  training      TrainingProgress[]
+
+  @@map("users")
+}
+
+model RoleRecord {
+  id          String           @id @default(cuid())
+  key         UserRole         @unique
+  name        String
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+
+  @@map("roles")
+}
+
+model PermissionRecord {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  name        String
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String           @id @default(cuid())
+  roleId       String
+  role         RoleRecord       @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   PermissionRecord @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model LegalSystem {
+  id             String         @id @default(cuid())
+  name           String         @unique
+  classification String?
+  articleCount   Int            @default(0)
+  articles       LegalArticle[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("legal_systems")
+}
+
+model LegalArticle {
+  id            String    @id @default(cuid())
+  legalSystemId String?
+  legalSystem   LegalSystem? @relation(fields: [legalSystemId], references: [id])
+  lawName       String
+  classification String?
+  articleNumber Int
+  title         String
+  content       String
+  chapter       String?
+  keywords      String[]  @default([])
+  royalDecree   String?
+  effectiveFrom DateTime?
+  status        String    @default("سارية")
+  embedding     Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([lawName, articleNumber])
+  @@index([lawName])
+  @@map("legal_articles")
+}
+
+model GlossaryTerm {
+  id        String   @id @default(cuid())
+  term      String   @unique
+  meaning   String
+  createdAt DateTime @default(now())
+
+  @@map("glossary_terms")
+}
+
+model CaseFile {
+  id          String       @id @default(cuid())
+  title       String
+  summary     String?
+  status      CaseStatus   @default(OPEN)
+  ownerId     String
+  owner       User         @relation(fields: [ownerId], references: [id])
+  attachments Attachment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("cases")
+}
+
+model Attachment {
+  id            String   @id @default(cuid())
+  caseId        String?
+  caseFile      CaseFile? @relation(fields: [caseId], references: [id])
+  fileName      String
+  mimeType      String
+  storageKey    String
+  extractedText String?
+  createdAt     DateTime @default(now())
+
+  @@map("attachments")
+}
+
+model Consultation {
+  id             String                @id @default(cuid())
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id])
+  caseId         String?
+  facts          String
+  status         String                @default("DRAFT")
+  output         String?
+  qualityReport  Json?
+  citations      ConsultationCitation[]
+  messages       Message[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@map("consultations")
+}
+
+model ConsultationCitation {
+  id             String        @id @default(cuid())
+  consultationId String
+  consultation   Consultation  @relation(fields: [consultationId], references: [id])
+  articleId      String
+  lawName        String
+  articleNumber  Int
+  quote          String
+  createdAt      DateTime      @default(now())
+
+  @@map("consultation_citations")
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  consultationId String?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+  role           String
+  content        String
+  createdAt      DateTime      @default(now())
+
+  @@map("messages")
+}
+
+model Simulation {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id])
+  title     String
+  stage     SimulationStage     @default(CLAIM_FILING)
+  messages  SimulationMessage[]
+  decisions SimulationDecision[]
+  judgments SimulationJudgment[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@map("simulation_sessions")
+}
+
+model SimulationMessage {
+  id           String     @id @default(cuid())
+  simulationId String
+  simulation   Simulation @relation(fields: [simulationId], references: [id])
+  role         String
+  stage        SimulationStage
+  content      String
+  createdAt    DateTime   @default(now())
+
+  @@map("simulation_messages")
+}
+
+model SimulationDecision {
+  id           String          @id @default(cuid())
+  simulationId String
+  simulation   Simulation      @relation(fields: [simulationId], references: [id])
+  stage        SimulationStage
+  decisionType String
+  content      String
+  exportPdfKey String?
+  exportDocxKey String?
+  createdAt    DateTime        @default(now())
+
+  @@map("simulation_decisions")
+}
+
+model SimulationJudgment {
+  id           String          @id @default(cuid())
+  simulationId String
+  simulation   Simulation      @relation(fields: [simulationId], references: [id])
+  stage        SimulationStage @default(TRAINING_JUDGMENT)
+  content      String
+  disclaimer   String          @default("هذا حكم تدريبي غير ملزم ولا يعد حكمًا فعليًا.")
+  createdAt    DateTime        @default(now())
+
+  @@map("simulation_judgments")
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     Json
+  createdAt   DateTime @default(now())
+
+  @@map("exercises")
+}
+
+model TrainingProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  points    Int      @default(0)
+  badges    String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("training_progress")
+}
+
+model FeatureToggle {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  enabled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("feature_toggles")
+}
+
+model GuardrailDecision {
+  id             String       @id @default(cuid())
+  subject        AuditSubject
+  requestId      String
+  guardName      String
+  result         String
+  details        Json?
+  createdAt      DateTime     @default(now())
+
+  @@map("guardrail_decisions")
+}
+
+model AuditEvent {
+  id        String       @id @default(cuid())
+  actorId   String?
+  actor     User?        @relation(fields: [actorId], references: [id])
+  subject   AuditSubject
+  action    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime     @default(now())
+
+  @@index([subject, action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

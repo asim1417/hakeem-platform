@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: hakeem-postgres
+    environment:
+      POSTGRES_DB: hakeem
+      POSTGRES_USER: hakeem
+      POSTGRES_PASSWORD: hakeem_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - hakeem-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  hakeem-postgres-data:
