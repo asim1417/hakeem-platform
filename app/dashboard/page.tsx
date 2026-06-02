@@ -5,16 +5,37 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 async function getDashboardStats() {
-  const [legalSystems, legalArticles, consultations, simulations, auditLogs, cases] = await Promise.all([
+  const [legalSystems, legalArticles, consultations, simulations, auditLogs, cases, recentActivities, recentConsultations, recentCases, recentSimulations] =
+    await Promise.all([
     prisma.legalSystem.count(),
     prisma.legalArticle.count(),
     prisma.consultation.count(),
     prisma.simulation.count(),
     prisma.auditEvent.count(),
-    prisma.caseFile.count()
+    prisma.caseFile.count(),
+    prisma.auditEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: { actor: { select: { name: true, email: true } } }
+    }),
+    prisma.consultation.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, facts: true, status: true, createdAt: true }
+    }),
+    prisma.caseFile.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+      select: { id: true, title: true, status: true, updatedAt: true }
+    }),
+    prisma.simulation.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+      select: { id: true, title: true, stage: true, updatedAt: true }
+    })
   ]);
 
-  return { legalSystems, legalArticles, consultations, simulations, auditLogs, cases };
+  return { legalSystems, legalArticles, consultations, simulations, auditLogs, cases, recentActivities, recentConsultations, recentCases, recentSimulations };
 }
 
 export default async function DashboardPage() {
@@ -82,6 +103,47 @@ export default async function DashboardPage() {
           description="تمارين، اختبارات، شارات، نقاط، ومتابعة تقدم."
         />
       </section>
+
+      {stats ? (
+        <section className="mt-6 grid gap-4 xl:grid-cols-2">
+          <RecentList
+            title="آخر 5 أنشطة"
+            empty="لا توجد أنشطة حديثة."
+            items={stats.recentActivities.map((item) => ({
+              id: item.id,
+              title: `${subjectLabel(item.subject)} · ${item.action}`,
+              meta: `${item.actor?.name ?? "النظام"} · ${item.createdAt.toLocaleString("ar-SA")}`
+            }))}
+          />
+          <RecentList
+            title="آخر 5 استشارات"
+            empty="لا توجد استشارات حديثة."
+            items={stats.recentConsultations.map((item) => ({
+              id: item.id,
+              title: item.facts.slice(0, 90),
+              meta: `${item.status} · ${item.createdAt.toLocaleString("ar-SA")}`
+            }))}
+          />
+          <RecentList
+            title="آخر 5 قضايا"
+            empty="لا توجد قضايا حديثة."
+            items={stats.recentCases.map((item) => ({
+              id: item.id,
+              title: item.title,
+              meta: `${item.status} · ${item.updatedAt.toLocaleString("ar-SA")}`
+            }))}
+          />
+          <RecentList
+            title="آخر 5 جلسات محاكاة"
+            empty="لا توجد جلسات محاكاة حديثة."
+            items={stats.recentSimulations.map((item) => ({
+              id: item.id,
+              title: item.title,
+              meta: `${stageLabel(item.stage)} · ${item.updatedAt.toLocaleString("ar-SA")}`
+            }))}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -93,4 +155,63 @@ function StatCard({ label, value }: { label: string; value: number }) {
       <p className="mt-2 text-3xl font-bold text-olive">{value.toLocaleString("ar-SA")}</p>
     </div>
   );
+}
+
+function RecentList({
+  title,
+  empty,
+  items
+}: {
+  title: string;
+  empty: string;
+  items: Array<{ id: string; title: string; meta: string }>;
+}) {
+  return (
+    <div className="rounded-md border border-black/10 bg-white p-5">
+      <h2 className="text-xl font-bold text-olive">{title}</h2>
+      {items.length === 0 ? (
+        <p className="mt-3 rounded-md bg-sand p-4 text-gray-700">{empty}</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {items.map((item) => (
+            <article key={item.id} className="rounded-md border border-black/10 p-3">
+              <p className="line-clamp-2 font-semibold text-olive">{item.title}</p>
+              <p className="mt-1 text-xs text-gray-500">{item.meta}</p>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function subjectLabel(subject: string) {
+  const labels: Record<string, string> = {
+    AUTH: "الدخول",
+    LIBRARY: "المكتبة",
+    CASE: "القضايا",
+    CONSULTATION: "الاستشارات",
+    SIMULATION: "المحاكاة",
+    TRAINING: "التدريب",
+    AI_GATEWAY: "بوابة الذكاء",
+    ADMIN: "الإدارة"
+  };
+  return labels[subject] ?? subject;
+}
+
+function stageLabel(stage: string) {
+  const labels: Record<string, string> = {
+    CLAIM_FILING: "تقييد الدعوى",
+    INITIAL_ADMISSIBILITY: "فحص القبول",
+    HEARING_RECORD: "ضبط الجلسة",
+    PLAINTIFF_STATEMENT: "مداخلة المدعي",
+    DEFENDANT_RESPONSE: "جواب المدعى عليه",
+    PROCEDURAL_DECISION: "قرار إجرائي",
+    PLEADING: "المرافعة",
+    SETTLEMENT: "الصلح",
+    CLOSE_PLEADING: "قفل باب المرافعة",
+    TRAINING_JUDGMENT: "الحكم التدريبي",
+    OBJECTION: "الاعتراض"
+  };
+  return labels[stage] ?? stage;
 }
