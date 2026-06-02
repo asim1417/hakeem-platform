@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, FileClock, GraduationCap, LayoutDashboard, Scale, Settings, ShieldCheck } from "lucide-react";
+import { BookOpen, Briefcase, FileClock, GraduationCap, LayoutDashboard, Paperclip, Scale, Settings, ShieldCheck } from "lucide-react";
 
 const nav = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
@@ -8,6 +8,7 @@ const nav = [
   { href: "/dashboard/consultations", label: "الاستشارات", icon: ShieldCheck },
   { href: "/dashboard/simulations", label: "المحاكاة", icon: Scale },
   { href: "/dashboard/training", label: "التدريب", icon: GraduationCap },
+  { href: "/dashboard/attachments", label: "المرفقات", icon: Paperclip },
   { href: "/admin", label: "الإدارة", icon: Settings },
   { href: "/audit-logs", label: "سجل التدقيق", icon: FileClock }
 ];
