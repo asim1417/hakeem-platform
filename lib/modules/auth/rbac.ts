@@ -1,4 +1,5 @@
-import { UserRole } from "@prisma/client";
+import type { UserRole } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export type Permission =
   | "CONSULTATIONS_FULL"
@@ -37,6 +38,33 @@ export function hasPermission(role: UserRole, permission: Permission) {
 export function assertPermission(role: UserRole, permission: Permission) {
   if (!hasPermission(role, permission)) {
     throw new Error(`لا يملك هذا الدور صلاحية ${permission}`);
+  }
+}
+
+export async function canUser(userId: string | undefined, permission: Permission) {
+  if (!userId) return false;
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user) return false;
+  if (user.role === "SYSTEM_ADMIN") return true;
+
+  const role = await prisma.roleRecord.findUnique({
+    where: { key: user.role },
+    include: {
+      permissions: {
+        include: { permission: true }
+      }
+    }
+  });
+
+  if (!role) return hasPermission(user.role, permission);
+  return role.permissions.some((item) => item.permission.key === permission);
+}
+
+export async function requirePermission(userId: string | undefined, permission: Permission) {
+  const allowed = await canUser(userId, permission);
+  if (!allowed) {
+    throw new Error(`لا يملك المستخدم صلاحية ${permission}`);
   }
 }
 
