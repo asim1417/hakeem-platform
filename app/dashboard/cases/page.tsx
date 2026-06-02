@@ -1,15 +1,45 @@
-export default function CasesPage() {
+import { CasesManager } from "@/components/CasesManager";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export default async function CasesPage() {
+  const cases = await prisma.caseFile
+    .findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 50
+    })
+    .then((items) =>
+      items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        status: item.status,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+        ...parseSummary(item.summary)
+      }))
+    )
+    .catch(() => []);
+
   return (
     <div>
       <p className="text-sm font-semibold text-gold">القضايا والمرفقات والبينات</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">ملفات القضايا</h1>
-      <div className="mt-6 rounded-md border border-black/10 bg-white p-6">
-        <h2 className="text-xl font-bold text-olive">نطاق MVP</h2>
-        <p className="mt-3 leading-8 text-gray-700">
-          يدعم المخطط ملفات قضايا حقيقية، مرفقات PDF/Word/صور، نصًا مستخرجًا، مالكًا للملف، وحالة تشغيلية.
-          كل عمليات القراءة والتحليل تسجل في سجل التدقيق مراعاة للخصوصية والامتثال.
-        </p>
+      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+        أنشئ قضايا أولية واحفظها في قاعدة البيانات مع تسجيل العملية في سجل التدقيق.
+      </p>
+      <div className="mt-6">
+        <CasesManager initialCases={cases} />
       </div>
     </div>
   );
+}
+
+function parseSummary(summary: string | null) {
+  if (!summary) return {};
+  try {
+    return JSON.parse(summary) as Record<string, string>;
+  } catch {
+    return { factsSummary: summary };
+  }
 }
