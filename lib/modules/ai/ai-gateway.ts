@@ -13,6 +13,26 @@ type AiResult = {
   mode: "offline" | "live";
 };
 
+export type OriginalHakeemAiInput = {
+  provider?: "openai" | "anthropic" | "gemini" | "custom" | "offline";
+  model?: string;
+  messages?: Array<{ role?: string; content?: string }>;
+  prompt?: string;
+  module?: string;
+  context?: Record<string, unknown>;
+  actorId?: string;
+};
+
+export type OriginalHakeemAiResult = {
+  ok: boolean;
+  provider: string;
+  model: string;
+  content: string;
+  warnings: string[];
+  mode: "server" | "offline";
+  requestId: string;
+};
+
 export async function createConsultationDraft(input: { facts: string; actorId?: string }): Promise<AiResult> {
   const requestId = randomUUID();
   const provider = (process.env.AI_PROVIDER || "offline").toLowerCase();
@@ -80,6 +100,78 @@ export async function createConsultationDraft(input: { facts: string; actorId?: 
   };
 }
 
+export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInput): Promise<OriginalHakeemAiResult> {
+  const requestId = randomUUID();
+  const requestedProvider = (input.provider || process.env.AI_PROVIDER || "offline").toLowerCase();
+  const provider = normalizeOriginalProvider(requestedProvider);
+  const prompt = buildOriginalPrompt(input);
+  const warnings = [
+    "هذه المخرجات مساعدة تدريبية داخل منصة حكيم، ولا تعد رأيا قانونيا نهائيا أو حكما قضائيا فعليا.",
+    "لا يتم إرسال أي مفتاح API إلى الواجهة عند استخدام البوابة الخلفية."
+  ];
+
+  const articles = await searchLegalArticles(prompt, 6).catch(() => []);
+  const legalContext =
+    articles.length > 0
+      ? articles.map((article) => `${article.lawName}، المادة ${article.articleNumber}: ${article.content.slice(0, 450)}`).join("\n")
+      : "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
+
+  if (provider === "offline") {
+    const content = buildOriginalOfflineResponse(prompt, legalContext);
+    await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, true, "ORIGINAL_HAKEEM_AI_OFFLINE", {
+      requestedProvider,
+      citations: articles.length,
+      mode: "offline"
+    });
+    return {
+      ok: true,
+      provider,
+      model: "offline",
+      content,
+      warnings,
+      mode: "offline",
+      requestId
+    };
+  }
+
+  try {
+    const model = resolveOriginalModel(provider, input.model);
+    const content = await callOriginalProvider(provider, model, prompt, legalContext);
+    const guardedContent = ensureOriginalGuardrails(content, articles.length);
+    await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, true, "ORIGINAL_HAKEEM_AI_COMPLETED", {
+      requestedProvider,
+      model,
+      citations: articles.length,
+      mode: "server",
+      tokenEstimate: Math.ceil((prompt.length + guardedContent.length) / 4)
+    });
+    return {
+      ok: true,
+      provider,
+      model,
+      content: guardedContent,
+      warnings,
+      mode: "server",
+      requestId
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "تعذر استدعاء مزود الذكاء الاصطناعي.";
+    await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, false, "ORIGINAL_HAKEEM_AI_FAILED", {
+      requestedProvider,
+      error: message
+    });
+    return {
+      ok: false,
+      provider,
+      model: resolveOriginalModel(provider, input.model),
+      content: "",
+      warnings: [...warnings, message],
+      mode: "server",
+      requestId
+    };
+  }
+}
+
 async function callLiveProvider(provider: string, facts: string, citations: AiResult["citations"]) {
   const system = [
     "أنت مساعد قانوني تعليمي لمنصة حكيم.",
@@ -131,6 +223,142 @@ async function callLiveProvider(provider: string, facts: string, citations: AiRe
   return { ok: false as const, text: `المزود ${provider} غير مدعوم، تم استخدام الوضع offline.` };
 }
 
+function normalizeOriginalProvider(provider: string) {
+  if (provider === "openai" || provider === "anthropic" || provider === "gemini" || provider === "custom") return provider;
+  return "offline";
+}
+
+function buildOriginalPrompt(input: OriginalHakeemAiInput) {
+  const messageText = (input.messages || [])
+    .map((message) => `${message.role || "user"}: ${message.content || ""}`)
+    .join("\n");
+  return [input.prompt, messageText].filter(Boolean).join("\n\n").trim() || "طلب محاكاة قضائية تدريبية داخل القاضي حكيم.";
+}
+
+function resolveOriginalModel(provider: string, requested?: string) {
+  if (requested?.trim()) return requested.trim();
+  if (provider === "openai") return process.env.OPENAI_MODEL || "gpt-4o-mini";
+  if (provider === "anthropic") return process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
+  if (provider === "gemini") return process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  if (provider === "custom") return process.env.CUSTOM_AI_MODEL || "gpt-4o-mini";
+  return "offline";
+}
+
+function buildOriginalSystemPrompt(legalContext: string) {
+  return [
+    "أنت القاضي حكيم داخل بيئة محاكاة قضائية تدريبية سعودية.",
+    "أجب بالعربية وبأسلوب قضائي تدريبي منضبط.",
+    "لا تعد المخرجات حكما قضائيا فعليا ولا رأيا قانونيا نهائيا.",
+    "لا تختلق مواد نظامية أو أرقام مواد.",
+    "إذا لم توجد مادة مناسبة في السياق النظامي فصرح بذلك نصا.",
+    "السياق النظامي المسموح عند الحاجة للاستشهاد:",
+    legalContext
+  ].join("\n");
+}
+
+async function callOriginalProvider(provider: string, model: string, prompt: string, legalContext: string) {
+  const system = buildOriginalSystemPrompt(legalContext);
+
+  if (provider === "openai") {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) throw new Error("OPENAI_API_KEY غير مضبوط في متغيرات البيئة.");
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.2
+      })
+    });
+    if (!response.ok) throw new Error(`OpenAI ${response.status}`);
+    const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    return payload.choices?.[0]?.message?.content || "";
+  }
+
+  if (provider === "anthropic") {
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("ANTHROPIC_API_KEY غير مضبوط في متغيرات البيئة.");
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1600,
+        system,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    if (!response.ok) throw new Error(`Anthropic ${response.status}`);
+    const payload = (await response.json()) as { content?: Array<{ text?: string }> };
+    return payload.content?.map((part) => part.text).filter(Boolean).join("\n") || "";
+  }
+
+  if (provider === "gemini") {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("GEMINI_API_KEY غير مضبوط في متغيرات البيئة.");
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2 }
+      })
+    });
+    if (!response.ok) throw new Error(`Gemini ${response.status}`);
+    const payload = (await response.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    return payload.candidates?.[0]?.content?.parts?.map((part) => part.text).filter(Boolean).join("\n") || "";
+  }
+
+  if (provider === "custom") {
+    const baseUrl = process.env.CUSTOM_AI_BASE_URL;
+    const key = process.env.CUSTOM_AI_API_KEY;
+    if (!baseUrl || !key) throw new Error("CUSTOM_AI_BASE_URL أو CUSTOM_AI_API_KEY غير مضبوط في متغيرات البيئة.");
+    const endpoint = `${baseUrl.replace(/\/$/, "")}/chat/completions`;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.2
+      })
+    });
+    if (!response.ok) throw new Error(`Custom provider ${response.status}`);
+    const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    return payload.choices?.[0]?.message?.content || "";
+  }
+
+  return buildOriginalOfflineResponse(prompt, legalContext);
+}
+
+function ensureOriginalGuardrails(content: string, articleCount: number) {
+  const fallback = articleCount === 0 ? "\n\nلم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية." : "";
+  const disclaimer = "\n\nتنبيه مهني: هذه المخرجات مساعدة تدريبية ولا تعد رأيا قانونيا نهائيا أو حكما قضائيا فعليا ولا تغني عن مراجعة محام مختص.";
+  return `${content || "تعذر توليد مخرج مناسب."}${fallback}${content.includes("تنبيه") ? "" : disclaimer}`;
+}
+
+function buildOriginalOfflineResponse(prompt: string, legalContext: string) {
+  return [
+    "استجابة تدريبية من وضع offline في القاضي حكيم.",
+    "",
+    "ملخص الطلب:",
+    prompt.slice(0, 1200),
+    "",
+    "السياق النظامي المتاح:",
+    legalContext,
+    "",
+    "تنبيه مهني: هذه المخرجات مساعدة تدريبية ولا تعد رأيا قانونيا نهائيا أو حكما قضائيا فعليا ولا تغني عن مراجعة محام مختص."
+  ].join("\n");
+}
+
 function sanitizeOutput(output: string, citations: AiResult["citations"]) {
   const allowed = new Set(citations.map((item) => `${item.lawName}-${item.articleNumber}`));
   const suspiciousArticleNumbers = [...output.matchAll(/المادة\s+(\d+)/g)].map((match) => Number(match[1]));
@@ -165,6 +393,21 @@ async function recordAiAudit(actorId: string | undefined, requestId: string, pro
       provider,
       success,
       module: "consultations",
+      ...metadata
+    }
+  }).catch(() => undefined);
+}
+
+async function recordOriginalHakeemAiAudit(actorId: string | undefined, requestId: string, provider: string, success: boolean, action: string, metadata: Record<string, unknown>) {
+  await auditEvent({
+    actorId,
+    subject: "AI_GATEWAY",
+    action,
+    metadata: {
+      requestId,
+      provider,
+      success,
+      module: "original-hakeem",
       ...metadata
     }
   }).catch(() => undefined);

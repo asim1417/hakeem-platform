@@ -1,67 +1,51 @@
-import { HakeemJudgeExperience } from "@/components/hakeem-original/HakeemJudgeExperience";
-import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SimulationsPage() {
-  await requirePagePermission("SIMULATIONS_USE");
-  const [sessions, cases, attachments] = await Promise.all([
-    prisma.simulation
-      .findMany({
-        orderBy: { updatedAt: "desc" },
-        take: 10,
-        include: {
-          messages: { orderBy: { createdAt: "asc" } },
-          decisions: { orderBy: { createdAt: "asc" } },
-          judgments: { orderBy: { createdAt: "asc" } }
-        }
-      })
-      .then((items) =>
-        items.map((item) => ({
-          id: item.id,
-          title: item.title,
-          stage: item.stage,
-          createdAt: item.createdAt.toISOString(),
-          messages: item.messages.map((message) => ({
-            id: message.id,
-            role: message.role,
-            stage: message.stage,
-            content: message.content,
-            createdAt: message.createdAt.toISOString()
-          })),
-          decisions: item.decisions.map((decision) => ({
-            id: decision.id,
-            decisionType: decision.decisionType,
-            content: decision.content,
-            stage: decision.stage,
-            createdAt: decision.createdAt.toISOString()
-          })),
-          judgments: item.judgments.map((judgment) => ({
-            id: judgment.id,
-            content: judgment.content,
-            disclaimer: judgment.disclaimer,
-            createdAt: judgment.createdAt.toISOString()
-          }))
-        }))
-      )
-      .catch(() => []),
-    prisma.caseFile
-      .findMany({
-        orderBy: { updatedAt: "desc" },
-        take: 25,
-        select: { id: true, title: true }
-      })
-      .catch(() => []),
-    prisma.attachment
-      .findMany({
-        orderBy: { createdAt: "desc" },
-        take: 25,
-        select: { id: true, fileName: true, mimeType: true, createdAt: true }
-      })
-      .then((items) => items.map((item) => ({ ...item, createdAt: item.createdAt.toISOString() })))
-      .catch(() => [])
-  ]);
+  const user = await requirePagePermission("SIMULATIONS_USE");
 
-  return <HakeemJudgeExperience initialSessions={sessions} cases={cases} attachments={attachments} />;
+  return (
+    <div className="flex min-h-[calc(100vh-7rem)] flex-col gap-3">
+      <section className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-4 shadow-[var(--sh-xs)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="t-head text-sm font-semibold text-[var(--gold-dark)]">النسخة الأصلية التفاعلية</p>
+            <h1 className="t-head mt-1 text-2xl font-bold text-[var(--navy)]">القاضي حكيم</h1>
+            <p className="mt-1 max-w-3xl text-sm leading-7 text-[var(--ink-60)]">
+              تجربة حكيم الأصلية للمحاكاة القضائية وتوليد مسودات الأحكام، مع عرضها داخل المنصة كواجهة القاضي الأساسية.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-[var(--gold-border)] bg-white px-3 py-2 text-xs text-[var(--ink-60)]">
+              المستخدم الحالي: {user.name} · {user.role}
+            </span>
+            <a className="btn btn-gold" href="/original-hakeem/hakim1111.html" target="_blank" rel="noreferrer">
+              فتح النسخة الأصلية في تبويب مستقل
+            </a>
+            <Link className="btn btn-outline" href="/dashboard">
+              العودة للوحة التحكم
+            </Link>
+            <Link className="btn btn-outline" href="/dashboard/simulations/modern">
+              الواجهة الحديثة التجريبية
+            </Link>
+          </div>
+        </div>
+        <div className="mt-3 rounded-[var(--r-lg)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
+          تنبيه: تستخدم النسخة الأصلية إعدادات مزود الذكاء الاصطناعي داخل المتصفح عند تشغيلها كما هي. لا تدخل مفاتيح حساسة في جهاز مشترك.
+          تم تجهيز بوابة خلفية آمنة لاحقًا عبر <span dir="ltr">/api/original-hakeem/ai</span> دون تعديل الملف الأصلي.
+        </div>
+      </section>
+
+      <section className="min-h-[760px] flex-1 overflow-hidden rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-white shadow-[var(--sh-sm)]">
+        <iframe
+          title="القاضي حكيم - النسخة الأصلية"
+          src="/original-hakeem/hakim1111.html"
+          className="h-[82vh] min-h-[760px] w-full border-0 bg-white"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+        />
+      </section>
+    </div>
+  );
 }
