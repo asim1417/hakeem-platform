@@ -1,4 +1,4 @@
-import { SimulationWorkspace } from "@/components/SimulationWorkspace";
+import { HakeemJudgeExperience } from "@/components/hakeem-original/HakeemJudgeExperience";
 import { prisma } from "@/lib/prisma";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
@@ -63,16 +63,5 @@ export default async function SimulationsPage() {
       .catch(() => [])
   ]);
 
-  return (
-    <div>
-      <p className="font-display-ar text-sm font-semibold text-[#C09B5A]">القاضي حكيم</p>
-      <h1 className="font-judicial mt-2 text-4xl font-bold text-[#0B1F3A]">المحاكاة القضائية التدريبية</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
-        قاضٍ افتراضي تدريبي متعدد المراحل لتقييد الدعوى، توليد الصحيفة، ضبط الجلسة، إدارة المرافعة، إصدار القرارات، وحكم تدريبي غير ملزم.
-      </p>
-      <div className="mt-6">
-        <SimulationWorkspace initialSessions={sessions} cases={cases} attachments={attachments} />
-      </div>
-    </div>
-  );
+  return <HakeemJudgeExperience initialSessions={sessions} cases={cases} attachments={attachments} />;
 }
