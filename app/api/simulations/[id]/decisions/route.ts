@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +12,10 @@ const decisionSchema = z.object({
 });
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
+  if (gate.response) return gate.response;
   const payload = decisionSchema.parse(await request.json().catch(() => ({})));
-  const user = await getSystemUser();
+  const user = gate.user!;
   const stage = payload.decisionType.includes("قفل")
     ? "CLOSE_PLEADING"
     : payload.decisionType.includes("صلح")

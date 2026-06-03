@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 import { nextStageForRole } from "@/lib/modules/simulations/simulation-labels";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,8 @@ const messageSchema = z.object({
 });
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", _request);
+  if (gate.response) return gate.response;
   const session = await prisma.simulation.findUnique({
     where: { id: params.id },
     include: {
@@ -30,8 +32,10 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 }
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
+  if (gate.response) return gate.response;
   const payload = messageSchema.parse(await request.json());
-  const user = await getSystemUser();
+  const user = gate.user!;
   const stage = nextStageForRole(payload.role);
 
   const message = await prisma.simulationMessage.create({

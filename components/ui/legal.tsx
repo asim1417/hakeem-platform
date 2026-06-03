@@ -29,6 +29,59 @@ export function NavyButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>)
   );
 }
 
+export function LegalAlert({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "success" | "warning" | "danger" }) {
+  const tones = {
+    info: "border-[#C09B5A]/25 bg-[#FBF8F1] text-[#0B1F3A]",
+    success: "border-[#1A5C41]/25 bg-[#1A5C41]/10 text-[#1A5C41]",
+    warning: "border-[#B8721A]/25 bg-[#B8721A]/10 text-[#8a5515]",
+    danger: "border-[#8C2233]/25 bg-[#8C2233]/10 text-[#8C2233]"
+  };
+  return <p className={`rounded-md border p-4 leading-7 ${tones[tone]}`}>{children}</p>;
+}
+
+export function LegalPageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
+  return (
+    <header className="rounded-lg border border-[#C09B5A]/25 bg-gradient-to-l from-[#0B1F3A] to-[#142D52] p-6 text-white shadow-[0_18px_45px_rgba(11,31,58,0.14)]">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          {eyebrow ? <p className="font-display-ar text-sm font-semibold text-[#D4AF6E]">{eyebrow}</p> : null}
+          <h1 className="font-judicial mt-2 text-4xl font-bold">{title}</h1>
+          {description ? <p className="mt-3 max-w-3xl leading-8 text-white/80">{description}</p> : null}
+        </div>
+        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+      </div>
+    </header>
+  );
+}
+
+export function LegalEmptyState({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="rounded-md border border-dashed border-[#C09B5A]/35 bg-[#F9F5EC] p-6 text-center">
+      <p className="font-display-ar font-bold text-[#0B1F3A]">{title}</p>
+      {description ? <p className="mt-2 text-sm leading-7 text-gray-600">{description}</p> : null}
+    </div>
+  );
+}
+
+export function LegalStatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-lg border border-[#C09B5A]/20 bg-[#FBF8F1] p-5 shadow-[0_10px_24px_rgba(11,31,58,0.06)]">
+      <p className="text-sm text-gray-600">{label}</p>
+      <p className="font-mono-legal mt-2 text-3xl font-bold text-[#0B1F3A]">{value}</p>
+      {hint ? <p className="mt-2 text-xs leading-6 text-[#C09B5A]">{hint}</p> : null}
+    </div>
+  );
+}
+
+export function LegalFormSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-[#C09B5A]/20 bg-white/80 p-5">
+      <h2 className="font-display-ar text-lg font-bold text-[#0B1F3A]">{title}</h2>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
 const badgeClasses: Record<string, string> = {
   نشطة: "border-[#1A5C41]/30 bg-[#1A5C41]/10 text-[#1A5C41]",
   "قيد المرافعة": "border-[#C09B5A]/40 bg-[#E8D5A8]/40 text-[#0B1F3A]",

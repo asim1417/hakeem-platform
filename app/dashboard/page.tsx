@@ -228,6 +228,16 @@ export default async function DashboardPage() {
   );
 }
 
+function roleLabel(role: string) {
+  const labels: Record<string, string> = {
+    SYSTEM_ADMIN: "مدير النظام",
+    LAWYER: "محامٍ",
+    TRAINER: "مدرب / مشرف",
+    TRAINEE: "متدرب"
+  };
+  return labels[role] ?? role;
+}
+
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-md border border-black/10 bg-white p-4">
@@ -294,14 +304,4 @@ function stageLabel(stage: string) {
     OBJECTION: "الاعتراض"
   };
   return labels[stage] ?? stage;
-}
-
-function roleLabel(role: string) {
-  const labels: Record<string, string> = {
-    SYSTEM_ADMIN: "مدير النظام",
-    LAWYER: "محامٍ",
-    TRAINER: "مدرب / مشرف",
-    TRAINEE: "متدرب"
-  };
-  return labels[role] ?? role;
 }

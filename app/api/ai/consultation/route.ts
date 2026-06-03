@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +17,10 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const gate = await requireApiPermission("CONSULTATIONS_LIMITED", request);
+  if (gate.response) return gate.response;
+  const actorId = gate.user!.id;
   const payload = schema.parse(await request.json());
-  const actor = payload.userId ? null : await getSystemUser();
-  const actorId = payload.userId ?? actor?.id;
   const factsForAnalysis = [
     payload.title ? `عنوان الاستشارة: ${payload.title}` : "",
     payload.matterType ? `نوع المسألة: ${payload.matterType}` : "",
@@ -32,27 +33,25 @@ export async function POST(request: NextRequest) {
   const draft = await createConsultationDraft({ facts: factsForAnalysis, actorId });
 
   let consultationId: string | undefined;
-  if (actorId) {
-    const consultation = await prisma.consultation.create({
-      data: {
-        userId: actorId,
-        caseId: payload.caseId,
-        facts: factsForAnalysis,
-        output: draft.output,
-        status: draft.blocked ? "BLOCKED" : "GENERATED",
-        qualityReport: {
-          ...(draft.qualityReport as Record<string, unknown>),
-          title: payload.title,
-          matterType: payload.matterType,
-          question: payload.question
-        },
-        citations: {
-          create: draft.citations
-        }
+  const consultation = await prisma.consultation.create({
+    data: {
+      userId: actorId,
+      caseId: payload.caseId,
+      facts: factsForAnalysis,
+      output: draft.output,
+      status: draft.blocked ? "BLOCKED" : "GENERATED",
+      qualityReport: {
+        ...(draft.qualityReport as Record<string, unknown>),
+        title: payload.title,
+        matterType: payload.matterType,
+        question: payload.question
+      },
+      citations: {
+        create: draft.citations
       }
-    });
-    consultationId = consultation.id;
-  }
+    }
+  });
+  consultationId = consultation.id;
 
   await auditEvent({
     actorId,
@@ -62,7 +61,9 @@ export async function POST(request: NextRequest) {
     metadata: {
       requestId: draft.requestId,
       blocked: draft.blocked,
-      citations: draft.citations.length
+      citations: draft.citations.length,
+      provider: draft.provider,
+      mode: draft.mode
     }
   });
 

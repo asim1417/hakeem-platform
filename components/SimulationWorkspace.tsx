@@ -239,6 +239,12 @@ export function SimulationWorkspace({ initialSessions, cases, attachments }: { i
           <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
             <LegalCard title="صحيفة الدعوى" eyebrow="وثيقة متاحة طوال الجلسة">
               <ClaimSheetCard claim={activeClaim} />
+              {activeSession ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <ExportLink sessionId={activeSession.id} type="claim-sheet" format="docx" label="تصدير صحيفة الدعوى DOCX" />
+                  <ExportLink sessionId={activeSession.id} type="claim-sheet" format="pdf" label="تصدير صحيفة الدعوى PDF" />
+                </div>
+              ) : null}
             </LegalCard>
             <LegalCard title="مقياس قوة الدعوى" eyebrow="تدريبي تقديري">
               <StrengthScoreCard score={strength?.score} notes={strength?.notes} />
@@ -251,6 +257,13 @@ export function SimulationWorkspace({ initialSessions, cases, attachments }: { i
           {hearingRecord ? (
             <LegalCard title="ضبط الجلسة" eyebrow="محضر تدريبي">
               <HearingRecordDocument content={hearingRecord.content} />
+              {activeSession ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <ExportLink sessionId={activeSession.id} type="hearing-record" format="pdf" label="تصدير ضبط الجلسة PDF" />
+                  <ExportLink sessionId={activeSession.id} type="hearing-record" format="docx" label="تصدير ضبط الجلسة DOCX" />
+                  <ExportLink sessionId={activeSession.id} type="full-report" format="docx" label="تصدير تقرير الجلسة كاملًا" />
+                </div>
+              ) : null}
             </LegalCard>
           ) : null}
 
@@ -331,7 +344,14 @@ export function SimulationWorkspace({ initialSessions, cases, attachments }: { i
 
           <LegalCard title="الحكم التدريبي وما بعد الحكم" eyebrow="وثيقة وطرق اعتراض تدريبية">
             {activeSession?.judgments.length ? (
-              activeSession.judgments.map((judgment) => <JudgmentDocument key={judgment.id} content={judgment.content} disclaimer={judgment.disclaimer} />)
+              <div>
+                {activeSession.judgments.map((judgment) => <JudgmentDocument key={judgment.id} content={judgment.content} disclaimer={judgment.disclaimer} />)}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <ExportLink sessionId={activeSession.id} type="judgment" format="pdf" label="تصدير الحكم PDF" />
+                  <ExportLink sessionId={activeSession.id} type="judgment" format="docx" label="تصدير الحكم DOCX" />
+                  <ExportLink sessionId={activeSession.id} type="full-report" format="docx" label="تصدير تقرير الجلسة كاملًا" />
+                </div>
+              </div>
             ) : (
               <p className="rounded-md bg-[#F2EADB] p-4 text-gray-700">لم يصدر حكم تدريبي بعد.</p>
             )}
@@ -427,5 +447,16 @@ function Select({ label, value, onChange, options }: { label: string; value: str
         {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
+  );
+}
+
+function ExportLink({ sessionId, type, format, label }: { sessionId: string; type: string; format: "pdf" | "docx"; label: string }) {
+  return (
+    <a
+      href={`/api/simulations/${sessionId}/export?type=${type}&format=${format}`}
+      className="focus-ring rounded-md border border-[#C09B5A]/30 bg-white px-3 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#E8D5A8]/30"
+    >
+      {label}
+    </a>
   );
 }

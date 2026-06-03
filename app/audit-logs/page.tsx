@@ -1,9 +1,11 @@
 import { AppShell } from "@/components/AppShell";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AuditLogsPage() {
+  await requirePagePermission("GOVERNANCE_AUDIT_VIEW");
   const logs = await prisma.auditEvent
     .findMany({
       orderBy: { createdAt: "desc" },

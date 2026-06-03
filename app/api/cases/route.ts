@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -21,23 +21,24 @@ const statusMap = {
   CLOSED: "CLOSED"
 } as const;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const gate = await requireApiPermission("CONSULTATIONS_LIMITED", request);
+  if (gate.response) return gate.response;
+
   const cases = await prisma.caseFile.findMany({
     orderBy: { updatedAt: "desc" },
     take: 50,
-    include: {
-      owner: {
-        select: { name: true, email: true }
-      }
-    }
+    include: { owner: { select: { name: true, email: true } } }
   });
 
   return NextResponse.json({ cases: cases.map(toCaseDto) });
 }
 
 export async function POST(request: NextRequest) {
+  const gate = await requireApiPermission("CONSULTATIONS_FULL", request);
+  if (gate.response) return gate.response;
+  const user = gate.user!;
   const payload = caseSchema.parse(await request.json());
-  const user = await getSystemUser();
   const summary = JSON.stringify({
     caseType: payload.caseType,
     clientRole: payload.clientRole,
@@ -52,11 +53,7 @@ export async function POST(request: NextRequest) {
       status: statusMap[payload.status],
       ownerId: user.id
     },
-    include: {
-      owner: {
-        select: { name: true, email: true }
-      }
-    }
+    include: { owner: { select: { name: true, email: true } } }
   });
 
   await auditEvent({

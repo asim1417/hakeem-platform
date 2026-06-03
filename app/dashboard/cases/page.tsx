@@ -1,9 +1,11 @@
 import { CasesManager } from "@/components/CasesManager";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function CasesPage() {
+  await requirePagePermission("CONSULTATIONS_LIMITED");
   const cases = await prisma.caseFile
     .findMany({
       orderBy: { updatedAt: "desc" },

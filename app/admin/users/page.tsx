@@ -1,21 +1,23 @@
 import { AppShell } from "@/components/AppShell";
 import { AdminUsersManager } from "@/components/AdminUsersManager";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
+  await requirePagePermission("USERS_MANAGE");
   const users = await prisma.user
     .findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
-      select: { id: true, name: true, email: true, role: true, createdAt: true }
+      select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true }
     })
     .then((items) =>
       items.map((item) => ({
         ...item,
         role: item.role,
-        status: "ACTIVE",
+        status: item.isActive ? "ACTIVE" : "INACTIVE",
         createdAt: item.createdAt.toISOString()
       }))
     )

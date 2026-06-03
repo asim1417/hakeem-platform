@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
-import { canUser } from "@/lib/modules/auth/rbac";
 import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { requireApiPermission } from "@/lib/modules/auth/session";
+import { uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,9 @@ const allowedTypes = new Set([
   "image/jpeg"
 ]);
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
+  if (gate.response) return gate.response;
   const attachments = await prisma.attachment.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
@@ -26,29 +28,26 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getSystemUser();
-  const allowed = await canUser(user.id, "ATTACHMENTS_FULL");
-  if (!allowed) return NextResponse.json({ message: "لا تملك صلاحية إدارة المرفقات." }, { status: 403 });
-
+  const gate = await requireApiPermission("ATTACHMENTS_FULL", request);
+  if (gate.response) return gate.response;
+  const user = gate.user!;
   const form = await request.formData();
   const file = form.get("file");
-  if (!(file instanceof File)) {
-    return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
-  }
-  if (!allowedTypes.has(file.type)) {
-    return NextResponse.json({ message: "نوع الملف غير مدعوم في نسخة MVP الحالية." }, { status: 400 });
-  }
+  if (!(file instanceof File)) return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
+  if (!allowedTypes.has(file.type)) return NextResponse.json({ message: "نوع الملف غير مدعوم. الصيغ المتاحة: PDF, DOCX, TXT, PNG, JPG." }, { status: 400 });
 
   const relationType = String(form.get("relationType") || "عام");
   const relationId = String(form.get("relationId") || "");
   const caseId = relationType === "قضية" && relationId ? relationId : undefined;
+  const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });
   const metadata = {
     size: file.size,
     relationType,
     relationId: relationId || undefined,
     uploadedBy: user.id,
-    storageMode: "metadata-only",
-    note: "إدارة المرفقات الحالية تسجل بيانات الملف فقط. التخزين الدائم واستخراج النص TODO لاحق."
+    storageMode: uploaded.storageMode,
+    storageUrl: uploaded.url,
+    note: "TODO: استخراج نص PDF/DOCX لاحقًا وربطه بتحليل الاستشارة والمحاكاة."
   };
 
   const attachment = await prisma.attachment.create({
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
       caseId,
       fileName: file.name,
       mimeType: file.type,
-      storageKey: `metadata-only/${Date.now()}-${file.name}`,
+      storageKey: uploaded.storageKey,
       extractedText: JSON.stringify(metadata)
     },
     include: { caseFile: { select: { id: true, title: true } } }
@@ -68,13 +67,13 @@ export async function POST(request: NextRequest) {
     action: "ATTACHMENT_UPLOADED",
     entityId: attachment.id,
     metadata: {
-      description: `تم تسجيل مرفق: ${attachment.fileName}`,
+      description: `تم رفع مرفق: ${attachment.fileName}`,
       fileName: attachment.fileName,
       mimeType: attachment.mimeType,
       size: file.size,
       relationType,
       relationId: relationId || undefined,
-      storageMode: "metadata-only"
+      storageMode: uploaded.storageMode
     }
   });
 
@@ -91,13 +90,5 @@ function toDto(attachment: {
   caseFile?: { id: string; title: string } | null;
 }) {
   const metadata = parseAttachmentMetadata(attachment.extractedText);
-  return {
-    id: attachment.id,
-    fileName: attachment.fileName,
-    mimeType: attachment.mimeType,
-    storageKey: attachment.storageKey,
-    createdAt: attachment.createdAt,
-    caseFile: attachment.caseFile,
-    ...metadata
-  };
+  return { id: attachment.id, fileName: attachment.fileName, mimeType: attachment.mimeType, storageKey: attachment.storageKey, createdAt: attachment.createdAt, caseFile: attachment.caseFile, ...metadata };
 }

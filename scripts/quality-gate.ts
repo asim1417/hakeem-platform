@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { createConsultationDraft } from "../lib/modules/ai/ai-gateway";
 import { auditEvent } from "../lib/modules/audit/audit";
 
@@ -71,7 +71,7 @@ async function consultationTest(userId: string) {
       facts: testFacts,
       output: draft.output,
       status: draft.blocked ? "BLOCKED" : "GENERATED",
-      qualityReport: draft.qualityReport,
+      qualityReport: draft.qualityReport as Prisma.InputJsonValue,
       citations: {
         create: draft.citations
       }
@@ -79,7 +79,8 @@ async function consultationTest(userId: string) {
     include: { citations: true }
   });
 
-  const citationKeys = consultation.citations.map((citation) => ({
+  const citations = consultation.citations as Array<{ lawName: string; articleNumber: number }>;
+  const citationKeys = citations.map((citation) => ({
     lawName: citation.lawName,
     articleNumber: citation.articleNumber
   }));
@@ -100,16 +101,16 @@ async function consultationTest(userId: string) {
     entityId: consultation.id,
     metadata: {
       blocked: draft.blocked,
-      citations: consultation.citations.length,
-      citationsAllExist: matchingArticles === consultation.citations.length
+      citations: citations.length,
+      citationsAllExist: matchingArticles === citations.length
     }
   });
 
   return {
     consultationId: consultation.id,
     blocked: draft.blocked,
-    citations: consultation.citations.length,
-    citationsAllExist: matchingArticles === consultation.citations.length
+    citations: citations.length,
+    citationsAllExist: matchingArticles === citations.length
   };
 }
 
@@ -209,7 +210,8 @@ async function main() {
       name: "مستخدم اختبار الجودة",
       email: "qa@hakeem.local",
       passwordHash: "not-for-login",
-      role: "LAWYER"
+      role: "LAWYER",
+      isActive: true
     }
   });
 

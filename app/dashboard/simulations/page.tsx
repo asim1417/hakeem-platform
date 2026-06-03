@@ -1,9 +1,11 @@
 import { SimulationWorkspace } from "@/components/SimulationWorkspace";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SimulationsPage() {
+  await requirePagePermission("SIMULATIONS_USE");
   const [sessions, cases, attachments] = await Promise.all([
     prisma.simulation
       .findMany({

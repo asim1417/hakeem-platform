@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 import { admissibilityCheck, encodeClaim, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,9 @@ const patchSchema = z.object({
   attendance: z.string().optional()
 });
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
+  if (gate.response) return gate.response;
   const session = await prisma.simulation.findUnique({
     where: { id: params.id },
     include: {
@@ -38,8 +40,10 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
+  if (gate.response) return gate.response;
   const payload = patchSchema.parse(await request.json());
-  const user = await getSystemUser();
+  const user = gate.user!;
   const title = payload.title || payload.subject;
 
   const session = await prisma.simulation.update({

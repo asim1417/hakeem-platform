@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 const EXPECTED_SYSTEMS = 9;
@@ -97,6 +99,22 @@ async function main() {
     }
   }
 
+  const initialAdminEmail = (process.env.INITIAL_ADMIN_EMAIL || "admin@hakeem.local").toLowerCase();
+  const existingAdmin = await prisma.user.findUnique({ where: { email: initialAdminEmail } });
+  let initialAdminPassword: string | undefined;
+  if (!existingAdmin) {
+    initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD || `Hakeem-${crypto.randomBytes(6).toString("hex")}!`;
+    await prisma.user.create({
+      data: {
+        name: "مدير منصة حكيم",
+        email: initialAdminEmail,
+        passwordHash: await bcrypt.hash(initialAdminPassword, 12),
+        role: "SYSTEM_ADMIN",
+        isActive: true
+      }
+    });
+  }
+
   const systems = Array.from(systemCounts.keys());
   for (const lawName of systems) {
     const articleCount = systemCounts.get(lawName) ?? 0;
@@ -170,6 +188,11 @@ async function main() {
       2
     )
   );
+  if (initialAdminPassword) {
+    console.log(`Initial admin: ${initialAdminEmail}`);
+    console.log(`Temporary password: ${initialAdminPassword}`);
+    console.log("غيّر كلمة المرور المؤقتة بعد أول دخول أو أنشئ مستخدمًا إداريًا جديدًا من /admin/users.");
+  }
 }
 
 main()

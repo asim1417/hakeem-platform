@@ -1,6 +1,8 @@
 import { ConsultationForm } from "@/components/ConsultationForm";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
-export default function ConsultationsPage() {
+export default async function ConsultationsPage() {
+  await requirePagePermission("CONSULTATIONS_LIMITED");
   return (
     <div>
       <p className="text-sm font-semibold text-gold">RAG محكوم بالمكتبة</p>

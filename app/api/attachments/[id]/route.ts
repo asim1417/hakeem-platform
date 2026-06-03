@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
-import { canUser } from "@/lib/modules/auth/rbac";
 import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { requireApiPermission } from "@/lib/modules/auth/session";
+import { signedDownloadUrl } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
+  if (gate.response) return gate.response;
   const attachment = await prisma.attachment.findUnique({
     where: { id: params.id },
     include: { caseFile: { select: { id: true, title: true } } }
@@ -20,6 +22,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
       fileName: attachment.fileName,
       mimeType: attachment.mimeType,
       storageKey: attachment.storageKey,
+      downloadUrl: signedDownloadUrl(attachment.storageKey),
       createdAt: attachment.createdAt,
       caseFile: attachment.caseFile,
       ...parseAttachmentMetadata(attachment.extractedText)
@@ -27,21 +30,17 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  const user = await getSystemUser();
-  const allowed = await canUser(user.id, "ATTACHMENTS_FULL");
-  if (!allowed) return NextResponse.json({ message: "لا تملك صلاحية حذف المرفقات." }, { status: 403 });
-
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("ATTACHMENTS_FULL", request);
+  if (gate.response) return gate.response;
+  const user = gate.user!;
   const attachment = await prisma.attachment.delete({ where: { id: params.id } });
   await auditEvent({
     actorId: user.id,
     subject: "ADMIN",
     action: "ATTACHMENT_DELETED",
     entityId: params.id,
-    metadata: {
-      description: `تم حذف مرفق: ${attachment.fileName}`,
-      fileName: attachment.fileName
-    }
+    metadata: { description: `تم حذف مرفق: ${attachment.fileName}`, fileName: attachment.fileName, storageKey: attachment.storageKey }
   });
 
   return NextResponse.json({ message: "تم حذف المرفق." });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 import { trainingPathTitle } from "@/lib/modules/training/training-paths";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +13,10 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const gate = await requireApiPermission("TRAINING_USE", request);
+  if (gate.response) return gate.response;
   const payload = schema.parse(await request.json());
-  const user = await getSystemUser();
+  const user = gate.user!;
   const pathTitle = trainingPathTitle(payload.pathKey);
   const points = Math.min(20, Math.max(5, Math.ceil(payload.answer.trim().length / 40)));
 

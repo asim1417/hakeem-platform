@@ -212,3 +212,35 @@ npm run qa:security
 - عدد المواد أقل من 1,981: أعد تشغيل `npm run db:seed` ثم `npm run qa:db`.
 - صفحة المكتبة لا تعرض مواد: تأكد من وجود `DATABASE_URL` في Vercel ومن تشغيل seed.
 - مفاتيح الذكاء: لا تضفها كـ `NEXT_PUBLIC_*` أبدًا؛ كل استدعاءات الذكاء تمر عبر `app/api`.
+## إعدادات المرحلة المؤسسية المتقدمة
+
+بعد نشر هذه النسخة على Vercel، أضف المتغيرات التالية بحسب الخدمات التي تريد تفعيلها:
+
+```text
+DATABASE_URL=postgresql://...
+AUTH_SECRET=long-random-secret
+NEXTAUTH_SECRET=long-random-secret
+NEXTAUTH_URL=https://your-project.vercel.app
+
+INITIAL_ADMIN_EMAIL=admin@hakeem.local
+INITIAL_ADMIN_PASSWORD=ضع-كلمة-مؤقتة-آمنة-أو-اتركها-فارغة
+
+AI_PROVIDER=offline | openai | anthropic
+OPENAI_API_KEY=server-only
+ANTHROPIC_API_KEY=server-only
+OPENAI_MODEL=gpt-4o-mini
+ANTHROPIC_MODEL=claude-3-5-haiku-latest
+
+AZURE_STORAGE_ACCOUNT=account-name
+AZURE_STORAGE_CONTAINER=hakeem-attachments
+AZURE_STORAGE_SAS_TOKEN=?sv=...
+```
+
+ملاحظات مهمة:
+
+- لا تستخدم أي متغير يبدأ بـ `NEXT_PUBLIC_` لمفاتيح الذكاء الاصطناعي.
+- شغّل `npm run db:push` بعد تحديث schema لإضافة `users.isActive`.
+- شغّل `npm run db:seed` مرة واحدة بعد ضبط قاعدة البيانات. سيُنشئ seed مديرًا أول إذا لم يكن موجودًا.
+- لا يعمل `db:seed` تلقائيًا في build، حتى لا يعيد الاستيراد مع كل نشر.
+- رفع المرفقات يستخدم Azure Blob عند توفر متغيرات Azure. عند غيابها يبقى النظام metadata-only ولا يكتب في Vercel filesystem.
+- تصدير مستندات المحاكاة يتم من الخادم عبر `/api/simulations/[id]/export`.

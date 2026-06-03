@@ -1,11 +1,13 @@
 import { AppShell } from "@/components/AppShell";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 const roleOrder = ["SYSTEM_ADMIN", "LAWYER", "TRAINER", "TRAINEE"];
 
 export default async function AdminRolesPage() {
+  await requirePagePermission("USERS_MANAGE");
   const roles = await prisma.roleRecord
     .findMany({
       include: {

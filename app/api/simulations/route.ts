@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 import { encodeClaim } from "@/lib/modules/simulations/hakeem-judge";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,9 @@ const schema = z.object({
   attendance: z.string().optional()
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
+  if (gate.response) return gate.response;
   const sessions = await prisma.simulation.findMany({
     orderBy: { updatedAt: "desc" },
     take: 25,
@@ -39,8 +41,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
+  if (gate.response) return gate.response;
   const payload = schema.parse(await request.json().catch(() => ({})));
-  const user = await getSystemUser();
+  const user = gate.user!;
   const title = payload.title?.trim() || payload.subject?.trim() || payload.caseTitle?.trim() || "جلسة محاكاة قضائية تدريبية";
   const claimContent = encodeClaim(payload);
 

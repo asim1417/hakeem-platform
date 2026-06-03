@@ -1,12 +1,12 @@
 import { TrainingWorkspace } from "@/components/TrainingWorkspace";
 import { prisma } from "@/lib/prisma";
-import { getSystemUser } from "@/lib/modules/auth/system-user";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrainingPage() {
-  const progress = await getSystemUser()
-    .then((user) => prisma.trainingProgress.findFirst({ where: { userId: user.id } }))
+  const user = await requirePagePermission("TRAINING_USE");
+  const progress = await prisma.trainingProgress.findFirst({ where: { userId: user.id } })
     .catch(() => null);
 
   return (

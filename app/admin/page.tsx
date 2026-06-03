@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ async function getAdminStatus() {
 const todos = ["ربط Microsoft 365", "ربط SharePoint", "رفع المرفقات", "إدارة المستخدمين", "صلاحيات متقدمة", "تفعيل AI حقيقي لاحقًا"];
 
 export default async function AdminPage() {
+  await requirePagePermission("ADMIN_REPORTS_VIEW");
   const status = await getAdminStatus();
 
   return (

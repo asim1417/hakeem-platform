@@ -1,10 +1,12 @@
 import { AttachmentsManager } from "@/components/AttachmentsManager";
 import { prisma } from "@/lib/prisma";
 import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AttachmentsPage() {
+  await requirePagePermission("ATTACHMENTS_LIMITED");
   const [attachments, cases] = await Promise.all([
     prisma.attachment
       .findMany({

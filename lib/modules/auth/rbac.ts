@@ -32,6 +32,8 @@ const rolePermissions: Record<UserRole, Permission[]> = {
 };
 
 export function hasPermission(role: UserRole, permission: Permission) {
+  if (permission === "CONSULTATIONS_LIMITED" && rolePermissions[role].includes("CONSULTATIONS_FULL")) return true;
+  if (permission === "ATTACHMENTS_LIMITED" && rolePermissions[role].includes("ATTACHMENTS_FULL")) return true;
   return rolePermissions[role].includes(permission);
 }
 
@@ -58,7 +60,10 @@ export async function canUser(userId: string | undefined, permission: Permission
   });
 
   if (!role) return hasPermission(user.role, permission);
-  return role.permissions.some((item) => item.permission.key === permission);
+  const keys = role.permissions.map((item) => item.permission.key);
+  if (permission === "CONSULTATIONS_LIMITED" && keys.includes("CONSULTATIONS_FULL")) return true;
+  if (permission === "ATTACHMENTS_LIMITED" && keys.includes("ATTACHMENTS_FULL")) return true;
+  return keys.includes(permission);
 }
 
 export async function requirePermission(userId: string | undefined, permission: Permission) {

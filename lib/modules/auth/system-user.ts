@@ -8,7 +8,8 @@ export async function getSystemUser() {
       name: "مستخدم النظام",
       email: "system@hakeem.local",
       passwordHash: "not-for-login",
-      role: "SYSTEM_ADMIN"
+      role: "SYSTEM_ADMIN",
+      isActive: true
     }
   });
 }
