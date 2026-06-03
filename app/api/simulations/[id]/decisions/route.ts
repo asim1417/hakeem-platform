@@ -11,18 +11,19 @@ const decisionSchema = z.object({
   content: z.string().optional()
 });
 
+function stageForDecision(decisionType: string) {
+  if (decisionType.includes("قفل")) return "CLOSE_PLEADING" as const;
+  if (decisionType.includes("صلح")) return "SETTLEMENT" as const;
+  if (decisionType.includes("فتح")) return "PLEADING" as const;
+  return "PROCEDURAL_DECISION" as const;
+}
+
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
   const payload = decisionSchema.parse(await request.json().catch(() => ({})));
   const user = gate.user!;
-  const stage = payload.decisionType.includes("قفل")
-    ? "CLOSE_PLEADING"
-    : payload.decisionType.includes("صلح")
-      ? "SETTLEMENT"
-      : payload.decisionType.includes("فتح")
-        ? "PLEADING"
-        : "PROCEDURAL_DECISION";
+  const stage = stageForDecision(payload.decisionType);
   const content = payload.content?.trim() || `قرار إجرائي: ${payload.decisionType}.`;
 
   const decision = await prisma.simulationDecision.create({

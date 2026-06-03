@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   if (gate.response) return gate.response;
   const payload = schema.parse(await request.json().catch(() => ({})));
   const user = gate.user!;
-  const title = payload.title?.trim() || payload.subject?.trim() || payload.caseTitle?.trim() || "جلسة محاكاة قضائية تدريبية";
+  const title = payload.title?.trim() || payload.subject?.trim() || payload.caseTitle?.trim() || "جلسة محاكاة قضائية";
   const claimContent = encodeClaim(payload);
 
   const simulation = await prisma.simulation.create({
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           {
             role: "النظام",
             stage: "CLAIM_FILING",
-            content: "تم إنشاء جلسة محاكاة قضائية تدريبية وتقييد الدعوى."
+            content: "تم إنشاء جلسة محاكاة قضائية وتقييد الدعوى مبدئيًا."
           },
           {
             role: "النظام",

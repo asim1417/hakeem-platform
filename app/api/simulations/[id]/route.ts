@@ -36,7 +36,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   });
 
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
-  return NextResponse.json({ session, claim: extractClaim(session.messages), admissibility: admissibilityCheck(extractClaim(session.messages)) });
+  const claim = extractClaim(session.messages);
+  return NextResponse.json({ session, claim, admissibility: admissibilityCheck(claim) });
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
@@ -44,7 +45,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (gate.response) return gate.response;
   const payload = patchSchema.parse(await request.json());
   const user = gate.user!;
-  const title = payload.title || payload.subject;
+  const title = payload.title || payload.subject || "جلسة محاكاة قضائية";
 
   const session = await prisma.simulation.update({
     where: { id: params.id },

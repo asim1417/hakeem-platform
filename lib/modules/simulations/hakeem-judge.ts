@@ -23,8 +23,8 @@ export function encodeClaim(data: ClaimData) {
   return `${claimMarker}${JSON.stringify(data)}`;
 }
 
-export function extractClaim(messages: Array<Pick<SimulationMessage, "content">>): ClaimData | undefined {
-  const source = [...messages].reverse().find((message) => message.content.startsWith(claimMarker));
+export function extractClaim(messages?: Array<Pick<SimulationMessage, "content">>): ClaimData | undefined {
+  const source = [...(messages ?? [])].reverse().find((message) => message.content.startsWith(claimMarker));
   if (!source) return undefined;
   try {
     return JSON.parse(source.content.slice(claimMarker.length)) as ClaimData;
@@ -55,17 +55,20 @@ export function admissibilityCheck(claim?: ClaimData) {
 export function buildHearingRecord(session: { id: string; title: string }, claim?: ClaimData) {
   const now = new Date().toLocaleString("ar-SA");
   return [
+    "بسم الله الرحمن الرحيم",
+    "ضبط جلسة محاكاة قضائية",
     `التاريخ والوقت: ${now}`,
     "المنصة: حكيم",
-    "الصفة: قاضٍ افتراضي تدريبي",
+    "الصفة: قاض افتراضي تدريبي",
     `رقم الجلسة: ${session.id}`,
     `موضوع الدعوى: ${claim?.subject || session.title}`,
     `المدعي: ${claim?.plaintiffName || "غير محدد"} - صفته: ${claim?.plaintiffCapacity || "غير محددة"}`,
     `المدعى عليه: ${claim?.defendantName || "غير محدد"} - صفته: ${claim?.defendantCapacity || "غير محددة"}`,
-    `إثبات الحضور والوكالة: ${claim?.attendance || "لم تسجل بيانات حضور تفصيلية"}`,
-    `ملخص الدعوى: ${claim?.facts || "لم تسجل وقائع تفصيلية"}`,
-    "قرار الجلسة: فتح باب المرافعة تدريبياً وتمكين الأطراف من عرض الدعوى والجواب.",
-    "تنبيه: هذا الضبط تدريبي وغير ملزم ولا يعد محضرًا قضائيًا فعليًا."
+    `إثبات الحضور والصفة: ${claim?.attendance || "لم تسجل بيانات حضور تفصيلية"}`,
+    `ملخص الوقائع: ${claim?.facts || "لم تسجل وقائع تفصيلية"}`,
+    `طلبات المدعي: ${claim?.requests || "لم تحدد الطلبات"}`,
+    "قرار الجلسة: فتح باب المرافعة تدريبيًا وتمكين الأطراف من عرض الدعوى والجواب.",
+    "تنبيه: هذا المستند صادر في بيئة محاكاة تدريبية بمنصة حكيم، ولا يعد حكمًا قضائيًا، ولا رأيًا قانونيًا نهائيًا، ولا يغني عن مراجعة محام مختص."
   ].join("\n");
 }
 
@@ -101,6 +104,6 @@ export function buildAppealDraft(kind: string, reasons: string[]) {
     `${kind} تدريبي`,
     `الأسباب المختارة: ${reasons.length ? reasons.join("، ") : "لم تحدد أسباب"}`,
     "TODO: توليد مذكرة اعتراض تفصيلية لاحقًا بعد تفعيل نماذج اعتراض متخصصة.",
-    "هذا الطلب تدريبي وغير ملزم ولا يعد إجراءً قضائيًا فعليًا."
+    "هذا الطلب تدريبي وغير ملزم ولا يعد إجراء قضائيًا فعليًا."
   ].join("\n");
 }

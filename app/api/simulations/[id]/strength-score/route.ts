@@ -12,11 +12,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const user = gate.user!;
   const session = await prisma.simulation.findUnique({ where: { id: params.id }, include: { messages: true } });
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
-  const attachmentsCount = await prisma.attachment.count();
+  const body = await request.json().catch(() => ({}));
+  const attachmentsCount = Number.isFinite(body?.attachmentsCount) ? Number(body.attachmentsCount) : await prisma.attachment.count();
   const score = strengthScore(extractClaim(session.messages), attachmentsCount);
   const message = await prisma.simulationMessage.create({
     data: { simulationId: params.id, role: "النظام", stage: "PROCEDURAL_DECISION", content: `${scoreMarker}${JSON.stringify(score)}` }
   });
-  await auditEvent({ actorId: user.id, subject: "SIMULATION", action: "HAKEEM_STRENGTH_SCORE_CREATED", entityId: params.id, metadata: { description: "تم حساب مقياس قوة الدعوى.", ...score } });
+  await auditEvent({
+    actorId: user.id,
+    subject: "SIMULATION",
+    action: "HAKEEM_STRENGTH_SCORE_CREATED",
+    entityId: params.id,
+    metadata: { description: "تم حساب مقياس قوة الدعوى.", ...score }
+  });
   return NextResponse.json({ score, message });
 }

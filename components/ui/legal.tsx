@@ -3,180 +3,148 @@ import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
 
 export function LegalCard({ title, eyebrow, children, className = "" }: { title?: string; eyebrow?: string; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-lg border border-[#C09B5A]/25 bg-[#FBF8F1] p-5 shadow-[0_12px_30px_rgba(11,31,58,0.08)] ${className}`}>
-      {eyebrow ? <p className="font-display-ar text-xs font-semibold text-[#C09B5A]">{eyebrow}</p> : null}
-      {title ? <h2 className="font-display-ar mt-2 text-xl font-bold text-[#0B1F3A]">{title}</h2> : null}
+    <section className={`card ${className}`}>
+      {eyebrow ? <p className="t-display text-xs font-semibold text-[var(--gold)]">{eyebrow}</p> : null}
+      {title ? <h2 className="card-title">{title}</h2> : null}
       <div className={title || eyebrow ? "mt-4" : ""}>{children}</div>
     </section>
   );
 }
 
 export function GoldButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      className={`focus-ring rounded-md bg-gradient-to-b from-[#D4AF6E] to-[#C09B5A] px-5 py-3 font-display-ar font-semibold text-[#0B1F3A] shadow-sm disabled:cursor-not-allowed disabled:opacity-60 ${props.className ?? ""}`}
-    />
-  );
+  return <button {...props} className={`btn btn-gold disabled:cursor-not-allowed disabled:opacity-60 ${props.className ?? ""}`} />;
 }
 
 export function NavyButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      className={`focus-ring rounded-md bg-[#0B1F3A] px-5 py-3 font-display-ar font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60 ${props.className ?? ""}`}
-    />
-  );
+  return <button {...props} className={`btn btn-primary disabled:cursor-not-allowed disabled:opacity-60 ${props.className ?? ""}`} />;
 }
 
 export function LegalAlert({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "success" | "warning" | "danger" }) {
-  const tones = {
-    info: "border-[#C09B5A]/25 bg-[#FBF8F1] text-[#0B1F3A]",
-    success: "border-[#1A5C41]/25 bg-[#1A5C41]/10 text-[#1A5C41]",
-    warning: "border-[#B8721A]/25 bg-[#B8721A]/10 text-[#8a5515]",
-    danger: "border-[#8C2233]/25 bg-[#8C2233]/10 text-[#8C2233]"
-  };
-  return <p className={`rounded-md border p-4 leading-7 ${tones[tone]}`}>{children}</p>;
+  const cls = {
+    info: "border-[var(--gold-border)] bg-[var(--gold-ghost)] text-[var(--navy)]",
+    success: "border-[rgba(26,92,65,.25)] bg-[var(--emerald-soft)] text-[var(--emerald)]",
+    warning: "border-[rgba(184,114,26,.25)] bg-[var(--amber-soft)] text-[var(--amber)]",
+    danger: "border-[rgba(140,34,51,.25)] bg-[var(--ruby-soft)] text-[var(--ruby)]"
+  }[tone];
+  return <p className={`rounded-[var(--r-md)] border p-4 leading-7 ${cls}`}>{children}</p>;
 }
 
 export function LegalPageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
   return (
-    <header className="rounded-lg border border-[#C09B5A]/25 bg-gradient-to-l from-[#0B1F3A] to-[#142D52] p-6 text-white shadow-[0_18px_45px_rgba(11,31,58,0.14)]">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          {eyebrow ? <p className="font-display-ar text-sm font-semibold text-[#D4AF6E]">{eyebrow}</p> : null}
-          <h1 className="font-judicial mt-2 text-4xl font-bold">{title}</h1>
-          {description ? <p className="mt-3 max-w-3xl leading-8 text-white/80">{description}</p> : null}
-        </div>
-        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
-      </div>
+    <header className="hero">
+      {eyebrow ? <p className="t-display text-sm text-[var(--gold-pale)]">{eyebrow}</p> : null}
+      <h1 className="t-head mt-2 text-5xl font-bold">{title}</h1>
+      {description ? <p className="mt-4 max-w-3xl leading-8 text-white/80">{description}</p> : null}
+      {actions ? <div className="mt-6 flex flex-wrap gap-2">{actions}</div> : null}
     </header>
   );
 }
 
 export function LegalEmptyState({ title, description }: { title: string; description?: string }) {
   return (
-    <div className="rounded-md border border-dashed border-[#C09B5A]/35 bg-[#F9F5EC] p-6 text-center">
-      <p className="font-display-ar font-bold text-[#0B1F3A]">{title}</p>
-      {description ? <p className="mt-2 text-sm leading-7 text-gray-600">{description}</p> : null}
+    <div className="rounded-[var(--r-md)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-6 text-center">
+      <p className="t-display font-bold text-[var(--navy)]">{title}</p>
+      {description ? <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">{description}</p> : null}
     </div>
   );
 }
 
 export function LegalStatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-lg border border-[#C09B5A]/20 bg-[#FBF8F1] p-5 shadow-[0_10px_24px_rgba(11,31,58,0.06)]">
-      <p className="text-sm text-gray-600">{label}</p>
-      <p className="font-mono-legal mt-2 text-3xl font-bold text-[#0B1F3A]">{value}</p>
-      {hint ? <p className="mt-2 text-xs leading-6 text-[#C09B5A]">{hint}</p> : null}
+    <div className="stat-card">
+      <p className="stat-lbl">{label}</p>
+      <p className="stat-val">{value}</p>
+      {hint ? <p className="stat-sub mt-2">{hint}</p> : null}
     </div>
   );
 }
 
 export function LegalFormSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-[#C09B5A]/20 bg-white/80 p-5">
-      <h2 className="font-display-ar text-lg font-bold text-[#0B1F3A]">{title}</h2>
+    <section className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/80 p-5">
+      <h2 className="t-display text-lg font-bold text-[var(--navy)]">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );
 }
 
-const badgeClasses: Record<string, string> = {
-  نشطة: "border-[#1A5C41]/30 bg-[#1A5C41]/10 text-[#1A5C41]",
-  "قيد المرافعة": "border-[#C09B5A]/40 bg-[#E8D5A8]/40 text-[#0B1F3A]",
-  "صدر الحكم": "border-[#0B1F3A]/20 bg-[#0B1F3A]/10 text-[#0B1F3A]",
-  اعتراض: "border-[#8C2233]/25 bg-[#8C2233]/10 text-[#8C2233]",
-  مغلقة: "border-gray-300 bg-gray-100 text-gray-700",
-  تدريبية: "border-[#B8721A]/25 bg-[#B8721A]/10 text-[#B8721A]"
-};
-
 export function LegalBadge({ status }: { status: string }) {
-  return <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses[status] ?? badgeClasses["تدريبية"]}`}>{status}</span>;
+  return <span className="inline-flex items-center rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-1 text-xs font-semibold text-[var(--navy)]">{status}</span>;
 }
 
 export function StageTracker({ currentStage }: { currentStage: string }) {
-  const stages = [
-    "CLAIM_FILING",
-    "INITIAL_ADMISSIBILITY",
-    "CLAIM_SHEET",
-    "HEARING_OPENING",
-    "HEARING_RECORD",
-    "ATTENDANCE_VERIFICATION",
-    "PLAINTIFF_STATEMENT",
-    "DEFENDANT_RESPONSE",
-    "EVIDENCE_MANAGEMENT",
-    "PROCEDURAL_DECISION",
-    "SETTLEMENT",
-    "CLOSE_PLEADING",
-    "TRAINING_JUDGMENT",
-    "POST_JUDGMENT"
-  ];
+  const stages = ["CLAIM_FILING", "INITIAL_ADMISSIBILITY", "HEARING_RECORD", "PLEADING", "PLAINTIFF_STATEMENT", "DEFENDANT_RESPONSE", "PROCEDURAL_DECISION", "SETTLEMENT", "CLOSE_PLEADING", "TRAINING_JUDGMENT"];
   const currentIndex = Math.max(0, stages.indexOf(currentStage));
   return (
-    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-      {stages.map((stage, index) => {
-        const complete = index < currentIndex;
-        const active = index === currentIndex;
-        const judgment = stage === "TRAINING_JUDGMENT";
-        return (
-          <div
-            key={stage}
-            className={`rounded-md border p-3 ${active ? "border-[#C09B5A] bg-[#E8D5A8]/45" : complete ? "border-[#1A5C41]/25 bg-[#1A5C41]/5" : "border-black/10 bg-white"} ${judgment ? "ring-1 ring-[#C09B5A]/30" : ""}`}
-          >
-            <p className="font-mono-legal text-xs text-[#C09B5A]">{(index + 1).toLocaleString("ar-SA")}</p>
-            <p className="font-display-ar mt-1 font-semibold text-[#0B1F3A]">{stageLabel(stage)}</p>
+    <div className="workflow-wrap">
+      <div className="wf-track">
+        {stages.map((stage, index) => (
+          <div className="contents" key={stage}>
+            <div className={`wf-step ${index < currentIndex ? "done" : index === currentIndex ? "cur" : ""}`}>
+              <div className="wf-circle">{index < currentIndex ? "✓" : (index + 1).toLocaleString("ar-SA")}</div>
+              <div className="wf-label">{stageLabel(stage)}</div>
+            </div>
+            {index < stages.length - 1 ? <div className={`wf-conn ${index < currentIndex ? "done" : ""}`} /> : null}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
 
 export function HearingMessage({ role, content, createdAt, stage }: { role: string; content: string; createdAt: string; stage: string }) {
-  const styles: Record<string, string> = {
-    "القاضي الافتراضي": "border-[#C09B5A]/40 bg-[#FBF8F1]",
-    المدعي: "border-[#1E3F6F]/20 bg-white",
-    "المدعى عليه": "border-[#8C2233]/20 bg-white",
-    "وكيل المدعي": "border-[#1E3F6F]/20 bg-[#F9F5EC]",
-    "وكيل المدعى عليه": "border-[#8C2233]/20 bg-[#F9F5EC]",
-    النظام: "border-gray-200 bg-gray-50"
-  };
+  const cls = role.includes("قاضي") ? "judge" : role.includes("مدعي") && !role.includes("مدعى عليه") ? "plaintiff" : role.includes("مدعى عليه") ? "defendant" : "system";
   return (
-    <article className={`rounded-lg border p-4 ${styles[role] ?? styles["النظام"]}`}>
-      <div className="flex flex-wrap justify-between gap-2">
-        <p className="font-display-ar font-bold text-[#0B1F3A]">{role}</p>
-        <p className="font-mono-legal text-xs text-gray-500">{new Date(createdAt).toLocaleString("ar-SA")}</p>
+    <article className={`msg ${cls}`}>
+      <div className="msg-avatar">{role.slice(0, 2)}</div>
+      <div className="msg-body">
+        <div className="msg-sender">{role} · {stageLabel(stage)}</div>
+        <div className="msg-bubble">{content}</div>
+        <div className="msg-time">{new Date(createdAt).toLocaleString("ar-SA")}</div>
       </div>
-      <p className="mt-1 text-xs text-[#C09B5A]">{stageLabel(stage)}</p>
-      <p className="mt-2 whitespace-pre-wrap leading-8 text-gray-700">{content}</p>
     </article>
   );
 }
 
 export function JudgmentDocument({ content, disclaimer }: { content: string; disclaimer: string }) {
   return (
-    <article className="rounded-lg border border-[#C09B5A]/45 bg-[#FBF8F1] p-6 shadow-[0_18px_45px_rgba(11,31,58,0.10)]">
-      <p className="rounded-md border border-[#8C2233]/25 bg-[#8C2233]/10 p-3 text-center font-display-ar font-bold text-[#8C2233]">حكم تدريبي غير ملزم</p>
-      <h3 className="font-judicial mt-5 text-3xl font-bold text-[#0B1F3A]">وثيقة الحكم التدريبي</h3>
-      <pre className="font-judicial mt-4 whitespace-pre-wrap text-lg leading-10 text-[#0D1321]">{content}</pre>
-      <p className="mt-5 border-t border-[#C09B5A]/30 pt-4 text-sm leading-7 text-gray-700">{disclaimer}</p>
+    <article className="verdict-doc">
+      <div className="vd-court">
+        <h2>مسودة حكم قضائي مسبب</h2>
+        <p>مولدة داخل بيئة القاضي حكيم وفق بنية قضائية تدريبية</p>
+      </div>
+      <div className="vd-meta">
+        <span><strong>المنصة:</strong> حكيم</span>
+        <span><strong>تاريخ العرض:</strong> {new Date().toLocaleString("ar-SA")}</span>
+      </div>
+      <div className="vd-basmala">بسم الله الرحمن الرحيم</div>
+      <div className="vd-section">
+        <pre>{content}</pre>
+      </div>
+      <div className="vd-disclaimer">{disclaimer}</div>
+      <div className="vd-sign">القاضي حكيم - قاض افتراضي تدريبي</div>
     </article>
   );
 }
 
 export function HearingRecordDocument({ content }: { content: string }) {
   return (
-    <article className="rounded-lg border border-[#C09B5A]/35 bg-[#FBF8F1] p-5">
-      <p className="font-judicial text-center text-2xl font-bold text-[#0B1F3A]">بسم الله الرحمن الرحيم</p>
-      <h3 className="font-display-ar mt-4 text-xl font-bold text-[#0B1F3A]">ضبط جلسة تدريبي</h3>
-      <pre className="mt-3 whitespace-pre-wrap leading-9 text-gray-800">{content}</pre>
+    <article className="hearing-doc">
+      <div className="vd-basmala">بسم الله الرحمن الرحيم</div>
+      <div className="vd-court">
+        <h2>ضبط جلسة</h2>
+        <p>منصة حكيم - محضر محاكاة قضائية</p>
+      </div>
+      <div className="vd-section">
+        <pre>{content}</pre>
+      </div>
+      <div className="vd-disclaimer">هذا الضبط مولد لأغراض المحاكاة والتدريب، ولا يعد ضبطًا صادرًا من جهة قضائية.</div>
     </article>
   );
 }
 
 export function ClaimSheetCard({ claim }: { claim?: Record<string, string> }) {
-  if (!claim) return <p className="rounded-md bg-[#F2EADB] p-4 text-gray-700">لم يتم تقييد صحيفة دعوى بعد.</p>;
+  if (!claim) return <LegalEmptyState title="لم يتم تقييد صحيفة دعوى بعد." />;
   const rows = [
     ["نوع الدعوى", claim.caseType],
     ["المدعي", `${claim.plaintiffName || ""} - ${claim.plaintiffCapacity || ""}`],
@@ -185,16 +153,16 @@ export function ClaimSheetCard({ claim }: { claim?: Record<string, string> }) {
     ["الوقائع", claim.facts],
     ["الطلبات", claim.requests],
     ["مبلغ المطالبة", claim.claimAmount],
-    ["أسانيد المدعي", claim.legalGrounds],
-    ["دفوع المدعى عليه", claim.defenses],
+    ["الأسانيد", claim.legalGrounds],
+    ["الدفوع", claim.defenses],
     ["الحضور والوكالة", claim.attendance]
   ];
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3 md:grid-cols-2">
       {rows.map(([label, value]) => (
-        <div key={label} className="rounded-md border border-[#C09B5A]/15 bg-white/70 p-3">
-          <p className="font-display-ar text-sm font-bold text-[#0B1F3A]">{label}</p>
-          <p className="mt-1 whitespace-pre-wrap leading-7 text-gray-700">{value || "غير محدد"}</p>
+        <div key={label} className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-white/70 p-3">
+          <p className="t-display text-sm font-bold text-[var(--navy)]">{label}</p>
+          <p className="mt-1 whitespace-pre-wrap leading-7 text-[var(--ink-80)]">{value || "غير محدد"}</p>
         </div>
       ))}
     </div>
@@ -202,24 +170,20 @@ export function ClaimSheetCard({ claim }: { claim?: Record<string, string> }) {
 }
 
 export function StrengthScoreCard({ score, notes }: { score?: number; notes?: string[] }) {
+  const safeScore = Math.min(100, Math.max(0, score ?? 0));
   return (
-    <div className="rounded-lg border border-[#C09B5A]/25 bg-white p-5">
-      <p className="font-display-ar text-sm text-[#C09B5A]">مقياس تدريبي تقديري</p>
-      <div className="mt-3 flex items-end gap-3">
-        <p className="font-mono-legal text-5xl font-bold text-[#0B1F3A]">{(score ?? 0).toLocaleString("ar-SA")}</p>
-        <p className="pb-2 text-gray-600">/ 100</p>
+    <div className="strength-layout">
+      <div className="criteria-list space-y-2">
+        {(notes?.length ? notes : ["وضوح الوقائع", "تحديد الطلبات", "وجود بينة", "وجود سند نظامي", "اتساق الدفوع", "اكتمال بيانات الأطراف"]).map((note) => (
+          <div key={note} className="criterion-card">{note}</div>
+        ))}
       </div>
-      <div className="mt-4 h-3 rounded-full bg-[#F2EADB]">
-        <div className="h-3 rounded-full bg-gradient-to-l from-[#C09B5A] to-[#1A5C41]" style={{ width: `${Math.min(100, Math.max(0, score ?? 0))}%` }} />
+      <div className="strength-panel">
+        <div className="gauge relative" style={{ "--score-deg": `${safeScore * 3.6}deg` } as React.CSSProperties}>
+          <div className="score">{safeScore.toLocaleString("ar-SA")}</div>
+        </div>
+        <p className="recommendation mt-4 text-sm text-[var(--gold-pale)]">مقياس تقديري للتدريب ولا يمثل توقعًا قضائيًا.</p>
       </div>
-      <p className="mt-3 text-sm text-[#B8721A]">هذا المقياس تقديري للتدريب ولا يمثل توقعًا قضائيًا.</p>
-      {notes?.length ? (
-        <ul className="mt-3 space-y-1 text-sm text-gray-700">
-          {notes.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
 }

@@ -18,9 +18,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const content = buildHearingRecord(session, claim);
   const decision = await prisma.simulationDecision.create({
-    data: { simulationId: params.id, stage: "HEARING_RECORD", decisionType: "ضبط جلسة تدريبي", content }
+    data: { simulationId: params.id, stage: "HEARING_RECORD", decisionType: "ضبط جلسة تدريبية", content }
   });
   await prisma.simulation.update({ where: { id: params.id }, data: { stage: "HEARING_RECORD" } });
-  await auditEvent({ actorId: user.id, subject: "SIMULATION", action: "HAKEEM_HEARING_RECORD_CREATED", entityId: params.id, metadata: { description: "تم توليد ضبط جلسة تدريبي.", decisionId: decision.id } });
+  await auditEvent({
+    actorId: user.id,
+    subject: "SIMULATION",
+    action: "HAKEEM_HEARING_RECORD_CREATED",
+    entityId: params.id,
+    metadata: { description: "تم توليد ضبط جلسة تدريبي.", decisionId: decision.id }
+  });
   return NextResponse.json({ decision });
 }

@@ -7,13 +7,15 @@ import { nextStageForRole } from "@/lib/modules/simulations/simulation-labels";
 
 export const dynamic = "force-dynamic";
 
+const allowedRoles = ["القاضي الافتراضي", "المدعي", "المدعى عليه", "وكيل المدعي", "وكيل المدعى عليه", "النظام"] as const;
+
 const messageSchema = z.object({
-  role: z.enum(["القاضي الافتراضي", "المدعي", "المدعى عليه", "وكيل المدعي", "وكيل المدعى عليه", "النظام"]),
+  role: z.enum(allowedRoles),
   content: z.string().min(2, "نص الرسالة مطلوب.")
 });
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  const gate = await requireApiPermission("SIMULATIONS_USE", _request);
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
   const session = await prisma.simulation.findUnique({
     where: { id: params.id },
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     metadata: {
       role: payload.role,
       stage,
-      description: "تمت إضافة رسالة إلى جلسة المحاكاة."
+      description: "تمت إضافة مداخلة إلى جلسة المحاكاة."
     }
   });
 

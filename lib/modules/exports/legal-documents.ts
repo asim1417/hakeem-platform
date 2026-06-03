@@ -10,7 +10,7 @@ type ExportSession = {
   judgments: Array<{ content: string; disclaimer: string; createdAt: Date }>;
 };
 
-const disclaimer = "هذا المستند صادر في بيئة محاكاة تدريبية بمنصة حكيم، ولا يعد حكمًا قضائيًا، ولا رأيًا قانونيًا نهائيًا، ولا يغني عن مراجعة محامٍ مختص.";
+const disclaimer = "هذا المستند صادر في بيئة محاكاة تدريبية بمنصة حكيم، ولا يعد حكمًا قضائيًا، ولا رأيًا قانونيًا نهائيًا، ولا يغني عن مراجعة محام مختص.";
 
 export function buildSimulationExport(session: ExportSession, type: string) {
   const claim = extractClaim(session.messages);
@@ -19,7 +19,10 @@ export function buildSimulationExport(session: ExportSession, type: string) {
   const judgment = session.judgments[0];
 
   const sections: Array<{ heading: string; body: string }> = [
-    { heading: "بيانات الجلسة", body: [`رقم الجلسة: ${session.id}`, `العنوان: ${session.title}`, `المرحلة: ${session.stage}`, `تاريخ الإنشاء: ${session.createdAt.toLocaleString("ar-SA")}`].join("\n") }
+    {
+      heading: "بيانات الجلسة",
+      body: [`رقم الجلسة: ${session.id}`, `العنوان: ${session.title}`, `المرحلة: ${session.stage}`, `تاريخ الإنشاء: ${session.createdAt.toLocaleString("ar-SA")}`].join("\n")
+    }
   ];
 
   if (claim) {
@@ -36,7 +39,7 @@ export function buildSimulationExport(session: ExportSession, type: string) {
     });
   }
 
-  if (type === "claim-sheet") return documentPayload("صحيفة الدعوى التدريبية", sections);
+  if (type === "claim-sheet") return documentPayload("صحيفة الدعوى", sections);
   if (hearingRecord && (type === "hearing-record" || type === "full-report")) sections.push({ heading: "ضبط الجلسة", body: hearingRecord.content });
   if (settlement && (type === "settlement" || type === "full-report")) sections.push({ heading: "مسودة الصلح", body: settlement.content });
   if (type === "full-report") {
@@ -53,18 +56,18 @@ export function buildSimulationExport(session: ExportSession, type: string) {
     });
   }
   if (judgment && (type === "judgment" || type === "full-report")) {
-    sections.push({ heading: "الحكم التدريبي", body: ensureTrainingJudgment(judgment.content) });
+    sections.push({ heading: "مسودة حكم قضائي مسبب", body: ensureReasonedJudgment(judgment.content) });
   }
 
   const titles: Record<string, string> = {
-    "hearing-record": "ضبط جلسة تدريبي",
-    judgment: "حكم تدريبي غير ملزم",
-    settlement: "مسودة صلح تدريبية",
+    "hearing-record": "ضبط جلسة",
+    judgment: "مسودة حكم قضائي مسبب",
+    settlement: "مسودة صلح",
     "full-report": "تقرير المحاكاة القضائية كاملًا",
     "consultation-summary": "ملخص قانوني تدريبي"
   };
 
-  return documentPayload(titles[type] ?? "مستند تدريبي من حكيم", sections);
+  return documentPayload(titles[type] ?? "مستند من حكيم", sections);
 }
 
 function documentPayload(title: string, sections: Array<{ heading: string; body: string }>) {
@@ -76,8 +79,8 @@ function documentPayload(title: string, sections: Array<{ heading: string; body:
   };
 }
 
-function ensureTrainingJudgment(content: string) {
-  return content.includes("حكم تدريبي غير ملزم") ? content : `حكم تدريبي غير ملزم\n\n${content}`;
+function ensureReasonedJudgment(content: string) {
+  return content.includes("مسودة حكم قضائي مسبب") ? content : `مسودة حكم قضائي مسبب\n\n${content}`;
 }
 
 export function toDocx(payload: ReturnType<typeof documentPayload>) {

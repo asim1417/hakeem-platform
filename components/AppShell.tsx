@@ -1,18 +1,40 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, FileClock, GraduationCap, LayoutDashboard, Paperclip, Scale, Settings, ShieldCheck } from "lucide-react";
+import { BookOpen, Briefcase, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 
-const nav = [
-  { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
-  { href: "/dashboard/library", label: "المكتبة النظامية", icon: BookOpen },
-  { href: "/dashboard/cases", label: "القضايا", icon: Briefcase },
-  { href: "/dashboard/consultations", label: "الاستشارات", icon: ShieldCheck },
-  { href: "/dashboard/simulations", label: "القاضي حكيم", icon: Scale },
-  { href: "/dashboard/training", label: "التدريب", icon: GraduationCap },
-  { href: "/dashboard/attachments", label: "المرفقات", icon: Paperclip },
-  { href: "/admin", label: "الإدارة", icon: Settings },
-  { href: "/audit-logs", label: "سجل التدقيق", icon: FileClock }
+const groups = [
+  {
+    title: "الرئيسية",
+    items: [{ href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard }]
+  },
+  {
+    title: "إدارة العمل القانوني",
+    items: [
+      { href: "/dashboard/cases", label: "القضايا", icon: Briefcase },
+      { href: "/dashboard/consultations", label: "الاستشارات", icon: ShieldCheck },
+      { href: "/dashboard/attachments", label: "المرفقات والبينات", icon: Paperclip }
+    ]
+  },
+  {
+    title: "القاضي حكيم",
+    items: [{ href: "/dashboard/simulations", label: "المحاكاة القضائية", icon: Scale }]
+  },
+  {
+    title: "المكتبة والتدريب",
+    items: [
+      { href: "/dashboard/library", label: "المكتبة النظامية", icon: BookOpen },
+      { href: "/dashboard/training", label: "التدريب القانوني", icon: GraduationCap }
+    ]
+  },
+  {
+    title: "الإدارة",
+    items: [
+      { href: "/admin", label: "الإدارة", icon: Settings },
+      { href: "/admin/users", label: "المستخدمون", icon: Users },
+      { href: "/audit-logs", label: "سجل التدقيق", icon: FileClock }
+    ]
+  }
 ];
 
 const roleLabels: Record<string, string> = {
@@ -24,35 +46,69 @@ const roleLabels: Record<string, string> = {
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser().catch(() => null);
+  const initials = user?.name
+    ?.split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("") || "ح";
 
   return (
-    <div className="legal-luxury-surface min-h-screen text-ink">
-      <aside className="fixed right-0 top-0 hidden h-screen w-64 border-l border-[#C09B5A]/25 bg-[#FBF8F1] px-4 py-6 shadow-[0_0_35px_rgba(11,31,58,0.08)] lg:block">
-        <Link href="/" className="block">
-          <p className="font-display-ar text-xs font-semibold text-[#C09B5A]">المنصة القانونية الموحدة</p>
-          <h2 className="font-judicial mt-1 text-4xl font-bold text-[#0B1F3A]">حكيم</h2>
-        </Link>
-        {user ? (
-          <div className="mt-5 rounded-md border border-[#C09B5A]/25 bg-white/70 p-3">
-            <p className="font-display-ar font-bold text-[#0B1F3A]">{user.name}</p>
-            <p className="mt-1 text-xs text-gray-600">{roleLabels[user.role] ?? user.role}</p>
-            <LogoutButton />
+    <div className="app" dir="rtl">
+      <aside className="sidebar">
+        <div className="sidebar-inner">
+          <Link href="/dashboard" className="brand">
+            <div className="brand-mark">ح</div>
+            <div className="brand-label">
+              <h1>حكيم</h1>
+              <p>المنصة القانونية الموحدة</p>
+            </div>
+          </Link>
+
+          <nav>
+            {groups.map((group) => (
+              <section key={group.title} className="nav-group">
+                <div className="nav-group-title">{group.title}</div>
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link key={item.href} href={item.href} className="nav-item">
+                        <Icon size={17} />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </nav>
+
+          <div className="sidebar-foot">
+            <div className="user-av">{initials}</div>
+            <div className="user-info min-w-0 flex-1">
+              <div className="uname truncate">{user?.name ?? "مستخدم حكيم"}</div>
+              <div className="urole truncate">{user ? roleLabels[user.role] ?? user.role : "جلسة غير مسجلة"}</div>
+            </div>
+            <div className="hidden">
+              <LogOut size={14} />
+            </div>
           </div>
-        ) : null}
-        <nav className="mt-8 space-y-1">
-          {nav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} href={item.href} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-[#0B1F3A] hover:bg-[#E8D5A8]/35">
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+          {user ? <LogoutButton /> : null}
+        </div>
       </aside>
-      <main className="lg:pr-64">
-        <div className="mx-auto max-w-7xl px-5 py-6">{children}</div>
+
+      <main className="main">
+        <div className="topbar">
+          <div>
+            <p className="t-display text-xs text-[var(--ink-60)]">منصة حكيم</p>
+            <h2 className="t-head text-2xl font-bold text-[var(--navy)]">مساحة العمل القانونية</h2>
+          </div>
+          <div className="rounded-full border border-[var(--gold-border)] bg-[var(--paper)] px-4 py-2 t-mono text-xs text-[var(--navy)]">
+            Modular Monolith · PostgreSQL
+          </div>
+        </div>
+        <div className="content">{children}</div>
       </main>
     </div>
   );

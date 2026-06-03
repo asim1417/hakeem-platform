@@ -18,6 +18,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     data: { simulationId: params.id, stage: "SETTLEMENT", decisionType: "مسودة صلح تدريبية", content: buildSettlementDraft(payload) }
   });
   await prisma.simulation.update({ where: { id: params.id }, data: { stage: "SETTLEMENT" } });
-  await auditEvent({ actorId: user.id, subject: "SIMULATION", action: "HAKEEM_SETTLEMENT_DRAFT_CREATED", entityId: params.id, metadata: { description: "تم توليد مسودة صلح تدريبية.", decisionId: decision.id } });
+  await auditEvent({
+    actorId: user.id,
+    subject: "SIMULATION",
+    action: "HAKEEM_SETTLEMENT_DRAFT_CREATED",
+    entityId: params.id,
+    metadata: { description: "تم توليد مسودة صلح تدريبية.", decisionId: decision.id }
+  });
   return NextResponse.json({ decision });
 }

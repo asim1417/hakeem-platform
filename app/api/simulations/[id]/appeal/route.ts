@@ -20,6 +20,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const decision = await prisma.simulationDecision.create({
     data: { simulationId: params.id, stage: "OBJECTION", decisionType: payload.kind, content: buildAppealDraft(payload.kind, payload.reasons) }
   });
-  await auditEvent({ actorId: user.id, subject: "SIMULATION", action: "HAKEEM_POST_JUDGMENT_CREATED", entityId: params.id, metadata: { description: `تم إنشاء ${payload.kind} تدريبي.`, reasons: payload.reasons } });
+  await auditEvent({
+    actorId: user.id,
+    subject: "SIMULATION",
+    action: "HAKEEM_POST_JUDGMENT_CREATED",
+    entityId: params.id,
+    metadata: { description: `تم إنشاء مسودة ${payload.kind} تدريبية.`, reasons: payload.reasons }
+  });
   return NextResponse.json({ decision });
 }
