@@ -4,6 +4,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 
 const prisma = new PrismaClient();
+const checkpointPath = path.join(process.cwd(), ".import-hoqoqi-checkpoint.json");
 
 type SqlRow = Record<string, string | number | null>;
 type ParsedSql = {
@@ -41,6 +42,27 @@ type ImportModel = {
   duplicateArticles: string[];
 };
 
+type ImportOptions = {
+  apply: boolean;
+  inputPath: string;
+  batchSize: number;
+  resume: boolean;
+  resetCheckpoint: boolean;
+};
+
+type ImportCheckpoint = {
+  startedAt: string;
+  lastSystemIndex: number;
+  lastArticleIndex: number;
+  importedSystems: number;
+  importedArticles: number;
+  skippedArticles: number;
+  failedArticles: number;
+  failedArticleIds: string[];
+  completed: boolean;
+  lastUpdatedAt: string;
+};
+
 const targetTables = [
   "laws",
   "laws_lang",
@@ -60,28 +82,49 @@ const targetTables = [
 ];
 
 async function main() {
-  const args = process.argv.slice(2);
-  const apply = args.includes("--apply");
-  const inputPath = resolveInputPath(args);
+  const options = await resolveOptions(process.argv.slice(2));
 
-  const sql = await readSqlFromZip(inputPath);
+  if (options.resetCheckpoint) {
+    await fs.rm(checkpointPath, { force: true });
+    console.log(`تم حذف checkpoint: ${checkpointPath}`);
+  }
+
+  const sql = await readSqlFromZip(options.inputPath);
   const parsed = parseSqlInserts(sql);
   const model = buildImportModel(parsed);
 
-  printReport(inputPath, parsed, model, apply);
+  printReport(options.inputPath, parsed, model, options.apply);
 
-  if (!apply) {
+  if (!options.apply) {
     console.log("وضع الفحص فقط. لم يتم إدخال أي بيانات. أعد التشغيل مع --apply عند التأكد من DATABASE_URL.");
     return;
   }
 
-  await importModel(model);
+  await importModel(model, options);
+}
+
+async function resolveOptions(args: string[]): Promise<ImportOptions> {
+  const resetCheckpoint = args.includes("--reset-checkpoint");
+  const checkpointExists = await fileExists(checkpointPath);
+  return {
+    apply: args.includes("--apply"),
+    inputPath: resolveInputPath(args),
+    batchSize: parsePositiveOption(args, "--batch-size", 250),
+    resume: args.includes("--resume") || (checkpointExists && !resetCheckpoint),
+    resetCheckpoint
+  };
 }
 
 function resolveInputPath(args: string[]) {
   const explicit = args.find((arg) => arg.startsWith("--file="))?.slice("--file=".length);
   const positional = args.find((arg) => !arg.startsWith("--"));
   return path.resolve(process.cwd(), explicit || positional || "hoqoqi.sql.zip");
+}
+
+function parsePositiveOption(args: string[], name: string, fallback: number) {
+  const raw = args.find((arg) => arg.startsWith(`${name}=`))?.slice(name.length + 1);
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
 async function readSqlFromZip(filePath: string) {
@@ -360,58 +403,142 @@ function findDuplicateArticleKeys(articles: HoqoqiArticle[]) {
   return Array.from(duplicate);
 }
 
-async function importModel(model: ImportModel) {
-  const systemIdBySource = new Map<string, string>();
+async function importModel(model: ImportModel, options: ImportOptions) {
+  const startedAt = Date.now();
+  const checkpoint = options.resume ? await loadCheckpoint() : createCheckpoint();
+  checkpoint.completed = false;
+  await saveCheckpoint(checkpoint);
 
-  for (const system of model.systems) {
-    const created = await prisma.legalSystem.upsert({
-      where: { name: system.name },
-      update: {
-        classification: system.classification,
-        articleCount: model.articles.filter((article) => article.sourceSystemId === system.sourceId).length
+  console.log(`Checkpoint: ${checkpointPath}`);
+  console.log(`Batch size: ${options.batchSize}`);
+  console.log(`Resume mode: ${options.resume ? "enabled" : "disabled"}`);
+
+  const articleCountBySystem = countArticlesBySystem(model.articles);
+  await importSystems(model, articleCountBySystem, checkpoint);
+  const systemIdBySource = await loadSystemIds(model.systems);
+  await importArticles(model, systemIdBySource, checkpoint, options, startedAt);
+
+  checkpoint.completed = checkpoint.lastArticleIndex >= model.articles.length;
+  checkpoint.lastUpdatedAt = new Date().toISOString();
+  await saveCheckpoint(checkpoint);
+
+  console.log("تقرير الاستيراد النهائي");
+  console.log(
+    JSON.stringify(
+      {
+        systemsDiscovered: model.systems.length,
+        systemsImportedOrSeen: checkpoint.importedSystems,
+        articlesDiscovered: model.articles.length,
+        articlesImported: checkpoint.importedArticles,
+        skippedDuplicates: checkpoint.skippedArticles,
+        failedArticles: checkpoint.failedArticles,
+        invalidArticles: model.invalidArticles.length,
+        duplicateArticleKeys: model.duplicateArticles.length,
+        completed: checkpoint.completed,
+        checkpoint: checkpointPath
       },
-      create: {
-        name: system.name,
-        classification: system.classification,
-        articleCount: model.articles.filter((article) => article.sourceSystemId === system.sourceId).length
-      }
-    });
-    systemIdBySource.set(system.sourceId, created.id);
+      null,
+      2
+    )
+  );
+
+  if (!checkpoint.completed) {
+    console.log("توقف الاستيراد مع حفظ checkpoint. أعد التشغيل بالأمر: npm run import:hoqoqi -- --apply --resume");
   }
+}
 
-  let importedArticles = 0;
-  for (const article of model.articles) {
-    const lawName = article.lawName ?? model.systems.find((system) => system.sourceId === article.sourceSystemId)?.name;
-    const legalSystemId = systemIdBySource.get(article.sourceSystemId);
-    if (!lawName || !legalSystemId || !article.articleNumber) continue;
-
-    await prisma.legalArticle.upsert({
-      where: { lawName_articleNumber: { lawName, articleNumber: article.articleNumber } },
-      update: {
-        legalSystemId,
-        classification: article.classification,
-        title: article.title ?? `المادة ${article.articleNumber}`,
-        content: article.content,
-        chapter: article.chapter,
-        status: "needs_review",
-        keywords: article.keywords
-      },
-      create: {
-        legalSystemId,
-        lawName,
-        classification: article.classification,
-        articleNumber: article.articleNumber,
-        title: article.title ?? `المادة ${article.articleNumber}`,
-        content: article.content,
-        chapter: article.chapter,
-        status: "needs_review",
-        keywords: article.keywords
-      }
+async function importSystems(model: ImportModel, articleCountBySystem: Map<string, number>, checkpoint: ImportCheckpoint) {
+  for (let index = checkpoint.lastSystemIndex; index < model.systems.length; index += 1) {
+    const system = model.systems[index];
+    await withRetry(async () => {
+      await prisma.legalSystem.upsert({
+        where: { name: system.name },
+        update: {
+          classification: system.classification,
+          articleCount: articleCountBySystem.get(system.sourceId) ?? 0
+        },
+        create: {
+          name: system.name,
+          classification: system.classification,
+          articleCount: articleCountBySystem.get(system.sourceId) ?? 0
+        }
+      });
     });
-    importedArticles += 1;
+    checkpoint.importedSystems += 1;
+    checkpoint.lastSystemIndex = index + 1;
+    checkpoint.lastUpdatedAt = new Date().toISOString();
+    if (index % 25 === 0 || index === model.systems.length - 1) await saveCheckpoint(checkpoint);
   }
+  await saveCheckpoint(checkpoint);
+}
 
-  console.log(`تم تنفيذ الاستيراد/التحديث. الأنظمة: ${model.systems.length}. المواد: ${importedArticles}.`);
+async function loadSystemIds(systems: HoqoqiSystem[]) {
+  const names = systems.map((system) => system.name);
+  const rows = await withRetry(() =>
+    prisma.legalSystem.findMany({
+      where: { name: { in: names } },
+      select: { id: true, name: true }
+    })
+  );
+  const idByName = new Map(rows.map((row) => [row.name, row.id]));
+  return new Map(systems.map((system) => [system.sourceId, idByName.get(system.name)]).filter((entry): entry is [string, string] => Boolean(entry[1])));
+}
+
+async function importArticles(
+  model: ImportModel,
+  systemIdBySource: Map<string, string>,
+  checkpoint: ImportCheckpoint,
+  options: ImportOptions,
+  startedAt: number
+) {
+  const totalBatches = Math.ceil(model.articles.length / options.batchSize);
+
+  for (let start = checkpoint.lastArticleIndex; start < model.articles.length; start += options.batchSize) {
+    const end = Math.min(start + options.batchSize, model.articles.length);
+    const batch = model.articles.slice(start, end);
+    const batchNumber = Math.floor(start / options.batchSize) + 1;
+    const data = batch
+      .map((article) => {
+        const lawName = article.lawName ?? model.systems.find((system) => system.sourceId === article.sourceSystemId)?.name;
+        const legalSystemId = systemIdBySource.get(article.sourceSystemId);
+        if (!lawName || !legalSystemId || !article.articleNumber || !article.content) return null;
+        return {
+          legalSystemId,
+          lawName,
+          classification: article.classification,
+          articleNumber: article.articleNumber,
+          title: article.title ?? `المادة ${article.articleNumber}`,
+          content: article.content,
+          chapter: article.chapter,
+          status: "needs_review",
+          keywords: article.keywords
+        };
+      })
+      .filter((article): article is NonNullable<typeof article> => Boolean(article));
+
+    try {
+      const result = await withRetry(() =>
+        prisma.legalArticle.createMany({
+          data,
+          skipDuplicates: true
+        })
+      );
+      checkpoint.importedArticles += result.count;
+      checkpoint.skippedArticles += Math.max(data.length - result.count, 0);
+    } catch (error) {
+      checkpoint.failedArticles += batch.length;
+      checkpoint.failedArticleIds.push(...batch.map((article) => article.sourceId).slice(0, 50));
+      checkpoint.lastUpdatedAt = new Date().toISOString();
+      await saveCheckpoint(checkpoint);
+      console.error("فشل استيراد دفعة بعد كل محاولات retry. تم حفظ checkpoint.");
+      throw error;
+    }
+
+    checkpoint.lastArticleIndex = end;
+    checkpoint.lastUpdatedAt = new Date().toISOString();
+    await saveCheckpoint(checkpoint);
+    printProgress(checkpoint, model.articles.length, batchNumber, totalBatches, startedAt);
+  }
 }
 
 function printReport(inputPath: string, parsed: ParsedSql, model: ImportModel, apply: boolean) {
@@ -436,6 +563,103 @@ function printReport(inputPath: string, parsed: ParsedSql, model: ImportModel, a
     null,
     2
   ));
+}
+
+function createCheckpoint(): ImportCheckpoint {
+  const now = new Date().toISOString();
+  return {
+    startedAt: now,
+    lastSystemIndex: 0,
+    lastArticleIndex: 0,
+    importedSystems: 0,
+    importedArticles: 0,
+    skippedArticles: 0,
+    failedArticles: 0,
+    failedArticleIds: [],
+    completed: false,
+    lastUpdatedAt: now
+  };
+}
+
+async function loadCheckpoint() {
+  if (!(await fileExists(checkpointPath))) return createCheckpoint();
+  const raw = await fs.readFile(checkpointPath, "utf8");
+  const parsed = JSON.parse(raw) as Partial<ImportCheckpoint>;
+  return {
+    ...createCheckpoint(),
+    ...parsed,
+    failedArticleIds: parsed.failedArticleIds ?? []
+  };
+}
+
+async function saveCheckpoint(checkpoint: ImportCheckpoint) {
+  await fs.writeFile(checkpointPath, JSON.stringify(checkpoint, null, 2), "utf8");
+}
+
+async function fileExists(filePath: string) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function withRetry<T>(operation: () => Promise<T>, attempts = 5): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientDatabaseError(error) || attempt === attempts) break;
+      const delay = Math.min(30000, 1000 * 2 ** (attempt - 1));
+      console.warn(`تعذر الاتصال بقاعدة البيانات. محاولة ${attempt}/${attempts}. إعادة المحاولة بعد ${delay}ms.`);
+      await sleep(delay);
+    }
+  }
+  throw lastError;
+}
+
+function isTransientDatabaseError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /P1001|Can't reach database server|timeout|timed out|connection reset|ECONNRESET|ETIMEDOUT|Connection terminated/i.test(message);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function countArticlesBySystem(articles: HoqoqiArticle[]) {
+  const counts = new Map<string, number>();
+  for (const article of articles) {
+    counts.set(article.sourceSystemId, (counts.get(article.sourceSystemId) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function printProgress(checkpoint: ImportCheckpoint, totalArticles: number, batchNumber: number, totalBatches: number, startedAt: number) {
+  const elapsedMs = Date.now() - startedAt;
+  const processed = Math.max(checkpoint.lastArticleIndex, 1);
+  const remaining = Math.max(totalArticles - checkpoint.lastArticleIndex, 0);
+  const estimatedRemainingMs = Math.round((elapsedMs / processed) * remaining);
+  console.log(
+    [
+      `Imported articles: ${checkpoint.importedArticles} / ${totalArticles}`,
+      `Batch: ${batchNumber} / ${totalBatches}`,
+      `Skipped duplicates: ${checkpoint.skippedArticles}`,
+      `Failed: ${checkpoint.failedArticles}`,
+      `Elapsed: ${formatDuration(elapsedMs)}`,
+      `Estimated remaining: ${formatDuration(estimatedRemainingMs)}`
+    ].join(" | ")
+  );
+}
+
+function formatDuration(ms: number) {
+  const totalSeconds = Math.max(Math.round(ms / 1000), 0);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
 }
 
 function pick(row: SqlRow, keys: string[]) {

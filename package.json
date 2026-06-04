@@ -12,6 +12,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/seed-legal-library.ts",
     "import:hoqoqi": "tsx scripts/import-hoqoqi-sql.ts",
+    "import:hoqoqi:resume": "tsx scripts/import-hoqoqi-sql.ts --apply --resume",
     "qa:db": "tsx scripts/qa-db.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts"
