@@ -3885,6 +3885,8 @@ async function generateVerdict() {
   // Compact system — avoid bloating input
   const compactLib = getSmartLibraryContext('موضوعي', CASE_CONTEXT, 8);
   const activeCaseCtx = getActiveCaseContext();
+  // استرجاع تلقائي للسند النظامي من النواة القانونية قبل صياغة الحكم
+  await lcAutoRetrieveForCase(CASE_CONTEXT);
   const sysPrompt = `أنت قاضٍ في المحكمة التجارية الافتراضية. أصدر حكماً مكتملاً لا يُقطع قبل المنطوق.
 قاعدة: لا تذكر مستنداً لم يُذكر في القضية. أكمل الحكم حتى آخر سطر.${activeCaseCtx || ''}${compactLib}${lcPromptContext()}`;
 
@@ -5532,6 +5534,9 @@ async function issueVerdictInline() {
   // Compact library — top 8 articles only
   const libCtx = getSmartLibraryContext('موضوعي', histTxt, 8);
 
+  // استرجاع تلقائي للسند النظامي من النواة القانونية قبل صياغة الحكم
+  await lcAutoRetrieveForCase(histTxt);
+
   // Short system prompt for verdict (not the full hearing prompt)
   const verdictSystem = `أنت قاضٍ في المحكمة التجارية الافتراضية. أصدر حكماً مكتملاً ومُسبَّباً.
 
@@ -6280,6 +6285,30 @@ function lcPromptContext() {
 ${list}
 
 اربط كل سبب أو تسبيب بالمادة المناسبة من هذه القائمة عند الاقتضاء، وأدرج في آخر المخرج قسماً بعنوان «المواد النظامية المستند إليها» يعدّد ما استُند إليه منها.`;
+}
+
+async function lcAutoRetrieveForCase(contextText) {
+  try {
+    const c = _activeCase;
+    const q = [c?.subject, c?.requests, contextText].filter(Boolean).join(' ').replace(/\s+/g,' ').slice(0, 160) || 'مطالبة مالية تجارية';
+    const results = await lcSearch(q, 'contains', 'article', 6);
+    let added = 0;
+    results.forEach(r => {
+      const key = (r.type || 'article') + '|' + (r.number || '') + '|' + (r.lawName || '');
+      if (!window._lcSelected.some(x => x._key === key)) {
+        window._lcSelected.push({ ...r, _key: key, _via: 'النواة القانونية (استرجاع تلقائي)' });
+        added++;
+      }
+    });
+    if (results.length) {
+      window._lcResults['verdict'] = results;
+      const box = document.getElementById('lcres_verdict');
+      if (box) { document.getElementById('lc_verdict')?.classList.remove('collapsed'); lcRenderResults('verdict', results, 'article'); }
+    }
+    // حدّث صناديق «المواد المستند إليها» الظاهرة
+    document.querySelectorAll('.legal-basis-mount').forEach(el => el.innerHTML = lcLegalBasisHTML());
+    return added;
+  } catch (e) { return 0; }
 }
 
 // اقتراح مواد للقضية الحالية من وقائعها وطلباتها
