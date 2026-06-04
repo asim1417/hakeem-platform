@@ -83,6 +83,12 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
               </p>
             </article>
 
+            <LegalCoreCard title="الأحكام والاستشهادات المرتبطة" subtitle="فهرس عكسي للمادة عند اعتماد الاستشهادات القضائية">
+              <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">
+                لا توجد أحكام أو استشهادات معتمدة مرتبطة بهذه المادة حتى الآن.
+              </div>
+            </LegalCoreCard>
+
             <div className="grid gap-4 md:grid-cols-2">
               {["الشرح", "شروط التطبيق", "الآثار", "الاستثناءات", "المسائل المرتبطة", "الأحكام القضائية", "المبادئ", "القوالب المرتبطة"].map((section) => (
                 <LegalCoreCard key={section} title={section}>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Database, FileSearch, Scale } from "lucide-react";
+import { BookOpen, Database, FileSearch, Quote, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getLibraryStats, searchLegalArticles } from "@/lib/modules/library/library-service";
 import { prisma } from "@/lib/prisma";
@@ -28,6 +28,7 @@ export default async function LegalCoreDashboardPage() {
           actions={
             <>
               <Link href="/dashboard/legal-core/search" className="btn btn-gold"><FileSearch size={16} /> البحث القانوني</Link>
+              <Link href="/dashboard/legal-core/citations" className="btn ho-hero-outline"><Quote size={16} /> التقاط الاستشهاد</Link>
               <Link href="/dashboard/legal-core/systems" className="btn ho-hero-outline"><BookOpen size={16} /> الأنظمة</Link>
               <Link href="/dashboard/legal-core/quality" className="btn ho-hero-outline"><Database size={16} /> جودة البيانات</Link>
             </>

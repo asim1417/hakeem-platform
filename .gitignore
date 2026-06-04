@@ -33,3 +33,7 @@ coverage/
 .vercel/
 .DS_Store
 Thumbs.db
+
+# Large local judgment databases
+*.sql.gz
+ahkam_moj.sql.gz
