@@ -5,6 +5,7 @@ import { ClaimSheetCard, GoldButton, HearingMessage, HearingRecordDocument, Judg
 import { admissibilityCheck, claimMarker, scoreMarker } from "@/lib/modules/simulations/hakeem-judge";
 import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
+import { PostJudgmentRemediesPanel } from "@/components/PostJudgmentRemediesPanel";
 
 type SimulationMessage = { id: string; role: string; stage: string; content: string; createdAt: string };
 type SimulationDecision = { id: string; decisionType: string; content: string; stage: string; createdAt: string };
@@ -360,6 +361,8 @@ export function SimulationWorkspace({ initialSessions, cases, attachments }: { i
               {activeSession ? <ExportLinks sessionId={activeSession.id} type="judgment" full /> : null}
             </LegalCard>
           ) : null}
+
+          <PostJudgmentRemediesPanel sessionId={activeSession?.id} hasJudgment={Boolean(latestJudgment)} />
 
           {latestJudgment ? (
             <LegalCard title="مسارات الاعتراض" eyebrow="بعد الحكم">

@@ -20,6 +20,7 @@ import {
 import { admissibilityCheck, claimMarker, scoreMarker } from "@/lib/modules/simulations/hakeem-judge";
 import { allowedSpeakerLabel, extractTurnState, isPleadingClosed, isRoleAllowedToSpeak, turnMarker, turnMessageForBlockedRole } from "@/lib/modules/simulations/judge-engine";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
+import { PostJudgmentRemediesPanel } from "@/components/PostJudgmentRemediesPanel";
 
 type SimulationMessage = { id: string; role: string; stage: string; content: string; createdAt: string };
 type SimulationDecision = { id: string; decisionType: string; content: string; stage: string; createdAt: string };
@@ -435,6 +436,8 @@ export function HakeemJudgeExperience({ initialSessions, cases, attachments }: {
       ) : null}
 
       {view === "appeal" ? hasJudgment ? <OriginalAppealCards selected={appealKind} onSelect={setAppealKind} /> : <div className="decision-box">لا اعتراض قبل صدور مسودة حكم قضائي مسبب.</div> : null}
+
+      {view === "appeal" ? <PostJudgmentRemediesPanel sessionId={activeSession?.id} hasJudgment={hasJudgment} compact /> : null}
 
       {view === "strength" ? <OriginalStrengthMeter score={strength.score} notes={strength.notes} /> : null}
 
