@@ -6,6 +6,7 @@ import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
+import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { LegalCoreCard, LegalCoreFilterPanel, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 
 export const dynamic = "force-dynamic";
@@ -205,7 +206,7 @@ export default async function LegalCoreSearchPage({
                     </div>
 
                     <p className="mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
-                      <HighlightedText text={article.snippet} terms={article.matchedTerms} />
+                      <HighlightedSearchText text={article.snippet} terms={joinSearchTerms(query, article.matchedTerms)} />
                     </p>
 
                     {article.matchedParagraphs.length ? (
@@ -213,7 +214,7 @@ export default async function LegalCoreSearchPage({
                         <p className="font-display-ar text-xs font-bold text-[var(--gold)]">فقرات مطابقة</p>
                         {article.matchedParagraphs.slice(0, 2).map((paragraph, index) => (
                           <p key={`${article.articleId}-${index}`} className="rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">
-                            <HighlightedText text={paragraph} terms={article.matchedTerms} />
+                            <HighlightedSearchText text={paragraph} terms={joinSearchTerms(query, article.matchedTerms)} />
                           </p>
                         ))}
                       </div>
@@ -253,21 +254,6 @@ function FilterItem({ label, value }: { label: string; value: string }) {
       <p className="font-display-ar text-xs font-bold text-[var(--gold)]">{label}</p>
       <p className="mt-1 text-sm text-[var(--ink-70)]">{value}</p>
     </div>
-  );
-}
-
-function HighlightedText({ text, terms }: { text: string; terms: string[] }) {
-  if (!terms.length) return <>{text}</>;
-  const firstTerm = terms.find((term) => term.length > 1);
-  if (!firstTerm) return <>{text}</>;
-  const index = text.toLowerCase().indexOf(firstTerm.toLowerCase());
-  if (index < 0) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, index)}
-      <mark className="rounded bg-[var(--gold-ghost)] px-1 text-[var(--navy)]">{text.slice(index, index + firstTerm.length)}</mark>
-      {text.slice(index + firstTerm.length)}
-    </>
   );
 }
 

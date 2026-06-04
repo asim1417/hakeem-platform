@@ -11,7 +11,7 @@ export function LegalFavoriteButton({ label = "إضافة للمفضلة" }: { l
       className={saved ? "btn btn-primary" : "btn btn-outline"}
       type="button"
       onClick={() => setSaved(true)}
-      title="حفظ دائم للمفضلة يحتاج جدولًا مستقلًا لاحقًا."
+      title="الحفظ الدائم للمفضلة يحتاج جدولًا مستقلًا لاحقًا."
     >
       {saved ? <Check size={16} /> : <BookmarkPlus size={16} />}
       {saved ? "تم تجهيزها للمفضلة" : label}
