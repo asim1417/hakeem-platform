@@ -1235,226 +1235,9 @@ input[type=range]::-moz-range-thumb {
 .reason-item:hover .ri-check { border-color:var(--ruby); background:var(--ruby-soft); }
 .reason-item.sel .ri-check { background:var(--ruby); border-color:var(--ruby); color:#fff; }
 .reason-item.sel .ri-check::after { content:'✓'; font-size:13px; font-weight:700; line-height:1; }
-.reason-item .ri-text { flex:1; min-width:0; overflow-wrap:anywhere; }
+.reason-item .ri-text { flex:1; }
 .reason-item .ri-title { font-family:'Reem Kufi'; font-size:13px; color:var(--navy); font-weight:500; }
 .reason-item .ri-sub { font-size:11.5px; color:var(--ink-60); margin-top:2px; }
-
-/* Cassation layout guard: keep Naqd reasons fully visible in RTL containers */
-#tabContent_naqd,
-#tabContent_naqd .appeal-main,
-#tabContent_naqd .appeal-form-card,
-#tabContent_naqd .appeal-side,
-#tabContent_naqd .appeal-side-card {
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-  direction:rtl;
-  transform:none;
-  position:relative;
-  right:auto;
-  left:auto;
-  margin-inline:0;
-}
-#tabContent_naqd .appeal-main {
-  grid-template-columns:minmax(0, 1fr) minmax(240px, 280px);
-  overflow-x:visible;
-}
-#naqdReasonsList {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
-  gap:14px;
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-  overflow-x:visible;
-}
-#naqdReasonsList .reason-item {
-  width:100%;
-  min-width:0;
-  max-width:100%;
-  box-sizing:border-box;
-  display:grid;
-  grid-template-columns:44px minmax(0, 1fr);
-  gap:14px;
-  align-items:start;
-  margin-inline:0;
-  overflow:visible;
-}
-#naqdReasonsList .reason-item .ri-check {
-  grid-column:1;
-  margin-top:0;
-}
-#naqdReasonsList .reason-item .ri-text {
-  grid-column:2;
-  min-width:0;
-  max-width:100%;
-  overflow-wrap:anywhere;
-  word-break:normal;
-}
-#tabContent_naqd .ftextarea,
-#tabContent_naqd .fselect,
-#tabContent_naqd .field {
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-}
-@media (max-width:1100px) {
-  #tabContent_naqd .appeal-main { grid-template-columns:1fr; }
-}
-@media (max-width:520px) {
-  #naqdReasonsList { grid-template-columns:1fr; }
-  #naqdReasonsList .reason-item { grid-template-columns:36px minmax(0, 1fr); gap:10px; }
-}
-
-/* Judiciary services revamp inside the original Hakeem mirror */
-.judiciary-status-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(135px, 1fr));
-  gap:8px;
-}
-.judiciary-status-cell {
-  background:rgba(249,245,236,0.82);
-  border:1px solid var(--ink-08);
-  border-radius:var(--r-md);
-  padding:9px 10px;
-  min-width:0;
-}
-.judiciary-status-label {
-  font-family:'Reem Kufi';
-  font-size:10.5px;
-  color:var(--ink-40);
-  margin-bottom:3px;
-}
-.judiciary-status-value {
-  font-family:'IBM Plex Sans Arabic';
-  font-size:12.5px;
-  font-weight:700;
-  color:var(--navy);
-  overflow-wrap:anywhere;
-}
-.current-role-alert {
-  margin-top:10px;
-  padding:10px 12px;
-  border-radius:var(--r-md);
-  background:rgba(192,155,90,0.12);
-  border:1px solid var(--gold-border);
-  font-family:'Reem Kufi';
-  font-size:12px;
-  line-height:1.7;
-  color:var(--navy);
-}
-.session-role-links,
-.procedural-actions-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(135px, 1fr));
-  gap:8px;
-}
-.session-role-link,
-.procedural-action-btn {
-  width:100%;
-  border:1px solid var(--gold-border);
-  background:var(--paper);
-  color:var(--navy);
-  border-radius:var(--r-md);
-  padding:8px 10px;
-  font-family:'Reem Kufi';
-  font-size:11.5px;
-  cursor:pointer;
-  text-align:center;
-}
-.session-role-link:hover,
-.procedural-action-btn:hover {
-  background:rgba(192,155,90,0.14);
-  border-color:var(--gold);
-}
-.judiciary-stage-track {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(118px, 1fr));
-  gap:7px;
-  margin-top:10px;
-}
-.judiciary-stage {
-  border:1px solid var(--ink-08);
-  background:var(--paper);
-  border-radius:var(--r-md);
-  padding:8px 9px;
-  font-family:'Reem Kufi';
-  font-size:10.8px;
-  color:var(--ink-60);
-  min-width:0;
-}
-.judiciary-stage.done {
-  background:rgba(26,92,65,0.08);
-  border-color:rgba(26,92,65,0.24);
-  color:var(--emerald);
-}
-.judiciary-stage.cur {
-  background:rgba(192,155,90,0.16);
-  border-color:var(--gold);
-  color:var(--navy);
-  font-weight:700;
-}
-.judiciary-stage.pending {
-  background:rgba(13,19,33,0.03);
-}
-.post-judgment-panel {
-  background:linear-gradient(180deg,var(--paper),var(--parchment));
-  border:1.5px solid var(--gold-border);
-  border-radius:var(--r-xl);
-  padding:18px;
-  margin:18px 0 24px;
-  box-shadow:var(--sh-sm);
-}
-.post-judgment-cards {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-  gap:14px;
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-}
-.post-judgment-card {
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-  background:var(--paper);
-  border:1.5px solid var(--ink-08);
-  border-radius:var(--r-lg);
-  padding:15px;
-  cursor:pointer;
-  transition:all .16s ease;
-}
-.post-judgment-card:hover {
-  transform:translateY(-2px);
-  border-color:var(--gold);
-  box-shadow:var(--sh-sm);
-}
-.post-judgment-card h4 {
-  margin:0 0 7px;
-  color:var(--navy);
-  font-family:'Reem Kufi';
-  font-size:15px;
-}
-.post-judgment-card p {
-  margin:0 0 10px;
-  color:var(--ink-60);
-  line-height:1.7;
-  font-size:12.5px;
-  overflow-wrap:anywhere;
-}
-.post-judgment-card .remedy-state {
-  display:inline-flex;
-  padding:3px 9px;
-  border-radius:999px;
-  background:rgba(192,155,90,0.13);
-  color:var(--gold);
-  font-family:'Reem Kufi';
-  font-size:10.5px;
-}
 
 .appeal-ai-output {
   background:var(--parchment); border:1px solid var(--gold-border);
@@ -1735,6 +1518,95 @@ input[type=range]::-moz-range-thumb {
   .audit-head, .audit-row { grid-template-columns: 80px 100px 1fr; }
   .audit-conf { display: none; }
 }
+
+/* ============================================================
+   تقوية التخطيط — منع الزحف الأفقي ودخول المحتوى تحت القائمة
+   ============================================================ */
+html, body { max-width: 100%; overflow-x: hidden; }
+.app, .main, .content, .page, .card, .panel,
+.appeal-form-card, .appeal-side-card, .side-card,
+.field, .field-row, .form-section { max-width: 100%; min-width: 0; }
+/* أي عنصر داخل grid/flex يجب أن يقبل الانكماش وإلا دفع العرض يميناً */
+.hearing-layout > *, .appeal-main > *, .wizard-wrap > *,
+.grid-main > *, .catalog-layout > *, .field-row > *,
+.choices-grid > *, .stats-row > * { min-width: 0; }
+/* النصوص الطويلة والمخرجات تكسر السطر بدل توسيع العرض */
+.appeal-output, .appeal-ai-output, pre, .msg-bubble,
+.lc-result, .rule-ref { overflow-wrap: anywhere; word-break: break-word; }
+textarea, input, select, .ftextarea, .fselect, .finput { max-width: 100%; }
+img, video, table { max-width: 100%; }
+.appeal-output, pre { white-space: pre-wrap; }
+
+/* ============================================================
+   لوحة مرحلة ما بعد الحكم الابتدائي
+   ============================================================ */
+.post-judgment-panel {
+  margin-top: 28px; border-radius: var(--r-xl); overflow: hidden;
+  border: 1.5px solid var(--gold-border);
+  box-shadow: 0 8px 30px rgba(11,31,58,0.08);
+}
+.pjp-head {
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: var(--gold-pale); padding: 18px 24px;
+  font-family: 'Reem Kufi'; font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; gap: 10px;
+}
+.pjp-sub { font-size: 12px; color: rgba(249,245,236,0.7); font-weight: 400; margin-top: 4px; }
+.pjp-body { background: var(--paper); padding: 22px 24px; }
+.pjp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.pjp-card {
+  border: 1px solid var(--ink-08); border-radius: var(--r-lg);
+  padding: 20px; background: var(--parchment); display: flex; flex-direction: column;
+  gap: 10px; min-width: 0; transition: all 0.18s;
+}
+.pjp-card:hover { border-color: var(--gold); box-shadow: 0 6px 20px rgba(192,155,90,0.15); transform: translateY(-2px); }
+.pjp-icon { font-size: 30px; line-height: 1; }
+.pjp-title { font-family: 'Reem Kufi'; font-size: 16px; font-weight: 700; color: var(--navy); }
+.pjp-text { font-size: 12.5px; color: var(--ink-60); line-height: 1.7; flex: 1; }
+.pjp-card .btn { width: 100%; justify-content: center; }
+@media (max-width: 760px) { .pjp-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   النواة القانونية — بحث المواد داخل القاضي
+   ============================================================ */
+.lc-panel { border: 1px solid var(--gold-border); border-radius: var(--r-lg); background: var(--paper); overflow: hidden; }
+.lc-head {
+  background: var(--gold-ghost); padding: 12px 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-family: 'Reem Kufi'; font-size: 13px; font-weight: 700; color: var(--navy);
+}
+.lc-head .lc-chev { transition: transform 0.2s; }
+.lc-panel.collapsed .lc-body { display: none; }
+.lc-panel.collapsed .lc-chev { transform: rotate(-90deg); }
+.lc-body { padding: 14px 16px; }
+.lc-search-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.lc-search-row input { flex: 1; min-width: 140px; }
+.lc-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.lc-filters select { flex: 1; min-width: 120px; font-size: 12px; }
+.lc-results { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; }
+.lc-result {
+  border: 1px solid var(--ink-08); border-radius: var(--r-md);
+  padding: 12px 14px; background: var(--parchment); min-width: 0;
+}
+.lc-result-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.lc-badge { font-family: 'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--gold); background: var(--gold-ghost); padding: 2px 8px; border-radius: 99px; }
+.lc-law { font-family: 'Reem Kufi'; font-size: 12.5px; font-weight: 600; color: var(--navy); }
+.lc-excerpt { font-size: 12.5px; color: var(--ink-60); line-height: 1.7; margin-bottom: 10px; }
+.lc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.lc-actions .btn { font-size: 11px; padding: 4px 10px; }
+.lc-empty { font-size: 12.5px; color: var(--ink-60); font-family: 'Reem Kufi'; text-align: center; padding: 16px; line-height: 1.8; }
+.lc-status { font-size: 12px; color: var(--ink-60); font-family: 'Reem Kufi'; padding: 8px 0; display: flex; align-items: center; gap: 8px; }
+
+/* قسم: السند النظامي المستند إليه (داخل المخرجات) */
+.legal-basis-box { margin-top: 18px; border: 1px solid var(--gold-border); border-radius: var(--r-lg); background: var(--parchment); padding: 16px 18px; }
+.legal-basis-box h4 { font-family: 'Reem Kufi'; font-size: 14px; color: var(--navy); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.lb-item { border-right: 3px solid var(--gold); padding: 4px 12px; margin-bottom: 10px; }
+.lb-item .lb-num { font-family: 'IBM Plex Mono'; font-weight: 700; color: var(--gold); font-size: 12px; }
+.lb-item .lb-src { font-size: 10.5px; color: var(--emerald); font-family: 'Reem Kufi'; }
+.lb-item .lb-txt { font-size: 12.5px; color: var(--ink-60); line-height: 1.7; margin-top: 3px; }
+/* حارس منع الاختلاق */
+.fab-warning { margin-top: 14px; background: var(--ruby-soft); border: 1px solid rgba(140,34,51,0.25); border-radius: var(--r-md); padding: 12px 16px; font-size: 12.5px; color: var(--ruby); line-height: 1.7; font-family: 'Reem Kufi'; }
+.lc-unverified { border-bottom: 1.5px dotted var(--ruby); cursor: help; }
 </style>
 </head>
 <body>
@@ -2549,46 +2421,6 @@ input[type=range]::-moz-range-thumb {
                 </button>
               </div>
             </div>
-            <div class="side-card" id="caseStatusPanel">
-              <div class="side-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> حالة القضية</div>
-              <div class="judiciary-status-grid">
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">رقم القضية</div><div class="judiciary-status-value" id="caseStatus_caseId">C-1447-0001</div></div>
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">المرحلة الحالية</div><div class="judiciary-status-value" id="caseStatus_stage">تقييد الدعوى</div></div>
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">صاحب الدور</div><div class="judiciary-status-value" id="caseStatus_turn">المدعي</div></div>
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">الإجراء المطلوب</div><div class="judiciary-status-value" id="caseStatus_required">تقديم الدعوى والطلبات</div></div>
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">باب المرافعة</div><div class="judiciary-status-value" id="caseStatus_pleading">مفتوح</div></div>
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">حالة الحكم</div><div class="judiciary-status-value" id="caseStatus_judgment">لم يصدر</div></div>
-                <div class="judiciary-status-cell"><div class="judiciary-status-label">آخر قرار</div><div class="judiciary-status-value" id="caseStatus_lastDecision">لم يصدر قرار بعد</div></div>
-              </div>
-              <div class="current-role-alert" id="caseStatus_roleAlert">الدور الحالي للمدعي، وتبقى المرافعة منظمة وفق قرار القاضي الافتراضي.</div>
-            </div>
-            <div class="side-card">
-              <div class="side-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg> روابط الجلسة</div>
-              <div class="session-role-links">
-                <button class="session-role-link" onclick="copySessionRoleLink('judge')">رابط القاضي</button>
-                <button class="session-role-link" onclick="copySessionRoleLink('claimant')">رابط المدعي</button>
-                <button class="session-role-link" onclick="copySessionRoleLink('defendant')">رابط المدعى عليه</button>
-                <button class="session-role-link" onclick="copySessionRoleLink('witness')">رابط الشاهد</button>
-                <button class="session-role-link" onclick="copySessionRoleLink('expert')">رابط الخبير</button>
-                <button class="session-role-link" onclick="copySessionRoleLink('general')">رابط عام</button>
-              </div>
-            </div>
-            <div class="side-card">
-              <div class="side-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M8 12h8M8 16h5M8 8h8"/></svg> قرارات القاضي الإجرائية</div>
-              <div class="procedural-actions-grid">
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('accept_claim')">قبول الدعوى شكلاً</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('request_completion')">طلب استكمال</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('enable_defendant')">تمكين المدعى عليه</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('enable_claimant')">تمكين المدعي</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('request_evidence')">طلب بينة</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('enable_witness')">تمكين الشاهد</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('enable_expert')">تمكين الخبير</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('settlement')">عرض الصلح</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('close_pleading')">قفل المرافعة</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('reserve_judgment')">حجز للحكم</button>
-                <button class="procedural-action-btn" onclick="applyProceduralDecision('issue_judgment')">إصدار الحكم</button>
-              </div>
-            </div>
             <div class="side-card">
               <div class="side-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg> <span id="submittedArgsTitle">ما قُدِّم في الجلسة</span></div>
               <div class="submitted-args" id="submittedArgs">
@@ -2601,6 +2433,13 @@ input[type=range]::-moz-range-thumb {
                 <div class="rule-ref"><strong>م/73</strong> — نظام المرافعات<br/>يُقدم المدعي بياناته في المواعيد.</div>
                 <div class="rule-ref"><strong>م/101</strong> — نظام الإثبات<br/>البينة على من ادّعى.</div>
               </div>
+            </div>
+            <div class="side-card" style="padding:0;overflow:visible;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px 0;">
+                <div class="side-card-title" style="margin:0;">النواة القانونية</div>
+                <button class="btn btn-outline btn-sm" onclick="lcSuggestForCase('hearing')" style="font-size:11px;">💡 اقتراح للقضية</button>
+              </div>
+              <div class="lc-mount" data-lc-slot="hearing" style="padding:12px 16px 16px;"></div>
             </div>
             <div class="side-card" style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-color:rgba(192,155,90,0.15);">
               <div class="side-card-title" style="color:var(--gold-pale);display:flex;align-items:center;justify-content:space-between;">
@@ -2648,30 +2487,6 @@ input[type=range]::-moz-range-thumb {
               اضغط «ولّد حكماً افتراضياً» ليقوم النموذج بإصدار حكم مستند إلى وقائع القضية والأنظمة السعودية.
             </div>
             <div id="aiOutput"></div>
-          </div>
-        </div>
-
-        <div class="post-judgment-panel" id="postJudgmentPanel">
-          <div class="card-title" style="margin-bottom:6px;">مرحلة ما بعد الحكم</div>
-          <p id="postJudgmentNotice" style="font-family:'Reem Kufi';font-size:13px;color:var(--ink-60);line-height:1.8;margin:0 0 14px;">
-            لا يمكن فتح مرحلة الاعتراض قبل صدور الحكم. بعد توليد الحكم ستظهر خيارات الاستئناف والنقض والالتماس بصورة مستقلة.
-          </p>
-          <div class="post-judgment-cards">
-            <article class="post-judgment-card" onclick="openPostJudgmentRemedy('appeal')">
-              <h4>تقديم لائحة استئناف</h4>
-              <p>مسار لمراجعة الحكم أمام جهة أعلى وفق أسباب الاستئناف والطلبات والمرفقات.</p>
-              <span class="remedy-state" id="appealRemedyState">بانتظار صدور الحكم</span>
-            </article>
-            <article class="post-judgment-card" onclick="openPostJudgmentRemedy('naqd')">
-              <h4>تقديم طلب نقض</h4>
-              <p>مسار مستقل لطلب النقض أمام المحكمة العليا، مرتبط بمخالفة النظام أو الخطأ في تطبيقه أو القصور في التسبيب.</p>
-              <span class="remedy-state" id="naqdRemedyState">بانتظار صدور الحكم</span>
-            </article>
-            <article class="post-judgment-card" onclick="openPostJudgmentRemedy('iltimas')">
-              <h4>تقديم التماس إعادة نظر</h4>
-              <p>مسار مستقل للأسباب الاستثنائية مثل ظهور أوراق قاطعة أو غش أو تزوير أو تناقض المنطوق.</p>
-              <span class="remedy-state" id="iltimasRemedyState">بانتظار صدور الحكم</span>
-            </article>
           </div>
         </div>
 
@@ -2728,6 +2543,51 @@ input[type=range]::-moz-range-thumb {
           <div class="vd-final">والله الموفق،،،</div>
           <div class="vd-sign">صدر هذا الحكم من القاضي الافتراضي بمنصة حكيم — الدائرة الأولى</div>
           <div class="vd-disclaimer"><p>⚠ تنبيه عدم الإلزام — هذا حكم افتراضي لأغراض التدريب والتحليل فقط، لا يُعدّ حكماً قضائياً ملزماً ولا يُرتب أي أثر نظامي. القاضي الافتراضي ليس بديلاً عن القاضي البشري.</p></div>
+        </div>
+
+        <!-- ====== لوحة مرحلة ما بعد الحكم الابتدائي ====== -->
+        <div class="post-judgment-panel" id="postJudgmentPanel">
+          <div class="pjp-head">
+            <span>⚖️</span>
+            <div>
+              مرحلة ما بعد الحكم الابتدائي
+              <div class="pjp-sub">صدر الحكم — اختر طريق الاعتراض المناسب وفق نظام المرافعات ولائحة الاعتراض على الأحكام</div>
+            </div>
+          </div>
+          <div class="pjp-body">
+            <div class="pjp-grid">
+              <!-- الاستئناف -->
+              <div class="pjp-card">
+                <div class="pjp-icon">📝</div>
+                <div class="pjp-title">الاستئناف</div>
+                <div class="pjp-text">إعداد لائحة اعتراضية استئنافية على الحكم الابتدائي أمام محكمة الاستئناف.</div>
+                <button class="btn btn-gold btn-sm" onclick="openObjection('appeal')">فتح نموذج الاستئناف</button>
+              </div>
+              <!-- النقض -->
+              <div class="pjp-card">
+                <div class="pjp-icon">🏛️</div>
+                <div class="pjp-title">النقض</div>
+                <div class="pjp-text">إعداد طلب نقض أمام المحكمة العليا عند وجود سبب نظامي مؤثر في الحكم.</div>
+                <button class="btn btn-gold btn-sm" onclick="openObjection('naqd')">فتح نموذج النقض</button>
+              </div>
+              <!-- التماس إعادة النظر -->
+              <div class="pjp-card">
+                <div class="pjp-icon">🔁</div>
+                <div class="pjp-title">التماس إعادة النظر</div>
+                <div class="pjp-text">إعداد طلب التماس إعادة النظر عند تحقق سبب من أسبابه النظامية المقررة.</div>
+                <button class="btn btn-gold btn-sm" onclick="openObjection('iltimas')">فتح نموذج الالتماس</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ====== النواة القانونية داخل صفحة الحكم ====== -->
+        <div style="margin-top:28px;display:grid;grid-template-columns:1fr;gap:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <h3 style="font-family:'Reem Kufi';font-size:16px;color:var(--navy);">السند النظامي من النواة القانونية</h3>
+            <button class="btn btn-outline btn-sm" onclick="lcSuggestForCase('verdict')">💡 اقتراح المواد النظامية للقضية</button>
+          </div>
+          <div class="lc-mount" data-lc-slot="verdict"></div>
+          <div class="legal-basis-mount"></div>
         </div>
       </section>
 
@@ -3228,6 +3088,11 @@ input[type=range]::-moz-range-thumb {
 
           <!-- Side panel -->
           <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div style="font-family:'Reem Kufi';font-size:13px;font-weight:700;color:var(--navy);">السند النظامي من النواة القانونية</div>
+              <button class="btn btn-outline btn-sm" onclick="lcSuggestForCase('appeal')">💡 اقتراح المواد</button>
+            </div>
+            <div class="lc-mount" data-lc-slot="appeal"></div>
             <div class="appeal-side-card">
               <div class="side-card-title">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
@@ -3257,14 +3122,17 @@ input[type=range]::-moz-range-thumb {
       <div id="tabContent_naqd" style="display:none;">
         <div class="appeal-main">
           <div class="appeal-form-card">
-            <div class="card-title" style="margin-bottom:4px;">النقض أمام المحكمة العليا</div>
-            <p style="font-size:13px;color:var(--ink-60);margin-bottom:16px;">م/40-47 لائحة الاعتراض — يُقدَّم بعد صدور حكم الاستئناف ولا يُقبل إن فاتت مدته</p>
+            <div class="card-title" style="margin-bottom:4px;">طلب نقض أمام المحكمة العليا</div>
+            <p style="font-size:13px;color:var(--ink-60);margin-bottom:12px;">م/40-47 لائحة الاعتراض — يُقدَّم بعد صدور حكم الاستئناف ولا يُقبل إن فاتت مدته</p>
+            <div style="background:var(--navy);color:var(--gold-pale);border-radius:var(--r-md);padding:12px 16px;margin-bottom:16px;font-size:12.5px;line-height:1.8;font-family:'Reem Kufi';">
+              النقض طريق اعتراض أمام المحكمة العليا، يركّز على الأسباب النظامية المؤثرة في الحكم، ولا يُعدّ إعادة نظر كاملة في موضوع النزاع.
+            </div>
 
             <!-- شرط أساسي -->
             <div style="background:rgba(184,114,26,0.08);border:1px solid rgba(184,114,26,0.25);border-radius:var(--r-lg);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--navy);line-height:1.9;">
               <div style="font-family:'Reem Kufi';font-weight:700;color:var(--amber);margin-bottom:6px;">⚠ شرط مسبق — م/41</div>
-              يجب بيان سبب طلب النقض ووجه أثره في الحكم محل طلب النقض بدقة.
-              <br/>يراجع السند النظامي المناسب قبل التقديم.
+              لا يُقبل في النقض سبب لم يُبدَ في <strong>الاستئناف</strong>، وكان ممكناً إبداؤه فيه.
+              <br/>هذا لا يعني أن النقض استئناف — النقض يختلف: يُقدَّم للمحكمة العليا وأسبابه محدودة نظاماً.
             </div>
 
             <!-- شروط المذكرة -->
@@ -3272,7 +3140,7 @@ input[type=range]::-moz-range-thumb {
               <div style="font-family:'Reem Kufi';font-weight:600;margin-bottom:6px;">شروط مذكرة النقض — م/42 (إلزامية وإلا رُدَّ تلقائياً)</div>
               ١. تحديد أسباب الاعتراض وموضعها من الحكم بدقة<br/>
               ٢. بيان وجه المخالفة وأثرها في نتيجة الحكم<br/>
-              ٣. بيان ما يثبت أن السبب مؤثر في الحكم أو تعذر إبداؤه في حينه
+              ٣. ما يُثبت سبق إبداء هذه الأسباب في الاستئناف أو تعذّر إبدائها فيه
             </div>
 
             <!-- أسباب النقض - مستخرجة من اللائحة فقط -->
@@ -3338,10 +3206,16 @@ input[type=range]::-moz-range-thumb {
           </div>
 
           <div class="appeal-side" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div style="font-family:'Reem Kufi';font-size:13px;font-weight:700;color:var(--navy);">السند النظامي من النواة القانونية</div>
+              <button class="btn btn-outline btn-sm" onclick="lcSuggestForCase('naqd')">💡 اقتراح المواد</button>
+            </div>
+            <div style="font-size:11px;color:var(--ink-60);font-family:'Reem Kufi';line-height:1.7;background:rgba(140,34,51,0.05);border:1px solid rgba(140,34,51,0.12);border-radius:var(--r-md);padding:8px 12px;">ركّز في النقض على الأسباب النظامية: مخالفة النظام، الخطأ في تطبيقه أو تأويله، القصور في التسبيب، مخالفة الاختصاص، الإخلال بحق الدفاع.</div>
+            <div class="lc-mount" data-lc-slot="naqd"></div>
             <div class="appeal-side-card">
               <div class="side-card-title">مواد اللائحة — النقض</div>
               <div class="rule-ref"><strong>م/40</strong> مخالفة مبدأ قضائي = مخالفة النظام</div>
-              <div class="rule-ref" style="margin-top:6px;"><strong>م/41</strong> شروط قبول سبب طلب النقض</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/41</strong> لا سبب جديد لم يُبدَ في الاستئناف</div>
               <div class="rule-ref" style="margin-top:6px;"><strong>م/42</strong> شروط المذكرة — إلزامية</div>
               <div class="rule-ref" style="margin-top:6px;"><strong>م/44</strong> الرد إذا فات الموعد أو تخلّفت الشروط</div>
               <div class="rule-ref" style="margin-top:6px;"><strong>م/45</strong> الفصل: رفض أو نقض مع التسبيب</div>
@@ -3349,7 +3223,7 @@ input[type=range]::-moz-range-thumb {
               <div class="rule-ref" style="margin-top:6px;"><strong>م/47</strong> الحكم في الموضوع: نطق علني</div>
             </div>
             <div class="appeal-side-card" style="background:rgba(140,34,51,0.05);border-color:rgba(140,34,51,0.15);">
-              <div style="font-family:'Reem Kufi';font-size:12px;color:var(--ruby);margin-bottom:6px;">طبيعة طلب النقض</div>
+              <div style="font-family:'Reem Kufi';font-size:12px;color:var(--ruby);margin-bottom:6px;">النقض ≠ الاستئناف</div>
               <div style="font-size:12px;color:var(--navy);line-height:1.7;">
                 النقض لا يُعيد محاكمة الوقائع — يقتصر على مراقبة صحة تطبيق النظام والمبادئ القضائية.
               </div>
@@ -3362,8 +3236,11 @@ input[type=range]::-moz-range-thumb {
       <div id="tabContent_iltimas" style="display:none;">
         <div class="appeal-main">
           <div class="appeal-form-card">
-            <div class="card-title" style="margin-bottom:6px;">التماس إعادة النظر</div>
-            <p style="font-size:13px;color:var(--ink-60);margin-bottom:20px;">م/48-59 من لائحة الاعتراض — يُقدَّم لمحكمة الاستئناف التي أيّدت الحكم.</p>
+            <div class="card-title" style="margin-bottom:6px;">طلب التماس إعادة النظر</div>
+            <p style="font-size:13px;color:var(--ink-60);margin-bottom:12px;">م/48-59 من لائحة الاعتراض — يُقدَّم لمحكمة الاستئناف التي أيّدت الحكم.</p>
+            <div style="background:var(--navy);color:var(--gold-pale);border-radius:var(--r-md);padding:12px 16px;margin-bottom:18px;font-size:12.5px;line-height:1.8;font-family:'Reem Kufi';">
+              التماس إعادة النظر طريق اعتراض غير عادي، مستقل عن الاستئناف والنقض، ولا يُقبل إلا عند تحقق سبب من أسبابه النظامية.
+            </div>
 
             <div style="background:var(--parchment);border:1px solid var(--gold-border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:20px;font-size:12px;color:var(--navy);line-height:1.8;">
               <strong style="font-family:'Reem Kufi';">حالات الالتماس المقبولة (م/200 من النظام):</strong>
@@ -3412,11 +3289,22 @@ input[type=range]::-moz-range-thumb {
                   <div class="ri-sub">الملتمس لم يكن ممثَّلاً تمثيلاً صحيحاً في الدعوى</div>
                 </div>
               </div>
+              <div class="reason-item" onclick="toggleIltimasReason(this)" data-case="ح">
+                <div class="ri-check"></div>
+                <div class="ri-text">
+                  <div class="ri-title">ح — سبب آخر مقرر نظاماً</div>
+                  <div class="ri-sub">أي سبب آخر من أسباب الالتماس المقررة نظاماً — يُحدَّد في الوقائع أدناه</div>
+                </div>
+              </div>
             </div>
 
             <div class="field" style="margin-bottom:14px;">
               <label class="flabel">الوقائع محل الالتماس وأثرها في الحكم (م/51-1) <span class="req">*</span></label>
               <textarea class="ftextarea" id="iltimasDetails" placeholder="حدد الواقعة بدقة وأثرها في الحكم — مثال: ثبت بالحكم الجزائي رقم (...) صدوره بتاريخ (...) أن الشاهد (فلان) حكم عليه بشهادة الزور في هذه الدعوى، وقد بُني الحكم على تلك الشهادة..." style="min-height:120px;"></textarea>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label class="flabel">تاريخ العلم بسبب الالتماس (م/52)</label>
+              <input class="finput" id="iltimasKnowDate" placeholder="مثال: ١٠ محرم ١٤٤٧هـ — تُحسب المدة من تاريخ العلم لا من تاريخ الحكم"/>
             </div>
             <div class="field" style="margin-bottom:16px;">
               <label class="flabel">الطلب في الالتماس</label>
@@ -3437,6 +3325,11 @@ input[type=range]::-moz-range-thumb {
           </div>
 
           <div class="appeal-side" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div style="font-family:'Reem Kufi';font-size:13px;font-weight:700;color:var(--navy);">السند النظامي من النواة القانونية</div>
+              <button class="btn btn-outline btn-sm" onclick="lcSuggestForCase('iltimas')">💡 اقتراح المواد</button>
+            </div>
+            <div class="lc-mount" data-lc-slot="iltimas"></div>
             <div class="appeal-side-card">
               <div class="side-card-title">المواد النظامية — الالتماس</div>
               <div class="rule-ref"><strong>م/48</strong> — تختص محكمة الاستئناف المؤيِّدة بنظره</div>
@@ -3973,6 +3866,9 @@ window.addEventListener('load', () => {
     const s = document.getElementById('s' + i);
     if (s) updateStrength(s, i);
   }
+  // تركيب لوحات النواة القانونية وأقسام «المواد المستند إليها»
+  lcMountAll();
+  document.querySelectorAll('.legal-basis-mount').forEach(el => { if (!el.innerHTML.trim()) el.innerHTML = lcLegalBasisHTML(); });
 });
 
 // ===== AI VERDICT GENERATOR =====
@@ -3990,7 +3886,7 @@ async function generateVerdict() {
   const compactLib = getSmartLibraryContext('موضوعي', CASE_CONTEXT, 8);
   const activeCaseCtx = getActiveCaseContext();
   const sysPrompt = `أنت قاضٍ في المحكمة التجارية الافتراضية. أصدر حكماً مكتملاً لا يُقطع قبل المنطوق.
-قاعدة: لا تذكر مستنداً لم يُذكر في القضية. أكمل الحكم حتى آخر سطر.${activeCaseCtx || ''}${compactLib}`;
+قاعدة: لا تذكر مستنداً لم يُذكر في القضية. أكمل الحكم حتى آخر سطر.${activeCaseCtx || ''}${compactLib}${lcPromptContext()}`;
 
   const userPrompt = `القضية المعروضة:\n${CASE_CONTEXT}
 
@@ -4041,16 +3937,15 @@ async function generateVerdict() {
           <button class="btn btn-gold btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
           <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ النص</button>`;
         outputEl.parentNode.insertBefore(btns, outputEl.nextSibling);
-        markJudgmentIssued('verdict-page');
+        // حدّث قسم المواد المستند إليها + بانر الحارس على صفحة الحكم
+        const lbm = document.querySelector('[data-page="verdict"] .legal-basis-mount');
+        if (lbm) lbm.innerHTML = lcLegalBasisHTML() + lcGuardBannerHTML(text);
       }
     }, 12);
 
   } catch(err) {
     statusEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ruby)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       <span style="color:var(--ruby);font-family:'Reem Kufi';">تعذّر الاتصال. يُرجى المحاولة مجدداً.</span>`;
-    isJudgeTyping = false;
-    renderTurnUI();
-    syncJudiciaryStatusPanel();
   }
 }
 
@@ -4758,7 +4653,7 @@ async function launchJudgeOpening(caseData) {
 
     if (isComplete) {
       updateStageTracker(2);
-      setAllowedSpeakerRole('defendant', 'تقديم جواب المدعى عليه على الدعوى.');
+      currentTurn = 'defendant';
       stageArgs = { plaintiff:0, defendant:0 };
       appendMessage('system', '― دفوع المدعى عليه ―');
       renderTurnUI();
@@ -4838,117 +4733,8 @@ let isJudgeTyping = false;
 let argCount = 0;
 // currentTurn: 'plaintiff' | 'defendant' | 'judge'
 let currentTurn = 'plaintiff';
-let allowedSpeakerRole = 'plaintiff';
-let requiredTurnInput = '';
 // hearingStage: 0=open,1=plaintiff,2=defendant,3=rebuttal,4=close,5=verdict
 let hearingStage = 1;
-let currentStage = 'claim_filing';
-let judgmentStatus = 'not_issued';
-let lastProceduralDecision = 'لم يصدر قرار بعد';
-const ROLE_LABELS = {
-  plaintiff: 'المدعي',
-  claimant: 'المدعي',
-  defendant: 'المدعى عليه',
-  judge: 'القاضي الافتراضي',
-  witness: 'الشاهد',
-  expert: 'الخبير',
-  both: 'الطرفان',
-  none: 'لا أحد'
-};
-const JUDICIARY_STAGES = [
-  ['claim_filing', 'تقييد الدعوى'],
-  ['admissibility', 'فحص القبول'],
-  ['opening', 'فتح المرافعة'],
-  ['defendant_answer', 'جواب المدعى عليه'],
-  ['claimant_reply', 'تعقيب المدعي'],
-  ['evidence', 'البينات والمرفقات'],
-  ['decisions', 'القرارات الإجرائية'],
-  ['closing', 'قفل المرافعة'],
-  ['judgment', 'إصدار الحكم'],
-  ['post_judgment', 'ما بعد الحكم']
-];
-
-function normalizeSpeakerRole(role) {
-  if (role === 'claimant') return 'plaintiff';
-  if (role === 'general') return 'both';
-  return role || 'judge';
-}
-
-function setAllowedSpeakerRole(role, requiredInput = '') {
-  allowedSpeakerRole = normalizeSpeakerRole(role || 'judge');
-  requiredTurnInput = requiredInput || '';
-  if (allowedSpeakerRole === 'both') {
-    currentTurn = currentRole || 'plaintiff';
-  } else if (allowedSpeakerRole === 'none' || allowedSpeakerRole === 'judge') {
-    currentTurn = 'judge';
-  } else {
-    currentTurn = allowedSpeakerRole;
-  }
-  syncJudiciaryStatusPanel();
-}
-
-function isCurrentRoleAllowedToSpeak() {
-  if (!currentRole) return false;
-  if (allowedSpeakerRole === 'both') return currentRole === 'plaintiff' || currentRole === 'defendant';
-  return allowedSpeakerRole === currentRole;
-}
-
-function getTurnLockMessage() {
-  if (allowedSpeakerRole === 'none') return 'تم قفل باب المرافعة، ولا يمكن إضافة مداخلات جديدة.';
-  if (allowedSpeakerRole === 'defendant') return 'الدور الحالي للمدعى عليه، ولا يمكنك الإدخال حتى يصدر القاضي قرارًا بتمكينك من الكلام.';
-  if (allowedSpeakerRole === 'plaintiff') return 'الدور الحالي للمدعي، ولا يمكنك الإدخال في هذه المرحلة.';
-  if (allowedSpeakerRole === 'witness') return 'الدور الحالي للشاهد، ولا يمكنك الإدخال حتى يطلب القاضي سماعك.';
-  if (allowedSpeakerRole === 'expert') return 'الدور الحالي للخبير، ولا يمكنك الإدخال حتى يطلب القاضي رأيك الفني.';
-  if (allowedSpeakerRole === 'both') return 'الدور متاح للطرفين في هذه المرحلة.';
-  return 'ليس لهذا الدور حق الإدخال في المرحلة الحالية.';
-}
-
-function getStageLabel(stageKey = currentStage) {
-  return (JUDICIARY_STAGES.find(([key]) => key === stageKey) || [stageKey, 'إجراء قضائي'])[1];
-}
-
-function setCaseStatusText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
-
-function syncJudiciaryStatusPanel() {
-  setCaseStatusText('caseStatus_stage', getStageLabel());
-  setCaseStatusText('caseStatus_turn', ROLE_LABELS[allowedSpeakerRole] || allowedSpeakerRole || 'القاضي');
-  setCaseStatusText('caseStatus_required', requiredTurnInput || 'انتظار قرار القاضي الإجرائي.');
-  setCaseStatusText('caseStatus_pleading', allowedSpeakerRole === 'none' ? 'مقفول' : 'مفتوح');
-  setCaseStatusText('caseStatus_judgment', judgmentStatus === 'issued' ? 'صدر الحكم' : 'لم يصدر');
-  setCaseStatusText('caseStatus_lastDecision', lastProceduralDecision || 'لم يصدر قرار بعد');
-  const alert = document.getElementById('caseStatus_roleAlert');
-  if (alert) alert.textContent = getTurnLockMessage();
-  renderJudiciaryStageTrack();
-  syncPostJudgmentPanel();
-}
-
-function renderJudiciaryStageTrack() {
-  const tracker = document.getElementById('stageTracker');
-  if (!tracker) return;
-  const currentIndex = Math.max(0, JUDICIARY_STAGES.findIndex(([key]) => key === currentStage));
-  tracker.innerHTML = JUDICIARY_STAGES.map(([key, label], index) => {
-    const cls = index < currentIndex ? 'done' : index === currentIndex ? 'cur' : 'pending';
-    return `<div class="stage-item ${cls}"><span class="stage-dot"></span>${label}</div>`;
-  }).join('');
-}
-
-function syncPostJudgmentPanel() {
-  const panel = document.getElementById('postJudgmentPanel');
-  const notice = document.getElementById('postJudgmentNotice');
-  const states = ['appealRemedyState', 'naqdRemedyState', 'iltimasRemedyState'];
-  if (!panel) return;
-  const issued = judgmentStatus === 'issued';
-  panel.style.opacity = issued ? '1' : '.72';
-  if (notice) {
-    notice.textContent = issued
-      ? 'صدر الحكم، ويمكنك الآن الانتقال إلى مرحلة ما بعد الحكم.'
-      : 'لا يمكن فتح مرحلة الاعتراض قبل صدور الحكم.';
-  }
-  states.forEach((id) => setCaseStatusText(id, issued ? 'متاح الآن' : 'بانتظار صدور الحكم'));
-}
 
 // Defense types per role
 const DEF_TYPES = {
@@ -4969,14 +4755,6 @@ const DEF_TYPES = {
     { label: 'رد على الطلب',   value: 'رد على دفع' },
     { label: 'طلب إجرائي',     value: 'طلب إجرائي' },
     { label: 'مرافعة ختامية',  value: 'تعقيب' },
-  ],
-  witness: [
-    { label: 'إفادة الشاهد', value: 'شهادة' },
-    { label: 'توضيح واقعة', value: 'إفادة' },
-  ],
-  expert: [
-    { label: 'رأي الخبير', value: 'خبرة' },
-    { label: 'إيضاح فني', value: 'تقرير فني' },
   ]
 };
 
@@ -4988,9 +4766,8 @@ function initHearing() {
   renderRoleBadge();
   renderTurnUI();
   updateStageAdvanceButton();
-  syncJudiciaryStatusPanel();
   const title = document.getElementById('submittedArgsTitle');
-  if (title) title.textContent = currentRole === 'plaintiff' ? 'طلبات المدعي وحججه' : currentRole === 'defendant' ? 'دفوع المدعى عليه المقدمة' : 'الإفادات المقدمة في الجلسة';
+  if (title) title.textContent = currentRole === 'plaintiff' ? 'طلبات المدعي وحججه' : 'دفوع المدعى عليه المقدمة';
 }
 
 function renderRoleBadge() {
@@ -5002,16 +4779,11 @@ function renderRoleBadge() {
     badge.style.color = 'var(--emerald)';
     badge.style.border = '1px solid rgba(26,92,65,0.3)';
     badge.textContent = '⚖️  أنا المدعي';
-  } else if (currentRole === 'defendant') {
+  } else {
     badge.style.background = 'var(--ruby-soft)';
     badge.style.color = 'var(--ruby)';
     badge.style.border = '1px solid rgba(140,34,51,0.3)';
     badge.textContent = '🛡️  أنا المدعى عليه';
-  } else {
-    badge.style.background = 'rgba(192,155,90,0.14)';
-    badge.style.color = 'var(--gold)';
-    badge.style.border = '1px solid var(--gold-border)';
-    badge.textContent = currentRole === 'witness' ? '👁️  أنا الشاهد' : currentRole === 'expert' ? '📋  أنا الخبير' : '⚖ القاضي';
   }
   // Update names in parties bar
   if (currentPartyName) {
@@ -5023,7 +4795,7 @@ function renderRoleBadge() {
 function renderDefTypes() {
   if (!currentRole) return;
   const container = document.getElementById('defenseTypes');
-  const types = DEF_TYPES[currentRole] || DEF_TYPES.plaintiff;
+  const types = DEF_TYPES[currentRole];
   container.innerHTML = types.map((t, i) =>
     `<button class="def-type-btn${i===0?' active':''}" onclick="selectDefType(this,'${t.value}')">${t.label}</button>`
   ).join('');
@@ -5032,7 +4804,7 @@ function renderDefTypes() {
 
 function renderTurnUI() {
   if (!currentRole) return;
-  const myTurn    = isCurrentRoleAllowedToSpeak();
+  const myTurn    = currentTurn === currentRole;
   const myArea    = document.getElementById('myTurnArea');
   const notMyArea = document.getElementById('notMyTurnArea');
   const noProv    = document.getElementById('noProviderArea');
@@ -5042,8 +4814,22 @@ function renderTurnUI() {
 
   // Show no-provider warning if needed (only in standalone mode)
   if (noProv) noProv.style.display = 'none';
-  if (sendBtn) sendBtn.disabled = !myTurn || isJudgeTyping || allowedSpeakerRole === 'none';
-  if (inp) inp.disabled = !myTurn || isJudgeTyping || allowedSpeakerRole === 'none';
+
+  // ===== بعد صدور الحكم: أوقف عبارة «القاضي يُعدّ الرد» وأغلق باب المرافعة =====
+  // الحكم صدر إذا بلغت المرحلة 5 (صدور الحكم) أو وُجد نص حكم محفوظ.
+  if (hearingStage >= 5 || window._lastVerdict) {
+    isJudgeTyping = false;
+    currentTurn = 'none';
+    if (myArea)    myArea.style.display = 'none';
+    if (notMyArea) {
+      notMyArea.style.display = 'block';
+      const wm = document.getElementById('waitingMsg');
+      if (wm) wm.innerHTML = '✅ صدر الحكم — أُقفل باب المرافعة. انتقل إلى مرحلة ما بعد الحكم في خيارات الاعتراض أدناه.';
+    }
+    const ti = document.getElementById('turnIndicator');
+    if (ti) { ti.style.background = 'var(--emerald-soft)'; ti.style.color = 'var(--emerald)'; ti.textContent = '✅ صدر الحكم'; }
+    return;
+  }
 
   // Turn indicator badge
   const ti = document.getElementById('turnIndicator');
@@ -5064,15 +4850,10 @@ function renderTurnUI() {
       rl.innerHTML = '<span style="color:var(--emerald)">⚖️ أنت المدعي</span> — اكتب طلبك أو حجتك:';
       if (inp) { inp.style.borderColor = myTurn ? 'var(--emerald)' : 'var(--ink-20)'; inp.placeholder = 'اعرض دعواك وحججك وطلباتك…'; }
       if (sendBtn) sendBtn.style.background = 'linear-gradient(135deg,#2a7a57,var(--emerald))';
-    } else if (currentRole === 'defendant') {
+    } else {
       rl.innerHTML = '<span style="color:var(--ruby)">🛡️ أنت المدعى عليه</span> — اكتب دفعك أو ردك:';
       if (inp) { inp.style.borderColor = myTurn ? 'var(--ruby)' : 'var(--ink-20)'; inp.placeholder = 'قدّم دفوعك وردودك على الدعوى…'; }
       if (sendBtn) sendBtn.style.background = 'linear-gradient(135deg,var(--ruby),#b03040)';
-    } else {
-      const roleName = ROLE_LABELS[currentRole] || 'مشارك الجلسة';
-      rl.innerHTML = `<span style="color:var(--gold)"> ${roleName}</span> — اكتب ما طلبه القاضي:`;
-      if (inp) { inp.style.borderColor = myTurn ? 'var(--gold)' : 'var(--ink-20)'; inp.placeholder = 'أدخل الإفادة أو التقرير المطلوب من القاضي…'; }
-      if (sendBtn) sendBtn.style.background = 'linear-gradient(135deg,var(--navy),var(--navy-mid))';
     }
   }
 
@@ -5088,11 +4869,10 @@ function renderTurnUI() {
     notMyArea.style.display = 'block';
     const wm = document.getElementById('waitingMsg');
     if (wm) {
-      if (judgmentStatus === 'issued') wm.textContent = 'صدر الحكم، ويمكنك الآن الانتقال إلى مرحلة ما بعد الحكم.';
-      else if (currentTurn === 'judge') wm.textContent = '⚖ القاضي يُعدّ الرد…';
+      if (currentTurn === 'judge') wm.textContent = '⚖ القاضي يُعدّ الرد…';
       else {
         const stageLabel = STAGE_NAMES[hearingStage] || '';
-        const otherLabel = ROLE_LABELS[currentTurn] || currentTurn;
+        const otherLabel = currentTurn === 'plaintiff' ? 'المدعي' : 'المدعى عليه';
         wm.textContent = `⏳ ${stageLabel} — دور ${otherLabel}`;
       }
     }
@@ -5113,8 +4893,8 @@ function appendMessage(role, content, type = '', isTyping = false) {
   const container = document.getElementById('hearingMessages');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
-  const avatars = { judge:'قا', plaintiff:'م.م', defendant:'م.ع', witness:'ش', expert:'خ' };
-  const senders = { judge:'القاضي الافتراضي', plaintiff:'المدعي', defendant:'المدعى عليه', witness:'الشاهد', expert:'الخبير' };
+  const avatars = { judge:'قا', plaintiff:'م.م', defendant:'م.ع' };
+  const senders = { judge:'القاضي الافتراضي', plaintiff:'المدعي', defendant:'المدعى عليه' };
 
   if (role === 'system') {
     div.innerHTML = `<div class="msg-body"><div class="msg-bubble">${content}</div></div>`;
@@ -5123,7 +4903,7 @@ function appendMessage(role, content, type = '', isTyping = false) {
       ? (document.getElementById('plaintiffNameBar')?.textContent || senders.plaintiff)
       : role === 'defendant'
       ? (document.getElementById('defendantNameBar')?.textContent || senders.defendant)
-      : (senders[role] || senders.judge);
+      : senders.judge;
     div.innerHTML = `
       <div class="msg-avatar">${avatars[role]||'?'}</div>
       <div class="msg-body">
@@ -5693,7 +5473,7 @@ ${recentHist || '(لم يُقدَّم شيء بعد)'}`;
     isJudgeTyping = false;
     stageArgs = { plaintiff: stageArgs.plaintiff, defendant:0 };
     updateStageTracker(2);
-    setAllowedSpeakerRole('defendant', 'تقديم جواب المدعى عليه على الدعوى.');
+    currentTurn = 'defendant';
     appendMessage('system', '― دفوع المدعى عليه ―');
 
   } else if (hearingStage === 2) {
@@ -5710,7 +5490,7 @@ ${recentHist || '(لم يُقدَّم شيء بعد)'}`;
     isJudgeTyping = false;
     stageArgs = { plaintiff:0, defendant:0 };
     updateStageTracker(3);
-    setAllowedSpeakerRole('both', 'التعقيب المتبادل متاح للطرفين.');
+    currentTurn = currentRole;
     appendMessage('system', '― التعقيب المتبادل ―');
 
   } else if (hearingStage === 3) {
@@ -5725,12 +5505,12 @@ ${recentHist || '(لم يُقدَّم شيء بعد)'}`;
     } catch(e) { removeJudgeTyping(); }
     isJudgeTyping = false;
     updateStageTracker(4);
-    setAllowedSpeakerRole('none', 'تم قفل باب المرافعة.');
+    currentTurn = 'judge';
     appendMessage('system', '― أُقفل باب المرافعة ―');
 
   } else if (hearingStage === 4) {
     updateStageTracker(5);
-    setAllowedSpeakerRole('none', 'تم قفل باب المرافعة وجار إصدار الحكم.');
+    currentTurn = 'judge';
     appendMessage('system', '― جاري إصدار الحكم الافتراضي… ―');
     await issueVerdictInline();
   }
@@ -5763,7 +5543,8 @@ async function issueVerdictInline() {
 
 **قاعدة الاكتمال:** لا تقطع الحكم — أكمله حتى آخر سطر المنطوق والخاتمة.
 ${getActiveCaseContext()}
-${libCtx}`;
+${libCtx}
+${lcPromptContext()}`;
 
   const att = _activeCase?._attendance;
   const pName = att?.pName || _activeCase?.plaintiff || 'المدعي';
@@ -5829,14 +5610,12 @@ ${histTxt}
       </button>
       <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ النص</button>`;
     msgEl.querySelector('.msg-body').appendChild(actionsDiv);
-    markJudgmentIssued('inline');
+    lcAttachBasisAfter(actionsDiv, text);   // المواد المستند إليها + حارس منع الاختلاق
     offerAppeal();
   } catch(e) {
     removeJudgeTyping();
     appendMessage('judge', `⚠ تعذّر إصدار الحكم: ${e.message}`);
     isJudgeTyping = false;
-    renderTurnUI();
-    syncJudiciaryStatusPanel();
   }
 }
 
@@ -5984,7 +5763,7 @@ async function submitDefense() {
     showToast(currentRole === 'plaintiff' ? 'اكتب طلبك أو أرفق مستنداً' : 'اكتب دفعك أو أرفق مستنداً');
     return;
   }
-  if (!isCurrentRoleAllowedToSpeak()) { showToast(getTurnLockMessage()); return; }
+  if (currentTurn !== currentRole) { showToast('ليس دورك الآن — انتظر القاضي'); return; }
 
   isJudgeTyping = true;
   document.getElementById('hearingSendBtn').disabled = true;
@@ -6004,7 +5783,7 @@ async function submitDefense() {
   updateStageAdvanceButton();
 
   // Switch to judge turn
-  setAllowedSpeakerRole('judge', 'انتظار قرار القاضي الإجرائي التالي.');
+  currentTurn = 'judge';
   renderTurnUI();
   showJudgeTyping();
 
@@ -6086,8 +5865,9 @@ ${stageInstruction}
         msgEl.querySelector('.msg-body').appendChild(td);
 
         // Determine next turn from judge's response
-        isJudgeTyping = false;
         determineNextTurn(judgeText);
+        isJudgeTyping = false;
+        document.getElementById('hearingSendBtn').disabled = false;
       }
     }, 16);
 
@@ -6097,7 +5877,7 @@ ${stageInstruction}
               : e.message?.includes('429') ? '⚠ تجاوز حد الاستخدام — انتظر قليلاً ثم أعد المحاولة.'
               : `⚠ تعذّر الاتصال: ${e.message || 'خطأ غير معروف'}`;
     appendMessage('judge', msg);
-    setAllowedSpeakerRole(currentRole || 'plaintiff', 'إعادة المحاولة بعد تعذر اتصال القاضي.');
+    currentTurn = currentRole;
     isJudgeTyping = false;
     document.getElementById('hearingSendBtn').disabled = false;
     renderTurnUI();
@@ -6106,7 +5886,6 @@ ${stageInstruction}
 
 function determineNextTurn(judgeText) {
   const t = judgeText;
-  let nextAllowedSpeakerRole = null;
 
   const decisionMatch = t.match(/القرار الإجرائي[:\*\s]+([^\n]+)/);
 
@@ -6120,7 +5899,6 @@ function determineNextTurn(judgeText) {
       }
     }
     renderProceduralDecision(fullDecision);
-    lastProceduralDecision = fullDecision;
 
     // Read SUBJECT only — the part before the dash
     // e.g. "المدعي (مؤسسة سالم) — تحرير تعقيبه..." → subject = "المدعي (مؤسسة سالم)"
@@ -6135,33 +5913,21 @@ function determineNextTurn(judgeText) {
                         fullDecision.includes('إصدار الحكم') || fullDecision.includes('قفل المرافعة');
 
     if (isVerdict) {
-      currentStage = 'closing';
       currentTurn = 'judge';
-      nextAllowedSpeakerRole = 'none';
       if (hearingStage < 4) { updateStageTracker(4); appendMessage('system','― أُقفل باب المرافعة ―'); }
     } else if (isBoth) {
-      currentStage = 'decisions';
       if (hearingStage < 3) { updateStageTracker(3); stageArgs={plaintiff:0,defendant:0}; appendMessage('system','― التعقيب المتبادل ―'); }
       currentTurn = 'plaintiff';
-      nextAllowedSpeakerRole = 'both';
     } else if (isDefendant) {
-      currentStage = 'defendant_answer';
       if (hearingStage <= 1) { updateStageTracker(2); stageArgs={plaintiff:stageArgs.plaintiff,defendant:0}; appendMessage('system','― دفوع المدعى عليه ―'); }
       currentTurn = 'defendant';
-      nextAllowedSpeakerRole = 'defendant';
     } else if (isPlaintiff) {
-      currentStage = 'claimant_reply';
       if (hearingStage === 2) { updateStageTracker(3); stageArgs={plaintiff:0,defendant:0}; appendMessage('system','― التعقيب المتبادل ―'); }
       currentTurn = 'plaintiff';
-      nextAllowedSpeakerRole = 'plaintiff';
     } else if (hearingStage === 3) {
-      currentStage = 'decisions';
       currentTurn = currentTurn === 'plaintiff' ? 'defendant' : 'plaintiff';
-      nextAllowedSpeakerRole = currentTurn;
     } else {
-      currentStage = hearingStage === 2 ? 'defendant_answer' : 'claim_filing';
       currentTurn = hearingStage === 2 ? 'defendant' : 'plaintiff';
-      nextAllowedSpeakerRole = currentTurn;
     }
 
   } else {
@@ -6180,36 +5946,22 @@ function determineNextTurn(judgeText) {
       updateStageTracker(2); stageArgs={plaintiff:stageArgs.plaintiff,defendant:0};
       appendMessage('system','― دفوع المدعى عليه ―');
       currentTurn = 'defendant';
-      nextAllowedSpeakerRole = 'defendant';
-      currentStage = 'defendant_answer';
-      lastProceduralDecision = 'المدعى عليه — تقديم جوابه على الدعوى.';
       renderProceduralDecision('المدعى عليه — تقديم جوابه على الدعوى.');
     } else if (passToPlaintiff) {
       if (hearingStage === 2) { updateStageTracker(3); stageArgs={plaintiff:0,defendant:0}; appendMessage('system','― التعقيب المتبادل ―'); }
       currentTurn = 'plaintiff';
-      nextAllowedSpeakerRole = 'plaintiff';
-      currentStage = 'claimant_reply';
-      lastProceduralDecision = 'المدعي — التعقيب على جواب المدعى عليه.';
       renderProceduralDecision('المدعي — التعقيب على جواب المدعى عليه.');
     } else if (hearingStage === 3) {
-      currentStage = 'decisions';
       currentTurn = currentTurn === 'plaintiff' ? 'defendant' : 'plaintiff';
-      nextAllowedSpeakerRole = currentTurn;
     } else if (hearingStage >= 4) {
-      currentStage = 'closing';
       currentTurn = 'judge';
-      nextAllowedSpeakerRole = 'none';
     } else {
-      currentStage = hearingStage === 2 ? 'defendant_answer' : 'claim_filing';
       currentTurn = hearingStage === 2 ? 'defendant' : 'plaintiff';
-      nextAllowedSpeakerRole = currentTurn;
     }
   }
 
-  setAllowedSpeakerRole(nextAllowedSpeakerRole || (currentTurn === 'judge' ? 'none' : currentTurn), nextAllowedSpeakerRole === 'none' ? 'تم قفل باب المرافعة، ولا يمكن إضافة مداخلات جديدة.' : '');
   renderTurnUI();
   updateStageAdvanceButton();
-  syncJudiciaryStatusPanel();
 }
 
 function renderProceduralDecision(decision) {
@@ -6231,114 +5983,319 @@ function renderProceduralDecision(decision) {
   msgs.scrollTop = 99999;
 }
 
-function markJudgmentIssued(source = 'inline') {
-  judgmentStatus = 'issued';
-  currentStage = 'post_judgment';
-  hearingStage = 5;
-  lastProceduralDecision = 'صدر الحكم الافتراضي التدريبي';
-  removeJudgeTyping();
-  isJudgeTyping = false;
-  setAllowedSpeakerRole('none', 'صدر الحكم، ويمكنك الآن الانتقال إلى مرحلة ما بعد الحكم.');
-  renderTurnUI();
-  updateStageAdvanceButton();
-  syncJudiciaryStatusPanel();
-  if (source !== 'silent') showToast('صدر الحكم، ويمكنك الآن الانتقال إلى مرحلة ما بعد الحكم.');
-}
-
-function openPostJudgmentRemedy(tab) {
-  if (judgmentStatus !== 'issued' && !window._lastVerdict) {
-    showToast('لا يمكن فتح مرحلة الاعتراض قبل صدور الحكم.');
-    return;
-  }
-  judgmentStatus = 'issued';
-  currentStage = 'post_judgment';
-  syncJudiciaryStatusPanel();
-  goPage('appeal');
-  setTimeout(() => {
-    if (typeof switchAppealTab === 'function') switchAppealTab(tab);
-  }, 40);
-}
-
-function copySessionRoleLink(role) {
-  const url = new URL(window.location.href);
-  if (role === 'general') url.searchParams.delete('role');
-  else url.searchParams.set('role', role);
-  const value = url.toString();
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(value).then(() => showToast('تم نسخ رابط الجلسة')).catch(() => fallbackCopy(value));
-  } else {
-    fallbackCopy(value);
-  }
-}
-
-function applyRoleFromQuery() {
-  const params = new URLSearchParams(window.location.search);
-  const roleParam = params.get('role');
-  if (!roleParam) return;
-  const role = normalizeSpeakerRole(roleParam);
-  if (!['judge','plaintiff','defendant','witness','expert'].includes(role)) return;
-  currentRole = role;
-  currentPartyName = ROLE_LABELS[role] || '';
-  const modal = document.getElementById('roleModal');
-  if (modal) modal.style.display = 'none';
-  initHearing();
-}
-
-function applyProceduralDecision(action) {
-  const decisions = {
-    accept_claim: ['admissibility', 'قبول الدعوى شكلاً وفتح مسار المرافعة.', 'judge', 'انتظار توجيه القاضي للخصوم.'],
-    request_completion: ['claim_filing', 'طلب استكمال بيانات الدعوى من المدعي.', 'plaintiff', 'استكمال بيانات الدعوى أو المرفقات الناقصة.'],
-    enable_defendant: ['defendant_answer', 'تمكين المدعى عليه من الجواب.', 'defendant', 'بيان موقف المدعى عليه من الوقائع والطلبات والمستندات.'],
-    enable_claimant: ['claimant_reply', 'تمكين المدعي من التعقيب.', 'plaintiff', 'التعقيب على جواب المدعى عليه ودفوعه.'],
-    request_evidence: ['evidence', 'طلب بينة من المدعي.', 'plaintiff', 'تقديم البينة أو وصفها أو بيان تعذر تقديمها.'],
-    enable_witness: ['evidence', 'تمكين الشاهد من الإدلاء بإفادته.', 'witness', 'إدخال إفادة الشاهد في حدود ما طلبه القاضي.'],
-    enable_expert: ['evidence', 'تمكين الخبير من تقديم الرأي الفني.', 'expert', 'تقديم الرأي الفني أو تقرير الخبرة المطلوب.'],
-    settlement: ['decisions', 'عرض الصلح على الطرفين.', 'both', 'بيان قبول الصلح أو رفضه أو اقتراح صيغة بديلة.'],
-    close_pleading: ['closing', 'قفل باب المرافعة.', 'none', 'تم قفل باب المرافعة، ولا يمكن إضافة مداخلات جديدة.'],
-    reserve_judgment: ['judgment', 'حجز القضية للحكم.', 'judge', 'انتظار إصدار الحكم التدريبي.'],
-    issue_judgment: ['judgment', 'إصدار الحكم التدريبي.', 'none', 'جار إصدار الحكم التدريبي.']
-  };
-  const data = decisions[action];
-  if (!data) return;
-  currentStage = data[0];
-  lastProceduralDecision = data[1];
-  renderProceduralDecision(data[1]);
-  setAllowedSpeakerRole(data[2], data[3]);
-  renderTurnUI();
-  if (action === 'issue_judgment') {
-    goPage('verdict');
-    setTimeout(() => {
-      if (window._lastVerdict) markJudgmentIssued('silent');
-      else showToast('افتح مولّد الحكم أو استخدم إصدار الحكم من الجلسة.');
-    }, 60);
-  }
-}
-
 function offerAppeal() {
   const c = document.getElementById('hearingMessages');
+
+  // 1) رسالة صدور الحكم + زر الانتقال السريع لمرحلة ما بعد الحكم
+  const note = document.createElement('div');
+  note.className = 'msg system';
+  note.innerHTML = `<div class="msg-body"><div class="msg-bubble" style="background:var(--emerald-soft);color:var(--emerald);border:1px solid rgba(26,92,65,0.2);">
+      ✅ صدر الحكم، ويمكنك الآن الانتقال إلى مرحلة ما بعد الحكم.
+      <div style="margin-top:8px;"><button class="btn btn-gold btn-sm" onclick="document.getElementById('chatPostJudgment')?.scrollIntoView({behavior:'smooth',block:'center'})">فتح مرحلة ما بعد الحكم ↓</button></div>
+    </div></div>`;
+  c.appendChild(note);
+
+  // 2) لوحة ما بعد الحكم الابتدائي — ثلاث بطاقات مستقلة
   const d = document.createElement('div');
-  d.style.cssText = 'margin:16px 8px;border-radius:var(--r-xl);overflow:hidden;border:1.5px solid var(--gold-border);';
+  d.id = 'chatPostJudgment';
+  d.className = 'post-judgment-panel';
+  d.style.cssText = 'margin:16px 8px;';
   d.innerHTML = `
-    <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));padding:16px 20px;color:var(--gold-pale);font-family:'Reem Kufi';font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      صدر الحكم — خيارات ما بعد الحكم
+    <div class="pjp-head">
+      <span>⚖️</span>
+      <div>مرحلة ما بعد الحكم الابتدائي
+        <div class="pjp-sub">اختر طريق الاعتراض المناسب — لكل طريق مصطلحاته وشروطه ومخرجاته المستقلة</div>
+      </div>
     </div>
-    <div style="background:var(--paper);padding:16px 20px;display:flex;flex-wrap:wrap;gap:10px;">
-      <button class="btn btn-gold btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
-      <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ الحكم</button>
-      <button class="btn btn-outline btn-sm" onclick="openPostJudgmentRemedy('appeal')">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 002-2v-4M17 9l-5-5-5 5M12 4v12"/></svg>
-        الاستئناف الافتراضي
-      </button>
-      <button class="btn btn-outline btn-sm" onclick="openPostJudgmentRemedy('naqd')">طلب النقض</button>
-      <button class="btn btn-outline btn-sm" onclick="openPostJudgmentRemedy('iltimas')">التماس إعادة النظر</button>
-      <button class="btn btn-outline btn-sm" onclick="goPage('settlement')">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        الصلح بعد الحكم
-      </button>
-      <button class="btn btn-ghost btn-sm" onclick="this.closest('div').parentNode.remove()">إغلاق</button>
+    <div class="pjp-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn btn-outline btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
+        <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ الحكم</button>
+        <button class="btn btn-outline btn-sm" onclick="goPage('settlement')">🤝 الصلح بعد الحكم</button>
+      </div>
+      <div class="pjp-grid">
+        <div class="pjp-card">
+          <div class="pjp-icon">📝</div>
+          <div class="pjp-title">الاستئناف</div>
+          <div class="pjp-text">إعداد لائحة اعتراضية استئنافية على الحكم الابتدائي أمام محكمة الاستئناف.</div>
+          <button class="btn btn-gold btn-sm" onclick="openObjection('appeal')">فتح نموذج الاستئناف</button>
+        </div>
+        <div class="pjp-card">
+          <div class="pjp-icon">🏛️</div>
+          <div class="pjp-title">النقض</div>
+          <div class="pjp-text">إعداد طلب نقض أمام المحكمة العليا عند وجود سبب نظامي مؤثر.</div>
+          <button class="btn btn-gold btn-sm" onclick="openObjection('naqd')">فتح نموذج النقض</button>
+        </div>
+        <div class="pjp-card">
+          <div class="pjp-icon">🔁</div>
+          <div class="pjp-title">التماس إعادة النظر</div>
+          <div class="pjp-text">إعداد طلب التماس إعادة النظر عند تحقق سبب من أسبابه النظامية.</div>
+          <button class="btn btn-gold btn-sm" onclick="openObjection('iltimas')">فتح نموذج الالتماس</button>
+        </div>
+      </div>
     </div>`;
-  c.appendChild(d); c.scrollTop = c.scrollHeight;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+// فتح طريق اعتراض محدد: ينتقل لصفحة الاعتراض ويفتح التبويب الصحيح ويمرّر إليه
+function openObjection(type) {
+  goPage('appeal');
+  setTimeout(() => {
+    switchAppealTab(type);
+    const map = { appeal: 'tabContent_appeal', naqd: 'tabContent_naqd', iltimas: 'tabContent_iltimas' };
+    document.getElementById(map[type])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 60);
+}
+
+/* ============================================================
+   النواة القانونية — وحدة البحث والاستشهاد + حارس منع الاختلاق
+   كل المواد تأتي من /api/legal-core/search فقط، أو يدخلها المستخدم صراحة.
+   ============================================================ */
+const LC_ENDPOINT = '/api/legal-core/search';
+window._lcResults  = {};   // نتائج آخر بحث لكل slot
+window._lcSelected = [];    // المواد المعتمدة (مسترجَعة من النواة أو مختارة) — تُبنى عليها المخرجات
+
+// بناء واجهة لوحة بحث (slot فريد لتفادي تعارض المعرّفات)
+function lcPanelHTML(slot) {
+  return `
+  <div class="lc-panel collapsed" id="lc_${slot}">
+    <div class="lc-head" onclick="lcToggle('${slot}')">
+      <span>📚 النواة القانونية — بحث المواد والأحكام</span>
+      <span class="lc-chev">▾</span>
+    </div>
+    <div class="lc-body">
+      <div class="lc-search-row">
+        <input class="finput" id="lcq_${slot}" placeholder="ابحث: تعويض، فسخ، إثبات…" onkeydown="if(event.key==='Enter'){event.preventDefault();lcRun('${slot}');}"/>
+        <button class="btn btn-gold btn-sm" onclick="lcRun('${slot}')">بحث في النواة</button>
+      </div>
+      <div class="lc-filters">
+        <select id="lcst_${slot}" title="نوع البحث">
+          <option value="contains">ضمن النص</option>
+          <option value="exact">مطابق</option>
+          <option value="derivations">اشتقاقات</option>
+          <option value="root">جذر</option>
+          <option value="stem">ساق</option>
+        </select>
+        <select id="lcsrc_${slot}" title="نوع المصدر">
+          <option value="article">مواد نظامية</option>
+          <option value="judgment">أحكام قضائية</option>
+          <option value="citation">استشهادات</option>
+        </select>
+      </div>
+      <div class="lc-results" id="lcres_${slot}">
+        <div class="lc-empty">اكتب كلمة مفتاحية وابحث. تُعرض المواد من قاعدة الأنظمة فقط — لا تُختلق أي مادة أو حكم. إذا لم يوجد سند مطابق يُصرَّح بذلك.</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="/dashboard/legal-core/search" target="_blank" style="font-size:11px;color:var(--gold);font-family:'Reem Kufi';">بحث موسّع ↗</a>
+        <a href="/dashboard/legal-core/judgments" target="_blank" style="font-size:11px;color:var(--gold);font-family:'Reem Kufi';">الأحكام القضائية ↗</a>
+        <a href="/dashboard/legal-core/citations" target="_blank" style="font-size:11px;color:var(--gold);font-family:'Reem Kufi';">الاستشهادات ↗</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+// تركيب اللوحات في كل مواضع التركيب data-lc-slot
+function lcMountAll() {
+  document.querySelectorAll('.lc-mount').forEach(el => {
+    if (el.dataset.lcMounted) return;
+    el.innerHTML = lcPanelHTML(el.dataset.lcSlot || 'x');
+    el.dataset.lcMounted = '1';
+  });
+}
+
+function lcToggle(slot) { document.getElementById('lc_' + slot)?.classList.toggle('collapsed'); }
+
+// تطبيع نتيجة واحدة من الـ API إلى شكل موحّد (قراءة دفاعية لأسماء الحقول)
+function lcNormalize(r) {
+  return {
+    id:        r.id ?? r.articleId ?? r._id ?? null,
+    type:      r.type ?? r.sourceType ?? 'article',
+    lawName:   r.lawName ?? r.systemName ?? r.law ?? r.systemTitle ?? r.source ?? 'نظام غير مسمّى',
+    number:    r.articleNumber ?? r.number ?? r.article ?? r.no ?? r.caseNumber ?? r.judgmentNumber ?? '',
+    text:      r.text ?? r.content ?? r.excerpt ?? r.body ?? r.snippet ?? '',
+    court:     r.court ?? r.courtName ?? '',
+    related:   r.relatedArticles ?? r.linkedArticles ?? []
+  };
+}
+
+async function lcSearch(query, searchType, sourceTypes, limit = 8) {
+  const url = `${LC_ENDPOINT}?q=${encodeURIComponent(query)}&searchType=${encodeURIComponent(searchType)}&sourceTypes=${encodeURIComponent(sourceTypes)}&limit=${limit}`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const arr = Array.isArray(data) ? data : (data.results ?? data.articles ?? data.data ?? data.items ?? []);
+  return arr.map(lcNormalize);
+}
+
+async function lcRun(slot) {
+  const q   = document.getElementById('lcq_' + slot)?.value?.trim();
+  const st  = document.getElementById('lcst_' + slot)?.value || 'contains';
+  const src = document.getElementById('lcsrc_' + slot)?.value || 'article';
+  const box = document.getElementById('lcres_' + slot);
+  if (!q) { showToast('اكتب كلمة للبحث في النواة القانونية'); return; }
+  box.innerHTML = `<div class="lc-status"><div class="typing-dots"><span></span><span></span><span></span></div> جارٍ البحث في النواة القانونية…</div>`;
+  try {
+    const results = await lcSearch(q, st, src, 8);
+    window._lcResults[slot] = results;
+    lcRenderResults(slot, results, src);
+  } catch (e) {
+    box.innerHTML = `<div class="lc-empty">⚠ تعذّر الاتصال بالنواة القانونية حالياً (${e.message}).<br/>تعمل هذه الميزة عند نشر الصفحة على المنصة حيث يتوفّر مسار <code>/api/legal-core/search</code>. لا تُعرض أي مادة غير مسترجَعة من النواة.</div>`;
+  }
+}
+
+function lcRenderResults(slot, results, src) {
+  const box = document.getElementById('lcres_' + slot);
+  if (!results || !results.length) {
+    box.innerHTML = `<div class="lc-empty">لم يتم العثور على ${src === 'judgment' ? 'تطبيق قضائي' : src === 'citation' ? 'استشهاد' : 'سند نظامي'} مطابق في النواة القانونية الحالية.</div>`;
+    return;
+  }
+  box.innerHTML = results.map((r, i) => {
+    const isJ = r.type === 'judgment';
+    const head = isJ
+      ? `<span class="lc-badge">حكم</span><span class="lc-law">${esc(r.court || 'محكمة')}${r.number ? ' — رقم ' + esc(String(r.number)) : ''}</span>`
+      : `<span class="lc-badge">${r.number ? 'م/' + esc(String(r.number)) : 'مادة'}</span><span class="lc-law">${esc(r.lawName)}</span>`;
+    const useBtns = isJ
+      ? `<button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'judgment')">استخدام كتطبيق قضائي</button>`
+      : `<button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'reasoning')">استخدام في التسبيب</button>
+         <button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'judgment')">استخدام في الحكم</button>
+         <button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'objection')">استخدام في الاعتراض</button>`;
+    const openLink = (!isJ && r.id) ? `<a class="btn btn-ghost btn-sm" href="/dashboard/legal-core/articles/${encodeURIComponent(r.id)}" target="_blank">فتح المادة ↗</a>` : '';
+    return `<div class="lc-result">
+      <div class="lc-result-head">${head}</div>
+      <div class="lc-excerpt">${esc((r.text || '').slice(0, 320))}${(r.text || '').length > 320 ? '…' : ''}</div>
+      <div class="lc-actions">
+        <button class="btn btn-outline btn-sm" onclick="lcCopy('${slot}',${i})">📋 نسخ الاستشهاد</button>
+        ${useBtns}${openLink}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+
+function lcCitation(r) {
+  if (r.type === 'judgment') return `${r.court || 'حكم قضائي'}${r.number ? ' رقم (' + r.number + ')' : ''} — النواة القانونية`;
+  return `المادة (${r.number || '—'}) من ${r.lawName}${r.text ? ': «' + r.text.slice(0, 200) + (r.text.length > 200 ? '…' : '') + '»' : ''}`;
+}
+
+function lcCopy(slot, i) {
+  const r = window._lcResults[slot]?.[i]; if (!r) return;
+  const txt = lcCitation(r);
+  navigator.clipboard?.writeText(txt).then(() => showToast('نُسخ الاستشهاد')).catch(() => showToast('تعذّر النسخ'));
+}
+
+// اعتماد مادة: تُضاف إلى السند النظامي المعتمد، ومع الاعتراض تُدرَج في حقل المذكرة
+function lcUse(slot, i, where) {
+  const r = window._lcResults[slot]?.[i]; if (!r) return;
+  // تسجيلها ضمن المواد المعتمدة (دون تكرار)
+  const key = (r.type || 'article') + '|' + (r.number || '') + '|' + (r.lawName || '');
+  if (!window._lcSelected.some(x => x._key === key)) {
+    window._lcSelected.push({ ...r, _key: key, _via: 'النواة القانونية' });
+  }
+  if (where === 'objection') {
+    // إدراج في حقل المذكرة المناسب حسب التبويب المفتوح
+    const target = document.getElementById('naqdLocation')?.offsetParent ? 'naqdLocation'
+                 : document.getElementById('iltimasDetails')?.offsetParent ? 'iltimasDetails'
+                 : 'appealReasons';
+    const ta = document.getElementById(target);
+    if (ta) { ta.value = (ta.value ? ta.value + '\n' : '') + 'السند النظامي: ' + lcCitation(r); showToast('أُدرج السند في مذكرة الاعتراض'); }
+  } else {
+    showToast(where === 'judgment' ? 'أُضيفت المادة إلى السند النظامي للحكم' : where === 'reasoning' ? 'أُضيفت المادة إلى التسبيب' : 'اعتُمد التطبيق القضائي');
+  }
+  // تحديث صناديق «المواد المستند إليها» الظاهرة
+  document.querySelectorAll('.legal-basis-mount').forEach(el => el.innerHTML = lcLegalBasisHTML());
+}
+
+// إدخال يدوي صريح لمادة (تُميَّز بأنها من المستخدم)
+function lcAddManual() {
+  const num = prompt('رقم المادة:'); if (!num) return;
+  const law = prompt('اسم النظام:') || 'نظام (إدخال المستخدم)';
+  window._lcSelected.push({ type: 'article', number: num, lawName: law, text: '', _key: 'manual|' + num + '|' + law, _via: 'إدخال المستخدم' });
+  document.querySelectorAll('.legal-basis-mount').forEach(el => el.innerHTML = lcLegalBasisHTML());
+  showToast('أُضيفت المادة (إدخال المستخدم)');
+}
+
+// HTML لقسم «المواد النظامية المستند إليها»
+function lcLegalBasisHTML() {
+  if (!window._lcSelected.length) {
+    return `<div class="legal-basis-box"><h4>📌 المواد النظامية المستند إليها</h4>
+      <div class="lc-empty" style="text-align:right;padding:4px;">لم يُعتمد بعد أي سند نظامي من النواة القانونية. استخدم بحث النواة أعلاه واختر «استخدام في الحكم/التسبيب»، أو صرّح: «لم يتم العثور على سند نظامي مطابق في النواة القانونية الحالية».</div></div>`;
+  }
+  const items = window._lcSelected.map(r => `
+    <div class="lb-item">
+      <span class="lb-num">${r.type === 'judgment' ? esc(r.court || 'حكم') + (r.number ? ' رقم ' + esc(String(r.number)) : '') : 'المادة (' + esc(String(r.number || '—')) + ') — ' + esc(r.lawName)}</span>
+      <span class="lb-src">· المصدر: ${esc(r._via || 'النواة القانونية')}</span>
+      ${r.text ? `<div class="lb-txt">${esc(r.text.slice(0, 240))}${r.text.length > 240 ? '…' : ''}</div>` : ''}
+      ${(r.id && r.type !== 'judgment') ? `<a href="/dashboard/legal-core/articles/${encodeURIComponent(r.id)}" target="_blank" style="font-size:11px;color:var(--gold);">فتح المادة ↗</a>` : ''}
+    </div>`).join('');
+  return `<div class="legal-basis-box"><h4>📌 المواد النظامية المستند إليها</h4>${items}</div>`;
+}
+
+// حارس منع الاختلاق: يفحص نص المخرج عن إشارات لمواد/أنظمة غير معتمدة من النواة
+function lcGuardBannerHTML(text) {
+  if (!text) return '';
+  const verified = new Set(window._lcSelected.map(r => String(r.number || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))));
+  const mentions = [];
+  const re = /(?:المادة|الماده|م\s*\/?\s*)\(?\s*([0-9٠-٩]{1,4})/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const n = m[1].replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    if (!verified.has(n)) mentions.push(m[1]);
+  }
+  const uniq = [...new Set(mentions)];
+  if (!uniq.length) return '';
+  return `<div class="fab-warning">⚠ <strong>تنبيه حارس النواة القانونية:</strong> ورد في النص إشارة إلى مادة/مواد (${uniq.join('، ')}) غير مُسترجَعة من النواة القانونية. لا تُعتمد كسند مؤكد — <strong>يراجع السند النظامي المناسب قبل التقديم</strong> أو ابحث عنها في النواة أعلاه واعتمدها.</div>`;
+}
+
+// إلحاق قسم السند النظامي + بانر الحارس بعد أي مخرج (حكم/اعتراض)
+function lcAttachBasisAfter(el, text) {
+  if (!el) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'legal-basis-mount';
+  wrap.innerHTML = lcLegalBasisHTML() + lcGuardBannerHTML(text);
+  el.parentNode?.insertBefore(wrap, el.nextSibling);
+}
+
+// سياق المواد المعتمدة لحقنه في موجِّه الذكاء — يُلزم القاضي بالاستناد للنواة فقط
+function lcPromptContext() {
+  const base = `
+
+**إلزام النواة القانونية (قاعدة صارمة لمنع الاختلاق):**
+- لا تستشهد بأي مادة نظامية أو حكم قضائي أو مبدأ إلا إن كان ضمن «السند المعتمد» أدناه.
+- يُمنع منعاً باتاً اختلاق رقم مادة أو اسم نظام أو نص مادة أو رقم حكم أو مبدأ قضائي.
+- إن احتجت سنداً نظامياً غير متوفر في القائمة فاكتب حرفياً: «يراجع السند النظامي المناسب قبل التقديم» ولا تخمّن.`;
+  if (!window._lcSelected || !window._lcSelected.length) {
+    return base + `
+- لم يُعتمد بعد أي سند من النواة القانونية لهذه القضية. إذا لزم سند نظامي فصرّح: «لم يتم العثور على سند نظامي مطابق في النواة القانونية الحالية» أو «يراجع السند النظامي المناسب قبل التقديم».`;
+  }
+  const list = window._lcSelected.map(r =>
+    r.type === 'judgment'
+      ? `- تطبيق قضائي: ${r.court || 'محكمة'}${r.number ? ' رقم ' + r.number : ''} (مصدره: ${r._via||'النواة القانونية'})`
+      : `- المادة (${r.number || '—'}) من ${r.lawName}${r.text ? ': «' + r.text.slice(0,160) + '»' : ''} (مصدره: ${r._via||'النواة القانونية'})`
+  ).join('\n');
+  return base + `
+
+**السند المعتمد من النواة القانونية (استخدم هذه المواد فقط):**
+${list}
+
+اربط كل سبب أو تسبيب بالمادة المناسبة من هذه القائمة عند الاقتضاء، وأدرج في آخر المخرج قسماً بعنوان «المواد النظامية المستند إليها» يعدّد ما استُند إليه منها.`;
+}
+
+// اقتراح مواد للقضية الحالية من وقائعها وطلباتها
+async function lcSuggestForCase(slot) {
+  const c = _activeCase;
+  const q = [c?.subject, c?.facts, c?.requests].filter(Boolean).join(' ').slice(0, 120) || 'مطالبة مالية تجارية';
+  const box = document.getElementById('lcres_' + slot);
+  document.getElementById('lc_' + slot)?.classList.remove('collapsed');
+  if (box) box.innerHTML = `<div class="lc-status"><div class="typing-dots"><span></span><span></span><span></span></div> جارٍ اقتراح المواد المرتبطة بالقضية…</div>`;
+  try {
+    const results = await lcSearch(q, 'contains', 'article', 8);
+    window._lcResults[slot] = results;
+    lcRenderResults(slot, results, 'article');
+  } catch (e) {
+    if (box) box.innerHTML = `<div class="lc-empty">لم يتم العثور على مواد نظامية مطابقة في النواة القانونية الحالية، أو تعذّر الاتصال (${e.message}).</div>`;
+  }
 }
 
 function switchRole() {
@@ -6348,11 +6305,7 @@ function switchRole() {
 
 function clearHearing() {
   hearingHistory = []; argCount = 0; isJudgeTyping = false;
-  judgmentStatus = 'not_issued';
-  currentStage = 'claim_filing';
-  lastProceduralDecision = 'لم يصدر قرار بعد';
-  setAllowedSpeakerRole('plaintiff', 'تقديم طلبات المدعي وحججه.');
-  hearingStage = 1;
+  currentTurn = 'plaintiff'; hearingStage = 1;
   stageArgs = { plaintiff:0, defendant:0 };
 
   // Static judge message removed — launchJudgeOpening provides it dynamically from case data
@@ -6360,10 +6313,13 @@ function clearHearing() {
     <div class="msg system"><div class="msg-body"><div class="msg-bubble">― بدأت جلسة المرافعة الافتراضية ―</div></div></div>`;
 
   document.getElementById('submittedArgs').innerHTML = '<div style="font-size:12px;color:var(--ink-40);text-align:center;padding:10px;font-family:\'Reem Kufi\';">لم يُقدَّم أي دفع بعد</div>';
-  renderJudiciaryStageTrack();
+  document.querySelectorAll('#stageTracker .stage-item').forEach((s, i) => {
+    s.className = 'stage-item' + (i === 0 ? ' done' : i === 1 ? ' cur' : ' pending');
+    const labels = ['افتتاح الجلسة','طلبات المدعي وحججه','دفوع المدعى عليه','التعقيب المتبادل','قفل المرافعة','صدور الحكم'];
+    s.innerHTML = `<span class="stage-dot"></span>${labels[i]}`;
+  });
 
   if (currentRole) renderTurnUI();
-  syncJudiciaryStatusPanel();
 }
 
 function updateLegalRefs(type) {
@@ -6718,6 +6674,7 @@ async function _runObjection(system, user, typingId, outputId) {
         b.style.cssText = 'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;';
         b.innerHTML = `<button class="btn btn-gold btn-sm" onclick="showVerdictModal()">⚖ عرض كاملاً</button><button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ</button>`;
         output.parentNode.insertBefore(b, output.nextSibling);
+        lcAttachBasisAfter(b, text);   // المواد المستند إليها + حارس منع الاختلاق للاعتراض
       }
     }, 12);
   } catch(e) { typing.style.display='none'; output.style.display='block'; output.textContent=`⚠ تعذّر الاتصال: ${e.message}`; }
@@ -6730,7 +6687,7 @@ async function submitNaqd() {
   const req = document.getElementById('naqdRequest')?.value;
   if (!loc) { showToast('حدّد موضع المخالفة'); return; }
   const cId = _activeCase?.id || '—';
-  const sys = `أنت قاضٍ في المحكمة العليا الافتراضية. أصدر حكماً في طلب النقض وفق م/40-47 من لائحة الاعتراض على الأحكام. لا تقطع الحكم قبل المنطوق.`;
+  const sys = `أنت قاضٍ في المحكمة العليا الافتراضية. أصدر حكماً في طلب النقض وفق م/40-47 من لائحة الاعتراض على الأحكام. لا تقطع الحكم قبل المنطوق.\nاستخدم مصطلحات النقض حصراً (طالب النقض، المطعون ضده، الحكم محل طلب النقض، أسباب النقض) ولا تستخدم مصطلحات الاستئناف. لا تُعِد سرد الوقائع كأنه استئناف إلا بالقدر اللازم لبيان سبب النقض.${lcPromptContext()}`;
   const usr = `طلب النقض — القضية رقم (${cId})\nأسباب النقض: ${[...naqdReasons].join('، ')}\nموضع المخالفة: ${loc}\nأثرها: ${eff||'—'}\nالطلب: ${req}\n\nاكتب حكم المحكمة العليا:\nالحمد لله والصلاة والسلام على رسول الله: أما بعد\nفلدى المحكمة العليا — الدائرة التجارية الافتراضية\n\n**في الشكل:** [قبول أو رد بحسب توفر شروط م/42]\n**في الموضوع:** [تحليل أسباب النقض — هل تثبت المخالفة؟]\n**نص الحكم:** حكمت المحكمة العليا بـ[رفض/نقض] + [مآل القضية وفق م/45-47]\n\nوالله الموفق، وصلى الله وسلم على نبينا محمد وعلى آله وصحبه أجمعين.\n[تنبيه: حكم نقض افتراضي تدريبي.]`;
   await _runObjection(sys, usr, 'naqdTyping', 'naqdOutput');
 }
@@ -6738,12 +6695,13 @@ async function submitNaqd() {
 async function submitIltimas() {
   if (iltimasReasons.size === 0) { showToast('اختر حالة الالتماس أولاً'); return; }
   const det = document.getElementById('iltimasDetails')?.value?.trim();
+  const know = document.getElementById('iltimasKnowDate')?.value?.trim();
   const req = document.getElementById('iltimasRequest')?.value;
   if (!det) { showToast('حدّد الوقائع محل الالتماس'); return; }
   const cId   = _activeCase?.id || '—';
   const cases = [...iltimasReasons].join('، ');
-  const sys = `أنت قاضٍ في دائرة افتراضية مختصة بالنظر في التماس إعادة النظر وفق مواضعه النظامية. لا تخلط الالتماس بالاستئناف أو النقض، ولا تنشئ سنداً نظامياً غير موجود.`;
-  const usr = `التماس إعادة النظر — القضية رقم (${cId})\nحالات الالتماس: ${cases}\nالوقائع وأثرها: ${det}\nالطلب: ${req}\n\nاكتب قراراً تدريبياً في الالتماس:\nالحمد لله والصلاة والسلام على رسول الله: أما بعد\nفلدى دائرة التماس إعادة النظر الافتراضية\n\n**في القبول الشكلي:** [قبول أو رد بحسب توفر شروط الالتماس]\n**في الموضوع:** [تحليل حالة الالتماس وشروطها وأثر الواقعة]\n**نص القرار:** قررت الدائرة بـ[رفض الالتماس/قبوله وإعادة نظر الحكم محل الالتماس]\n\nوالله الموفق، وصلى الله وسلم على نبينا محمد وعلى آله وصحبه أجمعين.\n[تنبيه: قرار التماس افتراضي تدريبي.]`;
+  const sys = `أنت قاضٍ في دائرة الاستئناف الافتراضية تنظر في التماس إعادة النظر وفق م/48-59 من لائحة الاعتراض على الأحكام.\nاستخدم مصطلحات الالتماس حصراً (الملتمس، الملتمس ضده، الحكم الملتمس إعادة النظر فيه، سبب الالتماس) ولا تعامله كاستئناف موضوعي؛ يقتصر النظر على سبب الالتماس وأثره في الحكم.${lcPromptContext()}`;
+  const usr = `طلب التماس إعادة نظر — القضية رقم (${cId})\nسبب الالتماس (م/200): ${cases}\nالوقائع وأثرها في الحكم: ${det}\nتاريخ العلم بسبب الالتماس: ${know||'غير محدد'}\nالطلب: ${req}\n\nاكتب حكم الدائرة (استخدم مصطلحات: الملتمس، الملتمس ضده، الحكم الملتمس إعادة النظر فيه، سبب الالتماس، تاريخ العلم، أثر السبب على الحكم، الطلبات):\nالحمد لله والصلاة والسلام على رسول الله: أما بعد\nفلدى دائرة الاستئناف الافتراضية — النظر في الالتماس\n\n**في القبول الشكلي (م/53):** [قبول أو رد بحسب توفر شروط م/51]\n**في الموضوع:** [تحليل الحالة وشروطها وأثر الواقعة]\n**نص الحكم:** حكمت الدائرة بـ[رفض/قبول ونقض] + [وقف التنفيذ إن قُبل وطُلب]\n\nوالله الموفق، وصلى الله وسلم على نبينا محمد وعلى آله وصحبه أجمعين.\n[تنبيه: حكم التماس افتراضي تدريبي.]`;
   await _runObjection(sys, usr, 'iltimasTyping', 'iltimasOutput');
 }
 
@@ -6802,7 +6760,8 @@ async function submitAppeal() {
 - عند الإلغاء: أذكر وجه الخطأ وأُصدر حكماً بديلاً
 - المنطوق يُعيد نص الحكم الابتدائي كاملاً عند التأييد مع رقمه
 - لا تقطع الحكم قبل المنطوق
-- الخاتمة: «والله الموفق، وصلى الله وسلم على نبينا محمد وعلى آله وصحبه أجمعين»`;
+- استخدم مصطلحات الاستئناف (المستأنف، المستأنف ضده، الحكم المستأنف، أسباب الاستئناف، أوجه الاعتراض) ولا تستخدم مصطلحات النقض أو الالتماس
+- الخاتمة: «والله الموفق، وصلى الله وسلم على نبينا محمد وعلى آله وصحبه أجمعين»${lcPromptContext()}`;
 
   const appealUser = `القضية رقم (${cId}) — ${pName} ضد ${dName}
 
@@ -6871,6 +6830,7 @@ ${priVerdict}
           <button class="btn btn-gold btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
           <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ النص</button>`;
         output.parentNode.insertBefore(btns, output.nextSibling);
+        lcAttachBasisAfter(btns, text);   // المواد المستند إليها + حارس منع الاختلاق للاستئناف
       }
     }, 12);
   } catch(e) {
@@ -6938,9 +6898,6 @@ function toAr(n) {
 // ===== STARTUP =====
 document.addEventListener('DOMContentLoaded', () => {
   loadSavedApiKey();
-  applyRoleFromQuery();
-  renderJudiciaryStageTrack();
-  syncJudiciaryStatusPanel();
 });
 </script>
 </body>
