@@ -22,6 +22,9 @@ const permissions = [
   ["TRAINING_USE", "استخدام التدريب والتعلم"],
   ["TRAINING_MANAGE", "إدارة التدريب والتقييم"],
   ["LIBRARY_READ", "قراءة المكتبة النظامية"],
+  ["LEGAL_CORE_VIEW", "Legal core view"],
+  ["LEGAL_CORE_EDIT", "Legal core edit"],
+  ["LEGAL_CORE_ADMIN", "Legal core admin"],
   ["ATTACHMENTS_FULL", "إدارة المرفقات كاملة"],
   ["ATTACHMENTS_LIMITED", "إدارة مرفقات محدودة"],
   ["USERS_MANAGE", "إدارة المستخدمين"],
@@ -31,9 +34,9 @@ const permissions = [
 
 const rolePermissionMap = {
   SYSTEM_ADMIN: permissions.map(([key]) => key),
-  LAWYER: ["CONSULTATIONS_FULL", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "ATTACHMENTS_FULL"],
-  TRAINER: ["SIMULATIONS_USE", "TRAINING_USE", "TRAINING_MANAGE", "LIBRARY_READ", "ATTACHMENTS_FULL", "ADMIN_REPORTS_VIEW"],
-  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "ATTACHMENTS_LIMITED"]
+  LAWYER: ["CONSULTATIONS_FULL", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL"],
+  TRAINER: ["SIMULATIONS_USE", "TRAINING_USE", "TRAINING_MANAGE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL", "ADMIN_REPORTS_VIEW"],
+  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_LIMITED"]
 } as const;
 
 const classifications: Record<string, string> = {

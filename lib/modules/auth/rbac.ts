@@ -8,6 +8,9 @@ export type Permission =
   | "TRAINING_USE"
   | "TRAINING_MANAGE"
   | "LIBRARY_READ"
+  | "LEGAL_CORE_VIEW"
+  | "LEGAL_CORE_EDIT"
+  | "LEGAL_CORE_ADMIN"
   | "ATTACHMENTS_FULL"
   | "ATTACHMENTS_LIMITED"
   | "USERS_MANAGE"
@@ -21,14 +24,17 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "TRAINING_USE",
     "TRAINING_MANAGE",
     "LIBRARY_READ",
+    "LEGAL_CORE_VIEW",
+    "LEGAL_CORE_EDIT",
+    "LEGAL_CORE_ADMIN",
     "ATTACHMENTS_FULL",
     "USERS_MANAGE",
     "ADMIN_REPORTS_VIEW",
     "GOVERNANCE_AUDIT_VIEW"
   ],
-  LAWYER: ["CONSULTATIONS_FULL", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "ATTACHMENTS_FULL"],
-  TRAINER: ["SIMULATIONS_USE", "TRAINING_USE", "TRAINING_MANAGE", "LIBRARY_READ", "ATTACHMENTS_FULL", "ADMIN_REPORTS_VIEW"],
-  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "ATTACHMENTS_LIMITED"]
+  LAWYER: ["CONSULTATIONS_FULL", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL"],
+  TRAINER: ["SIMULATIONS_USE", "TRAINING_USE", "TRAINING_MANAGE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL", "ADMIN_REPORTS_VIEW"],
+  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_LIMITED"]
 };
 
 export function hasPermission(role: UserRole, permission: Permission) {
@@ -63,6 +69,7 @@ export async function canUser(userId: string | undefined, permission: Permission
   const keys = role.permissions.map((item) => item.permission.key);
   if (permission === "CONSULTATIONS_LIMITED" && keys.includes("CONSULTATIONS_FULL")) return true;
   if (permission === "ATTACHMENTS_LIMITED" && keys.includes("ATTACHMENTS_FULL")) return true;
+  if (!keys.includes(permission) && hasPermission(user.role, permission)) return true;
   return keys.includes(permission);
 }
 

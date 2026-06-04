@@ -4,6 +4,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
 
 export const dynamic = "force-dynamic";
 
@@ -33,25 +34,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const claim = extractClaim(session.messages);
   const plaintiff = session.messages.find((message) => message.role === "المدعي" || message.role === "وكيل المدعي")?.content;
   const defendant = session.messages.find((message) => message.role === "المدعى عليه" || message.role === "وكيل المدعى عليه")?.content;
-  const query = [claim?.facts, claim?.requests, claim?.legalGrounds, claim?.subject].filter(Boolean).join(" ").slice(0, 120);
-  const legalArticles = query
-    ? await prisma.legalArticle.findMany({
-        where: {
-          OR: [
-            { content: { contains: query, mode: "insensitive" } },
-            { title: { contains: query, mode: "insensitive" } },
-            { lawName: { contains: claim?.caseType ?? "", mode: "insensitive" } }
-          ]
-        },
-        take: 3,
-        select: { lawName: true, articleNumber: true, content: true }
-      })
-    : [];
-
-  const citations = legalArticles.length
-    ? legalArticles.map((article) => `- ${article.lawName}، المادة ${article.articleNumber}: ${article.content.slice(0, 180)}`).join("\n")
-    : "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
-
+  const query = [claim?.facts, claim?.requests, claim?.legalGrounds, claim?.subject, plaintiff, defendant].filter(Boolean).join(" ").slice(0, 900);
+  const legalContext = query
+    ? await buildLegalContextForAI(query, { limit: 5 })
+    : { hasArticles: false, articles: [], citationBlock: noLegalArticleMessage, contextText: noLegalArticleMessage };
+  const citations = legalContext.citationBlock;
   const content = [
     "مسودة حكم قضائي مسبب",
     "بسم الله الرحمن الرحيم",
@@ -74,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       "ولا يجوز اعتبار هذه المسودة منشئة لاستشهاد نظامي غير موجود في قاعدة البيانات."
     ].join("\n"),
     "خامسًا: المنطوق",
-    legalArticles.length
+    legalContext.articles.length
       ? "لأغراض التدريب، تميل المسودة إلى قبول الطلبات في حدود ما تؤيده الوقائع والبينات المدخلة، مع بقاء التقدير النهائي مرهونًا بالمستندات والإجراءات النظامية الفعلية."
       : "لأغراض التدريب، لا تتكون نتيجة نظامية كافية لعدم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية أو لعدم اكتمال الوقائع.",
     "سادسًا: التنبيه",
@@ -105,7 +92,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     metadata: {
       judgmentId: judgment.id,
       title: "مسودة حكم قضائي مسبب",
-      citationsCount: legalArticles.length
+      citationsCount: legalContext.articles.length,
+      source: "legal_core"
     }
   });
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { encodeClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { encodeTurnState } from "@/lib/modules/simulations/judge-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,19 @@ export async function POST(request: NextRequest) {
             role: "النظام",
             stage: "CLAIM_FILING",
             content: claimContent
+          },
+          {
+            role: "النظام",
+            stage: "PLAINTIFF_STATEMENT",
+            content: encodeTurnState({
+              allowedSpeakerRole: "claimant",
+              disabledRoles: ["defendant", "defendant_agent"],
+              requiredInput: "بيان المدعي لدعواه ووقائعها وطلباته.",
+              procedureAction: "تمكين المدعي من عرض الدعوى",
+              currentStage: "CLAIM_FILING",
+              nextStage: "PLAINTIFF_STATEMENT",
+              reason: "بدأت الجلسة بتقييد الدعوى، والدور الأول للمدعي."
+            })
           }
         ]
       }
@@ -77,7 +91,9 @@ export async function POST(request: NextRequest) {
     entityId: simulation.id,
     metadata: {
       description: `تم إنشاء جلسة محاكاة: ${title}`,
-      stage: "CLAIM_FILING"
+      stage: "CLAIM_FILING",
+      nextAllowedRole: "claimant",
+      procedureAction: "تمكين المدعي من عرض الدعوى"
     }
   });
 

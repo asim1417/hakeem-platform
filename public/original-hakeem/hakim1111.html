@@ -1235,9 +1235,79 @@ input[type=range]::-moz-range-thumb {
 .reason-item:hover .ri-check { border-color:var(--ruby); background:var(--ruby-soft); }
 .reason-item.sel .ri-check { background:var(--ruby); border-color:var(--ruby); color:#fff; }
 .reason-item.sel .ri-check::after { content:'✓'; font-size:13px; font-weight:700; line-height:1; }
-.reason-item .ri-text { flex:1; }
+.reason-item .ri-text { flex:1; min-width:0; overflow-wrap:anywhere; }
 .reason-item .ri-title { font-family:'Reem Kufi'; font-size:13px; color:var(--navy); font-weight:500; }
 .reason-item .ri-sub { font-size:11.5px; color:var(--ink-60); margin-top:2px; }
+
+/* Cassation layout guard: keep Naqd reasons fully visible in RTL containers */
+#tabContent_naqd,
+#tabContent_naqd .appeal-main,
+#tabContent_naqd .appeal-form-card,
+#tabContent_naqd .appeal-side,
+#tabContent_naqd .appeal-side-card {
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  direction:rtl;
+  transform:none;
+  position:relative;
+  right:auto;
+  left:auto;
+  margin-inline:0;
+}
+#tabContent_naqd .appeal-main {
+  grid-template-columns:minmax(0, 1fr) minmax(240px, 280px);
+  overflow-x:visible;
+}
+#naqdReasonsList {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+  gap:14px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  overflow-x:visible;
+}
+#naqdReasonsList .reason-item {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:44px minmax(0, 1fr);
+  gap:14px;
+  align-items:start;
+  margin-inline:0;
+  overflow:visible;
+}
+#naqdReasonsList .reason-item .ri-check {
+  grid-column:1;
+  margin-top:0;
+}
+#naqdReasonsList .reason-item .ri-text {
+  grid-column:2;
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+#tabContent_naqd .ftextarea,
+#tabContent_naqd .fselect,
+#tabContent_naqd .field {
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+@media (max-width:1100px) {
+  #tabContent_naqd .appeal-main { grid-template-columns:1fr; }
+}
+@media (max-width:520px) {
+  #naqdReasonsList { grid-template-columns:1fr; }
+  #naqdReasonsList .reason-item { grid-template-columns:36px minmax(0, 1fr); gap:10px; }
+}
 
 .appeal-ai-output {
   background:var(--parchment); border:1px solid var(--gold-border);
@@ -4473,7 +4543,7 @@ async function launchJudgeOpening(caseData) {
 
     if (isComplete) {
       updateStageTracker(2);
-      currentTurn = 'defendant';
+      setAllowedSpeakerRole('defendant', 'تقديم جواب المدعى عليه على الدعوى.');
       stageArgs = { plaintiff:0, defendant:0 };
       appendMessage('system', '― دفوع المدعى عليه ―');
       renderTurnUI();
@@ -4553,8 +4623,36 @@ let isJudgeTyping = false;
 let argCount = 0;
 // currentTurn: 'plaintiff' | 'defendant' | 'judge'
 let currentTurn = 'plaintiff';
+let allowedSpeakerRole = 'plaintiff';
+let requiredTurnInput = '';
 // hearingStage: 0=open,1=plaintiff,2=defendant,3=rebuttal,4=close,5=verdict
 let hearingStage = 1;
+
+function setAllowedSpeakerRole(role, requiredInput = '') {
+  allowedSpeakerRole = role || 'judge';
+  requiredTurnInput = requiredInput || '';
+  if (allowedSpeakerRole === 'both') {
+    currentTurn = currentRole || 'plaintiff';
+  } else if (allowedSpeakerRole === 'none' || allowedSpeakerRole === 'judge') {
+    currentTurn = 'judge';
+  } else {
+    currentTurn = allowedSpeakerRole;
+  }
+}
+
+function isCurrentRoleAllowedToSpeak() {
+  if (!currentRole) return false;
+  if (allowedSpeakerRole === 'both') return currentRole === 'plaintiff' || currentRole === 'defendant';
+  return allowedSpeakerRole === currentRole;
+}
+
+function getTurnLockMessage() {
+  if (allowedSpeakerRole === 'none') return 'تم قفل باب المرافعة، ولا يمكن إضافة مداخلات جديدة.';
+  if (allowedSpeakerRole === 'defendant') return 'الدور الحالي للمدعى عليه، ولا يمكنك الإدخال حتى يصدر القاضي قرارًا بتمكينك من الكلام.';
+  if (allowedSpeakerRole === 'plaintiff') return 'الدور الحالي للمدعي، ولا يمكنك الإدخال في هذه المرحلة.';
+  if (allowedSpeakerRole === 'both') return 'الدور متاح للطرفين في هذه المرحلة.';
+  return 'ليس لهذا الدور حق الإدخال في المرحلة الحالية.';
+}
 
 // Defense types per role
 const DEF_TYPES = {
@@ -4624,7 +4722,7 @@ function renderDefTypes() {
 
 function renderTurnUI() {
   if (!currentRole) return;
-  const myTurn    = currentTurn === currentRole;
+  const myTurn    = isCurrentRoleAllowedToSpeak();
   const myArea    = document.getElementById('myTurnArea');
   const notMyArea = document.getElementById('notMyTurnArea');
   const noProv    = document.getElementById('noProviderArea');
@@ -4634,6 +4732,8 @@ function renderTurnUI() {
 
   // Show no-provider warning if needed (only in standalone mode)
   if (noProv) noProv.style.display = 'none';
+  if (sendBtn) sendBtn.disabled = !myTurn || isJudgeTyping || allowedSpeakerRole === 'none';
+  if (inp) inp.disabled = !myTurn || isJudgeTyping || allowedSpeakerRole === 'none';
 
   // Turn indicator badge
   const ti = document.getElementById('turnIndicator');
@@ -5277,7 +5377,7 @@ ${recentHist || '(لم يُقدَّم شيء بعد)'}`;
     isJudgeTyping = false;
     stageArgs = { plaintiff: stageArgs.plaintiff, defendant:0 };
     updateStageTracker(2);
-    currentTurn = 'defendant';
+    setAllowedSpeakerRole('defendant', 'تقديم جواب المدعى عليه على الدعوى.');
     appendMessage('system', '― دفوع المدعى عليه ―');
 
   } else if (hearingStage === 2) {
@@ -5294,7 +5394,7 @@ ${recentHist || '(لم يُقدَّم شيء بعد)'}`;
     isJudgeTyping = false;
     stageArgs = { plaintiff:0, defendant:0 };
     updateStageTracker(3);
-    currentTurn = currentRole;
+    setAllowedSpeakerRole('both', 'التعقيب المتبادل متاح للطرفين.');
     appendMessage('system', '― التعقيب المتبادل ―');
 
   } else if (hearingStage === 3) {
@@ -5309,12 +5409,12 @@ ${recentHist || '(لم يُقدَّم شيء بعد)'}`;
     } catch(e) { removeJudgeTyping(); }
     isJudgeTyping = false;
     updateStageTracker(4);
-    currentTurn = 'judge';
+    setAllowedSpeakerRole('none', 'تم قفل باب المرافعة.');
     appendMessage('system', '― أُقفل باب المرافعة ―');
 
   } else if (hearingStage === 4) {
     updateStageTracker(5);
-    currentTurn = 'judge';
+    setAllowedSpeakerRole('none', 'تم قفل باب المرافعة وجار إصدار الحكم.');
     appendMessage('system', '― جاري إصدار الحكم الافتراضي… ―');
     await issueVerdictInline();
   }
@@ -5565,7 +5665,7 @@ async function submitDefense() {
     showToast(currentRole === 'plaintiff' ? 'اكتب طلبك أو أرفق مستنداً' : 'اكتب دفعك أو أرفق مستنداً');
     return;
   }
-  if (currentTurn !== currentRole) { showToast('ليس دورك الآن — انتظر القاضي'); return; }
+  if (!isCurrentRoleAllowedToSpeak()) { showToast(getTurnLockMessage()); return; }
 
   isJudgeTyping = true;
   document.getElementById('hearingSendBtn').disabled = true;
@@ -5585,7 +5685,7 @@ async function submitDefense() {
   updateStageAdvanceButton();
 
   // Switch to judge turn
-  currentTurn = 'judge';
+  setAllowedSpeakerRole('judge', 'انتظار قرار القاضي الإجرائي التالي.');
   renderTurnUI();
   showJudgeTyping();
 
@@ -5667,9 +5767,8 @@ ${stageInstruction}
         msgEl.querySelector('.msg-body').appendChild(td);
 
         // Determine next turn from judge's response
-        determineNextTurn(judgeText);
         isJudgeTyping = false;
-        document.getElementById('hearingSendBtn').disabled = false;
+        determineNextTurn(judgeText);
       }
     }, 16);
 
@@ -5679,7 +5778,7 @@ ${stageInstruction}
               : e.message?.includes('429') ? '⚠ تجاوز حد الاستخدام — انتظر قليلاً ثم أعد المحاولة.'
               : `⚠ تعذّر الاتصال: ${e.message || 'خطأ غير معروف'}`;
     appendMessage('judge', msg);
-    currentTurn = currentRole;
+    setAllowedSpeakerRole(currentRole || 'plaintiff', 'إعادة المحاولة بعد تعذر اتصال القاضي.');
     isJudgeTyping = false;
     document.getElementById('hearingSendBtn').disabled = false;
     renderTurnUI();
@@ -5688,6 +5787,7 @@ ${stageInstruction}
 
 function determineNextTurn(judgeText) {
   const t = judgeText;
+  let nextAllowedSpeakerRole = null;
 
   const decisionMatch = t.match(/القرار الإجرائي[:\*\s]+([^\n]+)/);
 
@@ -5716,20 +5816,26 @@ function determineNextTurn(judgeText) {
 
     if (isVerdict) {
       currentTurn = 'judge';
+      nextAllowedSpeakerRole = 'none';
       if (hearingStage < 4) { updateStageTracker(4); appendMessage('system','― أُقفل باب المرافعة ―'); }
     } else if (isBoth) {
       if (hearingStage < 3) { updateStageTracker(3); stageArgs={plaintiff:0,defendant:0}; appendMessage('system','― التعقيب المتبادل ―'); }
       currentTurn = 'plaintiff';
+      nextAllowedSpeakerRole = 'both';
     } else if (isDefendant) {
       if (hearingStage <= 1) { updateStageTracker(2); stageArgs={plaintiff:stageArgs.plaintiff,defendant:0}; appendMessage('system','― دفوع المدعى عليه ―'); }
       currentTurn = 'defendant';
+      nextAllowedSpeakerRole = 'defendant';
     } else if (isPlaintiff) {
       if (hearingStage === 2) { updateStageTracker(3); stageArgs={plaintiff:0,defendant:0}; appendMessage('system','― التعقيب المتبادل ―'); }
       currentTurn = 'plaintiff';
+      nextAllowedSpeakerRole = 'plaintiff';
     } else if (hearingStage === 3) {
       currentTurn = currentTurn === 'plaintiff' ? 'defendant' : 'plaintiff';
+      nextAllowedSpeakerRole = currentTurn;
     } else {
       currentTurn = hearingStage === 2 ? 'defendant' : 'plaintiff';
+      nextAllowedSpeakerRole = currentTurn;
     }
 
   } else {
@@ -5748,20 +5854,26 @@ function determineNextTurn(judgeText) {
       updateStageTracker(2); stageArgs={plaintiff:stageArgs.plaintiff,defendant:0};
       appendMessage('system','― دفوع المدعى عليه ―');
       currentTurn = 'defendant';
+      nextAllowedSpeakerRole = 'defendant';
       renderProceduralDecision('المدعى عليه — تقديم جوابه على الدعوى.');
     } else if (passToPlaintiff) {
       if (hearingStage === 2) { updateStageTracker(3); stageArgs={plaintiff:0,defendant:0}; appendMessage('system','― التعقيب المتبادل ―'); }
       currentTurn = 'plaintiff';
+      nextAllowedSpeakerRole = 'plaintiff';
       renderProceduralDecision('المدعي — التعقيب على جواب المدعى عليه.');
     } else if (hearingStage === 3) {
       currentTurn = currentTurn === 'plaintiff' ? 'defendant' : 'plaintiff';
+      nextAllowedSpeakerRole = currentTurn;
     } else if (hearingStage >= 4) {
       currentTurn = 'judge';
+      nextAllowedSpeakerRole = 'none';
     } else {
       currentTurn = hearingStage === 2 ? 'defendant' : 'plaintiff';
+      nextAllowedSpeakerRole = currentTurn;
     }
   }
 
+  setAllowedSpeakerRole(nextAllowedSpeakerRole || (currentTurn === 'judge' ? 'none' : currentTurn), nextAllowedSpeakerRole === 'none' ? 'تم قفل باب المرافعة، ولا يمكن إضافة مداخلات جديدة.' : '');
   renderTurnUI();
   updateStageAdvanceButton();
 }
@@ -5817,7 +5929,8 @@ function switchRole() {
 
 function clearHearing() {
   hearingHistory = []; argCount = 0; isJudgeTyping = false;
-  currentTurn = 'plaintiff'; hearingStage = 1;
+  setAllowedSpeakerRole('plaintiff', 'تقديم طلبات المدعي وحججه.');
+  hearingStage = 1;
   stageArgs = { plaintiff:0, defendant:0 };
 
   // Static judge message removed — launchJudgeOpening provides it dynamically from case data

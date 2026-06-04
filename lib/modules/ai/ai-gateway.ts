@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
-import { searchLegalArticles } from "@/lib/modules/library/library-service";
 import { auditEvent, recordGuardrail } from "@/lib/modules/audit/audit";
-import { buildCitationFence, requireLibraryCitations } from "@/lib/modules/ai/guardrails";
+import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
+import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
+import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
 
 type AiResult = {
   requestId: string;
@@ -36,50 +37,46 @@ export type OriginalHakeemAiResult = {
 export async function createConsultationDraft(input: { facts: string; actorId?: string }): Promise<AiResult> {
   const requestId = randomUUID();
   const provider = (process.env.AI_PROVIDER || "offline").toLowerCase();
-  const articles = await searchLegalArticles(input.facts, 8);
-  const citationGuard = requireLibraryCitations(articles);
+  const legalContext = await buildLegalContextForAI(input.facts, { limit: 8 });
+  const citationGuard = assertHasLegalArticles(legalContext.articles);
 
   await recordGuardrail({
     subject: "AI_GATEWAY",
     requestId,
-    guardName: "library-citations-only",
-    result: citationGuard.passed ? "PASSED" : "BLOCKED",
-    details: { message: citationGuard.message, retrievedArticles: articles.length, provider }
+    guardName: "legal-core-citations-only",
+    result: citationGuard.ok ? "PASSED" : "BLOCKED",
+    details: { message: citationGuard.ok ? "تم العثور على مواد نظامية من النواة القانونية." : citationGuard.message, retrievedArticles: legalContext.articles.length, provider }
   });
 
-  if (!citationGuard.passed) {
-    const output = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
-    await recordAiAudit(input.actorId, requestId, provider, false, "CONSULTATION_BLOCKED", { retrievedArticles: 0 });
+  if (!citationGuard.ok) {
+    await recordAiAudit(input.actorId, requestId, provider, false, "CONSULTATION_BLOCKED", { retrievedArticles: 0, source: "legal_core" });
     return {
       requestId,
       blocked: true,
-      output,
+      output: noLegalArticleMessage,
       citations: [],
       provider,
       mode: provider === "offline" ? "offline" : "live",
-      qualityReport: { guards: [citationGuard], sourceOfTruth: "legal_articles", provider }
+      qualityReport: { guards: [citationGuard], sourceOfTruth: "legal_core.legal_articles", provider }
     };
   }
 
-  const fence = buildCitationFence(articles);
-  const citations = articles.map((article) => {
-    fence.assertAllowed(article.lawName, article.articleNumber);
-    return {
-      articleId: article.id,
-      lawName: article.lawName,
-      articleNumber: article.articleNumber,
-      quote: article.content.slice(0, 350)
-    };
-  });
+  const citations = legalContext.articles.map((article) => ({
+    articleId: article.articleId,
+    lawName: article.systemName,
+    articleNumber: article.articleNumber,
+    quote: article.articleText.slice(0, 350)
+  }));
 
-  const live = provider !== "offline" ? await callLiveProvider(provider, input.facts, citations).catch((error) => ({ ok: false as const, text: `تعذر استدعاء مزود الذكاء الاصطناعي: ${error instanceof Error ? error.message : "خطأ غير معروف"}` })) : null;
-  const output = live?.ok ? sanitizeOutput(live.text, citations) : offlineOutput(input.facts, citations);
-  const tokenEstimate = Math.ceil((input.facts.length + output.length) / 4);
+  const live = provider !== "offline" ? await callLiveProvider(provider, `${input.facts}\n\n${legalContext.contextText}`, citations).catch((error) => ({ ok: false as const, text: `تعذر استدعاء مزود الذكاء الاصطناعي: ${error instanceof Error ? error.message : "خطأ غير معروف"}` })) : null;
+  const output = live?.ok ? sanitizeOutput(live.text, citations, legalContext.articles) : offlineOutput(input.facts, citations);
+  const tokenEstimate = Math.ceil((input.facts.length + output.length + legalContext.contextText.length) / 4);
 
   await recordAiAudit(input.actorId, requestId, provider, true, live?.ok ? "AI_LIVE_COMPLETED" : "AI_OFFLINE_COMPLETED", {
-    retrievedArticles: articles.length,
+    retrievedArticles: legalContext.articles.length,
     citations: citations.length,
     tokenEstimate,
+    source: "legal_core",
     liveFailure: live && !live.ok ? live.text : undefined
   });
 
@@ -92,14 +89,13 @@ export async function createConsultationDraft(input: { facts: string; actorId?: 
     mode: live?.ok ? "live" : "offline",
     qualityReport: {
       guards: [citationGuard],
-      sourceOfTruth: "legal_articles",
+      sourceOfTruth: "legal_core.legal_articles",
       aiProvider: provider,
       mode: live?.ok ? "live" : "offline",
       tokenEstimate
     }
   };
 }
-
 export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInput): Promise<OriginalHakeemAiResult> {
   const requestId = randomUUID();
   const requestedProvider = (input.provider || process.env.AI_PROVIDER || "offline").toLowerCase();
@@ -110,17 +106,17 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
     "لا يتم إرسال أي مفتاح API إلى الواجهة عند استخدام البوابة الخلفية."
   ];
 
-  const articles = await searchLegalArticles(prompt, 6).catch(() => []);
-  const legalContext =
-    articles.length > 0
-      ? articles.map((article) => `${article.lawName}، المادة ${article.articleNumber}: ${article.content.slice(0, 450)}`).join("\n")
-      : "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
-
+  const legalContext = await buildLegalContextForAI(prompt, { limit: 6 }).catch(() => ({
+    hasArticles: false,
+    articles: [],
+    citationBlock: noLegalArticleMessage,
+    contextText: noLegalArticleMessage
+  }));
   if (provider === "offline") {
-    const content = buildOriginalOfflineResponse(prompt, legalContext);
+    const content = buildOriginalOfflineResponse(prompt, legalContext.contextText);
     await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, true, "ORIGINAL_HAKEEM_AI_OFFLINE", {
       requestedProvider,
-      citations: articles.length,
+      citations: legalContext.articles.length,
       mode: "offline"
     });
     return {
@@ -136,12 +132,13 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
 
   try {
     const model = resolveOriginalModel(provider, input.model);
-    const content = await callOriginalProvider(provider, model, prompt, legalContext);
-    const guardedContent = ensureOriginalGuardrails(content, articles.length);
+    const content = await callOriginalProvider(provider, model, prompt, legalContext.contextText);
+    const outputGuard = guardOutputAgainstUnknownArticleNumbers(content, legalContext.articles);
+    const guardedContent = ensureOriginalGuardrails(outputGuard.ok ? content : outputGuard.message, legalContext.articles.length);
     await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, true, "ORIGINAL_HAKEEM_AI_COMPLETED", {
       requestedProvider,
       model,
-      citations: articles.length,
+      citations: legalContext.articles.length,
       mode: "server",
       tokenEstimate: Math.ceil((prompt.length + guardedContent.length) / 4)
     });
@@ -359,7 +356,9 @@ function buildOriginalOfflineResponse(prompt: string, legalContext: string) {
   ].join("\n");
 }
 
-function sanitizeOutput(output: string, citations: AiResult["citations"]) {
+function sanitizeOutput(output: string, citations: AiResult["citations"], allowedArticles: LegalCoreResult[]) {
+  const outputGuard = guardOutputAgainstUnknownArticleNumbers(output, allowedArticles);
+  if (!outputGuard.ok) return offlineOutput(outputGuard.message, citations);
   const allowed = new Set(citations.map((item) => `${item.lawName}-${item.articleNumber}`));
   const suspiciousArticleNumbers = [...output.matchAll(/المادة\s+(\d+)/g)].map((match) => Number(match[1]));
   const allowedNumbers = new Set(citations.map((item) => item.articleNumber));

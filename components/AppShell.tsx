@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Briefcase, Database, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 import type { LucideIcon } from "lucide-react";
@@ -29,6 +29,7 @@ const navSections: Array<{ items: NavItem[] }> = [
   {
     items: [
       { href: "/dashboard/library", label: "المكتبة النظامية", icon: BookOpen },
+      { href: "/dashboard/legal-core", label: "النواة القانونية", icon: Database },
       { href: "/dashboard/training", label: "التدريب", icon: GraduationCap }
     ]
   },

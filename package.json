@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/seed-legal-library.ts",
+    "import:hoqoqi": "tsx scripts/import-hoqoqi-sql.ts",
     "qa:db": "tsx scripts/qa-db.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts"

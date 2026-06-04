@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { admissibilityCheck, encodeClaim, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
   const claim = extractClaim(session.messages);
-  return NextResponse.json({ session, claim, admissibility: admissibilityCheck(claim) });
+  return NextResponse.json({ session, claim, admissibility: admissibilityCheck(claim), turnState: extractTurnState(session.messages) });
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
@@ -47,17 +48,34 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const user = gate.user!;
   const title = payload.title || payload.subject || "جلسة محاكاة قضائية";
 
+  const turnState = {
+    allowedSpeakerRole: "claimant" as const,
+    disabledRoles: ["defendant" as const, "defendant_agent" as const],
+    requiredInput: "بيان المدعي لدعواه ووقائعها وطلباته.",
+    procedureAction: "تمكين المدعي من عرض الدعوى",
+    currentStage: "INITIAL_ADMISSIBILITY" as const,
+    nextStage: "PLAINTIFF_STATEMENT" as const,
+    reason: "تم تحديث صحيفة الدعوى، والدور للمدعي لاستكمال العرض."
+  };
+
   const session = await prisma.simulation.update({
     where: { id: params.id },
     data: {
       title,
       stage: "INITIAL_ADMISSIBILITY",
       messages: {
-        create: {
-          role: "النظام",
-          stage: "CLAIM_FILING",
-          content: encodeClaim(payload)
-        }
+        create: [
+          {
+            role: "النظام",
+            stage: "CLAIM_FILING",
+            content: encodeClaim(payload)
+          },
+          {
+            role: "النظام",
+            stage: "PLAINTIFF_STATEMENT",
+            content: encodeTurnState(turnState)
+          }
+        ]
       }
     },
     include: {
@@ -75,9 +93,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     metadata: {
       description: "تم تقييد دعوى تدريبية في القاضي حكيم.",
       title,
+      nextAllowedRole: turnState.allowedSpeakerRole,
+      procedureAction: turnState.procedureAction,
       admissibility: admissibilityCheck(payload)
     }
   });
 
-  return NextResponse.json({ session, claim: payload, admissibility: admissibilityCheck(payload) });
+  return NextResponse.json({ session, claim: payload, admissibility: admissibilityCheck(payload), turnState });
 }

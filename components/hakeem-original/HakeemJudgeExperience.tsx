@@ -18,7 +18,7 @@ import {
   OriginalWizardStep
 } from "./HakeemOriginalUI";
 import { admissibilityCheck, claimMarker, scoreMarker } from "@/lib/modules/simulations/hakeem-judge";
-import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
+import { allowedSpeakerLabel, extractTurnState, isPleadingClosed, isRoleAllowedToSpeak, turnMarker, turnMessageForBlockedRole } from "@/lib/modules/simulations/judge-engine";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
 
 type SimulationMessage = { id: string; role: string; stage: string; content: string; createdAt: string };
@@ -102,7 +102,8 @@ export function HakeemJudgeExperience({ initialSessions, cases, attachments }: {
 
   const selectedCase = useMemo(() => cases.find((item) => item.id === selectedCaseId), [cases, selectedCaseId]);
   const activeClaim = extractClaim(activeSession) ?? claim;
-  const visibleMessages = activeSession?.messages.filter((item) => !item.content.startsWith(claimMarker) && !item.content.startsWith(scoreMarker)) ?? [];
+  const turnState = extractTurnState(activeSession?.messages);
+  const visibleMessages = activeSession?.messages.filter((item) => !item.content.startsWith(claimMarker) && !item.content.startsWith(scoreMarker) && !item.content.startsWith(turnMarker)) ?? [];
   const hearingRecord = [...(activeSession?.decisions ?? [])].reverse().find((item) => item.decisionType === "ضبط جلسة تدريبية");
   const latestDecision = activeSession?.decisions.at(-1);
   const latestJudgment = activeSession?.judgments.at(-1);
@@ -110,6 +111,9 @@ export function HakeemJudgeExperience({ initialSessions, cases, attachments }: {
   const closed = isPleadingClosed(activeSession?.decisions ?? []);
   const hasRecord = Boolean(hearingRecord);
   const hasJudgment = Boolean(latestJudgment);
+  const canSpeakNow = isRoleAllowedToSpeak(messageRole, turnState);
+  const inputLocked = Boolean(activeSession && (!canSpeakNow || closed || busy === "message" || busy === "judge"));
+  const turnNotice = closed ? "تم قفل باب المرافعة، ولا يمكن إضافة مداخلات جديدة." : turnMessageForBlockedRole(turnState);
 
   async function refreshSession(sessionId: string) {
     const response = await fetch(`/api/simulations/${sessionId}`);
@@ -212,6 +216,10 @@ export function HakeemJudgeExperience({ initialSessions, cases, attachments }: {
     }
     if (!message.trim()) {
       setError("اكتب المداخلة قبل إرسالها.");
+      return;
+    }
+    if (inputLocked) {
+      setError(turnNotice);
       return;
     }
     await post("messages", { role: messageRole, content: message }, "message");
@@ -378,6 +386,7 @@ export function HakeemJudgeExperience({ initialSessions, cases, attachments }: {
           side={
             <>
               <div className="side-card"><div className="side-card-title">الدور التالي</div><div className="decision-box">{judgeState.nextAction}</div></div>
+              <div className="side-card"><div className="side-card-title">الدور المسموح بالكلام</div><div className="decision-box">{turnState ? allowedSpeakerLabel(turnState.allowedSpeakerRole) : "لم يحدد بعد"}</div></div>
               <div className="side-card"><div className="side-card-title">الأزرار المتاحة</div><div className="chips">{judgeState.availableActions.map((action) => <span className="chip on" key={action}>{action}</span>)}</div></div>
               <div className="side-card"><button className="btn btn-gold" type="button" onClick={() => void closePleading()} disabled={!judgeState.canClose && visibleMessages.length < 4}>قفل باب المرافعة</button></div>
             </>
@@ -389,12 +398,13 @@ export function HakeemJudgeExperience({ initialSessions, cases, attachments }: {
           </div>
           <div className="hearing-input-area">
             <div className="defense-type-row">
-              <select className="fselect" value={messageRole} onChange={(event) => setMessageRole(event.target.value)}>
+              <select className="fselect" value={messageRole} onChange={(event) => setMessageRole(event.target.value)} disabled={closed || busy === "message" || busy === "judge"}>
                 {["المدعي", "المدعى عليه", "وكيل المدعي", "وكيل المدعى عليه"].map((item) => <option key={item}>{item}</option>)}
               </select>
-              <textarea className="hearing-textarea" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="اكتب المداخلة في محضر الجلسة..." />
-              <button className="send-btn" type="button" onClick={() => void sendPleading()} disabled={busy === "message" || busy === "judge"}>←</button>
+              <textarea className="hearing-textarea" value={message} onChange={(event) => setMessage(event.target.value)} placeholder={inputLocked ? turnNotice : "اكتب المداخلة في محضر الجلسة..."} disabled={inputLocked} />
+              <button className="send-btn" type="button" onClick={() => void sendPleading()} disabled={inputLocked}>←</button>
             </div>
+            {inputLocked ? <div className="decision-box" style={{ marginTop: 10 }}>{turnNotice}</div> : null}
           </div>
         </OriginalHearingTranscript>
       ) : null}
