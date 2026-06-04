@@ -247,6 +247,9 @@ function buildSourceTypeFilter(sourceTypes?: string[]) {
   if (values.includes("hoqoqi_sql")) {
     return { keywords: { has: "source:hoqoqi_sql" } };
   }
+  if (values.includes("judgment") || values.includes("case_link")) {
+    return { id: "__no_article_results_for_judgment_source__" };
+  }
   return {};
 }
 

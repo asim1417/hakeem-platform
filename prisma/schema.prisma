@@ -121,12 +121,86 @@ model LegalArticle {
   effectiveFrom DateTime?
   status        String    @default("سارية")
   embedding     Json?
+  caseLinks     LegalArticleCaseLink[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@unique([lawName, articleNumber])
   @@index([lawName])
   @@map("legal_articles")
+}
+
+model JudicialCase {
+  id               String                 @id @default(cuid())
+  sourceId         Int?                   @unique
+  sourcePageId     Int?
+  decisionNo       String?
+  caseNo           String?
+  courtOfAppeal    String?
+  cityOfAppeal     String?
+  court            String?
+  cityName         String?
+  decisionDateText String?
+  caseDateText     String?
+  decisionDate     DateTime?
+  caseDate         DateTime?
+  classification   Json?
+  judgmentTitle    String?
+  judgmentText     String
+  appealText       String?
+  sourceLink       String?
+  source           String                 @default("ahkam_moj")
+  reviewStatus     String                 @default("needs_review")
+  articleLinks     LegalArticleCaseLink[]
+  principles       JudicialPrinciple[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([caseNo])
+  @@index([decisionNo])
+  @@index([court])
+  @@index([cityName])
+  @@index([decisionDate])
+  @@map("judicial_cases")
+}
+
+model LegalArticleCaseLink {
+  id           String       @id @default(cuid())
+  articleId    String
+  article      LegalArticle @relation(fields: [articleId], references: [id])
+  caseId       String
+  judicialCase JudicialCase @relation(fields: [caseId], references: [id])
+  relationType String
+  citedText    String?
+  excerpt      String?
+  explanation  String?
+  confidence   Float?
+  reviewStatus String       @default("needs_review")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([articleId, caseId, citedText])
+  @@index([articleId])
+  @@index([caseId])
+  @@index([relationType])
+  @@map("legal_article_case_links")
+}
+
+model JudicialPrinciple {
+  id            String       @id @default(cuid())
+  title         String
+  principleText String
+  sourceCaseId  String
+  sourceCase    JudicialCase @relation(fields: [sourceCaseId], references: [id])
+  court         String?
+  topic         String?
+  confidence    Float?
+  reviewStatus  String       @default("needs_review")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([sourceCaseId])
+  @@map("judicial_principles")
 }
 
 model GlossaryTerm {

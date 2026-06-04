@@ -10,11 +10,12 @@ export const dynamic = "force-dynamic";
 export default async function LegalCoreDashboardPage() {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const [stats, recentArticles, classifications, needsReview] = await Promise.all([
+  const [stats, recentArticles, classifications, needsReview, judgmentsCount] = await Promise.all([
     getLibraryStats().catch(() => ({ total: 0, systemCount: 0, laws: [] })),
     searchLegalArticles("", 4).catch(() => []),
     prisma.legalArticle.groupBy({ by: ["classification"], _count: { _all: true } }).catch(() => []),
-    prisma.legalArticle.count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } }).catch(() => 0)
+    prisma.legalArticle.count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } }).catch(() => 0),
+    prisma.judicialCase.count().catch(() => 0)
   ]);
 
   const classificationCount = classifications.filter((item) => item.classification).length;
@@ -42,7 +43,7 @@ export default async function LegalCoreDashboardPage() {
           <LegalCoreStatCard label="عدد الشروح" value={0} hint="جاهزة للإثراء لاحقًا" tone="amber" />
           <LegalCoreStatCard label="مواد تحتاج مراجعة" value={needsReview} hint="مؤشر جودة البيانات" tone={needsReview ? "amber" : "emerald"} />
           <LegalCoreStatCard label="عدد مسائل القانون" value={0} hint="غير مفعلة بعد" tone="amber" />
-          <LegalCoreStatCard label="عدد الأحكام" value={0} hint="تحتاج ربط قضائي" tone="amber" />
+          <LegalCoreStatCard label="عدد الأحكام" value={judgmentsCount} hint="أحكام مستوردة من مصدر وزارة العدل" tone={judgmentsCount ? "emerald" : "amber"} />
           <LegalCoreStatCard label="عدد المبادئ" value={0} hint="تحتاج إثراء" tone="amber" />
           <LegalCoreStatCard label="المقارنات القانونية" value={0} hint="جاهزة للبناء المرحلي" tone="amber" />
           <LegalCoreStatCard label="حالة المصدر" value="موحد" hint="legal_articles فقط" tone="emerald" />

@@ -20,7 +20,32 @@ export const dynamic = "force-dynamic";
 
 export default async function LegalCoreArticlePage({ params, searchParams }: { params: { id: string }; searchParams?: { q?: string } }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
-  const article = await prisma.legalArticle.findUnique({ where: { id: params.id } }).catch(() => null);
+
+  const article = await prisma.legalArticle
+    .findUnique({
+      where: { id: params.id },
+      include: {
+        caseLinks: {
+          include: {
+            judicialCase: {
+              select: {
+                id: true,
+                judgmentTitle: true,
+                caseNo: true,
+                decisionNo: true,
+                court: true,
+                cityName: true,
+                decisionDateText: true
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+          take: 8
+        }
+      }
+    })
+    .catch(() => null);
+
   if (!article) notFound();
 
   const related = await prisma.legalArticle.findMany({
@@ -84,9 +109,38 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             </article>
 
             <LegalCoreCard title="الأحكام والاستشهادات المرتبطة" subtitle="فهرس عكسي للمادة عند اعتماد الاستشهادات القضائية">
-              <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">
-                لا توجد أحكام أو استشهادات معتمدة مرتبطة بهذه المادة حتى الآن.
-              </div>
+              {article.caseLinks.length ? (
+                <div className="space-y-3">
+                  {article.caseLinks.map((link) => (
+                    <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-mono-legal text-sm text-[var(--gold)]">
+                            {link.judicialCase.caseNo ? `قضية ${link.judicialCase.caseNo}` : "قضية غير مرقمة"}
+                            {link.judicialCase.decisionNo ? ` | قرار ${link.judicialCase.decisionNo}` : ""}
+                          </p>
+                          <h3 className="mt-1 font-display-ar text-base font-bold text-[var(--navy)]">
+                            {link.judicialCase.judgmentTitle ?? "حكم قضائي مستورد"}
+                          </h3>
+                          <p className="mt-1 text-xs text-[var(--ink-60)]">
+                            {[link.judicialCase.court, link.judicialCase.cityName, link.judicialCase.decisionDateText].filter(Boolean).join(" | ") || "بيانات الحكم غير مكتملة"}
+                          </p>
+                        </div>
+                        <LegalTopicBadge tone={link.reviewStatus === "reviewed" ? "emerald" : "amber"}>{link.reviewStatus}</LegalTopicBadge>
+                      </div>
+                      {link.excerpt ? <p className="mt-3 rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">{link.excerpt}</p> : null}
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Link className="btn btn-gold" href={`/dashboard/legal-core/judgments/${link.judicialCase.id}`}>فتح الحكم</Link>
+                        <LegalCopyButton text={`${article.lawName}، المادة ${article.articleNumber}: ${link.citedText ?? ""}`} label="نسخ الاستشهاد" />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">
+                  لا توجد أحكام أو استشهادات معتمدة مرتبطة بهذه المادة حتى الآن.
+                </div>
+              )}
             </LegalCoreCard>
 
             <div className="grid gap-4 md:grid-cols-2">
