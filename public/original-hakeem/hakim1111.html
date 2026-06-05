@@ -6149,12 +6149,16 @@ function pbMatch(text, max = 3) {
     .slice(0, max)
     .map(x => x.p);
 }
-// استعلامات بحث موجَّهة من الـ playbooks المطابِقة (بدل الاستعلام العشوائي بنص القضية)
+// استعلامات بحث موجَّهة + الأنظمة المفضّلة من الـ playbooks المطابِقة (بدل الاستعلام العشوائي)
 function pbQueriesFor(text, maxPlaybooks = 3) {
   const matched = pbMatch(text, maxPlaybooks);
   const queries = [];
-  matched.forEach(p => (p.searchQueries || []).slice(0, 2).forEach(q => queries.push(q)));
-  return { matched, queries: [...new Set(queries)] };
+  const systems = [];
+  matched.forEach(p => {
+    (p.searchQueries || []).slice(0, 2).forEach(q => queries.push(q));
+    (p.preferredSystems || []).forEach(s => systems.push(s));
+  });
+  return { matched, queries: [...new Set(queries)], systems: [...new Set(systems)] };
 }
 
 // نافذة خريطة المواد القضائية: تصنيفات → مسائل → بحث في النواة
@@ -6201,8 +6205,9 @@ async function pbSearchPlaybook(id) {
   const box = document.getElementById('lcres_playbook'); if (!box) return;
   box.innerHTML = `<div class="lc-status"><div class="typing-dots"><span></span><span></span><span></span></div> بحث في النواة: ${esc(p.title)} …</div>`;
   try {
+    const sys = p.preferredSystems || [];
     let raw = [];
-    for (const sq of (p.searchQueries || [p.title]).slice(0, 3)) { try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6)); } catch (e) {} }
+    for (const sq of (p.searchQueries || [p.title]).slice(0, 3)) { try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6, sys)); } catch (e) {} }
     const seen = new Set();
     raw = raw.filter(r => { const k = (r.number || '') + '|' + (r.lawName || ''); if (seen.has(k)) return false; seen.add(k); return true; }).filter(r => !lcIsAdminNoise(r)).slice(0, 8);
     window._lcResults['playbook'] = raw;
@@ -6275,8 +6280,10 @@ function lcNormalize(r) {
   };
 }
 
-async function lcSearch(query, searchType, sourceTypes, limit = 8) {
-  const qs = `q=${encodeURIComponent(query)}&searchType=${encodeURIComponent(searchType)}&sourceTypes=${encodeURIComponent(sourceTypes)}&limit=${limit}`;
+async function lcSearch(query, searchType, sourceTypes, limit = 8, systems = []) {
+  let qs = `q=${encodeURIComponent(query)}&searchType=${encodeURIComponent(searchType)}&sourceTypes=${encodeURIComponent(sourceTypes)}&limit=${limit}`;
+  // قيد الأنظمة المفضّلة (يمنع تسرّب مواد من أنظمة لا صلة لها بالقضية)
+  if (systems && systems.length) qs += `&systemIds=${encodeURIComponent(systems.join('|'))}`;
   // جرّب المسار العام أولاً، ثم المحمي عند الفشل
   for (const base of [LC_ENDPOINT, LC_ENDPOINT_FALLBACK]) {
     try {
@@ -6486,13 +6493,13 @@ async function lcAutoRetrieveForCase(contextText) {
     await pbLoad();
     const c = _activeCase;
     const caseText = [c?.subject, c?.facts, c?.requests, contextText].filter(Boolean).join(' ');
-    // استعلامات موجَّهة من الـ playbooks بدل الاستعلام العشوائي بنص القضية
-    const { queries } = pbQueriesFor(caseText, 3);
+    // استعلامات موجَّهة + قيد الأنظمة المفضّلة من الـ playbooks بدل الاستعلام العشوائي
+    const { queries, systems } = pbQueriesFor(caseText, 3);
     const kws = lcCaseKeywords(contextText);
     const searchList = queries.length ? queries : [kws.slice(0, 6).join(' ') || c?.subject || 'مطالبة مالية تجارية'];
     let raw = [];
     for (const sq of searchList.slice(0, 5)) {
-      try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6)); } catch (e) { /* تابع */ }
+      try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6, systems)); } catch (e) { /* تابع */ }
     }
     // إزالة التكرار
     const seenKey = new Set();
@@ -6528,7 +6535,7 @@ async function lcSuggestForCase(slot) {
   await pbLoad();
   const c = _activeCase;
   const caseText = [c?.subject, c?.facts, c?.requests].filter(Boolean).join(' ');
-  const { matched, queries } = pbQueriesFor(caseText, 3);
+  const { matched, queries, systems } = pbQueriesFor(caseText, 3);
   const kws = lcCaseKeywords('');
   const searchList = queries.length ? queries : [kws.slice(0, 6).join(' ') || c?.subject || 'مطالبة مالية تجارية'];
   const box = document.getElementById('lcres_' + slot);
@@ -6536,7 +6543,7 @@ async function lcSuggestForCase(slot) {
   if (box) box.innerHTML = `<div class="lc-status"><div class="typing-dots"><span></span><span></span><span></span></div> جارٍ اقتراح المواد المرتبطة بالقضية…</div>`;
   try {
     let raw = [];
-    for (const sq of searchList.slice(0, 5)) { try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6)); } catch (e) {} }
+    for (const sq of searchList.slice(0, 5)) { try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6, systems)); } catch (e) {} }
     const seenKey = new Set();
     let results = raw.filter(r => { const k = (r.number || '') + '|' + (r.lawName || ''); if (seenKey.has(k)) return false; seenKey.add(k); return true; })
       .filter(r => !lcIsAdminNoise(r))

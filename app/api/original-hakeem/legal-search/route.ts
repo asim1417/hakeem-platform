@@ -53,11 +53,17 @@ export async function GET(request: NextRequest) {
   const rawSources = sp.getAll("sourceTypes").flatMap((s) => s.split(",")).map((s) => s.trim());
   const sourceTypes = rawSources.length > 0 ? rawSources.filter((s) => s !== "case_link") : ["article"];
 
+  // قيد الأنظمة المفضّلة (من خريطة المواد القضائية) — يمنع تسرّب مواد من أنظمة لا صلة لها
+  const systemIds = [...sp.getAll("systemIds"), ...sp.getAll("system")]
+    .flatMap((s) => s.split("|")).flatMap((s) => s.split(",")).map((s) => s.trim()).filter(Boolean)
+    .slice(0, 8);
+
   try {
     const response = await searchLegalCore({
       query,
       searchType,
       sourceTypes,
+      systemIds: systemIds.length ? systemIds : undefined,
       page: 1,
       limit,
       includeSnippets: true,
