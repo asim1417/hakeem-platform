@@ -75,13 +75,20 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // استبعاد الكلمات القصيرة/الشائعة حتى لا تطابق مواد لا صلة لها بالبحث
   const variants = filterMeaningfulVariants(buildVariants(query, searchType));
   const normalizedVariants = Array.from(new Set(variants.map(normalizeArabicText).filter(Boolean)));
+  // الكلمات الخام من الاستعلام (كما يكتبها المستخدم) — تطابق النص المخزَّن غير المُطبَّع (ة/ى/إ)
+  const rawWords = query
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 3 && !ARABIC_STOPWORDS.has(normalizeArabicText(word)));
+  // مُرشِّح قاعدة البيانات يبحث بالصيغتين: المُطبَّعة + الخام
+  const filterVariants = Array.from(new Set([...rawWords, ...variants]));
 
   const where: Record<string, unknown> = {
     AND: [
       buildSystemFilter(options.systemIds),
       buildCategoryFilter(options.categoryIds),
       buildSourceTypeFilter(options.sourceTypes),
-      buildTextFilter(variants, fields)
+      buildTextFilter(filterVariants, fields)
     ].filter((item) => Object.keys(item).length > 0)
   };
 
