@@ -2450,6 +2450,8 @@ img, video, table { max-width: 100%; }
                 <div class="rule-ref" style="color:var(--ink-60);font-family:'Reem Kufi';font-size:12px;line-height:1.7;">تُعرض هنا المواد ذات الصلة بالقضية من <strong>النواة القانونية</strong> — استخدم «بحث النواة» أو «اقتراح المواد للقضية» أدناه. لا تُعرض مواد ثابتة غير متصلة بالوقائع.</div>
               </div>
             </div>
+            <!-- مواد هذه المرحلة القضائية (من خريطة المواد القضائية) -->
+            <div id="pbStageMount"></div>
             <div class="side-card" style="padding:0;overflow:visible;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px 0;">
                 <div class="side-card-title" style="margin:0;">النواة القانونية</div>
@@ -5428,6 +5430,8 @@ function updateStageTracker(stage) {
     el.innerHTML = `<span class="stage-dot"></span>${labels[i]}`;
   });
   updateStageAdvanceButton();
+  // اعرض مواد خريطة المواد القضائية المرتبطة بهذه المرحلة
+  pbRenderStage(HEARING_STAGE_KEYS[stage] || '');
 }
 
 function updateStageAdvanceButton() {
@@ -6037,6 +6041,8 @@ function offerAppeal() {
     </div></div>`;
   c.appendChild(note);
   c.scrollTop = c.scrollHeight;
+  // اعرض مواد مرحلة ما بعد الحكم (الاستئناف/النقض/الالتماس/التنفيذ) من الخريطة
+  pbRenderStage('ما بعد الحكم');
   // افتح النافذة تلقائياً لضمان الوصول للأزرار مهما كانت أبعاد الشاشة
   showPostJudgmentModal();
 }
@@ -6048,6 +6054,7 @@ function postJudgmentCardsHTML() {
       <button class="btn btn-outline btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
       <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ الحكم</button>
       <button class="btn btn-outline btn-sm" onclick="closePostJudgmentModal();goPage('settlement')">🤝 الصلح بعد الحكم</button>
+      <button class="btn btn-outline btn-sm" onclick="closePostJudgmentModal();showPlaybookMapModal()">🗺️ خريطة المواد القضائية</button>
     </div>
     <div class="pjp-grid">
       <div class="pjp-card">
@@ -6184,6 +6191,26 @@ function showPlaybookMapModal() {
   });
 }
 function closePlaybookMapModal() { const m = document.getElementById('playbookMapModal'); if (m) m.style.display = 'none'; }
+
+// ===== ربط الخريطة بمراحل التقاضي =====
+const HEARING_STAGE_KEYS = { 1: 'فحص القبول', 2: 'جواب المدعى عليه', 3: 'تعقيب المدعي', 4: 'قفل المرافعة', 5: 'الحكم' };
+function pbById(id) { return window._playbooks.find(p => p.id === id); }
+function pbForStage(stageKey) { return ((window._playbookStages || {})[stageKey] || []).map(pbById).filter(Boolean); }
+function pbOpenAndSearch(id) { showPlaybookMapModal(); setTimeout(() => pbSearchPlaybook(id), 280); }
+async function pbRenderStage(stageKey) {
+  await pbLoad();
+  const mount = document.getElementById('pbStageMount'); if (!mount) return;
+  const pbs = pbForStage(stageKey);
+  if (!pbs.length) { mount.innerHTML = ''; return; }
+  mount.innerHTML = `<div class="side-card">
+    <div class="side-card-title">🧭 مواد هذه المرحلة: ${esc(stageKey)}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${pbs.map(p => `<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+        <span style="font-size:12px;color:var(--navy);font-family:'Reem Kufi';flex:1;min-width:0;">${esc(p.title)}</span>
+        <button class="btn btn-outline btn-sm" style="font-size:10px;padding:3px 8px;flex-shrink:0;" onclick="pbOpenAndSearch('${p.id}')">بحث</button>
+      </div>`).join('')}
+    </div></div>`;
+}
 function pbRenderMapList() {
   const host = document.getElementById('pbMapList'); if (!host) return;
   if (!window._playbooks.length) { host.innerHTML = '<div class="lc-empty">تعذّر تحميل خريطة المواد القضائية.</div>'; return; }
@@ -6196,6 +6223,9 @@ function pbRenderMapList() {
         ${cats[cat].map(p => `<div class="lc-result">
           <div class="lc-result-head"><span class="lc-law">${esc(p.title)}</span></div>
           <div class="lc-excerpt">${esc(p.description || '')}</div>
+          ${(p.keywords && p.keywords.length) ? `<div style="font-size:11px;color:var(--ink-60);margin-bottom:4px;"><strong>كلمات مفتاحية:</strong> ${esc(p.keywords.join('، '))}</div>` : ''}
+          ${(p.preferredSystems && p.preferredSystems.length) ? `<div style="font-size:11px;color:var(--emerald);margin-bottom:4px;"><strong>الأنظمة المفضّلة:</strong> ${esc(p.preferredSystems.join('، '))}</div>` : ''}
+          ${p.caution ? `<div style="font-size:11px;color:var(--ruby);margin-bottom:6px;">⚠ ${esc(p.caution)}</div>` : ''}
           <div class="lc-actions"><button class="btn btn-gold btn-sm" onclick="pbSearchPlaybook('${p.id}')">🔎 بحث في النواة</button></div>
         </div>`).join('')}
       </div></div>`).join('');
@@ -6327,6 +6357,7 @@ function lcRenderResults(slot, results, src) {
     const useBtns = isJ
       ? `<button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'judgment')">استخدام كتطبيق قضائي</button>`
       : `<button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'reasoning')">استخدام في التسبيب</button>
+         <button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'procedural')">استخدام في القرار الإجرائي</button>
          <button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'judgment')">استخدام في الحكم</button>
          <button class="btn btn-outline btn-sm" onclick="lcUse('${slot}',${i},'objection')">استخدام في الاعتراض</button>`;
     const openLink = (!isJ && r.id) ? `<a class="btn btn-ghost btn-sm" href="/dashboard/legal-core/articles/${encodeURIComponent(r.id)}" target="_blank">فتح المادة ↗</a>` : '';
@@ -6370,7 +6401,8 @@ function lcUse(slot, i, where) {
     const ta = document.getElementById(target);
     if (ta) { ta.value = (ta.value ? ta.value + '\n' : '') + 'السند النظامي: ' + lcCitation(r); showToast('أُدرج السند في مذكرة الاعتراض'); }
   } else {
-    showToast(where === 'judgment' ? 'أُضيفت المادة إلى السند النظامي للحكم' : where === 'reasoning' ? 'أُضيفت المادة إلى التسبيب' : 'اعتُمد التطبيق القضائي');
+    const msgs = { judgment: 'أُضيفت المادة إلى السند النظامي للحكم', reasoning: 'أُضيفت المادة إلى التسبيب', procedural: 'أُضيفت المادة إلى القرار الإجرائي' };
+    showToast(msgs[where] || 'اعتُمد التطبيق القضائي');
   }
   // تحديث صناديق «المواد المستند إليها» الظاهرة
   document.querySelectorAll('.legal-basis-mount').forEach(el => el.innerHTML = lcLegalBasisHTML());
