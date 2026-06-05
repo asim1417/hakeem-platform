@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import type { ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
-import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
+import { searchLegalCore, getArticlesByNumber } from "@/lib/modules/legal-core/legal-retrieval";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +57,28 @@ export async function GET(request: NextRequest) {
   const systemIds = [...sp.getAll("systemIds"), ...sp.getAll("system")]
     .flatMap((s) => s.split("|")).flatMap((s) => s.split(",")).map((s) => s.trim()).filter(Boolean)
     .slice(0, 8);
+
+  // وضع التحقق المباشر بالرقم: للتثبّت من وجود مادة مذكورة في الحكم (لا مطابقة نصية)
+  const articleNumberParam = sp.get("articleNumber");
+  if (articleNumberParam) {
+    const n = Number(articleNumberParam.replace(/[^0-9]/g, ""));
+    try {
+      const arts = await getArticlesByNumber(n, systemIds[0]);
+      const results = arts.map((r) => ({
+        id: r.articleId, type: "article", resultType: "legal_article",
+        systemName: r.systemName, systemId: r.systemId, articleNumber: r.articleNumber,
+        title: r.articleTitle, snippet: r.snippet, citationLabel: r.citationLabel, url: r.internalUrl
+      }));
+      return NextResponse.json(
+        { ok: true, mode: "byNumber", total: results.length, results,
+          message: results.length ? undefined : "لم يتم العثور على سند نظامي مطابق في النواة القانونية الحالية." },
+        { headers: CORS_HEADERS }
+      );
+    } catch (error) {
+      console.error("[legal-search:byNumber] Error:", error);
+      return NextResponse.json({ ok: false, error: "خطأ في التحقق", results: [] }, { status: 500, headers: CORS_HEADERS });
+    }
+  }
 
   try {
     const response = await searchLegalCore({

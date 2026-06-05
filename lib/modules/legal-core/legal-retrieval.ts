@@ -130,6 +130,25 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   };
 }
 
+// بحث مباشر بالرقم للتحقق من وجود مادة مذكورة في الحكم (دقيق — لا يعتمد المطابقة النصية).
+export async function getArticlesByNumber(articleNumber: number, systemHint?: string): Promise<LegalCoreResult[]> {
+  if (!Number.isFinite(articleNumber) || articleNumber <= 0) return [];
+  const where: Record<string, unknown> = { articleNumber };
+  const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
+  if (hint) {
+    where.OR = [
+      { lawName: { contains: hint, mode: "insensitive" } },
+      { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
+    ];
+  }
+  const articles = await prisma.legalArticle.findMany({
+    where,
+    include: { legalSystem: { select: { id: true, name: true } } },
+    take: 12
+  });
+  return articles.map((article) => mapArticleResult(article as LegalArticleWithSystem, "", "contains", [], { includeSnippets: true }));
+}
+
 // قائمة كلمات شائعة لا تميّز موضوع البحث (إجرائية/عامة) — تُستبعد من مطابقة الصلة.
 // تُطبَّع عند الإنشاء (إزالة التشكيل + توحيد الألف/الياء/التاء) لتطابق المتغيّرات المطبَّعة،
 // وإلا تسرّبت كلمات مثل «على/إلى» وطابقت كل مادة فأفسدت الترتيب بالصلة.

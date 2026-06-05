@@ -5691,8 +5691,10 @@ function showVerdictModal() {
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
   }
-  modal.querySelector('#verdictModalBody').innerHTML = lcLinkifyVerdict(window._lastVerdict || 'لا يوجد حكم بعد.');
+  const body = modal.querySelector('#verdictModalBody');
+  body.innerHTML = lcLinkifyVerdict(window._lastVerdict || 'لا يوجد حكم بعد.');
   modal.style.display = 'flex';
+  lcAutoVerifyCitations(body);   // تحقق تلقائي حيّ من المواد المذكورة
 }
 
 function selectVerdictText() {
@@ -6474,13 +6476,61 @@ function lcLinkifyVerdict(text) {
     if (hit) {
       return `<span title="مادة موثّقة من النواة القانونية" style="color:var(--gold);font-weight:700;border-bottom:1px solid var(--gold);">${m}</span>`;
     }
-    return `<span onclick="lcVerifyCite('${n}','${sysHint.replace(/['"\\]/g, '')}')" title="غير موثّقة من النواة القانونية — اضغط للتحقق" style="color:var(--ruby);border-bottom:1.5px dotted var(--ruby);cursor:pointer;font-weight:600;">${m} ⚠</span>`;
+    // غير مسترجَعة مسبقاً → تُعلَّم «قيد التحقق» ويتولّى lcAutoVerifyCitations حسمها حيّاً
+    return `<span class="lc-cite-pending" data-num="${n}" data-sys="${sysHint.replace(/["'<>]/g, '')}" title="جارٍ التحقق من النواة القانونية…" style="color:var(--ink-60);border-bottom:1.5px dotted var(--ink-40);">${m} ⏳</span>`;
   });
 }
 function lcVerifyCite(num, sys) {
   const q = ('المادة ' + num + ' ' + (sys || '')).trim();
   showToast('جارٍ فتح التحقق من المادة في النواة القانونية…');
   window.open('/dashboard/legal-core/search?q=' + encodeURIComponent(q), '_blank');
+}
+
+// تحقق مباشر بالرقم من وجود مادة في النواة القانونية
+async function lcVerifyArticleLive(num, sys) {
+  try {
+    const url = LC_ENDPOINT + '?articleNumber=' + encodeURIComponent(num) + (sys ? '&systemIds=' + encodeURIComponent(sys) : '') + '&limit=5';
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const arr = (Array.isArray(data) ? data : (data.results || [])).map(lcNormalize);
+    return arr.find(r => lcToWestern(String(r.number || '')) === String(num)) || null;
+  } catch (e) { return null; }
+}
+
+// التحقق التلقائي الحيّ: يحسم كل مادة «قيد التحقق» → رابط موثّق أو ⚠ اختلاق حقيقي
+async function lcAutoVerifyCitations(container) {
+  if (!container) return;
+  const pend = [...container.querySelectorAll('.lc-cite-pending')];
+  const cache = {};
+  for (const span of pend) {
+    const num = span.dataset.num, sys = span.dataset.sys || '';
+    const key = num + '|' + sys;
+    if (cache[key] === undefined) cache[key] = await lcVerifyArticleLive(num, sys);
+    const art = cache[key];
+    const label = span.textContent.replace(/[⏳⚠]\s*$/, '').trim();
+    if (art) {
+      // مادة حقيقية لم تُسترجع مسبقاً → اعتمدها واربطها
+      const k = (art.type || 'article') + '|' + (art.number || '') + '|' + (art.lawName || '');
+      if (!window._lcSelected.some(x => x._key === k)) window._lcSelected.push({ ...art, _key: k, _via: 'النواة القانونية (تحقق تلقائي)' });
+      span.outerHTML = art.id
+        ? `<a href="/dashboard/legal-core/articles/${encodeURIComponent(art.id)}" target="_blank" title="مادة موثّقة من النواة القانونية — افتح صفحتها" style="color:var(--gold);font-weight:700;text-decoration:underline;">${label} 🔗</a>`
+        : `<span title="مادة موثّقة من النواة القانونية" style="color:var(--gold);font-weight:700;border-bottom:1px solid var(--gold);">${label}</span>`;
+    } else {
+      // غير موجودة في النواة = اختلاق حقيقي
+      span.outerHTML = `<span onclick="lcVerifyCite('${num}','${sys.replace(/["'<>]/g, '')}')" title="غير موجودة في النواة القانونية — يراجع السند النظامي" style="color:var(--ruby);border-bottom:1.5px dotted var(--ruby);cursor:pointer;font-weight:600;">${label} ⚠</span>`;
+    }
+  }
+  // ملخص تنبيه أعلى الحكم إن بقيت مواد غير موثّقة
+  const warns = container.querySelectorAll('span[onclick^="lcVerifyCite"]').length;
+  const old = container.querySelector('.lc-verify-summary'); if (old) old.remove();
+  if (warns > 0) {
+    const b = document.createElement('div');
+    b.className = 'lc-verify-summary';
+    b.style.cssText = 'background:var(--ruby-soft);border:1px solid rgba(140,34,51,0.25);border-radius:var(--r-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--ruby);font-family:"Reem Kufi";line-height:1.7;';
+    b.innerHTML = `⚠ يحتوي هذا الحكم على (${warns}) إشارة لمواد <strong>غير موجودة في النواة القانونية</strong> (محمّرة) — راجع السند النظامي قبل الاعتماد.`;
+    container.insertBefore(b, container.firstChild);
+  }
 }
 
 function lcLegalBasisText() {
