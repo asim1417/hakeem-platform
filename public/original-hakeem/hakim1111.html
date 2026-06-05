@@ -5683,21 +5683,25 @@ function showVerdictModal() {
           </div>
         </div>
         <div style="padding:4px 8px;background:var(--parchment);border-bottom:1px solid var(--ink-08);font-size:11px;color:var(--ink-60);font-family:'Reem Kufi';text-align:center;">
-          يمكنك تحديد النص بـ Ctrl+A ونسخه بـ Ctrl+C، أو استخدام زر «📋 نسخ الكل» أعلاه
+          المواد الملوّنة شارات مرجعية: 🔗 موثّقة من النواة (اضغط لفتح المادة) · <span style="color:var(--ruby);">⚠ غير موثّقة (اضغط للتحقق)</span>
         </div>
-        <textarea id="verdictModalBody" readonly dir="rtl"
-          style="padding:24px 28px;flex:1;min-height:400px;font-family:'Amiri',serif;font-size:15px;line-height:2;color:var(--navy);background:var(--paper);border:none;resize:none;outline:none;overflow-y:auto;"></textarea>
+        <div id="verdictModalBody" dir="rtl"
+          style="padding:24px 28px;flex:1;min-height:400px;font-family:'Amiri',serif;font-size:15px;line-height:2;color:var(--navy);background:var(--paper);overflow-y:auto;white-space:pre-wrap;"></div>
       </div>`;
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
   }
-  modal.querySelector('#verdictModalBody').value = (window._lastVerdict || 'لا يوجد حكم بعد.') + lcLegalBasisText();
+  modal.querySelector('#verdictModalBody').innerHTML = lcLinkifyVerdict(window._lastVerdict || 'لا يوجد حكم بعد.');
   modal.style.display = 'flex';
 }
 
 function selectVerdictText() {
-  const ta = document.getElementById('verdictModalBody');
-  if (ta) { ta.focus(); ta.select(); showToast('تم تحديد النص — اضغط Ctrl+C للنسخ'); }
+  const el = document.getElementById('verdictModalBody');
+  if (el && window.getSelection) {
+    const sel = window.getSelection(); const range = document.createRange();
+    range.selectNodeContents(el); sel.removeAllRanges(); sel.addRange(range);
+    showToast('تم تحديد النص — اضغط Ctrl+C للنسخ');
+  }
 }
 
 function copyVerdictToClipboard() {
@@ -6448,6 +6452,37 @@ function lcLegalBasisHTML() {
 }
 
 // نسخة نصية من «المواد المستند إليها» — تُدرَج داخل وثيقة الحكم المعروضة/المنسوخة
+// تحويل كل إشارة «المادة (رقم) [من نظام ..]» في نص الحكم إلى شارة مرجعية قابلة للنقر:
+// الموثّقة من النواة → رابط يفتح صفحة المادة؛ غير الموثّقة → تحذير ⚠ مع خيار التحقق.
+function lcToWestern(s) { return String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)); }
+function lcLinkifyVerdict(text) {
+  if (!text) return '';
+  const html = esc(text);
+  const re = /(?:المادة|الماده|م\/)\s*\(?\s*([0-9٠-٩]{1,4})\s*\)?(?:\s*من\s+(نظام[^\n،.<]{2,40}|اللائحة[^\n،.<]{2,40}))?/g;
+  return html.replace(re, (m, num, sys) => {
+    const n = lcToWestern(num);
+    const sysHint = (sys || '').trim();
+    const hit = (window._lcSelected || []).find(r => {
+      if (lcToWestern(String(r.number || '')) !== n) return false;
+      if (!sysHint) return true;
+      const a = pbNorm(r.lawName || ''), b = pbNorm(sysHint);
+      return a.includes(b) || b.includes(a);
+    });
+    if (hit && hit.id) {
+      return `<a href="/dashboard/legal-core/articles/${encodeURIComponent(hit.id)}" target="_blank" title="مادة موثّقة من النواة القانونية — افتح صفحتها" style="color:var(--gold);font-weight:700;text-decoration:underline;">${m} 🔗</a>`;
+    }
+    if (hit) {
+      return `<span title="مادة موثّقة من النواة القانونية" style="color:var(--gold);font-weight:700;border-bottom:1px solid var(--gold);">${m}</span>`;
+    }
+    return `<span onclick="lcVerifyCite('${n}','${sysHint.replace(/['"\\]/g, '')}')" title="غير موثّقة من النواة القانونية — اضغط للتحقق" style="color:var(--ruby);border-bottom:1.5px dotted var(--ruby);cursor:pointer;font-weight:600;">${m} ⚠</span>`;
+  });
+}
+function lcVerifyCite(num, sys) {
+  const q = ('المادة ' + num + ' ' + (sys || '')).trim();
+  showToast('جارٍ فتح التحقق من المادة في النواة القانونية…');
+  window.open('/dashboard/legal-core/search?q=' + encodeURIComponent(q), '_blank');
+}
+
 function lcLegalBasisText() {
   // مُعطّل: لا تُلحَق المواد ككتلة منفصلة بعد الحكم — تُدمج داخل الأسباب في نص الحكم.
   return '';
