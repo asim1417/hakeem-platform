@@ -36,3 +36,6 @@ Thumbs.db
 *.sql.gz
 ahkam_moj.sql.gz
 .import-judgments-checkpoint.json
+.link-judgments-checkpoint.json
+.import-judgments.lock
+.link-judgments.lock

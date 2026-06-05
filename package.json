@@ -16,6 +16,12 @@
     "inspect:judgments": "tsx scripts/inspect-judgments-sql.ts",
     "import:judgments": "tsx scripts/import-judgments-sql.ts",
     "import:judgments:resume": "tsx scripts/import-judgments-sql.ts --apply --resume",
+    "import:judgments:forever": "tsx scripts/import-judgments-sql.ts --apply --resume --forever",
+    "import:judgments:status": "tsx scripts/import-judgments-sql.ts --status",
+    "link:judgments": "tsx scripts/import-judgments-sql.ts --apply --link-only",
+    "link:judgments:resume": "tsx scripts/import-judgments-sql.ts --apply --link-only --resume",
+    "link:judgments:forever": "tsx scripts/import-judgments-sql.ts --apply --link-only --resume --forever",
+    "link:judgments:status": "tsx scripts/import-judgments-sql.ts --link-only --status",
     "qa:db": "tsx scripts/qa-db.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts"

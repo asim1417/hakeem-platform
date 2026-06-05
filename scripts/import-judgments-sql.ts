@@ -7,7 +7,12 @@ import { Writable } from "node:stream";
 import zlib from "node:zlib";
 
 const prisma = new PrismaClient();
-const checkpointPath = path.join(process.cwd(), ".import-judgments-checkpoint.json");
+const importCheckpointPath = path.join(process.cwd(), ".import-judgments-checkpoint.json");
+const linkCheckpointPath = path.join(process.cwd(), ".link-judgments-checkpoint.json");
+const importLockPath = path.join(process.cwd(), ".import-judgments.lock");
+const linkLockPath = path.join(process.cwd(), ".link-judgments.lock");
+const LOCK_STALE_MS = 15 * 60 * 1000; // قفل أقدم من ١٥ دقيقة يُعدّ ميتاً
+let activeLockPath: string | null = null;
 
 type SqlRow = Record<string, string | number | null>;
 
@@ -43,6 +48,22 @@ type ImportOptions = {
   resetCheckpoint: boolean;
   batchSize: number;
   inputPath: string;
+  importOnly: boolean;
+  linkOnly: boolean;
+  forever: boolean;
+  status: boolean;
+};
+
+type LinkCheckpoint = {
+  startedAt: string;
+  lastCaseId: string | null;
+  casesScanned: number;
+  citationsFound: number;
+  linksCreated: number;
+  needsReview: number;
+  errors: number;
+  completed: boolean;
+  lastUpdatedAt: string;
 };
 
 type ImportCheckpoint = {
@@ -75,9 +96,33 @@ type ResolvedCitation = {
 async function main() {
   const options = await resolveOptions(process.argv.slice(2));
 
+  // ===== وضع الحالة فقط =====
+  if (options.status) {
+    await printStatus(options);
+    return;
+  }
+
+  // ===== المرحلة الثانية: الربط فقط (مستقل تماماً عن الاستيراد) =====
+  if (options.linkOnly) {
+    if (options.resetCheckpoint) {
+      await fsp.rm(linkCheckpointPath, { force: true });
+      console.log(`Deleted link checkpoint: ${linkCheckpointPath}`);
+    }
+    if (!options.apply) {
+      console.log("Dry-run (link). No links were written. To link, run: npm run link:judgments");
+      return;
+    }
+    await withLock(linkLockPath, async () => {
+      if (options.forever) await runForever(() => linkJudgments(options), isLinkComplete);
+      else await linkJudgments(options);
+    });
+    return;
+  }
+
+  // ===== المرحلة الأولى: الاستيراد (مع/بدون الربط حسب --import-only) =====
   if (options.resetCheckpoint) {
-    await fsp.rm(checkpointPath, { force: true });
-    console.log(`Deleted checkpoint: ${checkpointPath}`);
+    await fsp.rm(importCheckpointPath, { force: true });
+    console.log(`Deleted checkpoint: ${importCheckpointPath}`);
   }
 
   const sql = await readGzipSql(options.inputPath);
@@ -88,23 +133,33 @@ async function main() {
 
   if (!options.apply) {
     console.log("Dry-run only. No database writes were executed.");
-    console.log("To import, run: npm run import:judgments -- --apply");
+    console.log("To import only (fast), run: npm run import:judgments -- --apply --import-only");
     console.log("To resume, run: npm run import:judgments:resume");
+    console.log("To link afterwards, run: npm run link:judgments:resume");
     return;
   }
 
-  await importJudgments(judgments, options);
+  await withLock(importLockPath, async () => {
+    if (options.forever) await runForever(() => importJudgments(judgments, options), isImportComplete);
+    else await importJudgments(judgments, options);
+  });
 }
 
 async function resolveOptions(args: string[]): Promise<ImportOptions> {
   const resetCheckpoint = args.includes("--reset-checkpoint");
-  const checkpointExists = await fileExists(checkpointPath);
+  const linkOnly = args.includes("--link-only");
+  const activeCheckpoint = linkOnly ? linkCheckpointPath : importCheckpointPath;
+  const checkpointExists = await fileExists(activeCheckpoint);
   return {
     apply: args.includes("--apply"),
     resume: args.includes("--resume") || (checkpointExists && !resetCheckpoint),
     resetCheckpoint,
     batchSize: readNumberOption(args, "--batch-size", 100),
-    inputPath: resolveInputPath(args)
+    inputPath: resolveInputPath(args),
+    importOnly: args.includes("--import-only"),
+    linkOnly,
+    forever: args.includes("--forever"),
+    status: args.includes("--status")
   };
 }
 
@@ -342,7 +397,7 @@ function parseDateCandidate(value: string | null) {
 
 async function importJudgments(rows: JudgmentImportRow[], options: ImportOptions) {
   const startedAt = new Date();
-  const checkpoint = options.resume ? await readCheckpoint() : null;
+  const checkpoint = options.resume ? await readImportCheckpoint() : null;
   const state: ImportCheckpoint =
     checkpoint && !checkpoint.completed
       ? checkpoint
@@ -359,8 +414,10 @@ async function importJudgments(rows: JudgmentImportRow[], options: ImportOptions
           lastUpdatedAt: startedAt.toISOString()
         };
 
-  const systems = await prisma.legalSystem.findMany({ select: { id: true, name: true } });
-  const systemCandidates = systems.map((system) => ({ ...system, normalizedName: normalizeArabic(system.name) }));
+  // عند --import-only لا نحمّل الأنظمة ولا نستخرج الاستشهادات (أسرع وأخف ذاكرة)
+  const systemCandidates = options.importOnly
+    ? []
+    : (await prisma.legalSystem.findMany({ select: { id: true, name: true } })).map((system) => ({ ...system, normalizedName: normalizeArabic(system.name) }));
   const batches = Math.ceil(rows.length / options.batchSize);
 
   for (let start = state.lastRowIndex; start < rows.length; start += options.batchSize) {
@@ -401,27 +458,30 @@ async function importJudgments(rows: JudgmentImportRow[], options: ImportOptions
             }
           });
 
-          const citations = await resolveJudgmentCitations(row.judgmentText, systemCandidates);
-          const now = new Date();
-          if (citations.length) {
-            await prisma.legalArticleCaseLink.createMany({
-              data: citations.map((citation) => ({
-                articleId: citation.articleId,
-                caseId: created.id,
-                relationType: citation.relationType,
-                citedText: citation.citedText,
-                excerpt: citation.excerpt,
-                explanation: "تم ربط الاستشهاد آليًا من نص الحكم ويحتاج مراجعة قانونية.",
-                confidence: citation.confidence,
-                reviewStatus: "needs_review",
-                createdAt: now,
-                updatedAt: now
-              })),
-              skipDuplicates: true
-            });
-            state.importedLinks += citations.length;
-          } else {
-            state.unresolvedCitations += 1;
+          // الربط أثناء الاستيراد يحدث فقط في الوضع المدمج (بدون --import-only)
+          if (!options.importOnly) {
+            const citations = await resolveJudgmentCitations(row.judgmentText, systemCandidates);
+            const now = new Date();
+            if (citations.length) {
+              await prisma.legalArticleCaseLink.createMany({
+                data: citations.map((citation) => ({
+                  articleId: citation.articleId,
+                  caseId: created.id,
+                  relationType: citation.relationType,
+                  citedText: citation.citedText,
+                  excerpt: citation.excerpt,
+                  explanation: "تم ربط الاستشهاد آليًا من نص الحكم ويحتاج مراجعة قانونية.",
+                  confidence: citation.confidence,
+                  reviewStatus: "needs_review",
+                  createdAt: now,
+                  updatedAt: now
+                })),
+                skipDuplicates: true
+              });
+              state.importedLinks += citations.length;
+            } else {
+              state.unresolvedCitations += 1;
+            }
           }
 
           state.importedCases += 1;
@@ -436,14 +496,14 @@ async function importJudgments(rows: JudgmentImportRow[], options: ImportOptions
     });
 
     state.lastUpdatedAt = new Date().toISOString();
-    await writeCheckpoint(state);
-    printProgress(state, rows.length, batchNumber, batches, startedAt);
+    await writeImportCheckpoint(state);
+    printProgress(state, rows.length, batchNumber, batches, startedAt, options);
   }
 
   state.completed = true;
   state.lastUpdatedAt = new Date().toISOString();
-  await writeCheckpoint(state);
-  printFinalReport(state, rows.length, startedAt);
+  await writeImportCheckpoint(state);
+  printFinalReport(state, rows.length, startedAt, options);
 }
 
 async function findExistingJudicialCase(row: JudgmentImportRow) {
@@ -562,18 +622,190 @@ function isTransientDatabaseError(error: unknown) {
   return /P1001|Can't reach database server|timeout|ETIMEDOUT|ECONNRESET|connection.*closed|server.*closed|Connection terminated/i.test(message);
 }
 
-async function readCheckpoint() {
-  if (!(await fileExists(checkpointPath))) return null;
-  const text = await fsp.readFile(checkpointPath, "utf8");
+async function readImportCheckpoint() {
+  if (!(await fileExists(importCheckpointPath))) return null;
+  const text = await fsp.readFile(importCheckpointPath, "utf8");
   return JSON.parse(text) as ImportCheckpoint;
 }
 
-async function writeCheckpoint(state: ImportCheckpoint) {
-  await fsp.writeFile(checkpointPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+async function writeImportCheckpoint(state: ImportCheckpoint) {
+  await fsp.writeFile(importCheckpointPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  await touchLock();
+}
+
+async function readLinkCheckpoint() {
+  if (!(await fileExists(linkCheckpointPath))) return null;
+  const text = await fsp.readFile(linkCheckpointPath, "utf8");
+  return JSON.parse(text) as LinkCheckpoint;
+}
+
+async function writeLinkCheckpoint(state: LinkCheckpoint) {
+  await fsp.writeFile(linkCheckpointPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  await touchLock();
+}
+
+async function isImportComplete() {
+  return (await readImportCheckpoint())?.completed === true;
+}
+
+async function isLinkComplete() {
+  return (await readLinkCheckpoint())?.completed === true;
 }
 
 async function fileExists(filePath: string) {
   return fsp.access(filePath).then(() => true).catch(() => false);
+}
+
+// ===== أقفال التشغيل (منع تشغيل عمليتين متزامنتين على نفس المرحلة) =====
+async function withLock<T>(lockPath: string, operation: () => Promise<T>): Promise<T> {
+  if (await fileExists(lockPath)) {
+    const stat = await fsp.stat(lockPath).catch(() => null);
+    const age = stat ? Date.now() - stat.mtimeMs : Infinity;
+    if (age < LOCK_STALE_MS) {
+      const info = await fsp.readFile(lockPath, "utf8").catch(() => "");
+      throw new Error(`عملية أخرى تعمل بالفعل (${path.basename(lockPath)}). ${info}\nإن كانت متوقفة فاحذف الملف: ${lockPath}`);
+    }
+    console.warn(`Stale lock detected (>${Math.round(LOCK_STALE_MS / 60000)}m). Overriding: ${lockPath}`);
+  }
+  await fsp.writeFile(lockPath, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }), "utf8");
+  activeLockPath = lockPath;
+  try {
+    return await operation();
+  } finally {
+    activeLockPath = null;
+    await fsp.rm(lockPath, { force: true });
+  }
+}
+
+async function touchLock() {
+  if (!activeLockPath) return;
+  const now = new Date();
+  await fsp.utimes(activeLockPath, now, now).catch(() => {});
+}
+
+// ===== التكرار التلقائي حتى الاكتمال (forever) =====
+async function runForever(operation: () => Promise<void>, isComplete: () => Promise<boolean>) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await operation();
+    } catch (error) {
+      console.error(`Run failed (attempt ${attempt}): ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (await isComplete()) {
+      console.log("اكتملت العملية بالكامل — إيقاف الوضع المستمر.");
+      break;
+    }
+    const delay = 5000;
+    console.log(`Restarting in ${delay}ms (resume)…`);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+}
+
+// ===== المرحلة الثانية: ربط الأحكام بالمواد (مستقل عن الاستيراد) =====
+async function linkJudgments(options: ImportOptions) {
+  const startedAt = new Date();
+  const checkpoint = options.resume ? await readLinkCheckpoint() : null;
+  const state: LinkCheckpoint =
+    checkpoint && !checkpoint.completed
+      ? checkpoint
+      : {
+          startedAt: startedAt.toISOString(),
+          lastCaseId: null,
+          casesScanned: 0,
+          citationsFound: 0,
+          linksCreated: 0,
+          needsReview: 0,
+          errors: 0,
+          completed: false,
+          lastUpdatedAt: startedAt.toISOString()
+        };
+
+  const systems = await prisma.legalSystem.findMany({ select: { id: true, name: true } });
+  const systemCandidates = systems.map((system) => ({ ...system, normalizedName: normalizeArabic(system.name) }));
+  const total = await prisma.judicialCase.count();
+  console.log(`Linking phase — judicial cases in database: ${total}`);
+
+  while (true) {
+    const cases: Array<{ id: string; judgmentText: string | null }> = await prisma.judicialCase.findMany({
+      select: { id: true, judgmentText: true },
+      orderBy: { id: "asc" },
+      ...(state.lastCaseId ? { cursor: { id: state.lastCaseId }, skip: 1 } : {}),
+      take: options.batchSize
+    });
+    if (!cases.length) break;
+
+    await withRetry(async () => {
+      for (const judicialCase of cases) {
+        try {
+          const citations = await resolveJudgmentCitations(judicialCase.judgmentText ?? "", systemCandidates);
+          if (citations.length) {
+            const now = new Date();
+            const result = await prisma.legalArticleCaseLink.createMany({
+              data: citations.map((citation) => ({
+                articleId: citation.articleId,
+                caseId: judicialCase.id,
+                relationType: citation.relationType,
+                citedText: citation.citedText,
+                excerpt: citation.excerpt,
+                explanation: "تم ربط الاستشهاد آليًا من نص الحكم ويحتاج مراجعة قانونية.",
+                confidence: citation.confidence,
+                reviewStatus: "needs_review",
+                createdAt: now,
+                updatedAt: now
+              })),
+              skipDuplicates: true
+            });
+            state.citationsFound += citations.length;
+            state.linksCreated += result.count;
+            state.needsReview += result.count;
+          }
+          state.casesScanned += 1;
+          state.lastCaseId = judicialCase.id;
+        } catch (error) {
+          state.errors += 1;
+          state.lastCaseId = judicialCase.id;
+          console.error(`Failed linking case ${judicialCase.id}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+    });
+
+    state.lastUpdatedAt = new Date().toISOString();
+    await writeLinkCheckpoint(state);
+    printLinkProgress(state, total, startedAt);
+  }
+
+  state.completed = true;
+  state.lastUpdatedAt = new Date().toISOString();
+  await writeLinkCheckpoint(state);
+  printLinkFinal(state, total, startedAt);
+}
+
+async function printStatus(options: ImportOptions) {
+  if (options.linkOnly) {
+    const cp = await readLinkCheckpoint();
+    const total = await prisma.judicialCase.count().catch(() => null);
+    console.log("Link checkpoint status");
+    console.log(`Checkpoint: ${linkCheckpointPath}`);
+    if (!cp) { console.log("No link checkpoint yet."); return; }
+    console.log(`Cases scanned: ${cp.casesScanned}${total != null ? ` / ${total}` : ""}`);
+    console.log(`Citations found: ${cp.citationsFound}`);
+    console.log(`Links created: ${cp.linksCreated}`);
+    console.log(`Needs review: ${cp.needsReview}`);
+    console.log(`Errors: ${cp.errors}`);
+    console.log(`Completed: ${cp.completed ? "yes" : "no"}`);
+    console.log(`Last updated: ${cp.lastUpdatedAt}`);
+    return;
+  }
+  const cp = await readImportCheckpoint();
+  console.log("Import checkpoint status");
+  console.log(`Checkpoint: ${importCheckpointPath}`);
+  if (!cp) { console.log("No import checkpoint yet."); return; }
+  console.log(`Imported cases: ${cp.importedCases}`);
+  console.log(`Skipped duplicates: ${cp.skippedDuplicates}`);
+  console.log(`Failed: ${cp.failedCases}`);
+  console.log(`Last row index: ${cp.lastRowIndex}`);
+  console.log(`Completed: ${cp.completed ? "yes" : "no"}`);
+  console.log(`Last updated: ${cp.lastUpdatedAt}`);
 }
 
 function printInspectionReport(inputPath: string, tables: ParsedInsertTable[], judgments: JudgmentImportRow[], options: ImportOptions) {
@@ -589,29 +821,63 @@ function printInspectionReport(inputPath: string, tables: ParsedInsertTable[], j
   console.log(`Invalid or empty judgment rows: ${Math.max(0, tables.reduce((sum, table) => sum + table.rows.length, 0) - judgments.length)}`);
 }
 
-function printProgress(state: ImportCheckpoint, totalRows: number, batchNumber: number, batches: number, startedAt: Date) {
+function printProgress(state: ImportCheckpoint, totalRows: number, batchNumber: number, batches: number, startedAt: Date, options: ImportOptions) {
   const elapsedSeconds = Math.max((Date.now() - startedAt.getTime()) / 1000, 1);
   const rate = state.lastRowIndex / elapsedSeconds;
   const remaining = rate > 0 ? Math.ceil((totalRows - state.lastRowIndex) / rate) : 0;
+  const pct = totalRows ? ((state.lastRowIndex / totalRows) * 100).toFixed(1) : "0";
   console.log([
-    `Imported judgments: ${state.importedCases} / ${totalRows}`,
+    `${options.importOnly ? "[import-only]" : "[import+link]"}`,
+    `Imported: ${state.importedCases} / ${totalRows} (${pct}%)`,
     `Batch: ${batchNumber} / ${batches}`,
-    `Skipped duplicates: ${state.skippedDuplicates}`,
-    `Links: ${state.importedLinks}`,
+    `Duplicates: ${state.skippedDuplicates}`,
+    ...(options.importOnly ? [] : [`Links: ${state.importedLinks}`]),
     `Failed: ${state.failedCases}`,
-    `Estimated remaining: ${remaining}s`
+    `Last sourceId index: ${state.lastRowIndex}`,
+    `ETA: ${remaining}s`
   ].join(" | "));
 }
 
-function printFinalReport(state: ImportCheckpoint, totalRows: number, startedAt: Date) {
-  console.log("Judgments import completed");
+function printFinalReport(state: ImportCheckpoint, totalRows: number, startedAt: Date, options: ImportOptions) {
+  console.log(options.importOnly ? "Judgments import (import-only) completed" : "Judgments import completed");
   console.log(`Discovered judgments: ${totalRows}`);
   console.log(`Imported judgments: ${state.importedCases}`);
   console.log(`Skipped duplicates: ${state.skippedDuplicates}`);
-  console.log(`Imported article links: ${state.importedLinks}`);
-  console.log(`Unresolved citation rows: ${state.unresolvedCitations}`);
+  if (!options.importOnly) {
+    console.log(`Imported article links: ${state.importedLinks}`);
+    console.log(`Unresolved citation rows: ${state.unresolvedCitations}`);
+  }
   console.log(`Failed rows: ${state.failedCases}`);
-  console.log(`Checkpoint: ${checkpointPath}`);
+  console.log(`Progress: ${totalRows ? ((state.importedCases + state.skippedDuplicates) / totalRows * 100).toFixed(1) : "0"}%`);
+  console.log(`Checkpoint: ${importCheckpointPath}`);
+  console.log(`Elapsed seconds: ${Math.round((Date.now() - startedAt.getTime()) / 1000)}`);
+  if (options.importOnly) console.log("Next: run linking with → npm run link:judgments:resume");
+}
+
+function printLinkProgress(state: LinkCheckpoint, total: number, startedAt: Date) {
+  const elapsedSeconds = Math.max((Date.now() - startedAt.getTime()) / 1000, 1);
+  const rate = state.casesScanned / elapsedSeconds;
+  const remaining = rate > 0 ? Math.ceil((total - state.casesScanned) / rate) : 0;
+  const pct = total ? ((state.casesScanned / total) * 100).toFixed(1) : "0";
+  console.log([
+    `[link-only]`,
+    `Scanned: ${state.casesScanned} / ${total} (${pct}%)`,
+    `Citations: ${state.citationsFound}`,
+    `Links created: ${state.linksCreated}`,
+    `Needs review: ${state.needsReview}`,
+    `Errors: ${state.errors}`,
+    `ETA: ${remaining}s`
+  ].join(" | "));
+}
+
+function printLinkFinal(state: LinkCheckpoint, total: number, startedAt: Date) {
+  console.log("Judgments linking completed");
+  console.log(`Cases scanned: ${state.casesScanned} / ${total}`);
+  console.log(`Citations detected: ${state.citationsFound}`);
+  console.log(`Links created: ${state.linksCreated}`);
+  console.log(`Needs review: ${state.needsReview}`);
+  console.log(`Errors: ${state.errors}`);
+  console.log(`Checkpoint: ${linkCheckpointPath}`);
   console.log(`Elapsed seconds: ${Math.round((Date.now() - startedAt.getTime()) / 1000)}`);
 }
 
