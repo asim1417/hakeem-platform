@@ -2447,8 +2447,7 @@ img, video, table { max-width: 100%; }
             <div class="side-card">
               <div class="side-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> المواد المرجعية</div>
               <div class="rules-list" id="legalRefs">
-                <div class="rule-ref"><strong>م/73</strong> — نظام المرافعات<br/>يُقدم المدعي بياناته في المواعيد.</div>
-                <div class="rule-ref"><strong>م/101</strong> — نظام الإثبات<br/>البينة على من ادّعى.</div>
+                <div class="rule-ref" style="color:var(--ink-60);font-family:'Reem Kufi';font-size:12px;line-height:1.7;">تُعرض هنا المواد ذات الصلة بالقضية من <strong>النواة القانونية</strong> — استخدم «بحث النواة» أو «اقتراح المواد للقضية» أدناه. لا تُعرض مواد ثابتة غير متصلة بالوقائع.</div>
               </div>
             </div>
             <div class="side-card" style="padding:0;overflow:visible;">
@@ -6331,31 +6330,63 @@ function lcPromptContext() {
   ).join('\n');
   return base + `
 
-**السند المعتمد من النواة القانونية (استخدم هذه المواد فقط):**
+**مواد مرشّحة من النواة القانونية (اختر منها ما له صلة مباشرة بوقائع هذه الدعوى فقط):**
 ${list}
 
-اربط كل سبب أو تسبيب بالمادة المناسبة من هذه القائمة عند الاقتضاء، وأدرج في آخر المخرج قسماً بعنوان «المواد النظامية المستند إليها» يعدّد ما استُند إليه منها.`;
+تعليمات الاستشهاد:
+- استشهد بالمادة **داخل فقرة الأسباب/التسبيب نفسها** عند موضع الاستدلال (مثال: «وحيث تقضي المادة (..) من نظام (..) بأن ...»)، لا في قائمة منفصلة بعد المنطوق.
+- استخدم فقط ما يتّصل مباشرةً بموضوع النزاع (عقد/توريد/سداد/تعويض/إثبات...). **تجاهل تماماً** أي مادة لا علاقة لها بالوقائع (كمواد تنظيم المحاكم أو استحداث الوظائف)، ولا تذكرها إطلاقاً.
+- إن لم تكن أي مادة من القائمة متصلة بالوقائع فاكتب: «يراجع السند النظامي المناسب قبل التقديم» ولا تستشهد بغير المتصل.
+- لا تُنشئ قسماً نصياً بعنوان «المواد النظامية المستند إليها» — تتكفّل المنصة بعرضه أسفل الحكم.`;
 }
 
+// كلمات القضية الموضوعية (لقياس صلة المواد المسترجَعة)
+function lcCaseKeywords(extra) {
+  const c = _activeCase || {};
+  const raw = [c.subject, c.facts, c.requests, extra].filter(Boolean).join(' ');
+  const stop = new Set(['التي','الذي','الذين','على','إلى','عن','هذا','هذه','هذي','مع','قد','أن','إن','كان','كانت','بعد','قبل','رقم','ريال','ريالا','ريالاً','شركة','مؤسسة','المدعي','المدعى','عليه','عليها','المدعية','وقد','كما','بأن','بين','كل','أو','ثم','حيث','وهو','وهي','جميع','غير','عند','لها','كذلك','ذلك','قام','قامت','تقدم','جاء','فيها','أنه','أنها','إلا','رغم','وعليه','قِبل','قبل','مبلغ','المبلغ']);
+  const words = (raw.match(/[ء-ي]{4,}/g) || [])
+    .map(w => w.replace(/^(وال|بال|كال|فال|ال|و|ف|ب|ك|ل)/, ''))
+    .filter(w => w.length >= 3 && !stop.has(w));
+  return [...new Set(words)];
+}
+// مواد تنظيمية/إدارية لا تصلح سنداً موضوعياً — تُستبعد دائماً
+function lcIsAdminNoise(r) {
+  const hay = (r.lawName || '') + ' ' + (r.text || '');
+  return /آلية العمل التنفيذية|ديوان المظالم|استحداث|السلك القضائي|المجلس الأعلى للقضاء|الترتيبات التنظيمية|الوظائف الإدارية|محاكم استئناف لا يقل|وظائف قضاة|نفاذ نظام القضاء/.test(hay);
+}
+function lcRelevanceScore(r, kws) {
+  const hay = (r.lawName || '') + ' ' + (r.text || '');
+  let s = 0; kws.forEach(k => { if (hay.indexOf(k) !== -1) s++; });
+  return s;
+}
 async function lcAutoRetrieveForCase(contextText) {
   try {
     const c = _activeCase;
-    const q = [c?.subject, c?.requests, contextText].filter(Boolean).join(' ').replace(/\s+/g,' ').slice(0, 160) || 'مطالبة مالية تجارية';
-    const results = await lcSearch(q, 'contains', 'article', 6);
+    const q = [c?.subject, c?.requests, contextText].filter(Boolean).join(' ').replace(/\s+/g, ' ').slice(0, 160) || 'مطالبة مالية تجارية';
+    const raw = await lcSearch(q, 'contains', 'article', 12);
+    const kws = lcCaseKeywords(contextText);
+    // 1) استبعاد المواد التنظيمية غير الموضوعية  2) ترتيب بحسب الصلة  3) اعتماد المتّصل فقط
+    const chosen = raw
+      .filter(r => !lcIsAdminNoise(r))
+      .map(r => ({ r, s: lcRelevanceScore(r, kws) }))
+      .filter(x => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 4)
+      .map(x => x.r);
     let added = 0;
-    results.forEach(r => {
+    chosen.forEach(r => {
       const key = (r.type || 'article') + '|' + (r.number || '') + '|' + (r.lawName || '');
       if (!window._lcSelected.some(x => x._key === key)) {
         window._lcSelected.push({ ...r, _key: key, _via: 'النواة القانونية (استرجاع تلقائي)' });
         added++;
       }
     });
-    if (results.length) {
-      window._lcResults['verdict'] = results;
+    if (chosen.length) {
+      window._lcResults['verdict'] = chosen;
       const box = document.getElementById('lcres_verdict');
-      if (box) { document.getElementById('lc_verdict')?.classList.remove('collapsed'); lcRenderResults('verdict', results, 'article'); }
+      if (box) { document.getElementById('lc_verdict')?.classList.remove('collapsed'); lcRenderResults('verdict', chosen, 'article'); }
     }
-    // حدّث صناديق «المواد المستند إليها» الظاهرة
     document.querySelectorAll('.legal-basis-mount').forEach(el => el.innerHTML = lcLegalBasisHTML());
     return added;
   } catch (e) { return 0; }
