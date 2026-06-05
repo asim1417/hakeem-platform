@@ -4861,7 +4861,7 @@ function renderTurnUI() {
     if (notMyArea) {
       notMyArea.style.display = 'block';
       const wm = document.getElementById('waitingMsg');
-      if (wm) wm.innerHTML = '✅ صدر الحكم — أُقفل باب المرافعة. انتقل إلى مرحلة ما بعد الحكم في خيارات الاعتراض أدناه.';
+      if (wm) wm.innerHTML = '✅ صدر الحكم — أُقفل باب المرافعة. <button class="btn btn-gold btn-sm" style="margin-right:8px;" onclick="showPostJudgmentModal()">⚖️ مرحلة ما بعد الحكم</button>';
     }
     const ti = document.getElementById('turnIndicator');
     if (ti) { ti.style.background = 'var(--emerald-soft)'; ti.style.color = 'var(--emerald)'; ti.textContent = '✅ صدر الحكم'; }
@@ -6026,61 +6026,78 @@ function renderProceduralDecision(decision) {
 
 function offerAppeal() {
   const c = document.getElementById('hearingMessages');
-
-  // 1) رسالة صدور الحكم + زر الانتقال السريع لمرحلة ما بعد الحكم
+  // رسالة صدور الحكم + زر دائم لفتح نافذة مرحلة ما بعد الحكم
   const note = document.createElement('div');
   note.className = 'msg system';
   note.innerHTML = `<div class="msg-body"><div class="msg-bubble" style="background:var(--emerald-soft);color:var(--emerald);border:1px solid rgba(26,92,65,0.2);">
       ✅ صدر الحكم، ويمكنك الآن الانتقال إلى مرحلة ما بعد الحكم.
-      <div style="margin-top:8px;"><button class="btn btn-gold btn-sm" onclick="document.getElementById('chatPostJudgment')?.scrollIntoView({behavior:'smooth',block:'center'})">فتح مرحلة ما بعد الحكم ↓</button></div>
+      <div style="margin-top:8px;"><button class="btn btn-gold btn-sm" onclick="showPostJudgmentModal()">⚖️ فتح مرحلة ما بعد الحكم</button></div>
     </div></div>`;
   c.appendChild(note);
+  c.scrollTop = c.scrollHeight;
+  // افتح النافذة تلقائياً لضمان الوصول للأزرار مهما كانت أبعاد الشاشة
+  showPostJudgmentModal();
+}
 
-  // 2) لوحة ما بعد الحكم الابتدائي — ثلاث بطاقات مستقلة
-  const d = document.createElement('div');
-  d.id = 'chatPostJudgment';
-  d.className = 'post-judgment-panel';
-  d.style.cssText = 'margin:16px 8px;';
-  d.innerHTML = `
-    <div class="pjp-head">
-      <span>⚖️</span>
-      <div>مرحلة ما بعد الحكم الابتدائي
-        <div class="pjp-sub">اختر طريق الاعتراض المناسب — لكل طريق مصطلحاته وشروطه ومخرجاته المستقلة</div>
-      </div>
+// محتوى بطاقات الاعتراض الثلاث (يُعاد استخدامه في النافذة وفي صفحة الحكم)
+function postJudgmentCardsHTML() {
+  return `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="btn btn-outline btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
+      <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ الحكم</button>
+      <button class="btn btn-outline btn-sm" onclick="closePostJudgmentModal();goPage('settlement')">🤝 الصلح بعد الحكم</button>
     </div>
-    <div class="pjp-body">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-        <button class="btn btn-outline btn-sm" onclick="showVerdictModal()">⚖ عرض الحكم كاملاً</button>
-        <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ الحكم</button>
-        <button class="btn btn-outline btn-sm" onclick="goPage('settlement')">🤝 الصلح بعد الحكم</button>
+    <div class="pjp-grid">
+      <div class="pjp-card">
+        <div class="pjp-icon">📝</div>
+        <div class="pjp-title">الاستئناف</div>
+        <div class="pjp-text">إعداد لائحة اعتراضية استئنافية على الحكم الابتدائي أمام محكمة الاستئناف.</div>
+        <button class="btn btn-gold btn-sm" onclick="openObjection('appeal')">فتح نموذج الاستئناف</button>
       </div>
-      <div class="pjp-grid">
-        <div class="pjp-card">
-          <div class="pjp-icon">📝</div>
-          <div class="pjp-title">الاستئناف</div>
-          <div class="pjp-text">إعداد لائحة اعتراضية استئنافية على الحكم الابتدائي أمام محكمة الاستئناف.</div>
-          <button class="btn btn-gold btn-sm" onclick="openObjection('appeal')">فتح نموذج الاستئناف</button>
-        </div>
-        <div class="pjp-card">
-          <div class="pjp-icon">🏛️</div>
-          <div class="pjp-title">النقض</div>
-          <div class="pjp-text">إعداد طلب نقض أمام المحكمة العليا عند وجود سبب نظامي مؤثر.</div>
-          <button class="btn btn-gold btn-sm" onclick="openObjection('naqd')">فتح نموذج النقض</button>
-        </div>
-        <div class="pjp-card">
-          <div class="pjp-icon">🔁</div>
-          <div class="pjp-title">التماس إعادة النظر</div>
-          <div class="pjp-text">إعداد طلب التماس إعادة النظر عند تحقق سبب من أسبابه النظامية.</div>
-          <button class="btn btn-gold btn-sm" onclick="openObjection('iltimas')">فتح نموذج الالتماس</button>
-        </div>
+      <div class="pjp-card">
+        <div class="pjp-icon">🏛️</div>
+        <div class="pjp-title">النقض</div>
+        <div class="pjp-text">إعداد طلب نقض أمام المحكمة العليا عند وجود سبب نظامي مؤثر.</div>
+        <button class="btn btn-gold btn-sm" onclick="openObjection('naqd')">فتح نموذج النقض</button>
+      </div>
+      <div class="pjp-card">
+        <div class="pjp-icon">🔁</div>
+        <div class="pjp-title">التماس إعادة النظر</div>
+        <div class="pjp-text">إعداد طلب التماس إعادة النظر عند تحقق سبب من أسبابه النظامية.</div>
+        <button class="btn btn-gold btn-sm" onclick="openObjection('iltimas')">فتح نموذج الالتماس</button>
       </div>
     </div>`;
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
 }
+
+// نافذة منبثقة مركزية لمرحلة ما بعد الحكم — تُضمن الوصول للأزرار على أي أبعاد
+function showPostJudgmentModal() {
+  let modal = document.getElementById('postJudgmentModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'postJudgmentModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:800;background:rgba(11,31,58,0.7);backdrop-filter:blur(5px);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;';
+    modal.innerHTML = `
+      <div style="background:var(--paper);border-radius:var(--r-xl);max-width:780px;width:100%;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,0.45);overflow:hidden;">
+        <div class="pjp-head" style="margin:0;">
+          <span>⚖️</span>
+          <div style="flex:1;">مرحلة ما بعد الحكم الابتدائي
+            <div class="pjp-sub">اختر طريق الاعتراض المناسب — لكل طريق مصطلحاته وشروطه ومخرجاته المستقلة</div>
+          </div>
+          <button onclick="closePostJudgmentModal()" title="إغلاق" style="background:rgba(255,255,255,0.18);border:none;color:var(--gold-pale);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0;">✕</button>
+        </div>
+        <div class="pjp-body" id="postJudgmentModalBody"></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) closePostJudgmentModal(); });
+  }
+  document.getElementById('postJudgmentModalBody').innerHTML = postJudgmentCardsHTML();
+  modal.style.display = 'flex';
+}
+function closePostJudgmentModal() { const m = document.getElementById('postJudgmentModal'); if (m) m.style.display = 'none'; }
 
 // فتح طريق اعتراض محدد: ينتقل لصفحة الاعتراض ويفتح التبويب الصحيح ويمرّر إليه
 function openObjection(type) {
+  closePostJudgmentModal();
   goPage('appeal');
   setTimeout(() => {
     switchAppealTab(type);
