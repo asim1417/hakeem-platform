@@ -72,7 +72,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const page = Math.max(Number(options.page ?? 1), 1);
   const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 80);
   const fields = normalizeFields(options.fields);
-  const variants = buildVariants(query, searchType);
+  // استبعاد الكلمات القصيرة/الشائعة حتى لا تطابق مواد لا صلة لها بالبحث
+  const variants = filterMeaningfulVariants(buildVariants(query, searchType));
   const normalizedVariants = Array.from(new Set(variants.map(normalizeArabicText).filter(Boolean)));
 
   const where: Record<string, unknown> = {
@@ -84,31 +85,62 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     ].filter((item) => Object.keys(item).length > 0)
   };
 
-  const [total, articles] = await Promise.all([
+  // نجلب مجموعة مرشّحين كبيرة ثم نرتّبها بالصلة في الذاكرة قبل الاقتطاع،
+  // لأن الترتيب الأبجدي + take(limit) في قاعدة البيانات كان يُرجع مواد غير ذات صلة.
+  const CANDIDATE_CAP = 600;
+  const [total, candidates] = await Promise.all([
     prisma.legalArticle.count({ where }),
     prisma.legalArticle.findMany({
       where,
       include: { legalSystem: { select: { id: true, name: true } } },
       orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-      skip: (page - 1) * limit,
-      take: limit
+      take: CANDIDATE_CAP
     })
   ]);
 
-  const results = articles
+  const scored = candidates
     .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options))
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+  // عند وجود استعلام: نُبقي فقط النتائج ذات الصلة الحقيقية (تطابق مصطلح ذي معنى)؛
+  // وإلا نعيد رسالة عدم العثور بدل عرض مواد عشوائية.
+  const MIN_RELEVANCE = 12;
+  const relevant = query ? scored.filter((result) => result.relevanceScore >= MIN_RELEVANCE) : scored;
+
+  const effectiveTotal = query ? relevant.length : total;
+  const start = (page - 1) * limit;
+  const results = relevant.slice(start, start + limit);
 
   return {
     query,
     searchType,
-    total,
+    total: effectiveTotal,
     page,
     limit,
     relatedTerms: options.includeRelatedTerms ? variants.slice(0, 24) : [],
     results,
-    message: total ? undefined : noLegalArticleMessage
+    message: effectiveTotal ? undefined : noLegalArticleMessage
   };
+}
+
+// قائمة كلمات شائعة لا تميّز موضوع البحث (إجرائية/عامة) — تُستبعد من مطابقة الصلة
+const ARABIC_STOPWORDS = new Set<string>([
+  "من","في","على","عن","الى","او","ثم","قد","كل","بعد","قبل","عند","هذا","هذه","ذلك","تلك",
+  "التي","الذي","الذين","غير","بين","مع","ما","لا","ان","كان","كانت","به","بها","له","لها",
+  "هو","هي","هم","نحو","حيث","كما","وقد","وهو","وهي","الا","اذا","انه","انها","عليه","عليها",
+  "شركة","مؤسسة","المدعي","المدعى","المدعية","المدعيه","الدعوى","الدعوي","القضية","القضيه",
+  "ريال","ريالا","مبلغ","الحكم","الدائرة","الدائره","طلب","طلبات","وكيل","ممثل"
+]);
+
+function filterMeaningfulVariants(variants: string[]): string[] {
+  const meaningful = variants.filter((variant) => {
+    const normalized = normalizeArabicText(variant);
+    if (normalized.length < 3) return false;
+    if (ARABIC_STOPWORDS.has(normalized)) return false;
+    return true;
+  });
+  // إن أزالت التصفية كل شيء (استعلام قصير جداً) نُبقي الأصل لتفادي بحث فارغ
+  return meaningful.length ? meaningful : variants;
 }
 
 export async function findRelevantLegalArticles(query: string, options: { systemId?: string; category?: string; topic?: string; limit?: number } = {}): Promise<LegalCoreResult[]> {
