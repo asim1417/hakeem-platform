@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
 
   const query = (sp.get("q") ?? sp.get("query") ?? "").trim().slice(0, 200);
-  if (!query) {
+  // يُسمح بطلب التحقق المباشر بالرقم دون q
+  if (!query && !sp.get("articleNumber")) {
     return NextResponse.json(
       { ok: false, error: "q parameter required", results: [] },
       { status: 400, headers: CORS_HEADERS }
