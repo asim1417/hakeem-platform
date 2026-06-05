@@ -3890,6 +3890,8 @@ window.addEventListener('load', () => {
   // تركيب لوحات النواة القانونية وأقسام «المواد المستند إليها»
   lcMountAll();
   document.querySelectorAll('.legal-basis-mount').forEach(el => { if (!el.innerHTML.trim()) el.innerHTML = lcLegalBasisHTML(); });
+  // تحميل خريطة المواد القضائية مسبقاً (طبقة إرشادية لتوجيه البحث)
+  pbLoad();
   // إصلاح بنيوي: إعادة تبويبَي النقض والالتماس إلى داخل قسم الاعتراض
   // (كانا قد تسرّبا إلى <body> فيمتدّان تحت القائمة الجانبية)
   const _appealSec = document.querySelector('section.page[data-page="appeal"]');
@@ -6110,9 +6112,104 @@ function openObjection(type) {
    النواة القانونية — وحدة البحث والاستشهاد + حارس منع الاختلاق
    كل المواد تأتي من /api/legal-core/search فقط، أو يدخلها المستخدم صراحة.
    ============================================================ */
-const LC_ENDPOINT = '/api/legal-core/search';
+// المسار العام المخصص لصفحة القاضي (بلا مصادقة، CORS) — يتجاوز 401 لمسار النواة المحمي
+const LC_ENDPOINT = '/api/original-hakeem/legal-search';
+const LC_ENDPOINT_FALLBACK = '/api/legal-core/search';
 window._lcResults  = {};   // نتائج آخر بحث لكل slot
 window._lcSelected = [];    // المواد المعتمدة (مسترجَعة من النواة أو مختارة) — تُبنى عليها المخرجات
+
+/* ============================================================
+   خريطة المواد القضائية الأساسية (Judicial Playbooks)
+   طبقة إرشادية فقط لتوجيه البحث — ليست مصدراً نظامياً.
+   كل نص/رقم مادة يأتي حصراً من النواة القانونية عبر lcSearch.
+   ============================================================ */
+window._playbooks = [];
+window._playbookStages = {};
+async function pbLoad() {
+  if (window._playbooks.length) return window._playbooks;
+  try {
+    const res = await fetch('/original-hakeem/judicial-playbooks.json', { headers: { Accept: 'application/json' } });
+    if (res.ok) { const d = await res.json(); window._playbooks = d.playbooks || []; window._playbookStages = d.stageMapping || {}; }
+  } catch (e) { /* تعمل الواجهة بدونها */ }
+  return window._playbooks;
+}
+function pbNorm(s) { return String(s || '').replace(/[ً-ْ]/g, '').replace(/[إأآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه'); }
+// مطابقة نص القضية مع أنسب playbooks بحسب تداخل الكلمات المفتاحية
+function pbMatch(text, max = 3) {
+  const t = pbNorm(text);
+  if (!t || !window._playbooks.length) return [];
+  return window._playbooks
+    .map(p => {
+      const terms = [...(p.keywords || []), p.title].map(pbNorm);
+      let s = 0; terms.forEach(k => { if (k && t.indexOf(k) !== -1) s += (k.length >= 4 ? 2 : 1); });
+      return { p, s };
+    })
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, max)
+    .map(x => x.p);
+}
+// استعلامات بحث موجَّهة من الـ playbooks المطابِقة (بدل الاستعلام العشوائي بنص القضية)
+function pbQueriesFor(text, maxPlaybooks = 3) {
+  const matched = pbMatch(text, maxPlaybooks);
+  const queries = [];
+  matched.forEach(p => (p.searchQueries || []).slice(0, 2).forEach(q => queries.push(q)));
+  return { matched, queries: [...new Set(queries)] };
+}
+
+// نافذة خريطة المواد القضائية: تصنيفات → مسائل → بحث في النواة
+function showPlaybookMapModal() {
+  pbLoad().then(() => {
+    let modal = document.getElementById('playbookMapModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'playbookMapModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:810;background:rgba(11,31,58,0.7);backdrop-filter:blur(5px);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;';
+      modal.addEventListener('click', e => { if (e.target === modal) closePlaybookMapModal(); });
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `<div style="background:var(--paper);border-radius:var(--r-xl);max-width:880px;width:100%;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,0.45);overflow:hidden;">
+      <div class="pjp-head" style="margin:0;"><span>🗺️</span><div style="flex:1;">خريطة المواد القضائية الأساسية<div class="pjp-sub">طبقة إرشادية لتوجيه البحث — كل نص أو رقم مادة يُسترجع من النواة القانونية فقط، ولا يُختلق</div></div>
+      <button onclick="closePlaybookMapModal()" title="إغلاق" style="background:rgba(255,255,255,0.18);border:none;color:var(--gold-pale);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0;">✕</button></div>
+      <div class="pjp-body" style="display:grid;grid-template-columns:1fr;gap:14px;">
+        <div id="pbMapList"></div>
+        <div class="lc-results" id="lcres_playbook"><div class="lc-empty">اختر مسألة قضائية ثم «بحث في النواة» لاسترجاع المواد المرتبطة من قاعدة الأنظمة.</div></div>
+      </div></div>`;
+    pbRenderMapList();
+    modal.style.display = 'flex';
+  });
+}
+function closePlaybookMapModal() { const m = document.getElementById('playbookMapModal'); if (m) m.style.display = 'none'; }
+function pbRenderMapList() {
+  const host = document.getElementById('pbMapList'); if (!host) return;
+  if (!window._playbooks.length) { host.innerHTML = '<div class="lc-empty">تعذّر تحميل خريطة المواد القضائية.</div>'; return; }
+  const cats = {};
+  window._playbooks.forEach(p => { (cats[p.category] = cats[p.category] || []).push(p); });
+  host.innerHTML = Object.keys(cats).map((cat, ci) => `
+    <div class="lc-panel ${ci === 0 ? '' : 'collapsed'}" id="pbcat_${ci}">
+      <div class="lc-head" onclick="document.getElementById('pbcat_${ci}').classList.toggle('collapsed')"><span>${esc(cat)} <span style="color:var(--ink-40);font-size:11px;">(${cats[cat].length})</span></span><span class="lc-chev">▾</span></div>
+      <div class="lc-body" style="display:flex;flex-direction:column;gap:8px;">
+        ${cats[cat].map(p => `<div class="lc-result">
+          <div class="lc-result-head"><span class="lc-law">${esc(p.title)}</span></div>
+          <div class="lc-excerpt">${esc(p.description || '')}</div>
+          <div class="lc-actions"><button class="btn btn-gold btn-sm" onclick="pbSearchPlaybook('${p.id}')">🔎 بحث في النواة</button></div>
+        </div>`).join('')}
+      </div></div>`).join('');
+}
+async function pbSearchPlaybook(id) {
+  const p = window._playbooks.find(x => x.id === id); if (!p) return;
+  const box = document.getElementById('lcres_playbook'); if (!box) return;
+  box.innerHTML = `<div class="lc-status"><div class="typing-dots"><span></span><span></span><span></span></div> بحث في النواة: ${esc(p.title)} …</div>`;
+  try {
+    let raw = [];
+    for (const sq of (p.searchQueries || [p.title]).slice(0, 3)) { try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6)); } catch (e) {} }
+    const seen = new Set();
+    raw = raw.filter(r => { const k = (r.number || '') + '|' + (r.lawName || ''); if (seen.has(k)) return false; seen.add(k); return true; }).filter(r => !lcIsAdminNoise(r)).slice(0, 8);
+    window._lcResults['playbook'] = raw;
+    if (raw.length) lcRenderResults('playbook', raw, 'article');
+    else box.innerHTML = `<div class="lc-empty">لم يتم العثور على سند نظامي مطابق في النواة القانونية الحالية.${p.caution ? '<br/><span style="color:var(--amber);">' + esc(p.caution) + '</span>' : ''}</div>`;
+  } catch (e) { box.innerHTML = `<div class="lc-empty">تعذّر الاتصال بالنواة القانونية.</div>`; }
+}
 
 // بناء واجهة لوحة بحث (slot فريد لتفادي تعارض المعرّفات)
 function lcPanelHTML(slot) {
@@ -6123,6 +6220,7 @@ function lcPanelHTML(slot) {
       <span class="lc-chev">▾</span>
     </div>
     <div class="lc-body">
+      <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="showPlaybookMapModal()">🗺️ خريطة المواد القضائية الأساسية</button>
       <div class="lc-search-row">
         <input class="finput" id="lcq_${slot}" placeholder="ابحث: تعويض، فسخ، إثبات…" onkeydown="if(event.key==='Enter'){event.preventDefault();lcRun('${slot}');}"/>
         <button class="btn btn-gold btn-sm" onclick="lcRun('${slot}')">بحث في النواة</button>
@@ -6178,12 +6276,18 @@ function lcNormalize(r) {
 }
 
 async function lcSearch(query, searchType, sourceTypes, limit = 8) {
-  const url = `${LC_ENDPOINT}?q=${encodeURIComponent(query)}&searchType=${encodeURIComponent(searchType)}&sourceTypes=${encodeURIComponent(sourceTypes)}&limit=${limit}`;
-  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  const arr = Array.isArray(data) ? data : (data.results ?? data.articles ?? data.data ?? data.items ?? []);
-  return arr.map(lcNormalize);
+  const qs = `q=${encodeURIComponent(query)}&searchType=${encodeURIComponent(searchType)}&sourceTypes=${encodeURIComponent(sourceTypes)}&limit=${limit}`;
+  // جرّب المسار العام أولاً، ثم المحمي عند الفشل
+  for (const base of [LC_ENDPOINT, LC_ENDPOINT_FALLBACK]) {
+    try {
+      const res = await fetch(`${base}?${qs}`, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : (data.results ?? data.articles ?? data.data ?? data.items ?? []);
+      return arr.map(lcNormalize);
+    } catch (e) { /* جرّب التالي */ }
+  }
+  throw new Error('تعذّر الاتصال بالنواة القانونية');
 }
 
 async function lcRun(slot) {
@@ -6379,10 +6483,20 @@ function lcRelevanceScore(r, kws) {
 }
 async function lcAutoRetrieveForCase(contextText) {
   try {
+    await pbLoad();
     const c = _activeCase;
-    const q = [c?.subject, c?.requests, contextText].filter(Boolean).join(' ').replace(/\s+/g, ' ').slice(0, 160) || 'مطالبة مالية تجارية';
-    const raw = await lcSearch(q, 'contains', 'article', 12);
+    const caseText = [c?.subject, c?.facts, c?.requests, contextText].filter(Boolean).join(' ');
+    // استعلامات موجَّهة من الـ playbooks بدل الاستعلام العشوائي بنص القضية
+    const { queries } = pbQueriesFor(caseText, 3);
     const kws = lcCaseKeywords(contextText);
+    const searchList = queries.length ? queries : [kws.slice(0, 6).join(' ') || c?.subject || 'مطالبة مالية تجارية'];
+    let raw = [];
+    for (const sq of searchList.slice(0, 5)) {
+      try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6)); } catch (e) { /* تابع */ }
+    }
+    // إزالة التكرار
+    const seenKey = new Set();
+    raw = raw.filter(r => { const k = (r.number || '') + '|' + (r.lawName || ''); if (seenKey.has(k)) return false; seenKey.add(k); return true; });
     // 1) استبعاد المواد التنظيمية غير الموضوعية  2) ترتيب بحسب الصلة  3) اعتماد المتّصل فقط
     const chosen = raw
       .filter(r => !lcIsAdminNoise(r))
@@ -6411,15 +6525,29 @@ async function lcAutoRetrieveForCase(contextText) {
 
 // اقتراح مواد للقضية الحالية من وقائعها وطلباتها
 async function lcSuggestForCase(slot) {
+  await pbLoad();
   const c = _activeCase;
-  const q = [c?.subject, c?.facts, c?.requests].filter(Boolean).join(' ').slice(0, 120) || 'مطالبة مالية تجارية';
+  const caseText = [c?.subject, c?.facts, c?.requests].filter(Boolean).join(' ');
+  const { matched, queries } = pbQueriesFor(caseText, 3);
+  const kws = lcCaseKeywords('');
+  const searchList = queries.length ? queries : [kws.slice(0, 6).join(' ') || c?.subject || 'مطالبة مالية تجارية'];
   const box = document.getElementById('lcres_' + slot);
   document.getElementById('lc_' + slot)?.classList.remove('collapsed');
   if (box) box.innerHTML = `<div class="lc-status"><div class="typing-dots"><span></span><span></span><span></span></div> جارٍ اقتراح المواد المرتبطة بالقضية…</div>`;
   try {
-    const results = await lcSearch(q, 'contains', 'article', 8);
+    let raw = [];
+    for (const sq of searchList.slice(0, 5)) { try { raw = raw.concat(await lcSearch(sq, 'contains', 'article', 6)); } catch (e) {} }
+    const seenKey = new Set();
+    let results = raw.filter(r => { const k = (r.number || '') + '|' + (r.lawName || ''); if (seenKey.has(k)) return false; seenKey.add(k); return true; })
+      .filter(r => !lcIsAdminNoise(r))
+      .map(r => ({ r, s: lcRelevanceScore(r, lcCaseKeywords('')) }))
+      .sort((a, b) => b.s - a.s).map(x => x.r).slice(0, 8);
     window._lcResults[slot] = results;
-    lcRenderResults(slot, results, 'article');
+    if (results.length) lcRenderResults(slot, results, 'article');
+    else if (box) box.innerHTML = `<div class="lc-empty">لم يتم العثور على سند نظامي مطابق في النواة القانونية الحالية.</div>`;
+    if (matched.length && box) {
+      box.insertAdjacentHTML('afterbegin', `<div style="font-size:11px;color:var(--ink-60);font-family:'Reem Kufi';margin-bottom:8px;">المسائل القضائية المطابِقة: ${matched.map(p => esc(p.title)).join(' · ')}</div>`);
+    }
   } catch (e) {
     if (box) box.innerHTML = `<div class="lc-empty">لم يتم العثور على مواد نظامية مطابقة في النواة القانونية الحالية، أو تعذّر الاتصال (${e.message}).</div>`;
   }
