@@ -6142,14 +6142,27 @@ async function pbLoad() {
   return window._playbooks;
 }
 function pbNorm(s) { return String(s || '').replace(/[ً-ْ]/g, '').replace(/[إأآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه'); }
-// مطابقة نص القضية مع أنسب playbooks بحسب تداخل الكلمات المفتاحية
+// تقطيع نص إلى كلمات دلالية (تطبيع + إزالة السوابق و/ال/ب/ك/ل + طول ≥ 3)
+function pbTokens(s) {
+  return (pbNorm(s).match(/[ء-ي]{3,}/g) || [])
+    .map(w => w.replace(/^(وال|بال|كال|فال|ال|و|ف|ب|ك|ل)/, ''))
+    .filter(w => w.length >= 3);
+}
+// مطابقة نص القضية مع أنسب playbooks بتقاطع الكلمات (لا العبارة الكاملة) — أكثر مرونة
 function pbMatch(text, max = 3) {
-  const t = pbNorm(text);
-  if (!t || !window._playbooks.length) return [];
+  if (!window._playbooks.length) return [];
+  const caseTokens = new Set(pbTokens(text));
+  if (!caseTokens.size) return [];
+  const nt = pbNorm(text);
   return window._playbooks
     .map(p => {
-      const terms = [...(p.keywords || []), p.title].map(pbNorm);
-      let s = 0; terms.forEach(k => { if (k && t.indexOf(k) !== -1) s += (k.length >= 4 ? 2 : 1); });
+      let s = 0;
+      const counted = new Set();
+      pbTokens([...(p.keywords || []), p.title].join(' ')).forEach(tok => {
+        if (!counted.has(tok) && caseTokens.has(tok)) { counted.add(tok); s += 2; }
+      });
+      // مكافأة عند ورود عبارة مفتاحية كاملة في نص القضية
+      [...(p.keywords || []), p.title].forEach(k => { const nk = pbNorm(k); if (nk.length >= 5 && nt.indexOf(nk) !== -1) s += 3; });
       return { p, s };
     })
     .filter(x => x.s > 0)
