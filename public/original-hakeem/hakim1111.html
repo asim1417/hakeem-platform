@@ -1607,6 +1607,23 @@ img, video, table { max-width: 100%; }
 /* حارس منع الاختلاق */
 .fab-warning { margin-top: 14px; background: var(--ruby-soft); border: 1px solid rgba(140,34,51,0.25); border-radius: var(--r-md); padding: 12px 16px; font-size: 12.5px; color: var(--ruby); line-height: 1.7; font-family: 'Reem Kufi'; }
 .lc-unverified { border-bottom: 1.5px dotted var(--ruby); cursor: help; }
+
+/* ============================================================
+   قائمة جانبية يمنى قابلة للطي على جميع الشاشات
+   ============================================================ */
+.sidebar { transition: transform 0.28s cubic-bezier(0.22,1,0.36,1); }
+.main { transition: margin-right 0.28s cubic-bezier(0.22,1,0.36,1); }
+/* عند الطي: تنزلق القائمة لليمين ويتمدّد المحتوى */
+.app.nav-collapsed .sidebar { transform: translateX(100%); box-shadow: none; }
+.app.nav-collapsed .main { margin-right: 0; }
+/* زر الطي ظاهر على كل الشاشات */
+.mob-toggle {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  background: var(--paper); border: 1px solid var(--ink-08);
+  border-radius: var(--r-md); cursor: pointer; color: var(--ink-60);
+  flex-shrink: 0; transition: all 0.15s;
+}
+.mob-toggle:hover { background: var(--gold-ghost); color: var(--gold); border-color: var(--gold-border); }
 </style>
 </head>
 <body>
@@ -3740,7 +3757,12 @@ document.querySelectorAll('.nav-btn[data-page]').forEach(b => {
 });
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+  // على الجوال: درج منزلق (open). على سطح المكتب: طيّ القائمة وتمديد المحتوى (nav-collapsed)
+  if (window.innerWidth <= 860) {
+    document.getElementById('sidebar').classList.toggle('open');
+  } else {
+    document.querySelector('.app').classList.toggle('nav-collapsed');
+  }
 }
 
 // Close sidebar when clicking outside
@@ -3869,6 +3891,13 @@ window.addEventListener('load', () => {
   // تركيب لوحات النواة القانونية وأقسام «المواد المستند إليها»
   lcMountAll();
   document.querySelectorAll('.legal-basis-mount').forEach(el => { if (!el.innerHTML.trim()) el.innerHTML = lcLegalBasisHTML(); });
+  // إصلاح بنيوي: إعادة تبويبَي النقض والالتماس إلى داخل قسم الاعتراض
+  // (كانا قد تسرّبا إلى <body> فيمتدّان تحت القائمة الجانبية)
+  const _appealSec = document.querySelector('section.page[data-page="appeal"]');
+  ['tabContent_naqd','tabContent_iltimas'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && _appealSec && el.parentElement !== _appealSec) _appealSec.appendChild(el);
+  });
 });
 
 // ===== AI VERDICT GENERATOR =====
@@ -3942,6 +3971,13 @@ async function generateVerdict() {
         // حدّث قسم المواد المستند إليها + بانر الحارس على صفحة الحكم
         const lbm = document.querySelector('[data-page="verdict"] .legal-basis-mount');
         if (lbm) lbm.innerHTML = lcLegalBasisHTML() + lcGuardBannerHTML(text);
+        const pjp = document.getElementById('postJudgmentPanel');
+        if (pjp) {
+          pjp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          pjp.style.transition = 'box-shadow 0.3s';
+          pjp.style.boxShadow = '0 0 0 4px var(--gold), 0 12px 40px rgba(192,155,90,0.35)';
+          setTimeout(() => { pjp.style.boxShadow = ''; }, 2800);
+        }
       }
     }, 12);
 
@@ -5649,7 +5685,7 @@ function showVerdictModal() {
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
   }
-  modal.querySelector('#verdictModalBody').value = window._lastVerdict || 'لا يوجد حكم بعد.';
+  modal.querySelector('#verdictModalBody').value = (window._lastVerdict || 'لا يوجد حكم بعد.') + lcLegalBasisText();
   modal.style.display = 'flex';
 }
 
@@ -5660,12 +5696,13 @@ function selectVerdictText() {
 
 function copyVerdictToClipboard() {
   if (!window._lastVerdict) { showToast('لا يوجد حكم بعد'); return; }
+  const full = window._lastVerdict + lcLegalBasisText();
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(window._lastVerdict)
-      .then(() => showToast('✓ تم نسخ الحكم إلى الحافظة'))
-      .catch(() => fallbackCopy(window._lastVerdict));
+    navigator.clipboard.writeText(full)
+      .then(() => showToast('✓ تم نسخ الحكم مع المواد المستند إليها'))
+      .catch(() => fallbackCopy(full));
   } else {
-    fallbackCopy(window._lastVerdict);
+    fallbackCopy(full);
   }
 }
 
@@ -6235,6 +6272,19 @@ function lcLegalBasisHTML() {
       ${(r.id && r.type !== 'judgment') ? `<a href="/dashboard/legal-core/articles/${encodeURIComponent(r.id)}" target="_blank" style="font-size:11px;color:var(--gold);">فتح المادة ↗</a>` : ''}
     </div>`).join('');
   return `<div class="legal-basis-box"><h4>📌 المواد النظامية المستند إليها</h4>${items}</div>`;
+}
+
+// نسخة نصية من «المواد المستند إليها» — تُدرَج داخل وثيقة الحكم المعروضة/المنسوخة
+function lcLegalBasisText() {
+  if (!window._lcSelected || !window._lcSelected.length) return '';
+  const lines = window._lcSelected.map(r => {
+    const head = r.type === 'judgment'
+      ? '• ' + (r.court || 'حكم') + (r.number ? ' رقم ' + r.number : '') + ' — المصدر: ' + (r._via || 'النواة القانونية')
+      : '• المادة (' + (r.number || '—') + ') من ' + r.lawName + ' — المصدر: ' + (r._via || 'النواة القانونية');
+    const body = r.text ? '\n  ' + r.text.trim() : '';
+    return head + body;
+  });
+  return '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nالمواد النظامية المستند إليها (مُسترجَعة من النواة القانونية):\n\n' + lines.join('\n\n');
 }
 
 // حارس منع الاختلاق: يفحص نص المخرج عن إشارات لمواد/أنظمة غير معتمدة من النواة
