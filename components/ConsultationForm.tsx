@@ -122,12 +122,18 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
       {error ? <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</div> : null}
 
       {result ? (
-        <section className="rounded-md border border-black/10 bg-white p-5">
-          <p className="rounded-md bg-sand p-4 text-sm leading-7 text-gray-700">{result.warning}</p>
-          <h2 className="mt-5 text-xl font-bold text-olive">نتيجة التحليل</h2>
-          <pre className="mt-3 whitespace-pre-wrap rounded-md bg-gray-50 p-4 leading-8 text-gray-700">{result.analysis}</pre>
-          <p className="mt-4 font-semibold text-olive">{result.result}</p>
-          {result.consultationId ? <p className="mt-2 text-xs text-gray-500">رقم الاستشارة: {result.consultationId}</p> : null}
+        <section className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-6 shadow-[var(--sh-xs)]">
+          <p className="rounded-[var(--r-md)] border border-[var(--amber-soft)] bg-[var(--amber-soft)] p-4 text-sm leading-7 text-[var(--amber)]">
+            {result.warning}
+          </p>
+          <h2 className="t-head mt-5 text-xl font-bold text-[var(--navy)]">نتيجة التحليل</h2>
+          <p className="mt-3 whitespace-pre-wrap rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] p-4 leading-8 text-[var(--ink-80)]">
+            {result.analysis}
+          </p>
+          <p className="mt-4 font-semibold text-[var(--navy)]">{result.result}</p>
+          {result.consultationId ? (
+            <p className="mt-2 font-mono-legal text-xs text-[var(--ink-60)]">رقم الاستشارة: {result.consultationId}</p>
+          ) : null}
 
           <div className="mt-6">
             <LegalBasisPanel

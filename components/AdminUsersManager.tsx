@@ -100,37 +100,52 @@ export function AdminUsersManager({ initialUsers }: { initialUsers: UserItem[] }
         {users.length === 0 ? (
           <LegalAlert>لا يوجد مستخدمون مسجلون حتى الآن.</LegalAlert>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-right text-sm">
-              <thead className="bg-[#F2EADB] text-[#0B1F3A]">
-                <tr>
-                  <th className="px-4 py-3">الاسم</th>
-                  <th className="px-4 py-3">البريد</th>
-                  <th className="px-4 py-3">الدور</th>
-                  <th className="px-4 py-3">الحالة</th>
-                  <th className="px-4 py-3">تاريخ الإضافة</th>
-                  <th className="px-4 py-3">إجراء</th>
+          <div className="max-h-[68vh] overflow-auto rounded-[var(--r-lg)] border border-[var(--ink-08)]">
+            <table className="w-full min-w-[820px] border-collapse text-right text-sm">
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
+                  <th>الاسم</th>
+                  <th>البريد</th>
+                  <th>الدور</th>
+                  <th>الحالة</th>
+                  <th>تاريخ الإضافة</th>
+                  <th>إجراء</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="border-t border-[#C09B5A]/15">
-                    <td className="px-4 py-3 font-semibold text-[#0B1F3A]">{user.name}</td>
-                    <td className="px-4 py-3" dir="ltr">{user.email}</td>
-                    <td className="px-4 py-3">{roleLabel(user.role)}</td>
-                    <td className="px-4 py-3">{user.status === "INACTIVE" || user.isActive === false ? "غير نشط" : "نشط"}</td>
-                    <td className="px-4 py-3">{new Date(user.createdAt).toLocaleString("ar-SA")}</td>
+                {users.map((user) => {
+                  const inactive = user.status === "INACTIVE" || user.isActive === false;
+                  return (
+                  <tr key={user.id} className="border-b border-[var(--ink-04)] transition odd:bg-white even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]">
+                    <td className="px-4 py-3 font-semibold text-[var(--navy)]">{user.name}</td>
+                    <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">{user.email}</td>
+                    <td className="px-4 py-3 text-[var(--ink-70)]">{roleLabel(user.role)}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+                        style={
+                          inactive
+                            ? { color: "var(--ruby)", background: "var(--ruby-soft)", border: "1px solid rgba(140,34,51,0.30)" }
+                            : { color: "var(--emerald)", background: "var(--emerald-soft)", border: "1px solid rgba(26,92,65,0.30)" }
+                        }
+                      >
+                        <span aria-hidden>{inactive ? "○" : "●"}</span>
+                        {inactive ? "غير نشط" : "نشط"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-60)]">{new Date(user.createdAt).toLocaleString("ar-SA")}</td>
                     <td className="px-4 py-3">
                       <NavyButton
                         type="button"
-                        onClick={() => void updateUser(user.id, { status: user.status === "INACTIVE" || user.isActive === false ? "ACTIVE" : "INACTIVE" })}
+                        onClick={() => void updateUser(user.id, { status: inactive ? "ACTIVE" : "INACTIVE" })}
                         className="px-3 py-2 text-xs"
                       >
-                        {user.status === "INACTIVE" || user.isActive === false ? "تفعيل" : "تعطيل"}
+                        {inactive ? "تفعيل" : "تعطيل"}
                       </NavyButton>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
