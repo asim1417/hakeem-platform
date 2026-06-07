@@ -3,6 +3,7 @@ import { auditEvent, recordGuardrail } from "@/lib/modules/audit/audit";
 import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
+import { resolveAiConfig } from "@/lib/modules/ai/ai-config";
 
 type AiResult = {
   requestId: string;
@@ -36,7 +37,8 @@ export type OriginalHakeemAiResult = {
 
 export async function createConsultationDraft(input: { facts: string; actorId?: string }): Promise<AiResult> {
   const requestId = randomUUID();
-  const provider = (process.env.AI_PROVIDER || "offline").toLowerCase();
+  const cfg = await resolveAiConfig();
+  const provider = cfg.provider;
   const legalContext = await buildLegalContextForAI(input.facts, { limit: 8 });
   const citationGuard = assertHasLegalArticles(legalContext.articles);
 
@@ -68,7 +70,7 @@ export async function createConsultationDraft(input: { facts: string; actorId?: 
     quote: article.articleText.slice(0, 350)
   }));
 
-  const live = provider !== "offline" ? await callLiveProvider(provider, `${input.facts}\n\n${legalContext.contextText}`, citations).catch((error) => ({ ok: false as const, text: `تعذر استدعاء مزود الذكاء الاصطناعي: ${error instanceof Error ? error.message : "خطأ غير معروف"}` })) : null;
+  const live = provider !== "offline" ? await callLiveProvider(provider, `${input.facts}\n\n${legalContext.contextText}`, citations, cfg).catch((error) => ({ ok: false as const, text: `تعذر استدعاء مزود الذكاء الاصطناعي: ${error instanceof Error ? error.message : "خطأ غير معروف"}` })) : null;
   const output = live?.ok ? sanitizeOutput(live.text, citations, legalContext.articles) : offlineOutput(input.facts, citations);
   const tokenEstimate = Math.ceil((input.facts.length + output.length + legalContext.contextText.length) / 4);
 
@@ -98,7 +100,8 @@ export async function createConsultationDraft(input: { facts: string; actorId?: 
 }
 export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInput): Promise<OriginalHakeemAiResult> {
   const requestId = randomUUID();
-  const requestedProvider = (input.provider || process.env.AI_PROVIDER || "offline").toLowerCase();
+  const cfg = await resolveAiConfig();
+  const requestedProvider = (input.provider || cfg.provider || "offline").toLowerCase();
   const provider = normalizeOriginalProvider(requestedProvider);
   const prompt = buildOriginalPrompt(input);
   const warnings = [
@@ -131,8 +134,8 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
   }
 
   try {
-    const model = resolveOriginalModel(provider, input.model);
-    const content = await callOriginalProvider(provider, model, prompt, legalContext.contextText);
+    const model = resolveOriginalModel(provider, input.model || cfg.model || undefined);
+    const content = await callOriginalProvider(provider, model, prompt, legalContext.contextText, cfg);
     const outputGuard = guardOutputAgainstUnknownArticleNumbers(content, legalContext.articles);
     const guardedContent = ensureOriginalGuardrails(outputGuard.ok ? content : outputGuard.message, legalContext.articles.length);
     await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, true, "ORIGINAL_HAKEEM_AI_COMPLETED", {
@@ -169,7 +172,7 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
   }
 }
 
-async function callLiveProvider(provider: string, facts: string, citations: AiResult["citations"]) {
+async function callLiveProvider(provider: string, facts: string, citations: AiResult["citations"], cfg?: { apiKey?: string | null; baseUrl?: string | null }) {
   const system = [
     "أنت مساعد قانوني تعليمي لمنصة حكيم.",
     "لا تستشهد إلا بالمواد المرسلة داخل قائمة citations.",
@@ -180,8 +183,8 @@ async function callLiveProvider(provider: string, facts: string, citations: AiRe
   const user = `الواقعة:\n${facts}\n\nالمواد المسموح بها فقط:\n${citations.map((item) => `- ${item.lawName}، المادة ${item.articleNumber}: ${item.quote}`).join("\n")}`;
 
   if (provider === "openai") {
-    const key = process.env.OPENAI_API_KEY;
-    if (!key) throw new Error("OPENAI_API_KEY غير مضبوط.");
+    const key = cfg?.apiKey || process.env.OPENAI_API_KEY;
+    if (!key) throw new Error("مفتاح OpenAI غير مضبوط.");
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -200,8 +203,8 @@ async function callLiveProvider(provider: string, facts: string, citations: AiRe
   }
 
   if (provider === "anthropic") {
-    const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) throw new Error("ANTHROPIC_API_KEY غير مضبوط.");
+    const key = cfg?.apiKey || process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("مفتاح Anthropic غير مضبوط.");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
@@ -253,12 +256,12 @@ function buildOriginalSystemPrompt(legalContext: string) {
   ].join("\n");
 }
 
-async function callOriginalProvider(provider: string, model: string, prompt: string, legalContext: string) {
+async function callOriginalProvider(provider: string, model: string, prompt: string, legalContext: string, cfg?: { apiKey?: string | null; baseUrl?: string | null }) {
   const system = buildOriginalSystemPrompt(legalContext);
 
   if (provider === "openai") {
-    const key = process.env.OPENAI_API_KEY;
-    if (!key) throw new Error("OPENAI_API_KEY غير مضبوط في متغيرات البيئة.");
+    const key = cfg?.apiKey || process.env.OPENAI_API_KEY;
+    if (!key) throw new Error("مفتاح OpenAI غير مضبوط.");
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -277,8 +280,8 @@ async function callOriginalProvider(provider: string, model: string, prompt: str
   }
 
   if (provider === "anthropic") {
-    const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) throw new Error("ANTHROPIC_API_KEY غير مضبوط في متغيرات البيئة.");
+    const key = cfg?.apiKey || process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("مفتاح Anthropic غير مضبوط.");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
@@ -295,8 +298,8 @@ async function callOriginalProvider(provider: string, model: string, prompt: str
   }
 
   if (provider === "gemini") {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) throw new Error("GEMINI_API_KEY غير مضبوط في متغيرات البيئة.");
+    const key = cfg?.apiKey || process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("مفتاح Gemini غير مضبوط.");
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -312,9 +315,9 @@ async function callOriginalProvider(provider: string, model: string, prompt: str
   }
 
   if (provider === "custom") {
-    const baseUrl = process.env.CUSTOM_AI_BASE_URL;
-    const key = process.env.CUSTOM_AI_API_KEY;
-    if (!baseUrl || !key) throw new Error("CUSTOM_AI_BASE_URL أو CUSTOM_AI_API_KEY غير مضبوط في متغيرات البيئة.");
+    const baseUrl = cfg?.baseUrl || process.env.CUSTOM_AI_BASE_URL;
+    const key = cfg?.apiKey || process.env.CUSTOM_AI_API_KEY;
+    if (!baseUrl || !key) throw new Error("عنوان أو مفتاح المزوّد المخصّص غير مضبوط.");
     const endpoint = `${baseUrl.replace(/\/$/, "")}/chat/completions`;
     const response = await fetch(endpoint, {
       method: "POST",

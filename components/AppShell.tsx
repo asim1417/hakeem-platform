@@ -39,6 +39,7 @@ const navSections: Array<{ items: NavItem[] }> = [
   {
     items: [
       { href: "/admin", label: "الإعدادات", icon: Settings },
+      { href: "/admin/ai", label: "إعدادات الذكاء", icon: Sparkles },
       { href: "/admin/users", label: "المستخدمون", icon: Users },
       { href: "/audit-logs", label: "سجل التدقيق", icon: FileClock }
     ]

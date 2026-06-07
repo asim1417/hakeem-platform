@@ -391,3 +391,14 @@ model AuditEvent {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+// إعدادات عامة للتطبيق (مفتاح/قيمة) — تُستخدم لإعداد الذكاء الاصطناعي مركزياً.
+// قراءتها مغلّفة بـ try/catch في الكود، فإن لم يُنشأ الجدول بعد يعود التطبيق
+// لمتغيرات البيئة دون تعطّل. التفعيل: prisma db push.
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @default(now())
+
+  @@map("app_settings")
+}
