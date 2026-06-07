@@ -28,6 +28,8 @@ export type LegalCoreResult = {
   snippet: string;
   /** عدد كلمات الاستعلام المتمايزة ذات المعنى الموجودة فعلاً في المادة (لتقدير الصلة) */
   conceptCoverage: number;
+  /** عدد عبارات الاستعلام المتجاورة (bigrams) الموجودة كعبارة متّصلة في المادة (أقوى دليل صلة) */
+  phraseMatches: number;
 };
 
 export type AdvancedLegalSearchOptions = {
@@ -92,6 +94,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const filterVariants = Array.from(new Set([...rawWords, ...variants]));
   // كلمات المفاهيم: كلمات المستخدم المتمايزة ذات المعنى (لقياس تغطية الصلة وإعادة الترتيب)
   const conceptWords = Array.from(new Set(rawWords.map(normalizeArabicText))).filter((w) => w.length >= 3);
+  // عبارات المفاهيم المتجاورة (bigrams): كل كلمتين متتاليتين ذواتي معنى في الاستعلام الأصلي،
+  // مثل «عقد العمل» و«حقوق العامل» — وجودها كعبارة متّصلة دليل صلة قوي جداً.
+  const conceptBigrams = buildConceptBigrams(query);
 
   const where: Record<string, unknown> = {
     AND: [
@@ -116,7 +121,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   ]);
 
   const scored = candidates
-    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords))
+    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams))
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   // عند وجود استعلام: نُبقي فقط النتائج ذات الصلة الحقيقية (تطابق مصطلح ذي معنى)؛
@@ -128,9 +133,15 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // مفهومين متمايزين على الأقل، فتُستبعد المطابقات أحادية المفهوم الشائع غير ذات الصلة.
   if (query && options.requireConceptCoverage && conceptWords.length >= 3) {
     const required = Math.min(2, conceptWords.length);
-    const covered = relevant.filter((result) => result.conceptCoverage >= required);
-    // لا نُفرغ النتائج تماماً: إن أزال الفلتر كل شيء نُبقي الترتيب الأصلي (الأعلى صلة)
-    if (covered.length) relevant = covered;
+    // أفضلية قصوى للمواد التي تطابق عبارة متجاورة (أقوى دليل صلة)؛
+    const phraseHits = relevant.filter((result) => result.phraseMatches > 0);
+    if (phraseHits.length) {
+      relevant = phraseHits;
+    } else {
+      const covered = relevant.filter((result) => result.conceptCoverage >= required);
+      // لا نُفرغ النتائج تماماً: إن أزال الفلتر كل شيء نُبقي الترتيب الأصلي (الأعلى صلة)
+      if (covered.length) relevant = covered;
+    }
   }
 
   const effectiveTotal = query ? relevant.length : total;
@@ -178,6 +189,21 @@ const ARABIC_STOPWORDS = new Set<string>([
   "شركة","مؤسسة","المدعي","المدعى","المدعية","الدعوى","القضية",
   "ريال","ريالا","ريالاً","مبلغ","الحكم","الدائرة","طلب","طلبات","وكيل","ممثل","وهي","وعليه","فيها","عنها"
 ].map(normalizeArabicText));
+
+// يبني عبارات متجاورة (bigrams) من كل كلمتين متتاليتين ذواتي معنى في الاستعلام الأصلي.
+// يحترم الترتيب والتجاور: «حقوق العامل»، «عقد العمل» — ويتخطّى ما يفصله حرف وقف.
+function buildConceptBigrams(query: string): string[] {
+  const words = (query ?? "").split(/\s+/).map((w) => w.trim()).filter(Boolean);
+  const bigrams: string[] = [];
+  for (let i = 0; i < words.length - 1; i += 1) {
+    const a = normalizeArabicText(words[i]);
+    const b = normalizeArabicText(words[i + 1]);
+    if (a.length < 3 || b.length < 3) continue;
+    if (ARABIC_STOPWORDS.has(a) || ARABIC_STOPWORDS.has(b)) continue;
+    bigrams.push(`${a} ${b}`);
+  }
+  return Array.from(new Set(bigrams));
+}
 
 function filterMeaningfulVariants(variants: string[]): string[] {
   const meaningful = variants.filter((variant) => {
@@ -340,7 +366,8 @@ function mapArticleResult(
   searchType: ArabicSearchType,
   normalizedVariants: string[],
   options: AdvancedLegalSearchOptions,
-  conceptWords: string[] = []
+  conceptWords: string[] = [],
+  conceptBigrams: string[] = []
 ): LegalCoreResult {
   const systemName = article.legalSystem?.name ?? article.lawName;
   const haystack = [article.lawName, article.title, article.content, article.classification, article.chapter, article.keywords.join(" ")].filter(Boolean).join("\n");
@@ -350,9 +377,14 @@ function mapArticleResult(
   const snippet = options.includeSnippets === false ? article.content.slice(0, 450) : buildSnippet(article.content, matchedTerms[0] ?? query);
   // تغطية المفاهيم: كم كلمة من كلمات المستخدم المتمايزة وردت فعلاً في المادة
   const conceptCoverage = conceptWords.filter((w) => normalizedHaystack.includes(w)).length;
-  // المكافأة: ترفع ترتيب المواد التي تغطي مفاهيم أكثر (عامة وآمنة — لا تحذف نتائج).
-  // وزن تصاعدي يكافئ التغطية الكاملة بقوة فيتفوّق التطابق متعدد المفاهيم على الأحادي.
-  const coverageBonus = conceptCoverage * 14 + (conceptWords.length >= 2 && conceptCoverage >= conceptWords.length ? 20 : 0);
+  // مطابقة العبارات المتجاورة: أقوى دليل صلة (عبارة قانونية متّصلة لا كلمات متناثرة)
+  const phraseMatches = conceptBigrams.filter((bg) => normalizedHaystack.includes(bg)).length;
+  // المكافأة: ترفع ترتيب المواد التي تغطي مفاهيم أكثر وتطابق عبارات متّصلة
+  // (عامة وآمنة — لا تحذف نتائج). أوزان تصاعدية تكافئ العبارة بقوة.
+  const coverageBonus =
+    conceptCoverage * 14 +
+    (conceptWords.length >= 2 && conceptCoverage >= conceptWords.length ? 20 : 0) +
+    phraseMatches * 40;
   const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus;
 
   return {
@@ -372,7 +404,8 @@ function mapArticleResult(
     matchedParagraphs,
     matchType: query ? searchType : "general",
     snippet,
-    conceptCoverage
+    conceptCoverage,
+    phraseMatches
   };
 }
 
