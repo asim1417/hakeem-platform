@@ -28,7 +28,8 @@ export function HomeHero() {
       // بحث عام بلا تسجيل دخول — صفحة /search خارج /dashboard
       router.push(q ? `/search?q=${encoded}` : "/search");
     } else {
-      router.push(q ? `/dashboard/consultations?facts=${encoded}` : "/dashboard/consultations");
+      // «اسأل حكيم» → الوكيل القانوني الشفّاف (خلف الدخول)
+      router.push(q ? `/dashboard/ask?q=${encoded}` : "/dashboard/ask");
     }
   }
 

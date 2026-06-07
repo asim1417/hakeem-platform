@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, Database, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Users } from "lucide-react";
+import { Briefcase, Database, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -25,7 +25,10 @@ const navSections: Array<{ items: NavItem[] }> = [
     ]
   },
   {
-    items: [{ href: "/dashboard/simulations", label: "القاضي التفاعلي", icon: Scale, active: true }]
+    items: [
+      { href: "/dashboard/ask", label: "اسأل حكيم", icon: Sparkles },
+      { href: "/dashboard/simulations", label: "القاضي التفاعلي", icon: Scale, active: true }
+    ]
   },
   {
     items: [
