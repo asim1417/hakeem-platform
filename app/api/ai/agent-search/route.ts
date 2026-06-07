@@ -13,6 +13,7 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { searchLegalCore, getArticlesByNumber } from "@/lib/modules/legal-core/legal-retrieval";
+import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -106,23 +107,71 @@ export async function POST(request: NextRequest) {
           data: { verifiedArticles: articles.length, verifiedByNumber }
         });
 
-        // 5) النتيجة المستندة (المرحلة 1: سند موثّق بلا صياغة AI)
-        const basis = articles.map((a) => ({
-          systemName: a.systemName,
-          articleNumber: a.articleNumber,
-          articleTitle: a.articleTitle,
-          quote: a.snippet,
+        // 5) الصياغة المستندة (المرحلة 3) — إجابة تُركّب حصراً من مواد النواة
+        //    عبر ai-gateway مع حارس «لا استشهاد إلا بالمواد المرسلة» ومنع أرقام غير موجودة.
+        send({ type: "step", id: "synthesize", status: "running", label: "أصوغ إجابة مستندة للمواد فقط" });
+        const draft = await createConsultationDraft({ facts: query, actorId: user.id }).catch(() => null);
+
+        if (!draft || draft.blocked) {
+          // لا سند كافٍ → لا صياغة، حالة صادقة بلا اختراع
+          send({
+            type: "step",
+            id: "synthesize",
+            status: "done",
+            label: "لا يوجد سند نظامي كافٍ للصياغة",
+            data: { blocked: true }
+          });
+          // نعرض ما استُرجع (إن وُجد) كسند خام دون إجابة مولّدة
+          const rawBasis = articles.map((a) => ({
+            systemName: a.systemName,
+            articleNumber: a.articleNumber,
+            articleTitle: a.articleTitle,
+            quote: a.snippet,
+            state: "official" as const,
+            internalUrl: a.internalUrl
+          }));
+          send({
+            type: "result",
+            answer: null,
+            mode: draft?.mode ?? "offline",
+            basis: rawBasis,
+            total: response.total,
+            message: rawBasis.length
+              ? "تعذّرت الصياغة المستندة؛ إليك المواد ذات الصلة من النواة."
+              : "لا يوجد سند نظامي كافٍ مطابق في النواة القانونية الحالية. جرّب إعادة صياغة السؤال."
+          });
+          send({ type: "done" });
+          return;
+        }
+
+        send({
+          type: "step",
+          id: "synthesize",
+          status: "done",
+          label: "صغت الإجابة مستندة للمواد الموثّقة",
+          data: { mode: draft.mode, citations: draft.citations.length }
+        });
+
+        // 6) فحص مكافحة التلفيق (مطبَّق داخل البوابة) — نعرضه كخطوة شفّافة
+        send({ type: "step", id: "guard", status: "done", label: "فحصت المخرج ضد التلفيق", data: { sourceOfTruth: "legal_core.legal_articles" } });
+
+        const basis = draft.citations.map((c) => ({
+          systemName: c.lawName,
+          articleNumber: c.articleNumber,
+          articleTitle: undefined as string | undefined,
+          quote: c.quote,
           state: "official" as const,
-          internalUrl: a.internalUrl
+          internalUrl: `/dashboard/legal-core/articles/${c.articleId}`
         }));
+
         send({
           type: "result",
+          answer: draft.output,
+          mode: draft.mode, // "live" (صياغة ذكية فعلية) أو "offline" (صياغة تدريبية مُركّبة)
           basis,
           total: response.total,
           relatedTerms: detailed ? response.relatedTerms ?? [] : [],
-          message: articles.length
-            ? undefined
-            : "لا يوجد سند نظامي كافٍ مطابق في النواة القانونية الحالية. جرّب إعادة صياغة السؤال."
+          message: undefined
         });
         send({ type: "done" });
       } catch (error) {

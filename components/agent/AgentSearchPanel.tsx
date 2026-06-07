@@ -9,6 +9,8 @@ type Step = { id: string; status: StepStatus; label: string; data?: any };
 type Turn = {
   question: string;
   steps: Step[];
+  answer: string | null;
+  mode?: "live" | "offline";
   basis: LegalBasisItem[] | null;
   total: number;
   message?: string;
@@ -40,7 +42,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
     setValue("");
     setTurns((prev) => [
       ...prev,
-      { question, steps: [], basis: null, total: 0, streaming: true, showMethod: true }
+      { question, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
     ]);
 
     try {
@@ -88,6 +90,8 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
           } else if (evt.type === "result") {
             patchLastTurn((t) => ({
               ...t,
+              answer: typeof evt.answer === "string" ? evt.answer : null,
+              mode: evt.mode,
               basis: (evt.basis ?? []) as LegalBasisItem[],
               total: evt.total ?? 0,
               message: evt.message
@@ -192,12 +196,34 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                   </div>
                 ) : null}
 
+                {/* الإجابة المُصاغة المستندة */}
+                {turn.answer ? (
+                  <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)]">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
+                      <span className="text-sm font-bold text-[var(--navy)]">إجابة حكيم</span>
+                      <span
+                        className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                        style={
+                          turn.mode === "live"
+                            ? { color: "var(--emerald)", background: "var(--emerald-soft)" }
+                            : { color: "var(--amber)", background: "var(--amber-soft)" }
+                        }
+                        title={turn.mode === "live" ? "صياغة ذكية مستندة للمواد" : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"}
+                      >
+                        {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
+                  </div>
+                ) : null}
+
                 {turn.basis !== null ? (
                   turn.basis.length ? (
                     <LegalBasisPanel
                       items={turn.basis}
                       title="الأساس النظامي من النواة"
-                      note={`عُثر على ${turn.total.toLocaleString("ar-SA")} نتيجة — تُعرض المواد الأوثق صلة. (المرحلة 1: استرجاع موثّق دون صياغة ذكية بعد.)`}
+                      note={`المواد التي استندت إليها الإجابة — كلٌّ منها قائم فعلاً في النواة القانونية (إجمالي ${turn.total.toLocaleString("ar-SA")} نتيجة بحث).`}
                     />
                   ) : (
                     <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">
