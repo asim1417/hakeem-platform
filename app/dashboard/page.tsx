@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen, Briefcase, GraduationCap, Paperclip, Scale, ShieldCheck, Users } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
@@ -100,8 +101,8 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <StatCard label="الأنظمة القانونية" value={stats.legalSystems} />
-          <StatCard label="المواد النظامية" value={stats.legalArticles} />
+          <StatCard label="الأنظمة القانونية" value={stats.legalSystems} href="/dashboard/legal-core/systems" />
+          <StatCard label="المواد النظامية" value={stats.legalArticles} href="/dashboard/legal-core/search" />
           <StatCard label="الاستشارات" value={stats.consultations} />
           <StatCard label="جلسات المحاكاة" value={stats.simulations} />
           <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
@@ -238,13 +239,21 @@ function roleLabel(role: string) {
   return labels[role] ?? role;
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-black/10 bg-white p-4">
+function StatCard({ label, value, href }: { label: string; value: number; href?: string }) {
+  const inner = (
+    <>
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-2 text-3xl font-bold text-olive">{value.toLocaleString("ar-SA")}</p>
-    </div>
+    </>
   );
+  if (href) {
+    return (
+      <Link href={href} className="block rounded-md border border-black/10 bg-white p-4 transition hover:border-olive/40 hover:shadow-sm">
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="rounded-md border border-black/10 bg-white p-4">{inner}</div>;
 }
 
 function RecentList({
