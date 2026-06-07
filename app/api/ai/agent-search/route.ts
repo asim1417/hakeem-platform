@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
           includeSnippets: true,
           includeMatchedParagraphs: false,
           includeRelatedTerms: detailed,
-          requireConceptCoverage: true
+          requireConceptCoverage: true,
+          semantic: true
         });
         send({ type: "step", id: "search", status: "done", label: "بحثت في النواة القانونية", data: { total: response.total } });
 

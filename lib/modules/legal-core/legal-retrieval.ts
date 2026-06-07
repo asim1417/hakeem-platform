@@ -6,6 +6,7 @@ import {
   getArabicStem,
   normalizeArabicText
 } from "./arabic-morphology";
+import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -50,6 +51,11 @@ export type AdvancedLegalSearchOptions = {
    * اختياري (افتراضي معطّل) كي لا يتأثر البحث المفرد القائم في الواجهات الأخرى.
    */
   requireConceptCoverage?: boolean;
+  /**
+   * يفعّل إعادة الترتيب الدلالي (Embeddings) لأعلى المرشّحين: يطابق المعنى لا الحروف
+   * فيتجاوز اختلاف الصرف والمرادفات. سقوط آمن للترتيب المعجمي عند غياب المفتاح/المتجهات.
+   */
+  semantic?: boolean;
 };
 
 export type AdvancedLegalSearchResponse = {
@@ -144,6 +150,11 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     }
   }
 
+  // إعادة ترتيب دلالي (اختياري) لأعلى المرشّحين — يطابق المعنى لا الحروف.
+  if (query && options.semantic) {
+    relevant = await applySemanticRerank(query, relevant).catch(() => relevant);
+  }
+
   const effectiveTotal = query ? relevant.length : total;
   const start = (page - 1) * limit;
   const results = relevant.slice(start, start + limit);
@@ -158,6 +169,36 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     results,
     message: effectiveTotal ? undefined : noLegalArticleMessage
   };
+}
+
+/**
+ * إعادة ترتيب أعلى المرشّحين المعجميين بالتشابه الدلالي (cosine) مع متجه الاستعلام.
+ * سقوط آمن في كل خطوة: غياب التفعيل/المفتاح/المتجهات → يُعاد الترتيب المعجمي كما هو.
+ */
+async function applySemanticRerank(query: string, results: LegalCoreResult[]): Promise<LegalCoreResult[]> {
+  if (!semanticSearchEnabled() || results.length < 2) return results;
+  const queryVec = await embedText(query);
+  if (!queryVec) return results;
+
+  const POOL = 80; // نعيد ترتيب أعلى 80 فقط (حدّ التكلفة)؛ الباقي يبقى بترتيبه
+  const pool = results.slice(0, POOL);
+  const rest = results.slice(POOL);
+
+  const rows = await prisma.legalArticle.findMany({
+    where: { id: { in: pool.map((r) => r.articleId) } },
+    select: { id: true, embedding: true }
+  });
+  const vecById = new Map<string, number[]>();
+  for (const row of rows) {
+    const v = parseStoredEmbedding(row.embedding);
+    if (v) vecById.set(row.id, v);
+  }
+  if (vecById.size === 0) return results; // لا متجهات بعد (لم يُشغّل الـ backfill) → معجمي
+
+  const scored = pool.map((r) => ({ r, sim: vecById.has(r.articleId) ? cosineSimilarity(queryVec, vecById.get(r.articleId)!) : -1 }));
+  const withVec = scored.filter((s) => s.sim >= 0).sort((a, b) => b.sim - a.sim).map((s) => s.r);
+  const withoutVec = scored.filter((s) => s.sim < 0).map((s) => s.r);
+  return [...withVec, ...withoutVec, ...rest];
 }
 
 // بحث مباشر بالرقم للتحقق من وجود مادة مذكورة في الحكم (دقيق — لا يعتمد المطابقة النصية).
@@ -216,7 +257,7 @@ function filterMeaningfulVariants(variants: string[]): string[] {
   return meaningful.length ? meaningful : variants;
 }
 
-export async function findRelevantLegalArticles(query: string, options: { systemId?: string; category?: string; topic?: string; limit?: number; requireConceptCoverage?: boolean } = {}): Promise<LegalCoreResult[]> {
+export async function findRelevantLegalArticles(query: string, options: { systemId?: string; category?: string; topic?: string; limit?: number; requireConceptCoverage?: boolean; semantic?: boolean } = {}): Promise<LegalCoreResult[]> {
   const response = await searchLegalCore({
     query: [query, options.topic].filter(Boolean).join(" "),
     systemIds: options.systemId ? [options.systemId] : undefined,
@@ -226,7 +267,8 @@ export async function findRelevantLegalArticles(query: string, options: { system
     includeMatchedParagraphs: true,
     includeSnippets: true,
     includeRelatedTerms: true,
-    requireConceptCoverage: options.requireConceptCoverage
+    requireConceptCoverage: options.requireConceptCoverage,
+    semantic: options.semantic
   });
 
   return response.results;
@@ -261,8 +303,8 @@ export async function getArticleFullContext(articleId: string) {
 }
 
 export async function buildLegalContextForAI(query: string, options: { limit?: number } = {}) {
-  // مسار الذكاء: نُلزم بتغطية المفاهيم لمنع تسرّب مواد غير ذات صلة إلى الصياغة
-  const articles = await findRelevantLegalArticles(query, { limit: options.limit ?? 8, requireConceptCoverage: true });
+  // مسار الذكاء: نُلزم بتغطية المفاهيم + إعادة ترتيب دلالي (عند التفعيل) لمنع تسرّب مواد غير ذات صلة
+  const articles = await findRelevantLegalArticles(query, { limit: options.limit ?? 8, requireConceptCoverage: true, semantic: true });
   if (articles.length === 0) {
     return {
       hasArticles: false,
