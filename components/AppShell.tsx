@@ -24,7 +24,7 @@ const navSections: Array<{ items: NavItem[] }> = [
     ]
   },
   {
-    items: [{ href: "/dashboard/simulations", label: "القاضي الافتراضي", icon: Scale, active: true }]
+    items: [{ href: "/dashboard/simulations", label: "القاضي التفاعلي", icon: Scale, active: true }]
   },
   {
     items: [

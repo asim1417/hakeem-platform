@@ -11,10 +11,10 @@ export default async function SimulationsPage() {
       <section className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-4 shadow-[var(--sh-xs)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="t-head text-sm font-semibold text-[var(--gold-dark)]">النسخة الأصلية التفاعلية</p>
-            <h1 className="t-head mt-1 text-2xl font-bold text-[var(--navy)]">القاضي حكيم</h1>
+            <p className="t-head text-sm font-semibold text-[var(--gold-dark)]">منصة حكيم</p>
+            <h1 className="t-head mt-1 text-2xl font-bold text-[var(--navy)]">القاضي التفاعلي</h1>
             <p className="mt-1 max-w-3xl text-sm leading-7 text-[var(--ink-60)]">
-              تجربة حكيم الأصلية للمحاكاة القضائية وتوليد مسودات الأحكام، مع عرضها داخل المنصة كواجهة القاضي الأساسية.
+              القاضي التفاعلي لحكيم: قاعة مرافعة افتراضية، توليد أحكام مسبَّبة مستندة إلى النواة القانونية، وطرق الاعتراض (استئناف/نقض/التماس) — مدمج في أصل المنصة.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -22,13 +22,10 @@ export default async function SimulationsPage() {
               المستخدم الحالي: {user.name} · {user.role}
             </span>
             <a className="btn btn-gold" href="/original-hakeem/hakim1111.html" target="_blank" rel="noreferrer">
-              فتح النسخة الأصلية في تبويب مستقل
+              فتح في تبويب مستقل
             </a>
             <Link className="btn btn-outline" href="/dashboard">
               العودة للوحة التحكم
-            </Link>
-            <Link className="btn btn-outline" href="/dashboard/simulations/modern">
-              الواجهة الحديثة التجريبية
             </Link>
           </div>
         </div>
@@ -40,7 +37,7 @@ export default async function SimulationsPage() {
 
       <section className="min-h-[760px] flex-1 overflow-hidden rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-white shadow-[var(--sh-sm)]">
         <iframe
-          title="القاضي حكيم - النسخة الأصلية"
+          title="القاضي التفاعلي — حكيم"
           src="/original-hakeem/hakim1111.html"
           className="h-[82vh] min-h-[760px] w-full border-0 bg-white"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"

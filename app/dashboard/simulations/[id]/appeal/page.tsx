@@ -55,7 +55,7 @@ function PostJudgmentLayout({
         <h1 className="mt-2 font-judicial text-4xl font-bold">{title}</h1>
         <p className="mt-3 text-sm leading-7 text-white/75">{sessionTitle} | رقم الجلسة: {sessionId}</p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link className="btn btn-gold" href="/dashboard/simulations/modern">العودة إلى القاضي حكيم</Link>
+          <Link className="btn btn-gold" href="/dashboard/simulations">العودة إلى القاضي حكيم</Link>
           <Link className="btn ho-hero-outline" href={`/api/simulations/${sessionId}/export?type=judgment&format=docx`}>تصدير الحكم DOCX</Link>
           <Link className="btn ho-hero-outline" href={`/api/simulations/${sessionId}/export?type=judgment&format=pdf`}>تصدير الحكم PDF</Link>
         </div>

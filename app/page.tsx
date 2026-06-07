@@ -4,7 +4,7 @@ const links = [
   { href: "/dashboard", label: "لوحة التحكم" },
   { href: "/dashboard/library", label: "المكتبة النظامية" },
   { href: "/dashboard/consultations", label: "الاستشارات" },
-  { href: "/dashboard/simulations", label: "المحاكاة" },
+  { href: "/dashboard/simulations", label: "القاضي التفاعلي" },
   { href: "/dashboard/training", label: "التدريب" }
 ];
 
