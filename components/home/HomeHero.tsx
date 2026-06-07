@@ -25,7 +25,8 @@ export function HomeHero() {
     const q = (query ?? value).trim();
     const encoded = encodeURIComponent(q);
     if (mode === "search") {
-      router.push(q ? `/dashboard/legal-core/search?q=${encoded}` : "/dashboard/legal-core/search");
+      // بحث عام بلا تسجيل دخول — صفحة /search خارج /dashboard
+      router.push(q ? `/search?q=${encoded}` : "/search");
     } else {
       router.push(q ? `/dashboard/consultations?facts=${encoded}` : "/dashboard/consultations");
     }
