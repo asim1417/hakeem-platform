@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
           limit,
           includeSnippets: true,
           includeMatchedParagraphs: false,
-          includeRelatedTerms: detailed
+          includeRelatedTerms: detailed,
+          requireConceptCoverage: true
         });
         send({ type: "step", id: "search", status: "done", label: "بحثت في النواة القانونية", data: { total: response.total } });
 

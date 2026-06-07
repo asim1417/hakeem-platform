@@ -26,6 +26,8 @@ export type LegalCoreResult = {
   matchedParagraphs: string[];
   matchType: ArabicSearchType | "general";
   snippet: string;
+  /** عدد كلمات الاستعلام المتمايزة ذات المعنى الموجودة فعلاً في المادة (لتقدير الصلة) */
+  conceptCoverage: number;
 };
 
 export type AdvancedLegalSearchOptions = {
@@ -40,6 +42,12 @@ export type AdvancedLegalSearchOptions = {
   includeSnippets?: boolean;
   includeMatchedParagraphs?: boolean;
   includeRelatedTerms?: boolean;
+  /**
+   * يُلزم بتغطية مفاهيم متعددة للأسئلة الطبيعية متعددة الكلمات:
+   * يستبعد المواد التي تطابق مفهوماً واحداً شائعاً فقط (مثل «العمل» في مادة تعدين).
+   * اختياري (افتراضي معطّل) كي لا يتأثر البحث المفرد القائم في الواجهات الأخرى.
+   */
+  requireConceptCoverage?: boolean;
 };
 
 export type AdvancedLegalSearchResponse = {
@@ -82,6 +90,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     .filter((word) => word.length >= 3 && !ARABIC_STOPWORDS.has(normalizeArabicText(word)));
   // مُرشِّح قاعدة البيانات يبحث بالصيغتين: المُطبَّعة + الخام
   const filterVariants = Array.from(new Set([...rawWords, ...variants]));
+  // كلمات المفاهيم: كلمات المستخدم المتمايزة ذات المعنى (لقياس تغطية الصلة وإعادة الترتيب)
+  const conceptWords = Array.from(new Set(rawWords.map(normalizeArabicText))).filter((w) => w.length >= 3);
 
   const where: Record<string, unknown> = {
     AND: [
@@ -106,13 +116,22 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   ]);
 
   const scored = candidates
-    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options))
+    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords))
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   // عند وجود استعلام: نُبقي فقط النتائج ذات الصلة الحقيقية (تطابق مصطلح ذي معنى)؛
   // وإلا نعيد رسالة عدم العثور بدل عرض مواد عشوائية.
   const MIN_RELEVANCE = 12;
-  const relevant = query ? scored.filter((result) => result.relevanceScore >= MIN_RELEVANCE) : scored;
+  let relevant = query ? scored.filter((result) => result.relevanceScore >= MIN_RELEVANCE) : scored;
+
+  // فلتر تغطية المفاهيم (اختياري): للأسئلة الطبيعية متعددة الكلمات نشترط تطابق
+  // مفهومين متمايزين على الأقل، فتُستبعد المطابقات أحادية المفهوم الشائع غير ذات الصلة.
+  if (query && options.requireConceptCoverage && conceptWords.length >= 3) {
+    const required = Math.min(2, conceptWords.length);
+    const covered = relevant.filter((result) => result.conceptCoverage >= required);
+    // لا نُفرغ النتائج تماماً: إن أزال الفلتر كل شيء نُبقي الترتيب الأصلي (الأعلى صلة)
+    if (covered.length) relevant = covered;
+  }
 
   const effectiveTotal = query ? relevant.length : total;
   const start = (page - 1) * limit;
@@ -171,7 +190,7 @@ function filterMeaningfulVariants(variants: string[]): string[] {
   return meaningful.length ? meaningful : variants;
 }
 
-export async function findRelevantLegalArticles(query: string, options: { systemId?: string; category?: string; topic?: string; limit?: number } = {}): Promise<LegalCoreResult[]> {
+export async function findRelevantLegalArticles(query: string, options: { systemId?: string; category?: string; topic?: string; limit?: number; requireConceptCoverage?: boolean } = {}): Promise<LegalCoreResult[]> {
   const response = await searchLegalCore({
     query: [query, options.topic].filter(Boolean).join(" "),
     systemIds: options.systemId ? [options.systemId] : undefined,
@@ -180,7 +199,8 @@ export async function findRelevantLegalArticles(query: string, options: { system
     limit: options.limit ?? 8,
     includeMatchedParagraphs: true,
     includeSnippets: true,
-    includeRelatedTerms: true
+    includeRelatedTerms: true,
+    requireConceptCoverage: options.requireConceptCoverage
   });
 
   return response.results;
@@ -215,7 +235,8 @@ export async function getArticleFullContext(articleId: string) {
 }
 
 export async function buildLegalContextForAI(query: string, options: { limit?: number } = {}) {
-  const articles = await findRelevantLegalArticles(query, { limit: options.limit ?? 8 });
+  // مسار الذكاء: نُلزم بتغطية المفاهيم لمنع تسرّب مواد غير ذات صلة إلى الصياغة
+  const articles = await findRelevantLegalArticles(query, { limit: options.limit ?? 8, requireConceptCoverage: true });
   if (articles.length === 0) {
     return {
       hasArticles: false,
@@ -318,7 +339,8 @@ function mapArticleResult(
   query: string,
   searchType: ArabicSearchType,
   normalizedVariants: string[],
-  options: AdvancedLegalSearchOptions
+  options: AdvancedLegalSearchOptions,
+  conceptWords: string[] = []
 ): LegalCoreResult {
   const systemName = article.legalSystem?.name ?? article.lawName;
   const haystack = [article.lawName, article.title, article.content, article.classification, article.chapter, article.keywords.join(" ")].filter(Boolean).join("\n");
@@ -326,7 +348,12 @@ function mapArticleResult(
   const matchedTerms = normalizedVariants.filter((term) => term.length > 1 && normalizedHaystack.includes(term)).slice(0, 20);
   const matchedParagraphs = options.includeMatchedParagraphs ? extractMatchedParagraphs(article.content, matchedTerms.length ? matchedTerms : [query]) : [];
   const snippet = options.includeSnippets === false ? article.content.slice(0, 450) : buildSnippet(article.content, matchedTerms[0] ?? query);
-  const relevanceScore = scoreArticle(haystack, matchedTerms, query);
+  // تغطية المفاهيم: كم كلمة من كلمات المستخدم المتمايزة وردت فعلاً في المادة
+  const conceptCoverage = conceptWords.filter((w) => normalizedHaystack.includes(w)).length;
+  // المكافأة: ترفع ترتيب المواد التي تغطي مفاهيم أكثر (عامة وآمنة — لا تحذف نتائج).
+  // وزن تصاعدي يكافئ التغطية الكاملة بقوة فيتفوّق التطابق متعدد المفاهيم على الأحادي.
+  const coverageBonus = conceptCoverage * 14 + (conceptWords.length >= 2 && conceptCoverage >= conceptWords.length ? 20 : 0);
+  const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus;
 
   return {
     articleId: article.id,
@@ -344,7 +371,8 @@ function mapArticleResult(
     matchedTerms,
     matchedParagraphs,
     matchType: query ? searchType : "general",
-    snippet
+    snippet,
+    conceptCoverage
   };
 }
 
