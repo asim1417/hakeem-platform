@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createOriginalHakeemAiResponse } from "@/lib/modules/ai/ai-gateway";
+import { createOriginalHakeemAiResponse, callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +14,13 @@ const requestSchema = z.object({
   provider: z.enum(["openai", "anthropic", "gemini", "custom", "offline"]).optional(),
   model: z.string().trim().max(120).optional(),
   messages: z.array(messageSchema).optional(),
-  prompt: z.string().trim().max(12000).optional(),
+  prompt: z.string().trim().max(20000).optional(),
   module: z.string().optional(),
-  context: z.record(z.unknown()).optional()
+  context: z.record(z.unknown()).optional(),
+  // وضع التمرير الأمين: يستخدمه القاضي التفاعلي بنصوصه الخاصة عبر المفتاح المركزي
+  raw: z.boolean().optional(),
+  systemPrompt: z.string().max(20000).optional(),
+  maxTokens: z.number().int().min(1).max(4096).optional()
 });
 
 export async function POST(request: NextRequest) {
@@ -32,6 +36,22 @@ export async function POST(request: NextRequest) {
       },
       { status: 400 }
     );
+  }
+
+  // وضع التمرير الأمين للقاضي التفاعلي: نصوصه الخاصة + المفتاح المركزي
+  if (parsed.data.raw) {
+    const raw = await callCentralProvider({
+      systemPrompt: parsed.data.systemPrompt,
+      userPrompt: parsed.data.prompt ?? "",
+      maxTokens: parsed.data.maxTokens
+    });
+    if (!raw.ok) {
+      return NextResponse.json(
+        { ok: false, mode: raw.mode, provider: raw.provider, error: raw.mode === "offline" ? "لا مزوّد ذكاء مركزي مفعّل." : "تعذّر الاتصال بالمزوّد المركزي." },
+        { status: raw.mode === "offline" ? 409 : 502 }
+      );
+    }
+    return NextResponse.json({ ok: true, mode: raw.mode, provider: raw.provider, content: raw.content });
   }
 
   const result = await createOriginalHakeemAiResponse({

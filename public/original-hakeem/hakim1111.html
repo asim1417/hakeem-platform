@@ -4311,7 +4311,30 @@ async function extractTextFromResponse(type, resp) {
 // Mode 1: Inside Claude.ai → use built-in Anthropic proxy (no key needed)
 // Mode 2: User has a provider set → use their provider + key
 
+// البوابة الخادمية المركزية: تستخدم مفتاح إعدادات الموقع (المشفّر في القاعدة/البيئة)
+// مع نصوص القاضي نفسها — فلا حاجة لإدخال مفتاح في المتصفح. تُعطّل تلقائياً إن لم
+// تكن مفعّلة أو غير مصرّح بها (دخول مطلوب) فيعود القاضي لسلوكه الحالي.
+let _serverGatewayOff = false;
+async function callServerGateway(userPrompt, systemPrompt, maxTokens) {
+  if (_serverGatewayOff) return null;
+  try {
+    const resp = await fetch('/api/original-hakeem/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw: true, systemPrompt: systemPrompt || '', prompt: String(userPrompt), maxTokens: Math.min(maxTokens || 1000, 4096) })
+    });
+    if (resp.status === 401 || resp.status === 403 || resp.status === 409) { _serverGatewayOff = true; return null; }
+    if (!resp.ok) return null;
+    const data = await resp.json().catch(() => null);
+    return (data && data.ok && data.content) ? data.content : null;
+  } catch (e) { return null; }
+}
+
 async function callJudge(userPrompt, systemPrompt, maxTokens = 1000) {
+  // أولاً: الإعداد المركزي عبر البوابة الخادمية (مفتاح الموقع) — الأكثر أماناً
+  const central = await callServerGateway(userPrompt, systemPrompt, maxTokens);
+  if (central) return central;
+
   const provider = getActiveProvider();
 
   // MODE 1: No user provider → use Claude.ai's built-in Anthropic proxy
