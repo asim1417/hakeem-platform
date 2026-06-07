@@ -87,10 +87,10 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <header className="rounded-md bg-olive px-6 py-7 text-white">
-        <p className="text-sm text-white/75">MVP المرحلة الأولى</p>
-        <h1 className="mt-2 text-3xl font-bold">لوحة حكيم</h1>
-        <p className="mt-3 max-w-3xl leading-8 text-white/80">
+      <header className="hero">
+        <p className="text-sm text-[var(--gold-pale)]">منصة حكيم القانونية</p>
+        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">لوحة حكيم</h1>
+        <p className="mt-3 max-w-3xl leading-8 text-white/85">
           مؤشرات حية من قاعدة البيانات لوحدات المعرفة القانونية، القضايا، الاستشارات، المحاكاة، والتدقيق.
         </p>
       </header>
