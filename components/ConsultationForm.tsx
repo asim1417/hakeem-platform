@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 
 type Citation = {
   articleId: string;
@@ -128,23 +129,17 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
           <p className="mt-4 font-semibold text-olive">{result.result}</p>
           {result.consultationId ? <p className="mt-2 text-xs text-gray-500">رقم الاستشارة: {result.consultationId}</p> : null}
 
-          <h3 className="mt-6 font-bold text-olive">المواد النظامية المستند إليها</h3>
-          {result.citations.length === 0 ? (
-            <p className="mt-2 rounded-md border border-black/10 p-4 text-gray-700">
-              لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.
-            </p>
-          ) : (
-            <div className="mt-3 space-y-3">
-              {result.citations.map((citation) => (
-                <article key={`${citation.lawName}-${citation.articleNumber}-${citation.articleId}`} className="rounded-md border border-black/10 p-4">
-                  <p className="text-sm text-gold">
-                    {citation.lawName} · المادة {citation.articleNumber.toLocaleString("ar-SA")}
-                  </p>
-                  <p className="mt-2 leading-8 text-gray-700">{citation.quote}</p>
-                </article>
-              ))}
-            </div>
-          )}
+          <div className="mt-6">
+            <LegalBasisPanel
+              items={result.citations.map<LegalBasisItem>((citation) => ({
+                systemName: citation.lawName,
+                articleNumber: citation.articleNumber,
+                quote: citation.quote,
+                state: "official",
+                internalUrl: `/dashboard/legal-core/articles/${citation.articleId}`
+              }))}
+            />
+          </div>
         </section>
       ) : null}
     </div>

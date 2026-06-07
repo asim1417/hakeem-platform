@@ -9,6 +9,7 @@
   --gold: #C09B5A;
   --gold-bright: #D4AF6E;
   --gold-pale: #E8D5A8;
+  --gold-dark: #9A7636;
   --gold-ghost: rgba(192,155,90,0.12);
   --gold-border: rgba(192,155,90,0.30);
   --cream: #F9F5EC;
@@ -17,6 +18,7 @@
   --paper: #FFFFFF;
   --ink: #0D1321;
   --ink-80: rgba(13,19,33,0.80);
+  --ink-70: rgba(13,19,33,0.70);
   --ink-60: rgba(13,19,33,0.60);
   --ink-40: rgba(13,19,33,0.40);
   --ink-20: rgba(13,19,33,0.20);
