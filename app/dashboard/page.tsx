@@ -113,7 +113,7 @@ export default async function DashboardPage() {
 
       <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <ModuleCard
-          href="/dashboard/library"
+          href="/dashboard/legal-core/search"
           title="المكتبة النظامية"
           metric={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
           icon={BookOpen}

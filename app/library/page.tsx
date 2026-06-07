@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function LibraryAliasPage() {
-  redirect("/dashboard/library");
+  redirect("/dashboard/legal-core/search");
 }
