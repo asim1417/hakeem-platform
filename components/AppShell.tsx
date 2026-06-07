@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Briefcase, Database, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
+import { MobileNav } from "@/components/MobileNav";
 import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -60,6 +61,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app" dir="rtl">
+      <div className="sidebar-overlay" id="sidebar-overlay" aria-hidden />
       <aside className="sidebar" id="sidebar">
         <div className="sidebar-inner">
           <Link href="/dashboard" className="brand">
@@ -98,10 +100,13 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="main">
         <header className="topbar">
-          <div className="topbar-path">
-            <span className="seg">حكيم</span>
-            <span className="sep">/</span>
-            <span className="cur">القاضي الافتراضي</span>
+          <div className="flex items-center gap-3">
+            <MobileNav />
+            <div className="topbar-path">
+              <span className="seg">حكيم</span>
+              <span className="sep">/</span>
+              <span className="cur">القاضي الافتراضي</span>
+            </div>
           </div>
           <div className="topbar-right">
             <div className="search-box">

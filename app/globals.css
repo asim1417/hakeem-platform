@@ -373,10 +373,26 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
 .ho-audit-card { margin-top: 8px; }
 .ho-review { margin-top: 16px; }
 
+/* زر قائمة الجوال + غطاء التعتيم (مخفيان على سطح المكتب) */
+.mobile-menu-btn { display: none; }
+.sidebar-overlay { display: none; }
+
 @media (max-width: 1024px) {
-  .sidebar { transform: translateX(100%); }
+  .sidebar { transform: translateX(100%); transition: transform .25s ease; will-change: transform; }
+  .sidebar.is-open { transform: translateX(0); box-shadow: var(--sh-lg); }
   .main { margin-right: 0; }
   .content { padding: 20px; }
+
+  .mobile-menu-btn {
+    display: grid; place-items: center;
+    width: 40px; height: 40px; border-radius: var(--r-md);
+    border: 1px solid var(--ink-08); background: var(--paper); color: var(--navy);
+  }
+  .sidebar-overlay.is-open {
+    display: block; position: fixed; inset: 0; z-index: 35;
+    background: rgba(11,31,58,.42); backdrop-filter: blur(2px);
+  }
+
   .wizard-nav,.field-row,.strength-layout,.appeal-main,.appeal-grid,.vd-parties,.stats-row,.grid-main,.choice-grid,.wizard-wrap.ho-wizard-wrap { grid-template-columns: 1fr; }
   .hearing-layout { grid-template-columns: 1fr; height: auto; }
   .hearing-side { flex-direction: row; flex-wrap: wrap; overflow-y: visible; }
@@ -401,7 +417,7 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
   --hakeem-danger: #8C2233;
   --hakeem-warning: #B8721A;
   --font-judicial: "Amiri", "Times New Roman", serif;
-  --font-display: "Reem Kufi", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-display: "IBM Plex Sans Arabic", system-ui, "Tahoma", sans-serif;
   --font-body-ar: "IBM Plex Sans Arabic", "Tahoma", system-ui, sans-serif;
   --font-mono-legal: "IBM Plex Mono", "Consolas", monospace;
 }
