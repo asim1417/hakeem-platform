@@ -41,15 +41,37 @@
   --sh-md: 0 4px 16px rgba(11,31,58,0.08), 0 16px 48px rgba(11,31,58,0.10);
   --sh-lg: 0 8px 32px rgba(11,31,58,0.12), 0 32px 80px rgba(11,31,58,0.16);
   --font-judicial: "Amiri", "Times New Roman", serif;
-  --font-display: "Reem Kufi", "IBM Plex Sans Arabic", sans-serif;
+  --font-display: "IBM Plex Sans Arabic", "Tahoma", sans-serif;
   --font-body-ar: "IBM Plex Sans Arabic", "Tahoma", sans-serif;
   --font-mono-legal: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ===== أسماء نظام التصميم الرسمية (Design Tokens) =====
+     مرادفات صريحة كما وردت في مرجع الهوية البصرية، مبنية على القيم أعلاه
+     ليتوفّر الاسمان معاً: القديم (للتوافق) + hakeem-* الرسمي. */
+  --hakeem-bg: #FFFFFF;
+  --hakeem-bg-soft: #F8FAF9;
+  --hakeem-surface: #FFFFFF;
+  --hakeem-paper: #FBF8F1;
+  --hakeem-cream: #F9F5EC;
+  --hakeem-navy: #0B1F3A;
+  --hakeem-navy-mid: #142D52;
+  --hakeem-gold: #C09B5A;
+  --hakeem-gold-light: #D4AF6E;
+  --hakeem-text: #0D1321;
+  --hakeem-muted: rgba(13, 19, 33, 0.60);
+  --hakeem-border: rgba(13, 19, 33, 0.10);
+  --hakeem-success: #1A5C41;
+  --hakeem-danger: #8C2233;
+  --hakeem-warning: #B8721A;
 }
 
 body {
-  background: var(--cream);
-  color: var(--ink);
+  /* قاعدة بيضاء حديثة (White Legal AI Workspace) — الورقي محصور بالنصوص القانونية */
+  background: var(--hakeem-bg);
+  color: var(--hakeem-text);
   font-family: var(--font-body-ar);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body::after {
@@ -59,7 +81,7 @@ body::after {
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
   z-index: 9999;
-  opacity: .4;
+  opacity: .18;
 }
 
 ::selection { background: var(--gold-ghost); color: var(--navy); }
@@ -140,7 +162,7 @@ body::after {
 .user-info .uname { font-size: 12.5px; color: var(--cream); }
 .user-info .urole { font-size: 10.5px; color: rgba(232,213,168,.45); }
 .main { flex: 1; margin-right: var(--sidebar-w); min-height: 100vh; }
-.topbar { height: var(--topbar-h); display: flex; align-items: center; justify-content: space-between; padding: 0 36px; border-bottom: 1px solid var(--ink-08); background: rgba(249,245,236,.72); backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 20; }
+.topbar { height: var(--topbar-h); display: flex; align-items: center; justify-content: space-between; padding: 0 36px; border-bottom: 1px solid var(--ink-08); background: rgba(255,255,255,.78); backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 20; }
 .topbar-path { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 15px; }
 .topbar-path .seg { color: var(--ink-40); }
 .topbar-path .cur { color: var(--ink); font-weight: 600; }
