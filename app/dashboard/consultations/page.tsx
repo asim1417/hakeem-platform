@@ -1,8 +1,9 @@
 import { ConsultationForm } from "@/components/ConsultationForm";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
-export default async function ConsultationsPage() {
+export default async function ConsultationsPage({ searchParams }: { searchParams: { facts?: string } }) {
   await requirePagePermission("CONSULTATIONS_LIMITED");
+  const defaultFacts = typeof searchParams?.facts === "string" ? searchParams.facts : "";
   return (
     <div>
       <p className="text-sm font-semibold text-gold">RAG محكوم بالمكتبة</p>
@@ -11,7 +12,7 @@ export default async function ConsultationsPage() {
         أدخل الواقعة والسؤال القانوني ليتم تحليلها عبر الخادم فقط، مع حصر الاستشهادات في مواد المكتبة النظامية.
       </p>
       <div className="mt-6">
-        <ConsultationForm />
+        <ConsultationForm defaultFacts={defaultFacts} />
       </div>
     </div>
   );

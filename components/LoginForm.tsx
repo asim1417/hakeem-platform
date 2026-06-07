@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoldButton, LegalAlert, LegalCard } from "@/components/ui/legal";
 
-export function LoginForm() {
+export function LoginForm({ nextUrl = "/dashboard" }: { nextUrl?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +22,7 @@ export function LoginForm() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.message ?? "تعذر تسجيل الدخول.");
-      router.push("/dashboard");
+      router.push(nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول.");

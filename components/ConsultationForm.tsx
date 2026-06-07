@@ -21,10 +21,10 @@ type ConsultationResult = {
 
 const matterTypes = ["مدنية", "تجارية", "عمالية", "أحوال شخصية", "تنفيذ", "أخرى"];
 
-export function ConsultationForm() {
+export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string }) {
   const [title, setTitle] = useState("");
   const [matterType, setMatterType] = useState(matterTypes[0]);
-  const [facts, setFacts] = useState("");
+  const [facts, setFacts] = useState(defaultFacts);
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

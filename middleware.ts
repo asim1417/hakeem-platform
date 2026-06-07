@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const hasSession = Boolean(request.cookies.get("hakeem_session")?.value);
   if (hasSession) return NextResponse.next();
   const login = new URL("/login", request.url);
-  login.searchParams.set("next", pathname);
+  login.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
   return NextResponse.redirect(login);
 }
 
