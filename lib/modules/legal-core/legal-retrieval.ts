@@ -139,7 +139,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
           buildSystemFilter(options.systemIds),
           buildCategoryFilter(options.categoryIds),
           buildSourceTypeFilter(options.sourceTypes),
-          { OR: [{ lawName: { contains: trimmedQuery, mode: "insensitive" } }, { title: { contains: trimmedQuery, mode: "insensitive" } }] }
+          { OR: [{ lawName: { contains: trimmedQuery, mode: "insensitive" as const } }, { title: { contains: trimmedQuery, mode: "insensitive" as const } }] }
         ].filter((item) => Object.keys(item).length > 0)
       }
     : null;
