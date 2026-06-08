@@ -130,7 +130,21 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
       }
     : null;
 
-  const [total, candidates, nameCandidates] = await Promise.all([
+  // تطابق العبارة الكاملة في الاسم/العنوان: أقوى إشارة وأندر مطابقة، فلا يُقصى بالاقتطاع.
+  // يضمن حضور النظام صاحب الاسم المطابق تماماً (مثل «نظام العمل») رغم شيوع كلمة «نظام».
+  const trimmedQuery = query.trim();
+  const phraseNameWhere = trimmedQuery.length >= 3
+    ? {
+        AND: [
+          buildSystemFilter(options.systemIds),
+          buildCategoryFilter(options.categoryIds),
+          buildSourceTypeFilter(options.sourceTypes),
+          { OR: [{ lawName: { contains: trimmedQuery, mode: "insensitive" } }, { title: { contains: trimmedQuery, mode: "insensitive" } }] }
+        ].filter((item) => Object.keys(item).length > 0)
+      }
+    : null;
+
+  const [total, candidates, nameCandidates, phraseCandidates] = await Promise.all([
     prisma.legalArticle.count({ where }),
     prisma.legalArticle.findMany({
       where,
@@ -147,12 +161,23 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
             take: 400
           })
           .catch(() => [])
+      : Promise.resolve([]),
+    phraseNameWhere
+      ? prisma.legalArticle
+          .findMany({
+            where: phraseNameWhere,
+            include: { legalSystem: { select: { id: true, name: true } } },
+            orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
+            take: 200
+          })
+          .catch(() => [])
       : Promise.resolve([])
   ]);
 
-  // دمج مع إزالة التكرار (مرشّحو الاسم/العنوان أولاً لضمان عدم إقصائهم)
+  // دمج مع إزالة التكرار: تطابق العبارة الكاملة أولاً، ثم الاسم/العنوان، ثم العام
   const byId = new Map<string, (typeof candidates)[number]>();
-  for (const a of nameCandidates as typeof candidates) byId.set(a.id, a);
+  for (const a of phraseCandidates as typeof candidates) byId.set(a.id, a);
+  for (const a of nameCandidates as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
   for (const a of candidates) if (!byId.has(a.id)) byId.set(a.id, a);
 
   const scored = Array.from(byId.values())
