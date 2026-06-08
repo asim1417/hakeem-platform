@@ -3,6 +3,7 @@ import { auditEvent, recordGuardrail } from "@/lib/modules/audit/audit";
 import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
+import { parseArticleNumberCandidates } from "@/lib/modules/legal-core/judgment-citation-extractor";
 import { resolveAiConfig } from "@/lib/modules/ai/ai-config";
 
 type AiResult = {
@@ -416,7 +417,10 @@ function sanitizeOutput(output: string, citations: AiResult["citations"], allowe
   const outputGuard = guardOutputAgainstUnknownArticleNumbers(output, allowedArticles);
   if (!outputGuard.ok) return offlineOutput(outputGuard.message, citations);
   const allowed = new Set(citations.map((item) => `${item.lawName}-${item.articleNumber}`));
-  const suspiciousArticleNumbers = [...output.matchAll(/المادة\s+(\d+)/g)].map((match) => Number(match[1]));
+  // يلتقط الأرقام العربية/اللاتينية وصيغة «فقرة/مادة» مثل (١/١٢٠) ويأخذ رقم المادة (الأكبر)
+  const suspiciousArticleNumbers = [...output.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g)]
+    .map((match) => parseArticleNumberCandidates(match[1])[0])
+    .filter((n): n is number => Number.isFinite(n) && n > 0);
   const allowedNumbers = new Set(citations.map((item) => item.articleNumber));
   const hasForbiddenNumber = suspiciousArticleNumbers.some((number) => !allowedNumbers.has(number));
   if (hasForbiddenNumber || allowed.size === 0) return offlineOutput("تم حجب جزء من مخرج الذكاء الاصطناعي بسبب استشهاد غير مسموح.", citations);

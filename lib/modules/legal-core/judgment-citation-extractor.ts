@@ -34,7 +34,7 @@ type LegalSystemCandidate = {
   normalizedName: string;
 };
 
-const articlePattern = /(?:المادة|أحكام المادة|نصت المادة|وفق(?:ا|ًا)?\s+للمادة|استناد(?:ا|ًا)?\s+إلى\s+المادة)\s*(?:رقم)?\s*[\(\[]?\s*([0-9٠-٩۰-۹]+|[اأإآء-ي\s]+?)\s*[\)\]]?(?=(?:\s+من|\s+في|\s+،|\.|$))/g;
+const articlePattern = /(?:المادة|أحكام المادة|نصت المادة|وفق(?:ا|ًا)?\s+للمادة|استناد(?:ا|ًا)?\s+إلى\s+المادة)\s*(?:رقم)?\s*[\(\[]?\s*([0-9٠-٩۰-۹]+(?:\s*\/\s*[0-9٠-٩۰-۹]+)*|[اأإآء-ي\s]+?)\s*[\)\]]?(?=(?:\s+من|\s+في|\s+،|\.|$))/g;
 const systemOnlyPattern = /(?:وفق(?:ا|ًا)?\s+ل|استناد(?:ا|ًا)?\s+إلى\s+)?(نظام\s+[اأإآء-ي\s]+?)(?=(?:،|\.|\n|$))/g;
 
 export async function analyzeJudgmentCitations(judgmentText: string): Promise<JudgmentCitationAnalysis> {
@@ -80,17 +80,19 @@ async function loadLegalSystems(): Promise<LegalSystemCandidate[]> {
 }
 
 function extractArticleMentions(text: string, systems: LegalSystemCandidate[]) {
-  const mentions: Array<{ rawText: string; index: number; articleNumber: number | null; systemName: string | null; section: ExtractedJudgmentCitation["section"]; context: string }> = [];
+  const mentions: Array<{ rawText: string; index: number; articleNumber: number | null; articleNumbers: number[]; systemName: string | null; section: ExtractedJudgmentCitation["section"]; context: string }> = [];
   for (const match of text.matchAll(articlePattern)) {
     const rawText = match[0];
     const index = match.index ?? 0;
     const context = sliceAround(text, index, 260);
-    const articleNumber = parseArabicArticleNumber(match[1]);
+    // مرشّحو رقم المادة من صيغة قد تكون «فقرة/مادة» مثل (١/١٢٠) — الأكبر أولاً
+    const articleNumbers = parseArticleNumberCandidates(match[1]);
     const systemName = findNearestSystemName(text, index, systems);
     mentions.push({
       rawText,
       index,
-      articleNumber,
+      articleNumber: articleNumbers[0] ?? null,
+      articleNumbers,
       systemName,
       section: detectSection(text, index),
       context
@@ -124,23 +126,25 @@ function extractSystemOnlyMentions(
 }
 
 async function resolveCitation(
-  mention: { rawText: string; articleNumber: number | null; systemName: string | null; section: ExtractedJudgmentCitation["section"]; context: string },
+  mention: { rawText: string; articleNumber: number | null; articleNumbers?: number[]; systemName: string | null; section: ExtractedJudgmentCitation["section"]; context: string },
   systems: LegalSystemCandidate[]
 ): Promise<ExtractedJudgmentCitation> {
   const resolvedSystem = mention.systemName ? systems.find((system) => system.name === mention.systemName) : null;
-  const article = mention.articleNumber
-    ? await prisma.legalArticle.findFirst({
-        where: {
-          articleNumber: mention.articleNumber,
-          OR: resolvedSystem
-            ? [{ legalSystemId: resolvedSystem.id }, { lawName: resolvedSystem.name }]
-            : mention.systemName
-              ? [{ lawName: { contains: mention.systemName, mode: "insensitive" } }]
-              : undefined
-        },
-        select: { id: true, content: true, lawName: true, articleNumber: true }
-      })
-    : null;
+  const systemFilter = resolvedSystem
+    ? [{ legalSystemId: resolvedSystem.id }, { lawName: resolvedSystem.name }]
+    : mention.systemName
+      ? [{ lawName: { contains: mention.systemName, mode: "insensitive" as const } }]
+      : undefined;
+  // مرشّحو الرقم بالترتيب (الأكبر أولاً = المادة قبل الفقرة)؛ نأخذ أول ما يُحَلّ فعلاً
+  const candidates = mention.articleNumbers?.length ? mention.articleNumbers : mention.articleNumber ? [mention.articleNumber] : [];
+  let article: { id: string; content: string; lawName: string; articleNumber: number } | null = null;
+  for (const cand of candidates) {
+    const found = await prisma.legalArticle.findFirst({
+      where: { articleNumber: cand, ...(systemFilter ? { OR: systemFilter } : {}) },
+      select: { id: true, content: true, lawName: true, articleNumber: true }
+    });
+    if (found) { article = found; break; }
+  }
 
   const systemName = article?.lawName ?? mention.systemName;
   const courtPosition = classifyCourtPosition(mention.context, mention.section, Boolean(article));
@@ -188,6 +192,24 @@ export function normalizeCitationArabicText(text: string) {
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * يستخرج مرشّحي رقم المادة من قيمة قد تكون مركّبة «فقرة/مادة» مثل «١/١٢٠».
+ * يعيدهم بترتيب الأرجحية (الأكبر أولاً، فالمادة أكبر من رقم الفقرة/البند).
+ * عند عدم وجود أرقام يعود للتحليل اللفظي (المادة الأولى…).
+ */
+export function parseArticleNumberCandidates(value: string): number[] {
+  const normalized = normalizeDigits(value);
+  const parts = normalized
+    .split("/")
+    .map((p) => p.match(/\d+/)?.[0])
+    .filter((p): p is string => Boolean(p))
+    .map(Number)
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (parts.length) return Array.from(new Set(parts)).sort((a, b) => b - a);
+  const word = parseArabicArticleNumber(value);
+  return word ? [word] : [];
 }
 
 export function parseArabicArticleNumber(value: string) {

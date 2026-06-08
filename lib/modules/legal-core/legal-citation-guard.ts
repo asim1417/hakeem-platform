@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { LegalCoreResult } from "./legal-retrieval";
 import { noLegalArticleMessage } from "./legal-retrieval";
+import { parseArticleNumberCandidates } from "./judgment-citation-extractor";
 
 export type CitationGuardResult =
   | { ok: true; articleId: string; systemName: string; articleNumber: number; citationLabel: string }
@@ -47,7 +48,10 @@ export function assertHasLegalArticles(articles: LegalCoreResult[]) {
 
 export function guardOutputAgainstUnknownArticleNumbers(output: string, allowedArticles: LegalCoreResult[]) {
   const allowedNumbers = new Set(allowedArticles.map((article) => article.articleNumber));
-  const referencedNumbers = [...output.matchAll(/(?:المادة|مادة)\s*\(?(\d+)\)?/g)].map((match) => Number(match[1]));
+  // يلتقط الأرقام العربية واللاتينية وصيغة «فقرة/مادة» مثل (١/١٢٠) ويأخذ رقم المادة (الأكبر)
+  const referencedNumbers = [...output.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g)]
+    .map((match) => parseArticleNumberCandidates(match[1])[0])
+    .filter((n): n is number => Number.isFinite(n) && n > 0);
   const forbidden = referencedNumbers.filter((number) => !allowedNumbers.has(number));
   if (forbidden.length > 0) {
     return {
