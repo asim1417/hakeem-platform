@@ -67,6 +67,10 @@ export default async function LegalCoreJudgmentsPage({
                 <Search size={16} />
                 البحث القانوني
               </Link>
+              <Link className="btn ho-hero-outline" href="/dashboard/legal-core/citations/dashboard">
+                <BookMarked size={16} />
+                تغطية الربط
+              </Link>
               <Link className="btn ho-hero-outline" href="/dashboard/legal-core">
                 <BookMarked size={16} />
                 النواة القانونية
