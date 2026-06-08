@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, GraduationCap, Paperclip, Scale, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Briefcase, GraduationCap, Paperclip, Scale, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
@@ -111,39 +111,69 @@ export default async function DashboardPage() {
         </Link>
       </header>
 
-      <h2 className="mt-7 text-lg font-bold text-[var(--navy)]">نظرة عامة</h2>
-
+      {/* تابع عملك — أهمّ ما يحتاجه المستخدم العائد */}
       {!stats ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
-          تعذر تحميل مؤشرات لوحة التحكم.
+          تعذر تحميل بيانات الرئيسية.
         </div>
       ) : (
-        <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <StatCard label="الأنظمة القانونية" value={stats.legalSystems} href="/dashboard/legal-core/systems" />
-          <StatCard label="المواد النظامية" value={stats.legalArticles} href="/dashboard/legal-core/search" />
-          <StatCard label="الاستشارات" value={stats.consultations} />
-          <StatCard label="جلسات المحاكاة" value={stats.simulations} />
-          <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
-          <StatCard label="القضايا" value={stats.cases} />
-          <StatCard label="المستخدمون" value={stats.users} />
-          <StatCard label="المرفقات" value={stats.attachments} />
-        </section>
+        <>
+          <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">تابع عملك</h2>
+          <section className="mt-4 grid gap-4 xl:grid-cols-3">
+            <RecentList
+              title="آخر الاستشارات"
+              empty="لا توجد استشارات حديثة."
+              items={stats.recentConsultations.map((item) => ({
+                id: item.id,
+                title: item.facts.slice(0, 90),
+                meta: `${item.status} · ${item.createdAt.toLocaleString("ar-SA")}`
+              }))}
+            />
+            <RecentList
+              title="آخر القضايا"
+              empty="لا توجد قضايا حديثة."
+              items={stats.recentCases.map((item) => ({
+                id: item.id,
+                title: item.title,
+                meta: `${item.status} · ${item.updatedAt.toLocaleString("ar-SA")}`
+              }))}
+            />
+            <RecentList
+              title="آخر جلسات القاضي التفاعلي"
+              empty="لا توجد جلسات حديثة."
+              items={stats.recentSimulations.map((item) => ({
+                id: item.id,
+                title: item.title,
+                meta: `${stageLabel(item.stage)} · ${item.updatedAt.toLocaleString("ar-SA")}`
+              }))}
+            />
+          </section>
+        </>
       )}
 
-      <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {/* خدمات حكيم */}
+      <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">خدمات حكيم</h2>
+      <section className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <ModuleCard
           href="/dashboard/legal-core/search"
-          title="المكتبة النظامية"
+          title="النواة القانونية"
           metric={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
           icon={BookOpen}
           description="مصدر الحقيقة الوحيد لكل الاستشهادات والاسترجاع السياقي."
         />
         <ModuleCard
-          href="/dashboard/cases"
-          title="القضايا والمرفقات"
-          metric={`${(stats?.cases ?? 0).toLocaleString("ar-SA")} قضية`}
-          icon={Briefcase}
-          description="ملفات قضايا حقيقية مع سجل عمليات وربط بالبينات."
+          href="/dashboard/ask"
+          title="اسأل حكيم"
+          metric="وكيل قانوني شفّاف"
+          icon={Sparkles}
+          description="اطرح واقعتك ليبحث في النواة ويصوغ إجابة مستندة بحالات توثيق."
+        />
+        <ModuleCard
+          href="/dashboard/simulations"
+          title="القاضي التفاعلي"
+          metric={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
+          icon={Scale}
+          description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
         />
         <ModuleCard
           href="/dashboard/consultations"
@@ -153,11 +183,11 @@ export default async function DashboardPage() {
           description="تحويل الوقائع إلى مخرجات تعليمية مساعدة مستندة إلى مواد محفوظة."
         />
         <ModuleCard
-          href="/dashboard/simulations"
-          title="المحاكاة القضائية"
-          metric={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
-          icon={Scale}
-          description="تقييد الدعوى، الجلسات، الصلح، الحكم التدريبي، والاعتراض."
+          href="/dashboard/cases"
+          title="القضايا والمرفقات"
+          metric={`${(stats?.cases ?? 0).toLocaleString("ar-SA")} قضية`}
+          icon={Briefcase}
+          description="ملفات قضايا حقيقية مع سجل عمليات وربط بالبينات."
         />
         <ModuleCard
           href="/dashboard/training"
@@ -166,82 +196,57 @@ export default async function DashboardPage() {
           icon={GraduationCap}
           description="تمارين، اختبارات، شارات، نقاط، ومتابعة تقدم."
         />
-        <ModuleCard
-          href="/dashboard/attachments"
-          title="المرفقات"
-          metric={`${(stats?.attachments ?? 0).toLocaleString("ar-SA")} مرفق`}
-          icon={Paperclip}
-          description="تسجيل metadata للمرفقات والبينات إلى حين تفعيل التخزين الدائم."
-        />
-        <ModuleCard
-          href="/admin/users"
-          title="المستخدمون"
-          metric={`${(stats?.users ?? 0).toLocaleString("ar-SA")} مستخدم`}
-          icon={Users}
-          description="إدارة تنظيمية مبدئية للمستخدمين والأدوار."
-        />
       </section>
 
+      {/* نظرة عامة — مؤشرات مصغّرة */}
       {stats ? (
-        <section className="mt-6 grid gap-4 xl:grid-cols-2">
-          <RecentList
-            title="آخر 5 أنشطة"
-            empty="لا توجد أنشطة حديثة."
-            items={stats.recentActivities.map((item) => ({
-              id: item.id,
-              title: `${subjectLabel(item.subject)} · ${item.action}`,
-              meta: `${item.actor?.name ?? "النظام"} · ${item.createdAt.toLocaleString("ar-SA")}`
-            }))}
-          />
-          <RecentList
-            title="آخر 5 استشارات"
-            empty="لا توجد استشارات حديثة."
-            items={stats.recentConsultations.map((item) => ({
-              id: item.id,
-              title: item.facts.slice(0, 90),
-              meta: `${item.status} · ${item.createdAt.toLocaleString("ar-SA")}`
-            }))}
-          />
-          <RecentList
-            title="آخر 5 قضايا"
-            empty="لا توجد قضايا حديثة."
-            items={stats.recentCases.map((item) => ({
-              id: item.id,
-              title: item.title,
-              meta: `${item.status} · ${item.updatedAt.toLocaleString("ar-SA")}`
-            }))}
-          />
-          <RecentList
-            title="آخر 5 جلسات محاكاة"
-            empty="لا توجد جلسات محاكاة حديثة."
-            items={stats.recentSimulations.map((item) => ({
-              id: item.id,
-              title: item.title,
-              meta: `${stageLabel(item.stage)} · ${item.updatedAt.toLocaleString("ar-SA")}`
-            }))}
-          />
-          <RecentList
-            title="آخر 5 مرفقات"
-            empty="لا توجد مرفقات حديثة."
-            items={stats.recentAttachments.map((item) => {
-              const metadata = parseAttachmentMetadata(item.extractedText);
-              return {
+        <>
+          <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">نظرة عامة</h2>
+          <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <StatCard label="الأنظمة القانونية" value={stats.legalSystems} href="/dashboard/legal-core/systems" />
+            <StatCard label="المواد النظامية" value={stats.legalArticles} href="/dashboard/legal-core/search" />
+            <StatCard label="القضايا" value={stats.cases} />
+            <StatCard label="الاستشارات" value={stats.consultations} />
+            <StatCard label="جلسات القاضي" value={stats.simulations} />
+            <StatCard label="المرفقات" value={stats.attachments} />
+            <StatCard label="المستخدمون" value={stats.users} />
+            <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
+          </section>
+
+          <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">نشاط النظام</h2>
+          <section className="mt-4 grid gap-4 xl:grid-cols-3">
+            <RecentList
+              title="آخر الأنشطة"
+              empty="لا توجد أنشطة حديثة."
+              items={stats.recentActivities.map((item) => ({
                 id: item.id,
-                title: item.fileName,
-                meta: `${item.mimeType} · ${formatFileSize(metadata.size)} · ${item.createdAt.toLocaleString("ar-SA")}`
-              };
-            })}
-          />
-          <RecentList
-            title="آخر 5 مستخدمين"
-            empty="لا توجد إضافات مستخدمين حديثة."
-            items={stats.recentUsers.map((item) => ({
-              id: item.id,
-              title: item.name,
-              meta: `${roleLabel(item.role)} · ${item.createdAt.toLocaleString("ar-SA")}`
-            }))}
-          />
-        </section>
+                title: `${subjectLabel(item.subject)} · ${item.action}`,
+                meta: `${item.actor?.name ?? "النظام"} · ${item.createdAt.toLocaleString("ar-SA")}`
+              }))}
+            />
+            <RecentList
+              title="آخر المرفقات"
+              empty="لا توجد مرفقات حديثة."
+              items={stats.recentAttachments.map((item) => {
+                const metadata = parseAttachmentMetadata(item.extractedText);
+                return {
+                  id: item.id,
+                  title: item.fileName,
+                  meta: `${item.mimeType} · ${formatFileSize(metadata.size)} · ${item.createdAt.toLocaleString("ar-SA")}`
+                };
+              })}
+            />
+            <RecentList
+              title="آخر المستخدمين"
+              empty="لا توجد إضافات مستخدمين حديثة."
+              items={stats.recentUsers.map((item) => ({
+                id: item.id,
+                title: item.name,
+                meta: `${roleLabel(item.role)} · ${item.createdAt.toLocaleString("ar-SA")}`
+              }))}
+            />
+          </section>
+        </>
       ) : null}
     </div>
   );
