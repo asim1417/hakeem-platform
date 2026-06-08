@@ -89,11 +89,29 @@ export default async function DashboardPage() {
     <div>
       <header className="hero">
         <p className="text-sm text-[var(--gold-pale)]">منصة حكيم القانونية</p>
-        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">لوحة حكيم</h1>
+        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">الرئيسية</h1>
         <p className="mt-3 max-w-3xl leading-8 text-white/85">
-          مؤشرات حية من قاعدة البيانات لوحدات المعرفة القانونية، القضايا، الاستشارات، المحاكاة، والتدقيق.
+          ابدأ بالبحث في الأنظمة السعودية، أو اطرح واقعتك على «اسأل حكيم» — بمصدرٍ موثّق من النواة القانونية.
         </p>
+
+        <form action="/dashboard/legal-core/search" className="mt-5 flex max-w-2xl items-center gap-2 rounded-[var(--r-xl)] bg-white p-2 shadow-[var(--sh-md)]">
+          <span aria-hidden className="ms-2 text-xl text-[var(--ink-40)]">⌕</span>
+          <input
+            name="q"
+            aria-label="بحث قانوني"
+            placeholder="اكتب رقم مادة، اسم نظام، رقم قضية، أو وصف واقعة..."
+            className="h-11 w-full border-0 bg-transparent px-1 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
+          />
+          <button type="submit" className="focus-ring shrink-0 rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)]">
+            ابحث
+          </button>
+        </form>
+        <Link href="/dashboard/ask" className="focus-ring mt-3 inline-flex items-center gap-1.5 text-sm text-[var(--gold-pale)] transition hover:text-white">
+          ✦ أو اسأل حكيم مباشرةً ←
+        </Link>
       </header>
+
+      <h2 className="mt-7 text-lg font-bold text-[var(--navy)]">نظرة عامة</h2>
 
       {!stats ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">

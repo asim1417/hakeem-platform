@@ -3,6 +3,7 @@ import { Briefcase, Database, FileClock, GraduationCap, LayoutDashboard, LogOut,
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
+import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -106,17 +107,13 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <header className="topbar">
           <div className="flex items-center gap-3">
             <MobileNav />
-            <div className="topbar-path">
-              <span className="seg">حكيم</span>
-              <span className="sep">/</span>
-              <span className="cur">القاضي الافتراضي</span>
-            </div>
+            <TopbarBreadcrumb />
           </div>
           <div className="topbar-right">
-            <div className="search-box">
+            <form className="search-box" action="/dashboard/legal-core/search">
               <span>⌕</span>
-              <input aria-label="بحث" placeholder="بحث في حكيم..." />
-            </div>
+              <input name="q" aria-label="بحث" placeholder="بحث في النواة القانونية..." />
+            </form>
             <div className="icon-pill" title="تسجيل الخروج">
               <LogOut size={16} />
             </div>
