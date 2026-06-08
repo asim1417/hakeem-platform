@@ -4,6 +4,7 @@ import { ExternalLink, FileText, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
+import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 
 export const dynamic = "force-dynamic";
@@ -64,14 +65,30 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
           <div className="space-y-5">
             <LegalCoreCard title="نص الحكم" subtitle="النص مستورد كما هو، ويحتاج مراجعة قانونية قبل الاعتماد المعرفي">
               <article className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--parchment)] p-7 font-judicial text-2xl leading-[2.25] text-[var(--ink)] shadow-[var(--sh-xs)]">
-                {judgment.judgmentText}
+                <JudgmentText
+                  text={judgment.judgmentText}
+                  links={judgment.articleLinks.map((l) => ({
+                    articleId: l.article.id,
+                    lawName: l.article.lawName,
+                    articleNumber: l.article.articleNumber,
+                    reviewStatus: l.reviewStatus
+                  }))}
+                />
               </article>
             </LegalCoreCard>
 
             {judgment.appealText ? (
               <LegalCoreCard title="نص الاستئناف أو الاعتراض" subtitle="يعرض عند توفره داخل مصدر الأحكام">
                 <article className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white/60 p-6 font-judicial text-xl leading-10 text-[var(--ink)]">
-                  {judgment.appealText}
+                  <JudgmentText
+                    text={judgment.appealText}
+                    links={judgment.articleLinks.map((l) => ({
+                      articleId: l.article.id,
+                      lawName: l.article.lawName,
+                      articleNumber: l.article.articleNumber,
+                      reviewStatus: l.reviewStatus
+                    }))}
+                  />
                 </article>
               </LegalCoreCard>
             ) : null}
