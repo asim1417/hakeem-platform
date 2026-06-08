@@ -60,6 +60,17 @@ export function decryptSecret(stored: string): string | null {
   }
 }
 
+/**
+ * يضمن وجود جدول app_settings (إنشاء idempotent عند أول حفظ) — يلغي الحاجة لتشغيل
+ * prisma db push يدوياً. آمن: IF NOT EXISTS، ومغلّف بـ try/catch فإن غابت صلاحية
+ * الإنشاء يعود للسلوك السابق (رسالة توجيه لتشغيل db push).
+ */
+async function ensureSettingsTable(): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    'CREATE TABLE IF NOT EXISTS "app_settings" ("key" TEXT NOT NULL, "value" JSONB NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "app_settings_pkey" PRIMARY KEY ("key"));'
+  );
+}
+
 /** يقرأ إعداد القاعدة (إن وُجد الجدول). سقوط آمن إلى null. */
 async function readStored(): Promise<StoredAiSettings | null> {
   try {
@@ -152,6 +163,8 @@ export async function saveAiSettings(input: {
   baseUrl?: string;
   apiKey?: string;
 }): Promise<{ ok: boolean; message?: string }> {
+  // إنشاء الجدول تلقائياً إن لم يكن موجوداً (يلغي الحاجة لتشغيل db push يدوياً)
+  await ensureSettingsTable().catch(() => undefined);
   try {
     const existing = await readStored();
     let apiKeyEnc = existing?.apiKeyEnc ?? "";
@@ -174,7 +187,7 @@ export async function saveAiSettings(input: {
     return {
       ok: false,
       message:
-        "تعذّر حفظ الإعداد. تأكد من تشغيل prisma db push لإنشاء جدول app_settings على القاعدة الإنتاجية."
+        "تعذّر حفظ الإعداد. قد لا يملك مستخدم القاعدة صلاحية إنشاء الجداول — شغّل: npm run db:push من Codespace."
     };
   }
 }
