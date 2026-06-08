@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
+import { bm25Search } from "@/lib/modules/legal-core/bm25";
 import { LoginPopover } from "@/components/home/LoginPopover";
 
 export const dynamic = "force-dynamic";
@@ -16,19 +16,8 @@ export default async function PublicSearchPage({
   searchParams: { q?: string };
 }) {
   const query = (searchParams.q ?? "").trim().slice(0, 200);
-
-  const response = query
-    ? await searchLegalCore({
-        query,
-        searchType: "contains",
-        sourceTypes: ["article"],
-        page: 1,
-        limit: 10,
-        includeSnippets: true,
-        includeMatchedParagraphs: false,
-        includeRelatedTerms: false
-      }).catch(() => ({ query, searchType: "contains" as const, total: 0, page: 1, limit: 10, relatedTerms: [], results: [], message: "تعذّر تنفيذ البحث حاليًا." }))
-    : null;
+  // محرّك البحث: BM25 على فهرس النواة المُرمَّز (أعلى صلة من المطابقة النصية)
+  const hits = query ? bm25Search(query, 12) : null;
 
   return (
     <main className="min-h-screen bg-[var(--hakeem-bg)]">
@@ -70,39 +59,35 @@ export default async function PublicSearchPage({
           <LoginPopover />
         </div>
 
-        {/* النتائج */}
-        {response === null ? (
+        {/* النتائج (محرّك BM25) */}
+        {hits === null ? (
           <div className="mt-10 rounded-[var(--r-xl)] border border-dashed border-[var(--ink-15)] bg-[var(--hakeem-bg-soft)] p-10 text-center">
             <p className="font-display-ar text-lg font-bold text-[var(--navy)]">ابدأ بكتابة عبارة بحث</p>
-            <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">ابحث في المواد والأنظمة السعودية — النتائج من النواة القانونية الموثّقة فقط.</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">بحث ذكي (BM25) في 16,037 مادة مُرمَّزة — يتصدّر الأكثر صلة لا الأكثر تكراراً.</p>
           </div>
         ) : (
           <section className="mt-5">
             <p className="mb-3 text-sm text-[var(--ink-60)]">
-              {response.total > 0
-                ? `${response.total.toLocaleString("ar-SA")} نتيجة لـ «${query}»${response.total > response.results.length ? ` — تُعرض أول ${response.results.length}` : ""}`
-                : ""}
+              {hits.length ? `أعلى ${hits.length.toLocaleString("ar-SA")} نتيجة صلةً لـ «${query}»` : ""}
             </p>
 
-            {response.results.length ? (
+            {hits.length ? (
               <div className="space-y-4">
-                {response.results.map((article) => (
-                  <article key={article.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
-                    <p className="font-mono-legal text-sm text-[var(--gold-dark)]">
-                      {article.systemName} · المادة {article.articleNumber.toLocaleString("ar-SA")}
-                    </p>
-                    {article.articleTitle ? (
-                      <h2 className="mt-1.5 font-display-ar text-lg font-bold text-[var(--navy)]">{article.articleTitle}</h2>
-                    ) : null}
+                {hits.map((hit) => (
+                  <article key={hit.code} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-mono-legal text-sm text-[var(--gold-dark)]">{hit.meta.citation}</p>
+                      <span className="font-mono-legal text-[11px] text-[var(--ink-40)]">{hit.code}</span>
+                    </div>
                     <p className="mt-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--parchment)] p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
-                      {article.snippet}
+                      {hit.meta.snippet}
                     </p>
                     <div className="mt-4">
                       <Link
-                        href={`/dashboard/legal-core/articles/${article.articleId}`}
+                        href={`/dashboard/legal-core/search?q=${encodeURIComponent(`${hit.meta.law_name} ${hit.meta.article_number}`)}`}
                         className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold-ghost)]"
                       >
-                        فتح المادة كاملةً (يتطلب الدخول) ↗
+                        فتح المادة كاملةً في النواة (يتطلب الدخول) ↗
                       </Link>
                     </div>
                   </article>
@@ -110,14 +95,14 @@ export default async function PublicSearchPage({
               </div>
             ) : (
               <div className="mt-6 rounded-[var(--r-xl)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-8 text-center font-display-ar text-[var(--navy)]">
-                {response.message ?? "لم يتم العثور على نتائج مطابقة."}
+                لم يتم العثور على نتائج مطابقة. جرّب صياغة أخرى.
               </div>
             )}
           </section>
         )}
 
         <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-7 text-[var(--ink-40)]">
-          النتائج من النواة القانونية الموثّقة فقط ولا تُولَّد مواد غير موجودة. التنبيه المهني: المخرجات مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا.
+          بحث ذكي (BM25) على الأنظمة المُرمَّزة. التنبيه المهني: المخرجات مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا.
         </p>
       </div>
     </main>
