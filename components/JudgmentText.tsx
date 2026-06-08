@@ -20,8 +20,21 @@ function toInt(ar: string): number {
   return parseInt(ar.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString()), 10);
 }
 
-// يطابق: المادة/المادتين/المواد (رقم) أو المادة 111 أو المادة (١١١)
-const REF_RE = /(الماد(?:ة|تين|تان|ت)|المو?اد)\s*(?:رقم\s*)?\(?\s*([0-9٠-٩]+)\s*\)?/g;
+// يطابق: المادة/المادتين/المواد مع رقم قد يكون مركّباً «فقرة/مادة» مثل (١/١٢٠)
+const REF_RE = /(الماد(?:ة|تين|تان|ت)|المو?اد)\s*(?:رقم\s*)?\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g;
+
+/**
+ * يستخرج رقم المادة الصحيح من مجموعة أرقام قد تكون «فقرة/مادة».
+ * الأولوية: الرقم المرتبط فعلاً بهذا الحكم؛ وإلا الأكبر (المادة أكبر من رقم الفقرة).
+ */
+function pickArticleNumber(group: string, linked: Map<number, { link: ArticleLink; count: number }>): number {
+  const nums = group.split("/").map((p) => toInt(p)).filter((n) => Number.isFinite(n) && n > 0);
+  if (!nums.length) return NaN;
+  const inLinks = nums.filter((n) => linked.has(n));
+  if (inLinks.length === 1) return inLinks[0];
+  if (inLinks.length > 1) return Math.max(...inLinks);
+  return Math.max(...nums);
+}
 
 export function JudgmentText({ text, links, className = "" }: { text: string; links: ArticleLink[]; className?: string }) {
   if (!text) return null;
@@ -42,7 +55,7 @@ export function JudgmentText({ text, links, className = "" }: { text: string; li
   while ((m = REF_RE.exec(text))) {
     const start = m.index;
     const matched = m[0];
-    const num = toInt(m[2]);
+    const num = pickArticleNumber(m[2], byNumber);
     if (start > last) nodes.push(text.slice(last, start));
     last = start + matched.length;
 
