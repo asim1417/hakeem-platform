@@ -468,6 +468,8 @@ function mapArticleResult(
     titleBonus += conceptWords.filter((w) => normName.includes(w)).length * 30; // تغطية المفاهيم في الاسم
     if (normTitle.includes(nq)) titleBonus += 40; // عبارة كاملة في عنوان المادة
     titleBonus += conceptWords.filter((w) => normTitle.includes(w)).length * 12;
+    // ترجيح مبدئي للنظام الأصلي فوق لائحته/آليّته (التشريع الأعلى) عند تساوي تطابق الاسم
+    if (titleBonus > 0 && normName.trim().startsWith("نظام")) titleBonus += 18;
   }
 
   const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus + titleBonus;
