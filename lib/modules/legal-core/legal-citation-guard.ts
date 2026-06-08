@@ -48,11 +48,13 @@ export function assertHasLegalArticles(articles: LegalCoreResult[]) {
 
 export function guardOutputAgainstUnknownArticleNumbers(output: string, allowedArticles: LegalCoreResult[]) {
   const allowedNumbers = new Set(allowedArticles.map((article) => article.articleNumber));
-  // يلتقط الأرقام العربية واللاتينية وصيغة «فقرة/مادة» مثل (١/١٢٠) ويأخذ رقم المادة (الأكبر)
-  const referencedNumbers = [...output.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g)]
-    .map((match) => parseArticleNumberCandidates(match[1])[0])
-    .filter((n): n is number => Number.isFinite(n) && n > 0);
-  const forbidden = referencedNumbers.filter((number) => !allowedNumbers.has(number));
+  // إشارة «س/ص» قد يكون أيّ طرفيها رقم المادة (الترتيب غير ثابت في النصوص):
+  // لا نمنعها إلا إذا لم يكن أيٌّ من مرشّحيها مادةً مسموحة.
+  const forbidden: number[] = [];
+  for (const match of output.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g)) {
+    const candidates = parseArticleNumberCandidates(match[1]).filter((n) => n > 0);
+    if (candidates.length && !candidates.some((n) => allowedNumbers.has(n))) forbidden.push(candidates[0]);
+  }
   if (forbidden.length > 0) {
     return {
       ok: false as const,

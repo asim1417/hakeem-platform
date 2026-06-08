@@ -417,12 +417,11 @@ function sanitizeOutput(output: string, citations: AiResult["citations"], allowe
   const outputGuard = guardOutputAgainstUnknownArticleNumbers(output, allowedArticles);
   if (!outputGuard.ok) return offlineOutput(outputGuard.message, citations);
   const allowed = new Set(citations.map((item) => `${item.lawName}-${item.articleNumber}`));
-  // يلتقط الأرقام العربية/اللاتينية وصيغة «فقرة/مادة» مثل (١/١٢٠) ويأخذ رقم المادة (الأكبر)
-  const suspiciousArticleNumbers = [...output.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g)]
-    .map((match) => parseArticleNumberCandidates(match[1])[0])
-    .filter((n): n is number => Number.isFinite(n) && n > 0);
   const allowedNumbers = new Set(citations.map((item) => item.articleNumber));
-  const hasForbiddenNumber = suspiciousArticleNumbers.some((number) => !allowedNumbers.has(number));
+  // إشارة «س/ص» قد يكون أيّ طرفيها المادة؛ تُحجب فقط إن لم يكن أيّ مرشّح مسموحاً
+  const hasForbiddenNumber = [...output.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+(?:\s*\/\s*[0-9٠-٩]+)*)\s*\)?/g)]
+    .map((match) => parseArticleNumberCandidates(match[1]).filter((n) => n > 0))
+    .some((cands) => cands.length > 0 && !cands.some((n) => allowedNumbers.has(n)));
   if (hasForbiddenNumber || allowed.size === 0) return offlineOutput("تم حجب جزء من مخرج الذكاء الاصطناعي بسبب استشهاد غير مسموح.", citations);
   return `${output}\n\nتنبيه مهني: هذه المخرجات مساعدة أولية ولا تعد رأيًا قانونيًا نهائيًا أو بديلًا عن مراجعة محامٍ مختص.`;
 }
