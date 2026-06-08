@@ -116,17 +116,46 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // نجلب مجموعة مرشّحين كبيرة ثم نرتّبها بالصلة في الذاكرة قبل الاقتطاع،
   // لأن الترتيب الأبجدي + take(limit) في قاعدة البيانات كان يُرجع مواد غير ذات صلة.
   const CANDIDATE_CAP = 600;
-  const [total, candidates] = await Promise.all([
+  // مرشّحو الاسم/العنوان: عند وجود >CAP مرشّح، الاقتطاع الأبجدي كان يقصي «نظام...» (ن)
+  // قبل التقييم. لذا نجلب صراحةً المواد التي يطابق اسمُ نظامها/عنوانُها الاستعلام،
+  // فنضمن حضور النظام الأنسب (مثل «نظام الأحوال الشخصية») في مجموعة التقييم.
+  const nameWhere = query
+    ? {
+        AND: [
+          buildSystemFilter(options.systemIds),
+          buildCategoryFilter(options.categoryIds),
+          buildSourceTypeFilter(options.sourceTypes),
+          buildTextFilter(filterVariants, ["systemTitle", "title"])
+        ].filter((item) => Object.keys(item).length > 0)
+      }
+    : null;
+
+  const [total, candidates, nameCandidates] = await Promise.all([
     prisma.legalArticle.count({ where }),
     prisma.legalArticle.findMany({
       where,
       include: { legalSystem: { select: { id: true, name: true } } },
       orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
       take: CANDIDATE_CAP
-    })
+    }),
+    nameWhere
+      ? prisma.legalArticle
+          .findMany({
+            where: nameWhere,
+            include: { legalSystem: { select: { id: true, name: true } } },
+            orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
+            take: 400
+          })
+          .catch(() => [])
+      : Promise.resolve([])
   ]);
 
-  const scored = candidates
+  // دمج مع إزالة التكرار (مرشّحو الاسم/العنوان أولاً لضمان عدم إقصائهم)
+  const byId = new Map<string, (typeof candidates)[number]>();
+  for (const a of nameCandidates as typeof candidates) byId.set(a.id, a);
+  for (const a of candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+
+  const scored = Array.from(byId.values())
     .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams))
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
