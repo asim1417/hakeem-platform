@@ -427,7 +427,21 @@ function mapArticleResult(
     conceptCoverage * 14 +
     (conceptWords.length >= 2 && conceptCoverage >= conceptWords.length ? 20 : 0) +
     phraseMatches * 40;
-  const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus;
+
+  // ترجيح قوي لتطابق اسم النظام/عنوان المادة: فالأنسب (مثل «نظام الأحوال الشخصية»)
+  // يجب أن يتفوّق على ورود الكلمة العابر في نصوص أنظمة أخرى طويلة.
+  const normName = normalizeArabicText(`${systemName} ${article.lawName ?? ""}`);
+  const normTitle = normalizeArabicText(article.title ?? "");
+  const nq = normalizeArabicText(query);
+  let titleBonus = 0;
+  if (query && nq.length >= 3) {
+    if (normName.includes(nq)) titleBonus += 120; // عبارة الاستعلام كاملة في اسم النظام (أقوى إشارة)
+    titleBonus += conceptWords.filter((w) => normName.includes(w)).length * 30; // تغطية المفاهيم في الاسم
+    if (normTitle.includes(nq)) titleBonus += 40; // عبارة كاملة في عنوان المادة
+    titleBonus += conceptWords.filter((w) => normTitle.includes(w)).length * 12;
+  }
+
+  const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus + titleBonus;
 
   return {
     articleId: article.id,
