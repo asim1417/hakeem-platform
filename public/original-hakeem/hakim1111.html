@@ -7,6 +7,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- وضع التضمين: عند فتح القاضي داخل إطار موقع حكيم (?embed=1) نُخفي شريطه وعنوانه فيندمج بلا ازدواج -->
+<script>try{if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embed');}catch(e){}</script>
+<style>
+.embed-nav{display:none}
+html.embed .sidebar{display:none!important}
+html.embed .topbar{display:none!important}
+html.embed .main{margin-right:0!important;margin-left:0!important}
+html.embed body::after{display:none}
+html.embed .embed-nav{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--ink-08);background:#fff;position:sticky;top:0;z-index:30}
+html.embed .embed-nav button{font-family:'Reem Kufi';font-size:13px;border:1px solid var(--ink-08);background:#fff;border-radius:8px;padding:6px 14px;color:var(--navy);cursor:pointer;transition:.15s}
+html.embed .embed-nav button:hover{border-color:var(--gold);background:var(--gold-ghost,#f7f1e3)}
+html.embed .embed-nav .embed-nav-sp{flex:1}
+</style>
 <style>
 /* ============= CSS VARIABLES ============= */
 :root {
@@ -1689,6 +1702,13 @@ img, video, table { max-width: 100%; }
 
   <!-- ============ MAIN ============ -->
   <main class="main">
+    <!-- شريط تنقّل مصغّر يظهر فقط في وضع التضمين (إطار حكيم يوفّر باقي التنقّل) -->
+    <div class="embed-nav">
+      <button onclick="goPage('home')">🏠 الرئيسية</button>
+      <button onclick="goPage('cases')">📁 القضايا</button>
+      <span class="embed-nav-sp"></span>
+      <span style="font-family:'Reem Kufi';font-size:12px;color:var(--ink-40)">القاضي التفاعلي · حكيم</span>
+    </div>
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px;">
         <button class="mob-toggle" onclick="toggleSidebar()">
