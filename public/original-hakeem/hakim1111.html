@@ -3109,6 +3109,20 @@ img, video, table { max-width: 100%; }
                   <option>تأييد الحكم مع تصحيح التسبيب فقط (م/18)</option>
                 </select>
               </div>
+              <div class="field" style="margin-bottom:16px;">
+                <label class="flabel">احتساب مدة الاعتراض — القبول الشكلي</label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                  <div style="flex:1;min-width:160px;">
+                    <div style="font-size:11px;color:var(--ink-60);font-family:'Reem Kufi';margin-bottom:4px;">تاريخ تسلّم صك الحكم (م/7)</div>
+                    <input type="date" class="finput" id="appealNotifyDate" oninput="computeAppealDeadline()" />
+                  </div>
+                  <div style="width:150px;">
+                    <div style="font-size:11px;color:var(--ink-60);font-family:'Reem Kufi';margin-bottom:4px;">مدة الاعتراض (أيام)</div>
+                    <input type="number" class="finput" id="appealPeriodDays" value="30" min="1" oninput="computeAppealDeadline()" />
+                  </div>
+                </div>
+                <div id="appealDeadlineStatus" style="margin-top:10px;font-size:12px;font-family:'Reem Kufi';line-height:1.7;display:none;"></div>
+              </div>
               <button class="btn btn-gold" onclick="submitAppeal()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 رفع الاستئناف وتحليله بالذكاء الاصطناعي
@@ -7174,11 +7188,49 @@ function advanceAppealStage(n) {
   appealStage = n;
 }
 
+// احتساب مدة الاعتراض: المدة تبدأ من اليوم التالي لتسلّم صك الحكم (م/7).
+function appealDeadlineInfo() {
+  const dateEl = document.getElementById('appealNotifyDate');
+  const periodEl = document.getElementById('appealPeriodDays');
+  if (!dateEl || !dateEl.value) return null;
+  const start = new Date(dateEl.value + 'T00:00:00');
+  if (isNaN(start.getTime())) return null;
+  const period = Math.max(1, parseInt(periodEl?.value || '30', 10) || 30);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const elapsed = Math.floor((today - start) / 86400000); // الأيام منذ تسلّم الصك
+  const remaining = period - elapsed;                       // المدة تبدأ اليوم التالي
+  return { period, elapsed, remaining, expired: remaining < 0 };
+}
+
+function computeAppealDeadline() {
+  const box = document.getElementById('appealDeadlineStatus');
+  if (!box) return;
+  const info = appealDeadlineInfo();
+  if (!info) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  if (info.expired) {
+    box.style.color = 'var(--ruby)';
+    box.innerHTML = `⛔ انقضت مدة الاعتراض بـ <strong>${toAr(Math.abs(info.remaining))}</strong> يوماً (المدة ${toAr(info.period)} يوماً من اليوم التالي لتسلّم الصك — م/7). الطعن المقدَّم بعد المدة <strong>يُرد شكلاً</strong> (م/36).`;
+  } else {
+    box.style.color = 'var(--emerald)';
+    box.innerHTML = `✅ المدة سارية — تبقّى <strong>${toAr(info.remaining)}</strong> يوماً من أصل ${toAr(info.period)} يوماً. يجوز تقديم الاعتراض في الميعاد.`;
+  }
+}
+
 async function submitAppeal() {
   if (appealReasons.size === 0) { showToast('اختر سبباً واحداً على الأقل'); return; }
   const reasons = document.getElementById('appealReasons').value.trim();
   if (!reasons) { showToast('اشرح أسباب طعنك بالتفصيل'); return; }
   const request = document.getElementById('appealRequest').value;
+
+  // احتساب القبول الشكلي بناءً على ميعاد الاعتراض (م/7 وم/36)
+  const dl = appealDeadlineInfo();
+  const admissibility = dl
+    ? (dl.expired
+        ? `الميعاد منقضٍ: مضى ${dl.elapsed} يوماً على تسلّم الصك والمدة النظامية ${dl.period} يوماً (تبدأ من اليوم التالي للتسلّم — م/7). يجب أن تبتّ الدائرة في الشكل أولاً وتقضي بعدم قبول الاستئناف شكلاً لانقضاء الميعاد (م/7 وم/36)، ولا تتعرّض للموضوع، ويكتسب الحكم الابتدائي الصفة النهائية.`
+        : `الميعاد قائم: قُدّم الاعتراض خلال المدة النظامية (تبقّى ${dl.remaining} يوماً من أصل ${dl.period}). فاقبل الاستئناف شكلاً ثم انظر في الموضوع.`)
+    : `لم يُحدَّد تاريخ التسلّم — افترض تقديمه خلال المهلة فاقبله شكلاً ثم انظر في الموضوع.`;
+  if (dl?.expired) showToast('⛔ الميعاد منقضٍ — سيقضي القاضي بعدم القبول شكلاً (م/36)');
 
   advanceAppealStage(2);
   const typing = document.getElementById('appealTyping');
@@ -7200,6 +7252,7 @@ async function submitAppeal() {
 قواعد لا تُخالَف:
 - الوقائع تُحال للحكم الابتدائي ولا تُعاد
 - الشكل يُبتّ فيه أولاً قبل الموضوع جملةً مستقلة
+- إذا كان الاعتراض خارج الميعاد فالمنطوق: «عدم قبول الاستئناف شكلاً لانقضاء الميعاد (م/7 وم/36)» ولا تتعرّض للموضوع إطلاقاً
 - عند التأييد: «محمولاً على أسبابه» دون إعادة التسبيب
 - عند التعديل: أذكر وجه التعديل وسببه النظامي
 - عند الإلغاء: أذكر وجه الخطأ وأُصدر حكماً بديلاً
@@ -7216,6 +7269,8 @@ ${priVerdict}
 تفصيل أسباب الاعتراض: ${reasons}
 الطلب في الاستئناف: ${request}
 
+الفصل في الشكل (مُلزم): ${admissibility}
+
 اكتب حكم الاستئناف وفق البنية الحقيقية:
 
 الحمد لله والصلاة والسلام على رسول الله: أما بعد
@@ -7225,7 +7280,7 @@ ${priVerdict}
 بما أن وقائع هذه القضية قد أوردها الحكم محل الاعتراض فإن الدائرة تحيل إليه في ذلك، وتتلخص في [ملخص الطلبات الأصلية]، وبتسليم وكيل/ممثل المستأنف نسخة الحكم اعترض عليه وطلب استئنافه، وتلخّص اعتراضه في الأسباب الآتية: [أسباب الطعن سبباً سبباً].
 
 **الأسباب:**
-بما أن طلب الاستئناف جرى تقديمه وفق النظام خلال المهلة المحددة فإن الدائرة تنتهي إلى **قبوله شكلاً**.
+ابتُدئ بالفصل في الشكل وفق ما ورد في «الفصل في الشكل (مُلزم)» أعلاه: فإن كان الميعاد منقضياً فاقضِ بعدم قبول الاستئناف شكلاً لانقضاء الميعاد (م/7 وم/36) واختم الحكم دون التعرّض للموضوع؛ وإن كان الميعاد قائماً فاذكر **قبوله شكلاً** ثم تابع.
 وبعد دراسة الدائرة لأوراق القضية والحكم الصادر فيها وأسبابه والاعتراض المقدم عليه:
 [ناقش كل سبب من أسباب الاعتراض مع قرار الدائرة]
 [إذا رأيت التأييد: «استبان للدائرة صحة النتيجة التي خلصت إليها الدائرة الابتدائية وأن في أسبابها ما يكفي لتأييد الحكم»]
