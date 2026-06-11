@@ -10,7 +10,24 @@ import { LoginForm } from "@/components/LoginForm";
  */
 export function LoginPopover() {
   const [open, setOpen] = useState(false);
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // إن كان هناك مستخدم (بما في ذلك وضع «بدون تسجيل دخول») نعرض زر دخول مباشر بدل فورم الدخول.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : { user: null }))
+      .then((data) => {
+        if (active) setAuthed(Boolean(data?.user));
+      })
+      .catch(() => {
+        if (active) setAuthed(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -29,6 +46,17 @@ export function LoginPopover() {
       document.removeEventListener("mousedown", onClick);
     };
   }, [open]);
+
+  if (authed) {
+    return (
+      <Link
+        href="/dashboard"
+        className="focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-sm)]"
+      >
+        الدخول إلى المنصة
+      </Link>
+    );
+  }
 
   return (
     <div className="relative" ref={containerRef}>

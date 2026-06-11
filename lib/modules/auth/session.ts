@@ -13,6 +13,30 @@ import { canUser } from "@/lib/modules/auth/rbac";
 const cookieName = "hakeem_session";
 const maxAgeSeconds = 60 * 60 * 8;
 
+const guestEmail = "guest@hakeem.local";
+
+// وضع «بدون تسجيل دخول»: مفعّل افتراضيًا. لإعادة تفعيل صفحة الدخول اضبط DISABLE_AUTH=false
+export function isAuthDisabled() {
+  const flag = (process.env.DISABLE_AUTH ?? "").toLowerCase();
+  return flag !== "false" && flag !== "0" && flag !== "off";
+}
+
+// مستخدم افتراضي بصلاحيات كاملة يُستخدم عند تعطيل تسجيل الدخول.
+async function getGuestUser(): Promise<SafeUser> {
+  return prisma.user.upsert({
+    where: { email: guestEmail },
+    update: { isActive: true },
+    create: {
+      name: "زائر النظام",
+      email: guestEmail,
+      passwordHash: "not-for-login",
+      role: "SYSTEM_ADMIN",
+      isActive: true
+    },
+    select: { id: true, name: true, email: true, role: true, isActive: true }
+  });
+}
+
 type SessionPayload = {
   userId: string;
   role: UserRole;
@@ -82,7 +106,10 @@ export function clearLoginSession() {
 
 export async function getCurrentUser(): Promise<SafeUser | null> {
   const payload = decodeSession(cookies().get(cookieName)?.value);
-  if (!payload) return null;
+  if (!payload) {
+    if (isAuthDisabled()) return getGuestUser();
+    return null;
+  }
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
     select: { id: true, name: true, email: true, role: true, isActive: true }
@@ -107,7 +134,10 @@ export async function requirePagePermission(permission: Permission) {
 export async function getApiUser(request?: NextRequest) {
   const cookieValue = request?.cookies.get(cookieName)?.value ?? cookies().get(cookieName)?.value;
   const payload = decodeSession(cookieValue);
-  if (!payload) return null;
+  if (!payload) {
+    if (isAuthDisabled()) return getGuestUser();
+    return null;
+  }
   return prisma.user.findUnique({
     where: { id: payload.userId },
     select: { id: true, name: true, email: true, role: true, isActive: true }

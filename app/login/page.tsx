@@ -1,7 +1,11 @@
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
+import { isAuthDisabled } from "@/lib/modules/auth/session";
 
 export default function LoginPage({ searchParams }: { searchParams: { next?: string } }) {
   const nextUrl = searchParams?.next && searchParams.next.startsWith("/") ? searchParams.next : "/dashboard";
+  // عند تعطيل تسجيل الدخول نخفي الصفحة ونحوّل المستخدم مباشرة إلى لوحة التحكم.
+  if (isAuthDisabled()) redirect(nextUrl);
   return (
     <main className="legal-luxury-surface flex min-h-screen items-center justify-center px-5">
       <div className="w-full max-w-md">
