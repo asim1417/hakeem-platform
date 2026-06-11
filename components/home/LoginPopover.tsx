@@ -10,7 +10,27 @@ import { LoginForm } from "@/components/LoginForm";
  */
 export function LoginPopover() {
   const [open, setOpen] = useState(false);
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // إن كان هناك مستخدم (بما في ذلك وضع «بدون تسجيل دخول») نعرض زر دخول مباشر بدل فورم الدخول.
+  // نبدأ بإظهار زر «الدخول إلى المنصة» افتراضيًا ولا نُظهر نموذج الدخول إلا بعد التأكد
+  // فعليًا من أن الحماية مفعّلة والمستخدم غير مسجّل — حتى لا يومض الدخول في أي حالة.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : { user: null }))
+      .then((data) => {
+        if (active) setAuthed(Boolean(data?.user));
+      })
+      .catch(() => {
+        // عند أي خطأ نُبقي الدخول مخفيًا (لا نُظهر النموذج).
+        if (active) setAuthed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -29,6 +49,19 @@ export function LoginPopover() {
       document.removeEventListener("mousedown", onClick);
     };
   }, [open]);
+
+  // نُظهر نموذج الدخول فقط عندما نتأكد أن المستخدم غير مسجّل (authed === false)؛
+  // وفي حالة التحميل (null) أو وجود مستخدم (true) نعرض زر الدخول المباشر بلا ومضة.
+  if (authed !== false) {
+    return (
+      <Link
+        href="/dashboard"
+        className="focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-sm)]"
+      >
+        الدخول إلى المنصة
+      </Link>
+    );
+  }
 
   return (
     <div className="relative" ref={containerRef}>
