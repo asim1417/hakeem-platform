@@ -3004,6 +3004,7 @@ img, video, table { max-width: 100%; }
             <p>الاستئناف · النقض · التماس إعادة النظر — وفق لائحة الاعتراض على الأحكام</p>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
+            <a class="btn btn-outline btn-sm" href="/dashboard/legal-core/objection-methods" target="_blank" rel="noopener" title="الدليل الإجرائي الكامل وفق لائحة الاعتراض (م/1–62)">📖 الدليل الإجرائي الكامل</a>
             <span class="badge badge-appeal">حكم مطعون فيه</span>
             <span style="font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-60);" id="appealCaseId">C-1447-0001</span>
           </div>
@@ -3089,7 +3090,7 @@ img, video, table { max-width: 100%; }
                   <div class="ri-check"></div>
                   <div class="ri-text">
                     <div class="ri-title">دليل جديد لم يكن متاحاً</div>
-                    <div class="ri-sub">ظهر دليل جوهري لم يكن بالإمكان تقديمه في مرحلة الابتداء لسبب قاهر</div>
+                    <div class="ri-sub">ظهر دليل جوهري لم يكن بالإمكان تقديمه أمام الدرجة الأولى لسبب قاهر — م/21: لا تُقبل الأدلة التي كان ممكناً تقديمها ابتداءً</div>
                   </div>
                 </div>
               </div>
@@ -3101,11 +3102,11 @@ img, video, table { max-width: 100%; }
               <div class="field">
                 <label class="flabel">الطلبات في مرحلة الاستئناف</label>
                 <select class="fselect" id="appealRequest">
-                  <option>إلغاء الحكم الابتدائي والقضاء بالطلبات كاملةً</option>
+                  <option>إلغاء الحكم الابتدائي والقضاء في الموضوع (م/32)</option>
                   <option>تعديل الحكم وزيادة المبلغ المحكوم به</option>
                   <option>تعديل الحكم وتخفيض المبلغ المحكوم به</option>
-                  <option>إلغاء الحكم وإعادة القضية للمحكمة الابتدائية</option>
-                  <option>تأييد الحكم مع تصحيح التسبيب فقط</option>
+                  <option>إلغاء الحكم وإعادة القضية للمحكمة الابتدائية (في حالات م/34 الحصرية)</option>
+                  <option>تأييد الحكم مع تصحيح التسبيب فقط (م/18)</option>
                 </select>
               </div>
               <button class="btn btn-gold" onclick="submitAppeal()">
@@ -3143,14 +3144,20 @@ img, video, table { max-width: 100%; }
               </div>
             </div>
             <div class="appeal-side-card">
-              <div class="side-card-title">المادة النظامية</div>
-              <div class="rule-ref"><strong>م/171</strong> — نظام المحاكم التجارية<br/>يجوز الطعن بالاستئناف خلال 30 يوماً من التبليغ.</div>
-              <div class="rule-ref" style="margin-top:8px;"><strong>م/176</strong> — نظام المحاكم التجارية<br/>محكمة الاستئناف تنظر في المسائل المطعون فيها فقط.</div>
-              <div class="rule-ref" style="margin-top:8px;"><strong>م/178</strong> — نظام المحاكم التجارية<br/>الحكم: تأييد أو تعديل أو إلغاء مع الإحالة.</div>
+              <div class="side-card-title">مواد اللائحة — الاستئناف (م/19–39)</div>
+              <div class="rule-ref"><strong>م/19</strong> نوعا الاستئناف: مرافعة (الأصل) أو تدقيق</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/20</strong> ينقل الدعوى فيما رُفع عنه الاعتراض فقط</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/21</strong> لا أدلة جديدة كان ممكناً تقديمها للدرجة الأولى</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/26</strong> الجلسة الأولى ≤ 20 يوماً، وتبليغ قبلها بـ 5 أيام</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/34</strong> الإعادة للدرجة الأولى حصراً في 7 حالات</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/38</strong> حكم التأييد يُعدّ صادراً من محكمة الاستئناف</div>
+              <div class="rule-ref" style="margin-top:6px;"><strong>م/45</strong> الفصل: رفض الاستئناف أو نقض الحكم</div>
             </div>
-            <div class="appeal-side-card" style="background:var(--ruby-soft);border-color:rgba(140,34,51,0.2);">
-              <div style="font-family:'Reem Kufi';font-size:13px;color:var(--ruby);margin-bottom:6px;">⚠ تنبيه</div>
-              <div style="font-size:12px;color:var(--ruby);line-height:1.6;">انقضت مدة الاستئناف بعد 30 يوماً من تبليغ الحكم. الطعن المقدم بعد المدة يُرد شكلاً.</div>
+            <div class="appeal-side-card" style="background:rgba(184,114,26,0.06);border-color:rgba(184,114,26,0.2);">
+              <div style="font-family:'Reem Kufi';font-size:13px;color:var(--amber);margin-bottom:6px;">⏰ المواعيد</div>
+              <div style="font-size:12px;color:var(--navy);line-height:1.7;">
+                تبدأ مدة الاعتراض من اليوم التالي لتسلم صك الحكم (م/7). وطلب وقف التنفيذ خلال مدة الاعتراض فقط (م/11). وغياب المستأنف 60 يوماً دون طلب سير → سقوط حق الاستئناف (م/28).
+              </div>
             </div>
           </div>
         </div>
@@ -6108,6 +6115,7 @@ function postJudgmentCardsHTML() {
       <button class="btn btn-outline btn-sm" onclick="copyVerdictToClipboard()">📋 نسخ الحكم</button>
       <button class="btn btn-outline btn-sm" onclick="closePostJudgmentModal();goPage('settlement')">🤝 الصلح بعد الحكم</button>
       <button class="btn btn-outline btn-sm" onclick="closePostJudgmentModal();showPlaybookMapModal()">🗺️ خريطة المواد القضائية</button>
+      <a class="btn btn-outline btn-sm" href="/dashboard/legal-core/objection-methods" target="_blank" rel="noopener">📖 الدليل الإجرائي لطرق الاعتراض</a>
     </div>
     <div class="pjp-grid">
       <div class="pjp-card">
