@@ -14,6 +14,8 @@ export function LoginPopover() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // إن كان هناك مستخدم (بما في ذلك وضع «بدون تسجيل دخول») نعرض زر دخول مباشر بدل فورم الدخول.
+  // نبدأ بإظهار زر «الدخول إلى المنصة» افتراضيًا ولا نُظهر نموذج الدخول إلا بعد التأكد
+  // فعليًا من أن الحماية مفعّلة والمستخدم غير مسجّل — حتى لا يومض الدخول في أي حالة.
   useEffect(() => {
     let active = true;
     fetch("/api/auth/me")
@@ -22,7 +24,8 @@ export function LoginPopover() {
         if (active) setAuthed(Boolean(data?.user));
       })
       .catch(() => {
-        if (active) setAuthed(false);
+        // عند أي خطأ نُبقي الدخول مخفيًا (لا نُظهر النموذج).
+        if (active) setAuthed(true);
       });
     return () => {
       active = false;
@@ -47,7 +50,9 @@ export function LoginPopover() {
     };
   }, [open]);
 
-  if (authed) {
+  // نُظهر نموذج الدخول فقط عندما نتأكد أن المستخدم غير مسجّل (authed === false)؛
+  // وفي حالة التحميل (null) أو وجود مستخدم (true) نعرض زر الدخول المباشر بلا ومضة.
+  if (authed !== false) {
     return (
       <Link
         href="/dashboard"
