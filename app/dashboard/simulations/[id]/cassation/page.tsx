@@ -25,6 +25,7 @@ export default async function SimulationCassationPage({ params }: { params: { id
           <Link className="btn btn-gold" href="/dashboard/simulations">العودة إلى القاضي حكيم</Link>
           <Link className="btn ho-hero-outline" href={`/dashboard/simulations/${session.id}/appeal`}>الاستئناف</Link>
           <Link className="btn ho-hero-outline" href={`/dashboard/simulations/${session.id}/reconsideration`}>الالتماس</Link>
+          <Link className="btn ho-hero-outline" href="/dashboard/legal-core/objection-methods#cassation">الدليل الإجرائي</Link>
         </div>
       </section>
 
