@@ -4894,7 +4894,10 @@ function renderTurnUI() {
   const noProv    = document.getElementById('noProviderArea');
   const sendBtn   = document.getElementById('hearingSendBtn');
   const inp       = document.getElementById('hearingInput');
-  const hasProvider = !!getActiveProvider();
+  // المزود متاح إمّا عبر مزود محلّي أضافه المستخدم، أو عبر البوابة الخادمية المركزية
+  // (وضع التضمين داخل الموقع) ما لم تُعطَّل. هذا يضمن ظهور صندوق الكتابة في وضع
+  // التضمين حتى لو لم يُضف المستخدم مفتاحاً محلياً، فيستطيع المدعى عليه تقديم تعقيبه.
+  const hasProvider = !!getActiveProvider() || !_serverGatewayOff;
 
   // Show no-provider warning if needed (only in standalone mode)
   if (noProv) noProv.style.display = 'none';
