@@ -7533,19 +7533,22 @@ async function submitBugReport() {
   console.group('🐛 Bug Report');
   console.log(report);
   console.groupEnd();
-  // أرسل للخادم إن كان متاحاً
+  // أرسل لمسار المنصة (نفس الأصل) — يعمل عند فتح الواجهة داخل المنصة.
+  // يمكن تجاوزه بتعريف HAKIM_SERVER للاستضافة المنفصلة.
   let sent = false;
-  if (typeof HAKIM_SERVER !== 'undefined' && HAKIM_SERVER) {
-    try {
-      const res = await fetch(`${HAKIM_SERVER}/api/bug-report`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(report),
-        signal: AbortSignal.timeout(5000),
-      });
-      if (res.ok) sent = true;
-    } catch(_) {}
-  }
+  const endpoint = (typeof HAKIM_SERVER !== 'undefined' && HAKIM_SERVER)
+    ? `${HAKIM_SERVER}/api/original-hakeem/bug-report`
+    : '/api/original-hakeem/bug-report';
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(report),
+      credentials: 'same-origin',
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) sent = true;
+  } catch(_) {}
   // احفظ محلياً كـ fallback
   try {
     const list = JSON.parse(localStorage.getItem('hakim_bugs') || '[]');
@@ -7553,8 +7556,8 @@ async function submitBugReport() {
     localStorage.setItem('hakim_bugs', JSON.stringify(list.slice(-20)));
   } catch(_) {}
   statusEl.textContent = sent
-    ? '✅ تم الإرسال للفريق التقني.'
-    : '✅ تم الحفظ. الإصلاح المقترح: ' + report.suggestedFix;
+    ? '✅ تم إرسال البلاغ للفريق التقني.'
+    : '✅ حُفظ البلاغ محلياً (تعذّر الإرسال للخادم). الإصلاح المقترح: ' + report.suggestedFix;
   statusEl.style.cssText = 'display:block;background:rgba(26,92,65,0.1);color:var(--emerald);';
   setTimeout(() => { closeBugReport(); document.getElementById('bugType').value=''; }, 4000);
 }
@@ -7585,7 +7588,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="font-family:Reem Kufi;font-size:14px;font-weight:700;
                     color:var(--gold-pale);">⚠ الإبلاغ عن مشكلة</div>
         <div style="font-size:11px;color:rgba(249,245,236,0.5);">
-          تُرسَل للفريق التقني مع سياق الجلسة تلقائياً
+          تُرسَل للفريق التقني مع سياق الجلسة، وتُحفظ محلياً احتياطياً
         </div>
       </div>
       <button onclick="closeBugReport()"
