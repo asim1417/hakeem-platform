@@ -14,6 +14,7 @@
     "import:hoqoqi": "tsx scripts/import-hoqoqi-sql.ts",
     "import:hoqoqi:resume": "tsx scripts/import-hoqoqi-sql.ts --apply --resume",
     "inspect:judgments": "tsx scripts/inspect-judgments-sql.ts",
+    "analyze:judgments": "tsx scripts/analyze-judgments.ts",
     "import:judgments": "tsx scripts/import-judgments-sql.ts",
     "import:judgments:resume": "tsx scripts/import-judgments-sql.ts --apply --resume",
     "import:judgments:forever": "tsx scripts/import-judgments-sql.ts --apply --resume --forever",
