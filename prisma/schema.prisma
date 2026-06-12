@@ -402,3 +402,24 @@ model AppSetting {
 
   @@map("app_settings")
 }
+
+// بلاغات المشكلات من القاضي التفاعلي (الواجهة الأصلية hakim1111.html).
+// تُكتب عبر POST /api/original-hakeem/bug-report وتُقرأ للمالك عبر GET (ADMIN_REPORTS_VIEW).
+// القراءة/الكتابة مغلّفة بـ try/catch في الكود، فإن لم يُنشأ الجدول بعد لا يتعطّل
+// التطبيق ويعود العميل للحفظ المحلي. التفعيل: prisma db push.
+model BugReport {
+  id           String   @id @default(cuid())
+  type         String
+  description  String
+  suggestedFix String?
+  caseId       String?
+  subject      String?
+  stage        String?
+  context      Json?
+  actorId      String?
+  createdAt    DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("bug_reports")
+}
