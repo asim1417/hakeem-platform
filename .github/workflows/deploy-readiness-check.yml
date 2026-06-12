@@ -39,3 +39,6 @@ jobs:
 
       - name: Security QA
         run: npm run qa:security
+
+      - name: Citation extractor QA
+        run: npm run qa:citations
