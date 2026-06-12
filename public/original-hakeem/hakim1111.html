@@ -6034,7 +6034,7 @@ ${stageInstruction}
         msgEl.querySelector('.msg-body').appendChild(td);
 
         // Determine next turn from judge's response
-        determineNextTurn(judgeText);
+        determineNextTurn(judgeText, { isImplicitAdmission, isDoneSignal });
         isJudgeTyping = false;
         document.getElementById('hearingSendBtn').disabled = false;
       }
@@ -6053,8 +6053,20 @@ ${stageInstruction}
   }
 }
 
-function determineNextTurn(judgeText) {
+function determineNextTurn(judgeText, signals = {}) {
   const t = judgeText;
+
+  // قاعدة قاطعة — فلسفة الإجراءات القضائية:
+  // إعلان المدعى عليه اكتفاءه أو إقراره الضمني يقفل باب المرافعة فوراً.
+  // لا تُعاد دورة "تحرير الجواب" مهما كان نص القاضي — حسماً للتكرار.
+  if ((signals.isImplicitAdmission || signals.isDoneSignal) &&
+      hearingStage >= 2 && hearingStage < 4) {
+    renderProceduralDecision('الدائرة — قفل باب المرافعة وإصدار الحكم.');
+    currentTurn = 'judge';
+    updateStageTracker(4);
+    appendMessage('system', '― أُقفل باب المرافعة ―');
+    return;
+  }
 
   const decisionMatch = t.match(/القرار الإجرائي[:\*\s]+([^\n]+)/);
 
