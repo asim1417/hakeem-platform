@@ -25,7 +25,8 @@
     "link:judgments:status": "tsx scripts/import-judgments-sql.ts --link-only --status",
     "qa:db": "tsx scripts/qa-db.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
-    "qa:security": "tsx scripts/qa-security.ts"
+    "qa:security": "tsx scripts/qa-security.ts",
+    "qa:citations": "tsx scripts/qa-citations.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
