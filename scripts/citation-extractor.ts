@@ -253,27 +253,27 @@ export function extractAllCitations(
   ).trim();
 
   // ── النوع الأول: رقم صريح ─────────────────────────────
-  // م/40 | م/٤٠ | م. 40 | المادة (40) | المادة 40
-  const explicit = [
-    /(?:م\/|م\.\s*|المادة\s*[(\[]\s*)(\d+|[٠-٩]+)[)\]]?\s*(?:من\s+)?(?:نظام\s+)?([؀-ۿ\s]{3,35}?)(?=\s*[،,.\n\r]|$)/g,
-    /(?:م\/|م\.\s*)(\d+)/g,
-    // أرقام عربية: م/٤٠
-    /م\/([٠-٩]+)/g,
+  // المادة (40) | المادة 40 | م/40 | م/٤٠ | م. 40
+  // النظام يُحَل بالأقرب من قائمة الأنظمة المعروفة — أمتن من الالتقاط النصّي
+  // الذي يتكسّر أمام الأوصاف الطويلة («الصادر عام...») والنقطتين.
+  const explicitPatterns = [
+    /المادة\s*[(\[]?\s*(\d+|[٠-٩]+)\s*[)\]]?/g,
+    /م\s*[\/.]\s*(\d+|[٠-٩]+)/g,
   ];
-
-  for (const p of explicit) {
+  for (const p of explicitPatterns) {
     for (const m of text.matchAll(p)) {
-      const rawNum = m[1];
-      const num = String(parseInt(rawNum, rawNum.match(/[٠-٩]/) ? undefined : 10) ||
-                         arabicDigitsToWestern(rawNum));
-      const sys  = cleanSystem(m[2]) || detectNearestSystem(text, m.index!);
+      // استبعاد أرقام المراسيم/القرارات/الوثائق: «مرسوم ملكي رقم (م/١)»
+      const before = text.slice(Math.max(0, m.index! - 18), m.index!);
+      if (/(?:رقم|مرسوم|ملكي|قرار|تعميم|لائحة|صفحة)\s*[(\[]?\s*$/.test(before)) continue;
+      const num = arabicDigitsToWestern(m[1]);
+      const sys = detectNearestSystem(text, m.index!);
       if (!num || !sys) continue;
       add({
         articleNumber: num,
         systemName: sys,
         citedText: ctx(m.index!),
         extractedBy: 'regex_explicit',
-        confidence: 0.92,
+        confidence: 0.9,
       });
     }
   }
@@ -428,8 +428,9 @@ function detectNearestSystem(text: string, pos: number, maxDistance = 250): stri
   let best: string | null = null;
   let bestDist = Infinity;
   for (const sys of SYSTEM_NAMES) {
-    // ابحث عن الاسم الكامل ثم المختصر، وخذ أقرب ظهور للموضع
-    for (const needle of [sys, sys.replace('نظام ', '')]) {
+    // الاسم الكامل، ثم «نظام + أول كلمة» لالتقاط الإشارة المُختصرة
+    // («نظام المرافعات آنف الذكر») دون خفض الدقّة — الاشتراط ببادئة «نظام».
+    for (const needle of [sys, sys.split(/\s+/).slice(0, 2).join(' ')]) {
       let from = 0, idx: number;
       while ((idx = text.indexOf(needle, from)) !== -1) {
         const dist = Math.abs(idx - pos);
