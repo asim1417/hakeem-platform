@@ -266,7 +266,7 @@ export function extractAllCitations(
       const rawNum = m[1];
       const num = String(parseInt(rawNum, rawNum.match(/[٠-٩]/) ? undefined : 10) ||
                          arabicDigitsToWestern(rawNum));
-      const sys  = cleanSystem(m[2] || detectNearestSystem(text, m.index!));
+      const sys  = cleanSystem(m[2]) || detectNearestSystem(text, m.index!);
       if (!num || !sys) continue;
       add({
         articleNumber: num,
@@ -285,7 +285,7 @@ export function extractAllCitations(
   for (const m of text.matchAll(ordinalPat)) {
     const num = arabicOrdinalToNumber(m[1]);
     if (!num) continue;
-    const sys = cleanSystem(m[2] || detectNearestSystem(text, m.index!));
+    const sys = cleanSystem(m[2]) || detectNearestSystem(text, m.index!);
     if (!sys) continue;
     add({
       articleNumber: String(num),
@@ -305,7 +305,7 @@ export function extractAllCitations(
     for (const m of text.matchAll(p)) {
       const from = parseInt(m[1]);
       const to   = parseInt(m[2]);
-      const sys  = cleanSystem(m[3] || detectNearestSystem(text, m.index!));
+      const sys  = cleanSystem(m[3]) || detectNearestSystem(text, m.index!);
       if (!sys || from >= to) continue;
       // أضف كل مادة في النطاق
       for (let n = from; n <= Math.min(to, from + 10); n++) {
@@ -322,16 +322,17 @@ export function extractAllCitations(
   }
 
   // ── النوع الرابع: فقرة داخل مادة ─────────────────────
-  // "م/19 فقرة أ" | "الفقرة (2) من المادة (40)"
-  const paraPat = [
-    /م\/(\d+)\s*(?:ف(?:قرة)?\s*)([أبجدهوز\d]+)/g,
-    /الفقرة\s*[(\[]\s*([أبجدهوز\d]+)\s*[)\]]\s*من\s+المادة\s*[(\[]\s*(\d+)/g,
+  // "م/19 فقرة أ" | "المادة (٢٢) فقرة (ب)" | "الفقرة (2) من المادة (40)"
+  const paraPatterns: { re: RegExp; numGroup: number; paraGroup: number }[] = [
+    { re: /م\/(\d+|[٠-٩]+)\s*ف(?:قرة)?\s*[(\[]?\s*([أبجدهوزحط\d٠-٩]+)/g, numGroup: 1, paraGroup: 2 },
+    { re: /المادة\s*[(\[]?\s*(\d+|[٠-٩]+)\s*[)\]]?\s*فقرة\s*[(\[]?\s*([أبجدهوزحط\d٠-٩]+)/g, numGroup: 1, paraGroup: 2 },
+    { re: /الفقرة\s*[(\[]?\s*([أبجدهوزحط\d٠-٩]+)\s*[)\]]?\s*من\s+المادة\s*[(\[]?\s*(\d+|[٠-٩]+)/g, numGroup: 2, paraGroup: 1 },
   ];
-  for (const p of paraPat) {
-    for (const m of text.matchAll(p)) {
-      const num   = m[1] || m[2];
-      const para  = m[2] || m[1];
-      const sys   = detectNearestSystem(text, m.index!);
+  for (const { re, numGroup, paraGroup } of paraPatterns) {
+    for (const m of text.matchAll(re)) {
+      const num  = arabicDigitsToWestern(m[numGroup]);
+      const para = arabicDigitsToWestern(m[paraGroup]);
+      const sys  = detectNearestSystem(text, m.index!);
       if (!num || !sys) continue;
       add({
         articleNumber: num,
@@ -347,8 +348,9 @@ export function extractAllCitations(
   // ── النوع الخامس: إشارة للنظام فقط ───────────────────
   for (const sysName of SYSTEM_NAMES) {
     const shortName = sysName.replace('نظام ', '');
+    // يدعم اللام الملتصقة (لنظام/للنظام) و«أحكام النظام»
     const sysPattern = new RegExp(
-      `(?:وفق|طبقاً?\\s+ل|بموجب|وفقاً?\\s+ل|استناداً\\s+ل|وفق\\s+أحكام)\\s+(?:نظام\\s+)?${shortName}`,
+      `(?:وفق(?:اً)?|طبقاً?|بموجب|استناداً|بناءً\\s+على|عملاً\\s+ب)\\s+(?:لأحكام\\s+|أحكام\\s+)?(?:لل?نظام\\s+|ل?نظام\\s+)?${shortName}`,
       'g'
     );
     for (const m of text.matchAll(sysPattern)) {
