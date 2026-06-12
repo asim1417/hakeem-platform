@@ -83,16 +83,67 @@ const ORDINAL_MAP: Record<string, number> = {
   'الثانية مائتين': 200, 'المائتين': 200,
 };
 
-/** تحويل الرقم الترتيبي العربي إلى رقم */
-function arabicOrdinalToNumber(text: string): number | null {
-  // تجربة مباشرة
-  if (ORDINAL_MAP[text.trim()]) return ORDINAL_MAP[text.trim()];
+// آحاد ترتيبية (مذكّر/مؤنّث) → 1..9
+const ORDINAL_ONES: Record<string, number> = {
+  'الحادية': 1, 'الحادي': 1, 'الأولى': 1, 'الأول': 1, 'الواحدة': 1,
+  'الثانية': 2, 'الثاني': 2,
+  'الثالثة': 3, 'الثالث': 3,
+  'الرابعة': 4, 'الرابع': 4,
+  'الخامسة': 5, 'الخامس': 5,
+  'السادسة': 6, 'السادس': 6,
+  'السابعة': 7, 'السابع': 7,
+  'الثامنة': 8, 'الثامن': 8,
+  'التاسعة': 9, 'التاسع': 9,
+};
 
-  // تجربة أجزاء مركّبة مثل "الثانية والأربعون"
-  for (const [key, val] of Object.entries(ORDINAL_MAP)) {
-    if (text.includes(key)) return val;
+// عشرات (رفع/جر) → 20..90
+const ORDINAL_TENS: Record<string, number> = {
+  'العشرون': 20, 'العشرين': 20,
+  'الثلاثون': 30, 'الثلاثين': 30,
+  'الأربعون': 40, 'الأربعين': 40,
+  'الخمسون': 50, 'الخمسين': 50,
+  'الستون': 60, 'الستين': 60,
+  'السبعون': 70, 'السبعين': 70,
+  'الثمانون': 80, 'الثمانين': 80,
+  'التسعون': 90, 'التسعين': 90,
+};
+
+/** تحويل الرقم الترتيبي العربي إلى رقم — يدعم التركيب (آحاد + عشرات + مئات) */
+function arabicOrdinalToNumber(text: string): number | null {
+  const t = text.trim();
+
+  // ١. مطابقة مباشرة من القاموس الكامل (أدقّ صيَغ مثبتة)
+  if (ORDINAL_MAP[t]) return ORDINAL_MAP[t];
+
+  // ٢. تركيب: مئات + عشرات + آحاد (مثل "الثالثة والأربعين بعد المائة" = 143)
+  let hundreds = 0;
+  if (/بعد\s+الم[ئا]تين/.test(t)) hundreds = 200;
+  else if (/بعد\s+الم[ئا]ة/.test(t)) hundreds = 100;
+
+  let ones = 0;
+  for (const [k, v] of Object.entries(ORDINAL_ONES)) {
+    if (t.includes(k)) { ones = v; break; }
   }
-  return null;
+  let tens = 0;
+  for (const [k, v] of Object.entries(ORDINAL_TENS)) {
+    if (t.includes(k)) { tens = v; break; }
+  }
+  // أحد عشر..تسعة عشر: وجود "عشر/عشرة" دون عشرات صريحة
+  const isTeen = tens === 0 && /عشر[ةه]?/.test(t);
+
+  let base = 0;
+  if (isTeen) base = 10 + ones;
+  else if (tens > 0) base = tens + ones;
+  else if (ones > 0) base = ones;
+
+  if (base > 0 || hundreds > 0) return base + hundreds || null;
+
+  // ٣. احتياط: أطول مفتاح مطابق من القاموس الكامل
+  let best: number | null = null, bestLen = 0;
+  for (const [k, v] of Object.entries(ORDINAL_MAP)) {
+    if (t.includes(k) && k.length > bestLen) { best = v; bestLen = k.length; }
+  }
+  return best;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -229,7 +280,8 @@ export function extractAllCitations(
 
   // ── النوع الثاني: رقم بالكلمات ───────────────────────
   // "المادة الخامسة عشرة من نظام..."
-  const ordinalPat = /المادة\s+([؀-ۿ\s]{5,50}?)\s+(?:من\s+)?(?:نظام\s+)?([؀-ۿ\s]{5,35}?)(?=[،,.\n]|$)/g;
+  // نلتقط عبارة الترتيب كاملةً حتى « من » (تمنع اقتطاع "الخامسة والأربعين" إلى "الخامسة")
+  const ordinalPat = /المادة\s+([^،.\n()\[\]]+?)\s+من\s+(?:نظام\s+)?([؀-ۿ\s]{4,35}?)(?=[،,.\n]|$)/g;
   for (const m of text.matchAll(ordinalPat)) {
     const num = arabicOrdinalToNumber(m[1]);
     if (!num) continue;
@@ -369,15 +421,22 @@ function cleanSystem(raw?: string | null): string | null {
   return raw.startsWith('نظام') ? raw : null;
 }
 
-/** يجد اسم النظام الأقرب لموضع معين في النص */
-function detectNearestSystem(text: string, pos: number): string | null {
-  const window = text.slice(Math.max(0, pos - 200), Math.min(text.length, pos + 200));
+/** يجد اسم النظام الأقرب فعلياً (بأقل مسافة) لموضع معين في النص */
+function detectNearestSystem(text: string, pos: number, maxDistance = 250): string | null {
+  let best: string | null = null;
+  let bestDist = Infinity;
   for (const sys of SYSTEM_NAMES) {
-    if (window.includes(sys)) return sys;
-    const short = sys.replace('نظام ', '');
-    if (window.includes(short)) return sys;
+    // ابحث عن الاسم الكامل ثم المختصر، وخذ أقرب ظهور للموضع
+    for (const needle of [sys, sys.replace('نظام ', '')]) {
+      let from = 0, idx: number;
+      while ((idx = text.indexOf(needle, from)) !== -1) {
+        const dist = Math.abs(idx - pos);
+        if (dist < bestDist) { bestDist = dist; best = sys; }
+        from = idx + needle.length;
+      }
+    }
   }
-  return null;
+  return bestDist <= maxDistance ? best : null;
 }
 
 // ══════════════════════════════════════════════════════════

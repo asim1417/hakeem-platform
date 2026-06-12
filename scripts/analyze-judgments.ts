@@ -14,6 +14,8 @@ import { PrismaClient } from '@prisma/client';
 // نمرّ على طبقة الذكاء المركزية في الخادم بدل استدعاء مزوّد مباشرةً —
 // المفتاح يبقى داخل lib/modules/ai (وفق سياسة الأمن qa:security).
 import { callCentralProvider } from '@/lib/modules/ai/ai-gateway';
+// المستخرج الشامل (٨ أنواع إشارات) بدل الـ regex المبسّط.
+import { extractAllCitations, type Citation } from './citation-extractor';
 
 const prisma = new PrismaClient();
 
@@ -72,63 +74,35 @@ async function extractSampleCases(limit = 100) {
   return cases;
 }
 
-// ── المرحلة ٢: Regex Extractor ───────────────────────────
+// ── المرحلة ٢: المستخرج الشامل (٨ أنواع) ─────────────────
 
-function extractCitationsRegex(text: string): Partial<ExtractedCitation>[] {
-  const results: Partial<ExtractedCitation>[] = [];
+// تحويل نوع المستخرِج إلى نوع العلاقة الافتراضي
+const RELATION_BY_EXTRACTOR: Record<Citation['extractedBy'], RelationType> = {
+  regex_explicit:     'direct',
+  regex_ordinal:      'direct',
+  regex_range:        'supportive',
+  regex_paragraph:    'direct',
+  regex_system_only:  'supportive',
+  principle_fiqh:     'evidentiary',
+  principle_judicial: 'supportive',
+  ai_implicit:        'interpretive',
+};
 
-  // أنماط الاستشهاد بالمواد
-  const patterns = [
-    // م/15 من نظام ... | المادة (15) من ...
-    /(?:م\/|المادة\s*[(\[])(\d+)[)\]]?\s*(?:من\s+)?(?:نظام\s+)?([؀-ۿ\s]+?)(?:،|\.|\s*وفق|\s*المادة|$)/g,
-    // م/خامس عشر | المادة الخامسة
-    /(?:م\/|المادة\s+)([؀-ۿ]+)\s+(?:من\s+)?(?:نظام\s+)?([؀-ۿ\s]+?)(?:،|\.|\n)/g,
-    // نظام المرافعات م/40
-    /(نظام\s+[؀-ۿ\s]{5,30})\s*(?:،\s*)?م\/(\d+)/g,
-  ];
-
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      const articleNum = match[1]?.replace(/[^\d]/g, '') || '';
-      const systemName = (match[2] || match[1] || '').trim();
-
-      if (articleNum && systemName.length > 3) {
-        // استخراج السياق (200 حرف حول الاستشهاد)
-        const start = Math.max(0, match.index - 100);
-        const end   = Math.min(text.length, match.index + match[0].length + 100);
-
-        results.push({
-          articleNumber: articleNum,
-          systemName: cleanSystemName(systemName),
-          citedText: text.slice(start, end).trim(),
-          confidence: 0.7,
-        });
-      }
-    }
+/** يحوّل مخرجات المستخرج الشامل إلى الشكل القابل للحفظ (يتطلب رقم مادة) */
+function toExtracted(cits: Citation[]): ExtractedCitation[] {
+  const out: ExtractedCitation[] = [];
+  for (const c of cits) {
+    if (!c.articleNumber) continue; // إشارة نظام فقط — لا تُربط بمادة بعينها
+    out.push({
+      articleNumber: c.articleNumber,
+      systemName:    c.systemName,
+      citedText:     c.citedText,
+      relationType:  c.relationType ?? RELATION_BY_EXTRACTOR[c.extractedBy] ?? 'supportive',
+      explanation:   c.principleText ? `مبدأ: ${c.principleText}` : `استُخرجت عبر ${c.extractedBy}`,
+      confidence:    c.confidence,
+    });
   }
-
-  return deduplicateCitations(results);
-}
-
-function cleanSystemName(raw: string): string {
-  // تنظيف اسم النظام
-  const map: Record<string, string> = {
-    'المرافعات': 'نظام المرافعات الشرعية',
-    'المرافعات الشرعية': 'نظام المرافعات الشرعية',
-    'الإثبات': 'نظام الإثبات أمام المحاكم',
-    'المعاملات المدنية': 'نظام المعاملات المدنية',
-    'الشركات': 'نظام الشركات',
-    'التنفيذ': 'نظام التنفيذ',
-    'المحاكم التجارية': 'نظام المحاكم التجارية',
-    'التحكيم': 'نظام التحكيم',
-    'العمل': 'نظام العمل',
-  };
-  const cleaned = raw.replace(/^(نظام\s+)/, '').trim();
-  for (const [key, val] of Object.entries(map)) {
-    if (cleaned.includes(key)) return val;
-  }
-  return raw.startsWith('نظام') ? raw : `نظام ${raw}`;
+  return out;
 }
 
 // ── المرحلة ٣: AI Extractor (للأحكام المهمة) ────────────
@@ -320,7 +294,7 @@ async function applyPatternsToDB(
     cursor = batch[batch.length - 1].id;
 
     for (const c of batch) {
-      const citations = extractCitationsRegex(c.judgmentText) as ExtractedCitation[];
+      const citations = toExtracted(extractAllCitations(c.judgmentText));
       if (citations.length === 0) continue;
 
       const articleMap = await matchArticlesToDB(citations);
@@ -352,8 +326,8 @@ async function main() {
     const c = cases[i];
     process.stdout.write(`\r  ${i + 1}/${cases.length} — ${c.caseNo || c.id}`);
 
-    // regex أولاً (سريع)
-    const regexCitations = extractCitationsRegex(c.judgmentText) as ExtractedCitation[];
+    // المستخرج الشامل أولاً (سريع، بلا تكلفة)
+    const regexCitations = toExtracted(extractAllCitations(c.judgmentText));
 
     // AI للأحكام المهمة (كل 10 أحكام)
     let aiCitations: ExtractedCitation[] = [];
@@ -427,18 +401,6 @@ async function main() {
 }
 
 // ── Helpers ───────────────────────────────────────────────
-
-function deduplicateCitations(
-  citations: Partial<ExtractedCitation>[]
-): Partial<ExtractedCitation>[] {
-  const seen = new Set<string>();
-  return citations.filter(c => {
-    const key = `${c.articleNumber}|${c.systemName}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
 
 function mergeCitations(
   regex: Partial<ExtractedCitation>[],
