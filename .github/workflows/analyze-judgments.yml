@@ -1,0 +1,84 @@
+name: Analyze Judgments (Citations)
+
+# تشغيل يدوي فقط — لأنه يقرأ/يكتب في قاعدة الإنتاج.
+# المتطلبات: أضِف السرّ DATABASE_URL في:
+#   Settings → Secrets and variables → Actions → New repository secret
+# (اختياري لوضع العيّنة فقط: AUTH_SECRET مطابق للإنتاج كي يعمل استخراج الذكاء؛
+#  وضع --apply-all لا يستخدم الذكاء أصلاً.)
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "النطاق"
+        type: choice
+        required: true
+        default: sample
+        options:
+          - sample   # عيّنة (~100 حكم) + تقرير — كتابة محدودة للروابط
+          - all      # كل الأحكام (--apply-all) — كتابة واسعة في القاعدة
+      confirm:
+        description: "للكتابة على الكل اكتب: APPLY-ALL"
+        type: string
+        required: false
+        default: ""
+
+# يمنع تشغيلين متوازيين يكتبان في القاعدة معاً.
+concurrency:
+  group: analyze-judgments
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # لازم فقط لفكّ تشفير مفتاح الذكاء في وضع العيّنة — وضع الكل لا يحتاجه.
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+    steps:
+      - name: تحقق من السرّ والتأكيد
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::السرّ DATABASE_URL غير مضبوط. أضِفه في Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          if [ "${{ inputs.scope }}" = "all" ] && [ "${{ inputs.confirm }}" != "APPLY-ALL" ]; then
+            echo "::error::اخترت 'all' (كتابة واسعة على الإنتاج) دون تأكيد. أعِد التشغيل واكتب APPLY-ALL في حقل التأكيد."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Run analyzer
+        run: |
+          if [ "${{ inputs.scope }}" = "all" ]; then
+            echo "▶ تشغيل على كامل القاعدة (--apply-all)"
+            npm run analyze:judgments -- --apply-all
+          else
+            echo "▶ تشغيل على عيّنة (~100 حكم)"
+            npm run analyze:judgments
+          fi
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: citation-analysis-report
+          path: data/citation_analysis_report.json
+          if-no-files-found: ignore
