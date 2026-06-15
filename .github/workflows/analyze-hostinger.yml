@@ -1,0 +1,50 @@
+name: Analyze Hostinger Judgments
+
+# يتصل مباشرةً بقاعدة Hostinger MySQL (جدول ahkam_moj) ويحلّل الاستشهادات.
+# يتطلّب السرّ HOSTINGER_DB_URL بصيغة:
+#   mysql://USER:PASSWORD@HOST:3306/DBNAME
+# وتفعيل Remote MySQL في hPanel (السماح لأي مضيف %).
+# قراءة فقط — لا يكتب في قاعدة Hostinger.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "النطاق"
+        type: choice
+        required: true
+        default: sample
+        options:
+          - sample   # ~200 حكم
+          - all      # كل الأحكام
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    env:
+      HOSTINGER_DB_URL: ${{ secrets.HOSTINGER_DB_URL }}
+    steps:
+      - name: تحقق من السرّ
+        run: |
+          if [ -z "$HOSTINGER_DB_URL" ]; then
+            echo "::error::السرّ HOSTINGER_DB_URL غير مضبوط."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run analyzer
+        run: |
+          if [ "${{ inputs.scope }}" = "all" ]; then
+            npm run analyze:hostinger -- --all
+          else
+            npm run analyze:hostinger
+          fi
