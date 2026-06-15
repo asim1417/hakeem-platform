@@ -16,6 +16,7 @@
     "inspect:judgments": "tsx scripts/inspect-judgments-sql.ts",
     "analyze:judgments": "tsx scripts/analyze-judgments.ts",
     "analyze:hostinger": "tsx scripts/analyze-hostinger.ts",
+    "migrate:judgments": "tsx scripts/migrate-judgments.ts",
     "import:judgments": "tsx scripts/import-judgments-sql.ts",
     "import:judgments:resume": "tsx scripts/import-judgments-sql.ts --apply --resume",
     "import:judgments:forever": "tsx scripts/import-judgments-sql.ts --apply --resume --forever",

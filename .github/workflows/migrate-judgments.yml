@@ -1,0 +1,68 @@
+name: Migrate Judgments (Hostinger → Supabase)
+
+# يرحّل الأحكام من قاعدة Hostinger MySQL إلى قاعدة منصّة حكيم (Supabase).
+# يتطلّب سرّين:
+#   DATABASE_URL      = اتصال Supabase (قاعدة المنصّة)
+#   HOSTINGER_DB_URL  = mysql://USER:PASS@HOST:3306/u877489052_hqoqi
+# (مع تفعيل Remote MySQL في hPanel: السماح لأي مضيف %.)
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "النطاق"
+        type: choice
+        required: true
+        default: sample
+        options:
+          - sample   # ~200 حكم تجريبياً
+          - all      # كل الأحكام
+      confirm:
+        description: "للترحيل الكامل اكتب: MIGRATE-ALL"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: migrate-judgments
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      HOSTINGER_DB_URL: ${{ secrets.HOSTINGER_DB_URL }}
+    steps:
+      - name: تحقق من الأسرار والتأكيد
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$HOSTINGER_DB_URL" ]; then
+            echo "::error::يلزم ضبط السرّين DATABASE_URL و HOSTINGER_DB_URL."
+            exit 1
+          fi
+          if [ "${{ inputs.scope }}" = "all" ] && [ "${{ inputs.confirm }}" != "MIGRATE-ALL" ]; then
+            echo "::error::اخترت 'all' دون تأكيد. أعِد التشغيل واكتب MIGRATE-ALL في حقل التأكيد."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Apply schema to Supabase (db push)
+        run: npx prisma db push --skip-generate
+      - name: Migrate judgments
+        run: |
+          if [ "${{ inputs.scope }}" = "all" ]; then
+            npm run migrate:judgments -- --all
+          else
+            npm run migrate:judgments
+          fi
