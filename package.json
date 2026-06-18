@@ -32,7 +32,8 @@
     "test:kg": "tsx scripts/test-knowledge-graph.ts",
     "index:opensearch": "tsx scripts/index-opensearch.ts",
     "test:hybrid": "tsx scripts/test-hybrid-search.ts",
-    "test:rag": "tsx scripts/test-legal-rag.ts"
+    "test:rag": "tsx scripts/test-legal-rag.ts",
+    "test:composer": "tsx scripts/test-legal-answer-composer.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
