@@ -256,6 +256,7 @@ function emptyRag(): RagResult {
     relatedRulings: [],
     relatedPrinciples: [],
     provider: "none",
+    providerConfigured: false,
     model: "",
     providers: [],
   };

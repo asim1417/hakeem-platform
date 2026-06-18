@@ -30,7 +30,7 @@ function ragFixture(over: Partial<RagResult> = {}): RagResult {
     relatedArticles: [],
     relatedRulings: [{ id: "rul-1", title: "حكم ت/4520", reason: "مرتبط بالمادة 130", weight: 0.6 }],
     relatedPrinciples: [],
-    provider: "mock", model: "mock-deterministic", providers: [],
+    provider: "mock", providerConfigured: false, model: "mock-deterministic", providers: [],
     ...over,
   };
 }

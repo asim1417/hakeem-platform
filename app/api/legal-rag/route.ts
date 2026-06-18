@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     relatedRulings: result.relatedRulings,
     relatedPrinciples: result.relatedPrinciples,
     provider: result.provider,
+    providerConfigured: result.providerConfigured,
     model: result.model,
   });
 }
