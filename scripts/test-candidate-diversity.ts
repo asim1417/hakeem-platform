@@ -2,7 +2,7 @@
  * اختبار اختيار المرشّحين المتنوّع (selectDiverseCandidateIds) — نقيّ، بلا قاعدة.
  * يضمن كسر احتكار نظام واحد للمجموعة مع الإكمال من الفائض. التشغيل: npm run test:diversity
  */
-import { selectDiverseCandidateIds } from "@/lib/modules/legal-core/legal-retrieval";
+import { selectDiverseCandidateIds, blendSemanticScore } from "@/lib/modules/legal-core/legal-retrieval";
 
 let passed = 0;
 let failed = 0;
@@ -41,6 +41,12 @@ function main() {
   check(selectDiverseCandidateIds([], { perSystemCap: 10, target: 10 }).length === 0, "مدخل فارغ → []");
   check(selectDiverseCandidateIds(rows([["A", 5]]), { perSystemCap: 10, target: 100 }).length === 5, "أقل من الهدف → كل المتاح");
   check(new Set(sel).size === sel.length, "لا تكرار في المعرّفات");
+
+  // مزج الدرجة الدلالية: نتيجة دلالية بحتة تتجاوز عتبة الإسناد (12)، والمعجمي القوي يبقى أعلى.
+  check(blendSemanticScore(0, 0.5, 80) === 40, "دلالي بحت (lexical=0, cosine=0.5) → 40 (> عتبة 12)");
+  check(blendSemanticScore(120, 0.4, 80) === 152, "معجمي قوي + دلالي → يبقى الأعلى");
+  check(blendSemanticScore(30, 0, 80) === 30, "بلا تشابه دلالي → الدرجة المعجمية كما هي");
+  check(blendSemanticScore(0, 0.1, 80) === 8, "تشابه ضعيف (0.1) → 8 (< 12 فيُستبعَد لاحقاً)");
 
   console.log("\n" + "=".repeat(56));
   console.log(`النتيجة: ${passed} نجح، ${failed} فشل`);

@@ -74,7 +74,8 @@ export default async function LegalCoreSearchPage({
       page: Number.isFinite(page) ? page : 1,
       limit: 30,
       includeMatchedParagraphs: true,
-      includeRelatedTerms: true
+      includeRelatedTerms: true,
+      semantic: true
     }).catch(() => ({
       query,
       searchType: selectedSearchType,

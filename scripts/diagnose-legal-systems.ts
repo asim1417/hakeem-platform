@@ -119,7 +119,7 @@ async function section4_searchRepresentation(distinctLawNames: number) {
 
   for (const term of PROBE_TERMS) {
     try {
-      const res = await searchLegalCore({ query: term, limit: 20, searchType: "derivatives" });
+      const res = await searchLegalCore({ query: term, limit: 20, searchType: "derivatives", semantic: true });
       const systemsInTop = new Set<string>();
       for (const r of res.results) {
         slotCount.set(r.systemName, (slotCount.get(r.systemName) ?? 0) + 1);
