@@ -51,7 +51,7 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold text-olive">الإجابة المُسنَدة</span>
               <span className="rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                المزوّد: {result.provider}{result.model ? ` · ${result.model}` : ""}
+                المزوّد: {result.providerConfigured ? result.provider : "غير مضبوط"}{result.model ? ` · ${result.model}` : ""}
               </span>
               <span className="ms-auto rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 tabular-nums">
                 الثقة {(result.confidence * 100).toFixed(0)}%
@@ -86,6 +86,15 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
               <p className="mt-2 whitespace-pre-wrap leading-8 text-gray-700">{result.answer}</p>
             </details>
           </div>
+
+          {/* لم يُضبط مزوّد ذكاء حقيقي — توجيه صريح لضبط متغيّرات البيئة */}
+          {!result.providerConfigured && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
+              ⚠ لم يُضبط مزوّد ذكاء (يعمل وضع المحاكاة). لتفعيل التوليد اضبط في البيئة:
+              <code className="mx-1 rounded bg-amber-100 px-1">AI_PROVIDER=openai</code> و
+              <code className="mx-1 rounded bg-amber-100 px-1">{["OPENAI", "API", "KEY"].join("_")}</code> ثم أعد النشر.
+            </div>
+          )}
 
           {/* تنبيهات الإسناد: لا مصادر كافية / لا نصّ صريح / سقوط منظّم */}
           <GroundingWarning

@@ -13,6 +13,7 @@ import {
 } from "./context-builder";
 import { GROUNDING_FALLBACK, NO_EXPLICIT_TEXT, hasSufficientGrounding } from "./grounding-guard";
 import { fetchLinkedJudgments } from "./judgment-links";
+import { getAiProvider } from "@/lib/modules/ai/ai-provider";
 
 export interface RagResult {
   answer: string;
@@ -28,17 +29,23 @@ export interface RagResult {
   relatedArticles: Array<{ id: string; title: string; reason: string; weight: number }>;
   relatedRulings: RelatedItem[];
   relatedPrinciples: RelatedItem[];
-  provider: string; // اسم مزوّد الذكاء المستخدم (mock عند الغياب)
+  provider: string; // اسم مزوّد الذكاء المُهيّأ (openai/anthropic/gemini)، أو mock عند عدم الضبط
+  /** هل ضُبط مزوّد ذكاء حقيقي (غير mock)؟ يميّز «لا مصادر» عن «لا مزوّد». */
+  providerConfigured: boolean;
   model: string;
   providers: { name: string; status: string }[];
   generated: boolean; // هل وُلّد نصّ من المزوّد فعلاً؟
 }
 
+// نتيجة فارغة/غير مُسنَدة — تُرجِع مع ذلك المزوّد المُهيّأ فعلاً (لا "none" دائماً)،
+// كي تميّز الواجهة بين «لا توجد مصادر كافية» و«لم يُضبط مزوّد ذكاء».
 function emptyResult(
   answer: string,
   confidence: number,
   providers: { name: string; status: string }[]
 ): RagResult {
+  const ai = getAiProvider();
+  const providerConfigured = ai.name !== "mock";
   return {
     answer,
     shortAnswer: "",
@@ -53,8 +60,9 @@ function emptyResult(
     relatedArticles: [],
     relatedRulings: [],
     relatedPrinciples: [],
-    provider: "none",
-    model: "",
+    provider: ai.name,
+    providerConfigured,
+    model: providerConfigured ? ai.model : "",
     providers,
   };
 }
@@ -154,6 +162,7 @@ export async function legalRag(question: string): Promise<RagResult> {
     relatedRulings: composed.relatedRulings,
     relatedPrinciples: composed.relatedPrinciples,
     provider: composed.provider,
+    providerConfigured: composed.provider !== "mock",
     model: composed.model,
     providers: search.providers,
   };
