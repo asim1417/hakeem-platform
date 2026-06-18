@@ -1,0 +1,51 @@
+name: Inspect Live Vercel DB (read-only)
+
+# فحص قراءة-فقط لقاعدة الموقع الحيّ عبر سرّ مستقل VERCEL_DATABASE_URL_INSPECT.
+# لا يلمس DATABASE_URL الرئيسي. SELECT count فقط — لا كتابة/seed/backfill/migration/db push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "اكتب INSPECT للتأكيد"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: inspect-vercel-db
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_DATABASE_URL_INSPECT: ${{ secrets.VERCEL_DATABASE_URL_INSPECT }}
+      # رابط دمية لتوليد عميل Prisma فقط (لا يُتّصل به أبداً — السكربت يتجاوزه بـ datasourceUrl).
+      DATABASE_URL: "postgresql://inspect:inspect@localhost:5432/none"
+    steps:
+      - name: تحقق من السرّ والتأكيد
+        run: |
+          if [ -z "$VERCEL_DATABASE_URL_INSPECT" ]; then
+            echo "::error::يلزم ضبط السرّ VERCEL_DATABASE_URL_INSPECT (رابط قاعدة Vercel)."
+            exit 1
+          fi
+          if [ "${{ inputs.confirm }}" != "INSPECT" ]; then
+            echo "::error::اكتب INSPECT في حقل التأكيد."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Inspect live database (read-only)
+        run: npx tsx scripts/inspect-vercel-db.ts
