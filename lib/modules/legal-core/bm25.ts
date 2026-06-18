@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
+import { tokenize } from "./bm25-tokenizer";
 
 type Posting = Record<string, number>;
 type Meta = {
@@ -40,48 +41,6 @@ export function loadBm25Index(): Bm25Index | null {
   } catch {
     return null; // سقوط آمن: تعذّر تحميل الفهرس
   }
-}
-
-const STOPWORDS = new Set(
-  ["في","من","الي","علي","عن","مع","هذا","هذه","ذلك","التي","الذي","او","ام","ان","كل","بين","عند","لكن","قد","ما","لا","الا","به","بها","له","لها","هو","هي","كان","يكون","وهو","وهي","ثم","اي","كما","حتي","اذا","كانت","تكون","وقد"]
-);
-const PREFIXES = ["وال","بال","فال","كال","لل","ال","و"];
-const SUFFIXES = ["تهما","هما","كما","هم","هن","كم","كن","نا","تها","ها","ات","ين","ون","يه","ه","ك","ي","ت"];
-const MIN_STEM = 3;
-
-function normalizeArabic(text: string): string {
-  if (!text) return "";
-  return String(text)
-    .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString())
-    .replace(/[ؐ-ًؚ-ٰٟۖ-ۭـ]/g, "")
-    .replace(/[إأآٱ]/g, "ا")
-    .replace(/ى/g, "ي").replace(/ة/g, "ه")
-    .replace(/ؤ/g, "و").replace(/ئ/g, "ي").replace(/ء/g, "")
-    .replace(/[^ء-ي0-9a-zA-Z\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function lightStem(w: string): string {
-  for (const p of PREFIXES) {
-    if (w.startsWith(p) && w.length - p.length >= MIN_STEM) { w = w.slice(p.length); break; }
-  }
-  for (const s of SUFFIXES) {
-    if (w.endsWith(s) && w.length - s.length >= MIN_STEM) { w = w.slice(0, -s.length); break; }
-  }
-  return w;
-}
-
-function tokenize(text: string): string[] {
-  const norm = normalizeArabic(text);
-  if (!norm) return [];
-  const out: string[] = [];
-  for (const t of norm.split(" ")) {
-    if (t.length < 2) continue;
-    if (STOPWORDS.has(t)) continue;
-    out.push(lightStem(t));
-  }
-  return out;
 }
 
 export function bm25Search(query: string, topK = 20): Bm25Hit[] {
