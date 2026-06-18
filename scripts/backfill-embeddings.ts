@@ -11,6 +11,7 @@
  * آمن للاستئناف: يتخطّى ما له متجه (إلا مع --all). دفعات مع مهلة بسيطة لاحترام حدود المعدّل.
  */
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { embedBatch, buildEmbeddingText, EMBEDDING_MODEL } from "@/lib/modules/ai/embeddings";
 
@@ -29,7 +30,9 @@ async function main() {
     process.exit(1);
   }
 
-  const where = all ? {} : { embedding: { equals: null as never } };
+  // حقل embedding من نوع Json?: لفلترة الصفوف ذات القيمة NULL في القاعدة نستعمل
+  // Prisma.AnyNull (لا تعمل null العادية مع حقول Json — كانت تُرجع 0 خطأً).
+  const where = all ? {} : { embedding: { equals: Prisma.AnyNull } };
   const total = await prisma.legalArticle.count({ where });
   console.log(`المواد المستهدفة: ${total.toLocaleString("ar-SA")} | النموذج: ${EMBEDDING_MODEL}`);
   if (!total) {
