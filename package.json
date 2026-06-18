@@ -40,7 +40,10 @@
     "test:admin": "tsx scripts/test-admin.ts",
     "test:core-integration": "tsx scripts/test-core-integration.ts",
     "test:kg-seed": "tsx scripts/test-kg-seed.ts",
-    "seed:kg": "tsx scripts/seed-knowledge-graph.ts"
+    "seed:kg": "tsx scripts/seed-knowledge-graph.ts",
+    "build:bm25": "tsx scripts/build-bm25-index.ts",
+    "test:bm25": "tsx scripts/test-bm25.ts",
+    "test:embeddings": "tsx scripts/test-embeddings.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

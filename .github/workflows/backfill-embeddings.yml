@@ -1,0 +1,68 @@
+name: Backfill Embeddings (تضمين دلالي pgvector)
+
+# يولّد متجهات دلالية لمواد النواة ويخزّنها في LegalArticle.embedding،
+# فيُفعَّل إعادة الترتيب الدلالي (يحتاج SEMANTIC_SEARCH=true في بيئة الإنتاج).
+# يدوي فقط (workflow_dispatch). يتطلّب سرّين:
+#   DATABASE_URL        = اتصال Supabase (قاعدة المنصّة).
+#   EMBEDDING_API_KEY   = مفتاح مزوّد التضمين (OpenAI-compatible) — أو OPENAI_API_KEY.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "النطاق"
+        type: choice
+        required: true
+        default: missing
+        options:
+          - missing   # المواد التي بلا متجه فقط
+          - all       # إعادة توليد الكل
+      limit:
+        description: "حدّ أقصى (اختياري، فارغ = الكل)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: backfill-embeddings
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: تحقق من الأسرار
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ DATABASE_URL."
+            exit 1
+          fi
+          if [ -z "$EMBEDDING_API_KEY" ] && [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::يلزم ضبط EMBEDDING_API_KEY (أو OPENAI_API_KEY)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Apply schema (ensures embedding column)
+        run: npx prisma db push --skip-generate
+      - name: Backfill embeddings
+        run: |
+          ARGS=""
+          if [ "${{ inputs.scope }}" = "all" ]; then ARGS="--all"; fi
+          if [ -n "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          npx tsx scripts/backfill-embeddings.ts $ARGS
