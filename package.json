@@ -44,7 +44,8 @@
     "build:bm25": "tsx scripts/build-bm25-index.ts",
     "test:bm25": "tsx scripts/test-bm25.ts",
     "test:embeddings": "tsx scripts/test-embeddings.ts",
-    "inspect:vercel": "tsx scripts/inspect-vercel-db.ts"
+    "inspect:vercel": "tsx scripts/inspect-vercel-db.ts",
+    "audit:db-env": "tsx scripts/audit-db-environments.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

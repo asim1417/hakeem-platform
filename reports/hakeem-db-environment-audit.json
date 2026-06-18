@@ -1,0 +1,73 @@
+{
+  "title": "Hakeem Database Environment & Data Source Audit",
+  "phase": "diagnosis-only (no writes, no seed, no migration)",
+  "generatedFrom": "static code audit + prior read-only DB Inspect (GitHub DB) ; live Vercel counts pending audit:db-env run",
+  "connectionMap": {
+    "envVariablesReferencedInCode": {
+      "DATABASE_URL": 48,
+      "HOSTINGER_DB_URL": 17,
+      "VERCEL_DATABASE_URL_INSPECT": 10,
+      "DIRECT_URL": 0,
+      "POSTGRES_URL": 0,
+      "SUPABASE_URL": 0,
+      "MYSQL_URL": 0
+    },
+    "prismaDatasource": { "provider": "postgresql", "url": "env(DATABASE_URL)", "extensions": ["vector"] },
+    "directDbClients": ["PrismaClient (lib/prisma.ts singleton) + isolated clients in scripts (migrate/backfill/inspect/seed/db-inspect/audit)"],
+    "mysqlClients": ["mysql2 — scripts/analyze-hostinger.ts, scripts/import-judgments-sql.ts (Hostinger ahkam_moj)"],
+    "supabaseClients": ["none (@supabase/supabase-js not used) — Postgres accessed via Prisma only"],
+    "singleRuntimeVar": "DATABASE_URL (the app reads only this for the live DB)"
+  },
+  "databasesDetected": [
+    {
+      "label": "A — Vercel live (DATABASE_URL in Vercel)",
+      "role": "live site runtime",
+      "counts": "PENDING (run Audit DB Environments with VERCEL_DATABASE_URL_INSPECT)",
+      "evidence": "judgments visible on live /judgments which is force-dynamic (no cache) => judicial_cases > 0"
+    },
+    {
+      "label": "B — GitHub Actions (DATABASE_URL secret)",
+      "role": "automation/workflows target",
+      "counts": { "legalSystems": 9, "legalArticles": 1981, "judicialCases": 0, "legalArticleCaseLinks": 0, "judicialPrinciples": 0, "users": 1, "legalArticleEmbeddings": 1981 },
+      "evidence": "DB Inspect run 27743197094 (read-only)"
+    },
+    {
+      "label": "C — Hostinger MySQL (HOSTINGER_DB_URL)",
+      "role": "import source only (NOT app runtime)",
+      "counts": "~60k ahkam_moj (external; not migrated into B)"
+    }
+  ],
+  "githubActionsDatabase": { "legalSystems": 9, "legalArticles": 1981, "judicialCases": 0 },
+  "liveSiteLikelyDatabase": "A (Vercel) — different from B (judgments present live vs 0 in B)",
+  "mismatchDetected": true,
+  "smallDatasetDetected": true,
+  "largeDatasetDetected": "not in repo/B; possibly in A (unverified until live run)",
+  "judgmentsDetectedWhere": "A (live, visible) and Hostinger (source). NOT in B (=0).",
+  "bm25": {
+    "fileExists": true,
+    "articlesCount": 1981,
+    "sourceFile": "data/legal_articles_export.json (build:bm25)",
+    "matchesWhichDatabase": "B (1981). Would NOT match A if A is larger."
+  },
+  "embeddingsStatus": {
+    "split": true,
+    "legalArticleEmbedding": "B: 1981 (100%) — used by legal-retrieval rerank",
+    "embeddingsTablePgvector": "B: 0 — used by hybrid/RAG vector-provider (so RAG semantic NOT powered)"
+  },
+  "uiFallbacks": ["app/dashboard/legal-core/page.tsx:45 -> stats.total || 1981 (the only hardcoded number)"],
+  "hardcodedNumbers": { "1981": "1 location (legal-core fallback)", "15902": "0", "51105": "0", "489": "0 (only appears as an article number inside public/original-hakeem/hakim1111.html embedded seed)" },
+  "criticalRisks": [
+    "A != B: all seed/embeddings/BM25 work targeted B, not the live A.",
+    "DISABLE_AUTH=true -> RBAC not enforced; no PDPL field encryption.",
+    "Embedding store split -> semantic does not power RAG.",
+    "judicial_cases=0 in B -> judgment/KG/principle features empty there; A content unknown.",
+    "CI readiness does not run test:* -> engine logic unprotected."
+  ],
+  "recommendedNextStepsNoExecution": [
+    "Run Audit DB Environments with VERCEL_DATABASE_URL_INSPECT to get A's real counts.",
+    "Decide single source of truth (A vs B) and align Vercel + GitHub DATABASE_URL to it.",
+    "If A adopted: rebuild BM25 + embeddings from A; if B adopted: import content + judgments into B and point Vercel to B.",
+    "Unify the two embedding stores so semantic powers RAG.",
+    "Remove the || 1981 UI fallback; wire test:* into CI."
+  ]
+}
