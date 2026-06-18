@@ -37,6 +37,7 @@ const navSections: Array<{ items: NavItem[] }> = [
       { href: "/dashboard/knowledge-graph", label: "الرسم المعرفي (اختبار)", icon: Database },
       { href: "/dashboard/legal-search", label: "البحث الهجين (اختبار)", icon: Database },
       { href: "/dashboard/legal-rag", label: "الذكاء القانوني RAG (اختبار)", icon: Sparkles },
+      { href: "/dashboard/case-analysis", label: "تحليل القضايا (اختبار)", icon: Scale },
       { href: "/dashboard/training", label: "التدريب", icon: GraduationCap }
     ]
   },
