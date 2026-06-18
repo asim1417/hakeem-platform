@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getLibraryStats, searchLegalArticles } from "@/lib/modules/library/library-service";
 import { prisma } from "@/lib/prisma";
 import { LegalArticleCard, LegalCoreCard, LegalCorePageHeader, LegalCoreSearchBar, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { CoreIntelligenceDashboard } from "@/components/CoreIntelligenceDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,9 @@ export default async function LegalCoreDashboardPage() {
         </section>
 
         <LegalCoreSearchBar systems={stats.laws} />
+
+        {/* مركز التشغيل الذكي — ربط النواة بخدمات حكيم (إضافي، لا يغيّر بقية الصفحة) */}
+        <CoreIntelligenceDashboard />
 
         <section className="grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
           <LegalCoreCard title="أحدث المواد في المستودع" subtitle="عرض هادئ لأحدث المواد المتاحة للبحث والاستشهاد" icon={<BookOpen size={18} />}>
