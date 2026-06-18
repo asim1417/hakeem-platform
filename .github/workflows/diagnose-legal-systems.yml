@@ -17,6 +17,10 @@ jobs:
     env:
       NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # تفعيل قياس الدلالي في التشخيص (اختياري — يسقط آمناً للمعجمي إن غاب المفتاح).
+      SEMANTIC_SEARCH: "true"
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
