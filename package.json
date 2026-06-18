@@ -35,7 +35,8 @@
     "test:rag": "tsx scripts/test-legal-rag.ts",
     "test:composer": "tsx scripts/test-legal-answer-composer.ts",
     "test:case": "tsx scripts/test-case-analysis.ts",
-    "test:agent": "tsx scripts/test-legal-agent.ts"
+    "test:agent": "tsx scripts/test-legal-agent.ts",
+    "test:simulation": "tsx scripts/test-judicial-simulation.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
