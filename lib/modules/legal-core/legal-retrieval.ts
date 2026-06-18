@@ -120,6 +120,8 @@ export function selectDiverseCandidateIds(
 
 /** مقياس مزج التشابه الدلالي مع درجة الصلة المعجمية (cosine 0..1 → إضافة على الدرجة). */
 export const SEMANTIC_BLEND_SCALE = 80;
+/** عتبة: المطابقات المعجمية الأقوى منها لا تُضخَّم دلالياً (حفظاً للتنوّع)؛ يطابق MIN_RELEVANCE. */
+export const SEMANTIC_LEX_FLOOR = 12;
 
 /**
  * يمزج درجة الصلة المعجمية مع التشابه الدلالي: نتيجة دلالية بحتة (lexical≈0) بتشابه
@@ -282,7 +284,15 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const scored = Array.from(byId.values())
     .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams))
-    .map((r) => (semMap.size ? { ...r, relevanceScore: blendSemanticScore(r.relevanceScore, semMap.get(r.articleId) ?? 0) } : r))
+    // الدلالي **إضافي لا إزاحي**: نرفع فقط المواد الضعيفة/الدلالية البحتة (lexical < العتبة)
+    // كي تظهر أنظمة لم يجدها النصّي، دون تضخيم المطابقات المعجمية القوية (الذي يركّز على
+    // نظام المجال ويزيح التنوّع). فيزيد التغطية بدل أن يقلّصها.
+    .map((r) => {
+      if (!semMap.size) return r;
+      const cos = semMap.get(r.articleId) ?? 0;
+      if (cos === 0 || r.relevanceScore >= SEMANTIC_LEX_FLOOR) return r;
+      return { ...r, relevanceScore: blendSemanticScore(r.relevanceScore, cos) };
+    })
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   // عند وجود استعلام: نُبقي فقط النتائج ذات الصلة الحقيقية (تطابق مصطلح ذي معنى)؛
