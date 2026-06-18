@@ -25,7 +25,7 @@ const check = (cond: boolean, label: string) => {
 function ragFixture(over: Partial<RagResult> = {}): RagResult {
   return {
     answer: "", shortAnswer: "", legalAnalysis: "", limitations: "",
-    confidence: 0.7, grounded: true, generated: false, citations: [],
+    confidence: 0.7, grounded: true, legalBasisNote: null, generated: false, citations: [],
     legalBasis: [{ id: "art-130", title: "نظام المعاملات المدنية — م/130", reference: "نظام المعاملات المدنية — المادة (130)", weight: 0.9 }],
     relatedArticles: [],
     relatedRulings: [{ id: "rul-1", title: "حكم ت/4520", reason: "مرتبط بالمادة 130", weight: 0.6 }],
