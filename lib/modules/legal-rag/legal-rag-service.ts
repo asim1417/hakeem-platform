@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { getRelationsForEntity } from "@/lib/modules/knowledge-graph/relations";
 import { buildCitations, verifyCitations, type Citation } from "@/lib/modules/citations/citation-engine";
+import { composeLegalAnswer, type LegalBasisItem, type RelatedItem } from "./legal-answer-composer";
 import {
   buildLegalContext,
   type LegalContext,
@@ -11,26 +11,52 @@ import {
   type RagRelation,
   type RagRuling,
 } from "./context-builder";
-import {
-  GROUNDING_FALLBACK,
-  buildGroundedUserPrompt,
-  buildGroundingSystemPrompt,
-  hasSufficientGrounding,
-} from "./grounding-guard";
+import { GROUNDING_FALLBACK, hasSufficientGrounding } from "./grounding-guard";
 
 export interface RagResult {
   answer: string;
+  shortAnswer: string;
+  legalAnalysis: string;
+  limitations: string;
   confidence: number;
   grounded: boolean; // هل الإجابة مُسنَدة لمصادر حقيقية؟
   citations: Citation[];
+  legalBasis: LegalBasisItem[]; // الأساس النظامي (مواد حقيقية من القاعدة)
   relatedArticles: Array<{ id: string; title: string; reason: string; weight: number }>;
-  relatedRulings: Array<{ id: string; title: string; reason: string; weight: number }>;
-  relatedPrinciples: Array<{ id: string; title: string; reason: string; weight: number }>;
+  relatedRulings: RelatedItem[];
+  relatedPrinciples: RelatedItem[];
+  provider: string; // اسم مزوّد الذكاء المستخدم (mock عند الغياب)
+  model: string;
   providers: { name: string; status: string }[];
-  generated: boolean; // هل وُلّد نصّ من الـ LLM فعلاً؟
+  generated: boolean; // هل وُلّد نصّ من المزوّد فعلاً؟
 }
 
-// خط التنفيذ: Question → Hybrid Search → Context Builder → Citation Engine → LLM → Grounded Answer
+function emptyResult(
+  answer: string,
+  confidence: number,
+  providers: { name: string; status: string }[]
+): RagResult {
+  return {
+    answer,
+    shortAnswer: "",
+    legalAnalysis: "",
+    limitations: "",
+    confidence,
+    grounded: false,
+    generated: false,
+    citations: [],
+    legalBasis: [],
+    relatedArticles: [],
+    relatedRulings: [],
+    relatedPrinciples: [],
+    provider: "none",
+    model: "",
+    providers,
+  };
+}
+
+// خط التنفيذ: Question → Hybrid Search → Context Builder → Citation Engine
+//            → Grounding Guard → AI Provider → Answer Composer → Grounded Answer
 export async function legalRag(question: string): Promise<RagResult> {
   const q = question.trim();
 
@@ -91,32 +117,30 @@ export async function legalRag(question: string): Promise<RagResult> {
 
   // 5) حارس الإسناد — لا إجابة بلا مصادر كافية
   if (!hasSufficientGrounding(context)) {
-    return {
-      answer: GROUNDING_FALLBACK, confidence: context.confidence, grounded: false, generated: false,
-      citations: [], relatedArticles: [], relatedRulings: [], relatedPrinciples: [], providers: search.providers,
-    };
+    return emptyResult(GROUNDING_FALLBACK, context.confidence, search.providers);
   }
 
   // 6) الاستشهادات (مُتحقّق من وجودها فعلاً)
   const citations = await verifyCitations(buildCitations(context));
 
-  // 7) التوليد عبر الطبقة المركزية (Claude) بتعليمات الإسداد الصارمة
-  const llm = await callCentralProvider({
-    systemPrompt: buildGroundingSystemPrompt(),
-    userPrompt: buildGroundedUserPrompt(q, context),
-    maxTokens: 900,
-  });
-  const generated = llm.ok && Boolean(llm.content.trim());
-  const answer = generated
-    ? llm.content.trim()
-    : "عُرضت المصادر القانونية ذات الصلة أدناه (الذكاء المركزي غير مُفعّل — لم يُولَّد نصّ؛ راجع المصادر والاستشهادات).";
+  // 7) المزوّد + مُركّب الإجابة — نصّ مُسنَد منظّم (مع سقوط منظّم إن غاب المزوّد)
+  const composed = await composeLegalAnswer({ question: q, context, citations });
 
   return {
-    answer, confidence: context.confidence, grounded: true, generated,
-    citations,
+    answer: composed.answer,
+    shortAnswer: composed.shortAnswer,
+    legalAnalysis: composed.legalAnalysis,
+    limitations: composed.limitations,
+    confidence: context.confidence,
+    grounded: true,
+    generated: composed.generated,
+    citations: composed.citations,
+    legalBasis: composed.legalBasis,
     relatedArticles: context.articles.map((a) => ({ id: a.id, title: a.title, reason: a.reason, weight: a.weight })),
-    relatedRulings: context.rulings.map((r) => ({ id: r.id, title: r.title, reason: r.reason, weight: r.weight })),
-    relatedPrinciples: context.principles.map((p) => ({ id: p.id, title: p.title, reason: p.reason, weight: p.weight })),
+    relatedRulings: composed.relatedRulings,
+    relatedPrinciples: composed.relatedPrinciples,
+    provider: composed.provider,
+    model: composed.model,
     providers: search.providers,
   };
 }

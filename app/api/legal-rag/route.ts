@@ -21,11 +21,17 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     answer: result.answer,
+    shortAnswer: result.shortAnswer,
+    legalAnalysis: result.legalAnalysis,
+    limitations: result.limitations,
     confidence: result.confidence,
     grounded: result.grounded,
+    generated: result.generated,
     citations: result.citations,
-    relatedArticles: result.relatedArticles,
+    legalBasis: result.legalBasis,
     relatedRulings: result.relatedRulings,
     relatedPrinciples: result.relatedPrinciples,
+    provider: result.provider,
+    model: result.model,
   });
 }
