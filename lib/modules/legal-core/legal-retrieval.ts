@@ -118,6 +118,44 @@ export function selectDiverseCandidateIds(
   return selected;
 }
 
+/** مقياس مزج التشابه الدلالي مع درجة الصلة المعجمية (cosine 0..1 → إضافة على الدرجة). */
+export const SEMANTIC_BLEND_SCALE = 80;
+
+/**
+ * يمزج درجة الصلة المعجمية مع التشابه الدلالي: نتيجة دلالية بحتة (lexical≈0) بتشابه
+ * معقول تتجاوز عتبة الإسناد فتظهر؛ والمطابقة المعجمية القوية تبقى في القمة. نقيّة.
+ */
+export function blendSemanticScore(lexicalScore: number, cosine: number, scale: number = SEMANTIC_BLEND_SCALE): number {
+  const sem = cosine > 0 ? Math.round(Math.max(0, Math.min(1, cosine)) * scale) : 0;
+  return lexicalScore + sem;
+}
+
+/**
+ * استرجاع دلالي عبر كل الأنظمة من جدول pgvector «embeddings» (فهرس HNSW):
+ * يعيد خريطة articleId → تشابه (cosine). قراءة فقط، وسقوط آمن إلى Map فارغة
+ * إن غاب الجدول/الامتداد أو تعذّر التضمين.
+ */
+async function semanticArticleScores(query: string, take: number): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const vec = await embedText(query.trim());
+  if (!vec || vec.length === 0) return out;
+  const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
+  const limit = Math.min(Math.max(take, 1), 200);
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string; score: number }>>(
+      `SELECT owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
+       FROM embeddings
+       WHERE owner_type = 'article' AND embedding IS NOT NULL
+       ORDER BY embedding <=> '${literal}'::vector
+       LIMIT ${limit}`
+    );
+    for (const r of rows) out.set(r.owner_id, Math.max(0, Math.min(1, Number(r.score))));
+  } catch {
+    return new Map<string, number>(); // جدول المتجهات غير مُفعّل → بلا استرجاع دلالي
+  }
+  return out;
+}
+
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
@@ -227,8 +265,24 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   for (const a of nameCandidates as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
   for (const a of candidates) if (!byId.has(a.id)) byId.set(a.id, a);
 
+  // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): يجلب مواد قريبة
+  // بالمعنى حتى بلا تطابق لفظي، فيكسر حصر النتائج في الأنظمة التي تحوي الكلمة حرفياً.
+  // سقوط آمن: إن غاب جدول المتجهات تبقى semMap فارغة ويعمل البحث المعجمي كالسابق.
+  let semMap = new Map<string, number>();
+  if (query && options.semantic && semanticSearchEnabled()) {
+    semMap = await semanticArticleScores(query, 60).catch(() => new Map<string, number>());
+    const extraIds = [...semMap.keys()].filter((id) => !byId.has(id));
+    if (extraIds.length) {
+      const extra = await prisma.legalArticle
+        .findMany({ where: { id: { in: extraIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
+        .catch(() => [] as typeof candidates);
+      for (const a of extra as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+    }
+  }
+
   const scored = Array.from(byId.values())
     .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams))
+    .map((r) => (semMap.size ? { ...r, relevanceScore: blendSemanticScore(r.relevanceScore, semMap.get(r.articleId) ?? 0) } : r))
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   // عند وجود استعلام: نُبقي فقط النتائج ذات الصلة الحقيقية (تطابق مصطلح ذي معنى)؛
@@ -251,8 +305,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     }
   }
 
-  // إعادة ترتيب دلالي (اختياري) لأعلى المرشّحين — يطابق المعنى لا الحروف.
-  if (query && options.semantic) {
+  // احتياطي: إن تعذّر الاسترجاع الدلالي (جدول المتجهات غائب) نُعيد الترتيب دلالياً
+  // على متجهات legal_articles.embedding داخل التطبيق — يطابق المعنى لا الحروف.
+  if (query && options.semantic && semMap.size === 0) {
     relevant = await applySemanticRerank(query, relevant).catch(() => relevant);
   }
 
