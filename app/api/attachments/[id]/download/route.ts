@@ -11,7 +11,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   if (gate.response) return gate.response;
   const attachment = await prisma.attachment.findUnique({ where: { id: params.id } });
   if (!attachment) return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
-  const url = signedDownloadUrl(attachment.storageKey);
+  // Azure: رابط موقّع. SharePoint: رابط webUrl المخزَّن في الميتاداتا.
+  let url = signedDownloadUrl(attachment.storageKey);
+  if (!url && attachment.storageKey.startsWith("sharepoint/")) {
+    url = readStoredUrl(attachment.extractedText);
+  }
   if (!url) return NextResponse.json({ message: "هذا المرفق مسجل metadata-only ولا يحتوي ملفًا مخزنًا للتنزيل." }, { status: 404 });
 
   await auditEvent({
@@ -23,4 +27,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   });
 
   return NextResponse.redirect(url);
+}
+
+function readStoredUrl(extractedText: string | null): string | null {
+  if (!extractedText) return null;
+  try {
+    const meta = JSON.parse(extractedText) as { storageUrl?: string };
+    return typeof meta.storageUrl === "string" && meta.storageUrl ? meta.storageUrl : null;
+  } catch {
+    return null;
+  }
 }
