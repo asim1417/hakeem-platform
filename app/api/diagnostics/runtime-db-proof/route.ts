@@ -40,10 +40,10 @@ function hashHost(hostname: string) {
 function detectSupabaseProjectRef(parsed: URL, isSupabaseHost: boolean) {
   if (!isSupabaseHost) return null;
 
-  const directMatch = parsed.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
+  const directMatch = parsed.hostname.match(/^db\.([a-z0-9-]+)\.supabase\.co$/i);
   if (directMatch?.[1]) return directMatch[1];
 
-  const usernameMatch = decodeURIComponent(parsed.username || "").match(/^postgres\.([a-z0-9]+)$/i);
+  const usernameMatch = decodeURIComponent(parsed.username || "").match(/^postgres\.([a-z0-9-]+)$/i);
   if (usernameMatch?.[1]) return usernameMatch[1];
 
   return null;
