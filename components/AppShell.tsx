@@ -20,7 +20,7 @@ const navSections: Array<{ items: NavItem[] }> = [
   },
   {
     items: [
-      { href: "/dashboard/cases", label: "الدعاوى", icon: Briefcase, badge: "٤" },
+      { href: "/dashboard/cases", label: "الدعاوى", icon: Briefcase },
       { href: "/dashboard/consultations", label: "الاستشارات", icon: ShieldCheck },
       { href: "/dashboard/attachments", label: "المرفقات", icon: Paperclip }
     ]

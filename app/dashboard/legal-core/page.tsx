@@ -41,8 +41,8 @@ export default async function LegalCoreDashboardPage() {
         />
 
         <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-          <LegalCoreStatCard label="عدد الأنظمة" value={stats.systemCount || 9} hint="مصادر نظامية معتمدة" />
-          <LegalCoreStatCard label="عدد المواد" value={stats.total || 1981} hint="مصدر الحقيقة للاستشهادات" />
+          <LegalCoreStatCard label="عدد الأنظمة" value={stats.systemCount} hint="مصادر نظامية معتمدة (من قاعدة الإنتاج)" />
+          <LegalCoreStatCard label="عدد المواد" value={stats.total} hint="مصدر الحقيقة للاستشهادات (من قاعدة الإنتاج)" />
           <LegalCoreStatCard label="عدد التصنيفات" value={classificationCount} hint="تصنيف معرفي أولي" />
           <LegalCoreStatCard label="عدد الشروح" value={0} hint="جاهزة للإثراء لاحقًا" tone="amber" />
           <LegalCoreStatCard label="مواد تحتاج مراجعة" value={needsReview} hint="مؤشر جودة البيانات" tone={needsReview ? "amber" : "emerald"} />
