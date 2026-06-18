@@ -1,5 +1,6 @@
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
+import { GroundingWarning, LegalCitationBox, RelatedJudgmentsList } from "@/components/legal/legal-intelligence";
 
 export const dynamic = "force-dynamic";
 
@@ -86,50 +87,26 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
             </details>
           </div>
 
-          <BasisGroup items={result.legalBasis} />
-          <SourceGroup title="الأحكام المستخدمة" items={result.relatedRulings} type="ruling" />
-          <SourceGroup title="المبادئ المستخدمة" items={result.relatedPrinciples} type="principle" />
+          {/* تنبيهات الإسناد: لا مصادر كافية / لا نصّ صريح / سقوط منظّم */}
+          <GroundingWarning
+            grounded={result.grounded}
+            generated={result.generated}
+            legalBasisNote={result.legalBasisNote}
+          />
 
-          {/* الاستشهادات */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <div className="font-semibold text-olive">الاستشهادات الكاملة ({result.citations.length})</div>
-            {result.citations.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-400">لا استشهادات.</p>
-            ) : (
-              <ul className="mt-2 space-y-1 text-sm">
-                {result.citations.map((c) => (
-                  <li key={`${c.sourceType}:${c.sourceId}`} className="flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-gold/10 px-1.5 py-0.5 text-xs text-gold">{TYPE_LABELS[c.sourceType]}</span>
-                    <span className="text-gray-700">{c.reference}</span>
-                    <span className="ms-auto text-xs text-gray-400 tabular-nums">ثقة {(c.confidence * 100).toFixed(0)}%</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {/* صندوق الاستشهاد: الأساس النظامي + الاستشهادات المتحقّقة */}
+          <LegalCitationBox
+            legalBasis={result.legalBasis}
+            citations={result.citations}
+            legalBasisNote={result.legalBasisNote}
+          />
+
+          {/* الأحكام المرتبطة (سوابق مؤيِّدة لا أساس نظامي) */}
+          <RelatedJudgmentsList items={result.relatedRulings} title="أحكام مرتبطة" />
+
+          <SourceGroup title="المبادئ المستخدمة" items={result.relatedPrinciples} type="principle" />
         </div>
       )}
-    </div>
-  );
-}
-
-function BasisGroup({ items }: { items: Array<{ id: string; title: string; reference: string; weight: number }> }) {
-  if (items.length === 0) return null;
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="font-semibold text-olive">الأساس النظامي ({items.length})</div>
-      <ul className="mt-2 space-y-2 text-sm">
-        {items.map((it) => (
-          <li key={it.id} className="border-t border-gray-100 pt-2">
-            <div className="flex items-center gap-2">
-              <span className="rounded bg-gold/10 px-1.5 py-0.5 text-xs text-gold">مادة</span>
-              <span className="text-gray-800">{it.title}</span>
-              <span className="ms-auto text-xs text-gray-400 tabular-nums">{(it.weight * 100).toFixed(0)}%</span>
-            </div>
-            <div className="mt-1 text-xs text-gray-500">المرجع: {it.reference}</div>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

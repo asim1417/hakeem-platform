@@ -37,6 +37,7 @@ export const postgresProvider: SearchProvider = {
           score: inTitle ? 0.85 : 0.65,
           source: "postgres",
           reason: `تطابق نصّي في ${inTitle ? "عنوان المادة" : "نص المادة"}`,
+          meta: { matchedBy: "lexical", sourceType: "article", articleId: a.id, systemName: a.lawName, articleNumber: a.articleNumber },
         });
       }
 
@@ -61,6 +62,7 @@ export const postgresProvider: SearchProvider = {
           score: inTitle ? 0.8 : 0.6,
           source: "postgres",
           reason: `تطابق نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}`,
+          meta: { matchedBy: "lexical", sourceType: "ruling", caseNo: r.caseNo, decisionNo: r.decisionNo, court: r.court },
         });
       }
 
@@ -84,6 +86,7 @@ export const postgresProvider: SearchProvider = {
           score: 0.7,
           source: "postgres",
           reason: "تطابق نصّي في المبدأ",
+          meta: { matchedBy: "lexical", sourceType: "principle" },
         });
       }
     } catch {

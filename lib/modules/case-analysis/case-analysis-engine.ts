@@ -248,6 +248,7 @@ function emptyRag(): RagResult {
     limitations: "",
     confidence: 0,
     grounded: false,
+    legalBasisNote: null,
     generated: false,
     citations: [],
     legalBasis: [],

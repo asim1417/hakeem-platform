@@ -11,7 +11,8 @@ import {
   type RagRelation,
   type RagRuling,
 } from "./context-builder";
-import { GROUNDING_FALLBACK, hasSufficientGrounding } from "./grounding-guard";
+import { GROUNDING_FALLBACK, NO_EXPLICIT_TEXT, hasSufficientGrounding } from "./grounding-guard";
+import { fetchLinkedJudgments } from "./judgment-links";
 
 export interface RagResult {
   answer: string;
@@ -20,6 +21,8 @@ export interface RagResult {
   limitations: string;
   confidence: number;
   grounded: boolean; // هل الإجابة مُسنَدة لمصادر حقيقية؟
+  /** ملاحظة على الأساس النظامي: تُملأ بـ NO_EXPLICIT_TEXT عند غياب نصّ نظامي صريح رغم وجود مصادر. */
+  legalBasisNote: string | null;
   citations: Citation[];
   legalBasis: LegalBasisItem[]; // الأساس النظامي (مواد حقيقية من القاعدة)
   relatedArticles: Array<{ id: string; title: string; reason: string; weight: number }>;
@@ -43,6 +46,7 @@ function emptyResult(
     limitations: "",
     confidence,
     grounded: false,
+    legalBasisNote: null,
     generated: false,
     citations: [],
     legalBasis: [],
@@ -112,8 +116,16 @@ export async function legalRag(question: string): Promise<RagResult> {
     id: p.id, title: `مبدأ: ${p.title}`, text: p.principleText, score: scoreOf(p.id), reason: reasonOf(p.id),
   }));
 
+  // 3b) ربط المواد الحاضرة بأحكامها عبر legal_article_case_links (قراءة فقط، بسقوف).
+  //     يُغني السياق بالسوابق القضائية حين يخلو الرسم المعرفي من العلاقات (Neon).
+  //     سقوط آمن: غياب الروابط ⇒ سياق المواد فقط.
+  const presentArticleIds = articles.map((a) => a.id);
+  const linkedRulings = await fetchLinkedJudgments(prisma, presentArticleIds, { perArticle: 3, total: 8 });
+  // ندمج أحكام البحث مع الأحكام المرتبطة بالمواد (بنّاء السياق يزيل التكرار بالمعرّف).
+  const allRulings: RagRuling[] = [...rulings, ...linkedRulings];
+
   // 4) بناء السياق الموزون
-  const context = buildLegalContext({ question: q, articles, rulings, principles, relations });
+  const context = buildLegalContext({ question: q, articles, rulings: allRulings, principles, relations });
 
   // 5) حارس الإسناد — لا إجابة بلا مصادر كافية
   if (!hasSufficientGrounding(context)) {
@@ -133,6 +145,8 @@ export async function legalRag(question: string): Promise<RagResult> {
     limitations: composed.limitations,
     confidence: context.confidence,
     grounded: true,
+    // مصادر موجودة (أحكام مرتبطة) لكن بلا مادة نظامية صريحة ⇒ ننبّه أنّ لا نصّ صريح.
+    legalBasisNote: composed.legalBasis.length === 0 ? NO_EXPLICIT_TEXT : null,
     generated: composed.generated,
     citations: composed.citations,
     legalBasis: composed.legalBasis,
