@@ -82,6 +82,42 @@ const searchableFieldMap = {
   classification: "classification"
 } as const;
 
+/**
+ * يختار مجموعة مرشّحين متنوّعة الأنظمة من مسحٍ خفيف (id + lawName) بأسلوب round-robin:
+ * يأخذ مادة من كل نظام في كل جولة (حتى perSystemCap لكل نظام) قبل أن يأخذ ثانيةً من
+ * أيّ نظام — فيمنح **كل نظام مطابق** تمثيلاً قبل أن يهيمن نظام، حتى يبلغ target.
+ * يكسر الانحياز الأبجدي واحتكار نظام واحد. نقيّة وقابلة للاختبار.
+ */
+export function selectDiverseCandidateIds(
+  rows: Array<{ id: string; lawName: string }>,
+  opts: { perSystemCap: number; target: number }
+): string[] {
+  // تجميع حسب النظام مع حفظ ترتيب الظهور وتطبيق سقف لكل نظام.
+  const groups = new Map<string, string[]>();
+  for (const row of rows) {
+    let g = groups.get(row.lawName);
+    if (!g) {
+      g = [];
+      groups.set(row.lawName, g);
+    }
+    if (g.length < opts.perSystemCap) g.push(row.id);
+  }
+
+  // round-robin: الجولة k تأخذ المادة رقم k من كل نظام يملكها.
+  const selected: string[] = [];
+  const buckets = [...groups.values()];
+  const maxLen = buckets.reduce((m, g) => Math.max(m, g.length), 0);
+  for (let round = 0; round < maxLen && selected.length < opts.target; round += 1) {
+    for (const g of buckets) {
+      if (round < g.length) {
+        selected.push(g[round]);
+        if (selected.length >= opts.target) break;
+      }
+    }
+  }
+  return selected;
+}
+
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
@@ -113,9 +149,14 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     ].filter((item) => Object.keys(item).length > 0)
   };
 
-  // نجلب مجموعة مرشّحين كبيرة ثم نرتّبها بالصلة في الذاكرة قبل الاقتطاع،
-  // لأن الترتيب الأبجدي + take(limit) في قاعدة البيانات كان يُرجع مواد غير ذات صلة.
-  const CANDIDATE_CAP = 600;
+  // نجلب مجموعة مرشّحين متنوّعة الأنظمة ثم نرتّبها بالصلة في الذاكرة قبل الاقتطاع.
+  // المشكلة سابقاً: جلب أول CAP مادة **أبجدياً باسم النظام** كان يُقصي الأنظمة
+  // متأخّرة الترتيب أبجدياً، ويسمح لنظام واحد كثير المواد باحتكار المجموعة —
+  // فلا تظهر إلا أنظمة قليلة (قياس التشخيص: ~12% فقط). الحل: مسح خفيف (id+اسم)
+  // ثم اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط.
+  const LIGHT_SCAN = 6000;        // مسح خفيف (id + lawName) يغطّي كل المطابقات تقريباً
+  const POOL_TARGET = 1200;       // حجم مجموعة المرشّحين الكاملة بعد التنويع
+  const PER_SYSTEM_POOL_CAP = 80; // أقصى مواد لكل نظام (≥ أقصى حجم صفحة، فلا تنقص نتائج الاستعلام أحادي النظام)
   // مرشّحو الاسم/العنوان: عند وجود >CAP مرشّح، الاقتطاع الأبجدي كان يقصي «نظام...» (ن)
   // قبل التقييم. لذا نجلب صراحةً المواد التي يطابق اسمُ نظامها/عنوانُها الاستعلام،
   // فنضمن حضور النظام الأنسب (مثل «نظام الأحوال الشخصية») في مجموعة التقييم.
@@ -144,14 +185,12 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
       }
     : null;
 
-  const [total, candidates, nameCandidates, phraseCandidates] = await Promise.all([
+  const [total, lightRows, nameCandidates, phraseCandidates] = await Promise.all([
     prisma.legalArticle.count({ where }),
-    prisma.legalArticle.findMany({
-      where,
-      include: { legalSystem: { select: { id: true, name: true } } },
-      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-      take: CANDIDATE_CAP
-    }),
+    // مسح خفيف (id + lawName فقط) — رخيص حتى عند آلاف المطابقات.
+    prisma.legalArticle
+      .findMany({ where, select: { id: true, lawName: true }, orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }], take: LIGHT_SCAN })
+      .catch(() => [] as Array<{ id: string; lawName: string }>),
     nameWhere
       ? prisma.legalArticle
           .findMany({
@@ -173,6 +212,14 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
           .catch(() => [])
       : Promise.resolve([])
   ]);
+
+  // اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط (يكسر الاحتكار والانحياز الأبجدي).
+  const diverseIds = selectDiverseCandidateIds(lightRows, { perSystemCap: PER_SYSTEM_POOL_CAP, target: POOL_TARGET });
+  const candidates = diverseIds.length
+    ? await prisma.legalArticle
+        .findMany({ where: { id: { in: diverseIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
+        .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
+    : [];
 
   // دمج مع إزالة التكرار: تطابق العبارة الكاملة أولاً، ثم الاسم/العنوان، ثم العام
   const byId = new Map<string, (typeof candidates)[number]>();
