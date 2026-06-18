@@ -2,6 +2,8 @@ import { createHash } from "crypto";
 import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
 
+type DiagnosticEnv = Record<string, string | undefined>;
+
 export type CountResult = {
   exists: boolean;
   count: number | null;
@@ -44,11 +46,11 @@ export const KNOWN_GITHUB_DATABASE = {
   judicialCases: 0
 };
 
-export function isRuntimeDiagnosticsEnabled(env: NodeJS.ProcessEnv = process.env) {
+export function isRuntimeDiagnosticsEnabled(env: DiagnosticEnv = process.env) {
   return env.ENABLE_RUNTIME_DIAGNOSTICS === "true";
 }
 
-export function isDiagnosticTokenAuthorized(requestToken: string | null, env: NodeJS.ProcessEnv = process.env) {
+export function isDiagnosticTokenAuthorized(requestToken: string | null, env: DiagnosticEnv = process.env) {
   const expectedToken = env.RUNTIME_DIAGNOSTIC_TOKEN;
   return Boolean(expectedToken && requestToken && requestToken === expectedToken);
 }
