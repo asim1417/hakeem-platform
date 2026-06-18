@@ -61,6 +61,14 @@ export function hasValidDimension(vec: number[] | null, expectedDim: number): ve
   return Array.isArray(vec) && vec.length > 0 && vec.length === expectedDim;
 }
 
+/**
+ * يبني تمثيل pgvector النصّي لمتجه (`[x,y,z]`) لاستعماله في `'...'::vector`.
+ * يقصُر القيم على أرقام منتهية (يستبدل غير المنتهي بصفر) — لا يرمي أبداً.
+ */
+export function buildVectorLiteral(vec: number[]): string {
+  return `[${vec.map((x) => (Number.isFinite(x) ? Number(x) : 0)).join(",")}]`;
+}
+
 export interface CosineCandidate {
   id: string;
   embedding: unknown; // قيمة خام كما من القاعدة (Json) — تُحلَّل داخلياً
