@@ -4,16 +4,16 @@ name: Neon Retrieval Upgrade (trgm + pgvector HNSW)
 #   1) فهارس GIN trigram للبحث النصّي السريع.
 #   2) جدول embeddings (pgvector) + تعبئته من legal_articles.embedding (بلا إعادة توليد).
 #   3) فهرس HNSW للبحث الدلالي التقريبي (ANN).
-# يدوي فقط (workflow_dispatch). يكتب في DB ⇒ مُقفل خلف بوّابة المواءمة.
+# يدوي فقط (workflow_dispatch). يكتب في DB ⇒ مُقفل خلف بوّابة المواءمة + حارس هدف.
 #
-# المتطلّب الحاسم: سرّ DATABASE_URL في GitHub يجب أن يشير إلى **Neon** (كتابة)،
-# لا إلى قاعدة الأتمتة الأخرى — وإلا ستُطبَّق الترقية على القاعدة الخطأ.
+# يستعمل سرّاً **مخصّصاً** NEON_DATABASE_URL (كتابة) — لا يلمس DATABASE_URL المشترك.
+# قبل أي كتابة يتحقّق حارس الهدف أنّ القاعدة هي Neon الكبيرة فعلاً (وإلا يُلغى).
 
 on:
   workflow_dispatch:
     inputs:
       CONFIRM_RUNTIME_DB_ALIGNMENT:
-        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد أنّ DATABASE_URL يشير إلى Neon قبل أي كتابة"
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
         type: string
         required: true
         default: ""
@@ -34,21 +34,22 @@ jobs:
   upgrade:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # سرّ مخصّص لـ Neon (كتابة) — منفصل عن DATABASE_URL المشترك (Supabase).
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
     steps:
-      # 🔒 الكتابة مقفولة حتى تُواءَم قاعدة Runtime (Neon) مع DATABASE_URL عمداً.
+      # 🔒 بوّابة التأكيد.
       - name: "🔒 Runtime DB alignment gate"
         run: |
           if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
-            echo "::error::DB writes LOCKED — أكّد أنّ DATABASE_URL يشير إلى Neon ثم اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
             exit 1
           fi
 
-      - name: تحقق من السرّ
+      - name: تحقق من سرّ Neon
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "::error::يلزم ضبط السرّ DATABASE_URL (يشير إلى Neon)."
+            echo "::error::يلزم ضبط السرّ NEON_DATABASE_URL (اتصال Neon بكتابة)."
             exit 1
           fi
 
@@ -66,7 +67,11 @@ jobs:
       - name: Generate Prisma client
         run: npm run db:generate
 
-      - name: "① تطبيق الامتدادات + جدول embeddings + فهارس trigram"
+      # 🛡️ حارس الهدف — يلغي كل شيء إن لم تكن القاعدة Neon الكبيرة (قراءة فقط).
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "① الامتدادات + جدول embeddings + فهارس trigram"
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/sql/neon-retrieval-pre.sql
 
       - name: "② تعبئة جدول embeddings من legal_articles.embedding"
