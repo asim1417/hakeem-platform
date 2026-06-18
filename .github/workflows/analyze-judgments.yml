@@ -9,6 +9,11 @@ name: Analyze Judgments (Citations)
 on:
   workflow_dispatch:
     inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد مواءمة قاعدة Runtime قبل أي كتابة على DB"
+        type: string
+        required: true
+        default: ""
       scope:
         description: "النطاق"
         type: choice
@@ -40,6 +45,13 @@ jobs:
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
     steps:
+      # 🔒 Production DB writes are locked until Vercel Runtime DATABASE_URL and GitHub Actions DATABASE_URL are intentionally aligned.
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — Runtime source of truth is Neon (neondb), not the GitHub/Supabase DB (bnzicgymocelefeqiwig). Set CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED only after intentionally aligning DATABASE_URL."
+            exit 1
+          fi
       - name: تحقق من السرّ والتأكيد
         run: |
           if [ -z "$DATABASE_URL" ]; then
