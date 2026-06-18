@@ -1,0 +1,86 @@
+name: Neon Retrieval Upgrade (trgm + pgvector HNSW)
+
+# يرقّي الاسترجاع على قاعدة Runtime (Neon):
+#   1) فهارس GIN trigram للبحث النصّي السريع.
+#   2) جدول embeddings (pgvector) + تعبئته من legal_articles.embedding (بلا إعادة توليد).
+#   3) فهرس HNSW للبحث الدلالي التقريبي (ANN).
+# يدوي فقط (workflow_dispatch). يكتب في DB ⇒ مُقفل خلف بوّابة المواءمة.
+#
+# المتطلّب الحاسم: سرّ DATABASE_URL في GitHub يجب أن يشير إلى **Neon** (كتابة)،
+# لا إلى قاعدة الأتمتة الأخرى — وإلا ستُطبَّق الترقية على القاعدة الخطأ.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد أنّ DATABASE_URL يشير إلى Neon قبل أي كتابة"
+        type: string
+        required: true
+        default: ""
+      limit:
+        description: "حدّ أقصى لعدد المتجهات المنقولة (اختياري، فارغ = الكل)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: neon-retrieval-upgrade
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      # 🔒 الكتابة مقفولة حتى تُواءَم قاعدة Runtime (Neon) مع DATABASE_URL عمداً.
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — أكّد أنّ DATABASE_URL يشير إلى Neon ثم اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+
+      - name: تحقق من السرّ
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ DATABASE_URL (يشير إلى Neon)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: "① تطبيق الامتدادات + جدول embeddings + فهارس trigram"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/sql/neon-retrieval-pre.sql
+
+      - name: "② تعبئة جدول embeddings من legal_articles.embedding"
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.limit }}" ]; then ARGS="--limit ${{ inputs.limit }}"; fi
+          npx tsx scripts/backfill-embeddings-table.ts $ARGS
+
+      - name: "③ بناء فهرس HNSW للبحث الدلالي (ANN)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/sql/neon-retrieval-hnsw.sql
+
+      - name: "④ تحقق (قراءة فقط)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS embeddings_rows FROM embeddings;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT indexname FROM pg_indexes WHERE indexname IN ('idx_embeddings_hnsw_cosine','idx_legal_articles_content_trgm');"

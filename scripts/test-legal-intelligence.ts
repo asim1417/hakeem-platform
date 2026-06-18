@@ -5,7 +5,7 @@
  *
  * التشغيل: npm run test:intel
  */
-import { parseEmbedding, hasValidDimension, rankByCosine, cosineSimilarity } from "@/lib/modules/legal-search/embedding-fallback";
+import { parseEmbedding, hasValidDimension, rankByCosine, cosineSimilarity, buildVectorLiteral } from "@/lib/modules/legal-search/embedding-fallback";
 import { deriveMatchedBy } from "@/lib/modules/legal-search/hybrid-search";
 import { mapLinkedJudgments, type ArticleCaseLinkRow } from "@/lib/modules/legal-rag/judgment-links";
 import { hasSufficientGrounding, NO_EXPLICIT_TEXT, GROUNDING_FALLBACK } from "@/lib/modules/legal-rag/grounding-guard";
@@ -65,6 +65,11 @@ function main() {
   check(parseEmbedding(null) === null && parseEmbedding(undefined) === null, "null/undefined → null");
   check(parseEmbedding("نص") === null && parseEmbedding("") === null, "سلسلة غير JSON → null");
   check(parseEmbedding([1, "x", 3]) === null && parseEmbedding([]) === null, "عنصر غير رقمي/فارغ → null");
+
+  // ١ب) buildVectorLiteral — تمثيل pgvector النصّي (لتعبئة جدول embeddings)
+  check(buildVectorLiteral([1, 2, 3]) === "[1,2,3]", "متجه → '[1,2,3]'");
+  check(buildVectorLiteral([0.5, -0.25]) === "[0.5,-0.25]", "يحفظ القيم العشرية والسالبة");
+  check(buildVectorLiteral([1, Number.NaN, 3]) === "[1,0,3]", "غير المنتهي → 0 (لا يكسر)");
 
   // ٢) حارس الأبعاد — يتجاهل المخالف ولا يفشل
   console.log("\n[hasValidDimension]");
