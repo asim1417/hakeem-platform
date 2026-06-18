@@ -1,11 +1,12 @@
 import { createHash } from "crypto";
-import { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 
 export type CountResult = {
   exists: boolean;
   count: number | null;
   tableMissing?: boolean;
-  error?: "count_failed" | "column_check_failed";
+  error?: "count_failed";
 };
 
 export type DatabaseFingerprint = {
@@ -182,8 +183,8 @@ export async function countAllowedTable(prisma: PrismaClient, tableName: Diagnos
       return { exists: false, count: null, tableMissing: true };
     }
 
-    const rows = await prisma.$queryRawUnsafe<Array<{ count: bigint | number | string }>>(
-      `SELECT count(*)::bigint AS count FROM "${tableName}"`
+    const rows = await prisma.$queryRaw<Array<{ count: bigint | number | string }>>(
+      Prisma.sql`SELECT count(*)::bigint AS count FROM ${Prisma.raw(`"${tableName}"`)}`
     );
     const count = Number(rows[0]?.count ?? 0);
 
