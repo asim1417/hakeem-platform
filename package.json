@@ -28,7 +28,8 @@
     "qa:db": "tsx scripts/qa-db.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts",
-    "qa:citations": "tsx scripts/qa-citations.ts"
+    "qa:citations": "tsx scripts/qa-citations.ts",
+    "test:kg": "tsx scripts/test-knowledge-graph.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
