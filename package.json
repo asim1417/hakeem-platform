@@ -29,7 +29,9 @@
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts",
     "qa:citations": "tsx scripts/qa-citations.ts",
-    "test:kg": "tsx scripts/test-knowledge-graph.ts"
+    "test:kg": "tsx scripts/test-knowledge-graph.ts",
+    "index:opensearch": "tsx scripts/index-opensearch.ts",
+    "test:hybrid": "tsx scripts/test-hybrid-search.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
