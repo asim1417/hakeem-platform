@@ -38,7 +38,9 @@
     "test:agent": "tsx scripts/test-legal-agent.ts",
     "test:simulation": "tsx scripts/test-judicial-simulation.ts",
     "test:admin": "tsx scripts/test-admin.ts",
-    "test:core-integration": "tsx scripts/test-core-integration.ts"
+    "test:core-integration": "tsx scripts/test-core-integration.ts",
+    "test:kg-seed": "tsx scripts/test-kg-seed.ts",
+    "seed:kg": "tsx scripts/seed-knowledge-graph.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

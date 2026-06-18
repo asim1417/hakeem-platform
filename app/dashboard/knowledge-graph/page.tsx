@@ -58,7 +58,15 @@ export default async function KnowledgeGraphPage({
       {!dbReady && (
         <div className="mt-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-800">
           ⚠ جداول الرسم المعرفي/المتجهات غير مُفعّلة بعد على قاعدة البيانات. طبّق migration
-          <code className="mx-1">add_knowledge_graph_pgvector</code> (محلياً/التطوير) لعرض البيانات.
+          <code className="mx-1">add_knowledge_graph_pgvector</code> (أو شغّل <code className="mx-1">prisma db push</code>) لإنشاء الجداول.
+        </div>
+      )}
+
+      {dbReady && (
+        <div className="mt-6 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm leading-7 text-blue-800">
+          العلاقات تُشتق من الروابط القائمة (مادة↔حكم) والمبادئ (حكم↔مبدأ). إن ظهرت القائمة فارغة رغم وجود الأحكام،
+          فالعلاقات لم تُبذَر بعد — شغّل <code className="mx-1">workflow «Seed Knowledge Graph»</code> (أو
+          <code className="mx-1">npm run seed:kg -- --apply</code>) لتوليدها من البيانات الحقيقية.
         </div>
       )}
 

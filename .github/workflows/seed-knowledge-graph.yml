@@ -1,0 +1,58 @@
+name: Seed Knowledge Graph (علاقات النواة)
+
+# يبذر علاقات الرسم المعرفي (legal_relations) من الروابط القائمة:
+#   مادة↔حكم (LegalArticleCaseLink) + حكم↔مبدأ (JudicialPrinciple).
+# يدوي فقط (workflow_dispatch) — لا يعمل تلقائياً على الإنتاج.
+# يتطلّب السرّ:
+#   DATABASE_URL = اتصال Supabase (قاعدة المنصّة).
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "الوضع"
+        type: choice
+        required: true
+        default: dry-run
+        options:
+          - dry-run   # معاينة فقط (لا كتابة)
+          - apply     # تطبيق فعلي
+
+concurrency:
+  group: seed-knowledge-graph
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: تحقق من السرّ
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ DATABASE_URL."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Apply schema (ensures KG/pgvector tables exist)
+        run: npx prisma db push --skip-generate
+      - name: Seed knowledge graph relations
+        run: |
+          if [ "${{ inputs.mode }}" = "apply" ]; then
+            npm run seed:kg -- --apply
+          else
+            npm run seed:kg
+          fi
