@@ -81,8 +81,7 @@ export async function legalRag(question: string): Promise<RagResult> {
   const rulingIds = search.results.filter((r) => r.type === "ruling").map((r) => r.id);
   const principleIds = search.results.filter((r) => r.type === "principle").map((r) => r.id);
 
-  // 2) جلب الكيانات القائمة كاملةً + 3) علاقات الرسم المعرفي — مغلّفة بأمان
-  // (أي تعذّر قاعدة لا يكسر الخط؛ يؤول إلى نقص مصادر فيردّ حارس الإسناد).
+  // 2) جلب الكيانات القائمة كاملةً — مغلّف بأمان مستقل.
   let aRows: Array<{ id: string; title: string; content: string; lawName: string; articleNumber: number }> = [];
   let rRows: Array<{ id: string; judgmentTitle: string | null; judgmentText: string; caseNo: string | null; decisionNo: string | null; court: string | null }> = [];
   let pRows: Array<{ id: string; title: string; principleText: string }> = [];
@@ -102,13 +101,20 @@ export async function legalRag(question: string): Promise<RagResult> {
         select: { id: true, title: true, principleText: true },
       }),
     ]);
+  } catch {
+    aRows = []; rRows = []; pRows = [];
+  }
+
+  // 3) علاقات الرسم المعرفي — في try/catch **مستقلّ** كي لا يمسح فشلُه الكياناتِ أعلاه.
+  //    على Neon جدول legal_relations غير موجود، فلا يصحّ أن يُفرّغ المواد الصحيحة.
+  try {
     const relArrays = await Promise.all(articleIds.slice(0, 5).map((id) => getRelationsForEntity("article", id)));
     relations = relArrays.flat().map((r) => ({
       id: r.id, sourceType: r.sourceType, sourceId: r.sourceId, targetType: r.targetType,
       targetId: r.targetId, relation: r.relation, strength: r.strength,
     }));
   } catch {
-    aRows = []; rRows = []; pRows = []; relations = [];
+    relations = [];
   }
 
   const articles: RagArticle[] = aRows.map((a) => ({
