@@ -1,0 +1,44 @@
+name: Audit DB Environments
+
+# تدقيق قراءة-فقط لبيئات قواعد البيانات. يستخدم أسراراً اختيارية ولا يفشل عند غيابها.
+# SELECT فقط — لا seed/backfill/migration/db push/import/insert/update/delete.
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: audit-db-environments
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      VERCEL_DATABASE_URL_INSPECT: ${{ secrets.VERCEL_DATABASE_URL_INSPECT }}
+      GITHUB_DATABASE_URL_INSPECT: ${{ secrets.GITHUB_DATABASE_URL_INSPECT }}
+      HOSTINGER_DB_URL: ${{ secrets.HOSTINGER_DB_URL }}
+      MYSQL_URL: ${{ secrets.MYSQL_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Audit DB environments (read-only)
+        run: npm run audit:db-env | tee db-environment-audit-report.txt
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-environment-audit-report
+          path: db-environment-audit-report.txt
+          retention-days: 14
