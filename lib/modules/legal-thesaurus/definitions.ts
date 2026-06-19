@@ -49,6 +49,18 @@ export const TERM_STOPWORDS = new Set<string>([
  */
 const STRUCTURAL_HEADER = /^(ال)?(قسم|باب|فصل|فرع|كتاب|مبحث|جزء|مادة|بند|فقرة)(\s|$)/;
 
+/** بادئة تعداد (حرف عربي مفرد + شرطة): «ب - الهيئة»، «جـ - السلع»، «هـ -الصنادل». تُجرَّد. */
+const LIST_ITEM_PREFIX = /^[ء-ي]ـ?\s*[-–—]\s*/;
+
+/** علامات جملة داخل المصطلح ⇒ شظية لا مصطلح. */
+const CLAUSE_MARKERS = /(^|\s)(التي|الذي|الذين|الآتية|الآتي|بشكل|بحسب|أكثر)(\s|$)/;
+
+/** كلمات لا يصحّ أن يبدأ بها المصطلح (بدايات جُمَل/شظايا مرصودة). */
+const CLAUSE_STARTERS = new Set<string>(["أو", "ثم", "بواحدة", "وأي", "عند", "إذا", "دون", "وفق", "ميع", "بما", "وعلى"]);
+
+/** كلمات لا يصحّ أن ينتهي بها المصطلح (روابط مُعلّقة: «…قيمة نقدية مثل»). */
+const CLAUSE_ENDERS = new Set<string>(["مثل", "أو", "و", "ثم", "التي", "الذي", "من", "في", "على", "إلى", "عن", "بين", "أي"]);
+
 /** يجرّد السوابق المقطعية (لـ/و/ف/ب/ك) من بداية المصطلح إن أنتجت كلمة سليمة. */
 export function stripLeadingClitics(term: string): string {
   let t = term.trim();
@@ -81,15 +93,20 @@ export function extractDefinedTerms(text: string): DefinedTerm[] {
   const out: DefinedTerm[] = [];
   const seen = new Set<string>();
   const push = (termRaw: string, defRaw: string) => {
-    let term = termRaw.replace(/^[\s\-–•0-9.)؛،"«»]+/, "").replace(/\s+/g, " ").trim();
+    let term = termRaw.replace(/^[\s\-–•ـ0-9.)؛،"«»]+/, "").replace(/\s+/g, " ").trim();
+    term = term.replace(LIST_ITEM_PREFIX, "").trim(); // تجريد بادئة التعداد «ب -»
     term = stripLeadingClitics(term); // تجريد سوابق «لـ/و/ف»
     const definition = defRaw.replace(/\s+/g, " ").trim().replace(/[.،؛]\s*$/, "");
     if (term.length < 3 || term.length > 60) return; // ≥3 أحرف بعد التجريد
     if (definition.length < 5) return;
     if (/[.!?؟]/.test(term)) return; // علامات جملة ⇒ ليست مصطلحاً
     if (STRUCTURAL_HEADER.test(term)) return; // ترويسة قسم/باب/فصل ⇒ ليست مصطلحاً
-    // كلمة واحدة من قائمة الإيقاف (روابط) ⇒ ترفض
+    if (CLAUSE_MARKERS.test(term)) return; // شظية جملة (التي/الآتية/…) ⇒ ليست مصطلحاً
     const words = term.split(/\s+/);
+    if (words.length > 8) return; // عبارة مفرطة الطول ⇒ على الأرجح شظية
+    if (CLAUSE_STARTERS.has(words[0])) return; // بداية جملة/شظية
+    if (CLAUSE_ENDERS.has(words[words.length - 1])) return; // رابط مُعلّق في النهاية
+    // كلمة واحدة من قائمة الإيقاف (روابط) ⇒ ترفض
     if (words.length === 1 && TERM_STOPWORDS.has(term.replace(/^ال/, ""))) return;
     if (TERM_STOPWORDS.has(term)) return;
     // المصطلح يجب أن يبدأ بحرف عربي (لا رقم/رمز)

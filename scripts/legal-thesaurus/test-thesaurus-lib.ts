@@ -54,6 +54,15 @@ function main() {
   const cleanedHdr = extractDefinedTerms(headerNoise).map((t) => t.term);
   check(!cleanedHdr.includes("القسم الأول") && !cleanedHdr.some((t) => t.startsWith("القسم")), "ترويسة «القسم الأول» مرفوضة");
   check(cleanedHdr.includes("الوديعة"), "مصطلح سليم «الوديعة» يبقى رغم وجود ترويسة");
+  // تنقية التعميم: بادئات التعداد + الشظايا + العبارات الجُملية
+  const listNoise = "المعاني المبينة أمام كل منها:\nب - الهيئة: الجهة المشرفة.\nجـ - السلع: المنتجات المستوردة.\nالترخيص: وثيقة رسمية تصدرها الهيئة.";
+  const listClean = extractDefinedTerms(listNoise).map((t) => t.term);
+  check(listClean.includes("الهيئة") && !listClean.some((t) => t.startsWith("ب -")), "بادئة التعداد «ب -» تُجرَّد إلى «الهيئة»");
+  check(listClean.includes("السلع"), "«جـ - السلع» تُجرَّد إلى «السلع»");
+  const fragNoise = "المعاني المبينة أمام كل منها:\nالأصول: جميع المستندات التي تحمل قيمة نقدية مثل: نقد.\nالسجل: قيد نظامي.";
+  const fragClean = extractDefinedTerms(fragNoise).map((t) => t.term);
+  check(!fragClean.some((t) => t.includes("التي") || t.endsWith("مثل")), "شظية «…التي تحمل… مثل» مرفوضة");
+  check(fragClean.includes("السجل"), "مصطلح سليم «السجل» يبقى رغم وجود شظية");
 
   check(classifyConceptType("الوزارة", "وزارة التجارة") === "administrative_concept", "تصنيف «الوزارة» إداري");
   check(classifyConceptType("الترخيص", "وثيقة تصدرها الوزارة") !== "", "تصنيف غير فارغ");
