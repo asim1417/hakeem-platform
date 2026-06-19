@@ -43,6 +43,12 @@ export const TERM_STOPWORDS = new Set<string>([
   "حيث", "بحيث", "وعليه", "عليه", "ويكون", "يكون", "وغيرها", "غيرها", "إلخ",
 ]);
 
+/**
+ * ترويسات تقسيم النظام (قسم/باب/فصل/فرع/كتاب/مبحث/جزء) — ليست مصطلحات.
+ * تُرفض إذا بدأ بها المصطلح، لمنع التقاط «القسم الأول: الالتزامات…» تعريفاً.
+ */
+const STRUCTURAL_HEADER = /^(ال)?(قسم|باب|فصل|فرع|كتاب|مبحث|جزء|مادة|بند|فقرة)(\s|$)/;
+
 /** يجرّد السوابق المقطعية (لـ/و/ف/ب/ك) من بداية المصطلح إن أنتجت كلمة سليمة. */
 export function stripLeadingClitics(term: string): string {
   let t = term.trim();
@@ -81,6 +87,7 @@ export function extractDefinedTerms(text: string): DefinedTerm[] {
     if (term.length < 3 || term.length > 60) return; // ≥3 أحرف بعد التجريد
     if (definition.length < 5) return;
     if (/[.!?؟]/.test(term)) return; // علامات جملة ⇒ ليست مصطلحاً
+    if (STRUCTURAL_HEADER.test(term)) return; // ترويسة قسم/باب/فصل ⇒ ليست مصطلحاً
     // كلمة واحدة من قائمة الإيقاف (روابط) ⇒ ترفض
     const words = term.split(/\s+/);
     if (words.length === 1 && TERM_STOPWORDS.has(term.replace(/^ال/, ""))) return;

@@ -68,6 +68,7 @@ async function main() {
   const wantSystem = arg("--system");
   const wantSystemId = arg("--system-id");
   const reset = process.argv.includes("--reset");
+  const all = process.argv.includes("--all"); // تعميم على كامل القاعدة
   const topCandidates = Number(arg("--top") ?? 40);
 
   const tcheck = await query<{ c: bigint }>(`SELECT count(*)::bigint AS c FROM information_schema.tables WHERE table_name='legal_thesaurus_concepts'`).catch(() => []);
@@ -76,11 +77,14 @@ async function main() {
   const colCheck = await query<{ c: bigint }>(`SELECT count(*)::bigint AS c FROM information_schema.columns WHERE table_name='legal_thesaurus_concepts' AND column_name='recurrence_strength'`).catch(() => []);
   if (!colCheck.length || Number(colCheck[0].c) === 0) { console.error("✗ أعمدة 002 غير مطبّقة (recurrence_strength مفقود). طبّق 002-occurrence-recurrence.sql."); process.exit(1); }
 
-  // ── اختيار نظام واحد طويل ──
+  // ── الأنظمة (مجمّعة بالاسم مع عدد موادها) ──
   const groups = await query<{ law: string; n: number; sid: string | null }>(
     `SELECT a."lawName" AS law, count(*)::int AS n, min(a."legalSystemId") AS sid
      FROM legal_articles a WHERE a."lawName" IS NOT NULL GROUP BY a."lawName" ORDER BY n DESC`
   );
+  if (!groups.length) { console.error("✗ لا أنظمة."); process.exit(1); }
+
+  // اختيار نظام الطيّار (إن لم يكن تعميماً)
   let chosen = groups[0];
   if (wantSystemId) {
     const g = groups.find((x) => x.sid === wantSystemId);
@@ -91,15 +95,6 @@ async function main() {
     if (matches.length) chosen = matches.sort((a, b) => b.n - a.n)[0];
     else console.warn(`⚠ لا نظام يطابق «${wantSystem}» — سيُختار الأطول.`);
   }
-  if (!chosen) { console.error("✗ لا أنظمة."); process.exit(1); }
-  console.log(`🎯 النظام المختار (الطيّار): «${chosen.law}» — ${chosen.n} مادة.`);
-
-  const articles = await query<ArticleRow>(
-    `SELECT id, "lawName", "legalSystemId", "articleNumber", title, content, status
-     FROM legal_articles WHERE "lawName" = $1 ORDER BY "articleNumber" ASC NULLS LAST, id ASC`, chosen.law
-  );
-  const total = articles.length;
-  if (!total) { console.error("✗ لا مواد للنظام."); process.exit(1); }
 
   if (reset) {
     for (const t of ["legal_thesaurus_occurrences","legal_thesaurus_definitions","legal_thesaurus_terms","legal_thesaurus_candidate_terms","legal_thesaurus_review_queue","legal_thesaurus_concepts","legal_thesaurus_text_snapshots"]) {
@@ -109,12 +104,15 @@ async function main() {
   }
 
   const runId = randomUUID();
-  await exec(`INSERT INTO legal_thesaurus_extraction_runs (id, run_type, status, source_scope, batch_size, total_articles) VALUES ($1,'full_body_system_pilot','running',$2,$3,$4)`, runId, chosen.law.slice(0, 200), total, total);
+  const scopeLabel = all ? "كامل القاعدة" : chosen.law;
+  await exec(`INSERT INTO legal_thesaurus_extraction_runs (id, run_type, status, source_scope, batch_size, total_articles) VALUES ($1,$2,'running',$3,$4,$5)`,
+    runId, all ? "full_body_full_db" : "full_body_system_pilot", scopeLabel.slice(0, 200), 0, 0);
 
-  // ── المرور على كامل المتن ──
+  // ── الحالة المشتركة (تجميع المفاهيم عالمياً عبر الأنظمة) ──
   const concepts = new Map<string, ConceptAgg>();
   const compoundFreq = new Map<string, number>();
-  let defArticles = 0, bodyTouchedArticles = 0;
+  let defArticles = 0, bodyTouchedArticles = 0, total = 0;
+  const perSystemCoverage: Array<{ law: string; total: number; touched: number }> = [];
 
   const ensure = (label: string, type: string, domain: string | null, isCompound: boolean, carefulGroup?: string): ConceptAgg => {
     const k = aggKey(label);
@@ -126,20 +124,9 @@ async function main() {
     return c;
   };
 
-  for (let i = 0; i < total; i++) {
-    const a = articles[i];
-    const ratio = total > 1 ? i / (total - 1) : 0;
-    const artNum = String(a.articleNumber ?? i + 1);
-
-    // ① لقطة
-    await exec(
-      `INSERT INTO legal_thesaurus_text_snapshots (id, article_id, legal_source_id, original_text, normalized_text, searchable_text, sentences_json, paragraphs_json, text_hash)
-       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9) ON CONFLICT (article_id) DO NOTHING`,
-      randomUUID(), a.id, a.legalSystemId, a.content, normalizeText(a.content), searchableText(a.content),
-      JSON.stringify(splitSentences(a.content)), JSON.stringify(splitParagraphs(a.content)), textHash(a.content)
-    ).catch(() => 0);
-
-    // ② تعريفات صريحة
+  // يعالج مادة واحدة: تعريفات صريحة + مسح المتن + مرشّحات مركّبة. يُرجِع true إن مسّها المتن.
+  const processArticle = (a: ArticleRow, ratio: number): boolean => {
+    const artNum = String(a.articleNumber ?? "");
     if (isDefinitionArticle(a.content, a.title ?? undefined)) {
       defArticles += 1;
       for (const d of extractDefinedTerms(a.content)) {
@@ -150,8 +137,6 @@ async function main() {
         c.occ.push({ articleId: a.id, sourceId: a.legalSystemId, sourceName: a.lawName, articleNumber: artNum, ratio, matchType: "exact_label_match", evidence: `${d.term}: ${d.definition}`.slice(0, 300), type: "definition", count: 1 });
       }
     }
-
-    // ③ مسح المتن بالمعجم
     let touched = false;
     for (const hit of scanArticleForConcepts(a.content)) {
       touched = true;
@@ -160,10 +145,49 @@ async function main() {
       if (hit.matchType === "exact_label_match") c.exactMatch = true;
       c.occ.push({ articleId: a.id, sourceId: a.legalSystemId, sourceName: a.lawName, articleNumber: artNum, ratio, matchType: hit.matchType, evidence: hit.evidence, type: "body_usage", count: hit.count });
     }
-    if (touched) bodyTouchedArticles += 1;
-
-    // ④ عبارات مركّبة مرشّحة (من كامل المتن) للمراجعة
     for (const cand of scanCompoundCandidates(a.content)) compoundFreq.set(cand.phrase, (compoundFreq.get(cand.phrase) ?? 0) + cand.count);
+    return touched;
+  };
+
+  // يعالج كل مواد نظام واحد (النسبة تُحسب داخل النظام)؛ يكتب اللقطات للنظام المفرد فقط.
+  const runSystem = async (law: string, withSnapshots: boolean): Promise<ArticleRow[]> => {
+    const arts = await query<ArticleRow>(
+      `SELECT id, "lawName", "legalSystemId", "articleNumber", title, content, status
+       FROM legal_articles WHERE "lawName" = $1 ORDER BY "articleNumber" ASC NULLS LAST, id ASC`, law
+    );
+    const n = arts.length; let touchedCount = 0;
+    for (let i = 0; i < n; i++) {
+      const a = arts[i];
+      const ratio = n > 1 ? i / (n - 1) : 0;
+      if (withSnapshots) {
+        await exec(
+          `INSERT INTO legal_thesaurus_text_snapshots (id, article_id, legal_source_id, original_text, normalized_text, searchable_text, sentences_json, paragraphs_json, text_hash)
+           VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9) ON CONFLICT (article_id) DO NOTHING`,
+          randomUUID(), a.id, a.legalSystemId, a.content, normalizeText(a.content), searchableText(a.content),
+          JSON.stringify(splitSentences(a.content)), JSON.stringify(splitParagraphs(a.content)), textHash(a.content)
+        ).catch(() => 0);
+      }
+      if (processArticle(a, ratio)) { touchedCount += 1; bodyTouchedArticles += 1; }
+    }
+    perSystemCoverage.push({ law, total: n, touched: touchedCount });
+    total += n;
+    return arts;
+  };
+
+  // ── التنفيذ: تعميم على الكل، أو طيّار على نظام واحد ──
+  let pilotArticles: ArticleRow[] = [];
+  if (all) {
+    console.log(`🌐 تعميم على كامل القاعدة — ${groups.length} نظاماً.`);
+    let done = 0;
+    for (const g of groups) {
+      await runSystem(g.law, false); // بلا لقطات (توفير وقت/مساحة عند التعميم)
+      done += 1;
+      if (done % 50 === 0) console.log(`  … ${done}/${groups.length} نظاماً (${total} مادة، ${concepts.size} مفهوماً حتى الآن)`);
+    }
+  } else {
+    console.log(`🎯 النظام المختار (الطيّار): «${chosen.law}» — ${chosen.n} مادة.`);
+    pilotArticles = await runSystem(chosen.law, true);
+    if (!total) { console.error("✗ لا مواد للنظام."); process.exit(1); }
   }
 
   // ── احتساب التكرار والموقع والكتابة ──
@@ -229,22 +253,26 @@ async function main() {
   const candRows: unknown[][] = [], reviewRows: unknown[][] = [];
   for (const [phrase, count] of candPhrases) {
     const cid = randomUUID();
-    candRows.push([cid, phrase, searchableText(phrase), phrase.length, "compound_body_phrase", null, chosen.sid, null, phrase.slice(0, 200), "body_compound_pattern", 0, "auto_candidate", runId]);
-    reviewRows.push([randomUUID(), "candidate_term", cid, "compound_phrase_needs_classification", "review_classify_or_reject", JSON.stringify({ phrase, count, system: chosen.law }), "pending"]);
+    candRows.push([cid, phrase, searchableText(phrase), phrase.length, "compound_body_phrase", null, all ? null : chosen.sid, null, phrase.slice(0, 200), "body_compound_pattern", 0, "auto_candidate", runId]);
+    reviewRows.push([randomUUID(), "candidate_term", cid, "compound_phrase_needs_classification", "review_classify_or_reject", JSON.stringify({ phrase, count, system: scopeLabel }), "pending"]);
   }
   await bulkInsert("legal_thesaurus_candidate_terms", ["id","term_text","normalized_term","term_length","term_type_candidate","source_article_id","legal_source_id","article_number","evidence_quote","extraction_method","confidence_score","status","run_id"], candRows);
   for (const r of reviewRows) {
     await exec(`INSERT INTO legal_thesaurus_review_queue (id, item_type, item_id, issue_type, proposed_action, evidence_json, status) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7)`, ...r).catch(() => 0);
   }
 
-  await exec(`UPDATE legal_thesaurus_extraction_runs SET status='completed', finished_at=now(), processed_articles=$2, created_concepts=$3, created_terms=$4 WHERE id=$1`, runId, total, conceptRows.length, termRows.length).catch(() => 0);
+  await exec(`UPDATE legal_thesaurus_extraction_runs SET status='completed', finished_at=now(), total_articles=$2, processed_articles=$2, created_concepts=$3, created_terms=$4 WHERE id=$1`, runId, total, conceptRows.length, termRows.length).catch(() => 0);
 
   // ── التقارير ──
-  writeReports({ system: chosen.law, total, defArticles, bodyTouchedArticles, articles, conceptRows, candPhrases });
+  if (all) {
+    writeGlobalReport({ systemsCount: groups.length, total, defArticles, bodyTouchedArticles, perSystemCoverage, conceptRows, candPhrases });
+  } else {
+    writeReports({ system: chosen.law, total, defArticles, bodyTouchedArticles, articles: pilotArticles, conceptRows, candPhrases });
+  }
 
   console.log("\n" + "=".repeat(64));
-  console.log(`📊 الطيّار: «${chosen.law}» — ${total} مادة`);
-  console.log(`مواد تعريفات: ${defArticles} · مواد مسّها المتن: ${bodyTouchedArticles} (${((bodyTouchedArticles / total) * 100).toFixed(1)}%)`);
+  console.log(`📊 ${all ? "تعميم كامل القاعدة" : "الطيّار: «" + chosen.law + "»"} — ${total} مادة` + (all ? ` عبر ${groups.length} نظاماً` : ""));
+  console.log(`مواد تعريفات: ${defArticles} · مواد مسّها المتن: ${bodyTouchedArticles} (${total ? ((bodyTouchedArticles / total) * 100).toFixed(1) : 0}%)`);
   console.log(`مفاهيم: ${conceptRows.length} · مواضع: ${occRows.length} · مرشّحات مركّبة للمراجعة: ${candRows.length}`);
   console.log(`✅ التقارير في out/legal-thesaurus/ (bias · coverage · recurrence).`);
 }
@@ -343,6 +371,82 @@ function writeReports(ctx: ReportCtx) {
   if (ctx.candPhrases.length) {
     rec.push(`\n## عبارات مركّبة مرشّحة من كامل المتن (للمراجعة — خارج المعجم)`);
     for (const [p, c] of ctx.candPhrases.slice(0, 25)) rec.push(`- \`${esc(p)}\` — ${c} ورود`);
+  }
+  fs.writeFileSync(path.join(outDir, "concept-recurrence-report.md"), rec.join("\n") + "\n");
+}
+
+// ── تقرير التعميم على كامل القاعدة ──
+interface GlobalReportCtx {
+  systemsCount: number; total: number; defArticles: number; bodyTouchedArticles: number;
+  perSystemCoverage: Array<{ law: string; total: number; touched: number }>;
+  conceptRows: Array<{ a: ConceptAgg; rec: RecurrenceStrength; pos: SourcePosition; scope: string; basis: string; score: number; needsReview: boolean; dist: Record<string, number>; firstId: string; strongId: string; firstRatio: number }>;
+  candPhrases: Array<[string, number]>;
+}
+
+function writeGlobalReport(ctx: GlobalReportCtx) {
+  const outDir = path.join(process.cwd(), "out", "legal-thesaurus");
+  fs.mkdirSync(outDir, { recursive: true });
+  const esc = (s: string) => (s || "").replace(/\|/g, "\\|").replace(/\n/g, " ").slice(0, 220);
+  const sorted = [...ctx.conceptRows].sort((x, y) => y.a.occ.reduce((s, o) => s + o.count, 0) - x.a.occ.reduce((s, o) => s + o.count, 0));
+  const count = (pred: (r: GlobalReportCtx["conceptRows"][number]) => boolean) => ctx.conceptRows.filter(pred).length;
+
+  // ① الانحياز/التغطية العالمي
+  const bias: string[] = [];
+  bias.push(`# تقرير التعميم على كامل القاعدة — الاستخراج من كامل متون الأنظمة`);
+  bias.push(`\n- عدد الأنظمة: **${ctx.systemsCount}**`);
+  bias.push(`- إجمالي المواد: **${ctx.total}**`);
+  bias.push(`- مواد مسّها الاستخراج من المتن: **${ctx.bodyTouchedArticles}** (${ctx.total ? ((ctx.bodyTouchedArticles / ctx.total) * 100).toFixed(1) : 0}%)`);
+  bias.push(`- مواد تعريفات: **${ctx.defArticles}**`);
+  bias.push(`- إجمالي المفاهيم: **${ctx.conceptRows.length}**\n`);
+  bias.push(`## توزيع المفاهيم حسب نطاق الاستخراج`);
+  bias.push(`| النطاق | عدد |`); bias.push(`|---|---:|`);
+  for (const s of ["full_body", "mixed", "definitions_only"]) bias.push(`| ${s} | ${count((r) => r.scope === s)} |`);
+  bias.push(`\n## توزيع المفاهيم حسب قوّة التكرار`);
+  bias.push(`| قوّة التكرار | عدد |`); bias.push(`|---|---:|`);
+  for (const s of ["high_frequency_core_concept", "repeated_across_systems", "repeated_in_same_system", "repeated_in_same_article", "single_occurrence"]) bias.push(`| ${s} | ${count((r) => r.rec === s)} |`);
+  bias.push(`\n## توزيع المفاهيم حسب الموقع`);
+  bias.push(`| الموقع | عدد |`); bias.push(`|---|---:|`);
+  for (const s of ["all_system", "early_articles", "middle_articles", "late_articles"]) bias.push(`| ${s} | ${count((r) => r.pos === s)} |`);
+  bias.push(`\n**برهان التكرار عبر الأنظمة:** ${count((r) => r.rec === "repeated_across_systems" || new Set(r.a.occ.map((o) => o.sourceId)).size >= 2)} مفهوماً ورد في نظامين أو أكثر.`);
+  fs.writeFileSync(path.join(outDir, "legal-thesaurus-extraction-bias-report.md"), bias.join("\n") + "\n");
+
+  // ② التغطية لكل نظام
+  const cov: string[] = [];
+  cov.push(`# تقرير التغطية لكل نظام — كامل القاعدة`);
+  cov.push(`\nإجمالي ${ctx.systemsCount} نظاماً · ${ctx.total} مادة · نسبة التغطية الكلية ${ctx.total ? ((ctx.bodyTouchedArticles / ctx.total) * 100).toFixed(1) : 0}%.\n`);
+  const byCov = [...ctx.perSystemCoverage].sort((a, b) => (b.touched / Math.max(1, b.total)) - (a.touched / Math.max(1, a.total)));
+  cov.push(`## أعلى ٢٥ نظاماً تغطيةً`);
+  cov.push(`| النظام | مواد | مَمسوسة | % |`); cov.push(`|---|---:|---:|---:|`);
+  for (const s of byCov.slice(0, 25)) cov.push(`| ${esc(s.law)} | ${s.total} | ${s.touched} | ${((s.touched / Math.max(1, s.total)) * 100).toFixed(0)}% |`);
+  cov.push(`\n## أدنى ٢٥ نظاماً تغطيةً (فرص توسعة المعجم)`);
+  cov.push(`| النظام | مواد | مَمسوسة | % |`); cov.push(`|---|---:|---:|---:|`);
+  for (const s of byCov.filter((x) => x.total >= 10).slice(-25).reverse()) cov.push(`| ${esc(s.law)} | ${s.total} | ${s.touched} | ${((s.touched / Math.max(1, s.total)) * 100).toFixed(0)}% |`);
+  fs.writeFileSync(path.join(outDir, "legal-thesaurus-coverage-report.md"), cov.join("\n") + "\n");
+
+  // ③ التكرار العالمي (أعلى المفاهيم بمواضعها وأنظمتها)
+  const rec: string[] = [];
+  rec.push(`# تقرير التكرار — كامل القاعدة`);
+  rec.push(`\nكل مفهوم مُثبت بمواضعه (مواد + أنظمة + ورود + اقتباس). لا اعتماد على العدد وحده.\n`);
+  rec.push(`| المفهوم | النوع | النطاق | الموقع | قوّة التكرار | ورود | مواد | أنظمة | الثقة | مراجعة |`);
+  rec.push(`|---|---|---|---|---|---:|---:|---:|---:|:--:|`);
+  for (const r of sorted) {
+    const tot = r.a.occ.reduce((s, o) => s + o.count, 0);
+    const arts = new Set(r.a.occ.map((o) => o.articleId)).size;
+    const srcs = new Set(r.a.occ.map((o) => o.sourceId ?? r.a.label)).size;
+    rec.push(`| ${esc(r.a.label)} | ${r.a.type} | ${r.scope} | ${r.pos} | ${r.rec} | ${tot} | ${arts} | ${srcs} | ${r.score} | ${r.needsReview ? "نعم" : "لا"} |`);
+  }
+  rec.push(`\n## أدلّة المواضع (أعلى ٢٠ مفهوماً)`);
+  for (const r of sorted.slice(0, 20)) {
+    const tot = r.a.occ.reduce((s, o) => s + o.count, 0);
+    const arts = new Set(r.a.occ.map((o) => o.articleId)).size;
+    const srcs = new Set(r.a.occ.map((o) => o.sourceId ?? r.a.label)).size;
+    rec.push(`\n### ${r.a.label} — ${r.rec} (${tot} ورود · ${arts} مادة · ${srcs} نظام)`);
+    if (r.a.carefulGroup) rec.push(`- زوج دقيق: \`${r.a.carefulGroup}\` — يبقى منفصلاً (لا يُدمج).`);
+    for (const o of r.a.occ.slice(0, 3)) rec.push(`- ${esc(o.sourceName)} — المادة ${o.articleNumber} (${o.matchType}): «${esc(o.evidence)}»`);
+  }
+  if (ctx.candPhrases.length) {
+    rec.push(`\n## عبارات مركّبة مرشّحة من كامل المتون (للمراجعة — خارج المعجم)`);
+    for (const [p, c] of ctx.candPhrases.slice(0, 30)) rec.push(`- \`${esc(p)}\` — ${c} ورود`);
   }
   fs.writeFileSync(path.join(outDir, "concept-recurrence-report.md"), rec.join("\n") + "\n");
 }

@@ -49,6 +49,11 @@ function main() {
   check(!cleaned.includes("مثل"), "رابط «مثل» مرفوض");
   check(cleaned.includes("المحكمة"), "مصطلح سليم يبقى");
   check(TERM_STOPWORDS.has("وتشمل"), "قائمة الإيقاف تضمّ «وتشمل»");
+  // رفض ترويسات الأقسام/الأبواب (الإيجاب الزائف المرصود في الطيّار)
+  const headerNoise = "المعاني المبينة أمام كل منها:\nالقسم الأول: الالتزامات والحقوق الشخصية.\nالوديعة: عقد يلتزم به المودع لديه بحفظ الشيء.";
+  const cleanedHdr = extractDefinedTerms(headerNoise).map((t) => t.term);
+  check(!cleanedHdr.includes("القسم الأول") && !cleanedHdr.some((t) => t.startsWith("القسم")), "ترويسة «القسم الأول» مرفوضة");
+  check(cleanedHdr.includes("الوديعة"), "مصطلح سليم «الوديعة» يبقى رغم وجود ترويسة");
 
   check(classifyConceptType("الوزارة", "وزارة التجارة") === "administrative_concept", "تصنيف «الوزارة» إداري");
   check(classifyConceptType("الترخيص", "وثيقة تصدرها الوزارة") !== "", "تصنيف غير فارغ");
