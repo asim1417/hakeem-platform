@@ -54,7 +54,9 @@
     "test:diversity": "tsx scripts/test-candidate-diversity.ts",
     "build:bm25:db": "tsx scripts/build-bm25-index.ts --from-db",
     "test:concept": "tsx scripts/test-concept-map.ts",
-    "thesaurus:inspect": "tsx scripts/legal-thesaurus/inspect-legal-db.ts"
+    "thesaurus:inspect": "tsx scripts/legal-thesaurus/inspect-legal-db.ts",
+    "thesaurus:test": "tsx scripts/legal-thesaurus/test-thesaurus-lib.ts",
+    "thesaurus:extract": "tsx scripts/legal-thesaurus/extract-sample.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -1,0 +1,59 @@
+name: Legal Thesaurus — Apply schema + sample extraction
+
+# ينشئ جداول المكنز (جديدة فقط) ثم يستخرج عيّنة عالية الثقة (المصطلحات المُعرَّفة صراحةً).
+# يكتب في **جداول المكنز الجديدة فقط** — لا يمسّ legal_articles/legal_systems.
+# مُقفل ببوّابة + حارس هدف Neon. يستعمل سرّ NEON_DATABASE_URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED للكتابة في جداول المكنز على Neon"
+        type: string
+        required: true
+        default: ""
+      limit:
+        description: "حدّ مواد العيّنة (افتراضي 500)"
+        type: string
+        required: false
+        default: "500"
+
+concurrency:
+  group: legal-thesaurus-build
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::مقفول — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم سرّ NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "① Apply thesaurus schema (new tables only)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/001-thesaurus-schema.sql
+      - name: "② Extract high-confidence sample (defined terms)"
+        run: npx tsx scripts/legal-thesaurus/extract-sample.ts --limit ${{ inputs.limit }}
+      - name: "③ Verify (read-only counts)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT count(*) AS concepts FROM legal_thesaurus_concepts;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT count(*) AS review_items FROM legal_thesaurus_review_queue;"
