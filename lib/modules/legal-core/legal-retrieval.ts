@@ -122,6 +122,10 @@ export function selectDiverseCandidateIds(
 export const SEMANTIC_BLEND_SCALE = 80;
 /** عتبة: المطابقات المعجمية الأقوى منها لا تُضخَّم دلالياً (حفظاً للتنوّع)؛ يطابق MIN_RELEVANCE. */
 export const SEMANTIC_LEX_FLOOR = 12;
+/** ترجيح التشريع الأصلي (نظام) عند تطابق اسمه مع الاستعلام — يتفوّق على لائحته. */
+export const PRIMARY_LAW_BONUS = 80;
+/** خفض الأداة الثانوية (لائحة/قرار/دليل…) عند تطابق اسمها، فتُرتَّب بعد نظامها الأصل. */
+export const SECONDARY_INSTRUMENT_PENALTY = -25;
 
 /**
  * يمزج درجة الصلة المعجمية مع التشابه الدلالي: نتيجة دلالية بحتة (lexical≈0) بتشابه
@@ -605,8 +609,16 @@ function mapArticleResult(
     titleBonus += conceptWords.filter((w) => normName.includes(w)).length * 30; // تغطية المفاهيم في الاسم
     if (normTitle.includes(nq)) titleBonus += 40; // عبارة كاملة في عنوان المادة
     titleBonus += conceptWords.filter((w) => normTitle.includes(w)).length * 12;
-    // ترجيح مبدئي للنظام الأصلي فوق لائحته/آليّته (التشريع الأعلى) عند تساوي تطابق الاسم
-    if (titleBonus > 0 && normName.trim().startsWith("نظام")) titleBonus += 18;
+    // ترجيح قوي للتشريع الأصلي (نظام) فوق لائحته/أداته الثانوية — فقط عند تطابق الاسم:
+    // يمنع تصدّر «اللائحة التنفيذية لضبط أعمال تفتيش العمل» على «نظام العمل» لاستعلام «العمل».
+    if (titleBonus > 0) {
+      const trimmedName = normName.trim();
+      if (trimmedName.startsWith("نظام")) {
+        titleBonus += PRIMARY_LAW_BONUS; // تشريع أصلي
+      } else if (/^(اللائحة|لائحة|تنظيم|قرار|تعميم|الدليل|دليل|آلية|قواعد|ضوابط)/.test(trimmedName)) {
+        titleBonus += SECONDARY_INSTRUMENT_PENALTY; // أداة ثانوية تابعة لنظام (تُرتَّب بعده)
+      }
+    }
   }
 
   const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus + titleBonus;
