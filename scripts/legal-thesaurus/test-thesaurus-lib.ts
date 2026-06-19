@@ -5,7 +5,7 @@
 import { normalizeText, searchableText, splitSentences, splitParagraphs, textHash } from "@/lib/modules/legal-thesaurus/normalize";
 import { isDefinitionArticle, extractDefinedTerms, classifyConceptType, stripLeadingClitics, TERM_STOPWORDS } from "@/lib/modules/legal-thesaurus/definitions";
 import { scoreDefinedTerm, decideReview, conceptStatus, scoreBodyConcept } from "@/lib/modules/legal-thesaurus/scoring";
-import { scanArticleForConcepts, scanCompoundCandidates, BODY_CONCEPT_LEXICON } from "@/lib/modules/legal-thesaurus/body-concepts";
+import { scanArticleForConcepts, scanCompoundCandidates, scanCompoundPhrases, BODY_CONCEPT_LEXICON } from "@/lib/modules/legal-thesaurus/body-concepts";
 import { classifyRecurrence, classifySourcePosition, positionRatioToClass, classifyScope } from "@/lib/modules/legal-thesaurus/recurrence";
 
 let passed = 0;
@@ -98,6 +98,12 @@ function main() {
   console.log("    مرشّحات مركّبة:", cands.map((c) => c.phrase).join(" | "));
   check(cands.some((c) => c.phrase.startsWith("شروط")), "التقاط عبارة مركّبة مرشّحة");
   check(!cands.some((c) => c.phrase.includes("هذا") || c.phrase.includes("النظام")), "استبعاد الكلمات العامة (هذا/النظام)");
+  // الكشف المركّب المُوسَّع: رأس قانوني + وصف، مع رفض روابط الجُمَل
+  const cph = scanCompoundPhrases("للمساهم حق التصويت في الجمعية، ويصدر سند الشحن، وحق عليه الالتزام.").map((c) => c.phrase);
+  console.log("    عبارات مركّبة:", cph.join(" | "));
+  check(cph.includes("حق التصويت"), "التقاط «حق التصويت» (رأس قانوني + وصف)");
+  check(cph.includes("سند الشحن"), "التقاط «سند الشحن»");
+  check(!cph.some((p) => p.split(" ")[1] === "عليه"), "رفض الوصف الرابط «حق عليه»");
 
   // recurrence (برهان التكرار + الموقع + النطاق)
   console.log("\n[recurrence]");
