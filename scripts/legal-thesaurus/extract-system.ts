@@ -21,7 +21,7 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { normalizeText, searchableText, splitSentences, splitParagraphs, textHash } from "@/lib/modules/legal-thesaurus/normalize";
 import { isDefinitionArticle, extractDefinedTerms, classifyConceptType } from "@/lib/modules/legal-thesaurus/definitions";
-import { scanArticleForConcepts, scanCompoundCandidates, BODY_CONCEPT_LEXICON } from "@/lib/modules/legal-thesaurus/body-concepts";
+import { scanArticleForConcepts, scanCompoundPhrases, BODY_CONCEPT_LEXICON } from "@/lib/modules/legal-thesaurus/body-concepts";
 import { scoreDefinedTerm, scoreBodyConcept, decideReview } from "@/lib/modules/legal-thesaurus/scoring";
 import {
   classifyRecurrence, classifySourcePosition, positionRatioToClass, classifyScope, type RecurrenceStrength, type SourcePosition,
@@ -57,6 +57,13 @@ interface ConceptAgg {
   id: string; label: string; normLabel: string; type: string; domain: string | null; carefulGroup?: string; isCompound: boolean;
   hasDef: boolean; hasBody: boolean; defScore: number; defText: string; defEvidence: string; defArticleId: string | null;
   occ: OccRecord[]; exactMatch: boolean;
+  discovered?: boolean; // مفهوم مُرقّى من اكتشاف المتن (نمط مركّب، لا معجم)
+  realTotalOcc?: number; realDistinctArticles?: number; realDistinctSources?: number; // إجماليات حقيقية (المواضع المخزّنة عيّنة)
+}
+
+/** تجميع عبارة مركّبة مُكتشَفة من المتن قبل ترقيتها مفهوماً. */
+interface DiscoveredAgg {
+  phrase: string; normLabel: string; count: number; articles: Set<string>; sources: Set<string>; occ: OccRecord[];
 }
 
 function aggKey(label: string): string { return searchableText(label); }
@@ -110,7 +117,8 @@ async function main() {
 
   // ── الحالة المشتركة (تجميع المفاهيم عالمياً عبر الأنظمة) ──
   const concepts = new Map<string, ConceptAgg>();
-  const compoundFreq = new Map<string, number>();
+  const discovered = new Map<string, DiscoveredAgg>(); // عبارات مركّبة مُكتشَفة من المتن
+  const lexiconNorms = new Set(BODY_CONCEPT_LEXICON.map((e) => searchableText(e.label)));
   let defArticles = 0, bodyTouchedArticles = 0, total = 0;
   const perSystemCoverage: Array<{ law: string; total: number; touched: number }> = [];
 
@@ -145,7 +153,17 @@ async function main() {
       if (hit.matchType === "exact_label_match") c.exactMatch = true;
       c.occ.push({ articleId: a.id, sourceId: a.legalSystemId, sourceName: a.lawName, articleNumber: artNum, ratio, matchType: hit.matchType, evidence: hit.evidence, type: "body_usage", count: hit.count });
     }
-    for (const cand of scanCompoundCandidates(a.content)) compoundFreq.set(cand.phrase, (compoundFreq.get(cand.phrase) ?? 0) + cand.count);
+    // اكتشاف العبارات المركّبة من كامل المتن (للترقية مفاهيم أو للمراجعة)
+    for (const cp of scanCompoundPhrases(a.content)) {
+      const norm = searchableText(cp.phrase);
+      if (!norm || lexiconNorms.has(norm)) continue; // المعجم يفوز
+      let dd = discovered.get(norm);
+      if (!dd) { dd = { phrase: cp.phrase, normLabel: norm, count: 0, articles: new Set(), sources: new Set(), occ: [] }; discovered.set(norm, dd); }
+      dd.count += cp.count;
+      dd.articles.add(a.id);
+      dd.sources.add(a.legalSystemId ?? "");
+      if (dd.occ.length < 5) dd.occ.push({ articleId: a.id, sourceId: a.legalSystemId, sourceName: a.lawName, articleNumber: artNum, ratio, matchType: "variant_match", evidence: cp.evidence, type: "body_usage", count: cp.count });
+    }
     return touched;
   };
 
@@ -190,20 +208,40 @@ async function main() {
     if (!total) { console.error("✗ لا مواد للنظام."); process.exit(1); }
   }
 
+  // ── ترقية العبارات المركّبة المُكتشَفة إلى مفاهيم مُسنَدة (متكرّرة في مواد متعددة) ──
+  // العتبة: ≥3 ورود في ≥2 مادة. ما دونها يبقى مرشّحاً للمراجعة فقط.
+  const PROMOTE_MIN_OCC = 3, PROMOTE_MIN_ARTS = 2;
+  let promoted = 0;
+  const leftoverCandidates: Array<[string, number]> = [];
+  for (const dd of discovered.values()) {
+    const qualifies = dd.count >= PROMOTE_MIN_OCC && dd.articles.size >= PROMOTE_MIN_ARTS;
+    if (!qualifies || concepts.has(dd.normLabel)) { leftoverCandidates.push([dd.phrase, dd.count]); continue; }
+    const c = ensure(dd.phrase, classifyConceptType(dd.phrase, ""), null, dd.phrase.split(/\s+/).length > 1, undefined);
+    c.hasBody = true;
+    c.discovered = true;
+    c.realTotalOcc = dd.count;
+    c.realDistinctArticles = dd.articles.size;
+    c.realDistinctSources = dd.sources.size;
+    for (const o of dd.occ) c.occ.push(o); // عيّنة مواضع (≤5) كدليل
+    promoted += 1;
+  }
+  console.log(`🧩 عبارات مركّبة مُكتشَفة: ${discovered.size} · مُرقّاة مفاهيم: ${promoted} · مرشّحات مراجعة متبقّية: ${leftoverCandidates.length}`);
+
   // ── احتساب التكرار والموقع والكتابة ──
   const lexiconLabels = new Set(BODY_CONCEPT_LEXICON.map((e) => searchableText(e.label)));
-  const conceptRows: Array<{ a: ConceptAgg; rec: RecurrenceStrength; pos: SourcePosition; scope: string; basis: string; score: number; needsReview: boolean; dist: Record<string, number>; firstId: string; strongId: string; firstRatio: number }> = [];
+  const conceptRows: Array<{ a: ConceptAgg; rec: RecurrenceStrength; pos: SourcePosition; scope: string; basis: string; score: number; needsReview: boolean; dist: Record<string, number>; firstId: string; strongId: string; firstRatio: number; total: number; arts: number; sources: number }> = [];
   const occRows: unknown[][] = [], defRows: unknown[][] = [], termRows: unknown[][] = [];
 
   for (const c of concepts.values()) {
-    const distinctArticles = new Set(c.occ.map((o) => o.articleId)).size;
-    const distinctSources = new Set(c.occ.map((o) => o.sourceId ?? c.label)).size;
-    const totalOcc = c.occ.reduce((s, o) => s + o.count, 0);
+    // للمفاهيم المُرقّاة: الإجماليات الحقيقية محفوظة (المواضع المخزّنة عيّنة ≤5).
+    const distinctArticles = c.realDistinctArticles ?? new Set(c.occ.map((o) => o.articleId)).size;
+    const distinctSources = c.realDistinctSources ?? new Set(c.occ.map((o) => o.sourceId ?? c.label)).size;
+    const totalOcc = c.realTotalOcc ?? c.occ.reduce((s, o) => s + o.count, 0);
     const ratios = c.occ.map((o) => o.ratio);
     const rec = classifyRecurrence({ totalOccurrences: totalOcc, distinctArticles, distinctSources });
     const pos = classifySourcePosition(ratios);
     const scope = classifyScope(c.hasDef, c.hasBody);
-    const basis = c.hasDef && c.hasBody ? "mixed_definition_and_body" : c.hasDef ? "explicit_legal_definition" : "body_usage";
+    const basis = c.hasDef && c.hasBody ? "mixed_definition_and_body" : c.hasDef ? "explicit_legal_definition" : c.discovered ? "body_pattern" : "body_usage";
     const score = c.hasDef
       ? Math.max(c.defScore, scoreBodyConcept({ isCompound: c.isCompound, distinctArticles, totalOccurrences: totalOcc, exactMatch: c.exactMatch, hasExplicitDefinition: true }))
       : scoreBodyConcept({ isCompound: c.isCompound, distinctArticles, totalOccurrences: totalOcc, exactMatch: c.exactMatch, hasExplicitDefinition: false });
@@ -216,7 +254,7 @@ async function main() {
     const firstId = sortedByRatio[0]?.articleId ?? c.occ[0]?.articleId ?? "";
     const firstRatio = sortedByRatio[0]?.ratio ?? 0;
     const strongId = [...c.occ].sort((x, y) => y.count - x.count)[0]?.articleId ?? firstId;
-    conceptRows.push({ a: c, rec, pos, scope, basis, score, needsReview, dist, firstId, strongId, firstRatio });
+    conceptRows.push({ a: c, rec, pos, scope, basis, score, needsReview, dist, firstId, strongId, firstRatio, total: totalOcc, arts: distinctArticles, sources: distinctSources });
 
     // مواضع
     for (const o of c.occ) {
@@ -240,7 +278,7 @@ async function main() {
       c.id, c.label, c.normLabel, c.type, c.domain, c.hasDef ? "explicit_legal_definition" : "contextual_usage", c.hasDef ? c.defText : null,
       r.score, r.basis, r.needsReview ? "candidate" : "approved", r.needsReview,
       r.scope, r.pos, r.firstRatio,
-      c.occ.reduce((s, o) => s + o.count, 0), new Set(c.occ.map((o) => o.articleId)).size, new Set(c.occ.map((o) => o.sourceId ?? c.label)).size,
+      r.total, r.arts, r.sources,
       r.firstId, r.strongId, JSON.stringify(r.dist), r.rec
     ).catch((e) => { console.error("concept insert:", c.label, e instanceof Error ? e.message.split("\n")[0] : e); });
   }
@@ -248,8 +286,9 @@ async function main() {
   await bulkInsert("legal_thesaurus_terms", ["id","concept_id","term_text","normalized_term","term_type","confidence_score","status"], termRows);
   await bulkInsert("legal_thesaurus_definitions", ["id","concept_id","definition_text","definition_type","source_article_id","evidence_quote","confidence_score","status"], defRows);
 
-  // عبارات مركّبة مرشّحة (للمراجعة فقط) — خارج المعجم
-  const candPhrases = [...compoundFreq.entries()].filter(([p]) => !lexiconLabels.has(searchableText(p))).sort((a, b) => b[1] - a[1]).slice(0, topCandidates);
+  // عبارات مركّبة مرشّحة لم تُرقَّ (للمراجعة فقط) — تكرار دون العتبة
+  void lexiconLabels;
+  const candPhrases = leftoverCandidates.sort((a, b) => b[1] - a[1]).slice(0, topCandidates);
   const candRows: unknown[][] = [], reviewRows: unknown[][] = [];
   for (const [phrase, count] of candPhrases) {
     const cid = randomUUID();

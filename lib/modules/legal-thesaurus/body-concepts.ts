@@ -307,45 +307,84 @@ export function scanArticleForConcepts(articleText: string): ConceptHit[] {
 }
 
 /**
- * كشف العبارات المركّبة المرشّحة من **كامل المتن** عبر مفاتيح بنيوية (شروط/آثار/دعوى/
- * الدفع بـ/سند/عبء/حق …). نتائجها **مرشّحات للمراجعة فقط** — لا تُعتمد مفاهيم آلياً،
- * إثباتاً لأن المسح يغطّي المتن كلّه ويلتقط العبارات خارج المعجم لإحالتها للمراجع.
+ * كشف العبارات القانونية المركّبة من **كامل المتن**: رأس قانوني معروف (حق/عقد/سند/
+ * قرار/لائحة/شهادة/رخصة/إجراءات…) + وصف، مع استبعاد روابط الجُمَل من موضع الوصف.
+ * تُستعمل لاكتشاف مفاهيم المتن خارج المعجم وترقيتها (مُسنَدة بمواضعها) أو إحالتها للمراجعة.
  */
-const COMPOUND_CUES: RegExp[] = [
-  /شروط\s+[ء-ي]{3,}(?:\s+[ء-ي]{3,})?/g,
-  /اثار\s+[ء-ي]{3,}/g,
-  /دعوى\s+[ء-ي]{3,}/g,
-  /الدفع\s+ب[ء-ي]{3,}/g,
-  /سند\s+[ء-ي]{3,}/g,
-  /عبء\s+[ء-ي]{3,}/g,
-  /حق\s+[ء-ي]{3,}/g,
-  /منازعة\s+[ء-ي]{3,}/g,
-  /اعادة\s+[ء-ي]{3,}/g,
-  /تصفية\s+[ء-ي]{3,}/g,
-];
+const COMPOUND_HEADS = new Set<string>([
+  "حق", "حقوق", "عقد", "عقود", "سند", "سندات", "شهاده", "شهادات", "رخصه", "تصريح", "طلب", "طلبات",
+  "قرار", "قرارات", "لائحه", "لوائح", "دعوى", "دعاوى", "مده", "مهله", "رسوم", "بدل", "نسبه", "مجلس",
+  "لجنه", "هيئه", "صندوق", "سجل", "وثيقه", "اجراءات", "احكام", "شروط", "اثار", "التزام", "التزامات",
+  "حكم", "امر", "اوامر", "قائمه", "بطاقه", "خطه", "برنامج", "مكتب", "مركز", "اداره", "وحده", "قطاع",
+  "ضوابط", "معايير", "اتفاقيه", "مخالفه", "عقوبه", "غرامه", "تعويض", "ضمان", "كفاله", "رهن", "حجز",
+  "ملكيه", "حيازه", "انتفاع", "وكاله", "تفويض", "ترخيص", "تسجيل", "قيد", "محضر", "تقرير", "موافقه",
+  "اعتماد", "مساهمه", "حصه", "سهم", "واجبات", "صلاحيات", "اختصاص", "ولايه", "تدابير", "نفقه", "وديعه",
+]);
 
-/** كلمات عامة تُستبعد من رؤوس العبارات المرشّحة (منع تحويل المكنز لقائمة كلمات). */
-const GENERAL_HEADS = new Set<string>(["هذا", "ذلك", "التي", "الذي", "النظام", "المادة", "اللائحة", "احكام", "الاحكام"]);
+/** كلمات لا تصلح موضعَ وصفٍ في العبارة المركّبة (روابط/ضمائر/إشارات ⇒ ضوضاء). */
+const MODIFIER_STOP = new Set<string>([
+  "علي", "عليه", "عليها", "عليهم", "من", "لمن", "منه", "منها", "اذا", "بان", "لكل", "لاي", "التي",
+  "الذي", "الذين", "عن", "في", "الي", "اليه", "اليها", "به", "بها", "بهم", "ذلك", "هذا", "هذه",
+  "هولاء", "اي", "او", "ثم", "كل", "بعض", "غير", "نحو", "لدي", "ولا", "وان", "انه", "انها", "عند",
+  "حيث", "قد", "ما", "لا", "هو", "هي", "بين", "مع", "دون", "قبل", "بعد", "وهو", "وهي", "وقد", "ولم",
+  "فان", "لان", "ان", "ام", "لاثباته", "لاثبات", "المنصوص", "الوارده", "المحدده", "المذكوره", "المشار",
+  "الاتيه", "التاليه", "السابقه", "اللازمه", "نفسه", "نفسها", "ذاته",
+]);
+
+function stripClitic(w: string): string { return w.replace(/^[وفبكل]+/, ""); }
+function stripCliticAl(w: string): string { return stripClitic(w).replace(/^ال/, ""); }
+
+export interface CompoundHit {
+  phrase: string;
+  count: number;
+  evidence: string;
+}
+
+/** يلتقط العبارات القانونية المركّبة (رأس + وصف، ٢–٣ كلمات) من متن مادة مع اقتباس السند. */
+export function scanCompoundPhrases(articleText: string): CompoundHit[] {
+  const text = searchableText(articleText);
+  if (!text) return [];
+  const sentencesRaw = splitSentences(articleText);
+  const sentencesNorm = sentencesRaw.map((s) => searchableText(s));
+  // إزالة كل ما عدا الحروف العربية والمسافات (شرطات/فواصل/أقواس) قبل التقطيع
+  const words = text.replace(/[^ء-ي\s]+/g, " ").split(/\s+/).filter(Boolean);
+  const agg = new Map<string, number>();
+
+  const validMod = (w: string | undefined): boolean => {
+    if (!w) return false;
+    const core = stripCliticAl(w);
+    if (core.length < 3) return false;
+    if (!/^[ء-ي]/.test(w)) return false;
+    if (MODIFIER_STOP.has(w) || MODIFIER_STOP.has(stripClitic(w)) || MODIFIER_STOP.has(core)) return false;
+    return true;
+  };
+
+  for (let i = 0; i < words.length - 1; i++) {
+    if (!COMPOUND_HEADS.has(stripCliticAl(words[i]))) continue;
+    if (!validMod(words[i + 1])) continue;
+    const head = words[i].replace(/^[وف]/, ""); // تنظيف عطف بادئ فقط
+    let phrase = `${head} ${words[i + 1]}`;
+    if (validMod(words[i + 2])) phrase = `${phrase} ${words[i + 2]}`; // عبارة ثلاثية إن صحّت
+    agg.set(phrase, (agg.get(phrase) ?? 0) + 1);
+  }
+
+  const out: CompoundHit[] = [];
+  for (const [phrase, count] of agg) {
+    const head2 = phrase.split(" ").slice(0, 2).join(" ");
+    const idx = sentencesNorm.findIndex((s) => s.includes(head2));
+    const evidence = (idx >= 0 ? sentencesRaw[idx] : (sentencesRaw[0] ?? articleText)).slice(0, 300);
+    out.push({ phrase, count, evidence });
+  }
+  return out.sort((a, b) => b.count - a.count);
+}
 
 export interface CompoundCandidate {
   phrase: string;
   count: number;
 }
 
-/** يلتقط عبارات مركّبة مرشّحة (للمراجعة) من متن مادة. */
+/** توافق خلفي: عبارات مرشّحة (phrase+count) من متن مادة. */
 export function scanCompoundCandidates(articleText: string): CompoundCandidate[] {
-  const text = searchableText(articleText);
-  const freq = new Map<string, number>();
-  for (const cue of COMPOUND_CUES) {
-    cue.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = cue.exec(text)) !== null) {
-      const phrase = m[0].replace(/\s+/g, " ").trim();
-      const words = phrase.split(" ");
-      if (words.length < 2) continue;
-      if (words.some((w) => GENERAL_HEADS.has(w))) continue;
-      freq.set(phrase, (freq.get(phrase) ?? 0) + 1);
-    }
-  }
-  return [...freq.entries()].map(([phrase, count]) => ({ phrase, count })).sort((a, b) => b.count - a.count);
+  return scanCompoundPhrases(articleText).map(({ phrase, count }) => ({ phrase, count }));
 }
+
