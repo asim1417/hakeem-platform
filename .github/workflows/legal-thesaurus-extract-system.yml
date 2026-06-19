@@ -74,6 +74,16 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT extraction_scope, count(*) FROM legal_thesaurus_concepts GROUP BY extraction_scope ORDER BY 2 DESC;"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT recurrence_strength, count(*) FROM legal_thesaurus_concepts GROUP BY recurrence_strength ORDER BY 2 DESC;"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT source_position, count(*) FROM legal_thesaurus_concepts GROUP BY source_position ORDER BY 2 DESC;"
+      - name: "⑤ Detailed concepts (read-only — top by occurrences)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
+          "SELECT preferred_label_ar AS concept, concept_type AS type, recurrence_strength AS recurrence, source_position AS position, total_occurrences_count AS occ, distinct_articles_count AS arts, confidence_score AS conf, needs_human_review AS review FROM legal_thesaurus_concepts ORDER BY total_occurrences_count DESC LIMIT 40;"
+      - name: "⑥ Print report files (proof)"
+        run: |
+          for f in legal-thesaurus-extraction-bias-report.md legal-thesaurus-coverage-report.md concept-recurrence-report.md; do
+            echo ""; echo "==================== $f ===================="; echo ""
+            cat "out/legal-thesaurus/$f" || echo "(missing)"
+          done
       - name: Upload pilot reports
         uses: actions/upload-artifact@v4
         with:
