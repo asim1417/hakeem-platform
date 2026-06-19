@@ -1,0 +1,33 @@
+name: Legal Thesaurus — Inspect DB (read-only)
+
+# المرحلة الأولى من المكنز القانوني: فحص قاعدة الأنظمة وإخراج تقرير بنية.
+# قراءة فقط — لا إنشاء/تعديل/حذف، لا استخراج. يفضّل NEON_DATABASE_URL ثم DATABASE_URL.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Inspect legal DB (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          npm run thesaurus:inspect
