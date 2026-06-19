@@ -1,0 +1,83 @@
+name: Legal Thesaurus — Full-body pilot (one system)
+
+# طيّار: يستخرج المكنز من **كامل متن نظام واحد** (لا تعريفات فقط، لا أوائل المواد فقط)،
+# مع مواضع الورود وبرهان التكرار، ثم يولّد تقارير الانحياز/التغطية/التكرار كـ artifact.
+# يكتب في **جداول المكنز الجديدة فقط** — لا يمسّ legal_articles/legal_systems.
+# مُقفل ببوّابة + حارس هدف Neon. لا تعميم على القاعدة قبل اعتماد التقارير.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED للكتابة في جداول المكنز على Neon"
+        type: string
+        required: true
+        default: ""
+      system:
+        description: "اسم النظام (تطابق جزئي، مثل: المعاملات المدنية). فارغ = أطول نظام."
+        type: string
+        required: false
+        default: "المعاملات المدنية"
+      reset:
+        description: "إفراغ جداول محتوى المكنز الجديدة قبل الاستخراج (إعادة قياس نظيفة)"
+        type: boolean
+        required: false
+        default: true
+      top:
+        description: "عدد العبارات المركّبة المرشّحة للمراجعة"
+        type: string
+        required: false
+        default: "40"
+
+concurrency:
+  group: legal-thesaurus-extract-system
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::مقفول — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم سرّ NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "① Apply thesaurus schema (new tables only)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/001-thesaurus-schema.sql
+      - name: "② Apply recurrence/scope columns (new tables only)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/002-occurrence-recurrence.sql
+      - name: "③ Full-body pilot extraction (one system)"
+        run: |
+          RESET=""
+          if [ "${{ inputs.reset }}" = "true" ]; then RESET="--reset"; fi
+          npx tsx scripts/legal-thesaurus/extract-system.ts --system "${{ inputs.system }}" --top "${{ inputs.top }}" $RESET
+      - name: "④ Verify (read-only counts)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT extraction_scope, count(*) FROM legal_thesaurus_concepts GROUP BY extraction_scope ORDER BY 2 DESC;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT recurrence_strength, count(*) FROM legal_thesaurus_concepts GROUP BY recurrence_strength ORDER BY 2 DESC;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT source_position, count(*) FROM legal_thesaurus_concepts GROUP BY source_position ORDER BY 2 DESC;"
+      - name: Upload pilot reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-thesaurus-pilot-reports
+          path: out/legal-thesaurus/
+          retention-days: 30
+          if-no-files-found: error

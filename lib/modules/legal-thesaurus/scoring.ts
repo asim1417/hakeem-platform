@@ -21,6 +21,34 @@ export function scoreDefinedTerm(i: DefinedTermScoreInput): number {
   return clamp(s);
 }
 
+export interface BodyConceptScoreInput {
+  /** هل المفهوم عبارة مركّبة (أدقّ من المفردة)؟ */
+  isCompound: boolean;
+  /** عدد المواد المتمايزة التي ورد فيها (برهان التكرار). */
+  distinctArticles: number;
+  /** إجمالي مرّات الورود. */
+  totalOccurrences: number;
+  /** هل أقوى مطابقة كانت بالتسمية الصريحة (لا صيغة مشتقّة)؟ */
+  exactMatch: boolean;
+  /** هل للمفهوم تعريف صريح أيضاً (سند أقوى)؟ */
+  hasExplicitDefinition?: boolean;
+}
+
+/**
+ * درجة مفهوم مستخرج من المتن (سند استعمالي، لا تعريف صريح بالضرورة).
+ * أقل من المُعرَّف صراحةً، وترتفع بقوّة التكرار بمواضعه والمطابقة الصريحة والتركيب.
+ */
+export function scoreBodyConcept(i: BodyConceptScoreInput): number {
+  if (i.hasExplicitDefinition) return clamp(96); // سند تعريف صريح موجود
+  let s = 74; // أساس الاستعمال في المتن (تحت 85 ⇒ مراجعة افتراضياً)
+  if (i.isCompound) s += 6; // العبارة المركّبة أدقّ من المفردة
+  if (i.exactMatch) s += 3;
+  if (i.distinctArticles >= 2) s += 4; // تكرّر في عدّة مواد
+  if (i.distinctArticles >= 5) s += 4;
+  if (i.distinctArticles >= 8 && i.totalOccurrences >= 15) s += 4; // محوري
+  return clamp(s);
+}
+
 export interface ReviewDecision {
   needsReview: boolean;
   reasons: string[];

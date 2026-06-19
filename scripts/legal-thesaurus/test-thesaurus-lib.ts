@@ -4,7 +4,9 @@
  */
 import { normalizeText, searchableText, splitSentences, splitParagraphs, textHash } from "@/lib/modules/legal-thesaurus/normalize";
 import { isDefinitionArticle, extractDefinedTerms, classifyConceptType, stripLeadingClitics, TERM_STOPWORDS } from "@/lib/modules/legal-thesaurus/definitions";
-import { scoreDefinedTerm, decideReview, conceptStatus } from "@/lib/modules/legal-thesaurus/scoring";
+import { scoreDefinedTerm, decideReview, conceptStatus, scoreBodyConcept } from "@/lib/modules/legal-thesaurus/scoring";
+import { scanArticleForConcepts, scanCompoundCandidates, BODY_CONCEPT_LEXICON } from "@/lib/modules/legal-thesaurus/body-concepts";
+import { classifyRecurrence, classifySourcePosition, positionRatioToClass, classifyScope } from "@/lib/modules/legal-thesaurus/recurrence";
 
 let passed = 0;
 let failed = 0;
@@ -60,6 +62,42 @@ function main() {
   check(rev.needsReview && rev.reasons.includes("confidence_below_85"), "ثقة <85 → مراجعة");
   check(conceptStatus(96, decideReview(96)) === "approved", "ثقة عالية بلا إشارات → معتمد");
   check(conceptStatus(96, decideReview(96, { nearExisting: true })) === "candidate", "قريب من موجود → مرشّح للمراجعة");
+
+  // body-concepts (استخراج من كامل المتن)
+  console.log("\n[body-concepts]");
+  const body1 = "إذا توافرت شروط صحة العقد ترتب عليه أثره، وللدائن فسخ العقد عند الإخلال، ويلتزم المدين بالتعويض.";
+  const hits1 = scanArticleForConcepts(body1);
+  const labels1 = hits1.map((h) => h.entry.label);
+  console.log("    مفاهيم المتن:", labels1.join(" | "));
+  check(labels1.includes("شروط صحة العقد"), "التقاط عبارة مركّبة «شروط صحة العقد»");
+  check(labels1.includes("فسخ العقد"), "التقاط «فسخ العقد»");
+  check(labels1.includes("التعويض"), "التقاط «التعويض»");
+  check(labels1.includes("الدائن") && labels1.includes("المدين"), "التقاط أطراف الالتزام");
+  // الأزواج الدقيقة تبقى منفصلة (لا دمج)
+  const grp = BODY_CONCEPT_LEXICON.filter((e) => e.carefulGroup === "termination_invalidity").map((e) => e.label);
+  check(grp.includes("البطلان") && grp.includes("الفسخ") && grp.includes("الانفساخ"), "البطلان/الفسخ/الانفساخ مفاهيم منفصلة");
+  const clitic = scanArticleForConcepts("والعقد ملزم، وبالعقد تنشأ الالتزامات، وللعقد آثاره.");
+  check(clitic.some((h) => h.entry.label === "العقد"), "مطابقة السوابق المقطعية (والعقد/بالعقد/للعقد)");
+  check(clitic.find((h) => h.entry.label === "العقد")!.count >= 3, "عدّ تكرار الورود داخل المادة");
+  // استبعاد الكلمات العامة من المرشّحات
+  const cands = scanCompoundCandidates("شروط منح الترخيص، وأحكام هذا النظام، ودعوى التعويض.");
+  console.log("    مرشّحات مركّبة:", cands.map((c) => c.phrase).join(" | "));
+  check(cands.some((c) => c.phrase.startsWith("شروط")), "التقاط عبارة مركّبة مرشّحة");
+  check(!cands.some((c) => c.phrase.includes("هذا") || c.phrase.includes("النظام")), "استبعاد الكلمات العامة (هذا/النظام)");
+
+  // recurrence (برهان التكرار + الموقع + النطاق)
+  console.log("\n[recurrence]");
+  check(classifyRecurrence({ totalOccurrences: 1, distinctArticles: 1, distinctSources: 1 }) === "single_occurrence", "ورود واحد");
+  check(classifyRecurrence({ totalOccurrences: 3, distinctArticles: 1, distinctSources: 1 }) === "repeated_in_same_article", "تكرار داخل المادة");
+  check(classifyRecurrence({ totalOccurrences: 4, distinctArticles: 3, distinctSources: 1 }) === "repeated_in_same_system", "تكرار داخل النظام");
+  check(classifyRecurrence({ totalOccurrences: 5, distinctArticles: 3, distinctSources: 2 }) === "repeated_across_systems", "تكرار عبر الأنظمة");
+  check(classifyRecurrence({ totalOccurrences: 20, distinctArticles: 10, distinctSources: 1 }) === "high_frequency_core_concept", "مفهوم محوري عالي التردد");
+  check(positionRatioToClass(0.1) === "early_articles" && positionRatioToClass(0.5) === "middle_articles" && positionRatioToClass(0.9) === "late_articles", "تصنيف نسبة الموقع");
+  check(classifySourcePosition([0.1, 0.5, 0.9]) === "all_system", "ممتد على كامل النظام");
+  check(classifySourcePosition([0.05, 0.1]) === "early_articles", "محصور في البداية");
+  check(classifyScope(true, true) === "mixed" && classifyScope(true, false) === "definitions_only" && classifyScope(false, true) === "full_body", "تصنيف نطاق الاستخراج");
+  check(scoreBodyConcept({ isCompound: true, distinctArticles: 9, totalOccurrences: 16, exactMatch: true, hasExplicitDefinition: false }) > scoreBodyConcept({ isCompound: false, distinctArticles: 1, totalOccurrences: 1, exactMatch: false }), "الثقة ترتفع بالتركيب والتكرار");
+  check(scoreBodyConcept({ isCompound: false, distinctArticles: 1, totalOccurrences: 1, exactMatch: false, hasExplicitDefinition: true }) >= 95, "وجود تعريف صريح → ثقة عالية");
 
   console.log("\n" + "=".repeat(56));
   console.log(`النتيجة: ${passed} نجح، ${failed} فشل`);
