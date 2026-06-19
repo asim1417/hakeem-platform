@@ -68,6 +68,12 @@ interface DiscoveredAgg {
 
 function aggKey(label: string): string { return searchableText(label); }
 
+/** ألفاظ عامة/متعددة المعنى تُجبَر على needs_review مهما علا تكرارها (لا تُعتمد آلياً). */
+const GENERAL_MULTIMEANING = new Set<string>(
+  ["الحكم", "القرار", "الأمر", "الجهة المختصة", "الجهات المختصة", "الإدارة المختصة",
+   "اللائحة التنفيذية", "اللائحة", "اللوائح", "النظام", "الأحكام", "القرارات", "الطلب", "الموافقة"].map(searchableText)
+);
+
 async function main() {
   if (process.env.CONFIRM_RUNTIME_DB_ALIGNMENT !== "NEON_RUNTIME_CONFIRMED") {
     console.error("✗ مقفول. اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."); process.exit(1);
@@ -245,7 +251,8 @@ async function main() {
     const score = c.hasDef
       ? Math.max(c.defScore, scoreBodyConcept({ isCompound: c.isCompound, distinctArticles, totalOccurrences: totalOcc, exactMatch: c.exactMatch, hasExplicitDefinition: true }))
       : scoreBodyConcept({ isCompound: c.isCompound, distinctArticles, totalOccurrences: totalOcc, exactMatch: c.exactMatch, hasExplicitDefinition: false });
-    const needsReview = decideReview(score).needsReview;
+    // المفاهيم المُكتشَفة من المتن (نمط) والألفاظ العامة متعددة المعنى لا تُعتمد آلياً.
+    const needsReview = decideReview(score).needsReview || !!c.discovered || GENERAL_MULTIMEANING.has(c.normLabel);
     // توزيع المواقع
     const dist = { early_articles: 0, middle_articles: 0, late_articles: 0 } as Record<string, number>;
     for (const r of ratios) dist[positionRatioToClass(r)] += 1;
