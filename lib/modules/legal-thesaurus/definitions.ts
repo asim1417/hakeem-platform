@@ -36,6 +36,26 @@ export interface DefinedTerm {
   definition: string;
 }
 
+/** كلمات/روابط لا تصلح مصطلحاً قانونياً (تُرفض حتى لو سبقها «:»). */
+export const TERM_STOPWORDS = new Set<string>([
+  "مثل", "وتشمل", "تشمل", "وتعني", "تعني", "ويقصد", "أي", "منها", "ومنها",
+  "الترتيبات", "كما", "أيضا", "أيضاً", "وكذلك", "كذلك", "ذلك", "وهي", "وهو",
+  "حيث", "بحيث", "وعليه", "عليه", "ويكون", "يكون", "وغيرها", "غيرها", "إلخ",
+]);
+
+/** يجرّد السوابق المقطعية (لـ/و/ف/ب/ك) من بداية المصطلح إن أنتجت كلمة سليمة. */
+export function stripLeadingClitics(term: string): string {
+  let t = term.trim();
+  // «و» العطف و«ف» في بداية المصطلح الملتقَط خطأً
+  t = t.replace(/^[وف]\s*/u, "");
+  // لام الجرّ الملتصقة: «لتنظيم»→«تنظيم»، «لوزارة»→«وزارة»، «لمركز»→«مركز»
+  // (نجرّدها فقط إن لم تكن جزءاً من «ال» التعريف، وإن بقي ≥3 أحرف)
+  const mLam = t.match(/^ل([^ا].{2,})$/u);
+  if (mLam && !/^لل/.test(t)) t = mLam[1];
+  return t.trim();
+}
+
+
 /**
  * يستخرج أزواج (مصطلح: تعريف) من مادة تعريفات.
  * يتعامل مع الصيغتين: أسطر منفصلة («المصطلح: التعريف») أو نصّ متّصل.
@@ -55,12 +75,18 @@ export function extractDefinedTerms(text: string): DefinedTerm[] {
   const out: DefinedTerm[] = [];
   const seen = new Set<string>();
   const push = (termRaw: string, defRaw: string) => {
-    const term = termRaw.replace(/^[\s\-–•0-9\.\)؛،"«»]+/, "").replace(/\s+/g, " ").trim();
-    const definition = defRaw.replace(/\s+/g, " ").trim().replace(/[\.،؛]\s*$/, "");
-    if (term.length < 2 || term.length > 60) return;
+    let term = termRaw.replace(/^[\s\-–•0-9.)؛،"«»]+/, "").replace(/\s+/g, " ").trim();
+    term = stripLeadingClitics(term); // تجريد سوابق «لـ/و/ف»
+    const definition = defRaw.replace(/\s+/g, " ").trim().replace(/[.،؛]\s*$/, "");
+    if (term.length < 3 || term.length > 60) return; // ≥3 أحرف بعد التجريد
     if (definition.length < 5) return;
-    // المصطلح يجب ألا يحوي علامات جملة قوية (يرجّح أنه عبارة لا مصطلح)
-    if (/[\.\!\?؟]/.test(term)) return;
+    if (/[.!?؟]/.test(term)) return; // علامات جملة ⇒ ليست مصطلحاً
+    // كلمة واحدة من قائمة الإيقاف (روابط) ⇒ ترفض
+    const words = term.split(/\s+/);
+    if (words.length === 1 && TERM_STOPWORDS.has(term.replace(/^ال/, ""))) return;
+    if (TERM_STOPWORDS.has(term)) return;
+    // المصطلح يجب أن يبدأ بحرف عربي (لا رقم/رمز)
+    if (!/^[ء-ي]/.test(term)) return;
     const key = term.replace(/\s+/g, " ");
     if (seen.has(key)) return;
     seen.add(key);

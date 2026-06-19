@@ -17,6 +17,11 @@ on:
         type: string
         required: false
         default: "500"
+      reset:
+        description: "إفراغ جداول محتوى المكنز الجديدة قبل الاستخراج (لإعادة قياس نظيفة)"
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: legal-thesaurus-build
@@ -52,7 +57,10 @@ jobs:
       - name: "① Apply thesaurus schema (new tables only)"
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/001-thesaurus-schema.sql
       - name: "② Extract high-confidence sample (defined terms)"
-        run: npx tsx scripts/legal-thesaurus/extract-sample.ts --limit ${{ inputs.limit }}
+        run: |
+          RESET=""
+          if [ "${{ inputs.reset }}" = "true" ]; then RESET="--reset"; fi
+          npx tsx scripts/legal-thesaurus/extract-sample.ts --limit ${{ inputs.limit }} $RESET
       - name: "③ Verify (read-only counts)"
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT count(*) AS concepts FROM legal_thesaurus_concepts;"

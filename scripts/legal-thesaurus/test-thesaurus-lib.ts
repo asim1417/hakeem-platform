@@ -3,7 +3,7 @@
  * التشغيل: npm run thesaurus:test
  */
 import { normalizeText, searchableText, splitSentences, splitParagraphs, textHash } from "@/lib/modules/legal-thesaurus/normalize";
-import { isDefinitionArticle, extractDefinedTerms, classifyConceptType } from "@/lib/modules/legal-thesaurus/definitions";
+import { isDefinitionArticle, extractDefinedTerms, classifyConceptType, stripLeadingClitics, TERM_STOPWORDS } from "@/lib/modules/legal-thesaurus/definitions";
 import { scoreDefinedTerm, decideReview, conceptStatus } from "@/lib/modules/legal-thesaurus/scoring";
 
 let passed = 0;
@@ -35,6 +35,19 @@ function main() {
   check(terms.some((t) => t.term === "الوزارة"), "استخراج «الوزارة»");
   check(terms.some((t) => t.term === "الترخيص" && t.definition.includes("وثيقة")), "استخراج «الترخيص» بتعريفه");
   check(terms.length === 3, "ثلاثة مصطلحات مُعرَّفة");
+  // تنقية: تجريد السوابق + رفض الروابط (الضوضاء المرصودة في العيّنة الأولى)
+  check(stripLeadingClitics("لتنظيم") === "تنظيم", "تجريد لام الجرّ: لتنظيم→تنظيم");
+  check(stripLeadingClitics("لوزارة") === "وزارة", "لوزارة→وزارة");
+  check(stripLeadingClitics("والمحكمة") === "المحكمة", "تجريد واو العطف: والمحكمة→المحكمة");
+  check(stripLeadingClitics("الوزارة") === "الوزارة", "لا يمسّ «ال» التعريف");
+  const noisy = "المعاني المبينة أمام كل منها:\nلتنظيم: قواعد ضبط النشاط.\nمثل: عبارة ربط.\nالمحكمة: الجهة القضائية المختصة.";
+  const cleaned = extractDefinedTerms(noisy).map((t) => t.term);
+  console.log("    بعد التنقية:", cleaned.join(" | "));
+  check(cleaned.includes("تنظيم") && !cleaned.includes("لتنظيم"), "«لتنظيم» تُجرَّد إلى «تنظيم»");
+  check(!cleaned.includes("مثل"), "رابط «مثل» مرفوض");
+  check(cleaned.includes("المحكمة"), "مصطلح سليم يبقى");
+  check(TERM_STOPWORDS.has("وتشمل"), "قائمة الإيقاف تضمّ «وتشمل»");
+
   check(classifyConceptType("الوزارة", "وزارة التجارة") === "administrative_concept", "تصنيف «الوزارة» إداري");
   check(classifyConceptType("الترخيص", "وثيقة تصدرها الوزارة") !== "", "تصنيف غير فارغ");
 
