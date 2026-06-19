@@ -28,6 +28,11 @@ on:
         type: string
         required: false
         default: "40"
+      all_systems:
+        description: "تعميم على كامل القاعدة (كل الأنظمة) بدل نظام واحد"
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: legal-thesaurus-extract-system
@@ -64,11 +69,12 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/001-thesaurus-schema.sql
       - name: "② Apply recurrence/scope columns (new tables only)"
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/002-occurrence-recurrence.sql
-      - name: "③ Full-body pilot extraction (one system)"
+      - name: "③ Full-body extraction (one system, or --all for full DB)"
         run: |
-          RESET=""
+          RESET=""; SCOPE="--system \"${{ inputs.system }}\""
           if [ "${{ inputs.reset }}" = "true" ]; then RESET="--reset"; fi
-          npx tsx scripts/legal-thesaurus/extract-system.ts --system "${{ inputs.system }}" --top "${{ inputs.top }}" $RESET
+          if [ "${{ inputs.all_systems }}" = "true" ]; then SCOPE="--all"; fi
+          eval npx tsx scripts/legal-thesaurus/extract-system.ts $SCOPE --top "${{ inputs.top }}" $RESET
       - name: "④ Verify (read-only counts)"
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SELECT extraction_scope, count(*) FROM legal_thesaurus_concepts GROUP BY extraction_scope ORDER BY 2 DESC;"

@@ -146,6 +146,62 @@ export const BODY_CONCEPT_LEXICON: BodyConceptEntry[] = [
   { label: "الجهة المختصة", type: "jurisdictional_concept", domain: "إداري", isCompound: true, variants: ["الجهة المختصة", "الجهات المختصة"] },
   { label: "المحكمة المختصة", type: "jurisdictional_concept", domain: "مرافعات", isCompound: true, variants: ["المحكمة المختصة"] },
   { label: "الحالة المستعجلة", type: "procedural_concept", domain: "مرافعات", isCompound: true, variants: ["الحالة المستعجلة", "الامور المستعجلة", "القضاء المستعجل"] },
+
+  // ── العقود المسماة: بيع/إيجار/قرض/… (لرفع تغطية متن المعاملات المدنية) ──
+  { label: "المبيع", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["المبيع"] },
+  { label: "البائع", type: "person_status", domain: "مدني", isCompound: false, variants: ["البائع"] },
+  { label: "المشتري", type: "person_status", domain: "مدني", isCompound: false, variants: ["المشتري"] },
+  { label: "الثمن", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الثمن"] },
+  { label: "عقد البيع", type: "contractual_concept", domain: "مدني", isCompound: true, variants: ["عقد البيع", "البيع"] },
+  { label: "الإيجار", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الايجار", "عقد الايجار"] },
+  { label: "المؤجر", type: "person_status", domain: "مدني", isCompound: false, variants: ["المؤجر"] },
+  { label: "المستأجر", type: "person_status", domain: "مدني", isCompound: false, variants: ["المستاجر"] },
+  { label: "الأجرة", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الاجره", "بدل الايجار"] },
+  { label: "القرض", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["القرض", "عقد القرض"] },
+  { label: "الهبة", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الهبه", "عقد الهبه"] },
+  { label: "الوديعة", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الوديعه", "عقد الوديعه"] },
+  { label: "الوكالة", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الوكاله", "عقد الوكاله", "الوكيل"] },
+  { label: "الرهن", type: "property_concept", domain: "مدني", isCompound: false, variants: ["الرهن", "الراهن", "المرتهن"] },
+  { label: "الصلح", type: "contractual_concept", domain: "مدني", isCompound: false, variants: ["الصلح", "عقد الصلح"] },
+  { label: "حق الارتفاق", type: "property_concept", domain: "عقاري", isCompound: true, variants: ["حق الارتفاق"] },
+  { label: "حق الاستعمال", type: "property_concept", domain: "عقاري", isCompound: true, variants: ["حق الاستعمال"] },
+  { label: "الإعذار", type: "obligation_concept", domain: "مدني", isCompound: false, variants: ["الاعذار", "اعذار"] },
+  { label: "الفضالة", type: "obligation_concept", domain: "مدني", isCompound: false, variants: ["الفضاله"] },
+
+  // ── إجراءات/تنفيذ (لتغطية أنظمة المرافعات والتنفيذ عند التعميم) ──
+  { label: "الجلسة", type: "procedural_concept", domain: "مرافعات", isCompound: false, variants: ["الجلسه", "الجلسات"] },
+  { label: "المرافعة", type: "procedural_concept", domain: "مرافعات", isCompound: false, variants: ["المرافعه", "المرافعات"] },
+  { label: "الطعن", type: "procedural_concept", domain: "مرافعات", isCompound: false, variants: ["الطعن", "الطعون"] },
+  { label: "الاستئناف", type: "procedural_concept", domain: "مرافعات", isCompound: false, variants: ["الاستئناف"] },
+  { label: "النقض", type: "procedural_concept", domain: "مرافعات", isCompound: false, variants: ["النقض", "التمييز"] },
+  { label: "الخبير", type: "evidentiary_concept", domain: "إثبات", isCompound: false, variants: ["الخبير", "الخبره"] },
+  { label: "الشاهد", type: "evidentiary_concept", domain: "إثبات", isCompound: false, variants: ["الشاهد", "الشهاده", "الشهود"] },
+  { label: "اليمين", type: "evidentiary_concept", domain: "إثبات", isCompound: false, variants: ["اليمين"] },
+  { label: "الإقرار", type: "evidentiary_concept", domain: "إثبات", isCompound: false, variants: ["الاقرار"] },
+  { label: "الحجز", type: "enforcement_concept", domain: "تنفيذ", isCompound: false, variants: ["الحجز", "حجز"] },
+  { label: "قاضي التنفيذ", type: "enforcement_concept", domain: "تنفيذ", isCompound: true, variants: ["قاضي التنفيذ"] },
+
+  // ── شركات/إفلاس/تجاري (لتغطية أنظمة الشركات والإفلاس) ──
+  { label: "الشركة", type: "commercial_concept", domain: "شركات", isCompound: false, variants: ["الشركه", "الشركات"] },
+  { label: "الشريك", type: "commercial_concept", domain: "شركات", isCompound: false, variants: ["الشريك", "الشركاء"] },
+  { label: "الحصة", type: "commercial_concept", domain: "شركات", isCompound: false, variants: ["الحصه", "الحصص"] },
+  { label: "رأس المال", type: "commercial_concept", domain: "شركات", isCompound: true, variants: ["راس المال"] },
+  { label: "السهم", type: "commercial_concept", domain: "شركات", isCompound: false, variants: ["السهم", "الاسهم"] },
+  { label: "مجلس الإدارة", type: "commercial_concept", domain: "حوكمة", isCompound: true, variants: ["مجلس الاداره"] },
+  { label: "السجل التجاري", type: "commercial_concept", domain: "تجاري", isCompound: true, variants: ["السجل التجاري"] },
+
+  // ── عمالي (لتغطية نظام العمل) ──
+  { label: "العامل", type: "person_status", domain: "عمالي", isCompound: false, variants: ["العامل", "العمال"] },
+  { label: "صاحب العمل", type: "person_status", domain: "عمالي", isCompound: true, variants: ["صاحب العمل"] },
+  { label: "الأجر", type: "contractual_concept", domain: "عمالي", isCompound: false, variants: ["الاجر", "الاجور"] },
+  { label: "عقد العمل", type: "contractual_concept", domain: "عمالي", isCompound: true, variants: ["عقد العمل"] },
+  { label: "مكافأة نهاية الخدمة", type: "contractual_concept", domain: "عمالي", isCompound: true, variants: ["مكافاه نهايه الخدمه"] },
+
+  // ── جزائي (لتغطية الأنظمة الجزائية) ──
+  { label: "الجريمة", type: "legal_penalty", domain: "جزائي", isCompound: false, variants: ["الجريمه", "الجرائم"] },
+  { label: "المتهم", type: "person_status", domain: "جزائي", isCompound: false, variants: ["المتهم"] },
+  { label: "العقوبة", type: "legal_penalty", domain: "عقوبات", isCompound: false, variants: ["العقوبه", "العقوبات"] },
+  { label: "التوقيف", type: "procedural_concept", domain: "جزائي", isCompound: false, variants: ["التوقيف", "توقيف"] },
 ];
 
 const AR = "ء-ي"; // مدى الحروف العربية بعد التطبيع
