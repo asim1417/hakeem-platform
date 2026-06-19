@@ -58,7 +58,8 @@
     "thesaurus:test": "tsx scripts/legal-thesaurus/test-thesaurus-lib.ts",
     "thesaurus:extract": "tsx scripts/legal-thesaurus/extract-sample.ts",
     "thesaurus:extract-system": "tsx scripts/legal-thesaurus/extract-system.ts",
-    "thesaurus:export": "tsx scripts/legal-thesaurus/export-thesaurus.ts"
+    "thesaurus:export": "tsx scripts/legal-thesaurus/export-thesaurus.ts",
+    "thesaurus:qa": "tsx scripts/legal-thesaurus/qa-thesaurus.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -266,21 +266,24 @@ async function main() {
     if (c.hasDef && c.defArticleId) defRows.push([randomUUID(), c.id, c.defText, "explicit_legal_definition", c.defArticleId, c.defEvidence, c.defScore, "candidate"]);
   }
 
-  // إدخال المفاهيم (per-row بسبب jsonb)
-  for (const r of conceptRows) {
+  // إدخال المفاهيم دفعةً (bulk) — تحسين تقني فقط، بلا تغيير في القيم؛ العمود jsonb يُحقن بـ ::jsonb.
+  const CONCEPT_COLS = ["id","preferred_label_ar","normalized_label","concept_type","legal_domain_primary","definition_type","definition_text","confidence_score","source_basis","status","needs_human_review","extraction_scope","source_position","article_position_ratio","total_occurrences_count","distinct_articles_count","distinct_sources_count","first_occurrence_article_id","strongest_occurrence_article_id","occurrence_distribution_json","recurrence_strength"];
+  const conceptTuples = conceptRows.map((r) => {
     const c = r.a;
-    await exec(
-      `INSERT INTO legal_thesaurus_concepts
-        (id, preferred_label_ar, normalized_label, concept_type, legal_domain_primary, definition_type, definition_text, confidence_score, source_basis, status, needs_human_review,
-         extraction_scope, source_position, article_position_ratio, total_occurrences_count, distinct_articles_count, distinct_sources_count, first_occurrence_article_id, strongest_occurrence_article_id, occurrence_distribution_json, recurrence_strength)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb,$21)
-       ON CONFLICT (normalized_label) DO NOTHING`,
-      c.id, c.label, c.normLabel, c.type, c.domain, c.hasDef ? "explicit_legal_definition" : "contextual_usage", c.hasDef ? c.defText : null,
+    return [c.id, c.label, c.normLabel, c.type, c.domain, c.hasDef ? "explicit_legal_definition" : "contextual_usage", c.hasDef ? c.defText : null,
       r.score, r.basis, r.needsReview ? "candidate" : "approved", r.needsReview,
-      r.scope, r.pos, r.firstRatio,
-      r.total, r.arts, r.sources,
-      r.firstId, r.strongId, JSON.stringify(r.dist), r.rec
-    ).catch((e) => { console.error("concept insert:", c.label, e instanceof Error ? e.message.split("\n")[0] : e); });
+      r.scope, r.pos, r.firstRatio, r.total, r.arts, r.sources,
+      r.firstId, r.strongId, JSON.stringify(r.dist), r.rec];
+  });
+  const JSONB_IDX = CONCEPT_COLS.indexOf("occurrence_distribution_json"); // عمود jsonb الوحيد
+  const CHUNK = 80;
+  for (let i = 0; i < conceptTuples.length; i += CHUNK) {
+    const chunk = conceptTuples.slice(i, i + CHUNK);
+    const params: unknown[] = [];
+    let p = 0;
+    const tuples = chunk.map((row) => "(" + row.map((v, col) => { params.push(v); p += 1; return col === JSONB_IDX ? `$${p}::jsonb` : `$${p}`; }).join(",") + ")");
+    await exec(`INSERT INTO legal_thesaurus_concepts (${CONCEPT_COLS.join(",")}) VALUES ${tuples.join(",")} ON CONFLICT (normalized_label) DO NOTHING`, ...params)
+      .catch((e) => { console.error("concept bulk insert:", e instanceof Error ? e.message.split("\n")[0] : e); });
   }
   await bulkInsert("legal_thesaurus_occurrences", ["id","concept_id","article_id","legal_source_id","article_number","occurrence_text","occurrence_type","legal_source_name","match_type","confidence_score","article_position_ratio"], occRows);
   await bulkInsert("legal_thesaurus_terms", ["id","concept_id","term_text","normalized_term","term_type","confidence_score","status"], termRows);

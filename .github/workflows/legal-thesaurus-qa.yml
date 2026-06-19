@@ -1,0 +1,49 @@
+name: Legal Thesaurus — Quality review (read-only)
+
+# فحص جودة المكنز قبل الربط بالنواة: دقّة حقول التكرار، سؤال «الأنظمة»،
+# عيّنة 300، تصنيف 8 فئات، false positives، الأزواج المتقاربة، التقرير النهائي.
+# قراءة فقط — لا كتابة في القاعدة. يفضّل NEON_DATABASE_URL ثم DATABASE_URL.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Run QA (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          npm run thesaurus:qa
+      - name: Print QA reports
+        if: always()
+        run: |
+          for f in qa-final-report.md qa-careful-pairs.md; do
+            echo ""; echo "==================== $f ===================="; echo ""
+            cat "out/legal-thesaurus-qa/$f" 2>/dev/null || echo "(missing)"
+          done
+      - name: Upload QA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-thesaurus-qa
+          path: out/legal-thesaurus-qa/
+          retention-days: 30
+          if-no-files-found: error
