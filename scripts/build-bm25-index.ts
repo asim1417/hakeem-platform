@@ -16,11 +16,39 @@ type RawArticle = { article_number: number | string; law_name: string; title?: s
 const K1 = 1.5;
 const B = 0.75;
 
-function main() {
+/** يقرأ كل المواد من قاعدة Runtime (Neon) عبر Prisma، بصفحات، ليُفهرَس كامل المحتوى. */
+async function loadArticlesFromDb(): Promise<RawArticle[]> {
+  const { prisma } = await import("@/lib/prisma");
+  const out: RawArticle[] = [];
+  const BATCH = 1000;
+  let cursor: string | undefined;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const rows = await prisma.legalArticle.findMany({
+      select: { id: true, articleNumber: true, lawName: true, title: true, content: true, keywords: true },
+      orderBy: { id: "asc" },
+      take: BATCH,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+    if (!rows.length) break;
+    cursor = rows[rows.length - 1].id;
+    for (const r of rows) {
+      out.push({ article_number: r.articleNumber, law_name: r.lawName, title: r.title, content: r.content, keywords: r.keywords });
+    }
+    if (rows.length < BATCH) break;
+  }
+  await prisma.$disconnect().catch(() => undefined);
+  return out;
+}
+
+async function main() {
+  const fromDb = process.argv.includes("--from-db");
   const src = path.join(process.cwd(), "data", "legal_articles_export.json");
   const out = path.join(process.cwd(), "data", "legal-bm25-index.json.gz");
-  const articles = JSON.parse(fs.readFileSync(src, "utf8")) as RawArticle[];
-  console.log(`📚 مصدر: ${articles.length.toLocaleString("ar-SA")} مادة`);
+  const articles = fromDb
+    ? await loadArticlesFromDb()
+    : (JSON.parse(fs.readFileSync(src, "utf8")) as RawArticle[]);
+  console.log(`📚 مصدر: ${fromDb ? "قاعدة Runtime (Neon)" : "ملف التصدير"} · ${articles.length.toLocaleString("ar-SA")} مادة`);
 
   const doc_len: Record<string, number> = {};
   const df: Record<string, number> = {};
@@ -63,4 +91,7 @@ function main() {
   console.log(`   مستندات=${N} · مصطلحات=${Object.keys(postings).length} · متوسط الطول=${avgdl.toFixed(1)} · الحجم=${(gz.length / 1024).toFixed(0)}KB`);
 }
 
-main();
+main().catch((e) => {
+  console.error("✗ خطأ:", e instanceof Error ? e.message.split("\n")[0] : e);
+  process.exit(1);
+});

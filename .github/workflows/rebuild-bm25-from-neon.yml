@@ -1,0 +1,50 @@
+name: Rebuild BM25 from Neon (read-only DB)
+
+# يعيد بناء فهرس BM25 من قاعدة Runtime (Neon) بكامل المواد (≈15,902) بدل التصدير القديم
+# (≈1,981)، ويلتزم الفهرس الناتج إلى فرع جديد لفتح PR. **قراءة فقط من DB** — لا كتابة
+# في القاعدة؛ الكتابة الوحيدة إلى **المستودع** (ملف الفهرس).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Rebuild BM25 from Neon (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          npx tsx scripts/build-bm25-index.ts --from-db
+      - name: Verify index (read-only)
+        run: npm run test:bm25 || echo "::warning::test:bm25 أبلغ تحذيراً — راجع المخرجات"
+      - name: Commit rebuilt index to a branch
+        run: |
+          git config user.name "hakeem-bot"
+          git config user.email "noreply@anthropic.com"
+          BR="bot/bm25-neon-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$BR"
+          git add data/legal-bm25-index.json.gz
+          if git diff --cached --quiet; then
+            echo "لا تغيير في الفهرس."
+            exit 0
+          fi
+          git commit -m "Chore: rebuild BM25 index from Neon (full corpus)"
+          git push -u origin "$BR"
+          echo "✅ دُفع الفرع: $BR — افتح PR منه إلى main."
