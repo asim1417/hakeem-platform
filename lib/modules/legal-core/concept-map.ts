@@ -1,0 +1,112 @@
+/**
+ * concept-map.ts — ربط مفاهيمي منسّق (شفّاف، حتمي، بلا هلوسة) للبحث القانوني.
+ *
+ * المشكلة: بعض الأنظمة لا يحوي اسمُها مصطلحَ الاستعلام الشائع. مثال: «الملكية الفكرية»
+ * موضوعها في **نظام براءات الاختراع / حقوق المؤلف / العلامات التجارية**، لكنّ هذه
+ * الأنظمة لا تحوي عبارة «الملكية الفكرية» في اسمها — فلا يصل إليها البحث المعجمي ولا
+ * يرجّحها ترجيح الاسم.
+ *
+ * الحل: خريطة مفاهيم → مرادفات (تُوسَّع بها مصطلحات البحث) + أنظمة مفضّلة (تُرجَّح).
+ * منسّقة يدوياً (لا توليد آلي) فلا اختلاق؛ كل مدخل قابل للمراجعة.
+ */
+import { normalizeArabicText } from "./arabic-morphology";
+
+export interface ConceptEntry {
+  /** صيغ المفهوم التي تُطلق المطابقة (تُطبَّع عند الفحص). */
+  triggers: string[];
+  /** مرادفات/مصطلحات تقنية تُضاف لمصطلحات البحث (توسيع الاسترجاع). */
+  synonyms: string[];
+  /** كلمات تُميّز اسم النظام المعني (تُرجَّح مواده) — مطابقة احتواء على اسم النظام. */
+  preferSystems?: string[];
+}
+
+// خريطة مفاهيم قانونية سعودية شائعة (تُوسَّع عند الحاجة). كلها مصطلحات حقيقية.
+export const CONCEPT_ENTRIES: ConceptEntry[] = [
+  {
+    triggers: ["الملكية الفكرية", "حقوق الملكية الفكرية", "الملكيه الفكريه"],
+    synonyms: ["براءات الاختراع", "حقوق المؤلف", "العلامات التجارية", "التصاميم", "الأصناف النباتية", "النماذج الصناعية"],
+    preferSystems: ["براءات", "حقوق المؤلف", "العلامات التجارية", "التصاميم", "الأصناف النباتية"],
+  },
+  {
+    triggers: ["الفصل التعسفي", "فصل التعسفي", "فصل تعسفي", "طرد من العمل", "فصل العامل", "إنهاء عقد العمل", "إنهاء خدمة"],
+    synonyms: ["الفصل التعسفي", "إنهاء عقد العمل", "مكافأة نهاية الخدمة", "العامل", "صاحب العمل"],
+    preferSystems: ["العمل"],
+  },
+  {
+    triggers: ["الطلاق", "الخلع", "الحضانة", "النفقة", "الزواج", "العضل", "الرضاع", "النسب"],
+    synonyms: ["الأحوال الشخصية", "الطلاق", "الحضانة", "النفقة", "الزواج"],
+    preferSystems: ["الأحوال الشخصية"],
+  },
+  {
+    triggers: ["الغبن", "التغرير", "الغلط", "الإكراه", "العيوب الإرادية"],
+    synonyms: ["الغبن", "التغرير", "المعاملات المدنية"],
+    preferSystems: ["المعاملات المدنية"],
+  },
+  {
+    triggers: ["غسل الأموال", "غسيل الأموال"],
+    synonyms: ["غسل الأموال", "العمليات المشبوهة"],
+    preferSystems: ["غسل الأموال"],
+  },
+  {
+    triggers: ["الجرائم المعلوماتية", "الابتزاز الإلكتروني", "الاختراق", "جرائم الإنترنت", "التشهير الإلكتروني"],
+    synonyms: ["الجرائم المعلوماتية", "المعلوماتية", "البيانات", "الأنظمة المعلوماتية"],
+    preferSystems: ["المعلوماتية", "مكافحة جرائم"],
+  },
+  {
+    triggers: ["التحرش", "التحرّش"],
+    synonyms: ["التحرش", "مكافحة التحرش"],
+    preferSystems: ["التحرش"],
+  },
+  {
+    triggers: ["المخدرات", "المؤثرات العقلية"],
+    synonyms: ["المخدرات", "المؤثرات العقلية"],
+    preferSystems: ["المخدرات"],
+  },
+  {
+    triggers: ["الرشوة", "الفساد المالي"],
+    synonyms: ["الرشوة", "استغلال النفوذ"],
+    preferSystems: ["الرشوة"],
+  },
+  {
+    triggers: ["العمل التطوعي", "التطوع"],
+    synonyms: ["العمل التطوعي", "التطوع"],
+    preferSystems: ["التطوع"],
+  },
+];
+
+export interface ConceptMatch {
+  synonyms: string[];
+  preferSystems: string[];
+}
+
+/**
+ * يطابق الاستعلام بمداخل المفاهيم (احتواء مُطبَّع)، ويجمع المرادفات والأنظمة المفضّلة.
+ * نقيّة وقابلة للاختبار. لا تطابق ⇒ { [], [] }.
+ */
+export function matchConcepts(query: string): ConceptMatch {
+  const nq = normalizeArabicText(query || "");
+  if (!nq) return { synonyms: [], preferSystems: [] };
+  const synonyms = new Set<string>();
+  const preferSystems = new Set<string>();
+  for (const entry of CONCEPT_ENTRIES) {
+    const hit = entry.triggers.some((t) => {
+      const nt = normalizeArabicText(t);
+      return nt.length > 0 && nq.includes(nt);
+    });
+    if (hit) {
+      entry.synonyms.forEach((s) => synonyms.add(s));
+      (entry.preferSystems ?? []).forEach((s) => preferSystems.add(s));
+    }
+  }
+  return { synonyms: [...synonyms], preferSystems: [...preferSystems] };
+}
+
+/** هل يطابق اسمُ النظام (مُطبَّعاً) أيّاً من الأنظمة المفضّلة؟ (لترجيح مواده). */
+export function systemMatchesPreferred(systemName: string, preferSystems: string[]): boolean {
+  if (!preferSystems.length) return false;
+  const ns = normalizeArabicText(systemName || "");
+  return preferSystems.some((p) => {
+    const np = normalizeArabicText(p);
+    return np.length > 0 && ns.includes(np);
+  });
+}

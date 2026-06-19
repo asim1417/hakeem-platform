@@ -7,6 +7,7 @@ import {
   normalizeArabicText
 } from "./arabic-morphology";
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
+import { matchConcepts, systemMatchesPreferred } from "./concept-map";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -126,6 +127,8 @@ export const SEMANTIC_LEX_FLOOR = 12;
 export const PRIMARY_LAW_BONUS = 80;
 /** خفض الأداة الثانوية (لائحة/قرار/دليل…) عند تطابق اسمها، فتُرتَّب بعد نظامها الأصل. */
 export const SECONDARY_INSTRUMENT_PENALTY = -25;
+/** ترجيح النظام المعنيّ بمفهوم الاستعلام (مثل براءات الاختراع لـ«الملكية الفكرية»). */
+export const CONCEPT_SYSTEM_BONUS = 100;
 
 /**
  * يمزج درجة الصلة المعجمية مع التشابه الدلالي: نتيجة دلالية بحتة (lexical≈0) بتشابه
@@ -169,7 +172,12 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 80);
   const fields = normalizeFields(options.fields);
   // استبعاد الكلمات القصيرة/الشائعة حتى لا تطابق مواد لا صلة لها بالبحث
-  const variants = filterMeaningfulVariants(buildVariants(query, searchType));
+  const baseVariants = filterMeaningfulVariants(buildVariants(query, searchType));
+  // ربط مفاهيمي: نوسّع البحث بمرادفات المفهوم (مثل «الملكية الفكرية» ← براءات/حقوق المؤلف)
+  // ونرجّح الأنظمة المعنيّة — يحلّ حالة المفهوم الذي لا يحوي اسمُ نظامه مصطلحَ الاستعلام.
+  const concept = matchConcepts(query);
+  const preferSystems = concept.preferSystems;
+  const variants = Array.from(new Set([...baseVariants, ...concept.synonyms]));
   const normalizedVariants = Array.from(new Set(variants.map(normalizeArabicText).filter(Boolean)));
   // الكلمات الخام من الاستعلام (كما يكتبها المستخدم) — تطابق النص المخزَّن غير المُطبَّع (ة/ى/إ)
   const rawWords = query
@@ -287,7 +295,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   }
 
   const scored = Array.from(byId.values())
-    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams))
+    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems))
     // الدلالي **إضافي لا إزاحي**: نرفع فقط المواد الضعيفة/الدلالية البحتة (lexical < العتبة)
     // كي تظهر أنظمة لم يجدها النصّي، دون تضخيم المطابقات المعجمية القوية (الذي يركّز على
     // نظام المجال ويزيح التنوّع). فيزيد التغطية بدل أن يقلّصها.
@@ -579,7 +587,8 @@ function mapArticleResult(
   normalizedVariants: string[],
   options: AdvancedLegalSearchOptions,
   conceptWords: string[] = [],
-  conceptBigrams: string[] = []
+  conceptBigrams: string[] = [],
+  preferSystems: string[] = []
 ): LegalCoreResult {
   const systemName = article.legalSystem?.name ?? article.lawName;
   const haystack = [article.lawName, article.title, article.content, article.classification, article.chapter, article.keywords.join(" ")].filter(Boolean).join("\n");
@@ -621,7 +630,11 @@ function mapArticleResult(
     }
   }
 
-  const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus + titleBonus;
+  // ترجيح مفاهيمي: النظام المعنيّ بمفهوم الاستعلام (مثل براءات الاختراع لـ«الملكية الفكرية»)
+  // يُرفع فوق لائحة تحوي العبارة عرضاً — مستقلّ عن تطابق اسم النظام مع الاستعلام.
+  const conceptBonus2 = preferSystems.length && systemMatchesPreferred(systemName, preferSystems) ? CONCEPT_SYSTEM_BONUS : 0;
+
+  const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus + titleBonus + conceptBonus2;
 
   return {
     articleId: article.id,
