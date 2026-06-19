@@ -215,12 +215,13 @@ async function main() {
   }
 
   // ── ترقية العبارات المركّبة المُكتشَفة إلى مفاهيم مُسنَدة (متكرّرة في مواد متعددة) ──
-  // العتبة: ≥3 ورود في ≥2 مادة. ما دونها يبقى مرشّحاً للمراجعة فقط.
-  const PROMOTE_MIN_OCC = 3, PROMOTE_MIN_ARTS = 2;
+  // العتبة: ≥5 ورود في ≥3 مواد وعبر ≥2 نظام (تكرار عبر الأنظمة = دليل مفهوم حقيقي،
+  // يُسقِط الشظايا أحادية النظام). ما دونها يبقى مرشّحاً للمراجعة فقط.
+  const PROMOTE_MIN_OCC = 5, PROMOTE_MIN_ARTS = 3, PROMOTE_MIN_SOURCES = 2;
   let promoted = 0;
   const leftoverCandidates: Array<[string, number]> = [];
   for (const dd of discovered.values()) {
-    const qualifies = dd.count >= PROMOTE_MIN_OCC && dd.articles.size >= PROMOTE_MIN_ARTS;
+    const qualifies = dd.count >= PROMOTE_MIN_OCC && dd.articles.size >= PROMOTE_MIN_ARTS && dd.sources.size >= PROMOTE_MIN_SOURCES;
     if (!qualifies || concepts.has(dd.normLabel)) { leftoverCandidates.push([dd.phrase, dd.count]); continue; }
     const c = ensure(dd.phrase, classifyConceptType(dd.phrase, ""), null, dd.phrase.split(/\s+/).length > 1, undefined);
     c.hasBody = true;
