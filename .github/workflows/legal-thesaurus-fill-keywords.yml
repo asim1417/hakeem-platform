@@ -1,0 +1,51 @@
+name: Legal Thesaurus — Fill article keywords (write)
+
+# يملأ keywords للمواد الفارغة من مفاهيم المكنز المعتمدة (الأكثر تخصّصاً).
+# لا يمسّ المواد التي لها كلمات أصلاً. مُقفل ببوّابة + حارس هدف Neon.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED للكتابة في legal_articles.keywords على Neon"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: legal-thesaurus-fill-keywords
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  fill-keywords:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::مقفول — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم سرّ NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "Fill keywords from thesaurus"
+        run: npm run thesaurus:fill-keywords
+      - name: "Verify (read-only count)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
+            "SELECT count(*) AS articles_without_keywords FROM legal_articles WHERE COALESCE(cardinality(keywords),0)=0;"

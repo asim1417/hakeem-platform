@@ -64,6 +64,7 @@
     "thesaurus:extract-relations": "tsx scripts/legal-thesaurus/extract-relations.ts",
     "thesaurus:measure": "tsx scripts/legal-thesaurus/measure-coverage.ts",
     "thesaurus:article-relations": "tsx scripts/legal-thesaurus/derive-article-relations.ts",
+    "thesaurus:fill-keywords": "tsx scripts/legal-thesaurus/fill-keywords.ts",
     "export:saudi-systems": "tsx scripts/export-saudi-systems.ts",
     "build:fiqh-tree": "tsx scripts/build-fiqh-issues-tree.ts",
     "test:fiqh-tree": "tsx scripts/test-fiqh-tree.ts",
