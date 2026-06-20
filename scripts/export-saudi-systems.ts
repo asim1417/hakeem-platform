@@ -9,7 +9,8 @@
  *
  * التشغيل: npm run export:saudi-systems
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { join } from "node:path";
 import {
   classifyDomain,
@@ -102,10 +103,43 @@ async function fromDatabase(): Promise<SaudiSystem[] | null> {
   }
 }
 
-function fromFile(): { systems: SaudiSystem[]; source: string } {
+/**
+ * فهرس BM25 يحوي meta لكامل الكوربوس (كل المواد/الأنظمة) مع law_name + article_number + snippet.
+ * هو أكمل مصدر متاح دون قاعدة بيانات (نصّ المادة = snippet مقتطع، بلا chapter).
+ */
+function fromBm25Index(): { systems: SaudiSystem[]; source: string } | null {
+  const path = join(DATA, "legal-bm25-index.json.gz");
+  if (!existsSync(path)) return null;
+  try {
+    const idx = JSON.parse(gunzipSync(readFileSync(path)).toString("utf-8")) as {
+      meta?: Record<string, { law_name?: string; article_number?: number; snippet?: string; citation?: string }>;
+    };
+    const meta = idx.meta;
+    if (!meta || typeof meta !== "object") return null;
+    const rows: RawArticle[] = [];
+    for (const code of Object.keys(meta)) {
+      const m = meta[code];
+      if (!m?.law_name) continue;
+      rows.push({
+        law_name: m.law_name,
+        article_number: m.article_number,
+        title: `المادة ${m.article_number ?? ""}`.trim(),
+        content: m.snippet ?? "",
+        keywords: []
+      });
+    }
+    if (!rows.length) return null;
+    return { systems: aggregate(rows), source: "data/legal-bm25-index.json.gz (meta — الكوربوس الكامل)" };
+  } catch (e) {
+    console.warn("⚠️  تعذّرت قراءة فهرس BM25:", (e as Error).message);
+    return null;
+  }
+}
+
+function fromArticlesFile(): { systems: SaudiSystem[]; source: string } {
   const path = join(DATA, "legal_articles_export.json");
   const rows = JSON.parse(readFileSync(path, "utf-8")) as RawArticle[];
-  return { systems: aggregate(rows), source: "data/legal_articles_export.json" };
+  return { systems: aggregate(rows), source: "data/legal_articles_export.json (جزئي)" };
 }
 
 async function main() {
@@ -115,10 +149,11 @@ async function main() {
   let systems = await fromDatabase();
   let source = "database (legal_systems + legal_articles)";
   if (!systems) {
-    const f = fromFile();
+    const f = fromBm25Index() ?? fromArticlesFile();
     systems = f.systems;
     source = f.source;
   }
+  const contentIsSnippet = source.includes("bm25");
 
   const articlesCount = systems.reduce((n, s) => n + s.articleCount, 0);
   const out: SaudiSystemsExport = {
@@ -127,7 +162,9 @@ async function main() {
       source,
       systemsCount: systems.length,
       articlesCount,
-      note: "مُولّد آلياً عبر export-saudi-systems.ts — domain مُصنَّف من اسم النظام (انظر classifyDomain)."
+      note:
+        "مُولّد آلياً عبر export-saudi-systems.ts — domain مُصنَّف من اسم النظام (classifyDomain)." +
+        (contentIsSnippet ? " نصّ المادة = snippet مقتطع من فهرس BM25 (بلا chapter)؛ يُستكمل من قاعدة البيانات." : "")
     },
     schema: SYSTEMS_SCHEMA,
     systems
