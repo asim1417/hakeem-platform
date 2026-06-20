@@ -31,6 +31,10 @@ jobs:
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
           npm run thesaurus:export
+      - name: Verify search expansion (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          npm run thesaurus:verify
       - name: Build compact JSON
         run: |
           node -e '

@@ -8,6 +8,7 @@ import {
 } from "./arabic-morphology";
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -176,8 +177,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ربط مفاهيمي: نوسّع البحث بمرادفات المفهوم (مثل «الملكية الفكرية» ← براءات/حقوق المؤلف)
   // ونرجّح الأنظمة المعنيّة — يحلّ حالة المفهوم الذي لا يحوي اسمُ نظامه مصطلحَ الاستعلام.
   const concept = matchConcepts(query);
+  // مكنز حكيم (2,967 مفهوماً): توسيع معجمي مُسنَد لمعرّفات حقيقية — يكمّل الخريطة المنسّقة.
+  const thesaurus = await matchThesaurusConcepts(query);
   const preferSystems = concept.preferSystems;
-  const variants = Array.from(new Set([...baseVariants, ...concept.synonyms]));
+  const variants = Array.from(new Set([...baseVariants, ...concept.synonyms, ...thesaurus.synonyms]));
   const normalizedVariants = Array.from(new Set(variants.map(normalizeArabicText).filter(Boolean)));
   // الكلمات الخام من الاستعلام (كما يكتبها المستخدم) — تطابق النص المخزَّن غير المُطبَّع (ة/ى/إ)
   const rawWords = query
