@@ -37,12 +37,21 @@ async function insertRelations(rows: unknown[][], relationCast: string): Promise
 }
 
 async function main() {
+  // وجود جدول legal_relations (قد يكون غير مُنشأ على هذه القاعدة — التطبيق يلفّ عدّه بـ catch).
+  const tbl = await query<{ c: number }>(
+    `SELECT count(*)::int AS c FROM information_schema.tables WHERE table_name='legal_relations'`
+  );
+  if (!Number(tbl[0]?.c ?? 0)) {
+    console.log("⚠️ جدول legal_relations غير موجود على القاعدة — لا تخزين لـ«مواد ذات صلة».");
+    console.log("   يلزم إنشاؤه أولاً (prisma db push / seed-knowledge-graph) قبل التعبئة. تخطٍّ آمن.");
+    return; // لا فشل: تشخيص واضح بدل خطأ
+  }
   // نوع عمود relation: enum أصلي (USER-DEFINED) ⇒ cast باسم النوع؛ نصّي ⇒ بلا cast.
   const col = await query<{ data_type: string; udt_name: string }>(
     `SELECT data_type, udt_name FROM information_schema.columns
       WHERE table_name='legal_relations' AND column_name='relation' LIMIT 1`
   );
-  if (!col.length) { console.error("✗ تعذّر قراءة نوع عمود legal_relations.relation."); process.exit(1); }
+  if (!col.length) { console.error("✗ عمود relation غير موجود في legal_relations."); process.exit(1); }
   const relationCast = col[0].data_type === "USER-DEFINED" ? `::"${col[0].udt_name}"` : "";
   console.log(`ℹ️ نوع relation: ${col[0].data_type}${relationCast ? ` (${col[0].udt_name})` : ""}`);
 
