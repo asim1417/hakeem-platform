@@ -517,3 +517,46 @@ model Folder {
   @@index([userId])
   @@map("folders")
 }
+
+// ── المسائل الفقهية (الموسوعة الفقهية ↔ الأنظمة) ──
+// جداول مستقلّة، بلا مساس بالجداول الأصلية. الربط بالمواد منطقيّ عبر (law_name, article_number).
+model FiqhIssue {
+  id               String   @id // = issueId الثابت (fiqh-<sha1>)
+  title            String
+  path             String
+  section          String
+  book             String?
+  chapter          String?
+  nodeType         String   @map("node_type")
+  suggestedNizam   String   @map("suggested_nizam")
+  linkStatus       String   @map("link_status")
+  nizamRatio       Float    @map("nizam_ratio")
+  status           String   @default("candidate")
+  needsHumanReview Boolean  @default(true) @map("needs_human_review")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  links FiqhIssueLink[]
+
+  @@index([linkStatus])
+  @@index([suggestedNizam])
+  @@map("fiqh_issues")
+}
+
+model FiqhIssueLink {
+  id            String   @id @default(cuid())
+  issueId       String   @map("issue_id")
+  articleId     String?  @map("article_id") // مُحلّ من legal_articles عند البذر (مرجع منطقي)
+  lawName       String   @map("law_name")
+  articleNumber Int      @map("article_number")
+  citation      String
+  score         Float
+  rank          Int
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  issue FiqhIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, lawName, articleNumber])
+  @@index([lawName, articleNumber])
+  @@index([articleId])
+  @@map("fiqh_issue_links")
+}

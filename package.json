@@ -63,7 +63,15 @@
     "thesaurus:verify": "tsx scripts/legal-thesaurus/verify-expansion.ts",
     "thesaurus:extract-relations": "tsx scripts/legal-thesaurus/extract-relations.ts",
     "thesaurus:measure": "tsx scripts/legal-thesaurus/measure-coverage.ts",
-    "thesaurus:article-relations": "tsx scripts/legal-thesaurus/derive-article-relations.ts"
+    "thesaurus:article-relations": "tsx scripts/legal-thesaurus/derive-article-relations.ts",
+    "export:saudi-systems": "tsx scripts/export-saudi-systems.ts",
+    "build:fiqh-tree": "tsx scripts/build-fiqh-issues-tree.ts",
+    "test:fiqh-tree": "tsx scripts/test-fiqh-tree.ts",
+    "link:fiqh": "tsx scripts/link-fiqh-to-nizam.ts",
+    "test:fiqh-link": "tsx scripts/test-fiqh-nizam-link.ts",
+    "test:fiqh-core": "tsx scripts/test-fiqh-issues-core.ts",
+    "test:legal-issues": "tsx scripts/test-legal-issues.ts",
+    "seed:fiqh": "tsx scripts/seed-fiqh-issues.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

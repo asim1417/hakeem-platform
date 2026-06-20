@@ -232,6 +232,38 @@ export function RelatedMaterialsPanel({ articles }: { articles: Array<{ id: stri
   );
 }
 
+export function FiqhIssuesPanel({
+  issues
+}: {
+  issues: Array<{ issueId: string; title: string; path: string; section: string; linkStatus: string; nizamRatio: number }>;
+}) {
+  return (
+    <LegalCoreCard
+      title="المسائل القانونية المرتبطة"
+      subtitle="مسائل قانونية مربوطة بهذه المادة (قيد المراجعة)"
+      icon={<Scale size={18} />}
+    >
+      {issues.length ? (
+        <div className="space-y-2">
+          {issues.map((issue) => (
+            <div key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-display-ar text-sm font-bold text-[var(--navy)]">{issue.title}</p>
+                <LegalTopicBadge tone={issue.linkStatus === "linked" ? "emerald" : "amber"}>
+                  {issue.linkStatus === "linked" ? "مطابقة عالية" : "مراجعة"}
+                </LegalTopicBadge>
+              </div>
+              <p className="mt-1 font-mono-legal text-[0.7rem] text-[var(--ink-60)]">{issue.path}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-[var(--ink-60)]">لا توجد مسائل قانونية مرتبطة بهذه المادة حتى الآن.</p>
+      )}
+    </LegalCoreCard>
+  );
+}
+
 export function QualityItem({ label, value, tone = "amber" }: { label: string; value: number; tone?: "emerald" | "amber" | "ruby" }) {
   return (
     <div className="flex items-center justify-between rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-4">

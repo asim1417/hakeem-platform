@@ -43,10 +43,8 @@ export function loadBm25Index(): Bm25Index | null {
   }
 }
 
-export function bm25Search(query: string, topK = 20): Bm25Hit[] {
-  const index = loadBm25Index();
-  if (!index) return [];
-  const { params, doc_len, df, postings, meta } = index;
+function scoreAll(index: Bm25Index, query: string): Map<string, number> {
+  const { params, doc_len, df, postings } = index;
   const { k1, b, N, avgdl } = params;
   const scores = new Map<string, number>();
   for (const term of tokenize(query)) {
@@ -61,8 +59,29 @@ export function bm25Search(query: string, topK = 20): Bm25Hit[] {
       scores.set(docId, (scores.get(docId) || 0) + (idf * (tf * (k1 + 1))) / denom);
     }
   }
-  return [...scores.entries()]
+  return scores;
+}
+
+export function bm25Search(query: string, topK = 20): Bm25Hit[] {
+  const index = loadBm25Index();
+  if (!index) return [];
+  return [...scoreAll(index, query).entries()]
     .sort((a, c) => c[1] - a[1])
     .slice(0, topK)
-    .map(([code, score]) => ({ code, score: +score.toFixed(4), meta: meta[code] }));
+    .map(([code, score]) => ({ code, score: +score.toFixed(4), meta: index.meta[code] }));
+}
+
+/**
+ * بحث BM25 مُقيَّد بمواد تجتاز المُرشِّح (predicate على meta) — لتطبيق «حد النظام»:
+ * لا تُطابَق مسألة إلا بمواد نظامها. الفلترة تتم قبل القصّ فلا تُفقَد مواد النظام الأدنى رتبةً عالمياً.
+ */
+export function bm25SearchWhere(query: string, predicate: (m: Meta) => boolean, topK = 5): Bm25Hit[] {
+  const index = loadBm25Index();
+  if (!index) return [];
+  const scores = scoreAll(index, query);
+  return [...scores.entries()]
+    .filter(([code]) => index.meta[code] && predicate(index.meta[code]))
+    .sort((a, c) => c[1] - a[1])
+    .slice(0, topK)
+    .map(([code, score]) => ({ code, score: +score.toFixed(4), meta: index.meta[code] }));
 }

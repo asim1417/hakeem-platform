@@ -5,6 +5,7 @@ import { getLibraryStats, searchLegalArticles } from "@/lib/modules/library/libr
 import { prisma } from "@/lib/prisma";
 import { LegalArticleCard, LegalCoreCard, LegalCorePageHeader, LegalCoreSearchBar, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { CoreIntelligenceDashboard } from "@/components/CoreIntelligenceDashboard";
+import { getLegalIssuesCount } from "@/lib/modules/legal-core/legal-issues";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function LegalCoreDashboardPage() {
   ]);
 
   const classificationCount = classifications.filter((item) => item.classification).length;
+  const legalIssuesCount = getLegalIssuesCount();
 
   return (
     <LegalCoreShell>
@@ -34,6 +36,7 @@ export default async function LegalCoreDashboardPage() {
               <Link href="/dashboard/legal-core/systems" className="btn ho-hero-outline"><BookOpen size={16} /> الأنظمة</Link>
               <Link href="/dashboard/legal-core/judgments" className="btn ho-hero-outline"><Scale size={16} /> الأحكام القضائية</Link>
               <Link href="/dashboard/legal-core/objection-methods" className="btn ho-hero-outline"><Gavel size={16} /> طرق الاعتراض</Link>
+              <Link href="/dashboard/legal-core/legal-issues" className="btn ho-hero-outline"><Scale size={16} /> المسائل القانونية</Link>
               <Link href="/dashboard/legal-core/citations/dashboard" className="btn ho-hero-outline"><Quote size={16} /> تغطية الربط</Link>
               <Link href="/dashboard/legal-core/quality" className="btn ho-hero-outline"><Database size={16} /> جودة البيانات</Link>
             </>
@@ -46,7 +49,7 @@ export default async function LegalCoreDashboardPage() {
           <LegalCoreStatCard label="عدد التصنيفات" value={classificationCount} hint="تصنيف معرفي أولي" />
           <LegalCoreStatCard label="عدد الشروح" value={0} hint="جاهزة للإثراء لاحقًا" tone="amber" />
           <LegalCoreStatCard label="مواد تحتاج مراجعة" value={needsReview} hint="مؤشر جودة البيانات" tone={needsReview ? "amber" : "emerald"} />
-          <LegalCoreStatCard label="عدد مسائل القانون" value={0} hint="غير مفعلة بعد" tone="amber" />
+          <LegalCoreStatCard label="عدد المسائل القانونية" value={legalIssuesCount} hint="مربوطة بمواد الأنظمة" tone={legalIssuesCount ? "emerald" : "amber"} />
           <LegalCoreStatCard label="عدد الأحكام" value={judgmentsCount} hint="أحكام مستوردة من مصدر وزارة العدل" tone={judgmentsCount ? "emerald" : "amber"} />
           <LegalCoreStatCard label="عدد المبادئ" value={0} hint="تحتاج إثراء" tone="amber" />
           <LegalCoreStatCard label="المقارنات القانونية" value={0} hint="جاهزة للبناء المرحلي" tone="amber" />
