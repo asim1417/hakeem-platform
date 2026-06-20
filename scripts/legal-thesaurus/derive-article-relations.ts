@@ -20,14 +20,14 @@ const MAX_CLIQUE = 40;
 const TOP_K = 10;
 const MARKER = "auto:shared-concepts";
 
-async function insertRelations(rows: unknown[][], enumType: string): Promise<void> {
+async function insertRelations(rows: unknown[][], relationCast: string): Promise<void> {
   const CHUNK = 200;
   for (let i = 0; i < rows.length; i += CHUNK) {
     const chunk = rows.slice(i, i + CHUNK);
     const params: unknown[] = [];
     let p = 0;
     const tuples = chunk.map((r) =>
-      "(" + r.map((v, idx) => { params.push(v); const ph = `$${++p}`; return idx === 5 ? `${ph}::"${enumType}"` : ph; }).join(",") + ")"
+      "(" + r.map((v, idx) => { params.push(v); const ph = `$${++p}`; return idx === 5 ? `${ph}${relationCast}` : ph; }).join(",") + ")"
     );
     await exec(
       `INSERT INTO legal_relations (id,source_type,source_id,target_type,target_id,relation,strength,description) VALUES ${tuples.join(",")}`,
@@ -37,12 +37,14 @@ async function insertRelations(rows: unknown[][], enumType: string): Promise<voi
 }
 
 async function main() {
-  // اسم نوع enum العلاقات في Postgres (متين ضد اختلاف التسمية)
-  const et = await query<{ typname: string }>(
-    `SELECT t.typname FROM pg_type t JOIN pg_enum e ON e.enumtypid=t.oid WHERE e.enumlabel='RELATED_TO' LIMIT 1`
+  // نوع عمود relation: enum أصلي (USER-DEFINED) ⇒ cast باسم النوع؛ نصّي ⇒ بلا cast.
+  const col = await query<{ data_type: string; udt_name: string }>(
+    `SELECT data_type, udt_name FROM information_schema.columns
+      WHERE table_name='legal_relations' AND column_name='relation' LIMIT 1`
   );
-  const enumType = et[0]?.typname;
-  if (!enumType) { console.error("✗ تعذّر إيجاد نوع enum يحوي RELATED_TO."); process.exit(1); }
+  if (!col.length) { console.error("✗ تعذّر قراءة نوع عمود legal_relations.relation."); process.exit(1); }
+  const relationCast = col[0].data_type === "USER-DEFINED" ? `::"${col[0].udt_name}"` : "";
+  console.log(`ℹ️ نوع relation: ${col[0].data_type}${relationCast ? ` (${col[0].udt_name})` : ""}`);
 
   // مواضع المفاهيم المعتمدة المُميِّزة (تردّد 2..السقف)
   const occ = await query<{ concept_id: string; article_id: string }>(
@@ -96,7 +98,7 @@ async function main() {
       rows.push([randomUUID(), "article", a, "article", o, "RELATED_TO", n, MARKER]);
     }
   }
-  await insertRelations(rows, enumType);
+  await insertRelations(rows, relationCast);
   console.log(`\n✅ كُتبت ${rows.length} علاقة مادة↔مادة · مواد لها ≥1 صلة: ${adj.size}`);
 }
 
