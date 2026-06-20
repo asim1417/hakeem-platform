@@ -75,7 +75,7 @@ export default async function LegalIssuesPage({
         </section>
 
         {/* تخطيط الفهرس: عمود فهرس (يمين) + عمود المحتوى */}
-        <section className="grid gap-5 xl:grid-cols-[330px_1fr]">
+        <section className="grid gap-5 lg:grid-cols-[300px_1fr]">
           <IndexColumn sections={overview.sections} activeSection={activeSection} activeBook={activeBook} />
           <SectionList slug={activeSection} book={activeBook} page={page} />
         </section>
@@ -94,7 +94,7 @@ function IndexColumn({
   activeBook?: string;
 }) {
   return (
-    <aside className="self-start xl:sticky xl:top-6">
+    <aside className="self-start lg:sticky lg:top-6">
       <LegalCoreCard title="الفهرس" subtitle="الأقسام والكتب" icon={<BookOpen size={18} />}>
         <nav className="space-y-1">
           {sections.map((s) => {
