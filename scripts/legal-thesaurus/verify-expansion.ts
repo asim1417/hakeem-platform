@@ -3,7 +3,7 @@
  * يحمّل فهرس المفاهيم من القاعدة، ثم يطابق استعلامات نموذجية ويطبع المفاهيم
  * المُطابَقة + عيّنة من المرادفات المُضافة. يثبت أن التوسيع يعمل على البيانات الحقيقية.
  */
-import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
+import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 import { prisma } from "@/lib/prisma";
 
 const SAMPLES = [
@@ -23,12 +23,17 @@ async function main() {
   console.log("=".repeat(60));
 
   let anyMatch = false;
+  let anyBoost = false;
   for (const q of SAMPLES) {
     const m = await matchThesaurusConcepts(q);
     if (m.conceptIds.length) anyMatch = true;
+    const g = m.conceptIds.length ? await thesaurusGraphExpansion(m.conceptIds) : { relatedLabels: [], articleBoosts: new Map() };
+    if (g.articleBoosts.size) anyBoost = true;
     console.log(`\n🔎 «${q}»`);
     console.log(`   مفاهيم مُطابَقة: ${m.matched.length} → ${m.matched.slice(0, 6).map((x) => x.label).join(" | ") || "—"}`);
     console.log(`   مرادفات مُضافة (${m.synonyms.length}): ${m.synonyms.slice(0, 8).join(" · ") || "—"}`);
+    console.log(`   مفاهيم مرتبطة (${g.relatedLabels.length}): ${g.relatedLabels.slice(0, 8).join(" · ") || "—"}`);
+    console.log(`   مواد مُرجَّحة عبر المواضع: ${g.articleBoosts.size}`);
     if (m.matched[0]) console.log(`   مثال إسناد: concept_id=${m.matched[0].id}`);
   }
 
@@ -38,6 +43,7 @@ async function main() {
     process.exit(1);
   }
   console.log("✅ التوسيع يعمل: الاستعلامات تُوسَّع بمفاهيم مُسنَدة لمعرّفات حقيقية.");
+  console.log(anyBoost ? "✅ ترجيح المواد عبر المواضع يعمل (مواد مُسنَدة تُرفع/تُجلب)." : "ℹ️ لا مواضع مُرجَّحة في العيّنة (قد تكون مواضع المعتمدة قليلة).");
 }
 
 main()

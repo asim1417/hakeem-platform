@@ -133,3 +133,67 @@ export async function matchThesaurusConcepts(query: string): Promise<ThesaurusMa
 export function clearThesaurusCache(): void {
   cache = null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// التوسيع الرسومي (graph): مفاهيم مرتبطة + ترجيح المواد عبر مواضع المكنز.
+// الترتيب يُقصر على المفاهيم **المعتمدة** فقط (approved) — حماية الدقّة من ضجيج
+// المرشّحات — موزوناً بقوة التكرار (recurrence_strength). سقوط آمن في كل خطوة.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ThesaurusGraphExpansion {
+  /** تسميات المفاهيم المرتبطة (معتمدة) — تُضاف لمصطلحات البحث (توسيع علائقي). */
+  relatedLabels: string[];
+  /** ترجيح إضافي للمواد: articleId → مقدار يُضاف لدرجة الصلة. */
+  articleBoosts: Map<string, number>;
+}
+
+const MAX_RELATED_LABELS = 16;
+const OCC_BASE_BOOST = 8; // ترجيح أساس لكل مادة يرد فيها مفهوم مُطابَق
+const OCC_STRENGTH_BOOST = 14; // يُضاف × قوة التكرار (0..1)
+const OCC_ARTICLE_CAP = 28; // سقف الترجيح لكل مادة (لا يطغى على المطابقة المعجمية)
+
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/**
+ * توسيع رسومي للمفاهيم المُطابَقة: مفاهيم مرتبطة (علاقات معتمدة) + ترجيح المواد التي
+ * يرد فيها المفهوم فعلاً (مواضع المفاهيم المعتمدة، موزونة بالتكرار). قراءة فقط، سقوط آمن.
+ */
+export async function thesaurusGraphExpansion(conceptIds: string[]): Promise<ThesaurusGraphExpansion> {
+  const empty: ThesaurusGraphExpansion = { relatedLabels: [], articleBoosts: new Map() };
+  if (!expansionEnabled()) return empty;
+  // معرّفات UUID من قاعدتنا — نتحقّق من الصيغة قبل الإدراج (لا حقن).
+  const ids = conceptIds.filter((id) => UUID_RE.test(id));
+  if (!ids.length) return empty;
+  const idList = ids.map((id) => `'${id}'`).join(",");
+  try {
+    const [rels, occ] = await Promise.all([
+      prisma.$queryRawUnsafe<Array<{ label: string }>>(
+        `SELECT DISTINCT tc.preferred_label_ar AS label
+           FROM legal_thesaurus_relations r
+           JOIN legal_thesaurus_concepts tc ON tc.id = r.target_concept_id
+          WHERE r.status = 'approved' AND tc.status = 'approved'
+            AND r.source_concept_id IN (${idList})
+          LIMIT ${MAX_RELATED_LABELS}`
+      ),
+      prisma.$queryRawUnsafe<Array<{ article_id: string; strength: number | null }>>(
+        `SELECT o.article_id, c.recurrence_strength AS strength
+           FROM legal_thesaurus_occurrences o
+           JOIN legal_thesaurus_concepts c ON c.id = o.concept_id
+          WHERE c.status = 'approved' AND o.article_id IS NOT NULL
+            AND o.concept_id IN (${idList})`
+      ),
+    ]);
+    const articleBoosts = new Map<string, number>();
+    for (const row of occ) {
+      if (!row.article_id) continue;
+      const s = Math.max(0, Math.min(1, Number(row.strength ?? 0)));
+      const add = OCC_BASE_BOOST + s * OCC_STRENGTH_BOOST;
+      const next = Math.min(OCC_ARTICLE_CAP, (articleBoosts.get(row.article_id) ?? 0) + add);
+      articleBoosts.set(row.article_id, next);
+    }
+    const relatedLabels = Array.from(new Set(rels.map((r) => (r.label || "").trim()).filter(Boolean)));
+    return { relatedLabels, articleBoosts };
+  } catch {
+    return empty;
+  }
+}
