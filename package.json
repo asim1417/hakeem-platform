@@ -68,7 +68,9 @@
     "build:fiqh-tree": "tsx scripts/build-fiqh-issues-tree.ts",
     "test:fiqh-tree": "tsx scripts/test-fiqh-tree.ts",
     "link:fiqh": "tsx scripts/link-fiqh-to-nizam.ts",
-    "test:fiqh-link": "tsx scripts/test-fiqh-nizam-link.ts"
+    "test:fiqh-link": "tsx scripts/test-fiqh-nizam-link.ts",
+    "test:fiqh-core": "tsx scripts/test-fiqh-issues-core.ts",
+    "seed:fiqh": "tsx scripts/seed-fiqh-issues.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

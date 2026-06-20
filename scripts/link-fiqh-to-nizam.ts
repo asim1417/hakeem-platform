@@ -73,6 +73,32 @@ function main() {
   };
   writeFileSync(join(DATA, "fiqh-nizam-links.json"), JSON.stringify(out, null, 2));
 
+  // فهرس عكسي نحيف للنواة: مفتاح المادة (lawName|articleNumber) → مسائلها الفقهية.
+  // يُدرَج الربط الواثق فقط (linked/needs_review) حتى أعلى مرتبتين، حفاظاً على الجودة.
+  const reverse: Record<string, { issueId: string; title: string; path: string; section: string; linkStatus: string; nizamRatio: number; rank: number }[]> = {};
+  for (const l of links) {
+    if (l.linkStatus !== "linked" && l.linkStatus !== "needs_review") continue;
+    l.articleLinks.slice(0, 2).forEach((a, rank) => {
+      const key = `${a.lawName}|${a.articleNumber}`;
+      (reverse[key] ??= []).push({
+        issueId: l.issueId,
+        title: l.title,
+        path: l.path,
+        section: l.path.split(" > ")[0] ?? "",
+        linkStatus: l.linkStatus,
+        nizamRatio: l.nizamRatio,
+        rank
+      });
+    });
+  }
+  for (const key of Object.keys(reverse)) {
+    reverse[key].sort((a, b) => a.rank - b.rank || b.nizamRatio - a.nizamRatio);
+  }
+  writeFileSync(
+    join(DATA, "fiqh-article-index.json"),
+    JSON.stringify({ meta: { generatedAt: out.meta.generatedAt, articles: Object.keys(reverse).length, source: "fiqh-nizam-links.json (linked+needs_review)" }, index: reverse }, null, 2)
+  );
+
   // تقرير
   const pct = (n: number) => `${((n / masail.length) * 100).toFixed(1)}%`;
   const rep: string[] = [

@@ -8,6 +8,7 @@ import {
 } from "./arabic-morphology";
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
@@ -503,7 +504,8 @@ export async function getArticleFullContext(articleId: string) {
     chapter: article.chapter,
     status: article.status,
     citationLabel: buildSingleCitationLabel(article.lawName, article.articleNumber),
-    related: related.filter((item) => item.articleId !== article.id)
+    related: related.filter((item) => item.articleId !== article.id),
+    fiqhIssues: getFiqhIssuesForArticle(article.lawName, article.articleNumber)
   };
 }
 

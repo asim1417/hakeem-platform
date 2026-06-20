@@ -8,6 +8,7 @@ import { HighlightedSearchText, countSearchMatches, joinSearchTerms } from "@/co
 import {
   ComparativeLawPanel,
   ExplanationPanel,
+  FiqhIssuesPanel,
   LegalCitationBlock,
   LegalCoreCard,
   LegalCorePageHeader,
@@ -15,6 +16,7 @@ import {
   LegalTopicBadge,
   RelatedMaterialsPanel
 } from "@/components/legal-core";
+import { getFiqhIssuesForArticle } from "@/lib/modules/legal-core/fiqh-issues";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +63,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
   const query = (searchParams?.q ?? "").trim();
   const highlightTerms = joinSearchTerms(query);
   const matches = countSearchMatches(article.content, highlightTerms);
+  const fiqhIssues = getFiqhIssuesForArticle(article.lawName, article.articleNumber, 8);
 
   return (
     <LegalCoreShell>
@@ -167,6 +170,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             </LegalCoreCard>
 
             <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} />
+            <FiqhIssuesPanel issues={fiqhIssues} />
             <ExplanationPanel />
             <ComparativeLawPanel />
             <RelatedMaterialsPanel articles={related} />
