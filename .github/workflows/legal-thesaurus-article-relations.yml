@@ -44,9 +44,11 @@ jobs:
         run: npm run db:generate
       - name: "🛡️ Verify target is Neon (read-only)"
         run: npx tsx scripts/verify-neon-target.ts
-      - name: "Derive + write article relations"
+      - name: "① Ensure legal_relations schema (additive, IF NOT EXISTS)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/003-legal-relations.sql
+      - name: "② Derive + write article relations"
         run: npm run thesaurus:article-relations
-      - name: "Verify (read-only counts)"
+      - name: "③ Verify (read-only counts)"
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
             "SELECT count(*) AS article_relations FROM legal_relations WHERE description='auto:shared-concepts';"
