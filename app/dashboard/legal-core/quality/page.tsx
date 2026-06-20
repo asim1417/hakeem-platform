@@ -7,36 +7,42 @@ export const dynamic = "force-dynamic";
 export default async function LegalCoreQualityPage() {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const countRaw = async (sql: string): Promise<number> => {
+  // يعيد null عند فشل الاستعلام (مثلاً جدول غير موجود) — فنُسقِط على قيمة صادقة لاحقاً.
+  const countRawOrNull = async (sql: string): Promise<number | null> => {
     try {
       const r = await prisma.$queryRawUnsafe<Array<{ c: number }>>(sql);
       return Number(r[0]?.c ?? 0);
     } catch {
-      return 0;
+      return null;
     }
   };
 
-  const [total, noClassification, noKeywords, noChapter, noExplanation, noRelations, reviewNeeded] = await Promise.all([
+  const [total, noClassification, noKeywords, noChapter, noExplanationRaw, noRelationsRaw, reviewNeededRaw] = await Promise.all([
     prisma.legalArticle.count().catch(() => 0),
     prisma.legalArticle.count({ where: { classification: null } }).catch(() => 0),
     prisma.legalArticle.count({ where: { keywords: { isEmpty: true } } }).catch(() => 0),
     prisma.legalArticle.count({ where: { chapter: null } }).catch(() => 0),
-    // «بلا شرح» = مواد بلا أي تعليق/شرح (annotations) مرتبط بها (قياس حقيقي بدل ثابت)
-    countRaw(
+    // «بلا شرح» = مواد بلا أي تعليق/شرح (annotations) مرتبط بها
+    countRawOrNull(
       `SELECT count(*)::int AS c FROM legal_articles a
         WHERE NOT EXISTS (SELECT 1 FROM annotations an WHERE an.document_type='article' AND an.document_id=a.id AND an.note IS NOT NULL)`
     ),
-    // «بلا علاقات» = مواد لا تظهر مصدراً لأي علاقة في legal_relations (قياس حقيقي بدل ثابت)
-    countRaw(
+    // «بلا علاقات» = مواد لا تظهر مصدراً لأي علاقة في legal_relations
+    countRawOrNull(
       `SELECT count(*)::int AS c FROM legal_articles a
         WHERE NOT EXISTS (SELECT 1 FROM legal_relations r WHERE r.source_type='article' AND r.source_id=a.id)`
     ),
     // «تحتاج مراجعة» = عدّ مواد متمايز (تنقصها أيٌّ من: تصنيف/كلمات/باب) بلا ازدواج
-    countRaw(
+    countRawOrNull(
       `SELECT count(*)::int AS c FROM legal_articles a
         WHERE a.classification IS NULL OR coalesce(cardinality(a.keywords),0)=0 OR a.chapter IS NULL`
     )
   ]);
+
+  // سقوط صادق: إن غاب الجدول/تعذّر القياس، فكل المواد «بلا» (لا نُظهر صفراً مُضلِّلاً).
+  const noExplanation = noExplanationRaw ?? total;
+  const noRelations = noRelationsRaw ?? total;
+  const reviewNeeded = reviewNeededRaw ?? (noClassification + noKeywords + noChapter);
 
   return (
     <LegalCoreShell>
