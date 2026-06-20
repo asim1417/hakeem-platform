@@ -8,8 +8,14 @@
  * مبدأ حكيم: لا اختلاق — كل ربط لمادة موجودة فعلاً (lawName, articleNumber)، والمسائل غير
  * المقنّنة (أحكام شرعية) تُعلَّم بصدق بلا إجبار ربط.
  */
+import { createHash } from "node:crypto";
 import { bm25Search, bm25SearchWhere } from "./bm25";
 import { normalizeArabicText } from "./arabic-morphology";
+
+/** معرّف ثابت حتمي للمسألة من مسارها الفريد (يصمد عبر إعادة التوليد). */
+export function issueId(path: string): string {
+  return "fiqh-" + createHash("sha1").update(path).digest("hex").slice(0, 12);
+}
 
 // ── عُقد الشجرة ──
 export interface FiqhTreeNode {
@@ -88,6 +94,8 @@ export interface ArticleLink {
 export type LinkStatus = "linked" | "needs_review" | "review_nizam" | "no_match" | "uncodified_sharia";
 
 export interface MasalaLink {
+  /** معرّف ثابت حتمي (fiqh-<sha1>) مشتق من المسار الفريد. */
+  issueId: string;
   title: string;
   nodeType: string;
   path: string;
@@ -116,6 +124,7 @@ export function linkMasala(m: FlatMasala, knownSystems: Set<string>, topK = 3): 
   const { targets, codified } = resolveTargets(m.suggestedNizam, knownSystems);
 
   const base = {
+    issueId: issueId(path),
     title: m.title,
     nodeType: m.nodeType,
     path,

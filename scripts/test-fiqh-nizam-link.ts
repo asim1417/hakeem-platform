@@ -40,6 +40,11 @@ function main() {
   const masail = flattenMasail(tree);
   check(masail.length === 3073, `عدد المسائل = 3073 (${masail.length})`);
 
+  // issue_id ثابت وفريد عبر كل المسائل
+  const allIds = masail.map((m) => linkMasala(m, known).issueId);
+  check(allIds.every((id) => /^fiqh-[0-9a-f]{12}$/.test(id)), "كل مسألة لها issue_id بصيغة ثابتة");
+  check(new Set(allIds).size === masail.length, `issue_id فريد لكل مسألة (${new Set(allIds).size}/${masail.length})`);
+
   // عيّنة كافية للتحقق (لتسريع الاختبار): أول 400 مسألة
   const sample = masail.slice(0, 400);
   const links = sample.map((m) => linkMasala(m, known));
