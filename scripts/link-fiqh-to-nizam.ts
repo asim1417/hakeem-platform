@@ -99,6 +99,48 @@ function main() {
     JSON.stringify({ meta: { generatedAt: out.meta.generatedAt, articles: Object.keys(reverse).length, source: "fiqh-nizam-links.json (linked+needs_review)" }, index: reverse }, null, 2)
   );
 
+  // فهرس تصفّح المسائل القانونية للواجهة: أقسام → مسائل (كل الحالات) مع مادتها الأعلى.
+  const SECTION_SLUGS: Record<string, string> = {
+    "المعاملات المالية": "financial",
+    "الأحوال الشخصية والأسرة": "family",
+    "الجنايات والحدود": "criminal",
+    "القضاء والإثبات والأيمان": "judiciary",
+    "المواريث والوصايا": "inheritance"
+  };
+  const sectionsMap = new Map<string, { slug: string; title: string; issues: unknown[]; linked: number }>();
+  for (const l of links) {
+    const section = l.path.split(" > ")[0] ?? "أخرى";
+    const slug = SECTION_SLUGS[section] ?? "other";
+    let s = sectionsMap.get(slug);
+    if (!s) {
+      s = { slug, title: section, issues: [], linked: 0 };
+      sectionsMap.set(slug, s);
+    }
+    const parts = l.path.split(" > ");
+    const top = l.articleLinks[0];
+    if (l.linkStatus === "linked") s.linked++;
+    s.issues.push({
+      issueId: l.issueId,
+      title: l.title,
+      book: parts[1] ?? "",
+      chapter: parts[2] ?? "",
+      suggestedNizam: l.suggestedNizam,
+      linkStatus: l.linkStatus,
+      nizamRatio: l.nizamRatio,
+      topArticle: top ? { lawName: top.lawName, articleNumber: top.articleNumber, citation: top.citation } : null
+    });
+  }
+  const browse = {
+    meta: {
+      generatedAt: out.meta.generatedAt,
+      total: links.length,
+      byStatus: Object.fromEntries(byStatus),
+      sections: [...sectionsMap.values()].map((s) => ({ slug: s.slug, title: s.title, count: s.issues.length, linked: s.linked }))
+    },
+    sections: Object.fromEntries([...sectionsMap.values()].map((s) => [s.slug, s]))
+  };
+  writeFileSync(join(DATA, "legal-issues-browse.json"), JSON.stringify(browse, null, 2));
+
   // تقرير
   const pct = (n: number) => `${((n / masail.length) * 100).toFixed(1)}%`;
   const rep: string[] = [

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-06-20T04:35:46.149Z",
+    "generatedAt": "2026-06-20T04:45:02.647Z",
     "source": "data/fiqh_issue_tree.json + data/saudi_systems.json (BM25)",
     "masail": 3073,
     "thresholds": {

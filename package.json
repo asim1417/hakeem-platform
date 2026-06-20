@@ -70,6 +70,7 @@
     "link:fiqh": "tsx scripts/link-fiqh-to-nizam.ts",
     "test:fiqh-link": "tsx scripts/test-fiqh-nizam-link.ts",
     "test:fiqh-core": "tsx scripts/test-fiqh-issues-core.ts",
+    "test:legal-issues": "tsx scripts/test-legal-issues.ts",
     "seed:fiqh": "tsx scripts/seed-fiqh-issues.ts"
   },
   "dependencies": {

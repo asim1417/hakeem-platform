@@ -239,8 +239,8 @@ export function FiqhIssuesPanel({
 }) {
   return (
     <LegalCoreCard
-      title="المسائل الفقهية المرتبطة"
-      subtitle="من الموسوعة الفقهية — مربوطة بهذه المادة (قيد المراجعة)"
+      title="المسائل القانونية المرتبطة"
+      subtitle="مسائل قانونية مربوطة بهذه المادة (قيد المراجعة)"
       icon={<Scale size={18} />}
     >
       {issues.length ? (
@@ -258,7 +258,7 @@ export function FiqhIssuesPanel({
           ))}
         </div>
       ) : (
-        <p className="text-sm leading-7 text-[var(--ink-60)]">لا توجد مسائل فقهية مرتبطة بهذه المادة حتى الآن.</p>
+        <p className="text-sm leading-7 text-[var(--ink-60)]">لا توجد مسائل قانونية مرتبطة بهذه المادة حتى الآن.</p>
       )}
     </LegalCoreCard>
   );
