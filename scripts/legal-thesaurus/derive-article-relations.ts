@@ -12,12 +12,13 @@ import { prisma } from "@/lib/prisma";
 const exec = (sql: string, ...a: unknown[]) => prisma.$executeRawUnsafe(sql, ...a);
 const query = <T = Record<string, unknown>>(sql: string, ...a: unknown[]) => prisma.$queryRawUnsafe<T[]>(sql, ...a);
 
-/** سقف تردّد المفهوم: المحوري (يرد في مواد كثيرة) يربط كل شيء — يُتجاهل. */
-const MAX_CONCEPT_DF = 25;
-/** تجاهل المفهوم الذي يظهر في عدد مواد أكبر من هذا ضمن العيّنة (حماية إضافية). */
-const MAX_CLIQUE = 40;
+/** سقف تردّد المفهوم: المحوري جداً (مثل «العقد» في مئات المواد) يربط كل شيء — يُتجاهل.
+ *  رُفع من 25 إلى 150 لزيادة تغطية «مواد ذات صلة» مع استبعاد العشرات الأعلى تردّداً فقط. */
+const MAX_CONCEPT_DF = 150;
+/** تجاهل المفهوم الذي يظهر في عدد مواد أكبر من هذا ضمن العيّنة (حماية انفجار الأزواج). */
+const MAX_CLIQUE = 150;
 /** أقصى عدد «مواد ذات صلة» تُحفظ لكل مادة (الأقوى تشاركاً). */
-const TOP_K = 10;
+const TOP_K = 12;
 const MARKER = "auto:shared-concepts";
 
 async function insertRelations(rows: unknown[][], relationCast: string): Promise<void> {
