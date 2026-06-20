@@ -5,7 +5,8 @@
 import {
   getLegalIssuesOverview,
   getLegalIssuesBySection,
-  getLegalIssuesCount
+  getLegalIssuesCount,
+  getSectionBooks
 } from "@/lib/modules/legal-core/legal-issues";
 
 let passed = 0;
@@ -38,6 +39,17 @@ function main() {
   // ترقيم الصفحات
   const p2 = getLegalIssuesBySection("financial", 2, 60);
   check(p2.items.length > 0 && p2.items[0].issueId !== fin.items[0].issueId, "الصفحة الثانية تختلف عن الأولى");
+
+  // فهرس الكتب للقسم
+  const books = getSectionBooks("financial");
+  check(books.length > 1, `فهرس كتب القسم (${books.length} كتاباً)`);
+  check(books.reduce((n, b) => n + b.count, 0) === fin.total, "مجموع مسائل الكتب = إجمالي القسم");
+
+  // تصفية بالكتاب
+  const firstBook = books[0].book;
+  const byBook = getLegalIssuesBySection("financial", 1, 50, firstBook);
+  check(byBook.total === books[0].count, `تصفية بالكتاب «${firstBook}» تطابق عدّه (${byBook.total})`);
+  check(byBook.items.every((i) => i.book === firstBook), "كل عناصر الكتاب من الكتاب نفسه");
 
   // قسم غير موجود → فارغ
   check(getLegalIssuesBySection("nope", 1).total === 0, "قسم غير موجود → فارغ");
