@@ -31,6 +31,14 @@ jobs:
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
           npm run thesaurus:export
+      - name: Emit JSON (gzip + base64)
+        run: |
+          f=out/legal-thesaurus/thesaurus-export.json
+          echo "BYTES=$(wc -c < "$f")"
+          echo "===HAKEEM_TERMS_GZ_B64_BEGIN==="
+          gzip -c "$f" | base64 -w0
+          echo ""
+          echo "===HAKEEM_TERMS_GZ_B64_END==="
       - name: Upload review artifact
         uses: actions/upload-artifact@v4
         with:

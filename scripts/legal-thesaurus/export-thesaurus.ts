@@ -28,13 +28,15 @@ async function main() {
   const exists = await query<{ c: bigint }>(`SELECT count(*)::bigint AS c FROM information_schema.tables WHERE table_name='legal_thesaurus_concepts'`).catch(() => []);
   if (!exists.length || Number(exists[0].c) === 0) { console.error("✗ جداول المكنز غير موجودة."); process.exit(1); }
 
-  // المفاهيم مع عدد المواضع
+  // المفاهيم — مع عدّادات التكرار المخزّنة (الدقيقة)، لا عيّنة جدول المواضع
   const concepts = await query<Record<string, unknown>>(
-    `SELECT c.id, c.preferred_label_ar, c.concept_type, c.legal_domain_primary, c.confidence_score, c.status,
-            c.needs_human_review, c.source_basis, c.definition_text,
-            (SELECT count(*) FROM legal_thesaurus_occurrences o WHERE o.concept_id=c.id)::int AS occurrences
+    `SELECT c.id, c.preferred_label_ar, c.normalized_label, c.concept_type, c.legal_domain_primary,
+            c.definition_type, c.confidence_score, c.status, c.needs_human_review, c.source_basis,
+            c.extraction_scope, c.source_position, c.definition_text,
+            c.total_occurrences_count AS occurrences, c.distinct_articles_count, c.distinct_sources_count,
+            c.recurrence_strength
      FROM legal_thesaurus_concepts c
-     ORDER BY occurrences DESC, c.confidence_score DESC`
+     ORDER BY c.total_occurrences_count DESC NULLS LAST, c.confidence_score DESC`
   );
   console.log(`📦 مفاهيم: ${concepts.length}`);
 
@@ -49,12 +51,14 @@ async function main() {
     السند: c.source_basis,
     التعريف: c.definition_text,
     عدد_المواضع: c.occurrences,
+    عدد_المواد: c.distinct_articles_count,
+    عدد_الأنظمة: c.distinct_sources_count,
     "قرار_المراجع (اعتماد/رفض/تعديل/دمج/فصل)": "",
     ملاحظات: "",
     concept_id: c.id,
   }));
   fs.writeFileSync(path.join(outDir, "concepts-review.csv"), csv(reviewRows, [
-    "المفهوم","النوع","المجال","الثقة","الحالة","يحتاج_مراجعة","السند","التعريف","عدد_المواضع","قرار_المراجع (اعتماد/رفض/تعديل/دمج/فصل)","ملاحظات","concept_id",
+    "المفهوم","النوع","المجال","الثقة","الحالة","يحتاج_مراجعة","السند","التعريف","عدد_المواضع","عدد_المواد","عدد_الأنظمة","قرار_المراجع (اعتماد/رفض/تعديل/دمج/فصل)","ملاحظات","concept_id",
   ]));
 
   // قائمة المراجعة
@@ -74,14 +78,24 @@ async function main() {
   for (const d of defs) (defsByC.get(d.concept_id as string) ?? defsByC.set(d.concept_id as string, []).get(d.concept_id as string)!).push(d);
 
   // JSON منظّم
+  const num = (v: unknown) => Number(v ?? 0);
   const full = concepts.map((c) => ({
-    id: c.id, preferredLabel: c.preferred_label_ar, type: c.concept_type, domain: c.legal_domain_primary,
-    confidence: c.confidence_score, status: c.status, needsReview: c.needs_human_review, sourceBasis: c.source_basis,
-    definition: c.definition_text, occurrences: c.occurrences,
+    id: c.id, preferredLabel: c.preferred_label_ar, normalizedLabel: c.normalized_label,
+    type: c.concept_type, domain: c.legal_domain_primary, definitionType: c.definition_type,
+    confidence: c.confidence_score, status: c.status, needsReview: c.needs_human_review,
+    sourceBasis: c.source_basis, extractionScope: c.extraction_scope, sourcePosition: c.source_position,
+    definition: c.definition_text,
+    recurrence: {
+      totalOccurrences: num(c.occurrences),
+      distinctArticles: num(c.distinct_articles_count),
+      distinctSources: num(c.distinct_sources_count),
+      strength: c.recurrence_strength,
+    },
     terms: (termsByC.get(c.id as string) ?? []).map((t) => ({ text: t.term_text, type: t.term_type, confidence: t.confidence_score, status: t.status })),
     definitions: (defsByC.get(c.id as string) ?? []).map((d) => ({ text: d.definition_text, type: d.definition_type, evidence: d.evidence_quote, confidence: d.confidence_score })),
   }));
-  fs.writeFileSync(path.join(outDir, "thesaurus-export.json"), JSON.stringify({ exportedAt: new Date().toISOString(), conceptCount: full.length, concepts: full }, null, 2));
+  const approved = full.filter((c) => c.status === "approved").length;
+  fs.writeFileSync(path.join(outDir, "thesaurus-export.json"), JSON.stringify({ exportedAt: new Date().toISOString(), conceptCount: full.length, approvedCount: approved, needsReviewCount: full.length - approved, concepts: full }, null, 2));
 
   // SKOS-like
   const relBySrc = new Map<string, Record<string, unknown>[]>();
