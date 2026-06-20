@@ -1,0 +1,63 @@
+name: Legal Thesaurus — Extract relations (write)
+
+# يشتقّ علاقات المكنز (تضمين broader/narrower + ترابط related) ويكتبها في
+# legal_thesaurus_relations فقط — حتمي ومُسنَد، عَوْدي (يحذف صفوفه auto: ثم يعيد).
+# لا يمسّ legal_articles/legal_systems ولا جداول المكنز الأخرى.
+# مُقفل ببوّابة + حارس هدف Neon (نفس نمط extract-system).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED للكتابة في جدول العلاقات على Neon"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: legal-thesaurus-extract-relations
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  relations:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::مقفول — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم سرّ NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "① Apply thesaurus schema (idempotent, new tables only)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/legal-thesaurus/sql/001-thesaurus-schema.sql
+      - name: "② Derive + write relations"
+        run: npm run thesaurus:extract-relations
+      - name: "③ Verify (read-only counts)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
+            "SELECT relation_type, status, count(*) FROM legal_thesaurus_relations GROUP BY relation_type, status ORDER BY 3 DESC;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
+            "SELECT sc.preferred_label_ar AS source, r.relation_type, tc.preferred_label_ar AS target, r.confidence_score AS conf \
+               FROM legal_thesaurus_relations r \
+               JOIN legal_thesaurus_concepts sc ON sc.id=r.source_concept_id \
+               JOIN legal_thesaurus_concepts tc ON tc.id=r.target_concept_id \
+              WHERE r.explanation LIKE 'auto:%' ORDER BY r.confidence_score DESC LIMIT 40;"
+      - name: "④ Verify search expansion now uses relations (read-only)"
+        run: npm run thesaurus:verify

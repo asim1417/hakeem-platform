@@ -148,6 +148,8 @@ export interface ThesaurusGraphExpansion {
 }
 
 const MAX_RELATED_LABELS = 16;
+/** سقف تردّد المفهوم في التوسيع العلائقي (مصدراً وهدفاً) — يمنع إضافة المصطلحات العامة. */
+const MAX_RELATED_TARGET_DF = 60;
 const OCC_BASE_BOOST = 8; // ترجيح أساس لكل مادة يرد فيها مفهوم مُطابَق
 const OCC_STRENGTH_BOOST = 14; // يُضاف × قوة التكرار (0..1)
 const OCC_ARTICLE_CAP = 28; // سقف الترجيح لكل مادة (لا يطغى على المطابقة المعجمية)
@@ -176,10 +178,15 @@ export async function thesaurusGraphExpansion(conceptIds: string[]): Promise<The
   try {
     const [rels, occ] = await Promise.all([
       prisma.$queryRawUnsafe<Array<{ label: string }>>(
+        // التوسيع العلائقي يُقصر على العلاقات بين مفاهيم **مُميِّزة** (غير محورية): المصدر
+        // والهدف كلاهما تردّده ≤ السقف — فلا يُضاف مصطلح عام (مثل «العقد») للبحث.
         `SELECT DISTINCT tc.preferred_label_ar AS label
            FROM legal_thesaurus_relations r
+           JOIN legal_thesaurus_concepts sc ON sc.id = r.source_concept_id
            JOIN legal_thesaurus_concepts tc ON tc.id = r.target_concept_id
           WHERE r.status = 'approved' AND tc.status = 'approved'
+            AND COALESCE(sc.distinct_articles_count, 0) <= ${MAX_RELATED_TARGET_DF}
+            AND COALESCE(tc.distinct_articles_count, 0) <= ${MAX_RELATED_TARGET_DF}
             AND r.source_concept_id IN (${idList})
           LIMIT ${MAX_RELATED_LABELS}`
       ),
