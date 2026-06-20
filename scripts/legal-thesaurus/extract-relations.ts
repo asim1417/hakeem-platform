@@ -11,6 +11,7 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { deriveSubsumptionRelations, type ConceptLite } from "@/lib/modules/legal-thesaurus/relations";
+import { searchableText } from "@/lib/modules/legal-thesaurus/normalize";
 
 const exec = (sql: string, ...a: unknown[]) => prisma.$executeRawUnsafe(sql, ...a);
 const query = <T = Record<string, unknown>>(sql: string, ...a: unknown[]) => prisma.$queryRawUnsafe<T[]>(sql, ...a);
@@ -23,6 +24,28 @@ const COOCCUR_APPROVE_AT = 3;
 const MAX_DF_FOR_RELATED = 60;
 /** سقف الترابطات لكل مفهوم (الأقوى تواضعاً) لتفادي الانفجار. */
 const MAX_RELATED_PER_CONCEPT = 24;
+/**
+ * أدنى مُعامل Jaccard على مجموعتَي المواد: |A∩B| / |A∪B|. مبدئيّ يكبح المفاهيم العامة
+ * تلقائياً — اللفظ الذي يرد في مواد كثيرة يتواضع مع الكثير لكن تقاطعه النسبي ضعيف فيسقط.
+ */
+const MIN_JACCARD = 0.12;
+/** اعتماد related عند Jaccard قويّ بصرف النظر عن العدّ المطلق. */
+const JACCARD_APPROVE_AT = 0.25;
+
+/**
+ * ألفاظ عامة/إدارية مجرّدة تُستبعد من توليد الترابط (مصدراً أو هدفاً): تتواضع مع كل شيء
+ * بلا دلالة قانونية مميِّزة. لا يمسّ المركّبات («هيئة التحكيم»، «قاضي التنفيذ») — فقط
+ * الألفاظ المجرّدة. مُطبَّعة searchableText. (المركّبات تبقى عبر تطابق التسمية كاملةً.)
+ */
+const RELATED_STOP = new Set(
+  [
+    "النظام", "اللائحة", "اللوائح", "الأحكام", "القرارات", "القرار", "الحكم", "الأمر",
+    "اللجنة", "الهيئة", "المجلس", "الإدارة", "المركز", "الجهة", "الجهات المختصة", "الجهة المختصة",
+    "الإدارة المختصة", "الصندوق", "المكتب", "الوكالة", "المحكمة", "الدائرة", "الأمانة", "الديوان",
+    "المؤسسة", "الوزارة", "الوزير", "المحافظ", "الرئيس", "العضو", "الشخص", "الطلب", "الطلبات",
+    "الموافقة", "التقرير", "القائمة", "المدة", "النسبة", "البدل", "الرسوم", "الوثيقة", "السجل", "تنظيم", "نظام",
+  ].map(searchableText)
+);
 
 async function bulkInsert(cols: string[], rows: unknown[][]): Promise<void> {
   const CHUNK = 80;
@@ -51,6 +74,8 @@ async function main() {
   );
   console.log(`📚 مفاهيم معتمدة: ${concepts.length}`);
   const dfById = new Map(concepts.map((c) => [c.id, Number(c.df)]));
+  // معرّفات المفاهيم العامة/الإدارية المجرّدة (تُستبعد من توليد الترابط)
+  const stoppedIds = new Set(concepts.filter((c) => RELATED_STOP.has(searchableText(c.label))).map((c) => c.id));
 
   // حذف الصفوف المُشتقّة سابقاً (عَوْدية) — لا يمسّ المُدخَل يدوياً
   const deleted = await exec(`DELETE FROM legal_thesaurus_relations WHERE explanation LIKE 'auto:%'`);
@@ -77,10 +102,15 @@ async function main() {
   const byArticle = new Map<string, Set<string>>();
   for (const o of occ) {
     if ((dfById.get(o.concept_id) ?? 0) > MAX_DF_FOR_RELATED) continue;
+    if (stoppedIds.has(o.concept_id)) continue; // لفظ عام/إداري مجرّد — لا يُترابَط
     const s = byArticle.get(o.article_id) ?? new Set<string>();
     s.add(o.concept_id);
     byArticle.set(o.article_id, s);
   }
+  // تردّد كل مفهوم ضمن مواد المواضع (للمقام في Jaccard — متّسق المصدر)
+  const occDf = new Map<string, number>();
+  for (const set of byArticle.values()) for (const id of set) occDf.set(id, (occDf.get(id) ?? 0) + 1);
+
   // عدّ التواضع لكل زوج + مادة دليل
   const pairCount = new Map<string, { a: string; b: string; n: number; ev: string }>();
   for (const [articleId, set] of byArticle) {
@@ -96,23 +126,31 @@ async function main() {
       }
     }
   }
-  // ترشيح بالعتبة + سقف لكل مفهوم
+  // ترشيح: عتبة العدّ + عتبة Jaccard (يكبح العام) + سقف لكل مفهوم
   const perConcept = new Map<string, number>();
   let relatedRows = 0;
-  const strong = [...pairCount.values()].filter((p) => p.n >= MIN_COOCCUR).sort((x, y) => y.n - x.n);
-  for (const p of strong) {
+  let filteredByJaccard = 0;
+  const scored = [...pairCount.values()]
+    .filter((p) => p.n >= MIN_COOCCUR)
+    .map((p) => {
+      const union = (occDf.get(p.a) ?? 0) + (occDf.get(p.b) ?? 0) - p.n;
+      return { ...p, jaccard: union > 0 ? p.n / union : 0 };
+    })
+    .sort((x, y) => y.jaccard - x.jaccard || y.n - x.n);
+  for (const p of scored) {
+    if (p.jaccard < MIN_JACCARD) { filteredByJaccard++; continue; }
     if ((perConcept.get(p.a) ?? 0) >= MAX_RELATED_PER_CONCEPT) continue;
     if ((perConcept.get(p.b) ?? 0) >= MAX_RELATED_PER_CONCEPT) continue;
     perConcept.set(p.a, (perConcept.get(p.a) ?? 0) + 1);
     perConcept.set(p.b, (perConcept.get(p.b) ?? 0) + 1);
-    const conf = Math.min(95, 50 + p.n * 10);
-    const status = p.n >= COOCCUR_APPROVE_AT ? "approved" : "candidate";
-    const expl = `auto:cooccurrence(n=${p.n})`;
+    const conf = Math.min(95, 50 + Math.round(p.jaccard * 50) + p.n * 5);
+    const status = p.jaccard >= JACCARD_APPROVE_AT || p.n >= COOCCUR_APPROVE_AT ? "approved" : "candidate";
+    const expl = `auto:cooccurrence(n=${p.n},j=${p.jaccard.toFixed(2)})`;
     rows.push([randomUUID(), p.a, p.b, "related", conf, p.ev, null, expl, status]);
     rows.push([randomUUID(), p.b, p.a, "related", conf, p.ev, null, expl, status]);
     relatedRows += 2;
   }
-  console.log(`🔗 ترابط (related): ${relatedRows} صفّاً (من ${strong.length} زوجاً ≥${MIN_COOCCUR})`);
+  console.log(`🔗 ترابط (related): ${relatedRows} صفّاً (Jaccard≥${MIN_JACCARD}؛ أُسقط بـ Jaccard: ${filteredByJaccard})`);
 
   await bulkInsert(cols, rows);
   console.log(`\n✅ كُتبت ${rows.length} علاقة في legal_thesaurus_relations.`);
