@@ -39,7 +39,7 @@ jobs:
             const c=j.concepts.map(x=>({
               label:x.preferredLabel, norm:x.normalizedLabel, type:x.type, domain:x.domain,
               status:x.status, needsReview:x.needsReview, basis:x.sourceBasis,
-              definition:x.definition,
+              definitionPreview: x.definition ? String(x.definition).slice(0,120) : null,
               occ:x.recurrence.totalOccurrences, articles:x.recurrence.distinctArticles, systems:x.recurrence.distinctSources,
             }));
             fs.writeFileSync("out/legal-thesaurus/hakeem-terms.compact.json",
