@@ -13,10 +13,10 @@ const exec = (sql: string, ...a: unknown[]) => prisma.$executeRawUnsafe(sql, ...
 const query = <T = Record<string, unknown>>(sql: string, ...a: unknown[]) => prisma.$queryRawUnsafe<T[]>(sql, ...a);
 
 /** سقف تردّد المفهوم: المحوري جداً (مثل «العقد» في مئات المواد) يربط كل شيء — يُتجاهل.
- *  رُفع من 25 إلى 150 لزيادة تغطية «مواد ذات صلة» مع استبعاد العشرات الأعلى تردّداً فقط. */
-const MAX_CONCEPT_DF = 150;
+ *  رُفع إلى 400 لزيادة تغطية «مواد ذات صلة» أكثر، مع استبعاد المفاهيم الأعلى تردّداً فقط. */
+const MAX_CONCEPT_DF = 400;
 /** تجاهل المفهوم الذي يظهر في عدد مواد أكبر من هذا ضمن العيّنة (حماية انفجار الأزواج). */
-const MAX_CLIQUE = 150;
+const MAX_CLIQUE = 400;
 /** أقصى عدد «مواد ذات صلة» تُحفظ لكل مادة (الأقوى تشاركاً). */
 const TOP_K = 12;
 const MARKER = "auto:shared-concepts";
