@@ -61,7 +61,8 @@
     "thesaurus:export": "tsx scripts/legal-thesaurus/export-thesaurus.ts",
     "thesaurus:qa": "tsx scripts/legal-thesaurus/qa-thesaurus.ts",
     "thesaurus:verify": "tsx scripts/legal-thesaurus/verify-expansion.ts",
-    "thesaurus:extract-relations": "tsx scripts/legal-thesaurus/extract-relations.ts"
+    "thesaurus:extract-relations": "tsx scripts/legal-thesaurus/extract-relations.ts",
+    "thesaurus:measure": "tsx scripts/legal-thesaurus/measure-coverage.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
