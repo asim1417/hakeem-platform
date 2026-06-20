@@ -151,6 +151,14 @@ const MAX_RELATED_LABELS = 16;
 const OCC_BASE_BOOST = 8; // ترجيح أساس لكل مادة يرد فيها مفهوم مُطابَق
 const OCC_STRENGTH_BOOST = 14; // يُضاف × قوة التكرار (0..1)
 const OCC_ARTICLE_CAP = 28; // سقف الترجيح لكل مادة (لا يطغى على المطابقة المعجمية)
+/**
+ * سقف تردّد المفهوم (document frequency): المفهوم الذي يرد في أكثر من هذا العدد من المواد
+ * مفهوم «محوري/عام» غير مُميِّز (مثل «العقد» في مئات المواد) — تجاهله في الترجيح كي لا
+ * يُغرِق النتائج بضجيج. الترجيح يبقى للمفاهيم المُميِّزة فقط (المتخصّصة/المركّبة).
+ */
+const MAX_CONCEPT_DF = 30;
+/** سقف إجمالي لعدد المواد المُرجَّحة (أمان). */
+const MAX_BOOSTED_ARTICLES = 200;
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -175,21 +183,32 @@ export async function thesaurusGraphExpansion(conceptIds: string[]): Promise<The
             AND r.source_concept_id IN (${idList})
           LIMIT ${MAX_RELATED_LABELS}`
       ),
-      prisma.$queryRawUnsafe<Array<{ article_id: string; strength: number | null }>>(
-        `SELECT o.article_id, c.recurrence_strength AS strength
+      prisma.$queryRawUnsafe<Array<{ concept_id: string; article_id: string; strength: number | null }>>(
+        `SELECT o.concept_id, o.article_id, c.recurrence_strength AS strength
            FROM legal_thesaurus_occurrences o
            JOIN legal_thesaurus_concepts c ON c.id = o.concept_id
           WHERE c.status = 'approved' AND o.article_id IS NOT NULL
             AND o.concept_id IN (${idList})`
       ),
     ]);
-    const articleBoosts = new Map<string, number>();
+    // تجميع المواضع لكل مفهوم لتطبيق سقف التردّد: نتجاهل المفاهيم المحورية العامة
+    // (الواردة في مواد كثيرة) فلا تُغرِق الترجيح بضجيج غير مُميِّز.
+    const perConcept = new Map<string, { articles: Set<string>; strength: number }>();
     for (const row of occ) {
       if (!row.article_id) continue;
-      const s = Math.max(0, Math.min(1, Number(row.strength ?? 0)));
-      const add = OCC_BASE_BOOST + s * OCC_STRENGTH_BOOST;
-      const next = Math.min(OCC_ARTICLE_CAP, (articleBoosts.get(row.article_id) ?? 0) + add);
-      articleBoosts.set(row.article_id, next);
+      const bucket = perConcept.get(row.concept_id) ?? { articles: new Set<string>(), strength: Math.max(0, Math.min(1, Number(row.strength ?? 0))) };
+      bucket.articles.add(row.article_id);
+      perConcept.set(row.concept_id, bucket);
+    }
+    const articleBoosts = new Map<string, number>();
+    for (const { articles, strength } of perConcept.values()) {
+      if (articles.size > MAX_CONCEPT_DF) continue; // مفهوم محوري عام → تجاهل
+      const add = OCC_BASE_BOOST + strength * OCC_STRENGTH_BOOST;
+      for (const articleId of articles) {
+        if (articleBoosts.size >= MAX_BOOSTED_ARTICLES && !articleBoosts.has(articleId)) continue;
+        const next = Math.min(OCC_ARTICLE_CAP, (articleBoosts.get(articleId) ?? 0) + add);
+        articleBoosts.set(articleId, next);
+      }
     }
     const relatedLabels = Array.from(new Set(rels.map((r) => (r.label || "").trim()).filter(Boolean)));
     return { relatedLabels, articleBoosts };
