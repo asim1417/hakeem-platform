@@ -7,6 +7,8 @@ import { isDefinitionArticle, extractDefinedTerms, classifyConceptType, stripLea
 import { scoreDefinedTerm, decideReview, conceptStatus, scoreBodyConcept } from "@/lib/modules/legal-thesaurus/scoring";
 import { scanArticleForConcepts, scanCompoundCandidates, scanCompoundPhrases, BODY_CONCEPT_LEXICON } from "@/lib/modules/legal-thesaurus/body-concepts";
 import { classifyRecurrence, classifySourcePosition, positionRatioToClass, classifyScope } from "@/lib/modules/legal-thesaurus/recurrence";
+import { matchInIndex, type ThesaurusEntry } from "@/lib/modules/legal-thesaurus/concept-index";
+import { relationTokens, deriveSubsumptionRelations } from "@/lib/modules/legal-thesaurus/relations";
 
 let passed = 0;
 let failed = 0;
@@ -134,6 +136,40 @@ function main() {
   check(classifyScope(true, true) === "mixed" && classifyScope(true, false) === "definitions_only" && classifyScope(false, true) === "full_body", "تصنيف نطاق الاستخراج");
   check(scoreBodyConcept({ isCompound: true, distinctArticles: 9, totalOccurrences: 16, exactMatch: true, hasExplicitDefinition: false }) > scoreBodyConcept({ isCompound: false, distinctArticles: 1, totalOccurrences: 1, exactMatch: false }), "الثقة ترتفع بالتركيب والتكرار");
   check(scoreBodyConcept({ isCompound: false, distinctArticles: 1, totalOccurrences: 1, exactMatch: false, hasExplicitDefinition: true }) >= 95, "وجود تعريف صريح → ثقة عالية");
+
+  // concept-index (توسيع البحث بمفاهيم المكنز — مطابقة نقيّة بلا قاعدة)
+  console.log("\n[concept-index]");
+  const fx: ThesaurusEntry[] = [
+    { id: "c1", label: "عقد العمل", status: "approved", forms: [searchableText("عقد العمل")], synonyms: ["عقد العمل", "علاقة العمل"] },
+    { id: "c2", label: "الفصل التعسفي", status: "approved", forms: [searchableText("الفصل التعسفي")], synonyms: ["الفصل التعسفي", "إنهاء تعسفي"] },
+    { id: "c3", label: "الرهن", status: "candidate", forms: [searchableText("الرهن")], synonyms: ["الرهن", "الرهن الحيازي"] },
+  ];
+  const m1 = matchInIndex("ما حكم الفصل التعسفي للعامل؟", fx);
+  check(m1.conceptIds.includes("c2"), "مطابقة عبارة مركّبة «الفصل التعسفي» (احتواء)");
+  check(m1.synonyms.includes("إنهاء تعسفي"), "توسيع بمرادف المفهوم المُطابَق");
+  const m2 = matchInIndex("نزاع حول الرهن العقاري", fx);
+  check(m2.conceptIds.includes("c3"), "مطابقة كلمة مفردة «الرهن» كوحدة (token)");
+  const m3 = matchInIndex("الرهنية معقدة", fx);
+  check(!m3.conceptIds.includes("c3"), "عدم مطابقة «الرهن» داخل كلمة أخرى (دقّة الوحدة)");
+  check(matchInIndex("", fx).synonyms.length === 0, "استعلام فارغ ⇒ بلا توسيع");
+  check(matchInIndex("لا يوجد مفهوم هنا", fx).conceptIds.length === 0, "بلا مطابقة ⇒ فارغ");
+
+  // relations (تضمين الرأس — اشتقاق حتمي)
+  console.log("\n[relations]");
+  check(relationTokens("العقد").join(" ") === "عقد", "إزالة «ال»: العقد → عقد");
+  check(relationTokens("عقد العمل").join(" ") === "عقد عمل", "توحيد كلمات العبارة");
+  const rc: Array<{ id: string; label: string }> = [
+    { id: "A", label: "العقد" },
+    { id: "B", label: "عقد العمل" },
+    { id: "C", label: "عقد الإيجار" },
+    { id: "D", label: "بطلان العقد" },
+  ];
+  const rels = deriveSubsumptionRelations(rc);
+  const has = (s: string, t: string, ty: string) => rels.some((r) => r.sourceId === s && r.targetId === t && r.type === ty);
+  check(has("B", "A", "broader") && has("A", "B", "narrower"), "«عقد العمل» أخصّ من «العقد»");
+  check(has("C", "A", "broader"), "«عقد الإيجار» أخصّ من «العقد»");
+  check(!rels.some((r) => r.sourceId === "D" || r.targetId === "D" ? (r.sourceId === "A" || r.targetId === "A") : false), "«بطلان العقد» لا يُربط بـ«العقد» (رأس مختلف)");
+  check(!has("B", "C", "broader") && !has("C", "B", "broader"), "لا تضمين بين فرعين شقيقين");
 
   console.log("\n" + "=".repeat(56));
   console.log(`النتيجة: ${passed} نجح، ${failed} فشل`);

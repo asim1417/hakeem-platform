@@ -8,6 +8,7 @@ import {
 } from "./arabic-morphology";
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -129,6 +130,8 @@ export const PRIMARY_LAW_BONUS = 80;
 export const SECONDARY_INSTRUMENT_PENALTY = -25;
 /** ترجيح النظام المعنيّ بمفهوم الاستعلام (مثل براءات الاختراع لـ«الملكية الفكرية»). */
 export const CONCEPT_SYSTEM_BONUS = 100;
+/** أقصى عدد مواد تُجلب من مواضع المكنز ولم يجدها البحث المعجمي (استرجاع مُسنَد). */
+const THESAURUS_OCC_PULL_LIMIT = 50;
 
 /**
  * يمزج درجة الصلة المعجمية مع التشابه الدلالي: نتيجة دلالية بحتة (lexical≈0) بتشابه
@@ -176,8 +179,16 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ربط مفاهيمي: نوسّع البحث بمرادفات المفهوم (مثل «الملكية الفكرية» ← براءات/حقوق المؤلف)
   // ونرجّح الأنظمة المعنيّة — يحلّ حالة المفهوم الذي لا يحوي اسمُ نظامه مصطلحَ الاستعلام.
   const concept = matchConcepts(query);
+  // مكنز حكيم (2,967 مفهوماً): توسيع معجمي مُسنَد لمعرّفات حقيقية — يكمّل الخريطة المنسّقة.
+  const thesaurus = await matchThesaurusConcepts(query);
+  // توسيع رسومي: مفاهيم مرتبطة (للمصطلحات) + ترجيح المواد عبر المواضع (معتمدة، موزونة).
+  const graph = thesaurus.conceptIds.length
+    ? await thesaurusGraphExpansion(thesaurus.conceptIds)
+    : { relatedLabels: [] as string[], articleBoosts: new Map<string, number>() };
   const preferSystems = concept.preferSystems;
-  const variants = Array.from(new Set([...baseVariants, ...concept.synonyms]));
+  const variants = Array.from(
+    new Set([...baseVariants, ...concept.synonyms, ...thesaurus.synonyms, ...graph.relatedLabels])
+  );
   const normalizedVariants = Array.from(new Set(variants.map(normalizeArabicText).filter(Boolean)));
   // الكلمات الخام من الاستعلام (كما يكتبها المستخدم) — تطابق النص المخزَّن غير المُطبَّع (ة/ى/إ)
   const rawWords = query
@@ -279,6 +290,17 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   for (const a of nameCandidates as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
   for (const a of candidates) if (!byId.has(a.id)) byId.set(a.id, a);
 
+  // مواد مُسنَدة من مواضع المكنز لم يجدها البحث المعجمي — استرجاع مُسنَد (المفهوم يرد فيها فعلاً).
+  if (graph.articleBoosts.size) {
+    const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !byId.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
+    if (missingOccIds.length) {
+      const extraOcc = await prisma.legalArticle
+        .findMany({ where: { id: { in: missingOccIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
+        .catch(() => [] as typeof candidates);
+      for (const a of extraOcc as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+    }
+  }
+
   // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): يجلب مواد قريبة
   // بالمعنى حتى بلا تطابق لفظي، فيكسر حصر النتائج في الأنظمة التي تحوي الكلمة حرفياً.
   // سقوط آمن: إن غاب جدول المتجهات تبقى semMap فارغة ويعمل البحث المعجمي كالسابق.
@@ -296,6 +318,11 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const scored = Array.from(byId.values())
     .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems))
+    // ترجيح المكنز: مادة يرد فيها مفهوم مُطابَق (معتمد) تُرفع درجتها بمقدار مُسنَد للمواضع.
+    .map((r) => {
+      const boost = graph.articleBoosts.get(r.articleId);
+      return boost ? { ...r, relevanceScore: r.relevanceScore + boost } : r;
+    })
     // الدلالي **إضافي لا إزاحي**: نرفع فقط المواد الضعيفة/الدلالية البحتة (lexical < العتبة)
     // كي تظهر أنظمة لم يجدها النصّي، دون تضخيم المطابقات المعجمية القوية (الذي يركّز على
     // نظام المجال ويزيح التنوّع). فيزيد التغطية بدل أن يقلّصها.

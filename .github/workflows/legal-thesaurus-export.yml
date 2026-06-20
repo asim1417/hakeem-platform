@@ -31,6 +31,24 @@ jobs:
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
           npm run thesaurus:export
+      - name: Verify search expansion (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          npm run thesaurus:verify
+      - name: Build compact JSON
+        run: |
+          node -e '
+            const fs=require("fs");
+            const j=JSON.parse(fs.readFileSync("out/legal-thesaurus/thesaurus-export.json","utf8"));
+            const c=j.concepts.map(x=>({
+              label:x.preferredLabel, norm:x.normalizedLabel, type:x.type, domain:x.domain,
+              status:x.status, needsReview:x.needsReview, basis:x.sourceBasis,
+              definitionPreview: x.definition ? String(x.definition).slice(0,120) : null,
+              occ:x.recurrence.totalOccurrences, articles:x.recurrence.distinctArticles, systems:x.recurrence.distinctSources,
+            }));
+            fs.writeFileSync("out/legal-thesaurus/hakeem-terms.compact.json",
+              JSON.stringify({exportedAt:j.exportedAt, conceptCount:j.conceptCount, approvedCount:j.approvedCount, needsReviewCount:j.needsReviewCount, concepts:c}));
+          '
       - name: Upload review artifact
         uses: actions/upload-artifact@v4
         with:
@@ -38,3 +56,12 @@ jobs:
           path: out/legal-thesaurus/
           retention-days: 30
           if-no-files-found: error
+      # خطوة أخيرة عمداً: يبقى الـ base64 في نهاية السجل (ضمن نافذة الاسترجاع)
+      - name: Emit compact JSON (gzip + base64) — LAST
+        run: |
+          f=out/legal-thesaurus/hakeem-terms.compact.json
+          echo "BYTES=$(wc -c < "$f")"
+          echo "===HAKEEM_TERMS_GZ_B64_BEGIN==="
+          gzip -c "$f" | base64 -w0
+          echo ""
+          echo "===HAKEEM_TERMS_GZ_B64_END==="
