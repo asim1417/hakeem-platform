@@ -1,0 +1,54 @@
+name: Legal Thesaurus — Article relations (write)
+
+# يشتقّ «مواد ذات صلة» من المفاهيم المشتركة ويكتبها في legal_relations فقط
+# (article → article, RELATED_TO). عَوْدي (يحذف auto:shared-concepts ثم يعيد).
+# مُقفل ببوّابة + حارس هدف Neon.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED للكتابة في legal_relations على Neon"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: legal-thesaurus-article-relations
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  article-relations:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::مقفول — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم سرّ NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "Derive + write article relations"
+        run: npm run thesaurus:article-relations
+      - name: "Verify (read-only counts)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
+            "SELECT count(*) AS article_relations FROM legal_relations WHERE description='auto:shared-concepts';"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -P pager=off -c \
+            "SELECT count(*) AS articles_without_relations FROM legal_articles a WHERE NOT EXISTS (SELECT 1 FROM legal_relations r WHERE r.source_type='article' AND r.source_id=a.id);"
