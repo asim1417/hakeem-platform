@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, Database, FileClock, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -28,7 +28,8 @@ const navSections: Array<{ items: NavItem[] }> = [
   {
     items: [
       { href: "/dashboard/ask", label: "اسأل حكيم", icon: Sparkles },
-      { href: "/dashboard/simulations", label: "القاضي التفاعلي", icon: Scale, active: true }
+      { href: "/dashboard/simulations", label: "القاضي التفاعلي", icon: Gavel, active: true },
+      { href: "/dashboard/judicial-simulation", label: "المحاكاة القضائية", icon: Scale }
     ]
   },
   {
@@ -40,7 +41,6 @@ const navSections: Array<{ items: NavItem[] }> = [
       { href: "/dashboard/legal-rag", label: "الذكاء القانوني RAG (اختبار)", icon: Sparkles },
       { href: "/dashboard/case-analysis", label: "تحليل القضايا (اختبار)", icon: Scale },
       { href: "/dashboard/legal-agent", label: "الوكيل القانوني (اختبار)", icon: Sparkles },
-      { href: "/dashboard/judicial-simulation", label: "المحاكاة القضائية (اختبار)", icon: Scale },
       { href: "/dashboard/training", label: "التدريب", icon: GraduationCap }
     ]
   },

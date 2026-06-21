@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, GraduationCap, Paperclip, Scale, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { BookOpen, Briefcase, Gavel, GraduationCap, Paperclip, Scale, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
@@ -172,8 +172,15 @@ export default async function DashboardPage() {
           href="/dashboard/simulations"
           title="القاضي التفاعلي"
           metric={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
-          icon={Scale}
+          icon={Gavel}
           description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
+        />
+        <ModuleCard
+          href="/dashboard/judicial-simulation"
+          title="المحاكاة القضائية"
+          metric="تقدير الحكم المحتمل"
+          icon={Scale}
+          description="حلّل وقائعك ليحاكي حكيم نظر القاضي: التكييف، الدفوع، واتجاه الحكم المحتمل — بإسناد موثّق."
         />
         <ModuleCard
           href="/dashboard/consultations"
