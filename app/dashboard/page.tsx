@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, Gavel, GraduationCap, Paperclip, Scale, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { BookOpen, Briefcase, ClipboardList, Gavel, GraduationCap, Paperclip, Scale, ScanSearch, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
@@ -181,6 +181,20 @@ export default async function DashboardPage() {
           metric="تقدير الحكم المحتمل"
           icon={Scale}
           description="حلّل وقائعك ليحاكي حكيم نظر القاضي: التكييف، الدفوع، واتجاه الحكم المحتمل — بإسناد موثّق."
+        />
+        <ModuleCard
+          href="/dashboard/case-analysis"
+          title="تحليل القضايا"
+          metric="تحليل مُسنَد"
+          icon={ScanSearch}
+          description="توصيف النزاع، الوقائع المنتِجة، عبء الإثبات، المخاطر، ونقاط القوة والضعف — مع تقدير قوة الدعوى."
+        />
+        <ModuleCard
+          href="/dashboard/legal-agent"
+          title="الوكيل القانوني"
+          metric="خطة عمل عملية"
+          icon={ClipboardList}
+          description="يحوّل التحليل إلى خطة: استراتيجية، دفوع مصنّفة، بيّنات، خطة مرافعة، وتوصية — باستشهادات حقيقية فقط."
         />
         <ModuleCard
           href="/dashboard/consultations"
