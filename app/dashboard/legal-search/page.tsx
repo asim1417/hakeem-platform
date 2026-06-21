@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, FileText, Scale, Quote, ExternalLink } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,7 @@ export default async function LegalSearchPage({
   if (q.length >= 2) {
     try {
       data = await hybridSearch({ q, limit: 30 });
+      await recordSearch({ query: q, filters: activeType === "all" ? null : { type: activeType }, resultsCount: data.results.length });
     } catch {
       failed = true;
     }
