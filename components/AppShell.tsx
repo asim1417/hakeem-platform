@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, ScanSearch, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -16,7 +16,10 @@ type NavItem = {
 
 const navSections: Array<{ items: NavItem[] }> = [
   {
-    items: [{ href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard }]
+    items: [
+      { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
+      { href: "/dashboard/legal-search", label: "البحث الشامل", icon: Search }
+    ]
   },
   {
     items: [
@@ -39,7 +42,6 @@ const navSections: Array<{ items: NavItem[] }> = [
       { href: "/dashboard/legal-core", label: "النواة القانونية — المكتبة النظامية", icon: Database },
       { href: "/dashboard/legal-core/legal-issues", label: "المسائل القانونية", icon: Scale },
       { href: "/dashboard/knowledge-graph", label: "الرسم المعرفي (اختبار)", icon: Database },
-      { href: "/dashboard/legal-search", label: "البحث الهجين (اختبار)", icon: Database },
       { href: "/dashboard/legal-rag", label: "الذكاء القانوني RAG (اختبار)", icon: Sparkles },
       { href: "/dashboard/training", label: "التدريب", icon: GraduationCap }
     ]
@@ -117,9 +119,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <TopbarBreadcrumb />
           </div>
           <div className="topbar-right">
-            <form className="search-box" action="/dashboard/legal-core/search">
+            <form className="search-box" action="/dashboard/legal-search">
               <span>⌕</span>
-              <input name="q" aria-label="بحث" placeholder="بحث في النواة القانونية..." />
+              <input name="q" aria-label="بحث" placeholder="بحث شامل في الأنظمة والمواد والأحكام..." />
             </form>
             <div className="icon-pill" title="تسجيل الخروج">
               <LogOut size={16} />
