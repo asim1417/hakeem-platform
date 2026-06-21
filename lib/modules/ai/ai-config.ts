@@ -196,3 +196,83 @@ function maskKey(key: string): string {
   if (key.length <= 8) return "••••";
   return `${key.slice(0, 4)}••••${key.slice(-4)}`;
 }
+
+/** النموذج الافتراضي لكل مزوّد عند غياب تحديد صريح في الإعداد. */
+export function defaultModelFor(provider: AiProvider): string {
+  switch (provider) {
+    case "anthropic":
+      return "claude-sonnet-4-6";
+    case "openai":
+    case "custom":
+      return "gpt-4o-mini";
+    case "gemini":
+      return "gemini-1.5-flash";
+    default:
+      return "offline";
+  }
+}
+
+/**
+ * نداء إكمال خام موحّد لكل المزوّدين انطلاقاً من الإعداد الفعّال (DB أولاً ثم البيئة).
+ * مصدر واحد لمنطق الشبكة يستعمله callCentralProvider وresolveAiProvider معاً.
+ * يرمي عند فشل الشبكة/الاستجابة؛ يترك للمستدعي قرار السقوط المنظّم.
+ */
+export async function completeWithConfig(
+  cfg: EffectiveAiConfig,
+  system: string,
+  user: string,
+  maxTokens: number
+): Promise<string> {
+  if (cfg.provider === "offline" || !cfg.apiKey) return "";
+  const model = cfg.model || defaultModelFor(cfg.provider);
+  const mt = Math.min(Math.max(maxTokens, 1), 4096);
+  const sys = (system ?? "").trim();
+  const usr = String(user ?? "");
+
+  if (cfg.provider === "openai" || cfg.provider === "custom") {
+    const url =
+      cfg.provider === "custom" && cfg.baseUrl
+        ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions`
+        : "https://api.openai.com/v1/chat/completions";
+    const messages = [...(sys ? [{ role: "system", content: sys }] : []), { role: "user", content: usr }];
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, max_tokens: mt, messages, temperature: 0.2 })
+    });
+    if (!resp.ok) throw new Error(`provider ${resp.status}`);
+    const data = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    return data.choices?.[0]?.message?.content || "";
+  }
+
+  if (cfg.provider === "anthropic") {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model, max_tokens: mt, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
+    });
+    if (!resp.ok) throw new Error(`provider ${resp.status}`);
+    const data = (await resp.json()) as { content?: Array<{ text?: string }> };
+    return data.content?.map((p) => p.text).filter(Boolean).join("\n") || "";
+  }
+
+  if (cfg.provider === "gemini") {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}),
+          contents: [{ role: "user", parts: [{ text: usr }] }],
+          generationConfig: { maxOutputTokens: mt, temperature: 0.2 }
+        })
+      }
+    );
+    if (!resp.ok) throw new Error(`provider ${resp.status}`);
+    const data = (await resp.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    return data.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n") || "";
+  }
+
+  return "";
+}

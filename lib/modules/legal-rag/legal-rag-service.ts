@@ -13,7 +13,7 @@ import {
 } from "./context-builder";
 import { GROUNDING_FALLBACK, NO_EXPLICIT_TEXT, hasSufficientGrounding } from "./grounding-guard";
 import { fetchLinkedJudgments } from "./judgment-links";
-import { getAiProvider } from "@/lib/modules/ai/ai-provider";
+import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 
 export interface RagResult {
   answer: string;
@@ -39,12 +39,12 @@ export interface RagResult {
 
 // نتيجة فارغة/غير مُسنَدة — تُرجِع مع ذلك المزوّد المُهيّأ فعلاً (لا "none" دائماً)،
 // كي تميّز الواجهة بين «لا توجد مصادر كافية» و«لم يُضبط مزوّد ذكاء».
-function emptyResult(
+async function emptyResult(
   answer: string,
   confidence: number,
   providers: { name: string; status: string }[]
-): RagResult {
-  const ai = getAiProvider();
+): Promise<RagResult> {
+  const ai = await resolveAiProvider();
   const providerConfigured = ai.name !== "mock";
   return {
     answer,
@@ -143,7 +143,7 @@ export async function legalRag(question: string): Promise<RagResult> {
 
   // 5) حارس الإسناد — لا إجابة بلا مصادر كافية
   if (!hasSufficientGrounding(context)) {
-    return emptyResult(GROUNDING_FALLBACK, context.confidence, search.providers);
+    return await emptyResult(GROUNDING_FALLBACK, context.confidence, search.providers);
   }
 
   // 6) الاستشهادات (مُتحقّق من وجودها فعلاً)

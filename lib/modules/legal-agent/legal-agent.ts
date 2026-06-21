@@ -4,7 +4,7 @@
 //             → AI Provider → Legal Agent → Action Plan.
 // لا يعدّل أيّاً من المراحل السابقة؛ يستدعيها فقط.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
-import { getAiProvider } from "@/lib/modules/ai/ai-provider";
+import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { classifyDefense, type DefenseCategory } from "@/lib/modules/case-analysis/defense-classifier";
@@ -61,7 +61,7 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     ? `${PRELIMINARY_DISCLAIMER} — مبدئياً: ${strategy.practicalRecommendation}`
     : strategy.practicalRecommendation;
 
-  const aiMeta = getAiProvider();
+  const aiMeta = await resolveAiProvider();
   return {
     caseSummary: strategy.caseSummary,
     disputeCharacterization: analysis.disputeCharacterization,
