@@ -15,8 +15,8 @@ import "server-only";
 const BASE = (process.env.TURATH_API_BASE || "https://api.turath.io").replace(/\/$/, "");
 const APP_BASE = (process.env.TURATH_APP_BASE || "https://app.turath.io").replace(/\/$/, "");
 const SEARCH_PATH = process.env.TURATH_SEARCH_PATH || "/search?q={q}&precision=2";
-// حقل الصفحة المستعمَل في رابط تراث العميق: page (المطبوعة) افتراضاً، أو page_id.
-const URL_PAGE_FIELD = (process.env.TURATH_URL_PAGE_FIELD || "page").trim();
+// رابط تراث العميق: /book/{id}?page={page_id} — قيمة page_id (الفهرس المطلق).
+const URL_PAGE_FIELD = (process.env.TURATH_URL_PAGE_FIELD || "page_id").trim();
 
 export interface TurathResult {
   id: string;
@@ -72,11 +72,11 @@ function normalizeRows(data: any, limit: number): TurathResult[] {
       const vol = meta?.vol ?? r?.vol ?? meta?.volume;
       const snippet = stripHtml(r?.text ?? r?.snip ?? r?.snippet ?? "");
 
-      // رقم الصفحة في الرابط: page_id افتراضاً (فهرس مطلق فريد)، مع fallback.
+      // رابط تراث: /book/{id}?page={page_id} (فهرس مطلق فريد عبر query param).
       const urlPage = meta?.[URL_PAGE_FIELD] ?? pageId ?? page;
       const url =
         bookId != null
-          ? `${APP_BASE}/book/${bookId}${urlPage != null ? `/${urlPage}` : ""}`
+          ? `${APP_BASE}/book/${bookId}${urlPage != null ? `?page=${encodeURIComponent(String(urlPage))}` : ""}`
           : APP_BASE;
 
       return {
