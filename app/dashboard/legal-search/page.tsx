@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
+import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { TurathSourcesPanel } from "@/components/turath/TurathSourcesPanel";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,7 @@ export default async function LegalSearchPage({
   const activeType = FILTERS.some((f) => f.key === searchParams.type) ? searchParams.type! : "all";
   const activeSystem = (searchParams.system ?? "").trim();
   const activeCourt = (searchParams.court ?? "").trim();
+  const highlightTerms = joinSearchTerms(q);
 
   let data: HybridSearchResponse | null = null;
   let failed = false;
@@ -269,7 +271,11 @@ export default async function LegalSearchPage({
                     </span>
                   </div>
 
-                  {r.snippet && <p className="mt-2 line-clamp-2 leading-7 text-sm text-[var(--ink-80)]">{r.snippet}</p>}
+                  {r.snippet && (
+                    <p className="mt-2 line-clamp-2 leading-7 text-sm text-[var(--ink-80)]">
+                      <HighlightedSearchText text={r.snippet} terms={highlightTerms} />
+                    </p>
+                  )}
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--ink-60)]">
                     <span className="text-[var(--ink-40)]">المصادر:</span>

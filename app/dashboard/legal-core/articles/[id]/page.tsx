@@ -20,6 +20,14 @@ import { getFiqhIssuesForArticle } from "@/lib/modules/legal-core/fiqh-issues";
 
 export const dynamic = "force-dynamic";
 
+// لون حالة المادة: ساري=أخضر، ملغى=عقيق، معدّل=كهرماني.
+function statusTone(status?: string | null): "emerald" | "amber" | "ruby" {
+  const s = (status ?? "").trim();
+  if (s.includes("ملغ") || s.includes("منسوخ") || s.includes("موقوف")) return "ruby";
+  if (s.includes("معدّل") || s.includes("معدل") || s.includes("مؤقت")) return "amber";
+  return "emerald";
+}
+
 export default async function LegalCoreArticlePage({ params, searchParams }: { params: { id: string }; searchParams?: { q?: string } }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
@@ -90,7 +98,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                   <h2 className="mt-2 font-judicial text-4xl font-bold text-[var(--navy)]">المادة {article.articleNumber.toLocaleString("ar-SA")}</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <LegalTopicBadge tone="emerald">{article.status || "سارية"}</LegalTopicBadge>
+                  <LegalTopicBadge tone={statusTone(article.status)}>{article.status || "سارية"}</LegalTopicBadge>
                   {article.classification ? <LegalTopicBadge>{article.classification}</LegalTopicBadge> : null}
                 </div>
               </div>
@@ -161,7 +169,9 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">النظام</dt><dd className="text-left font-semibold text-[var(--navy)]">{article.lawName}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">رقم المادة</dt><dd className="font-mono-legal text-[var(--gold)]">{article.articleNumber.toLocaleString("ar-SA")}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">التصنيف</dt><dd>{article.classification ?? "غير محدد"}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">المرسوم الملكي</dt><dd className="text-left font-mono-legal text-[var(--gold)]">{article.royalDecree?.trim() || "غير مُدخَل"}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">تاريخ النفاذ</dt><dd>{article.effectiveFrom ? article.effectiveFrom.toLocaleDateString("ar-SA") : "غير مدخل"}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">الحالة</dt><dd><LegalTopicBadge tone={statusTone(article.status)}>{article.status || "سارية"}</LegalTopicBadge></dd></div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button className="btn btn-outline" type="button"><Link2 size={16} /> ربط بمسألة</button>
@@ -169,7 +179,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
               </div>
             </LegalCoreCard>
 
-            <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} />
+            <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} />
             <FiqhIssuesPanel issues={fiqhIssues} />
             <ExplanationPanel />
             <ComparativeLawPanel />

@@ -174,14 +174,49 @@ export function LegalTopicBadge({ children, tone = "gold" }: { children: ReactNo
   return <span className={`inline-flex items-center rounded-full border px-3 py-1 font-display-ar text-xs font-semibold ${cls}`}>{children}</span>;
 }
 
-export function LegalCitationBlock({ lawName, articleNumber, content }: { lawName: string; articleNumber: number; content: string }) {
+/** صيغة استناد رسمية موحّدة: النظام، المادة (رقم)، المرسوم الملكي + تاريخ النفاذ. */
+export function buildOfficialCitation(input: {
+  lawName: string;
+  articleNumber: number;
+  royalDecree?: string | null;
+  effectiveFrom?: Date | string | null;
+}): string {
+  const parts = [`${input.lawName}، المادة (${input.articleNumber.toLocaleString("ar-SA")})`];
+  if (input.royalDecree?.trim()) parts.push(`الصادر بالمرسوم الملكي رقم ${input.royalDecree.trim()}`);
+  if (input.effectiveFrom) {
+    const d = typeof input.effectiveFrom === "string" ? new Date(input.effectiveFrom) : input.effectiveFrom;
+    if (!Number.isNaN(d.getTime())) parts.push(`تاريخ النفاذ ${d.toLocaleDateString("ar-SA")}`);
+  }
+  return parts.join("، ") + ".";
+}
+
+export function LegalCitationBlock({
+  lawName,
+  articleNumber,
+  content,
+  royalDecree,
+  effectiveFrom
+}: {
+  lawName: string;
+  articleNumber: number;
+  content: string;
+  royalDecree?: string | null;
+  effectiveFrom?: Date | string | null;
+}) {
+  const official = buildOfficialCitation({ lawName, articleNumber, royalDecree, effectiveFrom });
   return (
     <div id="citation" className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
       <div className="flex items-center gap-2 font-display-ar text-sm font-bold text-[var(--navy)]">
         <Copy size={16} className="text-[var(--gold)]" />
-        صيغة الاستشهاد
+        صيغة الاستناد الرسمية
       </div>
-      <p className="mt-3 font-mono-legal text-sm leading-7 text-[var(--ink-80)]">{lawName}، المادة {articleNumber.toLocaleString("ar-SA")}: {content.slice(0, 220)}...</p>
+      <p className="mt-3 font-mono-legal text-sm leading-7 text-[var(--navy)]">{official}</p>
+      {royalDecree?.trim() ? null : (
+        <p className="mt-2 text-[11px] text-[var(--amber)]">رقم المرسوم الملكي غير مُدخَل لهذه المادة بعد.</p>
+      )}
+      <p className="mt-3 border-t border-[var(--gold-border)] pt-3 font-mono-legal text-xs leading-7 text-[var(--ink-60)]">
+        نصّ مرجعي: {content.slice(0, 200)}…
+      </p>
     </div>
   );
 }

@@ -75,8 +75,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app" dir="rtl">
+      <a href="#main-content" className="skip-link">تخطٍّ إلى المحتوى الرئيسي</a>
       <div className="sidebar-overlay" id="sidebar-overlay" aria-hidden />
-      <aside className="sidebar" id="sidebar">
+      <aside className="sidebar" id="sidebar" aria-label="التنقّل الرئيسي">
         <div className="sidebar-inner">
           <Link href="/dashboard" className="brand">
             <div className="brand-mark">ح</div>
@@ -128,7 +129,14 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <div className="content">{children}</div>
+        <div className="content" id="main-content">{children}</div>
+        <footer className="app-foot">
+          <span>منصة حكيم — المعرفة القضائية السعودية</span>
+          <nav className="app-foot-links" aria-label="روابط نظامية">
+            <Link href="/privacy">سياسة الخصوصية</Link>
+            <Link href="/terms">شروط الاستخدام</Link>
+          </nav>
+        </footer>
       </main>
     </div>
   );
