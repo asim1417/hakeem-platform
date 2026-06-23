@@ -74,7 +74,7 @@ export const postgresProvider: SearchProvider = {
           score: normalizeLexicalScore(a.relevanceScore, maxRel),
           source: "postgres",
           reason: a.relevanceReason || "تطابق نصّي في المادة",
-          meta: { matchedBy: "lexical", sourceType: "article", articleId: a.articleId, systemName: a.systemName, articleNumber: a.articleNumber },
+          meta: { matchedBy: "lexical", sourceType: "article", articleId: a.articleId, systemName: a.systemName, articleNumber: a.articleNumber, classification: a.classification ?? undefined, status: a.status ?? undefined },
         });
       }
     } catch {
@@ -85,7 +85,7 @@ export const postgresProvider: SearchProvider = {
       // الأحكام القضائية — مطابقة كلمات السؤال الدالّة.
       const rulings = await prisma.judicialCase.findMany({
         where: tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
-        select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true },
+        select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, decisionDate: true, decisionDateText: true },
         take,
       });
       for (const r of rulings) {
@@ -93,6 +93,8 @@ export const postgresProvider: SearchProvider = {
         const inTitle = tokens.some((t) => (r.judgmentTitle ?? "").includes(t)) || (r.judgmentTitle ?? "").includes(term);
         const hits = tokens.filter((t) => hay.includes(t)).length;
         const base = inTitle ? 0.78 : 0.58;
+        // السنة الميلادية للحكم (للفلترة الزمنية) — من التاريخ المهيكل إن وُجد.
+        const year = r.decisionDate ? String(r.decisionDate.getFullYear()) : undefined;
         results.push({
           type: "ruling",
           id: r.id,
@@ -101,7 +103,7 @@ export const postgresProvider: SearchProvider = {
           score: Math.min(0.9, base + Math.min(hits, 3) * 0.03),
           source: "postgres",
           reason: `تطابق نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}`,
-          meta: { matchedBy: "lexical", sourceType: "ruling", caseNo: r.caseNo, decisionNo: r.decisionNo, court: r.court },
+          meta: { matchedBy: "lexical", sourceType: "ruling", caseNo: r.caseNo, decisionNo: r.decisionNo, court: r.court, year, decisionDateText: r.decisionDateText ?? undefined },
         });
       }
 

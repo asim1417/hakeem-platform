@@ -54,7 +54,7 @@ function detailHref(r: MergedResult): string | null {
 export default async function LegalSearchPage({
   searchParams,
 }: {
-  searchParams: { q?: string; type?: string; system?: string; court?: string };
+  searchParams: { q?: string; type?: string; system?: string; court?: string; classification?: string; status?: string; year?: string };
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
@@ -62,6 +62,9 @@ export default async function LegalSearchPage({
   const activeType = FILTERS.some((f) => f.key === searchParams.type) ? searchParams.type! : "all";
   const activeSystem = (searchParams.system ?? "").trim();
   const activeCourt = (searchParams.court ?? "").trim();
+  const activeClassification = (searchParams.classification ?? "").trim();
+  const activeStatus = (searchParams.status ?? "").trim();
+  const activeYear = (searchParams.year ?? "").trim();
   const highlightTerms = joinSearchTerms(q);
 
   let data: HybridSearchResponse | null = null;
@@ -75,6 +78,9 @@ export default async function LegalSearchPage({
           ...(activeType !== "all" ? { type: activeType } : {}),
           ...(activeSystem ? { system: activeSystem } : {}),
           ...(activeCourt ? { court: activeCourt } : {}),
+          ...(activeClassification ? { classification: activeClassification } : {}),
+          ...(activeStatus ? { status: activeStatus } : {}),
+          ...(activeYear ? { year: activeYear } : {}),
         },
         resultsCount: data.results.length,
       });
@@ -92,18 +98,32 @@ export default async function LegalSearchPage({
   };
 
   // تسهيلات الفلترة (من كامل النتائج كي لا تختفي الخيارات)
-  const systemFacets = facetsOf(all.filter((r) => r.type === "article"), "systemName");
-  const courtFacets = facetsOf(all.filter((r) => r.type === "ruling"), "court");
+  const articleRows = all.filter((r) => r.type === "article");
+  const rulingRows = all.filter((r) => r.type === "ruling");
+  const systemFacets = facetsOf(articleRows, "systemName");
+  const classificationFacets = facetsOf(articleRows, "classification");
+  const statusFacets = facetsOf(articleRows, "status");
+  const courtFacets = facetsOf(rulingRows, "court");
+  // سنوات الأحكام مرتّبة تنازليًا (الأحدث أولاً).
+  const yearFacets = facetsOf(rulingRows, "year").sort((a, b) => Number(b.value) - Number(a.value));
 
-  // الفلترة: النوع + النظام (يضيّق المواد) + المحكمة (تضيّق الأحكام)
+  // الفلترة: النوع + النظام/التصنيف/الحالة (تضيّق المواد) + المحكمة/السنة (تضيّق الأحكام)
   const results = all.filter((r) => {
     if (activeType !== "all" && r.type !== activeType) return false;
-    if (activeSystem && r.type === "article" && metaStr(r, "systemName") !== activeSystem) return false;
-    if (activeCourt && r.type === "ruling" && metaStr(r, "court") !== activeCourt) return false;
+    if (r.type === "article") {
+      if (activeSystem && metaStr(r, "systemName") !== activeSystem) return false;
+      if (activeClassification && metaStr(r, "classification") !== activeClassification) return false;
+      if (activeStatus && metaStr(r, "status") !== activeStatus) return false;
+    }
+    if (r.type === "ruling") {
+      if (activeCourt && metaStr(r, "court") !== activeCourt) return false;
+      if (activeYear && metaStr(r, "year") !== activeYear) return false;
+    }
     return true;
   });
 
-  const hasActiveFilter = activeType !== "all" || Boolean(activeSystem) || Boolean(activeCourt);
+  const hasActiveFilter =
+    activeType !== "all" || Boolean(activeSystem) || Boolean(activeCourt) || Boolean(activeClassification) || Boolean(activeStatus) || Boolean(activeYear);
   // يبني رابطًا يحافظ على بقية الفلاتر مع تبديل النوع.
   const typeHref = (typeKey: string) => {
     const p = new URLSearchParams();
@@ -111,6 +131,9 @@ export default async function LegalSearchPage({
     if (typeKey !== "all") p.set("type", typeKey);
     if (activeSystem) p.set("system", activeSystem);
     if (activeCourt) p.set("court", activeCourt);
+    if (activeClassification) p.set("classification", activeClassification);
+    if (activeStatus) p.set("status", activeStatus);
+    if (activeYear) p.set("year", activeYear);
     return `/dashboard/legal-search?${p.toString()}`;
   };
 
@@ -164,8 +187,8 @@ export default async function LegalSearchPage({
         </div>
       )}
 
-      {/* الفلاتر المتقدمة: النظام + المحكمة (مشتقّة من النتائج) */}
-      {data && (systemFacets.length > 0 || courtFacets.length > 0) && (
+      {/* الفلاتر المتقدمة: النظام/التصنيف/الحالة (مواد) + المحكمة/السنة (أحكام) */}
+      {data && (systemFacets.length > 0 || courtFacets.length > 0 || classificationFacets.length > 0 || yearFacets.length > 0) && (
         <form action="/dashboard/legal-search" className="mt-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-[var(--paper)] p-3">
           <input type="hidden" name="q" value={q} />
           {activeType !== "all" ? <input type="hidden" name="type" value={activeType} /> : null}
@@ -176,6 +199,7 @@ export default async function LegalSearchPage({
             <select
               name="system"
               defaultValue={activeSystem}
+              aria-label="تصفية بالنظام"
               className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل الأنظمة</option>
@@ -186,14 +210,60 @@ export default async function LegalSearchPage({
               ))}
             </select>
           )}
+          {classificationFacets.length > 0 && (
+            <select
+              name="classification"
+              defaultValue={activeClassification}
+              aria-label="تصفية بالتصنيف"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+            >
+              <option value="">كل التصنيفات</option>
+              {classificationFacets.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.value} ({f.count})
+                </option>
+              ))}
+            </select>
+          )}
+          {statusFacets.length > 0 && (
+            <select
+              name="status"
+              defaultValue={activeStatus}
+              aria-label="تصفية بحالة المادة"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+            >
+              <option value="">كل الحالات</option>
+              {statusFacets.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.value} ({f.count})
+                </option>
+              ))}
+            </select>
+          )}
           {courtFacets.length > 0 && (
             <select
               name="court"
               defaultValue={activeCourt}
+              aria-label="تصفية بالمحكمة"
               className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل المحاكم</option>
               {courtFacets.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.value} ({f.count})
+                </option>
+              ))}
+            </select>
+          )}
+          {yearFacets.length > 0 && (
+            <select
+              name="year"
+              defaultValue={activeYear}
+              aria-label="تصفية بسنة الحكم"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+            >
+              <option value="">كل السنوات</option>
+              {yearFacets.map((f) => (
                 <option key={f.value} value={f.value}>
                   {f.value} ({f.count})
                 </option>

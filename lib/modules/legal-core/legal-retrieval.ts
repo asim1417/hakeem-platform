@@ -21,6 +21,7 @@ export type LegalCoreResult = {
   articleTitle: string;
   articleText: string;
   classification: string | null;
+  status: string | null;
   chapter: string | null;
   relevanceReason: string;
   citationLabel: string;
@@ -673,6 +674,7 @@ function mapArticleResult(
     articleTitle: article.title,
     articleText: article.content,
     classification: article.classification,
+    status: article.status,
     chapter: article.chapter,
     relevanceReason: query ? `تطابق ${matchTypeLabel(searchType)} مع: ${query.slice(0, 80)}` : "نتيجة عامة من النواة القانونية.",
     citationLabel: buildSingleCitationLabel(systemName, article.articleNumber),
