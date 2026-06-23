@@ -114,7 +114,10 @@ export function LegalCoreFilterPanel({ children }: { children: ReactNode }) {
   );
 }
 
-export function LegalSystemCard({ system }: { system: { lawName: string; classification: string | null; count: number } }) {
+export function LegalSystemCard({ system }: { system: { id?: string | null; lawName: string; classification: string | null; count: number } }) {
+  const viewHref = system.id
+    ? `/dashboard/legal-core/systems/${encodeURIComponent(system.id)}`
+    : `/dashboard/legal-core/systems/${encodeURIComponent(system.lawName)}`;
   return (
     <article className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)]">
       <div className="flex items-start justify-between gap-3">
@@ -130,10 +133,12 @@ export function LegalSystemCard({ system }: { system: { lawName: string; classif
         <span className="text-xs text-[var(--ink-40)]">تاريخ النفاذ: عند التوفر</span>
       </div>
       <div className="mt-4 flex gap-2">
-        <Link href={`/dashboard/legal-core/search?system=${encodeURIComponent(system.lawName)}`} className="btn btn-primary flex-1">
-          عرض المواد
+        <Link href={viewHref} className="btn btn-primary flex-1">
+          عرض شجرة المواد
         </Link>
-        <button className="btn btn-outline" type="button">تحرير</button>
+        <Link href={`/dashboard/legal-core/search?system=${encodeURIComponent(system.lawName)}`} className="btn btn-outline">
+          بحث
+        </Link>
       </div>
     </article>
   );

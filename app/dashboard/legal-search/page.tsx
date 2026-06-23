@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, FileText, Scale, Quote, ExternalLink } from "lucide-react";
+import { Search, FileText, Scale, Quote, ExternalLink, Filter, X } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
@@ -29,6 +29,21 @@ const FILTERS: Array<{ key: string; label: string }> = [
   { key: "principle", label: "المبادئ" },
 ];
 
+function metaStr(r: MergedResult, key: string): string | null {
+  const v = (r.meta as Record<string, unknown> | undefined)?.[key];
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/** يبني قائمة تسهيلات (facets) مرتّبة بالعدد التنازلي. */
+function facetsOf(rows: MergedResult[], key: string): Array<{ value: string; count: number }> {
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    const v = metaStr(r, key);
+    if (v) map.set(v, (map.get(v) ?? 0) + 1);
+  }
+  return [...map.entries()].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
+}
+
 function detailHref(r: MergedResult): string | null {
   if (r.type === "article") return `/dashboard/legal-core/articles/${r.id}`;
   if (r.type === "ruling") return `/dashboard/legal-core/judgments/${r.id}`;
@@ -38,19 +53,29 @@ function detailHref(r: MergedResult): string | null {
 export default async function LegalSearchPage({
   searchParams,
 }: {
-  searchParams: { q?: string; type?: string };
+  searchParams: { q?: string; type?: string; system?: string; court?: string };
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
   const q = (searchParams.q ?? "").trim();
   const activeType = FILTERS.some((f) => f.key === searchParams.type) ? searchParams.type! : "all";
+  const activeSystem = (searchParams.system ?? "").trim();
+  const activeCourt = (searchParams.court ?? "").trim();
 
   let data: HybridSearchResponse | null = null;
   let failed = false;
   if (q.length >= 2) {
     try {
       data = await hybridSearch({ q, limit: 30 });
-      await recordSearch({ query: q, filters: activeType === "all" ? null : { type: activeType }, resultsCount: data.results.length });
+      await recordSearch({
+        query: q,
+        filters: {
+          ...(activeType !== "all" ? { type: activeType } : {}),
+          ...(activeSystem ? { system: activeSystem } : {}),
+          ...(activeCourt ? { court: activeCourt } : {}),
+        },
+        resultsCount: data.results.length,
+      });
     } catch {
       failed = true;
     }
@@ -63,7 +88,29 @@ export default async function LegalSearchPage({
     ruling: all.filter((r) => r.type === "ruling").length,
     principle: all.filter((r) => r.type === "principle").length,
   };
-  const results = activeType === "all" ? all : all.filter((r) => r.type === activeType);
+
+  // تسهيلات الفلترة (من كامل النتائج كي لا تختفي الخيارات)
+  const systemFacets = facetsOf(all.filter((r) => r.type === "article"), "systemName");
+  const courtFacets = facetsOf(all.filter((r) => r.type === "ruling"), "court");
+
+  // الفلترة: النوع + النظام (يضيّق المواد) + المحكمة (تضيّق الأحكام)
+  const results = all.filter((r) => {
+    if (activeType !== "all" && r.type !== activeType) return false;
+    if (activeSystem && r.type === "article" && metaStr(r, "systemName") !== activeSystem) return false;
+    if (activeCourt && r.type === "ruling" && metaStr(r, "court") !== activeCourt) return false;
+    return true;
+  });
+
+  const hasActiveFilter = activeType !== "all" || Boolean(activeSystem) || Boolean(activeCourt);
+  // يبني رابطًا يحافظ على بقية الفلاتر مع تبديل النوع.
+  const typeHref = (typeKey: string) => {
+    const p = new URLSearchParams();
+    p.set("q", q);
+    if (typeKey !== "all") p.set("type", typeKey);
+    if (activeSystem) p.set("system", activeSystem);
+    if (activeCourt) p.set("court", activeCourt);
+    return `/dashboard/legal-search?${p.toString()}`;
+  };
 
   return (
     <div dir="rtl">
@@ -98,11 +145,10 @@ export default async function LegalSearchPage({
         <div className="mt-4 flex flex-wrap gap-2">
           {FILTERS.map((f) => {
             const isActive = f.key === activeType;
-            const href = `/dashboard/legal-search?q=${encodeURIComponent(q)}${f.key === "all" ? "" : `&type=${f.key}`}`;
             return (
               <Link
                 key={f.key}
-                href={href}
+                href={typeHref(f.key)}
                 className={`rounded-full border px-4 py-1.5 text-sm transition ${
                   isActive
                     ? "border-[var(--navy)] bg-[var(--navy)] text-white"
@@ -114,6 +160,54 @@ export default async function LegalSearchPage({
             );
           })}
         </div>
+      )}
+
+      {/* الفلاتر المتقدمة: النظام + المحكمة (مشتقّة من النتائج) */}
+      {data && (systemFacets.length > 0 || courtFacets.length > 0) && (
+        <form action="/dashboard/legal-search" className="mt-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-[var(--paper)] p-3">
+          <input type="hidden" name="q" value={q} />
+          {activeType !== "all" ? <input type="hidden" name="type" value={activeType} /> : null}
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ink-60)]">
+            <Filter size={14} className="text-[var(--gold)]" /> تصفية متقدّمة
+          </span>
+          {systemFacets.length > 0 && (
+            <select
+              name="system"
+              defaultValue={activeSystem}
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+            >
+              <option value="">كل الأنظمة</option>
+              {systemFacets.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.value} ({f.count})
+                </option>
+              ))}
+            </select>
+          )}
+          {courtFacets.length > 0 && (
+            <select
+              name="court"
+              defaultValue={activeCourt}
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+            >
+              <option value="">كل المحاكم</option>
+              {courtFacets.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.value} ({f.count})
+                </option>
+              ))}
+            </select>
+          )}
+          <button type="submit" className="btn btn-primary px-4 py-1.5 text-sm">تطبيق</button>
+          {hasActiveFilter && (
+            <Link
+              href={`/dashboard/legal-search?q=${encodeURIComponent(q)}`}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ruby)] hover:underline"
+            >
+              <X size={13} /> إعادة الضبط
+            </Link>
+          )}
+        </form>
       )}
 
       {/* حالة المزوّدات + عدد النتائج */}
