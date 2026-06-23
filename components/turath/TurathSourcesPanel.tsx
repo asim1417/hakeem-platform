@@ -7,8 +7,10 @@ interface TurathResult {
   id: string;
   bookTitle: string;
   author?: string;
+  category?: string;
   snippet?: string;
   page?: string;
+  volume?: string;
   url: string;
 }
 
@@ -81,12 +83,12 @@ export function TurathSourcesPanel({ query }: { query: string }) {
       ) : (
         <ul className="mt-3 space-y-2 text-sm">
           {results.map((r) => (
-            <li key={r.id} className="border-t border-[var(--ink-08)] pt-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <BookOpen size={13} className="text-[var(--gold-dark)]" />
+            <li key={r.id} className="border-t border-[var(--ink-08)] pt-3">
+              {/* بطاقة الكتاب: الاسم + المؤلف + القسم + الجزء/الصفحة */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <BookOpen size={14} className="text-[var(--gold-dark)]" />
                 <span className="t-display font-bold text-[var(--navy)]">{r.bookTitle}</span>
                 {r.author ? <span className="text-xs text-[var(--ink-60)]">— {r.author}</span> : null}
-                {r.page ? <span className="text-xs text-[var(--ink-40)] tabular-nums">ص {r.page}</span> : null}
                 <a
                   href={r.url}
                   target="_blank"
@@ -96,7 +98,24 @@ export function TurathSourcesPanel({ query }: { query: string }) {
                   فتح في تراث <ExternalLink size={12} />
                 </a>
               </div>
-              {r.snippet ? <p className="mt-1 leading-7 text-[var(--ink-80)]">{r.snippet}</p> : null}
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {r.category ? (
+                  <span className="rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2 py-0.5 text-[11px] text-[var(--navy)]">
+                    القسم: {r.category}
+                  </span>
+                ) : null}
+                {r.volume ? (
+                  <span className="rounded bg-[var(--ink-04)] px-1.5 py-0.5 text-[11px] text-[var(--ink-60)] tabular-nums">
+                    ج {r.volume}
+                  </span>
+                ) : null}
+                {r.page ? (
+                  <span className="rounded bg-[var(--ink-04)] px-1.5 py-0.5 text-[11px] text-[var(--ink-60)] tabular-nums">
+                    ص {r.page}
+                  </span>
+                ) : null}
+              </div>
+              {r.snippet ? <p className="mt-1.5 leading-7 text-[var(--ink-80)]">{r.snippet}</p> : null}
             </li>
           ))}
         </ul>
