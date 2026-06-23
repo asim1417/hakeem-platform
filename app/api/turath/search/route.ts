@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { searchTurath } from "@/lib/modules/turath/turath-client";
+import { searchTurath, fetchTurathRaw } from "@/lib/modules/turath/turath-client";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,11 @@ export async function GET(request: NextRequest) {
 
   if (q.length < 2) {
     return NextResponse.json({ ok: false, error: "أدخل عبارة بحث (حرفان فأكثر).", results: [] }, { status: 400 });
+  }
+
+  // وضع تشخيص مؤقّت: يُظهر شكل استجابة تراث الخام لضبط المحوّل بدقّة.
+  if (params.get("debug") === "1") {
+    return NextResponse.json(await fetchTurathRaw(q));
   }
 
   const data = await searchTurath(q, limit);

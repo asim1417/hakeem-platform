@@ -38,6 +38,41 @@ export interface TurathSearchResponse {
   note?: string;
 }
 
+/**
+ * تشخيص فقط: يعيد استجابة تراث الخام (مع المفاتيح العليا) لمعرفة شكلها الحقيقي
+ * وضبط normalize بدقّة. يُستدعى عبر /api/turath/search?debug=1 (محمي بنفس الصلاحية).
+ */
+export async function fetchTurathRaw(query: string): Promise<unknown> {
+  const q = (query ?? "").trim();
+  const path = SEARCH_PATH.replace("{q}", encodeURIComponent(q));
+  try {
+    const resp = await fetch(`${BASE}${path}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
+    const body = await resp.json().catch(() => null);
+    // مفاتيح المستوى الأعلى + أوّل صف نتيجة + عيّنة من جداول البحث — يكفي لضبط المحوّل.
+    const b = body as Record<string, unknown> | null;
+    const topKeys = b && typeof b === "object" ? Object.keys(b) : [];
+    const firstRow = Array.isArray((b as any)?.data) ? (b as any).data[0]
+      : Array.isArray((b as any)?.results) ? (b as any).results[0]
+      : Array.isArray(b) ? (b as any)[0] : null;
+    const sample = (k: string) => {
+      const v = (b as any)?.[k];
+      if (Array.isArray(v)) return v.slice(0, 2);
+      if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).slice(0, 2));
+      return v;
+    };
+    return {
+      status: resp.status,
+      topKeys,
+      firstRow,
+      books: sample("books"),
+      authors: sample("authors"),
+      cats: sample("cats") ?? sample("categories"),
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "fetch failed" };
+  }
+}
+
 export async function searchTurath(query: string, limit = 10): Promise<TurathSearchResponse> {
   const q = (query ?? "").trim();
   if (q.length < 2) return { ok: true, query: q, results: [], source: "turath", configured: true };
