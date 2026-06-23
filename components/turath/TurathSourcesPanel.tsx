@@ -17,6 +17,7 @@ interface TurathResult {
 interface TurathResponse {
   ok: boolean;
   results: TurathResult[];
+  total?: number;
   configured?: boolean;
   note?: string;
 }
@@ -28,6 +29,7 @@ interface TurathResponse {
 export function TurathSourcesPanel({ query }: { query: string }) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [results, setResults] = useState<TurathResult[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,11 +42,12 @@ export function TurathSourcesPanel({ query }: { query: string }) {
     let cancelled = false;
     setState("loading");
     setNote(null);
-    fetch(`/api/turath/search?q=${encodeURIComponent(q)}`)
+    fetch(`/api/turath/search?q=${encodeURIComponent(q)}&limit=50`)
       .then((r) => r.json() as Promise<TurathResponse>)
       .then((data) => {
         if (cancelled) return;
         setResults(data.results ?? []);
+        setTotal(typeof data.total === "number" ? data.total : null);
         setNote(data.note ?? null);
         setState(data.ok ? "done" : "error");
       })
@@ -74,6 +77,13 @@ export function TurathSourcesPanel({ query }: { query: string }) {
   return (
     <div className="card mt-5 border-r-4" style={{ borderRightColor: "var(--gold)" }}>
       <Header />
+      {state === "done" && results.length > 0 ? (
+        <p className="mt-2 text-xs text-[var(--ink-60)]">
+          {total != null && total > results.length
+            ? `يُعرض ${results.length.toLocaleString("ar-SA")} من ${total.toLocaleString("ar-SA")} نتيجة في تراث`
+            : `${results.length.toLocaleString("ar-SA")} نتيجة من تراث`}
+        </p>
+      ) : null}
       {state === "loading" ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-[var(--ink-60)]">
           <Loader2 size={15} className="animate-spin text-[var(--gold)]" /> جارٍ البحث في مكتبة تراث…

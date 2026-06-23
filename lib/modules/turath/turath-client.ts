@@ -15,8 +15,8 @@ import "server-only";
 const BASE = (process.env.TURATH_API_BASE || "https://api.turath.io").replace(/\/$/, "");
 const APP_BASE = (process.env.TURATH_APP_BASE || "https://app.turath.io").replace(/\/$/, "");
 const SEARCH_PATH = process.env.TURATH_SEARCH_PATH || "/search?q={q}&precision=2";
-// حقل الصفحة المستعمَل في رابط تراث العميق: page_id (فهرس مطلق) افتراضاً، أو page.
-const URL_PAGE_FIELD = (process.env.TURATH_URL_PAGE_FIELD || "page_id").trim();
+// حقل الصفحة المستعمَل في رابط تراث العميق: page (المطبوعة) افتراضاً، أو page_id.
+const URL_PAGE_FIELD = (process.env.TURATH_URL_PAGE_FIELD || "page").trim();
 
 export interface TurathResult {
   id: string;
@@ -33,6 +33,7 @@ export interface TurathSearchResponse {
   ok: boolean;
   query: string;
   results: TurathResult[];
+  total?: number; // إجمالي ما طابق في تراث (قد يفوق المعروض)
   source: "turath";
   configured: boolean;
   note?: string;
@@ -92,7 +93,7 @@ function normalizeRows(data: any, limit: number): TurathResult[] {
     .filter((x) => x.bookTitle);
 }
 
-export async function searchTurath(query: string, limit = 10): Promise<TurathSearchResponse> {
+export async function searchTurath(query: string, limit = 50): Promise<TurathSearchResponse> {
   const q = (query ?? "").trim();
   if (q.length < 2) return { ok: true, query: q, results: [], source: "turath", configured: true };
 
@@ -102,8 +103,9 @@ export async function searchTurath(query: string, limit = 10): Promise<TurathSea
     if (!resp.ok) {
       return { ok: false, query: q, results: [], source: "turath", configured: false, note: `turath HTTP ${resp.status}` };
     }
-    const data = (await resp.json()) as unknown;
-    return { ok: true, query: q, results: normalizeRows(data, limit), source: "turath", configured: true };
+    const data = (await resp.json()) as any;
+    const total = typeof data?.count === "number" ? data.count : typeof data?.total === "number" ? data.total : undefined;
+    return { ok: true, query: q, results: normalizeRows(data, limit), total, source: "turath", configured: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "تعذّر الوصول إلى تراث";
     const blocked = /allowlist|ENOTFOUND|EAI_AGAIN|fetch failed|forbidden|timeout|aborted/i.test(msg);

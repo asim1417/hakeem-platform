@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   const params = request.nextUrl.searchParams;
   const q = (params.get("q") ?? params.get("query") ?? "").trim();
-  const limit = Math.min(Number(params.get("limit")) || 10, 20);
+  const limit = Math.min(Number(params.get("limit")) || 50, 100);
 
   if (q.length < 2) {
     return NextResponse.json({ ok: false, error: "أدخل عبارة بحث (حرفان فأكثر).", results: [] }, { status: 400 });
