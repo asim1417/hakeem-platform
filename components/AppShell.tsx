@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, LogOut, Paperclip, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, LogOut, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -41,6 +41,7 @@ const navSections: Array<{ items: NavItem[] }> = [
     items: [
       { href: "/dashboard/legal-core", label: "النواة القانونية — المكتبة النظامية", icon: Database },
       { href: "/dashboard/legal-core/legal-issues", label: "المسائل القانونية", icon: Scale },
+      { href: "/dashboard/legal-core/principles", label: "المبادئ القضائية", icon: Quote },
       { href: "/dashboard/knowledge-graph", label: "الرسم المعرفي (اختبار)", icon: Database },
       { href: "/dashboard/legal-rag", label: "الذكاء القانوني RAG (اختبار)", icon: Sparkles },
       { href: "/dashboard/training", label: "التدريب", icon: GraduationCap }

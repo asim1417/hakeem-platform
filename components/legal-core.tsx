@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BookOpen, Copy, Database, FileText, Filter, Scale, Search, ShieldCheck } from "lucide-react";
+import { BookOpen, Copy, Database, FileText, Filter, History, Scale, Search, ShieldCheck } from "lucide-react";
 
 export function LegalCoreShell({ children }: { children: ReactNode }) {
   return <div className="min-h-screen rounded-[var(--r-2xl)] bg-[linear-gradient(180deg,var(--cream),var(--parchment))] text-[var(--ink)]">{children}</div>;
@@ -218,6 +218,67 @@ export function LegalCitationBlock({
         نصّ مرجعي: {content.slice(0, 200)}…
       </p>
     </div>
+  );
+}
+
+export type ArticleAmendmentView = {
+  id: string;
+  version: number;
+  changeType: string;
+  decreeRef: string | null;
+  hijriDate: string | null;
+  effectiveFrom: Date | string | null;
+  summary: string | null;
+  reviewStatus: string;
+};
+
+const CHANGE_TYPE_LABEL: Record<string, { label: string; tone: "emerald" | "amber" | "ruby" }> = {
+  amended: { label: "تعديل", tone: "amber" },
+  repealed: { label: "إلغاء", tone: "ruby" },
+  reinstated: { label: "إعادة سريان", tone: "emerald" },
+  corrected: { label: "تصحيح", tone: "amber" }
+};
+
+// سجلّ التعديلات والإصدارات التاريخية للمادة (حوكمة قانونية).
+export function AmendmentsPanel({ amendments }: { amendments: ArticleAmendmentView[] }) {
+  return (
+    <LegalCoreCard title="التعديلات والإصدارات" subtitle="تتبّع التغييرات النظامية على المادة عبر الزمن" icon={<History size={18} />}>
+      {amendments.length ? (
+        <ol className="relative space-y-4 border-r border-[var(--gold-border)] pe-4">
+          {amendments.map((a) => {
+            const meta = CHANGE_TYPE_LABEL[a.changeType] ?? { label: a.changeType, tone: "amber" as const };
+            const eff =
+              a.effectiveFrom != null
+                ? (typeof a.effectiveFrom === "string" ? new Date(a.effectiveFrom) : a.effectiveFrom)
+                : null;
+            return (
+              <li key={a.id} className="relative rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-mono-legal text-xs text-[var(--gold)]">الإصدار {a.version.toLocaleString("ar-SA")}</span>
+                  <div className="flex flex-wrap gap-2">
+                    <LegalTopicBadge tone={meta.tone}>{meta.label}</LegalTopicBadge>
+                    {a.reviewStatus !== "reviewed" ? <LegalTopicBadge tone="amber">بانتظار المراجعة</LegalTopicBadge> : null}
+                  </div>
+                </div>
+                {a.decreeRef ? <p className="mt-2 font-mono-legal text-xs text-[var(--navy)]">{a.decreeRef}</p> : null}
+                {a.hijriDate || eff ? (
+                  <p className="mt-1 text-xs text-[var(--ink-60)]">
+                    {a.hijriDate ? `التاريخ الهجري: ${a.hijriDate}` : ""}
+                    {a.hijriDate && eff ? " — " : ""}
+                    {eff && !Number.isNaN(eff.getTime()) ? `النفاذ: ${eff.toLocaleDateString("ar-SA")}` : ""}
+                  </p>
+                ) : null}
+                {a.summary ? <p className="mt-2 text-sm leading-7 text-[var(--ink-70)]">{a.summary}</p> : null}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <div className="rounded-[var(--r-md)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4 text-center text-sm leading-7 text-[var(--navy)]">
+          لا توجد تعديلات مسجّلة لهذه المادة. تُعدّ المادة سارية بنصّها الأصلي حتى يُوثَّق تعديل.
+        </div>
+      )}
+    </LegalCoreCard>
   );
 }
 

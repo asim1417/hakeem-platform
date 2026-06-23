@@ -12,12 +12,14 @@ export const dynamic = "force-dynamic";
 export default async function LegalCoreDashboardPage() {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const [stats, recentArticles, classifications, needsReview, judgmentsCount] = await Promise.all([
+  const [stats, recentArticles, classifications, needsReview, judgmentsCount, principlesCount, decreesCount] = await Promise.all([
     getLibraryStats().catch(() => ({ total: 0, systemCount: 0, laws: [] })),
     searchLegalArticles("", 4).catch(() => []),
     prisma.legalArticle.groupBy({ by: ["classification"], _count: { _all: true } }).catch(() => []),
     prisma.legalArticle.count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } }).catch(() => 0),
-    prisma.judicialCase.count().catch(() => 0)
+    prisma.judicialCase.count().catch(() => 0),
+    prisma.judicialPrinciple.count().catch(() => 0),
+    prisma.legalArticle.count({ where: { NOT: [{ royalDecree: null }, { royalDecree: "" }] } }).catch(() => 0)
   ]);
 
   const classificationCount = classifications.filter((item) => item.classification).length;
@@ -37,6 +39,7 @@ export default async function LegalCoreDashboardPage() {
               <Link href="/dashboard/legal-core/judgments" className="btn ho-hero-outline"><Scale size={16} /> الأحكام القضائية</Link>
               <Link href="/dashboard/legal-core/objection-methods" className="btn ho-hero-outline"><Gavel size={16} /> طرق الاعتراض</Link>
               <Link href="/dashboard/legal-core/legal-issues" className="btn ho-hero-outline"><Scale size={16} /> المسائل القانونية</Link>
+              <Link href="/dashboard/legal-core/principles" className="btn ho-hero-outline"><Quote size={16} /> المبادئ القضائية</Link>
               <Link href="/dashboard/legal-core/citations/dashboard" className="btn ho-hero-outline"><Quote size={16} /> تغطية الربط</Link>
               <Link href="/dashboard/legal-core/quality" className="btn ho-hero-outline"><Database size={16} /> جودة البيانات</Link>
             </>
@@ -51,8 +54,8 @@ export default async function LegalCoreDashboardPage() {
           <LegalCoreStatCard label="مواد تحتاج مراجعة" value={needsReview} hint="مؤشر جودة البيانات" tone={needsReview ? "amber" : "emerald"} />
           <LegalCoreStatCard label="عدد المسائل القانونية" value={legalIssuesCount} hint="مربوطة بمواد الأنظمة" tone={legalIssuesCount ? "emerald" : "amber"} />
           <LegalCoreStatCard label="عدد الأحكام" value={judgmentsCount} hint="أحكام مستوردة من مصدر وزارة العدل" tone={judgmentsCount ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="عدد المبادئ" value={0} hint="تحتاج إثراء" tone="amber" />
-          <LegalCoreStatCard label="المقارنات القانونية" value={0} hint="جاهزة للبناء المرحلي" tone="amber" />
+          <LegalCoreStatCard label="عدد المبادئ" value={principlesCount} hint="مستخرجة من الأحكام (تخضع للمراجعة)" tone={principlesCount ? "emerald" : "amber"} />
+          <LegalCoreStatCard label="مواد موثّقة المرسوم" value={decreesCount} hint="رقم المرسوم الملكي مُستخرَج من النصّ" tone={decreesCount ? "emerald" : "amber"} />
           <LegalCoreStatCard label="حالة المصدر" value="موحد" hint="legal_articles فقط" tone="emerald" />
         </section>
 

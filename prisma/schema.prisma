@@ -126,12 +126,39 @@ model LegalArticle {
   status         String                 @default("سارية")
   embedding      Json?
   caseLinks      LegalArticleCaseLink[]
+  amendments     ArticleAmendment[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
   @@unique([lawName, articleNumber])
   @@index([lawName])
   @@map("legal_articles")
+}
+
+// ── تتبّع التعديلات والإصدارات التاريخية للمادة (حوكمة قانونية) ──
+// كل سجلّ يمثّل واقعة تعديل: المرسوم/الأداة، التاريخ، نوع التغيير، والنصّان.
+model ArticleAmendment {
+  id            String       @id @default(cuid())
+  articleId     String
+  article       LegalArticle @relation(fields: [articleId], references: [id])
+  // ترتيب الإصدار (1 = الأقدم). يميّز نسخ المادة عبر الزمن.
+  version       Int          @default(1)
+  changeType    String       @default("amended") // amended | repealed | reinstated | corrected
+  decreeRef     String? // مرجع المرسوم/الأمر المُحدِث، مثل: «م/191 وتاريخ ...»
+  effectiveFrom DateTime?
+  hijriDate     String? // التاريخ الهجري كما ورد
+  summary       String? // ملخّص التعديل
+  previousText  String? // نصّ المادة قبل التعديل (إن توفّر)
+  newText       String? // نصّ المادة بعد التعديل (إن توفّر)
+  source        String       @default("manual") // manual | extractor | import
+  reviewStatus  String       @default("needs_review")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([articleId, version])
+  @@index([articleId])
+  @@index([effectiveFrom])
+  @@map("article_amendments")
 }
 
 model JudicialCase {

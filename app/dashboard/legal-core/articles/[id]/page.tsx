@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { HighlightedSearchText, countSearchMatches, joinSearchTerms } from "@/components/SearchHighlight";
 import {
+  AmendmentsPanel,
   ComparativeLawPanel,
   ExplanationPanel,
   FiqhIssuesPanel,
@@ -51,6 +52,10 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
           },
           orderBy: { createdAt: "desc" },
           take: 8
+        },
+        amendments: {
+          orderBy: { version: "asc" },
+          select: { id: true, version: true, changeType: true, decreeRef: true, hijriDate: true, effectiveFrom: true, summary: true, reviewStatus: true }
         }
       }
     })
@@ -180,6 +185,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             </LegalCoreCard>
 
             <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} />
+            <AmendmentsPanel amendments={article.amendments} />
             <FiqhIssuesPanel issues={fiqhIssues} />
             <ExplanationPanel />
             <ComparativeLawPanel />
