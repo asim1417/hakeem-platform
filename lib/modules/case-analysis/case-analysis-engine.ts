@@ -5,7 +5,7 @@
 // خط التنفيذ: مدخلات القضية → Legal RAG (مصادر + استشهادات)
 //            → AI (تحليل JSON مُسنَد) → دمج + تصنيف الدفوع → تقدير قوة الدعوى.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
-import { getAiProvider } from "@/lib/modules/ai/ai-provider";
+import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
 import { classifyDefense, type DefenseCategory } from "./defense-classifier";
 import { buildCaseAnalysisSystemPrompt, buildCaseAnalysisUserPrompt, type CaseSources } from "./case-prompts";
@@ -50,7 +50,7 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
   // 4) تقدير قوة الدعوى (حتمي مُحكَم 0-100) + الثقة من الإسناد.
   const caseStrengthScore = computeCaseStrengthScore(rag, narrative);
 
-  const aiMeta = getAiProvider();
+  const aiMeta = await resolveAiProvider();
   return {
     ...narrative,
     influentialArticles: rag.legalBasis, // 11 — من Legal RAG (مصادر حقيقية)

@@ -4,7 +4,7 @@
 //       → Judicial Simulation → رؤية قضائية مُحاكاة.
 // لا يعدّل أيّاً من المراحل السابقة؛ يستدعيها فقط. كل المخرجات تدريبية لا حكم فعلي.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
-import { getAiProvider } from "@/lib/modules/ai/ai-provider";
+import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { runLegalAgent } from "@/lib/modules/legal-agent/legal-agent";
@@ -78,7 +78,7 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
   const reliable = analysis.grounded && analysis.confidence >= MIN_SIM_CONFIDENCE;
   const outcome = wrapOutcome(narrative.probableDirection, narrative.tentativeRuling, narrative.draftReasoning, reliable);
 
-  const aiMeta = getAiProvider();
+  const aiMeta = await resolveAiProvider();
   return {
     caseSummary: plan?.caseSummary || det.disputeSubject || analysis.disputeCharacterization,
     preliminaryCharacterization: narrative.preliminaryCharacterization,

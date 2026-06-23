@@ -2,7 +2,7 @@
 // الأجزاء السردية (الجواب المختصر/التحليل/التحفظات) من النموذج، أمّا الأجزاء
 // المُسنَدة بنيوياً (الأساس النظامي/الأحكام/المبادئ/الاستشهادات) فتُشتق من السياق
 // الحقيقي فقط — منعاً للهلوسة: لا يُسمح بمصدر لم يأتِ من السياق.
-import { getAiProvider } from "@/lib/modules/ai/ai-provider";
+import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { SECTION_ANALYSIS, SECTION_LIMITATIONS, SECTION_SHORT } from "@/lib/modules/ai/legal-prompts";
 import type { Citation } from "@/lib/modules/citations/citation-engine";
 import type { LegalContext } from "./context-builder";
@@ -45,7 +45,7 @@ export async function composeLegalAnswer(input: {
   citations: Citation[];
 }): Promise<ComposedLegalAnswer> {
   const { question, context, citations } = input;
-  const provider = getAiProvider();
+  const provider = await resolveAiProvider();
 
   let raw = "";
   try {

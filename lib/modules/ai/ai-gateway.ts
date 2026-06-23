@@ -4,7 +4,7 @@ import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/leg
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
 import { parseArticleNumberCandidates } from "@/lib/modules/legal-core/judgment-citation-extractor";
-import { resolveAiConfig } from "@/lib/modules/ai/ai-config";
+import { resolveAiConfig, completeWithConfig } from "@/lib/modules/ai/ai-config";
 
 type AiResult = {
   requestId: string;
@@ -183,43 +183,8 @@ export async function callCentralProvider(input: { systemPrompt?: string; userPr
   if (cfg.provider === "offline" || !cfg.apiKey) {
     return { ok: false, content: "", mode: "offline", provider: "offline" };
   }
-  const model = resolveOriginalModel(cfg.provider, cfg.model || undefined);
-  const maxTokens = Math.min(Math.max(input.maxTokens ?? 1000, 1), 4096);
-  const system = (input.systemPrompt ?? "").trim();
-  const user = String(input.userPrompt ?? "");
-
   try {
-    let content = "";
-    if (cfg.provider === "openai" || cfg.provider === "custom") {
-      const url = cfg.provider === "custom" && cfg.baseUrl ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions` : "https://api.openai.com/v1/chat/completions";
-      const messages = [...(system ? [{ role: "system", content: system }] : []), { role: "user", content: user }];
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, max_tokens: maxTokens, messages, temperature: 0.2 })
-      });
-      if (!resp.ok) throw new Error(`provider ${resp.status}`);
-      const data = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-      content = data.choices?.[0]?.message?.content || "";
-    } else if (cfg.provider === "anthropic") {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-        body: JSON.stringify({ model, max_tokens: maxTokens, ...(system ? { system } : {}), messages: [{ role: "user", content: user }] })
-      });
-      if (!resp.ok) throw new Error(`provider ${resp.status}`);
-      const data = (await resp.json()) as { content?: Array<{ text?: string }> };
-      content = data.content?.map((p) => p.text).filter(Boolean).join("\n") || "";
-    } else if (cfg.provider === "gemini") {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}), contents: [{ role: "user", parts: [{ text: user }] }], generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 } })
-      });
-      if (!resp.ok) throw new Error(`provider ${resp.status}`);
-      const data = (await resp.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-      content = data.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n") || "";
-    }
+    const content = await completeWithConfig(cfg, input.systemPrompt ?? "", String(input.userPrompt ?? ""), input.maxTokens ?? 1000);
     return { ok: Boolean(content), content, mode: "server", provider: cfg.provider };
   } catch {
     return { ok: false, content: "", mode: "server", provider: cfg.provider };

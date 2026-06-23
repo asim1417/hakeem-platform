@@ -11,6 +11,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/seed-legal-library.ts",
+    "seed:demo-judgments": "tsx scripts/seed-demo-judgments.ts",
+    "db:search-indexes": "tsx scripts/apply-search-indexes.ts",
     "import:hoqoqi": "tsx scripts/import-hoqoqi-sql.ts",
     "import:hoqoqi:resume": "tsx scripts/import-hoqoqi-sql.ts --apply --resume",
     "inspect:judgments": "tsx scripts/inspect-judgments-sql.ts",

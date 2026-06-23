@@ -5,7 +5,8 @@ import { createClaudeProvider } from "./providers/claude-provider";
 import { createGeminiProvider } from "./providers/gemini-provider";
 import { createMockProvider } from "./providers/mock-provider";
 import { createOpenAiProvider } from "./providers/openai-provider";
-import type { AiProvider } from "./providers/base";
+import { makeProvider, type AiProvider } from "./providers/base";
+import { resolveAiConfig, completeWithConfig, defaultModelFor } from "./ai-config";
 
 export type { AiProvider };
 export type { LegalGenInput } from "./legal-prompts";
@@ -35,4 +36,18 @@ export function getAiProvider(): AiProvider {
 
   // إن لم يتوفّر مفتاح المزوّد المختار → سقوط منظّم إلى mock.
   return provider.available() ? provider : mock;
+}
+
+/**
+ * المزوّد الفعّال وفق إعدادات الموقع (DB من /admin/ai أولاً ثم البيئة) — غير متزامن.
+ * تستعمله كل مسارات التوليد (Legal RAG + محرّكات التمايز) كي يكفي ضبط مفتاح واحد
+ * من لوحة الإدارة لتفعيل الذكاء عبر المنصّة كاملةً. سقوط منظّم إلى mock عند offline/غياب المفتاح.
+ */
+export async function resolveAiProvider(): Promise<AiProvider> {
+  const cfg = await resolveAiConfig();
+  if (cfg.provider === "offline" || !cfg.apiKey) return createMockProvider();
+  return makeProvider(
+    { name: cfg.provider, model: cfg.model || defaultModelFor(cfg.provider), available: () => true },
+    (system, user, maxTokens) => completeWithConfig(cfg, system, user, maxTokens)
+  );
 }

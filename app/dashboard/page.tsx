@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, GraduationCap, Paperclip, Scale, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { BookOpen, Briefcase, ClipboardList, Gavel, GraduationCap, Paperclip, Scale, ScanSearch, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
@@ -94,12 +94,12 @@ export default async function DashboardPage() {
           ابدأ بالبحث في الأنظمة السعودية، أو اطرح واقعتك على «اسأل حكيم» — بمصدرٍ موثّق من النواة القانونية.
         </p>
 
-        <form action="/dashboard/legal-core/search" className="mt-5 flex max-w-2xl items-center gap-2 rounded-[var(--r-xl)] bg-white p-2 shadow-[var(--sh-md)]">
+        <form action="/dashboard/legal-search" className="mt-5 flex max-w-2xl items-center gap-2 rounded-[var(--r-xl)] bg-white p-2 shadow-[var(--sh-md)]">
           <span aria-hidden className="ms-2 text-xl text-[var(--ink-40)]">⌕</span>
           <input
             name="q"
-            aria-label="بحث قانوني"
-            placeholder="اكتب رقم مادة، اسم نظام، رقم قضية، أو وصف واقعة..."
+            aria-label="بحث قانوني شامل"
+            placeholder="ابحث في الأنظمة والمواد والأحكام والمبادئ — أو اطرح سؤالاً قانونياً..."
             className="h-11 w-full border-0 bg-transparent px-1 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <button type="submit" className="focus-ring shrink-0 rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)]">
@@ -155,6 +155,13 @@ export default async function DashboardPage() {
       <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">خدمات حكيم</h2>
       <section className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <ModuleCard
+          href="/dashboard/legal-search"
+          title="البحث القانوني الشامل"
+          metric="بحث موحّد"
+          icon={Search}
+          description="ابحث في كامل القاعدة دفعةً واحدة: الأنظمة والمواد والأحكام والمبادئ — مع فلاتر وترتيب بالصلة."
+        />
+        <ModuleCard
           href="/dashboard/legal-core/search"
           title="النواة القانونية"
           metric={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
@@ -172,8 +179,29 @@ export default async function DashboardPage() {
           href="/dashboard/simulations"
           title="القاضي التفاعلي"
           metric={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
-          icon={Scale}
+          icon={Gavel}
           description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
+        />
+        <ModuleCard
+          href="/dashboard/judicial-simulation"
+          title="المحاكاة القضائية"
+          metric="تقدير الحكم المحتمل"
+          icon={Scale}
+          description="حلّل وقائعك ليحاكي حكيم نظر القاضي: التكييف، الدفوع، واتجاه الحكم المحتمل — بإسناد موثّق."
+        />
+        <ModuleCard
+          href="/dashboard/case-analysis"
+          title="تحليل القضايا"
+          metric="تحليل مُسنَد"
+          icon={ScanSearch}
+          description="توصيف النزاع، الوقائع المنتِجة، عبء الإثبات، المخاطر، ونقاط القوة والضعف — مع تقدير قوة الدعوى."
+        />
+        <ModuleCard
+          href="/dashboard/legal-agent"
+          title="الوكيل القانوني"
+          metric="خطة عمل عملية"
+          icon={ClipboardList}
+          description="يحوّل التحليل إلى خطة: استراتيجية، دفوع مصنّفة، بيّنات، خطة مرافعة، وتوصية — باستشهادات حقيقية فقط."
         />
         <ModuleCard
           href="/dashboard/consultations"

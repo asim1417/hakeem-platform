@@ -560,3 +560,37 @@ model FiqhIssueLink {
   @@index([articleId])
   @@map("fiqh_issue_links")
 }
+
+// ── التصنيفات الموضوعية (شجرة) ──
+// تصنيف هرمي للموضوعات القانونية (مثال: التزامات ← مسؤولية عقدية ← فسخ).
+// مرجعية للفلترة والتنظيم؛ الربط بالمواد/الأحكام منطقيّ عبر الاسم/المعرّف.
+model LegalTopic {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  parentId  String?      @map("parent_id")
+  path      String       @default("") // مسار هرمي مثل: التزامات/مسؤولية عقدية
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  parent   LegalTopic?  @relation("TopicHierarchy", fields: [parentId], references: [id])
+  children LegalTopic[] @relation("TopicHierarchy")
+
+  @@index([parentId])
+  @@index([path])
+  @@map("legal_topics")
+}
+
+// ── سجل البحث (قياس الاستخدام وتحسين الصلة) ──
+// userId مرجع منطقيّ اختياري (بلا FK صارمة) كي لا يعتمد التسجيل على وجود مستخدم.
+model SearchLog {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  query        String
+  filters      Json?
+  resultsCount Int      @default(0) @map("results_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("search_logs")
+}
