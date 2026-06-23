@@ -3,18 +3,20 @@ import "server-only";
 /**
  * عميل تكامل مكتبة تراث (turath.io) — بحث حيّ في كتب التراث الإسلامي/الفقهي.
  *
- * بنية تراث: استجابة البحث تحوي book_id + مقتطف (نصّ) لكل نتيجة، **دون** اسم الكتاب
- * (تطبيق تراث يحمّل بيانات الكتب منفصلة). لذا نحلّ بطاقة الكتاب (الاسم/المؤلف/القسم)
- * عبر جلب /book/{id} مرّة واحدة لكل كتاب مع تخزين مؤقّت دائم في الذاكرة.
+ * شكل استجابة تراث (مُتحقَّق حيًّا): { count, data: [ row ] }، وكل صفّ:
+ *   { book_id, cat_id, author_id, snip, text, meta: "<JSON-string>" }
+ * وحقل meta نصّ JSON يُفكّ ليعطي: book_name, author_name, page, page_id, vol.
+ * لا يوجد endpoint منفصل للكتاب (/book/{id} = 404) — كل البطاقة من meta.
  *
- * تصميم دفاعي: كل اعتماد على شكل تراث محصور في normalizeRows + extractBookMeta،
- * وكل تعذّر (شبكة/حالة/شكل) يسقط بهدوء — لا يكسر الصفحة أبداً.
+ * تصميم دفاعي: كل اعتماد على الشكل محصور في normalizeRows؛ أي تعذّر يسقط بهدوء.
  * ملاحظة شبكة: يتطلّب إضافة api.turath.io إلى allowlist الخروج (egress).
  */
 
 const BASE = (process.env.TURATH_API_BASE || "https://api.turath.io").replace(/\/$/, "");
 const APP_BASE = (process.env.TURATH_APP_BASE || "https://app.turath.io").replace(/\/$/, "");
 const SEARCH_PATH = process.env.TURATH_SEARCH_PATH || "/search?q={q}&precision=2";
+// حقل الصفحة المستعمَل في رابط تراث العميق: page_id (فهرس مطلق) افتراضاً، أو page.
+const URL_PAGE_FIELD = (process.env.TURATH_URL_PAGE_FIELD || "page_id").trim();
 
 export interface TurathResult {
   id: string;
@@ -22,9 +24,9 @@ export interface TurathResult {
   author?: string;
   category?: string;
   snippet?: string;
-  page?: string;
-  volume?: string;
-  url: string;
+  page?: string; // الصفحة المطبوعة
+  volume?: string; // الجزء
+  url: string; // رابط عميق لصفحة الكتاب في تراث
 }
 
 export interface TurathSearchResponse {
@@ -36,132 +38,55 @@ export interface TurathSearchResponse {
   note?: string;
 }
 
-interface BookMeta {
-  name?: string;
-  author?: string;
-  category?: string;
-}
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// تخزين مؤقّت دائم لبطاقات الكتب (الكتب ثابتة) — يتفادى إعادة الجلب لكل بحث.
-const bookMetaCache = new Map<string, BookMeta | null>();
-
-function pickName(obj: any): string | undefined {
-  if (!obj) return undefined;
-  if (typeof obj === "string") return obj.trim() || undefined;
-  return (obj.name ?? obj.title ?? obj.value ?? obj.text ?? obj.fullname ?? undefined) || undefined;
-}
-
-/**
- * مسح عميق لا يعتمد على شكل محدّد: يبحث في كامل الكائن عن أوّل قيمة نصّية
- * مفتاحها يطابق نمطاً (اسم/مؤلف/قسم) بطول معقول — فيعمل مهما اختلفت بنية تراث.
- */
-function deepFindByKey(obj: any, keyRe: RegExp, depth = 0, seen = new Set<any>()): string | undefined {
-  if (!obj || depth > 5 || (typeof obj === "object" && seen.has(obj))) return undefined;
-  if (typeof obj === "object") seen.add(obj);
-  if (Array.isArray(obj)) {
-    for (const it of obj) {
-      const r = deepFindByKey(it, keyRe, depth + 1, seen);
-      if (r) return r;
-    }
-    return undefined;
-  }
-  if (typeof obj === "object") {
-    for (const [k, v] of Object.entries(obj)) {
-      if (keyRe.test(k)) {
-        if (typeof v === "string" && v.trim().length > 1 && v.trim().length < 220) return v.trim();
-        const nested = pickName(v);
-        if (nested && nested.length > 1 && nested.length < 220) return nested;
-      }
-    }
-    for (const v of Object.values(obj)) {
-      const r = deepFindByKey(v, keyRe, depth + 1, seen);
-      if (r) return r;
+/** يفكّ حقل meta سواء كان نصّ JSON أو كائناً. */
+function parseMeta(metaRaw: any): any {
+  if (!metaRaw) return {};
+  if (typeof metaRaw === "object") return metaRaw;
+  if (typeof metaRaw === "string") {
+    try {
+      return JSON.parse(metaRaw);
+    } catch {
+      return {};
     }
   }
-  return undefined;
+  return {};
 }
 
-const RE_NAME = /^(name|title|book_?name|book_?title|bookname|aname)$/i;
-const RE_AUTHOR = /(author|mu[ae]llif|writer|مؤلف)/i;
-const RE_CATEGORY = /(^cat$|^cat_|category|categ|section|قسم|تصنيف|نوع)/i;
-
-/** يستخرج بطاقة الكتاب من استجابة /book/{id}: مسارات صريحة ثم مسح عميق. */
-function extractBookMeta(j: any): BookMeta | null {
-  const m = j?.meta ?? j?.book ?? j?.data?.meta ?? j?.data?.book ?? j?.info ?? j?.data ?? j ?? {};
-  const name =
-    pickName(m) ?? m?.book_name ?? m?.bookName ?? deepFindByKey(j, RE_NAME) ?? deepFindByKey(m, RE_NAME);
-  const author =
-    pickName(m?.author) ?? m?.author_name ?? m?.authorName ?? pickName(j?.author) ?? deepFindByKey(j, RE_AUTHOR);
-  const category =
-    pickName(m?.cat) ?? pickName(m?.category) ?? m?.cat_name ?? m?.category_name ?? deepFindByKey(j, RE_CATEGORY);
-  if (!name && !author && !category) return null;
-  return {
-    name: name ? String(name) : undefined,
-    author: author ? String(author) : undefined,
-    category: category ? String(category) : undefined,
-  };
-}
-
-async function resolveBookMeta(bookId: string): Promise<BookMeta | null> {
-  if (bookMetaCache.has(bookId)) return bookMetaCache.get(bookId) ?? null;
-  try {
-    const resp = await fetch(`${BASE}/book/${encodeURIComponent(bookId)}`, {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!resp.ok) {
-      bookMetaCache.set(bookId, null);
-      return null;
-    }
-    const j = await resp.json().catch(() => null);
-    const meta = extractBookMeta(j);
-    bookMetaCache.set(bookId, meta);
-    return meta;
-  } catch {
-    bookMetaCache.set(bookId, null);
-    return null;
-  }
-}
-
-/** صفّ نتيجة بحث خام → معرّف الكتاب + الصفحة + الجزء + المقتطف (بمسارات دفاعية). */
-function parseRow(r: any, i: number) {
-  const bookId = r?.book_id ?? r?.bookId ?? r?.book?.id ?? r?.meta?.book_id ?? r?.bid ?? r?.id;
-  const page =
-    r?.page ?? r?.pg ?? r?.page_num ?? r?.pageNumber ?? r?.page_no ?? r?.p ?? r?.page_id ?? r?.pageId ?? r?.meta?.page;
-  const volume = r?.vol ?? r?.volume ?? r?.j ?? r?.part ?? r?.meta?.vol;
-  const snippet = stripHtml(r?.snippet ?? r?.text ?? r?.matn ?? r?.body ?? r?.highlight ?? r?.nass ?? r?.content ?? "");
-  // اسم الكتاب إن كان مضمّناً في الصف (نادراً) — يُستعمل قبل اللجوء لجلب /book.
-  const inlineName = pickName(r?.book) ?? r?.book_name ?? r?.bookName;
-  return { bookId: bookId != null ? String(bookId) : null, page, volume, snippet, inlineName, idx: i };
-}
-
-async function normalizeWithMeta(data: any, limit: number): Promise<TurathResult[]> {
-  const rows: any[] = Array.isArray(data)
-    ? data
-    : data?.data ?? data?.results ?? data?.hits ?? data?.matches ?? data?.items ?? [];
+function normalizeRows(data: any, limit: number): TurathResult[] {
+  const rows: any[] = Array.isArray(data) ? data : data?.data ?? data?.results ?? data?.hits ?? [];
   if (!Array.isArray(rows)) return [];
 
-  const parsed = rows.slice(0, limit).map(parseRow);
+  return rows
+    .slice(0, limit)
+    .map((r: any, i: number): TurathResult => {
+      const meta = parseMeta(r?.meta);
+      const bookId = r?.book_id ?? meta?.book_id ?? r?.bookId;
+      const bookTitle = meta?.book_name ?? r?.book_name ?? meta?.title ?? "كتاب من تراث";
+      const author = meta?.author_name ?? r?.author_name ?? meta?.author;
+      const category = meta?.cat_name ?? meta?.category ?? r?.cat_name; // غالباً غير متوفّر (cat_id فقط)
+      const page = meta?.page ?? r?.page;
+      const pageId = meta?.page_id ?? r?.page_id;
+      const vol = meta?.vol ?? r?.vol ?? meta?.volume;
+      const snippet = stripHtml(r?.text ?? r?.snip ?? r?.snippet ?? "");
 
-  // جلب بطاقات الكتب الفريدة بالتوازي (مع التخزين المؤقّت) — تحلّ اسم/مؤلف/قسم.
-  const uniqueIds = Array.from(new Set(parsed.map((p) => p.bookId).filter((x): x is string => Boolean(x))));
-  await Promise.all(uniqueIds.map((id) => resolveBookMeta(id)));
+      // رقم الصفحة في الرابط: page_id افتراضاً (فهرس مطلق فريد)، مع fallback.
+      const urlPage = meta?.[URL_PAGE_FIELD] ?? pageId ?? page;
+      const url =
+        bookId != null
+          ? `${APP_BASE}/book/${bookId}${urlPage != null ? `/${urlPage}` : ""}`
+          : APP_BASE;
 
-  return parsed
-    .map((p): TurathResult => {
-      const meta = p.bookId ? bookMetaCache.get(p.bookId) ?? null : null;
-      const bookTitle = meta?.name ?? p.inlineName ?? "كتاب من تراث";
       return {
-        id: `${p.bookId ?? "b"}:${p.page ?? p.idx}`,
+        id: `${bookId ?? "b"}:${pageId ?? page ?? i}`,
         bookTitle: String(bookTitle),
-        author: meta?.author,
-        category: meta?.category,
-        snippet: p.snippet || undefined,
-        page: p.page != null ? String(p.page) : undefined,
-        volume: p.volume != null ? String(p.volume) : undefined,
-        url: p.bookId ? `${APP_BASE}/book/${p.bookId}${p.page != null ? `/${p.page}` : ""}` : APP_BASE,
+        author: author ? String(author) : undefined,
+        category: category ? String(category) : undefined,
+        snippet: snippet || undefined,
+        page: page != null ? String(page) : undefined,
+        volume: vol != null ? String(vol) : undefined,
+        url,
       };
     })
     .filter((x) => x.bookTitle);
@@ -178,7 +103,7 @@ export async function searchTurath(query: string, limit = 10): Promise<TurathSea
       return { ok: false, query: q, results: [], source: "turath", configured: false, note: `turath HTTP ${resp.status}` };
     }
     const data = (await resp.json()) as unknown;
-    return { ok: true, query: q, results: await normalizeWithMeta(data, limit), source: "turath", configured: true };
+    return { ok: true, query: q, results: normalizeRows(data, limit), source: "turath", configured: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "تعذّر الوصول إلى تراث";
     const blocked = /allowlist|ENOTFOUND|EAI_AGAIN|fetch failed|forbidden|timeout|aborted/i.test(msg);
@@ -193,10 +118,7 @@ export async function searchTurath(query: string, limit = 10): Promise<TurathSea
   }
 }
 
-/**
- * تشخيص فقط: يكشف شكل استجابة البحث الخام + شكل /book/{id} لأول كتاب،
- * لضبط أسماء الحقول بدقّة. عبر /api/turath/debug.
- */
+/** تشخيص فقط: يعيد استجابة البحث الخام (مفاتيح + أول صفّ) لضبط المحوّل. */
 export async function fetchTurathRaw(query: string): Promise<unknown> {
   const q = (query ?? "").trim();
   const path = SEARCH_PATH.replace("{q}", encodeURIComponent(q));
@@ -204,30 +126,8 @@ export async function fetchTurathRaw(query: string): Promise<unknown> {
     const resp = await fetch(`${BASE}${path}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
     const body: any = await resp.json().catch(() => null);
     const topKeys = body && typeof body === "object" ? Object.keys(body) : [];
-    const rows: any[] = Array.isArray(body) ? body : body?.data ?? body?.results ?? body?.hits ?? [];
-    const firstRow = rows?.[0] ?? null;
-    const firstBookId = firstRow?.book_id ?? firstRow?.bookId ?? firstRow?.book?.id ?? firstRow?.id ?? null;
-
-    let bookSample: any = null;
-    if (firstBookId != null) {
-      try {
-        const br = await fetch(`${BASE}/book/${encodeURIComponent(String(firstBookId))}`, {
-          headers: { Accept: "application/json" },
-          signal: AbortSignal.timeout(6000),
-        });
-        const bj: any = await br.json().catch(() => null);
-        // عيّنة مختصرة من مفاتيح كتاب واحد (بلا النصّ الضخم).
-        bookSample = {
-          status: br.status,
-          topKeys: bj && typeof bj === "object" ? Object.keys(bj) : [],
-          meta: bj?.meta ?? bj?.book ?? bj?.data?.meta ?? bj?.info ?? null,
-        };
-      } catch (e) {
-        bookSample = { error: e instanceof Error ? e.message : "book fetch failed" };
-      }
-    }
-
-    return { status: resp.status, topKeys, firstRow, firstBookId, bookSample };
+    const rows: any[] = Array.isArray(body) ? body : body?.data ?? body?.results ?? [];
+    return { status: resp.status, topKeys, firstRow: rows?.[0] ?? null, parsedMeta: parseMeta(rows?.[0]?.meta) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "fetch failed" };
   }
