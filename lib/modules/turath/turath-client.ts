@@ -53,23 +53,49 @@ function pickName(obj: any): string | undefined {
   return (obj.name ?? obj.title ?? obj.value ?? obj.text ?? obj.fullname ?? undefined) || undefined;
 }
 
-/** يستخرج بطاقة الكتاب من استجابة /book/{id} بمسارات حقول دفاعية متعددة. */
+/**
+ * مسح عميق لا يعتمد على شكل محدّد: يبحث في كامل الكائن عن أوّل قيمة نصّية
+ * مفتاحها يطابق نمطاً (اسم/مؤلف/قسم) بطول معقول — فيعمل مهما اختلفت بنية تراث.
+ */
+function deepFindByKey(obj: any, keyRe: RegExp, depth = 0, seen = new Set<any>()): string | undefined {
+  if (!obj || depth > 5 || (typeof obj === "object" && seen.has(obj))) return undefined;
+  if (typeof obj === "object") seen.add(obj);
+  if (Array.isArray(obj)) {
+    for (const it of obj) {
+      const r = deepFindByKey(it, keyRe, depth + 1, seen);
+      if (r) return r;
+    }
+    return undefined;
+  }
+  if (typeof obj === "object") {
+    for (const [k, v] of Object.entries(obj)) {
+      if (keyRe.test(k)) {
+        if (typeof v === "string" && v.trim().length > 1 && v.trim().length < 220) return v.trim();
+        const nested = pickName(v);
+        if (nested && nested.length > 1 && nested.length < 220) return nested;
+      }
+    }
+    for (const v of Object.values(obj)) {
+      const r = deepFindByKey(v, keyRe, depth + 1, seen);
+      if (r) return r;
+    }
+  }
+  return undefined;
+}
+
+const RE_NAME = /^(name|title|book_?name|book_?title|bookname|aname)$/i;
+const RE_AUTHOR = /(author|mu[ae]llif|writer|مؤلف)/i;
+const RE_CATEGORY = /(^cat$|^cat_|category|categ|section|قسم|تصنيف|نوع)/i;
+
+/** يستخرج بطاقة الكتاب من استجابة /book/{id}: مسارات صريحة ثم مسح عميق. */
 function extractBookMeta(j: any): BookMeta | null {
   const m = j?.meta ?? j?.book ?? j?.data?.meta ?? j?.data?.book ?? j?.info ?? j?.data ?? j ?? {};
-  const name = pickName(m) ?? m?.book_name ?? m?.bookName;
+  const name =
+    pickName(m) ?? m?.book_name ?? m?.bookName ?? deepFindByKey(j, RE_NAME) ?? deepFindByKey(m, RE_NAME);
   const author =
-    pickName(m?.author) ??
-    m?.author_name ??
-    m?.authorName ??
-    pickName(j?.author) ??
-    (typeof m?.author === "string" ? m.author : undefined);
+    pickName(m?.author) ?? m?.author_name ?? m?.authorName ?? pickName(j?.author) ?? deepFindByKey(j, RE_AUTHOR);
   const category =
-    pickName(m?.cat) ??
-    pickName(m?.category) ??
-    m?.cat_name ??
-    m?.category_name ??
-    pickName(j?.cat) ??
-    pickName(j?.category);
+    pickName(m?.cat) ?? pickName(m?.category) ?? m?.cat_name ?? m?.category_name ?? deepFindByKey(j, RE_CATEGORY);
   if (!name && !author && !category) return null;
   return {
     name: name ? String(name) : undefined,
