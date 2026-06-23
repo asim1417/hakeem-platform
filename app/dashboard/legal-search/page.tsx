@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
+import { TurathSourcesPanel } from "@/components/turath/TurathSourcesPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -199,6 +200,9 @@ export default async function LegalSearchPage({
           )}
         </div>
       )}
+
+      {/* مصادر فقهية حيّة من مكتبة تراث (تظهر عند وجود عبارة بحث) */}
+      {q.length >= 2 && <TurathSourcesPanel query={q} />}
 
       {/* حالة فارغة قبل البحث */}
       {!data && !failed && (
