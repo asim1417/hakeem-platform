@@ -23,7 +23,8 @@ export interface TurathResult {
   bookTitle: string;
   author?: string;
   category?: string;
-  snippet?: string;
+  snippet?: string; // مقتطف قصير
+  fullText?: string; // نصّ الصفحة كاملاً للاطّلاع داخل المنصّة
   page?: string; // الصفحة المطبوعة
   volume?: string; // الجزء
   url: string; // رابط عميق لصفحة الكتاب في تراث
@@ -70,7 +71,9 @@ function normalizeRows(data: any, limit: number): TurathResult[] {
       const page = meta?.page ?? r?.page;
       const pageId = meta?.page_id ?? r?.page_id;
       const vol = meta?.vol ?? r?.vol ?? meta?.volume;
-      const snippet = stripHtml(r?.text ?? r?.snip ?? r?.snippet ?? "");
+      const rawText = r?.text ?? r?.snip ?? r?.snippet ?? "";
+      const snippet = stripHtml(rawText, 240);
+      const fullText = stripHtml(rawText, 6000);
 
       // رابط تراث: /book/{id}?page={page_id} (فهرس مطلق فريد عبر query param).
       const urlPage = meta?.[URL_PAGE_FIELD] ?? pageId ?? page;
@@ -85,6 +88,7 @@ function normalizeRows(data: any, limit: number): TurathResult[] {
         author: author ? String(author) : undefined,
         category: category ? String(category) : undefined,
         snippet: snippet || undefined,
+        fullText: fullText && fullText.length > snippet.length ? fullText : undefined,
         page: page != null ? String(page) : undefined,
         volume: vol != null ? String(vol) : undefined,
         url,
@@ -136,10 +140,11 @@ export async function fetchTurathRaw(query: string): Promise<unknown> {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-function stripHtml(s: unknown): string {
+function stripHtml(s: unknown, max = 240): string {
   return String(s ?? "")
     .replace(/<[^>]+>/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim()
-    .slice(0, 240);
+    .slice(0, max);
 }
