@@ -19,38 +19,48 @@ interface TurathResponse {
   ok: boolean;
   results: TurathResult[];
   total?: number;
+  page?: number;
   configured?: boolean;
   note?: string;
 }
 
 /**
  * لوحة «مصادر فقهية من تراث» — بحث حيّ في كتب التراث عبر الوسيط /api/turath/search.
- * عميل خفيف: يظهر فقط عند وجود نتائج؛ يسقط بهدوء عند تعذّر الخدمة (لا يكسر الصفحة).
+ * عميل خفيف مع «تحميل المزيد» (ترقيم تراكمي)؛ يسقط بهدوء عند تعذّر الخدمة.
  */
 export function TurathSourcesPanel({ query }: { query: string }) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [results, setResults] = useState<TurathResult[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
+  // بحث جديد عند تغيّر العبارة: إعادة ضبط الترقيم.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2) {
       setState("idle");
       setResults([]);
+      setHasMore(false);
       return;
     }
     let cancelled = false;
     setState("loading");
     setNote(null);
-    fetch(`/api/turath/search?q=${encodeURIComponent(q)}&limit=50`)
+    setPage(1);
+    setHasMore(false);
+    fetch(`/api/turath/search?q=${encodeURIComponent(q)}&page=1`)
       .then((r) => r.json() as Promise<TurathResponse>)
       .then((data) => {
         if (cancelled) return;
-        setResults(data.results ?? []);
+        const rows = data.results ?? [];
+        setResults(rows);
         setTotal(typeof data.total === "number" ? data.total : null);
         setNote(data.note ?? null);
         setState(data.ok ? "done" : "error");
+        setHasMore(Boolean(data.ok && rows.length > 0 && (data.total == null || rows.length < data.total)));
       })
       .catch(() => {
         if (cancelled) return;
@@ -62,15 +72,39 @@ export function TurathSourcesPanel({ query }: { query: string }) {
     };
   }, [query]);
 
+  const loadMore = () => {
+    const q = query.trim();
+    if (q.length < 2 || loadingMore) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    fetch(`/api/turath/search?q=${encodeURIComponent(q)}&page=${next}`)
+      .then((r) => r.json() as Promise<TurathResponse>)
+      .then((data) => {
+        const incoming = data.results ?? [];
+        setResults((prev) => {
+          const seen = new Set(prev.map((x) => x.id));
+          const fresh = incoming.filter((x) => !seen.has(x.id));
+          // إن لم تأتِ نتائج جديدة، أوقف «تحميل المزيد» (نهاية أو ترقيم غير مدعوم).
+          if (fresh.length === 0) setHasMore(false);
+          else {
+            setPage(next);
+            const merged = [...prev, ...fresh];
+            setHasMore(data.total == null ? fresh.length > 0 : merged.length < data.total);
+          }
+          return fresh.length === 0 ? prev : [...prev, ...fresh];
+        });
+      })
+      .catch(() => setHasMore(false))
+      .finally(() => setLoadingMore(false));
+  };
+
   // لا نعرض شيئاً قبل البحث، أو عند عدم توفّر الخدمة بلا نتائج (سقوط صامت).
   if (state === "idle") return null;
   if (state === "error" && results.length === 0) {
     return (
       <div className="card mt-5 border-r-4" style={{ borderRightColor: "var(--gold)" }}>
         <Header />
-        <p className="mt-2 text-sm text-[var(--ink-40)]">
-          {note ?? "تعذّر الوصول إلى مكتبة تراث حالياً."}
-        </p>
+        <p className="mt-2 text-sm text-[var(--ink-40)]">{note ?? "تعذّر الوصول إلى مكتبة تراث حالياً."}</p>
       </div>
     );
   }
@@ -92,11 +126,31 @@ export function TurathSourcesPanel({ query }: { query: string }) {
       ) : results.length === 0 ? (
         <p className="mt-3 text-sm text-[var(--ink-40)]">لا نتائج من تراث لهذه العبارة.</p>
       ) : (
-        <ul className="mt-3 space-y-2 text-sm">
-          {results.map((r) => (
-            <TurathItem key={r.id} r={r} />
-          ))}
-        </ul>
+        <>
+          <ul className="mt-3 space-y-2 text-sm">
+            {results.map((r) => (
+              <TurathItem key={r.id} r={r} />
+            ))}
+          </ul>
+          {hasMore ? (
+            <div className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="btn btn-outline disabled:opacity-60"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> جارٍ التحميل…
+                  </>
+                ) : (
+                  "تحميل المزيد من تراث"
+                )}
+              </button>
+            </div>
+          ) : null}
+        </>
       )}
       <p className="mt-3 text-[11px] text-[var(--ink-40)]">
         المصدر: مكتبة تراث (turath.io) — تُعرض النتائج للإحالة العلمية مع نسب المصدر.

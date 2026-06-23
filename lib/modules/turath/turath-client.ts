@@ -17,6 +17,8 @@ const APP_BASE = (process.env.TURATH_APP_BASE || "https://app.turath.io").replac
 const SEARCH_PATH = process.env.TURATH_SEARCH_PATH || "/search?q={q}&precision=2";
 // رابط تراث العميق: /book/{id}?page={page_id} — قيمة page_id (الفهرس المطلق).
 const URL_PAGE_FIELD = (process.env.TURATH_URL_PAGE_FIELD || "page_id").trim();
+// اسم بارامتر الترقيم في بحث تراث (للتحميل المزيد). قابل للضبط.
+const PAGE_PARAM = (process.env.TURATH_PAGE_PARAM || "page").trim();
 
 export interface TurathResult {
   id: string;
@@ -35,6 +37,7 @@ export interface TurathSearchResponse {
   query: string;
   results: TurathResult[];
   total?: number; // إجمالي ما طابق في تراث (قد يفوق المعروض)
+  page: number; // رقم الدفعة الحالية
   source: "turath";
   configured: boolean;
   note?: string;
@@ -97,19 +100,25 @@ function normalizeRows(data: any, limit: number): TurathResult[] {
     .filter((x) => x.bookTitle);
 }
 
-export async function searchTurath(query: string, limit = 50): Promise<TurathSearchResponse> {
+export async function searchTurath(
+  query: string,
+  opts: { limit?: number; page?: number } = {}
+): Promise<TurathSearchResponse> {
   const q = (query ?? "").trim();
-  if (q.length < 2) return { ok: true, query: q, results: [], source: "turath", configured: true };
+  const limit = Math.min(Math.max(opts.limit ?? 20, 1), 50);
+  const page = Math.max(1, opts.page ?? 1);
+  if (q.length < 2) return { ok: true, query: q, results: [], page, source: "turath", configured: true };
 
   try {
-    const path = SEARCH_PATH.replace("{q}", encodeURIComponent(q));
+    let path = SEARCH_PATH.replace("{q}", encodeURIComponent(q));
+    if (page > 1) path += `${path.includes("?") ? "&" : "?"}${PAGE_PARAM}=${page}`;
     const resp = await fetch(`${BASE}${path}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
     if (!resp.ok) {
-      return { ok: false, query: q, results: [], source: "turath", configured: false, note: `turath HTTP ${resp.status}` };
+      return { ok: false, query: q, results: [], page, source: "turath", configured: false, note: `turath HTTP ${resp.status}` };
     }
     const data = (await resp.json()) as any;
     const total = typeof data?.count === "number" ? data.count : typeof data?.total === "number" ? data.total : undefined;
-    return { ok: true, query: q, results: normalizeRows(data, limit), total, source: "turath", configured: true };
+    return { ok: true, query: q, results: normalizeRows(data, limit), total, page, source: "turath", configured: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "تعذّر الوصول إلى تراث";
     const blocked = /allowlist|ENOTFOUND|EAI_AGAIN|fetch failed|forbidden|timeout|aborted/i.test(msg);
@@ -117,25 +126,11 @@ export async function searchTurath(query: string, limit = 50): Promise<TurathSea
       ok: false,
       query: q,
       results: [],
+      page,
       source: "turath",
       configured: false,
       note: blocked ? "خدمة تراث غير متاحة من الخادم بعد (تتطلب فتح الشبكة)." : msg,
     };
-  }
-}
-
-/** تشخيص فقط: يعيد استجابة البحث الخام (مفاتيح + أول صفّ) لضبط المحوّل. */
-export async function fetchTurathRaw(query: string): Promise<unknown> {
-  const q = (query ?? "").trim();
-  const path = SEARCH_PATH.replace("{q}", encodeURIComponent(q));
-  try {
-    const resp = await fetch(`${BASE}${path}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
-    const body: any = await resp.json().catch(() => null);
-    const topKeys = body && typeof body === "object" ? Object.keys(body) : [];
-    const rows: any[] = Array.isArray(body) ? body : body?.data ?? body?.results ?? [];
-    return { status: resp.status, topKeys, firstRow: rows?.[0] ?? null, parsedMeta: parseMeta(rows?.[0]?.meta) };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "fetch failed" };
   }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
