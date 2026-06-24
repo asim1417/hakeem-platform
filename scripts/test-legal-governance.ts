@@ -4,7 +4,7 @@
  * التشغيل: npm run test:governance
  */
 import { extractRoyalDecree, normalizeDigits } from "@/lib/modules/legal-core/decree-extractor";
-import { extractPrinciple, isJunkPrinciple } from "@/lib/modules/legal-core/principle-extractor";
+import { extractPrinciple, isJunkPrinciple, deriveTitle } from "@/lib/modules/legal-core/principle-extractor";
 import { buildArticleEli, lawSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
 
 let passed = 0;
@@ -76,6 +76,20 @@ console.log("\n— فرز المبادئ (triage) —");
     !isJunkPrinciple("التعويض", "لا يجوز الحكم بالتعويض عن ضرر لم يثبت وقوعه يقينًا، والبيّنة على من ادّعى والإقرار سيّد الأدلّة في الإثبات.")
   );
   check("رفض الأرقام الصرفة", isJunkPrinciple(null, "1444/2/15 رقم 23/4/5 ص 120 مجلد 3 لوحة 7 قيد 9"));
+}
+
+console.log("\n— إعادة تعنون المبادئ —");
+{
+  const body = "لا يجوز الحكم بالتعويض عن ضرر لم يثبت وقوعه يقينًا، والبيّنة على من ادّعى.";
+  // عنوان مجرّد رقم قضية → يُشتقّ من النصّ.
+  const t1 = deriveTitle("القضية رقم 439201306 لعام 1444هـ", body);
+  check("اشتقاق عنوان من النصّ", /لا يجوز الحكم بالتعويض/.test(t1), t1);
+  // عنوان وصفي حقيقي → يبقى كما هو.
+  const t2 = deriveTitle("فسخ عقد الإيجار للإخلال", body);
+  check("الإبقاء على العنوان الوصفي", t2 === "فسخ عقد الإيجار للإخلال", t2);
+  // لا عنوان ولا جملة صالحة → بديل عام.
+  const t3 = deriveTitle(null, "رقم 12/3 ص 4");
+  check("بديل عام عند التعذّر", t3 === "مبدأ قضائي", t3);
 }
 
 console.log("\n— المعرّف التشريعي (ELI) —");

@@ -61,6 +61,18 @@ function indexOfAny(text: string, needles: string[]): number {
 }
 
 /**
+ * يشتقّ عنوانًا معبّرًا للمبدأ: يُفضّل عنوان الحكم إن كان وصفيًا، وإلا
+ * (كأن يكون مجرّد «القضية رقم …») يستعمل أول جملة من نصّ المبدأ.
+ */
+export function deriveTitle(fallbackTitle: string | null | undefined, principleText: string): string {
+  const fb = clean(String(fallbackTitle ?? ""));
+  if (fb && !isMetadataText(fb) && fb.length >= 8) return fb.slice(0, 200);
+  const sentence = clean(firstSentence(principleText, 110));
+  if (sentence.length >= 12 && !isMetadataText(sentence)) return sentence.slice(0, 200);
+  return "مبدأ قضائي";
+}
+
+/**
  * يستخرج المبدأ القضائي من نصّ الحكم. `fallbackTitle` يُستخدم للعنوان
  * إذا كان المبدأ بلا جملة افتتاحية واضحة.
  */
@@ -82,9 +94,8 @@ export function extractPrinciple(
       const factIdx = indexOfAny(rest, FACT_MARKERS);
       const slice = clean(factIdx > 30 ? rest.slice(0, factIdx) : rest.slice(0, 600));
       if (slice.length >= 30) {
-        const title = clean(fallbackTitle || firstSentence(slice));
         return {
-          title: title || "مبدأ قضائي",
+          title: deriveTitle(fallbackTitle, slice),
           principleText: slice.slice(0, 1200),
           method: "labeled",
           confidence: 0.85,
@@ -99,9 +110,8 @@ export function extractPrinciple(
     const slice = clean(text.slice(0, factIdx));
     // headnote حقيقي عادةً جملة أو جملتان لا مقدمة شكلية ولا بيانات تعريفية للقضية.
     if (slice.length >= 40 && slice.length <= 700 && !/^(?:بسم|الحمد|إن مجلس|إن المحكمة)/.test(slice) && !isMetadataText(slice)) {
-      const title = clean(fallbackTitle || firstSentence(slice));
       return {
-        title: title || "مبدأ قضائي",
+        title: deriveTitle(fallbackTitle, slice),
         principleText: slice.slice(0, 1200),
         method: "headnote",
         confidence: 0.6,

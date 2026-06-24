@@ -98,7 +98,10 @@ jobs:
       - name: "⑦ فرز المبادئ — تطبيق الرفض (--apply)"
         run: npx tsx scripts/triage-principles.ts --apply
 
-      - name: "⑧ تحقق (قراءة فقط)"
+      - name: "⑧ إعادة تعنون المبادئ (--apply)"
+        run: npx tsx scripts/retitle-principles.ts --apply
+
+      - name: "⑨ تحقق (قراءة فقط)"
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
             "SELECT review_status, count(*) FROM judicial_principles GROUP BY review_status;" 2>/dev/null \

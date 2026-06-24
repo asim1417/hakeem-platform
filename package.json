@@ -17,6 +17,7 @@
     "backfill:decrees": "tsx scripts/backfill-decrees.ts",
     "extract:principles": "tsx scripts/extract-principles.ts",
     "triage:principles": "tsx scripts/triage-principles.ts",
+    "retitle:principles": "tsx scripts/retitle-principles.ts",
     "import:hoqoqi": "tsx scripts/import-hoqoqi-sql.ts",
     "import:hoqoqi:resume": "tsx scripts/import-hoqoqi-sql.ts --apply --resume",
     "inspect:judgments": "tsx scripts/inspect-judgments-sql.ts",
