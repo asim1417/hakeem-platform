@@ -5,6 +5,7 @@ import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/li
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
+import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { TurathSourcesPanel } from "@/components/turath/TurathSourcesPanel";
 
 export const dynamic = "force-dynamic";
@@ -145,25 +146,14 @@ export default async function LegalSearchPage({
         description="بحث موحّد عبر الأنظمة والمواد والأحكام والمبادئ في آنٍ واحد — يجمع البحث النصّي والدلالي والعلائقي ويرتّب النتائج حسب الصلة. ابحث أولاً ثم ضيّق بالفلاتر."
       />
 
-      {/* صندوق البحث المركزي */}
-      <form className="card mt-6" action="/dashboard/legal-search">
-        {activeType !== "all" ? <input type="hidden" name="type" value={activeType} /> : null}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 focus-within:border-[var(--gold)] focus-within:ring-2 focus-within:ring-[var(--gold-ghost)]">
-            <Search size={18} className="text-[var(--ink-40)]" />
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="اكتب رقم مادة، اسم نظام، رقم حكم، أو سؤالاً قانونياً طبيعياً…"
-              className="h-11 w-full border-0 bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
-              autoFocus
-            />
-          </div>
-          <button type="submit" className="btn btn-gold">
-            <Search size={16} /> ابحث
-          </button>
-        </div>
-      </form>
+      {/* صندوق البحث المركزي مع الإكمال التلقائي */}
+      <div className="card mt-6">
+        <SearchAutocomplete
+          defaultValue={q}
+          autoFocus
+          placeholder="اكتب رقم مادة، اسم نظام، رقم حكم، أو سؤالاً قانونياً طبيعياً…"
+        />
+      </div>
 
       {/* فلاتر نوع الكيان (بعد ظهور النتائج) */}
       {data && all.length > 0 && (
