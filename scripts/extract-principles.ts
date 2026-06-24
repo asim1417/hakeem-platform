@@ -40,6 +40,16 @@ async function main() {
   let created = 0;
   const byMethod: Record<string, number> = { labeled: 0, headnote: 0 };
   const samples: string[] = [];
+  // نجمّع الإدراجات ونكتبها دفعةً بـ createMany (أسرع بكثير من الإدراج فردًا فردًا).
+  type Row = { title: string; principleText: string; sourceCaseId: string; court: string | null; confidence: number; reviewStatus: string };
+  let pending: Row[] = [];
+
+  async function flush() {
+    if (!APPLY || pending.length === 0) return;
+    const res = await prisma.judicialPrinciple.createMany({ data: pending });
+    created += res.count;
+    pending = [];
+  }
 
   for (;;) {
     if (scanned >= LIMIT) break;
@@ -61,22 +71,19 @@ async function main() {
       matched++;
       byMethod[p.method] = (byMethod[p.method] ?? 0) + 1;
       if (samples.length < 6) samples.push(`[${p.method}] ${p.title.slice(0, 70)}`);
-      if (APPLY) {
-        await prisma.judicialPrinciple.create({
-          data: {
-            title: p.title.slice(0, 250),
-            principleText: p.principleText,
-            sourceCaseId: c.id,
-            court: c.court,
-            confidence: p.confidence,
-            reviewStatus: "needs_review",
-          },
-        });
-        created++;
-      }
+      pending.push({
+        title: p.title.slice(0, 250),
+        principleText: p.principleText,
+        sourceCaseId: c.id,
+        court: c.court,
+        confidence: p.confidence,
+        reviewStatus: "needs_review",
+      });
     }
-    console.log(`  ...فُحص ${scanned}، طابق ${matched}`);
+    await flush();
+    console.log(`  ...فُحص ${scanned}، طابق ${matched}${APPLY ? `، أُنشئ ${created}` : ""}`);
   }
+  await flush();
 
   console.log("\nعيّنات مستخرَجة:");
   for (const s of samples) console.log(`  • ${s}`);
