@@ -6,6 +6,8 @@
 import { extractRoyalDecree, normalizeDigits } from "@/lib/modules/legal-core/decree-extractor";
 import { extractPrinciple, isJunkPrinciple, deriveTitle } from "@/lib/modules/legal-core/principle-extractor";
 import { buildArticleEli, lawSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
+import { extractArticleReferences } from "@/lib/modules/legal-core/cross-references";
+import { buildFiqhCitation, assertSeparated, isStatutoryCitation, isFiqhCitation } from "@/lib/modules/legal-core/content-separation";
 
 let passed = 0;
 let failed = 0;
@@ -132,6 +134,25 @@ console.log("\n— المعرّف التشريعي (ELI) —");
 
   check("رفض مسار خاطئ", parseArticleEli(["sa", "x", "chapter", "3"]) === null);
   check("رفض رقم غير صحيح", parseArticleEli(["sa", "x", "art", "abc"]) === null);
+}
+
+console.log("\n— الإحالات الداخلية بين المواد —");
+{
+  const refs = extractArticleReferences("يجوز الفسخ وفقًا للمادة (40) ومع مراعاة المادة 12 والمادتين 5 و6.", 99);
+  const nums = refs.map((r) => r.articleNumber);
+  check("استخراج إحالات متعددة", [5, 6, 12, 40].every((n) => nums.includes(n)), JSON.stringify(nums));
+  check("استبعاد الإحالة الذاتية", !extractArticleReferences("تطبّق هذه المادة 7", 7).some((r) => r.articleNumber === 7));
+  check("لا إحالات في نصّ خالٍ منها", extractArticleReferences("نصّ عام بلا إشارات.", 1).length === 0);
+}
+
+console.log("\n— منع خلط النظامي بالفقهي —");
+{
+  const statutory = "نظام العمل، المادة (80)، الصادر بالمرسوم الملكي رقم م/51.";
+  const fiqh = buildFiqhCitation("خيار العيب", "المادة (نظام/باب)");
+  check("الإسناد الفقهي موسوم بعدم الإلزام", isFiqhCitation(fiqh), fiqh);
+  check("الإسناد النظامي ليس فقهيًا", isStatutoryCitation(statutory) && !isFiqhCitation(statutory));
+  check("الإسنادان متمايزان (لا خلط)", assertSeparated(statutory, fiqh));
+  check("لا يُقبل فقهي بصيغة نظامية", !isStatutoryCitation(fiqh));
 }
 
 console.log(`\nالنتيجة: ${passed} ناجح، ${failed} فاشل`);

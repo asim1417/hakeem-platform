@@ -21,6 +21,9 @@ import {
   buildOfficialCitation
 } from "@/components/legal-core";
 import { getFiqhIssuesForArticle } from "@/lib/modules/legal-core/fiqh-issues";
+import { extractArticleReferences } from "@/lib/modules/legal-core/cross-references";
+import { resolveArticleIds } from "@/lib/modules/library/library-service";
+import { FIQH_NONBINDING_NOTICE } from "@/lib/modules/legal-core/content-separation";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +98,13 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
   const fiqhIssues = getFiqhIssuesForArticle(article.lawName, article.articleNumber, 8);
   const officialCitation = buildOfficialCitation({ lawName: article.lawName, articleNumber: article.articleNumber, royalDecree: article.royalDecree, effectiveFrom: article.effectiveFrom });
 
+  // الإحالات الداخلية: مواد يشير إليها نصّ هذه المادة داخل النظام نفسه.
+  const refs = extractArticleReferences(article.content, article.articleNumber).slice(0, 12);
+  const refIds = refs.length
+    ? await resolveArticleIds(refs.map((r) => ({ lawName: article.lawName, articleNumber: r.articleNumber }))).catch(() => new Map<string, string>())
+    : new Map<string, string>();
+  const crossReferences = refs.map((r) => ({ ...r, id: refIds.get(`${article.lawName}|${r.articleNumber}`) ?? null }));
+
   // محتوى الأحكام المرتبطة (يُعرض داخل تبويب).
   const judgmentsNode = article.caseLinks.length ? (
     <div className="space-y-3">
@@ -138,7 +148,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
         <div className="space-y-3">
           <div className="flex items-start gap-2 rounded-[var(--r-lg)] border border-[var(--amber)]/40 bg-[var(--amber-soft)] p-3 text-sm leading-7 text-[var(--navy)]">
             <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[var(--amber)]" aria-hidden />
-            <p>هذه نصوص فقهية مساندة للفهم والتأصيل، ولا تُعدّ بديلاً عن النص النظامي ولا مصدرًا ملزمًا بذاتها.</p>
+            <p>{FIQH_NONBINDING_NOTICE}</p>
           </div>
           <FiqhIssuesPanel issues={fiqhIssues} />
         </div>
@@ -236,6 +246,25 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             </LegalCoreCard>
 
             <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} />
+
+            {crossReferences.length ? (
+              <LegalCoreCard title="المواد المُحال إليها" subtitle="إحالات داخلية مستخرَجة من نصّ المادة" icon={<Link2 size={18} />}>
+                <div className="flex flex-wrap gap-2">
+                  {crossReferences.map((r) =>
+                    r.id ? (
+                      <Link key={r.articleNumber} href={`/dashboard/legal-core/articles/${r.id}`} className="inline-flex items-center gap-1 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-1 text-xs font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]">
+                        المادة {r.articleNumber.toLocaleString("ar-SA")}
+                      </Link>
+                    ) : (
+                      <span key={r.articleNumber} className="inline-flex items-center gap-1 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 px-2.5 py-1 text-xs text-[var(--ink-60)]">
+                        المادة {r.articleNumber.toLocaleString("ar-SA")}
+                      </span>
+                    )
+                  )}
+                </div>
+              </LegalCoreCard>
+            ) : null}
+
             <RelatedMaterialsPanel articles={related} />
           </aside>
         </section>

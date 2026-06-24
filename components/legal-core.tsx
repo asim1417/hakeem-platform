@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { BookOpen, Copy, Database, FileText, Filter, Fingerprint, History, Scale, Search, ShieldCheck } from "lucide-react";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { buildArticleEli } from "@/lib/modules/legal-core/eli";
+import { buildFiqhCitation } from "@/lib/modules/legal-core/content-separation";
 
 export function LegalCoreShell({ children }: { children: ReactNode }) {
   return <div className="min-h-screen rounded-[var(--r-2xl)] bg-[linear-gradient(180deg,var(--cream),var(--parchment))] text-[var(--ink)]">{children}</div>;
@@ -355,26 +356,39 @@ export function FiqhIssuesPanel({
 }) {
   return (
     <LegalCoreCard
-      title="المسائل القانونية المرتبطة"
-      subtitle="مسائل قانونية مربوطة بهذه المادة (قيد المراجعة)"
+      title="المسائل والتأصيل الفقهي المتوائم"
+      subtitle="مواءمة موضوعية مساندة للفهم — ليست نصًا نظاميًا ولا مصدرًا ملزمًا"
       icon={<Scale size={18} />}
     >
       {issues.length ? (
         <div className="space-y-2">
-          {issues.map((issue) => (
-            <div key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-display-ar text-sm font-bold text-[var(--navy)]">{issue.title}</p>
-                <LegalTopicBadge tone={issue.linkStatus === "linked" ? "emerald" : "amber"}>
-                  {issue.linkStatus === "linked" ? "مطابقة عالية" : "مراجعة"}
-                </LegalTopicBadge>
+          {issues.map((issue) => {
+            const pct = Math.round(Math.max(0, Math.min(1, issue.nizamRatio || 0)) * 100);
+            // وجه الصلة مشتقّ من موضع المسألة في شجرة المسائل.
+            const relation = issue.section?.trim() || issue.path?.split("/").filter(Boolean).slice(-1)[0] || "صلة موضوعية عامة";
+            const citation = buildFiqhCitation(issue.title, `المادة (${issue.path})`);
+            return (
+              <div key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-display-ar text-sm font-bold text-[var(--navy)]">{issue.title}</p>
+                  <LegalTopicBadge tone={issue.linkStatus === "linked" ? "emerald" : "amber"}>
+                    {issue.linkStatus === "linked" ? "مواءمة معتمدة" : "قيد المراجعة"}
+                  </LegalTopicBadge>
+                </div>
+                <p className="mt-1.5 text-xs leading-6 text-[var(--ink-70)]">
+                  <span className="font-semibold text-[var(--gold-dark)]">وجه الصلة:</span> {relation}
+                </p>
+                <p className="mt-1 font-mono-legal text-[0.7rem] text-[var(--ink-40)]">{issue.path}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-[var(--gold-ghost)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gold-dark)] tabular-nums">درجة التوافق {pct}%</span>
+                  <LegalCopyButton text={citation} label="نسخ الإسناد (غير ملزم)" />
+                </div>
               </div>
-              <p className="mt-1 font-mono-legal text-[0.7rem] text-[var(--ink-60)]">{issue.path}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <p className="text-sm leading-7 text-[var(--ink-60)]">لا توجد مسائل قانونية مرتبطة بهذه المادة حتى الآن.</p>
+        <p className="text-sm leading-7 text-[var(--ink-60)]">لا توجد مواءمة فقهية مرتبطة بهذه المادة حتى الآن.</p>
       )}
     </LegalCoreCard>
   );
