@@ -186,6 +186,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .app-foot-links { display: flex; gap: 16px; }
 .app-foot-links a { color: var(--ink-60); }
 .app-foot-links a:hover { color: var(--navy); }
+/* أدوات القراءة لصفحة المادة: حجم خط متغيّر + وضع تركيز + طباعة نظيفة */
+#legal-reading-root { --reading-scale: 1; }
+.article-body { font-size: calc(1.5rem * var(--reading-scale, 1)); line-height: 2.3; }
+.reading-focus .reading-hideable { display: none !important; }
+@media print {
+  .sidebar, .topbar, .app-foot, .skip-link, .reading-tools, .reading-hideable { display: none !important; }
+  .main { margin: 0 !important; }
+  .content { padding: 0 !important; max-width: none !important; }
+  .article-print-box { border: none !important; box-shadow: none !important; background: #fff !important; padding: 0 !important; }
+  body::after { display: none !important; }
+}
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px 16px; font-family: var(--font-display); font-size: 13px; transition: .15s; }
 .btn-primary { background: var(--navy); color: white; }
 .btn-gold { background: linear-gradient(135deg, var(--gold-bright), var(--gold)); color: var(--navy); box-shadow: 0 2px 8px rgba(192,155,90,.28); font-weight: 600; }

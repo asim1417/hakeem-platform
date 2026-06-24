@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpen, FileText, Link2, Pencil, Scale } from "lucide-react";
+import { BookOpen, FileText, Link2, Pencil, Scale, ChevronRight, ChevronLeft, ShieldAlert, ScrollText } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { HighlightedSearchText, countSearchMatches, joinSearchTerms } from "@/components/SearchHighlight";
+import { ArticleReadingTools } from "@/components/ArticleReadingTools";
+import { ArticleTabs, type ArticleTab } from "@/components/ArticleTabs";
 import {
   AmendmentsPanel,
   ComparativeLawPanel,
@@ -15,7 +17,8 @@ import {
   LegalCorePageHeader,
   LegalCoreShell,
   LegalTopicBadge,
-  RelatedMaterialsPanel
+  RelatedMaterialsPanel,
+  buildOfficialCitation
 } from "@/components/legal-core";
 import { getFiqhIssuesForArticle } from "@/lib/modules/legal-core/fiqh-issues";
 
@@ -29,6 +32,14 @@ function statusTone(status?: string | null): "emerald" | "amber" | "ruby" {
   return "emerald";
 }
 
+function Placeholder({ note }: { note: string }) {
+  return (
+    <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-sm leading-7 text-[var(--navy)]">
+      {note} يبقى نصّ المادة هو المصدر النظامي الأصلي.
+    </div>
+  );
+}
+
 export default async function LegalCoreArticlePage({ params, searchParams }: { params: { id: string }; searchParams?: { q?: string } }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
@@ -39,15 +50,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
         caseLinks: {
           include: {
             judicialCase: {
-              select: {
-                id: true,
-                judgmentTitle: true,
-                caseNo: true,
-                decisionNo: true,
-                court: true,
-                cityName: true,
-                decisionDateText: true
-              }
+              select: { id: true, judgmentTitle: true, caseNo: true, decisionNo: true, court: true, cityName: true, decisionDateText: true }
             }
           },
           orderBy: { createdAt: "desc" },
@@ -63,40 +66,118 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
 
   if (!article) notFound();
 
-  const related = await prisma.legalArticle.findMany({
-    where: {
-      id: { not: article.id },
-      OR: [{ lawName: article.lawName }, article.classification ? { classification: article.classification } : { lawName: article.lawName }]
-    },
-    orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-    take: 6,
-    select: { id: true, lawName: true, articleNumber: true, title: true }
-  });
+  // التنقّل بين مواد النظام نفسه (السابقة/اللاحقة).
+  const [related, prevArticle, nextArticle] = await Promise.all([
+    prisma.legalArticle.findMany({
+      where: {
+        id: { not: article.id },
+        OR: [{ lawName: article.lawName }, article.classification ? { classification: article.classification } : { lawName: article.lawName }]
+      },
+      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
+      take: 6,
+      select: { id: true, lawName: true, articleNumber: true, title: true }
+    }),
+    prisma.legalArticle.findFirst({
+      where: { lawName: article.lawName, articleNumber: { lt: article.articleNumber } },
+      orderBy: { articleNumber: "desc" },
+      select: { id: true, articleNumber: true }
+    }),
+    prisma.legalArticle.findFirst({
+      where: { lawName: article.lawName, articleNumber: { gt: article.articleNumber } },
+      orderBy: { articleNumber: "asc" },
+      select: { id: true, articleNumber: true }
+    })
+  ]);
 
   const query = (searchParams?.q ?? "").trim();
   const highlightTerms = joinSearchTerms(query);
   const matches = countSearchMatches(article.content, highlightTerms);
   const fiqhIssues = getFiqhIssuesForArticle(article.lawName, article.articleNumber, 8);
+  const officialCitation = buildOfficialCitation({ lawName: article.lawName, articleNumber: article.articleNumber, royalDecree: article.royalDecree, effectiveFrom: article.effectiveFrom });
+
+  // محتوى الأحكام المرتبطة (يُعرض داخل تبويب).
+  const judgmentsNode = article.caseLinks.length ? (
+    <div className="space-y-3">
+      {article.caseLinks.map((link) => (
+        <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-mono-legal text-sm text-[var(--gold)]">
+                {link.judicialCase.caseNo ? `قضية ${link.judicialCase.caseNo}` : "قضية غير مرقمة"}
+                {link.judicialCase.decisionNo ? ` | قرار ${link.judicialCase.decisionNo}` : ""}
+              </p>
+              <h3 className="mt-1 font-display-ar text-base font-bold text-[var(--navy)]">{link.judicialCase.judgmentTitle ?? "حكم قضائي مستورد"}</h3>
+              <p className="mt-1 text-xs text-[var(--ink-60)]">
+                {[link.judicialCase.court, link.judicialCase.cityName, link.judicialCase.decisionDateText].filter(Boolean).join(" | ") || "بيانات الحكم غير مكتملة"}
+              </p>
+            </div>
+            <LegalTopicBadge tone={link.reviewStatus === "reviewed" ? "emerald" : "amber"}>{link.reviewStatus}</LegalTopicBadge>
+          </div>
+          {link.excerpt ? <p className="mt-3 rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">{link.excerpt}</p> : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link className="btn btn-gold" href={`/dashboard/legal-core/judgments/${link.judicialCase.id}`}>فتح الحكم</Link>
+            <LegalCopyButton text={`${article.lawName}، المادة ${article.articleNumber}: ${link.citedText ?? ""}`} label="نسخ الاستشهاد" />
+          </div>
+        </article>
+      ))}
+    </div>
+  ) : (
+    <Placeholder note="لا توجد أحكام أو استشهادات معتمدة مرتبطة بهذه المادة حتى الآن." />
+  );
+
+  // التبويبات المنظّمة (الفصل البصري الصارم: الفقه طبقة مساندة غير ملزمة).
+  const tabs: ArticleTab[] = [
+    { id: "explanation", label: "الشرح والتحليل", content: <ExplanationPanel /> },
+    { id: "judgments", label: "الأحكام والمبادئ", badge: article.caseLinks.length, content: judgmentsNode },
+    { id: "regulation", label: "اللائحة التنفيذية", content: <Placeholder note="لم تُربط لائحة تنفيذية معتمدة بهذه المادة بعد." /> },
+    {
+      id: "fiqh",
+      label: "النصوص الفقهية المتوائمة",
+      badge: fiqhIssues.length,
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 rounded-[var(--r-lg)] border border-[var(--amber)]/40 bg-[var(--amber-soft)] p-3 text-sm leading-7 text-[var(--navy)]">
+            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[var(--amber)]" aria-hidden />
+            <p>هذه نصوص فقهية مساندة للفهم والتأصيل، ولا تُعدّ بديلاً عن النص النظامي ولا مصدرًا ملزمًا بذاتها.</p>
+          </div>
+          <FiqhIssuesPanel issues={fiqhIssues} />
+        </div>
+      )
+    },
+    { id: "questions", label: "الأسئلة العملية", content: <Placeholder note="لم تُضَف أسئلة عملية معتمدة لهذه المادة بعد." /> },
+    { id: "subissues", label: "المسائل المتفرعة", content: <Placeholder note="لم تُربط مسائل متفرعة معتمدة بهذه المادة بعد." /> },
+    { id: "comparative", label: "القانون المقارن", content: <ComparativeLawPanel /> },
+    { id: "references", label: "المراجع", content: <Placeholder note="لم تُسجَّل مراجع معتمدة لهذه المادة بعد." /> },
+    { id: "history", label: "سجل التعديلات", badge: article.amendments.length, content: <AmendmentsPanel amendments={article.amendments} /> }
+  ];
 
   return (
     <LegalCoreShell>
-      <div className="space-y-7">
+      <div className="space-y-7" id="legal-reading-root">
         <LegalCorePageHeader
           title={`المادة ${article.articleNumber.toLocaleString("ar-SA")}`}
           description={`${article.lawName}${article.chapter ? ` | ${article.chapter}` : ""}`}
           actions={
-            <>
+            <div className="reading-hideable flex flex-wrap items-center gap-2">
               <LegalCopyButton text={article.content} label="نسخ نص المادة" />
+              <LegalCopyButton text={officialCitation} label="نسخ الإحالة" />
               <button className="btn btn-outline" type="button"><Pencil size={16} /> تحرير</button>
               <Link className="btn btn-gold" href={`/dashboard/simulations?article=${article.id}`}><Scale size={16} /> استخدام في القاضي حكيم</Link>
               <Link className="btn ho-hero-outline" href={`/dashboard/consultations?article=${article.id}`}><FileText size={16} /> استخدام في الاستشارة</Link>
-            </>
+            </div>
           }
         />
 
         <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
           <div className="space-y-5">
-            <article className="rounded-[var(--r-2xl)] border border-[var(--gold-border)] bg-[var(--parchment)] p-8 shadow-[var(--sh-md)]">
+            {/* صندوق النص النظامي الرسمي — مفصول بصريًا وبعنوان صريح */}
+            <article className="article-print-box rounded-[var(--r-2xl)] border-2 border-[var(--gold-border)] bg-[var(--parchment)] p-8 shadow-[var(--sh-md)]">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--navy)] px-3 py-1 text-xs font-bold text-[var(--gold-pale)]">
+                  <ScrollText size={14} aria-hidden /> النص النظامي الرسمي
+                </span>
+                <ArticleReadingTools exportText={article.content} exportTitle={`${article.lawName} — المادة ${article.articleNumber}`} citation={officialCitation} />
+              </div>
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gold-border)] pb-5">
                 <div>
                   <p className="font-mono-legal text-sm text-[var(--gold)]">{article.lawName}</p>
@@ -109,66 +190,36 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
               </div>
               {article.chapter ? <p className="mb-4 font-display-ar text-sm font-semibold text-[var(--ink-60)]">{article.chapter}</p> : null}
               {query ? (
-                <div className="mb-5 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
-                  <p className="font-display-ar text-sm font-bold text-[var(--navy)]">
-                    عدد المطابقات داخل المادة: {matches.toLocaleString("ar-SA")}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <a className="btn btn-outline" href="#match-1">المطابقة التالية</a>
-                    <a className="btn btn-outline" href={`#match-${Math.max(matches, 1)}`}>المطابقة السابقة</a>
-                  </div>
+                <div className="reading-hideable mb-5 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
+                  <p className="font-display-ar text-sm font-bold text-[var(--navy)]">عدد المطابقات داخل المادة: {matches.toLocaleString("ar-SA")}</p>
                 </div>
               ) : null}
-              <p className="font-judicial text-2xl leading-[2.3] text-[var(--ink)]">
+              <p className="article-body font-judicial text-[var(--ink)]">
                 <HighlightedSearchText text={article.content} terms={highlightTerms} anchorPrefix="match" />
               </p>
             </article>
 
-            <LegalCoreCard title="الأحكام والاستشهادات المرتبطة" subtitle="فهرس عكسي للمادة عند اعتماد الاستشهادات القضائية">
-              {article.caseLinks.length ? (
-                <div className="space-y-3">
-                  {article.caseLinks.map((link) => (
-                    <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="font-mono-legal text-sm text-[var(--gold)]">
-                            {link.judicialCase.caseNo ? `قضية ${link.judicialCase.caseNo}` : "قضية غير مرقمة"}
-                            {link.judicialCase.decisionNo ? ` | قرار ${link.judicialCase.decisionNo}` : ""}
-                          </p>
-                          <h3 className="mt-1 font-display-ar text-base font-bold text-[var(--navy)]">
-                            {link.judicialCase.judgmentTitle ?? "حكم قضائي مستورد"}
-                          </h3>
-                          <p className="mt-1 text-xs text-[var(--ink-60)]">
-                            {[link.judicialCase.court, link.judicialCase.cityName, link.judicialCase.decisionDateText].filter(Boolean).join(" | ") || "بيانات الحكم غير مكتملة"}
-                          </p>
-                        </div>
-                        <LegalTopicBadge tone={link.reviewStatus === "reviewed" ? "emerald" : "amber"}>{link.reviewStatus}</LegalTopicBadge>
-                      </div>
-                      {link.excerpt ? <p className="mt-3 rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">{link.excerpt}</p> : null}
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Link className="btn btn-gold" href={`/dashboard/legal-core/judgments/${link.judicialCase.id}`}>فتح الحكم</Link>
-                        <LegalCopyButton text={`${article.lawName}، المادة ${article.articleNumber}: ${link.citedText ?? ""}`} label="نسخ الاستشهاد" />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">
-                  لا توجد أحكام أو استشهادات معتمدة مرتبطة بهذه المادة حتى الآن.
-                </div>
-              )}
-            </LegalCoreCard>
+            {/* التنقّل بين مواد النظام */}
+            <nav className="reading-hideable flex items-center justify-between gap-3" aria-label="التنقّل بين المواد">
+              {prevArticle ? (
+                <Link className="btn btn-outline" href={`/dashboard/legal-core/articles/${prevArticle.id}`}>
+                  <ChevronRight size={16} /> المادة {prevArticle.articleNumber.toLocaleString("ar-SA")}
+                </Link>
+              ) : <span />}
+              {nextArticle ? (
+                <Link className="btn btn-outline" href={`/dashboard/legal-core/articles/${nextArticle.id}`}>
+                  المادة {nextArticle.articleNumber.toLocaleString("ar-SA")} <ChevronLeft size={16} />
+                </Link>
+              ) : <span />}
+            </nav>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {["الشرح", "شروط التطبيق", "الآثار", "الاستثناءات", "المسائل المرتبطة", "الأحكام القضائية", "المبادئ", "القوالب المرتبطة"].map((section) => (
-                <LegalCoreCard key={section} title={section}>
-                  <p className="text-sm leading-7 text-[var(--ink-60)]">لم يتم إثراء هذا القسم بعد بمحتوى معتمد. يبقى نص المادة هو المصدر النظامي الأصلي.</p>
-                </LegalCoreCard>
-              ))}
+            {/* الأقسام المنظّمة في تبويبات (شرح/أحكام/فقه/سجل…) */}
+            <div className="reading-hideable">
+              <ArticleTabs tabs={tabs} />
             </div>
           </div>
 
-          <aside className="space-y-5">
+          <aside className="reading-hideable space-y-5">
             <LegalCoreCard title="رأس المادة" subtitle="بيانات تعريفية سريعة" icon={<BookOpen size={18} />}>
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">النظام</dt><dd className="text-left font-semibold text-[var(--navy)]">{article.lawName}</dd></div>
@@ -185,10 +236,6 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             </LegalCoreCard>
 
             <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} />
-            <AmendmentsPanel amendments={article.amendments} />
-            <FiqhIssuesPanel issues={fiqhIssues} />
-            <ExplanationPanel />
-            <ComparativeLawPanel />
             <RelatedMaterialsPanel articles={related} />
           </aside>
         </section>
