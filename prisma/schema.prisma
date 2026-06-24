@@ -621,3 +621,70 @@ model SearchLog {
   @@index([userId])
   @@map("search_logs")
 }
+
+// ── الطبقة الفقهية المنضبطة (مساندة غير ملزمة، منفصلة تمامًا عن النظام) ──
+// لا تُنشر مواءمة على الواجهة إلا بعد مراجعة بشرية أو موسومة «آلية غير معتمدة».
+
+model FiqhSource {
+  id                 String     @id @default(cuid())
+  sourceTitle        String     @map("source_title")
+  author             String?
+  school             String? // المذهب
+  era                String?
+  sourceType         String     @default("book") @map("source_type")
+  edition            String?
+  publisher          String?
+  verificationStatus String     @default("unverified") @map("verification_status")
+  externalId         String?    @unique @map("external_id") // معرّف المصدر الخارجي (مثل تراث)
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  texts FiqhText[]
+
+  @@index([author])
+  @@map("fiqh_sources")
+}
+
+model FiqhText {
+  id             String     @id @default(cuid())
+  sourceId       String     @map("source_id")
+  source         FiqhSource @relation(fields: [sourceId], references: [id])
+  book           String?
+  chapter        String?
+  section        String?
+  textOriginal   String     @map("text_original")
+  textNormalized String?    @map("text_normalized")
+  topic          String?
+  legalConceptId String?    @map("legal_concept_id")
+  pageReference  String?    @map("page_reference")
+  citation       String?
+  externalRef    String?    @map("external_ref") // مرجع الصفحة في المصدر الخارجي
+  deletedAt      DateTime?  @map("deleted_at") // حذف ناعم
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  alignments FiqhArticleAlignment[]
+
+  @@index([sourceId])
+  @@index([topic])
+  @@map("fiqh_texts")
+}
+
+model FiqhArticleAlignment {
+  id             String    @id @default(cuid())
+  articleId      String    @map("article_id")
+  fiqhTextId     String    @map("fiqh_text_id")
+  fiqhText       FiqhText  @relation(fields: [fiqhTextId], references: [id])
+  alignmentType  String    @default("topical") @map("alignment_type") // اصل|قاعدة|نظير|خلاف|تأصيل|غير_مناسب
+  alignmentReason String?  @map("alignment_reason") // وجه الصلة
+  confidenceScore Float?   @map("confidence_score")
+  reviewStatus   String    @default("needs_review") @map("review_status")
+  reviewedBy     String?   @map("reviewed_by")
+  reviewedAt     DateTime? @map("reviewed_at")
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@unique([articleId, fiqhTextId])
+  @@index([articleId])
+  @@index([reviewStatus])
+  @@map("fiqh_article_alignments")
+}

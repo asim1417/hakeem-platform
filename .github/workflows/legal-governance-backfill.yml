@@ -74,6 +74,9 @@ jobs:
       - name: "① تطبيق ترحيل article_amendments (آمن لإعادة التشغيل)"
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260623120000_add_article_amendments/migration.sql
 
+      - name: "①ب تطبيق ترحيل الطبقة الفقهية المنضبطة (آمن لإعادة التشغيل)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260624130000_add_curated_fiqh/migration.sql
+
       - name: "② معاينة المراسيم (dry-run قبل الكتابة)"
         run: npx tsx scripts/backfill-decrees.ts
 
