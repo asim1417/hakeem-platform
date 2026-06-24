@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BookOpen, Copy, Database, FileText, Filter, History, Scale, Search, ShieldCheck } from "lucide-react";
+import { BookOpen, Copy, Database, FileText, Filter, Fingerprint, History, Scale, Search, ShieldCheck } from "lucide-react";
+import { LegalCopyButton } from "@/components/LegalCopyButton";
+import { buildArticleEli } from "@/lib/modules/legal-core/eli";
 
 export function LegalCoreShell({ children }: { children: ReactNode }) {
   return <div className="min-h-screen rounded-[var(--r-2xl)] bg-[linear-gradient(180deg,var(--cream),var(--parchment))] text-[var(--ink)]">{children}</div>;
@@ -204,6 +206,7 @@ export function LegalCitationBlock({
   effectiveFrom?: Date | string | null;
 }) {
   const official = buildOfficialCitation({ lawName, articleNumber, royalDecree, effectiveFrom });
+  const eli = buildArticleEli(lawName, articleNumber);
   return (
     <div id="citation" className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
       <div className="flex items-center gap-2 font-display-ar text-sm font-bold text-[var(--navy)]">
@@ -214,6 +217,18 @@ export function LegalCitationBlock({
       {royalDecree?.trim() ? null : (
         <p className="mt-2 text-[11px] text-[var(--amber)]">رقم المرسوم الملكي غير مُدخَل لهذه المادة بعد.</p>
       )}
+      <div className="mt-3 border-t border-[var(--gold-border)] pt-3">
+        <div className="flex items-center gap-2 font-display-ar text-xs font-bold text-[var(--navy)]">
+          <Fingerprint size={14} className="text-[var(--gold)]" />
+          المعرّف التشريعي الثابت (نمط ELI)
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Link href={eli.path} className="font-mono-legal text-xs leading-6 text-[var(--gold-dark)] underline-offset-2 hover:underline" dir="ltr">
+            {eli.id}
+          </Link>
+          <LegalCopyButton text={eli.id} label="نسخ المعرّف" />
+        </div>
+      </div>
       <p className="mt-3 border-t border-[var(--gold-border)] pt-3 font-mono-legal text-xs leading-7 text-[var(--ink-60)]">
         نصّ مرجعي: {content.slice(0, 200)}…
       </p>

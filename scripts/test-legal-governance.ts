@@ -5,6 +5,7 @@
  */
 import { extractRoyalDecree, normalizeDigits } from "@/lib/modules/legal-core/decree-extractor";
 import { extractPrinciple } from "@/lib/modules/legal-core/principle-extractor";
+import { buildArticleEli, lawSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
 
 let passed = 0;
 let failed = 0;
@@ -64,6 +65,24 @@ console.log("\n— مستخرِج المبدأ القضائي —");
 
   const tooShort = extractPrinciple("حكم.", null);
   check("رفض النصّ القصير", tooShort === null);
+}
+
+console.log("\n— المعرّف التشريعي (ELI) —");
+{
+  // ملاحظة: التطبيع يوحّد ة→ه و ى→ي لثبات المعرّف، فالنتيجة المتوقّعة مطبّعة.
+  const eli = buildArticleEli("نظام المعاملات المدنية", 1);
+  check("بناء معرّف ELI", eli.id === `eli/sa/${lawSlug("نظام المعاملات المدنية")}/art/1`, JSON.stringify(eli));
+  check("الـ slug مطبّع (ة→ه)", eli.id === "eli/sa/نظام-المعاملات-المدنيه/art/1", JSON.stringify(eli));
+
+  // ثبات الـ slug رغم اختلاف التشكيل/الهمزات.
+  check("ثبات الـ slug", lawSlug("نظام العمل") === lawSlug("نظام العَمَل"), `${lawSlug("نظام العمل")} vs ${lawSlug("نظام العَمَل")}`);
+
+  const round = buildArticleEli("نظام العمل", 80);
+  const parsed = parseArticleEli(round.id.split("/").slice(1)); // أزل البادئة "eli"
+  check("تحليل ELI صحيح", parsed?.articleNumber === 80 && parsed?.slug === lawSlug("نظام العمل"), JSON.stringify(parsed));
+
+  check("رفض مسار خاطئ", parseArticleEli(["sa", "x", "chapter", "3"]) === null);
+  check("رفض رقم غير صحيح", parseArticleEli(["sa", "x", "art", "abc"]) === null);
 }
 
 console.log(`\nالنتيجة: ${passed} ناجح، ${failed} فاشل`);

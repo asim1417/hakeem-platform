@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Scale, Quote, ShieldCheck } from "lucide-react";
-import { requirePagePermission } from "@/lib/modules/auth/session";
+import { requirePagePermission, getCurrentUser } from "@/lib/modules/auth/session";
+import { canUser } from "@/lib/modules/auth/rbac";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
+import { PrincipleReviewControls } from "@/components/PrincipleReviewControls";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,8 @@ export default async function JudicialPrinciplesPage({
   searchParams?: { q?: string; court?: string; status?: string; page?: string };
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
+  const user = await getCurrentUser().catch(() => null);
+  const canReview = user ? await canUser(user.id, "LEGAL_CORE_EDIT").catch(() => false) : false;
 
   const q = (searchParams?.q ?? "").trim();
   const court = (searchParams?.court ?? "").trim();
@@ -25,12 +29,14 @@ export default async function JudicialPrinciplesPage({
   const where = {
     ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" as const } }, { principleText: { contains: q, mode: "insensitive" as const } }] } : {}),
     ...(court ? { court } : {}),
-    ...(status ? { reviewStatus: status } : {})
+    // افتراضيًا نُخفي المرفوضة ما لم تُطلب صراحةً.
+    ...(status ? { reviewStatus: status } : { reviewStatus: { not: "rejected" } })
   };
 
-  const [total, reviewed, courtsRaw, principles] = await Promise.all([
+  const [total, reviewed, pendingCount, courtsRaw, principles] = await Promise.all([
     prisma.judicialPrinciple.count().catch(() => 0),
     prisma.judicialPrinciple.count({ where: { reviewStatus: "reviewed" } }).catch(() => 0),
+    prisma.judicialPrinciple.count({ where: { reviewStatus: "needs_review" } }).catch(() => 0),
     prisma.judicialPrinciple.groupBy({ by: ["court"], _count: { _all: true }, orderBy: { _count: { court: "desc" } }, take: 12 }).catch(() => [] as Array<{ court: string | null; _count: { _all: number } }>),
     prisma.judicialPrinciple
       .findMany({
@@ -77,7 +83,7 @@ export default async function JudicialPrinciplesPage({
         <section className="grid gap-4 md:grid-cols-3">
           <LegalCoreStatCard label="إجمالي المبادئ" value={total} hint="مستخرجة من الأحكام" tone={total ? "emerald" : "amber"} />
           <LegalCoreStatCard label="مبادئ معتمدة" value={reviewed} hint="بعد المراجعة البشرية" tone={reviewed ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="بانتظار المراجعة" value={Math.max(0, total - reviewed)} hint="اقتراحات آلية" tone={total - reviewed ? "amber" : "emerald"} />
+          <LegalCoreStatCard label="بانتظار المراجعة" value={pendingCount} hint="اقتراحات آلية تنتظر الاعتماد" tone={pendingCount ? "amber" : "emerald"} />
         </section>
 
         {/* المرشّحات */}
@@ -98,9 +104,10 @@ export default async function JudicialPrinciplesPage({
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--ink-60)]" htmlFor="status">الحالة</label>
             <select id="status" name="status" defaultValue={status} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white px-3 text-sm">
-              <option value="">الكل</option>
+              <option value="">الكل (عدا المرفوض)</option>
               <option value="reviewed">معتمد</option>
               <option value="needs_review">بانتظار المراجعة</option>
+              <option value="rejected">مرفوض</option>
             </select>
           </div>
           <button type="submit" className="btn btn-gold h-10">تطبيق</button>
@@ -115,17 +122,18 @@ export default async function JudicialPrinciplesPage({
                     <h3 className="font-display-ar text-base font-bold text-[var(--navy)]">{p.title}</h3>
                     <div className="flex flex-wrap gap-2">
                       {p.court ? <LegalTopicBadge>{p.court}</LegalTopicBadge> : null}
-                      <LegalTopicBadge tone={p.reviewStatus === "reviewed" ? "emerald" : "amber"}>
-                        {p.reviewStatus === "reviewed" ? "معتمد" : "بانتظار المراجعة"}
+                      <LegalTopicBadge tone={p.reviewStatus === "reviewed" ? "emerald" : p.reviewStatus === "rejected" ? "ruby" : "amber"}>
+                        {p.reviewStatus === "reviewed" ? "معتمد" : p.reviewStatus === "rejected" ? "مرفوض" : "بانتظار المراجعة"}
                       </LegalTopicBadge>
                     </div>
                   </div>
                   <p className="mt-3 leading-8 text-[var(--ink-80)]">{p.principleText}</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
                     <Link className="btn btn-gold" href={`/dashboard/legal-core/judgments/${p.sourceCaseId}`}>
                       <Scale size={15} /> الحكم المصدر
                     </Link>
                     <LegalCopyButton text={`${p.title}: ${p.principleText}`} label="نسخ المبدأ" />
+                    {canReview ? <PrincipleReviewControls id={p.id} status={p.reviewStatus} /> : null}
                   </div>
                 </article>
               ))}
