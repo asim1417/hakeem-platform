@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, FileText, Link2, Pencil, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { prisma } from "@/lib/prisma";
+import { getArticleDetail, getRelatedArticles } from "@/lib/modules/library/library-service";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { HighlightedSearchText, countSearchMatches, joinSearchTerms } from "@/components/SearchHighlight";
 import {
@@ -23,41 +23,14 @@ export const dynamic = "force-dynamic";
 export default async function LegalCoreArticlePage({ params, searchParams }: { params: { id: string }; searchParams?: { q?: string } }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const article = await prisma.legalArticle
-    .findUnique({
-      where: { id: params.id },
-      include: {
-        caseLinks: {
-          include: {
-            judicialCase: {
-              select: {
-                id: true,
-                judgmentTitle: true,
-                caseNo: true,
-                decisionNo: true,
-                court: true,
-                cityName: true,
-                decisionDateText: true
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" },
-          take: 8
-        }
-      }
-    })
-    .catch(() => null);
+  const article = await getArticleDetail(params.id);
 
   if (!article) notFound();
 
-  const related = await prisma.legalArticle.findMany({
-    where: {
-      id: { not: article.id },
-      OR: [{ lawName: article.lawName }, article.classification ? { classification: article.classification } : { lawName: article.lawName }]
-    },
-    orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-    take: 6,
-    select: { id: true, lawName: true, articleNumber: true, title: true }
+  const related = await getRelatedArticles({
+    id: article.id,
+    lawName: article.lawName,
+    classification: article.classification
   });
 
   const query = (searchParams?.q ?? "").trim();

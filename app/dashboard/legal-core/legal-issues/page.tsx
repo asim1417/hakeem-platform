@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Scale, ArrowRight, BookOpen } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { prisma } from "@/lib/prisma";
+import { resolveArticleIds as resolveArticleIdsByPair } from "@/lib/modules/library/library-service";
 import {
   LegalCoreCard,
   LegalCorePageHeader,
@@ -31,15 +31,11 @@ const STATUS_TONE: Record<string, "emerald" | "amber"> = {
   uncodified_sharia: "amber"
 };
 
-async function resolveArticleIds(items: LegalIssueItem[]): Promise<Map<string, string>> {
+function resolveArticleIds(items: LegalIssueItem[]): Promise<Map<string, string>> {
   const pairs = items
     .filter((i) => i.topArticle)
     .map((i) => ({ lawName: i.topArticle!.lawName, articleNumber: i.topArticle!.articleNumber }));
-  if (!pairs.length) return new Map();
-  const rows = await prisma.legalArticle
-    .findMany({ where: { OR: pairs }, select: { id: true, lawName: true, articleNumber: true } })
-    .catch(() => [] as { id: string; lawName: string; articleNumber: number }[]);
-  return new Map(rows.map((r) => [`${r.lawName}|${r.articleNumber}`, r.id]));
+  return resolveArticleIdsByPair(pairs);
 }
 
 export default async function LegalIssuesPage({
