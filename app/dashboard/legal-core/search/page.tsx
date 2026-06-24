@@ -3,7 +3,7 @@ import { BookMarked, ExternalLink, FileArchive, Search } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
-import { prisma } from "@/lib/prisma";
+import { listAllSystems } from "@/lib/modules/library/library-service";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
@@ -63,7 +63,7 @@ export default async function LegalCoreSearchPage({
   const page = Number(searchParams.page ?? 1);
 
   const [systems, response] = await Promise.all([
-    prisma.legalSystem.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, classification: true } }).catch(() => []),
+    listAllSystems(),
     searchLegalCore({
       query,
       searchType: selectedSearchType,
