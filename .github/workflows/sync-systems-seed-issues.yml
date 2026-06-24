@@ -1,0 +1,93 @@
+name: Sync Systems & Seed Legal Issues (Neon)
+
+# يطبّق الناقص من توصيات تقرير الأنظمة على قاعدة Runtime (Neon):
+#   ① جداول المسائل القانونية (scripts/sql/fiqh-tables.sql) — إضافي آمن لإعادة التشغيل.
+#   ② sync:systems --apply — مزامنة legal_systems + articleCount + التصنيف من legal_articles.
+#   ③ seed:fiqh --apply — بذر المسائل القانونية وحلّ article_id (candidate/needs_human_review).
+#
+# يدوي فقط (workflow_dispatch). يكتب في DB ⇒ مُقفل خلف بوّابة المواءمة + حارس هدف Neon.
+# يستعمل سرّاً مخصّصاً NEON_DATABASE_URL (كتابة) — لا يلمس DATABASE_URL المشترك.
+# كل الخطوات idempotent وبمعاينة قبل الكتابة حيث ينطبق.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+      seed_fiqh:
+        description: "بذر المسائل القانونية (--apply)؟"
+        type: boolean
+        default: true
+
+concurrency:
+  group: sync-systems-seed-issues
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      # سرّ مخصّص لـ Neon (كتابة) — منفصل عن DATABASE_URL المشترك.
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      # 🔒 بوّابة التأكيد.
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ NEON_DATABASE_URL (اتصال Neon بكتابة)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      # 🛡️ حارس الهدف — يلغي كل شيء إن لم تكن القاعدة Neon الكبيرة (قراءة فقط).
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "① تطبيق جداول المسائل القانونية (إضافي آمن لإعادة التشغيل)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/sql/fiqh-tables.sql
+
+      - name: "② معاينة مزامنة الأنظمة (dry-run قبل الكتابة)"
+        run: npm run sync:systems
+
+      - name: "③ تطبيق مزامنة الأنظمة (--apply)"
+        run: npm run sync:systems -- --apply
+
+      - name: "④ بذر المسائل القانونية (--apply)"
+        if: ${{ inputs.seed_fiqh }}
+        run: npm run seed:fiqh -- --apply
+
+      - name: "⑤ تحقق (قراءة فقط)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS systems FROM legal_systems;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS fiqh_issues FROM fiqh_issues;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS fiqh_links_resolved FROM fiqh_issue_links WHERE article_id IS NOT NULL;"
