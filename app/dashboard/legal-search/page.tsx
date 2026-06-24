@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Search, FileText, Scale, Quote, ExternalLink, Filter, X } from "lucide-react";
+import { Search, FileText, Scale, Quote, ExternalLink, Filter, X, ArrowDownWideNarrow } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { TurathSourcesPanel } from "@/components/turath/TurathSourcesPanel";
 
 export const dynamic = "force-dynamic";
@@ -31,9 +32,21 @@ const FILTERS: Array<{ key: string; label: string }> = [
   { key: "principle", label: "المبادئ" },
 ];
 
+const SORTS: Array<{ key: string; label: string }> = [
+  { key: "relevance", label: "الصلة" },
+  { key: "newest", label: "الأحدث" },
+  { key: "article", label: "رقم المادة" },
+];
+
 function metaStr(r: MergedResult, key: string): string | null {
   const v = (r.meta as Record<string, unknown> | undefined)?.[key];
   return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+function metaNum(r: MergedResult, key: string): number | null {
+  const v = (r.meta as Record<string, unknown> | undefined)?.[key];
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : null;
 }
 
 /** يبني قائمة تسهيلات (facets) مرتّبة بالعدد التنازلي. */
@@ -55,7 +68,7 @@ function detailHref(r: MergedResult): string | null {
 export default async function LegalSearchPage({
   searchParams,
 }: {
-  searchParams: { q?: string; type?: string; system?: string; court?: string; classification?: string; status?: string; year?: string };
+  searchParams: { q?: string; type?: string; system?: string; court?: string; classification?: string; status?: string; year?: string; sort?: string };
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
@@ -66,6 +79,7 @@ export default async function LegalSearchPage({
   const activeClassification = (searchParams.classification ?? "").trim();
   const activeStatus = (searchParams.status ?? "").trim();
   const activeYear = (searchParams.year ?? "").trim();
+  const activeSort = SORTS.some((s) => s.key === searchParams.sort) ? searchParams.sort! : "relevance";
   const highlightTerms = joinSearchTerms(q);
 
   let data: HybridSearchResponse | null = null;
@@ -82,6 +96,7 @@ export default async function LegalSearchPage({
           ...(activeClassification ? { classification: activeClassification } : {}),
           ...(activeStatus ? { status: activeStatus } : {}),
           ...(activeYear ? { year: activeYear } : {}),
+          ...(activeSort !== "relevance" ? { sort: activeSort } : {}),
         },
         resultsCount: data.results.length,
       });
@@ -109,7 +124,7 @@ export default async function LegalSearchPage({
   const yearFacets = facetsOf(rulingRows, "year").sort((a, b) => Number(b.value) - Number(a.value));
 
   // الفلترة: النوع + النظام/التصنيف/الحالة (تضيّق المواد) + المحكمة/السنة (تضيّق الأحكام)
-  const results = all.filter((r) => {
+  const filtered = all.filter((r) => {
     if (activeType !== "all" && r.type !== activeType) return false;
     if (r.type === "article") {
       if (activeSystem && metaStr(r, "systemName") !== activeSystem) return false;
@@ -123,20 +138,43 @@ export default async function LegalSearchPage({
     return true;
   });
 
+  // الترتيب: الصلة (الافتراضي) | الأحدث (سنة الحكم تنازليًا) | رقم المادة (تصاعديًا).
+  const results = [...filtered];
+  if (activeSort === "newest") {
+    results.sort((a, b) => (metaNum(b, "year") ?? 0) - (metaNum(a, "year") ?? 0) || b.confidence - a.confidence);
+  } else if (activeSort === "article") {
+    results.sort((a, b) => {
+      const an = metaNum(a, "articleNumber");
+      const bn = metaNum(b, "articleNumber");
+      if (an == null && bn == null) return b.confidence - a.confidence;
+      if (an == null) return 1;
+      if (bn == null) return -1;
+      return an - bn;
+    });
+  }
+
   const hasActiveFilter =
     activeType !== "all" || Boolean(activeSystem) || Boolean(activeCourt) || Boolean(activeClassification) || Boolean(activeStatus) || Boolean(activeYear);
-  // يبني رابطًا يحافظ على بقية الفلاتر مع تبديل النوع.
-  const typeHref = (typeKey: string) => {
+  // يبني رابط بحث يحافظ على كل المعاملات مع تجاوزات اختيارية (نوع/ترتيب/نظام…).
+  const buildHref = (overrides: Record<string, string> = {}) => {
+    const base: Record<string, string> = {
+      q,
+      ...(activeType !== "all" ? { type: activeType } : {}),
+      ...(activeSystem ? { system: activeSystem } : {}),
+      ...(activeCourt ? { court: activeCourt } : {}),
+      ...(activeClassification ? { classification: activeClassification } : {}),
+      ...(activeStatus ? { status: activeStatus } : {}),
+      ...(activeYear ? { year: activeYear } : {}),
+      ...(activeSort !== "relevance" ? { sort: activeSort } : {})
+    };
+    const merged = { ...base, ...overrides };
     const p = new URLSearchParams();
-    p.set("q", q);
-    if (typeKey !== "all") p.set("type", typeKey);
-    if (activeSystem) p.set("system", activeSystem);
-    if (activeCourt) p.set("court", activeCourt);
-    if (activeClassification) p.set("classification", activeClassification);
-    if (activeStatus) p.set("status", activeStatus);
-    if (activeYear) p.set("year", activeYear);
+    for (const [k, v] of Object.entries(merged)) {
+      if (v && !(k === "type" && v === "all") && !(k === "sort" && v === "relevance")) p.set(k, v);
+    }
     return `/dashboard/legal-search?${p.toString()}`;
   };
+  const typeHref = (typeKey: string) => buildHref({ type: typeKey });
 
   return (
     <div dir="rtl">
@@ -182,6 +220,7 @@ export default async function LegalSearchPage({
         <form action="/dashboard/legal-search" className="mt-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-[var(--paper)] p-3">
           <input type="hidden" name="q" value={q} />
           {activeType !== "all" ? <input type="hidden" name="type" value={activeType} /> : null}
+          {activeSort !== "relevance" ? <input type="hidden" name="sort" value={activeSort} /> : null}
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ink-60)]">
             <Filter size={14} className="text-[var(--gold)]" /> تصفية متقدّمة
           </span>
@@ -272,6 +311,31 @@ export default async function LegalSearchPage({
         </form>
       )}
 
+      {/* شريط الترتيب + مشاركة الرابط (يظهر مع النتائج) */}
+      {data && all.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ink-60)]">
+            <ArrowDownWideNarrow size={14} className="text-[var(--gold)]" aria-hidden /> ترتيب:
+          </span>
+          {SORTS.map((s) => {
+            const on = s.key === activeSort;
+            return (
+              <Link
+                key={s.key}
+                href={buildHref({ sort: s.key })}
+                aria-current={on ? "true" : undefined}
+                className={`rounded-full border px-3 py-1 text-xs transition ${
+                  on ? "border-[var(--navy)] bg-[var(--navy)] text-white" : "border-[var(--ink-20)] bg-white text-[var(--ink-80)] hover:border-[var(--gold)]"
+                }`}
+              >
+                {s.label}
+              </Link>
+            );
+          })}
+          <span className="ms-auto"><CopyLinkButton /></span>
+        </div>
+      )}
+
       {/* حالة المزوّدات + عدد النتائج */}
       {data && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
@@ -348,11 +412,18 @@ export default async function LegalSearchPage({
                         <span>سبب الظهور: {r.reasons.join(" · ")}</span>
                       </>
                     )}
-                    {href && (
-                      <Link href={href} className="ms-auto inline-flex items-center gap-1 font-semibold text-[var(--gold-dark)] hover:text-[var(--navy)]">
-                        فتح التفاصيل <ExternalLink size={13} />
-                      </Link>
-                    )}
+                    <span className="ms-auto inline-flex items-center gap-3">
+                      {r.type === "article" && metaStr(r, "systemName") && metaStr(r, "systemName") !== activeSystem ? (
+                        <Link href={buildHref({ type: "article", system: metaStr(r, "systemName")! })} className="inline-flex items-center gap-1 font-semibold text-[var(--ink-60)] hover:text-[var(--navy)]">
+                          <Filter size={12} /> ضمن هذا النظام
+                        </Link>
+                      ) : null}
+                      {href && (
+                        <Link href={href} className="inline-flex items-center gap-1 font-semibold text-[var(--gold-dark)] hover:text-[var(--navy)]">
+                          فتح التفاصيل <ExternalLink size={13} />
+                        </Link>
+                      )}
+                    </span>
                   </div>
                 </article>
               );
