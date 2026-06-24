@@ -1,4 +1,14 @@
+import { unstable_cache, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
+
+/** وسم تخزين النواة القانونية — لإبطال الكاش عند تحديث البيانات. */
+export const LEGAL_CORE_CACHE_TAG = "legal-core";
+const CACHE_TTL = 600; // ثوانٍ (محتوى نظامي شبه ثابت)
+
+/** إبطال كاش النواة القانونية (يُستدعى بعد استيراد/تحديث المواد من مسار خادمي). */
+export function revalidateLegalCoreCache() {
+  revalidateTag(LEGAL_CORE_CACHE_TAG);
+}
 
 export async function searchLegalArticles(query: string, limit = 8, lawName?: string) {
   const normalized = query.trim();
@@ -32,7 +42,12 @@ export async function searchLegalArticles(query: string, limit = 8, lawName?: st
   });
 }
 
-export async function getLibraryStats() {
+export const getLibraryStats = unstable_cache(_getLibraryStats, ["library:stats"], {
+  revalidate: CACHE_TTL,
+  tags: [LEGAL_CORE_CACHE_TAG]
+});
+
+async function _getLibraryStats() {
   const [total, systems, groupedLaws] = await Promise.all([
     prisma.legalArticle.count(),
     prisma.legalSystem.findMany({
@@ -137,31 +152,42 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
 }
 
 /** قائمة مبسّطة للأنظمة (للمرشّحات والقوائم المنسدلة). */
-export function listAllSystems() {
-  return prisma.legalSystem
-    .findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, classification: true } })
-    .catch(() => [] as { id: string; name: string; classification: string | null }[]);
-}
+export const listAllSystems = unstable_cache(
+  () =>
+    prisma.legalSystem
+      .findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, classification: true } })
+      .catch(() => [] as { id: string; name: string; classification: string | null }[]),
+  ["library:all-systems"],
+  { revalidate: CACHE_TTL, tags: [LEGAL_CORE_CACHE_TAG] }
+);
 
 /** عدد التصنيفات المميّزة غير الفارغة (لإحصاء اللوحة). */
-export async function getClassificationCount(): Promise<number> {
-  const rows = await prisma.legalArticle
-    .groupBy({ by: ["classification"], _count: { _all: true } })
-    .catch(() => [] as { classification: string | null }[]);
-  return rows.filter((r) => r.classification).length;
-}
+export const getClassificationCount = unstable_cache(
+  async (): Promise<number> => {
+    const rows = await prisma.legalArticle
+      .groupBy({ by: ["classification"], _count: { _all: true } })
+      .catch(() => [] as { classification: string | null }[]);
+    return rows.filter((r) => r.classification).length;
+  },
+  ["library:classification-count"],
+  { revalidate: CACHE_TTL, tags: [LEGAL_CORE_CACHE_TAG] }
+);
 
 /** عدد المواد التي تحتاج إثراء/مراجعة (تصنيف/باب/كلمات مفتاحية ناقصة). */
-export function countArticlesNeedingReview(): Promise<number> {
-  return prisma.legalArticle
-    .count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } })
-    .catch(() => 0);
-}
+export const countArticlesNeedingReview = unstable_cache(
+  (): Promise<number> =>
+    prisma.legalArticle
+      .count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } })
+      .catch(() => 0),
+  ["library:needs-review-count"],
+  { revalidate: CACHE_TTL, tags: [LEGAL_CORE_CACHE_TAG] }
+);
 
 /** عدد الأحكام القضائية. */
-export function countJudicialCases(): Promise<number> {
-  return prisma.judicialCase.count().catch(() => 0);
-}
+export const countJudicialCases = unstable_cache(() => prisma.judicialCase.count().catch(() => 0), ["library:judicial-count"], {
+  revalidate: CACHE_TTL,
+  tags: [LEGAL_CORE_CACHE_TAG]
+});
 
 /** تفاصيل المادة مع روابط الأحكام (لصفحة المادة). */
 export function getArticleDetail(id: string) {
