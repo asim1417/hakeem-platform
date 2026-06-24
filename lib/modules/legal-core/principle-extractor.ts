@@ -60,15 +60,51 @@ function indexOfAny(text: string, needles: string[]): number {
   return best;
 }
 
+// تطبيع متين ضد أخطاء OCR: إزالة التشكيل/التطويل، توحيد الهمزات،
+// ودمج الألفات المتكرّرة («االحمد» → «الحمد») لكشف الديباجة الدينية.
+function normForGuard(s: string): string {
+  return normalizeDigits(s)
+    .replace(/[ً-ْٰـ]/g, "")
+    .replace(/[إأآ]/g, "ا")
+    .replace(/ا{2,}/g, "ا")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s:،.\-—()«»"']+/, "")
+    .trim();
+}
+
+// ديباجة دينية/افتتاحية لا مبدأ: «بسم الله»، «(ال)حمد لله»، «الصلاة والسلام»…
+// تلتقط متغيّرات OCR مثل «االحمد» و«لحمد لله» و«الحمدلله».
+const PREAMBLE_START = /^(?:بسم\s*الله|الحمد\s*لله|الحمدلله|لحمد\s*لله|ا?لحمد|و?الصلاة\s*والسلام|الصلاه\s*والسلام)/;
+
+// مقدّمة إجرائية تعقب الديباجة عادةً («أما بعد فلدى الدائرة»…).
+const PROCEDURAL_LEAD = /^(?:اما\s*بعد|فلدى\s*الدائر|وبعد\s*الاطلاع|بعد\s*الاطلاع|فلدى\s*المحكمة)/;
+
+function isPreambleStart(s: string): boolean {
+  return PREAMBLE_START.test(normForGuard(s));
+}
+
+// يزيل الديباجة والمقدّمة الإجرائية من الصدارة، ويعيد ما تبقّى من جوهر.
+function stripPreamble(s: string): string {
+  let t = normForGuard(s);
+  // أزل عبارة «أما بعد» وما حولها لكشف ما إذا كان بعدها مبدأ فعلي.
+  t = t.replace(PREAMBLE_START, "").replace(/^[\s،.:ـ]+/, "");
+  t = t.replace(/^(?:و?الصلاة\s*والسلام\s*على\s*رسول\s*الله)/, "").replace(/^[\s،.:]+/, "");
+  t = t.replace(/^(?:اما\s*بعد)\s*:?/, "").replace(/^[\s،.:]+/, "");
+  t = t.replace(PROCEDURAL_LEAD, "").replace(/^[\s،.:]+/, "");
+  return t.trim();
+}
+
 /**
  * يشتقّ عنوانًا معبّرًا للمبدأ: يُفضّل عنوان الحكم إن كان وصفيًا، وإلا
  * (كأن يكون مجرّد «القضية رقم …») يستعمل أول جملة من نصّ المبدأ.
  */
 export function deriveTitle(fallbackTitle: string | null | undefined, principleText: string): string {
   const fb = clean(String(fallbackTitle ?? ""));
-  if (fb && !isMetadataText(fb) && fb.length >= 8) return fb.slice(0, 200);
-  const sentence = clean(firstSentence(principleText, 110));
-  if (sentence.length >= 12 && !isMetadataText(sentence)) return sentence.slice(0, 200);
+  if (fb && !isMetadataText(fb) && !isPreambleStart(fb) && fb.length >= 8) return fb.slice(0, 200);
+  // الجملة الأولى من النصّ بعد تجاوز الديباجة إن وُجدت.
+  const source = isPreambleStart(principleText) ? stripPreamble(principleText) : clean(principleText);
+  const sentence = clean(firstSentence(source, 110));
+  if (sentence.length >= 12 && !isMetadataText(sentence) && !isPreambleStart(sentence)) return sentence.slice(0, 200);
   return "مبدأ قضائي";
 }
 
@@ -109,7 +145,7 @@ export function extractPrinciple(
   if (factIdx >= 40 && factIdx <= 700) {
     const slice = clean(text.slice(0, factIdx));
     // headnote حقيقي عادةً جملة أو جملتان لا مقدمة شكلية ولا بيانات تعريفية للقضية.
-    if (slice.length >= 40 && slice.length <= 700 && !/^(?:بسم|الحمد|إن مجلس|إن المحكمة)/.test(slice) && !isMetadataText(slice)) {
+    if (slice.length >= 40 && slice.length <= 700 && !isPreambleStart(slice) && !/^(?:إن مجلس|إن المحكمة)/.test(slice) && !isMetadataText(slice)) {
       return {
         title: deriveTitle(fallbackTitle, slice),
         principleText: slice.slice(0, 1200),
@@ -141,6 +177,11 @@ export function isJunkPrinciple(title: string | null | undefined, principleText:
   const text = clean(String(principleText ?? ""));
   if (text.length < 60) return true; // أقصر من أن يكون مبدأً
   if (isMetadataText(text)) return true;
+  // ديباجة دينية/مقدّمة إجرائية لا مبدأ: نزيلها ونرى إن بقي جوهر كافٍ.
+  if (isPreambleStart(text)) {
+    const core = stripPreamble(text);
+    if (core.length < 60 || isMetadataText(core)) return true;
+  }
   // مكرّر بالكامل من العنوان (لا محتوى مضاف).
   const t = clean(String(title ?? ""));
   if (t && t === text && isMetadataText(t)) return true;
