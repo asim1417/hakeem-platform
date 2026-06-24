@@ -1,0 +1,100 @@
+name: Legal Governance Backfill (decrees + principles)
+
+# يُعبّئ حوكمة البيانات القانونية على قاعدة Runtime (Neon):
+#   1) يطبّق ترحيل article_amendments (آمن لإعادة التشغيل، إضافي بالكامل).
+#   2) backfill:decrees --apply — يستخرج رقم/تاريخ المرسوم من نصّ الأنظمة (لا اختلاق).
+#   3) extract:principles --apply — يستخرج المبادئ القضائية من نصّ الأحكام (needs_review).
+# يدوي فقط (workflow_dispatch). يكتب في DB ⇒ مُقفل خلف بوّابة المواءمة + حارس هدف.
+#
+# يستعمل سرّاً **مخصّصاً** NEON_DATABASE_URL (كتابة) — لا يلمس DATABASE_URL المشترك.
+# قبل أي كتابة يتحقّق حارس الهدف أنّ القاعدة هي Neon الكبيرة فعلاً (وإلا يُلغى).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+      principles_limit:
+        description: "حدّ أقصى لعدد الأحكام المفحوصة لاستخراج المبادئ (فارغ = الكل)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: legal-governance-backfill
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    env:
+      # سرّ مخصّص لـ Neon (كتابة) — منفصل عن DATABASE_URL المشترك.
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      # 🔒 بوّابة التأكيد.
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ NEON_DATABASE_URL (اتصال Neon بكتابة)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      # 🛡️ حارس الهدف — يلغي كل شيء إن لم تكن القاعدة Neon الكبيرة (قراءة فقط).
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "① تطبيق ترحيل article_amendments (آمن لإعادة التشغيل)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260623120000_add_article_amendments/migration.sql
+
+      - name: "② معاينة المراسيم (dry-run قبل الكتابة)"
+        run: npx tsx scripts/backfill-decrees.ts
+
+      - name: "③ تطبيق تعبئة المراسيم (--apply)"
+        run: npx tsx scripts/backfill-decrees.ts --apply
+
+      - name: "④ معاينة المبادئ (dry-run قبل الكتابة)"
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.principles_limit }}" ]; then ARGS="--limit ${{ inputs.principles_limit }}"; fi
+          npx tsx scripts/extract-principles.ts $ARGS
+
+      - name: "⑤ تطبيق استخراج المبادئ (--apply)"
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.principles_limit }}" ]; then ARGS="--limit ${{ inputs.principles_limit }}"; fi
+          npx tsx scripts/extract-principles.ts --apply $ARGS
+
+      - name: "⑥ تحقق (قراءة فقط)"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS principles FROM judicial_principles;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS articles_with_decree FROM legal_articles WHERE \"royalDecree\" IS NOT NULL AND \"royalDecree\" <> '';"
