@@ -74,7 +74,9 @@
     "test:fiqh-link": "tsx scripts/test-fiqh-nizam-link.ts",
     "test:fiqh-core": "tsx scripts/test-fiqh-issues-core.ts",
     "test:legal-issues": "tsx scripts/test-legal-issues.ts",
-    "seed:fiqh": "tsx scripts/seed-fiqh-issues.ts"
+    "seed:fiqh": "tsx scripts/seed-fiqh-issues.ts",
+    "sync:systems": "tsx scripts/sync-legal-systems.ts",
+    "refresh:indexes": "npm run build:bm25:db && npm run export:saudi-systems && npm run link:fiqh"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
