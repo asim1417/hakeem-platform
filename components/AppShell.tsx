@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { Briefcase, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, LogOut, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
-import { LogoutButton } from "@/components/LogoutButton";
+import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { getTranslator } from "@/lib/i18n/server";
+import { DIR, LOCALE_LABEL } from "@/lib/i18n/dictionaries";
 import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
   href: string;
-  label: string;
+  /** مفتاح الترجمة في القاموس */
+  key: string;
   icon: LucideIcon;
   badge?: string;
   active?: boolean;
@@ -17,42 +21,42 @@ type NavItem = {
 const navSections: Array<{ items: NavItem[] }> = [
   {
     items: [
-      { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
-      { href: "/dashboard/legal-search", label: "البحث الشامل", icon: Search }
+      { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
+      { href: "/dashboard/legal-search", key: "nav.search", icon: Search }
     ]
   },
   {
     items: [
-      { href: "/dashboard/cases", label: "الدعاوى", icon: Briefcase },
-      { href: "/dashboard/consultations", label: "الاستشارات", icon: ShieldCheck },
-      { href: "/dashboard/attachments", label: "المرفقات", icon: Paperclip }
+      { href: "/dashboard/cases", key: "nav.cases", icon: Briefcase },
+      { href: "/dashboard/consultations", key: "nav.consultations", icon: ShieldCheck },
+      { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip }
     ]
   },
   {
     items: [
-      { href: "/dashboard/ask", label: "اسأل حكيم", icon: Sparkles },
-      { href: "/dashboard/simulations", label: "القاضي التفاعلي", icon: Gavel, active: true },
-      { href: "/dashboard/judicial-simulation", label: "المحاكاة القضائية", icon: Scale },
-      { href: "/dashboard/case-analysis", label: "تحليل القضايا", icon: ScanSearch },
-      { href: "/dashboard/legal-agent", label: "الوكيل القانوني", icon: ClipboardList }
+      { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
+      { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel, active: true },
+      { href: "/dashboard/judicial-simulation", key: "nav.simulation", icon: Scale },
+      { href: "/dashboard/case-analysis", key: "nav.caseAnalysis", icon: ScanSearch },
+      { href: "/dashboard/legal-agent", key: "nav.legalAgent", icon: ClipboardList }
     ]
   },
   {
     items: [
-      { href: "/dashboard/legal-core", label: "النواة القانونية — المكتبة النظامية", icon: Database },
-      { href: "/dashboard/legal-core/legal-issues", label: "المسائل القانونية", icon: Scale },
-      { href: "/dashboard/legal-core/principles", label: "المبادئ القضائية", icon: Quote },
-      { href: "/dashboard/knowledge-graph", label: "الرسم المعرفي (اختبار)", icon: Database },
-      { href: "/dashboard/legal-rag", label: "الذكاء القانوني RAG (اختبار)", icon: Sparkles },
-      { href: "/dashboard/training", label: "التدريب", icon: GraduationCap }
+      { href: "/dashboard/legal-core", key: "nav.legalCore", icon: Database },
+      { href: "/dashboard/legal-core/legal-issues", key: "nav.legalIssues", icon: Scale },
+      { href: "/dashboard/legal-core/principles", key: "nav.principles", icon: Quote },
+      { href: "/dashboard/knowledge-graph", key: "nav.knowledgeGraph", icon: Database },
+      { href: "/dashboard/legal-rag", key: "nav.rag", icon: Sparkles },
+      { href: "/dashboard/training", key: "nav.training", icon: GraduationCap }
     ]
   },
   {
     items: [
-      { href: "/admin", label: "الإعدادات", icon: Settings },
-      { href: "/admin/ai", label: "إعدادات الذكاء", icon: Sparkles },
-      { href: "/admin/users", label: "المستخدمون", icon: Users },
-      { href: "/audit-logs", label: "سجل التدقيق", icon: FileClock }
+      { href: "/admin", key: "nav.settings", icon: Settings },
+      { href: "/admin/ai", key: "nav.aiSettings", icon: Sparkles },
+      { href: "/admin/users", key: "nav.users", icon: Users },
+      { href: "/audit-logs", key: "nav.auditLog", icon: FileClock }
     ]
   }
 ];
@@ -65,6 +69,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
+  const { locale, t } = getTranslator();
   const user = await getCurrentUser().catch(() => null);
   const initials =
     user?.name
@@ -75,27 +80,27 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       .join("") || "ح";
 
   return (
-    <div className="app" dir="rtl">
-      <a href="#main-content" className="skip-link">تخطٍّ إلى المحتوى الرئيسي</a>
+    <div className="app" dir={DIR[locale]}>
+      <a href="#main-content" className="skip-link">{t("a11y.skipToContent")}</a>
       <div className="sidebar-overlay" id="sidebar-overlay" aria-hidden />
-      <aside className="sidebar" id="sidebar" aria-label="التنقّل الرئيسي">
+      <aside className="sidebar" id="sidebar" aria-label={t("a11y.mainNav")}>
         <div className="sidebar-inner">
           <Link href="/dashboard" className="brand">
-            <div className="brand-mark">ح</div>
+            <div className="brand-mark" aria-hidden>ح</div>
             <div className="brand-label">
               <h1>حكيم</h1>
-              <p>منصة المحاكاة القضائية السعودية</p>
+              <p>{t("brand.tagline")}</p>
             </div>
           </Link>
 
           {navSections.map((section, sectionIndex) => (
-            <nav className="nav-section" style={{ marginTop: sectionIndex ? 6 : 0 }} key={sectionIndex}>
+            <nav className="nav-section" style={{ marginTop: sectionIndex ? 6 : 0 }} key={sectionIndex} aria-label={t("a11y.mainNav")}>
               {section.items.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link key={item.href} href={item.href} className={`nav-btn ${item.active ? "active" : ""}`}>
-                    <Icon />
-                    {item.label}
+                    <Icon aria-hidden />
+                    {t(item.key)}
                     {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
                   </Link>
                 );
@@ -104,7 +109,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           ))}
 
           <div className="sidebar-foot">
-            <div className="user-av">{initials}</div>
+            <div className="user-av" aria-hidden>{initials}</div>
             <div className="user-info min-w-0 flex-1">
               <div className="uname truncate">{user?.name ?? "المستخدم التجريبي"}</div>
               <div className="urole truncate">{user ? roleLabels[user.role] ?? user.role : "حساب محام - تدريبي"}</div>
@@ -121,21 +126,20 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <TopbarBreadcrumb />
           </div>
           <div className="topbar-right">
-            <form className="search-box" action="/dashboard/legal-search">
-              <span>⌕</span>
-              <input name="q" aria-label="بحث" placeholder="بحث شامل في الأنظمة والمواد والأحكام..." />
+            <form className="search-box" action="/dashboard/legal-search" role="search">
+              <span aria-hidden>⌕</span>
+              <input name="q" aria-label={t("topbar.search")} placeholder={t("topbar.searchPlaceholder")} />
             </form>
-            <div className="icon-pill" title="تسجيل الخروج">
-              <LogOut size={16} />
-            </div>
+            <LanguageToggle current={locale} switchLabel={LOCALE_LABEL[locale === "ar" ? "en" : "ar"]} />
+            <LogoutIconButton label={t("topbar.logout")} />
           </div>
         </header>
         <div className="content" id="main-content">{children}</div>
         <footer className="app-foot">
-          <span>منصة حكيم — المعرفة القضائية السعودية</span>
-          <nav className="app-foot-links" aria-label="روابط نظامية">
-            <Link href="/privacy">سياسة الخصوصية</Link>
-            <Link href="/terms">شروط الاستخدام</Link>
+          <span>{t("footer.tagline")}</span>
+          <nav className="app-foot-links" aria-label={locale === "ar" ? "روابط نظامية" : "Legal links"}>
+            <Link href="/privacy">{t("footer.privacy")}</Link>
+            <Link href="/terms">{t("footer.terms")}</Link>
           </nav>
         </footer>
       </main>
