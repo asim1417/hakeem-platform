@@ -83,6 +83,14 @@ function isPreambleStart(s: string): boolean {
   return PREAMBLE_START.test(normForGuard(s));
 }
 
+// عبارات افتتاح إجرائية للحكم لا تظهر أبدًا في مبدأ مُقطّر: «فلدى الدائرة»،
+// «وبناء على القضية رقم»، «نظرت الدائرة»… وجودها = ديباجة/سرد لا قاعدة.
+const PROCEDURAL_OPENING = /فلدى\s*الدائر|لدى\s*الدائر|بناء\s*على\s*القضي|نظرت\s*الدائر|اطلعت\s*الدائر|بعد\s*سماع\s*الدعوى/;
+
+function isProceduralOpening(s: string): boolean {
+  return PROCEDURAL_OPENING.test(normForGuard(s));
+}
+
 // يزيل الديباجة والمقدّمة الإجرائية من الصدارة، ويعيد ما تبقّى من جوهر.
 function stripPreamble(s: string): string {
   let t = normForGuard(s);
@@ -100,11 +108,11 @@ function stripPreamble(s: string): string {
  */
 export function deriveTitle(fallbackTitle: string | null | undefined, principleText: string): string {
   const fb = clean(String(fallbackTitle ?? ""));
-  if (fb && !isMetadataText(fb) && !isPreambleStart(fb) && fb.length >= 8) return fb.slice(0, 200);
+  if (fb && !isMetadataText(fb) && !isPreambleStart(fb) && !isProceduralOpening(fb) && fb.length >= 8) return fb.slice(0, 200);
   // الجملة الأولى من النصّ بعد تجاوز الديباجة إن وُجدت.
   const source = isPreambleStart(principleText) ? stripPreamble(principleText) : clean(principleText);
   const sentence = clean(firstSentence(source, 110));
-  if (sentence.length >= 12 && !isMetadataText(sentence) && !isPreambleStart(sentence)) return sentence.slice(0, 200);
+  if (sentence.length >= 12 && !isMetadataText(sentence) && !isPreambleStart(sentence) && !isProceduralOpening(sentence)) return sentence.slice(0, 200);
   return "مبدأ قضائي";
 }
 
@@ -145,7 +153,7 @@ export function extractPrinciple(
   if (factIdx >= 40 && factIdx <= 700) {
     const slice = clean(text.slice(0, factIdx));
     // headnote حقيقي عادةً جملة أو جملتان لا مقدمة شكلية ولا بيانات تعريفية للقضية.
-    if (slice.length >= 40 && slice.length <= 700 && !isPreambleStart(slice) && !/^(?:إن مجلس|إن المحكمة)/.test(slice) && !isMetadataText(slice)) {
+    if (slice.length >= 40 && slice.length <= 700 && !isPreambleStart(slice) && !isProceduralOpening(slice) && !/^(?:إن مجلس|إن المحكمة)/.test(slice) && !isMetadataText(slice)) {
       return {
         title: deriveTitle(fallbackTitle, slice),
         principleText: slice.slice(0, 1200),
@@ -177,10 +185,12 @@ export function isJunkPrinciple(title: string | null | undefined, principleText:
   const text = clean(String(principleText ?? ""));
   if (text.length < 60) return true; // أقصر من أن يكون مبدأً
   if (isMetadataText(text)) return true;
-  // ديباجة دينية/مقدّمة إجرائية لا مبدأ: نزيلها ونرى إن بقي جوهر كافٍ.
+  // افتتاح إجرائي/سرد للحكم لا قاعدة: «فلدى الدائرة … وبناء على القضية رقم …».
+  if (isProceduralOpening(text)) return true;
+  // ديباجة دينية لا مبدأ: نزيلها ونرى إن بقي جوهر كافٍ.
   if (isPreambleStart(text)) {
     const core = stripPreamble(text);
-    if (core.length < 60 || isMetadataText(core)) return true;
+    if (core.length < 60 || isMetadataText(core) || isProceduralOpening(core) || /القضي[ةه]\s*رقم/.test(normForGuard(core))) return true;
   }
   // مكرّر بالكامل من العنوان (لا محتوى مضاف).
   const t = clean(String(title ?? ""));
