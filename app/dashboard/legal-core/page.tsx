@@ -1,28 +1,33 @@
 import Link from "next/link";
 import { BookOpen, Database, FileSearch, Gavel, Quote, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { getLibraryStats, searchLegalArticles } from "@/lib/modules/library/library-service";
-import { prisma } from "@/lib/prisma";
+import {
+  countArticlesNeedingReview,
+  countJudicialCases,
+  getClassificationCount,
+  getLibraryStats,
+  searchLegalArticles
+} from "@/lib/modules/library/library-service";
 import { LegalArticleCard, LegalCoreCard, LegalCorePageHeader, LegalCoreSearchBar, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { CoreIntelligenceDashboard } from "@/components/CoreIntelligenceDashboard";
 import { getLegalIssuesCount } from "@/lib/modules/legal-core/legal-issues";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function LegalCoreDashboardPage() {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const [stats, recentArticles, classifications, needsReview, judgmentsCount, principlesCount, decreesCount] = await Promise.all([
+  const [stats, recentArticles, classificationCount, needsReview, judgmentsCount, principlesCount, decreesCount] = await Promise.all([
     getLibraryStats().catch(() => ({ total: 0, systemCount: 0, laws: [] })),
     searchLegalArticles("", 4).catch(() => []),
-    prisma.legalArticle.groupBy({ by: ["classification"], _count: { _all: true } }).catch(() => []),
-    prisma.legalArticle.count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } }).catch(() => 0),
-    prisma.judicialCase.count().catch(() => 0),
+    getClassificationCount(),
+    countArticlesNeedingReview(),
+    countJudicialCases(),
     prisma.judicialPrinciple.count().catch(() => 0),
     prisma.legalArticle.count({ where: { NOT: [{ royalDecree: null }, { royalDecree: "" }] } }).catch(() => 0)
   ]);
 
-  const classificationCount = classifications.filter((item) => item.classification).length;
   const legalIssuesCount = getLegalIssuesCount();
 
   return (
