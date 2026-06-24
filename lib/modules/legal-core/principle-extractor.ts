@@ -97,8 +97,8 @@ export function extractPrinciple(
   const factIdx = indexOfAny(text, FACT_MARKERS);
   if (factIdx >= 40 && factIdx <= 700) {
     const slice = clean(text.slice(0, factIdx));
-    // headnote حقيقي عادةً جملة أو جملتان لا مقدمة شكلية.
-    if (slice.length >= 40 && slice.length <= 700 && !/^(?:بسم|الحمد|إن مجلس|إن المحكمة)/.test(slice)) {
+    // headnote حقيقي عادةً جملة أو جملتان لا مقدمة شكلية ولا بيانات تعريفية للقضية.
+    if (slice.length >= 40 && slice.length <= 700 && !/^(?:بسم|الحمد|إن مجلس|إن المحكمة)/.test(slice) && !isMetadataText(slice)) {
       const title = clean(fallbackTitle || firstSentence(slice));
       return {
         title: title || "مبدأ قضائي",
@@ -110,4 +110,29 @@ export function extractPrinciple(
   }
 
   return null;
+}
+
+// نصّ تعريفي للقضية لا مبدأ: «القضية رقم … لعام …هـ»، أرقام/قرارات صرفة.
+function isMetadataText(s: string): boolean {
+  const t = s.trim();
+  if (/^(?:القضية|الدعوى|القرار|الحكم|قضية|الاستئناف)\s*رقم/.test(t)) return true;
+  if (/^رقم\s+\d/.test(t)) return true;
+  // نسبة الأحرف العربية منخفضة (غالبه أرقام/تواريخ).
+  const letters = (t.match(/\p{L}/gu) ?? []).length;
+  if (letters < t.length * 0.4) return true;
+  return false;
+}
+
+/**
+ * يصنّف مبدأً مخزّنًا كـ«غير صالح» (لا يمثّل مبدأً قضائيًا فعليًا) للمراجعة الآلية.
+ * يُستخدم في الفرز (triage) لرفض المخرجات الضعيفة دون اعتماد بشري للجيّد.
+ */
+export function isJunkPrinciple(title: string | null | undefined, principleText: string | null | undefined): boolean {
+  const text = clean(String(principleText ?? ""));
+  if (text.length < 60) return true; // أقصر من أن يكون مبدأً
+  if (isMetadataText(text)) return true;
+  // مكرّر بالكامل من العنوان (لا محتوى مضاف).
+  const t = clean(String(title ?? ""));
+  if (t && t === text && isMetadataText(t)) return true;
+  return false;
 }

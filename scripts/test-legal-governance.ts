@@ -4,7 +4,7 @@
  * التشغيل: npm run test:governance
  */
 import { extractRoyalDecree, normalizeDigits } from "@/lib/modules/legal-core/decree-extractor";
-import { extractPrinciple } from "@/lib/modules/legal-core/principle-extractor";
+import { extractPrinciple, isJunkPrinciple } from "@/lib/modules/legal-core/principle-extractor";
 import { buildArticleEli, lawSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
 
 let passed = 0;
@@ -65,6 +65,17 @@ console.log("\n— مستخرِج المبدأ القضائي —");
 
   const tooShort = extractPrinciple("حكم.", null);
   check("رفض النصّ القصير", tooShort === null);
+}
+
+console.log("\n— فرز المبادئ (triage) —");
+{
+  check("رفض بيانات القضية", isJunkPrinciple("القضية رقم 439201306 لعام 1444هـ", "القضية رقم 439201306 لعام 1444هـ"));
+  check("رفض النصّ القصير", isJunkPrinciple("مبدأ", "نصّ قصير جدًا"));
+  check(
+    "قبول مبدأ حقيقي",
+    !isJunkPrinciple("التعويض", "لا يجوز الحكم بالتعويض عن ضرر لم يثبت وقوعه يقينًا، والبيّنة على من ادّعى والإقرار سيّد الأدلّة في الإثبات.")
+  );
+  check("رفض الأرقام الصرفة", isJunkPrinciple(null, "1444/2/15 رقم 23/4/5 ص 120 مجلد 3 لوحة 7 قيد 9"));
 }
 
 console.log("\n— المعرّف التشريعي (ELI) —");

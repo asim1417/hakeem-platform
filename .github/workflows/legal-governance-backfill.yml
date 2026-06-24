@@ -92,9 +92,17 @@ jobs:
           if [ -n "${{ inputs.principles_limit }}" ]; then ARGS="--limit ${{ inputs.principles_limit }}"; fi
           npx tsx scripts/extract-principles.ts --apply $ARGS
 
-      - name: "⑥ تحقق (قراءة فقط)"
+      - name: "⑥ فرز المبادئ — رفض غير الصالح (معاينة)"
+        run: npx tsx scripts/triage-principles.ts
+
+      - name: "⑦ فرز المبادئ — تطبيق الرفض (--apply)"
+        run: npx tsx scripts/triage-principles.ts --apply
+
+      - name: "⑧ تحقق (قراءة فقط)"
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
-            "SELECT count(*) AS principles FROM judicial_principles;"
+            "SELECT review_status, count(*) FROM judicial_principles GROUP BY review_status;" 2>/dev/null \
+          || psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT \"reviewStatus\", count(*) FROM judicial_principles GROUP BY \"reviewStatus\";"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
             "SELECT count(*) AS articles_with_decree FROM legal_articles WHERE \"royalDecree\" IS NOT NULL AND \"royalDecree\" <> '';"
