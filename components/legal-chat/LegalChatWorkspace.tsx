@@ -135,6 +135,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
           attachments,
           redact,
           dialogue,
+          history: working.slice(-10).map((t) => ({ role: t.role, content: t.content })),
         }),
       });
       const data = await res.json().catch(() => null);

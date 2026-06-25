@@ -489,6 +489,8 @@ export interface ChatTurnInput {
   workflow?: string;
   /** حالة الحوار المتراكمة (تُعاد من العميل كل دورة). */
   dialogue?: DialogueState;
+  /** تاريخ المحادثة (آخر الرسائل) — لذاكرة الصياغة ومنع التكرار. */
+  history?: { role: string; content: string }[];
 }
 
 export interface ChatAttachmentMeta {

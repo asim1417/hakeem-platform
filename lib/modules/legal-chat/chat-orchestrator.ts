@@ -38,6 +38,7 @@ import {
 } from "./evidence-logic-engine";
 import { buildLegalOutput, TRAINING_DISCLAIMER } from "./drafting-style-engine";
 import { groundQuery } from "./anti-hallucination";
+import { composeReply } from "./response-composer";
 import { OUTPUT_LABELS, ROLE_LABELS, TRACK_LABELS } from "./taxonomy";
 import {
   buildArbitrationSimulation,
@@ -79,7 +80,7 @@ function applyRejected(det: IntentResult, rejected: string[]): IntentResult {
   return { ...det, track: "UNKNOWN", disputeType: "نزاع غير محدد التكييف" };
 }
 
-function result(args: {
+async function result(args: {
   reply: string;
   cards: ChatCard[];
   intent: IntentResult;
@@ -93,9 +94,15 @@ function result(args: {
   stage: ConversationStage;
   messageIntent: string;
   dialogue: DialogueState;
-}): ChatTurnResult {
+  history?: { role: string; content: string }[];
+}): Promise<ChatTurnResult> {
+  // طبقة الصياغة الحيّة: للردود الحوارية فقط. المخرجات القانونية لا تُمسّ.
+  const reply =
+    args.conversational && args.reply.trim()
+      ? await composeReply({ template: args.reply, messageType: args.messageIntent, history: args.history })
+      : args.reply;
   return {
-    reply: args.reply,
+    reply,
     cards: args.cards,
     intent: args.intent,
     caseFile: args.caseFile,
@@ -156,11 +163,12 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       conv: { ...convInfo, messageType: special.intent },
       suggestedButtons: special.buttons,
       conversational: true,
-      stage: ["vague_case_signal", "court_document_reference", "possible_consumer_issue"].includes(special.intent)
+      stage: ["vague_case_signal", "court_document_reference", "possible_consumer_issue", "incident"].includes(special.intent)
         ? "clarifying"
         : "intake",
       messageIntent: special.intent,
       dialogue: special.dialogue,
+      history: input.history,
     });
   }
 
@@ -191,6 +199,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       stage: "clarifying",
       messageIntent: "report_request",
       dialogue: dialogue0,
+      history: input.history,
     });
   }
 
@@ -210,6 +219,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       stage: baseStage(conv.stage),
       messageIntent: conv.messageType,
       dialogue: dialogue0,
+      history: input.history,
     });
   }
 
@@ -229,6 +239,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       stage: "report_ready",
       messageIntent: "case_fact",
       dialogue: dialogue0,
+      history: input.history,
     });
   }
 
@@ -366,7 +377,7 @@ function reportResult(
   convInfo: { messageType: string; understandingStage: string; userLevel: string },
   dialogue: DialogueState,
   generated = false
-): ChatTurnResult {
+): Promise<ChatTurnResult> {
   return result({
     reply,
     cards,
