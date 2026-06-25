@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { normalizeArabic } from "./taxonomy";
+import { buildPhraseHintContext } from "./saudi-phrase-hints";
 
 /** أفعال المحادثة التي يفهمها الراوتر (وصف للنية، لا قرار). */
 export const CONVERSATION_ACTS = [
@@ -161,10 +162,13 @@ export async function classifyIntentLLM(
     ? `\nافتراضات رفضها المستخدم سابقاً (لا تَعُد إليها): ${dialogueState.rejectedAssumptions.join("، ")}`
     : "";
   const slow = dialogueState?.mode === "slow_guided_intake" ? "\n(المستخدم طلب التمهّل وعدم الافتراض المتسرّع.)" : "";
+  // تلميحات لهجة سعودية — تُمرَّر كمساعدة لا كقرار؛ النموذج يبقى حرًّا في الحكم بالمعنى.
+  const hints = buildPhraseHintContext(message);
 
   const userPrompt = [
     ctx ? `سياق آخر الرسائل:\n${ctx}\n` : "",
     `رسالة المستخدم الآن:\n«${message}»`,
+    hints ? `\n${hints}` : "",
     rejected,
     slow,
     "\nصنّفها وأخرج JSON فقط.",
