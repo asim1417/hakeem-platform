@@ -156,7 +156,9 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       conv: { ...convInfo, messageType: special.intent },
       suggestedButtons: special.buttons,
       conversational: true,
-      stage: special.intent === "vague_case_signal" ? "clarifying" : "intake",
+      stage: ["vague_case_signal", "court_document_reference", "possible_consumer_issue"].includes(special.intent)
+        ? "clarifying"
+        : "intake",
       messageIntent: special.intent,
       dialogue: special.dialogue,
     });

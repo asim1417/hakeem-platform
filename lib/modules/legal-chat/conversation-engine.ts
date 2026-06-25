@@ -375,9 +375,15 @@ export type MessageIntent =
   | "greeting"
   | "greeting_with_request"
   | "small_talk"
+  | "social_smalltalk"
+  | "sports_or_news_smalltalk"
+  | "non_legal_general"
+  | "possible_consumer_issue"
   | "vague_case_signal"
   | "legal_request"
+  | "clear_legal_request"
   | "case_fact"
+  | "court_document_reference"
   | "document_reference"
   | "answer_to_question"
   | "user_correction"
@@ -422,6 +428,15 @@ const CORRECTION_MARKERS = [
 const FRUSTRATION_MARKERS = ["متوتر", "قلقان", "تعبت", "مدري وش اسوي", "ما ادري وش اسوي", "ضايق", "زهقت", "محتار جدا"];
 // إشارات الغموض (وصف عام لا تكييف).
 const VAGUE_MARKERS = ["معقده", "معقد", "صعبه", "صعب", "متشابكه", "متشابك", "موضوع", "مشكله", "قضيه", "حالتي", "امري"];
+
+// دردشة اجتماعية عامة.
+const SOCIAL_MARKERS = ["وش الاخبار", "وش اخبارك", "كيف الحال", "كيف حالك", "شخبارك", "شلونك", "اخبارك", "وش مسوي"];
+// رياضة/أخبار خارج النطاق.
+const SPORTS_NEWS_MARKERS = ["مباراه", "المنتخب", "الدوري", "نادي", "النصر", "الهلال", "الاتحاد", "الاهلي", "كوره", "لاعب", "هدف", "الطقس", "الجو حار"];
+// احتمال قضية مستهلك.
+const CONSUMER_MARKERS = ["اشتريت", "شريت", "بضاعه", "منتج", "سلعه", "فاسد", "فاسده", "معيب", "معيبه", "تالف", "المتجر", "المحل", "البائع", "استبدال", "استرجاع", "ضمان"];
+// إشارة مستند قضائي.
+const COURT_DOC_MARKERS = ["جاني تبليغ", "وصلني تبليغ", "ورقه من ناجز", "ورقة من ناجز", "تبليغ من المحكمه", "صحيفه دعوى", "ورقه من المحكمه", "رساله من المحكمه", "ابلغوني"];
 
 const NEGATED_CONCEPTS: { keys: string[]; assumption: string }[] = [
   { keys: ["عقدي", "عقديه", "عقد"], assumption: "نزاع عقدي" },
@@ -516,8 +531,53 @@ export function classifyDialogue(
     };
   }
 
-  // ٤) إشارة غامضة (وصف عام بلا تكييف) — لا تُحوَّل إلى نوع نزاع.
   const noConcrete = det.track === "UNKNOWN" && det.requestedOutput === "UNKNOWN" && det.userRole === "UNKNOWN" && !det.hasJudgment;
+
+  // ٤) إشارة مستند قضائي → دخول حواري لـlegal intake (سؤال عن نوع المستند + رفعه).
+  if (hasAny(n, COURT_DOC_MARKERS)) {
+    return {
+      intent: "court_document_reference",
+      reply:
+        "يبدو أنك استلمت مستندًا/تبليغًا قضائيًا. خلنا نحدّده بهدوء قبل أي خطوة:\nهل هو تبليغ بدعوى جديدة، أم موعد جلسة، أم حكم؟ ويمكنك رفع صورة المستند وسأقرأه لك وأوضّح الخطوة التالية.",
+      buttons: ["تبليغ بدعوى جديدة", "موعد جلسة", "حكم صادر", "أرفع صورة المستند"],
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+
+  // ٥) دردشة اجتماعية / رياضة-أخبار / احتمال مستهلك — فقط عند غياب أي إشارة قانونية.
+  if (noConcrete && hasAny(n, SPORTS_NEWS_MARKERS) && !hasAny(n, CONSUMER_MARKERS)) {
+    return {
+      intent: "sports_or_news_smalltalk",
+      reply:
+        "هذا خارج تخصّصي القانوني 🙂، لكن لو عندك سؤال قانوني متعلق بالرياضة — مثل عقد لاعب، أو تذاكر، أو حقوق بث، أو نزاع رياضي — أقدر أساعدك فيه.",
+      buttons: ["عندي نزاع رياضي", "عندي عقد", "موضوع آخر"],
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+  if (noConcrete && hasAny(n, CONSUMER_MARKERS)) {
+    return {
+      intent: "possible_consumer_issue",
+      reply:
+        "قد تكون هذه مسألة تتعلق بحقوق المستهلك. هل تريد فقط معرفة التصرّف المناسب، أم لديك فاتورة ورفض البائع الاستبدال أو التعويض؟",
+      buttons: ["أريد معرفة التصرف", "رفض البائع الاستبدال", "عندي فاتورة", "موضوع آخر"],
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+  if (noConcrete && hasAny(n, SOCIAL_MARKERS) && n.split(/\s+/).length <= 6) {
+    return {
+      intent: "social_smalltalk",
+      reply:
+        "الأخبار طيّبة، حيّاك الله. 🌿 أنا جاهز أساعدك متى ما كان عندك موضوع قانوني أو مستند أو دعوى تريد ترتيبها.",
+      buttons: PATH_BUTTONS,
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+
+  // ٦) إشارة غامضة (وصف عام بلا تكييف) — لا تُحوَّل إلى نوع نزاع.
   if (noConcrete && hasAny(n, VAGUE_MARKERS) && n.split(/\s+/).length <= 8) {
     return {
       intent: "vague_case_signal",
