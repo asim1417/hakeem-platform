@@ -26,7 +26,26 @@ export function normalizeArabic(text: string): string {
 
 /** يفحص وجود أيٍّ من الكلمات (بعد التطبيع) داخل النص المُطبّع. */
 export function hasAny(normalizedHaystack: string, keywords: string[]): boolean {
-  return keywords.some((k) => normalizedHaystack.includes(normalizeArabic(k)));
+  return keywords.some((k) => matchWord(normalizedHaystack, normalizeArabic(k)));
+}
+
+const _boundaryCache = new Map<string, RegExp>();
+const AR = "\\u0621-\\u064A"; // حروف عربية
+
+/**
+ * مطابقة على حدود الكلمة (تسمح ببادئات: و/ف/ب/ك/ل/ال…) لمنع المطابقة الجزئية الخاطئة.
+ * مثال: «معقدة» لا تطابق «عقد»، و«مدينة» لا تطابق «دين» — بينما «العقد» يطابق «عقد».
+ */
+export function matchWord(haystack: string, keyword: string): boolean {
+  if (!keyword) return false;
+  // العبارات متعددة الكلمات تُطابَق كما هي (مع حدّ بصري في الطرفين).
+  let re = _boundaryCache.get(keyword);
+  if (!re) {
+    const esc = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    re = new RegExp(`(?<![${AR}])(?:بال|وال|فال|كال|لل|ال|و|ف|ب|ك|ل)?${esc}(?![${AR}])`);
+    _boundaryCache.set(keyword, re);
+  }
+  return re.test(haystack);
 }
 
 export interface KeywordRule<T> {
@@ -58,7 +77,7 @@ export const TRACK_RULES: KeywordRule<LegalTrack>[] = [
   { value: "ADMINISTRATIVE", keywords: ["اداري", "اداريه", "ديوان المظالم", "جهه حكوميه", "قرار اداري", "الغاء قرار"], weight: 2 },
   { value: "PERSONAL_STATUS", keywords: ["احوال شخصيه", "اسره", "زواج", "طلاق", "حضانه", "نفقه", "خلع", "ميراث", "وصيه"], weight: 2 },
   { value: "EXECUTION", keywords: ["تنفيذ", "سند تنفيذي", "محكمه التنفيذ", "قاضي التنفيذ", "حجز", "ايقاف خدمات"], weight: 2 },
-  { value: "CIVIL", keywords: ["مدني", "مدنيه", "عقد", "التزام", "ضرر", "تعويض", "بيع", "ايجار", "عقار", "ملكيه", "دين", "قرض"], weight: 1 },
+  { value: "CIVIL", keywords: ["مدني", "مدنيه", "عقد", "عقدي", "عقديه", "عقود", "التزام", "ضرر", "تعويض", "بيع", "ايجار", "عقار", "ملكيه", "دين", "قرض"], weight: 1 },
 ];
 
 // ── المرحلة الإجرائية ──

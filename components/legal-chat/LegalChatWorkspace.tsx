@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   ChatCard,
   ChatAttachmentMeta,
+  DialogueState,
   SearchStrength,
   SimulationCaseFile,
   SimulationMode,
@@ -55,6 +56,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
   const [strength, setStrength] = useState<SearchStrength>("BALANCED");
   const [attachments, setAttachments] = useState<ChatAttachmentMeta[]>([]);
   const [caseFile, setCaseFile] = useState<SimulationCaseFile | null>(null);
+  const [dialogue, setDialogue] = useState<DialogueState | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -132,6 +134,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
           conversationId,
           attachments,
           redact,
+          dialogue,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -151,6 +154,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
       const next = [...working, assistantTurn];
       setTurns(next);
       setCaseFile((data.caseFile as SimulationCaseFile | null) ?? null);
+      if (data.dialogue) setDialogue(data.dialogue as DialogueState);
       if (data.conversationId) setConversationId(data.conversationId);
       saveCurrentToHistory(next, data.caseFile as SimulationCaseFile, data.conversationId ?? null);
     } catch {
@@ -229,6 +233,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
   function newChat() {
     setTurns([]);
     setCaseFile(null);
+    setDialogue(null);
     setConversationId(null);
     setAttachments([]);
     setValue("");

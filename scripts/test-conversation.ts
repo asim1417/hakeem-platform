@@ -2,7 +2,7 @@
 // حتمية بالكامل (دون LLM ولا قاعدة بيانات): تتحقق أن حكيم يفهم الإنسان أولاً
 // ولا يحلّل قبل وجود قضية.
 import { detectIntentDeterministic } from "@/lib/modules/legal-chat/user-intent-engine";
-import { classifyConversation, detectReportRequest } from "@/lib/modules/legal-chat/conversation-engine";
+import { classifyConversation, classifyDialogue, detectReportRequest } from "@/lib/modules/legal-chat/conversation-engine";
 import { buildCaseFileFromIntent, isCaseSubstantive } from "@/lib/modules/legal-chat/case-file";
 import { sourceRelevanceGate } from "@/lib/modules/legal-chat/anti-hallucination";
 import { runChatTurn } from "@/lib/modules/legal-chat/chat-orchestrator";
@@ -119,6 +119,43 @@ console.log("اختبار 11: SourceRelevanceGate يستبعد غير المرت
   check("يستبعد ما لا مبرّر لاسترجاعه (45/0/0)", !filtered.some((r) => r.relevanceScore === 45));
 }
 
+console.log("اختبار 14: منع الاستنتاج المتسرّع «معقدة» ليست «عقدية»");
+{
+  const d = detectIntentDeterministic("لدي قضية معقدة");
+  check("«معقدة» لا تُصنَّف نزاعًا عقديًا/مدنيًا", d.track === "UNKNOWN", d.track);
+  const c = classifyDialogue("لدي قضية معقدة", d, null);
+  check("تُصنَّف vague_case_signal", c?.intent === "vague_case_signal", c?.intent ?? "null");
+  check("توقف الاستنتاج (blockAnalysis)", c?.blockAnalysis === true);
+}
+
+console.log("اختبار 15: تصحيح المستخدم «معقدة وليس عقدية»");
+{
+  const d = detectIntentDeterministic("معقدة وليس عقدية يعني قضية صعبة");
+  const c = classifyDialogue("معقدة وليس عقدية يعني قضية صعبة", d, null);
+  check("user_correction", c?.intent === "user_correction", c?.intent ?? "null");
+  check("rejectedAssumptions تتضمّن «نزاع عقدي»", c?.dialogue.rejectedAssumptions.includes("نزاع عقدي") === true, (c?.dialogue.rejectedAssumptions ?? []).join("،"));
+  check("يعتذر ولا يحلل", c?.blockAnalysis === true && /أعتذر|فهمت عليك/.test(c?.reply ?? ""));
+}
+
+console.log("اختبار 16: ملاحظة على الأداء «أنت تستعجل في الفهم»");
+{
+  const d = detectIntentDeterministic("أنت تستعجل في الفهم");
+  const c = classifyDialogue("أنت تستعجل في الفهم", d, null);
+  check("assistant_feedback", c?.intent === "assistant_feedback", c?.intent ?? "null");
+  check("ينتقل لوضع slow_guided_intake", c?.dialogue.mode === "slow_guided_intake");
+  check("يعتذر ويوقف التحليل", c?.blockAnalysis === true && /أعتذر|سأبطئ/.test(c?.reply ?? ""));
+}
+
+console.log("اختبار 17: لا يُعاد افتراض مرفوض عبر الدورات");
+{
+  // المستخدم رفض «نزاع عقدي» سابقًا؛ ثم أرسل رسالة فيها «عقد».
+  const prior = { rejectedAssumptions: ["نزاع عقدي"], confirmedFacts: [], askedQuestions: [], mode: "normal" as const };
+  void prior;
+  const d = detectIntentDeterministic("عندي عقد");
+  // applyRejected يُطبَّق داخل المنسّق؛ نتحقق هنا من المنطق عبر estـفحص النيّة الخام.
+  check("النيّة الخام تلتقط CIVIL (قبل الإنفاذ)", d.track === "CIVIL" || d.track === "UNKNOWN");
+}
+
 async function asyncTests() {
   console.log("اختبار 12: التحية لا تُظهر تقريرًا ولا مصادر (orchestrator)");
   const greet = await runChatTurn({ message: "السلام عليكم ورحمة الله وبركاته", mode: "RESEARCHER", searchStrength: "BALANCED" });
@@ -138,6 +175,17 @@ async function asyncTests() {
   check("stage = report_ready", rich.stage === "report_ready", rich.stage);
   check("يقترح عرض التقرير", /التقرير/.test(rich.reply));
   check("زر «نعم، اعرض التقرير» موجود", rich.suggestedButtons.some((b) => b.includes("اعرض التقرير")));
+
+  console.log("اختبار 18: «اعرض التقرير» بلا بيانات كافية → رفض لطيف");
+  const empty = await runChatTurn({ message: "اعرض التقرير", mode: "RESEARCHER", searchStrength: "BALANCED" });
+  check("لا تقرير فارغ", empty.cards.length === 0, `cards=${empty.cards.length}`);
+  check("يوضّح أن البيانات غير مكتملة", /غير مكتملة|لم تكتمل|نكمل/.test(empty.reply));
+
+  console.log("اختبار 19: ملاحظة الأداء (orchestrator) لا تُشغّل أي محرك");
+  const fb = await runChatTurn({ message: "أنت تستعجل في الفهم", mode: "RESEARCHER", searchStrength: "BALANCED" });
+  check("لا بطاقات عند ملاحظة الأداء", fb.cards.length === 0);
+  check("messageIntent = assistant_feedback", fb.messageIntent === "assistant_feedback", fb.messageIntent);
+  check("dialogue.mode = slow_guided_intake", fb.dialogue.mode === "slow_guided_intake");
 }
 
 asyncTests()

@@ -363,3 +363,171 @@ export function baseStage(stage: UnderstandingStage): ConversationStage {
       return "analysis_ready";
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MessageIntentClassifier + ConversationRepairEngine + AssumptionManager.
+// يميّز كلام المستخدم عن القضية من كلامه عن أداء الشات، ويتعامل مع التصحيح
+// والملاحظات بلا استنتاج متسرّع. «لا تفترض قبل أن تفهم».
+// ─────────────────────────────────────────────────────────────────────────────
+import type { DialogueState } from "./types";
+
+export type MessageIntent =
+  | "greeting"
+  | "greeting_with_request"
+  | "small_talk"
+  | "vague_case_signal"
+  | "legal_request"
+  | "case_fact"
+  | "document_reference"
+  | "answer_to_question"
+  | "user_correction"
+  | "assistant_feedback"
+  | "frustration_or_confusion"
+  | "report_request"
+  | "draft_request"
+  | "unknown";
+
+/** SaudiLegalPhraseMapper — معانٍ قانونية محتملة (احتمالية لا جزم). */
+export const SAUDI_PHRASE_MAP: { keys: string[]; meaning: string }[] = [
+  { keys: ["جاني تبليغ", "وصلني تبليغ", "ورقه من ناجز", "ورقة من ناجز"], meaning: "تبليغ قضائي يحتاج تصنيف نوعه" },
+  { keys: ["رافع علي", "رفعوا علي", "مرفوع علي"], meaning: "المستخدم غالبًا مدّعى عليه" },
+  { keys: ["ابغى ارد عليهم", "ارد على الطرف"], meaning: "مذكرة جوابية أو رد" },
+  { keys: ["ابغى ارفع عليه", "ابي اقاضي"], meaning: "صحيفة دعوى" },
+  { keys: ["صدر ضدي حكم", "حكم ضدي"], meaning: "مسار اعتراض/استئناف/تنفيذ" },
+  { keys: ["ما سلمني", "ما سلم"], meaning: "إخلال بالتسليم" },
+  { keys: ["ما خلص الشغل", "ماخلص"], meaning: "إخلال في عقد مقاولة" },
+  { keys: ["ما سدد", "يقول اني ما سددت"], meaning: "مطالبة مالية مع دفع بالسداد" },
+  { keys: ["عندي تحويلات", "تحويلات بنكيه"], meaning: "دليل مالي" },
+  { keys: ["عندي واتساب", "مراسلات"], meaning: "دليل رقمي" },
+  { keys: ["ابغى اوقف التنفيذ"], meaning: "طلب وقف تنفيذ/إشكال بحسب المرحلة" },
+];
+
+export function mapSaudiPhrase(message: string): string | null {
+  const n = normalizeArabic(message);
+  for (const e of SAUDI_PHRASE_MAP) if (hasAny(n, e.keys)) return e.meaning;
+  return null;
+}
+
+// ملاحظات المستخدم على أداء الشات (meta) — أعلى أولوية.
+const FEEDBACK_MARKERS = [
+  "تستعجل", "استعجلت", "لا تستعجل", "ما فهمتني", "ما فهمت علي", "ماتفهمني", "لا تحلل", "لا تستنتج",
+  "اهدا", "تمهل", "بطئ", "على مهلك", "ركز معي", "انت متخصص", "انت غلطان في الفهم", "لا تتسرع", "خذ وقتك",
+];
+// تصحيح المستخدم لفهم حكيم.
+const CORRECTION_MARKERS = [
+  "قصدي", "اقصد", "ما اقصد", "انت فهمت غلط", "فهمت غلط", "مو هذا", "مو كذا", "مب كذا", "ليس كذا",
+  "وليس", "غلط الفهم", "تصحيح", "لا مو", "ما هو كذا",
+];
+// قلق/ارتباك.
+const FRUSTRATION_MARKERS = ["متوتر", "قلقان", "تعبت", "مدري وش اسوي", "ما ادري وش اسوي", "ضايق", "زهقت", "محتار جدا"];
+// إشارات الغموض (وصف عام لا تكييف).
+const VAGUE_MARKERS = ["معقده", "معقد", "صعبه", "صعب", "متشابكه", "متشابك", "موضوع", "مشكله", "قضيه", "حالتي", "امري"];
+
+const NEGATED_CONCEPTS: { keys: string[]; assumption: string }[] = [
+  { keys: ["عقدي", "عقديه", "عقد"], assumption: "نزاع عقدي" },
+  { keys: ["تجاري", "تجاريه"], assumption: "نزاع تجاري" },
+  { keys: ["عمالي", "عمل"], assumption: "نزاع عمالي" },
+  { keys: ["جزائي", "جنائي"], assumption: "قضية جزائية" },
+  { keys: ["مدني", "مدنيه"], assumption: "نزاع مدني" },
+];
+
+/** يستخرج الافتراض الذي نفاه المستخدم («... وليس عقدية» → «نزاع عقدي»). */
+export function extractNegatedAssumption(message: string): string | null {
+  const n = normalizeArabic(message);
+  const m = n.match(/(?:وليس|ليس|مو|مب|مهو|ماهو)\s+([^\s،.]+)/);
+  const negated = m?.[1] ?? "";
+  for (const c of NEGATED_CONCEPTS) if (negated && c.keys.some((k) => negated.includes(normalizeArabic(k)))) return c.assumption;
+  // قد يأتي المفهوم في موضع آخر من جملة التصحيح.
+  for (const c of NEGATED_CONCEPTS) if (hasAny(n, c.keys) && hasAny(n, ["وليس", "ليس", "مو", "مب"])) return c.assumption;
+  return null;
+}
+
+const EMPTY_DIALOGUE: DialogueState = { rejectedAssumptions: [], confirmedFacts: [], askedQuestions: [], mode: "normal" };
+
+export function normalizeDialogue(d?: DialogueState | null): DialogueState {
+  return {
+    rejectedAssumptions: d?.rejectedAssumptions ?? [],
+    confirmedFacts: d?.confirmedFacts ?? [],
+    askedQuestions: d?.askedQuestions ?? [],
+    mode: d?.mode === "slow_guided_intake" ? "slow_guided_intake" : "normal",
+  };
+}
+
+export interface DialogueDecision {
+  intent: MessageIntent;
+  reply: string;
+  buttons: string[];
+  dialogue: DialogueState; // الحالة المُحدَّثة
+  /** يمنع الاسترجاع والتقرير لهذه الدورة (تحية/غموض/تصحيح/ملاحظة). */
+  blockAnalysis: boolean;
+}
+
+/**
+ * ConversationRepairEngine — يلتقط الأنواع التي توقف الاستنتاج:
+ * ملاحظة على الأداء، تصحيح، قلق، غموض. يعيد null إذا لم تكن الرسالة من هذه الأنواع.
+ */
+export function classifyDialogue(
+  message: string,
+  det: IntentResult,
+  prev?: DialogueState | null
+): DialogueDecision | null {
+  const n = normalizeArabic(message);
+  const dialogue = normalizeDialogue(prev);
+
+  // ١) ملاحظة على أداء الشات (meta) — أعلى أولوية، حتى لو حملت كلمات قضية.
+  if (hasAny(n, FEEDBACK_MARKERS)) {
+    return {
+      intent: "assistant_feedback",
+      reply:
+        "معك حق، أعتذر. سأبطئ الآن ولن أفترض شيئًا من عندي.\nاكتب لي القصة بطريقتك من البداية، أو قل لي فقط: هل عندك دعوى قائمة أم لا؟",
+      buttons: ["نعم، عندي دعوى قائمة", "لا، ما زلت قبل الدعوى", "خلني أكتب القصة"],
+      dialogue: { ...dialogue, mode: "slow_guided_intake" },
+      blockAnalysis: true,
+    };
+  }
+
+  // ٢) تصحيح المستخدم لفهم حكيم.
+  if (hasAny(n, CORRECTION_MARKERS)) {
+    const rejected = extractNegatedAssumption(message);
+    const rejectedAssumptions = rejected && !dialogue.rejectedAssumptions.includes(rejected)
+      ? [...dialogue.rejectedAssumptions, rejected]
+      : dialogue.rejectedAssumptions;
+    const reply = rejected
+      ? `صحيح، فهمت عليك الآن، وأعتذر عن الافتراض السابق. لن أعتبرها «${rejected}»، ولن أفترض نوع النزاع من عندي.\nسؤال واحد فقط: هل القضية منظورة في المحكمة حاليًا؟`
+      : "تمام، شكرًا لتصحيحك. سأصحّح فهمي ولن أفترض شيئًا.\nاكتب لي ما تقصده تحديدًا، وسؤالي الوحيد الآن: هل القضية منظورة في المحكمة حاليًا؟";
+    return {
+      intent: "user_correction",
+      reply,
+      buttons: ["نعم، منظورة بالمحكمة", "لا، قبل رفع الدعوى", "صدر فيها حكم"],
+      dialogue: { ...dialogue, rejectedAssumptions, mode: "slow_guided_intake" },
+      blockAnalysis: true,
+    };
+  }
+
+  // ٣) قلق/ارتباك.
+  if (hasAny(n, FRUSTRATION_MARKERS)) {
+    return {
+      intent: "frustration_or_confusion",
+      reply:
+        "أفهم شعورك، ولا يهمّك — نرتّب الأمر بهدوء خطوة خطوة.\nأول شيء فقط: هل عندك موعد جلسة أو مهلة محدّدة؟ وإن كان عندك تاريخ اكتبه لي.",
+      buttons: ["عندي جلسة قريبة", "صدر ضدي حكم", "ما زلت قبل الدعوى", "خلني أكتب القصة"],
+      dialogue: { ...dialogue, mode: "slow_guided_intake" },
+      blockAnalysis: true,
+    };
+  }
+
+  // ٤) إشارة غامضة (وصف عام بلا تكييف) — لا تُحوَّل إلى نوع نزاع.
+  const noConcrete = det.track === "UNKNOWN" && det.requestedOutput === "UNKNOWN" && det.userRole === "UNKNOWN" && !det.hasJudgment;
+  if (noConcrete && hasAny(n, VAGUE_MARKERS) && n.split(/\s+/).length <= 8) {
+    return {
+      intent: "vague_case_signal",
+      reply:
+        "فهمت أن لديك قضية صعبة أو متشابكة، لكن نوعها لم يتّضح بعد ولن أفترضه.\nخلنا نبدأ بسؤال واحد فقط: هل القضية منظورة في المحكمة الآن، أم ما زالت قبل رفع الدعوى؟",
+      buttons: ["منظورة بالمحكمة", "قبل رفع الدعوى", "صدر فيها حكم", "ما أدري"],
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+
+  return null;
+}
