@@ -184,6 +184,30 @@ console.log("اختبار 24: BUG2 — سؤال عام خارج النطاق (ل
   check("لا يبتلع الطلب القانوني الحقيقي", real?.intent !== "non_legal_general");
 }
 
+console.log("اختبار 26: سؤال الهوية/القدرات «ما اسمك» / «هل أنت عاقل»");
+{
+  const name = classifyDialogue("ما اسمك", detectIntentDeterministic("ما اسمك"), null);
+  check("«ما اسمك» → identity_or_capability", name?.intent === "identity_or_capability", name?.intent ?? "null");
+  check("يعرّف بحكيم بلا تحليل", name?.blockAnalysis === true && /حكيم/.test(name?.reply ?? ""));
+
+  const sane = classifyDialogue("هل انت عاقل", detectIntentDeterministic("هل انت عاقل"), null);
+  check("«هل أنت عاقل» → identity_or_capability", sane?.intent === "identity_or_capability", sane?.intent ?? "null");
+
+  const cap = classifyDialogue("وش تقدر تسوي", detectIntentDeterministic("وش تقدر تسوي"), null);
+  check("«وش تقدر تسوي» → identity_or_capability", cap?.intent === "identity_or_capability", cap?.intent ?? "null");
+
+  const real = classifyDialogue("الشركة تطالبني بمبلغ", detectIntentDeterministic("الشركة تطالبني بمبلغ"), null);
+  check("لا يبتلع الطلب القانوني الحقيقي", real?.intent !== "identity_or_capability");
+}
+
+console.log("اختبار 27: شكوى عدم الفهم بصيغة «لم» → assistant_feedback");
+{
+  const c = classifyDialogue("انت لم تفهمني جيدا", detectIntentDeterministic("انت لم تفهمني جيدا"), null);
+  check("«لم تفهمني» → assistant_feedback", c?.intent === "assistant_feedback", c?.intent ?? "null");
+  check("ينتقل لوضع slow_guided_intake", c?.dialogue.mode === "slow_guided_intake");
+  check("يعتذر ويوقف التحليل", c?.blockAnalysis === true && /أعتذر|سأبطئ/.test(c?.reply ?? ""));
+}
+
 console.log("اختبار 21: ResponseComposer — تشابه Jaccard");
 {
   check("نصّان متطابقان → 1", jaccardSimilarity("العقد بين الطرفين واضح", "العقد بين الطرفين واضح") === 1);
