@@ -110,3 +110,9 @@ function recomputeMissing(file: SimulationCaseFile, intent: IntentResult): Simul
     return true;
   });
 }
+
+/** هل في الملف ما يكفي لإنتاج تقرير (قصة فعلية + تصنيف)؟ «لا قضية = لا تقرير». */
+export function isCaseSubstantive(cf: SimulationCaseFile): boolean {
+  const factsLen = cf.facts.reduce((s, f) => s + f.text.length, 0);
+  return cf.facts.length >= 2 && factsLen >= 70 && cf.track !== "UNKNOWN";
+}

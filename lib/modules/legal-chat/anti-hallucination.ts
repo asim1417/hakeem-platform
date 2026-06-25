@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { findRelevantLegalArticles, type LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import type { GroundedSource, SearchStrength } from "./types";
+import { normalizeArabic } from "./taxonomy";
 
 export const NO_SOURCE_NOTE =
   "لا يظهر في النواة القانونية المتاحة نصٌّ صريح يمكن الاستناد إليه في هذه المسألة، ويحتاج الأمر إلى مراجعة مصدر نظامي معتمد.";
@@ -52,8 +53,33 @@ export interface GroundingResult {
   rawResults: LegalCoreResult[];
 }
 
+export const UNSPECIFIC_QUERY_NOTE =
+  "لم تتّضح بعد مسألة قانونية كافية لاسترجاع نصوص موثوقة من النواة. فضلاً اذكر الوقائع أو المطلوب.";
+
+const MIN_QUERY_WORDS = 4; // أقل من ذلك = استعلام عام لا يُسترجع له
+const RELEVANCE_FLOOR = 30; // الحد الأدنى لدرجة الصلة المقبولة
+
 /**
- * يسترجع مصادر مُسنَدة من النواة لاستعلام معيّن، مع حارس منع الهلوسة.
+ * SourceRelevanceGate — يستبعد كل مادة غير مرتبطة بالمسألة.
+ * يشترط درجة صلة كافية + تغطية مفاهيمية/عبارة/مصطلحات مطابقة (سبب واضح للاسترجاع).
+ * يمنع تسرّب مواد عشوائية (مثل أنظمة لا علاقة لها بالنزاع).
+ */
+export function sourceRelevanceGate(results: LegalCoreResult[]): LegalCoreResult[] {
+  return results.filter(
+    (r) =>
+      r.relevanceScore >= RELEVANCE_FLOOR &&
+      ((r.conceptCoverage ?? 0) >= 0.2 || (r.phraseMatches ?? 0) > 0 || (r.matchedTerms?.length ?? 0) >= 2)
+  );
+}
+
+/** قياس نوعية الاستعلام: عدد الكلمات الدالّة بعد التطبيع. */
+function querySpecificity(query: string): number {
+  return normalizeArabic(query).split(/\s+/).filter((w) => w.length >= 3).length;
+}
+
+/**
+ * يسترجع مصادر مُسنَدة من النواة لاستعلام معيّن، مع حارس منع الهلوسة وبوابة الصلة.
+ * لا يسترجع شيئاً لاستعلام عام (تحية/كلام غير محدد)، ولا fallback عشوائي.
  * لا يفشل التطبيق إذا تعذّر الاسترجاع (قاعدة غير مفعّلة) — يعيد «لا مصادر».
  */
 export async function groundQuery(
@@ -61,18 +87,26 @@ export async function groundQuery(
   options: { strength?: SearchStrength; systemHint?: string; requireConceptCoverage?: boolean } = {}
 ): Promise<GroundingResult> {
   const strength = options.strength ?? "BALANCED";
+
+  // بوابة نوعية الاستعلام: لا استرجاع قبل وجود مسألة كافية.
+  if (querySpecificity(query) < MIN_QUERY_WORDS) {
+    return { sources: [], hasSources: false, note: UNSPECIFIC_QUERY_NOTE, rawResults: [] };
+  }
+
   try {
     const results = await findRelevantLegalArticles(query, {
       limit: limitForStrength(strength),
-      requireConceptCoverage: options.requireConceptCoverage ?? false,
+      requireConceptCoverage: true, // اشتراط تغطية مفاهيمية (منع المواد العامة)
       semantic: strength === "DEEP" || strength === "JUDICIAL_EXTENDED",
     });
-    const sources = results.map(toGroundedSource);
+    // SourceRelevanceGate: استبعد كل ما هو غير مرتبط ومبرَّر.
+    const relevant = sourceRelevanceGate(results);
+    const sources = relevant.map(toGroundedSource);
     return {
       sources,
       hasSources: sources.length > 0,
       note: sources.length > 0 ? ANTI_HALLUCINATION_NOTE : NO_SOURCE_NOTE,
-      rawResults: results,
+      rawResults: relevant,
     };
   } catch {
     return { sources: [], hasSources: false, note: NO_SOURCE_NOTE, rawResults: [] };

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   // الحفظ best-effort: لا يُفشل الرد إن لم تكن جداول الشات مفعّلة بعد.
   let conversationId = data.conversationId ?? null;
-  if (user) {
+  if (user && result.caseFile) {
     try {
       conversationId = await persistTurn(user.id, conversationId, data, result.caseFile, result);
     } catch {
