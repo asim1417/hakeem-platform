@@ -133,6 +133,9 @@ model LegalArticle {
   royalDecree    String?
   effectiveFrom  DateTime?
   status         String                 @default("سارية")
+  // @deprecated (المرحلة ٥): مصدر الـembedding الوحيد هو جدول pgvector «embeddings».
+  // لا يُكتب إليه بعد الآن (التوليد يذهب للجدول مباشرة)؛ يبقى أرشيفًا للقراءة الاحتياطية
+  // فقط ولا يُحذف. لا تعتمد عليه كمصدر حقيقة.
   embedding      Json?
   caseLinks      LegalArticleCaseLink[]
   amendments     ArticleAmendment[]

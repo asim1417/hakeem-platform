@@ -1,23 +1,66 @@
 /**
  * backfill-embeddings.ts — يولّد متجهات دلالية (Embeddings) لمواد النواة القانونية
- * ويخزّنها في LegalArticle.embedding (Json).
+ * ويخزّنها **مباشرة في جدول pgvector «embeddings»** (مصدر الحقيقة الوحيد).
  *
- * التشغيل:
- *   اضبط مفتاح مزوّد التضمين في البيئة قبل التشغيل.
- *   npx tsx scripts/backfill-embeddings.ts            # يملأ المواد التي بلا متجه
+ * المرحلة ٥ (توحيد مصدر الـembedding): لم يعد يكتب إلى legal_articles.embedding
+ * (Json) — ذلك الحقل مهجور (deprecated/أرشيف). التوليد يذهب للجدول مباشرةً عبر
+ * UPSERT على (owner_type='article', owner_id) فلا ازدواج في مصدر الحقيقة.
+ *
+ * التشغيل (عبر workflow مُقفل فقط — كتابة على القاعدة):
+ *   اضبط مفتاح مزوّد التضمين + CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED
+ *   npx tsx scripts/backfill-embeddings.ts            # يملأ المواد التي بلا متجه في الجدول
  *   npx tsx scripts/backfill-embeddings.ts --all      # يعيد توليد الكل
  *   npx tsx scripts/backfill-embeddings.ts --limit 500
  *
- * آمن للاستئناف: يتخطّى ما له متجه (إلا مع --all). دفعات مع مهلة بسيطة لاحترام حدود المعدّل.
+ * آمن للاستئناف: يتخطّى ما له متجه في الجدول (إلا مع --all). دفعات مع مهلة لاحترام حدود المعدّل.
  */
 
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { embedBatch, buildEmbeddingText, EMBEDDING_MODEL } from "@/lib/modules/ai/embeddings";
+import { hasValidDimension, buildVectorLiteral } from "@/lib/modules/legal-search/embedding-fallback";
 
 const BATCH = 64;
+const DIM = Number(process.env.EMBEDDING_DIMS || 1536);
+
+function assertAlignmentConfirmed() {
+  if (process.env.CONFIRM_RUNTIME_DB_ALIGNMENT !== "NEON_RUNTIME_CONFIRMED") {
+    console.error(
+      "✗ الكتابة مقفولة. مصدر الحقيقة وقت التشغيل هو Neon. اضبط " +
+        "CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED بعد مواءمة DATABASE_URL مع Neon عمداً."
+    );
+    process.exit(1);
+  }
+}
+
+/** UPSERT متجه إلى جدول pgvector «embeddings» (المصدر الوحيد). */
+async function upsertVector(ownerId: string, literal: string): Promise<boolean> {
+  try {
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "embeddings" ("id","owner_type","owner_id","embedding","model","created_at")
+       VALUES (gen_random_uuid()::text, 'article', $1, $2::vector, $3, now())
+       ON CONFLICT ("owner_type","owner_id")
+       DO UPDATE SET "embedding" = EXCLUDED."embedding", "model" = EXCLUDED."model"`,
+      ownerId,
+      literal,
+      EMBEDDING_MODEL
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** معرّفات المواد التي لها متجه في الجدول فعلاً (لتخطّيها في الوضع التزايدي). */
+async function articleIdsWithVector(): Promise<Set<string>> {
+  const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string }>>(
+    `SELECT "owner_id" FROM "embeddings" WHERE "owner_type" = 'article'`
+  ).catch(() => [] as Array<{ owner_id: string }>);
+  return new Set(rows.map((r) => r.owner_id));
+}
 
 async function main() {
+  assertAlignmentConfirmed();
+
   const args = process.argv.slice(2);
   const all = args.includes("--all");
   const limitArg = args.indexOf("--limit");
@@ -30,60 +73,52 @@ async function main() {
     process.exit(1);
   }
 
-  // حقل embedding من نوع Json?: لفلترة الصفوف ذات القيمة NULL في القاعدة نستعمل
-  // Prisma.AnyNull (لا تعمل null العادية مع حقول Json — كانت تُرجع 0 خطأً).
-  const where = all ? {} : { embedding: { equals: Prisma.AnyNull } };
-  const total = await prisma.legalArticle.count({ where });
-  console.log(`المواد المستهدفة: ${total.toLocaleString("ar-SA")} | النموذج: ${EMBEDDING_MODEL}`);
-  if (!total) {
-    console.log("لا شيء لتوليده.");
-    return;
-  }
+  const existing = all ? new Set<string>() : await articleIdsWithVector();
+  const corpusTotal = await prisma.legalArticle.count();
+  console.log(
+    `المواد: ${corpusTotal.toLocaleString("ar-SA")} | لها متجه في الجدول: ${existing.size.toLocaleString("ar-SA")} | النموذج: ${EMBEDDING_MODEL} | البُعد: ${DIM}`
+  );
 
   let processed = 0;
   let updated = 0;
   let failed = 0;
+  let skippedDim = 0;
+  let cursor: string | undefined;
 
-  // eslint-disable-next-line no-constant-condition
-  while (processed < Math.min(total, max)) {
+  while (processed < max) {
     const rows = await prisma.legalArticle.findMany({
-      where,
       select: { id: true, lawName: true, title: true, content: true, legalSystem: { select: { name: true } } },
       orderBy: { id: "asc" },
       take: BATCH,
-      skip: all ? processed : 0 // عند عدم --all تتقلّص المجموعة تلقائياً (embedding لم يعد null)
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });
     if (!rows.length) break;
+    cursor = rows[rows.length - 1].id;
 
-    const texts = rows.map((r) =>
-      buildEmbeddingText({ systemName: r.legalSystem?.name ?? r.lawName, title: r.title, content: r.content })
-    );
-    const vectors = await embedBatch(texts);
-
-    await Promise.all(
-      rows.map(async (row, i) => {
-        const vec = vectors[i];
-        if (!vec) {
-          failed += 1;
-          return;
+    // الوضع التزايدي: تخطّى ما له متجه في الجدول.
+    const pending = all ? rows : rows.filter((r) => !existing.has(r.id));
+    if (pending.length) {
+      const texts = pending.map((r) =>
+        buildEmbeddingText({ systemName: r.legalSystem?.name ?? r.lawName, title: r.title, content: r.content })
+      );
+      const vectors = await embedBatch(texts);
+      for (let i = 0; i < pending.length && processed + i < max; i += 1) {
+        const vec = vectors[i] ?? null;
+        if (!hasValidDimension(vec, DIM)) {
+          skippedDim += 1;
+          continue;
         }
-        await prisma.legalArticle.update({ where: { id: row.id }, data: { embedding: vec } }).then(
-          () => {
-            updated += 1;
-          },
-          () => {
-            failed += 1;
-          }
-        );
-      })
-    );
+        const ok = await upsertVector(pending[i].id, buildVectorLiteral(vec));
+        ok ? (updated += 1) : (failed += 1);
+      }
+      await new Promise((r) => setTimeout(r, 250)); // مهلة بسيطة لحدود المعدّل
+    }
 
     processed += rows.length;
-    console.log(`تقدّم: ${processed.toLocaleString("ar-SA")} | مُحدَّث: ${updated} | فشل: ${failed}`);
-    await new Promise((r) => setTimeout(r, 250)); // مهلة بسيطة لحدود المعدّل
+    console.log(`تقدّم: ${processed.toLocaleString("ar-SA")} | مُحدَّث(جدول): ${updated} | متخطّى(بُعد): ${skippedDim} | فشل: ${failed}`);
   }
 
-  console.log(`✓ انتهى. مُحدَّث: ${updated.toLocaleString("ar-SA")} | فشل: ${failed.toLocaleString("ar-SA")}`);
+  console.log(`✓ انتهى. مُحدَّث في جدول pgvector: ${updated.toLocaleString("ar-SA")} | متخطّى(بُعد): ${skippedDim} | فشل: ${failed.toLocaleString("ar-SA")}`);
 }
 
 main()
