@@ -1,0 +1,3911 @@
+{
+  "meta": {
+    "source": "data/saudi_systems.json",
+    "systemsCount": 485,
+    "articlesCount": 15902,
+    "domains": {
+      "civil": "المعاملات المدنية",
+      "commercial": "التجاري والشركات",
+      "companies": "الشركات",
+      "labor": "العمل والتأمينات",
+      "criminal": "الجزائي والعقوبات",
+      "procedure": "المرافعات والإجراءات",
+      "enforcement": "التنفيذ",
+      "personal_status": "الأحوال الشخصية",
+      "arbitration": "التحكيم",
+      "notarization": "التوثيق",
+      "evidence": "الإثبات",
+      "judiciary": "القضاء والنيابة",
+      "realestate": "العقار والتسجيل العيني",
+      "ip": "الملكية الفكرية",
+      "tax_finance": "المالية والضرائب والبنوك",
+      "consumer": "حماية المستهلك والمنافسة",
+      "health": "الصحة والدواء",
+      "admin": "الإداري والحوكمة العامة",
+      "regulatory": "تنظيمي قطاعي"
+    },
+    "note": "تصنيف وترميز معاد بناؤه بقواعد الاسم — لا يعتمد domain الآلي القديم."
+  },
+  "systems": [
+    {
+      "code": "CIV-001",
+      "name": "نظام المعاملات المدنية",
+      "domain": "civil",
+      "domainTitle": "المعاملات المدنية",
+      "articleCount": 721,
+      "order": 1
+    },
+    {
+      "code": "COM-001",
+      "name": "النظام التجاري ( نظام المحكمة التجارية)",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 629,
+      "order": 2
+    },
+    {
+      "code": "COM-002",
+      "name": "النظام البحري التجاري",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 391,
+      "order": 3
+    },
+    {
+      "code": "CMP-001",
+      "name": "نظام الشركات",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 281,
+      "order": 4
+    },
+    {
+      "code": "JUD-001",
+      "name": "نظام تركيز مسؤوليات القضاء الشرعي",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 258,
+      "order": 5
+    },
+    {
+      "code": "PST-001",
+      "name": "نظام الأحوال الشخصية",
+      "domain": "personal_status",
+      "domainTitle": "الأحوال الشخصية",
+      "articleCount": 252,
+      "order": 6
+    },
+    {
+      "code": "LAB-001",
+      "name": "نظام العمل",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 248,
+      "order": 7
+    },
+    {
+      "code": "PRC-001",
+      "name": "نظام المرافعات الشرعية",
+      "domain": "procedure",
+      "domainTitle": "المرافعات والإجراءات",
+      "articleCount": 242,
+      "order": 8
+    },
+    {
+      "code": "CMP-002",
+      "name": "نظام الإفلاس",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 231,
+      "order": 9
+    },
+    {
+      "code": "PRC-002",
+      "name": "نظام الإجراءات الجزائية",
+      "domain": "procedure",
+      "domainTitle": "المرافعات والإجراءات",
+      "articleCount": 222,
+      "order": 10
+    },
+    {
+      "code": "ENF-001",
+      "name": "اللائحة التنفيذية لنظام الإجراءات الجزائية",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 181,
+      "order": 11
+    },
+    {
+      "code": "REG-001",
+      "name": "نظام الطيران المدني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 180,
+      "order": 12
+    },
+    {
+      "code": "REG-002",
+      "name": "نظام (قانون) الجمارك الموحد لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 179,
+      "order": 13
+    },
+    {
+      "code": "LAB-002",
+      "name": "نظام خدمة الضباط",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 161,
+      "order": 14
+    },
+    {
+      "code": "REG-003",
+      "name": "نظام الطرق والمباني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 160,
+      "order": 15
+    },
+    {
+      "code": "ADM-001",
+      "name": "تنظيم هيئات تطوير المناطق والمدن واللائحة المالية لهيئات تطوير المناطق والمدن واللائحة الإدارية لهيئات تطوير المناطق والمدن",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 139,
+      "order": 16
+    },
+    {
+      "code": "EVD-001",
+      "name": "نظام الإثبات",
+      "domain": "evidence",
+      "domainTitle": "الإثبات",
+      "articleCount": 129,
+      "order": 17
+    },
+    {
+      "code": "COM-003",
+      "name": "نظام الأوراق التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 121,
+      "order": 18
+    },
+    {
+      "code": "ADM-002",
+      "name": "نظام المنافسات و المشتريات الحكومية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 99,
+      "order": 19
+    },
+    {
+      "code": "ENF-002",
+      "name": "نظام التنفيذ",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 98,
+      "order": 20
+    },
+    {
+      "code": "ENF-003",
+      "name": "اللائحة التنفيذية لنظام الإفلاس",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 98,
+      "order": 21
+    },
+    {
+      "code": "COM-004",
+      "name": "نظام المحاكم التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 96,
+      "order": 22
+    },
+    {
+      "code": "REG-004",
+      "name": "نظام الأحوال المدنية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 96,
+      "order": 23
+    },
+    {
+      "code": "CRM-001",
+      "name": "نظام مكافحة جرائم الإرهاب وتمويله",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 96,
+      "order": 24
+    },
+    {
+      "code": "REG-005",
+      "name": "نظام الآثار والمتاحف والتراث العمراني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 94,
+      "order": 25
+    },
+    {
+      "code": "REG-006",
+      "name": "نظام المرور",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 85,
+      "order": 26
+    },
+    {
+      "code": "JUD-002",
+      "name": "نظام القضاء",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 85,
+      "order": 27
+    },
+    {
+      "code": "ADM-003",
+      "name": "النظام الأساسي للحكم",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 83,
+      "order": 28
+    },
+    {
+      "code": "FIN-001",
+      "name": "نظام ضريبة الدخل",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 81,
+      "order": 29
+    },
+    {
+      "code": "ADM-004",
+      "name": "نظام المنافسات والمشتريات الحكومية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 81,
+      "order": 30
+    },
+    {
+      "code": "RES-001",
+      "name": "نظام التسجيل العيني للعقار 1423هـ",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 78,
+      "order": 31
+    },
+    {
+      "code": "REG-007",
+      "name": "نظام المياه",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 77,
+      "order": 32
+    },
+    {
+      "code": "CRM-002",
+      "name": "نظام مكافحة المخدرات والمؤثرات العقلية",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 74,
+      "order": 33
+    },
+    {
+      "code": "LAB-003",
+      "name": "نظام خدمة الأفراد",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 73,
+      "order": 34
+    },
+    {
+      "code": "LAB-004",
+      "name": "نظام التأمينات الاجتماعية",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 71,
+      "order": 35
+    },
+    {
+      "code": "REG-008",
+      "name": "نظام المجالس البلدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 69,
+      "order": 36
+    },
+    {
+      "code": "FIN-002",
+      "name": "نظام السوق المالية",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 68,
+      "order": 37
+    },
+    {
+      "code": "COM-005",
+      "name": "نظام الغرف التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 66,
+      "order": 38
+    },
+    {
+      "code": "IPR-001",
+      "name": "نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية",
+      "domain": "ip",
+      "domainTitle": "الملكية الفكرية",
+      "articleCount": 65,
+      "order": 39
+    },
+    {
+      "code": "REG-009",
+      "name": "نــظام الاستــثمار التعديني.",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 64,
+      "order": 40
+    },
+    {
+      "code": "REG-010",
+      "name": "نظام نقابة السيارات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 64,
+      "order": 41
+    },
+    {
+      "code": "PRC-003",
+      "name": "نظام المرافعات أمام ديوان المظالم",
+      "domain": "procedure",
+      "domainTitle": "المرافعات والإجراءات",
+      "articleCount": 63,
+      "order": 42
+    },
+    {
+      "code": "CRM-003",
+      "name": "نظام الأسلحة والذخائر",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 63,
+      "order": 43
+    },
+    {
+      "code": "REG-011",
+      "name": "القانون (النظام) الموحد للتعدين لدول مجلس التعاون",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 62,
+      "order": 44
+    },
+    {
+      "code": "REG-012",
+      "name": "نظام مجلس التعليم العالي والجامعات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 60,
+      "order": 45
+    },
+    {
+      "code": "COM-006",
+      "name": "نظام العلامات التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 58,
+      "order": 46
+    },
+    {
+      "code": "REG-013",
+      "name": "نظام الجامعات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 58,
+      "order": 47
+    },
+    {
+      "code": "ARB-001",
+      "name": "نظام التحكيم",
+      "domain": "arbitration",
+      "domainTitle": "التحكيم",
+      "articleCount": 58,
+      "order": 48
+    },
+    {
+      "code": "NOT-001",
+      "name": "نظام التوثيق",
+      "domain": "notarization",
+      "domainTitle": "التوثيق",
+      "articleCount": 57,
+      "order": 49
+    },
+    {
+      "code": "REG-014",
+      "name": "نظام المحاماة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 56,
+      "order": 50
+    },
+    {
+      "code": "CRM-004",
+      "name": "نظام مكافحة غسل الأموال",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 54,
+      "order": 51
+    },
+    {
+      "code": "FIN-003",
+      "name": "نظام ضريبة القيمة المضافة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 53,
+      "order": 52
+    },
+    {
+      "code": "COM-007",
+      "name": "قانون (نظام) العلامات التجارية لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 52,
+      "order": 53
+    },
+    {
+      "code": "REG-015",
+      "name": "نظام أخلاقيات البحث على المخلوقات الحية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 51,
+      "order": 54
+    },
+    {
+      "code": "REG-016",
+      "name": "نظام المطبوعات والنشر",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 49,
+      "order": 55
+    },
+    {
+      "code": "REG-017",
+      "name": "نظام البلديات والقرى",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 49,
+      "order": 56
+    },
+    {
+      "code": "REG-018",
+      "name": "نظام البيئة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 49,
+      "order": 57
+    },
+    {
+      "code": "HLT-001",
+      "name": "نظام الأجهزة والمستلزمات الطبية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 49,
+      "order": 58
+    },
+    {
+      "code": "COM-008",
+      "name": "نظام الرهن التجاري",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 47,
+      "order": 59
+    },
+    {
+      "code": "RES-002",
+      "name": "نظام الرهن العقاري المسجل",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 46,
+      "order": 60
+    },
+    {
+      "code": "REG-019",
+      "name": "نظام المقيمين المعتمدين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 45,
+      "order": 61
+    },
+    {
+      "code": "REG-020",
+      "name": "نظام التخصيص",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 45,
+      "order": 62
+    },
+    {
+      "code": "HLT-002",
+      "name": "نظام الغذاء",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 45,
+      "order": 63
+    },
+    {
+      "code": "HLT-003",
+      "name": "نظام مزاولة المهن الصحية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 44,
+      "order": 64
+    },
+    {
+      "code": "REG-021",
+      "name": "نظام الجمعيات التعاونية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 44,
+      "order": 65
+    },
+    {
+      "code": "REG-022",
+      "name": "نظام الجمعيات والمؤسسات الأهلية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 44,
+      "order": 66
+    },
+    {
+      "code": "REG-023",
+      "name": "نظام حماية البيانات الشخصية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 43,
+      "order": 67
+    },
+    {
+      "code": "ADM-005",
+      "name": "نظام المناطق",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 42,
+      "order": 68
+    },
+    {
+      "code": "COM-009",
+      "name": "نظام الغرف التجارية والصناعية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 42,
+      "order": 69
+    },
+    {
+      "code": "HLT-004",
+      "name": "نظام المنشآت والمستحضرات الصيدلانية والعشبية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 42,
+      "order": 70
+    },
+    {
+      "code": "REG-024",
+      "name": "نظام الكليات العسكرية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 41,
+      "order": 71
+    },
+    {
+      "code": "PST-002",
+      "name": "نظام الهيئة العامة للولاية على أموال القاصرين ومن فى حكمهم",
+      "domain": "personal_status",
+      "domainTitle": "الأحوال الشخصية",
+      "articleCount": 41,
+      "order": 72
+    },
+    {
+      "code": "JUD-003",
+      "name": "النظام الأساسي للهيئة القضائية الاقتصادية لمجلس التعاون لدول الخليج العربية",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 41,
+      "order": 73
+    },
+    {
+      "code": "PST-003",
+      "name": "نظام وحدات الإخصاب والأجنة وعلاج العقم",
+      "domain": "personal_status",
+      "domainTitle": "الأحوال الشخصية",
+      "articleCount": 41,
+      "order": 74
+    },
+    {
+      "code": "REG-025",
+      "name": "نظام الاتصالات وتقنية المعلومات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 41,
+      "order": 75
+    },
+    {
+      "code": "ENF-004",
+      "name": "اللائحة التنفيذية لنظام مكافحة المخدرات والمؤثرات العقلية",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 40,
+      "order": 76
+    },
+    {
+      "code": "RES-003",
+      "name": "نظام التسجيل العيني للعقار",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 40,
+      "order": 77
+    },
+    {
+      "code": "REG-026",
+      "name": "النظام الأساسي للمجلس الدولي للتمور",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 40,
+      "order": 78
+    },
+    {
+      "code": "CMP-003",
+      "name": "نظام مراقبة شركات التمويل",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 40,
+      "order": 79
+    },
+    {
+      "code": "CMP-004",
+      "name": "لائحة تفضيل المحتوى المحلي والمنشآت الصغيرة والمتوسطة المحلية والشركات المدرجة في السوق المالية في الأعمال والمشتريات",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 39,
+      "order": 80
+    },
+    {
+      "code": "LAB-005",
+      "name": "نظام التقاعد المدني",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 39,
+      "order": 81
+    },
+    {
+      "code": "HLT-005",
+      "name": "نظام الأعلاف",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 39,
+      "order": 82
+    },
+    {
+      "code": "REG-027",
+      "name": "نظام النقل بالخطوط الحديدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 39,
+      "order": 83
+    },
+    {
+      "code": "FIN-004",
+      "name": "نظام المحاسبين القانونيين",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 38,
+      "order": 84
+    },
+    {
+      "code": "FIN-005",
+      "name": "نظام معالجة المنشآت المالية المهمة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 38,
+      "order": 85
+    },
+    {
+      "code": "REG-028",
+      "name": "نظام إدارة النفايات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 38,
+      "order": 86
+    },
+    {
+      "code": "CMP-005",
+      "name": "نظام المساهمات العقارية",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 38,
+      "order": 87
+    },
+    {
+      "code": "HLT-006",
+      "name": "نظام منتجات التجميل",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 38,
+      "order": 88
+    },
+    {
+      "code": "REG-029",
+      "name": "نظام حماية المبلغين والشهود والخبراء والضحايا",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 37,
+      "order": 89
+    },
+    {
+      "code": "COM-010",
+      "name": "نظام المعالجات التجارية في التجارة الدولية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 37,
+      "order": 90
+    },
+    {
+      "code": "REG-030",
+      "name": "نظام الزراعة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 37,
+      "order": 91
+    },
+    {
+      "code": "ENF-005",
+      "name": "نظام التنفيذ أمام ديوان المظالم",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 37,
+      "order": 92
+    },
+    {
+      "code": "REG-031",
+      "name": "نظام البريد",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 37,
+      "order": 93
+    },
+    {
+      "code": "REG-032",
+      "name": "نظام الدفاع المدني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 36,
+      "order": 94
+    },
+    {
+      "code": "LAB-006",
+      "name": "نظام الخدمة المدنية",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 36,
+      "order": 95
+    },
+    {
+      "code": "REG-033",
+      "name": "اللائحة التنظيمية لدور الأحداث",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 36,
+      "order": 96
+    },
+    {
+      "code": "FIN-006",
+      "name": "النظام الأساسي لهيئة المحاسبة والمراجعة لدول مجلس التعاون",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 35,
+      "order": 97
+    },
+    {
+      "code": "LAB-007",
+      "name": "نظام التقاعد العسكري",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 35,
+      "order": 98
+    },
+    {
+      "code": "HLT-007",
+      "name": "نظام المؤسسات الصحية الخاصة",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 35,
+      "order": 99
+    },
+    {
+      "code": "HLT-008",
+      "name": "نظام الرقابة على الاستخدامات النووية والاشعاعية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 35,
+      "order": 100
+    },
+    {
+      "code": "IPR-002",
+      "name": "نظام براءات الاختراع لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "ip",
+      "domainTitle": "الملكية الفكرية",
+      "articleCount": 34,
+      "order": 101
+    },
+    {
+      "code": "REG-034",
+      "name": "النظام الأساس لجمعية الكشافة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 34,
+      "order": 102
+    },
+    {
+      "code": "REG-035",
+      "name": "نظام مياه الصرف الصحي المعالجة وإعادة استخدامها",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 34,
+      "order": 103
+    },
+    {
+      "code": "REG-036",
+      "name": "نظام (قانون) الحجر الزراعي لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 34,
+      "order": 104
+    },
+    {
+      "code": "REG-037",
+      "name": "نظام خدمة حجاج الداخل",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 33,
+      "order": 105
+    },
+    {
+      "code": "RES-004",
+      "name": "نظام ملكية الوحدات العقارية وفرزها وإدارتها",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 33,
+      "order": 106
+    },
+    {
+      "code": "REG-038",
+      "name": "قانون (نظام) التنظيم الصناعي الموحد لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 33,
+      "order": 107
+    },
+    {
+      "code": "REG-039",
+      "name": "نظام حقوق الأشخاص ذوي الإعاقة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 33,
+      "order": 108
+    },
+    {
+      "code": "ADM-006",
+      "name": "نظام ديوان المراقبة العامة",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 33,
+      "order": 109
+    },
+    {
+      "code": "ADM-007",
+      "name": "نظام مجلس الوزراء",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 32,
+      "order": 110
+    },
+    {
+      "code": "FIN-007",
+      "name": "نظام صندوق الاستثمارات العامة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 32,
+      "order": 111
+    },
+    {
+      "code": "FIN-008",
+      "name": "نظام إيرادات الدولة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 32,
+      "order": 112
+    },
+    {
+      "code": "CRM-005",
+      "name": "نظام السجن والتوقيف",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 31,
+      "order": 113
+    },
+    {
+      "code": "CRM-006",
+      "name": "نظام المتفجرات والمفرقعات",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 31,
+      "order": 114
+    },
+    {
+      "code": "RES-005",
+      "name": "نظام استئجار الدولة للعقار",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 31,
+      "order": 115
+    },
+    {
+      "code": "HLT-009",
+      "name": "نظام المسؤولية المدنية عن الأضرار النووية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 31,
+      "order": 116
+    },
+    {
+      "code": "REG-040",
+      "name": "نظام التعاملات الإلكترونية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 31,
+      "order": 117
+    },
+    {
+      "code": "ADM-008",
+      "name": "نظام مجلس الشورى",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 30,
+      "order": 118
+    },
+    {
+      "code": "REG-041",
+      "name": "نظام المؤسسات الصحفية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 30,
+      "order": 119
+    },
+    {
+      "code": "CRM-007",
+      "name": "النظام الجزائي لجرائم التزوير",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 30,
+      "order": 120
+    },
+    {
+      "code": "REG-042",
+      "name": "نظام الجنسية العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 30,
+      "order": 121
+    },
+    {
+      "code": "COM-011",
+      "name": "نظام مكافحة الغش التجاري",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 30,
+      "order": 122
+    },
+    {
+      "code": "RES-006",
+      "name": "نظام بيع وتأجير مشروعات عقارية على الخارطة",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 30,
+      "order": 123
+    },
+    {
+      "code": "JUD-004",
+      "name": "نظام هيئة التحقيق والادعاء العام ( نظام النيابة العامة )",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 30,
+      "order": 124
+    },
+    {
+      "code": "JUD-005",
+      "name": "لائحة أعضاء هيئة التحقيق والادعاء العام والعاملين فيها",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 30,
+      "order": 125
+    },
+    {
+      "code": "HLT-010",
+      "name": "نظام الرعاية الصحية النفسية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 30,
+      "order": 126
+    },
+    {
+      "code": "REG-043",
+      "name": "نظام المواد الهيدروكربونية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 30,
+      "order": 127
+    },
+    {
+      "code": "REG-044",
+      "name": "اللائحة الأساسية لبرامج تأهيل المعوقين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 30,
+      "order": 128
+    },
+    {
+      "code": "CMP-006",
+      "name": "نظام الشركات المهنية",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 29,
+      "order": 129
+    },
+    {
+      "code": "FIN-009",
+      "name": "نظام ضمان الحقوق بالأموال المنقولة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 29,
+      "order": 130
+    },
+    {
+      "code": "REG-045",
+      "name": "نظام مطاحن إنتاج الدقيق",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 29,
+      "order": 131
+    },
+    {
+      "code": "HLT-011",
+      "name": "نظام المراقبة الصحية في منافذ الدخول",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 29,
+      "order": 132
+    },
+    {
+      "code": "HLT-012",
+      "name": "نظام الوقاية من متلازمة العوز المناعي المكتسب (الإيدز) وحقوق المصابين وواجباتهم",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 29,
+      "order": 133
+    },
+    {
+      "code": "LAB-008",
+      "name": "نظام التأمين ضد التعطل عن العمل",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 29,
+      "order": 134
+    },
+    {
+      "code": "IPR-003",
+      "name": "نظام حماية حقوق المؤلف",
+      "domain": "ip",
+      "domainTitle": "الملكية الفكرية",
+      "articleCount": 28,
+      "order": 135
+    },
+    {
+      "code": "CON-001",
+      "name": "نظام المنافسة",
+      "domain": "consumer",
+      "domainTitle": "حماية المستهلك والمنافسة",
+      "articleCount": 28,
+      "order": 136
+    },
+    {
+      "code": "ADM-009",
+      "name": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 28,
+      "order": 137
+    },
+    {
+      "code": "REG-046",
+      "name": "نظام الأئمة والمؤذنين وخدم المساجد",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 28,
+      "order": 138
+    },
+    {
+      "code": "REG-047",
+      "name": "نظام الملابس والتجهيزات العسكرية الفردية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 28,
+      "order": 139
+    },
+    {
+      "code": "HLT-013",
+      "name": "نظام تداول بدائل حليب الأم",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 28,
+      "order": 140
+    },
+    {
+      "code": "FIN-010",
+      "name": "نظام الإيداع في المخازن العامة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 28,
+      "order": 141
+    },
+    {
+      "code": "RES-007",
+      "name": "نظام الايجار التمويلي",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 28,
+      "order": 142
+    },
+    {
+      "code": "COM-012",
+      "name": "نظام الامتياز التجاري",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 27,
+      "order": 143
+    },
+    {
+      "code": "RES-008",
+      "name": "نظام نزع ملكية العقارات للمنفعة العامة ووضع اليد المؤقت على العقار",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 27,
+      "order": 144
+    },
+    {
+      "code": "JUD-006",
+      "name": "نظام محاكمة الوزراء",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 27,
+      "order": 145
+    },
+    {
+      "code": "PST-004",
+      "name": "نظام التبرع بالأعضاء البشرية",
+      "domain": "personal_status",
+      "domainTitle": "الأحوال الشخصية",
+      "articleCount": 27,
+      "order": 146
+    },
+    {
+      "code": "FIN-011",
+      "name": "نظام البنك المركزي السعودي",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 27,
+      "order": 147
+    },
+    {
+      "code": "CRM-008",
+      "name": "تنظيم اللجنة الوطنية لمكافحة المخدرات",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 26,
+      "order": 148
+    },
+    {
+      "code": "ENF-006",
+      "name": "اللائحة التنفيذية لنظام مكافحة جرائم الإرهاب وتمويله",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 26,
+      "order": 149
+    },
+    {
+      "code": "REG-048",
+      "name": "نظام التجارة الإلكترونية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 26,
+      "order": 150
+    },
+    {
+      "code": "ENF-007",
+      "name": "اللائحة التنفيذية لنظام نزع ملكية العقارات للمنفعة العامة ووضع اليد المؤقت على العقار",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 26,
+      "order": 151
+    },
+    {
+      "code": "HLT-014",
+      "name": "نظام (قانون) الحجر البيطري لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 26,
+      "order": 152
+    },
+    {
+      "code": "JUD-007",
+      "name": "نظام ديوان المظالم",
+      "domain": "judiciary",
+      "domainTitle": "القضاء والنيابة",
+      "articleCount": 26,
+      "order": 153
+    },
+    {
+      "code": "REG-049",
+      "name": "نظام حماية الطفل",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 26,
+      "order": 154
+    },
+    {
+      "code": "ADM-010",
+      "name": "تنظيم هيئة الهلال الأحمر السعودي",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 26,
+      "order": 155
+    },
+    {
+      "code": "REG-050",
+      "name": "تنظيم الهيئة السعودية للمدن الصناعية ومناطق التقنية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 26,
+      "order": 156
+    },
+    {
+      "code": "LAB-009",
+      "name": "نظام الضمان الاجتماعي",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 26,
+      "order": 157
+    },
+    {
+      "code": "FIN-012",
+      "name": "نظام مراقبة البنوك",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 26,
+      "order": 158
+    },
+    {
+      "code": "ADM-011",
+      "name": "نظام هيئة البيعة",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 25,
+      "order": 159
+    },
+    {
+      "code": "REG-051",
+      "name": "نظام الإعلام المرئي والمسموع",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 25,
+      "order": 160
+    },
+    {
+      "code": "CMP-007",
+      "name": "نظام مراقبة شركات التأمين التعاوني",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 25,
+      "order": 161
+    },
+    {
+      "code": "REG-052",
+      "name": "نظام الميداليات المدنية والعسكرية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 25,
+      "order": 162
+    },
+    {
+      "code": "REG-053",
+      "name": "تنظيم الدعم السكني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 25,
+      "order": 163
+    },
+    {
+      "code": "REG-054",
+      "name": "نظام الانضباط الوظيفي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 25,
+      "order": 164
+    },
+    {
+      "code": "HLT-015",
+      "name": "نظام الهيئة العامة للغذاء والدواء",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 25,
+      "order": 165
+    },
+    {
+      "code": "ADM-012",
+      "name": "نظام الهيئة العامة للأوقاف",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 25,
+      "order": 166
+    },
+    {
+      "code": "REG-055",
+      "name": "نظام تعليم الكبار ومحو الأمية في المملكة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 24,
+      "order": 167
+    },
+    {
+      "code": "REG-056",
+      "name": "نظام نقل الحجاج إلى المملكة وإعادتهم إلى بلادهم",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 24,
+      "order": 168
+    },
+    {
+      "code": "RES-009",
+      "name": "نظام الوساطة العقارية",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 24,
+      "order": 169
+    },
+    {
+      "code": "ENF-008",
+      "name": "اللائحة التنفيذية لضبط أعمال تفتيش العمل وتنظيمها",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 24,
+      "order": 170
+    },
+    {
+      "code": "REG-057",
+      "name": "نظام الأحداث",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 24,
+      "order": 171
+    },
+    {
+      "code": "REG-058",
+      "name": "نظام النقل العام على الطرق بالمملكة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 24,
+      "order": 172
+    },
+    {
+      "code": "REG-059",
+      "name": "نظام مكافحة الرشوة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 173
+    },
+    {
+      "code": "CON-002",
+      "name": "تنظيم جمعية حماية المستهلك",
+      "domain": "consumer",
+      "domainTitle": "حماية المستهلك والمنافسة",
+      "articleCount": 23,
+      "order": 174
+    },
+    {
+      "code": "REG-060",
+      "name": "نظام مقدمي خدمة حجاج الخارج",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 175
+    },
+    {
+      "code": "REG-061",
+      "name": "النظام الموحد لمد الحماية التأمينية لمواطني دول مجلس التعاون لدول الخليج العربية العاملين في غير دولهم في أي دولة عضو في المجلس",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 176
+    },
+    {
+      "code": "ADM-013",
+      "name": "نظام المناطق البحرية للمملكة العربية السعودية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 23,
+      "order": 177
+    },
+    {
+      "code": "REG-062",
+      "name": "نظام التكاليف القضائية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 178
+    },
+    {
+      "code": "HLT-016",
+      "name": "النظام الموحد لإدارة نفايات الرعاية الصحية بدول مجلس التعاون لدول الخليج العربية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 23,
+      "order": 179
+    },
+    {
+      "code": "REG-063",
+      "name": "نظام الكهرباء",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 180
+    },
+    {
+      "code": "REG-064",
+      "name": "لائحة عمال الخدمة المنزلية ومن في حكمهم",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 181
+    },
+    {
+      "code": "REG-065",
+      "name": "نظام حقوق كبير السن ورعايته",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 182
+    },
+    {
+      "code": "REG-066",
+      "name": "نظام البريد 1406هـ",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 23,
+      "order": 183
+    },
+    {
+      "code": "REG-067",
+      "name": "نظام مكتبة الملك عبد العزيز العامة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 22,
+      "order": 184
+    },
+    {
+      "code": "FIN-013",
+      "name": "نظام مهنة المحاسبة والمراجعة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 22,
+      "order": 185
+    },
+    {
+      "code": "REG-068",
+      "name": "نظام العلم للمملكة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 22,
+      "order": 186
+    },
+    {
+      "code": "REG-069",
+      "name": "النظام الأساس لجامعة الملك سعود (مؤسسة أكاديمية مستقلة غير هادفة للربح)",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 22,
+      "order": 187
+    },
+    {
+      "code": "REG-070",
+      "name": "نظام المعادن الثمينة والأحجار الكريمة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 22,
+      "order": 188
+    },
+    {
+      "code": "REG-071",
+      "name": "لائحة المدارس الأجنبية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 21,
+      "order": 189
+    },
+    {
+      "code": "REG-072",
+      "name": "نظام إدارة النفايات البلدية الصلبة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 21,
+      "order": 190
+    },
+    {
+      "code": "REG-073",
+      "name": "نظام الثروة الحيوانية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 21,
+      "order": 191
+    },
+    {
+      "code": "HLT-017",
+      "name": "النظام الأساس لمستشفى الملك فيصل التخصصي ومركز الأبحاث (مؤسسة مستقلة ذات طبيعة خاصة وغير هادفة للربح)",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 21,
+      "order": 192
+    },
+    {
+      "code": "ADM-014",
+      "name": "تنظيم هيئة تنظيم الكهرباء والإنتاج المزدوج",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 21,
+      "order": 193
+    },
+    {
+      "code": "COM-013",
+      "name": "نظام توزيع الغاز الجاف وغاز البترول السائل للأغراض السكنية والتجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 21,
+      "order": 194
+    },
+    {
+      "code": "REG-074",
+      "name": "نظام تعريفة الطيران المدني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 21,
+      "order": 195
+    },
+    {
+      "code": "REG-075",
+      "name": "تنظيم المنطقة الخاصة اللوجستية المتكاملة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 21,
+      "order": 196
+    },
+    {
+      "code": "REG-076",
+      "name": "لائحة حقوق والتزامات مستخدمي وسائل النقل العام",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 21,
+      "order": 197
+    },
+    {
+      "code": "REG-077",
+      "name": "قواعد تنظيم لوحات الدعاية والإعلان",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 198
+    },
+    {
+      "code": "REG-078",
+      "name": "تنظيم المؤسسة العامة للصناعات العسكرية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 199
+    },
+    {
+      "code": "COM-014",
+      "name": "نظام السجل التجاري",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 20,
+      "order": 200
+    },
+    {
+      "code": "COM-015",
+      "name": "نظام الأسماء التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 20,
+      "order": 201
+    },
+    {
+      "code": "REG-079",
+      "name": "النظام الأساسي للمركز الإحصائي لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 202
+    },
+    {
+      "code": "REG-080",
+      "name": "تنظيم الهيئة السعودية للمقاولين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 203
+    },
+    {
+      "code": "CRM-009",
+      "name": "نظام مكافحة التستر",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 20,
+      "order": 204
+    },
+    {
+      "code": "REG-081",
+      "name": "نظام المدفوعات وخدماتها",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 205
+    },
+    {
+      "code": "REG-082",
+      "name": "نظام المؤسسة العامة لتحلية المياه المالحة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 206
+    },
+    {
+      "code": "REG-083",
+      "name": "نظام الأرصاد",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 207
+    },
+    {
+      "code": "REG-084",
+      "name": "تنظيم الهيئة السعودية للمحامين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 208
+    },
+    {
+      "code": "REG-085",
+      "name": "تنظيم الهيئة الملكية لمحافظة العلا",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 209
+    },
+    {
+      "code": "REG-086",
+      "name": "نظام مكافحة التدخين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 210
+    },
+    {
+      "code": "REG-087",
+      "name": "النظام الموحد بشأن المواد المستنفدة لطبقة الأوزون لدول مجلس التعاون لدول الخليج العربية (المعدل)",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 211
+    },
+    {
+      "code": "ADM-015",
+      "name": "تنظيم هيئة تنظيم المياه والكهرباء",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 20,
+      "order": 212
+    },
+    {
+      "code": "REG-088",
+      "name": "اللائحة التنظيمية لمراكز التنمية الاجتماعية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 20,
+      "order": 213
+    },
+    {
+      "code": "ADM-016",
+      "name": "تنظيم الهيئة العامة للموانئ",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 20,
+      "order": 214
+    },
+    {
+      "code": "ADM-017",
+      "name": "تنظيم الهيئة العامة للصناعات العسكرية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 19,
+      "order": 215
+    },
+    {
+      "code": "REG-089",
+      "name": "نظام تصنيف المقاولين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 19,
+      "order": 216
+    },
+    {
+      "code": "RES-010",
+      "name": "نظام ملكية الوحدات العقارية وفرزها",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 19,
+      "order": 217
+    },
+    {
+      "code": "ADM-018",
+      "name": "نظام البحث العلمي البحري في المناطق البحرية التابِعة للمملكة العربية السعودية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 19,
+      "order": 218
+    },
+    {
+      "code": "ADM-019",
+      "name": "تنظيم هيئة حقوق الإنسان",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 19,
+      "order": 219
+    },
+    {
+      "code": "ARB-002",
+      "name": "اللائحة التنفيذية لنظام التحكيم",
+      "domain": "arbitration",
+      "domainTitle": "التحكيم",
+      "articleCount": 19,
+      "order": 220
+    },
+    {
+      "code": "REG-090",
+      "name": "نظام السياحة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 19,
+      "order": 221
+    },
+    {
+      "code": "REG-091",
+      "name": "نظام جمعية الكشافة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 19,
+      "order": 222
+    },
+    {
+      "code": "REG-092",
+      "name": "النظام الصحي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 19,
+      "order": 223
+    },
+    {
+      "code": "REG-093",
+      "name": "نظام الضمان الصحي التعاوني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 19,
+      "order": 224
+    },
+    {
+      "code": "REG-094",
+      "name": "اللائحة التنظيمية لتأشيرات الأعمال المؤقتة والموسمية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 19,
+      "order": 225
+    },
+    {
+      "code": "ADM-020",
+      "name": "تنظيم هيئة الاتصالات وتقنية المعلومات",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 19,
+      "order": 226
+    },
+    {
+      "code": "ADM-021",
+      "name": "تنظيم الهيئة العامة للإعلام المرئي والمسموع",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 18,
+      "order": 227
+    },
+    {
+      "code": "REG-095",
+      "name": "تنظيم مجمع الملك سلمان العالمي للغة العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 228
+    },
+    {
+      "code": "CRM-010",
+      "name": "النظام الأساسي لمركز المعلومات الجنائية لمكافحة المخدرات لمجلس التعاون لدول الخليج العربية",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 18,
+      "order": 229
+    },
+    {
+      "code": "REG-096",
+      "name": "نظام استخدام كاميرات المراقبة الأمنية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 230
+    },
+    {
+      "code": "REG-097",
+      "name": "نظام الاستثمار الأجنبي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 231
+    },
+    {
+      "code": "REG-098",
+      "name": "نظام القياس والمعايرة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 232
+    },
+    {
+      "code": "REG-099",
+      "name": "نظام استيراد المواد الكيميائية وإدارتها ( نظام إدارة المواد الكيميائية )",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 233
+    },
+    {
+      "code": "ADM-022",
+      "name": "تنظيم الهيئة العامة للإحصاء",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 18,
+      "order": 234
+    },
+    {
+      "code": "REG-100",
+      "name": "نظام صندوق البنية التحتية الوطني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 235
+    },
+    {
+      "code": "REG-101",
+      "name": "نظام مدينة الملك عبد العزيز للعلوم والتقنية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 236
+    },
+    {
+      "code": "ADM-023",
+      "name": "تنظيم هيئة تقويم التعليم والتدريب",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 18,
+      "order": 237
+    },
+    {
+      "code": "REG-102",
+      "name": "تنظيم مجمع خادم الحرمين الشريفين الملك سلمان بن عبدالعزيز ال سعود للحديث النبوي الشريف",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 238
+    },
+    {
+      "code": "ENF-009",
+      "name": "اللائحة التنفيذية لنظام رسوم الأراضي البيضاء",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 18,
+      "order": 239
+    },
+    {
+      "code": "REG-103",
+      "name": "لائحة الجزاءات عن المخالفات البلدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 240
+    },
+    {
+      "code": "RES-011",
+      "name": "نظام صندوق التنمية العقارية",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 18,
+      "order": 241
+    },
+    {
+      "code": "REG-104",
+      "name": "نظام الزراعة العضوية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 242
+    },
+    {
+      "code": "LAB-010",
+      "name": "نظام العمل التطوعي",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 18,
+      "order": 243
+    },
+    {
+      "code": "FIN-014",
+      "name": "نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية )",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 18,
+      "order": 244
+    },
+    {
+      "code": "REG-105",
+      "name": "نظام المؤسسة العامة لخطوط حديد حكومة المملكة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 18,
+      "order": 245
+    },
+    {
+      "code": "ADM-024",
+      "name": "تنظيم هيئة الحكومة الرقمية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 18,
+      "order": 246
+    },
+    {
+      "code": "REG-106",
+      "name": "نظام دارة الملك عبد العزيز",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 247
+    },
+    {
+      "code": "ADM-025",
+      "name": "تنظيم هيئة الإذاعة والتلفزيون",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 17,
+      "order": 248
+    },
+    {
+      "code": "REG-107",
+      "name": "نظام مزاولة نقل النقود والمعادن الثمينة والمستندات ذات القيمة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 249
+    },
+    {
+      "code": "REG-108",
+      "name": "القانون \"النظام\" الموحد لمكافحة الإغراق والتدابير التعويضية والوقائية لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 250
+    },
+    {
+      "code": "REG-109",
+      "name": "نظام مزاولة المهن الهندسية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 251
+    },
+    {
+      "code": "FIN-015",
+      "name": "تنظيم الهيئة العامة للزكاة والدخل",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 17,
+      "order": 252
+    },
+    {
+      "code": "CON-003",
+      "name": "تنظيم الهيئة العامة للمنافسة",
+      "domain": "consumer",
+      "domainTitle": "حماية المستهلك والمنافسة",
+      "articleCount": 17,
+      "order": 253
+    },
+    {
+      "code": "REG-110",
+      "name": "نظام معهد الإدارة العامة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 254
+    },
+    {
+      "code": "ADM-026",
+      "name": "تنظيم هيئة تقويم التعليم العام",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 17,
+      "order": 255
+    },
+    {
+      "code": "REG-111",
+      "name": "تنظيم المعهد الوطني للتطوير المهني التعليمي 1441هـ",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 256
+    },
+    {
+      "code": "REG-112",
+      "name": "نظام الإحصاءات العامة للدولة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 257
+    },
+    {
+      "code": "REG-113",
+      "name": "تنظيم المؤسسة العامة للحبوب",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 258
+    },
+    {
+      "code": "REG-114",
+      "name": "تنظيم المؤسسة العامة للري",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 259
+    },
+    {
+      "code": "REG-115",
+      "name": "تنظيم صندوق البيئة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 260
+    },
+    {
+      "code": "CRM-011",
+      "name": "نظام مكافحة جرائم الاتجار بالأشخاص",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 17,
+      "order": 261
+    },
+    {
+      "code": "REG-116",
+      "name": "تنظيم صندوق النفقة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 262
+    },
+    {
+      "code": "ENF-010",
+      "name": "اللائحة التنفيذية لنظام التكاليف القضائية",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 17,
+      "order": 263
+    },
+    {
+      "code": "REG-117",
+      "name": "النظام الأساسي للاتحادات الرياضية واللجنة الأولمبية العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 264
+    },
+    {
+      "code": "REG-118",
+      "name": "الترتيبات التنظيمية للهيئة الملكية لمدينة مكة المكرمة والمشاعر المقدسة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 265
+    },
+    {
+      "code": "REG-119",
+      "name": "نظام المختبرات الخاصة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 266
+    },
+    {
+      "code": "REG-120",
+      "name": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 267
+    },
+    {
+      "code": "ADM-027",
+      "name": "تنظيم الهيئة العامة للمساحة والمعلومات الجيومكانية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 17,
+      "order": 268
+    },
+    {
+      "code": "REG-121",
+      "name": "نظام الحماية من الإيذاء",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 269
+    },
+    {
+      "code": "LAB-011",
+      "name": "اللائحة التنظيمية لعمل الأسر المنتجة",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 17,
+      "order": 270
+    },
+    {
+      "code": "ADM-028",
+      "name": "تنظيم هيئة رعاية الأشخاص ذوي الإعاقة",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 17,
+      "order": 271
+    },
+    {
+      "code": "REG-122",
+      "name": "نظام المعلومات الائتمانية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 272
+    },
+    {
+      "code": "CRM-012",
+      "name": "تنظيم الهيئة الوطنية لمكافحة الفساد",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 17,
+      "order": 273
+    },
+    {
+      "code": "REG-123",
+      "name": "تنظيم المركز الوطني لقياس أداء الأجهزة العامة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 17,
+      "order": 274
+    },
+    {
+      "code": "REG-124",
+      "name": "تنظيم دارة الملك عبدالعزيز",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 275
+    },
+    {
+      "code": "REG-125",
+      "name": "تنظيم وكالة الأنباء السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 276
+    },
+    {
+      "code": "REG-126",
+      "name": "تنظيم المعهد الملكي للفنون التقليدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 277
+    },
+    {
+      "code": "ADM-029",
+      "name": "تنظيم الهيئة العامة لتنظيم الإعلام",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 278
+    },
+    {
+      "code": "REG-127",
+      "name": "نظام جوازات السفر السياسية والخاصة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 279
+    },
+    {
+      "code": "REG-128",
+      "name": "نظام وثائق السفر",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 280
+    },
+    {
+      "code": "ADM-030",
+      "name": "تنظيم الهيئة العامة للجمارك",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 281
+    },
+    {
+      "code": "ADM-031",
+      "name": "اللائحة التنظيمية للجان إصلاح ذات البين في إمارات المناطق",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 282
+    },
+    {
+      "code": "REG-129",
+      "name": "تنظيم الفحص الفني الدوري للمركبات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 283
+    },
+    {
+      "code": "REG-130",
+      "name": "تنظيم الهيئة العليا للأمن الصناعي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 284
+    },
+    {
+      "code": "COM-016",
+      "name": "نظام الدفاتر التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 16,
+      "order": 285
+    },
+    {
+      "code": "REG-131",
+      "name": "النظام الأساسي لهيئة التقييس لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 286
+    },
+    {
+      "code": "REG-132",
+      "name": "تنظيم الهيئة السعودية للمواصفات والمقاييس والجودة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 287
+    },
+    {
+      "code": "REG-133",
+      "name": "تنظيم المركز السعودي للأعمال الاقتصادية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 288
+    },
+    {
+      "code": "ADM-032",
+      "name": "تنظيم الهيئة العامة للتجارة الخارجية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 289
+    },
+    {
+      "code": "FIN-016",
+      "name": "تنظيم هيئة الزكاة والضريبة والجمارك",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 16,
+      "order": 290
+    },
+    {
+      "code": "REG-134",
+      "name": "نظام الأوسمة السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 291
+    },
+    {
+      "code": "ENF-011",
+      "name": "اللائحة التنفيذية لنظام الأوسمة السعودية",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 16,
+      "order": 292
+    },
+    {
+      "code": "REG-135",
+      "name": "نظام إنتاج المواد التعليمية المساعدة وتسويقها",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 293
+    },
+    {
+      "code": "RES-012",
+      "name": "تنظيم الهيئة العامة للعقار",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 16,
+      "order": 294
+    },
+    {
+      "code": "HLT-018",
+      "name": "نظام تطبيق كود البناء السعودي",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 16,
+      "order": 295
+    },
+    {
+      "code": "RES-013",
+      "name": "تنظيم الهيئة العامة لعقارات الدولة",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 16,
+      "order": 296
+    },
+    {
+      "code": "LAB-012",
+      "name": "تنظيم المؤسسة العامة للتقاعد",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 16,
+      "order": 297
+    },
+    {
+      "code": "ADM-033",
+      "name": "تنظيم هيئة توليد الوظائف ومكافحة البطالة",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 298
+    },
+    {
+      "code": "REG-136",
+      "name": "نظام تربية النحل",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 299
+    },
+    {
+      "code": "REG-137",
+      "name": "قانون (نظام) الرفق بالحيوان لدول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 300
+    },
+    {
+      "code": "REG-138",
+      "name": "الترتيبات التنظيمية للهيئة العامة للأمن الغذائي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 301
+    },
+    {
+      "code": "REG-139",
+      "name": "نظام صندوق التنمية الزراعية.",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 302
+    },
+    {
+      "code": "REG-140",
+      "name": "تنظيم المؤسسة العامة للمحافظة على الشعب المرجانية والسلاحف في البحر الأحمر",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 303
+    },
+    {
+      "code": "ADM-034",
+      "name": "تنظيم الهيئة العامة للترفيه",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 304
+    },
+    {
+      "code": "REG-141",
+      "name": "الترتيبات التنظيمية للهيئة السعودية للألعاب والرياضات الإلكترونية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 305
+    },
+    {
+      "code": "ADM-035",
+      "name": "تنظيم هيئة تطوير بوابة الدرعية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 306
+    },
+    {
+      "code": "REG-142",
+      "name": "التنظيم الخاص بهيئة المساحة الجيولوجية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 307
+    },
+    {
+      "code": "REG-143",
+      "name": "التنظيم الخاص بمركز الدراسات والبحوث البترولية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 308
+    },
+    {
+      "code": "REG-144",
+      "name": "نظام التجارة بالمنتجات البترولية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 309
+    },
+    {
+      "code": "REG-145",
+      "name": "نظام رعاية المعوقين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 310
+    },
+    {
+      "code": "LAB-013",
+      "name": "تنظيم المخصص المالي لصعوبة الحصول على عمل",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 16,
+      "order": 311
+    },
+    {
+      "code": "REG-146",
+      "name": "اللائحة الأساسية للبيوت الاجتماعية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 312
+    },
+    {
+      "code": "REG-147",
+      "name": "نظام المؤسسة العامة للموانئ السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 313
+    },
+    {
+      "code": "REG-148",
+      "name": "تنظيم مؤسسة البريد السعودي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 16,
+      "order": 314
+    },
+    {
+      "code": "CRM-013",
+      "name": "نظام مكافحة جرائم المعلوماتية",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 16,
+      "order": 315
+    },
+    {
+      "code": "ADM-036",
+      "name": "تنظيم هيئة النقل العام ( الهيئة العامة للنقل )",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 16,
+      "order": 316
+    },
+    {
+      "code": "REG-149",
+      "name": "تنظيم مركز الملك عبد الله بن عبد العزيز الدولي لخدمة اللغة العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 317
+    },
+    {
+      "code": "REG-150",
+      "name": "تنظيم وكالة الأنباء السعودية1433هـ",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 318
+    },
+    {
+      "code": "REG-151",
+      "name": "نظام صندوق التنمية الثقافي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 319
+    },
+    {
+      "code": "REG-152",
+      "name": "تنظيم مركز الملك عبدالله بن عبد العزيز للتخطيط والسياسات اللغوية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 320
+    },
+    {
+      "code": "CRM-014",
+      "name": "النظام الجزائي الخاص بتزييف وتقليد النقود",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 15,
+      "order": 321
+    },
+    {
+      "code": "REG-153",
+      "name": "نظام الحراسة الأمنية المدنية الخاصة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 322
+    },
+    {
+      "code": "REG-154",
+      "name": "تنظيم صندوق الشهداء والمصابين والأسرى والمفقودين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 323
+    },
+    {
+      "code": "REG-155",
+      "name": "نظام استخدام وحماية شارة واسم الهلال الأحمر وما في حكمهما",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 324
+    },
+    {
+      "code": "ADM-037",
+      "name": "تنظيم هيئة تنمية الصادرات السعودية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 15,
+      "order": 325
+    },
+    {
+      "code": "ADM-038",
+      "name": "تنظيم الهيئة العامة للمنشآت الصغيرة والمتوسطة",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 15,
+      "order": 326
+    },
+    {
+      "code": "REG-156",
+      "name": "تنظيم المركز الوطني للدراسات الاستراتيجية التنموية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 327
+    },
+    {
+      "code": "REG-157",
+      "name": "تنظيم صندوق التنمية الوطني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 328
+    },
+    {
+      "code": "IPR-004",
+      "name": "تنظيم الهيئة السعودية للملكية الفكرية",
+      "domain": "ip",
+      "domainTitle": "الملكية الفكرية",
+      "articleCount": 15,
+      "order": 329
+    },
+    {
+      "code": "ARB-003",
+      "name": "تنظيم المركز السعودي للتحكيم التجاري",
+      "domain": "arbitration",
+      "domainTitle": "التحكيم",
+      "articleCount": 15,
+      "order": 330
+    },
+    {
+      "code": "REG-158",
+      "name": "تنظيم مركز الاسناد والتصفية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 331
+    },
+    {
+      "code": "ADM-039",
+      "name": "تنظيم هيئة المحتوى المحلي والمشتريات الحكومية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 15,
+      "order": 332
+    },
+    {
+      "code": "FIN-017",
+      "name": "نظام بنك المنشآت الصغيرة والمتوسطة",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 15,
+      "order": 333
+    },
+    {
+      "code": "ADM-040",
+      "name": "تنظيم هيئة التأمين",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 15,
+      "order": 334
+    },
+    {
+      "code": "REG-159",
+      "name": "تنظيم المركز الوطني لنظم الموارد الحكومية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 335
+    },
+    {
+      "code": "REG-160",
+      "name": "الترتيبات التنظيمية لهيئة تنمية البحث والتطوير والابتكار",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 336
+    },
+    {
+      "code": "REG-161",
+      "name": "نظام حماية المرافق العامة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 337
+    },
+    {
+      "code": "REG-162",
+      "name": "نظام إجراءات التراخيص البلدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 338
+    },
+    {
+      "code": "REG-163",
+      "name": "نظام رسوم الأراضي البيضاء",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 339
+    },
+    {
+      "code": "REG-164",
+      "name": "تنظيم مؤسسة حديقة الملك سلمان",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 340
+    },
+    {
+      "code": "REG-165",
+      "name": "تنظيم المركز الوطني لتنمية القطاع غير الربحي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 341
+    },
+    {
+      "code": "REG-166",
+      "name": "قانون (نظام) الأسمدة ومحسنات التربة الزراعية في دول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 342
+    },
+    {
+      "code": "REG-167",
+      "name": "قانون (نظام) المبيدات في دول مجلس التعاون لدول الخليج العربية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 343
+    },
+    {
+      "code": "REG-168",
+      "name": "نظام التعامل مع الموارد الوراثية النباتية للأغذية والزراعة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 344
+    },
+    {
+      "code": "REG-169",
+      "name": "تنظيم المركز الوطني للوقاية من الآفات النباتية والأمراض الحيوانية ومكافحتها",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 345
+    },
+    {
+      "code": "ENF-012",
+      "name": "آلية العمل التنفيذية لنظام القضاء ونظام ديوان المظالم",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 15,
+      "order": 346
+    },
+    {
+      "code": "REG-170",
+      "name": "تنظيم الجمعية السعودية للمرشدين السياحيين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 347
+    },
+    {
+      "code": "REG-171",
+      "name": "تنظيم الجمعية السعودية لمرافق الإيواء السياحي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 348
+    },
+    {
+      "code": "REG-172",
+      "name": "تنظيم الجمعية السعودية للسفر والسياحة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 349
+    },
+    {
+      "code": "REG-173",
+      "name": "نظام صندوق التنمية السياحي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 350
+    },
+    {
+      "code": "REG-174",
+      "name": "تنظيم الهيئة السعودية للسياحة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 351
+    },
+    {
+      "code": "REG-175",
+      "name": "تنظيم مؤسسة المسار الرياضي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 352
+    },
+    {
+      "code": "REG-176",
+      "name": "تنظيم نادي سباقات الخيل",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 353
+    },
+    {
+      "code": "REG-177",
+      "name": "تنظيم الهيئة العليا للفروسية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 354
+    },
+    {
+      "code": "HLT-019",
+      "name": "تنظيم صندوق مدينة الملك فهد الطبية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 15,
+      "order": 355
+    },
+    {
+      "code": "HLT-020",
+      "name": "تنظيم المركز الوطني للمعلومات الصحية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 15,
+      "order": 356
+    },
+    {
+      "code": "HLT-021",
+      "name": "لائحة البحوث والدراسات في وزارة الصحة",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 15,
+      "order": 357
+    },
+    {
+      "code": "HLT-022",
+      "name": "تـنظيم هيـئـة الرقابة النوويـة والإشعـاعـية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 15,
+      "order": 358
+    },
+    {
+      "code": "REG-178",
+      "name": "تنظيم المركز الوطني للتنمية الصناعية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 359
+    },
+    {
+      "code": "LAB-014",
+      "name": "تنظيم إعانة البحث عن عمل 1432هـ",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 15,
+      "order": 360
+    },
+    {
+      "code": "REG-179",
+      "name": "نظام النقد العربى السعودى",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 361
+    },
+    {
+      "code": "REG-180",
+      "name": "تنظيم الجمعية السعودية للمراجعين الداخليين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 362
+    },
+    {
+      "code": "RES-014",
+      "name": "نظام التمويل العقاري",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 15,
+      "order": 363
+    },
+    {
+      "code": "REG-181",
+      "name": "نظام وظائف مباشرة الأموال العامة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 15,
+      "order": 364
+    },
+    {
+      "code": "FIN-018",
+      "name": "تنظيم بنك التصدير والاستيراد السعودي",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 15,
+      "order": 365
+    },
+    {
+      "code": "REG-182",
+      "name": "الترتيبات التنظيمية للمعهد الملكي للفنون التقليدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 366
+    },
+    {
+      "code": "REG-183",
+      "name": "نظام نقل معلومات المتعاملين مع المنشآت الخاصة إلكترونياً إلى مركز المعلومات الوطني في وزارة الداخلية (نظام شموس الأمني)",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 367
+    },
+    {
+      "code": "REG-184",
+      "name": "نظام الإقامة المميزة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 368
+    },
+    {
+      "code": "REG-185",
+      "name": "تنظيم مركز الإقامة المميزة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 369
+    },
+    {
+      "code": "ADM-041",
+      "name": "تنظيم الهيئة العامة للاستثمار",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 14,
+      "order": 370
+    },
+    {
+      "code": "COM-017",
+      "name": "نظام البيانات التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 14,
+      "order": 371
+    },
+    {
+      "code": "REG-186",
+      "name": "تنظيم المركز الوطني للتنافسية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 372
+    },
+    {
+      "code": "REG-187",
+      "name": "تنظيم المركز السعودي للاعتماد",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 373
+    },
+    {
+      "code": "REG-188",
+      "name": "تنظيم المركز الوطني لإدارة الدين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 374
+    },
+    {
+      "code": "FIN-019",
+      "name": "تنظيم الهيئة السعودية للمراجعين والمحاسبين",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 14,
+      "order": 375
+    },
+    {
+      "code": "REG-189",
+      "name": "هيئة كفاءة الإنفاق والمشروعات الحكومية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 376
+    },
+    {
+      "code": "REG-190",
+      "name": "القواعد التنظيمية الخاصة بإنشاء وحدات التدريب غير الربحية في مجال التدريب التقني والمهني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 377
+    },
+    {
+      "code": "REG-191",
+      "name": "تنظيم مدينة الملك عبدالعزيز للعلوم والتقنية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 378
+    },
+    {
+      "code": "REG-192",
+      "name": "تنظيم خدمات المعتمرين وزوار المسجد النبوي الشريف القادمين من خارج المملكة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 379
+    },
+    {
+      "code": "REG-193",
+      "name": "تنظيم مجمع الملك عبدالعزيز للمكتبات الوقفية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 380
+    },
+    {
+      "code": "ADM-042",
+      "name": "تنظيم الهيئة العامة للإسكان",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 14,
+      "order": 381
+    },
+    {
+      "code": "REG-194",
+      "name": "تنظيم المركز الوطني لكفاءة وترشيد المياه",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 382
+    },
+    {
+      "code": "REG-195",
+      "name": "تنظيم مركز الملك عبدالعزيز للخيل العربية الأصيلة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 383
+    },
+    {
+      "code": "REG-196",
+      "name": "الترتيبات التنظيمية لجائزة الملك عبد العزيز للجودة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 384
+    },
+    {
+      "code": "REG-197",
+      "name": "نظام صندوق التنمية الصناعية السعودي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 385
+    },
+    {
+      "code": "REG-198",
+      "name": "تنظيم المركز السعودي لكفاءة الطاقة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 386
+    },
+    {
+      "code": "REG-199",
+      "name": "تنظيم الصندوق الخيري الاجتماعي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 387
+    },
+    {
+      "code": "REG-200",
+      "name": "قواعد التعامل مع الوافدين من مخالفي الأنظمة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 388
+    },
+    {
+      "code": "ADM-043",
+      "name": "تنظيم الهيئة العامة للطيران المدني",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 14,
+      "order": 389
+    },
+    {
+      "code": "REG-201",
+      "name": "تنظيم مجلس المحتوى الرقمي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 390
+    },
+    {
+      "code": "REG-202",
+      "name": "الترتيبات التنظيمية للهيئة العامة للطرق",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 391
+    },
+    {
+      "code": "REG-203",
+      "name": "الترتيبات التنظيمية للمركز الوطني لسلامة النقل",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 14,
+      "order": 392
+    },
+    {
+      "code": "REG-204",
+      "name": "تنظيم المركز السعودي للشراكات الاستراتيجية الدولية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 393
+    },
+    {
+      "code": "REG-205",
+      "name": "الترتيبات التنظيمية للهيئة السعودية لتسويق الاستثمار",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 394
+    },
+    {
+      "code": "REG-206",
+      "name": "تنظيم المؤسسة العامة للتدريب التقني والمهني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 395
+    },
+    {
+      "code": "REG-207",
+      "name": "نظام المحافظة على مصادر المياه",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 396
+    },
+    {
+      "code": "REG-208",
+      "name": "نظام صيد واستثمار وحماية الثروات المائية الحية في المياه الاقليمية للمملكة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 397
+    },
+    {
+      "code": "REG-209",
+      "name": "الترتيبات التنظيمية للمركز الوطني للنخيل والتمور",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 398
+    },
+    {
+      "code": "REG-210",
+      "name": "تنظيم مجلس التنمية السياحي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 399
+    },
+    {
+      "code": "REG-211",
+      "name": "تنظيم الهيئة السعودية للبحر الأحمر",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 400
+    },
+    {
+      "code": "REG-212",
+      "name": "نظام أندية السيارات والدراجات النارية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 401
+    },
+    {
+      "code": "REG-213",
+      "name": "الترتيبات التنظيمية لمركز الفعاليات (المركز الوطني للفعاليات)",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 402
+    },
+    {
+      "code": "REG-214",
+      "name": "تنظيم المركز الوطني للطب البديل والتكميلي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 403
+    },
+    {
+      "code": "HLT-023",
+      "name": "تنظيم المركز الوطني لتعزيز الصحة النفسية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 13,
+      "order": 404
+    },
+    {
+      "code": "REG-215",
+      "name": "تنظيم المركز السعودي لسلامة المرضى",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 405
+    },
+    {
+      "code": "HLT-024",
+      "name": "الترتيبات التنظيمية لهيئة الصحة العامة",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 13,
+      "order": 406
+    },
+    {
+      "code": "REG-216",
+      "name": "لائحة دور الرعاية الاجتماعية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 407
+    },
+    {
+      "code": "ENF-013",
+      "name": "اللائحة التنفيذية لنظام الأحداث",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 13,
+      "order": 408
+    },
+    {
+      "code": "LAB-015",
+      "name": "تنظيم إعانة البحث عن عمل",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 13,
+      "order": 409
+    },
+    {
+      "code": "REG-217",
+      "name": "نظام المؤسسة العامة للخطوط الجوية العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 410
+    },
+    {
+      "code": "REG-218",
+      "name": "تنظيم وكالة الفضاء السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 13,
+      "order": 411
+    },
+    {
+      "code": "REG-219",
+      "name": "نظام الإذاعة الأساسي",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 412
+    },
+    {
+      "code": "REG-220",
+      "name": "نظام المركز الوطني للوثائق والمحفوظات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 413
+    },
+    {
+      "code": "ADM-044",
+      "name": "نظام مكتبة الملك فهد الوطنية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 12,
+      "order": 414
+    },
+    {
+      "code": "CRM-015",
+      "name": "نظام عقوبات نشر الوثائق والمعلومات السرية وإفشائها",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 12,
+      "order": 415
+    },
+    {
+      "code": "REG-221",
+      "name": "لائحة حقوق وواجبات من يستعان بهم في أعمال الدفاع المدني وعلاقتهم بجهاتهم",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 416
+    },
+    {
+      "code": "RES-015",
+      "name": "نظام المشاركة بالوقت فى الوحدات العقارية السياحية",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 12,
+      "order": 417
+    },
+    {
+      "code": "REG-222",
+      "name": "نظام الصندوق السعودي للتنمية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 418
+    },
+    {
+      "code": "REG-223",
+      "name": "تنظيم الجمعية السعودية للجودة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 419
+    },
+    {
+      "code": "ENF-014",
+      "name": "لائحة تنظيم تعارض المصالح في تطبيق نظام المنافسات والمشتريات الحكومية ولائحته التنفيذية",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 12,
+      "order": 420
+    },
+    {
+      "code": "REG-224",
+      "name": "تنظيم مشاركة الوفود الرسمية في الاجتماعات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 421
+    },
+    {
+      "code": "REG-225",
+      "name": "نظام معهد الدراسات الدبلوماسية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 422
+    },
+    {
+      "code": "REG-226",
+      "name": "تنظيم المركز الوطني للتعليم الإلكتروني",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 423
+    },
+    {
+      "code": "REG-227",
+      "name": "تنظيم الرئاسة العامة لهيئة الأمر بالمعروف والنهي عن المنكر",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 424
+    },
+    {
+      "code": "REG-228",
+      "name": "نظام مجلس الخدمة العسكرية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 425
+    },
+    {
+      "code": "REG-229",
+      "name": "نظام توزيع الأراضي البور",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 426
+    },
+    {
+      "code": "REG-230",
+      "name": "تنظيم المركز الوطني لأبحاث وتطوير الزراعة المستدامة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 427
+    },
+    {
+      "code": "REG-231",
+      "name": "إنشاء الهيئة العليا لأندية الفروسية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 428
+    },
+    {
+      "code": "REG-232",
+      "name": "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 429
+    },
+    {
+      "code": "HLT-025",
+      "name": "تنظيم المدن الطبية والمستشفيات التخصصية التابعة لوزارة الصحة",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 12,
+      "order": 430
+    },
+    {
+      "code": "REG-233",
+      "name": "تنظيم الهيئة الملكية للجبيل وينبع",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 431
+    },
+    {
+      "code": "REG-234",
+      "name": "نظام إمدادات الطاقة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 432
+    },
+    {
+      "code": "REG-235",
+      "name": "تنظيم مجلس شؤون الأسرة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 12,
+      "order": 433
+    },
+    {
+      "code": "REG-236",
+      "name": "نظام الوثائق والمحفوظات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 11,
+      "order": 434
+    },
+    {
+      "code": "REG-237",
+      "name": "نظام مكافحة الاحتيال المالي وخيانة الأمانة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 11,
+      "order": 435
+    },
+    {
+      "code": "LAB-016",
+      "name": "قواعد عمل اللجان الإشرافية للقطاعات المستهدفة بالتخصيص ومهماتها (المعدلة)",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 11,
+      "order": 436
+    },
+    {
+      "code": "LAB-017",
+      "name": "نظام مجلس الخدمة المدنية",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 11,
+      "order": 437
+    },
+    {
+      "code": "REG-238",
+      "name": "الترتيب التنظيمي لمصانع المياه",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 11,
+      "order": 438
+    },
+    {
+      "code": "ADM-045",
+      "name": "نظام حماية وتشجيع الصناعات الوطنية",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 11,
+      "order": 439
+    },
+    {
+      "code": "REG-239",
+      "name": "تنظيم المركز الوطني للدراسات والبحوث الاجتماعية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 11,
+      "order": 440
+    },
+    {
+      "code": "REG-240",
+      "name": "نظام مكافحة التسول",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 10,
+      "order": 441
+    },
+    {
+      "code": "REG-241",
+      "name": "نظام محلات بيع المركبات الملغى تسجيلها",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 10,
+      "order": 442
+    },
+    {
+      "code": "REG-242",
+      "name": "تنظيم المجلس الاقتصادي الأعلى",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 10,
+      "order": 443
+    },
+    {
+      "code": "HLT-026",
+      "name": "نظام الأنشطة المقلقة للراحة أو الخطرة أو المضرة بالصحة أو البيئة",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 10,
+      "order": 444
+    },
+    {
+      "code": "REG-243",
+      "name": "لائحة المحافظة على الذوق العام",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 10,
+      "order": 445
+    },
+    {
+      "code": "REG-244",
+      "name": "تنظيم المركز السعودي لزراعة الأعضاء",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 10,
+      "order": 446
+    },
+    {
+      "code": "HLT-027",
+      "name": "تنظيم المركز السعودي لاعتماد المنشآت الصحية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 10,
+      "order": 447
+    },
+    {
+      "code": "REG-245",
+      "name": "نظام الهيئة السعودية للمهندسين",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 9,
+      "order": 448
+    },
+    {
+      "code": "ADM-046",
+      "name": "تنظيم اللجنة الوطنية لتقنين أعمال التشغيل والصيانة وتقييسها",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 9,
+      "order": 449
+    },
+    {
+      "code": "CMP-008",
+      "name": "لائحة رقابة ديوان المراقبة العامة على المؤسسات الخاصة والشركات التي تساهم الدولة في رأسمالها أو تضمن لها حدا ادنى من الأرباح (لائحة رقابة الديوان العام للمحاسبة)",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 9,
+      "order": 450
+    },
+    {
+      "code": "REG-246",
+      "name": "الترتيبات التنظيمية لمركز تنظيم المعدّات الثقيلة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 9,
+      "order": 451
+    },
+    {
+      "code": "REG-247",
+      "name": "تنظيم الجمعية السعودية للزراعة العضوية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 9,
+      "order": 452
+    },
+    {
+      "code": "REG-248",
+      "name": "اللائحة التنظيمية للخيل العربية الأصيلة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 9,
+      "order": 453
+    },
+    {
+      "code": "LAB-018",
+      "name": "تنظيم صندوق تنمية الموارد البشرية",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 9,
+      "order": 454
+    },
+    {
+      "code": "REG-249",
+      "name": "ضوابط استخدام تقنيات المعلومات والاتصالات في الجهات الحكومية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 9,
+      "order": 455
+    },
+    {
+      "code": "REG-250",
+      "name": "نظام مكافحة جريمة التحرش",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 8,
+      "order": 456
+    },
+    {
+      "code": "ENF-015",
+      "name": "لائحة تنظيم سلوكيات وأخلاقيات القائمين على تطبيق نظام المنافسات والمشتريات الحكومية ولائحته التنفيذية",
+      "domain": "enforcement",
+      "domainTitle": "التنفيذ",
+      "articleCount": 8,
+      "order": 457
+    },
+    {
+      "code": "REG-251",
+      "name": "تنظيم معاملة القادمين للمملكة بتأشيرات دخول للحج أو العمرة وغيرها",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 8,
+      "order": 458
+    },
+    {
+      "code": "RES-016",
+      "name": "نظام تملك غير السعوديين للعقار واستثماره",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 8,
+      "order": 459
+    },
+    {
+      "code": "REG-252",
+      "name": "نظام حماية التراث المخطوط في المملكة العربية السعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 8,
+      "order": 460
+    },
+    {
+      "code": "REG-253",
+      "name": "نظام الموانئ والمرافئ والمنائر البحرية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 8,
+      "order": 461
+    },
+    {
+      "code": "FIN-020",
+      "name": "نظام الإيداع",
+      "domain": "tax_finance",
+      "domainTitle": "المالية والضرائب والبنوك",
+      "articleCount": 7,
+      "order": 462
+    },
+    {
+      "code": "ADM-047",
+      "name": "تنظيم اللجنة الوطنية لمتابعة مبادرة خادم الحرمين الشريفين الملك عبدالله بن عبدالعزيز آل سعود للحوار بين أتباع الأديان والثقافات",
+      "domain": "admin",
+      "domainTitle": "الإداري والحوكمة العامة",
+      "articleCount": 7,
+      "order": 463
+    },
+    {
+      "code": "REG-254",
+      "name": "نظام تعداد السكان العام",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 7,
+      "order": 464
+    },
+    {
+      "code": "RES-017",
+      "name": "نظام صندوق التنمية العقارية1394هـ",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 7,
+      "order": 465
+    },
+    {
+      "code": "REG-255",
+      "name": "نظام الوزراء ونواب الوزراء وموظفي المرتبة الممتازة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 7,
+      "order": 466
+    },
+    {
+      "code": "HLT-028",
+      "name": "نظام الهيئة السعودية للتخصصات الصحية",
+      "domain": "health",
+      "domainTitle": "الصحة والدواء",
+      "articleCount": 7,
+      "order": 467
+    },
+    {
+      "code": "CRM-016",
+      "name": "نظام عقوبات انتحال صفة رجل السلطة العامة",
+      "domain": "criminal",
+      "domainTitle": "الجزائي والعقوبات",
+      "articleCount": 6,
+      "order": 468
+    },
+    {
+      "code": "REG-256",
+      "name": "نظام أمن الحدود",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 6,
+      "order": 469
+    },
+    {
+      "code": "REG-257",
+      "name": "ضوابط إيقاف الخدمات",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 6,
+      "order": 470
+    },
+    {
+      "code": "COM-018",
+      "name": "نظام الوكالات التجارية",
+      "domain": "commercial",
+      "domainTitle": "التجاري والشركات",
+      "articleCount": 6,
+      "order": 471
+    },
+    {
+      "code": "RES-018",
+      "name": "نظام التصرف في العقارات البلدية",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 6,
+      "order": 472
+    },
+    {
+      "code": "RES-019",
+      "name": "تنظيم تملك مواطني دول المجلس للعقار في الدول الأعضاء بمجلس التعاون لغرض السكن والاستثمار",
+      "domain": "realestate",
+      "domainTitle": "العقار والتسجيل العيني",
+      "articleCount": 6,
+      "order": 473
+    },
+    {
+      "code": "REG-258",
+      "name": "نظام الأنواط العسكرية السعودية ولائحته التنظيمية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 6,
+      "order": 474
+    },
+    {
+      "code": "LAB-019",
+      "name": "نظام تبادل المنافع بين نظامي التقاعد المدني والعسكري ونظام التأمينات الإجتماعية",
+      "domain": "labor",
+      "domainTitle": "العمل والتأمينات",
+      "articleCount": 6,
+      "order": 475
+    },
+    {
+      "code": "REG-259",
+      "name": "الضوابط الخاصة بوضع الأطفال السعوديين في الخارج من أب سعودي وأم غير سعودية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 6,
+      "order": 476
+    },
+    {
+      "code": "CMP-009",
+      "name": "لائحة إنشاء الطرق من قبل الأهالي والشركات",
+      "domain": "companies",
+      "domainTitle": "الشركات",
+      "articleCount": 6,
+      "order": 477
+    },
+    {
+      "code": "REG-260",
+      "name": "تنظيم وزارة الاستثمار",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 5,
+      "order": 478
+    },
+    {
+      "code": "REG-261",
+      "name": "تنظيم وزارة السياحة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 5,
+      "order": 479
+    },
+    {
+      "code": "REG-262",
+      "name": "تنظيم وزارة الرياضة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 5,
+      "order": 480
+    },
+    {
+      "code": "REG-263",
+      "name": "نظام حماية خطوط السكك الحديدية",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 5,
+      "order": 481
+    },
+    {
+      "code": "REG-264",
+      "name": "نظام استبدال الغرامة بالحبس",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 4,
+      "order": 482
+    },
+    {
+      "code": "REG-265",
+      "name": "ضوابط تصدير مياه الشرب المعبأة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 4,
+      "order": 483
+    },
+    {
+      "code": "REG-266",
+      "name": "نظام جباية الزكاة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 4,
+      "order": 484
+    },
+    {
+      "code": "REG-267",
+      "name": "نظام رسوم تسجيل السفن والوحدات العائمة",
+      "domain": "regulatory",
+      "domainTitle": "تنظيمي قطاعي",
+      "articleCount": 4,
+      "order": 485
+    }
+  ]
+}

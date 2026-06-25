@@ -102,11 +102,16 @@ model LegalSystem {
   id             String         @id @default(cuid())
   name           String         @unique
   classification String?
+  code           String?        @unique // الرمز الفريد من ملف التصنيف (مثل CIV-001)
+  domain         String? // المجال المصنّف
+  domainTitle    String?         @map("domain_title") // العنوان العربي للمجال
+  sortOrder      Int            @default(0) @map("sort_order")
   articleCount   Int            @default(0)
   articles       LegalArticle[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
+  @@index([domain])
   @@map("legal_systems")
 }
 

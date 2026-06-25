@@ -1,0 +1,89 @@
+name: Systems DB Remediation (classify + relink orphans)
+
+# معالجة قاعدة الأنظمة على Neon: تشخيص (قراءة) ثم حقن التصنيف وربط المواد اليتيمة
+# وإعادة بناء فهرس BM25. يدوي فقط. التشخيص قراءة-فقط بلا تأكيد؛ الكتابة مُقفلة خلف
+# بوّابة CONFIRM + حارس هدف Neon. لا حذف — تحديث/ربط فقط، وكلها idempotent.
+#
+# يستعمل سرّاً مخصّصاً NEON_DATABASE_URL (كتابة) — لا يلمس DATABASE_URL المشترك.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "diagnose (قراءة فقط) أو apply (تطبيق الكتابة)"
+        type: choice
+        options: ["diagnose", "apply"]
+        default: "diagnose"
+        required: true
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "للكتابة فقط: اكتب NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: systems-db-remediation
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ NEON_DATABASE_URL."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+
+      - name: "🛡️ حارس الهدف Neon (قراءة فقط)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "① تشخيص (قراءة فقط)"
+        run: npx tsx scripts/diagnose-systems-remediation.ts
+
+      # ── ما يلي يكتب في القاعدة: مُقفل خلف mode=apply + بوّابة التأكيد ──
+      - name: "🔒 بوّابة الكتابة"
+        if: ${{ inputs.mode == 'apply' }}
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED مع mode=apply."
+            exit 1
+          fi
+
+      - name: "② تطبيق ترحيل تصنيف الأنظمة (آمن لإعادة التشغيل)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260625120000_add_system_classification/migration.sql
+
+      - name: "③ معاينة حقن التصنيف"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npx tsx scripts/apply-system-classification.ts
+
+      - name: "④ تطبيق حقن التصنيف (--apply)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npx tsx scripts/apply-system-classification.ts --apply
+
+      - name: "⑤ معاينة ربط المواد اليتيمة"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npx tsx scripts/relink-orphan-articles.ts
+
+      - name: "⑥ تطبيق ربط المواد اليتيمة (--apply)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npx tsx scripts/relink-orphan-articles.ts --apply
+
+      - name: "⑦ تحقق بعد الكتابة (قراءة فقط)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npx tsx scripts/diagnose-systems-remediation.ts
