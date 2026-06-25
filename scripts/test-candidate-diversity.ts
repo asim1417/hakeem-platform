@@ -42,6 +42,21 @@ function main() {
   check(selectDiverseCandidateIds(rows([["A", 5]]), { perSystemCap: 10, target: 100 }).length === 5, "أقل من الهدف → كل المتاح");
   check(new Set(sel).size === sel.length, "لا تكرار في المعرّفات");
 
+  // المرحلة ٢: التجميع بالمعرّف الثابت — مواد نظام واحد مكتوبة باسمين (تباين OCR/مسافات)
+  // تُعامَل كنظام واحد فيحدّها السقف، بدل أن تتضخّم بانقسامها لمجموعتين.
+  const variantRows = [
+    ...Array.from({ length: 40 }, (_, i) => ({ id: `S-a-${i}`, lawName: "نظام العمل", legalSystemId: "sys-1" })),
+    ...Array.from({ length: 40 }, (_, i) => ({ id: `S-b-${i}`, lawName: "نظام  العمل", legalSystemId: "sys-1" }))
+  ];
+  const variantSel = selectDiverseCandidateIds(variantRows, { perSystemCap: 50, target: 200 });
+  check(variantSel.length === 50, "تباين اسم النظام الواحد محدود بالسقف (50) عبر legalSystemId لا الاسم");
+  // ولو غاب legalSystemId لسقط التجميع إلى الاسم فانقسم لمجموعتين (80 = 40+40).
+  const noIdSel = selectDiverseCandidateIds(
+    variantRows.map(({ id, lawName }) => ({ id, lawName })),
+    { perSystemCap: 50, target: 200 }
+  );
+  check(noIdSel.length === 80, "السقوط الاحتياطي للاسم عند غياب المعرّف (40+40=80)");
+
   // مزج الدرجة الدلالية: نتيجة دلالية بحتة تتجاوز عتبة الإسناد (12)، والمعجمي القوي يبقى أعلى.
   check(blendSemanticScore(0, 0.5, 80) === 40, "دلالي بحت (lexical=0, cosine=0.5) → 40 (> عتبة 12)");
   check(blendSemanticScore(120, 0.4, 80) === 152, "معجمي قوي + دلالي → يبقى الأعلى");
