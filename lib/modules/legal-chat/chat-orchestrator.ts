@@ -179,8 +179,15 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       ? buildCaseFileFromIntent(det)
       : null;
 
-  const substantive = !!mergedCase && (isCaseSubstantive(mergedCase) || conv.runAnalysis);
   const askedReport = reportReq.show || reportReq.partial !== null || reportReq.draft || !!input.approval;
+  // BUG fix (تسرّب السياق): «وجود ملف قضية» منفصل عن «نوع الرسالة الحالية».
+  // تحية/دردشة عامة لا تُدخِل التحليل أبداً ولو كان هناك ملف متراكم — إلا إذا طلب
+  // المستخدم التقرير صراحةً. الملف يبقى محفوظاً (لا يُمحى).
+  const currentIsConversationalOnly = conv.stage === "GreetingOnly" || conv.stage === "NonLegalSmallTalk";
+  const substantive =
+    !!mergedCase &&
+    (isCaseSubstantive(mergedCase) || conv.runAnalysis) &&
+    !(currentIsConversationalOnly && !askedReport);
 
   // ── (٢) طلب التقرير دون قضية مكتملة → رفض لطيف (لا تقرير فارغ) ──
   if ((reportReq.show || reportReq.partial) && !substantive) {

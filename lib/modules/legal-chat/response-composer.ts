@@ -82,17 +82,18 @@ export async function composeReply(input: ComposeInput): Promise<string> {
   const template = (input.template ?? "").trim();
   if (!template) return input.template;
 
+  // ملاحظة أمان (BUG fix): لا نمرّر نصّ الردود السابقة داخل الـprompt إطلاقاً
+  // (يمنع تسرّب محتوى محادثة قديمة في الصياغة الجديدة). تُستخدم فقط لفحص التشابه بعد التوليد.
   const recent = lastAssistantReplies(input.history);
   const system = buildSystemPrompt(toneFor(input.messageType, input.tone));
 
   const userPrompt = (variation: boolean) =>
     [
-      "أعد صياغة هذا الردّ بأسلوب طبيعي دافئ، دون تغيير معناه أو سؤاله أو خياراته:",
+      "أعد صياغة هذا الردّ بأسلوب طبيعي دافئ، دون تغيير معناه أو سؤاله أو خياراته، واعتمد على هذا النص وحده دون أي سياق آخر:",
       "«",
       template,
       "»",
-      recent.length ? `\nتجنّب تكرار صياغة آخر ردودك حرفياً:\n- ${recent.join("\n- ")}` : "",
-      variation ? "\nمهم: نوّع الصياغة بوضوح عن محاولتك السابقة مع بقاء نفس المعنى." : "",
+      variation ? "\nمهم: نوّع الصياغة بوضوح عن أي محاولة سابقة مع بقاء نفس المعنى والسؤال." : "",
     ]
       .filter(Boolean)
       .join("\n");
