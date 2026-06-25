@@ -139,6 +139,7 @@ model LegalArticle {
   embedding      Json?
   caseLinks      LegalArticleCaseLink[]
   amendments     ArticleAmendment[]
+  versions       ArticleVersion[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
@@ -171,6 +172,30 @@ model ArticleAmendment {
   @@index([articleId])
   @@index([effectiveFrom])
   @@map("article_amendments")
+}
+
+// ── النسخ الزمنية للمادة (Akoma Ntoso-style: Work=المادة، Expression=النسخة) ──
+// كل سجلّ يمثّل «حالة» نصّ المادة في مدى زمني (من/إلى) — لاسترجاع «النصّ الساري
+// بتاريخ X». versionText ثابت بعد الإنشاء (تصحيح = نسخة جديدة، لا تحرير).
+// النسخة النافذة حاليًا: effectiveTo = null (واحدة كحدّ أقصى لكل مادة).
+model ArticleVersion {
+  id             String        @id @default(cuid())
+  articleId      String        @map("article_id")
+  article        LegalArticle  @relation(fields: [articleId], references: [id])
+  versionText    String        @map("version_text") // النصّ الكامل النافذ في هذه النسخة
+  effectiveFrom  DateTime?     @map("effective_from")
+  effectiveTo    DateTime?     @map("effective_to") // null = النسخة النافذة حاليًا
+  royalDecree    String?       @map("royal_decree")
+  hijriDate      String?       @map("hijri_date")
+  supersededById String?       @map("superseded_by")
+  supersededBy   ArticleVersion?  @relation("VersionChain", fields: [supersededById], references: [id])
+  supersedes     ArticleVersion[] @relation("VersionChain")
+  source         String        @default("derived") // derived | manual | amendment | import
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@index([articleId, effectiveFrom])
+  @@index([effectiveTo])
+  @@map("article_versions")
 }
 
 model JudicialCase {
