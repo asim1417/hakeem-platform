@@ -1,14 +1,22 @@
 // بطاقات الشات القضائي — عرض فقط (presentational). تُستهلك داخل واجهة العميل.
 import type {
+  ArbitrationView,
   ArgumentMapRow,
   ChatCard,
+  ContractReview,
+  DocAnalysis,
   EvidencePlanRow,
+  ExplainView,
+  JudgeView,
   LegalConfidenceScore,
   LegalIssue,
   LegalOutput,
+  OpponentRow,
   SimulationCaseFile,
+  StrategyRow,
   TimelineEvent,
   UnderstandingCard,
+  WorkflowRunView,
 } from "@/lib/modules/legal-chat/types";
 
 const PROVENANCE_LABELS: Record<string, string> = {
@@ -372,6 +380,243 @@ export function GovernanceCardView({ notes }: { notes: string[] }) {
   );
 }
 
+const STRENGTH_TONE: Record<string, string> = {
+  STRONG: "var(--ruby)",
+  MEDIUM: "var(--amber)",
+  WEAK: "var(--emerald)",
+};
+
+export function OpponentCardView({ rows }: { rows: OpponentRow[] }) {
+  return (
+    <CardShell tone="var(--ruby)" title="🥊 الخصم الافتراضي — الدفوع المتوقّعة">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-xs">
+          <thead>
+            <tr className="border-b border-[var(--ink-15)] text-right text-[var(--ink-60)]">
+              {["الدفع المتوقّع", "قوته", "السبب", "الرد المقترح", "المستند المطلوب"].map((h) => (
+                <th key={h} className="p-1.5 font-semibold">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-b border-[var(--ink-08)] align-top text-[var(--ink-80)]">
+                <td className="p-1.5">{r.expectedDefense}</td>
+                <td className="p-1.5">
+                  <span className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: STRENGTH_TONE[r.strength] }}>
+                    {r.strength === "STRONG" ? "قوي" : r.strength === "MEDIUM" ? "متوسط" : "ضعيف"}
+                  </span>
+                </td>
+                <td className="p-1.5">{r.reason}</td>
+                <td className="p-1.5">{r.suggestedResponse}</td>
+                <td className="p-1.5">{r.requiredDocument}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </CardShell>
+  );
+}
+
+export function JudgeCardView({ judge }: { judge: JudgeView }) {
+  return (
+    <CardShell tone="var(--navy)" title="👨‍⚖️ القاضي الافتراضي (تدريبي)">
+      <KeyVal label="تحرير محل النزاع" value={judge.disputeSubject} />
+      <KeyVal label="عبء الإثبات" value={judge.burdenOfProof} />
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
+        <MiniList title="الوقائع المنتِجة" items={judge.materialFacts} />
+        <MiniList title="أسئلة القاضي" items={judge.judgeQuestions} />
+        <MiniList title="النواقص قبل القفل" items={judge.gapsBeforeClosing} tone="var(--amber)" />
+        <MiniList title="مسودة الأسباب" items={judge.draftReasoning} ordered />
+      </div>
+      <div className="mt-2 rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-2 text-xs">
+        <b className="text-[var(--navy)]">صالحة للحكم؟</b>{" "}
+        <span style={{ color: judge.readyForJudgment ? "var(--emerald)" : "var(--amber)" }}>
+          {judge.readyForJudgment ? "نعم مبدئياً" : "لا"}
+        </span>{" "}
+        — {judge.readinessReason}
+        <p className="mt-1 text-[var(--ink-80)]"><b>المنطوق المحتمل:</b> {judge.draftRuling}</p>
+      </div>
+      <p className="mt-2 text-[11px] text-[var(--amber)]">{judge.disclaimer}</p>
+    </CardShell>
+  );
+}
+
+export function ArbitrationCardView({ a }: { a: ArbitrationView }) {
+  return (
+    <CardShell tone="var(--navy)" title="⚖️ المحكّم الافتراضي">
+      <KeyVal label="اتفاق التحكيم" value={a.agreementCheck} />
+      <KeyVal label="نطاق الشرط" value={a.scope} />
+      <KeyVal label="تشكيل الهيئة" value={a.tribunalFormation} />
+      <KeyVal label="الاختصاص" value={a.jurisdiction} />
+      <KeyVal label="النظام الواجب التطبيق" value={a.applicableLaw} />
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
+        <MiniList title="الإجراءات" items={a.procedure} ordered />
+        <MiniList title="الأمر الإجرائي / المواعيد" items={a.proceduralOrder} />
+        <MiniList title="المسائل محل الفصل" items={a.issues} />
+      </div>
+      <KeyVal label="مسودة حكم التحكيم" value={a.draftAwardNote} />
+      <p className="mt-2 text-[11px] text-[var(--amber)]">{a.disclaimer}</p>
+    </CardShell>
+  );
+}
+
+export function ContractReviewCardView({ c }: { c: ContractReview }) {
+  if (!c.hasContent) {
+    return (
+      <CardShell tone="var(--gold-dark)" title="📑 مراجعة العقد">
+        <p className="text-xs leading-6 text-[var(--ink-60)]">{c.summary}</p>
+      </CardShell>
+    );
+  }
+  return (
+    <CardShell tone="var(--gold-dark)" title="📑 مراجعة العقد">
+      <p className="text-sm leading-7 text-[var(--ink-80)]">{c.summary}</p>
+      <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+        {c.term && <Row label="المدة" value={c.term} />}
+        {c.consideration && <Row label="المقابل" value={c.consideration} />}
+        {c.penaltyClause && <Row label="الشرط الجزائي" value={c.penaltyClause} />}
+        {c.arbitrationClause && <Row label="شرط التحكيم" value={c.arbitrationClause} />}
+        {c.termination && <Row label="الفسخ" value={c.termination} />}
+        {c.jurisdiction && <Row label="الاختصاص" value={c.jurisdiction} />}
+      </div>
+      {c.parties.length > 0 && <MiniList title="الأطراف" items={c.parties} />}
+      {c.obligations.length > 0 && <MiniList title="الالتزامات" items={c.obligations} />}
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse text-xs">
+          <thead>
+            <tr className="border-b border-[var(--ink-15)] text-right text-[var(--ink-60)]">
+              {["البند", "النص", "الخطر", "الأثر", "التوصية"].map((h) => (
+                <th key={h} className="p-1.5 font-semibold">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {c.rows.map((r, i) => (
+              <tr key={i} className="border-b border-[var(--ink-08)] align-top text-[var(--ink-80)]">
+                <td className="p-1.5 font-semibold text-[var(--navy)]">{r.clause}</td>
+                <td className="p-1.5">{r.text}</td>
+                <td className="p-1.5 text-[var(--ruby)]">{r.risk}</td>
+                <td className="p-1.5">{r.impact}</td>
+                <td className="p-1.5 text-[var(--emerald)]">{r.recommendation}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {c.risks.length > 0 && <MiniList title="المخاطر" items={c.risks} tone="var(--ruby)" />}
+    </CardShell>
+  );
+}
+
+export function DocAnalysisCardView({ d }: { d: DocAnalysis }) {
+  return (
+    <CardShell title="🗃️ تحليل المستندات">
+      <div className="space-y-2">
+        {d.items.map((it, i) => (
+          <div key={i} className="rounded-[var(--r-md)] border border-[var(--ink-08)] p-2 text-xs">
+            <p className="font-semibold text-[var(--navy)]">📎 {it.name} <span className="text-[10px] text-[var(--ink-40)]">({it.kind})</span></p>
+            <p className="mt-1 text-[var(--ink-80)]">{it.summary}</p>
+            <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
+              {it.parties.map((p, k) => <Tag key={`p${k}`}>{p}</Tag>)}
+              {it.dates.map((p, k) => <Tag key={`d${k}`} tone="var(--navy)">{p}</Tag>)}
+              {it.amounts.map((p, k) => <Tag key={`a${k}`} tone="var(--emerald)">{p}</Tag>)}
+            </div>
+          </div>
+        ))}
+      </div>
+      {d.conflicts.length > 0 && <MiniList title="تعارضات" items={d.conflicts} tone="var(--ruby)" />}
+      {d.missing.length > 0 && <MiniList title="نواقص" items={d.missing} tone="var(--amber)" />}
+    </CardShell>
+  );
+}
+
+export function StrategiesCardView({ rows }: { rows: StrategyRow[] }) {
+  return (
+    <CardShell title="🧭 مقارنة الاستراتيجيات">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-xs">
+          <thead>
+            <tr className="border-b border-[var(--ink-15)] text-right text-[var(--ink-60)]">
+              {["الاستراتيجية", "المزايا", "المخاطر", "المتطلبات", "التقييم"].map((h) => (
+                <th key={h} className="p-1.5 font-semibold">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-b border-[var(--ink-08)] align-top text-[var(--ink-80)]">
+                <td className="p-1.5 font-semibold text-[var(--navy)]">{r.strategy}</td>
+                <td className="p-1.5 text-[var(--emerald)]">{r.advantages}</td>
+                <td className="p-1.5 text-[var(--ruby)]">{r.risks}</td>
+                <td className="p-1.5">{r.requirements}</td>
+                <td className="p-1.5">{r.assessment}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </CardShell>
+  );
+}
+
+export function ExplainCardView({ e }: { e: ExplainView }) {
+  return (
+    <CardShell title="💡 لماذا وصلتُ لهذه النتيجة">
+      <div className="grid gap-3 md:grid-cols-2">
+        <MiniList title="الوقائع المعتمدة" items={e.facts} />
+        <MiniList title="المصادر" items={e.sources} />
+        <MiniList title="الافتراضات" items={e.assumptions} tone="var(--amber)" />
+        <MiniList title="أسباب الترجيح" items={e.reasons} ordered />
+      </div>
+      <MiniList title="ما قد يغيّر النتيجة" items={e.whatWouldChange} tone="var(--navy)" />
+      <p className="mt-1 text-[11px] text-[var(--ink-60)]">درجة الثقة في الفهم: {Math.round(e.confidence * 100)}%</p>
+    </CardShell>
+  );
+}
+
+export function WorkflowCardView({ w }: { w: WorkflowRunView }) {
+  return (
+    <CardShell tone="var(--emerald)" title={`🔁 ${w.name}`}>
+      <p className="text-xs leading-6 text-[var(--ink-60)]">{w.purpose}</p>
+      <ol className="mt-2 space-y-1 text-xs">
+        {w.steps.map((s, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className={s.done ? "text-[var(--emerald)]" : "text-[var(--ink-40)]"}>{s.done ? "✓" : "○"}</span>
+            <span className="text-[var(--ink-80)]">{s.title} <span className="text-[10px] text-[var(--ink-40)]">— {s.detail}</span></span>
+          </li>
+        ))}
+      </ol>
+      {w.missingInputs.length > 0 && <MiniList title="مدخلات ناقصة" items={w.missingInputs} tone="var(--amber)" />}
+      <p className="mt-2 rounded-[var(--r-md)] bg-[var(--emerald-soft)] p-2 text-xs text-[var(--emerald)]">
+        الخطوة التالية: {w.nextStep}{w.reviewRequired ? " · يتطلب مراجعة بشرية قبل الاعتماد" : ""}
+      </p>
+    </CardShell>
+  );
+}
+
+function MiniList({ title, items, ordered, tone }: { title: string; items: string[]; ordered?: boolean; tone?: string }) {
+  if (!items.length) return null;
+  const Tag = ordered ? "ol" : "ul";
+  return (
+    <div className="mt-2">
+      <p className="text-xs font-semibold" style={{ color: tone ?? "var(--navy)" }}>{title}:</p>
+      <Tag className={`mt-1 ${ordered ? "list-decimal" : "list-disc"} space-y-0.5 pe-5 text-xs leading-6 text-[var(--ink-80)]`}>
+        {items.map((it, i) => <li key={i}>{it}</li>)}
+      </Tag>
+    </div>
+  );
+}
+
+function Tag({ children, tone }: { children: React.ReactNode; tone?: string }) {
+  return (
+    <span className="rounded px-1.5 py-0.5 text-white" style={{ background: tone ?? "var(--gold-dark)" }}>
+      {children}
+    </span>
+  );
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-1.5">
@@ -419,6 +664,22 @@ export function ChatCardRenderer({
       return card.issues ? <IssuesCardView issues={card.issues} /> : null;
     case "CONFIDENCE":
       return card.confidence ? <ConfidenceCardView score={card.confidence} /> : null;
+    case "OPPONENT":
+      return card.opponent ? <OpponentCardView rows={card.opponent} /> : null;
+    case "JUDGE_VIEW":
+      return card.judge ? <JudgeCardView judge={card.judge} /> : null;
+    case "ARBITRATION_VIEW":
+      return card.arbitration ? <ArbitrationCardView a={card.arbitration} /> : null;
+    case "CONTRACT_REVIEW":
+      return card.contractReview ? <ContractReviewCardView c={card.contractReview} /> : null;
+    case "DOC_ANALYSIS":
+      return card.docAnalysis ? <DocAnalysisCardView d={card.docAnalysis} /> : null;
+    case "COMPARE_STRATEGIES":
+      return card.strategies ? <StrategiesCardView rows={card.strategies} /> : null;
+    case "EXPLAIN":
+      return card.explain ? <ExplainCardView e={card.explain} /> : null;
+    case "WORKFLOW":
+      return card.workflow ? <WorkflowCardView w={card.workflow} /> : null;
     case "GOVERNANCE":
       return card.governance ? <GovernanceCardView notes={card.governance} /> : null;
     default:

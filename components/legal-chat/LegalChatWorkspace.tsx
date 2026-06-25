@@ -59,6 +59,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showTools, setShowTools] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);
+  const [redact, setRedact] = useState(false);
   const lastUserMessage = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +130,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
           caseFile,
           conversationId,
           attachments,
+          redact,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -181,9 +183,23 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
     }
   }
 
-  function onFiles(files: FileList | null) {
+  async function onFiles(files: FileList | null) {
     if (!files) return;
-    const metas: ChatAttachmentMeta[] = Array.from(files).map((f) => ({ fileName: f.name, mimeType: f.type || "application/octet-stream" }));
+    const metas: ChatAttachmentMeta[] = await Promise.all(
+      Array.from(files).map(async (f) => {
+        const meta: ChatAttachmentMeta = { fileName: f.name, mimeType: f.type || "application/octet-stream" };
+        // نقرأ النص فقط للملفات النصية الصغيرة (لا نحلّل قبل تحديد النوع لاحقاً).
+        const isText = f.type.startsWith("text/") || /\.(txt|md|csv|json|html?)$/i.test(f.name);
+        if (isText && f.size <= 200_000) {
+          try {
+            meta.content = (await f.text()).slice(0, 60000);
+          } catch {
+            /* تجاهل */
+          }
+        }
+        return meta;
+      })
+    );
     setAttachments((prev) => [...prev, ...metas].slice(0, 20));
   }
 
@@ -379,6 +395,17 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
               className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
             >
               مكتبة الأوامر
+            </button>
+            <button
+              type="button"
+              onClick={() => setRedact((v) => !v)}
+              aria-pressed={redact}
+              title="إخفاء البيانات الحساسة (هوية/جوال/آيبان) في المخرجات"
+              className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                redact ? "border-[var(--ruby)] bg-[var(--ruby-soft)] text-[var(--ruby)]" : "border-[var(--ink-15)] bg-white text-[var(--ink-60)] hover:border-[var(--gold)]"
+              }`}
+            >
+              {redact ? "🛡️ الإخفاء مُفعّل" : "🛡️ إخفاء البيانات"}
             </button>
             {currentCase && (
               <span className="rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">

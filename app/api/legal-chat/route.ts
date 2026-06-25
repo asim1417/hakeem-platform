@@ -17,13 +17,16 @@ const schema = z.object({
   searchStrength: z.enum(SEARCH_STRENGTHS).default("BALANCED"),
   approval: z.enum(["CONFIRM", "DRAFT_WITH_ASSUMPTIONS"]).nullable().optional(),
   caseFile: z.any().optional(), // ملف القضية القائم (يُمرّر من العميل كما هو)
-  conversationId: z.string().optional(),
+  conversationId: z.string().nullable().optional(), // العميل يرسل null في أول رسالة
+  redact: z.boolean().nullable().optional(),
+  workflow: z.string().max(80).nullable().optional(),
   attachments: z
     .array(
       z.object({
         fileName: z.string().max(300),
         mimeType: z.string().max(120),
         declaredKind: z.string().max(120).optional(),
+        content: z.string().max(60000).optional(),
       })
     )
     .max(20)
@@ -52,6 +55,8 @@ export async function POST(request: NextRequest) {
     caseFile: (data.caseFile as SimulationCaseFile | undefined) ?? null,
     approval: data.approval ?? null,
     attachments: data.attachments,
+    redact: data.redact ?? undefined,
+    workflow: data.workflow ?? undefined,
   };
 
   const result = await runChatTurn(turnInput);

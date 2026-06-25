@@ -284,6 +284,14 @@ export type ChatCardType =
   | "TIMELINE" // الخط الزمني
   | "ISSUES" // قائمة المسائل
   | "CONFIDENCE" // درجة الثقة القانونية
+  | "OPPONENT" // الخصم الافتراضي (جدول الدفوع المتوقعة)
+  | "JUDGE_VIEW" // القاضي الافتراضي (تحرير محل النزاع + أسئلة + منطوق محتمل)
+  | "ARBITRATION_VIEW" // المحكّم (اتفاق/اختصاص/إجراءات/أمر/حكم)
+  | "CONTRACT_REVIEW" // مراجعة عقد (جدول بنود/مخاطر/توصيات)
+  | "DOC_ANALYSIS" // تحليل المستندات (متعدد المستندات + تعارض)
+  | "COMPARE_STRATEGIES" // مقارنة الاستراتيجيات
+  | "EXPLAIN" // اشرح لماذا وصلت لهذه النتيجة
+  | "WORKFLOW" // مسار عمل قانوني (workflow/playbook)
   | "GOVERNANCE"; // تنبيه حوكمي
 
 /** حالة المراجعة البشرية للمخرج (Human-in-the-Loop). */
@@ -314,6 +322,126 @@ export interface OutputSection {
   body: string; // قد تكون فقرات بصياغة قضائية
 }
 
+// ── خصائص متقدمة: محاكاة الأدوار وتحليل المستندات والاستراتيجيات ──
+
+/** صفّ في جدول الخصم الافتراضي. */
+export interface OpponentRow {
+  expectedDefense: string; // الدفع المتوقع
+  strength: "STRONG" | "MEDIUM" | "WEAK";
+  reason: string; // سبب القوة/الضعف
+  suggestedResponse: string; // الرد المقترح
+  requiredDocument: string; // المستند المطلوب للرد
+}
+
+/** رؤية القاضي الافتراضي (تدريبية). */
+export interface JudgeView {
+  disputeSubject: string; // تحرير محل النزاع
+  materialFacts: string[]; // الوقائع المنتِجة
+  burdenOfProof: string; // عبء الإثبات
+  judgeQuestions: string[]; // أسئلة القاضي في الجلسة
+  readyForJudgment: boolean; // هل القضية صالحة للحكم؟
+  readinessReason: string;
+  gapsBeforeClosing: string[]; // النواقص قبل قفل باب المرافعة
+  draftReasoning: string[]; // أسباب افتراضية
+  draftRuling: string; // منطوق افتراضي (غير ملزم)
+  disclaimer: string;
+}
+
+/** رؤية المحكّم. */
+export interface ArbitrationView {
+  agreementCheck: string; // اتفاق التحكيم وصحته
+  scope: string; // نطاق شرط التحكيم
+  tribunalFormation: string; // تشكيل الهيئة
+  jurisdiction: string; // الاختصاص
+  applicableLaw: string; // النظام/القانون الواجب التطبيق
+  procedure: string[]; // الإجراءات
+  proceduralOrder: string[]; // أمر إجرائي / جدول مواعيد
+  issues: string[]; // المسائل محل الفصل
+  draftAwardNote: string; // ملاحظة على مسودة حكم التحكيم
+  disclaimer: string;
+}
+
+/** صفّ في جدول مراجعة العقد. */
+export interface ContractReviewRow {
+  clause: string; // البند
+  text: string; // النص (مقتطف)
+  risk: string; // الخطر
+  impact: string; // الأثر في النزاع المحتمل
+  recommendation: string; // التوصية
+}
+
+/** نتيجة مراجعة العقد. */
+export interface ContractReview {
+  hasContent: boolean; // هل توفّر نص العقد للتحليل؟
+  summary: string;
+  parties: string[];
+  obligations: string[];
+  term: string | null;
+  consideration: string | null;
+  penaltyClause: string | null;
+  arbitrationClause: string | null;
+  jurisdiction: string | null;
+  termination: string | null;
+  rows: ContractReviewRow[];
+  risks: string[];
+}
+
+/** تحليل مستند واحد. */
+export interface DocAnalysisItem {
+  name: string;
+  kind: string; // النوع الذي حدّده المستخدم
+  parties: string[];
+  dates: string[];
+  amounts: string[];
+  references: string[]; // إشارات نظامية مذكورة
+  summary: string;
+}
+
+/** تحليل متعدد المستندات (Multi-Document Reasoning). */
+export interface DocAnalysis {
+  hasContent: boolean;
+  items: DocAnalysisItem[];
+  conflicts: string[]; // تعارضات بين المستندات
+  missing: string[]; // نواقص
+}
+
+/** صفّ في مقارنة الاستراتيجيات. */
+export interface StrategyRow {
+  strategy: string;
+  advantages: string;
+  risks: string;
+  requirements: string;
+  assessment: string;
+}
+
+/** بطاقة «اشرح لماذا وصلت لهذه النتيجة». */
+export interface ExplainView {
+  facts: string[];
+  sources: string[];
+  assumptions: string[];
+  reasons: string[];
+  confidence: number;
+  whatWouldChange: string[];
+}
+
+/** خطوة في مسار عمل قانوني. */
+export interface WorkflowStep {
+  title: string;
+  done: boolean;
+  detail: string;
+}
+
+/** حالة تشغيل مسار عمل/Playbook. */
+export interface WorkflowRunView {
+  name: string;
+  purpose: string;
+  steps: WorkflowStep[];
+  checklist: { item: string; ok: boolean }[];
+  missingInputs: string[];
+  nextStep: string;
+  reviewRequired: boolean;
+}
+
 /** بطاقة واحدة في ردّ الشات. */
 export interface ChatCard {
   type: ChatCardType;
@@ -325,6 +453,14 @@ export interface ChatCard {
   timeline?: TimelineEvent[];
   issues?: LegalIssue[];
   confidence?: LegalConfidenceScore;
+  opponent?: OpponentRow[];
+  judge?: JudgeView;
+  arbitration?: ArbitrationView;
+  contractReview?: ContractReview;
+  docAnalysis?: DocAnalysis;
+  strategies?: StrategyRow[];
+  explain?: ExplainView;
+  workflow?: WorkflowRunView;
   governance?: string[];
 }
 
@@ -339,6 +475,10 @@ export interface ChatTurnInput {
     | "DRAFT_WITH_ASSUMPTIONS"
     | null; // قرار المستخدم على بطاقة الفهم السابقة
   attachments?: ChatAttachmentMeta[];
+  /** إخفاء البيانات الحساسة في المخرجات (Redaction). */
+  redact?: boolean;
+  /** تشغيل مسار عمل/Playbook محدّد بالاسم. */
+  workflow?: string;
 }
 
 export interface ChatAttachmentMeta {
@@ -346,6 +486,8 @@ export interface ChatAttachmentMeta {
   mimeType: string;
   /** التصنيف الذي اختاره المستخدم للملف (لا يُحلَّل قبل سؤاله). */
   declaredKind?: string;
+  /** النص المُستخرَج من الملف (للملفات النصية) — يُحلَّل فقط بعد تحديد النوع. */
+  content?: string;
 }
 
 /** مخرج دورة شات واحدة. */
