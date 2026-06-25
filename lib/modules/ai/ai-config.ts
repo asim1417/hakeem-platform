@@ -156,6 +156,15 @@ export async function getAiStatus(): Promise<{
   };
 }
 
+/**
+ * كشف المفتاح المحفوظ كاملاً — للمدير فقط وعبر طلب صريح (يُستدعى من مسار محمي
+ * بصلاحية USERS_MANAGE مع تسجيل في سجلّ التدقيق). خفضٌ أمني مقصود ومحدود.
+ */
+export async function revealAiKey(): Promise<{ provider: AiProvider; key: string | null; source: "db" | "env" | "offline" }> {
+  const cfg = await resolveAiConfig();
+  return { provider: cfg.provider, key: cfg.apiKey ?? null, source: cfg.source };
+}
+
 /** يحفظ إعداد الذكاء في القاعدة (يشفّر المفتاح). إن تُرك المفتاح فارغاً يُبقي القديم. */
 export async function saveAiSettings(input: {
   provider: AiProvider;
