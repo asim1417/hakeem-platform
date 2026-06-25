@@ -15,7 +15,8 @@ import type {
   IntentResult,
   SimulationCaseFile,
 } from "./types";
-import { detectIntent } from "./user-intent-engine";
+import { detectIntent, detectIntentDeterministic } from "./user-intent-engine";
+import { classifyConversation } from "./conversation-engine";
 import { buildCaseFileFromIntent, mergeIntentIntoCaseFile } from "./case-file";
 import { buildUnderstandingCard, canProduce } from "./understanding-engine";
 import { buildProcedureMap } from "./judicial-procedure-engine";
@@ -94,9 +95,47 @@ function buildReply(
  */
 export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult> {
   const documentsCount = input.attachments?.length ?? 0;
-  const intent = await detectIntent(input.message, documentsCount);
 
-  // ١) ملف القضية الحيّ.
+  // ٠) طبقة فهم المحادثة أولاً: تحية/دردشة/إشارة ضعيفة/نيّة ناقصة → حوار بلا تحليل.
+  //    «حكيم يفهم الإنسان أولاً، ثم المسألة». لا قضية = لا تحليل، لا مسألة = لا مصادر.
+  const det = detectIntentDeterministic(input.message, documentsCount);
+  const conv = classifyConversation(input.message, det, !!input.caseFile);
+
+  if (!conv.runAnalysis && !input.approval) {
+    const aiMetaC = await resolveAiProvider().catch(() => ({ name: "offline", model: "" }));
+    // حافظ على ذاكرة القضية إن وُجدت إشارة قانونية؛ ولا تنشئ ملفاً عند التحية المجرّدة.
+    let convCase: SimulationCaseFile | null = null;
+    if (input.caseFile) convCase = mergeIntentIntoCaseFile(input.caseFile, det);
+    else if (conv.stage !== "GreetingOnly" && conv.stage !== "NonLegalSmallTalk") convCase = buildCaseFileFromIntent(det);
+    return {
+      reply: conv.reply,
+      cards: [], // لا بطاقات تحليل في الطور الحواري
+      intent: det,
+      caseFile: convCase,
+      awaitingConfirmation: true,
+      trainingDisclaimer: TRAINING_DISCLAIMER,
+      provider: aiMetaC.name,
+      model: aiMetaC.model,
+      generated: false,
+      messageType: conv.messageType,
+      understandingStage: conv.stage,
+      userLevel: conv.userLevel,
+      suggestedButtons: conv.suggestedButtons,
+      conversational: true,
+    };
+  }
+
+  // ١) الطور التحليلي: أثرِ النيّة بمزوّد الذكاء عند الغموض.
+  const intent = await detectIntent(input.message, documentsCount);
+  const convMeta = {
+    messageType: "ready_for_analysis",
+    understandingStage: conv.stage === "AnalysisReady" ? conv.stage : "AnalysisReady",
+    userLevel: conv.userLevel,
+    suggestedButtons: [] as string[],
+    conversational: false,
+  };
+
+  // ملف القضية الحيّ.
   const caseFile: SimulationCaseFile = input.caseFile
     ? mergeIntentIntoCaseFile(input.caseFile, intent)
     : buildCaseFileFromIntent(intent);
@@ -124,6 +163,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       provider: aiMeta.name,
       model: aiMeta.model,
       generated: intent.source !== "deterministic",
+      ...convMeta,
     };
   }
 
@@ -246,5 +286,6 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
     provider: aiMeta.name,
     model: aiMeta.model,
     generated: intent.source !== "deterministic",
+    ...convMeta,
   };
 }

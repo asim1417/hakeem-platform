@@ -495,10 +495,16 @@ export interface ChatTurnResult {
   reply: string; // نص ردّ حكيم (لغة محادثة، لا قضائية)
   cards: ChatCard[];
   intent: IntentResult;
-  caseFile: SimulationCaseFile;
-  awaitingConfirmation: boolean; // هل ينتظر حكيم موافقة على بطاقة الفهم؟
+  caseFile: SimulationCaseFile | null; // قد يكون null في التحية/الدردشة (لا قضية بعد)
+  awaitingConfirmation: boolean; // هل ينتظر حكيم موافقة/استكمالاً؟
   trainingDisclaimer: string;
   provider: string;
   model: string;
   generated: boolean;
+  // ── طبقة فهم المحادثة (Conversation Intelligence) ──
+  messageType: string; // greeting | greeting_with_request | weak_legal_signal | legal_intent | ready_for_analysis | non_legal_smalltalk
+  understandingStage: string; // GreetingOnly … FinalDraftReviewReady
+  userLevel: string; // layperson | legal_practitioner | unknown
+  suggestedButtons: string[]; // أزرار متابعة (كل زرّ نصّ يُرسَل عند الضغط)
+  conversational: boolean; // دورة حوارية (بلا بطاقات تحليل ثقيلة)؟
 }

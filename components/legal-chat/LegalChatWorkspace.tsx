@@ -16,6 +16,7 @@ type Turn = {
   cards?: ChatCard[];
   awaiting?: boolean;
   error?: string;
+  suggestedButtons?: string[];
 };
 
 type HistoryItem = {
@@ -145,10 +146,11 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
         content: data.reply,
         cards: data.cards as ChatCard[],
         awaiting: data.awaitingConfirmation,
+        suggestedButtons: (data.suggestedButtons as string[] | undefined) ?? undefined,
       };
       const next = [...working, assistantTurn];
       setTurns(next);
-      setCaseFile(data.caseFile as SimulationCaseFile);
+      setCaseFile((data.caseFile as SimulationCaseFile | null) ?? null);
       if (data.conversationId) setConversationId(data.conversationId);
       saveCurrentToHistory(next, data.caseFile as SimulationCaseFile, data.conversationId ?? null);
     } catch {
@@ -346,6 +348,21 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
                             optionsDisabled={busy || i !== turns.length - 1}
                           />
                         ))}
+                        {turn.suggestedButtons && turn.suggestedButtons.length > 0 && (
+                          <div className="flex flex-wrap gap-2 ps-9">
+                            {turn.suggestedButtons.map((b, bi) => (
+                              <button
+                                key={bi}
+                                type="button"
+                                disabled={busy || i !== turns.length - 1}
+                                onClick={() => void send(b)}
+                                className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--navy)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
+                              >
+                                {b}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
