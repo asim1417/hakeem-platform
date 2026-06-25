@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 type Status = {
   provider: string;
@@ -25,13 +26,37 @@ const sourceLabel: Record<string, string> = {
   offline: "غير مفعّل"
 };
 
+// النموذج الموصى به لكل مزوّد (يُقترح كـ placeholder ويُملأ تلقائياً إن تُرك فارغاً).
+const DEFAULT_MODELS: Record<string, string> = {
+  openai: "gpt-4o-mini",
+  anthropic: "claude-sonnet-4-6",
+  gemini: "gemini-1.5-flash",
+  custom: ""
+};
+
+// تلميح صيغة المفتاح لكل مزوّد.
+const KEY_HINTS: Record<string, string> = {
+  anthropic: "مفتاح Anthropic يبدأ بـ sk-ant-api… (وليس sk-ant-admin…). أنشئه من console.anthropic.com ← Settings ← API Keys.",
+  openai: "مفتاح OpenAI يبدأ بـ sk-… من platform.openai.com.",
+  gemini: "مفتاح Google AI Studio.",
+  custom: "مفتاح المزوّد المخصّص حسب توثيقه."
+};
+
 export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) {
   const [status, setStatus] = useState<Status>(initialStatus);
   const [provider, setProvider] = useState(initialStatus.provider === "offline" ? "openai" : initialStatus.provider);
   const [model, setModel] = useState(initialStatus.model ?? "");
   const [baseUrl, setBaseUrl] = useState(initialStatus.baseUrl ?? "");
   const [apiKey, setApiKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // عند تغيير المزوّد: اقترح نموذجه الموصى به إن لم يُدخِل المستخدم نموذجاً.
+  function onProviderChange(next: string) {
+    setProvider(next);
+    setModel((prev) => (prev.trim() ? prev : DEFAULT_MODELS[next] ?? ""));
+    setShowKey(false);
+  }
   const [msg, setMsg] = useState<{ tone: "success" | "danger" | "info"; text: string } | null>(null);
 
   async function save(test: boolean) {
@@ -94,7 +119,7 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-semibold text-[var(--navy)]">المزوّد</span>
-            <select value={provider} onChange={(e) => setProvider(e.target.value)} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3">
+            <select value={provider} onChange={(e) => onProviderChange(e.target.value)} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3">
               {PROVIDERS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
@@ -102,7 +127,7 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
           </label>
           <label className="block">
             <span className="text-sm font-semibold text-[var(--navy)]">النموذج (اختياري)</span>
-            <input value={model} onChange={(e) => setModel(e.target.value)} dir="ltr" placeholder="gpt-4o-mini" className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3 text-left font-mono-legal text-sm" />
+            <input value={model} onChange={(e) => setModel(e.target.value)} dir="ltr" placeholder={DEFAULT_MODELS[provider] || "اسم النموذج"} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3 text-left font-mono-legal text-sm" />
           </label>
         </div>
 
@@ -115,7 +140,29 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
 
         <label className="mt-4 block">
           <span className="text-sm font-semibold text-[var(--navy)]">مفتاح الـ API</span>
-          <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} dir="ltr" type="password" placeholder={status.configured ? "اتركه فارغاً للإبقاء على المفتاح الحالي" : "sk-..."} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3 text-left font-mono-legal text-sm" />
+          <div className="relative mt-2">
+            <input
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              dir="ltr"
+              type={showKey ? "text" : "password"}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={status.configured ? "اتركه فارغاً للإبقاء على المفتاح الحالي" : DEFAULT_MODELS[provider] !== undefined && provider === "anthropic" ? "sk-ant-api03-..." : "sk-..."}
+              className="focus-ring w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white py-3 pe-4 ps-12 text-left font-mono-legal text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setShowKey((v) => !v)}
+              aria-label={showKey ? "إخفاء المفتاح" : "إظهار المفتاح"}
+              aria-pressed={showKey}
+              title={showKey ? "إخفاء المفتاح" : "إظهار المفتاح"}
+              className="focus-ring absolute inset-y-0 left-0 my-1.5 ms-1.5 grid w-9 place-items-center rounded-[var(--r-sm)] text-[var(--ink-60)] hover:bg-[var(--ink-04)] hover:text-[var(--navy)]"
+            >
+              {showKey ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+            </button>
+          </div>
+          <p className="mt-1.5 text-xs leading-6 text-[var(--ink-50)]">{KEY_HINTS[provider] ?? ""}</p>
         </label>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -144,8 +191,9 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
       </div>
 
       <p className="text-xs leading-6 text-[var(--ink-40)]">
-        ملاحظة تشغيل: يتطلب الإعداد في القاعدة تشغيل <span className="font-mono-legal">prisma db push</span> مرة واحدة لإنشاء جدول
-        <span className="font-mono-legal"> app_settings</span>. قبلها يعمل التطبيق بمتغيرات البيئة دون تعطّل.
+        يُنشأ جدول <span className="font-mono-legal">app_settings</span> تلقائياً عند أول حفظ (لا حاجة لأي أمر يدوي)، ويُخزَّن المفتاح
+        مشفّراً ولا يُعاد للمتصفح أبداً. إن تعذّر الحفظ في القاعدة يعمل التطبيق بمتغيرات البيئة دون تعطّل. زرّ
+        «حفظ واختبار الاتصال» يتحقّق من المفتاح فعلياً بنداء تجريبي للمزوّد.
       </p>
     </div>
   );
