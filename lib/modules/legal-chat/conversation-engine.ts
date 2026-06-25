@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { IntentResult } from "./types";
 import { normalizeArabic, hasAny } from "./taxonomy";
+import { classifyIntentLLM, ROUTER_CONFIDENCE_THRESHOLD, type LLMIntentResult, type ConversationAct } from "./llm-intent-router";
 
 export type ConversationMessageType =
   | "greeting"
@@ -661,4 +662,191 @@ export function classifyDialogue(
   }
 
   return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LLMIntentRouter integration — طبقة أعلى لا تستبدل الحتمي.
+// تستدعي النموذج للحالات الغامضة؛ وعند الثقة الكافية تُترجم conversationAct إلى
+// DialogueDecision حواري يوقف الأدوات. عند offline/فشل/ثقة منخفضة → الحتمي القائم.
+// لا تتّخذ قراراً خطراً (التشغيل/التقرير/الاستشهاد) — تلك تبقى لبوابات حتمية أعلى.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** ناتج التصنيف الموحّد: قرار حواري (أو null للمضي للأنابيب) + مخرج الراوتر الخام. */
+export interface RouterClassification {
+  decision: DialogueDecision | null; // short-circuit حواري (أو null → تابع classifyConversation)
+  router: LLMIntentResult | null; // مخرج النموذج الخام للبوابة الحتمية (المرحلة ٣)
+  source: "router" | "deterministic";
+}
+
+/** أفعال يجب أن تمرّ لأنابيب التحليل/الاستقصاء الحتمية (لا تُختصر حوارياً هنا). */
+const PIPELINE_ACTS: ReadonlySet<ConversationAct> = new Set(["clear_legal_request", "report_request"]);
+
+/** يبني DialogueDecision من مخرج الراوتر (للأفعال الحوارية وغير القانونية). */
+function decisionFromRouter(
+  llm: LLMIntentResult,
+  message: string,
+  det: IntentResult,
+  prev?: DialogueState | null
+): DialogueDecision | null {
+  const dialogue = normalizeDialogue(prev);
+  const act = llm.conversationAct;
+
+  switch (act) {
+    case "greeting":
+      return { intent: "greeting", reply: WARM_GREETING_REPLY, buttons: PATH_BUTTONS, dialogue, blockAnalysis: true };
+
+    case "smalltalk":
+      return {
+        intent: "social_smalltalk",
+        reply:
+          "حيّاك الله وأسعدك. 🌿 أنا جاهز أساعدك متى ما كان عندك موضوع قانوني أو مستند أو دعوى تريد ترتيبها — اكتب لي موضوعك بطريقتك.",
+        buttons: PATH_BUTTONS,
+        dialogue,
+        blockAnalysis: true,
+      };
+
+    case "playful":
+    case "non_legal_general":
+      return {
+        intent: "non_legal_general",
+        reply:
+          "هذا خارج تخصّصي القانوني 🙂. أنا هنا للمواضيع القضائية والقانونية السعودية — مثل دعوى، أو مذكرة، أو عقد، أو حكم. عندك موضوع من هذا النوع أساعدك فيه؟",
+        buttons: PATH_BUTTONS,
+        dialogue,
+        blockAnalysis: true,
+      };
+
+    case "insult":
+      return {
+        intent: "non_legal_general",
+        reply:
+          "أنا هنا لمساعدتك باحترام وهدوء. 🌿 لو عندك موضوع قانوني — دعوى أو مستند أو خلاف — اكتبه لي بطريقتك وأرتّبه لك خطوة خطوة.",
+        buttons: PATH_BUTTONS,
+        dialogue,
+        blockAnalysis: true,
+      };
+
+    case "incomplete":
+    case "noise":
+      return {
+        intent: "unclear",
+        reply:
+          "ما وصلتني رسالة واضحة 🙂. اكتب لي موضوعك بجملة بسيطة بطريقتك — مثل: «اشتريت شيئًا وفيه عيب» أو «جاني تبليغ من المحكمة» — وأنا أساعدك خطوة خطوة.",
+        buttons: PATH_BUTTONS,
+        dialogue,
+        blockAnalysis: true,
+      };
+
+    case "complaint":
+    case "correction": {
+      // أعطِ الأولوية للحتمي الغني (يستخرج الافتراض المرفوض)؛ وإلا ردّ عام معتذر.
+      const det0 = classifyDialogue(message, det, prev);
+      if (det0 && (det0.intent === "assistant_feedback" || det0.intent === "user_correction")) return det0;
+      return {
+        intent: act === "correction" ? "user_correction" : "assistant_feedback",
+        reply:
+          "معك حق، وأعتذر. سأتمهّل ولن أفترض شيئًا من عندي.\nاكتب لي ما تقصده تحديدًا من البداية، وسؤالي الوحيد الآن: هل القضية منظورة في المحكمة حاليًا؟",
+        buttons: ["نعم، منظورة بالمحكمة", "لا، قبل رفع الدعوى", "صدر فيها حكم"],
+        dialogue: { ...dialogue, mode: "slow_guided_intake" },
+        blockAnalysis: true,
+      };
+    }
+
+    case "document_reference":
+      return {
+        intent: "court_document_reference",
+        reply:
+          "يبدو أنك تشير إلى مستند/تبليغ قضائي. خلنا نحدّده بهدوء قبل أي خطوة:\nهل هو تبليغ بدعوى جديدة، أم موعد جلسة، أم حكم؟ ويمكنك رفع صورة المستند وسأقرأه وأوضّح الخطوة التالية.",
+        buttons: ["تبليغ بدعوى جديدة", "موعد جلسة", "حكم صادر", "أرفع صورة المستند"],
+        dialogue,
+        blockAnalysis: true,
+      };
+
+    case "possible_legal_issue": {
+      const consumer = (llm.incidentType ?? "").includes("مستهلك") || (llm.incidentType ?? "").includes("عيب") || (llm.incidentType ?? "").includes("مبيع");
+      if (consumer) {
+        return {
+          intent: "possible_consumer_issue",
+          reply:
+            "قد تكون هذه مسألة تتعلق بحقوق المستهلك أو عيب في المبيع. هل تريد فقط معرفة التصرّف المناسب، أم لديك فاتورة/عقد ورفض الطرف الآخر الإصلاح أو التعويض؟",
+          buttons: ["أريد معرفة التصرف", "رفض الطرف الآخر", "عندي فاتورة/عقد", "موضوع آخر"],
+          dialogue,
+          blockAnalysis: true,
+        };
+      }
+      return {
+        intent: "vague_case_signal",
+        reply:
+          "فهمت أن لديك موضوعًا قد تترتب عليه مطالبة، لكن نوعه لم يتّضح بعد ولن أفترضه.\nسؤال واحد فقط: هل القضية منظورة في المحكمة الآن، أم ما زالت قبل رفع الدعوى؟",
+        buttons: ["منظورة بالمحكمة", "قبل رفع الدعوى", "صدر فيها حكم", "ما أدري"],
+        dialogue,
+        blockAnalysis: true,
+      };
+    }
+
+    case "clear_legal_incident": {
+      const t = llm.incidentType ?? "";
+      const isCrime = /سرق|اعتداء|ضرب|نصب|احتيال|ابتزاز|تهديد|تحرش|فقد/.test(t);
+      if (isCrime) {
+        return {
+          intent: "incident",
+          reply:
+            "أنا معك، ولا يهمّك — نبدأ بالأهم عمليًا.\nفي مثل هذه الوقائع، الخطوة الأولى غالبًا تقديم بلاغ لدى الجهة المختصة (الشرطة/أبشر). سؤال واحد فقط: هل قدّمت بلاغًا حتى الآن؟",
+          buttons: ["نعم، قدّمت بلاغًا", "لا، لم أبلّغ بعد", "أبغى أعرف كيف أبلّغ", "عندي تفاصيل أكثر"],
+          dialogue,
+          blockAnalysis: true,
+        };
+      }
+      // واقعة قانونية مدنية/تعاقدية (عيب مبيع، إخلال تنفيذ…) → استقصاء حواري لا بلاغ.
+      return {
+        intent: "incident",
+        reply:
+          "فهمت أن لديك واقعة قد يترتب عليها حق أو مطالبة. خلنا نرتّبها بهدوء قبل أي خطوة:\nسؤال واحد أولًا — هل تواصلت مع الطرف الآخر وطلبت الإصلاح/التعويض، وما ردّه؟ ويمكنك رفع العقد أو الفاتورة إن وُجد.",
+        buttons: ["تواصلت ورفض", "لم أتواصل بعد", "عندي عقد/فاتورة", "عندي تفاصيل أكثر"],
+        dialogue,
+        blockAnalysis: true,
+      };
+    }
+
+    // أفعال الأنابيب القانونية: لا تُختصر هنا — يتولّاها classifyConversation.
+    case "clear_legal_request":
+    case "report_request":
+      return null;
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * المُصنّف الموحّد (طبقة أعلى): النموذج أولاً للحالات الغامضة، ثم الحتمي حارسًا.
+ * - ثقة ≥ العتبة وفعلٌ حواري → DialogueDecision من الراوتر (يُصحّح الإيجابي والسلبي الكاذب).
+ * - ثقة ≥ العتبة وفعلٌ من أنابيب التحليل → decision=null (يكمل classifyConversation) مع حفظ مخرج الراوتر.
+ * - null/ثقة منخفضة/offline → classifyDialogue الحتمي القائم (لا تدهور).
+ */
+export async function classifyWithRouter(
+  message: string,
+  det: IntentResult,
+  prev?: DialogueState | null,
+  history?: { role: string; content: string }[]
+): Promise<RouterClassification> {
+  let llm: LLMIntentResult | null = null;
+  try {
+    llm = await classifyIntentLLM(message, history, prev ?? null);
+  } catch {
+    llm = null;
+  }
+
+  if (!llm || llm.confidence < ROUTER_CONFIDENCE_THRESHOLD) {
+    // سقوط للحتمي القائم — السلوك الحالي تمامًا.
+    return { decision: classifyDialogue(message, det, prev), router: null, source: "deterministic" };
+  }
+
+  if (PIPELINE_ACTS.has(llm.conversationAct)) {
+    // فعل قانوني يحتاج الأنابيب الحتمية (استقصاء/تقرير) — لا نختصره، نمرّر مخرج الراوتر للبوابة.
+    return { decision: null, router: llm, source: "router" };
+  }
+
+  const decision = decisionFromRouter(llm, message, det, prev);
+  return { decision, router: llm, source: "router" };
 }

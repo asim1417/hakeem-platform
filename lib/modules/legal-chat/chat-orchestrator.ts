@@ -20,11 +20,12 @@ import { detectIntent, detectIntentDeterministic, intentFromCaseFile } from "./u
 import {
   baseStage,
   classifyConversation,
-  classifyDialogue,
+  classifyWithRouter,
   detectReportRequest,
   normalizeDialogue,
   type ConversationStage,
 } from "./conversation-engine";
+import type { LLMIntentResult } from "./llm-intent-router";
 import { buildCaseFileFromIntent, isCaseSubstantive, mergeIntentIntoCaseFile } from "./case-file";
 import { buildUnderstandingCard, canProduce } from "./understanding-engine";
 import { buildProcedureMap } from "./judicial-procedure-engine";
@@ -147,8 +148,11 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   const conv = classifyConversation(input.message, det, !!input.caseFile);
   const convInfo = { messageType: conv.messageType, understandingStage: conv.stage, userLevel: conv.userLevel };
 
-  // ── (١) ConversationRepairEngine: ملاحظة على الأداء/تصحيح/قلق/غموض → حوار يوقف الاستنتاج ──
-  const special = classifyDialogue(input.message, det, dialogue0);
+  // ── (١) LLMIntentRouter + ConversationRepairEngine: النموذج يصنّف الغامض، والحتمي حارس/بديل ──
+  const routed = await classifyWithRouter(input.message, det, dialogue0, input.history);
+  const special = routed.decision;
+  const routerResult: LLMIntentResult | null = routed.router; // يُستعمل في البوابة الحتمية (المرحلة ٣)
+  void routerResult;
   if (special) {
     // حافظ على ذاكرة القضية القائمة دون إضافة افتراض جديد.
     const cf = input.caseFile ? mergeIntentIntoCaseFile(input.caseFile, applyRejected(det, special.dialogue.rejectedAssumptions)) : null;
