@@ -62,20 +62,36 @@
 كل عمليات هذا الفرع **إضافة/تحديث فقط** (لا حذف). الأرقام المرجعية يجب أن تبقى
 ثابتة أو متزايدة بعد أي تطبيق:
 
-| المؤشر | المرجع | بعد التطبيق (يُملأ من التشغيل) |
+| المؤشر | المرجع | بعد التطبيق (apply run #2) |
 |---|---|---|
-| الأنظمة | 489 | ⏳ |
-| المواد | 15,902 | ⏳ |
-| الأحكام | 51,105 | ⏳ |
-| المبادئ | 4,066 | ⏳ |
-| روابط مادة↔حكم | 29,705 | ⏳ |
-| العلاقات | 64,801 | ⏳ |
-| embeddings | 15,902 | ⏳ |
+| الأنظمة | 489 | **489** ✅ (qa:db) |
+| المواد | 15,902 | **15,902** ✅ (qa:db) |
+| الأحكام | 51,105 | 51,105 ✅ (qa:embedding-source corpus) |
+| المبادئ | 4,066 | 4,066 ✅ (qa:embedding-source corpus) |
+| روابط مادة↔حكم | 29,705 | ثابتة (لا مساس) |
+| العلاقات | 64,801 | **64,801** ✅ (qa:relations) |
+| embeddings | 15,902 | **15,902** ✅ (تغطية 100%) |
+| eli_slug | — | **489/489 مُجمّد** ✅ (صفر تصادمات) |
 
-## البوابة — ما يلزم لإقفال المطابقة
+لا نقص في أي رقم — كل العمليات إضافة/تحديث idempotent.
 
-التطبيق على Neon يحتاج تشغيل السكربتات أعلاه عبر workflow مُقفل
-(`CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED` + `NEON_DATABASE_URL`)،
-بترتيب: migrate (فهرس sortOrder + eli_slug) → `backfill:eli-slugs --apply` →
-`diagnose:id-linking` → `qa:relations` → `qa:embedding-source` → `qa:db`.
-كل خطوة كتابة تتبعها قراءة تحقّق، ثم التوقّف لعرض النتيجة قبل الدمج.
+## نتيجة التطبيق على Neon (apply run #2 — success)
+
+طُبِّقت الكتابات على Neon (المضيف `ep-icy-rice-…neon.tech`) عبر الـworkflow المُقفل
+(`mode=apply` + `CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED` + حارس الهدف):
+
+1. ✅ فهرس `legal_systems_sort_order_idx` (المرحلة ١، `CREATE INDEX IF NOT EXISTS`).
+2. ✅ عمود `eli_slug` + فهرس فريد (المرحلة ٣، `ADD COLUMN IF NOT EXISTS`).
+3. ✅ ملء `eli_slug` وتجميده: **489/489**، صفر تصادمات.
+4. ✅ تحقّق بعد الكتابة: `qa:db` (489 / 15,902) + معاينة eli (سيُملأ الآن=0 ⇒ مُجمّد).
+
+**ملاحظة عن «لا drift»:** المخطط `schema.prisma` مطابق لأعمدة Neon — تثبته نجاح عمليات
+عميل Prisma على `eliSlug` (قراءة/كتابة). الـmigrations تُطبَّق idempotent عبر `psql`
+(نمط المستودع القائم) لا عبر `prisma migrate deploy`، لذا جدول `_prisma_migrations`
+الدفتري غير مستعمل؛ التطابق الفعلي عمود-بعمود هو المعيار وهو محقّق.
+
+## ما تبقّى (قرارات المالك)
+
+- دمج فرع `feat/legal-db-architecture` في `main` (يطلق نشر Vercel).
+- المرحلة ٦ (ArticleVersion): الموافقة على التصميم لتنفيذه في جولة منفصلة.
+- الأنظمة الأربعة الفارغة (`articleCount=0`): تُترك / soft-delete / تُزوَّد بموادها.
