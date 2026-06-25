@@ -8,8 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { getAiStatus, saveAiSettings, resolveAiConfig, type AiProvider } from "@/lib/modules/ai/ai-config";
+import { getAiStatus, saveAiSettings, resolveAiConfig, revealAiKey, type AiProvider } from "@/lib/modules/ai/ai-config";
 import { createOriginalHakeemAiResponse } from "@/lib/modules/ai/ai-gateway";
+import { auditEvent } from "@/lib/modules/audit/audit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,6 +22,9 @@ const bodySchema = z.object({
   apiKey: z.string().max(400).optional(),
   test: z.boolean().optional()
 });
+
+// إجراء كشف المفتاح المحفوظ (منفصل عن الحفظ) — للمدير فقط ومع تسجيل تدقيق.
+const revealSchema = z.object({ reveal: z.literal(true) });
 
 export async function GET(request: NextRequest) {
   const auth = await requireApiPermission("USERS_MANAGE", request);
@@ -39,6 +43,19 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ ok: false, message: "طلب غير صالح." }, { status: 400 });
   }
+
+  // كشف المفتاح المحفوظ — إجراء صريح منفصل عن الحفظ، مع تسجيل في سجلّ التدقيق.
+  if (revealSchema.safeParse(json).success) {
+    const revealed = await revealAiKey();
+    await auditEvent({
+      actorId: auth.user?.id,
+      subject: "ADMIN",
+      action: "AI_KEY_REVEALED",
+      metadata: { provider: revealed.provider, source: revealed.source }
+    }).catch(() => undefined);
+    return NextResponse.json({ ok: true, revealedKey: revealed.key, provider: revealed.provider, source: revealed.source });
+  }
+
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ ok: false, message: "بيانات غير صالحة." }, { status: 400 });

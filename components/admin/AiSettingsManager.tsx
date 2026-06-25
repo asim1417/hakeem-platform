@@ -49,7 +49,33 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
   const [baseUrl, setBaseUrl] = useState(initialStatus.baseUrl ?? "");
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // كشف المفتاح المحفوظ — خلف تأكيد صريح، ويُسجَّل في سجلّ التدقيق.
+  async function revealStored() {
+    if (!window.confirm("سيُعرض المفتاح المحفوظ كاملاً مرّة واحدة، وستُسجَّل العملية في سجلّ التدقيق. هل تريد المتابعة؟")) return;
+    setRevealing(true);
+    try {
+      const res = await fetch("/api/admin/ai-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reveal: true })
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.ok) throw new Error(payload?.message ?? "تعذّر كشف المفتاح.");
+      if (!payload.revealedKey) {
+        setMsg({ tone: "info", text: "لا يوجد مفتاح محفوظ لكشفه." });
+      } else {
+        setRevealedKey(payload.revealedKey as string);
+      }
+    } catch (e) {
+      setMsg({ tone: "danger", text: e instanceof Error ? e.message : "تعذّر كشف المفتاح." });
+    } finally {
+      setRevealing(false);
+    }
+  }
 
   // عند تغيير المزوّد: اقترح نموذجه الموصى به إن لم يُدخِل المستخدم نموذجاً.
   function onProviderChange(next: string) {
@@ -107,8 +133,30 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
         <div className="mt-3 grid gap-2 text-sm text-[var(--ink-70)] md:grid-cols-3">
           <div>المزوّد: <span className="font-semibold text-[var(--navy)]">{status.provider}</span></div>
           <div>النموذج: <span className="font-mono-legal">{status.model || "—"}</span></div>
-          <div>المفتاح: <span className="font-mono-legal">{status.keyMasked || "—"}</span></div>
+          <div dir="ltr" className="text-right">
+            <span dir="rtl">المفتاح: </span>
+            <span className="select-all break-all font-mono-legal">{revealedKey ?? status.keyMasked ?? "—"}</span>
+          </div>
         </div>
+        {status.configured ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {revealedKey ? (
+              <>
+                <button type="button" onClick={() => setRevealedKey(null)} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]">
+                  <EyeOff size={14} aria-hidden /> إخفاء
+                </button>
+                <button type="button" onClick={() => void navigator.clipboard?.writeText(revealedKey)} className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]">
+                  نسخ
+                </button>
+                <span className="text-[11px] text-[var(--amber)]">سُجِّلت عملية الكشف في سجلّ التدقيق.</span>
+              </>
+            ) : (
+              <button type="button" onClick={() => void revealStored()} disabled={revealing} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[rgba(184,114,26,.35)] bg-[var(--amber-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--amber)] hover:opacity-90 disabled:opacity-50">
+                <Eye size={14} aria-hidden /> {revealing ? "جارٍ…" : "كشف المفتاح المحفوظ"}
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* النموذج */}
