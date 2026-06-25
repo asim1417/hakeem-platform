@@ -36,7 +36,8 @@ const navSections: Array<{ items: NavItem[] }> = [
     items: [
       { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
       { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel, active: true },
-      { href: "/dashboard/judicial-simulation", key: "nav.simulation", icon: Scale },
+      { href: "/dashboard/legal-chat", key: "nav.simulation", icon: Scale },
+      { href: "/dashboard/judicial-simulation", key: "nav.quickAnalysis", icon: ClipboardCheck },
       { href: "/dashboard/case-analysis", key: "nav.caseAnalysis", icon: ScanSearch },
       { href: "/dashboard/legal-agent", key: "nav.legalAgent", icon: ClipboardList }
     ]
