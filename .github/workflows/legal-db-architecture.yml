@@ -63,13 +63,11 @@ jobs:
       - name: "③ تحقّق مصدر الـembedding الواحد (المرحلة ٥)"
         run: npm run qa:embedding-source
 
-      - name: "④ معاينة ملء eli_slug (المرحلة ٣ — تجربة، لا كتابة)"
-        run: npm run backfill:eli-slugs
-
-      - name: "⑤ تحقّق النواة الكاملة (قراءة فقط)"
+      - name: "④ تحقّق النواة الكاملة (قراءة فقط)"
         run: npm run qa:db
 
       # ── ما يلي يكتب في القاعدة: مُقفل خلف mode=apply + بوّابة التأكيد ──
+      # ملاحظة: معاينة/ملء eli_slug تأتي بعد migration العمود لأن العمود غير موجود قبلها.
       - name: "🔒 بوّابة الكتابة"
         if: ${{ inputs.mode == 'apply' }}
         run: |
@@ -78,13 +76,17 @@ jobs:
             exit 1
           fi
 
-      - name: "⑥ migration: فهرس sortOrder (المرحلة ١، idempotent)"
+      - name: "⑤ migration: فهرس sortOrder (المرحلة ١، idempotent)"
         if: ${{ inputs.mode == 'apply' }}
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260625140000_sync_system_classification_sortorder_index/migration.sql
 
-      - name: "⑦ migration: عمود eli_slug (المرحلة ٣، idempotent)"
+      - name: "⑥ migration: عمود eli_slug (المرحلة ٣، idempotent)"
         if: ${{ inputs.mode == 'apply' }}
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260625150000_add_system_eli_slug/migration.sql
+
+      - name: "⑦ معاينة ملء eli_slug (تجربة، بعد إنشاء العمود)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npm run backfill:eli-slugs
 
       - name: "⑧ ملء eli_slug وتجميده (--apply)"
         if: ${{ inputs.mode == 'apply' }}
