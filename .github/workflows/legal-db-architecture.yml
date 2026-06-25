@@ -92,7 +92,21 @@ jobs:
         if: ${{ inputs.mode == 'apply' }}
         run: npm run backfill:eli-slugs -- --apply
 
-      - name: "⑨ تحقّق بعد الكتابة (قراءة فقط): migrate status + التغطية"
+      - name: "⑨ migration: جدول article_versions (المرحلة ٦، idempotent)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260625160000_add_article_versions/migration.sql
+
+      - name: "⑩ معاينة اشتقاق النسخ (تجربة)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npm run derive:article-versions
+
+      - name: "⑪ اشتقاق النسخة الأولى لكل مادة (--apply)"
+        if: ${{ inputs.mode == 'apply' }}
+        env:
+          CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+        run: npm run derive:article-versions -- --apply
+
+      - name: "⑫ تحقّق بعد الكتابة (قراءة فقط): migrate status + التغطية"
         if: ${{ inputs.mode == 'apply' }}
         run: |
           npx prisma migrate status || true
