@@ -1,0 +1,98 @@
+name: Legal DB Architecture (sync + verify + apply)
+
+# تقويم بنية قواعد البيانات على Neon (المراحل ١–٥).
+# diagnose: قراءة فقط (تشخيص + فحوص تكامل) بلا تأكيد.
+# apply: يطبّق migrations الإضافية (فهرس sortOrder + عمود eli_slug) ويملأ eli_slug،
+#        مُقفل خلف بوّابة CONFIRM + حارس هدف Neon. لا حذف — إضافة/تحديث idempotent فقط.
+#
+# يستعمل سرّاً مخصّصاً NEON_DATABASE_URL (كتابة) — لا يلمس DATABASE_URL المشترك.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "diagnose (قراءة فقط) أو apply (تطبيق الكتابة)"
+        type: choice
+        options: ["diagnose", "apply"]
+        default: "diagnose"
+        required: true
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "للكتابة فقط: اكتب NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: legal-db-architecture
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ NEON_DATABASE_URL."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+
+      - name: "🛡️ حارس الهدف Neon (قراءة فقط)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      # ── فحوص قراءة-فقط (تعمل دائمًا) ──
+      - name: "① تشخيص الربط بالمعرّف (المرحلة ٢)"
+        run: npm run diagnose:id-linking
+
+      - name: "② فحص التكامل المرجعي للرسم (المرحلة ٤)"
+        run: npm run qa:relations
+
+      - name: "③ تحقّق مصدر الـembedding الواحد (المرحلة ٥)"
+        run: npm run qa:embedding-source
+
+      - name: "④ معاينة ملء eli_slug (المرحلة ٣ — تجربة، لا كتابة)"
+        run: npm run backfill:eli-slugs
+
+      - name: "⑤ تحقّق النواة الكاملة (قراءة فقط)"
+        run: npm run qa:db
+
+      # ── ما يلي يكتب في القاعدة: مُقفل خلف mode=apply + بوّابة التأكيد ──
+      - name: "🔒 بوّابة الكتابة"
+        if: ${{ inputs.mode == 'apply' }}
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED مع mode=apply."
+            exit 1
+          fi
+
+      - name: "⑥ migration: فهرس sortOrder (المرحلة ١، idempotent)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260625140000_sync_system_classification_sortorder_index/migration.sql
+
+      - name: "⑦ migration: عمود eli_slug (المرحلة ٣، idempotent)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260625150000_add_system_eli_slug/migration.sql
+
+      - name: "⑧ ملء eli_slug وتجميده (--apply)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npm run backfill:eli-slugs -- --apply
+
+      - name: "⑨ تحقّق بعد الكتابة (قراءة فقط): migrate status + التغطية"
+        if: ${{ inputs.mode == 'apply' }}
+        run: |
+          npx prisma migrate status || true
+          npm run backfill:eli-slugs
+          npm run qa:db
