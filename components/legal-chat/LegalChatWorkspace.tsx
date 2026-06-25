@@ -288,7 +288,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
 
       {/* الوسط: الشات */}
       <section className="order-1 flex min-h-[calc(100vh-12rem)] flex-col lg:order-2">
-        <div ref={scrollRef} className="flex-1 space-y-5 overflow-y-auto pb-4">
+        <div ref={scrollRef} className="flex-1 space-y-5 overflow-y-auto pb-28 lg:pb-6">
           {turns.length === 0 ? (
             <div className="flex flex-col items-center pt-[6vh] text-center">
               <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-3xl text-[var(--gold-bright)] shadow-[var(--sh-md)]">
@@ -379,57 +379,62 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
         </div>
 
         {/* الأسفل: مربع الإدخال الذكي */}
-        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-2">
-          {/* أدوات: نمط + قوة بحث */}
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value as SimulationMode)}
-              className="rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
-              title="نمط المحاكاة"
-            >
-              {config.modes.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={strength}
-              onChange={(e) => setStrength(e.target.value as SearchStrength)}
-              className="rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
-              title="قوة البحث"
-            >
-              {config.strengths.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setShowPrompts((v) => !v)}
-              className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
-            >
-              مكتبة الأوامر
-            </button>
-            <button
-              type="button"
-              onClick={() => setRedact((v) => !v)}
-              aria-pressed={redact}
-              title="إخفاء البيانات الحساسة (هوية/جوال/آيبان) في المخرجات"
-              className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                redact ? "border-[var(--ruby)] bg-[var(--ruby-soft)] text-[var(--ruby)]" : "border-[var(--ink-15)] bg-white text-[var(--ink-60)] hover:border-[var(--gold)]"
-              }`}
-            >
-              {redact ? "🛡️ الإخفاء مُفعّل" : "🛡️ إخفاء البيانات"}
-            </button>
-            {currentCase && (
-              <span className="rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">
-                حالة الملف: {currentCase.status === "READY" ? "جاهز" : currentCase.status === "INCOMPLETE" ? "ناقص" : "مسودة"}
-              </span>
-            )}
-          </div>
+        <div
+          className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-2"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          {/* الخيارات المتقدمة داخل زر الإعدادات ⚙️ (مطوية افتراضيًا — لا تزاحم المحادثة) */}
+          {showTools && (
+            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white p-2">
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value as SimulationMode)}
+                className="rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
+                title="نمط المحاكاة"
+              >
+                {config.modes.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={strength}
+                onChange={(e) => setStrength(e.target.value as SearchStrength)}
+                className="rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
+                title="قوة البحث"
+              >
+                {config.strengths.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowPrompts((v) => !v)}
+                className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
+              >
+                مكتبة الأوامر
+              </button>
+              <button
+                type="button"
+                onClick={() => setRedact((v) => !v)}
+                aria-pressed={redact}
+                title="إخفاء البيانات الحساسة (هوية/جوال/آيبان) في المخرجات"
+                className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  redact ? "border-[var(--ruby)] bg-[var(--ruby-soft)] text-[var(--ruby)]" : "border-[var(--ink-15)] bg-white text-[var(--ink-60)] hover:border-[var(--gold)]"
+                }`}
+              >
+                {redact ? "🛡️ الإخفاء مُفعّل" : "🛡️ إخفاء البيانات"}
+              </button>
+              {currentCase && (
+                <span className="rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">
+                  حالة الملف: {currentCase.status === "READY" ? "جاهز" : currentCase.status === "INCOMPLETE" ? "ناقص" : "مسودة"}
+                </span>
+              )}
+            </div>
+          )}
 
           {showPrompts && (
             <div className="mb-2 flex flex-wrap gap-1.5 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white p-2">
@@ -486,6 +491,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
             <textarea
               value={value}
               onChange={(e) => setValue(e.target.value)}
+              onFocus={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -494,7 +500,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
               }}
               rows={1}
               placeholder="اشرح قضيتك بكلماتك… (مثال: جاني تبليغ من المحكمة وأبغى أرد على دعوى)"
-              className="max-h-44 min-h-[46px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
+              className="max-h-36 min-h-[40px] w-full resize-none border-0 bg-transparent px-2 py-1.5 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
             />
             <div className="flex items-center justify-between gap-2 px-1">
               <div className="flex items-center gap-1">

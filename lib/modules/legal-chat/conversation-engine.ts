@@ -32,6 +32,17 @@ export type UserLevel = "layperson" | "legal_practitioner" | "unknown";
 export type Dialect = "saudi" | "msa" | "mixed" | "unknown";
 export type ToneNeeded = "warm" | "urgent" | "professional" | "reassuring";
 
+/** حالة تجربة المحادثة (الشات أولًا، التقرير لاحقًا). */
+export type ConversationStage =
+  | "greeting"
+  | "intake"
+  | "clarifying"
+  | "understanding_confirmation"
+  | "analysis_ready"
+  | "report_ready"
+  | "report_shown"
+  | "drafting";
+
 export interface ConversationResult {
   messageType: ConversationMessageType;
   stage: UnderstandingStage;
@@ -308,4 +319,47 @@ function buildGuidedIntake(
     nextQuestion: "ما الذي تريده تحديدًا؟",
     buttons: ["أريد رفع دعوى", "أريد الرد على دعوى", "تقييم موقفي", "أرفع مستند"],
   };
+}
+
+// ── طلب عرض التقرير (الشات أولًا، التقرير بعد موافقة المستخدم) ──
+const SHOW_REPORT_SIGNALS = [
+  "اعرض التقرير", "عرض التقرير", "نعم اعرض", "اعرض التحليل", "عرض التحليل", "التحليل التفصيلي",
+  "اعرض ملف القضيه", "ملف القضيه", "التقرير الاولي", "اعرض التقرير الاولي", "ابغى التقرير", "ورني التقرير",
+  "نعم التقرير", "اعرض التفاصيل",
+];
+const DRAFT_SIGNALS = ["صغ مذكره", "اكتب مذكره", "جهز مذكره", "اعد مذكره", "صياغه مذكره", "صغ لائحه", "اكتب لائحه", "صغ المذكره"];
+
+/** يكشف ما إذا طلب المستخدم عرض التقرير الكامل أو جزءاً منه أو صياغة مذكرة. */
+export function detectReportRequest(message: string): {
+  show: boolean;
+  partial: "evidence" | "similar" | "strategies" | null;
+  draft: boolean;
+} {
+  const n = normalizeArabic(message);
+  const partial: "evidence" | "similar" | "strategies" | null =
+    /خطه اثبات فقط|اعرض خطه الاثبات|خطه الاثبات فقط/.test(n)
+      ? "evidence"
+      : /الاحكام المشابهه فقط|اعرض الاحكام|احكام مشابهه فقط/.test(n)
+        ? "similar"
+        : /مقارنه الاستراتيجيات فقط|الاستراتيجيات فقط|قارن الاستراتيجيات/.test(n)
+          ? "strategies"
+          : null;
+  const show = hasAny(n, SHOW_REPORT_SIGNALS) || partial !== null;
+  const draft = hasAny(n, DRAFT_SIGNALS);
+  return { show, partial, draft };
+}
+
+/** يحوّل مستوى الفهم إلى حالة محادثة أساسية. */
+export function baseStage(stage: UnderstandingStage): ConversationStage {
+  switch (stage) {
+    case "GreetingOnly":
+      return "greeting";
+    case "NonLegalSmallTalk":
+      return "intake";
+    case "WeakLegalSignal":
+    case "ProbableLegalIntent":
+      return "clarifying";
+    default:
+      return "analysis_ready";
+  }
 }

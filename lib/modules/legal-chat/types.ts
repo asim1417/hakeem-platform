@@ -507,4 +507,5 @@ export interface ChatTurnResult {
   userLevel: string; // layperson | legal_practitioner | unknown
   suggestedButtons: string[]; // أزرار متابعة (كل زرّ نصّ يُرسَل عند الضغط)
   conversational: boolean; // دورة حوارية (بلا بطاقات تحليل ثقيلة)؟
+  stage: string; // ConversationStage: greeting … report_shown — يحكم عرض التقرير
 }

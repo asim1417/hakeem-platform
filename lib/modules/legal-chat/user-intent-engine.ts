@@ -13,6 +13,7 @@ import type {
   OutputRisk,
   ProceduralStage,
   RequestedOutput,
+  SimulationCaseFile,
   UnderstandingLevel,
   UserLegalRole,
 } from "./types";
@@ -326,4 +327,27 @@ export async function detectIntent(message: string, documentsCount = 0): Promise
   } catch {
     return base;
   }
+}
+
+/**
+ * يبني نيّة من ملف القضية المتراكم (لتشغيل التقرير عند طلب «اعرض التقرير»
+ * بينما الرسالة الحالية مجرّد موافقة لا تحمل وقائع).
+ */
+export function intentFromCaseFile(cf: SimulationCaseFile): IntentResult {
+  const factsText = cf.facts.map((f) => f.text).join(". ");
+  const base = detectIntentDeterministic(
+    [factsText, cf.claims ?? "", cf.disputeType].filter(Boolean).join(". ")
+  );
+  return {
+    ...base,
+    userRole: cf.userRole !== "UNKNOWN" ? cf.userRole : base.userRole,
+    track: cf.track !== "UNKNOWN" ? cf.track : base.track,
+    proceduralStage: cf.proceduralStage !== "UNKNOWN" ? cf.proceduralStage : base.proceduralStage,
+    disputeType: cf.disputeType || base.disputeType,
+    claims: cf.claims ?? base.claims,
+    defenses: cf.defenses ?? base.defenses,
+    hasArbitrationClause: cf.hasArbitrationClause,
+    claimValue: cf.claimValue ?? base.claimValue,
+    facts: factsText || base.facts,
+  };
 }
