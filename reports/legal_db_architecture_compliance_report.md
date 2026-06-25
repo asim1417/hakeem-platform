@@ -6,13 +6,15 @@
 
 ## ملخّص المطابقة على المعايير العالمية
 
-| المعيار | الحالة (كود) | التحقّق على Neon | الأداة |
+تشغيل diagnose على Neon (run #1، المضيف `ep-icy-rice-…neon.tech`) أكّد القراءات:
+
+| المعيار | الحالة (كود) | التحقّق على Neon (diagnose) | الأداة |
 |---|---|---|---|
-| **ELI**: معرّف دائم لكل مادة | ✅ `eliSlug` مُجمّد + `buildArticleEli` منه | ⏳ بعد `backfill:eli-slugs` | `npm run backfill:eli-slugs` |
-| **التكامل المرجعي**: صفر dangling في `legal_relations` | ✅ فاحص قراءة-فقط | ⏳ تشغيل الفاحص | `npm run qa:relations` |
-| **الربط بالـid** بدل `lawName` | ✅ التنويع على `legalSystemId`؛ citation/KG بالـid أصلًا | ⏳ تشخيص التغطية | `npm run diagnose:id-linking` |
-| **مصدر embedding واحد** | ✅ pgvector مصدر وحيد؛ Json مهجور بلا كتابة | ⏳ تأكيد 100% | `npm run qa:embedding-source` |
-| **تطابق المخطط مع Neon**: لا drift | ✅ الحقول + الفهارس في المخطط ومايغريشن idempotent | ⏳ `prisma migrate status` | عبر workflow |
+| **ELI**: معرّف دائم لكل مادة | ✅ `eliSlug` مُجمّد + `buildArticleEli` منه | ⏳ يُملأ في apply (العمود يُنشأ ثم يُجمّد) | `npm run backfill:eli-slugs` |
+| **التكامل المرجعي**: صفر dangling في `legal_relations` | ✅ فاحص قراءة-فقط | ✅ **صفر dangling** (64,801 علاقة، article 5418/5418) | `npm run qa:relations` |
+| **الربط بالـid** بدل `lawName` | ✅ التنويع على `legalSystemId`؛ citation/KG بالـid أصلًا | ✅ **تغطية 100%** (0 مادة بلا نظام، 0 lawName غير مطابق) | `npm run diagnose:id-linking` |
+| **مصدر embedding واحد** | ✅ pgvector مصدر وحيد؛ Json مهجور بلا كتابة | ✅ **pgvector 15,902 (تغطية 100%)**؛ أرشيف Json 15,902 | `npm run qa:embedding-source` |
+| **تطابق المخطط مع Neon**: لا drift | ✅ الحقول + الفهارس في المخطط ومايغريشن idempotent | ⏳ `prisma migrate status` في apply | عبر workflow |
 
 ## التفصيل لكل مرحلة
 
