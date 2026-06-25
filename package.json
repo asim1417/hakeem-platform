@@ -40,6 +40,7 @@
     "qa:db": "tsx scripts/qa-db.ts",
     "diagnose:id-linking": "tsx scripts/diagnose-id-linking.ts",
     "backfill:eli-slugs": "tsx scripts/backfill-eli-slugs.ts",
+    "qa:relations": "tsx scripts/qa-relations-integrity.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts",
     "qa:citations": "tsx scripts/qa-citations.ts",
