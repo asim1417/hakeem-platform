@@ -114,6 +114,7 @@ model LegalSystem {
   updatedAt      DateTime       @updatedAt
 
   @@index([domain])
+  @@index([sortOrder])
   @@map("legal_systems")
 }
 
