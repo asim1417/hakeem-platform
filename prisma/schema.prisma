@@ -63,6 +63,8 @@ model User {
   training      TrainingProgress[]
   annotations   Annotation[]
   folders       Folder[]
+  chatConversations ChatConversation[]
+  simulationCases   SimulationCase[]
 
   @@map("users")
 }
@@ -692,4 +694,88 @@ model FiqhArticleAlignment {
   @@index([articleId])
   @@index([reviewStatus])
   @@map("fiqh_article_alignments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// منصة العمل القضائية الذكية (Legal AI Workspace) — الشات القضائي + المحاكاة
+// المرحلة التاسعة: الحفظ. ملاحظة حوكمة: لا تُطبَّق هذه الجداول على قاعدة الإنتاج
+// إلا عبر migration وبإذن صريح. كود الحفظ في التطبيق best-effort (try/catch)
+// بحيث تعمل الواجهة حتى قبل تفعيل الجداول.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ChatConversation {
+  id        String          @id @default(cuid())
+  title     String
+  userId    String          @map("user_id")
+  user      User            @relation(fields: [userId], references: [id])
+  caseId    String?         @map("case_id")
+  case      SimulationCase? @relation(fields: [caseId], references: [id])
+  mode      String          @default("RESEARCHER")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id              String           @id @default(cuid())
+  conversationId  String           @map("conversation_id")
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            String // user | assistant | system
+  content         String
+  attachments     Json?
+  extractedIntent Json?            @map("extracted_intent")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@index([conversationId])
+  @@map("chat_messages")
+}
+
+model SimulationCase {
+  id                   String   @id @default(cuid())
+  title                String
+  userId               String   @map("user_id")
+  user                 User     @relation(fields: [userId], references: [id])
+  userRole             String?  @map("user_role")
+  disputeType          String?  @map("dispute_type")
+  trackType            String?  @map("track_type")
+  proceduralStage      String?  @map("procedural_stage")
+  status               String   @default("DRAFT")
+  summary              String?
+  claimValue           String?  @map("claim_value")
+  hasArbitrationClause Boolean? @map("has_arbitration_clause")
+  facts                Json?
+  parties              Json?
+  evidence             Json?
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  conversations ChatConversation[]
+  runs          SimulationRun[]
+
+  @@index([userId])
+  @@map("simulation_cases")
+}
+
+model SimulationRun {
+  id                 String          @id @default(cuid())
+  caseId             String?         @map("case_id")
+  case               SimulationCase? @relation(fields: [caseId], references: [id])
+  userId             String?         @map("user_id")
+  mode               String
+  outputType         String?         @map("output_type")
+  inputSnapshot      Json?           @map("input_snapshot")
+  understoodRequest  Json?           @map("understood_request")
+  userApprovalStatus String          @default("PENDING") @map("user_approval_status")
+  retrievedArticles  Json?           @map("retrieved_articles")
+  output             String?
+  warnings           Json?
+  confidence         Float?
+  createdAt          DateTime        @default(now()) @map("created_at")
+
+  @@index([caseId])
+  @@map("simulation_runs")
 }
