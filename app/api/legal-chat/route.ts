@@ -12,7 +12,7 @@ const SIM_MODES = ["RESEARCHER", "PLAINTIFF_LAWYER", "DEFENDANT_LAWYER", "OPPONE
 const SEARCH_STRENGTHS = ["QUICK", "BALANCED", "DEEP", "JUDICIAL_EXTENDED", "ARBITRATION"] as const;
 
 const schema = z.object({
-  message: z.string().trim().min(2, "اكتب رسالتك (حرفان فأكثر).").max(8000),
+  message: z.string().trim().min(1, "اكتب رسالتك.").max(8000),
   mode: z.enum(SIM_MODES).default("RESEARCHER"),
   searchStrength: z.enum(SEARCH_STRENGTHS).default("BALANCED"),
   approval: z.enum(["CONFIRM", "DRAFT_WITH_ASSUMPTIONS"]).nullable().optional(),
@@ -39,6 +39,10 @@ const schema = z.object({
       })
     )
     .max(20)
+    .optional(),
+  history: z
+    .array(z.object({ role: z.string().max(20), content: z.string().max(8000) }))
+    .max(40)
     .optional(),
 });
 
@@ -74,6 +78,7 @@ export async function POST(request: NextRequest) {
           mode: data.dialogue.mode ?? "normal",
         }
       : undefined,
+    history: data.history,
   };
 
   const result = await runChatTurn(turnInput);

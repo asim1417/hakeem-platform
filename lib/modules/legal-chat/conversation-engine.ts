@@ -383,6 +383,7 @@ export type MessageIntent =
   | "legal_request"
   | "clear_legal_request"
   | "case_fact"
+  | "incident"
   | "court_document_reference"
   | "document_reference"
   | "answer_to_question"
@@ -391,6 +392,7 @@ export type MessageIntent =
   | "frustration_or_confusion"
   | "report_request"
   | "draft_request"
+  | "unclear"
   | "unknown";
 
 /** SaudiLegalPhraseMapper — معانٍ قانونية محتملة (احتمالية لا جزم). */
@@ -433,10 +435,16 @@ const VAGUE_MARKERS = ["معقده", "معقد", "صعبه", "صعب", "متشا
 const SOCIAL_MARKERS = ["وش الاخبار", "وش اخبارك", "كيف الحال", "كيف حالك", "شخبارك", "شلونك", "اخبارك", "وش مسوي"];
 // رياضة/أخبار خارج النطاق.
 const SPORTS_NEWS_MARKERS = ["مباراه", "المنتخب", "الدوري", "نادي", "النصر", "الهلال", "الاتحاد", "الاهلي", "كوره", "لاعب", "هدف", "الطقس", "الجو حار"];
+// مواضيع عامة خارج التخصّص القانوني (أكل/سفر/طقس/فن/جغرافيا…).
+const NON_LEGAL_TOPIC_MARKERS = ["اكله", "اكل", "طعام", "وجبه", "مطعم", "طبخ", "وصفه", "سفر", "سياحه", "وجهه سياحيه", "فيلم", "مسلسل", "اغنيه", "لون", "جغرافيا", "عاصمه", "دوله", "اندونيسيا", "الطقس", "نكته", "برمجه", "رياضيات", "تاريخ العالم"];
+// كلمات استفهام (للتمييز بين سؤال عام وسؤال قانوني).
+const QUESTION_WORDS = ["وش", "ايش", "كيف", "اين", "وين", "متى", "ليش", "كم", "هل", "ما هي", "ما هو"];
 // احتمال قضية مستهلك.
 const CONSUMER_MARKERS = ["اشتريت", "شريت", "بضاعه", "منتج", "سلعه", "فاسد", "فاسده", "معيب", "معيبه", "تالف", "المتجر", "المحل", "البائع", "استبدال", "استرجاع", "ضمان"];
 // إشارة مستند قضائي.
 const COURT_DOC_MARKERS = ["جاني تبليغ", "وصلني تبليغ", "ورقه من ناجز", "ورقة من ناجز", "تبليغ من المحكمه", "صحيفه دعوى", "ورقه من المحكمه", "رساله من المحكمه", "ابلغوني"];
+// واقعة بسيطة (جريمة/اعتداء/فقد) — توجيه عملي + سؤال عن البلاغ، لا تقرير ولا مصادر.
+const INCIDENT_MARKERS = ["انسرق", "انسرقت", "سرقوا", "سرق", "نشل", "ضاع", "ضاعت", "فقدت", "اعتدى", "ضربني", "تعدى علي", "نصب علي", "احتيال", "ابتزاز", "هددني", "تهديد", "دخلوا بيتي", "تحرش"];
 
 const NEGATED_CONCEPTS: { keys: string[]; assumption: string }[] = [
   { keys: ["عقدي", "عقديه", "عقد"], assumption: "نزاع عقدي" },
@@ -488,6 +496,22 @@ export function classifyDialogue(
 ): DialogueDecision | null {
   const n = normalizeArabic(message);
   const dialogue = normalizeDialogue(prev);
+  const stripped = n.replace(/\s/g, "");
+  const hasArabic = /[ء-ي]/.test(n);
+
+  // ٠) رسالة ناقصة (حرف/حرفان) أو ضجيج عشوائي (أحرف مكررة/غير عربية بلا معنى) → طلب توضيح.
+  const isRepeatedNoise = /^(.)\1{2,}$/.test(stripped); // مثل «IIII» أو «ههههه»
+  const isGibberish = !hasArabic && !/^\d+$/.test(stripped) && stripped.length <= 12;
+  if (stripped.length <= 2 || isRepeatedNoise || isGibberish) {
+    return {
+      intent: "unclear",
+      reply:
+        "ما وصلتني رسالة واضحة 🙂. اكتب لي موضوعك بجملة بسيطة بطريقتك — مثل: «جاني تبليغ من المحكمة» أو «شركة تطالبني بمبلغ» — وأنا أساعدك خطوة خطوة.",
+      buttons: PATH_BUTTONS,
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
 
   // ١) ملاحظة على أداء الشات (meta) — أعلى أولوية، حتى لو حملت كلمات قضية.
   if (hasAny(n, FEEDBACK_MARKERS)) {
@@ -545,6 +569,18 @@ export function classifyDialogue(
     };
   }
 
+  // ٥-أ) واقعة بسيطة (جريمة/فقد/اعتداء) → توجيه عملي + سؤال واحد عن البلاغ، بلا تقرير ولا مصادر.
+  if (hasAny(n, INCIDENT_MARKERS)) {
+    return {
+      intent: "incident",
+      reply:
+        "أنا معك، ولا يهمّك — نبدأ بالأهم عمليًا.\nفي مثل هذه الوقائع، الخطوة الأولى غالبًا تقديم بلاغ لدى الجهة المختصة (الشرطة/أبشر أو منصة «أبشر أفراد»). سؤال واحد فقط: هل قدّمت بلاغًا حتى الآن؟",
+      buttons: ["نعم، قدّمت بلاغًا", "لا، لم أبلّغ بعد", "أبغى أعرف كيف أبلّغ", "عندي تفاصيل أكثر"],
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+
   // ٥) دردشة اجتماعية / رياضة-أخبار / احتمال مستهلك — فقط عند غياب أي إشارة قانونية.
   if (noConcrete && hasAny(n, SPORTS_NEWS_MARKERS) && !hasAny(n, CONSUMER_MARKERS)) {
     return {
@@ -552,6 +588,19 @@ export function classifyDialogue(
       reply:
         "هذا خارج تخصّصي القانوني 🙂، لكن لو عندك سؤال قانوني متعلق بالرياضة — مثل عقد لاعب، أو تذاكر، أو حقوق بث، أو نزاع رياضي — أقدر أساعدك فيه.",
       buttons: ["عندي نزاع رياضي", "عندي عقد", "موضوع آخر"],
+      dialogue,
+      blockAnalysis: true,
+    };
+  }
+  // سؤال عام خارج التخصّص (أكل/جغرافيا/طقس/فن…) → ردّ «خارج تخصّصي» لطيف، لا القالب القانوني.
+  if (noConcrete && hasAny(n, NON_LEGAL_TOPIC_MARKERS) && !hasAny(n, WEAK_LEGAL_WORDS) && !hasAny(n, VAGUE_MARKERS)) {
+    const isQuestion = hasAny(n, QUESTION_WORDS) || /\?|؟/.test(message);
+    return {
+      intent: "non_legal_general",
+      reply:
+        (isQuestion ? "هذا سؤال عام خارج تخصّصي القانوني 🙂. " : "هذا خارج تخصّصي القانوني 🙂. ") +
+        "أنا هنا للمواضيع القضائية والقانونية السعودية — مثل دعوى، أو مذكرة، أو عقد، أو حكم. عندك موضوع من هذا النوع؟",
+      buttons: PATH_BUTTONS,
       dialogue,
       blockAnalysis: true,
     };
