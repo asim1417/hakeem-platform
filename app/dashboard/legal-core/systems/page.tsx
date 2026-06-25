@@ -9,24 +9,35 @@ export const dynamic = "force-dynamic";
 export default async function LegalCoreSystemsPage({
   searchParams
 }: {
-  searchParams?: { q?: string; classification?: string; page?: string };
+  searchParams?: { q?: string; classification?: string; domain?: string; page?: string };
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
   const q = (searchParams?.q ?? "").trim();
   const classification = (searchParams?.classification ?? "").trim();
+  const domain = (searchParams?.domain ?? "").trim();
   const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);
 
-  const { items, total, pageSize, classifications } = await listSystems({ q, classification, page });
+  const { items, total, pageSize, domains } = await listSystems({ q, classification, domain, page });
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const qp = (extra: Record<string, string | number>) => {
     const sp = new URLSearchParams();
     if (q) sp.set("q", q);
     if (classification) sp.set("classification", classification);
+    if (domain) sp.set("domain", domain);
     for (const [k, v] of Object.entries(extra)) sp.set(k, String(v));
     const s = sp.toString();
     return `/dashboard/legal-core/systems${s ? `?${s}` : ""}`;
   };
+
+  // تجميع عناصر الصفحة حسب المجال (domainTitle) مع الحفاظ على ترتيب sortOrder.
+  const groups: { title: string; systems: typeof items }[] = [];
+  for (const sys of items) {
+    const title = sys.domainTitle ?? "غير مصنّف";
+    const last = groups[groups.length - 1];
+    if (last && last.title === title) last.systems.push(sys);
+    else groups.push({ title, systems: [sys] });
+  }
 
   return (
     <LegalCoreShell>
@@ -54,18 +65,18 @@ export default async function LegalCoreSystemsPage({
           ) : null}
         </form>
 
-        {classifications.length ? (
+        {domains.length ? (
           <div className="flex flex-wrap gap-2">
-            <Link href={q ? `/dashboard/legal-core/systems?q=${encodeURIComponent(q)}` : "/dashboard/legal-core/systems"} className={!classification ? "opacity-100" : "opacity-70"}>
-              <LegalTopicBadge tone={!classification ? "emerald" : "amber"}>الكل</LegalTopicBadge>
+            <Link href={q ? `/dashboard/legal-core/systems?q=${encodeURIComponent(q)}` : "/dashboard/legal-core/systems"} className={!domain ? "opacity-100" : "opacity-70"}>
+              <LegalTopicBadge tone={!domain ? "emerald" : "amber"}>كل المجالات</LegalTopicBadge>
             </Link>
-            {classifications.map((c) => {
+            {domains.map((d) => {
               const sp = new URLSearchParams();
               if (q) sp.set("q", q);
-              sp.set("classification", c);
+              sp.set("domain", d.domain);
               return (
-                <Link key={c} href={`/dashboard/legal-core/systems?${sp.toString()}`} className={classification === c ? "opacity-100" : "opacity-70"}>
-                  <LegalTopicBadge tone={classification === c ? "emerald" : "amber"}>{c}</LegalTopicBadge>
+                <Link key={d.domain} href={`/dashboard/legal-core/systems?${sp.toString()}`} className={domain === d.domain ? "opacity-100" : "opacity-70"}>
+                  <LegalTopicBadge tone={domain === d.domain ? "emerald" : "amber"}>{d.domainTitle}</LegalTopicBadge>
                 </Link>
               );
             })}
@@ -77,9 +88,20 @@ export default async function LegalCoreSystemsPage({
         </p>
 
         {items.length ? (
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((system) => <LegalSystemCard key={system.lawName} system={system} />)}
-          </section>
+          <div className="space-y-7">
+            {groups.map((g) => (
+              <section key={g.title}>
+                <h2 className="mb-3 flex items-center gap-2 font-display-ar text-base font-bold text-[var(--navy)]">
+                  <span className="h-4 w-1 rounded bg-[var(--gold)]" />
+                  {g.title}
+                  <span className="font-mono-legal text-xs text-[var(--ink-40)]">({g.systems.length.toLocaleString("ar-SA")})</span>
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {g.systems.map((system) => <LegalSystemCard key={system.id ?? system.lawName} system={system} />)}
+                </div>
+              </section>
+            ))}
+          </div>
         ) : (
           <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-6 text-center text-sm text-[var(--navy)]">
             لا توجد أنظمة مطابقة لبحثك.

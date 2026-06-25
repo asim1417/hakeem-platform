@@ -118,7 +118,18 @@ async function main() {
     });
   }
 
-  const systems = Array.from(systemCounts.keys());
+  // حارس: لا تكتب بذرة الـ9 (1981 مادة) فوق نواة كاملة موجودة (مثل Neon: 15,902 مادة).
+  // يبقى ملف الـ9 أرشيفًا؛ للإجبار صراحةً: SEED_LEGAL_LIBRARY_FORCE=1
+  const existingArticles = await prisma.legalArticle.count().catch(() => 0);
+  const forceSeed = process.env.SEED_LEGAL_LIBRARY_FORCE === "1";
+  const skipLibrary = existingArticles > EXPECTED_ARTICLES && !forceSeed;
+  if (skipLibrary) {
+    console.log(
+      `⚠️ القاعدة تحوي ${existingArticles} مادة (> ${EXPECTED_ARTICLES}) — تخطّي بذر المكتبة المختصرة لحماية النواة الكاملة. للإجبار: SEED_LEGAL_LIBRARY_FORCE=1`
+    );
+  }
+
+  const systems = skipLibrary ? [] : Array.from(systemCounts.keys());
   for (const lawName of systems) {
     const articleCount = systemCounts.get(lawName) ?? 0;
     await prisma.legalSystem.upsert({
@@ -135,7 +146,7 @@ async function main() {
     });
   }
 
-  for (const article of articles) {
+  for (const article of skipLibrary ? [] : articles) {
     const legalSystem = await prisma.legalSystem.findUniqueOrThrow({ where: { name: article.law_name } });
     await prisma.legalArticle.upsert({
       where: {

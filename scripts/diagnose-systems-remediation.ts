@@ -67,6 +67,22 @@ async function main() {
   console.log(`في الملف وليست في القاعدة = ${inFileNotInDb.length}`);
   inFileNotInDb.slice(0, 15).forEach((n) => console.log(`   • ${n}`));
 
+  // الأنظمة غير المربوطة بأي مادة عبر id (الفارق 489↔485) — تُعرض ولا تُصلَح تلقائيًا.
+  const linkedRows = await prisma.legalArticle
+    .findMany({ where: { legalSystemId: { not: null } }, distinct: ["legalSystemId"], select: { legalSystemId: true } })
+    .catch(() => [] as { legalSystemId: string | null }[]);
+  const linkedIds = new Set(linkedRows.map((r) => r.legalSystemId));
+  const unlinkedSystems = await prisma.legalSystem
+    .findMany({ where: { id: { notIn: [...linkedIds].filter((x): x is string => !!x) } }, select: { id: true, name: true, articleCount: true } })
+    .catch(() => [] as { id: string; name: string; articleCount: number }[]);
+  console.log("\n=== ②ب أنظمة بلا مواد مرتبطة عبر id (للعرض فقط — لا إصلاح تلقائي) ===");
+  console.log(`العدد = ${unlinkedSystems.length}`);
+  unlinkedSystems.forEach((s) => {
+    const hasArticlesByName = dbSystems.length >= 0; // معلومة مساعدة
+    void hasArticlesByName;
+    console.log(`   • «${s.name}» (articleCount=${s.articleCount})`);
+  });
+
   // توزيع اليتيمة حسب lawName + قابلية الربط
   if (orphanCount > 0) {
     const orphanByLaw = await prisma.legalArticle

@@ -42,6 +42,8 @@ export type AdvancedLegalSearchOptions = {
   searchType?: ArabicSearchType;
   categoryIds?: string[];
   systemIds?: string[];
+  /** فلترة اختيارية بمجال النظام المصنّف (legal_systems.domain) — لا تؤثر إن لم تُمرَّر. */
+  domain?: string;
   sourceTypes?: string[];
   fields?: string[];
   page?: number;
@@ -208,6 +210,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const where: Record<string, unknown> = {
     AND: [
       buildSystemFilter(options.systemIds),
+      buildDomainFilter(options.domain),
       buildCategoryFilter(options.categoryIds),
       buildSourceTypeFilter(options.sourceTypes),
       buildTextFilter(filterVariants, fields)
@@ -588,6 +591,13 @@ function buildSystemFilter(systemIds?: string[]) {
       { lawName: { contains: value, mode: "insensitive" as const } }
     ])
   };
+}
+
+// فلترة اختيارية بمجال النظام المصنّف — عبر علاقة legalSystem.domain.
+function buildDomainFilter(domain?: string) {
+  const d = domain?.trim();
+  if (!d) return {};
+  return { legalSystem: { domain: d } };
 }
 
 function buildCategoryFilter(categoryIds?: string[]) {

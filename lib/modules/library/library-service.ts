@@ -129,16 +129,27 @@ export async function getSystemDetail(idOrName: string) {
 // ── طبقة وصول موحّدة للأنظمة/المواد (DAL) — تُخرج prisma من الصفحات ──
 
 export interface SystemRow {
+  id?: string | null;
   lawName: string;
   classification: string | null;
+  code?: string | null;
+  domain?: string | null;
+  domainTitle?: string | null;
+  sortOrder?: number;
   count: number;
 }
 
 export interface SystemsQuery {
   q?: string;
   classification?: string;
+  domain?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface DomainRow {
+  domain: string;
+  domainTitle: string;
 }
 
 export interface SystemsResult {
@@ -147,14 +158,16 @@ export interface SystemsResult {
   page: number;
   pageSize: number;
   classifications: string[];
+  domains: DomainRow[];
 }
 
-/** قائمة الأنظمة مع بحث + تصفية بالتصنيف + ترقيم (لصفحة الأنظمة). */
+/** قائمة الأنظمة مع بحث + تصفية (تصنيف/مجال) + ترقيم، مرتّبة بـ sortOrder (لصفحة الأنظمة). */
 export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResult> {
   const page = Math.max(1, opts.page ?? 1);
   const pageSize = Math.min(60, Math.max(6, opts.pageSize ?? 24));
   const q = opts.q?.trim();
   const classification = opts.classification?.trim();
+  const domain = opts.domain?.trim();
   const skip = (page - 1) * pageSize;
 
   const systemCount = await prisma.legalSystem.count().catch(() => 0);
@@ -163,10 +176,12 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
     const where: Record<string, unknown> = {};
     if (q) where.name = { contains: q, mode: "insensitive" };
     if (classification) where.classification = classification;
-    const [rows, total, classRows] = await Promise.all([
+    if (domain) where.domain = domain;
+    const [rows, total, classRows, domainRows] = await Promise.all([
       prisma.legalSystem.findMany({
         where,
-        orderBy: [{ articleCount: "desc" }, { name: "asc" }],
+        // الترتيب المعتمد: sortOrder ثم عدد المواد ثم الاسم (يجمع أنظمة المجال معًا).
+        orderBy: [{ sortOrder: "asc" }, { articleCount: "desc" }, { name: "asc" }],
         skip,
         take: pageSize
       }),
@@ -176,14 +191,29 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
         select: { classification: true },
         distinct: ["classification"],
         orderBy: { classification: "asc" }
-      })
+      }),
+      prisma.legalSystem
+        .findMany({ where: { domain: { not: null } }, select: { domain: true, domainTitle: true }, distinct: ["domain"], orderBy: { sortOrder: "asc" } })
+        .catch(() => [] as { domain: string | null; domainTitle: string | null }[])
     ]);
     return {
-      items: rows.map((s) => ({ lawName: s.name, classification: s.classification, count: s.articleCount })),
+      items: rows.map((s) => ({
+        id: s.id,
+        lawName: s.name,
+        classification: s.classification,
+        code: s.code,
+        domain: s.domain,
+        domainTitle: s.domainTitle,
+        sortOrder: s.sortOrder,
+        count: s.articleCount
+      })),
       total,
       page,
       pageSize,
-      classifications: classRows.map((c) => c.classification).filter((c): c is string => !!c)
+      classifications: classRows.map((c) => c.classification).filter((c): c is string => !!c),
+      domains: domainRows
+        .filter((d): d is { domain: string; domainTitle: string } => !!d.domain && !!d.domainTitle)
+        .map((d) => ({ domain: d.domain, domainTitle: d.domainTitle }))
     };
   }
 
@@ -194,7 +224,7 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
   let laws: SystemRow[] = grouped.map((g) => ({ lawName: g.lawName, classification: null, count: g._count._all }));
   if (q) laws = laws.filter((l) => l.lawName.includes(q));
   laws.sort((a, b) => b.count - a.count || a.lawName.localeCompare(b.lawName, "ar"));
-  return { items: laws.slice(skip, skip + pageSize), total: laws.length, page, pageSize, classifications: [] };
+  return { items: laws.slice(skip, skip + pageSize), total: laws.length, page, pageSize, classifications: [], domains: [] };
 }
 
 /** قائمة مبسّطة للأنظمة (للمرشّحات والقوائم المنسدلة). */

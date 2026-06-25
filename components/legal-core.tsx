@@ -117,7 +117,8 @@ export function LegalCoreFilterPanel({ children }: { children: ReactNode }) {
   );
 }
 
-export function LegalSystemCard({ system }: { system: { id?: string | null; lawName: string; classification: string | null; count: number } }) {
+export function LegalSystemCard({ system }: { system: { id?: string | null; lawName: string; classification: string | null; count: number; code?: string | null; domainTitle?: string | null } }) {
+  // الربط بالمعرّف الثابت (id) لا بالاسم النصّي الهشّ.
   const viewHref = system.id
     ? `/dashboard/legal-core/systems/${encodeURIComponent(system.id)}`
     : `/dashboard/legal-core/systems/${encodeURIComponent(system.lawName)}`;
@@ -127,10 +128,13 @@ export function LegalSystemCard({ system }: { system: { id?: string | null; lawN
         <div className="grid h-11 w-11 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] text-[var(--gold-pale)]">
           <BookOpen size={20} />
         </div>
-        <LegalTopicBadge tone="emerald">ساري</LegalTopicBadge>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {system.code ? <span className="font-mono-legal text-[11px] font-bold text-[var(--gold-dark)]" dir="ltr">{system.code}</span> : null}
+          <LegalTopicBadge tone="emerald">ساري</LegalTopicBadge>
+        </div>
       </div>
       <h2 className="mt-4 font-display-ar text-lg font-bold leading-8 text-[var(--navy)]">{system.lawName}</h2>
-      <p className="mt-2 text-sm text-[var(--ink-60)]">{system.classification ?? "تصنيف نظامي عام"}</p>
+      <p className="mt-2 text-sm text-[var(--ink-60)]">{system.domainTitle ?? system.classification ?? "تصنيف نظامي عام"}</p>
       <div className="mt-4 flex items-center justify-between border-t border-[var(--ink-08)] pt-4">
         <span className="font-mono-legal text-sm text-[var(--gold)]">{system.count.toLocaleString("ar-SA")} مادة</span>
         <span className="text-xs text-[var(--ink-40)]">تاريخ النفاذ: عند التوفر</span>
