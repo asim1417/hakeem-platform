@@ -20,6 +20,15 @@ const schema = z.object({
   conversationId: z.string().nullable().optional(), // العميل يرسل null في أول رسالة
   redact: z.boolean().nullable().optional(),
   workflow: z.string().max(80).nullable().optional(),
+  dialogue: z
+    .object({
+      rejectedAssumptions: z.array(z.string().max(120)).max(50).optional(),
+      confirmedFacts: z.array(z.string().max(300)).max(50).optional(),
+      askedQuestions: z.array(z.string().max(300)).max(50).optional(),
+      mode: z.enum(["normal", "slow_guided_intake"]).optional(),
+    })
+    .nullable()
+    .optional(),
   attachments: z
     .array(
       z.object({
@@ -57,6 +66,14 @@ export async function POST(request: NextRequest) {
     attachments: data.attachments,
     redact: data.redact ?? undefined,
     workflow: data.workflow ?? undefined,
+    dialogue: data.dialogue
+      ? {
+          rejectedAssumptions: data.dialogue.rejectedAssumptions ?? [],
+          confirmedFacts: data.dialogue.confirmedFacts ?? [],
+          askedQuestions: data.dialogue.askedQuestions ?? [],
+          mode: data.dialogue.mode ?? "normal",
+        }
+      : undefined,
   };
 
   const result = await runChatTurn(turnInput);

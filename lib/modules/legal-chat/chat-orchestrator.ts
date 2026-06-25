@@ -1,9 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// ChatOrchestrator — قلب الشات القضائي الذكي (Chat-First).
-// القاعدة: الشات هو الطريق، التقرير هو النتيجة، والاسترجاع لا يبدأ إلا بعد فهم المسألة.
-// المسار: فهم الإنسان → حوار وأسئلة → اكتمال الحد الأدنى → عرض «اقتراح التقرير» →
-//         بعد موافقة المستخدم فقط: استرجاع مُسنَد + تحليل + بطاقات التقرير + صياغة.
-// لا قضية = لا تحليل · لا مسألة = لا مصادر · لا تقرير قبل موافقة المستخدم.
+// ChatOrchestrator — قلب الشات القضائي الذكي (Chat-First + Dialogue Intelligence).
+// القاعدة: لا تفترض قبل أن تفهم · لا تحلل قبل أن تسأل · لا تسترجع قبل أن تتضح المسألة ·
+//          لا تعرض التقرير قبل أن تنضج المحادثة · وإذا صححك المستخدم فتوقف وصحح فورًا.
 // ─────────────────────────────────────────────────────────────────────────────
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
@@ -12,12 +10,21 @@ import type {
   ChatCard,
   ChatTurnInput,
   ChatTurnResult,
+  DialogueState,
   GroundedSource,
   IntentResult,
+  LegalTrack,
   SimulationCaseFile,
 } from "./types";
 import { detectIntent, detectIntentDeterministic, intentFromCaseFile } from "./user-intent-engine";
-import { classifyConversation, detectReportRequest, baseStage, type ConversationStage } from "./conversation-engine";
+import {
+  baseStage,
+  classifyConversation,
+  classifyDialogue,
+  detectReportRequest,
+  normalizeDialogue,
+  type ConversationStage,
+} from "./conversation-engine";
 import { buildCaseFileFromIntent, isCaseSubstantive, mergeIntentIntoCaseFile } from "./case-file";
 import { buildUnderstandingCard, canProduce } from "./understanding-engine";
 import { buildProcedureMap } from "./judicial-procedure-engine";
@@ -42,7 +49,6 @@ import { buildExplain, buildStrategyComparison } from "./strategy";
 import { matchPlaybook, matchWorkflow, runWorkflow } from "./workflows";
 import { redactSections } from "./redaction";
 
-/** هل المخرج المطلوب «قابل للصياغة» كوثيقة قضائية؟ */
 function isDraftableOutput(intent: IntentResult): boolean {
   return [
     "CLAIM_SHEET", "ANSWER_MEMO", "REPLY_MEMO", "OBJECTION", "APPEAL_MEMO",
@@ -51,13 +57,28 @@ function isDraftableOutput(intent: IntentResult): boolean {
   ].includes(intent.requestedOutput);
 }
 
-/** يبني استعلام الاسترجاع من ملف القضية والنيّة. */
 function retrievalQuery(intent: IntentResult, caseFile: SimulationCaseFile): string {
   const parts = [intent.disputeType, caseFile.facts.map((f) => f.text).join(" "), intent.claims ?? ""];
   return parts.filter(Boolean).join(" ").slice(0, 1000);
 }
 
-/** قيم نتيجة موحّدة لتقليل التكرار. */
+// خرائط تسميات المسارات لإنفاذ الافتراضات المرفوضة.
+const TRACK_REJECT_LABELS: Partial<Record<LegalTrack, string[]>> = {
+  CIVIL: ["نزاع مدني", "نزاع عقدي"],
+  COMMERCIAL: ["نزاع تجاري"],
+  LABOR: ["نزاع عمالي"],
+  CRIMINAL: ["قضية جزائية"],
+};
+
+/** AssumptionManager (إنفاذ): لا يُعيد افتراض نوع نزاع رفضه المستخدم. */
+function applyRejected(det: IntentResult, rejected: string[]): IntentResult {
+  if (!rejected.length) return det;
+  const labels = TRACK_REJECT_LABELS[det.track] ?? [];
+  const blocked = rejected.includes(det.disputeType) || labels.some((l) => rejected.includes(l));
+  if (!blocked) return det;
+  return { ...det, track: "UNKNOWN", disputeType: "نزاع غير محدد التكييف" };
+}
+
 function result(args: {
   reply: string;
   cards: ChatCard[];
@@ -70,6 +91,8 @@ function result(args: {
   suggestedButtons: string[];
   conversational: boolean;
   stage: ConversationStage;
+  messageIntent: string;
+  dialogue: DialogueState;
 }): ChatTurnResult {
   return {
     reply: args.reply,
@@ -87,16 +110,15 @@ function result(args: {
     suggestedButtons: args.suggestedButtons,
     conversational: args.conversational,
     stage: args.stage,
+    messageIntent: args.messageIntent,
+    dialogue: args.dialogue,
   };
 }
 
-/** رسالة «اقتراح التقرير» بعد اكتمال الحد الأدنى (لا تظهر بطاقات بعد). */
 function reportReadyReply(cf: SimulationCaseFile): string {
   const role = ROLE_LABELS[cf.userRole];
   const track = TRACK_LABELS[cf.track];
-  const lines = [
-    `فهمت أن النزاع يدور حول ${cf.disputeType} (${track})، وأن صفتك: ${role}.`,
-  ];
+  const lines = [`فهمت أن النزاع يدور حول ${cf.disputeType} (${track})، وأن صفتك: ${role}.`];
   if (cf.defenses) lines.push(`ودفاعك الأساسي يدور حول: ${cf.defenses}.`);
   lines.push(
     "أستطيع الآن إعداد تقرير قضية أولي يتضمّن: ملخص الوقائع، المسائل القانونية، خطة الإثبات، الدفوع المحتملة، الأحكام المشابهة (عند تفعيلها)، والخطوة التالية."
@@ -105,26 +127,42 @@ function reportReadyReply(cf: SimulationCaseFile): string {
   return lines.join("\n");
 }
 
-const REPORT_READY_BUTTONS = [
-  "نعم، اعرض التقرير",
-  "اسألني قبل التقرير",
-  "صغ مذكرة جوابية",
-  "اعرض خطة إثبات فقط",
-  "اعرض الأحكام المشابهة فقط",
-];
+const REPORT_READY_BUTTONS = ["نعم، اعرض التقرير", "اسألني قبل التقرير", "صغ مذكرة جوابية", "اعرض خطة إثبات فقط", "اعرض الأحكام المشابهة فقط", "لا، أكمل الحوار"];
 
-/**
- * تشغيل دورة شات واحدة (Chat-First).
- */
+/** تشغيل دورة شات واحدة. */
 export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult> {
   const documentsCount = input.attachments?.length ?? 0;
-  const det = detectIntentDeterministic(input.message, documentsCount);
-  const conv = classifyConversation(input.message, det, !!input.caseFile);
-  const reportReq = detectReportRequest(input.message);
+  const dialogue0 = normalizeDialogue(input.dialogue);
+  const detRaw = detectIntentDeterministic(input.message, documentsCount);
+  const det = applyRejected(detRaw, dialogue0.rejectedAssumptions); // لا يُعاد افتراض مرفوض
   const aiMeta = await resolveAiProvider().catch(() => ({ name: "offline", model: "" }));
+  const reportReq = detectReportRequest(input.message);
+  const conv = classifyConversation(input.message, det, !!input.caseFile);
   const convInfo = { messageType: conv.messageType, understandingStage: conv.stage, userLevel: conv.userLevel };
 
-  // راكم ملف القضية (Case Memory) — لا تنشئ ملفاً عند التحية المجرّدة.
+  // ── (١) ConversationRepairEngine: ملاحظة على الأداء/تصحيح/قلق/غموض → حوار يوقف الاستنتاج ──
+  const special = classifyDialogue(input.message, det, dialogue0);
+  if (special) {
+    // حافظ على ذاكرة القضية القائمة دون إضافة افتراض جديد.
+    const cf = input.caseFile ? mergeIntentIntoCaseFile(input.caseFile, applyRejected(det, special.dialogue.rejectedAssumptions)) : null;
+    return result({
+      reply: special.reply,
+      cards: [],
+      intent: det,
+      caseFile: cf,
+      awaiting: true,
+      provider: aiMeta,
+      generated: false,
+      conv: { ...convInfo, messageType: special.intent },
+      suggestedButtons: special.buttons,
+      conversational: true,
+      stage: special.intent === "vague_case_signal" ? "clarifying" : "intake",
+      messageIntent: special.intent,
+      dialogue: special.dialogue,
+    });
+  }
+
+  // راكم ملف القضية (لا تنشئ ملفاً عند التحية المجرّدة).
   const mergedCase: SimulationCaseFile | null = input.caseFile
     ? mergeIntentIntoCaseFile(input.caseFile, det)
     : conv.stage !== "GreetingOnly" && conv.stage !== "NonLegalSmallTalk"
@@ -134,7 +172,27 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   const substantive = !!mergedCase && (isCaseSubstantive(mergedCase) || conv.runAnalysis);
   const askedReport = reportReq.show || reportReq.partial !== null || reportReq.draft || !!input.approval;
 
-  // ── الطور الحواري: تحية/دردشة/إشارة ضعيفة/نيّة ناقصة → شات فقط (بلا بطاقات/استرجاع) ──
+  // ── (٢) طلب التقرير دون قضية مكتملة → رفض لطيف (لا تقرير فارغ) ──
+  if ((reportReq.show || reportReq.partial) && !substantive) {
+    return result({
+      reply:
+        "ما زالت بيانات القضية غير مكتملة، ولا أحب أن أعرض تقريرًا ناقصًا قد يضلّلك.\nخلنا نكمل بسرعة: اكتب لي وقائع القضية باختصار (ماذا حصل؟ ومن الطرف الآخر؟ وفي أي مرحلة؟)، ثم أعرض التقرير.",
+      cards: [],
+      intent: det,
+      caseFile: mergedCase,
+      awaiting: true,
+      provider: aiMeta,
+      generated: false,
+      conv: { ...convInfo, messageType: "report_request" },
+      suggestedButtons: ["وصلتني دعوى", "أريد رفع دعوى", "صدر ضدي حكم", "خلني أكتب الوقائع"],
+      conversational: true,
+      stage: "clarifying",
+      messageIntent: "report_request",
+      dialogue: dialogue0,
+    });
+  }
+
+  // ── (٣) الطور الحواري: تحية/دردشة/إشارة ضعيفة/نيّة ناقصة → شات فقط ──
   if (!substantive) {
     return result({
       reply: conv.reply,
@@ -148,10 +206,12 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       suggestedButtons: conv.suggestedButtons,
       conversational: true,
       stage: baseStage(conv.stage),
+      messageIntent: conv.messageType,
+      dialogue: dialogue0,
     });
   }
 
-  // ── اكتمل الحد الأدنى، لكن لم يطلب المستخدم التقرير بعد → اقترح التقرير (لا بطاقات) ──
+  // ── (٤) اكتمل الحد الأدنى لكن لم يُطلب التقرير → اقترح التقرير (لا بطاقات) ──
   if (substantive && mergedCase && !askedReport) {
     return result({
       reply: reportReadyReply(mergedCase),
@@ -165,24 +225,24 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       suggestedButtons: REPORT_READY_BUTTONS,
       conversational: true,
       stage: "report_ready",
+      messageIntent: "case_fact",
+      dialogue: dialogue0,
     });
   }
 
-  // ── Report Mode: المستخدم وافق/طلب التقرير على قضية مكتملة → استرجاع + تحليل + بطاقات ──
-  return buildReportTurn(input, mergedCase as SimulationCaseFile, reportReq, aiMeta, convInfo);
+  // ── (٥) Report Mode: استرجاع مُسنَد + تحليل + بطاقات ──
+  return buildReportTurn(input, mergedCase as SimulationCaseFile, reportReq, aiMeta, convInfo, dialogue0);
 }
 
-/** يبني تقرير القضية الكامل (أو جزءاً منه) بعد موافقة المستخدم. */
 async function buildReportTurn(
   input: ChatTurnInput,
   caseFile: SimulationCaseFile,
   reportReq: { show: boolean; partial: "evidence" | "similar" | "strategies" | null; draft: boolean },
   aiMeta: { name: string; model: string },
-  convInfo: { messageType: string; understandingStage: string; userLevel: string }
+  convInfo: { messageType: string; understandingStage: string; userLevel: string },
+  dialogue: DialogueState
 ): Promise<ChatTurnResult> {
-  // نيّة التحليل تُبنى من ملف القضية المتراكم (لا من رسالة «نعم اعرض التقرير»).
-  let intent = intentFromCaseFile(caseFile);
-  // إن حملت الرسالة الحالية وقائع جديدة جوهرية، أثرِ النيّة بمزوّد الذكاء.
+  let intent = applyRejected(intentFromCaseFile(caseFile), dialogue.rejectedAssumptions);
   if (input.message.trim().length > 60) {
     try {
       intent = mergeIntent(intent, await detectIntent(input.message, input.attachments?.length ?? 0));
@@ -193,12 +253,9 @@ async function buildReportTurn(
   if (reportReq.draft && !isDraftableOutput(intent)) intent = { ...intent, requestedOutput: "ANSWER_MEMO" };
 
   const cards: ChatCard[] = [];
-
-  // الاسترجاع المُسنَد (مع SourceRelevanceGate ومنع المواد غير المرتبطة).
   const grounding = await groundQuery(retrievalQuery(intent, caseFile), { strength: input.searchStrength });
   const sources: GroundedSource[] = grounding.sources;
 
-  // التحليل (best-effort).
   let analysis: CaseAnalysisResult | null = null;
   try {
     analysis = await analyzeCase({
@@ -212,24 +269,22 @@ async function buildReportTurn(
     analysis = null;
   }
 
-  // عرض جزئي عند طلبه (خطة إثبات فقط / أحكام مشابهة فقط / استراتيجيات فقط).
   if (reportReq.partial === "evidence") {
     cards.push({ type: "EVIDENCE_PLAN", evidencePlan: buildEvidencePlan(intent, caseFile, analysis) });
     cards.push(governanceCard(grounding.note));
-    return reportResult("هذه خطة الإثبات فقط كما طلبت.", cards, intent, caseFile, aiMeta, convInfo);
+    return reportResult("هذه خطة الإثبات فقط كما طلبت.", cards, intent, caseFile, aiMeta, convInfo, dialogue);
   }
   if (reportReq.partial === "strategies") {
     cards.push({ type: "COMPARE_STRATEGIES", strategies: buildStrategyComparison(intent) });
     cards.push(governanceCard(grounding.note));
-    return reportResult("هذه مقارنة الاستراتيجيات فقط كما طلبت.", cards, intent, caseFile, aiMeta, convInfo);
+    return reportResult("هذه مقارنة الاستراتيجيات فقط كما طلبت.", cards, intent, caseFile, aiMeta, convInfo, dialogue);
   }
   if (reportReq.partial === "similar") {
     cards.push({ type: "ISSUES", issues: buildIssuesList(intent, analysis, sources) });
     cards.push(governanceCard(sources.length ? grounding.note : "لم تُسترجع أحكام مشابهة مرتبطة بدرجة صلة كافية."));
-    return reportResult("هذه أقرب المسائل/الأحكام المرتبطة كما طلبت.", cards, intent, caseFile, aiMeta, convInfo);
+    return reportResult("هذه أقرب المسائل/الأحكام المرتبطة كما طلبت.", cards, intent, caseFile, aiMeta, convInfo, dialogue);
   }
 
-  // التقرير الكامل.
   const gate = canProduce(intent, input.approval ?? null);
   cards.push({ type: "UNDERSTANDING", understanding: buildUnderstandingCard(intent, input.approval ?? null, caseFile, input.attachments?.length ?? 0) });
   cards.push({ type: "CASE_FILE", caseFile });
@@ -260,7 +315,6 @@ async function buildReportTurn(
   if (wfDef) cards.push({ type: "WORKFLOW", workflow: runWorkflow(wfDef, caseFile, intent) });
   const playbook = matchPlaybook(intent);
 
-  // الصياغة (للمخرجات القابلة للصياغة عند السماح) — مع إخفاء اختياري.
   let produced = false;
   if (isDraftableOutput(intent) && gate.allowed) {
     const output = buildLegalOutput({
@@ -294,7 +348,7 @@ async function buildReportTurn(
     ? `أعددت التقرير ومسودة ${OUTPUT_LABELS[intent.requestedOutput]} بمنهج قضائي مُسنَد. المخرج مسودة تحتاج مراجعة بشرية قبل الاعتماد.`
     : "هذا تقرير القضية الأولي. يمكنك طلب صياغة مذكرة، أو عرض جزء محدّد، أو استكمال نواقص.";
 
-  return reportResult(reply, cards, intent, caseFile, aiMeta, convInfo, produced);
+  return reportResult(reply, cards, intent, caseFile, aiMeta, convInfo, dialogue, produced);
 }
 
 function governanceCard(note: string): ChatCard {
@@ -308,6 +362,7 @@ function reportResult(
   caseFile: SimulationCaseFile,
   aiMeta: { name: string; model: string },
   convInfo: { messageType: string; understandingStage: string; userLevel: string },
+  dialogue: DialogueState,
   generated = false
 ): ChatTurnResult {
   return result({
@@ -322,10 +377,11 @@ function reportResult(
     suggestedButtons: [],
     conversational: false,
     stage: "report_shown",
+    messageIntent: "report_request",
+    dialogue,
   });
 }
 
-/** يدمج نيّة مُثراة في نيّة الأساس (يفضّل القيم المحدّدة). */
 function mergeIntent(base: IntentResult, extra: IntentResult): IntentResult {
   return {
     ...base,

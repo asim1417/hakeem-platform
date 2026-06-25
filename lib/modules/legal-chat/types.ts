@@ -464,6 +464,14 @@ export interface ChatCard {
   governance?: string[];
 }
 
+/** حالة حوار المستخدم عبر الدورات (AssumptionManager + ضبط النبرة). */
+export interface DialogueState {
+  rejectedAssumptions: string[]; // افتراضات رفضها المستخدم (يُمنع تكرارها)
+  confirmedFacts: string[]; // حقائق أكّدها المستخدم
+  askedQuestions: string[]; // أسئلة طُرحت (منع التكرار)
+  mode: "normal" | "slow_guided_intake"; // وضع الحوار (يُبطّئ ويمنع الافتراض)
+}
+
 /** مدخل دورة شات واحدة. */
 export interface ChatTurnInput {
   message: string;
@@ -479,6 +487,8 @@ export interface ChatTurnInput {
   redact?: boolean;
   /** تشغيل مسار عمل/Playbook محدّد بالاسم. */
   workflow?: string;
+  /** حالة الحوار المتراكمة (تُعاد من العميل كل دورة). */
+  dialogue?: DialogueState;
 }
 
 export interface ChatAttachmentMeta {
@@ -508,4 +518,6 @@ export interface ChatTurnResult {
   suggestedButtons: string[]; // أزرار متابعة (كل زرّ نصّ يُرسَل عند الضغط)
   conversational: boolean; // دورة حوارية (بلا بطاقات تحليل ثقيلة)؟
   stage: string; // ConversationStage: greeting … report_shown — يحكم عرض التقرير
+  messageIntent: string; // MessageIntent: greeting | user_correction | assistant_feedback | vague_case_signal …
+  dialogue: DialogueState; // الحالة المُحدَّثة (يخزّنها العميل ويعيدها)
 }
