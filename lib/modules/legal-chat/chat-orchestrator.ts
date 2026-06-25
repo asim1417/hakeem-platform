@@ -30,6 +30,15 @@ import {
 import { buildLegalOutput, TRAINING_DISCLAIMER } from "./drafting-style-engine";
 import { groundQuery } from "./anti-hallucination";
 import { OUTPUT_LABELS } from "./taxonomy";
+import {
+  buildArbitrationSimulation,
+  buildJudgeSimulation,
+  buildOpponentSimulation,
+} from "./role-simulations";
+import { analyzeDocuments, reviewContract } from "./document-analysis";
+import { buildExplain, buildStrategyComparison } from "./strategy";
+import { matchPlaybook, matchWorkflow, runWorkflow } from "./workflows";
+import { redactSections } from "./redaction";
 
 /** هل المخرج المطلوب «قابل للصياغة» كوثيقة قضائية؟ */
 function isDraftableOutput(intent: IntentResult): boolean {
@@ -156,7 +165,45 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   const confidence = buildConfidenceScore(intent, caseFile, analysis, sources);
   cards.push({ type: "CONFIDENCE", confidence });
 
-  // ٩) الصياغة القضائية (للمخرجات القابلة للصياغة).
+  // ٨-أ) محاكاة الأدوار بحسب النمط/المخرج (الخصم/القاضي/المحكّم).
+  if (input.mode === "OPPONENT" || intent.requestedOutput === "OPPONENT_DEFENSES") {
+    cards.push({ type: "OPPONENT", opponent: buildOpponentSimulation(intent, caseFile, analysis) });
+  }
+  if (input.mode === "JUDGE" || intent.requestedOutput === "DRAFT_JUDGMENT" || intent.requestedOutput === "HEARING_SIMULATION") {
+    cards.push({ type: "JUDGE_VIEW", judge: buildJudgeSimulation(intent, caseFile, analysis, sources) });
+  }
+  if (
+    input.mode === "ARBITRATOR" ||
+    intent.track === "ARBITRATION" ||
+    intent.requestedOutput === "ARBITRATION_AWARD" ||
+    intent.requestedOutput === "ARBITRATION_ORDER" ||
+    intent.requestedOutput === "ARBITRATION_CLAUSE_CHECK"
+  ) {
+    cards.push({ type: "ARBITRATION_VIEW", arbitration: buildArbitrationSimulation(intent, caseFile, analysis) });
+  }
+
+  // ٨-ب) تحليل المستندات (بعد تحديد نوعها) + مراجعة العقد عند توفّر نصّه.
+  const analyzable = (input.attachments ?? []).filter((a) => a.declaredKind && (a.content ?? "").trim());
+  if (analyzable.length > 0) {
+    cards.push({ type: "DOC_ANALYSIS", docAnalysis: analyzeDocuments(input.attachments ?? []) });
+  }
+  if (input.mode === "CONTRACT_EXAMINER" || intent.requestedOutput === "CONTRACT_REVIEW") {
+    const contractText = analyzable.map((a) => a.content ?? "").join("\n") || (intent.facts.length > 120 ? intent.facts : "");
+    cards.push({ type: "CONTRACT_REVIEW", contractReview: reviewContract(contractText) });
+  }
+
+  // ٨-ج) مقارنة الاستراتيجيات + شرح النتيجة (تحليلي).
+  cards.push({ type: "COMPARE_STRATEGIES", strategies: buildStrategyComparison(intent) });
+  cards.push({ type: "EXPLAIN", explain: buildExplain(intent, caseFile, analysis, sources) });
+
+  // ٨-د) مسار العمل القانوني / Playbook المطابق.
+  const wfDef = matchWorkflow(intent);
+  if (wfDef) {
+    cards.push({ type: "WORKFLOW", workflow: runWorkflow(wfDef, caseFile, intent) });
+  }
+  const playbook = matchPlaybook(intent);
+
+  // ٩) الصياغة القضائية (للمخرجات القابلة للصياغة) — مع إخفاء البيانات الحساسة اختيارياً.
   let produced = false;
   if (isDraftableOutput(intent)) {
     const output = buildLegalOutput({
@@ -165,9 +212,16 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
       sources,
       isDraftWithAssumptions: gate.isDraftWithAssumptions,
       assumptions: [],
-      extraGovernance: procedure.notes,
+      extraGovernance: [...procedure.notes, ...(playbook ? [`Playbook مُطبّق: ${playbook.name}`] : [])],
     });
     output.nextBestActions = buildNextBestActions(intent, caseFile);
+    if (input.redact) {
+      const r = redactSections(output.sections, "PARTIAL");
+      output.sections = r.sections;
+      if (r.redactedCount > 0) {
+        output.governanceNotes.push(`أُخفيت ${r.redactedCount} بيانات حساسة (${r.categories.join("، ")}) قبل العرض/التصدير.`);
+      }
+    }
     cards.push({ type: "OUTPUT", output });
     produced = true;
   }
