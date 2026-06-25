@@ -108,12 +108,14 @@ model LegalSystem {
   domain         String? // المجال المصنّف
   domainTitle    String?         @map("domain_title") // العنوان العربي للمجال
   sortOrder      Int            @default(0) @map("sort_order")
+  eliSlug        String?        @unique @map("eli_slug") // slug تشريعي ثابت (يُجمّد عند الإنشاء) — أساس معرّف ELI الدائم
   articleCount   Int            @default(0)
   articles       LegalArticle[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
   @@index([domain])
+  @@index([sortOrder])
   @@map("legal_systems")
 }
 
@@ -131,6 +133,9 @@ model LegalArticle {
   royalDecree    String?
   effectiveFrom  DateTime?
   status         String                 @default("سارية")
+  // @deprecated (المرحلة ٥): مصدر الـembedding الوحيد هو جدول pgvector «embeddings».
+  // لا يُكتب إليه بعد الآن (التوليد يذهب للجدول مباشرة)؛ يبقى أرشيفًا للقراءة الاحتياطية
+  // فقط ولا يُحذف. لا تعتمد عليه كمصدر حقيقة.
   embedding      Json?
   caseLinks      LegalArticleCaseLink[]
   amendments     ArticleAmendment[]

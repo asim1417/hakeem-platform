@@ -89,22 +89,27 @@ const searchableFieldMap = {
 } as const;
 
 /**
- * يختار مجموعة مرشّحين متنوّعة الأنظمة من مسحٍ خفيف (id + lawName) بأسلوب round-robin:
+ * يختار مجموعة مرشّحين متنوّعة الأنظمة من مسحٍ خفيف (id + معرّف النظام) بأسلوب round-robin:
  * يأخذ مادة من كل نظام في كل جولة (حتى perSystemCap لكل نظام) قبل أن يأخذ ثانيةً من
  * أيّ نظام — فيمنح **كل نظام مطابق** تمثيلاً قبل أن يهيمن نظام، حتى يبلغ target.
  * يكسر الانحياز الأبجدي واحتكار نظام واحد. نقيّة وقابلة للاختبار.
+ *
+ * المرحلة ٢ (تصليب الربط): التجميع يكون على المعرّف الثابت legalSystemId إن وُجد،
+ * ويسقط إلى lawName فقط حين يغيب — كي لا تنقسم مواد النظام الواحد عبر تباين نصّ الاسم
+ * (OCR/مسافات) فيتضخّم تمثيله؛ هذا جذر «الظهور/الاختفاء».
  */
 export function selectDiverseCandidateIds(
-  rows: Array<{ id: string; lawName: string }>,
+  rows: Array<{ id: string; lawName: string; legalSystemId?: string | null }>,
   opts: { perSystemCap: number; target: number }
 ): string[] {
-  // تجميع حسب النظام مع حفظ ترتيب الظهور وتطبيق سقف لكل نظام.
+  // تجميع حسب النظام (بالمعرّف الثابت أولًا) مع حفظ ترتيب الظهور وتطبيق سقف لكل نظام.
   const groups = new Map<string, string[]>();
   for (const row of rows) {
-    let g = groups.get(row.lawName);
+    const systemKey = row.legalSystemId ?? row.lawName;
+    let g = groups.get(systemKey);
     if (!g) {
       g = [];
-      groups.set(row.lawName, g);
+      groups.set(systemKey, g);
     }
     if (g.length < opts.perSystemCap) g.push(row.id);
   }
@@ -255,10 +260,11 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const [total, lightRows, nameCandidates, phraseCandidates] = await Promise.all([
     prisma.legalArticle.count({ where }),
-    // مسح خفيف (id + lawName فقط) — رخيص حتى عند آلاف المطابقات.
+    // مسح خفيف (id + معرّف النظام + lawName) — رخيص حتى عند آلاف المطابقات.
+    // legalSystemId هو مفتاح التنويع الثابت؛ lawName يبقى للسقوط الاحتياطي فقط.
     prisma.legalArticle
-      .findMany({ where, select: { id: true, lawName: true }, orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }], take: LIGHT_SCAN })
-      .catch(() => [] as Array<{ id: string; lawName: string }>),
+      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }], take: LIGHT_SCAN })
+      .catch(() => [] as Array<{ id: string; lawName: string; legalSystemId: string | null }>),
     nameWhere
       ? prisma.legalArticle
           .findMany({

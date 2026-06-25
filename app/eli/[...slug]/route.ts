@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { lawSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
+import { resolveSystemSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
 
 export const dynamic = "force-dynamic";
 
@@ -11,12 +11,16 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     return NextResponse.json({ ok: false, error: "صيغة معرّف ELI غير صحيحة. المتوقّع: /eli/sa/{النظام}/art/{رقم}" }, { status: 400 });
   }
 
-  // نحصر بالمواد ذات الرقم نفسه ثم نطابق slug النظام (ثابت ومشتقّ من الاسم).
+  // نحصر بالمواد ذات الرقم نفسه ثم نطابق slug النظام الكنسي.
+  // نُفضّل eliSlug المُجمّد (ثابت)، ونسقط لاشتقاقه من lawName للتوافق الخلفي.
   const candidates = await prisma.legalArticle
-    .findMany({ where: { articleNumber: parsed.articleNumber }, select: { id: true, lawName: true } })
-    .catch(() => [] as Array<{ id: string; lawName: string }>);
+    .findMany({
+      where: { articleNumber: parsed.articleNumber },
+      select: { id: true, lawName: true, legalSystem: { select: { eliSlug: true } } }
+    })
+    .catch(() => [] as Array<{ id: string; lawName: string; legalSystem: { eliSlug: string | null } | null }>);
 
-  const match = candidates.find((a) => lawSlug(a.lawName) === parsed.slug);
+  const match = candidates.find((a) => resolveSystemSlug(a.legalSystem?.eliSlug, a.lawName) === parsed.slug);
   if (!match) {
     return NextResponse.json({ ok: false, error: "لا توجد مادة مطابقة لهذا المعرّف." }, { status: 404 });
   }

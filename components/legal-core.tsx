@@ -202,16 +202,18 @@ export function LegalCitationBlock({
   articleNumber,
   content,
   royalDecree,
-  effectiveFrom
+  effectiveFrom,
+  eliSlug
 }: {
   lawName: string;
   articleNumber: number;
   content: string;
   royalDecree?: string | null;
   effectiveFrom?: Date | string | null;
+  eliSlug?: string | null;
 }) {
   const official = buildOfficialCitation({ lawName, articleNumber, royalDecree, effectiveFrom });
-  const eli = buildArticleEli(lawName, articleNumber);
+  const eli = buildArticleEli(lawName, articleNumber, eliSlug);
   return (
     <div id="citation" className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
       <div className="flex items-center gap-2 font-display-ar text-sm font-bold text-[var(--navy)]">

@@ -35,8 +35,22 @@ export interface ArticleEli {
   path: string;
 }
 
-export function buildArticleEli(lawName: string, articleNumber: number): ArticleEli {
-  const id = `eli/sa/${lawSlug(lawName)}/art/${articleNumber}`;
+/**
+ * يحسم slug النظام الكنسي: يُفضّل eliSlug المُجمّد (الثابت رغم تغيّر الاسم)،
+ * ويسقط إلى اشتقاقه من lawName للتوافق مع المواد التي لم يُملأ لها eliSlug بعد.
+ */
+export function resolveSystemSlug(eliSlug: string | null | undefined, lawName: string): string {
+  const frozen = (eliSlug ?? "").trim();
+  return frozen || lawSlug(lawName);
+}
+
+/**
+ * يبني معرّف ELI للمادة من slug النظام الثابت.
+ * المرحلة ٣: مرّر eliSlug المُجمّد متى توفّر؛ يبقى الاشتقاق من lawName سقوطًا
+ * احتياطيًا للتوافق الخلفي (المخرج متطابق ما دام الاسم لم يتغيّر).
+ */
+export function buildArticleEli(lawName: string, articleNumber: number, eliSlug?: string | null): ArticleEli {
+  const id = `eli/sa/${resolveSystemSlug(eliSlug, lawName)}/art/${articleNumber}`;
   return { id, path: `/${id}` };
 }
 
