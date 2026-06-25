@@ -26,7 +26,7 @@ import {
   type ConversationStage,
 } from "./conversation-engine";
 import type { LLMIntentResult } from "./llm-intent-router";
-import { buildCaseFileFromIntent, isCaseSubstantive, mergeIntentIntoCaseFile } from "./case-file";
+import { buildCaseFileFromIntent, caseReadinessScore, isCaseSubstantive, mergeIntentIntoCaseFile } from "./case-file";
 import { buildUnderstandingCard, canProduce } from "./understanding-engine";
 import { buildProcedureMap } from "./judicial-procedure-engine";
 import {
@@ -104,7 +104,8 @@ async function result(args: {
       : args.reply;
   return {
     reply,
-    cards: args.cards,
+    // بوابة حتمية: لا استشهاد بمادة/حكم (بطاقات) في الردود الحوارية إطلاقاً.
+    cards: args.conversational ? [] : args.cards,
     intent: args.intent,
     caseFile: args.caseFile,
     awaitingConfirmation: args.awaiting,
@@ -152,7 +153,6 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   const routed = await classifyWithRouter(input.message, det, dialogue0, input.history);
   const special = routed.decision;
   const routerResult: LLMIntentResult | null = routed.router; // يُستعمل في البوابة الحتمية (المرحلة ٣)
-  void routerResult;
   if (special) {
     // حافظ على ذاكرة القضية القائمة دون إضافة افتراض جديد.
     const cf = input.caseFile ? mergeIntentIntoCaseFile(input.caseFile, applyRejected(det, special.dialogue.rejectedAssumptions)) : null;
@@ -188,13 +188,28 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   // تحية/دردشة عامة لا تُدخِل التحليل أبداً ولو كان هناك ملف متراكم — إلا إذا طلب
   // المستخدم التقرير صراحةً. الملف يبقى محفوظاً (لا يُمحى).
   const currentIsConversationalOnly = conv.stage === "GreetingOnly" || conv.stage === "NonLegalSmallTalk";
-  const substantive =
+  const deterministicSubstantive =
     !!mergedCase &&
     (isCaseSubstantive(mergedCase) || conv.runAnalysis) &&
     !(currentIsConversationalOnly && !askedReport);
 
-  // ── (٢) طلب التقرير دون قضية مكتملة → رفض لطيف (لا تقرير فارغ) ──
-  if ((reportReq.show || reportReq.partial) && !substantive) {
+  // ── البوابة الحتمية الحارسة فوق مخرج الراوتر (المرحلة ٣) ──
+  // مبدأ: النموذج يصف النية، والحتمي يقرّر تشغيل الأدوات. هذه البوابة تَمنع فقط ولا
+  // تُفعّل: لو صنّف النموذج خطأً رسالةً غير قانونية كقانونية، يبقى تشغيل الأدوات ممنوعاً.
+  // عند غياب رأي النموذج (offline/ثقة منخفضة) لا تقييد إضافي → السلوك الحتمي القائم.
+  const TOOL_ELIGIBLE_ACTS = new Set(["possible_legal_issue", "clear_legal_incident", "clear_legal_request"]);
+  const routerAllowsTools =
+    routerResult === null ||
+    routerResult.conversationAct === "report_request" ||
+    (routerResult.isLegal && TOOL_ELIGIBLE_ACTS.has(routerResult.conversationAct));
+  const substantive = deterministicSubstantive && routerAllowsTools;
+
+  // درجة جاهزية القضية لبوابة التقرير: لا عرض تقرير إلا بطلب صريح + جاهزية ≥ 85.
+  const reportReadiness = mergedCase ? caseReadinessScore(mergedCase) : 0;
+  const reportEligible = substantive && reportReadiness >= 85;
+
+  // ── (٢) طلب التقرير دون قضية جاهزة (≥85) → رفض لطيف (لا تقرير ناقص) ──
+  if ((reportReq.show || reportReq.partial) && !reportEligible) {
     return result({
       reply:
         "ما زالت بيانات القضية غير مكتملة، ولا أحب أن أعرض تقريرًا ناقصًا قد يضلّلك.\nخلنا نكمل بسرعة: اكتب لي وقائع القضية باختصار (ماذا حصل؟ ومن الطرف الآخر؟ وفي أي مرحلة؟)، ثم أعرض التقرير.",

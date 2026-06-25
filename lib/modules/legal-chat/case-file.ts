@@ -116,3 +116,21 @@ export function isCaseSubstantive(cf: SimulationCaseFile): boolean {
   const factsLen = cf.facts.reduce((s, f) => s + f.text.length, 0);
   return cf.facts.length >= 2 && factsLen >= 70 && cf.track !== "UNKNOWN";
 }
+
+/**
+ * درجة جاهزية القضية (0..100) — إشارة حتمية بحتة لبوابة عرض التقرير.
+ * مُعايَرة بحيث كل قضية جوهرية (isCaseSubstantive) تبلغ ≥ 85 (لا انحدار):
+ *   مسار معروف 35 + وقيعتان 25 + طول وقائع كافٍ 25 = 85.
+ * وتزيد بإشارات إضافية (صفة الطرف، تعدّد الوقائع، تفصيل أوسع).
+ */
+export function caseReadinessScore(cf: SimulationCaseFile): number {
+  const factsLen = cf.facts.reduce((s, f) => s + f.text.length, 0);
+  let score = 0;
+  if (cf.track !== "UNKNOWN") score += 35; // نوع النزاع محدّد
+  if (cf.facts.length >= 2) score += 25; // وقيعتان على الأقل
+  if (cf.facts.length >= 3) score += 10; // تفصيل أوسع
+  if (factsLen >= 70) score += 25; // وقائع كافية الطول
+  if (factsLen >= 140) score += 5; // وقائع مفصّلة
+  if (cf.userRole && cf.userRole !== "UNKNOWN") score += 10; // صفة الطرف معروفة
+  return Math.min(score, 100);
+}
