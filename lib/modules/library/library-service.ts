@@ -271,6 +271,7 @@ export function getArticleDetail(id: string) {
     .findUnique({
       where: { id },
       include: {
+        legalSystem: { select: { id: true, name: true, code: true, eliSlug: true } },
         caseLinks: {
           include: {
             judicialCase: {

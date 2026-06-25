@@ -108,6 +108,7 @@ model LegalSystem {
   domain         String? // المجال المصنّف
   domainTitle    String?         @map("domain_title") // العنوان العربي للمجال
   sortOrder      Int            @default(0) @map("sort_order")
+  eliSlug        String?        @unique @map("eli_slug") // slug تشريعي ثابت (يُجمّد عند الإنشاء) — أساس معرّف ELI الدائم
   articleCount   Int            @default(0)
   articles       LegalArticle[]
   createdAt      DateTime       @default(now())

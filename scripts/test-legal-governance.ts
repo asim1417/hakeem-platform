@@ -133,6 +133,12 @@ console.log("\n— المعرّف التشريعي (ELI) —");
   check("تحليل ELI صحيح", parsed?.articleNumber === 80 && parsed?.slug === lawSlug("نظام العمل"), JSON.stringify(parsed));
 
   check("رفض مسار خاطئ", parseArticleEli(["sa", "x", "chapter", "3"]) === null);
+
+  // المرحلة ٣: eliSlug المُجمّد يَسبق الاشتقاق من الاسم؛ غيابه يسقط للاشتقاق (توافق خلفي).
+  const frozen = buildArticleEli("نظام العمل (الاسم تغيّر)", 80, "نظام-العمل");
+  check("eliSlug المُجمّد يَسبق الاسم", frozen.id === "eli/sa/نظام-العمل/art/80", JSON.stringify(frozen));
+  const fallback = buildArticleEli("نظام العمل", 80, null);
+  check("غياب eliSlug يسقط للاشتقاق", fallback.id === buildArticleEli("نظام العمل", 80).id, JSON.stringify(fallback));
   check("رفض رقم غير صحيح", parseArticleEli(["sa", "x", "art", "abc"]) === null);
 }
 

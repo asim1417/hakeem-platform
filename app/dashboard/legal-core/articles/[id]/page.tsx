@@ -50,6 +50,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
     .findUnique({
       where: { id: params.id },
       include: {
+        legalSystem: { select: { id: true, name: true, code: true, eliSlug: true } },
         caseLinks: {
           include: {
             judicialCase: {
@@ -245,7 +246,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
               </div>
             </LegalCoreCard>
 
-            <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} />
+            <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} eliSlug={article.legalSystem?.eliSlug} />
 
             {crossReferences.length ? (
               <LegalCoreCard title="المواد المُحال إليها" subtitle="إحالات داخلية مستخرَجة من نصّ المادة" icon={<Link2 size={18} />}>

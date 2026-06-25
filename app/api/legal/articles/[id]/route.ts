@@ -18,6 +18,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     ok: true,
     article,
     citation: buildOfficialCitation({ lawName: article.lawName, articleNumber: article.articleNumber, royalDecree: article.royalDecree, effectiveFrom: article.effectiveFrom }),
-    eli: buildArticleEli(article.lawName, article.articleNumber).id
+    eli: buildArticleEli(article.lawName, article.articleNumber, article.legalSystem?.eliSlug).id
   });
 }
