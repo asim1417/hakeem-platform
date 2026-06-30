@@ -70,8 +70,10 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: npm run db:generate
-      - name: Apply schema (ensures embedding column)
-        run: npx prisma db push --skip-generate
+      - name: Ensure embedding column (idempotent — لا db push مدمّر)
+        # db push كان يحاول مطابقة كامل السكيمة فيُسقط جداول legal_thesaurus_* المُدارة
+        # خارج Prisma (حُمي بـ Prisma من فقد البيانات). البديل: ضمان العمود فقط، إضافي وآمن.
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'ALTER TABLE "legal_articles" ADD COLUMN IF NOT EXISTS "embedding" JSONB;'
       - name: Backfill embeddings
         run: |
           ARGS=""
