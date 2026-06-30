@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   type ArabicSearchType,
@@ -6,6 +7,23 @@ import {
   getArabicStem,
   normalizeArabicText
 } from "./arabic-morphology";
+
+// إسقاط خفيف للترتيب الكامل (بلا نصّ المادة `content`): يكفي العنوان/الاسم/التصنيف/
+// الكلمات المفتاحية للتهديف على مستوى النظام، فيُرتَّب آلاف المطابقات بنقلٍ خفيف.
+const LIGHT_ARTICLE_SELECT = {
+  id: true,
+  lawName: true,
+  legalSystemId: true,
+  articleNumber: true,
+  title: true,
+  classification: true,
+  chapter: true,
+  keywords: true,
+  status: true,
+  legalSystem: { select: { id: true, name: true } }
+} satisfies Prisma.LegalArticleSelect;
+
+type LightArticle = Prisma.LegalArticleGetPayload<{ select: typeof LIGHT_ARTICLE_SELECT }>;
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
@@ -68,6 +86,8 @@ export type AdvancedLegalSearchResponse = {
   query: string;
   searchType: ArabicSearchType;
   total: number;
+  /** هل رُتِّبت **كل** المطابقات (استرجاع كامل)؟ false فقط للاستعلامات شديدة الاتساع (> COMPLETE_CAP). */
+  exhaustive?: boolean;
   page: number;
   limit: number;
   relatedTerms: string[];
@@ -185,7 +205,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
   const page = Math.max(Number(options.page ?? 1), 1);
-  const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 80);
+  // سقف الصفحة 200 (كان 80): يتيح سحب دفعات أكبر عند تصدير «كامل النتائج».
+  const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 200);
   const fields = normalizeFields(options.fields);
   // استبعاد الكلمات القصيرة/الشائعة حتى لا تطابق مواد لا صلة لها بالبحث
   const baseVariants = filterMeaningfulVariants(buildVariants(query, searchType));
@@ -226,116 +247,59 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     ].filter((item) => Object.keys(item).length > 0)
   };
 
-  // نجلب مجموعة مرشّحين متنوّعة الأنظمة ثم نرتّبها بالصلة في الذاكرة قبل الاقتطاع.
-  // المشكلة سابقاً: جلب أول CAP مادة **أبجدياً باسم النظام** كان يُقصي الأنظمة
-  // متأخّرة الترتيب أبجدياً، ويسمح لنظام واحد كثير المواد باحتكار المجموعة —
-  // فلا تظهر إلا أنظمة قليلة (قياس التشخيص: ~12% فقط). الحل: مسح خفيف (id+اسم)
-  // ثم اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط.
-  // سقف المسح ≥ حجم الكوربوس: يضمن مسح **كل** المواد المطابقة فلا يُقصى أيّ نظام مطابق
-  // بالاقتطاع (الجذر السابق للانحياز). صفوف خفيفة (id + معرّفان) فالكلفة ضئيلة حتى للمصطلحات الشائعة.
-  const LIGHT_SCAN = 20000;       // > 15,902 (حجم الكوربوس) — لا اقتطاع لأي استعلام واقعي
-  const POOL_TARGET = 2000;       // حجم مجموعة المرشّحين بعد التنويع (أوسع تمثيلاً للأنظمة في التقييم)
-  const PER_SYSTEM_POOL_CAP = 80; // أقصى مواد لكل نظام (≥ أقصى حجم صفحة، فلا تنقص نتائج الاستعلام أحادي النظام)
-  // مرشّحو الاسم/العنوان: عند وجود >CAP مرشّح، الاقتطاع الأبجدي كان يقصي «نظام...» (ن)
-  // قبل التقييم. لذا نجلب صراحةً المواد التي يطابق اسمُ نظامها/عنوانُها الاستعلام،
-  // فنضمن حضور النظام الأنسب (مثل «نظام الأحوال الشخصية») في مجموعة التقييم.
-  const nameWhere = query
-    ? {
-        AND: [
-          buildSystemFilter(options.systemIds),
-          buildCategoryFilter(options.categoryIds),
-          buildSourceTypeFilter(options.sourceTypes),
-          buildTextFilter(filterVariants, ["systemTitle", "title"])
-        ].filter((item) => Object.keys(item).length > 0)
-      }
-    : null;
+  // ════════════════════════════════════════════════════════════════════════
+  // استرجاع كامل (Complete Retrieval) بمرحلتين — كما في المحرّكات العالمية:
+  //   ① استدعاء + ترتيب **كل** المطابقات على إسقاط خفيف (بلا نصّ المادة): اسم النظام +
+  //      العنوان + التصنيف + الفصل + الكلمات المفتاحية + الرقم. نمرّر content="" لـ
+  //      mapArticleResult فيعتمد إشارات الاسم/العنوان/المفهوم/الدلالي (تكفي للترتيب على
+  //      مستوى النظام). فيظهر «كامل النتائج» (لو ألف نتيجة) ويعمل الترقيم العميق، بنقلٍ خفيف.
+  //   ② تجسيد الصفحة المطلوبة فقط (≤ limit): جلب النصّ الكامل لبناء المقتطف/الفقرات —
+  //      فلا يُنقل نصّ أيّ مادة غير معروضة (كان سابقاً يجلب نصّ 2000 مادة لكل استعلام).
+  // يزيل اقتطاع المجموعة (2000/80) ويُبلّغ الإجماليّ الحقيقي بصدق.
+  // ════════════════════════════════════════════════════════════════════════
+  const COMPLETE_CAP = 20000; // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة)
 
-  // تطابق العبارة الكاملة في الاسم/العنوان: أقوى إشارة وأندر مطابقة، فلا يُقصى بالاقتطاع.
-  // يضمن حضور النظام صاحب الاسم المطابق تماماً (مثل «نظام العمل») رغم شيوع كلمة «نظام».
-  const trimmedQuery = query.trim();
-  const phraseNameWhere = trimmedQuery.length >= 3
-    ? {
-        AND: [
-          buildSystemFilter(options.systemIds),
-          buildCategoryFilter(options.categoryIds),
-          buildSourceTypeFilter(options.sourceTypes),
-          { OR: [{ lawName: { contains: trimmedQuery, mode: "insensitive" as const } }, { title: { contains: trimmedQuery, mode: "insensitive" as const } }] }
-        ].filter((item) => Object.keys(item).length > 0)
-      }
-    : null;
-
-  const [total, lightRows, nameCandidates, phraseCandidates] = await Promise.all([
-    prisma.legalArticle.count({ where }),
-    // مسح خفيف (id + معرّف النظام + lawName) — رخيص حتى عند آلاف المطابقات.
-    // legalSystemId هو مفتاح التنويع الثابت؛ lawName يبقى للسقوط الاحتياطي فقط.
+  const [total, lightRows] = await Promise.all([
+    prisma.legalArticle.count({ where }).catch(() => 0),
     prisma.legalArticle
-      // ترتيب محايد (id) لا أبجدي: لو نما الكوربوس فوق السقف مستقبلاً، لا يكون الاقتطاع منحازاً للأنظمة المتقدّمة أبجدياً.
-      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: { id: "asc" }, take: LIGHT_SCAN })
-      .catch(() => [] as Array<{ id: string; lawName: string; legalSystemId: string | null }>),
-    nameWhere
-      ? prisma.legalArticle
-          .findMany({
-            where: nameWhere,
-            include: { legalSystem: { select: { id: true, name: true } } },
-            orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-            take: 400
-          })
-          .catch(() => [])
-      : Promise.resolve([]),
-    phraseNameWhere
-      ? prisma.legalArticle
-          .findMany({
-            where: phraseNameWhere,
-            include: { legalSystem: { select: { id: true, name: true } } },
-            orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-            take: 200
-          })
-          .catch(() => [])
-      : Promise.resolve([])
+      .findMany({ where, select: LIGHT_ARTICLE_SELECT, orderBy: { id: "asc" }, take: COMPLETE_CAP })
+      .catch(() => [] as LightArticle[])
   ]);
+  // exhaustive=false فقط إن تجاوزت المطابقات السقف (مستحيل بالكوربوس الحالي) — ترقيم غير مكتمل عندئذٍ.
+  const exhaustive = total <= COMPLETE_CAP;
 
-  // اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط (يكسر الاحتكار والانحياز الأبجدي).
-  const diverseIds = selectDiverseCandidateIds(lightRows, { perSystemCap: PER_SYSTEM_POOL_CAP, target: POOL_TARGET });
-  const candidates = diverseIds.length
-    ? await prisma.legalArticle
-        .findMany({ where: { id: { in: diverseIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-        .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
-    : [];
+  const lightById = new Map<string, LightArticle>();
+  for (const r of lightRows) lightById.set(r.id, r);
 
-  // دمج مع إزالة التكرار: تطابق العبارة الكاملة أولاً، ثم الاسم/العنوان، ثم العام
-  const byId = new Map<string, (typeof candidates)[number]>();
-  for (const a of phraseCandidates as typeof candidates) byId.set(a.id, a);
-  for (const a of nameCandidates as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
-  for (const a of candidates) if (!byId.has(a.id)) byId.set(a.id, a);
-
-  // مواد مُسنَدة من مواضع المكنز لم يجدها البحث المعجمي — استرجاع مُسنَد (المفهوم يرد فيها فعلاً).
+  // مواد مُسنَدة من مواضع المكنز لم يطابقها النصّي — استرجاع مُسنَد (المفهوم يرد فيها فعلاً).
   if (graph.articleBoosts.size) {
-    const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !byId.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
+    const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !lightById.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
     if (missingOccIds.length) {
       const extraOcc = await prisma.legalArticle
-        .findMany({ where: { id: { in: missingOccIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-        .catch(() => [] as typeof candidates);
-      for (const a of extraOcc as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+        .findMany({ where: { id: { in: missingOccIds } }, select: LIGHT_ARTICLE_SELECT })
+        .catch(() => [] as LightArticle[]);
+      for (const r of extraOcc) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
   }
 
-  // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): يجلب مواد قريبة
-  // بالمعنى حتى بلا تطابق لفظي، فيكسر حصر النتائج في الأنظمة التي تحوي الكلمة حرفياً.
-  // سقوط آمن: إن غاب جدول المتجهات تبقى semMap فارغة ويعمل البحث المعجمي كالسابق.
+  // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): معرّفات + تشابه (بلا نصّ)،
+  // فيجلب مواد قريبة بالمعنى حتى بلا تطابق لفظي. سقوط آمن إلى Map فارغة إن غاب الجدول.
   let semMap = new Map<string, number>();
   if (query && options.semantic && semanticSearchEnabled()) {
-    semMap = await semanticArticleScores(query, 60).catch(() => new Map<string, number>());
-    const extraIds = [...semMap.keys()].filter((id) => !byId.has(id));
+    semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
+    const extraIds = [...semMap.keys()].filter((id) => !lightById.has(id));
     if (extraIds.length) {
       const extra = await prisma.legalArticle
-        .findMany({ where: { id: { in: extraIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-        .catch(() => [] as typeof candidates);
-      for (const a of extra as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+        .findMany({ where: { id: { in: extraIds } }, select: LIGHT_ARTICLE_SELECT })
+        .catch(() => [] as LightArticle[]);
+      for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
   }
 
-  const scored = Array.from(byId.values())
-    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems))
+  // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
+  const lightOptions: AdvancedLegalSearchOptions = { ...options, includeSnippets: false, includeMatchedParagraphs: false };
+  const scored = Array.from(lightById.values())
+    .map((row) => mapArticleResult({ ...row, content: "" } as unknown as LegalArticleWithSystem, query, searchType, normalizedVariants, lightOptions, conceptWords, conceptBigrams, preferSystems))
     // ترجيح المكنز: مادة يرد فيها مفهوم مُطابَق (معتمد) تُرفع درجتها بمقدار مُسنَد للمواضع.
     .map((r) => {
       const boost = graph.articleBoosts.get(r.articleId);
@@ -378,20 +342,58 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     relevant = await applySemanticRerank(query, relevant).catch(() => relevant);
   }
 
-  const effectiveTotal = query ? relevant.length : total;
+  // الإجماليّ: عند الاسترجاع الكامل (exhaustive) = عدد النتائج ذات الصلة فعلاً (رُتِّبت كلها).
+  // عند المسار الاحتياطي شديد الاتساع نُبلّغ الإجماليّ الحقيقي من القاعدة (count) بصدق،
+  // ونعلّم exhaustive=false كي تعرف الواجهة أن ما بعد المجموعة المرتّبة غير مضمون الترتيب.
+  const effectiveTotal = query ? (exhaustive ? relevant.length : Math.max(relevant.length, total)) : total;
   const start = (page - 1) * limit;
-  const results = relevant.slice(start, start + limit);
+  const pageSlice = relevant.slice(start, start + limit);
+  // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
+  //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
+  const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
 
   return {
     query,
     searchType,
     total: effectiveTotal,
+    exhaustive,
     page,
     limit,
     relatedTerms: options.includeRelatedTerms ? variants.slice(0, 24) : [],
     results,
     message: effectiveTotal ? undefined : noLegalArticleMessage
   };
+}
+
+/**
+ * المرحلة ② للاسترجاع الكامل: تجسيد صفحة النتائج بنصّها الكامل.
+ * تجلب الصفوف الكاملة لمواد الصفحة فقط (≤ limit) وتبني النتيجة النهائية (مقتطف + فقرات)،
+ * مع الحفاظ على درجة وترتيب المرحلة ① (التهديف الخفيف) لثبات الترقيم عبر الصفحات.
+ * سقوط آمن: مادة تعذّر جلبها كاملةً تبقى بنتيجتها الخفيفة.
+ */
+async function materializePage(
+  pageSlice: LegalCoreResult[],
+  query: string,
+  searchType: ArabicSearchType,
+  normalizedVariants: string[],
+  options: AdvancedLegalSearchOptions,
+  conceptWords: string[],
+  conceptBigrams: string[],
+  preferSystems: string[]
+): Promise<LegalCoreResult[]> {
+  if (!pageSlice.length) return [];
+  const ids = pageSlice.map((r) => r.articleId);
+  const fullRows = await prisma.legalArticle
+    .findMany({ where: { id: { in: ids } }, include: { legalSystem: { select: { id: true, name: true } } } })
+    .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>);
+  const fullById = new Map(fullRows.map((a) => [a.id, a]));
+  return pageSlice.map((light) => {
+    const full = fullById.get(light.articleId);
+    if (!full) return light; // سقوط آمن: أبقِ النتيجة الخفيفة
+    const display = mapArticleResult(full as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+    // حافظ على درجة المرحلة ① (الترتيب الكامل) كي يبقى الترقيم متّسقاً عبر الصفحات.
+    return { ...display, relevanceScore: light.relevanceScore };
+  });
 }
 
 /**
