@@ -167,7 +167,7 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
         includeSnippets: false,
         includeMatchedParagraphs: false,
         includeRelatedTerms: false,
-        semantic: false, // أرخص للصفحة العميقة
+        semantic: true, // نفس إعداد الاستدعاء الأصلي ليطابق الإجماليّ (وإلا اختلف عدد النتائج)
       });
       base.deepPageOk = deep.results.length > 0;
     } catch {
