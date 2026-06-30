@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   type ArabicSearchType,
@@ -6,6 +7,23 @@ import {
   getArabicStem,
   normalizeArabicText
 } from "./arabic-morphology";
+
+// إسقاط خفيف للترتيب الكامل (بلا نصّ المادة `content`): يكفي العنوان/الاسم/التصنيف/
+// الكلمات المفتاحية للتهديف على مستوى النظام، فيُرتَّب آلاف المطابقات بنقلٍ خفيف.
+const LIGHT_ARTICLE_SELECT = {
+  id: true,
+  lawName: true,
+  legalSystemId: true,
+  articleNumber: true,
+  title: true,
+  classification: true,
+  chapter: true,
+  keywords: true,
+  status: true,
+  legalSystem: { select: { id: true, name: true } }
+} satisfies Prisma.LegalArticleSelect;
+
+type LightArticle = Prisma.LegalArticleGetPayload<{ select: typeof LIGHT_ARTICLE_SELECT }>;
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
@@ -230,74 +248,58 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   };
 
   // ════════════════════════════════════════════════════════════════════════
-  // استرجاع كامل (Complete Retrieval) — كما في المحرّكات العالمية: نرتّب **كل**
-  // المطابقات لا مجموعة مقتطعة، فيظهر «كامل النتائج» (لو ألف نتيجة) ويعمل الترقيم
-  // العميق، ويُبلَّغ الإجماليّ الحقيقي.
-  //
-  // سابقاً: كان يُختار 2000 مرشّح (≤80/نظام) فقط، فتُسقَط آلاف المطابقات من الترتيب
-  // والترقيم، ويُستبدل الإجماليّ الحقيقي بحجم المجموعة المقتطعة (لا يمكن تجاوز صفحة الـ2000).
-  //
-  // الآن: نجلب **كل** المطابقات بنصّها الكامل (حتى COMPLETE_CAP ≥ الكوربوس) ونرتّبها
-  // بنفس منطق التهديف تماماً (بلا تغيير في الصلة). النقل محدود: الكود سابقاً كان يجلب
-  // حتى 2000 صفّاً كاملاً أصلاً، والاستعلام النمطي يطابق مئات. للاستعلامات شديدة الاتساع
-  // (> COMPLETE_CAP، نادرة) نسقط إلى اختيار متنوّع مع إبلاغ الإجماليّ الحقيقي و exhaustive=false.
+  // استرجاع كامل (Complete Retrieval) بمرحلتين — كما في المحرّكات العالمية:
+  //   ① استدعاء + ترتيب **كل** المطابقات على إسقاط خفيف (بلا نصّ المادة): اسم النظام +
+  //      العنوان + التصنيف + الفصل + الكلمات المفتاحية + الرقم. نمرّر content="" لـ
+  //      mapArticleResult فيعتمد إشارات الاسم/العنوان/المفهوم/الدلالي (تكفي للترتيب على
+  //      مستوى النظام). فيظهر «كامل النتائج» (لو ألف نتيجة) ويعمل الترقيم العميق، بنقلٍ خفيف.
+  //   ② تجسيد الصفحة المطلوبة فقط (≤ limit): جلب النصّ الكامل لبناء المقتطف/الفقرات —
+  //      فلا يُنقل نصّ أيّ مادة غير معروضة (كان سابقاً يجلب نصّ 2000 مادة لكل استعلام).
+  // يزيل اقتطاع المجموعة (2000/80) ويُبلّغ الإجماليّ الحقيقي بصدق.
   // ════════════════════════════════════════════════════════════════════════
-  const COMPLETE_CAP = 6000;
+  const COMPLETE_CAP = 20000; // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة)
 
-  const total = await prisma.legalArticle.count({ where }).catch(() => 0);
+  const [total, lightRows] = await Promise.all([
+    prisma.legalArticle.count({ where }).catch(() => 0),
+    prisma.legalArticle
+      .findMany({ where, select: LIGHT_ARTICLE_SELECT, orderBy: { id: "asc" }, take: COMPLETE_CAP })
+      .catch(() => [] as LightArticle[])
+  ]);
+  // exhaustive=false فقط إن تجاوزت المطابقات السقف (مستحيل بالكوربوس الحالي) — ترقيم غير مكتمل عندئذٍ.
   const exhaustive = total <= COMPLETE_CAP;
 
-  let candidates: Awaited<ReturnType<typeof prisma.legalArticle.findMany>>;
-  if (exhaustive) {
-    // المسار الكامل: كل المطابقات بنصّها الكامل — ترتيب كامل + ترقيم عميق بلا اقتطاع.
-    candidates = await prisma.legalArticle
-      .findMany({ where, include: { legalSystem: { select: { id: true, name: true } } }, orderBy: { id: "asc" }, take: COMPLETE_CAP })
-      .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>);
-  } else {
-    // مسار احتياطي للاستعلامات شديدة الاتساع: مسح خفيف (id+اسم+معرّف) ثم اختيار متنوّع
-    // بسقف لكل نظام (يكسر احتكار نظام والانحياز الأبجدي)، مع إبلاغ الإجماليّ الحقيقي.
-    const lightRows = await prisma.legalArticle
-      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: { id: "asc" }, take: 20000 })
-      .catch(() => [] as Array<{ id: string; lawName: string; legalSystemId: string | null }>);
-    const diverseIds = selectDiverseCandidateIds(lightRows, { perSystemCap: 80, target: 2000 });
-    candidates = diverseIds.length
-      ? await prisma.legalArticle
-          .findMany({ where: { id: { in: diverseIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-          .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
-      : [];
-  }
+  const lightById = new Map<string, LightArticle>();
+  for (const r of lightRows) lightById.set(r.id, r);
 
-  const byId = new Map<string, (typeof candidates)[number]>();
-  for (const a of candidates) byId.set(a.id, a);
-
-  // مواد مُسنَدة من مواضع المكنز لم يجدها البحث المعجمي — استرجاع مُسنَد (المفهوم يرد فيها فعلاً).
+  // مواد مُسنَدة من مواضع المكنز لم يطابقها النصّي — استرجاع مُسنَد (المفهوم يرد فيها فعلاً).
   if (graph.articleBoosts.size) {
-    const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !byId.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
+    const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !lightById.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
     if (missingOccIds.length) {
       const extraOcc = await prisma.legalArticle
-        .findMany({ where: { id: { in: missingOccIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-        .catch(() => [] as typeof candidates);
-      for (const a of extraOcc as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+        .findMany({ where: { id: { in: missingOccIds } }, select: LIGHT_ARTICLE_SELECT })
+        .catch(() => [] as LightArticle[]);
+      for (const r of extraOcc) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
   }
 
-  // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): يجلب مواد قريبة
-  // بالمعنى حتى بلا تطابق لفظي، فيكسر حصر النتائج في الأنظمة التي تحوي الكلمة حرفياً.
-  // سقوط آمن: إن غاب جدول المتجهات تبقى semMap فارغة ويعمل البحث المعجمي كالسابق.
+  // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): معرّفات + تشابه (بلا نصّ)،
+  // فيجلب مواد قريبة بالمعنى حتى بلا تطابق لفظي. سقوط آمن إلى Map فارغة إن غاب الجدول.
   let semMap = new Map<string, number>();
   if (query && options.semantic && semanticSearchEnabled()) {
     semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
-    const extraIds = [...semMap.keys()].filter((id) => !byId.has(id));
+    const extraIds = [...semMap.keys()].filter((id) => !lightById.has(id));
     if (extraIds.length) {
       const extra = await prisma.legalArticle
-        .findMany({ where: { id: { in: extraIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-        .catch(() => [] as typeof candidates);
-      for (const a of extra as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+        .findMany({ where: { id: { in: extraIds } }, select: LIGHT_ARTICLE_SELECT })
+        .catch(() => [] as LightArticle[]);
+      for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
   }
 
-  const scored = Array.from(byId.values())
-    .map((article) => mapArticleResult(article as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems))
+  // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
+  const lightOptions: AdvancedLegalSearchOptions = { ...options, includeSnippets: false, includeMatchedParagraphs: false };
+  const scored = Array.from(lightById.values())
+    .map((row) => mapArticleResult({ ...row, content: "" } as unknown as LegalArticleWithSystem, query, searchType, normalizedVariants, lightOptions, conceptWords, conceptBigrams, preferSystems))
     // ترجيح المكنز: مادة يرد فيها مفهوم مُطابَق (معتمد) تُرفع درجتها بمقدار مُسنَد للمواضع.
     .map((r) => {
       const boost = graph.articleBoosts.get(r.articleId);
@@ -345,7 +347,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ونعلّم exhaustive=false كي تعرف الواجهة أن ما بعد المجموعة المرتّبة غير مضمون الترتيب.
   const effectiveTotal = query ? (exhaustive ? relevant.length : Math.max(relevant.length, total)) : total;
   const start = (page - 1) * limit;
-  const results = relevant.slice(start, start + limit);
+  const pageSlice = relevant.slice(start, start + limit);
+  // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
+  //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
+  const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
 
   return {
     query,
@@ -358,6 +363,37 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     results,
     message: effectiveTotal ? undefined : noLegalArticleMessage
   };
+}
+
+/**
+ * المرحلة ② للاسترجاع الكامل: تجسيد صفحة النتائج بنصّها الكامل.
+ * تجلب الصفوف الكاملة لمواد الصفحة فقط (≤ limit) وتبني النتيجة النهائية (مقتطف + فقرات)،
+ * مع الحفاظ على درجة وترتيب المرحلة ① (التهديف الخفيف) لثبات الترقيم عبر الصفحات.
+ * سقوط آمن: مادة تعذّر جلبها كاملةً تبقى بنتيجتها الخفيفة.
+ */
+async function materializePage(
+  pageSlice: LegalCoreResult[],
+  query: string,
+  searchType: ArabicSearchType,
+  normalizedVariants: string[],
+  options: AdvancedLegalSearchOptions,
+  conceptWords: string[],
+  conceptBigrams: string[],
+  preferSystems: string[]
+): Promise<LegalCoreResult[]> {
+  if (!pageSlice.length) return [];
+  const ids = pageSlice.map((r) => r.articleId);
+  const fullRows = await prisma.legalArticle
+    .findMany({ where: { id: { in: ids } }, include: { legalSystem: { select: { id: true, name: true } } } })
+    .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>);
+  const fullById = new Map(fullRows.map((a) => [a.id, a]));
+  return pageSlice.map((light) => {
+    const full = fullById.get(light.articleId);
+    if (!full) return light; // سقوط آمن: أبقِ النتيجة الخفيفة
+    const display = mapArticleResult(full as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+    // حافظ على درجة المرحلة ① (الترتيب الكامل) كي يبقى الترقيم متّسقاً عبر الصفحات.
+    return { ...display, relevanceScore: light.relevanceScore };
+  });
 }
 
 /**
