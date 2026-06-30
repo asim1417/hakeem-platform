@@ -16,11 +16,15 @@ function embeddingApiKey(): string | null {
   return process.env.EMBEDDING_API_KEY || process.env.OPENAI_API_KEY || null;
 }
 
-/** هل البحث الدلالي مُفعّل ومتاح (علَم + مفتاح)؟ */
+/**
+ * هل البحث الدلالي مُفعّل ومتاح؟
+ * مُفعَّل افتراضياً متى توفّر مفتاح التضمين (opt-out): لا يلزم ضبط SEMANTIC_SEARCH=true.
+ * يُعطَّل صراحةً بـ SEMANTIC_SEARCH=false|0|off. وبلا مفتاح يبقى مُعطَّلاً (سقوط آمن للمعجمي).
+ */
 export function semanticSearchEnabled(): boolean {
-  const flag = (process.env.SEMANTIC_SEARCH || "").toLowerCase();
-  const on = flag === "1" || flag === "true" || flag === "on";
-  return on && Boolean(embeddingApiKey());
+  const flag = (process.env.SEMANTIC_SEARCH ?? "").toLowerCase().trim();
+  const off = flag === "0" || flag === "false" || flag === "off";
+  return !off && Boolean(embeddingApiKey());
 }
 
 /**
