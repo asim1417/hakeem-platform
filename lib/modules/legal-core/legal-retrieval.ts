@@ -68,6 +68,8 @@ export type AdvancedLegalSearchResponse = {
   query: string;
   searchType: ArabicSearchType;
   total: number;
+  /** هل رُتِّبت **كل** المطابقات (استرجاع كامل)؟ false فقط للاستعلامات شديدة الاتساع (> COMPLETE_CAP). */
+  exhaustive?: boolean;
   page: number;
   limit: number;
   relatedTerms: string[];
@@ -185,7 +187,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
   const page = Math.max(Number(options.page ?? 1), 1);
-  const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 80);
+  // سقف الصفحة 200 (كان 80): يتيح سحب دفعات أكبر عند تصدير «كامل النتائج».
+  const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 200);
   const fields = normalizeFields(options.fields);
   // استبعاد الكلمات القصيرة/الشائعة حتى لا تطابق مواد لا صلة لها بالبحث
   const baseVariants = filterMeaningfulVariants(buildVariants(query, searchType));
@@ -226,87 +229,46 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     ].filter((item) => Object.keys(item).length > 0)
   };
 
-  // نجلب مجموعة مرشّحين متنوّعة الأنظمة ثم نرتّبها بالصلة في الذاكرة قبل الاقتطاع.
-  // المشكلة سابقاً: جلب أول CAP مادة **أبجدياً باسم النظام** كان يُقصي الأنظمة
-  // متأخّرة الترتيب أبجدياً، ويسمح لنظام واحد كثير المواد باحتكار المجموعة —
-  // فلا تظهر إلا أنظمة قليلة (قياس التشخيص: ~12% فقط). الحل: مسح خفيف (id+اسم)
-  // ثم اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط.
-  // سقف المسح ≥ حجم الكوربوس: يضمن مسح **كل** المواد المطابقة فلا يُقصى أيّ نظام مطابق
-  // بالاقتطاع (الجذر السابق للانحياز). صفوف خفيفة (id + معرّفان) فالكلفة ضئيلة حتى للمصطلحات الشائعة.
-  const LIGHT_SCAN = 20000;       // > 15,902 (حجم الكوربوس) — لا اقتطاع لأي استعلام واقعي
-  const POOL_TARGET = 2000;       // حجم مجموعة المرشّحين بعد التنويع (أوسع تمثيلاً للأنظمة في التقييم)
-  const PER_SYSTEM_POOL_CAP = 80; // أقصى مواد لكل نظام (≥ أقصى حجم صفحة، فلا تنقص نتائج الاستعلام أحادي النظام)
-  // مرشّحو الاسم/العنوان: عند وجود >CAP مرشّح، الاقتطاع الأبجدي كان يقصي «نظام...» (ن)
-  // قبل التقييم. لذا نجلب صراحةً المواد التي يطابق اسمُ نظامها/عنوانُها الاستعلام،
-  // فنضمن حضور النظام الأنسب (مثل «نظام الأحوال الشخصية») في مجموعة التقييم.
-  const nameWhere = query
-    ? {
-        AND: [
-          buildSystemFilter(options.systemIds),
-          buildCategoryFilter(options.categoryIds),
-          buildSourceTypeFilter(options.sourceTypes),
-          buildTextFilter(filterVariants, ["systemTitle", "title"])
-        ].filter((item) => Object.keys(item).length > 0)
-      }
-    : null;
+  // ════════════════════════════════════════════════════════════════════════
+  // استرجاع كامل (Complete Retrieval) — كما في المحرّكات العالمية: نرتّب **كل**
+  // المطابقات لا مجموعة مقتطعة، فيظهر «كامل النتائج» (لو ألف نتيجة) ويعمل الترقيم
+  // العميق، ويُبلَّغ الإجماليّ الحقيقي.
+  //
+  // سابقاً: كان يُختار 2000 مرشّح (≤80/نظام) فقط، فتُسقَط آلاف المطابقات من الترتيب
+  // والترقيم، ويُستبدل الإجماليّ الحقيقي بحجم المجموعة المقتطعة (لا يمكن تجاوز صفحة الـ2000).
+  //
+  // الآن: نجلب **كل** المطابقات بنصّها الكامل (حتى COMPLETE_CAP ≥ الكوربوس) ونرتّبها
+  // بنفس منطق التهديف تماماً (بلا تغيير في الصلة). النقل محدود: الكود سابقاً كان يجلب
+  // حتى 2000 صفّاً كاملاً أصلاً، والاستعلام النمطي يطابق مئات. للاستعلامات شديدة الاتساع
+  // (> COMPLETE_CAP، نادرة) نسقط إلى اختيار متنوّع مع إبلاغ الإجماليّ الحقيقي و exhaustive=false.
+  // ════════════════════════════════════════════════════════════════════════
+  const COMPLETE_CAP = 6000;
 
-  // تطابق العبارة الكاملة في الاسم/العنوان: أقوى إشارة وأندر مطابقة، فلا يُقصى بالاقتطاع.
-  // يضمن حضور النظام صاحب الاسم المطابق تماماً (مثل «نظام العمل») رغم شيوع كلمة «نظام».
-  const trimmedQuery = query.trim();
-  const phraseNameWhere = trimmedQuery.length >= 3
-    ? {
-        AND: [
-          buildSystemFilter(options.systemIds),
-          buildCategoryFilter(options.categoryIds),
-          buildSourceTypeFilter(options.sourceTypes),
-          { OR: [{ lawName: { contains: trimmedQuery, mode: "insensitive" as const } }, { title: { contains: trimmedQuery, mode: "insensitive" as const } }] }
-        ].filter((item) => Object.keys(item).length > 0)
-      }
-    : null;
+  const total = await prisma.legalArticle.count({ where }).catch(() => 0);
+  const exhaustive = total <= COMPLETE_CAP;
 
-  const [total, lightRows, nameCandidates, phraseCandidates] = await Promise.all([
-    prisma.legalArticle.count({ where }),
-    // مسح خفيف (id + معرّف النظام + lawName) — رخيص حتى عند آلاف المطابقات.
-    // legalSystemId هو مفتاح التنويع الثابت؛ lawName يبقى للسقوط الاحتياطي فقط.
-    prisma.legalArticle
-      // ترتيب محايد (id) لا أبجدي: لو نما الكوربوس فوق السقف مستقبلاً، لا يكون الاقتطاع منحازاً للأنظمة المتقدّمة أبجدياً.
-      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: { id: "asc" }, take: LIGHT_SCAN })
-      .catch(() => [] as Array<{ id: string; lawName: string; legalSystemId: string | null }>),
-    nameWhere
-      ? prisma.legalArticle
-          .findMany({
-            where: nameWhere,
-            include: { legalSystem: { select: { id: true, name: true } } },
-            orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-            take: 400
-          })
-          .catch(() => [])
-      : Promise.resolve([]),
-    phraseNameWhere
-      ? prisma.legalArticle
-          .findMany({
-            where: phraseNameWhere,
-            include: { legalSystem: { select: { id: true, name: true } } },
-            orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-            take: 200
-          })
-          .catch(() => [])
-      : Promise.resolve([])
-  ]);
+  let candidates: Awaited<ReturnType<typeof prisma.legalArticle.findMany>>;
+  if (exhaustive) {
+    // المسار الكامل: كل المطابقات بنصّها الكامل — ترتيب كامل + ترقيم عميق بلا اقتطاع.
+    candidates = await prisma.legalArticle
+      .findMany({ where, include: { legalSystem: { select: { id: true, name: true } } }, orderBy: { id: "asc" }, take: COMPLETE_CAP })
+      .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>);
+  } else {
+    // مسار احتياطي للاستعلامات شديدة الاتساع: مسح خفيف (id+اسم+معرّف) ثم اختيار متنوّع
+    // بسقف لكل نظام (يكسر احتكار نظام والانحياز الأبجدي)، مع إبلاغ الإجماليّ الحقيقي.
+    const lightRows = await prisma.legalArticle
+      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: { id: "asc" }, take: 20000 })
+      .catch(() => [] as Array<{ id: string; lawName: string; legalSystemId: string | null }>);
+    const diverseIds = selectDiverseCandidateIds(lightRows, { perSystemCap: 80, target: 2000 });
+    candidates = diverseIds.length
+      ? await prisma.legalArticle
+          .findMany({ where: { id: { in: diverseIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
+          .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
+      : [];
+  }
 
-  // اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط (يكسر الاحتكار والانحياز الأبجدي).
-  const diverseIds = selectDiverseCandidateIds(lightRows, { perSystemCap: PER_SYSTEM_POOL_CAP, target: POOL_TARGET });
-  const candidates = diverseIds.length
-    ? await prisma.legalArticle
-        .findMany({ where: { id: { in: diverseIds } }, include: { legalSystem: { select: { id: true, name: true } } } })
-        .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
-    : [];
-
-  // دمج مع إزالة التكرار: تطابق العبارة الكاملة أولاً، ثم الاسم/العنوان، ثم العام
   const byId = new Map<string, (typeof candidates)[number]>();
-  for (const a of phraseCandidates as typeof candidates) byId.set(a.id, a);
-  for (const a of nameCandidates as typeof candidates) if (!byId.has(a.id)) byId.set(a.id, a);
-  for (const a of candidates) if (!byId.has(a.id)) byId.set(a.id, a);
+  for (const a of candidates) byId.set(a.id, a);
 
   // مواد مُسنَدة من مواضع المكنز لم يجدها البحث المعجمي — استرجاع مُسنَد (المفهوم يرد فيها فعلاً).
   if (graph.articleBoosts.size) {
@@ -324,7 +286,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // سقوط آمن: إن غاب جدول المتجهات تبقى semMap فارغة ويعمل البحث المعجمي كالسابق.
   let semMap = new Map<string, number>();
   if (query && options.semantic && semanticSearchEnabled()) {
-    semMap = await semanticArticleScores(query, 60).catch(() => new Map<string, number>());
+    semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
     const extraIds = [...semMap.keys()].filter((id) => !byId.has(id));
     if (extraIds.length) {
       const extra = await prisma.legalArticle
@@ -378,7 +340,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     relevant = await applySemanticRerank(query, relevant).catch(() => relevant);
   }
 
-  const effectiveTotal = query ? relevant.length : total;
+  // الإجماليّ: عند الاسترجاع الكامل (exhaustive) = عدد النتائج ذات الصلة فعلاً (رُتِّبت كلها).
+  // عند المسار الاحتياطي شديد الاتساع نُبلّغ الإجماليّ الحقيقي من القاعدة (count) بصدق،
+  // ونعلّم exhaustive=false كي تعرف الواجهة أن ما بعد المجموعة المرتّبة غير مضمون الترتيب.
+  const effectiveTotal = query ? (exhaustive ? relevant.length : Math.max(relevant.length, total)) : total;
   const start = (page - 1) * limit;
   const results = relevant.slice(start, start + limit);
 
@@ -386,6 +351,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     query,
     searchType,
     total: effectiveTotal,
+    exhaustive,
     page,
     limit,
     relatedTerms: options.includeRelatedTerms ? variants.slice(0, 24) : [],

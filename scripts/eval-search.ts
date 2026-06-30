@@ -1,22 +1,20 @@
 /**
  * eval-search.ts — مقياس جودة الاسترجاع (Phase 1، البوّابة ٨ في تشخيص الاسترجاع).
  *
- * يحوّل ضبط الترتيب من حدس إلى هندسة: يشغّل مجموعة استعلامات ذهبية عبر searchLegalCore
- * ويقيس آلياً جودة الترتيب على مستوى النظام (الانحياز/التغطية المُثار في التشخيص):
- *   - P@1 / P@3 / P@5  : نسبة نتائج أعلى-k الواردة من نظام متوقّع.
- *   - MRR               : مقلوب رتبة أول نتيجة من نظام متوقّع (جودة التصدّر).
- *   - systemHit@5       : هل ظهر أيّ نظام متوقّع ضمن أعلى 5؟ (تغطية/استدعاء).
- *   - nDCG@5            : ربح متدرّج بالرتبة (مكسب ثنائي: 1 إن وردت من نظام متوقّع).
+ * يحوّل ضبط الترتيب من حدس إلى هندسة. يقيس عبر searchLegalCore بُعدين:
  *
- * المطابقة على مستوى النظام (لا أرقام مواد مُختلقة): نتيجة «صحيحة» إن احتوى اسم نظامها
- * أيّاً من الأنظمة المتوقّعة (تطبيع عربي + احتواء) — نفس منطق concept-map.systemMatchesPreferred.
- * عند توفّر expectedArticleNumbers في الاستعلام الذهبي، يُقاس إضافةً P@k على مستوى المادة.
+ * ① جودة الترتيب (Relevance) — على مستوى النظام (وعلى مستوى المادة عند توفّر أرقام متوقّعة):
+ *    P@1/P@3/P@5 · MRR · MAP · systemHit@k (التغطية) · systemRecall@10 · nDCG@5.
+ * ② اكتمال الاسترجاع (Completeness) — هل يُخرِج المحرّك **كامل النتائج** (لو ألف نتيجة)؟
+ *    trueTotal (الإجماليّ الحقيقي) · exhaustive (رُتِّبت كل المطابقات؟) ·
+ *    deepPageOk (هل يعمل الترقيم العميق حتى آخر صفحة؟).
  *
- * قراءة فقط. لا كتابة. سقوط آمن: استعلام يفشل (لا اتصال) يُعلَّم errored ولا يكسر البقية.
+ * المطابقة على مستوى النظام: تطبيع عربي + احتواء (نفس systemMatchesPreferred). لا أرقام مواد مُختلقة.
+ * قراءة فقط. سقوط آمن: استعلام يفشل (لا اتصال) يُعلَّم ولا يكسر البقية.
  *
  * التشغيل:  npm run eval:search            (تقرير)
- *           npm run eval:search -- --gate  (بوّابة: يفشل إن نزل systemHit@3 عن العتبة)
- *           متغيّرات: EVAL_GOLDEN=path  EVAL_LIMIT=10  EVAL_MIN_SYSTEMHIT3=0.6
+ *           npm run eval:search -- --gate  (بوّابة: يفشل دون عتبات الجودة/الاكتمال)
+ *           متغيّرات: EVAL_GOLDEN=path  EVAL_LIMIT=10  EVAL_MIN_SYSTEMHIT3=0.6  EVAL_MIN_EXHAUSTIVE=0.95
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -29,6 +27,7 @@ type GoldenQuery = {
   domain?: string;
   expectedSystems: string[];
   expectedArticleNumbers?: number[];
+  outOfConceptMap?: boolean; // استعلام خارج خريطة المفاهيم (يكسر الدائرية، يقيس التعميم)
 };
 
 type GoldenSet = { version?: number; queries: GoldenQuery[] };
@@ -37,19 +36,25 @@ type QueryMetrics = {
   id: string;
   query: string;
   domain?: string;
+  outOfConceptMap: boolean;
   errored: boolean;
-  total: number;
-  firstRelevantRank: number | null; // 1-based، أو null إن لم تظهر
-  pAt: Record<number, number>; // P@k على مستوى النظام
+  // الترتيب
+  firstRelevantRank: number | null;
+  pAt: Record<number, number>;
   systemHitAt: Record<number, boolean>;
+  systemRecallAt10: number;
   ndcgAt5: number;
-  articlePAt3: number | null; // عند توفّر expectedArticleNumbers فقط
-  topSystems: string[]; // أنظمة أعلى 3 نتائج (لتشخيص الانحياز عند الفشل)
+  ap: number; // average precision (للـ MAP)
+  articleRank: number | null; // رتبة أول مادة متوقّعة (عند توفّر أرقام)
+  // الاكتمال
+  trueTotal: number;
+  exhaustive: boolean;
+  deepPageOk: boolean | null; // null إذا total ≤ limit (لا صفحة عميقة)
+  topSystems: string[];
 };
 
 const K_VALUES = [1, 3, 5] as const;
 
-/** هل يطابق اسمُ النظام (مُطبَّعاً) أيّاً من الأنظمة المتوقّعة؟ (احتواء في الاتجاهين). */
 function systemIsExpected(systemName: string, expected: string[]): boolean {
   const ns = normalizeArabicText(systemName || "");
   if (!ns) return false;
@@ -59,15 +64,26 @@ function systemIsExpected(systemName: string, expected: string[]): boolean {
   });
 }
 
-function dcg(relevances: number[]): number {
-  return relevances.reduce((sum, rel, i) => sum + rel / Math.log2(i + 2), 0);
+function dcg(rels: number[]): number {
+  return rels.reduce((sum, rel, i) => sum + rel / Math.log2(i + 2), 0);
 }
-
-function ndcgAtK(relevances: number[], k: number): number {
-  const top = relevances.slice(0, k);
-  const ideal = [...relevances].sort((a, b) => b - a).slice(0, k);
+function ndcgAtK(rels: number[], k: number): number {
+  const top = rels.slice(0, k);
+  const ideal = [...rels].sort((a, b) => b - a).slice(0, k);
   const idcg = dcg(ideal);
   return idcg > 0 ? dcg(top) / idcg : 0;
+}
+/** Average Precision: متوسّط الدقّة عند كل نتيجة صحيحة (أساس MAP). */
+function averagePrecision(rels: number[]): number {
+  let hits = 0;
+  let sum = 0;
+  for (let i = 0; i < rels.length; i += 1) {
+    if (rels[i] === 1) {
+      hits += 1;
+      sum += hits / (i + 1);
+    }
+  }
+  return hits > 0 ? sum / hits : 0;
 }
 
 async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetrics> {
@@ -75,19 +91,24 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
     id: g.id,
     query: g.query,
     domain: g.domain,
+    outOfConceptMap: Boolean(g.outOfConceptMap),
     errored: false,
-    total: 0,
     firstRelevantRank: null,
     pAt: {},
     systemHitAt: {},
+    systemRecallAt10: 0,
     ndcgAt5: 0,
-    articlePAt3: null,
+    ap: 0,
+    articleRank: null,
+    trueTotal: 0,
+    exhaustive: false,
+    deepPageOk: null,
     topSystems: [],
   };
 
-  let results: Awaited<ReturnType<typeof searchLegalCore>>["results"];
+  let response: Awaited<ReturnType<typeof searchLegalCore>>;
   try {
-    const response = await searchLegalCore({
+    response = await searchLegalCore({
       query: g.query,
       searchType: "contains",
       page: 1,
@@ -97,13 +118,15 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
       includeRelatedTerms: false,
       semantic: true,
     });
-    results = response.results;
-    base.total = response.total;
   } catch (error) {
     base.errored = true;
     base.topSystems = [error instanceof Error ? error.message.slice(0, 60) : "خطأ"];
     return base;
   }
+
+  const results = response.results;
+  base.trueTotal = response.total;
+  base.exhaustive = response.exhaustive !== false;
 
   const rels: number[] = results.map((r) => (systemIsExpected(r.systemName, g.expectedSystems) ? 1 : 0));
   base.topSystems = results.slice(0, 3).map((r) => r.systemName);
@@ -114,16 +137,42 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
   for (const k of K_VALUES) {
     const win = rels.slice(0, k);
     const hits = win.reduce((a, b) => a + b, 0);
-    base.pAt[k] = win.length ? hits / k : 0; // P@k مقسوم على k (لا على المتاح) — يعاقب نقص النتائج
+    base.pAt[k] = win.length ? hits / k : 0;
     base.systemHitAt[k] = hits > 0;
   }
   base.ndcgAt5 = ndcgAtK(rels, 5);
+  base.ap = averagePrecision(rels.slice(0, 10));
 
+  // systemRecall@10: نسبة الأنظمة المتوقّعة المتمايزة التي ظهرت ضمن أعلى 10.
+  const top10Systems = results.slice(0, 10).map((r) => r.systemName);
+  const distinctExpectedHit = g.expectedSystems.filter((e) => top10Systems.some((s) => systemIsExpected(s, [e]))).length;
+  base.systemRecallAt10 = g.expectedSystems.length ? distinctExpectedHit / g.expectedSystems.length : 0;
+
+  // على مستوى المادة (عند توفّر أرقام متوقّعة).
   if (g.expectedArticleNumbers && g.expectedArticleNumbers.length) {
-    const expectedNums = new Set(g.expectedArticleNumbers);
-    const top3 = results.slice(0, 3);
-    const articleHits = top3.filter((r) => expectedNums.has(r.articleNumber)).length;
-    base.articlePAt3 = top3.length ? articleHits / 3 : 0;
+    const expected = new Set(g.expectedArticleNumbers);
+    const idx = results.findIndex((r) => expected.has(r.articleNumber));
+    base.articleRank = idx >= 0 ? idx + 1 : null;
+  }
+
+  // اكتمال الاسترجاع: هل يعمل الترقيم العميق حتى آخر صفحة؟ (إثبات «كامل النتائج»).
+  if (base.exhaustive && response.total > limit) {
+    const lastPage = Math.ceil(response.total / limit);
+    try {
+      const deep = await searchLegalCore({
+        query: g.query,
+        searchType: "contains",
+        page: lastPage,
+        limit,
+        includeSnippets: false,
+        includeMatchedParagraphs: false,
+        includeRelatedTerms: false,
+        semantic: false, // أرخص للصفحة العميقة
+      });
+      base.deepPageOk = deep.results.length > 0;
+    } catch {
+      base.deepPageOk = false;
+    }
   }
 
   return base;
@@ -132,7 +181,6 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
 function mean(xs: number[]): number {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
 }
-
 function pct(x: number): string {
   return `${(x * 100).toFixed(1)}%`;
 }
@@ -142,6 +190,7 @@ async function main() {
   const limit = Number(process.env.EVAL_LIMIT || 10);
   const gate = process.argv.includes("--gate");
   const minSystemHit3 = Number(process.env.EVAL_MIN_SYSTEMHIT3 || 0.6);
+  const minExhaustive = Number(process.env.EVAL_MIN_EXHAUSTIVE || 0.95);
 
   let golden: GoldenSet;
   try {
@@ -158,16 +207,14 @@ async function main() {
     process.exit(2);
   }
 
-  console.log("═".repeat(78));
-  console.log(`مقياس جودة الاسترجاع — eval:search   |   ${queries.length} استعلاماً ذهبياً   |   limit=${limit}`);
+  const inMap = queries.filter((q) => !q.outOfConceptMap).length;
+  console.log("═".repeat(82));
+  console.log(`مقياس جودة الاسترجاع — eval:search   |   ${queries.length} استعلاماً (${inMap} داخل الخريطة · ${queries.length - inMap} خارجها)   |   limit=${limit}`);
   console.log(`المصدر: ${goldenPath}`);
-  console.log("═".repeat(78));
+  console.log("═".repeat(82));
 
   const metrics: QueryMetrics[] = [];
-  for (const g of queries) {
-    // تسلسلي عمداً: ضغط منخفض على القاعدة، وترتيب ثابت للتقرير.
-    metrics.push(await evaluateQuery(g, limit));
-  }
+  for (const g of queries) metrics.push(await evaluateQuery(g, limit));
 
   const ok = metrics.filter((m) => !m.errored);
   const errored = metrics.filter((m) => m.errored);
@@ -180,69 +227,88 @@ async function main() {
   }
 
   // ── جدول لكل استعلام ──
-  console.log("\nالنتائج لكل استعلام (✓ = ظهر نظام متوقّع ضمن أعلى 5):\n");
-  console.log(
-    ["النتيجة", "الرتبة₁", "P@3", "nDCG@5", "المعرّف", "أعلى نظام ظاهر"].join("\t")
-  );
-  console.log("─".repeat(78));
+  console.log("\nالنتائج لكل استعلام (✓ = نظام متوقّع ضمن أعلى 5 · «إجمالي» = كل المطابقات · «عميق» = ترقيم آخر صفحة):\n");
+  console.log(["نتيجة", "رتبة₁", "P@3", "nDCG", "إجمالي", "كامل؟", "عميق؟", "المعرّف", "أعلى نظام"].join("\t"));
+  console.log("─".repeat(82));
   for (const m of metrics) {
     if (m.errored) {
-      console.log(["⚠ خطأ", "—", "—", "—", m.id, m.topSystems[0] ?? ""].join("\t"));
+      console.log(["⚠", "—", "—", "—", "—", "—", "—", m.id, m.topSystems[0] ?? ""].join("\t"));
       continue;
     }
-    const mark = m.systemHitAt[5] ? "✓" : "✗";
+    const deep = m.deepPageOk === null ? "—" : m.deepPageOk ? "✓" : "✗";
     console.log(
       [
-        mark,
+        m.systemHitAt[5] ? "✓" : "✗",
         m.firstRelevantRank ?? "—",
         pct(m.pAt[3] ?? 0),
-        (m.ndcgAt5 ?? 0).toFixed(3),
+        (m.ndcgAt5 ?? 0).toFixed(2),
+        m.trueTotal,
+        m.exhaustive ? "✓" : "جزئي",
+        deep,
         m.id,
-        m.topSystems[0] ?? "—",
+        (m.topSystems[0] ?? "—").slice(0, 28),
       ].join("\t")
     );
   }
 
   // ── المتوسّطات ──
+  const outMap = ok.filter((m) => m.outOfConceptMap);
   const agg = {
     pAt1: mean(ok.map((m) => m.pAt[1] ?? 0)),
     pAt3: mean(ok.map((m) => m.pAt[3] ?? 0)),
     pAt5: mean(ok.map((m) => m.pAt[5] ?? 0)),
     mrr: mean(ok.map((m) => (m.firstRelevantRank ? 1 / m.firstRelevantRank : 0))),
+    map: mean(ok.map((m) => m.ap)),
     systemHit3: mean(ok.map((m) => (m.systemHitAt[3] ? 1 : 0))),
     systemHit5: mean(ok.map((m) => (m.systemHitAt[5] ? 1 : 0))),
-    ndcg5: mean(ok.map((m) => m.ndcgAt5 ?? 0)),
+    recall10: mean(ok.map((m) => m.systemRecallAt10)),
+    ndcg5: mean(ok.map((m) => m.ndcgAt5)),
+    // التعميم: نفس المقياس على الاستعلامات خارج خريطة المفاهيم (يكسر الدائرية).
+    outMrr: mean(outMap.map((m) => (m.firstRelevantRank ? 1 / m.firstRelevantRank : 0))),
+    outSystemHit3: mean(outMap.map((m) => (m.systemHitAt[3] ? 1 : 0))),
+    // الاكتمال
+    exhaustiveRate: mean(ok.map((m) => (m.exhaustive ? 1 : 0))),
+    deepProbes: ok.filter((m) => m.deepPageOk !== null),
   };
+  const deepOk = agg.deepProbes.length ? mean(agg.deepProbes.map((m) => (m.deepPageOk ? 1 : 0))) : 1;
 
-  console.log("\n" + "═".repeat(78));
-  console.log("المتوسّطات (على مستوى النظام):");
-  console.log(`  P@1         = ${pct(agg.pAt1)}`);
-  console.log(`  P@3         = ${pct(agg.pAt3)}`);
-  console.log(`  P@5         = ${pct(agg.pAt5)}`);
-  console.log(`  MRR         = ${agg.mrr.toFixed(3)}`);
-  console.log(`  systemHit@3 = ${pct(agg.systemHit3)}   (التغطية: ظهر النظام المتوقّع ضمن أعلى 3)`);
-  console.log(`  systemHit@5 = ${pct(agg.systemHit5)}`);
-  console.log(`  nDCG@5      = ${agg.ndcg5.toFixed(3)}`);
+  console.log("\n" + "═".repeat(82));
+  console.log("① جودة الترتيب (Relevance):");
+  console.log(`  P@1 = ${pct(agg.pAt1)}   P@3 = ${pct(agg.pAt3)}   P@5 = ${pct(agg.pAt5)}`);
+  console.log(`  MRR = ${agg.mrr.toFixed(3)}   MAP = ${agg.map.toFixed(3)}   nDCG@5 = ${agg.ndcg5.toFixed(3)}`);
+  console.log(`  systemHit@3 = ${pct(agg.systemHit3)}   systemHit@5 = ${pct(agg.systemHit5)}   systemRecall@10 = ${pct(agg.recall10)}`);
+  if (outMap.length) {
+    console.log(`  ↳ خارج خريطة المفاهيم (${outMap.length} استعلام، تعميم بلا دائرية): MRR = ${agg.outMrr.toFixed(3)} · systemHit@3 = ${pct(agg.outSystemHit3)}`);
+  }
+  console.log("② اكتمال الاسترجاع (Completeness — «كامل النتائج لو ألف نتيجة»):");
+  console.log(`  exhaustive (رُتِّبت كل المطابقات) = ${pct(agg.exhaustiveRate)}`);
+  console.log(`  deepPageOk (الترقيم العميق يعمل) = ${pct(deepOk)}   [${agg.deepProbes.length} استعلاماً تجاوز حجم الصفحة]`);
+  const maxTotal = Math.max(0, ...ok.map((m) => m.trueTotal));
+  console.log(`  أكبر إجماليّ نتائج لاستعلام = ${maxTotal.toLocaleString("en-US")} (كلها قابلة للاسترجاع بالترقيم)`);
   if (errored.length) console.log(`  ⚠ استعلامات فشلت (لا اتصال؟): ${errored.length}`);
 
-  // ── الإخفاقات للتشخيص ──
+  // ── الإخفاقات ──
   const failures = ok.filter((m) => !m.systemHitAt[5]);
   if (failures.length) {
-    console.log("\n" + "─".repeat(78));
+    console.log("\n" + "─".repeat(82));
     console.log(`إخفاقات التغطية (${failures.length}) — النظام المتوقّع لم يظهر ضمن أعلى 5:`);
     for (const f of failures) {
-      console.log(`  ✗ ${f.id} — «${f.query}»`);
+      console.log(`  ✗ ${f.id}${f.outOfConceptMap ? " [خارج الخريطة]" : ""} — «${f.query}»  (إجمالي ${f.trueTotal})`);
       console.log(`      ظهر بدلاً منه: ${f.topSystems.filter(Boolean).join(" · ") || "(لا نتائج)"}`);
     }
   }
-  console.log("═".repeat(78));
+  console.log("═".repeat(82));
 
   if (gate) {
-    if (agg.systemHit3 < minSystemHit3) {
-      console.error(`\n✗ بوّابة فاشلة: systemHit@3 = ${pct(agg.systemHit3)} < العتبة ${pct(minSystemHit3)}`);
+    const fails: string[] = [];
+    if (agg.systemHit3 < minSystemHit3) fails.push(`systemHit@3 = ${pct(agg.systemHit3)} < ${pct(minSystemHit3)}`);
+    if (agg.exhaustiveRate < minExhaustive) fails.push(`exhaustive = ${pct(agg.exhaustiveRate)} < ${pct(minExhaustive)}`);
+    if (deepOk < 1) fails.push(`deepPageOk = ${pct(deepOk)} < 100%`);
+    if (fails.length) {
+      console.error(`\n✗ بوّابة فاشلة:\n  - ${fails.join("\n  - ")}`);
       process.exit(1);
     }
-    console.log(`\n✓ بوّابة ناجحة: systemHit@3 = ${pct(agg.systemHit3)} ≥ ${pct(minSystemHit3)}`);
+    console.log(`\n✓ بوّابة ناجحة: الجودة والاكتمال فوق العتبات.`);
   }
 }
 

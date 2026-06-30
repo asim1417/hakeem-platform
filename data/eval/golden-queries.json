@@ -1,6 +1,6 @@
 {
-  "_about": "مجموعة استعلامات ذهبية لقياس جودة الاسترجاع (Phase 1). كل استعلام مربوط بالنظام/الأنظمة الصحيحة المتوقّعة (مطابقة احتواء على اسم النظام) — لا أرقام مواد مُختلقة. المطابقة على مستوى النظام تُفعّل قياس الانحياز/التغطية المُثار في التشخيص. تُثرى لاحقاً بـ expectedArticleNumbers عند التحقّق على Neon. المرجع: lib/modules/legal-core/concept-map.ts (روابط مفاهيم↔أنظمة منسّقة يدوياً).",
-  "version": 1,
+  "_about": "مجموعة استعلامات ذهبية لقياس جودة واكتمال الاسترجاع (Phase 1). كل استعلام مربوط بالنظام/الأنظمة الصحيحة المتوقّعة (مطابقة احتواء على اسم النظام) — لا أرقام مواد مُختلقة. القسم الأول (30) مشتقّ من concept-map. القسم الثاني (outOfConceptMap=true) خارج الخريطة عمداً: يكسر الدائرية ويقيس التعميم (اعتماد على المعجمي+الدلالي+ترجيح العنوان لا حافز المفهوم). تُثرى لاحقاً بـ expectedArticleNumbers (قياس مستوى المادة) بعد تحقّق على Neon. ملاحظة: إخفاق استعلام خارج الخريطة قد يعني فجوة ترتيب أو غياب النظام من الكوربوس — قائمة الإخفاقات تكشف ما ظهر بدلاً منه.",
+  "version": 2,
   "queries": [
     { "id": "labor-unfair-dismissal", "query": "الفصل التعسفي للعامل", "domain": "عمالي", "expectedSystems": ["العمل"] },
     { "id": "labor-end-of-service", "query": "مكافأة نهاية الخدمة", "domain": "عمالي", "expectedSystems": ["العمل"] },
@@ -31,6 +31,27 @@
     { "id": "drugs", "query": "المخدرات والمؤثرات العقلية", "domain": "جزائي", "expectedSystems": ["المخدرات"] },
     { "id": "bribery", "query": "الرشوة واستغلال النفوذ", "domain": "جزائي", "expectedSystems": ["الرشوة"] },
     { "id": "weapons", "query": "ترخيص حمل السلاح والذخيرة", "domain": "جزائي", "expectedSystems": ["الأسلحة والذخائر"] },
-    { "id": "volunteer", "query": "العمل التطوعي", "domain": "إداري", "expectedSystems": ["التطوع"] }
+    { "id": "volunteer", "query": "العمل التطوعي", "domain": "إداري", "expectedSystems": ["التطوع"] },
+
+    { "id": "oom-commercial-concealment", "query": "التستر التجاري", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["التستر"] },
+    { "id": "oom-expropriation", "query": "نزع ملكية العقارات للمنفعة العامة", "domain": "عقاري", "outOfConceptMap": true, "expectedSystems": ["نزع ملكية", "نزع الملكية"] },
+    { "id": "oom-bankruptcy", "query": "الإفلاس وإعادة التنظيم المالي", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["الإفلاس"] },
+    { "id": "oom-arbitration", "query": "التحكيم التجاري واتفاق التحكيم", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["التحكيم"] },
+    { "id": "oom-data-protection", "query": "حماية البيانات الشخصية", "domain": "تقني", "outOfConceptMap": true, "expectedSystems": ["حماية البيانات"] },
+    { "id": "oom-traffic", "query": "المرور والحوادث المرورية", "domain": "إداري", "outOfConceptMap": true, "expectedSystems": ["المرور"] },
+    { "id": "oom-environment", "query": "حماية البيئة من التلوث", "domain": "إداري", "outOfConceptMap": true, "expectedSystems": ["البيئة"] },
+    { "id": "oom-customs", "query": "التعرفة الجمركية والتهريب", "domain": "مالي", "outOfConceptMap": true, "expectedSystems": ["الجمارك", "الجمركي"] },
+    { "id": "oom-vat", "query": "ضريبة القيمة المضافة", "domain": "مالي", "outOfConceptMap": true, "expectedSystems": ["القيمة المضافة"] },
+    { "id": "oom-residence", "query": "الإقامة وتأشيرات الزيارة للوافدين", "domain": "إداري", "outOfConceptMap": true, "expectedSystems": ["الإقامة", "الوافدين"] },
+    { "id": "oom-nationality", "query": "الجنسية العربية السعودية", "domain": "إداري", "outOfConceptMap": true, "expectedSystems": ["الجنسية"] },
+    { "id": "oom-competition", "query": "المنافسة ومنع الممارسات الاحتكارية", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["المنافسة"] },
+    { "id": "oom-enforcement", "query": "التنفيذ والحجز على الأموال", "domain": "إجرائي", "outOfConceptMap": true, "expectedSystems": ["التنفيذ"] },
+    { "id": "oom-civil-procedure", "query": "المرافعات الشرعية أمام المحاكم", "domain": "إجرائي", "outOfConceptMap": true, "expectedSystems": ["المرافعات"] },
+    { "id": "oom-criminal-procedure", "query": "الإجراءات الجزائية والتوقيف", "domain": "إجرائي", "outOfConceptMap": true, "expectedSystems": ["الإجراءات الجزائية"] },
+    { "id": "oom-commercial-papers", "query": "الشيك والكمبيالة والسند لأمر", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["الأوراق التجارية"] },
+    { "id": "oom-social-insurance", "query": "التأمينات الاجتماعية والمعاشات", "domain": "عمالي", "outOfConceptMap": true, "expectedSystems": ["التأمينات الاجتماعية"] },
+    { "id": "oom-capital-market", "query": "هيئة السوق المالية والأوراق المالية", "domain": "مالي", "outOfConceptMap": true, "expectedSystems": ["السوق المالية", "السوق المالي"] },
+    { "id": "oom-real-estate-financing", "query": "التمويل العقاري والرهن العقاري", "domain": "مالي", "outOfConceptMap": true, "expectedSystems": ["التمويل العقاري", "الرهن العقاري"] },
+    { "id": "oom-commercial-fraud", "query": "الغش التجاري والسلع المغشوشة", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["الغش التجاري"] }
   ]
 }
