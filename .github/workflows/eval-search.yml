@@ -1,0 +1,54 @@
+name: Eval Search (read-only)
+
+# مقياس جودة الاسترجاع على مجموعة استعلامات ذهبية (P@k / MRR / systemHit / nDCG).
+# قراءة فقط — لا كتابة، لا seed، لا backfill. يحوّل ضبط الترتيب من حدس إلى قياس.
+#
+# يفضّل سرّ NEON_DATABASE_URL (قراءة) لقياس الإنتاج الحقيقي؛ وإلا يعود إلى DATABASE_URL.
+# اضبط gate=true لجعل المهمّة تفشل إن نزل systemHit@3 عن العتبة (افتراضي 0.6).
+
+on:
+  workflow_dispatch:
+    inputs:
+      gate:
+        description: "تشغيل كبوّابة (يفشل دون العتبة)"
+        type: boolean
+        default: false
+      min_systemhit3:
+        description: "عتبة systemHit@3 عند التشغيل كبوّابة (0..1)"
+        type: string
+        default: "0.6"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # تفعيل الدلالي في القياس (اختياري — يسقط آمناً للمعجمي إن غاب المفتاح).
+      SEMANTIC_SEARCH: "true"
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      EVAL_MIN_SYSTEMHIT3: ${{ inputs.min_systemhit3 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Run retrieval eval (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          if [ "${{ inputs.gate }}" = "true" ]; then
+            npm run eval:search -- --gate
+          else
+            npm run eval:search
+          fi
