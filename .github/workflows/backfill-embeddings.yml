@@ -42,6 +42,8 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # يقرأه السكربت كحارس داخلي للكتابة (scripts/backfill-embeddings.ts) — لا بدّ من تمريره env.
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
     steps:
       # 🔒 Production DB writes are locked until Vercel Runtime DATABASE_URL and GitHub Actions DATABASE_URL are intentionally aligned.
       - name: "🔒 Runtime DB alignment gate"
