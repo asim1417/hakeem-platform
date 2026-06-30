@@ -227,8 +227,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // متأخّرة الترتيب أبجدياً، ويسمح لنظام واحد كثير المواد باحتكار المجموعة —
   // فلا تظهر إلا أنظمة قليلة (قياس التشخيص: ~12% فقط). الحل: مسح خفيف (id+اسم)
   // ثم اختيار متنوّع بسقف لكل نظام، ثم جلب النصوص الكاملة للمختارين فقط.
-  const LIGHT_SCAN = 6000;        // مسح خفيف (id + lawName) يغطّي كل المطابقات تقريباً
-  const POOL_TARGET = 1200;       // حجم مجموعة المرشّحين الكاملة بعد التنويع
+  // سقف المسح ≥ حجم الكوربوس: يضمن مسح **كل** المواد المطابقة فلا يُقصى أيّ نظام مطابق
+  // بالاقتطاع (الجذر السابق للانحياز). صفوف خفيفة (id + معرّفان) فالكلفة ضئيلة حتى للمصطلحات الشائعة.
+  const LIGHT_SCAN = 20000;       // > 15,902 (حجم الكوربوس) — لا اقتطاع لأي استعلام واقعي
+  const POOL_TARGET = 2000;       // حجم مجموعة المرشّحين بعد التنويع (أوسع تمثيلاً للأنظمة في التقييم)
   const PER_SYSTEM_POOL_CAP = 80; // أقصى مواد لكل نظام (≥ أقصى حجم صفحة، فلا تنقص نتائج الاستعلام أحادي النظام)
   // مرشّحو الاسم/العنوان: عند وجود >CAP مرشّح، الاقتطاع الأبجدي كان يقصي «نظام...» (ن)
   // قبل التقييم. لذا نجلب صراحةً المواد التي يطابق اسمُ نظامها/عنوانُها الاستعلام،
@@ -263,7 +265,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     // مسح خفيف (id + معرّف النظام + lawName) — رخيص حتى عند آلاف المطابقات.
     // legalSystemId هو مفتاح التنويع الثابت؛ lawName يبقى للسقوط الاحتياطي فقط.
     prisma.legalArticle
-      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }], take: LIGHT_SCAN })
+      // ترتيب محايد (id) لا أبجدي: لو نما الكوربوس فوق السقف مستقبلاً، لا يكون الاقتطاع منحازاً للأنظمة المتقدّمة أبجدياً.
+      .findMany({ where, select: { id: true, lawName: true, legalSystemId: true }, orderBy: { id: "asc" }, take: LIGHT_SCAN })
       .catch(() => [] as Array<{ id: string; lawName: string; legalSystemId: string | null }>),
     nameWhere
       ? prisma.legalArticle
