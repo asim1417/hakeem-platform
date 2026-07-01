@@ -44,6 +44,7 @@ jobs:
       EVAL_MIN_SYSTEMHIT3: ${{ inputs.min_systemhit3 }}
       EVAL_PROVIDER: ${{ inputs.provider }}
       IN_DB_RECALL: ${{ inputs.in_db_recall }}
+      IN_DB_RANK: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node

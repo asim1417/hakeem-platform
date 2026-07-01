@@ -250,6 +250,75 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
   }
 }
 
+/**
+ * المسار (2) — الترتيب الكامل **داخل القاعدة**: يرتّب بـ ts_rank_cd على فهرس GIN مع
+ * OFFSET/LIMIT في القاعدة (ترقيم عميق يتوسّع لملايين المواد، بلا تهديف في التطبيق).
+ * صيغة صريحة بلا حوافز التطبيق (مفهوم/اسم/دلالي) — تُقاس صراحةً: هل الترتيب الخام للقاعدة
+ * يكفي؟ يُجسّد صفحة الطلب فقط. يعيد null عند غياب العمود/الفهرس أو أي خطأ (سقوط آمن).
+ * يُطابق تعبير الفهرس (coalesce) ليستعمل الـ GIN لا مسحاً كاملاً.
+ */
+async function inDbRankedSearch(
+  words: string[],
+  page: number,
+  limit: number,
+  ctx: {
+    query: string;
+    searchType: ArabicSearchType;
+    normalizedVariants: string[];
+    options: AdvancedLegalSearchOptions;
+    conceptWords: string[];
+    conceptBigrams: string[];
+    preferSystems: string[];
+  }
+): Promise<{ total: number; results: LegalCoreResult[] } | null> {
+  if (!words.length) return null;
+  const tsq = words.join(" | ");
+  const start = Math.max(0, (page - 1) * limit);
+  const tsv = "to_tsvector('simple', coalesce(search_norm, ''))"; // يطابق تعبير فهرس GIN
+  try {
+    const [countRows, idRows] = await Promise.all([
+      prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+        `SELECT count(*)::bigint c FROM legal_articles WHERE ${tsv} @@ to_tsquery('simple', $1)`,
+        tsq
+      ),
+      prisma.$queryRawUnsafe<Array<{ id: string }>>(
+        `SELECT id FROM legal_articles
+         WHERE ${tsv} @@ to_tsquery('simple', $1)
+         ORDER BY ts_rank_cd(${tsv}, to_tsquery('simple', $1)) DESC, id
+         OFFSET ${start} LIMIT ${Math.max(1, limit)}`,
+        tsq
+      )
+    ]);
+    const total = Number(countRows[0]?.c ?? 0);
+    const ids = idRows.map((r) => r.id);
+    if (!ids.length) return { total, results: [] };
+    const fullRows = await prisma.legalArticle.findMany({
+      where: { id: { in: ids } },
+      include: { legalSystem: { select: { id: true, name: true } } }
+    });
+    const byId = new Map(fullRows.map((a) => [a.id, a]));
+    // نحفظ ترتيب القاعدة (ts_rank) — لا إعادة ترتيب.
+    const results = ids
+      .map((id) => byId.get(id))
+      .filter((a): a is NonNullable<typeof a> => Boolean(a))
+      .map((full) =>
+        mapArticleResult(
+          full as LegalArticleWithSystem,
+          ctx.query,
+          ctx.searchType,
+          ctx.normalizedVariants,
+          ctx.options,
+          ctx.conceptWords,
+          ctx.conceptBigrams,
+          ctx.preferSystems
+        )
+      );
+    return { total, results };
+  } catch {
+    return null;
+  }
+}
+
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
@@ -319,6 +388,34 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
       (cleanList(options.sourceTypes).length === 1 && cleanList(options.sourceTypes)[0] === "article")) &&
     fields.length === Object.keys(searchableFieldMap).length;
   const useInDb = Boolean(query) && noStructuralFilter && process.env.IN_DB_RECALL !== "0";
+
+  // المسار (2) — الترتيب الكامل داخل القاعدة (تجريبي، خلف IN_DB_RANK=1): يرتّب ويُرقّم في
+  // القاعدة بـ ts_rank_cd بلا تهديف في التطبيق. يُقاس صراحةً؛ سقوط آمن للمسار العادي عند null.
+  if (Boolean(query) && noStructuralFilter && process.env.IN_DB_RANK === "1") {
+    const p2 = await inDbRankedSearch(buildTsQueryWords(filterVariants), page, limit, {
+      query,
+      searchType,
+      normalizedVariants,
+      options,
+      conceptWords,
+      conceptBigrams,
+      preferSystems
+    });
+    if (p2) {
+      return {
+        query,
+        searchType,
+        total: p2.total,
+        exhaustive: true, // الترقيم العميق يُخدَم من القاعدة (كل النتائج قابلة للاسترجاع)
+        page,
+        limit,
+        relatedTerms: options.includeRelatedTerms ? variants.slice(0, 24) : [],
+        results: p2.results,
+        message: p2.total ? undefined : noLegalArticleMessage
+      };
+    }
+    // p2 === null ⇒ سقوط آمن للمسار العادي أدناه.
+  }
 
   let total = 0;
   let lightRows: LightArticle[] = [];
