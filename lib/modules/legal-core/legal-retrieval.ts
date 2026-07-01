@@ -201,6 +201,55 @@ async function semanticArticleScores(query: string, take: number): Promise<Map<s
   return out;
 }
 
+/** يبني كلمات استعلام tsquery مفردة مُطبَّعة (نفس تطبيع search_norm) من متغيّرات البحث. */
+function buildTsQueryWords(variants: string[]): string[] {
+  const words = new Set<string>();
+  for (const v of variants) {
+    for (const w of normalizeArabicText(v).split(/\s+/)) {
+      if (w.length >= 2) words.add(w);
+    }
+  }
+  return [...words].slice(0, 40);
+}
+
+/**
+ * استدعاء مفهرس داخل القاعدة: يطابق النصّ العربي المُطبَّع (search_norm) عبر فهرس GIN
+ * (tsvector('simple')) ويرتّب بـ ts_rank_cd — بدل عشرات ILIKE على أعمدة خام. يعالج
+ * «التطبيع وقت الاستعلام» (صور الهمزة/التاء المربوطة تُطابَق) ويسرّع الاسترجاع.
+ * يعيد صفوفاً خفيفة (بلا نصّ، بلا ضمّ legalSystem → systemName يسقط إلى lawName).
+ * سقوط آمن إلى null عند غياب العمود/الفهرس أو أي خطأ (فيعود المسار المعجمي).
+ */
+async function inDbLightCandidates(words: string[], cap: number): Promise<LightArticle[] | null> {
+  if (!words.length) return null;
+  const tsq = words.join(" | ");
+  try {
+    const rows = await prisma.$queryRawUnsafe<
+      Array<{
+        id: string;
+        lawName: string;
+        legalSystemId: string | null;
+        articleNumber: number;
+        title: string;
+        classification: string | null;
+        chapter: string | null;
+        keywords: string[];
+        status: string;
+      }>
+    >(
+      `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
+       FROM legal_articles
+       WHERE search_norm IS NOT NULL
+         AND to_tsvector('simple', search_norm) @@ to_tsquery('simple', $1)
+       ORDER BY ts_rank_cd(to_tsvector('simple', search_norm), to_tsquery('simple', $1)) DESC
+       LIMIT ${cap}`,
+      tsq
+    );
+    return rows.map((r) => ({ ...r, legalSystem: null })) as unknown as LightArticle[];
+  } catch {
+    return null; // العمود/الفهرس غير موجود، أو خطأ tsquery → سقوط آمن للمسار المعجمي
+  }
+}
+
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
@@ -259,12 +308,36 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ════════════════════════════════════════════════════════════════════════
   const COMPLETE_CAP = 20000; // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة)
 
-  const [total, lightRows] = await Promise.all([
-    prisma.legalArticle.count({ where }).catch(() => 0),
-    prisma.legalArticle
-      .findMany({ where, select: LIGHT_ARTICLE_SELECT, orderBy: { id: "asc" }, take: COMPLETE_CAP })
-      .catch(() => [] as LightArticle[])
-  ]);
+  // مسار الاستدعاء المفهرس داخل القاعدة (tsvector): للاستعلام النصّي البسيط بلا فلاتر بنيوية
+  // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر
+  // بنيوي أو تعطيله بـ IN_DB_RECALL=0 نعود للمسار المعجمي (ILIKE) دون تغيير سلوك.
+  const noStructuralFilter =
+    !cleanList(options.systemIds).length &&
+    !cleanList(options.categoryIds).length &&
+    !options.domain &&
+    (!cleanList(options.sourceTypes).length ||
+      (cleanList(options.sourceTypes).length === 1 && cleanList(options.sourceTypes)[0] === "article")) &&
+    fields.length === Object.keys(searchableFieldMap).length;
+  const useInDb = Boolean(query) && noStructuralFilter && process.env.IN_DB_RECALL !== "0";
+
+  let total = 0;
+  let lightRows: LightArticle[] = [];
+  const inDbRows = useInDb ? await inDbLightCandidates(buildTsQueryWords(filterVariants), COMPLETE_CAP) : null;
+  if (inDbRows) {
+    // كل المطابقات (< السقف) رُجِّعت مفهرسةً — الإجماليّ الحقيقي = طولها؛ التطبيق يعيد ترتيبها.
+    lightRows = inDbRows;
+    total = inDbRows.length;
+  } else {
+    // المسار المعجمي (ILIKE) — مع الفلاتر البنيوية أو عند تعذّر المسار المفهرس.
+    const [t, rows] = await Promise.all([
+      prisma.legalArticle.count({ where }).catch(() => 0),
+      prisma.legalArticle
+        .findMany({ where, select: LIGHT_ARTICLE_SELECT, orderBy: { id: "asc" }, take: COMPLETE_CAP })
+        .catch(() => [] as LightArticle[])
+    ]);
+    total = t;
+    lightRows = rows;
+  }
   // exhaustive=false فقط إن تجاوزت المطابقات السقف (مستحيل بالكوربوس الحالي) — ترقيم غير مكتمل عندئذٍ.
   const exhaustive = total <= COMPLETE_CAP;
 
