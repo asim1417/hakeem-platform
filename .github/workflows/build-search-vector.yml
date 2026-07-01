@@ -1,0 +1,80 @@
+name: Build Search Vector (search_norm + GIN)
+
+# الترتيب داخل القاعدة — الأساس: يضيف عمود legal_articles.search_norm (نصّ عربي مُطبَّع)
+# + فهارس GIN (tsvector + trigram)، ثم يملأ العمود. يدوي فقط. يكتب في DB ⇒ مُقفل خلف
+# بوّابة المواءمة + حارس هدف (Neon الكبيرة فقط). يستعمل سرّ NEON_DATABASE_URL (كتابة).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+      rebuild:
+        description: "إعادة بناء كل الصفوف (--all)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-search-vector
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::يلزم ضبط السرّ NEON_DATABASE_URL (اتصال Neon بكتابة)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "① عمود search_norm + فهارس GIN (tsvector + trigram)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/sql/legal-articles-search-vector.sql
+      - name: "② تعبئة search_norm (نصّ عربي مُطبَّع)"
+        run: |
+          if [ "${{ inputs.rebuild }}" = "true" ]; then
+            npm run backfill:search-norm -- --all
+          else
+            npm run backfill:search-norm
+          fi
+      - name: "③ تحقق (قراءة فقط) — التغطية + عيّنة ترتيب ts_rank_cd"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT count(*) AS filled FROM legal_articles WHERE search_norm IS NOT NULL AND length(search_norm) > 0;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT indexname FROM pg_indexes WHERE indexname LIKE 'idx_legal_articles_search_norm%';"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT \"lawName\", article_number FROM ( \
+               SELECT \"lawName\", \"articleNumber\" AS article_number, \
+                      ts_rank_cd(to_tsvector('simple', coalesce(search_norm,'')), plainto_tsquery('simple','التحكيم')) AS r \
+               FROM legal_articles \
+               WHERE to_tsvector('simple', coalesce(search_norm,'')) @@ plainto_tsquery('simple','التحكيم') \
+               ORDER BY r DESC LIMIT 5 \
+             ) t;"
