@@ -242,6 +242,9 @@ export default async function LegalCoreSearchPage({
                         <LegalTopicBadge>{matchTypeLabel(article.matchType)}</LegalTopicBadge>
                         <LegalTopicBadge tone="emerald">مادة نظامية</LegalTopicBadge>
                         {st ? <LegalTopicBadge tone={st.tone}>{st.label}</LegalTopicBadge> : null}
+                        {article.citationCount ? (
+                          <LegalTopicBadge tone="amber">مُستشهَد بها في {article.citationCount.toLocaleString("ar-SA")} حكمًا</LegalTopicBadge>
+                        ) : null}
                       </div>
                     </div>
 

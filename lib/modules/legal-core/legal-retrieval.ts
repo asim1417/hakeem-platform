@@ -26,6 +26,7 @@ const LIGHT_ARTICLE_SELECT = {
 type LightArticle = Prisma.LegalArticleGetPayload<{ select: typeof LIGHT_ARTICLE_SELECT }>;
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { getArticleAuthorityMap } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -53,6 +54,8 @@ export type LegalCoreResult = {
   conceptCoverage: number;
   /** عدد عبارات الاستعلام المتجاورة (bigrams) الموجودة كعبارة متّصلة في المادة (أقوى دليل صلة) */
   phraseMatches: number;
+  /** عدد الأحكام القضائية المستشهِدة بهذه المادة (شفافية سلطة للعرض — لا يؤثّر في الترتيب) */
+  citationCount?: number;
 };
 
 export type AdvancedLegalSearchOptions = {
@@ -425,6 +428,20 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
   const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
 
+  // شفافية السلطة (عرض فقط، لا ترتيب): نُرفق عدد الأحكام المستشهِدة بكل مادة في الصفحة —
+  // «مُستشهَد بها في N حكماً». عدّ حقيقي من روابط المادة↔الحكم؛ يحكم المحامي على المرجعية.
+  // مقصور على صفّ الصفحة (≤ limit)، خريطة مُذكّرة، سقوط آمن إلى بلا شارة. مُبدَّل بـ CITING_REFERENCES=0.
+  const citationMap =
+    results.length && process.env.CITING_REFERENCES !== "0"
+      ? await getArticleAuthorityMap().catch(() => new Map<string, number>())
+      : null;
+  const displayResults = citationMap
+    ? results.map((r) => {
+        const count = citationMap.get(r.articleId);
+        return count ? { ...r, citationCount: count } : r;
+      })
+    : results;
+
   return {
     query,
     searchType,
@@ -433,7 +450,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     page,
     limit,
     relatedTerms: options.includeRelatedTerms ? variants.slice(0, 24) : [],
-    results,
+    results: displayResults,
     message: effectiveTotal ? undefined : noLegalArticleMessage
   };
 }

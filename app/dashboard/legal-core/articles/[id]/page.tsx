@@ -60,6 +60,8 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
           orderBy: { createdAt: "desc" },
           take: 8
         },
+        // العدّ الحقيقي للأحكام المستشهِدة (للشارة)، بينما تُعرض أحدث 8 فقط أعلاه.
+        _count: { select: { caseLinks: true } },
         amendments: {
           orderBy: { version: "asc" },
           select: { id: true, version: true, changeType: true, decreeRef: true, hijriDate: true, effectiveFrom: true, summary: true, reviewStatus: true }
@@ -106,9 +108,15 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
     : new Map<string, string>();
   const crossReferences = refs.map((r) => ({ ...r, id: refIds.get(`${article.lawName}|${r.articleNumber}`) ?? null }));
 
-  // محتوى الأحكام المرتبطة (يُعرض داخل تبويب).
+  // محتوى الأحكام المرتبطة (يُعرض داخل تبويب). العدّ الحقيقي قد يفوق المعروض (أحدث 8).
+  const citingCount = article._count.caseLinks;
   const judgmentsNode = article.caseLinks.length ? (
     <div className="space-y-3">
+      {citingCount > article.caseLinks.length ? (
+        <p className="text-xs text-[var(--ink-60)]">
+          مُستشهَد بهذه المادة في {citingCount.toLocaleString("ar-SA")} حكمًا — تُعرض أحدث {article.caseLinks.length.toLocaleString("ar-SA")}.
+        </p>
+      ) : null}
       {article.caseLinks.map((link) => (
         <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -139,7 +147,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
   // التبويبات المنظّمة (الفصل البصري الصارم: الفقه طبقة مساندة غير ملزمة).
   const tabs: ArticleTab[] = [
     { id: "explanation", label: "الشرح والتحليل", content: <ExplanationPanel /> },
-    { id: "judgments", label: "الأحكام والمبادئ", badge: article.caseLinks.length, content: judgmentsNode },
+    { id: "judgments", label: "الأحكام والمبادئ", badge: citingCount, content: judgmentsNode },
     { id: "regulation", label: "اللائحة التنفيذية", content: <Placeholder note="لم تُربط لائحة تنفيذية معتمدة بهذه المادة بعد." /> },
     {
       id: "fiqh",
