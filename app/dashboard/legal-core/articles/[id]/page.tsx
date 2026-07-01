@@ -23,6 +23,8 @@ import {
 import { getFiqhIssuesForArticle } from "@/lib/modules/legal-core/fiqh-issues";
 import { extractArticleReferences } from "@/lib/modules/legal-core/cross-references";
 import { resolveArticleIds } from "@/lib/modules/library/library-service";
+import { getGraphNeighbors } from "@/lib/modules/knowledge-graph/relations";
+import type { RelationType } from "@prisma/client";
 import { FIQH_NONBINDING_NOTICE } from "@/lib/modules/legal-core/content-separation";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,19 @@ function statusTone(status?: string | null): "emerald" | "amber" | "ruby" {
   if (s.includes("ملغ") || s.includes("منسوخ") || s.includes("موقوف")) return "ruby";
   if (s.includes("معدّل") || s.includes("معدل") || s.includes("مؤقت")) return "amber";
   return "emerald";
+}
+
+// تسمية عربية لنوع العلاقة في الرسم المعرفي.
+const RELATION_LABELS: Record<RelationType, string> = {
+  SUPPORTS: "يدعم",
+  CONTRADICTS: "يعارض",
+  INTERPRETS: "يفسّر",
+  IMPLEMENTS: "ينفّذ",
+  SUPERSEDES: "يَنسخ",
+  RELATED_TO: "متعلّق"
+};
+function relationLabel(r: RelationType): string {
+  return RELATION_LABELS[r] ?? "متعلّق";
 }
 
 function Placeholder({ note }: { note: string }) {
@@ -107,6 +122,12 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
     ? await resolveArticleIds(refs.map((r) => ({ lawName: article.lawName, articleNumber: r.articleNumber }))).catch(() => new Map<string, string>())
     : new Map<string, string>();
   const crossReferences = refs.map((r) => ({ ...r, id: refIds.get(`${article.lawName}|${r.articleNumber}`) ?? null }));
+
+  // مواد ذات صلة عبر الرسم المعرفي (روابط منظّمة، لا مجرّد تطابق تصنيف). نأخذ الجيران من نوع
+  // «مادة» فقط (الأحكام تظهر في تبويبها) مرتّبةً بالقوّة. سقوط آمن إلى [] إن غاب الرسم/فشل.
+  const graphArticleNeighbors = (await getGraphNeighbors("article", article.id, 24))
+    .filter((n) => n.entity.type === "article")
+    .slice(0, 8);
 
   // محتوى الأحكام المرتبطة (يُعرض داخل تبويب). العدّ الحقيقي قد يفوق المعروض (أحدث 8).
   const citingCount = article._count.caseLinks;
@@ -275,6 +296,24 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             ) : null}
 
             <RelatedMaterialsPanel articles={related} />
+
+            {graphArticleNeighbors.length ? (
+              <LegalCoreCard title="مواد ذات صلة (الرسم المعرفي)" subtitle="روابط مُشتقّة من الرسم المعرفي القانوني — أقوى الصلات أولًا" icon={<Link2 size={18} />}>
+                <ul className="space-y-2">
+                  {graphArticleNeighbors.map((n) => (
+                    <li key={n.relationId}>
+                      <Link
+                        href={`/dashboard/legal-core/articles/${n.entity.id}`}
+                        className="flex items-start justify-between gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 px-3 py-2 text-xs leading-6 text-[var(--navy)] transition hover:border-[var(--gold)]"
+                      >
+                        <span className="font-semibold">{n.entity.label}</span>
+                        <LegalTopicBadge tone="amber">{relationLabel(n.relation)}</LegalTopicBadge>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </LegalCoreCard>
+            ) : null}
           </aside>
         </section>
       </div>
