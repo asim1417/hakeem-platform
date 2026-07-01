@@ -17,6 +17,11 @@ on:
         description: "عتبة systemHit@3 عند التشغيل كبوّابة (0..1)"
         type: string
         default: "0.6"
+      provider:
+        description: "المزوّد المُقاس: core (searchLegalCore) أو hybrid (RRF)"
+        type: choice
+        options: ["core", "hybrid"]
+        default: "core"
 
 permissions:
   contents: read
@@ -32,6 +37,7 @@ jobs:
       EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       EVAL_MIN_SYSTEMHIT3: ${{ inputs.min_systemhit3 }}
+      EVAL_PROVIDER: ${{ inputs.provider }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node

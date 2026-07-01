@@ -20,6 +20,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeArabicText } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
+import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
+
+// المزوّد المُقاس: "core" (searchLegalCore، الافتراضي) أو "hybrid" (hybridSearch عبر RRF).
+const PROVIDER = (process.env.EVAL_PROVIDER || "core").toLowerCase();
 
 type GoldenQuery = {
   id: string;
@@ -86,8 +90,32 @@ function averagePrecision(rels: number[]): number {
   return hits > 0 ? sum / hits : 0;
 }
 
-async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetrics> {
-  const base: QueryMetrics = {
+/** يملأ مقاييس الترتيب (P@k/MRR/nDCG/AP/recall/مادة) من قائمة نتائج (نظام + رقم مادة). مشترك بين المزوّدين. */
+function fillRanking(base: QueryMetrics, rows: Array<{ systemName: string; articleNumber: number }>, g: GoldenQuery): void {
+  const rels: number[] = rows.map((r) => (systemIsExpected(r.systemName, g.expectedSystems) ? 1 : 0));
+  base.topSystems = rows.slice(0, 3).map((r) => r.systemName);
+  const firstIdx = rels.findIndex((x) => x === 1);
+  base.firstRelevantRank = firstIdx >= 0 ? firstIdx + 1 : null;
+  for (const k of K_VALUES) {
+    const win = rels.slice(0, k);
+    const hits = win.reduce((a, b) => a + b, 0);
+    base.pAt[k] = win.length ? hits / k : 0;
+    base.systemHitAt[k] = hits > 0;
+  }
+  base.ndcgAt5 = ndcgAtK(rels, 5);
+  base.ap = averagePrecision(rels.slice(0, 10));
+  const top10 = rows.slice(0, 10).map((r) => r.systemName);
+  const distinctHit = g.expectedSystems.filter((e) => top10.some((s) => systemIsExpected(s, [e]))).length;
+  base.systemRecallAt10 = g.expectedSystems.length ? distinctHit / g.expectedSystems.length : 0;
+  if (g.expectedArticleNumbers && g.expectedArticleNumbers.length) {
+    const expected = new Set(g.expectedArticleNumbers);
+    const idx = rows.findIndex((r) => expected.has(r.articleNumber));
+    base.articleRank = idx >= 0 ? idx + 1 : null;
+  }
+}
+
+function newMetrics(g: GoldenQuery): QueryMetrics {
+  return {
     id: g.id,
     query: g.query,
     domain: g.domain,
@@ -105,6 +133,33 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
     deepPageOk: null,
     topSystems: [],
   };
+}
+
+/** تقييم عبر المسار الهجين (hybridSearch/RRF). سطح مختلف (سقف 30) — الاكتمال لا يُقاس هنا. */
+async function evaluateQueryHybrid(g: GoldenQuery, limit: number): Promise<QueryMetrics> {
+  const base = newMetrics(g);
+  try {
+    const response = await hybridSearch({ q: g.query, limit: Math.max(limit, 10) });
+    base.trueTotal = response.total;
+    base.exhaustive = true; // غير منطبق على الهجين — نحيّده كي لا يُسقط البوّابة
+    const sysName = (r: (typeof response.results)[number]): string => {
+      const s = r.meta?.systemName;
+      return typeof s === "string" && s ? s : r.title;
+    };
+    const artNo = (r: (typeof response.results)[number]): number => {
+      const n = r.meta?.articleNumber;
+      return typeof n === "number" ? n : -1;
+    };
+    fillRanking(base, response.results.map((r) => ({ systemName: sysName(r), articleNumber: artNo(r) })), g);
+  } catch (error) {
+    base.errored = true;
+    base.topSystems = [error instanceof Error ? error.message.slice(0, 60) : "خطأ"];
+  }
+  return base;
+}
+
+async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetrics> {
+  const base = newMetrics(g);
 
   let response: Awaited<ReturnType<typeof searchLegalCore>>;
   try {
@@ -128,32 +183,7 @@ async function evaluateQuery(g: GoldenQuery, limit: number): Promise<QueryMetric
   base.trueTotal = response.total;
   base.exhaustive = response.exhaustive !== false;
 
-  const rels: number[] = results.map((r) => (systemIsExpected(r.systemName, g.expectedSystems) ? 1 : 0));
-  base.topSystems = results.slice(0, 3).map((r) => r.systemName);
-
-  const firstIdx = rels.findIndex((x) => x === 1);
-  base.firstRelevantRank = firstIdx >= 0 ? firstIdx + 1 : null;
-
-  for (const k of K_VALUES) {
-    const win = rels.slice(0, k);
-    const hits = win.reduce((a, b) => a + b, 0);
-    base.pAt[k] = win.length ? hits / k : 0;
-    base.systemHitAt[k] = hits > 0;
-  }
-  base.ndcgAt5 = ndcgAtK(rels, 5);
-  base.ap = averagePrecision(rels.slice(0, 10));
-
-  // systemRecall@10: نسبة الأنظمة المتوقّعة المتمايزة التي ظهرت ضمن أعلى 10.
-  const top10Systems = results.slice(0, 10).map((r) => r.systemName);
-  const distinctExpectedHit = g.expectedSystems.filter((e) => top10Systems.some((s) => systemIsExpected(s, [e]))).length;
-  base.systemRecallAt10 = g.expectedSystems.length ? distinctExpectedHit / g.expectedSystems.length : 0;
-
-  // على مستوى المادة (عند توفّر أرقام متوقّعة).
-  if (g.expectedArticleNumbers && g.expectedArticleNumbers.length) {
-    const expected = new Set(g.expectedArticleNumbers);
-    const idx = results.findIndex((r) => expected.has(r.articleNumber));
-    base.articleRank = idx >= 0 ? idx + 1 : null;
-  }
+  fillRanking(base, results.map((r) => ({ systemName: r.systemName, articleNumber: r.articleNumber })), g);
 
   // اكتمال الاسترجاع: هل يعمل الترقيم العميق حتى آخر صفحة؟ (إثبات «كامل النتائج»).
   if (base.exhaustive && response.total > limit) {
@@ -209,12 +239,13 @@ async function main() {
 
   const inMap = queries.filter((q) => !q.outOfConceptMap).length;
   console.log("═".repeat(82));
-  console.log(`مقياس جودة الاسترجاع — eval:search   |   ${queries.length} استعلاماً (${inMap} داخل الخريطة · ${queries.length - inMap} خارجها)   |   limit=${limit}`);
+  console.log(`مقياس جودة الاسترجاع — eval:search   |   المزوّد: ${PROVIDER}   |   ${queries.length} استعلاماً (${inMap} داخل الخريطة · ${queries.length - inMap} خارجها)   |   limit=${limit}`);
   console.log(`المصدر: ${goldenPath}`);
   console.log("═".repeat(82));
 
   const metrics: QueryMetrics[] = [];
-  for (const g of queries) metrics.push(await evaluateQuery(g, limit));
+  const evaluate = PROVIDER === "hybrid" ? evaluateQueryHybrid : evaluateQuery;
+  for (const g of queries) metrics.push(await evaluate(g, limit));
 
   const ok = metrics.filter((m) => !m.errored);
   const errored = metrics.filter((m) => m.errored);

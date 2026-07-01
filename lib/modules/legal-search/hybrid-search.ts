@@ -63,7 +63,7 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
     })
   );
 
-  const results = mergeResults(rawBatches.flat(), limit);
+  const results = mergeResultsRRF(rawBatches, limit);
   return { query: query.q, mode, results, providers: providerStatuses, total: results.length };
 }
 
@@ -89,39 +89,53 @@ function buildCitationKey(m: MergedResult, meta: Record<string, unknown>): strin
   return m.title;
 }
 
-/** دمج النتائج: مفتاح type:id، أعلى درجة + حافز التعدّد، جمع المصادر والأسباب وبيانات وصفية موحّدة. */
-function mergeResults(raw: RawResult[], limit: number): MergedResult[] {
-  const map = new Map<string, MergedResult>();
-  for (const r of raw) {
-    const key = `${r.type}:${r.id}`;
-    const existing = map.get(key);
-    if (!existing) {
-      map.set(key, {
-        type: r.type,
-        id: r.id,
-        title: r.title,
-        snippet: r.snippet,
-        confidence: r.score,
-        sources: [r.source],
-        reasons: [r.reason],
-        meta: { ...(r.meta ?? {}) },
-      });
-    } else {
-      existing.confidence = Math.max(existing.confidence, r.score);
-      if (!existing.sources.includes(r.source)) existing.sources.push(r.source);
-      if (!existing.reasons.includes(r.reason)) existing.reasons.push(r.reason);
-      if (!existing.snippet && r.snippet) existing.snippet = r.snippet;
-      // ندمج البيانات الوصفية: نُبقي ما رُصد أولاً ونُكمل النواقص من المصدر اللاحق.
-      existing.meta = { ...(r.meta ?? {}), ...(existing.meta ?? {}) };
-    }
-  }
-  // حافز ظهور النتيجة في أكثر من مزوّد (دليل أقوى) + بيانات وصفية موحّدة لكل نتيجة.
-  for (const m of map.values()) {
-    if (m.sources.length > 1) {
-      m.confidence = Math.min(1, m.confidence + 0.05 * (m.sources.length - 1));
-    }
-    m.confidence = Math.round(m.confidence * 1000) / 1000;
+/** ثابت RRF القياسي (Cormack et al. 2009): يخفّف أثر الرتب المتأخّرة ويوازن المزوّدات. */
+const RRF_K = 60;
 
+/**
+ * دمج بـ Reciprocal Rank Fusion — المعيار العالمي لدمج نتائج مزوّدات غير متجانسة الدرجات.
+ * بدل جمع/أخذ أعلى درجة خام (غير قابلة للمقارنة بين معجمي 0.55–0.95 ودلالي cosine)، نعتمد
+ * **الرتبة داخل كل مزوّد**: مساهمة كل مزوّد = 1/(K + rank). فلا يلزم تطبيع، واتفاق مزوّدَين
+ * على نتيجة يرفعها تلقائياً (مجموع مساهمتين) — دليل أقوى بلا أوزان يدوية هشّة.
+ */
+function mergeResultsRRF(batches: RawResult[][], limit: number): MergedResult[] {
+  type Fused = MergedResult & { rrf: number; rawMax: number };
+  const map = new Map<string, Fused>();
+  for (const batch of batches) {
+    // كل مزوّد يُرتَّب بدرجته الخاصة، ثم نأخذ الرتبة (لا الدرجة) للدمج.
+    const ranked = [...batch].sort((a, b) => b.score - a.score);
+    ranked.forEach((r, i) => {
+      const key = `${r.type}:${r.id}`;
+      const contrib = 1 / (RRF_K + i + 1);
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, {
+          type: r.type,
+          id: r.id,
+          title: r.title,
+          snippet: r.snippet,
+          confidence: 0,
+          sources: [r.source],
+          reasons: [r.reason],
+          meta: { ...(r.meta ?? {}) },
+          rrf: contrib,
+          rawMax: r.score,
+        });
+      } else {
+        existing.rrf += contrib; // اتفاق المزوّدات يرفع الدرجة (جوهر RRF)
+        existing.rawMax = Math.max(existing.rawMax, r.score);
+        if (!existing.sources.includes(r.source)) existing.sources.push(r.source);
+        if (!existing.reasons.includes(r.reason)) existing.reasons.push(r.reason);
+        if (!existing.snippet && r.snippet) existing.snippet = r.snippet;
+        existing.meta = { ...(r.meta ?? {}), ...(existing.meta ?? {}) };
+      }
+    });
+  }
+  const arr = [...map.values()];
+  const maxRrf = arr.reduce((m, x) => Math.max(m, x.rrf), 1e-9);
+  for (const m of arr) {
+    // ثقة العرض 0..1: درجة RRF نسبةً لأعلى نتيجة (شفّافة للمستخدم).
+    m.confidence = Math.round((m.rrf / maxRrf) * 1000) / 1000;
     const base = m.meta ?? {};
     m.meta = {
       ...base,
@@ -131,8 +145,9 @@ function mergeResults(raw: RawResult[], limit: number): MergedResult[] {
       articleNumber: base.articleNumber,
       citationKey: buildCitationKey(m, base),
       score: m.confidence,
+      rrf: Math.round(m.rrf * 1e6) / 1e6,
       matchedBy: deriveMatchedBy(m.sources),
     };
   }
-  return [...map.values()].sort((a, b) => b.confidence - a.confidence).slice(0, limit);
+  return arr.sort((a, b) => b.rrf - a.rrf).slice(0, limit);
 }
