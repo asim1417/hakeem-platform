@@ -68,6 +68,7 @@
     "smoke:rag": "tsx scripts/smoke-rag.ts",
     "diagnose:systems": "tsx scripts/diagnose-legal-systems.ts",
     "eval:search": "tsx scripts/eval-search.ts",
+    "backfill:search-norm": "tsx scripts/backfill-search-norm.ts",
     "inspect:vercel": "tsx scripts/inspect-vercel-db.ts",
     "audit:db-env": "tsx scripts/audit-db-environments.ts",
     "test:diversity": "tsx scripts/test-candidate-diversity.ts",
