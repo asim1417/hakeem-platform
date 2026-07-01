@@ -99,6 +99,54 @@ export async function resolveEntity(type: EntityType, id: string): Promise<Resol
   return { type, id, exists: false, label: `${type}:${id} (غير موجود)` };
 }
 
+export interface GraphNeighbor {
+  relationId: string;
+  relation: RelationType;
+  strength: number;
+  direction: "outgoing" | "incoming";
+  entity: ResolvedEntity;
+}
+
+/**
+ * جيران الكيان في الرسم المعرفي: الطرف الآخر لكل علاقة، مرتّبة بالقوّة تنازلياً ومقصوصة.
+ * للعرض فقط. يحلّ الطرف الآخر فقط (لا الطرفين)، ويُسقط الروابط المعلّقة والإحالات الذاتية.
+ * سقوط آمن إلى [] عند أي خطأ.
+ */
+export async function getGraphNeighbors(type: EntityType, id: string, cap = 12): Promise<GraphNeighbor[]> {
+  const relations = await prisma.legalRelation
+    .findMany({
+      where: {
+        OR: [
+          { sourceType: type, sourceId: id },
+          { targetType: type, targetId: id },
+        ],
+      },
+      orderBy: { strength: "desc" },
+      take: Math.min(Math.max(cap, 1), 100),
+    })
+    .catch(() => [] as LegalRelation[]);
+
+  const neighbors = await Promise.all(
+    relations.map(async (r) => {
+      const outgoing = r.sourceType === type && r.sourceId === id;
+      const otherType = (outgoing ? r.targetType : r.sourceType) as EntityType;
+      const otherId = outgoing ? r.targetId : r.sourceId;
+      return {
+        relationId: r.id,
+        relation: r.relation,
+        strength: r.strength,
+        direction: (outgoing ? "outgoing" : "incoming") as GraphNeighbor["direction"],
+        entity: await resolveEntity(otherType, otherId),
+        _otherId: otherId,
+      };
+    })
+  );
+
+  return neighbors
+    .filter((n) => n.entity.exists && n._otherId !== id)
+    .map(({ _otherId, ...n }) => n);
+}
+
 export interface HydratedRelation {
   id: string;
   relation: RelationType;
