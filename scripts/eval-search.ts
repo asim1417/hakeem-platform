@@ -30,8 +30,9 @@ type GoldenQuery = {
   query: string;
   domain?: string;
   expectedSystems: string[];
-  expectedArticleNumbers?: number[];
+  expectedArticleNumbers?: number[]; // أرقام المواد المتوقّعة داخل النظام المتوقّع (مطابقة مقيَّدة بالنظام)
   outOfConceptMap?: boolean; // استعلام خارج خريطة المفاهيم (يكسر الدائرية، يقيس التعميم)
+  articleLevelOnly?: boolean; // استعلام مُوجَّه لمادة بعينها (قياس مستوى المادة فقط) — يُستثنى من متوسّطات مستوى النظام لإبقائها مُقارَنة
 };
 
 type GoldenSet = { version?: number; queries: GoldenQuery[] };
@@ -41,6 +42,8 @@ type QueryMetrics = {
   query: string;
   domain?: string;
   outOfConceptMap: boolean;
+  articleLevelOnly: boolean;
+  hasArticleGold: boolean;
   errored: boolean;
   // الترتيب
   firstRelevantRank: number | null;
@@ -108,8 +111,9 @@ function fillRanking(base: QueryMetrics, rows: Array<{ systemName: string; artic
   const distinctHit = g.expectedSystems.filter((e) => top10.some((s) => systemIsExpected(s, [e]))).length;
   base.systemRecallAt10 = g.expectedSystems.length ? distinctHit / g.expectedSystems.length : 0;
   if (g.expectedArticleNumbers && g.expectedArticleNumbers.length) {
+    // مطابقة مقيَّدة بالنظام: المادة رقم N صحيحة فقط داخل النظام المتوقّع (رقم المادة بلا نظام بلا معنى).
     const expected = new Set(g.expectedArticleNumbers);
-    const idx = rows.findIndex((r) => expected.has(r.articleNumber));
+    const idx = rows.findIndex((r) => expected.has(r.articleNumber) && systemIsExpected(r.systemName, g.expectedSystems));
     base.articleRank = idx >= 0 ? idx + 1 : null;
   }
 }
@@ -120,6 +124,8 @@ function newMetrics(g: GoldenQuery): QueryMetrics {
     query: g.query,
     domain: g.domain,
     outOfConceptMap: Boolean(g.outOfConceptMap),
+    articleLevelOnly: Boolean(g.articleLevelOnly),
+    hasArticleGold: Boolean(g.expectedArticleNumbers && g.expectedArticleNumbers.length),
     errored: false,
     firstRelevantRank: null,
     pAt: {},
@@ -237,9 +243,11 @@ async function main() {
     process.exit(2);
   }
 
-  const inMap = queries.filter((q) => !q.outOfConceptMap).length;
+  const systemQ = queries.filter((q) => !q.articleLevelOnly);
+  const inMap = systemQ.filter((q) => !q.outOfConceptMap).length;
+  const artOnly = queries.length - systemQ.length;
   console.log("═".repeat(82));
-  console.log(`مقياس جودة الاسترجاع — eval:search   |   المزوّد: ${PROVIDER}   |   ${queries.length} استعلاماً (${inMap} داخل الخريطة · ${queries.length - inMap} خارجها)   |   limit=${limit}`);
+  console.log(`مقياس جودة الاسترجاع — eval:search   |   المزوّد: ${PROVIDER}   |   ${systemQ.length} استعلام نظام (${inMap} داخل الخريطة · ${systemQ.length - inMap} خارجها)${artOnly ? ` + ${artOnly} مستوى مادة` : ""}   |   limit=${limit}`);
   console.log(`المصدر: ${goldenPath}`);
   console.log("═".repeat(82));
 
@@ -283,24 +291,38 @@ async function main() {
   }
 
   // ── المتوسّطات ──
-  const outMap = ok.filter((m) => m.outOfConceptMap);
+  // مستوى النظام: نستثني استعلامات «مستوى المادة فقط» كي تبقى الأرقام الرئيسة مُقارَنة بالإصدارات السابقة.
+  const okSystem = ok.filter((m) => !m.articleLevelOnly);
+  const outMap = okSystem.filter((m) => m.outOfConceptMap);
   const agg = {
-    pAt1: mean(ok.map((m) => m.pAt[1] ?? 0)),
-    pAt3: mean(ok.map((m) => m.pAt[3] ?? 0)),
-    pAt5: mean(ok.map((m) => m.pAt[5] ?? 0)),
-    mrr: mean(ok.map((m) => (m.firstRelevantRank ? 1 / m.firstRelevantRank : 0))),
-    map: mean(ok.map((m) => m.ap)),
-    systemHit3: mean(ok.map((m) => (m.systemHitAt[3] ? 1 : 0))),
-    systemHit5: mean(ok.map((m) => (m.systemHitAt[5] ? 1 : 0))),
-    recall10: mean(ok.map((m) => m.systemRecallAt10)),
-    ndcg5: mean(ok.map((m) => m.ndcgAt5)),
+    pAt1: mean(okSystem.map((m) => m.pAt[1] ?? 0)),
+    pAt3: mean(okSystem.map((m) => m.pAt[3] ?? 0)),
+    pAt5: mean(okSystem.map((m) => m.pAt[5] ?? 0)),
+    mrr: mean(okSystem.map((m) => (m.firstRelevantRank ? 1 / m.firstRelevantRank : 0))),
+    map: mean(okSystem.map((m) => m.ap)),
+    systemHit3: mean(okSystem.map((m) => (m.systemHitAt[3] ? 1 : 0))),
+    systemHit5: mean(okSystem.map((m) => (m.systemHitAt[5] ? 1 : 0))),
+    recall10: mean(okSystem.map((m) => m.systemRecallAt10)),
+    ndcg5: mean(okSystem.map((m) => m.ndcgAt5)),
     // التعميم: نفس المقياس على الاستعلامات خارج خريطة المفاهيم (يكسر الدائرية).
     outMrr: mean(outMap.map((m) => (m.firstRelevantRank ? 1 / m.firstRelevantRank : 0))),
     outSystemHit3: mean(outMap.map((m) => (m.systemHitAt[3] ? 1 : 0))),
     // الاكتمال
-    exhaustiveRate: mean(ok.map((m) => (m.exhaustive ? 1 : 0))),
-    deepProbes: ok.filter((m) => m.deepPageOk !== null),
+    exhaustiveRate: mean(okSystem.map((m) => (m.exhaustive ? 1 : 0))),
+    deepProbes: okSystem.filter((m) => m.deepPageOk !== null),
   };
+  // مستوى المادة (معلومة معروفة): على الاستعلامات التي لها أرقام مواد متوقّعة (مطابقة مقيَّدة بالنظام).
+  const okArticle = ok.filter((m) => m.hasArticleGold);
+  const artHitAt = (k: number) => mean(okArticle.map((m) => (m.articleRank && m.articleRank <= k ? 1 : 0)));
+  const articleAgg = okArticle.length
+    ? {
+        n: okArticle.length,
+        hit1: artHitAt(1),
+        hit3: artHitAt(3),
+        hit5: artHitAt(5),
+        mrr: mean(okArticle.map((m) => (m.articleRank ? 1 / m.articleRank : 0))),
+      }
+    : null;
   const deepOk = agg.deepProbes.length ? mean(agg.deepProbes.map((m) => (m.deepPageOk ? 1 : 0))) : 1;
 
   console.log("\n" + "═".repeat(82));
@@ -314,12 +336,20 @@ async function main() {
   console.log("② اكتمال الاسترجاع (Completeness — «كامل النتائج لو ألف نتيجة»):");
   console.log(`  exhaustive (رُتِّبت كل المطابقات) = ${pct(agg.exhaustiveRate)}`);
   console.log(`  deepPageOk (الترقيم العميق يعمل) = ${pct(deepOk)}   [${agg.deepProbes.length} استعلاماً تجاوز حجم الصفحة]`);
-  const maxTotal = Math.max(0, ...ok.map((m) => m.trueTotal));
+  const maxTotal = Math.max(0, ...okSystem.map((m) => m.trueTotal));
   console.log(`  أكبر إجماليّ نتائج لاستعلام = ${maxTotal.toLocaleString("en-US")} (كلها قابلة للاسترجاع بالترقيم)`);
   if (errored.length) console.log(`  ⚠ استعلامات فشلت (لا اتصال؟): ${errored.length}`);
+  if (articleAgg) {
+    console.log(`③ دقّة مستوى المادة (معلومة معروفة — ${articleAgg.n} استعلاماً بأرقام مواد متوقّعة، مطابقة مقيَّدة بالنظام):`);
+    console.log(`  articleHit@1 = ${pct(articleAgg.hit1)}   articleHit@3 = ${pct(articleAgg.hit3)}   articleHit@5 = ${pct(articleAgg.hit5)}   articleMRR = ${articleAgg.mrr.toFixed(3)}`);
+    const artMiss = okArticle.filter((m) => !m.articleRank || m.articleRank > 5);
+    if (artMiss.length) {
+      console.log(`  ↳ لم تظهر المادة المتوقّعة ضمن أعلى 5 (راجِع الوسم أو الترتيب): ${artMiss.map((m) => m.id).join(" · ")}`);
+    }
+  }
 
-  // ── الإخفاقات ──
-  const failures = ok.filter((m) => !m.systemHitAt[5]);
+  // ── الإخفاقات (على مستوى النظام؛ نستثني استعلامات المادة فقط) ──
+  const failures = okSystem.filter((m) => !m.systemHitAt[5]);
   if (failures.length) {
     console.log("\n" + "─".repeat(82));
     console.log(`إخفاقات التغطية (${failures.length}) — النظام المتوقّع لم يظهر ضمن أعلى 5:`);
