@@ -3,6 +3,7 @@ import { BookMarked, ChevronLeft, ChevronRight, ExternalLink, FileArchive, Searc
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
+import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { listAllSystems } from "@/lib/modules/library/library-service";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
@@ -224,7 +225,7 @@ export default async function LegalCoreSearchPage({
             {response.results.length ? (
               <div className="space-y-4">
                 {response.results.map((article) => {
-                  const st = statusBadge(article.status);
+                  const st = articleStatusBadge(article.status);
                   return (
                   <article key={article.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -344,16 +345,4 @@ function fieldLabel(field: string) {
 function matchTypeLabel(type: string) {
   const item = searchTypes.find((entry) => entry.value === type);
   return item?.label ?? "عام";
-}
-
-// شارة حالة المادة (نظير Citator): سارية/معدّلة/منسوخة/موقوفة. تُعرض فقط عند توفّر قيمة
-// معروفة — القيم غير المعروفة تُترك بلا شارة تفادياً للتضليل (الحالة الكاملة على خارطة الطريق).
-function statusBadge(status: string | null): { label: string; tone: "emerald" | "amber" | "ruby" } | null {
-  if (!status) return null;
-  const s = status.trim().toUpperCase();
-  if (["ACTIVE", "IN_FORCE", "VALID", "سارية", "سار", "نافذ", "نافذة"].includes(s)) return { label: "سارية", tone: "emerald" };
-  if (["AMENDED", "MODIFIED", "معدلة", "معدّلة", "معدل"].includes(s)) return { label: "معدّلة", tone: "amber" };
-  if (["REPEALED", "CANCELLED", "CANCELED", "منسوخة", "ملغاة", "ملغي"].includes(s)) return { label: "منسوخة", tone: "ruby" };
-  if (["SUSPENDED", "موقوفة", "معلقة"].includes(s)) return { label: "موقوفة", tone: "amber" };
-  return null;
 }
