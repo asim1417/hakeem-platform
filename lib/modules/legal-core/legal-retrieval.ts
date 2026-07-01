@@ -478,14 +478,18 @@ const GENERIC_SYSTEM_NAME_WORDS = new Set<string>([
  * المعايرة: IDF ~2.7 (شائع) → ~6، ~4.3 (نادر) → ~28، مقصوصة [6, 40] — مضبوطة على المجموعة الذهبية.
  */
 function nameWordWeight(word: string, idf: number | null): number {
-  if (idf !== null) return Math.max(6, Math.min(40, Math.round(13.75 * idf - 31)));
-  return GENERIC_SYSTEM_NAME_WORDS.has(word) ? 6 : 30; // احتياطي بلا فهرس
+  if (GENERIC_SYSTEM_NAME_WORDS.has(word)) return 6; // معرفة بشرية مرجعية للكلمات العامة المعروفة
+  if (idf === null) return 30; // بلا فهرس → وزن الكلمة الجوهرية الكامل
+  // IDF يُستعمل للخفض فقط (مقصوص عند 30): الكلمة الشائعة (IDF منخفض) تُخفَّض، والجوهرية تبلغ 30
+  // دون تجاوزه — فلا يُبالَغ في رفع كلمة نادرة ثانوية (مثل «الأموال» فوق «التنفيذ»).
+  return Math.max(6, Math.min(30, Math.round(9 * idf - 8)));
 }
 
-/** نظير nameWordWeight لحقل عنوان المادة (وزن أخفّ)، مقصوص [3, 16]. */
+/** نظير nameWordWeight لحقل عنوان المادة (وزن أخفّ)، مقصوص [3, 12]. */
 function titleWordWeight(word: string, idf: number | null): number {
-  if (idf !== null) return Math.max(3, Math.min(16, Math.round(5.6 * idf - 12)));
-  return GENERIC_SYSTEM_NAME_WORDS.has(word) ? 3 : 12; // احتياطي بلا فهرس
+  if (GENERIC_SYSTEM_NAME_WORDS.has(word)) return 3;
+  if (idf === null) return 12;
+  return Math.max(3, Math.min(12, Math.round(3.6 * idf - 3)));
 }
 
 /** يبني خريطة كلمة الاستعلام → IDF مرّة واحدة (تُمرَّر للتهديف بدل حسابها لكل مادة). */
