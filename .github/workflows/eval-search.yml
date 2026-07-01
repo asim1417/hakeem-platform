@@ -22,6 +22,11 @@ on:
         type: choice
         options: ["core", "hybrid"]
         default: "core"
+      in_db_recall:
+        description: "الاستدعاء المفهرس داخل القاعدة (tsvector): 1 مُفعَّل، 0 معطَّل (مسار ILIKE)"
+        type: choice
+        options: ["1", "0"]
+        default: "1"
 
 permissions:
   contents: read
@@ -38,6 +43,7 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       EVAL_MIN_SYSTEMHIT3: ${{ inputs.min_systemhit3 }}
       EVAL_PROVIDER: ${{ inputs.provider }}
+      IN_DB_RECALL: ${{ inputs.in_db_recall }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
