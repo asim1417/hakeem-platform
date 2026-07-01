@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
+import { articleStatusBadge, type StatusTone } from "@/lib/modules/legal-core/article-status";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
@@ -380,6 +381,12 @@ export default async function LegalSearchPage({
               const meta = TYPE_META[r.type as EntityType] ?? TYPE_META.article;
               const Icon = meta.icon;
               const href = detailHref(r);
+              const st = r.type === "article" ? articleStatusBadge(metaStr(r, "status")) : null;
+              const statusColor: Record<StatusTone, string> = {
+                emerald: "var(--emerald)",
+                amber: "var(--gold-dark)",
+                ruby: "var(--ruby)",
+              };
               return (
                 <article key={`${r.type}:${r.id}`} className="card transition hover:-translate-y-0.5 hover:shadow-[var(--sh-md)]">
                   <div className="flex flex-wrap items-center gap-2">
@@ -389,6 +396,14 @@ export default async function LegalSearchPage({
                     >
                       <Icon size={12} /> {meta.label}
                     </span>
+                    {st ? (
+                      <span
+                        className="rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                        style={{ color: statusColor[st.tone], borderColor: "currentColor" }}
+                      >
+                        {st.label}
+                      </span>
+                    ) : null}
                     <h3 className="t-display font-bold text-[var(--navy)]">{r.title}</h3>
                     <span className="ms-auto rounded-full border border-[rgba(26,92,65,.25)] bg-[var(--emerald-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--emerald)] tabular-nums">
                       الصلة {(r.confidence * 100).toFixed(0)}%
