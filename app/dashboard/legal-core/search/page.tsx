@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookMarked, ExternalLink, FileArchive, Search } from "lucide-react";
+import { BookMarked, ChevronLeft, ChevronRight, ExternalLink, FileArchive, Search } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
@@ -80,6 +80,7 @@ export default async function LegalCoreSearchPage({
       query,
       searchType: selectedSearchType,
       total: 0,
+      exhaustive: true,
       page: 1,
       limit: 30,
       relatedTerms: [],
@@ -87,6 +88,26 @@ export default async function LegalCoreSearchPage({
       message: "تعذر تنفيذ البحث القانوني حاليًا."
     }))
   ]);
+
+  // ── ترقيم النتائج: يُتيح تصفّح **كل** النتائج (الإجماليّ الحقيقي + الترقيم العميق من النواة). ──
+  const limit = 30;
+  const totalPages = Math.max(1, Math.ceil(response.total / limit));
+  const currentPage = Math.min(Math.max(Number.isFinite(page) ? page : 1, 1), totalPages);
+  const firstShown = response.total === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const lastShown = Math.min(currentPage * limit, response.total);
+
+  // يبني رابط صفحة مع الحفاظ على كل معاملات البحث الحالية.
+  const pageHref = (p: number) => {
+    const sp = new URLSearchParams();
+    if (query) sp.set("q", query);
+    sp.set("searchType", selectedSearchType);
+    if (selectedSystem) sp.set("systemIds", selectedSystem);
+    if (selectedCategory) sp.set("category", selectedCategory);
+    if (selectedSourceType) sp.set("sourceType", selectedSourceType);
+    for (const f of selectedFields) sp.append("fields", f);
+    sp.set("page", String(p));
+    return `/dashboard/legal-core/search?${sp.toString()}`;
+  };
 
   return (
     <LegalCoreShell>
@@ -179,16 +200,32 @@ export default async function LegalCoreSearchPage({
             </div>
           </LegalCoreFilterPanel>
 
-          <LegalCoreCard title="نتائج البحث" subtitle={`${response.total.toLocaleString("ar-SA")} نتيجة مطابقة في قاعدة البيانات الحالية`}>
+          <LegalCoreCard
+            title="نتائج البحث"
+            subtitle={
+              response.total > limit
+                ? `${response.total.toLocaleString("ar-SA")} نتيجة — عرض ${firstShown.toLocaleString("ar-SA")}–${lastShown.toLocaleString("ar-SA")}`
+                : `${response.total.toLocaleString("ar-SA")} نتيجة مطابقة في قاعدة البيانات الحالية`
+            }
+          >
             <div className="mb-4 flex flex-wrap gap-2">
               <LegalTopicBadge tone="emerald">النتائج من legal_articles فقط</LegalTopicBadge>
               <LegalTopicBadge>لا توليد لمواد غير موجودة</LegalTopicBadge>
+              {response.total > 0 ? (
+                response.exhaustive === false ? (
+                  <LegalTopicBadge tone="amber">استعلام واسع — ترتيب مُقرَّب</LegalTopicBadge>
+                ) : (
+                  <LegalTopicBadge tone="emerald">كل النتائج قابلة للتصفّح</LegalTopicBadge>
+                )
+              ) : null}
               {response.relatedTerms.length ? <LegalTopicBadge tone="amber">مصطلحات موسعة: {response.relatedTerms.slice(0, 5).join("، ")}</LegalTopicBadge> : null}
             </div>
 
             {response.results.length ? (
               <div className="space-y-4">
-                {response.results.map((article) => (
+                {response.results.map((article) => {
+                  const st = statusBadge(article.status);
+                  return (
                   <article key={article.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -203,6 +240,7 @@ export default async function LegalCoreSearchPage({
                       <div className="flex flex-wrap gap-2">
                         <LegalTopicBadge>{matchTypeLabel(article.matchType)}</LegalTopicBadge>
                         <LegalTopicBadge tone="emerald">مادة نظامية</LegalTopicBadge>
+                        {st ? <LegalTopicBadge tone={st.tone}>{st.label}</LegalTopicBadge> : null}
                       </div>
                     </div>
 
@@ -235,13 +273,45 @@ export default async function LegalCoreSearchPage({
                       </button>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-6 text-center font-display-ar text-[var(--navy)]">
                 {response.message ?? "لم يتم العثور على نتائج مطابقة في قاعدة البيانات الحالية."}
               </div>
             )}
+
+            {totalPages > 1 ? (
+              <nav className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink-08)] pt-4" aria-label="ترقيم النتائج">
+                <p className="text-sm text-[var(--ink-60)]">
+                  عرض {firstShown.toLocaleString("ar-SA")}–{lastShown.toLocaleString("ar-SA")} من {response.total.toLocaleString("ar-SA")}
+                </p>
+                <div className="flex items-center gap-2">
+                  {currentPage > 1 ? (
+                    <Link className="btn btn-outline" href={pageHref(currentPage - 1)}>
+                      <ChevronRight size={16} /> السابق
+                    </Link>
+                  ) : (
+                    <span className="btn btn-outline pointer-events-none opacity-40" aria-disabled="true">
+                      <ChevronRight size={16} /> السابق
+                    </span>
+                  )}
+                  <span className="px-2 text-sm text-[var(--ink-70)]">
+                    صفحة {currentPage.toLocaleString("ar-SA")} من {totalPages.toLocaleString("ar-SA")}
+                  </span>
+                  {currentPage < totalPages ? (
+                    <Link className="btn btn-outline" href={pageHref(currentPage + 1)}>
+                      التالي <ChevronLeft size={16} />
+                    </Link>
+                  ) : (
+                    <span className="btn btn-outline pointer-events-none opacity-40" aria-disabled="true">
+                      التالي <ChevronLeft size={16} />
+                    </span>
+                  )}
+                </div>
+              </nav>
+            ) : null}
           </LegalCoreCard>
         </div>
       </div>
@@ -274,4 +344,16 @@ function fieldLabel(field: string) {
 function matchTypeLabel(type: string) {
   const item = searchTypes.find((entry) => entry.value === type);
   return item?.label ?? "عام";
+}
+
+// شارة حالة المادة (نظير Citator): سارية/معدّلة/منسوخة/موقوفة. تُعرض فقط عند توفّر قيمة
+// معروفة — القيم غير المعروفة تُترك بلا شارة تفادياً للتضليل (الحالة الكاملة على خارطة الطريق).
+function statusBadge(status: string | null): { label: string; tone: "emerald" | "amber" | "ruby" } | null {
+  if (!status) return null;
+  const s = status.trim().toUpperCase();
+  if (["ACTIVE", "IN_FORCE", "VALID", "سارية", "سار", "نافذ", "نافذة"].includes(s)) return { label: "سارية", tone: "emerald" };
+  if (["AMENDED", "MODIFIED", "معدلة", "معدّلة", "معدل"].includes(s)) return { label: "معدّلة", tone: "amber" };
+  if (["REPEALED", "CANCELLED", "CANCELED", "منسوخة", "ملغاة", "ملغي"].includes(s)) return { label: "منسوخة", tone: "ruby" };
+  if (["SUSPENDED", "موقوفة", "معلقة"].includes(s)) return { label: "موقوفة", tone: "amber" };
+  return null;
 }
