@@ -1,6 +1,6 @@
 {
-  "_about": "مجموعة استعلامات ذهبية لقياس جودة واكتمال الاسترجاع (Phase 1). كل استعلام مربوط بالنظام/الأنظمة الصحيحة المتوقّعة (مطابقة احتواء على اسم النظام) — لا أرقام مواد مُختلقة. القسم الأول (30) مشتقّ من concept-map. القسم الثاني (outOfConceptMap=true) خارج الخريطة عمداً: يكسر الدائرية ويقيس التعميم (اعتماد على المعجمي+الدلالي+ترجيح العنوان لا حافز المفهوم). تُثرى لاحقاً بـ expectedArticleNumbers (قياس مستوى المادة) بعد تحقّق على Neon. ملاحظة: إخفاق استعلام خارج الخريطة قد يعني فجوة ترتيب أو غياب النظام من الكوربوس — قائمة الإخفاقات تكشف ما ظهر بدلاً منه.",
-  "version": 2,
+  "_about": "مجموعة استعلامات ذهبية لقياس جودة واكتمال الاسترجاع (Phase 1). القسم الأول (30) مشتقّ من concept-map. القسم الثاني (outOfConceptMap=true) خارج الخريطة عمداً: يكسر الدائرية ويقيس التعميم. القسم الثالث (articleLevelOnly=true) استعلامات مستوى المادة: لها expectedArticleNumbers مقيَّدة بالنظام المتوقّع — بذرة معلومة معروفة (المادة ١ = التعريفات، عُرف صياغي سعودي) تُشغّل مقياس articleHit@k/articleMRR وتفتح قياس السلطة/إعادة الترتيب على مستوى المادة. تُستثنى هذه من متوسّطات مستوى النظام كي تبقى الأرقام الرئيسة مُقارَنة. البذرة قابلة للتوسعة بأحكام مُدرَّجة من خبير قانوني. ملاحظة: إخفاق استعلام قد يعني فجوة ترتيب أو وسمًا غير دقيق — القوائم تكشف ذلك.",
+  "version": 3,
   "queries": [
     { "id": "labor-unfair-dismissal", "query": "الفصل التعسفي للعامل", "domain": "عمالي", "expectedSystems": ["العمل"] },
     { "id": "labor-end-of-service", "query": "مكافأة نهاية الخدمة", "domain": "عمالي", "expectedSystems": ["العمل"] },
@@ -52,6 +52,11 @@
     { "id": "oom-social-insurance", "query": "التأمينات الاجتماعية والمعاشات", "domain": "عمالي", "outOfConceptMap": true, "expectedSystems": ["التأمينات الاجتماعية"] },
     { "id": "oom-capital-market", "query": "هيئة السوق المالية والأوراق المالية", "domain": "مالي", "outOfConceptMap": true, "expectedSystems": ["السوق المالية", "السوق المالي"] },
     { "id": "oom-real-estate-financing", "query": "التمويل العقاري والرهن العقاري", "domain": "مالي", "outOfConceptMap": true, "expectedSystems": ["التمويل العقاري", "الرهن العقاري"] },
-    { "id": "oom-commercial-fraud", "query": "الغش التجاري والسلع المغشوشة", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["الغش التجاري"] }
+    { "id": "oom-commercial-fraud", "query": "الغش التجاري والسلع المغشوشة", "domain": "تجاري", "outOfConceptMap": true, "expectedSystems": ["الغش التجاري"] },
+
+    { "id": "art-labor-definitions", "query": "التعريفات والمقصود بالألفاظ والعبارات في نظام العمل", "domain": "عمالي", "articleLevelOnly": true, "expectedSystems": ["العمل"], "expectedArticleNumbers": [1] },
+    { "id": "art-companies-definitions", "query": "التعريفات والمصطلحات في نظام الشركات", "domain": "تجاري", "articleLevelOnly": true, "expectedSystems": ["الشركات"], "expectedArticleNumbers": [1] },
+    { "id": "art-traffic-definitions", "query": "التعريفات والمقصود بالألفاظ في نظام المرور", "domain": "إداري", "articleLevelOnly": true, "expectedSystems": ["المرور"], "expectedArticleNumbers": [1] },
+    { "id": "art-data-protection-definitions", "query": "التعريفات في نظام حماية البيانات الشخصية", "domain": "تقني", "articleLevelOnly": true, "expectedSystems": ["حماية البيانات"], "expectedArticleNumbers": [1] }
   ]
 }
