@@ -81,6 +81,19 @@ async function main() {
   bar("LegalRelation (رسم معرفي)", await safe("relations", () => prisma.legalRelation.count()));
   bar("SearchLog (سلوك البحث)", await safe("searchlog", () => prisma.searchLog.count()));
 
+  // ⑤ تركيب الرسم المعرفي (هل توجد روابط مادة↔مادة تغذّي «مواد ذات صلة»؟)
+  console.log("\n⑤ تركيب الرسم المعرفي (نوع المصدر↔الهدف):");
+  const composition = await safe("relation composition", () =>
+    prisma.legalRelation.groupBy({ by: ["sourceType", "targetType"], _count: { _all: true } })
+  );
+  if (composition) {
+    for (const g of composition.sort((a, b) => b._count._all - a._count._all)) {
+      bar(`  ${g.sourceType} → ${g.targetType}`, g._count._all);
+    }
+    const artArt = composition.find((g) => g.sourceType === "article" && g.targetType === "article");
+    console.log(`  ← «مواد ذات صلة» (مادة→مادة) ${artArt ? "متوفّرة ✓" : "غير مبذورة — شغّل thesaurus:article-relations"}`);
+  }
+
   console.log("\n" + "═".repeat(72));
   console.log("الخلاصة: البنود التي بياناتها > 0 قابلة للبناء الآن؛ التي = 0 تنتظر استيراداً.");
   console.log("═".repeat(72));
