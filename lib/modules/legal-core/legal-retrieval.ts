@@ -26,6 +26,7 @@ const LIGHT_ARTICLE_SELECT = {
 type LightArticle = Prisma.LegalArticleGetPayload<{ select: typeof LIGHT_ARTICLE_SELECT }>;
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { getArticleAuthorityMap, authorityBonus } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -369,6 +370,13 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     }
   }
 
+  // إشارة السلطة (نظير «الأكثر استشهاداً»): خريطة articleId → عدد الاستشهادات من روابط
+  // المادة↔الحكم. حافز مُدرَّج لوغاريتمياً يرجّح المواد المرجعية. مُبدَّل بـ AUTHORITY_RANKING=0.
+  const authorityMap =
+    query && process.env.AUTHORITY_RANKING !== "0"
+      ? await getArticleAuthorityMap().catch(() => new Map<string, number>())
+      : new Map<string, number>();
+
   // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
   const lightOptions: AdvancedLegalSearchOptions = { ...options, includeSnippets: false, includeMatchedParagraphs: false };
   const scored = Array.from(lightById.values())
@@ -377,6 +385,11 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     .map((r) => {
       const boost = graph.articleBoosts.get(r.articleId);
       return boost ? { ...r, relevanceScore: r.relevanceScore + boost } : r;
+    })
+    // إشارة السلطة: ترفع المادة الأكثر استشهاداً (مرجعية موضوعية) — حافز مقصوص لا يهيمن.
+    .map((r) => {
+      const bonus = authorityBonus(authorityMap.get(r.articleId));
+      return bonus ? { ...r, relevanceScore: r.relevanceScore + bonus } : r;
     })
     // الدلالي **إضافي لا إزاحي**: نرفع فقط المواد الضعيفة/الدلالية البحتة (lexical < العتبة)
     // كي تظهر أنظمة لم يجدها النصّي، دون تضخيم المطابقات المعجمية القوية (الذي يركّز على
