@@ -62,14 +62,18 @@ export default async function LegalCoreJudgmentsPage({
 
   // مرحلة ①: بركة مرشّحين خفيفة (بلا نصّ الحكم الثقيل) لترتيبها بالصلة عند وجود استعلام.
   // بلا استعلام = تصفّح: نُبقي الأحدث أولاً. السقف يكفي الصفحة الأولى (لا ترقيم عميق في الواجهة).
+  // بلا استعلام = تصفّح: نجلب الصفحة فقط (الأحدث). مع استعلام: نجلب بركةً لنرتّبها بالصلة.
   const POOL = 480;
+  const poolTake = query ? POOL : limit;
+  const poolSkip = query ? 0 : (page - 1) * limit;
   const [total, pool, totalLinks, courts, cities] = await Promise.all([
     prisma.judicialCase.count({ where }).catch(() => 0),
     prisma.judicialCase
       .findMany({
         where,
         orderBy: [{ decisionDate: "desc" }, { createdAt: "desc" }],
-        take: POOL,
+        skip: poolSkip,
+        take: poolTake,
         select: {
           id: true,
           judgmentTitle: true,
@@ -91,11 +95,13 @@ export default async function LegalCoreJudgmentsPage({
 
   // الترتيب بالصلة عند وجود استعلام: تطابق العنوان/رقم القضية أولاً، ثم إشارة السلطة (عدد
   // روابط المواد = مركزية الحكم)، ثم الأحدث. تطابق النصّ وحده يبقى أدنى من تطابق العنوان.
-  const ranked = query
-    ? [...pool].sort((a, b) => scoreJudgment(b, query) - scoreJudgment(a, query) || dateDesc(a, b))
-    : pool;
+  // مع استعلام: نرتّب البركة بالصلة ثم نقتطع الصفحة. بلا استعلام: البركة هي الصفحة أصلاً.
   const approximate = query.length > 0 && total > POOL;
-  const judgments = ranked.slice((page - 1) * limit, (page - 1) * limit + limit);
+  const judgments = query
+    ? [...pool]
+        .sort((a, b) => scoreJudgment(b, query) - scoreJudgment(a, query) || dateDesc(a, b))
+        .slice((page - 1) * limit, (page - 1) * limit + limit)
+    : pool;
 
   // مرحلة ②: نجلب نصّ الحكم الثقيل لصفّ الصفحة فقط (≤ limit) لبناء المعاينة.
   const textById = judgments.length
