@@ -6,6 +6,27 @@ import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, 
 
 export const dynamic = "force-dynamic";
 
+type JudgmentPoolItem = {
+  judgmentTitle: string | null;
+  caseNo: string | null;
+  decisionNo: string | null;
+  decisionDate: Date | null;
+  _count: { articleLinks: number };
+};
+
+// درجة الصلة: تطابق العنوان (أقوى) ثم رقم القضية/القرار، مضافًا إليها إشارة السلطة
+// (عدد روابط المواد، مُدرَّجة لوغاريتمياً). تطابق النصّ وحده = 0 هنا فيبقى أدنى من العنوان.
+function scoreJudgment(j: JudgmentPoolItem, q: string): number {
+  let s = 0;
+  if (j.judgmentTitle && j.judgmentTitle.includes(q)) s += 100;
+  if ((j.caseNo && j.caseNo.includes(q)) || (j.decisionNo && j.decisionNo.includes(q))) s += 60;
+  s += Math.round(15 * Math.log10(1 + j._count.articleLinks));
+  return s;
+}
+function dateDesc(a: { decisionDate: Date | null }, b: { decisionDate: Date | null }): number {
+  return (b.decisionDate?.getTime() ?? 0) - (a.decisionDate?.getTime() ?? 0);
+}
+
 export default async function LegalCoreJudgmentsPage({
   searchParams
 }: {
@@ -39,21 +60,53 @@ export default async function LegalCoreJudgmentsPage({
     ].filter((item) => Object.keys(item).length > 0)
   };
 
-  const [total, judgments, totalLinks, courts, cities] = await Promise.all([
+  // مرحلة ①: بركة مرشّحين خفيفة (بلا نصّ الحكم الثقيل) لترتيبها بالصلة عند وجود استعلام.
+  // بلا استعلام = تصفّح: نُبقي الأحدث أولاً. السقف يكفي الصفحة الأولى (لا ترقيم عميق في الواجهة).
+  const POOL = 480;
+  const [total, pool, totalLinks, courts, cities] = await Promise.all([
     prisma.judicialCase.count({ where }).catch(() => 0),
     prisma.judicialCase
       .findMany({
         where,
         orderBy: [{ decisionDate: "desc" }, { createdAt: "desc" }],
-        skip: (page - 1) * limit,
-        take: limit,
-        include: { _count: { select: { articleLinks: true } } }
+        take: POOL,
+        select: {
+          id: true,
+          judgmentTitle: true,
+          caseNo: true,
+          decisionNo: true,
+          court: true,
+          cityName: true,
+          decisionDateText: true,
+          decisionDate: true,
+          reviewStatus: true,
+          _count: { select: { articleLinks: true } }
+        }
       })
       .catch(() => []),
     prisma.legalArticleCaseLink.count().catch(() => 0),
     prisma.judicialCase.findMany({ distinct: ["court"], select: { court: true }, where: { court: { not: null } }, take: 60 }).catch(() => []),
     prisma.judicialCase.findMany({ distinct: ["cityName"], select: { cityName: true }, where: { cityName: { not: null } }, take: 60 }).catch(() => [])
   ]);
+
+  // الترتيب بالصلة عند وجود استعلام: تطابق العنوان/رقم القضية أولاً، ثم إشارة السلطة (عدد
+  // روابط المواد = مركزية الحكم)، ثم الأحدث. تطابق النصّ وحده يبقى أدنى من تطابق العنوان.
+  const ranked = query
+    ? [...pool].sort((a, b) => scoreJudgment(b, query) - scoreJudgment(a, query) || dateDesc(a, b))
+    : pool;
+  const approximate = query.length > 0 && total > POOL;
+  const judgments = ranked.slice((page - 1) * limit, (page - 1) * limit + limit);
+
+  // مرحلة ②: نجلب نصّ الحكم الثقيل لصفّ الصفحة فقط (≤ limit) لبناء المعاينة.
+  const textById = judgments.length
+    ? new Map(
+        (
+          await prisma.judicialCase
+            .findMany({ where: { id: { in: judgments.map((j) => j.id) } }, select: { id: true, judgmentText: true } })
+            .catch(() => [] as Array<{ id: string; judgmentText: string }>)
+        ).map((r) => [r.id, r.judgmentText])
+      )
+    : new Map<string, string>();
 
   return (
     <LegalCoreShell>
@@ -111,7 +164,12 @@ export default async function LegalCoreJudgmentsPage({
           </div>
         </form>
 
-        <LegalCoreCard title="قائمة الأحكام" subtitle={`${total.toLocaleString("ar-SA")} حكمًا مطابقًا في قاعدة البيانات الحالية`}>
+        <LegalCoreCard title="قائمة الأحكام" subtitle={`${total.toLocaleString("ar-SA")} حكمًا مطابقًا${query ? " — مرتّبة بالصلة (العنوان ثم الاستشهادات ثم الأحدث)" : " — الأحدث أولاً"}`}>
+          {approximate ? (
+            <div className="mb-4">
+              <LegalTopicBadge tone="amber">استعلام واسع — رُتِّب أحدث {POOL.toLocaleString("ar-SA")} حكمًا بالصلة</LegalTopicBadge>
+            </div>
+          ) : null}
           {judgments.length ? (
             <div className="space-y-4">
               {judgments.map((judgment) => (
@@ -136,7 +194,7 @@ export default async function LegalCoreJudgmentsPage({
                     </div>
                   </div>
                   <p className="mt-4 line-clamp-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
-                    {judgment.judgmentText}
+                    {textById.get(judgment.id) ?? ""}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     <Link className="btn btn-gold" href={`/dashboard/legal-core/judgments/${judgment.id}`}>
