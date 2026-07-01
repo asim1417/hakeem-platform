@@ -62,6 +62,27 @@ function scoreAll(index: Bm25Index, query: string): Map<string, number> {
   return scores;
 }
 
+/**
+ * IDF (ندرة المصطلح) لكلمة من الكوربوس — مشتقّة من تكرار الوثيقة (df) في فهرس BM25.
+ * الكلمة النادرة (التحكيم) → IDF مرتفع؛ الشائعة (التجاري) → IDF منخفض. تُستعمل لترجيح
+ * مطابقة اسم النظام بندرة الكلمة (بدل قائمة يدوية) نظير tf-idf في المحركات العالمية.
+ * ترمّز الكلمة بنفس مُرمّز الفهرس، وتعيد أعلى IDF بين رموزها (أندرها = أكثرها تمييزاً).
+ * تعيد null إن غاب الفهرس أو لم تُطابَق الكلمة (سقوط آمن).
+ */
+export function termIdf(word: string): number | null {
+  const index = loadBm25Index();
+  if (!index) return null;
+  const { N } = index.params;
+  let best: number | null = null;
+  for (const t of tokenize(word)) {
+    const df = index.df[t];
+    if (!df) continue;
+    const idf = Math.log(1 + (N - df + 0.5) / (df + 0.5));
+    if (best === null || idf > best) best = idf;
+  }
+  return best;
+}
+
 export function bm25Search(query: string, topK = 20): Bm25Hit[] {
   const index = loadBm25Index();
   if (!index) return [];

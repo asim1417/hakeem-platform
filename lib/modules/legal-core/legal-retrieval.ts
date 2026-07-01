@@ -26,6 +26,7 @@ const LIGHT_ARTICLE_SELECT = {
 type LightArticle = Prisma.LegalArticleGetPayload<{ select: typeof LIGHT_ARTICLE_SELECT }>;
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { termIdf } from "./bm25";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -236,6 +237,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // عبارات المفاهيم المتجاورة (bigrams): كل كلمتين متتاليتين ذواتي معنى في الاستعلام الأصلي،
   // مثل «عقد العمل» و«حقوق العامل» — وجودها كعبارة متّصلة دليل صلة قوي جداً.
   const conceptBigrams = buildConceptBigrams(query);
+  // ندرة كل كلمة استعلام (IDF) — تُحسب مرّة وتُمرَّر للتهديف لترجيح مطابقة الاسم بالندرة.
+  const conceptWordIdf = buildConceptWordIdf(conceptWords);
 
   const where: Record<string, unknown> = {
     AND: [
@@ -299,7 +302,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
   const lightOptions: AdvancedLegalSearchOptions = { ...options, includeSnippets: false, includeMatchedParagraphs: false };
   const scored = Array.from(lightById.values())
-    .map((row) => mapArticleResult({ ...row, content: "" } as unknown as LegalArticleWithSystem, query, searchType, normalizedVariants, lightOptions, conceptWords, conceptBigrams, preferSystems))
+    .map((row) => mapArticleResult({ ...row, content: "" } as unknown as LegalArticleWithSystem, query, searchType, normalizedVariants, lightOptions, conceptWords, conceptBigrams, preferSystems, conceptWordIdf))
     // ترجيح المكنز: مادة يرد فيها مفهوم مُطابَق (معتمد) تُرفع درجتها بمقدار مُسنَد للمواضع.
     .map((r) => {
       const boost = graph.articleBoosts.get(r.articleId);
@@ -350,7 +353,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const pageSlice = relevant.slice(start, start + limit);
   // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
   //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
-  const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+  const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems, conceptWordIdf);
 
   return {
     query,
@@ -379,7 +382,8 @@ async function materializePage(
   options: AdvancedLegalSearchOptions,
   conceptWords: string[],
   conceptBigrams: string[],
-  preferSystems: string[]
+  preferSystems: string[],
+  conceptWordIdf: Map<string, number | null>
 ): Promise<LegalCoreResult[]> {
   if (!pageSlice.length) return [];
   const ids = pageSlice.map((r) => r.articleId);
@@ -390,7 +394,7 @@ async function materializePage(
   return pageSlice.map((light) => {
     const full = fullById.get(light.articleId);
     if (!full) return light; // سقوط آمن: أبقِ النتيجة الخفيفة
-    const display = mapArticleResult(full as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+    const display = mapArticleResult(full as LegalArticleWithSystem, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems, conceptWordIdf);
     // حافظ على درجة المرحلة ① (الترتيب الكامل) كي يبقى الترقيم متّسقاً عبر الصفحات.
     return { ...display, relevanceScore: light.relevanceScore };
   });
@@ -465,6 +469,29 @@ const GENERIC_SYSTEM_NAME_WORDS = new Set<string>([
   "الموحد","الموحدة","التنفيذية","التنفيذي","العسكرية","العسكري","الوطني","الوطنية",
   "السعودي","السعودية","العربي","العربية","مكافحة","حماية","الخدمة"
 ].map(normalizeArabicText));
+
+/**
+ * وزن مطابقة كلمة الاستعلام في اسم النظام، مُدرَّج بندرة الكلمة (IDF من فهرس BM25) —
+ * نظير tf-idf العالمي: الكلمة الجوهرية النادرة (التحكيم، IDF مرتفع) تُرجَّح أقوى من
+ * الكلمة العامة الشائعة (التجاري، IDF منخفض). بيانيّ ومتكيّف (يلتقط أي كلمة عامة جديدة آلياً).
+ * سقوط آمن إن غاب الفهرس: القائمة اليدوية المنسّقة (GENERIC_SYSTEM_NAME_WORDS).
+ * المعايرة: IDF ~2.7 (شائع) → ~6، ~4.3 (نادر) → ~28، مقصوصة [6, 40] — مضبوطة على المجموعة الذهبية.
+ */
+function nameWordWeight(word: string, idf: number | null): number {
+  if (idf !== null) return Math.max(6, Math.min(40, Math.round(13.75 * idf - 31)));
+  return GENERIC_SYSTEM_NAME_WORDS.has(word) ? 6 : 30; // احتياطي بلا فهرس
+}
+
+/** نظير nameWordWeight لحقل عنوان المادة (وزن أخفّ)، مقصوص [3, 16]. */
+function titleWordWeight(word: string, idf: number | null): number {
+  if (idf !== null) return Math.max(3, Math.min(16, Math.round(5.6 * idf - 12)));
+  return GENERIC_SYSTEM_NAME_WORDS.has(word) ? 3 : 12; // احتياطي بلا فهرس
+}
+
+/** يبني خريطة كلمة الاستعلام → IDF مرّة واحدة (تُمرَّر للتهديف بدل حسابها لكل مادة). */
+function buildConceptWordIdf(conceptWords: string[]): Map<string, number | null> {
+  return new Map(conceptWords.map((w) => [w, termIdf(w)]));
+}
 
 // يبني عبارات متجاورة (bigrams) من كل كلمتين متتاليتين ذواتي معنى في الاستعلام الأصلي.
 // يحترم الترتيب والتجاور: «حقوق العامل»، «عقد العمل» — ويتخطّى ما يفصله حرف وقف.
@@ -653,7 +680,8 @@ function mapArticleResult(
   options: AdvancedLegalSearchOptions,
   conceptWords: string[] = [],
   conceptBigrams: string[] = [],
-  preferSystems: string[] = []
+  preferSystems: string[] = [],
+  conceptWordIdf: Map<string, number | null> = new Map()
 ): LegalCoreResult {
   const systemName = article.legalSystem?.name ?? article.lawName;
   const haystack = [article.lawName, article.title, article.content, article.classification, article.chapter, article.keywords.join(" ")].filter(Boolean).join("\n");
@@ -680,14 +708,14 @@ function mapArticleResult(
   let titleBonus = 0;
   if (query && nq.length >= 3) {
     if (normName.includes(nq)) titleBonus += 120; // عبارة الاستعلام كاملة في اسم النظام (أقوى إشارة)
-    // تغطية المفاهيم في الاسم: الكلمة الجوهرية (النادرة) تُرجَّح ×30، والكلمة العامة المؤهِّلة
-    // (التجاري/المالي/حماية...) ×6 فقط — فلا يتعادل «التجاري» العام مع «التحكيم» الجوهري.
+    // تغطية المفاهيم في الاسم: كل كلمة مطابقة تُرجَّح بندرتها (IDF من فهرس BM25) — الكلمة
+    // الجوهرية النادرة (التحكيم) تسود على العامة الشائعة (التجاري)، بيانياً لا بقائمة يدوية.
     for (const w of conceptWords) {
-      if (normName.includes(w)) titleBonus += GENERIC_SYSTEM_NAME_WORDS.has(w) ? 6 : 30;
+      if (normName.includes(w)) titleBonus += nameWordWeight(w, conceptWordIdf.get(w) ?? null);
     }
     if (normTitle.includes(nq)) titleBonus += 40; // عبارة كاملة في عنوان المادة
     for (const w of conceptWords) {
-      if (normTitle.includes(w)) titleBonus += GENERIC_SYSTEM_NAME_WORDS.has(w) ? 3 : 12;
+      if (normTitle.includes(w)) titleBonus += titleWordWeight(w, conceptWordIdf.get(w) ?? null);
     }
     // ترجيح قوي للتشريع الأصلي (نظام) فوق لائحته/أداته الثانوية — فقط عند تطابق الاسم:
     // يمنع تصدّر «اللائحة التنفيذية لضبط أعمال تفتيش العمل» على «نظام العمل» لاستعلام «العمل».
