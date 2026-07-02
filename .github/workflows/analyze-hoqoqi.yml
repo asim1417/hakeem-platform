@@ -1,0 +1,57 @@
+name: Analyze hoqoqi.sql vs DB (read-only)
+
+# ينزّل المصدر hoqoqi.sql من رابط مشاركة (مدخل) ويحلّله عميقًا مقابل قاعدة المنصّة (Neon، SELECT فقط):
+# ملاحظات، إضافات غير مُستغلّة، أخطاء/فجوات. لا كتابة إطلاقًا.
+
+on:
+  workflow_dispatch:
+    inputs:
+      share_url:
+        description: "رابط مشاركة OneDrive لملف hoqoqi.sql"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Download hoqoqi.sql from share link
+        env:
+          SHARE_URL: ${{ inputs.share_url }}
+        run: |
+          set -e
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          is_ok() { local sz; sz=$(stat -c%s "$1" 2>/dev/null || echo 0); local h; h=$(head -c 200 "$1" | tr -d '\0')
+            echo "   حجم=$sz"; case "$h" in *"<!DOCTYPE"*|*"<html"*|*"<HTML"*) return 1;; esac; [ "$sz" -gt 500000 ]; }
+          dl() { echo ">> $1"; curl -sSL -c /tmp/cj -b /tmp/cj -A "$UA" --max-time 600 -o hoqoqi.sql \
+                   -w "   HTTP %{http_code} · %{content_type} · %{size_download}B\n" "$2" || true; }
+          case "$SHARE_URL" in *\?*) U1="$SHARE_URL&download=1";; *) U1="$SHARE_URL?download=1";; esac
+          dl "download=1" "$U1"
+          if ! is_ok hoqoqi.sql; then
+            BASE=$(echo "$SHARE_URL" | sed -E 's#(/personal/[^/]+)/.*#\1#')
+            TOKEN=$(echo "$SHARE_URL" | sed -E 's#.*/personal/[^/]+/([^/?]+).*#\1#')
+            dl "download.aspx" "$BASE/_layouts/15/download.aspx?share=$TOKEN"
+            is_ok hoqoqi.sql || { echo "::error::تعذّر تنزيل الملف (قد يتطلّب مصادقة)."; exit 1; }
+          fi
+          echo "✔ جاهز"
+      - name: Analyze source vs DB
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::warning::بلا اتصال قاعدة — سيقتصر على تحليل المصدر."; fi
+          npx tsx scripts/analyze-hoqoqi-vs-db.ts --file=hoqoqi.sql
