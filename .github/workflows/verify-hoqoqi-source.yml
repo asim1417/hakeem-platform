@@ -1,0 +1,73 @@
+name: Verify hoqoqi.sql Source (read-only)
+
+# ينزّل المصدر الأصلي hoqoqi.sql من رابط مشاركة OneDrive (يُمرَّر كمدخل، لا يُخزَّن في المستودع)،
+# ثم يقيس جودة نصّ المصدر نفسه ليقرّر: هل الالتصاق/التقطّع في المصدر أصلاً أم تُحدثه المنصّة؟
+# قراءة فقط: لا قاعدة بيانات، لا كتابة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      share_url:
+        description: "رابط مشاركة OneDrive لملف hoqoqi.sql"
+        type: string
+        required: true
+      verify_articles:
+        description: "أرقام مواد للفحص المباشر (اختياري، مفصولة بفواصل)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Download hoqoqi.sql from share link
+        env:
+          SHARE_URL: ${{ inputs.share_url }}
+        run: |
+          set -e
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          is_ok() { # $1=file → success if large and not HTML
+            local sz; sz=$(stat -c%s "$1" 2>/dev/null || echo 0)
+            local head; head=$(head -c 200 "$1" | tr -d '\0')
+            echo "   حجم=$sz بايت"
+            case "$head" in
+              *"<!DOCTYPE"*|*"<html"*|*"<HTML"*) return 1;;
+            esac
+            [ "$sz" -gt 500000 ]
+          }
+          dl() { echo ">> $1"; curl -sSL -c /tmp/cj -b /tmp/cj -A "$UA" --max-time 600 -o hoqoqi.sql \
+                   -w "   HTTP %{http_code} · %{content_type} · %{size_download}B\n" "$2" || true; }
+
+          # المحاولة 1: إلحاق download=1
+          case "$SHARE_URL" in *\?*) U1="$SHARE_URL&download=1";; *) U1="$SHARE_URL?download=1";; esac
+          dl "download=1" "$U1"
+          if is_ok hoqoqi.sql; then echo "✔ تم التنزيل (المحاولة 1)"; else
+            # المحاولة 2: صيغة download.aspx?share={token}
+            BASE=$(echo "$SHARE_URL" | sed -E 's#(/personal/[^/]+)/.*#\1#')
+            TOKEN=$(echo "$SHARE_URL" | sed -E 's#.*/personal/[^/]+/([^/?]+).*#\1#')
+            U2="$BASE/_layouts/15/download.aspx?share=$TOKEN"
+            dl "download.aspx" "$U2"
+            if is_ok hoqoqi.sql; then echo "✔ تم التنزيل (المحاولة 2)"; else
+              echo "::error::تعذّر تنزيل الملف بشكل مباشر (قد يتطلّب الرابط مصادقة/نطاق «أي شخص لديه الرابط»)."
+              echo "أول 400 حرف مما وصل:"; head -c 400 hoqoqi.sql | tr -d '\0'; echo
+              exit 1
+            fi
+          fi
+          echo "أول سطر من الملف:"; head -c 160 hoqoqi.sql | tr -d '\0'; echo
+      - name: Verify source text quality
+        env:
+          VERIFY_ARTICLES: ${{ inputs.verify_articles }}
+          SAMPLE_N: "8"
+          TOP_N: "30"
+        run: npx tsx scripts/verify-hoqoqi-source.ts --file=hoqoqi.sql
