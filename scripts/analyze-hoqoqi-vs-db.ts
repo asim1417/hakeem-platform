@@ -100,6 +100,10 @@ async function main() {
   // ── المصدر: المواد + لغة المواد (كشف ازدواج اللغة) ──
   const base = tables.get("law_articles") ?? [];
   const langRows = [...(tables.get("law_articles_lang") ?? []), ...(tables.get("lang_articles_law") ?? [])];
+  // كشف البنية الحقيقية للأعمدة (يحسم أسئلة الترقيم/المحتوى)
+  const trunc = (v: unknown) => { const s = v === null || v === undefined ? "∅" : String(v); return s.length > 60 ? s.slice(0, 60) + "…" : s; };
+  if (base.length) { console.log(`\nأعمدة law_articles: ${Object.keys(base[0]).join(", ")}`); console.log(`  عيّنة صف: ${Object.entries(base[0]).map(([k, v]) => `${k}=${trunc(v)}`).join(" · ")}`); }
+  if (langRows.length) { console.log(`أعمدة law_articles_lang: ${Object.keys(langRows[0]).join(", ")}`); console.log(`  عيّنة صف: ${Object.entries(langRows[0]).map(([k, v]) => `${k}=${trunc(v)}`).join(" · ")}`); }
   const langCols = langRows.length ? Object.keys(langRows[0]) : [];
   const langKey = ["lang", "locale", "language", "lang_code"].find((k) => langCols.map((c) => c.toLowerCase()).includes(k));
   const langDist = new Map<string, number>();
@@ -108,9 +112,11 @@ async function main() {
   const firstLang = new Map<string, SqlRow>();
   for (const r of langRows) { const aid = sv(pick(r, ["article_id", "id_article", "law_article_id"])); if (aid && !firstLang.has(aid)) firstLang.set(aid, r); }
 
-  let withContent = 0, withTitle = 0, withChapter = 0, withCategory = 0, noSystem = 0, unparseNum = 0, englishFirst = 0, zwArticles = 0;
+  let withContent = 0, withTitle = 0, withChapter = 0, withCategory = 0, noSystem = 0, englishFirst = 0, zwArticles = 0;
+  let numFromCol = 0, numFromTitle = 0, numFromSid = 0, numNone = 0, wouldImport = 0;
   const seenKey = new Set<string>(); let dupKey = 0;
   const dropNoContent = new Set<string>(), dropNoSystem = new Set<string>(), dropNoNum = new Set<string>();
+  const hasDigit = (s: string) => /[0-9٠-٩]/.test(s);
   for (const row of base) {
     const sid = sv(pick(row, ["id", "article_id", "id_article", "law_article_id"]));
     const sys = sv(pick(row, ["law_id", "id_law", "laws_id", "system_id"]));
@@ -118,29 +124,26 @@ async function main() {
     const lang = firstLang.get(sid);
     const content = sv(pick(lang ?? {}, ["content", "text", "article", "article_text", "body", "lang_text"]));
     const title = sv(pick(lang ?? {}, ["title", "name", "article_title", "lang_title"]));
-    const numText = sv(pick(row, ["article_number", "number", "no", "article_no", "sort", "order"])) || title || sid;
-    const num = parseArabicInt(numText);
+    const colRaw = sv(pick(row, ["article_number", "number", "no", "article_no", "sort", "order"]));
+    // مطابقة دقيقة لسلوك المُستورِد: أول غير فارغ من [عمود الرقم، العنوان، معرّف الصف] ثم استخراج أرقام فقط
+    const first = colRaw || title || sid;
+    const num = parseArabicInt(first);
     if (content) withContent++; else dropNoContent.add(sid);
     if (title) withTitle++;
     if (sv(pick(row, ["chapter", "section", "part", "door", "bab", "chapter_id"]))) withChapter++;
     if (cat) withCategory++;
     if (!sys) { noSystem++; dropNoSystem.add(sid); }
-    if (num === null || num === 0) { unparseNum++; dropNoNum.add(sid); }
+    // مصدر الرقم: عمود صريح؟ أم أرقام في العنوان؟ أم سقط إلى معرّف الصف؟ أم لا رقم (يُسقَط)؟
+    if (num === null || num === 0) { numNone++; dropNoNum.add(sid); }
+    else if (colRaw && hasDigit(colRaw)) numFromCol++;
+    else if (!colRaw && hasDigit(title)) numFromTitle++;
+    else numFromSid++; // العمود والعنوان بلا أرقام ⇒ الرقم جاء من معرّف الصف (مريب: رقم المادة = id)
+    if (sys && content && num !== null && num !== 0) wouldImport++;
     if (content && ZW.test(content)) zwArticles++;
-    // كشف: هل النصّ المختار إنجليزيّ؟ (لاتيني > عربي)
     if (content) { const la = (content.match(ARLATIN) || []).length, ar = (content.match(AR) || []).length; if (la > ar && la > 20) englishFirst++; }
-    // ازدواج (نظام, رقم) — قيد الوحدة في القاعدة
     const lawName = lawNames.get(sys) || sys;
     if (num !== null) { const k = `${lawName}#${num}`; if (seenKey.has(k)) dupKey++; else seenKey.add(k); }
   }
-  const wouldImport = base.filter((row) => {
-    const sys = sv(pick(row, ["law_id", "id_law", "laws_id", "system_id"]));
-    const sid = sv(pick(row, ["id", "article_id", "id_article", "law_article_id"]));
-    const content = sv(pick(firstLang.get(sid) ?? {}, ["content", "text", "article", "article_text", "body", "lang_text"]));
-    const numText = sv(pick(row, ["article_number", "number", "no", "article_no", "sort", "order"])) || sid;
-    const num = parseArabicInt(numText);
-    return sys && content && num !== null && num !== 0;
-  }).length;
 
   const cats = tables.get("law_categories") ?? [];
   const chapters = tables.get("law_chapters") ?? [];
@@ -152,6 +155,7 @@ async function main() {
   console.log(`\n── المصدر ──`);
   console.log(`أنظمة (laws): ${laws.length} · باسم عربي: ${lawsWithName}`);
   console.log(`مواد (law_articles): ${base.length} · بنصّ: ${withContent} · بعنوان: ${withTitle} · بباب: ${withChapter} · بتصنيف: ${withCategory}`);
+  console.log(`مصدر رقم المادة: من عمود صريح=${numFromCol} · من أرقام العنوان=${numFromTitle} · سقط إلى معرّف الصف=${numFromSid} · بلا رقم(يُسقَط)=${numNone}`);
   if (langKey) console.log(`عمود لغة المواد «${langKey}» → ${[...langDist.entries()].map(([k, v]) => `${k}:${v}`).join(" · ")}`);
   console.log(`تصنيفات: ${cats.length} · أبواب/فصول: ${chapters.length} · تعديلات: ${amendments.length} · أدوات إصدار/مراسيم: ${issuance.length} · معجم(أسماء/أفعال): ${nouns.length}/${verbs.length}`);
   console.log(`قابلة للاستيراد وفق مرشّحات المُستورِد (نظام+نصّ+رقم صحيح): ${wouldImport} من ${base.length}`);
@@ -161,7 +165,7 @@ async function main() {
   let dbOk = false;
   if (process.env.DATABASE_URL) {
     try {
-      const [systems, articles, hoqoqiKw, orphan, withDecree, withEffective, withChap, withClass, needsReview] = await Promise.all([
+      const [systems, articles, hoqoqiKw, orphan, withDecree, withEffective, withChap, withClass, needsReview, bigNum, maxAgg] = await Promise.all([
         prisma.legalSystem.count(),
         prisma.legalArticle.count(),
         prisma.legalArticle.count({ where: { keywords: { has: "source:hoqoqi_sql" } } }),
@@ -171,8 +175,10 @@ async function main() {
         prisma.legalArticle.count({ where: { NOT: { chapter: null } } }),
         prisma.legalArticle.count({ where: { NOT: { classification: null } } }),
         prisma.legalArticle.count({ where: { keywords: { has: "review:needs_review" } } }),
+        prisma.legalArticle.count({ where: { articleNumber: { gt: 1000 } } }),
+        prisma.legalArticle.aggregate({ _max: { articleNumber: true } }),
       ]);
-      db = { systems, articles, hoqoqiKw, orphan, withDecree, withEffective, withChap, withClass, needsReview };
+      db = { systems, articles, hoqoqiKw, orphan, withDecree, withEffective, withChap, withClass, needsReview, bigNum, maxNum: maxAgg._max.articleNumber ?? 0 };
       dbOk = true;
     } catch (e) { console.log(`\n(تعذّرت قراءة القاعدة: ${e instanceof Error ? e.message.slice(0, 120) : e})`); }
   } else console.log("\n(بلا DATABASE_URL — قسم المقارنة مع القاعدة مُتخطّى)");
@@ -181,6 +187,7 @@ async function main() {
     console.log(`\n── قاعدة المنصّة (Neon، قراءة فقط) ──`);
     console.log(`أنظمة: ${db.systems} · مواد: ${db.articles} · منها من hoqoqi: ${db.hoqoqiKw}`);
     console.log(`مواد بلا نظام (يتيمة): ${db.orphan} · بمرسوم: ${db.withDecree} · بتاريخ نفاذ: ${db.withEffective} · بباب: ${db.withChap} · بتصنيف: ${db.withClass} · «بحاجة مراجعة»: ${db.needsReview}`);
+    console.log(`ترقيم المواد: أقصى articleNumber=${db.maxNum} · عدد المواد برقم>1000=${db.bigNum} (إن كان كبيرًا فبعض الأرقام = معرّفات صفوف لا ترتيب حقيقي).`);
   }
 
   // ── الخلاصات ──
@@ -201,12 +208,13 @@ async function main() {
   if (enName) console.log(`  • ترجمات إنجليزية للمواد (~${enName} صفًّا) — لملء textEn وخدمة الواجهة ثنائية اللغة.`);
 
   console.log(`\n🟥 أخطاء/فجوات تحتاج معالجة:`);
-  console.log(`  • مواد يُسقطها الاستيراد: بلا نظام=${dropNoSystem.size} · بلا نصّ=${dropNoContent.size} · رقم غير صالح=${dropNoNum.size} (اتحادها ≈ ${base.length - wouldImport} مادة مفقودة).`);
+  console.log(`  • مواد يُسقطها الاستيراد: بلا نظام=${dropNoSystem.size} · بلا نصّ=${dropNoContent.size} · بلا رقم=${dropNoNum.size} (قابلة للاستيراد فعليًّا=${wouldImport} من ${base.length}).`);
+  if (numFromSid) console.log(`  • ⚠️ ${numFromSid} مادة رقمها في المصدر مأخوذ من معرّف الصف (id) لا من رقم مادة حقيقي — قد يجعل articleNumber في القاعدة = id لا الترتيب الصحيح؛ يستحق تدقيقًا.`);
   if (dupKey) console.log(`  • تصادم (نظام, رقم مادة): ${dupKey} حالة — قيد الوحدة @@unique([lawName, articleNumber]) يجعل الاستيراد يتخطّى/يستبدل، فتُفقد نسخ.`);
-  if (englishFirst) console.log(`  • ${englishFirst} مادة نصّها المختار «إنجليزيّ» (المُستورِد يأخذ أول صف لغة) — قد تُخزَّن ترجمة بدل الأصل العربي. ⚠️`);
+  if (englishFirst) console.log(`  • ${englishFirst} مادة نصّها المختار «إنجليزيّ» — قد تُخزَّن ترجمة بدل الأصل العربي. ⚠️`);
   if (zwArticles) console.log(`  • ${zwArticles} مادة تحوي محارف صفرية العرض في المصدر — تُنظَّف عرضًا فقط (سليمة).`);
   if (dbOk && db.orphan) console.log(`  • ${db.orphan} مادة يتيمة (بلا نظام) في القاعدة — تحتاج إعادة ربط.`);
-  if (dbOk && db.needsReview) console.log(`  • ${db.needsReview} مادة موسومة «بحاجة مراجعة» في القاعدة.`);
+  console.log(`  • ملاحظة قياس: وسم المصدر (source:hoqoqi_sql) أُزيل بتنظيف الكلمات المفتاحية سابقًا، فعدّاد «من hoqoqi» غير معوَّل عليه؛ المطابقة تُبنى على الأعداد لا الوسم.`);
 
   await prisma.$disconnect();
 }
