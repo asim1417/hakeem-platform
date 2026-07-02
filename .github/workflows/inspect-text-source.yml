@@ -1,0 +1,39 @@
+name: Inspect Text Source (read-only)
+
+# كشف روابط المصدر الأصلي (sourceLink) والسياق للحالات المُعلَّمة في الأحكام،
+# لتقرير جدوى الرجوع للمصدر عند التباس الكلمات الملتصقة. قراءة فقط.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "عدد الحالات المعروضة بالسياق"
+        type: string
+        default: "40"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TS_LIMIT: ${{ inputs.limit }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Inspect text source (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال."; exit 1; fi
+          npm run inspect:text-source
