@@ -64,7 +64,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
         <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
           <div className="space-y-5">
             <LegalCoreCard title="نص الحكم" subtitle="النص مستورد كما هو، ويحتاج مراجعة قانونية قبل الاعتماد المعرفي">
-              <article className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--parchment)] p-7 font-judicial text-2xl leading-[2.25] text-[var(--ink)] shadow-[var(--sh-xs)]">
+              <article className="legal-prose rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--parchment)] p-7 font-judicial text-2xl leading-[2.25] text-[var(--ink)] shadow-[var(--sh-xs)]">
                 <JudgmentText
                   text={judgment.judgmentText}
                   links={judgment.articleLinks.map((l) => ({
@@ -79,7 +79,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
 
             {judgment.appealText ? (
               <LegalCoreCard title="نص الاستئناف أو الاعتراض" subtitle="يعرض عند توفره داخل مصدر الأحكام">
-                <article className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white/60 p-6 font-judicial text-xl leading-10 text-[var(--ink)]">
+                <article className="legal-prose rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white/60 p-6 font-judicial text-xl leading-10 text-[var(--ink)]">
                   <JudgmentText
                     text={judgment.appealText}
                     links={judgment.articleLinks.map((l) => ({

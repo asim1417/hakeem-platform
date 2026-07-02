@@ -188,7 +188,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .app-foot-links a:hover { color: var(--navy); }
 /* أدوات القراءة لصفحة المادة: حجم خط متغيّر + وضع تركيز + طباعة نظيفة */
 #legal-reading-root { --reading-scale: 1; }
-.article-body { font-size: calc(1.5rem * var(--reading-scale, 1)); line-height: 2.3; }
+.article-body { font-size: calc(1.5rem * var(--reading-scale, 1)); line-height: 2.3; white-space: pre-wrap; overflow-wrap: break-word; }
+/* نصّ قانوني عام: يحفظ بنية الأسطر من المصدر ويكسر المقاطع الطويلة بأمان بدل تجاوز الحاوية. */
+.legal-prose { white-space: pre-wrap; overflow-wrap: break-word; }
 .reading-focus .reading-hideable { display: none !important; }
 @media print {
   .sidebar, .topbar, .app-foot, .skip-link, .reading-tools, .reading-hideable { display: none !important; }

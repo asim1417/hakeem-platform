@@ -24,6 +24,7 @@ import { getFiqhIssuesForArticle } from "@/lib/modules/legal-core/fiqh-issues";
 import { extractArticleReferences } from "@/lib/modules/legal-core/cross-references";
 import { resolveArticleIds } from "@/lib/modules/library/library-service";
 import { getGraphNeighbors } from "@/lib/modules/knowledge-graph/relations";
+import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import type { RelationType } from "@prisma/client";
 import { FIQH_NONBINDING_NOTICE } from "@/lib/modules/legal-core/content-separation";
 
@@ -112,12 +113,14 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
 
   const query = (searchParams?.q ?? "").trim();
   const highlightTerms = joinSearchTerms(query);
-  const matches = countSearchMatches(article.content, highlightTerms);
+  // نصّ العرض المنقّى (غير مُتلِف للكلمات): يُزيل المحارف الفاسدة ويحفظ بنية الأسطر.
+  const content = sanitizeDisplayText(article.content);
+  const matches = countSearchMatches(content, highlightTerms);
   const fiqhIssues = getFiqhIssuesForArticle(article.lawName, article.articleNumber, 8);
   const officialCitation = buildOfficialCitation({ lawName: article.lawName, articleNumber: article.articleNumber, royalDecree: article.royalDecree, effectiveFrom: article.effectiveFrom });
 
   // الإحالات الداخلية: مواد يشير إليها نصّ هذه المادة داخل النظام نفسه.
-  const refs = extractArticleReferences(article.content, article.articleNumber).slice(0, 12);
+  const refs = extractArticleReferences(content, article.articleNumber).slice(0, 12);
   const refIds = refs.length
     ? await resolveArticleIds(refs.map((r) => ({ lawName: article.lawName, articleNumber: r.articleNumber }))).catch(() => new Map<string, string>())
     : new Map<string, string>();
@@ -199,7 +202,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
           description={`${article.lawName}${article.chapter ? ` | ${article.chapter}` : ""}`}
           actions={
             <div className="reading-hideable flex flex-wrap items-center gap-2">
-              <LegalCopyButton text={article.content} label="نسخ نص المادة" />
+              <LegalCopyButton text={content} label="نسخ نص المادة" />
               <LegalCopyButton text={officialCitation} label="نسخ الإحالة" />
               <button className="btn btn-outline" type="button"><Pencil size={16} /> تحرير</button>
               <Link className="btn btn-gold" href={`/dashboard/simulations?article=${article.id}`}><Scale size={16} /> استخدام في القاضي حكيم</Link>
@@ -216,7 +219,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--navy)] px-3 py-1 text-xs font-bold text-[var(--gold-pale)]">
                   <ScrollText size={14} aria-hidden /> النص النظامي الرسمي
                 </span>
-                <ArticleReadingTools exportText={article.content} exportTitle={`${article.lawName} — المادة ${article.articleNumber}`} citation={officialCitation} />
+                <ArticleReadingTools exportText={content} exportTitle={`${article.lawName} — المادة ${article.articleNumber}`} citation={officialCitation} />
               </div>
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gold-border)] pb-5">
                 <div>
@@ -235,7 +238,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 </div>
               ) : null}
               <p className="article-body font-judicial text-[var(--ink)]">
-                <HighlightedSearchText text={article.content} terms={highlightTerms} anchorPrefix="match" />
+                <HighlightedSearchText text={content} terms={highlightTerms} anchorPrefix="match" />
               </p>
             </article>
 
@@ -275,7 +278,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
               </div>
             </LegalCoreCard>
 
-            <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={article.content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} eliSlug={article.legalSystem?.eliSlug} />
+            <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} eliSlug={article.legalSystem?.eliSlug} />
 
             {crossReferences.length ? (
               <LegalCoreCard title="المواد المُحال إليها" subtitle="إحالات داخلية مستخرَجة من نصّ المادة" icon={<Link2 size={18} />}>

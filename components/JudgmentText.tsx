@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 
 /**
  * يعرض نصّ الحكم مع إبراز إشارات المواد تلقائياً:
@@ -36,7 +37,8 @@ function pickArticleNumber(group: string, linked: Map<number, { link: ArticleLin
   return Math.max(...nums);
 }
 
-export function JudgmentText({ text, links, className = "" }: { text: string; links: ArticleLink[]; className?: string }) {
+export function JudgmentText({ text: rawText, links, className = "" }: { text: string; links: ArticleLink[]; className?: string }) {
+  const text = sanitizeDisplayText(rawText); // تنقية عرض غير مُتلِفة (لا تمسّ الكلمات)
   if (!text) return null;
 
   // خريطة رقم المادة → الرابط (قابل للنقر فقط إن كان الرقم غير ملتبس داخل هذا الحكم)

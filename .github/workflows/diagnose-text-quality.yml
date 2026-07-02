@@ -1,0 +1,45 @@
+name: Diagnose Text Quality (read-only)
+
+# تشخيص قرائي لجودة عرض نصوص الأنظمة والأحكام: محارف فاسدة/صفرية، كلمات ملتصقة،
+# تسرّب HTML، أسطر/فراغات زائدة… ويُصدِّر عيّنات «غير قابلة للإصلاح الآلي» للمراجعة.
+# قراءة فقط. يفضّل NEON_DATABASE_URL؛ وإلا DATABASE_URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: "عدد العيّنات لكل فئة غير قابلة للإصلاح"
+        type: string
+        default: "60"
+      glue:
+        description: "حدّ طول التوكن العربي المُعتبَر «ملتصقًا»"
+        type: string
+        default: "28"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TQ_SAMPLES: ${{ inputs.samples }}
+      TQ_GLUE: ${{ inputs.glue }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Diagnose text quality (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          npm run diagnose:text-quality
