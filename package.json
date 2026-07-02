@@ -100,7 +100,8 @@
     "diagnose:authority": "tsx scripts/diagnose-authority-data.ts",
     "diagnose:text-quality": "tsx scripts/diagnose-text-quality.ts",
     "inspect:text-source": "tsx scripts/inspect-text-source.ts",
-    "probe:source": "tsx scripts/probe-source.ts"
+    "probe:source": "tsx scripts/probe-source.ts",
+    "emit:source-urls": "tsx scripts/emit-source-urls.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

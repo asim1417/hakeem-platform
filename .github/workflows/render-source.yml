@@ -1,0 +1,43 @@
+name: Render Source (Playwright, read-only)
+
+# يقرأ نصّ الأحكام الملتصقة من المصدر الأصلي (sjp.moj.gov.sa، صفحة SPA) عبر متصفّح حقيقي،
+# ليقرّر هل المصدر يفصل الكلمات الملتصقة (فنُقيّدها بإسناد) أم أنها تالفة أصلاً. قراءة فقط.
+
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: "عدد الأحكام المقروءة من المصدر"
+        type: string
+        default: "3"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      EMIT_N: ${{ inputs.n }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Install Playwright Chromium
+        run: npm i --no-save playwright@1.48.0 && npx playwright install --with-deps chromium
+      - name: Read original source via browser (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال."; exit 1; fi
+          npm run emit:source-urls > urls.jsonl
+          echo "روابط:"; cat urls.jsonl
+          node scripts/render-source.mjs < urls.jsonl
