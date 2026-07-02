@@ -1,0 +1,61 @@
+name: Eval Known-Item (read-only)
+
+# قياس «العنصر المعروف» على مستوى المادة: نُولّد استعلامًا من عنوان كلّ مادة في عيّنة،
+# ونقيس رتبة استرجاع تلك المادة نفسها (articleHit@k / articleMRR). غير دائري، بلا وسم يدوي.
+# قراءة فقط — لا كتابة، لا seed، لا backfill. يفضّل NEON_DATABASE_URL؛ وإلا DATABASE_URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      gate:
+        description: "تشغيل كبوّابة (يفشل دون العتبة)"
+        type: boolean
+        default: false
+      sample:
+        description: "حجم العيّنة (عدد المواد المُختبَرة)"
+        type: string
+        default: "120"
+      limit:
+        description: "عمق النتائج المفحوص (rank ضمن أعلى limit)"
+        type: string
+        default: "10"
+      min_hit5:
+        description: "عتبة articleHit@5 عند التشغيل كبوّابة (0..1)"
+        type: string
+        default: "0.7"
+
+permissions:
+  contents: read
+
+jobs:
+  known-item:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SEMANTIC_SEARCH: "true"
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      KI_SAMPLE: ${{ inputs.sample }}
+      KI_LIMIT: ${{ inputs.limit }}
+      KI_MIN_HIT5: ${{ inputs.min_hit5 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Run known-item eval (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          if [ "${{ inputs.gate }}" = "true" ]; then
+            npm run eval:known-item -- --gate
+          else
+            npm run eval:known-item
+          fi
