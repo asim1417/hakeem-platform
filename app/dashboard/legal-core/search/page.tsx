@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
+import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { listAllSystems } from "@/lib/modules/library/library-service";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
@@ -248,16 +249,16 @@ export default async function LegalCoreSearchPage({
                       </div>
                     </div>
 
-                    <p className="mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
-                      <HighlightedSearchText text={article.snippet} terms={joinSearchTerms(query, article.matchedTerms)} />
+                    <p className="legal-prose mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
+                      <HighlightedSearchText text={sanitizeDisplayText(article.snippet)} terms={joinSearchTerms(query, article.matchedTerms)} />
                     </p>
 
                     {article.matchedParagraphs.length ? (
                       <div className="mt-3 space-y-2">
                         <p className="font-display-ar text-xs font-bold text-[var(--gold)]">فقرات مطابقة</p>
                         {article.matchedParagraphs.slice(0, 2).map((paragraph, index) => (
-                          <p key={`${article.articleId}-${index}`} className="rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">
-                            <HighlightedSearchText text={paragraph} terms={joinSearchTerms(query, article.matchedTerms)} />
+                          <p key={`${article.articleId}-${index}`} className="legal-prose rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">
+                            <HighlightedSearchText text={sanitizeDisplayText(paragraph)} terms={joinSearchTerms(query, article.matchedTerms)} />
                           </p>
                         ))}
                       </div>

@@ -13,7 +13,8 @@ export function HighlightedSearchText({
   const preparedTerms = prepareHighlightTerms(terms);
   if (!preparedTerms.length) return <>{text}</>;
 
-  const parts = text.split(/(\p{L}[\p{L}\p{N}_-]*|\p{N}+)/gu);
+  // نضمّ علامات التشكيل (\p{M}) للتوكن كي لا تتقطّع الكلمة المشكولة عند كل حركة.
+  const parts = text.split(/(\p{L}[\p{L}\p{M}\p{N}_-]*|\p{N}+)/gu);
   let matchIndex = 0;
 
   return (
@@ -39,7 +40,7 @@ export function countSearchMatches(text: string, terms: string[]) {
   const preparedTerms = prepareHighlightTerms(terms);
   if (!preparedTerms.length) return 0;
   return text
-    .split(/(\p{L}[\p{L}\p{N}_-]*|\p{N}+)/gu)
+    .split(/(\p{L}[\p{L}\p{M}\p{N}_-]*|\p{N}+)/gu)
     .filter((part) => isWordPart(part) && matchesAnyTerm(part, preparedTerms)).length;
 }
 
@@ -65,7 +66,7 @@ function matchesAnyTerm(word: string, terms: string[]) {
 }
 
 function isWordPart(value: string) {
-  return /^[\p{L}\p{N}_-]+$/u.test(value);
+  return /^[\p{L}\p{M}\p{N}_-]+$/u.test(value);
 }
 
 export function joinSearchTerms(...groups: Array<string[] | string | undefined | null>): string[] {

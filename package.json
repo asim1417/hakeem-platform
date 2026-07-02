@@ -97,7 +97,8 @@
     "seed:fiqh": "tsx scripts/seed-fiqh-issues.ts",
     "sync:systems": "tsx scripts/sync-legal-systems.ts",
     "refresh:indexes": "npm run build:bm25:db && npm run export:saudi-systems && npm run link:fiqh",
-    "diagnose:authority": "tsx scripts/diagnose-authority-data.ts"
+    "diagnose:authority": "tsx scripts/diagnose-authority-data.ts",
+    "diagnose:text-quality": "tsx scripts/diagnose-text-quality.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
