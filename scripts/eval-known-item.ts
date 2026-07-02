@@ -41,7 +41,12 @@ function buildKnownItemQuery(a: LightArticle, minLen: number): { query: string; 
   if (subject && subject.length >= minLen && !/^[\d\s٠-٩().,-]+$/.test(subject)) {
     return { query: subject, source: "colon" };
   }
-  const kw = (a.keywords ?? []).map((k) => (k ?? "").trim()).filter((k) => k.length >= 2);
+  // نُصفّي «كلمات» ملوّثة بميتاداتا الاستيراد (source:hoqoqi_sql / review:needs_review / article:…):
+  // أيّ رمز يحوي حروفًا لاتينية أو «:» أو «_» ليس كلمةً مفتاحية عربية مميِّزة، فنُسقطه كي لا
+  // يصنع استعلامًا شبه دائري يطابق المادة عبر ميتاداتاها المفهرسة.
+  const kw = (a.keywords ?? [])
+    .map((k) => (k ?? "").trim())
+    .filter((k) => k.length >= 2 && !/[A-Za-z:_]/.test(k));
   if (kw.length) {
     const q = kw.slice(0, 6).join(" ");
     if (q.length >= minLen) return { query: q, source: "keywords" };
