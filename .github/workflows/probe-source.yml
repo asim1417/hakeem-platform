@@ -1,0 +1,39 @@
+name: Probe Source (read-only)
+
+# محاولة الوصول إلى المصدر الأصلي (sjp.moj.gov.sa) من شبكة مُشغّل CI لتقرير إمكان قراءة
+# نصّ الحكم وتصحيح الكلمات الملتصقة. قراءة فقط على القاعدة + جلب خارجي.
+
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: "عدد الأحكام الملتصقة المُختبَرة"
+        type: string
+        default: "8"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PROBE_N: ${{ inputs.n }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Probe original source (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال."; exit 1; fi
+          npm run probe:source
