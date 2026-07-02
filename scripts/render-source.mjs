@@ -1,9 +1,7 @@
 /**
- * render-source.mjs — يُصيّر صفحة المصدر (SPA) بمتصفّح حقيقي (Playwright/Chromium) ويستخرج
- * نصّها، لقراءة الكلمات الملتصقة من المصدر الأصلي (وزارة العدل). يقرأ JSONL من stdin:
- *   {"id":"…","url":"https://sjp.moj.gov.sa/Filter/AhkamDetails/…","glued":"…"}
- * يطبع لكل حكم: هل ظهر نصّ عربي، ومقتطف حوله، وهل التوكن الملتصق ما زال ملتصقًا في المصدر.
- * لا كتابة. للتشغيل داخل CI بعد: npm i --no-save playwright && npx playwright install chromium
+ * render-source.mjs — يقرأ نصّ الحكم من المصدر الأصلي (SPA لوزارة العدل) عبر متصفّح حقيقي،
+ * **ويلتقط نداءات الشبكة** (XHR/fetch) لاكتشاف الـAPI الذي يحمل النصّ — أوثق من نصّ الصفحة.
+ * يقرأ JSONL من stdin: {"id","url","glued"}. لا كتابة. يُشغَّل في CI بعد تثبيت playwright.
  */
 import { createInterface } from "node:readline";
 
@@ -17,36 +15,52 @@ const ctx = await browser.newContext({
   userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
   locale: "ar-SA",
 });
-
-const LONG_AR = /[ء-غف-يٮ-ۓەۺ-ۿ]{29,}/;
+const arCount = (s) => (s.match(/[؀-ۿ]/g) || []).length;
 
 for (const it of items) {
   console.log("=".repeat(80));
   console.log(`• ${it.id}\n  ${it.url}\n  الملتصق في قاعدتنا: «${it.glued}»`);
   const page = await ctx.newPage();
+  const apiHits = [];
+  page.on("response", async (res) => {
+    try {
+      const ct = (res.headers()["content-type"] || "").toLowerCase();
+      if (!/json|text|html/.test(ct)) return;
+      const body = await res.text();
+      const ar = arCount(body);
+      if (ar > 150) apiHits.push({ url: res.url(), ar, body });
+    } catch { /* */ }
+  });
   try {
-    await page.goto(it.url, { waitUntil: "networkidle", timeout: 45000 });
-    await page.waitForTimeout(3500); // مهلة لتحميل المحتوى الديناميكي
-    const text = (await page.evaluate(() => document.body?.innerText || "")).replace(/\s+/g, " ").trim();
-    const arLen = (text.match(/[؀-ۿ]/g) || []).length;
-    console.log(`  المصدر: طول=${text.length} · حروف عربية=${arLen}`);
-    if (arLen > 60) {
-      // ابحث عن جذر الكلمة الملتصقة (أوّل 8 محارف) في نصّ المصدر
-      const stem = (it.glued || "").slice(0, 8);
-      const idx = stem ? text.indexOf(stem) : -1;
-      if (idx >= 0) {
-        const around = text.slice(Math.max(0, idx - 40), idx + 90);
-        const stillGlued = LONG_AR.test(around);
-        console.log(`  حول الكلمة في المصدر: «…${around}…»`);
-        console.log(`  الحكم: ${stillGlued ? "ما زالت ملتصقة في المصدر (تلف أصليّ)" : "المصدر يفصلها ✓ (يمكن التقييد بإسناد)"}`);
-      } else {
-        console.log(`  لم أجد جذر الكلمة في نصّ المصدر — مقتطف: «${text.slice(0, 160)}…»`);
-      }
+    await page.goto(it.url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(5000);
+    console.log(`  الرابط النهائي بعد التحميل: ${page.url()}`);
+    // رتّب الاستجابات بحسب كثافة العربية
+    apiHits.sort((a, b) => b.ar - a.ar);
+    const uniq = [...new Map(apiHits.map((h) => [h.url, h])).values()].slice(0, 6);
+    console.log(`  استجابات فيها عربية (أعلى 6):`);
+    for (const h of uniq) console.log(`     [${h.ar}] ${h.url.slice(0, 110)}`);
+    // أفضل استجابة (غالبًا JSON نصّ الحكم) — اطبع نصًّا مقروءًا منها
+    const top = uniq.find((h) => !/\.js($|\?)/.test(h.url)) || uniq[0];
+    if (top) {
+      let txt = top.body;
+      // إن كانت JSON، حاول انتزاع قيَم نصّية طويلة
+      try {
+        const j = JSON.parse(top.body);
+        const vals = [];
+        const walk = (o) => { if (typeof o === "string") { if (arCount(o) > 40) vals.push(o); } else if (o && typeof o === "object") Object.values(o).forEach(walk); };
+        walk(j);
+        if (vals.length) txt = vals.sort((a, b) => b.length - a.length)[0];
+      } catch { /* نصّ خام */ }
+      txt = txt.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      console.log(`  📄 نصّ من المصدر (أفضل استجابة، ${top.url.slice(0, 80)}):`);
+      console.log(`     «${txt.slice(0, 700)}»`);
     } else {
-      console.log(`  المصدر ما زال بلا نصّ كافٍ بعد التصيير (قد يحتاج تفاعلاً/تحقّق بشري). مقتطف: «${text.slice(0, 120)}»`);
+      console.log(`  لم تُلتقَط استجابة تحمل نصًّا عربيًا كافيًا (قد يكون الرابط العميق غير مدعوم مباشرةً).`);
     }
   } catch (e) {
-    console.log(`  تعذّر التصيير: ${e?.message?.slice(0, 120) || e}`);
+    console.log(`  تعذّر: ${e?.message?.slice(0, 140) || e}`);
   } finally {
     await page.close();
   }
