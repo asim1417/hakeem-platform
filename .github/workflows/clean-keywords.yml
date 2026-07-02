@@ -1,0 +1,62 @@
+name: Clean Keywords (import metadata)
+
+# ينظّف legal_articles.keywords من ميتاداتا الاستيراد المُسرَّبة (source:hoqoqi_sql …).
+# افتراضيًا **تجربة جافّة قراءة فقط** (تقرير بلا كتابة). التطبيق يحتاج apply=true +
+# بوّابة المواءمة + حارس هدف (Neon الكبيرة فقط). يستعمل سرّ NEON_DATABASE_URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "تطبيق التنظيف (كتابة). خطأ = تجربة جافّة قراءة فقط."
+        type: boolean
+        default: false
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة (يلزم عند apply=true)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: clean-keywords
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate (only when applying)"
+        run: |
+          if [ "${{ inputs.apply }}" = "true" ] && [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED للتطبيق."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only, only when applying)"
+        if: ${{ inputs.apply == true }}
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npx tsx scripts/verify-neon-target.ts
+      - name: "تنظيف keywords (تجربة جافّة أو تطبيق)"
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            npm run clean:keywords -- --apply
+          else
+            npm run clean:keywords
+          fi
