@@ -17,12 +17,17 @@ import { prisma } from "@/lib/prisma";
 
 const BATCH = 300;
 
-// بصمة ميتاداتا الاستيراد: ثنائية «مفتاح‎:‎» لاتينية، أو رموز استيراد معروفة.
-const META_KEY = /(?:^|\s)(?:source|review|article|status|id|page|sourceid|sourcepageid|created|updated)\s*:/i;
+// الكلمة المفتاحية المشروعة في هذا الكوربوس **عربية**. الميتاداتا المُسرَّبة إمّا بلا حرف
+// عربي (source:hoqoqi_sql · source_article_id:5290) أو ثنائية «مفتاح‎:‎» لاتينية داخل نصّ
+// (article:المادة). نُسقط الحالتين، ونُبقي كلّ كلمة عربية.
+const META_KEY = /[A-Za-z_][\w-]*\s*:/; // مُعرِّف لاتيني يتبعه «:» أينما ورد
+const HAS_ARABIC = /[؀-ۿ]/;
 function isJunkKeyword(k: string): boolean {
   const t = (k ?? "").trim();
   if (!t) return true; // فارغ → يُزال
-  return META_KEY.test(t) || /hoqoqi/i.test(t) || /needs_review/i.test(t) || /_sql\b/i.test(t);
+  if (!HAS_ARABIC.test(t)) return true; // بلا حرف عربي → ميتاداتا/رقم/لاتيني، لا كلمة مفتاحية
+  if (META_KEY.test(t)) return true; // بصمة «مفتاح:» لاتينية داخل النص (article:المادة)
+  return /hoqoqi/i.test(t);
 }
 
 /** يعيد الكلمات النظيفة (مقلَّمة، بلا ميتاداتا، بلا فراغ، بلا تكرار مع حفظ الترتيب). */
