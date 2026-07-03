@@ -1,0 +1,37 @@
+name: Verify Search Index (EXPLAIN, read-only)
+
+# يتحقّق تجريبيًّا هل استعلام البحث يستخدم فهرس tsvector فعلًا (Bitmap Index Scan) أم يمسح
+# الجدول (Seq Scan)، لحسم تعارض تعبير coalesce. EXPLAIN ANALYZE = SELECT فقط، لا كتابة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      term:
+        description: "كلمة اختبار (مُطبَّعة)"
+        type: string
+        default: "التحكيم"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      VERIFY_TERM: ${{ inputs.term }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: EXPLAIN search query (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$DATABASE_URL" ] && { echo "::error::لا اتصال"; exit 1; }
+          npx tsx scripts/verify-search-index.ts
