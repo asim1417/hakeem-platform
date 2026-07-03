@@ -5,7 +5,7 @@
 // كل ما يُعرض هنا مخرجات المصنّف الحتمي (lib/modules/document-inspection) — لا توليد ولا اختلاق.
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   analyzeDocuments,
   legalDocumentReference,
@@ -19,8 +19,6 @@ import {
   type TextSegment
 } from "@/lib/modules/document-inspection";
 import styles from "./workstation.module.css";
-
-const STORAGE_KEY = "hakeem.document-inspection.imported.v1";
 
 type FilterKey = "all" | "rulings" | "contracts" | "review";
 
@@ -55,24 +53,6 @@ function parseAmount(value: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function loadImported(): DocumentInput[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item): item is DocumentInput =>
-        typeof item === "object" &&
-        item !== null &&
-        typeof (item as DocumentInput).title === "string" &&
-        typeof (item as DocumentInput).rawText === "string"
-    );
-  } catch {
-    return [];
-  }
-}
-
 function matchesFilter(doc: AnalyzedDocument, filter: FilterKey): boolean {
   switch (filter) {
     case "all":
@@ -105,8 +85,9 @@ const CheckIcon = () => (
 );
 
 export function DocumentWorkstation() {
+  // الوثائق المضافة تعيش في ذاكرة الجلسة فقط — لا تخزين متصفح دائم (سياسة أمن المشروع/PDPL).
+  // الحفظ الدائم مرحلة لاحقة تبدأ من الـ Schema (ربطها بجدول القضايا).
   const [imported, setImported] = useState<DocumentInput[]>([]);
-  const [hydrated, setHydrated] = useState(false);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -114,11 +95,6 @@ export function DocumentWorkstation() {
   const [draftTitle, setDraftTitle] = useState("");
   const [draftText, setDraftText] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setImported(loadImported());
-    setHydrated(true);
-  }, []);
 
   const docs = useMemo(
     () => analyzeDocuments([...SAMPLE_DOCUMENT_INPUTS, ...imported]),
@@ -161,15 +137,6 @@ export function DocumentWorkstation() {
     };
   }, [docs]);
 
-  function persist(next: DocumentInput[]) {
-    setImported(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // التخزين المحلي غير متاح (وضع خاص) — تبقى الوثائق لهذه الجلسة فقط
-    }
-  }
-
   function handleImport(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const title = draftTitle.trim();
@@ -179,7 +146,7 @@ export function DocumentWorkstation() {
       return;
     }
     const next = [...imported, { title, rawText }];
-    persist(next);
+    setImported(next);
     const analyzed = analyzeDocuments([...SAMPLE_DOCUMENT_INPUTS, ...next]);
     const added = analyzed[analyzed.length - 1];
     setSelectedCode(added.code);
@@ -192,8 +159,7 @@ export function DocumentWorkstation() {
   function handleRemove(code: string) {
     const offset = docs.findIndex((d) => d.code === code) - SAMPLE_DOCUMENT_INPUTS.length;
     if (offset < 0) return;
-    const next = imported.filter((_, i) => i !== offset);
-    persist(next);
+    setImported(imported.filter((_, i) => i !== offset));
     if (selectedCode === code) setSelectedCode(null);
   }
 
@@ -565,7 +531,7 @@ export function DocumentWorkstation() {
             <h3>إضافة وثيقة للفحص</h3>
             <p>
               الصق نص الوثيقة كما هو — يُصنَّف النوع والجهة وتُستخرج الكيانات ويُولَّد الرمز الهرمي فوريًا في
-              متصفحك، دون إرسال النص إلى أي خادم. {hydrated ? "تُحفظ الوثائق المضافة محليًا في جهازك فقط." : ""}
+              متصفحك، دون إرسال النص إلى أي خادم ودون أي تخزين — تبقى الوثيقة لهذه الجلسة فقط.
             </p>
             <form onSubmit={handleImport}>
               <label className={styles.field}>
