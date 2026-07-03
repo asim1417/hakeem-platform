@@ -1,0 +1,24 @@
+# ── تبعيات أداة القياس ──
+# أساسية (خفيفة، مثبّتة ومختبَرة):
+rapidfuzz>=3.0        # مسافة التحرير (أساس CER) — سريعة ومختبرة
+jiwer>=3.0            # معدّل خطأ الكلمات WER القياسي
+Pillow>=10.0          # توليد/قراءة صور العيّنات
+
+# ── محرّكات مفتوحة عالية الجودة (اختيارية، ثقيلة — تُثبَّت عند الحاجة) ──
+# كلٌّ منها يُفعَّل تلقائياً في engines.py بمجرد تثبيته. رخصها مبيّنة.
+
+# EasyOCR — نص عربي/إنجليزي محلي (Apache-2.0):
+#   pip install easyocr
+
+# PaddleOCR — نص + PP-StructureV3 للجداول (Apache-2.0):
+#   pip install paddleocr paddlepaddle        # أو paddlepaddle-gpu مع CUDA
+
+# Surya — كشف/تخطيط/جداول 90+ لغة (GPL-3.0 — انتبه للترخيص التجاري):
+#   pip install surya-ocr
+
+# Docling — تخطيط + جداول TableFormer، مناسب للبيئات المعزولة (MIT):
+#   pip install docling
+
+# سحابية (اختيارية، بمفاتيح بيئة):
+#   pip install azure-ai-documentintelligence azure-core
+#   pip install google-cloud-documentai
