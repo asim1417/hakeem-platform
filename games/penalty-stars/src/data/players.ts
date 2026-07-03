@@ -15,6 +15,7 @@ export interface PlayerDef {
   power: number; // 1-5 يؤثر على أقصى قوة تسديد
   accuracy: number; // 1-5 يقلل انحراف التسديدة
   celebration: string; // عبارة احتفال خاصة
+  cheer: string; // عبارة المذيع الصغير عند التسديد 🎤
   photo?: string; // صورة حقيقية اختيارية (data URI عند البناء)
 }
 
@@ -28,6 +29,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 3,
     accuracy: 3,
     celebration: 'أسرع من البرق! ⚡',
+    cheer: 'يا سلام يا سلومي!',
     photo: saloumiPhoto,
   },
   {
@@ -39,6 +41,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 4,
     accuracy: 4,
     celebration: 'قيادة رائعة يا كابتن! 🧢',
+    cheer: 'كابتن حسوني يسدد!',
     photo: hassouniPhoto,
   },
   {
@@ -50,6 +53,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 3,
     accuracy: 5,
     celebration: 'تسديدة محسوبة بذكاء! 🤓',
+    cheer: 'العبقري حماد يحسبها صح!',
     photo: hammadPhoto,
   },
   {
@@ -61,6 +65,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 5,
     accuracy: 3,
     celebration: 'تسديدة أسطورية! 🔥',
+    cheer: 'الأسطورة محمد لا يرحم!',
   },
   {
     id: 'aws',
@@ -71,6 +76,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 3,
     accuracy: 5,
     celebration: 'دقة مذهلة يا أوس! 🎯',
+    cheer: 'المعلم أوس يعرف الزاوية!',
   },
   {
     id: 'azzam',
@@ -81,6 +87,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 4,
     accuracy: 4,
     celebration: 'احتفال العمدة! 👑🎉',
+    cheer: 'العمدة عزام قائد الملعب!',
   },
   {
     id: 'sheikh',
@@ -91,6 +98,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 4,
     accuracy: 5,
     celebration: 'هدوء وإتقان! 🌙',
+    cheer: 'الشيخ الهداف بكل هدوء!',
   },
   {
     id: 'assoumi',
@@ -101,6 +109,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 5,
     accuracy: 2,
     celebration: 'قوة الزعيم! 💪',
+    cheer: 'الزعيم عصومي نجم المباراة!',
   },
 ];
 
