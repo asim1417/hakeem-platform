@@ -26,6 +26,7 @@ const LIGHT_ARTICLE_SELECT = {
 type LightArticle = Prisma.LegalArticleGetPayload<{ select: typeof LIGHT_ARTICLE_SELECT }>;
 import { cosineSimilarity, embedText, parseStoredEmbedding, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { matchConcepts, systemMatchesPreferred } from "./concept-map";
+import { expandToken } from "./lexicon-expansion";
 import { getArticleAuthorityMap } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
@@ -272,8 +273,13 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     ? await thesaurusGraphExpansion(thesaurus.conceptIds)
     : { relatedLabels: [] as string[], articleBoosts: new Map<string, number>() };
   const preferSystems = concept.preferSystems;
+  // توسيع صرفيّ من المعجم الرسميّ (hoqoqi): صيغ شقيقة بنفس الجذر. خلف علمٍ افتراضيّه OFF
+  // حتى يُقاس أثره بـ eval:search قبل الاعتماد (انضباط القياس-قبل-الاعتماد).
+  const lexiconSynonyms = process.env.LEXICON_EXPANSION === "1"
+    ? Array.from(new Set(query.split(/\s+/).flatMap((w) => expandToken(w.trim(), 6))))
+    : [];
   const variants = Array.from(
-    new Set([...baseVariants, ...concept.synonyms, ...thesaurus.synonyms, ...graph.relatedLabels])
+    new Set([...baseVariants, ...concept.synonyms, ...thesaurus.synonyms, ...graph.relatedLabels, ...lexiconSynonyms])
   );
   const normalizedVariants = Array.from(new Set(variants.map(normalizeArabicText).filter(Boolean)));
   // الكلمات الخام من الاستعلام (كما يكتبها المستخدم) — تطابق النص المخزَّن غير المُطبَّع (ة/ى/إ)
