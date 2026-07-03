@@ -53,7 +53,7 @@ export class PlayerSelectScene extends Phaser.Scene {
 
     const bg = this.add.rectangle(0, 0, w, h, COLORS.white, 0.95).setOrigin(0.5);
     bg.setStrokeStyle(selected ? 6 : 4, selected ? COLORS.yellow : p.color);
-    const avatar = this.add.image(0, -22, `avatar-${p.id}`).setScale(0.72);
+    const avatar = this.add.image(0, -22, `avatar-${p.id}`).setDisplaySize(72, 72);
     const name = this.add
       .text(0, 32, rtl(`${p.name} ${p.emoji}`), {
         fontFamily: FONT,

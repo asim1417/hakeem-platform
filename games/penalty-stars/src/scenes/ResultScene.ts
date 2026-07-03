@@ -40,7 +40,7 @@ export class ResultScene extends Phaser.Scene {
     popIn(title);
 
     // صورة اللاعب
-    const avatar = this.add.image(GAME_WIDTH / 2, 220, `avatar-${player.id}`).setScale(1.5);
+    const avatar = this.add.image(GAME_WIDTH / 2, 220, `avatar-${player.id}`).setDisplaySize(150, 150);
     popIn(avatar, 0.15);
     this.add
       .text(GAME_WIDTH / 2, 300, rtl(`${player.name} ${player.emoji}`), {

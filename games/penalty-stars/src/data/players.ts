@@ -1,4 +1,8 @@
 // بيانات اللاعبين — شخصيات مرحة للأطفال
+// لإضافة صورة حقيقية للاعب: ضع الصورة في src/assets/players/
+// واستوردها هنا ثم أسندها لحقل photo — تُستخدم تلقائيًا بدل الشكل المرسوم
+
+import saloumiPhoto from '../assets/players/saloumi.png';
 
 export interface PlayerDef {
   id: string;
@@ -9,6 +13,7 @@ export interface PlayerDef {
   power: number; // 1-5 يؤثر على أقصى قوة تسديد
   accuracy: number; // 1-5 يقلل انحراف التسديدة
   celebration: string; // عبارة احتفال خاصة
+  photo?: string; // صورة حقيقية اختيارية (data URI عند البناء)
 }
 
 export const PLAYERS: PlayerDef[] = [
@@ -21,6 +26,7 @@ export const PLAYERS: PlayerDef[] = [
     power: 3,
     accuracy: 3,
     celebration: 'أسرع من البرق! ⚡',
+    photo: saloumiPhoto,
   },
   {
     id: 'hassouni',

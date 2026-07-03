@@ -125,7 +125,7 @@ export class GameScene extends Phaser.Scene {
     this.ball.setCircle(22);
     this.ball.setScale(0.9);
     // اللاعب المسدد بجانب الكرة
-    const shooter = this.add.image(BALL_START.x + 85, BALL_START.y + 20, `avatar-${this.player.id}`).setDepth(6).setScale(1.05);
+    const shooter = this.add.image(BALL_START.x + 85, BALL_START.y + 20, `avatar-${this.player.id}`).setDepth(6).setDisplaySize(105, 105);
     this.tweens.add({ targets: shooter, y: shooter.y - 6, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     this.aimArrow = this.add.graphics().setDepth(7);
   }

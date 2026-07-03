@@ -10,11 +10,21 @@ export class BootScene extends Phaser.Scene {
     super('Boot');
   }
 
+  preload(): void {
+    // الصور الحقيقية للاعبين (مضمّنة كـ data URI عند البناء)
+    for (const p of PLAYERS) {
+      if (p.photo) this.load.image(`avatar-${p.id}`, p.photo);
+    }
+  }
+
   create(): void {
     this.makeBall();
     this.makeStar();
     this.makeKeeper();
-    for (const p of PLAYERS) this.makeAvatar(p.id, p.color);
+    // شكل مرسوم فقط لمن لا يملك صورة حقيقية
+    for (const p of PLAYERS) {
+      if (!this.textures.exists(`avatar-${p.id}`)) this.makeAvatar(p.id, p.color);
+    }
     this.scene.start('Menu');
   }
 
