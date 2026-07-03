@@ -78,6 +78,23 @@ const crowdSrc = synth(1.6, (t) => {
 // صوت زر لطيف
 const buttonSrc = synth(0.09, (t) => Math.sin(2 * Math.PI * 620 * t) * Math.exp(-t * 40) * 0.5);
 
+// نغمة الكأس: فانفار صاعد احتفالي
+const trophySrc = synth(1.3, (t) => {
+  const notes = [523, 659, 784, 1046, 1318];
+  const idx = Math.min(4, Math.floor(t / 0.22));
+  const lt = t - idx * 0.22;
+  const env = Math.exp(-lt * 5) * 0.55;
+  const f = notes[idx];
+  return (Math.sin(2 * Math.PI * f * t) + 0.5 * Math.sin(2 * Math.PI * f * 1.5 * t)) * env;
+});
+
+// جرس فتح مكافأة: نغمتان لامعتان
+const unlockSrc = synth(0.5, (t) => {
+  const f = t < 0.18 ? 660 : 990;
+  const lt = t < 0.18 ? t : t - 0.18;
+  return Math.sin(2 * Math.PI * f * t) * Math.exp(-lt * 9) * 0.5;
+});
+
 // صفارة الحكم
 const whistleSrc = synth(0.45, (t) => {
   const vib = 1 + 0.02 * Math.sin(2 * Math.PI * 30 * t);
@@ -85,7 +102,7 @@ const whistleSrc = synth(0.45, (t) => {
   return Math.sin(2 * Math.PI * 2100 * vib * t) * env * 0.4;
 });
 
-type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle';
+type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock';
 
 // أحجام متوازنة: المؤثرات تحت صوت المعلق حتى لا تطغى عليه
 const sounds: Record<SoundName, Howl> = {
@@ -95,6 +112,8 @@ const sounds: Record<SoundName, Howl> = {
   crowd: new Howl({ src: [crowdSrc], format: ['wav'], volume: 0.4 }),
   button: new Howl({ src: [buttonSrc], format: ['wav'], volume: 0.7 }),
   whistle: new Howl({ src: [whistleSrc], format: ['wav'], volume: 0.6 }),
+  trophy: new Howl({ src: [trophySrc], format: ['wav'], volume: 0.85 }),
+  unlock: new Howl({ src: [unlockSrc], format: ['wav'], volume: 0.8 }),
 };
 
 let muted = false;

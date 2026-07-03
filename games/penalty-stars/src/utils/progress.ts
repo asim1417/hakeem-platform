@@ -35,6 +35,7 @@ interface SavedProgress {
   totalStars: number;
   ball: string;
   stadium: string;
+  trophy?: boolean; // الفوز بكأس النجوم
 }
 
 function load(): SavedProgress {
@@ -74,4 +75,15 @@ export const progress = {
     save(state);
   },
   isUnlocked: (cost: number) => state.totalStars >= cost,
+  hasTrophy: () => Boolean(state.trophy),
+  winTrophy(): void {
+    state.trophy = true;
+    save(state);
+  },
+  // المكافآت التي فُتحت بين رصيدين — لإظهار بشارة الفتح
+  newUnlocks(before: number, after: number): string[] {
+    return [...BALLS, ...STADIUMS]
+      .filter((item) => item.cost > 0 && item.cost > before && item.cost <= after)
+      .map((item) => item.name);
+  },
 };

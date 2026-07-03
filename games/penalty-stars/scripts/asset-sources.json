@@ -1,0 +1,37 @@
+{
+  "imageQueries": {
+    "stadiums": [
+      "soccer stadium field goal",
+      "football stadium penalty kick",
+      "soccer goal stadium grass",
+      "football field night lights"
+    ],
+    "balls": [
+      "soccer ball grass",
+      "football ball stadium",
+      "soccer ball close up"
+    ],
+    "goalkeepers": [
+      "goalkeeper diving save",
+      "football goalkeeper save",
+      "soccer goalkeeper action"
+    ]
+  },
+  "soundQueries": {
+    "kick": "soccer kick sound effect",
+    "goal": "goal cheer crowd sound effect",
+    "save": "goalkeeper save sound effect",
+    "crowd": "football crowd cheer sound effect",
+    "button": "cute button click sound",
+    "trophy": "trophy win sound effect",
+    "unlock": "reward unlock sound effect"
+  },
+  "preferredSources": [
+    "Pexels",
+    "Pixabay",
+    "Kenney",
+    "OpenGameArt",
+    "Game-icons.net",
+    "Font Awesome Free"
+  ]
+}
