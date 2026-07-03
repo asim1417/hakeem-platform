@@ -314,6 +314,43 @@ check("DOCX: تحويل XML إلى نص بفواصل فقرات", () => {
   assert.ok(text.split("\n").length >= 2);
 });
 
+// ── توجيه OCR ──
+import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
+
+check("توجيه OCR: امتدادات الصور تُكشف", () => {
+  assert.equal(isImageExtension("png"), true);
+  assert.equal(isImageExtension("JPG"), true);
+  assert.equal(isImageExtension("webp"), true);
+  assert.equal(isImageExtension("pdf"), false);
+  assert.equal(isImageExtension("docx"), false);
+});
+
+check("OCR: ترجمة حالات التقدّم للعربية", () => {
+  assert.equal(translateOcrStatus("recognizing text"), "قراءة النص");
+  assert.equal(translateOcrStatus("loading language traineddata"), "تحميل النموذج العربي");
+  assert.equal(translateOcrStatus("unknown-status"), "unknown-status");
+});
+
+// ── تكامل Google Drive (دوال نقية) ──
+import { buildAuthUrl, driveRedirectUri, isDriveConfigured } from "../lib/modules/doc-platform/google-drive";
+
+check("Drive: غير مُهيّأ بلا مفاتيح بيئة", () => {
+  // في بيئة الاختبار لا مفاتيح — يجب أن يكون معطّلاً
+  assert.equal(isDriveConfigured(), false);
+});
+
+check("Drive: redirect URI صحيح", () => {
+  assert.equal(driveRedirectUri("https://x.com"), "https://x.com/api/doc-platform/drive/callback");
+});
+
+check("Drive: رابط الموافقة يحوي النطاق والمَعلمات", () => {
+  const url = buildAuthUrl("https://x.com", "st4te");
+  assert.ok(url.startsWith("https://accounts.google.com/o/oauth2/v2/auth?"));
+  assert.ok(url.includes("drive.readonly"));
+  assert.ok(url.includes("state=st4te"));
+  assert.ok(url.includes(encodeURIComponent("https://x.com/api/doc-platform/drive/callback")));
+});
+
 async function asyncChecks() {
   const xml = "<w:p><w:t>وثيقة مضغوطة للاختبار داخل أرشيف</w:t></w:p>";
   const zip = buildZip("word/document.xml", new TextEncoder().encode(xml));

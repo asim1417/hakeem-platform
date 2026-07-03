@@ -513,3 +513,16 @@
   .txt { font-size: 16px; }
   .cmpWrap { flex-direction: column; }
 }
+
+/* شريط تقدّم القراءة الضوئية OCR */
+.ocrBar {
+  background: linear-gradient(90deg, var(--accent2), var(--pane));
+  color: var(--accent);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
