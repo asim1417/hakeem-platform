@@ -24,8 +24,9 @@ function assertAlignmentConfirmed() {
 
 async function main() {
   assertAlignmentConfirmed();
-  const data = JSON.parse(readFileSync("data/moj-regs.json", "utf8")) as RegFile;
-  console.log(`قراءة data/moj-regs.json — ${data.length} لوائح.`);
+  const dataPath = process.argv[2] || "data/moj-regs.json";
+  const data = JSON.parse(readFileSync(dataPath, "utf8")) as RegFile;
+  console.log(`قراءة ${dataPath} — ${data.length} عنصرًا.`);
 
   let totalArticles = 0;
   for (const reg of data) {
