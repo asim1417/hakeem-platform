@@ -20,7 +20,7 @@ const TARGETS: Array<{ label: string; tokens: string[]; canon: string }> = [
   { label: "المرافعات الشرعية", tokens: ["مرافعات", "شرعيه"], canon: "نظام المرافعات الشرعيه" },
   { label: "الإثبات", tokens: ["اثبات"], canon: "نظام الاثبات" },
   { label: "الأحوال الشخصية", tokens: ["احوال", "شخصيه"], canon: "نظام الاحوال الشخصيه" },
-  { label: "الإجراءات الجزائية", tokens: ["اجراءات", "جزائيه"], canon: "نظام الاجراءات الجزائيه" },
+  { label: "الإجراءات الجزائية", tokens: ["اجراءات"], canon: "نظام الاجراءات الجزائيه" },
   { label: "الشركات", tokens: ["شركات"], canon: "نظام الشركات" },
   { label: "المحاكم التجارية", tokens: ["محاكم", "تجاريه"], canon: "نظام المحاكم التجاريه" },
   { label: "العمل", tokens: ["عمل"], canon: "نظام العمل" },
@@ -81,6 +81,12 @@ async function main() {
   for (const s of N) { const c = await prisma.legalArticle.count({ where: { OR: [{ legalSystemId: s.id }, { lawName: s.name }] } }); if (c === 0) { emptyCount++; if (emptyNames.length < 25) emptyNames.push(s.name); } }
   console.log(`\nأنظمة بلا أي مادة (تلوّث): ${emptyCount}`);
   for (const n of emptyNames) console.log(`   - ${n}`);
+
+  // حسم «الإجراءات الجزائية»: كل نظام حيّ يحوي جزائ/جنائ/اجراءات (مطبَّعًا).
+  console.log(`\nكل الأنظمة الحيّة التي تحوي جزائ/جنائ/اجراءات:`);
+  const crim = N.filter((s) => /جزائ|جنائ|اجراءات/.test(s.n));
+  for (const s of crim) console.log(`   - «${s.name}» (تصنيف=${s.classification ?? "∅"})`);
+  if (!crim.length) console.log("   (لا شيء)");
 
   await prisma.$disconnect();
 }
