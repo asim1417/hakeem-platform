@@ -264,6 +264,14 @@ export function CaseBrowser() {
   const [fileBusy, setFileBusy] = useState(false);
   const [ocrProgress, setOcrProgress] = useState("");
 
+  // Google Drive
+  const [driveConfigured, setDriveConfigured] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
+  const [driveFiles, setDriveFiles] = useState<Array<{ id: string; name: string; mimeType: string }>>([]);
+  const [driveQuery, setDriveQuery] = useState("");
+  const [driveBusy, setDriveBusy] = useState(false);
+
   const pendingMark = useRef<number | "first" | "last">("first");
   const txtRef = useRef<HTMLDivElement | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
@@ -477,6 +485,94 @@ export function CaseBrowser() {
     setInputs(next);
     const analyzed = analyzeDocuments(next);
     setCurrentCode(analyzed[analyzed.length - 1].code);
+  }
+
+  // ── Google Drive ──
+  const refreshDriveStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/doc-platform/drive/status");
+      const json = (await res.json()) as { configured?: boolean; connected?: boolean };
+      setDriveConfigured(Boolean(json.configured));
+      setDriveConnected(Boolean(json.connected));
+    } catch {
+      /* تجاهل */
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshDriveStatus();
+    // إشعار العودة من ربط Drive
+    const params = new URLSearchParams(window.location.search);
+    const drive = params.get("drive");
+    if (drive) {
+      if (drive === "connected") {
+        setStatusMsg("✓ تم ربط Google Drive");
+        setDriveOpen(true);
+      } else if (drive === "unconfigured") setStatusMsg("⚠ تكامل Drive غير مُهيّأ بعد");
+      else setStatusMsg("⚠ تعذّر ربط Drive");
+      setTimeout(() => setStatusMsg(""), 5000);
+      window.history.replaceState(null, "", "/documents/app");
+    }
+  }, [refreshDriveStatus]);
+
+  const loadDriveFiles = useCallback(async (q?: string) => {
+    setDriveBusy(true);
+    try {
+      const res = await fetch(`/api/doc-platform/drive/files${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+      if (res.status === 401) {
+        setDriveConnected(false);
+        return;
+      }
+      const json = (await res.json()) as { files?: Array<{ id: string; name: string; mimeType: string }> };
+      setDriveFiles(json.files ?? []);
+    } catch {
+      /* تجاهل */
+    } finally {
+      setDriveBusy(false);
+    }
+  }, []);
+
+  function openDrive() {
+    if (!driveConnected) {
+      window.location.href = "/api/doc-platform/drive/auth";
+      return;
+    }
+    setDriveOpen(true);
+    void loadDriveFiles();
+  }
+
+  async function importFromDrive(file: { id: string; name: string; mimeType: string }) {
+    setDriveBusy(true);
+    try {
+      const res = await fetch("/api/doc-platform/drive/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(file)
+      });
+      const json = (await res.json()) as { title?: string; rawText?: string; bytesBase64?: string; ext?: string; error?: string };
+      if (!res.ok) {
+        window.alert(json.error ?? "تعذّر الاستيراد");
+        return;
+      }
+      if (typeof json.rawText === "string") {
+        if (json.rawText.trim().length < 5) {
+          window.alert("المستند فارغ أو بلا نص.");
+          return;
+        }
+        addExtracted(json.title ?? file.name, json.rawText);
+        setStatusMsg(`✓ استُورد «${json.title ?? file.name}» من Drive`);
+        setTimeout(() => setStatusMsg(""), 4000);
+        setDriveOpen(false);
+      } else if (json.bytesBase64 && json.ext) {
+        // PDF/DOCX: استخرجه في المتصفح (نفس خطّ الرفع، بما فيه OCR للـ PDF الممسوح)
+        const bytes = Uint8Array.from(atob(json.bytesBase64), (c) => c.charCodeAt(0));
+        const blobFile = new File([bytes], `${json.title ?? file.name}.${json.ext}`);
+        setDriveOpen(false);
+        await handleLoadFile(blobFile);
+      }
+    } finally {
+      setDriveBusy(false);
+    }
   }
 
   async function handleLoadFile(file: File) {
@@ -1060,6 +1156,11 @@ export function CaseBrowser() {
             >
               🗂 قضاياي ({savedCases.length})
             </button>
+            {driveConfigured ? (
+              <button onClick={openDrive} title={driveConnected ? "استيراد من Google Drive" : "ربط Google Drive"}>
+                {driveConnected ? "▲ استيراد من Drive" : "▲ ربط Drive"}
+              </button>
+            ) : null}
           </span>
         </div>
         <span className={styles.meta} role="status" aria-live="polite">
@@ -1782,6 +1883,52 @@ export function CaseBrowser() {
                     </button>
                     {loadedCaseId === c.id ? <span>← المفتوحة الآن</span> : null}
                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {driveOpen ? (
+        <div className={styles.modal} onClick={(e) => e.target === e.currentTarget && setDriveOpen(false)}>
+          <div className={styles.panel}>
+            <button
+              style={{ float: "left", border: "none", background: "none", cursor: "pointer", fontSize: 18, color: "var(--mut)" }}
+              onClick={() => setDriveOpen(false)}
+            >
+              ×
+            </button>
+            <h3>▲ استيراد من Google Drive</h3>
+            <p className={styles.hint}>مستندات Google تُستورد نصاً مباشرةً؛ ملفات PDF وWord تُنزَّل وتُستخرج في متصفحك (مع OCR للممسوح).</p>
+            <div style={{ display: "flex", gap: 6, margin: "10px 0" }}>
+              <input
+                type="text"
+                placeholder="بحث بالاسم…"
+                value={driveQuery}
+                onChange={(e) => setDriveQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void loadDriveFiles(driveQuery)}
+                style={{ flex: 1, border: "1px solid var(--line)", borderRadius: 8, padding: "8px 10px", background: "var(--pane)", color: "inherit" }}
+              />
+              <button className={styles.tab} onClick={() => void loadDriveFiles(driveQuery)}>
+                بحث
+              </button>
+            </div>
+            {driveBusy ? (
+              <div className={styles.empty} style={{ margin: "16px 0" }}>
+                ⏳ جارٍ…
+              </div>
+            ) : driveFiles.length === 0 ? (
+              <div className={styles.empty} style={{ margin: "16px 0" }}>
+                لا ملفات — جرّب البحث أو تأكّد من وجود مستندات في Drive.
+              </div>
+            ) : (
+              driveFiles.map((f) => (
+                <div key={f.id} className={styles.quote} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, wordBreak: "break-word" }}>{f.name}</span>
+                  <button className={styles.tab} style={{ flex: "none" }} disabled={driveBusy} onClick={() => void importFromDrive(f)}>
+                    استيراد
+                  </button>
                 </div>
               ))
             )}
