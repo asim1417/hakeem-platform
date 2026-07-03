@@ -11,6 +11,11 @@ on:
         type: string
         required: true
         default: ""
+      DATA_FILE:
+        description: "ملف بيانات الإدراج"
+        type: string
+        required: false
+        default: "data/moj-regs.json"
 
 concurrency:
   group: import-moj-regs
@@ -45,8 +50,8 @@ jobs:
         run: npm run db:generate
       - name: "🛡️ Verify target is Neon (read-only)"
         run: npx tsx scripts/verify-neon-target.ts
-      - name: "① إدراج اللوائح الأربع"
-        run: npx tsx scripts/import-moj-regs.ts
+      - name: "① إدراج البيانات من الملف"
+        run: npx tsx scripts/import-moj-regs.ts "${{ inputs.DATA_FILE }}"
       - name: "② فهرسة search_norm للمواد الجديدة (تزايدي)"
         run: npx tsx scripts/backfill-search-norm.ts
       - name: "③ تحقق (قراءة فقط) — عدّ مواد اللوائح المُدرَجة"

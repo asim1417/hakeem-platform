@@ -1,0 +1,36 @@
+name: MOJ Fetch Instruments (Playwright → data/moj-instruments.json)
+
+# يسحب نصوص مواد الأدوات المرتبطة الإحدى‑عشرة المفقودة (لوائح/أدلة/ضوابط/قواعد) من بوابة العدل
+# ويدفع data/moj-instruments.json إلى فرع claude/moj-instruments-data للمراجعة. قراءة من المصدر.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - name: Install Playwright Chromium
+        run: npm i --no-save playwright@1.48.0 && npx playwright install --with-deps chromium
+      - name: Fetch instruments from MOJ gateway (read-only source)
+        run: node scripts/moj-fetch-instruments.mjs
+      - name: Commit & push data artifact
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B claude/moj-instruments-data
+          git add data/moj-instruments.json
+          if git diff --cached --quiet; then echo "لا تغييرات."; exit 0; fi
+          printf '%s\n\n%s\n%s\n' \
+            "data(moj): نصوص مواد الأدوات المرتبطة الإحدى‑عشرة من المصدر الرسمي" \
+            "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>" \
+            "Claude-Session: https://claude.ai/code/session_013b7dDyeMWyxP13KtU5T7bv" > /tmp/moj_instr_msg.txt
+          git commit -F /tmp/moj_instr_msg.txt
+          git push -f origin claude/moj-instruments-data
