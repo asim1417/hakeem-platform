@@ -97,9 +97,16 @@ class TesseractPrepEngine(BaseEngine):
         if img.width < self.MIN_WIDTH:  # تكبير الصور الصغيرة إلى ~300DPI
             scale = min(3.0, self.MIN_WIDTH / img.width)
             img = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
-        # عتبة Otsu (نفس خوارزمية المنصّة)
         hist = img.histogram()
         total = img.width * img.height
+        # معالجة تكيّفية: التعتيب فقط للصور المتدهورة (رمادي متوسط كثيف).
+        # القياس أثبت أن التعتيب غير المشروط يضرّ الصور النظيفة.
+        midgray = sum(hist[64:193])
+        if total and (midgray / total) < 0.12:
+            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+            img.save(tmp.name)  # نظيفة → رمادي فقط
+            return tmp.name
+        # عتبة Otsu (نفس خوارزمية المنصّة) للمتدهورة
         sum_all = sum(i * hist[i] for i in range(256))
         sumB = wB = 0
         max_var = 0.0

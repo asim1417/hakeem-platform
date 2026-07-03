@@ -85,7 +85,12 @@ function otsuThreshold(histogram: number[], total: number): number {
   return threshold;
 }
 
-/** تدرّج رمادي + تكبير عند الحاجة + عتبة Otsu ثنائية — تحسّن قراءة العربية */
+// حدّ نسبة البكسلات الرماديّة المتوسطة الذي يميّز الصورة المتدهورة (تحتاج معالجة)
+// عن النظيفة (ثنائية أصلاً، لا يجب تعتيبها). قياس goldset أثبت أن التعتيب يضرّ النظيف.
+const MIDGRAY_DEGRADED = 0.12;
+
+/** معالجة تكيّفية: للصور النظيفة تدرّج رمادي فقط؛ للمتدهورة عتبة Otsu.
+ *  التكبير يُطبَّق فقط على الصور الصغيرة. أثبت القياس أن التعتيب غير المشروط يخفض الدقّة. */
 export function preprocessCanvas(input: HTMLCanvasElement): HTMLCanvasElement {
   const scale = input.width < MIN_OCR_WIDTH ? Math.min(3, MIN_OCR_WIDTH / input.width) : 1;
   const w = Math.round(input.width * scale);
@@ -101,17 +106,21 @@ export function preprocessCanvas(input: HTMLCanvasElement): HTMLCanvasElement {
 
   const imageData = ctx.getImageData(0, 0, w, h);
   const px = imageData.data;
-  const gray = new Uint8Array(w * h);
+  const total = w * h;
+  const gray = new Uint8Array(total);
   const histogram = new Array<number>(256).fill(0);
+  let midGray = 0;
   for (let i = 0, g = 0; i < px.length; i += 4, g += 1) {
-    // إضاءة إدراكية (Rec. 601)
     const v = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) | 0;
     gray[g] = v;
     histogram[v] += 1;
+    if (v >= 64 && v <= 192) midGray += 1;
   }
-  const threshold = otsuThreshold(histogram, w * h);
+  // نظيفة (قليل من الرمادي المتوسط) → تدرّج رمادي فقط، بلا تعتيب يتلف وصلات الحروف
+  const degraded = midGray / total >= MIDGRAY_DEGRADED;
+  const threshold = degraded ? otsuThreshold(histogram, total) : 0;
   for (let i = 0, g = 0; i < px.length; i += 4, g += 1) {
-    const v = gray[g] > threshold ? 255 : 0;
+    const v = degraded ? (gray[g] > threshold ? 255 : 0) : gray[g];
     px[i] = v;
     px[i + 1] = v;
     px[i + 2] = v;
