@@ -388,7 +388,56 @@ function buildArticles(parsed: ParsedSql, systems: HoqoqiSystem[], categories: M
 function parseArticleNumber(value: string) {
   const englishDigits = value.replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
   const match = englishDigits.match(/\d+/);
-  return match ? Number(match[0]) : undefined;
+  if (match) return Number(match[0]);
+  // لا أرقام رقمية ⇒ جرّب العنوان الترتيبي العربي («المادة الخامسة والأربعون بعد المائة» = 145)
+  return parseArabicOrdinal(value);
+}
+
+// خرائط الأعداد الترتيبية العربية (بعد التطبيع: بلا تشكيل، الهمزات→ا، ة→ه، ى→ي).
+const AR_UNITS: Record<string, number> = {
+  "اول": 1, "اولي": 1, "حادي": 1, "حاديه": 1, "واحد": 1, "واحده": 1,
+  "ثاني": 2, "ثانيه": 2, "اثنان": 2, "اثنتان": 2,
+  "ثالث": 3, "ثالثه": 3, "رابع": 4, "رابعه": 4, "خامس": 5, "خامسه": 5,
+  "سادس": 6, "سادسه": 6, "سابع": 7, "سابعه": 7, "ثامن": 8, "ثامنه": 8,
+  "تاسع": 9, "تاسعه": 9, "عاشر": 10, "عاشره": 10,
+};
+const AR_TENS: Record<string, number> = {
+  "عشرون": 20, "عشرين": 20, "ثلاثون": 30, "ثلاثين": 30, "اربعون": 40, "اربعين": 40,
+  "خمسون": 50, "خمسين": 50, "ستون": 60, "ستين": 60, "سبعون": 70, "سبعين": 70,
+  "ثمانون": 80, "ثمانين": 80, "تسعون": 90, "تسعين": 90,
+};
+const AR_HUNDREDS: Record<string, number> = {
+  "مايه": 100, "مايتان": 200, "مايتين": 200, "ثلاثمايه": 300, "اربعمايه": 400,
+  "خمسمايه": 500, "ستمايه": 600, "سبعمايه": 700, "ثمانمايه": 800, "تسعمايه": 900,
+};
+
+/** يحوّل عنوان مادة عربيًّا ترتيبيًّا إلى رقم صحيح؛ يُعيد undefined إن تعذّر. */
+export function parseArabicOrdinal(raw: string): number | undefined {
+  let s = raw
+    .replace(/[ً-ْٰـ]/g, "")
+    .replace(/[إأآ]/g, "ا").replace(/ئ/g, "ي").replace(/ؤ/g, "و").replace(/ء/g, "")
+    .replace(/ى/g, "ي").replace(/ة/g, "ه")
+    .replace(/[«»(){}\[\].,،؛]/g, " ");
+  s = s.replace(/الماده/g, " ").replace(/مكرر/g, " ");
+  const words = s.split(/\s+/).map((w) => w.replace(/^و?ال/, "").replace(/^و/, "")).filter(Boolean);
+  if (!words.length) return undefined;
+
+  let hundreds = 0, tens = 0, units = 0, teen = 0, sawAny = false;
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    if (w in AR_HUNDREDS) { hundreds += AR_HUNDREDS[w]; sawAny = true; continue; }
+    if (w === "بعد") continue; // «بعد المائة» = وجود المئة كإزاحة
+    if (w in AR_TENS) { tens += AR_TENS[w]; sawAny = true; continue; }
+    if (w in AR_UNITS) {
+      const next = words[i + 1];
+      if (next === "عشر" || next === "عشره") { teen += 10 + AR_UNITS[w]; i++; sawAny = true; continue; }
+      units += AR_UNITS[w]; sawAny = true; continue;
+    }
+    if (w === "عشر" || w === "عشره") { teen += 10; sawAny = true; continue; }
+  }
+  if (!sawAny) return undefined;
+  const total = hundreds + tens + teen + units;
+  return total > 0 ? total : undefined;
 }
 
 function findDuplicateArticleKeys(articles: HoqoqiArticle[]) {

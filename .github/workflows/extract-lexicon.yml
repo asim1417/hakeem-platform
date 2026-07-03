@@ -1,0 +1,71 @@
+name: Extract hoqoqi Lexicon (read-only source)
+
+# ينزّل hoqoqi.sql من رابط (مدخل) ويستخرج معجم nouns/verbs.
+# mode=discover: يطبع بنية الأعمدة فقط. mode=export: يكتب data/hoqoqi-lexicon.json ويدفعه لفرع.
+
+on:
+  workflow_dispatch:
+    inputs:
+      share_url:
+        description: "رابط مشاركة OneDrive لملف hoqoqi.sql"
+        type: string
+        required: true
+      mode:
+        description: "discover (طباعة البنية) أو export (كتابة+دفع الملف)"
+        type: choice
+        options: ["discover", "export"]
+        default: "discover"
+      target_branch:
+        description: "فرع دفع الملف عند export"
+        type: string
+        default: "claude/lexicon-data"
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Download hoqoqi.sql
+        env:
+          SHARE_URL: ${{ inputs.share_url }}
+        run: |
+          set -e
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          is_ok() { local sz; sz=$(stat -c%s "$1" 2>/dev/null || echo 0); local h; h=$(head -c 200 "$1" | tr -d '\0')
+            echo "   حجم=$sz"; case "$h" in *"<!DOCTYPE"*|*"<html"*|*"<HTML"*) return 1;; esac; [ "$sz" -gt 500000 ]; }
+          dl() { curl -sSL -c /tmp/cj -b /tmp/cj -A "$UA" --max-time 600 -o hoqoqi.sql \
+                   -w "   HTTP %{http_code} · %{size_download}B\n" "$1" || true; }
+          case "$SHARE_URL" in *\?*) U1="$SHARE_URL&download=1";; *) U1="$SHARE_URL?download=1";; esac
+          dl "$U1"
+          if ! is_ok hoqoqi.sql; then
+            BASE=$(echo "$SHARE_URL" | sed -E 's#(/personal/[^/]+)/.*#\1#')
+            TOKEN=$(echo "$SHARE_URL" | sed -E 's#.*/personal/[^/]+/([^/?]+).*#\1#')
+            dl "$BASE/_layouts/15/download.aspx?share=$TOKEN"
+            is_ok hoqoqi.sql || { echo "::error::تعذّر التنزيل"; exit 1; }
+          fi
+      - name: Extract lexicon
+        env:
+          LEXICON_MODE: ${{ inputs.mode }}
+        run: npx tsx scripts/extract-hoqoqi-lexicon.ts --file=hoqoqi.sql
+      - name: Commit lexicon (export mode only)
+        if: ${{ inputs.mode == 'export' }}
+        env:
+          TARGET: ${{ inputs.target_branch }}
+        run: |
+          test -f data/hoqoqi-lexicon.json || { echo "::error::لم يُنتج الملف"; exit 1; }
+          ls -la data/hoqoqi-lexicon.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$TARGET"
+          git add data/hoqoqi-lexicon.json
+          git commit -m "data(lexicon): معجم nouns/verbs مستخرَج من hoqoqi.sql"
+          git push -f -u origin "$TARGET"
+          echo "✔ دُفع الملف إلى الفرع $TARGET"
