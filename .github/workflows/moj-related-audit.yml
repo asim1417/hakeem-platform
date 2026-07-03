@@ -26,8 +26,10 @@ jobs:
         run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
       - name: Install Playwright Chromium
         run: npm i --no-save playwright@1.48.0 && npx playwright install --with-deps chromium
-      - name: Audit related instruments (read-only)
+      - name: Fetch related instruments from MOJ (browser)
+        run: node scripts/moj-related-fetch.mjs > /tmp/related.json
+      - name: Compare against DB (read-only)
         run: |
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           [ -z "$DATABASE_URL" ] && { echo "::error::لا اتصال بالقاعدة"; exit 1; }
-          npx tsx scripts/moj-related-audit.ts
+          npx tsx scripts/moj-related-check.ts /tmp/related.json
