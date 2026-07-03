@@ -1075,7 +1075,12 @@ export function CaseBrowser() {
       </a>
 
       <header className={styles.header} role="banner">
-        <h1>محطة فحص الوثائق</h1>
+        <span className={styles.brandSeal} aria-hidden="true">
+          و
+        </span>
+        <h1>
+          منصة الوثائق<small>· محطة العمل</small>
+        </h1>
         <span className={styles.banner}>مخرج آلي يحتاج مراجعة بشرية</span>
         <div className={styles.bar} role="toolbar" aria-label="أدوات العرض">
           <span className={styles.grp}>
