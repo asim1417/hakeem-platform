@@ -314,6 +314,23 @@ check("DOCX: تحويل XML إلى نص بفواصل فقرات", () => {
   assert.ok(text.split("\n").length >= 2);
 });
 
+// ── توجيه OCR ──
+import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
+
+check("توجيه OCR: امتدادات الصور تُكشف", () => {
+  assert.equal(isImageExtension("png"), true);
+  assert.equal(isImageExtension("JPG"), true);
+  assert.equal(isImageExtension("webp"), true);
+  assert.equal(isImageExtension("pdf"), false);
+  assert.equal(isImageExtension("docx"), false);
+});
+
+check("OCR: ترجمة حالات التقدّم للعربية", () => {
+  assert.equal(translateOcrStatus("recognizing text"), "قراءة النص");
+  assert.equal(translateOcrStatus("loading language traineddata"), "تحميل النموذج العربي");
+  assert.equal(translateOcrStatus("unknown-status"), "unknown-status");
+});
+
 async function asyncChecks() {
   const xml = "<w:p><w:t>وثيقة مضغوطة للاختبار داخل أرشيف</w:t></w:p>";
   const zip = buildZip("word/document.xml", new TextEncoder().encode(xml));

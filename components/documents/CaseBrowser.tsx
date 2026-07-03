@@ -29,6 +29,7 @@ import {
   type ParsedQuery
 } from "@/lib/modules/document-inspection";
 import { extractFromFile } from "@/lib/modules/document-inspection/file-extract";
+import { isImageExtension } from "@/lib/modules/document-inspection/ocr";
 import styles from "./casebrowser.module.css";
 
 type ThemeKey = "" | "dark" | "paper";
@@ -261,6 +262,7 @@ export function CaseBrowser() {
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [fileBusy, setFileBusy] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState("");
 
   const pendingMark = useRef<number | "first" | "last">("first");
   const txtRef = useRef<HTMLDivElement | null>(null);
@@ -470,21 +472,72 @@ export function CaseBrowser() {
       .filter((x): x is DocumentInput => x !== null);
   }
 
+  function addExtracted(title: string, rawText: string) {
+    const next = [...inputs, { title, rawText }];
+    setInputs(next);
+    const analyzed = analyzeDocuments(next);
+    setCurrentCode(analyzed[analyzed.length - 1].code);
+  }
+
   async function handleLoadFile(file: File) {
     const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+    const baseName = file.name.replace(/\.[^.]+$/, "");
+
+    // صورة ممسوحة → OCR في المتصفح
+    if (isImageExtension(ext)) {
+      setFileBusy(true);
+      setOcrProgress("تحضير محرّك القراءة الضوئية…");
+      try {
+        const { ocrImage, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+        const { text, confidence } = await ocrImage(file, (info) =>
+          setOcrProgress(`${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`)
+        );
+        if (text.trim().length < 5) throw new Error("لم يُقرأ نص من الصورة — تأكد من وضوحها");
+        addExtracted(baseName, text);
+        setStatusMsg(`✓ قُرئت الصورة ضوئياً محلياً (ثقة ${Math.round(confidence)}٪)`);
+        setTimeout(() => setStatusMsg(""), 5000);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : "تعذّرت القراءة الضوئية");
+      } finally {
+        setFileBusy(false);
+        setOcrProgress("");
+      }
+      return;
+    }
+
     // PDF / DOCX / TXT: استخراج النص محلياً في المتصفح ثم إضافته كوثيقة
     if (ext === "pdf" || ext === "docx" || ext === "txt" || ext === "md") {
       setFileBusy(true);
       try {
         const extracted = await extractFromFile(file);
-        const next = [...inputs, { title: extracted.title, rawText: extracted.rawText }];
-        setInputs(next);
-        const analyzed = analyzeDocuments(next);
-        setCurrentCode(analyzed[analyzed.length - 1].code);
+        addExtracted(extracted.title, extracted.rawText);
         setStatusMsg(extracted.warning ? `⚠ ${extracted.warning}` : `✓ استُخرج نص «${extracted.title}» محلياً`);
         setTimeout(() => setStatusMsg(""), 5000);
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : "تعذّر استخراج النص من الملف");
+        // PDF ممسوح ضوئياً → اعرض خيار تشغيل OCR
+        const msg = error instanceof Error ? error.message : "";
+        if (ext === "pdf" && msg.includes("ممسوح")) {
+          if (window.confirm("هذا PDF ممسوح ضوئياً (صور). هل تشغّل القراءة الضوئية OCR في متصفحك؟ قد تستغرق دقيقة للصفحة.")) {
+            setOcrProgress("تحضير محرّك القراءة الضوئية…");
+            try {
+              const buffer = await file.arrayBuffer();
+              const { ocrScannedPdf, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+              const { text, avgConfidence } = await ocrScannedPdf(buffer, (info) =>
+                setOcrProgress(`صفحة ${info.page}/${info.pages} — ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`)
+              );
+              if (text.replace(/\[صفحة \d+\]/g, "").trim().length < 10) throw new Error("لم يُقرأ نص واضح من المسح");
+              addExtracted(baseName, text);
+              setStatusMsg(`✓ قُرئ الـ PDF ضوئياً محلياً (ثقة ${Math.round(avgConfidence)}٪)`);
+              setTimeout(() => setStatusMsg(""), 6000);
+            } catch (ocrErr) {
+              window.alert(ocrErr instanceof Error ? ocrErr.message : "تعذّرت القراءة الضوئية");
+            } finally {
+              setOcrProgress("");
+            }
+          }
+        } else {
+          window.alert(msg || "تعذّر استخراج النص من الملف");
+        }
       } finally {
         setFileBusy(false);
       }
@@ -972,8 +1025,12 @@ export function CaseBrowser() {
             </button>
           </span>
           <span className={styles.grp}>
-            <button onClick={() => fileRef.current?.click()} title="رفع ملف: PDF نصّي، DOCX، TXT، JSON، أو نسخة مقفلة" disabled={fileBusy}>
-              {fileBusy ? "⏳ يستخرج…" : "📂 رفع ملف"}
+            <button
+              onClick={() => fileRef.current?.click()}
+              title="رفع ملف: PDF، صورة/مسح ضوئي (OCR)، DOCX، TXT، JSON، أو نسخة مقفلة"
+              disabled={fileBusy}
+            >
+              {fileBusy ? "⏳ يعالج…" : "📂 رفع ملف"}
             </button>
             <button onClick={() => setAddOpen(true)} title="لصق وثيقة جديدة للفحص">
               ＋ إضافة
@@ -981,7 +1038,7 @@ export function CaseBrowser() {
             <input
               ref={fileRef}
               type="file"
-              accept=".pdf,.docx,.txt,.md,.js,.json"
+              accept=".pdf,.docx,.txt,.md,.js,.json,.png,.jpg,.jpeg,.webp,.bmp,.gif"
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -1009,6 +1066,12 @@ export function CaseBrowser() {
           {statusMsg || (docs.length ? `${docs.length} مستند${loadedCaseId ? " — قضية محفوظة" : " — جلسة محلية"}` : "لا وثائق بعد")}
         </span>
       </header>
+
+      {ocrProgress ? (
+        <div className={styles.ocrBar} role="status" aria-live="polite">
+          🔎 قراءة ضوئية (OCR) في متصفحك — {ocrProgress}
+        </div>
+      ) : null}
 
       <div className={styles.tabs} role="tablist">
         {VIEWS.map((v) => (
@@ -1260,7 +1323,7 @@ export function CaseBrowser() {
                         )
                       }
                     >
-                      {copied === "ask" ? "✓ انسخه في حكيم" : "🤖 جهّز سؤالاً لحكيم"}
+                      {copied === "ask" ? "✓ انسخه في مساعدك" : "🤖 جهّز سؤالاً للتحليل"}
                     </button>
                     <button onClick={() => void copyToClipboard("copy", current.rawText)}>
                       {copied === "copy" ? "✓ نُسخ" : "📋 نسخ النص"}
