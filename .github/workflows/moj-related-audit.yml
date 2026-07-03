@@ -1,0 +1,35 @@
+name: MOJ Related Audit (Playwright + DB read)
+
+# يجمع من بوابة العدل كل الأدوات المرتبطة بكل نظام أساسي (لوائح/أدلة/ضوابط/قواعد) عبر
+# otherRelatedLegal، ويقارنها بالقاعدة (SELECT فقط) ليُظهر المفقود. قراءة فقط — لا كتابة.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Install Playwright Chromium
+        run: npm i --no-save playwright@1.48.0 && npx playwright install --with-deps chromium
+      - name: Fetch related instruments from MOJ (browser)
+        run: node scripts/moj-related-fetch.mjs > /tmp/related.json
+      - name: Compare against DB (read-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$DATABASE_URL" ] && { echo "::error::لا اتصال بالقاعدة"; exit 1; }
+          npx tsx scripts/moj-related-check.ts /tmp/related.json
