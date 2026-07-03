@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzeDocuments,
   buildBm25Index,
+  buildMorphLexicon,
   buildStemFamilies,
   bm25Score,
   computeFrequencies,
@@ -26,6 +27,7 @@ import {
   parseQuery,
   queryStems,
   segmentDocument,
+  setMorphLexicon,
   suspectWords,
   type AnalyzedDocument,
   type DocumentInput,
@@ -231,6 +233,7 @@ export function CaseBrowser() {
   // البحث والتصفية
   const [query, setQuery] = useState("");
   const [rootOn, setRootOn] = useState(true);
+  const [morphReady, setMorphReady] = useState(false);
   const [colorOn, setColorOn] = useState(true);
   const [suspOn, setSuspOn] = useState(true);
   const [termsOn, setTermsOn] = useState(true);
@@ -293,6 +296,25 @@ export function CaseBrowser() {
   const parsed: ParsedQuery = useMemo(() => parseQuery(query.trim()), [query]);
   const fams = rootOn ? families : null;
 
+  // المعجم الصرفي (جذر→صيغ) يُحمَّل مرّة من public/doc-lexicon.json ويُفعّل التوسعة الصرفية للبحث.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/doc-lexicon.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json: { roots?: Record<string, string[]> } | null) => {
+        if (cancelled || !json?.roots) return;
+        setMorphLexicon(buildMorphLexicon(json.roots));
+        setMorphReady(true);
+      })
+      .catch(() => {
+        /* البحث يعمل بالتجذيع الخفيف دون المعجم إن تعذّر الجلب */
+      });
+    return () => {
+      cancelled = true;
+      setMorphLexicon(null);
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     let list = docs.filter((d, i) => {
       if (typeFilter && d.type.name !== typeFilter) return false;
@@ -310,10 +332,10 @@ export function CaseBrowser() {
     else if (sort === "title") list = [...list].sort((a, b) => a.title.localeCompare(b.title, "ar"));
     else if (sort === "type") list = [...list].sort((a, b) => a.type.name.localeCompare(b.type.name, "ar"));
     return list;
-  }, [docs, haystacks, parsed, fams, typeFilter, onlyFlagged, sort, bm25, flags]);
+  }, [docs, haystacks, parsed, fams, typeFilter, onlyFlagged, sort, bm25, flags, morphReady]);
 
   const current = docs.find((d) => d.code === currentCode) ?? null;
-  const needles = useMemo(() => (parsed.empty ? [] : highlightNeedles(parsed, fams)), [parsed, fams]);
+  const needles = useMemo(() => (parsed.empty ? [] : highlightNeedles(parsed, fams)), [parsed, fams, morphReady]);
 
   const types = useMemo(() => {
     const m = new Map<string, number>();
@@ -347,11 +369,7 @@ export function CaseBrowser() {
     (i: number) => {
       const marks = collectMarks();
       if (!marks.length) return;
-      const idx = ((i % marks.length) + marks.length) % marks.length;
-      marks.forEach((m) => m.classList.remove(styles.cur));
-      marks[idx].classList.add(styles.cur);
-      marks[idx].scrollIntoView({ block: "center" });
-      setMarkIdx(idx);
+      setMarkIdx(((i % marks.length) + marks.length) % marks.length);
     },
     [collectMarks]
   );
@@ -362,10 +380,29 @@ export function CaseBrowser() {
     if (marks.length) {
       const p = pendingMark.current;
       const target = typeof p === "number" ? Math.min(p, marks.length - 1) : p === "last" ? marks.length - 1 : 0;
-      gotoMark(target);
+      setMarkIdx(target);
     } else setMarkIdx(-1);
     pendingMark.current = "first";
-  }, [docHtml, collectMarks, gotoMark]);
+  }, [docHtml, collectMarks]);
+
+  // إبراز المطابقة الحالية بلون مستقل (برتقالي) — يُعاد تطبيقه بعد أي إعادة بناء لنصّ القارئ،
+  // لأن التظليل يُحقَن عبر innerHTML فتُستبدل عُقَد <mark> ويُمحى الصنف المُضاف يدوياً.
+  useEffect(() => {
+    const marks = collectMarks();
+    if (!marks.length || markIdx < 0) return;
+    const idx = Math.min(markIdx, marks.length - 1);
+    marks.forEach((m) => m.classList.remove(styles.cur));
+    marks[idx].classList.add(styles.cur);
+  }, [markIdx, docHtml, collectMarks]);
+
+  // التمرير إلى المطابقة الحالية عند التنقّل فقط (لا عند كل إعادة رسم)
+  useEffect(() => {
+    const marks = collectMarks();
+    if (marks.length && markIdx >= 0) {
+      marks[Math.min(markIdx, marks.length - 1)].scrollIntoView({ block: "center" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markIdx]);
 
   const openDoc = useCallback((code: string, at: number | "first" | "last" = "first") => {
     pendingMark.current = at;

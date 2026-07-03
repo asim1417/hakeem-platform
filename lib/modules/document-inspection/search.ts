@@ -24,6 +24,12 @@ function normChar(ch: string): string {
   if (c >= 0x064b && c <= 0x0652) return ""; // تشكيل
   if (c === 0x0640) return ""; // تطويل
   if (c === 0x0670) return ""; // ألف خنجرية
+  // محارف صفرية العرض وعلامات الاتجاه — تظهر في نصّ PDF/OCR وتكسر شبك الكلمات وتقطيعها
+  if (c === 0x200b || c === 0x200c || c === 0x200d) return ""; // ZWSP/ZWNJ/ZWJ
+  if (c >= 0x200e && c <= 0x200f) return ""; // LRM/RLM
+  if (c >= 0x202a && c <= 0x202e) return ""; // تضمين/تجاوز الاتجاه
+  if (c >= 0x2066 && c <= 0x2069) return ""; // عزل الاتجاه
+  if (c === 0xfeff) return ""; // BOM/ZWNBSP
   if (c >= 0x0660 && c <= 0x0669) return String.fromCharCode(48 + (c - 0x0660));
   if (c >= 0x06f0 && c <= 0x06f9) return String.fromCharCode(48 + (c - 0x06f0));
   return (LETTER_VARIANTS[ch] ?? ch).toLowerCase();
@@ -186,11 +192,51 @@ export function buildStemFamilies(docs: AnalyzedDocument[]): Map<string, Set<str
   return families;
 }
 
+// المعجم الصرفي (جذر→صيغ) — يُحمَّل اختيارياً من public/doc-lexicon.json.
+// المفتاح: صيغة مُطبَّعة → كل الصيغ الصرفية المُطبَّعة لجذرها. يوسّع البحث صرفياً.
+let morphLexicon: Map<string, string[]> | null = null;
+
+/** يُبني خريطة (صيغة مُطبَّعة → صيغ جذرها المُطبَّعة) من خريطة الجذور الخام */
+export function buildMorphLexicon(roots: Record<string, string[]>): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const forms of Object.values(roots)) {
+    if (!Array.isArray(forms) || forms.length < 2) continue;
+    const normForms = Array.from(new Set(forms.map(normStr).filter((f) => f.length >= 2)));
+    if (normForms.length < 2) continue;
+    for (const f of normForms) {
+      const existing = map.get(f);
+      if (existing) {
+        for (const nf of normForms) if (!existing.includes(nf)) existing.push(nf);
+      } else {
+        map.set(f, normForms);
+      }
+    }
+  }
+  return map;
+}
+
+/** يُفعّل التوسعة الصرفية بالمعجم (يُستدعى مرّة بعد جلب doc-lexicon.json) */
+export function setMorphLexicon(map: Map<string, string[]> | null): void {
+  morphLexicon = map;
+}
+
+export function hasMorphLexicon(): boolean {
+  return morphLexicon !== null && morphLexicon.size > 0;
+}
+
 export function expandTerm(term: string, families: Map<string, Set<string>> | null): string[] {
-  if (!families) return [term];
-  const family = families.get(lightStem(term));
-  if (!family) return [term];
-  return Array.from(new Set([term, ...family]));
+  const out = new Set<string>([term]);
+  // التوسعة (بالجذع أو صرفياً) مرتبطة بمفتاح «البحث بالجذر»: families != null يعني المفتاح مُفعّل.
+  if (families) {
+    const family = families.get(lightStem(term));
+    if (family) for (const f of family) out.add(f);
+    // توسعة صرفية بالمعجم: صيغ الجذر نفسه (مرغوب/رغائب لـ«رغبة»…)
+    if (morphLexicon) {
+      const forms = morphLexicon.get(term);
+      if (forms) for (const f of forms) out.add(f);
+    }
+  }
+  return Array.from(out);
 }
 
 export function matchDoc(P: ParsedQuery, normHay: string, families: Map<string, Set<string>> | null): boolean {
