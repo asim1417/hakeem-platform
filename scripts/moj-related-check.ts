@@ -32,7 +32,7 @@ async function main() {
   console.log("الأدوات المرتبطة رسميًّا بكل نظام (relatedLegal + otherRelatedLegal) ومطابقتها بالقاعدة");
   console.log("═".repeat(96));
 
-  const summary: Array<{ name: string; kind: string; system: string; inDb: boolean; dbArticles: number }> = [];
+  const summary: Array<{ name: string; kind: string; system: string; serial: string | null; inDb: boolean; dbArticles: number }> = [];
   for (const g of groups) {
     console.log(`\n▮ ${g.system} — ${g.items.length} أداة مرتبطة`);
     if (!g.items.length) { console.log("   (لا شيء مرتبط في البوابة)"); continue; }
@@ -48,7 +48,7 @@ async function main() {
       );
       const inDb = rows.length > 0;
       const dbArticles = inDb ? Number(rows[0].c) : 0;
-      summary.push({ name: it.name, kind, system: g.system, inDb, dbArticles });
+      summary.push({ name: it.name, kind, system: g.system, serial: it.serial, inDb, dbArticles });
       console.log(`   ${inDb ? "✅" : "❌"} [${kind}] «${it.name}»${it.typeName ? ` · نوع=${it.typeName}` : ""}${inDb ? ` · DB مواد=${dbArticles}` : " · مفقود"}`);
     }
   }
@@ -57,8 +57,8 @@ async function main() {
   console.log("\n" + "═".repeat(96));
   console.log(`إجمالي الأدوات المرتبطة الفريدة: ${summary.length} · موجود=${summary.length - missing.length} · مفقود=${missing.length}`);
   if (missing.length) {
-    console.log("\nالمفقود من القاعدة:");
-    for (const x of missing) console.log(`   ❌ [${x.kind}] «${x.name}»  (مرتبط بـ ${x.system})`);
+    console.log("\nالمفقود من القاعدة (بمعرّفاتها للإدراج):");
+    for (const x of missing) console.log(`   ❌ [${x.kind}] «${x.name}» · serial=${x.serial ?? "∅"} · (مرتبط بـ ${x.system})`);
   } else {
     console.log("لا شيء مفقود — كل الأدوات المرتبطة رسميًّا موجودة في القاعدة.");
   }
