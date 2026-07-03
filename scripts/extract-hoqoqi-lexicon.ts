@@ -41,9 +41,14 @@ function parse(sql: string) {
 }
 const sv = (v: unknown) => (v === null || v === undefined ? "" : String(v).trim());
 const isAr = (s: string) => /[ء-ي]/.test(s);
-// أعمدة مرشّحة للكلمة السطحية والجذر/اللمّة
-const WORD_KEYS = ["word", "name", "text", "title", "value", "noun", "verb", "lemma", "term", "surface", "form"];
-const ROOT_KEYS = ["root", "base", "stem", "lemma", "asl", "masdar", "origin", "root_word"];
+// أعمدة الصيغ السطحية في معجم حقوقي (nouns/verbs) — نجمعها كلّها تحت جذرٍ واحد.
+const FORM_COLS = [
+  "unvocalized", "normalized", "single", "broken_plural",
+  "feminin", "masculin", "masculin_plural", "feminin_plural",
+  "past", "future", "imperative", "passive",
+];
+const ROOT_COLS = ["root", "stamped"];
+const lc = (r: SqlRow) => new Map(Object.entries(r).map(([k, v]) => [k.toLowerCase(), sv(v)]));
 
 async function main() {
   const file = process.argv.find((a) => a.startsWith("--file="))?.slice(7) || process.env.HOQOQI_FILE || "hoqoqi.sql";
@@ -64,35 +69,41 @@ async function main() {
 
   if (mode === "discover") { console.log("\n(وضع الاكتشاف: لم يُكتب ملف)"); return; }
 
-  // اختيار عمودي الكلمة والجذر بأفضل تطابق
-  const cols = nouns.length ? Object.keys(nouns[0]).map((c) => c.toLowerCase()) : [];
-  const wordKey = WORD_KEYS.find((k) => cols.includes(k));
-  const rootKey = ROOT_KEYS.find((k) => cols.includes(k));
-  const pickCol = (r: SqlRow, key: string | undefined) => key ? sv(r[Object.keys(r).find((c) => c.toLowerCase() === key) ?? ""]) : "";
-
-  const build = (rows: SqlRow[]) => {
-    const byRoot = new Map<string, Set<string>>();
-    const flat: string[] = [];
+  // تجميع كل الصيغ السطحية تحت جذرها (nouns + verbs معًا).
+  const byRoot = new Map<string, Set<string>>();
+  let forms = 0;
+  const ingest = (rows: SqlRow[]) => {
     for (const r of rows) {
-      const w = pickCol(r, wordKey) || sv(Object.values(r).find((v) => isAr(sv(v))));
-      if (!w || !isAr(w)) continue;
-      flat.push(w);
-      const root = pickCol(r, rootKey);
-      if (root && isAr(root)) { if (!byRoot.has(root)) byRoot.set(root, new Set()); byRoot.get(root)!.add(w); }
+      const m = lc(r);
+      const root = ROOT_COLS.map((c) => m.get(c) || "").find((v) => v && isAr(v));
+      if (!root) continue;
+      const set = byRoot.get(root) ?? new Set<string>();
+      for (const col of FORM_COLS) {
+        const val = m.get(col) || "";
+        if (val && isAr(val) && val.length >= 2) { set.add(val); }
+      }
+      if (set.size) { byRoot.set(root, set); forms += set.size; }
     }
-    return { count: flat.length, groups: [...byRoot.entries()].map(([root, set]) => ({ root, forms: [...set] })) };
   };
+  ingest(nouns); ingest(verbs);
 
+  // أبقِ الجذور ذات ≥2 صيغة (التوسيع مفيد فقط حين توجد صيغ شقيقة).
+  const roots: Record<string, string[]> = {};
+  let kept = 0;
+  for (const [root, set] of byRoot) {
+    if (set.size >= 2) { roots[root] = [...set].sort(); kept++; }
+  }
   const out = {
-    generatedFrom: "hoqoqi.sql (nouns/verbs)",
-    schema: { nounsColumns: nouns.length ? Object.keys(nouns[0]) : [], verbsColumns: verbs.length ? Object.keys(verbs[0]) : [], wordKey: wordKey ?? null, rootKey: rootKey ?? null },
-    nouns: build(nouns),
-    verbs: build(verbs),
+    generatedFrom: "hoqoqi.sql · جداول nouns/verbs (معجم صرفيّ عربيّ)",
+    counts: { nouns: nouns.length, verbs: verbs.length, roots: kept, forms },
+    note: "خريطة جذر→صيغ سطحية (مفرد/جمع/مذكّر/مؤنّث/أزمنة) لتوسيع البحث بالمرادفات الصرفية.",
+    roots,
   };
   const dir = path.resolve("data");
   await fs.mkdir(dir, { recursive: true });
   const target = path.join(dir, "hoqoqi-lexicon.json");
-  await fs.writeFile(target, JSON.stringify(out, null, 0), "utf8");
-  console.log(`\n✔ كُتب ${target} · جذور(nouns)=${out.nouns.groups.length} · جذور(verbs)=${out.verbs.groups.length} · wordKey=${wordKey} · rootKey=${rootKey}`);
+  await fs.writeFile(target, JSON.stringify(out), "utf8");
+  const bytes = (await fs.stat(target)).size;
+  console.log(`\n✔ كُتب ${target} · جذور=${kept} · صيغ=${forms} · الحجم=${(bytes / 1048576).toFixed(2)}MB`);
 }
 main().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
