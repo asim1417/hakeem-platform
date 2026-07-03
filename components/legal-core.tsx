@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BookOpen, Copy, Database, FileText, Filter, Fingerprint, History, Scale, Search, ShieldCheck } from "lucide-react";
+import { BookOpen, Copy, Database, ExternalLink, FileText, Filter, Fingerprint, History, Landmark, Scale, ScrollText, Search, ShieldCheck } from "lucide-react";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { buildArticleEli } from "@/lib/modules/legal-core/eli";
 import { buildFiqhCitation } from "@/lib/modules/legal-core/content-separation";
+import { getCoreSystemMeta, formatHijri } from "@/lib/modules/legal-core/core-systems";
 
 export function LegalCoreShell({ children }: { children: ReactNode }) {
   return <div className="min-h-screen rounded-[var(--r-2xl)] bg-[linear-gradient(180deg,var(--cream),var(--parchment))] text-[var(--ink)]">{children}</div>;
@@ -122,23 +123,58 @@ export function LegalSystemCard({ system }: { system: { id?: string | null; lawN
   const viewHref = system.id
     ? `/dashboard/legal-core/systems/${encodeURIComponent(system.id)}`
     : `/dashboard/legal-core/systems/${encodeURIComponent(system.lawName)}`;
+  // تمييز الركائز الأحد‑عشر ببيانات رسمية مُتحقَّقة من بوابة العدل.
+  const core = getCoreSystemMeta(system.lawName);
+  const issuance = core ? formatHijri(core.issuanceDateH) : null;
   return (
-    <article className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)]">
+    <article
+      className={
+        core
+          ? "relative overflow-hidden rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-5 shadow-[var(--sh-sm)] transition hover:shadow-[var(--sh-md)]"
+          : "rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)]"
+      }
+    >
+      {core ? <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l from-[var(--gold)] to-[var(--gold-dark)]" aria-hidden /> : null}
       <div className="flex items-start justify-between gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] text-[var(--gold-pale)]">
-          <BookOpen size={20} />
+        <div className={`grid h-11 w-11 place-items-center rounded-[var(--r-md)] ${core ? "bg-gradient-to-br from-[var(--navy)] to-[var(--gold-dark)]" : "bg-[var(--navy)]"} text-[var(--gold-pale)]`}>
+          {core ? <Landmark size={20} /> : <BookOpen size={20} />}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
           {system.code ? <span className="font-mono-legal text-[11px] font-bold text-[var(--gold-dark)]" dir="ltr">{system.code}</span> : null}
+          {core ? <LegalTopicBadge tone="gold">ركيزة أساسية</LegalTopicBadge> : null}
           <LegalTopicBadge tone="emerald">ساري</LegalTopicBadge>
         </div>
       </div>
       <h2 className="mt-4 font-display-ar text-lg font-bold leading-8 text-[var(--navy)]">{system.lawName}</h2>
-      <p className="mt-2 text-sm text-[var(--ink-60)]">{system.domainTitle ?? system.classification ?? "تصنيف نظامي عام"}</p>
+      <p className="mt-2 text-sm text-[var(--ink-60)]">{core?.classification ?? system.domainTitle ?? system.classification ?? "تصنيف نظامي عام"}</p>
       <div className="mt-4 flex items-center justify-between border-t border-[var(--ink-08)] pt-4">
         <span className="font-mono-legal text-sm text-[var(--gold)]">{system.count.toLocaleString("ar-SA")} مادة</span>
-        <span className="text-xs text-[var(--ink-40)]">تاريخ النفاذ: عند التوفر</span>
+        <span className="text-xs text-[var(--ink-40)]">{issuance ? `صدر: ${issuance}` : core?.sourceNote ?? "تاريخ النفاذ: عند التوفر"}</span>
       </div>
+      {core && (core.regulationLawName || core.sourceUrl) ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-[var(--gold-border)] pt-3 text-xs">
+          {core.regulationLawName ? (
+            <Link
+              href={`/dashboard/legal-core/systems?q=${encodeURIComponent(core.regulationLawName)}`}
+              className="inline-flex items-center gap-1 rounded-[var(--r-sm)] bg-[var(--gold-ghost)] px-2 py-1 font-medium text-[var(--gold-dark)] transition hover:bg-[var(--gold-pale)]"
+            >
+              <ScrollText size={13} />
+              لائحته التنفيذية{core.regulationArticles ? ` (${core.regulationArticles.toLocaleString("ar-SA")} مادة)` : ""}
+            </Link>
+          ) : null}
+          {core.sourceUrl ? (
+            <a
+              href={core.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[var(--ink-60)] transition hover:text-[var(--navy)]"
+            >
+              <ExternalLink size={13} />
+              المصدر الرسمي
+            </a>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-4 flex gap-2">
         <Link href={viewHref} className="btn btn-primary flex-1">
           عرض شجرة المواد
