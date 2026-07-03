@@ -145,6 +145,7 @@ model LegalArticle {
 
   @@unique([lawName, articleNumber])
   @@index([lawName])
+  @@index([legalSystemId]) // فلتر systemIds (مساواة) — يُنشأ فعليًّا على Neon عبر legal-articles-extra-indexes.sql
   @@map("legal_articles")
 }
 

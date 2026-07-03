@@ -1,0 +1,56 @@
+name: Apply Extra Indexes (legalSystemId + classification)
+
+# يُنشئ فهرسي legalSystemId (b-tree) وclassification (trigram GIN) لتسريع فلاتر البحث.
+# يكتب في DB ⇒ مُقفل خلف بوّابة المواءمة + حارس هدف Neon. CONCURRENTLY (بلا قفل جدول).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: apply-extra-indexes
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL (كتابة)."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "24", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "① إنشاء الفهرسين (CONCURRENTLY)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/sql/legal-articles-extra-indexes.sql
+      - name: "② تحقق (قراءة فقط) — الفهارس + EXPLAIN لفلتر النظام"
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT indexname FROM pg_indexes WHERE tablename='legal_articles' AND (indexname='legal_articles_legalSystemId_idx' OR indexname='idx_trgm_la_classification');"
+          echo '--- EXPLAIN فلتر النظام (يُتوقّع Index Scan) ---'
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "EXPLAIN (ANALYZE, BUFFERS) SELECT id FROM legal_articles WHERE \"legalSystemId\" = (SELECT \"legalSystemId\" FROM legal_articles WHERE \"legalSystemId\" IS NOT NULL LIMIT 1);"
