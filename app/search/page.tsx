@@ -62,7 +62,7 @@ export default async function PublicSearchPage({
           <LoginPopover />
         </div>
 
-        {/* النتائج (محرّك BM25) */}
+        {/* النتائج (محرّك النواة searchLegalCore) */}
         {hits === null ? (
           <div className="mt-10 rounded-[var(--r-xl)] border border-dashed border-[var(--ink-15)] bg-[var(--hakeem-bg-soft)] p-10 text-center">
             <p className="font-display-ar text-lg font-bold text-[var(--navy)]">ابدأ بكتابة عبارة بحث</p>
