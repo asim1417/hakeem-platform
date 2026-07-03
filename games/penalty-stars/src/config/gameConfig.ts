@@ -33,6 +33,7 @@ export type DifficultyKey = 'easy' | 'medium' | 'hero';
 export interface DifficultySettings {
   key: DifficultyKey;
   label: string;
+  keeperName: string; // اسم الحارس المرح
   keeperIdleSpeed: number; // مدة تأرجح الحارس (ثواني)
   diveDuration: number; // مدة الارتماء (أقل = أسرع)
   guessChance: number; // احتمال تخمين الاتجاه الصحيح
@@ -40,9 +41,9 @@ export interface DifficultySettings {
 }
 
 export const DIFFICULTIES: Record<DifficultyKey, DifficultySettings> = {
-  easy: { key: 'easy', label: 'سهلة', keeperIdleSpeed: 2.6, diveDuration: 0.62, guessChance: 0.3, reach: 46 },
-  medium: { key: 'medium', label: 'متوسطة', keeperIdleSpeed: 2.0, diveDuration: 0.5, guessChance: 0.45, reach: 50 },
-  hero: { key: 'hero', label: 'صعبة', keeperIdleSpeed: 1.6, diveDuration: 0.42, guessChance: 0.55, reach: 54 },
+  easy: { key: 'easy', label: 'سهلة', keeperName: 'الحارس فرفور', keeperIdleSpeed: 2.6, diveDuration: 0.62, guessChance: 0.3, reach: 46 },
+  medium: { key: 'medium', label: 'متوسطة', keeperName: 'الحارس صقر', keeperIdleSpeed: 2.0, diveDuration: 0.5, guessChance: 0.45, reach: 50 },
+  hero: { key: 'hero', label: 'صعبة', keeperName: 'الحارس أبو قفزة', keeperIdleSpeed: 1.6, diveDuration: 0.42, guessChance: 0.55, reach: 54 },
 };
 
 // رحلة المراحل: سهلة ← متوسطة ← صعبة — اجتياز المرحلة يتطلب PASS_GOALS أهداف
@@ -70,16 +71,22 @@ export const SHOT = {
   minDrag: 24, // أقل سحب مقبول
 };
 
-// عبارات تشجيعية — لا عبارات سلبية أبدًا
+// عبارات تشجيعية — المصدر في src/data/phrases.ts
+import { goalPhrases, missPhrases, savePhrases } from '../data/phrases';
+
 export const PHRASES = {
-  goal: ['قووول يا بطل! ⚽', 'تسديدة بطولية! 🌟', 'يا سلام يا نجم! ✨', 'رااائع! هدف عالمي! 🎉'],
-  save: ['محاولة رائعة يا بطل! جرّب مرة ثانية 💪', 'محاولة ممتازة! 👏', 'كابتن المستقبل! حاول ثانية 🧤'],
-  miss: ['اقتربت كثيرًا! 🎯', 'قريبة جدًا! جرّب ثانية 🌈', 'محاولة ممتازة! صوّب نحو المرمى ⭐'],
+  goal: goalPhrases,
+  save: savePhrases,
+  miss: missPhrases,
 };
 
 // تغليف النص بعلامة RTL لضبط اتجاه علامات الترقيم في الكانفاس
+// يُطبَّق لكل سطر لأن الكانفاس يرسم كل سطر على حدة
 export function rtl(s: string): string {
-  return `‏${s}‏`;
+  return s
+    .split('\n')
+    .map((line) => `‏${line}‏`)
+    .join('\n');
 }
 
 // تحويل الأرقام إلى أرقام عربية

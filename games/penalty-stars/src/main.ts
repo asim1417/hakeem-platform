@@ -7,6 +7,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { PlayerSelectScene } from './scenes/PlayerSelectScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
+import { LockerScene } from './scenes/LockerScene';
 import { unlockSpeech } from './utils/announcer';
 import './styles.css';
 
@@ -29,5 +30,5 @@ new Phaser.Game({
     arcade: { gravity: { x: 0, y: 0 }, debug: false },
   },
   input: { activePointers: 2 }, // دعم اللمس المتعدد للجوال
-  scene: [BootScene, MenuScene, PlayerSelectScene, GameScene, ResultScene],
+  scene: [BootScene, MenuScene, PlayerSelectScene, GameScene, ResultScene, LockerScene],
 });

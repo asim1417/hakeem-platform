@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 import {
   arabicNum,
   COLORS,
+  DIFFICULTIES,
   FONT,
   GAME_HEIGHT,
   GAME_WIDTH,
@@ -17,6 +18,8 @@ import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { confetti, popIn } from '../utils/animations';
 import { makeButton } from '../utils/ui';
+import { progress } from '../utils/progress';
+import { resultMessage } from '../data/phrases';
 
 type Outcome = 'championship' | 'advance' | 'retry';
 
@@ -40,6 +43,7 @@ export class ResultScene extends Phaser.Scene {
     }
 
     const player = getPlayer(this.registry.get('playerId') as string);
+    if (this.goals > 0) progress.addStars(this.goals); // كل هدف = نجمة في الرصيد
     const passed = this.goals >= PASS_GOALS;
     const isLastStage = this.stage >= STAGES.length - 1;
     const outcome: Outcome = passed ? (isLastStage ? 'championship' : 'advance') : 'retry';
@@ -111,14 +115,16 @@ export class ResultScene extends Phaser.Scene {
       }
     }
 
-    // الرسالة — تشجيعية دائمًا
-    const messages: Record<Outcome, string> = {
-      championship: '⭐ أنت نجم البلنتيات وبطل كل المراحل! ⭐',
-      advance: `رائع يا بطل! الحارس أصبح أسرع في ${STAGES[this.stage + 1]?.label ?? ''} — هل أنت مستعد؟`,
-      retry: `اقتربت كثيرًا! سجّل ${arabicNum(PASS_GOALS)} أهداف لتكمل المرحلة، أنت قادر يا نجم! 🌟`,
+    // الرسالة الرئيسية حسب عدد الأهداف + سطر حال المرحلة
+    // أسطر قصيرة مفصولة يدويًا حتى لا يكسر الالتفاف اتجاه علامات الترقيم
+    const nextKeeper = STAGES[this.stage + 1] ? DIFFICULTIES[STAGES[this.stage + 1].difficulty].keeperName : '';
+    const stageNote: Record<Outcome, string> = {
+      championship: 'أنت بطل كل المراحل! 🏆',
+      advance: `القادم: ${nextKeeper} 🧤\nمستعد يا بطل؟`,
+      retry: `سجّل ${arabicNum(PASS_GOALS)} أهداف لتكمل المرحلة\nأنت قادر يا نجم! 🌟`,
     };
     const msgText = this.add
-      .text(GAME_WIDTH / 2, 483, rtl(messages[outcome]), {
+      .text(GAME_WIDTH / 2, 483, rtl(`${resultMessage(this.goals)}\n${stageNote[outcome]}`), {
         fontFamily: FONT,
         fontSize: '24px',
         color: '#ffffff',
@@ -132,7 +138,7 @@ export class ResultScene extends Phaser.Scene {
     popIn(msgText, 0.7);
 
     this.add
-      .text(GAME_WIDTH / 2, 550, rtl(`الأهداف: ${arabicNum(this.goals)} من ${arabicNum(SHOTS_PER_ROUND)}`), {
+      .text(GAME_WIDTH / 2, 550, rtl(`الأهداف: ${arabicNum(this.goals)} من ${arabicNum(SHOTS_PER_ROUND)}  •  رصيدك: ⭐ ${arabicNum(progress.totalStars())}`), {
         fontFamily: FONT,
         fontSize: '21px',
         color: '#e8f6ff',
