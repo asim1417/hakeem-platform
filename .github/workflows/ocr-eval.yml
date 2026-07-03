@@ -31,8 +31,11 @@ jobs:
       - name: Run OCR eval
         working-directory: tools/ocr-eval
         run: |
-          python run_eval.py --gold "${{ github.event.inputs.goldset }}" \
-            --engines "${{ github.event.inputs.engines }}" | tee eval-console.txt
+          # المحرّكات تُمرَّر مفصولةً بمسافات (argparse nargs=+): نحوّل الفواصل لمسافات
+          ENGINES="$(echo '${{ github.event.inputs.engines }}' | tr ',' ' ')"
+          [ -z "$ENGINES" ] && ENGINES="mock tesseract tesseract_prep"
+          python run_eval.py --gold "${{ github.event.inputs.goldset || 'goldset/legal' }}" \
+            --engines $ENGINES | tee eval-console.txt
       - name: Show latest summary
         working-directory: tools/ocr-eval
         run: |
