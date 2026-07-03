@@ -106,11 +106,15 @@ export async function extractDocxText(buffer: ArrayBuffer): Promise<string> {
 
 // ── PDF (رقمي): يعمل في المتصفح فقط (pdfjs worker) ──
 
+import { cleanPdfTextLayer } from "./reshape";
+
 export interface PdfExtractResult {
   text: string;
   pages: number;
   /** صفحات بلا نص يُذكر — مؤشر مسح ضوئي يحتاج OCR */
   emptyPages: number;
+  /** طبقة النصّ معطوبة بدرجة يتعذّر إصلاحها نصّياً (خطّ مُجزّأ) — المصدر الصحيح OCR */
+  needsOcr: boolean;
 }
 
 export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfExtractResult> {
@@ -131,7 +135,9 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfExtractRes
     parts.push(`[صفحة ${p}]\n${pageText}`);
   }
   await doc.destroy();
-  return { text: parts.join("\n\n").trim(), pages: doc.numPages, emptyPages };
+  // إصلاح طبقة النصّ العربية المعطوبة (صيغ عرض معزولة/مُضاعَفة) قبل تسليمها.
+  const cleaned = cleanPdfTextLayer(parts.join("\n\n").trim());
+  return { text: cleaned.text, pages: doc.numPages, emptyPages, needsOcr: cleaned.needsOcr };
 }
 
 // ── الموزّع حسب النوع ──
@@ -157,6 +163,12 @@ export async function extractFromFile(file: File): Promise<ExtractedFile> {
     const result = await extractPdfText(await file.arrayBuffer());
     if (result.text.replace(/\[صفحة \d+\]/g, "").trim().length < 20) {
       throw new Error("هذا PDF ممسوح ضوئياً (صور بلا نص) — يحتاج معالجة OCR خارجية قبل رفعه");
+    }
+    // طبقة نصّ معطوبة يتعذّر إصلاحها نصّياً (خطّ مُجزّأ بلا يونيكود) → وجّه إلى OCR على صورة الصفحة
+    if (result.needsOcr) {
+      throw new Error(
+        "طبقة نصّ هذا الـ PDF معطوبة (خطّ مُجزّأ يخرج رموزاً غير صحيحة) — يُنصح بتشغيل القراءة الضوئية OCR للحصول على نصّ سليم"
+      );
     }
     const warning =
       result.emptyPages > 0 ? `${result.emptyPages} من ${result.pages} صفحة بلا نص (ممسوحة ضوئياً؟) — راجعها` : undefined;
