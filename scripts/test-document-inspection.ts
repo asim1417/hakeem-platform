@@ -469,6 +469,51 @@ check("استخراج الحقول حسب النوع: حكم مقابل عقد (
   assert.ok(!clabels.includes("رقم الصك"));
 });
 
+// ── إعادة تشكيل نصّ PDF المعطوب (صيغ العرض/التكرار/توجيه OCR) ──
+import {
+  cleanPdfTextLayer,
+  dedupeAdjacentDuplicates,
+  isGarbledArabicText,
+  reshapeArabicPresentationForms
+} from "../lib/modules/document-inspection/reshape";
+
+check("إعادة التشكيل: صيغ عرض بحدود سليمة → حروف أساسية مقروءة", () => {
+  // صيغ عرض متّصلة (بلا مسافة داخل الكلمة) — التشكيل يستردّها كاملةً
+  const pf = "ﺣﻜﻤﺖ ﺍﻟﺪﺍﺋﺮﺓ ﺑﺮﻓﺾ ﺍﻟﺪﻋﻮﻯ";
+  assert.equal(reshapeArabicPresentationForms(pf), "حكمت الدائرة برفض الدعوى");
+});
+
+check("إعادة التشكيل: النص السليم لا يتغيّر", () => {
+  const good = "حكمت الدائرة برفض الدعوى المقامة من شركة الأفق";
+  assert.equal(reshapeArabicPresentationForms(good), good);
+});
+
+check("إزالة التكرار المضاعف المتلاصق (كلمات وأسطر)", () => {
+  assert.equal(dedupeAdjacentDuplicates("السلام السلام عليكم"), "السلام عليكم");
+  assert.equal(dedupeAdjacentDuplicates("سطر مكرر\nسطر مكرر\nمختلف"), "سطر مكرر\nمختلف");
+});
+
+check("كشف العطب: مسافة بين كل صورة حرف → garbled + توجيه OCR", () => {
+  const g = "و ا ﻟ ﺴ ﻼ م و ا ﻟ ﺴ ﻼ م ا ﻟ ﺜ ﺎ ﻧ ﻴ ﺔ ا ﻟ ﺜ ﺎ ﻧ ﻴ ﺔ";
+  const r = isGarbledArabicText(g);
+  assert.equal(r.garbled, true);
+  assert.ok(r.singleLetterRatio > 0.45);
+  assert.equal(cleanPdfTextLayer(g).needsOcr, true); // التشكيل وحده لا يكفي — OCR هو المصدر الصحيح
+});
+
+check("كشف العطب: خطّ مُجزّأ (رموز بديلة) → توجيه OCR", () => {
+  const g = "حكمت ال% ائرة ب%فض ال%عوى المقامة من ش%كة الأفق وال% I J عباس أحمد زيني";
+  assert.equal(cleanPdfTextLayer(g).needsOcr, true);
+});
+
+check("كشف العطب: نص سليم ليس معطوباً ولا يحتاج OCR", () => {
+  const good = "حكمت الدائرة برفض الدعوى المقامة من شركة الأفق التجارية بمبلغ مليون ريال";
+  const c = cleanPdfTextLayer(good);
+  assert.equal(c.report.garbled, false);
+  assert.equal(c.needsOcr, false);
+  assert.equal(c.text, good);
+});
+
 // ── توجيه OCR ──
 import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
 

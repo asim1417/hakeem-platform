@@ -652,10 +652,13 @@ export function CaseBrowser() {
         setStatusMsg(extracted.warning ? `⚠ ${extracted.warning}` : `✓ استُخرج نص «${extracted.title}» محلياً`);
         setTimeout(() => setStatusMsg(""), 5000);
       } catch (error) {
-        // PDF ممسوح ضوئياً → اعرض خيار تشغيل OCR
+        // PDF ممسوح ضوئياً أو بطبقة نصّ معطوبة → اعرض خيار تشغيل OCR
         const msg = error instanceof Error ? error.message : "";
-        if (ext === "pdf" && msg.includes("ممسوح")) {
-          if (window.confirm("هذا PDF ممسوح ضوئياً (صور). هل تشغّل القراءة الضوئية OCR في متصفحك؟ قد تستغرق دقيقة للصفحة.")) {
+        if (ext === "pdf" && (msg.includes("ممسوح") || msg.includes("OCR"))) {
+          const prompt = msg.includes("معطوبة")
+            ? "طبقة نصّ هذا الـ PDF معطوبة فتخرج رموزاً غير صحيحة. هل تشغّل القراءة الضوئية OCR في متصفحك لنصّ سليم؟ قد تستغرق دقيقة للصفحة."
+            : "هذا PDF ممسوح ضوئياً (صور). هل تشغّل القراءة الضوئية OCR في متصفحك؟ قد تستغرق دقيقة للصفحة.";
+          if (window.confirm(prompt)) {
             setOcrProgress("تحضير محرّك القراءة الضوئية…");
             try {
               const buffer = await file.arrayBuffer();

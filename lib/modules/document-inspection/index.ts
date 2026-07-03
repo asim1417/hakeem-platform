@@ -3,5 +3,6 @@ export * from "./reference";
 export * from "./classifier";
 export * from "./search";
 export * from "./text-quality";
+export * from "./reshape";
 export * from "./structure";
 export * from "./sample-case";
