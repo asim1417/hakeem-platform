@@ -879,3 +879,33 @@ model LegalGraphEdge {
   @@index([sourceId])
   @@map("legal_graph_edges")
 }
+
+// ═══ منصة الوثائق (منتج مستقل — يستخدم البنية للنشر فقط) ═══
+
+// مساحة عمل مربوطة بكوكي متصفح (بلا حساب) — تنتقل لاحقاً لحساب مستخدم عند تفعيل المصادقة
+model DocWorkspace {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token     String    @unique // قيمة الكوكي (عشوائية 128-bit)
+  prefs     Json? // تفضيلات القراءة (سمة/خط/أسطر…)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  cases     DocCase[]
+
+  @@map("doc_workspaces")
+}
+
+// «قضية» محفوظة: مجموعة وثائق + ملاحظاتها وأعلامها ومقتطفاتها
+model DocCase {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String       @map("workspace_id") @db.Uuid
+  title       String
+  docs        Json // [{title, rawText}]
+  annotations Json? // {notes:{}, flags:{}, quotes:[]}
+  docCount    Int          @default(0) @map("doc_count")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  workspace   DocWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("doc_cases")
+}

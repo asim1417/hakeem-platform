@@ -249,4 +249,88 @@ check("أسطر الترويسة تُكشف", () => {
   assert.equal(isBoilerplateLine("وحيث إن المدعي طلب الفسخ"), false);
 });
 
-console.log(`\nكل الاختبارات ناجحة (${passed})`);
+// ── استخراج الملفات (DOCX) ──
+
+import { deflateRawSync } from "node:zlib";
+import { docxXmlToText, extractZipEntry } from "../lib/modules/document-inspection/file-extract";
+
+function crc32(buf: Uint8Array): number {
+  let c = ~0;
+  for (let i = 0; i < buf.length; i += 1) {
+    c ^= buf[i];
+    for (let k = 0; k < 8; k += 1) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+  }
+  return ~c >>> 0;
+}
+
+/** يبني أرشيف ZIP مصغّراً بملف واحد (deflate) — لاختبار قارئ DOCX */
+function buildZip(name: string, content: Uint8Array): ArrayBuffer {
+  const nameBytes = new TextEncoder().encode(name);
+  const compressed = new Uint8Array(deflateRawSync(Buffer.from(content)));
+  const crc = crc32(content);
+  const local = new Uint8Array(30 + nameBytes.length + compressed.length);
+  const lv = new DataView(local.buffer);
+  lv.setUint32(0, 0x04034b50, true);
+  lv.setUint16(8, 8, true); // deflate
+  lv.setUint32(14, crc, true);
+  lv.setUint32(18, compressed.length, true);
+  lv.setUint32(22, content.length, true);
+  lv.setUint16(26, nameBytes.length, true);
+  local.set(nameBytes, 30);
+  local.set(compressed, 30 + nameBytes.length);
+
+  const central = new Uint8Array(46 + nameBytes.length);
+  const cv = new DataView(central.buffer);
+  cv.setUint32(0, 0x02014b50, true);
+  cv.setUint16(10, 8, true);
+  cv.setUint32(16, crc, true);
+  cv.setUint32(20, compressed.length, true);
+  cv.setUint32(24, content.length, true);
+  cv.setUint16(28, nameBytes.length, true);
+  cv.setUint32(42, 0, true); // local offset
+  central.set(nameBytes, 46);
+
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, 1, true);
+  ev.setUint16(10, 1, true);
+  ev.setUint32(12, central.length, true);
+  ev.setUint32(16, local.length, true);
+
+  const out = new Uint8Array(local.length + central.length + eocd.length);
+  out.set(local, 0);
+  out.set(central, local.length);
+  out.set(eocd, local.length + central.length);
+  return out.buffer;
+}
+
+check("DOCX: تحويل XML إلى نص بفواصل فقرات", () => {
+  const xml =
+    '<w:document><w:body><w:p><w:r><w:t>صك حكم</w:t></w:r><w:r><w:t xml:space="preserve"> رقم ١٢٣</w:t></w:r></w:p><w:p><w:r><w:t>حكمت الدائرة &amp; أفهمت</w:t></w:r></w:p></w:body></w:document>';
+  const text = docxXmlToText(xml);
+  assert.ok(text.includes("صك حكم رقم ١٢٣"));
+  assert.ok(text.includes("حكمت الدائرة & أفهمت"));
+  assert.ok(text.split("\n").length >= 2);
+});
+
+async function asyncChecks() {
+  const xml = "<w:p><w:t>وثيقة مضغوطة للاختبار داخل أرشيف</w:t></w:p>";
+  const zip = buildZip("word/document.xml", new TextEncoder().encode(xml));
+  const entry = await extractZipEntry(zip, "word/document.xml");
+  check("DOCX: فك ZIP (deflate) واستخراج document.xml", () => {
+    assert.ok(entry);
+    assert.equal(docxXmlToText(new TextDecoder().decode(entry as Uint8Array)), "وثيقة مضغوطة للاختبار داخل أرشيف");
+  });
+  const missing = await extractZipEntry(zip, "word/missing.xml");
+  check("DOCX: ملف غير موجود في الأرشيف → null", () => {
+    assert.equal(missing, null);
+  });
+}
+
+asyncChecks()
+  .then(() => console.log(`\nكل الاختبارات ناجحة (${passed})`))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
