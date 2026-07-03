@@ -1,0 +1,31 @@
+name: Audit Core Systems (read-only)
+
+# فحص دقيق للأنظمة الأساسية الأحد‑عشر ولوائحها: الوجود، عدد المواد، سلامة الترقيم،
+# النصّ الناقص، التصنيف، ووجود اللائحة التنفيذية. قراءة فقط — لا كتابة.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Audit
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$DATABASE_URL" ] && { echo "::error::لا اتصال"; exit 1; }
+          npx tsx scripts/audit-core-systems.ts
