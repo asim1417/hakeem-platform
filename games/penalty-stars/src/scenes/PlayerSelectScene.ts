@@ -30,49 +30,49 @@ export class PlayerSelectScene extends Phaser.Scene {
       .setOrigin(0.5);
     popIn(title);
 
-    // شبكة بطاقات 2×4
+    // شبكة بطاقات 2×5
     PLAYERS.forEach((p, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = GAME_WIDTH / 2 + (col === 0 ? -112 : 112);
-      const y = 175 + row * 150;
+      const y = 154 + row * 126;
       const card = this.makeCard(p, x, y);
-      popIn(card, 0.08 * i);
+      popIn(card, 0.06 * i);
     });
 
-    const backBtn = makeButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 55, '🏠 رجوع', () => {
+    const backBtn = makeButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 42, '🏠 رجوع', () => {
       this.scene.start('Menu');
-    }, { width: 220, height: 60, fontSize: 24, color: COLORS.orange });
+    }, { width: 220, height: 56, fontSize: 24, color: COLORS.orange });
     popIn(backBtn, 0.6);
   }
 
   private makeCard(p: PlayerDef, x: number, y: number): Phaser.GameObjects.Container {
     const selected = this.registry.get('playerId') === p.id;
     const w = 208;
-    const h = 136;
+    const h = 116;
 
     const bg = this.add.rectangle(0, 0, w, h, COLORS.white, 0.95).setOrigin(0.5);
     bg.setStrokeStyle(selected ? 6 : 4, selected ? COLORS.yellow : p.color);
-    const avatar = this.add.image(0, -22, `avatar-${p.id}`).setDisplaySize(72, 72);
+    const avatar = this.add.image(0, -20, `avatar-${p.id}`).setDisplaySize(60, 60);
     const name = this.add
-      .text(0, 32, rtl(`${p.name} ${p.emoji}`), {
+      .text(0, 26, rtl(`${p.name} ${p.emoji}`), {
         fontFamily: FONT,
-        fontSize: '18px',
+        fontSize: '16px',
         color: '#1a5c2e',
         fontStyle: 'bold',
       })
       .setOrigin(0.5);
     // نقاط القوة كنجوم صغيرة
     const stats = this.add
-      .text(0, 54, rtl(`⭐ قوة ${'●'.repeat(Math.round(p.power / 2))}  دقة ${'●'.repeat(Math.round(p.accuracy / 2))}`), {
+      .text(0, 46, rtl(`⭐ قوة ${'●'.repeat(Math.round(p.power / 2))}  دقة ${'●'.repeat(Math.round(p.accuracy / 2))}`), {
         fontFamily: FONT,
-        fontSize: '12px',
+        fontSize: '11px',
         color: '#555555',
       })
       .setOrigin(0.5);
 
     const badge = selected
-      ? this.add.text(0, -64, rtl('✅ مختار'), { fontFamily: FONT, fontSize: '16px', color: '#1a5c2e', fontStyle: 'bold', backgroundColor: '#ffd93d', padding: { x: 8, y: 3 } }).setOrigin(0.5)
+      ? this.add.text(0, -54, rtl('✅ مختار'), { fontFamily: FONT, fontSize: '16px', color: '#1a5c2e', fontStyle: 'bold', backgroundColor: '#ffd93d', padding: { x: 8, y: 3 } }).setOrigin(0.5)
       : null;
 
     const children: Phaser.GameObjects.GameObject[] = [bg, avatar, name, stats];
