@@ -3,6 +3,8 @@
 // واستوردها هنا ثم أسندها لحقل photo — تُستخدم تلقائيًا بدل الشكل المرسوم
 
 import saloumiPhoto from '../assets/players/saloumi.png';
+import hassouniPhoto from '../assets/players/hassouni.png';
+import hammadPhoto from '../assets/players/hammad.png';
 
 export interface PlayerDef {
   id: string;
@@ -37,6 +39,18 @@ export const PLAYERS: PlayerDef[] = [
     power: 4,
     accuracy: 4,
     celebration: 'قيادة رائعة يا كابتن! 🧢',
+    photo: hassouniPhoto,
+  },
+  {
+    id: 'hammad',
+    name: 'العبقري حماد',
+    emoji: '🤓',
+    color: 0xff6b9d,
+    speed: 3,
+    power: 3,
+    accuracy: 5,
+    celebration: 'تسديدة محسوبة بذكاء! 🤓',
+    photo: hammadPhoto,
   },
   {
     id: 'mohammed',

@@ -40,10 +40,25 @@ export interface DifficultySettings {
 }
 
 export const DIFFICULTIES: Record<DifficultyKey, DifficultySettings> = {
-  easy: { key: 'easy', label: 'سهل', keeperIdleSpeed: 2.6, diveDuration: 0.62, guessChance: 0.3, reach: 46 },
-  medium: { key: 'medium', label: 'متوسط', keeperIdleSpeed: 2.0, diveDuration: 0.5, guessChance: 0.45, reach: 50 },
-  hero: { key: 'hero', label: 'بطل', keeperIdleSpeed: 1.6, diveDuration: 0.42, guessChance: 0.55, reach: 54 },
+  easy: { key: 'easy', label: 'سهلة', keeperIdleSpeed: 2.6, diveDuration: 0.62, guessChance: 0.3, reach: 46 },
+  medium: { key: 'medium', label: 'متوسطة', keeperIdleSpeed: 2.0, diveDuration: 0.5, guessChance: 0.45, reach: 50 },
+  hero: { key: 'hero', label: 'صعبة', keeperIdleSpeed: 1.6, diveDuration: 0.42, guessChance: 0.55, reach: 54 },
 };
+
+// رحلة المراحل: سهلة ← متوسطة ← صعبة — اجتياز المرحلة يتطلب PASS_GOALS أهداف
+export interface StageDef {
+  difficulty: DifficultyKey;
+  label: string;
+  icon: string;
+}
+
+export const STAGES: StageDef[] = [
+  { difficulty: 'easy', label: 'المرحلة الأولى — سهلة', icon: '🙂' },
+  { difficulty: 'medium', label: 'المرحلة الثانية — متوسطة', icon: '😎' },
+  { difficulty: 'hero', label: 'المرحلة الثالثة — صعبة', icon: '🔥' },
+];
+
+export const PASS_GOALS = 3; // أهداف اجتياز المرحلة من أصل ٥
 
 export const SHOTS_PER_ROUND = 5;
 

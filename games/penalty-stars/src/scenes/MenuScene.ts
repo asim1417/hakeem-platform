@@ -1,7 +1,7 @@
 // MenuScene — واجهة البداية: الشعار والأزرار الكبيرة واختيار الصعوبة
 
 import Phaser from 'phaser';
-import { COLORS, DIFFICULTIES, DifficultyKey, FONT, GAME_HEIGHT, GAME_WIDTH, rtl } from '../config/gameConfig';
+import { COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES } from '../config/gameConfig';
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
@@ -15,7 +15,6 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     // القيم الافتراضية في أول تشغيل
     if (!this.registry.has('playerId')) this.registry.set('playerId', 'hassouni');
-    if (!this.registry.has('difficulty')) this.registry.set('difficulty', 'easy' as DifficultyKey);
 
     this.drawBackground();
 
@@ -63,46 +62,35 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
     popIn(chosen, 0.35);
 
-    // الأزرار الرئيسية
-    const startBtn = makeButton(this, GAME_WIDTH / 2, 410, '🎮 ابدأ اللعب', () => {
-      this.scene.start('Game', { training: false });
+    // الأزرار الرئيسية — ابدأ اللعب يطلق رحلة المراحل الثلاث
+    const startBtn = makeButton(this, GAME_WIDTH / 2, 420, '🎮 ابدأ اللعب', () => {
+      this.scene.start('Game', { stage: 0 });
     }, { width: 320, height: 84, color: COLORS.blue, fontSize: 34 });
     popIn(startBtn, 0.45);
     pulse(startBtn);
 
-    const selectBtn = makeButton(this, GAME_WIDTH / 2, 505, '😃 اختيار اللاعب', () => {
-      this.scene.start('PlayerSelect');
-    }, { width: 320, color: COLORS.orange });
-    popIn(selectBtn, 0.55);
-
-    const trainBtn = makeButton(this, GAME_WIDTH / 2, 590, '🏋️ التدريب', () => {
-      this.scene.start('Game', { training: true });
-    }, { width: 320, color: COLORS.pink });
-    popIn(trainBtn, 0.65);
-
-    // اختيار الصعوبة
-    this.add
-      .text(GAME_WIDTH / 2, 655, rtl('مستوى الحارس:'), {
+    // خريطة المراحل الصغيرة تحت زر البداية
+    const stagesHint = this.add
+      .text(GAME_WIDTH / 2, 485, rtl(STAGES.map((s) => `${s.icon} ${DIFFICULTIES[s.difficulty].label}`).join('  ←  ')), {
         fontFamily: FONT,
-        fontSize: '20px',
+        fontSize: '18px',
         color: '#ffffff',
         fontStyle: 'bold',
         stroke: '#1a5c2e',
         strokeThickness: 4,
       })
       .setOrigin(0.5);
+    popIn(stagesHint, 0.5);
 
-    const diffButtons: Phaser.GameObjects.Container[] = [];
-    const keys: DifficultyKey[] = ['easy', 'medium', 'hero'];
-    keys.forEach((key, i) => {
-      const x = GAME_WIDTH / 2 + (i - 1) * 130;
-      const btn = makeButton(this, x, 705, DIFFICULTIES[key].label, () => {
-        this.registry.set('difficulty', key);
-        diffButtons.forEach((b, j) => b.setAlpha(keys[j] === key ? 1 : 0.55));
-      }, { width: 116, height: 56, fontSize: 22, color: key === 'hero' ? 0x9b6bff : key === 'medium' ? 0x35c96b : COLORS.blue });
-      btn.setAlpha(this.registry.get('difficulty') === key ? 1 : 0.55);
-      diffButtons.push(btn);
-    });
+    const selectBtn = makeButton(this, GAME_WIDTH / 2, 560, '😃 اختيار اللاعب', () => {
+      this.scene.start('PlayerSelect');
+    }, { width: 320, color: COLORS.orange });
+    popIn(selectBtn, 0.55);
+
+    const trainBtn = makeButton(this, GAME_WIDTH / 2, 650, '🏋️ التدريب', () => {
+      this.scene.start('Game', { training: true });
+    }, { width: 320, color: COLORS.pink });
+    popIn(trainBtn, 0.65);
 
     // زر كتم الصوت
     const muteBtn = makeButton(this, GAME_WIDTH - 55, 50, audio.isMuted() ? '🔇' : '🔊', () => {

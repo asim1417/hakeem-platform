@@ -16,6 +16,7 @@ import {
   PHRASES,
   SHOT,
   SHOTS_PER_ROUND,
+  STAGES,
 } from '../config/gameConfig';
 import { getPlayer, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
@@ -30,6 +31,7 @@ const KEEPER_RANGE = GOAL.width / 2 - 40; // مدى حركة الحارس
 
 export class GameScene extends Phaser.Scene {
   private training = false;
+  private stage?: number; // رقم المرحلة في رحلة المراحل — undefined في التدريب
   private player!: PlayerDef;
   private ball!: Phaser.Physics.Arcade.Image;
   private keeper!: Phaser.GameObjects.Image;
@@ -48,8 +50,9 @@ export class GameScene extends Phaser.Scene {
     super('Game');
   }
 
-  init(data: { training?: boolean }): void {
+  init(data: { training?: boolean; stage?: number }): void {
     this.training = Boolean(data.training);
+    this.stage = data.stage;
     this.state = 'aiming';
     this.shotIndex = 0;
     this.goals = 0;
@@ -148,7 +151,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.training) {
       for (let i = 0; i < SHOTS_PER_ROUND; i++) {
         const icon = this.add
-          .image(GAME_WIDTH / 2 - 80 + i * 40, 62, 'star')
+          .image(GAME_WIDTH / 2 - 80 + i * 40, 100, 'star')
           .setScale(0.55)
           .setAlpha(0.28)
           .setDepth(20);
@@ -203,10 +206,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateShotText(): void {
+    const stageTag = this.stage !== undefined ? `${STAGES[this.stage].icon} ${STAGES[this.stage].label}\n` : '';
     this.shotText.setText(
       this.training
         ? rtl('🏋️ تدريب حر')
-        : rtl(`التسديدة ${arabicNum(Math.min(this.shotIndex + 1, SHOTS_PER_ROUND))} من ${arabicNum(SHOTS_PER_ROUND)}`),
+        : rtl(`${stageTag}التسديدة ${arabicNum(Math.min(this.shotIndex + 1, SHOTS_PER_ROUND))} من ${arabicNum(SHOTS_PER_ROUND)}`),
     );
   }
 
@@ -389,7 +393,7 @@ export class GameScene extends Phaser.Scene {
     this.shotIndex++;
     // انتهت الجولة (٥ تسديدات) — التدريب لا ينتهي
     if (!this.training && this.shotIndex >= SHOTS_PER_ROUND) {
-      this.scene.start('Result', { goals: this.goals });
+      this.scene.start('Result', { goals: this.goals, stage: this.stage });
       return;
     }
     // إعادة التجهيز
@@ -403,6 +407,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private difficulty() {
-    return DIFFICULTIES[(this.registry.get('difficulty') as DifficultyKey) ?? 'easy'];
+    const key: DifficultyKey = this.stage !== undefined ? STAGES[this.stage].difficulty : 'easy';
+    return DIFFICULTIES[key];
   }
 }
