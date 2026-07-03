@@ -1,0 +1,2410 @@
+[
+  {
+    "law": "نظام المرافعات الشرعية ولائحته التنفيذية",
+    "url": "https://nezams.com/نظام-المرافعات-الشرعية-ولائحته-التنف/",
+    "pairings": [
+      {
+        "sysNum": 1,
+        "bylawLabels": [
+          "1/1"
+        ],
+        "explicitRefs": [
+          70
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 2,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 3,
+        "bylawLabels": [
+          "3/1",
+          "3/2",
+          "3/3",
+          "3/4",
+          "3/5",
+          "3/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 4,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 5,
+        "bylawLabels": [
+          "5/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 6,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 7,
+        "bylawLabels": [
+          "7/1",
+          "7/2",
+          "7/3",
+          "7/4",
+          "7/5",
+          "7/6",
+          "7/7"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 8,
+        "bylawLabels": [
+          "8/1",
+          "8/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 9,
+        "bylawLabels": [
+          "9/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 10,
+        "bylawLabels": [
+          "10/1",
+          "10/2",
+          "10/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 11,
+        "bylawLabels": [
+          "11/1",
+          "11/2",
+          "11/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 12,
+        "bylawLabels": [
+          "12/1",
+          "12/2",
+          "12/3"
+        ],
+        "explicitRefs": [
+          5
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 13,
+        "bylawLabels": [
+          "13/1",
+          "13/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 14,
+        "bylawLabels": [
+          "14/1",
+          "14/2",
+          "14/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 15,
+        "bylawLabels": [
+          "15/1"
+        ],
+        "explicitRefs": [
+          14
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 16,
+        "bylawLabels": [],
+        "explicitRefs": [
+          13
+        ],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 17,
+        "bylawLabels": [
+          "17/1",
+          "17/2",
+          "17/3",
+          "17/4",
+          "17/5"
+        ],
+        "explicitRefs": [
+          14
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 18,
+        "bylawLabels": [
+          "18/1"
+        ],
+        "explicitRefs": [
+          17
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 19,
+        "bylawLabels": [
+          "19/1",
+          "19/2",
+          "19/3",
+          "19/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 20,
+        "bylawLabels": [
+          "20/1",
+          "20/2",
+          "20/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 21,
+        "bylawLabels": [
+          "21/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 22,
+        "bylawLabels": [
+          "22/1",
+          "22/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 23,
+        "bylawLabels": [
+          "23/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 24,
+        "bylawLabels": [
+          "24/1",
+          "24/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 25,
+        "bylawLabels": [
+          "25/1",
+          "25/2"
+        ],
+        "explicitRefs": [
+          17
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 26,
+        "bylawLabels": [
+          "26/1",
+          "26/2",
+          "26/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 27,
+        "bylawLabels": [
+          "27/1",
+          "27/2"
+        ],
+        "explicitRefs": [
+          36
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 28,
+        "bylawLabels": [
+          "28/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 29,
+        "bylawLabels": [
+          "29/1",
+          "29/2",
+          "29/3",
+          "29/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 30,
+        "bylawLabels": [
+          "30/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 31,
+        "bylawLabels": [
+          "31/1",
+          "31/2",
+          "31/3",
+          "31/4",
+          "31/5",
+          "31/6",
+          "31/7",
+          "205/5",
+          "205/6",
+          "31/8",
+          "31/9"
+        ],
+        "explicitRefs": [
+          33,
+          39
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 32,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 33,
+        "bylawLabels": [
+          "33/1",
+          "33/2",
+          "33/3",
+          "33/4",
+          "33/5",
+          "33/6",
+          "33/7",
+          "33/8",
+          "33/9",
+          "33/10",
+          "33/11",
+          "33/12",
+          "33/13",
+          "33/14",
+          "33/15",
+          "33/16"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 34,
+        "bylawLabels": [
+          "34/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 35,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 36,
+        "bylawLabels": [
+          "36/1",
+          "36/2",
+          "36/3",
+          "36/4",
+          "36/5",
+          "36/6",
+          "36/7"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 37,
+        "bylawLabels": [
+          "37/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 38,
+        "bylawLabels": [
+          "38/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 39,
+        "bylawLabels": [
+          "39/1",
+          "39/2",
+          "39/3",
+          "39/4",
+          "39/5"
+        ],
+        "explicitRefs": [
+          36
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 40,
+        "bylawLabels": [
+          "40/1",
+          "40/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 41,
+        "bylawLabels": [
+          "41/1",
+          "41/2",
+          "41/3",
+          "41/4",
+          "41/5",
+          "41/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 42,
+        "bylawLabels": [
+          "42/1",
+          "42/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 43,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 44,
+        "bylawLabels": [
+          "44/1",
+          "44/2",
+          "44/3",
+          "44/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 45,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 46,
+        "bylawLabels": [
+          "46/1"
+        ],
+        "explicitRefs": [
+          43
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 47,
+        "bylawLabels": [
+          "47/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 48,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 49,
+        "bylawLabels": [
+          "49/1",
+          "49/2",
+          "49/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 50,
+        "bylawLabels": [
+          "50/1",
+          "50/2",
+          "50/3",
+          "50/4"
+        ],
+        "explicitRefs": [
+          55,
+          57
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 51,
+        "bylawLabels": [
+          "51/1",
+          "51/2",
+          "51/3",
+          "51/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 52,
+        "bylawLabels": [
+          "52/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 53,
+        "bylawLabels": [
+          "53/1",
+          "53/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 54,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 55,
+        "bylawLabels": [
+          "55/1",
+          "55/2",
+          "55/3",
+          "55/4",
+          "55/5"
+        ],
+        "explicitRefs": [
+          59
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 56,
+        "bylawLabels": [
+          "56/1"
+        ],
+        "explicitRefs": [
+          55,
+          89
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 57,
+        "bylawLabels": [
+          "57/1",
+          "57/2",
+          "57/3",
+          "57/4",
+          "57/5",
+          "57/6",
+          "57/7",
+          "57/8",
+          "57/9",
+          "57/10",
+          "57/11",
+          "57/12",
+          "57/13",
+          "57/14",
+          "57/15"
+        ],
+        "explicitRefs": [
+          17,
+          113,
+          114,
+          179
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 58,
+        "bylawLabels": [
+          "58/1",
+          "58/2",
+          "58/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 59,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 60,
+        "bylawLabels": [
+          "60/1",
+          "60/2",
+          "60/3"
+        ],
+        "explicitRefs": [
+          185
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 61,
+        "bylawLabels": [
+          "61/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 62,
+        "bylawLabels": [
+          "62/1",
+          "62/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 63,
+        "bylawLabels": [
+          "63/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 64,
+        "bylawLabels": [
+          "64/1"
+        ],
+        "explicitRefs": [
+          73
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 65,
+        "bylawLabels": [
+          "65/1",
+          "65/2",
+          "65/3",
+          "65/4",
+          "65/5"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 66,
+        "bylawLabels": [
+          "66/1",
+          "66/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 67,
+        "bylawLabels": [
+          "67/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 68,
+        "bylawLabels": [
+          "68/1",
+          "68/2",
+          "68/3",
+          "68/4"
+        ],
+        "explicitRefs": [
+          67
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 69,
+        "bylawLabels": [
+          "69/1",
+          "69/2"
+        ],
+        "explicitRefs": [
+          89
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 70,
+        "bylawLabels": [
+          "70/1",
+          "70/2",
+          "70/3"
+        ],
+        "explicitRefs": [
+          3
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 71,
+        "bylawLabels": [
+          "71/1",
+          "71/2",
+          "71/3",
+          "71/4",
+          "71/5",
+          "71/6",
+          "71/7",
+          "71/8"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 72,
+        "bylawLabels": [
+          "72/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 73,
+        "bylawLabels": [
+          "73/1",
+          "73/2",
+          "73/3",
+          "73/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 74,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 75,
+        "bylawLabels": [
+          "75/1",
+          "75/2",
+          "75/3",
+          "75/4",
+          "75/5",
+          "75/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 76,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 77,
+        "bylawLabels": [
+          "77/1",
+          "77/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 78,
+        "bylawLabels": [
+          "78/1",
+          "78/2"
+        ],
+        "explicitRefs": [
+          178
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 79,
+        "bylawLabels": [
+          "79/1",
+          "79/2",
+          "79/3",
+          "79/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 80,
+        "bylawLabels": [
+          "80/1",
+          "80/2",
+          "80/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 81,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 82,
+        "bylawLabels": [
+          "82/1",
+          "82/2",
+          "82/3",
+          "82/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 83,
+        "bylawLabels": [
+          "83/1",
+          "83/2",
+          "83/3",
+          "83/4",
+          "83/5",
+          "83/6",
+          "83/7",
+          "83/8",
+          "83/9",
+          "83/10",
+          "83/11",
+          "83/12",
+          "83/13",
+          "83/14"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 84,
+        "bylawLabels": [
+          "84/1",
+          "84/2",
+          "84/3",
+          "84/4",
+          "84/5",
+          "84/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 85,
+        "bylawLabels": [
+          "85/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 86,
+        "bylawLabels": [
+          "86/1",
+          "86/2",
+          "86/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 87,
+        "bylawLabels": [
+          "87/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 88,
+        "bylawLabels": [
+          "88/1",
+          "88/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 89,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 90,
+        "bylawLabels": [
+          "90/1",
+          "90/2",
+          "90/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 91,
+        "bylawLabels": [
+          "91/1",
+          "91/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 92,
+        "bylawLabels": [
+          "92/1",
+          "92/2",
+          "92/3",
+          "92/4"
+        ],
+        "explicitRefs": [
+          11
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 93,
+        "bylawLabels": [
+          "93/1",
+          "93/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 94,
+        "bylawLabels": [
+          "94/1",
+          "94/2",
+          "94/3",
+          "94/4",
+          "94/5",
+          "94/6",
+          "94/7",
+          "94/8",
+          "94/9",
+          "94/10"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 95,
+        "bylawLabels": [
+          "95/1",
+          "95/2",
+          "95/3",
+          "95/4"
+        ],
+        "explicitRefs": [
+          94
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 96,
+        "bylawLabels": [
+          "96/1",
+          "96/2",
+          "96/3",
+          "96/4",
+          "96/5",
+          "96/6",
+          "96/7",
+          "96/8"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 97,
+        "bylawLabels": [
+          "97/1",
+          "97/2",
+          "97/3",
+          "97/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 98,
+        "bylawLabels": [
+          "98/1",
+          "98/2"
+        ],
+        "explicitRefs": [
+          96
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 99,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 100,
+        "bylawLabels": [
+          "100/1",
+          "100/2",
+          "100/3",
+          "100/4",
+          "100/5",
+          "97/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 101,
+        "bylawLabels": [
+          "101/1",
+          "101/2",
+          "101/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 102,
+        "bylawLabels": [
+          "102/1",
+          "102/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 103,
+        "bylawLabels": [
+          "103/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 104,
+        "bylawLabels": [
+          "104/1",
+          "104/2",
+          "104/3",
+          "104/4"
+        ],
+        "explicitRefs": [
+          53,
+          74
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 105,
+        "bylawLabels": [
+          "105/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 106,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 107,
+        "bylawLabels": [
+          "107/1"
+        ],
+        "explicitRefs": [
+          67
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 108,
+        "bylawLabels": [
+          "108/1",
+          "108/2",
+          "108/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 109,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 110,
+        "bylawLabels": [
+          "110/1",
+          "110/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 111,
+        "bylawLabels": [
+          "111/1",
+          "111/2",
+          "111/3",
+          "111/4",
+          "111/5"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 112,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 113,
+        "bylawLabels": [
+          "113/1",
+          "113/2",
+          "113/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 114,
+        "bylawLabels": [
+          "114/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 115,
+        "bylawLabels": [
+          "115/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 116,
+        "bylawLabels": [
+          "116/1",
+          "116/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 117,
+        "bylawLabels": [
+          "117/1",
+          "117/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 118,
+        "bylawLabels": [
+          "118/1",
+          "118/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 119,
+        "bylawLabels": [
+          "119/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 120,
+        "bylawLabels": [
+          "120/1",
+          "120/2",
+          "120/3",
+          "120/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 121,
+        "bylawLabels": [
+          "121/1",
+          "121/2"
+        ],
+        "explicitRefs": [
+          101
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 122,
+        "bylawLabels": [
+          "122/1"
+        ],
+        "explicitRefs": [
+          102
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 123,
+        "bylawLabels": [
+          "123/1",
+          "123/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 124,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 125,
+        "bylawLabels": [
+          "125/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 126,
+        "bylawLabels": [
+          "126/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 127,
+        "bylawLabels": [
+          "127/1",
+          "127/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 128,
+        "bylawLabels": [
+          "128/1",
+          "128/2",
+          "128/3",
+          "128/4",
+          "128/5",
+          "128/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 129,
+        "bylawLabels": [
+          "129/1",
+          "129/2",
+          "129/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 130,
+        "bylawLabels": [
+          "130/1",
+          "130/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 131,
+        "bylawLabels": [
+          "131/1",
+          "131/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 132,
+        "bylawLabels": [
+          "132/1",
+          "132/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 133,
+        "bylawLabels": [
+          "133/1",
+          "133/2",
+          "133/3",
+          "133/4"
+        ],
+        "explicitRefs": [
+          96
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 134,
+        "bylawLabels": [
+          "134/1",
+          "134/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 135,
+        "bylawLabels": [
+          "135/1",
+          "135/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 136,
+        "bylawLabels": [
+          "136/1",
+          "136/2",
+          "136/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 137,
+        "bylawLabels": [
+          "137/1",
+          "137/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 138,
+        "bylawLabels": [
+          "138/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 139,
+        "bylawLabels": [
+          "139/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 140,
+        "bylawLabels": [
+          "140/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 141,
+        "bylawLabels": [
+          "141/1",
+          "141/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 142,
+        "bylawLabels": [
+          "142/1",
+          "142/2",
+          "142/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 143,
+        "bylawLabels": [
+          "143/1",
+          "143/2",
+          "143/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 144,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 145,
+        "bylawLabels": [
+          "145/1",
+          "145/2",
+          "145/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 146,
+        "bylawLabels": [
+          "146/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 147,
+        "bylawLabels": [
+          "147/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 148,
+        "bylawLabels": [
+          "148/1",
+          "148/2",
+          "148/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 149,
+        "bylawLabels": [
+          "149/1",
+          "149/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 150,
+        "bylawLabels": [
+          "150/1",
+          "150/2",
+          "150/3",
+          "150/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 151,
+        "bylawLabels": [
+          "151/1",
+          "151/2",
+          "151/3",
+          "151/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 152,
+        "bylawLabels": [
+          "152/1",
+          "152/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 153,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 154,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 155,
+        "bylawLabels": [
+          "155/1",
+          "155/2",
+          "155/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 156,
+        "bylawLabels": [
+          "156/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 157,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 158,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 159,
+        "bylawLabels": [
+          "159/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 160,
+        "bylawLabels": [
+          "160/1"
+        ],
+        "explicitRefs": [
+          162
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 161,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 162,
+        "bylawLabels": [
+          "162/1",
+          "162/2",
+          "162/3",
+          "162/4",
+          "162/5"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 163,
+        "bylawLabels": [
+          "163/1",
+          "163/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 164,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 165,
+        "bylawLabels": [
+          "165/1",
+          "165/2",
+          "165/3",
+          "165/4"
+        ],
+        "explicitRefs": [
+          185,
+          187
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 166,
+        "bylawLabels": [
+          "166/1",
+          "166/2",
+          "166/3",
+          "166/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 167,
+        "bylawLabels": [
+          "167/1",
+          "167/2",
+          "167/3"
+        ],
+        "explicitRefs": [
+          166
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 168,
+        "bylawLabels": [
+          "168/1",
+          "168/2",
+          "168/3",
+          "168/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 169,
+        "bylawLabels": [
+          "169/1",
+          "169/2",
+          "169/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 170,
+        "bylawLabels": [
+          "170/1",
+          "170/2",
+          "170/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 171,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 172,
+        "bylawLabels": [
+          "172/1",
+          "172/2",
+          "172/3"
+        ],
+        "explicitRefs": [
+          185
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 173,
+        "bylawLabels": [
+          "173/1",
+          "173/2",
+          "173/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 174,
+        "bylawLabels": [
+          "174/1",
+          "174/2",
+          "174/3"
+        ],
+        "explicitRefs": [
+          185
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 175,
+        "bylawLabels": [
+          "175/1",
+          "175/2",
+          "175/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 176,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 177,
+        "bylawLabels": [
+          "177/1",
+          "177/2",
+          "177/3",
+          "177/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 178,
+        "bylawLabels": [
+          "178/1",
+          "178/2",
+          "178/3",
+          "178/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 179,
+        "bylawLabels": [
+          "179/1",
+          "179/2",
+          "179/3",
+          "179/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 180,
+        "bylawLabels": [
+          "180/1",
+          "180/2",
+          "180/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 181,
+        "bylawLabels": [
+          "181/1",
+          "181/2"
+        ],
+        "explicitRefs": [
+          78
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 182,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 183,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 184,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 185,
+        "bylawLabels": [
+          "185/1",
+          "185/2"
+        ],
+        "explicitRefs": [
+          57,
+          177
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 186,
+        "bylawLabels": [
+          "186/1",
+          "186/2",
+          "186/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 187,
+        "bylawLabels": [
+          "187/1"
+        ],
+        "explicitRefs": [
+          185
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 188,
+        "bylawLabels": [
+          "188/1",
+          "188/2",
+          "188/3",
+          "188/4",
+          "188/5",
+          "188/6"
+        ],
+        "explicitRefs": [
+          41
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 189,
+        "bylawLabels": [
+          "189/1",
+          "189/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 190,
+        "bylawLabels": [
+          "190/1",
+          "190/2",
+          "190/3",
+          "190/4",
+          "190/5",
+          "190/6",
+          "190/7"
+        ],
+        "explicitRefs": [
+          166,
+          185
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 191,
+        "bylawLabels": [
+          "191/1",
+          "191/2",
+          "191/3",
+          "191/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 192,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 193,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 194,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 195,
+        "bylawLabels": [
+          "195/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 196,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 197,
+        "bylawLabels": [],
+        "explicitRefs": [
+          195
+        ],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 198,
+        "bylawLabels": [
+          "198/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 199,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 200,
+        "bylawLabels": [
+          "200/1",
+          "200/2"
+        ],
+        "explicitRefs": [
+          185
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 201,
+        "bylawLabels": [
+          "201/1"
+        ],
+        "explicitRefs": [
+          200
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 202,
+        "bylawLabels": [
+          "202/1",
+          "202/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 203,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 204,
+        "bylawLabels": [],
+        "explicitRefs": [
+          200
+        ],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 205,
+        "bylawLabels": [
+          "205/1",
+          "205/2",
+          "205/3",
+          "205/4",
+          "205/5",
+          "205/6"
+        ],
+        "explicitRefs": [
+          87,
+          206
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 206,
+        "bylawLabels": [
+          "206/1",
+          "206/2",
+          "206/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 207,
+        "bylawLabels": [
+          "207/1",
+          "207/2",
+          "207/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 208,
+        "bylawLabels": [
+          "208/1",
+          "208/2",
+          "208/3",
+          "208/4",
+          "208/5",
+          "208/6",
+          "208/7"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 209,
+        "bylawLabels": [
+          "209/1",
+          "209/2",
+          "209/3",
+          "209/4",
+          "209/5",
+          "209/6",
+          "209/7"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 210,
+        "bylawLabels": [
+          "210/1",
+          "210/2",
+          "210/3",
+          "210/4",
+          "210/5"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 211,
+        "bylawLabels": [
+          "211/1",
+          "211/2",
+          "211/3",
+          "211/4",
+          "211/5",
+          "211/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 212,
+        "bylawLabels": [
+          "212/1",
+          "212/2",
+          "212/3",
+          "212/4",
+          "212/5",
+          "212/6",
+          "212/7",
+          "212/8"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 213,
+        "bylawLabels": [
+          "213/1",
+          "213/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 214,
+        "bylawLabels": [
+          "214/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 215,
+        "bylawLabels": [
+          "215/1",
+          "215/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 216,
+        "bylawLabels": [
+          "216/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 217,
+        "bylawLabels": [
+          "217/1",
+          "217/2",
+          "217/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 218,
+        "bylawLabels": [
+          "218/1",
+          "218/2",
+          "218/3",
+          "218/4",
+          "218/5",
+          "218/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 219,
+        "bylawLabels": [
+          "219/1",
+          "219/2",
+          "219/3",
+          "219/4",
+          "219/5"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 220,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 221,
+        "bylawLabels": [
+          "221/1",
+          "221/2",
+          "221/3",
+          "221/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 222,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 223,
+        "bylawLabels": [
+          "223/1",
+          "223/2",
+          "223/3",
+          "223/4",
+          "223/5",
+          "223/6",
+          "223/7",
+          "223/8",
+          "223/9",
+          "223/10"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 224,
+        "bylawLabels": [
+          "224/1",
+          "224/2",
+          "224/3",
+          "224/4",
+          "224/5",
+          "224/6",
+          "224/7",
+          "224/8"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 224,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 225,
+        "bylawLabels": [
+          "225/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 226,
+        "bylawLabels": [
+          "226/1",
+          "226/2",
+          "226/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 227,
+        "bylawLabels": [
+          "227/1",
+          "227/2",
+          "227/3",
+          "227/4",
+          "227/5",
+          "227/6",
+          "227/7"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 228,
+        "bylawLabels": [
+          "228/1",
+          "228/2",
+          "228/3",
+          "228/4",
+          "228/5",
+          "228/6",
+          "228/7",
+          "228/8",
+          "228/9",
+          "228/10",
+          "228/11",
+          "228/12"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 229,
+        "bylawLabels": [
+          "229/1",
+          "229/2",
+          "229/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 230,
+        "bylawLabels": [
+          "230/1",
+          "230/2",
+          "230/3",
+          "230/4"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 231,
+        "bylawLabels": [
+          "231/1",
+          "231/2",
+          "231/3",
+          "231/4",
+          "231/5",
+          "231/6",
+          "231/7"
+        ],
+        "explicitRefs": [
+          233
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 232,
+        "bylawLabels": [
+          "232/1",
+          "232/2"
+        ],
+        "explicitRefs": [
+          231
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 233,
+        "bylawLabels": [
+          "233/1",
+          "233/2",
+          "233/3",
+          "233/4"
+        ],
+        "explicitRefs": [
+          166,
+          231
+        ],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 234,
+        "bylawLabels": [
+          "234/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 235,
+        "bylawLabels": [
+          "235/1",
+          "235/2",
+          "235/3",
+          "235/4",
+          "235/5",
+          "235/6"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 236,
+        "bylawLabels": [
+          "236/1",
+          "236/2",
+          "236/3"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 237,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 238,
+        "bylawLabels": [
+          "238/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 239,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 240,
+        "bylawLabels": [
+          "240/1",
+          "11/2",
+          "128/2",
+          "128/4",
+          "218/4",
+          "240/2"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      },
+      {
+        "sysNum": 241,
+        "bylawLabels": [],
+        "explicitRefs": [],
+        "hasBylaw": false
+      },
+      {
+        "sysNum": 242,
+        "bylawLabels": [
+          "242/1"
+        ],
+        "explicitRefs": [],
+        "hasBylaw": true
+      }
+    ]
+  }
+]
