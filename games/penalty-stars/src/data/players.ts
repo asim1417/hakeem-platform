@@ -7,6 +7,7 @@ import hassouniPhoto from '../assets/players/hassouni.png';
 import hammadPhoto from '../assets/players/hammad.png';
 import hishamPhoto from '../assets/players/hisham.png';
 import omarPhoto from '../assets/players/omar.png';
+import sheikhPhoto from '../assets/players/sheikh.png';
 
 // نوع الاحتفال عند تسجيل الهدف
 export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart' | 'roar' | 'crown';
@@ -129,7 +130,7 @@ export const PLAYERS: PlayerDef[] = [
   },
   {
     id: 'sheikh',
-    name: 'الشيخ الهداف',
+    name: 'الشيخ أحمد',
     emoji: '🌙',
     color: 0x20b2aa,
     speed: 6,
@@ -137,7 +138,8 @@ export const PLAYERS: PlayerDef[] = [
     accuracy: 9,
     celebration: 'هدوء وإتقان! 🌙',
     celebrationType: 'stars',
-    cheer: 'الشيخ الهداف بكل هدوء!',
+    cheer: 'الشيخ أحمد يسجل بكل هدوء!',
+    photo: sheikhPhoto,
   },
   {
     id: 'assoumi',
