@@ -19,7 +19,7 @@ export class PlayerSelectScene extends Phaser.Scene {
     }
 
     const title = this.add
-      .text(GAME_WIDTH / 2, 55, rtl('😃 اختر لاعبك المفضل'), {
+      .text(GAME_WIDTH / 2, 55, rtl('😃 اختر لاعبك وابدأ اللعب فورًا!'), {
         fontFamily: FONT,
         fontSize: '32px',
         color: '#ffd93d',
@@ -83,7 +83,11 @@ export class PlayerSelectScene extends Phaser.Scene {
     card.on('pointerup', () => {
       audio.play('button');
       this.registry.set('playerId', p.id);
-      this.scene.restart(); // إعادة الرسم لإظهار علامة الاختيار
+      // انتقال مباشر للعب: وميض اختيار سريع ثم بدء البطولة — بلا رجوع
+      bg.setStrokeStyle(6, COLORS.yellow);
+      this.tweens.add({ targets: card, scale: 1.08, duration: 120, yoyo: true });
+      audio.play('whistle');
+      this.time.delayedCall(320, () => this.scene.start('Game', { stage: 0 }));
     });
     return card;
   }
