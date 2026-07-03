@@ -1,0 +1,29 @@
+name: Nezams Diagnose (page structure, read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "رابط صفحة nezams"
+        type: string
+        required: true
+        default: "https://nezams.com/نظام-المرافعات-الشرعية-ولائحته-التنف/"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install Playwright (python)
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Diagnose page structure
+        env:
+          NZ_URL: ${{ inputs.url }}
+        run: python scripts/nezams/nz_diagnose.py "$NZ_URL"
