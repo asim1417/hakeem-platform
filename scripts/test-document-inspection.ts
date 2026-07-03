@@ -5,15 +5,30 @@ import assert from "node:assert/strict";
 import {
   analyzeDocuments,
   assessQuality,
+  buildBm25Index,
+  buildStemFamilies,
+  bm25Score,
   classifyType,
+  computeFrequencies,
+  computeTermStats,
+  convertDateApprox,
   detectIssuer,
   detectTopics,
   extractEntities,
   extractHijriYear,
+  findRanges,
+  isBoilerplateLine,
+  lightStem,
   makeCode,
+  matchDoc,
+  normStr,
   normalizeForMatch,
+  occurrences,
+  parseQuery,
+  queryStems,
   sampleCaseDocuments,
   segmentParagraph,
+  suspectWords,
   validateReference
 } from "../lib/modules/document-inspection";
 
@@ -155,6 +170,83 @@ check("التسلسل داخل (النوع×الجهة×السنة)", () => {
   ]);
   assert.equal(twin[0].code, "HKM.TIJ.1446.001");
   assert.equal(twin[1].code, "HKM.TIJ.1446.002");
+});
+
+// ── طبقة البحث (واجهة v2) ──
+
+check("تحليل الاستعلام: عبارة دقيقة واستبعاد وأو", () => {
+  const P = parseQuery('"بيع الحصص" عقد -تقرير أو');
+  assert.deepEqual(P.phrases, [normStr("بيع الحصص")]);
+  assert.deepEqual(P.terms, [normStr("عقد")]);
+  assert.deepEqual(P.nots, [normStr("تقرير")]);
+  assert.equal(P.orMode, true);
+});
+
+check("التجذيع الخفيف: ال/و بادئة وات/ين لاحقة", () => {
+  assert.equal(lightStem(normStr("والدعوى")), normStr("دعو"));
+  assert.equal(lightStem(normStr("الشركات")), normStr("شرك"));
+  assert.equal(lightStem("عقد"), "عقد");
+});
+
+check("مطابقة الوثيقة: استبعاد يُسقط، والاشتقاق يوسّع", () => {
+  const docs = analyzeDocuments([
+    { title: "مذكرة", rawText: "تقدم المدعي بدعواه إلى المحكمة التجارية بشأن الشركات" }
+  ]);
+  const hay = normStr(`${docs[0].title} \n ${docs[0].rawText}`);
+  const fams = buildStemFamilies(docs);
+  assert.equal(matchDoc(parseQuery("الشركة"), hay, fams), true); // «الشركة» تطابق «الشركات» بالجذع
+  assert.equal(matchDoc(parseQuery("الشركة"), hay, null), false); // بلا اشتقاق: لا تطابق حرفياً
+  assert.equal(matchDoc(parseQuery("المحكمة -الشركات"), hay, null), false); // الاستبعاد يُسقط
+});
+
+check("BM25: الوثيقة الأكثر تكراراً للكلمة تتقدم", () => {
+  const texts = [normStr("عقد بيع عقد بيع عقد"), normStr("مذكرة اعتراض واحدة عن عقد")];
+  const idx = buildBm25Index(texts);
+  const stems = queryStems(parseQuery("عقد"));
+  assert.ok(bm25Score(idx, 0, stems) > bm25Score(idx, 1, stems));
+});
+
+check("مواضع التظليل تُعاد على النص الأصلي (مع التشكيل)", () => {
+  const text = "حَكَمَتِ الدائرةُ برفضِ الدعوى";
+  const ranges = findRanges(text, [normStr("الدائرة")]);
+  assert.equal(ranges.length, 1);
+  assert.equal(text.slice(ranges[0][0], ranges[0][1]).includes("الدائرة"), true);
+  const occ = occurrences(text, [normStr("الدعوى")]);
+  assert.equal(occ.length, 1);
+});
+
+check("الكلمات غير الواضحة: تكرار حرف ثلاثاً أو رمز تالف", () => {
+  const s = suspectWords("حضر وكيلللتاعن وقدم مذكرته ورمز ت�لف هنا");
+  assert.ok(s.has(normStr("وكيلللتاعن")));
+  assert.ok(!s.has(normStr("مذكرته")));
+});
+
+check("المصطلحات: «غبن» يُحصى ويُنسب لفئته من المكنز", () => {
+  const docs = analyzeDocuments([{ title: "مذكرة", rawText: "دفع المدعي بوقوع الغبن والتدليس في العقد مرتين غبن" }]);
+  const stats = computeTermStats(docs);
+  const ghabn = stats.concepts.find((c) => c.term === "غبن");
+  assert.ok(ghabn && ghabn.count >= 2 && ghabn.category === "عيوب الإرادة");
+});
+
+check("الأكثر تكراراً: تجميع بالجذع واستبعاد كلمات الوصل", () => {
+  const docs = analyzeDocuments([
+    { title: "مذكرة", rawText: "الدعوى دعوى الدعاوى في من إلى الدعوى مذكرة" }
+  ]);
+  const f = computeFrequencies(docs);
+  assert.ok(f.length > 0);
+  assert.ok(f[0].count >= 3);
+  assert.ok(!f.some((g) => normStr(g.word) === normStr("في")));
+});
+
+check("تحويل التاريخ التقريبي: هجري→ميلادي والعكس", () => {
+  assert.ok(convertDateApprox("١٤٤٦/٠٣/١٢هـ").startsWith("م "));
+  assert.ok(convertDateApprox("15-06-2024").startsWith("هـ "));
+  assert.equal(convertDateApprox("بلا تاريخ"), "");
+});
+
+check("أسطر الترويسة تُكشف", () => {
+  assert.equal(isBoilerplateLine("المملكة العربية السعودية — وزارة العدل"), true);
+  assert.equal(isBoilerplateLine("وحيث إن المدعي طلب الفسخ"), false);
 });
 
 console.log(`\nكل الاختبارات ناجحة (${passed})`);
