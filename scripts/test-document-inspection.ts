@@ -356,6 +356,59 @@ check("تحليل شامل issues: rev/frag/badsym/ar", () => {
   assert.ok(bad.badsym >= 1 || bad.q < 70);
 });
 
+// ── بنية الوثيقة: الترويسة/المتن/التذييل + الحقول حسب النوع ──
+import {
+  extractKeyFields,
+  removePageFurniture,
+  segmentDocument
+} from "../lib/modules/document-inspection/structure";
+
+check("الترويسة تُفصل عن المتن (منطقة الهامش العلوي)", () => {
+  const text = "المملكة العربية السعودية\nوزارة العدل المحكمة التجارية\nالدائرة الأولى\nحكمت الدائرة برفض الدعوى المقامة من شركة الأفق";
+  const seg = segmentDocument(text, "TIJ");
+  assert.ok(seg.headerLines.length >= 2);
+  assert.ok(seg.headerLines.join(" ").includes("وزارة العدل"));
+  assert.ok(seg.bodyText.includes("حكمت الدائرة"));
+  assert.ok(!seg.bodyText.includes("وزارة العدل")); // الترويسة خارج المتن
+});
+
+check("التذييل يُفصل (رمز التحقّق/التوقيع في الهامش السفلي)", () => {
+  const text = "حكمت الدائرة برفض الدعوى\nوالله الموفق\nالتوقيع: القاضي فلان\nرمز التحقق: AB12CD";
+  const seg = segmentDocument(text, "TIJ");
+  assert.ok(seg.footerLines.some((l) => l.includes("رمز التحقق") || l.includes("التوقيع")));
+  assert.ok(!seg.bodyText.includes("رمز التحقق"));
+});
+
+check("إزالة أثاث الصفحة المتكرّر عبر صفحات PDF", () => {
+  const page = (n: number) => `[صفحة ${n}]\nوزارة العدل\nمتن الصفحة رقم ${n} المختلف\nصفحة ${n} من 3`;
+  const text = [page(1), page(2), page(3)].join("\n\n");
+  const cleaned = removePageFurniture(text);
+  assert.ok(cleaned.includes("متن الصفحة رقم 1"));
+  assert.ok(!cleaned.includes("وزارة العدل")); // الترويسة المتكرّرة أُزيلت
+});
+
+check("استخراج الحقول حسب النوع: حكم مقابل عقد (تفريق حقيقي)", () => {
+  const ruling = analyzeDocuments([
+    {
+      title: "صك حكم",
+      rawText:
+        "المملكة العربية السعودية المحكمة التجارية الدائرة الأولى صك رقم 3142078 وتاريخ ١٤٤٦/٠٣/١٢هـ\nحكمت الدائرة برفض الدعوى المقامة من شركة الأفق التجارية ضد مؤسسة النخبة."
+    }
+  ])[0];
+  const rf = extractKeyFields(ruling);
+  const labels = rf.map((f) => f.label);
+  assert.ok(labels.includes("رقم الصك")); // حقل خاص بالحكم
+  assert.ok(labels.includes("المنطوق"));
+
+  const contract = analyzeDocuments([
+    { title: "عقد بيع", rawText: "عقد بيع حصص\nاتفق الطرفان شركة الأفق ومؤسسة النخبة على البيع بمبلغ ٣٠٠٬٠٠٠ ريال." }
+  ])[0];
+  const cf = extractKeyFields(contract);
+  const clabels = cf.map((f) => f.label);
+  assert.ok(clabels.includes("الثمن")); // حقل خاص بالعقد لا الحكم
+  assert.ok(!clabels.includes("رقم الصك"));
+});
+
 // ── توجيه OCR ──
 import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
 
