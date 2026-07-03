@@ -1,11 +1,9 @@
 "use client";
 
-// واجهة تصفّح الوثائق — نقل كامل لخصائص «واجهة تصفّح القضية v2» إلى المنصة.
-// ملاحظة حاكمة: بيانات القضية الأصلية (وثائقها وأسماؤها وروابطها) حُذفت كلياً —
-// الواجهة تبدأ فارغة وتعمل على وثائق يضيفها المستخدم (لصقاً أو من ملف)، وكل
-// التبويبات والجداول تُشتق آلياً من كيانات المصنّف الحتمي. لا تخزين متصفح دائم (PDPL).
+// منصة الوثائق — واجهة تصفّح مستقلة (تستخدم البنية للنشر فقط).
+// التحليل كله محلي في المتصفح؛ الحفظ الدائم اختياري عبر «قضاياي» (قاعدة بيانات المنصة).
+// كل التبويبات والجداول تُشتق آلياً من كيانات المصنّف الحتمي — لا بيانات مثبّتة.
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzeDocuments,
@@ -30,6 +28,7 @@ import {
   type DocumentInput,
   type ParsedQuery
 } from "@/lib/modules/document-inspection";
+import { extractFromFile } from "@/lib/modules/document-inspection/file-extract";
 import styles from "./casebrowser.module.css";
 
 type ThemeKey = "" | "dark" | "paper";
@@ -255,6 +254,14 @@ export function CaseBrowser() {
   const [markIdx, setMarkIdx] = useState(-1);
   const [markCount, setMarkCount] = useState(0);
 
+  // «قضاياي» — الحفظ الدائم في قاعدة بيانات المنصة (اختياري)
+  const [savedCases, setSavedCases] = useState<Array<{ id: string; title: string; docCount: number; updatedAt: string }>>([]);
+  const [casesOpen, setCasesOpen] = useState(false);
+  const [loadedCaseId, setLoadedCaseId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+  const [fileBusy, setFileBusy] = useState(false);
+
   const pendingMark = useRef<number | "first" | "last">("first");
   const txtRef = useRef<HTMLDivElement | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
@@ -464,6 +471,25 @@ export function CaseBrowser() {
   }
 
   async function handleLoadFile(file: File) {
+    const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+    // PDF / DOCX / TXT: استخراج النص محلياً في المتصفح ثم إضافته كوثيقة
+    if (ext === "pdf" || ext === "docx" || ext === "txt" || ext === "md") {
+      setFileBusy(true);
+      try {
+        const extracted = await extractFromFile(file);
+        const next = [...inputs, { title: extracted.title, rawText: extracted.rawText }];
+        setInputs(next);
+        const analyzed = analyzeDocuments(next);
+        setCurrentCode(analyzed[analyzed.length - 1].code);
+        setStatusMsg(extracted.warning ? `⚠ ${extracted.warning}` : `✓ استُخرج نص «${extracted.title}» محلياً`);
+        setTimeout(() => setStatusMsg(""), 5000);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : "تعذّر استخراج النص من الملف");
+      } finally {
+        setFileBusy(false);
+      }
+      return;
+    }
     const text = await file.text();
     try {
       const start = text.indexOf("{");
@@ -517,6 +543,122 @@ export function CaseBrowser() {
     } catch {
       window.alert("تعذّر التشفير في هذا المتصفح.");
     }
+  }
+
+  // ── «قضاياي»: حفظ دائم اختياري في قاعدة بيانات المنصة (كوكي مساحة عمل، بلا حساب) ──
+
+  const prefsLoaded = useRef(false);
+
+  const refreshSavedCases = useCallback(async (): Promise<unknown> => {
+    try {
+      const res = await fetch("/api/doc-platform/cases");
+      const json: unknown = await res.json();
+      const o = (typeof json === "object" && json !== null ? json : {}) as Record<string, unknown>;
+      if (Array.isArray(o.cases)) {
+        setSavedCases(o.cases as Array<{ id: string; title: string; docCount: number; updatedAt: string }>);
+      }
+      return o;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // عند الفتح: جلب القضايا المحفوظة + تطبيق التفضيلات المحفوظة
+  useEffect(() => {
+    void (async () => {
+      const o = (await refreshSavedCases()) as Record<string, unknown> | null;
+      const p = o?.prefs;
+      if (p && typeof p === "object") {
+        const prefs = p as Record<string, unknown>;
+        if (typeof prefs.fontSize === "number") setFontSize(prefs.fontSize);
+        if (typeof prefs.lineHeight === "number") setLineHeight(prefs.lineHeight);
+        if (typeof prefs.fontFamily === "string") setFontFamily(prefs.fontFamily);
+        if (typeof prefs.justify === "boolean") setJustify(prefs.justify);
+        if (prefs.theme === "" || prefs.theme === "dark" || prefs.theme === "paper") setTheme(prefs.theme);
+      }
+      prefsLoaded.current = true;
+    })();
+  }, [refreshSavedCases]);
+
+  // حفظ التفضيلات تلقائياً (بعد التحميل الأول)
+  useEffect(() => {
+    if (!prefsLoaded.current) return;
+    const t = setTimeout(() => {
+      void fetch("/api/doc-platform/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prefs: { fontSize, lineHeight, fontFamily, justify, theme } })
+      }).catch(() => undefined);
+    }, 900);
+    return () => clearTimeout(t);
+  }, [fontSize, lineHeight, fontFamily, justify, theme]);
+
+  function collectAnnotations() {
+    return {
+      notes: Object.fromEntries(notes),
+      flags: Object.fromEntries(flags),
+      quotes
+    };
+  }
+
+  async function saveCase() {
+    if (!inputs.length) {
+      window.alert("لا وثائق للحفظ.");
+      return;
+    }
+    const currentTitle = loadedCaseId ? savedCases.find((c) => c.id === loadedCaseId)?.title : undefined;
+    const title = window.prompt("اسم القضية:", currentTitle ?? "قضيتي");
+    if (title == null) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/doc-platform/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId: loadedCaseId, title, docs: inputs, annotations: collectAnnotations() })
+      });
+      const json: unknown = await res.json();
+      const o = (typeof json === "object" && json !== null ? json : {}) as Record<string, unknown>;
+      if (!res.ok) {
+        window.alert(typeof o.error === "string" ? o.error : "تعذّر الحفظ");
+        return;
+      }
+      if (typeof o.id === "string") setLoadedCaseId(o.id);
+      setStatusMsg("✓ حُفظت القضية في حسابك على المنصة");
+      setTimeout(() => setStatusMsg(""), 4000);
+      void refreshSavedCases();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function loadCase(id: string) {
+    const res = await fetch(`/api/doc-platform/cases/${id}`);
+    const json: unknown = await res.json();
+    const o = (typeof json === "object" && json !== null ? json : {}) as Record<string, unknown>;
+    if (!res.ok) {
+      window.alert(typeof o.error === "string" ? o.error : "تعذّر التحميل");
+      return;
+    }
+    const loaded = parseLoadedDocs(o.docs);
+    if (!loaded.length) {
+      window.alert("القضية المحفوظة فارغة.");
+      return;
+    }
+    setInputs(loaded);
+    setCurrentCode(null);
+    setLoadedCaseId(id);
+    const ann = (typeof o.annotations === "object" && o.annotations !== null ? o.annotations : {}) as Record<string, unknown>;
+    setNotes(new Map(Object.entries((ann.notes as Record<string, string>) ?? {})));
+    setFlags(new Map(Object.entries((ann.flags as Record<string, string>) ?? {})));
+    setQuotes(Array.isArray(ann.quotes) ? (ann.quotes as Quote[]) : []);
+    setCasesOpen(false);
+  }
+
+  async function deleteCase(id: string) {
+    if (!window.confirm("حذف هذه القضية المحفوظة نهائياً؟")) return;
+    await fetch(`/api/doc-platform/cases/${id}`, { method: "DELETE" }).catch(() => undefined);
+    if (loadedCaseId === id) setLoadedCaseId(null);
+    void refreshSavedCases();
   }
 
   // ── التصدير ──
@@ -830,8 +972,8 @@ export function CaseBrowser() {
             </button>
           </span>
           <span className={styles.grp}>
-            <button onClick={() => fileRef.current?.click()} title="فتح ملف وثائق (JSON أو نسخة مقفلة)">
-              📂 فتح
+            <button onClick={() => fileRef.current?.click()} title="رفع ملف: PDF نصّي، DOCX، TXT، JSON، أو نسخة مقفلة" disabled={fileBusy}>
+              {fileBusy ? "⏳ يستخرج…" : "📂 رفع ملف"}
             </button>
             <button onClick={() => setAddOpen(true)} title="لصق وثيقة جديدة للفحص">
               ＋ إضافة
@@ -839,7 +981,7 @@ export function CaseBrowser() {
             <input
               ref={fileRef}
               type="file"
-              accept=".js,.json"
+              accept=".pdf,.docx,.txt,.md,.js,.json"
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -848,9 +990,23 @@ export function CaseBrowser() {
               }}
             />
           </span>
+          <span className={styles.grp}>
+            <button onClick={() => void saveCase()} title="حفظ القضية في حسابك على المنصة" disabled={saving}>
+              {saving ? "⏳ يحفظ…" : "💾 حفظ"}
+            </button>
+            <button
+              onClick={() => {
+                setCasesOpen(true);
+                void refreshSavedCases();
+              }}
+              title="القضايا المحفوظة"
+            >
+              🗂 قضاياي ({savedCases.length})
+            </button>
+          </span>
         </div>
-        <span className={styles.meta}>
-          {docs.length ? `${docs.length} مستند — جلسة محلية` : "لا وثائق بعد"} · <Link href="/dashboard">حكيم ↗</Link>
+        <span className={styles.meta} role="status" aria-live="polite">
+          {statusMsg || (docs.length ? `${docs.length} مستند${loadedCaseId ? " — قضية محفوظة" : " — جلسة محلية"}` : "لا وثائق بعد")}
         </span>
       </header>
 
@@ -1524,6 +1680,48 @@ export function CaseBrowser() {
                 فحص وإضافة
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {casesOpen ? (
+        <div className={styles.modal} onClick={(e) => e.target === e.currentTarget && setCasesOpen(false)}>
+          <div className={styles.panel}>
+            <button
+              style={{ float: "left", border: "none", background: "none", cursor: "pointer", fontSize: 18, color: "var(--mut)" }}
+              onClick={() => setCasesOpen(false)}
+            >
+              ×
+            </button>
+            <h3>🗂 قضاياي المحفوظة</h3>
+            <p className={styles.hint}>تُحفظ القضايا في قاعدة بيانات المنصة مرتبطةً بهذا المتصفح، وتشمل الوثائق والملاحظات والأعلام والمقتطفات.</p>
+            {savedCases.length === 0 ? (
+              <div className={styles.empty} style={{ margin: "24px 0" }}>
+                لا قضايا محفوظة بعد — أضف وثائق ثم اضغط «💾 حفظ».
+              </div>
+            ) : (
+              savedCases.map((c) => (
+                <div key={c.id} className={styles.quote}>
+                  <b>{c.title}</b> — {c.docCount} وثيقة
+                  <div style={{ color: "var(--mut)", fontSize: 11.5, marginTop: 4, display: "flex", gap: 12 }}>
+                    <span>{c.updatedAt.slice(0, 10)}</span>
+                    <button
+                      style={{ border: "none", background: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12 }}
+                      onClick={() => void loadCase(c.id)}
+                    >
+                      فتح
+                    </button>
+                    <button
+                      style={{ border: "none", background: "none", color: "#b91c1c", cursor: "pointer", fontSize: 12 }}
+                      onClick={() => void deleteCase(c.id)}
+                    >
+                      حذف
+                    </button>
+                    {loadedCaseId === c.id ? <span>← المفتوحة الآن</span> : null}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       ) : null}

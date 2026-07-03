@@ -1,0 +1,21 @@
+# تهيئة جداول منصة الوثائق (doc_workspaces, doc_cases) على قاعدة البيانات
+# يُشغَّل يدوياً مرة واحدة بعد دمج المخطط — Actions → Doc Platform DB Push → Run
+name: Doc Platform DB Push
+
+on:
+  workflow_dispatch:
+
+jobs:
+  db-push:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Push schema (creates missing tables only)
+        run: npx prisma db push --skip-generate
