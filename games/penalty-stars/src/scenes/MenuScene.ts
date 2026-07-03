@@ -1,7 +1,7 @@
 // MenuScene — واجهة البداية: الشعار والأزرار الكبيرة واختيار الصعوبة
 
 import Phaser from 'phaser';
-import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES } from '../config/gameConfig';
+import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES, VERSION } from '../config/gameConfig';
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
@@ -116,6 +116,18 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0, 0.5);
     popIn(starsLabel, 0.3);
+
+    // رقم الإصدار — للتحقق من تحديث النسخة على الجهاز
+    this.add
+      .text(GAME_WIDTH - 8, GAME_HEIGHT - 8, rtl(VERSION), {
+        fontFamily: FONT,
+        fontSize: '13px',
+        color: '#ffffff',
+        stroke: '#1a5c2e',
+        strokeThickness: 3,
+      })
+      .setOrigin(1, 1)
+      .setAlpha(0.85);
 
     // زر كتم الصوت
     const muteBtn = makeButton(this, GAME_WIDTH - 55, 50, audio.isMuted() ? '🔇' : '🔊', () => {
