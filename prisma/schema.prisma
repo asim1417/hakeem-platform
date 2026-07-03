@@ -48,21 +48,21 @@ enum SimulationStage {
 }
 
 model User {
-  id            String             @id @default(cuid())
-  name          String
-  email         String             @unique
-  passwordHash  String
-  role          UserRole           @default(TRAINEE)
-  isActive      Boolean            @default(true)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  cases         CaseFile[]
-  consultations Consultation[]
-  simulations   Simulation[]
-  auditEvents   AuditEvent[]
-  training      TrainingProgress[]
-  annotations   Annotation[]
-  folders       Folder[]
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  passwordHash      String
+  role              UserRole           @default(TRAINEE)
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  cases             CaseFile[]
+  consultations     Consultation[]
+  simulations       Simulation[]
+  auditEvents       AuditEvent[]
+  training          TrainingProgress[]
+  annotations       Annotation[]
+  folders           Folder[]
   chatConversations ChatConversation[]
   simulationCases   SimulationCase[]
 
@@ -106,7 +106,7 @@ model LegalSystem {
   classification String?
   code           String?        @unique // الرمز الفريد من ملف التصنيف (مثل CIV-001)
   domain         String? // المجال المصنّف
-  domainTitle    String?         @map("domain_title") // العنوان العربي للمجال
+  domainTitle    String?        @map("domain_title") // العنوان العربي للمجال
   sortOrder      Int            @default(0) @map("sort_order")
   eliSlug        String?        @unique @map("eli_slug") // slug تشريعي ثابت (يُجمّد عند الإنشاء) — أساس معرّف ELI الدائم
   articleCount   Int            @default(0)
@@ -140,6 +140,7 @@ model LegalArticle {
   caseLinks      LegalArticleCaseLink[]
   amendments     ArticleAmendment[]
   versions       ArticleVersion[]
+  graphNodes     LegalGraphNode[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
@@ -180,19 +181,19 @@ model ArticleAmendment {
 // بتاريخ X». versionText ثابت بعد الإنشاء (تصحيح = نسخة جديدة، لا تحرير).
 // النسخة النافذة حاليًا: effectiveTo = null (واحدة كحدّ أقصى لكل مادة).
 model ArticleVersion {
-  id             String        @id @default(cuid())
-  articleId      String        @map("article_id")
-  article        LegalArticle  @relation(fields: [articleId], references: [id])
-  versionText    String        @map("version_text") // النصّ الكامل النافذ في هذه النسخة
-  effectiveFrom  DateTime?     @map("effective_from")
-  effectiveTo    DateTime?     @map("effective_to") // null = النسخة النافذة حاليًا
-  royalDecree    String?       @map("royal_decree")
-  hijriDate      String?       @map("hijri_date")
-  supersededById String?       @map("superseded_by")
+  id             String           @id @default(cuid())
+  articleId      String           @map("article_id")
+  article        LegalArticle     @relation(fields: [articleId], references: [id])
+  versionText    String           @map("version_text") // النصّ الكامل النافذ في هذه النسخة
+  effectiveFrom  DateTime?        @map("effective_from")
+  effectiveTo    DateTime?        @map("effective_to") // null = النسخة النافذة حاليًا
+  royalDecree    String?          @map("royal_decree")
+  hijriDate      String?          @map("hijri_date")
+  supersededById String?          @map("superseded_by")
   supersededBy   ArticleVersion?  @relation("VersionChain", fields: [supersededById], references: [id])
   supersedes     ArticleVersion[] @relation("VersionChain")
-  source         String        @default("derived") // derived | manual | amendment | import
-  createdAt      DateTime      @default(now()) @map("created_at")
+  source         String           @default("derived") // derived | manual | amendment | import
+  createdAt      DateTime         @default(now()) @map("created_at")
 
   @@index([articleId, effectiveFrom])
   @@index([effectiveTo])
@@ -630,12 +631,12 @@ model FiqhIssueLink {
 // تصنيف هرمي للموضوعات القانونية (مثال: التزامات ← مسؤولية عقدية ← فسخ).
 // مرجعية للفلترة والتنظيم؛ الربط بالمواد/الأحكام منطقيّ عبر الاسم/المعرّف.
 model LegalTopic {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  parentId  String?      @map("parent_id")
-  path      String       @default("") // مسار هرمي مثل: التزامات/مسؤولية عقدية
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  name      String   @unique
+  parentId  String?  @map("parent_id")
+  path      String   @default("") // مسار هرمي مثل: التزامات/مسؤولية عقدية
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   parent   LegalTopic?  @relation("TopicHierarchy", fields: [parentId], references: [id])
   children LegalTopic[] @relation("TopicHierarchy")
@@ -664,18 +665,18 @@ model SearchLog {
 // لا تُنشر مواءمة على الواجهة إلا بعد مراجعة بشرية أو موسومة «آلية غير معتمدة».
 
 model FiqhSource {
-  id                 String     @id @default(cuid())
-  sourceTitle        String     @map("source_title")
+  id                 String   @id @default(cuid())
+  sourceTitle        String   @map("source_title")
   author             String?
   school             String? // المذهب
   era                String?
-  sourceType         String     @default("book") @map("source_type")
+  sourceType         String   @default("book") @map("source_type")
   edition            String?
   publisher          String?
-  verificationStatus String     @default("unverified") @map("verification_status")
-  externalId         String?    @unique @map("external_id") // معرّف المصدر الخارجي (مثل تراث)
-  createdAt          DateTime   @default(now()) @map("created_at")
-  updatedAt          DateTime   @updatedAt @map("updated_at")
+  verificationStatus String   @default("unverified") @map("verification_status")
+  externalId         String?  @unique @map("external_id") // معرّف المصدر الخارجي (مثل تراث)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   texts FiqhText[]
 
@@ -708,18 +709,18 @@ model FiqhText {
 }
 
 model FiqhArticleAlignment {
-  id             String    @id @default(cuid())
-  articleId      String    @map("article_id")
-  fiqhTextId     String    @map("fiqh_text_id")
-  fiqhText       FiqhText  @relation(fields: [fiqhTextId], references: [id])
-  alignmentType  String    @default("topical") @map("alignment_type") // اصل|قاعدة|نظير|خلاف|تأصيل|غير_مناسب
-  alignmentReason String?  @map("alignment_reason") // وجه الصلة
-  confidenceScore Float?   @map("confidence_score")
-  reviewStatus   String    @default("needs_review") @map("review_status")
-  reviewedBy     String?   @map("reviewed_by")
-  reviewedAt     DateTime? @map("reviewed_at")
-  deletedAt      DateTime? @map("deleted_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(cuid())
+  articleId       String    @map("article_id")
+  fiqhTextId      String    @map("fiqh_text_id")
+  fiqhText        FiqhText  @relation(fields: [fiqhTextId], references: [id])
+  alignmentType   String    @default("topical") @map("alignment_type") // اصل|قاعدة|نظير|خلاف|تأصيل|غير_مناسب
+  alignmentReason String?   @map("alignment_reason") // وجه الصلة
+  confidenceScore Float?    @map("confidence_score")
+  reviewStatus    String    @default("needs_review") @map("review_status")
+  reviewedBy      String?   @map("reviewed_by")
+  reviewedAt      DateTime? @map("reviewed_at")
+  deletedAt       DateTime? @map("deleted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   @@unique([articleId, fiqhTextId])
   @@index([articleId])
@@ -745,7 +746,7 @@ model ChatConversation {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  messages  ChatMessage[]
+  messages ChatMessage[]
 
   @@index([userId])
   @@map("chat_conversations")
@@ -809,4 +810,72 @@ model SimulationRun {
 
   @@index([caseId])
   @@map("simulation_runs")
+}
+
+// ============================================================================
+//  الرسم القانوني رباعي الطبقات — نظام / لائحة / ضابط / دليل إجرائي
+//  (حزمة hakeem-bylaw-linking) — يُعمّم الربط الثنائي إلى property graph في SQL.
+//  المصدر الأوّلي: بيانات بوابة العدل المُدرَجة؛ قابل لدمج nezams لاحقًا (upsert idempotent).
+// ============================================================================
+
+enum LegalNodeType {
+  SYSTEM_ARTICLE // مادة نظام
+  BYLAW_ARTICLE // مادة لائحة تنفيذية
+  CONTROL // ضابط
+  PROCEDURE // دليل / إجراء إجرائي
+}
+
+enum LegalRelationType {
+  IMPLEMENTS // لائحة تُنفّذ/تُفصّل مادة نظام
+  GOVERNED_BY // بند يخضع لضابط
+  PROCEDURE_FOR // إجراء لتنفيذ بند
+  REFERS // إحالة مجرّدة
+  DETAILS // تفصيل
+  AMENDS // تعديل
+}
+
+enum RelationSource {
+  STRUCTURAL // محاذاة بنيوية من ترتيب الصفحة/النظام الأمّ
+  EXPLICIT // إشارة نصية صريحة «المادة (كذا) من النظام»
+  MANUAL // إدخال/إقرار بشري
+}
+
+model LegalGraphNode {
+  id        String        @id // معرّف المُستخرِج (SYS::law::n) أو cuid
+  type      LegalNodeType
+  law       String // اسم/معرّف النظام
+  number    Int?
+  seq       Int?
+  body      String?       @db.Text
+  sourceUrl String?
+  articleId String? // ربط اختياري بمادة قائمة في legal_articles
+  article   LegalArticle? @relation(fields: [articleId], references: [id])
+
+  outgoing LegalGraphEdge[] @relation("RelSource")
+  incoming LegalGraphEdge[] @relation("RelTarget")
+
+  @@index([type])
+  @@index([law, number])
+  @@index([articleId])
+  @@map("legal_graph_nodes")
+}
+
+model LegalGraphEdge {
+  id         String            @id @default(cuid())
+  sourceId   String
+  targetId   String
+  type       LegalRelationType @default(IMPLEMENTS)
+  evidence   String?           @db.Text
+  confidence Float             @default(0.9)
+  source     RelationSource    @default(STRUCTURAL)
+  verifiedBy String?
+  createdAt  DateTime          @default(now())
+
+  sourceNode LegalGraphNode @relation("RelSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetNode LegalGraphNode @relation("RelTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, type]) // idempotent → upsert آمن، والأعلى ثقة يرجّح
+  @@index([targetId])
+  @@index([sourceId])
+  @@map("legal_graph_edges")
 }
