@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/test-conversation.ts",
+    "test:document-inspection": "tsx scripts/test-document-inspection.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/seed-legal-library.ts",
