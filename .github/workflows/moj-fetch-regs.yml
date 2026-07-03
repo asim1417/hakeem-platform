@@ -28,8 +28,9 @@ jobs:
           git checkout -B claude/moj-regs-data
           git add data/moj-regs.json
           if git diff --cached --quiet; then echo "لا تغييرات."; exit 0; fi
-          git commit -m "data(moj): نصوص مواد اللوائح التنفيذية الأربع من المصدر الرسمي
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_013b7dDyeMWyxP13KtU5T7bv"
+          printf '%s\n\n%s\n%s\n' \
+            "data(moj): نصوص مواد اللوائح التنفيذية الأربع من المصدر الرسمي" \
+            "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>" \
+            "Claude-Session: https://claude.ai/code/session_013b7dDyeMWyxP13KtU5T7bv" > /tmp/moj_regs_msg.txt
+          git commit -F /tmp/moj_regs_msg.txt
           git push -f origin claude/moj-regs-data
