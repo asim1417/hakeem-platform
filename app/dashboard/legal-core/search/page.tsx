@@ -15,11 +15,10 @@ export const dynamic = "force-dynamic";
 
 const searchTypes: Array<{ value: ArabicSearchType; label: string; hint: string }> = [
   { value: "contains", label: "ضمن النص", hint: "يبحث في النظام والمادة والنص والكلمات" },
-  { value: "exact", label: "مطابق", hint: "يطابق العبارة كما كتبت" },
-  { value: "derivatives", label: "اشتقاقات", hint: "يوسع البحث بمشتقات عربية محتملة" },
-  { value: "root", label: "جذر", hint: "يستفيد من مرشحات الجذر" },
-  { value: "stem", label: "ساق", hint: "يزيل بعض السوابق واللواحق" },
-  { value: "affixes", label: "سوابق ولواحق", hint: "يعالج ال، و، ب، ل، ات، ون..." }
+  { value: "exact", label: "عبارة مطابقة", hint: "العبارة كما كُتبت تمامًا — تطابق متّصل ضمن النص" },
+  { value: "derivatives", label: "اشتقاقات", hint: "يوسّع بصيَغ الجذر الحقيقية من المعجم + مشتقات محتملة" },
+  { value: "root", label: "جذر", hint: "يجمع صيَغ الجذر الحقيقية من المعجم (المدعي/الدعوى/دعاوى…)" },
+  { value: "stem", label: "جذع (تجريد اللواصق)", hint: "يزيل السوابق واللواحق: ال، و، ب، ل، ات، ون…" }
 ];
 
 const legalCategories = [

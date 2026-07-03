@@ -292,6 +292,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     .filter((word) => word.length >= 3 && !ARABIC_STOPWORDS.has(normalizeArabicText(word)));
   // مُرشِّح قاعدة البيانات يبحث بالصيغتين: المُطبَّعة + الخام
   const filterVariants = Array.from(new Set([...rawWords, ...variants]));
+  // «مطابق» (exact): العبارة المتّصلة كما كُتبت فقط — بلا تفكيك كلمات ولا توسيع مفاهيم/صرف،
+  // فتُطابَق حرفيًّا متّصلةً عبر ILIKE (لا OR على الكلمات).
+  const dbFilterVariants = searchType === "exact" ? [query] : filterVariants;
   // كلمات المفاهيم: كلمات المستخدم المتمايزة ذات المعنى (لقياس تغطية الصلة وإعادة الترتيب)
   const conceptWords = Array.from(new Set(rawWords.map(normalizeArabicText))).filter((w) => w.length >= 3);
   // عبارات المفاهيم المتجاورة (bigrams): كل كلمتين متتاليتين ذواتي معنى في الاستعلام الأصلي،
@@ -304,7 +307,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
       buildDomainFilter(options.domain),
       buildCategoryFilter(options.categoryIds),
       buildSourceTypeFilter(options.sourceTypes),
-      buildTextFilter(filterVariants, fields)
+      buildTextFilter(dbFilterVariants, fields)
     ].filter((item) => Object.keys(item).length > 0)
   };
 
@@ -330,11 +333,12 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     (!cleanList(options.sourceTypes).length ||
       (cleanList(options.sourceTypes).length === 1 && cleanList(options.sourceTypes)[0] === "article")) &&
     fields.length === Object.keys(searchableFieldMap).length;
-  const useInDb = Boolean(query) && noStructuralFilter && process.env.IN_DB_RECALL !== "0";
+  // «مطابق» يُستثنى من المسار المفهرس (tsvector يفكّك الكلمات بـOR) ليبقى التطابق متّصلًا عبر ILIKE.
+  const useInDb = Boolean(query) && noStructuralFilter && searchType !== "exact" && process.env.IN_DB_RECALL !== "0";
 
   let total = 0;
   let lightRows: LightArticle[] = [];
-  const inDbRows = useInDb ? await inDbLightCandidates(buildTsQueryWords(filterVariants), COMPLETE_CAP) : null;
+  const inDbRows = useInDb ? await inDbLightCandidates(buildTsQueryWords(dbFilterVariants), COMPLETE_CAP) : null;
   if (inDbRows) {
     // كل المطابقات (< السقف) رُجِّعت مفهرسةً — الإجماليّ الحقيقي = طولها؛ التطبيق يعيد ترتيبها.
     lightRows = inDbRows;
@@ -680,7 +684,10 @@ function buildVariants(query: string, searchType: ArabicSearchType) {
   if (!query) return [];
   if (searchType === "exact") return [query];
   if (searchType === "stem") return [query, getArabicStem(query), ...buildArabicSearchVariants(query, "stem")];
-  if (searchType === "root") return [query, ...findRootCandidates(query), ...buildArabicSearchVariants(query, "root")];
+  // الجذر/الاشتقاق: أوضاعٌ صرفيّة يختارها المستخدم صراحةً — نُثريها بصيَغ شقيقة **حقيقية**
+  // من معجم hoqoqi (expandToken) إضافةً إلى المرشّحات الحدسيّة. لا تمسّ الوضع الافتراضي (contains).
+  if (searchType === "root") return [query, ...findRootCandidates(query), ...expandToken(query, 8), ...buildArabicSearchVariants(query, "root")];
+  if (searchType === "derivatives") return [query, ...expandToken(query, 8), ...buildArabicSearchVariants(query, "derivatives")];
   return buildArabicSearchVariants(query, searchType);
 }
 
