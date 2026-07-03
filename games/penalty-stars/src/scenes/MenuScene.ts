@@ -1,7 +1,7 @@
 // MenuScene — واجهة البداية: الشعار والأزرار الكبيرة واختيار الصعوبة
 
 import Phaser from 'phaser';
-import { arabicNum, COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES } from '../config/gameConfig';
+import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES } from '../config/gameConfig';
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
@@ -64,18 +64,18 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
     popIn(chosen, 0.35);
 
-    // الأزرار الرئيسية — ابدأ اللعب يطلق رحلة المراحل الثلاث
-    const startBtn = makeButton(this, GAME_WIDTH / 2, 420, '🎮 ابدأ اللعب', () => {
+    // الأزرار الرئيسية — البطولة (٤ أدوار) والمباراة والتدريب والخزنة
+    const startBtn = makeButton(this, GAME_WIDTH / 2, 408, '🏆 بطولة نجوم البلنتيات', () => {
       this.scene.start('Game', { stage: 0 });
-    }, { width: 320, height: 84, color: COLORS.blue, fontSize: 34 });
+    }, { width: 340, height: 76, color: COLORS.blue, fontSize: 28 });
     popIn(startBtn, 0.45);
     pulse(startBtn);
 
-    // خريطة المراحل الصغيرة تحت زر البداية
+    // خريطة أدوار البطولة
     const stagesHint = this.add
-      .text(GAME_WIDTH / 2, 485, rtl(STAGES.map((s) => `${s.icon} ${DIFFICULTIES[s.difficulty].label}`).join('  ←  ')), {
+      .text(GAME_WIDTH / 2, 462, rtl(STAGES.map((s) => `${s.icon} ${s.label}`).join(' ← ')), {
         fontFamily: FONT,
-        fontSize: '18px',
+        fontSize: '14px',
         color: '#ffffff',
         fontStyle: 'bold',
         stroke: '#1a5c2e',
@@ -84,24 +84,29 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
     popIn(stagesHint, 0.5);
 
-    const selectBtn = makeButton(this, GAME_WIDTH / 2, 548, '😃 اختيار اللاعب', () => {
+    const matchBtn = makeButton(this, GAME_WIDTH / 2, 518, '⚔️ مباراة البلنتيات', () => {
+      this.scene.start('Game', { mode: 'match' });
+    }, { width: 340, height: 66, fontSize: 26, color: 0x35c96b });
+    popIn(matchBtn, 0.55);
+
+    const selectBtn = makeButton(this, GAME_WIDTH / 2, 592, '😃 اختيار اللاعب', () => {
       this.scene.start('PlayerSelect');
-    }, { width: 320, height: 66, color: COLORS.orange });
-    popIn(selectBtn, 0.55);
+    }, { width: 340, height: 62, fontSize: 25, color: COLORS.orange });
+    popIn(selectBtn, 0.62);
 
-    const trainBtn = makeButton(this, GAME_WIDTH / 2, 626, '🏋️ التدريب', () => {
+    const trainBtn = makeButton(this, GAME_WIDTH / 2, 662, '🏋️ التدريب', () => {
       this.scene.start('Game', { training: true });
-    }, { width: 320, height: 66, color: COLORS.pink });
-    popIn(trainBtn, 0.65);
+    }, { width: 340, height: 62, fontSize: 25, color: COLORS.pink });
+    popIn(trainBtn, 0.69);
 
-    const lockerBtn = makeButton(this, GAME_WIDTH / 2, 704, '🎒 الخزنة — كرات وملاعب', () => {
+    const lockerBtn = makeButton(this, GAME_WIDTH / 2, 732, '🎒 الخزنة — كرات وملاعب', () => {
       this.scene.start('Locker');
-    }, { width: 320, height: 66, fontSize: 26, color: 0x9b6bff });
-    popIn(lockerBtn, 0.75);
+    }, { width: 340, height: 62, fontSize: 24, color: 0x9b6bff });
+    popIn(lockerBtn, 0.76);
 
     // مجموع النجوم المكتسبة
     const starsLabel = this.add
-      .text(20, 128, rtl(`⭐ ${arabicNum(progress.totalStars())}`), {
+      .text(20, 128, rtl(`⭐ ${arabicNum(progress.totalStars())}${progress.hasTrophy() ? '  🏆' : ''}`), {
         fontFamily: FONT,
         fontSize: '26px',
         color: '#ffd93d',

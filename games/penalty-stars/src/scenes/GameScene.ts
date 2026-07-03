@@ -1,4 +1,5 @@
 // GameScene — الملعب، الكرة، الحارس، السحب للتسديد، العداد والنجوم
+// الأوضاع: بطولة (stage) / مباراة بلنتيات (match) / تدريب حر (training)
 
 import Phaser from 'phaser';
 import { gsap } from 'gsap';
@@ -27,21 +28,26 @@ import { makeButton } from '../utils/ui';
 import { announcer } from '../utils/announcer';
 
 type ShotState = 'aiming' | 'shooting' | 'resolved';
+type GameMode = 'tournament' | 'match' | 'training';
 
 const GOAL_TOP = GOAL.lineY - GOAL.height; // العارضة
 const KEEPER_Y = GOAL.lineY - 42;
 const KEEPER_RANGE = GOAL.width / 2 - 40; // مدى حركة الحارس
 
 export class GameScene extends Phaser.Scene {
-  private training = false;
-  private stage?: number; // رقم المرحلة في رحلة المراحل — undefined في التدريب
+  private mode: GameMode = 'tournament';
+  private stage = 0; // دور البطولة الحالي
+  private golden = false; // الضربة الذهبية في المباراة
   private player!: PlayerDef;
   private ball!: Phaser.Physics.Arcade.Image;
+  private ballShadow!: Phaser.GameObjects.Ellipse;
   private keeper!: Phaser.GameObjects.Image;
+  private keeperShadow!: Phaser.GameObjects.Ellipse;
   private keeperTween?: Phaser.Tweens.Tween;
   private state: ShotState = 'aiming';
   private shotIndex = 0;
   private goals = 0;
+  private oppGoals = 0; // أهداف فريق الحارس في المباراة
   private dragStart: Phaser.Math.Vector2 | null = null;
   private aimArrow!: Phaser.GameObjects.Graphics;
   private shooter!: Phaser.GameObjects.Image;
@@ -49,19 +55,23 @@ export class GameScene extends Phaser.Scene {
   private starIcons: Phaser.GameObjects.Image[] = [];
   private phraseText!: Phaser.GameObjects.Text;
   private resolveTimer?: Phaser.Time.TimerEvent;
+  private trajectory: { x: number; y: number }[] = []; // مسار الكرة لإعادة الهدف
 
   constructor() {
     super('Game');
   }
 
-  init(data: { training?: boolean; stage?: number }): void {
-    this.training = Boolean(data.training);
-    this.stage = data.stage;
+  init(data: { training?: boolean; stage?: number; mode?: string }): void {
+    this.mode = data.training ? 'training' : data.mode === 'match' ? 'match' : 'tournament';
+    this.stage = data.stage ?? 0;
+    this.golden = false;
     this.state = 'aiming';
     this.shotIndex = 0;
     this.goals = 0;
+    this.oppGoals = 0;
     this.dragStart = null;
     this.starIcons = [];
+    this.trajectory = [];
   }
 
   create(): void {
@@ -79,8 +89,8 @@ export class GameScene extends Phaser.Scene {
   // ── الرسم ──
 
   private drawField(): void {
-    // خلفية الملعب شبه الواقعية المختارة — مع طبقة تعتيم خفيفة لوضوح النصوص
-    const stadiumKey = progress.selectedStadium();
+    // في البطولة لكل دور ملعبه؛ وإلا ملعب الخزنة المختار — مع تعتيم خفيف لوضوح النصوص
+    const stadiumKey = this.mode === 'tournament' ? STAGES[this.stage].stadium : progress.selectedStadium();
     if (this.textures.exists(stadiumKey)) {
       this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.1);
@@ -92,6 +102,8 @@ export class GameScene extends Phaser.Scene {
         this.add.rectangle(GAME_WIDTH / 2, 180 + i * 110, GAME_WIDTH, 55, COLORS.grassDark, 0.45);
       }
     }
+    // طبقة إضاءة خفيفة أعلى الملعب
+    this.add.rectangle(GAME_WIDTH / 2, 90, GAME_WIDTH, 180, 0xffffff, 0.06);
     // منطقة الجزاء
     const g = this.add.graphics();
     g.lineStyle(4, COLORS.white, 0.8);
@@ -115,8 +127,16 @@ export class GameScene extends Phaser.Scene {
     g.fillRect(left - GOAL.postWidth, GOAL_TOP - GOAL.postWidth, GOAL.width + GOAL.postWidth * 2, GOAL.postWidth);
   }
 
+  // مفتاح صورة الحارس حسب الصعوبة (الحديدي في نهائي البطولة)
+  private keeperTexture(dive = false): string {
+    const base = this.difficulty().key === 'iron' ? 'keeper-iron' : 'keeper';
+    return dive ? `${base}-dive` : base;
+  }
+
   private createKeeper(): void {
-    this.keeper = this.add.image(GOAL.centerX, KEEPER_Y, 'keeper').setDepth(5);
+    // ظل الحارس
+    this.keeperShadow = this.add.ellipse(GOAL.centerX, KEEPER_Y + 54, 72, 14, 0x000000, 0.28).setDepth(4);
+    this.keeper = this.add.image(GOAL.centerX, KEEPER_Y, this.keeperTexture()).setDepth(5);
     // اسم الحارس المرح فوق المرمى
     this.add
       .text(GOAL.centerX, GOAL_TOP + 26, rtl(`🧤 ${this.difficulty().keeperName}`), {
@@ -137,6 +157,7 @@ export class GameScene extends Phaser.Scene {
     const diff = this.difficulty();
     this.keeperTween?.remove();
     this.keeper.setAngle(0);
+    this.keeper.setTexture(this.keeperTexture());
     this.keeperTween = this.tweens.add({
       targets: this.keeper,
       x: { from: GOAL.centerX - KEEPER_RANGE * 0.55, to: GOAL.centerX + KEEPER_RANGE * 0.55 },
@@ -148,6 +169,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBall(): void {
+    // ظل الكرة
+    this.ballShadow = this.add.ellipse(BALL_START.x, BALL_START.y + 20, 36, 11, 0x000000, 0.3).setDepth(4);
     // كرة اللاعب المختارة من الخزنة — 'ball' المرسومة احتياطًا
     const ballKey = this.textures.exists(progress.selectedBall()) ? progress.selectedBall() : 'ball';
     this.ball = this.physics.add.image(BALL_START.x, BALL_START.y, ballKey).setDepth(6);
@@ -160,7 +183,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createHud(): void {
-    // عداد التسديدات أو شارة التدريب
+    // عداد التسديدات / نتيجة المباراة / شارة التدريب
     this.shotText = this.add
       .text(16, 14, '', {
         fontFamily: FONT,
@@ -173,8 +196,8 @@ export class GameScene extends Phaser.Scene {
       .setDepth(20);
     this.updateShotText();
 
-    // نجوم الأهداف (في اللعب فقط)
-    if (!this.training) {
+    // نجوم الأهداف (في البطولة والمباراة)
+    if (this.mode !== 'training') {
       for (let i = 0; i < SHOTS_PER_ROUND; i++) {
         const icon = this.add
           .image(GAME_WIDTH / 2 - 80 + i * 40, 100, 'star')
@@ -232,12 +255,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateShotText(): void {
-    const stageTag = this.stage !== undefined ? `${STAGES[this.stage].icon} ${STAGES[this.stage].label}\n` : '';
-    this.shotText.setText(
-      this.training
-        ? rtl('🏋️ تدريب حر')
-        : rtl(`${stageTag}التسديدة ${arabicNum(Math.min(this.shotIndex + 1, SHOTS_PER_ROUND))} من ${arabicNum(SHOTS_PER_ROUND)}`),
-    );
+    if (this.mode === 'training') {
+      this.shotText.setText(rtl('🏋️ تدريب حر'));
+      return;
+    }
+    const shotLine = this.golden
+      ? '⚡ الضربة الذهبية!'
+      : `التسديدة ${arabicNum(Math.min(this.shotIndex + 1, SHOTS_PER_ROUND))} من ${arabicNum(SHOTS_PER_ROUND)}`;
+    if (this.mode === 'match') {
+      this.shotText.setText(rtl(`⚔️ أنت ${arabicNum(this.goals)} - ${arabicNum(this.oppGoals)} فريق الحارس\n${shotLine}`));
+    } else {
+      const st = STAGES[this.stage];
+      this.shotText.setText(rtl(`${st.icon} ${st.label}\n${shotLine}`));
+    }
   }
 
   // ── الإدخال: السحب للتسديد ──
@@ -260,12 +290,10 @@ export class GameScene extends Phaser.Scene {
       if (!this.dragStart || this.state !== 'aiming') return;
       const drag = new Phaser.Math.Vector2(p.x - this.dragStart.x, p.y - this.dragStart.y);
       this.aimArrow.clear();
-      const start = this.dragStart;
       this.dragStart = null;
       // سحب قصير جدًا أو ليس نحو الأعلى → تجاهل
       if (drag.length() < SHOT.minDrag || drag.y > -10) return;
       this.shoot(drag);
-      void start;
     });
   }
 
@@ -297,6 +325,7 @@ export class GameScene extends Phaser.Scene {
 
   private shoot(drag: Phaser.Math.Vector2): void {
     this.state = 'shooting';
+    this.trajectory = [];
     audio.play('kick');
     announcer.onShot(this, this.player);
 
@@ -322,6 +351,7 @@ export class GameScene extends Phaser.Scene {
   private keeperDive(shotAngle: number, power: number): void {
     const diff = this.difficulty();
     this.keeperTween?.remove();
+    this.keeper.setTexture(this.keeperTexture(true)); // وضعية الارتماء
 
     // النقطة المتوقعة لوصول الكرة عند خط المرمى
     const vy = Math.sin(shotAngle) * power;
@@ -343,11 +373,19 @@ export class GameScene extends Phaser.Scene {
     gsap.to(this.keeper, { angle: targetX > this.keeper.x ? 22 : -22, duration: diff.diveDuration });
   }
 
-  // ── الحسم في كل إطار ──
+  // ── كل إطار: الظلال + حسم التسديدة ──
 
   update(): void {
+    // الظلال تتبع الكرة والحارس دائمًا
+    this.ballShadow.setPosition(this.ball.x, this.ball.y + 20);
+    this.ballShadow.setDisplaySize(Math.max(20, this.ball.displayWidth * 0.8), 10);
+    this.keeperShadow.setPosition(this.keeper.x, KEEPER_Y + 54);
+
     if (this.state !== 'shooting') return;
     const diff = this.difficulty();
+
+    // تسجيل مسار الكرة لإعادة الهدف
+    if (this.trajectory.length < 240) this.trajectory.push({ x: this.ball.x, y: this.ball.y });
 
     // تصدي: الكرة لمست الحارس
     if (
@@ -388,7 +426,7 @@ export class GameScene extends Phaser.Scene {
       confetti(this, 36);
       playerCelebration(this, this.player.celebrationType, this.shooter, this.ball.x, this.ball.y);
       // إضاءة نجمة في العداد
-      if (!this.training && this.starIcons[this.shotIndex]) {
+      if (this.mode !== 'training' && !this.golden && this.starIcons[this.shotIndex]) {
         const icon = this.starIcons[this.shotIndex];
         icon.setAlpha(1);
         gsap.fromTo(icon, { scale: 1.4 }, { scale: 0.55, duration: 0.5, ease: 'bounce.out' });
@@ -399,6 +437,13 @@ export class GameScene extends Phaser.Scene {
       announcer.onOutcome('goal', phrase);
       this.ball.setVelocity(0, 0);
       this.ball.setPosition(this.ball.x, GOAL.lineY - 50);
+      this.updateShotText();
+      // إعادة الهدف القصيرة (خارج التدريب) ثم المتابعة
+      if (this.mode !== 'training') {
+        this.time.delayedCall(1400, () => this.showReplay());
+        this.time.delayedCall(3100, () => this.afterShot(result));
+        return;
+      }
     } else if (result === 'save') {
       audio.play('save');
       // الكرة ترتد من الحارس
@@ -413,7 +458,154 @@ export class GameScene extends Phaser.Scene {
       announcer.onOutcome('miss', missPhrase);
     }
 
-    this.time.delayedCall(1700, () => this.nextShot(result === 'goal' && !this.training));
+    this.time.delayedCall(1700, () => this.afterShot(result));
+  }
+
+  // 🎬 إعادة قصيرة وبطيئة لمسار الكرة
+  private showReplay(): void {
+    if (this.trajectory.length < 8) return;
+    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.35).setDepth(38);
+    const label = this.add
+      .text(GAME_WIDTH / 2, 320, rtl('🎬 إعادة الهدف'), {
+        fontFamily: FONT,
+        fontSize: '26px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#1a5c2e',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(41);
+    const ghost = this.add.image(this.trajectory[0].x, this.trajectory[0].y, this.ball.texture.key).setDisplaySize(40, 40).setDepth(40);
+
+    // عينات من المسار بسرعة نصفية
+    const pts = this.trajectory.filter((_, i) => i % 3 === 0);
+    const tl = gsap.timeline({
+      onComplete: () => {
+        overlay.destroy();
+        label.destroy();
+        ghost.destroy();
+      },
+    });
+    const per = 1.15 / pts.length;
+    for (const pt of pts) tl.to(ghost, { x: pt.x, y: pt.y, duration: per, ease: 'none' });
+    tl.to(ghost, { alpha: 0, duration: 0.2 });
+  }
+
+  // بعد حسم تسديدة اللاعب: دور فريق الحارس في المباراة، أو التسديدة التالية
+  private afterShot(result: 'goal' | 'save' | 'miss'): void {
+    if (this.mode === 'match' && !this.golden) {
+      this.opponentTurn();
+      return;
+    }
+    if (this.golden) {
+      // الضربة الذهبية: هدف اللاعب يحسم فورًا، وإلا يسدد الخصم
+      if (result === 'goal') {
+        this.scene.start('Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals, goldenWin: true });
+      } else {
+        this.opponentTurn();
+      }
+      return;
+    }
+    this.nextShot();
+  }
+
+  // 🤖 تسديدة فريق الحارس (آلية وسريعة) في وضع المباراة
+  private opponentTurn(): void {
+    const banner = this.add
+      .text(GAME_WIDTH / 2, 500, rtl('🤖 فريق الحارس يسدد...'), {
+        fontFamily: FONT,
+        fontSize: '25px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        backgroundColor: '#1a5c2ecc',
+        padding: { x: 16, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setDepth(35)
+      .setAlpha(0);
+    gsap.to(banner, { alpha: 1, duration: 0.3 });
+
+    this.time.delayedCall(1200, () => {
+      const scored = Math.random() < 0.5; // فرصة عادلة وممتعة
+      if (scored) {
+        this.oppGoals++;
+        audio.play('goal');
+        banner.setText(rtl('🥅 سجّل فريق الحارس!'));
+      } else {
+        audio.play('save');
+        banner.setText(rtl('🧤 تصديت لكرة فريق الحارس!'));
+        starBurst(this, GOAL.centerX, GOAL.lineY - 40, 6);
+      }
+      this.updateShotText();
+      this.time.delayedCall(1100, () => {
+        banner.destroy();
+        if (this.golden) {
+          // خصم سجل في الذهبية → انتهت؛ لم يسجل → جولة ذهبية جديدة
+          if (this.oppGoals > this.goals) {
+            this.scene.start('Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals });
+          } else {
+            this.showPhrase('جولة ذهبية جديدة! ⚡');
+            this.nextShot(true);
+          }
+          return;
+        }
+        this.nextShot();
+      });
+    });
+  }
+
+  private nextShot(stayGolden = false): void {
+    if (!stayGolden) this.shotIndex++;
+    // نهاية الجولة
+    if (this.mode !== 'training' && !this.golden && this.shotIndex >= SHOTS_PER_ROUND) {
+      if (this.mode === 'match') {
+        if (this.goals === this.oppGoals) {
+          // تعادل → الضربة الذهبية
+          this.golden = true;
+          audio.play('whistle');
+          this.showPhrase('⚡ تعادل! الضربة الذهبية تحسم');
+        } else {
+          this.scene.start('Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals });
+          return;
+        }
+      } else {
+        this.scene.start('Result', { goals: this.goals, stage: this.stage });
+        return;
+      }
+    }
+    // إعادة التجهيز
+    this.ball.setVelocity(0, 0);
+    this.ball.setPosition(BALL_START.x, BALL_START.y);
+    this.ball.setDisplaySize(44, 44);
+    this.keeper.setPosition(GOAL.centerX, KEEPER_Y);
+    this.keeper.setScale(1);
+    this.startKeeperIdle();
+    this.updateShotText();
+    this.state = 'aiming';
+    if (Math.random() < 0.35) this.coachTip();
+  }
+
+  // 🧑‍🏫 المدرب الصغير: شخصية في الزاوية بفقاعة نصيحة
+  private coachTip(): void {
+    const tip = Phaser.Utils.Array.GetRandom(coachPhrases);
+    const face = this.add.circle(0, 0, 26, 0xffffff).setStrokeStyle(4, COLORS.blue);
+    const emoji = this.add.text(0, 0, '🧑‍🏫', { fontSize: '30px' }).setOrigin(0.5);
+    const bubble = this.add
+      .text(38, 0, rtl(tip), {
+        fontFamily: FONT,
+        fontSize: '17px',
+        color: '#1a5c2e',
+        fontStyle: 'bold',
+        backgroundColor: '#ffffffee',
+        padding: { x: 10, y: 6 },
+      })
+      .setOrigin(0, 0.5);
+    const coach = this.add.container(-60, GAME_HEIGHT - 92, [face, emoji, bubble]).setDepth(25);
+    gsap
+      .timeline()
+      .to(coach, { x: 34, duration: 0.45, ease: 'back.out(1.6)' })
+      .to(coach, { x: -320, duration: 0.4, delay: 2.4, ease: 'power2.in', onComplete: () => coach.destroy() });
   }
 
   private showPhrase(phrase: string): void {
@@ -422,46 +614,8 @@ export class GameScene extends Phaser.Scene {
     bouncePhrase(this.phraseText);
   }
 
-  private nextShot(_wasGoal: boolean): void {
-    this.shotIndex++;
-    // انتهت الجولة (٥ تسديدات) — التدريب لا ينتهي
-    if (!this.training && this.shotIndex >= SHOTS_PER_ROUND) {
-      this.scene.start('Result', { goals: this.goals, stage: this.stage });
-      return;
-    }
-    // إعادة التجهيز
-    this.ball.setVelocity(0, 0);
-    this.ball.setPosition(BALL_START.x, BALL_START.y);
-    this.ball.setDisplaySize(44, 44);
-    this.keeper.setPosition(GOAL.centerX, KEEPER_Y);
-    this.startKeeperIdle();
-    this.updateShotText();
-    this.state = 'aiming';
-    if (Math.random() < 0.35) this.coachTip();
-  }
-
-  // نصيحة مدرب لطيفة أسفل الشاشة
-  private coachTip(): void {
-    const tip = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 84, rtl(`🧑‍🏫 ${Phaser.Utils.Array.GetRandom(coachPhrases)}`), {
-        fontFamily: FONT,
-        fontSize: '19px',
-        color: '#1a5c2e',
-        fontStyle: 'bold',
-        backgroundColor: '#ffffffee',
-        padding: { x: 12, y: 6 },
-      })
-      .setOrigin(0.5)
-      .setDepth(25)
-      .setAlpha(0);
-    gsap
-      .timeline()
-      .to(tip, { alpha: 1, duration: 0.3 })
-      .to(tip, { alpha: 0, duration: 0.4, delay: 2.2, onComplete: () => tip.destroy() });
-  }
-
   private difficulty() {
-    const key: DifficultyKey = this.stage !== undefined ? STAGES[this.stage].difficulty : 'easy';
+    const key: DifficultyKey = this.mode === 'tournament' ? STAGES[this.stage].difficulty : this.mode === 'match' ? 'medium' : 'easy';
     return DIFFICULTIES[key];
   }
 }

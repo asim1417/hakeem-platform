@@ -28,7 +28,7 @@ export const GOAL = {
 export const BALL_START = { x: GAME_WIDTH / 2, y: 640 };
 
 // مستويات الصعوبة — سرعة الحارس واحتمال تخمينه الصحيح
-export type DifficultyKey = 'easy' | 'medium' | 'hero';
+export type DifficultyKey = 'easy' | 'medium' | 'hero' | 'iron';
 
 export interface DifficultySettings {
   key: DifficultyKey;
@@ -44,19 +44,22 @@ export const DIFFICULTIES: Record<DifficultyKey, DifficultySettings> = {
   easy: { key: 'easy', label: 'سهلة', keeperName: 'الحارس فرفور', keeperIdleSpeed: 2.6, diveDuration: 0.62, guessChance: 0.3, reach: 46 },
   medium: { key: 'medium', label: 'متوسطة', keeperName: 'الحارس صقر', keeperIdleSpeed: 2.0, diveDuration: 0.5, guessChance: 0.45, reach: 50 },
   hero: { key: 'hero', label: 'صعبة', keeperName: 'الحارس أبو قفزة', keeperIdleSpeed: 1.6, diveDuration: 0.42, guessChance: 0.55, reach: 54 },
+  iron: { key: 'iron', label: 'حديدية', keeperName: 'الحارس الحديدي', keeperIdleSpeed: 1.45, diveDuration: 0.4, guessChance: 0.6, reach: 56 },
 };
 
-// رحلة المراحل: سهلة ← متوسطة ← صعبة — اجتياز المرحلة يتطلب PASS_GOALS أهداف
+// بطولة نجوم البلنتيات: ٤ أدوار — لكل دور ملعبه وحارسه، والاجتياز بـ PASS_GOALS أهداف
 export interface StageDef {
   difficulty: DifficultyKey;
   label: string;
   icon: string;
+  stadium: string; // ملعب الدور في البطولة
 }
 
 export const STAGES: StageDef[] = [
-  { difficulty: 'easy', label: 'المرحلة الأولى — سهلة', icon: '🙂' },
-  { difficulty: 'medium', label: 'المرحلة الثانية — متوسطة', icon: '😎' },
-  { difficulty: 'hero', label: 'المرحلة الثالثة — صعبة', icon: '🔥' },
+  { difficulty: 'easy', label: 'الدور الأول', icon: '🙂', stadium: 'stadium-school' },
+  { difficulty: 'medium', label: 'نصف النهائي', icon: '😎', stadium: 'stadium-street' },
+  { difficulty: 'hero', label: 'النهائي', icon: '🔥', stadium: 'stadium-stars' },
+  { difficulty: 'iron', label: 'كأس النجوم', icon: '🏆', stadium: 'stadium-cup' },
 ];
 
 export const PASS_GOALS = 3; // أهداف اجتياز المرحلة من أصل ٥
