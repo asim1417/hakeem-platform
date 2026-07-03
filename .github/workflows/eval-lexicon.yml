@@ -1,0 +1,47 @@
+name: Eval Lexicon Expansion (read-only)
+
+# يقيس أثر توسيع البحث بالمعجم الصرفيّ (LEXICON_EXPANSION): يشغّل eval:search مرّتين
+# (أساس بلا توسيع، ثم مع التوسيع) ويطبع المقياسين للمقارنة. قراءة فقط — لا كتابة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "المزوّد: core أو hybrid"
+        type: choice
+        options: ["core", "hybrid"]
+        default: "core"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      EVAL_PROVIDER: ${{ inputs.provider }}
+      IN_DB_RECALL: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Baseline (LEXICON_EXPANSION off)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$DATABASE_URL" ] && { echo "::error::لا اتصال"; exit 1; }
+          echo "═══ الأساس: بلا توسيع معجميّ ═══"
+          npm run eval:search 2>&1 | tail -22
+      - name: With lexicon expansion (LEXICON_EXPANSION=1)
+        env:
+          LEXICON_EXPANSION: "1"
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          echo "═══ مع التوسيع المعجميّ ═══"
+          npm run eval:search 2>&1 | tail -22
