@@ -2,6 +2,7 @@
 // مع طبقة استخراج كيانات حتمية (regex) بلا أي توليد — «لا hallucination».
 
 import { legalDocumentReference, thesaurusCategories } from "./reference";
+import { cleanPdfTextLayer } from "./reshape";
 import type {
   AnalyzedDocument,
   EntityKind,
@@ -262,7 +263,9 @@ export interface DocumentInput {
 }
 
 export function analyzeDocument(input: DocumentInput, seq: number): AnalyzedDocument {
-  const rawText = input.rawText.trim();
+  // إعادة تشكيل صيغ العرض العربية وإزالة التكرار لأي مصدر (لصق/PDF/OCR/تحميل) —
+  // فالنصّ المعطوب يجب ألّا يُعرَض أو يُصنَّف كما هو مهما كان مصدره. حتمي وآمن على السليم.
+  const rawText = cleanPdfTextLayer(input.rawText).text.trim();
   const headerZone = rawText.slice(0, HEADER_ZONE_CHARS);
   const type = classifyType(input.title, rawText);
   const issuer = detectIssuer(headerZone);
@@ -292,7 +295,8 @@ export function analyzeDocument(input: DocumentInput, seq: number): AnalyzedDocu
 /** يحلّل مجموعة وثائق مع تسلسل داخل (النوع×الجهة×السنة) كما يقضي المرجع */
 export function analyzeDocuments(inputs: DocumentInput[]): AnalyzedDocument[] {
   const counters = new Map<string, number>();
-  return inputs.map((input) => {
+  return inputs.map((raw) => {
+    const input: DocumentInput = { ...raw, rawText: cleanPdfTextLayer(raw.rawText).text };
     const type = classifyType(input.title, input.rawText);
     const issuer = detectIssuer(input.rawText.slice(0, HEADER_ZONE_CHARS));
     const year = extractHijriYear(input.rawText);

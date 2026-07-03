@@ -8,7 +8,7 @@
 //  1) تحويل صيغ العرض (FE70–FEFC، FB50–FDFF) إلى الحروف الأساسية عبر NFKC.
 //  2) إعادة بناء حدود الكلمات من «صنف الوصل»: الحرف بصيغة أوّل/وسط يصل بما بعده،
 //     فالمسافة التي تليه وهميّة تُحذف؛ وبصيغة معزول/آخِر ينهي الكلمة.
-//  3) إزالة التكرار المضاعف المتلاصق (كلمات/أسطر مُعادة حرفياً).
+//  3) إزالة التكرار المضاعف المتلاصق (كلمات/كتل/أسطر مُعادة حرفياً).
 //
 // ما لا يُعالَج هنا (خطّ مُجزّأ بلا يونيكود → رموز لاتينية) يُكشَف بـ isGarbledArabicText
 // ويُوجَّه إلى OCR على صورة الصفحة — وهو المصدر الصحيح الوحيد لتلك الحالة.
@@ -52,6 +52,7 @@ function isPresentationForm(code: number): boolean {
 }
 
 const PF_RE = /[ﭐ-﷿ﹰ-ﻼ]/;
+const ARABIC_RE = /[ء-ي]/;
 
 function reshapeLine(line: string): string {
   const words: string[] = [];
@@ -94,16 +95,56 @@ export function reshapeArabicPresentationForms(text: string): string {
     .replace(/[ \t]{2,}/g, " ");
 }
 
-/** يزيل التكرار المضاعف المتلاصق: كلمة/سطر يتكرّر حرفياً مباشرةً بعد نفسه. */
+/**
+ * يطوي كل «كتلة مُضاعَفة متلاصقة» محلياً: عند كل موضع، إن تكرّرت الكتلة التالية
+ * (بطول 1..8) مباشرةً، تُكتب مرّة واحدة. يعالج المضاعفة المتداخلة الشائعة في طبقات
+ * PDF المعطوبة: «و ا لسلا م و ا لسلا م و ا لصلا ة و ا لصلا ة» → «و ا لسلا م و ا لصلا ة».
+ */
+function collapseLocalDoubling(toks: string[]): string[] {
+  const out: string[] = [];
+  let i = 0;
+  while (i < toks.length) {
+    let collapsed = false;
+    const maxBlock = Math.min(8, Math.floor((toks.length - i) / 2));
+    for (let b = maxBlock; b >= 1; b -= 1) {
+      let same = true;
+      for (let k = 0; k < b; k += 1) {
+        if (toks[i + k] !== toks[i + b + k]) {
+          same = false;
+          break;
+        }
+      }
+      if (same && ARABIC_RE.test(toks.slice(i, i + b).join(""))) {
+        for (let k = 0; k < b; k += 1) out.push(toks[i + k]);
+        i += 2 * b;
+        collapsed = true;
+        break;
+      }
+    }
+    if (!collapsed) {
+      out.push(toks[i]);
+      i += 1;
+    }
+  }
+  return out;
+}
+
+/**
+ * يزيل التكرار المضاعف الشائع في طبقات PDF المعطوبة:
+ *  - سطر يتكرّر حرفياً بعد نفسه.
+ *  - كتلة مُضاعَفة متلاصقة داخل السطر (بأيّ طول): «و ا لسلا م و ا لسلا م» → «و ا لسلا م».
+ *  - كلمة عربية تتكرّر متلاصقةً: «أما أما» → «أما».
+ */
 export function dedupeAdjacentDuplicates(text: string): string {
   const lines = text.split("\n");
   const outLines: string[] = [];
   for (const line of lines) {
     if (outLines.length && outLines[outLines.length - 1] === line && line.trim()) continue; // سطر مُعاد
-    const toks = line.split(" ");
+    const rawToks = line.split(" ").filter((t) => t !== "");
+    const toks = collapseLocalDoubling(rawToks); // طيّ المضاعفة على مستوى الكتل
     const dedup: string[] = [];
     for (const t of toks) {
-      if (dedup.length && dedup[dedup.length - 1] === t && /[ء-ي]/.test(t) && t.length >= 2) continue; // كلمة مُعادة
+      if (dedup.length && dedup[dedup.length - 1] === t && ARABIC_RE.test(t) && t.length >= 2) continue; // كلمة مُعادة
       dedup.push(t);
     }
     outLines.push(dedup.join(" "));
@@ -174,7 +215,7 @@ export function isGarbledArabicText(rawText: string): GarbleReport {
 export function cleanPdfTextLayer(rawText: string): { text: string; needsOcr: boolean; report: GarbleReport } {
   const report = isGarbledArabicText(rawText);
   let text = reshapeArabicPresentationForms(rawText);
-  if (report.duplicationRatio > 0.1 || report.garbled) text = dedupeAdjacentDuplicates(text);
+  if (report.duplicationRatio > 0.05 || report.garbled) text = dedupeAdjacentDuplicates(text);
   // إعادة التشكيل تُصلح الحالة الشائعة (صيغ عرض بحدود كلمات سليمة). لكنها لا تستطيع
   // استرجاع حدود الكلمات حين تُفصل كلّ صورة حرف بمسافة (singleLetterRatio عالٍ)،
   // ولا إصلاح الخطّ المُجزّأ (رموز بديلة). في هاتين الحالتين المصدر الصحيح هو OCR.
