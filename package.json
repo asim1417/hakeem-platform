@@ -104,7 +104,9 @@
     "probe:source": "tsx scripts/probe-source.ts",
     "emit:source-urls": "tsx scripts/emit-source-urls.ts",
     "extract:lexicon": "tsx scripts/extract-hoqoqi-lexicon.ts",
-    "test:lexicon": "tsx scripts/test-lexicon-expansion.ts"
+    "test:lexicon": "tsx scripts/test-lexicon-expansion.ts",
+    "test:legal-graph": "tsx scripts/test-legal-graph-parser.ts",
+    "seed:legal-graph": "tsx scripts/seed-legal-graph.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
