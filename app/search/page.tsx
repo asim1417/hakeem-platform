@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { bm25Search } from "@/lib/modules/legal-core/bm25";
+import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { LoginPopover } from "@/components/home/LoginPopover";
 
 export const dynamic = "force-dynamic";
@@ -16,8 +16,11 @@ export default async function PublicSearchPage({
   searchParams: { q?: string };
 }) {
   const query = (searchParams.q ?? "").trim().slice(0, 200);
-  // محرّك البحث: BM25 على فهرس النواة المُرمَّز (أعلى صلة من المطابقة النصية)
-  const hits = query ? bm25Search(query, 12) : null;
+  // محرّك البحث: النواة (searchLegalCore) — نفس محرّك الشات والقاضي: خريطة مفاهيم + مكنز + ترتيب صلة.
+  const response = query
+    ? await searchLegalCore({ query, limit: 12, includeSnippets: true, includeRelatedTerms: false })
+    : null;
+  const hits = response?.results ?? null;
 
   return (
     <main className="min-h-screen bg-[var(--hakeem-bg)]">
@@ -63,7 +66,7 @@ export default async function PublicSearchPage({
         {hits === null ? (
           <div className="mt-10 rounded-[var(--r-xl)] border border-dashed border-[var(--ink-15)] bg-[var(--hakeem-bg-soft)] p-10 text-center">
             <p className="font-display-ar text-lg font-bold text-[var(--navy)]">ابدأ بكتابة عبارة بحث</p>
-            <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">بحث ذكي (BM25) في 16,037 مادة مُرمَّزة — يتصدّر الأكثر صلة لا الأكثر تكراراً.</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">بحث النواة الذكي في مواد الأنظمة — خريطة مفاهيم ومكنز وترتيب صلة، يتصدّر الأكثر صلة لا الأكثر تكراراً.</p>
           </div>
         ) : (
           <section className="mt-5">
@@ -74,17 +77,17 @@ export default async function PublicSearchPage({
             {hits.length ? (
               <div className="space-y-4">
                 {hits.map((hit) => (
-                  <article key={hit.code} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
+                  <article key={hit.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-mono-legal text-sm text-[var(--gold-dark)]">{hit.meta.citation}</p>
-                      <span className="font-mono-legal text-[11px] text-[var(--ink-40)]">{hit.code}</span>
+                      <p className="font-mono-legal text-sm text-[var(--gold-dark)]">{hit.citationLabel}</p>
+                      <span className="font-mono-legal text-[11px] text-[var(--ink-40)]">{hit.systemName}</span>
                     </div>
                     <p className="mt-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--parchment)] p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
-                      {hit.meta.snippet}
+                      {hit.snippet}
                     </p>
                     <div className="mt-4">
                       <Link
-                        href={`/dashboard/legal-core/search?q=${encodeURIComponent(`${hit.meta.law_name} ${hit.meta.article_number}`)}`}
+                        href={`/dashboard/legal-core/search?q=${encodeURIComponent(`${hit.systemName} ${hit.articleNumber}`)}`}
                         className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold-ghost)]"
                       >
                         فتح المادة كاملةً في النواة (يتطلب الدخول) ↗
@@ -102,7 +105,7 @@ export default async function PublicSearchPage({
         )}
 
         <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-7 text-[var(--ink-40)]">
-          بحث ذكي (BM25) على الأنظمة المُرمَّزة. التنبيه المهني: المخرجات مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا.
+          بحث النواة الذكي على مواد الأنظمة. التنبيه المهني: المخرجات مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا.
         </p>
       </div>
     </main>
