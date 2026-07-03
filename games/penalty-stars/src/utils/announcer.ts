@@ -16,12 +16,22 @@ const clipModules = import.meta.glob('../assets/audio/*.mp3', { eager: true, imp
 const clips = new Map<string, Howl>();
 for (const [path, src] of Object.entries(clipModules)) {
   const name = path.split('/').pop()!.replace('.mp3', '');
-  clips.set(name, new Howl({ src: [src], format: ['mp3'], volume: 0.9 }));
+  clips.set(name, new Howl({ src: [src], format: ['mp3'], volume: 1.0 }));
 }
 
-// كتم Howler العام (زر 🔊) يشمل هذه المقاطع تلقائيًا
-function playClip(name: string): void {
-  clips.get(name)?.play();
+// قناة واحدة للمعلق: مقطع جديد يوقف السابق — لا تراكب أبدًا
+let currentClip: Howl | null = null;
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+function playClip(name: string, delayMs = 0): void {
+  const clip = clips.get(name);
+  if (!clip) return;
+  if (pendingTimer) clearTimeout(pendingTimer);
+  pendingTimer = setTimeout(() => {
+    currentClip?.stop();
+    currentClip = clip;
+    clip.play(); // كتم Howler العام (زر 🔊) يشمل المقاطع تلقائيًا
+  }, delayMs);
 }
 
 // عبارات عامة تتناوب مع عبارة اللاعب حتى لا يمل الطفل
@@ -61,23 +71,22 @@ function showBubble(scene: Phaser.Scene, text: string, color: number): void {
 
 export const announcer = {
   // عند التسديد: عبارة اللاعب غالبًا، وعبارة عامة أحيانًا — الفقاعة والصوت معًا
+  // تأخير قصير حتى لا يتراكب مع صوت الركلة
   onShot(scene: Phaser.Scene, player: PlayerDef): void {
     if (Math.random() < 0.65) {
       showBubble(scene, player.cheer, player.color);
-      playClip(`cheer-${player.id}`);
+      playClip(`cheer-${player.id}`, 220);
     } else {
       const i = Math.floor(Math.random() * GENERIC_CHEERS.length);
       showBubble(scene, GENERIC_CHEERS[i], player.color);
-      playClip(`cheer-gen-${i}`);
+      playClip(`cheer-gen-${i}`, 220);
     }
   },
 
-  // عند الحسم: نداء صوتي — العبارة الوسطى الموجودة تكفي بصريًا
+  // عند الحسم: يوقف عبارة التسديدة وينادي بعد أن يهدأ مؤثر الهدف/التصدي
   onOutcome(result: 'goal' | 'save' | 'miss', _phrase: string): void {
+    if (audio.isMuted()) return;
     const i = Math.floor(Math.random() * CALL_COUNTS[result]);
-    // تأخير بسيط حتى لا يتراكب مع صوت الهدف/التصدي
-    setTimeout(() => {
-      if (!audio.isMuted()) playClip(`call-${result}-${i}`);
-    }, 350);
+    playClip(`call-${result}-${i}`, 550);
   },
 };

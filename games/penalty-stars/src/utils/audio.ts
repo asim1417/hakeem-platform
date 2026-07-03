@@ -87,13 +87,14 @@ const whistleSrc = synth(0.45, (t) => {
 
 type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle';
 
+// أحجام متوازنة: المؤثرات تحت صوت المعلق حتى لا تطغى عليه
 const sounds: Record<SoundName, Howl> = {
-  kick: new Howl({ src: [kickSrc], format: ['wav'] }),
-  goal: new Howl({ src: [goalSrc], format: ['wav'], volume: 0.9 }),
-  save: new Howl({ src: [saveSrc], format: ['wav'] }),
-  crowd: new Howl({ src: [crowdSrc], format: ['wav'], volume: 0.8 }),
-  button: new Howl({ src: [buttonSrc], format: ['wav'] }),
-  whistle: new Howl({ src: [whistleSrc], format: ['wav'] }),
+  kick: new Howl({ src: [kickSrc], format: ['wav'], volume: 0.8 }),
+  goal: new Howl({ src: [goalSrc], format: ['wav'], volume: 0.65 }),
+  save: new Howl({ src: [saveSrc], format: ['wav'], volume: 0.7 }),
+  crowd: new Howl({ src: [crowdSrc], format: ['wav'], volume: 0.4 }),
+  button: new Howl({ src: [buttonSrc], format: ['wav'], volume: 0.7 }),
+  whistle: new Howl({ src: [whistleSrc], format: ['wav'], volume: 0.6 }),
 };
 
 let muted = false;
