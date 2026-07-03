@@ -8,11 +8,7 @@ import { PlayerSelectScene } from './scenes/PlayerSelectScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
 import { LockerScene } from './scenes/LockerScene';
-import { unlockSpeech } from './utils/announcer';
 import './styles.css';
-
-// فتح محرك النطق بأول لمسة — متطلب iOS/Safari لصوت المعلق
-window.addEventListener('pointerdown', unlockSpeech, { once: true });
 
 new Phaser.Game({
   type: Phaser.AUTO,
