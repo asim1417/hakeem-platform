@@ -22,8 +22,10 @@ import {
   fixReversedArabicLines,
   normStr,
   occurrences,
+  extractKeyFields,
   parseQuery,
   queryStems,
+  segmentDocument,
   suspectWords,
   type AnalyzedDocument,
   type DocumentInput,
@@ -1404,6 +1406,34 @@ export function CaseBrowser() {
                       </div>
                     );
                   })}
+                  {(() => {
+                    const seg = segmentDocument(current.rawText, current.issuer.code);
+                    const fields = extractKeyFields(current, seg);
+                    return (
+                      <>
+                        {fields.length ? (
+                          <div className={styles.entRow}>
+                            <b>📋 حقول {current.type.name}:</b>
+                            <div className={styles.kv} style={{ marginTop: 4 }}>
+                              {fields.map((f) => (
+                                <div key={f.label} style={{ display: "contents" }}>
+                                  <b>{f.label}</b>
+                                  <div>{f.value}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        {seg.headerLines.length || seg.footerLines.length ? (
+                          <div className={styles.entRow}>
+                            <b>🗂️ البنية:</b>{" "}
+                            {seg.headerLines.length ? <span className={styles.tag}>ترويسة ({seg.headerLines.length} سطر)</span> : null}{" "}
+                            {seg.footerLines.length ? <span className={styles.tag}>تذييل/توثيق ({seg.footerLines.length} سطر)</span> : null}
+                          </div>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                   {(() => {
                     const bd = termStats.byDoc[docs.indexOf(current)] ?? {};
                     const ks = Object.keys(bd).sort((a, b) => bd[b] - bd[a]);
