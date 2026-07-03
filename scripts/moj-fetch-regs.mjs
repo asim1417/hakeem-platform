@@ -73,15 +73,15 @@ try {
 
     const articles = [];
     let seq = 0;
-    const usedNumbers = new Set();
     const walk = (nodes, chapterLabel) => {
       for (const n of nodes || []) {
         if (n && n.type === 1) {
           seq += 1;
           const label = (n.sequence || "").trim();
-          let num = parseArabicOrdinal(label);
-          if (!Number.isFinite(num) || usedNumbers.has(num)) num = 10000 + seq; // احتياطي مضمون التفرّد
-          usedNumbers.add(num);
+          // الترقيم = ترتيب المصدر (يساوي الرقم الحقيقي في اللوائح المرقّمة تسلسليًّا، ويحفظ
+          // الترتيب في المزدوجة «١/٢٤٢»)؛ الرقم الحقيقي/التسمية يبقى في title. مضمون التفرّد.
+          const num = seq;
+          const parsed = parseArabicOrdinal(label); // تشخيص فقط: هل التسمية رقم ترتيبي نظيف؟
           const content = htmlToText(n.text);
           articles.push({
             articleNumber: num,
@@ -91,7 +91,7 @@ try {
             royalDecree: (n.decree || "").trim() || null,
             _seq: seq,
             _label: label,
-            _parsedOk: Number.isFinite(parseArabicOrdinal(label)),
+            _matchesOrdinal: parsed === seq,
             _len: content.length,
           });
         }
@@ -104,11 +104,10 @@ try {
     };
     walk(m.statuteStructure, null);
 
-    const parsedOk = articles.filter((a) => a._parsedOk).length;
+    const ordinalMatch = articles.filter((a) => a._matchesOrdinal).length;
     const empty = articles.filter((a) => a._len < 10).length;
-    const dupFallback = articles.filter((a) => a.articleNumber >= 10000).length;
     console.log(`   «${lawName}» · تصنيف=${m.classificationName ?? "∅"} · إصدار هـ=${(m.issuanceDate || "").slice(0, 10) || "∅"}`);
-    console.log(`   مواد مستخرجة=${articles.length} · ترقيم ناجح=${parsedOk}/${articles.length} · احتياطي/تصادم=${dupFallback} · نصّ شبه فارغ=${empty}`);
+    console.log(`   مواد مستخرجة=${articles.length} · ترقيم تسلسلي (يطابق الترتيبي العربي في ${ordinalMatch}/${articles.length}) · نصّ شبه فارغ=${empty}`);
     if (articles[0]) console.log(`   أول: «${articles[0]._label}» (#${articles[0].articleNumber}) — ${articles[0].content.slice(0, 80)}…`);
     if (articles.at(-1)) console.log(`   آخر: «${articles.at(-1)._label}» (#${articles.at(-1).articleNumber})`);
 
@@ -122,7 +121,7 @@ try {
         issuanceDateH: (m.issuanceDate || "").slice(0, 10) || null,
         officialArticleCount: articles.length,
       },
-      articles: articles.map(({ _seq, _label, _parsedOk, _len, ...a }) => a),
+      articles: articles.map(({ _seq, _label, _matchesOrdinal, _len, ...a }) => a),
     });
   }
 
