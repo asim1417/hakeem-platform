@@ -147,6 +147,17 @@ export function playerCelebration(
       if (avatar) risingEmoji(scene, avatar.x, avatar.y - 70, '💡');
       emojiBurst(scene, goalX, goalY, '🤓', 5);
       break;
+    case 'roar': // زئير الشبل
+      if (avatar) {
+        risingEmoji(scene, avatar.x, avatar.y - 70, '🦁');
+        gsap.to(avatar, { scale: avatar.scale * 1.18, duration: 0.18, yoyo: true, repeat: 3 });
+      }
+      emojiBurst(scene, goalX, goalY, '🐾', 7);
+      break;
+    case 'crown': // تتويج الأمير
+      if (avatar) risingEmoji(scene, avatar.x, avatar.y - 70, '🤴');
+      emojiBurst(scene, goalX, goalY, '✨', 9);
+      break;
   }
 }
 

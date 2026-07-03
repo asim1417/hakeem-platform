@@ -5,9 +5,11 @@
 import saloumiPhoto from '../assets/players/saloumi.png';
 import hassouniPhoto from '../assets/players/hassouni.png';
 import hammadPhoto from '../assets/players/hammad.png';
+import hishamPhoto from '../assets/players/hisham.png';
+import omarPhoto from '../assets/players/omar.png';
 
 // نوع الاحتفال عند تسجيل الهدف
-export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart';
+export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart' | 'roar' | 'crown';
 
 export interface PlayerDef {
   id: string;
@@ -62,6 +64,32 @@ export const PLAYERS: PlayerDef[] = [
     celebrationType: 'smart',
     cheer: 'العبقري حماد يحسبها صح!',
     photo: hammadPhoto,
+  },
+  {
+    id: 'hisham',
+    name: 'الشبل هشام',
+    emoji: '🦁',
+    color: 0xc78f3c,
+    speed: 8,
+    power: 7,
+    accuracy: 6,
+    celebration: 'زئير الشبل! 🦁',
+    celebrationType: 'roar',
+    cheer: 'الشبل هشام ينقض على الكرة!',
+    photo: hishamPhoto,
+  },
+  {
+    id: 'omar',
+    name: 'الأمير عمر',
+    emoji: '🤴',
+    color: 0x4169e1,
+    speed: 7,
+    power: 7,
+    accuracy: 8,
+    celebration: 'تحية الأمير! 🤴',
+    celebrationType: 'crown',
+    cheer: 'الأمير عمر يتقدم بثقة!',
+    photo: omarPhoto,
   },
   {
     id: 'mohammed',
