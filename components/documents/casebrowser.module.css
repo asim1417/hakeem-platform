@@ -2,21 +2,24 @@
    السمات: فاتح (افتراضي) / ليلي (.dark) / ورقي (.paper) عبر متغيّرات على .root */
 
 .root {
-  --bg: #f6f7f9;
-  --pane: #fff;
-  --ink: #1f2937;
-  --mut: #6b7280;
-  --line: #e5e7eb;
-  --accent: #2563eb;
-  --accent2: #eff6ff;
-  --warn: #fde68a;
-  --chip: #f1f5f9;
+  /* هوية «أمان»: بترولي/نحاسي/ورقي — موحّدة مع صفحة العرض */
+  --bg: #eff3f2;
+  --pane: #fbfaf6;
+  --ink: #12211f;
+  --mut: #5c6e6b;
+  --line: #cad6d3;
+  --accent: #0e3435;
+  --accent2: #e2eae8;
+  --copper: #a9793f;
+  --copper-soft: #e8d6bc;
+  --warn: #f5e6c5;
+  --chip: #e8eeec;
   --tsize: 18px;
   --tlh: 1.9;
-  --tfam: "Traditional Arabic", "Simplified Arabic", "Arabic Typesetting", "Amiri", Tahoma, serif;
+  --tfam: "Amiri", "Traditional Arabic", "Simplified Arabic", "Arabic Typesetting", Tahoma, serif;
   --talign: justify;
-  --mark: #fde68a;
-  --markink: #1f2937;
+  --mark: #f3e2b8;
+  --markink: #2a2317;
 
   background: var(--bg);
   color: var(--ink);
@@ -27,24 +30,28 @@
   text-align: right;
 }
 .root.dark {
-  --bg: #0f172a;
-  --pane: #1e293b;
-  --ink: #e5e7eb;
-  --mut: #94a3b8;
-  --line: #334155;
-  --accent: #3b82f6;
-  --accent2: #1e3a5f;
-  --chip: #243449;
-  --mark: #854d0e;
+  --bg: #0d1b1b;
+  --pane: #14403f;
+  --ink: #eaf1ef;
+  --mut: #9db3af;
+  --line: #1f4f4c;
+  --accent: #c69763;
+  --accent2: #16403f;
+  --copper: #d4af6e;
+  --copper-soft: #6b4f2a;
+  --chip: #16403f;
+  --mark: #6b4f2a;
   --markink: #fff;
 }
 .root.paper {
-  --bg: #efe6d2;
-  --pane: #fbf5e6;
-  --ink: #3a2f1d;
+  --bg: #f5efe1;
+  --pane: #fbf7ec;
+  --ink: #2a2317;
   --mut: #8a7a5c;
   --line: #e0d4ba;
-  --accent2: #f3ead2;
+  --accent: #0e3435;
+  --accent2: #f0e7d3;
+  --copper: #a9793f;
 }
 .root :focus-visible {
   outline: 3px solid var(--accent);
@@ -58,7 +65,7 @@
 
 /* تلوين ذكي للنص */
 .root .eAmt { color: #15803d; font-weight: 600; }
-.root .eDate { color: #1d4ed8; }
+.root .eDate { color: #1f4f4c; }
 .root .eNum { color: #7c3aed; }
 .root .eParty { color: #c2410c; font-weight: 600; }
 .root.dark .eAmt { color: #4ade80; }
@@ -95,28 +102,56 @@
 .tchip b { color: #7c3aed; }
 .root.dark .tchip { background: #3b1d6e; color: #e9d5ff; border-color: #5b21b6; }
 
-/* الرأس */
+/* الرأس — شريط بترولي أنيق موحّد مع صفحة العرض */
 .header {
-  background: var(--pane);
-  border-bottom: 1px solid var(--line);
-  padding: 8px 14px;
+  background: linear-gradient(180deg, #0e3435 0%, #16403f 100%);
+  color: #eaf1ef;
+  border-bottom: 1px solid rgba(198, 151, 99, 0.35);
+  padding: 10px 16px;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
   position: sticky;
   top: 0;
   z-index: 6;
 }
-.header h1 { font-size: 16px; margin: 0; }
-.banner {
-  background: var(--warn);
-  color: #7c2d12;
-  font-size: 12px;
-  padding: 3px 9px;
-  border-radius: 6px;
+.brandSeal {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex: none;
+  background: radial-gradient(circle at 32% 30%, #c69763 0%, #a9793f 78%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 2px 8px rgba(169, 121, 63, 0.4);
+  display: grid;
+  place-items: center;
+  color: #241a0c;
+  font-weight: 700;
+  font-size: 16px;
 }
-.meta { color: var(--mut); font-size: 12px; margin-inline-start: auto; }
+.header h1 { font-size: 16px; margin: 0; color: #fff; font-weight: 700; }
+.header h1 small { color: #c69763; font-weight: 400; font-size: 12px; margin-inline-start: 6px; }
+.banner {
+  background: rgba(198, 151, 99, 0.18);
+  color: #e8d6bc;
+  border: 1px solid rgba(198, 151, 99, 0.4);
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.meta { color: #a9c0bc; font-size: 12px; margin-inline-start: auto; }
+/* أدوات الرأس فوق خلفية بترولية: شرائح فاتحة شفافة */
+.header .bar { color: #c4d6d2; }
+.header .grp {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(198, 151, 99, 0.28);
+}
+.header .grp button { color: #eaf1ef; }
+.header .grp button:hover { background: rgba(255, 255, 255, 0.12); }
+.header .grp select,
+.header .grp input { color: #eaf1ef; }
+.header .grp select option { color: #12211f; }
+.header .grp button:disabled { opacity: 0.55; cursor: default; }
 .bar {
   display: flex;
   gap: 6px;
@@ -157,18 +192,34 @@
 .grp label { white-space: nowrap; display: flex; align-items: center; gap: 3px; cursor: pointer; }
 
 /* التبويبات */
-.tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 14px 0; }
-.tab {
-  padding: 6px 13px;
-  border: 1px solid var(--line);
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 16px 0;
   background: var(--pane);
-  border-radius: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.tab {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 13px;
-  color: inherit;
+  color: var(--mut);
   font-family: inherit;
+  transition: 0.15s;
 }
-.tabActive { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tab:hover { background: var(--accent2); color: var(--ink); }
+.tabActive,
+.root .tabActive:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--copper);
+}
+.root.dark .tabActive { color: #12211f; }
 
 /* التخطيط */
 .wrap { display: flex; height: calc(100vh - 96px); }
@@ -217,12 +268,13 @@
 .row button:hover { background: var(--accent2); }
 .row label { display: flex; align-items: center; gap: 3px; cursor: pointer; }
 .btnExport {
-  background: var(--accent) !important;
-  color: #fff !important;
-  border-color: var(--accent) !important;
-  font-weight: 600;
+  background: var(--copper) !important;
+  color: #241a0c !important;
+  border-color: var(--copper) !important;
+  font-weight: 700;
 }
-.selcount { color: var(--accent); font-weight: 600; }
+.btnExport:hover { filter: brightness(1.06); }
+.selcount { color: var(--copper); font-weight: 700; }
 .count { font-size: 12px; color: var(--mut); padding: 2px 4px; }
 
 /* القائمة */
@@ -299,14 +351,15 @@
 .chips span {
   display: inline-block;
   background: var(--accent2);
-  color: #1e40af;
+  color: var(--accent);
+  border: 1px solid var(--line);
   border-radius: 16px;
   padding: 2px 10px;
   font-size: 12px;
   margin: 2px;
   cursor: pointer;
 }
-.root.dark .chips span { color: #bfdbfe; }
+.root.dark .chips span { color: var(--copper); }
 .chips span:hover { filter: brightness(0.95); }
 .entRow { margin-top: 6px; font-size: 13px; }
 .entRow b { color: var(--mut); }
