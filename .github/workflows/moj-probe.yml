@@ -5,7 +5,12 @@ name: MOJ Portal Probe (Playwright, read-only)
 # قراءة فقط — لا قاعدة بيانات، لا كتابة.
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "اسم ملف المسبار داخل scripts/ (mjs)"
+        type: string
+        default: "moj-probe.mjs"
 
 permissions:
   contents: read
@@ -23,4 +28,4 @@ jobs:
       - name: Install Playwright Chromium
         run: npm i --no-save playwright@1.48.0 && npx playwright install --with-deps chromium
       - name: Probe MOJ legal gateway (read-only)
-        run: node scripts/moj-probe.mjs
+        run: node "scripts/${{ inputs.script }}"
