@@ -10,8 +10,6 @@ import {
   analyzeDocuments,
   legalDocumentReference,
   normalizeForMatch,
-  SAMPLE_CASE,
-  SAMPLE_DOCUMENT_INPUTS,
   type AnalyzedDocument,
   type DocumentInput,
   type EntityKind,
@@ -45,12 +43,6 @@ const SPINE_CLASS: Record<QualityGrade, string> = {
 
 function toArabicDigits(value: string | number): string {
   return String(value).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
-}
-
-function parseAmount(value: string): number {
-  const ascii = value.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,٬\s]/g, "");
-  const parsed = Number(ascii);
-  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function matchesFilter(doc: AnalyzedDocument, filter: FilterKey): boolean {
@@ -96,14 +88,7 @@ export function DocumentWorkstation() {
   const [draftText, setDraftText] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
 
-  const docs = useMemo(
-    () => analyzeDocuments([...SAMPLE_DOCUMENT_INPUTS, ...imported]),
-    [imported]
-  );
-  const importedCodes = useMemo(
-    () => new Set(docs.slice(SAMPLE_DOCUMENT_INPUTS.length).map((d) => d.code)),
-    [docs]
-  );
+  const docs = useMemo(() => analyzeDocuments(imported), [imported]);
 
   const visibleDocs = useMemo(() => {
     const normalizedQuery = normalizeForMatch(query);
@@ -121,22 +106,6 @@ export function DocumentWorkstation() {
   const selected =
     docs.find((d) => d.code === selectedCode) ?? visibleDocs[0] ?? docs[0] ?? null;
 
-  const stats = useMemo(() => {
-    const deeds = new Set(
-      docs.flatMap((d) => d.entities.filter((e) => e.kind === "deed").map((e) => normalizeForMatch(e.value)))
-    );
-    const maxAmount = Math.max(
-      0,
-      ...docs.flatMap((d) => d.entities.filter((e) => e.kind === "amount").map((e) => parseAmount(e.value)))
-    );
-    return {
-      total: docs.length,
-      deeds: deeds.size,
-      maxAmountMillions: Math.round(maxAmount / 1_000_000),
-      review: docs.filter((d) => d.quality.grade === "review").length
-    };
-  }, [docs]);
-
   function handleImport(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const title = draftTitle.trim();
@@ -147,7 +116,7 @@ export function DocumentWorkstation() {
     }
     const next = [...imported, { title, rawText }];
     setImported(next);
-    const analyzed = analyzeDocuments([...SAMPLE_DOCUMENT_INPUTS, ...next]);
+    const analyzed = analyzeDocuments(next);
     const added = analyzed[analyzed.length - 1];
     setSelectedCode(added.code);
     setDraftTitle("");
@@ -157,11 +126,14 @@ export function DocumentWorkstation() {
   }
 
   function handleRemove(code: string) {
-    const offset = docs.findIndex((d) => d.code === code) - SAMPLE_DOCUMENT_INPUTS.length;
+    const offset = docs.findIndex((d) => d.code === code);
     if (offset < 0) return;
     setImported(imported.filter((_, i) => i !== offset));
     if (selectedCode === code) setSelectedCode(null);
   }
+
+  // لا وثائق بعد → نُظهر نموذج الإضافة مباشرة بدل واجهة فارغة
+  const importPanelVisible = showImport || docs.length === 0;
 
   const qualityBadgeClass =
     selected?.quality.grade === "high" ? styles.qGood : selected?.quality.grade === "medium" ? styles.qWarn : styles.qRisk;
@@ -198,54 +170,16 @@ export function DocumentWorkstation() {
 
       <header className={styles.cover}>
         <div className={styles.coverIn}>
-          <span className={styles.eyebrow}>محطة فحص الوثائق — قراءة وفهرسة وتحقّق</span>
-          <h1>ملف القضية، مقروءًا ومُفهرسًا ومُحقَّقًا</h1>
+          <span className={styles.eyebrow}>محطة فحص الوثائق</span>
+          <h1>اقرأ وثيقتك، مُصنَّفة ومُرمَّزة وبكياناتها</h1>
           <p className={styles.lede}>
-            كل وثيقة لها كعبٌ في الفهرس، وختمُ تحقّقٍ نحاسي، ومؤشر جودةٍ ظاهر. التصنيف والترميز يجريان
-            وفق المرجع التشغيلي المشتق من الدليل المرجعي للمستندات القانونية السعودية — بلا أي توليد.
+            الصق نص الوثيقة فيُصنَّف نوعها وجهتها ويُولَّد رمزها الهرمي وتُستخرج كياناتها فوريًا في
+            متصفحك — دون إرسال النص إلى أي خادم ودون أي تخزين.
           </p>
-          <div className={styles.casebar} aria-label="بيانات القضية">
-            <span className={styles.chip}>
-              القضية <b className={styles.num}>{toArabicDigits(SAMPLE_CASE.number)}</b>
-            </span>
-            <span className={styles.chip}>{SAMPLE_CASE.subject}</span>
-            <span className={styles.chip}>{SAMPLE_CASE.court}</span>
-            <span className={`${styles.chip} ${styles.chipNote}`}>{SAMPLE_CASE.disclaimer}</span>
-          </div>
-          <div className={styles.stats} role="list">
-            <div className={styles.stat} role="listitem">
-              <div className={`${styles.statV} ${styles.num}`}>{toArabicDigits(stats.total)}</div>
-              <div className={styles.statL}>وثيقة مُفهرسة</div>
-            </div>
-            <div className={styles.stat} role="listitem">
-              <div className={`${styles.statV} ${styles.num}`}>{toArabicDigits(stats.deeds)}</div>
-              <div className={styles.statL}>صكٌّ مرصود</div>
-            </div>
-            <div className={styles.stat} role="listitem">
-              <div className={`${styles.statV} ${styles.num}`}>
-                {toArabicDigits(stats.maxAmountMillions)}
-                <small> مليون ر.س</small>
-              </div>
-              <div className={styles.statL}>أعلى مبلغ محل النزاع</div>
-            </div>
-            <div className={styles.stat} role="listitem">
-              <div className={`${styles.statV} ${styles.num}`}>
-                {toArabicDigits(stats.review)}
-                <small> وثائق</small>
-              </div>
-              <div className={styles.statL}>تحتاج مراجعة</div>
-            </div>
-          </div>
         </div>
       </header>
 
-      <main className={styles.wrap}>
-        <div className={styles.sectionHead} id="station">
-          <span className={styles.sectionK}>01</span>
-          <h2>محطة العمل</h2>
-          <p>ثلاثة ألواح: الفهرس والبحث يمينًا، القراءة في الوسط، بطاقة الوثيقة وكياناتها وجودتها يسارًا.</p>
-        </div>
-
+      <main className={styles.wrap} id="station">
         <section className={styles.station} aria-label="محطة العمل">
           <aside className={styles.index} aria-label="فهرس الوثائق والبحث">
             <div className={styles.indexHd}>
@@ -280,7 +214,11 @@ export function DocumentWorkstation() {
             </div>
             <div className={styles.list} role="list">
               {visibleDocs.length === 0 ? (
-                <p className={styles.emptyList}>لا وثائق مطابقة للبحث أو التصفية الحالية.</p>
+                <p className={styles.emptyList}>
+                  {docs.length === 0
+                    ? "لا وثائق بعد — أضف وثيقتك الأولى من النموذج أدناه."
+                    : "لا وثائق مطابقة للبحث أو التصفية الحالية."}
+                </p>
               ) : (
                 visibleDocs.map((doc) => (
                   <button
@@ -301,25 +239,23 @@ export function DocumentWorkstation() {
                         ) : doc.quality.grade === "review" ? (
                           <span className={styles.leafRisk}>جودة منخفضة</span>
                         ) : null}
-                        {importedCodes.has(doc.code) ? (
-                          <span
-                            className={styles.removeBtn}
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => {
+                        <span
+                          className={styles.removeBtn}
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemove(doc.code);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
                               e.stopPropagation();
                               handleRemove(doc.code);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.stopPropagation();
-                                handleRemove(doc.code);
-                              }
-                            }}
-                          >
-                            حذف
-                          </span>
-                        ) : null}
+                            }
+                          }}
+                        >
+                          حذف
+                        </span>
                       </span>
                     </span>
                     {doc.verified ? (
@@ -334,7 +270,7 @@ export function DocumentWorkstation() {
               )}
             </div>
             <button type="button" className={styles.addBtn} onClick={() => setShowImport((v) => !v)}>
-              {showImport ? "إغلاق نموذج الإضافة" : "+ إضافة وثيقة للفحص"}
+              {importPanelVisible ? "نموذج الإضافة معروض أدناه ↓" : "+ إضافة وثيقة للفحص"}
             </button>
           </aside>
 
@@ -366,7 +302,12 @@ export function DocumentWorkstation() {
               </>
             ) : (
               <div className={styles.page}>
-                <p>اختر وثيقة من الفهرس لقراءتها.</p>
+                <p className={styles.pCenter}>لا وثيقة معروضة</p>
+                <p>
+                  ابدأ بلصق نص وثيقتك في نموذج «إضافة وثيقة للفحص» أدناه — سيُصنَّف نوعها وجهتها
+                  ويُولَّد رمزها الهرمي وتُستخرج كياناتها فورًا، ثم تظهر هنا للقراءة بخط النسخ مع
+                  تظليل الأطراف والمبالغ والتواريخ والأنظمة.
+                </p>
               </div>
             )}
           </article>
@@ -526,7 +467,7 @@ export function DocumentWorkstation() {
           </aside>
         </section>
 
-        {showImport ? (
+        {importPanelVisible ? (
           <section className={styles.importPanel} aria-label="إضافة وثيقة">
             <h3>إضافة وثيقة للفحص</h3>
             <p>
@@ -556,16 +497,18 @@ export function DocumentWorkstation() {
                 <button type="submit" className={styles.primaryBtn}>
                   فحص وإضافة إلى الفهرس
                 </button>
-                <button
-                  type="button"
-                  className={styles.ghostBtn}
-                  onClick={() => {
-                    setShowImport(false);
-                    setImportError(null);
-                  }}
-                >
-                  إلغاء
-                </button>
+                {docs.length > 0 ? (
+                  <button
+                    type="button"
+                    className={styles.ghostBtn}
+                    onClick={() => {
+                      setShowImport(false);
+                      setImportError(null);
+                    }}
+                  >
+                    إلغاء
+                  </button>
+                ) : null}
                 {importError ? <span className={styles.importHint}>{importError}</span> : null}
               </div>
             </form>
@@ -578,8 +521,6 @@ export function DocumentWorkstation() {
           محطة الفحص القانوني · هوية <b>أمان</b> البصرية — ضمن منصة حكيم
         </div>
         <p className={styles.legal}>
-          جميع الأسماء والأرقام والمبالغ في وثائق العينة افتراضية لأغراض العرض فقط، ولا تمثل قضية حقيقية.
-          <br />
           كل مخرجات المحطة «مساعدة آلية تحتاج مراجعة المحامي»، وليست رأيًا قانونيًا نهائيًا، ولا تدّعي المنظومة
           التحقّق من الأصالة بذاتها.
         </p>
