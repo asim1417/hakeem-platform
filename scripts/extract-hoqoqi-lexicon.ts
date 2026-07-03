@@ -41,14 +41,16 @@ function parse(sql: string) {
 }
 const sv = (v: unknown) => (v === null || v === undefined ? "" : String(v).trim());
 const isAr = (s: string) => /[ء-ي]/.test(s);
-// أعمدة الصيغ السطحية في معجم حقوقي (nouns/verbs) — نجمعها كلّها تحت جذرٍ واحد.
+// أعمدة الصيغ السطحية النظيفة (نتجنّب «normalized» لأنه يستبدل الهمزات بـ«ء»).
 const FORM_COLS = [
-  "unvocalized", "normalized", "single", "broken_plural",
+  "unvocalized", "single", "broken_plural",
   "feminin", "masculin", "masculin_plural", "feminin_plural",
   "past", "future", "imperative", "passive",
 ];
 const ROOT_COLS = ["root", "stamped"];
 const lc = (r: SqlRow) => new Map(Object.entries(r).map(([k, v]) => [k.toLowerCase(), sv(v)]));
+// تنقية الصيغة: إزالة التشكيل/التطويل (بعض الأعمدة مشكولة) — لتطابق نصّ البحث الفعليّ.
+const cleanForm = (s: string) => s.replace(/[ً-ْٰـ]/g, "").trim();
 
 async function main() {
   const file = process.argv.find((a) => a.startsWith("--file="))?.slice(7) || process.env.HOQOQI_FILE || "hoqoqi.sql";
@@ -79,7 +81,7 @@ async function main() {
       if (!root) continue;
       const set = byRoot.get(root) ?? new Set<string>();
       for (const col of FORM_COLS) {
-        const val = m.get(col) || "";
+        const val = cleanForm(m.get(col) || "");
         if (val && isAr(val) && val.length >= 2) { set.add(val); }
       }
       if (set.size) { byRoot.set(root, set); forms += set.size; }
