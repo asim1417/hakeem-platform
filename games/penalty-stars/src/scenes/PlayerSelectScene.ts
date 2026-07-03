@@ -64,7 +64,7 @@ export class PlayerSelectScene extends Phaser.Scene {
       .setOrigin(0.5);
     // نقاط القوة كنجوم صغيرة
     const stats = this.add
-      .text(0, 54, rtl(`⭐ قوة ${'●'.repeat(p.power)}  دقة ${'●'.repeat(p.accuracy)}`), {
+      .text(0, 54, rtl(`⭐ قوة ${'●'.repeat(Math.round(p.power / 2))}  دقة ${'●'.repeat(Math.round(p.accuracy / 2))}`), {
         fontFamily: FONT,
         fontSize: '12px',
         color: '#555555',

@@ -20,7 +20,9 @@ import {
 } from '../config/gameConfig';
 import { getPlayer, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
-import { bouncePhrase, confetti, starBurst } from '../utils/animations';
+import { bouncePhrase, confetti, playerCelebration, starBurst } from '../utils/animations';
+import { progress } from '../utils/progress';
+import { coachPhrases } from '../data/phrases';
 import { makeButton } from '../utils/ui';
 import { announcer } from '../utils/announcer';
 
@@ -42,6 +44,7 @@ export class GameScene extends Phaser.Scene {
   private goals = 0;
   private dragStart: Phaser.Math.Vector2 | null = null;
   private aimArrow!: Phaser.GameObjects.Graphics;
+  private shooter!: Phaser.GameObjects.Image;
   private shotText!: Phaser.GameObjects.Text;
   private starIcons: Phaser.GameObjects.Image[] = [];
   private phraseText!: Phaser.GameObjects.Text;
@@ -70,16 +73,24 @@ export class GameScene extends Phaser.Scene {
     this.createHud();
     this.setupInput();
     audio.play('whistle');
+    this.coachTip();
   }
 
   // ── الرسم ──
 
   private drawField(): void {
-    this.add.rectangle(GAME_WIDTH / 2, 60, GAME_WIDTH, 120, COLORS.sky);
-    this.add.rectangle(GAME_WIDTH / 2, (GAME_HEIGHT + 120) / 2, GAME_WIDTH, GAME_HEIGHT - 120, COLORS.grass);
-    // خطوط عشب أفقية
-    for (let i = 0; i < 6; i++) {
-      this.add.rectangle(GAME_WIDTH / 2, 180 + i * 110, GAME_WIDTH, 55, COLORS.grassDark, 0.45);
+    // خلفية الملعب شبه الواقعية المختارة — مع طبقة تعتيم خفيفة لوضوح النصوص
+    const stadiumKey = progress.selectedStadium();
+    if (this.textures.exists(stadiumKey)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.1);
+    } else {
+      // fallback مرسوم إذا غابت الصور
+      this.add.rectangle(GAME_WIDTH / 2, 60, GAME_WIDTH, 120, COLORS.sky);
+      this.add.rectangle(GAME_WIDTH / 2, (GAME_HEIGHT + 120) / 2, GAME_WIDTH, GAME_HEIGHT - 120, COLORS.grass);
+      for (let i = 0; i < 6; i++) {
+        this.add.rectangle(GAME_WIDTH / 2, 180 + i * 110, GAME_WIDTH, 55, COLORS.grassDark, 0.45);
+      }
     }
     // منطقة الجزاء
     const g = this.add.graphics();
@@ -106,6 +117,18 @@ export class GameScene extends Phaser.Scene {
 
   private createKeeper(): void {
     this.keeper = this.add.image(GOAL.centerX, KEEPER_Y, 'keeper').setDepth(5);
+    // اسم الحارس المرح فوق المرمى
+    this.add
+      .text(GOAL.centerX, GOAL_TOP + 26, rtl(`🧤 ${this.difficulty().keeperName}`), {
+        fontFamily: FONT,
+        fontSize: '17px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#1a5c2e',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
     this.startKeeperIdle();
   }
 
@@ -125,12 +148,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBall(): void {
-    this.ball = this.physics.add.image(BALL_START.x, BALL_START.y, 'ball').setDepth(6);
-    this.ball.setCircle(22);
-    this.ball.setScale(0.9);
+    // كرة اللاعب المختارة من الخزنة — 'ball' المرسومة احتياطًا
+    const ballKey = this.textures.exists(progress.selectedBall()) ? progress.selectedBall() : 'ball';
+    this.ball = this.physics.add.image(BALL_START.x, BALL_START.y, ballKey).setDepth(6);
+    this.ball.setCircle(this.ball.width / 2);
+    this.ball.setDisplaySize(44, 44);
     // اللاعب المسدد بجانب الكرة
-    const shooter = this.add.image(BALL_START.x + 85, BALL_START.y + 20, `avatar-${this.player.id}`).setDepth(6).setDisplaySize(105, 105);
-    this.tweens.add({ targets: shooter, y: shooter.y - 6, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    this.shooter = this.add.image(BALL_START.x + 85, BALL_START.y + 20, `avatar-${this.player.id}`).setDepth(6).setDisplaySize(105, 105);
+    this.tweens.add({ targets: this.shooter, y: this.shooter.y - 6, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     this.aimArrow = this.add.graphics().setDepth(7);
   }
 
@@ -276,16 +301,16 @@ export class GameScene extends Phaser.Scene {
     announcer.onShot(this, this.player);
 
     // القوة: طول السحب × معامل + تعزيز حسب قوة اللاعب
-    const powerBoost = 1 + (this.player.power - 3) * 0.05;
+    const powerBoost = 1 + (this.player.power - 7) * 0.03;
     const power = Phaser.Math.Clamp(drag.length() * SHOT.dragToPower * powerBoost, SHOT.minPower, SHOT.maxPower);
 
     // الدقة: انحراف عشوائي أقل كلما زادت دقة اللاعب
-    const noiseDeg = (5 - this.player.accuracy) * 1.5;
+    const noiseDeg = (10 - this.player.accuracy) * 0.8;
     const angle = drag.angle() + Phaser.Math.DegToRad(Phaser.Math.FloatBetween(-noiseDeg, noiseDeg));
 
     this.ball.setVelocity(Math.cos(angle) * power, Math.sin(angle) * power);
     // تصغير الكرة قليلًا لإيحاء العمق
-    this.tweens.add({ targets: this.ball, scale: 0.55, duration: 600 });
+    this.tweens.add({ targets: this.ball, displayWidth: 28, displayHeight: 28, duration: 600 });
 
     this.keeperDive(angle, power);
 
@@ -361,6 +386,7 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.shake(220, 0.008); // اهتزاز بسيط
       starBurst(this, this.ball.x, this.ball.y, 12);
       confetti(this, 36);
+      playerCelebration(this, this.player.celebrationType, this.shooter, this.ball.x, this.ball.y);
       // إضاءة نجمة في العداد
       if (!this.training && this.starIcons[this.shotIndex]) {
         const icon = this.starIcons[this.shotIndex];
@@ -406,11 +432,32 @@ export class GameScene extends Phaser.Scene {
     // إعادة التجهيز
     this.ball.setVelocity(0, 0);
     this.ball.setPosition(BALL_START.x, BALL_START.y);
-    this.ball.setScale(0.9);
+    this.ball.setDisplaySize(44, 44);
     this.keeper.setPosition(GOAL.centerX, KEEPER_Y);
     this.startKeeperIdle();
     this.updateShotText();
     this.state = 'aiming';
+    if (Math.random() < 0.35) this.coachTip();
+  }
+
+  // نصيحة مدرب لطيفة أسفل الشاشة
+  private coachTip(): void {
+    const tip = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 84, rtl(`🧑‍🏫 ${Phaser.Utils.Array.GetRandom(coachPhrases)}`), {
+        fontFamily: FONT,
+        fontSize: '19px',
+        color: '#1a5c2e',
+        fontStyle: 'bold',
+        backgroundColor: '#ffffffee',
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setDepth(25)
+      .setAlpha(0);
+    gsap
+      .timeline()
+      .to(tip, { alpha: 1, duration: 0.3 })
+      .to(tip, { alpha: 0, duration: 0.4, delay: 2.2, onComplete: () => tip.destroy() });
   }
 
   private difficulty() {

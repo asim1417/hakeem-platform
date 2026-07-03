@@ -1,11 +1,12 @@
 // MenuScene — واجهة البداية: الشعار والأزرار الكبيرة واختيار الصعوبة
 
 import Phaser from 'phaser';
-import { COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES } from '../config/gameConfig';
+import { arabicNum, COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES } from '../config/gameConfig';
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
 import { makeButton } from '../utils/ui';
+import { progress } from '../utils/progress';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -44,7 +45,8 @@ export class MenuScene extends Phaser.Scene {
     popIn(subtitle, 0.25);
 
     // كرة متحركة للزينة
-    const ball = this.add.image(GAME_WIDTH / 2, 265, 'ball').setScale(1.3);
+    const ballKey = this.textures.exists(progress.selectedBall()) ? progress.selectedBall() : 'ball';
+    const ball = this.add.image(GAME_WIDTH / 2, 265, ballKey).setDisplaySize(62, 62);
     this.tweens.add({ targets: ball, y: 245, duration: 700, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     this.tweens.add({ targets: ball, angle: 360, duration: 3000, repeat: -1 });
 
@@ -82,15 +84,33 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
     popIn(stagesHint, 0.5);
 
-    const selectBtn = makeButton(this, GAME_WIDTH / 2, 560, '😃 اختيار اللاعب', () => {
+    const selectBtn = makeButton(this, GAME_WIDTH / 2, 548, '😃 اختيار اللاعب', () => {
       this.scene.start('PlayerSelect');
-    }, { width: 320, color: COLORS.orange });
+    }, { width: 320, height: 66, color: COLORS.orange });
     popIn(selectBtn, 0.55);
 
-    const trainBtn = makeButton(this, GAME_WIDTH / 2, 650, '🏋️ التدريب', () => {
+    const trainBtn = makeButton(this, GAME_WIDTH / 2, 626, '🏋️ التدريب', () => {
       this.scene.start('Game', { training: true });
-    }, { width: 320, color: COLORS.pink });
+    }, { width: 320, height: 66, color: COLORS.pink });
     popIn(trainBtn, 0.65);
+
+    const lockerBtn = makeButton(this, GAME_WIDTH / 2, 704, '🎒 الخزنة — كرات وملاعب', () => {
+      this.scene.start('Locker');
+    }, { width: 320, height: 66, fontSize: 26, color: 0x9b6bff });
+    popIn(lockerBtn, 0.75);
+
+    // مجموع النجوم المكتسبة
+    const starsLabel = this.add
+      .text(20, 128, rtl(`⭐ ${arabicNum(progress.totalStars())}`), {
+        fontFamily: FONT,
+        fontSize: '26px',
+        color: '#ffd93d',
+        fontStyle: 'bold',
+        stroke: '#1a5c2e',
+        strokeThickness: 6,
+      })
+      .setOrigin(0, 0.5);
+    popIn(starsLabel, 0.3);
 
     // زر كتم الصوت
     const muteBtn = makeButton(this, GAME_WIDTH - 55, 50, audio.isMuted() ? '🔇' : '🔊', () => {
@@ -101,12 +121,17 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private drawBackground(): void {
-    // سماء وملعب
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 4, GAME_WIDTH, GAME_HEIGHT / 2, COLORS.sky);
-    this.add.rectangle(GAME_WIDTH / 2, (GAME_HEIGHT * 3) / 4, GAME_WIDTH, GAME_HEIGHT / 2, COLORS.grass);
-    // خطوط عشب
-    for (let i = 0; i < 5; i++) {
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40 + i * 80, GAME_WIDTH, 40, COLORS.grassDark, 0.5);
+    // خلفية الملعب شبه الواقعية + طبقة تعتيم خفيفة لوضوح الواجهة المرحة فوقها
+    const stadiumKey = progress.selectedStadium();
+    if (this.textures.exists(stadiumKey)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.18);
+    } else {
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 4, GAME_WIDTH, GAME_HEIGHT / 2, COLORS.sky);
+      this.add.rectangle(GAME_WIDTH / 2, (GAME_HEIGHT * 3) / 4, GAME_WIDTH, GAME_HEIGHT / 2, COLORS.grass);
+      for (let i = 0; i < 5; i++) {
+        this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40 + i * 80, GAME_WIDTH, 40, COLORS.grassDark, 0.5);
+      }
     }
     // شمس مبتسمة
     const sun = this.add.circle(70, 70, 36, COLORS.yellow);

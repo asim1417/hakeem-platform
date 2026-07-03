@@ -1,4 +1,4 @@
-// بيانات اللاعبين — شخصيات مرحة للأطفال
+// بيانات اللاعبين — شخصيات مرحة للأطفال (مقياس ١–١٠)
 // لإضافة صورة حقيقية للاعب: ضع الصورة في src/assets/players/
 // واستوردها هنا ثم أسندها لحقل photo — تُستخدم تلقائيًا بدل الشكل المرسوم
 
@@ -6,15 +6,19 @@ import saloumiPhoto from '../assets/players/saloumi.png';
 import hassouniPhoto from '../assets/players/hassouni.png';
 import hammadPhoto from '../assets/players/hammad.png';
 
+// نوع الاحتفال عند تسجيل الهدف
+export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart';
+
 export interface PlayerDef {
   id: string;
   name: string;
   emoji: string;
   color: number; // لون القميص
-  speed: number; // 1-5
-  power: number; // 1-5 يؤثر على أقصى قوة تسديد
-  accuracy: number; // 1-5 يقلل انحراف التسديدة
+  speed: number; // 1-10
+  power: number; // 1-10 يؤثر على أقصى قوة تسديد
+  accuracy: number; // 1-10 يقلل انحراف التسديدة
   celebration: string; // عبارة احتفال خاصة
+  celebrationType: CelebrationType; // الاحتفال المرئي
   cheer: string; // عبارة المذيع الصغير عند التسديد 🎤
   photo?: string; // صورة حقيقية اختيارية (data URI عند البناء)
 }
@@ -25,10 +29,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'سلومي السريع',
     emoji: '⚡',
     color: 0xff5d5d,
-    speed: 5,
-    power: 3,
-    accuracy: 3,
+    speed: 9,
+    power: 6,
+    accuracy: 7,
     celebration: 'أسرع من البرق! ⚡',
+    celebrationType: 'run',
     cheer: 'يا سلام يا سلومي!',
     photo: saloumiPhoto,
   },
@@ -37,10 +42,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'كابتن حسوني',
     emoji: '🧢',
     color: 0x2f9bff,
-    speed: 4,
-    power: 4,
-    accuracy: 4,
+    speed: 7,
+    power: 7,
+    accuracy: 7,
     celebration: 'قيادة رائعة يا كابتن! 🧢',
+    celebrationType: 'cup',
     cheer: 'كابتن حسوني يسدد!',
     photo: hassouniPhoto,
   },
@@ -49,10 +55,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'العبقري حماد',
     emoji: '🤓',
     color: 0xff6b9d,
-    speed: 3,
-    power: 3,
-    accuracy: 5,
+    speed: 7,
+    power: 6,
+    accuracy: 9,
     celebration: 'تسديدة محسوبة بذكاء! 🤓',
+    celebrationType: 'smart',
     cheer: 'العبقري حماد يحسبها صح!',
     photo: hammadPhoto,
   },
@@ -61,10 +68,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'الأسطورة محمد',
     emoji: '🔥',
     color: 0xff8c42,
-    speed: 3,
-    power: 5,
-    accuracy: 3,
+    speed: 6,
+    power: 9,
+    accuracy: 7,
     celebration: 'تسديدة أسطورية! 🔥',
+    celebrationType: 'fire',
     cheer: 'الأسطورة محمد لا يرحم!',
   },
   {
@@ -72,10 +80,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'العَلَم أوس',
     emoji: '🎯',
     color: 0x35c96b,
-    speed: 3,
-    power: 3,
-    accuracy: 5,
+    speed: 7,
+    power: 6,
+    accuracy: 9,
     celebration: 'دقة مذهلة يا أوس! 🎯',
+    celebrationType: 'flag',
     cheer: 'المعلم أوس يعرف الزاوية!',
   },
   {
@@ -83,10 +92,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'العمدة عزام',
     emoji: '👑',
     color: 0x9b6bff,
-    speed: 3,
-    power: 4,
-    accuracy: 4,
+    speed: 7,
+    power: 8,
+    accuracy: 7,
     celebration: 'احتفال العمدة! 👑🎉',
+    celebrationType: 'crowd',
     cheer: 'العمدة عزام قائد الملعب!',
   },
   {
@@ -94,10 +104,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'الشيخ الهداف',
     emoji: '🌙',
     color: 0x20b2aa,
-    speed: 2,
-    power: 4,
-    accuracy: 5,
+    speed: 6,
+    power: 7,
+    accuracy: 9,
     celebration: 'هدوء وإتقان! 🌙',
+    celebrationType: 'stars',
     cheer: 'الشيخ الهداف بكل هدوء!',
   },
   {
@@ -105,10 +116,11 @@ export const PLAYERS: PlayerDef[] = [
     name: 'الزعيم عصومي',
     emoji: '💪',
     color: 0xffd93d,
-    speed: 4,
-    power: 5,
-    accuracy: 2,
+    speed: 8,
+    power: 8,
+    accuracy: 7,
     celebration: 'قوة الزعيم! 💪',
+    celebrationType: 'dance',
     cheer: 'الزعيم عصومي نجم المباراة!',
   },
 ];
