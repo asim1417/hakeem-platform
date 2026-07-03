@@ -1,0 +1,45 @@
+name: Nezams Extract (rewritten parser → data/nezams_pairings.json)
+
+# يشغّل المُفكِّك المُعاد كتابته لتنسيق nezams (تمرير + «رقم المادة N» + بنود «س/ص»)،
+# ويدفع data/nezams_pairings.json لفرع claude/nezams-data للمراجعة. قراءة من المصدر فقط.
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "روابط صفحات nezams (مفصولة بمسافة)"
+        type: string
+        required: true
+        default: "https://nezams.com/نظام-المرافعات-الشرعية-ولائحته-التنف/"
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install Playwright (python)
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Parse nezams pages
+        env:
+          NZ_URLS: ${{ inputs.urls }}
+        run: python scripts/nezams/nezams_parse.py $NZ_URLS
+      - name: Commit & push pairings
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B claude/nezams-data
+          git add data/nezams_pairings.json
+          if git diff --cached --quiet; then echo "لا تغييرات."; exit 0; fi
+          printf '%s\n\n%s\n%s\n' \
+            "data(nezams): مزاوجة مادة النظام ببنود لائحتها (من المصدر، للطبقة البنيوية)" \
+            "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>" \
+            "Claude-Session: https://claude.ai/code/session_013b7dDyeMWyxP13KtU5T7bv" > /tmp/nzp_msg.txt
+          git commit -F /tmp/nzp_msg.txt
+          git push -f origin claude/nezams-data
