@@ -1,0 +1,71 @@
+name: Legal Graph (migration + seed, gated)
+
+# يبني الرسم القانوني رباعي الطبقات: هجرة الجداول (legal_graph_nodes/edges) + بذر من القاعدة الرسمية.
+# diagnose: جاف (بذر بلا كتابة، يطبع الإحصاء والعيّنة). apply: هجرة + بذر، مُقفل خلف بوّابة + حارس Neon.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "diagnose (جاف) أو apply (هجرة + كتابة)"
+        type: choice
+        options: ["diagnose", "apply"]
+        default: "diagnose"
+        required: true
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "للكتابة فقط: NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: legal-graph
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  graph:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "24", cache: npm }
+      - run: npm ci
+      - run: npm run db:generate
+      - name: "🛡️ حارس الهدف Neon (قراءة فقط)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      # ── جاف: بذر بلا كتابة (لا يمسّ جداول الرسم؛ يقرأ legal_articles فقط) ──
+      - name: "معاينة البذر (جاف)"
+        if: ${{ inputs.mode == 'diagnose' }}
+        run: npx tsx scripts/seed-legal-graph.ts
+
+      # ── apply: بوّابة → هجرة → بذر ──
+      - name: "🔒 بوّابة الكتابة"
+        if: ${{ inputs.mode == 'apply' }}
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED مع mode=apply."
+            exit 1
+          fi
+      - name: "① هجرة جداول الرسم (idempotent)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260703120000_add_legal_graph/migration.sql
+      - name: "② بذر الرسم (كتابة)"
+        if: ${{ inputs.mode == 'apply' }}
+        run: npx tsx scripts/seed-legal-graph.ts
+      - name: "③ تحقّق (قراءة فقط) — أعداد العُقد/العلاقات"
+        if: ${{ inputs.mode == 'apply' }}
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT type, count(*) FROM legal_graph_nodes GROUP BY type ORDER BY 1;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "SELECT type, source, count(*) FROM legal_graph_edges GROUP BY type, source ORDER BY 1,2;"
