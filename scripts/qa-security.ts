@@ -38,6 +38,8 @@ function scanFile(file: string) {
     const isDocumentation = rel === "README.md" || rel.endsWith(".md");
     const isExample = rel === ".env.example" || isDocumentation;
     const isServerAiGateway = rel.startsWith(path.join("lib", "modules", "ai")) || rel.startsWith(path.join("app", "api"));
+    // لعبة الأطفال تخزن تقدم اللعب فقط (عدد نجوم) محليًا — لا بيانات شخصية
+    const isKidsGame = rel.startsWith("games" + path.sep);
 
     if (/sk-[A-Za-z0-9_-]{20,}/.test(line)) {
       findings.push({ file: rel, line: index + 1, reason: "مفتاح API محتمل مكشوف", text: trimmed });
@@ -47,7 +49,7 @@ function scanFile(file: string) {
       findings.push({ file: rel, line: index + 1, reason: "متغير مفتاح ذكاء مكشوف للواجهة", text: trimmed });
     }
 
-    if (!isDocumentation && /localStorage/.test(line)) {
+    if (!isDocumentation && !isKidsGame && /localStorage/.test(line)) {
       findings.push({ file: rel, line: index + 1, reason: "استخدام localStorage يحتاج مراجعة أمنية", text: trimmed });
     }
 
