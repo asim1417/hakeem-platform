@@ -1,5 +1,7 @@
-# تهيئة جداول منصة الوثائق (doc_workspaces, doc_cases) على قاعدة البيانات
-# يُشغَّل يدوياً مرة واحدة بعد دمج المخطط — Actions → Doc Platform DB Push → Run
+# تهيئة جدولَي منصة الوثائق (doc_workspaces, doc_cases) على قاعدة البيانات.
+# آمن تماماً: يُنشئ الجدولين الجديدين فقط عبر SQL مُتحكَّم فيه (IF NOT EXISTS)
+# ولا يمسّ أي جدول قائم — بخلاف prisma db push الذي يزامن المخطط كاملاً.
+# يُشغَّل يدوياً: Actions → Doc Platform DB Push → Run
 name: Doc Platform DB Push
 
 on:
@@ -17,5 +19,11 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - name: Push schema (creates missing tables only)
-        run: npx prisma db push --skip-generate
+      - name: Create doc-platform tables (idempotent, no data loss)
+        run: npx prisma db execute --schema prisma/schema.prisma --file prisma/sql/doc-platform.sql
+      - name: Verify tables exist
+        run: |
+          npx prisma db execute --schema prisma/schema.prisma --stdin <<'SQL'
+          SELECT 'doc_workspaces' AS table, count(*) FROM doc_workspaces
+          UNION ALL SELECT 'doc_cases', count(*) FROM doc_cases;
+          SQL
