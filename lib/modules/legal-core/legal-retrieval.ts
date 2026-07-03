@@ -240,11 +240,14 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
         status: string;
       }>
     >(
+      // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
+      // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
+      // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
       `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
        FROM legal_articles
        WHERE search_norm IS NOT NULL
-         AND to_tsvector('simple', search_norm) @@ to_tsquery('simple', $1)
-       ORDER BY ts_rank_cd(to_tsvector('simple', search_norm), to_tsquery('simple', $1)) DESC
+         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
+       ORDER BY ts_rank_cd(to_tsvector('simple', coalesce(search_norm, '')), to_tsquery('simple', $1)) DESC
        LIMIT ${cap}`,
       tsq
     );
