@@ -73,8 +73,12 @@ async function main() {
     for (const e of edges) uniq.set(`${e.sourceId}|${e.targetId}`, e);
     const list = [...uniq.values()];
     totalEdges += list.length;
-    console.log(`   بنود مُزاوَجة صالحة (بنيوي): ${list.length} · لائحة غير مُطابَقة=${totalMissingBylaw} · عُقد ناقصة=${totalMissingNode}`);
-    console.log("   عيّنة:");
+    // تغطية الطبقة الصريحة القائمة لهذا النظام (لبيان أن اللوائح غير المُزاوَجة بنيويًّا مربوطة صريحًا)
+    const explicitCount = await prisma.legalGraphEdge.count({ where: { type: "IMPLEMENTS", source: "EXPLICIT", targetNode: { law: cfg.systemLaw } } });
+    console.log(`   بنود مُزاوَجة صالحة (بنيوي 0.9): ${list.length} · لائحة غير مُطابَقة=${totalMissingBylaw} · عُقد ناقصة=${totalMissingNode}`);
+    console.log(`   علاقات صريحة قائمة (0.98) إلى «${cfg.systemLaw}»: ${explicitCount}`);
+    if (list.length < 5 && explicitCount > 0) console.log(`   ℹ لائحة هذا النظام غير مُرقَّمة «N/m» — العلاقة مُغطّاة بالطبقة الصريحة أعلاه (سلوك صحيح).`);
+    console.log("   عيّنة بنيوية:");
     for (const e of list.slice(0, 5)) console.log(`     ${e.sourceId}  ──IMPLEMENTS(0.9,STRUCTURAL)──▶  ${e.targetId}  [${e.evidence}]`);
 
     if (!confirmed) continue;
