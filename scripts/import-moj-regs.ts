@@ -50,7 +50,7 @@ async function main() {
       articleNumber: a.articleNumber,
       title: a.title || `المادة ${a.articleNumber}`,
       content: a.content,
-      chapter: a.chapter,
+      chapter: a.chapter ? a.chapter.replace(/:\s*:\s*/g, ": ").replace(/\s+/g, " ").trim() : null,
       royalDecree: a.royalDecree,
       status: "سارية",
       keywords: ["source:moj_gateway", "review:needs_review", `moj_serial:${system.sourceSerial}`, `parent:${system.parentSystem}`],
