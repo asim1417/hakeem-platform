@@ -101,7 +101,9 @@
     "diagnose:text-quality": "tsx scripts/diagnose-text-quality.ts",
     "inspect:text-source": "tsx scripts/inspect-text-source.ts",
     "probe:source": "tsx scripts/probe-source.ts",
-    "emit:source-urls": "tsx scripts/emit-source-urls.ts"
+    "emit:source-urls": "tsx scripts/emit-source-urls.ts",
+    "extract:lexicon": "tsx scripts/extract-hoqoqi-lexicon.ts",
+    "test:lexicon": "tsx scripts/test-lexicon-expansion.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
