@@ -12,10 +12,14 @@ import { prisma } from "@/lib/prisma";
 
 const confirmed = process.env.CONFIRM_RUNTIME_DB_ALIGNMENT === "NEON_RUNTIME_CONFIRMED";
 
-// خريطة صفحة nezams → (اسم النظام، اسم اللائحة) في قاعدتنا. تُوسَّع لكل نظام لاحقًا.
+// خريطة صفحة nezams → (اسم النظام، اسم اللائحة) في قاعدتنا. match = جزء مميّز مُطبَّع.
 const LAW_MAP: Array<{ match: string; systemLaw: string; bylawLaw: string }> = [
-  { match: "المرافعات", systemLaw: "نظام المرافعات الشرعية", bylawLaw: "اللوائح التنفيذية لنظام المرافعات الشرعية" },
+  { match: "مرافعات", systemLaw: "نظام المرافعات الشرعية", bylawLaw: "اللوائح التنفيذية لنظام المرافعات الشرعية" },
+  { match: "اجراءات الجزائيه", systemLaw: "نظام الإجراءات الجزائية", bylawLaw: "اللائحة التنفيذية لنظام الإجراءات الجزائية" },
 ];
+
+// تطبيع عربي للمطابقة المرنة لاسم الصفحة (تجريد الهمزات/التطويل، ة→ه، ى→ي).
+const normAr = (s: string) => (s || "").replace(/[ً-ْٰـ]/g, "").replace(/[إأآ]/g, "ا").replace(/ئ/g, "ي").replace(/ؤ/g, "و").replace(/ء/g, "").replace(/ى/g, "ي").replace(/ة/g, "ه");
 
 const EN2AR: Record<string, string> = { "0": "٠", "1": "١", "2": "٢", "3": "٣", "4": "٤", "5": "٥", "6": "٦", "7": "٧", "8": "٨", "9": "٩" };
 const toArabic = (s: string | number) => String(s).replace(/[0-9]/g, (d) => EN2AR[d]);
@@ -32,7 +36,7 @@ async function main() {
   let totalEdges = 0, totalMissingBylaw = 0, totalMissingNode = 0, written = 0, skippedExplicit = 0;
 
   for (const page of pages) {
-    const cfg = LAW_MAP.find((m) => page.law.includes(m.match));
+    const cfg = LAW_MAP.find((m) => normAr(page.law).includes(normAr(m.match)));
     if (!cfg) { console.log(`⚠ لا خريطة لصفحة «${page.law}» — تخطّي.`); continue; }
     console.log(`\n▮ ${page.law} → نظام=«${cfg.systemLaw}» · لائحة=«${cfg.bylawLaw}»`);
 
@@ -56,8 +60,8 @@ async function main() {
       for (const label of labels) {
         const [n, m] = normLabel(label).split("/"); // nezams «N/m»
         if (!n || !m) continue;
-        const mojTitle = normLabel(`${toArabic(m)}/${toArabic(n)}`); // معكوس → «m/N»
-        const bylawArtNum = titleToNum.get(mojTitle);
+        // نجرّب الاتجاهين: «m/N» (معكوس كالمرافعات) و«N/m» (نفس الترتيب) — أيُّهما طابق عنوان لائحتنا.
+        const bylawArtNum = titleToNum.get(normLabel(`${toArabic(m)}/${toArabic(n)}`)) ?? titleToNum.get(normLabel(`${toArabic(n)}/${toArabic(m)}`));
         if (bylawArtNum == null) { totalMissingBylaw++; continue; }
         const bylawNodeId = `BYLAW::${cfg.bylawLaw}::${bylawArtNum}`;
         if (!nodeIds.has(bylawNodeId)) { totalMissingNode++; continue; }
@@ -69,8 +73,12 @@ async function main() {
     for (const e of edges) uniq.set(`${e.sourceId}|${e.targetId}`, e);
     const list = [...uniq.values()];
     totalEdges += list.length;
-    console.log(`   بنود مُزاوَجة صالحة (بنيوي): ${list.length} · لائحة غير مُطابَقة=${totalMissingBylaw} · عُقد ناقصة=${totalMissingNode}`);
-    console.log("   عيّنة:");
+    // تغطية الطبقة الصريحة القائمة لهذا النظام (لبيان أن اللوائح غير المُزاوَجة بنيويًّا مربوطة صريحًا)
+    const explicitCount = await prisma.legalGraphEdge.count({ where: { type: "IMPLEMENTS", source: "EXPLICIT", targetNode: { law: cfg.systemLaw } } });
+    console.log(`   بنود مُزاوَجة صالحة (بنيوي 0.9): ${list.length} · لائحة غير مُطابَقة=${totalMissingBylaw} · عُقد ناقصة=${totalMissingNode}`);
+    console.log(`   علاقات صريحة قائمة (0.98) إلى «${cfg.systemLaw}»: ${explicitCount}`);
+    if (list.length < 5 && explicitCount > 0) console.log(`   ℹ لائحة هذا النظام غير مُرقَّمة «N/m» — العلاقة مُغطّاة بالطبقة الصريحة أعلاه (سلوك صحيح).`);
+    console.log("   عيّنة بنيوية:");
     for (const e of list.slice(0, 5)) console.log(`     ${e.sourceId}  ──IMPLEMENTS(0.9,STRUCTURAL)──▶  ${e.targetId}  [${e.evidence}]`);
 
     if (!confirmed) continue;
