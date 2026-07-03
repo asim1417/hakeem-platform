@@ -39,3 +39,7 @@ ahkam_moj.sql.gz
 .link-judgments-checkpoint.json
 .import-judgments.lock
 .link-judgments.lock
+
+# Python
+__pycache__/
+*.pyc
