@@ -134,7 +134,9 @@ interface RecognizeResult {
   confidence: number;
 }
 
-/** يشغّل OCR على صورة/لوحة مع معالجة مسبقة ترفع الدقّة */
+/** يشغّل OCR على صورة/لوحة. المعالجة المسبقة اختيارية (معطّلة افتراضياً):
+ *  قياس CER/WER على goldset أثبت أن الخام أدقّ على المحتوى النظيف (82.8% مقابل 61%).
+ *  تُفعَّل preprocess=true فقط للمسح الرديء (بعد إثبات نفعه على صور مسح حقيقية). */
 export async function ocrImage(
   source: Blob | HTMLCanvasElement | string,
   onProgress?: OcrProgress,
@@ -152,7 +154,7 @@ export async function ocrImage(
   try {
     await worker.setParameters(OCR_PARAMS as unknown as Parameters<typeof worker.setParameters>[0]);
     let input: Blob | HTMLCanvasElement | string = source;
-    if (options?.preprocess !== false) {
+    if (options?.preprocess === true) {
       try {
         input = preprocessCanvas(await sourceToCanvas(source));
       } catch {
@@ -198,19 +200,17 @@ export async function ocrScannedPdf(
   let confSum = 0;
   for (let p = 1; p <= doc.numPages; p += 1) {
     const page = await doc.getPage(p);
+    // دقّة عالية (scale 3) لكن بلا تعتيب — القياس أثبت أن الخام أدقّ
     const canvas = await renderPdfPageToCanvas(page);
-    const processed = preprocessCanvas(canvas);
     const { text, confidence } = await ocrImage(
-      processed,
+      canvas,
       (info) => onProgress?.({ page: p, pages: doc.numPages, status: info.status, progress: info.progress }),
-      { preprocess: false } // عولجت مسبقاً
+      { preprocess: false }
     );
     confSum += confidence;
     parts.push(`[صفحة ${p}]\n${text}`);
     canvas.width = 0;
     canvas.height = 0;
-    processed.width = 0;
-    processed.height = 0;
   }
   await doc.destroy();
   return { text: parts.join("\n\n").trim(), pages: doc.numPages, avgConfidence: doc.numPages ? confSum / doc.numPages : 0 };
