@@ -1,0 +1,26 @@
+name: MOJ Portal Probe (Playwright, read-only)
+
+# يكتشف عقد واجهة API لبوابة العدل القانونية (laws.moj.gov.sa / laws-gateway.moj.gov.sa)
+# عبر متصفّح حقيقي: نقطة قائمة الأنظمة، ونقطة مواد/أقسام النظام لعدّها رسميًا.
+# قراءة فقط — لا قاعدة بيانات، لا كتابة.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install Playwright Chromium
+        run: npm i --no-save playwright@1.48.0 && npx playwright install --with-deps chromium
+      - name: Probe MOJ legal gateway (read-only)
+        run: node scripts/moj-probe.mjs
