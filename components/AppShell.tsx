@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, ClipboardCheck, ClipboardList, Database, FileClock, Gavel, GraduationCap, LayoutDashboard, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, ClipboardCheck, ClipboardList, Database, FileClock, FileSearch, Gavel, GraduationCap, LayoutDashboard, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -29,7 +29,8 @@ const navSections: Array<{ items: NavItem[] }> = [
     items: [
       { href: "/dashboard/cases", key: "nav.cases", icon: Briefcase },
       { href: "/dashboard/consultations", key: "nav.consultations", icon: ShieldCheck },
-      { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip }
+      { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip },
+      { href: "/documents", key: "nav.documents", icon: FileSearch }
     ]
   },
   {
