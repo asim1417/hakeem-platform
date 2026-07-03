@@ -1,0 +1,43 @@
+name: Fix Ithbat Classification (gated)
+
+# يصحّح تصنيف «نظام الإثبات» ليطابق أشقّاءه القضائيين (الرسمي: القضاء).
+# بلا CONFIRM ⇒ جاف (قراءة فقط). مع CONFIRM=NEON_RUNTIME_CONFIRMED ⇒ كتابة على Neon.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اتركه فارغًا لوضع جاف، أو NEON_RUNTIME_CONFIRMED للكتابة"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: fix-ithbat-classification
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "24", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: تصحيح التصنيف (جاف أو كتابة حسب CONFIRM)
+        run: npx tsx scripts/fix-ithbat-classification.ts
