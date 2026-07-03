@@ -19,6 +19,7 @@ import {
   legalDocumentReference,
   lightStem,
   matchDoc,
+  fixReversedArabicLines,
   normStr,
   occurrences,
   parseQuery,
@@ -589,9 +590,11 @@ export function CaseBrowser() {
           setOcrProgress(`${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`)
         );
         if (text.trim().length < 5) throw new Error("لم يُقرأ نص من الصورة — تأكد من وضوحها");
-        addExtracted(baseName, text);
-        setStatusMsg(`✓ قُرئت الصورة ضوئياً محلياً (ثقة ${Math.round(confidence)}٪)`);
-        setTimeout(() => setStatusMsg(""), 5000);
+        const fixed = fixReversedArabicLines(text);
+        addExtracted(baseName, fixed.text);
+        const corr = fixed.corrected.length ? ` · صُحِّح ${fixed.corrected.length} سطر معكوس` : "";
+        setStatusMsg(`✓ قُرئت الصورة ضوئياً محلياً (ثقة ${Math.round(confidence)}٪)${corr}`);
+        setTimeout(() => setStatusMsg(""), 5500);
       } catch (error) {
         window.alert(error instanceof Error ? error.message : "تعذّرت القراءة الضوئية");
       } finally {
@@ -622,9 +625,11 @@ export function CaseBrowser() {
                 setOcrProgress(`صفحة ${info.page}/${info.pages} — ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`)
               );
               if (text.replace(/\[صفحة \d+\]/g, "").trim().length < 10) throw new Error("لم يُقرأ نص واضح من المسح");
-              addExtracted(baseName, text);
-              setStatusMsg(`✓ قُرئ الـ PDF ضوئياً محلياً (ثقة ${Math.round(avgConfidence)}٪)`);
-              setTimeout(() => setStatusMsg(""), 6000);
+              const fixed = fixReversedArabicLines(text);
+              addExtracted(baseName, fixed.text);
+              const corr = fixed.corrected.length ? ` · صُحِّح ${fixed.corrected.length} سطر معكوس` : "";
+              setStatusMsg(`✓ قُرئ الـ PDF ضوئياً محلياً (ثقة ${Math.round(avgConfidence)}٪)${corr}`);
+              setTimeout(() => setStatusMsg(""), 6500);
             } catch (ocrErr) {
               window.alert(ocrErr instanceof Error ? ocrErr.message : "تعذّرت القراءة الضوئية");
             } finally {
