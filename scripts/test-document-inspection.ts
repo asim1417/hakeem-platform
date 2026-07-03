@@ -314,6 +314,48 @@ check("DOCX: تحويل XML إلى نص بفواصل فقرات", () => {
   assert.ok(text.split("\n").length >= 2);
 });
 
+// ── جودة النص وتصحيح الأسطر المعكوسة (فلسفة النتائج العالية) ──
+import {
+  analyzeTextIssues,
+  arabicRatio,
+  fixReversedArabicLines,
+  fragmentationRatio,
+  reversedLineCount
+} from "../lib/modules/document-inspection/text-quality";
+
+check("جودة: نسبة العربية والتجزئة", () => {
+  assert.ok(arabicRatio("حكمت الدائرة برفض الدعوى") > 0.9);
+  assert.ok(arabicRatio("hello world 123") < 0.1);
+  assert.ok(fragmentationRatio("ا ل م ح ك م ة") > 0.9); // أحرف مبعثرة
+  assert.ok(fragmentationRatio("حكمت الدائرة برفض الدعوى") < 0.2);
+});
+
+check("تصحيح الأسطر المعكوسة: يكشف ويعكس بدليل قاطع", () => {
+  // سطر معكوس: «يف» بدل «في»، «نم» بدل «من»، «ىلع» بدل «على»
+  const reversed = "ةرئادلا تمكح يف ىوعدلا نم ىعدملا ىلع";
+  assert.ok(reversedLineCount(reversed) >= 1);
+  const fixed = fixReversedArabicLines(reversed);
+  assert.equal(fixed.corrected.length, 1);
+  // بعد التصحيح تظهر الكلمات الصحيحة
+  assert.ok(fixed.text.includes("في") || fixed.text.includes("من"));
+});
+
+check("تصحيح: لا يمسّ النص السليم", () => {
+  const clean = "حكمت الدائرة في الدعوى المقامة من المدعي على المدعى عليه";
+  const fixed = fixReversedArabicLines(clean);
+  assert.equal(fixed.corrected.length, 0);
+  assert.equal(fixed.text, clean);
+});
+
+check("تحليل شامل issues: rev/frag/badsym/ar", () => {
+  const issues = analyzeTextIssues("حكمت الدائرة برفض الدعوى بمبلغ ٥٠٬٠٠٠ ريال");
+  assert.ok(issues.ar > 0.7);
+  assert.equal(issues.badsym, 0);
+  assert.ok(issues.q >= 70);
+  const bad = analyzeTextIssues("ت�ريخ م/ن ٤٤ بخصو� ا ل م ح");
+  assert.ok(bad.badsym >= 1 || bad.q < 70);
+});
+
 // ── توجيه OCR ──
 import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
 
