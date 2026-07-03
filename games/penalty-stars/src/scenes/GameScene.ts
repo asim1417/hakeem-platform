@@ -22,6 +22,7 @@ import { getPlayer, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
 import { bouncePhrase, confetti, starBurst } from '../utils/animations';
 import { makeButton } from '../utils/ui';
+import { announcer } from '../utils/announcer';
 
 type ShotState = 'aiming' | 'shooting' | 'resolved';
 
@@ -272,6 +273,7 @@ export class GameScene extends Phaser.Scene {
   private shoot(drag: Phaser.Math.Vector2): void {
     this.state = 'shooting';
     audio.play('kick');
+    announcer.onShot(this, this.player);
 
     // القوة: طول السحب × معامل + تعزيز حسب قوة اللاعب
     const powerBoost = 1 + (this.player.power - 3) * 0.05;
@@ -368,6 +370,7 @@ export class GameScene extends Phaser.Scene {
       // عبارة الاحتفال — أحيانًا عبارة اللاعب الخاصة
       const phrase = Math.random() < 0.3 ? this.player.celebration : Phaser.Utils.Array.GetRandom(PHRASES.goal);
       this.showPhrase(phrase);
+      announcer.onOutcome('goal', phrase);
       this.ball.setVelocity(0, 0);
       this.ball.setPosition(this.ball.x, GOAL.lineY - 50);
     } else if (result === 'save') {
@@ -375,9 +378,13 @@ export class GameScene extends Phaser.Scene {
       // الكرة ترتد من الحارس
       this.ball.setVelocity(Phaser.Math.FloatBetween(-160, 160), Phaser.Math.FloatBetween(220, 320));
       gsap.to(this.keeper, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1 });
-      this.showPhrase(Phaser.Utils.Array.GetRandom(PHRASES.save));
+      const savePhrase = Phaser.Utils.Array.GetRandom(PHRASES.save);
+      this.showPhrase(savePhrase);
+      announcer.onOutcome('save', savePhrase);
     } else {
-      this.showPhrase(Phaser.Utils.Array.GetRandom(PHRASES.miss));
+      const missPhrase = Phaser.Utils.Array.GetRandom(PHRASES.miss);
+      this.showPhrase(missPhrase);
+      announcer.onOutcome('miss', missPhrase);
     }
 
     this.time.delayedCall(1700, () => this.nextShot(result === 'goal' && !this.training));
