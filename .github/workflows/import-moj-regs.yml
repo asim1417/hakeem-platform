@@ -1,0 +1,53 @@
+name: Import MOJ Regs (gated write)
+
+# يُدرج اللوائح التنفيذية الأربع من data/moj-regs.json إلى القاعدة، ثم يفهرس المواد الجديدة
+# (search_norm). كتابة على Neon ⇒ مُقفل خلف بوّابة المواءمة + حارس هدف Neon.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: import-moj-regs
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL (كتابة)."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: "24", cache: npm }
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: "🛡️ Verify target is Neon (read-only)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: "① إدراج اللوائح الأربع"
+        run: npx tsx scripts/import-moj-regs.ts
+      - name: "② فهرسة search_norm للمواد الجديدة (تزايدي)"
+        run: npx tsx scripts/backfill-search-norm.ts
+      - name: "③ تحقق (قراءة فقط) — عدّ مواد اللوائح المُدرَجة"
+        run: npx tsx scripts/verify-systems-raw.ts
