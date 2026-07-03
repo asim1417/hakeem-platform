@@ -1,0 +1,59 @@
+name: Nezams Scraper (inspect / extract, read-only source)
+
+# يشغّل مُستخرِج nezams (Python + Playwright) على CI لأن الساحة تحجب المصدر الخارجي.
+# inspect: معايرة الوسوم على صفحة واحدة (قراءة فقط). extract: يبني nezams_graph.json ويدفعه للمراجعة.
+# قراءة من المصدر فقط — لا قاعدة بيانات.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "inspect (معايرة) أو extract (استخراج)"
+        type: choice
+        options: ["inspect", "extract"]
+        default: "inspect"
+        required: true
+      urls:
+        description: "روابط صفحات nezams (مفصولة بمسافة)"
+        type: string
+        required: true
+        default: "https://nezams.com/نظام-المرافعات-الشرعية-ولائحته-التنف/"
+
+permissions:
+  contents: write
+
+jobs:
+  nezams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install Playwright (python)
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Run scraper
+        env:
+          NZ_MODE: ${{ inputs.mode }}
+          NZ_URLS: ${{ inputs.urls }}
+        run: python scripts/nezams/nezams_scraper.py "$NZ_MODE" $NZ_URLS
+      - name: Commit & push graph artifact (extract only)
+        if: ${{ inputs.mode == 'extract' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p data
+          for f in nezams_graph.json nezams_graph_nodes.csv nezams_graph_relations.csv; do
+            [ -f "$f" ] && mv "$f" "data/$f" || true
+          done
+          git checkout -B claude/nezams-data
+          git add data/nezams_graph.json data/nezams_graph_nodes.csv data/nezams_graph_relations.csv
+          if git diff --cached --quiet; then echo "لا تغييرات."; exit 0; fi
+          printf '%s\n\n%s\n%s\n' \
+            "data(nezams): رسم nezams المُستخرَج (عُقد + علاقات بنيوية/صريحة)" \
+            "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>" \
+            "Claude-Session: https://claude.ai/code/session_013b7dDyeMWyxP13KtU5T7bv" > /tmp/nz_msg.txt
+          git commit -F /tmp/nz_msg.txt
+          git push -f origin claude/nezams-data
