@@ -9,6 +9,10 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ["localhost:3000"]
     }
+  },
+  // لعبة نجوم البلنتيات — ملف ثابت في public يُقدَّم على مسار نظيف
+  async rewrites() {
+    return [{ source: "/penalty-stars", destination: "/penalty-stars/index.html" }];
   }
 };
 

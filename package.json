@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "build:game": "cd games/penalty-stars && npm install && npm run build && mkdir -p ../../public/penalty-stars && cp dist/index.html ../../public/penalty-stars/index.html",
     "test": "tsx scripts/test-conversation.ts",
     "test:document-inspection": "tsx scripts/test-document-inspection.ts",
     "db:generate": "prisma generate",
