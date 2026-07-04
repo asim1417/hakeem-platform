@@ -284,4 +284,13 @@
   installPromptSetup();
   serviceWorkerSetup();
   render(location.hash.replace("#", "") || state.screen || "home");
+
+  // إخفاء شاشة الإقلاع بعد اكتمال أول رسم وتحميل الخطوط
+  const splash = document.getElementById("ffSplash");
+  if (splash) {
+    const hide = () => { splash.classList.add("hide"); window.setTimeout(() => splash.remove(), 600); };
+    const ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+    Promise.race([ready, new Promise(r => window.setTimeout(r, 1800))])
+      .then(() => window.setTimeout(hide, 1100));
+  }
 })();

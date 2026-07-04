@@ -1,9 +1,13 @@
-const CACHE_NAME = "football-future-static-v3";
+const CACHE_NAME = "football-future-static-v4";
 const ASSETS = [
   "/football-future/",
   "/football-future/index.html",
   "/football-future/manifest.webmanifest",
   "/football-future/src/css/tokens.css",
+  "/football-future/src/css/fonts.css",
+  "/football-future/src/assets/fonts/noto-kufi-arabic-var-arabic.woff2",
+  "/football-future/src/assets/fonts/noto-kufi-arabic-var-latin.woff2",
+  "/football-future/src/assets/fonts/rajdhani-700-latin.woff2",
   "/football-future/src/css/styles.css",
   "/football-future/src/js/audio.js",
   "/football-future/src/assets/audio/voice_ar_manifest.json",

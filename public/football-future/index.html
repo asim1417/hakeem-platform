@@ -8,13 +8,22 @@
     <title>فوتبول فيوتشر — Football Future</title>
     <link rel="icon" href="/football-future/src/assets/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/football-future/manifest.webmanifest" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/football-future/src/assets/fonts/noto-kufi-arabic-var-arabic.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/football-future/src/css/fonts.css" />
     <link rel="stylesheet" href="/football-future/src/css/styles.css" />
   </head>
   <body>
     <noscript>هذه اللعبة تحتاج تفعيل JavaScript للعمل.</noscript>
+    <!-- شاشة الإقلاع بالهوية -->
+    <div id="ffSplash" class="ff-splash" aria-hidden="true">
+      <img class="ff-splash-logo" src="/football-future/src/assets/logo.svg" alt="" />
+      <div class="ff-splash-word">
+        <strong>فوتبول فيوتشر</strong>
+        <span>FOOTBALL FUTURE</span>
+      </div>
+      <div class="ff-splash-tag">اِلعب. تطوّر. انتصر.</div>
+      <div class="ff-splash-loader"><i></i></div>
+    </div>
     <div id="app"></div>
     <div id="installBanner" class="install-banner" role="dialog" aria-live="polite">
       <div><strong>تثبيت اللعبة</strong><br><small>يمكن تثبيت فوتبول فيوتشر كتطبيق على الجوال.</small></div>
