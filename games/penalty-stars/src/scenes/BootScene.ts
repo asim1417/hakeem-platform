@@ -45,7 +45,8 @@ export class BootScene extends Phaser.Scene {
     for (const c of progress.customPlayers()) {
       makeCircularAvatar(this, `avatar-${c.id}`, `photo-${c.id}`);
     }
-    this.scene.start('Menu');
+    // أول شاشة: اختيار اللاعب — كل من يفتح اللعبة يختار لاعبه بنفسه، لا لاعب افتراضي
+    this.scene.start('PlayerSelect');
   }
 
   // ── عدة الواجهة وفق دليل الهوية: تدرج نيون، زجاج كحلي، أيقونات موحدة ──
