@@ -103,7 +103,7 @@ export function arabicNum(n: number): string {
   return String(n).replace(/[0-9]/g, (c) => d[Number(c)]);
 }
 
-export const FONT = 'Arial, "Segoe UI", Tahoma, sans-serif';
+export const FONT = 'Cairo, Arial, "Segoe UI", Tahoma, sans-serif';
 
 // رقم الإصدار — يظهر أسفل القائمة للتحقق من أن الجهاز يعرض آخر نسخة
-export const VERSION = 'الإصدار ١٢';
+export const VERSION = 'الإصدار ١٣';

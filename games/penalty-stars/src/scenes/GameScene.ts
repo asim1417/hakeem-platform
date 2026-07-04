@@ -1,5 +1,6 @@
 // GameScene — الملعب، الكرة، الحارس، السحب للتسديد، العداد والنجوم
-// الأوضاع: بطولة (stage) / مباراة بلنتيات (match) / تدريب حر (training)
+// الأوضاع: بطولة (stage) / مباراة بلنتيات (match مع دفاع بالإصبع) / تدريب حر (training)
+//          / تحدي الفاولات (freekick مع حائط وقوس) / تحدي اليوم (daily) / تحدي صديق (duel)
 
 import Phaser from 'phaser';
 import { gsap } from 'gsap';
@@ -19,27 +20,37 @@ import {
   SHOTS_PER_ROUND,
   STAGES,
 } from '../config/gameConfig';
-import { getPlayer, PlayerDef } from '../data/players';
+import { getPlayer, PLAYERS, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
 import { bouncePhrase, confetti, playerCelebration, starBurst } from '../utils/animations';
 import { progress } from '../utils/progress';
 import { coachPhrases } from '../data/phrases';
-import { glassBehind, makeChip, makeMuteChip } from '../utils/ui';
+import { glassBehind, makeButton, makeChip, makeMuteChip } from '../utils/ui';
 import { announcer } from '../utils/announcer';
+import { fadeIn, go, goalZoom, kickPunch, slowMo } from '../utils/camera';
 
-type ShotState = 'aiming' | 'shooting' | 'resolved';
-type GameMode = 'tournament' | 'match' | 'training';
+type ShotState = 'aiming' | 'shooting' | 'resolved' | 'defending' | 'paused';
+type GameMode = 'tournament' | 'match' | 'training' | 'freekick' | 'daily' | 'duel';
+
+interface GameInitData {
+  training?: boolean;
+  stage?: number;
+  mode?: string;
+}
 
 const GOAL_TOP = GOAL.lineY - GOAL.height; // العارضة
 const KEEPER_Y = GOAL.lineY - 42;
 const KEEPER_RANGE = GOAL.width / 2 - 40; // مدى حركة الحارس
+const WALL_Y = 430; // صف الحائط في تحدي الفاولات
+const DEFENSE_REACH = 62; // مدى التصدي عندما يحرس الطفل بإصبعه (سخي)
 
 export class GameScene extends Phaser.Scene {
   private mode: GameMode = 'tournament';
+  private initData: GameInitData = {};
   private stadiumKey = 'stadium-real';
   private stage = 0; // دور البطولة الحالي
   private golden = false; // الضربة الذهبية في المباراة
-  private player!: PlayerDef;
+  private player!: PlayerDef; // المسدد الحالي
   private ball!: Phaser.Physics.Arcade.Image;
   private ballShadow!: Phaser.GameObjects.Ellipse;
   private keeper!: Phaser.GameObjects.Image;
@@ -50,6 +61,7 @@ export class GameScene extends Phaser.Scene {
   private goals = 0;
   private oppGoals = 0; // أهداف فريق الحارس في المباراة
   private dragStart: Phaser.Math.Vector2 | null = null;
+  private dragPath: { x: number; y: number }[] = []; // مسار الإصبع — لحساب القوس
   private aimArrow!: Phaser.GameObjects.Graphics;
   private shooter!: Phaser.GameObjects.Image;
   private shotText!: Phaser.GameObjects.Text;
@@ -58,13 +70,33 @@ export class GameScene extends Phaser.Scene {
   private resolveTimer?: Phaser.Time.TimerEvent;
   private hudPanel!: Phaser.GameObjects.Image & { sync: () => void };
   private trajectory: { x: number; y: number }[] = []; // مسار الكرة لإعادة الهدف
+  // فيزياء إضافية
+  private curve = 0; // تسارع جانبي من قوس السحبة (تسديدة موز 🍌)
+  private powerRatio = 0;
+  private bounced = false; // ارتدت من قائم/عارضة/حائط — تُحسم ضائعة
+  private pendingMissPhrase: string | null = null;
+  // تحدي الفاولات
+  private wall: Phaser.GameObjects.Image[] = [];
+  private wallX = GOAL.centerX;
+  private passedWall = false;
+  // دفاع الإصبع في المباراة
+  private oppBall: Phaser.GameObjects.Image | null = null;
+  private oppShotFlying = false;
+  private oppTargetInGoal = true;
+  // تحدي صديق
+  private duelPlayers: [PlayerDef, PlayerDef] | null = null;
+  private duelTurn: 0 | 1 = 0;
+  private duelGoals: [number, number] = [0, 0];
+  private duelShots: [number, number] = [0, 0];
 
   constructor() {
     super('Game');
   }
 
-  init(data: { training?: boolean; stage?: number; mode?: string }): void {
-    this.mode = data.training ? 'training' : data.mode === 'match' ? 'match' : 'tournament';
+  init(data: GameInitData): void {
+    this.initData = data;
+    const m = data.mode as GameMode | undefined;
+    this.mode = data.training ? 'training' : m && ['match', 'freekick', 'daily', 'duel'].includes(m) ? m : 'tournament';
     this.stage = data.stage ?? 0;
     this.golden = false;
     this.state = 'aiming';
@@ -72,20 +104,52 @@ export class GameScene extends Phaser.Scene {
     this.goals = 0;
     this.oppGoals = 0;
     this.dragStart = null;
+    this.dragPath = [];
     this.starIcons = [];
     this.trajectory = [];
+    this.curve = 0;
+    this.bounced = false;
+    this.pendingMissPhrase = null;
+    this.wall = [];
+    this.passedWall = false;
+    this.oppBall = null;
+    this.oppShotFlying = false;
+    this.duelPlayers = null;
+    this.duelTurn = 0;
+    this.duelGoals = [0, 0];
+    this.duelShots = [0, 0];
   }
 
   create(): void {
     this.player = getPlayer(this.registry.get('playerId') as string);
+    if (this.mode === 'duel') {
+      // اللاعب الثاني: الشخصية التالية في القائمة — صديقك على نفس الجهاز
+      const i = PLAYERS.findIndex((p) => p.id === this.player.id);
+      this.duelPlayers = [this.player, PLAYERS[(i + 1) % PLAYERS.length]];
+    }
     this.drawField();
     this.drawGoal();
     this.createKeeper();
     this.createBall();
+    if (this.mode === 'freekick') this.createWall();
     this.createHud();
     this.setupInput();
+    fadeIn(this);
     audio.play('whistle');
     this.coachTip();
+
+    // 🧹 تنظيف شامل عند مغادرة المشهد — لا مؤقتات ولا حركات معلّقة تلاحق الشاشة التالية
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
+  }
+
+  private cleanup(): void {
+    this.resolveTimer?.remove();
+    announcer.stop();
+    gsap.globalTimeline.getChildren(true, true, true).forEach((t) => t.kill());
+    // بعض المدراء قد يكونون مفككين لحظة الإغلاق — إعادة الزمن بحذر
+    if (this.time) this.time.timeScale = 1;
+    if (this.tweens) this.tweens.timeScale = 1;
+    if (this.physics && this.physics.world) this.physics.world.timeScale = 1;
   }
 
   // ── الرسم ──
@@ -134,10 +198,10 @@ export class GameScene extends Phaser.Scene {
     g.fillRect(left - GOAL.postWidth, GOAL_TOP - GOAL.postWidth, GOAL.width + GOAL.postWidth * 2, GOAL.postWidth);
   }
 
-  // مفتاح صورة الحارس حسب الصعوبة (الحديدي في نهائي البطولة)
-  private keeperTexture(dive = false): string {
+  // مفتاح صورة الحارس حسب الصعوبة والحالة (الحديدي في نهائي البطولة)
+  private keeperTexture(state: '' | '-dive' | '-save' | '-sad' | '-happy' = ''): string {
     const base = this.difficulty().key === 'iron' ? 'keeper-iron' : 'keeper';
-    return dive ? `${base}-dive` : base;
+    return `${base}${state}`;
   }
 
   private createKeeper(): void {
@@ -164,6 +228,7 @@ export class GameScene extends Phaser.Scene {
     const diff = this.difficulty();
     this.keeperTween?.remove();
     this.keeper.setAngle(0);
+    this.keeper.clearTint();
     this.keeper.setTexture(this.keeperTexture());
     this.keeperTween = this.tweens.add({
       targets: this.keeper,
@@ -189,6 +254,20 @@ export class GameScene extends Phaser.Scene {
     this.aimArrow = this.add.graphics().setDepth(7);
   }
 
+  // 🧱 حائط الفاولات: ثلاثة لاعبين يقفزون لحظة التسديد — التفّ حولهم بالقوس
+  private createWall(): void {
+    for (let i = 0; i < 3; i++) {
+      this.wall.push(this.add.image(0, WALL_Y, 'wall-player').setDepth(5));
+    }
+    this.repositionWall();
+  }
+
+  private repositionWall(): void {
+    this.wallX = GOAL.centerX + Phaser.Math.FloatBetween(-70, 70);
+    this.wall.forEach((p, i) => p.setPosition(this.wallX + (i - 1) * 48, WALL_Y));
+    this.passedWall = false;
+  }
+
   private createHud(): void {
     // عداد التسديدات / نتيجة المباراة / شارة التدريب
     this.shotText = this.add
@@ -205,8 +284,8 @@ export class GameScene extends Phaser.Scene {
     this.hudPanel.setDepth(19);
     this.updateShotText();
 
-    // نجوم الأهداف (في البطولة والمباراة)
-    if (this.mode !== 'training') {
+    // نجوم الأهداف (٥ تسديدات لكل الأوضاع عدا التدريب الحر وتحدي الصديق)
+    if (this.mode !== 'training' && this.mode !== 'duel') {
       for (let i = 0; i < SHOTS_PER_ROUND; i++) {
         const icon = this.add
           .image(GAME_WIDTH / 2 - 80 + i * 40, 100, 'star')
@@ -234,8 +313,9 @@ export class GameScene extends Phaser.Scene {
       .setAlpha(0);
 
     // إرشاد اللعب
+    const hintText = this.mode === 'freekick' ? '🌀 اسحب بقوس حول الحائط ثم أفلت' : '✋ اسحب من الكرة نحو المرمى ثم أفلت';
     const hint = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 40, rtl('✋ اسحب من الكرة نحو المرمى ثم أفلت'), {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 40, rtl(hintText), {
         fontFamily: FONT,
         fontSize: '20px',
         color: '#ffffff',
@@ -247,9 +327,10 @@ export class GameScene extends Phaser.Scene {
       .setDepth(20);
     this.tweens.add({ targets: hint, alpha: 0.5, duration: 800, yoyo: true, repeat: -1 });
 
-    // رقاقتا النظام: رئيسية وصوت
-    makeChip(this, GAME_WIDTH - 44, 44, 'ic-home', () => this.scene.start('Menu')).setDepth(20);
+    // رقاقات النظام: رئيسية وصوت واستراحة
+    makeChip(this, GAME_WIDTH - 44, 44, 'ic-home', () => go(this, 'Menu')).setDepth(20);
     makeMuteChip(this, GAME_WIDTH - 112, 44).setDepth(20);
+    makeChip(this, GAME_WIDTH - 180, 44, 'ic-pause', () => this.openPause()).setDepth(20);
   }
 
   private updateShotText(): void {
@@ -263,6 +344,17 @@ export class GameScene extends Phaser.Scene {
       : `التسديدة ${arabicNum(Math.min(this.shotIndex + 1, SHOTS_PER_ROUND))} من ${arabicNum(SHOTS_PER_ROUND)}`;
     if (this.mode === 'match') {
       this.shotText.setText(rtl(`⚔️ أنت ${arabicNum(this.goals)} - ${arabicNum(this.oppGoals)} فريق الحارس\n${shotLine}`));
+    } else if (this.mode === 'duel' && this.duelPlayers) {
+      const [p1, p2] = this.duelPlayers;
+      const cur = this.duelPlayers[this.duelTurn];
+      const shot = `التسديدة ${arabicNum(Math.min(this.duelShots[this.duelTurn] + 1, SHOTS_PER_ROUND))} من ${arabicNum(SHOTS_PER_ROUND)}`;
+      this.shotText.setText(
+        rtl(`🤝 ${p1.emoji} ${arabicNum(this.duelGoals[0])} - ${arabicNum(this.duelGoals[1])} ${p2.emoji}\nدور ${cur.name} — ${shot}`),
+      );
+    } else if (this.mode === 'freekick') {
+      this.shotText.setText(rtl(`🌀 تحدي الفاولات\n${shotLine}`));
+    } else if (this.mode === 'daily') {
+      this.shotText.setText(rtl(`🎯 تحدي اليوم — سجّل ٤ لتفوز\n${shotLine}`));
     } else {
       const st = STAGES[this.stage];
       this.shotText.setText(rtl(`${st.icon} ${st.label}\n${shotLine}`));
@@ -278,11 +370,13 @@ export class GameScene extends Phaser.Scene {
       // يبدأ السحب قرب الكرة (منطقة واسعة لأصابع الأطفال)
       if (Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y) < 150) {
         this.dragStart = new Phaser.Math.Vector2(p.x, p.y);
+        this.dragPath = [{ x: p.x, y: p.y }];
       }
     });
 
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!this.dragStart || this.state !== 'aiming') return;
+      if (this.dragPath.length < 60) this.dragPath.push({ x: p.x, y: p.y });
       this.drawAimArrow(p);
     });
 
@@ -290,14 +384,16 @@ export class GameScene extends Phaser.Scene {
       if (!this.dragStart || this.state !== 'aiming') return;
       const drag = new Phaser.Math.Vector2(p.x - this.dragStart.x, p.y - this.dragStart.y);
       this.aimArrow.clear();
+      const path = this.dragPath;
       this.dragStart = null;
+      this.dragPath = [];
       // سحب قصير جدًا أو ليس نحو الأعلى → تجاهل
       if (drag.length() < SHOT.minDrag || drag.y > -10) return;
-      this.shoot(drag);
+      this.shoot(drag, path);
     });
   }
 
-  // سهم التصويب — لونه يتغير مع القوة
+  // سهم التصويب — لونه يتغير مع القوة، مرفوع فوق الإصبع حتى لا يحجبه
   private drawAimArrow(p: Phaser.Input.Pointer): void {
     if (!this.dragStart) return;
     const dir = new Phaser.Math.Vector2(p.x - this.dragStart.x, p.y - this.dragStart.y);
@@ -305,9 +401,10 @@ export class GameScene extends Phaser.Scene {
     if (dir.length() < SHOT.minDrag || dir.y > -10) return;
     const powerRatio = Phaser.Math.Clamp((dir.length() * SHOT.dragToPower) / SHOT.maxPower, 0, 1);
     const color = powerRatio < 0.5 ? COLORS.lime : powerRatio < 0.8 ? COLORS.gold : 0xff3e3e;
-    const end = new Phaser.Math.Vector2(this.ball.x, this.ball.y).add(dir.clone().setLength(60 + powerRatio * 130));
+    // إزاحة ٣٠ بكسل للأعلى: رأس السهم يظهر فوق الإصبع لا تحته
+    const end = new Phaser.Math.Vector2(this.ball.x, this.ball.y - 30).add(dir.clone().setLength(60 + powerRatio * 130));
     this.aimArrow.lineStyle(8, color, 0.9);
-    this.aimArrow.lineBetween(this.ball.x, this.ball.y, end.x, end.y);
+    this.aimArrow.lineBetween(this.ball.x, this.ball.y - 30, end.x, end.y);
     // رأس السهم
     const angle = dir.angle();
     this.aimArrow.fillStyle(color, 0.95);
@@ -323,15 +420,32 @@ export class GameScene extends Phaser.Scene {
 
   // ── التسديد ──
 
-  private shoot(drag: Phaser.Math.Vector2): void {
+  // 🍌 قوس السحبة: انحراف منتصف المسار عن الخط المستقيم = تسديدة موز
+  private computeCurve(path: { x: number; y: number }[]): number {
+    if (path.length < 6) return 0;
+    const a = path[0];
+    const b = path[path.length - 1];
+    const mid = path[Math.floor(path.length / 2)];
+    const devX = mid.x - (a.x + b.x) / 2;
+    // في الفاولات القوس أقوى — هو سر تخطي الحائط
+    const k = this.mode === 'freekick' ? 11 : 7;
+    return Phaser.Math.Clamp(devX * k, -520, 520);
+  }
+
+  private shoot(drag: Phaser.Math.Vector2, path: { x: number; y: number }[]): void {
     this.state = 'shooting';
     this.trajectory = [];
+    this.bounced = false;
+    this.pendingMissPhrase = null;
+    this.curve = this.computeCurve(path);
     audio.play('kick');
+    kickPunch(this);
     announcer.onShot(this, this.player);
 
     // القوة: طول السحب × معامل + تعزيز حسب قوة اللاعب
     const powerBoost = 1 + (this.player.power - 7) * 0.03;
     const power = Phaser.Math.Clamp(drag.length() * SHOT.dragToPower * powerBoost, SHOT.minPower, SHOT.maxPower);
+    this.powerRatio = power / SHOT.maxPower;
 
     // الدقة: انحراف عشوائي أقل كلما زادت دقة اللاعب
     const noiseDeg = (10 - this.player.accuracy) * 0.8;
@@ -340,6 +454,13 @@ export class GameScene extends Phaser.Scene {
     this.ball.setVelocity(Math.cos(angle) * power, Math.sin(angle) * power);
     // تصغير الكرة قليلًا لإيحاء العمق
     this.tweens.add({ targets: this.ball, displayWidth: 28, displayHeight: 28, duration: 600 });
+
+    // الحائط يقفز لحظة التسديدة
+    if (this.mode === 'freekick') {
+      this.wall.forEach((w, i) => {
+        this.tweens.add({ targets: w, y: WALL_Y - 36, duration: 260, yoyo: true, delay: i * 30, ease: 'sine.out' });
+      });
+    }
 
     this.keeperDive(angle, power);
 
@@ -351,7 +472,7 @@ export class GameScene extends Phaser.Scene {
   private keeperDive(shotAngle: number, power: number): void {
     const diff = this.difficulty();
     this.keeperTween?.remove();
-    this.keeper.setTexture(this.keeperTexture(true)); // وضعية الارتماء
+    this.keeper.setTexture(this.keeperTexture('-dive')); // وضعية الارتماء
 
     // النقطة المتوقعة لوصول الكرة عند خط المرمى
     const vy = Math.sin(shotAngle) * power;
@@ -373,19 +494,47 @@ export class GameScene extends Phaser.Scene {
     gsap.to(this.keeper, { angle: targetX > this.keeper.x ? 22 : -22, duration: diff.diveDuration });
   }
 
-  // ── كل إطار: الظلال + حسم التسديدة ──
+  // ── كل إطار: الظلال + القوس + الحائط + القائم + حسم التسديدة ──
 
-  update(): void {
+  update(_time: number, delta: number): void {
     // الظلال تتبع الكرة والحارس دائمًا
     this.ballShadow.setPosition(this.ball.x, this.ball.y + 20);
     this.ballShadow.setDisplaySize(Math.max(20, this.ball.displayWidth * 0.8), 10);
     this.keeperShadow.setPosition(this.keeper.x, KEEPER_Y + 54);
 
+    // 🧤 دفاع الإصبع: الحارس يتبع إصبع الطفل
+    if (this.state === 'defending') {
+      this.updateDefense();
+      return;
+    }
+
     if (this.state !== 'shooting') return;
     const diff = this.difficulty();
+    const body = this.ball.body as Phaser.Physics.Arcade.Body;
+
+    // تسديدة الموز: تسارع جانبي من قوس السحبة
+    if (this.curve !== 0 && !this.bounced) body.velocity.x += this.curve * (delta / 1000);
 
     // تسجيل مسار الكرة لإعادة الهدف
     if (this.trajectory.length < 240) this.trajectory.push({ x: this.ball.x, y: this.ball.y });
+
+    // كرة مرتدة (قائم/عارضة/حائط): تسقط وتُحسم ضائعة بمؤقت — لا فحوصات أخرى
+    if (this.bounced) return;
+
+    // 🧱 حائط الفاولات يعترض ما لم تلتف الكرة حوله
+    if (this.mode === 'freekick' && !this.passedWall && this.ball.y <= WALL_Y + 24) {
+      if (this.ball.y >= WALL_Y - 30 && Math.abs(this.ball.x - this.wallX) < 76) {
+        this.bounced = true;
+        audio.play('kick');
+        this.cameras.main.shake(110, 0.005);
+        body.velocity.y = Math.abs(body.velocity.y) * 0.4;
+        body.velocity.x *= 0.5;
+        this.pendingMissPhrase = 'الحائط صدّها! وسّع القوس أكثر 🌀';
+        this.time.delayedCall(750, () => this.resolve('miss'));
+        return;
+      }
+      if (this.ball.y < WALL_Y - 30) this.passedWall = true;
+    }
 
     // تصدي: الكرة لمست الحارس
     if (
@@ -398,8 +547,21 @@ export class GameScene extends Phaser.Scene {
 
     // الكرة وصلت خط المرمى
     if (this.ball.y <= GOAL.lineY - 20) {
+      const dxAbs = Math.abs(this.ball.x - GOAL.centerX);
       const halfW = GOAL.width / 2 - 14;
-      const inGoal = Math.abs(this.ball.x - GOAL.centerX) < halfW && this.ball.y > GOAL_TOP - 10;
+
+      // 🥅 القائم: الكرة على حافة العارض الجانبي → رنّة معدنية وارتداد
+      if (Math.abs(dxAbs - GOAL.width / 2) < 11) {
+        this.hitWoodwork('vertical', body);
+        return;
+      }
+      // 🥅 العارضة: قوة قصوى داخل الإطار — أحيانًا تطنّ من العارضة وتعود
+      if (dxAbs < halfW && this.powerRatio > 0.96 && Math.random() < 0.35) {
+        this.hitWoodwork('horizontal', body);
+        return;
+      }
+
+      const inGoal = dxAbs < halfW && this.ball.y > GOAL_TOP - 10;
       this.resolve(inGoal ? 'goal' : 'miss');
       return;
     }
@@ -408,6 +570,23 @@ export class GameScene extends Phaser.Scene {
     if (this.ball.x < -40 || this.ball.x > GAME_WIDTH + 40 || this.ball.y < -40) {
       this.resolve('miss');
     }
+  }
+
+  // رنّة القائم/العارضة: صوت معدني + ارتداد درامي + عبارة مواسية
+  private hitWoodwork(kind: 'vertical' | 'horizontal', body: Phaser.Physics.Arcade.Body): void {
+    this.bounced = true;
+    audio.play('post');
+    this.cameras.main.shake(140, 0.006);
+    if (kind === 'vertical') {
+      body.velocity.x *= -0.55;
+      body.velocity.y = Math.abs(body.velocity.y) * 0.35;
+      this.pendingMissPhrase = 'القائم! كانت قريييبة 😍';
+    } else {
+      body.velocity.y = Math.abs(body.velocity.y) * 0.5;
+      body.velocity.x *= 0.6;
+      this.pendingMissPhrase = 'العارضة تطنّ! خفّف القوة قليلًا 💪';
+    }
+    this.time.delayedCall(750, () => this.resolve('miss'));
   }
 
   // ── النتيجة ──
@@ -420,13 +599,17 @@ export class GameScene extends Phaser.Scene {
     if (result === 'goal') {
       audio.play('goal');
       audio.play('crowd');
-      this.goals++;
+      if (this.mode === 'duel') this.duelGoals[this.duelTurn]++;
+      else this.goals++;
+      this.keeper.setTexture(this.keeperTexture('-sad'));
+      this.keeper.setAngle(0);
+      goalZoom(this, this.ball.x, GOAL.lineY - 50);
       this.cameras.main.shake(220, 0.008); // اهتزاز بسيط
       starBurst(this, this.ball.x, this.ball.y, 12);
       confetti(this, 36);
       playerCelebration(this, this.player.celebrationType, this.shooter, this.ball.x, this.ball.y);
       // إضاءة نجمة في العداد
-      if (this.mode !== 'training' && !this.golden && this.starIcons[this.shotIndex]) {
+      if (this.starIcons.length && !this.golden && this.starIcons[this.shotIndex]) {
         const icon = this.starIcons[this.shotIndex];
         icon.setAlpha(1);
         gsap.fromTo(icon, { scale: 1.4 }, { scale: 0.55, duration: 0.5, ease: 'bounce.out' });
@@ -440,20 +623,26 @@ export class GameScene extends Phaser.Scene {
       this.updateShotText();
       // إعادة الهدف القصيرة (خارج التدريب) ثم المتابعة
       if (this.mode !== 'training') {
-        this.time.delayedCall(1400, () => this.showReplay());
-        this.time.delayedCall(3100, () => this.afterShot(result));
+        this.time.delayedCall(1500, () => this.showReplay());
+        this.time.delayedCall(3200, () => this.afterShot(result));
         return;
       }
     } else if (result === 'save') {
       audio.play('save');
-      // الكرة ترتد من الحارس
+      slowMo(this); // ⏱️ لقطة بطيئة للتصدي
+      // الحارس يمسك الكرة فخورًا ثم الكرة ترتد
+      this.keeper.setTexture(this.keeperTexture('-save'));
+      this.keeper.setAngle(0);
       this.ball.setVelocity(Phaser.Math.FloatBetween(-160, 160), Phaser.Math.FloatBetween(220, 320));
       gsap.to(this.keeper, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1 });
       const savePhrase = Phaser.Utils.Array.GetRandom(PHRASES.save);
       this.showPhrase(savePhrase);
       announcer.onOutcome('save', savePhrase);
     } else {
-      const missPhrase = Phaser.Utils.Array.GetRandom(PHRASES.miss);
+      this.keeper.setTexture(this.keeperTexture('-happy'));
+      this.keeper.setAngle(0);
+      const missPhrase = this.pendingMissPhrase ?? Phaser.Utils.Array.GetRandom(PHRASES.miss);
+      this.pendingMissPhrase = null;
       this.showPhrase(missPhrase);
       announcer.onOutcome('miss', missPhrase);
     }
@@ -492,73 +681,196 @@ export class GameScene extends Phaser.Scene {
     tl.to(ghost, { alpha: 0, duration: 0.2 });
   }
 
-  // بعد حسم تسديدة اللاعب: دور فريق الحارس في المباراة، أو التسديدة التالية
+  // بعد حسم تسديدة اللاعب: دور الحراسة في المباراة، أو التسديدة التالية
   private afterShot(result: 'goal' | 'save' | 'miss'): void {
+    if (this.mode === 'duel') {
+      this.duelNext();
+      return;
+    }
     if (this.mode === 'match' && !this.golden) {
-      this.opponentTurn();
+      this.startDefense();
       return;
     }
     if (this.golden) {
-      // الضربة الذهبية: هدف اللاعب يحسم فورًا، وإلا يسدد الخصم
+      // الضربة الذهبية: هدف اللاعب يحسم فورًا، وإلا يحرس ضد تسديدة الخصم
       if (result === 'goal') {
-        this.scene.start('Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals, goldenWin: true });
+        go(this, 'Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals, goldenWin: true });
       } else {
-        this.opponentTurn();
+        this.startDefense();
       }
       return;
     }
     this.nextShot();
   }
 
-  // 🤖 تسديدة فريق الحارس (آلية وسريعة) في وضع المباراة
-  private opponentTurn(): void {
+  // ── 🧤 دور الحراسة: الطفل يحرك الحارس بإصبعه ليصد تسديدة فريق الخصم ──
+
+  private startDefense(): void {
+    this.state = 'defending';
+    this.oppShotFlying = false;
+    // الحارس بين يدي الطفل: توهج سماوي وموقع البداية في المنتصف
+    this.keeperTween?.remove();
+    this.keeper.setTexture(this.keeperTexture());
+    this.keeper.setAngle(0).setScale(1).setPosition(GOAL.centerX, KEEPER_Y);
+    this.keeper.setTint(0x9be8ff);
+    // الكرة الأصلية جانبًا حتى لا تشوش
+    this.ball.setVelocity(0, 0);
+    this.ball.setPosition(BALL_START.x, BALL_START.y);
+    this.ball.setDisplaySize(44, 44);
+
     const banner = this.add
-      .text(GAME_WIDTH / 2, 500, rtl('🤖 فريق الحارس يسدد...'), {
+      .text(GAME_WIDTH / 2, 500, rtl('🧤 دورك في الحراسة!\nحرّك إصبعك يمينًا ويسارًا لتصد'), {
         fontFamily: FONT,
-        fontSize: '25px',
+        fontSize: '24px',
         color: '#ffffff',
         fontStyle: 'bold',
-        backgroundColor: '#1a5c2ecc',
-        padding: { x: 16, y: 8 },
+        align: 'center',
+        backgroundColor: '#07111fcc',
+        padding: { x: 18, y: 10 },
       })
       .setOrigin(0.5)
       .setDepth(35)
       .setAlpha(0);
     gsap.to(banner, { alpha: 1, duration: 0.3 });
 
-    this.time.delayedCall(1200, () => {
-      const scored = Math.random() < 0.5; // فرصة عادلة وممتعة
-      if (scored) {
-        this.oppGoals++;
-        audio.play('goal');
-        banner.setText(rtl('🥅 سجّل فريق الحارس!'));
-      } else {
-        audio.play('save');
-        banner.setText(rtl('🧤 تصديت لكرة فريق الحارس!'));
-        starBurst(this, GOAL.centerX, GOAL.lineY - 40, 6);
+    // كرة الخصم تنطلق بعد لحظة استعداد
+    this.oppBall = this.add.image(BALL_START.x, BALL_START.y, 'ball').setDisplaySize(44, 44).setDepth(6);
+    this.time.delayedCall(1300, () => {
+      gsap.to(banner, { alpha: 0, duration: 0.25, onComplete: () => banner.destroy() });
+      audio.play('kick');
+      // ١٥٪ من تسديدات الخصم تطيش وحدها — نَفَس للطفل
+      this.oppTargetInGoal = Math.random() > 0.15;
+      const halfW = GOAL.width / 2 - 30;
+      const targetX = this.oppTargetInGoal
+        ? GOAL.centerX + Phaser.Math.FloatBetween(-halfW, halfW)
+        : GOAL.centerX + (Math.random() < 0.5 ? -1 : 1) * (GOAL.width / 2 + Phaser.Math.FloatBetween(30, 70));
+      this.oppShotFlying = true;
+      if (this.oppBall) {
+        gsap.to(this.oppBall, { x: targetX, y: GOAL.lineY - 32, displayWidth: 28, displayHeight: 28, duration: 0.85, ease: 'power1.in' });
       }
-      this.updateShotText();
-      this.time.delayedCall(1100, () => {
-        banner.destroy();
-        if (this.golden) {
-          // خصم سجل في الذهبية → انتهت؛ لم يسجل → جولة ذهبية جديدة
-          if (this.oppGoals > this.goals) {
-            this.scene.start('Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals });
-          } else {
-            this.showPhrase('جولة ذهبية جديدة! ⚡');
-            this.nextShot(true);
-          }
-          return;
-        }
-        this.nextShot();
-      });
     });
   }
+
+  private updateDefense(): void {
+    // الحارس يتبع الإصبع (أو مؤشر الفأرة)
+    const px = this.input.activePointer.x;
+    this.keeper.x = Phaser.Math.Clamp(px, GOAL.centerX - KEEPER_RANGE, GOAL.centerX + KEEPER_RANGE);
+    if (!this.oppBall || !this.oppShotFlying) return;
+    // تصدٍّ!
+    if (Math.abs(this.oppBall.x - this.keeper.x) < DEFENSE_REACH && Math.abs(this.oppBall.y - this.keeper.y) < 58) {
+      this.finishDefense('saved');
+      return;
+    }
+    // وصلت خط المرمى
+    if (this.oppBall.y <= GOAL.lineY - 26) {
+      this.finishDefense(this.oppTargetInGoal ? 'goal' : 'wide');
+    }
+  }
+
+  private finishDefense(outcome: 'saved' | 'goal' | 'wide'): void {
+    this.state = 'resolved';
+    this.oppShotFlying = false;
+    if (this.oppBall) gsap.killTweensOf(this.oppBall);
+
+    if (outcome === 'saved') {
+      audio.play('save');
+      slowMo(this);
+      this.keeper.setTexture(this.keeperTexture('-save'));
+      starBurst(this, this.keeper.x, this.keeper.y, 10);
+      this.showPhrase('🧤 تصدٍّ خرافي! أنت حارس عظيم');
+      this.oppBall?.destroy();
+      this.oppBall = null;
+    } else if (outcome === 'wide') {
+      this.showPhrase('طاشت منهم! 😅');
+      gsap.to(this.oppBall, { alpha: 0, duration: 0.4, delay: 0.3 });
+    } else {
+      this.oppGoals++;
+      audio.play('goal');
+      this.keeper.setTexture(this.keeperTexture('-sad'));
+      this.showPhrase('سجّلوا... عوّضها بتسديدتك! 💪');
+    }
+    this.updateShotText();
+
+    this.time.delayedCall(1400, () => {
+      this.oppBall?.destroy();
+      this.oppBall = null;
+      this.keeper.clearTint();
+      if (this.golden) {
+        // في الذهبية: هدف الخصم يحسم الخسارة، وإلا جولة ذهبية جديدة
+        if (this.oppGoals > this.goals) {
+          go(this, 'Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals });
+        } else {
+          this.showPhrase('جولة ذهبية جديدة! ⚡');
+          this.nextShot(true);
+        }
+        return;
+      }
+      this.nextShot();
+    });
+  }
+
+  // ── 🤝 تحدي صديق: تبادل الأدوار على نفس الجهاز ──
+
+  private duelNext(): void {
+    if (!this.duelPlayers) return;
+    this.duelShots[this.duelTurn]++;
+    if (this.duelShots[0] >= SHOTS_PER_ROUND && this.duelShots[1] >= SHOTS_PER_ROUND) {
+      const [p1, p2] = this.duelPlayers;
+      go(this, 'Result', {
+        mode: 'duel',
+        p1Name: p1.name,
+        p2Name: p2.name,
+        p1Goals: this.duelGoals[0],
+        p2Goals: this.duelGoals[1],
+      });
+      return;
+    }
+    // تبديل الدور مع شاشة تسليم الجهاز
+    this.duelTurn = this.duelTurn === 0 ? 1 : 0;
+    this.player = this.duelPlayers[this.duelTurn];
+    this.duelHandoff();
+  }
+
+  private duelHandoff(): void {
+    this.state = 'paused';
+    const next = this.player;
+    const overlay = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.78)
+      .setDepth(70)
+      .setInteractive();
+    const avatar = this.add.image(GAME_WIDTH / 2, 300, `avatar-${next.id}`).setDisplaySize(130, 130).setDepth(71);
+    const label = this.add
+      .text(GAME_WIDTH / 2, 402, rtl(`🔄 سلّم الجهاز إلى\n${next.emoji} ${next.name}`), {
+        fontFamily: FONT,
+        fontSize: '30px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setDepth(71);
+    const btn = makeButton(
+      this,
+      GAME_WIDTH / 2,
+      520,
+      '✅ جاهز — هات الكرة!',
+      () => {
+        [overlay, avatar, label, btn].forEach((o) => o.destroy());
+        this.shooter.setTexture(`avatar-${next.id}`);
+        this.resetForNextShot();
+      },
+      { width: 330, height: 78, variant: 'primary', fontSize: 26 },
+    );
+    btn.setDepth(72);
+    gsap.from(avatar, { scale: 0, duration: 0.45, ease: 'back.out(2)' });
+  }
+
+  // ── التسديدة التالية ──
 
   private nextShot(stayGolden = false): void {
     if (!stayGolden) this.shotIndex++;
     // نهاية الجولة
-    if (this.mode !== 'training' && !this.golden && this.shotIndex >= SHOTS_PER_ROUND) {
+    if (this.mode !== 'training' && this.mode !== 'duel' && !this.golden && this.shotIndex >= SHOTS_PER_ROUND) {
       if (this.mode === 'match') {
         if (this.goals === this.oppGoals) {
           // تعادل → الضربة الذهبية
@@ -566,24 +878,70 @@ export class GameScene extends Phaser.Scene {
           audio.play('whistle');
           this.showPhrase('⚡ تعادل! الضربة الذهبية تحسم');
         } else {
-          this.scene.start('Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals });
+          go(this, 'Result', { mode: 'match', goals: this.goals, oppGoals: this.oppGoals });
           return;
         }
+      } else if (this.mode === 'freekick' || this.mode === 'daily') {
+        go(this, 'Result', { mode: this.mode, goals: this.goals });
+        return;
       } else {
-        this.scene.start('Result', { goals: this.goals, stage: this.stage });
+        go(this, 'Result', { goals: this.goals, stage: this.stage });
         return;
       }
     }
-    // إعادة التجهيز
+    this.resetForNextShot();
+  }
+
+  // إعادة تجهيز الملعب لتسديدة جديدة
+  private resetForNextShot(): void {
     this.ball.setVelocity(0, 0);
     this.ball.setPosition(BALL_START.x, BALL_START.y);
     this.ball.setDisplaySize(44, 44);
+    this.curve = 0;
+    this.bounced = false;
     this.keeper.setPosition(GOAL.centerX, KEEPER_Y);
     this.keeper.setScale(1);
     this.startKeeperIdle();
+    if (this.mode === 'freekick') this.repositionWall();
     this.updateShotText();
     this.state = 'aiming';
     if (Math.random() < 0.35) this.coachTip();
+  }
+
+  // ── ⏸️ الاستراحة ──
+
+  private openPause(): void {
+    if (this.state !== 'aiming') return;
+    this.state = 'paused';
+    const items: Phaser.GameObjects.GameObject[] = [];
+    const overlay = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.7)
+      .setDepth(70)
+      .setInteractive();
+    const panel = this.add.image(GAME_WIDTH / 2, 400, 'panel-glass').setDisplaySize(360, 360).setDepth(71);
+    const title = this.add
+      .text(GAME_WIDTH / 2, 280, rtl('⏸️ استراحة'), { fontFamily: FONT, fontSize: '34px', color: '#ffd45a', fontStyle: 'bold' })
+      .setOrigin(0.5)
+      .setDepth(72);
+    items.push(overlay, panel, title);
+    const close = () => items.forEach((o) => o.destroy());
+    const b1 = makeButton(this, GAME_WIDTH / 2, 360, '▶️ متابعة اللعب', () => {
+      close();
+      this.state = 'aiming';
+    }, { width: 300, height: 68, variant: 'primary', fontSize: 24 });
+    const b2 = makeButton(this, GAME_WIDTH / 2, 444, '🔁 إعادة الجولة', () => {
+      this.scene.restart(this.initData);
+    }, { width: 300, height: 68, variant: 'glass', fontSize: 24 });
+    const b3 = makeButton(this, GAME_WIDTH / 2, 528, '🏠 الرئيسية', () => go(this, 'Menu'), {
+      width: 300,
+      height: 68,
+      variant: 'glass',
+      fontSize: 24,
+    });
+    [b1, b2, b3].forEach((b) => {
+      b.setDepth(72);
+      items.push(b);
+    });
   }
 
   // 🧑‍🏫 المدرب الصغير: شخصية في الزاوية بفقاعة نصيحة
@@ -615,7 +973,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private difficulty() {
-    const key: DifficultyKey = this.mode === 'tournament' ? STAGES[this.stage].difficulty : this.mode === 'match' ? 'medium' : 'easy';
+    const key: DifficultyKey =
+      this.mode === 'tournament' ? STAGES[this.stage].difficulty : this.mode === 'training' ? 'easy' : 'medium';
     return DIFFICULTIES[key];
   }
 }

@@ -63,11 +63,39 @@ def stadium(name, sky0, sky1, stand_fn, night=False, extra_fn=None):
     pitch(d, STANDS_END, night)
     if extra_fn:
         extra_fn(img, d)
-    img.convert('RGB').save(os.path.join(OUT, f'{name}.jpg'), quality=72, optimize=True)
+    # WebP: أصغر ~30٪ من JPEG بنفس الجودة — الملف النهائي أخف
+    img.convert('RGB').save(os.path.join(OUT, f'{name}.webp'), quality=74, method=6)
     print('saved', name)
 
 
 CROWD_COLORS = [(230, 60, 60), (60, 130, 230), (250, 220, 90), (240, 240, 240), (90, 200, 120), (255, 150, 70), (200, 100, 220)]
+
+
+def palm(d, x, base_y, h=74):
+    # نخلة سعودية: جذع مائل قليلًا وسعف أخضر
+    d.line([(x, base_y), (x + 5, base_y - h)], fill=(133, 98, 56), width=8)
+    for i in range(3):  # عقد الجذع
+        d.arc([x - 6 + i, base_y - h * (i + 1) // 4 - 4, x + 12, base_y - h * (i + 1) // 4 + 6], 200, 340, fill=(110, 80, 44), width=2)
+    top = (x + 5, base_y - h)
+    for a in range(-150, 180, 30):
+        rad = math.radians(a)
+        ex = top[0] + 40 * math.sin(rad)
+        ey = top[1] - 14 * math.cos(rad) + 12 + abs(math.sin(rad)) * 10
+        d.line([top, (ex, ey)], fill=(44, 138, 58), width=5)
+    d.ellipse([top[0] - 6, top[1] - 4, top[0] + 6, top[1] + 8], fill=(190, 130, 40))  # تمر
+
+
+def sadu_band(d, y0, y1):
+    # شريط سدو: مثلثات ومعينات بألوان النسيج التقليدي
+    colors = [(158, 27, 50), (20, 20, 24), (216, 130, 44), (240, 234, 222)]
+    d.rectangle([0, y0, W, y1], fill=(240, 234, 222))
+    band_h = y1 - y0
+    step = 34
+    for i, x in enumerate(range(0, W + step, step)):
+        c = colors[i % len(colors)]
+        d.polygon([(x, y1), (x + step // 2, y0), (x + step, y1)], fill=c)
+    d.line([(0, y0), (W, y0)], fill=(20, 20, 24), width=3)
+    d.line([(0, y1), (W, y1)], fill=(20, 20, 24), width=3)
 
 
 def stands_real(img, d):
@@ -77,24 +105,27 @@ def stands_real(img, d):
 
 
 def stands_school(img, d):
-    # سور مدرسة أخضر مع أشجار
-    d.rectangle([0, SKY_END, W, STANDS_END], fill=(58, 125, 68))
-    for x in range(0, W, 26):
-        d.rectangle([x, SKY_END, x + 4, STANDS_END], fill=(48, 105, 58))
-    for x in range(40, W, 150):
-        r = random.randint(28, 40)
-        d.ellipse([x - r, SKY_END - r, x + r, SKY_END + r // 2], fill=(60, 150, 70))
+    # 🇸🇦 ساحة مدرسة سعودية: سور رملي، نخيل خلفه، وشريط رمل قبل العشب
+    d.rectangle([0, SKY_END - 6, W, STANDS_END], fill=(224, 198, 152))
+    for x in range(0, W, 60):  # فواصل السور
+        d.line([(x, SKY_END - 6), (x, STANDS_END)], fill=(198, 170, 122), width=3)
+    d.rectangle([0, SKY_END - 14, W, SKY_END - 6], fill=(206, 178, 130))  # حافة السور
+    for x in range(60, W, 130):  # نخيل يطل من خلف السور
+        palm(d, x, SKY_END + 8, h=random.randint(62, 86))
+    d.rectangle([0, STANDS_END - 14, W, STANDS_END], fill=(226, 204, 160))  # شريط رمل
 
 
 def stands_street(img, d):
-    # جدار حارة بطوب ورسومات ملونة
-    d.rectangle([0, SKY_END - 20, W, STANDS_END], fill=(180, 118, 86))
-    for y in range(SKY_END - 20, STANDS_END, 18):
-        off = 0 if (y // 18) % 2 == 0 else 22
-        for x in range(-22 + off, W, 44):
-            d.rectangle([x, y, x + 40, y + 15], outline=(150, 92, 64))
-    for x, c in [(90, (255, 210, 80)), (280, (90, 200, 230)), (470, (250, 130, 160)), (620, (140, 230, 120))]:
-        d.ellipse([x, SKY_END + 5, x + 60, STANDS_END - 12], outline=c, width=6)
+    # 🇸🇦 حارة سعودية: جدار طيني أبيض بشريط سدو ونخلة في الزاوية
+    d.rectangle([0, SKY_END - 20, W, STANDS_END], fill=(242, 234, 218))
+    for y in range(SKY_END - 20, STANDS_END, 22):  # مداميك الطين
+        d.line([(0, y), (W, y)], fill=(226, 214, 192), width=2)
+    # شرفات مثلثية أعلى الجدار (عمارة نجدية)
+    for x in range(0, W, 48):
+        d.polygon([(x, SKY_END - 20), (x + 24, SKY_END - 34), (x + 48, SKY_END - 20)], fill=(242, 234, 218))
+    sadu_band(d, SKY_END + 36, SKY_END + 62)
+    palm(d, 64, STANDS_END - 4, h=96)
+    palm(d, W - 70, STANDS_END - 4, h=88)
 
 
 def stands_night(img, d):
@@ -106,9 +137,12 @@ def stands_cup(img, d):
     d.rectangle([0, SKY_END - 12, W, SKY_END], fill=(228, 200, 120))
     vgrad(d, SKY_END, STANDS_END, (86, 70, 40), (60, 50, 32))
     crowd(d, SKY_END + 4, STANDS_END - 4, CROWD_COLORS, density=1200, size=(2, 5))
-    # لافتات ذهبية
-    for x in range(20, W, 180):
-        d.rectangle([x, SKY_END + 8, x + 130, SKY_END + 30], fill=(245, 197, 66))
+    # 🇸🇦 لافتات خضراء وذهبية تتناوب على المدرجات
+    for i, x in enumerate(range(20, W, 180)):
+        c = (0, 106, 60) if i % 2 == 0 else (245, 197, 66)
+        d.rectangle([x, SKY_END + 8, x + 130, SKY_END + 30], fill=c)
+        if i % 2 == 0:  # سيف وستارة بيضاء رمزية على الأخضر
+            d.line([(x + 18, SKY_END + 19), (x + 112, SKY_END + 19)], fill=(255, 255, 255), width=3)
 
 
 def sky_night_extra(img, d):
@@ -125,7 +159,7 @@ def sky_cup_extra(img, d):
         d.rectangle([x, y, x + 6, y + 4], fill=random.choice(CROWD_COLORS))
 
 
-stadium('stadium-real', (110, 190, 240), (168, 224, 250), stands_real)
+# stadium-real لا يُولَّد هنا — صورته فوتوغرافية حقيقية مركّبة (لا تستبدلها)
 stadium('stadium-school', (140, 210, 246), (190, 234, 252), stands_school)
 stadium('stadium-street', (126, 200, 242), (180, 228, 250), stands_street)
 stadium('stadium-stars', (10, 20, 58), (32, 46, 96), stands_night, night=True, extra_fn=sky_night_extra)
@@ -172,11 +206,11 @@ def ball_base(base=(250, 250, 250), pattern=(30, 30, 34)):
 
 
 def save_ball(name, img):
-    img.save(os.path.join(OUT, f'{name}.png'), optimize=True)
+    img.save(os.path.join(OUT, f'{name}.webp'), quality=90, method=6)
     print('saved', name)
 
 
-save_ball('ball-real', ball_base())
+# ball-real لا تُولَّد هنا — صورتها الحقيقية من حزمة الهوية البصرية
 
 stars = ball_base((255, 240, 170), (240, 170, 30))
 d = ImageDraw.Draw(stars)

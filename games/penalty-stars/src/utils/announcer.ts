@@ -9,6 +9,7 @@ import { Howl } from 'howler';
 import { COLORS, FONT, GAME_WIDTH, rtl } from '../config/gameConfig';
 import { PlayerDef } from '../data/players';
 import { audio } from './audio';
+import { progress } from './progress';
 
 // تحميل كل مقاطع المعلق — تُضمّن data URI عند البناء
 const clipModules = import.meta.glob('../assets/audio/*.mp3', { eager: true, import: 'default' }) as Record<string, string>;
@@ -24,6 +25,7 @@ let currentClip: Howl | null = null;
 let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
 function playClip(name: string, delayMs = 0): void {
+  if (!progress.announcerEnabled()) return;
   const clip = clips.get(name);
   if (!clip) return;
   if (pendingTimer) clearTimeout(pendingTimer);
@@ -70,6 +72,14 @@ function showBubble(scene: Phaser.Scene, text: string, color: number): void {
 }
 
 export const announcer = {
+  // إيقاف كامل — يُستدعى عند مغادرة المشهد حتى لا يصدح المعلق في الشاشة التالية
+  stop(): void {
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = null;
+    currentClip?.stop();
+    currentClip = null;
+  },
+
   // عند التسديد: عبارة اللاعب غالبًا، وعبارة عامة أحيانًا — الفقاعة والصوت معًا
   // تأخير قصير حتى لا يتراكب مع صوت الركلة
   onShot(scene: Phaser.Scene, player: PlayerDef): void {

@@ -1,4 +1,4 @@
-// ResultScene — نتيجة دور البطولة أو المباراة: تشجيع دائم، لا عبارات قاسية
+// ResultScene — نتيجة البطولة/المباراة/الفاولات/تحدي اليوم/تحدي صديق: تشجيع دائم، لا عبارات قاسية
 
 import Phaser from 'phaser';
 import { gsap } from 'gsap';
@@ -20,26 +20,55 @@ import { confetti, popIn } from '../utils/animations';
 import { makeButton } from '../utils/ui';
 import { progress } from '../utils/progress';
 import { resultMessage } from '../data/phrases';
+import { fadeIn, go } from '../utils/camera';
 
-type Outcome = 'championship' | 'advance' | 'retry' | 'matchWin' | 'matchClose';
+type Outcome =
+  | 'championship'
+  | 'advance'
+  | 'retry'
+  | 'matchWin'
+  | 'matchClose'
+  | 'freekick'
+  | 'dailyWin'
+  | 'dailyClose'
+  | 'duel';
+
+interface ResultData {
+  goals?: number;
+  stage?: number;
+  mode?: string;
+  oppGoals?: number;
+  goldenWin?: boolean;
+  p1Name?: string;
+  p2Name?: string;
+  p1Goals?: number;
+  p2Goals?: number;
+}
 
 export class ResultScene extends Phaser.Scene {
   private goals = 0;
   private stage = 0;
-  private matchMode = false;
+  private mode = 'tournament';
   private oppGoals = 0;
   private goldenWin = false;
+  private duel = { p1Name: '', p2Name: '', p1Goals: 0, p2Goals: 0 };
 
   constructor() {
     super('Result');
   }
 
-  init(data: { goals?: number; stage?: number; mode?: string; oppGoals?: number; goldenWin?: boolean }): void {
+  init(data: ResultData): void {
     this.goals = data.goals ?? 0;
     this.stage = data.stage ?? 0;
-    this.matchMode = data.mode === 'match';
+    this.mode = data.mode ?? 'tournament';
     this.oppGoals = data.oppGoals ?? 0;
     this.goldenWin = Boolean(data.goldenWin);
+    this.duel = {
+      p1Name: data.p1Name ?? '',
+      p2Name: data.p2Name ?? '',
+      p1Goals: data.p1Goals ?? 0,
+      p2Goals: data.p2Goals ?? 0,
+    };
   }
 
   create(): void {
@@ -51,26 +80,26 @@ export class ResultScene extends Phaser.Scene {
     } else {
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
     }
+    fadeIn(this);
 
     const player = getPlayer(this.registry.get('playerId') as string);
 
     // إضافة النجوم للرصيد مع كشف المكافآت المفتوحة حديثًا
     const starsBefore = progress.totalStars();
-    if (this.goals > 0) progress.addStars(this.goals);
+    const earnedStars = this.mode === 'duel' ? Math.max(this.duel.p1Goals, this.duel.p2Goals) : this.goals;
+    if (earnedStars > 0) progress.addStars(earnedStars);
+
+    // 🎯 مكافأة تحدي اليوم: +٥ نجوم مرة واحدة يوميًا
+    const dailyPassed = this.mode === 'daily' && this.goals >= 4;
+    let dailyBonus = false;
+    if (dailyPassed && !progress.dailyDoneToday()) {
+      progress.addStars(5);
+      progress.markDailyDone();
+      dailyBonus = true;
+    }
     const unlocked = progress.newUnlocks(starsBefore, progress.totalStars());
 
-    const passed = this.goals >= PASS_GOALS;
-    const isLastStage = this.stage >= STAGES.length - 1;
-    const outcome: Outcome = this.matchMode
-      ? this.goldenWin || this.goals > this.oppGoals
-        ? 'matchWin'
-        : 'matchClose'
-      : passed
-        ? isLastStage
-          ? 'championship'
-          : 'advance'
-        : 'retry';
-
+    const outcome = this.computeOutcome();
     if (outcome === 'championship') progress.winTrophy();
 
     // العنوان حسب النتيجة — لا عبارات قاسية أبدًا
@@ -80,26 +109,32 @@ export class ResultScene extends Phaser.Scene {
       retry: '💪 محاولة شجاعة!',
       matchWin: '⚔️ فزت بالمباراة! 🎉',
       matchClose: '⚔️ مباراة حماسية!',
+      freekick: '🌀 تحدي الفاولات!',
+      dailyWin: '🎯 أنجزت تحدي اليوم! 🎉',
+      dailyClose: '🎯 تحدٍّ شجاع!',
+      duel: this.duelTitle(),
     };
     const title = this.add
       .text(GAME_WIDTH / 2, 100, rtl(titles[outcome]), {
         fontFamily: FONT,
-        fontSize: outcome === 'championship' ? '40px' : '36px',
+        fontSize: outcome === 'championship' ? '40px' : '34px',
         color: '#ffd45a',
         fontStyle: 'bold',
         stroke: '#07111f',
         strokeThickness: 9,
+        align: 'center',
       })
       .setOrigin(0.5);
     popIn(title);
 
-    // صورة اللاعب — مع كأس عند البطولة أو الفوز بالمباراة
+    // صورة اللاعب — مع كأس الهوية المرسوم عند البطولة أو الفوز
     const avatar = this.add.image(GAME_WIDTH / 2, 210, `avatar-${player.id}`).setDisplaySize(150, 150);
     popIn(avatar, 0.15);
-    if (outcome === 'championship' || outcome === 'matchWin') {
+    if (outcome === 'championship' || outcome === 'matchWin' || outcome === 'dailyWin') {
+      const big = outcome === 'championship';
       const trophy = this.add
-        .text(GAME_WIDTH / 2 + 85, 160, '🏆', { fontSize: '52px' })
-        .setOrigin(0.5)
+        .image(GAME_WIDTH / 2 + 88, 158, 'ic-trophy')
+        .setDisplaySize(big ? 76 : 56, big ? 76 : 56)
         .setAngle(15);
       popIn(trophy, 0.5);
       gsap.to(trophy, { angle: -15, duration: 0.8, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1 });
@@ -115,12 +150,9 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // شارة الدور أو نتيجة المباراة
-    const badge = this.matchMode
-      ? `⚔️ أنت ${arabicNum(this.goals)} - ${arabicNum(this.oppGoals)} فريق الحارس${this.goldenWin ? ' • ⚡ ذهبية!' : ''}`
-      : `${STAGES[this.stage].icon} ${STAGES[this.stage].label} — 🧤 ${DIFFICULTIES[STAGES[this.stage].difficulty].keeperName}`;
+    // شارة السياق: الدور / نتيجة المباراة / نتيجة الصديقين
     this.add
-      .text(GAME_WIDTH / 2, 337, rtl(badge), {
+      .text(GAME_WIDTH / 2, 337, rtl(this.badgeText()), {
         fontFamily: FONT,
         fontSize: '19px',
         color: '#e8f6ff',
@@ -130,9 +162,10 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // النجوم — نجمة لكل هدف
+    // النجوم — نجمة لكل هدف (في تحدي الصديق: أهداف الفائز)
+    const starGoals = this.mode === 'duel' ? Math.max(this.duel.p1Goals, this.duel.p2Goals) : this.goals;
     for (let i = 0; i < SHOTS_PER_ROUND; i++) {
-      const earned = i < this.goals;
+      const earned = i < starGoals;
       const star = this.add
         .image(GAME_WIDTH / 2 - 130 + i * 65, 400, 'star')
         .setScale(earned ? 1.15 : 0.9)
@@ -145,16 +178,8 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // الرسالة الرئيسية + سطر الحال — أسطر قصيرة حتى لا يكسر الالتفاف الاتجاه
-    const nextKeeper = STAGES[this.stage + 1] ? DIFFICULTIES[STAGES[this.stage + 1].difficulty].keeperName : '';
-    const stageNote: Record<Outcome, string> = {
-      championship: 'أنت بطل كل الأدوار! 🏆',
-      advance: `القادم: ${nextKeeper} 🧤\nمستعد يا بطل؟`,
-      retry: `سجّل ${arabicNum(PASS_GOALS)} أهداف لتجتاز الدور\nأنت قادر يا نجم! 🌟`,
-      matchWin: 'فريقك يحتفل بك يا بطل! 🎉',
-      matchClose: 'اقتربت من الفوز يا بطل\nجرّب مرة ثانية! 🌟',
-    };
     const msgText = this.add
-      .text(GAME_WIDTH / 2, 478, rtl(`${resultMessage(this.goals)}\n${stageNote[outcome]}`), {
+      .text(GAME_WIDTH / 2, 478, rtl(`${resultMessage(starGoals)}\n${this.stageNote(outcome, dailyBonus)}`), {
         fontFamily: FONT,
         fontSize: '23px',
         color: '#ffffff',
@@ -168,7 +193,7 @@ export class ResultScene extends Phaser.Scene {
     popIn(msgText, 0.7);
 
     this.add
-      .text(GAME_WIDTH / 2, 545, rtl(`الأهداف: ${arabicNum(this.goals)} من ${arabicNum(SHOTS_PER_ROUND)}  •  رصيدك: ⭐ ${arabicNum(progress.totalStars())}`), {
+      .text(GAME_WIDTH / 2, 545, rtl(`الأهداف: ${arabicNum(starGoals)} من ${arabicNum(SHOTS_PER_ROUND)}  •  رصيدك: ⭐ ${arabicNum(progress.totalStars())}`), {
         fontFamily: FONT,
         fontSize: '20px',
         color: '#e8f6ff',
@@ -196,12 +221,12 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // احتفالات
-    if (outcome === 'championship' || outcome === 'matchWin') {
+    if (outcome === 'championship' || outcome === 'matchWin' || outcome === 'dailyWin') {
       audio.play('trophy');
       audio.play('crowd');
       confetti(this, 70);
       this.time.addEvent({ delay: 1300, repeat: 3, callback: () => confetti(this, 35) });
-    } else if (outcome === 'advance') {
+    } else if (outcome === 'advance' || (outcome === 'duel' && this.duel.p1Goals !== this.duel.p2Goals)) {
       audio.play('goal');
       audio.play('crowd');
       confetti(this, 40);
@@ -212,24 +237,104 @@ export class ResultScene extends Phaser.Scene {
     // الأزرار حسب النتيجة
     const mainLabels: Record<Outcome, string> = {
       championship: '🔁 العب البطولة من جديد',
-      advance: '▶️ الدور التالي',
+      advance: '▶️ شجرة البطولة',
       retry: '🔁 إعادة الدور',
       matchWin: '⚔️ مباراة جديدة',
       matchClose: '🔁 إعادة المباراة',
+      freekick: '🌀 إعادة تحدي الفاولات',
+      dailyWin: '🏆 شجرة البطولة',
+      dailyClose: '🔁 حاول مرة أخرى',
+      duel: '🤝 مباراة أخرى',
     };
-    const mainBtn = makeButton(this, GAME_WIDTH / 2, 640, mainLabels[outcome], () => {
-      if (this.matchMode) {
-        this.scene.start('Game', { mode: 'match' });
-      } else {
-        const nextStage = outcome === 'advance' ? this.stage + 1 : outcome === 'retry' ? this.stage : 0;
-        this.scene.start('Game', { stage: nextStage });
-      }
-    }, { width: 340, height: 74, fontSize: 26, variant: 'primary' });
+    const mainBtn = makeButton(this, GAME_WIDTH / 2, 640, mainLabels[outcome], () => this.mainAction(outcome), {
+      width: 340,
+      height: 74,
+      fontSize: 25,
+      variant: 'primary',
+    });
     popIn(mainBtn, 0.9);
 
-    const homeBtn = makeButton(this, GAME_WIDTH / 2, 726, '🏠 الرئيسية', () => {
-      this.scene.start('Menu');
-    }, { width: 340, height: 62, fontSize: 25, variant: 'glass' });
+    const homeBtn = makeButton(this, GAME_WIDTH / 2, 726, '🏠 الرئيسية', () => go(this, 'Menu'), {
+      width: 340,
+      height: 62,
+      fontSize: 25,
+      variant: 'glass',
+    });
     popIn(homeBtn, 1.0);
+  }
+
+  private computeOutcome(): Outcome {
+    if (this.mode === 'match') return this.goldenWin || this.goals > this.oppGoals ? 'matchWin' : 'matchClose';
+    if (this.mode === 'freekick') return 'freekick';
+    if (this.mode === 'daily') return this.goals >= 4 ? 'dailyWin' : 'dailyClose';
+    if (this.mode === 'duel') return 'duel';
+    const passed = this.goals >= PASS_GOALS;
+    if (!passed) return 'retry';
+    return this.stage >= STAGES.length - 1 ? 'championship' : 'advance';
+  }
+
+  private duelTitle(): string {
+    const { p1Name, p2Name, p1Goals, p2Goals } = this.duel;
+    if (p1Goals === p2Goals) return '🤝 تعادل الأبطال!';
+    return `🎉 فاز ${p1Goals > p2Goals ? p1Name : p2Name}!`;
+  }
+
+  private badgeText(): string {
+    if (this.mode === 'match') {
+      return `⚔️ أنت ${arabicNum(this.goals)} - ${arabicNum(this.oppGoals)} فريق الحارس${this.goldenWin ? ' • ⚡ ذهبية!' : ''}`;
+    }
+    if (this.mode === 'duel') {
+      return `🤝 ${this.duel.p1Name} ${arabicNum(this.duel.p1Goals)} - ${arabicNum(this.duel.p2Goals)} ${this.duel.p2Name}`;
+    }
+    if (this.mode === 'freekick') return '🌀 حائط يقفز وقوس ذكي — تحدي الكبار!';
+    if (this.mode === 'daily') return `🎯 تحدي اليوم ضد ${DIFFICULTIES.medium.keeperName}`;
+    return `${STAGES[this.stage].icon} ${STAGES[this.stage].label} — 🧤 ${DIFFICULTIES[STAGES[this.stage].difficulty].keeperName}`;
+  }
+
+  private stageNote(outcome: Outcome, dailyBonus: boolean): string {
+    const nextKeeper = STAGES[this.stage + 1] ? DIFFICULTIES[STAGES[this.stage + 1].difficulty].keeperName : '';
+    const notes: Record<Outcome, string> = {
+      championship: 'أنت بطل كل الأدوار! 🏆',
+      advance: `القادم: ${nextKeeper} 🧤\nمستعد يا بطل؟`,
+      retry: `سجّل ${arabicNum(PASS_GOALS)} أهداف لتجتاز الدور\nأنت قادر يا نجم! 🌟`,
+      matchWin: 'فريقك يحتفل بك يا بطل! 🎉',
+      matchClose: 'اقتربت من الفوز يا بطل\nجرّب مرة ثانية! 🌟',
+      freekick: 'القوس سلاحك — كل فاولة أجمل من التي قبلها 🌀',
+      dailyWin: dailyBonus ? '🎁 +٥ نجوم مكافأة التحدي!\nعُد غدًا لتحدٍّ جديد' : 'أنجزته اليوم من قبل — بطل مثابر! 🌟',
+      dailyClose: 'تحتاج ٤ أهداف — قريبة جدًا\nعُد وجرّب ثانية! 💪',
+      duel: this.duel.p1Goals === this.duel.p2Goals ? 'مباراة ممتعة — كلاكما نجم! ⭐' : 'صافحا بعضكما — هكذا يفعل الأبطال 🤝',
+    };
+    return notes[outcome];
+  }
+
+  private mainAction(outcome: Outcome): void {
+    switch (outcome) {
+      case 'championship':
+        this.registry.set('tournamentStage', 0);
+        go(this, 'Tournament', { stage: 0 });
+        break;
+      case 'advance':
+        go(this, 'Tournament', { stage: this.stage + 1 });
+        break;
+      case 'retry':
+        go(this, 'Game', { stage: this.stage });
+        break;
+      case 'matchWin':
+      case 'matchClose':
+        go(this, 'Game', { mode: 'match' });
+        break;
+      case 'freekick':
+        go(this, 'Game', { mode: 'freekick' });
+        break;
+      case 'dailyWin':
+        go(this, 'Tournament');
+        break;
+      case 'dailyClose':
+        go(this, 'Game', { mode: 'daily' });
+        break;
+      case 'duel':
+        go(this, 'Game', { mode: 'duel' });
+        break;
+    }
   }
 }

@@ -7,6 +7,7 @@ import { PLAYERS, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn } from '../utils/animations';
 import { makeButton } from '../utils/ui';
+import { fadeIn, go } from '../utils/camera';
 
 export class PlayerSelectScene extends Phaser.Scene {
   constructor() {
@@ -22,6 +23,7 @@ export class PlayerSelectScene extends Phaser.Scene {
     } else {
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
     }
+    fadeIn(this);
 
     const title = this.add
       .text(GAME_WIDTH / 2, 55, rtl('😃 اختر لاعبك وابدأ اللعب فورًا!'), {
@@ -46,7 +48,7 @@ export class PlayerSelectScene extends Phaser.Scene {
     });
 
     const backBtn = makeButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 42, '🏠 رجوع', () => {
-      this.scene.start('Menu');
+      go(this, 'Menu');
     }, { width: 220, height: 56, fontSize: 24, variant: 'glass' });
     popIn(backBtn, 0.6);
   }
@@ -88,11 +90,11 @@ export class PlayerSelectScene extends Phaser.Scene {
     card.on('pointerup', () => {
       audio.play('button');
       this.registry.set('playerId', p.id);
-      // انتقال مباشر للعب: وميض اختيار سريع ثم بدء البطولة — بلا رجوع
+      // انتقال مباشر للعب: وميض اختيار سريع ثم شجرة البطولة — بلا رجوع
       bg.setStrokeStyle(6, COLORS.yellow);
       this.tweens.add({ targets: card, scale: 1.08, duration: 120, yoyo: true });
       audio.play('whistle');
-      this.time.delayedCall(320, () => this.scene.start('Game', { stage: 0 }));
+      this.time.delayedCall(320, () => go(this, 'Tournament'));
     });
     return card;
   }
