@@ -9,6 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "build:game": "cd games/penalty-stars && npm install && npm run build && mkdir -p ../../public/penalty-stars && cp dist/index.html ../../public/penalty-stars/index.html",
+    "tool:docs": "cd tools/arabic-doc-tool && python3 -m uvicorn tool_app:app --host 0.0.0.0 --port 8080",
+    "tool:docs:install": "python3 -m pip install -r tools/arabic-doc-tool/requirements_tool.txt",
     "test": "tsx scripts/test-conversation.ts",
     "test:document-inspection": "tsx scripts/test-document-inspection.ts",
     "db:generate": "prisma generate",
