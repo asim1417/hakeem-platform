@@ -46,5 +46,8 @@ export function isMissingTableError(error: unknown): boolean {
   return msg.includes("does not exist") || (typeof error === "object" && error !== null && (error as { code?: string }).code === "P2021");
 }
 
+/** عنوان حارس لسجل وثائق «أداة معالجة الوثائق» (/doc-tool) — يُستثنى من قوائم القضايا */
+export const DOC_TOOL_CASE_MARKER = "__hakeem_doc_tool__";
+
 export const MISSING_TABLE_MESSAGE =
   "جداول منصة الوثائق غير مهيأة بعد — شغّل: npm run db:push (أو workflow doc-platform-db-push)";

@@ -95,6 +95,27 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload && sudo systemctl enable --now hakeem-tool
 ```
 
+## 4-ب) النسخة المدمجة (serverless) — تعمل فور النشر بلا أي إعداد ⭐
+
+المسار `/doc-tool` يعمل الآن **مباشرةً على نشر حكيم (Vercel)** دون أي خدمة خارجية:
+
+- **الواجهة**: `components/doc-tool/DocToolApp.tsx` — استخراج النص (نص + Word/docx بفك zip
+  أصلي في المتصفح) والتطبيع العربي والبحث والتظليل كلها في متصفح المستخدم.
+- **الحفظ**: `app/api/doc-tool/route.ts` — يخزّن النصوص المستخرَجة في قاعدة PostgreSQL
+  عبر جداول منصة الوثائق القائمة (`doc_workspaces`/`doc_cases`) بمساحة عمل مربوطة
+  بكوكي المتصفح (بلا حساب) — **لا يحتاج migration**؛ الجداول منشأة أصلاً.
+- **القيد**: ‏PDF الممسوح والصور (OCR) غير مدعومة في هذه النسخة — لها نسخة الخادم أدناه.
+- عند ضبط `DOC_TOOL_URL` تحل نسخة الخادم الكاملة محل هذه الصفحة تلقائياً (البروكسي أولوية).
+
+## 4-ج) نشر نسخة الخادم (OCR) على Render بضغطة واحدة
+
+ملف `render.yaml` في جذر المشروع يجعل نشر خدمة FastAPI الكاملة بضغطة واحدة:
+
+1. افتح: `https://render.com/deploy?repo=https://github.com/asim1417/hakeem-platform`
+2. سجّل الدخول بحساب GitHub، أدخل `APP_PASSWORD`، واضغط Deploy
+3. خذ الرابط الناتج (مثل `https://hakeem-doc-tool.onrender.com`) وضعه في `DOC_TOOL_URL`
+   على Vercel — فتظهر نسخة OCR الكاملة على `دومين-حكيم/doc-tool`
+
 ## 5) التفعيل على نفس دومين حكيم (`/doc-tool`)
 
 بعد تشغيل الخدمة بأي طريقة أعلاه، أضِف في `.env` الخاص بتطبيق حكيم (Next.js):

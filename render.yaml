@@ -1,0 +1,16 @@
+# نشر نسخة الخادم الكاملة لأداة معالجة الوثائق (OCR عربي) على Render بضغطة واحدة:
+# https://render.com/deploy?repo=https://github.com/asim1417/hakeem-platform
+# بعد النشر: خذ الرابط الناتج وضعه في DOC_TOOL_URL على Vercel ليظهر على دومين حكيم /doc-tool.
+services:
+  - type: web
+    name: hakeem-doc-tool
+    runtime: docker
+    rootDir: tools/arabic-doc-tool
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_PASSWORD
+        sync: false # تُدخلها عند النشر — كلمة مرور الأداة
+      - key: TOOL_DB
+        value: /tmp/tool_docs.db # الخطة المجانية بلا قرص دائم؛ مع قرص مدفوع اجعله /data/tool_docs.db
