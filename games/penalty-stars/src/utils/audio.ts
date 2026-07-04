@@ -6,6 +6,8 @@ import kickImpactSrc from '../assets/sfx/kick-impact.mp3';
 import crowdGoalSrc from '../assets/sfx/crowd-goal.mp3';
 import crowdAmbientSrc from '../assets/sfx/crowd-ambient.mp3';
 import whiffSrc from '../assets/sfx/whiff.mp3';
+import whistleRealSrc from '../assets/sfx/whistle.mp3';
+import punchSrc from '../assets/sfx/punch.mp3';
 
 const RATE = 22050;
 
@@ -94,14 +96,7 @@ const postSrc = synth(0.35, (t) => {
   return (Math.sin(2 * Math.PI * 880 * t) + 0.6 * Math.sin(2 * Math.PI * 1320 * t)) * env * 0.5;
 });
 
-// صفارة الحكم
-const whistleSrc = synth(0.45, (t) => {
-  const vib = 1 + 0.02 * Math.sin(2 * Math.PI * 30 * t);
-  const env = t < 0.05 ? t / 0.05 : Math.exp(-(t - 0.05) * 5);
-  return Math.sin(2 * Math.PI * 2100 * vib * t) * env * 0.4;
-});
-
-type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock' | 'post' | 'whiff';
+type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock' | 'post' | 'whiff' | 'punch';
 
 // أحجام متوازنة: المؤثرات تحت صوت المعلق حتى لا تطغى عليه
 // kick وcrowd صارا mp3 (ارتطام مضغوط + هتاف هدف حقيقي الإحساس)
@@ -111,11 +106,13 @@ const sounds: Record<SoundName, Howl> = {
   save: new Howl({ src: [saveSrc], format: ['wav'], volume: 0.7 }),
   crowd: new Howl({ src: [crowdGoalSrc], format: ['mp3'], volume: 0.5 }),
   button: new Howl({ src: [buttonSrc], format: ['wav'], volume: 0.7 }),
-  whistle: new Howl({ src: [whistleSrc], format: ['wav'], volume: 0.6 }),
+  // صافرة الحكم الحقيقية (بِف-بِف) من حزمة nojoom_audio
+  whistle: new Howl({ src: [whistleRealSrc], format: ['mp3'], volume: 0.65 }),
   trophy: new Howl({ src: [trophySrc], format: ['wav'], volume: 0.85 }),
   unlock: new Howl({ src: [unlockSrc], format: ['wav'], volume: 0.8 }),
   post: new Howl({ src: [postSrc], format: ['wav'], volume: 0.75 }),
   whiff: new Howl({ src: [whiffSrc], format: ['mp3'], volume: 0.6 }),
+  punch: new Howl({ src: [punchSrc], format: ['mp3'], volume: 0.8 }), // التحام الحائط
 };
 
 // 🏟️ أجواء الملعب: حلقة جماهير خلفية مستمرة أثناء اللعب فقط
