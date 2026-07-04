@@ -12,7 +12,20 @@ const nextConfig = {
   },
   // لعبة نجوم البلنتيات — ملف ثابت في public يُقدَّم على مسار نظيف
   async rewrites() {
-    return [{ source: "/penalty-stars", destination: "/penalty-stars/index.html" }];
+    // أداة معالجة الوثائق العربية: تُقدَّم على نفس الدومين تحت /doc-tool
+    // عبر بروكسي إلى خدمة FastAPI المعرَّفة في DOC_TOOL_URL (tools/arabic-doc-tool).
+    // بدون المتغيّر تُعرض صفحة تعليمات الإعداد (app/doc-tool/page.tsx) بدلاً منه.
+    const docToolUrl = (process.env.DOC_TOOL_URL ?? "").trim().replace(/\/+$/, "");
+    const docToolProxy = docToolUrl
+      ? [
+          { source: "/doc-tool", destination: `${docToolUrl}/` },
+          { source: "/doc-tool/:path*", destination: `${docToolUrl}/:path*` }
+        ]
+      : [];
+    return {
+      beforeFiles: docToolProxy,
+      afterFiles: [{ source: "/penalty-stars", destination: "/penalty-stars/index.html" }]
+    };
   }
 };
 

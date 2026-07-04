@@ -11,5 +11,20 @@ services:
     volumes:
       - hakeem-postgres-data:/var/lib/postgresql/data
 
+  # أداة معالجة الوثائق العربية — رفع/استخراج/تطبيع/فهرسة/بحث (FastAPI)
+  doc-tool:
+    build: ./tools/arabic-doc-tool
+    container_name: hakeem-doc-tool
+    environment:
+      # اتركه فارغاً للتشغيل خلف شبكة داخلية فقط، أو ضع كلمة مرور للنشر العام
+      APP_PASSWORD: ${DOC_TOOL_PASSWORD:-}
+      SESSION_SECRET: ${DOC_TOOL_SESSION_SECRET:-}
+      TOOL_DB: /data/tool_docs.db
+    ports:
+      - "8080:8080"
+    volumes:
+      - hakeem-doc-tool-data:/data
+
 volumes:
   hakeem-postgres-data:
+  hakeem-doc-tool-data:

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getOrCreateWorkspace,
   getWorkspace,
+  DOC_TOOL_CASE_MARKER,
   isMissingTableError,
   MISSING_TABLE_MESSAGE
 } from "@/lib/modules/doc-platform/workspace";
@@ -41,7 +42,8 @@ export async function GET() {
     if (!ws) return NextResponse.json({ cases: [], prefs: null });
     const [cases, workspace] = await Promise.all([
       prisma.docCase.findMany({
-        where: { workspaceId: ws.id },
+        // سجل أداة معالجة الوثائق (/doc-tool) داخلي — لا يظهر بين قضايا المنصة
+        where: { workspaceId: ws.id, title: { not: DOC_TOOL_CASE_MARKER } },
         orderBy: { updatedAt: "desc" },
         select: { id: true, title: true, docCount: true, updatedAt: true }
       }),
