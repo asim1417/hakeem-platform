@@ -9,6 +9,8 @@ import hammadPhoto from '../assets/players/hammad.webp';
 import hishamPhoto from '../assets/players/hisham.webp';
 import omarPhoto from '../assets/players/omar.webp';
 import sheikhPhoto from '../assets/players/sheikh.webp';
+import mohammedPhoto from '../assets/players/mohammed.webp';
+import azzamPhoto from '../assets/players/azzam.webp';
 
 // نوع الاحتفال عند تسجيل الهدف
 export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart' | 'roar' | 'crown';
@@ -104,6 +106,7 @@ export const PLAYERS: PlayerDef[] = [
     celebration: 'تسديدة أسطورية! 🔥',
     celebrationType: 'fire',
     cheer: 'الأسطورة محمد لا يرحم!',
+    photo: mohammedPhoto,
   },
   {
     id: 'aws',
@@ -128,6 +131,7 @@ export const PLAYERS: PlayerDef[] = [
     celebration: 'احتفال العمدة! 👑🎉',
     celebrationType: 'crowd',
     cheer: 'العمدة عزام قائد الملعب!',
+    photo: azzamPhoto,
   },
   {
     id: 'sheikh',
