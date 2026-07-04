@@ -5,6 +5,7 @@ import { Howl, Howler } from 'howler';
 import kickImpactSrc from '../assets/sfx/kick-impact.mp3';
 import crowdGoalSrc from '../assets/sfx/crowd-goal.mp3';
 import crowdAmbientSrc from '../assets/sfx/crowd-ambient.mp3';
+import whiffSrc from '../assets/sfx/whiff.mp3';
 
 const RATE = 22050;
 
@@ -100,7 +101,7 @@ const whistleSrc = synth(0.45, (t) => {
   return Math.sin(2 * Math.PI * 2100 * vib * t) * env * 0.4;
 });
 
-type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock' | 'post';
+type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock' | 'post' | 'whiff';
 
 // أحجام متوازنة: المؤثرات تحت صوت المعلق حتى لا تطغى عليه
 // kick وcrowd صارا mp3 (ارتطام مضغوط + هتاف هدف حقيقي الإحساس)
@@ -114,6 +115,7 @@ const sounds: Record<SoundName, Howl> = {
   trophy: new Howl({ src: [trophySrc], format: ['wav'], volume: 0.85 }),
   unlock: new Howl({ src: [unlockSrc], format: ['wav'], volume: 0.8 }),
   post: new Howl({ src: [postSrc], format: ['wav'], volume: 0.75 }),
+  whiff: new Howl({ src: [whiffSrc], format: ['mp3'], volume: 0.6 }),
 };
 
 // 🏟️ أجواء الملعب: حلقة جماهير خلفية مستمرة أثناء اللعب فقط

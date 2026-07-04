@@ -642,6 +642,7 @@ export class GameScene extends Phaser.Scene {
       this.showPhrase(savePhrase);
       announcer.onOutcome('save', savePhrase);
     } else {
+      audio.play('whiff'); // صوت الهواء — الكرة مرت بجانب المرمى
       this.keeper.setTexture(this.keeperTexture('-happy'));
       this.keeper.setAngle(0);
       const missPhrase = this.pendingMissPhrase ?? Phaser.Utils.Array.GetRandom(PHRASES.miss);

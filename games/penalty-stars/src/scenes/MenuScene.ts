@@ -203,7 +203,7 @@ export class MenuScene extends Phaser.Scene {
     makeChip(this, 46, 46, 'ic-gear', () => this.openSettings());
   }
 
-  // ⚙️ الإعدادات: صوت المعلق + حذف التقدم خلف بوابة أهل (سؤال حساب)
+  // ⚙️ الإعدادات: حذف التقدم خلف بوابة أهل (سؤال حساب)
   private openSettings(): void {
     const items: Phaser.GameObjects.GameObject[] = [];
     const kill = () => items.forEach((o) => o.destroy());
@@ -212,38 +212,22 @@ export class MenuScene extends Phaser.Scene {
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.75)
       .setDepth(80)
       .setInteractive();
-    const panel = this.add.image(GAME_WIDTH / 2, 400, 'panel-glass').setDisplaySize(390, 420).setDepth(81);
+    const panel = this.add.image(GAME_WIDTH / 2, 400, 'panel-glass').setDisplaySize(390, 360).setDepth(81);
     const title = this.add
-      .text(GAME_WIDTH / 2, 250, rtl('⚙️ الإعدادات'), { fontFamily: FONT, fontSize: '32px', color: '#ffd45a', fontStyle: 'bold' })
+      .text(GAME_WIDTH / 2, 268, rtl('⚙️ الإعدادات'), { fontFamily: FONT, fontSize: '32px', color: '#ffd45a', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(82);
     items.push(overlay, panel, title);
-
-    // تبديل صوت المعلق
-    const announcerLabel = () => (progress.announcerEnabled() ? '🎙️ صوت المعلق: يعمل' : '🔇 صوت المعلق: متوقف');
-    const annBtn = makeButton(
-      this,
-      GAME_WIDTH / 2,
-      330,
-      announcerLabel(),
-      () => {
-        progress.setAnnouncer(!progress.announcerEnabled());
-        (annBtn.getAt(2) as Phaser.GameObjects.Text).setText(rtl(announcerLabel()));
-      },
-      { width: 320, height: 64, fontSize: 22, variant: 'primary' },
-    );
-    annBtn.setDepth(82);
-    items.push(annBtn);
 
     // حذف التقدم — سؤال حساب بسيط حتى لا يضغطه الصغار بالخطأ
     const resetBtn = makeButton(
       this,
       GAME_WIDTH / 2,
-      414,
+      348,
       '🗑️ حذف كل التقدم',
       () => {
         const q = this.add
-          .text(GAME_WIDTH / 2, 470, rtl('للتأكيد (سؤال للكبار): كم ٦ × ٧؟'), {
+          .text(GAME_WIDTH / 2, 412, rtl('للتأكيد (سؤال للكبار): كم ٦ × ٧؟'), {
             fontFamily: FONT,
             fontSize: '19px',
             color: '#ffffff',
@@ -256,7 +240,7 @@ export class MenuScene extends Phaser.Scene {
           const a = makeButton(
             this,
             GAME_WIDTH / 2 - 110 + i * 110,
-            520,
+            466,
             arabicNum(n),
             () => {
               if (n === 42) {
@@ -280,7 +264,7 @@ export class MenuScene extends Phaser.Scene {
     resetBtn.setDepth(82);
     items.push(resetBtn);
 
-    const closeBtn = makeButton(this, GAME_WIDTH / 2, 578, '✖️ إغلاق', () => kill(), {
+    const closeBtn = makeButton(this, GAME_WIDTH / 2, 532, '✖️ إغلاق', () => kill(), {
       width: 200,
       height: 54,
       fontSize: 21,
