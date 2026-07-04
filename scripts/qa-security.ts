@@ -38,9 +38,12 @@ function scanFile(file: string) {
     const isDocumentation = rel === "README.md" || rel.endsWith(".md");
     const isExample = rel === ".env.example" || isDocumentation;
     const isServerAiGateway = rel.startsWith(path.join("lib", "modules", "ai")) || rel.startsWith(path.join("app", "api"));
-    // لعبة الأطفال تخزن تقدم اللعب فقط (عدد نجوم) محليًا — لا بيانات شخصية
-    // يشمل نسختها المبنية المنشورة تحت public/penalty-stars
-    const isKidsGame = rel.startsWith("games" + path.sep) || rel.startsWith(path.join("public", "penalty-stars"));
+    // ألعاب الأطفال تخزن تقدم اللعب وإعداداته فقط محليًا — لا بيانات شخصية
+    // يشمل نسخها المنشورة تحت public/penalty-stars وpublic/football-future
+    const isKidsGame =
+      rel.startsWith("games" + path.sep) ||
+      rel.startsWith(path.join("public", "penalty-stars")) ||
+      rel.startsWith(path.join("public", "football-future"));
 
     if (/sk-[A-Za-z0-9_-]{20,}/.test(line)) {
       findings.push({ file: rel, line: index + 1, reason: "مفتاح API محتمل مكشوف", text: trimmed });
