@@ -1,0 +1,10 @@
+{
+  "name": "gemini-ocr-service",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Gemini OCR Service for Arabic Documents",
+  "main": "GeminiOcrService.js",
+  "dependencies": {
+    "@google/genai": "^0.1.1"
+  }
+}
