@@ -118,14 +118,18 @@ LOGIN = """<!doctype html><html lang=ar dir=rtl><meta charset=utf-8><meta name=v
 <title>دخول</title><style>body{font-family:Tahoma;background:#0f172a;color:#e5e7eb;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
 .b{background:#1e293b;padding:26px;border-radius:14px;width:300px}input{width:100%;padding:11px;margin:9px 0;border-radius:9px;border:1px solid #334155;background:#0f172a;color:#fff;box-sizing:border-box}
 button{width:100%;padding:11px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-size:16px}</style>
-<div class=b><h2>أداة معالجة الوثائق</h2><form method=post action=/login><input type=password name=password placeholder="كلمة المرور" autofocus>
-<div style="color:#fca5a5;font-size:13px">__E__</div><button>دخول</button></form></div></html>"""
+<div class=b><h2>أداة معالجة الوثائق</h2><form method=post id=lf><input type=password name=password placeholder="كلمة المرور" autofocus>
+<div style="color:#fca5a5;font-size:13px">__E__</div><button>دخول</button></form></div>
+<script>/* مسار دخول نسبي: يعمل على الجذر مباشرةً أو خلف بادئة بروكسي مثل /doc-tool */
+var p=location.pathname.replace(new RegExp('/+$'),'');if(p.slice(-6)=='/login')p=p.slice(0,-6);
+document.getElementById('lf').action=p+'/login';</script></html>"""
 
 
 @app.post("/login")
 def login(password: str = Form("")):
     if APP_PASSWORD and hmac.compare_digest(password, APP_PASSWORD):
-        r = RedirectResponse("/", status_code=303)
+        # إعادة توجيه نسبية (".") — تُحلّ إلى جذر الأداة سواء كانت على / أو خلف /doc-tool
+        r = RedirectResponse(".", status_code=303)
         r.set_cookie(COOKIE, _token(), httponly=True, samesite="lax", max_age=604800)
         return r
     return HTMLResponse(LOGIN.replace("__E__", "كلمة مرور خاطئة"), 401)
@@ -237,12 +241,15 @@ mark{background:#fde68a}.cnt{color:var(--mut);font-size:12px;padding:6px 12px}.k
   </main>
 </div>
 <script>
+/* B = بادئة المسار الحالية — '' على الجذر، '/doc-tool' خلف بروكسي حكيم */
+var B=location.pathname.replace(new RegExp('/+$'),'');
+var lgo=document.getElementById('lgo');if(lgo)lgo.href=B+'/logout';
 var listEl=document.getElementById('list'),view=document.getElementById('view'),q=document.getElementById('q'),cnt=document.getElementById('cnt'),drop=document.getElementById('drop');
 var curTokens=[];
 function esc(s){return (s||'').replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 function nrm(s){var o='';for(var i=0;i<s.length;i++){var ch=s[i],c=ch.charCodeAt(0);
  if(c>=0x064B&&c<=0x0652||c===0x0640||c===0x0670)continue;o+=({'أ':'ا','إ':'ا','آ':'ا','ٱ':'ا','ة':'ه','ى':'ي','ؤ':'و','ئ':'ي'}[ch]||ch.toLowerCase());}return o;}
-function api(m,u,b,cb){var x=new XMLHttpRequest();x.open(m,u);x.onload=function(){if(x.status==200)cb(x.responseText?JSON.parse(x.responseText):null);else if(x.status==401)location='/login';};if(b)x.send(b);else x.send();}
+function api(m,u,b,cb){var x=new XMLHttpRequest();x.open(m,B+u);x.onload=function(){if(x.status==200)cb(x.responseText?JSON.parse(x.responseText):null);else if(x.status==401)location=B||'/';};if(b)x.send(b);else x.send();}
 function row(d){return '<div class=it data-id="'+d.id+'"><div class=t>'+esc(d.title)+' <span class=kind>['+esc(d.kind||'')+']</span></div>'+(d.snip?'<div class=s>'+esc(d.snip).replace(/«/g,'<mark>').replace(/»/g,'</mark>')+'</div>':'')+'</div>';}
 function bind(){[].forEach.call(listEl.querySelectorAll('.it'),function(el){el.onclick=function(){openDoc(el.getAttribute('data-id'));};});}
 function showList(a){cnt.textContent=a.length+' وثيقة';listEl.innerHTML=a.map(row).join('')||'<div class=cnt>لا نتائج.</div>';bind();}
@@ -266,10 +273,11 @@ refresh();
 def home(req: Request):
     if not _authed(req):
         return HTMLResponse(LOGIN.replace("__E__", ""))
-    logout = ('<a href="/logout" style="font-size:12px;margin-inline-start:auto">خروج</a>' if APP_PASSWORD else '')
+    logout = ('<a href="#" id=lgo style="font-size:12px;margin-inline-start:auto">خروج</a>' if APP_PASSWORD else '')
     return HTMLResponse(PAGE.replace("__LOGOUT__", logout))
 
 
 @app.get("/logout")
 def logout():
-    r = RedirectResponse("/"); r.delete_cookie(COOKIE); return r
+    # "." نسبية — تعيد إلى جذر الأداة أياً كانت البادئة
+    r = RedirectResponse("."); r.delete_cookie(COOKIE); return r
