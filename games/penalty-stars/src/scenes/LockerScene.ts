@@ -2,7 +2,7 @@
 // بلا مشتريات، بلا إعلانات — النجوم تأتي من الأهداف فقط
 
 import Phaser from 'phaser';
-import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl } from '../config/gameConfig';
+import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, HEADING, rtl } from '../config/gameConfig';
 import { audio } from '../utils/audio';
 import { popIn } from '../utils/animations';
 import { makeButton } from '../utils/ui';
@@ -16,20 +16,19 @@ export class LockerScene extends Phaser.Scene {
 
   create(): void {
     // خلفية الملعب المختار مع تعتيم أوضح للقوائم
-    const stadiumKey = progress.selectedStadium();
-    if (this.textures.exists(stadiumKey)) {
-      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0a2818, 0.55);
+    if (this.textures.exists('stadium-stars')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'stadium-stars').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.7);
     } else {
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy);
     }
     fadeIn(this);
 
     const title = this.add
       .text(GAME_WIDTH / 2, 48, rtl('🎒 الخزنة'), {
-        fontFamily: FONT,
-        fontSize: '34px',
-        color: '#ffd45a',
+        fontFamily: HEADING,
+        fontSize: '30px',
+        color: '#c6ff00',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 8,
@@ -56,7 +55,7 @@ export class LockerScene extends Phaser.Scene {
       const unlocked = progress.isUnlocked(b.cost);
       const selected = progress.selectedBall() === b.key;
 
-      const ring = this.add.circle(x, y, 38, selected ? COLORS.yellow : 0xffffff, selected ? 0.95 : 0.35);
+      const ring = this.add.circle(x, y, 38, selected ? COLORS.lime : COLORS.graphite, selected ? 0.9 : 0.7);
       const img = this.textures.exists(b.key)
         ? this.add.image(x, y, b.key).setDisplaySize(60, 60)
         : this.add.image(x, y, 'ball').setDisplaySize(60, 60);
@@ -67,7 +66,7 @@ export class LockerScene extends Phaser.Scene {
         .text(x, y + 52, rtl(caption), {
           fontFamily: FONT,
           fontSize: '13px',
-          color: unlocked ? '#ffffff' : '#ffd93d',
+          color: unlocked ? '#ffffff' : '#ffd23f',
           fontStyle: 'bold',
           stroke: '#0b0f14',
           strokeThickness: 3,
@@ -96,8 +95,8 @@ export class LockerScene extends Phaser.Scene {
       const unlocked = progress.isUnlocked(st.cost);
       const selected = progress.selectedStadium() === st.key;
 
-      const frame = this.add.rectangle(x, y, 204, 96, COLORS.white, 0.95);
-      frame.setStrokeStyle(selected ? 6 : 3, selected ? COLORS.yellow : COLORS.white);
+      const frame = this.add.rectangle(x, y, 204, 96, COLORS.graphite, 0.95);
+      frame.setStrokeStyle(selected ? 4 : 2, selected ? COLORS.lime : COLORS.cyan, selected ? 1 : 0.45);
       // قصاصة من منتصف صورة الملعب (منطقة المرمى) بدل تكديس الصورة كاملة
       let thumb: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
       if (this.textures.exists(st.key)) {
@@ -135,7 +134,7 @@ export class LockerScene extends Phaser.Scene {
             fontSize: '13px',
             color: '#0b0f14',
             fontStyle: 'bold',
-            backgroundColor: '#ffd93d',
+            backgroundColor: '#ffd23f',
             padding: { x: 6, y: 2 },
           })
           .setOrigin(0.5);

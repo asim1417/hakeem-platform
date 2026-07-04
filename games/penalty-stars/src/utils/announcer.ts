@@ -24,12 +24,12 @@ function showBubble(scene: Phaser.Scene, text: string, color: number): void {
     .text(0, 0, rtl(`🎤 ${text}`), {
       fontFamily: FONT,
       fontSize: '22px',
-      color: '#0b0f14',
+      color: '#f8fff7',
       fontStyle: 'bold',
     })
     .setOrigin(0.5);
   const w = label.width + 44;
-  const bg = scene.add.rectangle(0, 0, w, 52, COLORS.white, 0.97).setOrigin(0.5);
+  const bg = scene.add.rectangle(0, 0, w, 52, COLORS.graphite, 0.94).setOrigin(0.5);
   bg.setStrokeStyle(4, color);
   const bubble = scene.add.container(GAME_WIDTH / 2, y, [bg, label]).setDepth(45);
 

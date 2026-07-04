@@ -2,7 +2,7 @@
 // المرجع: visual_identity_guide.html + design_tokens.json
 
 import Phaser from 'phaser';
-import { FONT, rtl } from '../config/gameConfig';
+import { FONT, HEADING, rtl } from '../config/gameConfig';
 import { audio } from './audio';
 
 export type ButtonVariant = 'primary' | 'glass' | 'gold';
@@ -44,7 +44,7 @@ export function makeButton(
   const bg = scene.add.image(0, 0, TEXTURE[variant]).setDisplaySize(w, h);
   const text = scene.add
     .text(0, 0, rtl(label), {
-      fontFamily: FONT,
+      fontFamily: HEADING, // خط العناوين الكوفي في كل الأزرار (الهوية)
       fontSize: `${opts.fontSize ?? 28}px`,
       color: TEXT_COLOR[variant],
       fontStyle: 'bold',
@@ -95,6 +95,25 @@ export function makeMuteChip(scene: Phaser.Scene, x: number, y: number): Phaser.
     (chip.getAt(1) as Phaser.GameObjects.Image).setTexture(muted ? 'ic-mute' : 'ic-sound');
   });
   return chip;
+}
+
+// ⚡ خطوط الطاقة المائلة (الهوية §9): ثلاث ضربات ضوئية خلف العناوين
+export function energyStreaks(scene: Phaser.Scene, y: number, depth = 0): void {
+  const w = scene.scale.width;
+  const g = scene.add.graphics().setDepth(depth);
+  const streak = (x0: number, sw: number, color: number, alpha: number) => {
+    g.fillStyle(color, alpha);
+    g.fillPoints([
+      new Phaser.Math.Vector2(x0, y + 34),
+      new Phaser.Math.Vector2(x0 + 26, y - 34),
+      new Phaser.Math.Vector2(x0 + 26 + sw, y - 34),
+      new Phaser.Math.Vector2(x0 + sw, y + 34),
+    ], true);
+  };
+  streak(-20, 14, 0xc6ff00, 0.16);
+  streak(26, 8, 0x00e5ff, 0.14);
+  streak(w - 60, 14, 0x00e5ff, 0.16);
+  streak(w - 22, 8, 0xc6ff00, 0.14);
 }
 
 // 🧭 شريط التنقل السفلي (هوية فوتبول فيوتشر): ٤ تبويبات — الرئيسية/الأوضاع/المهام/الملف
