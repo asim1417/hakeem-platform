@@ -162,6 +162,9 @@ export interface GarbleReport {
   substitutionRatio: number;
   /** نسبة الكلمات المكوّنة من حرف عربي واحد (تقطيع مفرط) */
   singleLetterRatio: number;
+  /** نسبة الرموز غير المُعيَّنة يونيكودياً (منطقة الاستخدام الخاص PUA وبدائل العطب) —
+      خطّ مُرمَّز ترميزاً خاصاً تظهر رموزه مربعات ☐؛ لا يُقرأ إلا بـ OCR */
+  unmappedRatio: number;
 }
 
 /**
@@ -202,10 +205,26 @@ export function isGarbledArabicText(rawText: string): GarbleReport {
   const arabicAfter = (reshaped.match(/[ء-ي]/g) ?? []).length;
   const substitutionRatio = arabicAfter > 40 ? latin / (latin + arabicAfter) : 0;
 
-  const garbled =
-    presentationRatio > 0.3 || singleLetterRatio > 0.4 || duplicationRatio > 0.25 || substitutionRatio > 0.12;
+  // الرموز غير المُعيَّنة (تظهر مربعات ☐): منطقة الاستخدام الخاص PUA بمستوييها،
+  // ومحرف الإحلال FFFD، ومحارف التحكم C1 — سمة الخطوط المُرمَّزة ترميزاً خاصاً
+  let unmapped = 0;
+  let visible = 0;
+  for (const ch of text) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (c <= 0x20) continue;
+    visible += 1;
+    if ((c >= 0xe000 && c <= 0xf8ff) || c >= 0xf0000 || c === 0xfffd || (c >= 0x80 && c <= 0x9f)) unmapped += 1;
+  }
+  const unmappedRatio = visible > 40 ? unmapped / visible : 0;
 
-  return { garbled, presentationRatio, duplicationRatio, substitutionRatio, singleLetterRatio };
+  const garbled =
+    presentationRatio > 0.3 ||
+    singleLetterRatio > 0.4 ||
+    duplicationRatio > 0.25 ||
+    substitutionRatio > 0.12 ||
+    unmappedRatio > 0.2;
+
+  return { garbled, presentationRatio, duplicationRatio, substitutionRatio, singleLetterRatio, unmappedRatio };
 }
 
 /**
@@ -219,6 +238,7 @@ export function cleanPdfTextLayer(rawText: string): { text: string; needsOcr: bo
   // إعادة التشكيل تُصلح الحالة الشائعة (صيغ عرض بحدود كلمات سليمة). لكنها لا تستطيع
   // استرجاع حدود الكلمات حين تُفصل كلّ صورة حرف بمسافة (singleLetterRatio عالٍ)،
   // ولا إصلاح الخطّ المُجزّأ (رموز بديلة). في هاتين الحالتين المصدر الصحيح هو OCR.
-  const needsOcr = report.substitutionRatio > 0.12 || report.singleLetterRatio > 0.45;
+  const needsOcr =
+    report.substitutionRatio > 0.12 || report.singleLetterRatio > 0.45 || report.unmappedRatio > 0.2;
   return { text, needsOcr, report };
 }
