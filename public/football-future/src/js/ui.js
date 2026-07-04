@@ -241,20 +241,33 @@
     return `<div class="match-layout">
       <canvas id="matchCanvas" aria-label="ملعب كرة قدم تفاعلي"></canvas>
       <div class="match-hud">
-        <div class="scoreboard"><b>FUT</b><span id="scoreHome">0</span><span>-</span><span id="scoreAway">0</span><b>NMO</b><span id="matchTime">0:00</span></div>
-        <button class="pause-btn" data-route="matchSummary" type="button" aria-label="إيقاف">Ⅱ</button>
-        <div class="hud-tip">${DATA.copy.tutorial[0]}<br>${DATA.copy.tutorial[2]}</div>
-        <div class="commentary-line" id="commentaryLine" aria-live="polite">المعلق العربي جاهز...</div>
-        <div class="joystick" id="joystick"><div class="knob" id="joystickKnob"></div></div>
-        <div class="action-buttons">
+        <div class="scoreboard" aria-label="النتيجة">
+          <span class="ff-tag">FF</span>
+          <b>FUT</b><span class="sc" id="scoreHome">0</span>
+          <span class="dash">-</span>
+          <span class="sc" id="scoreAway">0</span><b>NMO</b>
+          <span class="tm" id="matchTime">0:00</span>
+        </div>
+        <button class="pause-btn" data-route="matchSummary" type="button" aria-label="إيقاف المباراة">II</button>
+        <div class="commentary-line" id="commentaryLine" aria-live="polite"></div>
+        <div class="joystick" id="joystick" aria-label="عصا التحكم">
+          <div class="knob" id="joystickKnob"></div>
+          <div class="stamina"><i id="staminaBar"></i></div>
+        </div>
+        <div class="action-cluster" aria-label="أزرار اللعب">
           <button class="act shoot" data-game-action="shoot" type="button">تسديد<small>SHOOT</small></button>
           <button class="act pass" data-game-action="pass" type="button">تمرير<small>PASS</small></button>
-          <button class="act sprint" id="sprintButton" type="button">ركض<small>SPRINT</small></button>
           <button class="act skill" data-game-action="skill" type="button">مهارة<small>SKILL</small></button>
           <button class="act tackle" data-game-action="tackle" type="button">ضغط<small>TACKLE</small></button>
+          <button class="act sprint" id="sprintButton" type="button">ركض<small>SPRINT</small></button>
         </div>
         <canvas class="minimap" id="minimap" width="180" height="96"></canvas>
         <div id="summaryOverlay"></div>
+      </div>
+      <div class="rotate-overlay" aria-hidden="true">
+        <div class="ph">📱</div>
+        <b>أدر جهازك للوضع العرضي</b>
+        <span>تجربة المباراة مصممة للشاشة العريضة</span>
       </div>
     </div>`;
   }
