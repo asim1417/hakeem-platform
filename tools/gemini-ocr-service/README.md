@@ -32,3 +32,45 @@ npm install
    ```bash
    node test-ocr.js
    ```
+
+---
+
+## المعالجة الجماعية (Bulk): تحويل مجلد كامل (مثل 220 وثيقة) إلى نصوص خام
+
+الملف: `processDriveDocuments.js` — وضعان للتشغيل:
+
+### الوضع الأول: مباشرة من Google Drive (بلا تنزيل يدوي)
+
+**التجهيز (مرة واحدة):**
+1. مفتاح Gemini من Google AI Studio → `export GEMINI_API_KEY="..."`
+2. في Google Cloud Console: فعّل **Google Drive API** → أنشئ **Service Account**
+   → نزّل مفتاح JSON باسم `credentials.json` وضعه في هذا المجلد
+3. **الخطوة المهمة:** خذ بريد حساب الخدمة (ينتهي بـ `gserviceaccount.com`)
+   وشارك معه مجلد الوثائق في Drive (صلاحية «مشاهد» تكفي)
+4. `npm install` في هذا المجلد
+
+**التشغيل:**
+```bash
+DRIVE_FOLDER_ID="معرف_المجلد_من_رابط_درايف" node processDriveDocuments.js
+```
+
+### الوضع الثاني: مجلد محلي على الجهاز/الخادم
+
+```bash
+DOCUMENTS_FOLDER="./my-drive-documents" node processDriveDocuments.js
+```
+
+### ما يفعله السكربت
+- يجلب كل الوثائق (PNG/JPG/PDF) مهما بلغ عددها (ترقيم صفحات تلقائي)
+- يرسل كل وثيقة لـ Gemini (`gemini-2.5-flash` افتراضياً؛ بدّل بـ `GEMINI_MODEL=gemini-2.5-pro` للخط اليدوي)
+- يحفظ النص الخام في `extracted-arabic-texts/اسم_الوثيقة.txt`
+- **استئناف تلقائي**: أعد تشغيله بعد أي انقطاع — يتخطى ما اكتمل ويعالج الباقي فقط
+- إعادة محاولة تلقائية عند حدود المعدل (429) وملخص نهائي بالناجح والفاشل
+
+### خيارات إضافية (متغيرات بيئة)
+| المتغير | الافتراضي | الوظيفة |
+|---|---|---|
+| `OUTPUT_FOLDER` | `./extracted-arabic-texts` | مجلد المخرجات |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | النموذج (`gemini-2.5-pro` للمعقد) |
+| `DELAY_MS` | `1200` | مهلة بين الوثائق لتفادي حدود المعدل |
+| `GOOGLE_CREDENTIALS_FILE` | `./credentials.json` | مسار ملف حساب الخدمة |
