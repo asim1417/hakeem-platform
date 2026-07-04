@@ -31,6 +31,15 @@ export const STADIUMS: StadiumSkin[] = [
 
 const KEY = 'penalty-stars-progress';
 
+// لاعب يضيفه الأهل: اسم وصورة فقط — تُحفظ على الجهاز ولا تغادر أبدًا
+export interface CustomPlayerSaved {
+  id: string; // custom-1 | custom-2
+  name: string;
+  photo: string; // data URI مصغّرة ٢٠٠×٢٠٠
+}
+
+export const MAX_CUSTOM_PLAYERS = 2;
+
 interface SavedProgress {
   totalStars: number;
   ball: string;
@@ -38,6 +47,7 @@ interface SavedProgress {
   trophy?: boolean; // الفوز بكأس النجوم
   lastDailyDate?: string; // آخر يوم أُنجز فيه تحدي اليوم
   announcerOn?: boolean; // تفضيل صوت المعلق
+  customPlayers?: CustomPlayerSaved[]; // لاعبو العائلة المضافون
 }
 
 function load(): SavedProgress {
@@ -99,6 +109,25 @@ export const progress = {
   },
   resetAll(): void {
     state = { totalStars: 0, ball: 'ball-real', stadium: 'stadium-real' };
+    save(state);
+  },
+  // ── لاعبو العائلة ──
+  customPlayers(): CustomPlayerSaved[] {
+    return state.customPlayers ?? [];
+  },
+  addCustomPlayer(name: string, photo: string): CustomPlayerSaved | null {
+    const list = state.customPlayers ?? [];
+    if (list.length >= MAX_CUSTOM_PLAYERS) return null;
+    // أول معرف شاغر حتى لا يتصادم مع لاعب محذوف سابقًا
+    let n = 1;
+    while (list.some((c) => c.id === `custom-${n}`)) n++;
+    const player: CustomPlayerSaved = { id: `custom-${n}`, name, photo };
+    state.customPlayers = [...list, player];
+    save(state);
+    return player;
+  },
+  removeCustomPlayer(id: string): void {
+    state.customPlayers = (state.customPlayers ?? []).filter((c) => c.id !== id);
     save(state);
   },
   // المكافآت التي فُتحت بين رصيدين — لإظهار بشارة الفتح

@@ -136,10 +136,11 @@ export class MenuScene extends Phaser.Scene {
     grid.forEach(([label, onTap], i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
-      const btn = makeButton(this, 140 + col * 200, 548 + row * 66, label, onTap, {
-        width: 188,
-        height: 58,
-        fontSize: 19,
+      // أزرار لعب أعرض بخط ضمن نطاق الدليل (28-38px مع هامش للعبارات الطويلة)
+      const btn = makeButton(this, 124 + col * 232, 548 + row * 66, label, onTap, {
+        width: 222,
+        height: 60,
+        fontSize: 26,
         variant: 'glass',
       });
       popIn(btn, 0.52 + i * 0.05);
@@ -148,8 +149,8 @@ export class MenuScene extends Phaser.Scene {
     // ── الخزنة بعرض كامل ──
     const lockerBtn = makeButton(this, GAME_WIDTH / 2, 664, '🎒 الخزنة — كرات وملاعب جديدة', () => go(this, 'Locker'), {
       width: 392,
-      height: 52,
-      fontSize: 19,
+      height: 54,
+      fontSize: 23,
       variant: 'glass',
     });
     popIn(lockerBtn, 0.68);

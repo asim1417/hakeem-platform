@@ -14,11 +14,15 @@ export const COLORS = {
   orange: 0xff8c42,
   pink: 0xff6b9d,
   net: 0xe8f6ff,
-  // ألوان الهوية البصرية (design_tokens.json)
-  gold: 0xffd45a,
-  navy: 0x07111f,
-  lime: 0xb7ff2a,
-  cyan: 0x00d7ff,
+  // ألوان الهوية البصرية (design_tokens.json) — المجموعة الكاملة
+  gold: 0xffd45a, // trophyGold
+  navy: 0x07111f, // stadiumNavy
+  lime: 0xb7ff2a, // neonLime
+  cyan: 0x00d7ff, // electricCyan
+  pitchGreen: 0x0b7a3b,
+  pitchDark: 0x06140e,
+  softPanel: 0xeaf3ff,
+  dangerRed: 0xff3e3e,
 };
 
 // أبعاد المرمى والملعب
@@ -106,4 +110,4 @@ export function arabicNum(n: number): string {
 export const FONT = 'Cairo, Arial, "Segoe UI", Tahoma, sans-serif';
 
 // رقم الإصدار — يظهر أسفل القائمة للتحقق من أن الجهاز يعرض آخر نسخة
-export const VERSION = 'الإصدار ١٣';
+export const VERSION = 'الإصدار ١٤';
