@@ -63,7 +63,26 @@ export function DocToolApp() {
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [cloudAvailable, setCloudAvailable] = useState(false);
+  const [cloudOcr, setCloudOcr] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // الخيار السحابي يظهر فقط إن كانت الخدمة السحابية مفعّلة على الخادم.
+  // التفضيل يُحفظ في كوكي (قيمة 0/1 فقط — لا بيانات شخصية).
+  useEffect(() => {
+    fetch("/api/doc-tool/ocr")
+      .then((r) => r.json())
+      .then((d: { configured?: boolean }) => {
+        setCloudAvailable(Boolean(d.configured));
+        if (d.configured) setCloudOcr(/(?:^|; )docToolCloudOcr=1/.test(document.cookie));
+      })
+      .catch(() => setCloudAvailable(false));
+  }, []);
+
+  const toggleCloud = useCallback((on: boolean) => {
+    setCloudOcr(on);
+    document.cookie = `docToolCloudOcr=${on ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+  }, []);
 
   // تحميل المحفوظ من الخادم عند الفتح
   useEffect(() => {
@@ -114,7 +133,10 @@ export function DocToolApp() {
       setStatus("جارٍ المعالجة…");
       const added: ToolDoc[] = [];
       for (const f of list) {
-        const r = await extractFile(f, (label) => setStatus(`${f.name}: ${label}`));
+        const r = await extractFile(f, {
+          onProgress: (label) => setStatus(`${f.name}: ${label}`),
+          cloudOcr
+        });
         added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text) });
         if (r.warning) setError(`⚠ ${f.name}: ${r.warning}`);
       }
@@ -128,7 +150,7 @@ export function DocToolApp() {
         `أُضيف ${list.length.toLocaleString(AR)} (نجح استخراج ${ok.toLocaleString(AR)})`
       );
     },
-    [persist]
+    [persist, cloudOcr]
   );
 
   const removeDoc = useCallback(
@@ -198,6 +220,19 @@ export function DocToolApp() {
         <button type="button" className={styles.btnAlt} onClick={clearAll}>
           مسح الكل
         </button>
+        {cloudAvailable ? (
+          <label
+            className={styles.cloudToggle}
+            title="يرسل الصور وPDF لخدمة Gemini لقراءة أدق (خصوصاً الخط اليدوي والمسح الرديء). بدونه تبقى المعالجة كلها داخل متصفحك."
+          >
+            <input
+              type="checkbox"
+              checked={cloudOcr}
+              onChange={(e) => toggleCloud(e.target.checked)}
+            />
+            OCR سحابي فائق الدقة
+          </label>
+        ) : null}
         <span className={styles.cnt} role="status">
           {status || counter}
         </span>

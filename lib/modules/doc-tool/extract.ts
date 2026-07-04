@@ -14,11 +14,25 @@ export interface ExtractResult {
 /** تقدّم المعالجة الطويلة (OCR) — نص عربي جاهز للعرض */
 export type ExtractProgress = (label: string) => void;
 
+export interface ExtractOptions {
+  onProgress?: ExtractProgress;
+  /** قراءة سحابية عالية الدقة عبر Gemini (‏/api/doc-tool/ocr) — تُرسل الوثيقة للخادم؛
+      عند الفشل أو عدم التفعيل نسقط تلقائياً للمعالجة المحلية */
+  cloudOcr?: boolean;
+}
+
 const TEXT_EXTS = ["txt", "md", "csv", "json"];
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "webp", "bmp", "gif", "tif", "tiff"];
+const CLOUD_EXTS = ["png", "jpg", "jpeg", "pdf"];
 
 /** يستخرج نص ملف بحسب صيغته — يعمل في المتصفح فقط */
-export async function extractFile(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {
+export async function extractFile(
+  file: File,
+  optionsOrProgress?: ExtractOptions | ExtractProgress
+): Promise<ExtractResult> {
+  const opts: ExtractOptions =
+    typeof optionsOrProgress === "function" ? { onProgress: optionsOrProgress } : optionsOrProgress ?? {};
+  const onProgress = opts.onProgress;
   const ext = (file.name.match(/\.([^.]+)$/)?.[1] ?? "").toLowerCase();
 
   if (TEXT_EXTS.includes(ext)) {
@@ -34,6 +48,13 @@ export async function extractFile(file: File, onProgress?: ExtractProgress): Pro
     }
   }
 
+  // المسار السحابي (اختياري صراحةً): Gemini يقرأ الصور وPDF بأنواعه
+  if (opts.cloudOcr && CLOUD_EXTS.includes(ext)) {
+    const cloud = await cloudOcr(file, onProgress);
+    if (cloud) return cloud;
+    onProgress?.("السحابي غير متاح — متابعة بالمعالجة المحلية…");
+  }
+
   if (ext === "pdf") {
     return extractPdf(file, onProgress);
   }
@@ -43,6 +64,20 @@ export async function extractFile(file: File, onProgress?: ExtractProgress): Pro
   }
 
   return { text: "", kind: "صيغة غير مدعومة" };
+}
+
+async function cloudOcr(file: File, onProgress?: ExtractProgress): Promise<ExtractResult | null> {
+  try {
+    onProgress?.("قراءة سحابية عالية الدقة (Gemini)…");
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/doc-tool/ocr", { method: "POST", body: fd });
+    const json = (await res.json()) as { text?: string; error?: string };
+    if (!res.ok || !json.text) return null;
+    return { text: json.text, kind: file.name.toLowerCase().endsWith(".pdf") ? "PDF (Gemini)" : "صورة (Gemini)" };
+  } catch {
+    return null;
+  }
 }
 
 async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {

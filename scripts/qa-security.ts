@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const excluded = new Set(["node_modules", ".next", ".git", ".npm-cache", "work"]);
+// tools/ يستضيف خدمات مستقلة (لا تدخل حزمة تطبيق الويب ولا نشره) — تُراجَع أمنياً على حدة
+const excluded = new Set(["node_modules", ".next", ".git", ".npm-cache", "work", "tools"]);
 const scannedExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json", ".md", ".css"]);
 
 type Finding = {
