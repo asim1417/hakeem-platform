@@ -25,6 +25,30 @@ services:
     volumes:
       - hakeem-doc-tool-data:/data
 
+  # ── طبقة التحويل الذاتية (وفق دليل المعمارية — المكدّس الموصى به، رخص MIT) ──
+  # لا تعمل افتراضياً؛ شغّلها عند الحاجة: docker compose --profile convert up -d
+  # Stirling-PDF: أكثر من 60 عملية PDF (دمج/تقسيم/تحويل Office/ضغط/OCR) بواجهة وREST API
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:latest
+    container_name: hakeem-stirling-pdf
+    profiles: ["convert"]
+    environment:
+      DOCKER_ENABLE_SECURITY: "false"
+      LANGS: ar_AR,en_GB
+    ports:
+      - "8081:8080"
+    volumes:
+      - hakeem-stirling-data:/usr/share/tessdata
+
+  # Gotenberg: تحويل Office/HTML إلى PDF كخدمة API خلف حكيم (يغلّف LibreOffice وChromium)
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: hakeem-gotenberg
+    profiles: ["convert"]
+    ports:
+      - "8082:3000"
+
 volumes:
   hakeem-postgres-data:
   hakeem-doc-tool-data:
+  hakeem-stirling-data:
