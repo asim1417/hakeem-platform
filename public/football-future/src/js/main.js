@@ -162,6 +162,8 @@
       scoreHome.textContent = String(currentEngine.score.home);
       scoreAway.textContent = String(currentEngine.score.away);
       matchTime.textContent = currentEngine.getTimeText();
+      const stam = document.getElementById("staminaBar");
+      if (stam && currentEngine.controlled) stam.style.width = currentEngine.controlled.stamina + "%";
       drawMiniMap(currentEngine);
     }, 200);
 

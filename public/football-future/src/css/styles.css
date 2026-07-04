@@ -236,27 +236,191 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .switch::after { content:""; position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:.18s; }
 .switch.on { background: var(--ff-grad-primary); }
 .switch.on::after { right:23px; background:#071013; }
-.match-layout { position: fixed; inset: 0; z-index: 50; background: #071013; direction:ltr; }
-#matchCanvas { width: 100%; height: 100%; display:block; background:#173A1C; touch-action:none; }
-.match-hud { position:absolute; inset:0; pointer-events:none; color:#fff; font-family: var(--ff-font-ar); }
-.scoreboard { position:absolute; top: max(12px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:linear-gradient(90deg, rgba(198,255,0,.14), rgba(11,15,20,.85) 22% 78%, rgba(0,229,255,.14)); border:1px solid var(--ff-line-strong); border-radius:16px; padding:8px 18px; display:flex; align-items:center; gap:12px; box-shadow:var(--ff-shadow-card), 0 0 26px rgba(0,229,255,.14); backdrop-filter: blur(12px); direction:ltr; clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 100%, 0 100%); }
-.scoreboard b { color:var(--ff-lime); font-family:var(--ff-font-en); font-size:15px; letter-spacing:.08em; }
-.scoreboard span { font-family:var(--ff-font-en); font-weight:700; font-size:17px; }
-.scoreboard #matchTime { color:var(--ff-cyan); font-size:13px; border-inline-start:1px solid var(--ff-line); padding-inline-start:10px; }
-.pause-btn { pointer-events:auto; position:absolute; top:max(12px, env(safe-area-inset-top)); right:12px; width:48px; height:48px; border-radius:16px; background:rgba(11,15,20,.78); color:white; border:1px solid var(--ff-line); }
-.hud-tip { position:absolute; top:72px; right:12px; direction:rtl; background:rgba(11,15,20,.72); border:1px solid var(--ff-line); border-radius:16px; padding:10px; max-width:270px; color:var(--ff-silver); font-size:12px; }
-.joystick { pointer-events:auto; position:absolute; left:28px; bottom:32px; width:132px; height:132px; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); touch-action:none; }
-.joystick .knob { position:absolute; width:58px; height:58px; border-radius:50%; right:37px; top:37px; background:rgba(255,255,255,.72); box-shadow:0 0 16px rgba(0,229,255,.42); }
-.action-buttons { pointer-events:auto; position:absolute; right:22px; bottom:28px; width:220px; height:230px; }
-.act { position:absolute; width:74px; height:74px; border-radius:50%; border:2px solid rgba(255,255,255,.28); color:#061012; font-weight:900; box-shadow:var(--ff-shadow-card); backdrop-filter: blur(6px); transition: transform 90ms ease; }
+.match-layout { position: fixed; inset: 0; z-index: 50; background: #05070C; direction: ltr; overflow: hidden; }
+#matchCanvas { width: 100%; height: 100%; display: block; background: #0E5230; touch-action: none; }
+.match-hud { position: absolute; inset: 0; pointer-events: none; color: #fff; font-family: var(--ff-font-ar); }
+
+/* ── لوحة النتيجة: شارة بث أعلى اليسار ── */
+.scoreboard {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  display: flex; align-items: center; gap: 7px;
+  background: linear-gradient(90deg, rgba(9,12,17,.92), rgba(9,12,17,.78));
+  border: 1px solid rgba(0,229,255,.28);
+  padding: 5px 14px 5px 8px;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 0 100%);
+  backdrop-filter: blur(10px);
+  direction: ltr;
+  font-family: var(--ff-font-en);
+}
+.scoreboard .ff-tag {
+  background: var(--ff-grad-primary); color: #071013;
+  font-weight: 900; font-size: 12px; padding: 3px 7px;
+  clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
+}
+.scoreboard b { color: var(--ff-silver); font-size: 12px; letter-spacing: .1em; font-weight: 700; }
+.scoreboard .sc { color: #fff; font-weight: 700; font-size: 19px; min-width: 14px; text-align: center; }
+.scoreboard .dash { color: var(--ff-lime); font-weight: 700; }
+.scoreboard .tm { color: var(--ff-cyan); font-size: 12px; font-weight: 700; border-left: 1px solid rgba(255,255,255,.16); padding-left: 9px; margin-left: 3px; font-variant-numeric: tabular-nums; }
+
+.pause-btn {
+  pointer-events: auto;
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  width: 46px; height: 46px; border-radius: 14px;
+  background: rgba(9,12,17,.55); color: #fff;
+  border: 1px solid rgba(255,255,255,.22);
+  backdrop-filter: blur(8px);
+  font-family: var(--ff-font-en); font-weight: 900; font-size: 15px; letter-spacing: 1px;
+}
+
+/* ── سطر المعلق: شريط رفيع أعلى الوسط ── */
+.commentary-line {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%; transform: translateX(-50%);
+  direction: rtl;
+  max-width: min(46vw, 520px);
+  padding: 6px 16px;
+  border: 1px solid rgba(198,255,0,.35);
+  border-radius: 999px;
+  background: rgba(9,12,17,.62);
+  color: rgba(255,255,255,.92);
+  font-weight: 700; font-size: 12px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 4;
+}
+.commentary-line:empty { display: none; }
+
+/* ── عصا التحكم ── */
+.joystick {
+  pointer-events: auto;
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: clamp(108px, 30vmin, 148px);
+  height: clamp(108px, 30vmin, 148px);
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.22);
+  background: radial-gradient(circle, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 74%);
+  touch-action: none;
+}
+.joystick .knob {
+  position: absolute; left: 50%; top: 50%;
+  width: 42%; height: 42%;
+  margin: -21% 0 0 -21%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, rgba(255,255,255,.85), rgba(190,205,215,.55));
+  box-shadow: 0 4px 14px rgba(0,0,0,.45), 0 0 16px rgba(0,229,255,.28);
+}
+.joystick .stamina {
+  position: absolute; left: 12%; right: 12%; bottom: -12px;
+  height: 4px; border-radius: 99px;
+  background: rgba(255,255,255,.14); overflow: hidden;
+}
+.joystick .stamina i { display: block; height: 100%; width: 100%; background: var(--ff-grad-energy); border-radius: inherit; transition: width .2s linear; }
+
+/* ── أزرار اللعب: قوس زجاجي أسفل اليمين (بأسلوب FC للجوال) ── */
+.action-cluster {
+  pointer-events: none;
+  position: absolute;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: clamp(210px, 58vmin, 280px);
+  height: clamp(170px, 48vmin, 230px);
+}
+.act {
+  pointer-events: auto;
+  position: absolute;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: clamp(11px, 3vmin, 14px);
+  color: #fff;
+  background: rgba(9,12,17,.42);
+  border: 2px solid rgba(255,255,255,.30);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  transition: transform 90ms ease, background 120ms ease;
+  display: grid; place-items: center; align-content: center; gap: 0;
+  line-height: 1.15;
+}
 .act:active { transform: scale(.9); }
-.act small { display:block; font-size:10px; font-family:var(--ff-font-en); letter-spacing:.06em; }
-.act.shoot { right:48px; top:0; background:var(--ff-grad-primary); border-color: rgba(198,255,0,.8); box-shadow: var(--ff-glow-lime), var(--ff-shadow-card); }
-.act.pass { right:86px; top:82px; background:var(--ff-grad-secondary); border-color: rgba(0,229,255,.7); box-shadow: var(--ff-glow-cyan), var(--ff-shadow-card); }
-.act.sprint { right:8px; top:116px; background:rgba(11,15,20,.72); color:var(--ff-lime); border-color: rgba(198,255,0,.65); }
-.act.skill { right:146px; top:36px; background:linear-gradient(135deg,#B967FF,#00E5FF); color:white; border-color: rgba(185,103,255,.7); }
-.act.tackle { right:152px; top:138px; background:rgba(11,15,20,.72); color:#fff; border-color: rgba(255,255,255,.5); }
-.minimap { position:absolute; bottom:32px; left:50%; transform:translateX(-50%); width:180px; height:96px; border:1px solid var(--ff-line); border-radius:12px; background:rgba(11,15,20,.58); direction:ltr; }
+.act small { display: block; font-size: clamp(7px, 1.9vmin, 9px); font-family: var(--ff-font-en); letter-spacing: .1em; opacity: .75; }
+.act.shoot {
+  width: clamp(66px, 19vmin, 88px); height: clamp(66px, 19vmin, 88px);
+  right: 2%; bottom: 30%;
+  border-color: var(--ff-lime); color: var(--ff-lime);
+  box-shadow: 0 0 18px rgba(198,255,0,.28), 0 6px 18px rgba(0,0,0,.35);
+}
+.act.shoot:active { background: rgba(198,255,0,.28); color: #071013; }
+.act.pass {
+  width: clamp(56px, 16vmin, 74px); height: clamp(56px, 16vmin, 74px);
+  right: 34%; bottom: 2%;
+  border-color: var(--ff-cyan); color: var(--ff-cyan);
+}
+.act.pass:active { background: rgba(0,229,255,.26); color: #071013; }
+.act.skill {
+  width: clamp(46px, 13vmin, 60px); height: clamp(46px, 13vmin, 60px);
+  right: 24%; bottom: 62%;
+  border-color: #B967FF; color: #D9B3FF;
+}
+.act.tackle {
+  width: clamp(46px, 13vmin, 60px); height: clamp(46px, 13vmin, 60px);
+  right: 66%; bottom: 34%;
+  border-color: rgba(255,255,255,.55); color: #fff;
+}
+.act.sprint {
+  width: clamp(50px, 14vmin, 64px); height: clamp(50px, 14vmin, 64px);
+  right: 74%; bottom: 0;
+  border-color: var(--ff-teal); color: var(--ff-teal);
+}
+.act.sprint:active { background: rgba(0,191,174,.26); color: #071013; }
+
+/* ── الخريطة المصغرة ── */
+.minimap {
+  position: absolute;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: 50%; transform: translateX(-50%);
+  width: clamp(104px, 17vw, 150px); height: auto;
+  border: 1px solid rgba(0,229,255,.28);
+  border-radius: 9px;
+  background: rgba(9,12,17,.42);
+  opacity: .8;
+  direction: ltr;
+}
+
+/* ── الوضع الطولي: اطلب تدوير الجهاز ── */
+.rotate-overlay {
+  position: absolute; inset: 0; z-index: 60;
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  text-align: center; direction: rtl;
+  background:
+    radial-gradient(70% 40% at 50% 0%, rgba(0,229,255,.10), transparent 60%),
+    radial-gradient(70% 40% at 50% 100%, rgba(198,255,0,.08), transparent 60%),
+    rgba(5,7,12,.97);
+  padding: 24px;
+}
+.rotate-overlay .ph { font-size: 54px; animation: rotatePhone 1.6s ease-in-out infinite; }
+@keyframes rotatePhone { 0%, 20% { transform: rotate(0); } 55%, 80% { transform: rotate(90deg); } 100% { transform: rotate(90deg); } }
+.rotate-overlay b { font-size: 19px; font-weight: 900; }
+.rotate-overlay span { color: var(--ff-silver); font-size: 13px; }
+@media (orientation: portrait) and (max-width: 820px) {
+  .rotate-overlay { display: flex; }
+  .match-hud { visibility: hidden; }
+}
+
+/* شاشات قصيرة جداً: تصغير الطبقات */
+@media (max-height: 380px) {
+  .minimap { display: none; }
+  .commentary-line { font-size: 11px; max-width: 38vw; }
+}
+
 .match-summary { position:absolute; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.64); backdrop-filter:blur(8px); pointer-events:auto; }
 .summary-card { width:min(94vw, 620px); background:var(--ff-grad-panel); border:1px solid var(--ff-line-active); border-radius:28px; padding:24px; direction:rtl; box-shadow:var(--ff-shadow-card), var(--ff-glow-lime); }
 .summary-card h2 { margin-top:0; }
@@ -274,24 +438,30 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 @media (max-width: 680px) {
   .app-shell { padding-inline: 10px; }
-  .topbar { border-radius: 18px; }
-  .brand-title strong { font-size: 18px; }
-  .brand-title span { font-size: 9px; }
-  .currency { padding: 7px 8px; font-size: 12px; }
-  .profile-pill { display:none; }
-  .hero-card { min-height: 380px; }
-  .card-grid, .card-grid.two, .card-grid.four, .stats-row { grid-template-columns: 1fr; }
-  .bottom-nav { grid-template-columns: repeat(7, 1fr); gap:2px; padding: 6px; }
+  .topbar { border-radius: 16px; padding: 8px; }
+  .brand-logo { width: 44px; height: 30px; }
+  .brand-title strong { font-size: 17px; }
+  .brand-title span { font-size: 8px; }
+  .currency { padding: 6px 8px; font-size: 12px; min-height: 34px; }
+  .profile-pill { display: none; }
+  .hero-card { min-height: 330px; }
+  .hero-player { min-height: 330px; }
+  .hero-copy p { font-size: 14px; }
+  .panel-inner { padding: 12px; }
+  /* شبكات ثنائية على الجوال — لا أعمدة طويلة مملة */
+  .card-grid, .card-grid.two, .card-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { padding: 9px 6px; }
+  .stat b { font-size: 17px; }
+  .stat span { font-size: 10px; }
+  .ff-card { min-height: 108px; padding: 12px; }
+  .ff-card h3 { font-size: 15px; }
+  .icon-badge { width: 40px; height: 40px; font-size: 20px; border-radius: 13px; margin-bottom: 8px; }
+  .bottom-nav { grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 6px; }
   .nav-item { min-height: 50px; border-radius: 13px; }
   .nav-item small { font-size: 8px; }
-  .pitch-card { min-height: 360px; }
-  .player-token { width: 48px; height: 62px; }
-  .scoreboard { font-size: 12px; }
-  .joystick { width: 118px; height:118px; left:16px; bottom:20px; }
-  .joystick .knob { right:32px; top:32px; }
-  .action-buttons { right:8px; bottom:10px; transform:scale(.82); transform-origin: bottom right; }
-  .minimap { display:none; }
-  .hud-tip { display:none; }
+  .pitch-card { min-height: 340px; }
+  .player-token { width: 46px; height: 58px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior:auto !important; } }
 
@@ -302,8 +472,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 680px) { .audio-control { display:none; } .card-grid.five { grid-template-columns: 1fr; } }
 
 
-.commentary-line{position:absolute;left:50%;bottom:148px;top:auto;transform:translateX(-50%);direction:rtl;max-width:min(760px,60vw);padding:10px 18px;border:1px solid rgba(198,255,0,.45);border-radius:999px;background:linear-gradient(90deg,rgba(11,15,20,.78),rgba(0,229,255,.12),rgba(11,15,20,.78));box-shadow:0 0 24px rgba(0,229,255,.18);color:#fff;font-weight:800;letter-spacing:.01em;text-align:center;backdrop-filter:blur(10px);z-index:5;pointer-events:none}.audio-control{box-shadow:0 0 18px rgba(0,229,255,.12)}
-@media (max-width:980px){.commentary-line{bottom:116px;font-size:12px;max-width:44vw;padding:8px 12px}}
 
 /* ═══ شاشة الإقلاع / SPLASH ═══ */
 .ff-splash {
