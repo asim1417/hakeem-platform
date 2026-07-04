@@ -1,7 +1,10 @@
-// نظام الصوت — Howler.js مع أصوات مولّدة برمجيًا (WAV data URI)
-// يمكن لاحقًا استبدالها بملفات mp3 حقيقية في public/assets/audio
+// نظام الصوت — Howler.js: مؤثرات mp3 مولّدة (scripts/generate-sfx.py) + أصوات WAV برمجية
+// يمكن لاحقًا استبدال أي ملف بتسجيل حقيقي بنفس الاسم في src/assets/sfx
 
 import { Howl, Howler } from 'howler';
+import kickImpactSrc from '../assets/sfx/kick-impact.mp3';
+import crowdGoalSrc from '../assets/sfx/crowd-goal.mp3';
+import crowdAmbientSrc from '../assets/sfx/crowd-ambient.mp3';
 
 const RATE = 22050;
 
@@ -45,13 +48,8 @@ function synth(duration: number, fn: (t: number, i: number) => number): string {
   return encodeWav(out);
 }
 
-const rnd = () => Math.random() * 2 - 1;
 
-// صوت ركل الكرة: ضربة منخفضة + نبضة ضجيج قصيرة
-const kickSrc = synth(0.16, (t) => {
-  const env = Math.exp(-t * 34);
-  return (Math.sin(2 * Math.PI * 95 * t) * 0.8 + rnd() * 0.35) * env;
-});
+// (صوت الركلة والجماهير صارا mp3 من scripts/generate-sfx.py)
 
 // صوت الهدف: نغمات صاعدة فرحة
 const goalSrc = synth(0.85, (t) => {
@@ -67,12 +65,6 @@ const goalSrc = synth(0.85, (t) => {
 const saveSrc = synth(0.4, (t) => {
   const f = 330 - 140 * t;
   return Math.sin(2 * Math.PI * f * t) * Math.exp(-t * 6) * 0.55;
-});
-
-// صوت الجمهور: هدير ضجيج متموج
-const crowdSrc = synth(1.6, (t) => {
-  const swell = Math.sin((Math.PI * t) / 1.6);
-  return rnd() * 0.28 * swell * (0.7 + 0.3 * Math.sin(2 * Math.PI * 3 * t));
 });
 
 // صوت زر لطيف
@@ -111,11 +103,12 @@ const whistleSrc = synth(0.45, (t) => {
 type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock' | 'post';
 
 // أحجام متوازنة: المؤثرات تحت صوت المعلق حتى لا تطغى عليه
+// kick وcrowd صارا mp3 (ارتطام مضغوط + هتاف هدف حقيقي الإحساس)
 const sounds: Record<SoundName, Howl> = {
-  kick: new Howl({ src: [kickSrc], format: ['wav'], volume: 0.8 }),
+  kick: new Howl({ src: [kickImpactSrc], format: ['mp3'], volume: 0.85 }),
   goal: new Howl({ src: [goalSrc], format: ['wav'], volume: 0.65 }),
   save: new Howl({ src: [saveSrc], format: ['wav'], volume: 0.7 }),
-  crowd: new Howl({ src: [crowdSrc], format: ['wav'], volume: 0.4 }),
+  crowd: new Howl({ src: [crowdGoalSrc], format: ['mp3'], volume: 0.5 }),
   button: new Howl({ src: [buttonSrc], format: ['wav'], volume: 0.7 }),
   whistle: new Howl({ src: [whistleSrc], format: ['wav'], volume: 0.6 }),
   trophy: new Howl({ src: [trophySrc], format: ['wav'], volume: 0.85 }),
@@ -123,11 +116,27 @@ const sounds: Record<SoundName, Howl> = {
   post: new Howl({ src: [postSrc], format: ['wav'], volume: 0.75 }),
 };
 
+// 🏟️ أجواء الملعب: حلقة جماهير خلفية مستمرة أثناء اللعب فقط
+const ambient = new Howl({ src: [crowdAmbientSrc], format: ['mp3'], volume: 0.2, loop: true });
+
 let muted = false;
 
 export const audio = {
   play(name: SoundName): void {
     sounds[name].play();
+  },
+  // تشغيل/إيقاف حلقة أجواء الملعب — بدخول متدرج حتى لا تفاجئ الطفل
+  setAmbient(on: boolean): void {
+    if (on) {
+      if (!ambient.playing()) {
+        ambient.volume(0);
+        ambient.play();
+        ambient.fade(0, 0.2, 900);
+      }
+    } else if (ambient.playing()) {
+      ambient.fade(ambient.volume(), 0, 350);
+      setTimeout(() => ambient.stop(), 400);
+    }
   },
   toggleMute(): boolean {
     muted = !muted;
