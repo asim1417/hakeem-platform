@@ -121,4 +121,4 @@ export const FONT = 'Cairo, Arial, "Segoe UI", Tahoma, sans-serif';
 export const HEADING = '"Noto Kufi Arabic", Cairo, Arial, sans-serif';
 
 // رقم الإصدار — يظهر أسفل القائمة للتحقق من أن الجهاز يعرض آخر نسخة
-export const VERSION = 'الإصدار ٢١';
+export const VERSION = 'الإصدار ٢٢';
