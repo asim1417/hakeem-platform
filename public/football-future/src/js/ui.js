@@ -232,6 +232,10 @@
             <div class="list-item"><span class="status">⚡</span><div><h3>هجوم سريع</h3><p>Quick attack</p></div><span>جاهز</span></div>
             <div class="list-item"><span class="status">🎯</span><div><h3>تعليمات مبسطة</h3><p>Young-player tutorial hints</p></div><span>مفعل</span></div>
           </div>
+          <div class="diff-seg" role="group" aria-label="مستوى الصعوبة">
+            ${[["0.85","😊 سهل"],["1","💪 متوسط"],["1.2","🔥 صعب"]].map(([v, label]) => `
+              <button class="diff-btn ${Number(state.difficulty || 1) === Number(v) ? "sel" : ""}" data-action="setDifficulty" data-diff="${v}" type="button">${label}</button>`).join("")}
+          </div>
           <div class="cta-row"><button class="btn" data-route="liveMatch" type="button">ابدأ المباراة ▶</button><button class="btn ghost" data-route="team" type="button">تعديل التشكيلة</button></div>
         </div></div>
       </section>`);
@@ -248,7 +252,7 @@
           <span class="sc" id="scoreAway">0</span><b>NMO</b>
           <span class="tm" id="matchTime">0:00</span>
         </div>
-        <button class="pause-btn" data-route="matchSummary" type="button" aria-label="إيقاف المباراة">II</button>
+        <button class="pause-btn" data-action="togglePause" type="button" aria-label="إيقاف مؤقت">II</button>
         <div class="commentary-line" id="commentaryLine" aria-live="polite"></div>
         <div class="joystick" id="joystick" aria-label="عصا التحكم">
           <div class="knob" id="joystickKnob"></div>

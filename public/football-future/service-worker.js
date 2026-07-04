@@ -1,4 +1,4 @@
-const CACHE_NAME = "football-future-static-v4";
+const CACHE_NAME = "football-future-static-v6";
 const ASSETS = [
   "/football-future/",
   "/football-future/index.html",

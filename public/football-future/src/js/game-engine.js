@@ -63,6 +63,7 @@
       this.options = options || {};
       this.onEnd = this.options.onEnd || function () {};
       this.onEvent = this.options.onEvent || function () {};
+      this.diff = clamp(this.options.difficulty || 1, 0.7, 1.4);   // سهل 0.85 / متوسط 1 / صعب 1.2
       this.running = false;
       this.finished = false;
       this.last = 0;
@@ -80,6 +81,10 @@
       this.flash = 0;
       this.time = 0;
       this.freeze = 0;
+      this.restartInfo = null;      // رمية تماس / ركنية / ركلة مرمى
+      this.celebFocus = null;       // تركيز الكاميرا على المحتفل
+      this.goalBannerT = 0;
+      this.goalBannerText = "";
       this.camX = W / 2;
       this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       this.buildPitchTexture();
@@ -242,10 +247,43 @@
       this.updateParticles(dt);
       if (this.messageTime > 0) this.messageTime -= dt;
 
-      const camTarget = clamp(this.ball.x, this.camMin, this.camMax);
+      const focus = this.celebFocus != null ? this.celebFocus : this.ball.x;
+      const camTarget = clamp(focus, this.camMin, this.camMax);
       this.camX += (camTarget - this.camX) * Math.min(1, dt * 3.4);
+      this.goalBannerT = Math.max(0, this.goalBannerT - dt);
 
-      if (this.freeze > 0) { this.freeze -= dt; if (this.freeze <= 0) this.kickoff(this._concededBy); return; }
+      if (this.freeze > 0) {
+        this.freeze -= dt;
+        // حركة الاحتفال: المسجّل يقفز وزملاؤه يهرعون إليه
+        for (const p of this.all) {
+          if (p.celebT > 0) {
+            p.celebT -= dt;
+            p.phase += dt * 9;
+            if (p.celebTarget) {
+              const d = dist(p, p.celebTarget) || 1;
+              if (d > 40) {
+                p.x += (p.celebTarget.x - p.x) / d * 150 * dt;
+                p.y += (p.celebTarget.y - p.y) / d * 150 * dt;
+                p.dirX = p.celebTarget.x > p.x ? 1 : -1;
+              }
+            }
+          }
+        }
+        if (this.freeze <= 0) {
+          this.celebFocus = null;
+          for (const p of this.all) { p.celebT = 0; p.celebTarget = null; }
+          this.kickoff(this._concededBy);
+        }
+        return;
+      }
+
+      // استئناف اللعب (تماس/ركنية/ركلة مرمى)
+      if (this.restartInfo) {
+        this.restartInfo.t -= dt;
+        this.updateAI(dt);                 // اللاعبون يتمركزون أثناء التحضير
+        if (this.restartInfo.t <= 0) { this.execRestart(); }
+        return;
+      }
 
       this.clock += dt;
       if (this.half === 1 && this.clock >= this.duration / 2) {
@@ -328,10 +366,10 @@
           if (!b.owner && nearGoal) { tx = b.x; ty = b.y; sp = 200; }
         } else if (b.owner === p) {
           const gx = p.side === 1 ? W - FX : FX;
-          tx = gx; ty = lerp(p.y, H / 2, 0.25); sp = p.side === -1 ? 156 : 172;
+          tx = gx; ty = lerp(p.y, H / 2, 0.25); sp = p.side === -1 ? 156 * this.diff : 172;
           const pressers = this.all.filter(o => o.side !== p.side && dist(o, p) < 70);
           const distGoal = Math.abs(p.x - gx);
-          if (distGoal < 300 && Math.random() < (p.side === -1 ? 0.72 : 1.15) * dt) { this.aiShoot(p); continue; }
+          if (distGoal < 300 && Math.random() < (p.side === -1 ? 0.72 * this.diff : 1.15) * dt) { this.aiShoot(p); continue; }
           if (pressers.length && Math.random() < 1.7 * dt) { this.aiPass(p); continue; }
         } else if (ownerSide === p.side) {
           const shift = p.side * FW * 0.14;
@@ -343,10 +381,10 @@
           const chasers = this.all.filter(o => o.side === p.side && o.role !== "GK")
             .sort((m, n) => dist(m, carrier) - dist(n, carrier));
           if (chasers.indexOf(p) < 2) {
-            tx = carrier.x; ty = carrier.y; sp = 168;
-            if (p.side === -1 && p.cd <= 0 && dist(p, carrier) < PR * 2.2 && Math.random() < 1.35 * dt) {
+            tx = carrier.x; ty = carrier.y; sp = p.side === -1 ? 168 * this.diff : 168;
+            if (p.side === -1 && p.cd <= 0 && dist(p, carrier) < PR * 2.2 && Math.random() < 1.35 * this.diff * dt) {
               p.cd = 1.1;
-              if (Math.random() < 0.3) { b.owner = p; this.msg("الخصم يستخلص الكرة!"); }
+              if (Math.random() < 0.3 * this.diff) { b.owner = p; this.msg("الخصم يستخلص الكرة!"); }
             }
           } else {
             tx = p.home.x - p.side * FW * 0.10;
@@ -395,24 +433,36 @@
         if (b.z <= 0) { b.z = 0; b.vz = Math.abs(b.vz) > 60 ? Math.abs(b.vz) * 0.42 : 0; }
       }
 
-      if (b.y < FY + BR) { b.y = FY + BR; b.vy = Math.abs(b.vy) * 0.72; }
-      if (b.y > H - FY - BR) { b.y = H - FY - BR; b.vy = -Math.abs(b.vy) * 0.72; }
+      // خروج من خطي التماس → رمية تماس
+      if (b.y < FY - 6 || b.y > H - FY + 6) {
+        const toSide = b.lastKick ? -b.lastKick.side : 1;
+        return this.beginRestart("throw", toSide, clamp(b.x, FX + 30, W - FX - 30), b.y < H / 2 ? FY : H - FY);
+      }
       const inMouth = b.y > GOAL_TOP && b.y < GOAL_BOT;
-      if (b.x < FX + BR && !inMouth) { b.x = FX + BR; b.vx = Math.abs(b.vx) * 0.72; }
-      if (b.x > W - FX - BR && !inMouth) { b.x = W - FX - BR; b.vx = -Math.abs(b.vx) * 0.72; }
+      // خروج من خطي المرمى خارج الفتحة → ركنية أو ركلة مرمى
+      if (b.x < FX - 8 && !inMouth) {
+        const defenderTouched = b.lastKick && b.lastKick.side === 1;   // يدافع عن اليسار: فريقك
+        if (defenderTouched) return this.beginRestart("corner", -1, FX, b.y < H / 2 ? FY : H - FY);
+        return this.beginRestart("goalkick", 1, FX + 40, H / 2);
+      }
+      if (b.x > W - FX + 8 && !inMouth) {
+        const defenderTouched = b.lastKick && b.lastKick.side === -1;  // يدافع عن اليمين: الخصم
+        if (defenderTouched) return this.beginRestart("corner", 1, W - FX, b.y < H / 2 ? FY : H - FY);
+        return this.beginRestart("goalkick", -1, W - FX - 40, H / 2);
+      }
       b.x = clamp(b.x, FX - 34, W - FX + 34);
     }
 
     detectPossession() {
       const b = this.ball;
-      if (b.owner || this.freeze > 0) return;
+      if (b.owner || this.freeze > 0 || this.restartInfo) return;
       if (b.z > 26) return;
       const speed = Math.hypot(b.vx, b.vy);
       for (const p of this.all) {
         if (p === b.lastKick && speed > 90) continue;
         if (dist(p, b) < PR + BR + 4) {
           if (p.role === "GK" && b.lastKick && b.lastKick.side !== p.side && speed > 250) {
-            const save = Math.random() < (p.side === -1 ? 0.52 : 0.72);
+            const save = Math.random() < (p.side === -1 ? clamp(0.52 + (this.diff - 1) * 0.5, 0.3, 0.85) : clamp(0.72 - (this.diff - 1) * 0.35, 0.45, 0.85));
             if (save) {
               if (p.side === 1) this.stats.saves += 1;
               b.vx = p.side * (170 + Math.random() * 120);
@@ -442,7 +492,7 @@
 
     detectGoal() {
       const b = this.ball;
-      if (this.freeze > 0 || b.owner) return;
+      if (this.freeze > 0 || b.owner || this.restartInfo) return;
       const inMouth = b.y > GOAL_TOP && b.y < GOAL_BOT;
       if (!inMouth) return;
       if (b.x > W - FX + 10) return this.goal("home");
@@ -452,14 +502,99 @@
     goal(team) {
       this.score[team] += 1;
       if (team === "home") { this.stats.goals += 1; }
-      this.msg(team === "home" ? "هــــدف! تسديدة عالمية" : "هدف للخصم — ارجع بقوة!", 2.6);
       this.shake = 10;
       this.flash = team === "home" ? 1 : 0.4;
       this.spawnConfetti(this.ball.x, this.ball.y, team === "home");
       this.onEvent({ type: "goal", team });
-      this.freeze = 1.8;
       this._concededBy = team === "home" ? "away" : "home";
       this.ball.owner = null; this.ball.vx = this.ball.vy = 0; this.ball.vz = 0;
+      // مشهد الاحتفال
+      const squad = team === "home" ? this.home : this.away;
+      const scorer = (this.ball.lastKick && this.ball.lastKick.side === (team === "home" ? 1 : -1))
+        ? this.ball.lastKick
+        : squad.find(p => p.role === "ST");
+      if (scorer) {
+        scorer.celebT = 2.4;
+        scorer.celebTarget = null;
+        this.celebFocus = scorer.x;
+        squad.filter(p => p !== scorer && p.role !== "GK")
+          .sort((a, c) => dist(a, scorer) - dist(c, scorer))
+          .slice(0, 3)
+          .forEach(p => { p.celebT = 2.2; p.celebTarget = scorer; });
+      }
+      this.freeze = team === "home" ? 2.6 : 1.9;
+      this.goalBannerT = team === "home" ? 2.4 : 1.6;
+      this.goalBannerText = team === "home" ? "هــدف!" : "هدف للخصم";
+      this.goalBannerHome = team === "home";
+      this.msg(team === "home" ? "تسديدة عالمية من " + (scorer ? scorer.name : "فريقك") : "ارجع بقوة يا بطل!", 2.4);
+    }
+
+    /* ─────────────── الاستئنافات: تماس / ركنية / ركلة مرمى ─────────────── */
+    beginRestart(type, side, x, y) {
+      const b = this.ball;
+      b.owner = null; b.vx = b.vy = 0; b.z = 0; b.vz = 0; b.passTo = null; b.lastKick = null;
+      b.x = x; b.y = y;
+      this.restartInfo = { type, side, x, y, t: type === "corner" ? 1.1 : 0.8 };
+      const label = { throw: "رمية تماس", corner: "ركلة ركنية!", goalkick: "ركلة مرمى" }[type];
+      this.msg(side === 1 ? label + " لفريقك" : label + " للخصم", 1.4);
+      this.onEvent({ type: "restart", kind: type, team: side === 1 ? "home" : "away" });
+      // المنفّذ يتحرك لموقع الاستئناف
+      const squad = side === 1 ? this.home : this.away;
+      let taker;
+      if (type === "goalkick") taker = squad.find(p => p.role === "GK");
+      else taker = squad.filter(p => p.role !== "GK").sort((a, c) => dist(a, { x, y }) - dist(c, { x, y }))[0];
+      this.restartInfo.taker = taker;
+      // في الركنية: مهاجمو المنفذ يتوغلون داخل المنطقة
+      if (type === "corner") {
+        const boxX = side === 1 ? W - FX - 100 : FX + 100;
+        squad.filter(p => ["ST", "CM"].includes(p.role)).forEach((p, i) => {
+          p.x = boxX + (side === 1 ? -1 : 1) * i * 46;
+          p.y = H / 2 + (i ? -52 : 44);
+        });
+      }
+    }
+
+    execRestart() {
+      const info = this.restartInfo;
+      this.restartInfo = null;
+      const b = this.ball;
+      const taker = info.taker;
+      if (!taker) return;
+      taker.x = clamp(info.x, FX + 8, W - FX - 8);
+      taker.y = clamp(info.y, FY + 8, H - FY - 8);
+      if (info.type === "corner") {
+        // عرضية تلقائية نحو نقطة الجزاء
+        const spotX = info.side === 1 ? W - FX - 106 : FX + 106;
+        taker.kickT = 0.24;
+        b.x = taker.x; b.y = taker.y;
+        this.kick(taker, spotX, H / 2 + (Math.random() - 0.5) * 90, 520, 150);
+        const target = (info.side === 1 ? this.home : this.away).find(p => p.role === "ST");
+        b.passTo = target || null;
+        this.msg("عرضية داخل المنطقة!");
+      } else if (info.type === "goalkick") {
+        // الحارس يطلقها طويلة لمنتصف الملعب
+        b.x = taker.x; b.y = taker.y;
+        taker.kickT = 0.24;
+        this.kick(taker, W / 2 + info.side * 120, H / 2 + (Math.random() - 0.5) * 220, 560, 160);
+      } else {
+        // رمية تماس: تسليم قصير لأقرب زميل
+        b.x = taker.x; b.y = taker.y;
+        const mate = (info.side === 1 ? this.home : this.away)
+          .filter(p => p !== taker && p.role !== "GK")
+          .sort((a, c) => dist(a, taker) - dist(c, taker))[0];
+        if (mate) { this.kick(taker, mate.x, mate.y, 330, 70); b.passTo = mate; }
+      }
+    }
+
+    /* تسلل مبسّط: تمريرة لمستلم خلف آخر مدافع في الثلث الهجومي */
+    isOffside(passer, receiver) {
+      if (!receiver || receiver.role === "GK") return false;
+      if (passer.side === 1) {
+        const lastDef = Math.max(...this.away.filter(p => p.role !== "GK").map(p => p.x));
+        return receiver.x > W * 0.62 && receiver.x > lastDef + 8 && receiver.x > passer.x;
+      }
+      const lastDef = Math.min(...this.home.filter(p => p.role !== "GK").map(p => p.x));
+      return receiver.x < W * 0.38 && receiver.x < lastDef - 8 && receiver.x < passer.x;
     }
 
     /* ─────────────── أفعال اللاعب ─────────────── */
@@ -474,6 +609,11 @@
         if (score < best) { best = score; mate = p; }
       }
       if (!mate) return;
+      if (this.isOffside(owner, mate)) {
+        this.msg("تسلل! الكرة للخصم", 1.6);
+        this.onEvent({ type: "offside", team: "home" });
+        return this.beginRestart("goalkick", -1, W - FX - 40, H / 2);
+      }
       const lead = { x: mate.x + mate.vx * 0.22, y: mate.y + mate.vy * 0.22 };
       owner.kickT = 0.22;
       this.kick(owner, lead.x, lead.y, 470, 60);
@@ -535,6 +675,11 @@
       const sorted = mates.sort((a, b) => a.x - b.x);
       const mate = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
       if (!mate) return;
+      if (this.isOffside(owner, mate)) {
+        this.msg("تسلل على الخصم!", 1.5);
+        this.onEvent({ type: "offside", team: "away" });
+        return this.beginRestart("goalkick", 1, FX + 40, H / 2);
+      }
       owner.kickT = 0.22;
       this.kick(owner, mate.x, mate.y, 430, 55);
       this.ball.passTo = mate;
@@ -956,9 +1101,12 @@
       const swing2Raw = moving ? Math.sin(ph + Math.PI) : 0;
       // وضعية التسديد: الرجل الأمامية ممدودة للأمام
       const kicking = p.kickT > 0;
-      const swing = kicking ? 1.5 : swingRaw;
-      const swing2 = kicking ? -0.7 : swing2Raw;
-      const bob = moving && !kicking ? Math.abs(Math.sin(ph)) * 1.8 * u : 0;
+      const celebrating = p.celebT > 0;
+      const swing = kicking ? 1.5 : celebrating ? 0.4 : swingRaw;
+      const swing2 = kicking ? -0.7 : celebrating ? -0.4 : swing2Raw;
+      const bob = celebrating
+        ? Math.abs(Math.sin(this.time * 9)) * 5 * u
+        : moving && !kicking ? Math.abs(Math.sin(ph)) * 1.8 * u : 0;
 
       ctx.save();
       ctx.translate(pos.x, pos.y);
@@ -1017,8 +1165,13 @@
       ctx.strokeStyle = kit.skin;
       ctx.lineWidth = armW;
       ctx.beginPath();
-      ctx.moveTo(-5.2 * u, shoY + 2.4 * u);
-      ctx.quadraticCurveTo(-6.5 * u - swing * 3 * u, shoY + hgt * 0.12, -5.2 * u - swing * 6.5 * u, shoY + hgt * 0.2);
+      if (celebrating) {
+        ctx.moveTo(-5.2 * u, shoY + 2 * u);
+        ctx.quadraticCurveTo(-8.5 * u, shoY - 4 * u, -7.2 * u, shoY - 10 * u);
+      } else {
+        ctx.moveTo(-5.2 * u, shoY + 2.4 * u);
+        ctx.quadraticCurveTo(-6.5 * u - swing * 3 * u, shoY + hgt * 0.12, -5.2 * u - swing * 6.5 * u, shoY + hgt * 0.2);
+      }
       ctx.stroke();
 
       /* ── الشورت ── */
@@ -1119,8 +1272,13 @@
       ctx.strokeStyle = kit.skin;
       ctx.lineWidth = armW * 1.05;
       ctx.beginPath();
-      ctx.moveTo(5.4 * u, shoY + 2.4 * u);
-      ctx.quadraticCurveTo(6.8 * u + swing2 * 3 * u, shoY + hgt * 0.12, 5.4 * u + swing2 * 6.5 * u, shoY + hgt * 0.2);
+      if (celebrating) {
+        ctx.moveTo(5.4 * u, shoY + 2 * u);
+        ctx.quadraticCurveTo(8.7 * u, shoY - 4 * u, 7.4 * u, shoY - 10 * u);
+      } else {
+        ctx.moveTo(5.4 * u, shoY + 2.4 * u);
+        ctx.quadraticCurveTo(6.8 * u + swing2 * 3 * u, shoY + hgt * 0.12, 5.4 * u + swing2 * 6.5 * u, shoY + hgt * 0.2);
+      }
       ctx.stroke();
 
       /* ── الرأس والشعر ── */
@@ -1208,6 +1366,40 @@
     }
 
     drawOverlay(ctx, w, h) {
+      // لافتة الهدف السينمائية
+      if (this.goalBannerT > 0) {
+        const k = this.goalBannerT;
+        const inK = clamp((2.4 - k) / 0.25, 0, 1);          // دخول
+        const outK = clamp(k / 0.3, 0, 1);                   // خروج
+        const a = Math.min(inK, outK);
+        const slide = (1 - inK) * w * 0.25;
+        ctx.save();
+        ctx.globalAlpha = a;
+        // شريط عرضي مائل
+        const bandH = Math.min(110, h * 0.2);
+        const cy = h * 0.38;
+        const grad = ctx.createLinearGradient(0, 0, w, 0);
+        if (this.goalBannerHome) {
+          grad.addColorStop(0, "rgba(198,255,0,0)");
+          grad.addColorStop(0.2, "rgba(198,255,0,.85)");
+          grad.addColorStop(0.8, "rgba(0,229,255,.85)");
+          grad.addColorStop(1, "rgba(0,229,255,0)");
+        } else {
+          grad.addColorStop(0, "rgba(20,26,35,0)");
+          grad.addColorStop(0.5, "rgba(20,26,35,.9)");
+          grad.addColorStop(1, "rgba(20,26,35,0)");
+        }
+        ctx.fillStyle = grad;
+        ctx.save();
+        ctx.transform(1, 0, -0.12, 1, slide, 0);
+        ctx.fillRect(-w * 0.1, cy - bandH / 2, w * 1.2, bandH);
+        ctx.restore();
+        ctx.font = `900 ${Math.min(64, h * 0.12)}px "Noto Kufi Arabic", Arial`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = this.goalBannerHome ? "#071013" : "#FFFFFF";
+        ctx.fillText(this.goalBannerText, w / 2 - slide * 0.4, cy);
+        ctx.restore();
+      }
       if (this.messageTime <= 0) return;
       const alpha = clamp(this.messageTime / 0.3, 0, 1);
       // دخول بتكبير خفيف (إحساس لعبة فيديو)

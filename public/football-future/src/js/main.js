@@ -14,6 +14,7 @@
     stats: { wins: 24, matches: 39, goals: 76 },
     missions: JSON.parse(JSON.stringify(window.FF_DATA.missions)),
     lastMatch: { score: { home: 0, away: 0 }, stats: { shots: 0, passes: 0, tackles: 0, goals: 0 }, result: "win" },
+    difficulty: 1,
     audio: { muted: false, voice: true, sfx: true }
   };
 
@@ -61,6 +62,13 @@
         if (action === "buyPack") buyPack(Number(event.currentTarget.getAttribute("data-price")) || 0);
         if (action === "toggleAudio") toggleAudio();
         if (action === "testArabicVoice") { window.FFAudio?.play("reward"); window.FFAudio?.speak("audioTest", { force: true }); toast("تم تشغيل اختبار الصوت العربي."); }
+        if (action === "setDifficulty") {
+          state.difficulty = Number(event.currentTarget.getAttribute("data-diff")) || 1;
+          saveState(); window.FFAudio?.play("click");
+          render("preMatch");
+        }
+        if (action === "togglePause") togglePause();
+        if (action === "resumeMatch") resumeMatch();
       });
     });
   }
@@ -125,6 +133,7 @@
       currentEngine.destroy();
       currentEngine = null;
     }
+    window.FFAudio?.crowdStop?.();
   }
 
   function setupMatch() {
@@ -136,10 +145,15 @@
     const summaryOverlay = document.getElementById("summaryOverlay");
 
     currentEngine = new window.FootballFutureEngine(canvas, {
+      difficulty: state.difficulty || 1,
       onEvent(event) {
         if (event.type === "goal") {
+          window.FFAudio?.crowdSwell?.(0.13, 1.6);
           window.FFCommentary?.goal?.(event.team);
         }
+        if (event.type === "shot") window.FFAudio?.crowdSwell?.(0.05);
+        if (event.type === "save") window.FFAudio?.crowdSwell?.(0.075);
+        if (event.type === "restart" && event.kind === "corner") window.FFAudio?.crowdSwell?.(0.05);
       },
       onEnd(result) {
         const line = document.getElementById("commentaryLine");
@@ -170,7 +184,33 @@
     setupJoystick(currentEngine);
     setupActionButtons(currentEngine);
     window.FFCommentary?.kickoff?.();
+    window.FFAudio?.crowdStart?.();
     currentEngine.start();
+  }
+
+  /* ── إيقاف مؤقت حقيقي ── */
+  function togglePause() {
+    if (!currentEngine || currentEngine.finished) return;
+    currentEngine.stop();
+    const hud = document.querySelector(".match-hud");
+    if (!hud || document.getElementById("pauseOverlay")) return;
+    const node = document.createElement("div");
+    node.id = "pauseOverlay";
+    node.className = "match-summary";
+    node.innerHTML = `<div class="summary-card" style="text-align:center">
+      <h2>إيقاف مؤقت</h2>
+      <p style="color:var(--ff-silver);margin:6px 0 16px">خذ نفسًا يا بطل — المباراة بانتظارك.</p>
+      <div class="cta-row" style="justify-content:center">
+        <button class="btn" data-action="resumeMatch" type="button">▶ استئناف</button>
+        <button class="btn ghost" data-route="home" type="button">إنهاء المباراة</button>
+      </div>
+    </div>`;
+    hud.appendChild(node);
+    bindScreen();
+  }
+  function resumeMatch() {
+    document.getElementById("pauseOverlay")?.remove();
+    if (currentEngine && !currentEngine.finished) currentEngine.start();
   }
 
   function updateMissionsAfterMatch(result) {

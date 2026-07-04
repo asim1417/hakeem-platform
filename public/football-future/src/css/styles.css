@@ -497,3 +497,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ff-splash-loader { width: min(46vw, 220px); height: 5px; border-radius: 99px; background: rgba(255,255,255,.09); overflow: hidden; }
 .ff-splash-loader i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--ff-grad-energy); box-shadow: var(--ff-glow-lime); animation: ffSplashLoad 1.05s cubic-bezier(.2,.8,.2,1) forwards; }
 @keyframes ffSplashLoad { to { width: 100%; } }
+
+/* ═══ محدد الصعوبة (ما قبل المباراة) ═══ */
+.diff-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.diff-btn {
+  min-height: 46px;
+  border-radius: var(--ff-radius-md);
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid var(--ff-line);
+  color: var(--ff-silver);
+  font-weight: 800; font-size: 13px;
+  transition: all 140ms ease;
+}
+.diff-btn.sel {
+  background: rgba(198,255,0,.10);
+  border-color: var(--ff-lime);
+  color: #fff;
+  box-shadow: var(--ff-glow-lime);
+}
