@@ -7,6 +7,7 @@ import { audio } from '../utils/audio';
 import { popIn } from '../utils/animations';
 import { makeButton } from '../utils/ui';
 import { BALLS, progress, STADIUMS } from '../utils/progress';
+import { fadeIn, go } from '../utils/camera';
 
 export class LockerScene extends Phaser.Scene {
   constructor() {
@@ -22,6 +23,7 @@ export class LockerScene extends Phaser.Scene {
     } else {
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
     }
+    fadeIn(this);
 
     const title = this.add
       .text(GAME_WIDTH / 2, 48, rtl('🎒 الخزنة'), {
@@ -96,9 +98,21 @@ export class LockerScene extends Phaser.Scene {
 
       const frame = this.add.rectangle(x, y, 204, 96, COLORS.white, 0.95);
       frame.setStrokeStyle(selected ? 6 : 3, selected ? COLORS.yellow : COLORS.white);
-      const thumb = this.textures.exists(st.key)
-        ? this.add.image(x, y, st.key).setDisplaySize(192, 84)
-        : this.add.rectangle(x, y, 192, 84, COLORS.grass);
+      // قصاصة من منتصف صورة الملعب (منطقة المرمى) بدل تكديس الصورة كاملة
+      let thumb: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+      if (this.textures.exists(st.key)) {
+        const src = this.textures.get(st.key).getSourceImage() as HTMLImageElement;
+        const bandH = Math.round(src.width * (84 / 192));
+        const img = this.add.image(x, y, st.key);
+        img.setCrop(0, Math.max(0, Math.round(src.height * 0.22)), src.width, bandH);
+        // setCrop لا يغيّر الإطار — نضبط المقياس ثم نزيح الصورة حتى تتمركز القصاصة
+        const scale = 192 / src.width;
+        img.setScale(scale);
+        img.y = y + (src.height / 2 - src.height * 0.22 - bandH / 2) * scale;
+        thumb = img;
+      } else {
+        thumb = this.add.rectangle(x, y, 192, 84, COLORS.grass);
+      }
       if (!unlocked && 'setTint' in thumb) (thumb as Phaser.GameObjects.Image).setTint(0x555555);
 
       const caption = unlocked ? st.name : `🔒 ${st.name} — ⭐ ${arabicNum(st.cost)}`;
@@ -138,7 +152,7 @@ export class LockerScene extends Phaser.Scene {
     });
 
     const backBtn = makeButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 55, '🏠 رجوع', () => {
-      this.scene.start('Menu');
+      go(this, 'Menu');
     }, { width: 220, height: 60, fontSize: 24, variant: 'glass' });
     popIn(backBtn, 0.5);
   }

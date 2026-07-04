@@ -95,6 +95,12 @@ const unlockSrc = synth(0.5, (t) => {
   return Math.sin(2 * Math.PI * f * t) * Math.exp(-lt * 9) * 0.5;
 });
 
+// طنين القائم/العارضة: رنة معدنية قصيرة
+const postSrc = synth(0.35, (t) => {
+  const env = Math.exp(-t * 12);
+  return (Math.sin(2 * Math.PI * 880 * t) + 0.6 * Math.sin(2 * Math.PI * 1320 * t)) * env * 0.5;
+});
+
 // صفارة الحكم
 const whistleSrc = synth(0.45, (t) => {
   const vib = 1 + 0.02 * Math.sin(2 * Math.PI * 30 * t);
@@ -102,7 +108,7 @@ const whistleSrc = synth(0.45, (t) => {
   return Math.sin(2 * Math.PI * 2100 * vib * t) * env * 0.4;
 });
 
-type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock';
+type SoundName = 'kick' | 'goal' | 'save' | 'crowd' | 'button' | 'whistle' | 'trophy' | 'unlock' | 'post';
 
 // أحجام متوازنة: المؤثرات تحت صوت المعلق حتى لا تطغى عليه
 const sounds: Record<SoundName, Howl> = {
@@ -114,6 +120,7 @@ const sounds: Record<SoundName, Howl> = {
   whistle: new Howl({ src: [whistleSrc], format: ['wav'], volume: 0.6 }),
   trophy: new Howl({ src: [trophySrc], format: ['wav'], volume: 0.85 }),
   unlock: new Howl({ src: [unlockSrc], format: ['wav'], volume: 0.8 }),
+  post: new Howl({ src: [postSrc], format: ['wav'], volume: 0.75 }),
 };
 
 let muted = false;

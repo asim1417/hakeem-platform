@@ -2,12 +2,12 @@
 // لإضافة صورة حقيقية للاعب: ضع الصورة في src/assets/players/
 // واستوردها هنا ثم أسندها لحقل photo — تُستخدم تلقائيًا بدل الشكل المرسوم
 
-import saloumiPhoto from '../assets/players/saloumi.png';
-import hassouniPhoto from '../assets/players/hassouni.png';
-import hammadPhoto from '../assets/players/hammad.png';
-import hishamPhoto from '../assets/players/hisham.png';
-import omarPhoto from '../assets/players/omar.png';
-import sheikhPhoto from '../assets/players/sheikh.png';
+import saloumiPhoto from '../assets/players/saloumi.webp';
+import hassouniPhoto from '../assets/players/hassouni.webp';
+import hammadPhoto from '../assets/players/hammad.webp';
+import hishamPhoto from '../assets/players/hisham.webp';
+import omarPhoto from '../assets/players/omar.webp';
+import sheikhPhoto from '../assets/players/sheikh.webp';
 
 // نوع الاحتفال عند تسجيل الهدف
 export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart' | 'roar' | 'crown';

@@ -36,6 +36,8 @@ interface SavedProgress {
   ball: string;
   stadium: string;
   trophy?: boolean; // الفوز بكأس النجوم
+  lastDailyDate?: string; // آخر يوم أُنجز فيه تحدي اليوم
+  announcerOn?: boolean; // تفضيل صوت المعلق
 }
 
 function load(): SavedProgress {
@@ -78,6 +80,25 @@ export const progress = {
   hasTrophy: () => Boolean(state.trophy),
   winTrophy(): void {
     state.trophy = true;
+    save(state);
+  },
+  // تحدي اليوم — يُنجز مرة واحدة يوميًا (تاريخ محلي، بلا خوادم)
+  dailyDoneToday(): boolean {
+    return state.lastDailyDate === new Date().toDateString();
+  },
+  markDailyDone(): void {
+    state.lastDailyDate = new Date().toDateString();
+    save(state);
+  },
+  announcerEnabled(): boolean {
+    return state.announcerOn !== false; // مفعّل افتراضيًا
+  },
+  setAnnouncer(on: boolean): void {
+    state.announcerOn = on;
+    save(state);
+  },
+  resetAll(): void {
+    state = { totalStars: 0, ball: 'ball-real', stadium: 'stadium-real' };
     save(state);
   },
   // المكافآت التي فُتحت بين رصيدين — لإظهار بشارة الفتح

@@ -3,16 +3,16 @@
 // لاستبدال أي أصل بصورة حقيقية: ضع الملف بنفس الاسم في src/assets/images/ وأعد البناء.
 // (سير جلب الأصول الخارجية موثق في ASSET_GUIDE.md وسكربت scripts/fetch-assets.mjs)
 
-import stadiumReal from '../assets/images/stadium-real.jpg';
-import stadiumSchool from '../assets/images/stadium-school.jpg';
-import stadiumStreet from '../assets/images/stadium-street.jpg';
-import stadiumStars from '../assets/images/stadium-stars.jpg';
-import stadiumCup from '../assets/images/stadium-cup.jpg';
-import ballReal from '../assets/images/ball-real.png';
-import ballStars from '../assets/images/ball-stars.png';
-import ballFire from '../assets/images/ball-fire.png';
-import ballBolt from '../assets/images/ball-bolt.png';
-import ballGold from '../assets/images/ball-gold.png';
+import stadiumReal from '../assets/images/stadium-real.webp';
+import stadiumSchool from '../assets/images/stadium-school.webp';
+import stadiumStreet from '../assets/images/stadium-street.webp';
+import stadiumStars from '../assets/images/stadium-stars.webp';
+import stadiumCup from '../assets/images/stadium-cup.webp';
+import ballReal from '../assets/images/ball-real.webp';
+import ballStars from '../assets/images/ball-stars.webp';
+import ballFire from '../assets/images/ball-fire.webp';
+import ballBolt from '../assets/images/ball-bolt.webp';
+import ballGold from '../assets/images/ball-gold.webp';
 
 export const assetsManifest: Record<string, string> = {
   'stadium-real': stadiumReal,
