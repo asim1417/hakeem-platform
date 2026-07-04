@@ -30,7 +30,7 @@ const navSections: Array<{ items: NavItem[] }> = [
       { href: "/dashboard/cases", key: "nav.cases", icon: Briefcase },
       { href: "/dashboard/consultations", key: "nav.consultations", icon: ShieldCheck },
       { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip },
-      { href: "/dashboard/doc-tool", key: "nav.docTool", icon: FileSearch }
+      { href: "/doc-tool", key: "nav.docTool", icon: FileSearch }
     ]
   },
   {
