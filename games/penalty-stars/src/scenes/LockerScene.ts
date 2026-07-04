@@ -27,9 +27,9 @@ export class LockerScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 48, rtl('🎒 الخزنة'), {
         fontFamily: FONT,
         fontSize: '34px',
-        color: '#ffd93d',
+        color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#07111f',
         strokeThickness: 8,
       })
       .setOrigin(0.5);
@@ -139,7 +139,7 @@ export class LockerScene extends Phaser.Scene {
 
     const backBtn = makeButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 55, '🏠 رجوع', () => {
       this.scene.start('Menu');
-    }, { width: 220, height: 60, fontSize: 24, color: COLORS.orange });
+    }, { width: 220, height: 60, fontSize: 24, variant: 'glass' });
     popIn(backBtn, 0.5);
   }
 

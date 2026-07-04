@@ -2,6 +2,7 @@
 
 import Phaser from 'phaser';
 import { COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl } from '../config/gameConfig';
+import { progress } from '../utils/progress';
 import { PLAYERS, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn } from '../utils/animations';
@@ -13,18 +14,22 @@ export class PlayerSelectScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
-    for (let i = 0; i < 7; i++) {
-      this.add.rectangle(GAME_WIDTH / 2, i * 120, GAME_WIDTH, 60, COLORS.grassDark, 0.4);
+    // خلفية الملعب الواقعي بطبقة كحلية زجاجية (دليل الهوية)
+    const stadiumKey = progress.selectedStadium();
+    if (this.textures.exists(stadiumKey)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.55);
+    } else {
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
     }
 
     const title = this.add
       .text(GAME_WIDTH / 2, 55, rtl('😃 اختر لاعبك وابدأ اللعب فورًا!'), {
         fontFamily: FONT,
         fontSize: '32px',
-        color: '#ffd93d',
+        color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#07111f',
         strokeThickness: 8,
       })
       .setOrigin(0.5);
@@ -42,7 +47,7 @@ export class PlayerSelectScene extends Phaser.Scene {
 
     const backBtn = makeButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 42, '🏠 رجوع', () => {
       this.scene.start('Menu');
-    }, { width: 220, height: 56, fontSize: 24, color: COLORS.orange });
+    }, { width: 220, height: 56, fontSize: 24, variant: 'glass' });
     popIn(backBtn, 0.6);
   }
 
@@ -51,14 +56,14 @@ export class PlayerSelectScene extends Phaser.Scene {
     const w = 208;
     const h = 116;
 
-    const bg = this.add.rectangle(0, 0, w, h, COLORS.white, 0.95).setOrigin(0.5);
-    bg.setStrokeStyle(selected ? 6 : 4, selected ? COLORS.yellow : p.color);
+    const bg = this.add.rectangle(0, 0, w, h, COLORS.navy, 0.72).setOrigin(0.5);
+    bg.setStrokeStyle(selected ? 5 : 3, selected ? COLORS.gold : p.color);
     const avatar = this.add.image(0, -20, `avatar-${p.id}`).setDisplaySize(60, 60);
     const name = this.add
       .text(0, 26, rtl(`${p.name} ${p.emoji}`), {
         fontFamily: FONT,
         fontSize: '16px',
-        color: '#1a5c2e',
+        color: '#f8fff7',
         fontStyle: 'bold',
       })
       .setOrigin(0.5);
@@ -67,7 +72,7 @@ export class PlayerSelectScene extends Phaser.Scene {
       .text(0, 46, rtl(`⭐ قوة ${'●'.repeat(Math.round(p.power / 2))}  دقة ${'●'.repeat(Math.round(p.accuracy / 2))}`), {
         fontFamily: FONT,
         fontSize: '11px',
-        color: '#555555',
+        color: '#ffd45a',
       })
       .setOrigin(0.5);
 

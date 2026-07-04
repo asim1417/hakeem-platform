@@ -5,7 +5,7 @@ import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, STAGES, VERSION 
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
-import { makeButton } from '../utils/ui';
+import { makeButton, makeMuteChip } from '../utils/ui';
 import { progress } from '../utils/progress';
 
 export class MenuScene extends Phaser.Scene {
@@ -96,45 +96,60 @@ export class MenuScene extends Phaser.Scene {
     popIn(playerCard, 0.28);
     this.tweens.add({ targets: avatar, scale: avatar.scale * 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 
-    // ── بطاقتا الوضعين: البطولة والمباراة ──
-    const tournamentCard = this.modeCard(
-      GAME_WIDTH / 2 - 113, 478, COLORS.blue, '🏆', 'البطولة',
-      `${arabicNum(STAGES.length)} أدوار حتى الكأس`,
-      () => this.scene.start('Game', { stage: 0 }),
-    );
-    popIn(tournamentCard, 0.42);
-    pulse(tournamentCard);
+    // ── الزر الأساسي الضخم (نيون متدرج وفق الدليل) ──
+    const startBtn = makeButton(this, GAME_WIDTH / 2, 428, '🏆 ابدأ البطولة', () => {
+      this.scene.start('Game', { stage: 0 });
+    }, { width: 392, height: 88, fontSize: 32, variant: 'primary' });
+    popIn(startBtn, 0.42);
+    pulse(startBtn);
 
-    const matchCard = this.modeCard(
-      GAME_WIDTH / 2 + 113, 478, 0x2fae62, '⚔️', 'المباراة',
-      'أنت ضد فريق الحارس',
-      () => this.scene.start('Game', { mode: 'match' }),
-    );
-    popIn(matchCard, 0.5);
+    // خريطة أدوار البطولة
+    const stagesHint = this.add
+      .text(GAME_WIDTH / 2, 484, rtl(STAGES.map((s) => `${s.icon} ${s.label}`).join(' ← ')), {
+        fontFamily: FONT,
+        fontSize: '13px',
+        color: '#ffd45a',
+        fontStyle: 'bold',
+        stroke: '#07111f',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5);
+    popIn(stagesHint, 0.48);
 
-    // ── صف الأزرار الثانوية ──
-    const trainBtn = makeButton(this, GAME_WIDTH / 2 - 113, 620, '🏋️ التدريب', () => {
-      this.scene.start('Game', { training: true });
-    }, { width: 210, height: 64, fontSize: 24, color: COLORS.pink });
-    popIn(trainBtn, 0.58);
+    // ── صف زجاجي: المباراة والتدريب والخزنة ──
+    const glassRow: [string, () => void][] = [
+      ['⚔️ المباراة', () => this.scene.start('Game', { mode: 'match' })],
+      ['🏋️ التدريب', () => this.scene.start('Game', { training: true })],
+      ['🎒 الخزنة', () => this.scene.start('Locker')],
+    ];
+    glassRow.forEach(([label, go], i) => {
+      const btn = makeButton(this, 84 + i * 156, 552, label, go, { width: 148, height: 62, fontSize: 19, variant: 'glass' });
+      popIn(btn, 0.52 + i * 0.06);
+    });
 
-    const lockerBtn = makeButton(this, GAME_WIDTH / 2 + 113, 620, '🎒 الخزنة', () => {
-      this.scene.start('Locker');
-    }, { width: 210, height: 64, fontSize: 24, color: 0x9b6bff });
-    popIn(lockerBtn, 0.64);
-
-    // ── شريط الحالة السفلي: النجوم والكأس والإصدار ──
+    // ── شريط الحالة: الرصيد + سطر الأمان (وفق الدليل) ──
     const statusBar = this.add
-      .text(GAME_WIDTH / 2, 700, rtl(`رصيدك: ⭐ ${arabicNum(progress.totalStars())}${progress.hasTrophy() ? '  •  🏆 بطل كأس النجوم' : ''}`), {
+      .text(GAME_WIDTH / 2, 668, rtl(`رصيدك: ⭐ ${arabicNum(progress.totalStars())}${progress.hasTrophy() ? '  •  🏆 بطل كأس النجوم' : ''}`), {
         fontFamily: FONT,
         fontSize: '20px',
-        color: '#ffd93d',
+        color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#07111f',
         strokeThickness: 5,
       })
       .setOrigin(0.5);
     popIn(statusBar, 0.7);
+
+    this.add
+      .text(GAME_WIDTH / 2, 700, rtl('بلا إعلانات • بلا مشتريات • آمنة للأطفال'), {
+        fontFamily: FONT,
+        fontSize: '13px',
+        color: '#f8fff7',
+        stroke: '#07111f',
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setAlpha(0.9);
 
     // رقم الإصدار — للتحقق من تحديث النسخة
     this.add
@@ -148,58 +163,8 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(1, 1)
       .setAlpha(0.85);
 
-    // زر كتم الصوت
-    const muteBtn = makeButton(this, GAME_WIDTH - 52, 48, audio.isMuted() ? '🔇' : '🔊', () => {
-      const muted = audio.toggleMute();
-      const label = muteBtn.getAt(2) as Phaser.GameObjects.Text;
-      label.setText(muted ? '🔇' : '🔊');
-    }, { width: 66, height: 66, fontSize: 30, color: 0x27893f });
-  }
-
-  // بطاقة وضع لعب كبيرة: أيقونة + اسم + وصف قصير
-  private modeCard(
-    x: number,
-    y: number,
-    color: number,
-    icon: string,
-    label: string,
-    sub: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Container {
-    const w = 212;
-    const h = 128;
-    const shadow = this.add.rectangle(4, 7, w, h, 0x000000, 0.3);
-    const bg = this.add.rectangle(0, 0, w, h, color, 0.97).setStrokeStyle(5, 0xffffff);
-    const iconText = this.add.text(0, -34, icon, { fontSize: '42px' }).setOrigin(0.5);
-    const labelText = this.add
-      .text(0, 14, rtl(label), {
-        fontFamily: FONT,
-        fontSize: '28px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        stroke: '#00000044',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5);
-    const subText = this.add
-      .text(0, 44, rtl(sub), {
-        fontFamily: FONT,
-        fontSize: '13px',
-        color: '#ffffffdd',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    const card = this.add.container(x, y, [shadow, bg, iconText, labelText, subText]);
-    card.setSize(w, h);
-    card.setInteractive({ useHandCursor: true });
-    card.on('pointerdown', () => card.setScale(0.94));
-    card.on('pointerout', () => card.setScale(1));
-    card.on('pointerup', () => {
-      card.setScale(1);
-      audio.play('button');
-      onClick();
-    });
-    return card;
+    // رقاقة الصوت الزجاجية
+    makeMuteChip(this, GAME_WIDTH - 46, 46);
   }
 
   private drawBackground(): void {

@@ -24,7 +24,7 @@ import { audio } from '../utils/audio';
 import { bouncePhrase, confetti, playerCelebration, starBurst } from '../utils/animations';
 import { progress } from '../utils/progress';
 import { coachPhrases } from '../data/phrases';
-import { makeButton } from '../utils/ui';
+import { glassBehind, makeChip, makeMuteChip } from '../utils/ui';
 import { announcer } from '../utils/announcer';
 
 type ShotState = 'aiming' | 'shooting' | 'resolved';
@@ -56,6 +56,7 @@ export class GameScene extends Phaser.Scene {
   private starIcons: Phaser.GameObjects.Image[] = [];
   private phraseText!: Phaser.GameObjects.Text;
   private resolveTimer?: Phaser.Time.TimerEvent;
+  private hudPanel!: Phaser.GameObjects.Image & { sync: () => void };
   private trajectory: { x: number; y: number }[] = []; // مسار الكرة لإعادة الهدف
 
   constructor() {
@@ -200,6 +201,8 @@ export class GameScene extends Phaser.Scene {
         strokeThickness: 5,
       })
       .setDepth(20);
+    this.hudPanel = glassBehind(this, this.shotText) as Phaser.GameObjects.Image & { sync: () => void };
+    this.hudPanel.setDepth(19);
     this.updateShotText();
 
     // نجوم الأهداف (في البطولة والمباراة)
@@ -244,25 +247,15 @@ export class GameScene extends Phaser.Scene {
       .setDepth(20);
     this.tweens.add({ targets: hint, alpha: 0.5, duration: 800, yoyo: true, repeat: -1 });
 
-    // زر الرجوع للرئيسية
-    makeButton(this, GAME_WIDTH - 50, 44, '🏠', () => this.scene.start('Menu'), {
-      width: 64,
-      height: 64,
-      fontSize: 28,
-      color: COLORS.orange,
-    }).setDepth(20);
-
-    // زر كتم الصوت
-    const muteBtn = makeButton(this, GAME_WIDTH - 122, 44, audio.isMuted() ? '🔇' : '🔊', () => {
-      const muted = audio.toggleMute();
-      (muteBtn.getAt(2) as Phaser.GameObjects.Text).setText(muted ? '🔇' : '🔊');
-    }, { width: 64, height: 64, fontSize: 26, color: 0x27893f });
-    muteBtn.setDepth(20);
+    // رقاقتا النظام: رئيسية وصوت
+    makeChip(this, GAME_WIDTH - 44, 44, 'ic-home', () => this.scene.start('Menu')).setDepth(20);
+    makeMuteChip(this, GAME_WIDTH - 112, 44).setDepth(20);
   }
 
   private updateShotText(): void {
     if (this.mode === 'training') {
       this.shotText.setText(rtl('🏋️ تدريب حر'));
+      this.hudPanel.sync();
       return;
     }
     const shotLine = this.golden
@@ -274,6 +267,7 @@ export class GameScene extends Phaser.Scene {
       const st = STAGES[this.stage];
       this.shotText.setText(rtl(`${st.icon} ${st.label}\n${shotLine}`));
     }
+    this.hudPanel.sync();
   }
 
   // ── الإدخال: السحب للتسديد ──
