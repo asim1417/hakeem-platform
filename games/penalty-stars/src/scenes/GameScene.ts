@@ -137,6 +137,7 @@ export class GameScene extends Phaser.Scene {
     this.setupInput();
     fadeIn(this);
     audio.play('whistle');
+    audio.setAmbient(true); // 🏟️ همهمة الجماهير طوال اللعب
     this.coachTip();
 
     // 🧹 تنظيف شامل عند مغادرة المشهد — لا مؤقتات ولا حركات معلّقة تلاحق الشاشة التالية
@@ -146,6 +147,7 @@ export class GameScene extends Phaser.Scene {
   private cleanup(): void {
     this.resolveTimer?.remove();
     announcer.stop();
+    audio.setAmbient(false);
     gsap.globalTimeline.getChildren(true, true, true).forEach((t) => t.kill());
     // بعض المدراء قد يكونون مفككين لحظة الإغلاق — إعادة الزمن بحذر
     if (this.time) this.time.timeScale = 1;

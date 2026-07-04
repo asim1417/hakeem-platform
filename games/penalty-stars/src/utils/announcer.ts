@@ -43,9 +43,11 @@ const GENERIC_CHEERS = [
   'يا لها من لحظة!',
   'الكل يحبس أنفاسه!',
   'تسديدة قوية قادمة!',
+  'تسديييدة!',
 ];
 
-const CALL_COUNTS = { goal: 3, save: 2, miss: 2 } as const;
+// goal-3 = «جوووووول!» الممدودة، save-2 = «يا إلهي! ما هذا التصدي!»
+const CALL_COUNTS = { goal: 4, save: 3, miss: 2 } as const;
 
 // فقاعة المذيع: تنزلق من الأعلى، تثبت لحظة، ثم تختفي
 function showBubble(scene: Phaser.Scene, text: string, color: number): void {
