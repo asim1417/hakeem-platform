@@ -40,6 +40,17 @@ export interface CustomPlayerSaved {
 
 export const MAX_CUSTOM_PLAYERS = 2;
 
+// سجل اللعب — أرقام محلية للملف الشخصي والإنجازات
+export interface PlayStats {
+  shots: number; // تسديدات اللاعب
+  goals: number; // أهدافه
+  saves: number; // تصديات دور الحراسة بالإصبع
+  rounds: number; // جولات مكتملة (٥ تسديدات)
+  goldenWins: number; // انتصارات الضربة الذهبية
+}
+
+const EMPTY_STATS: PlayStats = { shots: 0, goals: 0, saves: 0, rounds: 0, goldenWins: 0 };
+
 interface SavedProgress {
   totalStars: number;
   ball: string;
@@ -48,6 +59,7 @@ interface SavedProgress {
   lastDailyDate?: string; // آخر يوم أُنجز فيه تحدي اليوم
   announcerOn?: boolean; // تفضيل صوت المعلق
   customPlayers?: CustomPlayerSaved[]; // لاعبو العائلة المضافون
+  stats?: PlayStats; // سجل اللعب
 }
 
 function load(): SavedProgress {
@@ -128,6 +140,35 @@ export const progress = {
   },
   removeCustomPlayer(id: string): void {
     state.customPlayers = (state.customPlayers ?? []).filter((c) => c.id !== id);
+    save(state);
+  },
+  // ── سجل اللعب ──
+  stats(): PlayStats {
+    return { ...EMPTY_STATS, ...(state.stats ?? {}) };
+  },
+  recordShot(goal: boolean): void {
+    const s = this.stats();
+    s.shots++;
+    if (goal) s.goals++;
+    state.stats = s;
+    save(state);
+  },
+  recordSave(): void {
+    const s = this.stats();
+    s.saves++;
+    state.stats = s;
+    save(state);
+  },
+  recordRound(): void {
+    const s = this.stats();
+    s.rounds++;
+    state.stats = s;
+    save(state);
+  },
+  recordGolden(): void {
+    const s = this.stats();
+    s.goldenWins++;
+    state.stats = s;
     save(state);
   },
   // المكافآت التي فُتحت بين رصيدين — لإظهار بشارة الفتح

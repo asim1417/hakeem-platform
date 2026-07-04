@@ -101,6 +101,9 @@ export class ResultScene extends Phaser.Scene {
 
     const outcome = this.computeOutcome();
     if (outcome === 'championship') progress.winTrophy();
+    // سجل الملف الشخصي: جولة مكتملة + انتصار الذهبية
+    progress.recordRound();
+    if (this.goldenWin) progress.recordGolden();
 
     // العنوان حسب النتيجة — لا عبارات قاسية أبدًا
     const titles: Record<Outcome, string> = {
@@ -120,7 +123,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: outcome === 'championship' ? '40px' : '34px',
         color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 9,
         align: 'center',
       })
@@ -145,7 +148,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: '26px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 6,
       })
       .setOrigin(0.5);
@@ -157,7 +160,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: '19px',
         color: '#e8f6ff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 4,
       })
       .setOrigin(0.5);
@@ -184,7 +187,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: '23px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 6,
         align: 'center',
         wordWrap: { width: 420 },
@@ -198,7 +201,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: '20px',
         color: '#e8f6ff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 5,
       })
       .setOrigin(0.5);
@@ -209,7 +212,7 @@ export class ResultScene extends Phaser.Scene {
         .text(GAME_WIDTH / 2, 583, rtl(`🎁 فُتح: ${unlocked.join('، ')} — زر الخزنة!`), {
           fontFamily: FONT,
           fontSize: '18px',
-          color: '#1a5c2e',
+          color: '#0b0f14',
           fontStyle: 'bold',
           backgroundColor: '#ffd93d',
           padding: { x: 12, y: 5 },

@@ -23,7 +23,7 @@ function showBubble(scene: Phaser.Scene, text: string, color: number): void {
     .text(0, 0, rtl(`🎤 ${text}`), {
       fontFamily: FONT,
       fontSize: '22px',
-      color: '#1a5c2e',
+      color: '#0b0f14',
       fontStyle: 'bold',
     })
     .setOrigin(0.5);

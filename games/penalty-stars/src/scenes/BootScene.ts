@@ -49,12 +49,13 @@ export class BootScene extends Phaser.Scene {
     this.scene.start('PlayerSelect');
   }
 
-  // ── عدة الواجهة وفق دليل الهوية: تدرج نيون، زجاج كحلي، أيقونات موحدة ──
+  // ── عدة الواجهة وفق هوية «فوتبول فيوتشر»: نيون كهربائي وزجاج غرافيت داكن ──
   private makeUiKit(): void {
-    this.gradientTexture('btn-primary', '#b7ff2a', '#00d7ff'); // زر أساسي: ليموني ← سماوي
+    this.gradientTexture('btn-primary', '#c6ff00', '#9eeb00'); // primaryCTA (tokens)
+    this.gradientTexture('btn-cyan', '#00e5ff', '#00bfae'); // secondaryCTA (tokens)
     this.gradientTexture('btn-gold', '#ffd45a', '#ff9d2e'); // مكافآت
-    this.glassTexture('btn-glass', 340, 80, 20, true); // زر ثانوي: أبيض شفاف بحد خفيف (الدليل §7)
-    this.glassTexture('panel-glass', 360, 120, 18); // لوحة HUD كحلية للوضوح فوق الملاعب
+    this.glassTexture('btn-glass', 340, 80, 20, true); // زر ثانوي زجاجي بحد سماوي
+    this.glassTexture('panel-glass', 360, 120, 18); // لوحة غرافيت داكنة
     this.chipTexture(); // رقاقة دائرية للأيقونات
     this.makeGlyphs();
   }
@@ -82,22 +83,16 @@ export class BootScene extends Phaser.Scene {
     tex.refresh();
   }
 
-  // طبقة زجاجية شفافة بحد ناعم — كحلية للوحات، بيضاء للأزرار الثانوية (وفق الدليل)
-  private glassTexture(key: string, w: number, h: number, r: number, light = false): void {
+  // زجاج غرافيت داكن (overlay.glass بالرموز) — الأزرار بحد سماوي، اللوحات بحد رمادي خافت
+  private glassTexture(key: string, w: number, h: number, r: number, button = false): void {
     const tex = this.textures.createCanvas(key, w, h);
     if (!tex) return;
     const ctx = tex.getContext();
     this.roundedPath(ctx, 2, 2, w - 4, h - 4, r);
-    // زجاج أبيض فوق تعتيم خفيف يضمن قراءة النص الأبيض على الملاعب المضيئة
-    ctx.fillStyle = light ? 'rgba(7,17,31,0.35)' : 'rgba(7,17,31,0.62)';
+    ctx.fillStyle = button ? 'rgba(17,23,32,0.82)' : 'rgba(11,15,20,0.80)';
     ctx.fill();
-    if (light) {
-      this.roundedPath(ctx, 2, 2, w - 4, h - 4, r);
-      ctx.fillStyle = 'rgba(248,255,247,0.16)';
-      ctx.fill();
-    }
     ctx.lineWidth = 2.5;
-    ctx.strokeStyle = light ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.5)';
+    ctx.strokeStyle = button ? 'rgba(0,229,255,0.45)' : 'rgba(255,255,255,0.12)';
     ctx.stroke();
     tex.refresh();
   }
@@ -108,10 +103,10 @@ export class BootScene extends Phaser.Scene {
     const ctx = tex.getContext();
     ctx.beginPath();
     ctx.arc(45, 45, 41, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(7,17,31,0.65)';
+    ctx.fillStyle = 'rgba(17,23,32,0.85)';
     ctx.fill();
     ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.strokeStyle = 'rgba(0,229,255,0.5)';
     ctx.stroke();
     tex.refresh();
   }
@@ -132,7 +127,7 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xf8fff7);
     g.fillTriangle(24, 5, 4, 23, 44, 23);
     g.fillRect(10, 23, 28, 18);
-    g.fillStyle(0x07111f);
+    g.fillStyle(0x0b0f14);
     g.fillRect(19, 29, 10, 12);
     g.generateTexture('ic-home', 48, 48);
     g.destroy();
@@ -171,12 +166,12 @@ export class BootScene extends Phaser.Scene {
       new Phaser.Math.Vector2(112, 74), new Phaser.Math.Vector2(60, 128),
       new Phaser.Math.Vector2(8, 74), new Phaser.Math.Vector2(8, 20),
     ];
-    g.fillStyle(0x07111f, 0.96);
+    g.fillStyle(0x0b0f14, 0.96);
     g.fillPoints(pts, true);
     g.lineStyle(5, 0xffd45a);
     g.strokePoints(pts, true);
     // خط ضوء مائل
-    g.fillStyle(0xb7ff2a, 0.22);
+    g.fillStyle(0xc6ff00, 0.22);
     g.fillPoints([
       new Phaser.Math.Vector2(20, 14), new Phaser.Math.Vector2(44, 10),
       new Phaser.Math.Vector2(96, 110), new Phaser.Math.Vector2(72, 116),
@@ -184,7 +179,7 @@ export class BootScene extends Phaser.Scene {
     // الكرة
     g.fillStyle(0xf8fff7);
     g.fillCircle(60, 62, 24);
-    g.fillStyle(0x07111f);
+    g.fillStyle(0x0b0f14);
     g.fillCircle(60, 62, 8);
     for (let k = 0; k < 5; k++) {
       const a = (k * 2 * Math.PI) / 5 - Math.PI / 2;
@@ -219,7 +214,7 @@ export class BootScene extends Phaser.Scene {
       g.fillRoundedRect(24 + Math.cos(a) * 15 - 4, 24 + Math.sin(a) * 15 - 4, 8, 8, 2);
     }
     g.fillCircle(24, 24, 13);
-    g.fillStyle(0x07111f);
+    g.fillStyle(0x0b0f14);
     g.fillCircle(24, 24, 5.5);
     g.generateTexture('ic-gear', 48, 48);
     g.destroy();
@@ -235,6 +230,22 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xb8860b);
     g.fillRect(16, 33, 16, 2);
     g.generateTexture('ic-trophy', 48, 42);
+    g.destroy();
+    // 👤 لاعب (الملف الشخصي — شريط التنقل)
+    g = this.add.graphics();
+    g.fillStyle(0xf8fff7);
+    g.fillCircle(24, 15, 9);
+    g.fillRoundedRect(8, 26, 32, 18, 9);
+    g.generateTexture('ic-user', 48, 48);
+    g.destroy();
+    // 🎯 هدف/مهام (شريط التنقل)
+    g = this.add.graphics();
+    g.lineStyle(4, 0xf8fff7);
+    g.strokeCircle(24, 24, 17);
+    g.strokeCircle(24, 24, 9);
+    g.fillStyle(0xf8fff7);
+    g.fillCircle(24, 24, 3.5);
+    g.generateTexture('ic-target', 48, 48);
     g.destroy();
   }
 

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fontsource/cairo": "^5.2.7",
+    "@fontsource/noto-kufi-arabic": "^5.2.9",
     "gsap": "^3.12.5",
     "howler": "^2.2.4",
     "phaser": "^3.80.1"

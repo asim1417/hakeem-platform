@@ -14,15 +14,24 @@ export const COLORS = {
   orange: 0xff8c42,
   pink: 0xff6b9d,
   net: 0xe8f6ff,
-  // ألوان الهوية البصرية (design_tokens.json) — المجموعة الكاملة
-  gold: 0xffd45a, // trophyGold
-  navy: 0x07111f, // stadiumNavy
-  lime: 0xb7ff2a, // neonLime
-  cyan: 0x00d7ff, // electricCyan
+  // 🖤 هوية «فوتبول فيوتشر» الداكنة (03_DESIGN_TOKENS.json)
+  gold: 0xffd45a, // ذهب الكؤوس والنجوم (مكافآت)
+  navy: 0x0b0f14, // deepBlack — خلفية الهوية الأساسية
+  graphite: 0x111720,
+  deepNavy: 0x1b2430,
+  steelBlue: 0x2a3442,
+  lime: 0xc6ff00, // electricLime — الزر الأساسي
+  limeDark: 0x9eeb00,
+  cyan: 0x00e5ff, // electricCyan
+  teal: 0x00bfae,
+  silver: 0xb2bcc6,
+  success: 0x36f58a,
+  warning: 0xffd23f,
+  dangerRed: 0xff4d4d,
+  premium: 0xb967ff,
   pitchGreen: 0x0b7a3b,
   pitchDark: 0x06140e,
   softPanel: 0xeaf3ff,
-  dangerRed: 0xff3e3e,
 };
 
 // أبعاد المرمى والملعب
@@ -108,6 +117,8 @@ export function arabicNum(n: number): string {
 }
 
 export const FONT = 'Cairo, Arial, "Segoe UI", Tahoma, sans-serif';
+// خط العناوين — Noto Kufi (هوية فوتبول فيوتشر) مع سقوط على Cairo
+export const HEADING = '"Noto Kufi Arabic", Cairo, Arial, sans-serif';
 
 // رقم الإصدار — يظهر أسفل القائمة للتحقق من أن الجهاز يعرض آخر نسخة
-export const VERSION = 'الإصدار ١٩';
+export const VERSION = 'الإصدار ٢٠';

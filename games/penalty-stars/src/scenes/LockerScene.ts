@@ -31,7 +31,7 @@ export class LockerScene extends Phaser.Scene {
         fontSize: '34px',
         color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 8,
       })
       .setOrigin(0.5);
@@ -43,7 +43,7 @@ export class LockerScene extends Phaser.Scene {
         fontSize: '19px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 4,
       })
       .setOrigin(0.5);
@@ -69,7 +69,7 @@ export class LockerScene extends Phaser.Scene {
           fontSize: '13px',
           color: unlocked ? '#ffffff' : '#ffd93d',
           fontStyle: 'bold',
-          stroke: '#1a5c2e',
+          stroke: '#0b0f14',
           strokeThickness: 3,
           align: 'center',
           wordWrap: { width: 86 },
@@ -122,7 +122,7 @@ export class LockerScene extends Phaser.Scene {
           fontSize: '14px',
           color: '#ffffff',
           fontStyle: 'bold',
-          stroke: '#1a5c2e',
+          stroke: '#0b0f14',
           strokeThickness: 4,
           backgroundColor: '#00000055',
           padding: { x: 6, y: 2 },
@@ -133,7 +133,7 @@ export class LockerScene extends Phaser.Scene {
           .text(x, y - 34, rtl('✅ مختار'), {
             fontFamily: FONT,
             fontSize: '13px',
-            color: '#1a5c2e',
+            color: '#0b0f14',
             fontStyle: 'bold',
             backgroundColor: '#ffd93d',
             padding: { x: 6, y: 2 },
@@ -164,7 +164,7 @@ export class LockerScene extends Phaser.Scene {
         fontSize: '24px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 6,
       })
       .setOrigin(0.5);
