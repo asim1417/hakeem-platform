@@ -24,7 +24,11 @@ const nextConfig = {
       : [];
     return {
       beforeFiles: docToolProxy,
-      afterFiles: [{ source: "/penalty-stars", destination: "/penalty-stars/index.html" }]
+      afterFiles: [
+        { source: "/penalty-stars", destination: "/penalty-stars/index.html" },
+        // لعبة فوتبول فيوتشر — تجربة مستقلة تماماً عن واجهة حكيم، تُقدَّم من public
+        { source: "/football-future", destination: "/football-future/index.html" }
+      ]
     };
   }
 };
