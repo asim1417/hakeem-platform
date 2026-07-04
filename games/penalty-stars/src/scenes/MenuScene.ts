@@ -15,11 +15,10 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    // القيم الافتراضية في أول تشغيل
-    if (!this.registry.has('playerId')) this.registry.set('playerId', 'hassouni');
-
     this.drawBackground();
     fadeIn(this);
+    // لا لاعب افتراضي: من وصل هنا دون اختيار تُعيده الأزرار لشاشة الاختيار
+    const hasPlayer = this.registry.has('playerId');
     const player = getPlayer(this.registry.get('playerId') as string);
 
     // ── الشعار: درع الهوية فوق الاسم ──
@@ -67,11 +66,13 @@ export class MenuScene extends Phaser.Scene {
       this.tweens.add({ targets: b, angle: 360, duration: 2600, repeat: -1 });
     }
 
-    // ── بطاقة اللاعب المختار (اضغطها للتغيير) ──
-    const ring = this.add.circle(0, 0, 56, 0xffffff, 0.95).setStrokeStyle(6, player.color);
-    const avatar = this.add.image(0, 0, `avatar-${player.id}`).setDisplaySize(102, 102);
+    // ── بطاقة اللاعب المختار (اضغطها للتغيير) — أو دعوة للاختيار إن لم يُختَر أحد ──
+    const ring = this.add.circle(0, 0, 56, 0xffffff, 0.95).setStrokeStyle(6, hasPlayer ? player.color : COLORS.gold);
+    const avatar = hasPlayer
+      ? this.add.image(0, 0, `avatar-${player.id}`).setDisplaySize(102, 102)
+      : this.add.text(0, 0, '👤', { fontSize: '58px' }).setOrigin(0.5);
     const nameTag = this.add
-      .text(0, 74, rtl(`${player.name} ${player.emoji}`), {
+      .text(0, 74, rtl(hasPlayer ? `${player.name} ${player.emoji}` : 'من يلعب اليوم؟'), {
         fontFamily: FONT,
         fontSize: '22px',
         color: '#ffffff',
@@ -81,7 +82,7 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const changeHint = this.add
-      .text(0, 102, rtl('👆 اضغط لتغيير اللاعب'), {
+      .text(0, 102, rtl(hasPlayer ? '👆 اضغط لتغيير اللاعب' : '👆 اضغط لاختيار لاعبك'), {
         fontFamily: FONT,
         fontSize: '14px',
         color: '#ffe9a8',
@@ -100,8 +101,14 @@ export class MenuScene extends Phaser.Scene {
     popIn(playerCard, 0.28);
     this.tweens.add({ targets: avatar, scale: avatar.scale * 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 
+    // أي وضع لعب قبل اختيار اللاعب → شاشة الاختيار أولًا
+    const requirePlayer = (action: () => void) => () => {
+      if (this.registry.has('playerId')) action();
+      else go(this, 'PlayerSelect');
+    };
+
     // ── الزر الأساسي: شجرة البطولة ──
-    const startBtn = makeButton(this, GAME_WIDTH / 2, 418, '🏆 ابدأ البطولة', () => go(this, 'Tournament'), {
+    const startBtn = makeButton(this, GAME_WIDTH / 2, 418, '🏆 ابدأ البطولة', requirePlayer(() => go(this, 'Tournament')), {
       width: 392,
       height: 80,
       fontSize: 31,
@@ -118,9 +125,9 @@ export class MenuScene extends Phaser.Scene {
       GAME_WIDTH / 2,
       482,
       dailyLabel,
-      () => {
+      requirePlayer(() => {
         if (!progress.dailyDoneToday()) go(this, 'Game', { mode: 'daily' });
-      },
+      }),
       { width: 392, height: 54, fontSize: 18, variant: 'gold' },
     );
     if (dailyDone) dailyBtn.setAlpha(0.75);
@@ -128,10 +135,10 @@ export class MenuScene extends Phaser.Scene {
 
     // ── شبكة الأوضاع ٢×٢ ──
     const grid: [string, () => void][] = [
-      ['⚔️ المباراة', () => go(this, 'Game', { mode: 'match' })],
-      ['🌀 الفاولات', () => go(this, 'Game', { mode: 'freekick' })],
-      ['🏋️ التدريب', () => go(this, 'Game', { training: true })],
-      ['🤝 تحدي صديق', () => go(this, 'Game', { mode: 'duel' })],
+      ['⚔️ المباراة', requirePlayer(() => go(this, 'Game', { mode: 'match' }))],
+      ['🌀 الفاولات', requirePlayer(() => go(this, 'Game', { mode: 'freekick' }))],
+      ['🏋️ التدريب', requirePlayer(() => go(this, 'Game', { training: true }))],
+      ['🤝 تحدي صديق', requirePlayer(() => go(this, 'Game', { mode: 'duel' }))],
     ];
     grid.forEach(([label, onTap], i) => {
       const col = i % 2;
