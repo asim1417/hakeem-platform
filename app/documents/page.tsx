@@ -40,11 +40,11 @@ export default function DocumentsLandingPage() {
           <span className={styles.brand}>
             منصة الوثائق<span>· قراءة وفحص المستندات القانونية</span>
           </span>
-          <Link href="/doc-tool" className={styles.topGhost}>
-            أداة البحث السريع
+          <Link href="/documents/tool" className={styles.topGhost}>
+            البحث السريع
           </Link>
           <Link href="/documents/app" className={styles.topCta}>
-            ابدأ الآن
+            محطة العمل — ابدأ الآن
           </Link>
         </div>
       </div>
@@ -66,12 +66,39 @@ export default function DocumentsLandingPage() {
             <Link href="/documents/app" className={styles.primary}>
               افتح محطة العمل ←
             </Link>
+            <Link href="/documents/tool" className={styles.secondary}>
+              البحث السريع
+            </Link>
             <span className={styles.privacyChip}>🔒 نص وثيقتك لا يغادر متصفحك أثناء الفحص</span>
           </div>
         </div>
       </header>
 
       <main className={styles.wrap}>
+        <h2 className={styles.sectionTitle}>قسمان لمهمتين</h2>
+        <div className={styles.grid}>
+          <Link href="/documents/tool" className={styles.card} style={{ textDecoration: "none" }}>
+            <span className={styles.ic} aria-hidden="true">
+              🔎
+            </span>
+            <h3>البحث السريع</h3>
+            <p>
+              ارفع أي صيغة (نص/Word/PDF/صور بـ OCR) وابحث فوراً ببحث مطبَّع يتجاهل التشكيل
+              وفروق الهمزات مع تظليل المطابقات — وثائقك تُحفَظ وتعود إليها متى شئت.
+            </p>
+          </Link>
+          <Link href="/documents/app" className={styles.card} style={{ textDecoration: "none" }}>
+            <span className={styles.ic} aria-hidden="true">
+              🗂️
+            </span>
+            <h3>محطة العمل — الفحص المتقدم</h3>
+            <p>
+              فحص ملف القضية كاملاً: تصنيف وترميز أرشيفي، كيانات مظلَّلة، جداول مشتقة، مقتطفات
+              وملاحظات، وتصدير احترافي — لكل وثائق القضية معاً.
+            </p>
+          </Link>
+        </div>
+
         <h2 className={styles.sectionTitle}>ماذا تفعل المنصة؟</h2>
         <div className={styles.grid}>
           {FEATURES.map((f) => (

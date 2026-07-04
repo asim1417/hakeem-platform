@@ -1126,8 +1126,13 @@ export function CaseBrowser() {
           و
         </span>
         <h1>
-          منصة الوثائق<small>· محطة العمل</small>
+          <a href="/documents" className={styles.brandHome}>منصة الوثائق</a>
+          <small>· محطة العمل</small>
         </h1>
+        <nav className={styles.headNav} aria-label="أقسام منصة الوثائق">
+          <a href="/documents">البوابة</a>
+          <a href="/documents/tool">البحث السريع</a>
+        </nav>
         <span className={styles.banner}>مخرج آلي يحتاج مراجعة بشرية</span>
         <div className={styles.bar} role="toolbar" aria-label="أدوات العرض">
           <span className={styles.grp}>

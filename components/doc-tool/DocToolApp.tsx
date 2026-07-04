@@ -164,10 +164,14 @@ export function DocToolApp() {
     <div className={styles.root} dir="rtl">
       <header className={styles.header}>
         <div className={styles.brand}>
-          <b>أداة معالجة الوثائق العربية</b>
-          <small>
-            حكيم — استخراج وتطبيع وبحث · <a className={styles.brandLink} href="/documents/app">منصة الوثائق ↗</a>
-          </small>
+          <b>
+            <a className={styles.brandHome} href="/documents">منصة الوثائق</a> · البحث السريع
+          </b>
+          <nav className={styles.tabs} aria-label="أقسام منصة الوثائق">
+            <a className={styles.tab} href="/documents">البوابة</a>
+            <span className={styles.tabOn} aria-current="page">البحث السريع</span>
+            <a className={styles.tab} href="/documents/app">محطة العمل (فحص متقدم)</a>
+          </nav>
         </div>
         <input
           className={styles.search}
@@ -290,9 +294,8 @@ export function DocToolApp() {
                 </small>
               </div>
               <div className={styles.note}>
-                <b>تريد فحصاً أعمق؟</b> لمنصة الفحص المتقدمة (تصنيف، كيانات مظلَّلة، جداول مشتقة،
-                مقتطفات وتصدير): <a href="/documents/app">منصة الوثائق</a> — نفس المحرّكات، نفس
-                الخصوصية.
+                <b>تريد فحصاً أعمق؟</b> انتقل إلى <a href="/documents/app">محطة العمل</a> —
+                تصنيف وكيانات مظلَّلة وجداول مشتقة ومقتطفات وتصدير، بنفس المحرّكات ونفس الخصوصية.
               </div>
               {error ? <div className={styles.empty}>⚠ {error}</div> : null}
               <div className={styles.hint}>
