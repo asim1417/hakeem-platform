@@ -67,20 +67,21 @@ export function DocToolApp() {
   const [cloudOcr, setCloudOcr] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // الخيار السحابي يظهر فقط إن كان GEMINI_API_KEY مضبوطاً على الخادم
+  // الخيار السحابي يظهر فقط إن كانت الخدمة السحابية مفعّلة على الخادم.
+  // التفضيل يُحفظ في كوكي (قيمة 0/1 فقط — لا بيانات شخصية).
   useEffect(() => {
     fetch("/api/doc-tool/ocr")
       .then((r) => r.json())
       .then((d: { configured?: boolean }) => {
         setCloudAvailable(Boolean(d.configured));
-        if (d.configured) setCloudOcr(window.localStorage.getItem("docToolCloudOcr") === "1");
+        if (d.configured) setCloudOcr(/(?:^|; )docToolCloudOcr=1/.test(document.cookie));
       })
       .catch(() => setCloudAvailable(false));
   }, []);
 
   const toggleCloud = useCallback((on: boolean) => {
     setCloudOcr(on);
-    window.localStorage.setItem("docToolCloudOcr", on ? "1" : "0");
+    document.cookie = `docToolCloudOcr=${on ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
   }, []);
 
   // تحميل المحفوظ من الخادم عند الفتح

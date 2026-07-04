@@ -5,7 +5,7 @@ import {
   GEMINI_OCR_MIME_TYPES,
   type GeminiOcrMime,
   type GeminiOcrModel
-} from "@/lib/modules/doc-tool/gemini-ocr";
+} from "@/lib/modules/ai/gemini-ocr";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
