@@ -60,10 +60,33 @@
   font-size: 11px;
   letter-spacing: 0.04em;
 }
-.brandLink {
+.brandHome {
+  color: inherit;
+  text-decoration: none;
+}
+.brandHome:hover {
+  color: var(--gold);
+}
+.tabs {
+  display: flex;
+  gap: 10px;
+  font-size: 11.5px;
+  margin-top: 2px;
+}
+.tab {
+  color: var(--mut);
+  text-decoration: none;
+}
+.tab:hover {
   color: var(--gold);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+}
+.tabOn {
+  color: var(--gold);
+  font-weight: 700;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 1px;
 }
 .search {
   flex: 1;

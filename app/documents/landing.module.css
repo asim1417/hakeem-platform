@@ -148,6 +148,19 @@
 .primary:hover {
   background: var(--copper-soft);
 }
+.secondary {
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  padding: 12px 26px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.15s;
+}
+.secondary:hover {
+  background: rgba(198, 151, 99, 0.12);
+}
 .privacyChip {
   display: inline-flex;
   align-items: center;
