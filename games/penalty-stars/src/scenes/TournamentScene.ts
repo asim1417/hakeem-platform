@@ -4,8 +4,8 @@
 import Phaser from 'phaser';
 import { gsap } from 'gsap';
 import { arabicNum, COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, HEADING, PASS_GOALS, rtl, STAGES } from '../config/gameConfig';
-import { progress, STADIUMS } from '../utils/progress';
-import { makeButton, makeChip, makeMuteChip } from '../utils/ui';
+import { STADIUMS } from '../utils/progress';
+import { energyStreaks, makeButton, makeChip, makeMuteChip } from '../utils/ui';
 import { popIn, pulse } from '../utils/animations';
 import { fadeIn, go } from '../utils/camera';
 
@@ -25,13 +25,14 @@ export class TournamentScene extends Phaser.Scene {
     this.drawBackground();
     fadeIn(this);
 
-    const logo = this.add.image(GAME_WIDTH / 2, 72, 'logo-shield').setDisplaySize(84, 92);
+    energyStreaks(this, 110, 1);
+    const logo = this.add.image(GAME_WIDTH / 2, 66, 'logo-shield').setDisplaySize(104, 76);
     popIn(logo, 0.05);
     const title = this.add
       .text(GAME_WIDTH / 2, 148, rtl('🏆 بطولة نجوم البلنتيات'), {
         fontFamily: HEADING,
         fontSize: '34px',
-        color: '#ffd45a',
+        color: '#c6ff00',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 9,
@@ -64,7 +65,7 @@ export class TournamentScene extends Phaser.Scene {
         .text(30, -14, rtl(`${st.icon} ${st.label}`), {
           fontFamily: FONT,
           fontSize: '23px',
-          color: done ? '#9fffb9' : current ? '#ffd45a' : '#cfd8e3',
+          color: done ? '#36f58a' : current ? '#c6ff00' : '#b2bcc6',
           fontStyle: 'bold',
         })
         .setOrigin(0.5);
@@ -80,7 +81,7 @@ export class TournamentScene extends Phaser.Scene {
       if (!done && !current) card.setAlpha(0.75);
       popIn(card, 0.18 + i * 0.08);
       if (current) {
-        bg.setTint(0xbfffd9);
+        bg.setTint(0xa8ffd0);
         gsap.to(icon, { scale: 1.25, duration: 0.55, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 0.9 });
       }
     });
@@ -110,10 +111,9 @@ export class TournamentScene extends Phaser.Scene {
   }
 
   private drawBackground(): void {
-    const stadiumKey = progress.selectedStadium();
-    if (this.textures.exists(stadiumKey)) {
-      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.6);
+    if (this.textures.exists('stadium-stars')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'stadium-stars').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.68);
     } else {
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy);
     }

@@ -39,7 +39,13 @@ export class ProfileScene extends Phaser.Scene {
     card.add(bg);
     if (hasPlayer) {
       const avatar = this.add.image(-130, -10, `avatar-${player.id}`).setDisplaySize(120, 120);
-      const ring = this.add.circle(-130, -10, 64, 0x000000, 0).setStrokeStyle(4, player.color);
+      const ring = this.add.circle(-130, -10, 64, 0x000000, 0);
+      // التقييم العام بأسلوب بطاقات المحترفين
+      const rating = Math.round(60 + ((player.speed + player.power + player.accuracy) / 3) * 4);
+      const ratingNum = this.add
+        .text(-130, -88, rtl(String(rating)), { fontFamily: HEADING, fontSize: '26px', color: '#c6ff00', fontStyle: 'bold' })
+        .setOrigin(0.5);
+      card.add(ratingNum);
       const name = this.add
         .text(150, -55, rtl(`${player.name} ${player.emoji}`), {
           fontFamily: HEADING,
@@ -159,9 +165,8 @@ export class ProfileScene extends Phaser.Scene {
   }
 
   private drawBackground(): void {
-    const stadiumKey = progress.selectedStadium();
-    if (this.textures.exists(stadiumKey)) {
-      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    if (this.textures.exists('stadium-stars')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'stadium-stars').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.75);
     } else {
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy);

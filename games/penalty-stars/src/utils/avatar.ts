@@ -21,16 +21,23 @@ export function makeCircularAvatar(scene: Phaser.Scene, avatarKey: string, photo
   ctx.drawImage(src, (src.width - side) / 2, (src.height - side) / 2, side, side, 0, 0, SIZE, SIZE);
   ctx.restore();
 
-  // إطار ذهبي مزدوج مثل بقية النجوم
-  ctx.lineWidth = 10;
-  ctx.strokeStyle = '#ffd45a';
+  // إطار الطاقة «فوتبول فيوتشر»: حلقة متدرجة ليموني→سماوي مثل بقية النجوم
+  const grad = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  grad.addColorStop(0, '#c6ff00');
+  grad.addColorStop(1, '#00e5ff');
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = grad;
   ctx.beginPath();
-  ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 9, 0, Math.PI * 2);
+  ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 10, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
   ctx.beginPath();
-  ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 3, 0, Math.PI * 2);
+  ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 17, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = '#0b0f14';
+  ctx.beginPath();
+  ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2);
   ctx.stroke();
   tex.refresh();
 }

@@ -158,43 +158,47 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
-  // شعار الدرع الكروي (هوية §4): درع كحلي بحد ذهبي + كرة + نجمة + خط ضوء
+  // شعار «FF» المائل (هوية فوتبول فيوتشر): ضربتان كهربائيتان فضية وليمونية وسماوية + كرة
   private makeShieldLogo(): void {
     const g = this.add.graphics();
-    const pts = [
-      new Phaser.Math.Vector2(60, 4), new Phaser.Math.Vector2(112, 20),
-      new Phaser.Math.Vector2(112, 74), new Phaser.Math.Vector2(60, 128),
-      new Phaser.Math.Vector2(8, 74), new Phaser.Math.Vector2(8, 20),
-    ];
-    g.fillStyle(0x0b0f14, 0.96);
-    g.fillPoints(pts, true);
-    g.lineStyle(5, 0xffd45a);
-    g.strokePoints(pts, true);
-    // خط ضوء مائل
-    g.fillStyle(0xc6ff00, 0.22);
+    const slash = (x0: number, color: number, alpha = 1) => {
+      g.fillStyle(color, alpha);
+      g.fillPoints([
+        new Phaser.Math.Vector2(x0, 96),
+        new Phaser.Math.Vector2(x0 + 30, 10),
+        new Phaser.Math.Vector2(x0 + 52, 10),
+        new Phaser.Math.Vector2(x0 + 22, 96),
+      ], true);
+    };
+    // توهج خلفي خافت
+    slash(6, 0xc6ff00, 0.12);
+    slash(46, 0x00e5ff, 0.12);
+    // الضربات الثلاث: فضي ← ليموني ← سماوي
+    slash(10, 0xd7dde3);
+    slash(38, 0xc6ff00);
+    slash(66, 0x00e5ff);
+    // شرطة أفقية وسطية (تلمح لحرف F)
+    g.fillStyle(0xd7dde3);
     g.fillPoints([
-      new Phaser.Math.Vector2(20, 14), new Phaser.Math.Vector2(44, 10),
-      new Phaser.Math.Vector2(96, 110), new Phaser.Math.Vector2(72, 116),
+      new Phaser.Math.Vector2(26, 46), new Phaser.Math.Vector2(78, 46),
+      new Phaser.Math.Vector2(73, 60), new Phaser.Math.Vector2(21, 60),
     ], true);
-    // الكرة
+    // الكرة أعلى اليمين
     g.fillStyle(0xf8fff7);
-    g.fillCircle(60, 62, 24);
+    g.fillCircle(112, 26, 17);
     g.fillStyle(0x0b0f14);
-    g.fillCircle(60, 62, 8);
+    g.fillCircle(112, 26, 6);
     for (let k = 0; k < 5; k++) {
       const a = (k * 2 * Math.PI) / 5 - Math.PI / 2;
-      g.fillCircle(60 + 17 * Math.cos(a), 62 + 17 * Math.sin(a), 4.5);
+      g.fillCircle(112 + 12 * Math.cos(a), 26 + 12 * Math.sin(a), 3.2);
     }
-    // النجمة الذهبية أعلى الكرة
-    g.fillStyle(0xffd45a);
-    const star: Phaser.Math.Vector2[] = [];
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 === 0 ? 11 : 4.5;
-      const a = (Math.PI * i) / 5 - Math.PI / 2;
-      star.push(new Phaser.Math.Vector2(60 + r * Math.cos(a), 26 + r * Math.sin(a)));
-    }
-    g.fillPoints(star, true);
-    g.generateTexture('logo-shield', 120, 132);
+    // خط سرعة تحت الكرة
+    g.fillStyle(0x00e5ff, 0.7);
+    g.fillPoints([
+      new Phaser.Math.Vector2(92, 44), new Phaser.Math.Vector2(130, 38),
+      new Phaser.Math.Vector2(128, 44), new Phaser.Math.Vector2(94, 49),
+    ], true);
+    g.generateTexture('logo-shield', 136, 100);
     g.destroy();
   }
 

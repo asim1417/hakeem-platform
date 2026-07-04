@@ -305,7 +305,7 @@ export class GameScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 420, '', {
         fontFamily: FONT,
         fontSize: '34px',
-        color: '#ffd93d',
+        color: '#c6ff00',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 8,
@@ -973,15 +973,15 @@ export class GameScene extends Phaser.Scene {
   // 🧑‍🏫 المدرب الصغير: شخصية في الزاوية بفقاعة نصيحة
   private coachTip(): void {
     const tip = Phaser.Utils.Array.GetRandom(coachPhrases);
-    const face = this.add.circle(0, 0, 26, 0xffffff).setStrokeStyle(4, COLORS.blue);
+    const face = this.add.circle(0, 0, 26, COLORS.graphite).setStrokeStyle(3, COLORS.cyan);
     const emoji = this.add.text(0, 0, '🧑‍🏫', { fontSize: '30px' }).setOrigin(0.5);
     const bubble = this.add
       .text(38, 0, rtl(tip), {
         fontFamily: FONT,
         fontSize: '17px',
-        color: '#0b0f14',
+        color: '#f8fff7',
         fontStyle: 'bold',
-        backgroundColor: '#ffffffee',
+        backgroundColor: '#111720ee',
         padding: { x: 10, y: 6 },
       })
       .setOrigin(0, 0.5);

@@ -5,7 +5,7 @@ import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, HEADING, rtl, VERSION
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
-import { makeBottomNav, makeButton, makeChip, makeMuteChip } from '../utils/ui';
+import { energyStreaks, makeBottomNav, makeButton, makeChip, makeMuteChip } from '../utils/ui';
 import { progress } from '../utils/progress';
 import { fadeIn, go } from '../utils/camera';
 
@@ -21,8 +21,9 @@ export class MenuScene extends Phaser.Scene {
     const hasPlayer = this.registry.has('playerId');
     const player = getPlayer(this.registry.get('playerId') as string);
 
-    // ── الشعار: درع الهوية فوق الاسم ──
-    const shield = this.add.image(GAME_WIDTH / 2, 56, 'logo-shield').setDisplaySize(74, 81);
+    // ── الشعار: علامة FF المائلة فوق الاسم + خطوط الطاقة ──
+    energyStreaks(this, 100, 1);
+    const shield = this.add.image(GAME_WIDTH / 2, 52, 'logo-shield').setDisplaySize(104, 76);
     popIn(shield, 0.02);
     const titleShadow = this.add
       .text(GAME_WIDTH / 2 + 3, 118 + 4, rtl('نجوم البلنتيات'), {
@@ -37,7 +38,7 @@ export class MenuScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 118, rtl('نجوم البلنتيات'), {
         fontFamily: HEADING,
         fontSize: '50px',
-        color: '#ffd45a',
+        color: '#ffffff',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 12,
@@ -46,10 +47,11 @@ export class MenuScene extends Phaser.Scene {
     popIn(titleShadow, 0.05);
     popIn(title, 0.05);
 
+    // سطر الهوية الرسمي: ألعب. تطوّر. انتصر.
     const subtitle = this.add
-      .text(GAME_WIDTH / 2, 164, rtl('⚽ سدّد… واصنع المجد! ⚽'), {
-        fontFamily: FONT,
-        fontSize: '20px',
+      .text(GAME_WIDTH / 2, 164, rtl('ألعب. تطوّر. انتصر. ⚡'), {
+        fontFamily: HEADING,
+        fontSize: '19px',
         color: '#00e5ff',
         fontStyle: 'bold',
         stroke: '#0b0f14',
@@ -67,7 +69,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // ── بطاقة اللاعب المختار (اضغطها للتغيير) — أو دعوة للاختيار إن لم يُختَر أحد ──
-    const ring = this.add.circle(0, 0, 56, 0xffffff, 0.95).setStrokeStyle(6, hasPlayer ? player.color : COLORS.gold);
+    const ring = this.add.circle(0, 0, 56, COLORS.graphite, 0.9).setStrokeStyle(3, COLORS.cyan, 0.7);
     const avatar = hasPlayer
       ? this.add.image(0, 0, `avatar-${player.id}`).setDisplaySize(102, 102)
       : this.add.text(0, 0, '👤', { fontSize: '58px' }).setOrigin(0.5);
@@ -85,7 +87,7 @@ export class MenuScene extends Phaser.Scene {
       .text(0, 102, rtl(hasPlayer ? '👆 اضغط لتغيير اللاعب' : '👆 اضغط لاختيار لاعبك'), {
         fontFamily: FONT,
         fontSize: '14px',
-        color: '#ffe9a8',
+        color: '#b2bcc6',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 4,
@@ -153,7 +155,7 @@ export class MenuScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 626, rtl(`رصيدك: ⭐ ${arabicNum(progress.totalStars())}${progress.hasTrophy() ? '  •  🏆 بطل كأس النجوم' : ''}`), {
         fontFamily: FONT,
         fontSize: '19px',
-        color: '#ffd45a',
+        color: '#ffd23f',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 5,
@@ -203,7 +205,7 @@ export class MenuScene extends Phaser.Scene {
       .setInteractive();
     const panel = this.add.image(GAME_WIDTH / 2, 400, 'panel-glass').setDisplaySize(390, 360).setDepth(81);
     const title = this.add
-      .text(GAME_WIDTH / 2, 268, rtl('⚙️ الإعدادات'), { fontFamily: FONT, fontSize: '32px', color: '#ffd45a', fontStyle: 'bold' })
+      .text(GAME_WIDTH / 2, 268, rtl('⚙️ الإعدادات'), { fontFamily: HEADING, fontSize: '30px', color: '#c6ff00', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(82);
     items.push(overlay, panel, title);
@@ -264,20 +266,15 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private drawBackground(): void {
-    // خلفية الملعب شبه الواقعية + تدرجا وضوح أعلى وأسفل
-    const stadiumKey = progress.selectedStadium();
-    if (this.textures.exists(stadiumKey)) {
-      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
+    // الهوية الداكنة: الملعب الليلي السينمائي خلفية موحدة لكل شاشات القوائم
+    if (this.textures.exists('stadium-stars')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'stadium-stars').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.6);
     } else {
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 4, GAME_WIDTH, GAME_HEIGHT / 2, COLORS.sky);
-      this.add.rectangle(GAME_WIDTH / 2, (GAME_HEIGHT * 3) / 4, GAME_WIDTH, GAME_HEIGHT / 2, COLORS.grass);
-      for (let i = 0; i < 5; i++) {
-        this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40 + i * 80, GAME_WIDTH, 40, COLORS.grassDark, 0.5);
-      }
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy);
     }
     // تظليل علوي وسفلي لإبراز الشعار وشريط الحالة
-    this.add.rectangle(GAME_WIDTH / 2, 70, GAME_WIDTH, 190, COLORS.navy, 0.38);
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 55, GAME_WIDTH, 130, COLORS.navy, 0.38);
+    this.add.rectangle(GAME_WIDTH / 2, 70, GAME_WIDTH, 190, COLORS.navy, 0.35);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 55, GAME_WIDTH, 130, COLORS.navy, 0.35);
   }
 }

@@ -7,6 +7,7 @@ import {
   COLORS,
   DIFFICULTIES,
   FONT,
+  HEADING,
   GAME_HEIGHT,
   GAME_WIDTH,
   PASS_GOALS,
@@ -74,12 +75,11 @@ export class ResultScene extends Phaser.Scene {
 
   create(): void {
     // خلفية الملعب الواقعي بطبقة كحلية (دليل الهوية)
-    const stadiumKey = progress.selectedStadium();
-    if (this.textures.exists(stadiumKey)) {
-      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.55);
+    if (this.textures.exists('stadium-stars')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'stadium-stars').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.68);
     } else {
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy);
     }
     fadeIn(this);
 
@@ -120,9 +120,9 @@ export class ResultScene extends Phaser.Scene {
     };
     const title = this.add
       .text(GAME_WIDTH / 2, 100, rtl(titles[outcome]), {
-        fontFamily: FONT,
-        fontSize: outcome === 'championship' ? '40px' : '34px',
-        color: '#ffd45a',
+        fontFamily: HEADING,
+        fontSize: outcome === 'championship' ? '38px' : '32px',
+        color: '#c6ff00',
         fontStyle: 'bold',
         stroke: '#0b0f14',
         strokeThickness: 9,
@@ -215,7 +215,7 @@ export class ResultScene extends Phaser.Scene {
           fontSize: '18px',
           color: '#0b0f14',
           fontStyle: 'bold',
-          backgroundColor: '#ffd93d',
+          backgroundColor: '#ffd23f',
           padding: { x: 12, y: 5 },
         })
         .setOrigin(0.5)
