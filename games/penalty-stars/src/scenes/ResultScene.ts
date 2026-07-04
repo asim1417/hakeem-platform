@@ -16,6 +16,7 @@ import {
 } from '../config/gameConfig';
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
+import { announcer } from '../utils/announcer';
 import { confetti, popIn } from '../utils/animations';
 import { makeButton } from '../utils/ui';
 import { progress } from '../utils/progress';
@@ -227,6 +228,7 @@ export class ResultScene extends Phaser.Scene {
     if (outcome === 'championship' || outcome === 'matchWin' || outcome === 'dailyWin') {
       audio.play('trophy');
       audio.play('crowd');
+      announcer.onCelebrate(); // 🎤 «أحسنت!»
       confetti(this, 70);
       this.time.addEvent({ delay: 1300, repeat: 3, callback: () => confetti(this, 35) });
     } else if (outcome === 'advance' || (outcome === 'duel' && this.duel.p1Goals !== this.duel.p2Goals)) {

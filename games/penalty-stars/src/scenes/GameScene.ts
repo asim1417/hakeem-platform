@@ -138,6 +138,7 @@ export class GameScene extends Phaser.Scene {
     fadeIn(this);
     audio.play('whistle');
     audio.setAmbient(true); // 🏟️ همهمة الجماهير طوال اللعب
+    announcer.onReady(); // 🎤 «ضربة جزاء!» بعد الصافرة
     this.coachTip();
 
     // 🧹 تنظيف شامل عند مغادرة المشهد — لا مؤقتات ولا حركات معلّقة تلاحق الشاشة التالية
@@ -528,7 +529,7 @@ export class GameScene extends Phaser.Scene {
     if (this.mode === 'freekick' && !this.passedWall && this.ball.y <= WALL_Y + 24) {
       if (this.ball.y >= WALL_Y - 30 && Math.abs(this.ball.x - this.wallX) < 76) {
         this.bounced = true;
-        audio.play('kick');
+        audio.play('punch'); // التحام حقيقي بالحائط
         this.cameras.main.shake(110, 0.005);
         body.velocity.y = Math.abs(body.velocity.y) * 0.4;
         body.velocity.x *= 0.5;
