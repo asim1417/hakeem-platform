@@ -40,6 +40,9 @@ export default function DocumentsLandingPage() {
           <span className={styles.brand}>
             منصة الوثائق<span>· قراءة وفحص المستندات القانونية</span>
           </span>
+          <Link href="/doc-tool" className={styles.topGhost}>
+            أداة البحث السريع
+          </Link>
           <Link href="/documents/app" className={styles.topCta}>
             ابدأ الآن
           </Link>

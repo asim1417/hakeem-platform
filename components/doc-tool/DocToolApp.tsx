@@ -114,8 +114,9 @@ export function DocToolApp() {
       setStatus("جارٍ المعالجة…");
       const added: ToolDoc[] = [];
       for (const f of list) {
-        const r = await extractFile(f);
+        const r = await extractFile(f, (label) => setStatus(`${f.name}: ${label}`));
         added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text) });
+        if (r.warning) setError(`⚠ ${f.name}: ${r.warning}`);
       }
       const ok = added.filter((d) => d.rawText.trim()).length;
       setDocs((prev) => {
@@ -164,7 +165,9 @@ export function DocToolApp() {
       <header className={styles.header}>
         <div className={styles.brand}>
           <b>أداة معالجة الوثائق العربية</b>
-          <small>حكيم — استخراج وتطبيع وبحث</small>
+          <small>
+            حكيم — استخراج وتطبيع وبحث · <a className={styles.brandLink} href="/documents/app">منصة الوثائق ↗</a>
+          </small>
         </div>
         <input
           className={styles.search}
@@ -181,7 +184,7 @@ export function DocToolApp() {
             className={styles.hiddenInput}
             type="file"
             multiple
-            accept=".txt,.md,.csv,.json,.docx"
+            accept=".txt,.md,.csv,.json,.docx,.pdf,.png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff"
             onChange={(e) => {
               if (e.target.files) void upload(e.target.files);
               e.target.value = "";
@@ -281,14 +284,15 @@ export function DocToolApp() {
                 📎 اسحب ملفاتك هنا أو اضغط «إرفاق ملفات»
                 <br />
                 <small>
-                  نص (txt / md / csv / json) و‏Word (docx) — تُستخرَج وتُطبَّع داخل متصفحك، ولا
-                  يغادر الملف جهازك؛ النص المستخرَج يُحفَظ في حسابك (كوكي المتصفح).
+                  كل الصيغ: نص (txt / md / csv / json) و‏Word (docx) و‏PDF (نصّي أو ممسوح) والصور —
+                  الممسوح يُقرأ بـ OCR عربي داخل متصفحك، ولا يغادر الملف جهازك؛ النص المستخرَج
+                  يُحفَظ في حسابك (كوكي المتصفح).
                 </small>
               </div>
               <div className={styles.note}>
-                <b>ملاحظة:</b> ‏PDF الممسوح والصور (OCR) تحتاج نسخة الخادم — راجع{" "}
-                <code dir="ltr">tools/arabic-doc-tool</code>. ولمنصة الفحص المتقدمة (كيانات، جداول
-                مشتقة، OCR في المتصفح): <a href="/documents/app">منصة الوثائق</a>.
+                <b>تريد فحصاً أعمق؟</b> لمنصة الفحص المتقدمة (تصنيف، كيانات مظلَّلة، جداول مشتقة،
+                مقتطفات وتصدير): <a href="/documents/app">منصة الوثائق</a> — نفس المحرّكات، نفس
+                الخصوصية.
               </div>
               {error ? <div className={styles.empty}>⚠ {error}</div> : null}
               <div className={styles.hint}>

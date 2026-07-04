@@ -60,6 +60,11 @@
   font-size: 11px;
   letter-spacing: 0.04em;
 }
+.brandLink {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .search {
   flex: 1;
   min-width: 180px;
