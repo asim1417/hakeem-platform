@@ -34,9 +34,9 @@ export class MenuScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 88, rtl('نجوم البلنتيات'), {
         fontFamily: FONT,
         fontSize: '54px',
-        color: '#ffd93d',
+        color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#07111f',
         strokeThickness: 12,
       })
       .setOrigin(0.5);
@@ -47,7 +47,7 @@ export class MenuScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 140, rtl('⚽ سدّد… واصنع المجد! ⚽'), {
         fontFamily: FONT,
         fontSize: '21px',
-        color: '#ffffff',
+        color: '#00d7ff',
         fontStyle: 'bold',
         stroke: '#1a5c2e',
         strokeThickness: 5,
@@ -216,7 +216,7 @@ export class MenuScene extends Phaser.Scene {
       }
     }
     // تظليل علوي وسفلي لإبراز الشعار وشريط الحالة
-    this.add.rectangle(GAME_WIDTH / 2, 70, GAME_WIDTH, 190, 0x0c3a1c, 0.32);
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 55, GAME_WIDTH, 130, 0x0c3a1c, 0.32);
+    this.add.rectangle(GAME_WIDTH / 2, 70, GAME_WIDTH, 190, COLORS.navy, 0.38);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 55, GAME_WIDTH, 130, COLORS.navy, 0.38);
   }
 }

@@ -14,6 +14,11 @@ export const COLORS = {
   orange: 0xff8c42,
   pink: 0xff6b9d,
   net: 0xe8f6ff,
+  // ألوان الهوية البصرية (design_tokens.json)
+  gold: 0xffd45a,
+  navy: 0x07111f,
+  lime: 0xb7ff2a,
+  cyan: 0x00d7ff,
 };
 
 // أبعاد المرمى والملعب
@@ -101,4 +106,4 @@ export function arabicNum(n: number): string {
 export const FONT = 'Arial, "Segoe UI", Tahoma, sans-serif';
 
 // رقم الإصدار — يظهر أسفل القائمة للتحقق من أن الجهاز يعرض آخر نسخة
-export const VERSION = 'الإصدار ١٠';
+export const VERSION = 'الإصدار ١١';
