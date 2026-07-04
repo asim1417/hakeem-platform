@@ -1,0 +1,16 @@
+{
+  "name": "Football Future",
+  "short_name": "FFuture",
+  "description": "Original mobile football game prototype for ages 7-14.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/football-future/",
+  "scope": "/football-future/",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "theme_color": "#0B0F14",
+  "background_color": "#0B0F14",
+  "icons": [
+    { "src": "/football-future/src/assets/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

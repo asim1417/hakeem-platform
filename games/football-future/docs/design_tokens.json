@@ -1,0 +1,168 @@
+{
+  "project": "Football Future - Mobile Football Game Visual Identity",
+  "languageSupport": {
+    "primary": "ar",
+    "secondary": "en",
+    "rtl": true
+  },
+  "colors": {
+    "background": {
+      "deepBlack": "#0B0F14",
+      "graphite": "#111720",
+      "deepNavy": "#1B2430",
+      "steelBlue": "#2A3442"
+    },
+    "brand": {
+      "electricLime": "#C6FF00",
+      "cyan": "#00E5FF",
+      "teal": "#00BFAE",
+      "white": "#FFFFFF",
+      "silver": "#B2BCC6"
+    },
+    "state": {
+      "success": "#36F58A",
+      "warning": "#FFD23F",
+      "error": "#FF4D4D",
+      "info": "#00B8FF",
+      "premium": "#B967FF"
+    },
+    "overlay": {
+      "glass": "rgba(17, 23, 32, 0.82)",
+      "scrim": "rgba(0,0,0,0.55)",
+      "line": "rgba(255,255,255,0.10)"
+    }
+  },
+  "gradients": {
+    "primaryCTA": [
+      "#C6FF00",
+      "#9EEB00"
+    ],
+    "secondaryCTA": [
+      "#00E5FF",
+      "#00BFAE"
+    ],
+    "darkPanel": [
+      "#111720",
+      "#0B0F14"
+    ],
+    "energyMotion": [
+      "#C6FF00",
+      "#00E5FF",
+      "#00BFAE"
+    ]
+  },
+  "typography": {
+    "arabic": {
+      "heading": "DIN Next Arabic Bold / Noto Kufi Arabic Bold",
+      "body": "DIN Next Arabic Regular / Noto Sans Arabic"
+    },
+    "latin": {
+      "heading": "DIN Next / Inter / Rajdhani",
+      "body": "Inter / Noto Sans"
+    },
+    "sizes": {
+      "screenTitle": 28,
+      "sectionTitle": 20,
+      "cardTitle": 16,
+      "body": 14,
+      "caption": 12,
+      "rating": 44,
+      "button": 15
+    }
+  },
+  "spacing": {
+    "base": 8,
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48
+  },
+  "radius": {
+    "xs": 6,
+    "sm": 10,
+    "md": 16,
+    "lg": 24,
+    "pill": 999
+  },
+  "border": {
+    "thin": "1px",
+    "active": "1px solid rgba(198,255,0,0.55)",
+    "default": "1px solid rgba(0,229,255,0.25)",
+    "subtle": "1px solid rgba(255,255,255,0.10)"
+  },
+  "shadow": {
+    "card": "0 12px 30px rgba(0,0,0,0.35)",
+    "limeGlow": "0 0 22px rgba(198,255,0,0.35)",
+    "cyanGlow": "0 0 22px rgba(0,229,255,0.28)"
+  },
+  "motion": {
+    "press": {
+      "durationMs": 100,
+      "scale": 0.97,
+      "easing": "easeOut"
+    },
+    "pageTransition": {
+      "durationMs": 280,
+      "type": "slideFade",
+      "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+    },
+    "modal": {
+      "durationMs": 220,
+      "type": "fadeScale"
+    },
+    "rewardReveal": {
+      "durationMs": 800,
+      "type": "glowPulseCounter"
+    }
+  },
+  "touch": {
+    "minTargetPx": 44,
+    "safeEdgePx": 16,
+    "hudButtonPx": 64,
+    "joystickPx": 132
+  },
+  "components": {
+    "button": [
+      "primary",
+      "secondary",
+      "ghost",
+      "outline",
+      "danger",
+      "disabled",
+      "loading"
+    ],
+    "card": [
+      "player",
+      "mission",
+      "reward",
+      "event",
+      "offer",
+      "team",
+      "mode"
+    ],
+    "navigation": [
+      "bottomNav",
+      "topBar",
+      "modeGrid",
+      "routeCard"
+    ],
+    "feedback": [
+      "success",
+      "error",
+      "warning",
+      "info",
+      "empty",
+      "loading"
+    ],
+    "gameplay": [
+      "scoreboard",
+      "minimap",
+      "joystick",
+      "actionButton",
+      "tacticCommand",
+      "matchSummary"
+    ]
+  }
+}
