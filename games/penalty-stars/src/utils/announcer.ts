@@ -85,7 +85,9 @@ export const announcer = {
   onShot(scene: Phaser.Scene, player: PlayerDef): void {
     if (Math.random() < 0.65) {
       showBubble(scene, player.cheer, player.color);
-      playClip(`cheer-${player.id}`, 220);
+      // لاعبو العائلة بلا مقطع خاص — يهتف لهم المعلق بعبارة عامة
+      if (clips.has(`cheer-${player.id}`)) playClip(`cheer-${player.id}`, 220);
+      else playClip(`cheer-gen-${Math.floor(Math.random() * GENERIC_CHEERS.length)}`, 220);
     } else {
       const i = Math.floor(Math.random() * GENERIC_CHEERS.length);
       showBubble(scene, GENERIC_CHEERS[i], player.color);

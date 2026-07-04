@@ -4,6 +4,8 @@
 import Phaser from 'phaser';
 import { COLORS } from '../config/gameConfig';
 import { PLAYERS } from '../data/players';
+import { progress } from '../utils/progress';
+import { makeCircularAvatar } from '../utils/avatar';
 
 // خريطة الأصول الموحّدة (الملاعب والكرات) — انظر src/data/assetsManifest.ts
 import { assetsManifest } from '../data/assetsManifest';
@@ -22,6 +24,10 @@ export class BootScene extends Phaser.Scene {
     for (const p of PLAYERS) {
       if (p.photo) this.load.image(`avatar-${p.id}`, p.photo);
     }
+    // صور لاعبي العائلة المضافين — من ذاكرة الجهاز، تُقصّ دائريًا في create
+    for (const c of progress.customPlayers()) {
+      this.load.image(`photo-${c.id}`, c.photo);
+    }
   }
 
   create(): void {
@@ -35,6 +41,10 @@ export class BootScene extends Phaser.Scene {
     for (const p of PLAYERS) {
       if (!this.textures.exists(`avatar-${p.id}`)) this.makeAvatar(p.id, p.color);
     }
+    // أفاتار دائري بإطار ذهبي للاعبي العائلة
+    for (const c of progress.customPlayers()) {
+      makeCircularAvatar(this, `avatar-${c.id}`, `photo-${c.id}`);
+    }
     this.scene.start('Menu');
   }
 
@@ -42,8 +52,8 @@ export class BootScene extends Phaser.Scene {
   private makeUiKit(): void {
     this.gradientTexture('btn-primary', '#b7ff2a', '#00d7ff'); // زر أساسي: ليموني ← سماوي
     this.gradientTexture('btn-gold', '#ffd45a', '#ff9d2e'); // مكافآت
-    this.glassTexture('btn-glass', 340, 80, 20); // زر ثانوي زجاجي
-    this.glassTexture('panel-glass', 360, 120, 18); // لوحة HUD
+    this.glassTexture('btn-glass', 340, 80, 20, true); // زر ثانوي: أبيض شفاف بحد خفيف (الدليل §7)
+    this.glassTexture('panel-glass', 360, 120, 18); // لوحة HUD كحلية للوضوح فوق الملاعب
     this.chipTexture(); // رقاقة دائرية للأيقونات
     this.makeGlyphs();
   }
@@ -71,16 +81,22 @@ export class BootScene extends Phaser.Scene {
     tex.refresh();
   }
 
-  // طبقة زجاجية كحلية شفافة بحد أبيض ناعم
-  private glassTexture(key: string, w: number, h: number, r: number): void {
+  // طبقة زجاجية شفافة بحد ناعم — كحلية للوحات، بيضاء للأزرار الثانوية (وفق الدليل)
+  private glassTexture(key: string, w: number, h: number, r: number, light = false): void {
     const tex = this.textures.createCanvas(key, w, h);
     if (!tex) return;
     const ctx = tex.getContext();
     this.roundedPath(ctx, 2, 2, w - 4, h - 4, r);
-    ctx.fillStyle = 'rgba(7,17,31,0.62)';
+    // زجاج أبيض فوق تعتيم خفيف يضمن قراءة النص الأبيض على الملاعب المضيئة
+    ctx.fillStyle = light ? 'rgba(7,17,31,0.35)' : 'rgba(7,17,31,0.62)';
     ctx.fill();
+    if (light) {
+      this.roundedPath(ctx, 2, 2, w - 4, h - 4, r);
+      ctx.fillStyle = 'rgba(248,255,247,0.16)';
+      ctx.fill();
+    }
     ctx.lineWidth = 2.5;
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.strokeStyle = light ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.5)';
     ctx.stroke();
     tex.refresh();
   }

@@ -2,6 +2,7 @@
 // لإضافة صورة حقيقية للاعب: ضع الصورة في src/assets/players/
 // واستوردها هنا ثم أسندها لحقل photo — تُستخدم تلقائيًا بدل الشكل المرسوم
 
+import { CustomPlayerSaved, progress } from '../utils/progress';
 import saloumiPhoto from '../assets/players/saloumi.webp';
 import hassouniPhoto from '../assets/players/hassouni.webp';
 import hammadPhoto from '../assets/players/hammad.webp';
@@ -155,6 +156,28 @@ export const PLAYERS: PlayerDef[] = [
   },
 ];
 
+// لاعب العائلة المضاف من الجهاز — إحصائيات متوازنة ولون ذهبي مميز
+export function customToDef(c: CustomPlayerSaved): PlayerDef {
+  return {
+    id: c.id,
+    name: c.name,
+    emoji: '⭐',
+    color: 0xffd45a,
+    speed: 7,
+    power: 7,
+    accuracy: 7,
+    celebration: `نجم العائلة ${c.name}! ⭐`,
+    celebrationType: 'stars',
+    cheer: `${c.name} يسدد بثقة!`,
+    photo: c.photo,
+  };
+}
+
+// كل اللاعبين: الأساسيون + من أضافتهم العائلة
+export function allPlayers(): PlayerDef[] {
+  return [...PLAYERS, ...progress.customPlayers().map(customToDef)];
+}
+
 export function getPlayer(id: string): PlayerDef {
-  return PLAYERS.find((p) => p.id === id) ?? PLAYERS[1];
+  return allPlayers().find((p) => p.id === id) ?? PLAYERS[1];
 }

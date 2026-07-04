@@ -2,12 +2,26 @@
 
 import Phaser from 'phaser';
 
-// انتقال ناعم بين المشاهد (fadeOut ثم start) — يقابله fadeIn في create كل مشهد
+// انتقال بين المشاهد وفق الدليل: شعاع ضوء ملعب يمسح الشاشة من اليمين لليسار
+// خلال ~380ms بينما ستارة كحلية تشتد خلفه — يقابله fadeIn في create كل مشهد
 export function go(scene: Phaser.Scene, key: string, data?: object): void {
-  const cam = scene.cameras.main;
-  cam.fadeOut(180, 7, 17, 31);
-  cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-    scene.scene.start(key, data);
+  const w = scene.scale.width;
+  const h = scene.scale.height;
+  const cover = scene.add.rectangle(w / 2, h / 2, w, h, 0x07111f, 0).setDepth(9998).setScrollFactor(0);
+  const band = scene.add.graphics().setDepth(9999).setScrollFactor(0);
+  // شعاع أبيض متدرج: يتوهج في وسطه ويخفت على حافتيه
+  band.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0, 0.55, 0, 0.55);
+  band.fillRect(0, 0, 85, h);
+  band.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.55, 0, 0.55, 0);
+  band.fillRect(85, 0, 85, h);
+  band.x = w + 20;
+  scene.tweens.add({ targets: band, x: -200, duration: 380, ease: 'Sine.easeIn' });
+  scene.tweens.add({
+    targets: cover,
+    fillAlpha: 1,
+    duration: 340,
+    delay: 40,
+    onComplete: () => scene.scene.start(key, data),
   });
 }
 

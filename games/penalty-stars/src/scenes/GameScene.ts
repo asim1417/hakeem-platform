@@ -20,7 +20,7 @@ import {
   SHOTS_PER_ROUND,
   STAGES,
 } from '../config/gameConfig';
-import { getPlayer, PLAYERS, PlayerDef } from '../data/players';
+import { allPlayers, getPlayer, PlayerDef } from '../data/players';
 import { audio } from '../utils/audio';
 import { bouncePhrase, confetti, playerCelebration, starBurst } from '../utils/animations';
 import { progress } from '../utils/progress';
@@ -123,9 +123,10 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.player = getPlayer(this.registry.get('playerId') as string);
     if (this.mode === 'duel') {
-      // اللاعب الثاني: الشخصية التالية في القائمة — صديقك على نفس الجهاز
-      const i = PLAYERS.findIndex((p) => p.id === this.player.id);
-      this.duelPlayers = [this.player, PLAYERS[(i + 1) % PLAYERS.length]];
+      // اللاعب الثاني: الشخصية التالية في القائمة (تشمل لاعبي العائلة) — صديقك على نفس الجهاز
+      const list = allPlayers();
+      const i = list.findIndex((p) => p.id === this.player.id);
+      this.duelPlayers = [this.player, list[(i + 1) % list.length]];
     }
     this.drawField();
     this.drawGoal();
@@ -400,7 +401,7 @@ export class GameScene extends Phaser.Scene {
     this.aimArrow.clear();
     if (dir.length() < SHOT.minDrag || dir.y > -10) return;
     const powerRatio = Phaser.Math.Clamp((dir.length() * SHOT.dragToPower) / SHOT.maxPower, 0, 1);
-    const color = powerRatio < 0.5 ? COLORS.lime : powerRatio < 0.8 ? COLORS.gold : 0xff3e3e;
+    const color = powerRatio < 0.5 ? COLORS.lime : powerRatio < 0.8 ? COLORS.gold : COLORS.dangerRed;
     // إزاحة ٣٠ بكسل للأعلى: رأس السهم يظهر فوق الإصبع لا تحته
     const end = new Phaser.Math.Vector2(this.ball.x, this.ball.y - 30).add(dir.clone().setLength(60 + powerRatio * 130));
     this.aimArrow.lineStyle(8, color, 0.9);
@@ -674,11 +675,30 @@ export class GameScene extends Phaser.Scene {
         overlay.destroy();
         label.destroy();
         ghost.destroy();
+        skip.destroy();
       },
     });
     const per = 1.15 / pts.length;
     for (const pt of pts) tl.to(ghost, { x: pt.x, y: pt.y, duration: per, ease: 'none' });
     tl.to(ghost, { alpha: 0, duration: 0.2 });
+
+    // ⏭️ زر تخطي الإعادة (الدليل §12)
+    const skip = this.add
+      .text(GAME_WIDTH / 2, 560, rtl('⏭️ تخطي'), {
+        fontFamily: FONT,
+        fontSize: '19px',
+        color: '#f8fff7',
+        fontStyle: 'bold',
+        backgroundColor: '#07111faa',
+        padding: { x: 14, y: 7 },
+      })
+      .setOrigin(0.5)
+      .setDepth(42)
+      .setInteractive({ useHandCursor: true });
+    skip.on('pointerup', () => {
+      audio.play('button');
+      tl.progress(1); // يقفز للنهاية — onComplete ينظف كل شيء
+    });
   }
 
   // بعد حسم تسديدة اللاعب: دور الحراسة في المباراة، أو التسديدة التالية
