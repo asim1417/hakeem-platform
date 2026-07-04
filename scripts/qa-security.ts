@@ -39,7 +39,8 @@ function scanFile(file: string) {
     const isExample = rel === ".env.example" || isDocumentation;
     const isServerAiGateway = rel.startsWith(path.join("lib", "modules", "ai")) || rel.startsWith(path.join("app", "api"));
     // لعبة الأطفال تخزن تقدم اللعب فقط (عدد نجوم) محليًا — لا بيانات شخصية
-    const isKidsGame = rel.startsWith("games" + path.sep);
+    // يشمل نسختها المبنية المنشورة تحت public/penalty-stars
+    const isKidsGame = rel.startsWith("games" + path.sep) || rel.startsWith(path.join("public", "penalty-stars"));
 
     if (/sk-[A-Za-z0-9_-]{20,}/.test(line)) {
       findings.push({ file: rel, line: index + 1, reason: "مفتاح API محتمل مكشوف", text: trimmed });
