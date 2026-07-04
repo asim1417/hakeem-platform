@@ -11,6 +11,7 @@ import omarPhoto from '../assets/players/omar.webp';
 import sheikhPhoto from '../assets/players/sheikh.webp';
 import mohammedPhoto from '../assets/players/mohammed.webp';
 import azzamPhoto from '../assets/players/azzam.webp';
+import awsPhoto from '../assets/players/aws.webp';
 
 // نوع الاحتفال عند تسجيل الهدف
 export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart' | 'roar' | 'crown';
@@ -119,6 +120,7 @@ export const PLAYERS: PlayerDef[] = [
     celebration: 'دقة مذهلة يا أوس! 🎯',
     celebrationType: 'flag',
     cheer: 'المعلم أوس يعرف الزاوية!',
+    photo: awsPhoto,
   },
   {
     id: 'azzam',
