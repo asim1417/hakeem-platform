@@ -15,13 +15,24 @@ import {
   type HighlightRange
 } from "@/lib/modules/doc-tool/normalize";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
+import {
+  AlertIcon,
+  CheckSealIcon,
+  DocScaleIcon,
+  PaperclipIcon
+} from "@/components/ui/HakeemIcons";
 import styles from "./doc-tool.module.css";
 
 interface ToolDoc {
   title: string;
   kind: string;
   rawText: string;
+  /* الترويسات/التذييلات المتكررة المفصولة كبيانات وصفية (وفق دليل المعالجة) */
+  running?: string;
 }
+
+/* مؤشر مراحل المعالجة: رفع ← استخراج ← تعرّف ← جاهز */
+const STAGES = ["رفع", "استخراج", "تعرّف", "جاهز"] as const;
 
 const AR = "ar-EG";
 
@@ -65,6 +76,7 @@ export function DocToolApp() {
   const [loaded, setLoaded] = useState(false);
   const [cloudAvailable, setCloudAvailable] = useState(false);
   const [cloudOcr, setCloudOcr] = useState(false);
+  const [stage, setStage] = useState(0); // 0 خامل · 1 رفع · 2 استخراج · 3 تعرّف · 4 جاهز
   const fileRef = useRef<HTMLInputElement>(null);
 
   // الخيار السحابي يظهر فقط إن كانت الخدمة السحابية مفعّلة على الخادم.
@@ -131,15 +143,22 @@ export function DocToolApp() {
       const list = Array.from(files);
       if (!list.length) return;
       setStatus("جارٍ المعالجة…");
+      setStage(1);
       const added: ToolDoc[] = [];
       for (const f of list) {
+        setStage(2);
         const r = await extractFile(f, {
-          onProgress: (label) => setStatus(`${f.name}: ${label}`),
+          onProgress: (label) => {
+            setStage(/OCR|ضوئية|تعرّف|Gemini/.test(label) ? 3 : 2);
+            setStatus(`${f.name}: ${label}`);
+          },
           cloudOcr
         });
-        added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text) });
-        if (r.warning) setError(`⚠ ${f.name}: ${r.warning}`);
+        added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text), running: r.running });
+        if (r.warning) setError(`${f.name}: ${r.warning}`);
       }
+      setStage(4);
+      setTimeout(() => setStage(0), 3000);
       const ok = added.filter((d) => d.rawText.trim()).length;
       setDocs((prev) => {
         const next = [...added, ...prev];
@@ -187,7 +206,7 @@ export function DocToolApp() {
       <header className={styles.header}>
         <div className={styles.brand}>
           <b>
-            <a className={styles.brandHome} href="/documents">منصة الوثائق</a> · البحث السريع
+            <DocScaleIcon size={17} /> <a className={styles.brandHome} href="/documents">منصة الوثائق</a> · البحث السريع
           </b>
           <nav className={styles.tabs} aria-label="أقسام منصة الوثائق">
             <a className={styles.tab} href="/documents">البوابة</a>
@@ -233,6 +252,18 @@ export function DocToolApp() {
             OCR سحابي فائق الدقة
           </label>
         ) : null}
+        {stage > 0 ? (
+          <span className={styles.stages} aria-label="مراحل المعالجة">
+            {STAGES.map((label, i) => (
+              <span
+                key={label}
+                className={i + 1 === stage ? styles.stageOn : i + 1 < stage ? styles.stageDone : styles.stage}
+              >
+                {label}
+              </span>
+            ))}
+          </span>
+        ) : null}
         <span className={styles.cnt} role="status">
           {status || counter}
         </span>
@@ -241,9 +272,14 @@ export function DocToolApp() {
       <div className={styles.wrap}>
         <main className={styles.main}>
           {current ? (
-            <div>
+            <div className={styles.docView}>
               <h2 className={styles.docTitle}>
-                {current.title} <span className={styles.kind}>{current.kind}</span>
+                {current.title} <span className={styles.kind}>{current.kind}</span>{" "}
+                {!current.kind.includes("Gemini") && current.rawText ? (
+                  <span className={styles.sealBadge}>
+                    <CheckSealIcon size={13} /> معالجة محلية
+                  </span>
+                ) : null}
               </h2>
               <div className={styles.docBar}>
                 <button
@@ -291,6 +327,18 @@ export function DocToolApp() {
                   ← رجوع
                 </button>
               </div>
+              {current.kind.includes("Gemini") ? (
+                <div className={styles.aiWarn}>
+                  <AlertIcon size={18} />
+                  <span>قراءة ذكاء اصطناعي (Gemini) — راجع المبالغ والأرقام والتواريخ بشرياً قبل الاعتماد.</span>
+                </div>
+              ) : null}
+              {current.running ? (
+                <details className={styles.running}>
+                  <summary>ترويسة/تذييل متكرران فُصلا كبيانات وصفية — اعرضهما</summary>
+                  <pre>{current.running}</pre>
+                </details>
+              ) : null}
               <hr className={styles.rule} />
               <div className={styles.txt}>
                 {current.rawText
@@ -320,7 +368,7 @@ export function DocToolApp() {
                   void upload(e.dataTransfer.files);
                 }}
               >
-                📎 اسحب ملفاتك هنا أو اضغط «إرفاق ملفات»
+                <PaperclipIcon size={22} /> اسحب ملفاتك هنا أو اضغط «إرفاق ملفات»
                 <br />
                 <small>
                   كل الصيغ: نص (txt / md / csv / json) و‏Word (docx) و‏PDF (نصّي أو ممسوح) والصور —
@@ -332,6 +380,15 @@ export function DocToolApp() {
                 <b>تريد فحصاً أعمق؟</b> انتقل إلى <a href="/documents/app">محطة العمل</a> —
                 تصنيف وكيانات مظلَّلة وجداول مشتقة ومقتطفات وتصدير، بنفس المحرّكات ونفس الخصوصية.
               </div>
+              {cloudOcr ? (
+                <div className={styles.aiWarn}>
+                  <AlertIcon size={18} />
+                  <span>
+                    القراءة السحابية مخرَج ذكاء اصطناعي: قد «يصحّح» الأرقامَ والمبالغ إلى قيم
+                    متوقعة — راجعها بشرياً قبل الاعتماد في أي وثيقة قانونية أو صك.
+                  </span>
+                </div>
+              ) : null}
               {error ? <div className={styles.empty}>⚠ {error}</div> : null}
               <div className={styles.hint}>
                 {loaded ? "اختر وثيقة من القائمة أو ارفع ملفات ثم ابحث." : "جارٍ التحميل…"}

@@ -1,6 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./landing.module.css";
+import {
+  AlertIcon,
+  DocScaleIcon,
+  DriveIcon,
+  EyeIcon,
+  ExportIcon,
+  FolderIcon,
+  QuoteIcon,
+  SaveIcon,
+  ScanIcon,
+  SearchIcon,
+  ShieldIcon,
+  TableIcon,
+  TagIcon,
+  UploadIcon
+} from "@/components/ui/HakeemIcons";
 
 export const metadata: Metadata = {
   title: "منصة الوثائق — قراءة وفحص المستندات القانونية",
@@ -8,18 +24,19 @@ export const metadata: Metadata = {
     "ارفع وثائقك القانونية (PDF/Word/نص) وتصفّحها مقروءةً ومصنّفةً ومرمّزة: بحث اشتقاقي، تلوين كيانات، جداول مشتقة، مقتطفات، تصدير، وقفل مشفّر — التحليل كله في متصفحك."
 };
 
+// أيقونات خطية موحّدة (HakeemIcons) بدل الإيموجي — وفق دليل الهوية البصرية
 const FEATURES = [
-  { ic: "📂", t: "رفع مباشر", d: "PDF نصّي وWord وTXT وJSON — يُستخرج النص في متصفحك دون أن يغادر الملف جهازك." },
-  { ic: "🔎", t: "قراءة ضوئية OCR", d: "الصور والوثائق الممسوحة ضوئياً تُقرأ عربياً داخل متصفحك (Tesseract) — الصورة لا تُرفع لأي خادم." },
-  { ic: "▲", t: "استيراد من Google Drive", d: "اربط درايف واستورد مستنداتك مباشرةً (يتطلب تهيئة المنصة بمفاتيح Google) — قراءة فقط للملفات التي تختارها." },
-  { ic: "🏷️", t: "تصنيف وترميز آلي", d: "نوع الوثيقة والجهة المُصدِرة والسنة، ورمز هرمي أرشيفي مثل HKM.TIJ.1446.001 — وفق مرجع تشغيلي قابل للمراجعة." },
-  { ic: "🔎", t: "بحث بمستوى المحترفين", d: "عبارة دقيقة، استبعاد، «أو»، اشتقاق صرفي، وترتيب بالصلة BM25 مع تنقّل بين المطابقات كبرنامج وورد." },
-  { ic: "🎨", t: "قراءة مريحة", d: "تلوين الأطراف والمبالغ والتواريخ والأنظمة، خطوط وأحجام وسمات (فاتح/ليلي/ورقي)، ووضع قراءة صافٍ." },
-  { ic: "📊", t: "جداول تُبنى وحدها", d: "الخط الزمني، الصكوك، المبالغ، الأنظمة، المحطات الإجرائية، الإحصاءات، المصطلحات، والأكثر تكراراً — كلها من وثائقك." },
-  { ic: "⚠️", t: "كشف غير الواضح", d: "الكلمات المشوّهة من المسح الضوئي تُعلَّم بتسطير متموّج ومؤشر جودة لكل وثيقة." },
-  { ic: "✂️", t: "مقتطفات وملاحظات", d: "ظلّل أي نص واحفظه كمقتطف مسنَد لمصدره، وعلّم الوثائق (مهم/روجع/يحتاج مراجعة)." },
-  { ic: "💾", t: "قضاياك محفوظة", d: "احفظ مجموعة الوثائق بملاحظاتها في حسابك وافتحها من أي وقت — أو صدّرها نسخة مقفلة مشفّرة AES-GCM." },
-  { ic: "📤", t: "تصدير احترافي", d: "Word وطباعة/PDF وHTML وبطاقات CSV والمقتطفات — بنطاق تختاره (المحدد/المطابق/الكل)." }
+  { ic: UploadIcon, t: "رفع مباشر", d: "PDF نصّي وWord وTXT وJSON — يُستخرج النص في متصفحك دون أن يغادر الملف جهازك." },
+  { ic: ScanIcon, t: "قراءة ضوئية OCR", d: "الصور والوثائق الممسوحة ضوئياً تُقرأ عربياً داخل متصفحك (Tesseract) — الصورة لا تُرفع لأي خادم." },
+  { ic: DriveIcon, t: "استيراد من Google Drive", d: "اربط درايف واستورد مستنداتك مباشرةً (يتطلب تهيئة المنصة بمفاتيح Google) — قراءة فقط للملفات التي تختارها." },
+  { ic: TagIcon, t: "تصنيف وترميز آلي", d: "نوع الوثيقة والجهة المُصدِرة والسنة، ورمز هرمي أرشيفي مثل HKM.TIJ.1446.001 — وفق مرجع تشغيلي قابل للمراجعة." },
+  { ic: SearchIcon, t: "بحث بمستوى المحترفين", d: "عبارة دقيقة، استبعاد، «أو»، اشتقاق صرفي، وترتيب بالصلة BM25 مع تنقّل بين المطابقات كبرنامج وورد." },
+  { ic: EyeIcon, t: "قراءة مريحة", d: "تلوين الأطراف والمبالغ والتواريخ والأنظمة، خطوط وأحجام وسمات (فاتح/ليلي/ورقي)، ووضع قراءة صافٍ." },
+  { ic: TableIcon, t: "جداول تُبنى وحدها", d: "الخط الزمني، الصكوك، المبالغ، الأنظمة، المحطات الإجرائية، الإحصاءات، المصطلحات، والأكثر تكراراً — كلها من وثائقك." },
+  { ic: AlertIcon, t: "كشف غير الواضح", d: "الكلمات المشوّهة من المسح الضوئي تُعلَّم بتسطير متموّج ومؤشر جودة لكل وثيقة." },
+  { ic: QuoteIcon, t: "مقتطفات وملاحظات", d: "ظلّل أي نص واحفظه كمقتطف مسنَد لمصدره، وعلّم الوثائق (مهم/روجع/يحتاج مراجعة)." },
+  { ic: SaveIcon, t: "قضاياك محفوظة", d: "احفظ مجموعة الوثائق بملاحظاتها في حسابك وافتحها من أي وقت — أو صدّرها نسخة مقفلة مشفّرة AES-GCM." },
+  { ic: ExportIcon, t: "تصدير احترافي", d: "Word وطباعة/PDF وHTML وبطاقات CSV والمقتطفات — بنطاق تختاره (المحدد/المطابق/الكل)." }
 ];
 
 const STEPS = [
@@ -35,7 +52,7 @@ export default function DocumentsLandingPage() {
       <div className={styles.topbar}>
         <div className={styles.topbarIn}>
           <span className={styles.seal} aria-hidden="true">
-            و
+            <DocScaleIcon size={20} />
           </span>
           <span className={styles.brand}>
             منصة الوثائق<span>· قراءة وفحص المستندات القانونية</span>
@@ -69,7 +86,9 @@ export default function DocumentsLandingPage() {
             <Link href="/documents/tool" className={styles.secondary}>
               البحث السريع
             </Link>
-            <span className={styles.privacyChip}>🔒 نص وثيقتك لا يغادر متصفحك أثناء الفحص</span>
+            <span className={styles.privacyChip}>
+              <ShieldIcon size={16} /> نص وثيقتك لا يغادر متصفحك أثناء الفحص
+            </span>
           </div>
         </div>
       </header>
@@ -79,7 +98,7 @@ export default function DocumentsLandingPage() {
         <div className={styles.grid}>
           <Link href="/documents/tool" className={styles.card} style={{ textDecoration: "none" }}>
             <span className={styles.ic} aria-hidden="true">
-              🔎
+              <SearchIcon size={26} />
             </span>
             <h3>البحث السريع</h3>
             <p>
@@ -89,7 +108,7 @@ export default function DocumentsLandingPage() {
           </Link>
           <Link href="/documents/app" className={styles.card} style={{ textDecoration: "none" }}>
             <span className={styles.ic} aria-hidden="true">
-              🗂️
+              <FolderIcon size={26} />
             </span>
             <h3>محطة العمل — الفحص المتقدم</h3>
             <p>
@@ -104,7 +123,7 @@ export default function DocumentsLandingPage() {
           {FEATURES.map((f) => (
             <div key={f.t} className={styles.card}>
               <span className={styles.ic} aria-hidden="true">
-                {f.ic}
+                <f.ic size={26} />
               </span>
               <h3>{f.t}</h3>
               <p>{f.d}</p>

@@ -20,6 +20,8 @@ export interface ToolDoc {
   title: string;
   kind: string;
   rawText: string;
+  /** ترويسات/تذييلات متكررة مفصولة كبيانات وصفية */
+  running?: string;
 }
 
 function sanitizeDocs(payload: unknown): ToolDoc[] | null {
@@ -32,7 +34,8 @@ function sanitizeDocs(payload: unknown): ToolDoc[] | null {
     const kind = typeof o.kind === "string" ? o.kind.slice(0, 60) : "نص";
     const title = o.title.trim().slice(0, 300);
     if (!title) return null;
-    docs.push({ title, kind, rawText: o.rawText.slice(0, MAX_TEXT_CHARS) });
+    const running = typeof o.running === "string" && o.running.trim() ? o.running.slice(0, 5000) : undefined;
+    docs.push({ title, kind, rawText: o.rawText.slice(0, MAX_TEXT_CHARS), ...(running ? { running } : {}) });
   }
   return docs;
 }

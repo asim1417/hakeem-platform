@@ -213,6 +213,15 @@ function renderDocHtml(
     .join("");
 }
 
+/** التاريخ الهجري أولاً (أم القرى) والميلادي مسانداً — وفق دليل الهوية */
+function formatHijri(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", { dateStyle: "medium" }).format(new Date(iso));
+  } catch {
+    return iso.slice(0, 10);
+  }
+}
+
 export function CaseBrowser() {
   // الوثائق: تعيش في ذاكرة الجلسة فقط
   const [inputs, setInputs] = useState<DocumentInput[]>([]);
@@ -1953,7 +1962,7 @@ export function CaseBrowser() {
                 <div key={c.id} className={styles.quote}>
                   <b>{c.title}</b> — {c.docCount} وثيقة
                   <div style={{ color: "var(--mut)", fontSize: 11.5, marginTop: 4, display: "flex", gap: 12 }}>
-                    <span>{c.updatedAt.slice(0, 10)}</span>
+                    <span title={c.updatedAt.slice(0, 10)}>{formatHijri(c.updatedAt)}</span>
                     <button
                       style={{ border: "none", background: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12 }}
                       onClick={() => void loadCase(c.id)}
