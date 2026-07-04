@@ -36,6 +36,7 @@ const KEEPER_RANGE = GOAL.width / 2 - 40; // مدى حركة الحارس
 
 export class GameScene extends Phaser.Scene {
   private mode: GameMode = 'tournament';
+  private stadiumKey = 'stadium-real';
   private stage = 0; // دور البطولة الحالي
   private golden = false; // الضربة الذهبية في المباراة
   private player!: PlayerDef;
@@ -91,6 +92,7 @@ export class GameScene extends Phaser.Scene {
   private drawField(): void {
     // في البطولة لكل دور ملعبه؛ وإلا ملعب الخزنة المختار — مع تعتيم خفيف لوضوح النصوص
     const stadiumKey = this.mode === 'tournament' ? STAGES[this.stage].stadium : progress.selectedStadium();
+    this.stadiumKey = stadiumKey;
     if (this.textures.exists(stadiumKey)) {
       this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.1);
@@ -104,15 +106,19 @@ export class GameScene extends Phaser.Scene {
     }
     // طبقة إضاءة خفيفة أعلى الملعب
     this.add.rectangle(GAME_WIDTH / 2, 90, GAME_WIDTH, 180, 0xffffff, 0.06);
-    // منطقة الجزاء
+    // منطقة الجزاء — الملعب الحقيقي يحمل خطوطه الفوتوغرافية
     const g = this.add.graphics();
-    g.lineStyle(4, COLORS.white, 0.8);
-    g.strokeRect(GAME_WIDTH / 2 - 210, GOAL.lineY - 6, 420, 330);
+    if (this.stadiumKey !== 'stadium-real') {
+      g.lineStyle(4, COLORS.white, 0.8);
+      g.strokeRect(GAME_WIDTH / 2 - 210, GOAL.lineY - 6, 420, 330);
+    }
     // نقطة الجزاء
     g.fillStyle(COLORS.white, 0.9).fillCircle(BALL_START.x, BALL_START.y, 6);
   }
 
   private drawGoal(): void {
+    // مرمى الصورة الحقيقية منطبق على هندسة اللعبة — لا حاجة لرسم فوقه
+    if (this.stadiumKey === 'stadium-real') return;
     const g = this.add.graphics();
     const left = GOAL.centerX - GOAL.width / 2;
     const right = GOAL.centerX + GOAL.width / 2;
@@ -304,7 +310,7 @@ export class GameScene extends Phaser.Scene {
     this.aimArrow.clear();
     if (dir.length() < SHOT.minDrag || dir.y > -10) return;
     const powerRatio = Phaser.Math.Clamp((dir.length() * SHOT.dragToPower) / SHOT.maxPower, 0, 1);
-    const color = powerRatio < 0.5 ? COLORS.yellow : powerRatio < 0.8 ? COLORS.orange : 0xff5d5d;
+    const color = powerRatio < 0.5 ? COLORS.lime : powerRatio < 0.8 ? COLORS.gold : 0xff3e3e;
     const end = new Phaser.Math.Vector2(this.ball.x, this.ball.y).add(dir.clone().setLength(60 + powerRatio * 130));
     this.aimArrow.lineStyle(8, color, 0.9);
     this.aimArrow.lineBetween(this.ball.x, this.ball.y, end.x, end.y);

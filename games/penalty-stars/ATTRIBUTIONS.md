@@ -15,6 +15,8 @@
 | cheer-*.mp3 / call-*.mp3 (صوت المعلق) | مولّدة برمجيًا | scripts/generate-voice.py (espeak-ng GPLv3 كأداة) | ناتج التوليد ملك المشروع | https://github.com/espeak-ng/espeak-ng | الأداة GPL، المخرجات غير مقيدة |
 | المؤثرات الصوتية (kick/goal/…) | مولّدة برمجيًا | src/utils/audio.ts (توليف WAV) | ملك المشروع | — | |
 | صور الأطفال (players/*.png) | العائلة | ولي الأمر | استخدام عائلي بإذن المالك | — | خاصة — لا تُعاد في مشاريع أخرى |
+| stadium-real.jpg و ball-real.png | حزمة الهوية البصرية (مقدمة من المالك) | مالك المشروع | هوية أصلية — بلا عناصر FIFA/EA محمية | — | معالجة ومحاذاة داخل المشروع |
+| ألوان الواجهة (gold/navy/lime/cyan) | design_tokens.json من حزمة الهوية | مالك المشروع | ملك المشروع | — | |
 
 ## عند إضافة أصول خارجية (Pexels / Pixabay / Kenney / OpenGameArt / Game-icons)
 
