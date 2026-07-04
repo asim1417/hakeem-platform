@@ -29,6 +29,11 @@
   min-height: 100vh;
   text-align: right;
 }
+/* خانات الاختيار بالنحاسي — هوية أمان بدل الأزرق الافتراضي */
+.root input[type="checkbox"],
+.root input[type="radio"] {
+  accent-color: #c69763;
+}
 .root.dark {
   --bg: #0d1b1b;
   --pane: #14403f;

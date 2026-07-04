@@ -34,6 +34,20 @@ import {
   type ParsedQuery
 } from "@/lib/modules/document-inspection";
 import { extractFromFile } from "@/lib/modules/document-inspection/file-extract";
+import {
+  ClipboardIcon,
+  FlagIcon,
+  FolderIcon,
+  LockIcon,
+  NoteIcon,
+  SaveIcon,
+  ScanIcon,
+  SparkIcon,
+  TableIcon,
+  TagIcon,
+  TrashIcon,
+  UploadIcon
+} from "@/components/ui/HakeemIcons";
 import { isImageExtension } from "@/lib/modules/document-inspection/ocr";
 import styles from "./casebrowser.module.css";
 
@@ -744,7 +758,7 @@ export function CaseBrowser() {
       );
       const payload: LockedPayload = { locked: true, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
       download("وثائق_مقفلة.json", JSON.stringify(payload), "application/json;charset=utf-8");
-      window.alert("أُنشئت نسخة مقفلة (AES-GCM). افتحها من زر 📂 وستُطلب كلمة المرور.");
+      window.alert("أُنشئت نسخة مقفلة (AES-GCM). افتحها من زر «رفع ملف» وستُطلب كلمة المرور.");
     } catch {
       window.alert("تعذّر التشفير في هذا المتصفح.");
     }
@@ -885,7 +899,7 @@ export function CaseBrowser() {
       "h2{font-size:15px;margin:0 0 6px}table{border-collapse:collapse;margin:6px 0}td,th{border:1px solid #ccc;padding:4px 8px;font-size:12px;text-align:right}th{background:#eef}",
       ".txt{white-space:pre-wrap;word-break:break-word;font-size:12.5px;border-top:1px solid #eee;margin-top:8px;padding-top:8px}",
       ".doc+.doc{page-break-before:always}.note{color:#7c2d12}@media print{.noprint{display:none}}</style></head><body dir=\"rtl\" lang=\"ar\">",
-      word ? "" : '<div class="noprint" style="margin-bottom:10px"><button onclick="window.print()" style="padding:8px 16px;cursor:pointer">🖨️ اطبع / احفظ PDF</button></div>',
+      word ? "" : '<div class="noprint" style="margin-bottom:10px"><button onclick="window.print()" style="padding:8px 16px;cursor:pointer">اطبع / احفظ PDF</button></div>',
       `<h1 style="font-size:18px">مستندات مفحوصة — عدد: ${list.length}</h1>`,
       '<p class="note">مخرج آلي يحتاج مراجعة بشرية</p>'
     ];
@@ -1056,14 +1070,14 @@ export function CaseBrowser() {
         />
         <div style={{ flex: 1 }}>
           <div className={styles.itemT}>
-            <span className={styles.num}>{idx + 1}</span> {notes.has(d.code) ? "📝 " : ""}
+            <span className={styles.num}>{idx + 1}</span> {notes.has(d.code) ? <NoteIcon size={12} /> : null}{notes.has(d.code) ? " " : ""}
             {d.title} {qualityDot(d)} {qualityBadge(d)}{" "}
             {hits > 0 ? <span className={styles.hitb}>{hits} مطابقة</span> : null}
           </div>
           <div className={styles.itemS}>
             {d.type.name}
             {d.hijriDate ? ` · ${d.hijriDate}` : ""}
-            {flags.has(d.code) ? <span className={styles.flag}> 🚩 {flags.get(d.code)}</span> : null}
+            {flags.has(d.code) ? <span className={styles.flag}> <FlagIcon size={12} /> {flags.get(d.code)}</span> : null}
           </div>
         </div>
       </div>
@@ -1183,7 +1197,7 @@ export function CaseBrowser() {
           </span>
           <span className={styles.grp}>
             <button onClick={lockAndDownload} title="حفظ نسخة مقفلة بكلمة مرور (AES-GCM)">
-              🔒 قفل
+              <LockIcon size={14} /> قفل
             </button>
           </span>
           <span className={styles.grp}>
@@ -1192,7 +1206,7 @@ export function CaseBrowser() {
               title="رفع ملف: PDF، صورة/مسح ضوئي (OCR)، DOCX، TXT، JSON، أو نسخة مقفلة"
               disabled={fileBusy}
             >
-              {fileBusy ? "⏳ يعالج…" : "📂 رفع ملف"}
+              {fileBusy ? "يعالج…" : <><UploadIcon size={14} /> رفع ملف</>}
             </button>
             <button onClick={() => setAddOpen(true)} title="لصق وثيقة جديدة للفحص">
               ＋ إضافة
@@ -1211,7 +1225,7 @@ export function CaseBrowser() {
           </span>
           <span className={styles.grp}>
             <button onClick={() => void saveCase()} title="حفظ القضية في حسابك على المنصة" disabled={saving}>
-              {saving ? "⏳ يحفظ…" : "💾 حفظ"}
+              {saving ? "يحفظ…" : <><SaveIcon size={14} /> حفظ</>}
             </button>
             <button
               onClick={() => {
@@ -1220,7 +1234,7 @@ export function CaseBrowser() {
               }}
               title="القضايا المحفوظة"
             >
-              🗂 قضاياي ({savedCases.length})
+              <FolderIcon size={14} /> قضاياي ({savedCases.length})
             </button>
             {driveConfigured ? (
               <button onClick={openDrive} title={driveConnected ? "استيراد من Google Drive" : "ربط Google Drive"}>
@@ -1236,7 +1250,7 @@ export function CaseBrowser() {
 
       {ocrProgress ? (
         <div className={styles.ocrBar} role="status" aria-live="polite">
-          🔎 قراءة ضوئية (OCR) في متصفحك — {ocrProgress}
+          <ScanIcon size={14} /> قراءة ضوئية (OCR) في متصفحك — {ocrProgress}
         </div>
       ) : null}
 
@@ -1355,7 +1369,7 @@ export function CaseBrowser() {
                 <div className={styles.empty} style={{ padding: "0 14px" }}>
                   لا وثائق بعد.
                   <br />
-                  أضف وثيقة (＋ إضافة) أو افتح ملف وثائق (📂).
+                  أضف وثيقة (＋ إضافة) أو افتح ملف وثائق (رفع ملف).
                 </div>
               ) : allResults && !parsed.empty ? (
                 filtered.flatMap((d) => {
@@ -1467,7 +1481,7 @@ export function CaseBrowser() {
                       <>
                         {fields.length ? (
                           <div className={styles.entRow}>
-                            <b>📋 حقول {current.type.name}:</b>
+                            <b><ClipboardIcon size={13} /> حقول {current.type.name}:</b>
                             <div className={styles.kv} style={{ marginTop: 4 }}>
                               {fields.map((f) => (
                                 <div key={f.label} style={{ display: "contents" }}>
@@ -1480,7 +1494,7 @@ export function CaseBrowser() {
                         ) : null}
                         {seg.headerLines.length || seg.footerLines.length ? (
                           <div className={styles.entRow}>
-                            <b>🗂️ البنية:</b>{" "}
+                            <b><TableIcon size={13} /> البنية:</b>{" "}
                             {seg.headerLines.length ? <span className={styles.tag}>ترويسة ({seg.headerLines.length} سطر)</span> : null}{" "}
                             {seg.footerLines.length ? <span className={styles.tag}>تذييل/توثيق ({seg.footerLines.length} سطر)</span> : null}
                           </div>
@@ -1494,7 +1508,7 @@ export function CaseBrowser() {
                     if (!ks.length) return null;
                     return (
                       <div className={styles.entRow}>
-                        <b>🏷️ مصطلحات بارزة:</b>{" "}
+                        <b><TagIcon size={13} /> مصطلحات بارزة:</b>{" "}
                         {ks.slice(0, 10).map((k) => (
                           <span key={k} className={styles.tchip} onClick={() => setQuery(k)}>
                             {k} <b>({bd[k]})</b>
@@ -1518,10 +1532,10 @@ export function CaseBrowser() {
                         )
                       }
                     >
-                      {copied === "ask" ? "✓ انسخه في مساعدك" : "🤖 جهّز سؤالاً للتحليل"}
+                      {copied === "ask" ? "✓ انسخه في مساعدك" : <><SparkIcon size={13} /> جهّز سؤالاً للتحليل</>}
                     </button>
                     <button onClick={() => void copyToClipboard("copy", current.rawText)}>
-                      {copied === "copy" ? "✓ نُسخ" : "📋 نسخ النص"}
+                      {copied === "copy" ? "✓ نُسخ" : <><ClipboardIcon size={13} /> نسخ النص</>}
                     </button>
                     <select
                       value={flags.get(current.code) ?? ""}
@@ -1548,7 +1562,7 @@ export function CaseBrowser() {
                         setNotes(next);
                       }}
                     >
-                      📝 ملاحظة
+                      <NoteIcon size={13} /> ملاحظة
                     </button>
                     <button
                       onClick={() => {
@@ -1558,10 +1572,10 @@ export function CaseBrowser() {
                         setCurrentCode(null);
                       }}
                     >
-                      🗑 حذف
+                      <TrashIcon size={13} /> حذف
                     </button>
                   </div>
-                  {notes.has(current.code) ? <div className={styles.noteBox}>📝 {notes.get(current.code)}</div> : null}
+                  {notes.has(current.code) ? <div className={styles.noteBox}><NoteIcon size={13} /> {notes.get(current.code)}</div> : null}
                 </div>
 
                 <div className={`${styles.card} ${styles.cardBare}`}>
@@ -1618,7 +1632,7 @@ export function CaseBrowser() {
           ))}
           {Array.from(notes.entries()).map(([code, note]) => (
             <div key={code} className={styles.quote}>
-              📝 {note}
+              <NoteIcon size={12} /> {note}
               <div style={{ color: "var(--mut)", fontSize: 11.5, marginTop: 4 }}>— {docs.find((d) => d.code === code)?.title ?? code}</div>
             </div>
           ))}
@@ -1951,11 +1965,11 @@ export function CaseBrowser() {
             >
               ×
             </button>
-            <h3>🗂 قضاياي المحفوظة</h3>
+            <h3><FolderIcon size={15} /> قضاياي المحفوظة</h3>
             <p className={styles.hint}>تُحفظ القضايا في قاعدة بيانات المنصة مرتبطةً بهذا المتصفح، وتشمل الوثائق والملاحظات والأعلام والمقتطفات.</p>
             {savedCases.length === 0 ? (
               <div className={styles.empty} style={{ margin: "24px 0" }}>
-                لا قضايا محفوظة بعد — أضف وثائق ثم اضغط «💾 حفظ».
+                لا قضايا محفوظة بعد — أضف وثائق ثم اضغط «حفظ».
               </div>
             ) : (
               savedCases.map((c) => (

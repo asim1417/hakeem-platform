@@ -193,3 +193,64 @@ export function PaperclipIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function LockIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5" />
+      <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" />
+      <path d="M12 14.2v2.3" />
+    </Svg>
+  );
+}
+
+export function NoteIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M16.8 3.7a2 2 0 0 1 2.9 2.9L8.5 17.8 4.5 19l1.2-4z" />
+      <path d="m14.8 5.7 2.9 2.9" />
+    </Svg>
+  );
+}
+
+export function TrashIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4.5 6.5h15" />
+      <path d="M9 6.5V4.8A1.3 1.3 0 0 1 10.3 3.5h3.4A1.3 1.3 0 0 1 15 4.8v1.7" />
+      <path d="M6.5 6.5 7.4 20h9.2l.9-13.5" />
+      <path d="M10 10v6.5" />
+      <path d="M14 10v6.5" />
+    </Svg>
+  );
+}
+
+export function ClipboardIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="5.5" y="5" width="13" height="16" rx="1.5" />
+      <path d="M9 5a3 3 0 0 1 6 0" />
+      <path d="M8.5 10.5h7" />
+      <path d="M8.5 14h7" />
+      <path d="M8.5 17.5h4.5" />
+    </Svg>
+  );
+}
+
+export function FlagIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M6 21V4" />
+      <path d="M6 4.8c3.5-1.8 6.5 1.8 12 0v8.5c-5.5 1.8-8.5-1.8-12 0" />
+    </Svg>
+  );
+}
+
+export function SparkIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18.2l-1.8-5.6-5.7-1.8L10.2 9z" />
+      <path d="M19 16.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" transform="scale(0.8) translate(3 1)" />
+    </Svg>
+  );
+}
