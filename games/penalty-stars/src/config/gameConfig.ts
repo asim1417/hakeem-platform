@@ -106,4 +106,4 @@ export function arabicNum(n: number): string {
 export const FONT = 'Arial, "Segoe UI", Tahoma, sans-serif';
 
 // رقم الإصدار — يظهر أسفل القائمة للتحقق من أن الجهاز يعرض آخر نسخة
-export const VERSION = 'الإصدار ١١';
+export const VERSION = 'الإصدار ١٢';

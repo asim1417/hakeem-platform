@@ -43,9 +43,13 @@ export class ResultScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
-    for (let i = 0; i < 7; i++) {
-      this.add.rectangle(GAME_WIDTH / 2, i * 120, GAME_WIDTH, 60, COLORS.grassDark, 0.4);
+    // خلفية الملعب الواقعي بطبقة كحلية (دليل الهوية)
+    const stadiumKey = progress.selectedStadium();
+    if (this.textures.exists(stadiumKey)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, stadiumKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.navy, 0.55);
+    } else {
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.grass);
     }
 
     const player = getPlayer(this.registry.get('playerId') as string);
@@ -81,9 +85,9 @@ export class ResultScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 100, rtl(titles[outcome]), {
         fontFamily: FONT,
         fontSize: outcome === 'championship' ? '40px' : '36px',
-        color: '#ffd93d',
+        color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#07111f',
         strokeThickness: 9,
       })
       .setOrigin(0.5);
@@ -220,12 +224,12 @@ export class ResultScene extends Phaser.Scene {
         const nextStage = outcome === 'advance' ? this.stage + 1 : outcome === 'retry' ? this.stage : 0;
         this.scene.start('Game', { stage: nextStage });
       }
-    }, { width: 340, height: 74, color: COLORS.blue, fontSize: 26 });
+    }, { width: 340, height: 74, fontSize: 26, variant: 'primary' });
     popIn(mainBtn, 0.9);
 
     const homeBtn = makeButton(this, GAME_WIDTH / 2, 726, '🏠 الرئيسية', () => {
       this.scene.start('Menu');
-    }, { width: 340, height: 62, color: COLORS.orange, fontSize: 25 });
+    }, { width: 340, height: 62, fontSize: 25, variant: 'glass' });
     popIn(homeBtn, 1.0);
   }
 }
