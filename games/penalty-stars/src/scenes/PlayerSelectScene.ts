@@ -38,7 +38,7 @@ export class PlayerSelectScene extends Phaser.Scene {
         fontSize: '30px',
         color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 8,
       })
       .setOrigin(0.5);
@@ -97,7 +97,7 @@ export class PlayerSelectScene extends Phaser.Scene {
           .text(0, -44, rtl('✅ مختار'), {
             fontFamily: FONT,
             fontSize: '13px',
-            color: '#1a5c2e',
+            color: '#0b0f14',
             fontStyle: 'bold',
             backgroundColor: '#ffd93d',
             padding: { x: 7, y: 2 },
@@ -134,7 +134,7 @@ export class PlayerSelectScene extends Phaser.Scene {
       .text(0, 24, rtl('أضف لاعبك\nصورة من جهازك — تبقى عندك'), {
         fontFamily: FONT,
         fontSize: '12px',
-        color: '#b7ff2a',
+        color: '#c6ff00',
         fontStyle: 'bold',
         align: 'center',
       })
@@ -224,9 +224,9 @@ export class PlayerSelectScene extends Phaser.Scene {
         <img src="${photo}" style="width:110px;height:110px;border-radius:50%;border:5px solid #ffd45a;object-fit:cover" alt="" />
         <div style="color:#f8fff7;font-size:19px;font-weight:bold;margin:14px 0 10px">ما اسم اللاعب الجديد؟</div>
         <input id="ps-name" type="text" maxlength="14" placeholder="اسم اللاعب"
-          style="width:100%;box-sizing:border-box;padding:12px;font-size:18px;border-radius:14px;border:2px solid #00d7ff;background:#07111f;color:#f8fff7;text-align:center;font-family:inherit" />
+          style="width:100%;box-sizing:border-box;padding:12px;font-size:18px;border-radius:14px;border:2px solid #00e5ff;background:#0b0f14;color:#f8fff7;text-align:center;font-family:inherit" />
         <div style="display:flex;gap:10px;margin-top:16px">
-          <button id="ps-save" style="flex:1;padding:13px;font-size:17px;font-weight:bold;border:0;border-radius:14px;background:linear-gradient(135deg,#b7ff2a,#00d7ff);color:#07111f;font-family:inherit">✅ حفظ</button>
+          <button id="ps-save" style="flex:1;padding:13px;font-size:17px;font-weight:bold;border:0;border-radius:14px;background:linear-gradient(135deg,#c6ff00,#00e5ff);color:#0b0f14;font-family:inherit">✅ حفظ</button>
           <button id="ps-cancel" style="flex:1;padding:13px;font-size:17px;font-weight:bold;border:2px solid rgba(255,255,255,.5);border-radius:14px;background:transparent;color:#f8fff7;font-family:inherit">إلغاء</button>
         </div>
         <div style="color:#9fb3c8;font-size:12px;margin-top:12px">🔒 الصورة والاسم يبقيان على هذا الجهاز فقط</div>

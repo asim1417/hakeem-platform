@@ -7,7 +7,7 @@ import Phaser from 'phaser';
 export function go(scene: Phaser.Scene, key: string, data?: object): void {
   const w = scene.scale.width;
   const h = scene.scale.height;
-  const cover = scene.add.rectangle(w / 2, h / 2, w, h, 0x07111f, 0).setDepth(9998).setScrollFactor(0);
+  const cover = scene.add.rectangle(w / 2, h / 2, w, h, 0x0b0f14, 0).setDepth(9998).setScrollFactor(0);
   const band = scene.add.graphics().setDepth(9999).setScrollFactor(0);
   // شعاع أبيض متدرج: يتوهج في وسطه ويخفت على حافتيه
   band.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0, 0.55, 0, 0.55);
@@ -26,7 +26,7 @@ export function go(scene: Phaser.Scene, key: string, data?: object): void {
 }
 
 export function fadeIn(scene: Phaser.Scene): void {
-  scene.cameras.main.fadeIn(220, 7, 17, 31);
+  scene.cameras.main.fadeIn(220, 11, 15, 20);
 }
 
 // دفعة زوم خفيفة لحظة الركلة

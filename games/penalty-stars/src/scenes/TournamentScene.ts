@@ -3,7 +3,7 @@
 
 import Phaser from 'phaser';
 import { gsap } from 'gsap';
-import { arabicNum, COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, PASS_GOALS, rtl, STAGES } from '../config/gameConfig';
+import { arabicNum, COLORS, DIFFICULTIES, FONT, GAME_HEIGHT, GAME_WIDTH, HEADING, PASS_GOALS, rtl, STAGES } from '../config/gameConfig';
 import { progress, STADIUMS } from '../utils/progress';
 import { makeButton, makeChip, makeMuteChip } from '../utils/ui';
 import { popIn, pulse } from '../utils/animations';
@@ -29,11 +29,11 @@ export class TournamentScene extends Phaser.Scene {
     popIn(logo, 0.05);
     const title = this.add
       .text(GAME_WIDTH / 2, 148, rtl('🏆 بطولة نجوم البلنتيات'), {
-        fontFamily: FONT,
+        fontFamily: HEADING,
         fontSize: '34px',
         color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 9,
       })
       .setOrigin(0.5);
@@ -44,7 +44,7 @@ export class TournamentScene extends Phaser.Scene {
         fontSize: '17px',
         color: '#e8f6ff',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 4,
       })
       .setOrigin(0.5);

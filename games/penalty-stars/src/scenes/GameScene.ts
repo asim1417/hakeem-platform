@@ -218,7 +218,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '17px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 4,
       })
       .setOrigin(0.5)
@@ -279,7 +279,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '24px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 5,
       })
       .setDepth(20);
@@ -306,7 +306,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '34px',
         color: '#ffd93d',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 8,
         align: 'center',
         wordWrap: { width: 420 },
@@ -323,7 +323,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '20px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 5,
       })
       .setOrigin(0.5)
@@ -598,6 +598,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'shooting') return;
     this.state = 'resolved';
     this.resolveTimer?.remove();
+    progress.recordShot(result === 'goal'); // سجل الملف الشخصي
 
     if (result === 'goal') {
       audio.play('goal');
@@ -664,7 +665,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '26px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 6,
       })
       .setOrigin(0.5)
@@ -692,7 +693,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '19px',
         color: '#f8fff7',
         fontStyle: 'bold',
-        backgroundColor: '#07111faa',
+        backgroundColor: '#0b0f14aa',
         padding: { x: 14, y: 7 },
       })
       .setOrigin(0.5)
@@ -748,7 +749,7 @@ export class GameScene extends Phaser.Scene {
         color: '#ffffff',
         fontStyle: 'bold',
         align: 'center',
-        backgroundColor: '#07111fcc',
+        backgroundColor: '#0b0f14cc',
         padding: { x: 18, y: 10 },
       })
       .setOrigin(0.5)
@@ -797,6 +798,7 @@ export class GameScene extends Phaser.Scene {
 
     if (outcome === 'saved') {
       audio.play('save');
+      progress.recordSave(); // تصدٍّ بالإصبع — يُحسب في الملف الشخصي
       slowMo(this);
       this.keeper.setTexture(this.keeperTexture('-save'));
       starBurst(this, this.keeper.x, this.keeper.y, 10);
@@ -976,7 +978,7 @@ export class GameScene extends Phaser.Scene {
       .text(38, 0, rtl(tip), {
         fontFamily: FONT,
         fontSize: '17px',
-        color: '#1a5c2e',
+        color: '#0b0f14',
         fontStyle: 'bold',
         backgroundColor: '#ffffffee',
         padding: { x: 10, y: 6 },

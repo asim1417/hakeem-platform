@@ -1,11 +1,11 @@
 // MenuScene — الشاشة الأولية: شعار الدرع، بطاقة اللاعب، شبكة الأوضاع، تحدي اليوم، والإعدادات
 
 import Phaser from 'phaser';
-import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, rtl, VERSION } from '../config/gameConfig';
+import { arabicNum, COLORS, FONT, GAME_HEIGHT, GAME_WIDTH, HEADING, rtl, VERSION } from '../config/gameConfig';
 import { getPlayer } from '../data/players';
 import { audio } from '../utils/audio';
 import { popIn, pulse } from '../utils/animations';
-import { makeButton, makeChip, makeMuteChip } from '../utils/ui';
+import { makeBottomNav, makeButton, makeChip, makeMuteChip } from '../utils/ui';
 import { progress } from '../utils/progress';
 import { fadeIn, go } from '../utils/camera';
 
@@ -26,20 +26,20 @@ export class MenuScene extends Phaser.Scene {
     popIn(shield, 0.02);
     const titleShadow = this.add
       .text(GAME_WIDTH / 2 + 3, 118 + 4, rtl('نجوم البلنتيات'), {
-        fontFamily: FONT,
+        fontFamily: HEADING,
         fontSize: '50px',
-        color: '#0c3a1c',
+        color: '#050708',
         fontStyle: 'bold',
       })
       .setOrigin(0.5)
       .setAlpha(0.55);
     const title = this.add
       .text(GAME_WIDTH / 2, 118, rtl('نجوم البلنتيات'), {
-        fontFamily: FONT,
+        fontFamily: HEADING,
         fontSize: '50px',
         color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 12,
       })
       .setOrigin(0.5);
@@ -50,9 +50,9 @@ export class MenuScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 164, rtl('⚽ سدّد… واصنع المجد! ⚽'), {
         fontFamily: FONT,
         fontSize: '20px',
-        color: '#00d7ff',
+        color: '#00e5ff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 5,
       })
       .setOrigin(0.5);
@@ -77,7 +77,7 @@ export class MenuScene extends Phaser.Scene {
         fontSize: '22px',
         color: '#ffffff',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 6,
       })
       .setOrigin(0.5);
@@ -87,7 +87,7 @@ export class MenuScene extends Phaser.Scene {
         fontSize: '14px',
         color: '#ffe9a8',
         fontStyle: 'bold',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 4,
       })
       .setOrigin(0.5);
@@ -133,18 +133,13 @@ export class MenuScene extends Phaser.Scene {
     if (dailyDone) dailyBtn.setAlpha(0.75);
     popIn(dailyBtn, 0.48);
 
-    // ── شبكة الأوضاع ٢×٢ ──
-    const grid: [string, () => void][] = [
+    // ── وصول سريع: المباراة والفاولات (بقية الأوضاع في تبويب الأوضاع) ──
+    const quick: [string, () => void][] = [
       ['⚔️ المباراة', requirePlayer(() => go(this, 'Game', { mode: 'match' }))],
       ['🌀 الفاولات', requirePlayer(() => go(this, 'Game', { mode: 'freekick' }))],
-      ['🏋️ التدريب', requirePlayer(() => go(this, 'Game', { training: true }))],
-      ['🤝 تحدي صديق', requirePlayer(() => go(this, 'Game', { mode: 'duel' }))],
     ];
-    grid.forEach(([label, onTap], i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      // أزرار لعب أعرض بخط ضمن نطاق الدليل (28-38px مع هامش للعبارات الطويلة)
-      const btn = makeButton(this, 124 + col * 232, 548 + row * 66, label, onTap, {
+    quick.forEach(([label, onTap], i) => {
+      const btn = makeButton(this, 124 + i * 232, 552, label, onTap, {
         width: 222,
         height: 60,
         fontSize: 26,
@@ -153,46 +148,37 @@ export class MenuScene extends Phaser.Scene {
       popIn(btn, 0.52 + i * 0.05);
     });
 
-    // ── الخزنة بعرض كامل ──
-    const lockerBtn = makeButton(this, GAME_WIDTH / 2, 664, '🎒 الخزنة — كرات وملاعب جديدة', () => go(this, 'Locker'), {
-      width: 392,
-      height: 54,
-      fontSize: 23,
-      variant: 'glass',
-    });
-    popIn(lockerBtn, 0.68);
-
     // ── شريط الحالة: الرصيد + سطر الأمان ──
     const statusBar = this.add
-      .text(GAME_WIDTH / 2, 712, rtl(`رصيدك: ⭐ ${arabicNum(progress.totalStars())}${progress.hasTrophy() ? '  •  🏆 بطل كأس النجوم' : ''}`), {
+      .text(GAME_WIDTH / 2, 626, rtl(`رصيدك: ⭐ ${arabicNum(progress.totalStars())}${progress.hasTrophy() ? '  •  🏆 بطل كأس النجوم' : ''}`), {
         fontFamily: FONT,
         fontSize: '19px',
         color: '#ffd45a',
         fontStyle: 'bold',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 5,
       })
       .setOrigin(0.5);
     popIn(statusBar, 0.74);
 
     this.add
-      .text(GAME_WIDTH / 2, 742, rtl('بلا إعلانات • بلا مشتريات • آمنة للأطفال'), {
+      .text(GAME_WIDTH / 2, 658, rtl('بلا إعلانات • بلا مشتريات • آمنة للأطفال'), {
         fontFamily: FONT,
         fontSize: '13px',
         color: '#f8fff7',
-        stroke: '#07111f',
+        stroke: '#0b0f14',
         strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setAlpha(0.9);
 
-    // رقم الإصدار — للتحقق من تحديث النسخة
+    // رقم الإصدار — للتحقق من تحديث النسخة (فوق شريط التنقل)
     this.add
-      .text(GAME_WIDTH - 8, GAME_HEIGHT - 8, rtl(VERSION), {
+      .text(GAME_WIDTH - 8, GAME_HEIGHT - 88, rtl(VERSION), {
         fontFamily: FONT,
         fontSize: '13px',
         color: '#ffffff',
-        stroke: '#1a5c2e',
+        stroke: '#0b0f14',
         strokeThickness: 3,
       })
       .setOrigin(1, 1)
@@ -201,6 +187,9 @@ export class MenuScene extends Phaser.Scene {
     // رقاقات النظام: صوت + إعدادات
     makeMuteChip(this, GAME_WIDTH - 46, 46);
     makeChip(this, 46, 46, 'ic-gear', () => this.openSettings());
+
+    // 🧭 شريط التنقل السفلي
+    makeBottomNav(this, 'home', go);
   }
 
   // ⚙️ الإعدادات: حذف التقدم خلف بوابة أهل (سؤال حساب)
