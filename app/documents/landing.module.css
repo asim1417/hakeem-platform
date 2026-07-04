@@ -55,8 +55,19 @@
   font-size: 13px;
   margin-inline-start: 6px;
 }
-.topCta {
+.topGhost {
   margin-inline-start: auto;
+  color: var(--copper);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.topGhost:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.topCta {
   background: var(--copper);
   color: #241a0c;
   padding: 8px 20px;
