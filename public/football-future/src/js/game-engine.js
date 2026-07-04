@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════
-   فوتبول فيوتشر — محرك المباراة v3.1
-   مشهد استاد ليلي كامل: مدرجات وجمهور، كشافات، لوحات إعلانية متوهجة،
-   لاعبون بتفاصيل وحراس مرمى وذكاء اصطناعي، مؤثرات أهداف واهتزاز كاميرا.
+   فوتبول فيوتشر — محرك المباراة v4
+   عرض بمنظور كاميرا البث التلفزيوني (بأسلوب ألعاب كرة القدم الحديثة):
+   ملعب بمنظور، كاميرا تتبع الكرة، لاعبون مجسّمون بحركة جري،
+   مدرج بانورامي بجمهور، لوحات LED، مرميان ثلاثيا الأبعاد بشباك،
+   قوس طيران للكرة، واحتفالات أهداف سينمائية.
    API المتاح للتطبيق:
      new FootballFutureEngine(canvas, {onEvent, onEnd})
      .start() .stop() .destroy() .setInput() .action() .getTimeText()
@@ -10,25 +12,37 @@
 (function () {
   "use strict";
 
-  /* ── أبعاد العالم ── */
-  const W = 1280, H = 800;          // مشهد الاستاد كاملاً
-  const STAND = 78;                 // عمق المدرجات
-  const FX = 132, FY = 132;         // بداية أرضية الملعب
-  const FW = W - FX * 2, FH = H - FY * 2; // أرضية اللعب 1016×536
-  const GOAL_W = 168;               // عرض فتحة المرمى
+  /* roundRect polyfill للمتصفحات الأقدم */
+  if (typeof CanvasRenderingContext2D !== "undefined" && !CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
+  /* ── عالم اللعب (إحداثيات منطقية علوية — الفيزياء مستقلة عن العرض) ── */
+  const W = 1280, H = 800;
+  const FX = 132, FY = 132;               // حدود أرضية اللعب
+  const FW = W - FX * 2, FH = H - FY * 2;
+  const GOAL_W = 168;
   const GOAL_TOP = H / 2 - GOAL_W / 2, GOAL_BOT = H / 2 + GOAL_W / 2;
-  const PR = 15;                    // نصف قطر اللاعب
-  const BR = 8;                     // نصف قطر الكرة
+  const PR = 15;                          // نصف قطر التصادم
+  const BR = 8;
 
   const LIME = "#C6FF00", CYAN = "#00E5FF", TEAL = "#00BFAE";
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function lerp(a, b, t) { return a + (b - a) * t; }
-  // عشوائي حتمي للجمهور (ثابت بين الإطارات)
   function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
 
-  /* التشكيلة 1-2-1-2 لكل فريق (حارس + 5) — نسب على أرضية اللعب */
+  /* التشكيلة 1-2-1-2 لكل فريق (حارس + 5) */
   const FORM = [
     { role: "GK", fx: 0.035, fy: 0.50 },
     { role: "CB", fx: 0.16, fy: 0.50 },
@@ -64,7 +78,8 @@
       this.shake = 0;
       this.flash = 0;
       this.time = 0;
-      this.freeze = 0;              // توقف قصير بعد الهدف
+      this.freeze = 0;
+      this.camX = W / 2;
       this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       this.resetWorld();
       this.resize = this.resize.bind(this);
@@ -80,7 +95,6 @@
 
     /* ─────────────── العالم ─────────────── */
     makeTeam(side) {
-      // side=1: الفريق (يهاجم يميناً) / side=-1: الخصم (يهاجم يساراً)
       return FORM.map((f, i) => {
         const fx = side === 1 ? f.fx : 1 - f.fx;
         return {
@@ -90,6 +104,8 @@
           home: { x: FX + fx * FW, y: FY + f.fy * FH },
           x: FX + fx * FW, y: FY + f.fy * FH,
           vx: 0, vy: 0, face: side === 1 ? 0 : Math.PI,
+          dirX: side,                      // اتجاه النظر الأفقي للرسم
+          phase: hash(i * 7) * 6,          // طور حركة الجري
           user: side === 1 && f.role === "ST",
           stamina: 100, cd: 0
         };
@@ -100,17 +116,18 @@
       this.home = this.makeTeam(1);
       this.away = this.makeTeam(-1);
       this.all = this.home.concat(this.away);
-      this.ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, owner: null, lastKick: null, passTo: null, spin: 0 };
+      this.ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, z: 0, vz: 0, owner: null, lastKick: null, passTo: null, spin: 0 };
       this.controlled = this.home.find(p => p.user);
       this.kickoff("home");
-      this.message = "اسحب للتحرك — مرّر وسدّد نحو المرمى الأيمن";
-      this.messageTime = 3.2;
+      this.message = "تقدّم نحو المرمى الأيمن وسدّد";
+      this.messageTime = 3;
     }
 
     kickoff(concededBy) {
       for (const p of this.all) { p.x = p.home.x; p.y = p.home.y; p.vx = p.vy = 0; }
       const b = this.ball;
-      b.x = W / 2; b.y = H / 2; b.vx = b.vy = 0; b.owner = null; b.lastKick = null; b.passTo = null;
+      b.x = W / 2; b.y = H / 2; b.vx = b.vy = 0; b.z = 0; b.vz = 0;
+      b.owner = null; b.lastKick = null; b.passTo = null;
       const starter = concededBy === "away"
         ? this.away.find(p => p.role === "CM")
         : this.home.find(p => p.role === "CM");
@@ -119,6 +136,7 @@
       if (this.controlled) this.controlled.user = false;
       me.user = true; this.controlled = me;
       this.trail.length = 0;
+      this.camX = W / 2;
     }
 
     /* ─────────────── الإدخال ─────────────── */
@@ -147,10 +165,26 @@
       this.canvas.height = Math.max(1, Math.floor(rect.height * this.dpr));
       this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
       this.view = { w: rect.width, h: rect.height };
-      // احتواء المشهد كاملاً داخل الشاشة
-      this.scale = Math.min(rect.width / W, rect.height / H);
-      this.offset = { x: (rect.width - W * this.scale) / 2, y: (rect.height - H * this.scale) / 2 };
-      this.buildStadium();
+
+      /* معايرة منظور كاميرا البث */
+      const vw = rect.width, vh = rect.height;
+      this.py0 = vh * 0.245;               // خط التماس البعيد على الشاشة
+      this.py1 = vh * 0.985;               // خط التماس القريب
+      this.kNear = Math.max(vh / 620, vw / 1500); // بكسل/وحدة عند الخط القريب
+      this.kFar = this.kNear * 0.52;       // وعند البعيد (التقلص المنظوري)
+      const halfNear = vw / 2 / this.kNear;
+      this.camMin = Math.min(W / 2, halfNear * 0.92);
+      this.camMax = Math.max(W / 2, W - halfNear * 0.92);
+      this.buildBackdrop();
+    }
+
+    /* إسقاط نقطة من عالم اللعب إلى الشاشة */
+    proj(wx, wy) {
+      const t = clamp((wy - FY) / FH, -0.35, 1.3);
+      const s = this.kFar + (this.kNear - this.kFar) * clamp(t, 0, 1);
+      const y = this.py0 + (this.py1 - this.py0) * (t * (0.7 + 0.3 * clamp(t, 0, 1)));
+      const x = this.view.w / 2 + (wx - this.camX) * s;
+      return { x, y, s };
     }
 
     start() {
@@ -194,12 +228,16 @@
       this.updateParticles(dt);
       if (this.messageTime > 0) this.messageTime -= dt;
 
+      // الكاميرا تتبع الكرة بنعومة
+      const camTarget = clamp(this.ball.x, this.camMin, this.camMax);
+      this.camX += (camTarget - this.camX) * Math.min(1, dt * 3.4);
+
       if (this.freeze > 0) { this.freeze -= dt; if (this.freeze <= 0) this.kickoff(this._concededBy); return; }
 
       this.clock += dt;
       if (this.half === 1 && this.clock >= this.duration / 2) {
         this.half = 2;
-        this.message = "⏱ نهاية الشوط الأول — واصل يا بطل";
+        this.message = "نهاية الشوط الأول — واصل يا بطل";
         this.messageTime = 2.6;
         this.kickoff("away");
       }
@@ -220,6 +258,13 @@
       this.updateBall(dt);
       this.detectPossession();
       this.detectGoal();
+
+      // طور الجري واتجاه النظر لكل اللاعبين
+      for (const p of this.all) {
+        const spd = Math.hypot(p.vx, p.vy);
+        p.phase += spd * dt * 0.055;
+        if (Math.abs(p.vx) > 12) p.dirX = p.vx > 0 ? 1 : -1;
+      }
     }
 
     /* ─────────────── اللاعب المتحكَّم به ─────────────── */
@@ -263,14 +308,12 @@
         let tx = p.home.x, ty = p.home.y, sp = 128;
 
         if (p.role === "GK") {
-          // الحارس: يتحرك عمودياً بمحاذاة الكرة على خط مرماه
           const line = p.side === 1 ? FX + 26 : W - FX - 26;
           tx = line;
           ty = clamp(b.y, GOAL_TOP + 16, GOAL_BOT - 16);
           const nearGoal = Math.abs(b.x - (p.side === 1 ? FX : W - FX)) < 200 && b.y > GOAL_TOP - 60 && b.y < GOAL_BOT + 60;
           if (!b.owner && nearGoal) { tx = b.x; ty = b.y; sp = 200; }
         } else if (b.owner === p) {
-          // حامل الكرة الآلي: تقدّم نحو مرمى الخصم
           const gx = p.side === 1 ? W - FX : FX;
           tx = gx; ty = lerp(p.y, H / 2, 0.25); sp = p.side === -1 ? 156 : 172;
           const pressers = this.all.filter(o => o.side !== p.side && dist(o, p) < 70);
@@ -278,13 +321,11 @@
           if (distGoal < 300 && Math.random() < (p.side === -1 ? 0.72 : 1.15) * dt) { this.aiShoot(p); continue; }
           if (pressers.length && Math.random() < 1.7 * dt) { this.aiPass(p); continue; }
         } else if (ownerSide === p.side) {
-          // فريق مستحوذ: انزياح هجومي مع حفظ الشكل
           const shift = p.side * FW * 0.14;
           tx = p.home.x + shift + (b.x - p.home.x) * 0.22;
           ty = p.home.y + (b.y - p.home.y) * 0.25;
           sp = 138;
         } else if (ownerSide !== 0) {
-          // فريق مدافع: الأقرب اثنان يضغطان
           const carrier = b.owner;
           const chasers = this.all.filter(o => o.side === p.side && o.role !== "GK")
             .sort((m, n) => dist(m, carrier) - dist(n, carrier));
@@ -299,7 +340,6 @@
             ty = p.home.y + (b.y - p.home.y) * 0.2;
           }
         } else {
-          // كرة حرة: الأقرب من كل فريق يلاحق
           const mates = this.all.filter(o => o.side === p.side && o.role !== "GK")
             .sort((m, n) => dist(m, b) - dist(n, b));
           if (mates.indexOf(p) === 0 || b.passTo === p) { tx = b.x; ty = b.y; sp = 172; }
@@ -328,6 +368,7 @@
         b.x = o.x + Math.cos(o.face) * (PR + 9);
         b.y = o.y + Math.sin(o.face) * (PR + 9);
         b.vx = o.vx; b.vy = o.vy;
+        b.z = 0; b.vz = 0;
         return;
       }
       b.x += b.vx * dt; b.y += b.vy * dt;
@@ -335,10 +376,15 @@
       b.vx *= fr; b.vy *= fr;
       b.spin += Math.hypot(b.vx, b.vy) * dt * 0.02;
 
-      // حدود الملعب العلوية/السفلية
+      // قوس الطيران (بصري)
+      if (b.z > 0 || b.vz !== 0) {
+        b.z += b.vz * dt;
+        b.vz -= 420 * dt;
+        if (b.z <= 0) { b.z = 0; b.vz = Math.abs(b.vz) > 60 ? Math.abs(b.vz) * 0.42 : 0; }
+      }
+
       if (b.y < FY + BR) { b.y = FY + BR; b.vy = Math.abs(b.vy) * 0.72; }
       if (b.y > H - FY - BR) { b.y = H - FY - BR; b.vy = -Math.abs(b.vy) * 0.72; }
-      // خطا المرمى (خارج فتحة المرمى يرتد)
       const inMouth = b.y > GOAL_TOP && b.y < GOAL_BOT;
       if (b.x < FX + BR && !inMouth) { b.x = FX + BR; b.vx = Math.abs(b.vx) * 0.72; }
       if (b.x > W - FX - BR && !inMouth) { b.x = W - FX - BR; b.vx = -Math.abs(b.vx) * 0.72; }
@@ -348,26 +394,26 @@
     detectPossession() {
       const b = this.ball;
       if (b.owner || this.freeze > 0) return;
+      if (b.z > 26) return;                       // الكرة في الهواء
       const speed = Math.hypot(b.vx, b.vy);
       for (const p of this.all) {
         if (p === b.lastKick && speed > 90) continue;
         if (dist(p, b) < PR + BR + 4) {
-          // تصدي الحارس للتسديدات القوية
           if (p.role === "GK" && b.lastKick && b.lastKick.side !== p.side && speed > 250) {
             const save = Math.random() < (p.side === -1 ? 0.52 : 0.72);
             if (save) {
               if (p.side === 1) this.stats.saves += 1;
               b.vx = p.side * (170 + Math.random() * 120);
               b.vy = (Math.random() - 0.5) * 260;
+              b.vz = 90; b.z = 1;
               b.lastKick = p;
-              this.msg(p.side === -1 ? "🧤 تصدى الحارس — حاول زاوية أخرى!" : "🧤 تصدٍّ خرافي من حارسك!");
+              this.msg(p.side === -1 ? "تصدى الحارس — حاول زاوية أخرى!" : "تصدٍّ خرافي من حارسك!");
               this.spawnRing(p.x, p.y, CYAN);
               this.onEvent({ type: "save", team: p.side === 1 ? "home" : "away" });
               return;
             }
           }
           b.owner = p;
-          // تمريرة ناجحة للفريق
           if (b.passTo && b.lastKick && b.lastKick.side === p.side && b.lastKick !== p && p.side === 1) {
             this.stats.passes += 1;
           }
@@ -394,14 +440,14 @@
     goal(team) {
       this.score[team] += 1;
       if (team === "home") { this.stats.goals += 1; }
-      this.msg(team === "home" ? "⚽ هــــدف! رائع يا بطل" : "هدف للخصم — ارجع بقوة!", 2.6);
-      this.shake = 9;
+      this.msg(team === "home" ? "هــــدف! تسديدة عالمية" : "هدف للخصم — ارجع بقوة!", 2.6);
+      this.shake = 10;
       this.flash = team === "home" ? 1 : 0.4;
       this.spawnConfetti(this.ball.x, this.ball.y, team === "home");
       this.onEvent({ type: "goal", team });
-      this.freeze = 1.7;
+      this.freeze = 1.8;
       this._concededBy = team === "home" ? "away" : "home";
-      this.ball.owner = null; this.ball.vx = this.ball.vy = 0;
+      this.ball.owner = null; this.ball.vx = this.ball.vy = 0; this.ball.vz = 0;
     }
 
     /* ─────────────── أفعال اللاعب ─────────────── */
@@ -411,15 +457,15 @@
       let mate = null, best = Infinity;
       for (const p of this.home) {
         if (p === owner || p.role === "GK") continue;
-        const backward = Math.max(0, owner.x - p.x) * 0.5;   // عقوبة الرجوع للخلف
+        const backward = Math.max(0, owner.x - p.x) * 0.5;
         const score = dist(p, owner) + backward;
         if (score < best) { best = score; mate = p; }
       }
       if (!mate) return;
       const lead = { x: mate.x + mate.vx * 0.22, y: mate.y + mate.vy * 0.22 };
-      this.kick(owner, lead.x, lead.y, 470);
+      this.kick(owner, lead.x, lead.y, 470, 60);
       this.ball.passTo = mate;
-      this.msg("تمريرة ذكية");
+      this.msg("تمريرة متقنة");
     }
 
     doShoot() {
@@ -427,7 +473,7 @@
       if (!owner || owner.side !== 1) return;
       const aimY = clamp(H / 2 + this.input.y * (GOAL_W / 2 - 16) + (Math.random() - 0.5) * 60, GOAL_TOP + 10, GOAL_BOT - 10);
       const power = owner.x > W - FX - 380 ? 820 : 640;
-      this.kick(owner, W - FX + 40, aimY, power);
+      this.kick(owner, W - FX + 40, aimY, power, 120);
       this.stats.shots += 1;
       this.msg("تسديدة!");
       this.spawnRing(owner.x, owner.y, LIME);
@@ -442,7 +488,7 @@
       p.stamina = clamp(p.stamina - 7, 0, 100);
       this.bound(p);
       this.spawnRing(p.x, p.y, TEAL);
-      this.msg("مراوغة رائعة");
+      this.msg("مراوغة مذهلة");
     }
 
     doTackle() {
@@ -455,16 +501,18 @@
           this.ball.owner = p;
           this.stats.tackles += 1;
           this.spawnRing(p.x, p.y, LIME);
-          this.msg("افتكاك ناجح!");
+          this.msg("استخلاص نظيف!");
         } else this.msg("أفلت منك — طارده!");
       }
     }
 
-    kick(from, tx, ty, power) {
+    kick(from, tx, ty, power, loft) {
       const b = this.ball;
       const d = Math.hypot(tx - b.x, ty - b.y) || 1;
       b.vx = (tx - b.x) / d * power;
       b.vy = (ty - b.y) / d * power;
+      b.vz = clamp((loft || 60) * (0.6 + Math.random() * 0.7), 30, 170);
+      b.z = 1;
       b.owner = null; b.lastKick = from;
     }
 
@@ -473,13 +521,13 @@
       const sorted = mates.sort((a, b) => a.x - b.x);
       const mate = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
       if (!mate) return;
-      this.kick(owner, mate.x, mate.y, 430);
+      this.kick(owner, mate.x, mate.y, 430, 55);
       this.ball.passTo = mate;
     }
 
     aiShoot(owner) {
       const aimY = GOAL_TOP + 14 + Math.random() * (GOAL_W - 28);
-      this.kick(owner, FX - 40, aimY, 640);
+      this.kick(owner, FX - 40, aimY, 640, 110);
       this.onEvent({ type: "shot", team: "away" });
     }
 
@@ -497,9 +545,7 @@
         });
       }
     }
-    spawnRing(x, y, c) {
-      this.particles.push({ ring: true, x, y, r: 10, t: 0.45, c });
-    }
+    spawnRing(x, y, c) { this.particles.push({ ring: true, x, y, r: 10, t: 0.45, c }); }
     spawnDust(p) {
       this.particles.push({
         x: p.x - Math.cos(p.face) * PR, y: p.y - Math.sin(p.face) * PR + 6,
@@ -516,344 +562,556 @@
       }
     }
 
-    /* ═══════════════ الرسم ═══════════════ */
+    /* ═══════════════ العرض بمنظور البث ═══════════════ */
 
-    /* المشهد الثابت يُرسم مرة واحدة في canvas منفصل (أداء + ثبات) */
-    buildStadium() {
+    /* بانوراما المدرج البعيد + لوحات LED — تُبنى مرة عند تغيير المقاس */
+    buildBackdrop() {
+      const vw = this.view.w;
+      const padWorld = 700;
+      this.panPad = padWorld;
+      const panW = Math.ceil((W + padWorld * 2) * this.kFar);
+      const panH = Math.ceil(this.py0);
       const c = document.createElement("canvas");
-      c.width = Math.max(2, Math.floor(W * this.scale * this.dpr));
-      c.height = Math.max(2, Math.floor(H * this.scale * this.dpr));
+      c.width = Math.max(2, panW); c.height = Math.max(2, panH);
       const x = c.getContext("2d");
-      x.scale(this.scale * this.dpr, this.scale * this.dpr);
 
-      /* خلفية الليل */
-      const night = x.createLinearGradient(0, 0, 0, H);
-      night.addColorStop(0, "#05070B"); night.addColorStop(1, "#0B0F14");
-      x.fillStyle = night; x.fillRect(0, 0, W, H);
+      /* سماء ليلية */
+      const sky = x.createLinearGradient(0, 0, 0, panH);
+      sky.addColorStop(0, "#05070C"); sky.addColorStop(1, "#0A1017");
+      x.fillStyle = sky; x.fillRect(0, 0, panW, panH);
 
-      /* المدرجات الأربعة */
-      const standGrad = (x0, y0, x1, y1) => {
-        const g = x.createLinearGradient(x0, y0, x1, y1);
-        g.addColorStop(0, "#151C27"); g.addColorStop(1, "#0A0F16");
-        return g;
-      };
-      x.fillStyle = standGrad(0, 0, 0, STAND); x.fillRect(0, 0, W, STAND);
-      x.fillStyle = standGrad(0, H, 0, H - STAND); x.fillRect(0, H - STAND, W, STAND);
-      x.fillStyle = standGrad(0, 0, STAND, 0); x.fillRect(0, 0, STAND, H);
-      x.fillStyle = standGrad(W, 0, W - STAND, 0); x.fillRect(W - STAND, 0, STAND, H);
+      /* هيكل المدرج: طبقتان بميل */
+      const standTop = panH * 0.10, boardTop = panH * 0.80;
+      const tier = x.createLinearGradient(0, standTop, 0, boardTop);
+      tier.addColorStop(0, "#0D1420"); tier.addColorStop(0.5, "#131C2A"); tier.addColorStop(1, "#0B111B");
+      x.fillStyle = tier;
+      x.fillRect(0, standTop, panW, boardTop - standTop);
+      // خط سقف متوهج
+      const roof = x.createLinearGradient(0, 0, panW, 0);
+      roof.addColorStop(0, "rgba(0,229,255,.0)"); roof.addColorStop(0.2, "rgba(0,229,255,.55)");
+      roof.addColorStop(0.5, "rgba(198,255,0,.55)"); roof.addColorStop(0.8, "rgba(0,229,255,.55)");
+      roof.addColorStop(1, "rgba(0,229,255,.0)");
+      x.fillStyle = roof;
+      x.fillRect(0, standTop, panW, 2.5);
 
-      /* الجمهور: نقاط حتمية بصفوف — لمسات ليموني/سماوي متفرقة */
-      const crowdDot = (px, py, i) => {
-        const h1 = hash(i), h2 = hash(i * 1.7);
-        const tone = h1 < 0.06 ? LIME : h1 < 0.12 ? CYAN : h1 < 0.2 ? "#8FA3B8" : h1 < 0.6 ? "#3D4C5E" : "#2A3644";
-        x.fillStyle = tone;
-        x.globalAlpha = 0.55 + h2 * 0.45;
-        x.fillRect(px, py, 3, 3);
-      };
-      let seed = 1;
-      for (let row = 8; row < STAND - 8; row += 7) {
-        for (let px = 8; px < W - 8; px += 6) { crowdDot(px + hash(seed) * 3, row + hash(seed * 3) * 3, seed); seed++; }
-        for (let px = 8; px < W - 8; px += 6) { crowdDot(px + hash(seed) * 3, H - row - 3 + hash(seed * 3) * 3, seed); seed++; }
-      }
-      for (let col = 8; col < STAND - 8; col += 7) {
-        for (let py = STAND; py < H - STAND; py += 6) { crowdDot(col + hash(seed) * 3, py + hash(seed * 3) * 3, seed); seed++; }
-        for (let py = STAND; py < H - STAND; py += 6) { crowdDot(W - col - 3 + hash(seed) * 3, py + hash(seed * 3) * 3, seed); seed++; }
+      /* الجمهور: صفوف نقاط بكثافة عالية */
+      let seed = 7;
+      const rows = Math.max(6, Math.floor((boardTop - standTop - 8) / 5));
+      for (let r = 0; r < rows; r++) {
+        const ry = standTop + 6 + r * 5;
+        for (let px = 2; px < panW - 2; px += 4) {
+          const h1 = hash(seed), h2 = hash(seed * 1.7); seed++;
+          const tone = h1 < 0.045 ? LIME : h1 < 0.09 ? CYAN : h1 < 0.18 ? "#7E93A8" : h1 < 0.55 ? "#39485A" : "#242F3D";
+          x.fillStyle = tone;
+          x.globalAlpha = 0.4 + h2 * 0.55;
+          x.fillRect(px + h1 * 3, ry + h2 * 3, 2.4, 2.4);
+        }
       }
       x.globalAlpha = 1;
 
-      /* اللوحات الإعلانية المتوهجة حول الملعب */
-      const board = (bx, by, bw, bh, horizontal) => {
-        const g = horizontal
-          ? x.createLinearGradient(bx, 0, bx + bw, 0)
-          : x.createLinearGradient(0, by, 0, by + bh);
-        g.addColorStop(0, "#0D141D"); g.addColorStop(0.5, "#111B26"); g.addColorStop(1, "#0D141D");
-        x.fillStyle = g; x.fillRect(bx, by, bw, bh);
-        const glow = horizontal
-          ? x.createLinearGradient(bx, 0, bx + bw, 0)
-          : x.createLinearGradient(0, by, 0, by + bh);
-        glow.addColorStop(0, LIME); glow.addColorStop(0.5, CYAN); glow.addColorStop(1, TEAL);
-        x.fillStyle = glow;
-        if (horizontal) x.fillRect(bx, by, bw, 2.5); else x.fillRect(bx, by, 2.5, bh);
-        if (horizontal && bw > 300) {
-          x.save();
-          x.font = "700 13px Rajdhani, Arial";
-          x.textAlign = "center"; x.textBaseline = "middle";
-          const cx0 = bx + bw / 2;
-          x.fillStyle = "rgba(198,255,0,.8)";
-          x.fillText("FOOTBALL FUTURE", cx0 - 260, by + bh / 2 + 1);
-          x.fillStyle = "rgba(0,229,255,.8)";
-          x.fillText("PLAY · GROW · WIN", cx0, by + bh / 2 + 1);
-          x.fillStyle = "rgba(198,255,0,.8)";
-          x.fillText("FOOTBALL FUTURE", cx0 + 260, by + bh / 2 + 1);
-          x.restore();
-        }
-      };
-      board(STAND, STAND, W - STAND * 2, 22, true);
-      board(STAND, H - STAND - 22, W - STAND * 2, 22, true);
-      board(STAND, STAND + 22, 20, H - STAND * 2 - 44, false);
-      board(W - STAND - 20, STAND + 22, 20, H - STAND * 2 - 44, false);
-
-      /* أرضية العشب الليلي + خطوط القص */
-      const apx = STAND + 22, apy = STAND + 22;
-      const apw = W - apx * 2, aph = H - apy * 2;
-      const grass = x.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, W * 0.62);
-      grass.addColorStop(0, "#17603A"); grass.addColorStop(0.55, "#0F4A2C"); grass.addColorStop(1, "#08301D");
-      x.fillStyle = grass; x.fillRect(apx, apy, apw, aph);
-      const stripes = 14;
-      for (let i = 0; i < stripes; i++) {
-        if (i % 2) continue;
-        x.fillStyle = "rgba(255,255,255,.032)";
-        x.fillRect(apx + i * apw / stripes, apy, apw / stripes, aph);
-      }
-      // بقع إضاءة الكشافات على العشب
-      for (const [lx, ly] of [[W * .22, H * .3], [W * .78, H * .3], [W * .22, H * .7], [W * .78, H * .7]]) {
-        const spot = x.createRadialGradient(lx, ly, 10, lx, ly, 300);
-        spot.addColorStop(0, "rgba(210,255,230,.05)"); spot.addColorStop(1, "transparent");
-        x.fillStyle = spot; x.fillRect(apx, apy, apw, aph);
-      }
-
-      /* خطوط الملعب مع توهج خفيف */
-      x.strokeStyle = "rgba(235,255,245,.85)";
-      x.lineWidth = 3;
-      x.shadowColor = "rgba(190,255,220,.5)"; x.shadowBlur = 6;
-      x.strokeRect(FX, FY, W - FX * 2, H - FY * 2);
-      x.beginPath(); x.moveTo(W / 2, FY); x.lineTo(W / 2, H - FY); x.stroke();
-      x.beginPath(); x.arc(W / 2, H / 2, 92, 0, Math.PI * 2); x.stroke();
-      const paW = 158, paH = 330, gaW = 62, gaH = 190;
-      x.strokeRect(FX, H / 2 - paH / 2, paW, paH);
-      x.strokeRect(W - FX - paW, H / 2 - paH / 2, paW, paH);
-      x.strokeRect(FX, H / 2 - gaH / 2, gaW, gaH);
-      x.strokeRect(W - FX - gaW, H / 2 - gaH / 2, gaW, gaH);
-      x.beginPath(); x.arc(FX + paW, H / 2, 62, -Math.PI / 2.6, Math.PI / 2.6); x.stroke();
-      x.beginPath(); x.arc(W - FX - paW, H / 2, 62, Math.PI - Math.PI / 2.6, Math.PI + Math.PI / 2.6); x.stroke();
-      x.shadowBlur = 0;
-      x.fillStyle = "rgba(235,255,245,.85)";
-      for (const px of [FX + 106, W - FX - 106, W / 2]) { x.beginPath(); x.arc(px, H / 2, 4, 0, Math.PI * 2); x.fill(); }
-
-      /* المرميان: قائمان وشبكة وتوهج بلون الهوية */
-      const goalNet = (gx, dir, color) => {
-        const depth = 30 * dir;
-        x.save();
-        const g = x.createRadialGradient(gx, H / 2, 8, gx, H / 2, 150);
-        g.addColorStop(0, color === LIME ? "rgba(198,255,0,.20)" : "rgba(0,229,255,.20)");
+      /* أعمدة إنارة على المدرج */
+      const step = Math.max(300, panW / 7);
+      for (let lx = step / 2; lx < panW; lx += step) {
+        const g = x.createRadialGradient(lx, standTop + 8, 2, lx, standTop + 8, 90);
+        g.addColorStop(0, "rgba(235,250,255,.7)");
+        g.addColorStop(0.25, "rgba(235,250,255,.14)");
         g.addColorStop(1, "transparent");
         x.fillStyle = g;
-        x.fillRect(gx - 150, H / 2 - 150, 300, 300);
-        x.strokeStyle = "rgba(255,255,255,.30)"; x.lineWidth = 1;
-        for (let i = 0; i <= 6; i++) {
-          const yy = GOAL_TOP + i * GOAL_W / 6;
-          x.beginPath(); x.moveTo(gx, yy); x.lineTo(gx + depth, yy + (i - 3) * 2); x.stroke();
-        }
-        for (let i = 0; i <= 4; i++) {
-          const xx = gx + depth * i / 4;
-          x.beginPath(); x.moveTo(xx, GOAL_TOP); x.lineTo(xx, GOAL_BOT); x.stroke();
-        }
-        x.strokeStyle = "#F2F6FA"; x.lineWidth = 5; x.lineCap = "round";
-        x.shadowColor = color; x.shadowBlur = 16;
-        x.beginPath();
-        x.moveTo(gx + depth, GOAL_TOP); x.lineTo(gx, GOAL_TOP);
-        x.lineTo(gx, GOAL_BOT); x.lineTo(gx + depth, GOAL_BOT);
-        x.stroke();
-        x.shadowBlur = 0;
-        x.restore();
-      };
-      goalNet(FX, -1, CYAN);
-      goalNet(W - FX, 1, LIME);
-
-      /* أبراج الكشافات في الزوايا */
-      for (const [cx0, cy0] of [[26, 26], [W - 26, 26], [26, H - 26], [W - 26, H - 26]]) {
-        const g = x.createRadialGradient(cx0, cy0, 2, cx0, cy0, 120);
-        g.addColorStop(0, "rgba(240,255,250,.55)");
-        g.addColorStop(0.2, "rgba(240,255,250,.12)");
-        g.addColorStop(1, "transparent");
-        x.fillStyle = g;
-        x.beginPath(); x.arc(cx0, cy0, 120, 0, Math.PI * 2); x.fill();
-        x.fillStyle = "#DDE9F2";
-        for (let i = -1; i <= 1; i++) { x.beginPath(); x.arc(cx0 + i * 9, cy0 + (cy0 > H / 2 ? 4 : -4), 3, 0, Math.PI * 2); x.fill(); }
+        x.beginPath(); x.arc(lx, standTop + 8, 90, 0, Math.PI * 2); x.fill();
+        x.fillStyle = "#E6F1F8";
+        x.fillRect(lx - 8, standTop + 4, 16, 5);
       }
 
-      /* تظليل الحواف (vignette) */
-      const vig = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.72);
-      vig.addColorStop(0, "transparent"); vig.addColorStop(1, "rgba(0,0,0,.5)");
-      x.fillStyle = vig; x.fillRect(0, 0, W, H);
-
-      this.stadium = c;
+      /* شريط لوحات LED */
+      const bh = panH - boardTop;
+      const led = x.createLinearGradient(0, boardTop, 0, panH);
+      led.addColorStop(0, "#0A121C"); led.addColorStop(1, "#0D1520");
+      x.fillStyle = led; x.fillRect(0, boardTop, panW, bh);
+      x.fillStyle = "rgba(198,255,0,.9)";
+      x.fillRect(0, boardTop, panW, 1.6);
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.font = `700 ${Math.max(9, bh * 0.52)}px Rajdhani, Arial`;
+      const msgs = ["FOOTBALL FUTURE", "PLAY · GROW · WIN", "FUTURE CUP"];
+      const colors = [LIME, CYAN, "#EAF2F8"];
+      const segW = 240;
+      for (let sx = segW / 2, i = 0; sx < panW; sx += segW, i++) {
+        x.fillStyle = colors[i % 3];
+        x.globalAlpha = 0.85;
+        x.fillText(msgs[i % 3], sx, boardTop + bh / 2 + 1);
+        x.globalAlpha = 0.25;
+        x.fillRect(sx + segW / 2 - 1, boardTop + 4, 1, bh - 8);
+        x.globalAlpha = 1;
+      }
+      this.backdrop = c;
     }
 
     draw() {
       const ctx = this.ctx;
       const vw = this.view.w, vh = this.view.h;
-      ctx.fillStyle = "#05070B";
-      ctx.fillRect(0, 0, vw, vh);
-
-      ctx.save();
-      // اهتزاز الكاميرا
       const sh = this.shake;
       const shx = sh ? (Math.random() - .5) * sh : 0;
       const shy = sh ? (Math.random() - .5) * sh : 0;
-      ctx.translate(this.offset.x + shx, this.offset.y + shy);
 
-      // المشهد الثابت
-      if (this.stadium) ctx.drawImage(this.stadium, 0, 0, W * this.scale, H * this.scale);
+      ctx.save();
+      ctx.translate(shx, shy);
 
-      ctx.scale(this.scale, this.scale);
-
-      // وميض الجمهور
-      ctx.globalAlpha = 0.5;
-      for (let i = 0; i < 26; i++) {
-        const h1 = hash(i * 13.7 + Math.floor(this.time * 3));
-        const h2 = hash(i * 7.3 + Math.floor(this.time * 3) * 1.7);
-        const side = i % 4;
-        let px, py;
-        if (side === 0) { px = h1 * W; py = h2 * (STAND - 12) + 6; }
-        else if (side === 1) { px = h1 * W; py = H - STAND + h2 * (STAND - 12) + 6; }
-        else if (side === 2) { px = h1 * (STAND - 12) + 6; py = STAND + h2 * (H - STAND * 2); }
-        else { px = W - STAND + h1 * (STAND - 12) + 6; py = STAND + h2 * (H - STAND * 2); }
-        ctx.fillStyle = i % 5 === 0 ? LIME : i % 5 === 1 ? CYAN : "#EAF2F8";
-        ctx.fillRect(px, py, 2.6, 2.6);
+      /* 1) المدرج البانورامي (بارالاكس مع الكاميرا) */
+      ctx.fillStyle = "#05070C";
+      ctx.fillRect(-8, -8, vw + 16, vh + 16);
+      if (this.backdrop) {
+        const dx = vw / 2 - (this.camX + this.panPad) * this.kFar;
+        ctx.drawImage(this.backdrop, dx, 0);
+        // وميض جمهور حي
+        ctx.globalAlpha = 0.55;
+        for (let i = 0; i < 22; i++) {
+          const h1 = hash(i * 13.7 + Math.floor(this.time * 3));
+          const h2 = hash(i * 7.3 + Math.floor(this.time * 3) * 1.7);
+          ctx.fillStyle = i % 5 === 0 ? LIME : i % 5 === 1 ? CYAN : "#EAF2F8";
+          ctx.fillRect(h1 * vw, this.py0 * (0.14 + h2 * 0.6), 2.2, 2.2);
+        }
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
 
-      // أثر الكرة
+      /* 2) أرضية العشب بمنظور */
+      this.drawGrass(ctx, vw, vh);
+
+      /* 3) خطوط الملعب بمنظور */
+      this.drawLines(ctx);
+
+      /* 4) المرميان */
+      this.drawGoal(FX, CYAN, ctx);
+      this.drawGoal(W - FX, LIME, ctx);
+
+      /* 5) أثر الكرة */
       const b = this.ball;
       if (!b.owner && Math.hypot(b.vx, b.vy) > 120) {
-        this.trail.push({ x: b.x, y: b.y });
+        this.trail.push({ x: b.x, y: b.y, z: b.z });
         if (this.trail.length > 9) this.trail.shift();
       } else if (this.trail.length) this.trail.shift();
       for (let i = 0; i < this.trail.length; i++) {
         const k = i / this.trail.length;
+        const tp = this.proj(this.trail[i].x, this.trail[i].y);
         ctx.fillStyle = `rgba(198,255,0,${k * 0.3})`;
-        ctx.beginPath(); ctx.arc(this.trail[i].x, this.trail[i].y, BR * k, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(tp.x, tp.y - this.trail[i].z * tp.s * 0.55, BR * 0.55 * tp.s * k, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // اللاعبون مرتبون حسب العمق
-      const sorted = [...this.all].sort((m, n) => m.y - n.y);
-      for (const p of sorted) this.drawPlayer(ctx, p);
+      /* 6) الكيانات بترتيب العمق */
+      const drawables = this.all.map(p => ({ y: p.y, fn: () => this.drawPlayer(ctx, p) }));
+      drawables.push({ y: b.y, fn: () => this.drawBall(ctx) });
+      drawables.sort((m, n) => m.y - n.y);
+      for (const d of drawables) d.fn();
 
-      this.drawBall(ctx);
+      /* 7) الجسيمات */
       this.drawParticles(ctx);
+
       ctx.restore();
 
-      // وميض الهدف
+      /* 8) وميض الهدف واللافتات */
       if (this.flash > 0) {
-        ctx.fillStyle = `rgba(198,255,0,${this.flash * 0.16})`;
+        ctx.fillStyle = `rgba(198,255,0,${this.flash * 0.15})`;
         ctx.fillRect(0, 0, vw, vh);
       }
-
       this.drawOverlay(ctx, vw, vh);
     }
 
+    drawGrass(ctx, vw, vh) {
+      // مساحة العشب: من خط التماس البعيد حتى أسفل الشاشة
+      const g = ctx.createLinearGradient(0, this.py0, 0, vh);
+      g.addColorStop(0, "#0E4A2B");
+      g.addColorStop(0.45, "#12613A");
+      g.addColorStop(1, "#0A3B22");
+      ctx.fillStyle = g;
+      ctx.fillRect(-8, this.py0, vw + 16, vh - this.py0 + 8);
+
+      // خطوط القص العمودية (شبه منحرفة بالمنظور)
+      const stripes = 16, sw = (W + 1400) / stripes;
+      for (let i = 0; i < stripes; i++) {
+        if (i % 2) continue;
+        const x0 = -700 + i * sw, x1 = x0 + sw;
+        const fT = this.proj(x0, FY), fB = this.proj(x0, H - FY + 260);
+        const gT = this.proj(x1, FY), gB = this.proj(x1, H - FY + 260);
+        ctx.fillStyle = "rgba(255,255,255,.035)";
+        ctx.beginPath();
+        ctx.moveTo(fT.x, this.py0); ctx.lineTo(gT.x, this.py0);
+        ctx.lineTo(gB.x, vh + 8); ctx.lineTo(fB.x, vh + 8);
+        ctx.closePath(); ctx.fill();
+      }
+
+      // إضاءة كشافات مركزية على العشب
+      const spot = ctx.createRadialGradient(vw / 2, (this.py0 + vh) / 2, 30, vw / 2, (this.py0 + vh) / 2, vw * 0.62);
+      spot.addColorStop(0, "rgba(220,255,235,.055)");
+      spot.addColorStop(1, "rgba(0,0,0,.22)");
+      ctx.fillStyle = spot;
+      ctx.fillRect(-8, this.py0, vw + 16, vh - this.py0 + 8);
+    }
+
+    /* رسم خط عالمي مُسقط */
+    line(ctx, x0, y0, x1, y1) {
+      const a = this.proj(x0, y0), b = this.proj(x1, y1);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    drawLines(ctx) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(240,255,248,.82)";
+      ctx.shadowColor = "rgba(190,255,220,.35)";
+      ctx.shadowBlur = 5;
+
+      const lwFar = 1.4, lwNear = 2.6;
+      // الحدود
+      ctx.lineWidth = lwFar;   this.line(ctx, FX, FY, W - FX, FY);
+      ctx.lineWidth = lwNear;  this.line(ctx, FX, H - FY, W - FX, H - FY);
+      ctx.lineWidth = 2;       this.line(ctx, FX, FY, FX, H - FY);
+                               this.line(ctx, W - FX, FY, W - FX, H - FY);
+      // خط المنتصف
+      this.line(ctx, W / 2, FY, W / 2, H - FY);
+
+      // دائرة المنتصف (مضلع مُسقط)
+      ctx.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const a = i / 40 * Math.PI * 2;
+        const p = this.proj(W / 2 + Math.cos(a) * 92, H / 2 + Math.sin(a) * 92);
+        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      // شعار الهوية باهت في دائرة المنتصف
+      const cc = this.proj(W / 2, H / 2);
+      ctx.save();
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = LIME;
+      ctx.font = `900 ${Math.round(46 * cc.s)}px Rajdhani, Arial`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("FF", cc.x, cc.y);
+      ctx.restore();
+
+      // منطقتا الجزاء والمرمى
+      const paW = 158, paH = 330, gaW = 62, gaH = 190;
+      const box = (bx, bw) => {
+        this.line(ctx, bx, H / 2 - paH / 2, bx + bw, H / 2 - paH / 2);
+        this.line(ctx, bx, H / 2 + paH / 2, bx + bw, H / 2 + paH / 2);
+        this.line(ctx, bx + (bw > 0 ? bw : bw), H / 2 - paH / 2, bx + bw, H / 2 + paH / 2);
+      };
+      // يسار
+      this.line(ctx, FX, H / 2 - paH / 2, FX + paW, H / 2 - paH / 2);
+      this.line(ctx, FX, H / 2 + paH / 2, FX + paW, H / 2 + paH / 2);
+      this.line(ctx, FX + paW, H / 2 - paH / 2, FX + paW, H / 2 + paH / 2);
+      this.line(ctx, FX, H / 2 - gaH / 2, FX + gaW, H / 2 - gaH / 2);
+      this.line(ctx, FX, H / 2 + gaH / 2, FX + gaW, H / 2 + gaH / 2);
+      this.line(ctx, FX + gaW, H / 2 - gaH / 2, FX + gaW, H / 2 + gaH / 2);
+      // يمين
+      this.line(ctx, W - FX, H / 2 - paH / 2, W - FX - paW, H / 2 - paH / 2);
+      this.line(ctx, W - FX, H / 2 + paH / 2, W - FX - paW, H / 2 + paH / 2);
+      this.line(ctx, W - FX - paW, H / 2 - paH / 2, W - FX - paW, H / 2 + paH / 2);
+      this.line(ctx, W - FX, H / 2 - gaH / 2, W - FX - gaW, H / 2 - gaH / 2);
+      this.line(ctx, W - FX, H / 2 + gaH / 2, W - FX - gaW, H / 2 + gaH / 2);
+      this.line(ctx, W - FX - gaW, H / 2 - gaH / 2, W - FX - gaW, H / 2 + gaH / 2);
+
+      // قوسا الجزاء
+      const arc = (cx, from, to) => {
+        ctx.beginPath();
+        for (let i = 0; i <= 18; i++) {
+          const a = from + (to - from) * i / 18;
+          const p = this.proj(cx + Math.cos(a) * 62, H / 2 + Math.sin(a) * 62);
+          i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      };
+      arc(FX + paW, -Math.PI / 2.6, Math.PI / 2.6);
+      arc(W - FX - paW, Math.PI - Math.PI / 2.6, Math.PI + Math.PI / 2.6);
+
+      // نقاط الجزاء والمنتصف
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(240,255,248,.82)";
+      for (const px of [FX + 106, W - FX - 106, W / 2]) {
+        const p = this.proj(px, H / 2);
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2.4 * p.s, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /* مرمى ثلاثي الأبعاد بشباك */
+    drawGoal(gx, color, ctx) {
+      const out = gx < W / 2 ? -1 : 1;
+      const pT = this.proj(gx, GOAL_TOP), pB = this.proj(gx, GOAL_BOT);
+      const hT = 56 * pT.s, hB = 56 * pB.s;          // ارتفاع كل قائم حسب عمقه
+      const dT = 24 * pT.s * out, dB = 24 * pB.s * out;
+      const ftT = { x: pT.x, y: pT.y - hT };          // أعلى القائم البعيد
+      const ftB = { x: pB.x, y: pB.y - hB };          // أعلى القائم القريب
+      const bkT = { x: pT.x + dT, y: pT.y - hT * 0.42 };
+      const bkB = { x: pB.x + dB, y: pB.y - hB * 0.42 };
+      const gT  = { x: pT.x + dT, y: pT.y };
+      const gB  = { x: pB.x + dB, y: pB.y };
+      const sMid = (pT.s + pB.s) / 2;
+
+      ctx.save();
+      // توهج خلف المرمى
+      const cx = (pT.x + pB.x) / 2 + dT, cy = (ftT.y + pB.y) / 2;
+      const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 110 * sMid);
+      glow.addColorStop(0, color === LIME ? "rgba(198,255,0,.20)" : "rgba(0,229,255,.20)");
+      glow.addColorStop(1, "transparent");
+      ctx.fillStyle = glow;
+      ctx.fillRect(cx - 120 * sMid, cy - 120 * sMid, 240 * sMid, 240 * sMid);
+
+      // نسيج الشباك: تعبئة خفيفة ثم شبكة
+      ctx.fillStyle = "rgba(255,255,255,.05)";
+      ctx.beginPath();
+      ctx.moveTo(ftT.x, ftT.y); ctx.lineTo(bkT.x, bkT.y); ctx.lineTo(gT.x, gT.y); ctx.lineTo(pT.x, pT.y);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(ftB.x, ftB.y); ctx.lineTo(bkB.x, bkB.y); ctx.lineTo(gB.x, gB.y); ctx.lineTo(pB.x, pB.y);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(bkT.x, bkT.y); ctx.lineTo(bkB.x, bkB.y); ctx.lineTo(gB.x, gB.y); ctx.lineTo(gT.x, gT.y);
+      ctx.closePath(); ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,.28)";
+      ctx.lineWidth = 0.8;
+      // خطوط الشبكة الخلفية (عمودية وأفقية)
+      for (let i = 0; i <= 6; i++) {
+        const k = i / 6;
+        ctx.beginPath();
+        ctx.moveTo(lerp(bkT.x, bkB.x, k), lerp(bkT.y, bkB.y, k));
+        ctx.lineTo(lerp(gT.x, gB.x, k), lerp(gT.y, gB.y, k));
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 3; i++) {
+        const k = i / 3;
+        ctx.beginPath();
+        ctx.moveTo(lerp(bkT.x, gT.x, k), lerp(bkT.y, gT.y, k));
+        ctx.lineTo(lerp(bkB.x, gB.x, k), lerp(bkB.y, gB.y, k));
+        ctx.stroke();
+      }
+      // شبكة جانبية علوية
+      for (let i = 1; i <= 3; i++) {
+        const k = i / 4;
+        ctx.beginPath();
+        ctx.moveTo(lerp(ftT.x, pT.x, k), lerp(ftT.y, pT.y, k));
+        ctx.lineTo(lerp(bkT.x, gT.x, k), lerp(bkT.y, gT.y, k));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(lerp(ftB.x, pB.x, k), lerp(ftB.y, pB.y, k));
+        ctx.lineTo(lerp(bkB.x, gB.x, k), lerp(bkB.y, gB.y, k));
+        ctx.stroke();
+      }
+
+      // القائمان والعارضة
+      ctx.strokeStyle = "#F4F8FB";
+      ctx.lineCap = "round";
+      ctx.shadowColor = color; ctx.shadowBlur = 13;
+      ctx.lineWidth = Math.max(2.2, 3.6 * pT.s);
+      ctx.beginPath(); ctx.moveTo(pT.x, pT.y); ctx.lineTo(ftT.x, ftT.y); ctx.stroke();
+      ctx.lineWidth = Math.max(2.4, 3.6 * pB.s);
+      ctx.beginPath(); ctx.moveTo(pB.x, pB.y); ctx.lineTo(ftB.x, ftB.y); ctx.stroke();
+      ctx.lineWidth = Math.max(2.2, 3.6 * sMid);
+      ctx.beginPath(); ctx.moveTo(ftT.x, ftT.y); ctx.lineTo(ftB.x, ftB.y); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    /* لاعب مجسّم بحركة جري */
     drawPlayer(ctx, p) {
       const isUser = p === this.controlled;
       const isGK = p.role === "GK";
-      const kit = p.side === 1 ? (isGK ? "#FFD23F" : LIME) : (isGK ? "#FF8DA0" : "#FF5A5F");
-      const kitDark = p.side === 1 ? (isGK ? "#B8931B" : "#7FA800") : (isGK ? "#C24A61" : "#B02A30");
+      const pos = this.proj(p.x, p.y);
+      const u = pos.s;                       // وحدة القياس المنظورية
+      const hgt = 57 * u;                    // طول اللاعب بالبكسل
+
+      const kit     = p.side === 1 ? (isGK ? "#FFD23F" : "#1A2430") : (isGK ? "#3E2A56" : "#E8ECF2");
+      const kitLite = p.side === 1 ? (isGK ? "#FFE58A" : "#273548") : (isGK ? "#5A3E7E" : "#FFFFFF");
+      const accent  = p.side === 1 ? LIME : "#FF4D5E";
+      const shorts  = p.side === 1 ? "#0C1218" : "#C3341F";
+      const skin    = p.side === 1 ? "#E8C39E" : "#D9A67F";
+      const moving = Math.hypot(p.vx, p.vy) > 14;
+      const ph = p.phase;
 
       ctx.save();
-      ctx.translate(p.x, p.y);
+      ctx.translate(pos.x, pos.y);
 
-      // الظل
-      ctx.fillStyle = "rgba(0,0,0,.45)";
-      ctx.beginPath(); ctx.ellipse(2, PR * 0.72, PR * 1.05, PR * 0.42, 0, 0, Math.PI * 2); ctx.fill();
-
-      // حلقة اللاعب المتحكَّم به (متحركة)
+      /* ظل وحلقة التحكم على العشب */
+      ctx.fillStyle = "rgba(0,0,0,.42)";
+      ctx.beginPath(); ctx.ellipse(0, 1.5 * u, 13 * u, 4.6 * u, 0, 0, Math.PI * 2); ctx.fill();
       if (isUser) {
         ctx.save();
-        ctx.rotate(this.time * 2.2);
-        ctx.strokeStyle = LIME; ctx.lineWidth = 3;
-        ctx.setLineDash([9, 7]);
-        ctx.shadowColor = LIME; ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.arc(0, 0, PR + 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = LIME; ctx.lineWidth = 2.2;
+        ctx.setLineDash([7 * u, 5 * u]);
+        ctx.lineDashOffset = -this.time * 40;
+        ctx.shadowColor = LIME; ctx.shadowBlur = 9;
+        ctx.beginPath(); ctx.ellipse(0, 1.5 * u, 17 * u, 6.4 * u, 0, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
 
-      // سهم الاتجاه
-      if (Math.hypot(p.vx, p.vy) > 20) {
+      /* اتجاه النظر */
+      ctx.scale(p.dirX < 0 ? -1 : 1, 1);
+
+      const swing = moving ? Math.sin(ph) : 0;
+      const swing2 = moving ? Math.sin(ph + Math.PI) : 0;
+      const bob = moving ? Math.abs(Math.sin(ph)) * 1.6 * u : 0;
+
+      const hipY = -hgt * 0.42 - bob;
+      const shoY = -hgt * 0.74 - bob;
+
+      ctx.lineCap = "round";
+
+      /* الرجل الخلفية */
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = 3.4 * u;
+      ctx.beginPath();
+      ctx.moveTo(-1.2 * u, hipY);
+      ctx.lineTo(-1.2 * u + swing2 * 6.5 * u, hipY + hgt * 0.24);
+      ctx.lineTo(-1.2 * u + swing2 * 9.5 * u, -2 * u - Math.max(0, swing2) * 3.4 * u);
+      ctx.stroke();
+      // حذاء
+      ctx.strokeStyle = "#0B0F14";
+      ctx.lineWidth = 3.8 * u;
+      ctx.beginPath();
+      ctx.moveTo(-1.2 * u + swing2 * 9.5 * u, -1.6 * u - Math.max(0, swing2) * 3.4 * u);
+      ctx.lineTo(1.2 * u + swing2 * 9.5 * u, -1.2 * u - Math.max(0, swing2) * 3.4 * u);
+      ctx.stroke();
+
+      /* الشورت */
+      ctx.fillStyle = shorts;
+      ctx.beginPath();
+      ctx.roundRect(-5.4 * u, hipY - 3.5 * u, 10.8 * u, 8 * u, 2.6 * u);
+      ctx.fill();
+
+      /* الرجل الأمامية */
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = 3.6 * u;
+      ctx.beginPath();
+      ctx.moveTo(1.4 * u, hipY);
+      ctx.lineTo(1.4 * u + swing * 6.5 * u, hipY + hgt * 0.24);
+      ctx.lineTo(1.4 * u + swing * 9.5 * u, -2 * u - Math.max(0, swing) * 3.4 * u);
+      ctx.stroke();
+      ctx.strokeStyle = "#10161D";
+      ctx.lineWidth = 4 * u;
+      ctx.beginPath();
+      ctx.moveTo(1.4 * u + swing * 9.5 * u, -1.6 * u - Math.max(0, swing) * 3.4 * u);
+      ctx.lineTo(4 * u + swing * 9.5 * u, -1.2 * u - Math.max(0, swing) * 3.4 * u);
+      ctx.stroke();
+
+      /* الذراع الخلفية */
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = 2.8 * u;
+      ctx.beginPath();
+      ctx.moveTo(-4.6 * u, shoY + 2 * u);
+      ctx.lineTo(-4.6 * u - swing * 5.5 * u, shoY + hgt * 0.17);
+      ctx.stroke();
+
+      /* الجذع (القميص) */
+      const jg = ctx.createLinearGradient(0, shoY, 0, hipY);
+      jg.addColorStop(0, kitLite); jg.addColorStop(1, kit);
+      ctx.fillStyle = jg;
+      ctx.beginPath();
+      ctx.roundRect(-6.4 * u, shoY, 12.8 * u, (hipY - shoY) + 4 * u, 3.4 * u);
+      ctx.fill();
+      // شريط الهوية المائل على القميص
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(-6.4 * u, shoY, 12.8 * u, (hipY - shoY) + 4 * u, 3.4 * u);
+      ctx.clip();
+      ctx.fillStyle = accent;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(-6.4 * u, shoY + 2 * u); ctx.lineTo(-2.4 * u, shoY);
+      ctx.lineTo(1.6 * u, hipY + 4 * u); ctx.lineTo(-2.4 * u, hipY + 4 * u);
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      // الرقم على القميص
+      ctx.fillStyle = p.side === 1 ? "#EAF6FF" : "#10161D";
+      ctx.font = `800 ${6.4 * u}px Rajdhani, Arial`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.save(); ctx.scale(p.dirX < 0 ? -1 : 1, 1);
+      ctx.fillText(String(p.num), 0, (shoY + hipY) / 2 + 1.4 * u);
+      ctx.restore();
+
+      /* الذراع الأمامية */
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = 3 * u;
+      ctx.beginPath();
+      ctx.moveTo(4.8 * u, shoY + 2 * u);
+      ctx.lineTo(4.8 * u + swing2 * 5.5 * u, shoY + hgt * 0.17);
+      ctx.stroke();
+
+      /* الرأس والشعر */
+      const headY = shoY - 4.6 * u;
+      ctx.fillStyle = skin;
+      ctx.beginPath(); ctx.arc(1.2 * u, headY, 4.4 * u, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#151A20";
+      ctx.beginPath(); ctx.arc(0.6 * u, headY - 1.2 * u, 4.3 * u, Math.PI * 0.95, Math.PI * 2.02); ctx.fill();
+
+      ctx.restore();
+
+      /* اسم اللاعب المتحكَّم به فوق رأسه */
+      if (isUser) {
         ctx.save();
-        ctx.rotate(p.face);
-        ctx.fillStyle = p.side === 1 ? "rgba(198,255,0,.5)" : "rgba(255,90,95,.45)";
+        ctx.font = `700 ${Math.max(10, 10.5 * u)}px "Noto Kufi Arabic", Arial`;
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.fillStyle = "rgba(255,255,255,.95)";
+        ctx.shadowColor = "#000"; ctx.shadowBlur = 6;
+        ctx.fillText(p.name, pos.x, pos.y - hgt - 8 * u);
+        // مؤشر مثلث
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = LIME;
         ctx.beginPath();
-        ctx.moveTo(PR + 7, 0); ctx.lineTo(PR + 1, -5); ctx.lineTo(PR + 1, 5);
+        ctx.moveTo(pos.x, pos.y - hgt - 3 * u);
+        ctx.lineTo(pos.x - 4.5 * u, pos.y - hgt - 8 * u);
+        ctx.lineTo(pos.x + 4.5 * u, pos.y - hgt - 8 * u);
         ctx.closePath(); ctx.fill();
         ctx.restore();
       }
-
-      // الجسم: قميص بتظليل كروي + حافة
-      const g = ctx.createRadialGradient(-PR * 0.4, -PR * 0.4, 2, 0, 0, PR * 1.25);
-      g.addColorStop(0, "#FFFFFF");
-      g.addColorStop(0.25, kit);
-      g.addColorStop(1, kitDark);
-      ctx.fillStyle = g;
-      ctx.strokeStyle = "rgba(255,255,255,.7)";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.arc(0, 0, PR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-      // شريط كتف بلون الفريق الثانوي
-      ctx.save();
-      ctx.beginPath(); ctx.arc(0, 0, PR, 0, Math.PI * 2); ctx.clip();
-      ctx.fillStyle = p.side === 1 ? "rgba(0,229,255,.35)" : "rgba(255,255,255,.22)";
-      ctx.fillRect(-PR, -PR, PR * 2, 5);
-      ctx.restore();
-
-      // الرأس
-      ctx.fillStyle = p.side === 1 ? "#E8C9A5" : "#D9B08C";
-      ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(Math.cos(p.face) * 4, Math.sin(p.face) * 4 - PR * 0.62, PR * 0.42, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-
-      // الرقم
-      ctx.fillStyle = p.side === 1 ? "#06210B" : "#FFFFFF";
-      ctx.font = `800 ${PR * 0.9}px Rajdhani, Arial`;
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(String(p.num), 0, 2.5);
-
-      // اسم اللاعب المتحكَّم به
-      if (isUser) {
-        ctx.font = '700 11px "Noto Kufi Arabic", Arial';
-        ctx.fillStyle = "rgba(255,255,255,.92)";
-        ctx.shadowColor = "#000"; ctx.shadowBlur = 5;
-        ctx.fillText(p.name, 0, -PR - 15);
-        ctx.shadowBlur = 0;
-      }
-      ctx.restore();
     }
 
     drawBall(ctx) {
       const b = this.ball;
+      const pos = this.proj(b.x, b.y);
+      const u = pos.s;
+      const r = 5.4 * u;
+      const lift = b.z * u * 0.55;
+
       ctx.save();
-      ctx.translate(b.x, b.y);
-      ctx.fillStyle = "rgba(0,0,0,.5)";
-      ctx.beginPath(); ctx.ellipse(1.6, BR * 0.85, BR * 0.95, BR * 0.42, 0, 0, Math.PI * 2); ctx.fill();
-      const g = ctx.createRadialGradient(-3, -3, 1, 0, 0, BR + 2);
-      g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.75, "#E8EFF4"); g.addColorStop(1, "#B9C6D1");
+      // الظل على العشب
+      const shScale = clamp(1 - b.z / 220, 0.45, 1);
+      ctx.fillStyle = `rgba(0,0,0,${0.42 * shScale})`;
+      ctx.beginPath(); ctx.ellipse(pos.x, pos.y + 1 * u, r * shScale, r * 0.42 * shScale, 0, 0, Math.PI * 2); ctx.fill();
+
+      // الكرة
+      ctx.translate(pos.x, pos.y - r - lift);
+      const g = ctx.createRadialGradient(-r * 0.35, -r * 0.35, 0.5, 0, 0, r + 1.5);
+      g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.72, "#E9F0F5"); g.addColorStop(1, "#B7C4CF");
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(0, 0, BR, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "rgba(10,16,22,.55)"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "rgba(10,16,22,.5)"; ctx.lineWidth = 0.8; ctx.stroke();
       ctx.rotate(b.spin);
-      ctx.fillStyle = "#141B23";
-      ctx.beginPath(); ctx.arc(0, 0, BR * 0.34, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#161D26";
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.32, 0, Math.PI * 2); ctx.fill();
       for (let i = 0; i < 5; i++) {
         const a = i * Math.PI * 2 / 5;
-        ctx.beginPath(); ctx.arc(Math.cos(a) * BR * 0.78, Math.sin(a) * BR * 0.78, BR * 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(Math.cos(a) * r * 0.76, Math.sin(a) * r * 0.76, r * 0.2, 0, Math.PI * 2); ctx.fill();
       }
       ctx.restore();
     }
 
     drawParticles(ctx) {
       for (const pt of this.particles) {
+        const pos = this.proj(pt.x, pt.y);
         if (pt.ring) {
           ctx.globalAlpha = clamp(pt.t / 0.45, 0, 1);
-          ctx.strokeStyle = pt.c; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = pt.c; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.ellipse(pos.x, pos.y, pt.r * pos.s, pt.r * pos.s * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
           ctx.globalAlpha = 1;
           continue;
         }
         ctx.save();
         ctx.globalAlpha = clamp(pt.t, 0, 1);
-        ctx.translate(pt.x, pt.y);
+        ctx.translate(pos.x, pos.y - 20 * pos.s);
         if (pt.rot != null) ctx.rotate(pt.rot);
         ctx.fillStyle = pt.c;
-        ctx.fillRect(-pt.size / 2, -pt.size / 2, pt.size, pt.size * 0.7);
+        const sz = pt.size * pos.s;
+        ctx.fillRect(-sz / 2, -sz / 2, sz, sz * 0.7);
         ctx.restore();
       }
       ctx.globalAlpha = 1;
@@ -864,23 +1122,24 @@
       const alpha = clamp(this.messageTime / 0.3, 0, 1);
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.font = '900 19px "Noto Kufi Arabic", Arial';
-      const tw = ctx.measureText(this.message).width + 56;
-      const bx = w / 2 - tw / 2, by = h * 0.16;
-      ctx.fillStyle = "rgba(11,15,20,.82)";
-      ctx.strokeStyle = "rgba(198,255,0,.65)";
-      ctx.lineWidth = 1.5;
-      ctx.shadowColor = "rgba(198,255,0,.45)"; ctx.shadowBlur = 22;
-      roundRect(ctx, bx, by, tw, 48, 24); ctx.fill(); ctx.stroke();
+      ctx.font = '800 18px "Noto Kufi Arabic", Arial';
+      const tw = ctx.measureText(this.message).width + 58;
+      const bx = w / 2 - tw / 2, by = h * 0.135;
+      ctx.fillStyle = "rgba(11,15,20,.84)";
+      ctx.strokeStyle = "rgba(198,255,0,.6)";
+      ctx.lineWidth = 1.4;
+      ctx.shadowColor = "rgba(198,255,0,.4)"; ctx.shadowBlur = 20;
+      roundRect(ctx, bx, by, tw, 46, 12);
+      ctx.fill(); ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.fillStyle = LIME;
       ctx.beginPath();
-      ctx.moveTo(bx + 16, by + 10); ctx.lineTo(bx + 24, by + 10);
-      ctx.lineTo(bx + 18, by + 38); ctx.lineTo(bx + 10, by + 38);
+      ctx.moveTo(bx + 15, by + 9); ctx.lineTo(bx + 23, by + 9);
+      ctx.lineTo(bx + 17, by + 37); ctx.lineTo(bx + 9, by + 37);
       ctx.closePath(); ctx.fill();
       ctx.fillStyle = "#FFFFFF";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(this.message, w / 2 + 10, by + 25);
+      ctx.fillText(this.message, w / 2 + 10, by + 24);
       ctx.restore();
     }
 
