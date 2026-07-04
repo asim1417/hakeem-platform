@@ -205,5 +205,58 @@
   });
   if ("speechSynthesis" in window) window.speechSynthesis.onvoiceschanged = () => getArabicVoice();
 
-  window.FFAudio = { play, speak, announce, screen, toggleMute, setVolume, settings: () => ({ ...settings }), phrases: { ...PHRASES } };
+  /* ── هدير الجمهور المحيطي التفاعلي ── */
+  let crowdRig = null;
+  const CROWD_BASE = 0.016;
+  function crowdStart() {
+    if (crowdRig || settings.muted || !settings.sfx) return;
+    const ac = ensureContext();
+    if (!ac) return;
+    const dur = 2.5;
+    const buffer = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < data.length; i += 1) {
+      // ضجيج وردي مبسّط (أدفأ من الأبيض) لهدير جماهيري
+      const white = Math.random() * 2 - 1;
+      last = last * 0.94 + white * 0.06;
+      data[i] = last * 3.2;
+    }
+    const src = ac.createBufferSource();
+    src.buffer = buffer; src.loop = true;
+    const filter = ac.createBiquadFilter();
+    filter.type = "bandpass"; filter.frequency.value = 420; filter.Q.value = 0.5;
+    const gain = ac.createGain();
+    gain.gain.value = 0.0001;
+    src.connect(filter); filter.connect(gain); gain.connect(master);
+    src.start();
+    gain.gain.setTargetAtTime(CROWD_BASE, ac.currentTime, 0.8);
+    // تموّج طبيعي بطيء
+    const timer = window.setInterval(() => {
+      if (!crowdRig) return;
+      const target = CROWD_BASE * (0.75 + Math.random() * 0.6);
+      crowdRig.gain.gain.setTargetAtTime(target, ac.currentTime, 1.4);
+    }, 2600);
+    crowdRig = { src, gain, filter, timer };
+  }
+  function crowdSwell(level, hold) {
+    if (!crowdRig || settings.muted || !settings.sfx) return;
+    const ac = ensureContext();
+    const g = crowdRig.gain.gain;
+    g.cancelScheduledValues(ac.currentTime);
+    g.setTargetAtTime(level, ac.currentTime, 0.06);
+    g.setTargetAtTime(CROWD_BASE, ac.currentTime + (hold || 0.7), 0.9);
+  }
+  function crowdStop() {
+    if (!crowdRig) return;
+    try {
+      window.clearInterval(crowdRig.timer);
+      crowdRig.gain.gain.setTargetAtTime(0.0001, (ctx || {}).currentTime || 0, 0.3);
+      const src = crowdRig.src;
+      window.setTimeout(() => { try { src.stop(); } catch {} }, 900);
+    } catch {}
+    crowdRig = null;
+  }
+
+  window.FFAudio = { play, speak, announce, screen, toggleMute, setVolume, crowdStart, crowdSwell, crowdStop, settings: () => ({ ...settings }), phrases: { ...PHRASES } };
 })();
