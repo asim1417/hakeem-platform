@@ -1,4 +1,5 @@
-// PlayerSelectScene — بطاقات لاعبين بأسلوب FIFA (FFPlayerCard): تقييم، صورة، أرقام قدرات
+// PlayerSelectScene — عرض احترافي: لاعب واحد في كل شاشة بطقم فوتبول فيوتشر الكامل
+// (قميص وشورت بألوان الهوية + وجه الطفل الحقيقي) — تقليب بالسحب أو الأسهم
 // + إضافة لاعب من العائلة (صورة واسم، على الجهاز فقط)
 
 import Phaser from 'phaser';
@@ -9,15 +10,15 @@ import { audio } from '../utils/audio';
 import { popIn } from '../utils/animations';
 import { fadeIn, go } from '../utils/camera';
 import { makeCircularAvatar } from '../utils/avatar';
-import { makeChip } from '../utils/ui';
+import { makeButton, makeChip } from '../utils/ui';
 
-// شبكة بطاقات FIFA عمودية: ٣ أعمدة × ٤ صفوف (حتى ١٢ بطاقة)
-const CW = 146;
-const CH = 184;
-const COL_X = [396, 240, 84]; // RTL: العمود الأول يمين
-const ROW_Y = [142, 322, 502, 682];
+const CARD_Y = 368; // مركز بطاقة العرض
 
 export class PlayerSelectScene extends Phaser.Scene {
+  private index = 0;
+  private pageItems: Phaser.GameObjects.GameObject[] = [];
+  private swipeX = 0;
+
   constructor() {
     super('PlayerSelect');
   }
@@ -33,7 +34,7 @@ export class PlayerSelectScene extends Phaser.Scene {
     fadeIn(this);
 
     const title = this.add
-      .text(GAME_WIDTH / 2, 40, rtl('اختر نجمك وابدأ فورًا! ⚡'), {
+      .text(GAME_WIDTH / 2, 34, rtl('اختر نجمك ⚡'), {
         fontFamily: HEADING,
         fontSize: '26px',
         color: '#c6ff00',
@@ -44,20 +45,49 @@ export class PlayerSelectScene extends Phaser.Scene {
       .setOrigin(0.5);
     popIn(title);
 
-    // الشبكة: كل اللاعبين ثم بطاقة الإضافة إن بقي مكان
-    const players = allPlayers();
-    const cells: ('add' | PlayerDef)[] = [...players];
-    if (progress.customPlayers().length < MAX_CUSTOM_PLAYERS) cells.push('add');
+    // أسهم التقليب (RTL: السهم الأيمن يرجع، الأيسر يتقدم)
+    const mkArrow = (x: number, dir: 1 | -1, glyph: string) => {
+      const chip = this.add.container(x, CARD_Y);
+      const bg = this.add.image(0, 0, 'chip-glass').setDisplaySize(56, 56);
+      const t = this.add.text(0, -2, glyph, { fontFamily: HEADING, fontSize: '26px', color: '#00e5ff', fontStyle: 'bold' }).setOrigin(0.5);
+      chip.add([bg, t]);
+      chip.setSize(56, 56);
+      chip.setInteractive({ useHandCursor: true });
+      chip.on('pointerup', () => this.flip(dir));
+      chip.setDepth(20);
+      return chip;
+    };
+    mkArrow(GAME_WIDTH - 34, 1, '‹');
+    mkArrow(34, -1, '›');
 
-    cells.forEach((cell, i) => {
-      const x = COL_X[i % 3];
-      const y = ROW_Y[Math.floor(i / 3)];
-      const card = cell === 'add' ? this.makeAddCard(x, y) : this.makeCard(cell, x, y);
-      popIn(card, 0.04 * i);
+    // سحب لليمين/اليسار للتقليب
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => (this.swipeX = p.x));
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      const dx = p.x - this.swipeX;
+      if (Math.abs(dx) > 60) this.flip(dx > 0 ? 1 : -1);
     });
 
-    // رقاقة رجوع صغيرة أعلى اليسار (بدل زر سفلي — الشبكة تملأ الشاشة)
-    makeChip(this, 42, 40, 'ic-home', () => go(this, 'Menu'), 56);
+    makeChip(this, 42, 38, 'ic-home', () => go(this, 'Menu'), 54);
+
+    // ابدأ من اللاعب المختار حاليًا إن وُجد
+    const cells = this.cells();
+    const cur = this.registry.get('playerId') as string | undefined;
+    const found = cells.findIndex((c) => c !== 'add' && c.id === cur);
+    this.index = found >= 0 ? found : 0;
+    this.renderPage(0);
+  }
+
+  private cells(): ('add' | PlayerDef)[] {
+    const list: ('add' | PlayerDef)[] = [...allPlayers()];
+    if (progress.customPlayers().length < MAX_CUSTOM_PLAYERS) list.push('add');
+    return list;
+  }
+
+  private flip(dir: 1 | -1): void {
+    const n = this.cells().length;
+    this.index = (this.index + dir + n) % n;
+    audio.play('button');
+    this.renderPage(dir);
   }
 
   // التقييم العام بأسلوب بطاقات المحترفين (٨٤-٩٦)
@@ -65,191 +95,263 @@ export class PlayerSelectScene extends Phaser.Scene {
     return Math.round(60 + ((p.speed + p.power + p.accuracy) / 3) * 4);
   }
 
-  // 🃏 خامة بطاقة FIFA: تُرسم مرة واحدة لكل لاعب (خلفية متدرجة، صورة، تقييم، أرقام)
-  private buildCardTexture(p: PlayerDef): string {
-    const key = `ffcard-${p.id}`;
+  // 🧍 رسم اللاعب من لوحة الهوية الأصلية + وجه الطفل مركّبًا بحواف ناعمة
+  // (الوجه من الأفاتار يوضع مكان وجه رسم «علي» بنفس المقاس — مواءمة كاملة)
+  private buildCardArt(p: PlayerDef): string {
+    const key = `cardart-${p.id}`;
     if (this.textures.exists(key)) this.textures.remove(key);
-    const W = 150;
-    const H = 190;
+    const W = 390;
+    const H = 570;
     const tex = this.textures.createCanvas(key, W, H);
-    if (!tex) return 'ffcard-missing';
+    if (!tex) return 'card-base';
     const ctx = tex.getContext();
 
-    const round = (x: number, y: number, w: number, h: number, r: number) => {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    };
+    // رسم الهوية الأساسي (اللاعب بالطقم والكرة وخلفية الطاقة)
+    const baseSrc = this.textures.get('card-base').getSourceImage() as HTMLImageElement;
+    ctx.drawImage(baseSrc, 0, 0, W, H);
 
-    // جسم البطاقة: تدرج غرافيت داكن + حد ليموني
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#1b2430');
-    g.addColorStop(1, '#0b0f14');
-    round(2, 2, W - 4, H - 4, 12);
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(198,255,0,0.65)';
-    ctx.stroke();
-    // شريحة طاقة قطرية خافتة
-    ctx.save();
-    round(2, 2, W - 4, H - 4, 12);
-    ctx.clip();
-    ctx.fillStyle = 'rgba(0,229,255,0.07)';
-    ctx.beginPath();
-    ctx.moveTo(8, H);
-    ctx.lineTo(46, 0);
-    ctx.lineTo(66, 0);
-    ctx.lineTo(28, H);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    // صورة اللاعب: المربع الداخلي من دائرة الأفاتار (قصّة صدر)
+    // من لا صورة حقيقية له يبقى وجه رسم الهوية الأصلي كما هو
+    if (!p.photo) {
+      tex.refresh();
+      return key;
+    }
+    // 🎨 دمج ذكي: قناع بيضاوي بشكل الوجه + مطابقة لونية مع إضاءة الرسم + حافة متلاشية
     const avatarKey = this.textures.exists(`avatar-${p.id}`) ? `avatar-${p.id}` : 'avatar-hassouni';
     const src = this.textures.get(avatarKey).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
-    const s = src.width * 0.6;
-    const off = (src.width - s) / 2;
-    ctx.save();
-    round(28, 32, 94, 94, 10);
-    ctx.clip();
-    ctx.drawImage(src, off, off, s, s, 28, 32, 94, 94);
-    // تلاشٍ سفلي يدمج الصورة بالبطاقة
-    const fade = ctx.createLinearGradient(0, 100, 0, 126);
-    fade.addColorStop(0, 'rgba(11,15,20,0)');
-    fade.addColorStop(1, 'rgba(11,15,20,0.85)');
-    ctx.fillStyle = fade;
-    ctx.fillRect(28, 96, 94, 30);
-    ctx.restore();
-    round(28, 32, 94, 94, 10);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = 'rgba(0,229,255,0.5)';
-    ctx.stroke();
+    const FW = 148; // عرض البيضاوي
+    const FH = 176; // ارتفاعه (الوجه أطول من عرضه)
+    const CXF = 210; // مركز وجه الرسم
+    const CYF = 148;
 
-    // التقييم + المركز أعلى اليمين (RTL)
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#c6ff00';
-    ctx.font = '800 24px "Noto Kufi Arabic", Cairo, sans-serif';
-    ctx.fillText(String(this.rating(p)), W - 8, 28);
-    ctx.fillStyle = '#b2bcc6';
-    ctx.font = '700 10px Inter, sans-serif';
-    ctx.fillText('ST', W - 12, 42);
-    // إيموجي الشخصية أعلى اليسار
-    ctx.textAlign = 'left';
-    ctx.font = '16px sans-serif';
-    ctx.fillText(p.emoji, 8, 24);
-
-    // اسم اللاعب
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#f8fff7';
-    ctx.font = '700 13px "Noto Kufi Arabic", Cairo, sans-serif';
-    ctx.fillText(p.name, W / 2, 145);
-
-    // أرقام القدرات الثلاثة بأسلوب فيفا (سرعة/قوة/دقة)
-    const stat = (v: number) => Math.min(99, 40 + v * 6);
-    const cols: [string, number, number][] = [
-      ['سرعة', stat(p.speed), W - 28],
-      ['قوة', stat(p.power), W / 2],
-      ['دقة', stat(p.accuracy), 28],
-    ];
-    for (const [label, val, x] of cols) {
-      ctx.fillStyle = '#c6ff00';
-      ctx.font = '700 15px "Noto Kufi Arabic", Cairo, sans-serif';
-      ctx.fillText(String(val), x, 165);
-      ctx.fillStyle = '#b2bcc6';
-      ctx.font = '600 9px "Noto Kufi Arabic", Cairo, sans-serif';
-      ctx.fillText(label, x, 178);
+    // متوسط لون بشرة الرسم (منطقة الخد/الجبهة) — لمطابقة الإضاءة
+    const artPix = ctx.getImageData(CXF - 26, CYF - 6, 52, 34).data;
+    let ar = 0;
+    let ag = 0;
+    let ab = 0;
+    for (let i = 0; i < artPix.length; i += 4) {
+      ar += artPix[i];
+      ag += artPix[i + 1];
+      ab += artPix[i + 2];
     }
+    const an = artPix.length / 4;
+    ar /= an;
+    ag /= an;
+    ab /= an;
 
-    // خط قاعدي متدرج ليموني→سماوي
-    const base = ctx.createLinearGradient(12, 0, W - 12, 0);
-    base.addColorStop(0, '#00e5ff');
-    base.addColorStop(1, '#c6ff00');
-    ctx.fillStyle = base;
-    ctx.fillRect(12, H - 8, W - 24, 3);
+    const face = document.createElement('canvas');
+    face.width = FW;
+    face.height = FH;
+    const fctx = face.getContext('2d');
+    if (fctx) {
+      // قصاصة بيضاوية من داخل الأفاتار (بعيدًا عن حلقته)
+      fctx.save();
+      fctx.beginPath();
+      fctx.ellipse(FW / 2, FH / 2, FW / 2, FH / 2, 0, 0, Math.PI * 2);
+      fctx.clip();
+      const inner = src.width * 0.72;
+      const off = (src.width - inner) / 2;
+      fctx.drawImage(src, off, off, inner, inner, -(FH - FW) / 2, 0, FH, FH);
+      fctx.restore();
+
+      // مطابقة لونية: كسب لكل قناة نحو متوسط بشرة الرسم
+      const fd = fctx.getImageData(0, 0, FW, FH);
+      const d = fd.data;
+      let cr = 0;
+      let cg = 0;
+      let cb = 0;
+      let cn = 0;
+      for (let y = 55; y < 130; y += 3) {
+        for (let x = 38; x < FW - 38; x += 3) {
+          const i = (y * FW + x) * 4;
+          if (d[i + 3] > 200) {
+            cr += d[i];
+            cg += d[i + 1];
+            cb += d[i + 2];
+            cn++;
+          }
+        }
+      }
+      if (cn > 0) {
+        const gr = Phaser.Math.Clamp(ar / (cr / cn), 0.72, 1.35);
+        const gg = Phaser.Math.Clamp(ag / (cg / cn), 0.72, 1.35);
+        const gb = Phaser.Math.Clamp(ab / (cb / cn), 0.72, 1.35);
+        for (let i = 0; i < d.length; i += 4) {
+          d[i] = Math.min(255, d[i] * gr);
+          d[i + 1] = Math.min(255, d[i + 1] * gg);
+          d[i + 2] = Math.min(255, d[i + 2] * gb);
+        }
+        fctx.putImageData(fd, 0, 0);
+      }
+
+      // حافة متلاشية بيضاوية قوية — لا حدود مرئية
+      fctx.globalCompositeOperation = 'destination-in';
+      fctx.save();
+      fctx.translate(FW / 2, FH / 2);
+      fctx.scale(1, FH / FW);
+      const fade = fctx.createRadialGradient(0, 0, (FW / 2) * 0.5, 0, 0, FW / 2);
+      fade.addColorStop(0, 'rgba(0,0,0,1)');
+      fade.addColorStop(0.72, 'rgba(0,0,0,1)');
+      fade.addColorStop(1, 'rgba(0,0,0,0)');
+      fctx.fillStyle = fade;
+      fctx.fillRect(-FW / 2, -FW / 2, FW, FW);
+      fctx.restore();
+    }
+    ctx.drawImage(face, CXF - FW / 2, CYF - FH / 2);
 
     tex.refresh();
     return key;
   }
 
-  private makeCard(p: PlayerDef, x: number, y: number): Phaser.GameObjects.Container {
-    const selected = this.registry.get('playerId') === p.id;
-    const isCustom = p.id.startsWith('custom-');
+  // ── صفحة عرض اللاعب الواحد ──
 
-    const img = this.add.image(0, 0, this.buildCardTexture(p)).setDisplaySize(CW, CH);
-    const children: Phaser.GameObjects.GameObject[] = [img];
-    if (selected) {
-      const glow = this.add.rectangle(0, 0, CW + 8, CH + 8, COLORS.lime, 0).setStrokeStyle(3, COLORS.gold);
-      const badge = this.add
-        .text(0, -CH / 2 - 2, rtl('✅ مختار'), {
-          fontFamily: FONT,
-          fontSize: '12px',
-          color: '#0b0f14',
-          fontStyle: 'bold',
-          backgroundColor: '#ffd23f',
-          padding: { x: 7, y: 2 },
-        })
-        .setOrigin(0.5);
-      children.push(glow, badge);
+  private renderPage(dir: number): void {
+    this.pageItems.forEach((o) => o.destroy());
+    this.pageItems = [];
+    const cells = this.cells();
+    const cell = cells[this.index];
+
+    // مؤشر الصفحات
+    const dots = this.add.container(GAME_WIDTH / 2, 64);
+    cells.forEach((_, i) => {
+      dots.add(this.add.circle((i - cells.length / 2) * 16, 0, i === this.index ? 5 : 3, i === this.index ? COLORS.lime : COLORS.silver, i === this.index ? 1 : 0.5));
+    });
+    this.pageItems.push(dots);
+
+    if (cell === 'add') {
+      this.renderAddPage();
+      return;
     }
-    const card = this.add.container(x, y, children);
-    card.setSize(CW, CH);
-    card.setInteractive({ useHandCursor: true });
-    card.on('pointerdown', () => card.setScale(0.97));
-    card.on('pointerout', () => card.setScale(1));
-    card.on('pointerup', () => {
-      card.setScale(1);
-      audio.play('button');
-      this.registry.set('playerId', p.id);
-      // انتقال مباشر للعب: وميض اختيار سريع ثم شجرة البطولة — بلا رجوع
-      this.tweens.add({ targets: card, scale: 1.08, duration: 120, yoyo: true });
-      audio.play('whistle');
-      this.time.delayedCall(320, () => go(this, 'Tournament'));
+    const p = cell;
+    const selected = this.registry.get('playerId') === p.id;
+
+    // 🃏 من له بطاقة رسمية كاملة (تصميم فوتبول فيوتشر) تُعرض كما هي — فيها التقييم والاسم والأرقام
+    if (p.card && this.textures.exists(`card-${p.id}`)) {
+      const official = this.add.image(GAME_WIDTH / 2, CARD_Y - 4, `card-${p.id}`).setDisplaySize(452, 565);
+      official.x += dir * 60;
+      official.setAlpha(0);
+      this.tweens.add({ targets: official, x: GAME_WIDTH / 2, alpha: 1, duration: 240, ease: 'Sine.easeOut' });
+      const btnO = makeButton(
+        this,
+        GAME_WIDTH / 2,
+        726,
+        selected ? '✅ نجمك الحالي — العب!' : '⚡ اختر هذا النجم',
+        () => {
+          audio.play('whistle');
+          this.registry.set('playerId', p.id);
+          this.time.delayedCall(200, () => go(this, 'Tournament'));
+        },
+        { width: 360, height: 66, fontSize: 26, variant: 'primary' },
+      );
+      this.pageItems.push(official, btnO);
+      return;
+    }
+
+    // لوحة البطاقة الكبيرة
+    const panel = this.add.image(GAME_WIDTH / 2, CARD_Y, 'panel-glass').setDisplaySize(392, 560);
+    // التقييم الكبير + المركز
+    // 🧍 اللاعب برسم الهوية الأصلي ووجه الطفل
+    const figure = this.add.image(GAME_WIDTH / 2, CARD_Y - 44, this.buildCardArt(p)).setDisplaySize(320, 468);
+    figure.x += dir * 60;
+    figure.setAlpha(0);
+    this.tweens.add({ targets: figure, x: GAME_WIDTH / 2, alpha: 1, duration: 240, ease: 'Sine.easeOut' });
+
+    const artL = GAME_WIDTH / 2 - 160; // حافة الرسم اليسرى (٣٢٠ عرضًا)
+    const artT = CARD_Y - 44 - 234; // حافته العليا
+    const ratingNum = this.add
+      .text(artL + 48, artT + 34, rtl(String(this.rating(p))), {
+        fontFamily: HEADING,
+        fontSize: '34px',
+        color: '#c6ff00',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5, 0);
+    const pos = this.add
+      .text(artL + 48, artT + 78, 'ST', { fontFamily: HEADING, fontSize: '13px', color: '#b2bcc6' })
+      .setOrigin(0.5, 0);
+    const emoji = this.add.text(GAME_WIDTH / 2 + 168, 122, p.emoji, { fontSize: '32px' }).setOrigin(1, 0);
+
+    // الاسم + الأرقام الثلاثة
+    const name = this.add
+      .text(GAME_WIDTH / 2, CARD_Y + 178, rtl(`${p.name} ${p.emoji}`), {
+        fontFamily: HEADING,
+        fontSize: '26px',
+        color: '#f8fff7',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+    const stat = (v: number) => Math.min(99, 40 + v * 6);
+    const statCols: [string, number][] = [
+      ['سرعة', stat(p.speed)],
+      ['قوة', stat(p.power)],
+      ['دقة', stat(p.accuracy)],
+    ];
+    const statObjs: Phaser.GameObjects.GameObject[] = [];
+    statCols.forEach(([label, val], i) => {
+      const x = GAME_WIDTH / 2 + (1 - i) * 110;
+      statObjs.push(
+        this.add.text(x, CARD_Y + 222, rtl(String(val)), { fontFamily: HEADING, fontSize: '24px', color: '#00e5ff', fontStyle: 'bold' }).setOrigin(0.5),
+        this.add.text(x, CARD_Y + 250, rtl(label), { fontFamily: FONT, fontSize: '13px', color: '#b2bcc6' }).setOrigin(0.5),
+      );
     });
 
-    // زر حذف للاعب العائلة — بتأكيد على ضغطتين
-    if (isCustom) this.addDeleteBadge(p.id, x, y);
-    return card;
+    // زر الاختيار
+    const btn = makeButton(
+      this,
+      GAME_WIDTH / 2,
+      726,
+      selected ? '✅ نجمك الحالي — العب!' : '⚡ اختر هذا النجم',
+      () => {
+        audio.play('whistle');
+        this.registry.set('playerId', p.id);
+        this.time.delayedCall(200, () => go(this, 'Tournament'));
+      },
+      { width: 360, height: 66, fontSize: 26, variant: 'primary' },
+    );
+
+    this.pageItems.push(panel, ratingNum, pos, emoji, figure, name, ...statObjs, btn);
+
+    // حذف لاعب العائلة
+    if (p.id.startsWith('custom-')) this.addDeleteBadge(p.id);
   }
 
-  // بطاقة "أضف لاعبك": صورة من الجهاز + اسم — تُحفظ محليًا فقط
-  private makeAddCard(x: number, y: number): Phaser.GameObjects.Container {
-    const bg = this.add.rectangle(0, 0, CW, CH, COLORS.graphite, 0.6).setOrigin(0.5);
-    bg.setStrokeStyle(2, COLORS.lime, 0.8);
-    const plus = this.add.text(0, -30, '➕', { fontSize: '36px' }).setOrigin(0.5);
+  private renderAddPage(): void {
+    const panel = this.add.image(GAME_WIDTH / 2, CARD_Y, 'panel-glass').setDisplaySize(392, 560);
+    const plus = this.add.text(GAME_WIDTH / 2, CARD_Y - 80, '➕', { fontSize: '72px' }).setOrigin(0.5);
+    this.tweens.add({ targets: plus, scale: 1.12, duration: 700, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     const label = this.add
-      .text(0, 34, rtl('أضف لاعبك\nصورة من جهازك\nتبقى عندك 🔒'), {
-        fontFamily: FONT,
-        fontSize: '12px',
+      .text(GAME_WIDTH / 2, CARD_Y + 40, rtl('أضف لاعبًا من عائلتك\nبصورته الحقيقية'), {
+        fontFamily: HEADING,
+        fontSize: '24px',
         color: '#c6ff00',
         fontStyle: 'bold',
         align: 'center',
       })
       .setOrigin(0.5);
-    const card = this.add.container(x, y, [bg, plus, label]);
-    card.setSize(CW, CH);
-    card.setInteractive({ useHandCursor: true });
-    card.on('pointerup', () => {
-      audio.play('button');
-      this.pickPhoto();
+    const note = this.add
+      .text(GAME_WIDTH / 2, CARD_Y + 110, rtl('🔒 الصورة تبقى على هذا الجهاز فقط'), {
+        fontFamily: FONT,
+        fontSize: '14px',
+        color: '#b2bcc6',
+      })
+      .setOrigin(0.5);
+    const btn = makeButton(this, GAME_WIDTH / 2, 726, '📷 اختر صورة من جهازك', () => this.pickPhoto(), {
+      width: 360,
+      height: 66,
+      fontSize: 24,
+      variant: 'primary',
     });
-    this.tweens.add({ targets: plus, scale: 1.15, duration: 700, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-    return card;
+    this.pageItems.push(panel, plus, label, note, btn);
   }
 
-  private addDeleteBadge(id: string, cardX: number, cardY: number): void {
+  private addDeleteBadge(id: string): void {
     let armed = false;
     const badge = this.add
-      .text(cardX - CW / 2 + 4, cardY - CH / 2 + 4, '✖', {
+      .text(GAME_WIDTH / 2 - 186, 100, '✖', {
         fontFamily: FONT,
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#ffffff',
         backgroundColor: '#ff4d4d',
-        padding: { x: 6, y: 3 },
+        padding: { x: 8, y: 4 },
       })
       .setOrigin(0, 0)
       .setDepth(5)
@@ -257,7 +359,7 @@ export class PlayerSelectScene extends Phaser.Scene {
     badge.on('pointerup', () => {
       if (!armed) {
         armed = true;
-        badge.setText(rtl('تأكيد؟'));
+        badge.setText(rtl('تأكيد الحذف؟'));
         this.time.delayedCall(2500, () => {
           if (badge.active) {
             armed = false;
@@ -269,8 +371,10 @@ export class PlayerSelectScene extends Phaser.Scene {
       progress.removeCustomPlayer(id);
       if (this.registry.get('playerId') === id) this.registry.set('playerId', 'hassouni');
       audio.play('save');
+      this.index = 0;
       this.scene.restart();
     });
+    this.pageItems.push(badge);
   }
 
   // ── إضافة لاعب: اختيار صورة → تصغير ٢٠٠×٢٠٠ → اسم → حفظ محلي ──
@@ -331,7 +435,7 @@ export class PlayerSelectScene extends Phaser.Scene {
       wrap.remove();
       const saved = progress.addCustomPlayer(name, photo);
       if (!saved) return;
-      // تجهيز الأفاتار فورًا ثم تحديث الشاشة
+      // تجهيز الأفاتار فورًا ثم عرض اللاعب الجديد
       const photoKey = `photo-${saved.id}`;
       this.textures.once(`addtexture-${photoKey}`, () => {
         makeCircularAvatar(this, `avatar-${saved.id}`, photoKey);

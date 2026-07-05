@@ -23,6 +23,7 @@ export class BootScene extends Phaser.Scene {
     // الصور الحقيقية للاعبين (مضمّنة كـ data URI عند البناء)
     for (const p of PLAYERS) {
       if (p.photo) this.load.image(`avatar-${p.id}`, p.photo);
+      if (p.card) this.load.image(`card-${p.id}`, p.card); // البطاقة الرسمية الكاملة
     }
     // صور لاعبي العائلة المضافين — من ذاكرة الجهاز، تُقصّ دائريًا في create
     for (const c of progress.customPlayers()) {
