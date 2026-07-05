@@ -51,6 +51,7 @@
      الفريق: أسود فحمي + قصّة ليمونية + ياقة/أكمام سماوية + جوارب ليمونية */
   const KITS = {
     home:    { shirt0: "#1A222D", shirt1: "#0C1219", slash: LIME,    trim: CYAN,    shorts: "#0B1016", sock: LIME,    num: LIME,    skin: "#E8C39E", hair: "#171C22" },
+    // (قصّة الفريق وجواربه تُستبدل بلون التخصيص عند تفعيله — انظر kitFor)
     homeGK:  { shirt0: "#FFDF66", shirt1: "#E4B62B", slash: "#0C1219", trim: "#0C1219", shorts: "#12181F", sock: "#FFDF66", num: "#0C1219", skin: "#E8C39E", hair: "#171C22" },
     away:    { shirt0: "#F4F7FA", shirt1: "#CDD7E0", slash: "#FF4D5E", trim: "#B02A30", shorts: "#B02A30", sock: "#F4F7FA", num: "#B02A30", skin: "#D9A67F", hair: "#26160F" },
     awayGK:  { shirt0: "#8E5CFF", shirt1: "#6234C9", slash: "#F4F7FA", trim: "#F4F7FA", shorts: "#2A1B4E", sock: "#8E5CFF", num: "#FFFFFF", skin: "#D9A67F", hair: "#26160F" }
@@ -64,6 +65,14 @@
       this.onEnd = this.options.onEnd || function () {};
       this.onEvent = this.options.onEvent || function () {};
       this.diff = clamp(this.options.difficulty || 1, 0.7, 1.4);   // سهل 0.85 / متوسط 1 / صعب 1.2
+      // تخصيص اللاعب (من شاشة الهوية): الاسم، الرقم، لون القصّة، شارة الكابتن، ذيل الكرة
+      this.custom = {
+        name: (this.options.playerName || "علي").slice(0, 12),
+        number: this.options.playerNumber || 10,
+        accent: this.options.kitAccent || LIME,
+        captain: Boolean(this.options.captain),
+        ballTrail: this.options.ballTrail || null
+      };
       this.running = false;
       this.finished = false;
       this.last = 0;
@@ -86,6 +95,9 @@
       this.goalBannerT = 0;
       this.goalBannerText = "";
       this.camX = W / 2;
+      this.history = [];            // مخزن لقطات آخر ثانيتين (لإعادة الهدف)
+      this.replayQ = null;          // إطارات الإعادة الجارية
+      this.replayIdx = 0;
       this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       this.buildPitchTexture();
       this.resetWorld();
@@ -104,10 +116,11 @@
     makeTeam(side) {
       return FORM.map((f, i) => {
         const fx = side === 1 ? f.fx : 1 - f.fx;
+        const isMe = side === 1 && f.role === "ST";
         return {
           id: (side === 1 ? "h" : "a") + i,
-          name: side === 1 ? HOME_NAMES[i] : AWAY_NAMES[i],
-          num: NUMS[i], role: f.role, side,
+          name: isMe ? this.custom.name : side === 1 ? HOME_NAMES[i] : AWAY_NAMES[i],
+          num: isMe ? this.custom.number : NUMS[i], role: f.role, side,
           home: { x: FX + fx * FW, y: FY + f.fy * FH },
           x: FX + fx * FW, y: FY + f.fy * FH,
           vx: 0, vy: 0, face: side === 1 ? 0 : Math.PI,
@@ -314,8 +327,21 @@
         const spd = Math.hypot(p.vx, p.vy);
         p.phase += spd * dt * 0.055;
         p.kickT = Math.max(0, p.kickT - dt);
+        p.diveT = Math.max(0, (p.diveT || 0) - dt);
+        if (p.slideT > 0) {
+          p.slideT = Math.max(0, p.slideT - dt);
+          p.x = clamp(p.x + p.dirX * 150 * dt, FX + 6, W - FX - 6);   // اندفاع الانزلاق
+          if (this.time % 0.07 < dt) this.spawnDust(p);
+        }
         if (Math.abs(p.vx) > 12) p.dirX = p.vx > 0 ? 1 : -1;
       }
+
+      // تسجيل لقطة للإعادة (آخر ~1.8 ثانية)
+      this.history.push({
+        b: { x: this.ball.x, y: this.ball.y, z: this.ball.z },
+        ps: this.all.map(p => ({ x: p.x, y: p.y, dirX: p.dirX, phase: p.phase, kickT: p.kickT, diveT: p.diveT || 0, slideT: p.slideT || 0 }))
+      });
+      if (this.history.length > 55) this.history.shift();
     }
 
     /* ─────────────── اللاعب المتحكَّم به ─────────────── */
@@ -463,6 +489,8 @@
         if (dist(p, b) < PR + BR + 4) {
           if (p.role === "GK" && b.lastKick && b.lastKick.side !== p.side && speed > 250) {
             const save = Math.random() < (p.side === -1 ? clamp(0.52 + (this.diff - 1) * 0.5, 0.3, 0.85) : clamp(0.72 - (this.diff - 1) * 0.35, 0.45, 0.85));
+            p.diveT = 0.6;
+            p.diveDir = b.vy >= 0 ? 1 : -1;
             if (save) {
               if (p.side === 1) this.stats.saves += 1;
               b.vx = p.side * (170 + Math.random() * 120);
@@ -522,8 +550,14 @@
           .slice(0, 3)
           .forEach(p => { p.celebT = 2.2; p.celebTarget = scorer; });
       }
-      this.freeze = team === "home" ? 2.6 : 1.9;
-      this.goalBannerT = team === "home" ? 2.4 : 1.6;
+      // إعادة اللقطة السينمائية لأهدافك — نصف سرعة لآخر ثانيتين
+      if (team === "home" && this.history.length > 20) {
+        this.replayQ = this.history.slice();
+        this.replayIdx = 0;
+      }
+      const replaySec = this.replayQ ? this.replayQ.length / 30 : 0;
+      this.freeze = (team === "home" ? 2.6 : 1.9) + replaySec;
+      this.goalBannerT = (team === "home" ? 2.4 : 1.6) + replaySec;
       this.goalBannerText = team === "home" ? "هــدف!" : "هدف للخصم";
       this.goalBannerHome = team === "home";
       this.msg(team === "home" ? "تسديدة عالمية من " + (scorer ? scorer.name : "فريقك") : "ارجع بقوة يا بطل!", 2.4);
@@ -648,7 +682,8 @@
     doTackle() {
       const p = this.controlled;
       if (!p || p.cd > 0) return;
-      p.cd = 0.5;
+      p.cd = 0.6;
+      p.slideT = 0.5;
       const target = this.ball.owner && this.ball.owner.side === -1 ? this.ball.owner : null;
       if (target && dist(p, target) < PR * 3.2) {
         if (Math.random() < 0.62) {
@@ -852,6 +887,26 @@
     draw() {
       const ctx = this.ctx;
       const vw = this.view.w, vh = this.view.h;
+
+      /* وضع الإعادة: استبدال مواضع الكيانات بلقطة مسجلة (نصف سرعة) */
+      let snapBackup = null;
+      const replaying = this.replayQ && this.replayIdx < this.replayQ.length;
+      if (replaying) {
+        const snap = this.replayQ[Math.floor(this.replayIdx)];
+        this.replayIdx += 0.5;
+        snapBackup = {
+          b: { x: this.ball.x, y: this.ball.y, z: this.ball.z },
+          ps: this.all.map(p => ({ x: p.x, y: p.y, dirX: p.dirX, phase: p.phase, kickT: p.kickT, diveT: p.diveT, slideT: p.slideT, celebT: p.celebT }))
+        };
+        this.ball.x = snap.b.x; this.ball.y = snap.b.y; this.ball.z = snap.b.z;
+        this.all.forEach((p, i) => {
+          const sp = snap.ps[i];
+          p.x = sp.x; p.y = sp.y; p.dirX = sp.dirX; p.phase = sp.phase;
+          p.kickT = sp.kickT; p.diveT = sp.diveT; p.slideT = sp.slideT; p.celebT = 0;
+        });
+        if (this.replayIdx >= this.replayQ.length) this._replayDone = true;
+      }
+
       const sh = this.shake;
       const shx = sh ? (Math.random() - .5) * sh : 0;
       const shy = sh ? (Math.random() - .5) * sh : 0;
@@ -898,10 +953,11 @@
         this.trail.push({ x: b.x, y: b.y, z: b.z });
         if (this.trail.length > 9) this.trail.shift();
       } else if (this.trail.length) this.trail.shift();
+      const trailRGB = this.custom.ballTrail === "#FFD34D" ? "255,211,77" : "198,255,0";
       for (let i = 0; i < this.trail.length; i++) {
         const k = i / this.trail.length;
         const tp = this.proj(this.trail[i].x, this.trail[i].y);
-        ctx.fillStyle = `rgba(198,255,0,${k * 0.3})`;
+        ctx.fillStyle = `rgba(${trailRGB},${k * (this.custom.ballTrail ? 0.45 : 0.3)})`;
         ctx.beginPath();
         ctx.arc(tp.x, tp.y - this.trail[i].z * tp.s * 0.55, BR * 0.55 * tp.s * k, 0, Math.PI * 2);
         ctx.fill();
@@ -918,12 +974,44 @@
 
       ctx.restore();
 
-      /* 8) وميض الهدف واللافتات */
+      /* 8) استعادة الحالة الحية بعد رسم لقطة الإعادة */
+      if (snapBackup) {
+        this.ball.x = snapBackup.b.x; this.ball.y = snapBackup.b.y; this.ball.z = snapBackup.b.z;
+        this.all.forEach((p, i) => {
+          const sp = snapBackup.ps[i];
+          p.x = sp.x; p.y = sp.y; p.dirX = sp.dirX; p.phase = sp.phase;
+          p.kickT = sp.kickT; p.diveT = sp.diveT; p.slideT = sp.slideT; p.celebT = sp.celebT;
+        });
+        if (this._replayDone) { this.replayQ = null; this._replayDone = false; }
+      }
+
+      /* 9) أشرطة سينمائية + شارة الإعادة أثناء عرض اللقطة */
+      if (replaying) {
+        const barH = vh * 0.085;
+        ctx.fillStyle = "rgba(4,6,10,.92)";
+        ctx.fillRect(0, 0, vw, barH);
+        ctx.fillRect(0, vh - barH, vw, barH);
+        ctx.save();
+        ctx.font = '800 13px Rajdhani, Arial';
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "left";
+        ctx.fillStyle = LIME;
+        const blink = Math.floor(this.time * 3) % 2 === 0;
+        if (blink) { ctx.beginPath(); ctx.arc(18, barH / 2, 5, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillText("REPLAY", 30, barH / 2 + 1);
+        ctx.font = '700 13px "Noto Kufi Arabic", Arial';
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#EAF2F8";
+        ctx.fillText("إعادة اللقطة", vw - 16, barH / 2 + 1);
+        ctx.restore();
+      }
+
+      /* 10) وميض الهدف واللافتات (اللافتة الكبيرة بعد انتهاء الإعادة) */
       if (this.flash > 0) {
         ctx.fillStyle = `rgba(198,255,0,${this.flash * 0.15})`;
         ctx.fillRect(0, 0, vw, vh);
       }
-      this.drawOverlay(ctx, vw, vh);
+      if (!replaying) this.drawOverlay(ctx, vw, vh);
     }
 
     /* المسح السطري: كل شريحة شاشة تُملأ من صف الخامة الموافق لعمقها */
@@ -1085,11 +1173,21 @@
       ctx.restore();
     }
 
+    /* طقم اللاعب مع تطبيق لون التخصيص على قصّة الفريق وجواربه */
+    kitFor(p) {
+      const isGK = p.role === "GK";
+      const base = p.side === 1 ? (isGK ? KITS.homeGK : KITS.home) : (isGK ? KITS.awayGK : KITS.away);
+      if (p.side === 1 && !isGK && this.custom.accent !== LIME) {
+        return { ...base, slash: this.custom.accent, sock: this.custom.accent, num: this.custom.accent };
+      }
+      return base;
+    }
+
     /* ── لاعب بمواصفات حزمة الهوية — جسم ممتلئ وحركة جري ووضعية تسديد ── */
     drawPlayer(ctx, p) {
       const isUser = p === this.controlled;
       const isGK = p.role === "GK";
-      const kit = p.side === 1 ? (isGK ? KITS.homeGK : KITS.home) : (isGK ? KITS.awayGK : KITS.away);
+      const kit = this.kitFor(p);
       const pos = this.proj(p.x, p.y);
       const u = pos.s;
       const hgt = 64 * u;                                // الطول الكلي
@@ -1102,8 +1200,10 @@
       // وضعية التسديد: الرجل الأمامية ممدودة للأمام
       const kicking = p.kickT > 0;
       const celebrating = p.celebT > 0;
-      const swing = kicking ? 1.5 : celebrating ? 0.4 : swingRaw;
-      const swing2 = kicking ? -0.7 : celebrating ? -0.4 : swing2Raw;
+      const diving = (p.diveT || 0) > 0;
+      const sliding = (p.slideT || 0) > 0;
+      const swing = kicking || sliding ? 1.5 : celebrating || diving ? 0.4 : swingRaw;
+      const swing2 = kicking ? -0.7 : sliding ? -1.2 : celebrating || diving ? -0.4 : swing2Raw;
       const bob = celebrating
         ? Math.abs(Math.sin(this.time * 9)) * 5 * u
         : moving && !kicking ? Math.abs(Math.sin(ph)) * 1.8 * u : 0;
@@ -1127,8 +1227,15 @@
       }
 
       ctx.scale(p.dirX < 0 ? -1 : 1, 1);
-      // ميلان الجسم للأمام مع الجري
-      ctx.rotate(runK * 0.14);
+      // ميلان الجسم: جريٌ أمامي / ارتماء جانبي للحارس / انزلاق منخفض
+      if (diving) {
+        const k = 1 - (p.diveT || 0) / 0.6;
+        ctx.rotate((p.diveDir || 1) * Math.min(1.15, k * 1.5));
+      } else if (sliding) {
+        ctx.rotate(0.85 * Math.min(1, (0.5 - (p.slideT || 0)) * 6 + 0.4));
+      } else {
+        ctx.rotate(runK * 0.14);
+      }
 
       const hipY = -hgt * 0.44 - bob;
       const shoY = -hgt * 0.76 - bob;
@@ -1165,7 +1272,7 @@
       ctx.strokeStyle = kit.skin;
       ctx.lineWidth = armW;
       ctx.beginPath();
-      if (celebrating) {
+      if (celebrating || diving) {
         ctx.moveTo(-5.2 * u, shoY + 2 * u);
         ctx.quadraticCurveTo(-8.5 * u, shoY - 4 * u, -7.2 * u, shoY - 10 * u);
       } else {
@@ -1272,7 +1379,7 @@
       ctx.strokeStyle = kit.skin;
       ctx.lineWidth = armW * 1.05;
       ctx.beginPath();
-      if (celebrating) {
+      if (celebrating || diving) {
         ctx.moveTo(5.4 * u, shoY + 2 * u);
         ctx.quadraticCurveTo(8.7 * u, shoY - 4 * u, 7.4 * u, shoY - 10 * u);
       } else {
@@ -1280,6 +1387,16 @@
         ctx.quadraticCurveTo(6.8 * u + swing2 * 3 * u, shoY + hgt * 0.12, 5.4 * u + swing2 * 6.5 * u, shoY + hgt * 0.2);
       }
       ctx.stroke();
+
+      /* شارة الكابتن (عنصر متجر) على العضد */
+      if (this.custom.captain && isUser) {
+        ctx.strokeStyle = this.custom.accent;
+        ctx.lineWidth = 2.2 * u;
+        ctx.beginPath();
+        ctx.moveTo(4.6 * u, shoY + 3.4 * u);
+        ctx.lineTo(6.6 * u, shoY + 4.4 * u);
+        ctx.stroke();
+      }
 
       /* ── الرأس والشعر ── */
       const headY = shoY - 6.2 * u;

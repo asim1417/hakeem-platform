@@ -47,6 +47,18 @@ window.FF_DATA = {
     { name: "عمر", en: "OMAR", pos: "RB", rating: 82, x: 30, y: 84, stats: { PAC: 81, SHO: 50, PAS: 70, DRI: 72, DEF: 83, PHY: 77 } },
     { name: "حارس", en: "GK", pos: "GK", rating: 86, x: 8, y: 50, stats: { DIV: 87, HAN: 84, KIC: 79, REF: 88, SPD: 60, POS: 85 } }
   ],
+  opponents: [
+    { ar: "النمور", code: "NMO", logo: "shield" },
+    { ar: "الصقور", code: "SQR", logo: "bolt" },
+    { ar: "نجوم الشرق", code: "EST", logo: "star" },
+    { ar: "العاصفة", code: "STM", logo: "spin" },
+    { ar: "الأساطير", code: "LGD", logo: "trophy" }
+  ],
+  shopItems: [
+    { id: "gold", ar: "الطقم الذهبي", en: "GOLD KIT", desc: "قصّة وجوارب ذهبية لفريقك داخل المباراة.", price: 1500, icon: "shirt" },
+    { id: "goldball", ar: "كرة الشهاب الذهبية", en: "GOLD COMET BALL", desc: "ذيل ذهبي متوهج للكرة عند الانطلاق.", price: 800, icon: "ball" },
+    { id: "captain", ar: "شارة الكابتن", en: "CAPTAIN BAND", desc: "شارة قيادة على ذراع لاعبك.", price: 500, icon: "medal" }
+  ],
   missions: [
     { id: "m1", ar: "سجل 3 أهداف", en: "Score 3 goals", progress: 2, target: 3, reward: 150, type: "XP" },
     { id: "m2", ar: "اربح مباراة واحدة", en: "Win 1 match", progress: 0, target: 1, reward: 200, type: "XP" },
