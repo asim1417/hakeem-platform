@@ -72,5 +72,11 @@ DOCUMENTS_FOLDER="./my-drive-documents" node processDriveDocuments.js
 |---|---|---|
 | `OUTPUT_FOLDER` | `./extracted-arabic-texts` | مجلد المخرجات |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | النموذج (`gemini-2.5-pro` للمعقد) |
-| `DELAY_MS` | `1200` | مهلة بين الوثائق لتفادي حدود المعدل |
+| `CONCURRENCY` | `1` | عدد الوثائق المعالَجة معاً — ارفعه (مثلاً `6`) للمفاتيح المدفوعة لتسريع الدفعات الكبيرة؛ أبقِه `1` للمفاتيح المجانية |
+| `DELAY_MS` | `1200` | مهلة بين الوثائق (تُطبَّق في الوضع المتسلسل `CONCURRENCY=1` فقط) |
 | `GOOGLE_CREDENTIALS_FILE` | `./credentials.json` | مسار ملف حساب الخدمة |
+
+> **السرعة:** على flash يُعطَّل «التفكير» تلقائياً (OCR لا يحتاجه) فتصير كل قراءةٍ أسرع وأدقّ وأأمن. للدفعات الضخمة بمفتاحٍ مدفوع، `CONCURRENCY=6` يختصر الزمن إلى نحو السُّدس مقارنةً بالتسلسل:
+> ```bash
+> CONCURRENCY=6 DOCUMENTS_FOLDER="./my-drive-documents" node processDriveDocuments.js
+> ```
