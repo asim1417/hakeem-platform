@@ -403,17 +403,26 @@ export interface ScannedPdfResult {
   avgConfidence: number;
 }
 
-/** OCR لكامل ملف PDF ممسوح ضوئياً: يرسم كل صفحة بدقّة عالية، يعالجها، ثم يقرأها */
+/**
+ * OCR لملف PDF ممسوح ضوئياً: يرسم كل صفحة بدقّة عالية، يعالجها، ثم يقرأها.
+ * opts.onlyPages: يقتصر على صفحاتٍ محدّدة — لقراءة الصفحات الممسوحة فقط في مستندٍ
+ * مختلط (بعضُه طبقة نصّ سليمة وبعضُه صور) دون إعادة قراءة ما قُرئ نصّياً.
+ */
 export async function ocrScannedPdf(
   buffer: ArrayBuffer,
-  onProgress?: (info: { page: number; pages: number; status: string; progress: number }) => void
+  onProgress?: (info: { page: number; pages: number; status: string; progress: number }) => void,
+  opts?: { onlyPages?: number[] }
 ): Promise<ScannedPdfResult> {
   const pdfjs = await import("pdfjs-dist");
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const doc = await pdfjs.getDocument({ data: buffer }).promise;
   const parts: string[] = [];
   let confSum = 0;
-  for (let p = 1; p <= doc.numPages; p += 1) {
+  const target =
+    opts?.onlyPages && opts.onlyPages.length
+      ? opts.onlyPages.filter((p) => p >= 1 && p <= doc.numPages).sort((a, b) => a - b)
+      : Array.from({ length: doc.numPages }, (_, i) => i + 1);
+  for (const p of target) {
     const page = await doc.getPage(p);
     const canvas = await renderPdfPageToCanvas(page);
     // «أفضل من عدّة محاولات» لكل صفحة — يختار الأعلى جودة (raw/otsu/upscale)
@@ -429,7 +438,7 @@ export async function ocrScannedPdf(
   const raw = parts.join("\n\n").trim();
   // عزل خربشة الشعار/الختم في الصفحة الأولى/الأخيرة (تبقى الترويسة النصية)
   const scrubbed = scrubLogoNoise(raw, doc.numPages);
-  return { text: scrubbed, pages: doc.numPages, avgConfidence: doc.numPages ? confSum / doc.numPages : 0 };
+  return { text: scrubbed, pages: doc.numPages, avgConfidence: target.length ? confSum / target.length : 0 };
 }
 
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "bmp", "gif"];

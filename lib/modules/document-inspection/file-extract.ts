@@ -116,11 +116,16 @@ export async function extractDocxText(buffer: ArrayBuffer): Promise<string> {
 
 import { cleanPdfTextLayer } from "./reshape";
 
+/** علامةُ صفحةٍ بلا طبقة نصّ (صورة ممسوحة) — تُوضَع مكان الفراغ فلا تختفي الصفحة صامتةً */
+export const SCANNED_PAGE_MARK = "(صفحة بلا طبقة نصّ — صورة ممسوحة تحتاج قراءة ضوئية OCR)";
+
 export interface PdfExtractResult {
   text: string;
   pages: number;
-  /** صفحات بلا نص يُذكر — مؤشر مسح ضوئي يحتاج OCR */
+  /** عدد الصفحات بلا نص يُذكر — مؤشر مسح ضوئي يحتاج OCR */
   emptyPages: number;
+  /** أرقام تلك الصفحات (1-based) — لقراءتها ضوئياً ودمجها لاحقاً */
+  emptyPageNumbers: number[];
   /** طبقة النصّ معطوبة بدرجة يتعذّر إصلاحها نصّياً (خطّ مُجزّأ) — المصدر الصحيح OCR */
   needsOcr: boolean;
 }
@@ -130,7 +135,7 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfExtractRes
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const doc = await pdfjs.getDocument({ data: buffer }).promise;
   const parts: string[] = [];
-  let emptyPages = 0;
+  const emptyPageNumbers: number[] = [];
   for (let p = 1; p <= doc.numPages; p += 1) {
     const page = await doc.getPage(p);
     const content = await page.getTextContent();
@@ -139,13 +144,45 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfExtractRes
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
-    if (pageText.length < 10) emptyPages += 1;
-    parts.push(`[صفحة ${p}]\n${pageText}`);
+    if (pageText.length < 10) {
+      // صفحة بلا طبقة نصّ (صورة ممسوحة): علِّمها بوضوح بدل تركها فراغاً صامتاً.
+      emptyPageNumbers.push(p);
+      parts.push(`[صفحة ${p}]\n${SCANNED_PAGE_MARK}`);
+    } else {
+      parts.push(`[صفحة ${p}]\n${pageText}`);
+    }
   }
   await doc.destroy();
   // إصلاح طبقة النصّ العربية المعطوبة (صيغ عرض معزولة/مُضاعَفة) قبل تسليمها.
   const cleaned = cleanPdfTextLayer(parts.join("\n\n").trim());
-  return { text: cleaned.text, pages: doc.numPages, emptyPages, needsOcr: cleaned.needsOcr };
+  return {
+    text: cleaned.text,
+    pages: doc.numPages,
+    emptyPages: emptyPageNumbers.length,
+    emptyPageNumbers,
+    needsOcr: cleaned.needsOcr
+  };
+}
+
+/**
+ * يدمج نصَّ الصفحات المقروءة ضوئياً في نصّ طبقة النصّ الأصلي، محلَّ علامة الصفحة
+ * الممسوحة. يُبقي الصفحات ذات النصّ السليم كما هي.
+ */
+export function mergeScannedPages(base: string, ocrText: string): string {
+  const blocks = new Map<number, string>();
+  const re = /\[صفحة (\d+)\]\n([\s\S]*?)(?=\n\n\[صفحة |$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(ocrText))) {
+    const body = m[2].trim();
+    if (body) blocks.set(Number(m[1]), body);
+  }
+  // نستبدل متن كل صفحةٍ لدينا قراءتها الضوئية (مطابقةٌ بالبنية، لا بنصّ العلامة —
+  // فقد يكون التنظيف غيّر شكل العلامة). الصفحات ذات النصّ السليم لا تُمسّ لأنها
+  // ليست ضمن blocks (لم تُقرأ ضوئياً).
+  return base.replace(/\[صفحة (\d+)\]\n([\s\S]*?)(?=\n\n\[صفحة |$)/g, (whole, num: string) => {
+    const body = blocks.get(Number(num));
+    return body ? `[صفحة ${num}]\n${body}` : whole;
+  });
 }
 
 // ── الموزّع حسب النوع ──
@@ -154,6 +191,8 @@ export interface ExtractedFile {
   title: string;
   rawText: string;
   warning?: string;
+  /** أرقام صفحات PDF بلا طبقة نصّ (صور ممسوحة) — يمكن قراءتها ضوئياً ودمجها */
+  scannedPages?: number[];
 }
 
 export async function extractFromFile(file: File): Promise<ExtractedFile> {
@@ -169,7 +208,8 @@ export async function extractFromFile(file: File): Promise<ExtractedFile> {
   }
   if (ext === "pdf") {
     const result = await extractPdfText(await file.arrayBuffer());
-    if (result.text.replace(/\[صفحة \d+\]/g, "").trim().length < 20) {
+    // كل الصفحات بلا طبقة نصّ → مستند ممسوح بالكامل، وجّهه إلى OCR.
+    if (result.emptyPages >= result.pages) {
       throw new Error("هذا PDF ممسوح ضوئياً (صور بلا نص) — يحتاج معالجة OCR خارجية قبل رفعه");
     }
     // طبقة نصّ معطوبة يتعذّر إصلاحها نصّياً (خطّ مُجزّأ بلا يونيكود) → وجّه إلى OCR على صورة الصفحة
@@ -178,9 +218,18 @@ export async function extractFromFile(file: File): Promise<ExtractedFile> {
         "طبقة نصّ هذا الـ PDF معطوبة (خطّ مُجزّأ يخرج رموزاً غير صحيحة) — يُنصح بتشغيل القراءة الضوئية OCR للحصول على نصّ سليم"
       );
     }
+    // مسحٌ جزئي: بعض الصفحات نصّ سليم وبعضها صور. نُعيدها كلها مع أرقام الصفحات الممسوحة
+    // ليعرض المستدعي قراءتها ضوئياً ودمجها (بدل فراغ صامت).
     const warning =
-      result.emptyPages > 0 ? `${result.emptyPages} من ${result.pages} صفحة بلا نص (ممسوحة ضوئياً؟) — راجعها` : undefined;
-    return { title: name, rawText: result.text, warning };
+      result.emptyPages > 0
+        ? `الصفحات (${result.emptyPageNumbers.join("، ")}) صور ممسوحة بلا نص — تحتاج قراءة ضوئية OCR`
+        : undefined;
+    return {
+      title: name,
+      rawText: result.text,
+      warning,
+      scannedPages: result.emptyPageNumbers.length ? result.emptyPageNumbers : undefined
+    };
   }
   throw new Error("صيغة غير مدعومة — يُقبل: PDF نصّي، DOCX، TXT، JSON");
 }

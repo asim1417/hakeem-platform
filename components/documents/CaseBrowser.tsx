@@ -802,9 +802,52 @@ export function CaseBrowser() {
       setFileBusy(true);
       try {
         const extracted = await extractFromFile(file);
-        addExtracted(extracted.title, extracted.rawText);
-        setStatusMsg(extracted.warning ? `⚠ ${extracted.warning}` : `✓ استُخرج نص «${extracted.title}» محلياً`);
-        setTimeout(() => setStatusMsg(""), 5000);
+        // مسحٌ جزئي: بعض صفحات الـ PDF صور بلا نص. اعرض قراءتها ضوئياً ودمجها بدل
+        // إبقائها فراغاً صامتاً. (السحابي إن كان مفعّلاً التقطه الفرعُ ذو الأولوية أعلاه.)
+        if (ext === "pdf" && extracted.scannedPages?.length) {
+          const list = extracted.scannedPages.join("، ");
+          const doOcr = window.confirm(
+            `الصفحات (${list}) في «${extracted.title}» صور ممسوحة بلا طبقة نصّ. ` +
+              `هل تُشغّل القراءة الضوئية OCR لهذه الصفحات فقط ودمجها؟ قد تستغرق دقيقة للصفحة.`
+          );
+          if (doOcr) {
+            setOcrProgress("تحضير محرّك القراءة الضوئية…");
+            try {
+              const buffer = await file.arrayBuffer();
+              const { ocrScannedPdf, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+              const { mergeScannedPages } = await import("@/lib/modules/document-inspection/file-extract");
+              const { text: ocrText, avgConfidence } = await ocrScannedPdf(
+                buffer,
+                (info) =>
+                  setOcrProgress(
+                    `صفحة ${info.page}/${info.pages} — ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`
+                  ),
+                { onlyPages: extracted.scannedPages }
+              );
+              const fixed = fixReversedArabicLines(ocrText);
+              const merged = mergeScannedPages(extracted.rawText, fixed.text);
+              addExtracted(extracted.title, merged);
+              setStatusMsg(
+                `✓ استُخرج النصّ ودُمجت ${extracted.scannedPages.length} صفحة مقروءة ضوئياً (ثقة ${Math.round(avgConfidence)}٪)`
+              );
+              setTimeout(() => setStatusMsg(""), 6500);
+            } catch (ocrErr) {
+              // فشل الـ OCR → أضف النصّ بعلامات الصفحات الممسوحة الظاهرة (لا فراغ صامت)
+              addExtracted(extracted.title, extracted.rawText);
+              window.alert(ocrErr instanceof Error ? ocrErr.message : "تعذّرت القراءة الضوئية — أُضيف النصّ مع تعليم الصفحات الممسوحة");
+            } finally {
+              setOcrProgress("");
+            }
+          } else {
+            addExtracted(extracted.title, extracted.rawText);
+            setStatusMsg(`⚠ ${extracted.warning}`);
+            setTimeout(() => setStatusMsg(""), 6000);
+          }
+        } else {
+          addExtracted(extracted.title, extracted.rawText);
+          setStatusMsg(extracted.warning ? `⚠ ${extracted.warning}` : `✓ استُخرج نص «${extracted.title}» محلياً`);
+          setTimeout(() => setStatusMsg(""), 5000);
+        }
       } catch (error) {
         // PDF ممسوح ضوئياً أو بطبقة نصّ معطوبة → اعرض خيار تشغيل OCR
         const msg = error instanceof Error ? error.message : "";
