@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   extractTextWithGemini,
-  isGeminiOcrConfigured,
+  getGeminiOcrStatus,
   GEMINI_OCR_MIME_TYPES,
   type GeminiOcrMime,
   type GeminiOcrModel
@@ -22,14 +22,16 @@ const EXT_MIME: Record<string, GeminiOcrMime> = {
 
 /** حالة الخدمة — يستعلمها العميل ليعرف إن كان الخيار السحابي متاحاً */
 export async function GET() {
-  return NextResponse.json({ configured: isGeminiOcrConfigured() });
+  const status = await getGeminiOcrStatus();
+  return NextResponse.json({ configured: status.configured, source: status.source });
 }
 
 /** OCR سحابي عبر Gemini — multipart: file (+ model اختياري: flash | pro) */
 export async function POST(request: NextRequest) {
-  if (!isGeminiOcrConfigured()) {
+  const status = await getGeminiOcrStatus();
+  if (!status.configured) {
     return NextResponse.json(
-      { error: "الخدمة السحابية غير مفعّلة — اضبط GEMINI_API_KEY في بيئة الخادم" },
+      { error: "الخدمة السحابية غير مفعّلة — أضف مفتاح Gemini من إعدادات منصة الوثائق" },
       { status: 503 }
     );
   }

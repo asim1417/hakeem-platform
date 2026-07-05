@@ -65,7 +65,7 @@ export function decryptSecret(stored: string): string | null {
  * prisma db push يدوياً. آمن: IF NOT EXISTS، ومغلّف بـ try/catch فإن غابت صلاحية
  * الإنشاء يعود للسلوك السابق (رسالة توجيه لتشغيل db push).
  */
-async function ensureSettingsTable(): Promise<void> {
+export async function ensureSettingsTable(): Promise<void> {
   await prisma.$executeRawUnsafe(
     'CREATE TABLE IF NOT EXISTS "app_settings" ("key" TEXT NOT NULL, "value" JSONB NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "app_settings_pkey" PRIMARY KEY ("key"));'
   );

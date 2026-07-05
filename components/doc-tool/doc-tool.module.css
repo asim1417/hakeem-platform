@@ -467,3 +467,67 @@ details.running pre {
     animation: none;
   }
 }
+
+/* ═══ لوحة مفتاح Gemini (إعداد القراءة السحابية من المنصة) ═══ */
+.keyBtn {
+  min-height: 34px;
+  padding: 4px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(15, 118, 110, 0.35);
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f766e;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.keyBtn:hover { background: rgba(15, 118, 110, 0.14); }
+.keyPanel {
+  margin: 10px 14px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(15, 118, 110, 0.06), rgba(15, 118, 110, 0.02));
+  display: grid;
+  gap: 8px;
+}
+.keyPanelHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.keyPanelHead strong { font-size: 14px; }
+.keyStatus { font-size: 12px; color: #0f766e; font-weight: 700; }
+.keyHint { margin: 0; font-size: 12px; color: #64748b; line-height: 1.7; }
+.keyRow { display: flex; gap: 8px; flex-wrap: wrap; }
+.keyInput {
+  flex: 1;
+  min-width: 220px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+.keyInput:focus { outline: 2px solid #0f766e; border-color: transparent; }
+.keySave {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.keySave:disabled { opacity: 0.55; cursor: default; }
+.keyRemove {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  background: #fff;
+  color: #b91c1c;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.keyMsg { margin: 0; font-size: 12.5px; font-weight: 700; color: #0f766e; }

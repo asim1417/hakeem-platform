@@ -76,6 +76,11 @@ export function DocToolApp() {
   const [loaded, setLoaded] = useState(false);
   const [cloudAvailable, setCloudAvailable] = useState(false);
   const [cloudOcr, setCloudOcr] = useState(false);
+  const [keyPanel, setKeyPanel] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [keyBusy, setKeyBusy] = useState(false);
+  const [keyMsg, setKeyMsg] = useState("");
+  const [keySource, setKeySource] = useState<"db" | "env" | "none">("none");
   const [stage, setStage] = useState(0); // 0 خامل · 1 رفع · 2 استخراج · 3 تعرّف · 4 جاهز
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -84,8 +89,9 @@ export function DocToolApp() {
   useEffect(() => {
     fetch("/api/doc-tool/ocr")
       .then((r) => r.json())
-      .then((d: { configured?: boolean }) => {
+      .then((d: { configured?: boolean; source?: "db" | "env" | "none" }) => {
         setCloudAvailable(Boolean(d.configured));
+        setKeySource(d.source ?? (d.configured ? "env" : "none"));
         if (d.configured) setCloudOcr(/(?:^|; )docToolCloudOcr=1/.test(document.cookie));
       })
       .catch(() => setCloudAvailable(false));
@@ -94,6 +100,56 @@ export function DocToolApp() {
   const toggleCloud = useCallback((on: boolean) => {
     setCloudOcr(on);
     document.cookie = `docToolCloudOcr=${on ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+  }, []);
+
+  // إعداد مفتاح Gemini من داخل منصة الوثائق (مدير فقط — الخادم يتحقق)
+  const saveOcrKey = useCallback(async () => {
+    const key = keyInput.trim();
+    if (key.length < 20) { setKeyMsg("ألصق مفتاح Gemini كاملاً."); return; }
+    setKeyBusy(true);
+    setKeyMsg("جارٍ اختبار المفتاح…");
+    try {
+      const res = await fetch("/api/doc-tool/ocr/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: key, test: true })
+      });
+      const data = (await res.json()) as { ok?: boolean; message?: string; configured?: boolean; source?: "db" | "env" | "none" };
+      if (res.status === 401 || res.status === 403) {
+        setKeyMsg(data.message ?? "هذه الخطوة لمدير المنصة — سجّل الدخول بحساب مدير.");
+      } else if (!res.ok || !data.ok) {
+        setKeyMsg(data.message ?? "تعذّر الحفظ.");
+      } else {
+        setKeyMsg(data.message ?? "حُفظ المفتاح — الخدمة السحابية مفعّلة.");
+        setKeyInput("");
+        setCloudAvailable(true);
+        setKeySource(data.source ?? "db");
+      }
+    } catch {
+      setKeyMsg("تعذّر الاتصال بالخادم.");
+    } finally {
+      setKeyBusy(false);
+    }
+  }, [keyInput]);
+
+  const removeOcrKey = useCallback(async () => {
+    setKeyBusy(true);
+    try {
+      const res = await fetch("/api/doc-tool/ocr/settings", { method: "DELETE" });
+      const data = (await res.json()) as { ok?: boolean; message?: string; configured?: boolean; source?: "db" | "env" | "none" };
+      if (res.status === 401 || res.status === 403) {
+        setKeyMsg(data.message ?? "هذه الخطوة لمدير المنصة.");
+      } else {
+        setKeyMsg(data.message ?? "أُزيل المفتاح.");
+        setCloudAvailable(Boolean(data.configured));
+        setKeySource(data.source ?? "none");
+        if (!data.configured) { setCloudOcr(false); }
+      }
+    } catch {
+      setKeyMsg("تعذّر الاتصال بالخادم.");
+    } finally {
+      setKeyBusy(false);
+    }
   }, []);
 
   // تحميل المحفوظ من الخادم عند الفتح
@@ -252,6 +308,14 @@ export function DocToolApp() {
             OCR سحابي فائق الدقة
           </label>
         ) : null}
+        <button
+          type="button"
+          className={styles.keyBtn}
+          onClick={() => { setKeyPanel((v) => !v); setKeyMsg(""); }}
+          title={cloudAvailable ? "إدارة مفتاح Gemini للقراءة السحابية" : "فعّل القراءة السحابية بإضافة مفتاح Gemini"}
+        >
+          {cloudAvailable ? "⚙ مفتاح Gemini" : "تفعيل OCR السحابي"}
+        </button>
         {stage > 0 ? (
           <span className={styles.stages} aria-label="مراحل المعالجة">
             {STAGES.map((label, i) => (
@@ -269,6 +333,45 @@ export function DocToolApp() {
         </span>
       </header>
 
+      {keyPanel ? (
+        <div className={styles.keyPanel} dir="rtl">
+          <div className={styles.keyPanelHead}>
+            <strong>القراءة السحابية (Gemini OCR)</strong>
+            <span className={styles.keyStatus}>
+              {cloudAvailable
+                ? keySource === "db"
+                  ? "مفعّلة — المفتاح محفوظ مشفّراً في المنصة"
+                  : "مفعّلة — المفتاح من بيئة الخادم"
+                : "غير مفعّلة"}
+            </span>
+          </div>
+          <p className={styles.keyHint}>
+            ألصق مفتاح Google AI Studio (يبدأ بـ AIza). يُحفظ مشفّراً في خادم المنصة ولا يصل المتصفح أبداً —
+            هذه الخطوة لمدير المنصة فقط.
+          </p>
+          <div className={styles.keyRow}>
+            <input
+              type="password"
+              className={styles.keyInput}
+              placeholder="AIza…"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              dir="ltr"
+            />
+            <button type="button" className={styles.keySave} onClick={saveOcrKey} disabled={keyBusy}>
+              {keyBusy ? "جارٍ…" : "اختبار وحفظ"}
+            </button>
+            {keySource === "db" ? (
+              <button type="button" className={styles.keyRemove} onClick={removeOcrKey} disabled={keyBusy}>
+                إزالة المفتاح
+              </button>
+            ) : null}
+          </div>
+          {keyMsg ? <p className={styles.keyMsg} role="status">{keyMsg}</p> : null}
+        </div>
+      ) : null}
       <div className={styles.wrap}>
         <main className={styles.main}>
           {current ? (
