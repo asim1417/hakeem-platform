@@ -211,6 +211,102 @@
   padding: 3px 6px;
   font-variant-numeric: tabular-nums;
 }
+/* ── لوحة خيارات المعالجة (بعد الرفع، قبل البدء) ── */
+.stageWrap { display: flex; justify-content: center; padding: 22px 16px 6px; }
+.stageCard {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--pane);
+  box-shadow: 0 6px 24px rgba(14, 52, 53, 0.08);
+  padding: 18px 18px 16px;
+}
+.stageHead { display: flex; align-items: center; gap: 9px; color: #0e3435; }
+.stageName {
+  flex: 1;
+  font-weight: 700;
+  font-size: 15px;
+  word-break: break-word;
+  color: var(--ink);
+}
+.stageClose {
+  border: 0; background: transparent; cursor: pointer;
+  font-size: 16px; color: var(--mut); line-height: 1; padding: 4px 8px;
+  min-height: 44px; min-width: 44px; border-radius: 8px;
+}
+.stageClose:hover { background: var(--accent2); }
+.stageHint { color: var(--mut); font-size: 13px; margin: 6px 0 14px; line-height: 1.7; }
+.stageOpt {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 9px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 13px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.stageOpt:has(input:checked) { border-color: #c69763; background: rgba(198, 151, 99, 0.08); }
+.stageOpt input { accent-color: #c69763; width: 17px; height: 17px; margin-top: 2px; }
+.stageOptMain { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink); }
+.stageOptSub { grid-column: 2; color: var(--mut); font-size: 12.5px; line-height: 1.7; }
+.stageRange {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  color: var(--mut); font-size: 13px; margin: 2px 0 14px; padding-inline-start: 4px;
+}
+.stageRange .rangeIn { width: 70px; min-height: 40px; font-size: 14px; }
+.stageActions { display: flex; gap: 10px; align-items: center; }
+.stageStart {
+  flex: 1;
+  min-height: 48px;
+  border: 0;
+  border-radius: 10px;
+  background: #0e3435;
+  color: #eaf1ef;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.stageStart:hover { background: #12403f; }
+.stageStart:disabled { opacity: 0.7; cursor: default; }
+.stageCancel {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mut);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.stageCancel:hover { background: var(--accent2); }
+.stageProg { margin-top: 10px; color: #c69763; font-size: 13px; text-align: center; }
+/* ── منطقة السحب/الرفع (الحالة الفارغة) ── */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 24px);
+  margin: 14px 12px;
+  padding: 40px 20px;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--mut);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dropzone:hover, .dropzoneOver { border-color: #c69763; background: rgba(198, 151, 99, 0.06); }
+.dropTitle { font-size: 15px; font-weight: 700; color: var(--ink); text-align: center; }
+.dropSub { font-size: 12.5px; text-align: center; line-height: 1.7; }
 /* أهداف لمس ≥44px على أجهزة اللمس (دليل الهوية) — دون تضخيم كثافة شريط سطح المكتب */
 @media (pointer: coarse) {
   .grp button,
