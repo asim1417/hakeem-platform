@@ -165,6 +165,10 @@ export interface GarbleReport {
   /** نسبة الرموز غير المُعيَّنة يونيكودياً (منطقة الاستخدام الخاص PUA وبدائل العطب) —
       خطّ مُرمَّز ترميزاً خاصاً تظهر رموزه مربعات ☐؛ لا يُقرأ إلا بـ OCR */
   unmappedRatio: number;
+  /** نسبة شظايا «الترتيب البصري»: كلمات تبدأ/تنتهي بتطويل أو شظايا مستحيلة
+      (ىل، ني، يه، رش…) — سمة طبقات InDesign المخزّنة بترتيب العرض لا المنطق؛
+      النص حروفه عربية سليمة لكن أجزاء الكلمات مبعثرة، والمصدر الصحيح OCR بالصورة */
+  fragmentRatio: number;
 }
 
 /**
@@ -217,14 +221,24 @@ export function isGarbledArabicText(rawText: string): GarbleReport {
   }
   const unmappedRatio = visible > 40 ? unmapped / visible : 0;
 
+  // شظايا الترتيب البصري: تطويل على حافة الكلمة (تبــ / ـاهمني) أو شظايا مستحيلة كوحدات
+  const IMPOSSIBLE = new Set(["ىل", "ني", "يه", "رش", "زت", "هت", "اهت"]);
+  let fragments = 0;
+  for (const w of arabicWords) {
+    const core = w.replace(/[،؛:.()\[\]«»"']/g, "");
+    if (core.startsWith("ـ") || core.endsWith("ـ") || IMPOSSIBLE.has(core)) fragments += 1;
+  }
+  const fragmentRatio = arabicWords.length > 30 ? fragments / arabicWords.length : 0;
+
   const garbled =
     presentationRatio > 0.3 ||
     singleLetterRatio > 0.4 ||
     duplicationRatio > 0.25 ||
     substitutionRatio > 0.12 ||
-    unmappedRatio > 0.2;
+    unmappedRatio > 0.2 ||
+    fragmentRatio > 0.08;
 
-  return { garbled, presentationRatio, duplicationRatio, substitutionRatio, singleLetterRatio, unmappedRatio };
+  return { garbled, presentationRatio, duplicationRatio, substitutionRatio, singleLetterRatio, unmappedRatio, fragmentRatio };
 }
 
 /**
@@ -239,6 +253,9 @@ export function cleanPdfTextLayer(rawText: string): { text: string; needsOcr: bo
   // استرجاع حدود الكلمات حين تُفصل كلّ صورة حرف بمسافة (singleLetterRatio عالٍ)،
   // ولا إصلاح الخطّ المُجزّأ (رموز بديلة). في هاتين الحالتين المصدر الصحيح هو OCR.
   const needsOcr =
-    report.substitutionRatio > 0.12 || report.singleLetterRatio > 0.45 || report.unmappedRatio > 0.2;
+    report.substitutionRatio > 0.12 ||
+    report.singleLetterRatio > 0.45 ||
+    report.unmappedRatio > 0.2 ||
+    report.fragmentRatio > 0.08;
   return { text, needsOcr, report };
 }

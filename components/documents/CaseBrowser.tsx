@@ -657,17 +657,15 @@ export function CaseBrowser() {
     document.cookie = `docToolCloudOcr=${on ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
   }
 
-  /** قراءة سحابية فائقة الدقة (Gemini) عبر خادم المنصة — null عند الفشل ليسقط للمحلي */
+  /** قراءة سحابية فائقة الدقة (Gemini) — الـ PDF يُرسل صفحاتٍ كصور (رؤية حقيقية
+      تتجاوز طبقات النص المعطوبة)؛ null عند الفشل ليسقط للمحلي */
   async function cloudRead(file: File): Promise<string | null> {
     try {
-      if (file.size > 3_400_000) return null; // حد جسم الطلب — الأكبر يذهب للمحلي
-      setOcrProgress("قراءة سحابية فائقة الدقة (Gemini)…");
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/doc-tool/ocr", { method: "POST", body: fd });
-      const json = (await res.json()) as { text?: string };
-      if (!res.ok || !json.text || json.text.trim().length < 5) return null;
-      return json.text;
+      const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
+      if ((file.name.split(".").pop() ?? "").toLowerCase() === "pdf") {
+        return await cloudOcrPdfPages(await file.arrayBuffer(), (label) => setOcrProgress(label));
+      }
+      return await cloudOcrImage(file, (label) => setOcrProgress(label));
     } catch {
       return null;
     }
