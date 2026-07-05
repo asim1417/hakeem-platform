@@ -771,6 +771,32 @@ export function CaseBrowser() {
       return;
     }
 
+    // PDF + سحابي مُفعَّل صراحةً → المسار السحابي مباشرةً بالنطاق المحدَّد (أولوية،
+    // لا استخراج محلي كامل يتجاهل اختيار المستخدم للسحابي والنطاق)
+    if (ext === "pdf" && cloudAvail && cloudOcrOn) {
+      const { startConversion, isConversionRunning } = await import("@/lib/modules/doc-tool/conversion-manager");
+      if (isConversionRunning()) {
+        window.alert("هناك معالجة سحابية جارية بالفعل — انتظر اكتمالها أو ألغِها من المؤشر.");
+        return;
+      }
+      const buf = await file.arrayBuffer();
+      const rFrom = cloudFrom ? Number(cloudFrom) : undefined;
+      const rTo = cloudTo ? Number(cloudTo) : undefined;
+      void startConversion({
+        title: baseName,
+        buffer: buf,
+        options: { from: rFrom, to: rTo },
+        onComplete: () => undefined // التسوية عبر المشترك أدناه
+      });
+      setStatusMsg(
+        rFrom || rTo
+          ? `بدأت القراءة السحابية للصفحات ${rFrom ?? 1}–${rTo ?? "النهاية"} — تابع المؤشر`
+          : "بدأت القراءة السحابية لكل الصفحات — تابع المؤشر"
+      );
+      setTimeout(() => setStatusMsg(""), 6000);
+      return; // المؤشر يتابع؛ التنقّل لا يوقفه
+    }
+
     // PDF / DOCX / TXT: استخراج النص محلياً في المتصفح ثم إضافته كوثيقة
     if (ext === "pdf" || ext === "docx" || ext === "txt" || ext === "md") {
       setFileBusy(true);

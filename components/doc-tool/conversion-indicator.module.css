@@ -1,8 +1,8 @@
-/* مؤشر المعالجة العائم — هوية أمان، ثابت أسفل يسار الشاشة فوق كل المحتوى */
+/* مؤشر المعالجة العائم — هوية أمان، ثابت أعلى الشاشة فوق كل المحتوى */
 .wrap {
   position: fixed;
   inset-inline-start: 16px;
-  inset-block-end: 16px;
+  inset-block-start: 16px;
   z-index: 60;
   width: 300px;
   max-width: calc(100vw - 32px);
