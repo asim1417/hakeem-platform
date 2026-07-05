@@ -108,8 +108,19 @@ const OCR_PROMPT =
   "5) الخط اليدوي المعقّد: حلّله بعناية فائقة.\n" +
   "6) أخرِج النص الخام مباشرة دون أي مقدمات أو تعليقات منك.";
 
-// إعدادات توليد لرفع الدقّة والثبات — حرارة منخفضة جداً تمنع التأليف
-const GEN_CONFIG = { temperature: 0.1, topP: 0.95 };
+// إعدادات التوليد لكل نموذج. حرارةٌ منخفضة جداً تمنع التأليف. والأهمّ:
+// - maxOutputTokens مرتفع: صفحة قانونية كثيفة قد تتجاوز الحدّ الافتراضي فتُبتَر.
+// - thinkingBudget=0 على flash: OCR مهمّة إدراكٍ لا استدلال؛ «التفكير» يستهلك رصيد
+//   المخرجات (فيعيد نصّاً فارغاً/مبتوراً) ويبطّئ الاستجابة. تعطيله يعطي نسخاً مباشراً
+//   أدقّ وأسرع. (gemini-2.5-pro لا يقبل 0 — نتركه على التفكير الديناميكي للخط اليدوي.)
+export function genConfig(modelType: GeminiOcrModel) {
+  return {
+    temperature: 0.1,
+    topP: 0.95,
+    maxOutputTokens: 16384,
+    ...(modelType === "flash" ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+  };
+}
 
 export const GEMINI_OCR_MIME_TYPES = ["image/png", "image/jpeg", "application/pdf"] as const;
 export type GeminiOcrMime = (typeof GEMINI_OCR_MIME_TYPES)[number];
@@ -123,7 +134,7 @@ export function isGeminiOcrConfigured(): boolean {
 }
 
 interface GeminiResponse {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
   error?: { message?: string };
 }
 
@@ -148,7 +159,7 @@ export async function extractTextWithGemini(
           ]
         }
       ],
-      generationConfig: GEN_CONFIG
+      generationConfig: genConfig(modelType)
     })
   });
 
@@ -156,7 +167,14 @@ export async function extractTextWithGemini(
   if (!res.ok) {
     throw new Error(json.error?.message ?? `Gemini أعاد ${res.status}`);
   }
-  const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-  if (!text.trim()) throw new Error("لم يُعِد Gemini نصاً — تأكد من وضوح الوثيقة");
+  const candidate = json.candidates?.[0];
+  const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  if (!text.trim()) {
+    // MAX_TOKENS بلا نصّ = ابتُلع الرصيد في التفكير/الطول — نُبلّغ بوضوح بدل «فارغ» غامض
+    if (candidate?.finishReason === "MAX_TOKENS") {
+      throw new Error("انقطعت استجابة Gemini قبل النصّ (حدّ المخرجات) — أُعيدت الصفحة");
+    }
+    throw new Error("لم يُعِد Gemini نصاً — تأكد من وضوح الوثيقة");
+  }
   return text.trim();
 }
