@@ -53,6 +53,7 @@
     "derive:article-versions": "tsx scripts/derive-article-versions.ts",
     "test:versions": "tsx scripts/test-article-versions.ts",
     "test:dialogue-brain": "tsx scripts/test-dialogue-brain.ts",
+    "test:policy-gate": "tsx scripts/test-policy-gate.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts",
     "qa:citations": "tsx scripts/qa-citations.ts",
