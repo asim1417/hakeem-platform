@@ -116,6 +116,24 @@ export default function DocumentsLandingPage() {
               وملاحظات، وتصدير احترافي — لكل وثائق القضية معاً.
             </p>
           </Link>
+          {process.env.DOC_SERVICE_URL ? (
+            <a
+              href={process.env.DOC_SERVICE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.card}
+              style={{ textDecoration: "none" }}
+            >
+              <span className={styles.ic} aria-hidden="true">
+                <ScanIcon size={26} />
+              </span>
+              <h3>المعالجة الاحترافية (خادم)</h3>
+              <p>
+                محرّك بايثون الكامل مع معالجةٍ في الخلفية: ارفع دفعاتك الكبيرة، أغلق الصفحة، وعُد
+                فتجد النتيجة جاهزة — وGemini كمزوّد إضافي اختياري.
+              </p>
+            </a>
+          ) : null}
         </div>
 
         <h2 className={styles.sectionTitle}>ماذا تفعل المنصة؟</h2>
