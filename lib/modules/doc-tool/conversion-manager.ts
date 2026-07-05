@@ -81,6 +81,11 @@ export interface StartConversionArgs {
   title: string;
   buffer: ArrayBuffer;
   options: CloudPdfOptions;
+  /**
+   * نصّ أساسي بعلامات [صفحة N] (الصفحات الرقمية السليمة) — إن وُجد، تُدمج القراءة
+   * السحابية للصفحات الممسوحة داخله محلَّ علاماتها، فلا نرمي النصّ الرقميّ السليم.
+   */
+  baseText?: string;
   /** يُستدعى عند الاكتمال بالنص النهائي — لحفظه/إضافته كوثيقة */
   onComplete: (result: { text: string; running: string | null; failed: number }) => void | Promise<void>;
 }
@@ -130,8 +135,14 @@ export async function startConversion(args: StartConversionArgs): Promise<void> 
       return;
     }
 
+    // ادمج الصفحات المقروءة سحابياً في النصّ الرقميّ الأساسي (إن وُجد) بدل استبداله كلّه.
+    let merged = result.text;
+    if (args.baseText) {
+      const { mergeScannedPages } = await import("@/lib/modules/document-inspection/file-extract");
+      merged = mergeScannedPages(args.baseText, result.text);
+    }
     const { separateRunningLines } = await import("./extract");
-    const sep = separateRunningLines(result.text);
+    const sep = separateRunningLines(merged);
     patch({
       phase: "done",
       label: result.failed.length ? `اكتمل — ${result.failed.length} صفحة متعذرة` : "اكتملت المعالجة",

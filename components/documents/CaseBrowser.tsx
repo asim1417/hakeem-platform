@@ -895,29 +895,73 @@ export function CaseBrowser() {
       return;
     }
 
-    // PDF + سحابي مُفعَّل صراحةً → المسار السحابي مباشرةً بالنطاق المحدَّد (أولوية،
-    // لا استخراج محلي كامل يتجاهل اختيار المستخدم للسحابي والنطاق)
+    // PDF + سحابي مُفعَّل: قرارٌ ذكيّ لكل صفحة. لا نرمي النصّ الرقميّ السليم ونستبدله
+    // بقراءةٍ ضوئية أدنى — بل نستعمل طبقة النصّ حيث كانت سليمة، ونرسل لـ Gemini الصفحات
+    // الممسوحة/المعطوبة فقط، ثم ندمجها. فإن كان المستند رقمياً بالكامل → لا سحابي أصلاً
+    // (نتيجة فورية بجودةٍ كاملة بلا تكلفة).
     if (ext === "pdf" && cloudAvail && cloudOcrOn) {
       const { startConversion, isConversionRunning } = await import("@/lib/modules/doc-tool/conversion-manager");
       if (isConversionRunning()) {
         window.alert("هناك معالجة سحابية جارية بالفعل — انتظر اكتمالها أو ألغِها من المؤشر.");
         return;
       }
-      const buf = await file.arrayBuffer();
+      setFileBusy(true);
+      setOcrProgress("فحص طبقة نصّ الصفحات…");
       const rFrom = cloudFrom ? Number(cloudFrom) : undefined;
       const rTo = cloudTo ? Number(cloudTo) : undefined;
-      void startConversion({
-        title: baseName,
-        buffer: buf,
-        options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash", concurrency: cloudFast ? 6 : undefined },
-        onComplete: () => undefined // التسوية عبر المشترك أدناه
-      });
-      setStatusMsg(
-        rFrom || rTo
-          ? `بدأت القراءة السحابية للصفحات ${rFrom ?? 1}–${rTo ?? "النهاية"} — تابع المؤشر`
-          : "بدأت القراءة السحابية لكل الصفحات — تابع المؤشر"
-      );
-      setTimeout(() => setStatusMsg(""), 6000);
+      try {
+        const buf = await file.arrayBuffer();
+        const { planPdfPageOcr } = await import("@/lib/modules/document-inspection/file-extract");
+        const { separateRunningLines } = await import("@/lib/modules/doc-tool/extract");
+        const plan = await planPdfPageOcr(buf.slice(0), rFrom, rTo);
+
+        // كل الصفحات نصّها الرقميّ سليم → لا حاجة للسحابي إطلاقاً (فوريّ، جودة كاملة)
+        if (!plan.needOcrPages.length) {
+          const sep = separateRunningLines(plan.baseText);
+          addExtracted(baseName, sep.body);
+          setFileBusy(false);
+          setOcrProgress("");
+          setStatusMsg(
+            `✓ استُخرج نصّ «${baseName}» من طبقة النصّ الرقمية (${plan.cleanPages} صفحة) — بلا حاجة للسحابي`
+          );
+          setTimeout(() => setStatusMsg(""), 6500);
+          return;
+        }
+
+        // بعض/كل الصفحات ممسوحة أو معطوبة → اقرأ سحابياً ما يحتاجه فقط وادمجه بالسليم
+        setFileBusy(false);
+        setOcrProgress("");
+        void startConversion({
+          title: baseName,
+          buffer: buf,
+          baseText: plan.cleanPages > 0 ? plan.baseText : undefined,
+          options: {
+            onlyPages: plan.needOcrPages,
+            model: cloudHiQ ? "pro" : "flash",
+            concurrency: cloudFast ? 6 : undefined
+          },
+          onComplete: () => undefined // التسوية عبر المشترك أدناه
+        });
+        setStatusMsg(
+          plan.cleanPages > 0
+            ? `${plan.cleanPages} صفحة نصّها سليم (استُعملت مباشرةً) · ${plan.needOcrPages.length} صفحة ممسوحة تُقرأ سحابياً — تابع المؤشر`
+            : `بدأت القراءة السحابية لـ ${plan.needOcrPages.length} صفحة — تابع المؤشر`
+        );
+        setTimeout(() => setStatusMsg(""), 7000);
+      } catch {
+        // فشل الفحص المسبق → المسار السحابي الكامل احتياطاً
+        setFileBusy(false);
+        setOcrProgress("");
+        const buf = await file.arrayBuffer();
+        void startConversion({
+          title: baseName,
+          buffer: buf,
+          options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash", concurrency: cloudFast ? 6 : undefined },
+          onComplete: () => undefined
+        });
+        setStatusMsg("بدأت القراءة السحابية — تابع المؤشر");
+        setTimeout(() => setStatusMsg(""), 6000);
+      }
       return; // المؤشر يتابع؛ التنقّل لا يوقفه
     }
 
