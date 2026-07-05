@@ -226,7 +226,15 @@ export class PlayerSelectScene extends Phaser.Scene {
 
     // 🃏 من له بطاقة رسمية كاملة (تصميم فوتبول فيوتشر) تُعرض كما هي — فيها التقييم والاسم والأرقام
     if (p.card && this.textures.exists(`card-${p.id}`)) {
-      const official = this.add.image(GAME_WIDTH / 2, CARD_Y - 4, `card-${p.id}`).setDisplaySize(452, 565);
+      // البطاقة بخلفية شفافة وبدقة عالية — نحافظ على نسبتها الأصلية بلا تشويه
+      const srcImg = this.textures.get(`card-${p.id}`).getSourceImage() as HTMLImageElement;
+      let dh = 585;
+      let dw = dh * (srcImg.width / srcImg.height);
+      if (dw > 452) {
+        dw = 452;
+        dh = dw * (srcImg.height / srcImg.width);
+      }
+      const official = this.add.image(GAME_WIDTH / 2, CARD_Y - 4, `card-${p.id}`).setDisplaySize(dw, dh);
       official.x += dir * 60;
       official.setAlpha(0);
       this.tweens.add({ targets: official, x: GAME_WIDTH / 2, alpha: 1, duration: 240, ease: 'Sine.easeOut' });
