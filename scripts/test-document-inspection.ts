@@ -312,7 +312,12 @@ check("المعجم الصرفي: matchDoc/highlightNeedles يجدان صيغة 
 // ── استخراج الملفات (DOCX) ──
 
 import { deflateRawSync } from "node:zlib";
-import { docxXmlToText, extractZipEntry } from "../lib/modules/document-inspection/file-extract";
+import {
+  docxXmlToText,
+  extractZipEntry,
+  mergeScannedPages,
+  SCANNED_PAGE_MARK
+} from "../lib/modules/document-inspection/file-extract";
 
 function crc32(buf: Uint8Array): number {
   let c = ~0;
@@ -364,6 +369,27 @@ function buildZip(name: string, content: Uint8Array): ArrayBuffer {
   out.set(eocd, local.length + central.length);
   return out.buffer;
 }
+
+check("مسح جزئي: دمج الصفحات المقروءة ضوئياً محلَّ العلامة، وإبقاء صفحات النصّ", () => {
+  // مستند: صفحة 1 نصّ سليم، صفحتان 2 و3 صور ممسوحة (علامة)، ثم قراءة ضوئية لهما.
+  const base = `[صفحة 1]\nنصّ الصفحة الأولى السليم\n\n[صفحة 2]\n${SCANNED_PAGE_MARK}\n\n[صفحة 3]\n${SCANNED_PAGE_MARK}`;
+  const ocr = "[صفحة 2]\nنصّ الصفحة الثانية المقروء ضوئياً\n\n[صفحة 3]\nنصّ الصفحة الثالثة المقروء ضوئياً";
+  const merged = mergeScannedPages(base, ocr);
+  // الصفحة السليمة لا تُمسّ
+  assert.ok(merged.includes("نصّ الصفحة الأولى السليم"));
+  // العلامة استُبدلت بنصّ القراءة الضوئية، ولم تبقَ أيّ علامة صامتة
+  assert.ok(merged.includes("نصّ الصفحة الثانية المقروء ضوئياً"));
+  assert.ok(merged.includes("نصّ الصفحة الثالثة المقروء ضوئياً"));
+  assert.ok(!merged.includes(SCANNED_PAGE_MARK));
+});
+
+check("مسح جزئي: صفحة بلا قراءة ضوئية تبقى علامتها ظاهرة (لا فراغ صامت)", () => {
+  const base = `[صفحة 1]\nنصّ سليم\n\n[صفحة 2]\n${SCANNED_PAGE_MARK}`;
+  // لا نتيجة ضوئية للصفحة 2 → تبقى العلامة كما هي بدل اختفائها فراغاً
+  const merged = mergeScannedPages(base, "");
+  assert.ok(merged.includes(SCANNED_PAGE_MARK));
+  assert.ok(merged.includes("نصّ سليم"));
+});
 
 check("DOCX: تحويل XML إلى نص بفواصل فقرات", () => {
   const xml =

@@ -144,17 +144,32 @@ async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<Ext
     const { extractPdfText } = await import("@/lib/modules/document-inspection/file-extract");
     onProgress?.("قراءة نص الـ PDF…");
     const result = await extractPdfText(buffer);
-    const bare = result.text.replace(/\[صفحة \d+\]/g, "").trim();
-    // ممسوح ضوئياً أو طبقة نص معطوبة → OCR على صور الصفحات
-    if (bare.length < 20 || result.needsOcr) {
+    // ممسوح بالكامل أو طبقة نص معطوبة → OCR على صور كل الصفحات
+    if (result.emptyPages >= result.pages || result.needsOcr) {
       return ocrPdf(buffer, onProgress);
     }
-    const warning =
-      result.emptyPages > 0
-        ? `${result.emptyPages} من ${result.pages} صفحة بلا نص (ممسوحة؟)`
-        : undefined;
+    // مسح جزئي: بعض الصفحات نصّ سليم وبعضها صور — اقرأ الممسوحة فقط ضوئياً وادمجها،
+    // فلا تبقى صفحاتٌ فارغةً صامتةً في المخرجات.
+    if (result.emptyPageNumbers.length) {
+      const { ocrScannedPdf, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+      const { fixReversedArabicLines } = await import("@/lib/modules/document-inspection/text-quality");
+      const { mergeScannedPages } = await import("@/lib/modules/document-inspection/file-extract");
+      onProgress?.("قراءة الصفحات الممسوحة ضوئياً…");
+      const ocr = await ocrScannedPdf(
+        buffer,
+        (info) =>
+          onProgress?.(
+            `OCR صفحة ${info.page}/${info.pages} — ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`
+          ),
+        { onlyPages: result.emptyPageNumbers }
+      );
+      const fixed = fixReversedArabicLines(ocr.text);
+      const merged = mergeScannedPages(result.text, fixed.text);
+      const sep = separateRunningLines(merged);
+      return { text: sep.body, kind: `PDF مختلط (نص + OCR ${Math.round(ocr.avgConfidence)}٪)`, running: sep.running };
+    }
     const sep = separateRunningLines(result.text);
-    return { text: sep.body, kind: "PDF (نص)", warning, running: sep.running };
+    return { text: sep.body, kind: "PDF (نص)", running: sep.running };
   } catch (err) {
     // فشل فك النص (ملف صور خالص مثلاً) — جرّب OCR قبل الاستسلام
     try {
