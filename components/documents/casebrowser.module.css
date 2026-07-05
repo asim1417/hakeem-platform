@@ -190,6 +190,20 @@
   font-family: inherit;
 }
 .grp button:hover { background: var(--accent2); }
+/* أهداف لمس ≥44px على أجهزة اللمس (دليل الهوية) — دون تضخيم كثافة شريط سطح المكتب */
+@media (pointer: coarse) {
+  .grp button,
+  .grp select,
+  .grp input,
+  .grp label,
+  .actions button,
+  .actions select {
+    min-height: 44px;
+  }
+  .grp {
+    padding: 2px 8px;
+  }
+}
 .grp select,
 .grp input {
   border: none;
@@ -278,13 +292,14 @@
 .row button:hover { background: var(--accent2); }
 .row label { display: flex; align-items: center; gap: 3px; cursor: pointer; }
 .btnExport {
-  background: var(--copper) !important;
-  color: #241a0c !important;
-  border-color: var(--copper) !important;
+  /* نحاسي أدكن يحقق تباين WCAG AA (4.5:1) مع النص الداكن */
+  background: #b8874d !important;
+  color: #241305 !important;
+  border-color: #b8874d !important;
   font-weight: 700;
 }
 .btnExport:hover { filter: brightness(1.06); }
-.selcount { color: var(--copper); font-weight: 700; }
+.selcount { color: #7a5218; font-weight: 700; } /* نحاسي داكن — تباين AA على الرملي */
 .count { font-size: 12px; color: var(--mut); padding: 2px 4px; }
 
 /* القائمة */
