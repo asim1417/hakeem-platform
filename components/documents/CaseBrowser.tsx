@@ -299,6 +299,14 @@ export function CaseBrowser() {
   const [cloudTo, setCloudTo] = useState("");
   // دقّة أعلى: gemini-2.5-pro (للخطّ اليدوي والأختام والوثائق الصعبة) بدل flash الأسرع
   const [cloudHiQ, setCloudHiQ] = useState(false);
+  // معالجة سريعة: توازٍ أعلى (للمفاتيح المدفوعة، حدّ معدلٍ أعلى) — يهبط تلقائياً عند 429
+  const [cloudFast, setCloudFast] = useState(false);
+  // عدد صفحات الملف المُهيَّأ (PDF) — للتقدير المسبق للوقت
+  const [stagedPages, setStagedPages] = useState<number | null>(null);
+  // نافذة مقارنة الجودة (flash/pro/محلي على صفحة واحدة)
+  const [cmpOpen, setCmpOpen] = useState(false);
+  const [cmpBusy, setCmpBusy] = useState("");
+  const [cmpRes, setCmpRes] = useState<{ engine: string; text: string; score: number }[]>([]);
   // ملف مُهيَّأ بانتظار اختيار خيارات المعالجة ثم «ابدأ» — لا يُعالَج تلقائياً عند الرفع
   const [staged, setStaged] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -699,6 +707,110 @@ export function CaseBrowser() {
     document.cookie = `docToolCloudOcr=${on ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
   }
 
+  // تقدير مسبق: عند تهيئة ملف PDF نقرأ عدد صفحاته لعرض الوقت المتوقّع قبل البدء.
+  useEffect(() => {
+    let alive = true;
+    const ext = staged ? (staged.name.split(".").pop() ?? "").toLowerCase() : "";
+    if (!staged || ext !== "pdf") {
+      setStagedPages(null);
+      return;
+    }
+    staged
+      .arrayBuffer()
+      .then((buf) => import("@/lib/modules/doc-tool/cloud-ocr").then((m) => m.getPdfPageCount(buf)))
+      .then((n) => {
+        if (alive) setStagedPages(n || null);
+      })
+      .catch(() => {
+        if (alive) setStagedPages(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [staged]);
+
+  // عدد الصفحات ضمن النطاق المحدَّد (أو كلّها) — أساس التقدير
+  const plannedPages = useMemo(() => {
+    if (!stagedPages) return 0;
+    const from = cloudFrom ? Math.max(1, Number(cloudFrom)) : 1;
+    const to = cloudTo ? Math.min(stagedPages, Number(cloudTo)) : stagedPages;
+    return Math.max(0, Math.min(stagedPages, to) - from + 1);
+  }, [stagedPages, cloudFrom, cloudTo]);
+
+  // تقدير الزمن: (صفحات ÷ توازٍ) × ثوانٍ للصفحة. pro أبطأ من flash.
+  const estimate = useMemo(() => {
+    if (!plannedPages) return null;
+    const perPage = cloudHiQ ? 14 : 7; // ثوانٍ تقديرية للصفحة الواحدة
+    const parallel = cloudFast ? 6 : 3;
+    const secs = Math.ceil((plannedPages / parallel) * perPage);
+    const mins = Math.round((secs / 60) * 10) / 10;
+    return { pages: plannedPages, secs, mins, heavy: plannedPages > 60 };
+  }, [plannedPages, cloudHiQ, cloudFast]);
+
+  /** مقارنة الجودة: يقرأ صفحةً واحدة بالمحرّكات الثلاثة (محلي/flash/pro) للعرض جنباً لجنب */
+  async function runComparison() {
+    if (!staged) return;
+    const ext = (staged.name.split(".").pop() ?? "").toLowerCase();
+    const page = cloudFrom ? Math.max(1, Number(cloudFrom)) : 1;
+    setCmpRes([]);
+    setCmpOpen(true);
+    setCmpBusy("جارٍ التحضير…");
+    try {
+      const buf = await staged.arrayBuffer();
+      const { analyzeTextIssues } = await import("@/lib/modules/document-inspection/text-quality");
+      const strip = (t: string) => t.replace(/\[صفحة \d+\]\n?/g, "").trim();
+      const out: { engine: string; text: string; score: number }[] = [];
+
+      // محلي (Tesseract) — يعمل دائماً، بلا مفتاح
+      setCmpBusy("القراءة المحلية (Tesseract)…");
+      try {
+        if (ext === "pdf") {
+          const { ocrScannedPdf } = await import("@/lib/modules/document-inspection/ocr");
+          const r = await ocrScannedPdf(buf.slice(0), undefined, { onlyPages: [page] });
+          const t = strip(r.text);
+          out.push({ engine: "محلي (Tesseract)", text: t, score: analyzeTextIssues(t).q });
+        } else {
+          const { ocrImageBest } = await import("@/lib/modules/document-inspection/ocr");
+          const bmp = await createImageBitmap(staged);
+          const c = document.createElement("canvas");
+          c.width = bmp.width;
+          c.height = bmp.height;
+          c.getContext("2d")?.drawImage(bmp, 0, 0);
+          bmp.close();
+          const r = await ocrImageBest(c);
+          out.push({ engine: "محلي (Tesseract)", text: r.text, score: analyzeTextIssues(r.text).q });
+        }
+      } catch {
+        out.push({ engine: "محلي (Tesseract)", text: "تعذّرت القراءة المحلية", score: 0 });
+      }
+      setCmpRes([...out]);
+
+      // سحابي flash ثم pro — يحتاجان المفتاح
+      if (cloudAvail) {
+        const { cloudOcrPdfPages, cloudOcrImage } = await import("@/lib/modules/doc-tool/cloud-ocr");
+        for (const m of ["flash", "pro"] as const) {
+          setCmpBusy(m === "flash" ? "السحابي flash…" : "السحابي pro…");
+          try {
+            let t = "";
+            if (ext === "pdf") {
+              const r = await cloudOcrPdfPages(buf.slice(0), undefined, { onlyPages: [page], model: m });
+              t = strip(r?.text ?? "");
+            } else {
+              t = (await cloudOcrImage(staged, undefined, m)) ?? "";
+            }
+            out.push({ engine: m === "flash" ? "Gemini flash" : "Gemini pro", text: t || "لا نصّ", score: t ? analyzeTextIssues(t).q : 0 });
+          } catch {
+            out.push({ engine: m === "flash" ? "Gemini flash" : "Gemini pro", text: "تعذّرت القراءة السحابية", score: 0 });
+          }
+          setCmpRes([...out]);
+        }
+      }
+      setCmpBusy("");
+    } catch {
+      setCmpBusy("تعذّرت المقارنة");
+    }
+  }
+
   /** قراءة سحابية فائقة الدقة (Gemini) — الـ PDF يُرسل صفحاتٍ كصور (رؤية حقيقية
       تتجاوز طبقات النص المعطوبة)؛ null عند الفشل ليسقط للمحلي */
   async function cloudRead(file: File): Promise<string | null> {
@@ -709,7 +821,8 @@ export function CaseBrowser() {
         const result = await cloudOcrPdfPages(await file.arrayBuffer(), (label) => setOcrProgress(label), {
           from: cloudFrom ? Number(cloudFrom) : undefined,
           to: cloudTo ? Number(cloudTo) : undefined,
-          model
+          model,
+          concurrency: cloudFast ? 6 : undefined
         });
         if (!result) return null;
         if (result.failed.length) {
@@ -789,7 +902,7 @@ export function CaseBrowser() {
       void startConversion({
         title: baseName,
         buffer: buf,
-        options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash" },
+        options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash", concurrency: cloudFast ? 6 : undefined },
         onComplete: () => undefined // التسوية عبر المشترك أدناه
       });
       setStatusMsg(
@@ -873,7 +986,8 @@ export function CaseBrowser() {
               options: {
                 from: cloudFrom ? Number(cloudFrom) : undefined,
                 to: cloudTo ? Number(cloudTo) : undefined,
-                model: cloudHiQ ? "pro" : "flash"
+                model: cloudHiQ ? "pro" : "flash",
+                concurrency: cloudFast ? 6 : undefined
               },
               // الإضافة تتم عبر تسوية النتيجة (أدناه) لتعمل حتى لو انتقل المستخدم
               onComplete: () => undefined
@@ -1713,6 +1827,52 @@ export function CaseBrowser() {
                     </label>
                   ) : null}
 
+                  {cloudAvail && cloudOcrOn ? (
+                    <label className={styles.stageOpt}>
+                      <input type="checkbox" checked={cloudFast} onChange={(e) => setCloudFast(e.target.checked)} />
+                      <span className={styles.stageOptMain}>
+                        <ScanIcon size={15} /> معالجة سريعة (مفتاح مدفوع)
+                      </span>
+                      <span className={styles.stageOptSub}>
+                        ترفع التوازي إلى 6 صفحات معاً — تُسرّع الدفعات الكبيرة إن كان حدّ معدّل مفتاحك يسمح. تهبط تلقائياً
+                        للتتابع عند بلوغ الحدّ (429).
+                      </span>
+                    </label>
+                  ) : null}
+
+                  {cloudAvail && cloudOcrOn && estimate ? (
+                    <div className={styles.stageEstimate}>
+                      <ScanIcon size={15} />
+                      <span>
+                        سيُعالَج <b>{estimate.pages}</b> صفحة سحابياً · الزمن التقديري <b>~{estimate.mins}</b> دقيقة
+                        {estimate.heavy ? (
+                          <span className={styles.stageEstimateWarn}> · دفعة كبيرة — تابع المؤشر ولا تُغلق التبويب</span>
+                        ) : null}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {cloudAvail && cloudOcrOn ? (
+                    <button className={styles.stageCompare} onClick={() => void runComparison()} disabled={fileBusy || Boolean(cmpBusy)}>
+                      <ScanIcon size={14} /> قارن الجودة على صفحة واحدة (محلي · flash · pro)
+                    </button>
+                  ) : null}
+
+                  {estimate?.heavy ? (
+                    <details className={styles.stageGuide}>
+                      <summary>دفعة كبيرة جداً؟ استخدم الخادم الدائم (يصمد أمام إغلاق التبويب)</summary>
+                      <p>
+                        المعالجة هنا تعمل في متصفحك وتصمد أثناء تنقّلك بين الشاشات، لكن إغلاق التبويب يوقفها. للدفعات
+                        الضخمة (مئات الوثائق) استخدم الخدمة المستقلّة التي تعمل على جهازك/خادمك وتُكمل بلا متصفح — مجلد
+                        محلّي أو Google Drive مباشرةً. اضبط مفتاح Gemini في بيئة الطرفية (انظر الـ README) ثم شغّل:
+                      </p>
+                      <code>{`cd tools/gemini-ocr-service
+npm install
+DOCUMENTS_FOLDER="./وثائقي" node processDriveDocuments.js`}</code>
+                      <p>ثم استورد النصوص الناتجة إلى المنصّة. خطوة المفتاح والتفاصيل في tools/gemini-ocr-service/README.md.</p>
+                    </details>
+                  ) : null}
+
                   <div className={styles.stageActions}>
                     <button
                       className={styles.stageStart}
@@ -1729,6 +1889,34 @@ export function CaseBrowser() {
                     </button>
                   </div>
                   {fileBusy && ocrProgress ? <div className={styles.stageProg}>{ocrProgress}</div> : null}
+                </div>
+              </div>
+            ) : null}
+            {cmpOpen ? (
+              <div className={styles.cmpBackdrop} onClick={() => !cmpBusy && setCmpOpen(false)}>
+                <div className={styles.cmpModal} onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.cmpHead}>
+                    <span className={styles.cmpTitle}>مقارنة جودة القراءة — صفحة {cloudFrom ? Number(cloudFrom) : 1}</span>
+                    <button className={styles.cmpClose} onClick={() => setCmpOpen(false)} disabled={Boolean(cmpBusy)}>
+                      إغلاق
+                    </button>
+                  </div>
+                  <div className={styles.cmpHint}>
+                    اقرأ الأعمدة الثلاثة وقارِن بنفسك أيّها أدقّ على وثيقتك. «الدرجة» تقديرٌ آليّ للجودة (0–100) لا حكمٌ
+                    نهائيّ — العين أدقّ. راجع الأرقام والمبالغ يدوياً دائماً.
+                  </div>
+                  {cmpBusy ? <div className={styles.cmpBusy}>{cmpBusy}</div> : null}
+                  <div className={styles.cmpGrid}>
+                    {cmpRes.map((r) => (
+                      <div key={r.engine} className={styles.cmpCol}>
+                        <div className={styles.cmpColHead}>
+                          <span>{r.engine}</span>
+                          <span className={styles.cmpScore}>الدرجة {r.score}</span>
+                        </div>
+                        <pre className={styles.cmpText}>{r.text}</pre>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : null}

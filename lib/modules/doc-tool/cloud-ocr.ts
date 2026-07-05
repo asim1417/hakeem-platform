@@ -120,8 +120,27 @@ export interface CloudPdfOptions {
   onlyPages?: number[];
   /** النموذج: flash (اقتصادي) أو pro (دقة قصوى — VIP) */
   model?: "flash" | "pro";
+  /** درجة التوازي المطلوبة — للمفاتيح المدفوعة (حدّ معدلٍ أعلى). يهبط تلقائياً عند 429. */
+  concurrency?: number;
   /** إلغاء تعاوني — تتوقف الحلقة عند أول صفحة تالية */
   shouldCancel?: () => boolean;
+}
+
+/** أقصى توازٍ مسموح — سقفٌ أمانٍ حتى للمفاتيح المدفوعة */
+export const MAX_CONCURRENCY = 8;
+
+/** عدد صفحات ملف PDF (للتقدير المسبق قبل بدء الدفعة) */
+export async function getPdfPageCount(buffer: ArrayBuffer): Promise<number> {
+  try {
+    const pdfjs = await import("pdfjs-dist");
+    pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    const doc = await pdfjs.getDocument({ data: buffer }).promise;
+    const n = doc.numPages;
+    await doc.destroy();
+    return n;
+  } catch {
+    return 0;
+  }
 }
 
 export interface CloudPdfResult {
@@ -212,7 +231,8 @@ export async function cloudOcrPdfPages(
       }
     };
 
-    const poolSize = Math.min(DEFAULT_CONCURRENCY, pages.length);
+    const requested = Math.max(1, Math.min(opts.concurrency ?? DEFAULT_CONCURRENCY, MAX_CONCURRENCY));
+    const poolSize = Math.min(requested, pages.length);
     await Promise.all(Array.from({ length: poolSize }, (_, i) => worker(i)));
     await doc.destroy();
 
