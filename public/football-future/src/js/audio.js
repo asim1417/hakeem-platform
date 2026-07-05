@@ -205,13 +205,23 @@
   });
   if ("speechSynthesis" in window) window.speechSynthesis.onvoiceschanged = () => getArabicVoice();
 
-  /* ── هدير الجمهور المحيطي التفاعلي ── */
+  /* ── هدير الجمهور المحيطي التفاعلي ──
+     يفضّل عيّنة استاد حقيقية محلقة (ambience.wav) فور فك ترميزها،
+     مع بدء فوري بمولّد الضجيج الوردي ريثما تُحمَّل — وسقوط كامل عليه إن تعذّرت. */
   let crowdRig = null;
   const CROWD_BASE = 0.016;
-  function crowdStart() {
-    if (crowdRig || settings.muted || !settings.sfx) return;
-    const ac = ensureContext();
-    if (!ac) return;
+  const AMB_URL = "/football-future/src/assets/audio/sfx/ambience.wav";
+  let ambBuffer = null, ambLoading = null;
+  function loadAmbience(ac) {
+    if (ambBuffer || ambLoading) return ambLoading;
+    ambLoading = fetch(AMB_URL)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error("http"))))
+      .then((buf) => ac.decodeAudioData(buf))
+      .then((decoded) => { ambBuffer = decoded; return decoded; })
+      .catch(() => { ambLoading = null; return null; });
+    return ambLoading;
+  }
+  function makeSynthSource(ac) {
     const dur = 2.5;
     const buffer = ac.createBuffer(1, Math.floor(ac.sampleRate * dur), ac.sampleRate);
     const data = buffer.getChannelData(0);
@@ -226,10 +236,27 @@
     src.buffer = buffer; src.loop = true;
     const filter = ac.createBiquadFilter();
     filter.type = "bandpass"; filter.frequency.value = 420; filter.Q.value = 0.5;
+    src.connect(filter);
+    return { src, out: filter };
+  }
+  function makeAmbSource(ac) {
+    const src = ac.createBufferSource();
+    src.buffer = ambBuffer; src.loop = true;
+    const comp = ac.createGain();
+    comp.gain.value = 1.5; // العيّنة أدفأ طيفياً من المولّد — معادلة مستوى
+    src.connect(comp);
+    return { src, out: comp };
+  }
+  function crowdStart() {
+    if (crowdRig || settings.muted || !settings.sfx) return;
+    const ac = ensureContext();
+    if (!ac) return;
     const gain = ac.createGain();
     gain.gain.value = 0.0001;
-    src.connect(filter); filter.connect(gain); gain.connect(master);
-    src.start();
+    gain.connect(master);
+    const piece = ambBuffer ? makeAmbSource(ac) : makeSynthSource(ac);
+    piece.out.connect(gain);
+    piece.src.start();
     gain.gain.setTargetAtTime(CROWD_BASE, ac.currentTime, 0.8);
     // تموّج طبيعي بطيء
     const timer = window.setInterval(() => {
@@ -237,7 +264,19 @@
       const target = CROWD_BASE * (0.75 + Math.random() * 0.6);
       crowdRig.gain.gain.setTargetAtTime(target, ac.currentTime, 1.4);
     }, 2600);
-    crowdRig = { src, gain, filter, timer };
+    crowdRig = { src: piece.src, gain, timer, isFile: !!ambBuffer };
+    if (!ambBuffer) {
+      // بدّل للهدير الحقيقي فور جاهزيته — بتلاشٍ متقاطع قصير
+      loadAmbience(ac).then((decoded) => {
+        if (!decoded || !crowdRig || crowdRig.isFile) return;
+        const old = crowdRig.src;
+        const real = makeAmbSource(ac);
+        real.out.connect(crowdRig.gain);
+        real.src.start();
+        crowdRig.src = real.src; crowdRig.isFile = true;
+        window.setTimeout(() => { try { old.stop(); } catch {} }, 700);
+      });
+    }
   }
   function crowdSwell(level, hold) {
     if (!crowdRig || settings.muted || !settings.sfx) return;
