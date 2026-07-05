@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text, model: model === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash" });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "تعذّر الاستخراج";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    // حد المعدل يمرَّر 429 ليتراجع العميل للتتابع ويعيد المحاولة بانتظار
+    const rateLimited = /429|quota|RESOURCE_EXHAUSTED|rate limit/i.test(msg);
+    return NextResponse.json({ error: msg }, { status: rateLimited ? 429 : 502 });
   }
 }

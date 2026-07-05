@@ -200,6 +200,17 @@
   white-space: nowrap;
 }
 .cloudLbl input { accent-color: #c69763; margin: 0; }
+.rangeIn {
+  width: 52px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 3px 6px;
+  font-variant-numeric: tabular-nums;
+}
 /* أهداف لمس ≥44px على أجهزة اللمس (دليل الهوية) — دون تضخيم كثافة شريط سطح المكتب */
 @media (pointer: coarse) {
   .grp button,

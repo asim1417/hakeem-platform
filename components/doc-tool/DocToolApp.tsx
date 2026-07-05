@@ -82,6 +82,10 @@ export function DocToolApp() {
   const [keyMsg, setKeyMsg] = useState("");
   const [keySource, setKeySource] = useState<"db" | "env" | "none">("none");
   const [stage, setStage] = useState(0); // 0 خامل · 1 رفع · 2 استخراج · 3 تعرّف · 4 جاهز
+  const [rangeFrom, setRangeFrom] = useState("");
+  const [rangeTo, setRangeTo] = useState("");
+  const [retryBusy, setRetryBusy] = useState(false);
+  const retryRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // الخيار السحابي يظهر فقط إن كانت الخدمة السحابية مفعّلة على الخادم.
@@ -208,7 +212,11 @@ export function DocToolApp() {
             setStage(/OCR|ضوئية|تعرّف|Gemini/.test(label) ? 3 : 2);
             setStatus(`${f.name}: ${label}`);
           },
-          cloudOcr
+          cloudOcr,
+          cloudRange: {
+            from: rangeFrom ? Number(rangeFrom) : undefined,
+            to: rangeTo ? Number(rangeTo) : undefined
+          }
         });
         added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text), running: r.running });
         if (r.warning) setError(`${f.name}: ${r.warning}`);
@@ -225,7 +233,7 @@ export function DocToolApp() {
         `أُضيف ${list.length.toLocaleString(AR)} (نجح استخراج ${ok.toLocaleString(AR)})`
       );
     },
-    [persist, cloudOcr]
+    [persist, cloudOcr, rangeFrom, rangeTo]
   );
 
   const removeDoc = useCallback(
@@ -246,6 +254,43 @@ export function DocToolApp() {
     setSelected(null);
     fetch("/api/doc-tool", { method: "DELETE" }).catch(() => undefined);
   }, []);
+
+  const retryFailedPages = useCallback(
+    async (file: File) => {
+      if (selected === null) return;
+      const doc = docs[selected];
+      if (!doc) return;
+      setRetryBusy(true);
+      try {
+        const { cloudOcrPdfPages, extractFailedPages, mergeRetriedPages } = await import(
+          "@/lib/modules/doc-tool/cloud-ocr"
+        );
+        const failed = extractFailedPages(doc.rawText);
+        if (!failed.length) { setStatus("لا صفحات متعذرة في هذه الوثيقة."); return; }
+        const result = await cloudOcrPdfPages(
+          await file.arrayBuffer(),
+          (label) => setStatus(label),
+          { onlyPages: failed }
+        );
+        if (!result) { setError("تعذّرت إعادة القراءة — تحقق من المفتاح أو أعد المحاولة لاحقاً"); return; }
+        const mergedText = cleanText(mergeRetriedPages(doc.rawText, result.text));
+        const stillFailed = result.failed.length;
+        setDocs((prev) => {
+          const next = prev.map((d, i) => (i === selected ? { ...d, rawText: mergedText } : d));
+          persist(next);
+          return next;
+        });
+        setStatus(
+          stillFailed
+            ? `أُعيدت قراءة ${failed.length - stillFailed} صفحة — بقيت ${stillFailed} متعذرة`
+            : `✓ اكتملت إعادة قراءة ${failed.length} صفحة`
+        );
+      } finally {
+        setRetryBusy(false);
+      }
+    },
+    [selected, docs, persist]
+  );
 
   const current = selected !== null ? docs[selected] : undefined;
   const currentRanges = useMemo(() => {
@@ -295,6 +340,29 @@ export function DocToolApp() {
         <button type="button" className={styles.btnAlt} onClick={clearAll}>
           مسح الكل
         </button>
+        {cloudAvailable && cloudOcr ? (
+          <span className={styles.range} title="نطاق صفحات القراءة السحابية للـ PDF — اتركه فارغاً للكل">
+            <input
+              className={styles.rangeIn}
+              type="number"
+              min={1}
+              placeholder="من"
+              value={rangeFrom}
+              onChange={(e) => setRangeFrom(e.target.value)}
+              aria-label="من صفحة"
+            />
+            <span>–</span>
+            <input
+              className={styles.rangeIn}
+              type="number"
+              min={1}
+              placeholder="إلى"
+              value={rangeTo}
+              onChange={(e) => setRangeTo(e.target.value)}
+              aria-label="إلى صفحة"
+            />
+          </span>
+        ) : null}
         {cloudAvailable ? (
           <label
             className={styles.cloudToggle}
@@ -426,6 +494,30 @@ export function DocToolApp() {
                 <span className={styles.chars}>
                   {current.rawText.length.toLocaleString(AR)} حرف
                 </span>
+                {cloudAvailable && current.rawText.includes("(تعذّرت قراءة هذه الصفحة سحابياً)") ? (
+                  <>
+                    <button
+                      type="button"
+                      className={styles.btnAlt}
+                      disabled={retryBusy}
+                      onClick={() => retryRef.current?.click()}
+                      title="اختر نفس ملف الـ PDF — تُعاد قراءة الصفحات المتعذرة فقط وتُدمج في مكانها"
+                    >
+                      {retryBusy ? "يعيد القراءة…" : "أعد قراءة المتعذر"}
+                    </button>
+                    <input
+                      ref={retryRef}
+                      className={styles.hiddenInput}
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void retryFailedPages(f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </>
+                ) : null}
                 <button type="button" className={styles.btnAlt} onClick={() => setSelected(null)}>
                   ← رجوع
                 </button>

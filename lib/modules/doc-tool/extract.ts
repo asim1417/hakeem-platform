@@ -63,6 +63,8 @@ export interface ExtractOptions {
   /** قراءة سحابية عالية الدقة عبر Gemini (‏/api/doc-tool/ocr) — تُرسل الوثيقة للخادم؛
       عند الفشل أو عدم التفعيل نسقط تلقائياً للمعالجة المحلية */
   cloudOcr?: boolean;
+  /** نطاق صفحات للقراءة السحابية للـ PDF (شامل الطرفين) */
+  cloudRange?: { from?: number; to?: number };
 }
 
 const TEXT_EXTS = ["txt", "md", "csv", "json"];
@@ -94,7 +96,7 @@ export async function extractFile(
 
   // المسار السحابي (اختياري صراحةً): Gemini يقرأ الصور وPDF بأنواعه
   if (opts.cloudOcr && CLOUD_EXTS.includes(ext)) {
-    const cloud = await cloudOcr(file, onProgress);
+    const cloud = await cloudOcr(file, onProgress, opts.cloudRange);
     if (cloud) return cloud;
     onProgress?.("السحابي غير متاح — متابعة بالمعالجة المحلية…");
   }
@@ -110,14 +112,26 @@ export async function extractFile(
   return { text: "", kind: "صيغة غير مدعومة" };
 }
 
-async function cloudOcr(file: File, onProgress?: ExtractProgress): Promise<ExtractResult | null> {
+async function cloudOcr(
+  file: File,
+  onProgress?: ExtractProgress,
+  range?: { from?: number; to?: number }
+): Promise<ExtractResult | null> {
   const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
   if (file.name.toLowerCase().endsWith(".pdf")) {
     // صفحات كصور — رؤية حقيقية تتجاوز طبقات النص المعطوبة (الترتيب البصري)
-    const text = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress);
-    if (!text) return null;
-    const sep = separateRunningLines(text);
-    return { text: sep.body, kind: "PDF (Gemini)", running: sep.running };
+    const result = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress, range ?? {});
+    if (!result) return null;
+    const sep = separateRunningLines(result.text);
+    const ranged = range?.from || range?.to ? ` · ص ${range.from ?? 1}–${range.to ?? result.total}` : "";
+    return {
+      text: sep.body,
+      kind: `PDF (Gemini${ranged})`,
+      running: sep.running,
+      warning: result.failed.length
+        ? `تعذّرت ${result.failed.length} صفحة — افتح الوثيقة واضغط «أعد قراءة المتعذر»`
+        : undefined
+    };
   }
   const text = await cloudOcrImage(file, onProgress);
   if (!text) return null;

@@ -183,6 +183,32 @@
   width: 16px;
   height: 16px;
 }
+.range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(234, 241, 239, 0.8);
+  font-size: 12px;
+}
+.rangeIn {
+  width: 62px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid rgba(234, 241, 239, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--headInk);
+  font-family: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.rangeIn::placeholder {
+  color: rgba(234, 241, 239, 0.45);
+}
+.rangeIn:focus {
+  outline: 2px solid var(--copper);
+  outline-offset: 1px;
+}
 .wrap {
   flex: 1;
   display: flex;
