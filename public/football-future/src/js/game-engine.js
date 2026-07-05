@@ -27,13 +27,21 @@
   const LIME = "#C6FF00", CYAN = "#00E5FF", TEAL = "#00BFAE";
 
   /* نسيج الأرضية: دقة الخامة وامتدادها خارج الملعب */
-  const TS = 1.2;              // بكسل خامة / وحدة عالم
+  const TS = 1.6;              // بكسل خامة / وحدة عالم (دقة أعلى للتقريب)
   const PAD = 720;             // امتداد العشب خلف المرمى وخارج الرؤية
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+  /* تفتيح/تعتيم لون hex — أساس الإضاءة الأسطوانية الواقعية */
+  function shade(hex, f) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = Math.min(255, Math.max(0, ((n >> 16) & 255) * f)) | 0;
+    const g = Math.min(255, Math.max(0, ((n >> 8) & 255) * f)) | 0;
+    const b = Math.min(255, Math.max(0, (n & 255) * f)) | 0;
+    return `rgb(${r},${g},${b})`;
+  }
 
   const FORM = [
     { role: "GK", fx: 0.035, fy: 0.50 },
@@ -191,16 +199,17 @@
       this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
       this.view = { w: rect.width, h: rect.height };
 
-      /* معايرة منظور كاميرا البث */
+      /* معايرة منظور كاميرا البث — تقريب FC: يظهر ~نصف الملعب والكاميرا تتنقل */
       const vw = rect.width, vh = rect.height;
-      this.py0 = vh * 0.235;
-      this.py1 = vh * 0.99;
-      this.kNear = Math.max(vh / 600, vw / 1450);
-      this.kFar = this.kNear * 0.5;
+      this.py0 = vh * 0.165;
+      this.py1 = vh * 1.03;
+      this.kNear = Math.max(vh / 400, vw / 900);
+      this.kFar = this.kNear * 0.45;
       const halfNear = vw / 2 / this.kNear;
-      this.camMin = Math.min(W / 2, halfNear * 0.9);
-      this.camMax = Math.max(W / 2, W - halfNear * 0.9);
+      this.camMin = Math.min(W / 2, halfNear * 0.86);
+      this.camMax = Math.max(W / 2, W - halfNear * 0.86);
       this.buildBackdrop();
+      this.buildGrade(vw, vh);
     }
 
     /* إسقاط: عالم → شاشة */
@@ -771,23 +780,53 @@
       x.scale(TS, TS);
       x.translate(PAD, 0);
 
-      /* عشب أساس + مربعات قص متعامدة (نمط بث حقيقي) */
-      x.fillStyle = "#0E5230";
+      /* عشب أساس + مربعات قص متعامدة بتباين بث حقيقي */
+      x.fillStyle = "#0D5030";
       x.fillRect(-PAD, 0, W + PAD * 2, H);
       const stripes = 16, sw = FW / (stripes - 2);
-      // أعمدة قص رأسية
       for (let i = -6; i < stripes + 6; i++) {
         if (i % 2) continue;
-        x.fillStyle = "rgba(255,255,255,.05)";
+        // شريط قص بميل إضاءة داخلي (اتجاه انحناء العشب)
+        const g0 = x.createLinearGradient(FX + (i - 1) * sw, 0, FX + i * sw, 0);
+        g0.addColorStop(0, "rgba(255,255,255,.085)");
+        g0.addColorStop(1, "rgba(255,255,255,.03)");
+        x.fillStyle = g0;
         x.fillRect(FX + (i - 1) * sw, 0, sw, H);
       }
-      // صفوف قص أفقية (تُكوّن مربعات مع الأعمدة)
       const rows = 10, rh = FH / (rows - 2);
       for (let i = -3; i < rows + 3; i++) {
         if (i % 2) continue;
-        x.fillStyle = "rgba(0,0,0,.05)";
+        x.fillStyle = "rgba(0,0,0,.055)";
         x.fillRect(-PAD, FY + (i - 1) * rh, W + PAD * 2, rh);
       }
+
+      /* حبيبات عشب (معالجة فوتوغرافية): آلاف النقاط الدقيقة بتفاوت إضاءة */
+      let gSeed = 3;
+      for (let i = 0; i < 46000; i++) {
+        const gx = -PAD + hash(gSeed) * (W + PAD * 2);
+        const gy = hash(gSeed * 1.7) * H;
+        const tone = hash(gSeed * 2.3);
+        gSeed++;
+        x.fillStyle = tone < 0.5
+          ? `rgba(255,255,255,${0.02 + tone * 0.05})`
+          : `rgba(0,20,8,${0.02 + (tone - 0.5) * 0.06})`;
+        x.fillRect(gx, gy, 1.4, 2.2);
+      }
+
+      /* مناطق اهتراء اللعب: أمام المرميين ودائرة المنتصف (تراب خفيف) */
+      const wear = (wx, wy, r) => {
+        const g = x.createRadialGradient(wx, wy, 4, wx, wy, r);
+        g.addColorStop(0, "rgba(124,108,64,.14)");
+        g.addColorStop(0.7, "rgba(124,108,64,.06)");
+        g.addColorStop(1, "transparent");
+        x.fillStyle = g;
+        x.beginPath(); x.arc(wx, wy, r, 0, Math.PI * 2); x.fill();
+      };
+      wear(FX + 60, H / 2, 90);
+      wear(W - FX - 60, H / 2, 90);
+      wear(W / 2, H / 2, 70);
+      wear(FX + 106, H / 2, 34);
+      wear(W - FX - 106, H / 2, 34);
       // تعتيم خارج أرضية اللعب (منطقة الأمان)
       x.fillStyle = "rgba(0,0,0,.28)";
       x.fillRect(-PAD, 0, PAD + FX - 26, H);
@@ -824,11 +863,17 @@
       sky.addColorStop(0, "#05070C"); sky.addColorStop(1, "#0A1017");
       x.fillStyle = sky; x.fillRect(0, 0, panW, panH);
 
-      const standTop = panH * 0.10, boardTop = panH * 0.80;
+      const standTop = panH * 0.08, boardTop = panH * 0.80;
       const tier = x.createLinearGradient(0, standTop, 0, boardTop);
-      tier.addColorStop(0, "#0D1420"); tier.addColorStop(0.5, "#131C2A"); tier.addColorStop(1, "#0B111B");
+      tier.addColorStop(0, "#0C1320"); tier.addColorStop(0.5, "#141E2D"); tier.addColorStop(1, "#0A101A");
       x.fillStyle = tier;
       x.fillRect(0, standTop, panW, boardTop - standTop);
+      // فاصل الطابقين (ممر + درابزين مضاء)
+      const midTier = standTop + (boardTop - standTop) * 0.52;
+      x.fillStyle = "#060A10";
+      x.fillRect(0, midTier - 3, panW, 6);
+      x.fillStyle = "rgba(120,150,175,.35)";
+      x.fillRect(0, midTier - 3.6, panW, 1.2);
       const roof = x.createLinearGradient(0, 0, panW, 0);
       roof.addColorStop(0, "rgba(0,229,255,.0)"); roof.addColorStop(0.2, "rgba(0,229,255,.55)");
       roof.addColorStop(0.5, "rgba(198,255,0,.55)"); roof.addColorStop(0.8, "rgba(0,229,255,.55)");
@@ -881,7 +926,32 @@
         x.fillRect(sx + segW / 2 - 1, boardTop + 4, 1, bh - 8);
         x.globalAlpha = 1;
       }
+      // ضباب ليلي فوق اللوحات (عمق جوي)
+      const haze = x.createLinearGradient(0, boardTop - 26, 0, boardTop + bh);
+      haze.addColorStop(0, "rgba(140,180,205,0)");
+      haze.addColorStop(1, "rgba(140,180,205,.10)");
+      x.fillStyle = haze;
+      x.fillRect(0, boardTop - 26, panW, bh + 26);
+
       this.backdrop = c;
+    }
+
+    /* طبقة المعايرة اللونية السينمائية — تُبنى مرة لكل مقاس */
+    buildGrade(vw, vh) {
+      const c = document.createElement("canvas");
+      c.width = Math.max(2, vw); c.height = Math.max(2, vh);
+      const x = c.getContext("2d");
+      // تظليل حواف بارد
+      const vig = x.createRadialGradient(vw / 2, vh * 0.55, vh * 0.3, vw / 2, vh * 0.55, Math.max(vw, vh) * 0.75);
+      vig.addColorStop(0, "rgba(0,0,0,0)");
+      vig.addColorStop(1, "rgba(2,8,18,.42)");
+      x.fillStyle = vig; x.fillRect(0, 0, vw, vh);
+      // دفء كشافات في مركز اللعب
+      const warm = x.createRadialGradient(vw / 2, vh * 0.55, 10, vw / 2, vh * 0.55, vh * 0.7);
+      warm.addColorStop(0, "rgba(255,250,225,.05)");
+      warm.addColorStop(1, "rgba(255,250,225,0)");
+      x.fillStyle = warm; x.fillRect(0, 0, vw, vh);
+      this.gradeLayer = c;
     }
 
     draw() {
@@ -932,6 +1002,22 @@
 
       /* 2) الأرضية بالمسح السطري المنظوري (Mode-7) */
       this.drawGroundMode7(ctx, vw, vh);
+
+      /* 2ب) أشعة الكشافات الساقطة على الملعب (تتحرك مع الكاميرا) */
+      for (const wx of [W * 0.18, W * 0.5, W * 0.82]) {
+        const sx = vw / 2 + (wx - this.camX) * this.kFar;
+        if (sx < -vw * 0.3 || sx > vw * 1.3) continue;
+        const beam = ctx.createLinearGradient(sx, 0, sx, vh * 0.85);
+        beam.addColorStop(0, "rgba(235,255,240,.085)");
+        beam.addColorStop(1, "rgba(235,255,240,0)");
+        ctx.fillStyle = beam;
+        ctx.beginPath();
+        ctx.moveTo(sx - vw * 0.015, this.py0 * 0.2);
+        ctx.lineTo(sx + vw * 0.015, this.py0 * 0.2);
+        ctx.lineTo(sx + vw * 0.14, vh * 0.85);
+        ctx.lineTo(sx - vw * 0.14, vh * 0.85);
+        ctx.closePath(); ctx.fill();
+      }
 
       /* 3) خطوط الملعب متجهية حادة فوق الأرضية */
       this.drawLines(ctx);
@@ -1006,7 +1092,10 @@
         ctx.restore();
       }
 
-      /* 10) وميض الهدف واللافتات (اللافتة الكبيرة بعد انتهاء الإعادة) */
+      /* 10) المعايرة اللونية السينمائية */
+      if (this.gradeLayer) ctx.drawImage(this.gradeLayer, 0, 0);
+
+      /* 11) وميض الهدف واللافتات (اللافتة الكبيرة بعد انتهاء الإعادة) */
       if (this.flash > 0) {
         ctx.fillStyle = `rgba(198,255,0,${this.flash * 0.15})`;
         ctx.fillRect(0, 0, vw, vh);
@@ -1183,21 +1272,19 @@
       return base;
     }
 
-    /* ── لاعب بمواصفات حزمة الهوية — جسم ممتلئ وحركة جري ووضعية تسديد ── */
+    /* ── لاعب بنِسب FC واقعية: إضاءة أسطوانية، بلا خطوط كرتونية ── */
     drawPlayer(ctx, p) {
       const isUser = p === this.controlled;
-      const isGK = p.role === "GK";
       const kit = this.kitFor(p);
       const pos = this.proj(p.x, p.y);
       const u = pos.s;
-      const hgt = 64 * u;                                // الطول الكلي
+      const hgt = 66 * u;
       const spd = Math.hypot(p.vx, p.vy);
       const moving = spd > 14;
       const runK = clamp(spd / 290, 0, 1);
       const ph = p.phase;
       const swingRaw = moving ? Math.sin(ph) : 0;
       const swing2Raw = moving ? Math.sin(ph + Math.PI) : 0;
-      // وضعية التسديد: الرجل الأمامية ممدودة للأمام
       const kicking = p.kickT > 0;
       const celebrating = p.celebT > 0;
       const diving = (p.diveT || 0) > 0;
@@ -1205,210 +1292,228 @@
       const swing = kicking || sliding ? 1.5 : celebrating || diving ? 0.4 : swingRaw;
       const swing2 = kicking ? -0.7 : sliding ? -1.2 : celebrating || diving ? -0.4 : swing2Raw;
       const bob = celebrating
-        ? Math.abs(Math.sin(this.time * 9)) * 5 * u
-        : moving && !kicking ? Math.abs(Math.sin(ph)) * 1.8 * u : 0;
+        ? Math.abs(Math.sin(this.time * 9)) * 4.4 * u
+        : moving && !kicking ? Math.abs(Math.sin(ph)) * 1.6 * u : 0;
 
       ctx.save();
       ctx.translate(pos.x, pos.y);
 
-      /* الظل وحلقة التحكم */
-      ctx.fillStyle = "rgba(0,0,0,.30)";
-      ctx.beginPath(); ctx.ellipse(0, 1.2 * u, 16 * u, 5.6 * u, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "rgba(0,0,0,.30)";
-      ctx.beginPath(); ctx.ellipse(0, 1.2 * u, 10 * u, 3.6 * u, 0, 0, Math.PI * 2); ctx.fill();
+      /* ظل تلامس ناعم مزدوج */
+      ctx.fillStyle = "rgba(0,10,4,.26)";
+      ctx.beginPath(); ctx.ellipse(0.5 * u, 1.2 * u, 15 * u, 5 * u, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(0,10,4,.32)";
+      ctx.beginPath(); ctx.ellipse(0.5 * u, 1.2 * u, 9 * u, 3 * u, 0, 0, Math.PI * 2); ctx.fill();
+
       if (isUser) {
         ctx.save();
-        ctx.strokeStyle = LIME; ctx.lineWidth = 2.4;
+        ctx.strokeStyle = this.custom.accent; ctx.lineWidth = 2.2;
         ctx.setLineDash([8 * u, 6 * u]);
         ctx.lineDashOffset = -this.time * 44;
-        ctx.shadowColor = LIME; ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.ellipse(0, 1.2 * u, 19 * u, 7 * u, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath(); ctx.ellipse(0, 1.2 * u, 18 * u, 6.4 * u, 0, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
 
       ctx.scale(p.dirX < 0 ? -1 : 1, 1);
-      // ميلان الجسم: جريٌ أمامي / ارتماء جانبي للحارس / انزلاق منخفض
       if (diving) {
         const k = 1 - (p.diveT || 0) / 0.6;
         ctx.rotate((p.diveDir || 1) * Math.min(1.15, k * 1.5));
       } else if (sliding) {
         ctx.rotate(0.85 * Math.min(1, (0.5 - (p.slideT || 0)) * 6 + 0.4));
       } else {
-        ctx.rotate(runK * 0.14);
+        ctx.rotate(runK * 0.13);
       }
 
-      const hipY = -hgt * 0.44 - bob;
-      const shoY = -hgt * 0.76 - bob;
-      const legW = 4.8 * u, armW = 3.9 * u;
-
+      /* هيكل النسب الواقعية (~8.5 رؤوس) */
+      const hipY = -hgt * 0.47 - bob;
+      const shoY = -hgt * 0.80 - bob;
+      const headY = shoY - 4.9 * u;
+      const legW = 4.3 * u, armW = 3.3 * u;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      /* ── الرجل الخلفية: فخذ (بشرة) → جورب → حذاء ── */
-      const b2x = swing2 * 8 * u, b2lift = Math.max(0, swing2) * 4.5 * u;
-      // الفخذ والساق
-      ctx.strokeStyle = kit.skin;
-      ctx.lineWidth = legW;
+      /* طرف بإضاءة أسطوانية: تمريرة ظل عريضة + تمريرة ضوء أرفع */
+      const limb = (pts, color, w, dim) => {
+        const trace = (dx) => {
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0] + dx, pts[0][1]);
+          if (pts.length === 3) ctx.quadraticCurveTo(pts[1][0] + dx, pts[1][1], pts[2][0] + dx, pts[2][1]);
+          else ctx.lineTo(pts[1][0] + dx, pts[1][1]);
+        };
+        ctx.strokeStyle = shade(color, dim ? 0.5 : 0.66);
+        ctx.lineWidth = w;
+        trace(0); ctx.stroke();
+        ctx.strokeStyle = shade(color, dim ? 0.86 : 1.08);
+        ctx.lineWidth = w * 0.52;
+        trace(-0.5 * u); ctx.stroke();
+      };
+
+      /* مفاصل الرجلين */
+      const b2x = swing2 * 8 * u, b2lift = Math.max(0, swing2) * 4.2 * u;
+      const b1x = swing * 8 * u, b1lift = Math.max(0, swing) * 4.2 * u;
+      const kneeY = hipY + (0 - hipY) * 0.52;
+
+      /* الرجل الخلفية (أخفت — عمق) */
+      limb([[-1.9 * u, hipY], [-1.9 * u + b2x * 0.55, kneeY], [-1.9 * u + b2x * 0.85, -6.5 * u - b2lift]], kit.skin, legW, true);
+      limb([[-1.9 * u + b2x * 0.85, -6.5 * u - b2lift], [-1.9 * u + b2x, -2 * u - b2lift]], kit.sock, legW * 1.02, true);
+      ctx.strokeStyle = shade("#14181E", 0.9);
+      ctx.lineWidth = legW * 1.1;
       ctx.beginPath();
-      ctx.moveTo(-1.6 * u, hipY);
-      ctx.quadraticCurveTo(-1.6 * u + b2x * 0.5, hipY + hgt * 0.15, -1.6 * u + b2x * 0.8, hipY + hgt * 0.26);
-      ctx.stroke();
-      // الجورب (لون الهوية)
-      ctx.strokeStyle = kit.sock;
-      ctx.lineWidth = legW * 1.02;
-      ctx.beginPath();
-      ctx.moveTo(-1.6 * u + b2x * 0.8, hipY + hgt * 0.26);
-      ctx.lineTo(-1.6 * u + b2x, -2.2 * u - b2lift);
-      ctx.stroke();
-      // الحذاء
-      ctx.strokeStyle = "#0A0D12";
-      ctx.lineWidth = legW * 1.15;
-      ctx.beginPath();
-      ctx.moveTo(-1.6 * u + b2x, -1.8 * u - b2lift);
-      ctx.lineTo(1.2 * u + b2x, -1.4 * u - b2lift);
+      ctx.moveTo(-1.9 * u + b2x, -1.7 * u - b2lift);
+      ctx.lineTo(0.9 * u + b2x, -1.3 * u - b2lift);
       ctx.stroke();
 
-      /* ── الذراع الخلفية ── */
-      ctx.strokeStyle = kit.skin;
-      ctx.lineWidth = armW;
-      ctx.beginPath();
+      /* الذراع الخلفية: كمّ قصير ثم ساعد */
+      const shBX = -5.4 * u, shY = shoY + 1.6 * u;
       if (celebrating || diving) {
-        ctx.moveTo(-5.2 * u, shoY + 2 * u);
-        ctx.quadraticCurveTo(-8.5 * u, shoY - 4 * u, -7.2 * u, shoY - 10 * u);
+        limb([[shBX, shY], [shBX - 2.6 * u, shoY - 4.5 * u], [shBX - 1.6 * u, shoY - 9.5 * u]], kit.skin, armW, true);
       } else {
-        ctx.moveTo(-5.2 * u, shoY + 2.4 * u);
-        ctx.quadraticCurveTo(-6.5 * u - swing * 3 * u, shoY + hgt * 0.12, -5.2 * u - swing * 6.5 * u, shoY + hgt * 0.2);
+        const elbX = shBX - swing * 4.6 * u, elbY = shoY + hgt * 0.10;
+        const hndX = shBX - swing * 7.6 * u, hndY = shoY + hgt * 0.185;
+        limb([[shBX, shY], [elbX, elbY]], kit.shirt1, armW * 1.1, true);
+        limb([[elbX, elbY], [hndX, hndY]], kit.skin, armW * 0.92, true);
       }
-      ctx.stroke();
 
-      /* ── الشورت ── */
-      ctx.fillStyle = kit.shorts;
+      /* الشورت: قصّة واقعية بظل جانبي */
+      const shortG = ctx.createLinearGradient(-6 * u, 0, 6.5 * u, 0);
+      shortG.addColorStop(0, shade(kit.shorts, 1.15));
+      shortG.addColorStop(0.6, kit.shorts);
+      shortG.addColorStop(1, shade(kit.shorts, 0.55));
+      ctx.fillStyle = shortG;
       ctx.beginPath();
-      ctx.moveTo(-6 * u, hipY - 4 * u);
-      ctx.lineTo(6 * u, hipY - 4 * u);
-      ctx.lineTo(7 * u, hipY + 4.5 * u);
-      ctx.lineTo(1.2 * u, hipY + 5.5 * u);
-      ctx.lineTo(0, hipY + 2 * u);
-      ctx.lineTo(-1.2 * u, hipY + 5.5 * u);
-      ctx.lineTo(-7 * u, hipY + 4.5 * u);
+      ctx.moveTo(-5.6 * u, hipY - 3.6 * u);
+      ctx.lineTo(5.6 * u, hipY - 3.6 * u);
+      ctx.lineTo(6.6 * u, hipY + 5 * u);
+      ctx.lineTo(1 * u, hipY + 5.6 * u);
+      ctx.lineTo(0, hipY + 2.4 * u);
+      ctx.lineTo(-1 * u, hipY + 5.6 * u);
+      ctx.lineTo(-6.6 * u, hipY + 5 * u);
       ctx.closePath(); ctx.fill();
-      // شريط جانبي على الشورت
       ctx.fillStyle = kit.slash;
-      ctx.fillRect(5.2 * u, hipY - 4 * u, 1.5 * u, 8.5 * u);
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(4.9 * u, hipY - 3.6 * u, 1.2 * u, 8.6 * u);
+      ctx.globalAlpha = 1;
 
-      /* ── الرجل الأمامية ── */
-      const b1x = swing * 8 * u, b1lift = Math.max(0, swing) * 4.5 * u;
-      ctx.strokeStyle = kit.skin;
-      ctx.lineWidth = legW * 1.06;
+      /* الرجل الأمامية */
+      limb([[1.9 * u, hipY], [1.9 * u + b1x * 0.55, kneeY], [1.9 * u + b1x * 0.85, -6.5 * u - b1lift]], kit.skin, legW * 1.05, false);
+      limb([[1.9 * u + b1x * 0.85, -6.5 * u - b1lift], [1.9 * u + b1x, -2 * u - b1lift]], kit.sock, legW * 1.08, false);
+      ctx.strokeStyle = "#171B21";
+      ctx.lineWidth = legW * 1.16;
       ctx.beginPath();
-      ctx.moveTo(1.8 * u, hipY);
-      ctx.quadraticCurveTo(1.8 * u + b1x * 0.5, hipY + hgt * 0.15, 1.8 * u + b1x * 0.8, hipY + hgt * 0.26);
+      ctx.moveTo(1.9 * u + b1x, -1.7 * u - b1lift);
+      ctx.lineTo(4.7 * u + b1x, -1.3 * u - b1lift);
       ctx.stroke();
-      ctx.strokeStyle = kit.sock;
-      ctx.lineWidth = legW * 1.08;
+      // لمعة صول الحذاء
+      ctx.strokeStyle = "rgba(255,255,255,.18)";
+      ctx.lineWidth = 0.9 * u;
       ctx.beginPath();
-      ctx.moveTo(1.8 * u + b1x * 0.8, hipY + hgt * 0.26);
-      ctx.lineTo(1.8 * u + b1x, -2.2 * u - b1lift);
-      ctx.stroke();
-      ctx.strokeStyle = "#0A0D12";
-      ctx.lineWidth = legW * 1.2;
-      ctx.beginPath();
-      ctx.moveTo(1.8 * u + b1x, -1.8 * u - b1lift);
-      ctx.lineTo(4.8 * u + b1x, -1.4 * u - b1lift);
+      ctx.moveTo(1.9 * u + b1x, -0.7 * u - b1lift);
+      ctx.lineTo(4.7 * u + b1x, -0.3 * u - b1lift);
       ctx.stroke();
 
-      /* ── الجذع: قميص الهوية ── */
-      const jg = ctx.createLinearGradient(0, shoY, 0, hipY);
+      /* الجذع: كتفان → خصر بقصّة رياضية + ظل جانبي + إضاءة حافة */
+      const torso = () => {
+        ctx.beginPath();
+        ctx.moveTo(-6.8 * u, shoY + 0.6 * u);
+        ctx.quadraticCurveTo(-7 * u, shoY - 2 * u, -4.4 * u, shoY - 2.4 * u);
+        ctx.lineTo(4.4 * u, shoY - 2.4 * u);
+        ctx.quadraticCurveTo(7 * u, shoY - 2 * u, 6.8 * u, shoY + 0.6 * u);
+        ctx.quadraticCurveTo(5.6 * u, hipY - 6 * u, 4.9 * u, hipY - 2 * u);
+        ctx.lineTo(-4.9 * u, hipY - 2 * u);
+        ctx.quadraticCurveTo(-5.6 * u, hipY - 6 * u, -6.8 * u, shoY + 0.6 * u);
+        ctx.closePath();
+      };
+      const jg = ctx.createLinearGradient(0, shoY - 2.4 * u, 0, hipY);
       jg.addColorStop(0, kit.shirt0); jg.addColorStop(1, kit.shirt1);
-      ctx.fillStyle = jg;
-      ctx.beginPath();
-      // كتفان أعرض من الخصر
-      ctx.moveTo(-7.6 * u, shoY + 1 * u);
-      ctx.quadraticCurveTo(-7.8 * u, shoY - 1.5 * u, -5.5 * u, shoY - 2 * u);
-      ctx.lineTo(5.5 * u, shoY - 2 * u);
-      ctx.quadraticCurveTo(7.8 * u, shoY - 1.5 * u, 7.6 * u, shoY + 1 * u);
-      ctx.lineTo(6.2 * u, hipY - 2 * u);
-      ctx.lineTo(-6.2 * u, hipY - 2 * u);
-      ctx.closePath();
-      ctx.fill();
-      // القصّة الليمونية المائلة (بصمة الهوية)
+      torso(); ctx.fillStyle = jg; ctx.fill();
       ctx.save();
-      ctx.clip();
+      torso(); ctx.clip();
+      // القصّة المميزة للهوية
       ctx.fillStyle = kit.slash;
-      ctx.globalAlpha = 0.95;
+      ctx.globalAlpha = 0.92;
       ctx.beginPath();
-      ctx.moveTo(-7.6 * u, shoY + 3 * u);
-      ctx.lineTo(-3.2 * u, shoY - 2 * u);
-      ctx.lineTo(-0.6 * u, shoY - 2 * u);
-      ctx.lineTo(-5 * u, hipY - 2 * u);
-      ctx.lineTo(-7.6 * u, hipY - 2 * u);
+      ctx.moveTo(-7 * u, shoY + 2 * u);
+      ctx.lineTo(-3 * u, shoY - 2.4 * u);
+      ctx.lineTo(-0.8 * u, shoY - 2.4 * u);
+      ctx.lineTo(-4.6 * u, hipY - 2 * u);
+      ctx.lineTo(-7 * u, hipY - 2 * u);
       ctx.closePath(); ctx.fill();
-      // لمعة قماش
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(-7.6 * u, shoY - 2 * u, 15.2 * u, 2.6 * u);
-      ctx.restore();
-      // ياقة سماوية
-      ctx.strokeStyle = kit.trim;
-      ctx.lineWidth = 1.6 * u;
+      ctx.globalAlpha = 1;
+      // ظل جانبي (حجم أسطواني)
+      const side = ctx.createLinearGradient(1.5 * u, 0, 7 * u, 0);
+      side.addColorStop(0, "rgba(0,0,0,0)");
+      side.addColorStop(1, "rgba(0,0,0,.42)");
+      ctx.fillStyle = side;
+      ctx.fillRect(0, shoY - 2.4 * u, 7 * u, hipY - shoY + 2 * u);
+      // إضاءة حافة من الكشافات
+      const rim = ctx.createLinearGradient(0, shoY - 2.4 * u, 0, shoY + 3 * u);
+      rim.addColorStop(0, "rgba(205,235,255,.20)");
+      rim.addColorStop(1, "rgba(205,235,255,0)");
+      ctx.fillStyle = rim;
+      ctx.fillRect(-7 * u, shoY - 2.4 * u, 14 * u, 5.4 * u);
+      // طيّات قماش خفيفة
+      ctx.strokeStyle = "rgba(0,0,0,.14)";
+      ctx.lineWidth = 0.7 * u;
       ctx.beginPath();
-      ctx.moveTo(-2.6 * u, shoY - 2 * u);
-      ctx.quadraticCurveTo(0, shoY - 0.4 * u, 2.6 * u, shoY - 2 * u);
+      ctx.moveTo(-2.4 * u, shoY + 4 * u); ctx.quadraticCurveTo(0, shoY + 5.4 * u, 2.6 * u, shoY + 4.4 * u);
       ctx.stroke();
-      /* كمّان قصيران */
-      for (const sd of [-1, 1]) {
-        ctx.fillStyle = kit.shirt1;
-        ctx.beginPath();
-        ctx.ellipse(sd * 7.4 * u, shoY + 2.6 * u, 2.6 * u, 3.6 * u, sd * 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = kit.trim;
-        ctx.lineWidth = 1.1 * u;
-        ctx.beginPath();
-        ctx.ellipse(sd * 7.6 * u, shoY + 4.6 * u, 2.2 * u, 1 * u, sd * 0.35, 0, Math.PI);
-        ctx.stroke();
-      }
+      ctx.restore();
+      // ياقة
+      ctx.strokeStyle = kit.trim;
+      ctx.lineWidth = 1.3 * u;
+      ctx.beginPath();
+      ctx.moveTo(-2.3 * u, shoY - 2.4 * u);
+      ctx.quadraticCurveTo(0, shoY - 0.9 * u, 2.3 * u, shoY - 2.4 * u);
+      ctx.stroke();
       /* الرقم على الصدر */
       ctx.fillStyle = kit.num;
-      ctx.font = `800 ${8.6 * u}px Rajdhani, Arial`;
+      ctx.font = `700 ${7 * u}px Rajdhani, Arial`;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.save(); ctx.scale(p.dirX < 0 ? -1 : 1, 1);
-      ctx.fillText(String(p.num), 0.4 * u * (p.dirX < 0 ? -1 : 1), (shoY + hipY) / 2 - 1.2 * u);
+      ctx.globalAlpha = 0.94;
+      ctx.fillText(String(p.num), 0.3 * u * (p.dirX < 0 ? -1 : 1), (shoY + hipY) / 2 - 1.8 * u);
+      ctx.globalAlpha = 1;
       ctx.restore();
 
-      /* ── الذراع الأمامية ── */
-      ctx.strokeStyle = kit.skin;
-      ctx.lineWidth = armW * 1.05;
-      ctx.beginPath();
-      if (celebrating || diving) {
-        ctx.moveTo(5.4 * u, shoY + 2 * u);
-        ctx.quadraticCurveTo(8.7 * u, shoY - 4 * u, 7.4 * u, shoY - 10 * u);
-      } else {
-        ctx.moveTo(5.4 * u, shoY + 2.4 * u);
-        ctx.quadraticCurveTo(6.8 * u + swing2 * 3 * u, shoY + hgt * 0.12, 5.4 * u + swing2 * 6.5 * u, shoY + hgt * 0.2);
-      }
-      ctx.stroke();
-
-      /* شارة الكابتن (عنصر متجر) على العضد */
+      /* شارة الكابتن */
       if (this.custom.captain && isUser) {
         ctx.strokeStyle = this.custom.accent;
-        ctx.lineWidth = 2.2 * u;
+        ctx.lineWidth = 2 * u;
         ctx.beginPath();
-        ctx.moveTo(4.6 * u, shoY + 3.4 * u);
-        ctx.lineTo(6.6 * u, shoY + 4.4 * u);
+        ctx.moveTo(4.5 * u, shoY + 2.6 * u);
+        ctx.lineTo(6.3 * u, shoY + 3.6 * u);
         ctx.stroke();
       }
 
-      /* ── الرأس والشعر ── */
-      const headY = shoY - 6.2 * u;
-      ctx.fillStyle = kit.skin;
-      ctx.beginPath(); ctx.arc(1.4 * u, headY, 5 * u, 0, Math.PI * 2); ctx.fill();
-      // رقبة
-      ctx.fillRect(-0.4 * u, headY + 3.4 * u, 3.4 * u, 2.6 * u);
-      // شعر رياضي حديث
-      ctx.fillStyle = kit.hair;
+      /* الذراع الأمامية */
+      const shFX = 5.4 * u;
+      if (celebrating || diving) {
+        limb([[shFX, shY], [shFX + 2.8 * u, shoY - 4.5 * u], [shFX + 1.8 * u, shoY - 9.5 * u]], kit.skin, armW, false);
+      } else {
+        const elbX = shFX + swing2 * 4.6 * u, elbY = shoY + hgt * 0.10;
+        const hndX = shFX + swing2 * 7.6 * u, hndY = shoY + hgt * 0.185;
+        limb([[shFX, shY], [elbX, elbY]], kit.shirt1, armW * 1.12, false);
+        limb([[elbX, elbY], [hndX, hndY]], kit.skin, armW * 0.95, false);
+      }
+
+      /* الرأس والرقبة والشعر — بإضاءة كروية */
+      ctx.strokeStyle = shade(kit.skin, 0.8);
+      ctx.lineWidth = 2.6 * u;
+      ctx.beginPath(); ctx.moveTo(0.8 * u, shoY - 1.6 * u); ctx.lineTo(0.9 * u, headY + 2.6 * u); ctx.stroke();
+      const hg = ctx.createRadialGradient(-0.6 * u, headY - 1.3 * u, 0.6 * u, 1 * u, headY, 4.6 * u);
+      hg.addColorStop(0, shade(kit.skin, 1.14));
+      hg.addColorStop(0.72, kit.skin);
+      hg.addColorStop(1, shade(kit.skin, 0.66));
+      ctx.fillStyle = hg;
+      ctx.beginPath(); ctx.arc(1 * u, headY, 4 * u, 0, Math.PI * 2); ctx.fill();
+      // شعر رياضي بحجم وظل
+      const hairG = ctx.createLinearGradient(0, headY - 4.4 * u, 0, headY);
+      hairG.addColorStop(0, shade(kit.hair, 1.5));
+      hairG.addColorStop(1, kit.hair);
+      ctx.fillStyle = hairG;
       ctx.beginPath();
-      ctx.arc(0.9 * u, headY - 0.7 * u, 5 * u, Math.PI * 0.86, Math.PI * 2.06);
-      ctx.quadraticCurveTo(3 * u, headY - 5.8 * u, -1 * u, headY - 4.6 * u);
+      ctx.arc(0.6 * u, headY - 0.6 * u, 4 * u, Math.PI * 0.92, Math.PI * 2.04);
+      ctx.quadraticCurveTo(3.4 * u, headY - 5 * u, -0.6 * u, headY - 4.2 * u);
       ctx.closePath(); ctx.fill();
 
       ctx.restore();
@@ -1416,17 +1521,17 @@
       /* اسم اللاعب المتحكَّم به */
       if (isUser) {
         ctx.save();
-        ctx.font = `700 ${Math.max(10, 10.5 * u)}px "Noto Kufi Arabic", Arial`;
+        ctx.font = `700 ${Math.max(10, 8.6 * u)}px "Noto Kufi Arabic", Arial`;
         ctx.textAlign = "center"; ctx.textBaseline = "bottom";
         ctx.fillStyle = "rgba(255,255,255,.95)";
         ctx.shadowColor = "#000"; ctx.shadowBlur = 6;
-        ctx.fillText(p.name, pos.x, pos.y - hgt - 9 * u);
+        ctx.fillText(p.name, pos.x, pos.y - hgt - 8 * u);
         ctx.shadowBlur = 0;
-        ctx.fillStyle = LIME;
+        ctx.fillStyle = this.custom.accent;
         ctx.beginPath();
-        ctx.moveTo(pos.x, pos.y - hgt - 3.4 * u);
-        ctx.lineTo(pos.x - 4.6 * u, pos.y - hgt - 8.6 * u);
-        ctx.lineTo(pos.x + 4.6 * u, pos.y - hgt - 8.6 * u);
+        ctx.moveTo(pos.x, pos.y - hgt - 2.6 * u);
+        ctx.lineTo(pos.x - 3.8 * u, pos.y - hgt - 7 * u);
+        ctx.lineTo(pos.x + 3.8 * u, pos.y - hgt - 7 * u);
         ctx.closePath(); ctx.fill();
         ctx.restore();
       }
