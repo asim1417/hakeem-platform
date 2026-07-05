@@ -1,4 +1,4 @@
-const CACHE_NAME = "football-future-static-v7";
+const CACHE_NAME = "football-future-static-v8";
 const ASSETS = [
   "/football-future/",
   "/football-future/index.html",
@@ -37,14 +37,50 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", event => {
+  // الاستيلاء الفوري: لا نسخة «منتظرة» قد تخلط إصداراً قديماً بجديد
+  self.skipWaiting();
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))));
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+    ])
+  );
 });
 
+/* استراتيجية منع تداخل الإصدارات:
+   - HTML/JS/CSS: الشبكة أولاً (نسخة واحدة متسقة دائماً عند الاتصال)
+     مع سقوط للكاش دون اتصال.
+   - الخطوط/الأصوات/الصور: الكاش أولاً (ثقيلة ونادرة التغيير). */
+const NETWORK_FIRST = /\.(?:html|js|css|webmanifest)$/;
+
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+  const { request } = event;
+  if (request.method !== "GET") return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  const isNav = request.mode === "navigate";
+  const isCore = isNav || NETWORK_FIRST.test(url.pathname) || url.pathname === "/football-future/";
+
+  if (isCore) {
+    event.respondWith(
+      fetch(request)
+        .then(res => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(request).then(cached => cached || caches.match("/football-future/index.html"))
+        )
+    );
+    return;
+  }
+  event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
