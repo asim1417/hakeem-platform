@@ -22,6 +22,8 @@ ENV JOBS_UPLOAD_DIR=/data/job_uploads
 ENV PYTHONUNBUFFERED=1
 # اختياري: فعّل مزوّد Gemini الإضافي بتمرير المفتاح عند التشغيل: -e GEMINI_API_KEY=...
 # اختياري: اقفل الأداة بكلمة مرور: -e APP_PASSWORD=...
+# اختياري: سرعة الدفعات الكبيرة — توازي معالجة الملفات: -e JOBS_CONCURRENCY=6 (الافتراضي 3)
+ENV JOBS_CONCURRENCY=3
 RUN mkdir -p /data
 VOLUME ["/data"]
 

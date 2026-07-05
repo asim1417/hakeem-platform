@@ -78,23 +78,28 @@ def _process_file(provider, model, name, data):
     return clean_text(txt or ""), kind
 
 
-def _run(job_id):
-    """خيط المعالجة: يمشي على ملفات المهمّة غير المنجزة، يعالجها، ويحدّث الحالة."""
-    with _lock, _con() as con:
-        row = con.execute("SELECT provider,model FROM jobs WHERE id=?", (job_id,)).fetchone()
-        if not row:
-            return
-        provider, model = row["provider"], row["model"]
-        con.execute("UPDATE jobs SET status='running' WHERE id=?", (job_id,))
+# درجة التوازي — عدد الملفات المعالَجة معاً في المهمّة الواحدة (أسرع للدفعات الكبيرة).
+CONCURRENCY = max(1, min(int(os.environ.get("JOBS_CONCURRENCY", "3")), 8))
 
-    while True:
-        with _lock, _con() as con:
-            f = con.execute(
-                "SELECT id,name,path FROM job_files WHERE job_id=? AND status='pending' ORDER BY idx LIMIT 1",
-                (job_id,),
-            ).fetchone()
+
+def _claim(job_id):
+    """يلتقط ملفاً واحداً غير منجز ويعلّمه «قيد المعالجة» ذرّياً (يمنع ازدواج العمّال)."""
+    with _lock, _con() as con:
+        f = con.execute(
+            "SELECT id,name,path FROM job_files WHERE job_id=? AND status='pending' ORDER BY idx LIMIT 1",
+            (job_id,),
+        ).fetchone()
         if not f:
-            break
+            return None
+        con.execute("UPDATE job_files SET status='processing' WHERE id=?", (f["id"],))
+        return dict(f)
+
+
+def _worker_loop(job_id, provider, model):
+    while True:
+        f = _claim(job_id)
+        if not f:
+            return
         try:
             with open(f["path"], "rb") as fh:
                 data = fh.read()
@@ -115,6 +120,31 @@ def _run(job_id):
                 os.remove(f["path"])
             except OSError:
                 pass
+
+
+def _run(job_id):
+    """مُنسّق المهمّة: يُطلق مجمّع عمّالٍ متوازياً على ملفاتها غير المنجزة."""
+    with _lock, _con() as con:
+        row = con.execute("SELECT provider,model FROM jobs WHERE id=?", (job_id,)).fetchone()
+        if not row:
+            return
+        provider, model = row["provider"], row["model"]
+        # أعِد أي ملفٍ عالقٍ في «قيد المعالجة» (من تعطّلٍ سابق) إلى «pending»
+        con.execute(
+            "UPDATE job_files SET status='pending' WHERE job_id=? AND status='processing'", (job_id,)
+        )
+        con.execute("UPDATE jobs SET status='running' WHERE id=?", (job_id,))
+
+    with _lock, _con() as con:
+        pending = con.execute(
+            "SELECT COUNT(*) AS n FROM job_files WHERE job_id=? AND status='pending'", (job_id,)
+        ).fetchone()["n"]
+    pool = max(1, min(CONCURRENCY, pending or 1))
+    workers = [threading.Thread(target=_worker_loop, args=(job_id, provider, model)) for _ in range(pool)]
+    for w in workers:
+        w.start()
+    for w in workers:
+        w.join()
 
     with _lock, _con() as con:
         con.execute("UPDATE jobs SET status='done' WHERE id=?", (job_id,))
