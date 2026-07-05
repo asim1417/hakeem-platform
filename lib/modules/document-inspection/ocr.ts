@@ -6,7 +6,7 @@
 // تدرّج رمادي + عتبة Otsu (تحويل ثنائي) + تكبير الصور الصغيرة إلى ~300DPI،
 // ورفع دقّة تحويل صفحات PDF، وضبط وسائط Tesseract للعربية.
 
-import { isGarbledArabicText, scrubLogoNoise } from "./reshape";
+import { scrubLogoNoise } from "./reshape";
 
 export type OcrProgress = (info: { status: string; progress: number }) => void;
 
@@ -23,8 +23,9 @@ const OCR_PARAMS = {
 
 // عتبة عرض دنيا؛ الصور الأصغر تُكبَّر لأن Tesseract يحتاج ~300DPI للجودة العالية.
 const MIN_OCR_WIDTH = 1400;
-// دقّة تحويل صفحات PDF الممسوح (كان 2؛ 3 يرفع الدقّة على حساب زمن أطول).
-const PDF_OCR_SCALE = 3;
+// دقّة تحويل صفحات PDF الممسوح. زيني يستخدم 400DPI (pdf2image)؛ pdfjs الافتراضي
+// 72DPI، فـ scale 5.5 ≈ 400DPI — نظير جودة صورة زيني (كان 3 ≈ 216DPI).
+const PDF_OCR_SCALE = 5.5;
 
 const STATUS_AR: Record<string, string> = {
   "loading tesseract core": "تحميل نواة التعرّف",
@@ -136,26 +137,40 @@ interface RecognizeResult {
   confidence: number;
 }
 
-// ── درجة جودة النص لاختيار أفضل استراتيجية OCR (نظير معادلة الجودة في محرّك زيني) ──
-// تجمع: ثقة Tesseract + نسبة العربية + طول النص − عقوبة الخربشة (شظايا/رموز غريبة).
-function pageQualityScore(text: string, confidence: number, garble: { fragmentRatio: number; substitutionRatio: number; unmappedRatio: number }): number {
-  const t = text.trim();
-  if (t.length < 5) return -1;
-  const chars = Array.from(t);
-  const arabic = chars.filter((c) => /[؀-ۿ]/u.test(c)).length;
-  const letters = chars.filter((c) => /[\p{L}]/u.test(c)).length;
-  const arabicRatio = letters > 0 ? arabic / letters : 0;
-  const words = t.split(/\s+/).filter(Boolean).length;
-  // كل مكوّن مُطبَّع [0..1]، مجموع موزون
-  const conf = Math.max(0, Math.min(1, confidence / 100));
-  const density = Math.min(1, words / 40); // نص أوفر = أرجح صحةً (حتى سقف)
-  const noise = garble.fragmentRatio + garble.substitutionRatio + garble.unmappedRatio;
-  return conf * 0.35 + arabicRatio * 0.3 + density * 0.15 - Math.min(0.8, noise) * 0.6;
+// ── معادلة الجودة الموثّقة من محرّك زيني (quality_metrics) لاختيار أفضل محاولة ──
+// q = 100·(0.55·نسبة_عربية + 0.30·انتظام_الأسطر − 20·نسبة_الرموز − 0.15·نسبة_التقطيع)
+// تُرجَّع درجة 0..100 (لا تعتمد على ثقة Tesseract التي أثبت زيني أنها أقلّ موثوقية).
+function pageQualityScore(text: string): number {
+  const t = (text || "").normalize("NFKC");
+  if (t.trim().length < 3) return -1;
+  const chars = t.length;
+  const letters = Array.from(t).filter((c) => /[\p{L}]/u.test(c)).length;
+  const arabic = Array.from(t).filter((c) => c >= "؀" && c <= "ۿ").length;
+  const arRatio = arabic / Math.max(1, letters);
+  const nonempty = t.split("\n").filter((l) => l.trim());
+  const short = nonempty.filter((l) => l.trim().length <= 2).length;
+  const lineReg = 1 - short / Math.max(1, nonempty.length);
+  const fragRatio = short / Math.max(1, nonempty.length);
+  const bad = (t.match(/[�□¿⸻]/g) ?? []).length;
+  const badRatio = bad / Math.max(1, chars);
+  const q = 100 * (0.55 * arRatio + 0.3 * lineReg - 20 * badRatio - 0.15 * fragRatio);
+  return Math.max(0, Math.min(100, q));
 }
 
-// استراتيجيات المعالجة المسبقة لكل محاولة — نظير COMBOS في reocr_hard (base/otsu/upscale)
-type PreVariant = "raw" | "otsu" | "upscale";
-const OCR_VARIANTS: PreVariant[] = ["raw", "otsu", "upscale"];
+// خمس استراتيجيات معالجة — نظير COMBOS في reocr_hard:
+//   base/psm6 · otsu/psm6 · upscale(+unsharp)/psm4 · denoise(median)/psm6 · base/psm3
+type PreVariant = "base" | "otsu" | "upscale" | "denoise";
+interface Combo {
+  variant: PreVariant;
+  psm: number;
+}
+const OCR_COMBOS: Combo[] = [
+  { variant: "base", psm: 6 },
+  { variant: "otsu", psm: 6 },
+  { variant: "upscale", psm: 4 },
+  { variant: "denoise", psm: 6 },
+  { variant: "base", psm: 3 }
+];
 
 /** يشغّل OCR على صورة/لوحة. المعالجة المسبقة اختيارية (معطّلة افتراضياً):
  *  قياس CER/WER على goldset أثبت أن الخام أدقّ على المحتوى النظيف (82.8% مقابل 61%).
@@ -191,41 +206,145 @@ export async function ocrImage(
   }
 }
 
-/** يبني نسخة معالَجة من الصورة حسب الاستراتيجية (raw/otsu/upscale) */
-async function buildVariant(source: Blob | HTMLCanvasElement | string, variant: PreVariant): Promise<Blob | HTMLCanvasElement | string> {
-  if (variant === "raw") return source;
-  try {
-    let canvas = await sourceToCanvas(source);
-    if (variant === "upscale" && canvas.width < MIN_OCR_WIDTH * 1.4) {
-      const s = Math.min(3, (MIN_OCR_WIDTH * 1.4) / canvas.width);
-      const up = document.createElement("canvas");
-      up.width = Math.round(canvas.width * s);
-      up.height = Math.round(canvas.height * s);
-      const c = up.getContext("2d");
-      if (c) {
-        c.imageSmoothingEnabled = true;
-        c.imageSmoothingQuality = "high";
-        c.drawImage(canvas, 0, 0, up.width, up.height);
-        canvas = up;
-      }
-    }
-    return preprocessCanvas(canvas); // otsu/upscale: عتبة Otsu تكيفية
-  } catch {
-    return source;
+/** تدرّج رمادي + autocontrast (نظير ImageOps.grayscale+autocontrast في زيني) */
+function grayscaleAutocontrast(canvas: HTMLCanvasElement, cutoff = 2): HTMLCanvasElement {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  const { width: w, height: h } = canvas;
+  const img = ctx.getImageData(0, 0, w, h);
+  const px = img.data;
+  const gray = new Uint8Array(w * h);
+  const hist = new Array<number>(256).fill(0);
+  for (let i = 0, g = 0; i < px.length; i += 4, g += 1) {
+    const v = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) | 0;
+    gray[g] = v;
+    hist[v] += 1;
   }
+  // autocontrast: قصّ cutoff% من الطرفين ثم تمديد
+  const total = w * h;
+  const cut = Math.floor((total * cutoff) / 100);
+  let lo = 0;
+  let hi = 255;
+  for (let acc = 0; lo < 255; lo += 1) {
+    acc += hist[lo];
+    if (acc > cut) break;
+  }
+  for (let acc = 0; hi > 0; hi -= 1) {
+    acc += hist[hi];
+    if (acc > cut) break;
+  }
+  const range = hi - lo || 1;
+  for (let i = 0, g = 0; i < px.length; i += 4, g += 1) {
+    const v = Math.max(0, Math.min(255, ((gray[g] - lo) * 255) / range));
+    px[i] = px[i + 1] = px[i + 2] = v;
+  }
+  ctx.putImageData(img, 0, 0);
+  return canvas;
+}
+
+/** مرشّح متوسط 3×3 لإزالة التشويش (نظير MedianFilter(3) في زيني) */
+function medianFilter3(canvas: HTMLCanvasElement): HTMLCanvasElement {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  const { width: w, height: h } = canvas;
+  const src = ctx.getImageData(0, 0, w, h);
+  const s = src.data;
+  const out = ctx.createImageData(w, h);
+  const o = out.data;
+  const win = new Uint8Array(9);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      let k = 0;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const yy = Math.min(h - 1, Math.max(0, y + dy));
+          const xx = Math.min(w - 1, Math.max(0, x + dx));
+          win[k++] = s[(yy * w + xx) * 4];
+        }
+      }
+      win.sort();
+      const m = win[4];
+      const idx = (y * w + x) * 4;
+      o[idx] = o[idx + 1] = o[idx + 2] = m;
+      o[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+  return canvas;
+}
+
+/** حدّة (unsharp mask مبسّطة) لإبراز حواف الحروف بعد التكبير */
+function unsharp(canvas: HTMLCanvasElement, amount = 1.5): HTMLCanvasElement {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  const { width: w, height: h } = canvas;
+  const src = ctx.getImageData(0, 0, w, h);
+  const s = src.data;
+  const out = ctx.createImageData(w, h);
+  const o = out.data;
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const idx = (y * w + x) * 4;
+      let sum = 0;
+      let n = 0;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const yy = Math.min(h - 1, Math.max(0, y + dy));
+          const xx = Math.min(w - 1, Math.max(0, x + dx));
+          sum += s[(yy * w + xx) * 4];
+          n += 1;
+        }
+      }
+      const blur = sum / n;
+      const v = Math.max(0, Math.min(255, s[idx] + (s[idx] - blur) * amount));
+      o[idx] = o[idx + 1] = o[idx + 2] = v;
+      o[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+  return canvas;
+}
+
+function cloneCanvas(src: HTMLCanvasElement): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = src.width;
+  c.height = src.height;
+  const ctx = c.getContext("2d");
+  if (ctx) ctx.drawImage(src, 0, 0);
+  return c;
+}
+
+/** يبني نسخة معالَجة من قماش أساس حسب الاستراتيجية (base/otsu/upscale/denoise) */
+function buildVariant(baseCanvas: HTMLCanvasElement, variant: PreVariant): HTMLCanvasElement {
+  const c = cloneCanvas(baseCanvas);
+  if (variant === "base") return grayscaleAutocontrast(c);
+  if (variant === "otsu") return preprocessCanvas(c); // عتبة Otsu ثنائية
+  if (variant === "denoise") return grayscaleAutocontrast(medianFilter3(c));
+  // upscale: تكبير 1.5× + autocontrast + unsharp (نظير زيني)
+  const up = document.createElement("canvas");
+  up.width = Math.round(c.width * 1.5);
+  up.height = Math.round(c.height * 1.5);
+  const uctx = up.getContext("2d");
+  if (uctx) {
+    uctx.imageSmoothingEnabled = true;
+    uctx.imageSmoothingQuality = "high";
+    uctx.drawImage(c, 0, 0, up.width, up.height);
+  }
+  return unsharp(grayscaleAutocontrast(up));
 }
 
 /**
- * OCR «أفضل من عدّة محاولات» — نظير reocr_hard: يجرّب استراتيجيات معالجة ويختار
- * الأعلى جودة بمعادلة الجودة. يعيد استخدام عامل Tesseract واحد لكل المحاولات.
- * variants الافتراضية raw+otsu+upscale؛ mode="fast" يكتفي بـ raw.
+ * OCR «أفضل من خمس محاولات» — نظير reocr_hard: يجرّب 5 استراتيجيات (base/otsu/
+ * upscale/denoise × psm 6/4/3) ويختار الأعلى جودة بمعادلة زيني. عامل Tesseract
+ * واحد يُعاد ضبط psm لكل محاولة. توقّف مبكر عند جودة ممتازة توفيراً للزمن.
  */
 export async function ocrImageBest(
   source: Blob | HTMLCanvasElement | string,
   onProgress?: OcrProgress,
-  opts?: { variants?: PreVariant[] }
+  opts?: { combos?: Combo[] }
 ): Promise<RecognizeResult & { strategy: string }> {
-  const variants = opts?.variants ?? OCR_VARIANTS;
+  const combos = opts?.combos ?? OCR_COMBOS;
+  const base = await sourceToCanvas(source);
   const { createWorker } = await import("tesseract.js");
   const worker = await createWorker(OCR_LANGS, 1, {
     workerPath: WORKER_PATH,
@@ -236,17 +355,27 @@ export async function ocrImageBest(
       : undefined
   });
   try {
-    await worker.setParameters(OCR_PARAMS as unknown as Parameters<typeof worker.setParameters>[0]);
-    let best = { text: "", confidence: 0, strategy: "raw", score: -Infinity };
-    for (const variant of variants) {
-      const input = await buildVariant(source, variant);
+    let best = { text: "", confidence: 0, strategy: "", score: -Infinity };
+    for (let i = 0; i < combos.length; i += 1) {
+      const { variant, psm } = combos[i];
+      await worker.setParameters({
+        preserve_interword_spaces: "1",
+        tessedit_pageseg_mode: String(psm)
+      } as unknown as Parameters<typeof worker.setParameters>[0]);
+      let input: HTMLCanvasElement;
+      try {
+        input = buildVariant(base, variant);
+      } catch {
+        continue;
+      }
       const { data } = await worker.recognize(input as Parameters<typeof worker.recognize>[0]);
+      input.width = 0;
+      input.height = 0;
       const text = (data.text ?? "").trim();
-      const confidence = data.confidence ?? 0;
-      const score = pageQualityScore(text, confidence, isGarbledArabicText(text));
-      if (score > best.score) best = { text, confidence, strategy: variant, score };
-      // توقف مبكر: جودة ممتازة تكفي (توفير زمن على الصفحات النظيفة)
-      if (best.score > 0.72) break;
+      const score = pageQualityScore(text);
+      if (score > best.score) best = { text, confidence: data.confidence ?? 0, strategy: `${variant}/psm${psm}`, score };
+      // توقّف مبكر: جودة ممتازة (≥88/100) تكفي — لا داعي لبقية المحاولات
+      if (best.score >= 88) break;
     }
     return { text: best.text, confidence: best.confidence, strategy: best.strategy };
   } finally {
