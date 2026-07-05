@@ -190,6 +190,16 @@
   font-family: inherit;
 }
 .grp button:hover { background: var(--accent2); }
+.cloudLbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+.cloudLbl input { accent-color: #c69763; margin: 0; }
 /* أهداف لمس ≥44px على أجهزة اللمس (دليل الهوية) — دون تضخيم كثافة شريط سطح المكتب */
 @media (pointer: coarse) {
   .grp button,

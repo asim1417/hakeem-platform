@@ -292,6 +292,9 @@ export function CaseBrowser() {
   const [statusMsg, setStatusMsg] = useState("");
   const [fileBusy, setFileBusy] = useState(false);
   const [ocrProgress, setOcrProgress] = useState("");
+  // القراءة السحابية (Gemini) — مفتاح مركزي واحد وتفضيل موحّد مع البحث السريع (نفس الكوكي)
+  const [cloudAvail, setCloudAvail] = useState(false);
+  const [cloudOcrOn, setCloudOcrOn] = useState(false);
 
   // Google Drive
   const [driveConfigured, setDriveConfigured] = useState(false);
@@ -638,13 +641,57 @@ export function CaseBrowser() {
     }
   }
 
+  // تهيئة القراءة السحابية عند الفتح (نفس مصدر البحث السريع)
+  useEffect(() => {
+    fetch("/api/doc-tool/ocr")
+      .then((r) => r.json())
+      .then((d: { configured?: boolean }) => {
+        setCloudAvail(Boolean(d.configured));
+        if (d.configured) setCloudOcrOn(/(?:^|; )docToolCloudOcr=1/.test(document.cookie));
+      })
+      .catch(() => setCloudAvail(false));
+  }, []);
+
+  function toggleCloudOcr(on: boolean) {
+    setCloudOcrOn(on);
+    document.cookie = `docToolCloudOcr=${on ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+  }
+
+  /** قراءة سحابية فائقة الدقة (Gemini) عبر خادم المنصة — null عند الفشل ليسقط للمحلي */
+  async function cloudRead(file: File): Promise<string | null> {
+    try {
+      if (file.size > 3_400_000) return null; // حد جسم الطلب — الأكبر يذهب للمحلي
+      setOcrProgress("قراءة سحابية فائقة الدقة (Gemini)…");
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/doc-tool/ocr", { method: "POST", body: fd });
+      const json = (await res.json()) as { text?: string };
+      if (!res.ok || !json.text || json.text.trim().length < 5) return null;
+      return json.text;
+    } catch {
+      return null;
+    }
+  }
+
   async function handleLoadFile(file: File) {
     const ext = (file.name.split(".").pop() ?? "").toLowerCase();
     const baseName = file.name.replace(/\.[^.]+$/, "");
 
-    // صورة ممسوحة → OCR في المتصفح
+    // صورة ممسوحة → سحابي فائق الدقة أولاً (إن فُعِّل)، والمحلي احتياط
     if (isImageExtension(ext)) {
       setFileBusy(true);
+      if (cloudAvail && cloudOcrOn) {
+        const cloudText = await cloudRead(file);
+        if (cloudText) {
+          addExtracted(baseName, cloudText);
+          setStatusMsg("✓ قُرئت سحابياً (Gemini) — راجع الأرقام والمبالغ يدوياً");
+          setTimeout(() => setStatusMsg(""), 6500);
+          setFileBusy(false);
+          setOcrProgress("");
+          return;
+        }
+        setOcrProgress("السحابي غير متاح — متابعة بالمحلي…");
+      }
       setOcrProgress("تحضير محرّك القراءة الضوئية…");
       try {
         const { ocrImage, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
@@ -678,6 +725,19 @@ export function CaseBrowser() {
         // PDF ممسوح ضوئياً أو بطبقة نصّ معطوبة → اعرض خيار تشغيل OCR
         const msg = error instanceof Error ? error.message : "";
         if (ext === "pdf" && (msg.includes("ممسوح") || msg.includes("OCR"))) {
+          // المسار السحابي أولاً عند تفعيله — أسرع وأدق لهذه الحالات، والمحلي احتياط
+          if (cloudAvail && cloudOcrOn) {
+            const cloudText = await cloudRead(file);
+            if (cloudText) {
+              addExtracted(baseName, cloudText);
+              setStatusMsg("✓ قُرئ الـ PDF سحابياً (Gemini) — راجع الأرقام والمبالغ يدوياً");
+              setTimeout(() => setStatusMsg(""), 6500);
+              setFileBusy(false);
+              setOcrProgress("");
+              return;
+            }
+            setOcrProgress("");
+          }
           const prompt = msg.includes("معطوبة")
             ? "طبقة نصّ هذا الـ PDF معطوبة فتخرج رموزاً غير صحيحة. هل تشغّل القراءة الضوئية OCR في متصفحك لنصّ سليم؟ قد تستغرق دقيقة للصفحة."
             : "هذا PDF ممسوح ضوئياً (صور). هل تشغّل القراءة الضوئية OCR في متصفحك؟ قد تستغرق دقيقة للصفحة.";
@@ -1200,6 +1260,17 @@ export function CaseBrowser() {
               <LockIcon size={14} /> قفل
             </button>
           </span>
+          {cloudAvail ? (
+            <span className={styles.grp}>
+              <label
+                className={styles.cloudLbl}
+                title="يقرأ الصور وPDF الممسوح عبر Gemini بدقة أعلى — تُرسل الوثيقة لخدمة Google، وراجع الأرقام والمبالغ يدوياً. بدونه تبقى القراءة محلية في متصفحك."
+              >
+                <input type="checkbox" checked={cloudOcrOn} onChange={(e) => toggleCloudOcr(e.target.checked)} />
+                <ScanIcon size={13} /> OCR سحابي
+              </label>
+            </span>
+          ) : null}
           <span className={styles.grp}>
             <button
               onClick={() => fileRef.current?.click()}
