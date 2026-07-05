@@ -314,6 +314,7 @@ export function CaseBrowser() {
   const mainRef = useRef<HTMLElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const convUnsubRef = useRef<(() => void) | null>(null);
   const selpopRef = useRef<HTMLButtonElement | null>(null);
 
   // ── الفهارس المشتقة ──
@@ -558,6 +559,40 @@ export function CaseBrowser() {
     setCurrentCode(analyzed[analyzed.length - 1].code);
   }
 
+  // تسوية نتيجة المعالجة السحابية المستمرّة: عند اكتمالها (حتى لو انتقل المستخدم ثم
+  // عاد) تُضاف الوثيقة مرّة واحدة (حارس بطابع البدء) ثم يُمسح المؤشر.
+  const consumedConvRef = useRef<number | null>(null);
+  useEffect(() => {
+    let stop = false;
+    import("@/lib/modules/doc-tool/conversion-manager").then(({ subscribeConversion, clearConversion }) => {
+      if (stop) return;
+      const unsub = subscribeConversion((s) => {
+        if (s.phase === "done" && s.resultText && s.startedAt && consumedConvRef.current !== s.startedAt) {
+          consumedConvRef.current = s.startedAt;
+          setInputs((prev) => {
+            const next = [...prev, { title: s.title, rawText: s.resultText as string }];
+            const analyzed = analyzeDocuments(next);
+            setCurrentCode(analyzed[analyzed.length - 1].code);
+            return next;
+          });
+          setStatusMsg(
+            s.failed
+              ? `✓ اكتملت القراءة السحابية — ${s.failed} صفحة متعذرة — راجع الأرقام يدوياً`
+              : "✓ اكتملت القراءة السحابية — راجع الأرقام والمبالغ يدوياً"
+          );
+          setTimeout(() => setStatusMsg(""), 7000);
+          clearConversion();
+        }
+      });
+      convUnsubRef.current = unsub;
+    });
+    return () => {
+      stop = true;
+      convUnsubRef.current?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Google Drive ──
   const refreshDriveStatus = useCallback(async () => {
     try {
@@ -748,18 +783,28 @@ export function CaseBrowser() {
         // PDF ممسوح ضوئياً أو بطبقة نصّ معطوبة → اعرض خيار تشغيل OCR
         const msg = error instanceof Error ? error.message : "";
         if (ext === "pdf" && (msg.includes("ممسوح") || msg.includes("OCR"))) {
-          // المسار السحابي أولاً عند تفعيله — أسرع وأدق لهذه الحالات، والمحلي احتياط
+          // المسار السحابي عبر مدير المعالجة المستمرّ — يكمل أثناء تنقّلك بين الشاشات
           if (cloudAvail && cloudOcrOn) {
-            const cloudText = await cloudRead(file);
-            if (cloudText) {
-              addExtracted(baseName, cloudText);
-              setStatusMsg("✓ قُرئ الـ PDF سحابياً (Gemini) — راجع الأرقام والمبالغ يدوياً");
-              setTimeout(() => setStatusMsg(""), 6500);
+            const { startConversion, isConversionRunning } = await import("@/lib/modules/doc-tool/conversion-manager");
+            if (isConversionRunning()) {
+              window.alert("هناك معالجة سحابية جارية بالفعل — انتظر اكتمالها أو ألغِها من المؤشر.");
               setFileBusy(false);
-              setOcrProgress("");
               return;
             }
+            const buf = await file.arrayBuffer();
+            setFileBusy(false);
             setOcrProgress("");
+            void startConversion({
+              title: baseName,
+              buffer: buf,
+              options: {
+                from: cloudFrom ? Number(cloudFrom) : undefined,
+                to: cloudTo ? Number(cloudTo) : undefined
+              },
+              // الإضافة تتم عبر تسوية النتيجة (أدناه) لتعمل حتى لو انتقل المستخدم
+              onComplete: () => undefined
+            });
+            return; // المؤشر العائم يتابع التقدّم؛ التنقّل لا يوقفه
           }
           const prompt = msg.includes("معطوبة")
             ? "طبقة نصّ هذا الـ PDF معطوبة فتخرج رموزاً غير صحيحة. هل تشغّل القراءة الضوئية OCR في متصفحك لنصّ سليم؟ قد تستغرق دقيقة للصفحة."
