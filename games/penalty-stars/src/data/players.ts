@@ -12,6 +12,12 @@ import sheikhPhoto from '../assets/players/sheikh.webp';
 import mohammedPhoto from '../assets/players/mohammed.webp';
 import azzamPhoto from '../assets/players/azzam.webp';
 import awsPhoto from '../assets/players/aws.webp';
+// البطاقات الرسمية بأسلوب فوتبول فيوتشر (مولدة خصيصًا لكل طفل بطقم الهوية)
+import awsCard from '../assets/cards/aws.webp';
+import hammadCard from '../assets/cards/hammad.webp';
+import mohammedCard from '../assets/cards/mohammed.webp';
+import hassouniCard from '../assets/cards/hassouni.webp';
+import sheikhCard from '../assets/cards/sheikh.webp';
 
 // نوع الاحتفال عند تسجيل الهدف
 export type CelebrationType = 'run' | 'cup' | 'fire' | 'flag' | 'crowd' | 'stars' | 'dance' | 'smart' | 'roar' | 'crown';
@@ -28,6 +34,7 @@ export interface PlayerDef {
   celebrationType: CelebrationType; // الاحتفال المرئي
   cheer: string; // عبارة المذيع الصغير عند التسديد 🎤
   photo?: string; // صورة حقيقية اختيارية (data URI عند البناء)
+  card?: string; // البطاقة الرسمية الكاملة (تصميم فوتبول فيوتشر) إن وُجدت
 }
 
 export const PLAYERS: PlayerDef[] = [
@@ -56,6 +63,7 @@ export const PLAYERS: PlayerDef[] = [
     celebrationType: 'cup',
     cheer: 'كابتن حسوني يسدد!',
     photo: hassouniPhoto,
+    card: hassouniCard,
   },
   {
     id: 'hammad',
@@ -69,6 +77,7 @@ export const PLAYERS: PlayerDef[] = [
     celebrationType: 'smart',
     cheer: 'العبقري حماد يحسبها صح!',
     photo: hammadPhoto,
+    card: hammadCard,
   },
   {
     id: 'hisham',
@@ -108,6 +117,7 @@ export const PLAYERS: PlayerDef[] = [
     celebrationType: 'fire',
     cheer: 'الأسطورة محمد لا يرحم!',
     photo: mohammedPhoto,
+    card: mohammedCard,
   },
   {
     id: 'aws',
@@ -121,6 +131,7 @@ export const PLAYERS: PlayerDef[] = [
     celebrationType: 'flag',
     cheer: 'المعلم أوس يعرف الزاوية!',
     photo: awsPhoto,
+    card: awsCard,
   },
   {
     id: 'azzam',
@@ -147,6 +158,7 @@ export const PLAYERS: PlayerDef[] = [
     celebrationType: 'stars',
     cheer: 'الشيخ أحمد يسجل بكل هدوء!',
     photo: sheikhPhoto,
+    card: sheikhCard,
   },
   {
     id: 'assoumi',

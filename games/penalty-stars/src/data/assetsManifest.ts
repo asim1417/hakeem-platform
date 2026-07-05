@@ -13,6 +13,7 @@ import ballStars from '../assets/images/ball-stars.webp';
 import ballFire from '../assets/images/ball-fire.webp';
 import ballBolt from '../assets/images/ball-bolt.webp';
 import ballGold from '../assets/images/ball-gold.webp';
+import cardBase from '../assets/images/card-base.webp';
 
 export const assetsManifest: Record<string, string> = {
   'stadium-real': stadiumReal,
@@ -25,4 +26,5 @@ export const assetsManifest: Record<string, string> = {
   'ball-fire': ballFire,
   'ball-bolt': ballBolt,
   'ball-gold': ballGold,
+  'card-base': cardBase, // رسم اللاعب بالطقم من لوحة الهوية — يُركّب عليه وجه الطفل
 };
