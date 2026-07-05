@@ -295,6 +295,8 @@ export function CaseBrowser() {
   // القراءة السحابية (Gemini) — مفتاح مركزي واحد وتفضيل موحّد مع البحث السريع (نفس الكوكي)
   const [cloudAvail, setCloudAvail] = useState(false);
   const [cloudOcrOn, setCloudOcrOn] = useState(false);
+  const [cloudFrom, setCloudFrom] = useState("");
+  const [cloudTo, setCloudTo] = useState("");
 
   // Google Drive
   const [driveConfigured, setDriveConfigured] = useState(false);
@@ -663,7 +665,15 @@ export function CaseBrowser() {
     try {
       const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
       if ((file.name.split(".").pop() ?? "").toLowerCase() === "pdf") {
-        return await cloudOcrPdfPages(await file.arrayBuffer(), (label) => setOcrProgress(label));
+        const result = await cloudOcrPdfPages(await file.arrayBuffer(), (label) => setOcrProgress(label), {
+          from: cloudFrom ? Number(cloudFrom) : undefined,
+          to: cloudTo ? Number(cloudTo) : undefined
+        });
+        if (!result) return null;
+        if (result.failed.length) {
+          setStatusMsg(`⚠ تعذّرت ${result.failed.length} من ${result.requested} صفحة سحابياً — مواضعها معلَّمة في النص`);
+        }
+        return result.text;
       }
       return await cloudOcrImage(file, (label) => setOcrProgress(label));
     } catch {
@@ -1267,6 +1277,29 @@ export function CaseBrowser() {
                 <input type="checkbox" checked={cloudOcrOn} onChange={(e) => toggleCloudOcr(e.target.checked)} />
                 <ScanIcon size={13} /> OCR سحابي
               </label>
+              {cloudOcrOn ? (
+                <>
+                  <input
+                    className={styles.rangeIn}
+                    type="number"
+                    min={1}
+                    placeholder="من"
+                    value={cloudFrom}
+                    onChange={(e) => setCloudFrom(e.target.value)}
+                    aria-label="من صفحة (قراءة سحابية)"
+                    title="نطاق صفحات القراءة السحابية — فارغ = الكل"
+                  />
+                  <input
+                    className={styles.rangeIn}
+                    type="number"
+                    min={1}
+                    placeholder="إلى"
+                    value={cloudTo}
+                    onChange={(e) => setCloudTo(e.target.value)}
+                    aria-label="إلى صفحة (قراءة سحابية)"
+                  />
+                </>
+              ) : null}
             </span>
           ) : null}
           <span className={styles.grp}>
