@@ -2,6 +2,7 @@
 // مع طبقة استخراج كيانات حتمية (regex) بلا أي توليد — «لا hallucination».
 
 import { legalDocumentReference, thesaurusCategories } from "./reference";
+import { isGarbledArabicText } from "./reshape";
 import { cleanPdfTextLayer } from "./reshape";
 import type {
   AnalyzedDocument,
@@ -240,15 +241,25 @@ export function assessQuality(text: string): QualityAssessment {
   const words = trimmed.split(/\s+/).filter(Boolean);
   const tinyWords = words.filter((w) => Array.from(w).length === 1).length;
   if (words.length > 0 && tinyWords / words.length > 0.15) score -= 20;
+
+  // «الترتيب البصري»: حروف عربية سليمة لكن أجزاء الكلمات مبعثرة (الرشكة/عــ ىل/ـب ـا) —
+  // كان يمر على المقاييس أعلاه بـ 100% كاذبة. كاشف الشظايا يلتقطه ويعاقبه بشدة.
+  const garble = isGarbledArabicText(trimmed);
+  const visualOrder = garble.fragmentRatio > 0.08;
+  if (visualOrder) score -= Math.min(70, Math.round(garble.fragmentRatio * 180));
+  else if (garble.garbled) score -= 25;
+
   score = Math.max(0, Math.min(100, score));
 
   const grade = score >= 85 ? "high" : score >= 65 ? "medium" : "review";
   const label =
     grade === "high"
       ? "ممتازة — لا تحتاج إعادة استخراج"
-      : grade === "medium"
-        ? "متوسطة — يُستحسن التدقيق"
-        : "منخفضة — تحتاج مراجعة";
+      : visualOrder
+        ? "منخفضة — طبقة نص بترتيب بصري معطوب (كلمات مبعثرة الأجزاء)؛ أعد القراءة بالـ OCR السحابي أو المحلي"
+        : grade === "medium"
+          ? "متوسطة — يُستحسن التدقيق"
+          : "منخفضة — تحتاج مراجعة";
   return { score, grade, label };
 }
 
