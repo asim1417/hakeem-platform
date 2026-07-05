@@ -111,17 +111,17 @@ export async function extractFile(
 }
 
 async function cloudOcr(file: File, onProgress?: ExtractProgress): Promise<ExtractResult | null> {
-  try {
-    onProgress?.("قراءة سحابية عالية الدقة (Gemini)…");
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/doc-tool/ocr", { method: "POST", body: fd });
-    const json = (await res.json()) as { text?: string; error?: string };
-    if (!res.ok || !json.text) return null;
-    return { text: json.text, kind: file.name.toLowerCase().endsWith(".pdf") ? "PDF (Gemini)" : "صورة (Gemini)" };
-  } catch {
-    return null;
+  const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
+  if (file.name.toLowerCase().endsWith(".pdf")) {
+    // صفحات كصور — رؤية حقيقية تتجاوز طبقات النص المعطوبة (الترتيب البصري)
+    const text = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress);
+    if (!text) return null;
+    const sep = separateRunningLines(text);
+    return { text: sep.body, kind: "PDF (Gemini)", running: sep.running };
   }
+  const text = await cloudOcrImage(file, onProgress);
+  if (!text) return null;
+  return { text, kind: "صورة (Gemini)" };
 }
 
 async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {
