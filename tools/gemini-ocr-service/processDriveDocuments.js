@@ -28,15 +28,31 @@ const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || '';
 const DOCUMENTS_FOLDER = process.env.DOCUMENTS_FOLDER || '';
 const OUTPUT_FOLDER = process.env.OUTPUT_FOLDER || './extracted-arabic-texts';
 const CREDENTIALS_FILE = process.env.GOOGLE_CREDENTIALS_FILE || './credentials.json';
-// مهلة لطيفة بين الوثائق لتفادي حدود المعدل (بالمللي ثانية)
+// مهلة لطيفة بين دفعات المعالجة لتفادي حدود المعدل (بالمللي ثانية)
 const DELAY_MS = Number(process.env.DELAY_MS || 1200);
+// عدد الوثائق المعالَجة معاً — 1 (متسلسل) افتراضاً لسلامة المفاتيح المجانية.
+// ارفعه للمفاتيح المدفوعة (حدّ معدلٍ أعلى) لتسريع الدفعات الكبيرة: CONCURRENCY=6
+const CONCURRENCY = Math.max(1, Math.min(Number(process.env.CONCURRENCY || 1), 8));
 
 const SUPPORTED_MIMES = new Set(['image/png', 'image/jpeg', 'application/pdf']);
 const EXT_MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.pdf': 'application/pdf' };
 
+// توجيهٌ بسلامةٍ قانونية: لا تخمين للأرقام/المبالغ/التواريخ/الصكوك/الأعلام — تُنقل حرفياً
+// و[غير واضح] بدل التخمين. مطابقٌ لمسار الويب في المنصّة.
 const OCR_PROMPT =
-  'قم بقراءة هذه الوثيقة واستخراج كافة النصوص العربية والإنجليزية منها كنص خام بدقة عالية. ' +
-  'حافظ على ترتيب الأسطر وتنسيق الفقرات والجداول إن وجدت، دون أي تفسير أو مقدمات منك.';
+  'أنت محرّك OCR احترافي للمستندات الرسمية والقانونية العربية. استخرج كل النصوص كنصّ خام بأعلى دقة، ' +
+  'محافظاً على ترتيب الأسطر والفقرات والجداول. تنبيه حاسم (وثيقة قانونية): لا تُصحِّح ولا تُخمِّن الأرقامَ ' +
+  'والمبالغَ والتواريخَ الهجرية وأرقامَ الصكوك والأعلامَ وأسماءَ الأطراف — انقلها حرفياً كما تراها؛ إن تعذّرت ' +
+  'قراءة رقم فاكتب [غير واضح] بدل تخمينه. أخرِج النص مباشرة دون مقدمات أو تعليقات.';
+
+// إعدادات التوليد: سقف مخرجات مرتفع + تعطيل «التفكير» على flash (OCR إدراكٌ لا استدلال؛
+// التفكير يبتلع رصيد المخرجات ويبطّئ الاستجابة). pro يُترك على التفكير الديناميكي.
+const GEN_CONFIG = {
+  temperature: 0.1,
+  topP: 0.95,
+  maxOutputTokens: 16384,
+  ...(GEMINI_MODEL.includes('pro') ? {} : { thinkingConfig: { thinkingBudget: 0 } })
+};
 
 // ── فحوصات مسبقة بواجبها رسائل واضحة ──
 if (!process.env.GEMINI_API_KEY?.trim()) {
@@ -67,6 +83,7 @@ async function geminiExtract(base64Data, mimeType, attempt = 1) {
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [{ inlineData: { data: base64Data, mimeType } }, OCR_PROMPT],
+      config: GEN_CONFIG,
     });
     const text = (response.text ?? '').trim();
     if (!text) throw new Error('أعاد Gemini نصاً فارغاً — تأكد من وضوح الوثيقة');
@@ -140,12 +157,17 @@ async function main() {
     console.log('❌ لم يُعثر على وثائق مدعومة (PNG/JPG/PDF) في المصدر.');
     return;
   }
-  console.log(`🟢 عُثر على ${tasks.length} وثيقة. النموذج: ${GEMINI_MODEL} — المخرجات في: ${OUTPUT_FOLDER}\n`);
+  console.log(
+    `🟢 عُثر على ${tasks.length} وثيقة. النموذج: ${GEMINI_MODEL} — التوازي: ${CONCURRENCY} — المخرجات في: ${OUTPUT_FOLDER}\n`
+  );
 
   let done = 0, skipped = 0;
   const failures = [];
+  let cursor = 0;
 
-  for (const [i, task] of tasks.entries()) {
+  // معالجة كل وثيقة على حدة (استئناف + قراءة + استخراج + حفظ)
+  async function processOne(i) {
+    const task = tasks[i];
     const outName = path.parse(task.name).name + '.txt';
     const outPath = path.join(OUTPUT_FOLDER, outName);
 
@@ -153,7 +175,7 @@ async function main() {
     if (fs.existsSync(outPath) && fs.statSync(outPath).size > 0) {
       skipped++;
       console.log(`⏭️  [${i + 1}/${tasks.length}] موجود مسبقاً — ${outName}`);
-      continue;
+      return;
     }
 
     console.log(`📄 [${i + 1}/${tasks.length}] معالجة: ${task.name} …`);
@@ -167,8 +189,19 @@ async function main() {
       failures.push({ name: task.name, error: String(err?.message ?? err).slice(0, 120) });
       console.error(`   ❌ فشل: ${String(err?.message ?? err).slice(0, 160)}`);
     }
-    if (i < tasks.length - 1) await sleep(DELAY_MS);
   }
+
+  // مجمّع عمّالٍ بدرجة توازٍ CONCURRENCY — كلّ عامل يلتقط الوثيقة التالية.
+  // مهلةٌ لطيفة بين وثائق العامل الواحد لتفادي حدود المعدل (لا تبطّئ التوازي بينها).
+  async function worker() {
+    for (;;) {
+      const i = cursor++;
+      if (i >= tasks.length) return;
+      await processOne(i);
+      if (cursor < tasks.length && CONCURRENCY === 1) await sleep(DELAY_MS);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, tasks.length) }, () => worker()));
 
   // ── الملخص النهائي ──
   console.log('\n════════ الملخص ════════');

@@ -306,7 +306,7 @@ export function CaseBrowser() {
   // نافذة مقارنة الجودة (flash/pro/محلي على صفحة واحدة)
   const [cmpOpen, setCmpOpen] = useState(false);
   const [cmpBusy, setCmpBusy] = useState("");
-  const [cmpRes, setCmpRes] = useState<{ engine: string; text: string; score: number }[]>([]);
+  const [cmpRes, setCmpRes] = useState<{ engine: string; text: string; score: number; ms: number }[]>([]);
   // ملف مُهيَّأ بانتظار اختيار خيارات المعالجة ثم «ابدأ» — لا يُعالَج تلقائياً عند الرفع
   const [staged, setStaged] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -759,16 +759,17 @@ export function CaseBrowser() {
       const buf = await staged.arrayBuffer();
       const { analyzeTextIssues } = await import("@/lib/modules/document-inspection/text-quality");
       const strip = (t: string) => t.replace(/\[صفحة \d+\]\n?/g, "").trim();
-      const out: { engine: string; text: string; score: number }[] = [];
+      const out: { engine: string; text: string; score: number; ms: number }[] = [];
 
       // محلي (Tesseract) — يعمل دائماً، بلا مفتاح
       setCmpBusy("القراءة المحلية (Tesseract)…");
+      const t0 = Date.now();
       try {
         if (ext === "pdf") {
           const { ocrScannedPdf } = await import("@/lib/modules/document-inspection/ocr");
           const r = await ocrScannedPdf(buf.slice(0), undefined, { onlyPages: [page] });
           const t = strip(r.text);
-          out.push({ engine: "محلي (Tesseract)", text: t, score: analyzeTextIssues(t).q });
+          out.push({ engine: "محلي (Tesseract)", text: t, score: analyzeTextIssues(t).q, ms: Date.now() - t0 });
         } else {
           const { ocrImageBest } = await import("@/lib/modules/document-inspection/ocr");
           const bmp = await createImageBitmap(staged);
@@ -778,10 +779,10 @@ export function CaseBrowser() {
           c.getContext("2d")?.drawImage(bmp, 0, 0);
           bmp.close();
           const r = await ocrImageBest(c);
-          out.push({ engine: "محلي (Tesseract)", text: r.text, score: analyzeTextIssues(r.text).q });
+          out.push({ engine: "محلي (Tesseract)", text: r.text, score: analyzeTextIssues(r.text).q, ms: Date.now() - t0 });
         }
       } catch {
-        out.push({ engine: "محلي (Tesseract)", text: "تعذّرت القراءة المحلية", score: 0 });
+        out.push({ engine: "محلي (Tesseract)", text: "تعذّرت القراءة المحلية", score: 0, ms: Date.now() - t0 });
       }
       setCmpRes([...out]);
 
@@ -790,6 +791,7 @@ export function CaseBrowser() {
         const { cloudOcrPdfPages, cloudOcrImage } = await import("@/lib/modules/doc-tool/cloud-ocr");
         for (const m of ["flash", "pro"] as const) {
           setCmpBusy(m === "flash" ? "السحابي flash…" : "السحابي pro…");
+          const ts = Date.now();
           try {
             let t = "";
             if (ext === "pdf") {
@@ -798,9 +800,14 @@ export function CaseBrowser() {
             } else {
               t = (await cloudOcrImage(staged, undefined, m)) ?? "";
             }
-            out.push({ engine: m === "flash" ? "Gemini flash" : "Gemini pro", text: t || "لا نصّ", score: t ? analyzeTextIssues(t).q : 0 });
+            out.push({
+              engine: m === "flash" ? "Gemini flash" : "Gemini pro",
+              text: t || "لا نصّ",
+              score: t ? analyzeTextIssues(t).q : 0,
+              ms: Date.now() - ts
+            });
           } catch {
-            out.push({ engine: m === "flash" ? "Gemini flash" : "Gemini pro", text: "تعذّرت القراءة السحابية", score: 0 });
+            out.push({ engine: m === "flash" ? "Gemini flash" : "Gemini pro", text: "تعذّرت القراءة السحابية", score: 0, ms: Date.now() - ts });
           }
           setCmpRes([...out]);
         }
@@ -1868,8 +1875,11 @@ export function CaseBrowser() {
                       </p>
                       <code>{`cd tools/gemini-ocr-service
 npm install
-DOCUMENTS_FOLDER="./وثائقي" node processDriveDocuments.js`}</code>
-                      <p>ثم استورد النصوص الناتجة إلى المنصّة. خطوة المفتاح والتفاصيل في tools/gemini-ocr-service/README.md.</p>
+CONCURRENCY=6 DOCUMENTS_FOLDER="./وثائقي" node processDriveDocuments.js`}</code>
+                      <p>
+                        CONCURRENCY=6 يُسرّع الدفعة للمفاتيح المدفوعة (اتركه 1 للمجاني). ثم استورد النصوص الناتجة إلى
+                        المنصّة. خطوة المفتاح والتفاصيل في tools/gemini-ocr-service/README.md.
+                      </p>
                     </details>
                   ) : null}
 
@@ -1911,7 +1921,9 @@ DOCUMENTS_FOLDER="./وثائقي" node processDriveDocuments.js`}</code>
                       <div key={r.engine} className={styles.cmpCol}>
                         <div className={styles.cmpColHead}>
                           <span>{r.engine}</span>
-                          <span className={styles.cmpScore}>الدرجة {r.score}</span>
+                          <span className={styles.cmpScore}>
+                            الدرجة {r.score} · {(r.ms / 1000).toFixed(1)}ث
+                          </span>
                         </div>
                         <pre className={styles.cmpText}>{r.text}</pre>
                       </div>
