@@ -1,4 +1,4 @@
-const CACHE_NAME = "football-future-static-v6";
+const CACHE_NAME = "football-future-static-v7";
 const ASSETS = [
   "/football-future/",
   "/football-future/index.html",
@@ -9,6 +9,7 @@ const ASSETS = [
   "/football-future/src/assets/fonts/noto-kufi-arabic-var-latin.woff2",
   "/football-future/src/assets/fonts/rajdhani-700-latin.woff2",
   "/football-future/src/css/styles.css",
+  "/football-future/src/js/icons.js",
   "/football-future/src/js/audio.js",
   "/football-future/src/assets/audio/voice_ar_manifest.json",
   "/football-future/src/assets/audio/README_AUDIO_AR.md",
