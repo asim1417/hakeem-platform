@@ -120,22 +120,38 @@ def _read_pdf_text(data):
         return ""
 
 
+# إعداد Tesseract للعربية: LSTM (oem 1) + كتلة نصٍّ موحّدة (psm 6) — أدقّ للوثائق الكثيفة.
+_TESS_CFG = "--oem 1 --psm 6"
+
+
+def _prep(img):
+    """تحسينٌ يرفع دقّة القراءة: تدرّج رمادي + تمديد تباين + حدّة يسيرة (أقوى للحبر الباهت)."""
+    from PIL import ImageOps, ImageFilter
+    g = ImageOps.grayscale(img)
+    g = ImageOps.autocontrast(g, cutoff=1)
+    return g.filter(ImageFilter.SHARPEN)
+
+
+def _ocr_img_obj(img):
+    import pytesseract
+    return pytesseract.image_to_string(_prep(img), lang="ara", config=_TESS_CFG)
+
+
 def _ocr_image(data):
     try:
-        import pytesseract
         from PIL import Image
         img = Image.open(io.BytesIO(data)).convert("RGB")
-        return pytesseract.image_to_string(img, lang="ara"), "صورة (OCR)"
+        return _ocr_img_obj(img), "صورة (OCR)"
     except Exception:
         return "", "صورة — تحتاج OCR (ثبّت pytesseract + tesseract-ocr-ara)"
 
 
 def _ocr_pdf(data):
     try:
-        import pytesseract
         from pdf2image import convert_from_bytes
-        pages = convert_from_bytes(data, dpi=200)
-        return "\n".join(pytesseract.image_to_string(p, lang="ara") for p in pages), "PDF ممسوح (OCR)"
+        # دقّة 300 (بدل 200) تُبرز التشكيل والنقاط في النصّ العربي الكثيف
+        pages = convert_from_bytes(data, dpi=300)
+        return "\n".join(_ocr_img_obj(p) for p in pages), "PDF ممسوح (OCR)"
     except Exception:
         return "", "PDF ممسوح — تحتاج OCR (pytesseract + pdf2image + poppler)"
 
