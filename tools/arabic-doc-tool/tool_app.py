@@ -21,77 +21,10 @@ DB = os.environ.get("TOOL_DB", os.path.join(tempfile.gettempdir(), "tool_docs.db
 COOKIE = "tool_auth"
 app = FastAPI(title="أداة معالجة الوثائق العربية", docs_url=None, redoc_url=None)
 
-# ---------- تنظيف/تطبيع عربي ----------
-_STRIP = dict.fromkeys([0x200b, 0x200c, 0x200d, 0x200e, 0x200f, 0x202a, 0x202b,
-                        0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069, 0xfeff], None)
-_LOOK = {"ھ": "ه", "ہ": "ه", "ۀ": "ه", "ۃ": "ة", "ی": "ي", "ۍ": "ي", "ک": "ك"}
-_PDIG = {0x06F0 + i: chr(0x0660 + i) for i in range(10)}
-
-
-def clean_text(t):
-    if not t:
-        return t
-    t = t.translate(_STRIP)
-    for a, b in _LOOK.items():
-        t = t.replace(a, b)
-    return t.translate(_PDIG)
-
-
-def norm(s):
-    out = []
-    for ch in s or "":
-        c = ord(ch)
-        if 0x064B <= c <= 0x0652 or c in (0x0640, 0x0670):
-            continue
-        out.append({"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي",
-                    "ؤ": "و", "ئ": "ي"}.get(ch, ch.lower()))
-    return "".join(out)
-
-
-# ---------- استخراج النص من الملفات ----------
-def extract_text(name, data):
-    ext = os.path.splitext(name)[1].lower()
-    try:
-        if ext in (".txt", ".md", ".csv", ".json"):
-            return data.decode("utf-8", "ignore"), "نص"
-        if ext == ".docx":
-            from docx import Document
-            d = Document(io.BytesIO(data))
-            return "\n".join(p.text for p in d.paragraphs), "Word"
-        if ext == ".pdf":
-            try:
-                from pdfminer.high_level import extract_text as pdftext
-                txt = pdftext(io.BytesIO(data)) or ""
-                if len(re.findall(r"[؀-ۿ]", txt)) > 30:
-                    return txt, "PDF (نص)"
-            except Exception:
-                pass
-            return _ocr_pdf(data)
-        if ext in (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"):
-            return _ocr_image(data)
-    except Exception as e:
-        return "", "تعذّر (%s)" % str(e)[:40]
-    return "", "صيغة غير مدعومة"
-
-
-def _ocr_image(data):
-    try:
-        import pytesseract
-        from PIL import Image
-        return pytesseract.image_to_string(Image.open(io.BytesIO(data)).convert("RGB"), lang="ara"), "صورة (OCR)"
-    except Exception:
-        return "", "صورة — تحتاج OCR (ثبّت pytesseract+tesseract-ara)"
-
-
-def _ocr_pdf(data):
-    try:
-        import pytesseract
-        from pdf2image import convert_from_bytes
-        pages = convert_from_bytes(data, dpi=200)
-        return "\n".join(pytesseract.image_to_string(p, lang="ara") for p in pages), "PDF ممسوح (OCR)"
-    except Exception:
-        return "", "PDF ممسوح — تحتاج OCR (pytesseract+pdf2image+poppler)"
-
+# ---------- العقل: doc_reader (وحدة مستقلة — قراءة وتنظيف وتطبيع) ----------
+# المنطق كله في doc_reader.py: clean_text/norm/read_bytes — بلا تكرار هنا.
+# مكسب مباشر: read_bytes يلتقط جداول Word أيضاً (كثير من الوثائق القانونية جداول).
+from doc_reader import clean_text, norm, read_bytes as extract_text  # noqa: E402
 
 # ---------- قاعدة البيانات ----------
 def _db():
