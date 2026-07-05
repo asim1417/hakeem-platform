@@ -46,6 +46,22 @@
     } catch {}
   })();
 
+  /* صورة جمهور المدرج (قابلة للتبليط أفقياً) — تُحمَّل مرة واحدة للصفحة */
+  const crowdPhoto = { img: null, ready: false, cbs: [] };
+  (function loadCrowd() {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        crowdPhoto.img = img;
+        crowdPhoto.ready = true;
+        crowdPhoto.cbs.forEach(cb => { try { cb(); } catch {} });
+        crowdPhoto.cbs.length = 0;
+      };
+      img.onerror = () => { crowdPhoto.ready = false; };
+      img.src = "/football-future/src/assets/textures/crowd.jpg";
+    } catch {}
+  })();
+
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function lerp(a, b, t) { return a + (b - a) * t; }
@@ -126,6 +142,8 @@
       this.buildPitchTexture();
       // عند اكتمال تحميل الصورة الفوتوغرافية: أعد بناء الأرضية بها
       if (!grassPhoto.ready) grassPhoto.cbs.push(() => this.buildPitchTexture());
+      // وعند اكتمال صورة الجمهور: أعد بناء البانوراما (بعد أول resize فقط)
+      if (!crowdPhoto.ready) crowdPhoto.cbs.push(() => { if (this.py0) this.buildBackdrop(); });
       this.resetWorld();
       this.resize = this.resize.bind(this);
       this.loop = this.loop.bind(this);
@@ -897,12 +915,31 @@
       x.fillStyle = sky; x.fillRect(0, 0, panW, panH);
 
       const standTop = panH * 0.08, boardTop = panH * 0.80;
+      const midTier = standTop + (boardTop - standTop) * 0.52;
       const tier = x.createLinearGradient(0, standTop, 0, boardTop);
       tier.addColorStop(0, "#0C1320"); tier.addColorStop(0.5, "#141E2D"); tier.addColorStop(1, "#0A101A");
       x.fillStyle = tier;
       x.fillRect(0, standTop, panW, boardTop - standTop);
+
+      /* جمهور فوتوغرافي مبلَّط أفقياً — طابقان بعمق مختلف */
+      const hasCrowdPhoto = crowdPhoto.ready && crowdPhoto.img;
+      if (hasCrowdPhoto) {
+        const im = crowdPhoto.img;
+        const drawBand = (top, bot, darken) => {
+          const h = bot - top;
+          if (h < 4) return;
+          const tw = Math.max(8, h * (im.width / im.height));
+          for (let tx = 0; tx < panW; tx += tw) x.drawImage(im, tx, top, tw, h);
+          if (darken > 0) { x.fillStyle = `rgba(3,7,13,${darken})`; x.fillRect(0, top, panW, h); }
+        };
+        drawBand(standTop + 2, midTier - 3, 0.32); // الطابق العلوي أبعد وأعتم
+        drawBand(midTier + 3, boardTop, 0.10);
+        // صبغة استاد باردة موحّدة فوق الصورة
+        x.fillStyle = "rgba(8,16,28,.14)";
+        x.fillRect(0, standTop, panW, boardTop - standTop);
+      }
+
       // فاصل الطابقين (ممر + درابزين مضاء)
-      const midTier = standTop + (boardTop - standTop) * 0.52;
       x.fillStyle = "#060A10";
       x.fillRect(0, midTier - 3, panW, 6);
       x.fillStyle = "rgba(120,150,175,.35)";
@@ -915,15 +952,27 @@
       x.fillRect(0, standTop, panW, 2.5);
 
       let seed = 7;
-      const rows = Math.max(6, Math.floor((boardTop - standTop - 8) / 5));
-      for (let r = 0; r < rows; r++) {
-        const ry = standTop + 6 + r * 5;
-        for (let px = 2; px < panW - 2; px += 4) {
-          const h1 = hash(seed), h2 = hash(seed * 1.7); seed++;
-          const tone = h1 < 0.045 ? LIME : h1 < 0.09 ? CYAN : h1 < 0.18 ? "#7E93A8" : h1 < 0.55 ? "#39485A" : "#242F3D";
-          x.fillStyle = tone;
-          x.globalAlpha = 0.4 + h2 * 0.55;
-          x.fillRect(px + h1 * 3, ry + h2 * 3, 2.4, 2.4);
+      if (!hasCrowdPhoto) {
+        // سقوط إجرائي: جمهور نقطي كثيف
+        const rows = Math.max(6, Math.floor((boardTop - standTop - 8) / 5));
+        for (let r = 0; r < rows; r++) {
+          const ry = standTop + 6 + r * 5;
+          for (let px = 2; px < panW - 2; px += 4) {
+            const h1 = hash(seed), h2 = hash(seed * 1.7); seed++;
+            const tone = h1 < 0.045 ? LIME : h1 < 0.09 ? CYAN : h1 < 0.18 ? "#7E93A8" : h1 < 0.55 ? "#39485A" : "#242F3D";
+            x.fillStyle = tone;
+            x.globalAlpha = 0.4 + h2 * 0.55;
+            x.fillRect(px + h1 * 3, ry + h2 * 3, 2.4, 2.4);
+          }
+        }
+      } else {
+        // لمعان حي متناثر فوق الصورة (هواتف وأوشحة بألوان الهوية)
+        const sparks = Math.floor(panW / 6);
+        for (let i = 0; i < sparks; i++) {
+          const h1 = hash(seed), h2 = hash(seed * 1.7), h3 = hash(seed * 2.3); seed++;
+          x.fillStyle = h3 < 0.3 ? LIME : h3 < 0.6 ? CYAN : "#DCEAF5";
+          x.globalAlpha = 0.10 + h2 * 0.25;
+          x.fillRect(h1 * panW, standTop + 4 + h2 * (boardTop - standTop - 8), 1.6, 1.6);
         }
       }
       x.globalAlpha = 1;

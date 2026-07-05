@@ -1,4 +1,4 @@
-const CACHE_NAME = "football-future-static-v11";
+const CACHE_NAME = "football-future-static-v12";
 const ASSETS = [
   "/football-future/",
   "/football-future/index.html",
@@ -19,6 +19,8 @@ const ASSETS = [
   "/football-future/src/js/main.js",
   "/football-future/src/assets/logo.svg",
   "/football-future/src/assets/textures/grass.jpg",
+  "/football-future/src/assets/textures/crowd.jpg",
+  "/football-future/src/assets/audio/sfx/ambience.wav",
   "/football-future/src/assets/icon.svg",
   "/football-future/src/assets/field.svg",
   "/football-future/src/js/commentary.js",
