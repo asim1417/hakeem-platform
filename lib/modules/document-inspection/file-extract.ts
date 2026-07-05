@@ -185,6 +185,60 @@ export function mergeScannedPages(base: string, ocrText: string): string {
   });
 }
 
+/**
+ * تحليلٌ لكل صفحة: أيّها طبقةُ نصٍّ سليمة (نستعملها كما هي) وأيّها ممسوحة/معطوبة
+ * (تحتاج قراءةً ضوئية سحابية). يُعيد نصّاً أساسياً بعلامات الصفحات، وقائمةَ الصفحات
+ * التي تحتاج OCR — فنقرأ سحابياً ما يحتاجه فقط، ولا نرمي النصّ الرقميّ السليم.
+ */
+export interface PdfPageOcrPlan {
+  total: number;
+  /** أرقام الصفحات (ضمن النطاق) التي تحتاج قراءةً ضوئية (فارغة أو معطوبة) */
+  needOcrPages: number[];
+  /** عدد الصفحات ذات النصّ الرقميّ السليم ضمن النطاق */
+  cleanPages: number;
+  /** النصّ الأساسي بعلامات [صفحة N]: الصفحات السليمة بنصّها، والباقي بعلامة الممسوح */
+  baseText: string;
+}
+
+export async function planPdfPageOcr(buffer: ArrayBuffer, from?: number, to?: number): Promise<PdfPageOcrPlan> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+  const doc = await pdfjs.getDocument({ data: buffer }).promise;
+  const total = doc.numPages;
+  const start = Math.max(1, Math.min(from ?? 1, total));
+  const end = Math.max(start, Math.min(to ?? total, total));
+
+  const parts: string[] = [];
+  const needOcrPages: number[] = [];
+  let cleanPages = 0;
+  for (let p = start; p <= end; p += 1) {
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    const raw = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (raw.length < 10) {
+      // صفحة بلا طبقة نصّ (ممسوحة) → للقراءة الضوئية
+      needOcrPages.push(p);
+      parts.push(`[صفحة ${p}]\n${SCANNED_PAGE_MARK}`);
+      continue;
+    }
+    const cleaned = cleanPdfTextLayer(raw);
+    if (cleaned.needsOcr) {
+      // طبقة نصٍّ معطوبة (خطّ مُجزّأ/ترتيب بصري) → أصدق مصدرٍ لها OCR على صورة الصفحة
+      needOcrPages.push(p);
+      parts.push(`[صفحة ${p}]\n${SCANNED_PAGE_MARK}`);
+    } else {
+      cleanPages += 1;
+      parts.push(`[صفحة ${p}]\n${cleaned.text}`);
+    }
+  }
+  await doc.destroy();
+  return { total, needOcrPages, cleanPages, baseText: parts.join("\n\n").trim() };
+}
+
 // ── الموزّع حسب النوع ──
 
 export interface ExtractedFile {
