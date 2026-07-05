@@ -184,10 +184,10 @@ async function ocrPdf(buffer: ArrayBuffer, onProgress?: ExtractProgress): Promis
 
 async function extractImage(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {
   try {
-    const { ocrImage, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+    const { ocrImageBest, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
     const { fixReversedArabicLines } = await import("@/lib/modules/document-inspection/text-quality");
     onProgress?.("تحضير القراءة الضوئية…");
-    const { text, confidence } = await ocrImage(file, (info) =>
+    const { text, confidence } = await ocrImageBest(file, (info) =>
       onProgress?.(`${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`)
     );
     if (text.trim().length < 5) {

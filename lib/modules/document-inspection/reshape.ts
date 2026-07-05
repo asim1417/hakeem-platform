@@ -259,3 +259,61 @@ export function cleanPdfTextLayer(rawText: string): { text: string; needsOcr: bo
     report.fragmentRatio > 0.08;
   return { text, needsOcr, report };
 }
+
+/**
+ * عزل خربشة الشعار/الختم في الصفحة الأولى/الأخيرة من مستند OCR.
+ * الشعارات والأختام صور رسومية يُخرج Tesseract منها خربشة (لاتيني/رموز مبعثرة).
+ * نفحص أسطر الصفحة الأولى والأخيرة فقط: السطر الذي غالبه ضجيج غير عربي (رموز/لاتيني
+ * قصير) يُستبدل بعلامة «[شعار/ختم]» بدل تركه خربشة تلوّث المتن — مع الإبقاء على أي
+ * سطر عربي حقيقي (اسم الجهة في الترويسة يبقى للتصنيف والترميز).
+ */
+export function scrubLogoNoise(text: string, totalPages?: number): string {
+  const blocks = text.split(/(\[صفحة \d+\]\n?)/);
+  // إن لم يكن مقسّماً بصفحات، عامله كصفحة واحدة (الأولى=الأخيرة)
+  const pageIndices: number[] = [];
+  for (let i = 0; i < blocks.length; i += 1) if (/^\[صفحة \d+\]/.test(blocks[i])) pageIndices.push(i);
+
+  const isNoiseLine = (line: string): boolean => {
+    const t = line.trim();
+    if (t.length < 2) return false;
+    const chars = Array.from(t);
+    const arabic = chars.filter((c) => /[؀-ۿ]/u.test(c)).length;
+    const latinSym = chars.filter((c) => /[A-Za-z@#&%©®™°£€$§±×÷|\\/{}<>~^`_=]/.test(c)).length;
+    const spaces = chars.filter((c) => c === " ").length;
+    const meaningful = chars.length - spaces;
+    if (meaningful < 2) return false;
+    // خربشة شعار: غالبه لاتيني/رموز، والعربي ضئيل، وطوله قصير (سطر شعار لا فقرة)
+    return arabic <= 2 && latinSym / meaningful > 0.5 && t.length < 60;
+  };
+
+  const scrubBlock = (content: string): string => {
+    const lines = content.split("\n");
+    // ننظّف أول 4 وآخر 4 أسطر فقط (منطقة الشعار/الختم)، لا وسط الصفحة
+    const zone = 4;
+    let removed = 0;
+    const out = lines.map((l, idx) => {
+      const nearEdge = idx < zone || idx >= lines.length - zone;
+      if (nearEdge && isNoiseLine(l)) {
+        removed += 1;
+        return null;
+      }
+      return l;
+    });
+    let body = out.filter((l): l is string => l !== null).join("\n");
+    if (removed > 0) body = "[شعار/ختم — صورة غير نصية]\n" + body;
+    return body;
+  };
+
+  if (!pageIndices.length) {
+    // مستند بلا وسم صفحات: عامل كامله كصفحة أولى/أخيرة
+    return scrubBlock(text);
+  }
+
+  const firstPage = pageIndices[0];
+  const lastPage = pageIndices[pageIndices.length - 1];
+  for (const pi of [firstPage, lastPage]) {
+    const contentIdx = pi + 1;
+    if (contentIdx < blocks.length) blocks[contentIdx] = scrubBlock(blocks[contentIdx]);
+  }
+  return blocks.join("");
+}

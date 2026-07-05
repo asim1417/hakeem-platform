@@ -76,6 +76,9 @@ export function docxXmlToText(xml: string): string {
   const withBreaks = xml
     .replace(/<w:tab[^>]*\/>/g, "\t")
     .replace(/<w:br[^>]*\/>/g, "\n")
+    // بنية الجداول: خليّة ← فاصلة جدولة، صفّ ← سطر جديد (كثير من الوثائق القانونية جداول)
+    .replace(/<\/w:tc>/g, "\t")
+    .replace(/<\/w:tr>/g, "\n")
     .replace(/<\/w:p>/g, "\n");
   const texts: string[] = [];
   const re = /<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|(\n|\t)/g;
@@ -94,6 +97,11 @@ export function docxXmlToText(xml: string): string {
   }
   return texts
     .join("")
+    // تنظيف حدود الجداول: سطر الفقرة داخل الخليّة قبل فاصلة الجدولة يُطوى،
+    // وفاصلة الخليّة الزائدة قبل نهاية الصفّ تُحذف
+    .replace(/\n+\t/g, "\t")
+    .replace(/\t+\n/g, "\n")
+    .replace(/\t{2,}/g, "\t")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

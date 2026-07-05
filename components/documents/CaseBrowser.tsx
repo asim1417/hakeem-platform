@@ -717,8 +717,8 @@ export function CaseBrowser() {
       }
       setOcrProgress("تحضير محرّك القراءة الضوئية…");
       try {
-        const { ocrImage, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
-        const { text, confidence } = await ocrImage(file, (info) =>
+        const { ocrImageBest, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+        const { text, confidence } = await ocrImageBest(file, (info) =>
           setOcrProgress(`${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`)
         );
         if (text.trim().length < 5) throw new Error("لم يُقرأ نص من الصورة — تأكد من وضوحها");
