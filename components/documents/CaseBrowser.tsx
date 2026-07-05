@@ -297,6 +297,8 @@ export function CaseBrowser() {
   const [cloudOcrOn, setCloudOcrOn] = useState(false);
   const [cloudFrom, setCloudFrom] = useState("");
   const [cloudTo, setCloudTo] = useState("");
+  // دقّة أعلى: gemini-2.5-pro (للخطّ اليدوي والأختام والوثائق الصعبة) بدل flash الأسرع
+  const [cloudHiQ, setCloudHiQ] = useState(false);
   // ملف مُهيَّأ بانتظار اختيار خيارات المعالجة ثم «ابدأ» — لا يُعالَج تلقائياً عند الرفع
   const [staged, setStaged] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -702,10 +704,12 @@ export function CaseBrowser() {
   async function cloudRead(file: File): Promise<string | null> {
     try {
       const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
+      const model = cloudHiQ ? "pro" : "flash";
       if ((file.name.split(".").pop() ?? "").toLowerCase() === "pdf") {
         const result = await cloudOcrPdfPages(await file.arrayBuffer(), (label) => setOcrProgress(label), {
           from: cloudFrom ? Number(cloudFrom) : undefined,
-          to: cloudTo ? Number(cloudTo) : undefined
+          to: cloudTo ? Number(cloudTo) : undefined,
+          model
         });
         if (!result) return null;
         if (result.failed.length) {
@@ -713,7 +717,7 @@ export function CaseBrowser() {
         }
         return result.text;
       }
-      return await cloudOcrImage(file, (label) => setOcrProgress(label));
+      return await cloudOcrImage(file, (label) => setOcrProgress(label), model);
     } catch {
       return null;
     }
@@ -785,7 +789,7 @@ export function CaseBrowser() {
       void startConversion({
         title: baseName,
         buffer: buf,
-        options: { from: rFrom, to: rTo },
+        options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash" },
         onComplete: () => undefined // التسوية عبر المشترك أدناه
       });
       setStatusMsg(
@@ -868,7 +872,8 @@ export function CaseBrowser() {
               buffer: buf,
               options: {
                 from: cloudFrom ? Number(cloudFrom) : undefined,
-                to: cloudTo ? Number(cloudTo) : undefined
+                to: cloudTo ? Number(cloudTo) : undefined,
+                model: cloudHiQ ? "pro" : "flash"
               },
               // الإضافة تتم عبر تسوية النتيجة (أدناه) لتعمل حتى لو انتقل المستخدم
               onComplete: () => undefined
@@ -1693,6 +1698,19 @@ export function CaseBrowser() {
                         aria-label="إلى صفحة"
                       />
                     </div>
+                  ) : null}
+
+                  {cloudAvail && cloudOcrOn ? (
+                    <label className={styles.stageOpt}>
+                      <input type="checkbox" checked={cloudHiQ} onChange={(e) => setCloudHiQ(e.target.checked)} />
+                      <span className={styles.stageOptMain}>
+                        <ScanIcon size={15} /> دقّة أعلى — نموذج pro
+                      </span>
+                      <span className={styles.stageOptSub}>
+                        gemini-2.5-pro للخطّ اليدوي والأختام والوثائق الصعبة (أدقّ، أبطأ وأعلى تكلفة). بدونها flash الأسرع
+                        الاقتصادي — يكفي غالب الوثائق المطبوعة.
+                      </span>
+                    </label>
                   ) : null}
 
                   <div className={styles.stageActions}>

@@ -68,6 +68,7 @@
     "test:embeddings": "tsx scripts/test-embeddings.ts",
     "test:intel": "tsx scripts/test-legal-intelligence.ts",
     "test:provider": "tsx scripts/test-ai-provider.ts",
+    "test:gemini-ocr": "tsx scripts/test-gemini-ocr.ts",
     "test:retrieval": "tsx scripts/test-postgres-retrieval.ts",
     "smoke:rag": "tsx scripts/smoke-rag.ts",
     "diagnose:systems": "tsx scripts/diagnose-legal-systems.ts",
