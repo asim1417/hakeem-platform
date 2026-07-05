@@ -297,6 +297,9 @@ export function CaseBrowser() {
   const [cloudOcrOn, setCloudOcrOn] = useState(false);
   const [cloudFrom, setCloudFrom] = useState("");
   const [cloudTo, setCloudTo] = useState("");
+  // ملف مُهيَّأ بانتظار اختيار خيارات المعالجة ثم «ابدأ» — لا يُعالَج تلقائياً عند الرفع
+  const [staged, setStaged] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   // Google Drive
   const [driveConfigured, setDriveConfigured] = useState(false);
@@ -681,7 +684,19 @@ export function CaseBrowser() {
     }
   }
 
+  // النصوص لا تحتاج خيارات معالجة → تُستخرَج فوراً؛ الصور وPDF تُهيَّأ لاختيار الخيارات
+  const OCR_EXTS = ["pdf", "png", "jpg", "jpeg", "webp", "bmp", "gif", "tif", "tiff"];
+  function stageOrProcess(file: File) {
+    const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+    if (OCR_EXTS.includes(ext) || ext === "enc") {
+      setStaged(file); // أظهر لوحة خيارات المعالجة — لا معالجة قبل «ابدأ»
+    } else {
+      void handleLoadFile(file); // نص/Word: بلا خيارات، مباشرة
+    }
+  }
+
   async function handleLoadFile(file: File) {
+    setStaged(null);
     const ext = (file.name.split(".").pop() ?? "").toLowerCase();
     const baseName = file.name.replace(/\.[^.]+$/, "");
 
@@ -1268,40 +1283,6 @@ export function CaseBrowser() {
               <LockIcon size={14} /> قفل
             </button>
           </span>
-          {cloudAvail ? (
-            <span className={styles.grp}>
-              <label
-                className={styles.cloudLbl}
-                title="يقرأ الصور وPDF الممسوح عبر Gemini بدقة أعلى — تُرسل الوثيقة لخدمة Google، وراجع الأرقام والمبالغ يدوياً. بدونه تبقى القراءة محلية في متصفحك."
-              >
-                <input type="checkbox" checked={cloudOcrOn} onChange={(e) => toggleCloudOcr(e.target.checked)} />
-                <ScanIcon size={13} /> OCR سحابي
-              </label>
-              {cloudOcrOn ? (
-                <>
-                  <input
-                    className={styles.rangeIn}
-                    type="number"
-                    min={1}
-                    placeholder="من"
-                    value={cloudFrom}
-                    onChange={(e) => setCloudFrom(e.target.value)}
-                    aria-label="من صفحة (قراءة سحابية)"
-                    title="نطاق صفحات القراءة السحابية — فارغ = الكل"
-                  />
-                  <input
-                    className={styles.rangeIn}
-                    type="number"
-                    min={1}
-                    placeholder="إلى"
-                    value={cloudTo}
-                    onChange={(e) => setCloudTo(e.target.value)}
-                    aria-label="إلى صفحة (قراءة سحابية)"
-                  />
-                </>
-              ) : null}
-            </span>
-          ) : null}
           <span className={styles.grp}>
             <button
               onClick={() => fileRef.current?.click()}
@@ -1316,11 +1297,11 @@ export function CaseBrowser() {
             <input
               ref={fileRef}
               type="file"
-              accept=".pdf,.docx,.txt,.md,.js,.json,.png,.jpg,.jpeg,.webp,.bmp,.gif"
+              accept=".pdf,.docx,.txt,.md,.js,.json,.png,.jpg,.jpeg,.webp,.bmp,.gif,.enc"
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) void handleLoadFile(f);
+                if (f) stageOrProcess(f);
                 e.target.value = "";
               }}
             />
@@ -1468,11 +1449,27 @@ export function CaseBrowser() {
             </div>
             <div className={styles.list} role={docs.length ? "list" : undefined} aria-label="نتائج الوثائق">
               {docs.length === 0 ? (
-                <div className={styles.empty} style={{ padding: "0 14px" }}>
-                  لا وثائق بعد.
-                  <br />
-                  أضف وثيقة (＋ إضافة) أو افتح ملف وثائق (رفع ملف).
-                </div>
+                <button
+                  type="button"
+                  className={`${styles.dropzone}${dragOver ? " " + styles.dropzoneOver : ""}`}
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) stageOrProcess(f);
+                  }}
+                >
+                  <UploadIcon size={30} />
+                  <div className={styles.dropTitle}>اسحب وثيقتك هنا أو اضغط للاختيار</div>
+                  <div className={styles.dropSub}>PDF · صور/مسح ضوئي · Word · نص — تُعالَج في متصفحك</div>
+                  <div className={styles.dropSub}>ثم تختار خيارات المعالجة قبل البدء</div>
+                </button>
               ) : allResults && !parsed.empty ? (
                 filtered.flatMap((d) => {
                   const occ = occurrences(d.rawText, needles);
@@ -1516,7 +1513,93 @@ export function CaseBrowser() {
             </div>
           </aside>
 
-          <main id="detail" ref={mainRef} className={styles.main} role="main" tabIndex={-1}>
+          <main
+            id="detail"
+            ref={mainRef}
+            className={styles.main}
+            role="main"
+            tabIndex={-1}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) stageOrProcess(f);
+            }}
+          >
+            {staged ? (
+              <div className={styles.stageWrap}>
+                <div className={styles.stageCard}>
+                  <div className={styles.stageHead}>
+                    <UploadIcon size={18} />
+                    <div className={styles.stageName}>{staged.name}</div>
+                    <button className={styles.stageClose} onClick={() => setStaged(null)} title="إلغاء" aria-label="إلغاء">
+                      ✕
+                    </button>
+                  </div>
+                  <div className={styles.stageHint}>اختر خيارات المعالجة ثم ابدأ — لن تُعالَج الوثيقة قبل ذلك.</div>
+
+                  {cloudAvail ? (
+                    <label className={styles.stageOpt}>
+                      <input type="checkbox" checked={cloudOcrOn} onChange={(e) => toggleCloudOcr(e.target.checked)} />
+                      <span className={styles.stageOptMain}>
+                        <ScanIcon size={15} /> قراءة سحابية فائقة الدقة (Gemini)
+                      </span>
+                      <span className={styles.stageOptSub}>
+                        للخط اليدوي والمسح الرديء وطبقات النص المعطوبة. تُرسل الوثيقة لخدمة Google — راجع الأرقام والمبالغ
+                        يدوياً. بدونها القراءة محلية في متصفحك.
+                      </span>
+                    </label>
+                  ) : null}
+
+                  {cloudAvail && cloudOcrOn ? (
+                    <div className={styles.stageRange}>
+                      <span>نطاق الصفحات (اختياري — فارغ = كل الوثيقة):</span>
+                      <input
+                        className={styles.rangeIn}
+                        type="number"
+                        min={1}
+                        placeholder="من"
+                        value={cloudFrom}
+                        onChange={(e) => setCloudFrom(e.target.value)}
+                        aria-label="من صفحة"
+                      />
+                      <span>–</span>
+                      <input
+                        className={styles.rangeIn}
+                        type="number"
+                        min={1}
+                        placeholder="إلى"
+                        value={cloudTo}
+                        onChange={(e) => setCloudTo(e.target.value)}
+                        aria-label="إلى صفحة"
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className={styles.stageActions}>
+                    <button
+                      className={styles.stageStart}
+                      disabled={fileBusy}
+                      onClick={() => {
+                        const f = staged;
+                        if (f) void handleLoadFile(f);
+                      }}
+                    >
+                      {fileBusy ? (ocrProgress || "يعالج…") : "ابدأ المعالجة"}
+                    </button>
+                    <button className={styles.stageCancel} onClick={() => setStaged(null)} disabled={fileBusy}>
+                      إلغاء
+                    </button>
+                  </div>
+                  {fileBusy && ocrProgress ? <div className={styles.stageProg}>{ocrProgress}</div> : null}
+                </div>
+              </div>
+            ) : null}
             {compare && compareDocs.length === 2 ? (
               <div className={styles.cmpWrap}>
                 {compareDocs.map((d) => {
@@ -1702,7 +1785,7 @@ export function CaseBrowser() {
               </>
             ) : (
               <div className={styles.empty}>
-                {docs.length ? "اختر مستنداً لعرض بطاقته ونصّه الكامل." : "أضف وثيقتك الأولى من زر «＋ إضافة» في الأعلى — يُصنَّف نوعها وجهتها وتُستخرج كياناتها فوراً في متصفحك دون إرسالها لأي خادم."}
+                {docs.length ? "اختر مستنداً لعرض بطاقته ونصّه الكامل." : "ارفع وثيقتك من زر «رفع ملف» أو بالسحب إلى هنا — تختار خيارات المعالجة (قراءة سحابية، نطاق صفحات) ثم تبدأ. يُصنَّف نوعها وجهتها وتُستخرج كياناتها في متصفحك."}
               </div>
             )}
           </main>
