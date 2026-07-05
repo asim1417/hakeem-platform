@@ -515,3 +515,67 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color: #fff;
   box-shadow: var(--ff-glow-lime);
 }
+
+/* ═══ نظام الأيقونات الموحّد (لوحة الهوية 06) ═══ */
+.ffic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.12em; flex-shrink: 0; }
+.currency .ffic { font-size: 17px; }
+.currency.coins .ffic { color: var(--ff-lime); }
+.currency.gems .ffic { color: var(--ff-cyan); }
+.audio-control .ffic { font-size: 16px; color: var(--ff-cyan); margin-inline-end: 4px; }
+.nav-item .ico { display: grid; place-items: center; }
+.nav-item .ico .ffic { font-size: 21px; }
+.nav-item.active .ico .ffic { color: #061012; }
+.icon-badge .ffic { font-size: 23px; color: var(--ff-cyan); }
+.ff-card.active .icon-badge .ffic { color: var(--ff-lime); }
+.list-item .status .ffic { font-size: 17px; }
+.ok-ic .ffic { color: var(--ff-lime); font-size: 17px; }
+.btn .ffic { font-size: 16px; }
+.big-trophy { display: grid; place-items: center; margin-bottom: 6px; }
+.big-trophy .ffic { font-size: 84px; color: var(--ff-lime); filter: drop-shadow(0 0 22px rgba(198,255,0,.4)); }
+
+/* ═══ بطاقات المهام — تصميم جوال أولاً ═══ */
+.mission-list { display: grid; gap: 10px; }
+.mission-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--ff-radius-md);
+  background: var(--ff-grad-panel);
+  border: 1px solid var(--ff-line);
+  position: relative; overflow: hidden;
+}
+.mission-item::before {
+  content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--ff-line-strong);
+}
+.mission-item.done { border-color: rgba(198,255,0,.45); }
+.mission-item.done::before { background: var(--ff-grad-primary); box-shadow: var(--ff-glow-lime); }
+.m-ic {
+  width: 42px; height: 42px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border-radius: 13px;
+  background: rgba(0,229,255,.08);
+  border: 1px solid var(--ff-line-strong);
+  color: var(--ff-cyan);
+}
+.m-ic .ffic { font-size: 21px; }
+.mission-item.done .m-ic { background: rgba(198,255,0,.10); border-color: rgba(198,255,0,.5); color: var(--ff-lime); }
+.m-body { flex: 1; min-width: 0; display: grid; gap: 7px; }
+.m-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.m-top h3 { margin: 0; font-size: 14px; font-weight: 800; }
+.m-reward {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--ff-lime); font-family: var(--ff-font-en); font-weight: 700; font-size: 12px;
+  white-space: nowrap; direction: ltr;
+  background: rgba(198,255,0,.08);
+  border: 1px solid rgba(198,255,0,.25);
+  border-radius: 999px; padding: 3px 9px;
+}
+.m-reward .ffic { font-size: 12px; }
+.m-meta { display: flex; align-items: center; gap: 10px; }
+.m-meta .progress { flex: 1; height: 8px; }
+.m-count { color: var(--ff-silver); font-family: var(--ff-font-en); font-weight: 700; font-size: 12px; direction: ltr; min-width: 32px; text-align: end; }
+@media (max-width: 680px) {
+  .m-top h3 { font-size: 13px; }
+  .mission-item { padding: 11px 12px; gap: 10px; }
+  .m-ic { width: 38px; height: 38px; }
+}

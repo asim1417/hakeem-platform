@@ -2,6 +2,7 @@
   "use strict";
 
   const DATA = window.FF_DATA;
+  const ic = (n) => window.FFIcons ? window.FFIcons.svg(n) : "";
 
   function esc(value) {
     return String(value == null ? "" : value)
@@ -23,9 +24,9 @@
           <div class="brand-title"><strong>${DATA.app.nameAr}</strong><span>${DATA.app.nameEn.toUpperCase()}</span></div>
         </div>
         <div class="top-actions">
-          <div class="currency" title="Coins">🪙 <b>${state.coins.toLocaleString("en-US")}</b></div>
-          <div class="currency" title="Gems">💎 <b>${state.gems.toLocaleString("en-US")}</b></div>
-          <button class="btn ghost small audio-control" data-action="toggleAudio" type="button" title="تشغيل/كتم الصوت">🔊 الصوت</button>
+          <div class="currency coins" title="Coins">${ic("coin")} <b>${state.coins.toLocaleString("en-US")}</b></div>
+          <div class="currency gems" title="Gems">${ic("gem")} <b>${state.gems.toLocaleString("en-US")}</b></div>
+          <button class="btn ghost small audio-control" data-action="toggleAudio" type="button" title="تشغيل/كتم الصوت">${ic("speaker")} الصوت</button>
           <button class="profile-pill" data-route="profile" type="button"><span class="avatar-dot">ع</span><span>${esc(state.player.name)} · LV ${state.player.level}</span></button>
         </div>
       </header>`;
@@ -35,7 +36,7 @@
     return `<nav class="bottom-nav" aria-label="التنقل الرئيسي">
       ${DATA.nav.map(item => `
         <button class="nav-item ${active === item.id ? "active" : ""}" data-route="${item.id}" type="button" aria-label="${esc(item.ar)}">
-          <span class="ico">${item.icon}</span><small>${esc(item.ar)}</small>
+          <span class="ico">${ic(item.icon)}</span><small>${esc(item.ar)}</small>
         </button>`).join("")}
     </nav>`;
   }
@@ -87,7 +88,7 @@
       <section class="card-grid three">
         ${cards.map(card => `
           <button class="ff-card" data-route="${card.route}" type="button" style="text-align:right;color:inherit">
-            <div class="icon-badge">${card.icon}</div><h3>${esc(card.title)}</h3><p>${esc(card.en)} · ${esc(card.desc)}</p>
+            <div class="icon-badge">${ic(card.icon)}</div><h3>${esc(card.title)}</h3><p>${esc(card.en)} · ${esc(card.desc)}</p>
           </button>`).join("")}
       </section>`);
   }
@@ -98,7 +99,7 @@
       <section class="card-grid four">
         ${DATA.modes.map((mode, i) => `
           <button class="ff-card ${i === 0 ? "active" : ""}" data-route="${mode.id === "quick" ? "preMatch" : mode.id === "academy" ? "academy" : mode.id === "training" ? "training" : mode.id === "online" ? "social" : "modes"}" type="button" style="text-align:right;color:inherit">
-            <div class="icon-badge">${mode.icon}</div>
+            <div class="icon-badge">${ic(mode.icon)}</div>
             <h3>${esc(mode.ar)}</h3>
             <p>${esc(mode.en)} · ${esc(mode.desc)}</p>
           </button>`).join("")}
@@ -107,7 +108,7 @@
       <section class="panel"><div class="panel-inner">
         <div class="section-title"><h2>تدفق تجربة اللعب</h2><span>GAMEPLAY FLOW</span></div>
         <div class="card-grid four">
-          ${["التشكيلة", "البداية", "اللعب المباشر", "الملخص"].map((x, i) => `<div class="ff-card"><div class="icon-badge">${["📋","⚽","🎮","🏅"][i]}</div><h3>${x}</h3><p>${["LINEUP","KICKOFF","LIVE MATCH","SUMMARY"][i]}</p></div>`).join("")}
+          ${["التشكيلة", "البداية", "اللعب المباشر", "الملخص"].map((x, i) => `<div class="ff-card"><div class="icon-badge">${ic(["📋","⚽","🎮","🏅"][i])}</div><h3>${x}</h3><p>${["LINEUP","KICKOFF","LIVE MATCH","SUMMARY"][i]}</p></div>`).join("")}
         </div>
       </div></section>`);
   }
@@ -126,9 +127,9 @@
           <div class="stats-row"><div class="stat"><b>87</b><span>قوة الفريق</span></div><div class="stat"><b>92</b><span>انسجام</span></div><div class="stat"><b>4-3-3</b><span>الخطة</span></div></div>
           <div style="height:14px"></div>
           <div class="list">
-            <button class="list-item" type="button"><span class="status">⚙</span><div><h3>الخطط والتكتيك</h3><p>Tactics & roles</p></div><span>›</span></button>
-            <button class="list-item" type="button"><span class="status">👟</span><div><h3>المعدات والزي</h3><p>Outfit & boots</p></div><span>›</span></button>
-            <button class="list-item" type="button"><span class="status">⚡</span><div><h3>تطوير المهارات</h3><p>Skill upgrades</p></div><span>›</span></button>
+            <button class="list-item" type="button"><span class="status">${ic("gear")}</span><div><h3>الخطط والتكتيك</h3><p>Tactics & roles</p></div><span>›</span></button>
+            <button class="list-item" type="button"><span class="status">${ic("boot")}</span><div><h3>المعدات والزي</h3><p>Outfit & boots</p></div><span>›</span></button>
+            <button class="list-item" type="button"><span class="status">${ic("bolt")}</span><div><h3>تطوير المهارات</h3><p>Skill upgrades</p></div><span>›</span></button>
           </div>
         </div></div>
       </section>`);
@@ -138,17 +139,26 @@
     return shell(state, "missions", `
       <div class="section-title"><h1>المهام والتحديات</h1><span>MISSIONS & CHALLENGES</span></div>
       <div class="tabs"><button class="tab active">اليومية</button><button class="tab">الأسبوعية</button><button class="tab">الموسمية</button></div>
-      <section class="panel"><div class="panel-inner">
-        <div class="list">
-          ${state.missions.map(m => `
-            <div class="list-item">
-              <span class="status">${m.progress >= m.target ? "✓" : "⚡"}</span>
-              <div><h3>${esc(m.ar)}</h3><p>${esc(m.en)} · ${m.progress}/${m.target}<span class="progress" style="margin-top:8px"><i style="--p:${pct(m.progress, m.target)}%"></i></span></p></div>
-              <strong class="price">${m.reward} ${m.type}</strong>
-            </div>`).join("")}
-        </div>
-        <div style="height:14px"></div><button class="btn secondary" data-action="claimMissions" type="button">استلام المكتمل</button>
-      </div></section>`);
+      <section class="mission-list">
+        ${state.missions.map(m => {
+          const done = m.progress >= m.target;
+          return `
+          <div class="mission-item ${done ? "done" : ""} ${m.claimed ? "claimed" : ""}">
+            <span class="m-ic">${ic(done ? "check" : "target")}</span>
+            <div class="m-body">
+              <div class="m-top">
+                <h3>${esc(m.ar)}</h3>
+                <span class="m-reward">${ic("bolt")} ${m.reward} XP</span>
+              </div>
+              <div class="m-meta">
+                <div class="progress"><i style="--p:${pct(m.progress, m.target)}%"></i></div>
+                <span class="m-count">${m.progress}/${m.target}</span>
+              </div>
+            </div>
+          </div>`;
+        }).join("")}
+      </section>
+      <button class="btn secondary" data-action="claimMissions" type="button" style="margin-top:14px">${ic("gift")} استلام المكتمل</button>`);
   }
 
   function tournaments(state) {
@@ -158,12 +168,12 @@
         <div class="panel"><div class="panel-inner">
           <div class="section-title"><h2>كأس المستقبل</h2><span>FUTURE CUP</span></div>
           <div class="ff-card active" style="min-height:310px;display:grid;place-items:center;text-align:center">
-            <div style="font-size:88px">🏆</div><h3 style="font-size:34px">النهائي</h3><p>Future United VS Al Nmooor</p>
+            <div class="big-trophy">${ic("trophy")}</div><h3 style="font-size:34px">النهائي</h3><p>Future United VS Al Nmooor</p>
             <button class="btn" data-route="preMatch" type="button">ابدأ النهائي</button>
           </div>
         </div></div>
         <div class="panel"><div class="panel-inner"><div class="section-title"><h2>بطولات قادمة</h2><span>UPCOMING</span></div>
-          <div class="list">${DATA.events.map(e => `<div class="list-item"><span class="status">${e.icon}</span><div><h3>${e.ar}</h3><p>${e.en}</p></div><span class="price">${e.time}</span></div>`).join("")}</div>
+          <div class="list">${DATA.events.map(e => `<div class="list-item"><span class="status">${ic(e.icon)}</span><div><h3>${e.ar}</h3><p>${e.en}</p></div><span class="price">${e.time}</span></div>`).join("")}</div>
         </div></div>
       </section>`);
   }
@@ -176,7 +186,7 @@
         ${DATA.shop.map((pack, i) => `
           <div class="ff-card shop-pack ${i === 0 ? "active" : ""}">
             <div><div class="pack-rating">${esc(pack.rating)}</div><h3>${esc(pack.ar)}</h3><p>${esc(pack.en)}</p></div>
-            <button class="btn small ${i === 0 ? "" : "secondary"}" data-action="buyPack" data-price="${pack.price.replace(/,/g, "")}" type="button">💎 ${esc(pack.price)}</button>
+            <button class="btn small ${i === 0 ? "" : "secondary"}" data-action="buyPack" data-price="${pack.price.replace(/,/g, "")}" type="button">${ic("gem")} ${esc(pack.price)}</button>
           </div>`).join("")}
       </section>
       <section style="height:14px"></section>
@@ -201,9 +211,9 @@
         </div></div>
         <div class="panel"><div class="panel-inner"><div class="section-title"><h2>الإنجازات</h2><span>ACHIEVEMENTS</span></div>
           <div class="list">
-            <div class="list-item"><span class="status">⚽</span><div><h3>أول هدف</h3><p>First Goal · مكتمل</p></div><span>✓</span></div>
-            <div class="list-item"><span class="status">🔥</span><div><h3>فوز متتالي</h3><p>Win Streak · 3/5</p></div><span>3/5</span></div>
-            <div class="list-item"><span class="status">🎁</span><div><h3>مكافأة الموسم</h3><p>Season Reward</p></div><span>›</span></div>
+            <div class="list-item"><span class="status">${ic("ball")}</span><div><h3>أول هدف</h3><p>First Goal · مكتمل</p></div><span class="ok-ic">${ic("check")}</span></div>
+            <div class="list-item"><span class="status">${ic("bolt")}</span><div><h3>فوز متتالي</h3><p>Win Streak · 3/5</p></div><span>3/5</span></div>
+            <div class="list-item"><span class="status">${ic("gift")}</span><div><h3>مكافأة الموسم</h3><p>Season Reward</p></div><span>›</span></div>
           </div>
         </div></div>
       </section>`);
@@ -213,8 +223,8 @@
     return shell(state, "settings", `
       <div class="section-title"><h1>الإعدادات</h1><span>SETTINGS</span></div>
       <section class="panel"><div class="panel-inner settings-list"><div class="list">
-        ${DATA.settings.map(s => `<button class="list-item" type="button"><span class="status">${s.icon}</span><div><h3>${esc(s.ar)}</h3><p>${esc(s.en)}</p></div>${s.type === "toggle" ? `<span class="switch ${s.on ? "on" : ""}"></span>` : `<span>›</span>`}</button>`).join("")}
-        <button class="list-item" data-action="testArabicVoice" type="button"><span class="status">🔊</span><div><h3>اختبار الصوت العربي</h3><p>Arabic voice test + procedural SFX</p></div><span>تشغيل</span></button>
+        ${DATA.settings.map(s => `<button class="list-item" type="button"><span class="status">${ic(s.icon)}</span><div><h3>${esc(s.ar)}</h3><p>${esc(s.en)}</p></div>${s.type === "toggle" ? `<span class="switch ${s.on ? "on" : ""}"></span>` : `<span>›</span>`}</button>`).join("")}
+        <button class="list-item" data-action="testArabicVoice" type="button"><span class="status">${ic("speaker")}</span><div><h3>اختبار الصوت العربي</h3><p>Arabic voice test + procedural SFX</p></div><span>تشغيل</span></button>
       </div></div></section>`);
   }
 
@@ -228,9 +238,9 @@
           <div class="stats-row"><div class="stat"><b>87</b><span>Future FC</span></div><div class="stat"><b>VS</b><span>المباراة</span></div><div class="stat"><b>84</b><span>Al Nmooor</span></div></div>
           <div style="height:16px"></div>
           <div class="list">
-            <div class="list-item"><span class="status">🛡</span><div><h3>دفاع متوازن</h3><p>Balanced defense</p></div><span>نشط</span></div>
-            <div class="list-item"><span class="status">⚡</span><div><h3>هجوم سريع</h3><p>Quick attack</p></div><span>جاهز</span></div>
-            <div class="list-item"><span class="status">🎯</span><div><h3>تعليمات مبسطة</h3><p>Young-player tutorial hints</p></div><span>مفعل</span></div>
+            <div class="list-item"><span class="status">${ic("shield")}</span><div><h3>دفاع متوازن</h3><p>Balanced defense</p></div><span>نشط</span></div>
+            <div class="list-item"><span class="status">${ic("bolt")}</span><div><h3>هجوم سريع</h3><p>Quick attack</p></div><span>جاهز</span></div>
+            <div class="list-item"><span class="status">${ic("target")}</span><div><h3>تعليمات مبسطة</h3><p>Young-player tutorial hints</p></div><span>مفعل</span></div>
           </div>
           <div class="diff-seg" role="group" aria-label="مستوى الصعوبة">
             ${[["0.85","😊 سهل"],["1","💪 متوسط"],["1.2","🔥 صعب"]].map(([v, label]) => `
@@ -300,33 +310,33 @@
       <section class="hero-grid">
         <div class="panel"><div class="panel-inner hero-card"><div class="hero-copy"><div class="kicker">STRIKER TRAINING · LEVEL 3</div><h1><span class="gradient-text">طور مهاراتك</span></h1><p>نظام تدريب مبسط للأطفال: تعليمات قصيرة، مكافآت واضحة، وتقدم آمن خطوة بخطوة.</p><div class="cta-row"><button class="btn" data-route="preMatch" type="button">ابدأ تدريب المباراة</button><button class="btn secondary" data-route="skills" type="button">شجرة المهارات</button></div></div></div></div>
         <div class="panel"><div class="panel-inner"><div class="section-title"><h2>تقدم التدريب</h2><span>TRAINING PROGRESS</span></div><div class="stats-row"><div class="stat"><b>12</b><span>نقاط مهارة</span></div><div class="stat"><b>76%</b><span>جاهزية</span></div><div class="stat"><b>3</b><span>مستوى</span></div></div><div style="height:14px"></div><div class="progress"><i style="--p:76%"></i></div></div></div>
-      </section><section style="height:14px"></section><section class="card-grid four">${drills.map(d => `<button class="ff-card" type="button" style="text-align:right;color:inherit"><div class="icon-badge">${d[0]}</div><h3>${d[1]}</h3><p>${d[2]} · ${d[3]}</p></button>`).join("")}</section>`);
+      </section><section style="height:14px"></section><section class="card-grid four">${drills.map(d => `<button class="ff-card" type="button" style="text-align:right;color:inherit"><div class="icon-badge">${ic(d[0])}</div><h3>${d[1]}</h3><p>${d[2]} · ${d[3]}</p></button>`).join("")}</section>`);
   }
 
   function avatar(state) {
     const faces = ["قصير", "مموج", "رياضي", "كلاسيكي", "ناعم", "حارس"];
     return shell(state, "profile", `
       <div class="section-title"><h1>تخصيص هوية اللاعب</h1><span>CUSTOM AVATAR</span></div>
-      <section class="hero-grid"><div class="panel"><div class="panel-inner hero-player"><div class="hero-copy"><div class="kicker">DESIGN YOUR IDENTITY</div><h1><span class="gradient-text">${esc(state.player.name)}</span></h1><p>تعديل آمن لشكل اللاعب: الشعر، البشرة، الزي، الحذاء، والاحتفالات بدون صور حقيقية أو بيانات حساسة.</p><div class="cta-row"><button class="btn" data-route="profile" type="button">حفظ الهوية</button><button class="btn secondary" data-route="team" type="button">العودة للفريق</button></div></div><div class="player-figure"></div></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>خيارات المظهر</h2><span>LOOK OPTIONS</span></div><div class="badge-row">${faces.map(f => `<span class="badge">${f}</span>`).join("")}</div><div style="height:14px"></div><div class="list"><div class="list-item"><span class="status">👕</span><div><h3>زي فيوتشر الأساسي</h3><p>Black / Lime / Cyan</p></div><span>✓</span></div><div class="list-item"><span class="status">👟</span><div><h3>حذاء السرعة</h3><p>Aero Strike</p></div><span>✓</span></div></div></div></div></section>`);
+      <section class="hero-grid"><div class="panel"><div class="panel-inner hero-player"><div class="hero-copy"><div class="kicker">DESIGN YOUR IDENTITY</div><h1><span class="gradient-text">${esc(state.player.name)}</span></h1><p>تعديل آمن لشكل اللاعب: الشعر، البشرة، الزي، الحذاء، والاحتفالات بدون صور حقيقية أو بيانات حساسة.</p><div class="cta-row"><button class="btn" data-route="profile" type="button">حفظ الهوية</button><button class="btn secondary" data-route="team" type="button">العودة للفريق</button></div></div><div class="player-figure"></div></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>خيارات المظهر</h2><span>LOOK OPTIONS</span></div><div class="badge-row">${faces.map(f => `<span class="badge">${f}</span>`).join("")}</div><div style="height:14px"></div><div class="list"><div class="list-item"><span class="status">${ic("shirt")}</span><div><h3>زي فيوتشر الأساسي</h3><p>Black / Lime / Cyan</p></div><span>✓</span></div><div class="list-item"><span class="status">${ic("boot")}</span><div><h3>حذاء السرعة</h3><p>Aero Strike</p></div><span>✓</span></div></div></div></div></section>`);
   }
 
   function skills(state) {
     const skills = [["⚽","تسديدة قوية","POWER SHOT","3/5"],["🧠","صانع لعب","PLAYMAKER","2/5"],["🛡","ضغط دفاعي","PRESSURE","1/5"],["⚡","انطلاقة","SPRINT BURST","4/5"],["🎯","دقة التمرير","PASS ACCURACY","3/5"],["🌀","مراوغة سريعة","QUICK DRIBBLE","2/5"]];
-    return shell(state, "team", `<div class="section-title"><h1>شجرة المهارات</h1><span>SKILL TREE</span></div><section class="card-grid three">${skills.map((s,i)=>`<div class="ff-card ${i===0?'active':''}"><div class="icon-badge">${s[0]}</div><h3>${s[1]}</h3><p>${s[2]} · ${s[3]}</p><div class="progress" style="margin-top:12px"><i style="--p:${Number(s[3].split('/')[0])*20}%"></i></div></div>`).join("")}</section><section style="height:14px"></section><section class="panel"><div class="panel-inner"><button class="btn" data-route="training" type="button">اكسب نقاط مهارة من التدريب</button></div></section>`);
+    return shell(state, "team", `<div class="section-title"><h1>شجرة المهارات</h1><span>SKILL TREE</span></div><section class="card-grid three">${skills.map((s,i)=>`<div class="ff-card ${i===0?'active':''}"><div class="icon-badge">${ic(s[0])}</div><h3>${s[1]}</h3><p>${s[2]} · ${s[3]}</p><div class="progress" style="margin-top:12px"><i style="--p:${Number(s[3].split('/')[0])*20}%"></i></div></div>`).join("")}</section><section style="height:14px"></section><section class="panel"><div class="panel-inner"><button class="btn" data-route="training" type="button">اكسب نقاط مهارة من التدريب</button></div></section>`);
   }
 
   function academy(state) {
     const stages = [["المبتدئ","ROOKIE","1-10","✓"],["النشء","DEVELOPING","11-20","نشط"],["المتميز","ADVANCED","21-30","🔒"],["النخبة","ELITE","31-40","🔒"],["الأسطورة","LEGEND","41+","🔒"]];
-    return shell(state, "modes", `<div class="section-title"><h1>أكاديمية فيوتشر</h1><span>ACADEMY DEVELOPMENT JOURNEY</span></div><section class="card-grid five">${stages.map((s,i)=>`<div class="ff-card ${i===1?'active':''}"><div class="icon-badge">${i<2?'⭐':'🔒'}</div><h3>${s[0]}</h3><p>${s[1]} · ${s[2]}</p><strong class="price">${s[3]}</strong></div>`).join("")}</section><section style="height:14px"></section><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>مزايا الأكاديمية</h2><span>BENEFITS</span></div><div class="list"><div class="list-item"><span class="status">🎓</span><div><h3>تعليمات قصيرة</h3><p>Simple direct language for ages 7-14</p></div><span>✓</span></div><div class="list-item"><span class="status">🏆</span><div><h3>بطولات أكاديمية</h3><p>Academy tournaments</p></div><span>✓</span></div><div class="list-item"><span class="status">🛡</span><div><h3>بيئة آمنة</h3><p>Kid-safe progression</p></div><span>✓</span></div></div></div></div><div class="panel"><div class="panel-inner hero-card"><div class="hero-copy"><h1><span class="gradient-text">كل خطوة تقربك من حلمك</span></h1><p>رحلة تقدم واضحة من لاعب ناشئ إلى نجم المستقبل.</p><button class="btn" data-route="training" type="button">ابدأ الرحلة</button></div></div></div></section>`);
+    return shell(state, "modes", `<div class="section-title"><h1>أكاديمية فيوتشر</h1><span>ACADEMY DEVELOPMENT JOURNEY</span></div><section class="card-grid five">${stages.map((s,i)=>`<div class="ff-card ${i===1?'active':''}"><div class="icon-badge">${ic(i<2?"star":"lock")}</div><h3>${s[0]}</h3><p>${s[1]} · ${s[2]}</p><strong class="price">${s[3]}</strong></div>`).join("")}</section><section style="height:14px"></section><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>مزايا الأكاديمية</h2><span>BENEFITS</span></div><div class="list"><div class="list-item"><span class="status">🎓</span><div><h3>تعليمات قصيرة</h3><p>Simple direct language for ages 7-14</p></div><span>✓</span></div><div class="list-item"><span class="status">🏆</span><div><h3>بطولات أكاديمية</h3><p>Academy tournaments</p></div><span>✓</span></div><div class="list-item"><span class="status">🛡</span><div><h3>بيئة آمنة</h3><p>Kid-safe progression</p></div><span>✓</span></div></div></div></div><div class="panel"><div class="panel-inner hero-card"><div class="hero-copy"><h1><span class="gradient-text">كل خطوة تقربك من حلمك</span></h1><p>رحلة تقدم واضحة من لاعب ناشئ إلى نجم المستقبل.</p><button class="btn" data-route="training" type="button">ابدأ الرحلة</button></div></div></div></section>`);
   }
 
   function events(state) {
-    return shell(state, "tournaments", `<div class="section-title"><h1>مركز الأحداث الموسمية</h1><span>SEASONAL EVENT HUB</span></div><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>نهائيات الأبطال</h2><span>CHAMPIONS FINALS</span></div><div class="ff-card active"><div class="pack-rating">90+</div><h3>ينتهي خلال 4 أيام</h3><p>أكمل تحديات المهارات واحصل على باقة بطل المستقبل.</p><div class="cta-row"><button class="btn" data-route="preMatch" type="button">ادخل الحدث</button><button class="btn secondary" data-route="rewards" type="button">المكافآت</button></div></div></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>أحداث جارية</h2><span>LIVE EVENTS</span></div><div class="list">${DATA.events.map(e=>`<button class="list-item" data-route="preMatch" type="button"><span class="status">${e.icon}</span><div><h3>${esc(e.ar)}</h3><p>${esc(e.en)}</p></div><span>${e.time}</span></button>`).join("")}</div></div></div></section>`);
+    return shell(state, "tournaments", `<div class="section-title"><h1>مركز الأحداث الموسمية</h1><span>SEASONAL EVENT HUB</span></div><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>نهائيات الأبطال</h2><span>CHAMPIONS FINALS</span></div><div class="ff-card active"><div class="pack-rating">90+</div><h3>ينتهي خلال 4 أيام</h3><p>أكمل تحديات المهارات واحصل على باقة بطل المستقبل.</p><div class="cta-row"><button class="btn" data-route="preMatch" type="button">ادخل الحدث</button><button class="btn secondary" data-route="rewards" type="button">المكافآت</button></div></div></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>أحداث جارية</h2><span>LIVE EVENTS</span></div><div class="list">${DATA.events.map(e=>`<button class="list-item" data-route="preMatch" type="button"><span class="status">${ic(e.icon)}</span><div><h3>${esc(e.ar)}</h3><p>${esc(e.en)}</p></div><span>${e.time}</span></button>`).join("")}</div></div></div></section>`);
   }
 
   function social(state) {
     const friends = [["ALI_FF","ONLINE","89"],["NOVA_KING","IN MATCH","87"],["MOHAMED_10","ONLINE","84"],["ZIDANE_FF","OFFLINE","82"]];
-    return shell(state, "profile", `<div class="section-title"><h1>النادي والأصدقاء</h1><span>CLUB / FRIENDS / SAFE SOCIAL</span></div><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>نادي المستقبل</h2><span>FUTURE CLUB</span></div><div class="stats-row"><div class="stat"><b>32/50</b><span>أعضاء</span></div><div class="stat"><b>124</b><span>انتصار</span></div><div class="stat"><b>210</b><span>مباراة</span></div></div><div class="cta-row"><button class="btn" data-route="leaderboard" type="button">لوحة المتصدرين</button><button class="btn secondary" data-route="notifications" type="button">التنبيهات</button></div></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>تواصل آمن</h2><span>SAFE REACTIONS</span></div><div class="badge-row"><span class="badge lime">لعب جميل!</span><span class="badge">بالتوفيق</span><span class="badge">تمريرة رائعة</span><span class="badge">أحسنت</span><span class="badge">شكراً</span></div><div style="height:12px"></div><div class="list">${friends.map(f=>`<div class="list-item"><span class="status">👤</span><div><h3>${f[0]}</h3><p>${f[1]}</p></div><strong class="price">${f[2]}</strong></div>`).join("")}</div></div></div></section>`);
+    return shell(state, "profile", `<div class="section-title"><h1>النادي والأصدقاء</h1><span>CLUB / FRIENDS / SAFE SOCIAL</span></div><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>نادي المستقبل</h2><span>FUTURE CLUB</span></div><div class="stats-row"><div class="stat"><b>32/50</b><span>أعضاء</span></div><div class="stat"><b>124</b><span>انتصار</span></div><div class="stat"><b>210</b><span>مباراة</span></div></div><div class="cta-row"><button class="btn" data-route="leaderboard" type="button">لوحة المتصدرين</button><button class="btn secondary" data-route="notifications" type="button">التنبيهات</button></div></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>تواصل آمن</h2><span>SAFE REACTIONS</span></div><div class="badge-row"><span class="badge lime">لعب جميل!</span><span class="badge">بالتوفيق</span><span class="badge">تمريرة رائعة</span><span class="badge">أحسنت</span><span class="badge">شكراً</span></div><div style="height:12px"></div><div class="list">${friends.map(f=>`<div class="list-item"><span class="status">${ic("user")}</span><div><h3>${f[0]}</h3><p>${f[1]}</p></div><strong class="price">${f[2]}</strong></div>`).join("")}</div></div></div></section>`);
   }
 
   function leaderboard(state) {
@@ -336,11 +346,11 @@
 
   function notifications(state) {
     const items = [["🎁","مكافأة مهمة يومية","Daily mission reward claimed","منذ 5 دقائق"],["👥","دعوة للانضمام إلى النادي","Club invitation","منذ 15 دقيقة"],["⚡","حدث جديد متاح الآن","New event is live","منذ ساعة"],["🛒","تم فتح عرض متجر جديد","New store offer","منذ ساعتين"]];
-    return shell(state, "profile", `<div class="section-title"><h1>الإشعارات والبريد</h1><span>NOTIFICATIONS & INBOX</span></div><section class="panel"><div class="panel-inner"><div class="list">${items.map(i=>`<div class="list-item"><span class="status">${i[0]}</span><div><h3>${i[1]}</h3><p>${i[2]}</p></div><span>${i[3]}</span></div>`).join("")}</div><div class="cta-row"><button class="btn secondary" data-route="rewards" type="button">استلام المكافآت</button></div></div></section>`);
+    return shell(state, "profile", `<div class="section-title"><h1>الإشعارات والبريد</h1><span>NOTIFICATIONS & INBOX</span></div><section class="panel"><div class="panel-inner"><div class="list">${items.map(i=>`<div class="list-item"><span class="status">${ic(i[0])}</span><div><h3>${i[1]}</h3><p>${i[2]}</p></div><span>${i[3]}</span></div>`).join("")}</div><div class="cta-row"><button class="btn secondary" data-route="rewards" type="button">استلام المكافآت</button></div></div></section>`);
   }
 
   function rewards(state) {
-    return shell(state, "missions", `<div class="section-title"><h1>المكافآت والتقدم</h1><span>REWARDS & PROGRESSION</span></div><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>مستوى اللاعب</h2><span>LEVELING</span></div><div class="stats-row"><div class="stat"><b>${state.player.level}</b><span>الحالي</span></div><div class="stat"><b>${state.player.level+1}</b><span>التالي</span></div><div class="stat"><b>${state.player.xp}</b><span>XP</span></div></div><div style="height:14px"></div><div class="progress"><i style="--p:${pct(state.player.xp,state.player.nextXp)}%"></i></div><button class="btn" data-action="claimMissions" type="button" style="margin-top:16px">استلام المكتمل</button></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>جوائز قادمة</h2><span>NEXT REWARDS</span></div><div class="card-grid two"><div class="ff-card"><div class="icon-badge">🪙</div><h3>2,000 عملة</h3><p>COINS</p></div><div class="ff-card"><div class="icon-badge">🎽</div><h3>زي حصري</h3><p>EXCLUSIVE KIT</p></div></div></div></div></section>`);
+    return shell(state, "missions", `<div class="section-title"><h1>المكافآت والتقدم</h1><span>REWARDS & PROGRESSION</span></div><section class="hero-grid"><div class="panel"><div class="panel-inner"><div class="section-title"><h2>مستوى اللاعب</h2><span>LEVELING</span></div><div class="stats-row"><div class="stat"><b>${state.player.level}</b><span>الحالي</span></div><div class="stat"><b>${state.player.level+1}</b><span>التالي</span></div><div class="stat"><b>${state.player.xp}</b><span>XP</span></div></div><div style="height:14px"></div><div class="progress"><i style="--p:${pct(state.player.xp,state.player.nextXp)}%"></i></div><button class="btn" data-action="claimMissions" type="button" style="margin-top:16px">استلام المكتمل</button></div></div><div class="panel"><div class="panel-inner"><div class="section-title"><h2>جوائز قادمة</h2><span>NEXT REWARDS</span></div><div class="card-grid two"><div class="ff-card"><div class="icon-badge">${ic("coin")}</div><h3>2,000 عملة</h3><p>COINS</p></div><div class="ff-card"><div class="icon-badge">${ic("shirt")}</div><h3>زي حصري</h3><p>EXCLUSIVE KIT</p></div></div></div></div></section>`);
   }
 
   function notFound(state) {
