@@ -26,6 +26,12 @@ app = FastAPI(title="أداة معالجة الوثائق العربية", docs_
 # مكسب مباشر: read_bytes يلتقط جداول Word أيضاً (كثير من الوثائق القانونية جداول).
 from doc_reader import clean_text, norm, read_bytes as extract_text  # noqa: E402
 
+# المعالجة في الخلفية (مهام) + مزوّد Gemini الإضافي
+import jobs as jobstore  # noqa: E402
+from gemini_provider import gemini_available  # noqa: E402
+
+jobstore.resume_pending()  # استئناف أي مهمّة لم تكتمل قبل إعادة تشغيل الخادم
+
 # ---------- قاعدة البيانات ----------
 def _db():
     con = sqlite3.connect(DB)
@@ -134,6 +140,71 @@ def api_clear(req: Request):
     return JSONResponse({"ok": True})
 
 
+# ---------- المعالجة في الخلفية (مهام) ----------
+@app.get("/api/providers")
+def api_providers(req: Request):
+    """المزوّدون المتاحون — local دائماً، وgemini إن ضُبط المفتاح."""
+    _guard(req)
+    return JSONResponse({"local": True, "gemini": gemini_available()})
+
+
+@app.post("/api/jobs")
+async def api_create_job(
+    req: Request,
+    files: list[UploadFile] = File(...),
+    provider: str = Form("local"),
+    model: str = Form("flash"),
+):
+    """يرفع وثائق ويبدأ معالجتها في الخلفية على الخادم. يعيد job_id فوراً."""
+    _guard(req)
+    provider = provider if provider in ("local", "gemini") else "local"
+    if provider == "gemini" and not gemini_available():
+        raise HTTPException(400, "مزوّد Gemini غير مُفعّل — اضبط GEMINI_API_KEY على الخادم")
+    payload = [(f.filename, await f.read()) for f in files]
+    if not payload:
+        raise HTTPException(400, "أرفق ملفاً واحداً على الأقل")
+    job_id = jobstore.start_job(payload, provider=provider, model=(model or "flash"))
+    return JSONResponse({"job_id": job_id, "total": len(payload), "provider": provider})
+
+
+@app.get("/api/jobs")
+def api_list_jobs(req: Request):
+    _guard(req)
+    return JSONResponse(jobstore.list_jobs())
+
+
+@app.get("/api/jobs/{job_id}")
+def api_get_job(req: Request, job_id: str, text: int = 0):
+    """حالة المهمّة وتقدّمها — والنصوص عند text=1. صالحٌ للاستطلاع بعد العودة للصفحة."""
+    _guard(req)
+    j = jobstore.get_job(job_id, include_text=bool(text))
+    if not j:
+        raise HTTPException(404, "المهمّة غير موجودة")
+    return JSONResponse(j)
+
+
+@app.post("/api/jobs/{job_id}/import")
+def api_import_job(req: Request, job_id: str):
+    """يستورد نتائج مهمّة مكتملة إلى فهرس البحث (docs/fts)."""
+    _guard(req)
+    j = jobstore.get_job(job_id, include_text=True)
+    if not j:
+        raise HTTPException(404, "المهمّة غير موجودة")
+    con = _db(); added = 0
+    for f in j["files"]:
+        txt = clean_text(f.get("text") or "")
+        if not txt.strip():
+            continue
+        cur = con.execute(
+            "INSERT INTO docs(title,kind,full_text,norm_text) VALUES(?,?,?,?)",
+            (f["name"], f.get("kind") or "", txt, norm(txt)),
+        )
+        con.execute("INSERT INTO fts(rowid,body) VALUES(?,?)", (cur.lastrowid, norm(txt)))
+        added += 1
+    con.commit(); con.close()
+    return JSONResponse({"imported": added})
+
+
 @app.get("/healthz")
 def health():
     return {"ok": True}
@@ -162,6 +233,8 @@ mark{background:#fde68a}.cnt{color:var(--mut);font-size:12px;padding:6px 12px}.k
 </style>
 <header><b>أداة معالجة الوثائق العربية</b>
   <input id=q placeholder="بحث في وثائقك…">
+  <select id=prov class="btn alt" title="مزوّد المعالجة" style="padding:8px"></select>
+  <select id=model class="btn alt" title="نموذج Gemini" style="padding:8px;display:none"><option value=flash>flash (سريع)</option><option value=pro>pro (دقّة أعلى)</option></select>
   <label class="btn">➕ إرفاق ملفات<input id=file type=file multiple style=display:none accept=".txt,.md,.csv,.json,.docx,.pdf,.png,.jpg,.jpeg,.tif,.tiff"></label>
   <button class="btn alt" id=clr>🗑️ مسح الكل</button>
   <span id=cnt class=cnt></span>__LOGOUT__
@@ -190,9 +263,18 @@ function refresh(){var v=q.value.trim();if(!v){curTokens=[];api('GET','/api/docs
 function hl(t){var e=esc(t);if(!curTokens.length)return e;var nb=nrm(t),marks=[];curTokens.forEach(function(tok){var i=0;while((i=nb.indexOf(tok,i))>=0){marks.push([i,i+tok.length]);i+=tok.length;}});
  if(!marks.length)return e;marks.sort(function(a,b){return a[0]-b[0];});var o='',p=0;marks.forEach(function(m){if(m[0]<p)return;o+=esc(t.slice(p,m[0]))+'<mark>'+esc(t.slice(m[0],m[1]))+'</mark>';p=m[1];});return o+esc(t.slice(p));}
 function openDoc(id){api('GET','/api/doc/'+id,null,function(d){document.getElementById('detail').innerHTML='<h2>'+esc(d.title)+' <span class=kind>['+esc(d.kind||'')+']</span></h2><hr><div class=txt>'+hl(d.full_text||'(لا نص مستخرج)')+'</div>';});}
+/* المزوّدون: local دائماً، وgemini إن ضُبط المفتاح على الخادم */
+var prov=document.getElementById('prov'),modelSel=document.getElementById('model');
+function setupProviders(){api('GET','/api/providers',null,function(p){var o='<option value=local>محلّي (بايثون/زيني)</option>';if(p&&p.gemini)o+='<option value=gemini>Gemini (سحابي)</option>';prov.innerHTML=o;prov.onchange=function(){modelSel.style.display=prov.value=='gemini'?'':'none';};});}
+/* رفع → مهمّة خلفية على الخادم → استطلاع التقدّم (يصمد أمام إغلاق التبويب) */
+function pollJob(id){api('GET','/api/jobs/'+id,null,function(j){if(!j)return;cnt.textContent='معالجة في الخلفية… '+j.done+'/'+j.total;
+ if(j.status=='done'){api('POST','/api/jobs/'+id+'/import',new FormData(),function(r){cnt.textContent='اكتمل — استُورد '+(r?r.imported:0)+' وثيقة';refresh();});}
+ else{setTimeout(function(){pollJob(id);},1500);}});}
 function upload(files){if(!files.length)return;var fd=new FormData();for(var i=0;i<files.length;i++)fd.append('files',files[i]);
- cnt.textContent='جارٍ الرفع والمعالجة…';api('POST','/api/upload',fd,function(r){var ok=r.added.filter(function(x){return x.ok;}).length;cnt.textContent='أُضيف '+r.added.length+' (نجح استخراج '+ok+')';refresh();});}
+ fd.append('provider',prov.value||'local');fd.append('model',modelSel.value||'flash');
+ cnt.textContent='بدء المعالجة…';api('POST','/api/jobs',fd,function(r){if(r&&r.job_id){cnt.textContent='معالجة في الخلفية… (يمكنك إغلاق الصفحة والعودة)';pollJob(r.job_id);}});}
 document.getElementById('file').onchange=function(e){upload(e.target.files);};
+setupProviders();
 ['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('hl');});});
 ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('hl');});});
 drop.addEventListener('drop',function(e){upload(e.dataTransfer.files);});
