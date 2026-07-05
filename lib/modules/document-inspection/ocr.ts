@@ -6,6 +6,8 @@
 // تدرّج رمادي + عتبة Otsu (تحويل ثنائي) + تكبير الصور الصغيرة إلى ~300DPI،
 // ورفع دقّة تحويل صفحات PDF، وضبط وسائط Tesseract للعربية.
 
+import { isGarbledArabicText, scrubLogoNoise } from "./reshape";
+
 export type OcrProgress = (info: { status: string; progress: number }) => void;
 
 const OCR_LANGS = "ara+eng";
@@ -134,6 +136,27 @@ interface RecognizeResult {
   confidence: number;
 }
 
+// ── درجة جودة النص لاختيار أفضل استراتيجية OCR (نظير معادلة الجودة في محرّك زيني) ──
+// تجمع: ثقة Tesseract + نسبة العربية + طول النص − عقوبة الخربشة (شظايا/رموز غريبة).
+function pageQualityScore(text: string, confidence: number, garble: { fragmentRatio: number; substitutionRatio: number; unmappedRatio: number }): number {
+  const t = text.trim();
+  if (t.length < 5) return -1;
+  const chars = Array.from(t);
+  const arabic = chars.filter((c) => /[؀-ۿ]/u.test(c)).length;
+  const letters = chars.filter((c) => /[\p{L}]/u.test(c)).length;
+  const arabicRatio = letters > 0 ? arabic / letters : 0;
+  const words = t.split(/\s+/).filter(Boolean).length;
+  // كل مكوّن مُطبَّع [0..1]، مجموع موزون
+  const conf = Math.max(0, Math.min(1, confidence / 100));
+  const density = Math.min(1, words / 40); // نص أوفر = أرجح صحةً (حتى سقف)
+  const noise = garble.fragmentRatio + garble.substitutionRatio + garble.unmappedRatio;
+  return conf * 0.35 + arabicRatio * 0.3 + density * 0.15 - Math.min(0.8, noise) * 0.6;
+}
+
+// استراتيجيات المعالجة المسبقة لكل محاولة — نظير COMBOS في reocr_hard (base/otsu/upscale)
+type PreVariant = "raw" | "otsu" | "upscale";
+const OCR_VARIANTS: PreVariant[] = ["raw", "otsu", "upscale"];
+
 /** يشغّل OCR على صورة/لوحة. المعالجة المسبقة اختيارية (معطّلة افتراضياً):
  *  قياس CER/WER على goldset أثبت أن الخام أدقّ على المحتوى النظيف (82.8% مقابل 61%).
  *  تُفعَّل preprocess=true فقط للمسح الرديء (بعد إثبات نفعه على صور مسح حقيقية). */
@@ -163,6 +186,69 @@ export async function ocrImage(
     }
     const { data } = await worker.recognize(input as Parameters<typeof worker.recognize>[0]);
     return { text: (data.text ?? "").trim(), confidence: data.confidence ?? 0 };
+  } finally {
+    await worker.terminate();
+  }
+}
+
+/** يبني نسخة معالَجة من الصورة حسب الاستراتيجية (raw/otsu/upscale) */
+async function buildVariant(source: Blob | HTMLCanvasElement | string, variant: PreVariant): Promise<Blob | HTMLCanvasElement | string> {
+  if (variant === "raw") return source;
+  try {
+    let canvas = await sourceToCanvas(source);
+    if (variant === "upscale" && canvas.width < MIN_OCR_WIDTH * 1.4) {
+      const s = Math.min(3, (MIN_OCR_WIDTH * 1.4) / canvas.width);
+      const up = document.createElement("canvas");
+      up.width = Math.round(canvas.width * s);
+      up.height = Math.round(canvas.height * s);
+      const c = up.getContext("2d");
+      if (c) {
+        c.imageSmoothingEnabled = true;
+        c.imageSmoothingQuality = "high";
+        c.drawImage(canvas, 0, 0, up.width, up.height);
+        canvas = up;
+      }
+    }
+    return preprocessCanvas(canvas); // otsu/upscale: عتبة Otsu تكيفية
+  } catch {
+    return source;
+  }
+}
+
+/**
+ * OCR «أفضل من عدّة محاولات» — نظير reocr_hard: يجرّب استراتيجيات معالجة ويختار
+ * الأعلى جودة بمعادلة الجودة. يعيد استخدام عامل Tesseract واحد لكل المحاولات.
+ * variants الافتراضية raw+otsu+upscale؛ mode="fast" يكتفي بـ raw.
+ */
+export async function ocrImageBest(
+  source: Blob | HTMLCanvasElement | string,
+  onProgress?: OcrProgress,
+  opts?: { variants?: PreVariant[] }
+): Promise<RecognizeResult & { strategy: string }> {
+  const variants = opts?.variants ?? OCR_VARIANTS;
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker(OCR_LANGS, 1, {
+    workerPath: WORKER_PATH,
+    langPath: LANG_PATH,
+    corePath: CORE_PATH,
+    logger: onProgress
+      ? (m: { status: string; progress: number }) => onProgress({ status: m.status, progress: m.progress })
+      : undefined
+  });
+  try {
+    await worker.setParameters(OCR_PARAMS as unknown as Parameters<typeof worker.setParameters>[0]);
+    let best = { text: "", confidence: 0, strategy: "raw", score: -Infinity };
+    for (const variant of variants) {
+      const input = await buildVariant(source, variant);
+      const { data } = await worker.recognize(input as Parameters<typeof worker.recognize>[0]);
+      const text = (data.text ?? "").trim();
+      const confidence = data.confidence ?? 0;
+      const score = pageQualityScore(text, confidence, isGarbledArabicText(text));
+      if (score > best.score) best = { text, confidence, strategy: variant, score };
+      // توقف مبكر: جودة ممتازة تكفي (توفير زمن على الصفحات النظيفة)
+      if (best.score > 0.72) break;
+    }
+    return { text: best.text, confidence: best.confidence, strategy: best.strategy };
   } finally {
     await worker.terminate();
   }
@@ -200,12 +286,10 @@ export async function ocrScannedPdf(
   let confSum = 0;
   for (let p = 1; p <= doc.numPages; p += 1) {
     const page = await doc.getPage(p);
-    // دقّة عالية (scale 3) لكن بلا تعتيب — القياس أثبت أن الخام أدقّ
     const canvas = await renderPdfPageToCanvas(page);
-    const { text, confidence } = await ocrImage(
-      canvas,
-      (info) => onProgress?.({ page: p, pages: doc.numPages, status: info.status, progress: info.progress }),
-      { preprocess: false }
+    // «أفضل من عدّة محاولات» لكل صفحة — يختار الأعلى جودة (raw/otsu/upscale)
+    const { text, confidence } = await ocrImageBest(canvas, (info) =>
+      onProgress?.({ page: p, pages: doc.numPages, status: info.status, progress: info.progress })
     );
     confSum += confidence;
     parts.push(`[صفحة ${p}]\n${text}`);
@@ -213,7 +297,10 @@ export async function ocrScannedPdf(
     canvas.height = 0;
   }
   await doc.destroy();
-  return { text: parts.join("\n\n").trim(), pages: doc.numPages, avgConfidence: doc.numPages ? confSum / doc.numPages : 0 };
+  const raw = parts.join("\n\n").trim();
+  // عزل خربشة الشعار/الختم في الصفحة الأولى/الأخيرة (تبقى الترويسة النصية)
+  const scrubbed = scrubLogoNoise(raw, doc.numPages);
+  return { text: scrubbed, pages: doc.numPages, avgConfidence: doc.numPages ? confSum / doc.numPages : 0 };
 }
 
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "bmp", "gif"];
