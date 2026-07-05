@@ -30,6 +30,22 @@
   const TS = 1.6;              // بكسل خامة / وحدة عالم (دقة أعلى للتقريب)
   const PAD = 720;             // امتداد العشب خلف المرمى وخارج الرؤية
 
+  /* خامة عشب فوتوغرافية حقيقية (قابلة للتكرار) — تُحمَّل مرة واحدة للصفحة */
+  const grassPhoto = { img: null, ready: false, cbs: [] };
+  (function loadGrass() {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        grassPhoto.img = img;
+        grassPhoto.ready = true;
+        grassPhoto.cbs.forEach(cb => { try { cb(); } catch {} });
+        grassPhoto.cbs.length = 0;
+      };
+      img.onerror = () => { grassPhoto.ready = false; };
+      img.src = "/football-future/src/assets/textures/grass.jpg";
+    } catch {}
+  })();
+
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function lerp(a, b, t) { return a + (b - a) * t; }
@@ -108,6 +124,8 @@
       this.replayIdx = 0;
       this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       this.buildPitchTexture();
+      // عند اكتمال تحميل الصورة الفوتوغرافية: أعد بناء الأرضية بها
+      if (!grassPhoto.ready) grassPhoto.cbs.push(() => this.buildPitchTexture());
       this.resetWorld();
       this.resize = this.resize.bind(this);
       this.loop = this.loop.bind(this);
@@ -780,15 +798,29 @@
       x.scale(TS, TS);
       x.translate(PAD, 0);
 
-      /* عشب أساس + مربعات قص متعامدة بتباين بث حقيقي */
+      /* عشب أساس: خامة فوتوغرافية حقيقية إن توفرت + معايرة ليلية، وإلا لون إجرائي */
       x.fillStyle = "#0D5030";
       x.fillRect(-PAD, 0, W + PAD * 2, H);
+      if (grassPhoto.ready && grassPhoto.img) {
+        // تكرار الصورة بمقياس واقعي (~300 وحدة عالم لكل بلاطة)
+        const tile = 300;
+        for (let ty = 0; ty < H; ty += tile) {
+          for (let tx = -PAD; tx < W + PAD; tx += tile) {
+            x.drawImage(grassPhoto.img, tx, ty, tile, tile);
+          }
+        }
+        // معايرة ليلية فوق الصورة النهارية: تعتيم + صبغة استاد باردة
+        x.fillStyle = "rgba(4,34,20,.52)";
+        x.fillRect(-PAD, 0, W + PAD * 2, H);
+        x.fillStyle = "rgba(0,40,60,.10)";
+        x.fillRect(-PAD, 0, W + PAD * 2, H);
+      }
       const stripes = 16, sw = FW / (stripes - 2);
       for (let i = -6; i < stripes + 6; i++) {
         if (i % 2) continue;
         // شريط قص بميل إضاءة داخلي (اتجاه انحناء العشب)
         const g0 = x.createLinearGradient(FX + (i - 1) * sw, 0, FX + i * sw, 0);
-        g0.addColorStop(0, "rgba(255,255,255,.085)");
+        g0.addColorStop(0, "rgba(255,255,255,.10)");
         g0.addColorStop(1, "rgba(255,255,255,.03)");
         x.fillStyle = g0;
         x.fillRect(FX + (i - 1) * sw, 0, sw, H);
@@ -800,9 +832,10 @@
         x.fillRect(-PAD, FY + (i - 1) * rh, W + PAD * 2, rh);
       }
 
-      /* حبيبات عشب (معالجة فوتوغرافية): آلاف النقاط الدقيقة بتفاوت إضاءة */
+      /* حبيبات إجرائية إضافية (أخف عند وجود الصورة) */
       let gSeed = 3;
-      for (let i = 0; i < 46000; i++) {
+      const grainCount = grassPhoto.ready ? 12000 : 46000;
+      for (let i = 0; i < grainCount; i++) {
         const gx = -PAD + hash(gSeed) * (W + PAD * 2);
         const gy = hash(gSeed * 1.7) * H;
         const tone = hash(gSeed * 2.3);
