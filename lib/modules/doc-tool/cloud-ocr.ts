@@ -62,15 +62,49 @@ async function postToCloud(blob: Blob, name: string, model?: "flash" | "pro"): P
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * يُلائم صورةً مرفوعة لحدّ الرفع: الصور الكبيرة (صور الجوّال 4–12MB) كانت تُرفض صامتةً.
+ * الحلّ: إن تجاوزت الحدّ (أو لم تكن JPEG/PNG) نُصغّرها إلى حدٍّ أقصى للبُعد يكفي رؤية
+ * Gemini ثم نرمّزها بجودةٍ مُلائمة. الصغيرة المقبولة تُرسَل كما هي بلا مساس.
+ */
+async function fitImageForCloud(file: File): Promise<{ blob: Blob; name: string } | null> {
+  if (file.size <= MAX_UPLOAD_BYTES && /image\/(jpe?g|png)/i.test(file.type)) {
+    return { blob: file, name: file.name };
+  }
+  try {
+    const bmp = await createImageBitmap(file);
+    const MAX_SIDE = 3000; // يكفي دقّةَ رؤية Gemini ويحدّ الحجم
+    const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bmp.width * scale));
+    canvas.height = Math.max(1, Math.round(bmp.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bmp.close();
+      return file.size <= MAX_UPLOAD_BYTES ? { blob: file, name: file.name } : null;
+    }
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    bmp.close();
+    const blob = await encodeToFit(canvas);
+    canvas.width = 0;
+    canvas.height = 0;
+    return blob ? { blob, name: "image.jpg" } : null;
+  } catch {
+    return file.size <= MAX_UPLOAD_BYTES ? { blob: file, name: file.name } : null;
+  }
+}
+
 /** قراءة صورة (ملف مرفوع) سحابياً */
 export async function cloudOcrImage(file: File, onProgress?: CloudProgress, model?: "flash" | "pro"): Promise<string | null> {
   onProgress?.(model === "pro" ? "قراءة سحابية فائقة الدقة (Gemini Pro)…" : "قراءة سحابية فائقة الدقة (Gemini)…");
-  const r = await postToCloud(file, file.name, model);
+  const fitted = await fitImageForCloud(file);
+  if (!fitted) return null; // صورة يتعذّر تصغيرها لحدّ الرفع → يتراجع المستدعي للمحلي
+  const r = await postToCloud(fitted.blob, fitted.name, model);
   if (r.rateLimited) {
     for (const wait of RATE_WAITS_MS) {
       onProgress?.(`حد المعدل — انتظار ${wait / 1000} ثانية…`);
       await sleep(wait);
-      const retry = await postToCloud(file, file.name, model);
+      const retry = await postToCloud(fitted.blob, fitted.name, model);
       if (retry.text) return retry.text;
       if (!retry.rateLimited) break;
     }
