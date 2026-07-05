@@ -278,6 +278,8 @@
 }
 .note a {
   color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .hint {
   color: var(--mut);

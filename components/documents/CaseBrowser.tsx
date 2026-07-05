@@ -1364,7 +1364,7 @@ export function CaseBrowser() {
                     : `${filtered.length} من ${docs.length} وثيقة`}
               </div>
             </div>
-            <div className={styles.list} role="list" aria-label="نتائج الوثائق">
+            <div className={styles.list} role={docs.length ? "list" : undefined} aria-label="نتائج الوثائق">
               {docs.length === 0 ? (
                 <div className={styles.empty} style={{ padding: "0 14px" }}>
                   لا وثائق بعد.

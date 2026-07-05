@@ -1,0 +1,20 @@
+/* انتقال الشاشات داخل منصة الوثائق — انزلاق أفقي خفيف يحترم RTL (الجديد يدخل من اليسار)
+   وفق قواعد الحركة في دليل الهوية: وظيفية، قصيرة (200ms)، وتحترم تقليل الحركة */
+@keyframes slideInRtl {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.screen {
+  animation: slideInRtl 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .screen {
+    animation: none;
+  }
+}
