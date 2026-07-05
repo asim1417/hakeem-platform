@@ -47,7 +47,7 @@
 
   function home(state) {
     const cards = [
-      { title: "مباراة سريعة", en: "QUICK MATCH", icon: "⚽", route: "preMatch", desc: "ادخل مباراة فورية ضد فريق النمور." },
+      { title: "مباراة سريعة", en: "QUICK MATCH", icon: "⚽", action: "quickMatch", desc: "ادخل مباراة فورية ضد خصم عشوائي." },
       { title: "المهام اليومية", en: "DAILY MISSIONS", icon: "☑", route: "missions", desc: "اجمع XP وطور مستواك." },
       { title: "كأس فيوتشر", en: "FUTURE CUP", icon: "🏆", route: "tournaments", desc: "بطولات أسبوعية وجوائز." },
       { title: "التدريب", en: "TRAINING", icon: "🎯", route: "training", desc: "تمارين تسديد ومراوغة وتمرير." },
@@ -62,7 +62,7 @@
             <h1><span class="gradient-text">${DATA.app.nameAr}</span></h1>
             <p>${DATA.app.taglineAr} تجربة لعب سريعة، آمنة، ممتعة، وتفاعلية تجمع بين المهارة، بناء الفريق، والتطور المرح.</p>
             <div class="cta-row">
-              <button class="btn" data-route="preMatch" type="button">العب الآن ▶</button>
+              <button class="btn" data-action="quickMatch" type="button">العب الآن ▶</button>
               <button class="btn secondary" data-route="team" type="button">تخصيص الفريق</button>
               <button class="btn ghost" data-route="modes" type="button">اختيار نمط اللعب</button>
             </div>
@@ -87,7 +87,7 @@
       <section style="height:14px"></section>
       <section class="card-grid three">
         ${cards.map(card => `
-          <button class="ff-card" data-route="${card.route}" type="button" style="text-align:right;color:inherit">
+          <button class="ff-card" ${card.action ? `data-action="${card.action}"` : `data-route="${card.route}"`} type="button" style="text-align:right;color:inherit">
             <div class="icon-badge">${ic(card.icon)}</div><h3>${esc(card.title)}</h3><p>${esc(card.en)} · ${esc(card.desc)}</p>
           </button>`).join("")}
       </section>`);
@@ -162,35 +162,62 @@
   }
 
   function tournaments(state) {
+    const ROUNDS = ["ربع النهائي", "نصف النهائي", "النهائي"];
+    const cup = state.cup;
+    const bracket = cup ? cup.opps.map((o, i) => {
+      const res = cup.results[i];
+      const cls = res ? "played" : (i === cup.round && !cup.done ? "current" : "pending");
+      return `
+      <div class="tie ${cls}">
+        <span class="tie-round">${ROUNDS[i]}</span>
+        <span class="tie-team">${ic("shield")} فيوتشر FC</span>
+        ${res ? `<b class="tie-score">${res[0]} - ${res[1]}</b>` : `<span class="tie-vs">VS</span>`}
+        <span class="tie-team">${ic(o.logo || "shield")} ${esc(o.ar)}</span>
+      </div>`;
+    }).join("") : "";
     return shell(state, "tournaments", `
-      <div class="section-title"><h1>البطولات</h1><span>TOURNAMENTS</span></div>
-      <section class="hero-grid">
-        <div class="panel"><div class="panel-inner">
-          <div class="section-title"><h2>كأس المستقبل</h2><span>FUTURE CUP</span></div>
-          <div class="ff-card active" style="min-height:310px;display:grid;place-items:center;text-align:center">
-            <div class="big-trophy">${ic("trophy")}</div><h3 style="font-size:34px">النهائي</h3><p>Future United VS Al Nmooor</p>
-            <button class="btn" data-route="preMatch" type="button">ابدأ النهائي</button>
-          </div>
-        </div></div>
-        <div class="panel"><div class="panel-inner"><div class="section-title"><h2>بطولات قادمة</h2><span>UPCOMING</span></div>
-          <div class="list">${DATA.events.map(e => `<div class="list-item"><span class="status">${ic(e.icon)}</span><div><h3>${e.ar}</h3><p>${e.en}</p></div><span class="price">${e.time}</span></div>`).join("")}</div>
-        </div></div>
-      </section>`);
+      <div class="section-title"><h1>كأس المستقبل</h1><span>FUTURE CUP</span></div>
+      <section class="panel"><div class="panel-inner">
+        ${cup ? `
+          <div class="bracket">${bracket}</div>
+          ${cup.done
+            ? (cup.won
+              ? `<div class="cup-champ"><div class="big-trophy">${ic("trophy")}</div><h3>أنت بطل كأس المستقبل!</h3><button class="btn" data-action="newCup" type="button">بطولة جديدة</button></div>`
+              : `<div class="cup-champ"><p>انتهى المشوار — الأبطال لا يستسلمون.</p><button class="btn" data-action="newCup" type="button">حاول من جديد</button></div>`)
+            : `<div class="cta-row"><button class="btn" data-action="playCup" type="button">${ic("play")} اِلعب ${ROUNDS[cup.round]}</button></div>`}
+        ` : `
+          <div class="cup-champ">
+            <div class="big-trophy">${ic("trophy")}</div>
+            <h3>ثلاثة أدوار تفصلك عن الكأس</h3>
+            <p style="color:var(--ff-silver)">إقصائية بصعوبة متصاعدة — اخسر مرة وتودّع البطولة. جائزة البطل 500 عملة.</p>
+            <button class="btn" data-action="playCup" type="button">${ic("play")} ابدأ البطولة</button>
+          </div>`}
+      </div></section>
+      <section style="height:14px"></section>
+      <section class="panel"><div class="panel-inner"><div class="section-title"><h2>أحداث قادمة</h2><span>UPCOMING</span></div>
+        <div class="list">${DATA.events.map(e => `<div class="list-item"><span class="status">${ic(e.icon)}</span><div><h3>${esc(e.ar)}</h3><p>${esc(e.en)}</p></div><span class="price">${e.time}</span></div>`).join("")}</div>
+      </div></section>`);
   }
 
   function shop(state) {
+    const items = (DATA.shopItems || []).map(item => {
+      const owned = (state.owned || []).includes(item.id);
+      return `
+      <div class="ff-card shop-item ${owned ? "owned" : ""}">
+        <div class="icon-badge">${ic(item.icon)}</div>
+        <h3>${esc(item.ar)}</h3>
+        <p>${esc(item.desc)}</p>
+        ${owned
+          ? `<span class="owned-tag">${ic("check")} مقتنى</span>`
+          : `<button class="btn small" data-action="buyItem" data-item="${item.id}" type="button">${ic("coin")} ${item.price.toLocaleString("en-US")}</button>`}
+      </div>`;
+    }).join("");
     return shell(state, "shop", `
-      <div class="section-title"><h1>المتجر</h1><span>STORE / PACKS / CURRENCY</span></div>
-      <div class="tabs"><button class="tab active">مميز</button><button class="tab">الباقات</button><button class="tab">العملات</button><button class="tab">العناصر</button></div>
-      <section class="card-grid four">
-        ${DATA.shop.map((pack, i) => `
-          <div class="ff-card shop-pack ${i === 0 ? "active" : ""}">
-            <div><div class="pack-rating">${esc(pack.rating)}</div><h3>${esc(pack.ar)}</h3><p>${esc(pack.en)}</p></div>
-            <button class="btn small ${i === 0 ? "" : "secondary"}" data-action="buyPack" data-price="${pack.price.replace(/,/g, "")}" type="button">${ic("gem")} ${esc(pack.price)}</button>
-          </div>`).join("")}
-      </section>
+      <div class="section-title"><h1>المتجر</h1><span>STORE</span></div>
+      <p class="shop-hint">كل العناصر تُشترى بعملات اللعبة التي تكسبها من المباريات والكأس — لا مشتريات حقيقية.</p>
+      <section class="card-grid three">${items}</section>
       <section style="height:14px"></section>
-      <section class="panel"><div class="panel-inner"><div class="section-title"><h2>سياسة المتجر للأطفال</h2><span>KID-SAFE STORE</span></div><p style="color:var(--ff-silver);line-height:1.8">جميع عمليات الشراء داخل هذا النموذج مغلقة تجريبيًا. عند تحويله لمنتج حقيقي، تُفعّل موافقة ولي الأمر وحدود الإنفاق والتنبيهات.</p></div></section>`);
+      <section class="panel"><div class="panel-inner"><div class="section-title"><h2>سياسة المتجر للأطفال</h2><span>KID-SAFE STORE</span></div><p style="color:var(--ff-silver);line-height:1.8">لا إعلانات ولا مدفوعات حقيقية — العملات تُكسب باللعب فقط، وما تشتريه ينعكس فوراً داخل المباراة.</p></div></section>`);
   }
 
   function profile(state) {
@@ -198,6 +225,31 @@
     const statKeys = Object.keys(main.stats);
     return shell(state, "profile", `
       <div class="section-title"><h1>هوية اللاعب</h1><span>PLAYER IDENTITY</span></div>
+      <section class="panel"><div class="panel-inner">
+        <div class="section-title"><h2>تخصيص لاعبك</h2><span>CUSTOMIZE — ينعكس داخل المباراة</span></div>
+        <div class="cust-grid">
+          <label class="cust-field">
+            <span>اسم اللاعب</span>
+            <input class="cust-input" data-field="custName" maxlength="12" value="${esc(state.custom?.name || "علي")}" />
+          </label>
+          <div class="cust-field">
+            <span>رقم القميص</span>
+            <div class="chip-row">
+              ${[7, 9, 10, 11, 19].map(n => `<button class="chip ${Number(state.custom?.number) === n ? "sel" : ""}" data-action="setNum" data-num="${n}" type="button">${n}</button>`).join("")}
+            </div>
+          </div>
+          <div class="cust-field">
+            <span>لون القصّة والجوارب</span>
+            <div class="chip-row">
+              ${[["lime", "#C6FF00"], ["cyan", "#00E5FF"], ["teal", "#00BFAE"], ["gold", "#FFD34D"]].map(([k, c]) => {
+                const locked = k === "gold" && !(state.owned || []).includes("gold");
+                return `<button class="swatch ${state.custom?.accent === k ? "sel" : ""} ${locked ? "locked" : ""}" data-action="setAccent" data-accent="${k}" style="--sw:${c}" type="button" aria-label="${k}">${locked ? ic("lock") : ""}</button>`;
+              }).join("")}
+            </div>
+          </div>
+        </div>
+      </div></section>
+      <section style="height:14px"></section>
       <section class="hero-grid">
         <div class="panel"><div class="panel-inner hero-player" style="min-height:360px;align-items:center">
           <div class="hero-copy">
@@ -231,11 +283,11 @@
   function preMatch(state) {
     const tokens = DATA.players.slice(0, 11).map(p => `<div class="player-token" style="left:${p.x}%;top:${p.y}%"><b>${p.rating}</b><small>${p.pos}</small></div>`).join("");
     return shell(state, "preMatch", `
-      <div class="section-title"><h1>قبل المباراة</h1><span>PRE-MATCH LINEUP</span></div>
+      <div class="section-title"><h1>${state.matchContext === "cup" ? "كأس المستقبل" : "قبل المباراة"}</h1><span>PRE-MATCH LINEUP</span></div>
       <section class="hero-grid">
-        <div class="panel"><div class="panel-inner"><div class="section-title"><h2>فيوتشر FC ضد النمور</h2><span>FUTURE FC VS AL NMOOR</span></div><div class="pitch-card">${tokens}</div></div></div>
+        <div class="panel"><div class="panel-inner"><div class="section-title"><h2>فيوتشر FC ضد ${esc(state.currentOpp?.ar || "النمور")}</h2><span>FUTURE FC VS ${esc(state.currentOpp?.code || "NMO")}</span></div><div class="pitch-card">${tokens}</div></div></div>
         <div class="panel"><div class="panel-inner">
-          <div class="stats-row"><div class="stat"><b>87</b><span>Future FC</span></div><div class="stat"><b>VS</b><span>المباراة</span></div><div class="stat"><b>84</b><span>Al Nmooor</span></div></div>
+          <div class="stats-row"><div class="stat"><b>87</b><span>Future FC</span></div><div class="stat"><b>VS</b><span>المباراة</span></div><div class="stat"><b>84</b><span>${esc(state.currentOpp?.ar || "النمور")}</span></div></div>
           <div style="height:16px"></div>
           <div class="list">
             <div class="list-item"><span class="status">${ic("shield")}</span><div><h3>دفاع متوازن</h3><p>Balanced defense</p></div><span>نشط</span></div>
@@ -259,7 +311,7 @@
           <span class="ff-tag">FF</span>
           <b>FUT</b><span class="sc" id="scoreHome">0</span>
           <span class="dash">-</span>
-          <span class="sc" id="scoreAway">0</span><b>NMO</b>
+          <span class="sc" id="scoreAway">0</span><b>${esc(state.currentOpp?.code || "NMO")}</b>
           <span class="tm" id="matchTime">0:00</span>
         </div>
         <button class="pause-btn" data-action="togglePause" type="button" aria-label="إيقاف مؤقت">II</button>

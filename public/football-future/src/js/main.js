@@ -15,10 +15,23 @@
     missions: JSON.parse(JSON.stringify(window.FF_DATA.missions)),
     lastMatch: { score: { home: 0, away: 0 }, stats: { shots: 0, passes: 0, tackles: 0, goals: 0 }, result: "win" },
     difficulty: 1,
+    custom: { name: "علي", number: 10, accent: "lime" },
+    owned: [],
+    cup: null,
+    matchContext: "quick",
+    currentOpp: { ar: "النمور", code: "NMO" },
     audio: { muted: false, voice: true, sfx: true }
   };
 
   let state = loadState();
+  const ACCENTS = { lime: "#C6FF00", cyan: "#00E5FF", teal: "#00BFAE", gold: "#FFD34D" };
+  const CUP_ROUNDS = ["ربع النهائي", "نصف النهائي", "النهائي"];
+  const CUP_DIFF = [0.85, 1.0, 1.2];
+
+  function newCup() {
+    const pool = [...window.FF_DATA.opponents].sort(() => Math.random() - 0.5).slice(0, 3);
+    return { round: 0, opps: pool, results: [], done: false, won: false };
+  }
 
   function loadState() {
     try {
@@ -55,6 +68,17 @@
       });
     });
 
+    root.querySelectorAll("[data-field]").forEach((el) => {
+      el.addEventListener("change", (event) => {
+        const field = event.currentTarget.getAttribute("data-field");
+        if (field === "custName") {
+          const v = String(event.currentTarget.value || "").trim().slice(0, 12);
+          state.custom.name = v || "علي";
+          saveState(); toast("حُفظ اسم اللاعب: " + state.custom.name);
+        }
+      });
+    });
+
     root.querySelectorAll("[data-action]").forEach((el) => {
       el.addEventListener("click", (event) => {
         const action = event.currentTarget.getAttribute("data-action");
@@ -69,6 +93,31 @@
         }
         if (action === "togglePause") togglePause();
         if (action === "resumeMatch") resumeMatch();
+        if (action === "quickMatch") {
+          const pool = window.FF_DATA.opponents;
+          state.currentOpp = pool[Math.floor(Math.random() * pool.length)];
+          state.matchContext = "quick";
+          saveState(); render("preMatch");
+        }
+        if (action === "playCup") {
+          if (!state.cup || state.cup.done) state.cup = newCup();
+          state.currentOpp = state.cup.opps[state.cup.round];
+          state.difficulty = CUP_DIFF[state.cup.round];
+          state.matchContext = "cup";
+          saveState(); render("preMatch");
+        }
+        if (action === "newCup") { state.cup = newCup(); saveState(); render("tournaments"); }
+        if (action === "buyItem") buyItem(event.currentTarget.getAttribute("data-item"));
+        if (action === "setNum") {
+          state.custom.number = Number(event.currentTarget.getAttribute("data-num")) || 10;
+          saveState(); window.FFAudio?.play("click"); render("profile");
+        }
+        if (action === "setAccent") {
+          const a = event.currentTarget.getAttribute("data-accent");
+          if (a === "gold" && !state.owned.includes("gold")) { toast("الطقم الذهبي يُشترى من المتجر أولاً."); return; }
+          state.custom.accent = a;
+          saveState(); window.FFAudio?.play("click"); render("profile");
+        }
       });
     });
   }
@@ -97,6 +146,24 @@
     }
     saveState();
     render("missions");
+  }
+
+  function buyItem(id) {
+    const item = (window.FF_DATA.shopItems || []).find((x) => x.id === id);
+    if (!item) return;
+    if (state.owned.includes(id)) { toast("تملك هذا العنصر بالفعل."); return; }
+    if (state.coins < item.price) {
+      window.FFAudio?.announce("error", "error");
+      toast("عملاتك لا تكفي — اِلعب مباريات واجمع المزيد!");
+      return;
+    }
+    state.coins -= item.price;
+    state.owned.push(id);
+    if (id === "gold") state.custom.accent = "gold";
+    window.FFAudio?.announce("pack", "reward");
+    toast("مبروك! حصلت على " + item.ar);
+    saveState();
+    render("shop");
   }
 
   function buyPack(price) {
@@ -146,6 +213,11 @@
 
     currentEngine = new window.FootballFutureEngine(canvas, {
       difficulty: state.difficulty || 1,
+      playerName: state.custom?.name,
+      playerNumber: state.custom?.number,
+      kitAccent: ACCENTS[state.custom?.accent] || ACCENTS.lime,
+      captain: state.owned?.includes("captain"),
+      ballTrail: state.owned?.includes("goldball") ? "#FFD34D" : null,
       onEvent(event) {
         if (event.type === "goal") {
           window.FFAudio?.crowdSwell?.(0.13, 1.6);
@@ -163,9 +235,51 @@
         state.stats.goals += result.stats.goals;
         if (result.result === "win") state.stats.wins += 1;
         updateMissionsAfterMatch(result);
+
+        // الاقتصاد: عملات وخبرة حسب النتيجة والأهداف
+        const win = result.result === "win", draw = result.result === "draw";
+        let coins = (win ? 120 : draw ? 50 : 25) + result.stats.goals * 10;
+        let xp = (win ? 70 : draw ? 35 : 20) + result.stats.goals * 5;
+
+        // منطق كأس المستقبل
+        let cupHtml = "";
+        let nextBtn = "";
+        if (state.matchContext === "cup" && state.cup && !state.cup.done) {
+          state.cup.results[state.cup.round] = [result.score.home, result.score.away];
+          if (win) {
+            if (state.cup.round === 2) {
+              state.cup.done = true; state.cup.won = true;
+              state.stats.cups = (state.stats.cups || 0) + 1;
+              coins += 500; xp += 250;
+              cupHtml = `<p class="cup-note win">🏆 أنت بطل كأس المستقبل! +500 عملة إضافية</p>`;
+            } else {
+              state.cup.round += 1;
+              coins += 100; xp += 60;
+              cupHtml = `<p class="cup-note">تأهلت إلى ${CUP_ROUNDS[state.cup.round]}!</p>`;
+              nextBtn = `<button class="btn" data-action="playCup" type="button">الدور التالي ◀</button>`;
+            }
+          } else if (draw) {
+            // التعادل في الإقصائيات: تُعاد المباراة — لا إقصاء بالتعادل
+            state.cup.results[state.cup.round] = null;
+            cupHtml = `<p class="cup-note">تعادل — أعد المباراة لتحسم التأهل!</p>`;
+            nextBtn = `<button class="btn" data-action="playCup" type="button">إعادة المباراة ◀</button>`;
+          } else {
+            state.cup.done = true; state.cup.won = false;
+            cupHtml = `<p class="cup-note">انتهى مشوار الكأس — حاول من جديد، البطولة تنتظرك.</p>`;
+          }
+        }
+
+        state.coins += coins;
+        state.player.xp += xp;
+        while (state.player.xp >= state.player.nextXp) {
+          state.player.xp -= state.player.nextXp;
+          state.player.level += 1;
+          state.player.nextXp += 250;
+        }
         saveState();
         window.FFCommentary?.fulltime?.(result);
-        summaryOverlay.innerHTML = `<div class="match-summary"><div class="summary-card"><h2>نهاية المباراة</h2><div class="stats-row"><div class="stat"><b>${result.score.home}-${result.score.away}</b><span>النتيجة</span></div><div class="stat"><b>${result.stats.shots}</b><span>تسديدات</span></div><div class="stat"><b>${result.stats.passes}</b><span>تمريرات</span></div></div><div class="cta-row"><button class="btn" data-route="preMatch" type="button">إعادة المباراة</button><button class="btn secondary" data-route="missions" type="button">المكافآت</button><button class="btn ghost" data-route="home" type="button">الرئيسية</button></div></div></div>`;
+        const title = win ? "فوز رائع!" : draw ? "تعادل مثير" : "مباراة قوية";
+        summaryOverlay.innerHTML = `<div class="match-summary"><div class="summary-card"><h2>${title}</h2><div class="stats-row"><div class="stat"><b>${result.score.home}-${result.score.away}</b><span>النتيجة</span></div><div class="stat"><b>${result.stats.shots}</b><span>تسديدات</span></div><div class="stat"><b>${result.stats.passes}</b><span>تمريرات</span></div></div>${cupHtml}<div class="reward-row"><span class="reward-pill">+${coins} عملة</span><span class="reward-pill xp">+${xp} XP</span></div><div class="cta-row">${nextBtn || '<button class="btn" data-action="quickMatch" type="button">مباراة أخرى</button>'}<button class="btn secondary" data-route="missions" type="button">المهام</button><button class="btn ghost" data-route="home" type="button">الرئيسية</button></div></div></div>`;
         bindScreen();
       }
     });
