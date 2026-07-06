@@ -76,17 +76,19 @@ _AR_RE = re.compile(r"[؀-ۿ]")   # نطاق الحروف العربية
 
 def read_bytes(name, data):
     """يستخرج النص الخام من محتوى ملف (بايتات) حسب امتداد الاسم.
-    يُعيد (نص, نوع). النص غير منظَّف — طبّق clean_text عند الحاجة."""
+    يُعيد (نص, نوع). النص منظَّف من الرموز الغريبة والعلامات الخفيّة."""
     ext = os.path.splitext(name)[1].lower()
     try:
         if ext in TEXT_EXT:
-            return data.decode("utf-8", "ignore"), "نص"
+            txt = data.decode("utf-8", "ignore")
+            return clean_text(txt), "نص"
         if ext == ".docx":
-            return _read_docx(data), "Word"
+            txt = _read_docx(data)
+            return clean_text(txt), "Word"
         if ext == ".pdf":
             txt = _read_pdf_text(data)
             if len(_AR_RE.findall(txt)) > 30:      # نصّي فعلاً؟
-                return txt, "PDF (نص)"
+                return clean_text(txt), "PDF (نص)"
             return _ocr_pdf(data)                  # وإلا: ممسوح → OCR
         if ext in IMG_EXT:
             return _ocr_image(data)
@@ -109,13 +111,22 @@ def _read_docx(data):
     for tbl in d.tables:
         for row in tbl.rows:
             parts.append("\t".join(c.text for c in row.cells))
-    return "\n".join(parts)
+    text = "\n".join(parts)
+    # تأكد من الترميز وتنظيف الرموز
+    if isinstance(text, bytes):
+        text = text.decode("utf-8", "ignore")
+    return text
 
 
 def _read_pdf_text(data):
     try:
         from pdfminer.high_level import extract_text
-        return extract_text(io.BytesIO(data)) or ""
+        text = extract_text(io.BytesIO(data)) or ""
+        # تأكد من أن النص UTF-8 صحيح
+        if isinstance(text, bytes):
+            text = text.decode("utf-8", "ignore")
+        # نظّف العلامات الخفيّة والرموز الغريبة
+        return clean_text(text)
     except Exception:
         return ""
 
@@ -134,7 +145,9 @@ def _prep(img):
 
 def _ocr_img_obj(img):
     import pytesseract
-    return pytesseract.image_to_string(_prep(img), lang="ara", config=_TESS_CFG)
+    text = pytesseract.image_to_string(_prep(img), lang="ara", config=_TESS_CFG)
+    # نظّف النص من الرموز الغريبة والعلامات الخفيّة
+    return clean_text(text) if text else ""
 
 
 def _ocr_image(data):
@@ -160,8 +173,9 @@ def _ocr_pdf(data):
 def extract(path):
     """يقرأ ملفاً ويُعيد قاموساً جاهزاً: العنوان والنوع والنص المنظَّف
     وصيغة التطبيع للبحث وعدد الأحرف."""
-    raw, kind = read_file(path)
-    text = clean_text(raw or "")
+    text, kind = read_file(path)
+    # النص بالفعل منظَّف من read_file، لا تطبّق clean_text مرتين
+    text = text or ""
     return {
         "title": os.path.basename(path),
         "kind": kind,
