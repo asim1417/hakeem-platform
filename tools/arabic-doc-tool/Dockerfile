@@ -25,7 +25,6 @@ ENV PYTHONUNBUFFERED=1
 # اختياري: سرعة الدفعات الكبيرة — توازي معالجة الملفات: -e JOBS_CONCURRENCY=6 (الافتراضي 3)
 ENV JOBS_CONCURRENCY=3
 RUN mkdir -p /data
-VOLUME ["/data"]
 
 EXPOSE 8080
 CMD ["uvicorn", "tool_app:app", "--host", "0.0.0.0", "--port", "8080"]
