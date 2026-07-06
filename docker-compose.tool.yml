@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  hakeem-doc-service:
+    build:
+      context: ./tools/arabic-doc-tool
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - hakeem_doc_data:/data
+    environment:
+      # اختياري: قفل بكلمة مرور
+      # APP_PASSWORD: "your-strong-password"
+
+      # اختياري: مفتاح Gemini
+      # GEMINI_API_KEY: "your-gemini-api-key"
+
+      # معالجة متوازية (1-8)
+      JOBS_CONCURRENCY: "3"
+
+      # مسارات التخزين
+      TOOL_DB: "/data/tool_docs.db"
+      JOBS_UPLOAD_DIR: "/data/job_uploads"
+
+      # تعطيل سجل Python (افتراضي)
+      PYTHONUNBUFFERED: "1"
+
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  hakeem_doc_data:
+    driver: local
