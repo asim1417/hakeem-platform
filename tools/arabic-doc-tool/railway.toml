@@ -1,0 +1,7 @@
+[build]
+# Railway سيكتشف Python تلقائياً من requirements_tool.txt
+dockerfile = "Dockerfile"
+
+[deploy]
+startCommand = "uvicorn tool_app:app --host 0.0.0.0 --port 8080"
+restartPolicyMaxRetries = 5
