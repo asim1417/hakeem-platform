@@ -1,7 +1,29 @@
-# نشر نسخة الخادم الكاملة لأداة معالجة الوثائق (OCR عربي) على Render بضغطة واحدة:
-# https://render.com/deploy?repo=https://github.com/asim1417/hakeem-platform
-# بعد النشر: خذ الرابط الناتج وضعه في DOC_TOOL_URL على Vercel ليظهر على دومين حكيم /doc-tool.
+# مخطّط Render — نشرٌ شبه آلي بضغطة واحدة:
+#   https://render.com/deploy?repo=https://github.com/asim1417/hakeem-platform
+# اربط المستودع مرّةً واحدة، فيُنشئ Render الخدمة تلقائياً من هذا الملف.
+# بعد النشر: خذ الرابط وضعه في DOC_TOOL_URL على Vercel ليظهر على دومين حكيم /doc-tool.
 services:
+  # ── الخدمة الموصى بها: خادم Node (يعيد استخدام الدماغ الموحّد + إنتاجية 1000 صفحة) ──
+  - type: web
+    name: hakeem-doc-node
+    runtime: docker
+    dockerfilePath: services/doc-node/Dockerfile
+    dockerContext: . # يُبنى من جذر المستودع (يحتاج lib/ والنواة المشتركة)
+    plan: free # للتجربة؛ ارفعها لـ starter+ للإنتاج (ذاكرة أكبر للتوازي العالي)
+    healthCheckPath: /healthz
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # الصقه في لوحة Render — يفعّل السحابي والإنتاجية العالية
+      - key: GEMINI_MAX_CONCURRENCY
+        value: "16" # ارفعه (32/64) لمفاتيح الطبقات العليا
+      - key: GEMINI_CHUNK_PAGES
+        value: "4"
+      - key: APP_PASSWORD
+        sync: false # قفل الخدمة (ترويسة x-app-password)
+      - key: DOC_NODE_DATA
+        value: /tmp/hakeem-doc-node # الخطة المجانية بلا قرص دائم؛ مع قرص مدفوع اجعله /data
+
+  # ── الخدمة القديمة (بايثون) — تبقى للتوافق؛ احذف هذا القسم إن اكتفيت بخادم Node ──
   - type: web
     name: hakeem-doc-tool
     runtime: docker
@@ -11,6 +33,6 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: APP_PASSWORD
-        sync: false # تُدخلها عند النشر — كلمة مرور الأداة
+        sync: false
       - key: TOOL_DB
-        value: /tmp/tool_docs.db # الخطة المجانية بلا قرص دائم؛ مع قرص مدفوع اجعله /data/tool_docs.db
+        value: /tmp/tool_docs.db

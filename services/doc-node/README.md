@@ -55,6 +55,20 @@ docker run -d -p 8090:8090 -v hakeem_doc_node:/data \
 
 Railway/Render/Fly: أشِر لهذا الـ Dockerfile، وأبقِ حجماً دائماً على `/data`.
 
+### أقرب ما يكون للنقرة الواحدة
+
+- **Render (Blueprint):** المستودع فيه `render.yaml` جاهز. افتح
+  `https://render.com/deploy?repo=https://github.com/asim1417/hakeem-platform`،
+  اربط المستودع، الصق `GEMINI_API_KEY` و`APP_PASSWORD` — ويُنشأ الخادم تلقائياً.
+- **Google Cloud Run** (يقبل الحاوية، يضبط `PORT` تلقائياً):
+  ```bash
+  gcloud run deploy hakeem-doc-node \
+    --source . --dockerfile services/doc-node/Dockerfile \
+    --region me-central1 --allow-unauthenticated \
+    --set-env-vars GEMINI_API_KEY=مفتاحك,GEMINI_MAX_CONCURRENCY=32,DOC_NODE_DATA=/tmp
+  ```
+  (`me-central1` = الدوحة، الأقرب للسعودية — أو `me-central2` جدّة.)
+
 ## متغيّرات البيئة
 
 | المتغيّر | الوظيفة |
