@@ -51,36 +51,18 @@ def mime_for(name):
     return _MIME_BY_EXT.get(ext)
 
 
-def extract_with_gemini(name, data, model_type="flash", timeout=120):
-    """
-    يرسل ملفاً (صورة/PDF) إلى Gemini ويعيد النصّ. يرفع استثناءً عند الفشل.
-    Gemini يقرأ الـ PDF أصلاً (رؤية) — فلا حاجة لتحويل الصفحات لصور على الخادم.
-    """
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not key:
-        raise RuntimeError("GEMINI_API_KEY غير مضبوط — فعّل مزوّد Gemini بضبط المفتاح")
-    mime = mime_for(name)
-    if not mime:
-        raise RuntimeError("Gemini يقبل PNG/JPG/PDF فقط — استخدم المزوّد المحلّي لغيرها")
+def _img_part(data, mime):
+    return {"inline_data": {"data": base64.b64encode(data).decode("ascii"), "mime_type": mime}}
 
+
+def _gemini_generate(parts, model_type, key, timeout):
+    """نداءٌ واحد لـ Gemini على قائمة أجزاء (صورة/نص). يعيد النصّ أو يرفع استثناءً."""
     model = "gemini-2.5-pro" if model_type == "pro" else "gemini-2.5-flash"
-    body = {
-        "contents": [
-            {
-                "parts": [
-                    {"inline_data": {"data": base64.b64encode(data).decode("ascii"), "mime_type": mime}},
-                    {"text": OCR_PROMPT},
-                ]
-            }
-        ],
-        "generationConfig": _gen_config(model_type),
-    }
+    body = {"contents": [{"parts": parts}], "generationConfig": _gen_config(model_type)}
     url = "%s/%s:generateContent?key=%s" % (GEMINI_BASE, model, key)
     req = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
+        url, data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"}, method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -92,12 +74,57 @@ def extract_with_gemini(name, data, model_type="flash", timeout=120):
         except Exception:
             pass
         raise RuntimeError("Gemini أعاد %s%s" % (e.code, (" — " + detail) if detail else ""))
-
     cand = (payload.get("candidates") or [{}])[0]
-    parts = ((cand.get("content") or {}).get("parts")) or []
-    text = "".join(p.get("text", "") for p in parts).strip()
+    parts_out = ((cand.get("content") or {}).get("parts")) or []
+    text = "".join(p.get("text", "") for p in parts_out).strip()
     if not text:
         if cand.get("finishReason") == "MAX_TOKENS":
             raise RuntimeError("انقطعت استجابة Gemini قبل النصّ (حدّ المخرجات)")
         raise RuntimeError("لم يُعِد Gemini نصاً — تأكد من وضوح الوثيقة")
     return text
+
+
+def _render_pdf_to_jpegs(data, dpi=200):
+    """يرسم صفحات PDF صوراً JPEG (يتطلّب pdf2image + poppler). يرفع عند تعذّره."""
+    import io
+    from pdf2image import convert_from_bytes
+
+    out = []
+    for im in convert_from_bytes(data, dpi=dpi):
+        buf = io.BytesIO()
+        im.convert("RGB").save(buf, format="JPEG", quality=90)
+        out.append(buf.getvalue())
+    return out
+
+
+def extract_with_gemini(name, data, model_type="flash", timeout=120):
+    """
+    يرسل ملفاً (صورة/PDF) إلى Gemini ويعيد النصّ. يرفع استثناءً عند الفشل.
+    للـ PDF: يرسم الصفحات صوراً ويرسلها (رؤية حقيقية) بدل الـ PDF الخام.
+    """
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY غير مضبوط — فعّل مزوّد Gemini بضبط المفتاح")
+    mime = mime_for(name)
+    if not mime:
+        raise RuntimeError("Gemini يقبل PNG/JPG/PDF فقط — استخدم المزوّد المحلّي لغيرها")
+
+    if mime == "application/pdf":
+        # رؤية حقيقية: نرسم كل صفحة صورةً ونرسلها — لا نرسل الـ PDF الخام. طبقات النصّ
+        # العربية كثيراً ما تكون بترتيبٍ بصريٍّ معكوس ومُضاعَف (InDesign)، وإرسال الـ PDF
+        # الخام يجعل Gemini يقرأ تلك الطبقة المعطوبة فيرث عطبها. الرسم كصورةٍ يُجبره على
+        # الرؤية الحقيقية فيقرأ سليماً.
+        pages = None
+        try:
+            pages = _render_pdf_to_jpegs(data)
+        except Exception:
+            pages = None  # بلا poppler → نتراجع لإرسال الـ PDF الخام
+        if pages:
+            parts_text = []
+            for i, img in enumerate(pages, 1):
+                txt = _gemini_generate([_img_part(img, "image/jpeg"), {"text": OCR_PROMPT}], model_type, key, timeout)
+                parts_text.append("[صفحة %d]\n%s" % (i, txt))
+            return "\n\n".join(parts_text)
+
+    # صورة، أو PDF تعذّر رسمه: أرسل الملف كما هو
+    return _gemini_generate([_img_part(data, mime), {"text": OCR_PROMPT}], model_type, key, timeout)
