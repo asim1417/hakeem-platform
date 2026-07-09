@@ -34,8 +34,9 @@ async function encodeToFit(canvas: HTMLCanvasElement): Promise<Blob | null> {
 }
 /** دقة تحويل الصفحة لصورة — 3 لإبراز التشكيل والنقاط في النصّ العربي الكثيف */
 const PAGE_SCALE = 3;
-/** التوازي الافتراضي — يهبط إلى 1 تلقائياً عند أول 429 */
-const DEFAULT_CONCURRENCY = 3;
+/** التوازي الافتراضي — يهبط إلى 1 تلقائياً عند أول 429، فالرقم الأعلى آمن حتى
+    للمفاتيح المجانية (تنكمش فوراً) ويطلق سرعة المفاتيح المدفوعة (Tier 1: ~2000 RPM) */
+const DEFAULT_CONCURRENCY = 6;
 /** انتظارات إعادة المحاولة عند حد المعدل */
 const RATE_WAITS_MS = [15_000, 30_000];
 
@@ -177,7 +178,7 @@ export interface CloudPdfOptions {
 }
 
 /** أقصى توازٍ مسموح — سقفٌ أمانٍ حتى للمفاتيح المدفوعة */
-export const MAX_CONCURRENCY = 8;
+export const MAX_CONCURRENCY = 12;
 
 /** عدد صفحات ملف PDF (للتقدير المسبق قبل بدء الدفعة) */
 export async function getPdfPageCount(buffer: ArrayBuffer): Promise<number> {

@@ -744,7 +744,7 @@ export function CaseBrowser() {
   const estimate = useMemo(() => {
     if (!plannedPages) return null;
     const perPage = cloudHiQ ? 14 : 7; // ثوانٍ تقديرية للصفحة الواحدة
-    const parallel = cloudFast ? 6 : 3;
+    const parallel = cloudFast ? 10 : 6;
     const secs = Math.ceil((plannedPages / parallel) * perPage);
     const mins = Math.round((secs / 60) * 10) / 10;
     return { pages: plannedPages, secs, mins, heavy: plannedPages > 60 };
@@ -834,7 +834,7 @@ export function CaseBrowser() {
           from: cloudFrom ? Number(cloudFrom) : undefined,
           to: cloudTo ? Number(cloudTo) : undefined,
           model,
-          concurrency: cloudFast ? 6 : undefined
+          concurrency: cloudFast ? 10 : undefined
         });
         if (!result.text) return { text: null, error: result.error };
         if (result.failed.length) {
@@ -956,7 +956,7 @@ export function CaseBrowser() {
           options: {
             onlyPages: plan.needOcrPages,
             model: cloudHiQ ? "pro" : "flash",
-            concurrency: cloudFast ? 6 : undefined
+            concurrency: cloudFast ? 10 : undefined
           },
           onComplete: () => undefined // التسوية عبر المشترك أدناه
         });
@@ -974,7 +974,7 @@ export function CaseBrowser() {
         void startConversion({
           title: baseName,
           buffer: buf,
-          options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash", concurrency: cloudFast ? 6 : undefined },
+          options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash", concurrency: cloudFast ? 10 : undefined },
           onComplete: () => undefined
         });
         setStatusMsg("بدأت القراءة السحابية — تابع المؤشر");
@@ -1056,7 +1056,7 @@ export function CaseBrowser() {
                 from: cloudFrom ? Number(cloudFrom) : undefined,
                 to: cloudTo ? Number(cloudTo) : undefined,
                 model: cloudHiQ ? "pro" : "flash",
-                concurrency: cloudFast ? 6 : undefined
+                concurrency: cloudFast ? 10 : undefined
               },
               // الإضافة تتم عبر تسوية النتيجة (أدناه) لتعمل حتى لو انتقل المستخدم
               onComplete: () => undefined
