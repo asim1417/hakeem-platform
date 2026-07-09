@@ -9,3 +9,4 @@ export * from "./sample-case";
 export * from "./pipeline";
 export * from "./accuracy";
 export * from "./throughput";
+export * from "./margin-numbers";

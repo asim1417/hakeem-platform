@@ -119,6 +119,59 @@ def clean_text(text):
     return text
 
 
+_AR2LAT = {"٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+           "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9"}
+# رقمٌ خالص (عربي/لاتيني) في بداية السطر يليه مسافةٌ ثم حرفٌ غير رقمي — مرشَّح رقم هامش.
+_LEAD_NUM = re.compile(r"^(\s*)([0-9٠-٩]{1,4})(\s+)(?=[^\s0-9٠-٩])")
+
+
+def _to_int(s):
+    out = ""
+    for ch in s:
+        if "0" <= ch <= "9":
+            out += ch
+        elif ch in _AR2LAT:
+            out += _AR2LAT[ch]
+        else:
+            return None
+    return int(out) if out else None
+
+
+def strip_margin_line_numbers(text):
+    """يحذف أرقام هامش الأسطر المتسلسلة فقط (218،219،220…) التي تلتقطها الرؤية من
+    المدوّنات المرقّمة. محافظ: لا يمسّ أي رقمِ متن (مادة/مبلغ/تاريخ/إحالة كـ٧٣/٦)،
+    ولا يحذف رقماً إلا إن أثبت أنه ضمن تتابعٍ تصاعدي (خطوة 1–3 عبر أسطرٍ متقاربة)."""
+    if not text:
+        return text
+    lines = text.split("\n")
+    cand = []  # (index, value, prefix_len)
+    for i, line in enumerate(lines):
+        if re.match(r"^\s*\[صفحة \d+\]", line):
+            continue
+        m = _LEAD_NUM.match(line)
+        if not m:
+            continue
+        v = _to_int(m.group(2))
+        if v is None:
+            continue
+        cand.append((i, v, len(m.group(0))))
+    if len(cand) < 3:
+        return text
+    seq = set()
+    for a in range(len(cand)):
+        for b in range(a + 1, min(a + 4, len(cand))):
+            diff = cand[b][1] - cand[a][1]
+            gap = cand[b][0] - cand[a][0]
+            if 1 <= diff <= 3 and 1 <= gap <= 6:
+                seq.add(cand[a][0])
+                seq.add(cand[b][0])
+    if len(seq) < 3:
+        return text
+    plen = {i: p for (i, _v, p) in cand}
+    out = [line[plen[i]:] if i in seq else line for i, line in enumerate(lines)]
+    return "\n".join(out)
+
+
 def norm(s):
     """تطبيع للبحث: حذف التشكيل والتطويل"""
     if not s:

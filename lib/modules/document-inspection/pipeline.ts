@@ -9,6 +9,7 @@
 
 import { cleanPdfTextLayer, scrubLogoNoise, separateRunningLines } from "./reshape";
 import { fixReversedArabicLines } from "./text-quality";
+import { stripMarginLineNumbers } from "./margin-numbers";
 
 /** منشأ النص المُستخرَج — يحدّد سلسلة المعالجة المناسبة له. */
 export type TextSource =
@@ -31,6 +32,8 @@ export interface ProcessedText {
   needsOcr: boolean;
   /** عدد الأسطر التي صُحِّح انعكاس اتجاهها (OCR). */
   correctedLines: number;
+  /** عدد أرقام هامش الأسطر المتسلسلة التي حُذفت (ترقيمُ مدوّناتٍ التقطته الرؤية). */
+  marginNumbersRemoved: number;
 }
 
 /**
@@ -57,5 +60,13 @@ export function processExtractedText(rawText: string, opts: ProcessOptions): Pro
   }
   // كل المصادر: افصل الترويسات/التذييلات المتكررة عن المتن (يعمل عند ≥3 صفحات).
   const sep = separateRunningLines(text);
-  return { body: sep.body, running: sep.running, needsOcr, correctedLines };
+  // احذف أرقام هامش الأسطر المتسلسلة (محافظ: يُبقي كل رقمِ متن؛ لا شيء يُحذف بلا تسلسل مثبَت).
+  const stripped = stripMarginLineNumbers(sep.body);
+  return {
+    body: stripped.text,
+    running: sep.running,
+    needsOcr,
+    correctedLines,
+    marginNumbersRemoved: stripped.removed
+  };
 }

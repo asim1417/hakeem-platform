@@ -119,4 +119,50 @@ def _clean_normalizes():
 check("التنظيف العربي: علامات خفيّة + تطبيع", _clean_normalizes)
 
 
+# ── حذف أرقام هامش الأسطر (حذر شديد) ──
+from doc_reader import strip_margin_line_numbers
+
+
+def _strip_sequence():
+    src = (
+        "218 الأنموذج الرابع: القسامة\n"
+        "219 فبناء على ما تقدم من الدعوى\n"
+        "220 الأنموذج الخامس: حكم في صيال\n"
+        "221 فبناء على ما تقدم\n"
+        "222 أولاً: أن القرائن حجة"
+    )
+    out = strip_margin_line_numbers(src)
+    assert out.startswith("الأنموذج الرابع"), out[:30]
+    assert "الأنموذج الخامس" in out
+    assert not out.split("\n")[0][0].isdigit()
+
+
+check("أرقام الهامش: تسلسل يُحذف والمتن يبقى", _strip_sequence)
+
+
+def _keep_content_numbers():
+    src = (
+        "201 قال في كشاف القناع (٧٣/٦) ونصه\n"
+        "202 استناداً إلى المادة 62 من النظام\n"
+        "203 والمبلغ 15000 ريال بتاريخ 1440/03/12"
+    )
+    out = strip_margin_line_numbers(src)
+    assert "٧٣/٦" in out
+    assert "المادة 62" in out
+    assert "15000 ريال" in out
+    assert "1440/03/12" in out
+    assert "201 قال" not in out
+
+
+check("أرقام الهامش: لا يمسّ أرقام المتن", _keep_content_numbers)
+
+
+def _no_sequence_no_strip():
+    out = strip_margin_line_numbers("5 بنود مهمة\nنص عادي\nسطر آخر")
+    assert "5 بنود" in out  # رقم منفرد بلا تسلسل يبقى
+
+
+check("أرقام الهامش: رقم منفرد بلا تسلسل يبقى", _no_sequence_no_strip)
+
+
 print("\nكل اختبارات المحرّكات ناجحة (%d)" % passed)

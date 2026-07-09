@@ -33,6 +33,7 @@ import {
   measureAccuracy,
   parseQuery,
   runAdaptive,
+  stripMarginLineNumbers,
   processExtractedText,
   queryStems,
   sampleCaseDocuments,
@@ -777,6 +778,60 @@ async function adaptiveAll() {
     check("التكيّف: مدخلٌ فارغ → نتيجة فارغة", () => assert.deepEqual(out, []));
   })();
 }
+
+// ── حذف أرقام هامش الأسطر (حذر شديد) ──
+check("أرقام الهامش: تسلسل حقيقي (218–223) يُحذف والمتن يبقى", () => {
+  const src =
+    "218 الأنموذج الرابع: القسامة مع التأجيل\n" +
+    "219 فبناء على ما تقدم من الدعوى والإجابة\n" +
+    "220 الأنموذج الخامس: حكم في صيال\n" +
+    "221 فبناء على ما تقدم من الدعوى\n" +
+    "222 أولاً: أن القرائن حجة يعمل بها";
+  const { text, removed } = stripMarginLineNumbers(src);
+  assert.equal(removed, 5);
+  assert.ok(text.startsWith("الأنموذج الرابع"), "حُذف الرقم البادئ");
+  assert.ok(text.includes("الأنموذج الخامس"));
+  assert.ok(!/^\d/.test(text.split("\n")[0]));
+});
+
+check("أرقام الهامش: لا يمسّ أرقام المتن داخل الجملة", () => {
+  const src =
+    "201 قال في كشاف القناع (٧٣/٦) ونصه كذا\n" +
+    "202 استناداً إلى المادة 62 من نظام مكافحة المخدرات\n" +
+    "203 والمبلغ المحكوم به 15000 ريال بتاريخ 1440/03/12";
+  const { text } = stripMarginLineNumbers(src);
+  // أرقام المتن كلها تبقى
+  assert.ok(text.includes("٧٣/٦"), "إحالة المرجع باقية");
+  assert.ok(text.includes("المادة 62"), "رقم المادة باقٍ");
+  assert.ok(text.includes("15000 ريال"), "المبلغ باقٍ");
+  assert.ok(text.includes("1440/03/12"), "التاريخ باقٍ");
+  // الأرقام البادئة الهامشية فقط تُحذف
+  assert.ok(text.includes("قال في كشاف القناع"));
+  assert.ok(!text.includes("201 قال"));
+});
+
+check("أرقام الهامش: رقمٌ منفرد بلا تسلسل يبقى (لا حذف عشوائي)", () => {
+  const src =
+    "5 بنود يجب مراعاتها في الحكم\nنص عادي بلا رقم بادئ\nسطر آخر من المتن";
+  const { text, removed } = stripMarginLineNumbers(src);
+  assert.equal(removed, 0, "لا تسلسل → لا حذف");
+  assert.ok(text.includes("5 بنود"));
+});
+
+check("أرقام الهامش: بنود مرقّمة (1) 2) لا تُحذف (ليست رقماً معزولاً)", () => {
+  const src = "1) أولاً كذا\n2) ثانياً كذا\n3) ثالثاً كذا";
+  const { removed } = stripMarginLineNumbers(src);
+  assert.equal(removed, 0, "«1)» ليست رقم هامش معزولاً");
+});
+
+check("أرقام الهامش: يحترم علامات الصفحات [صفحة N]", () => {
+  const src =
+    "[صفحة 7]\n318 الفصل الأول في أحكام الدعوى\n319 المادة الأولى من النظام\n320 المادة الثانية من النظام";
+  const { text, removed } = stripMarginLineNumbers(src);
+  assert.equal(removed, 3);
+  assert.ok(text.includes("[صفحة 7]"), "علامة الصفحة لم تُمسّ");
+  assert.ok(text.includes("الفصل الأول"));
+});
 
 async function asyncChecks() {
   await adaptiveAll();

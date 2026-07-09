@@ -141,11 +141,7 @@ register(Engine("qari", "QARI-OCR (عربي دقيق — GPU)", _qari_available,
 
 
 # ───────────────────────── المُوزِّع الموحّد ─────────────────────────
-def process(provider, model, name, data):
-    """
-    يشغّل المحرّك المطلوب. عند فشل محرّكٍ بعيد (سحابي/GPU) يتراجع للمحلّي مع تنبيه
-    صريح في الوصف (لا فشلٌ صامت). المحرّك المحلّي متاح دائماً كأمان أخير.
-    """
+def _dispatch(provider, model, name, data):
     from doc_reader import read_bytes, clean_text
 
     eng = get(provider)
@@ -162,3 +158,14 @@ def process(provider, model, name, data):
     # local (أو مزوّد غير معروف → افتراضي محلّي)
     txt, kind = read_bytes(name, data)
     return clean_text(txt or ""), kind
+
+
+def process(provider, model, name, data):
+    """
+    يشغّل المحرّك المطلوب (مع تراجعٍ منظّم للمحلّي)، ثم يحذف أرقام هامش الأسطر
+    المتسلسلة عند كل المسارات — محافظ: لا يمسّ أي رقمِ متن.
+    """
+    from doc_reader import strip_margin_line_numbers
+
+    text, kind = _dispatch(provider, model, name, data)
+    return strip_margin_line_numbers(text or ""), kind
