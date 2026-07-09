@@ -262,10 +262,30 @@
 }
 .privacy ul {
   margin: 0;
-  padding: 0 18px 0 0;
+  padding: 0;
+  list-style: none;
   color: var(--muted);
   font-size: 14px;
-  line-height: 2;
+  line-height: 1.8;
+  display: grid;
+  gap: 12px;
+}
+.privacy li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.privacyIc {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--copper-deep);
 }
 
 .footer {
