@@ -94,7 +94,9 @@ export default function DocumentsLandingPage() {
       </header>
 
       <main className={styles.wrap}>
-        <h2 className={styles.sectionTitle}>قسمان لمهمتين</h2>
+        <h2 className={styles.sectionTitle}>
+          {process.env.DOC_SERVICE_URL ? "ثلاثة مسارات" : "قسمان لمهمتين"}
+        </h2>
         <div className={styles.grid}>
           <Link href="/documents/tool" className={styles.card} style={{ textDecoration: "none" }}>
             <span className={styles.ic} aria-hidden="true">
