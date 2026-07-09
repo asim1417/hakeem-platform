@@ -75,11 +75,11 @@ def extract_with_gemini(name, data, model_type="flash", timeout=120):
         ],
         "generationConfig": _gen_config(model_type),
     }
-    url = "%s/%s:generateContent?key=%s" % (GEMINI_BASE, model, key)
+    url = "%s/%s:generateContent" % (GEMINI_BASE, model)
     req = urllib.request.Request(
         url,
         data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "x-goog-api-key": key},
         method="POST",
     )
     try:

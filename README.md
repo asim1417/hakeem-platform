@@ -233,7 +233,7 @@ CUSTOM_AI_BASE_URL=https://provider.example.com/v1
 CUSTOM_AI_API_KEY=server-only
 OPENAI_MODEL=gpt-4o-mini
 ANTHROPIC_MODEL=claude-3-5-haiku-latest
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.5-flash
 CUSTOM_AI_MODEL=gpt-4o-mini
 
 AZURE_STORAGE_ACCOUNT=account-name

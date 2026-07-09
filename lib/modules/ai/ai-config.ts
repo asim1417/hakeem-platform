@@ -215,7 +215,7 @@ export function defaultModelFor(provider: AiProvider): string {
     case "custom":
       return "gpt-4o-mini";
     case "gemini":
-      return "gemini-1.5-flash";
+      return "gemini-2.5-flash";
     default:
       return "offline";
   }
@@ -267,10 +267,10 @@ export async function completeWithConfig(
 
   if (cfg.provider === "gemini") {
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": cfg.apiKey },
         body: JSON.stringify({
           ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}),
           contents: [{ role: "user", parts: [{ text: usr }] }],

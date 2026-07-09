@@ -77,8 +77,9 @@ export async function clearGeminiOcrKey(): Promise<{ ok: boolean }> {
 /** اختبار خفيف للمفتاح قبل الحفظ — استعلام قائمة النماذج (لا يستهلك توليداً). */
 export async function testGeminiOcrKey(plainKey: string): Promise<{ ok: boolean; message: string }> {
   try {
-    const res = await fetch(`${GEMINI_BASE}?key=${encodeURIComponent(plainKey.trim())}&pageSize=1`, {
+    const res = await fetch(`${GEMINI_BASE}?pageSize=1`, {
       method: "GET",
+      headers: { "x-goog-api-key": plainKey.trim() },
       signal: AbortSignal.timeout(10_000)
     });
     if (res.ok) return { ok: true, message: "المفتاح صالح — الخدمة السحابية جاهزة." };
@@ -147,9 +148,9 @@ export async function extractTextWithGemini(
   if (!apiKey) throw new Error("مفتاح Gemini غير مضبوط — أضفه من إعدادات منصة الوثائق");
 
   const model = modelType === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash";
-  const res = await fetch(`${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`, {
+  const res = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       contents: [
         {

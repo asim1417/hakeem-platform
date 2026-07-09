@@ -30,7 +30,7 @@ const sourceLabel: Record<string, string> = {
 const DEFAULT_MODELS: Record<string, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-sonnet-4-6",
-  gemini: "gemini-1.5-flash",
+  gemini: "gemini-2.5-flash",
   custom: ""
 };
 
