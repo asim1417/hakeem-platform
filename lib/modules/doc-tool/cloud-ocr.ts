@@ -63,6 +63,19 @@ async function postToCloud(blob: Blob, name: string, model?: "flash" | "pro"): P
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
+ * ينتظر بمدّة `ms` مُبلّغاً عن الثواني المتبقية كل ثانية — بدل رسالة تقدّمٍ ثابتة
+ * تُعلَن مرّةً واحدة وتتجمّد طوال الانتظار (كانت تُظهر "15 ثانية" حتى لحظة الانتهاء).
+ */
+async function sleepWithCountdown(ms: number, onTick: (remainingSec: number) => void): Promise<void> {
+  let remaining = Math.round(ms / 1000);
+  while (remaining > 0) {
+    onTick(remaining);
+    await sleep(1000);
+    remaining -= 1;
+  }
+}
+
+/**
  * يُلائم صورةً مرفوعة لحدّ الرفع: الصور الكبيرة (صور الجوّال 4–12MB) كانت تُرفض صامتةً.
  * الحلّ: إن تجاوزت الحدّ (أو لم تكن JPEG/PNG) نُصغّرها إلى حدٍّ أقصى للبُعد يكفي رؤية
  * Gemini ثم نرمّزها بجودةٍ مُلائمة. الصغيرة المقبولة تُرسَل كما هي بلا مساس.
@@ -102,8 +115,7 @@ export async function cloudOcrImage(file: File, onProgress?: CloudProgress, mode
   const r = await postToCloud(fitted.blob, fitted.name, model);
   if (r.rateLimited) {
     for (const wait of RATE_WAITS_MS) {
-      onProgress?.(`حد المعدل — انتظار ${wait / 1000} ثانية…`);
-      await sleep(wait);
+      await sleepWithCountdown(wait, (remaining) => onProgress?.(`حد المعدل — انتظار ${remaining} ثانية…`));
       const retry = await postToCloud(fitted.blob, fitted.name, model);
       if (retry.text) return retry.text;
       if (!retry.rateLimited) break;
@@ -207,8 +219,9 @@ export async function cloudOcrPdfPages(
       let waitIdx = 0;
       while (attempt.rateLimited && waitIdx < RATE_WAITS_MS.length) {
         limitHit = true;
-        onProgress?.(`حد المعدل — انتظار ${RATE_WAITS_MS[waitIdx] / 1000} ثانية ثم إعادة صفحة ${p}…`);
-        await sleep(RATE_WAITS_MS[waitIdx]);
+        await sleepWithCountdown(RATE_WAITS_MS[waitIdx], (remaining) =>
+          onProgress?.(`حد المعدل — انتظار ${remaining} ثانية ثم إعادة صفحة ${p}…`)
+        );
         waitIdx += 1;
         attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
       }
