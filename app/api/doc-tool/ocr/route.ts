@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   extractTextWithGemini,
   getGeminiOcrStatus,
+  GeminiApiError,
   GEMINI_OCR_MIME_TYPES,
   type GeminiOcrMime,
   type GeminiOcrModel
@@ -58,8 +59,18 @@ export async function POST(request: NextRequest) {
     const text = await extractTextWithGemini(Buffer.from(await file.arrayBuffer()), mime, model);
     return NextResponse.json({ text, model: model === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash" });
   } catch (error) {
+    if (error instanceof GeminiApiError) {
+      // حصة يومية مستهلَكة: 429 لكن بعلمٍ صريح — العميل يتوقّف عن إعادة المحاولة العمياء
+      if (error.dailyLimitExceeded) {
+        return NextResponse.json({ error: error.message, dailyLimitExceeded: true }, { status: 429 });
+      }
+      const rateLimited = /429|quota|RESOURCE_EXHAUSTED|rate limit/i.test(error.message);
+      return NextResponse.json(
+        { error: error.message, retryDelaySec: error.retryDelaySec ?? undefined },
+        { status: rateLimited ? 429 : 502 }
+      );
+    }
     const msg = error instanceof Error ? error.message : "تعذّر الاستخراج";
-    // حد المعدل يمرَّر 429 ليتراجع العميل للتتابع ويعيد المحاولة بانتظار
     const rateLimited = /429|quota|RESOURCE_EXHAUSTED|rate limit/i.test(msg);
     return NextResponse.json({ error: msg }, { status: rateLimited ? 429 : 502 });
   }

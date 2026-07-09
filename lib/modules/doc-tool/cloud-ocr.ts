@@ -42,21 +42,44 @@ const RATE_WAITS_MS = [15_000, 30_000];
 interface PostResult {
   text: string | null;
   rateLimited: boolean;
+  /** حصة يومية مستهلَكة (RPD) — لا طائل من إعادة المحاولة اليوم، بخلاف حدّ الدقيقة العابر */
+  dailyLimitExceeded?: boolean;
+  /** مهلة الانتظار الحقيقية التي أرسلها Google (RetryInfo) — أدقّ من تخمين ثابت */
+  retryDelaySec?: number | null;
+  /** السبب الحقيقي عند الفشل — يُعرض للمستخدم بدل رسالة عامة */
+  error?: string;
 }
 
 async function postToCloud(blob: Blob, name: string, model?: "flash" | "pro"): Promise<PostResult> {
   try {
-    if (blob.size > MAX_UPLOAD_BYTES) return { text: null, rateLimited: false };
+    if (blob.size > MAX_UPLOAD_BYTES) {
+      return { text: null, rateLimited: false, error: "حجم الصفحة يتجاوز حدّ الرفع السحابي" };
+    }
     const fd = new FormData();
     fd.append("file", new File([blob], name, { type: blob.type || "application/octet-stream" }));
     if (model) fd.append("model", model);
     const res = await fetch("/api/doc-tool/ocr", { method: "POST", body: fd });
-    if (res.status === 429) return { text: null, rateLimited: true };
-    const json = (await res.json()) as { text?: string };
-    if (!res.ok || !json.text || json.text.trim().length < 3) return { text: null, rateLimited: false };
+    const json = (await res.json().catch(() => ({}))) as {
+      text?: string;
+      error?: string;
+      dailyLimitExceeded?: boolean;
+      retryDelaySec?: number;
+    };
+    if (res.status === 429) {
+      return {
+        text: null,
+        rateLimited: !json.dailyLimitExceeded,
+        dailyLimitExceeded: json.dailyLimitExceeded,
+        retryDelaySec: json.retryDelaySec ?? null,
+        error: json.error
+      };
+    }
+    if (!res.ok || !json.text || json.text.trim().length < 3) {
+      return { text: null, rateLimited: false, error: json.error ?? `Gemini أعاد ${res.status}` };
+    }
     return { text: json.text.trim(), rateLimited: false };
   } catch {
-    return { text: null, rateLimited: false };
+    return { text: null, rateLimited: false, error: "تعذّر الاتصال بخدمة القراءة السحابية" };
   }
 }
 
@@ -107,21 +130,36 @@ async function fitImageForCloud(file: File): Promise<{ blob: Blob; name: string 
   }
 }
 
+export interface CloudImageResult {
+  text: string | null;
+  /** السبب الحقيقي عند الفشل (مفتاح، حصة يومية، شبكة، ...) — لا يظهر إلا عند text=null */
+  error?: string;
+}
+
+/** ينتقي مهلة الانتظار: الحقيقية من Google (RetryInfo) إن وُجدت، وإلا التخمين الثابت */
+function waitMsFor(attempt: PostResult, fallbackMs: number): number {
+  if (!attempt.retryDelaySec) return fallbackMs;
+  return Math.min(Math.max(Math.round(attempt.retryDelaySec * 1000), 3_000), 60_000);
+}
+
 /** قراءة صورة (ملف مرفوع) سحابياً */
-export async function cloudOcrImage(file: File, onProgress?: CloudProgress, model?: "flash" | "pro"): Promise<string | null> {
+export async function cloudOcrImage(file: File, onProgress?: CloudProgress, model?: "flash" | "pro"): Promise<CloudImageResult> {
   onProgress?.(model === "pro" ? "قراءة سحابية فائقة الدقة (Gemini Pro)…" : "قراءة سحابية فائقة الدقة (Gemini)…");
   const fitted = await fitImageForCloud(file);
-  if (!fitted) return null; // صورة يتعذّر تصغيرها لحدّ الرفع → يتراجع المستدعي للمحلي
-  const r = await postToCloud(fitted.blob, fitted.name, model);
-  if (r.rateLimited) {
+  if (!fitted) return { text: null, error: "تعذّر تحضير الصورة لحدّ الرفع السحابي" };
+  let attempt = await postToCloud(fitted.blob, fitted.name, model);
+  if (attempt.dailyLimitExceeded) return { text: null, error: attempt.error };
+  if (attempt.rateLimited) {
     for (const wait of RATE_WAITS_MS) {
-      await sleepWithCountdown(wait, (remaining) => onProgress?.(`حد المعدل — انتظار ${remaining} ثانية…`));
-      const retry = await postToCloud(fitted.blob, fitted.name, model);
-      if (retry.text) return retry.text;
-      if (!retry.rateLimited) break;
+      const waitMs = waitMsFor(attempt, wait);
+      await sleepWithCountdown(waitMs, (remaining) => onProgress?.(`حد المعدل — انتظار ${remaining} ثانية…`));
+      attempt = await postToCloud(fitted.blob, fitted.name, model);
+      if (attempt.text) return { text: attempt.text };
+      if (attempt.dailyLimitExceeded) return { text: null, error: attempt.error };
+      if (!attempt.rateLimited) break;
     }
   }
-  return r.text;
+  return { text: attempt.text, error: attempt.text ? undefined : attempt.error };
 }
 
 export interface CloudPdfOptions {
@@ -164,17 +202,20 @@ export interface CloudPdfResult {
   requested: number;
   /** إجمالي صفحات الملف */
   total: number;
+  /** السبب الحقيقي عند فشل القراءة كلياً (text فارغ) — مفتاح، حصة يومية، شبكة... */
+  error?: string;
 }
 
 /**
  * قراءة PDF سحابياً — صفحاتٍ كصور مرسومة في المتصفح (رؤية حقيقية، لا طبقة نص).
- * متوازية تكيفياً، وتدعم نطاقاً أو قائمة صفحات محددة. null إن لم تُقرأ أي صفحة.
+ * متوازية تكيفياً، وتدعم نطاقاً أو قائمة صفحات محددة. عند فشل القراءة كلياً يعود
+ * text فارغاً مع error يحمل السبب الحقيقي — المستدعي يسقط للمحلي مع عرض السبب.
  */
 export async function cloudOcrPdfPages(
   buffer: ArrayBuffer,
   onProgress?: CloudProgress,
   opts: CloudPdfOptions = {}
-): Promise<CloudPdfResult | null> {
+): Promise<CloudPdfResult> {
   try {
     onProgress?.("تجهيز صفحات الـ PDF للقراءة السحابية…");
     const pdfjs = await import("pdfjs-dist");
@@ -192,15 +233,18 @@ export async function cloudOcrPdfPages(
     }
     if (!pages.length) {
       await doc.destroy();
-      return null;
+      return { text: "", failed: [], requested: 0, total, error: "لا صفحات ضمن النطاق المحدَّد" };
     }
 
     const results = new Map<number, string | null>();
     let cursor = 0;
     let done = 0;
     let limitHit = false; // بعد أول 429: يعمل عامل واحد فقط (تتابع)
+    let dailyBlocked = false; // حصة يومية مستهلَكة — توقّف الكل فوراً، لا طائل من الإعادة
+    let lastError: string | undefined;
 
     const readPage = async (p: number): Promise<string | null> => {
+      if (dailyBlocked) return null;
       const page = await doc.getPage(p);
       const viewport = page.getViewport({ scale: PAGE_SCALE });
       const canvas = document.createElement("canvas");
@@ -216,22 +260,34 @@ export async function cloudOcrPdfPages(
       if (!blob) return null;
 
       let attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+      if (attempt.dailyLimitExceeded) {
+        dailyBlocked = true;
+        lastError = attempt.error;
+        return null;
+      }
       let waitIdx = 0;
       while (attempt.rateLimited && waitIdx < RATE_WAITS_MS.length) {
         limitHit = true;
-        await sleepWithCountdown(RATE_WAITS_MS[waitIdx], (remaining) =>
+        const waitMs = waitMsFor(attempt, RATE_WAITS_MS[waitIdx]);
+        await sleepWithCountdown(waitMs, (remaining) =>
           onProgress?.(`حد المعدل — انتظار ${remaining} ثانية ثم إعادة صفحة ${p}…`)
         );
         waitIdx += 1;
         attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+        if (attempt.dailyLimitExceeded) {
+          dailyBlocked = true;
+          lastError = attempt.error;
+          return null;
+        }
       }
       if (attempt.rateLimited) limitHit = true;
+      if (!attempt.text && attempt.error) lastError = attempt.error;
       return attempt.text;
     };
 
     const worker = async (id: number) => {
       for (;;) {
-        if (opts.shouldCancel?.()) return; // إلغاء تعاوني
+        if (opts.shouldCancel?.() || dailyBlocked) return; // إلغاء تعاوني / حصة مستهلَكة
         if (limitHit && id > 0) return; // انكماش التوازي عند حد المعدل
         const i = cursor;
         cursor += 1;
@@ -250,15 +306,23 @@ export async function cloudOcrPdfPages(
     await doc.destroy();
 
     const failed = pages.filter((p) => !results.get(p));
-    if (failed.length === pages.length) return null; // فشل شامل → المستدعي يسقط للمحلي
+    if (failed.length === pages.length) {
+      return { text: "", failed, requested: pages.length, total, error: lastError ?? "تعذّرت قراءة كل الصفحات سحابياً" };
+    }
 
     const text = pages
       .map((p) => `[صفحة ${p}]\n${results.get(p) ?? CLOUD_PAGE_FAILED}`)
       .join("\n\n")
       .trim();
     return { text, failed, requested: pages.length, total };
-  } catch {
-    return null;
+  } catch (err) {
+    return {
+      text: "",
+      failed: [],
+      requested: 0,
+      total: 0,
+      error: err instanceof Error ? err.message : "تعذّر تحضير الملف للقراءة السحابية"
+    };
   }
 }
 

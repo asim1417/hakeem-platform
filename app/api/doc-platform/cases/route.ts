@@ -20,9 +20,14 @@ interface DocInput {
   rawText: string;
 }
 
-function sanitizeDocs(payload: unknown): DocInput[] | null {
+/**
+ * يقصّ كل وثيقة إلى MAX_TEXT_CHARS ويُرجع أيضاً عناوين ما قُصَّ فعلياً — لولا ذلك
+ * يُحفَظ المستند مقطوعاً بصمت و«✓ حُفظت» تظهر كأن كل شيء تمّ بلا نقص.
+ */
+function sanitizeDocs(payload: unknown): { docs: DocInput[]; truncated: string[] } | null {
   if (!Array.isArray(payload) || payload.length === 0 || payload.length > MAX_DOCS) return null;
   const docs: DocInput[] = [];
+  const truncated: string[] = [];
   for (const item of payload) {
     if (typeof item !== "object" || item === null) return null;
     const o = item as Record<string, unknown>;
@@ -30,9 +35,10 @@ function sanitizeDocs(payload: unknown): DocInput[] | null {
     const title = o.title.trim().slice(0, 300);
     const rawText = o.rawText.slice(0, MAX_TEXT_CHARS);
     if (!title || rawText.trim().length < 5) return null;
+    if (o.rawText.length > MAX_TEXT_CHARS) truncated.push(title);
     docs.push({ title, rawText });
   }
-  return docs;
+  return { docs, truncated };
 }
 
 /** قائمة القضايا المحفوظة لمساحة العمل الحالية */
@@ -73,8 +79,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const docs = sanitizeDocs(o.docs);
-    if (!docs) return NextResponse.json({ error: "وثائق غير صالحة (يُقبل حتى 500 وثيقة نصية)" }, { status: 400 });
+    const sanitized = sanitizeDocs(o.docs);
+    if (!sanitized) return NextResponse.json({ error: "وثائق غير صالحة (يُقبل حتى 500 وثيقة نصية)" }, { status: 400 });
+    const { docs, truncated } = sanitized;
     const title = typeof o.title === "string" && o.title.trim() ? o.title.trim().slice(0, 200) : "قضية بلا عنوان";
     const annotations = typeof o.annotations === "object" && o.annotations !== null ? (o.annotations as object) : undefined;
     const caseId = typeof o.caseId === "string" ? o.caseId : null;
@@ -91,7 +98,7 @@ export async function POST(request: NextRequest) {
           docCount: docs.length
         }
       });
-      return NextResponse.json({ ok: true, id: updated.id });
+      return NextResponse.json({ ok: true, id: updated.id, truncated });
     }
 
     const count = await prisma.docCase.count({ where: { workspaceId: ws.id } });
@@ -107,7 +114,7 @@ export async function POST(request: NextRequest) {
         docCount: docs.length
       }
     });
-    return NextResponse.json({ ok: true, id: created.id });
+    return NextResponse.json({ ok: true, id: created.id, truncated });
   } catch (error) {
     if (isMissingTableError(error)) return NextResponse.json({ error: MISSING_TABLE_MESSAGE }, { status: 503 });
     return NextResponse.json({ error: "تعذّر الحفظ" }, { status: 500 });

@@ -680,7 +680,10 @@ export function CaseBrowser() {
         setTimeout(() => setStatusMsg(""), 4000);
         setDriveOpen(false);
       } else if (json.bytesBase64 && json.ext) {
-        // PDF/DOCX: استخرجه في المتصفح (نفس خطّ الرفع، بما فيه OCR للـ PDF الممسوح)
+        // PDF/DOCX: استخرجه في المتصفح (نفس خطّ الرفع، بما فيه OCR للـ PDF الممسوح).
+        // يتجاوز لوحة الخيارات — فلا بدّ من تصفير نطاق/جودة أي ملفٍ سابق أولاً، وإلا
+        // طُبِّق نطاق صفحات متروك من ملفٍ آخر صامتاً على هذا الملف الجديد.
+        resetCloudRangeOpts();
         const bytes = Uint8Array.from(atob(json.bytesBase64), (c) => c.charCodeAt(0));
         const blobFile = new File([bytes], `${json.title ?? file.name}.${json.ext}`);
         setDriveOpen(false);
@@ -796,9 +799,10 @@ export function CaseBrowser() {
             let t = "";
             if (ext === "pdf") {
               const r = await cloudOcrPdfPages(buf.slice(0), undefined, { onlyPages: [page], model: m });
-              t = strip(r?.text ?? "");
+              t = strip(r.text ?? "");
             } else {
-              t = (await cloudOcrImage(staged, undefined, m)) ?? "";
+              const r = await cloudOcrImage(staged, undefined, m);
+              t = r.text ?? "";
             }
             out.push({
               engine: m === "flash" ? "Gemini flash" : "Gemini pro",
@@ -819,8 +823,9 @@ export function CaseBrowser() {
   }
 
   /** قراءة سحابية فائقة الدقة (Gemini) — الـ PDF يُرسل صفحاتٍ كصور (رؤية حقيقية
-      تتجاوز طبقات النص المعطوبة)؛ null عند الفشل ليسقط للمحلي */
-  async function cloudRead(file: File): Promise<string | null> {
+      تتجاوز طبقات النص المعطوبة)؛ text=null عند الفشل ليسقط المستدعي للمحلي،
+      مع error يحمل السبب الحقيقي (مفتاح/حصة يومية/شبكة) بدل رسالة عامة. */
+  async function cloudRead(file: File): Promise<{ text: string | null; error?: string }> {
     try {
       const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
       const model = cloudHiQ ? "pro" : "flash";
@@ -831,16 +836,28 @@ export function CaseBrowser() {
           model,
           concurrency: cloudFast ? 6 : undefined
         });
-        if (!result) return null;
+        if (!result.text) return { text: null, error: result.error };
         if (result.failed.length) {
           setStatusMsg(`⚠ تعذّرت ${result.failed.length} من ${result.requested} صفحة سحابياً — مواضعها معلَّمة في النص`);
         }
-        return result.text;
+        return { text: result.text };
       }
       return await cloudOcrImage(file, (label) => setOcrProgress(label), model);
-    } catch {
-      return null;
+    } catch (err) {
+      return { text: null, error: err instanceof Error ? err.message : "خطأ غير متوقع في القراءة السحابية" };
     }
+  }
+
+  /**
+   * تُصفَّر خيارات نطاق/جودة الملف السابق قبل معالجة ملفٍ جديد — بلا هذا، نطاق
+   * صفحات أو وضع جودة ضُبط لملفٍ ثم أُلغي (✕) يبقى عالقاً في الحالة ويُطبَّق صامتاً
+   * على الملف التالي (خصوصاً استيراد Drive الذي يتجاوز لوحة الخيارات بالكامل).
+   */
+  function resetCloudRangeOpts() {
+    setCloudFrom("");
+    setCloudTo("");
+    setCloudHiQ(false);
+    setCloudFast(false);
   }
 
   // النصوص لا تحتاج خيارات معالجة → تُستخرَج فوراً؛ الصور وPDF تُهيَّأ لاختيار الخيارات
@@ -848,6 +865,7 @@ export function CaseBrowser() {
   function stageOrProcess(file: File) {
     const ext = (file.name.split(".").pop() ?? "").toLowerCase();
     if (OCR_EXTS.includes(ext) || ext === "enc") {
+      resetCloudRangeOpts();
       setStaged(file); // أظهر لوحة خيارات المعالجة — لا معالجة قبل «ابدأ»
     } else {
       void handleLoadFile(file); // نص/Word: بلا خيارات، مباشرة
@@ -863,16 +881,16 @@ export function CaseBrowser() {
     if (isImageExtension(ext)) {
       setFileBusy(true);
       if (cloudAvail && cloudOcrOn) {
-        const cloudText = await cloudRead(file);
-        if (cloudText) {
-          addExtracted(baseName, cloudText);
+        const cloudResult = await cloudRead(file);
+        if (cloudResult.text) {
+          addExtracted(baseName, cloudResult.text);
           setStatusMsg("✓ قُرئت سحابياً (Gemini) — راجع الأرقام والمبالغ يدوياً");
           setTimeout(() => setStatusMsg(""), 6500);
           setFileBusy(false);
           setOcrProgress("");
           return;
         }
-        setOcrProgress("السحابي غير متاح — متابعة بالمحلي…");
+        setOcrProgress(cloudResult.error ? `⚠ ${cloudResult.error} — متابعة بالمحلي…` : "السحابي غير متاح — متابعة بالمحلي…");
       }
       setOcrProgress("تحضير محرّك القراءة الضوئية…");
       try {
@@ -1209,7 +1227,15 @@ export function CaseBrowser() {
         return;
       }
       if (typeof o.id === "string") setLoadedCaseId(o.id);
-      setStatusMsg("✓ حُفظت القضية في حسابك على المنصة");
+      const truncated = Array.isArray(o.truncated) ? (o.truncated as unknown[]).filter((t) => typeof t === "string") : [];
+      if (truncated.length) {
+        window.alert(
+          `⚠ حُفظت القضية، لكن نص هذه الوثائق قُصَّ عند 400,000 حرف (تجاوزت الحدّ):\n${truncated.join("\n")}`
+        );
+        setStatusMsg("✓ حُفظت (بتقصير جزئي — راجع التنبيه)");
+      } else {
+        setStatusMsg("✓ حُفظت القضية في حسابك على المنصة");
+      }
       setTimeout(() => setStatusMsg(""), 4000);
       void refreshSavedCases();
     } finally {

@@ -130,8 +130,8 @@ export async function startConversion(args: StartConversionArgs): Promise<void> 
       patch({ phase: "canceled", label: "أُلغيت المعالجة" });
       return;
     }
-    if (!result) {
-      patch({ phase: "error", error: "تعذّرت القراءة السحابية — تحقّق من المفتاح أو الاتصال", label: "" });
+    if (!result.text) {
+      patch({ phase: "error", error: result.error ?? "تعذّرت القراءة السحابية — تحقّق من المفتاح أو الاتصال", label: "" });
       return;
     }
 

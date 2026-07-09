@@ -136,7 +136,32 @@ export function isGeminiOcrConfigured(): boolean {
 
 interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
-  error?: { message?: string };
+  error?: {
+    message?: string;
+    status?: string;
+    details?: Array<{
+      "@type"?: string;
+      violations?: Array<{ quotaId?: string; quotaMetric?: string }>;
+      retryDelay?: string;
+    }>;
+  };
+}
+
+/**
+ * خطأ Gemini المُبنى — يحمل تمييزاً صريحاً بين حدّ معدلٍ عابر (يُجدي الانتظار
+ * والإعادة) وحصةٍ يومية مستهلَكة (PerDay — لا طائل من إعادة المحاولة اليوم؛
+ * الحلّ الوحيد تفعيل الفوترة أو الانتظار للغد)، بالإضافة لمهلة الانتظار الحقيقية
+ * التي يرسلها Google نفسه (RetryInfo.retryDelay) بدل تخمين ثابت.
+ */
+export class GeminiApiError extends Error {
+  dailyLimitExceeded: boolean;
+  retryDelaySec: number | null;
+  constructor(message: string, opts: { dailyLimitExceeded?: boolean; retryDelaySec?: number | null } = {}) {
+    super(message);
+    this.name = "GeminiApiError";
+    this.dailyLimitExceeded = opts.dailyLimitExceeded ?? false;
+    this.retryDelaySec = opts.retryDelaySec ?? null;
+  }
 }
 
 export async function extractTextWithGemini(
@@ -166,7 +191,19 @@ export async function extractTextWithGemini(
 
   const json = (await res.json()) as GeminiResponse;
   if (!res.ok) {
-    throw new Error(json.error?.message ?? `Gemini أعاد ${res.status}`);
+    const details = json.error?.details ?? [];
+    const dailyLimitExceeded = details.some((d) =>
+      d.violations?.some((v) => /perday/i.test(v.quotaId ?? "") || /perday/i.test(v.quotaMetric ?? ""))
+    );
+    const retryDelayRaw = details.find((d) => typeof d.retryDelay === "string")?.retryDelay;
+    const retryDelaySec = retryDelayRaw ? Number.parseFloat(retryDelayRaw) || null : null;
+    if (dailyLimitExceeded) {
+      throw new GeminiApiError(
+        "استُهلكت حصتك اليومية المجانية من Google لهذا النموذج (Free Tier) — فعّل الفوترة من Google AI Studio لرفع الحدّ، أو أعد المحاولة غداً.",
+        { dailyLimitExceeded: true, retryDelaySec }
+      );
+    }
+    throw new GeminiApiError(json.error?.message ?? `Gemini أعاد ${res.status}`, { retryDelaySec });
   }
   const candidate = json.candidates?.[0];
   const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
