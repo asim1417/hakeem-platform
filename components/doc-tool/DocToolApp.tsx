@@ -274,7 +274,10 @@ export function DocToolApp() {
           (label) => setStatus(label),
           { onlyPages: failed, model: cloudHiQ ? "pro" : "flash" }
         );
-        if (!result) { setError("تعذّرت إعادة القراءة — تحقق من المفتاح أو أعد المحاولة لاحقاً"); return; }
+        if (!result.text) {
+          setError(result.error ?? "تعذّرت إعادة القراءة — تحقق من المفتاح أو أعد المحاولة لاحقاً");
+          return;
+        }
         const mergedText = cleanText(mergeRetriedPages(doc.rawText, result.text));
         const stillFailed = result.failed.length;
         setDocs((prev) => {

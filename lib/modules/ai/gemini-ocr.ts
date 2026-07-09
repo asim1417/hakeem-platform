@@ -77,8 +77,9 @@ export async function clearGeminiOcrKey(): Promise<{ ok: boolean }> {
 /** اختبار خفيف للمفتاح قبل الحفظ — استعلام قائمة النماذج (لا يستهلك توليداً). */
 export async function testGeminiOcrKey(plainKey: string): Promise<{ ok: boolean; message: string }> {
   try {
-    const res = await fetch(`${GEMINI_BASE}?key=${encodeURIComponent(plainKey.trim())}&pageSize=1`, {
+    const res = await fetch(`${GEMINI_BASE}?pageSize=1`, {
       method: "GET",
+      headers: { "x-goog-api-key": plainKey.trim() },
       signal: AbortSignal.timeout(10_000)
     });
     if (res.ok) return { ok: true, message: "المفتاح صالح — الخدمة السحابية جاهزة." };
@@ -106,10 +107,13 @@ const OCR_PROMPT =
   "وأرقامَ الصكوك والأعلامَ وأسماءَ الأطراف — انقلها حرفياً كما تراها تماماً حتى لو بدت غريبة؛ " +
   "إن تعذّرت قراءة رقم فاكتب مكانه [غير واضح] بدل تخمينه.\n" +
   "5) الخط اليدوي المعقّد: حلّله بعناية فائقة.\n" +
-  "6) أخرِج النص الخام مباشرة دون أي مقدمات أو تعليقات منك.";
+  "6) ترقيم الأسطر الهامشي: بعض الوثائق القضائية تحمل أرقام أسطر متسلسلة في الهامش " +
+  "(1، 2، 3…) — هذه ليست من متن الوثيقة؛ لا تنسخها ولا تدمجها مع بدايات الأسطر أبداً.\n" +
+  "7) أخرِج النص الخام مباشرة دون أي مقدمات أو تعليقات منك.";
 
 // إعدادات التوليد لكل نموذج. حرارةٌ منخفضة جداً تمنع التأليف. والأهمّ:
-// - maxOutputTokens مرتفع: صفحة قانونية كثيفة قد تتجاوز الحدّ الافتراضي فتُبتَر.
+// - maxOutputTokens أقصى ما يسمح به النموذج (65536): المدخل قد يكون PDF كاملاً
+//   متعدّد الصفحات (طلب واحد بدل طلبٍ لكل صفحة) — السقف الأدنى كان يبتر الطويل.
 // - thinkingBudget=0 على flash: OCR مهمّة إدراكٍ لا استدلال؛ «التفكير» يستهلك رصيد
 //   المخرجات (فيعيد نصّاً فارغاً/مبتوراً) ويبطّئ الاستجابة. تعطيله يعطي نسخاً مباشراً
 //   أدقّ وأسرع. (gemini-2.5-pro لا يقبل 0 — نتركه على التفكير الديناميكي للخط اليدوي.)
@@ -117,7 +121,7 @@ export function genConfig(modelType: GeminiOcrModel) {
   return {
     temperature: 0.1,
     topP: 0.95,
-    maxOutputTokens: 16384,
+    maxOutputTokens: 65536,
     ...(modelType === "flash" ? { thinkingConfig: { thinkingBudget: 0 } } : {})
   };
 }
@@ -135,7 +139,42 @@ export function isGeminiOcrConfigured(): boolean {
 
 interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
-  error?: { message?: string };
+  error?: {
+    message?: string;
+    status?: string;
+    details?: Array<{
+      "@type"?: string;
+      violations?: Array<{ quotaId?: string; quotaMetric?: string }>;
+      retryDelay?: string;
+    }>;
+  };
+}
+
+/**
+ * خطأ Gemini المُبنى — يحمل تمييزاً صريحاً بين حدّ معدلٍ عابر (يُجدي الانتظار
+ * والإعادة) وحصةٍ يومية مستهلَكة (PerDay — لا طائل من إعادة المحاولة اليوم؛
+ * الحلّ الوحيد تفعيل الفوترة أو الانتظار للغد)، بالإضافة لمهلة الانتظار الحقيقية
+ * التي يرسلها Google نفسه (RetryInfo.retryDelay) بدل تخمين ثابت.
+ */
+export class GeminiApiError extends Error {
+  dailyLimitExceeded: boolean;
+  retryDelaySec: number | null;
+  constructor(message: string, opts: { dailyLimitExceeded?: boolean; retryDelaySec?: number | null } = {}) {
+    super(message);
+    this.name = "GeminiApiError";
+    this.dailyLimitExceeded = opts.dailyLimitExceeded ?? false;
+    this.retryDelaySec = opts.retryDelaySec ?? null;
+  }
+}
+
+/**
+ * ينزع أرقام الأسطر الهامشية التي دمجها OCR ببداية السطر رغم التوجيه — تُعرف
+ * بنمطٍ مستحيل في النص الأصيل: أرقام غربية (رقم الهامش) ملتصقة مباشرةً بأرقام
+ * هندية (رقم البند الأصلي: ٦. ٧.…) في أول السطر، مثل «9٦. التقرير الطبي».
+ * لا يمسّ أي رقمٍ سليم: النمط المختلط المتلاصق لا يرد في الكتابة العربية الأصيلة.
+ */
+export function stripMarginLineNumbers(text: string): string {
+  return text.replace(/^(\d{1,3})(?=[٠-٩]{1,3}\s*[.،)\-–])/gm, "");
 }
 
 export async function extractTextWithGemini(
@@ -147,9 +186,9 @@ export async function extractTextWithGemini(
   if (!apiKey) throw new Error("مفتاح Gemini غير مضبوط — أضفه من إعدادات منصة الوثائق");
 
   const model = modelType === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash";
-  const res = await fetch(`${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`, {
+  const res = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       contents: [
         {
@@ -165,7 +204,19 @@ export async function extractTextWithGemini(
 
   const json = (await res.json()) as GeminiResponse;
   if (!res.ok) {
-    throw new Error(json.error?.message ?? `Gemini أعاد ${res.status}`);
+    const details = json.error?.details ?? [];
+    const dailyLimitExceeded = details.some((d) =>
+      d.violations?.some((v) => /perday/i.test(v.quotaId ?? "") || /perday/i.test(v.quotaMetric ?? ""))
+    );
+    const retryDelayRaw = details.find((d) => typeof d.retryDelay === "string")?.retryDelay;
+    const retryDelaySec = retryDelayRaw ? Number.parseFloat(retryDelayRaw) || null : null;
+    if (dailyLimitExceeded) {
+      throw new GeminiApiError(
+        "استُهلكت حصتك اليومية المجانية من Google لهذا النموذج (Free Tier) — فعّل الفوترة من Google AI Studio لرفع الحدّ، أو أعد المحاولة غداً.",
+        { dailyLimitExceeded: true, retryDelaySec }
+      );
+    }
+    throw new GeminiApiError(json.error?.message ?? `Gemini أعاد ${res.status}`, { retryDelaySec });
   }
   const candidate = json.candidates?.[0];
   const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
@@ -176,5 +227,5 @@ export async function extractTextWithGemini(
     }
     throw new Error("لم يُعِد Gemini نصاً — تأكد من وضوح الوثيقة");
   }
-  return text.trim();
+  return stripMarginLineNumbers(text.trim());
 }

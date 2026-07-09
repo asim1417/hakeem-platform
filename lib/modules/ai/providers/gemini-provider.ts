@@ -2,16 +2,16 @@
 import { makeProvider, type AiProvider, type CompleteFn } from "./base";
 
 function model(): string {
-  return process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  return process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.5-flash";
 }
 
 const complete: CompleteFn = async (system, user, maxTokens) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return "";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model())}:generateContent?key=${encodeURIComponent(key)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model())}:generateContent`;
   const resp = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
       ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
       contents: [{ role: "user", parts: [{ text: user }] }],

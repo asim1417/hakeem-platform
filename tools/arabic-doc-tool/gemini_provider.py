@@ -11,6 +11,7 @@ GEMINI_API_KEY. يطبّق نفس ضبط مسار الويب في المنصّة
   - توجيهٌ بسلامةٍ قانونية: لا تخمين للأرقام/المبالغ/التواريخ/الصكوك/الأعلام.
 """
 import os
+import re
 import json
 import base64
 import urllib.request
@@ -23,8 +24,18 @@ OCR_PROMPT = (
     "بأعلى دقة، محافظاً على ترتيب الأسطر والفقرات والجداول. تنبيه حاسم (وثيقة قانونية): لا "
     "تُصحِّح ولا تُخمِّن الأرقامَ والمبالغَ والتواريخَ الهجرية وأرقامَ الصكوك والأعلامَ وأسماءَ "
     "الأطراف — انقلها حرفياً كما تراها؛ إن تعذّرت قراءة رقم فاكتب [غير واضح] بدل تخمينه. "
+    "ترقيم الأسطر الهامشي في الوثائق القضائية (1، 2، 3… في الهامش) ليس من المتن — "
+    "لا تنسخه ولا تدمجه مع بدايات الأسطر. "
     "أخرِج النص مباشرة دون مقدمات أو تعليقات."
 )
+
+# نمط رقم هامشٍ غربي التصق برقم بندٍ هندي أول السطر («9٦.») — مستحيل في نصٍّ أصيل
+_MARGIN_NUM = re.compile(r"^(\d{1,3})(?=[٠-٩]{1,3}\s*[.،)\-–])", re.MULTILINE)
+
+
+def strip_margin_line_numbers(text):
+    """ينزع أرقام الأسطر الهامشية المدموجة ببداية السطر — لا يمسّ أي رقم سليم."""
+    return _MARGIN_NUM.sub("", text)
 
 _MIME_BY_EXT = {
     ".png": "image/png",
@@ -40,7 +51,9 @@ def gemini_available():
 
 
 def _gen_config(model_type):
-    cfg = {"temperature": 0.1, "topP": 0.95, "maxOutputTokens": 16384}
+    # أقصى سقف مخرجات للنموذج (65536): الخدمة ترسل الـ PDF كاملاً في طلبٍ واحد،
+    # والسقف الأدنى كان يبتر المستندات الطويلة (عشرات الصفحات) قبل اكتمال نصّها.
+    cfg = {"temperature": 0.1, "topP": 0.95, "maxOutputTokens": 65536}
     if model_type != "pro":  # pro لا يقبل تعطيل التفكير — يُترك ديناميكياً
         cfg["thinkingConfig"] = {"thinkingBudget": 0}
     return cfg
@@ -58,11 +71,14 @@ def _img_part(data, mime):
 def _gemini_generate(parts, model_type, key, timeout):
     """نداءٌ واحد لـ Gemini على قائمة أجزاء (صورة/نص). يعيد النصّ أو يرفع استثناءً."""
     model = "gemini-2.5-pro" if model_type == "pro" else "gemini-2.5-flash"
+    # مصادقة بترويسة x-goog-api-key (من main) + جسمٌ من أجزاءٍ عامّة (صورة/نص) لدعم رسم الصفحات.
     body = {"contents": [{"parts": parts}], "generationConfig": _gen_config(model_type)}
-    url = "%s/%s:generateContent?key=%s" % (GEMINI_BASE, model, key)
+    url = "%s/%s:generateContent" % (GEMINI_BASE, model)
     req = urllib.request.Request(
-        url, data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json"}, method="POST",
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json", "x-goog-api-key": key},
+        method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -123,8 +139,9 @@ def extract_with_gemini(name, data, model_type="flash", timeout=120):
             parts_text = []
             for i, img in enumerate(pages, 1):
                 txt = _gemini_generate([_img_part(img, "image/jpeg"), {"text": OCR_PROMPT}], model_type, key, timeout)
-                parts_text.append("[صفحة %d]\n%s" % (i, txt))
+                parts_text.append("[صفحة %d]\n%s" % (i, strip_margin_line_numbers(txt)))
             return "\n\n".join(parts_text)
 
     # صورة، أو PDF تعذّر رسمه: أرسل الملف كما هو
-    return _gemini_generate([_img_part(data, mime), {"text": OCR_PROMPT}], model_type, key, timeout)
+    txt = _gemini_generate([_img_part(data, mime), {"text": OCR_PROMPT}], model_type, key, timeout)
+    return strip_margin_line_numbers(txt)

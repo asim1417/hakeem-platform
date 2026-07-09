@@ -63,9 +63,9 @@ export async function extractFile(
 
   // المسار السحابي (اختياري صراحةً): Gemini يقرأ الصور وPDF بأنواعه
   if (opts.cloudOcr && CLOUD_EXTS.includes(ext)) {
-    const cloud = await cloudOcr(file, onProgress, opts.cloudRange, opts.cloudModel);
+    const { result: cloud, error: cloudError } = await cloudOcr(file, onProgress, opts.cloudRange, opts.cloudModel);
     if (cloud) return cloud;
-    onProgress?.("السحابي غير متاح — متابعة بالمعالجة المحلية…");
+    onProgress?.(cloudError ? `⚠ ${cloudError} — متابعة بالمعالجة المحلية…` : "السحابي غير متاح — متابعة بالمعالجة المحلية…");
   }
 
   if (ext === "pdf") {
@@ -84,27 +84,29 @@ async function cloudOcr(
   onProgress?: ExtractProgress,
   range?: { from?: number; to?: number },
   model?: "flash" | "pro"
-): Promise<ExtractResult | null> {
+): Promise<{ result: ExtractResult | null; error?: string }> {
   const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
   const tag = model === "pro" ? "Gemini pro" : "Gemini";
   if (file.name.toLowerCase().endsWith(".pdf")) {
     // صفحات كصور — رؤية حقيقية تتجاوز طبقات النص المعطوبة (الترتيب البصري)
     const result = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress, { ...(range ?? {}), model });
-    if (!result) return null;
+    if (!result.text) return { result: null, error: result.error };
     const sep = separateRunningLines(result.text);
     const ranged = range?.from || range?.to ? ` · ص ${range.from ?? 1}–${range.to ?? result.total}` : "";
     return {
-      text: sep.body,
-      kind: `PDF (${tag}${ranged})`,
-      running: sep.running,
-      warning: result.failed.length
-        ? `تعذّرت ${result.failed.length} صفحة — افتح الوثيقة واضغط «أعد قراءة المتعذر»`
-        : undefined
+      result: {
+        text: sep.body,
+        kind: `PDF (${tag}${ranged})`,
+        running: sep.running,
+        warning: result.failed.length
+          ? `تعذّرت ${result.failed.length} صفحة — افتح الوثيقة واضغط «أعد قراءة المتعذر»`
+          : undefined
+      }
     };
   }
-  const text = await cloudOcrImage(file, onProgress, model);
-  if (!text) return null;
-  return { text, kind: `صورة (${tag})` };
+  const { text, error } = await cloudOcrImage(file, onProgress, model);
+  if (!text) return { result: null, error };
+  return { result: { text, kind: `صورة (${tag})` } };
 }
 
 async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {

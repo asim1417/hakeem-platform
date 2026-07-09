@@ -258,7 +258,7 @@ function resolveOriginalModel(provider: string, requested?: string) {
   if (requested?.trim()) return requested.trim();
   if (provider === "openai") return process.env.OPENAI_MODEL || "gpt-4o-mini";
   if (provider === "anthropic") return process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
-  if (provider === "gemini") return process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  if (provider === "gemini") return process.env.GEMINI_MODEL || "gemini-2.5-flash";
   if (provider === "custom") return process.env.CUSTOM_AI_MODEL || "gpt-4o-mini";
   return "offline";
 }
@@ -319,9 +319,9 @@ async function callOriginalProvider(provider: string, model: string, prompt: str
   if (provider === "gemini") {
     const key = cfg?.apiKey || process.env.GEMINI_API_KEY;
     if (!key) throw new Error("مفتاح Gemini غير مضبوط.");
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: prompt }] }],

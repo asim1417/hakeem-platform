@@ -371,7 +371,6 @@ def _ocr_pdf(data):
     """استخراج نص ممسوح من PDF باستخدام OCR"""
     try:
         from pdf2image import convert_from_bytes
-        from PIL import Image
 
         # تحويل إلى صور بدقة عالية (400 DPI)
         pages = convert_from_bytes(data, dpi=400)

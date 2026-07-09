@@ -411,7 +411,7 @@ export interface ScannedPdfResult {
 export async function ocrScannedPdf(
   buffer: ArrayBuffer,
   onProgress?: (info: { page: number; pages: number; status: string; progress: number }) => void,
-  opts?: { onlyPages?: number[] }
+  opts?: { onlyPages?: number[]; shouldCancel?: () => boolean }
 ): Promise<ScannedPdfResult> {
   const pdfjs = await import("pdfjs-dist");
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -423,6 +423,7 @@ export async function ocrScannedPdf(
       ? opts.onlyPages.filter((p) => p >= 1 && p <= doc.numPages).sort((a, b) => a - b)
       : Array.from({ length: doc.numPages }, (_, i) => i + 1);
   for (const p of target) {
+    if (opts?.shouldCancel?.()) break; // إلغاء تعاوني — يُعاد ما قُرئ حتى الآن
     const page = await doc.getPage(p);
     const canvas = await renderPdfPageToCanvas(page);
     // «أفضل من عدّة محاولات» لكل صفحة — يختار الأعلى جودة (raw/otsu/upscale)
