@@ -13,47 +13,11 @@ export interface ExtractResult {
   running?: string;
 }
 
-/**
- * كشف الترويسة/التذييل بالتكرار عبر الصفحات (وفق دليل المعالجة):
- * السطر الذي يتكرر في ≥60% من الصفحات قرب أولها أو آخرها ترويسة أو تذييل —
- * يُنقل لبيانات وصفية ويُنزع من المتن حفاظاً على نقاء البحث والفهرسة.
- * يعمل على نصوص PDF المقسّمة بعلامات [صفحة N].
- */
-export function separateRunningLines(text: string): { body: string; running?: string } {
-  const pages = text.split(/\[صفحة \d+\]\n?/).filter((p) => p.trim().length > 0);
-  if (pages.length < 3) return { body: text };
-
-  const ZONE = 3; // أسطر منطقة الترويسة/التذييل من كل طرف
-  const tops = new Map<string, number>();
-  const bots = new Map<string, number>();
-  const pageLines = pages.map((p) => p.split("\n").map((l) => l.trim()).filter(Boolean));
-  for (const lines of pageLines) {
-    for (const l of lines.slice(0, ZONE)) tops.set(l, (tops.get(l) ?? 0) + 1);
-    for (const l of lines.slice(-ZONE)) bots.set(l, (bots.get(l) ?? 0) + 1);
-  }
-  const threshold = Math.ceil(0.6 * pages.length);
-  const isRunning = (l: string) =>
-    l.length >= 3 && ((tops.get(l) ?? 0) >= threshold || (bots.get(l) ?? 0) >= threshold);
-
-  const found = new Set<string>();
-  const cleanedPages = pageLines.map((lines) =>
-    lines
-      .filter((l, idx) => {
-        const nearEdge = idx < ZONE || idx >= lines.length - ZONE;
-        if (nearEdge && isRunning(l)) {
-          found.add(l);
-          return false;
-        }
-        return true;
-      })
-      .join("\n")
-  );
-  if (!found.size) return { body: text };
-  return {
-    body: cleanedPages.map((p, i) => `[صفحة ${i + 1}]\n${p}`).join("\n\n").trim(),
-    running: Array.from(found).join("\n")
-  };
-}
+// كشف الترويسة/التذييل نُقل إلى النواة المحايدة للبيئة (document-inspection/reshape)
+// ليعمل في المتصفح والخادم معاً. يُستورد محلياً (للاستخدام الداخلي) ويُعاد تصديره
+// للتوافق مع المستوردين الحاليين (conversion-manager, CaseBrowser).
+import { separateRunningLines } from "@/lib/modules/document-inspection/reshape";
+export { separateRunningLines };
 
 /** تقدّم المعالجة الطويلة (OCR) — نص عربي جاهز للعرض */
 export type ExtractProgress = (label: string) => void;

@@ -30,8 +30,10 @@ import {
   normalizeForMatch,
   occurrences,
   parseQuery,
+  processExtractedText,
   queryStems,
   sampleCaseDocuments,
+  separateRunningLines,
   segmentParagraph,
   suspectWords,
   validateReference
@@ -583,6 +585,51 @@ check("Drive: رابط الموافقة يحوي النطاق والمَعلما
   assert.ok(url.includes("drive.readonly"));
   assert.ok(url.includes("state=st4te"));
   assert.ok(url.includes(encodeURIComponent("https://x.com/api/doc-platform/drive/callback")));
+});
+
+// ── النواة الموحّدة: فصل الترويسات ──
+check("فصل الترويسات: ترويسة متكررة عبر 3 صفحات تُنقل لبيانات وصفية", () => {
+  const doc =
+    "[صفحة 1]\nمحكمة الرياض\nنص المتن الأول\n\n" +
+    "[صفحة 2]\nمحكمة الرياض\nنص المتن الثاني\n\n" +
+    "[صفحة 3]\nمحكمة الرياض\nنص المتن الثالث";
+  const sep = separateRunningLines(doc);
+  assert.equal(sep.running, "محكمة الرياض");
+  assert.ok(!sep.body.includes("محكمة الرياض"));
+  assert.ok(sep.body.includes("نص المتن الأول"));
+});
+
+// ── النواة الموحّدة: الدماغ processExtractedText ──
+check("الدماغ (cloud): يفصل الترويسات دون توجيه OCR", () => {
+  const doc =
+    "[صفحة 1]\nوزارة العدل\nالوقائع الأولى\n\n" +
+    "[صفحة 2]\nوزارة العدل\nالوقائع الثانية\n\n" +
+    "[صفحة 3]\nوزارة العدل\nالوقائع الثالثة";
+  const r = processExtractedText(doc, { source: "cloud", totalPages: 3 });
+  assert.equal(r.needsOcr, false);
+  assert.equal(r.correctedLines, 0);
+  assert.equal(r.running, "وزارة العدل");
+  assert.ok(!r.body.includes("وزارة العدل"));
+});
+
+check("الدماغ (digital-layer): نصّ سليم لا يحتاج OCR", () => {
+  const r = processExtractedText("هذا نصّ عربيّ سليمٌ من طبقة رقمية واضحة تماماً.", {
+    source: "digital-layer"
+  });
+  assert.equal(r.needsOcr, false);
+});
+
+check("الدماغ (digital-layer): حروف مفردة مبعثرة → توجيه OCR", () => {
+  const r = processExtractedText("ا ل م ح ك م ة ا ل ع ل ي ا ل ل ق ض ا ء", {
+    source: "digital-layer"
+  });
+  assert.equal(r.needsOcr, true);
+});
+
+check("الدماغ (ocr): يصحّح انعكاس اتجاه السطر", () => {
+  const r = processExtractedText("يضاقلا نم ةمكحملا يف", { source: "ocr" });
+  assert.ok(r.body.includes("في المحكمة من القاضي"));
+  assert.equal(r.correctedLines, 1);
 });
 
 async function asyncChecks() {
