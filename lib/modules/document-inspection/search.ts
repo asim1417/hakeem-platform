@@ -438,12 +438,16 @@ function jdToGreg(jd: number): [number, number, number] {
   return [year, month, day];
 }
 
+// مبدأ التقويم الهجري (JDN لـ 1 محرّم 1هـ). الصحيح 1948439؛ كان خطأً 1948440-385=1948055
+// فأزاح كل تحويلٍ ~سنةً كاملة (1426/3/20هـ → 2004 بدل 2005). مُعايَر: 1محرّم1426=2005-02-10.
+const HIJRI_EPOCH_JD = 1948439;
+
 function hijriToJD(y: number, m: number, d: number): number {
-  return d + Math.ceil(29.5 * (m - 1)) + (y - 1) * 354 + Math.floor((3 + 11 * y) / 30) + 1948440 - 385;
+  return d + Math.ceil(29.5 * (m - 1)) + (y - 1) * 354 + Math.floor((3 + 11 * y) / 30) + HIJRI_EPOCH_JD;
 }
 
 function jdToHijri(jd: number): [number, number, number] {
-  const y = Math.floor((30 * (jd - 1948440 + 385) + 10646) / 10631);
+  const y = Math.floor((30 * (jd - HIJRI_EPOCH_JD) + 10646) / 10631);
   let m = Math.min(12, Math.ceil((jd - (29 + hijriToJD(y, 1, 1) - 1)) / 29.5) + 1);
   if (m < 1) m = 1;
   const d = jd - hijriToJD(y, m, 1) + 1;

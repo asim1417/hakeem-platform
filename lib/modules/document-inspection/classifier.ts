@@ -249,18 +249,31 @@ export function assessQuality(text: string): QualityAssessment {
   if (visualOrder) score -= Math.min(70, Math.round(garble.fragmentRatio * 180));
   else if (garble.garbled) score -= 25;
 
+  // صفحاتٌ تعذّرت قراءتها (سحابياً أو ممسوحة بلا OCR): نصّها مفقودٌ فعلياً — كان المؤشّر
+  // يتجاهلها فيمنح 100% كاذبة بينما سُدسُ الوثيقة مثلاً ضائع. نعدّها ونعاقب بنسبة الفقد،
+  // ونمنع أي تقييمٍ «ممتاز» ما دامت هناك صفحةٌ مفقودة (تستوجب إعادة استخراج/مراجعة).
+  const failedPages = (trimmed.match(/تعذّرت قراءة هذه الصفحة|صورة ممسوحة تحتاج قراءة ضوئية/g) ?? []).length;
+  const pageMarks = (trimmed.match(/\[صفحة \d+\]/g) ?? []).length;
+  if (failedPages > 0) {
+    const denom = Math.max(pageMarks, failedPages);
+    const missingRatio = failedPages / denom;
+    score = Math.min(score, 55) - Math.round(missingRatio * 45); // يمنع «ممتاز» ويعكس نسبة الفقد
+  }
+
   score = Math.max(0, Math.min(100, score));
 
-  const grade = score >= 85 ? "high" : score >= 65 ? "medium" : "review";
+  const grade = failedPages > 0 ? "review" : score >= 85 ? "high" : score >= 65 ? "medium" : "review";
   const label =
-    grade === "high"
-      ? "ممتازة — لا تحتاج إعادة استخراج"
-      : visualOrder
-        ? "منخفضة — طبقة نص بترتيب بصري معطوب (كلمات مبعثرة الأجزاء)؛ أعد القراءة بالـ OCR السحابي أو المحلي"
-        : grade === "medium"
-          ? "متوسطة — يُستحسن التدقيق"
-          : "منخفضة — تحتاج مراجعة";
-  return { score, grade, label };
+    failedPages > 0
+      ? `ناقصة — تعذّرت قراءة ${failedPages} صفحة (نصّها مفقود)؛ أعد استخراجها قبل الاعتماد على الوثيقة`
+      : grade === "high"
+        ? "ممتازة — لا تحتاج إعادة استخراج"
+        : visualOrder
+          ? "منخفضة — طبقة نص بترتيب بصري معطوب (كلمات مبعثرة الأجزاء)؛ أعد القراءة بالـ OCR السحابي أو المحلي"
+          : grade === "medium"
+            ? "متوسطة — يُستحسن التدقيق"
+            : "منخفضة — تحتاج مراجعة";
+  return { score, grade, label, failedPages: failedPages || undefined };
 }
 
 // ── التحليل الكامل لوثيقة ──
