@@ -15,8 +15,17 @@ import styles from "./conversion-indicator.module.css";
 
 export function ConversionIndicator() {
   const [st, setSt] = useState<ConversionState | null>(null);
+  // نبضة ثانوية تفرض إعادة الرسم أثناء الانتظار (حدّ المعدل مثلاً) — بلا هذه، يتجمّد
+  // العدّاد بين رسائل التقدّم المتفرقة لأن dur يُحسب فقط عند إعادة الرسم.
+  const [, setTick] = useState(0);
 
   useEffect(() => subscribeConversion(setSt), []);
+
+  useEffect(() => {
+    if (st?.phase !== "running") return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [st?.phase]);
 
   if (!st || st.phase === "idle") return null;
 
