@@ -103,6 +103,8 @@ export interface QualityAssessment {
   score: number; // 0–100 — مؤشر إرشادي (heuristic)، ليس قياس OCR فعلياً
   grade: QualityGrade;
   label: string;
+  /** عدد الصفحات التي تعذّرت قراءتها (نصّها مفقود فعلياً) — يخفض التقييم ويستوجب المراجعة */
+  failedPages?: number;
 }
 
 /** مقطع نصّي داخل فقرة — إمّا نص عادي أو كيان مُظلَّل */

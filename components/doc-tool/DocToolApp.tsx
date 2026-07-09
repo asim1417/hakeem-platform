@@ -76,6 +76,7 @@ export function DocToolApp() {
   const [loaded, setLoaded] = useState(false);
   const [cloudAvailable, setCloudAvailable] = useState(false);
   const [cloudOcr, setCloudOcr] = useState(false);
+  const [cloudHiQ, setCloudHiQ] = useState(false); // نموذج pro للخطّ اليدوي والوثائق الصعبة
   const [keyPanel, setKeyPanel] = useState(false);
   const [keyInput, setKeyInput] = useState("");
   const [keyBusy, setKeyBusy] = useState(false);
@@ -213,6 +214,7 @@ export function DocToolApp() {
             setStatus(`${f.name}: ${label}`);
           },
           cloudOcr,
+          cloudModel: cloudHiQ ? "pro" : "flash",
           cloudRange: {
             from: rangeFrom ? Number(rangeFrom) : undefined,
             to: rangeTo ? Number(rangeTo) : undefined
@@ -270,7 +272,7 @@ export function DocToolApp() {
         const result = await cloudOcrPdfPages(
           await file.arrayBuffer(),
           (label) => setStatus(label),
-          { onlyPages: failed }
+          { onlyPages: failed, model: cloudHiQ ? "pro" : "flash" }
         );
         if (!result.text) {
           setError(result.error ?? "تعذّرت إعادة القراءة — تحقق من المفتاح أو أعد المحاولة لاحقاً");
@@ -292,7 +294,7 @@ export function DocToolApp() {
         setRetryBusy(false);
       }
     },
-    [selected, docs, persist]
+    [selected, docs, persist, cloudHiQ]
   );
 
   const current = selected !== null ? docs[selected] : undefined;
@@ -377,6 +379,19 @@ export function DocToolApp() {
               onChange={(e) => toggleCloud(e.target.checked)}
             />
             OCR سحابي فائق الدقة
+          </label>
+        ) : null}
+        {cloudAvailable && cloudOcr ? (
+          <label
+            className={styles.cloudToggle}
+            title="gemini-2.5-pro للخطّ اليدوي والأختام والوثائق الصعبة (أدقّ، أبطأ وأعلى تكلفة). بدونه flash الأسرع الاقتصادي — يكفي غالب الوثائق المطبوعة."
+          >
+            <input
+              type="checkbox"
+              checked={cloudHiQ}
+              onChange={(e) => setCloudHiQ(e.target.checked)}
+            />
+            دقّة أعلى — نموذج pro
           </label>
         ) : null}
         <button

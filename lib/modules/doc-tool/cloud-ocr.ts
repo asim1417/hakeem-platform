@@ -8,6 +8,8 @@
 // السرعة: تفريغ متوازٍ (3 صفحات معاً افتراضاً) يهبط تلقائياً إلى التتابع عند ملامسة
 // حد المعدل (429) مع إعادة محاولة بانتظار متزايد — يناسب المفاتيح المجانية والمدفوعة معاً.
 
+import { runAdaptive } from "@/lib/modules/document-inspection/throughput";
+
 export type CloudProgress = (label: string) => void;
 
 /** علامة الصفحة المتعذرة في النص — تُستخدم لاحقاً لإعادة قراءتها وحدها */
@@ -32,13 +34,15 @@ async function encodeToFit(canvas: HTMLCanvasElement): Promise<Blob | null> {
   }
   return null;
 }
-/** دقة تحويل الصفحة لصورة — 3 لإبراز التشكيل والنقاط في النصّ العربي الكثيف */
-const PAGE_SCALE = 3;
-/** التوازي الافتراضي — يهبط إلى 1 تلقائياً عند أول 429، فالرقم الأعلى آمن حتى
-    للمفاتيح المجانية (تنكمش فوراً) ويطلق سرعة المفاتيح المدفوعة (Tier 1: ~2000 RPM) */
+/** دقة تحويل الصفحة لصورة. 2 يكفي رؤية Gemini (تُصغّر الصور داخلياً إلى بلاطات
+ *  محدودة، فـ3 يضخّم الرفع بلا مكسب) ويُنصّف بايتات الرفع — أسرع بلا فقدٍ محسوس. */
+const PAGE_SCALE = 2;
+/** التوازي الافتراضي (بدايةٌ للجدولة المتكيّفة) — تُشبع حدّ المفتاح ثم تتراجع. */
 const DEFAULT_CONCURRENCY = 6;
-/** انتظارات إعادة المحاولة عند حد المعدل */
+/** انتظارات إعادة المحاولة لمسار الصورة المفردة (مع مهلة Google الحقيقية عند توفّرها). */
 const RATE_WAITS_MS = [15_000, 30_000];
+/** تهدئة مشتركة متزايدة للجدولة المتكيّفة في مسار الـ PDF — قابلة للتعافي عند النجاح. */
+const RATE_BACKOFFS_MS = [4_000, 8_000, 16_000];
 
 interface PostResult {
   text: string | null;
@@ -177,7 +181,9 @@ export interface CloudPdfOptions {
   shouldCancel?: () => boolean;
 }
 
-/** أقصى توازٍ مسموح — سقفٌ أمانٍ حتى للمفاتيح المدفوعة */
+/** أقصى توازٍ مسموح في المتصفح — سقفُ أمانِ ذاكرةٍ (كل صفحةٍ طائرة تُرسَم كـ canvas
+ *  كبير). الجدولة المتكيّفة ترفع التوازي تدريجياً حتى هذا السقف أو حتى يُلامَس حدّ
+ *  المعدل. الإنتاجية الأعلى (1000 صفحة) محلّها الخادم بلا قيد ذاكرة المتصفح. */
 export const MAX_CONCURRENCY = 12;
 
 /** عدد صفحات ملف PDF (للتقدير المسبق قبل بدء الدفعة) */
@@ -238,72 +244,49 @@ export async function cloudOcrPdfPages(
     }
 
     const results = new Map<number, string | null>();
-    let cursor = 0;
-    let done = 0;
-    let limitHit = false; // بعد أول 429: يعمل عامل واحد فقط (تتابع)
     let dailyBlocked = false; // حصة يومية مستهلَكة — توقّف الكل فوراً، لا طائل من الإعادة
     let lastError: string | undefined;
 
-    const readPage = async (p: number): Promise<string | null> => {
-      if (dailyBlocked) return null;
+    // يرسم صفحةً ويرفعها؛ يعيد إشارة حدّ المعدل للجدولة المتكيّفة (لا تراجع يدوي هنا).
+    // ويكتشف نفاد الحصة اليومية فيوقف الكلّ عبر إشارة الإلغاء (لا طائل من الإعادة اليوم).
+    const renderAndPost = async (p: number): Promise<{ value: string | null; rateLimited: boolean }> => {
+      if (dailyBlocked) return { value: null, rateLimited: false };
       const page = await doc.getPage(p);
       const viewport = page.getViewport({ scale: PAGE_SCALE });
       const canvas = document.createElement("canvas");
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
       const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
+      if (!ctx) return { value: null, rateLimited: false };
       await page.render({ canvasContext: ctx, viewport }).promise;
       // نرسل الصفحة ملوّنةً كما رُسمت (بلا تدرّج رمادي/تعتيب) بأعلى جودةٍ تسعُها الحدود.
       const blob = await encodeToFit(canvas);
       canvas.width = 0;
       canvas.height = 0;
-      if (!blob) return null;
-
-      let attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+      if (!blob) return { value: null, rateLimited: false };
+      const attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
       if (attempt.dailyLimitExceeded) {
-        dailyBlocked = true;
+        dailyBlocked = true; // يوقف الجدولة عبر signal أدناه
         lastError = attempt.error;
-        return null;
+        return { value: null, rateLimited: false };
       }
-      let waitIdx = 0;
-      while (attempt.rateLimited && waitIdx < RATE_WAITS_MS.length) {
-        limitHit = true;
-        const waitMs = waitMsFor(attempt, RATE_WAITS_MS[waitIdx]);
-        await sleepWithCountdown(waitMs, (remaining) =>
-          onProgress?.(`حد المعدل — انتظار ${remaining} ثانية ثم إعادة صفحة ${p}…`)
-        );
-        waitIdx += 1;
-        attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
-        if (attempt.dailyLimitExceeded) {
-          dailyBlocked = true;
-          lastError = attempt.error;
-          return null;
-        }
-      }
-      if (attempt.rateLimited) limitHit = true;
       if (!attempt.text && attempt.error) lastError = attempt.error;
-      return attempt.text;
+      return { value: attempt.text, rateLimited: attempt.rateLimited };
     };
 
-    const worker = async (id: number) => {
-      for (;;) {
-        if (opts.shouldCancel?.() || dailyBlocked) return; // إلغاء تعاوني / حصة مستهلَكة
-        if (limitHit && id > 0) return; // انكماش التوازي عند حد المعدل
-        const i = cursor;
-        cursor += 1;
-        if (i >= pages.length) return;
-        const p = pages[i];
-        onProgress?.(`قراءة سحابية (Gemini) — ${done}/${pages.length} · صفحة ${p}…`);
-        results.set(p, await readPage(p));
-        done += 1;
-        onProgress?.(`قراءة سحابية (Gemini) — ${done}/${pages.length} صفحة`);
-      }
-    };
-
-    const requested = Math.max(1, Math.min(opts.concurrency ?? DEFAULT_CONCURRENCY, MAX_CONCURRENCY));
-    const poolSize = Math.min(requested, pages.length);
-    await Promise.all(Array.from({ length: poolSize }, (_, i) => worker(i)));
+    // جدولةٌ متكيّفة (AIMD): ترفع التوازي حتى يُشبَع حدّ المعدل ثم تتراجع وتتعافى —
+    // فتُنجز كأقصى ما يسمح به المفتاح، بلا انهيارٍ دائم ولا فقدِ صفحة (إعادة جدولة).
+    // تتوقّف عند إلغاء المستخدم أو نفاد الحصة اليومية.
+    const start = Math.max(1, Math.min(opts.concurrency ?? DEFAULT_CONCURRENCY, MAX_CONCURRENCY));
+    const pageResults = await runAdaptive(pages, (p) => renderAndPost(p), {
+      start,
+      max: MAX_CONCURRENCY,
+      min: 1,
+      cooldownMs: RATE_BACKOFFS_MS,
+      signal: () => Boolean(opts.shouldCancel?.()) || dailyBlocked,
+      onProgress: (d, t, c) => onProgress?.(`قراءة سحابية (Gemini) — ${d}/${t} صفحة · توازٍ ${c}`)
+    });
+    pages.forEach((p, i) => results.set(p, pageResults[i]));
     await doc.destroy();
 
     const failed = pages.filter((p) => !results.get(p));

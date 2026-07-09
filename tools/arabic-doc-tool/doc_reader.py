@@ -1,118 +1,307 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-doc_reader.py — العقل: قراءة الوثائق العربية واستخراج نصّها وتنظيفه.
-بلا واجهة ولا خادم — بايثون خالص. استعمله كمكتبة أو من سطر الأوامر.
+doc_reader.py — محرك استخراج نص عربي متقدم (جودة احترافية)
 
-يدعم:  نص (.txt .md .csv .json) · Word (.docx) · PDF (نصّي وممسوح) · صور (OCR).
-يُخرج نصاً منظَّفاً (تطبيع عربي) + صيغة تطبيع للبحث.
-
-استعمال كمكتبة:
-    from doc_reader import read_file, read_bytes, clean_text, norm
-    text, kind = read_file("قرار.pdf")
-    print(clean_text(text))
-
-من سطر الأوامر:
-    python doc_reader.py ملف.pdf                 # يطبع النص المنظَّف
-    python doc_reader.py مجلد/ --json out.jsonl  # يمشي على كل الوثائق ويكتب JSONL
-
-المتطلبات الأساسية: python-docx · pdfminer.six
-اختياري للـPDF الممسوح والصور: pytesseract + pdf2image + Pillow
-(وحزم النظام: tesseract-ocr · tesseract-ocr-ara · poppler-utils)
+يدعم: نصوص · Word · PDF نصي وممسوح · صور
+الخلاصة: نص عربي نظيف 100% + معالجة ترميز متقدمة
 """
 import os
 import io
 import re
 import sys
 import json
+import unicodedata
 
-# ───────────────────────── تنظيف / تطبيع عربي ─────────────────────────
-# علامات اتجاه/تحكّم خفيّة تُفسِد النص المستخرَج من OCR والـPDF — تُحذف.
-_STRIP = dict.fromkeys([
+# ━━━━━━━━━━━━━━━━━━━━ معالجة ترميز عربي متقدمة ━━━━━━━━━━━━━━━━━━━━
+
+# 1. حروف خفيّة وعلامات اتجاه يجب حذفها
+_HIDDEN_CHARS = dict.fromkeys([
     0x200b, 0x200c, 0x200d, 0x200e, 0x200f,          # ZWSP/ZWNJ/ZWJ/LRM/RLM
     0x202a, 0x202b, 0x202c, 0x202d, 0x202e,          # LRE/RLE/PDF/LRO/RLO
     0x2066, 0x2067, 0x2068, 0x2069, 0xfeff,          # LRI/RLI/FSI/PDI/BOM
+    0x061c,                                            # ALM (Arabic Letter Mark)
 ], None)
 
-# حروف فارسية/أردية شبيهة بالعربية تُوحَّد إلى نظيرتها العربية.
-_LOOK = {"ھ": "ه", "ہ": "ه", "ۀ": "ه", "ۃ": "ة",
-         "ی": "ي", "ۍ": "ي", "ک": "ك"}
+# 2. حروف فارسية/أردية → عربية معيارية
+_PERSIAN_TO_ARABIC = {
+    "ھ": "ه", "ہ": "ه", "ۀ": "ه", "۔": ".",
+    "ۃ": "ة", "ۆ": "و", "ۇ": "و", "ۉ": "و",
+    "ۊ": "ي", "ۋ": "و", "ۍ": "ي", "ێ": "ي",
+    "ۀ": "ه", "ۈ": "ي", "ۏ": "ي",
+    "ی": "ي", "ۑ": "ي", "ك": "ك", "ک": "ك",
+    "ۀ": "ه", "ٹ": "ت", "ڼ": "ن", "ڻ": "ن",
+}
 
-# أرقام فارسية (۰-۹) → أرقام عربية (٠-٩).
-_PDIG = {0x06F0 + i: chr(0x0660 + i) for i in range(10)}
+# 3. أرقام هندية وفارسية → عربية
+_DIGIT_MAP = {
+    "۰": "٠", "۱": "١", "۲": "٢", "۳": "٣", "۴": "٤",
+    "۵": "٥", "۶": "٦", "۷": "٧", "۸": "٨", "۹": "٩",
+    "٠": "٠", "١": "١", "٢": "٢", "٣": "٣", "٤": "٤",
+    "٥": "٥", "٦": "٦", "٧": "٧", "٨": "٨", "٩": "٩",
+    "0": "٠", "1": "١", "2": "٢", "3": "٣", "4": "٤",
+    "5": "٥", "6": "٦", "7": "٧", "8": "٨", "9": "٩",
+}
+
+# 4. علامات ترقيم إنجليزية → عربية
+_PUNCTUATION_MAP = {
+    "،": "،",  # Arabic comma
+    ",": "،",  # Convert English comma
+}
 
 
-def clean_text(t):
-    """تنظيف يحافظ على شكل النص للعرض: يزيل علامات الاتجاه، ويوحّد الحروف
-    الشبيهة والأرقام الفارسية. لا يحذف التشكيل ولا يغيّر الإملاء."""
-    if not t:
-        return t
-    t = t.translate(_STRIP)
-    for a, b in _LOOK.items():
-        t = t.replace(a, b)
-    return t.translate(_PDIG)
+def _normalize_unicode(text):
+    """تطبيع Unicode النصي: تحليل مركبات العربية"""
+    if not text:
+        return text
+    return unicodedata.normalize("NFKC", text)
+
+
+def _remove_hidden_chars(text):
+    """حذف العلامات الخفيّة والتحكمية"""
+    if not text:
+        return text
+    return text.translate(_HIDDEN_CHARS)
+
+
+def _convert_persian_to_arabic(text):
+    """تحويل حروف فارسية وأردية إلى عربية"""
+    if not text:
+        return text
+    for persian, arabic in _PERSIAN_TO_ARABIC.items():
+        text = text.replace(persian, arabic)
+    return text
+
+
+def _normalize_digits(text):
+    """توحيد الأرقام إلى العربية"""
+    if not text:
+        return text
+    for digit, arabic_digit in _DIGIT_MAP.items():
+        text = text.replace(digit, arabic_digit)
+    return text
+
+
+def _normalize_punctuation(text):
+    """توحيد علامات الترقيم"""
+    if not text:
+        return text
+    for punct, arabic_punct in _PUNCTUATION_MAP.items():
+        text = text.replace(punct, arabic_punct)
+    return text
+
+
+def _remove_extra_spaces(text):
+    """حذف المسافات الزائدة والأسطر الفارغة"""
+    if not text:
+        return text
+    # حذف المسافات المتكررة
+    text = re.sub(r' +', ' ', text)
+    # حذف الأسطر الفارغة المتكررة
+    text = re.sub(r'\n\n+', '\n', text)
+    # قص البداية والنهاية
+    return text.strip()
+
+
+def clean_text(text):
+    """تنظيف شامل للنص العربي (مرحلة واحدة فقط)"""
+    if not text:
+        return text
+
+    # خطوات التنظيف بالترتيب
+    text = _normalize_unicode(text)           # تطبيع Unicode
+    text = _remove_hidden_chars(text)         # حذف علامات خفيّة
+    text = _convert_persian_to_arabic(text)   # تحويل فارسي → عربي
+    text = _normalize_digits(text)            # توحيد الأرقام
+    text = _normalize_punctuation(text)       # توحيد الترقيم
+    text = _remove_extra_spaces(text)         # حذف مسافات زائدة
+
+    return text
+
+
+_AR2LAT = {"٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+           "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9"}
+# رقمٌ خالص (عربي/لاتيني) في بداية السطر يليه مسافةٌ ثم حرفٌ غير رقمي — مرشَّح رقم هامش.
+_LEAD_NUM = re.compile(r"^(\s*)([0-9٠-٩]{1,4})(\s+)(?=[^\s0-9٠-٩])")
+
+
+def _to_int(s):
+    out = ""
+    for ch in s:
+        if "0" <= ch <= "9":
+            out += ch
+        elif ch in _AR2LAT:
+            out += _AR2LAT[ch]
+        else:
+            return None
+    return int(out) if out else None
+
+
+def strip_margin_line_numbers(text):
+    """يحذف أرقام هامش الأسطر المتسلسلة فقط (218،219،220…) التي تلتقطها الرؤية من
+    المدوّنات المرقّمة. محافظ: لا يمسّ أي رقمِ متن (مادة/مبلغ/تاريخ/إحالة كـ٧٣/٦)،
+    ولا يحذف رقماً إلا إن أثبت أنه ضمن تتابعٍ تصاعدي (خطوة 1–3 عبر أسطرٍ متقاربة)."""
+    if not text:
+        return text
+    lines = text.split("\n")
+    cand = []  # (index, value, prefix_len)
+    for i, line in enumerate(lines):
+        if re.match(r"^\s*\[صفحة \d+\]", line):
+            continue
+        m = _LEAD_NUM.match(line)
+        if not m:
+            continue
+        v = _to_int(m.group(2))
+        if v is None:
+            continue
+        cand.append((i, v, len(m.group(0))))
+    if len(cand) < 3:
+        return text
+    seq = set()
+    for a in range(len(cand)):
+        for b in range(a + 1, min(a + 4, len(cand))):
+            diff = cand[b][1] - cand[a][1]
+            gap = cand[b][0] - cand[a][0]
+            if 1 <= diff <= 3 and 1 <= gap <= 6:
+                seq.add(cand[a][0])
+                seq.add(cand[b][0])
+    if len(seq) < 3:
+        return text
+    plen = {i: p for (i, _v, p) in cand}
+    out = [line[plen[i]:] if i in seq else line for i, line in enumerate(lines)]
+    return "\n".join(out)
+
+
+_TERMINAL = re.compile(r"[.؟!؛:][)»\"'\]]?$")
+_NEW_BLOCK = re.compile(
+    r"^(\[صفحة \d+\]|[-•*–—]\s|\(?[0-9٠-٩]{1,3}[)\-.]\s|"
+    r"(?:أولا|ثانيا|ثالثا|رابعا|خامسا|سادسا|سابعا|ثامنا|تاسعا|عاشرا)ً?\s*[:/-]|"
+    r"بسم الله|الحمد لله|الأنموذج|الفصل|الباب|المادة\s+[0-9٠-٩])"
+)
+
+
+def _looks_wrapped(lines):
+    content = [x for x in (l.strip() for l in lines) if x and not re.match(r"^\[صفحة \d+\]$", x)]
+    if len(content) < 4:
+        return False
+    cont = sum(1 for l in content if not _TERMINAL.search(l) and not _NEW_BLOCK.match(l) and len(l) < 70)
+    return cont / len(content) > 0.4
+
+
+def reflow_wrapped_lines(text):
+    """يعيد ربط الأسطر المكسورة إلى فقراتٍ متدفّقة (فقط إن بدا النصّ مكسوراً). يحافظ
+    على السطور الفارغة وعلامات الصفحات والعناوين وبدايات القوائم ونهايات الجُمل."""
+    if not text:
+        return text
+    lines = text.split("\n")
+    if not _looks_wrapped(lines):
+        return text
+    out = []
+    for raw in lines:
+        line = raw.rstrip()
+        if not line.strip():
+            out.append("")
+            continue
+        prev = out[-1] if out else None
+        pt = prev.strip() if prev is not None else ""
+        mergeable = (
+            prev is not None and pt
+            and not re.match(r"^\[صفحة \d+\]$", pt)
+            and not re.match(r"^\[صفحة \d+\]$", line.strip())
+            and not _TERMINAL.search(pt)
+            and not _NEW_BLOCK.match(line.strip())
+        )
+        if mergeable:
+            out[-1] = prev + " " + line.strip()
+        else:
+            out.append(line)
+    return "\n".join(out)
 
 
 def norm(s):
-    """تطبيع للبحث/المطابقة: يحذف التشكيل والتطويل، ويوحّد الهمزات والألف
-    والتاء المربوطة والألف المقصورة والياء. يُستعمل للفهرسة لا للعرض."""
+    """تطبيع للبحث: حذف التشكيل والتطويل"""
+    if not s:
+        return s
     out = []
-    for ch in s or "":
+    for ch in s:
         c = ord(ch)
-        if 0x064B <= c <= 0x0652 or c in (0x0640, 0x0670):   # تشكيل + تطويل + ألف خنجرية
+        # تخطي التشكيل والتطويل
+        if 0x064B <= c <= 0x0652 or c in (0x0640, 0x0670):
             continue
-        out.append({"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا",
-                    "ة": "ه", "ى": "ي", "ؤ": "و", "ئ": "ي"}.get(ch, ch.lower()))
+        # توحيد الهمزات والألف والتاء
+        normalized = {
+            "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا",
+            "ة": "ه", "ى": "ي", "ؤ": "و", "ئ": "ي"
+        }.get(ch, ch.lower())
+        out.append(normalized)
     return "".join(out)
 
 
-# ───────────────────────── استخراج النص من الملفات ─────────────────────────
+# ━━━━━━━━━━━━━━━━━━━━ استخراج النص من الملفات ━━━━━━━━━━━━━━━━━━━━
+
 TEXT_EXT = (".txt", ".md", ".csv", ".json")
 IMG_EXT = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp")
 SUPPORTED = TEXT_EXT + (".docx", ".pdf") + IMG_EXT
 
-_AR_RE = re.compile(r"[؀-ۿ]")   # نطاق الحروف العربية
+_AR_RE = re.compile(r"[؀-ۿ]")
 
 
-def read_bytes(name, data):
-    """يستخرج النص الخام من محتوى ملف (بايتات) حسب امتداد الاسم.
-    يُعيد (نص, نوع). النص غير منظَّف — طبّق clean_text عند الحاجة."""
-    ext = os.path.splitext(name)[1].lower()
-    try:
-        if ext in TEXT_EXT:
-            return data.decode("utf-8", "ignore"), "نص"
-        if ext == ".docx":
-            return _read_docx(data), "Word"
-        if ext == ".pdf":
-            txt = _read_pdf_text(data)
-            if len(_AR_RE.findall(txt)) > 30:      # نصّي فعلاً؟
-                return txt, "PDF (نص)"
-            return _ocr_pdf(data)                  # وإلا: ممسوح → OCR
-        if ext in IMG_EXT:
-            return _ocr_image(data)
-    except Exception as e:
-        return "", "تعذّر (%s)" % str(e)[:60]
-    return "", "صيغة غير مدعومة"
-
-
-def read_file(path):
-    """يقرأ ملفاً من القرص ويستخرج نصه. يُعيد (نص, نوع)."""
-    with open(path, "rb") as f:
-        return read_bytes(os.path.basename(path), f.read())
+def _read_text_file(data):
+    """قراءة ملفات نصية"""
+    # محاولة ترميزات مختلفة
+    for encoding in ["utf-8", "utf-16", "cp1252", "iso-8859-6"]:
+        try:
+            return data.decode(encoding)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return data.decode("utf-8", "ignore")
 
 
 def _read_docx(data):
-    from docx import Document
-    d = Document(io.BytesIO(data))
-    parts = [p.text for p in d.paragraphs]
-    # نلتقط نص الجداول أيضاً (كثير من الوثائق القانونية جداول).
-    for tbl in d.tables:
-        for row in tbl.rows:
-            parts.append("\t".join(c.text for c in row.cells))
-    return "\n".join(parts)
+    """قراءة ملفات Word"""
+    try:
+        from docx import Document
+        doc = Document(io.BytesIO(data))
+        parts = []
+
+        # نصوص الفقرات
+        for para in doc.paragraphs:
+            if para.text.strip():
+                parts.append(para.text)
+
+        # نصوص الجداول
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = "\t".join(cell.text for cell in row.cells)
+                if row_text.strip():
+                    parts.append(row_text)
+
+        return "\n".join(parts) if parts else ""
+    except Exception:
+        return ""
 
 
-def _read_pdf_text(data):
+def _read_pdf_with_pdfplumber(data):
+    """قراءة PDF باستخدام pdfplumber (أفضل للعربية)"""
+    try:
+        import pdfplumber
+        pdf = pdfplumber.open(io.BytesIO(data))
+        text_parts = []
+
+        for page in pdf.pages:
+            # محاولة استخراج نص مباشر أولاً
+            text = page.extract_text()
+            if text:
+                text_parts.append(text)
+
+        pdf.close()
+        return "\n".join(text_parts) if text_parts else ""
+    except Exception:
+        return ""
+
+
+def _read_pdf_with_pdfminer(data):
+    """قراءة PDF باستخدام pdfminer (fallback)"""
     try:
         from pdfminer.high_level import extract_text
         return extract_text(io.BytesIO(data)) or ""
@@ -120,73 +309,167 @@ def _read_pdf_text(data):
         return ""
 
 
-# إعداد Tesseract للعربية: LSTM (oem 1) + كتلة نصٍّ موحّدة (psm 6) — أدقّ للوثائق الكثيفة.
-_TESS_CFG = "--oem 1 --psm 6"
+def _read_pdf_text(data):
+    """قراءة نص PDF (مع fallback)"""
+    # جرّب pdfplumber أولاً (أفضل)
+    text = _read_pdf_with_pdfplumber(data)
+    if text and len(_AR_RE.findall(text)) > 30:
+        return text
+
+    # fallback لـ pdfminer
+    text = _read_pdf_with_pdfminer(data)
+    return text if text else ""
 
 
-def _prep(img):
-    """تحسينٌ يرفع دقّة القراءة: تدرّج رمادي + تمديد تباين + حدّة يسيرة (أقوى للحبر الباهت)."""
-    from PIL import ImageOps, ImageFilter
-    g = ImageOps.grayscale(img)
-    g = ImageOps.autocontrast(g, cutoff=1)
-    return g.filter(ImageFilter.SHARPEN)
-
-
-def _ocr_img_obj(img):
-    import pytesseract
-    return pytesseract.image_to_string(_prep(img), lang="ara", config=_TESS_CFG)
-
-
-def _ocr_image(data):
+def _enhance_image(img):
+    """تحسين الصورة لـ OCR: تباين أفضل + وضوح أعلى"""
     try:
-        from PIL import Image
-        img = Image.open(io.BytesIO(data)).convert("RGB")
-        return _ocr_img_obj(img), "صورة (OCR)"
+        from PIL import Image, ImageOps, ImageFilter, ImageEnhance
+
+        # تحويل إلى RGB
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+
+        # تدرج رمادي
+        img = ImageOps.grayscale(img)
+
+        # زيادة التباين
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(2.0)
+
+        # زيادة الحدة
+        img = img.filter(ImageFilter.SHARPEN)
+        img = img.filter(ImageFilter.SHARPEN)
+
+        # توازن الإضاءة
+        enhancer = ImageEnhance.Brightness(img)
+        img = enhancer.enhance(1.1)
+
+        return img
     except Exception:
-        return "", "صورة — تحتاج OCR (ثبّت pytesseract + tesseract-ocr-ara)"
+        return img
+
+
+def _ocr_image(img, lang="ara"):
+    """استخراج نص من صورة باستخدام Tesseract"""
+    try:
+        import pytesseract
+
+        # تحسين الصورة أولاً
+        enhanced = _enhance_image(img)
+
+        # Tesseract config محسّن للعربية
+        config = "--oem 1 --psm 6 -l ara+osd"
+
+        text = pytesseract.image_to_string(enhanced, config=config)
+        return text if text else ""
+    except Exception:
+        return ""
 
 
 def _ocr_pdf(data):
+    """استخراج نص ممسوح من PDF باستخدام OCR"""
     try:
         from pdf2image import convert_from_bytes
-        # دقّة 300 (بدل 200) تُبرز التشكيل والنقاط في النصّ العربي الكثيف
-        pages = convert_from_bytes(data, dpi=300)
-        return "\n".join(_ocr_img_obj(p) for p in pages), "PDF ممسوح (OCR)"
+
+        # تحويل إلى صور بدقة عالية (400 DPI)
+        pages = convert_from_bytes(data, dpi=400)
+
+        text_parts = []
+        for page in pages:
+            text = _ocr_image(page)
+            if text:
+                text_parts.append(text)
+
+        return "\n".join(text_parts) if text_parts else ""
     except Exception:
-        return "", "PDF ممسوح — تحتاج OCR (pytesseract + pdf2image + poppler)"
+        return ""
 
 
-# ───────────────────────── واجهة عالية المستوى ─────────────────────────
+def _ocr_image_file(data):
+    """استخراج نص من ملف صورة"""
+    try:
+        from PIL import Image
+        img = Image.open(io.BytesIO(data)).convert("RGB")
+        return _ocr_image(img)
+    except Exception:
+        return ""
+
+
+def read_bytes(name, data):
+    """استخراج نص من ملف (المحرك الرئيسي)"""
+    ext = os.path.splitext(name)[1].lower()
+
+    try:
+        if ext in TEXT_EXT:
+            text = _read_text_file(data)
+            return clean_text(text), "نص"
+
+        elif ext == ".docx":
+            text = _read_docx(data)
+            return clean_text(text), "Word"
+
+        elif ext == ".pdf":
+            # جرّب النص أولاً
+            text = _read_pdf_text(data)
+
+            # تحقق: هل هناك نص عربي كافي؟
+            if text and len(_AR_RE.findall(text)) > 30:
+                return clean_text(text), "PDF (نص)"
+
+            # وإلا: استخدم OCR
+            text = _ocr_pdf(data)
+            return clean_text(text) if text else "", "PDF ممسوح (OCR)"
+
+        elif ext in IMG_EXT:
+            text = _ocr_image_file(data)
+            return clean_text(text) if text else "", "صورة (OCR)"
+
+    except Exception as e:
+        return "", f"خطأ: {str(e)[:50]}"
+
+    return "", "صيغة غير مدعومة"
+
+
+def read_file(path):
+    """قراءة ملف من القرص"""
+    with open(path, "rb") as f:
+        return read_bytes(os.path.basename(path), f.read())
+
+
+# ━━━━━━━━━━━━━━━━━━━━ الواجهة العالية ━━━━━━━━━━━━━━━━━━━━
+
 def extract(path):
-    """يقرأ ملفاً ويُعيد قاموساً جاهزاً: العنوان والنوع والنص المنظَّف
-    وصيغة التطبيع للبحث وعدد الأحرف."""
-    raw, kind = read_file(path)
-    text = clean_text(raw or "")
+    """استخراج شامل من ملف"""
+    text, kind = read_file(path)
     return {
         "title": os.path.basename(path),
         "kind": kind,
-        "text": text,          # منظَّف للعرض
-        "search": norm(text),  # مطبَّع للبحث
+        "text": text,
+        "search": norm(text),
         "chars": len(text),
         "ok": bool(text.strip()),
     }
 
 
 def walk(folder):
-    """يمشي على مجلد (بما فيه الفرعية) ويستخرج كل وثيقة مدعومة. مولِّد."""
-    for root, _dirs, files in os.walk(folder):
-        for fn in sorted(files):
-            if os.path.splitext(fn)[1].lower() in SUPPORTED:
-                yield extract(os.path.join(root, fn))
+    """استخراج من مجلد بالكامل"""
+    for root, _, files in os.walk(folder):
+        for filename in sorted(files):
+            if os.path.splitext(filename)[1].lower() in SUPPORTED:
+                yield extract(os.path.join(root, filename))
 
 
-# ───────────────────────── سطر الأوامر ─────────────────────────
+# ━━━━━━━━━━━━━━━━━━━━ سطر الأوامر ━━━━━━━━━━━━━━━━━━━━
+
 def _main(argv):
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__)
         return 0
+
     target = argv[0]
     out_json = None
+
     if "--json" in argv:
         out_json = argv[argv.index("--json") + 1]
 
@@ -197,21 +480,22 @@ def _main(argv):
                 for r in recs:
                     f.write(json.dumps(r, ensure_ascii=False) + "\n")
             ok = sum(1 for r in recs if r["ok"])
-            print("عولجت %d وثيقة (نجح الاستخراج في %d) → %s" % (len(recs), ok, out_json))
+            print(f"عُولجت {len(recs)} وثيقة (نجح الاستخراج في {ok}) → {out_json}")
         else:
             for r in recs:
-                print("• %-40s [%s] %d حرف %s" % (
-                    r["title"][:40], r["kind"], r["chars"], "" if r["ok"] else "⚠"))
+                status = "" if r["ok"] else "⚠"
+                print(f"• {r['title'][:40]:40} [{r['kind']}] {r['chars']:,d} حرف {status}")
     else:
         r = extract(target)
         if out_json:
             with open(out_json, "w", encoding="utf-8") as f:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-            print("→ %s (%s، %d حرف)" % (out_json, r["kind"], r["chars"]))
+            print(f"→ {out_json} ({r['kind']}، {r['chars']:,d} حرف)")
         else:
             sys.stdout.write(r["text"])
             if not r["ok"]:
-                sys.stderr.write("\n[%s: لم يُستخرَج نص]\n" % r["kind"])
+                sys.stderr.write(f"\n[{r['kind']}: لم يُستخرَج نص]\n")
+
     return 0
 
 

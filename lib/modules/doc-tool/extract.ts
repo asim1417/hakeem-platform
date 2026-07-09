@@ -13,47 +13,11 @@ export interface ExtractResult {
   running?: string;
 }
 
-/**
- * كشف الترويسة/التذييل بالتكرار عبر الصفحات (وفق دليل المعالجة):
- * السطر الذي يتكرر في ≥60% من الصفحات قرب أولها أو آخرها ترويسة أو تذييل —
- * يُنقل لبيانات وصفية ويُنزع من المتن حفاظاً على نقاء البحث والفهرسة.
- * يعمل على نصوص PDF المقسّمة بعلامات [صفحة N].
- */
-export function separateRunningLines(text: string): { body: string; running?: string } {
-  const pages = text.split(/\[صفحة \d+\]\n?/).filter((p) => p.trim().length > 0);
-  if (pages.length < 3) return { body: text };
-
-  const ZONE = 3; // أسطر منطقة الترويسة/التذييل من كل طرف
-  const tops = new Map<string, number>();
-  const bots = new Map<string, number>();
-  const pageLines = pages.map((p) => p.split("\n").map((l) => l.trim()).filter(Boolean));
-  for (const lines of pageLines) {
-    for (const l of lines.slice(0, ZONE)) tops.set(l, (tops.get(l) ?? 0) + 1);
-    for (const l of lines.slice(-ZONE)) bots.set(l, (bots.get(l) ?? 0) + 1);
-  }
-  const threshold = Math.ceil(0.6 * pages.length);
-  const isRunning = (l: string) =>
-    l.length >= 3 && ((tops.get(l) ?? 0) >= threshold || (bots.get(l) ?? 0) >= threshold);
-
-  const found = new Set<string>();
-  const cleanedPages = pageLines.map((lines) =>
-    lines
-      .filter((l, idx) => {
-        const nearEdge = idx < ZONE || idx >= lines.length - ZONE;
-        if (nearEdge && isRunning(l)) {
-          found.add(l);
-          return false;
-        }
-        return true;
-      })
-      .join("\n")
-  );
-  if (!found.size) return { body: text };
-  return {
-    body: cleanedPages.map((p, i) => `[صفحة ${i + 1}]\n${p}`).join("\n\n").trim(),
-    running: Array.from(found).join("\n")
-  };
-}
+// كشف الترويسة/التذييل نُقل إلى النواة المحايدة للبيئة (document-inspection/reshape)
+// ليعمل في المتصفح والخادم معاً. يُستورد محلياً (للاستخدام الداخلي) ويُعاد تصديره
+// للتوافق مع المستوردين الحاليين (conversion-manager, CaseBrowser).
+import { separateRunningLines } from "@/lib/modules/document-inspection/reshape";
+export { separateRunningLines };
 
 /** تقدّم المعالجة الطويلة (OCR) — نص عربي جاهز للعرض */
 export type ExtractProgress = (label: string) => void;
@@ -65,6 +29,9 @@ export interface ExtractOptions {
   cloudOcr?: boolean;
   /** نطاق صفحات للقراءة السحابية للـ PDF (شامل الطرفين) */
   cloudRange?: { from?: number; to?: number };
+  /** نموذج القراءة السحابية: flash (اقتصادي) · pro (خطّ يدوي/أختام/وثائق صعبة).
+      الافتراضي flash. متاح في كل مسارات الرفع (محطة العمل والبحث السريع). */
+  cloudModel?: "flash" | "pro";
 }
 
 const TEXT_EXTS = ["txt", "md", "csv", "json"];
@@ -96,7 +63,7 @@ export async function extractFile(
 
   // المسار السحابي (اختياري صراحةً): Gemini يقرأ الصور وPDF بأنواعه
   if (opts.cloudOcr && CLOUD_EXTS.includes(ext)) {
-    const { result: cloud, error: cloudError } = await cloudOcr(file, onProgress, opts.cloudRange);
+    const { result: cloud, error: cloudError } = await cloudOcr(file, onProgress, opts.cloudRange, opts.cloudModel);
     if (cloud) return cloud;
     onProgress?.(cloudError ? `⚠ ${cloudError} — متابعة بالمعالجة المحلية…` : "السحابي غير متاح — متابعة بالمعالجة المحلية…");
   }
@@ -115,19 +82,21 @@ export async function extractFile(
 async function cloudOcr(
   file: File,
   onProgress?: ExtractProgress,
-  range?: { from?: number; to?: number }
+  range?: { from?: number; to?: number },
+  model?: "flash" | "pro"
 ): Promise<{ result: ExtractResult | null; error?: string }> {
   const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
+  const tag = model === "pro" ? "Gemini pro" : "Gemini";
   if (file.name.toLowerCase().endsWith(".pdf")) {
     // صفحات كصور — رؤية حقيقية تتجاوز طبقات النص المعطوبة (الترتيب البصري)
-    const result = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress, range ?? {});
+    const result = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress, { ...(range ?? {}), model });
     if (!result.text) return { result: null, error: result.error };
     const sep = separateRunningLines(result.text);
     const ranged = range?.from || range?.to ? ` · ص ${range.from ?? 1}–${range.to ?? result.total}` : "";
     return {
       result: {
         text: sep.body,
-        kind: `PDF (Gemini${ranged})`,
+        kind: `PDF (${tag}${ranged})`,
         running: sep.running,
         warning: result.failed.length
           ? `تعذّرت ${result.failed.length} صفحة — افتح الوثيقة واضغط «أعد قراءة المتعذر»`
@@ -135,9 +104,9 @@ async function cloudOcr(
       }
     };
   }
-  const { text, error } = await cloudOcrImage(file, onProgress);
+  const { text, error } = await cloudOcrImage(file, onProgress, model);
   if (!text) return { result: null, error };
-  return { result: { text, kind: "صورة (Gemini)" } };
+  return { result: { text, kind: `صورة (${tag})` } };
 }
 
 async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {
