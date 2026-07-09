@@ -32,6 +32,7 @@ import {
   editDistance,
   measureAccuracy,
   parseQuery,
+  runAdaptive,
   processExtractedText,
   queryStems,
   sampleCaseDocuments,
@@ -665,7 +666,92 @@ check("الدقّة: WER على مستوى الكلمات", () => {
   assert.ok(Math.abs(a.wer - 1 / 3) < 1e-9); // كلمة من ثلاث مختلفة
 });
 
+// ── جدولة التوازي المتكيّفة (AIMD) ──
+// زمنٌ ونومٌ محقونان — حتمي بلا انتظارٍ حقيقي.
+function fakeClock() {
+  let t = 0;
+  const now = () => t;
+  const sleep = (ms: number) => {
+    t += ms;
+    return Promise.resolve();
+  };
+  return { now, sleep };
+}
+
+async function adaptiveAll() {
+  await (async () => {
+    // 1) كل العناصر تنجح → كل النتائج مرتّبة، بلا فقد
+    const { now, sleep } = fakeClock();
+    const items = Array.from({ length: 50 }, (_, i) => i);
+    const out = await runAdaptive(items, async (x) => ({ value: x * 2, rateLimited: false }), {
+      now,
+      sleep,
+      max: 16
+    });
+    check("التكيّف: 50 عنصراً تنجح كلها بالترتيب", () => {
+      assert.equal(out.length, 50);
+      assert.deepEqual(out.slice(0, 3), [0, 2, 4]);
+      assert.ok(out.every((v, i) => v === i * 2));
+    });
+  })();
+
+  await (async () => {
+    // 2) تقارب تحت حدٍّ للمعدل: المُنفّذ يرفض (429) إن تجاوز الطائرُ عتبةً.
+    //    على الجدولة أن تخفض التوازي دون العتبة فتُكمل كل العناصر بلا تعليق.
+    const { now, sleep } = fakeClock();
+    const CAP = 4;
+    let active = 0;
+    let maxSeen = 0;
+    let rejections = 0;
+    const items = Array.from({ length: 60 }, (_, i) => i);
+    const out = await runAdaptive(
+      items,
+      async (x) => {
+        active += 1;
+        await sleep(5); // تُتيح لبقية العمّال الدخول — فيظهر التزامن الحقيقي
+        maxSeen = Math.max(maxSeen, active);
+        const over = active > CAP;
+        active -= 1;
+        if (over) {
+          rejections += 1;
+          return { value: null, rateLimited: true };
+        }
+        return { value: x, rateLimited: false };
+      },
+      { now, sleep, start: 12, max: 20, min: 1 }
+    );
+    check("التكيّف: يتقارب تحت حدّ المعدل ويُكمل الكل", () => {
+      const okCount = out.filter((v) => v !== null).length;
+      assert.equal(okCount, 60, "كل العناصر اكتملت رغم الرفض");
+      assert.ok(rejections > 0, "لمس حدّ المعدل فعلاً");
+    });
+  })();
+
+  await (async () => {
+    // 3) رفضٌ دائم → استسلامٌ بعد maxRetries، بلا تعليقٍ لا نهائي
+    const { now, sleep } = fakeClock();
+    const items = [0, 1, 2];
+    const out = await runAdaptive(items, async () => ({ value: null, rateLimited: true }), {
+      now,
+      sleep,
+      maxRetries: 3,
+      max: 4
+    });
+    check("التكيّف: الرفض الدائم يستسلم بلا تعليق", () => {
+      assert.equal(out.length, 3);
+      assert.ok(out.every((v) => v === null));
+    });
+  })();
+
+  await (async () => {
+    const { now, sleep } = fakeClock();
+    const out = await runAdaptive([], async () => ({ value: 1, rateLimited: false }), { now, sleep });
+    check("التكيّف: مدخلٌ فارغ → نتيجة فارغة", () => assert.deepEqual(out, []));
+  })();
+}
+
 async function asyncChecks() {
+  await adaptiveAll();
   const xml = "<w:p><w:t>وثيقة مضغوطة للاختبار داخل أرشيف</w:t></w:p>";
   const zip = buildZip("word/document.xml", new TextEncoder().encode(xml));
   const entry = await extractZipEntry(zip, "word/document.xml");

@@ -8,6 +8,8 @@
 // السرعة: تفريغ متوازٍ (3 صفحات معاً افتراضاً) يهبط تلقائياً إلى التتابع عند ملامسة
 // حد المعدل (429) مع إعادة محاولة بانتظار متزايد — يناسب المفاتيح المجانية والمدفوعة معاً.
 
+import { runAdaptive } from "@/lib/modules/document-inspection/throughput";
+
 export type CloudProgress = (label: string) => void;
 
 /** علامة الصفحة المتعذرة في النص — تُستخدم لاحقاً لإعادة قراءتها وحدها */
@@ -128,8 +130,10 @@ export interface CloudPdfOptions {
   shouldCancel?: () => boolean;
 }
 
-/** أقصى توازٍ مسموح — سقفٌ أمانٍ حتى للمفاتيح المدفوعة */
-export const MAX_CONCURRENCY = 8;
+/** أقصى توازٍ مسموح في المتصفح — سقفُ أمانِ ذاكرةٍ (كل صفحةٍ طائرة تُرسَم كـ canvas
+ *  كبير). الجدولة المتكيّفة ترفع التوازي تدريجياً حتى هذا السقف أو حتى يُلامَس حدّ
+ *  المعدل. الإنتاجية الأعلى (1000 صفحة) محلّها الخادم بلا قيد ذاكرة المتصفح. */
+export const MAX_CONCURRENCY = 12;
 
 /** عدد صفحات ملف PDF (للتقدير المسبق قبل بدء الدفعة) */
 export async function getPdfPageCount(buffer: ArrayBuffer): Promise<number> {
@@ -186,68 +190,38 @@ export async function cloudOcrPdfPages(
     }
 
     const results = new Map<number, string | null>();
-    let cursor = 0;
-    let done = 0;
-    // تهدئة مشتركة عند 429: كل العمّال يحترمونها ثم يستأنفون بكامل التوازي — لا انهيار
-    // دائم إلى التتابع (كان بجّاً: أول 429 يقتل التوازي لبقية الوثيقة كلها).
-    let pauseUntil = 0;
-    let backoff = 0;
 
-    const respectPause = async () => {
-      const wait = pauseUntil - Date.now();
-      if (wait > 0) await sleep(wait);
-    };
-
-    const readPage = async (p: number): Promise<string | null> => {
+    // يرسم صفحةً ويرفعها؛ يعيد إشارة حدّ المعدل للجدولة المتكيّفة (لا تراجع يدوي هنا).
+    const renderAndPost = async (p: number): Promise<{ value: string | null; rateLimited: boolean }> => {
       const page = await doc.getPage(p);
       const viewport = page.getViewport({ scale: PAGE_SCALE });
       const canvas = document.createElement("canvas");
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
       const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
+      if (!ctx) return { value: null, rateLimited: false };
       await page.render({ canvasContext: ctx, viewport }).promise;
       // نرسل الصفحة ملوّنةً كما رُسمت (بلا تدرّج رمادي/تعتيب) بأعلى جودةٍ تسعُها الحدود.
       const blob = await encodeToFit(canvas);
       canvas.width = 0;
       canvas.height = 0;
-      if (!blob) return null;
-
-      for (let tries = 0; tries <= RATE_BACKOFFS_MS.length; tries += 1) {
-        await respectPause();
-        const attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
-        if (!attempt.rateLimited) {
-          if (attempt.text) backoff = Math.max(0, backoff - 1); // تعافٍ تدريجي عند النجاح
-          return attempt.text;
-        }
-        // 429: ارفع التهدئة المشتركة (يحترمها كل العمّال) دون قتل التوازي
-        const b = RATE_BACKOFFS_MS[Math.min(backoff, RATE_BACKOFFS_MS.length - 1)];
-        backoff = Math.min(backoff + 1, RATE_BACKOFFS_MS.length - 1);
-        pauseUntil = Date.now() + b;
-        onProgress?.(`حد المعدل — تهدئة ${Math.round(b / 1000)}ث ثم متابعة (صفحة ${p})…`);
-      }
-      return null;
+      if (!blob) return { value: null, rateLimited: false };
+      const attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+      return { value: attempt.text, rateLimited: attempt.rateLimited };
     };
 
-    const worker = async (id: number): Promise<void> => {
-      // مباعدةٌ يسيرة لبدء العمّال تتفادى ازدحام الطلبات الأول (thundering herd)
-      if (id > 0) await sleep(id * 250);
-      for (;;) {
-        if (opts.shouldCancel?.()) return; // إلغاء تعاوني
-        const i = cursor;
-        cursor += 1;
-        if (i >= pages.length) return;
-        const p = pages[i];
-        onProgress?.(`قراءة سحابية (Gemini) — ${done}/${pages.length} · صفحة ${p}…`);
-        results.set(p, await readPage(p));
-        done += 1;
-        onProgress?.(`قراءة سحابية (Gemini) — ${done}/${pages.length} صفحة`);
-      }
-    };
-
-    const requested = Math.max(1, Math.min(opts.concurrency ?? DEFAULT_CONCURRENCY, MAX_CONCURRENCY));
-    const poolSize = Math.min(requested, pages.length);
-    await Promise.all(Array.from({ length: poolSize }, (_, i) => worker(i)));
+    // جدولةٌ متكيّفة (AIMD): ترفع التوازي حتى يُشبَع حدّ المعدل ثم تتراجع وتتعافى —
+    // فتُنجز كأقصى ما يسمح به المفتاح، بلا انهيارٍ دائم ولا فقدِ صفحة (إعادة جدولة).
+    const start = Math.max(1, Math.min(opts.concurrency ?? DEFAULT_CONCURRENCY, MAX_CONCURRENCY));
+    const pageResults = await runAdaptive(pages, (p) => renderAndPost(p), {
+      start,
+      max: MAX_CONCURRENCY,
+      min: 1,
+      cooldownMs: RATE_BACKOFFS_MS,
+      signal: opts.shouldCancel,
+      onProgress: (d, t, c) => onProgress?.(`قراءة سحابية (Gemini) — ${d}/${t} صفحة · توازٍ ${c}`)
+    });
+    pages.forEach((p, i) => results.set(p, pageResults[i]));
     await doc.destroy();
 
     const failed = pages.filter((p) => !results.get(p));
