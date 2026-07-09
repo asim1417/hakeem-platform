@@ -4,8 +4,12 @@
 // المحرّكات: local (استخراج محلّي: نص/Word/PDF نصّي) · gemini (رؤية سحابية عبر
 // GEMINI_API_KEY) · qari (مقبس GPU عبر QARI_ENDPOINT). إضافة محرّكٍ = register() واحدة.
 
-import { processExtractedText } from "@/lib/modules/document-inspection";
+import { processExtractedText, runAdaptive } from "@/lib/modules/document-inspection";
 import { extractLocal, RemoteNeeded, type ExtractOut } from "./extract";
+
+// إعدادات الإنتاجية العالية للـ PDF عبر Gemini (قابلة للضبط بيئياً).
+const CHUNK_PAGES = Math.max(1, Number(process.env.GEMINI_CHUNK_PAGES ?? "4") || 4);
+const GEMINI_MAX_CONCURRENCY = Math.max(1, Number(process.env.GEMINI_MAX_CONCURRENCY ?? "16") || 16);
 
 export interface Engine {
   name: string;
@@ -74,27 +78,68 @@ function geminiConfig(model: string) {
   return base;
 }
 
-async function runGemini(name: string, data: Uint8Array, model: string): Promise<ExtractOut> {
+type GeminiCall =
+  | { ok: true; text: string }
+  | { ok: false; rateLimited: boolean; error: string };
+
+/** نداءٌ واحد لـ Gemini على بايتات (صورة/PDF). يميّز 429 لتتكيّف الجدولة. */
+async function callGemini(bytes: Uint8Array, mime: string, model: string): Promise<GeminiCall> {
   const key = (process.env.GEMINI_API_KEY ?? "").trim();
-  if (!key) throw new Error("GEMINI_API_KEY غير مضبوط");
+  if (!key) return { ok: false, rateLimited: false, error: "GEMINI_API_KEY غير مضبوط" };
+  const modelId = model === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash";
+  let res: Response;
+  try {
+    res = await fetch(`${GEMINI_BASE}/${modelId}:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ inline_data: { data: Buffer.from(bytes).toString("base64"), mime_type: mime } }, { text: OCR_PROMPT }] }],
+        generationConfig: geminiConfig(model)
+      })
+    });
+  } catch (e) {
+    return { ok: false, rateLimited: false, error: (e as Error).message };
+  }
+  if (res.status === 429) return { ok: false, rateLimited: true, error: "حدّ المعدل" };
+  const json: any = await res.json().catch(() => null);
+  if (!res.ok) return { ok: false, rateLimited: false, error: json?.error?.message ?? `Gemini أعاد ${res.status}` };
+  const text: string = (json?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? "").join("").trim();
+  if (!text) return { ok: false, rateLimited: false, error: "لم يُعِد Gemini نصاً" };
+  return { ok: true, text };
+}
+
+async function runGemini(name: string, data: Uint8Array, model: string): Promise<ExtractOut> {
   const mime = mimeFor(name);
   if (!mime) throw new Error("Gemini يقبل PNG/JPG/PDF فقط");
-  const modelId = model === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash";
-  const b64 = Buffer.from(data).toString("base64");
-  const res = await fetch(`${GEMINI_BASE}/${modelId}:generateContent?key=${key}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ inline_data: { data: b64, mime_type: mime } }, { text: OCR_PROMPT }] }],
-      generationConfig: geminiConfig(model)
-    })
-  });
-  const json: any = await res.json();
-  if (!res.ok) throw new Error(json?.error?.message ?? `Gemini أعاد ${res.status}`);
-  const text: string = (json?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? "").join("").trim();
-  if (!text) throw new Error("لم يُعِد Gemini نصاً");
-  // نصّ رؤية → مرّره عبر الدماغ (فصل ترويسات) بمصدر cloud
-  const processed = processExtractedText(text, { source: "cloud" });
+
+  // PDF: تقسيمٌ إلى قطعٍ ومعالجةٌ متوازية متكيّفة — إنتاجيةٌ عالية بلا بترٍ للوثائق الكبيرة.
+  if (mime === "application/pdf") {
+    const { splitPdf } = await import("./pdf-split");
+    const chunks = await splitPdf(data, CHUNK_PAGES);
+    if (!chunks.length) throw new Error("PDF بلا صفحات");
+    const texts = await runAdaptive(
+      chunks,
+      async (chunk) => {
+        const r = await callGemini(chunk.bytes, "application/pdf", model);
+        if (r.ok) return { value: r.text, rateLimited: false };
+        return { value: null, rateLimited: r.rateLimited };
+      },
+      { start: Math.min(8, GEMINI_MAX_CONCURRENCY), max: GEMINI_MAX_CONCURRENCY, min: 1, cooldownMs: [2_000, 5_000, 12_000] }
+    );
+    const merged = chunks.map((_c, i) => texts[i] ?? "").join("\n\n").trim();
+    if (!merged) throw new Error("لم يُعِد Gemini نصاً");
+    const processed = processExtractedText(merged, { source: "cloud" });
+    const okChunks = texts.filter(Boolean).length;
+    return {
+      text: processed.body,
+      kind: `Gemini ${model === "pro" ? "pro" : "flash"} · ${okChunks}/${chunks.length} قطعة`
+    };
+  }
+
+  // صورة: نداءٌ واحد
+  const r = await callGemini(data, mime, model);
+  if (!r.ok) throw new Error(r.error);
+  const processed = processExtractedText(r.text, { source: "cloud" });
   return { text: processed.body, kind: `Gemini ${model === "pro" ? "pro" : "flash"}` };
 }
 

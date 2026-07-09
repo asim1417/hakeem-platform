@@ -90,6 +90,26 @@ async function main() {
     assert.equal(noText!.files[0].text, null);
   });
 
+  // ── تقسيم PDF (إنتاجية عالية) ──
+  const { splitPdf, pdfPageCount } = await import("./pdf-split");
+  const { PDFDocument } = await import("pdf-lib");
+  const built = await PDFDocument.create();
+  for (let i = 0; i < 10; i += 1) built.addPage([200, 200]);
+  const pdfBytes = await built.save();
+
+  await acheck("pdf-split: 10 صفحات → 3 قطع (4+4+2) صالحة", async () => {
+    assert.equal(await pdfPageCount(pdfBytes), 10);
+    const chunks = await splitPdf(pdfBytes, 4);
+    assert.equal(chunks.length, 3);
+    assert.equal(chunks[0].pageCount, 4);
+    assert.equal(chunks[0].firstPage, 1);
+    assert.equal(chunks[2].pageCount, 2);
+    assert.equal(chunks[2].firstPage, 9);
+    // كل قطعة وثيقة PDF مستقلّة صالحة بعدد صفحاتها
+    assert.equal(await pdfPageCount(chunks[1].bytes), 4);
+    assert.equal(await pdfPageCount(chunks[2].bytes), 2);
+  });
+
   await fs.rm(process.env.DOC_NODE_DATA!, { recursive: true, force: true }).catch(() => undefined);
   console.log(`\nكل اختبارات خادم Node ناجحة (${passed})`);
 }
