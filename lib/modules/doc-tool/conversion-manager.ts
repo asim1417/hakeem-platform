@@ -91,6 +91,42 @@ export interface StartConversionArgs {
 }
 
 /**
+ * قراءة صفحاتٍ محلياً في المتصفح (Tesseract) — سقوطٌ تلقائي عند تعذّر السحابي
+ * (نفاد الحصة اليومية، مفتاح معطّل، شبكة): لا يمرّ عبر Google فلا حصص عليه،
+ * فيكتمل المستند اليوم بدقةٍ أقل بدل التوقف الكامل. null إن لم يُقرأ نصّ يُعتدّ به.
+ */
+async function ocrPagesLocallyFallback(buffer: ArrayBuffer, pages: number[], reason?: string): Promise<string | null> {
+  try {
+    patch({
+      label: reason
+        ? `⚠ ${reason} — متابعة بالقراءة المحلية في متصفحك (بلا حصص)…`
+        : "إكمال الصفحات المتعذرة بالقراءة المحلية (بلا حصص)…",
+      done: 0,
+      total: pages.length
+    });
+    const { ocrScannedPdf, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+    const { fixReversedArabicLines } = await import("@/lib/modules/document-inspection/text-quality");
+    const { text } = await ocrScannedPdf(
+      buffer,
+      (info) => {
+        const idx = pages.indexOf(info.page);
+        patch({
+          label: `قراءة محلية — صفحة ${info.page} · ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`,
+          done: idx >= 0 ? idx : state.done,
+          total: pages.length
+        });
+      },
+      { onlyPages: pages, shouldCancel: () => cancelFlag }
+    );
+    if (cancelFlag) return null;
+    if (text.replace(/\[صفحة \d+\]/g, "").trim().length < 10) return null;
+    return fixReversedArabicLines(text).text;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * يبدأ قراءة PDF سحابية مُدارة تستمر عبر التنقّل. يرفض البدء إن كانت مهمة جارية.
  * التقدّم يصل المشتركين عبر subscribeConversion.
  */
@@ -130,27 +166,61 @@ export async function startConversion(args: StartConversionArgs): Promise<void> 
       patch({ phase: "canceled", label: "أُلغيت المعالجة" });
       return;
     }
-    if (!result.text) {
+
+    // سقوط تلقائي للقراءة المحلية بدل التوقف: نفاد الحصة اليومية أو تعطّل السحابي
+    // لا يعني ضياع المستند — الصفحات المتعذرة تُقرأ في المتصفح (Tesseract، بلا حصص).
+    let text = result.text;
+    let failedPages = result.failed;
+    let localPages = 0;
+
+    if (!text && failedPages.length) {
+      // فشل سحابي شامل والصفحات معروفة → اقرأها كلها محلياً
+      const local = await ocrPagesLocallyFallback(args.buffer, failedPages, result.error);
+      if (cancelFlag) {
+        patch({ phase: "canceled", label: "أُلغيت المعالجة" });
+        return;
+      }
+      if (local) {
+        text = local;
+        localPages = failedPages.length;
+        failedPages = [];
+      }
+    }
+    if (!text) {
       patch({ phase: "error", error: result.error ?? "تعذّرت القراءة السحابية — تحقّق من المفتاح أو الاتصال", label: "" });
       return;
     }
+    if (failedPages.length && !cancelFlag) {
+      // نجاح جزئي → أكمل الصفحات المتعذرة وحدها محلياً وادمجها محلّ علاماتها
+      const local = await ocrPagesLocallyFallback(args.buffer, failedPages);
+      if (local) {
+        const { mergeRetriedPages, extractFailedPages } = await import("./cloud-ocr");
+        const before = failedPages.length;
+        text = mergeRetriedPages(text, local);
+        failedPages = extractFailedPages(text);
+        localPages = before - failedPages.length;
+      }
+    }
 
-    // ادمج الصفحات المقروءة سحابياً في النصّ الرقميّ الأساسي (إن وُجد) بدل استبداله كلّه.
-    let merged = result.text;
+    // ادمج الصفحات المقروءة في النصّ الرقميّ الأساسي (إن وُجد) بدل استبداله كلّه.
+    let merged = text;
     if (args.baseText) {
       const { mergeScannedPages } = await import("@/lib/modules/document-inspection/file-extract");
-      merged = mergeScannedPages(args.baseText, result.text);
+      merged = mergeScannedPages(args.baseText, text);
     }
     const { separateRunningLines } = await import("./extract");
     const sep = separateRunningLines(merged);
+    const localNote = localPages ? ` · ${localPages} صفحة قُرئت محلياً لتعذّر السحابي — راجعها بعناية` : "";
     patch({
       phase: "done",
-      label: result.failed.length ? `اكتمل — ${result.failed.length} صفحة متعذرة` : "اكتملت المعالجة",
-      failed: result.failed.length,
+      label: failedPages.length
+        ? `اكتمل — ${failedPages.length} صفحة متعذرة${localNote}`
+        : `اكتملت المعالجة${localNote}`,
+      failed: failedPages.length,
       resultText: sep.body,
       running: sep.running ?? null
     });
-    await args.onComplete({ text: sep.body, running: sep.running ?? null, failed: result.failed.length });
+    await args.onComplete({ text: sep.body, running: sep.running ?? null, failed: failedPages.length });
   } catch (err) {
     patch({ phase: "error", error: err instanceof Error ? err.message : "خطأ غير متوقع", label: "" });
   }
