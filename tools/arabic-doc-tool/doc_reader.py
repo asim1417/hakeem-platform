@@ -172,6 +172,52 @@ def strip_margin_line_numbers(text):
     return "\n".join(out)
 
 
+_TERMINAL = re.compile(r"[.؟!؛:][)»\"'\]]?$")
+_NEW_BLOCK = re.compile(
+    r"^(\[صفحة \d+\]|[-•*–—]\s|\(?[0-9٠-٩]{1,3}[)\-.]\s|"
+    r"(?:أولا|ثانيا|ثالثا|رابعا|خامسا|سادسا|سابعا|ثامنا|تاسعا|عاشرا)ً?\s*[:/-]|"
+    r"بسم الله|الحمد لله|الأنموذج|الفصل|الباب|المادة\s+[0-9٠-٩])"
+)
+
+
+def _looks_wrapped(lines):
+    content = [x for x in (l.strip() for l in lines) if x and not re.match(r"^\[صفحة \d+\]$", x)]
+    if len(content) < 4:
+        return False
+    cont = sum(1 for l in content if not _TERMINAL.search(l) and not _NEW_BLOCK.match(l) and len(l) < 70)
+    return cont / len(content) > 0.4
+
+
+def reflow_wrapped_lines(text):
+    """يعيد ربط الأسطر المكسورة إلى فقراتٍ متدفّقة (فقط إن بدا النصّ مكسوراً). يحافظ
+    على السطور الفارغة وعلامات الصفحات والعناوين وبدايات القوائم ونهايات الجُمل."""
+    if not text:
+        return text
+    lines = text.split("\n")
+    if not _looks_wrapped(lines):
+        return text
+    out = []
+    for raw in lines:
+        line = raw.rstrip()
+        if not line.strip():
+            out.append("")
+            continue
+        prev = out[-1] if out else None
+        pt = prev.strip() if prev is not None else ""
+        mergeable = (
+            prev is not None and pt
+            and not re.match(r"^\[صفحة \d+\]$", pt)
+            and not re.match(r"^\[صفحة \d+\]$", line.strip())
+            and not _TERMINAL.search(pt)
+            and not _NEW_BLOCK.match(line.strip())
+        )
+        if mergeable:
+            out[-1] = prev + " " + line.strip()
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
 def norm(s):
     """تطبيع للبحث: حذف التشكيل والتطويل"""
     if not s:

@@ -165,7 +165,9 @@ def process(provider, model, name, data):
     يشغّل المحرّك المطلوب (مع تراجعٍ منظّم للمحلّي)، ثم يحذف أرقام هامش الأسطر
     المتسلسلة عند كل المسارات — محافظ: لا يمسّ أي رقمِ متن.
     """
-    from doc_reader import strip_margin_line_numbers
+    from doc_reader import strip_margin_line_numbers, reflow_wrapped_lines
 
     text, kind = _dispatch(provider, model, name, data)
-    return strip_margin_line_numbers(text or ""), kind
+    text = strip_margin_line_numbers(text or "")
+    text = reflow_wrapped_lines(text)
+    return text, kind

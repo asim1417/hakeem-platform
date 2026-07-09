@@ -10,6 +10,7 @@
 import { cleanPdfTextLayer, scrubLogoNoise, separateRunningLines } from "./reshape";
 import { fixReversedArabicLines } from "./text-quality";
 import { stripMarginLineNumbers } from "./margin-numbers";
+import { reflowWrappedLines } from "./line-reflow";
 
 /** منشأ النص المُستخرَج — يحدّد سلسلة المعالجة المناسبة له. */
 export type TextSource =
@@ -62,8 +63,10 @@ export function processExtractedText(rawText: string, opts: ProcessOptions): Pro
   const sep = separateRunningLines(text);
   // احذف أرقام هامش الأسطر المتسلسلة (محافظ: يُبقي كل رقمِ متن؛ لا شيء يُحذف بلا تسلسل مثبَت).
   const stripped = stripMarginLineNumbers(sep.body);
+  // أعِد ربط الأسطر المكسورة إلى فقراتٍ متدفّقة (فقط إن بدا النصّ مكسوراً — وإلا كما هو).
+  const reflowed = reflowWrappedLines(stripped.text);
   return {
-    body: stripped.text,
+    body: reflowed,
     running: sep.running,
     needsOcr,
     correctedLines,
