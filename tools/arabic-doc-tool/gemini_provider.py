@@ -51,7 +51,9 @@ def gemini_available():
 
 
 def _gen_config(model_type):
-    cfg = {"temperature": 0.1, "topP": 0.95, "maxOutputTokens": 16384}
+    # أقصى سقف مخرجات للنموذج (65536): الخدمة ترسل الـ PDF كاملاً في طلبٍ واحد،
+    # والسقف الأدنى كان يبتر المستندات الطويلة (عشرات الصفحات) قبل اكتمال نصّها.
+    cfg = {"temperature": 0.1, "topP": 0.95, "maxOutputTokens": 65536}
     if model_type != "pro":  # pro لا يقبل تعطيل التفكير — يُترك ديناميكياً
         cfg["thinkingConfig"] = {"thinkingBudget": 0}
     return cfg
