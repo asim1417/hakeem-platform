@@ -29,6 +29,8 @@ import {
   setMorphLexicon,
   normalizeForMatch,
   occurrences,
+  editDistance,
+  measureAccuracy,
   parseQuery,
   processExtractedText,
   queryStems,
@@ -630,6 +632,37 @@ check("الدماغ (ocr): يصحّح انعكاس اتجاه السطر", () =>
   const r = processExtractedText("يضاقلا نم ةمكحملا يف", { source: "ocr" });
   assert.ok(r.body.includes("في المحكمة من القاضي"));
   assert.equal(r.correctedLines, 1);
+});
+
+// ── قياس الدقّة: CER/WER ──
+check("مسافة التحرير: متطابق=0، بديل واحد=1", () => {
+  assert.equal(editDistance(Array.from("محكمة"), Array.from("محكمة")), 0);
+  assert.equal(editDistance(Array.from("محكمة"), Array.from("محكمه")), 1);
+});
+
+check("الدقّة: نصّ مطابق → CER=0 وWER=0 ودقّة 100٪", () => {
+  const a = measureAccuracy("حكم قضائي نهائي", "حكم قضائي نهائي");
+  assert.equal(a.cer, 0);
+  assert.equal(a.wer, 0);
+  assert.equal(a.charAccuracy, 1);
+});
+
+check("الدقّة: خطأ حرف واحد يُحسب نسبةً للحقيقة", () => {
+  // «محكمة» (5 أحرف) مقابل «محكمه» → حرف واحد مختلف → CER = 1/5
+  const a = measureAccuracy("محكمة", "محكمه");
+  assert.ok(Math.abs(a.cer - 0.2) < 1e-9);
+});
+
+check("الدقّة: التطبيع يتجاهل فرق التشكيل والهمزة", () => {
+  const strict = measureAccuracy("إثبات", "اثبات");
+  const normalized = measureAccuracy("إثبات", "اثبات", { normalize: true });
+  assert.ok(strict.cer > 0); // حرفياً مختلف (همزة)
+  assert.equal(normalized.cer, 0); // بعد التطبيع متطابق
+});
+
+check("الدقّة: WER على مستوى الكلمات", () => {
+  const a = measureAccuracy("المحكمة رفضت الدعوى", "المحكمة قبلت الدعوى");
+  assert.ok(Math.abs(a.wer - 1 / 3) < 1e-9); // كلمة من ثلاث مختلفة
 });
 
 async function asyncChecks() {

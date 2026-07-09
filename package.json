@@ -13,6 +13,7 @@
     "tool:docs:install": "python3 -m pip install -r tools/arabic-doc-tool/requirements_tool.txt",
     "test": "tsx scripts/test-conversation.ts",
     "test:document-inspection": "tsx scripts/test-document-inspection.ts",
+    "accuracy": "tsx scripts/measure-accuracy.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/seed-legal-library.ts",

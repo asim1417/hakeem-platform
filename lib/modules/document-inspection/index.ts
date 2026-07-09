@@ -7,3 +7,4 @@ export * from "./reshape";
 export * from "./structure";
 export * from "./sample-case";
 export * from "./pipeline";
+export * from "./accuracy";
