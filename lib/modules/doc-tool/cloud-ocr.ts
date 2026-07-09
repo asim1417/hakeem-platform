@@ -32,12 +32,14 @@ async function encodeToFit(canvas: HTMLCanvasElement): Promise<Blob | null> {
   }
   return null;
 }
-/** دقة تحويل الصفحة لصورة — 3 لإبراز التشكيل والنقاط في النصّ العربي الكثيف */
-const PAGE_SCALE = 3;
-/** التوازي الافتراضي — يهبط إلى 1 تلقائياً عند أول 429 */
+/** دقة تحويل الصفحة لصورة. 2 يكفي رؤية Gemini (تُصغّر الصور داخلياً إلى بلاطات
+ *  محدودة، فـ3 يضخّم الرفع بلا مكسب) ويُنصّف بايتات الرفع — أسرع بلا فقدٍ محسوس. */
+const PAGE_SCALE = 2;
+/** التوازي الافتراضي — يبقى فعّالاً؛ عند 429 تُطبَّق تهدئةٌ مشتركة قصيرة قابلة للتعافي
+ *  بدل الانهيار الدائم إلى التتابع. */
 const DEFAULT_CONCURRENCY = 3;
-/** انتظارات إعادة المحاولة عند حد المعدل */
-const RATE_WAITS_MS = [15_000, 30_000];
+/** تهدئة مشتركة متزايدة عند حد المعدل — أقصر من قبل وقابلة للتعافي عند النجاح. */
+const RATE_BACKOFFS_MS = [4_000, 8_000, 16_000];
 
 interface PostResult {
   text: string | null;
@@ -101,7 +103,7 @@ export async function cloudOcrImage(file: File, onProgress?: CloudProgress, mode
   if (!fitted) return null; // صورة يتعذّر تصغيرها لحدّ الرفع → يتراجع المستدعي للمحلي
   const r = await postToCloud(fitted.blob, fitted.name, model);
   if (r.rateLimited) {
-    for (const wait of RATE_WAITS_MS) {
+    for (const wait of RATE_BACKOFFS_MS) {
       onProgress?.(`حد المعدل — انتظار ${wait / 1000} ثانية…`);
       await sleep(wait);
       const retry = await postToCloud(fitted.blob, fitted.name, model);
@@ -186,7 +188,15 @@ export async function cloudOcrPdfPages(
     const results = new Map<number, string | null>();
     let cursor = 0;
     let done = 0;
-    let limitHit = false; // بعد أول 429: يعمل عامل واحد فقط (تتابع)
+    // تهدئة مشتركة عند 429: كل العمّال يحترمونها ثم يستأنفون بكامل التوازي — لا انهيار
+    // دائم إلى التتابع (كان بجّاً: أول 429 يقتل التوازي لبقية الوثيقة كلها).
+    let pauseUntil = 0;
+    let backoff = 0;
+
+    const respectPause = async () => {
+      const wait = pauseUntil - Date.now();
+      if (wait > 0) await sleep(wait);
+    };
 
     const readPage = async (p: number): Promise<string | null> => {
       const page = await doc.getPage(p);
@@ -203,23 +213,27 @@ export async function cloudOcrPdfPages(
       canvas.height = 0;
       if (!blob) return null;
 
-      let attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
-      let waitIdx = 0;
-      while (attempt.rateLimited && waitIdx < RATE_WAITS_MS.length) {
-        limitHit = true;
-        onProgress?.(`حد المعدل — انتظار ${RATE_WAITS_MS[waitIdx] / 1000} ثانية ثم إعادة صفحة ${p}…`);
-        await sleep(RATE_WAITS_MS[waitIdx]);
-        waitIdx += 1;
-        attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+      for (let tries = 0; tries <= RATE_BACKOFFS_MS.length; tries += 1) {
+        await respectPause();
+        const attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+        if (!attempt.rateLimited) {
+          if (attempt.text) backoff = Math.max(0, backoff - 1); // تعافٍ تدريجي عند النجاح
+          return attempt.text;
+        }
+        // 429: ارفع التهدئة المشتركة (يحترمها كل العمّال) دون قتل التوازي
+        const b = RATE_BACKOFFS_MS[Math.min(backoff, RATE_BACKOFFS_MS.length - 1)];
+        backoff = Math.min(backoff + 1, RATE_BACKOFFS_MS.length - 1);
+        pauseUntil = Date.now() + b;
+        onProgress?.(`حد المعدل — تهدئة ${Math.round(b / 1000)}ث ثم متابعة (صفحة ${p})…`);
       }
-      if (attempt.rateLimited) limitHit = true;
-      return attempt.text;
+      return null;
     };
 
-    const worker = async (id: number) => {
+    const worker = async (id: number): Promise<void> => {
+      // مباعدةٌ يسيرة لبدء العمّال تتفادى ازدحام الطلبات الأول (thundering herd)
+      if (id > 0) await sleep(id * 250);
       for (;;) {
         if (opts.shouldCancel?.()) return; // إلغاء تعاوني
-        if (limitHit && id > 0) return; // انكماش التوازي عند حد المعدل
         const i = cursor;
         cursor += 1;
         if (i >= pages.length) return;
