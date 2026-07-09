@@ -38,7 +38,11 @@ function scanFile(file: string) {
     const trimmed = line.trim();
     const isDocumentation = rel === "README.md" || rel.endsWith(".md");
     const isExample = rel === ".env.example" || isDocumentation;
-    const isServerAiGateway = rel.startsWith(path.join("lib", "modules", "ai")) || rel.startsWith(path.join("app", "api"));
+    const isServerAiGateway =
+      rel.startsWith(path.join("lib", "modules", "ai")) ||
+      rel.startsWith(path.join("app", "api")) ||
+      // خادم معالجة الوثائق (Node) — طبقة خادمية مستقلّة تقرأ المفتاح من البيئة فقط
+      rel.startsWith(path.join("services", "doc-node"));
     // ألعاب الأطفال تخزن تقدم اللعب وإعداداته فقط محليًا — لا بيانات شخصية
     // يشمل نسخها المنشورة تحت public/penalty-stars وpublic/football-future
     const isKidsGame =
