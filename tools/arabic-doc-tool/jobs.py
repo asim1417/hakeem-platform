@@ -60,22 +60,11 @@ def init_jobs_db():
 
 
 def _process_file(provider, model, name, data):
-    """يعيد (text, kind). يجرّب المزوّد المطلوب، ويتراجع للمحلّي إن فشل السحابي."""
-    from doc_reader import read_bytes, clean_text
+    """يعيد (text, kind). يفوّض لسجلّ المحرّكات الموحّد (engines) — مصدر حقيقة واحد
+    لاختيار المحرّك والتراجع المنظّم. إضافة محرّكٍ جديد لا تمسّ هذا الملف."""
+    from engines import process
 
-    if provider == "gemini":
-        try:
-            from gemini_provider import extract_with_gemini
-            txt = extract_with_gemini(name, data, model_type=model or "flash")
-            return clean_text(txt or ""), "Gemini %s" % (model or "flash")
-        except Exception as e:
-            # تراجعٌ منظّم للمحلّي مع تنبيه (لا فشلٌ صامت)
-            txt, kind = read_bytes(name, data)
-            note = "(تعذّر Gemini: %s — استُعمل المحلّي)" % str(e)[:80]
-            return clean_text(txt or ""), (kind + " " + note)
-
-    txt, kind = read_bytes(name, data)
-    return clean_text(txt or ""), kind
+    return process(provider, model, name, data)
 
 
 # درجة التوازي — عدد الملفات المعالَجة معاً في المهمّة الواحدة (أسرع للدفعات الكبيرة).

@@ -143,9 +143,13 @@ def api_clear(req: Request):
 # ---------- المعالجة في الخلفية (مهام) ----------
 @app.get("/api/providers")
 def api_providers(req: Request):
-    """المزوّدون المتاحون — local دائماً، وgemini إن ضُبط المفتاح."""
+    """المزوّدون المتاحون من سجلّ المحرّكات — يظهر أي محرّك جديد تلقائياً.
+    يبقي الحقول المسطّحة (local/gemini) للتوافق مع الواجهة الحالية، ويضيف
+    detail غنيّاً (needs_gpu/remote) للحوكمة ولوحة الإدارة."""
     _guard(req)
-    return JSONResponse({"local": True, "gemini": gemini_available()})
+    from engines import providers_status, providers_detail
+
+    return JSONResponse({**providers_status(), "detail": providers_detail()})
 
 
 @app.post("/api/jobs")
