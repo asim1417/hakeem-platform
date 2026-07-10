@@ -48,6 +48,7 @@ export default async function AdminPage() {
   const services: { label: string; state: ServiceState; detail: string; href?: string }[] = [
     { label: "إدارة المستخدمين", state: "live", detail: "إنشاء/تعديل دور/تفعيل — مُفعّلة", href: "/admin/users" },
     { label: "الصلاحيات المتقدمة (RBAC)", state: "live", detail: "محرّر مصفوفة الأدوار×الصلاحيات — مُفعّل", href: "/admin/roles" },
+    { label: "مفاتيح API (البوابة الخارجية)", state: "live", detail: "إنشاء مفاتيح للأطراف الخارجية وأنظمة الذكاء — مُفعّلة", href: "/admin/api-keys" },
     {
       label: "تفعيل الذكاء الحقيقي",
       state: status.aiLive ? "live" : "config",
@@ -102,6 +103,7 @@ export default async function AdminPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <AdminLink href="/admin/users" label="إدارة المستخدمين" />
             <AdminLink href="/admin/roles" label="الأدوار والصلاحيات" />
+            <AdminLink href="/admin/api-keys" label="مفاتيح API" />
             <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
             <AdminLink href="/dashboard/attachments" label="المرفقات" />
             <AdminLink href="/audit-logs" label="سجل التدقيق" />
