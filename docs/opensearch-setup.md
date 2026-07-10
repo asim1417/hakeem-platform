@@ -28,6 +28,25 @@ npm run index:opensearch -- --all              # فهرسة كل المواد و
 3. شغّل الفهرسة مرة واحدة (عبر workflow أو محليًّا موجّهًا للعنقود): `npm run index:opensearch -- --all`.
 4. سيظهر المزوّد `opensearch: active` في استجابات البحث تلقائيًا.
 
+## التفعيل بضغطة زر (workflow) — الأسهل
+بدل تشغيل الفهرسة يدويًّا، استعمل الـworkflow الجاهز `Index OpenSearch`:
+1. أنشئ العنقود (انظر «مسار Bonsai» أدناه).
+2. أضِف في **GitHub → Settings → Secrets and variables → Actions**:
+   - `OPENSEARCH_URL` · `OPENSEARCH_USERNAME` · `OPENSEARCH_PASSWORD`
+   - (`NEON_DATABASE_URL` موجود سلفًا — لقراءة المحتوى.)
+3. **Actions → Index OpenSearch → Run workflow** → اكتب `INDEX` واختر `all`.
+4. راجع خطوة «التحقّق» لعدد المستندات المفهرَسة.
+5. أضِف نفس الأسرار الثلاثة في **Vercel** (Environment Variables) ليقرأها الموقع، ثم أعِد النشر.
+
+## مسار Bonsai (أسرع بداية مُدارة)
+1. أنشئ حسابًا على bonsai.io واختر عنقود OpenSearch (توجد خطة بداية صغيرة).
+2. من لوحة العنقود انسخ **Full Access URL** (يحوي user:pass@host) أو المستخدم/السر منفصلَين.
+3. `OPENSEARCH_URL=https://<host>` · `OPENSEARCH_USERNAME=<user>` · `OPENSEARCH_PASSWORD=<pass>`.
+4. شهادة Bonsai صالحة — لا حاجة لأي تجاوز TLS.
+
+> بديل مؤسّسي: **AWS OpenSearch Service** (أقوى، أعقد إعدادًا وتكلفةً). المبدأ نفسه: URL + اعتماد → نفس الأسرار.
+
 ## ملاحظات
 - تغيير المحلّل يتطلّب فهرسًا جديدًا (لا يُغيَّر على فهرس قائم) — احذف الفهرس وأعد الفهرسة عند تعديل الإعدادات.
 - المتغيّرات غير مضبوطة = لا تغيّر سلوك: البحث يبقى على Postgres.
+- الـworkflow يقرأ من Neon ويكتب في العنقود فقط — لا يمسّ قاعدة البيانات.
