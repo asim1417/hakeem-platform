@@ -39,6 +39,9 @@ import {
 import { buildLegalOutput, TRAINING_DISCLAIMER } from "./drafting-style-engine";
 import { groundQuery } from "./anti-hallucination";
 import { composeReply } from "./response-composer";
+import { runDialogueBrain, type DialogueBrainResult } from "./dialogue-brain";
+import { allowRetrieval, evaluateReportGate } from "./policy-gate";
+import { finalizeReply, isRepeated } from "./response-verifier";
 import { OUTPUT_LABELS, ROLE_LABELS, TRACK_LABELS } from "./taxonomy";
 import {
   buildArbitrationSimulation,
@@ -95,10 +98,13 @@ async function result(args: {
   messageIntent: string;
   dialogue: DialogueState;
   history?: { role: string; content: string }[];
+  /** الردّ مُصاغ سلفاً بالنموذج (عقل الحوار) — لا يُعاد تمريره على طبقة الصياغة. */
+  preComposed?: boolean;
 }): Promise<ChatTurnResult> {
-  // طبقة الصياغة الحيّة: للردود الحوارية فقط. المخرجات القانونية لا تُمسّ.
+  // طبقة الصياغة الحيّة: للردود الحوارية فقط، وما لم يكن الردّ مُصاغاً سلفاً بالنموذج.
+  // المخرجات القانونية لا تُمسّ.
   const reply =
-    args.conversational && args.reply.trim()
+    !args.preComposed && args.conversational && args.reply.trim()
       ? await composeReply({ template: args.reply, messageType: args.messageIntent, history: args.history })
       : args.reply;
   return {
@@ -136,8 +142,194 @@ function reportReadyReply(cf: SimulationCaseFile): string {
 
 const REPORT_READY_BUTTONS = ["نعم، اعرض التقرير", "اسألني قبل التقرير", "صغ مذكرة جوابية", "اعرض خطة إثبات فقط", "اعرض الأحكام المشابهة فقط", "لا، أكمل الحوار"];
 
-/** تشغيل دورة شات واحدة. */
+// نوايا عقل الحوار التي تبقى محادثة عامة (بلا أدوات ولا تقرير).
+const CONVERSATIONAL_BRAIN_INTENTS = new Set([
+  "greeting",
+  "smalltalk",
+  "out_of_scope",
+  "identity",
+  "complaint",
+  "correction",
+  "insufficient",
+  "document_ref",
+]);
+const DEFAULT_PATH_BUTTONS = ["وصلتني دعوى", "أريد رفع دعوى", "صدر ضدي حكم", "تحليل مستند", "تقييم موقفي", "لست متأكدًا"];
+
+/** ملخّص موجز لملف القضية كسياق لعقل الحوار (لا يُعاد عرضه للمستخدم). */
+function summarizeCaseForBrain(cf: SimulationCaseFile): string {
+  const parts = [`المسار: ${TRACK_LABELS[cf.track]}`, `الصفة: ${ROLE_LABELS[cf.userRole]}`];
+  if (cf.disputeType && !cf.disputeType.includes("غير محدد")) parts.unshift(`النزاع: ${cf.disputeType}`);
+  if (cf.facts.length) parts.push(`وقائع مسجّلة: ${cf.facts.length}`);
+  if (cf.defenses) parts.push(`الدفع: ${cf.defenses}`);
+  return parts.join(" · ");
+}
+
+/** درجة جاهزية القضية [0..1] — تُحسب كوديًّا (لا يقرّرها النموذج). */
+function readinessScore(cf: SimulationCaseFile | null): number {
+  if (!cf) return 0;
+  let s = 0;
+  if (cf.userRole !== "UNKNOWN") s += 0.25;
+  if (cf.track !== "UNKNOWN") s += 0.25;
+  const factsLen = cf.facts.reduce((a, f) => a + f.text.length, 0);
+  if (cf.facts.length >= 2 && factsLen >= 70) s += 0.3;
+  if (cf.claims || cf.defenses) s += 0.2;
+  return Math.min(1, s);
+}
+
+/** يدمج سؤال المتابعة الواحد في ردّ النموذج (سؤال واحد لا عدّة). */
+function brainReplyWithQuestion(b: DialogueBrainResult): string {
+  const q = b.nextQuestion?.trim();
+  return q && !b.reply.includes(q) ? `${b.reply}\n${q}` : b.reply;
+}
+
+/**
+ * تشغيل دورة شات واحدة — العقل النموذجي يقود الحوار، والبوابات الحتمية تحرس
+ * القرارات الخطرة. عند تعذّر النموذج يسقط للمسار الحتمي دون تعطّل.
+ */
 export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult> {
+  const documentsCount = input.attachments?.length ?? 0;
+  const dialogue0 = normalizeDialogue(input.dialogue);
+  const detRaw = detectIntentDeterministic(input.message, documentsCount);
+  const det = applyRejected(detRaw, dialogue0.rejectedAssumptions);
+  const aiMeta = await resolveAiProvider().catch(() => ({ name: "offline", model: "" }));
+
+  // العقل النموذجي يقود الحوار.
+  let brain = await runDialogueBrain({
+    message: input.message,
+    history: input.history,
+    caseSummary: input.caseFile ? summarizeCaseForBrain(input.caseFile) : null,
+    dialogueMode: dialogue0.mode,
+  }).catch(() => null);
+
+  // سقوط آمن: لا نموذج/فشل/JSON غير صالح → المسار الحتمي الكامل.
+  if (!brain) return runChatTurnDeterministic(input);
+
+  // المرحلة ٦ (ResponseVerifier): إن كرّر النموذج آخر ردّ، أعد التوليد مرة بتعليمة تنويع.
+  const recentReplies = (input.history ?? [])
+    .filter((m) => m.role === "assistant" && m.content?.trim())
+    .slice(-2)
+    .map((m) => m.content);
+  if (isRepeated(brain.reply, recentReplies)) {
+    const retry = await runDialogueBrain({
+      message: input.message,
+      history: input.history,
+      caseSummary: input.caseFile ? summarizeCaseForBrain(input.caseFile) : null,
+      dialogueMode: dialogue0.mode,
+      correctionNote: "نوّع صياغتك بوضوح عن ردودك السابقة مع الحفاظ على المعنى والسؤال والقرار.",
+    }).catch(() => null);
+    if (retry && !isRepeated(retry.reply, recentReplies)) brain = retry;
+  }
+
+  // راكم ملف القضية (لا تنشئ ملفاً لمحادثة عامة غير قانونية).
+  const modelConversationalOnly = CONVERSATIONAL_BRAIN_INTENTS.has(brain.intent) && !brain.isLegal;
+  const mergedCase: SimulationCaseFile | null = input.caseFile
+    ? mergeIntentIntoCaseFile(input.caseFile, det)
+    : brain.isLegal && !modelConversationalOnly
+      ? buildCaseFileFromIntent(det)
+      : null;
+
+  const reportReq = detectReportRequest(input.message);
+  const approved = reportReq.show || reportReq.partial !== null || reportReq.draft || !!input.approval;
+  const substantive = !!mergedCase && isCaseSubstantive(mergedCase);
+  const readiness = readinessScore(mergedCase);
+  const convInfo = { messageType: brain.intent, understandingStage: "NonLegalSmallTalk", userLevel: "unknown" };
+
+  // ── محادثة عامة أو واقعة بسيطة → ردّ النموذج مباشرة، بلا أدوات، مع تجريد أي استشهاد ──
+  if (CONVERSATIONAL_BRAIN_INTENTS.has(brain.intent) || brain.intent === "legal_incident") {
+    return result({
+      reply: finalizeReply(brainReplyWithQuestion(brain)),
+      cards: [],
+      intent: det,
+      caseFile: mergedCase,
+      awaiting: true,
+      provider: aiMeta,
+      generated: true,
+      conv: convInfo,
+      suggestedButtons: brain.suggestedButtons.length ? brain.suggestedButtons : DEFAULT_PATH_BUTTONS,
+      conversational: true,
+      stage: brain.intent === "legal_incident" ? "clarifying" : "intake",
+      messageIntent: brain.intent,
+      dialogue: dialogue0,
+      preComposed: true,
+    });
+  }
+
+  // ── طلب تقرير لكن الوقائع ناقصة → لا تقرير، اطلب الوقائع (ردّ النموذج) ──
+  if ((reportReq.show || reportReq.partial !== null || brain.intent === "report_request") && !substantive) {
+    return result({
+      reply: finalizeReply(brain.reply),
+      cards: [],
+      intent: det,
+      caseFile: mergedCase,
+      awaiting: true,
+      provider: aiMeta,
+      generated: true,
+      conv: { ...convInfo, messageType: "report_request" },
+      suggestedButtons: ["وصلتني دعوى", "أريد رفع دعوى", "صدر ضدي حكم", "خلني أكتب الوقائع"],
+      conversational: true,
+      stage: "clarifying",
+      messageIntent: "report_request",
+      dialogue: dialogue0,
+      preComposed: true,
+    });
+  }
+
+  // ── البوّابة الحتمية للتقرير: إقرار (النموذج أو الجوهرية) + موافقة + جاهزية ──
+  const reportGate = evaluateReportGate({
+    readyForReport: brain.readyForReport || substantive,
+    approved,
+    readinessScore: readiness,
+  });
+
+  // (أ) مسموح + قضية جوهرية + نيّة استرجاعية → التقرير الحتمي المُسنَد (الاسترجاع داخله) ──
+  if (substantive && reportGate.allowed && allowRetrieval(brain)) {
+    return buildReportTurn(input, mergedCase as SimulationCaseFile, reportReq, aiMeta, convInfo, dialogue0);
+  }
+
+  // (ب) قضية جوهرية لكن بلا موافقة صريحة → اقترح التقرير (ردّ النموذج + أزرار) ──
+  if (substantive && !approved) {
+    return result({
+      reply: finalizeReply(brain.reply.trim() || reportReadyReply(mergedCase as SimulationCaseFile)),
+      cards: [],
+      intent: det,
+      caseFile: mergedCase,
+      awaiting: true,
+      provider: aiMeta,
+      generated: true,
+      conv: { ...convInfo, understandingStage: "AnalysisReady" },
+      suggestedButtons: REPORT_READY_BUTTONS,
+      conversational: true,
+      stage: "report_ready",
+      messageIntent: "case_fact",
+      dialogue: dialogue0,
+      preComposed: true,
+    });
+  }
+
+  // (ج) نيّة قانونية ناقصة → ردّ النموذج + سؤال واحد (بلا أدوات) ──
+  return result({
+    reply: finalizeReply(brainReplyWithQuestion(brain)),
+    cards: [],
+    intent: det,
+    caseFile: mergedCase,
+    awaiting: true,
+    provider: aiMeta,
+    generated: true,
+    conv: { ...convInfo, understandingStage: "ProbableLegalIntent" },
+    suggestedButtons: brain.suggestedButtons.length ? brain.suggestedButtons : DEFAULT_PATH_BUTTONS,
+    conversational: true,
+    stage: "clarifying",
+    messageIntent: brain.intent,
+    dialogue: dialogue0,
+    preComposed: true,
+  });
+}
+
+/**
+ * المسار الحتمي الاحتياطي (fallback): يعمل عند تعذّر عقل الحوار النموذجي
+ * (offline/فشل/JSON غير صالح). المنطق الأصلي كما هو — لا يعتمد على أي نموذج.
+ */
+async function runChatTurnDeterministic(input: ChatTurnInput): Promise<ChatTurnResult> {
   const documentsCount = input.attachments?.length ?? 0;
   const dialogue0 = normalizeDialogue(input.dialogue);
   const detRaw = detectIntentDeterministic(input.message, documentsCount);
