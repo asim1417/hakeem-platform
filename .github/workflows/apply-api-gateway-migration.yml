@@ -1,0 +1,54 @@
+name: Apply API Gateway Migration (api_keys)
+
+# ينشئ جدولي api_keys و api_request_windows على Neon (إضافة فقط، idempotent).
+# مُقفل خلف CONFIRM + حارس هدف Neon. يستعمل سرّ NEON_DATABASE_URL (كتابة).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "للكتابة: اكتب NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: apply-api-gateway-migration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+
+      - name: "🛡️ حارس الهدف Neon (قراءة فقط)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "🔒 بوّابة الكتابة"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1
+          fi
+
+      - name: "تطبيق migration (idempotent)"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260626120000_add_api_gateway/migration.sql
+
+      - name: "تحقّق بعد الكتابة (قراءة فقط): وجود الجدولين"
+        run: |
+          psql "$DATABASE_URL" -c "SELECT to_regclass('public.api_keys') AS api_keys, to_regclass('public.api_request_windows') AS api_request_windows;"
+          psql "$DATABASE_URL" -c "SELECT count(*) AS api_keys_rows FROM api_keys;"
