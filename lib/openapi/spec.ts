@@ -21,8 +21,78 @@ export const openApiSpec = {
     { name: "النواة القانونية", description: "المواد والمبادئ والمعرّفات" },
     { name: "تراث", description: "مكتبة التراث الإسلامي مفتوحة المصدر" },
     { name: "المصادقة", description: "تسجيل الدخول والخروج" },
+    { name: "البوابة الخارجية", description: "واجهات /api/legal/* للتكامل الخارجي بمفتاح API (نطاق legal:read)" },
   ],
   paths: {
+    "/api/legal/search": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "بحث قانوني (بوابة خارجية)",
+        description: "بحث هجين في النواة القانونية. متاح بمفتاح API خارجي (Bearer/x-api-key، نطاق legal:read) أو جلسة داخلية.",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [
+          { name: "q", in: "query", required: true, schema: { type: "string", minLength: 2 } },
+          { name: "limit", in: "query", required: false, schema: { type: "integer", default: 20, maximum: 50 } },
+        ],
+        responses: {
+          "200": { description: "نتائج البحث" },
+          "400": { description: "عبارة قصيرة" },
+          "401": { description: "مفتاح مفقود/غير صالح" },
+          "403": { description: "المفتاح لا يملك النطاق" },
+          "429": { description: "تجاوز حدّ المعدّل" },
+        },
+      },
+    },
+    "/api/legal/systems": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "قائمة الأنظمة (بوابة خارجية)",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [
+          { name: "q", in: "query", required: false, schema: { type: "string" } },
+          { name: "classification", in: "query", required: false, schema: { type: "string" } },
+          { name: "page", in: "query", required: false, schema: { type: "integer", default: 1 } },
+          { name: "pageSize", in: "query", required: false, schema: { type: "integer", default: 24 } },
+        ],
+        responses: { "200": { description: "أنظمة مع ترقيم" }, "401": { description: "غير مصادق" }, "429": { description: "تجاوز الحدّ" } },
+      },
+    },
+    "/api/legal/systems/{id}": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "تفاصيل نظام (بوابة خارجية)",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" }, description: "معرّف النظام أو اسمه" }],
+        responses: { "200": { description: "النظام ومواده بالفصول" }, "404": { description: "غير موجود" } },
+      },
+    },
+    "/api/legal/articles/{id}": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "مادة مع الاستناد والمعرّف التشريعي (بوابة خارجية)",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "المادة + citation + eli" }, "404": { description: "غير موجودة" } },
+      },
+    },
+    "/api/legal/articles/{id}/related": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "مواد ذات صلة وإحالات داخلية (بوابة خارجية)",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "related + crossReferences" }, "404": { description: "غير موجودة" } },
+      },
+    },
+    "/api/legal/articles/{id}/fiqh": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "المواءمة الفقهية المساندة (غير ملزمة) (بوابة خارجية)",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "fiqh مع تنبيه عدم الإلزام" }, "404": { description: "غير موجودة" } },
+      },
+    },
     "/api/legal-search": {
       get: {
         tags: ["البحث"],
@@ -163,6 +233,8 @@ export const openApiSpec = {
     },
     securitySchemes: {
       sessionCookie: { type: "apiKey", in: "cookie", name: "hakeem_session", description: "جلسة موقّعة (HMAC) عبر تسجيل الدخول" },
+      apiKeyAuth: { type: "http", scheme: "bearer", description: "مفتاح بوابة API الخارجية: Authorization: Bearer hk_live_… (نطاق legal:read، خاضع لحدّ معدّل)" },
+      apiKeyHeader: { type: "apiKey", in: "header", name: "x-api-key", description: "بديل: تمرير المفتاح في ترويسة x-api-key" },
     },
   },
   security: [{ sessionCookie: [] }],

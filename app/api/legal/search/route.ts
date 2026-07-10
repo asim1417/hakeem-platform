@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiPermission } from "@/lib/modules/auth/session";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
+import { handleLegalApi, corsPreflight } from "@/lib/modules/api-gateway/gateway-auth";
 
 export const dynamic = "force-dynamic";
+export const OPTIONS = corsPreflight;
 
-// GET /api/legal/search?q=&limit= — واجهة بحث قانوني عامّة (غلاف فوق البحث الهجين).
+// GET /api/legal/search?q=&limit= — واجهة بحث قانوني (بوابة خارجية بمفتاح أو جلسة داخلية).
 export async function GET(request: NextRequest) {
-  const gate = await requireApiPermission("LEGAL_CORE_VIEW", request);
-  if (gate.response) return gate.response;
+  return handleLegalApi(request, "legal:read", async () => {
+    const q = (request.nextUrl.searchParams.get("q") ?? "").trim();
+    const limit = Math.min(Number(request.nextUrl.searchParams.get("limit")) || 20, 50);
+    if (q.length < 2) return NextResponse.json({ ok: false, error: "أدخل عبارة بحث (حرفان فأكثر)." }, { status: 400 });
 
-  const q = (request.nextUrl.searchParams.get("q") ?? "").trim();
-  const limit = Math.min(Number(request.nextUrl.searchParams.get("limit")) || 20, 50);
-  if (q.length < 2) return NextResponse.json({ ok: false, error: "أدخل عبارة بحث (حرفان فأكثر)." }, { status: 400 });
-
-  const data = await hybridSearch({ q, limit });
-  return NextResponse.json({
-    ok: true,
-    query: q,
-    total: data.results.length,
-    providers: data.providers,
-    results: data.results
+    const data = await hybridSearch({ q, limit });
+    return NextResponse.json({ ok: true, query: q, total: data.results.length, providers: data.providers, results: data.results });
   });
 }

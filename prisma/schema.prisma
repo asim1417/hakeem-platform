@@ -909,3 +909,39 @@ model DocCase {
   @@index([workspaceId])
   @@map("doc_cases")
 }
+
+// ── بوابة API الخارجية: مفاتيح الأطراف الثالثة (توكن مُخزَّن مُجزَّأ لا خام) ──
+// keyHash = SHA-256 للمفتاح الكامل (لا يُخزَّن الخام أبدًا)؛ keyPrefix للعرض/الإدارة.
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String // وصف بشري للمفتاح (لمن/لماذا)
+  keyPrefix   String    @unique @map("key_prefix") // بادئة ظاهرة مثل hk_live_ab12cd34
+  keyHash     String    @unique @map("key_hash") // SHA-256 للمفتاح الكامل
+  scopes      String[]  @default([]) // نطاقات الوصول، مثل ["legal:read"]
+  rateLimit   Int       @default(60) @map("rate_limit") // طلبات لكل نافذة دقيقة
+  active      Boolean   @default(true)
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  windows ApiRequestWindow[]
+
+  @@index([keyPrefix])
+  @@map("api_keys")
+}
+
+// نافذة حدّ المعدّل (fixed window لكل دقيقة) — عدّاد ذرّي عبر UPSERT، يصمد عبر النسخ الخادمية.
+model ApiRequestWindow {
+  id          String   @id @default(cuid())
+  apiKeyId    String   @map("api_key_id")
+  apiKey      ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  windowStart Int      @map("window_start") // رقم الدقيقة (epoch/60000)
+  count       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([apiKeyId, windowStart])
+  @@index([windowStart])
+  @@map("api_request_windows")
+}
