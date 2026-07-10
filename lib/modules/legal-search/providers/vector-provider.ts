@@ -13,6 +13,8 @@ import type { LegalEntityType, RawResult, SearchProvider, SearchQuery } from "./
 // لا يكتب أي بيانات ولا يجري backfill. أي تعذّر يعيد [] دون كسر البحث.
 
 const FALLBACK_CANDIDATE_POOL = 100; // سقف المرشّحين المعجميين الذين نعيد ترتيبهم دلالياً
+// عتبة التشابه الدلالي الدنيا (cosine): أقل منها = بعيد الصلة يُستبعَد كضجيج.
+const MIN_SEMANTIC_SCORE = 0.6;
 
 /** هل جدول pgvector `embeddings` متاح وفيه متجهات؟ */
 async function embeddingsTableHasRows(): Promise<boolean> {
@@ -54,9 +56,11 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
     for (const row of rows) {
       const type = row.owner_type as EntityType;
       if (type !== "article" && type !== "ruling" && type !== "principle") continue;
+      const score = Math.max(0, Math.min(1, Number(row.score)));
+      // عتبة دنيا للتشابه الدلالي: تمنع ظهور نتائج بعيدة (٣٠٪–٤٠٪) كضجيج.
+      if (score < MIN_SEMANTIC_SCORE) continue;
       const entity = await resolveEntity(type, row.owner_id);
       if (!entity.exists) continue;
-      const score = Math.max(0, Math.min(1, Number(row.score)));
       results.push({
         type: type as LegalEntityType,
         id: row.owner_id,
@@ -94,6 +98,7 @@ async function searchViaArticleEmbeddings(q: string, vec: number[], limit: numbe
 
   const results: RawResult[] = [];
   for (const { id, score } of ranked) {
+    if (score < MIN_SEMANTIC_SCORE) continue; // نفس عتبة المسار الأساسي
     const meta = byId.get(id);
     if (!meta) continue;
     results.push({

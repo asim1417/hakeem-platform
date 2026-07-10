@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { knowledgeGraphProvider } from "./providers/knowledge-graph-provider";
 import { opensearchProvider } from "./providers/opensearch-provider";
 import { postgresProvider } from "./providers/postgres-provider";
@@ -38,6 +39,57 @@ export interface HybridSearchResponse {
   total: number;
 }
 
+const ARTICLE_NUM_RE = /(?:الماد[ةه]|ماد[ةه]|م)\s*\/?\s*\(?\s*(\d{1,4})\s*\)?/;
+
+/**
+ * يفصل «المادة {رقم} {اسم النظام}» إلى رقم المادة وتلميح اسم النظام. نقيّة وقابلة
+ * للاختبار. يعيد null إن لم يكن الاستعلام بهذا النمط أو لم يبقَ اسم نظام مميّز.
+ */
+export function parseArticleQuery(q: string): { articleNumber: number; systemHint: string } | null {
+  const m = q.match(ARTICLE_NUM_RE);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  const hint = q.replace(ARTICLE_NUM_RE, " ").replace(/\bنظام\b|\bمن\b|\bفي\b|\bال\b/g, " ").replace(/\s+/g, " ").trim();
+  if (hint.length < 3) return null;
+  return { articleNumber: n, systemHint: hint };
+}
+
+/**
+ * مطابقة مباشرة لنمط «المادة {رقم} {اسم النظام}»: يستعلم مقيّدًا بالنظام المطابق —
+ * فلا تُعاد مادة بالرقم الصحيح من نظام خاطئ. يعيد null إن لم ينطبق النمط.
+ */
+async function findExactArticleMatch(q: string): Promise<MergedResult | null> {
+  const parsed = parseArticleQuery(q);
+  if (!parsed) return null;
+  const { articleNumber: n, systemHint: hint } = parsed;
+
+  const findSystem = (needle: string) =>
+    prisma.legalSystem.findFirst({ where: { name: { contains: needle, mode: "insensitive" } }, select: { id: true, name: true }, orderBy: { articleCount: "desc" } }).catch(() => null);
+
+  let sys = await findSystem(hint);
+  if (!sys) {
+    const longest = hint.split(/\s+/).filter((w) => w.length >= 4).sort((a, b) => b.length - a.length)[0];
+    if (longest) sys = await findSystem(longest);
+  }
+  if (!sys) return null;
+
+  const article = await prisma.legalArticle
+    .findFirst({ where: { OR: [{ legalSystemId: sys.id }, { lawName: sys.name }], articleNumber: n }, select: { id: true, lawName: true, articleNumber: true, title: true } })
+    .catch(() => null);
+  if (!article) return null;
+
+  return {
+    type: "article",
+    id: article.id,
+    title: `${article.lawName} — م/${article.articleNumber}: ${article.title}`,
+    confidence: 1,
+    sources: ["postgres"],
+    reasons: ["مطابقة مباشرة: رقم المادة ضمن النظام المذكور في الاستعلام"],
+    meta: { articleId: article.id, systemName: article.lawName, articleNumber: article.articleNumber, sourceType: "article", exactMatch: true },
+  };
+}
+
 /** منسّق البحث الهجين: يشغّل المزوّدات المتاحة، يدمج ويزيل التكرار ويرتّب. */
 export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResponse> {
   const mode = getSearchMode();
@@ -63,7 +115,14 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
     })
   );
 
-  const results = mergeResultsRRF(rawBatches, limit);
+  let results = mergeResultsRRF(rawBatches, limit);
+
+  // مطابقة «المادة {رقم} {نظام}» المباشرة تتصدّر النتائج (تصحيح تجاهل اسم النظام كقيد).
+  const exact = await findExactArticleMatch(query.q).catch(() => null);
+  if (exact) {
+    results = [exact, ...results.filter((r) => !(r.type === "article" && r.id === exact.id))].slice(0, limit);
+  }
+
   return { query: query.q, mode, results, providers: providerStatuses, total: results.length };
 }
 

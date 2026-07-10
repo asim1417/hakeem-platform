@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
       classification: sp.get("classification") ?? undefined,
       page: Number(sp.get("page")) || undefined,
       pageSize: Number(sp.get("pageSize")) || undefined,
+      withArticlesOnly: true, // الواجهة العامة تُخفي الأنظمة الفارغة (count=0)
     });
     return NextResponse.json({ ok: true, ...result });
   });

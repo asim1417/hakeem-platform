@@ -13,9 +13,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const article = await getArticleDetail(params.id);
     if (!article) return NextResponse.json({ ok: false, error: "المادة غير موجودة." }, { status: 404 });
 
+    // لا نُخرج متجه التضمين (embedding) في الواجهة العامة: تمثيل داخلي وحمولة ضخمة.
+    const { embedding: _embedding, ...articleSafe } = article as typeof article & { embedding?: unknown };
+
     return NextResponse.json({
       ok: true,
-      article,
+      article: articleSafe,
       citation: buildOfficialCitation({ lawName: article.lawName, articleNumber: article.articleNumber, royalDecree: article.royalDecree, effectiveFrom: article.effectiveFrom }),
       eli: buildArticleEli(article.lawName, article.articleNumber, article.legalSystem?.eliSlug).id,
     });

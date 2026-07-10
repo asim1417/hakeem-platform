@@ -90,6 +90,12 @@ export async function requireLegalReadAccess(request: NextRequest, scope: ApiSco
   const hasKeyHeader = request.headers.get("authorization") || request.headers.get("x-api-key");
   if (hasKeyHeader) return requireApiKey(request, scope);
 
+  // بوابة خارجية: بلا مفتاح، تُقبل الجلسة الداخلية الحقيقية فقط (وجود كوكي جلسة موقّعة).
+  // لا يكفي وضع «بدون تسجيل» (guest/DISABLE_AUTH) — منعًا لسحب القاعدة كاملةً بلا مفتاح.
+  const hasSessionCookie = Boolean(request.cookies.get("hakeem_session")?.value);
+  if (!hasSessionCookie) {
+    return { principal: null, response: json("مفتاح API مطلوب (Authorization: Bearer أو x-api-key، نطاق legal:read).", 401) };
+  }
   const gate = await requireApiPermission("LEGAL_CORE_VIEW", request);
   if (gate.response) return { principal: null, response: gate.response };
   return { principal: { kind: "session", id: gate.user?.id ?? "session" }, response: null };
