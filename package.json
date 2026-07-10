@@ -45,6 +45,7 @@
     "link:judgments:forever": "tsx scripts/import-judgments-sql.ts --apply --link-only --resume --forever",
     "link:judgments:status": "tsx scripts/import-judgments-sql.ts --link-only --status",
     "qa:db": "tsx scripts/qa-db.ts",
+    "test:api-gateway": "tsx scripts/test-api-gateway.ts",
     "diagnose:id-linking": "tsx scripts/diagnose-id-linking.ts",
     "backfill:eli-slugs": "tsx scripts/backfill-eli-slugs.ts",
     "qa:relations": "tsx scripts/qa-relations-integrity.ts",
