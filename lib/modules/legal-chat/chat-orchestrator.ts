@@ -40,7 +40,8 @@ import { buildLegalOutput, TRAINING_DISCLAIMER } from "./drafting-style-engine";
 import { groundQuery } from "./anti-hallucination";
 import { composeReply } from "./response-composer";
 import { runDialogueBrain, type DialogueBrainResult } from "./dialogue-brain";
-import { allowRetrieval, evaluateReportGate, stripUnsourcedCitations } from "./policy-gate";
+import { allowRetrieval, evaluateReportGate } from "./policy-gate";
+import { finalizeReply, isRepeated } from "./response-verifier";
 import { OUTPUT_LABELS, ROLE_LABELS, TRACK_LABELS } from "./taxonomy";
 import {
   buildArbitrationSimulation,
@@ -193,7 +194,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   const aiMeta = await resolveAiProvider().catch(() => ({ name: "offline", model: "" }));
 
   // العقل النموذجي يقود الحوار.
-  const brain = await runDialogueBrain({
+  let brain = await runDialogueBrain({
     message: input.message,
     history: input.history,
     caseSummary: input.caseFile ? summarizeCaseForBrain(input.caseFile) : null,
@@ -202,6 +203,22 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
 
   // سقوط آمن: لا نموذج/فشل/JSON غير صالح → المسار الحتمي الكامل.
   if (!brain) return runChatTurnDeterministic(input);
+
+  // المرحلة ٦ (ResponseVerifier): إن كرّر النموذج آخر ردّ، أعد التوليد مرة بتعليمة تنويع.
+  const recentReplies = (input.history ?? [])
+    .filter((m) => m.role === "assistant" && m.content?.trim())
+    .slice(-2)
+    .map((m) => m.content);
+  if (isRepeated(brain.reply, recentReplies)) {
+    const retry = await runDialogueBrain({
+      message: input.message,
+      history: input.history,
+      caseSummary: input.caseFile ? summarizeCaseForBrain(input.caseFile) : null,
+      dialogueMode: dialogue0.mode,
+      correctionNote: "نوّع صياغتك بوضوح عن ردودك السابقة مع الحفاظ على المعنى والسؤال والقرار.",
+    }).catch(() => null);
+    if (retry && !isRepeated(retry.reply, recentReplies)) brain = retry;
+  }
 
   // راكم ملف القضية (لا تنشئ ملفاً لمحادثة عامة غير قانونية).
   const modelConversationalOnly = CONVERSATIONAL_BRAIN_INTENTS.has(brain.intent) && !brain.isLegal;
@@ -219,9 +236,8 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
 
   // ── محادثة عامة أو واقعة بسيطة → ردّ النموذج مباشرة، بلا أدوات، مع تجريد أي استشهاد ──
   if (CONVERSATIONAL_BRAIN_INTENTS.has(brain.intent) || brain.intent === "legal_incident") {
-    const guarded = stripUnsourcedCitations(brainReplyWithQuestion(brain), new Set());
     return result({
-      reply: guarded.text,
+      reply: finalizeReply(brainReplyWithQuestion(brain)),
       cards: [],
       intent: det,
       caseFile: mergedCase,
@@ -240,9 +256,8 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
 
   // ── طلب تقرير لكن الوقائع ناقصة → لا تقرير، اطلب الوقائع (ردّ النموذج) ──
   if ((reportReq.show || reportReq.partial !== null || brain.intent === "report_request") && !substantive) {
-    const guarded = stripUnsourcedCitations(brain.reply, new Set());
     return result({
-      reply: guarded.text,
+      reply: finalizeReply(brain.reply),
       cards: [],
       intent: det,
       caseFile: mergedCase,
@@ -273,9 +288,8 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
 
   // (ب) قضية جوهرية لكن بلا موافقة صريحة → اقترح التقرير (ردّ النموذج + أزرار) ──
   if (substantive && !approved) {
-    const guarded = stripUnsourcedCitations(brain.reply.trim() || reportReadyReply(mergedCase as SimulationCaseFile), new Set());
     return result({
-      reply: guarded.text,
+      reply: finalizeReply(brain.reply.trim() || reportReadyReply(mergedCase as SimulationCaseFile)),
       cards: [],
       intent: det,
       caseFile: mergedCase,
@@ -293,9 +307,8 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnResult>
   }
 
   // (ج) نيّة قانونية ناقصة → ردّ النموذج + سؤال واحد (بلا أدوات) ──
-  const guided = stripUnsourcedCitations(brainReplyWithQuestion(brain), new Set());
   return result({
-    reply: guided.text,
+    reply: finalizeReply(brainReplyWithQuestion(brain)),
     cards: [],
     intent: det,
     caseFile: mergedCase,

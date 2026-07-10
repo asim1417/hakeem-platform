@@ -47,6 +47,8 @@ export interface DialogueBrainInput {
   caseSummary?: string | null;
   /** حالة الحوار (normal | slow_guided_intake) لضبط الإيقاع. */
   dialogueMode?: string | null;
+  /** تعليمة تصحيح لإعادة التوليد (المرحلة ٦): مثل تنويع الصياغة عن ردّ مكرّر. */
+  correctionNote?: string | null;
 }
 
 // هوية حكيم — طبقة الشخصية المتّسقة (روح الأمر: عقل قانوني سعودي طبيعي وواثق).
@@ -116,6 +118,7 @@ function buildUserPrompt(input: DialogueBrainInput): string {
     input.caseSummary?.trim() ? `سياق ملف القضية الحالي (للفهم فقط، لا تُعِد عرضه):\n${input.caseSummary.trim()}` : "",
     input.dialogueMode === "slow_guided_intake" ? "ملاحظة: المستخدم طلب التمهّل سابقًا — لا تتسرّع ولا تفترض." : "",
     recent ? `آخر رسائل المحادثة:\n${recent}` : "",
+    input.correctionNote?.trim() ? `تصحيح مطلوب: ${input.correctionNote.trim()}` : "",
     `رسالة المستخدم الآن:\n«${input.message.trim()}»`,
     "",
     OUTPUT_CONTRACT,
