@@ -13,6 +13,12 @@ export async function GET(request: NextRequest) {
     if (q.length < 2) return NextResponse.json({ ok: false, error: "أدخل عبارة بحث (حرفان فأكثر)." }, { status: 400 });
 
     const data = await hybridSearch({ q, limit });
-    return NextResponse.json({ ok: true, query: q, total: data.results.length, providers: data.providers, results: data.results });
+    // لا نُخرج حقول الحالة الداخلية (مثل needs_review) في الواجهة العامة.
+    const results = data.results.map((r) => {
+      if (!r.meta) return r;
+      const { status: _s, reviewStatus: _rs, ...metaPublic } = r.meta as Record<string, unknown>;
+      return { ...r, meta: metaPublic };
+    });
+    return NextResponse.json({ ok: true, query: q, total: results.length, providers: data.providers, results });
   });
 }

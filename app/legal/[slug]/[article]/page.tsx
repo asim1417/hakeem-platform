@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { resolveSystemSlug, buildArticleEli } from "@/lib/modules/legal-core/eli";
+import { resolveSystemSlug, buildArticleEli, lawSlug } from "@/lib/modules/legal-core/eli";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 
@@ -10,13 +10,14 @@ export const revalidate = 3600;
 const BASE = "https://hakeem-platform.vercel.app";
 
 async function resolveSystem(slug: string) {
-  const s = slug.trim();
-  const byEli = await prisma.legalSystem.findFirst({ where: { eliSlug: s } }).catch(() => null);
+  const raw = slug.trim();
+  const norm = lawSlug(raw); // تطبيع الوارد ليطابق eliSlug المطبَّع
+  const byEli = await prisma.legalSystem.findFirst({ where: { eliSlug: norm } }).catch(() => null);
   if (byEli) return byEli;
-  const byId = await prisma.legalSystem.findUnique({ where: { id: s } }).catch(() => null);
+  const byId = await prisma.legalSystem.findUnique({ where: { id: raw } }).catch(() => null);
   if (byId) return byId;
   const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true } }).catch(() => []);
-  const m = all.find((x) => resolveSystemSlug(x.eliSlug, x.name) === s);
+  const m = all.find((x) => resolveSystemSlug(x.eliSlug, x.name) === norm);
   return m ? prisma.legalSystem.findUnique({ where: { id: m.id } }).catch(() => null) : null;
 }
 

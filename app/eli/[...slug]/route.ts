@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resolveSystemSlug, parseArticleEli } from "@/lib/modules/legal-core/eli";
+import { resolveSystemSlug, parseArticleEli, lawSlug } from "@/lib/modules/legal-core/eli";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,9 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     })
     .catch(() => [] as Array<{ id: string; lawName: string; legalSystem: { eliSlug: string | null } | null }>);
 
-  const match = candidates.find((a) => resolveSystemSlug(a.legalSystem?.eliSlug, a.lawName) === parsed.slug);
+  // تطبيع slug الوارد (ة→ه، الهمزات→ا، ى→ي) قبل المطابقة — فالمعرّف يعمل بالإملاء الصحيح أيضًا.
+  const wanted = lawSlug(parsed.slug);
+  const match = candidates.find((a) => resolveSystemSlug(a.legalSystem?.eliSlug, a.lawName) === wanted);
   if (!match) {
     return NextResponse.json({ ok: false, error: "لا توجد مادة مطابقة لهذا المعرّف." }, { status: 404 });
   }

@@ -145,6 +145,8 @@ export interface SystemsQuery {
   domain?: string;
   page?: number;
   pageSize?: number;
+  /** يستبعد الأنظمة بلا مواد (articleCount=0) — للواجهات العامة. */
+  withArticlesOnly?: boolean;
 }
 
 export interface DomainRow {
@@ -164,7 +166,8 @@ export interface SystemsResult {
 /** قائمة الأنظمة مع بحث + تصفية (تصنيف/مجال) + ترقيم، مرتّبة بـ sortOrder (لصفحة الأنظمة). */
 export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResult> {
   const page = Math.max(1, opts.page ?? 1);
-  const pageSize = Math.min(60, Math.max(6, opts.pageSize ?? 24));
+  // احترام pageSize الوارد (١–٦٠)؛ الافتراضي ٢٤. (كان يُقسر إلى ٦ كحدّ أدنى.)
+  const pageSize = Math.min(60, Math.max(1, opts.pageSize ?? 24));
   const q = opts.q?.trim();
   const classification = opts.classification?.trim();
   const domain = opts.domain?.trim();
@@ -177,6 +180,7 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
     if (q) where.name = { contains: q, mode: "insensitive" };
     if (classification) where.classification = classification;
     if (domain) where.domain = domain;
+    if (opts.withArticlesOnly) where.articleCount = { gt: 0 };
     const [rows, total, classRows, domainRows] = await Promise.all([
       prisma.legalSystem.findMany({
         where,

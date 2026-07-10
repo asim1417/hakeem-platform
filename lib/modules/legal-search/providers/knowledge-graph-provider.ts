@@ -37,6 +37,21 @@ export const knowledgeGraphProvider: SearchProvider = {
 
       for (const seed of seeds) {
         const seedLabel = `${seed.lawName} م/${seed.articleNumber}`;
+        // عقدة الأصل (البذرة) نفسها نتيجة مباشرة — لا تُسقَط لصالح جيرانها الأقل صلة.
+        const seedKey = `article:${seed.id}`;
+        if (!seen.has(seedKey)) {
+          seen.add(seedKey);
+          results.push({
+            type: "article",
+            id: seed.id,
+            title: `${seed.lawName} — م/${seed.articleNumber}: ${seed.title}`,
+            score: 0.95,
+            source: "knowledge_graph",
+            reason: "مطابقة مباشرة للاستعلام (عقدة الأصل في الرسم المعرفي)",
+            meta: { articleId: seed.id, systemName: seed.lawName, articleNumber: seed.articleNumber, sourceType: "article" },
+          });
+          if (results.length >= limit) return results;
+        }
         const relations = await getRelationsForEntity("article", seed.id);
         for (const rel of relations) {
           // الطرف الآخر من العلاقة
