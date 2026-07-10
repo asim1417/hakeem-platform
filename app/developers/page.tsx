@@ -125,6 +125,7 @@ const data = await res.json();`}
         </section>
 
         <footer className="mt-12 flex flex-wrap items-center gap-4 border-t border-black/10 pt-6 text-sm text-gray-600">
+          <Link href="/legal" className="font-semibold text-[#0B1F3A] hover:underline">تصفّح الأنظمة</Link>
           <Link href="/api-docs" className="font-semibold text-[#0B1F3A] hover:underline">التوثيق التفاعلي</Link>
           <Link href="/terms" className="hover:underline">شروط الاستخدام</Link>
           <Link href="/privacy" className="hover:underline">الخصوصية</Link>
