@@ -48,6 +48,7 @@ export default function ApiDocsPage() {
             <span className="rounded-full bg-[var(--gold-ghost)] px-3 py-1 text-xs font-semibold text-[var(--gold-dark)]">OpenAPI {spec.openapi}</span>
             <span className="rounded-full bg-[var(--gold-ghost)] px-3 py-1 text-xs font-semibold text-[var(--gold-dark)]">الإصدار {spec.info.version}</span>
             <a href="/api/openapi" className="btn btn-outline" target="_blank" rel="noreferrer">المواصفة الخام (JSON)</a>
+            <Link href="/developers" className="btn btn-outline">دليل المطوّرين والوصول</Link>
             <Link href="/dashboard" className="btn btn-gold">العودة إلى المنصّة</Link>
           </div>
           <p className="mt-4 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-xs leading-6 text-[var(--navy)]">
