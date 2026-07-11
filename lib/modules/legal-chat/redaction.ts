@@ -51,6 +51,17 @@ export function redactText(input: string, level: RedactionLevel): RedactionResul
   return { text, redactedCount: count, categories: Array.from(categories) };
 }
 
+/**
+ * تعمية إلزامية للمُدخل قبل مغادرته إلى مزوّد الذكاء الخارجي (قاعدة PDPL ④:
+ * «لا تُرسل بيانات شخصية لـ Claude API — أرسل وقائع القضية فقط»). تحجب
+ * الهويات/الآيبان/الجوّال/الأرقام الطويلة حجباً كاملاً؛ الوقائع والسرد يبقيان
+ * فالنموذج لا يحتاج معرّفات الأطراف للتحليل. مستقلّة عن زرّ العرض الاختياري
+ * (ذاك للمخرج المعروض، وهذه للمُدخل الصادر). آمنة على القيم الفارغة/العدمية.
+ */
+export function sanitizeForModel(text: string | null | undefined): RedactionResult {
+  return redactText(text ?? "", "FULL");
+}
+
 /** يطبّق الإخفاء على مصفوفة نصوص (أقسام المخرج). */
 export function redactSections(
   sections: { heading: string; body: string }[],

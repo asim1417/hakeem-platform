@@ -6,6 +6,7 @@
 //            → AI (تحليل JSON مُسنَد) → دمج + تصنيف الدفوع → تقدير قوة الدعوى.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
+import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
 import { classifyDefense, type DefenseCategory } from "./defense-classifier";
 import { buildCaseAnalysisSystemPrompt, buildCaseAnalysisUserPrompt, type CaseSources } from "./case-prompts";
@@ -27,12 +28,21 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
   const sources = toSources(rag);
   const det = buildDeterministicAnalysis(input, rag);
 
+  // PDPL ④: تُعمّى معرّفات الأطراف من وقائع/طلبات/دفوع المستخدم قبل إرسالها
+  // للمزوّد الخارجي (الاسترجاع أعلاه محلّي فيبقى على النص الأصلي).
+  const modelInput: CaseAnalysisInput = {
+    ...input,
+    facts: sanitizeForModel(input.facts).text,
+    claims: input.claims ? sanitizeForModel(input.claims).text : input.claims,
+    defenses: input.defenses ? sanitizeForModel(input.defenses).text : input.defenses,
+  };
+
   let parsed: CaseNarrative | null = null;
   let generated = false;
   try {
     const llm = await callCentralProvider({
       systemPrompt: buildCaseAnalysisSystemPrompt(),
-      userPrompt: buildCaseAnalysisUserPrompt(input, sources),
+      userPrompt: buildCaseAnalysisUserPrompt(modelInput, sources),
       maxTokens: 1500,
     });
     if (llm.ok && llm.content.trim()) {

@@ -22,6 +22,7 @@
     "seed:demo-judgments": "tsx scripts/seed-demo-judgments.ts",
     "db:search-indexes": "tsx scripts/apply-search-indexes.ts",
     "test:governance": "tsx scripts/test-legal-governance.ts",
+    "test:pdpl": "tsx scripts/test-pdpl-redaction.ts",
     "backfill:decrees": "tsx scripts/backfill-decrees.ts",
     "extract:principles": "tsx scripts/extract-principles.ts",
     "triage:principles": "tsx scripts/triage-principles.ts",
