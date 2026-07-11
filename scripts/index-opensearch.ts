@@ -32,7 +32,7 @@ const TEXT_AR = { type: "text", analyzer: "hakeem_arabic" } as const;
 const TEXT_AR_EXACT = { type: "text", analyzer: "hakeem_arabic", fields: { exact: { type: "text", analyzer: "hakeem_arabic_exact" } } } as const;
 
 const ARTICLE_INDEX_BODY = {
-  settings: { index: { number_of_shards: 1, number_of_replicas: 1 }, analysis: ANALYSIS },
+  settings: { index: { number_of_shards: 1, number_of_replicas: 0 }, analysis: ANALYSIS },
   mappings: {
     properties: {
       type: { type: "keyword" },
@@ -50,7 +50,7 @@ const ARTICLE_INDEX_BODY = {
 };
 
 const CASE_INDEX_BODY = {
-  settings: { index: { number_of_shards: 1, number_of_replicas: 1 }, analysis: ANALYSIS },
+  settings: { index: { number_of_shards: 1, number_of_replicas: 0 }, analysis: ANALYSIS },
   mappings: {
     properties: {
       type: { type: "keyword" },
