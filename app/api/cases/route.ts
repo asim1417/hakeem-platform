@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("CONSULTATIONS_LIMITED", request);
   if (gate.response) return gate.response;
 
+  // [إصلاح تدقيق SEC-003: كان يعيد قضايا جميع المستخدمين — قُصِر على مالكها (أو المدير).]
+  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
   const cases = await prisma.caseFile.findMany({
+    where: isAdmin ? undefined : { ownerId: gate.user!.id },
     orderBy: { updatedAt: "desc" },
     take: 50,
     include: { owner: { select: { name: true, email: true } } }

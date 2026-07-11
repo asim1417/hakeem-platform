@@ -5,6 +5,7 @@ import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
 import { parseArticleNumberCandidates } from "@/lib/modules/legal-core/judgment-citation-extractor";
 import { resolveAiConfig, completeWithConfig } from "@/lib/modules/ai/ai-config";
+import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 
 type AiResult = {
   requestId: string;
@@ -71,7 +72,10 @@ export async function createConsultationDraft(input: { facts: string; actorId?: 
     quote: article.articleText.slice(0, 350)
   }));
 
-  const live = provider !== "offline" ? await callLiveProvider(provider, `${input.facts}\n\n${legalContext.contextText}`, citations, cfg).catch((error) => ({ ok: false as const, text: `تعذر استدعاء مزود الذكاء الاصطناعي: ${error instanceof Error ? error.message : "خطأ غير معروف"}` })) : null;
+  // [إصلاح تدقيق SEC-007/PDPL ④: تُعمّى معرّفات الأطراف من وقائع المستخدم قبل إرسالها
+  // للمزوّد الخارجي. الاسترجاع أعلاه محلّي فيبقى على النص الأصلي.]
+  const modelFacts = sanitizeForModel(input.facts).text;
+  const live = provider !== "offline" ? await callLiveProvider(provider, `${modelFacts}\n\n${legalContext.contextText}`, citations, cfg).catch((error) => ({ ok: false as const, text: `تعذر استدعاء مزود الذكاء الاصطناعي: ${error instanceof Error ? error.message : "خطأ غير معروف"}` })) : null;
   const output = live?.ok ? sanitizeOutput(live.text, citations, legalContext.articles) : offlineOutput(input.facts, citations);
   const tokenEstimate = Math.ceil((input.facts.length + output.length + legalContext.contextText.length) / 4);
 
@@ -136,7 +140,9 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
 
   try {
     const model = resolveOriginalModel(provider, input.model || cfg.model || undefined);
-    const content = await callOriginalProvider(provider, model, prompt, legalContext.contextText, cfg);
+    // [إصلاح تدقيق SEC-007/PDPL ④: تعمية معرّفات الأطراف قبل الإرسال للمزوّد الخارجي.]
+    const safePrompt = sanitizeForModel(prompt).text;
+    const content = await callOriginalProvider(provider, model, safePrompt, legalContext.contextText, cfg);
     const outputGuard = guardOutputAgainstUnknownArticleNumbers(content, legalContext.articles);
     const guardedContent = ensureOriginalGuardrails(outputGuard.ok ? content : outputGuard.message, legalContext.articles.length);
     await recordOriginalHakeemAiAudit(input.actorId, requestId, provider, true, "ORIGINAL_HAKEEM_AI_COMPLETED", {

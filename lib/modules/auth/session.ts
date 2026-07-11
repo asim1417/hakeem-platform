@@ -15,22 +15,26 @@ const maxAgeSeconds = 60 * 60 * 8;
 
 const guestEmail = "guest@hakeem.local";
 
-// وضع «بدون تسجيل دخول»: مفعّل افتراضيًا. لإعادة تفعيل صفحة الدخول اضبط DISABLE_AUTH=false
+// وضع «بدون تسجيل دخول»: مغلق افتراضيًا (المصادقة إلزامية). في الإنتاج لا يُسمح به إطلاقًا
+// مهما كانت قيمة DISABLE_AUTH. خارج الإنتاج يُفعَّل صراحةً فقط بـ DISABLE_AUTH=true|1|on
+// (لراحة التطوير المحلّي). [إصلاح تدقيق SEC-001: كان مفعّلاً افتراضيًا يرفع الزائر لأدمن.]
 export function isAuthDisabled() {
+  if (process.env.NODE_ENV === "production") return false;
   const flag = (process.env.DISABLE_AUTH ?? "").toLowerCase();
-  return flag !== "false" && flag !== "0" && flag !== "off";
+  return flag === "true" || flag === "1" || flag === "on";
 }
 
-// مستخدم افتراضي بصلاحيات كاملة يُستخدم عند تعطيل تسجيل الدخول.
+// مستخدم تطوير محلّي بأدنى صلاحية (TRAINEE) — لا يُنشأ إلا خارج الإنتاج عبر isAuthDisabled.
+// [إصلاح تدقيق SEC-001: كان يُنشأ بدور SYSTEM_ADMIN → تصعيد صلاحية كامل للزائر.]
 async function getGuestUser(): Promise<SafeUser> {
   return prisma.user.upsert({
     where: { email: guestEmail },
-    update: { isActive: true },
+    update: { isActive: true, role: "TRAINEE" },
     create: {
-      name: "زائر النظام",
+      name: "زائر التطوير",
       email: guestEmail,
       passwordHash: "not-for-login",
-      role: "SYSTEM_ADMIN",
+      role: "TRAINEE",
       isActive: true
     },
     select: { id: true, name: true, email: true, role: true, isActive: true }
@@ -48,8 +52,15 @@ type SessionPayload = {
 
 export type SafeUser = Pick<User, "id" | "name" | "email" | "role" | "isActive">;
 
+// [إصلاح تدقيق SEC-006: كان يعود لسرّ ثابت مكتوب → تزوير أي جلسة عند غياب المتغيّر.]
+// في الإنتاج: سرّ إلزامي (يفشل الإقلاع/التوقيع بدونه). خارج الإنتاج: سرّ تطوير غير آمن.
 function authSecret() {
-  return process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "hakeem-mvp-development-secret-change-me";
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET غير مضبوط — إلزامي في الإنتاج لتوقيع جلسات المستخدمين.");
+  }
+  return "hakeem-dev-only-insecure-secret";
 }
 
 function base64Url(input: string | Buffer) {
