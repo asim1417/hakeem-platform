@@ -1,0 +1,64 @@
+name: Audit DB (read-only) — تدقيق قاعدة البيانات
+
+# يشغّل استعلامات audit/*.sql على Neon ويُخرج النتائج (سجلّ + artifact).
+# قراءة فقط بثلاث طبقات حماية: (١) الاستعلامات SELECT فقط، (٢) default_transaction_read_only
+# مفروض على مستوى الخادم عبر PGOPTIONS، (٣) permissions: contents:read. لا يكتب في القاعدة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'اكتب READ لتأكيد التشغيل (قراءة فقط)'
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: audit-db-readonly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      PGURL: ${{ secrets.NEON_DATABASE_URL }}
+      # يفرض القراءة فقط على مستوى الجلسة: أي كتابة عرضيّة تفشل فورًا.
+      PGOPTIONS: "-c default_transaction_read_only=on -c statement_timeout=120000"
+    steps:
+      - name: "تحقّق"
+        run: |
+          if [ "${{ inputs.confirm }}" != "READ" ]; then echo "::error::اكتب READ للتأكيد."; exit 1; fi
+          if [ -z "$PGURL" ]; then echo "::error::NEON_DATABASE_URL مفقود."; exit 1; fi
+
+      - uses: actions/checkout@v4
+
+      - name: "تثبيت psql"
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: "تشغيل استعلامات التدقيق (قراءة فقط)"
+        run: |
+          mkdir -p audit-out
+          FILES="data-inventory orphan-records duplicate-records missing-required-fields \
+                 temporal-overlaps current-version-conflicts source-validation \
+                 content-anomalies search-readiness rag-readiness"
+          for name in $FILES; do
+            f="audit/$name.sql"
+            [ -f "$f" ] || { echo "تخطّي (غير موجود): $f"; continue; }
+            echo ""
+            echo "═══════════════════════════════════════════════════════"
+            echo "  $f"
+            echo "═══════════════════════════════════════════════════════"
+            # ON_ERROR_STOP=0: استعلام فاشل (جدول غير مُهاجَر مثلاً) لا يوقف الملف.
+            psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc -f "$f" 2>&1 | tee "audit-out/$name.txt"
+          done
+
+      - name: "رفع النتائج كـ artifact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-db-results
+          path: audit-out/
+          retention-days: 14
