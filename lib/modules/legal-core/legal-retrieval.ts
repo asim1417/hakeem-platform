@@ -910,7 +910,14 @@ function mapArticleResult(
   // يُرفع فوق لائحة تحوي العبارة عرضاً — مستقلّ عن تطابق اسم النظام مع الاستعلام.
   const conceptBonus2 = preferSystems.length && systemMatchesPreferred(systemName, preferSystems) ? CONCEPT_SYSTEM_BONUS : 0;
 
-  const relevanceScore = scoreArticle(haystack, matchedTerms, query) + coverageBonus + titleBonus + conceptBonus2;
+  // [تخفيض التغطية] المشكلة: التردّد العالي لكلمة شائعة (مثل «عقد») يراكم درجة خام تطغى على
+  // المادة التي تغطّي **كل** مفاهيم الاستعلام. لاستعلام «فسخ العقود» تفوز ضريبة الدخل (تكرّر
+  // «عقد» بلا «فسخ») على مادة الفسخ. الحلّ: تخفيض الدرجة الخام (term-frequency) بنسبة تغطية
+  // مفاهيم الاستعلام — فمادة تفوّت مفهوماً مميِّزاً (فسخ) تُخفَّض بقوة مهما تكرّر المفهوم العام.
+  // مقصور على الاستعلامات متعددة المفاهيم؛ التغطية الكاملة = بلا تخفيض. كِلّ-سويتش COVERAGE_DAMP=0.
+  const coverageRatio = conceptWords.length >= 2 ? conceptCoverage / conceptWords.length : 1;
+  const rawDamp = process.env.COVERAGE_DAMP === "0" ? 1 : Math.max(0.3, coverageRatio);
+  const relevanceScore = scoreArticle(haystack, matchedTerms, query) * rawDamp + coverageBonus + titleBonus + conceptBonus2;
 
   return {
     articleId: article.id,
