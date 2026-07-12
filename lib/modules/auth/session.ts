@@ -15,36 +15,29 @@ const maxAgeSeconds = 60 * 60 * 8;
 
 const guestEmail = "guest@hakeem.local";
 
-// ⚠️ تجاوز المالك الصريح (AUTH_BYPASS): يفتح الموقع بلا تسجيل دخول بدور مدير النظام — للمالك
-// أثناء التطوير فقط. يعمل حتى في الإنتاج (مفتاح صريح مقصود)، لكنه **يفتح الوصول لأي زائر**.
-// يجب إطفاؤه (حذف AUTH_BYPASS من Vercel) قبل الإطلاق العلني. مفصول عن DISABLE_AUTH.
-function isOwnerBypass(): boolean {
-  const f = (process.env.AUTH_BYPASS ?? "").toLowerCase();
+// ⚠️ الدخول معطّل افتراضيًا (وصول المالك المباشر بلا تسجيل دخول، بدور مدير النظام).
+// لفرض المصادقة قبل الإطلاق العلني: اضبط REQUIRE_AUTH=true في Vercel. طالما لم تُضبَط،
+// يبقى الموقع مفتوحًا لأي زائر كمدير — مناسب للتطوير الحالي، خطير للإنتاج العلني.
+function authRequired(): boolean {
+  const f = (process.env.REQUIRE_AUTH ?? "").toLowerCase();
   return f === "true" || f === "1" || f === "on";
 }
 
-// وضع «بدون تسجيل دخول»: مغلق افتراضيًا (المصادقة إلزامية). يُفتح بأحد أمرين: تجاوز المالك
-// الصريح AUTH_BYPASS (يعمل في الإنتاج)، أو DISABLE_AUTH خارج الإنتاج (تطوير محلّي).
-// [إصلاح تدقيق SEC-001: لم يعد مفعّلاً افتراضيًا — يتطلب مفتاحًا صريحًا.]
+// «بدون تسجيل دخول» = افتراضي. يُغلق فقط عند فرض المصادقة صراحةً بـ REQUIRE_AUTH=true.
 export function isAuthDisabled() {
-  if (isOwnerBypass()) return true;
-  if (process.env.NODE_ENV === "production") return false;
-  const flag = (process.env.DISABLE_AUTH ?? "").toLowerCase();
-  return flag === "true" || flag === "1" || flag === "on";
+  return !authRequired();
 }
 
-// مستخدم الوصول بلا دخول: دوره SYSTEM_ADMIN عند تجاوز المالك الصريح (ليعمل المالك)، وإلا
-// TRAINEE (تطوير محلّي بأدنى صلاحية). [SEC-001: لا تصعيد إلا بمفتاح AUTH_BYPASS المقصود.]
+// مستخدم الوصول المباشر: مدير النظام (المالك). عند فرض المصادقة (REQUIRE_AUTH) لا يُستخدم أصلًا.
 async function getGuestUser(): Promise<SafeUser> {
-  const role = isOwnerBypass() ? "SYSTEM_ADMIN" : "TRAINEE";
   return prisma.user.upsert({
     where: { email: guestEmail },
-    update: { isActive: true, role },
+    update: { isActive: true, role: "SYSTEM_ADMIN" },
     create: {
       name: "زائر النظام",
       email: guestEmail,
       passwordHash: "not-for-login",
-      role,
+      role: "SYSTEM_ADMIN",
       isActive: true
     },
     select: { id: true, name: true, email: true, role: true, isActive: true }
@@ -67,8 +60,8 @@ export type SafeUser = Pick<User, "id" | "name" | "email" | "role" | "isActive">
 function authSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
-  // في وضع تجاوز المالك لا تُوقَّع جلسات حقيقية (الوصول عبر الزائر)، فلا نُسقط الموقع بغياب السرّ.
-  if (process.env.NODE_ENV === "production" && !isOwnerBypass()) {
+  // عند عدم فرض المصادقة (الوصول المباشر) لا تُوقَّع جلسات حقيقية، فلا نُسقط الموقع بغياب السرّ.
+  if (process.env.NODE_ENV === "production" && authRequired()) {
     throw new Error("AUTH_SECRET غير مضبوط — إلزامي في الإنتاج لتوقيع جلسات المستخدمين.");
   }
   return "hakeem-dev-only-insecure-secret";
