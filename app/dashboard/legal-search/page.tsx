@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Search, FileText, Scale, Quote, ExternalLink, Filter, X, ArrowDownWideNarrow } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { searchLegalCoreComprehensive } from "@/lib/modules/legal-core/comprehensive-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { articleStatusBadge, type StatusTone } from "@/lib/modules/legal-core/article-status";
@@ -87,7 +88,8 @@ export default async function LegalSearchPage({
   let failed = false;
   if (q.length >= 2) {
     try {
-      data = await hybridSearch({ q, limit: 30 });
+      // محرّك النواة الشامل الموحّد — نفس عقل بقية الصناديق (مواد النواة + أحكام/مبادئ الهجين).
+      data = await searchLegalCoreComprehensive(q, 30);
       await recordSearch({
         query: q,
         filters: {
