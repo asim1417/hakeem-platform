@@ -49,7 +49,8 @@ jobs:
   backfill:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # [تدقيق] الكتابة تستهدف Neon صراحةً (كان secrets.DATABASE_URL قد يكون غير مُواءَم).
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       # يقرأه السكربت كحارس داخلي للكتابة (scripts/backfill-embeddings.ts) — لا بدّ من تمريره env.
@@ -82,6 +83,8 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: npm run db:generate
+      - name: "🛡️ حارس هدف Neon (يمنع الكتابة على قاعدة خاطئة)"
+        run: npx tsx scripts/verify-neon-target.ts
       - name: Ensure embedding column (idempotent — لا db push مدمّر)
         # db push كان يحاول مطابقة كامل السكيمة فيُسقط جداول legal_thesaurus_* المُدارة
         # خارج Prisma (حُمي بـ Prisma من فقد البيانات). البديل: ضمان العمود فقط، إضافي وآمن.
