@@ -1,0 +1,42 @@
+name: Eval Judicial (read-only) — قياس أثر OpenSearch على بحث الأحكام
+
+# مقارنة مباشرة (قراءة فقط) لبحث الأحكام: OpenSearch (BM25 عربي مُرتَّب) مقابل PostgreSQL
+# (ILIKE بلا ترتيب). لكل استعلام: زمن الاستجابة + عدد المطابقات + أعلى 3 عناوين.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  judicial:
+    runs-on: ubuntu-latest
+    env:
+      PGURL: ${{ secrets.NEON_DATABASE_URL }}
+      OPENSEARCH_URL: ${{ secrets.OPENSEARCH_URL }}
+      OPENSEARCH_USERNAME: ${{ secrets.OPENSEARCH_USERNAME }}
+      OPENSEARCH_PASSWORD: ${{ secrets.OPENSEARCH_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare judicial search engines
+        run: |
+          set +e
+          if [ -z "$PGURL" ] || [ -z "$OPENSEARCH_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL و OPENSEARCH_URL."; exit 1; fi
+          AUTH="-u ${OPENSEARCH_USERNAME}:${OPENSEARCH_PASSWORD}"
+          QUERIES=("فسخ عقد الإيجار" "التعويض عن الضرر" "الفصل التعسفي من العمل" "الشيك بدون رصيد" "المسؤولية التقصيرية")
+
+          for Q in "${QUERIES[@]}"; do
+            echo "════════════════════════════════════════════════════════"
+            echo "🔎 الاستعلام: $Q"
+            echo "──────────────── OpenSearch (BM25 مُرتَّب) ────────────────"
+            BODY=$(python3 -c "import json,sys; q=sys.argv[1]; print(json.dumps({'size':3,'_source':['judgmentTitle','court'],'query':{'bool':{'should':[{'match':{'judgmentText':{'query':q,'operator':'and','boost':4}}},{'match':{'judgmentText':{'query':q}}},{'match':{'judgmentTitle':{'query':q,'boost':3}}}],'minimum_should_match':1}}}))" "$Q")
+            curl -s $AUTH -H 'Content-Type: application/json' "$OPENSEARCH_URL/judicial_cases/_search" -d "$BODY" \
+              | python3 -c "import sys,json; d=json.load(sys.stdin); h=d.get('hits',{}); tot=h.get('total',{}); tot=tot.get('value',tot) if isinstance(tot,dict) else tot; print(f'  ⏱️ {d.get(\"took\",\"?\")}ms | مطابقات: {tot}'); [print(f\"    {x['_score']:.1f}  {(x['_source'].get('judgmentTitle') or '(بلا عنوان)')[:70]}\") for x in h.get('hits',[])]" 2>/dev/null || echo "    (تعذّر)"
+
+            echo "──────────────── PostgreSQL (ILIKE بلا ترتيب) ────────────────"
+            # بناء شرط AND على الكلمات ذات المعنى (>2 حروف) — تغطية كاملة كما في OpenSearch.
+            COND=$(python3 -c "import sys; ws=[w for w in sys.argv[1].split() if len(w)>2]; print(' AND '.join([f\"\\\"judgmentText\\\" ILIKE '%{w}%'\" for w in ws]))" "$Q")
+            printf '\\timing on\nSELECT count(*) AS matches FROM judicial_cases WHERE %s;\nSELECT left(coalesce("judgmentTitle",%s),70) AS top3 FROM judicial_cases WHERE %s LIMIT 3;\n' "$COND" "'(بلا عنوان)'" "$COND" \
+              | psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc -A -F'  ' 2>&1 | grep -E "matches|Time:|بلا عنوان|[0-9]" | head -8
+          done
