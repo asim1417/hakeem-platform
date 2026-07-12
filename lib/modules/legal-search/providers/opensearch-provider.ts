@@ -41,6 +41,14 @@ export const opensearchProvider: SearchProvider = {
       }
       if (q) {
         should.push(
+          // [إصلاح الترتيب] تغطية كاملة: مطابقة **كل** كلمات الاستعلام في نفس الحقل
+          // بوزن عالٍ — يرفع ما يحوي «فسخ» و«عقد» معًا فوق ما يحوي الكلمة الشائعة «عقد»
+          // وحدها (يعالج طغيان الكلمة العامّة على الكلمة المميِّزة).
+          { match: { title: { query: q, operator: "and", boost: 8 } } },
+          { match: { content: { query: q, operator: "and", boost: 6 } } },
+          { match: { judgmentText: { query: q, operator: "and", boost: 4 } } },
+          { match: { principleText: { query: q, operator: "and", boost: 4 } } },
+          // مطابقة جزئية (OR) للاسترجاع الواسع بأوزان أقل.
           { match: { title: { query: q, boost: 3 } } },
           { match: { judgmentTitle: { query: q, boost: 3 } } },
           { match: { content: { query: q, boost: 2 } } },
