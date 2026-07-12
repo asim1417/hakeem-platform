@@ -15,26 +15,36 @@ const maxAgeSeconds = 60 * 60 * 8;
 
 const guestEmail = "guest@hakeem.local";
 
-// وضع «بدون تسجيل دخول»: مغلق افتراضيًا (المصادقة إلزامية). في الإنتاج لا يُسمح به إطلاقًا
-// مهما كانت قيمة DISABLE_AUTH. خارج الإنتاج يُفعَّل صراحةً فقط بـ DISABLE_AUTH=true|1|on
-// (لراحة التطوير المحلّي). [إصلاح تدقيق SEC-001: كان مفعّلاً افتراضيًا يرفع الزائر لأدمن.]
+// ⚠️ تجاوز المالك الصريح (AUTH_BYPASS): يفتح الموقع بلا تسجيل دخول بدور مدير النظام — للمالك
+// أثناء التطوير فقط. يعمل حتى في الإنتاج (مفتاح صريح مقصود)، لكنه **يفتح الوصول لأي زائر**.
+// يجب إطفاؤه (حذف AUTH_BYPASS من Vercel) قبل الإطلاق العلني. مفصول عن DISABLE_AUTH.
+function isOwnerBypass(): boolean {
+  const f = (process.env.AUTH_BYPASS ?? "").toLowerCase();
+  return f === "true" || f === "1" || f === "on";
+}
+
+// وضع «بدون تسجيل دخول»: مغلق افتراضيًا (المصادقة إلزامية). يُفتح بأحد أمرين: تجاوز المالك
+// الصريح AUTH_BYPASS (يعمل في الإنتاج)، أو DISABLE_AUTH خارج الإنتاج (تطوير محلّي).
+// [إصلاح تدقيق SEC-001: لم يعد مفعّلاً افتراضيًا — يتطلب مفتاحًا صريحًا.]
 export function isAuthDisabled() {
+  if (isOwnerBypass()) return true;
   if (process.env.NODE_ENV === "production") return false;
   const flag = (process.env.DISABLE_AUTH ?? "").toLowerCase();
   return flag === "true" || flag === "1" || flag === "on";
 }
 
-// مستخدم تطوير محلّي بأدنى صلاحية (TRAINEE) — لا يُنشأ إلا خارج الإنتاج عبر isAuthDisabled.
-// [إصلاح تدقيق SEC-001: كان يُنشأ بدور SYSTEM_ADMIN → تصعيد صلاحية كامل للزائر.]
+// مستخدم الوصول بلا دخول: دوره SYSTEM_ADMIN عند تجاوز المالك الصريح (ليعمل المالك)، وإلا
+// TRAINEE (تطوير محلّي بأدنى صلاحية). [SEC-001: لا تصعيد إلا بمفتاح AUTH_BYPASS المقصود.]
 async function getGuestUser(): Promise<SafeUser> {
+  const role = isOwnerBypass() ? "SYSTEM_ADMIN" : "TRAINEE";
   return prisma.user.upsert({
     where: { email: guestEmail },
-    update: { isActive: true, role: "TRAINEE" },
+    update: { isActive: true, role },
     create: {
-      name: "زائر التطوير",
+      name: "زائر النظام",
       email: guestEmail,
       passwordHash: "not-for-login",
-      role: "TRAINEE",
+      role,
       isActive: true
     },
     select: { id: true, name: true, email: true, role: true, isActive: true }
@@ -57,7 +67,8 @@ export type SafeUser = Pick<User, "id" | "name" | "email" | "role" | "isActive">
 function authSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
-  if (process.env.NODE_ENV === "production") {
+  // في وضع تجاوز المالك لا تُوقَّع جلسات حقيقية (الوصول عبر الزائر)، فلا نُسقط الموقع بغياب السرّ.
+  if (process.env.NODE_ENV === "production" && !isOwnerBypass()) {
     throw new Error("AUTH_SECRET غير مضبوط — إلزامي في الإنتاج لتوقيع جلسات المستخدمين.");
   }
   return "hakeem-dev-only-insecure-secret";
