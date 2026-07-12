@@ -1,0 +1,39 @@
+name: Health Check (read-only) — فحص صحّة النظام والبحث
+
+# قراءة فقط: يفحص نظافة قاعدة الأنظمة والعلاقات (SQL على Neon) وجودة/تفعيل OpenSearch
+# (صحّة العنقود + عدد الوثائق + استعلام «فسخ العقود» للتحقّق من الصلة). لا يكتب شيئًا.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    env:
+      PGURL: ${{ secrets.NEON_DATABASE_URL }}
+      OPENSEARCH_URL: ${{ secrets.OPENSEARCH_URL }}
+      OPENSEARCH_USERNAME: ${{ secrets.OPENSEARCH_USERNAME }}
+      OPENSEARCH_PASSWORD: ${{ secrets.OPENSEARCH_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: DB health (systems + relations)
+        run: |
+          if [ -z "$PGURL" ]; then echo "::error::NEON_DATABASE_URL غير مضبوط."; exit 1; fi
+          echo "SET default_transaction_read_only=on;" | cat - audit/health-check.sql > /tmp/hc.sql
+          psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc -f /tmp/hc.sql 2>&1
+      - name: OpenSearch health + relevance
+        run: |
+          if [ -z "$OPENSEARCH_URL" ]; then echo "⚠️ OPENSEARCH_URL غير مضبوط — يُعدّ OpenSearch غير مُفعّل."; exit 0; fi
+          AUTH="-u ${OPENSEARCH_USERNAME}:${OPENSEARCH_PASSWORD}"
+          echo "── صحّة العنقود ──"
+          curl -s $AUTH "$OPENSEARCH_URL/_cluster/health?pretty" | grep -E '"status"|"number_of_nodes"|"active_shards"' || true
+          echo "── عدد الوثائق لكل فهرس ──"
+          curl -s $AUTH "$OPENSEARCH_URL/_cat/indices/legal_articles,judicial_cases?v&h=index,docs.count,health,status" || true
+          echo "── اختبار الصلة: «فسخ العقود» (أعلى 3 عناوين) ──"
+          curl -s $AUTH -H 'Content-Type: application/json' \
+            "$OPENSEARCH_URL/legal_articles/_search?_source=title,lawName,articleNumber&size=3" \
+            -d '{"query":{"bool":{"should":[{"match":{"title":{"query":"فسخ العقود","operator":"and","boost":8}}},{"match":{"content":{"query":"فسخ العقود","operator":"and","boost":6}}},{"match":{"content":{"query":"فسخ العقود"}}}],"minimum_should_match":1}}}' \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); [print(f\"  {h['_score']:.1f}  {h['_source'].get('lawName','')} — {h['_source'].get('title','')[:60]}\") for h in d.get('hits',{}).get('hits',[])]" || true
