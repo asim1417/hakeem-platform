@@ -105,6 +105,7 @@ export default async function AdminPage() {
             <AdminLink href="/admin/roles" label="الأدوار والصلاحيات" />
             <AdminLink href="/admin/api-keys" label="مفاتيح API" />
             <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
+            <AdminLink href="/admin/settings" label="مفاتيح التكامل (البحث/الذكاء/Google)" />
             <AdminLink href="/dashboard/attachments" label="المرفقات" />
             <AdminLink href="/audit-logs" label="سجل التدقيق" />
             <AdminLink href="/settings" label="إعدادات المنصة" />

@@ -6,6 +6,8 @@ const nextConfig = {
     "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
   },
   experimental: {
+    // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
+    instrumentationHook: true,
     serverActions: {
       allowedOrigins: ["localhost:3000"]
     }

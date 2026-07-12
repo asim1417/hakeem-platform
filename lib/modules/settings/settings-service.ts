@@ -1,0 +1,122 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// settings-service — إعدادات التشغيل المُدارة من الموقع (بدل تعديل Vercel).
+//
+// المبدأ: تُخزَّن المفاتيح في جدول app_settings (الحسّاسة مُشفّرة AES-256-GCM)، وتُحمَّل
+// إلى process.env عند إقلاع الخادم (instrumentation) — فتعمل كل قرّاء process.env الحاليين
+// دون تعديل. إضافيّ وآمن: إن غاب الجدول/المفتاح يبقى متغيّر البيئة (Vercel) هو المصدر.
+// ─────────────────────────────────────────────────────────────────────────────
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { prisma } from "@/lib/prisma";
+
+// سجلّ المفاتيح التي تُدار من اللوحة (المجموعة + الوصف + هل هي سرّ).
+export type ManagedKey = { key: string; label: string; secret: boolean; group: string; placeholder?: string };
+
+export const MANAGED_KEYS: ManagedKey[] = [
+  { key: "ANTHROPIC_API_KEY", label: "مفتاح Claude (Anthropic)", secret: true, group: "الذكاء الاصطناعي", placeholder: "sk-ant-..." },
+  { key: "EMBEDDING_API_KEY", label: "مفتاح التضمين الدلالي (Embeddings)", secret: true, group: "الذكاء الاصطناعي", placeholder: "sk-..." },
+  { key: "OPENSEARCH_URL", label: "رابط عنقود OpenSearch", secret: false, group: "البحث (OpenSearch)", placeholder: "https://...bonsaisearch.net" },
+  { key: "OPENSEARCH_USERNAME", label: "اسم مستخدم OpenSearch", secret: true, group: "البحث (OpenSearch)" },
+  { key: "OPENSEARCH_PASSWORD", label: "كلمة مرور OpenSearch", secret: true, group: "البحث (OpenSearch)" },
+  { key: "GOOGLE_CLIENT_ID", label: "Google Client ID", secret: false, group: "دخول Google", placeholder: "...apps.googleusercontent.com" },
+  { key: "GOOGLE_CLIENT_SECRET", label: "Google Client Secret", secret: true, group: "دخول Google" },
+  { key: "OAUTH_ADMIN_EMAILS", label: "بُرد مدراء Google (بفواصل)", secret: false, group: "دخول Google", placeholder: "you@gmail.com" },
+];
+
+const MANAGED_SET = new Set(MANAGED_KEYS.map((k) => k.key));
+const SECRET_SET = new Set(MANAGED_KEYS.filter((k) => k.secret).map((k) => k.key));
+
+// ── التشفير ──
+function encKey(): Buffer {
+  const secret = process.env.SETTINGS_SECRET || process.env.AUTH_SECRET || "hakeem-settings-dev-only";
+  return scryptSync(secret, "hakeem-app-settings-salt", 32);
+}
+
+export function encryptValue(plain: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", encKey(), iv);
+  const ct = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString("base64")}:${tag.toString("base64")}:${ct.toString("base64")}`;
+}
+
+export function decryptValue(stored: string): string | null {
+  try {
+    const [ivB, tagB, ctB] = stored.split(":");
+    if (!ivB || !tagB || !ctB) return null;
+    const decipher = createDecipheriv("aes-256-gcm", encKey(), Buffer.from(ivB, "base64"));
+    decipher.setAuthTag(Buffer.from(tagB, "base64"));
+    return Buffer.concat([decipher.update(Buffer.from(ctB, "base64")), decipher.final()]).toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+// ── القراءة/الكتابة ──
+/** يجلب الإعدادات المُدارة مفكوكة التشفير (خريطة key→value). سقوط آمن إلى فارغ. */
+export async function getAllSettings(): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  try {
+    // مقصور على المفاتيح المُدارة فقط — كي لا يتداخل مع إعدادات أخرى في app_settings.
+    const rows = await prisma.appSetting.findMany({ where: { key: { in: MANAGED_KEYS.map((k) => k.key) } } });
+    for (const r of rows) {
+      const raw = typeof r.value === "string" ? r.value : String(r.value ?? "");
+      const val = SECRET_SET.has(r.key) ? decryptValue(raw) : raw;
+      if (val != null && val !== "") out.set(r.key, val);
+    }
+  } catch {
+    // الجدول غير متاح → لا إعدادات، تبقى متغيّرات البيئة هي المصدر.
+  }
+  return out;
+}
+
+/** يحفظ مفتاحًا (يُشفّر إن كان سرًّا). قيمة فارغة = حذف المفتاح (رجوع لمتغيّر البيئة). */
+export async function setSetting(key: string, rawValue: string, _updatedBy?: string): Promise<void> {
+  if (!MANAGED_SET.has(key)) throw new Error(`مفتاح غير مُدار: ${key}`);
+  const value = rawValue.trim();
+  if (!value) {
+    await prisma.appSetting.delete({ where: { key } }).catch(() => undefined);
+    delete process.env[key];
+    return;
+  }
+  const stored = SECRET_SET.has(key) ? encryptValue(value) : value;
+  await prisma.appSetting.upsert({
+    where: { key },
+    update: { value: stored },
+    create: { key, value: stored },
+  });
+  // تطبيق فوري على العملية الحالية (بقية النُّسخ تلتقطه عند إقلاعها).
+  process.env[key] = value;
+}
+
+/** حالة العرض للّوحة: هل لكل مفتاح قيمة (من القاعدة أو البيئة)؟ لا نكشف قيم الأسرار. */
+export async function getSettingsStatus(): Promise<Array<ManagedKey & { hasValue: boolean; source: "db" | "env" | "none"; preview?: string }>> {
+  const db = await getAllSettings();
+  return MANAGED_KEYS.map((mk) => {
+    const inDb = db.has(mk.key);
+    const envVal = process.env[mk.key];
+    const source: "db" | "env" | "none" = inDb ? "db" : envVal ? "env" : "none";
+    const value = inDb ? db.get(mk.key)! : envVal || "";
+    const hasValue = Boolean(value);
+    // معاينة غير حسّاسة فقط؛ الأسرار تُقنَّع.
+    const preview = hasValue ? (mk.secret ? maskSecret(value) : value) : undefined;
+    return { ...mk, hasValue, source, preview };
+  });
+}
+
+function maskSecret(v: string): string {
+  if (v.length <= 6) return "••••";
+  return `${v.slice(0, 3)}••••${v.slice(-2)}`;
+}
+
+/** يُحمّل إعدادات القاعدة إلى process.env (تجاوز متغيّرات البيئة للمفاتيح المُدارة). يُستدعى عند الإقلاع. */
+export async function hydrateEnvFromSettings(): Promise<number> {
+  const db = await getAllSettings();
+  let n = 0;
+  for (const [key, value] of db) {
+    if (MANAGED_SET.has(key) && value) {
+      process.env[key] = value;
+      n += 1;
+    }
+  }
+  return n;
+}
