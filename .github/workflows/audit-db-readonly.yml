@@ -56,6 +56,14 @@ jobs:
               cat "$f"; } | psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc 2>&1 | tee "audit-out/$name.txt"
           done
 
+      - name: "الخلاصة المضغوطة (مقاييس القرار)"
+        run: |
+          echo "░░░░░ AUDIT SUMMARY START ░░░░░"
+          { echo "SET default_transaction_read_only=on;"; cat audit/summary.sql; } \
+            | psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc -A -F' | ' -P footer=off 2>&1 \
+            | tee audit-out/_summary.txt
+          echo "░░░░░ AUDIT SUMMARY END ░░░░░"
+
       - name: "رفع النتائج كـ artifact"
         if: always()
         uses: actions/upload-artifact@v4
