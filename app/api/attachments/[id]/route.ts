@@ -7,15 +7,24 @@ import { signedDownloadUrl } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
 
+// ملكيّة المرفق = ملكيّة القضية المرتبطة به. مرفق بلا قضية (ownerId=null) لا يقرؤه إلا المدير.
+function ownsAttachment(user: { id: string; role: string }, ownerId: string | null): boolean {
+  if (user.role === "SYSTEM_ADMIN") return true;
+  return ownerId !== null && ownerId === user.id;
+}
+
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
   if (gate.response) return gate.response;
   const attachment = await prisma.attachment.findUnique({
     where: { id: params.id },
-    include: { caseFile: { select: { id: true, title: true } } }
+    include: { caseFile: { select: { id: true, title: true, ownerId: true } } }
   });
 
-  if (!attachment) return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
+  // [إصلاح تدقيق SEC-005: كان بلا فحص ملكيّة → قراءة/تنزيل مرفقات مستخدمين آخرين.]
+  if (!attachment || !ownsAttachment(gate.user!, attachment.caseFile?.ownerId ?? null)) {
+    return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
+  }
   return NextResponse.json({
     attachment: {
       id: attachment.id,
@@ -34,6 +43,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   const gate = await requireApiPermission("ATTACHMENTS_FULL", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
+  // [إصلاح تدقيق SEC-005: تحقّق من الملكيّة قبل الحذف — يمنع حذف مرفقات الغير.]
+  const existing = await prisma.attachment.findUnique({
+    where: { id: params.id },
+    include: { caseFile: { select: { ownerId: true } } }
+  });
+  if (!existing || !ownsAttachment(user, existing.caseFile?.ownerId ?? null)) {
+    return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
+  }
   const attachment = await prisma.attachment.delete({ where: { id: params.id } });
   await auditEvent({
     actorId: user.id,

@@ -269,6 +269,76 @@ export const countJudicialCases = unstable_cache(() => prisma.judicialCase.count
   tags: [LEGAL_CORE_CACHE_TAG]
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// [INT-001] سحب جماعي + تغذية تغييرات للمزامنة الخارجية (أنظمة إدارة/مواقع/فهارس ذكاء).
+// يدعم updatedSince (يعيد ما تغيّر بعد وقت معيّن) + ترقيم صفحات. لا يُخرج متجه embedding.
+// syncCursor في الردّ = updatedAt لآخر عنصر → يُمرّر كـ updatedSince للدفعة التالية.
+// ─────────────────────────────────────────────────────────────────────────────
+export interface ArticleSyncQuery {
+  page?: number;
+  pageSize?: number;
+  updatedSince?: string; // ISO 8601
+  systemId?: string;
+}
+
+export async function listArticlesForSync(opts: ArticleSyncQuery = {}) {
+  const pageSize = Math.min(100, Math.max(1, opts.pageSize ?? 50));
+  const page = Math.max(1, opts.page ?? 1);
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+  if (opts.systemId) where.legalSystemId = opts.systemId;
+  if (opts.updatedSince) {
+    const since = new Date(opts.updatedSince);
+    if (!Number.isNaN(since.getTime())) where.updatedAt = { gt: since };
+  }
+
+  const [rows, total] = await Promise.all([
+    prisma.legalArticle.findMany({
+      where,
+      // ترتيب مستقرّ للمزامنة التزايدية (updatedAt ثم id لكسر التعادل).
+      orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
+      skip,
+      take: pageSize,
+      select: {
+        id: true, lawName: true, articleNumber: true, title: true, content: true,
+        classification: true, status: true, chapter: true, royalDecree: true,
+        effectiveFrom: true, updatedAt: true, createdAt: true,
+        legalSystemId: true,
+        legalSystem: { select: { eliSlug: true } },
+        // ملاحظة: لا يُختار embedding إطلاقًا (تمثيل داخلي + حمولة ضخمة).
+      },
+    }),
+    prisma.legalArticle.count({ where }),
+  ]);
+
+  const items = rows.map((a) => ({
+    id: a.id,
+    lawName: a.lawName,
+    articleNumber: a.articleNumber,
+    title: a.title,
+    content: a.content,
+    classification: a.classification,
+    status: a.status,
+    chapter: a.chapter,
+    royalDecree: a.royalDecree,
+    effectiveFrom: a.effectiveFrom,
+    systemId: a.legalSystemId,
+    eliSlug: a.legalSystem?.eliSlug ?? null,
+    updatedAt: a.updatedAt,
+    createdAt: a.createdAt,
+  }));
+
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    hasMore: skip + items.length < total,
+    syncCursor: items.length ? items[items.length - 1].updatedAt : (opts.updatedSince ?? null),
+  };
+}
+
 /** تفاصيل المادة مع روابط الأحكام (لصفحة المادة). */
 export function getArticleDetail(id: string) {
   return prisma.legalArticle

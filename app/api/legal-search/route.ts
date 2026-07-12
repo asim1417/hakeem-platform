@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
+import { searchLegalCoreComprehensive } from "@/lib/modules/legal-core/comprehensive-search";
 import { getRelationsForEntity, hydrateRelations } from "@/lib/modules/knowledge-graph/relations";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "أدخل عبارة بحث (حرفان فأكثر)." }, { status: 400 });
   }
 
-  const search = await hybridSearch({ q, limit });
+  const search = await searchLegalCoreComprehensive(q, limit);
 
   // تجميع حسب النوع
   const articles = search.results.filter((r) => r.type === "article");

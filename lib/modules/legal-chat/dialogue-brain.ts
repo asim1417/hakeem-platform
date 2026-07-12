@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from "zod";
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
+import { sanitizeForModel } from "./redaction";
 
 /** نوايا الحوار التي يقودها النموذج (الحوار لا الأدوات). */
 export const DIALOGUE_INTENTS = [
@@ -109,17 +110,21 @@ export function extractJsonObject(text: string): unknown | null {
 }
 
 function buildUserPrompt(input: DialogueBrainInput): string {
+  // PDPL ④: تُعمّى معرّفات الأطراف (هوية/آيبان/جوّال/أرقام طويلة) من كل محتوى
+  // مستخدم قبل أن يغادر إلى المزوّد الخارجي. الوقائع القانونية تبقى للتحليل.
   const recent = (input.history ?? [])
     .filter((m) => m.content?.trim())
     .slice(-6)
-    .map((m) => `${m.role === "assistant" ? "حكيم" : "المستخدم"}: ${m.content.trim()}`)
+    .map((m) => `${m.role === "assistant" ? "حكيم" : "المستخدم"}: ${sanitizeForModel(m.content).text.trim()}`)
     .join("\n");
+  const caseSummary = sanitizeForModel(input.caseSummary).text.trim();
+  const message = sanitizeForModel(input.message).text.trim();
   return [
-    input.caseSummary?.trim() ? `سياق ملف القضية الحالي (للفهم فقط، لا تُعِد عرضه):\n${input.caseSummary.trim()}` : "",
+    caseSummary ? `سياق ملف القضية الحالي (للفهم فقط، لا تُعِد عرضه):\n${caseSummary}` : "",
     input.dialogueMode === "slow_guided_intake" ? "ملاحظة: المستخدم طلب التمهّل سابقًا — لا تتسرّع ولا تفترض." : "",
     recent ? `آخر رسائل المحادثة:\n${recent}` : "",
     input.correctionNote?.trim() ? `تصحيح مطلوب: ${input.correctionNote.trim()}` : "",
-    `رسالة المستخدم الآن:\n«${input.message.trim()}»`,
+    `رسالة المستخدم الآن:\n«${message}»`,
     "",
     OUTPUT_CONTRACT,
   ]

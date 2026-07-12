@@ -25,6 +25,12 @@ function main() {
   check(parseArticleQuery("المقاصة") === null, "«المقاصة» (بلا رقم) → null");
   check(parseArticleQuery("المادة 5") === null, "«المادة 5» (بلا اسم نظام) → null");
 
+  console.log("\n— SEARCH-001: أرقام المواد بالأرقام العربية-الهندية —");
+  const a1 = parseArticleQuery("المادة ٢٢٦ المعاملات");
+  check(a1?.articleNumber === 226 && a1?.systemHint.includes("المعاملات"), "«المادة ٢٢٦ المعاملات» → 226 + تلميح المعاملات");
+  const a2 = parseArticleQuery("م/٨٠ نظام العمل");
+  check(a2?.articleNumber === 80 && a2?.systemHint.includes("عمل"), "«م/٨٠ نظام العمل» → 80 + تلميح عمل");
+
   console.log("\n— #5: تطبيع slug ثنائي الاتجاه (ة/ه، الهمزات) —");
   check(lawSlug("نظام-الإثبات") === lawSlug("نظام-الاثبات"), "الهمزة والألف المجرّدة تتطابقان بعد التطبيع");
   check(lawSlug("نظام-المعاملات-المدنية") === lawSlug("نظام-المعاملات-المدنيه"), "التاء المربوطة والهاء تتطابقان");

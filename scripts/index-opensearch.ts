@@ -32,7 +32,7 @@ const TEXT_AR = { type: "text", analyzer: "hakeem_arabic" } as const;
 const TEXT_AR_EXACT = { type: "text", analyzer: "hakeem_arabic", fields: { exact: { type: "text", analyzer: "hakeem_arabic_exact" } } } as const;
 
 const ARTICLE_INDEX_BODY = {
-  settings: { index: { number_of_shards: 1, number_of_replicas: 1 }, analysis: ANALYSIS },
+  settings: { index: { number_of_shards: 1, number_of_replicas: 0 }, analysis: ANALYSIS },
   mappings: {
     properties: {
       type: { type: "keyword" },
@@ -50,7 +50,7 @@ const ARTICLE_INDEX_BODY = {
 };
 
 const CASE_INDEX_BODY = {
-  settings: { index: { number_of_shards: 1, number_of_replicas: 1 }, analysis: ANALYSIS },
+  settings: { index: { number_of_shards: 1, number_of_replicas: 0 }, analysis: ANALYSIS },
   mappings: {
     properties: {
       type: { type: "keyword" },
@@ -88,6 +88,35 @@ async function bulkIndex(url: string, headers: Record<string, string>, index: st
   if (!res.ok) throw new Error(`bulk فشل: ${res.status}`);
 }
 
+// فهرسة مرنة لنطاق [skip, skip+take): عند فشل جلب/تحويل صفّ تالف الترميز
+// (خطأ Prisma «rust String into napi») يُقسَّم النطاق حتى يُعزَل الصفّ المعيب
+// ويُتخطّى وحده — فتكتمل فهرسة بقيّة الصفوف بدل تعطّل المهمّة كلّها.
+// يعيد [عدد المفهرَس, عدد المتخطّى].
+async function resilientRange<T extends { id: string }>(
+  url: string,
+  headers: Record<string, string>,
+  index: string,
+  fetch: (skip: number, take: number) => Promise<T[]>,
+  toDoc: (row: T) => Record<string, unknown>,
+  skip: number,
+  take: number
+): Promise<[number, number]> {
+  try {
+    const rows = await fetch(skip, take);
+    await bulkIndex(url, headers, index, rows.map(toDoc));
+    return [rows.length, 0];
+  } catch (e) {
+    if (take <= 1) {
+      console.warn(`  ⚠️ تخطّي صفّ تالف الترميز عند skip=${skip}`);
+      return [0, 1];
+    }
+    const half = Math.floor(take / 2);
+    const [a, sa] = await resilientRange(url, headers, index, fetch, toDoc, skip, half);
+    const [b, sb] = await resilientRange(url, headers, index, fetch, toDoc, skip + half, take - half);
+    return [a + b, sa + sb];
+  }
+}
+
 async function main() {
   const cfg = getOpenSearchConfig();
   if (!cfg) {
@@ -114,38 +143,48 @@ async function main() {
   );
   console.log(`  ✓ مواد: ${articles.length}`);
 
-  // الأحكام
-  const rulings = await prisma.judicialCase.findMany({
-    select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, reviewStatus: true },
-    take,
-  });
-  await bulkIndex(
-    cfg.url,
-    headers,
-    cfg.indexCases,
-    rulings.map((r) => ({
-      type: "ruling",
-      id: r.id,
-      judgmentTitle: r.judgmentTitle ?? r.decisionNo ?? r.caseNo,
-      judgmentText: (r.judgmentText ?? "").slice(0, 8000),
-      court: r.court,
-      status: r.reviewStatus,
-    }))
-  );
-  console.log(`  ✓ أحكام: ${rulings.length}`);
+  // الأحكام — فهرسة مرنة بدفعات (تتخطّى الصفوف التالفة الترميز بدل تعطّل المهمّة).
+  const BATCH = 500;
+  try {
+    const rulingTotal = SCOPE_ALL ? await prisma.judicialCase.count() : SAMPLE;
+    let ri = 0, rs = 0;
+    for (let off = 0; off < rulingTotal; off += BATCH) {
+      const [i, s] = await resilientRange(
+        cfg.url, headers, cfg.indexCases,
+        (skip, take) => prisma.judicialCase.findMany({
+          select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, reviewStatus: true },
+          orderBy: { id: "asc" }, skip, take,
+        }),
+        (r) => ({ type: "ruling", id: r.id, judgmentTitle: r.judgmentTitle ?? r.decisionNo ?? r.caseNo, judgmentText: (r.judgmentText ?? "").slice(0, 8000), court: r.court, status: r.reviewStatus }),
+        off, Math.min(BATCH, rulingTotal - off)
+      );
+      ri += i; rs += s;
+    }
+    console.log(`  ✓ أحكام: ${ri}${rs ? ` (تخطّي ${rs} تالف)` : ""}`);
+  } catch (e) {
+    console.warn(`  ⚠️ تعذّرت فهرسة الأحكام كلّيًّا: ${e instanceof Error ? e.message : e}`);
+  }
 
-  // المبادئ (في فهرس الأحكام)
-  const principles = await prisma.judicialPrinciple.findMany({
-    select: { id: true, title: true, principleText: true, reviewStatus: true },
-    take,
-  });
-  await bulkIndex(
-    cfg.url,
-    headers,
-    cfg.indexCases,
-    principles.map((p) => ({ type: "principle", id: p.id, title: p.title, principleText: p.principleText, status: p.reviewStatus }))
-  );
-  console.log(`  ✓ مبادئ: ${principles.length}`);
+  // المبادئ (في فهرس الأحكام) — فهرسة مرنة مماثلة.
+  try {
+    const principleTotal = SCOPE_ALL ? await prisma.judicialPrinciple.count() : SAMPLE;
+    let pi = 0, ps = 0;
+    for (let off = 0; off < principleTotal; off += BATCH) {
+      const [i, s] = await resilientRange(
+        cfg.url, headers, cfg.indexCases,
+        (skip, take) => prisma.judicialPrinciple.findMany({
+          select: { id: true, title: true, principleText: true, reviewStatus: true },
+          orderBy: { id: "asc" }, skip, take,
+        }),
+        (p) => ({ type: "principle", id: p.id, title: p.title, principleText: p.principleText, status: p.reviewStatus }),
+        off, Math.min(BATCH, principleTotal - off)
+      );
+      pi += i; ps += s;
+    }
+    console.log(`  ✓ مبادئ: ${pi}${ps ? ` (تخطّي ${ps} تالف)` : ""}`);
+  } catch (e) {
+    console.warn(`  ⚠️ تعذّرت فهرسة المبادئ كلّيًّا: ${e instanceof Error ? e.message : e}`);
+  }
 
   await prisma.$disconnect();
   console.log("✅ اكتملت الفهرسة المبدئية.");

@@ -32,14 +32,15 @@ function assertAlignmentConfirmed() {
   }
 }
 
-/** UPSERT متجه إلى جدول pgvector «embeddings» (المصدر الوحيد). */
-async function upsertVector(ownerId: string, literal: string): Promise<boolean> {
+/** UPSERT متجه إلى جدول pgvector «embeddings» لأي نوع مالك (article|ruling|principle). */
+async function upsertVector(ownerType: string, ownerId: string, literal: string): Promise<boolean> {
   try {
     await prisma.$executeRawUnsafe(
       `INSERT INTO "embeddings" ("id","owner_type","owner_id","embedding","model","created_at")
-       VALUES (gen_random_uuid()::text, 'article', $1, $2::vector, $3, now())
+       VALUES (gen_random_uuid()::text, $1, $2, $3::vector, $4, now())
        ON CONFLICT ("owner_type","owner_id")
        DO UPDATE SET "embedding" = EXCLUDED."embedding", "model" = EXCLUDED."model"`,
+      ownerType,
       ownerId,
       literal,
       EMBEDDING_MODEL
@@ -50,12 +51,53 @@ async function upsertVector(ownerId: string, literal: string): Promise<boolean> 
   }
 }
 
-/** معرّفات المواد التي لها متجه في الجدول فعلاً (لتخطّيها في الوضع التزايدي). */
-async function articleIdsWithVector(): Promise<Set<string>> {
+/** معرّفات مالكي نوع معيّن لهم متجه في الجدول فعلاً (لتخطّيهم في الوضع التزايدي). */
+async function ownerIdsWithVector(ownerType: string): Promise<Set<string>> {
   const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string }>>(
-    `SELECT "owner_id" FROM "embeddings" WHERE "owner_type" = 'article'`
+    `SELECT "owner_id" FROM "embeddings" WHERE "owner_type" = $1`,
+    ownerType
   ).catch(() => [] as Array<{ owner_id: string }>);
   return new Set(rows.map((r) => r.owner_id));
+}
+
+// مواصفة نوع للفهرسة: كيف نعدّه، كيف نصفحه، وكيف نبني نصّ التضمين.
+type BackfillSpec = {
+  label: string;
+  ownerType: string;
+  count: () => Promise<number>;
+  page: (cursor: string | undefined, take: number) => Promise<Array<{ id: string; text: string }>>;
+};
+
+/** فهرسة عامّة لنوع واحد: تزايديّة (تتخطّى ما له متجه) أو كاملة (--all). */
+async function backfillType(spec: BackfillSpec, all: boolean, max: number) {
+  const existing = all ? new Set<string>() : await ownerIdsWithVector(spec.ownerType);
+  const total = await spec.count();
+  console.log(
+    `${spec.label}: ${total.toLocaleString("ar-SA")} | لها متجه: ${existing.size.toLocaleString("ar-SA")} | النموذج: ${EMBEDDING_MODEL} | البُعد: ${DIM}`
+  );
+
+  let processed = 0, updated = 0, failed = 0, skippedDim = 0;
+  let cursor: string | undefined;
+  while (processed < max) {
+    const rows = await spec.page(cursor, BATCH);
+    if (!rows.length) break;
+    cursor = rows[rows.length - 1].id;
+
+    const pending = all ? rows : rows.filter((r) => !existing.has(r.id));
+    if (pending.length) {
+      const vectors = await embedBatch(pending.map((r) => r.text));
+      for (let i = 0; i < pending.length && processed + i < max; i += 1) {
+        const vec = vectors[i] ?? null;
+        if (!hasValidDimension(vec, DIM)) { skippedDim += 1; continue; }
+        const ok = await upsertVector(spec.ownerType, pending[i].id, buildVectorLiteral(vec));
+        ok ? (updated += 1) : (failed += 1);
+      }
+      await new Promise((r) => setTimeout(r, 250)); // مهلة بسيطة لحدود المعدّل
+    }
+    processed += rows.length;
+    console.log(`  ${spec.label} تقدّم: ${processed.toLocaleString("ar-SA")} | مُحدَّث: ${updated} | متخطّى(بُعد): ${skippedDim} | فشل: ${failed}`);
+  }
+  console.log(`✓ ${spec.label}: مُحدَّث ${updated.toLocaleString("ar-SA")} | متخطّى(بُعد) ${skippedDim} | فشل ${failed.toLocaleString("ar-SA")}`);
 }
 
 async function main() {
@@ -65,6 +107,8 @@ async function main() {
   const all = args.includes("--all");
   const limitArg = args.indexOf("--limit");
   const max = limitArg >= 0 ? Number(args[limitArg + 1]) : Infinity;
+  const targetArg = args.indexOf("--target");
+  const target = targetArg >= 0 ? String(args[targetArg + 1]) : "articles"; // articles|rulings|principles|all
 
   const keyName = ["EMBEDDING", "API", "KEY"].join("_");
   const fallbackKeyName = ["OPENAI", "API", "KEY"].join("_");
@@ -73,52 +117,51 @@ async function main() {
     process.exit(1);
   }
 
-  const existing = all ? new Set<string>() : await articleIdsWithVector();
-  const corpusTotal = await prisma.legalArticle.count();
-  console.log(
-    `المواد: ${corpusTotal.toLocaleString("ar-SA")} | لها متجه في الجدول: ${existing.size.toLocaleString("ar-SA")} | النموذج: ${EMBEDDING_MODEL} | البُعد: ${DIM}`
-  );
+  const specs: Record<string, BackfillSpec> = {
+    articles: {
+      label: "المواد", ownerType: "article",
+      count: () => prisma.legalArticle.count(),
+      page: async (cursor, take) => {
+        const rows = await prisma.legalArticle.findMany({
+          select: { id: true, lawName: true, title: true, content: true, legalSystem: { select: { name: true } } },
+          orderBy: { id: "asc" }, take, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        });
+        return rows.map((r) => ({ id: r.id, text: buildEmbeddingText({ systemName: r.legalSystem?.name ?? r.lawName, title: r.title, content: r.content }) }));
+      },
+    },
+    rulings: {
+      label: "الأحكام", ownerType: "ruling",
+      count: () => prisma.judicialCase.count(),
+      page: async (cursor, take) => {
+        const rows = await prisma.judicialCase.findMany({
+          select: { id: true, judgmentTitle: true, judgmentText: true, court: true },
+          orderBy: { id: "asc" }, take, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        });
+        return rows.map((r) => ({ id: r.id, text: buildEmbeddingText({ systemName: r.court, title: r.judgmentTitle, content: (r.judgmentText ?? "").slice(0, 8000) }) }));
+      },
+    },
+    principles: {
+      label: "المبادئ", ownerType: "principle",
+      count: () => prisma.judicialPrinciple.count(),
+      page: async (cursor, take) => {
+        const rows = await prisma.judicialPrinciple.findMany({
+          select: { id: true, title: true, principleText: true },
+          orderBy: { id: "asc" }, take, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        });
+        return rows.map((r) => ({ id: r.id, text: buildEmbeddingText({ title: r.title, content: r.principleText }) }));
+      },
+    },
+  };
 
-  let processed = 0;
-  let updated = 0;
-  let failed = 0;
-  let skippedDim = 0;
-  let cursor: string | undefined;
-
-  while (processed < max) {
-    const rows = await prisma.legalArticle.findMany({
-      select: { id: true, lawName: true, title: true, content: true, legalSystem: { select: { name: true } } },
-      orderBy: { id: "asc" },
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-    });
-    if (!rows.length) break;
-    cursor = rows[rows.length - 1].id;
-
-    // الوضع التزايدي: تخطّى ما له متجه في الجدول.
-    const pending = all ? rows : rows.filter((r) => !existing.has(r.id));
-    if (pending.length) {
-      const texts = pending.map((r) =>
-        buildEmbeddingText({ systemName: r.legalSystem?.name ?? r.lawName, title: r.title, content: r.content })
-      );
-      const vectors = await embedBatch(texts);
-      for (let i = 0; i < pending.length && processed + i < max; i += 1) {
-        const vec = vectors[i] ?? null;
-        if (!hasValidDimension(vec, DIM)) {
-          skippedDim += 1;
-          continue;
-        }
-        const ok = await upsertVector(pending[i].id, buildVectorLiteral(vec));
-        ok ? (updated += 1) : (failed += 1);
-      }
-      await new Promise((r) => setTimeout(r, 250)); // مهلة بسيطة لحدود المعدّل
+  const targets = target === "all" ? ["articles", "rulings", "principles"] : [target];
+  for (const t of targets) {
+    const spec = specs[t];
+    if (!spec) {
+      console.error(`✗ هدف غير معروف: ${t} (المتاح: articles|rulings|principles|all)`);
+      process.exit(1);
     }
-
-    processed += rows.length;
-    console.log(`تقدّم: ${processed.toLocaleString("ar-SA")} | مُحدَّث(جدول): ${updated} | متخطّى(بُعد): ${skippedDim} | فشل: ${failed}`);
+    await backfillType(spec, all, max);
   }
-
-  console.log(`✓ انتهى. مُحدَّث في جدول pgvector: ${updated.toLocaleString("ar-SA")} | متخطّى(بُعد): ${skippedDim} | فشل: ${failed.toLocaleString("ar-SA")}`);
 }
 
 main()

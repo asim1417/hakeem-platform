@@ -27,8 +27,10 @@ const patchSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
+  // [إصلاح تدقيق SEC-004: كان بلا فحص ملكيّة → قراءة محاكاة مستخدم آخر بمعرّفها.]
+  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
+  const session = await prisma.simulation.findFirst({
+    where: isAdmin ? { id: params.id } : { id: params.id, userId: gate.user!.id },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
       decisions: { orderBy: { createdAt: "asc" } },
@@ -44,8 +46,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
-  const payload = patchSchema.parse(await request.json());
   const user = gate.user!;
+  // [إصلاح تدقيق SEC-004: تأكّد من ملكيّة الجلسة قبل التعديل — يمنع الكتابة على محاكاة الغير.]
+  const owned = await prisma.simulation.findFirst({
+    where: user.role === "SYSTEM_ADMIN" ? { id: params.id } : { id: params.id, userId: user.id },
+    select: { id: true }
+  });
+  if (!owned) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
+  const payload = patchSchema.parse(await request.json());
   const title = payload.title || payload.subject || "جلسة محاكاة قضائية";
 
   const turnState = {

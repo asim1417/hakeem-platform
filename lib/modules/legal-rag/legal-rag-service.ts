@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
+import { searchLegalCoreComprehensive } from "@/lib/modules/legal-core/comprehensive-search";
 import { getRelationsForEntity } from "@/lib/modules/knowledge-graph/relations";
 import { buildCitations, verifyCitations, type Citation } from "@/lib/modules/citations/citation-engine";
 import { composeLegalAnswer, type LegalBasisItem, type RelatedItem } from "./legal-answer-composer";
@@ -72,8 +72,8 @@ async function emptyResult(
 export async function legalRag(question: string): Promise<RagResult> {
   const q = question.trim();
 
-  // 1) البحث الهجين
-  const search = await hybridSearch({ q, limit: 15 });
+  // 1) البحث عبر النواة الشاملة (نفس محرّك صناديق الموقع والمحادثة — استناد موحّد).
+  const search = await searchLegalCoreComprehensive(q, 15);
   const scoreOf = (id: string) => search.results.find((r) => r.id === id)?.confidence ?? 0;
   const reasonOf = (id: string) => search.results.find((r) => r.id === id)?.reasons.join(" · ") ?? "تطابق";
 

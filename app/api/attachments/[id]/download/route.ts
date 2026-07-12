@@ -9,8 +9,16 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
   if (gate.response) return gate.response;
-  const attachment = await prisma.attachment.findUnique({ where: { id: params.id } });
-  if (!attachment) return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
+  const attachment = await prisma.attachment.findUnique({
+    where: { id: params.id },
+    include: { caseFile: { select: { ownerId: true } } }
+  });
+  // [إصلاح تدقيق SEC-005: تحقّق من الملكيّة قبل إصدار رابط التنزيل الموقّع.]
+  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
+  const ownerId = attachment?.caseFile?.ownerId ?? null;
+  if (!attachment || (!isAdmin && ownerId !== gate.user!.id)) {
+    return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
+  }
   // Azure: رابط موقّع. SharePoint: رابط webUrl المخزَّن في الميتاداتا.
   let url = signedDownloadUrl(attachment.storageKey);
   if (!url && attachment.storageKey.startsWith("sharepoint/")) {

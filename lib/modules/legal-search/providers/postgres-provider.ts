@@ -53,12 +53,16 @@ export const postgresProvider: SearchProvider = {
     return true;
   },
 
-  async search({ q, limit = 10 }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, context }: SearchQuery): Promise<RawResult[]> {
     const term = q.trim();
     if (term.length < 2) return [];
     const take = Math.min(limit, 20);
     const tokens = tokenizeQuery(term);
     const results: RawResult[] = [];
+    // [إصلاح SEARCH-002] فلتر المحكمة يُطبَّق فعليًّا على الأحكام إن مُرّر (كان يُتجاهَل).
+    const courtFilter = context?.court?.trim()
+      ? { court: { contains: context.court.trim(), mode: "insensitive" as const } }
+      : null;
 
     // المواد النظامية — عبر بحث النواة العربي (تفكيك + مشتقّات + ترتيب بالصلة).
     // semantic:false كي يبقى هذا المزوّد معجمياً صرفاً (الدلالي مسؤولية vector-provider).
@@ -84,8 +88,10 @@ export const postgresProvider: SearchProvider = {
     try {
       // الأحكام القضائية — مطابقة كلمات السؤال الدالّة.
       const rulings = await prisma.judicialCase.findMany({
-        where: tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
-        select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, decisionDate: true, decisionDateText: true },
+        where: courtFilter
+          ? { AND: [tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]), courtFilter] }
+          : tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
+        select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, decisionDate: true, decisionDateText: true, reviewStatus: true },
         take,
       });
       for (const r of rulings) {
@@ -95,34 +101,40 @@ export const postgresProvider: SearchProvider = {
         const base = inTitle ? 0.78 : 0.58;
         // السنة الميلادية للحكم (للفلترة الزمنية) — من التاريخ المهيكل إن وُجد.
         const year = r.decisionDate ? String(r.decisionDate.getFullYear()) : undefined;
+        // [إصلاح SEARCH-006] المحتوى غير المُراجَع (needs_review) يُخفَّض ترتيبه ويُعلَّم،
+        // بدل حجبه (حجبه قد يُفرغ النتائج إن لم تُراجَع بعد)، فيتقدّم المُعتمد.
+        const reviewed = r.reviewStatus !== "needs_review";
+        const score = Math.min(0.9, base + Math.min(hits, 3) * 0.03) * (reviewed ? 1 : 0.85);
         results.push({
           type: "ruling",
           id: r.id,
           title: `حكم ${r.decisionNo ?? r.caseNo ?? r.id}${r.court ? ` — ${r.court}` : ""}`,
           snippet: (r.judgmentText ?? "").slice(0, 200),
-          score: Math.min(0.9, base + Math.min(hits, 3) * 0.03),
+          score,
           source: "postgres",
-          reason: `تطابق نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}`,
-          meta: { matchedBy: "lexical", sourceType: "ruling", caseNo: r.caseNo, decisionNo: r.decisionNo, court: r.court, year, decisionDateText: r.decisionDateText ?? undefined },
+          reason: `تطابق نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}${reviewed ? "" : " (غير مُراجَع)"}`,
+          meta: { matchedBy: "lexical", sourceType: "ruling", caseNo: r.caseNo, decisionNo: r.decisionNo, court: r.court, year, decisionDateText: r.decisionDateText ?? undefined, reviewed },
         });
       }
 
       // المبادئ القضائية — مطابقة كلمات السؤال الدالّة.
       const principles = await prisma.judicialPrinciple.findMany({
         where: tokenOrFilter(tokens, term, ["title", "principleText"]),
-        select: { id: true, title: true, principleText: true },
+        select: { id: true, title: true, principleText: true, reviewStatus: true },
         take,
       });
       for (const p of principles) {
+        // [إصلاح SEARCH-006] نفس المبدأ: خفض ترتيب غير المُراجَع ووسمه بدل حجبه.
+        const reviewed = p.reviewStatus !== "needs_review";
         results.push({
           type: "principle",
           id: p.id,
           title: `مبدأ: ${p.title}`,
           snippet: p.principleText.slice(0, 200),
-          score: 0.7,
+          score: reviewed ? 0.7 : 0.6,
           source: "postgres",
-          reason: "تطابق نصّي في المبدأ",
-          meta: { matchedBy: "lexical", sourceType: "principle" },
+          reason: `تطابق نصّي في المبدأ${reviewed ? "" : " (غير مُراجَع)"}`,
+          meta: { matchedBy: "lexical", sourceType: "principle", reviewed },
         });
       }
     } catch {
