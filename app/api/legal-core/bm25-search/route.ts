@@ -4,11 +4,15 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { bm25Search } from "@/lib/modules/legal-core/bm25";
+import { requireApiPermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  // [إصلاح SEARCH-005] كان بلا بوّابة — أُلحق بنفس صلاحية بقيّة مسارات النواة الداخلية.
+  const gate = await requireApiPermission("LEGAL_CORE_VIEW", request);
+  if (gate.response) return gate.response;
   const q = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 200);
   const limit = Math.min(Math.max(Number(request.nextUrl.searchParams.get("limit") ?? 12), 1), 30);
   if (!q) {
