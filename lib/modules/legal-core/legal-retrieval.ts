@@ -30,6 +30,7 @@ import { expandToken } from "./lexicon-expansion";
 import { getArticleAuthorityMap } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
+import { getOpenSearchConfig, openSearchHeaders } from "@/lib/modules/legal-search/providers/search-provider";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -84,6 +85,11 @@ export type AdvancedLegalSearchOptions = {
    * فيتجاوز اختلاف الصرف والمرادفات. سقوط آمن للترتيب المعجمي عند غياب المفتاح/المتجهات.
    */
   semantic?: boolean;
+  /**
+   * يفعّل إشارة OpenSearch (BM25 بمحلّل عربي + ترجيح التغطية الكاملة) كإشارة خامسة في النواة.
+   * افتراضياً مُفعّلة حين يُضبَط العنقود (كِلّ-سويتش: CORE_OPENSEARCH=0). سقوط آمن عند غيابه.
+   */
+  openSearch?: boolean;
 };
 
 export type AdvancedLegalSearchResponse = {
@@ -169,6 +175,13 @@ export const SECONDARY_INSTRUMENT_PENALTY = -25;
 export const CONCEPT_SYSTEM_BONUS = 170;
 /** أقصى عدد مواد تُجلب من مواضع المكنز ولم يجدها البحث المعجمي (استرجاع مُسنَد). */
 const THESAURUS_OCC_PULL_LIMIT = 50;
+/**
+ * وزن إشارة OpenSearch (BM25 بمحلّل عربي) على درجة الصلة: إضافيّ [0..OPENSEARCH_BOOST_SCALE].
+ * مُعايَر ليعيد الترتيب بوضوح دون أن يطغى على تطابق العبارة (phraseMatches*40) — فمادة
+ * تطابق **كل** كلمات الاستعلام في OpenSearch ترتفع، ومادة الكلمة الشائعة وحدها لا. */
+export const OPENSEARCH_BOOST_SCALE = 30;
+/** أقصى عدد مواد تُجلب من OpenSearch ولم يجدها المسار المعجمي داخل القاعدة (استرجاع مُسنَد). */
+const OPENSEARCH_PULL_LIMIT = 60;
 
 /**
  * يمزج درجة الصلة المعجمية مع التشابه الدلالي: نتيجة دلالية بحتة (lexical≈0) بتشابه
@@ -201,6 +214,67 @@ async function semanticArticleScores(query: string, take: number): Promise<Map<s
     for (const r of rows) out.set(r.owner_id, Math.max(0, Math.min(1, Number(r.score))));
   } catch {
     return new Map<string, number>(); // جدول المتجهات غير مُفعّل → بلا استرجاع دلالي
+  }
+  return out;
+}
+
+/**
+ * إشارة OpenSearch للنواة (الخامسة): يستعلم فهرس legal_articles بمحلّل عربي (BM25) مع
+ * ترجيح «التغطية الكاملة» (operator:"and") — فترتفع المادة التي تحوي **كل** كلمات
+ * الاستعلام فوق ما يحوي كلمة شائعة وحدها (يعالج «فسخ العقود» ← ضريبة الدخل). يعيد
+ * خريطة معرّف المادة ← درجة مُطبَّعة [0..1]. مقصور على النوع «article» ليطابق نطاق النواة.
+ * سقوط آمن إلى Map فارغة عند غياب الإعداد/تعذّر الاتصال (لا يكسر البحث أبداً).
+ */
+async function openSearchArticleScores(query: string, take: number): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const q = query.trim();
+  if (!q) return out;
+  const cfg = getOpenSearchConfig();
+  if (!cfg) return out;
+  const size = Math.min(Math.max(take, 1), 200);
+  const body = {
+    size,
+    _source: ["id", "articleId"],
+    query: {
+      bool: {
+        // النوع «article» فقط — النواة مقصورة على المواد (الأحكام/المبادئ لاحقًا).
+        filter: [{ term: { type: "article" } }],
+        must_not: [{ term: { status: "needs_review" } }],
+        should: [
+          // تغطية كاملة عالية الوزن (نفس إصلاح «فسخ»).
+          { match: { title: { query: q, operator: "and", boost: 8 } } },
+          { match: { content: { query: q, operator: "and", boost: 6 } } },
+          // مطابقة جزئية (OR) للاسترجاع الواسع.
+          { match: { title: { query: q, boost: 3 } } },
+          { match: { content: { query: q, boost: 2 } } },
+          { match: { "content.exact": { query: q, boost: 4 } } },
+          { match: { lawName: { query: q } } }
+        ],
+        minimum_should_match: 1
+      }
+    }
+  };
+  try {
+    const res = await fetch(`${cfg.url}/${cfg.indexArticles}/_search`, {
+      method: "POST",
+      headers: openSearchHeaders(cfg),
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(3500)
+    });
+    if (!res.ok) return out;
+    const data = (await res.json()) as {
+      hits?: { max_score?: number; hits?: Array<{ _score?: number; _source?: Record<string, unknown> }> };
+    };
+    const hits = data.hits?.hits ?? [];
+    const maxScore = data.hits?.max_score || 1;
+    for (const h of hits) {
+      const src = h._source ?? {};
+      const id = String(src.id ?? src.articleId ?? "");
+      if (!id) continue;
+      out.set(id, Math.max(0, Math.min(1, (h._score ?? 0) / maxScore)));
+    }
+  } catch {
+    return new Map<string, number>(); // OpenSearch غير متاح → النواة تعمل بإشاراتها الأربع.
   }
   return out;
 }
@@ -385,6 +459,24 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     }
   }
 
+  // إشارة OpenSearch (الخامسة): BM25 بمحلّل عربي + ترجيح التغطية الكاملة (إصلاح «فسخ»).
+  // مُفعّلة افتراضياً حين يُضبَط العنقود (كِلّ-سويتش CORE_OPENSEARCH=0 أو options.openSearch=false).
+  // تجلب أيضاً مواداً قوية لم يجدها المسار المعجمي داخل القاعدة (استرجاع مُسنَد). سقوط آمن تام.
+  let osMap = new Map<string, number>();
+  const osEnabled = query && options.openSearch !== false && process.env.CORE_OPENSEARCH !== "0";
+  if (osEnabled) {
+    osMap = await openSearchArticleScores(query, 200).catch(() => new Map<string, number>());
+    if (osMap.size) {
+      const extraIds = [...osMap.keys()].filter((id) => !lightById.has(id)).slice(0, OPENSEARCH_PULL_LIMIT);
+      if (extraIds.length) {
+        const extra = await prisma.legalArticle
+          .findMany({ where: { id: { in: extraIds } }, select: LIGHT_ARTICLE_SELECT })
+          .catch(() => [] as LightArticle[]);
+        for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
+      }
+    }
+  }
+
   // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
   const lightOptions: AdvancedLegalSearchOptions = { ...options, includeSnippets: false, includeMatchedParagraphs: false };
   const scored = Array.from(lightById.values())
@@ -393,6 +485,13 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     .map((r) => {
       const boost = graph.articleBoosts.get(r.articleId);
       return boost ? { ...r, relevanceScore: r.relevanceScore + boost } : r;
+    })
+    // إشارة OpenSearch **إضافيّة**: ترجيح BM25 مُطبَّع [0..1] × السقف. مادة التغطية الكاملة
+    // («فسخ»+«عقد» معاً) تنال درجة عالية فترتفع؛ مادة الكلمة الشائعة وحدها تنال درجة ضعيفة.
+    .map((r) => {
+      if (!osMap.size) return r;
+      const os = osMap.get(r.articleId) ?? 0;
+      return os > 0 ? { ...r, relevanceScore: r.relevanceScore + Math.round(os * OPENSEARCH_BOOST_SCALE) } : r;
     })
     // الدلالي **إضافي لا إزاحي**: نرفع فقط المواد الضعيفة/الدلالية البحتة (lexical < العتبة)
     // كي تظهر أنظمة لم يجدها النصّي، دون تضخيم المطابقات المعجمية القوية (الذي يركّز على
