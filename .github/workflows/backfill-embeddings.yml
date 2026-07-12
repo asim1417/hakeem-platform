@@ -85,10 +85,8 @@ jobs:
         run: npm run db:generate
       - name: "🛡️ حارس هدف Neon (يمنع الكتابة على قاعدة خاطئة)"
         run: npx tsx scripts/verify-neon-target.ts
-      - name: Ensure embedding column (idempotent — لا db push مدمّر)
-        # db push كان يحاول مطابقة كامل السكيمة فيُسقط جداول legal_thesaurus_* المُدارة
-        # خارج Prisma (حُمي بـ Prisma من فقد البيانات). البديل: ضمان العمود فقط، إضافي وآمن.
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'ALTER TABLE "legal_articles" ADD COLUMN IF NOT EXISTS "embedding" JSONB;'
+      # [تدقيق] أُزيلت خطوة «ضمان عمود embedding» (psql على عمود Json مهجور) — التوليد
+      # يذهب لجدول pgvector «embeddings» القائم (المرحلة ٥)، ولا psql على الرَنر.
       - name: Backfill embeddings
         run: |
           ARGS="--target ${{ inputs.target }}"
