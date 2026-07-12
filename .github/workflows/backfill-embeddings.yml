@@ -1,10 +1,9 @@
 name: Backfill Embeddings (تضمين دلالي pgvector)
 
-# يولّد متجهات دلالية لمواد النواة ويخزّنها في LegalArticle.embedding،
-# فيُفعَّل إعادة الترتيب الدلالي (يحتاج SEMANTIC_SEARCH=true في بيئة الإنتاج).
-# يدوي فقط (workflow_dispatch). يتطلّب سرّين:
-#   DATABASE_URL        = اتصال Supabase (قاعدة المنصّة).
-#   EMBEDDING_API_KEY   = مفتاح مزوّد التضمين (OpenAI-compatible) — أو OPENAI_API_KEY.
+# يولّد متجهات دلالية ويخزّنها في جدول pgvector «embeddings».
+# يدعم أنواعًا متعدّدة عبر --target (articles|rulings|principles|all).
+# يدوي فقط (workflow_dispatch). يتطلّب: NEON_DATABASE_URL + EMBEDDING_API_KEY (أو OPENAI_API_KEY).
+# المهاجرات/السكربت المُحدَّث على فرع التدقيق — شغّله باختيار claude/website-visual-audit-kihjic.
 
 on:
   workflow_dispatch:
@@ -14,14 +13,24 @@ on:
         type: string
         required: true
         default: ""
+      target:
+        description: "الهدف (نوع المحتوى)"
+        type: choice
+        required: true
+        default: articles
+        options:
+          - articles
+          - rulings
+          - principles
+          - all
       scope:
         description: "النطاق"
         type: choice
         required: true
         default: missing
         options:
-          - missing   # المواد التي بلا متجه فقط
-          - all       # إعادة توليد الكل
+          - missing
+          - all
       limit:
         description: "حدّ أقصى (اختياري، فارغ = الكل)"
         type: string
@@ -39,25 +48,21 @@ jobs:
   backfill:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # [تدقيق] الكتابة تستهدف Neon صراحةً (كان secrets.DATABASE_URL قد يكون غير مُواءَم).
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      # يقرأه السكربت كحارس داخلي للكتابة (scripts/backfill-embeddings.ts) — لا بدّ من تمريره env.
       CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
     steps:
-      # 🔒 Production DB writes are locked until Vercel Runtime DATABASE_URL and GitHub Actions DATABASE_URL are intentionally aligned.
       - name: "🔒 Runtime DB alignment gate"
         run: |
           if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
-            echo "::error::DB writes LOCKED — Runtime source of truth is Neon (neondb), not the GitHub/Supabase DB (bnzicgymocelefeqiwig). Set CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED only after intentionally aligning DATABASE_URL."
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
             exit 1
           fi
       - name: تحقق من الأسرار
         run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "::error::يلزم ضبط السرّ DATABASE_URL."
-            exit 1
-          fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم ضبط NEON_DATABASE_URL."; exit 1; fi
           if [ -z "$EMBEDDING_API_KEY" ] && [ -z "$OPENAI_API_KEY" ]; then
             echo "::error::يلزم ضبط EMBEDDING_API_KEY (أو OPENAI_API_KEY)."
             exit 1
@@ -72,13 +77,11 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: npm run db:generate
-      - name: Ensure embedding column (idempotent — لا db push مدمّر)
-        # db push كان يحاول مطابقة كامل السكيمة فيُسقط جداول legal_thesaurus_* المُدارة
-        # خارج Prisma (حُمي بـ Prisma من فقد البيانات). البديل: ضمان العمود فقط، إضافي وآمن.
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'ALTER TABLE "legal_articles" ADD COLUMN IF NOT EXISTS "embedding" JSONB;'
+      - name: "🛡️ حارس هدف Neon (يمنع الكتابة على قاعدة خاطئة)"
+        run: npx tsx scripts/verify-neon-target.ts
       - name: Backfill embeddings
         run: |
-          ARGS=""
-          if [ "${{ inputs.scope }}" = "all" ]; then ARGS="--all"; fi
+          ARGS="--target ${{ inputs.target }}"
+          if [ "${{ inputs.scope }}" = "all" ]; then ARGS="$ARGS --all"; fi
           if [ -n "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
           npx tsx scripts/backfill-embeddings.ts $ARGS
