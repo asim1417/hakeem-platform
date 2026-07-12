@@ -53,12 +53,16 @@ export const postgresProvider: SearchProvider = {
     return true;
   },
 
-  async search({ q, limit = 10 }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, context }: SearchQuery): Promise<RawResult[]> {
     const term = q.trim();
     if (term.length < 2) return [];
     const take = Math.min(limit, 20);
     const tokens = tokenizeQuery(term);
     const results: RawResult[] = [];
+    // [إصلاح SEARCH-002] فلتر المحكمة يُطبَّق فعليًّا على الأحكام إن مُرّر (كان يُتجاهَل).
+    const courtFilter = context?.court?.trim()
+      ? { court: { contains: context.court.trim(), mode: "insensitive" as const } }
+      : null;
 
     // المواد النظامية — عبر بحث النواة العربي (تفكيك + مشتقّات + ترتيب بالصلة).
     // semantic:false كي يبقى هذا المزوّد معجمياً صرفاً (الدلالي مسؤولية vector-provider).
@@ -84,7 +88,9 @@ export const postgresProvider: SearchProvider = {
     try {
       // الأحكام القضائية — مطابقة كلمات السؤال الدالّة.
       const rulings = await prisma.judicialCase.findMany({
-        where: tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
+        where: courtFilter
+          ? { AND: [tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]), courtFilter] }
+          : tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
         select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, decisionDate: true, decisionDateText: true, reviewStatus: true },
         take,
       });

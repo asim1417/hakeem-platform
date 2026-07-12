@@ -14,13 +14,23 @@ on:
         type: string
         required: true
         default: ""
+      target:
+        description: "الهدف (نوع المحتوى)"
+        type: choice
+        required: true
+        default: articles
+        options:
+          - articles    # المواد النظامية
+          - rulings     # الأحكام القضائية
+          - principles  # المبادئ القضائية
+          - all         # الثلاثة معًا
       scope:
         description: "النطاق"
         type: choice
         required: true
         default: missing
         options:
-          - missing   # المواد التي بلا متجه فقط
+          - missing   # ما بلا متجه فقط (تزايدي)
           - all       # إعادة توليد الكل
       limit:
         description: "حدّ أقصى (اختياري، فارغ = الكل)"
@@ -78,7 +88,7 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'ALTER TABLE "legal_articles" ADD COLUMN IF NOT EXISTS "embedding" JSONB;'
       - name: Backfill embeddings
         run: |
-          ARGS=""
-          if [ "${{ inputs.scope }}" = "all" ]; then ARGS="--all"; fi
+          ARGS="--target ${{ inputs.target }}"
+          if [ "${{ inputs.scope }}" = "all" ]; then ARGS="$ARGS --all"; fi
           if [ -n "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
           npx tsx scripts/backfill-embeddings.ts $ARGS
