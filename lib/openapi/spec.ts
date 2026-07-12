@@ -66,6 +66,21 @@ export const openApiSpec = {
         responses: { "200": { description: "النظام ومواده بالفصول" }, "404": { description: "غير موجود" } },
       },
     },
+    "/api/legal/articles": {
+      get: {
+        tags: ["البوابة الخارجية"],
+        summary: "سحب جماعي + تغذية تغييرات للمواد (مزامنة خارجية)",
+        description: "للمزامنة التزايدية: مرّر قيمة syncCursor العائدة كـ updatedSince في الطلب التالي.",
+        security: [{ apiKeyAuth: [] }, { apiKeyHeader: [] }, { sessionCookie: [] }],
+        parameters: [
+          { name: "updatedSince", in: "query", required: false, schema: { type: "string", format: "date-time" }, description: "أعِد فقط ما تغيّر بعد هذا الوقت (ISO 8601)" },
+          { name: "systemId", in: "query", required: false, schema: { type: "string" } },
+          { name: "page", in: "query", required: false, schema: { type: "integer", default: 1 } },
+          { name: "pageSize", in: "query", required: false, schema: { type: "integer", default: 50, maximum: 100 } },
+        ],
+        responses: { "200": { description: "مواد + total + hasMore + syncCursor" }, "401": { description: "غير مصادق" }, "429": { description: "تجاوز الحدّ" } },
+      },
+    },
     "/api/legal/articles/{id}": {
       get: {
         tags: ["البوابة الخارجية"],

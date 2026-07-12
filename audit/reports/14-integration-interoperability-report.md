@@ -13,6 +13,10 @@ Microsoft/Word أو محرّك ذكاء. مبنيّ على الكود (ملف:س
 | **موصّلات Microsoft SharePoint/Graph + Azure Blob + Google Drive** | `attachments/blob-storage.ts`، `doc-platform/google-drive.ts` |
 | **قابليّة للذكاء:** llms.txt + robots + sitemap (غير محجوب) | `app/llms.txt`، `app/robots.ts`، `app/sitemap.ts` |
 
+## تحديث التنفيذ
+- ✅ **INT-001 عولج جزئيًّا:** أُضيفت نقطة **`GET /api/legal/articles`** (سحب جماعي + `updatedSince` + ترقيم + `syncCursor`)
+  ومُوثّقة في OpenAPI. تبقّى: Webhook/دفع (INT-008) وربط `content_hash` لكشف تغيّر أدقّ (INT-003).
+
 ## أبرز الاحتياجات والنواقص (بالخطورة)
 
 | الرمز | الخطورة | النقص | الأثر على التكامل | الدليل |
