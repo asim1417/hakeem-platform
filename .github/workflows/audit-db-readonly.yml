@@ -25,8 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PGURL: ${{ secrets.NEON_DATABASE_URL }}
-      # يفرض القراءة فقط على مستوى الجلسة: أي كتابة عرضيّة تفشل فورًا.
-      PGOPTIONS: "-c default_transaction_read_only=on -c statement_timeout=120000"
     steps:
       - name: "تحقّق"
         run: |
@@ -51,8 +49,11 @@ jobs:
             echo "═══════════════════════════════════════════════════════"
             echo "  $f"
             echo "═══════════════════════════════════════════════════════"
+            # القراءة فقط تُفرَض عبر أمر SQL (متوافق مع pooler نيون، بخلاف startup option).
             # ON_ERROR_STOP=0: استعلام فاشل (جدول غير مُهاجَر مثلاً) لا يوقف الملف.
-            psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc -f "$f" 2>&1 | tee "audit-out/$name.txt"
+            { echo "SET default_transaction_read_only=on;"; \
+              echo "SET statement_timeout='120s';"; \
+              cat "$f"; } | psql "$PGURL" -v ON_ERROR_STOP=0 --no-psqlrc 2>&1 | tee "audit-out/$name.txt"
           done
 
       - name: "رفع النتائج كـ artifact"
