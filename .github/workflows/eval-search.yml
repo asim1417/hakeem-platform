@@ -27,6 +27,11 @@ on:
         type: choice
         options: ["1", "0"]
         default: "1"
+      core_opensearch:
+        description: "إشارة OpenSearch داخل النواة: 1 مُفعَّلة (بعد)، 0 معطَّلة (خطّ الأساس قبل)"
+        type: choice
+        options: ["1", "0"]
+        default: "1"
 
 permissions:
   contents: read
@@ -41,6 +46,11 @@ jobs:
       SEMANTIC_SEARCH: "true"
       EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # إشارة OpenSearch الخامسة داخل النواة — لقياس أثرها الحقيقي (تسقط آمناً إن غاب العنقود).
+      OPENSEARCH_URL: ${{ secrets.OPENSEARCH_URL }}
+      OPENSEARCH_USERNAME: ${{ secrets.OPENSEARCH_USERNAME }}
+      OPENSEARCH_PASSWORD: ${{ secrets.OPENSEARCH_PASSWORD }}
+      CORE_OPENSEARCH: ${{ inputs.core_opensearch }}
       EVAL_MIN_SYSTEMHIT3: ${{ inputs.min_systemhit3 }}
       EVAL_PROVIDER: ${{ inputs.provider }}
       IN_DB_RECALL: ${{ inputs.in_db_recall }}
