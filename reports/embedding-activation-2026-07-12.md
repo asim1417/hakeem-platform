@@ -1,0 +1,70 @@
+# تفعيل البحث الدلالي (التضمين) — دليل تشغيل + تصحيح سِجل
+
+**التاريخ:** 2026-07-12 · **الفرع:** `claude/legal-platform-audit-ii0r3u`
+**الحالة:** تعديل برمجي صغير مُنفَّذ (سكربت npm + افتراضي workflow) + دليل تشغيل. **لا تشغيل حيّ من هذه البيئة** (بلا DB/مفتاح).
+
+---
+
+## ⚠️ تصحيح سِجل (شفافية)
+في `reports/global-audit-2026-07-12.md` وردت الفجوة **G20** بصياغة توحي أن سكربت الـbackfill «يملأ `owner_type='article'` فقط». **هذا غير دقيق** بعد مراجعة الكود الفعلي:
+
+- **سكربت التوليد `scripts/backfill-embeddings.ts` يدعم الأنواع الثلاثة أصلًا** عبر `--target articles|rulings|principles|all` (الأسطر 120-164)، مع مواصفات صفحنة جاهزة للأحكام (`judicialCase`) والمبادئ (`judicialPrinciple`).
+- **الـworkflow `.github/workflows/backfill-embeddings.yml` يمرّر `--target ${{ inputs.target }}`** (السطر 84).
+- الالتباس السابق نشأ من السكربت **الآخر** `backfill-embeddings-table.ts` الذي ينسخ متجهات موجودة للمواد فقط (`owner_type='article'` مُثبَّت، السطر 39) — وهو سكربت نسخ لا توليد.
+
+**الخلاصة المصحّحة:** تغطية الأحكام/المبادئ = 0% ليست فجوة **برمجية** بل **تشغيلية** — لم يُشغَّل الـbackfill بـ`--target all` قط (الافتراضي كان `articles`).
+
+---
+
+## ما نُفِّذ الآن (تعديل آمن)
+| التغيير | الملف | الأثر |
+|---|---|---|
+| إضافة سكربت npm `backfill:embeddings` و`backfill:embeddings:all` | `package.json:66-67` | مدخل تشغيل موثّق (كان مفقودًا) |
+| تغيير افتراضي الـworkflow `target: articles → all` | `.github/workflows/backfill-embeddings.yml:20` | «تشغيل» واحد يغطّي الأنواع الثلاثة؛ مع `scope: missing` الافتراضي = «املأ الناقص فقط» (تزايُدي وآمن) |
+
+**لا تغيير على منطق التوليد نفسه** (كان صحيحًا)، ولا هجرة قاعدة بيانات.
+
+---
+
+## دليل التشغيل (تُطلقه أنت — يحتاج أسرارك)
+
+### الطريق الأول — GitHub Actions (المُوصى، لأنه يستهدف Neon بأمان)
+1. GitHub → Actions → **Backfill Embeddings (تضمين دلالي pgvector)** → Run workflow.
+2. اختر الفرع، ثم المُدخلات:
+   - `CONFIRM_RUNTIME_DB_ALIGNMENT` = `NEON_RUNTIME_CONFIRMED` (إلزامي — بوّابة أمان ضد الكتابة على قاعدة خطأ).
+   - `target` = `all` (صار الافتراضي).
+   - `scope` = `missing` (يملأ الناقص فقط) أو `all` (يعيد توليد الكل).
+   - `limit` = فارغ (الكل) أو رقم للتجربة أولًا (مثلًا 500).
+3. المتطلبات المضبوطة كأسرار Actions: `NEON_DATABASE_URL` + (`EMBEDDING_API_KEY` أو `OPENAI_API_KEY`).
+
+### الطريق الثاني — محليًا (إن كان `DATABASE_URL` يشير لـ Neon عمدًا)
+```bash
+export EMBEDDING_API_KEY="sk-..."                       # أو OPENAI_API_KEY
+export CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED
+npm run backfill:embeddings -- --target all --limit 500   # تجربة أولًا
+npm run backfill:embeddings:all                            # ثم الكل (missing فقط)
+```
+
+### التحقّق بعد التشغيل
+```bash
+curl -s https://<نطاقك>/api/embeddings/status | jq
+# المتوقّع: coverage.articles≈100 · rulings≈100 · principles≈100
+```
+
+### التكلفة التقديرية (text-embedding-3-small)
+~51,105 حكمًا + 3,433 مبدأ + 1,421 مادة ناقصة ≈ 56 ألف عنصر × ~حتى 2000 توكن ≈ **~100M توكن ≈ ~2$** (تقدير؛ الأحكام مبتورة عند 8000 حرف في `backfill-embeddings.ts:140`).
+
+---
+
+## الفجوة المتبقّية الحقيقية (تحتاج كودًا + هجرة) — لم تُنفَّذ
+**كشف التقادم (`content_hash`)** لا يزال قائمًا: جدول `embeddings` بلا عمود hash، فتعديل نصّ مادة **لا يُعيد تضمينها** (المتجه يبقى قديمًا صامتًا). معالجته تتطلّب:
+1. هجرة: إضافة `content_hash text` و`model_version` لجدول `embeddings`.
+2. تعديل `backfill-embeddings.ts`: تخزين sha256 للنصّ، وإعادة التضمين عند اختلاف الـhash (بدل تخطّي «ما له متجه»).
+3. اختيارياً: مهمة دورية تعيد تضمين المتغيّر فقط.
+
+هذه فجوة برمجية فعلية (بخلاف تغطية الأنواع). أخبرني إن أردت تنفيذها كخطوة تالية.
+
+---
+
+## بتر 8000 حرف (سياق)
+مرتبط بفجوة «لا تقطيع (chunking)» في التقرير الأصلي: نصّ الحكم/المادة يُبتَر عند 8000 حرف قبل التضمين (`embeddings.ts:37`, `backfill-embeddings.ts:140`)، فذيول المواد الطويلة (استثناءات/عقوبات) خارج المتجه. حلّها (تقطيع فقرات + صفوف متعدّدة لكل مادة) تغيير أكبر موثّق كـ**RAG-CHUNK** في `global-audit`.
