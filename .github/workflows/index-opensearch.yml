@@ -18,6 +18,10 @@ on:
         options: ["all", "sample"]
         default: "all"
         required: true
+      index_suffix:
+        description: 'لاحقة أسماء الفهارس (مثل _v2 لبناء فهرس مُحسّن دون مساس بالحالي). فارغ = الحالي.'
+        type: string
+        default: ""
 
 concurrency:
   group: index-opensearch
@@ -34,6 +38,9 @@ jobs:
       OPENSEARCH_URL: ${{ secrets.OPENSEARCH_URL }}
       OPENSEARCH_USERNAME: ${{ secrets.OPENSEARCH_USERNAME }}
       OPENSEARCH_PASSWORD: ${{ secrets.OPENSEARCH_PASSWORD }}
+      # لاحقة أسماء الفهارس (فارغة = الفهرس الحيّ؛ _v2 = فهرس مُحسّن بالتوازي).
+      OPENSEARCH_INDEX_LEGAL_ARTICLES: "legal_articles${{ inputs.index_suffix }}"
+      OPENSEARCH_INDEX_JUDICIAL_CASES: "judicial_cases${{ inputs.index_suffix }}"
     steps:
       - name: "تحقّق من الأسرار"
         run: |

@@ -48,6 +48,12 @@ export const opensearchProvider: SearchProvider = {
           { match: { content: { query: q, operator: "and", boost: 6 } } },
           { match: { judgmentText: { query: q, operator: "and", boost: 4 } } },
           { match: { principleText: { query: q, operator: "and", boost: 4 } } },
+          // [طبقة العبارات] مطابقة الحقل الفرعي .phrase (عبارات متلاصقة): «فسخ العقد» كوحدة
+          // دليل صلة قويّ. غير ضارّ على الفهرس القديم بلا هذا الحقل (لا مطابقة، لا خطأ).
+          { match: { "title.phrase": { query: q, boost: 6 } } },
+          { match: { "content.phrase": { query: q, boost: 5 } } },
+          { match: { "judgmentText.phrase": { query: q, boost: 4 } } },
+          { match: { "principleText.phrase": { query: q, boost: 4 } } },
           // مطابقة جزئية (OR) للاسترجاع الواسع بأوزان أقل.
           { match: { title: { query: q, boost: 3 } } },
           { match: { judgmentTitle: { query: q, boost: 3 } } },

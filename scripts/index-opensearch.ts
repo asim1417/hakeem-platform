@@ -21,15 +21,21 @@ const ANALYSIS = {
   filter: {
     arabic_stop: { type: "stop", stopwords: "_arabic_" },
     arabic_stem: { type: "stemmer", language: "arabic" },
+    // [طبقة العبارات] عبارات متلاصقة ثنائية (bigrams) فقط — لمطابقة المصطلح القانوني كوحدة
+    // («فسخ العقد» لا «فسخ»…«عقد» متناثرتين). output_unigrams=false: الحقل .phrase عبارات فقط.
+    legal_shingle: { type: "shingle", min_shingle_size: 2, max_shingle_size: 2, output_unigrams: false },
   },
   analyzer: {
     hakeem_arabic: { type: "custom", tokenizer: "standard", filter: ["decimal_digit", "arabic_normalization", "lowercase", "arabic_stop", "arabic_stem"] },
     hakeem_arabic_exact: { type: "custom", tokenizer: "standard", filter: ["decimal_digit", "arabic_normalization", "lowercase"] },
+    // محلّل العبارات: نفس السلسلة + shingle في النهاية (تجذيع ثم تلاصق) للحقل الفرعي .phrase.
+    hakeem_arabic_shingle: { type: "custom", tokenizer: "standard", filter: ["decimal_digit", "arabic_normalization", "lowercase", "arabic_stop", "arabic_stem", "legal_shingle"] },
   },
 } as const;
 
-const TEXT_AR = { type: "text", analyzer: "hakeem_arabic" } as const;
-const TEXT_AR_EXACT = { type: "text", analyzer: "hakeem_arabic", fields: { exact: { type: "text", analyzer: "hakeem_arabic_exact" } } } as const;
+// حقل نصّي عربي + حقل فرعي .phrase (عبارات متلاصقة) لرفع دقّة المصطلحات المركّبة.
+const TEXT_AR = { type: "text", analyzer: "hakeem_arabic", fields: { phrase: { type: "text", analyzer: "hakeem_arabic_shingle" } } } as const;
+const TEXT_AR_EXACT = { type: "text", analyzer: "hakeem_arabic", fields: { exact: { type: "text", analyzer: "hakeem_arabic_exact" }, phrase: { type: "text", analyzer: "hakeem_arabic_shingle" } } } as const;
 
 const ARTICLE_INDEX_BODY = {
   settings: { index: { number_of_shards: 1, number_of_replicas: 0 }, analysis: ANALYSIS },
@@ -155,7 +161,7 @@ async function main() {
           select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, reviewStatus: true },
           orderBy: { id: "asc" }, skip, take,
         }),
-        (r) => ({ type: "ruling", id: r.id, judgmentTitle: r.judgmentTitle ?? r.decisionNo ?? r.caseNo, judgmentText: (r.judgmentText ?? "").slice(0, 8000), court: r.court, status: r.reviewStatus }),
+        (r) => ({ type: "ruling", id: r.id, judgmentTitle: r.judgmentTitle ?? r.decisionNo ?? r.caseNo, judgmentText: (r.judgmentText ?? "").slice(0, 20000), court: r.court, status: r.reviewStatus }),
         off, Math.min(BATCH, rulingTotal - off)
       );
       ri += i; rs += s;
