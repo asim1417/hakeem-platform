@@ -244,6 +244,9 @@ async function openSearchArticleScores(query: string, take: number): Promise<Map
           // تغطية كاملة عالية الوزن (نفس إصلاح «فسخ»).
           { match: { title: { query: q, operator: "and", boost: 8 } } },
           { match: { content: { query: q, operator: "and", boost: 6 } } },
+          // [طبقة العبارات] الحقل الفرعي .phrase (عبارات متلاصقة) — غير ضارّ على الفهرس القديم.
+          { match: { "title.phrase": { query: q, boost: 6 } } },
+          { match: { "content.phrase": { query: q, boost: 5 } } },
           // مطابقة جزئية (OR) للاسترجاع الواسع.
           { match: { title: { query: q, boost: 3 } } },
           { match: { content: { query: q, boost: 2 } } },
