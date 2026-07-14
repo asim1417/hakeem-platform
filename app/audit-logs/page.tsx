@@ -32,11 +32,11 @@ export default async function AuditLogsPage() {
             <table className="w-full min-w-[760px] border-collapse text-right text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
-                  <th>نوع العملية</th>
-                  <th>الوحدة</th>
-                  <th>الوصف</th>
-                  <th>المستخدم</th>
-                  <th>التاريخ</th>
+                  <th scope="col">نوع العملية</th>
+                  <th scope="col">الوحدة</th>
+                  <th scope="col">الوصف</th>
+                  <th scope="col">المستخدم</th>
+                  <th scope="col">التاريخ</th>
                 </tr>
               </thead>
               <tbody>

@@ -57,21 +57,21 @@ export default async function LegalAgentPage({
       />
 
       <form className="card mt-6 grid gap-3" action="/dashboard/legal-agent">
-        <textarea name="caseFacts" defaultValue={caseFacts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
+        <textarea name="caseFacts" aria-label="وقائع الدعوى" defaultValue={caseFacts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
         <div className="grid gap-3 md:grid-cols-3">
-          <select name="partyRole" defaultValue={partyRole ?? ""} className={inputCls}>
+          <select name="partyRole" aria-label="صفة الطرف" defaultValue={partyRole ?? ""} className={inputCls}>
             <option value="">دور الموكِّل…</option>
             <option value="PLAINTIFF">مدّعٍ</option>
             <option value="DEFENDANT">مدّعى عليه</option>
           </select>
-          <input name="caseType" defaultValue={caseType} placeholder="نوع القضية (تجاري/تنفيذي…)" className={inputCls} />
-          <input name="jurisdiction" defaultValue={jurisdiction} placeholder="جهة الاختصاص (المحكمة)" className={inputCls} />
+          <input name="caseType" aria-label="نوع القضية" defaultValue={caseType} placeholder="نوع القضية (تجاري/تنفيذي…)" className={inputCls} />
+          <input name="jurisdiction" aria-label="جهة الاختصاص" defaultValue={jurisdiction} placeholder="جهة الاختصاص (المحكمة)" className={inputCls} />
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          <textarea name="claims" defaultValue={claims} rows={2} placeholder="طلبات المدعي (اختياري)..." className={inputCls} />
-          <textarea name="defenses" defaultValue={defenses} rows={2} placeholder="دفوع الخصم (اختياري)..." className={inputCls} />
+          <textarea name="claims" aria-label="طلبات المدعي" defaultValue={claims} rows={2} placeholder="طلبات المدعي (اختياري)..." className={inputCls} />
+          <textarea name="defenses" aria-label="دفوع الخصم" defaultValue={defenses} rows={2} placeholder="دفوع الخصم (اختياري)..." className={inputCls} />
         </div>
-        <textarea name="documents" defaultValue={documents.join("\n")} rows={2} placeholder="المستندات (سطر لكل مستند، اختياري)..." className={inputCls} />
+        <textarea name="documents" aria-label="المستندات" defaultValue={documents.join("\n")} rows={2} placeholder="المستندات (سطر لكل مستند، اختياري)..." className={inputCls} />
         <div>
           <button type="submit" className="btn btn-gold">
             <Scale size={16} /> حلّل وخطّط

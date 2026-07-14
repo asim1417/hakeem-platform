@@ -226,13 +226,13 @@ export function CoreIntelligenceDashboard() {
           void runSearch();
         }}
       >
-        <select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)} className="rounded-md border border-gray-300 px-2 py-2 text-sm">
+        <select value={mode} aria-label="نمط البحث" onChange={(e) => setMode(e.target.value as typeof mode)} className="rounded-md border border-gray-300 px-2 py-2 text-sm">
           {SEARCH_MODES.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </select>
         <input
-          value={q}
+          value={q} aria-label="بحث النواة القانونية"
           onChange={(e) => setQ(e.target.value)}
           placeholder="ابحث في النواة القانونية…"
           className="min-w-[220px] flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -242,12 +242,12 @@ export function CoreIntelligenceDashboard() {
 
       {(systems.length > 0 || classes.length > 0) && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <select value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)} className="rounded-md border border-gray-300 px-2 py-1.5">
+          <select value={systemFilter} aria-label="تصفية بالنظام" onChange={(e) => setSystemFilter(e.target.value)} className="rounded-md border border-gray-300 px-2 py-1.5">
             <option value="">كل الأنظمة</option>
             {systems.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           {classes.length > 0 && (
-            <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="rounded-md border border-gray-300 px-2 py-1.5">
+            <select value={classFilter} aria-label="تصفية بالتصنيف" onChange={(e) => setClassFilter(e.target.value)} className="rounded-md border border-gray-300 px-2 py-1.5">
               <option value="">كل التصنيفات</option>
               {classes.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>

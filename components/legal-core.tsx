@@ -78,13 +78,13 @@ export function LegalCoreSearchBar({ systems, defaultQuery, defaultSystem }: { s
         <label className="relative">
           <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--gold)]" />
           <input
-            name="q"
+            name="q" aria-label="بحث النواة القانونية"
             defaultValue={defaultQuery}
             className="w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] py-3 pl-4 pr-12 leading-7 outline-none focus:border-[var(--gold)]"
             placeholder="ابحث في نص المادة أو رقمها أو موضوعها..."
           />
         </label>
-        <select name="system" defaultValue={defaultSystem ?? ""} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+        <select name="system" aria-label="النظام" defaultValue={defaultSystem ?? ""} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
           <option value="">كل الأنظمة</option>
           {systems.map((system) => (
             <option key={system.lawName} value={system.lawName}>

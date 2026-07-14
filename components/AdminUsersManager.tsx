@@ -104,12 +104,12 @@ export function AdminUsersManager({ initialUsers }: { initialUsers: UserItem[] }
             <table className="w-full min-w-[820px] border-collapse text-right text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
-                  <th>الاسم</th>
-                  <th>البريد</th>
-                  <th>الدور</th>
-                  <th>الحالة</th>
-                  <th>تاريخ الإضافة</th>
-                  <th>إجراء</th>
+                  <th scope="col">الاسم</th>
+                  <th scope="col">البريد</th>
+                  <th scope="col">الدور</th>
+                  <th scope="col">الحالة</th>
+                  <th scope="col">تاريخ الإضافة</th>
+                  <th scope="col">إجراء</th>
                 </tr>
               </thead>
               <tbody>

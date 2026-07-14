@@ -129,20 +129,20 @@ export default async function LegalCoreSearchPage({
             <label className="relative">
               <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--gold)]" />
               <input
-                name="q"
+                name="q" aria-label="بحث النواة القانونية"
                 defaultValue={query}
                 className="w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] py-3 pl-4 pr-12 leading-7 outline-none focus:border-[var(--gold)]"
                 placeholder="مثال: فسخ العقد، التعويض، الإثبات، اختصاص المحكمة..."
               />
             </label>
-            <select name="searchType" defaultValue={selectedSearchType} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+            <select name="searchType" aria-label="نوع البحث" defaultValue={selectedSearchType} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               {searchTypes.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
                 </option>
               ))}
             </select>
-            <select name="systemIds" defaultValue={selectedSystem} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+            <select name="systemIds" aria-label="النظام" defaultValue={selectedSystem} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               <option value="">كل الأنظمة</option>
               {systems.map((system) => (
                 <option key={system.id} value={system.id}>
@@ -157,7 +157,7 @@ export default async function LegalCoreSearchPage({
           </div>
 
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
-            <select name="category" defaultValue={selectedCategory} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+            <select name="category" aria-label="التصنيف القانوني" defaultValue={selectedCategory} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               <option value="">كل الأقسام القانونية</option>
               {legalCategories.map((category) => (
                 <option key={category} value={category}>
@@ -165,7 +165,7 @@ export default async function LegalCoreSearchPage({
                 </option>
               ))}
             </select>
-            <select name="sourceType" defaultValue={selectedSourceType} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+            <select name="sourceType" aria-label="نوع المصدر" defaultValue={selectedSourceType} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               <option value="article">مادة نظامية</option>
               <option value="hoqoqi_sql">مصدر حقوقي المستورد</option>
               <option value="explanation" disabled>شرح - لاحقًا</option>

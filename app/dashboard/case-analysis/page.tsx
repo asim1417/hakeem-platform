@@ -54,13 +54,13 @@ export default async function CaseAnalysisPage({
       />
 
       <form className="card mt-6 grid gap-3" action="/dashboard/case-analysis">
-        <textarea name="facts" defaultValue={facts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
+        <textarea name="facts" aria-label="وقائع الدعوى" defaultValue={facts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
         <div className="grid gap-3 md:grid-cols-2">
-          <textarea name="claims" defaultValue={claims} rows={2} placeholder="طلبات المدعي (اختياري)..." className={inputCls} />
-          <textarea name="defenses" defaultValue={defenses} rows={2} placeholder="دفوع المدعى عليه (اختياري)..." className={inputCls} />
+          <textarea name="claims" aria-label="طلبات المدعي" defaultValue={claims} rows={2} placeholder="طلبات المدعي (اختياري)..." className={inputCls} />
+          <textarea name="defenses" aria-label="دفوع المدعى عليه" defaultValue={defenses} rows={2} placeholder="دفوع المدعى عليه (اختياري)..." className={inputCls} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input name="caseType" defaultValue={caseType} placeholder="نوع القضية (تجاري/عمالي/مدني...)" className={`${inputCls} min-w-[220px] flex-1`} />
+          <input name="caseType" aria-label="نوع القضية" defaultValue={caseType} placeholder="نوع القضية (تجاري/عمالي/مدني...)" className={`${inputCls} min-w-[220px] flex-1`} />
           <button type="submit" className="btn btn-gold">
             <Scale size={16} /> حلّل القضية
           </button>

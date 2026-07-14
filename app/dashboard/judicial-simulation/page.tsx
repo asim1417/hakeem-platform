@@ -67,27 +67,27 @@ export default async function JudicialSimulationPage({
       </div>
 
       <form className="card mt-6 grid gap-3" action="/dashboard/judicial-simulation">
-        <textarea name="caseFacts" defaultValue={caseFacts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
+        <textarea name="caseFacts" aria-label="وقائع الدعوى" defaultValue={caseFacts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
         <div className="grid gap-3 md:grid-cols-4">
-          <select name="partyRole" defaultValue={partyRole ?? ""} className={inputCls}>
+          <select name="partyRole" aria-label="صفة الطرف" defaultValue={partyRole ?? ""} className={inputCls}>
             <option value="">دور المستخدم…</option>
             <option value="PLAINTIFF">مدّعٍ</option>
             <option value="DEFENDANT">مدّعى عليه</option>
           </select>
-          <input name="caseType" defaultValue={caseType} placeholder="نوع القضية (تجاري/تنفيذي…)" className={inputCls} />
-          <select name="litigationStage" defaultValue={litigationStage ?? ""} className={inputCls}>
+          <input name="caseType" aria-label="نوع القضية" defaultValue={caseType} placeholder="نوع القضية (تجاري/تنفيذي…)" className={inputCls} />
+          <select name="litigationStage" aria-label="مرحلة التقاضي" defaultValue={litigationStage ?? ""} className={inputCls}>
             <option value="">المرحلة الإجرائية…</option>
             <option value="FIRST_INSTANCE">ابتدائي</option>
             <option value="APPEAL">استئناف</option>
             <option value="CASSATION">تمييز</option>
           </select>
-          <input name="jurisdiction" defaultValue={jurisdiction} placeholder="جهة الاختصاص" className={inputCls} />
+          <input name="jurisdiction" aria-label="جهة الاختصاص" defaultValue={jurisdiction} placeholder="جهة الاختصاص" className={inputCls} />
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          <textarea name="claims" defaultValue={claims} rows={2} placeholder="طلبات المدعي (اختياري)..." className={inputCls} />
-          <textarea name="defenses" defaultValue={defenses} rows={2} placeholder="دفوع المدعى عليه (اختياري)..." className={inputCls} />
+          <textarea name="claims" aria-label="طلبات المدعي" defaultValue={claims} rows={2} placeholder="طلبات المدعي (اختياري)..." className={inputCls} />
+          <textarea name="defenses" aria-label="دفوع المدعى عليه" defaultValue={defenses} rows={2} placeholder="دفوع المدعى عليه (اختياري)..." className={inputCls} />
         </div>
-        <textarea name="evidenceSummary" defaultValue={evidenceSummary} rows={2} placeholder="ملخّص البيّنات (اختياري)..." className={inputCls} />
+        <textarea name="evidenceSummary" aria-label="ملخّص البيّنات" defaultValue={evidenceSummary} rows={2} placeholder="ملخّص البيّنات (اختياري)..." className={inputCls} />
         <div>
           <button type="submit" className="btn btn-gold">
             <Gavel size={16} /> ابدأ المحاكاة القضائية

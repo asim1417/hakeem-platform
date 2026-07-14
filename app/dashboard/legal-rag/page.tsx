@@ -30,7 +30,7 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
 
       <form className="mt-6 flex flex-wrap items-center gap-2" action="/dashboard/legal-rag">
         <input
-          name="q"
+          name="q" aria-label="سؤال قانوني للبحث المُسنَد"
           defaultValue={q}
           placeholder="مثال: هل يجوز فسخ العقد بسبب الغبن؟"
           className="min-w-[300px] flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
