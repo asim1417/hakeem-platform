@@ -538,10 +538,11 @@ model LegalRelation {
 model Embedding {
   id        String                       @id @default(cuid())
   ownerType String                       @map("owner_type") // article | ruling | principle
-  ownerId   String                       @map("owner_id")
-  embedding Unsupported("vector(1536)")?
-  model     String                       @default("text-embedding-3-small")
-  createdAt DateTime                     @default(now()) @map("created_at")
+  ownerId     String                       @map("owner_id")
+  embedding   Unsupported("vector(1536)")?
+  model       String                       @default("text-embedding-3-small")
+  contentHash String?                      @map("content_hash") // sha256 لنصّ المصدر — لكشف التقادم وإعادة التضمين التزايُدية
+  createdAt   DateTime                     @default(now()) @map("created_at")
 
   @@unique([ownerType, ownerId])
   @@index([ownerType, ownerId])
