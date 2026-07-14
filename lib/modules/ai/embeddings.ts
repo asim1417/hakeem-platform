@@ -60,28 +60,38 @@ export async function embedText(text: string): Promise<number[] | null> {
 /** يولّد متجهات لدفعة نصوص (للـ backfill). يعيد مصفوفة بنفس الترتيب (null لكل فشل). */
 export async function embedBatch(texts: string[]): Promise<Array<number[] | null>> {
   const key = embeddingApiKey();
-  if (!key) return texts.map(() => null);
-  const inputs = texts.map((t) => (t || "").replace(/\s+/g, " ").trim().slice(0, 8000));
+  const out: Array<number[] | null> = texts.map(() => null);
+  if (!key) return out;
+
+  const cleaned = texts.map((t) => (t || "").replace(/\s+/g, " ").trim().slice(0, 8000));
+  // استبعاد المدخلات الفارغة قبل النداء: واجهة OpenAI ترفض أي إدخال فارغ (400)
+  // فتُفشل الدفعة كاملة — فيسقط نصّ فارغ واحد معه بقية الدفعة الصالحة. نُبقيها null.
+  const nonEmpty = cleaned.map((t, i) => ({ t, i })).filter((x) => x.t.length > 0);
+  if (!nonEmpty.length) return out;
+
   const baseUrl = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
   try {
     const response = await fetch(`${baseUrl.replace(/\/$/, "")}/embeddings`, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: EMBEDDING_MODEL, input: inputs })
+      body: JSON.stringify({ model: EMBEDDING_MODEL, input: nonEmpty.map((x) => x.t) })
     });
     if (!response.ok) {
       console.error("[embeddings:batch] HTTP", response.status);
-      return texts.map(() => null);
+      return out;
     }
     const payload = (await response.json()) as { data?: Array<{ embedding?: number[]; index?: number }> };
-    const out: Array<number[] | null> = texts.map(() => null);
     for (const item of payload.data ?? []) {
-      if (typeof item.index === "number" && Array.isArray(item.embedding)) out[item.index] = item.embedding;
+      // item.index موضعٌ ضمن المدخلات غير الفارغة — نُعيده لموضعه الأصلي.
+      if (typeof item.index === "number" && Array.isArray(item.embedding)) {
+        const original = nonEmpty[item.index]?.i;
+        if (typeof original === "number") out[original] = item.embedding;
+      }
     }
     return out;
   } catch (error) {
     console.error("[embeddings:batch] error:", error instanceof Error ? error.message : error);
-    return texts.map(() => null);
+    return out;
   }
 }
 
