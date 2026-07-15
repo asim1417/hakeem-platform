@@ -10,6 +10,7 @@ import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { LegalCoreCard, LegalCoreFilterPanel, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
+import { SearchModeTabs } from "@/components/search/SearchModeTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,9 @@ export default async function LegalCoreSearchPage({
             </Link>
           }
         />
+
+        {/* شريط أوضاع البحث الموحّد — تبديل بين الشامل والمتقدّم مع حفظ العبارة */}
+        <SearchModeTabs active="advanced" q={query} />
 
         <form action="/dashboard/legal-core/search" className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
           <div className="grid gap-3 xl:grid-cols-[1fr_220px_240px_auto]">
