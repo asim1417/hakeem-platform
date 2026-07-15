@@ -25,6 +25,8 @@ export default async function CaseAnalysisPage({
   const defenses = (searchParams.defenses ?? "").trim();
   const caseType = (searchParams.caseType ?? "").trim();
 
+  // إبطال الـno-op الصامت: إدخال أقصر من الحدّ يعرض تنبيهًا بدل إعادة تحميل صامتة.
+  const tooShort = facts.length > 0 && facts.length < 10;
   let result: CaseAnalysisResult | null = null;
   let failed = false;
   if (facts.length >= 10) {
@@ -66,6 +68,12 @@ export default async function CaseAnalysisPage({
           </button>
         </div>
       </form>
+
+      {tooShort && (
+        <div className="mt-6">
+          <LegalAlert tone="warning">وقائع الدعوى قصيرة جدًا — اكتب ١٠ أحرف فأكثر لبدء التحليل.</LegalAlert>
+        </div>
+      )}
 
       {failed && (
         <div className="mt-6">
