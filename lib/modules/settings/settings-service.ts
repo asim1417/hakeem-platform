@@ -5,8 +5,20 @@
 // إلى process.env عند إقلاع الخادم (instrumentation) — فتعمل كل قرّاء process.env الحاليين
 // دون تعديل. إضافيّ وآمن: إن غاب الجدول/المفتاح يبقى متغيّر البيئة (Vercel) هو المصدر.
 // ─────────────────────────────────────────────────────────────────────────────
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
 import { prisma } from "@/lib/prisma";
+
+// node:crypto محمّل بكسلٍ ومُخفى عمدًا عن مُحلِّل الحزم (webpack): هذه الوحدة Node-only
+// (تشفير AES-256-GCM) لكن instrumentation.ts يسحبها إلى رسم حزمة Edge أيضًا؛ والإخفاء
+// يمنع دخول node:crypto رسمَ Edge (حيث لا يتوفّر) — دون أي تغيير في منطق التشفير.
+// آمن: حارس NEXT_RUNTIME في instrumentation يمنع Edge من استدعاء أي دالّة هنا أصلاً،
+// وفي وقت Node يعيد require الحقيقيّ وحدةَ التشفير كاملةً.
+type NodeCrypto = typeof import("node:crypto");
+let _nodeCrypto: NodeCrypto | null = null;
+function nodeCrypto(): NodeCrypto {
+  // eslint-disable-next-line no-eval — indirect eval لجلب require الحقيقي بعيدًا عن التحزيم
+  if (!_nodeCrypto) _nodeCrypto = (0, eval)("require")("node:crypto") as NodeCrypto;
+  return _nodeCrypto;
+}
 
 // سجلّ المفاتيح التي تُدار من اللوحة (المجموعة + الوصف + هل هي سرّ).
 export type ManagedKey = { key: string; label: string; secret: boolean; group: string; placeholder?: string };
@@ -28,10 +40,11 @@ const SECRET_SET = new Set(MANAGED_KEYS.filter((k) => k.secret).map((k) => k.key
 // ── التشفير ──
 function encKey(): Buffer {
   const secret = process.env.SETTINGS_SECRET || process.env.AUTH_SECRET || "hakeem-settings-dev-only";
-  return scryptSync(secret, "hakeem-app-settings-salt", 32);
+  return nodeCrypto().scryptSync(secret, "hakeem-app-settings-salt", 32);
 }
 
 export function encryptValue(plain: string): string {
+  const { createCipheriv, randomBytes } = nodeCrypto();
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", encKey(), iv);
   const ct = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
@@ -43,7 +56,7 @@ export function decryptValue(stored: string): string | null {
   try {
     const [ivB, tagB, ctB] = stored.split(":");
     if (!ivB || !tagB || !ctB) return null;
-    const decipher = createDecipheriv("aes-256-gcm", encKey(), Buffer.from(ivB, "base64"));
+    const decipher = nodeCrypto().createDecipheriv("aes-256-gcm", encKey(), Buffer.from(ivB, "base64"));
     decipher.setAuthTag(Buffer.from(tagB, "base64"));
     return Buffer.concat([decipher.update(Buffer.from(ctB, "base64")), decipher.final()]).toString("utf8");
   } catch {
