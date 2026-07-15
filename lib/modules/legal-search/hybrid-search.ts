@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { parseArticleQuery } from "./query-parse";
+import { parseArticleQuery, normalizeArabicQuery } from "./query-parse";
 import { knowledgeGraphProvider } from "./providers/knowledge-graph-provider";
 import { opensearchProvider } from "./providers/opensearch-provider";
 import { postgresProvider } from "./providers/postgres-provider";
@@ -59,6 +59,21 @@ async function findExactArticleMatch(q: string): Promise<MergedResult | null> {
   if (!sys) {
     const longest = hint.split(/\s+/).filter((w) => w.length >= 4).sort((a, b) => b.length - a.length)[0];
     if (longest) sys = await findSystem(longest);
+  }
+  if (!sys) {
+    // سقوط مُطبَّع (الدفعة ١.٣): يتجاوز اختلاف الهمزة/التاء المربوطة/الألف المقصورة بين
+    // اسم النظام في الاستعلام واسمه في القاعدة — بمطابقة بعد التطبيع العربي الموحّد.
+    const systems = await prisma.legalSystem
+      .findMany({ select: { id: true, name: true }, orderBy: { articleCount: "desc" } })
+      .catch(() => [] as Array<{ id: string; name: string }>);
+    const nHint = normalizeArabicQuery(hint);
+    if (nHint.length >= 3) {
+      sys =
+        systems.find((s) => {
+          const nName = normalizeArabicQuery(s.name);
+          return nName.includes(nHint) || nHint.includes(nName);
+        }) ?? null;
+    }
   }
   if (!sys) return null;
 
