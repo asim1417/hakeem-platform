@@ -17,6 +17,43 @@ function embeddingApiKey(): string | null {
 }
 
 /**
+ * نداء واجهة التضمين مع إعادة محاولة عند 429 (حدّ المعدّل) و5xx — تراجع أُسّي
+ * يحترم رأس Retry-After. بدون هذا، أي 429 يُسقط الدفعة صامتة (كما حدث للأحكام).
+ * يعيد آخر استجابة بعد استنفاد المحاولات (ليسجّلها المتصل)، أو null عند خطأ شبكة.
+ */
+async function fetchEmbeddingsWithRetry(body: string, key: string, attempts = 5): Promise<Response | null> {
+  const baseUrl = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
+  const url = `${baseUrl.replace(/\/$/, "")}/embeddings`;
+  let delayMs = 1000;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body
+      });
+    } catch (error) {
+      if (attempt === attempts - 1) {
+        console.error("[embeddings] network error:", error instanceof Error ? error.message : error);
+        return null;
+      }
+      await new Promise((r) => setTimeout(r, delayMs));
+      delayMs = Math.min(delayMs * 2, 16000);
+      continue;
+    }
+    // ناجح أو خطأ عميل غير قابل لإعادة المحاولة (≠429 و<500) → أعِد الاستجابة فورًا.
+    if (res.status !== 429 && res.status < 500) return res;
+    if (attempt === attempts - 1) return res; // استُنفدت المحاولات — يسجّلها المتصل.
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : delayMs;
+    await new Promise((r) => setTimeout(r, waitMs));
+    delayMs = Math.min(delayMs * 2, 16000);
+  }
+  return null;
+}
+
+/**
  * هل البحث الدلالي مُفعّل ومتاح؟
  * مُفعَّل افتراضياً متى توفّر مفتاح التضمين (opt-out): لا يلزم ضبط SEMANTIC_SEARCH=true.
  * يُعطَّل صراحةً بـ SEMANTIC_SEARCH=false|0|off. وبلا مفتاح يبقى مُعطَّلاً (سقوط آمن للمعجمي).
@@ -37,51 +74,49 @@ export async function embedText(text: string): Promise<number[] | null> {
   const input = (text || "").replace(/\s+/g, " ").trim().slice(0, 8000);
   if (!input) return null;
 
-  const baseUrl = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
-  try {
-    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/embeddings`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: EMBEDDING_MODEL, input })
-    });
-    if (!response.ok) {
-      console.error("[embeddings] HTTP", response.status);
-      return null;
-    }
-    const payload = (await response.json()) as { data?: Array<{ embedding?: number[] }> };
-    const vector = payload.data?.[0]?.embedding;
-    return Array.isArray(vector) && vector.length ? vector : null;
-  } catch (error) {
-    console.error("[embeddings] error:", error instanceof Error ? error.message : error);
+  const response = await fetchEmbeddingsWithRetry(JSON.stringify({ model: EMBEDDING_MODEL, input }), key);
+  if (!response || !response.ok) {
+    if (response) console.error("[embeddings] HTTP", response.status);
     return null;
   }
+  const payload = (await response.json()) as { data?: Array<{ embedding?: number[] }> };
+  const vector = payload.data?.[0]?.embedding;
+  return Array.isArray(vector) && vector.length ? vector : null;
 }
 
 /** يولّد متجهات لدفعة نصوص (للـ backfill). يعيد مصفوفة بنفس الترتيب (null لكل فشل). */
 export async function embedBatch(texts: string[]): Promise<Array<number[] | null>> {
   const key = embeddingApiKey();
-  if (!key) return texts.map(() => null);
-  const inputs = texts.map((t) => (t || "").replace(/\s+/g, " ").trim().slice(0, 8000));
-  const baseUrl = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
+  const out: Array<number[] | null> = texts.map(() => null);
+  if (!key) return out;
+
+  const cleaned = texts.map((t) => (t || "").replace(/\s+/g, " ").trim().slice(0, 8000));
+  // استبعاد المدخلات الفارغة قبل النداء: واجهة OpenAI ترفض أي إدخال فارغ (400)
+  // فتُفشل الدفعة كاملة — فيسقط نصّ فارغ واحد معه بقية الدفعة الصالحة. نُبقيها null.
+  const nonEmpty = cleaned.map((t, i) => ({ t, i })).filter((x) => x.t.length > 0);
+  if (!nonEmpty.length) return out;
+
   try {
-    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/embeddings`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: EMBEDDING_MODEL, input: inputs })
-    });
-    if (!response.ok) {
-      console.error("[embeddings:batch] HTTP", response.status);
-      return texts.map(() => null);
+    const response = await fetchEmbeddingsWithRetry(
+      JSON.stringify({ model: EMBEDDING_MODEL, input: nonEmpty.map((x) => x.t) }),
+      key
+    );
+    if (!response || !response.ok) {
+      if (response) console.error("[embeddings:batch] HTTP", response.status);
+      return out;
     }
     const payload = (await response.json()) as { data?: Array<{ embedding?: number[]; index?: number }> };
-    const out: Array<number[] | null> = texts.map(() => null);
     for (const item of payload.data ?? []) {
-      if (typeof item.index === "number" && Array.isArray(item.embedding)) out[item.index] = item.embedding;
+      // item.index موضعٌ ضمن المدخلات غير الفارغة — نُعيده لموضعه الأصلي.
+      if (typeof item.index === "number" && Array.isArray(item.embedding)) {
+        const original = nonEmpty[item.index]?.i;
+        if (typeof original === "number") out[original] = item.embedding;
+      }
     }
     return out;
   } catch (error) {
     console.error("[embeddings:batch] error:", error instanceof Error ? error.message : error);
-    return texts.map(() => null);
+    return out;
   }
 }
 

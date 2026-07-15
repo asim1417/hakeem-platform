@@ -17,12 +17,12 @@ on:
         description: "الهدف (نوع المحتوى)"
         type: choice
         required: true
-        default: articles
+        default: all
         options:
+          - all
           - articles
           - rulings
           - principles
-          - all
       scope:
         description: "النطاق"
         type: choice

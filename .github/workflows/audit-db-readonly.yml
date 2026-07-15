@@ -41,7 +41,7 @@ jobs:
           mkdir -p audit-out
           FILES="data-inventory orphan-records duplicate-records missing-required-fields \
                  temporal-overlaps current-version-conflicts source-validation \
-                 content-anomalies search-readiness rag-readiness"
+                 content-anomalies search-readiness rag-readiness embedding-coverage-check"
           for name in $FILES; do
             f="audit/$name.sql"
             [ -f "$f" ] || { echo "تخطّي (غير موجود): $f"; continue; }

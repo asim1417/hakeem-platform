@@ -12,15 +12,23 @@
  *   npx tsx scripts/backfill-embeddings.ts --all      # يعيد توليد الكل
  *   npx tsx scripts/backfill-embeddings.ts --limit 500
  *
- * آمن للاستئناف: يتخطّى ما له متجه في الجدول (إلا مع --all). دفعات مع مهلة لاحترام حدود المعدّل.
+ * آمن للاستئناف: في الوضع التزايُدي يعيد التضمين فقط لِما لا متجه له، أو تغيّر نصّ مصدره
+ * (بمقارنة content_hash)، أو تغيّر نموذجه — وإلا يتخطّاه. مع --all يعيد توليد الكل.
+ * دفعات مع مهلة لاحترام حدود المعدّل.
  */
 
+import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { embedBatch, buildEmbeddingText, EMBEDDING_MODEL } from "@/lib/modules/ai/embeddings";
 import { hasValidDimension, buildVectorLiteral } from "@/lib/modules/legal-search/embedding-fallback";
 
 const BATCH = 64;
 const DIM = Number(process.env.EMBEDDING_DIMS || 1536);
+
+/** بصمة نصّ المصدر — تُخزَّن في content_hash لكشف التقادم (إعادة التضمين عند تغيّر النص). */
+function contentHash(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
+}
 
 function assertAlignmentConfirmed() {
   if (process.env.CONFIRM_RUNTIME_DB_ALIGNMENT !== "NEON_RUNTIME_CONFIRMED") {
@@ -33,17 +41,18 @@ function assertAlignmentConfirmed() {
 }
 
 /** UPSERT متجه إلى جدول pgvector «embeddings» لأي نوع مالك (article|ruling|principle). */
-async function upsertVector(ownerType: string, ownerId: string, literal: string): Promise<boolean> {
+async function upsertVector(ownerType: string, ownerId: string, literal: string, hash: string): Promise<boolean> {
   try {
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "embeddings" ("id","owner_type","owner_id","embedding","model","created_at")
-       VALUES (gen_random_uuid()::text, $1, $2, $3::vector, $4, now())
+      `INSERT INTO "embeddings" ("id","owner_type","owner_id","embedding","model","content_hash","created_at")
+       VALUES (gen_random_uuid()::text, $1, $2, $3::vector, $4, $5, now())
        ON CONFLICT ("owner_type","owner_id")
-       DO UPDATE SET "embedding" = EXCLUDED."embedding", "model" = EXCLUDED."model"`,
+       DO UPDATE SET "embedding" = EXCLUDED."embedding", "model" = EXCLUDED."model", "content_hash" = EXCLUDED."content_hash"`,
       ownerType,
       ownerId,
       literal,
-      EMBEDDING_MODEL
+      EMBEDDING_MODEL,
+      hash
     );
     return true;
   } catch {
@@ -51,13 +60,19 @@ async function upsertVector(ownerType: string, ownerId: string, literal: string)
   }
 }
 
-/** معرّفات مالكي نوع معيّن لهم متجه في الجدول فعلاً (لتخطّيهم في الوضع التزايدي). */
-async function ownerIdsWithVector(ownerType: string): Promise<Set<string>> {
-  const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string }>>(
-    `SELECT "owner_id" FROM "embeddings" WHERE "owner_type" = $1`,
-    ownerType
-  ).catch(() => [] as Array<{ owner_id: string }>);
-  return new Set(rows.map((r) => r.owner_id));
+type OwnerMeta = { hash: string | null; model: string | null };
+
+/** بصمة/نموذج مالكي نوع معيّن لهم متجه فعلاً — لتخطّي غير المتغيّر وإعادة تضمين المتقادم. */
+async function ownerMetaByType(ownerType: string): Promise<Map<string, OwnerMeta>> {
+  const rows = await prisma
+    .$queryRawUnsafe<Array<{ owner_id: string; content_hash: string | null; model: string | null }>>(
+      `SELECT "owner_id", "content_hash", "model" FROM "embeddings" WHERE "owner_type" = $1`,
+      ownerType
+    )
+    .catch(() => [] as Array<{ owner_id: string; content_hash: string | null; model: string | null }>);
+  const map = new Map<string, OwnerMeta>();
+  for (const r of rows) map.set(r.owner_id, { hash: r.content_hash, model: r.model });
+  return map;
 }
 
 // مواصفة نوع للفهرسة: كيف نعدّه، كيف نصفحه، وكيف نبني نصّ التضمين.
@@ -70,7 +85,7 @@ type BackfillSpec = {
 
 /** فهرسة عامّة لنوع واحد: تزايديّة (تتخطّى ما له متجه) أو كاملة (--all). */
 async function backfillType(spec: BackfillSpec, all: boolean, max: number) {
-  const existing = all ? new Set<string>() : await ownerIdsWithVector(spec.ownerType);
+  const existing = all ? new Map<string, OwnerMeta>() : await ownerMetaByType(spec.ownerType);
   const total = await spec.count();
   console.log(
     `${spec.label}: ${total.toLocaleString("ar-SA")} | لها متجه: ${existing.size.toLocaleString("ar-SA")} | النموذج: ${EMBEDDING_MODEL} | البُعد: ${DIM}`
@@ -83,13 +98,19 @@ async function backfillType(spec: BackfillSpec, all: boolean, max: number) {
     if (!rows.length) break;
     cursor = rows[rows.length - 1].id;
 
-    const pending = all ? rows : rows.filter((r) => !existing.has(r.id));
+    // الوضع التزايُدي: يُعاد التضمين فقط إذا لم يوجد متجه، أو تغيّر نصّ المصدر (hash)، أو تغيّر النموذج.
+    const pending = all
+      ? rows
+      : rows.filter((r) => {
+          const meta = existing.get(r.id);
+          return !meta || meta.hash !== contentHash(r.text) || meta.model !== EMBEDDING_MODEL;
+        });
     if (pending.length) {
       const vectors = await embedBatch(pending.map((r) => r.text));
       for (let i = 0; i < pending.length && processed + i < max; i += 1) {
         const vec = vectors[i] ?? null;
         if (!hasValidDimension(vec, DIM)) { skippedDim += 1; continue; }
-        const ok = await upsertVector(spec.ownerType, pending[i].id, buildVectorLiteral(vec));
+        const ok = await upsertVector(spec.ownerType, pending[i].id, buildVectorLiteral(vec), contentHash(pending[i].text));
         ok ? (updated += 1) : (failed += 1);
       }
       await new Promise((r) => setTimeout(r, 250)); // مهلة بسيطة لحدود المعدّل

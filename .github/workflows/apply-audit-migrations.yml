@@ -68,11 +68,15 @@ jobs:
       - name: "② تطبيق فهارس الأداء (HNSW + search_norm GIN)"
         run: psql "$PGURL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260712120000_search_performance_indexes/migration.sql
 
+      - name: "③ إضافة عمود content_hash لكشف تقادم التضمين"
+        run: psql "$PGURL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260712130000_embeddings_content_hash/migration.sql
+
       - name: "تحقّق: الفهارس/القيد أُنشئت"
         run: |
           echo "— article_versions —"
           psql "$PGURL" -c "\d article_versions" | grep -i "one_current" || echo "(لم يظهر الفهرس الفريد — راجع)"
           echo "— embeddings —"
           psql "$PGURL" -c "SELECT indexname FROM pg_indexes WHERE tablename='embeddings';"
+          psql "$PGURL" -c "SELECT column_name FROM information_schema.columns WHERE table_name='embeddings' AND column_name='content_hash';"
           echo "— legal_articles search_norm —"
           psql "$PGURL" -c "SELECT column_name FROM information_schema.columns WHERE table_name='legal_articles' AND column_name='search_norm';"
