@@ -68,3 +68,31 @@ export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<Sea
 
   return out.slice(0, limit);
 }
+
+/**
+ * اقتراحات «هل تقصد؟» عند صفر نتائج — تصحيح إملائي عبر word_similarity (pg_trgm)
+ * على مفردات مختصرة موثوقة: أسماء الأنظمة + مصطلحات المعجم. يُشغَّل فقط على الاستعلامات
+ * التي لم تُرجِع نتائج (نادر)، فمسح الجدولين الصغيرين مقبول. آمن: أي خطأ يُعيد [].
+ */
+export async function getDidYouMeanSuggestions(qRaw: string, limit = 4): Promise<string[]> {
+  const q = qRaw.trim();
+  if (q.length < 2) return [];
+  const take = Math.max(1, Math.min(limit, 8));
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ candidate: string; sim: number }>>(
+      `SELECT candidate, MAX(sim) AS sim FROM (
+         SELECT "name" AS candidate, word_similarity($1, "name") AS sim FROM "legal_systems"
+         UNION ALL
+         SELECT "term" AS candidate, word_similarity($1, "term") AS sim FROM "glossary_terms"
+       ) t
+       WHERE sim > 0.35 AND lower(candidate) <> lower($1)
+       GROUP BY candidate
+       ORDER BY sim DESC
+       LIMIT ${take}`,
+      q
+    );
+    return rows.map((r) => r.candidate).filter((v) => typeof v === "string" && v.trim().length > 0);
+  } catch {
+    return []; // pg_trgm غير مفعّل أو جدول مفقود — سقوط آمن
+  }
+}
