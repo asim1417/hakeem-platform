@@ -204,7 +204,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             <div className="reading-hideable flex flex-wrap items-center gap-2">
               <LegalCopyButton text={content} label="نسخ نص المادة" />
               <LegalCopyButton text={officialCitation} label="نسخ الإحالة" />
-              <button className="btn btn-outline" type="button"><Pencil size={16} /> تحرير</button>
+              <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Pencil size={16} /> تحرير</button>
               <Link className="btn btn-gold" href={`/dashboard/simulations?article=${article.id}`}><Scale size={16} /> استخدام في القاضي حكيم</Link>
               <Link className="btn ho-hero-outline" href={`/dashboard/consultations?article=${article.id}`}><FileText size={16} /> استخدام في الاستشارة</Link>
             </div>
@@ -273,8 +273,8 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">الحالة</dt><dd><LegalTopicBadge tone={statusTone(article.status)}>{article.status || "سارية"}</LegalTopicBadge></dd></div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button className="btn btn-outline" type="button"><Link2 size={16} /> ربط بمسألة</button>
-                <button className="btn btn-outline" type="button"><Scale size={16} /> ربط بحكم</button>
+                <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Link2 size={16} /> ربط بمسألة</button>
+                <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Scale size={16} /> ربط بحكم</button>
               </div>
             </LegalCoreCard>
 
