@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import { DEFENSE_CATEGORY_LABELS } from "@/lib/modules/case-analysis/defense-classifier";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
+import { AiToolTabs } from "@/components/ai/AiToolTabs";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,8 @@ export default async function CaseAnalysisPage({
           </>
         }
       />
+
+      <AiToolTabs active="case-analysis" />
 
       <form className="card mt-6 grid gap-3" action="/dashboard/case-analysis">
         <textarea name="facts" aria-label="وقائع الدعوى" defaultValue={facts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />

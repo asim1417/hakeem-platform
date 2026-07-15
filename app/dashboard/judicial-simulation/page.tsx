@@ -3,6 +3,7 @@ import { Scale, Gavel } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { runJudicialSimulation } from "@/lib/modules/judicial-simulation/judicial-simulation";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
+import { AiToolTabs } from "@/components/ai/AiToolTabs";
 import type { LitigationStage, SimulatedJudicialView } from "@/lib/modules/judicial-simulation/types";
 import type { PartyRole } from "@/lib/modules/legal-agent/types";
 
@@ -59,6 +60,8 @@ export default async function JudicialSimulationPage({
           </>
         }
       />
+
+      <AiToolTabs active="judicial-simulation" />
 
       <div className="mt-6">
         <LegalAlert tone="warning">

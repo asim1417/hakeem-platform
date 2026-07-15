@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { runLegalAgent } from "@/lib/modules/legal-agent/legal-agent";
 import { DEFENSE_CATEGORY_LABELS } from "@/lib/modules/case-analysis/defense-classifier";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
+import { AiToolTabs } from "@/components/ai/AiToolTabs";
 import type { LegalActionPlan, PartyRole } from "@/lib/modules/legal-agent/types";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,8 @@ export default async function LegalAgentPage({
           </>
         }
       />
+
+      <AiToolTabs active="legal-agent" />
 
       <form className="card mt-6 grid gap-3" action="/dashboard/legal-agent">
         <textarea name="caseFacts" aria-label="وقائع الدعوى" defaultValue={caseFacts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
