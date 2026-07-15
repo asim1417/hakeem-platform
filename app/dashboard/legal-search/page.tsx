@@ -9,6 +9,7 @@ import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { articleStatusBadge, type StatusTone } from "@/lib/modules/legal-core/article-status";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
+import { SearchModeTabs } from "@/components/search/SearchModeTabs";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { TurathSourcesPanel } from "@/components/turath/TurathSourcesPanel";
 
@@ -203,8 +204,13 @@ export default async function LegalSearchPage({
         description="بحث موحّد عبر الأنظمة والمواد والأحكام والمبادئ في آنٍ واحد — يجمع البحث النصّي والدلالي والعلائقي ويرتّب النتائج حسب الصلة. ابحث أولاً ثم ضيّق بالفلاتر."
       />
 
+      {/* شريط أوضاع البحث الموحّد — تبديل بين الشامل والمتقدّم مع حفظ العبارة */}
+      <div className="mt-6">
+        <SearchModeTabs active="comprehensive" q={q} />
+      </div>
+
       {/* صندوق البحث المركزي مع الإكمال التلقائي */}
-      <div className="card mt-6">
+      <div className="card mt-3">
         <SearchAutocomplete
           defaultValue={q}
           autoFocus
