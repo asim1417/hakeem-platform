@@ -64,9 +64,19 @@ export function semanticSearchEnabled(): boolean {
   return !off && Boolean(embeddingApiKey());
 }
 
+// تخزين مؤقّت (في الذاكرة) لمتجه الاستعلام. مفتاحه = النموذج + النصّ المُطبَّع، فالمتجه
+// المُعاد **مطابق تمامًا** لِما ستعيده الشبكة → لا فرق في الترتيب أو النتائج (تحسين سرعة بحت).
+// الفائدتان: (١) توحيد النداءات **المتزامنة** المتطابقة (النواة + الهجين في الطلب الواحد
+// يشتركان بنداء شبكي واحد بدل اثنين)، (٢) خدمة الاستعلامات المكرّرة فورًا دون شبكة.
+// نُخزّن الوعد نفسه (لتوحيد النداءات الطائرة)، ولا نُخزّن الفشل (نسمح بإعادة المحاولة).
+type EmbedCacheEntry = { at: number; promise: Promise<number[] | null> };
+const EMBED_CACHE = new Map<string, EmbedCacheEntry>();
+const EMBED_TTL_MS = 5 * 60_000;
+const EMBED_CACHE_MAX = 500;
+
 /**
  * يولّد متجهاً لنصّ واحد عبر OpenAI embeddings (متوافق مع المزوّدات المشابهة).
- * يعيد null عند غياب المفتاح أو أي فشل (سقوط آمن).
+ * يعيد null عند غياب المفتاح أو أي فشل (سقوط آمن). مُخزَّن مؤقتًا (نفس المتجه بالضبط).
  */
 export async function embedText(text: string): Promise<number[] | null> {
   const key = embeddingApiKey();
@@ -74,14 +84,33 @@ export async function embedText(text: string): Promise<number[] | null> {
   const input = (text || "").replace(/\s+/g, " ").trim().slice(0, 8000);
   if (!input) return null;
 
-  const response = await fetchEmbeddingsWithRetry(JSON.stringify({ model: EMBEDDING_MODEL, input }), key);
-  if (!response || !response.ok) {
-    if (response) console.error("[embeddings] HTTP", response.status);
-    return null;
+  const cacheKey = `${EMBEDDING_MODEL}:${input}`;
+  const now = Date.now();
+  const cached = EMBED_CACHE.get(cacheKey);
+  if (cached && now - cached.at < EMBED_TTL_MS) return cached.promise;
+
+  const promise = (async (): Promise<number[] | null> => {
+    const response = await fetchEmbeddingsWithRetry(JSON.stringify({ model: EMBEDDING_MODEL, input }), key);
+    if (!response || !response.ok) {
+      if (response) console.error("[embeddings] HTTP", response.status);
+      EMBED_CACHE.delete(cacheKey); // لا نُخزّن الفشل
+      return null;
+    }
+    const payload = (await response.json()) as { data?: Array<{ embedding?: number[] }> };
+    const vector = payload.data?.[0]?.embedding;
+    if (!(Array.isArray(vector) && vector.length)) {
+      EMBED_CACHE.delete(cacheKey);
+      return null;
+    }
+    return vector;
+  })();
+
+  if (EMBED_CACHE.size >= EMBED_CACHE_MAX) {
+    const oldest = EMBED_CACHE.keys().next().value; // إزالة الأقدم (حدّ حجم بسيط)
+    if (oldest !== undefined) EMBED_CACHE.delete(oldest);
   }
-  const payload = (await response.json()) as { data?: Array<{ embedding?: number[] }> };
-  const vector = payload.data?.[0]?.embedding;
-  return Array.isArray(vector) && vector.length ? vector : null;
+  EMBED_CACHE.set(cacheKey, { at: now, promise });
+  return promise;
 }
 
 /** يولّد متجهات لدفعة نصوص (للـ backfill). يعيد مصفوفة بنفس الترتيب (null لكل فشل). */

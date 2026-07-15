@@ -24,9 +24,14 @@ const ARTICLE_CAP = 25;
 const RULING_CAP = 15;
 const PRINCIPLE_CAP = 10;
 
-// عدد المطابقات المُعتبَرة لحساب الأوجه (facets) — أوسع من سقف العرض كي تعكس الأعداد
-// المجموعةَ الكاملة للمطابقات لا صفحةَ العرض فقط (إصلاح الأوجه المبتورة، الدفعة ١.٥).
+// عمق حساب الأوجه (facets) — أوسع من سقف العرض كي تعكس الأعداد المجموعةَ الكاملة للمطابقات
+// لا صفحةَ العرض فقط (إصلاح الأوجه المبتورة، الدفعة ١.٥).
 const FACET_FETCH = 200;
+
+// عمق **تجسيد** مواد النواة (جلب النصّ + بناء المقتطف) — صغير لأن العرض مسقوف بـ ARTICLE_CAP.
+// الأوجه تُحسب داخل النواة على العمق الكامل (خفيفة، بلا تجسيد)، فلا حاجة لتجسيد ٢٠٠ صفًّا
+// كي نعرض ٢٥ — تحسين سرعة لا يمسّ الترتيب ولا أعداد الأوجه (تحسين الأداء، بلا تغيّر نتائج).
+const ARTICLE_MATERIALIZE = 50;
 
 export type FacetValue = { value: string; count: number };
 export interface ComprehensiveFacets {
@@ -120,9 +125,14 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
   // المواد من النواة (٥ إشارات، دلالي مُفعّل)؛ والأحكام/المبادئ من الهجين (يحمل court/year + RRF).
   // نجلب حتى FACET_FETCH (لا سقف العرض) كي تُحسب الأوجه على المجموعة الكاملة لا صفحة العرض.
   const [core, hybrid] = await Promise.all([
-    searchLegalCore({ query, limit: Math.max(limit, FACET_FETCH), includeSnippets: true, semantic: true }).catch(
-      () => null
-    ),
+    searchLegalCore({
+      query,
+      limit: Math.max(limit, ARTICLE_MATERIALIZE), // تجسيد صفحة صغيرة فقط (لا ٢٠٠)
+      includeSnippets: true,
+      semantic: true,
+      includeFacets: true, // النواة تحسب الأوجه على العمق الكامل (خفيفة) وتعيدها
+      facetDepth: FACET_FETCH,
+    }).catch(() => null),
     hybridSearch({ q: query, limit: Math.max(limit, FACET_FETCH) }).catch(() => null),
   ]);
 
@@ -158,12 +168,14 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
     { items: principles, priority: 1 },
   ]);
 
-  // الأوجه (facets): تُحسب على المجموعة الكاملة (حتى FACET_FETCH) لا على صفحة العرض المسقوفة.
+  // الأوجه (facets): المواد من النواة (مُحسوبة على العمق الكامل خفيفةً داخلها)، والأحكام من
+  // الهجين. سقوط آمن إلى العدّ على المُجسَّد إن غابت أوجه النواة. الأعداد مطابقة للسابق.
   const allRulings = hybridResults.filter((r) => r.type === "ruling");
+  const cf = core?.facetCounts;
   const facets: ComprehensiveFacets = {
-    system: countBy(coreResults, (a) => a.systemName),
-    classification: countBy(coreResults, (a) => a.classification),
-    status: countBy(coreResults, (a) => a.status),
+    system: cf?.system ?? countBy(coreResults, (a) => a.systemName),
+    classification: cf?.classification ?? countBy(coreResults, (a) => a.classification),
+    status: cf?.status ?? countBy(coreResults, (a) => a.status),
     court: countBy(allRulings, (r) => metaField(r, "court")),
     year: countBy(allRulings, (r) => metaField(r, "year")).sort((a, b) => Number(b.value) - Number(a.value)),
   };
