@@ -90,7 +90,18 @@ export type AdvancedLegalSearchOptions = {
    * افتراضياً مُفعّلة حين يُضبَط العنقود (كِلّ-سويتش: CORE_OPENSEARCH=0). سقوط آمن عند غيابه.
    */
   openSearch?: boolean;
+  /**
+   * يحسب أعداد الأوجه (نظام/تصنيف/حالة) على المجموعة المرتّبة الكاملة (صفوف **خفيفة** بلا
+   * تجسيد نصّ/مقتطف) ويعيدها في `facetCounts`. يفصل **عمق الأوجه** عن **عمق العرض**: تبقى
+   * الأعداد دقيقة مع تجسيد صفحة صغيرة فقط — فلا نبني مقتطفات لمئات الصفوف غير المعروضة.
+   */
+  includeFacets?: boolean;
+  /** عمق حساب الأوجه ضمن المجموعة المرتّبة (افتراضي: كل المجموعة). */
+  facetDepth?: number;
 };
+
+export type CoreFacetValue = { value: string; count: number };
+export type CoreFacetCounts = { system: CoreFacetValue[]; classification: CoreFacetValue[]; status: CoreFacetValue[] };
 
 export type AdvancedLegalSearchResponse = {
   query: string;
@@ -103,6 +114,8 @@ export type AdvancedLegalSearchResponse = {
   relatedTerms: string[];
   message?: string;
   results: LegalCoreResult[];
+  /** أعداد الأوجه على المجموعة المرتّبة الكاملة (تُحسب فقط عند includeFacets). */
+  facetCounts?: CoreFacetCounts;
 };
 
 type LegalArticleWithSystem = Awaited<ReturnType<typeof prisma.legalArticle.findFirst>> & {
@@ -334,6 +347,25 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
   }
 }
 
+/** عدّاد قيَم مرتّب تنازليًا (يتجاهل الفارغ) — لأوجه النواة على الصفوف الخفيفة. */
+function countCoreBy(rows: LegalCoreResult[], get: (r: LegalCoreResult) => string | null | undefined): CoreFacetValue[] {
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    const v = (get(r) ?? "").toString().trim();
+    if (v) map.set(v, (map.get(v) ?? 0) + 1);
+  }
+  return [...map.entries()].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
+}
+
+/** يحسب أوجه النظام/التصنيف/الحالة على المجموعة المرتّبة (خفيفة، بلا تجسيد نصّ). */
+function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
+  return {
+    system: countCoreBy(rows, (r) => r.systemName),
+    classification: countCoreBy(rows, (r) => r.classification),
+    status: countCoreBy(rows, (r) => r.status),
+  };
+}
+
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
@@ -537,6 +569,13 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // عند المسار الاحتياطي شديد الاتساع نُبلّغ الإجماليّ الحقيقي من القاعدة (count) بصدق،
   // ونعلّم exhaustive=false كي تعرف الواجهة أن ما بعد المجموعة المرتّبة غير مضمون الترتيب.
   const effectiveTotal = query ? (exhaustive ? relevant.length : Math.max(relevant.length, total)) : total;
+
+  // أعداد الأوجه (اختياري) على المجموعة المرتّبة **الخفيفة** قبل التجسيد — فتبقى الأعداد
+  // دقيقة (على عمق facetDepth) بينما نُجسِّد صفحة صغيرة فقط. لا تجسيد نصّ هنا.
+  const facetCounts = options.includeFacets
+    ? computeCoreFacets(relevant.slice(0, Math.max(1, options.facetDepth ?? relevant.length)))
+    : undefined;
+
   const start = (page - 1) * limit;
   const pageSlice = relevant.slice(start, start + limit);
   // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
@@ -566,6 +605,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     limit,
     relatedTerms: options.includeRelatedTerms ? variants.slice(0, 24) : [],
     results: displayResults,
+    facetCounts,
     message: effectiveTotal ? undefined : noLegalArticleMessage
   };
 }
