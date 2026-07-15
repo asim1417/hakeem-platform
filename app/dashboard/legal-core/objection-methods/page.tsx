@@ -97,7 +97,7 @@ export default async function ObjectionMethodsPage() {
                     <span className="grid h-10 w-10 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] font-judicial text-lg text-[var(--gold-bright)]">
                       {route.badge}
                     </span>
-                    <h3 className="font-display-ar text-lg font-bold text-[var(--navy)] group-hover:text-[var(--gold-dark,#9a7636)]">{route.name}</h3>
+                    <h3 className="font-display-ar text-lg font-bold text-[var(--navy)] group-hover:text-[var(--gold-dark)]">{route.name}</h3>
                   </div>
                   <dl className="mt-4 space-y-2 text-sm leading-6">
                     <Row label="الجهة الناظرة" value={route.court} />
@@ -234,7 +234,7 @@ function NoteList({ notes }: { notes: ArticleNote[] }) {
     <ul className="space-y-3">
       {notes.map((note) => (
         <li key={note.article} className="flex items-start gap-3 text-sm leading-7 text-[var(--ink)]">
-          <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-0.5 font-judicial text-xs font-bold text-[var(--gold-dark,#9a7636)]">
+          <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-0.5 font-judicial text-xs font-bold text-[var(--gold-dark)]">
             {note.article}
           </span>
           <span>{note.text}</span>

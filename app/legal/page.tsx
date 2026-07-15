@@ -45,14 +45,14 @@ export default async function LegalIndexPage() {
         <h1 className="text-3xl font-bold md:text-4xl">الأنظمة القانونية السعودية</h1>
         <p className="mt-3 max-w-3xl leading-8 text-gray-700">
           مطالعة عامة لنصوص الأنظمة ومَوادّها مع الإسناد الرسمي. {systems.length.toLocaleString("ar-SA")} نظامًا متاحًا للمطالعة.
-          للتكامل البرمجي راجع <Link href="/developers" className="font-semibold text-[#0B1F3A] underline">واجهة المطوّرين</Link>.
+          للتكامل البرمجي راجع <Link href="/developers" className="font-semibold text-[var(--navy)] underline">واجهة المطوّرين</Link>.
         </p>
       </header>
 
       {groups.map((g) => (
         <section key={g.title} className="mt-8">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-[#0B1F3A]">
-            <span className="h-4 w-1 rounded bg-[#C09B5A]" />
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--navy)]">
+            <span className="h-4 w-1 rounded bg-[var(--gold)]" />
             {g.title}
             <span className="text-xs font-normal text-gray-400">({g.items.length.toLocaleString("ar-SA")})</span>
           </h2>
@@ -61,7 +61,7 @@ export default async function LegalIndexPage() {
               <li key={s.id}>
                 <Link
                   href={`/legal/${encodeURIComponent(resolveSystemSlug(s.eliSlug, s.name))}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-[#C09B5A]/25 bg-white px-4 py-3 transition hover:border-[#C09B5A] hover:shadow-sm"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-[#C09B5A]/25 bg-white px-4 py-3 transition hover:border-[var(--gold)] hover:shadow-sm"
                 >
                   <span className="font-semibold">{s.name}</span>
                   <span className="shrink-0 text-xs text-gray-500">{s.articleCount.toLocaleString("ar-SA")} مادة</span>

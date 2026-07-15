@@ -15,7 +15,7 @@ function useLogout() {
 export function LogoutButton() {
   const logout = useLogout();
   return (
-    <button type="button" onClick={() => void logout()} className="focus-ring mt-3 w-full rounded-md border border-[#C09B5A]/30 px-3 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#E8D5A8]/30">
+    <button type="button" onClick={() => void logout()} className="focus-ring mt-3 w-full rounded-md border border-[#C09B5A]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D5A8]/30">
       تسجيل الخروج
     </button>
   );

@@ -78,11 +78,11 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
         <h1 className="mt-2 text-3xl font-bold">المادة {n.toLocaleString("ar-SA")}</h1>
         {article.title && article.title !== String(n) ? <p className="mt-2 text-lg text-gray-700">{article.title}</p> : null}
 
-        <div className="mt-6 whitespace-pre-wrap rounded-xl border border-[#C09B5A]/25 bg-white p-6 text-lg leading-9 text-[#0B1F3A]">
+        <div className="mt-6 whitespace-pre-wrap rounded-xl border border-[#C09B5A]/25 bg-white p-6 text-lg leading-9 text-[var(--navy)]">
           {content}
         </div>
 
-        <div className="mt-4 rounded-lg border border-[#C09B5A]/40 bg-[#FBF6EA] p-4 text-sm leading-7 text-[#0B1F3A]">
+        <div className="mt-4 rounded-lg border border-[#C09B5A]/40 bg-[#FBF6EA] p-4 text-sm leading-7 text-[var(--navy)]">
           <p><b>الاستناد الرسمي:</b> {citation}</p>
           <p className="mt-1 font-mono text-xs" dir="ltr"><b>ELI:</b> {eli}</p>
           <p className="mt-2 text-xs text-gray-600">النصّ النظامي هو المصدر الأصلي؛ يُرجى التحقّق من مصدره الرسمي عند الاعتماد.</p>
@@ -92,7 +92,7 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
           {prev ? (
             <Link href={`/legal/${encodeURIComponent(slug)}/${prev.articleNumber}`} className="rounded-md border border-[#C09B5A]/40 px-4 py-2 font-semibold hover:bg-[#C09B5A]/10">← المادة {prev.articleNumber.toLocaleString("ar-SA")}</Link>
           ) : <span />}
-          <Link href={`/legal/${encodeURIComponent(slug)}`} className="rounded-md px-4 py-2 text-[#0B1F3A] hover:underline">كل مواد النظام</Link>
+          <Link href={`/legal/${encodeURIComponent(slug)}`} className="rounded-md px-4 py-2 text-[var(--navy)] hover:underline">كل مواد النظام</Link>
           {next ? (
             <Link href={`/legal/${encodeURIComponent(slug)}/${next.articleNumber}`} className="rounded-md border border-[#C09B5A]/40 px-4 py-2 font-semibold hover:bg-[#C09B5A]/10">المادة {next.articleNumber.toLocaleString("ar-SA")} →</Link>
           ) : <span />}

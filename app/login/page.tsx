@@ -22,7 +22,7 @@ export default function LoginPage({ searchParams }: { searchParams: { next?: str
       <div className="w-full max-w-md">
         {oauthError ? <div className="mb-4"><LegalAlert tone="danger">{oauthError}</LegalAlert></div> : null}
         <LoginForm nextUrl={nextUrl} googleEnabled={isGoogleOAuthConfigured()} />
-        <p className="mt-4 rounded-md border border-[#C09B5A]/25 bg-[#FBF8F1] p-4 text-sm leading-7 text-[#0B1F3A]">
+        <p className="mt-4 rounded-md border border-[#C09B5A]/25 bg-[var(--parchment)] p-4 text-sm leading-7 text-[var(--navy)]">
           الدخول محمي بجلسة خادمية وكلمة مرور مشفرة. عند تعطيل المستخدم من الإدارة لن يستطيع تسجيل الدخول.
         </p>
       </div>

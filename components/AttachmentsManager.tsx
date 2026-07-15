@@ -186,7 +186,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
                     <td className="px-4 py-3">{new Date(item.createdAt).toLocaleString("ar-SA")}</td>
                     <td className="px-4 py-3">
                       {item.storageMode === "azure-blob" ? (
-                        <a href={`/api/attachments/${item.id}/download`} className="focus-ring ml-2 rounded-md border border-[#C09B5A]/30 px-3 py-2 text-[#0B1F3A]">
+                        <a href={`/api/attachments/${item.id}/download`} className="focus-ring ml-2 rounded-md border border-[#C09B5A]/30 px-3 py-2 text-[var(--navy)]">
                           تنزيل
                         </a>
                       ) : null}

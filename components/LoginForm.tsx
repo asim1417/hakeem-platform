@@ -35,7 +35,7 @@ export function LoginForm({ nextUrl = "/dashboard", googleEnabled = false }: { n
     <LegalCard eyebrow="حكيم" title="تسجيل الدخول">
       <div className="space-y-4">
         <label className="block">
-          <span className="text-sm font-semibold text-[#0B1F3A]">البريد الإلكتروني</span>
+          <span className="text-sm font-semibold text-[var(--navy)]">البريد الإلكتروني</span>
           <input
             dir="ltr"
             type="email"
@@ -45,7 +45,7 @@ export function LoginForm({ nextUrl = "/dashboard", googleEnabled = false }: { n
           />
         </label>
         <label className="block">
-          <span className="text-sm font-semibold text-[#0B1F3A]">كلمة المرور</span>
+          <span className="text-sm font-semibold text-[var(--navy)]">كلمة المرور</span>
           <input
             dir="ltr"
             type="password"
@@ -68,7 +68,7 @@ export function LoginForm({ nextUrl = "/dashboard", googleEnabled = false }: { n
             </div>
             <a
               href={`/api/auth/google?next=${encodeURIComponent(nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard")}`}
-              className="focus-ring flex w-full items-center justify-center gap-3 rounded-md border border-[#C09B5A]/35 bg-white px-4 py-3 font-semibold text-[#0B1F3A] transition hover:bg-[#FBF8F1]"
+              className="focus-ring flex w-full items-center justify-center gap-3 rounded-md border border-[#C09B5A]/35 bg-white px-4 py-3 font-semibold text-[var(--navy)] transition hover:bg-[var(--parchment)]"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
                 <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.71-1.57 2.68-3.89 2.68-6.62z" />
