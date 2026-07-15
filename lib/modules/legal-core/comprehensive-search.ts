@@ -82,6 +82,23 @@ function articleToMerged(a: LegalCoreResult, confidence: number): MergedResult {
   };
 }
 
+/** ثابت RRF القياسي (Cormack et al. 2009) — نفس القيمة المستعملة في الدمج الهجين. */
+const RRF_K = 60;
+
+/**
+ * دمج متعدّد الأنواع بـ Reciprocal Rank Fusion على **الرتبة داخل النوع**.
+ * كل نوع محفوظ ترتيبه الداخلي (من محرّكه المُوالَف)؛ نعطيه درجة موحّدة قابلة للمقارنة
+ * = 1/(K + رتبته داخل نوعه). فيتشابك أعلى كل نوع بإنصاف بلا مقارنة درجات غير متجانسة.
+ * التعادل يُكسَر بأولوية النوع (المواد أولاً) ثم بالثقة الأصلية — فالترتيب حتميّ ومستقرّ.
+ */
+function interleaveByRRF(groups: Array<{ items: MergedResult[]; priority: number }>): MergedResult[] {
+  const scored = groups.flatMap(({ items, priority }) =>
+    items.map((item, rank) => ({ item, priority, unified: 1 / (RRF_K + rank + 1) }))
+  );
+  scored.sort((a, b) => b.unified - a.unified || b.priority - a.priority || b.item.confidence - a.item.confidence);
+  return scored.map((s) => s.item);
+}
+
 /** يطبّع درجات النواة (غير محدودة) إلى ثقة عرض [0..1] نسبةً لأعلى نتيجة في المجموعة. */
 function normalizeArticleConfidence(results: LegalCoreResult[]): Map<string, number> {
   const max = results.reduce((m, r) => Math.max(m, r.relevanceScore), 0) || 1;
@@ -128,8 +145,18 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
   const rulings = hybridResults.filter((r) => r.type === "ruling").slice(0, RULING_CAP);
   const principles = hybridResults.filter((r) => r.type === "principle").slice(0, PRINCIPLE_CAP);
 
-  // الدمج: نرتّب كل نوع بثقته ثم نجمع (الصفحة تتولّى التبويب/الفلترة/الترتيب النهائي).
-  const results = [...articles, ...rulings, ...principles].sort((a, b) => b.confidence - a.confidence);
+  // الدمج الموحّد (الدفعة ١.٤): كل نوع يأتي بترتيبه الداخلي من محرّكه المُوالَف
+  //   • المواد   → ترتيب النواة (٥ إشارات) — لا نمسّه.
+  //   • الأحكام/المبادئ → ترتيب RRF من الهجين — لا نمسّه.
+  // المشكلة المُصحَّحة: الفرز السابق كان يقارن ثقة المواد (مُطبَّعة على النواة) بثقة
+  // الأحكام (مُطبَّعة على RRF) — مقياسان غير متجانسين. نوحّدهما بـ RRF على **الرتبة داخل
+  // النوع** (المعيار العالمي لدمج مصادر غير متجانسة الدرجات): درجة موحّدة = 1/(K+رتبة).
+  // فيتشابك أعلى كل نوع بإنصاف، مع حفظ الترتيب الداخلي، وكسر التعادل بأولوية المواد.
+  const results = interleaveByRRF([
+    { items: articles, priority: 3 },
+    { items: rulings, priority: 2 },
+    { items: principles, priority: 1 },
+  ]);
 
   // الأوجه (facets): تُحسب على المجموعة الكاملة (حتى FACET_FETCH) لا على صفحة العرض المسقوفة.
   const allRulings = hybridResults.filter((r) => r.type === "ruling");
