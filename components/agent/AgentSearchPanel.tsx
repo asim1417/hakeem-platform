@@ -10,7 +10,7 @@ type Turn = {
   question: string;
   steps: Step[];
   answer: string | null;
-  mode?: "live" | "offline";
+  mode?: "live" | "offline" | "intent";
   basis: LegalBasisItem[] | null;
   total: number;
   message?: string;
@@ -202,23 +202,25 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                     <div className="mb-3 flex items-center gap-2">
                       <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
                       <span className="text-sm font-bold text-[var(--navy)]">إجابة حكيم</span>
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                        style={
-                          turn.mode === "live"
-                            ? { color: "var(--emerald)", background: "var(--emerald-soft)" }
-                            : { color: "var(--amber)", background: "var(--amber-soft)" }
-                        }
-                        title={turn.mode === "live" ? "صياغة ذكية مستندة للمواد" : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"}
-                      >
-                        {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
-                      </span>
+                      {turn.mode !== "intent" ? (
+                        <span
+                          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                          style={
+                            turn.mode === "live"
+                              ? { color: "var(--emerald)", background: "var(--emerald-soft)" }
+                              : { color: "var(--amber)", background: "var(--amber-soft)" }
+                          }
+                          title={turn.mode === "live" ? "صياغة ذكية مستندة للمواد" : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"}
+                        >
+                          {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
                   </div>
                 ) : null}
 
-                {turn.basis !== null ? (
+                {turn.basis !== null && turn.mode !== "intent" ? (
                   turn.basis.length ? (
                     <LegalBasisPanel
                       items={turn.basis}
