@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { LoginPopover } from "@/components/home/LoginPopover";
+import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 
 export const dynamic = "force-dynamic";
 
@@ -38,21 +39,15 @@ export default async function PublicSearchPage({
       </header>
 
       <div className="mx-auto max-w-4xl px-5 py-6">
-        {/* صندوق البحث */}
-        <form action="/search" className="flex items-center gap-2 rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-white p-2 shadow-[var(--sh-sm)] focus-within:border-[var(--gold)]">
-          <span aria-hidden className="ms-2 text-xl text-[var(--ink-40)]">⌕</span>
-          <input
-            name="q"
+        {/* صندوق البحث الموحّد (نفس مكوّن لوحة التحكم) — يرسل إلى /search للزائر */}
+        <div dir="rtl">
+          <SearchAutocomplete
+            action="/search"
             defaultValue={query}
             autoFocus={!query}
-            aria-label="بحث قانوني"
             placeholder="اكتب رقم مادة، اسم نظام، رقم قضية، أو وصف واقعة..."
-            className="h-11 w-full border-0 bg-transparent px-1 text-base text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
-          <button type="submit" className="focus-ring shrink-0 rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)]">
-            ابحث
-          </button>
-        </form>
+        </div>
 
         {/* لافتة الزائر */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-3">

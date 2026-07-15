@@ -15,11 +15,14 @@ export function SearchAutocomplete({
   placeholder = "ابحث في الأنظمة والمواد والأحكام…",
   autoFocus = false,
   className = "",
+  action = "/dashboard/legal-search",
 }: {
   defaultValue?: string;
   placeholder?: string;
   autoFocus?: boolean;
   className?: string;
+  /** وجهة إرسال النموذج — تُتيح إعادة استخدام الصندوق الموحّد في أكثر من سطح (عام/لوحة). */
+  action?: string;
 }) {
   const [q, setQ] = useState(defaultValue);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -81,7 +84,7 @@ export function SearchAutocomplete({
 
   return (
     <div ref={boxRef} className={`relative ${className}`}>
-      <form action="/dashboard/legal-search" role="search">
+      <form action={action} role="search">
         <div className="flex flex-wrap items-center gap-2">
           <div
             className="flex flex-1 items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 focus-within:border-[var(--gold)] focus-within:ring-2 focus-within:ring-[var(--gold-ghost)]"
