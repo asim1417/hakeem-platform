@@ -185,6 +185,16 @@ export default async function LegalSearchPage({
   };
   const typeHref = (typeKey: string) => buildHref({ type: typeKey });
 
+  // رقائق الفلاتر النشطة (قابلة للإزالة فرديًا): تمرير قيمة فارغة يحذف الفلتر عبر buildHref.
+  const activeFilterChips: Array<{ label: string; href: string }> = [
+    ...(activeType !== "all" ? [{ label: `النوع: ${FILTERS.find((f) => f.key === activeType)?.label ?? activeType}`, href: buildHref({ type: "all" }) }] : []),
+    ...(activeSystem ? [{ label: `النظام: ${activeSystem}`, href: buildHref({ system: "" }) }] : []),
+    ...(activeCourt ? [{ label: `المحكمة: ${activeCourt}`, href: buildHref({ court: "" }) }] : []),
+    ...(activeClassification ? [{ label: `التصنيف: ${activeClassification}`, href: buildHref({ classification: "" }) }] : []),
+    ...(activeStatus ? [{ label: `الحالة: ${activeStatus}`, href: buildHref({ status: "" }) }] : []),
+    ...(activeYear ? [{ label: `السنة: ${activeYear}`, href: buildHref({ year: "" }) }] : []),
+  ];
+
   return (
     <div dir="rtl">
       <LegalPageHeader
@@ -318,6 +328,27 @@ export default async function LegalSearchPage({
             </Link>
           )}
         </form>
+      )}
+
+      {/* رقائق الفلاتر النشطة — إزالة فردية بنقرة (×) + مسح الكل */}
+      {activeFilterChips.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="الفلاتر النشطة">
+          <span className="text-xs text-[var(--ink-60)]">الفلاتر النشطة:</span>
+          {activeFilterChips.map((chip) => (
+            <Link
+              key={chip.label}
+              href={chip.href}
+              className="inline-flex items-center gap-1 rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-1 text-xs text-[var(--navy)] transition hover:bg-[var(--gold-pale)]"
+              aria-label={`إزالة الفلتر ${chip.label}`}
+            >
+              {chip.label}
+              <X size={12} aria-hidden />
+            </Link>
+          ))}
+          <Link href={buildHref({ type: "all", system: "", court: "", classification: "", status: "", year: "" })} className="text-xs text-[var(--ruby)] underline">
+            مسح الكل
+          </Link>
+        </div>
       )}
 
       {/* شريط الترتيب + مشاركة الرابط (يظهر مع النتائج) */}
