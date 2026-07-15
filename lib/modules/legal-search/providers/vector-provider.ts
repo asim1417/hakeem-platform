@@ -68,7 +68,8 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
         score,
         source: "vector",
         reason: `تشابه دلالي (${(score * 100).toFixed(0)}%)`,
-        meta: { matchedBy: "semantic", semanticSource: "embeddings_table", sourceType: type },
+        // نمرّر التشابه الخام (cosine) صراحةً كي تُشتقّ الثقة من التشابه الفعلي لا من رتبة RRF (الدفعة ١.٤).
+        meta: { matchedBy: "semantic", semanticSource: "embeddings_table", sourceType: type, similarity: score },
       });
     }
     return results;
@@ -116,6 +117,7 @@ async function searchViaArticleEmbeddings(q: string, vec: number[], limit: numbe
         articleId: id,
         systemName: meta.systemName,
         articleNumber: meta.articleNumber,
+        similarity: score, // التشابه الخام (cosine) — مصدر الثقة الدلالية الحقيقي (الدفعة ١.٤).
       },
     });
   }
