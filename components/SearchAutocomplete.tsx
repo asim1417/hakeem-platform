@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Search, BookText, TrendingUp } from "lucide-react";
+import { Search, BookText, TrendingUp, Clock } from "lucide-react";
 
-type Suggestion = { value: string; kind: "system" | "popular"; hint?: string };
+type Suggestion = { value: string; kind: "system" | "popular" | "recent"; hint?: string };
 
 /**
  * صندوق بحث مع إكمال تلقائي حيّ من /api/legal-search/suggest.
@@ -30,7 +30,8 @@ export function SearchAutocomplete({
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) {
+    // صندوق فارغ وغير مركَّز: لا شيء. فارغ ومركَّز: نجلب سجل البحث الأخير (q فارغ).
+    if (term.length < 2 && !open) {
       setItems([]);
       return;
     }
@@ -49,7 +50,7 @@ export function SearchAutocomplete({
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [q]);
+  }, [q, open]);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -123,7 +124,7 @@ export function SearchAutocomplete({
           className="absolute z-30 mt-1 w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white shadow-[var(--sh-md)]"
         >
           {items.map((s, i) => {
-            const Icon = s.kind === "system" ? BookText : TrendingUp;
+            const Icon = s.kind === "system" ? BookText : s.kind === "recent" ? Clock : TrendingUp;
             return (
               <li
                 key={`${s.kind}:${s.value}`}
