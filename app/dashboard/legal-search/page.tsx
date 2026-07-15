@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Search, FileText, Scale, Quote, ExternalLink, Filter, X, ArrowDownWideNarrow } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
-import { searchLegalCoreComprehensive } from "@/lib/modules/legal-core/comprehensive-search";
+import { searchLegalCoreComprehensive, type ComprehensiveResponse } from "@/lib/modules/legal-core/comprehensive-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { articleStatusBadge, type StatusTone } from "@/lib/modules/legal-core/article-status";
@@ -84,7 +84,7 @@ export default async function LegalSearchPage({
   const activeSort = SORTS.some((s) => s.key === searchParams.sort) ? searchParams.sort! : "relevance";
   const highlightTerms = joinSearchTerms(q);
 
-  let data: HybridSearchResponse | null = null;
+  let data: ComprehensiveResponse | null = null;
   let failed = false;
   if (q.length >= 2) {
     try {
@@ -119,12 +119,14 @@ export default async function LegalSearchPage({
   // تسهيلات الفلترة (من كامل النتائج كي لا تختفي الخيارات)
   const articleRows = all.filter((r) => r.type === "article");
   const rulingRows = all.filter((r) => r.type === "ruling");
-  const systemFacets = facetsOf(articleRows, "systemName");
-  const classificationFacets = facetsOf(articleRows, "classification");
-  const statusFacets = facetsOf(articleRows, "status");
-  const courtFacets = facetsOf(rulingRows, "court");
+  // الأوجه: تُفضَّل الأعداد الخادمية المحسوبة على المجموعة الكاملة (الدفعة ١.٥)، ومع
+  // غيابها (سقوط) نعود لحسابها من نتائج العرض كي لا تختفي الخيارات.
+  const systemFacets = data?.facets?.system ?? facetsOf(articleRows, "systemName");
+  const classificationFacets = data?.facets?.classification ?? facetsOf(articleRows, "classification");
+  const statusFacets = data?.facets?.status ?? facetsOf(articleRows, "status");
+  const courtFacets = data?.facets?.court ?? facetsOf(rulingRows, "court");
   // سنوات الأحكام مرتّبة تنازليًا (الأحدث أولاً).
-  const yearFacets = facetsOf(rulingRows, "year").sort((a, b) => Number(b.value) - Number(a.value));
+  const yearFacets = data?.facets?.year ?? facetsOf(rulingRows, "year").sort((a, b) => Number(b.value) - Number(a.value));
 
   // الفلترة: النوع + النظام/التصنيف/الحالة (تضيّق المواد) + المحكمة/السنة (تضيّق الأحكام)
   const filtered = all.filter((r) => {
