@@ -60,7 +60,7 @@ export function RolePermissionsEditor({ initialMatrix }: { initialMatrix: RoleMa
                         type="button"
                         disabled={busy === id}
                         onClick={() => toggle(row.role, cell.permission, !cell.granted)}
-                        className={`ms-auto rounded px-2 py-0.5 text-xs ${
+                        className={`ms-auto rounded px-3 py-1.5 text-xs ${
                           cell.granted ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"
                         } ${busy === id ? "opacity-50" : ""}`}
                       >

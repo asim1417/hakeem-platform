@@ -76,9 +76,9 @@ const data = await res.json();`}
             <table className="w-full min-w-[680px] border-collapse text-right text-sm">
               <thead>
                 <tr className="border-b border-black/10 bg-[#F3EEE2] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
-                  <th className="w-20">الطريقة</th>
-                  <th>المسار</th>
-                  <th>الوظيفة</th>
+                  <th scope="col" className="w-20">الطريقة</th>
+                  <th scope="col">المسار</th>
+                  <th scope="col">الوظيفة</th>
                 </tr>
               </thead>
               <tbody>

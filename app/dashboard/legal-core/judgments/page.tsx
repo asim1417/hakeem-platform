@@ -150,17 +150,17 @@ export default async function LegalCoreJudgmentsPage({
             <label className="relative">
               <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--gold)]" />
               <input
-                name="q"
+                name="q" aria-label="بحث الأحكام"
                 defaultValue={query}
                 className="w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] py-3 pl-4 pr-12 leading-7 outline-none focus:border-[var(--gold)]"
                 placeholder="ابحث في عنوان الحكم أو نص الحكم أو رقم القضية..."
               />
             </label>
-            <select name="court" defaultValue={court} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+            <select name="court" aria-label="المحكمة" defaultValue={court} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               <option value="">كل المحاكم</option>
               {courts.map((item) => (item.court ? <option key={item.court} value={item.court}>{item.court}</option> : null))}
             </select>
-            <select name="city" defaultValue={city} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+            <select name="city" aria-label="المدينة" defaultValue={city} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               <option value="">كل المدن</option>
               {cities.map((item) => (item.cityName ? <option key={item.cityName} value={item.cityName}>{item.cityName}</option> : null))}
             </select>

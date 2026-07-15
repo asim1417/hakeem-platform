@@ -113,13 +113,13 @@ export function AdminApiKeysManager({ initialKeys, scopes }: { initialKeys: KeyI
             <table className="w-full min-w-[820px] border-collapse text-right text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
-                  <th>الاسم</th>
-                  <th>البادئة</th>
-                  <th>النطاقات</th>
-                  <th>الحدّ</th>
-                  <th>الحالة</th>
-                  <th>آخر استخدام</th>
-                  <th>إجراء</th>
+                  <th scope="col">الاسم</th>
+                  <th scope="col">البادئة</th>
+                  <th scope="col">النطاقات</th>
+                  <th scope="col">الحدّ</th>
+                  <th scope="col">الحالة</th>
+                  <th scope="col">آخر استخدام</th>
+                  <th scope="col">إجراء</th>
                 </tr>
               </thead>
               <tbody>

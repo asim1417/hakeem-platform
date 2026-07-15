@@ -80,7 +80,7 @@ export function AdminSettingsForm({ initial }: { initial: SettingStatus[] }) {
                   </div>
                   <input
                     dir="ltr"
-                    type={s.secret ? "password" : "text"}
+                    type={s.secret ? "password" : "text"} aria-label={s.label}
                     autoComplete="off"
                     placeholder={s.hasValue ? "•••• (اترك فارغًا للإبقاء)" : s.placeholder ?? "أدخل القيمة"}
                     value={edits[s.key] ?? ""}
