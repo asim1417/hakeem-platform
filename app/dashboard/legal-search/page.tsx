@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { searchLegalCoreComprehensive, type ComprehensiveResponse } from "@/lib/modules/legal-core/comprehensive-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
+import { getDidYouMeanSuggestions } from "@/lib/modules/legal-search/suggestions";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { articleStatusBadge, type StatusTone } from "@/lib/modules/legal-core/article-status";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
@@ -107,6 +108,9 @@ export default async function LegalSearchPage({
       failed = true;
     }
   }
+
+  // «هل تقصد؟»: تصحيح إملائي يُحسب فقط عند صفر نتائج خام (لا عند فراغٍ سببه الفلاتر).
+  const didYouMean = q.length >= 2 && data && data.results.length === 0 ? await getDidYouMeanSuggestions(q) : [];
 
   const all = data?.results ?? [];
   const counts: Record<string, number> = {
@@ -377,6 +381,22 @@ export default async function LegalSearchPage({
         <div className="mt-5 space-y-3">
           {results.length === 0 ? (
             <div className="card text-center">
+              {didYouMean.length > 0 ? (
+                <div className="mb-4">
+                  <p className="text-sm text-[var(--ink-60)]">هل تقصد؟</p>
+                  <div className="mt-2 flex flex-wrap justify-center gap-2">
+                    {didYouMean.map((s) => (
+                      <Link
+                        key={s}
+                        href={`/dashboard/legal-search?q=${encodeURIComponent(s)}`}
+                        className="rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-1 text-sm text-[var(--navy)] transition hover:bg-[var(--gold-pale)]"
+                      >
+                        {s}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <p className="t-display font-bold text-[var(--navy)]">لا توجد نتائج مطابقة</p>
               <p className="mt-2 text-sm text-[var(--ink-60)]">جرّب كلمات أعمّ، أو أزل الفلتر، أو أعد صياغة السؤال.</p>
             </div>
