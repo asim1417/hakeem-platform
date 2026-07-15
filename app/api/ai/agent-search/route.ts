@@ -14,6 +14,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { searchLegalCore, getArticlesByNumber } from "@/lib/modules/legal-core/legal-retrieval";
 import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
+import { classifyIntent, intentNeedsSearch } from "@/lib/modules/agents/intent-gate";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,6 +48,24 @@ export async function POST(request: NextRequest) {
     async start(controller) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
       try {
+        // 0) بوّابة النيّة (المرحلة ١): قبل أي بحث — تحية/شكر/تعريف/خارج النطاق → ردّ مباشر
+        //    بلا بحث (يحلّ «السلام عليكم → مواد عشوائية»). السؤال القانوني فقط يمرّ.
+        const intent = classifyIntent(query);
+        if (!intentNeedsSearch(intent.type)) {
+          send({ type: "step", id: "intent", status: "done", label: "فهمت رسالتك", data: { intent: intent.type } });
+          send({
+            type: "result",
+            answer: intent.reply ?? null,
+            mode: "intent",
+            basis: [],
+            total: 0,
+            intent: intent.type,
+            message: undefined,
+          });
+          send({ type: "done" });
+          return;
+        }
+
         // 1) تحليل السؤال (استخراج المصطلحات والأرقام)
         send({ type: "step", id: "analyze", status: "running", label: "أحلّل سؤالك" });
         const numbers = (query.match(/\d+/g) ?? []).map(Number).filter((n) => n > 0).slice(0, 3);

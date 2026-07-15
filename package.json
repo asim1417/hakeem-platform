@@ -121,7 +121,8 @@
     "extract:lexicon": "tsx scripts/extract-hoqoqi-lexicon.ts",
     "test:lexicon": "tsx scripts/test-lexicon-expansion.ts",
     "test:legal-graph": "tsx scripts/test-legal-graph-parser.ts",
-    "seed:legal-graph": "tsx scripts/seed-legal-graph.ts"
+    "seed:legal-graph": "tsx scripts/seed-legal-graph.ts",
+    "test:intent-gate": "tsx scripts/test-intent-gate.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
