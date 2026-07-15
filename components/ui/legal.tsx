@@ -26,7 +26,13 @@ export function LegalAlert({ children, tone = "info" }: { children: ReactNode; t
     warning: "border-[rgba(184,114,26,.25)] bg-[var(--amber-soft)] text-[var(--amber)]",
     danger: "border-[rgba(140,34,51,.25)] bg-[var(--ruby-soft)] text-[var(--ruby)]"
   }[tone];
-  return <p className={`rounded-[var(--r-md)] border p-4 leading-7 ${cls}`}>{children}</p>;
+  // aria-live: التنبيهات الحرجة (خطأ/تحذير) تُعلَن فورًا (assertive)، والبقية بلطف (polite).
+  const assertive = tone === "danger" || tone === "warning";
+  return (
+    <p role={assertive ? "alert" : "status"} aria-live={assertive ? "assertive" : "polite"} className={`rounded-[var(--r-md)] border p-4 leading-7 ${cls}`}>
+      {children}
+    </p>
+  );
 }
 
 export function LegalPageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
