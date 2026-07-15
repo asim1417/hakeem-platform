@@ -168,7 +168,7 @@ export function AdminApiKeysManager({ initialKeys, scopes }: { initialKeys: KeyI
 function Field({ label, value, onChange, dir = "rtl", placeholder }: { label: string; value: string; onChange: (value: string) => void; dir?: "rtl" | "ltr"; placeholder?: string }) {
   return (
     <label>
-      <span className="text-sm font-semibold text-[#0B1F3A]">{label}</span>
+      <span className="text-sm font-semibold text-[var(--navy)]">{label}</span>
       <input value={value} dir={dir} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C09B5A]/25 px-4 py-3" />
     </label>
   );

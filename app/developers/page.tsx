@@ -26,10 +26,10 @@ const card = "rounded-2xl border border-[var(--gold-border,rgba(192,155,90,.28))
 
 export default function DevelopersPage() {
   return (
-    <main dir="rtl" className="min-h-screen bg-[linear-gradient(180deg,#FBF8F1,#F3EEE2)] text-[#0B1F3A]">
+    <main dir="rtl" className="min-h-screen bg-[linear-gradient(180deg,var(--parchment),#F3EEE2)] text-[var(--navy)]">
       <div className="mx-auto max-w-5xl px-6 py-14">
         {/* Hero */}
-        <header className="rounded-3xl border border-[rgba(192,155,90,.22)] bg-[linear-gradient(135deg,#0B1F3A,#13294B)] p-10 text-white shadow-lg">
+        <header className="rounded-3xl border border-[rgba(192,155,90,.22)] bg-[linear-gradient(135deg,var(--navy),#13294B)] p-10 text-white shadow-lg">
           <p className="text-sm font-semibold tracking-wide text-[#D9C08A]">حكيم · واجهة المطوّرين</p>
           <h1 className="mt-3 text-4xl font-bold leading-tight md:text-5xl">API المعرفة القانونية السعودية</h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-white/80">
@@ -37,7 +37,7 @@ export default function DevelopersPage() {
             مع استناد رسمي إلى المصدر — بلا اختلاق ولا هلوسة. الوصول عبر مفتاح API بنطاق <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-sm">legal:read</code>.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/api-docs" className="rounded-lg bg-[#C09B5A] px-5 py-3 font-semibold text-[#0B1F3A] transition hover:opacity-90">
+            <Link href="/api-docs" className="rounded-lg bg-[var(--gold)] px-5 py-3 font-semibold text-[var(--navy)] transition hover:opacity-90">
               توثيق الواجهات التفاعلي ↗
             </Link>
             <a href="/api/openapi" className="rounded-lg border border-white/25 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
@@ -50,17 +50,17 @@ export default function DevelopersPage() {
         <section className="mt-10">
           <h2 className="text-2xl font-bold">البدء السريع</h2>
           <div className={`${card} mt-4`}>
-            <p className="text-sm font-semibold text-[#0B1F3A]">١) المصادقة — مرّر مفتاحك في الترويسة:</p>
-            <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-[#0B1F3A] p-4 text-sm leading-6 text-[#E9E2D0]">
+            <p className="text-sm font-semibold text-[var(--navy)]">١) المصادقة — مرّر مفتاحك في الترويسة:</p>
+            <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-[var(--navy)] p-4 text-sm leading-6 text-[#E9E2D0]">
 {`Authorization: Bearer hk_live_XXXXXXXXXXXXXXXX`}
             </pre>
-            <p className="mt-5 text-sm font-semibold text-[#0B1F3A]">٢) مثال بحث (cURL):</p>
-            <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-[#0B1F3A] p-4 text-sm leading-6 text-[#E9E2D0]">
+            <p className="mt-5 text-sm font-semibold text-[var(--navy)]">٢) مثال بحث (cURL):</p>
+            <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-[var(--navy)] p-4 text-sm leading-6 text-[#E9E2D0]">
 {`curl -H "Authorization: Bearer hk_live_XXXX" \\
   "${BASE}/api/legal/search?q=%D8%A7%D9%84%D8%A5%D9%8A%D8%AC%D8%A7%D8%B1&limit=10"`}
             </pre>
-            <p className="mt-5 text-sm font-semibold text-[#0B1F3A]">٣) مثال (JavaScript):</p>
-            <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-[#0B1F3A] p-4 text-sm leading-6 text-[#E9E2D0]">
+            <p className="mt-5 text-sm font-semibold text-[var(--navy)]">٣) مثال (JavaScript):</p>
+            <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-[var(--navy)] p-4 text-sm leading-6 text-[#E9E2D0]">
 {`const res = await fetch("${BASE}/api/legal/search?q=" + encodeURIComponent("فسخ عقد الإيجار"), {
   headers: { Authorization: "Bearer hk_live_XXXX" }
 });
@@ -83,9 +83,9 @@ const data = await res.json();`}
               </thead>
               <tbody>
                 {endpoints.map((e) => (
-                  <tr key={e.path} className="border-b border-black/5 odd:bg-white even:bg-[#FBF8F1]">
-                    <td className="px-4 py-3"><span className="rounded bg-[#E6F1EA] px-2 py-1 font-mono text-xs font-bold text-[#1A5C41]">{e.method}</span></td>
-                    <td className="px-4 py-3 font-mono text-xs text-[#0B1F3A]" dir="ltr">{e.path}</td>
+                  <tr key={e.path} className="border-b border-black/5 odd:bg-white even:bg-[var(--parchment)]">
+                    <td className="px-4 py-3"><span className="rounded bg-[#E6F1EA] px-2 py-1 font-mono text-xs font-bold text-[var(--emerald)]">{e.method}</span></td>
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--navy)]" dir="ltr">{e.path}</td>
                     <td className="px-4 py-3 leading-7 text-gray-700">{e.desc}</td>
                   </tr>
                 ))}
@@ -103,7 +103,7 @@ const data = await res.json();`}
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             {steps.map((s) => (
               <div key={s.n} className={card}>
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-[#0B1F3A] font-bold text-[#D9C08A]">{s.n}</div>
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-[var(--navy)] font-bold text-[#D9C08A]">{s.n}</div>
                 <h3 className="mt-4 text-lg font-bold">{s.h}</h3>
                 <p className="mt-2 text-sm leading-7 text-gray-700">{s.p}</p>
               </div>
@@ -113,7 +113,7 @@ const data = await res.json();`}
 
         {/* Governance */}
         <section className="mt-10">
-          <div className="rounded-2xl border border-[#C09B5A] bg-[#FBF6EA] p-6">
+          <div className="rounded-2xl border border-[var(--gold)] bg-[#FBF6EA] p-6">
             <h2 className="text-xl font-bold">الحوكمة والحدود</h2>
             <ul className="mt-3 list-disc space-y-2 pr-5 leading-8 text-gray-700">
               <li>كل استشهاد بمادة أو حكم يأتي حصرًا من النواة القانونية الرسمية — لا يُختلق مصدر.</li>
@@ -125,8 +125,8 @@ const data = await res.json();`}
         </section>
 
         <footer className="mt-12 flex flex-wrap items-center gap-4 border-t border-black/10 pt-6 text-sm text-gray-600">
-          <Link href="/legal" className="font-semibold text-[#0B1F3A] hover:underline">تصفّح الأنظمة</Link>
-          <Link href="/api-docs" className="font-semibold text-[#0B1F3A] hover:underline">التوثيق التفاعلي</Link>
+          <Link href="/legal" className="font-semibold text-[var(--navy)] hover:underline">تصفّح الأنظمة</Link>
+          <Link href="/api-docs" className="font-semibold text-[var(--navy)] hover:underline">التوثيق التفاعلي</Link>
           <Link href="/terms" className="hover:underline">شروط الاستخدام</Link>
           <Link href="/privacy" className="hover:underline">الخصوصية</Link>
           <span className="ms-auto">© منصّة حكيم</span>

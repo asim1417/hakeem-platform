@@ -61,7 +61,7 @@ export function HomeHero() {
 
       {/* البطل: البحث أولاً */}
       <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[8vh] text-center">
-        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-[var(--hakeem-bg-soft)] px-4 py-1.5 text-xs font-semibold text-[var(--gold-dark,#9a7636)]">
+        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-[var(--hakeem-bg-soft)] px-4 py-1.5 text-xs font-semibold text-[var(--gold-dark)]">
           المصدر القانوني الموثّق · بحث ذكي
         </p>
         <h1 className="font-judicial text-4xl font-bold leading-tight text-[var(--navy)] md:text-6xl">

@@ -69,9 +69,9 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
         <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C09B5A]/25 bg-white">
           {articles.map((a) => (
             <li key={a.id}>
-              <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[#FBF8F1]">
-                <span className="mt-0.5 shrink-0 rounded bg-[#0B1F3A] px-2 py-1 font-mono text-xs font-bold text-[#D9C08A]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
-                <span className="leading-7 text-[#0B1F3A]">{a.title}</span>
+              <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
+                <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#D9C08A]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
+                <span className="leading-7 text-[var(--navy)]">{a.title}</span>
               </Link>
             </li>
           ))}
