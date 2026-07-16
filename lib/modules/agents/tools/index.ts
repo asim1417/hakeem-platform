@@ -194,6 +194,27 @@ export async function get_thesaurus_term(term: string): Promise<ToolResult<unkno
   }
 }
 
+/**
+ * مسح فهرس نظام كاملًا (للحصر الاستقصائي): يعيد كل مواد النظام بنصّها لاستخراج العناصر
+ * حتميًّا (مثل كل المدد). محدود بسقف أمان. ليس ضمن الأدوات الـ١٦ القياسية (أداة استقصاء).
+ */
+export async function scan_system_articles(
+  systemName: string,
+  limit = 1200
+): Promise<ToolResult<Array<{ articleNumber: number; title: string; content: string }>>> {
+  try {
+    const rows = await prisma.legalArticle.findMany({
+      where: { lawName: { contains: systemName.trim(), mode: "insensitive" } },
+      select: { articleNumber: true, title: true, content: true },
+      orderBy: { articleNumber: "asc" },
+      take: Math.min(Math.max(limit, 1), 2000),
+    });
+    return ok(rows, "legal_core.legal_articles(full-scan)", rows.length ? 0.95 : 0.3, rows.length ? undefined : "لا مواد لهذا النظام");
+  } catch (e) {
+    return fail<Array<{ articleNumber: number; title: string; content: string }>>([], "legal_core", `تعذّر مسح النظام: ${(e as Error).message}`);
+  }
+}
+
 /** سجلّ الأدوات — لتوجيه المنسّق واختباره (المرحلة ٣+). */
 export const TOOLS = {
   search_articles,

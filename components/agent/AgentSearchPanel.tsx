@@ -232,7 +232,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                       title="الأساس النظامي من النواة"
                       note={`المواد التي استندت إليها الإجابة — كلٌّ منها قائم فعلاً في النواة القانونية (إجمالي ${turn.total.toLocaleString("ar-SA")} نتيجة بحث).`}
                     />
-                  ) : (
+                  ) : turn.answer ? null : (
                     <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">
                       {turn.message ?? "لا يوجد سند نظامي كافٍ."}
                     </div>
