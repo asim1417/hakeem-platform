@@ -532,3 +532,26 @@ body {
 .ans-th { background: var(--navy); color: #fff; padding: .6rem .8rem; text-align: right; font-weight: 600; }
 .ans-td { border: 1px solid var(--ink-15); padding: .55rem .8rem; text-align: right; vertical-align: top; }
 .ans-table tr:nth-child(even) { background: var(--paper, #f7f5f0); }
+
+/* ── الإضافة ١: مراجع المواد القابلة للنقر («م/٣٩») + إبراز بطاقة المصدر ── */
+.cite-ref {
+  display: inline-flex; align-items: center;
+  font-size: .72em; font-weight: 700; line-height: 1;
+  color: var(--gold-dark, #9a7b2e); background: var(--gold-ghost, #f5ecd8);
+  border: 1px solid var(--gold-border, rgba(212,175,110,.4));
+  border-radius: 5px; padding: .05em .4em; margin: 0 .15em;
+  cursor: pointer; vertical-align: super; text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.cite-ref::before { content: "م/"; opacity: .7; }
+.cite-ref:hover, .cite-ref:focus-visible { background: var(--gold, #d4af6e); color: #fff; outline: none; }
+/* بطاقة المصدر تُبرز عند القفز إليها من مرجع، ولا تختبئ خلف الرأس الثابت */
+.basis-src { scroll-margin-top: 90px; transition: box-shadow .3s, background .3s; }
+.basis-src:target {
+  box-shadow: 0 0 0 2px var(--gold, #d4af6e); background: var(--gold-ghost, #f5ecd8);
+  animation: citePulse 1.6s ease-out 1;
+}
+@keyframes citePulse {
+  0% { box-shadow: 0 0 0 3px var(--gold, #d4af6e); }
+  100% { box-shadow: 0 0 0 2px var(--gold-border, rgba(212,175,110,.4)); }
+}

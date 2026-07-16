@@ -227,7 +227,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                     {turn.mode === "intent" ? (
                       <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
                     ) : (
-                      <AnswerRenderer content={turn.answer} />
+                      <AnswerRenderer content={turn.answer} basis={turn.basis ?? []} anchorPrefix={`t${i}-src-`} />
                     )}
                   </div>
                 ) : null}
@@ -269,6 +269,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                   turn.basis.length ? (
                     <LegalBasisPanel
                       items={turn.basis}
+                      anchorPrefix={`t${i}-src-`}
                       title="الأساس النظامي من النواة"
                       note={`المواد التي استندت إليها الإجابة — كلٌّ منها قائم فعلاً في النواة القانونية (إجمالي ${turn.total.toLocaleString("ar-SA")} نتيجة بحث).`}
                     />
