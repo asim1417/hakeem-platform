@@ -208,22 +208,24 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                 {/* الإجابة المُصاغة المستندة */}
                 {turn.answer ? (
                   <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)]">
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
-                      <span className="text-sm font-bold text-[var(--navy)]">إجابة حكيم</span>
-                      {turn.mode !== "intent" ? (
-                        <span
-                          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                          style={
-                            turn.mode === "live"
-                              ? { color: "var(--emerald)", background: "var(--emerald-soft)" }
-                              : { color: "var(--amber)", background: "var(--amber-soft)" }
-                          }
-                          title={turn.mode === "live" ? "صياغة ذكية مستندة للمواد" : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"}
-                        >
-                          {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
-                        </span>
-                      ) : null}
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-[var(--ink-08)] pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
+                        <span className="text-sm font-bold text-[var(--navy)]">إجابة حكيم</span>
+                        {turn.mode !== "intent" ? (
+                          <span
+                            className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                            style={
+                              turn.mode === "live"
+                                ? { color: "var(--emerald)", background: "var(--emerald-soft)" }
+                                : { color: "var(--amber)", background: "var(--amber-soft)" }
+                            }
+                            title={turn.mode === "live" ? "صياغة ذكية مستندة للمواد" : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"}
+                          >
+                            {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
+                          </span>
+                        ) : null}
+                      </div>
                       {turn.mode !== "intent" ? (
                         <AnswerToolbar answer={turn.answer} basis={turn.basis ?? []} question={turn.question} />
                       ) : null}
