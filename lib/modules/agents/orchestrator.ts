@@ -9,6 +9,8 @@ import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from 
 import { verifyCitations } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
 import { rerankArticles } from "./thinking/rerank";
+import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
+import { loadSystemsRegistry } from "./substrate/systems-registry";
 import { search_articles, search_rulings, search_principles, scan_system_articles } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
 import type { AgentStep, IntentType } from "./types";
@@ -30,6 +32,8 @@ export interface OrchestratorResult {
   principles?: MergedResult[];
   /** المستوى العميق فقط: نصّ التحليل المستند للمواد المُتحقَّقة (أو null عند الامتناع). */
   analysis?: string | null;
+  /** المرحلة ٢: خطة التغطية (تصنيف + أنظمة مستهدفة + مسائل) — تُفحَص بوّابتها في المرحلة ٤. */
+  plan?: QueryPlan;
 }
 
 /** يقترح المستوى تلقائيًّا من تعقيد السؤال (طوله + تعدّد الروابط/المسائل). */
@@ -82,6 +86,20 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   onStep({ id: "takyeef", status: "running", label: "أكيّف المسألة (تفكيك + مناط)" });
   const tk = await runTakyeef(query);
   onStep({ id: "takyeef", status: "done", label: `فكّكت ${tk.issues.length.toLocaleString("ar-SA")} مسألة`, data: { source: tk.source, issues: tk.issues.map((i) => i.issue) } });
+
+  // ②.٥ المخطِّط (المرحلة ٢): تصنيف السؤال + الأنظمة المستهدفة + بيان تغطية (coverageManifest).
+  //     خلف راية (AGENT_PLANNER). سقوط آمن إلى undefined عند تعذّر تحميل سجلّ الأنظمة.
+  let plan: QueryPlan | undefined;
+  if (process.env.AGENT_PLANNER !== "0") {
+    const registry = await loadSystemsRegistry().catch(() => []);
+    plan = buildPlan(query, registry, tk.issues);
+    onStep({
+      id: "plan",
+      status: "done",
+      label: `خطّطت التغطية — ${describePlan(plan)}`,
+      data: { queryClass: plan.queryClass, issues: plan.issues.length, systems: plan.targetSystems.map((s) => s.name) },
+    });
+  }
 
   // ③ التخريج بحلقة تكرارية: بحث ← كشف نقص ← إعادة (بصياغة المناط) ← تكرار.
   //    سقف الجولات: ٣ (سريع) / ٧ (متعمّق). توقّف: نفاد المسائل أو بلوغ السقف.
@@ -174,5 +192,5 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     analysis = an.analysis;
   }
 
-  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis };
+  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis, plan };
 }
