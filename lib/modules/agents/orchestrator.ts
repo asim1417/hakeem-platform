@@ -8,10 +8,11 @@ import { runTakyeef, type LegalIssue } from "./thinking/takyeef";
 import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from "./thinking/mazann";
 import { verifyCitations } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
-import { search_articles, scan_system_articles } from "./tools";
+import { search_articles, search_rulings, search_principles, scan_system_articles } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
 import type { AgentStep, IntentType } from "./types";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
+import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 
 export type OrchestratorMode = "quick" | "deep";
 
@@ -23,6 +24,9 @@ export interface OrchestratorResult {
   mode: OrchestratorMode;
   /** المستوى العميق فقط: الأنظمة الحاكمة المرتّبة (المظانّ). */
   governingSystems?: GoverningSystem[];
+  /** المستوى العميق فقط: أحكام قضائية داعمة (سوابق) ومبادئ — من الهجين. */
+  rulings?: MergedResult[];
+  principles?: MergedResult[];
   /** المستوى العميق فقط: نصّ التحليل المستند للمواد المُتحقَّقة (أو null عند الامتناع). */
   analysis?: string | null;
 }
@@ -121,6 +125,8 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   }
 
   let governingSystems: GoverningSystem[] | undefined;
+  let rulings: MergedResult[] | undefined;
+  let principles: MergedResult[] | undefined;
   let analysis: string | null | undefined;
 
   // ④ المستوى المتعمّق: المظانّ → **تعميق موجَّه داخل كل نظام حاكم** → التحقّق → التحليل.
@@ -137,6 +143,13 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
       if (r.ok) add(r.data);
     }
     onStep({ id: "deepen", status: "done", label: `التعميق أضاف ${(byId.size - before).toLocaleString("ar-SA")} مادة` });
+
+    // السوابق: أحكام ومبادئ قضائية داعمة (أدوات كانت مبنيّة وغير موصولة — تُوصَل الآن).
+    onStep({ id: "precedents", status: "running", label: "أجمع الأحكام والمبادئ القضائية الداعمة" });
+    const [rul, prin] = await Promise.all([search_rulings(query, 6), search_principles(query, 6)]);
+    rulings = rul.ok ? rul.data : [];
+    principles = prin.ok ? prin.data : [];
+    onStep({ id: "precedents", status: "done", label: `أحكام ${rulings.length.toLocaleString("ar-SA")} · مبادئ ${principles.length.toLocaleString("ar-SA")}` });
   }
 
   const articles = [...byId.values()];
@@ -150,10 +163,14 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     onStep({ id: "verify-deep", status: "done", label: `مؤصَّل ${outcome.verified.length.toLocaleString("ar-SA")} · محجوب ${outcome.blocked.length.toLocaleString("ar-SA")}` });
 
     onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
-    const an = await runAnalysis(query, outcome.verified, undefined, governingSystems?.map((g) => g.systemName));
+    const supporting = {
+      rulings: (rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
+      principles: (principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet })),
+    };
+    const an = await runAnalysis(query, outcome.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
     onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
     analysis = an.analysis;
   }
 
-  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, analysis };
+  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis };
 }
