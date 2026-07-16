@@ -124,7 +124,8 @@
     "seed:legal-graph": "tsx scripts/seed-legal-graph.ts",
     "test:intent-gate": "tsx scripts/test-intent-gate.ts",
     "test:verifier": "tsx scripts/test-verifier.ts",
-    "test:commands": "tsx scripts/test-commands.ts"
+    "test:commands": "tsx scripts/test-commands.ts",
+    "test:deep-mode": "tsx scripts/test-deep-mode.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
