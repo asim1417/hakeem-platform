@@ -1,0 +1,41 @@
+name: Activate Normative Tagging (data)
+
+# يفعّل بيانات تفكيك المعيار على Neon: (١) يطبّق أعمدة norm_* + الفهرس (idempotent)،
+# (٢) يوسم المواد حتميًّا (rules-only) فيعمل المسح المفهوميّ (HLS-5.5) على بيانات حقيقية.
+# يدويّ فقط (workflow_dispatch). آمن لإعادة التشغيل. لا يحذف بيانات.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "حدّ عدد المواد للوسم (0 = الكل)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: read
+
+jobs:
+  activate-normative:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Apply norm_* columns + tag (rules-only)
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال قاعدة"; exit 1; fi
+          for m in server-only client-only; do
+            mkdir -p "node_modules/$m"
+            echo 'module.exports = {};' > "node_modules/$m/index.js"
+            printf '{"name":"%s","version":"0.0.0","main":"index.js"}' "$m" > "node_modules/$m/package.json"
+          done
+          npm run db:apply-normative
+          npm run tag:normative -- --rules-only --limit "${{ github.event.inputs.limit }}"
