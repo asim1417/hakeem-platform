@@ -11,7 +11,8 @@ import { runAnalysis } from "./thinking/analysis";
 import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
 import { loadSystemsRegistry } from "./substrate/systems-registry";
-import { search_articles, search_rulings, search_principles, scan_system_articles } from "./tools";
+import { detectNormativeConcept } from "./substrate/normative";
+import { search_articles, search_rulings, search_principles, scan_system_articles, scan_normative } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
 import type { AgentStep, IntentType } from "./types";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
@@ -112,11 +113,34 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     for (const a of rows) if (!byId.has(a.articleId)) byId.set(a.articleId, a);
   };
 
-  // (أ) بحث المسائل بحلقة تكرارية (كشف نقص → إعادة بالمناط)، بعمق أوسع في المتعمّق.
-  if (!seed.length) {
-    const res = await search_articles(query, DEEP ? 30 : 8);
+  // قيد النطاق (المرحلة ٣): عند تحديد أنظمة، نمرّر systemIds لفلتر النواة القائم فلا تتسرّب
+  // مادةٌ من نظامٍ إلى سؤالٍ عن نظامٍ آخر. لا يلمس نواة الترتيب — خطّافها الموجود فقط. خلف راية.
+  const SCOPE = process.env.AGENT_SCOPE_SCAN !== "0";
+  const scopeIds = SCOPE && plan?.targetSystems.length ? plan.targetSystems.map((s) => s.id) : undefined;
+
+  // (أ.٠) وضع المسح المفهوميّ: «حصر_مفهوميّ» + مفهوم معياريّ مكتشَف (مثل «السلطة التقديرية»)
+  // → مسح **فهرس المعيار** ضمن النطاق **بلا top‑k** فيُرجِع كل المطابق دون مواد عرضية (HLS‑5.5).
+  // إن أرجع نتائج تولّى الاسترجاع (نتخطّى الحلقة المعجمية العرضية)؛ وإلا نُكمل بالمسار العادي.
+  let conceptualHandled = false;
+  if (SCOPE && plan?.queryClass === "حصر_مفهوميّ") {
+    const concept = detectNormativeConcept(query);
+    if (concept) {
+      onStep({ id: "scan-normative", status: "running", label: `مسح مفهوميّ لفهرس المعيار: ${concept.modality}${concept.addressee ? ` / ${concept.addressee}` : ""}` });
+      const targets = plan.targetSystems.length ? plan.targetSystems.map((s) => s.name) : [undefined];
+      for (const systemName of targets) {
+        const r = await scan_normative({ systemName, modality: concept.modality, addressee: concept.addressee });
+        if (r.ok) add(r.data);
+      }
+      onStep({ id: "scan-normative", status: "done", label: `المسح المفهوميّ أرجع ${byId.size.toLocaleString("ar-SA")} مادة (بلا سقف)`, data: { count: byId.size } });
+      if (byId.size) conceptualHandled = true;
+    }
+  }
+
+  // (أ) بحث المسائل بحلقة تكرارية (كشف نقص → إعادة بالمناط)، بعمق أوسع في المتعمّق — مقيّد بالنطاق.
+  if (!conceptualHandled && !seed.length) {
+    const res = await search_articles(query, DEEP ? 30 : 8, scopeIds);
     if (res.ok) add(res.data);
-  } else {
+  } else if (!conceptualHandled) {
     const queue: Array<{ iss: LegalIssue; retried: boolean }> = seed.map((iss) => ({ iss, retried: false }));
     let round = 0;
     while (queue.length && round < cap) {
@@ -125,7 +149,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
       const q = retried && iss.manat ? [iss.manat, ...iss.keywords].join(" ") : [iss.issue, ...iss.keywords].filter(Boolean).join(" ") || query;
       onStep({ id: `round-${round}`, status: "running", label: `جولة ${round.toLocaleString("ar-SA")}: أبحث «${iss.issue.slice(0, 36)}»` });
       const before = byId.size;
-      const res = await search_articles(q, perIssue);
+      const res = await search_articles(q, perIssue, scopeIds);
       if (res.ok) add(res.data);
       const added = byId.size - before;
       onStep({ id: `round-${round}`, status: "done", label: `جولة ${round.toLocaleString("ar-SA")}: أضفتُ ${added.toLocaleString("ar-SA")} مادة`, data: { added } });
@@ -135,10 +159,10 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
 
   // (ب) المتعمّق: مسحة بالاستعلام الخام — حاسمة لأسئلة الحصر («كل/أي المدد في نظام كذا»)
   // كي لا يقتصر على مقتطفات المسائل المفكّكة.
-  if (DEEP) {
+  if (DEEP && !conceptualHandled) {
     onStep({ id: "sweep", status: "running", label: "مسحة شاملة بالاستعلام الأصلي" });
     const before = byId.size;
-    const raw = await search_articles(query, 30);
+    const raw = await search_articles(query, 30, scopeIds);
     if (raw.ok) add(raw.data);
     onStep({ id: "sweep", status: "done", label: `المسحة أضافت ${(byId.size - before).toLocaleString("ar-SA")} مادة` });
   }
@@ -158,7 +182,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     onStep({ id: "deepen", status: "running", label: "أقرأ مظانّ المسألة (تعميق داخل الأنظمة الحاكمة)" });
     const before = byId.size;
     for (const g of governingSystems.slice(0, 2)) {
-      const r = await search_articles(`${g.systemName} ${query}`, 24);
+      const r = await search_articles(`${g.systemName} ${query}`, 24, scopeIds);
       if (r.ok) add(r.data);
     }
     onStep({ id: "deepen", status: "done", label: `التعميق أضاف ${(byId.size - before).toLocaleString("ar-SA")} مادة` });
@@ -170,6 +194,20 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     principles = prin.ok ? prin.data : [];
     onStep({ id: "precedents", status: "done", label: `أحكام ${rulings.length.toLocaleString("ar-SA")} · مبادئ ${principles.length.toLocaleString("ar-SA")}` });
   }
+
+  // بثّ `retrieved` (المرحلة ٣): حصيلة الاسترجاع النهائية مع الحفاظ على شكل العناصر
+  // (systemName/articleNumber) — بعد الحلقة والمسحة والتعميق، وقبل إعادة الترتيب.
+  onStep({
+    id: "retrieved",
+    status: "done",
+    label: `استرجعتُ ${byId.size.toLocaleString("ar-SA")} مادة${scopeIds ? " (مقيّدة بالنطاق)" : ""}${conceptualHandled ? " · مسح مفهوميّ" : ""}`,
+    data: {
+      count: byId.size,
+      scoped: Boolean(scopeIds),
+      conceptual: conceptualHandled,
+      sample: [...byId.values()].slice(0, 8).map((a) => ({ systemName: a.systemName, articleNumber: a.articleNumber })),
+    },
+  });
 
   // إعادة ترتيب خفيفة: الصلة + سلطة (استشهادات) + حالة سارية — فتصل الأفضل للتحليل (سقف ٤٠).
   const articles = rerankArticles([...byId.values()]);

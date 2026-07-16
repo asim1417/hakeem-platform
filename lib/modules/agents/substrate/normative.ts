@@ -93,3 +93,24 @@ export function inferNormative(text: string): NormativeTag {
 export function isValidModality(v: unknown): v is NormativeModality {
   return v === "إلزام" || v === "إباحة" || v === "حظر" || v === "رخصة_تقديرية";
 }
+
+// عبارات تدلّ على **مفهوم معياريّ** في السؤال (لوضع المسح المفهوميّ — المرحلة ٣).
+const CONCEPT_DISCRETION = norm(["السلطة التقديرية", "سلطة تقديرية", "تقدير المحكمة", "التقدير القضائي", "سلطة القاضي التقديرية", "الصلاحية التقديرية"]);
+const CONCEPT_HAZR = norm(["المحظورات", "ما يحظر", "الممنوعات", "ما يمنع", "المحرمات"]);
+const CONCEPT_ILZAM = norm(["الالتزامات", "الواجبات", "ما يجب", "التزامات"]);
+const CONCEPT_IBAHA = norm(["الرخص", "ما يجوز", "المباحات", "الرخصة"]);
+
+/**
+ * يكشف مفهومًا معياريًّا في السؤال ويحوّله إلى مرشِّح استعلام (modality [+ addressee]).
+ * أساس «السلطة التقديرية» → {modality:'رخصة_تقديرية', addressee:'المحكمة'} (قبول HLS‑5.5).
+ * يعيد null إن لم يُذكر مفهوم معياريّ صريح. حتميّ ونقيّ.
+ */
+export function detectNormativeConcept(query: string): { modality: NormativeModality; addressee?: string } | null {
+  const h = normalizeArabicText(query || "");
+  const courtBound = includesAny(h, N_COURT);
+  if (includesAny(h, CONCEPT_DISCRETION)) return { modality: "رخصة_تقديرية", addressee: "المحكمة" };
+  if (includesAny(h, CONCEPT_HAZR)) return { modality: "حظر", addressee: courtBound ? "المحكمة" : undefined };
+  if (includesAny(h, CONCEPT_ILZAM)) return { modality: "إلزام", addressee: courtBound ? "المحكمة" : undefined };
+  if (includesAny(h, CONCEPT_IBAHA)) return { modality: "إباحة", addressee: courtBound ? "المحكمة" : undefined };
+  return null;
+}
