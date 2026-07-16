@@ -132,7 +132,8 @@
     "tag:normative": "tsx scripts/tag-normative.ts",
     "eval:agents": "tsx scripts/eval-agents.ts",
     "test:planner": "tsx scripts/test-planner.ts",
-    "test:verification": "tsx scripts/test-verification.ts"
+    "test:verification": "tsx scripts/test-verification.ts",
+    "test:structured": "tsx scripts/test-structured-answer.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

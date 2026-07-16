@@ -7,6 +7,7 @@ import { classifyIntent, intentNeedsSearch } from "./intent-gate";
 import { runTakyeef, type LegalIssue } from "./thinking/takyeef";
 import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from "./thinking/mazann";
 import { runVerification, describeVerification, type CoverageState } from "./thinking/verification";
+import type { VerifiedCitation } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
 import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
@@ -37,6 +38,8 @@ export interface OrchestratorResult {
   plan?: QueryPlan;
   /** المرحلة ٤: حالة التغطية بعد التحقّق (كل مسألة: مُجابة/لا نصّ + بوّابة التسليم). */
   coverage?: CoverageState;
+  /** المرحلة ٥: المواد المُتحقَّقة بترتيبها المُغذّى للتحليل — لمحاذاة ذيول [n] بلوحة الأساس. */
+  verified?: VerifiedCitation[];
 }
 
 /** يقترح المستوى تلقائيًّا من تعقيد السؤال (طوله + تعدّد الروابط/المسائل). */
@@ -174,6 +177,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   let principles: MergedResult[] | undefined;
   let analysis: string | null | undefined;
   let coverage: CoverageState | undefined;
+  let verified: VerifiedCitation[] | undefined;
 
   // ④ المستوى المتعمّق: المظانّ → **تعميق موجَّه داخل كل نظام حاكم** → التحقّق → التحليل.
   if (DEEP && byId.size) {
@@ -221,6 +225,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     onStep({ id: "verify", status: "running", label: "مرحلة التحقّق: نطاق · نفاذ · تأريض · تغطية" });
     const report = await runVerification({ articles, plan });
     coverage = report.coverage;
+    verified = report.verified;
     onStep({
       id: "verify",
       status: "done",
@@ -244,5 +249,5 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     analysis = an.analysis;
   }
 
-  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis, plan, coverage };
+  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis, plan, coverage, verified };
 }
