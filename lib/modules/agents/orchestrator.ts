@@ -158,7 +158,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   if (DEEP && articles.length) {
     onStep({ id: "verify-deep", status: "running", label: "أتحقّق من المواد قبل التحليل" });
     const outcome = await verifyCitations(
-      articles.map((a) => ({ articleId: a.articleId, systemName: a.systemName, articleNumber: Number(a.articleNumber), quote: a.snippet }))
+      articles.map((a) => ({ articleId: a.articleId, systemName: a.systemName, articleNumber: Number(a.articleNumber), quote: a.snippet, status: a.status }))
     );
     onStep({ id: "verify-deep", status: "done", label: `مؤصَّل ${outcome.verified.length.toLocaleString("ar-SA")} · محجوب ${outcome.blocked.length.toLocaleString("ar-SA")}` });
 

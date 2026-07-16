@@ -10,6 +10,8 @@ export interface CitationCandidate {
   systemName?: string;
   articleNumber?: number;
   quote?: string;
+  /** حالة المادة (سارية/معدّلة/منسوخة…) — بيان عرض يُمرَّر للتحليل لتنبيه الملغى/المعدّل. */
+  status?: string | null;
 }
 
 export interface VerifiedCitation extends CitationCandidate {
