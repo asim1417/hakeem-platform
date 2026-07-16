@@ -154,7 +154,12 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                     </button>
 
                     {turn.showMethod ? (
-                      <ol className="mt-3 space-y-2.5 border-t border-[var(--ink-08)] pt-3">
+                      <ol
+                        className="mt-3 space-y-2.5 border-t border-[var(--ink-08)] pt-3"
+                        aria-live="polite"
+                        aria-busy={turn.streaming}
+                        aria-label="خطوات عمل الوكيل"
+                      >
                         {turn.steps.map((step) => (
                           <li key={step.id} className="flex items-start gap-3">
                             <span className="mt-0.5 shrink-0">
