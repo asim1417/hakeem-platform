@@ -19,6 +19,7 @@ const SYSTEM = [
   "إن كان السؤال **حصريًّا** (أي/كل/جميع/ما هي) فاستقصِ **كل** العناصر المطابقة في المواد المرفقة واعرضها في **جدول شامل** دون إغفال.",
   "**استند حصرًا** إلى المواد المُتحقَّقة المرفقة — لا تذكر مادة غير مرفقة ولا رقمًا غير وارد؛ واربط كل نقطة برقم مادتها.",
   "اربط الأنظمة ذات الصلة المذكورة بالمسألة صراحةً (لا تُدرجها منفصلة بلا بيان علاقتها).",
+  "إن رُفِقت **أحكام/مبادئ قضائية داعمة** فاستأنِس بها كسوابق وأشِر إليها، مع بقاء **السند النظاميّ هو المواد**.",
   "في الاجتهاد استخدم صيغة الاحتمال (يُرجَّح/قد) لا الجزم. عربية فصيحة.",
   "**أكمِل حتى الخلاصة**؛ لا تترك جملة أو ركنًا معلّقًا.",
 ].join(" ");
@@ -35,11 +36,31 @@ function groundingBlock(citations: VerifiedCitation[]): string {
  * يحلّل المسألة استنادًا للمواد المُتحقَّقة فقط. لا سند → امتناع صادق (لا تلفيق).
  * يمرّر الأنظمة الحاكمة (المظانّ) كي يربطها التحليل بالمسألة بدل عرضها منفصلة.
  */
+export interface SupportingMaterial {
+  rulings?: Array<{ title: string; snippet?: string }>;
+  principles?: Array<{ title: string; snippet?: string }>;
+}
+
+/** يبني كتلة السوابق الداعمة (أحكام/مبادئ) — استئناسية، والسند النظاميّ يبقى المواد. */
+function supportingBlock(s?: SupportingMaterial): string {
+  if (!s) return "";
+  const fmt = (items?: Array<{ title: string; snippet?: string }>) =>
+    (items ?? []).slice(0, 6).map((x, i) => `[${i + 1}] ${x.title}${x.snippet ? `: ${x.snippet.slice(0, 220)}` : ""}`).join("\n");
+  const r = fmt(s.rulings);
+  const p = fmt(s.principles);
+  if (!r && !p) return "";
+  return [
+    r ? `\nأحكام قضائية داعمة (سوابق — استئناس لا سند نظاميّ):\n${r}` : "",
+    p ? `\nمبادئ قضائية داعمة:\n${p}` : "",
+  ].join("\n");
+}
+
 export async function runAnalysis(
   question: string,
   citations: VerifiedCitation[],
   skillContext?: string,
-  governingSystems?: string[]
+  governingSystems?: string[],
+  supporting?: SupportingMaterial
 ): Promise<AnalysisResult> {
   if (!citations.length) {
     return { analysis: null, abstained: true, source: "offline" }; // الامتناع مطلوب
@@ -49,6 +70,7 @@ export async function runAnalysis(
     `المسألة:\n${question}`,
     governingSystems?.length ? `\nالأنظمة الحاكمة (المظانّ) — اربطها بالمسألة:\n${governingSystems.slice(0, 6).join("، ")}` : "",
     `\nالمواد المُتحقَّقة (السند الوحيد المسموح، ${Math.min(citations.length, 40)} مادة):\n${groundingBlock(citations)}`,
+    supportingBlock(supporting),
   ].join("\n");
 
   const res = await generateComplete(SYSTEM, userPrompt, { maxTokens: 6000, maxRounds: 2 });
