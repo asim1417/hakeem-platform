@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { resolveEnforcement } from "@/lib/modules/agents/substrate/enforcement";
 
 /**
  * LegalBasisPanel — لوحة «الأساس النظامي» بحالات التوثيق.
@@ -28,7 +29,33 @@ export type LegalBasisItem = {
   state: DocumentationState;
   /** رابط داخلي لفتح المادة في النواة */
   internalUrl?: string;
+  /** المرحلة ٦: حالة النفاذ الخام (status) لعرض شارة ساري/لاغٍ/معدّل بجانب التوثيق. */
+  enforcement?: string | null;
 };
+
+// المرحلة ٦: شارة النفاذ الزمنيّ — تُعرض بجانب حالة التوثيق كي يرى المحامي أن السند ساري لا لاغٍ.
+const ENFORCEMENT_META: Record<string, { fg: string; bg: string; border: string; icon: string }> = {
+  "ساري": { fg: "var(--emerald)", bg: "var(--emerald-soft)", border: "rgba(26,92,65,0.30)", icon: "✓" },
+  "لاغٍ": { fg: "var(--ruby)", bg: "var(--ruby-soft)", border: "rgba(140,34,51,0.30)", icon: "⊘" },
+  "معدّل": { fg: "var(--amber)", bg: "var(--amber-soft)", border: "rgba(184,114,26,0.30)", icon: "✎" },
+  "موقوف": { fg: "var(--amber)", bg: "var(--amber-soft)", border: "rgba(184,114,26,0.30)", icon: "⏸" },
+};
+
+export function EnforcementBadge({ status }: { status?: string | null }) {
+  const { state } = resolveEnforcement(status);
+  const meta = ENFORCEMENT_META[state];
+  if (!meta) return null; // غير_معروف → لا شارة (تفادي التضليل)
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+      style={{ color: meta.fg, background: meta.bg, border: `1px solid ${meta.border}` }}
+      title={`حالة النفاذ: ${state}`}
+    >
+      <span aria-hidden>{meta.icon}</span>
+      {state}
+    </span>
+  );
+}
 
 type StateMeta = {
   label: string;
@@ -134,7 +161,10 @@ export function LegalBasisPanel({
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <p className="font-mono-legal text-sm text-[var(--navy)]">{ref}</p>
-                  <DocumentationBadge state={item.state} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <EnforcementBadge status={item.enforcement} />
+                    <DocumentationBadge state={item.state} />
+                  </div>
                 </div>
                 {item.articleTitle ? (
                   <p className="mt-1 text-sm font-semibold text-[var(--ink-80)]">{item.articleTitle}</p>

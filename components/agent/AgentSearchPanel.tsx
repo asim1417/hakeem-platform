@@ -13,6 +13,7 @@ type Turn = {
   mode?: "live" | "offline" | "intent";
   basis: LegalBasisItem[] | null;
   total: number;
+  coverage?: { answered: number; total: number; issues?: Array<{ systemName?: string; status: string }> };
   message?: string;
   error?: string;
   streaming: boolean;
@@ -94,6 +95,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
               mode: evt.mode,
               basis: (evt.basis ?? []) as LegalBasisItem[],
               total: evt.total ?? 0,
+              coverage: evt.coverage,
               message: evt.message
             }));
           } else if (evt.type === "error") {
@@ -172,9 +174,9 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-[var(--ink-80)]">{step.label}</p>
                               {step.data?.sub ? <p className="mt-0.5 text-xs leading-6 text-[var(--ink-60)]">{step.data.sub}</p> : null}
-                              {step.id === "retrieved" && Array.isArray(step.data?.items) && step.data.items.length ? (
+                              {step.id === "retrieved" && Array.isArray(step.data?.sample) && step.data.sample.length ? (
                                 <ul className="mt-1.5 space-y-1">
-                                  {step.data.items.slice(0, 6).map((it: any, k: number) => (
+                                  {step.data.sample.slice(0, 6).map((it: any, k: number) => (
                                     <li key={k} className="font-mono-legal text-[11px] text-[var(--ink-60)]">
                                       • {it.systemName} · م{Number(it.articleNumber).toLocaleString("ar-SA")}
                                     </li>
@@ -222,6 +224,39 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                       ) : null}
                     </div>
                     <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
+                  </div>
+                ) : null}
+
+                {/* المرحلة ٦: مؤشّر التغطية — يُبيّن أن كل نظام مستهدف مُجاب (أو ما تعذّر). */}
+                {turn.coverage && turn.coverage.total >= 2 ? (
+                  <div
+                    className="flex flex-wrap items-center gap-2 rounded-[var(--r-lg)] border px-4 py-2.5 text-xs font-semibold"
+                    style={
+                      turn.coverage.answered >= turn.coverage.total
+                        ? { color: "var(--emerald)", background: "var(--emerald-soft)", borderColor: "rgba(26,92,65,0.30)" }
+                        : { color: "var(--amber)", background: "var(--amber-soft)", borderColor: "rgba(184,114,26,0.30)" }
+                    }
+                  >
+                    <span aria-hidden>{turn.coverage.answered >= turn.coverage.total ? "✓" : "◐"}</span>
+                    <span>
+                      التغطية: {turn.coverage.answered.toLocaleString("ar-SA")} من {turn.coverage.total.toLocaleString("ar-SA")}
+                      {turn.coverage.answered >= turn.coverage.total ? " — كل الأنظمة المستهدفة مُجابة" : " — بعض الأنظمة بلا نصّ مطابق"}
+                    </span>
+                    {Array.isArray(turn.coverage.issues) ? (
+                      <span className="flex flex-wrap gap-1.5">
+                        {turn.coverage.issues
+                          .filter((iss) => iss.systemName)
+                          .map((iss, k) => (
+                            <span
+                              key={k}
+                              className="rounded-full bg-white/60 px-2 py-0.5"
+                              style={{ color: iss.status === "answered" ? "var(--emerald)" : "var(--ink-60)" }}
+                            >
+                              {iss.status === "answered" ? "✓" : "—"} {iss.systemName}
+                            </span>
+                          ))}
+                      </span>
+                    ) : null}
                   </div>
                 ) : null}
 
