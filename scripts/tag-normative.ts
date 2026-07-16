@@ -41,9 +41,37 @@ async function classifyWithModel(text: string): Promise<NormativeTag | null> {
   }
 }
 
+// أعمدة norm_* خارج موديل Prisma عمدًا (تفادي كسر ما لم تُطبَّق الهجرة) → قراءة/كتابة بـSQL خام.
+async function countUntagged(): Promise<number> {
+  const rows = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+    `SELECT COUNT(*)::bigint AS c FROM legal_articles WHERE "norm_modality" IS NULL`
+  );
+  return Number(rows[0]?.c ?? 0);
+}
+async function fetchUntagged(limit: number): Promise<Array<{ id: string; content: string }>> {
+  return prisma.$queryRawUnsafe<Array<{ id: string; content: string }>>(
+    `SELECT id, content FROM legal_articles WHERE "norm_modality" IS NULL ORDER BY id ASC LIMIT ${limit}`
+  );
+}
+async function writeTag(id: string, tag: NormativeTag): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    `UPDATE legal_articles
+       SET "norm_addressee" = $2, "norm_modality" = $3, "norm_condition" = $4, "norm_effect" = $5, "norm_source" = $6
+     WHERE id = $1`,
+    id,
+    tag.addressee ?? null,
+    tag.modality ?? "غير_مصنّف", // غير null كي لا يُعاد اختياره لانهائيًّا
+    tag.condition ?? null,
+    tag.effect ?? null,
+    tag.source
+  );
+}
+
 async function main() {
-  const where = { normModality: null as string | null } as const;
-  const total = await prisma.legalArticle.count({ where }).catch(() => 0);
+  const total = await countUntagged().catch((e) => {
+    console.error("تعذّر العدّ (هل طُبِّقت الهجرة؟):", (e as Error).message);
+    return 0;
+  });
   const take = LIMIT > 0 ? LIMIT : total;
   console.log(`مواد غير مُوسَّمة: ${total.toLocaleString("ar-SA")} · سنعالج: ${take.toLocaleString("ar-SA")}${DRY ? " (تجريبي)" : ""}${RULES_ONLY ? " (قواعد فقط)" : ""}`);
 
@@ -51,14 +79,8 @@ async function main() {
   let processed = 0,
     modelTagged = 0,
     ruleTagged = 0;
-  for (let offset = 0; processed < take; offset += batchSize) {
-    const rows = await prisma.legalArticle.findMany({
-      where,
-      select: { id: true, content: true },
-      orderBy: { id: "asc" },
-      take: Math.min(batchSize, take - processed),
-      skip: 0, // الصفوف المُعالَجة لم تعد null → لا نُكرّرها، فنُبقي skip=0
-    });
+  while (processed < take) {
+    const rows = await fetchUntagged(Math.min(batchSize, take - processed));
     if (!rows.length) break;
     for (const r of rows) {
       let tag: NormativeTag | null = RULES_ONLY ? null : await classifyWithModel(r.content);
@@ -67,20 +89,7 @@ async function main() {
         tag = inferNormative(r.content);
         ruleTagged += 1;
       }
-      if (!DRY) {
-        await prisma.legalArticle
-          .update({
-            where: { id: r.id },
-            data: {
-              normAddressee: tag.addressee ?? null,
-              normModality: tag.modality ?? "غير_مصنّف", // غير null كي لا يُعاد اختياره لانهائيًّا
-              normCondition: tag.condition ?? null,
-              normEffect: tag.effect ?? null,
-              normSource: tag.source,
-            },
-          })
-          .catch(() => {});
-      }
+      if (!DRY) await writeTag(r.id, tag).catch(() => {});
       processed += 1;
     }
     console.log(`… ${processed.toLocaleString("ar-SA")}/${take.toLocaleString("ar-SA")} (نموذج ${modelTagged} · قواعد ${ruleTagged})`);
