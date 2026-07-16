@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
             articleTitle: a.articleTitle,
             quote: a.snippet,
             state: "official" as const,
+            enforcement: a.status ?? null,
             internalUrl: a.internalUrl
           }));
           send({ type: "step", id: "synthesize", status: "done", label: "لا يوجد سند نظامي كافٍ للصياغة", data: { blocked: true } });
