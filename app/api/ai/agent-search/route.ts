@@ -10,7 +10,7 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
-import { orchestrate } from "@/lib/modules/agents/orchestrator";
+import { orchestrate, suggestMode } from "@/lib/modules/agents/orchestrator";
 import { intentNeedsSearch } from "@/lib/modules/agents/intent-gate";
 import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 
@@ -47,10 +47,9 @@ export async function POST(request: NextRequest) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
       try {
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
-        const result = await orchestrate(query, {
-          mode: detailed ? "deep" : "quick",
-          onStep: (s) => send({ type: "step", ...s })
-        });
+        // المستوى: مبدّل «بحث تفصيلي» يفرض العميق؛ وإلا يقترحه المنسّق تلقائيًّا من التعقيد.
+        const mode = detailed ? "deep" : suggestMode(query);
+        const result = await orchestrate(query, { mode, onStep: (s) => send({ type: "step", ...s }) });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
@@ -86,7 +85,22 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        // ⑥ الصياغة المستندة (حصرًا من مواد النواة، بحارس داخلي ضدّ أرقام غير موجودة).
+        // ⑥ المستوى المتعمّق: إن أنجز المنسّق تحليلًا مستندًا (كل الوكلاء)، نقدّمه إجابةً.
+        if (result.analysis) {
+          const basis = outcome.verified.map((c) => ({
+            systemName: c.systemName,
+            articleNumber: c.articleNumber,
+            articleTitle: undefined as string | undefined,
+            quote: c.quote,
+            state: "official" as const,
+            internalUrl: `/dashboard/legal-core/articles/${c.articleId}`
+          }));
+          send({ type: "result", answer: result.analysis, mode: "live", basis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
+          send({ type: "done" });
+          return;
+        }
+
+        // ⑦ الصياغة المستندة (حصرًا من مواد النواة، بحارس داخلي ضدّ أرقام غير موجودة).
         send({ type: "step", id: "synthesize", status: "running", label: "أصوغ إجابة مستندة للمواد فقط" });
         const draft = await createConsultationDraft({ facts: query, actorId: user.id }).catch(() => null);
 
