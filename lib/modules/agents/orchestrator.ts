@@ -8,7 +8,8 @@ import { runTakyeef, type LegalIssue } from "./thinking/takyeef";
 import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from "./thinking/mazann";
 import { verifyCitations } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
-import { search_articles } from "./tools";
+import { search_articles, scan_system_articles } from "./tools";
+import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
 import type { AgentStep, IntentType } from "./types";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 
@@ -49,6 +50,27 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   onStep({ id: "intent", status: "done", label: "فهمت رسالتك", data: { intent: intent.type } });
   if (!intentNeedsSearch(intent.type)) {
     return { intent: intent.type, reply: intent.reply, issues: [], articles: [], mode };
+  }
+
+  // ①.٥ مسار الحصر الكامل للنظام: سؤال حصريّ عن مدد نظام مُسمّى → مسح فهرس النظام كاملًا
+  //     واستخراج المدد حتميًّا (تغطية كاملة، لا عيّنة استرجاع). يُقدَّم كإجابة مباشرة.
+  const enumReq = detectDurationEnumeration(query);
+  if (enumReq) {
+    onStep({ id: "scan", status: "running", label: `أمسح فهرس «${enumReq.systemName}» كاملًا لحصر المدد` });
+    const scan = await scan_system_articles(enumReq.systemName);
+    const rows: DurationRow[] = [];
+    if (scan.ok) {
+      for (const a of scan.data) {
+        const durations = extractDurations(a.content);
+        if (durations.length) rows.push({ articleNumber: a.articleNumber, title: a.title, durations });
+      }
+    }
+    onStep({ id: "scan", status: "done", label: `مسحتُ ${scan.data.length.toLocaleString("ar-SA")} مادة · وجدتُ ${rows.length.toLocaleString("ar-SA")} مادة بمدد` });
+    if (rows.length) {
+      const table = formatDurationTable(enumReq.systemName, rows);
+      return { intent: intent.type, issues: [], articles: [], mode, analysis: table };
+    }
+    // لا نتائج للمسح → نكمل بالمسار العادي (قد يجدها البحث الدلالي).
   }
 
   // ② التكييف الأصولي: تفكيك المسائل + المناطات

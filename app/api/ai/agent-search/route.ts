@@ -58,6 +58,22 @@ export async function POST(request: NextRequest) {
           return;
         }
 
+        // إجابة جاهزة من المنسّق (تحليل متعمّق أو حصر كامل للنظام) → تُقدَّم مباشرةً.
+        // المواد مُخرَّجة من النواة (قائمة فعلاً)؛ الحصر الاستقرائي حتميّ من نصوص المواد.
+        if (result.analysis) {
+          const basis = result.articles.slice(0, 40).map((a) => ({
+            systemName: a.systemName,
+            articleNumber: a.articleNumber,
+            articleTitle: a.articleTitle,
+            quote: a.snippet,
+            state: "official" as const,
+            internalUrl: a.internalUrl
+          }));
+          send({ type: "result", answer: result.analysis, mode: "live", basis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
+          send({ type: "done" });
+          return;
+        }
+
         // ④ التحقّق (حارس التلفيق): كل مادة مُخرَّجة تُتحقَّق فعلاً في النواة؛ المُختلَق يُحجَب.
         send({ type: "step", id: "verify", status: "running", label: "أتحقّق من ورود المواد فعلاً" });
         const outcome = await verifyCitations(
@@ -85,22 +101,7 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        // ⑥ المستوى المتعمّق: إن أنجز المنسّق تحليلًا مستندًا (كل الوكلاء)، نقدّمه إجابةً.
-        if (result.analysis) {
-          const basis = outcome.verified.map((c) => ({
-            systemName: c.systemName,
-            articleNumber: c.articleNumber,
-            articleTitle: undefined as string | undefined,
-            quote: c.quote,
-            state: "official" as const,
-            internalUrl: `/dashboard/legal-core/articles/${c.articleId}`
-          }));
-          send({ type: "result", answer: result.analysis, mode: "live", basis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
-          send({ type: "done" });
-          return;
-        }
-
-        // ⑦ الصياغة المستندة (حصرًا من مواد النواة، بحارس داخلي ضدّ أرقام غير موجودة).
+        // ⑥ الصياغة المستندة (حصرًا من مواد النواة، بحارس داخلي ضدّ أرقام غير موجودة).
         send({ type: "step", id: "synthesize", status: "running", label: "أصوغ إجابة مستندة للمواد فقط" });
         const draft = await createConsultationDraft({ facts: query, actorId: user.id }).catch(() => null);
 
