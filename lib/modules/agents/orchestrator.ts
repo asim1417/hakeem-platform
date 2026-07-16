@@ -6,7 +6,7 @@
 import { classifyIntent, intentNeedsSearch } from "./intent-gate";
 import { runTakyeef, type LegalIssue } from "./thinking/takyeef";
 import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from "./thinking/mazann";
-import { verifyCitations } from "./thinking/verifier";
+import { runVerification, describeVerification, type CoverageState } from "./thinking/verification";
 import { runAnalysis } from "./thinking/analysis";
 import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
@@ -35,6 +35,8 @@ export interface OrchestratorResult {
   analysis?: string | null;
   /** المرحلة ٢: خطة التغطية (تصنيف + أنظمة مستهدفة + مسائل) — تُفحَص بوّابتها في المرحلة ٤. */
   plan?: QueryPlan;
+  /** المرحلة ٤: حالة التغطية بعد التحقّق (كل مسألة: مُجابة/لا نصّ + بوّابة التسليم). */
+  coverage?: CoverageState;
 }
 
 /** يقترح المستوى تلقائيًّا من تعقيد السؤال (طوله + تعدّد الروابط/المسائل). */
@@ -171,6 +173,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   let rulings: MergedResult[] | undefined;
   let principles: MergedResult[] | undefined;
   let analysis: string | null | undefined;
+  let coverage: CoverageState | undefined;
 
   // ④ المستوى المتعمّق: المظانّ → **تعميق موجَّه داخل كل نظام حاكم** → التحقّق → التحليل.
   if (DEEP && byId.size) {
@@ -214,21 +217,32 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   onStep({ id: "search", status: "done", label: `خرّجت ${articles.length.toLocaleString("ar-SA")} مادة`, data: { count: articles.length } });
 
   if (DEEP && articles.length) {
-    onStep({ id: "verify-deep", status: "running", label: "أتحقّق من المواد قبل التحليل" });
-    const outcome = await verifyCitations(
-      articles.map((a) => ({ articleId: a.articleId, systemName: a.systemName, articleNumber: Number(a.articleNumber), quote: a.snippet, status: a.status }))
-    );
-    onStep({ id: "verify-deep", status: "done", label: `مؤصَّل ${outcome.verified.length.toLocaleString("ar-SA")} · محجوب ${outcome.blocked.length.toLocaleString("ar-SA")}` });
+    // ④ مرحلة التحقّق المستقلّة (المرحلة ٤): نطاق → نفاذ → تأريض → تغطية. **لا تزيد المصادر**.
+    onStep({ id: "verify", status: "running", label: "مرحلة التحقّق: نطاق · نفاذ · تأريض · تغطية" });
+    const report = await runVerification({ articles, plan });
+    coverage = report.coverage;
+    onStep({
+      id: "verify",
+      status: "done",
+      label: `تحقّقت — ${describeVerification(report)}`,
+      data: {
+        verified: report.verified.length,
+        blocked: report.blocked,
+        outOfScope: report.droppedOutOfScope,
+        repealedDropped: report.droppedRepealed,
+        coverage: { answered: report.coverage.answered, total: report.coverage.issues.length, gate: report.coverage.gatePassed },
+      },
+    });
 
     onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
     const supporting = {
       rulings: (rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
       principles: (principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet })),
     };
-    const an = await runAnalysis(query, outcome.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
+    const an = await runAnalysis(query, report.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
     onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
     analysis = an.analysis;
   }
 
-  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis, plan };
+  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis, plan, coverage };
 }
