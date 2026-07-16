@@ -69,9 +69,12 @@ export function markCoverage(plan: QueryPlan | undefined, verified: VerifiedCita
 export async function runVerification(input: {
   articles: LegalCoreResult[];
   plan?: QueryPlan;
+  /** تجاوز نطاق التحقّق (المرحلة ٢): الأنظمة الحاكمة المُحدَّدة بالنموذج تُستعمل للنفي حتى
+   *  لو لم تُذكر في الخطة — كي يتّسق نفي النطاق مع تقييد الاسترجاع. */
+  targets?: SystemRef[];
   validator?: CitationValidator;
 }): Promise<VerificationReport> {
-  const targets = input.plan?.targetSystems ?? [];
+  const targets = input.targets?.length ? input.targets : input.plan?.targetSystems ?? [];
 
   // ① النطاق — إسقاط كل مادة خارج الأنظمة المستهدفة (صفر تسريب).
   const inScope = input.articles.filter((a) => belongsToScope(a, targets));
