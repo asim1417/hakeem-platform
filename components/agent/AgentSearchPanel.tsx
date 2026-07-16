@@ -227,13 +227,13 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                         ) : null}
                       </div>
                       {turn.mode !== "intent" ? (
-                        <AnswerToolbar answer={turn.answer} basis={turn.basis ?? []} question={turn.question} />
+                        <AnswerToolbar answer={turn.answer} basis={turn.basis ?? []} question={turn.question} printTargetId={`t${i}-answer`} />
                       ) : null}
                     </div>
                     {turn.mode === "intent" ? (
                       <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
                     ) : (
-                      <AnswerRenderer content={turn.answer} basis={turn.basis ?? []} anchorPrefix={`t${i}-src-`} />
+                      <AnswerRenderer content={turn.answer} basis={turn.basis ?? []} anchorPrefix={`t${i}-src-`} id={`t${i}-answer`} />
                     )}
                   </div>
                 ) : null}
