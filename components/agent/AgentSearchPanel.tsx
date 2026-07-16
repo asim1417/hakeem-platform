@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
+import { AnswerToolbar } from "@/components/AnswerToolbar";
 
 type StepStatus = "running" | "done";
 type Step = { id: string; status: StepStatus; label: string; data?: any };
@@ -222,6 +223,9 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                         >
                           {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
                         </span>
+                      ) : null}
+                      {turn.mode !== "intent" ? (
+                        <AnswerToolbar answer={turn.answer} basis={turn.basis ?? []} question={turn.question} />
                       ) : null}
                     </div>
                     {turn.mode === "intent" ? (
