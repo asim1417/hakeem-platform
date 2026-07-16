@@ -35,4 +35,10 @@ jobs:
         run: |
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال قاعدة"; exit 1; fi
-          NODE_OPTIONS='--conditions=react-server' npm run eval:agents
+          # شِمّ server-only/client-only كوحدة فارغة لتشغيل tsx خارج Next (حارس RSC لا يلزم هنا)
+          for m in server-only client-only; do
+            mkdir -p "node_modules/$m"
+            echo 'module.exports = {};' > "node_modules/$m/index.js"
+            printf '{"name":"%s","version":"0.0.0","main":"index.js"}' "$m" > "node_modules/$m/package.json"
+          done
+          npm run eval:agents
