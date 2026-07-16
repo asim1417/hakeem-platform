@@ -29,13 +29,15 @@ export function AnswerRenderer({
   content,
   basis = [],
   anchorPrefix = "",
+  id,
 }: {
   content: string;
   basis?: AnswerSource[];
   anchorPrefix?: string;
+  id?: string;
 }) {
   return (
-    <div className="answer-prose" dir="rtl">
+    <div className="answer-prose" dir="rtl" id={id}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
