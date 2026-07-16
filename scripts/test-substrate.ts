@@ -1,7 +1,7 @@
 // اختبار الركيزة (المرحلة ١) — نقيّ بلا قاعدة: النفاذ + تفكيك المعيار + سجلّ الأنظمة.
 // يغطّي منطق قبول HLS‑4.2 (تمييز اللاغي) وHLS‑4.4 (رخصة تقديرية/المحكمة) والنطاق.
 import { resolveEnforcement, isRepealed, isInForce, enforcementBadge } from "@/lib/modules/agents/substrate/enforcement";
-import { inferModality, inferAddressee, inferNormative, isValidModality } from "@/lib/modules/agents/substrate/normative";
+import { inferModality, inferAddressee, inferNormative, isValidModality, detectNormativeConcept } from "@/lib/modules/agents/substrate/normative";
 import { normalizeSystemName, matchSystemsInText, mentionsSystem } from "@/lib/modules/agents/substrate/systems-registry";
 
 let pass = 0,
@@ -36,6 +36,15 @@ check("الوسم الكامل يجمع المخاطَب والحكم", (() => {
   return t.modality === "رخصة_تقديرية" && t.addressee === "المحكمة" && t.source === "rule";
 })());
 check("حارس modality يرفض قيمة فاسدة", !isValidModality("ربما") && isValidModality("حظر"));
+
+// ── المرحلة ٣: كشف المفهوم المعياريّ (وضع المسح المفهوميّ) ──
+check("«السلطة التقديرية» → رخصة_تقديرية/المحكمة", (() => {
+  const c = detectNormativeConcept("ما هي كل مواد السلطة التقديرية للمحكمة؟");
+  return c?.modality === "رخصة_تقديرية" && c?.addressee === "المحكمة";
+})());
+check("«المحظورات» → حظر", detectNormativeConcept("عدّد المحظورات في النظام")?.modality === "حظر");
+check("«الالتزامات» → إلزام", detectNormativeConcept("ما هي الالتزامات المقرّرة؟")?.modality === "إلزام");
+check("سؤال بلا مفهوم معياريّ → null", detectNormativeConcept("ما مدة الإشعار؟") === null);
 
 // ── ١.ج سجلّ الأنظمة والنطاق ──
 check("تطبيع «نظام العمل» → «العمل»", normalizeSystemName("نظام العمل") === normalizeSystemName("العمل"));

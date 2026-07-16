@@ -19,6 +19,8 @@ import { buildArticleCitation } from "@/lib/modules/legal-core/intelligence";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { queryNormative } from "../substrate/queries";
+import type { NormativeModality } from "../substrate/normative";
 
 function ok<T>(data: T, source: string, confidence = 0.9, note?: string): ToolResult<T> {
   return { ok: true, data, source, confidence, note };
@@ -28,10 +30,13 @@ function fail<T>(data: T, source: string, note: string): ToolResult<T> {
 }
 
 // ── بحث (٤) ──────────────────────────────────────────────────────────────────
-export async function search_articles(query: string, limit = 8): Promise<ToolResult<LegalCoreResult[]>> {
+// systemIds اختياريّ = **قيد النطاق** (المرحلة ٣): يُمرَّر لفلتر النواة القائم فلا تتسرّب
+// مادةٌ من نظامٍ إلى سؤالٍ عن نظامٍ آخر. لا يلمس نواة الترتيب — يستعمل خطّافها الموجود فقط.
+export async function search_articles(query: string, limit = 8, systemIds?: string[]): Promise<ToolResult<LegalCoreResult[]>> {
   try {
-    const r = await searchLegalCore({ query, sourceTypes: ["article"], limit, includeSnippets: true, semantic: true });
-    return ok(r.results, "legal_core.legal_articles", r.results.length ? 0.9 : 0.4);
+    const scoped = systemIds && systemIds.length ? { systemIds } : {};
+    const r = await searchLegalCore({ query, sourceTypes: ["article"], limit, includeSnippets: true, semantic: true, ...scoped });
+    return ok(r.results, "legal_core.legal_articles", r.results.length ? 0.9 : 0.4, systemIds?.length ? `مقيّد بـ${systemIds.length} نظامًا` : undefined);
   } catch (e) {
     return fail<LegalCoreResult[]>([], "legal_core.legal_articles", `تعذّر بحث المواد: ${(e as Error).message}`);
   }
@@ -212,6 +217,44 @@ export async function scan_system_articles(
     return ok(rows, "legal_core.legal_articles(full-scan)", rows.length ? 0.95 : 0.3, rows.length ? undefined : "لا مواد لهذا النظام");
   } catch (e) {
     return fail<Array<{ articleNumber: number; title: string; content: string }>>([], "legal_core", `تعذّر مسح النظام: ${(e as Error).message}`);
+  }
+}
+
+/**
+ * وضع المسح المفهوميّ (المرحلة ٣) — للحصر المفهوميّ (مثل «كل مواد السلطة التقديرية للمحكمة»).
+ * يمسح **فهرس المعيار** (norm_modality/norm_addressee) ضمن نطاقٍ اختياريّ، **بلا top‑k**،
+ * فيُرجِع كل المواد المطابقة للمفهوم دون مواد عرضية. سقوط آمن إلى [] قبل الوسم/الهجرة.
+ * يُطابِق شكل LegalCoreResult كي ينساب في خطّ التحقّق/الصياغة كبقيّة الأدوات.
+ */
+export async function scan_normative(
+  opts: { systemName?: string; modality: NormativeModality; addressee?: string; limit?: number }
+): Promise<ToolResult<LegalCoreResult[]>> {
+  try {
+    const hits = await queryNormative(opts);
+    const mapped: LegalCoreResult[] = hits.map((h) => ({
+      articleId: h.id,
+      systemName: h.lawName,
+      systemId: null,
+      articleNumber: h.articleNumber,
+      articleTitle: h.title,
+      articleText: h.content,
+      classification: null,
+      status: null,
+      chapter: null,
+      relevanceReason: `حصر مفهوميّ: ${opts.modality}${opts.addressee ? ` / ${opts.addressee}` : ""}`,
+      citationLabel: `${h.lawName}، المادة ${h.articleNumber}`,
+      internalUrl: `/dashboard/legal-core/articles/${h.id}`,
+      relevanceScore: 100,
+      matchedTerms: [],
+      matchedParagraphs: [],
+      matchType: "general" as const,
+      snippet: (h.content ?? "").slice(0, 450),
+      conceptCoverage: 0,
+      phraseMatches: 0,
+    }));
+    return ok(mapped, "legal_core.normative_index(full-scan)", mapped.length ? 0.95 : 0.3, mapped.length ? undefined : "لا مواد مُوسَّمة مطابقة (قد يلزم الوسم/الهجرة)");
+  } catch (e) {
+    return fail<LegalCoreResult[]>([], "legal_core.normative_index", `تعذّر المسح المفهوميّ: ${(e as Error).message}`);
   }
 }
 
