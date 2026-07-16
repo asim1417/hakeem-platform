@@ -58,14 +58,19 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
 
   // ③ التخريج بحلقة تكرارية: بحث ← كشف نقص ← إعادة (بصياغة المناط) ← تكرار.
   //    سقف الجولات: ٣ (سريع) / ٧ (متعمّق). توقّف: نفاد المسائل أو بلوغ السقف.
-  const cap = mode === "deep" ? 7 : 3;
-  const seed = mode === "quick" ? tk.issues.slice(0, 3) : tk.issues.slice(0, 7);
+  const DEEP = mode === "deep";
+  const cap = DEEP ? 7 : 3;
+  const perIssue = DEEP ? 24 : 6;
+  const seed = DEEP ? tk.issues.slice(0, 7) : tk.issues.slice(0, 3);
   const byId = new Map<string, LegalCoreResult>();
+  const add = (rows: LegalCoreResult[]) => {
+    for (const a of rows) if (!byId.has(a.articleId)) byId.set(a.articleId, a);
+  };
 
+  // (أ) بحث المسائل بحلقة تكرارية (كشف نقص → إعادة بالمناط)، بعمق أوسع في المتعمّق.
   if (!seed.length) {
-    // لا مسائل مكيّفة (سقوط) → بحث مباشر بالاستعلام.
-    const res = await search_articles(query, mode === "quick" ? 8 : 12);
-    if (res.ok) for (const a of res.data) if (!byId.has(a.articleId)) byId.set(a.articleId, a);
+    const res = await search_articles(query, DEEP ? 30 : 8);
+    if (res.ok) add(res.data);
   } else {
     const queue: Array<{ iss: LegalIssue; retried: boolean }> = seed.map((iss) => ({ iss, retried: false }));
     let round = 0;
@@ -75,37 +80,58 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
       const q = retried && iss.manat ? [iss.manat, ...iss.keywords].join(" ") : [iss.issue, ...iss.keywords].filter(Boolean).join(" ") || query;
       onStep({ id: `round-${round}`, status: "running", label: `جولة ${round.toLocaleString("ar-SA")}: أبحث «${iss.issue.slice(0, 36)}»` });
       const before = byId.size;
-      const res = await search_articles(q, mode === "quick" ? 6 : 10);
-      if (res.ok) for (const a of res.data) if (!byId.has(a.articleId)) byId.set(a.articleId, a);
+      const res = await search_articles(q, perIssue);
+      if (res.ok) add(res.data);
       const added = byId.size - before;
       onStep({ id: `round-${round}`, status: "done", label: `جولة ${round.toLocaleString("ar-SA")}: أضفتُ ${added.toLocaleString("ar-SA")} مادة`, data: { added } });
-      // كشف نقص: جولة بلا إضافة ولم نُعِد بالمناط → أعِد المسألة بصياغة المناط (تنقيح موجَّه).
       if (added === 0 && !retried && iss.manat) queue.push({ iss, retried: true });
     }
+  }
+
+  // (ب) المتعمّق: مسحة بالاستعلام الخام — حاسمة لأسئلة الحصر («كل/أي المدد في نظام كذا»)
+  // كي لا يقتصر على مقتطفات المسائل المفكّكة.
+  if (DEEP) {
+    onStep({ id: "sweep", status: "running", label: "مسحة شاملة بالاستعلام الأصلي" });
+    const before = byId.size;
+    const raw = await search_articles(query, 30);
+    if (raw.ok) add(raw.data);
+    onStep({ id: "sweep", status: "done", label: `المسحة أضافت ${(byId.size - before).toLocaleString("ar-SA")} مادة` });
+  }
+
+  let governingSystems: GoverningSystem[] | undefined;
+  let analysis: string | null | undefined;
+
+  // ④ المستوى المتعمّق: المظانّ → **تعميق موجَّه داخل كل نظام حاكم** → التحقّق → التحليل.
+  if (DEEP && byId.size) {
+    onStep({ id: "mazann", status: "running", label: "أحدّد المظانّ (الأنظمة الحاكمة)" });
+    governingSystems = rankGoverningSystems([...byId.values()], inferSpecialization(query));
+    onStep({ id: "mazann", status: "done", label: `رتّبت ${governingSystems.length.toLocaleString("ar-SA")} نظامًا حاكمًا`, data: { top: governingSystems.slice(0, 3).map((g) => g.systemName) } });
+
+    // تعميق موجَّه بالمظانّ: لكل نظام من أعلى نظامين، بحث منحاز لتوسيع التغطية داخله.
+    onStep({ id: "deepen", status: "running", label: "أقرأ مظانّ المسألة (تعميق داخل الأنظمة الحاكمة)" });
+    const before = byId.size;
+    for (const g of governingSystems.slice(0, 2)) {
+      const r = await search_articles(`${g.systemName} ${query}`, 24);
+      if (r.ok) add(r.data);
+    }
+    onStep({ id: "deepen", status: "done", label: `التعميق أضاف ${(byId.size - before).toLocaleString("ar-SA")} مادة` });
   }
 
   const articles = [...byId.values()];
   onStep({ id: "search", status: "done", label: `خرّجت ${articles.length.toLocaleString("ar-SA")} مادة`, data: { count: articles.length } });
 
-  // ④ المستوى المتعمّق (تتويج): المظانّ (ترتيب الأنظمة الحاكمة) + التحقّق + التحليل المستند.
-  //    الوضع السريع يتخطّى هذا (خفّة وسرعة)؛ التحقّق النهائي يجري في الراوت لكلا الوضعين.
-  if (mode === "deep" && articles.length) {
-    onStep({ id: "mazann", status: "running", label: "أحدّد المظانّ (الأنظمة الحاكمة)" });
-    const governingSystems = rankGoverningSystems(articles, inferSpecialization(query));
-    onStep({ id: "mazann", status: "done", label: `رتّبت ${governingSystems.length.toLocaleString("ar-SA")} نظامًا حاكمًا`, data: { top: governingSystems.slice(0, 3).map((g) => g.systemName) } });
-
+  if (DEEP && articles.length) {
     onStep({ id: "verify-deep", status: "running", label: "أتحقّق من المواد قبل التحليل" });
     const outcome = await verifyCitations(
       articles.map((a) => ({ articleId: a.articleId, systemName: a.systemName, articleNumber: Number(a.articleNumber), quote: a.snippet }))
     );
     onStep({ id: "verify-deep", status: "done", label: `مؤصَّل ${outcome.verified.length.toLocaleString("ar-SA")} · محجوب ${outcome.blocked.length.toLocaleString("ar-SA")}` });
 
-    onStep({ id: "analysis", status: "running", label: "أحلّل: مطابقة الأركان وموازنة وترجيح" });
-    const an = await runAnalysis(query, outcome.verified);
+    onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
+    const an = await runAnalysis(query, outcome.verified, undefined, governingSystems?.map((g) => g.systemName));
     onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
-
-    return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, analysis: an.analysis };
+    analysis = an.analysis;
   }
 
-  return { intent: intent.type, issues: tk.issues, articles, mode };
+  return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, analysis };
 }
