@@ -15,7 +15,8 @@ export interface AnalysisResult {
 const SYSTEM = [
   "أنت محلّل قانوني سعودي. حلّل المسألة بمطابقة الأركان بالوقائع والموازنة والترجيح.",
   "**استند حصرًا** إلى المواد المُتحقَّقة المرفقة — لا تذكر مادة غير مرفقة، ولا رقمًا غير وارد.",
-  "في مواضع الاجتهاد استخدم صيغة الاحتمال (يُرجَّح/قد) لا الجزم. اكتب بعربية فصيحة موجزة.",
+  "في مواضع الاجتهاد استخدم صيغة الاحتمال (يُرجَّح/قد) لا الجزم. اكتب بعربية فصيحة.",
+  "**أكمِل التحليل حتى نهايته واختِمه بخلاصة**؛ لا تترك جملة أو ركنًا معلّقًا. وازِن طولك مع اكتمال المعنى.",
 ].join(" ");
 
 /** يبني كتلة السند المُتحقَّق لتغذية النموذج (لا يُرسَل شيء غير مُتحقَّق). */
@@ -43,7 +44,7 @@ export async function runAnalysis(
     `\nالمواد المُتحقَّقة (السند الوحيد المسموح):\n${groundingBlock(citations)}`,
   ].join("\n");
 
-  const res = await callCentralProvider({ systemPrompt: SYSTEM, userPrompt, maxTokens: 1200 }).catch(() => null);
+  const res = await callCentralProvider({ systemPrompt: SYSTEM, userPrompt, maxTokens: 6000 }).catch(() => null);
   if (res?.ok && res.mode === "server" && res.content.trim()) {
     return { analysis: res.content.trim(), abstained: false, source: "model" };
   }

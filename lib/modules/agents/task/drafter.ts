@@ -59,7 +59,7 @@ export async function draftDocument(req: DraftRequest): Promise<DraftResult> {
     req.citations?.length ? `\nالاستشهادات المُتحقَّقة (السند الوحيد):\n${req.citations.join("\n")}` : "",
   ].join("\n");
 
-  const res = await callCentralProvider({ systemPrompt: system, userPrompt, maxTokens: 1800 }).catch(() => null);
+  const res = await callCentralProvider({ systemPrompt: system, userPrompt, maxTokens: 6000 }).catch(() => null);
   if (res?.ok && res.mode === "server" && res.content.trim()) {
     return { kind: req.kind, title: meta.title, content: res.content.trim(), format: "markdown-rtl", source: "model" };
   }
