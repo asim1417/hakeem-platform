@@ -3,7 +3,7 @@
 // RTL، ترقيم عربي، عربية فصيحة، كل جملة مختلطة عربي/إنجليزي بسطر مستقلّ. يقوده النموذج
 // مع سقوط آمن. لائحة النقض تلتزم مواد ١٩٣/١٩٥/١٩٦/١٩٨ (aman-naqd). لا يلمس النواة/الأمن.
 // ─────────────────────────────────────────────────────────────────────────────
-import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
+import { generateComplete } from "../llm";
 
 export type DraftKind =
   | "contract" // عقد
@@ -59,8 +59,8 @@ export async function draftDocument(req: DraftRequest): Promise<DraftResult> {
     req.citations?.length ? `\nالاستشهادات المُتحقَّقة (السند الوحيد):\n${req.citations.join("\n")}` : "",
   ].join("\n");
 
-  const res = await callCentralProvider({ systemPrompt: system, userPrompt, maxTokens: 6000 }).catch(() => null);
-  if (res?.ok && res.mode === "server" && res.content.trim()) {
+  const res = await generateComplete(system, userPrompt, { maxTokens: 6000, maxRounds: 2 });
+  if (res.ok && res.mode === "server" && res.content.trim()) {
     return { kind: req.kind, title: meta.title, content: res.content.trim(), format: "markdown-rtl", source: "model" };
   }
   return { kind: req.kind, title: meta.title, content: null, format: "markdown-rtl", source: "offline" };

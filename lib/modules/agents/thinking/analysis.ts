@@ -3,7 +3,7 @@
 // يقوده النموذج (callCentralProvider) مع سقوط آمن. يستدعي مهارة التدقيق (المرحلة ٧ تربطها).
 // لا يُصدر حكمًا جازمًا في موضع اجتهاد (يُوسم بالاحتمال) — والامتناع عند غياب السند.
 // ─────────────────────────────────────────────────────────────────────────────
-import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
+import { generateComplete } from "../llm";
 import type { VerifiedCitation } from "./verifier";
 
 export interface AnalysisResult {
@@ -44,8 +44,8 @@ export async function runAnalysis(
     `\nالمواد المُتحقَّقة (السند الوحيد المسموح):\n${groundingBlock(citations)}`,
   ].join("\n");
 
-  const res = await callCentralProvider({ systemPrompt: SYSTEM, userPrompt, maxTokens: 6000 }).catch(() => null);
-  if (res?.ok && res.mode === "server" && res.content.trim()) {
+  const res = await generateComplete(SYSTEM, userPrompt, { maxTokens: 6000, maxRounds: 2 });
+  if (res.ok && res.mode === "server" && res.content.trim()) {
     return { analysis: res.content.trim(), abstained: false, source: "model" };
   }
   // سقوط offline: عرض السند المُتحقَّق دون تحليل مولّد (صدق بلا اختراع).
