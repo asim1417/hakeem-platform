@@ -128,6 +128,8 @@
     "test:deep-mode": "tsx scripts/test-deep-mode.ts",
     "test:enumeration": "tsx scripts/test-enumeration.ts",
     "test:rerank": "tsx scripts/test-rerank.ts",
+    "test:substrate": "tsx scripts/test-substrate.ts",
+    "tag:normative": "tsx scripts/tag-normative.ts",
     "eval:agents": "tsx scripts/eval-agents.ts"
   },
   "dependencies": {

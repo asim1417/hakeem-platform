@@ -133,6 +133,13 @@ model LegalArticle {
   royalDecree    String?
   effectiveFrom  DateTime?
   status         String                 @default("سارية")
+  // ── المرحلة ١.ب: تفكيك المعيار (normative tagging) — مفهرس للاستعلام المفهوميّ ──
+  // يُملأ عبر scripts/tag-normative.ts (نموذج + سقوط حتميّ). فارغ = غير مُوسَّم بعد.
+  normAddressee  String?                @map("norm_addressee")
+  normModality   String?                @map("norm_modality") // إلزام | إباحة | حظر | رخصة_تقديرية
+  normCondition  String?                @map("norm_condition")
+  normEffect     String?                @map("norm_effect")
+  normSource     String?                @map("norm_source") // rule | model
   // @deprecated (المرحلة ٥): مصدر الـembedding الوحيد هو جدول pgvector «embeddings».
   // لا يُكتب إليه بعد الآن (التوليد يذهب للجدول مباشرة)؛ يبقى أرشيفًا للقراءة الاحتياطية
   // فقط ولا يُحذف. لا تعتمد عليه كمصدر حقيقة.
@@ -147,6 +154,7 @@ model LegalArticle {
   @@unique([lawName, articleNumber])
   @@index([lawName])
   @@index([legalSystemId]) // فلتر systemIds (مساواة) — يُنشأ فعليًّا على Neon عبر legal-articles-extra-indexes.sql
+  @@index([normModality, normAddressee]) // المرحلة ١.ب: استعلام المعيار (رخصة تقديرية/المحكمة…)
   @@map("legal_articles")
 }
 
