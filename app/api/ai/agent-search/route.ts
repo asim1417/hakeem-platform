@@ -61,15 +61,36 @@ export async function POST(request: NextRequest) {
         // إجابة جاهزة من المنسّق (تحليل متعمّق أو حصر كامل للنظام) → تُقدَّم مباشرةً.
         // المواد مُخرَّجة من النواة (قائمة فعلاً)؛ الحصر الاستقرائي حتميّ من نصوص المواد.
         if (result.analysis) {
-          const basis = result.articles.slice(0, 40).map((a) => ({
-            systemName: a.systemName,
-            articleNumber: a.articleNumber,
-            articleTitle: a.articleTitle,
-            quote: a.snippet,
-            state: "official" as const,
-            internalUrl: a.internalUrl
-          }));
-          send({ type: "result", answer: result.analysis, mode: "live", basis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
+          // المرحلة ٥: لوحة الأساس تُبنى من المواد **المُتحقَّقة بترتيبها المُغذّى للتحليل** كي
+          // يطابق ذيل [n] في النصّ ترتيب المصدر في اللوحة؛ سقوط إلى المواد المُخرَّجة إن غابت.
+          const basis = (result.verified?.length
+            ? result.verified.map((c) => ({
+                systemName: c.systemName ?? "",
+                articleNumber: c.articleNumber ?? 0,
+                articleTitle: undefined as string | undefined,
+                quote: c.quote,
+                state: "official" as const,
+                enforcement: c.status ?? null,
+                internalUrl: c.articleId ? `/dashboard/legal-core/articles/${c.articleId}` : undefined
+              }))
+            : result.articles.slice(0, 40).map((a) => ({
+                systemName: a.systemName,
+                articleNumber: a.articleNumber,
+                articleTitle: a.articleTitle,
+                quote: a.snippet,
+                state: "official" as const,
+                enforcement: a.status ?? null,
+                internalUrl: a.internalUrl
+              })));
+          send({
+            type: "result",
+            answer: result.analysis,
+            mode: "live",
+            basis,
+            total: result.articles.length,
+            issues: result.issues.map((i) => i.issue),
+            coverage: result.coverage ? { answered: result.coverage.answered, total: result.coverage.issues.length, issues: result.coverage.issues } : undefined
+          });
           send({ type: "done" });
           return;
         }
