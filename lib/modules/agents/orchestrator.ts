@@ -8,6 +8,7 @@ import { runTakyeef, type LegalIssue } from "./thinking/takyeef";
 import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from "./thinking/mazann";
 import { verifyCitations } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
+import { rerankArticles } from "./thinking/rerank";
 import { search_articles, search_rulings, search_principles, scan_system_articles } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
 import type { AgentStep, IntentType } from "./types";
@@ -152,7 +153,8 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     onStep({ id: "precedents", status: "done", label: `أحكام ${rulings.length.toLocaleString("ar-SA")} · مبادئ ${principles.length.toLocaleString("ar-SA")}` });
   }
 
-  const articles = [...byId.values()];
+  // إعادة ترتيب خفيفة: الصلة + سلطة (استشهادات) + حالة سارية — فتصل الأفضل للتحليل (سقف ٤٠).
+  const articles = rerankArticles([...byId.values()]);
   onStep({ id: "search", status: "done", label: `خرّجت ${articles.length.toLocaleString("ar-SA")} مادة`, data: { count: articles.length } });
 
   if (DEEP && articles.length) {
