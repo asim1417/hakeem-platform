@@ -127,7 +127,8 @@
     "test:commands": "tsx scripts/test-commands.ts",
     "test:deep-mode": "tsx scripts/test-deep-mode.ts",
     "test:enumeration": "tsx scripts/test-enumeration.ts",
-    "test:rerank": "tsx scripts/test-rerank.ts"
+    "test:rerank": "tsx scripts/test-rerank.ts",
+    "eval:agents": "tsx scripts/eval-agents.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
