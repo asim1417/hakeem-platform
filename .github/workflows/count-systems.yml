@@ -1,0 +1,32 @@
+name: Diag Count Systems (read-only)
+
+# تشخيص للقراءة فقط: عدد المواد لكل نظام. لا يعدّل بيانات ولا محرّكًا. يدويّ فقط.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  count-systems:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Count articles per system
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال قاعدة"; exit 1; fi
+          for m in server-only client-only; do
+            mkdir -p "node_modules/$m"; echo 'module.exports = {};' > "node_modules/$m/index.js"
+            printf '{"name":"%s","version":"0.0.0","main":"index.js"}' "$m" > "node_modules/$m/package.json"
+          done
+          npx tsx scripts/count-systems.ts
