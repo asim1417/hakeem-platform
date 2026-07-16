@@ -11,7 +11,8 @@ import type { VerifiedCitation } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
 import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
-import { loadSystemsRegistry } from "./substrate/systems-registry";
+import { loadSystemsRegistry, type SystemRef } from "./substrate/systems-registry";
+import { resolveGoverningSystems } from "./thinking/resolve-scope";
 import { detectNormativeConcept } from "./substrate/normative";
 import { search_articles, search_rulings, search_principles, scan_system_articles, scan_normative } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
@@ -121,7 +122,26 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   // قيد النطاق (المرحلة ٣): عند تحديد أنظمة، نمرّر systemIds لفلتر النواة القائم فلا تتسرّب
   // مادةٌ من نظامٍ إلى سؤالٍ عن نظامٍ آخر. لا يلمس نواة الترتيب — خطّافها الموجود فقط. خلف راية.
   const SCOPE = process.env.AGENT_SCOPE_SCAN !== "0";
-  const scopeIds = SCOPE && plan?.targetSystems.length ? plan.targetSystems.map((s) => s.id) : undefined;
+  // النظام الحاكم: (١) ما ذُكر صراحةً في السؤال، وإلا (٢) **ما يفهمه النموذج** (المرحلة ٢):
+  //     «فسخ الزواج» → الأحوال الشخصية، حتى بلا ذكر النظام. التحقّق بالسجلّ يمنع الهلوسة،
+  //     والسقوط للمكنز الجامد عند تعذّر النموذج. خلف راية AGENT_LLM_SCOPE.
+  let scopeSystems: SystemRef[] = plan?.targetSystems ?? [];
+  if (SCOPE && !scopeSystems.length && process.env.AGENT_LLM_SCOPE !== "0") {
+    onStep({ id: "scope", status: "running", label: "أحدّد النظام الحاكم (فهمًا لا قاموسًا)" });
+    const resolved = await resolveGoverningSystems(query).catch(() => null);
+    if (resolved && resolved.systems.length) {
+      scopeSystems = resolved.systems;
+      onStep({
+        id: "scope",
+        status: "done",
+        label: `النظام الحاكم: ${resolved.systems.map((s) => s.name).join("، ")}`,
+        data: { source: resolved.source, systems: resolved.systems.map((s) => s.name), reasoning: resolved.reasoning },
+      });
+    } else {
+      onStep({ id: "scope", status: "done", label: "بحث عامّ (لم أُقيّد بنظام)" });
+    }
+  }
+  const scopeIds = SCOPE && scopeSystems.length ? scopeSystems.map((s) => s.id) : undefined;
 
   // (أ.٠) وضع المسح المفهوميّ: «حصر_مفهوميّ» + مفهوم معياريّ مكتشَف (مثل «السلطة التقديرية»)
   // → مسح **فهرس المعيار** ضمن النطاق **بلا top‑k** فيُرجِع كل المطابق دون مواد عرضية (HLS‑5.5).
@@ -223,7 +243,7 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   if (DEEP && articles.length) {
     // ④ مرحلة التحقّق المستقلّة (المرحلة ٤): نطاق → نفاذ → تأريض → تغطية. **لا تزيد المصادر**.
     onStep({ id: "verify", status: "running", label: "مرحلة التحقّق: نطاق · نفاذ · تأريض · تغطية" });
-    const report = await runVerification({ articles, plan });
+    const report = await runVerification({ articles, plan, targets: scopeSystems });
     coverage = report.coverage;
     verified = report.verified;
     onStep({
