@@ -73,7 +73,7 @@ export function AnswerToolbar({
         onClick={copyAnswer}
         title={copied ? "نُسخ ✓" : "نسخ النصّ"}
         aria-label="نسخ نصّ الإجابة"
-        className="focus-ring inline-flex items-center gap-1 rounded-md border border-[var(--ink-15)] px-2 py-1 text-xs font-semibold text-[var(--ink-60)] transition hover:border-[var(--gold)] hover:text-[var(--navy)]"
+        className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-1.5 text-xs font-semibold text-[var(--navy)] transition hover:bg-[var(--gold)] hover:text-white"
       >
         {copied ? (
           <span className="text-[var(--emerald)]">نُسخ ✓</span>
@@ -93,7 +93,7 @@ export function AnswerToolbar({
         disabled={exporting}
         title="تصدير Word"
         aria-label="تصدير الإجابة إلى ملفّ Word"
-        className="focus-ring inline-flex items-center gap-1 rounded-md border border-[var(--ink-15)] px-2 py-1 text-xs font-semibold text-[var(--ink-60)] transition hover:border-[var(--gold)] hover:text-[var(--navy)] disabled:opacity-50"
+        className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-1.5 text-xs font-semibold text-[var(--navy)] transition hover:bg-[var(--gold)] hover:text-white disabled:opacity-50"
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
