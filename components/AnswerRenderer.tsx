@@ -2,24 +2,38 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AnswerRenderer — تصيير إجابة «اسأل حكيم» (Markdown) عرضًا احترافيًّا يوازي المنصّات
-// القانونية: عناوين، جداول، فواصل، غامق، ومراجع [n] مميّزة بصريًّا (رقم علويّ ذهبيّ).
-// عرض فقط — لا يمسّ المحرّك ولا البحث ولا الوكلاء ولا المصادقة.
-// أمان: لا نُفعّل تصيير HTML الخام (سلوك react-markdown الافتراضي يهرّب أي HTML في نصّ
-// النموذج)، ومعالجة [n] عبر تحويل رابط Markdown آمن — لا حقن HTML.
+// القانونية: عناوين، جداول، فواصل، غامق، ومراجع مواد **قابلة للنقر** («م/٣٩» تُبرز بطاقة
+// المادة في لوحة الأساس). عرض فقط — لا يمسّ المحرّك ولا البحث ولا الوكلاء ولا المصادقة.
+// أمان: لا نُفعّل تصيير HTML الخام (react-markdown يهرّب أي HTML)، ومعالجة [n] عبر رابط آمن.
 // ─────────────────────────────────────────────────────────────────────────────
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AnchorHTMLAttributes } from "react";
 
-/**
- * يحوّل مراجع «[24]» إلى روابط Markdown آمنة «[24](#ref-24)» فتُصيَّر رقمًا علويًّا ذهبيًّا
- * (مرساة #ref-n جاهزة لربطها لاحقًا ببطاقة الأساس). يتجاوز روابط Markdown القائمة.
- */
-function linkifyRefs(md: string): string {
-  return (md || "").replace(/(!?)\[(\d{1,3})\](?!\()/g, (m, bang, n) => (bang ? m : `[${n}](#ref-${n})`));
+export interface AnswerSource {
+  articleNumber?: number | string;
+  systemName?: string;
 }
 
-export function AnswerRenderer({ content }: { content: string }) {
+/** يحوّل مراجع «[24]» إلى روابط Markdown آمنة «[24](#cite-24)» لتُعالَج كمرجع مادة قابل للنقر. */
+function linkifyRefs(md: string): string {
+  return (md || "").replace(/(!?)\[(\d{1,3})\](?!\()/g, (m, bang, n) => (bang ? m : `[${n}](#cite-${n})`));
+}
+
+/**
+ * @param content نصّ الإجابة (Markdown).
+ * @param basis مصادر الإجابة بالترتيب — يُطابَق مرجع [n] بـ basis[n-1] لعرض رقم المادة والربط.
+ * @param anchorPrefix بادئة مرساة بطاقات الأساس لهذا الدور (تفرّد عبر الأدوار) — مثل "t2-src-".
+ */
+export function AnswerRenderer({
+  content,
+  basis = [],
+  anchorPrefix = "",
+}: {
+  content: string;
+  basis?: AnswerSource[];
+  anchorPrefix?: string;
+}) {
   return (
     <div className="answer-prose" dir="rtl">
       <ReactMarkdown
@@ -44,17 +58,29 @@ export function AnswerRenderer({ content }: { content: string }) {
           blockquote: ({ children }) => <blockquote className="ans-quote">{children}</blockquote>,
           code: ({ children }) => <code className="ans-code">{children}</code>,
           a: ({ href, children, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href?: string }) => {
-            // مرجع [n] → رقم علويّ ذهبيّ مميّز (مرساة داخلية).
-            if (href?.startsWith("#ref-")) {
-              return (
-                <sup className="ans-ref">
-                  <a href={href} aria-label={`المرجع ${children}`}>
-                    {children}
+            // مرجع مادة [n] → «م/رقم المادة» قابل للنقر يُبرز بطاقة المصدر في لوحة الأساس.
+            if (href?.startsWith("#cite-")) {
+              const n = Number(href.slice("#cite-".length));
+              const src = Number.isFinite(n) && n > 0 ? basis[n - 1] : undefined;
+              const num = src?.articleNumber;
+              const target = anchorPrefix ? `#${anchorPrefix}${n}` : undefined;
+              // نعرض «م/رقم المادة» فقط حين نعرف رقم المادة الحقيقيّ (تفادي إيهام رقم غير صحيح).
+              if (num !== undefined && num !== "") {
+                const label = typeof num === "number" ? num.toLocaleString("ar-SA") : String(num);
+                return (
+                  <a
+                    className="cite-ref"
+                    href={target}
+                    title={src?.systemName ? `${src.systemName} · المادة ${label}` : `المادة ${label}`}
+                    aria-label={`المادة ${label} — اعرض المصدر`}
+                  >
+                    {label}
                   </a>
-                </sup>
-              );
+                );
+              }
+              // لا رقم مادة معروف → رقم علويّ محايد (بلا «م/» كي لا نُوهم).
+              return <sup className="ans-ref">{children}</sup>;
             }
-            // رابط داخليّ (النواة) يُفتح في مكانه؛ الخارجيّ في تبويب جديد.
             const internal = href?.startsWith("/") || href?.startsWith("#");
             return (
               <a className="ans-link" href={href} {...(internal ? {} : { target: "_blank", rel: "noreferrer" })} {...rest}>

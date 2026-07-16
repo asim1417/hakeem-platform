@@ -125,12 +125,15 @@ export function LegalBasisPanel({
   items,
   title = "الأساس النظامي",
   note,
-  children
+  children,
+  anchorPrefix
 }: {
   items: LegalBasisItem[];
   title?: string;
   note?: ReactNode;
   children?: ReactNode;
+  /** بادئة مرساة لبطاقات المصادر (للنقر من مراجع الإجابة). يجب أن تتفرّد عبر الأدوار. */
+  anchorPrefix?: string;
 }) {
   const overall = overallState(items);
 
@@ -156,7 +159,8 @@ export function LegalBasisPanel({
             return (
               <li
                 key={`${item.systemName}-${item.articleNumber ?? index}`}
-                className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4"
+                id={anchorPrefix ? `${anchorPrefix}${index + 1}` : undefined}
+                className="basis-src rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4"
                 style={{ borderInlineStartColor: meta.fg, borderInlineStartWidth: 3 }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
