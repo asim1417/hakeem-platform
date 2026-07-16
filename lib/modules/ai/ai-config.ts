@@ -234,7 +234,7 @@ export async function completeWithConfig(
 ): Promise<string> {
   if (cfg.provider === "offline" || !cfg.apiKey) return "";
   const model = cfg.model || defaultModelFor(cfg.provider);
-  const mt = Math.min(Math.max(maxTokens, 1), 4096);
+  const mt = Math.min(Math.max(maxTokens, 1), 8192);
   const sys = (system ?? "").trim();
   const usr = String(user ?? "");
 
