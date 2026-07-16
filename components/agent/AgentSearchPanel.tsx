@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
+import { AnswerRenderer } from "@/components/AnswerRenderer";
 
 type StepStatus = "running" | "done";
 type Step = { id: string; status: StepStatus; label: string; data?: any };
@@ -223,7 +224,11 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                         </span>
                       ) : null}
                     </div>
-                    <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
+                    {turn.mode === "intent" ? (
+                      <p className="whitespace-pre-wrap leading-8 text-[var(--ink-80)]">{turn.answer}</p>
+                    ) : (
+                      <AnswerRenderer content={turn.answer} />
+                    )}
                   </div>
                 ) : null}
 
