@@ -1,0 +1,43 @@
+name: Eval HLS (conformance)
+
+# يقيس مطابقة HLS §8 على القاعدة الحيّة (نطاق/نفاذ/مرحلية/تخطيط/تأريض). قراءة فقط.
+# النموذج يعمل إن توفّر مفتاحه، وإلا تُقاس الأبعاد الحتمية (نطاق/نفاذ/مرحلية/تخطيط).
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  eval-hls:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SEMANTIC_SEARCH: "true"
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      SETTINGS_SECRET: ${{ secrets.SETTINGS_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: Run HLS conformance eval
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال قاعدة"; exit 1; fi
+          # شِمّ server-only/client-only كوحدة فارغة لتشغيل tsx خارج Next (حارس RSC لا يلزم هنا)
+          for m in server-only client-only; do
+            mkdir -p "node_modules/$m"
+            echo 'module.exports = {};' > "node_modules/$m/index.js"
+            printf '{"name":"%s","version":"0.0.0","main":"index.js"}' "$m" > "node_modules/$m/package.json"
+          done
+          npm run eval:hls

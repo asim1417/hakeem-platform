@@ -133,7 +133,9 @@
     "eval:agents": "tsx scripts/eval-agents.ts",
     "test:planner": "tsx scripts/test-planner.ts",
     "test:verification": "tsx scripts/test-verification.ts",
-    "test:structured": "tsx scripts/test-structured-answer.ts"
+    "test:structured": "tsx scripts/test-structured-answer.ts",
+    "test:hls": "tsx scripts/test-hls-conformance.ts",
+    "eval:hls": "tsx scripts/eval-hls.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
