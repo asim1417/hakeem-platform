@@ -1,0 +1,110 @@
+/* ============================================================
+   حكيم — أساس الهوية البصرية الموحّدة (بترولي / نحاسي / ورقي)
+   المرجع: دليل الهوية HKM.ID + app/documents/landing.module.css
+   يُستورد أوّلًا في الـ layout الجذري؛ كل الصفحات تقرأ منه.
+   ============================================================ */
+
+:root {
+  /* العلامة */
+  --petrol: #0E3435;
+  --petrol-600: #1F4F4C;
+  --petrol-mid: #1F4F4C; /* اسم بديل مستخدَم في نظام ds */
+  --copper: #C69763;
+  --copper-deep: #A9793F;
+  --copper-soft: #E8D6BC;
+
+  /* الأسطح والنصوص */
+  --surface: #EFF3F2;
+  --ivory: #FBFAF6;
+  --pane: #FBFAF6;
+  --line: #CAD6D3;
+  --ink: #12211F;
+  --muted: #5C6E6B;
+  --chip: #E8EEEC;
+  --accent2: #E2EAE8;
+  --on-petrol: #EAF1EF;
+  --on-copper: #241A0C;
+
+  /* أسماء بديلة (توافق نظام ds/cs) */
+  --doc-surface: #EFF3F2;
+  --doc-ivory: #FBFAF6;
+  --doc-line: #CAD6D3;
+  --doc-ink: #12211F;
+  --doc-muted: #5C6E6B;
+
+  /* التظليل والبحث */
+  --mark: #F3E2B8;
+  --markink: #2A2317;
+  --mark-current: #FB923C;
+
+  /* تلوين الكيانات (وضع القراءة) */
+  --entity-amount: #15803D;
+  --entity-date: #1F4F4C;
+  --entity-number: #7C3AED;
+  --entity-party: #C2410C;
+  --suspect-underline: #DC2626;
+  --term-bg: #EDE9FE;
+  --term-ink: #5B21B6;
+  --term-border: #7C3AED;
+
+  /* الخطوط */
+  --font-ui: "IBM Plex Sans Arabic", system-ui, Tahoma, sans-serif;
+  --font-doc: "Amiri", "Traditional Arabic", "Simplified Arabic", "Arabic Typesetting", serif;
+
+  /* المقاسات والأشكال */
+  --maxw: 1120px;
+  --radius-card: 14px;
+  --radius-panel: 12px;
+  --radius-chip: 14px;
+  --radius-pill: 999px;
+}
+
+/* ---------- السمة الليلية ---------- */
+.dark {
+  --surface: #0D1B1B;
+  --ivory: #14403F;
+  --pane: #14403F;
+  --line: #1F4F4C;
+  --ink: #EAF1EF;
+  --muted: #9DB3AF;
+  --chip: #16403F;
+  --accent2: #16403F;
+  --copper: #D4AF6E;
+  --copper-soft: #6B4F2A;
+  --doc-surface: #0D1B1B;
+  --doc-ivory: #14403F;
+  --doc-line: #1F4F4C;
+  --doc-ink: #EAF1EF;
+  --doc-muted: #9DB3AF;
+  --mark: #6B4F2A;
+  --markink: #FFFFFF;
+  --entity-amount: #4ADE80;
+  --entity-date: #93C5FD;
+  --entity-number: #C4B5FD;
+  --entity-party: #FDBA74;
+  --term-bg: #4C1D95;
+  --term-ink: #E9D5FF;
+}
+
+/* ---------- السمة الورقية ---------- */
+.paper {
+  --surface: #F5EFE1;
+  --ivory: #FBF7EC;
+  --pane: #FBF7EC;
+  --line: #E0D4BA;
+  --ink: #2A2317;
+  --muted: #8A7A5C;
+  --copper: #A9793F;
+  --doc-surface: #F5EFE1;
+  --doc-ivory: #FBF7EC;
+  --doc-line: #E0D4BA;
+  --doc-ink: #2A2317;
+  --doc-muted: #8A7A5C;
+}
+
+/* ---------- الوصولية (معايير عالمية + الحكومة الرقمية) ---------- */
+:focus-visible { outline: 3px solid var(--petrol); outline-offset: 2px; }
+input, textarea, select, progress { accent-color: var(--copper); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

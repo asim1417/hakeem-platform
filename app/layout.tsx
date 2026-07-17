@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "./identity.css";
 import "./globals.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
