@@ -4,6 +4,7 @@
 // أشرِك المستخدم، لا تقرّر عنه. حتميّ ونقيّ — يُختبَر بلا نموذج ولا قاعدة.
 // ─────────────────────────────────────────────────────────────────────────────
 import { normalizeArabicText } from "@/lib/modules/legal-core/arabic-morphology";
+import { classifyBreadthDeterministic } from "./breadth-classifier";
 
 /** خيار استيضاح — يُرسَل كرسالة تالية عند نقره في الواجهة. */
 export interface ClarifyOption {
@@ -22,9 +23,6 @@ export interface BreadthClarification {
   dimension: string;
   options: ClarifyOption[]; // ٢–٣ كحدّ أقصى
 }
-
-// علامات الحصر (تدلّ على «الكلّ»). بلا واحدة منها → ليس واسعًا (سؤال محدّد).
-const ENUM_MARKERS = ["كل ", "جميع", "كافة", "ما هي", "ماهي", "عدد ", "عدّد", "قائمة", "حصر", "استقصاء"];
 
 // أبعاد واسعة تتوزّع عبر أنظمة كثيرة، ولكلٍّ خيارات مناسبة (٢ + استقصاء شامل).
 interface Dimension {
@@ -69,45 +67,66 @@ const DIMENSIONS: Dimension[] = [
   },
 ];
 
-// دلائل أن السؤال يقصد «عبر الأنظمة» عمومًا (لا نظامًا بعينه).
-const CROSS_SYSTEM_HINTS = ["الانظمه", "الانظمة", "القانون السعودي", "الانظمه السعوديه", "كل الانظمه", "جميع الانظمه", "عبر الانظمه"];
-
-/**
- * يكشف السؤال الواسع ويُرجِع استيضاحًا بخيارات. الشروط:
- *   • فيه علامة حصر (كل/جميع/ما هي…)، و
- *   • فيه بُعد واسع (مدد/عقوبات/شروط/حقوق…)، و
- *   • **لم يُذكر نظام محدّد** (hasSystem=false).
- * وإلا → null (سؤال محدّد يُبحَث مباشرةً).
- */
-export function detectBreadth(query: string, opts: { hasSystem: boolean }): BreadthClarification | null {
-  if (opts.hasSystem) return null; // نظام مذكور → محدّد
+/** يكشف بُعدًا واسعًا معروفًا في السؤال (مدد/عقوبات/شروط/حقوق…) — حتميّ نقيّ. */
+export function findDimension(query: string): Dimension | null {
   const n = normalizeArabicText(query || "");
   if (!n) return null;
+  return DIMENSIONS.find((d) => d.markers.some((m) => n.includes(normalizeArabicText(m)))) ?? null;
+}
 
-  const hasEnum = ENUM_MARKERS.some((m) => n.includes(normalizeArabicText(m)));
-  if (!hasEnum) return null;
-
-  const dim = DIMENSIONS.find((d) => d.markers.some((m) => n.includes(normalizeArabicText(m))));
-  if (!dim) return null;
-
-  // ترجيح إضافيّ: وجود دلالة «عبر الأنظمة» يقوّي الاتّساع (لكن ليس شرطًا — غياب النظام يكفي).
-  const crossHint = CROSS_SYSTEM_HINTS.some((h) => n.includes(normalizeArabicText(h)));
-
+/** استيضاح الاستقصاء: خياران مركّزان + استقصاء شامل (للسؤال الاستقصائي بلا نظام مذكور). */
+function buildExhaustiveClarification(query: string, dim: Dimension): BreadthClarification {
   const options: ClarifyOption[] = [
     ...dim.focused.slice(0, 2).map((f, i) => ({ id: `focus-${i + 1}`, label: f.label, query: f.query })),
-    {
-      id: "exhaustive",
-      label: "استقصاء شامل عبر الأنظمة (أعمق، يستغرق وقتًا)",
-      query: query.trim(),
-      exhaustive: true,
-      hint: "يفحص عدّة أنظمة ويعرض النتائج بالتدرّج",
-    },
+    { id: "exhaustive", label: "استقصاء شامل عبر الأنظمة (أعمق، يستغرق وقتًا)", query: query.trim(), exhaustive: true, hint: "يفحص عدّة أنظمة ويعرض النتائج بالتدرّج" },
   ];
-
   return {
     broad: true,
     dimension: dim.label,
-    message: `سؤالك عن «${dim.label}» يشمل عدّة أنظمة${crossHint ? " سعودية" : ""}. لأخدمك بدقّة، أي اتجاه تريد؟`,
+    message: `سؤالك عن «${dim.label}» يشمل عدّة أنظمة. لأخدمك بدقّة، أي اتجاه تريد؟`,
     options,
   };
+}
+
+/** استيضاح الالتباس: خياران فقط — الجواب المباشر عن المسألة، أو الاستقصاء الشامل. */
+function buildAmbiguousClarification(query: string, dim: Dimension): BreadthClarification {
+  const q = query.trim();
+  return {
+    broad: true,
+    dimension: dim.label,
+    message: `سؤالك عن «${dim.label}» يحتمل وجهين: جوابًا مباشرًا عن مسألةٍ بعينها، أو استقصاءً لكل ما يتعلّق بـ«${dim.label}». أيّهما تريد؟`,
+    options: [
+      { id: "direct", label: "الجواب المباشر عن المسألة", query: q, hint: "إجابة مركّزة من المادة الحاكمة" },
+      { id: "exhaustive", label: "استقصاء شامل (أعمق، يستغرق وقتًا)", query: q, exhaustive: true, hint: "يفحص كل المواد المتعلّقة بالبُعد" },
+    ],
+  };
+}
+
+/**
+ * يكشف حاجة الاستيضاح وفق تصنيف الاتّساع (٣ فئات، حتميّ نقيّ هنا):
+ *   • محدّد → null (يُبحَث مباشرةً، بلا استقصاء).
+ *   • استقصائيّ + نظام مذكور → null (يتولّاه المسح الكامل للنظام لا الاستيضاح).
+ *   • استقصائيّ بلا نظام → استيضاح الاستقصاء (خيارات مركّزة + شامل).
+ *   • ملتبس → استيضاح بخيارين (مباشر · شامل).
+ * (التصنيف بالنموذج يجري في المنسّق؛ هذا المسار الحتميّ للاختبار والسقوط الآمن.)
+ */
+export function detectBreadth(query: string, opts: { hasSystem: boolean }): BreadthClarification | null {
+  const dim = findDimension(query);
+  if (!dim) return null;
+  const klass = classifyBreadthDeterministic(query, { hasSystem: opts.hasSystem, hasDimension: true });
+  if (klass === "specific") return null;
+  if (klass === "exhaustive") return opts.hasSystem ? null : buildExhaustiveClarification(query, dim);
+  return buildAmbiguousClarification(query, dim);
+}
+
+/** يبني استيضاحًا من فئةٍ مُصنَّفة مسبقًا (يُستعمَل في المنسّق مع تصنيف النموذج). */
+export function buildClarificationForClass(
+  query: string,
+  klass: "exhaustive" | "ambiguous",
+  opts: { hasSystem: boolean }
+): BreadthClarification | null {
+  const dim = findDimension(query);
+  if (!dim) return null;
+  if (klass === "exhaustive") return opts.hasSystem ? null : buildExhaustiveClarification(query, dim);
+  return buildAmbiguousClarification(query, dim);
 }
