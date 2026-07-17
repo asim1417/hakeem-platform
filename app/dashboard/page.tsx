@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
-import { ModuleCard } from "@/components/ModuleCard";
 import { CenterSearch } from "@/components/CenterSearch";
+import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { activityLabel, statusLabel } from "@/lib/activity-labels";
@@ -91,14 +91,15 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      {/* صندوق البحث المركزيّ — كبير، في الوسط، بخيارين (اسأل حكيم افتراضيّ + البحث النصّي) */}
-      <section className="pt-8 text-center">
-        <h1 className="t-display text-3xl font-bold text-[var(--navy)] md:text-4xl">
-          ابحث في الأنظمة السعودية، أو اسأل حكيم
-        </h1>
-        <p className="mt-2 text-[var(--ink-60)]">بمصدرٍ موثّق من النواة القانونية.</p>
+      {/* الترويسة الموحّدة (نظام التصميم) — تحوي صندوق البحث المركزيّ بخياريه */}
+      <Hero
+        center
+        eyebrow="المصدر القانوني الموثّق · بحث ذكي"
+        title="ابحث في الأنظمة السعودية، أو اسأل حكيم"
+        lede="بمصدرٍ موثّق من النواة القانونية — من الواقعة إلى الاستراتيجية."
+      >
         <CenterSearch />
-      </section>
+      </Hero>
 
       {/* تابع عملك — أهمّ ما يحتاجه المستخدم العائد */}
       {!stats ? (
@@ -107,8 +108,8 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <>
-          <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">تابع عملك</h2>
-          <section className="mt-4 grid gap-4 xl:grid-cols-3">
+          <SectionTitle>تابع عملك</SectionTitle>
+          <section className="grid gap-4 xl:grid-cols-3">
             <RecentList
               title="آخر الاستشارات"
               empty="لا استشارات بعد."
@@ -140,51 +141,49 @@ export default async function DashboardPage() {
         </>
       )}
 
-      {/* الوجهات الرئيسية — إجراءات سريعة تطابق القائمة (بلا الخدمات التي صارت أوضاعًا) */}
-      <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">الوجهات الرئيسية</h2>
-      <section className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <ModuleCard
+      {/* الوجهات الرئيسية — بطاقات نظام التصميم الموحّد */}
+      <SectionTitle>الوجهات الرئيسية</SectionTitle>
+      <CardGrid>
+        <Card
           href="/dashboard/legal-search"
           title="البحث الشامل"
-          metric="بحث موحّد"
           icon={Search}
           description="ابحث في كامل القاعدة دفعةً واحدة: الأنظمة والمواد والأحكام والمبادئ — مع فلاتر وترتيب بالصلة."
         />
-        <ModuleCard
+        <Card
           href="/dashboard/legal-core"
           title="النواة القانونية"
-          metric={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
+          badge={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
           icon={BookOpen}
           description="المكتبة النظامية ومصدر الحقيقة الوحيد — الأنظمة والمواد والأحكام والمبادئ والمسائل القانونية."
         />
-        <ModuleCard
+        <Card
           href="/dashboard/ask"
           title="اسأل حكيم"
-          metric="٦ أوضاع ذكاء"
+          badge="٦ أوضاع"
           icon={Sparkles}
           description="مدخل واحد بأوضاع: اسأل · حلّل قضية · خطة عمل · تقدير حكم · استشارة · محادثة — يبحث في النواة ويصوغ إجابة مؤصّلة."
         />
-        <ModuleCard
+        <Card
           href="/dashboard/simulations"
           title="القاضي التفاعلي"
-          metric={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
+          badge={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
           icon={Gavel}
           description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
         />
-        <ModuleCard
+        <Card
           href="/documents"
           title="منصة الوثائق"
-          metric="استخراج نصّ"
           icon={FileText}
           description="حمّل مستندك (Word · PDF · صور ممسوحة) واستخرج نصّه العربيّ فورًا مع دعم القراءة الضوئية."
         />
-      </section>
+      </CardGrid>
 
       {/* نظرة عامة — مؤشرات مصغّرة */}
       {stats ? (
         <>
-          <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">نظرة عامة</h2>
-          <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <SectionTitle>نظرة عامة</SectionTitle>
+          <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard label="الأنظمة القانونية" value={stats.legalSystems} href="/dashboard/legal-core/systems" />
             <StatCard label="المواد النظامية" value={stats.legalArticles} href="/dashboard/legal-core/search" />
             <StatCard label="القضايا" value={stats.cases} />
@@ -195,8 +194,8 @@ export default async function DashboardPage() {
             <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
           </section>
 
-          <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">نشاط النظام</h2>
-          <section className="mt-4 grid gap-4 xl:grid-cols-3">
+          <SectionTitle>نشاط النظام</SectionTitle>
+          <section className="grid gap-4 xl:grid-cols-3">
             <RecentList
               title="آخر الأنشطة"
               empty="لا توجد أنشطة حديثة."
@@ -247,18 +246,18 @@ function roleLabel(role: string) {
 function StatCard({ label, value, href }: { label: string; value: number; href?: string }) {
   const inner = (
     <>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-olive">{value.toLocaleString("ar-SA")}</p>
+      <p className="text-sm text-[var(--ink-60)]">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-[var(--navy)] tabular-nums">{value.toLocaleString("ar-SA")}</p>
     </>
   );
   if (href) {
     return (
-      <Link href={href} className="block rounded-md border border-black/10 bg-white p-4 transition hover:border-olive/40 hover:shadow-sm">
+      <Link href={href} className="block rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-4 transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
         {inner}
       </Link>
     );
   }
-  return <div className="rounded-md border border-black/10 bg-white p-4">{inner}</div>;
+  return <div className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-4">{inner}</div>;
 }
 
 function RecentList({
@@ -271,16 +270,16 @@ function RecentList({
   items: Array<{ id: string; title: string; meta: string }>;
 }) {
   return (
-    <div className="rounded-md border border-black/10 bg-white p-5">
-      <h2 className="text-xl font-bold text-olive">{title}</h2>
+    <div className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-5">
+      <h3 className="text-base font-bold text-[var(--navy)]">{title}</h3>
       {items.length === 0 ? (
-        <p className="mt-3 rounded-md bg-sand p-4 text-gray-700">{empty}</p>
+        <p className="mt-3 rounded-[var(--r-md)] bg-[var(--hakeem-bg-soft)] p-4 text-sm text-[var(--ink-60)]">{empty}</p>
       ) : (
         <div className="mt-4 space-y-3">
           {items.map((item) => (
-            <article key={item.id} className="rounded-md border border-black/10 p-3">
-              <p className="line-clamp-2 font-semibold text-olive">{item.title}</p>
-              <p className="mt-1 text-xs text-gray-500">{item.meta}</p>
+            <article key={item.id} className="rounded-[var(--r-md)] border border-[var(--ink-08)] p-3">
+              <p className="line-clamp-2 font-semibold text-[var(--navy)]">{item.title}</p>
+              <p className="mt-1 text-xs text-[var(--ink-40)]">{item.meta}</p>
             </article>
           ))}
         </div>
