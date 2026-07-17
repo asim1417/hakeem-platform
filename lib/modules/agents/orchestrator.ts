@@ -15,6 +15,7 @@ import { loadSystemsRegistry, matchSystemsInText, type SystemRef } from "./subst
 import { resolveGoverningSystems } from "./thinking/resolve-scope";
 import { detectBreadth, type BreadthClarification } from "./breadth-gate";
 import { buildScopeDisclosure, systemsFromArticles } from "./thinking/disclosure";
+import { isCrossSystemDurationQuery, scanDurationsAcrossSystems, type DurationGroup } from "./cross-system-enum";
 import { detectNormativeConcept } from "./substrate/normative";
 import { search_articles, search_rulings, search_principles, scan_system_articles, scan_normative } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
@@ -41,6 +42,10 @@ export interface OrchestratorResult {
   plan?: QueryPlan;
   /** بوّابة الاتّساع: استيضاح بخيارات عند السؤال الواسع (بدل التخمين). */
   clarify?: BreadthClarification;
+  /** الاستقصاء الشامل (المرحلة ٣): مجموعات لكل نظام تُعرَض بالتدرّج (دفعات). */
+  enumGroups?: DurationGroup[];
+  /** الأنظمة التي شملها الاستقصاء الشامل (للإفصاح). */
+  scannedSystems?: string[];
   /** المرحلة ٤: حالة التغطية بعد التحقّق (كل مسألة: مُجابة/لا نصّ + بوّابة التسليم). */
   coverage?: CoverageState;
   /** المرحلة ٥: المواد المُتحقَّقة بترتيبها المُغذّى للتحليل — لمحاذاة ذيول [n] بلوحة الأساس. */
@@ -81,6 +86,19 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     if (clarify) {
       onStep({ id: "breadth", status: "done", label: "سؤالك واسع — أعرض خيارات للاستيضاح", data: { dimension: clarify.dimension, options: clarify.options.length } });
       return { intent: intent.type, clarify, issues: [], articles: [], mode };
+    }
+  }
+
+  // ①.٦ الاستقصاء الشامل (المرحلة ٣): يُفعَّل فقط عند اختيار المستخدم (skipBreadth) لسؤال
+  //     «حصر مدد عبر الأنظمة» بلا نظام محدّد → مسح عدّة أنظمة وتجميعها للعرض المتدرّج (دفعات).
+  if (opts.skipBreadth && process.env.AGENT_BREADTH !== "0" && isCrossSystemDurationQuery(query)) {
+    const registry = await loadSystemsRegistry().catch(() => []);
+    const hasSystem = matchSystemsInText(query, registry).length > 0;
+    if (!hasSystem) {
+      onStep({ id: "exhaustive", status: "running", label: "استقصاء شامل: أمسح المدد عبر الأنظمة (يستغرق وقتًا)" });
+      const { groups, scannedSystems } = await scanDurationsAcrossSystems(onStep);
+      onStep({ id: "exhaustive", status: "done", label: `وجدتُ مدداً في ${groups.length.toLocaleString("ar-SA")} من ${scannedSystems.length.toLocaleString("ar-SA")} نظامًا` });
+      return { intent: intent.type, issues: [], articles: [], mode, enumGroups: groups, scannedSystems };
     }
   }
 

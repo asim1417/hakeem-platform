@@ -13,6 +13,7 @@ import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
 import { orchestrate, suggestMode } from "@/lib/modules/agents/orchestrator";
 import { intentNeedsSearch } from "@/lib/modules/agents/intent-gate";
 import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
+import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -62,6 +63,21 @@ export async function POST(request: NextRequest) {
         // بوّابة الاتّساع: سؤال واسع → استيضاح بخيارات (لا بحث فوريّ). المستخدم يختار فيُعاد الإرسال.
         if (result.clarify) {
           send({ type: "clarify", message: result.clarify.message, dimension: result.clarify.dimension, options: result.clarify.options });
+          send({ type: "done" });
+          return;
+        }
+
+        // الاستقصاء الشامل: مجموعات لكل نظام تُعرَض بالتدرّج (دفعات + «عرض المزيد»).
+        if (result.enumGroups && result.enumGroups.length) {
+          send({
+            type: "result",
+            mode: "live",
+            answer: "## حصر المدد عبر الأنظمة",
+            groups: result.enumGroups,
+            total: result.enumGroups.reduce((s, g) => s + g.count, 0),
+            basis: [],
+            disclosure: buildScopeDisclosure({ systems: result.scannedSystems ?? [], dimension: "المدد", complete: false })
+          });
           send({ type: "done" });
           return;
         }

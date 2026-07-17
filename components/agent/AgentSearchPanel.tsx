@@ -17,6 +17,9 @@ type Turn = {
   total: number;
   coverage?: { answered: number; total: number; issues?: Array<{ systemName?: string; status: string }> };
   clarify?: { message: string; dimension?: string; options: Array<{ id: string; label: string; query: string; exhaustive?: boolean; hint?: string }> };
+  groups?: Array<{ systemName: string; count: number; table: string }>;
+  disclosure?: string;
+  visibleGroups?: number;
   message?: string;
   error?: string;
   streaming: boolean;
@@ -99,6 +102,9 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
               basis: (evt.basis ?? []) as LegalBasisItem[],
               total: evt.total ?? 0,
               coverage: evt.coverage,
+              groups: Array.isArray(evt.groups) ? evt.groups : undefined,
+              disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
+              visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
               message: evt.message
             }));
           } else if (evt.type === "clarify") {
@@ -208,6 +214,41 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                   </div>
                 ) : null}
 
+                {/* الاستقصاء الشامل — عرض متدرّج بالدفعات (مجموعة لكل نظام + «عرض المزيد») */}
+                {turn.groups && turn.groups.length ? (
+                  <div className="space-y-3">
+                    {turn.answer ? (
+                      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-4 shadow-[var(--sh-xs)]">
+                        <AnswerRenderer content={turn.answer} />
+                        <p className="mt-1 text-xs text-[var(--ink-60)]">وجدتُ مدداً في {turn.groups.length.toLocaleString("ar-SA")} أنظمة · إجمالي {turn.total.toLocaleString("ar-SA")} مادة. تُعرَض دفعةً دفعة.</p>
+                      </div>
+                    ) : null}
+                    {turn.groups.slice(0, turn.visibleGroups ?? 3).map((g, gi) => (
+                      <div key={`${g.systemName}-${gi}`} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-4 shadow-[var(--sh-xs)]">
+                        <div className="mb-2 flex items-center justify-between gap-2 border-b border-[var(--ink-08)] pb-2">
+                          <span className="text-sm font-bold text-[var(--navy)]">{g.systemName}</span>
+                          <span className="rounded-full bg-[var(--gold-ghost)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gold-dark)]">{g.count.toLocaleString("ar-SA")} مادة بمدد</span>
+                        </div>
+                        <AnswerRenderer content={g.table} />
+                      </div>
+                    ))}
+                    {(turn.visibleGroups ?? 3) < turn.groups.length ? (
+                      <button
+                        type="button"
+                        onClick={() => patchTurn(setTurns, i, (t) => ({ ...t, visibleGroups: (t.visibleGroups ?? 3) + 3 }))}
+                        className="focus-ring flex w-full items-center justify-center gap-1.5 rounded-lg border border-[var(--gold)] bg-[var(--gold-ghost)] px-3 py-2.5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold)] hover:text-white"
+                      >
+                        عرض المزيد ▾ ({(turn.groups.length - (turn.visibleGroups ?? 3)).toLocaleString("ar-SA")} نظامًا متبقّيًا)
+                      </button>
+                    ) : null}
+                    {turn.disclosure ? (
+                      <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3">
+                        <AnswerRenderer content={turn.disclosure} />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 {/* استيضاح السؤال الواسع — خيارات تفاعلية (المستخدم يقرّر، لا نخمّن) */}
                 {turn.clarify ? (
                   <div className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
@@ -236,7 +277,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                 ) : null}
 
                 {/* الإجابة المُصاغة المستندة */}
-                {turn.answer ? (
+                {turn.answer && !turn.groups ? (
                   <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)]">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-[var(--ink-08)] pb-2.5">
                       <div className="flex items-center gap-2">
@@ -301,7 +342,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                   </div>
                 ) : null}
 
-                {turn.basis !== null && turn.mode !== "intent" ? (
+                {turn.basis !== null && turn.mode !== "intent" && !turn.groups ? (
                   turn.basis.length ? (
                     <LegalBasisPanel
                       items={turn.basis}
