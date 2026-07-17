@@ -21,6 +21,7 @@ export default async function JudicialPrinciplesPage({
   await requirePagePermission("LEGAL_CORE_VIEW");
   const user = await getCurrentUser().catch(() => null);
   const canReview = user ? await canUser(user.id, "LEGAL_CORE_EDIT").catch(() => false) : false;
+  const canManage = user ? await canUser(user.id, "LEGAL_CORE_ADMIN").catch(() => false) : false;
 
   const q = (searchParams?.q ?? "").trim();
   const court = (searchParams?.court ?? "").trim();
@@ -69,7 +70,7 @@ export default async function JudicialPrinciplesPage({
 
   return (
     <LegalCoreShell>
-      <LegalCoreTabs />
+      <LegalCoreTabs canManage={canManage} />
       <div className="space-y-7">
         <LegalCorePageHeader
           eyebrow="حكيم | النواة القانونية"

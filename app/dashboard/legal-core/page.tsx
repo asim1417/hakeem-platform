@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, Database, FileSearch, Gavel, Quote, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { canUser } from "@/lib/modules/auth/rbac";
 import {
   countArticlesNeedingReview,
   countJudicialCases,
@@ -17,7 +18,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function LegalCoreDashboardPage() {
-  await requirePagePermission("LEGAL_CORE_VIEW");
+  const currentUser = await requirePagePermission("LEGAL_CORE_VIEW");
+  const canManage = await canUser(currentUser.id, "LEGAL_CORE_ADMIN");
 
   const [stats, recentArticles, classificationCount, needsReview, judgmentsCount, principlesCount, decreesCount] = await Promise.all([
     getLibraryStats().catch(() => ({ total: 0, systemCount: 0, laws: [] })),
@@ -33,7 +35,7 @@ export default async function LegalCoreDashboardPage() {
 
   return (
     <LegalCoreShell>
-      <LegalCoreTabs />
+      <LegalCoreTabs canManage={canManage} />
       <div className="space-y-7">
         <LegalCorePageHeader
           title="النواة القانونية الموحدة"

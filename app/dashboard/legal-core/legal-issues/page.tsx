@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Scale, ArrowRight, BookOpen } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { canUser } from "@/lib/modules/auth/rbac";
 import { resolveArticleIds as resolveArticleIdsByPair } from "@/lib/modules/library/library-service";
 import {
   LegalCoreCard,
@@ -44,7 +45,8 @@ export default async function LegalIssuesPage({
 }: {
   searchParams?: { section?: string; book?: string; page?: string };
 }) {
-  await requirePagePermission("LEGAL_CORE_VIEW");
+  const currentUser = await requirePagePermission("LEGAL_CORE_VIEW");
+  const canManage = await canUser(currentUser.id, "LEGAL_CORE_ADMIN");
 
   const overview = getLegalIssuesOverview();
   const activeSection = searchParams?.section ?? overview.sections[0]?.slug;
@@ -53,7 +55,7 @@ export default async function LegalIssuesPage({
 
   return (
     <LegalCoreShell>
-      <LegalCoreTabs />
+      <LegalCoreTabs canManage={canManage} />
       <div className="space-y-6">
         <LegalCorePageHeader
           title="المسائل القانونية"

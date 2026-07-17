@@ -3,6 +3,7 @@ import { ShieldCheck, Quote, Scale, BookOpen, Database, ClipboardCheck, AlertTri
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export default async function LegalContentAdminPage() {
 
   return (
     <LegalCoreShell>
+      <LegalCoreTabs canManage />
       <div className="space-y-7">
         <LegalCorePageHeader
           eyebrow="حكيم | النواة القانونية"

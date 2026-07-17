@@ -4,17 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 // تبويبات المكتبة النظامية: المواد · المسائل · المبادئ — تصفّحٌ داخل الصفحة بدل عناصر منفصلة في القائمة.
-const TABS = [
+// «إدارة المحتوى» تبويبٌ إضافيّ يظهر لأصحاب صلاحية إدارة النواة فقط (canManage).
+const BASE_TABS = [
   { href: "/dashboard/legal-core", label: "المواد" },
   { href: "/dashboard/legal-core/legal-issues", label: "المسائل القانونية" },
   { href: "/dashboard/legal-core/principles", label: "المبادئ القضائية" },
 ];
 
-export function LegalCoreTabs() {
+const MANAGE_TAB = { href: "/dashboard/legal-core/admin", label: "إدارة المحتوى" };
+
+export function LegalCoreTabs({ canManage = false }: { canManage?: boolean }) {
   const pathname = usePathname();
+  const tabs = canManage ? [...BASE_TABS, MANAGE_TAB] : BASE_TABS;
   return (
     <nav className="lc-tabs" aria-label="أقسام المكتبة النظامية" dir="rtl">
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         // «المواد» نشط على الجذر فقط؛ الآخران على مسارهما (أو ما تحته).
         const active =
           tab.href === "/dashboard/legal-core"
