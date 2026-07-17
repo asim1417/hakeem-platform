@@ -15,9 +15,9 @@
  */
 import { prisma } from "@/lib/prisma";
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
-import { resolveAiConfig } from "@/lib/modules/ai/ai-config";
+import { resolveAiConfig, getAiStatus } from "@/lib/modules/ai/ai-config";
 import { buildExtractPrompt, buildVerifyPrompt, parseVerify } from "@/lib/modules/judgment-cards/prompts";
-import { parseCard, normalizeAr, EXTRACTOR_VERSION, type JudgmentCard } from "@/lib/modules/judgment-cards/card-schema";
+import { parseCard, normalizeAr, toWesternDigits, EXTRACTOR_VERSION, type JudgmentCard } from "@/lib/modules/judgment-cards/card-schema";
 import { checkConsistency, decideReviewStatus } from "@/lib/modules/judgment-cards/consistency";
 
 const APPLY = process.argv.includes("--apply");
@@ -60,11 +60,12 @@ function seededShuffle<T>(arr: T[], rng: () => number): T[] {
 }
 const SEED = 20260717;
 
-type Candidate = { id: string; court: string | null; courtOfAppeal: string | null; decisionDate: Date | null; decisionDateText: string | null };
+type Candidate = { id: string; court: string | null; courtOfAppeal: string | null; decisionDate: Date | null; decisionDateText: string | null; caseDateText: string | null };
 
 function yearOf(c: Candidate): string {
   if (c.decisionDate) return String(c.decisionDate.getFullYear());
-  const m = (c.decisionDateText || "").match(/1[34]\d{2}|20\d{2}|19\d{2}/);
+  // تواريخ الأحكام السعودية غالبًا هجرية بأرقام عربية-هندية (١٤٤٠) — نحوّلها قبل الالتقاط.
+  const m = toWesternDigits(`${c.decisionDateText || ""} ${c.caseDateText || ""}`).match(/1[34]\d{2}|20\d{2}|19\d{2}/);
   return m ? m[0] : "غير معروف";
 }
 function courtGroup(c: Candidate): string {
@@ -147,7 +148,7 @@ async function main() {
   // ② مرشّحون + اختيار متنوّع حتميّ
   const cands = (await prisma.judicialCase.findMany({
     where: whereCommercial,
-    select: { id: true, court: true, courtOfAppeal: true, decisionDate: true, decisionDateText: true },
+    select: { id: true, court: true, courtOfAppeal: true, decisionDate: true, decisionDateText: true, caseDateText: true },
   })) as Candidate[];
   const selected = diverseSelect(cands, Math.min(TARGET, cands.length));
   if (selected.length < TARGET) console.log(`⚠ المتاح ${selected.length} < الهدف ${TARGET} — سنعالج المتاح كاملاً (لا سقف صامت).`);
@@ -173,6 +174,9 @@ async function main() {
     // معاينة نصّ أول مرشّح للتأكّد من توفّر النصّ الكامل
     const sample = await prisma.judicialCase.findUnique({ where: { id: selected[0].id }, select: { judgmentText: true, court: true } });
     console.log(`عيّنة نصّ (طول): ${sample?.judgmentText?.length ?? 0} حرف · المحكمة: ${sample?.court ?? "∅"}`);
+    // فحص مسبق لمزوّد الذكاء (دون كشف المفتاح) — يحدّد هل يمكن تشغيل run فعليًّا
+    const ai = await getAiStatus().catch(() => null);
+    console.log(`فحص الذكاء المسبق: مزوّد=${ai?.provider ?? "?"} · مصدر=${ai?.source ?? "?"} · مضبوط=${ai?.configured ? "نعم ✅" : "لا ❌ (run سيتوقّف بأمان)"}`);
     await prisma.$disconnect();
     return;
   }

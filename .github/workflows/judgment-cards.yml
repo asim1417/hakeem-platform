@@ -46,6 +46,9 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+      # فكّ تشفير مفتاح الذكاء المخزّن في app_settings (إن استُعمل مسار DB) — يلزم AUTH_SECRET نفسه.
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       # مزوّد الذكاء (run فقط) — من أسرار المستودع. غيابها ⇒ توقّف نظيف برسالة.
       AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
