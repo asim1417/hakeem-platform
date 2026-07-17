@@ -79,7 +79,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
 
             {judgment.appealText ? (
               <LegalCoreCard title="نص الاستئناف أو الاعتراض" subtitle="يعرض عند توفره داخل مصدر الأحكام">
-                <article className="legal-prose rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white/60 p-6 font-judicial text-xl leading-10 text-[var(--ink)]">
+                <article className="legal-prose rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory/60 p-6 font-judicial text-xl leading-10 text-[var(--ink)]">
                   <JudgmentText
                     text={judgment.appealText}
                     links={judgment.articleLinks.map((l) => ({
@@ -97,7 +97,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
               {judgment.articleLinks.length ? (
                 <div className="space-y-3">
                   {judgment.articleLinks.map((link) => (
-                    <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
+                    <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="font-mono-legal text-sm text-[var(--gold)]">

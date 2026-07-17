@@ -29,7 +29,7 @@ export default async function AdminApiKeysPage() {
     <AppShell>
       <p className="text-sm font-semibold text-gold">البوابة الخارجية</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">مفاتيح API</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         أنشئ مفاتيح للأطراف الخارجية وأنظمة الذكاء للوصول إلى واجهات <code className="font-mono-legal">/api/legal/*</code> بنطاق
         <code className="font-mono-legal"> legal:read</code>، مع حدّ معدّل لكل مفتاح. المفتاح يظهر مرة واحدة فقط عند الإنشاء.
       </p>

@@ -61,14 +61,14 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
 
   return (
     <div className="space-y-6">
-      <section className="rounded-md border border-black/10 bg-white p-5">
+      <section className="rounded-md border border-line bg-ivory p-5">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-semibold text-olive">عنوان الاستشارة</span>
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+              className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
               placeholder="مثال: نزاع توريد مواد بناء"
             />
           </label>
@@ -78,7 +78,7 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
             <select
               value={matterType}
               onChange={(event) => setMatterType(event.target.value)}
-              className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+              className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
             >
               {matterTypes.map((type) => (
                 <option key={type} value={type}>
@@ -94,7 +94,7 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
           <textarea
             value={facts}
             onChange={(event) => setFacts(event.target.value)}
-            className="focus-ring mt-2 min-h-40 w-full rounded-md border border-black/10 px-4 py-3 leading-8"
+            className="focus-ring mt-2 min-h-40 w-full rounded-md border border-line px-4 py-3 leading-8"
             placeholder="اكتب الوقائع القانونية بتفصيل كاف..."
           />
         </label>
@@ -104,7 +104,7 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
           <textarea
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            className="focus-ring mt-2 min-h-24 w-full rounded-md border border-black/10 px-4 py-3 leading-8"
+            className="focus-ring mt-2 min-h-24 w-full rounded-md border border-line px-4 py-3 leading-8"
             placeholder="مثال: هل يحق للشركة خصم قيمة المواد المعيبة؟"
           />
         </label>
@@ -122,7 +122,7 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
       {error ? <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</div> : null}
 
       {result ? (
-        <section className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-6 shadow-[var(--sh-xs)]">
+        <section className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-6 shadow-[var(--sh-xs)]">
           <p className="rounded-[var(--r-md)] border border-[var(--amber-soft)] bg-[var(--amber-soft)] p-4 text-sm leading-7 text-[var(--amber)]">
             {result.warning}
           </p>

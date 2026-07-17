@@ -230,7 +230,7 @@ export default async function LegalSearchPage({
                 className={`rounded-full border px-4 py-1.5 text-sm transition ${
                   isActive
                     ? "border-[var(--navy)] bg-[var(--navy)] text-white"
-                    : "border-[var(--ink-20)] bg-white text-[var(--ink-80)] hover:border-[var(--gold)]"
+                    : "border-[var(--ink-20)] bg-ivory text-[var(--ink-80)] hover:border-[var(--gold)]"
                 }`}
               >
                 {f.label} <span className="tabular-nums opacity-70">({counts[f.key].toLocaleString("ar-SA")})</span>
@@ -254,7 +254,7 @@ export default async function LegalSearchPage({
               name="system"
               defaultValue={activeSystem}
               aria-label="تصفية بالنظام"
-              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل الأنظمة</option>
               {systemFacets.map((f) => (
@@ -269,7 +269,7 @@ export default async function LegalSearchPage({
               name="classification"
               defaultValue={activeClassification}
               aria-label="تصفية بالتصنيف"
-              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل التصنيفات</option>
               {classificationFacets.map((f) => (
@@ -284,7 +284,7 @@ export default async function LegalSearchPage({
               name="status"
               defaultValue={activeStatus}
               aria-label="تصفية بحالة المادة"
-              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل الحالات</option>
               {statusFacets.map((f) => (
@@ -299,7 +299,7 @@ export default async function LegalSearchPage({
               name="court"
               defaultValue={activeCourt}
               aria-label="تصفية بالمحكمة"
-              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل المحاكم</option>
               {courtFacets.map((f) => (
@@ -314,7 +314,7 @@ export default async function LegalSearchPage({
               name="year"
               defaultValue={activeYear}
               aria-label="تصفية بسنة الحكم"
-              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
+              className="rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 py-1.5 text-sm text-[var(--ink-80)] outline-none focus:border-[var(--gold)]"
             >
               <option value="">كل السنوات</option>
               {yearFacets.map((f) => (
@@ -371,7 +371,7 @@ export default async function LegalSearchPage({
                 href={buildHref({ sort: s.key })}
                 aria-current={on ? "true" : undefined}
                 className={`rounded-full border px-3 py-1 text-xs transition ${
-                  on ? "border-[var(--navy)] bg-[var(--navy)] text-white" : "border-[var(--ink-20)] bg-white text-[var(--ink-80)] hover:border-[var(--gold)]"
+                  on ? "border-[var(--navy)] bg-[var(--navy)] text-white" : "border-[var(--ink-20)] bg-ivory text-[var(--ink-80)] hover:border-[var(--gold)]"
                 }`}
               >
                 {s.label}

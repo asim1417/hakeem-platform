@@ -24,7 +24,7 @@ export default async function AuditLogsPage() {
       <h1 className="t-head mt-2 text-3xl font-bold text-[var(--navy)]">سجل التدقيق</h1>
       <p className="mt-2 text-sm text-[var(--ink-60)]">أحدث {logs.length.toLocaleString("ar-SA")} عملية مُسجَّلة في النظام.</p>
 
-      <section className="mt-6 overflow-hidden rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white shadow-[var(--sh-xs)]">
+      <section className="mt-6 overflow-hidden rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory shadow-[var(--sh-xs)]">
         {logs.length === 0 ? (
           <div className="p-6 text-center text-[var(--ink-60)]">لا توجد سجلات تدقيق حتى الآن.</div>
         ) : (
@@ -43,7 +43,7 @@ export default async function AuditLogsPage() {
                 {logs.map((log) => (
                   <tr
                     key={log.id}
-                    className="border-b border-[var(--ink-04)] align-top transition odd:bg-white even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]"
+                    className="border-b border-[var(--ink-04)] align-top transition odd:bg-ivory even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]"
                   >
                     <td className="px-4 py-3 font-mono-legal text-[var(--navy)]">{log.action}</td>
                     <td className="px-4 py-3 text-[var(--ink-70)]">{log.subject}</td>

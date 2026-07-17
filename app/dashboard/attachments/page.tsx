@@ -39,7 +39,7 @@ export default async function AttachmentsPage() {
     <div>
       <p className="text-sm font-semibold text-gold">المرفقات والبينات</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">المرفقات</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         واجهة MVP لتسجيل بيانات المرفقات وربطها بالقضايا أو المسارات الأخرى دون تخزين دائم للملفات.
       </p>
       <div className="mt-6">

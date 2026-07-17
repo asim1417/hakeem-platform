@@ -67,7 +67,7 @@ export function LegalStatCard({ label, value, hint }: { label: string; value: st
 
 export function LegalFormSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/80 p-5">
+    <section className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/80 p-5">
       <h2 className="t-display text-lg font-bold text-[var(--navy)]">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
@@ -166,7 +166,7 @@ export function ClaimSheetCard({ claim }: { claim?: Record<string, string> }) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {rows.map(([label, value]) => (
-        <div key={label} className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-white/70 p-3">
+        <div key={label} className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory/70 p-3">
           <p className="t-display text-sm font-bold text-[var(--navy)]">{label}</p>
           <p className="mt-1 whitespace-pre-wrap leading-7 text-[var(--ink-80)]">{value || "غير محدد"}</p>
         </div>

@@ -29,7 +29,7 @@ export function ArticleReadingTools({ exportText, exportTitle, citation }: { exp
     const html =
       `<html dir="rtl" lang="ar"><head><meta charset="utf-8"></head>` +
       `<body style="font-family:'Times New Roman',serif;line-height:1.9">` +
-      `<h2 style="color:#0B1F3A">${exportTitle}</h2>` +
+      `<h2 style="color:#0E3435">${exportTitle}</h2>` +
       `<div style="font-size:16px">${safe.replace(/\n/g, "<br>")}</div>` +
       `<hr><p style="font-size:12px;color:#555">${citation}</p>` +
       `</body></html>`;

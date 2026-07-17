@@ -101,7 +101,7 @@ export function HomeHero() {
             submit();
           }}
         >
-          <div className="flex items-center gap-2 rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-white p-2 shadow-[var(--sh-md)] transition focus-within:border-[var(--gold)]">
+          <div className="flex items-center gap-2 rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-ivory p-2 shadow-[var(--sh-md)] transition focus-within:border-[var(--gold)]">
             <span aria-hidden className="ms-2 text-xl text-[var(--ink-40)]">
               ⌕
             </span>
@@ -146,7 +146,7 @@ export function HomeHero() {
             <Link
               key={link.href}
               href={link.href}
-              className="focus-ring rounded-full border border-[var(--ink-08)] bg-white px-4 py-2 text-sm text-[var(--navy)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
+              className="focus-ring rounded-full border border-[var(--ink-08)] bg-ivory px-4 py-2 text-sm text-[var(--navy)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
             >
               {link.label}
             </Link>

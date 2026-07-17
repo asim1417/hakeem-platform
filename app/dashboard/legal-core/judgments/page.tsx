@@ -200,7 +200,7 @@ export default async function LegalCoreJudgmentsPage({
                       </LegalTopicBadge>
                     </div>
                   </div>
-                  <p className="mt-4 line-clamp-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
+                  <p className="mt-4 line-clamp-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
                     {textById.get(judgment.id) ?? ""}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">

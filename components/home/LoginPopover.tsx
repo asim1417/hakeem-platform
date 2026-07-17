@@ -56,7 +56,7 @@ export function LoginPopover() {
     return (
       <Link
         href="/dashboard"
-        className="focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-sm)]"
+        className="focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-sm)]"
       >
         الدخول إلى المنصة
       </Link>
@@ -70,7 +70,7 @@ export function LoginPopover() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-sm)]"
+        className="focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-sm)]"
       >
         تسجيل الدخول
       </button>
@@ -89,9 +89,9 @@ export function LoginPopover() {
             className={[
               "z-50",
               // Popover سطح المكتب
-              "md:absolute md:left-0 md:mt-3 md:w-[360px] md:rounded-[var(--r-xl)] md:border md:border-[var(--gold-border)] md:bg-white md:p-4 md:shadow-[var(--sh-lg)]",
+              "md:absolute md:left-0 md:mt-3 md:w-[360px] md:rounded-[var(--r-xl)] md:border md:border-[var(--gold-border)] md:bg-ivory md:p-4 md:shadow-[var(--sh-lg)]",
               // BottomSheet الجوال
-              "fixed inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-[var(--r-2xl)] border-t border-[var(--gold-border)] bg-white p-4 pb-7 shadow-[var(--sh-lg)] md:inset-auto md:bottom-auto md:max-h-none md:rounded-t-[var(--r-xl)] md:pb-4"
+              "fixed inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-[var(--r-2xl)] border-t border-[var(--gold-border)] bg-ivory p-4 pb-7 shadow-[var(--sh-lg)] md:inset-auto md:bottom-auto md:max-h-none md:rounded-t-[var(--r-xl)] md:pb-4"
             ].join(" ")}
           >
             <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[var(--ink-15)] md:hidden" aria-hidden />

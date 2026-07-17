@@ -93,11 +93,11 @@ export default async function JudicialPrinciplesPage({
         <form className="flex flex-wrap items-end gap-3 rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-4 shadow-[var(--sh-xs)]" action="/dashboard/legal-core/principles">
           <div className="flex-1 min-w-[220px]">
             <label className="mb-1 block text-xs font-semibold text-[var(--ink-60)]" htmlFor="q">بحث في المبادئ</label>
-            <input id="q" name="q" defaultValue={q} placeholder="كلمة في المبدأ أو عنوانه..." className="h-10 w-full rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white px-3 text-sm" />
+            <input id="q" name="q" defaultValue={q} placeholder="كلمة في المبدأ أو عنوانه..." className="h-10 w-full rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory px-3 text-sm" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--ink-60)]" htmlFor="court">المحكمة</label>
-            <select id="court" name="court" defaultValue={court} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white px-3 text-sm">
+            <select id="court" name="court" defaultValue={court} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory px-3 text-sm">
               <option value="">كل المحاكم</option>
               {courts.map((c) => (
                 <option key={c.court} value={c.court ?? ""}>{c.court} ({c._count._all})</option>
@@ -106,7 +106,7 @@ export default async function JudicialPrinciplesPage({
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--ink-60)]" htmlFor="status">الحالة</label>
-            <select id="status" name="status" defaultValue={status} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white px-3 text-sm">
+            <select id="status" name="status" defaultValue={status} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory px-3 text-sm">
               <option value="">الكل (عدا المرفوض)</option>
               <option value="reviewed">معتمد</option>
               <option value="needs_review">بانتظار المراجعة</option>
@@ -120,7 +120,7 @@ export default async function JudicialPrinciplesPage({
           {principles.length ? (
             <div className="space-y-3">
               {principles.map((p) => (
-                <article key={p.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
+                <article key={p.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <h3 className="font-display-ar text-base font-bold text-[var(--navy)]">{p.title}</h3>
                     <div className="flex flex-wrap gap-2">

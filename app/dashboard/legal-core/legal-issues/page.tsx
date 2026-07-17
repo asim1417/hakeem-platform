@@ -172,7 +172,7 @@ async function SectionList({ slug, book, page }: { slug?: string; book?: string;
           const id = issue.topArticle ? articleIds.get(`${issue.topArticle.lawName}|${issue.topArticle.articleNumber}`) : undefined;
           const order = (page - 1) * pageSize + i + 1;
           return (
-            <li key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+            <li key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3">
               <div className="flex items-start justify-between gap-2">
                 <p className="font-display-ar text-sm font-bold text-[var(--navy)]">
                   <span className="ml-2 font-mono-legal text-[0.7rem] text-[var(--ink-50)]">{order.toLocaleString("ar-SA")}.</span>

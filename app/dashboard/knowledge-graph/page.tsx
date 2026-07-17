@@ -50,7 +50,7 @@ export default async function KnowledgeGraphPage({
     <div dir="rtl">
       <p className="text-sm font-semibold text-gold">الرسم المعرفي القانوني (Knowledge Graph)</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">صفحة اختبار العلاقات والمتجهات</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         تعرض هذه الصفحة علاقات المواد بالأحكام والمبادئ ونوع العلاقة ودرجة الثقة، وحالة متجهات الدلالة (pgvector).
         صفحة فنية للتحقق — لا تُغيّر الواجهات القائمة.
       </p>
@@ -82,7 +82,7 @@ export default async function KnowledgeGraphPage({
 
       {/* تصفية بعلاقات مادة */}
       <form className="mt-6 flex flex-wrap items-end gap-2" action="/dashboard/knowledge-graph">
-        <label className="text-sm text-gray-600">
+        <label className="text-sm text-muted">
           عرض علاقات مادة بمعرّفها:
           <input
             name="articleId"
@@ -95,7 +95,7 @@ export default async function KnowledgeGraphPage({
           عرض
         </button>
         {articleId && (
-          <a href="/dashboard/knowledge-graph" className="text-sm text-gray-500 underline">
+          <a href="/dashboard/knowledge-graph" className="text-sm text-muted underline">
             إلغاء التصفية
           </a>
         )}
@@ -104,7 +104,7 @@ export default async function KnowledgeGraphPage({
       {/* جدول العلاقات */}
       <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full text-right text-sm">
-          <thead className="bg-gray-50 text-gray-600">
+          <thead className="bg-surface text-muted">
             <tr>
               <th className="px-3 py-2">المصدر</th>
               <th className="px-3 py-2">العلاقة</th>
@@ -115,7 +115,7 @@ export default async function KnowledgeGraphPage({
           <tbody>
             {relations.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-gray-400">
+                <td colSpan={4} className="px-3 py-6 text-center text-muted">
                   لا توجد علاقات لعرضها{articleId ? " لهذه المادة" : ""}.
                 </td>
               </tr>
@@ -144,8 +144,8 @@ export default async function KnowledgeGraphPage({
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
-      <div className="text-xs text-gray-500">{label}</div>
+    <div className="rounded-lg border border-gray-200 bg-ivory p-3">
+      <div className="text-xs text-muted">{label}</div>
       <div className="mt-1 text-2xl font-bold text-olive tabular-nums">{value}</div>
     </div>
   );

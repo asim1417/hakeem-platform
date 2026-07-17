@@ -118,7 +118,7 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
   return (
     <div className="space-y-5">
       {/* الحالة */}
-      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)]">
+      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5 shadow-[var(--sh-xs)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-[var(--gold-dark)]">الحالة الحالية</p>
@@ -142,10 +142,10 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {revealedKey ? (
               <>
-                <button type="button" onClick={() => setRevealedKey(null)} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]">
+                <button type="button" onClick={() => setRevealedKey(null)} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]">
                   <EyeOff size={14} aria-hidden /> إخفاء
                 </button>
-                <button type="button" onClick={() => void navigator.clipboard?.writeText(revealedKey)} className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]">
+                <button type="button" onClick={() => void navigator.clipboard?.writeText(revealedKey)} className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]">
                   نسخ
                 </button>
                 <span className="text-[11px] text-[var(--amber)]">سُجِّلت عملية الكشف في سجلّ التدقيق.</span>
@@ -160,14 +160,14 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
       </div>
 
       {/* النموذج */}
-      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)]">
+      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5 shadow-[var(--sh-xs)]">
         <h2 className="t-head text-base font-bold text-[var(--navy)]">تعديل الإعداد</h2>
         <p className="mt-1 text-sm text-[var(--ink-60)]">يُحفظ المفتاح مشفّراً في قاعدة البيانات ولا يظهر بعد الحفظ. يرثه «اسأل حكيم» والقاضي التفاعلي.</p>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-semibold text-[var(--navy)]">المزوّد</span>
-            <select value={provider} onChange={(e) => onProviderChange(e.target.value)} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3">
+            <select value={provider} onChange={(e) => onProviderChange(e.target.value)} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-4 py-3">
               {PROVIDERS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
@@ -175,14 +175,14 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
           </label>
           <label className="block">
             <span className="text-sm font-semibold text-[var(--navy)]">النموذج (اختياري)</span>
-            <input value={model} onChange={(e) => setModel(e.target.value)} dir="ltr" placeholder={DEFAULT_MODELS[provider] || "اسم النموذج"} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3 text-left font-mono-legal text-sm" />
+            <input value={model} onChange={(e) => setModel(e.target.value)} dir="ltr" placeholder={DEFAULT_MODELS[provider] || "اسم النموذج"} className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-4 py-3 text-left font-mono-legal text-sm" />
           </label>
         </div>
 
         {provider === "custom" ? (
           <label className="mt-4 block">
             <span className="text-sm font-semibold text-[var(--navy)]">عنوان المزوّد المخصّص (Base URL)</span>
-            <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} dir="ltr" placeholder="https://..." className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-4 py-3 text-left font-mono-legal text-sm" />
+            <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} dir="ltr" placeholder="https://..." className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-4 py-3 text-left font-mono-legal text-sm" />
           </label>
         ) : null}
 
@@ -197,7 +197,7 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
               autoComplete="off"
               spellCheck={false}
               placeholder={status.configured ? "اتركه فارغاً للإبقاء على المفتاح الحالي" : DEFAULT_MODELS[provider] !== undefined && provider === "anthropic" ? "sk-ant-api03-..." : "sk-..."}
-              className="focus-ring w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white py-3 pe-4 ps-12 text-left font-mono-legal text-sm"
+              className="focus-ring w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory py-3 pe-4 ps-12 text-left font-mono-legal text-sm"
             />
             <button
               type="button"
@@ -217,7 +217,7 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
           <button type="button" onClick={() => void save(false)} disabled={busy} className="focus-ring rounded-[var(--r-md)] bg-[var(--navy)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:opacity-50">
             {busy ? "جارٍ…" : "حفظ"}
           </button>
-          <button type="button" onClick={() => void save(true)} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold-ghost)] disabled:opacity-50">
+          <button type="button" onClick={() => void save(true)} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold-ghost)] disabled:opacity-50">
             حفظ واختبار الاتصال
           </button>
         </div>

@@ -32,7 +32,7 @@ export function ArticleTabs({ tabs }: { tabs: ArticleTab[] }) {
             >
               {t.label}
               {typeof t.badge === "number" && t.badge > 0 ? (
-                <span className={`rounded-full px-1.5 text-[11px] tabular-nums ${on ? "bg-white/20" : "bg-[var(--ink-08)] text-[var(--ink-60)]"}`}>
+                <span className={`rounded-full px-1.5 text-[11px] tabular-nums ${on ? "bg-ivory/20" : "bg-[var(--ink-08)] text-[var(--ink-60)]"}`}>
                   {t.badge.toLocaleString("ar-SA")}
                 </span>
               ) : null}

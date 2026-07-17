@@ -27,7 +27,7 @@ export default async function CasesPage() {
     <div>
       <p className="text-sm font-semibold text-gold">القضايا والمرفقات والبينات</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">ملفات القضايا</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         أنشئ قضايا أولية واحفظها في قاعدة البيانات مع تسجيل العملية في سجل التدقيق.
       </p>
       <div className="mt-6">

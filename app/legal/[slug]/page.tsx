@@ -60,24 +60,24 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <header>
         <h1 className="text-3xl font-bold leading-snug md:text-4xl">{system.name}</h1>
-        <p className="mt-3 text-gray-700">
+        <p className="mt-3 text-ink">
           {articles.length.toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
         </p>
       </header>
 
       {articles.length ? (
-        <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C09B5A]/25 bg-white">
+        <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C69763]/25 bg-ivory">
           {articles.map((a) => (
             <li key={a.id}>
               <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
-                <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#D9C08A]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
+                <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
                 <span className="leading-7 text-[var(--navy)]">{a.title}</span>
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-6 rounded-lg border border-dashed border-[#C09B5A]/40 bg-white p-5 text-gray-600">لا توجد مواد منشورة لهذا النظام بعد.</p>
+        <p className="mt-6 rounded-lg border border-dashed border-[#C69763]/40 bg-ivory p-5 text-muted">لا توجد مواد منشورة لهذا النظام بعد.</p>
       )}
     </PublicLegalShell>
   );

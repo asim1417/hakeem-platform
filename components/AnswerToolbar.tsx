@@ -174,7 +174,7 @@ export function AnswerToolbar({
   }
 
   const btn =
-    "focus-ring inline-flex items-center gap-1.5 rounded-lg border-2 border-[var(--gold)] bg-white px-2.5 py-1.5 text-xs font-bold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:border-[var(--navy)] hover:text-white disabled:opacity-50";
+    "focus-ring inline-flex items-center gap-1.5 rounded-lg border-2 border-[var(--gold)] bg-ivory px-2.5 py-1.5 text-xs font-bold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:border-[var(--navy)] hover:text-white disabled:opacity-50";
   const ico = { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, "aria-hidden": true } as const;
 
   return (

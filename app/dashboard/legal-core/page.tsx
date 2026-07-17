@@ -83,7 +83,7 @@ export default async function LegalCoreDashboardPage() {
           <LegalCoreCard title="مركز المعرفة القانونية" subtitle="طبقات النواة التي ستخدم القاضي حكيم والاستشارات" icon={<Scale size={18} />}>
             <div className="grid gap-3">
               {["الأنظمة والمواد", "الشروح وشروط التطبيق", "الأحكام والمبادئ", "القانون المقارن", "القوالب المرتبطة"].map((item, index) => (
-                <div key={item} className="flex items-center justify-between rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-4">
+                <div key={item} className="flex items-center justify-between rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-4">
                   <span className="font-display-ar text-sm font-bold text-[var(--navy)]">{item}</span>
                   <LegalTopicBadge tone={index === 0 ? "emerald" : "amber"}>{index === 0 ? "نشط" : "مرحلي"}</LegalTopicBadge>
                 </div>

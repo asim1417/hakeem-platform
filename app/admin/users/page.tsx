@@ -27,7 +27,7 @@ export default async function AdminUsersPage() {
     <AppShell>
       <p className="text-sm font-semibold text-gold">إدارة المستخدمين</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">المستخدمون</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         إدارة تنظيمية مبدئية للمستخدمين والأدوار دون تفعيل تسجيل دخول حقيقي أو كلمات مرور.
       </p>
       <div className="mt-6">

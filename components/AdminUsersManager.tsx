@@ -116,7 +116,7 @@ export function AdminUsersManager({ initialUsers }: { initialUsers: UserItem[] }
                 {users.map((user) => {
                   const inactive = user.status === "INACTIVE" || user.isActive === false;
                   return (
-                  <tr key={user.id} className="border-b border-[var(--ink-04)] transition odd:bg-white even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]">
+                  <tr key={user.id} className="border-b border-[var(--ink-04)] transition odd:bg-ivory even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]">
                     <td className="px-4 py-3 font-semibold text-[var(--navy)]">{user.name}</td>
                     <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">{user.email}</td>
                     <td className="px-4 py-3 text-[var(--ink-70)]">{roleLabel(user.role)}</td>
@@ -159,7 +159,7 @@ function Field({ label, value, onChange, dir = "rtl", placeholder }: { label: st
   return (
     <label>
       <span className="text-sm font-semibold text-[var(--navy)]">{label}</span>
-      <input value={value} dir={dir} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C09B5A]/25 px-4 py-3" />
+      <input value={value} dir={dir} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C69763]/25 px-4 py-3" />
     </label>
   );
 }
@@ -168,7 +168,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
   return (
     <label>
       <span className="text-sm font-semibold text-[var(--navy)]">{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C09B5A]/25 px-4 py-3">
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C69763]/25 px-4 py-3">
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
