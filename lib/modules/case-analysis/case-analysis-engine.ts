@@ -1,15 +1,19 @@
-// محرك تحليل القضايا (المرحلة السادسة).
-// يُبنى فوق Legal RAG (للإسناد) + طبقة المزوّد المركزي (للتحليل السردي)،
-// دون تعديل أيٍّ من: Legal RAG / Citation Engine / Hybrid Search / KG / OpenSearch.
+// محرك تحليل القضايا (المرحلة السادسة → مُرقّى إلى الوكيل الكامل).
+// يُبنى فوق **وكيل الأنظمة** (نفس نقطة دخول «اسأل حكيم») للإسناد: فهم النظام الحاكم
+// (resolve-scope) + الاسترجاع المقيّد + التحقّق + السوابق، ثم طبقة المزوّد المركزي للتحليل
+// السردي بوضع التحليل. لا يعدّل النواة ولا الوكيل ولا «اسأل حكيم».
 //
-// خط التنفيذ: مدخلات القضية → Legal RAG (مصادر + استشهادات)
-//            → AI (تحليل JSON مُسنَد) → دمج + تصنيف الدفوع → تقدير قوة الدعوى.
+// خط التنفيذ: مدخلات القضية → وكيل الأنظمة (مواد النظام الحاكم + تحقّق + استشهادات)
+//            → AI (تحليل JSON مُسنَد بوضع التحليل) → دمج + تصنيف الدفوع → تقدير قوة الدعوى.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
 import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
-import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
+// نوع فقط عند التحميل — يُستورَد الوكيل ديناميكيًّا داخل analyzeCase كي تبقى الدوالّ النقيّة
+// (التحليل الحتمي/التقدير) قابلةً للاستيراد في اختبارات tsx بلا سلسلة server-only للوكيل.
+import type { AgentGroundedContext } from "@/lib/modules/agents/case-agent-bridge";
+import type { Citation } from "@/lib/modules/citations/citation-engine";
+import type { RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
 import { classifyDefense, type DefenseCategory } from "./defense-classifier";
 import { buildCaseAnalysisSystemPrompt, buildCaseAnalysisUserPrompt, type CaseSources } from "./case-prompts";
 import type { CaseAnalysisInput, CaseAnalysisResult, CaseNarrative, PotentialDefense } from "./types";
@@ -17,21 +21,18 @@ import type { CaseAnalysisInput, CaseAnalysisResult, CaseNarrative, PotentialDef
 export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysisResult> {
   const facts = (input.facts ?? "").trim();
 
-  // 1) استرجاع مُسنَد عبر Legal RAG (بلا تعديل) — يوفّر المواد والأحكام والاستشهادات والثقة.
+  // 1) الوكيل الكامل: فهم النظام الحاكم (resolve-scope) + الاسترجاع المقيّد + التحقّق + السوابق.
+  //    يرقّي الخدمة من «بحث لقطة واحدة» إلى مستوى «اسأل حكيم». سقوط آمن إلى سياق فارغ.
   const ragQuery = [facts, input.claims, input.defenses].filter(Boolean).join("\n").slice(0, 1800) || facts;
-  let rag: RagResult;
-  try {
-    rag = await legalRag(ragQuery);
-  } catch {
-    rag = emptyRag();
-  }
+  const agent = await import("@/lib/modules/agents/case-agent-bridge")
+    .then((m) => m.runCaseAgent(ragQuery))
+    .catch(() => null);
+  const rag: RagResult = agent ? agentContextToRag(agent) : emptyRag();
 
-  // 2) تأريض إضافي: نصّ المواد من النواة القانونية الموحّدة (نفس دالة الخدمات المؤرَّضة
-  //    buildLegalContextForAI) + القاعدة الإلزامية «لا تخترع مواد» — كي يحلّل النموذج حول
-  //    نصّ حقيقي لا حول مرجع/عنوان مجرّد. سقوط آمن إلى بلا سياق عند أي تعذّر.
-  const grounding = await buildLegalContextForAI(ragQuery, { limit: 8 }).catch(() => null);
+  // 2) نصّ سياق الوكيل (نصّ مواد النظام الحاكم + القاعدة الإلزامية) لحقنه في prompt التحليل.
+  const groundingText = agent?.grounded ? agent.groundingText : undefined;
 
-  // 3) تحليل سردي عبر المزوّد المركزي بتعليمات إسناد صارمة (JSON).
+  // 3) تحليل سردي عبر المزوّد المركزي بتعليمات إسناد صارمة (JSON) — وضع التحليل.
   const sources = toSources(rag);
   const det = buildDeterministicAnalysis(input, rag);
 
@@ -44,9 +45,9 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
     defenses: input.defenses ? sanitizeForModel(input.defenses).text : input.defenses,
   };
 
-  // أرقام المواد المسموح بها = المسترجَع فعلاً من النواة (grounding) ⋃ مراجع legalRag/الاستشهادات.
+  // أرقام المواد المسموح بها = مواد الوكيل المسترجَعة ⋃ مراجع الأساس/الاستشهادات المُتحقَّقة.
   const allowedArticleNumbers = collectAllowedArticleNumbers({
-    numbers: (grounding?.articles ?? []).map((a) => a.articleNumber),
+    numbers: (agent?.articles ?? []).map((a) => a.articleNumber),
     references: [...rag.legalBasis.map((a) => a.reference), ...rag.citations.map((c) => c.reference)],
   });
 
@@ -55,7 +56,7 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
   try {
     const llm = await callCentralProvider({
       systemPrompt: buildCaseAnalysisSystemPrompt(),
-      userPrompt: buildCaseAnalysisUserPrompt(modelInput, sources, grounding?.hasArticles ? grounding.contextText : undefined),
+      userPrompt: buildCaseAnalysisUserPrompt(modelInput, sources, groundingText),
       maxTokens: 1500,
     });
     if (llm.ok && llm.content.trim()) {
@@ -81,15 +82,50 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
   const aiMeta = await resolveAiProvider();
   return {
     ...narrative,
-    influentialArticles: rag.legalBasis, // 11 — من Legal RAG (مصادر حقيقية)
+    influentialArticles: rag.legalBasis, // 11 — من مواد النظام الحاكم عبر الوكيل (مصادر حقيقية)
     similarRulings: rag.relatedRulings, // 12
     caseStrengthScore, // 13
     confidence: rag.confidence, // 14
-    citations: rag.citations, // 15 — عبر Citation Engine داخل Legal RAG
+    citations: rag.citations, // 15 — استشهادات مُتحقَّقة عبر الوكيل
     grounded: rag.grounded,
     generated,
     provider: generated ? aiMeta.name : "deterministic",
     model: generated ? aiMeta.model : "rule-based",
+    // تُمرَّر للخدمات التالية (الوكيل القانوني/المحاكاة) فتؤرّض إخراجها بلا إعادة تشغيل الوكيل.
+    groundingContext: groundingText,
+    governingSystems: agent?.governingSystems.map((g) => g.systemName) ?? [],
+  };
+}
+
+// ───────────────────── حصيلة الوكيل → شكل RagResult (محوِّل داخليّ) ─────────────────────
+// يبقي منطق التوجيه/التقدير الحتميّ القائم دون تغيير: الوكيل يستبدل المُخرِّج، لا المستهلك.
+
+function agentContextToRag(ctx: AgentGroundedContext): RagResult {
+  const verified = ctx.verified.filter((v): v is typeof v & { articleId: string } => Boolean(v.articleId));
+  const legalBasis = verified.length
+    ? verified.map((v) => ({ id: v.articleId, title: v.citationLabel, reference: v.citationLabel, weight: v.certainty === "high" ? 1 : 0.7 }))
+    : ctx.articles.map((a) => ({ id: a.articleId, title: `${a.systemName} — م/${a.articleNumber}: ${a.articleTitle}`, reference: a.citationLabel, weight: 1 }));
+  const citations: Citation[] = verified.length
+    ? verified.map((v) => ({ sourceType: "article" as const, sourceId: v.articleId, title: v.citationLabel, reference: v.citationLabel, confidence: v.certainty === "high" ? 0.9 : 0.7 }))
+    : ctx.articles.map((a) => ({ sourceType: "article" as const, sourceId: a.articleId, title: a.citationLabel, reference: a.citationLabel, confidence: Math.min(1, a.relevanceScore / 100) }));
+  return {
+    answer: "",
+    shortAnswer: "",
+    legalAnalysis: "",
+    limitations: "",
+    confidence: ctx.confidence,
+    grounded: ctx.grounded,
+    legalBasisNote: null,
+    generated: false,
+    citations,
+    legalBasis,
+    relatedArticles: ctx.articles.map((a) => ({ id: a.articleId, title: `${a.systemName} — م/${a.articleNumber}`, reason: a.relevanceReason, weight: 1 })),
+    relatedRulings: ctx.rulings.map((r) => ({ id: r.id, title: r.title, reason: r.reasons?.join(" · ") || r.snippet || "", weight: r.confidence })),
+    relatedPrinciples: ctx.principles.map((p) => ({ id: p.id, title: p.title, reason: p.reasons?.join(" · ") || p.snippet || "", weight: p.confidence })),
+    provider: "agent",
+    providerConfigured: true,
+    model: "",
+    providers: [],
   };
 }
 
