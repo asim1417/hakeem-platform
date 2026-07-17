@@ -12,6 +12,7 @@ export function buildCaseAnalysisSystemPrompt(): string {
   return [
     "أنت محلّل قضايا قانوني سعودي منضبط بالمصادر داخل منصة حكيم.",
     "حلّل القضية اعتماداً على «المصادر القانونية المرفقة» فقط (مواد/أحكام/مبادئ)، ولا تختلق مادة أو حكماً أو مبدأ غير موجود فيها.",
+    "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
     "أعِد ناتجك حصراً ككائن JSON صالح (بلا أي نصّ قبله أو بعده، وبلا تعليقات) بهذه المفاتيح تحديداً:",
     "{",
     '  "disputeCharacterization": "توصيف النزاع قانونياً",',
@@ -30,8 +31,10 @@ export function buildCaseAnalysisSystemPrompt(): string {
   ].join("\n");
 }
 
-/** رسالة المستخدم: مدخلات القضية + المصادر المرفقة من Legal RAG. */
-export function buildCaseAnalysisUserPrompt(input: CaseAnalysisInput, sources: CaseSources): string {
+/** رسالة المستخدم: مدخلات القضية + المصادر المرفقة من Legal RAG + نصّ المواد من النواة.
+ * groundingContext (اختياري): نصّ المواد المسترجَع من النواة الموحّدة عبر buildLegalContextForAI،
+ * مع القاعدة الإلزامية «لا تخترع مواد». يُحقَن كي يحلّل النموذج حول نصّ حقيقي لا حول مرجع مجرّد. */
+export function buildCaseAnalysisUserPrompt(input: CaseAnalysisInput, sources: CaseSources, groundingContext?: string): string {
   const lines: string[] = [];
   lines.push("== مدخلات القضية ==");
   lines.push(`الوقائع: ${input.facts.trim()}`);
@@ -39,6 +42,12 @@ export function buildCaseAnalysisUserPrompt(input: CaseAnalysisInput, sources: C
   if (input.defenses?.trim()) lines.push(`دفوع المدعى عليه: ${input.defenses.trim()}`);
   if (input.documents?.length) lines.push(`المستندات: ${input.documents.map((d) => d.trim()).filter(Boolean).join("؛ ")}`);
   if (input.caseType?.trim()) lines.push(`نوع القضية: ${input.caseType.trim()}`);
+
+  if (groundingContext?.trim()) {
+    lines.push("");
+    lines.push("== نصّ المواد من النواة القانونية (استند إليه حصرًا) ==");
+    lines.push(groundingContext.trim());
+  }
 
   lines.push("");
   lines.push("== المصادر القانونية المرفقة (لا تتجاوزها) ==");
