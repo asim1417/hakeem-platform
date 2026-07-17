@@ -59,6 +59,14 @@ export default async function LegalAgentPage({
 
       <AiToolTabs active="legal-agent" />
 
+      {/* توحيد: «خطة عمل» متاحة الآن كوضع داخل «اسأل حكيم» (عقل واحد، استدعاء وكيل واحد). */}
+      <div className="my-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold)] bg-[var(--gold-ghost)] px-3 py-2 text-sm text-[var(--navy)]">
+        <span>📋 جديد: «خطة عمل» صارت وضعًا داخل «اسأل حكيم» — خطة مؤصَّلة بفهم النظام الحاكم من مدخلٍ واحد.</span>
+        <Link href="/dashboard/ask" className="font-semibold underline">
+          جرّبها في اسأل حكيم ←
+        </Link>
+      </div>
+
       <form className="card mt-6 grid gap-3" action="/dashboard/legal-agent">
         <textarea name="caseFacts" aria-label="وقائع الدعوى" defaultValue={caseFacts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
         <div className="grid gap-3 md:grid-cols-3">
