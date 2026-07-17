@@ -952,3 +952,58 @@ model ApiRequestWindow {
   @@index([windowStart])
   @@map("api_request_windows")
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// طبقة استخراج بطاقات الأحكام (داخلية — لا تظهر في الواجهات حتى اعتماد المراجعة)
+// جداول مخرجات فقط: تُشير إلى judicial_cases عبر FK على مستوى القاعدة (بلا علاقات
+// Prisma عكسية كي لا تُمَسّ جداول المصدر). الجدول المعتمد للحكم = judicial_cases.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// بطاقة حكم مهيكلة مستخرَجة (مرآة الحكم لا توليد). review_status: auto|needs_review|approved|rejected
+model JudgmentCard {
+  id               String   @id @default(cuid())
+  judgmentId       String   @unique @map("judgment_id") // FK → judicial_cases.id (قاعدةً)
+  card             Json // مخطّط البطاقة الثابت (disputeType, claims, defenses, appliedArticles, result…)
+  confidence       Float    @default(0)
+  extractorVersion String   @map("extractor_version")
+  verifierAgreed   Boolean? @map("verifier_agreed") // نتيجة التدقيق المستقل (null = لم يُدقَّق)
+  reviewStatus     String   @default("auto") @map("review_status") // auto | needs_review | approved | rejected
+  calibration      Boolean  @default(false) // ضمن عيّنة المعايرة المحجوزة (100)
+  runId            String?  @map("run_id") // FK → extraction_runs.id (قاعدةً)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([reviewStatus])
+  @@index([calibration])
+  @@index([runId])
+  @@map("judgment_cards")
+}
+
+// رابط مادة←حكم بحبيبة الاستخراج الخام (رقم المادة نصًّا كما ورد + السياق). الوقود الأولي للفهرس العكسي.
+model JudgmentArticleLink {
+  id            String   @id @default(cuid())
+  judgmentId    String   @map("judgment_id") // FK → judicial_cases.id (قاعدةً)
+  legalSystemId String?  @map("legal_system_id") // FK → legal_systems.id بعد التطبيع (قد لا يُطابَق)
+  articleNumber String   @map("article_number") // كما ورد حرفيًّا في الحكم (نصّ)
+  articleId     String?  @map("article_id") // FK → legal_articles.id إن أمكن الربط الدقيق
+  context       String   @db.Text // الجملة الحاملة للذكر في نصّ الحكم
+  verified      Boolean  @default(false) // المادة موجودة نصًّا في الحكم (فحص اتساق)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([judgmentId])
+  @@index([legalSystemId, articleNumber])
+  @@index([articleId])
+  @@map("judgment_article_links")
+}
+
+// سجلّ تشغيلة استخراج (نقاط استئناف + إحصاء) — أداة التشغيل الليلي والتقرير.
+model ExtractionRun {
+  id            String    @id @default(cuid())
+  startedAt     DateTime  @default(now()) @map("started_at")
+  finishedAt    DateTime? @map("finished_at")
+  processed     Int       @default(0)
+  failed        Int       @default(0)
+  avgConfidence Float?    @map("avg_confidence")
+  notes         String?   @db.Text
+
+  @@map("extraction_runs")
+}
