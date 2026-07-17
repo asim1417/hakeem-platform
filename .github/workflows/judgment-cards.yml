@@ -1,0 +1,106 @@
+name: Judgment Cards (extract sample, gated)
+
+# طبقة استخراج بطاقات الأحكام التجارية (داخلية). أوضاع:
+#   migrate  — إنشاء جداول المخرجات على Neon (idempotent، مُقفل).
+#   diagnose — عدّ التجاري المتاح + خطة الاختيار (قراءة فقط، بلا نموذج).
+#   run      — التشغيل الفعليّ: استخراج + تدقيق + اتساق + فهرس (مُقفل + يحتاج مفتاح ذكاء).
+#   report   — توليد reports/night-run-1000.md ودفعه للفرع (قراءة من القاعدة).
+# الجدول المعتمد للأحكام (judicial_cases) لا يُمَسّ — الكتابة في جداول المخرجات فقط.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "migrate | diagnose | run | report"
+        type: choice
+        options: ["diagnose", "migrate", "run", "report"]
+        default: "diagnose"
+        required: true
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "للكتابة (migrate/run): NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: false
+        default: ""
+      limit:
+        description: "run/diagnose: عدد الأحكام (افتراضي 1000)"
+        type: string
+        required: false
+        default: "1000"
+      calibration:
+        description: "run: حجم عيّنة المعايرة (افتراضي 100)"
+        type: string
+        required: false
+        default: "100"
+
+concurrency:
+  group: judgment-cards
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+      # مزوّد الذكاء (run فقط) — من أسرار المستودع. غيابها ⇒ توقّف نظيف برسالة.
+      AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: تحقق من سرّ Neon
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: npm run db:generate
+
+      - name: "🛡️ حارس الهدف Neon (قراءة فقط)"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "🔒 بوّابة الكتابة (migrate/run)"
+        if: ${{ inputs.mode == 'migrate' || inputs.mode == 'run' }}
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED مع الوضع الكتابيّ."; exit 1
+          fi
+
+      - name: "migrate — تطبيق جداول المخرجات (idempotent)"
+        if: ${{ inputs.mode == 'migrate' }}
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260717120000_add_judgment_cards/migration.sql
+          psql "$DATABASE_URL" -c "SELECT to_regclass('public.judgment_cards') AS cards, to_regclass('public.judgment_article_links') AS links, to_regclass('public.extraction_runs') AS runs, to_regclass('public.article_judgments') AS reverse_view;"
+
+      - name: "diagnose — عدّ التجاري + خطة الاختيار (جافّ)"
+        if: ${{ inputs.mode == 'diagnose' }}
+        run: npx tsx scripts/run-judgment-cards.ts --limit "${{ inputs.limit }}"
+
+      - name: "run — التشغيل الفعليّ (استخراج + تدقيق + اتساق + فهرس)"
+        if: ${{ inputs.mode == 'run' }}
+        run: npx tsx scripts/run-judgment-cards.ts --apply --limit "${{ inputs.limit }}" --calibration "${{ inputs.calibration }}"
+
+      - name: "report — توليد تقرير الصباح"
+        if: ${{ inputs.mode == 'report' }}
+        run: npx tsx scripts/report-judgment-cards.ts
+
+      - name: "report — دفع التقرير للفرع"
+        if: ${{ inputs.mode == 'report' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- reports/night-run-1000.md; then echo "لا تغيير في التقرير."; exit 0; fi
+          git add reports/night-run-1000.md
+          printf '%s\n\n%s\n%s\n' \
+            "data(cards): تقرير التشغيل الليلي — عيّنة الألف حكم" \
+            "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>" \
+            "Claude-Session: https://claude.ai/code/session_013b7dDyeMWyxP13KtU5T7bv" > /tmp/rep_msg.txt
+          git commit -F /tmp/rep_msg.txt
+          git push origin HEAD:data/judgment-cards-sample
