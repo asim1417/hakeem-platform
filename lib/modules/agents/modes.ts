@@ -3,7 +3,7 @@
 // بيانات نقيّة (بلا استيراد خادميّ) كي تستوردها الواجهة (العميل) والروت (الخادم) معًا.
 // التوحيد المعماريّ يبدأ بوضعين؛ تُضاف البقية بإضافة إدخالٍ هنا لا صفحةٍ جديدة.
 // ─────────────────────────────────────────────────────────────────────────────
-export type AgentModeId = "ask" | "analyze-case" | "action-plan" | "verdict-estimate";
+export type AgentModeId = "ask" | "analyze-case" | "action-plan" | "verdict-estimate" | "consultation";
 
 export interface AgentMode {
   id: AgentModeId;
@@ -69,11 +69,23 @@ const VERDICT_ESTIMATE_PROMPT = [
   "صُغ الاتّجاه بصيغة احتمالية، ولا تُعطِ نتيجة قطعية عند نقص المواد. اختم بتنبيه تدريبيّ.",
 ].join("\n");
 
+/** تعليمة وضع «استشارة»: يحوّل الواقعة إلى استشارة تعليمية مؤصَّلة (يُحفَظ سجلّها). */
+const CONSULTATION_PROMPT = [
+  "أنت مستشار قانوني تعليمي سعودي منضبط بالمصادر داخل منصة حكيم.",
+  "حوّل الواقعة إلى استشارة تعليمية مؤصّلة اعتمادًا حصرًا على «المواد المرفقة من النواة»، ولا تخترع مادة أو رقم مادة غير وارد فيها.",
+  "أخرِج استشارة عربية منظّمة بعناوين Markdown بهذا الترتيب:",
+  "## وصف المسألة",
+  "## المواد النظامية الحاكمة",
+  "## التوجيه العملي",
+  "إن لم تكفِ المواد فصرّح بذلك صراحةً بدل الاختلاق. اختم بتنبيه مهنيّ موجز.",
+].join("\n");
+
 export const AGENT_MODES: AgentMode[] = [
   { id: "ask", name: "اسأل", icon: "✦", hint: "بحث وإجابة مؤصّلة من النواة", systemPrompt: null },
   { id: "analyze-case", name: "حلّل قضية", icon: "🔍", hint: "تحليل قضية مؤصّل بفهم النظام الحاكم", placeholder: "اذكر وقائع القضية وطلباتها للتحليل…", systemPrompt: ANALYZE_CASE_PROMPT },
   { id: "action-plan", name: "خطة عمل", icon: "📋", hint: "خطة عمل عملية للمحامي مؤصّلة", placeholder: "اذكر وقائع القضية لبناء خطة العمل…", systemPrompt: ACTION_PLAN_PROMPT },
   { id: "verdict-estimate", name: "تقدير حكم", icon: "⚖️", hint: "محاكاة نظر القاضي واتّجاه الحكم — تدريبيّ", placeholder: "اذكر وقائع الدعوى وطلباتها لمحاكاة نظر القاضي…", systemPrompt: VERDICT_ESTIMATE_PROMPT },
+  { id: "consultation", name: "استشارة", icon: "📝", hint: "استشارة تعليمية مؤصّلة (تُحفظ في سجلّك)", placeholder: "اذكر واقعتك للحصول على استشارة مؤصّلة…", systemPrompt: CONSULTATION_PROMPT },
 ];
 
 export const DEFAULT_MODE_ID: AgentModeId = "ask";

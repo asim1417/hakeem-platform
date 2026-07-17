@@ -8,6 +8,7 @@
  */
 
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
 import { orchestrate, suggestMode } from "@/lib/modules/agents/orchestrator";
@@ -179,6 +180,26 @@ export async function POST(request: NextRequest) {
           }
           send({ type: "step", id: "synthesize", status: "done", label: `صغت بوضع «${agentMode.name}» مستندًا للمواد`, data: { mode: synth.mode, citations: modeBasis.length } });
           send({ type: "step", id: "guard", status: "done", label: "فحصت المخرَج ضد التلفيق", data: { sourceOfTruth: "legal_core.legal_articles" } });
+
+          // وضع «استشارة»: يُحفَظ سجلّ الاستشارة (كصفحة الاستشارات) — سقوط آمن لا يكسر الردّ.
+          if (agentMode.id === "consultation") {
+            const consultCitations = outcome.verified
+              .filter((c): c is typeof c & { articleId: string; articleNumber: number } => Boolean(c.articleId) && typeof c.articleNumber === "number")
+              .map((c) => ({ articleId: c.articleId, lawName: c.systemName ?? "", articleNumber: c.articleNumber, quote: c.quote ?? "" }));
+            await prisma.consultation
+              .create({
+                data: {
+                  userId: user.id,
+                  facts: query,
+                  output: synth.output,
+                  status: "GENERATED",
+                  qualityReport: { sourceOfTruth: "legal_core.legal_articles", mode: "consultation", agent: true, citations: consultCitations.length },
+                  citations: { create: consultCitations }
+                }
+              })
+              .catch(() => undefined);
+          }
+
           send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
           send({ type: "done" });
           return;
