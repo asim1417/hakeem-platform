@@ -85,12 +85,12 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
     <div className="space-y-6">
       <section className="rounded-md border border-gold bg-sand p-5">
         <h2 className="text-xl font-bold text-olive">تنبيه التخزين</h2>
-        <p className="mt-2 leading-8 text-gray-700">
+        <p className="mt-2 leading-8 text-ink">
           إدارة المرفقات الحالية مخصصة للتجربة، وسيتم ربط التخزين الدائم لاحقًا. لا يتم حفظ محتوى الملف على Vercel في هذه المرحلة.
         </p>
       </section>
 
-      <section className="rounded-md border border-black/10 bg-white p-5">
+      <section className="rounded-md border border-line bg-ivory p-5">
         <h2 className="text-xl font-bold text-olive">إضافة مرفق</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_160px_1fr_auto]">
           <label>
@@ -99,7 +99,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
               ref={fileRef}
               type="file"
               accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/png,image/jpeg"
-              className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+              className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
             />
           </label>
 
@@ -111,7 +111,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
                 setRelationType(event.target.value);
                 setRelationId("");
               }}
-              className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+              className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
             >
               {relationTypes.map((item) => (
                 <option key={item} value={item}>
@@ -127,7 +127,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
               <select
                 value={relationId}
                 onChange={(event) => setRelationId(event.target.value)}
-                className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+                className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
               >
                 <option value="">بدون ربط</option>
                 {cases.map((caseItem) => (
@@ -140,7 +140,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
               <input
                 value={relationId}
                 onChange={(event) => setRelationId(event.target.value)}
-                className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+                className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
                 placeholder="اختياري"
               />
             )}
@@ -159,10 +159,10 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
         {error ? <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</p> : null}
       </section>
 
-      <section className="rounded-md border border-black/10 bg-white p-5">
+      <section className="rounded-md border border-line bg-ivory p-5">
         <h2 className="text-xl font-bold text-olive">قائمة المرفقات</h2>
         {attachments.length === 0 ? (
-          <p className="mt-4 rounded-md bg-sand p-4 text-gray-700">لا توجد مرفقات حتى الآن.</p>
+          <p className="mt-4 rounded-md bg-sand p-4 text-ink">لا توجد مرفقات حتى الآن.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[760px] text-right text-sm">
@@ -178,7 +178,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
               </thead>
               <tbody>
                 {attachments.map((item) => (
-                  <tr key={item.id} className="border-t border-black/10">
+                  <tr key={item.id} className="border-t border-line">
                     <td className="px-4 py-3 font-semibold text-olive">{item.fileName}</td>
                     <td className="px-4 py-3">{item.mimeType}</td>
                     <td className="px-4 py-3">{formatFileSize(item.size)}</td>
@@ -186,7 +186,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
                     <td className="px-4 py-3">{new Date(item.createdAt).toLocaleString("ar-SA")}</td>
                     <td className="px-4 py-3">
                       {item.storageMode === "azure-blob" ? (
-                        <a href={`/api/attachments/${item.id}/download`} className="focus-ring ml-2 rounded-md border border-[#C09B5A]/30 px-3 py-2 text-[var(--navy)]">
+                        <a href={`/api/attachments/${item.id}/download`} className="focus-ring ml-2 rounded-md border border-[#C69763]/30 px-3 py-2 text-[var(--navy)]">
                           تنزيل
                         </a>
                       ) : null}
@@ -205,7 +205,7 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
             </table>
           </div>
         )}
-        <p className="mt-4 text-xs leading-6 text-gray-500">
+        <p className="mt-4 text-xs leading-6 text-muted">
           TODO: التخزين في Azure Blob أو SharePoint، استخراج النص من PDF/DOCX، وربط المرفقات بتحليل الاستشارة والمحاكاة.
         </p>
       </section>

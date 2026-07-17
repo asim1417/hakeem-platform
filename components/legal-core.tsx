@@ -99,7 +99,7 @@ export function LegalCoreSearchBar({ systems, defaultQuery, defaultSystem }: { s
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         {["التصنيف", "الموضوع", "نوع المصدر", "يحتوي على شروح", "يحتوي على أحكام", "قانون مقارن"].map((filter) => (
-          <div key={filter} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 px-3 py-2 text-sm text-[var(--ink-60)]">
+          <div key={filter} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 px-3 py-2 text-sm text-[var(--ink-60)]">
             <Filter className="ml-2 inline h-4 w-4 text-[var(--gold)]" />
             {filter}
           </div>
@@ -310,7 +310,7 @@ export function AmendmentsPanel({ amendments }: { amendments: ArticleAmendmentVi
                 ? (typeof a.effectiveFrom === "string" ? new Date(a.effectiveFrom) : a.effectiveFrom)
                 : null;
             return (
-              <li key={a.id} className="relative rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+              <li key={a.id} className="relative rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono-legal text-xs text-[var(--gold)]">الإصدار {a.version.toLocaleString("ar-SA")}</span>
                   <div className="flex flex-wrap gap-2">
@@ -351,7 +351,7 @@ export function ComparativeLawPanel() {
           ["الفائدة العملية", "تحديد أثر المقارنة على الاستشارة أو المحاكاة."],
           ["المصدر", "غير محدد حاليًا."]
         ].map(([label, value]) => (
-          <div key={label} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/55 p-3">
+          <div key={label} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/55 p-3">
             <p className="font-display-ar text-xs font-bold text-[var(--gold)]">{label}</p>
             <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">{value}</p>
           </div>
@@ -378,7 +378,7 @@ export function RelatedMaterialsPanel({ articles }: { articles: Array<{ id: stri
       {articles.length ? (
         <div className="space-y-2">
           {articles.map((article) => (
-            <Link key={article.id} href={`/dashboard/legal-core/articles/${article.id}`} className="block rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3 hover:border-[var(--gold-border)]">
+            <Link key={article.id} href={`/dashboard/legal-core/articles/${article.id}`} className="block rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3 hover:border-[var(--gold-border)]">
               <p className="font-mono-legal text-xs text-[var(--gold)]">{article.lawName} | المادة {article.articleNumber.toLocaleString("ar-SA")}</p>
               <p className="mt-1 font-display-ar text-sm font-bold text-[var(--navy)]">{article.title}</p>
             </Link>
@@ -410,7 +410,7 @@ export function FiqhIssuesPanel({
             const relation = issue.section?.trim() || issue.path?.split("/").filter(Boolean).slice(-1)[0] || "صلة موضوعية عامة";
             const citation = buildFiqhCitation(issue.title, `المادة (${issue.path})`);
             return (
-              <div key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+              <div key={issue.issueId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-display-ar text-sm font-bold text-[var(--navy)]">{issue.title}</p>
                   <LegalTopicBadge tone={issue.linkStatus === "linked" ? "emerald" : "amber"}>

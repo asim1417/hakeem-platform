@@ -33,7 +33,7 @@ export function SearchModeTabs({ active, q = "" }: { active: SearchMode; q?: str
             title={m.hint}
             className={`rounded-[var(--r-md)] px-4 py-2 text-sm font-semibold transition ${
               isActive
-                ? "bg-white text-[var(--navy)] shadow-[var(--sh-xs)]"
+                ? "bg-ivory text-[var(--navy)] shadow-[var(--sh-xs)]"
                 : "text-[var(--ink-60)] hover:text-[var(--navy)]"
             }`}
           >

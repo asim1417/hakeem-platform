@@ -40,7 +40,7 @@ const positionLabels: Record<CourtPosition, { label: string; className: string }
   basis: { label: "أساس الحكم", className: "border-[rgba(26,92,65,.25)] bg-[var(--emerald-soft)] text-[var(--emerald)]" },
   dispute: { label: "قول خصوم", className: "border-[var(--gold-border)] bg-[var(--gold-ghost)] text-[var(--navy)]" },
   procedural: { label: "إجرائي", className: "border-[rgba(184,114,26,.25)] bg-[var(--amber-soft)] text-[var(--amber)]" },
-  general_reference: { label: "مرجع عام", className: "border-[var(--ink-08)] bg-white/70 text-[var(--ink-70)]" },
+  general_reference: { label: "مرجع عام", className: "border-[var(--ink-08)] bg-ivory/70 text-[var(--ink-70)]" },
   unresolved: { label: "غير محلول", className: "border-[rgba(140,34,51,.25)] bg-[var(--ruby-soft)] text-[var(--ruby)]" }
 };
 
@@ -164,7 +164,7 @@ export function JudgmentCitationCapture() {
                   <Info label="الثقة" value={`${Math.round(citation.confidence * 100).toLocaleString("ar-SA")}%`} />
                 </div>
 
-                <div className="mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4">
+                <div className="mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/55 p-4">
                   {citation.resolvedArticleText ? (
                     <>
                       <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--emerald)]">
@@ -208,7 +208,7 @@ export function JudgmentCitationCapture() {
             <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">المادة ← الإشارات التي استشهدت بها في النص الملصق. هذا عرض مؤقت قابل لاحقًا للحفظ في جدول دائم.</p>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {analysis.reverseIndex.length ? analysis.reverseIndex.map((item) => (
-                <div key={item.articleId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+                <div key={item.articleId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3">
                   <p className="font-mono-legal text-sm text-[var(--gold)]">{item.systemName} | المادة {item.articleNumber.toLocaleString("ar-SA")}</p>
                   <p className="mt-1 text-sm text-[var(--ink-70)]">عدد الإشارات: {item.references.toLocaleString("ar-SA")}</p>
                 </div>
@@ -235,7 +235,7 @@ function Stat({ label, value, tone = "navy" }: { label: string; value: number; t
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-3">
+    <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3">
       <p className="font-display-ar text-xs font-bold text-[var(--gold)]">{label}</p>
       <p className="mt-1 text-sm text-[var(--ink-70)]">{value}</p>
     </div>

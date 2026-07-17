@@ -160,7 +160,7 @@ export function LegalBasisPanel({
               <li
                 key={`${item.systemName}-${item.articleNumber ?? index}`}
                 id={anchorPrefix ? `${anchorPrefix}${index + 1}` : undefined}
-                className="basis-src rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4"
+                className="basis-src rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4"
                 style={{ borderInlineStartColor: meta.fg, borderInlineStartWidth: 3 }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">

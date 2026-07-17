@@ -184,7 +184,7 @@ export function CoreIntelligenceDashboard() {
   });
 
   return (
-    <div dir="rtl" className="rounded-[var(--r-lg,12px)] border border-[var(--ink-08,#e5e7eb)] bg-white p-5">
+    <div dir="rtl" className="rounded-[var(--r-lg,12px)] border border-[var(--ink-08,#e5e7eb)] bg-ivory p-5">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-xl font-bold text-olive">مركز التشغيل الذكي</h2>
         <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">ربط النواة بخدمات حكيم</span>
@@ -202,13 +202,13 @@ export function CoreIntelligenceDashboard() {
             <Stat label="جودة البيانات" value={`${summary.dataQualityScore}%`} tone={summary.dataQualityScore >= 60 ? "emerald" : "amber"} />
           </div>
 
-          <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3">
+          <div className="mt-3 rounded-md border border-gray-200 bg-surface p-3">
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span className="font-semibold text-olive">جودة الربط</span>
-              <span className="text-gray-700">مواد مرتبطة بأحكام: <b>{summary.linkedArticlesCount}</b></span>
-              <span className="text-gray-700">مواد بلا أحكام: <b>{summary.unlinkedArticlesCount}</b></span>
-              <span className="text-gray-700">أحكام بلا مواد: <b>{summary.unlinkedRulingsCount}</b></span>
-              <span className="text-gray-700">علاقات معرفية: <b>{summary.relationsCount}</b></span>
+              <span className="text-ink">مواد مرتبطة بأحكام: <b>{summary.linkedArticlesCount}</b></span>
+              <span className="text-ink">مواد بلا أحكام: <b>{summary.unlinkedArticlesCount}</b></span>
+              <span className="text-ink">أحكام بلا مواد: <b>{summary.unlinkedRulingsCount}</b></span>
+              <span className="text-ink">علاقات معرفية: <b>{summary.relationsCount}</b></span>
               <span className="ms-auto rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700 tabular-nums">تغطية الربط {summary.linkCoveragePercent}%</span>
             </div>
             {summary.rulingsImportedButUnlinked && (
@@ -252,7 +252,7 @@ export function CoreIntelligenceDashboard() {
               {classes.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           )}
-          <label className="flex items-center gap-1 text-gray-700">
+          <label className="flex items-center gap-1 text-ink">
             <input type="checkbox" checked={needsReviewOnly} onChange={(e) => setNeedsReviewOnly(e.target.checked)} /> يحتاج مراجعة
           </label>
         </div>
@@ -261,16 +261,16 @@ export function CoreIntelligenceDashboard() {
       {/* النتائج + اللوحة الجانبية */}
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <div className="space-y-3">
-          {!searched && <p className="text-sm text-gray-500">ابحث لعرض المواد مع أزرار التشغيل الذكي.</p>}
-          {searched && !loading && filtered.length === 0 && <p className="text-sm text-gray-400">لا توجد مواد مطابقة.</p>}
+          {!searched && <p className="text-sm text-muted">ابحث لعرض المواد مع أزرار التشغيل الذكي.</p>}
+          {searched && !loading && filtered.length === 0 && <p className="text-sm text-muted">لا توجد مواد مطابقة.</p>}
           {filtered.map((a) => (
-            <article key={a.id} className={`rounded-lg border p-4 ${selected?.id === a.id ? "border-olive bg-sand/40" : "border-gray-200 bg-white"}`}>
+            <article key={a.id} className={`rounded-lg border p-4 ${selected?.id === a.id ? "border-olive bg-sand/40" : "border-gray-200 bg-ivory"}`}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded bg-gold/10 px-1.5 py-0.5 text-xs text-gold">مادة</span>
                 <span className="font-semibold text-olive">{a.citation}</span>
-                {a.classification && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">{a.classification}</span>}
+                {a.classification && <span className="rounded bg-surface px-1.5 py-0.5 text-xs text-muted">{a.classification}</span>}
               </div>
-              {a.snippet && <p className="mt-2 line-clamp-2 text-sm leading-7 text-gray-700">{a.snippet}</p>}
+              {a.snippet && <p className="mt-2 line-clamp-2 text-sm leading-7 text-ink">{a.snippet}</p>}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <ActBtn href={`/dashboard/legal-core/articles/${a.id}`}>فتح المادة</ActBtn>
                 <ActBtn onClick={() => copy(a.citation, `c-${a.id}`)}>{copied === `c-${a.id}` ? "نُسخ ✓" : "نسخ الاستشهاد"}</ActBtn>
@@ -285,9 +285,9 @@ export function CoreIntelligenceDashboard() {
         </div>
 
         {/* اللوحة الجانبية: تشغيل ذكي */}
-        <aside className="rounded-lg border border-gray-200 bg-white p-4">
+        <aside className="rounded-lg border border-gray-200 bg-ivory p-4">
           <div className="font-semibold text-olive">تشغيل ذكي</div>
-          {!selected && <p className="mt-2 text-sm text-gray-400">اختر مادة لعرض سياقها وتشغيل الخدمات الذكية.</p>}
+          {!selected && <p className="mt-2 text-sm text-muted">اختر مادة لعرض سياقها وتشغيل الخدمات الذكية.</p>}
           {selected && (
             <div className="mt-2 space-y-3">
               <div className="rounded-md bg-sand/50 p-3">
@@ -297,7 +297,7 @@ export function CoreIntelligenceDashboard() {
                 </button>
               </div>
 
-              {intelLoading && <p className="text-sm text-gray-400">جارٍ التحميل…</p>}
+              {intelLoading && <p className="text-sm text-muted">جارٍ التحميل…</p>}
 
               {intel && (
                 <>
@@ -309,32 +309,32 @@ export function CoreIntelligenceDashboard() {
                     <ActBtn onClick={() => copy(`${intel.citation}\n${intel.article.content}`, "ctx")}>{copied === "ctx" ? "نُسخ ✓" : "نسخ السياق"}</ActBtn>
                   </div>
 
-                  {engineKey && <p className="text-sm text-gray-500">⏳ جارٍ تشغيل الخدمة…</p>}
+                  {engineKey && <p className="text-sm text-muted">⏳ جارٍ تشغيل الخدمة…</p>}
                   {engineResult && (
                     <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-3">
-                      <p className="whitespace-pre-wrap text-sm leading-7 text-gray-800">{engineResult.text}</p>
-                      {engineResult.meta && <p className="mt-1 text-xs text-gray-500">{engineResult.meta}</p>}
+                      <p className="whitespace-pre-wrap text-sm leading-7 text-ink">{engineResult.text}</p>
+                      {engineResult.meta && <p className="mt-1 text-xs text-muted">{engineResult.meta}</p>}
                     </div>
                   )}
 
                   <PanelList title="الأحكام المرتبطة" empty="لا توجد روابط كافية حتى الآن لهذه المادة.">
                     {intel.relatedRulings.map((r) => (
-                      <li key={r.id} className="border-t border-gray-100 py-1.5 text-sm text-gray-700">
-                        {r.title}{r.court ? ` — ${r.court}` : ""} <span className="text-xs text-gray-400">({r.relationType})</span>
+                      <li key={r.id} className="border-t border-gray-100 py-1.5 text-sm text-ink">
+                        {r.title}{r.court ? ` — ${r.court}` : ""} <span className="text-xs text-muted">({r.relationType})</span>
                       </li>
                     ))}
                   </PanelList>
 
                   <PanelList title="المبادئ المرتبطة" empty="لا مبادئ مرتبطة بعد.">
                     {intel.relatedPrinciples.map((p) => (
-                      <li key={p.id} className="border-t border-gray-100 py-1.5 text-sm text-gray-700">{p.title}</li>
+                      <li key={p.id} className="border-t border-gray-100 py-1.5 text-sm text-ink">{p.title}</li>
                     ))}
                   </PanelList>
 
                   <PanelList title="العلاقات المعرفية" empty="لا توجد روابط كافية حتى الآن لهذه المادة.">
                     {intel.relations.map((r) => (
-                      <li key={r.id} className="border-t border-gray-100 py-1.5 text-sm text-gray-700">
-                        {r.sourceType} → {r.relation} → {r.targetType} <span className="text-xs text-gray-400">({(r.strength * 100).toFixed(0)}%)</span>
+                      <li key={r.id} className="border-t border-gray-100 py-1.5 text-sm text-ink">
+                        {r.sourceType} → {r.relation} → {r.targetType} <span className="text-xs text-muted">({(r.strength * 100).toFixed(0)}%)</span>
                       </li>
                     ))}
                   </PanelList>
@@ -351,15 +351,15 @@ export function CoreIntelligenceDashboard() {
 function Stat({ label, value, tone }: { label: string; value: number | string; tone?: "emerald" | "amber" }) {
   const cls = tone === "emerald" ? "text-emerald-700" : tone === "amber" ? "text-amber-700" : "text-olive";
   return (
-    <div className="rounded-md border border-gray-200 bg-white p-3">
-      <p className="text-xs text-gray-500">{label}</p>
+    <div className="rounded-md border border-gray-200 bg-ivory p-3">
+      <p className="text-xs text-muted">{label}</p>
       <p className={`mt-1 text-xl font-bold tabular-nums ${cls}`}>{typeof value === "number" ? value.toLocaleString("ar-SA") : value}</p>
     </div>
   );
 }
 
 function ActBtn({ children, onClick, href }: { children: React.ReactNode; onClick?: () => void; href?: string }) {
-  const cls = "rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 hover:bg-gold/10 hover:text-olive";
+  const cls = "rounded border border-gray-200 bg-surface px-2 py-1 text-xs text-ink hover:bg-gold/10 hover:text-olive";
   if (href) return <a href={href} className={cls}>{children}</a>;
   return <button type="button" onClick={onClick} className={cls}>{children}</button>;
 }
@@ -368,7 +368,7 @@ function PanelList({ title, empty, children }: { title: string; empty: string; c
   return (
     <div className="rounded-md border border-gray-100 p-3">
       <div className="text-sm font-semibold text-olive">{title} ({children.length})</div>
-      {children.length === 0 ? <p className="mt-1 text-xs text-gray-400">{empty}</p> : <ul className="mt-1">{children}</ul>}
+      {children.length === 0 ? <p className="mt-1 text-xs text-muted">{empty}</p> : <ul className="mt-1">{children}</ul>}
     </div>
   );
 }

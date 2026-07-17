@@ -226,13 +226,13 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                 {turn.groups && turn.groups.length ? (
                   <div className="space-y-3">
                     {turn.answer ? (
-                      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-4 shadow-[var(--sh-xs)]">
+                      <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-4 shadow-[var(--sh-xs)]">
                         <AnswerRenderer content={turn.answer} />
                         <p className="mt-1 text-xs text-[var(--ink-60)]">وجدتُ مدداً في {turn.groups.length.toLocaleString("ar-SA")} أنظمة · إجمالي {turn.total.toLocaleString("ar-SA")} مادة. تُعرَض دفعةً دفعة.</p>
                       </div>
                     ) : null}
                     {turn.groups.slice(0, turn.visibleGroups ?? 3).map((g, gi) => (
-                      <div key={`${g.systemName}-${gi}`} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-4 shadow-[var(--sh-xs)]">
+                      <div key={`${g.systemName}-${gi}`} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-4 shadow-[var(--sh-xs)]">
                         <div className="mb-2 flex items-center justify-between gap-2 border-b border-[var(--ink-08)] pb-2">
                           <span className="text-sm font-bold text-[var(--navy)]">{g.systemName}</span>
                           <span className="rounded-full bg-[var(--gold-ghost)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gold-dark)]">{g.count.toLocaleString("ar-SA")} مادة بمدد</span>
@@ -271,7 +271,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                           type="button"
                           disabled={busy}
                           onClick={() => void ask(opt.query, { detailed: !!opt.exhaustive, skipBreadth: true })}
-                          className="focus-ring flex items-center justify-between gap-2 rounded-lg border border-[var(--gold)] bg-white px-3.5 py-2.5 text-right text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:text-white disabled:opacity-50"
+                          className="focus-ring flex items-center justify-between gap-2 rounded-lg border border-[var(--gold)] bg-ivory px-3.5 py-2.5 text-right text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:text-white disabled:opacity-50"
                         >
                           <span className="flex flex-col">
                             <span>{opt.label}</span>
@@ -286,7 +286,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
 
                 {/* الإجابة المُصاغة المستندة */}
                 {turn.answer && !turn.groups ? (
-                  <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)]">
+                  <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5 shadow-[var(--sh-xs)]">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-[var(--ink-08)] pb-2.5">
                       <div className="flex items-center gap-2">
                         <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
@@ -339,7 +339,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                           .map((iss, k) => (
                             <span
                               key={k}
-                              className="rounded-full bg-white/60 px-2 py-0.5"
+                              className="rounded-full bg-ivory/60 px-2 py-0.5"
                               style={{ color: iss.status === "answered" ? "var(--emerald)" : "var(--ink-60)" }}
                             >
                               {iss.status === "answered" ? "✓" : "—"} {iss.systemName}
@@ -377,7 +377,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
             e.preventDefault();
             void ask();
           }}
-          className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-white p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
+          className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-ivory p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
         >
           {/* شريط الأوضاع — عقل واحد، والوضع يغيّر زاوية الإخراج فقط */}
           <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">

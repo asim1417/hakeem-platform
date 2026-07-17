@@ -142,7 +142,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
         </p>
       ) : null}
       {article.caseLinks.map((link) => (
-        <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4">
+        <article key={link.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono-legal text-sm text-[var(--gold)]">
@@ -289,7 +289,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                         المادة {r.articleNumber.toLocaleString("ar-SA")}
                       </Link>
                     ) : (
-                      <span key={r.articleNumber} className="inline-flex items-center gap-1 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 px-2.5 py-1 text-xs text-[var(--ink-60)]">
+                      <span key={r.articleNumber} className="inline-flex items-center gap-1 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 px-2.5 py-1 text-xs text-[var(--ink-60)]">
                         المادة {r.articleNumber.toLocaleString("ar-SA")}
                       </span>
                     )
@@ -307,7 +307,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                     <li key={n.relationId}>
                       <Link
                         href={`/dashboard/legal-core/articles/${n.entity.id}`}
-                        className="flex items-start justify-between gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 px-3 py-2 text-xs leading-6 text-[var(--navy)] transition hover:border-[var(--gold)]"
+                        className="flex items-start justify-between gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 px-3 py-2 text-xs leading-6 text-[var(--navy)] transition hover:border-[var(--gold)]"
                       >
                         <span className="font-semibold">{n.entity.label}</span>
                         <LegalTopicBadge tone="amber">{relationLabel(n.relation)}</LegalTopicBadge>

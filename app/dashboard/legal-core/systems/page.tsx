@@ -49,7 +49,7 @@ export default async function LegalCoreSystemsPage({
 
         {/* بحث + تصفية */}
         <form action="/dashboard/legal-core/systems" className="flex flex-wrap items-center gap-3 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--parchment)] p-4">
-          <div className="flex flex-1 items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white px-3 py-2">
+          <div className="flex flex-1 items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory px-3 py-2">
             <Search size={16} className="text-[var(--gold)]" />
             <input
               name="q"

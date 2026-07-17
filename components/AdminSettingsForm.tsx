@@ -64,7 +64,7 @@ export function AdminSettingsForm({ initial }: { initial: SettingStatus[] }) {
   return (
     <div className="space-y-6">
       {groups.map(([group, items]) => (
-        <section key={group} className="rounded-[14px] border border-[#C09B5A]/25 bg-white p-5">
+        <section key={group} className="rounded-[14px] border border-[#C69763]/25 bg-ivory p-5">
           <h3 className="mb-4 font-bold text-[var(--navy)]">{group}</h3>
           <div className="space-y-4">
             {items.map((s) => {
@@ -75,7 +75,7 @@ export function AdminSettingsForm({ initial }: { initial: SettingStatus[] }) {
                     <div className="text-sm font-semibold text-[var(--navy)]">{s.label}</div>
                     <div className="mt-1 flex items-center gap-2 text-xs">
                       <span className="rounded px-2 py-0.5" style={{ background: `${src.tone}1a`, color: src.tone }}>{src.text}</span>
-                      {s.preview ? <span dir="ltr" className="text-[#0B1F3A]/50">{s.preview}</span> : null}
+                      {s.preview ? <span dir="ltr" className="text-[#0E3435]/50">{s.preview}</span> : null}
                     </div>
                   </div>
                   <input
@@ -85,7 +85,7 @@ export function AdminSettingsForm({ initial }: { initial: SettingStatus[] }) {
                     placeholder={s.hasValue ? "•••• (اترك فارغًا للإبقاء)" : s.placeholder ?? "أدخل القيمة"}
                     value={edits[s.key] ?? ""}
                     onChange={(e) => setEdits((p) => ({ ...p, [s.key]: e.target.value }))}
-                    className="w-full rounded-md border border-[#C09B5A]/30 bg-[var(--parchment)] px-3 py-2 text-left text-sm outline-none focus:border-[var(--gold)]"
+                    className="w-full rounded-md border border-[#C69763]/30 bg-[var(--parchment)] px-3 py-2 text-left text-sm outline-none focus:border-[var(--gold)]"
                   />
                 </div>
               );
@@ -111,11 +111,11 @@ export function AdminSettingsForm({ initial }: { initial: SettingStatus[] }) {
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className="rounded-md bg-[var(--navy)] px-6 py-3 font-semibold text-white transition hover:bg-[#0B1F3A]/90 disabled:opacity-60"
+          className="rounded-md bg-[var(--navy)] px-6 py-3 font-semibold text-white transition hover:bg-[#0E3435]/90 disabled:opacity-60"
         >
           {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
         </button>
-        <span className="text-xs text-[#0B1F3A]/50">القيم الحسّاسة مُشفّرة في قاعدة البيانات ولا تُعرض.</span>
+        <span className="text-xs text-[#0E3435]/50">القيم الحسّاسة مُشفّرة في قاعدة البيانات ولا تُعرض.</span>
       </div>
     </div>
   );

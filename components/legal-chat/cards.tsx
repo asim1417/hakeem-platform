@@ -29,7 +29,7 @@ const PROVENANCE_LABELS: Record<string, string> = {
 
 function CardShell({ tone, title, children }: { tone?: string; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-4 shadow-[var(--sh-xs)]">
+    <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-4 shadow-[var(--sh-xs)]">
       <div className="mb-2 flex items-center gap-2">
         <span className="t-head text-sm font-bold" style={{ color: tone ?? "var(--navy)" }}>
           {title}
@@ -56,7 +56,7 @@ export function UnderstandingCardView({
         <span className="rounded-full bg-[var(--navy)] px-2.5 py-0.5 text-[11px] font-semibold text-white">
           {card.understandingLabel}
         </span>
-        <span className="rounded-full border border-[var(--gold-border)] bg-white px-2.5 py-0.5 text-[11px] tabular-nums text-[var(--navy)]">
+        <span className="rounded-full border border-[var(--gold-border)] bg-ivory px-2.5 py-0.5 text-[11px] tabular-nums text-[var(--navy)]">
           الثقة {Math.round(card.confidence * 100)}%
         </span>
       </div>
@@ -93,7 +93,7 @@ export function UnderstandingCardView({
       </div>
 
       {card.blockReason && (
-        <p className="mt-3 rounded-[var(--r-md)] bg-white p-2 text-xs leading-6 text-[var(--ruby)]">{card.blockReason}</p>
+        <p className="mt-3 rounded-[var(--r-md)] bg-ivory p-2 text-xs leading-6 text-[var(--ruby)]">{card.blockReason}</p>
       )}
 
       <p className="mt-3 text-sm font-semibold text-[var(--navy)]">{card.question}</p>
@@ -108,8 +108,8 @@ export function UnderstandingCardView({
               opt.key === "CONFIRM"
                 ? "border-[var(--emerald)] bg-[var(--emerald)] text-white hover:opacity-90"
                 : opt.key === "DRAFT_WITH_ASSUMPTIONS"
-                  ? "border-[var(--gold)] bg-white text-[var(--navy)] hover:bg-[var(--gold-ghost)]"
-                  : "border-[var(--ink-15)] bg-white text-[var(--ink-80)] hover:border-[var(--navy)]"
+                  ? "border-[var(--gold)] bg-ivory text-[var(--navy)] hover:bg-[var(--gold-ghost)]"
+                  : "border-[var(--ink-15)] bg-ivory text-[var(--ink-80)] hover:border-[var(--navy)]"
             }`}
           >
             {opt.label}
@@ -231,7 +231,7 @@ export function OutputCardView({ output, onCopy }: { output: LegalOutput; onCopy
         <button
           type="button"
           onClick={() => onCopy(`${output.title}\n\n${fullText}`)}
-          className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]"
+          className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]"
         >
           نسخ المخرج
         </button>
@@ -240,7 +240,7 @@ export function OutputCardView({ output, onCopy }: { output: LegalOutput; onCopy
             .map((s) => `<h3>${s.heading}</h3><p>${s.body.replace(/\n/g, "<br/>")}</p>`)
             .join("")}<hr/><p><em>${output.governanceNotes[0] ?? ""}</em></p></body></html>`)}`}
           download={`${output.title}.doc`}
-          className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]"
+          className="focus-ring rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)]"
         >
           تصدير Word
         </a>

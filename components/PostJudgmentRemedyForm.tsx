@@ -110,7 +110,7 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
             <h3 className="font-display-ar text-lg font-bold text-[var(--navy)]">{config.reasonLabel}</h3>
             <div className="mt-4 grid w-full max-w-full gap-3 sm:grid-cols-2">
               {config.reasons.map((reason) => (
-                <label key={reason} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-start gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/65 p-4">
+                <label key={reason} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-start gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/65 p-4">
                   <input
                     className="mt-1 h-5 w-5"
                     type="checkbox"
@@ -159,7 +159,7 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
               <pre className="mt-3 whitespace-pre-wrap font-judicial text-lg leading-9 text-[var(--ink)]">{draft}</pre>
             </div>
           ) : null}
-          <div className="rounded-[var(--r-xl)] border border-dashed border-[var(--gold-border)] bg-white/60 p-4 text-xs leading-6 text-[var(--ink-60)]">
+          <div className="rounded-[var(--r-xl)] border border-dashed border-[var(--gold-border)] bg-ivory/60 p-4 text-xs leading-6 text-[var(--ink-60)]">
             التصدير PDF/DOCX متاح حاليًا للحكم وضبط الجلسة عبر صفحة الحكم. تصدير لوائح الاعتراض كملفات مستقلة يحتاج مسار تصدير مخصص لاحقًا.
           </div>
         </aside>

@@ -13,7 +13,7 @@ export default async function AdminRolesPage() {
     <AppShell>
       <p className="text-sm font-semibold text-gold">RBAC — صلاحيات متقدمة</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">الأدوار والصلاحيات</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         محرّر فعّال لمصفوفة الأدوار×الصلاحيات. المنح الإضافي يُحفظ في القاعدة ويحترمه التحقق الخادمي مباشرةً عبر <code>canUser</code>.
       </p>
       <div className="mt-6">

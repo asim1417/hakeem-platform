@@ -87,7 +87,7 @@ export function SearchAutocomplete({
       <form action={action} role="search">
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="flex flex-1 items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 focus-within:border-[var(--gold)] focus-within:ring-2 focus-within:ring-[var(--gold-ghost)]"
+            className="flex flex-1 items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 focus-within:border-[var(--gold)] focus-within:ring-2 focus-within:ring-[var(--gold-ghost)]"
             role="combobox"
             aria-expanded={showList}
             aria-haspopup="listbox"
@@ -124,7 +124,7 @@ export function SearchAutocomplete({
           id={listId}
           role="listbox"
           aria-label="اقتراحات البحث"
-          className="absolute z-30 mt-1 w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white shadow-[var(--sh-md)]"
+          className="absolute z-30 mt-1 w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory shadow-[var(--sh-md)]"
         >
           {items.map((s, i) => {
             const Icon = s.kind === "system" ? BookText : s.kind === "recent" ? Clock : TrendingUp;

@@ -91,7 +91,7 @@ export function AdminApiKeysManager({ initialKeys, scopes }: { initialKeys: KeyI
               <div className="space-y-2">
                 <p className="font-semibold">تم إنشاء المفتاح — انسخه الآن، لن يظهر مرة أخرى:</p>
                 <div className="flex items-center gap-2">
-                  <code dir="ltr" className="flex-1 select-all break-all rounded-md border border-[var(--gold-border)] bg-white px-3 py-2 font-mono-legal text-sm text-[var(--navy)]">
+                  <code dir="ltr" className="flex-1 select-all break-all rounded-md border border-[var(--gold-border)] bg-ivory px-3 py-2 font-mono-legal text-sm text-[var(--navy)]">
                     {newKey}
                   </code>
                   <NavyButton type="button" onClick={() => void copyKey()} className="px-3 py-2 text-xs">
@@ -124,7 +124,7 @@ export function AdminApiKeysManager({ initialKeys, scopes }: { initialKeys: KeyI
               </thead>
               <tbody>
                 {keys.map((k) => (
-                  <tr key={k.id} className="border-b border-[var(--ink-04)] transition odd:bg-white even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]">
+                  <tr key={k.id} className="border-b border-[var(--ink-04)] transition odd:bg-ivory even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]">
                     <td className="px-4 py-3 font-semibold text-[var(--navy)]">{k.name}</td>
                     <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">{k.keyPrefix}…</td>
                     <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-60)]" dir="ltr">{k.scopes.join(", ")}</td>
@@ -169,7 +169,7 @@ function Field({ label, value, onChange, dir = "rtl", placeholder }: { label: st
   return (
     <label>
       <span className="text-sm font-semibold text-[var(--navy)]">{label}</span>
-      <input value={value} dir={dir} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C09B5A]/25 px-4 py-3" />
+      <input value={value} dir={dir} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 w-full rounded-md border border-[#C69763]/25 px-4 py-3" />
     </label>
   );
 }

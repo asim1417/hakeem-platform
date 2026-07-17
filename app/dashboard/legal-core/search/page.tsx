@@ -176,14 +176,14 @@ export default async function LegalCoreSearchPage({
               <option value="judgment" disabled>حكم - لاحقًا</option>
               <option value="comparative" disabled>قانون مقارن - لاحقًا</option>
             </select>
-            <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/55 px-4 py-3 text-sm text-[var(--ink-60)]">
+            <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/55 px-4 py-3 text-sm text-[var(--ink-60)]">
               نطاق البحث: {selectedFields.length ? selectedFields.map(fieldLabel).join("، ") : "كل الحقول القانونية"}
             </div>
           </div>
 
           <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             {searchFields.map(([value, label]) => (
-              <label key={value} className="flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/55 px-3 py-2 text-sm text-[var(--ink-70)]">
+              <label key={value} className="flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/55 px-3 py-2 text-sm text-[var(--ink-70)]">
                 <input name="fields" type="checkbox" value={value} defaultChecked={!selectedFields.length || selectedFields.includes(value)} />
                 {label}
               </label>
@@ -252,7 +252,7 @@ export default async function LegalCoreSearchPage({
                       </div>
                     </div>
 
-                    <p className="legal-prose mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
+                    <p className="legal-prose mt-4 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/55 p-4 font-judicial text-lg leading-9 text-[var(--ink)]">
                       <HighlightedSearchText text={sanitizeDisplayText(article.snippet)} terms={joinSearchTerms(query, article.matchedTerms)} />
                     </p>
 
@@ -329,7 +329,7 @@ export default async function LegalCoreSearchPage({
 
 function FilterItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/55 p-3">
+    <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/55 p-3">
       <p className="font-display-ar text-xs font-bold text-[var(--gold)]">{label}</p>
       <p className="mt-1 text-sm text-[var(--ink-70)]">{value}</p>
     </div>

@@ -68,7 +68,7 @@ export function CasesManager({ initialCases }: { initialCases: CaseItem[] }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-md border border-black/10 bg-white p-5">
+      <section className="rounded-md border border-line bg-ivory p-5">
         <h2 className="text-xl font-bold text-olive">إضافة قضية</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <Field label="عنوان القضية" value={title} onChange={setTitle} placeholder="مثال: مطالبة توريد مواد" />
@@ -79,7 +79,7 @@ export function CasesManager({ initialCases }: { initialCases: CaseItem[] }) {
             <select
               value={clientRole}
               onChange={(event) => setClientRole(event.target.value)}
-              className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+              className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
             >
               {clientRoles.map((role) => (
                 <option key={role} value={role}>
@@ -94,7 +94,7 @@ export function CasesManager({ initialCases }: { initialCases: CaseItem[] }) {
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
-              className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+              className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
             >
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -119,25 +119,25 @@ export function CasesManager({ initialCases }: { initialCases: CaseItem[] }) {
         {error ? <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
       </section>
 
-      <section className="rounded-md border border-black/10 bg-white p-5">
+      <section className="rounded-md border border-line bg-ivory p-5">
         <h2 className="text-xl font-bold text-olive">القضايا المسجلة</h2>
         {cases.length === 0 ? (
-          <p className="mt-4 rounded-md bg-sand p-4 text-gray-700">لا توجد قضايا مسجلة حتى الآن.</p>
+          <p className="mt-4 rounded-md bg-sand p-4 text-ink">لا توجد قضايا مسجلة حتى الآن.</p>
         ) : (
           <div className="mt-4 space-y-3">
             {cases.map((caseItem) => (
-              <article key={caseItem.id} className="rounded-md border border-black/10 p-4">
+              <article key={caseItem.id} className="rounded-md border border-line p-4">
                 <div className="flex flex-wrap justify-between gap-3">
                   <div>
                     <h3 className="font-bold text-olive">{caseItem.title}</h3>
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="mt-1 text-sm text-muted">
                       {[caseItem.caseType, caseItem.clientRole, statusLabel(caseItem.status)].filter(Boolean).join(" · ")}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500">{new Date(caseItem.createdAt).toLocaleString("ar-SA")}</p>
+                  <p className="text-xs text-muted">{new Date(caseItem.createdAt).toLocaleString("ar-SA")}</p>
                 </div>
-                {caseItem.factsSummary ? <p className="mt-3 leading-8 text-gray-700">{caseItem.factsSummary}</p> : null}
-                {caseItem.requests ? <p className="mt-2 text-sm text-gray-600">الطلبات: {caseItem.requests}</p> : null}
+                {caseItem.factsSummary ? <p className="mt-3 leading-8 text-ink">{caseItem.factsSummary}</p> : null}
+                {caseItem.requests ? <p className="mt-2 text-sm text-muted">الطلبات: {caseItem.requests}</p> : null}
               </article>
             ))}
           </div>
@@ -164,7 +164,7 @@ function Field({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="focus-ring mt-2 w-full rounded-md border border-black/10 px-4 py-3"
+        className="focus-ring mt-2 w-full rounded-md border border-line px-4 py-3"
         placeholder={placeholder}
       />
     </label>
@@ -178,7 +178,7 @@ function TextArea({ label, value, onChange }: { label: string; value: string; on
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="focus-ring mt-2 min-h-24 w-full rounded-md border border-black/10 px-4 py-3 leading-8"
+        className="focus-ring mt-2 min-h-24 w-full rounded-md border border-line px-4 py-3 leading-8"
       />
     </label>
   );

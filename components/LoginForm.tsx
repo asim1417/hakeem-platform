@@ -41,7 +41,7 @@ export function LoginForm({ nextUrl = "/dashboard", googleEnabled = false }: { n
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="focus-ring mt-2 w-full rounded-md border border-[#C09B5A]/25 bg-white px-4 py-3 text-left"
+            className="focus-ring mt-2 w-full rounded-md border border-[#C69763]/25 bg-ivory px-4 py-3 text-left"
           />
         </label>
         <label className="block">
@@ -51,7 +51,7 @@ export function LoginForm({ nextUrl = "/dashboard", googleEnabled = false }: { n
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="focus-ring mt-2 w-full rounded-md border border-[#C09B5A]/25 bg-white px-4 py-3 text-left"
+            className="focus-ring mt-2 w-full rounded-md border border-[#C69763]/25 bg-ivory px-4 py-3 text-left"
           />
         </label>
         <GoldButton type="button" onClick={() => void login()} disabled={loading || !email || !password} className="w-full">
@@ -61,14 +61,14 @@ export function LoginForm({ nextUrl = "/dashboard", googleEnabled = false }: { n
 
         {googleEnabled ? (
           <>
-            <div className="flex items-center gap-3 py-1 text-xs text-[#0B1F3A]/50">
-              <span className="h-px flex-1 bg-[#C09B5A]/25" />
+            <div className="flex items-center gap-3 py-1 text-xs text-[#0E3435]/50">
+              <span className="h-px flex-1 bg-[#C69763]/25" />
               أو
-              <span className="h-px flex-1 bg-[#C09B5A]/25" />
+              <span className="h-px flex-1 bg-[#C69763]/25" />
             </div>
             <a
               href={`/api/auth/google?next=${encodeURIComponent(nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard")}`}
-              className="focus-ring flex w-full items-center justify-center gap-3 rounded-md border border-[#C09B5A]/35 bg-white px-4 py-3 font-semibold text-[var(--navy)] transition hover:bg-[var(--parchment)]"
+              className="focus-ring flex w-full items-center justify-center gap-3 rounded-md border border-[#C69763]/35 bg-ivory px-4 py-3 font-semibold text-[var(--navy)] transition hover:bg-[var(--parchment)]"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
                 <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.71-1.57 2.68-3.89 2.68-6.62z" />

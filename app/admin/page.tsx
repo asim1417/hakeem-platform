@@ -73,7 +73,7 @@ export default async function AdminPage() {
     <AppShell>
       <p className="text-sm font-semibold text-gold">الإدارة والتقارير</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">لوحة الإدارة</h1>
-      <p className="mt-3 max-w-3xl leading-8 text-gray-700">
+      <p className="mt-3 max-w-3xl leading-8 text-ink">
         لوحة حالة فعلية لخدمات المنصة وتكاملاتها. الحالة محسوبة من الإعداد الفعلي لا من نصّ ثابت.
       </p>
 
@@ -89,7 +89,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-2">
-        <div className="rounded-md border border-black/10 bg-white p-5 xl:col-span-2">
+        <div className="rounded-md border border-line bg-ivory p-5 xl:col-span-2">
           <h2 className="text-xl font-bold text-olive">حالة الخدمات والتكاملات</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {services.map((s) => (
@@ -98,7 +98,7 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div className="rounded-md border border-black/10 bg-white p-5">
+        <div className="rounded-md border border-line bg-ivory p-5">
           <h2 className="text-xl font-bold text-olive">روابط الإدارة</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <AdminLink href="/admin/users" label="إدارة المستخدمين" />
@@ -114,7 +114,7 @@ export default async function AdminPage() {
 
         <div className="rounded-md border border-gold bg-sand p-5">
           <h2 className="text-xl font-bold text-olive">تنبيه MVP</h2>
-          <p className="mt-3 leading-8 text-gray-700">
+          <p className="mt-3 leading-8 text-ink">
             المخرجات القانونية والتدريبية مساعدة أولية ولا تعد رأيًا قانونيًا نهائيًا أو حكمًا فعليًا. التكاملات المعلّمة بـ«يتطلب ضبط» تُفعَّل
             تلقائيًا عند إضافة متغيّرات البيئة المقابلة.
           </p>
@@ -127,18 +127,18 @@ export default async function AdminPage() {
 const STATE_BADGE: Record<ServiceState, { text: string; cls: string }> = {
   live: { text: "مُفعّلة", cls: "bg-emerald-50 text-emerald-700" },
   config: { text: "تتطلب ضبطًا", cls: "bg-amber-50 text-amber-700" },
-  tenant: { text: "تتطلب مستأجرًا", cls: "bg-gray-100 text-gray-500" }
+  tenant: { text: "تتطلب مستأجرًا", cls: "bg-surface text-muted" }
 };
 
 function ServiceRow({ label, state, detail, href }: { label: string; state: ServiceState; detail: string; href?: string }) {
   const badge = STATE_BADGE[state];
   const body = (
-    <div className="flex h-full flex-col rounded-md border border-black/10 bg-sand p-4">
+    <div className="flex h-full flex-col rounded-md border border-line bg-sand p-4">
       <div className="flex items-center gap-2">
         <span className="font-semibold text-olive">{label}</span>
         <span className={`ms-auto rounded px-2 py-0.5 text-xs ${badge.cls}`}>{badge.text}</span>
       </div>
-      <p className="mt-2 text-sm leading-7 text-gray-600">{detail}</p>
+      <p className="mt-2 text-sm leading-7 text-muted">{detail}</p>
     </div>
   );
   return href ? (
@@ -152,8 +152,8 @@ function ServiceRow({ label, state, detail, href }: { label: string; state: Serv
 
 function StatusCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-black/10 bg-white p-4">
-      <p className="text-sm text-gray-500">{label}</p>
+    <div className="rounded-md border border-line bg-ivory p-4">
+      <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 break-words text-2xl font-bold text-olive">{value}</p>
     </div>
   );

@@ -59,7 +59,7 @@ export function PrincipleReviewControls({ id, status }: { id: string; status: st
           onClick={() => decide("reset")}
           disabled={busy !== null}
           aria-label="إعادة إلى قيد المراجعة"
-          className="inline-flex items-center gap-1 rounded-[var(--r-md)] border border-[var(--ink-20)] bg-white px-3 py-1.5 text-sm text-[var(--ink-60)] transition hover:border-[var(--gold)] disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-[var(--r-md)] border border-[var(--ink-20)] bg-ivory px-3 py-1.5 text-sm text-[var(--ink-60)] transition hover:border-[var(--gold)] disabled:opacity-40"
         >
           <RotateCcw size={14} aria-hidden /> إعادة
         </button>

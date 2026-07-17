@@ -26,7 +26,7 @@ export default async function PublicSearchPage({
   return (
     <main className="min-h-screen bg-[var(--hakeem-bg)]">
       {/* شريط علوي */}
-      <header className="sticky top-0 z-20 border-b border-[var(--ink-08)] bg-white/80 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-[var(--ink-08)] bg-ivory/80 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-5 py-3">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] font-judicial text-lg font-bold text-[var(--gold-bright)]">
@@ -72,7 +72,7 @@ export default async function PublicSearchPage({
             {hits.length ? (
               <div className="space-y-4">
                 {hits.map((hit) => (
-                  <article key={hit.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-white p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
+                  <article key={hit.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5 shadow-[var(--sh-xs)] transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-mono-legal text-sm text-[var(--gold-dark)]">{hit.citationLabel}</p>
                       <span className="font-mono-legal text-[11px] text-[var(--ink-40)]">{hit.systemName}</span>
@@ -83,7 +83,7 @@ export default async function PublicSearchPage({
                     <div className="mt-4">
                       <Link
                         href={`/dashboard/legal-core/search?q=${encodeURIComponent(`${hit.systemName} ${hit.articleNumber}`)}`}
-                        className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold-ghost)]"
+                        className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2 text-sm font-semibold text-[var(--navy)] transition hover:bg-[var(--gold-ghost)]"
                       >
                         فتح المادة كاملةً في النواة (يتطلب الدخول) ↗
                       </Link>

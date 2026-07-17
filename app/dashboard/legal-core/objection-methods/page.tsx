@@ -74,7 +74,7 @@ export default async function ObjectionMethodsPage() {
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--navy)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-xs)]"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-ivory px-4 py-1.5 text-xs font-semibold text-[var(--navy)] transition hover:border-[var(--gold)] hover:shadow-[var(--sh-xs)]"
               >
                 <s.icon size={14} className="text-[var(--gold)]" />
                 {s.label}
@@ -205,7 +205,7 @@ export default async function ObjectionMethodsPage() {
           <LegalCoreCard title="٦. المبادئ الحاكمة في جميع طرق الاعتراض" icon={<ShieldCheck size={18} />}>
             <div className="grid gap-3 md:grid-cols-2">
               {governingPrinciples.map((note) => (
-                <div key={note.article} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white/60 p-4">
+                <div key={note.article} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-4">
                   <LegalTopicBadge tone="gold">{note.article}</LegalTopicBadge>
                   <p className="mt-2 text-sm leading-7 text-[var(--ink)]">{note.text}</p>
                 </div>
@@ -265,7 +265,7 @@ function RefTableView({ table }: { table: RefTable }) {
         </thead>
         <tbody>
           {table.rows.map((row, ri) => (
-            <tr key={ri} className={`border-t border-[var(--ink-08)] ${row.tone ? toneClass[row.tone] : ri % 2 ? "bg-[var(--paper)]" : "bg-white/60"}`}>
+            <tr key={ri} className={`border-t border-[var(--ink-08)] ${row.tone ? toneClass[row.tone] : ri % 2 ? "bg-[var(--paper)]" : "bg-ivory/60"}`}>
               {row.cells.map((cell, ci) => (
                 <td key={ci} className={`px-3 py-2.5 leading-6 ${ci === 0 ? "font-semibold text-[var(--navy)]" : "text-[var(--ink)]"}`}>
                   {cell}

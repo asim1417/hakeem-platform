@@ -66,7 +66,7 @@ export default async function LegalContentAdminPage() {
             {queues.map((q) => {
               const Icon = q.icon;
               return (
-                <Link key={q.key} href={q.href} className="flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white/60 p-4 transition hover:border-[var(--gold)]">
+                <Link key={q.key} href={q.href} className="flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4 transition hover:border-[var(--gold)]">
                   <span className="inline-flex items-center gap-2 font-display-ar text-sm font-bold text-[var(--navy)]">
                     <Icon size={17} className="text-[var(--gold)]" /> {q.label}
                   </span>

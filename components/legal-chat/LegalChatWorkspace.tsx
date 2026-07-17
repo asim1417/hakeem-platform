@@ -275,7 +275,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
                 key={h.id}
                 type="button"
                 onClick={() => loadHistory(h)}
-                className="focus-ring block w-full rounded-[var(--r-md)] border border-[var(--ink-08)] bg-white p-2 text-right text-xs hover:border-[var(--gold)]"
+                className="focus-ring block w-full rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory p-2 text-right text-xs hover:border-[var(--gold)]"
               >
                 <span className="block truncate font-semibold text-[var(--navy)]">{h.title}</span>
                 <span className="block truncate text-[10px] text-[var(--ink-40)]">
@@ -311,7 +311,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
                     key={p.label}
                     type="button"
                     onClick={() => setValue(p.prompt)}
-                    className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
+                    className="focus-ring rounded-full border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
                   >
                     {p.label}
                   </button>
@@ -362,7 +362,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
                                 type="button"
                                 disabled={busy || i !== turns.length - 1}
                                 onClick={() => void send(b)}
-                                className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--navy)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
+                                className="focus-ring rounded-full border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs font-medium text-[var(--navy)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
                               >
                                 {b}
                               </button>
@@ -391,11 +391,11 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
         >
           {/* الخيارات المتقدمة داخل زر الإعدادات ⚙️ (مطوية افتراضيًا — لا تزاحم المحادثة) */}
           {showTools && (
-            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white p-2">
+            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-2">
               <select
                 value={mode}
                 onChange={(e) => setMode(e.target.value as SimulationMode)}
-                className="rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
+                className="rounded-full border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
                 title="نمط المحاكاة"
               >
                 {config.modes.map((m) => (
@@ -407,7 +407,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
               <select
                 value={strength}
                 onChange={(e) => setStrength(e.target.value as SearchStrength)}
-                className="rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
+                className="rounded-full border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs text-[var(--navy)] focus-ring"
                 title="قوة البحث"
               >
                 {config.strengths.map((s) => (
@@ -419,7 +419,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
               <button
                 type="button"
                 onClick={() => setShowPrompts((v) => !v)}
-                className="focus-ring rounded-full border border-[var(--ink-15)] bg-white px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
+                className="focus-ring rounded-full border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs text-[var(--ink-80)] hover:border-[var(--gold)]"
               >
                 مكتبة الأوامر
               </button>
@@ -429,7 +429,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
                 aria-pressed={redact}
                 title="إخفاء البيانات الحساسة (هوية/جوال/آيبان) في المخرجات"
                 className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  redact ? "border-[var(--ruby)] bg-[var(--ruby-soft)] text-[var(--ruby)]" : "border-[var(--ink-15)] bg-white text-[var(--ink-60)] hover:border-[var(--gold)]"
+                  redact ? "border-[var(--ruby)] bg-[var(--ruby-soft)] text-[var(--ruby)]" : "border-[var(--ink-15)] bg-ivory text-[var(--ink-60)] hover:border-[var(--gold)]"
                 }`}
               >
                 {redact ? "🛡️ الإخفاء مُفعّل" : "🛡️ إخفاء البيانات"}
@@ -443,7 +443,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
           )}
 
           {showPrompts && (
-            <div className="mb-2 flex flex-wrap gap-1.5 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white p-2">
+            <div className="mb-2 flex flex-wrap gap-1.5 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-2">
               {config.prompts.map((p) => (
                 <button
                   key={p.label}
@@ -470,7 +470,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
                   <select
                     value={a.declaredKind ?? ""}
                     onChange={(e) => setKind(i, e.target.value)}
-                    className="rounded border border-[var(--ink-15)] bg-white px-1.5 py-0.5 text-[11px]"
+                    className="rounded border border-[var(--ink-15)] bg-ivory px-1.5 py-0.5 text-[11px]"
                   >
                     <option value="">نوع الملف…</option>
                     {FILE_KINDS.map((k) => (
@@ -492,7 +492,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
               e.preventDefault();
               void send(value);
             }}
-            className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-white p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
+            className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-ivory p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
           >
             <textarea
               value={value}
@@ -540,7 +540,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
         <p className="mb-2 px-1 text-[11px] font-semibold text-[var(--ink-60)]">ملف القضية</p>
         {currentCase ? (
           <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "calc(100vh - 14rem)" }}>
-            <div className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-white p-3 text-xs">
+            <div className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-3 text-xs">
               <p className="font-bold text-[var(--navy)]">{currentCase.title}</p>
               <p className="mt-1 leading-6 text-[var(--ink-60)]">{currentCase.summary}</p>
               {currentCase.missingInfo.length > 0 && (
@@ -556,7 +556,7 @@ export function LegalChatWorkspace({ config }: { config: WorkspaceConfig }) {
             </div>
           </div>
         ) : (
-          <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--ink-15)] bg-white p-4 text-center text-xs text-[var(--ink-40)]">
+          <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--ink-15)] bg-ivory p-4 text-center text-xs text-[var(--ink-40)]">
             يظهر ملف القضية هنا تلقائياً بعد أول رسالة.
           </div>
         )}
@@ -571,7 +571,7 @@ function IconBtn({ title, onClick, children }: { title: string; onClick: () => v
       type="button"
       title={title}
       onClick={onClick}
-      className="focus-ring grid h-9 w-9 place-items-center rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white text-base hover:border-[var(--gold)]"
+      className="focus-ring grid h-9 w-9 place-items-center rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory text-base hover:border-[var(--gold)]"
     >
       {children}
     </button>
