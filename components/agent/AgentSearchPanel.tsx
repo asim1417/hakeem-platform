@@ -27,10 +27,11 @@ type Turn = {
   showMethod: boolean;
 };
 
-export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: string; initialQuery?: string }) {
+export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "ask" }: { userName?: string; initialQuery?: string; initialMode?: string }) {
   const [value, setValue] = useState(initialQuery);
   const [detailed, setDetailed] = useState(false);
-  const [modeId, setModeId] = useState<AgentModeId>("ask");
+  // النمط الأوّليّ يُصفَّى عبر getAgentMode كي يسقط أي معرّف مجهول للوضع الافتراضي «اسأل».
+  const [modeId, setModeId] = useState<AgentModeId>(getAgentMode(initialMode).id);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

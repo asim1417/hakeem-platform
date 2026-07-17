@@ -28,7 +28,8 @@
 | تعريفات الأوضاع | `lib/modules/agents/modes.ts` | بيانات نقيّة: `{ id, name, icon, hint, systemPrompt }`. `ask` (افتراضيّ، `systemPrompt=null`) و`analyze-case`. |
 | الصياغة بالوضع | `lib/modules/agents/mode-synthesis.ts` | `synthesizeWithMode` يصوغ من **المواد المُتحقَّقة نفسها** (بلا إعادة استرجاع) بتعليمة الوضع، بحارس التلفيق المشترك. |
 | الروت | `app/api/ai/agent-search/route.ts` | يقبل `mode`. «اسأل» بلا تغيير. الأوضاع الأخرى: orchestrate مرّة (quick، تخطّي الاتّساع) ثم `synthesizeWithMode`. |
-| الواجهة | `components/agent/AgentSearchPanel.tsx` | شريط رقائق الأوضاع؛ يرسل `mode` مع الطلب. |
+| الواجهة | `components/agent/AgentSearchPanel.tsx` | شريط رقائق الأوضاع؛ يقبل `initialMode` (يُصفَّى بـ`getAgentMode`) ويرسل `mode` مع الطلب. |
+| التحويلات | `app/dashboard/{case-analysis,legal-agent,judicial-simulation}/page.tsx` | تحويل دائم إلى `/dashboard/ask?mode=<id>` بعد بوّابة الصلاحية. |
 
 ## لماذا «استدعاء وكيل واحد»؟
 
@@ -44,7 +45,9 @@
    يلتقطانه تلقائيًّا لأوضاع الصياغة البحتة.
 2. **حالات خاصّة:** الاستشارة تضيف حفظ سجلّ في الروت (`prisma.consultation.create`)؛ المحادثة
    ترفع `conversational:true` فيمرّر الروت `history` إلى `synthesizeWithMode`.
-3. أبقِ الصفحة القديمة تعمل مع تنويهٍ يوجّه للوضع (كما في كل الصفحات المدموجة).
+3. الصفحات المدموجة بالكامل (`case-analysis`، `legal-agent`، `judicial-simulation`) صارت
+   **تحويلًا دائمًا** إلى `/dashboard/ask?mode=<id>` بعد بوّابة الصلاحية — لا واجهة مستقلّة لها.
+   وأُزيلت روابطها من القائمة الجانبية. النمط يُمرَّر عبر `?mode=` ويُصفَّى بـ`getAgentMode`.
 
 **استدعاء وكيل واحد لكل دور** في كل الأوضاع: `orchestrate` مرّة ثم `synthesizeWithMode` من المواد
 المُتحقَّقة — لا `analyzeCase`/`groundQuery` مزدوج. فيزول التكرار الذي كان في الصفحات المستقلّة.

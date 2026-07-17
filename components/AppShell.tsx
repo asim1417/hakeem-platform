@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Briefcase, ClipboardCheck, ClipboardList, Database, FileClock, FileSearch, Gavel, GraduationCap, LayoutDashboard, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, ClipboardCheck, Database, FileClock, FileSearch, Gavel, GraduationCap, LayoutDashboard, Paperclip, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
+import { NavGroup, type NavChild } from "@/components/NavGroup";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { getTranslator } from "@/lib/i18n/server";
 import { DIR, LOCALE_LABEL } from "@/lib/i18n/dictionaries";
+import { AGENT_MODES } from "@/lib/modules/agents/modes";
 import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -18,51 +20,66 @@ type NavItem = {
   active?: boolean;
 };
 
-const navSections: Array<{ items: NavItem[] }> = [
-  {
-    items: [
-      { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
-      { href: "/dashboard/legal-search", key: "nav.search", icon: Search }
-    ]
-  },
-  {
-    items: [
-      { href: "/dashboard/cases", key: "nav.cases", icon: Briefcase },
-      { href: "/dashboard/consultations", key: "nav.consultations", icon: ShieldCheck },
-      { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip },
-      { href: "/documents", key: "nav.docPlatform", icon: FileSearch }
-    ]
-  },
-  {
-    items: [
-      { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
-      { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel, active: true },
-      { href: "/dashboard/legal-chat", key: "nav.simulation", icon: Scale },
-      { href: "/dashboard/judicial-simulation", key: "nav.quickAnalysis", icon: ClipboardCheck },
-      { href: "/dashboard/case-analysis", key: "nav.caseAnalysis", icon: ScanSearch },
-      { href: "/dashboard/legal-agent", key: "nav.legalAgent", icon: ClipboardList }
-    ]
-  },
-  {
-    items: [
-      { href: "/dashboard/legal-core", key: "nav.legalCore", icon: Database },
-      { href: "/dashboard/legal-core/legal-issues", key: "nav.legalIssues", icon: Scale },
-      { href: "/dashboard/legal-core/principles", key: "nav.principles", icon: Quote },
-      { href: "/dashboard/legal-core/admin", key: "nav.contentAdmin", icon: ClipboardCheck },
-      { href: "/dashboard/knowledge-graph", key: "nav.knowledgeGraph", icon: Database },
-      { href: "/dashboard/legal-rag", key: "nav.rag", icon: Sparkles },
-      { href: "/dashboard/training", key: "nav.training", icon: GraduationCap }
-    ]
-  },
-  {
-    items: [
-      { href: "/admin", key: "nav.settings", icon: Settings },
-      { href: "/admin/ai", key: "nav.aiSettings", icon: Sparkles },
-      { href: "/admin/users", key: "nav.users", icon: Users },
-      { href: "/audit-logs", key: "nav.auditLog", icon: FileClock }
-    ]
-  }
+// ── أوضاع «اسأل حكيم» الستّة كأبناءٍ قابلين للطيّ (توليد من مصدر الأوضاع نفسه — بلا تكرار تسميات) ──
+// كل وضع يفتح «اسأل حكيم» به مفعّلًا عبر ?mode=. الوضع «اسأل» هو الوجهة الافتراضية بلا استعلام.
+const askModeChildren: NavChild[] = AGENT_MODES.map((m) => ({
+  href: m.id === "ask" ? "/dashboard/ask" : `/dashboard/ask?mode=${m.id}`,
+  label: m.name,
+  icon: m.icon,
+}));
+
+// ── أبناء «النواة القانونية»: تصفّحٌ داخل النواة بدل عناصر منفصلة في القائمة الرئيسية ──
+const legalCoreChildren: NavChild[] = [
+  { href: "/dashboard/legal-core/legal-issues", label: "المسائل القانونية" },
+  { href: "/dashboard/legal-core/principles", label: "المبادئ القضائية" },
 ];
+
+// ── عناصر مسطّحة أعلى القائمة الرئيسية (قبل مجموعة «اسأل حكيم») ──
+const primaryTop: NavItem[] = [
+  { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
+  { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
+];
+
+// ── عناصر مستقلّة بين المجموعتين: القاضي التفاعلي + منصة الوثائق (لا يُدمجان) ──
+const primaryMid: NavItem[] = [
+  { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
+  { href: "/documents", key: "nav.docPlatform", icon: FileSearch },
+];
+
+// ── أدوات متقدّمة (تبقى للوصول — ليست ضمن «الرئيسية الستّة» لكن لا تُحذف) ──
+const toolItems: NavItem[] = [
+  { href: "/dashboard/legal-core/admin", key: "nav.contentAdmin", icon: ClipboardCheck },
+  { href: "/dashboard/knowledge-graph", key: "nav.knowledgeGraph", icon: Database },
+  { href: "/dashboard/legal-rag", key: "nav.rag", icon: Sparkles },
+  { href: "/dashboard/training", key: "nav.training", icon: GraduationCap },
+];
+
+// ── الإدارة (لا تُلمس — أمن/صلاحيات) ──
+const adminItems: NavItem[] = [
+  { href: "/admin", key: "nav.settings", icon: Settings },
+  { href: "/admin/ai", key: "nav.aiSettings", icon: Sparkles },
+  { href: "/admin/users", key: "nav.users", icon: Users },
+  { href: "/audit-logs", key: "nav.auditLog", icon: FileClock },
+];
+
+// ── ملفّاتي (تحت الحساب): الدعاوى · الاستشارات (سجلّ) · المرفقات — نُقلت من القائمة الرئيسية ──
+const myFilesItems: NavItem[] = [
+  { href: "/dashboard/cases", key: "nav.cases", icon: Briefcase },
+  { href: "/dashboard/consultations", key: "nav.consultations", icon: ShieldCheck },
+  { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip },
+];
+
+// عنصر تنقّل مسطّح واحد (رابط) — يُستعمل في كل الأقسام غير القابلة للطيّ.
+function renderNavItem(item: NavItem, t: (key: string) => string) {
+  const Icon = item.icon;
+  return (
+    <Link key={item.href} href={item.href} className={`nav-btn ${item.active ? "active" : ""}`}>
+      <Icon aria-hidden />
+      {t(item.key)}
+      {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+    </Link>
+  );
+}
 
 const roleLabels: Record<string, string> = {
   SYSTEM_ADMIN: "مدير النظام",
@@ -96,20 +113,36 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          {navSections.map((section, sectionIndex) => (
-            <nav className="nav-section" style={{ marginTop: sectionIndex ? 6 : 0 }} key={sectionIndex} aria-label={t("a11y.mainNav")}>
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link key={item.href} href={item.href} className={`nav-btn ${item.active ? "active" : ""}`}>
-                    <Icon aria-hidden />
-                    {t(item.key)}
-                    {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
-                  </Link>
-                );
-              })}
-            </nav>
-          ))}
+          {/* ── القائمة الرئيسية: عناصر ظاهرة + مجموعتان قابلتان للطيّ ── */}
+          <nav className="nav-section" aria-label={t("a11y.mainNav")}>
+            {primaryTop.map((item) => renderNavItem(item, t))}
+
+            {/* اسأل حكيم ▾ — تنفتح على الأوضاع الستّة (الوجهات هي الأوضاع) */}
+            <NavGroup label={t("nav.ask")} icon={<Sparkles aria-hidden />} defaultOpen children={askModeChildren} />
+
+            {primaryMid.map((item) => renderNavItem(item, t))}
+
+            {/* النواة القانونية ▾ — تصفّح المسائل والمبادئ داخلها */}
+            <NavGroup label={t("nav.legalCore")} icon={<Database aria-hidden />} href="/dashboard/legal-core" children={legalCoreChildren} />
+          </nav>
+
+          {/* ── أدوات متقدّمة ── */}
+          <nav className="nav-section" style={{ marginTop: 6 }} aria-label={t("nav.tools")}>
+            <div className="nav-section-label">{t("nav.tools")}</div>
+            {toolItems.map((item) => renderNavItem(item, t))}
+          </nav>
+
+          {/* ── الإدارة ── */}
+          <nav className="nav-section" style={{ marginTop: 6 }} aria-label={t("nav.admin")}>
+            <div className="nav-section-label">{t("nav.admin")}</div>
+            {adminItems.map((item) => renderNavItem(item, t))}
+          </nav>
+
+          {/* ── ملفّاتي (تحت الحساب) — تُدفع لأسفل بجوار كتلة الحساب ── */}
+          <nav className="nav-section nav-account" aria-label={t("nav.myFiles")}>
+            <div className="nav-section-label">{t("nav.myFiles")}</div>
+            {myFilesItems.map((item) => renderNavItem(item, t))}
+          </nav>
 
           <div className="sidebar-foot">
             <div className="user-av" aria-hidden>{initials}</div>
