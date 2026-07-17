@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
@@ -6,6 +6,13 @@ import { getLocale } from "@/lib/i18n/server";
 export const metadata: Metadata = {
   title: "حكيم",
   description: "المنصة القانونية الموحدة"
+};
+
+// إعداد صريح للـviewport يضمن عرضًا متّسقًا على الجوّال (آيفون/أندرويد) والكمبيوتر.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
