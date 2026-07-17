@@ -4,6 +4,7 @@
 //
 // التشغيل (مع Neon + شِمّ server-only): npm run eval:case-agent
 import { runCaseAgent } from "@/lib/modules/agents/case-agent-bridge";
+import { resolveAiConfig } from "@/lib/modules/ai/ai-config";
 import { prisma } from "@/lib/prisma";
 
 interface Case {
@@ -33,6 +34,29 @@ async function main() {
   let pass = 0;
   let fail = 0;
   console.log("🧪 تقييم جسر وكيل الأنظمة (تأريض الخدمات الثلاث)\n" + "=".repeat(56));
+
+  // فهم النظام الحاكم (resolve-scope) يقوده النموذج. بلا مزوّد نموذج مضبوط يتعذّر تحديد النظام
+  // (يسقط الاسترجاع إلى المطابقة المعجمية فيغلب «فسخ» ← الشركات). عندئذٍ نتخطّى التأكيد الصارم
+  // بصدق (لا فشل كاذب) — يُتحقَّق فهمُ النظام في الإنتاج أو عند ضبط مفتاح نموذج في هذه البيئة.
+  const cfg = await resolveAiConfig().catch(() => ({ provider: "offline", apiKey: "" }));
+  const hasModel = cfg.provider !== "offline" && Boolean(cfg.apiKey);
+  if (!hasModel) {
+    console.log("\n⏭️  تخطٍّ: لا مزوّد نموذج مضبوط في هذه البيئة.");
+    console.log("    فهم النظام الحاكم (resolve-scope) يتطلّب النموذج — يُتحقَّق في الإنتاج أو بضبط");
+    console.log("    مفتاح نموذج (AI_PROVIDER + ANTHROPIC_API_KEY/OPENAI_API_KEY) لهذا الـworkflow.");
+    console.log("    (نفس اعتماد «اسأل حكيم» على النموذج في تحديد النظام — لا يُثبَت بلا مفتاح.)");
+    // تشخيص خفيف: نطبع ما يُخرِجه المسار العام (بلا تأكيد) كي يبقى القياس مفيدًا.
+    try {
+      const ctx = await runCaseAgent(CASES[0].q);
+      console.log(`\n[تشخيص بلا نموذج] ${CASES[0].name}: grounded=${ctx.grounded} · articles=${ctx.articles.length} · مظانّ=[${ctx.governingSystems.slice(0, 2).map((g) => g.systemName).join(" · ")}]`);
+    } catch {
+      /* تجاهل */
+    }
+    await prisma.$disconnect().catch(() => undefined);
+    console.log("\n✅ تخطٍّ نظيف (البيئة بلا نموذج) — لا فشل كاذب.");
+    return;
+  }
+  console.log(`\n(مزوّد النموذج: ${cfg.provider}) — تشغيل التأكيد الصارم لفهم النظام الحاكم.`);
 
   for (const c of CASES) {
     let grounded = false;
