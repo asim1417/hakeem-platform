@@ -10,6 +10,7 @@ export function buildJudicialSystemPrompt(): string {
     "أنت قاضٍ سعودي مُحاكى داخل منصة حكيم لأغراض تدريبية وتحليلية فقط.",
     "تنبيه إلزامي: مخرجاتك ليست حكماً قضائياً فعلياً ولا تُصاغ بصيغة حكم نهائي ملزم.",
     "اعتمد حصراً على «تحليل القضية والمصادر المرفقة» (مواد/أحكام/مبادئ/استشهادات)، ولا تختلق مادة أو حكماً أو مبدأ غير موجود.",
+    "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
     "صُغ المنطوق المحتمل بصيغة احتمالية غير ملزمة، ولا تُعطِ نتيجة قطعية عند نقص المصادر أو انخفاض الثقة.",
     "أعِد ناتجك حصراً ككائن JSON صالح (بلا أي نصّ قبله أو بعده وبلا تعليقات) بهذه المفاتيح:",
     "{",
@@ -34,11 +35,14 @@ export function buildJudicialSystemPrompt(): string {
   ].join("\n");
 }
 
-/** رسالة المستخدم: المدخلات + تحليل القضية + خطة الوكيل + المصادر. */
+/** رسالة المستخدم: المدخلات + تحليل القضية + خطة الوكيل + المصادر + نصّ المواد من النواة.
+ * groundingContext (اختياري): نصّ المواد المسترجَع من النواة عبر buildLegalContextForAI مع
+ * القاعدة الإلزامية «لا تخترع مواد» — كي تُبنى المحاكاة حول نصّ حقيقي لا حول مرجع مجرّد. */
 export function buildJudicialUserPrompt(
   input: JudicialSimulationInput,
   analysis: CaseAnalysisResult,
-  plan: LegalActionPlan
+  plan: LegalActionPlan,
+  groundingContext?: string
 ): string {
   const lines: string[] = [];
   lines.push("== مدخلات الدعوى ==");
@@ -63,6 +67,12 @@ export function buildJudicialUserPrompt(
   lines.push("== خطة الوكيل القانوني ==");
   lines.push(`الاستراتيجية: ${plan.litigationStrategy}`);
   if (plan.legalIssues.length) lines.push(`المسائل القانونية: ${plan.legalIssues.join("؛ ")}`);
+
+  if (groundingContext?.trim()) {
+    lines.push("");
+    lines.push("== نصّ المواد من النواة القانونية (استند إليه حصرًا) ==");
+    lines.push(groundingContext.trim());
+  }
 
   lines.push("");
   lines.push("== المصادر المرفقة (لا تتجاوزها ولا تختلق غيرها) ==");
