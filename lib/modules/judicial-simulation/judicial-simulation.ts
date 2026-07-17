@@ -6,6 +6,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { runLegalAgent } from "@/lib/modules/legal-agent/legal-agent";
@@ -60,6 +61,12 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
   const grounding = await buildLegalContextForAI(groundingQuery, { limit: 8 }).catch(() => null);
 
   // 4) الرؤية القضائية: مزوّد مركزي (JSON) + احتياط حتمي/mock.
+  // أرقام المواد المسموح بها = المسترجَع فعلاً من النواة (grounding) ⋃ مواد/استشهادات التحليل.
+  const allowedArticleNumbers = collectAllowedArticleNumbers({
+    numbers: (grounding?.articles ?? []).map((a) => a.articleNumber),
+    references: [...analysis.influentialArticles.map((a) => a.reference), ...analysis.citations.map((c) => c.reference)],
+  });
+
   const det = buildDeterministicJudicialView(input, analysis, plan);
   let parsed: JudicialNarrative | null = null;
   let generated = false;
@@ -72,6 +79,10 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
       });
       if (llm.ok && llm.content.trim()) {
         parsed = parseJudicialView(llm.content);
+        // حارس التأريض: أيّ رقم مادة في المحاكاة ليس ضمن المسترجَع ⇒ رفض السرد والسقوط للحتمي.
+        if (parsed && !verifyNarrativeGrounding(collectStrings(parsed), allowedArticleNumbers).ok) {
+          parsed = null;
+        }
         generated = parsed !== null;
       }
     } catch {

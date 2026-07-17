@@ -6,6 +6,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { classifyDefense, type DefenseCategory } from "@/lib/modules/case-analysis/defense-classifier";
@@ -39,6 +40,12 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
   const grounding = await buildLegalContextForAI(groundingQuery, { limit: 8 }).catch(() => null);
 
   // 3) الطبقة الاستراتيجية عبر المزوّد المركزي (JSON)، مع احتياط حتمي/mock.
+  // أرقام المواد المسموح بها = المسترجَع فعلاً من النواة (grounding) ⋃ مواد/استشهادات التحليل.
+  const allowedArticleNumbers = collectAllowedArticleNumbers({
+    numbers: (grounding?.articles ?? []).map((a) => a.articleNumber),
+    references: [...analysis.influentialArticles.map((a) => a.reference), ...analysis.citations.map((c) => c.reference)],
+  });
+
   const det = buildDeterministicStrategy(input, analysis);
   let parsed: AgentStrategy | null = null;
   let generated = false;
@@ -50,6 +57,10 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     });
     if (llm.ok && llm.content.trim()) {
       parsed = parseAgentPlan(llm.content);
+      // حارس التأريض: أيّ رقم مادة في الخطة ليس ضمن المسترجَع ⇒ رفض الخطة والسقوط للحتمي.
+      if (parsed && !verifyNarrativeGrounding(collectStrings(parsed), allowedArticleNumbers).ok) {
+        parsed = null;
+      }
       generated = parsed !== null;
     }
   } catch {

@@ -8,6 +8,7 @@ import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
 import { classifyDefense, type DefenseCategory } from "./defense-classifier";
 import { buildCaseAnalysisSystemPrompt, buildCaseAnalysisUserPrompt, type CaseSources } from "./case-prompts";
@@ -43,6 +44,12 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
     defenses: input.defenses ? sanitizeForModel(input.defenses).text : input.defenses,
   };
 
+  // أرقام المواد المسموح بها = المسترجَع فعلاً من النواة (grounding) ⋃ مراجع legalRag/الاستشهادات.
+  const allowedArticleNumbers = collectAllowedArticleNumbers({
+    numbers: (grounding?.articles ?? []).map((a) => a.articleNumber),
+    references: [...rag.legalBasis.map((a) => a.reference), ...rag.citations.map((c) => c.reference)],
+  });
+
   let parsed: CaseNarrative | null = null;
   let generated = false;
   try {
@@ -53,6 +60,11 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
     });
     if (llm.ok && llm.content.trim()) {
       parsed = parseCaseAnalysis(llm.content);
+      // حارس التأريض: أيّ رقم مادة في السرد ليس ضمن المسترجَع من النواة ⇒ رفض السرد كاملاً
+      // والسقوط إلى التحليل الحتمي (المبنيّ بلا اختلاق) — فلا يتسرّب رقم مختلق للمحامي.
+      if (parsed && !verifyNarrativeGrounding(collectStrings(parsed), allowedArticleNumbers).ok) {
+        parsed = null;
+      }
       generated = parsed !== null;
     }
   } catch {
