@@ -555,3 +555,18 @@ body {
   0% { box-shadow: 0 0 0 3px var(--gold, #d4af6e); }
   100% { box-shadow: 0 0 0 2px var(--gold-border, rgba(212,175,110,.4)); }
 }
+
+/* ── طباعة الإجابة: نطبع المستند الرئيسي ونُخفي كل شيء إلا منطقة الطباعة (يعمل على iOS) ── */
+#hakeem-print-area { display: none; }
+@media print {
+  body.hakeem-printing > *:not(#hakeem-print-area) { display: none !important; }
+  #hakeem-print-area { display: block !important; direction: rtl; text-align: right; color: #111; }
+  #hakeem-print-area .doc-head { border-bottom: 2px solid var(--gold, #d4af6e); padding-bottom: .4rem; margin-bottom: 1rem; }
+  #hakeem-print-area .doc-brand { color: var(--gold-dark, #9a7b2e); font-weight: 700; }
+  #hakeem-print-area .doc-title { color: var(--navy, #1B3A5B); font-size: 20pt; font-weight: 700; margin: .2rem 0; }
+  #hakeem-print-area .doc-date { color: #777; font-size: 11pt; }
+  #hakeem-print-area .doc-foot { margin-top: 1.4rem; border-top: 1px solid #ddd; padding-top: .5rem; color: #999; font-size: 9pt; }
+  #hakeem-print-area .answer-prose { line-height: 1.9; }
+  #hakeem-print-area .cite-ref::before { content: "م/"; }
+  @page { margin: 1.6cm; }
+}
