@@ -3,28 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --navy: #0B1F3A;
-  --navy-mid: #142D52;
-  --navy-soft: #1E3F6F;
-  --gold: #C09B5A;
+  /* ── إعادة توجيه رموز التطبيق القديمة إلى لوحة الهوية (بترولي/نحاسي) ──
+     المؤسسة بترولية، والفعل نحاسي، والمحتوى ورقيّ — دليل HKM.ID. */
+  --navy: #0E3435;         /* المؤسسة → بترولي */
+  --navy-mid: #1F4F4C;
+  --navy-soft: #2A6360;
+  --gold: #C69763;         /* الفعل → نحاسي */
   --gold-bright: #D4AF6E;
-  --gold-pale: #E8D5A8;
-  --gold-dark: #9A7636;
-  --gold-ghost: rgba(192,155,90,0.12);
-  --gold-border: rgba(192,155,90,0.30);
-  --cream: #F9F5EC;
-  --cream-warm: #F2EADB;
-  --parchment: #FBF8F1;
-  --paper: #FFFFFF;
-  --ink: #0D1321;
-  --ink-80: rgba(13,19,33,0.80);
-  --ink-70: rgba(13,19,33,0.70);
-  --ink-60: rgba(13,19,33,0.60);
-  --ink-40: rgba(13,19,33,0.40);
-  --ink-20: rgba(13,19,33,0.20);
-  --ink-15: rgba(13,19,33,0.15);
-  --ink-08: rgba(13,19,33,0.08);
-  --ink-04: rgba(13,19,33,0.04);
+  --gold-pale: #E8D6BC;
+  --gold-dark: #A9793F;
+  --gold-ghost: rgba(198,151,99,0.12);
+  --gold-border: rgba(198,151,99,0.30);
+  --cream: #EAF1EF;        /* نص فاتح فوق البترولي */
+  --cream-warm: #E2EAE8;
+  --parchment: #FBFAF6;
+  --paper: #FBFAF6;        /* المحتوى → عاجيّ (لا أبيض نقيّ) */
+  --ink: #12211F;          /* الحبر */
+  --ink-80: rgba(18,33,31,0.82);
+  --ink-70: rgba(18,33,31,0.70);
+  --ink-60: rgba(18,33,31,0.60);
+  --ink-40: rgba(18,33,31,0.42);
+  --ink-20: rgba(18,33,31,0.20);
+  --ink-15: rgba(18,33,31,0.15);
+  --ink-08: rgba(18,33,31,0.10);
+  --ink-04: rgba(18,33,31,0.05);
   --ruby: #8C2233;
   --ruby-soft: rgba(140,34,51,0.10);
   --emerald: #1A5C41;
@@ -47,22 +49,11 @@
   --space-6: 24px;
   --space-7: 32px;
   --space-8: 48px;
-
-  /* ═══ حزمة الهوية البصرية «الوثائق» (بترولي/نحاسي) — مصدرها app/documents ═══ */
-  --petrol: #0e3435;
-  --petrol-mid: #1f4f4c;
-  --copper: #c69763;
-  --copper-deep: #a9793f;
-  --copper-soft: #e8d6bc;
-  --doc-surface: #eff3f2;
-  --doc-ivory: #fbfaf6;
-  --doc-line: #cad6d3;
-  --doc-ink: #12211f;
-  --doc-muted: #5c6e6b;
-  --sh-xs: 0 1px 3px rgba(11,31,58,0.04), 0 2px 8px rgba(11,31,58,0.04);
-  --sh-sm: 0 2px 8px rgba(11,31,58,0.06), 0 8px 24px rgba(11,31,58,0.06);
-  --sh-md: 0 4px 16px rgba(11,31,58,0.08), 0 16px 48px rgba(11,31,58,0.10);
-  --sh-lg: 0 8px 32px rgba(11,31,58,0.12), 0 32px 80px rgba(11,31,58,0.16);
+  /* رموز الهوية (petrol/copper/surface/ivory/line/ink/muted…) معرّفة في app/identity.css */
+  --sh-xs: 0 1px 3px rgba(14,52,53,0.04), 0 2px 8px rgba(14,52,53,0.04);
+  --sh-sm: 0 2px 8px rgba(14,52,53,0.06), 0 8px 24px rgba(14,52,53,0.06);
+  --sh-md: 0 4px 16px rgba(14,52,53,0.08), 0 16px 48px rgba(14,52,53,0.10);
+  --sh-lg: 0 8px 32px rgba(14,52,53,0.12), 0 32px 80px rgba(14,52,53,0.16);
   --font-judicial: "Amiri", "Times New Roman", serif;
   --font-display: "IBM Plex Sans Arabic", "Tahoma", sans-serif;
   --font-body-ar: "IBM Plex Sans Arabic", "Tahoma", sans-serif;
@@ -71,18 +62,18 @@
   /* ===== أسماء نظام التصميم الرسمية (Design Tokens) =====
      مرادفات صريحة كما وردت في مرجع الهوية البصرية، مبنية على القيم أعلاه
      ليتوفّر الاسمان معاً: القديم (للتوافق) + hakeem-* الرسمي. */
-  --hakeem-bg: #FFFFFF;
-  --hakeem-bg-soft: #F8FAF9;
-  --hakeem-surface: #FFFFFF;
-  --hakeem-paper: #FBF8F1;
-  --hakeem-cream: #F9F5EC;
-  --hakeem-navy: #0B1F3A;
-  --hakeem-navy-mid: #142D52;
-  --hakeem-gold: #C09B5A;
+  --hakeem-bg: #EFF3F2;        /* خلفية الصفحة → surface */
+  --hakeem-bg-soft: #E9EFED;
+  --hakeem-surface: #FBFAF6;
+  --hakeem-paper: #FBFAF6;
+  --hakeem-cream: #EFF3F2;
+  --hakeem-navy: #0E3435;
+  --hakeem-navy-mid: #1F4F4C;
+  --hakeem-gold: #C69763;
   --hakeem-gold-light: #D4AF6E;
-  --hakeem-text: #0D1321;
-  --hakeem-muted: rgba(13, 19, 33, 0.60);
-  --hakeem-border: rgba(13, 19, 33, 0.10);
+  --hakeem-text: #12211F;
+  --hakeem-muted: rgba(18, 33, 31, 0.60);
+  --hakeem-border: rgba(18, 33, 31, 0.10);
   --hakeem-success: #1A5C41;
   --hakeem-danger: #8C2233;
   --hakeem-warning: #B8721A;
@@ -136,15 +127,15 @@ body::after {
   inset: 0;
   opacity: .3;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23C09B5A' stroke-width='0.4' opacity='0.18'%3E%3Cpolygon points='30,5 55,20 55,40 30,55 5,40 5,20'/%3E%3Cpolygon points='30,14 47,24 47,36 30,46 13,36 13,24'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23C69763' stroke-width='0.4' opacity='0.18'%3E%3Cpolygon points='30,5 55,20 55,40 30,55 5,40 5,20'/%3E%3Cpolygon points='30,14 47,24 47,36 30,46 13,36 13,24'/%3E%3C/g%3E%3C/svg%3E");
 }
 .sidebar-inner { position: relative; z-index: 2; display: flex; min-height: 100%; flex-direction: column; padding: 24px 16px; }
-.brand { display: flex; align-items: center; gap: 12px; padding: 4px 8px 24px; border-bottom: 1px solid rgba(192,155,90,0.15); }
+.brand { display: flex; align-items: center; gap: 12px; padding: 4px 8px 24px; border-bottom: 1px solid rgba(198,151,99,0.15); }
 .brand-mark {
   width: 48px; height: 48px; border-radius: var(--r-md);
   background: linear-gradient(135deg, var(--gold-bright), var(--gold));
   display: grid; place-items: center; font-family: var(--font-judicial); font-size: 27px; font-weight: 700; color: var(--navy);
-  box-shadow: 0 4px 16px rgba(192,155,90,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 4px 16px rgba(198,151,99,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 .brand-label h1 { font-family: var(--font-judicial); font-size: 30px; line-height: 1; color: var(--cream); font-weight: 700; }
 .brand-label p { margin-top: 3px; color: rgba(232,213,168,.55); font-size: 11px; }
@@ -152,7 +143,7 @@ body::after {
 .nav-group-title { padding: 0 10px 8px; font-family: var(--font-display); font-size: 11px; color: rgba(232,213,168,.45); }
 .nav-item { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 9px 10px; border-radius: var(--r-md); color: rgba(249,245,236,.72); font-size: 13px; transition: .15s; }
 .nav-item:hover { color: var(--cream); background: rgba(255,255,255,.06); }
-.nav-item.active { color: var(--gold-pale); background: rgba(192,155,90,.13); border: 1px solid rgba(192,155,90,.18); }
+.nav-item.active { color: var(--gold-pale); background: rgba(198,151,99,.13); border: 1px solid rgba(198,151,99,.18); }
 .nav-section { margin-bottom: 8px; }
 .nav-btn {
   width: 100%;
@@ -174,9 +165,9 @@ body::after {
   text-align: right;
 }
 .nav-btn svg { flex-shrink: 0; width: 17px; height: 17px; opacity: .75; transition: opacity .18s; }
-.nav-btn:hover { background: rgba(192,155,90,.07); color: var(--cream); }
+.nav-btn:hover { background: rgba(198,151,99,.07); color: var(--cream); }
 .nav-btn:hover svg { opacity: 1; }
-.nav-btn.active { background: rgba(192,155,90,.12); color: var(--gold-pale); border-color: rgba(192,155,90,.22); }
+.nav-btn.active { background: rgba(198,151,99,.12); color: var(--gold-pale); border-color: rgba(198,151,99,.22); }
 .nav-btn.active svg { opacity: 1; color: var(--gold); }
 .nav-btn.active::before { content: ""; position: absolute; right: -1px; top: 20%; bottom: 20%; width: 3px; background: var(--gold); border-radius: 2px 0 0 2px; }
 .nav-badge { margin-right: auto; font-family: var(--font-mono-legal); font-size: 10px; font-weight: 600; background: var(--gold); color: var(--navy); padding: 1px 6px; border-radius: 99px; }
@@ -186,7 +177,7 @@ body::after {
   padding: 4px 12px 6px; font-family: var(--font-display); font-size: 10.5px; font-weight: 600;
   letter-spacing: .04em; text-transform: uppercase; color: rgba(249,245,236,0.34);
 }
-.sidebar-foot { margin-top: auto; padding: 12px 10px 10px; border-top: 1px solid rgba(192,155,90,.12); display: flex; align-items: center; gap: 10px; }
+.sidebar-foot { margin-top: auto; padding: 12px 10px 10px; border-top: 1px solid rgba(198,151,99,.12); display: flex; align-items: center; gap: 10px; }
 
 /* ═══════════════════════════════════════════════════════════
    نظام التصميم الموحّد (ds-*) — بنيةٌ مستخرَجة من «منصة الوثائق»
@@ -259,7 +250,7 @@ a.ds-card:hover { transform: translateY(-2px); box-shadow: var(--sh-md); border-
 }
 .lc-tab:hover { background: var(--hakeem-bg-soft, #f5f1e8); color: var(--navy, #1e293b); }
 .lc-tab.active { background: var(--navy, #1e293b); color: #fff; }
-.user-av { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--navy-mid), var(--navy-soft)); border: 1px solid rgba(192,155,90,.2); display: grid; place-items: center; font-family: var(--font-display); font-size: 12px; color: var(--gold-pale); }
+.user-av { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--navy-mid), var(--navy-soft)); border: 1px solid rgba(198,151,99,.2); display: grid; place-items: center; font-family: var(--font-display); font-size: 12px; color: var(--gold-pale); }
 .user-info .uname { font-size: 12.5px; color: var(--cream); }
 .user-info .urole { font-size: 10.5px; color: rgba(232,213,168,.45); }
 .main { flex: 1; margin-right: var(--sidebar-w); min-height: 100vh; min-height: 100dvh; }
@@ -300,12 +291,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px 16px; font-family: var(--font-display); font-size: 13px; transition: .15s; }
 .btn-primary { background: var(--navy); color: white; }
-.btn-gold { background: linear-gradient(135deg, var(--gold-bright), var(--gold)); color: var(--navy); box-shadow: 0 2px 8px rgba(192,155,90,.28); font-weight: 600; }
+.btn-gold { background: linear-gradient(135deg, var(--gold-bright), var(--gold)); color: var(--navy); box-shadow: 0 2px 8px rgba(198,151,99,.28); font-weight: 600; }
 .btn-outline { background: var(--paper); color: var(--navy); border-color: var(--ink-20); }
 .card { background: var(--paper); border: 1px solid var(--ink-08); border-radius: var(--r-xl); padding: 22px; box-shadow: var(--sh-xs); }
 .card-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--navy); margin-bottom: 18px; }
 .hero { background: linear-gradient(145deg, var(--navy) 0%, var(--navy-mid) 55%, #1B3460 100%); border-radius: var(--r-2xl); padding: 52px 48px; color: white; position: relative; overflow: hidden; box-shadow: var(--sh-md); }
-.hero::after { content: ""; position: absolute; inset: 0; opacity: .25; background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23C09B5A' stroke-width='.45' opacity='.35'%3E%3Cpath d='M40 5l30 17v36L40 75 10 58V22z'/%3E%3C/g%3E%3C/svg%3E"); }
+.hero::after { content: ""; position: absolute; inset: 0; opacity: .25; background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23C69763' stroke-width='.45' opacity='.35'%3E%3Cpath d='M40 5l30 17v36L40 75 10 58V22z'/%3E%3C/g%3E%3C/svg%3E"); }
 .hero > * { position: relative; z-index: 1; }
 .stat-card { background: var(--paper); border: 1px solid var(--ink-08); border-radius: var(--r-xl); padding: 22px; box-shadow: var(--sh-xs); }
 .stat-lbl { font-family: var(--font-display); font-size: 12px; color: var(--ink-60); margin-bottom: 8px; }
@@ -363,12 +354,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .gauge::before { content: ""; position: absolute; width: 108px; height: 108px; border-radius: 50%; background: var(--navy); }
 .score { position: relative; font-family: var(--font-judicial); font-size: 42px; color: var(--gold-pale); }
 .verdict-doc,.hearing-doc { background: var(--parchment); border: 1px solid var(--gold-border); border-radius: var(--r-xl); padding: 48px; box-shadow: var(--sh-md); position: relative; overflow: hidden; }
-.verdict-doc::before,.hearing-doc::before { content: ""; position: absolute; inset: 16px; border: 1.5px double rgba(192,155,90,.3); border-radius: 12px; pointer-events: none; }
+.verdict-doc::before,.hearing-doc::before { content: ""; position: absolute; inset: 16px; border: 1.5px double rgba(198,151,99,.3); border-radius: 12px; pointer-events: none; }
 .verdict-doc > *,.hearing-doc > * { position: relative; z-index: 1; }
 .vd-court { text-align: center; margin-bottom: 24px; }
 .vd-court h2 { font-family: var(--font-judicial); font-size: 30px; font-weight: 700; color: var(--navy); }
 .vd-court p { font-family: var(--font-display); font-size: 15px; color: var(--gold); }
-.vd-meta { display: flex; justify-content: space-between; gap: 14px; border-top: 1px solid rgba(192,155,90,.25); border-bottom: 1px solid rgba(192,155,90,.25); padding: 13px 0; margin-bottom: 26px; font-family: var(--font-display); font-size: 12.5px; color: var(--ink-60); flex-wrap: wrap; }
+.vd-meta { display: flex; justify-content: space-between; gap: 14px; border-top: 1px solid rgba(198,151,99,.25); border-bottom: 1px solid rgba(198,151,99,.25); padding: 13px 0; margin-bottom: 26px; font-family: var(--font-display); font-size: 12.5px; color: var(--ink-60); flex-wrap: wrap; }
 .vd-meta strong { color: var(--navy); }
 .vd-basmala { font-family: var(--font-judicial); font-size: 32px; text-align: center; color: var(--navy); margin: 22px 0; font-weight: 700; }
 .vd-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: var(--cream-warm); border-radius: var(--r-md); padding: 16px; margin-bottom: 24px; }
@@ -395,12 +386,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* ============= Hakeem original experience transplant ============= */
 .ho-experience { display: flex; flex-direction: column; gap: 24px; }
 .hero-body { max-width: 760px; }
-.hero-tag { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px; background: rgba(192,155,90,.14); border: 1px solid rgba(192,155,90,.24); color: var(--gold-pale); font-family: var(--font-display); font-size: 12px; margin-bottom: 18px; }
-.hero-tag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(192,155,90,.16); }
+.hero-tag { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px; background: rgba(198,151,99,.14); border: 1px solid rgba(198,151,99,.24); color: var(--gold-pale); font-family: var(--font-display); font-size: 12px; margin-bottom: 18px; }
+.hero-tag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(198,151,99,.16); }
 .hero h1 { font-family: var(--font-judicial); font-size: 56px; line-height: 1.05; margin: 0; font-weight: 700; }
 .hero p { margin-top: 16px; color: rgba(249,245,236,.78); line-height: 1.9; font-size: 15px; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-.ho-hero-outline { background: rgba(255,255,255,.07); color: #fff; border-color: rgba(192,155,90,.3); }
+.ho-hero-outline { background: rgba(255,255,255,.07); color: #fff; border-color: rgba(198,151,99,.3); }
 .stats-row { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
 .stat-sub.warn { color: var(--amber); }
 .ho-stat-unit { font-size: 16px; color: var(--ink-40); font-family: var(--font-mono-legal); }
@@ -471,10 +462,10 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
 .gauge-reading { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); text-align: center; }
 .g-score { font-family: var(--font-judicial); font-size: 56px; font-weight: 700; color: var(--gold-bright); line-height: 1; }
 .g-sub { font-family: var(--font-display); font-size: 11px; color: var(--gold-pale); opacity: .7; }
-.sp-divider { height: 1px; background: rgba(192,155,90,.2); margin: 16px 0; }
+.sp-divider { height: 1px; background: rgba(198,151,99,.2); margin: 16px 0; }
 .sp-level { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--gold-bright); text-align: center; margin-bottom: 8px; }
 .sp-rec { font-size: 13px; color: rgba(249,245,236,.75); text-align: center; line-height: 1.65; }
-.sp-note { margin-top: 20px; padding: 11px; background: rgba(192,155,90,.08); border-radius: var(--r-md); font-size: 11px; color: rgba(249,245,236,.5); text-align: center; line-height: 1.5; }
+.sp-note { margin-top: 20px; padding: 11px; background: rgba(198,151,99,.08); border-radius: var(--r-md); font-size: 11px; color: rgba(249,245,236,.5); text-align: center; line-height: 1.5; }
 .hearing-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; scrollbar-width: thin; }
 .msg.judge { align-self: flex-start; }
 .msg.plaintiff { align-self: flex-end; flex-direction: row-reverse; }
@@ -483,7 +474,7 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
 .hearing-input-area { border-top: 1px solid var(--ink-08); padding: 16px 20px; flex-shrink: 0; background: var(--parchment); }
 .defense-type-row { display: flex; gap: 10px; align-items: flex-end; }
 .send-btn { width: 44px; height: 44px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold-bright), var(--gold)); border: 0; border-radius: var(--r-md); cursor: pointer; color: var(--navy); font-weight: 800; }
-.session-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: rgba(192,155,90,.18); border: 1px solid rgba(192,155,90,.3); font-family: var(--font-display); font-size: 11px; color: var(--gold-pale); }
+.session-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: rgba(198,151,99,.18); border: 1px solid rgba(198,151,99,.3); font-family: var(--font-display); font-size: 11px; color: var(--gold-pale); }
 .live-dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%,100% { opacity:.6; transform:scale(1); } 50% { opacity:1; transform:scale(1.25); } }
 .appeal-form-card, .appeal-side-card { background: var(--paper); border: 1px solid var(--ink-08); border-radius: var(--r-lg); padding: 18px; }
@@ -514,7 +505,7 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
   }
   .sidebar-overlay.is-open {
     display: block; position: fixed; inset: 0; z-index: 35;
-    background: rgba(11,31,58,.42); backdrop-filter: blur(2px);
+    background: rgba(14,52,53,.42); backdrop-filter: blur(2px);
   }
 
   .wizard-nav,.field-row,.strength-layout,.appeal-main,.appeal-grid,.vd-parties,.stats-row,.grid-main,.choice-grid,.wizard-wrap.ho-wizard-wrap { grid-template-columns: 1fr; }
@@ -530,10 +521,10 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
 /* legacy aliases */
 :root {
   color-scheme: light;
-  --hakeem-navy: #0B1F3A;
-  --hakeem-navy-2: #142D52;
-  --hakeem-navy-3: #1E3F6F;
-  --hakeem-gold: #C09B5A;
+  --hakeem-navy: #0E3435;
+  --hakeem-navy-2: #1F4F4C;
+  --hakeem-navy-3: #2A6360;
+  --hakeem-gold: #C69763;
   --hakeem-gold-light: #D4AF6E;
   --hakeem-gold-pale: #E8D5A8;
   --hakeem-cream: #F9F5EC;
