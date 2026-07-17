@@ -3,6 +3,7 @@ import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { activityLabel, statusLabel } from "@/lib/activity-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -137,7 +138,7 @@ export default async function DashboardPage() {
               items={stats.recentCases.map((item) => ({
                 id: item.id,
                 title: item.title,
-                meta: `${caseStatusLabel(item.status)} · ${item.updatedAt.toLocaleString("ar-SA")}`
+                meta: `${statusLabel(item.status)} · ${item.updatedAt.toLocaleString("ar-SA")}`
               }))}
             />
             <RecentList
@@ -215,7 +216,7 @@ export default async function DashboardPage() {
               empty="لا توجد أنشطة حديثة."
               items={stats.recentActivities.map((item) => ({
                 id: item.id,
-                title: `${subjectLabel(item.subject)} · ${item.action}`,
+                title: `${subjectLabel(item.subject)} · ${activityLabel(item.action)}`,
                 meta: `${item.actor?.name ?? "النظام"} · ${item.createdAt.toLocaleString("ar-SA")}`
               }))}
             />
@@ -255,15 +256,6 @@ function roleLabel(role: string) {
     TRAINEE: "متدرب"
   };
   return labels[role] ?? role;
-}
-
-function caseStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    OPEN: "مفتوحة",
-    UNDER_REVIEW: "قيد المراجعة",
-    CLOSED: "مغلقة"
-  };
-  return labels[status] ?? status;
 }
 
 function StatCard({ label, value, href }: { label: string; value: number; href?: string }) {
