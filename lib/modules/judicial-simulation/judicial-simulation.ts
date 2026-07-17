@@ -5,6 +5,7 @@
 // لا يعدّل أيّاً من المراحل السابقة؛ يستدعيها فقط. كل المخرجات تدريبية لا حكم فعلي.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
+import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { runLegalAgent } from "@/lib/modules/legal-agent/legal-agent";
@@ -52,7 +53,13 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
     plan = null;
   }
 
-  // 3) الرؤية القضائية: مزوّد مركزي (JSON) + احتياط حتمي/mock.
+  // 3) تأريض إضافي: نصّ المواد من النواة القانونية الموحّدة (buildLegalContextForAI) +
+  //    القاعدة الإلزامية «لا تخترع مواد» — كي تُبنى المحاكاة حول نصّ حقيقي لا حول مرجع مجرّد.
+  //    سقوط آمن إلى بلا سياق عند أي تعذّر.
+  const groundingQuery = [input.caseFacts, input.claims, input.defenses, input.evidenceSummary].filter(Boolean).join("\n").slice(0, 1800) || input.caseFacts;
+  const grounding = await buildLegalContextForAI(groundingQuery, { limit: 8 }).catch(() => null);
+
+  // 4) الرؤية القضائية: مزوّد مركزي (JSON) + احتياط حتمي/mock.
   const det = buildDeterministicJudicialView(input, analysis, plan);
   let parsed: JudicialNarrative | null = null;
   let generated = false;
@@ -60,7 +67,7 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
     try {
       const llm = await callCentralProvider({
         systemPrompt: buildJudicialSystemPrompt(),
-        userPrompt: buildJudicialUserPrompt(input, analysis, plan),
+        userPrompt: buildJudicialUserPrompt(input, analysis, plan, grounding?.hasArticles ? grounding.contextText : undefined),
         maxTokens: 2000,
       });
       if (llm.ok && llm.content.trim()) {
@@ -74,7 +81,7 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
   }
   const narrative = parsed ? mergeNarrative(parsed, det) : det;
 
-  // 4) الحوكمة: موثوقية المحاكاة + صياغة احتمالية غير ملزمة + تحفّظ نقص المصادر.
+  // 5) الحوكمة: موثوقية المحاكاة + صياغة احتمالية غير ملزمة + تحفّظ نقص المصادر.
   const reliable = analysis.grounded && analysis.confidence >= MIN_SIM_CONFIDENCE;
   const outcome = wrapOutcome(narrative.probableDirection, narrative.tentativeRuling, narrative.draftReasoning, reliable);
 
