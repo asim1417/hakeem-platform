@@ -13,7 +13,8 @@ import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
 import { loadSystemsRegistry, matchSystemsInText, type SystemRef } from "./substrate/systems-registry";
 import { resolveGoverningSystems } from "./thinking/resolve-scope";
-import { detectBreadth, type BreadthClarification } from "./breadth-gate";
+import { findDimension, buildClarificationForClass, type BreadthClarification } from "./breadth-gate";
+import { classifyBreadth } from "./breadth-classifier";
 import { buildScopeDisclosure, systemsFromArticles } from "./thinking/disclosure";
 import { isCrossSystemDurationQuery, scanDurationsAcrossSystems, type DurationGroup } from "./cross-system-enum";
 import { detectNormativeConcept } from "./substrate/normative";
@@ -77,15 +78,23 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     return { intent: intent.type, reply: intent.reply, issues: [], articles: [], mode };
   }
 
-  // ①.٤ بوّابة الاتّساع (المرحلة ١): سؤال واسع بلا نظام محدّد → **استيضاح بخيارات** بدل
-  //      التخمين وإعطاء عيّنة موهِمة. يُتجاوَز عند اختيار المستخدم (skipBreadth). خلف راية.
-  if (process.env.AGENT_BREADTH !== "0" && !opts.skipBreadth) {
+  // ①.٤ بوّابة الاتّساع: تصنيف ٣-فئات **يقوده النموذج** (محدّد/استقصائي/ملتبس). وجود بُعد قابل
+  //      للحصر لا يعني الاستقصاء؛ المحدّد يُجاب مباشرة، والملتبس يُستوضَح، والاستقصائيّ يُستوضَح أو
+  //      يتولّاه المسح الكامل (نظام مذكور). يُتجاوَز عند اختيار المستخدم (skipBreadth). خلف راية.
+  let breadthSpecific = false; // محدّد مؤكَّد → نتخطّى المسح الكامل فلا نُغرِق الجواب المباشر بجدول
+  if (process.env.AGENT_BREADTH !== "0" && !opts.skipBreadth && findDimension(query)) {
     const registry = await loadSystemsRegistry().catch(() => []);
     const hasSystem = matchSystemsInText(query, registry).length > 0;
-    const clarify = detectBreadth(query, { hasSystem });
-    if (clarify) {
-      onStep({ id: "breadth", status: "done", label: "سؤالك واسع — أعرض خيارات للاستيضاح", data: { dimension: clarify.dimension, options: clarify.options.length } });
-      return { intent: intent.type, clarify, issues: [], articles: [], mode };
+    const { breadthClass, source } = await classifyBreadth(query, { hasSystem, hasDimension: true });
+    onStep({ id: "breadth", status: "done", label: `صنّفتُ السؤال: ${breadthClass === "specific" ? "محدّد" : breadthClass === "exhaustive" ? "استقصائيّ" : "ملتبس"}`, data: { breadthClass, source } });
+    if (breadthClass === "specific") {
+      breadthSpecific = true; // جواب مباشر من المادة الحاكمة — لا استقصاء ولا جدول شامل
+    } else {
+      const clarify = buildClarificationForClass(query, breadthClass, { hasSystem });
+      if (clarify) {
+        return { intent: intent.type, clarify, issues: [], articles: [], mode };
+      }
+      // استقصائيّ + نظام مذكور → لا استيضاح؛ يتولّاه المسح الكامل للنظام أدناه.
     }
   }
 
@@ -102,9 +111,9 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     }
   }
 
-  // ①.٥ مسار الحصر الكامل للنظام: سؤال حصريّ عن مدد نظام مُسمّى → مسح فهرس النظام كاملًا
-  //     واستخراج المدد حتميًّا (تغطية كاملة، لا عيّنة استرجاع). يُقدَّم كإجابة مباشرة.
-  const enumReq = detectDurationEnumeration(query);
+  // ①.٥ مسار الحصر الكامل للنظام: سؤال **استقصائيّ** عن مدد نظام مُسمّى → مسح فهرس النظام كاملًا
+  //     واستخراج المدد حتميًّا (تغطية كاملة). يُتخطّى للسؤال المحدّد (breadthSpecific) فلا يُغرَق بجدول.
+  const enumReq = breadthSpecific ? null : detectDurationEnumeration(query);
   if (enumReq) {
     onStep({ id: "scan", status: "running", label: `أمسح فهرس «${enumReq.systemName}» كاملًا لحصر المدد` });
     const scan = await scan_system_articles(enumReq.systemName);
