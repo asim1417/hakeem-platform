@@ -14,6 +14,8 @@ import { orchestrate, suggestMode } from "@/lib/modules/agents/orchestrator";
 import { intentNeedsSearch } from "@/lib/modules/agents/intent-gate";
 import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
+import { getAgentMode } from "@/lib/modules/agents/modes";
+import { synthesizeWithMode } from "@/lib/modules/agents/mode-synthesis";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean } = {};
+  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -36,6 +38,8 @@ export async function POST(request: NextRequest) {
   const query = String(body?.query ?? "").trim().slice(0, 500);
   const detailed = Boolean(body?.detailed);
   const skipBreadth = Boolean(body?.skipBreadth);
+  // الوضع: «اسأل» (افتراضيّ) بلا تغيير، أو وضعٌ بتعليمة إخراج خاصّة (حلّل قضية…).
+  const agentMode = getAgentMode(body?.mode);
   if (!query) {
     return new Response(JSON.stringify({ type: "error", message: "اكتب سؤالك أولاً." }), {
       status: 400,
@@ -49,9 +53,11 @@ export async function POST(request: NextRequest) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
       try {
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
-        // المستوى: مبدّل «بحث تفصيلي» يفرض العميق؛ وإلا يقترحه المنسّق تلقائيًّا من التعقيد.
-        const mode = detailed ? "deep" : suggestMode(query);
-        const result = await orchestrate(query, { mode, skipBreadth, onStep: (s) => send({ type: "step", ...s }) });
+        // المستوى: وضع «اسأل» — مبدّل «بحث تفصيلي» يفرض العميق وإلا يُقترَح تلقائيًّا. أوضاع الإخراج
+        // الأخرى (حلّل قضية…) تشغّل الوكيل مرّة واحدة (quick) وتتخطّى الاتّساع، ثم تُصاغ بتعليمة الوضع.
+        const mode = agentMode.id === "ask" ? (detailed ? "deep" : suggestMode(query)) : "quick";
+        const modeSkipBreadth = agentMode.id === "ask" ? skipBreadth : true;
+        const result = await orchestrate(query, { mode, skipBreadth: modeSkipBreadth, onStep: (s) => send({ type: "step", ...s }) });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
@@ -147,6 +153,37 @@ export async function POST(request: NextRequest) {
         }
 
         // ⑥ الصياغة المستندة (حصرًا من مواد النواة، بحارس داخلي ضدّ أرقام غير موجودة).
+        // وضعُ إخراجٍ غير «اسأل» → يُصاغ بتعليمة الوضع من **المواد المُتحقَّقة نفسها** (استدعاء وكيل
+        // واحد، بلا إعادة استرجاع). سقوط آمن لعرض المواد الخام عند تعذّر الصياغة/رصد تلفيق.
+        if (agentMode.systemPrompt) {
+          send({ type: "step", id: "synthesize", status: "running", label: `أصوغ بوضع «${agentMode.name}» مستندًا للمواد` });
+          const modeBasis = outcome.verified.map((c) => ({
+            systemName: c.systemName ?? "",
+            articleNumber: c.articleNumber ?? 0,
+            articleTitle: undefined as string | undefined,
+            quote: c.quote,
+            state: "official" as const,
+            enforcement: c.status ?? null,
+            internalUrl: c.articleId ? `/dashboard/legal-core/articles/${c.articleId}` : undefined
+          }));
+          const synth = await synthesizeWithMode({
+            query,
+            systemPrompt: agentMode.systemPrompt,
+            citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote }))
+          }).catch(() => null);
+          if (!synth) {
+            send({ type: "step", id: "synthesize", status: "done", label: "تعذّرت الصياغة المستندة؛ إليك المواد المُتحقَّقة", data: { blocked: true } });
+            send({ type: "result", answer: null, mode: "offline", basis: modeBasis, total: result.articles.length, message: modeBasis.length ? "تعذّرت الصياغة المستندة؛ إليك المواد المُتحقَّقة من النواة." : undefined });
+            send({ type: "done" });
+            return;
+          }
+          send({ type: "step", id: "synthesize", status: "done", label: `صغت بوضع «${agentMode.name}» مستندًا للمواد`, data: { mode: synth.mode, citations: modeBasis.length } });
+          send({ type: "step", id: "guard", status: "done", label: "فحصت المخرَج ضد التلفيق", data: { sourceOfTruth: "legal_core.legal_articles" } });
+          send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
+          send({ type: "done" });
+          return;
+        }
+
         send({ type: "step", id: "synthesize", status: "running", label: "أصوغ إجابة مستندة للمواد فقط" });
         const draft = await createConsultationDraft({ facts: query, actorId: user.id }).catch(() => null);
 
