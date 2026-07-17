@@ -23,6 +23,8 @@ export async function synthesizeWithMode(input: {
   query: string;
   systemPrompt: string;
   citations: ModeCitation[];
+  /** تاريخ المحادثة السابق (للأوضاع الحوارية) — يُمرَّر للحفاظ على تعدّد الأدوار. */
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
 }): Promise<{ output: string; mode: "live" | "offline" } | null> {
   const valid = input.citations.filter((c) => typeof c.articleNumber === "number" && (c.articleNumber ?? 0) > 0);
   if (!valid.length) return null;
@@ -36,13 +38,21 @@ export async function synthesizeWithMode(input: {
     input.systemPrompt,
     "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
   ].join("\n");
+  // سياق المحادثة السابق (للأوضاع الحوارية): يُعمّى ويُقتطَع لآخر ٦ رسائل حفظًا للكمون.
+  const historyBlock = (input.history ?? [])
+    .slice(-6)
+    .map((m) => `${m.role === "user" ? "المستخدم" : "حكيم"}: ${sanitizeForModel(m.content).text.slice(0, 600)}`)
+    .join("\n");
   const user = [
-    `المسألة/الوقائع:\n${facts}`,
+    historyBlock ? `سياق المحادثة السابقة:\n${historyBlock}\n` : "",
+    `الرسالة/المسألة الحالية:\n${facts}`,
     "",
     `المواد المرفقة من النواة (السند الوحيد المسموح):\n${block}`,
     "",
     "قاعدة إلزامية: لا تستشهد إلا بالمواد أعلاه، ولا تخترع مواد أو أرقام مواد.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const llm = await callCentralProvider({ systemPrompt: system, userPrompt: user, maxTokens: 1600 }).catch(() => ({
     ok: false as const,
