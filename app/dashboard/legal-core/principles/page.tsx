@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { PrincipleReviewControls } from "@/components/PrincipleReviewControls";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,7 @@ export default async function JudicialPrinciplesPage({
 
   return (
     <LegalCoreShell>
+      <LegalCoreTabs />
       <div className="space-y-7">
         <LegalCorePageHeader
           eyebrow="حكيم | النواة القانونية"
