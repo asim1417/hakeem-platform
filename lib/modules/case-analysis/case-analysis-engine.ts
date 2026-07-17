@@ -7,6 +7,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
+import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
 import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
 import { classifyDefense, type DefenseCategory } from "./defense-classifier";
 import { buildCaseAnalysisSystemPrompt, buildCaseAnalysisUserPrompt, type CaseSources } from "./case-prompts";
@@ -24,7 +25,12 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
     rag = emptyRag();
   }
 
-  // 2) تحليل سردي عبر المزوّد المركزي بتعليمات إسناد صارمة (JSON).
+  // 2) تأريض إضافي: نصّ المواد من النواة القانونية الموحّدة (نفس دالة الخدمات المؤرَّضة
+  //    buildLegalContextForAI) + القاعدة الإلزامية «لا تخترع مواد» — كي يحلّل النموذج حول
+  //    نصّ حقيقي لا حول مرجع/عنوان مجرّد. سقوط آمن إلى بلا سياق عند أي تعذّر.
+  const grounding = await buildLegalContextForAI(ragQuery, { limit: 8 }).catch(() => null);
+
+  // 3) تحليل سردي عبر المزوّد المركزي بتعليمات إسناد صارمة (JSON).
   const sources = toSources(rag);
   const det = buildDeterministicAnalysis(input, rag);
 
@@ -42,7 +48,7 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
   try {
     const llm = await callCentralProvider({
       systemPrompt: buildCaseAnalysisSystemPrompt(),
-      userPrompt: buildCaseAnalysisUserPrompt(modelInput, sources),
+      userPrompt: buildCaseAnalysisUserPrompt(modelInput, sources, grounding?.hasArticles ? grounding.contextText : undefined),
       maxTokens: 1500,
     });
     if (llm.ok && llm.content.trim()) {
@@ -54,10 +60,10 @@ export async function analyzeCase(input: CaseAnalysisInput): Promise<CaseAnalysi
     generated = false;
   }
 
-  // 3) دمج: السرد من المزوّد إن صحّ، وإلا الاحتياط الحتمي (لا فراغ في المخرج).
+  // 4) دمج: السرد من المزوّد إن صحّ، وإلا الاحتياط الحتمي (لا فراغ في المخرج).
   const narrative = parsed ? mergeNarrative(parsed, det) : det;
 
-  // 4) تقدير قوة الدعوى (حتمي مُحكَم 0-100) + الثقة من الإسناد.
+  // 5) تقدير قوة الدعوى (حتمي مُحكَم 0-100) + الثقة من الإسناد.
   const caseStrengthScore = computeCaseStrengthScore(rag, narrative);
 
   const aiMeta = await resolveAiProvider();
