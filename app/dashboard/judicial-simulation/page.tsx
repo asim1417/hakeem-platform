@@ -63,6 +63,14 @@ export default async function JudicialSimulationPage({
 
       <AiToolTabs active="judicial-simulation" />
 
+      {/* توحيد: «تقدير حكم» متاح الآن كوضع داخل «اسأل حكيم» (عقل واحد، استدعاء وكيل واحد). */}
+      <div className="my-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold)] bg-[var(--gold-ghost)] px-3 py-2 text-sm text-[var(--navy)]">
+        <span>⚖️ جديد: «تقدير حكم» صار وضعًا داخل «اسأل حكيم» — محاكاة نظر القاضي مؤصَّلة من مدخلٍ واحد.</span>
+        <Link href="/dashboard/ask" className="font-semibold underline">
+          جرّبه في اسأل حكيم ←
+        </Link>
+      </div>
+
       <div className="mt-6">
         <LegalAlert tone="warning">
           مخرجات المحاكاة <strong>تدريبية وتحليلية</strong> تساعدك على فهم اتجاهات النظر القضائي المحتملة — وليست حكماً قضائياً فعلياً ولا تُعتمد كحكم نهائي ملزم.
