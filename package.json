@@ -138,7 +138,8 @@
     "eval:hls": "tsx scripts/eval-hls.ts",
     "db:apply-normative": "tsx scripts/apply-normative-migration.ts",
     "test:resolve-scope": "tsx scripts/test-resolve-scope.ts",
-    "test:breadth": "tsx scripts/test-breadth-gate.ts"
+    "test:breadth": "tsx scripts/test-breadth-gate.ts",
+    "test:disclosure": "tsx scripts/test-disclosure.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
