@@ -94,11 +94,20 @@ export async function groundQuery(
   }
 
   try {
-    const results = await findRelevantLegalArticles(query, {
-      limit: limitForStrength(strength),
-      requireConceptCoverage: true, // اشتراط تغطية مفاهيمية (منع المواد العامة)
-      semantic: strength === "DEEP" || strength === "JUDICIAL_EXTENDED",
-    });
+    // ترقية للوكيل: استرجاع عبر وكيل الأنظمة (فهم النظام الحاكم resolve-scope + استرجاع مقيّد
+    // + تحقّق) بدل بحث اللقطة الواحدة — فتُصبح مصادر المحادثة مطابقةً للنظام الحاكم لا للمعجم.
+    // سقوط آمن للبحث المباشر عند تعذّر الوكيل/غياب السند فتبقى المحادثة تعمل (وبلا نموذج).
+    // استيراد ديناميكيّ كسول كي يبقى هذا المتغيّر (المستورَد في اختبارات) بلا سلسلة server-only.
+    const { runCaseAgent } = await import("@/lib/modules/agents/case-agent-bridge");
+    const agent = await runCaseAgent(query).catch(() => null);
+    const results =
+      agent?.grounded && agent.articles.length
+        ? agent.articles.slice(0, limitForStrength(strength))
+        : await findRelevantLegalArticles(query, {
+            limit: limitForStrength(strength),
+            requireConceptCoverage: true, // اشتراط تغطية مفاهيمية (منع المواد العامة)
+            semantic: strength === "DEEP" || strength === "JUDICIAL_EXTENDED",
+          });
     // SourceRelevanceGate: استبعد كل ما هو غير مرتبط ومبرَّر.
     const relevant = sourceRelevanceGate(results);
     const sources = relevant.map(toGroundedSource);
