@@ -3,12 +3,10 @@ import { Briefcase, ClipboardCheck, Database, FileClock, FileSearch, Gavel, Grad
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
-import { NavGroup, type NavChild } from "@/components/NavGroup";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { getTranslator } from "@/lib/i18n/server";
 import { DIR, LOCALE_LABEL } from "@/lib/i18n/dictionaries";
-import { AGENT_MODES } from "@/lib/modules/agents/modes";
 import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -20,30 +18,16 @@ type NavItem = {
   active?: boolean;
 };
 
-// ── أوضاع «اسأل حكيم» الستّة كأبناءٍ قابلين للطيّ (توليد من مصدر الأوضاع نفسه — بلا تكرار تسميات) ──
-// كل وضع يفتح «اسأل حكيم» به مفعّلًا عبر ?mode=. الوضع «اسأل» هو الوجهة الافتراضية بلا استعلام.
-const askModeChildren: NavChild[] = AGENT_MODES.map((m) => ({
-  href: m.id === "ask" ? "/dashboard/ask" : `/dashboard/ask?mode=${m.id}`,
-  label: m.name,
-  icon: m.icon,
-}));
-
-// ── أبناء «النواة القانونية»: تصفّحٌ داخل النواة بدل عناصر منفصلة في القائمة الرئيسية ──
-const legalCoreChildren: NavChild[] = [
-  { href: "/dashboard/legal-core/legal-issues", label: "المسائل القانونية" },
-  { href: "/dashboard/legal-core/principles", label: "المبادئ القضائية" },
-];
-
-// ── عناصر مسطّحة أعلى القائمة الرئيسية (قبل مجموعة «اسأل حكيم») ──
-const primaryTop: NavItem[] = [
+// ── القائمة الرئيسية: روابط مسطّحة بلا طيّ/هرميّة ──
+// «اسأل حكيم» رابطٌ واحد؛ الأوضاع الستّة تُختار من شريط الأوضاع داخل صفحة البحث نفسها.
+// «النواة القانونية» رابطٌ واحد؛ المسائل والمبادئ يُوصَل إليهما من داخل صفحة النواة.
+const primaryItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
-];
-
-// ── عناصر مستقلّة بين المجموعتين: القاضي التفاعلي + منصة الوثائق (لا يُدمجان) ──
-const primaryMid: NavItem[] = [
+  { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
   { href: "/documents", key: "nav.docPlatform", icon: FileSearch },
+  { href: "/dashboard/legal-core", key: "nav.legalCore", icon: Database },
 ];
 
 // ── أدوات متقدّمة (تبقى للوصول — ليست ضمن «الرئيسية الستّة» لكن لا تُحذف) ──
@@ -113,17 +97,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          {/* ── القائمة الرئيسية: عناصر ظاهرة + مجموعتان قابلتان للطيّ ── */}
+          {/* ── القائمة الرئيسية: روابط مسطّحة (بلا هرميّة) ── */}
           <nav className="nav-section" aria-label={t("a11y.mainNav")}>
-            {primaryTop.map((item) => renderNavItem(item, t))}
-
-            {/* اسأل حكيم ▾ — تنفتح على الأوضاع الستّة (الوجهات هي الأوضاع) */}
-            <NavGroup label={t("nav.ask")} icon={<Sparkles aria-hidden />} defaultOpen children={askModeChildren} />
-
-            {primaryMid.map((item) => renderNavItem(item, t))}
-
-            {/* النواة القانونية ▾ — تصفّح المسائل والمبادئ داخلها */}
-            <NavGroup label={t("nav.legalCore")} icon={<Database aria-hidden />} href="/dashboard/legal-core" children={legalCoreChildren} />
+            {primaryItems.map((item) => renderNavItem(item, t))}
           </nav>
 
           {/* ── أدوات متقدّمة ── */}
