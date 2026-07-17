@@ -167,6 +167,19 @@ body::after {
 }
 .sidebar-foot { margin-top: auto; padding: 12px 10px 10px; border-top: 1px solid rgba(192,155,90,.12); display: flex; align-items: center; gap: 10px; }
 
+/* صندوق البحث المركزيّ (الصفحة الرئيسية) — كبير، في الوسط، بخيارين */
+.center-search { max-width: 640px; margin: 2.5rem auto; text-align: center; }
+.cs-toggle { display: inline-flex; gap: .25rem; margin-bottom: 1rem; background: var(--hakeem-bg-soft); border: 1px solid var(--ink-08); border-radius: 9999px; padding: .25rem; }
+.cs-toggle button { border: 0; cursor: pointer; border-radius: 9999px; padding: .5rem 1.4rem; font-weight: 600; font-size: .9rem; color: var(--ink-60); background: transparent; transition: all .15s; }
+.cs-toggle button[data-active="true"] { background: var(--navy); color: #fff; }
+.cs-box { display: flex; align-items: center; gap: .5rem; height: 58px; border-radius: var(--r-xl); border: 1px solid var(--ink-15); background: #fff; padding: 0 1rem; box-shadow: var(--sh-md); transition: border-color .15s, box-shadow .15s; }
+.cs-box:focus-within { border-color: var(--gold); box-shadow: var(--sh-lg); }
+.cs-box span { color: var(--ink-40); font-size: 1.15rem; }
+.cs-box input { flex: 1; height: 100%; border: 0; background: transparent; font-size: 1.05rem; color: var(--ink); outline: none; text-align: right; }
+.cs-box input::placeholder { color: var(--ink-40); }
+.cs-box button { border: 0; cursor: pointer; border-radius: var(--r-md); background: var(--navy); color: #fff; padding: .65rem 1.6rem; font-weight: 600; }
+.cs-box button:hover { background: var(--navy-mid); }
+
 /* تبويبات المكتبة النظامية (المواد · المسائل · المبادئ) */
 .lc-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 20px 0 4px; border-bottom: 1px solid var(--ink-08, rgba(0,0,0,.08)); padding-bottom: 8px; }
 .lc-tab {

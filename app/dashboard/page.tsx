@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
+import { CenterSearch } from "@/components/CenterSearch";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { activityLabel, statusLabel } from "@/lib/activity-labels";
@@ -90,29 +91,14 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <header className="hero">
-        <p className="text-sm text-[var(--gold-pale)]">منصة حكيم القانونية</p>
-        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">الرئيسية</h1>
-        <p className="mt-3 max-w-3xl leading-8 text-white/85">
-          ابدأ بالبحث في الأنظمة السعودية، أو اطرح واقعتك على «اسأل حكيم» — بمصدرٍ موثّق من النواة القانونية.
-        </p>
-
-        <form action="/dashboard/legal-search" className="mt-5 flex max-w-2xl items-center gap-2 rounded-[var(--r-xl)] bg-white p-2 shadow-[var(--sh-md)]">
-          <span aria-hidden className="ms-2 text-xl text-[var(--ink-40)]">⌕</span>
-          <input
-            name="q"
-            aria-label="بحث قانوني شامل"
-            placeholder="ابحث في الأنظمة والمواد والأحكام والمبادئ — أو اطرح سؤالاً قانونياً..."
-            className="h-11 w-full border-0 bg-transparent px-1 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
-          />
-          <button type="submit" className="focus-ring shrink-0 rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)]">
-            ابحث
-          </button>
-        </form>
-        <Link href="/dashboard/ask" className="focus-ring mt-3 inline-flex items-center gap-1.5 text-sm text-[var(--gold-pale)] transition hover:text-white">
-          ✦ أو اسأل حكيم مباشرةً ←
-        </Link>
-      </header>
+      {/* صندوق البحث المركزيّ — كبير، في الوسط، بخيارين (اسأل حكيم افتراضيّ + البحث النصّي) */}
+      <section className="pt-8 text-center">
+        <h1 className="t-display text-3xl font-bold text-[var(--navy)] md:text-4xl">
+          ابحث في الأنظمة السعودية، أو اسأل حكيم
+        </h1>
+        <p className="mt-2 text-[var(--ink-60)]">بمصدرٍ موثّق من النواة القانونية.</p>
+        <CenterSearch />
+      </section>
 
       {/* تابع عملك — أهمّ ما يحتاجه المستخدم العائد */}
       {!stats ? (
