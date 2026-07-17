@@ -498,6 +498,15 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
   .main { margin-right: 0; }
   .content { padding: 20px; }
 
+  /* الدرج على الجوّال: عرض متناسب مع حجم الشاشة + عناصر أكبر ملائمة للّمس */
+  .sidebar { width: min(85vw, 300px); }
+  .sidebar-inner { padding: 22px 16px; }
+  .brand-mark { width: 44px; height: 44px; font-size: 24px; }
+  .brand-label h1 { font-size: 26px; }
+  .nav-section { margin-bottom: 4px; }
+  .nav-btn { font-size: 15px; padding: 13px 14px; min-height: 48px; margin-bottom: 4px; }
+  .nav-btn svg { width: 19px; height: 19px; }
+
   .mobile-menu-btn {
     display: grid; place-items: center;
     width: 40px; height: 40px; border-radius: var(--r-md);
