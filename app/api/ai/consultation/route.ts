@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
+import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const draft = await createConsultationDraft({ facts: factsForAnalysis, actorId });
+  const draft = await createAgentConsultationDraft({ facts: factsForAnalysis, actorId });
 
   let consultationId: string | undefined;
   const consultation = await prisma.consultation.create({
