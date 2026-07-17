@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
+import { AGENT_MODES, type AgentModeId } from "@/lib/modules/agents/modes";
 
 type StepStatus = "running" | "done";
 type Step = { id: string; status: StepStatus; label: string; data?: any };
@@ -29,6 +30,7 @@ type Turn = {
 export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: string; initialQuery?: string }) {
   const [value, setValue] = useState(initialQuery);
   const [detailed, setDetailed] = useState(false);
+  const [modeId, setModeId] = useState<AgentModeId>("ask");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,7 +58,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false })
+        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId })
       });
 
       if (!res.ok || !res.body) {
@@ -371,6 +373,28 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
           }}
           className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-white p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
         >
+          {/* شريط الأوضاع — عقل واحد، والوضع يغيّر زاوية الإخراج فقط */}
+          <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">
+            {AGENT_MODES.map((m) => {
+              const active = m.id === modeId;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setModeId(m.id)}
+                  aria-pressed={active}
+                  title={m.hint}
+                  className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
+                      : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
+                  }`}
+                >
+                  <span aria-hidden>{m.icon}</span> {m.name}
+                </button>
+              );
+            })}
+          </div>
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -381,7 +405,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
               }
             }}
             rows={1}
-            placeholder="اسأل في القانون ما شئت…"
+            placeholder={modeId === "analyze-case" ? "اذكر وقائع القضية وطلباتها للتحليل…" : "اسأل في القانون ما شئت…"}
             className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <div className="flex items-center justify-between gap-2 px-1">
