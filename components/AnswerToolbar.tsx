@@ -102,27 +102,27 @@ export function AnswerToolbar({
     await copyAnswer();
   }
 
+  // طباعة عبر **المستند الرئيسي** (لا iframe) + @media print يُخفي كل شيء إلا منطقة الطباعة،
+  // و window.print() **متزامن داخل النقرة** (يحفظ إيماءة المستخدم فلا يمنعه iOS، ولا يطبع فارغًا).
   function printAnswer() {
-    const html = renderedHtml() || fallbackHtml();
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      iframe.remove();
-      return;
+    const inner = renderedHtml() || fallbackHtml();
+    let area = document.getElementById("hakeem-print-area");
+    if (!area) {
+      area = document.createElement("div");
+      area.id = "hakeem-print-area";
+      document.body.appendChild(area);
     }
-    doc.open();
-    doc.write(standaloneAnswerHtml(html, docTitle, dateStr()));
-    doc.close();
-    const fire = () => {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-      window.setTimeout(() => iframe.remove(), 1000);
+    area.setAttribute("dir", "rtl");
+    area.innerHTML = `${answerHeaderHtml(docTitle, dateStr())}<div class="answer-prose">${inner}</div>${answerFootHtml()}`;
+    const cleanup = () => {
+      document.body.classList.remove("hakeem-printing");
+      if (area) area.innerHTML = "";
+      window.removeEventListener("afterprint", cleanup);
     };
-    if (doc.readyState === "complete") window.setTimeout(fire, 200);
-    else iframe.onload = () => window.setTimeout(fire, 200);
+    window.addEventListener("afterprint", cleanup);
+    document.body.classList.add("hakeem-printing");
+    window.print(); // متزامن — يحفظ الإيماءة
+    window.setTimeout(cleanup, 60000); // احتياط لمتصفّحات لا تُطلق afterprint
   }
 
   async function exportWord() {
