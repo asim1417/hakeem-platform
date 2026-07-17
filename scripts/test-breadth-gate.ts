@@ -1,6 +1,7 @@
 // اختبار بوّابة الاتّساع — نقيّ. قبول: المحدّد → لا استيضاح؛ الاستقصائي → خيارات؛ الملتبس → خياران.
 import { detectBreadth } from "@/lib/modules/agents/breadth-gate";
 import { classifyBreadthDeterministic } from "@/lib/modules/agents/breadth-classifier";
+import { detectDurationEnumeration } from "@/lib/modules/agents/enumeration";
 
 let pass = 0,
   fail = 0;
@@ -60,6 +61,12 @@ check("«اذكر جميع العقوبات» → استقصائي", cls("اذك
 check("«ما هي المدد في الأنظمة» (جمع+عبر الأنظمة) → استقصائي", cls("ما هي المدد في الأنظمة السعودية", false) === "exhaustive");
 check("«المدد في نظام العمل» (جمع+نظام) → ملتبس", cls("المدد في نظام العمل", true) === "ambiguous");
 check("بلا بُعد → محدّد", cls("ما هي شروط الزواج", false, false) === "specific");
+
+// ⑧ المسح الكامل للنظام (منع الإغراق): محدّد بنظام مذكور → لا مسح؛ استقصائيّ صريح → مسح.
+check("«ما هي مدة الاستئناف في نظام المرافعات» (محدّد) → لا مسح كامل", detectDurationEnumeration("ما هي مدة الاستئناف في نظام المرافعات الشرعية") === null);
+check("«اذكر مدة الاستئناف في نظام المرافعات» (محدّد) → لا مسح كامل", detectDurationEnumeration("اذكر مدة الاستئناف في نظام المرافعات الشرعية") === null);
+check("«كل المدد في نظام المعاملات المدنية» (استقصائيّ) → مسح كامل", detectDurationEnumeration("كل المدد في نظام المعاملات المدنية") !== null);
+check("«جميع المدد في نظام العمل» (استقصائيّ) → مسح كامل", detectDurationEnumeration("جميع المدد في نظام العمل") !== null);
 
 console.log(`\nنتيجة: ${pass} نجح، ${fail} فشل`);
 process.exit(fail ? 1 : 0);
