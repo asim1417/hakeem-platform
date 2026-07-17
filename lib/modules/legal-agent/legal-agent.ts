@@ -1,11 +1,10 @@
-// الوكيل القانوني (المرحلة السابعة).
+// الوكيل القانوني (المرحلة السابعة → مُرقّى إلى الوكيل الكامل).
 // يحوّل تحليل القضية إلى خطة عمل عملية للمحامي، مُسنَدة وقابلة للتتبّع.
-// مسار التنفيذ: مدخلات → Case Analysis Engine → Legal RAG → Citation Engine
-//             → AI Provider → Legal Agent → Action Plan.
-// لا يعدّل أيّاً من المراحل السابقة؛ يستدعيها فقط.
+// مسار التنفيذ: مدخلات → Case Analysis Engine (وكيل الأنظمة الكامل) → AI Provider (وضع الخطة)
+//             → Legal Agent → Action Plan.
+// يرث تأريض الوكيل (فهم النظام الحاكم + التحقّق) عبر analyzeCase، فلا يعيد تشغيل الوكيل.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
 import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
@@ -19,7 +18,7 @@ export const PRELIMINARY_DISCLAIMER =
   "التحليل أولي، وتوجد حاجة إلى مصادر أو مستندات إضافية قبل اعتماد الاستراتيجية.";
 
 export async function runLegalAgent(input: LegalAgentInput): Promise<LegalActionPlan> {
-  // 1) تحليل القضية (Case Analysis Engine → Legal RAG → Citation Engine).
+  // 1) تحليل القضية عبر **وكيل الأنظمة الكامل** (فهم النظام الحاكم + استرجاع مقيّد + تحقّق).
   let analysis: CaseAnalysisResult;
   try {
     analysis = await analyzeCase({
@@ -33,16 +32,13 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     analysis = fallbackAnalysis();
   }
 
-  // 2) تأريض إضافي: نصّ المواد من النواة القانونية الموحّدة (buildLegalContextForAI) +
-  //    القاعدة الإلزامية «لا تخترع مواد» — كي تُبنى الخطة حول نصّ حقيقي لا حول مرجع مجرّد.
-  //    سقوط آمن إلى بلا سياق عند أي تعذّر.
-  const groundingQuery = [input.caseFacts, input.claims, input.defenses].filter(Boolean).join("\n").slice(0, 1800) || input.caseFacts;
-  const grounding = await buildLegalContextForAI(groundingQuery, { limit: 8 }).catch(() => null);
+  // 2) تأريض الخطة من الوكيل عبر تحليل القضية (نصّ مواد النظام الحاكم + القاعدة الإلزامية) —
+  //    بلا إعادة تشغيل الوكيل. تُبنى الخطة حول نصّ حقيقي مؤرَّض بفهم النظام لا حول مرجع مجرّد.
+  const groundingText = analysis.groundingContext;
 
-  // 3) الطبقة الاستراتيجية عبر المزوّد المركزي (JSON)، مع احتياط حتمي/mock.
-  // أرقام المواد المسموح بها = المسترجَع فعلاً من النواة (grounding) ⋃ مواد/استشهادات التحليل.
+  // 3) الطبقة الاستراتيجية عبر المزوّد المركزي (JSON) بوضع الخطة، مع احتياط حتمي/mock.
+  // أرقام المواد المسموح بها = مواد/استشهادات التحليل المُتحقَّقة عبر الوكيل.
   const allowedArticleNumbers = collectAllowedArticleNumbers({
-    numbers: (grounding?.articles ?? []).map((a) => a.articleNumber),
     references: [...analysis.influentialArticles.map((a) => a.reference), ...analysis.citations.map((c) => c.reference)],
   });
 
@@ -52,7 +48,7 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
   try {
     const llm = await callCentralProvider({
       systemPrompt: buildLegalAgentSystemPrompt(),
-      userPrompt: buildLegalAgentUserPrompt(input, analysis, grounding?.hasArticles ? grounding.contextText : undefined),
+      userPrompt: buildLegalAgentUserPrompt(input, analysis, groundingText),
       maxTokens: 1800,
     });
     if (llm.ok && llm.content.trim()) {
