@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, ClipboardCheck, ClipboardList, Database, FileClock, FileSearch, Gavel, GraduationCap, LayoutDashboard, Paperclip, Quote, Scale, ScanSearch, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Briefcase, ClipboardCheck, Database, FileClock, FileSearch, Gavel, GraduationCap, LayoutDashboard, Paperclip, Quote, Scale, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -35,12 +35,12 @@ const navSections: Array<{ items: NavItem[] }> = [
   },
   {
     items: [
+      // «حلّل قضية» و«خطة عمل» و«تقدير حكم» صارت أنماطًا داخل «اسأل حكيم» (توحيد الأوضاع)
+      // فأُزيلت روابطها المنفصلة من القائمة. الصفحات تبقى عاملة عبر الرابط المباشر بتنويهٍ يوجّه للنمط.
+      // يبقى «القاضي التفاعلي» و«المحاكاة القضائية» مستقلَّين عمدًا (تجربة أعمق — انظر docs/agent-modes-unification.md).
       { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
       { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel, active: true },
-      { href: "/dashboard/legal-chat", key: "nav.simulation", icon: Scale },
-      { href: "/dashboard/judicial-simulation", key: "nav.quickAnalysis", icon: ClipboardCheck },
-      { href: "/dashboard/case-analysis", key: "nav.caseAnalysis", icon: ScanSearch },
-      { href: "/dashboard/legal-agent", key: "nav.legalAgent", icon: ClipboardList }
+      { href: "/dashboard/legal-chat", key: "nav.simulation", icon: Scale }
     ]
   },
   {
