@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string } = {};
+  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; history?: Array<{ role?: string; content?: string }> } = {};
   try {
     body = await request.json();
   } catch {
@@ -41,6 +41,13 @@ export async function POST(request: NextRequest) {
   const skipBreadth = Boolean(body?.skipBreadth);
   // الوضع: «اسأل» (افتراضيّ) بلا تغيير، أو وضعٌ بتعليمة إخراج خاصّة (حلّل قضية…).
   const agentMode = getAgentMode(body?.mode);
+  // تاريخ المحادثة (للأوضاع الحوارية) — يُنقّى ويُقصَر لآخر ٨ رسائل.
+  const history = Array.isArray(body?.history)
+    ? body!.history!
+        .filter((m) => (m?.role === "user" || m?.role === "assistant") && typeof m?.content === "string" && m.content.trim())
+        .map((m) => ({ role: m.role as "user" | "assistant", content: String(m.content).slice(0, 1200) }))
+        .slice(-8)
+    : [];
   if (!query) {
     return new Response(JSON.stringify({ type: "error", message: "اكتب سؤالك أولاً." }), {
       status: 400,
@@ -170,7 +177,8 @@ export async function POST(request: NextRequest) {
           const synth = await synthesizeWithMode({
             query,
             systemPrompt: agentMode.systemPrompt,
-            citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote }))
+            citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote })),
+            history: agentMode.conversational ? history : undefined
           }).catch(() => null);
           if (!synth) {
             send({ type: "step", id: "synthesize", status: "done", label: "تعذّرت الصياغة المستندة؛ إليك المواد المُتحقَّقة", data: { blocked: true } });

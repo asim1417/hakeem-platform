@@ -3,7 +3,7 @@
 // بيانات نقيّة (بلا استيراد خادميّ) كي تستوردها الواجهة (العميل) والروت (الخادم) معًا.
 // التوحيد المعماريّ يبدأ بوضعين؛ تُضاف البقية بإضافة إدخالٍ هنا لا صفحةٍ جديدة.
 // ─────────────────────────────────────────────────────────────────────────────
-export type AgentModeId = "ask" | "analyze-case" | "action-plan" | "verdict-estimate" | "consultation";
+export type AgentModeId = "ask" | "analyze-case" | "action-plan" | "verdict-estimate" | "consultation" | "chat";
 
 export interface AgentMode {
   id: AgentModeId;
@@ -15,6 +15,8 @@ export interface AgentMode {
   hint: string;
   /** عبّارة حقل الإدخال الخاصّة بالوضع (اختياريّة — تسقط للعبّارة الافتراضية). */
   placeholder?: string;
+  /** وضع حواريّ متعدّد الأدوار: تُمرَّر رسائل المحادثة السابقة للوكيل في كل دور. */
+  conversational?: boolean;
   /**
    * تعليمة النظام التي تحدّد زاوية الإخراج فوق مواد النواة المُتحقَّقة.
    * null = السلوك الافتراضي لـ«اسأل حكيم» (صياغة الاستشارة القائمة) — بلا تغيير.
@@ -80,12 +82,22 @@ const CONSULTATION_PROMPT = [
   "إن لم تكفِ المواد فصرّح بذلك صراحةً بدل الاختلاق. اختم بتنبيه مهنيّ موجز.",
 ].join("\n");
 
+/** تعليمة وضع «محادثة»: حوار قانونيّ متعدّد الأدوار يحافظ على السياق، مؤصَّل عند الاستناد. */
+const CHAT_PROMPT = [
+  "أنت حكيم، مساعد قانوني سعودي محاوِر منضبط بالمصادر داخل منصة حكيم.",
+  "تابِع المحادثة بطبيعية مع الحفاظ على سياقها السابق، وأجب عن الرسالة الحالية.",
+  "عند الاستناد القانونيّ اعتمد حصرًا على «المواد المرفقة من النواة»، ولا تخترع مادة أو رقم مادة غير وارد فيها.",
+  "إن كانت الرسالة تحية أو توضيحًا فردّ بإيجاز مناسب دون إقحام مواد.",
+  "اكتب بالعربية بإيجاز محادثيّ، وأضِف تنبيهًا مهنيًّا موجزًا عند تقديم إسناد قانونيّ.",
+].join("\n");
+
 export const AGENT_MODES: AgentMode[] = [
   { id: "ask", name: "اسأل", icon: "✦", hint: "بحث وإجابة مؤصّلة من النواة", systemPrompt: null },
   { id: "analyze-case", name: "حلّل قضية", icon: "🔍", hint: "تحليل قضية مؤصّل بفهم النظام الحاكم", placeholder: "اذكر وقائع القضية وطلباتها للتحليل…", systemPrompt: ANALYZE_CASE_PROMPT },
   { id: "action-plan", name: "خطة عمل", icon: "📋", hint: "خطة عمل عملية للمحامي مؤصّلة", placeholder: "اذكر وقائع القضية لبناء خطة العمل…", systemPrompt: ACTION_PLAN_PROMPT },
   { id: "verdict-estimate", name: "تقدير حكم", icon: "⚖️", hint: "محاكاة نظر القاضي واتّجاه الحكم — تدريبيّ", placeholder: "اذكر وقائع الدعوى وطلباتها لمحاكاة نظر القاضي…", systemPrompt: VERDICT_ESTIMATE_PROMPT },
   { id: "consultation", name: "استشارة", icon: "📝", hint: "استشارة تعليمية مؤصّلة (تُحفظ في سجلّك)", placeholder: "اذكر واقعتك للحصول على استشارة مؤصّلة…", systemPrompt: CONSULTATION_PROMPT },
+  { id: "chat", name: "محادثة", icon: "💬", hint: "حوار قانونيّ متعدّد الأدوار يحافظ على السياق", placeholder: "حاور حكيم في مسألتك القانونية…", conversational: true, systemPrompt: CHAT_PROMPT },
 ];
 
 export const DEFAULT_MODE_ID: AgentModeId = "ask";

@@ -54,11 +54,16 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
       { question, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
     ]);
 
+    // الأوضاع الحوارية: نمرّر تاريخ الأدوار السابقة (سؤال/جواب) للحفاظ على سياق المحادثة.
+    const history = getAgentMode(modeId).conversational
+      ? turns.flatMap((t) => (t.answer ? [{ role: "user" as const, content: t.question }, { role: "assistant" as const, content: t.answer }] : []))
+      : undefined;
+
     try {
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId })
+        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history })
       });
 
       if (!res.ok || !res.body) {
