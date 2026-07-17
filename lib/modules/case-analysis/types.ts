@@ -53,4 +53,8 @@ export interface CaseAnalysisResult extends CaseNarrative {
   generated: boolean; // هل وُلّد التحليل من مزوّد ذكاء؟
   provider: string;
   model: string;
+  /** سياق مواد النظام الحاكم من الوكيل — تعيد استخدامه الخدمات التالية بلا إعادة تشغيله. */
+  groundingContext?: string;
+  /** الأنظمة الحاكمة المرتّبة (المظانّ) كما فهمها الوكيل — لفهم النظام الحاكم/العرض. */
+  governingSystems?: string[];
 }
