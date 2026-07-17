@@ -1,0 +1,135 @@
+// مسوّدة الاستشارة عبر وكيل الأنظمة الكامل (ترقية الخدمة الصفراء «consultations»).
+// يرفع الاستشارة من «بحث لقطة واحدة» (buildLegalContextForAI) إلى مستوى «اسأل حكيم»: فهم
+// النظام الحاكم (resolve-scope) + الاسترجاع المقيّد + التحقّق، ثم صياغة استشارة تعليمية بوضع
+// الاستشارة. لا يمسّ createConsultationDraft (المشتركة مع «اسأل حكيم») ولا المصادقة ولا النواة.
+//
+// يعيد نفس شكل مخرَج createConsultationDraft كي تعمل صفحة الاستشارات دون تغيير واجهتها.
+import { randomUUID } from "crypto";
+import { recordGuardrail } from "@/lib/modules/audit/audit";
+import { noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
+import { guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
+import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
+import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
+
+export interface AgentConsultationResult {
+  requestId: string;
+  blocked: boolean;
+  output: string;
+  citations: Array<{ articleId: string; lawName: string; articleNumber: number; quote: string }>;
+  qualityReport: Record<string, unknown>;
+  provider: string;
+  mode: "offline" | "live";
+}
+
+const PRO_DISCLAIMER =
+  "تنبيه مهني: هذه المخرجات مساعدة أولية ولا تعد رأيًا قانونيًا نهائيًا أو بديلًا عن مراجعة محامٍ مختص.";
+
+/** تعليمة وضع الاستشارة: يحوّل الواقعة إلى استشارة تعليمية مؤصّلة حصريًا بمواد النظام الحاكم. */
+function buildConsultationSystemPrompt(): string {
+  return [
+    "أنت مستشار قانوني تعليمي سعودي منضبط بالمصادر داخل منصة حكيم.",
+    "حوّل الواقعة إلى استشارة تعليمية مؤصّلة: (١) وصف المسألة قانونيًا، (٢) المواد النظامية الحاكمة، (٣) التوجيه العملي.",
+    "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
+    "إن لم تكفِ المواد المرفقة فصرّح بذلك صراحةً بدل الاختلاق.",
+    "اكتب بالعربية بأسلوب منظّم، وأضِف تنبيهًا مهنيًا في الختام.",
+  ].join("\n");
+}
+
+/** استشارة احتياطية مبنيّة حصريًا على المواد المُتحقَّقة (بلا نموذج) — لا اختلاق. */
+function offlineConsultation(citations: AgentConsultationResult["citations"]): string {
+  return [
+    PRO_DISCLAIMER,
+    "",
+    "١. المواد النظامية الحاكمة (من النواة):",
+    ...citations.map((c) => `- ${c.lawName}، المادة ${c.articleNumber}: ${c.quote}`),
+    "",
+    "٢. التوجيه:",
+    "يُبنى التوجيه على المواد أعلاه فقط لأنها الثابتة في النواة القانونية. راجِع المستندات والبيّنات قبل اعتماد أي مسار.",
+  ].join("\n");
+}
+
+/**
+ * ينشئ مسوّدة استشارة مؤرَّضة بوكيل الأنظمة. سقوط آمن إلى الحجب الصادق عند غياب السند،
+ * وإلى الاستشارة الاحتياطية عند تعذّر النموذج أو رصد رقم مادة غير مؤرَّض في المخرَج.
+ */
+export async function createAgentConsultationDraft(input: { facts: string; actorId?: string }): Promise<AgentConsultationResult> {
+  const requestId = randomUUID();
+  const { runCaseAgent } = await import("@/lib/modules/agents/case-agent-bridge");
+  const agent = await runCaseAgent(input.facts).catch(() => null);
+  const articles = agent?.articles ?? [];
+
+  // حارس السند: لا مواد من النواة ⇒ حجب صادق (لا استشارة ملفّقة).
+  if (!agent?.grounded || !articles.length) {
+    await recordGuardrail({
+      subject: "AI_GATEWAY",
+      requestId,
+      guardName: "legal-core-citations-only",
+      result: "BLOCKED",
+      details: { message: noLegalArticleMessage, retrievedArticles: 0, provider: "agent" },
+    }).catch(() => undefined);
+    return {
+      requestId,
+      blocked: true,
+      output: noLegalArticleMessage,
+      citations: [],
+      provider: "agent",
+      mode: "offline",
+      qualityReport: { sourceOfTruth: "legal_core.legal_articles", agent: true, guard: "no-articles" },
+    };
+  }
+
+  const citations = articles.slice(0, 8).map((a) => ({
+    articleId: a.articleId,
+    lawName: a.systemName,
+    articleNumber: a.articleNumber,
+    quote: a.articleText.slice(0, 350),
+  }));
+
+  await recordGuardrail({
+    subject: "AI_GATEWAY",
+    requestId,
+    guardName: "legal-core-citations-only",
+    result: "PASSED",
+    details: { retrievedArticles: articles.length, governingSystems: agent.governingSystems.slice(0, 3).map((g) => g.systemName), provider: "agent" },
+  }).catch(() => undefined);
+
+  // PDPL ④: تُعمّى معرّفات الأطراف من الواقعة قبل الإرسال للنموذج (السياق النظامي محلّي فيبقى).
+  const modelFacts = sanitizeForModel(input.facts).text;
+  const llm = await callCentralProvider({
+    systemPrompt: buildConsultationSystemPrompt(),
+    userPrompt: `الواقعة:\n${modelFacts}\n\n${agent.groundingText}`,
+    maxTokens: 1300,
+  }).catch(() => ({ ok: false as const, content: "", mode: "offline" as const, provider: "offline" }));
+
+  let output: string;
+  let mode: "offline" | "live";
+  let provider: string;
+  if (llm.ok && llm.content.trim()) {
+    // حارس التلفيق: أيّ رقم مادة في المخرَج ليس ضمن المسترجَع ⇒ استبدال بالاحتياطي المؤرَّض.
+    const guard = guardOutputAgainstUnknownArticleNumbers(llm.content, articles);
+    output = guard.ok ? `${llm.content}\n\n${PRO_DISCLAIMER}` : offlineConsultation(citations);
+    mode = "live";
+    provider = llm.provider;
+  } else {
+    output = offlineConsultation(citations);
+    mode = "offline";
+    provider = "offline";
+  }
+
+  return {
+    requestId,
+    blocked: false,
+    output,
+    citations,
+    provider,
+    mode,
+    qualityReport: {
+      sourceOfTruth: "legal_core.legal_articles",
+      agent: true,
+      mode,
+      retrievedArticles: articles.length,
+      verified: agent.verified.length,
+      governingSystems: agent.governingSystems.slice(0, 3).map((g) => g.systemName),
+    },
+  };
+}
