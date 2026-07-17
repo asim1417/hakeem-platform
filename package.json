@@ -60,6 +60,7 @@
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts",
     "qa:citations": "tsx scripts/qa-citations.ts",
+    "test:grounding": "tsx scripts/test-grounding-guard.ts",
     "test:kg": "tsx scripts/test-knowledge-graph.ts",
     "index:opensearch": "tsx scripts/index-opensearch.ts",
     "backfill:embeddings": "tsx scripts/backfill-embeddings.ts",
