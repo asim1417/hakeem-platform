@@ -246,18 +246,18 @@ function roleLabel(role: string) {
 function StatCard({ label, value, href }: { label: string; value: number; href?: string }) {
   const inner = (
     <>
-      <p className="text-sm text-[var(--ink-60)]">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-[var(--navy)] tabular-nums">{value.toLocaleString("ar-SA")}</p>
+      <p className="text-sm text-[var(--doc-muted)]">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-[var(--petrol)] tabular-nums">{value.toLocaleString("ar-SA")}</p>
     </>
   );
   if (href) {
     return (
-      <Link href={href} className="block rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-4 transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-sm)]">
+      <Link href={href} className="block rounded-[14px] border border-[var(--doc-line)] bg-[var(--doc-ivory)] p-4 transition hover:border-[var(--copper)] hover:shadow-[var(--sh-sm)]">
         {inner}
       </Link>
     );
   }
-  return <div className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-4">{inner}</div>;
+  return <div className="rounded-[14px] border border-[var(--doc-line)] bg-[var(--doc-ivory)] p-4">{inner}</div>;
 }
 
 function RecentList({
@@ -270,16 +270,16 @@ function RecentList({
   items: Array<{ id: string; title: string; meta: string }>;
 }) {
   return (
-    <div className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] p-5">
-      <h3 className="text-base font-bold text-[var(--navy)]">{title}</h3>
+    <div className="rounded-[14px] border border-[var(--doc-line)] bg-[var(--doc-ivory)] p-5">
+      <h3 className="text-base font-bold text-[var(--petrol)]">{title}</h3>
       {items.length === 0 ? (
-        <p className="mt-3 rounded-[var(--r-md)] bg-[var(--hakeem-bg-soft)] p-4 text-sm text-[var(--ink-60)]">{empty}</p>
+        <p className="mt-3 rounded-[var(--r-md)] bg-[var(--doc-surface)] p-4 text-sm text-[var(--doc-muted)]">{empty}</p>
       ) : (
         <div className="mt-4 space-y-3">
           {items.map((item) => (
-            <article key={item.id} className="rounded-[var(--r-md)] border border-[var(--ink-08)] p-3">
-              <p className="line-clamp-2 font-semibold text-[var(--navy)]">{item.title}</p>
-              <p className="mt-1 text-xs text-[var(--ink-40)]">{item.meta}</p>
+            <article key={item.id} className="rounded-[var(--r-md)] border border-[var(--doc-line)] p-3">
+              <p className="line-clamp-2 font-semibold text-[var(--petrol)]">{item.title}</p>
+              <p className="mt-1 text-xs text-[var(--doc-muted)]">{item.meta}</p>
             </article>
           ))}
         </div>
