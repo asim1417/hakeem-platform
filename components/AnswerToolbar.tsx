@@ -1,15 +1,15 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// شريط أدوات الإجابة — نسخ · طباعة · قائمة مشاركة/تصدير (نصّ · Word · PDF · صفحة HTML).
-// عرض/تصدير فقط (لا يمسّ المحرّك). ملفات الوورد/PDF/HTML تُشارَك كملفّ (Web Share) حيث يُدعَم،
-// وإلا تُنزَّل. كل شيء في الذاكرة، بلا localStorage.
+// شريط أدوات الإجابة — كل الأدوات ظاهرة inline (بلا قائمة تُقتطع): نسخ · مشاركة · طباعة ·
+// Word · PDF · HTML. عرض/تصدير فقط. الملفات تُسلَّم بآلية متوافقة مع iOS (Web Share للملفّ،
+// وإلا فتح/تنزيل مباشر). PDF يُخرَج من **نفس التنسيق المعروض** (عرض نظيف عالي الدقّة).
 // ─────────────────────────────────────────────────────────────────────────────
 import { useState } from "react";
 import type { AnswerSource } from "./AnswerRenderer";
-import { standaloneAnswerHtml, escapeHtml } from "@/lib/answer-html";
+import { standaloneAnswerHtml, answerHeaderHtml, answerFootHtml, escapeHtml, DOC_CSS } from "@/lib/answer-html";
 
-/** يحوّل Markdown الإجابة إلى نصّ نظيف: يزيل رموز التنسيق ويعرض المراجع «(م/رقم المادة)». */
+/** يحوّل Markdown الإجابة إلى نصّ نظيف مع المراجع «(م/رقم المادة)». */
 export function toPlainText(content: string, basis: AnswerSource[] = []): string {
   let t = content || "";
   t = t.replace(/\[(\d{1,3})\]/g, (m, n) => {
@@ -31,28 +31,32 @@ function safeName(title: string, ext: string): string {
   return `حكيم-${(title || "إجابة").replace(/[\\/:*?"<>|]/g, "").trim().slice(0, 40) || "إجابة"}.${ext}`;
 }
 
-/** يشارك ملفًّا (Web Share) حيث يُدعَم، وإلا يُنزّله. يتجاهل إلغاء المستخدم دون تنزيل مزدوج. */
-async function shareOrDownload(blob: Blob, filename: string, mime: string, title: string) {
-  try {
-    const file = new File([blob], filename, { type: mime });
-    const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean; share?: (d: { files: File[]; title?: string }) => Promise<void> };
-    if (nav.canShare && nav.canShare({ files: [file] }) && nav.share) {
-      try {
-        await nav.share({ files: [file], title });
-        return;
-      } catch (e) {
-        if ((e as Error)?.name === "AbortError") return; // ألغى المستخدم
-      }
+/**
+ * يسلّم ملفًّا بطريقة متوافقة مع iOS: (١) Web Share للملفّ حيث يُدعَم (يفتح ورقة المشاركة على
+ * الآيفون فيُحفَظ/يُرسَل)، (٢) وإلا رابط تنزيل (سطح المكتب/أندرويد)، مع فتح المدوّنة على iOS.
+ */
+async function deliverFile(blob: Blob, filename: string, mime: string, title: string) {
+  const file = new File([blob], filename, { type: mime });
+  const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean; share?: (d: { files: File[]; title?: string }) => Promise<void> };
+  if (nav.canShare && nav.canShare({ files: [file] }) && typeof nav.share === "function") {
+    try {
+      await nav.share({ files: [file], title });
+      return;
+    } catch (e) {
+      if ((e as Error)?.name === "AbortError") return; // ألغى المستخدم
+      // غير ذلك → نُكمل للتنزيل
     }
-  } catch {
-    /* تجاهل → تنزيل */
   }
-  const { saveAs } = await import("file-saver");
-  saveAs(blob, filename);
-}
-
-function iconWrap(children: React.ReactNode) {
-  return children;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  a.target = "_blank"; // iOS يتجاهل download فيفتح الملفّ (مع خيار الحفظ)
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 export function AnswerToolbar({
@@ -67,11 +71,11 @@ export function AnswerToolbar({
   printTargetId?: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const [busy, setBusy] = useState<null | "word" | "pdf" | "html" | "text">(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [busy, setBusy] = useState<null | "word" | "pdf" | "html">(null);
   const docTitle = (question || "استشارة قانونية").trim();
 
   const renderedHtml = () => (printTargetId ? document.getElementById(printTargetId)?.innerHTML ?? "" : "");
+  const fallbackHtml = () => escapeHtml(toPlainText(answer, basis)).replace(/\n/g, "<br/>");
   const dateStr = () => new Date().toLocaleDateString("ar-SA");
 
   async function copyAnswer() {
@@ -84,8 +88,22 @@ export function AnswerToolbar({
     }
   }
 
+  async function shareText() {
+    const text = toPlainText(answer, basis);
+    const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string }) => Promise<void> };
+    if (typeof nav.share === "function") {
+      try {
+        await nav.share({ title: `${docTitle} — حكيم`, text });
+      } catch {
+        /* أُلغيت */
+      }
+      return;
+    }
+    await copyAnswer();
+  }
+
   function printAnswer() {
-    const html = renderedHtml() || escapeHtml(toPlainText(answer, basis)).replace(/\n/g, "<br/>");
+    const html = renderedHtml() || fallbackHtml();
     const iframe = document.createElement("iframe");
     iframe.setAttribute("aria-hidden", "true");
     iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
@@ -107,47 +125,12 @@ export function AnswerToolbar({
     else iframe.onload = () => window.setTimeout(fire, 200);
   }
 
-  async function shareText() {
-    const text = toPlainText(answer, basis);
-    const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string }) => Promise<void> };
-    if (typeof nav.share === "function") {
-      try {
-        await nav.share({ title: `${docTitle} — حكيم`, text });
-      } catch {
-        /* أُلغيت */
-      }
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* تجاهل */
-    }
-  }
-
   async function exportWord() {
     setBusy("word");
     try {
       const { buildAnswerDocx } = await import("@/lib/answer-docx");
       const blob = await buildAnswerDocx({ content: answer, basis, title: question });
-      await shareOrDownload(blob, safeName(docTitle, "docx"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docTitle);
-    } catch {
-      /* تجاهل */
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function exportPdf() {
-    setBusy("pdf");
-    try {
-      const el = printTargetId ? document.getElementById(printTargetId) : null;
-      if (!el) return;
-      const { buildAnswerPdfBlob } = await import("@/lib/answer-pdf");
-      const blob = await buildAnswerPdfBlob(el as HTMLElement);
-      await shareOrDownload(blob, safeName(docTitle, "pdf"), "application/pdf", docTitle);
+      await deliverFile(blob, safeName(docTitle, "docx"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docTitle);
     } catch {
       /* تجاهل */
     } finally {
@@ -158,9 +141,8 @@ export function AnswerToolbar({
   async function exportHtml() {
     setBusy("html");
     try {
-      const html = renderedHtml() || escapeHtml(toPlainText(answer, basis)).replace(/\n/g, "<br/>");
-      const blob = new Blob([standaloneAnswerHtml(html, docTitle, dateStr())], { type: "text/html;charset=utf-8" });
-      await shareOrDownload(blob, safeName(docTitle, "html"), "text/html", docTitle);
+      const blob = new Blob([standaloneAnswerHtml(renderedHtml() || fallbackHtml(), docTitle, dateStr())], { type: "text/html;charset=utf-8" });
+      await deliverFile(blob, safeName(docTitle, "html"), "text/html", docTitle);
     } catch {
       /* تجاهل */
     } finally {
@@ -168,74 +150,85 @@ export function AnswerToolbar({
     }
   }
 
-  const btn =
-    "focus-ring inline-flex items-center gap-1.5 rounded-lg border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-1.5 text-xs font-semibold text-[var(--navy)] transition hover:bg-[var(--gold)] hover:text-white disabled:opacity-50";
-  const menuItem = "flex w-full items-center gap-2 px-3 py-2 text-right text-xs font-medium text-[var(--ink-80)] transition hover:bg-[var(--gold-ghost)]";
-
-  function runAndClose(fn: () => void | Promise<void>) {
-    setMenuOpen(false);
-    void fn();
+  // PDF من **نفس التنسيق المعروض**: نُصيّر عرضًا نظيفًا (ترويسة + أنماط المستند) خارج الشاشة
+  // بعرض ثابت، ونلتقطه بدقّة ×٢ فيخرج أمينًا للتنسيق لا باهتًا.
+  async function exportPdf() {
+    setBusy("pdf");
+    let host: HTMLDivElement | null = null;
+    try {
+      const inner = renderedHtml() || fallbackHtml();
+      host = document.createElement("div");
+      host.setAttribute("dir", "rtl");
+      host.style.cssText = "position:fixed;left:-100000px;top:0;width:820px;background:#fff;";
+      host.innerHTML = `<style>${DOC_CSS}</style><div style="padding:28px;">${answerHeaderHtml(docTitle, dateStr())}<div class="answer-prose">${inner}</div>${answerFootHtml()}</div>`;
+      document.body.appendChild(host);
+      const { buildAnswerPdfBlob } = await import("@/lib/answer-pdf");
+      const blob = await buildAnswerPdfBlob(host);
+      await deliverFile(blob, safeName(docTitle, "pdf"), "application/pdf", docTitle);
+    } catch {
+      /* تجاهل */
+    } finally {
+      host?.remove();
+      setBusy(null);
+    }
   }
+
+  const btn =
+    "focus-ring inline-flex items-center gap-1.5 rounded-lg border-2 border-[var(--gold)] bg-white px-2.5 py-1.5 text-xs font-bold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:border-[var(--navy)] hover:text-white disabled:opacity-50";
+  const ico = { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, "aria-hidden": true } as const;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {/* نسخ */}
       <button type="button" onClick={copyAnswer} title="نسخ النصّ" aria-label="نسخ النصّ" className={btn}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <svg {...ico}>
           <rect x="9" y="9" width="13" height="13" rx="2" />
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
         </svg>
         <span className={copied ? "text-[var(--emerald)]" : ""}>{copied ? "نُسخ ✓" : "نسخ"}</span>
       </button>
 
-      {/* طباعة */}
+      <button type="button" onClick={shareText} title="مشاركة نصّ" aria-label="مشاركة نصّ" className={btn}>
+        <svg {...ico}>
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+        </svg>
+        مشاركة
+      </button>
+
       <button type="button" onClick={printAnswer} title="طباعة" aria-label="طباعة" className={btn}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <svg {...ico}>
           <path d="M6 9V2h12v7" />
           <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
           <rect x="6" y="14" width="12" height="8" rx="1" />
         </svg>
-        <span>طباعة</span>
+        طباعة
       </button>
 
-      {/* مشاركة/تصدير (قائمة) */}
-      <div className="relative">
-        <button type="button" onClick={() => setMenuOpen((v) => !v)} title="مشاركة / تصدير" aria-haspopup="menu" aria-expanded={menuOpen} className={btn}>
-          {iconWrap(
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
-            </svg>
-          )}
-          <span>{busy ? "جارٍ…" : "مشاركة"}</span>
-          <span aria-hidden className="opacity-70">▾</span>
-        </button>
+      <button type="button" onClick={exportWord} disabled={busy !== null} title="تصدير Word" aria-label="تصدير Word" className={btn}>
+        <svg {...ico}>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6M8 13h8M8 17h5" />
+        </svg>
+        {busy === "word" ? "جارٍ…" : "Word"}
+      </button>
 
-        {menuOpen ? (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden />
-            <div
-              role="menu"
-              className="absolute left-0 z-20 mt-1 min-w-[9.5rem] overflow-hidden rounded-xl border border-[var(--ink-15)] bg-white py-1 shadow-[var(--sh-md)]"
-            >
-              <button role="menuitem" className={menuItem} onClick={() => runAndClose(shareText)}>
-                <span aria-hidden>✍️</span> مشاركة نصّ
-              </button>
-              <button role="menuitem" className={menuItem} onClick={() => runAndClose(exportWord)} disabled={busy !== null}>
-                <span aria-hidden>📄</span> ملفّ Word
-              </button>
-              <button role="menuitem" className={menuItem} onClick={() => runAndClose(exportPdf)} disabled={busy !== null || !printTargetId}>
-                <span aria-hidden>📕</span> ملفّ PDF
-              </button>
-              <button role="menuitem" className={menuItem} onClick={() => runAndClose(exportHtml)} disabled={busy !== null}>
-                <span aria-hidden>🌐</span> صفحة HTML
-              </button>
-            </div>
-          </>
-        ) : null}
-      </div>
+      <button type="button" onClick={exportPdf} disabled={busy !== null || !printTargetId} title="تصدير PDF" aria-label="تصدير PDF" className={btn}>
+        <svg {...ico}>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+          <path d="M9 13h1.5a1.5 1.5 0 0 1 0 3H9zM9 13v6" />
+        </svg>
+        {busy === "pdf" ? "جارٍ…" : "PDF"}
+      </button>
+
+      <button type="button" onClick={exportHtml} disabled={busy !== null} title="تصدير صفحة HTML" aria-label="تصدير صفحة HTML" className={btn}>
+        <svg {...ico}>
+          <path d="M4 7l-2 5 2 5M20 7l2 5-2 5M14 4l-4 16" />
+        </svg>
+        {busy === "html" ? "جارٍ…" : "HTML"}
+      </button>
     </div>
   );
 }
