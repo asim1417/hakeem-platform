@@ -16,6 +16,7 @@ type Turn = {
   basis: LegalBasisItem[] | null;
   total: number;
   coverage?: { answered: number; total: number; issues?: Array<{ systemName?: string; status: string }> };
+  clarify?: { message: string; dimension?: string; options: Array<{ id: string; label: string; query: string; exhaustive?: boolean; hint?: string }> };
   message?: string;
   error?: string;
   streaming: boolean;
@@ -38,7 +39,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
     });
   }
 
-  async function ask(q?: string) {
+  async function ask(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) {
     const question = (q ?? value).trim();
     if (!question || busy) return;
     setBusy(true);
@@ -52,7 +53,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, detailed })
+        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false })
       });
 
       if (!res.ok || !res.body) {
@@ -100,6 +101,8 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
               coverage: evt.coverage,
               message: evt.message
             }));
+          } else if (evt.type === "clarify") {
+            patchLastTurn((t) => ({ ...t, clarify: { message: evt.message, dimension: evt.dimension, options: evt.options ?? [] } }));
           } else if (evt.type === "error") {
             patchLastTurn((t) => ({ ...t, error: evt.message ?? "خطأ غير متوقع." }));
           } else if (evt.type === "done") {
@@ -202,6 +205,33 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
                 {turn.error ? (
                   <div className="rounded-[var(--r-lg)] border border-[rgba(140,34,51,0.3)] bg-[var(--ruby-soft)] p-4 text-sm leading-7 text-[var(--ruby)]">
                     {turn.error}
+                  </div>
+                ) : null}
+
+                {/* استيضاح السؤال الواسع — خيارات تفاعلية (المستخدم يقرّر، لا نخمّن) */}
+                {turn.clarify ? (
+                  <div className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4">
+                    <p className="mb-3 flex items-start gap-2 text-sm font-semibold leading-7 text-[var(--navy)]">
+                      <span aria-hidden>🧭</span>
+                      {turn.clarify.message}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {turn.clarify.options.map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void ask(opt.query, { detailed: !!opt.exhaustive, skipBreadth: true })}
+                          className="focus-ring flex items-center justify-between gap-2 rounded-lg border border-[var(--gold)] bg-white px-3.5 py-2.5 text-right text-sm font-semibold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:text-white disabled:opacity-50"
+                        >
+                          <span className="flex flex-col">
+                            <span>{opt.label}</span>
+                            {opt.hint ? <span className="text-[11px] font-normal opacity-70">{opt.hint}</span> : null}
+                          </span>
+                          <span aria-hidden>←</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
 

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let body: { query?: string; detailed?: boolean } = {};
+  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean } = {};
   try {
     body = await request.json();
   } catch {
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
   }
   const query = String(body?.query ?? "").trim().slice(0, 500);
   const detailed = Boolean(body?.detailed);
+  const skipBreadth = Boolean(body?.skipBreadth);
   if (!query) {
     return new Response(JSON.stringify({ type: "error", message: "اكتب سؤالك أولاً." }), {
       status: 400,
@@ -49,11 +50,18 @@ export async function POST(request: NextRequest) {
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
         // المستوى: مبدّل «بحث تفصيلي» يفرض العميق؛ وإلا يقترحه المنسّق تلقائيًّا من التعقيد.
         const mode = detailed ? "deep" : suggestMode(query);
-        const result = await orchestrate(query, { mode, onStep: (s) => send({ type: "step", ...s }) });
+        const result = await orchestrate(query, { mode, skipBreadth, onStep: (s) => send({ type: "step", ...s }) });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
           send({ type: "result", answer: result.reply ?? null, mode: "intent", basis: [], total: 0, intent: result.intent });
+          send({ type: "done" });
+          return;
+        }
+
+        // بوّابة الاتّساع: سؤال واسع → استيضاح بخيارات (لا بحث فوريّ). المستخدم يختار فيُعاد الإرسال.
+        if (result.clarify) {
+          send({ type: "clarify", message: result.clarify.message, dimension: result.clarify.dimension, options: result.clarify.options });
           send({ type: "done" });
           return;
         }

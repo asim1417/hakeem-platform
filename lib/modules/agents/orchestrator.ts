@@ -11,8 +11,9 @@ import type { VerifiedCitation } from "./thinking/verifier";
 import { runAnalysis } from "./thinking/analysis";
 import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
-import { loadSystemsRegistry, type SystemRef } from "./substrate/systems-registry";
+import { loadSystemsRegistry, matchSystemsInText, type SystemRef } from "./substrate/systems-registry";
 import { resolveGoverningSystems } from "./thinking/resolve-scope";
+import { detectBreadth, type BreadthClarification } from "./breadth-gate";
 import { detectNormativeConcept } from "./substrate/normative";
 import { search_articles, search_rulings, search_principles, scan_system_articles, scan_normative } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
@@ -37,6 +38,8 @@ export interface OrchestratorResult {
   analysis?: string | null;
   /** المرحلة ٢: خطة التغطية (تصنيف + أنظمة مستهدفة + مسائل) — تُفحَص بوّابتها في المرحلة ٤. */
   plan?: QueryPlan;
+  /** بوّابة الاتّساع: استيضاح بخيارات عند السؤال الواسع (بدل التخمين). */
+  clarify?: BreadthClarification;
   /** المرحلة ٤: حالة التغطية بعد التحقّق (كل مسألة: مُجابة/لا نصّ + بوّابة التسليم). */
   coverage?: CoverageState;
   /** المرحلة ٥: المواد المُتحقَّقة بترتيبها المُغذّى للتحليل — لمحاذاة ذيول [n] بلوحة الأساس. */
@@ -57,7 +60,7 @@ type OnStep = (step: AgentStep) => void;
  * تشغيل المنسّق الأوّلي (وضع سريع). للنوايا غير القانونية يردّ مباشرةً بلا بحث.
  * للسؤال القانوني: يكيّف المسائل ثم يخرّج (بحث) لكلّ مسألة، ويجمع المواد بلا تكرار.
  */
-export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep } = {}): Promise<OrchestratorResult> {
+export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep; skipBreadth?: boolean } = {}): Promise<OrchestratorResult> {
   const mode: OrchestratorMode = opts.mode ?? "quick";
   const onStep: OnStep = opts.onStep ?? (() => {});
 
@@ -66,6 +69,18 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
   onStep({ id: "intent", status: "done", label: "فهمت رسالتك", data: { intent: intent.type } });
   if (!intentNeedsSearch(intent.type)) {
     return { intent: intent.type, reply: intent.reply, issues: [], articles: [], mode };
+  }
+
+  // ①.٤ بوّابة الاتّساع (المرحلة ١): سؤال واسع بلا نظام محدّد → **استيضاح بخيارات** بدل
+  //      التخمين وإعطاء عيّنة موهِمة. يُتجاوَز عند اختيار المستخدم (skipBreadth). خلف راية.
+  if (process.env.AGENT_BREADTH !== "0" && !opts.skipBreadth) {
+    const registry = await loadSystemsRegistry().catch(() => []);
+    const hasSystem = matchSystemsInText(query, registry).length > 0;
+    const clarify = detectBreadth(query, { hasSystem });
+    if (clarify) {
+      onStep({ id: "breadth", status: "done", label: "سؤالك واسع — أعرض خيارات للاستيضاح", data: { dimension: clarify.dimension, options: clarify.options.length } });
+      return { intent: intent.type, clarify, issues: [], articles: [], mode };
+    }
   }
 
   // ①.٥ مسار الحصر الكامل للنظام: سؤال حصريّ عن مدد نظام مُسمّى → مسح فهرس النظام كاملًا
