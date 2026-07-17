@@ -58,6 +58,14 @@ export default async function CaseAnalysisPage({
 
       <AiToolTabs active="case-analysis" />
 
+      {/* توحيد: «حلّل قضية» متاح الآن كوضع داخل «اسأل حكيم» (عقل واحد، استدعاء وكيل واحد). */}
+      <div className="my-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold)] bg-[var(--gold-ghost)] px-3 py-2 text-sm text-[var(--navy)]">
+        <span>🔍 جديد: «حلّل قضية» صار وضعًا داخل «اسأل حكيم» — تحليل مؤصَّل بفهم النظام الحاكم من مدخلٍ واحد.</span>
+        <Link href="/dashboard/ask" className="font-semibold underline">
+          جرّبه في اسأل حكيم ←
+        </Link>
+      </div>
+
       <form className="card mt-6 grid gap-3" action="/dashboard/case-analysis">
         <textarea name="facts" aria-label="وقائع الدعوى" defaultValue={facts} rows={4} placeholder="وقائع الدعوى (إلزامي، ١٠ أحرف فأكثر)..." className={inputCls} />
         <div className="grid gap-3 md:grid-cols-2">
