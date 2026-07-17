@@ -9,6 +9,7 @@ import {
   LegalCoreStatCard,
   LegalTopicBadge
 } from "@/components/legal-core";
+import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 import {
   getLegalIssuesOverview,
   getLegalIssuesBySection,
@@ -52,6 +53,7 @@ export default async function LegalIssuesPage({
 
   return (
     <LegalCoreShell>
+      <LegalCoreTabs />
       <div className="space-y-6">
         <LegalCorePageHeader
           title="المسائل القانونية"

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, ClipboardCheck, Database, FileClock, FileSearch, Gavel, GraduationCap, LayoutDashboard, Paperclip, Search, Settings, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Search, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -18,39 +18,18 @@ type NavItem = {
   active?: boolean;
 };
 
-// ── القائمة الرئيسية: روابط مسطّحة بلا طيّ/هرميّة ──
-// «اسأل حكيم» رابطٌ واحد؛ الأوضاع الستّة تُختار من شريط الأوضاع داخل صفحة البحث نفسها.
-// «النواة القانونية» رابطٌ واحد؛ المسائل والمبادئ يُوصَل إليهما من داخل صفحة النواة.
-const primaryItems: NavItem[] = [
+// ── القائمة النهائية: ثمانية عناصر مسطّحة، بأيقونات موحّدة، بلا هرميّة ──
+// «اسأل حكيم» وأوضاعه مدخلها الصفحة الرئيسية (صندوق البحث + الأوضاع)، فلا يظهر كعنصر مستقلّ.
+// المسائل والمبادئ داخل المكتبة (تبويبات)؛ التجريبيّ داخل المختبر؛ الملفّات والإعدادات صفحتا تجميع.
+const navItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
-  { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
-  { href: "/documents", key: "nav.docPlatform", icon: FileSearch },
-  { href: "/dashboard/legal-core", key: "nav.legalCore", icon: Database },
-];
-
-// ── أدوات متقدّمة (تبقى للوصول — ليست ضمن «الرئيسية الستّة» لكن لا تُحذف) ──
-const toolItems: NavItem[] = [
-  { href: "/dashboard/legal-core/admin", key: "nav.contentAdmin", icon: ClipboardCheck },
-  { href: "/dashboard/knowledge-graph", key: "nav.knowledgeGraph", icon: Database },
-  { href: "/dashboard/legal-rag", key: "nav.rag", icon: Sparkles },
-  { href: "/dashboard/training", key: "nav.training", icon: GraduationCap },
-];
-
-// ── الإدارة (لا تُلمس — أمن/صلاحيات) ──
-const adminItems: NavItem[] = [
+  { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
+  { href: "/documents", key: "nav.docPlatform", icon: FileText },
+  { href: "/dashboard/lab", key: "nav.lab", icon: FlaskConical },
+  { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
   { href: "/admin", key: "nav.settings", icon: Settings },
-  { href: "/admin/ai", key: "nav.aiSettings", icon: Sparkles },
-  { href: "/admin/users", key: "nav.users", icon: Users },
-  { href: "/audit-logs", key: "nav.auditLog", icon: FileClock },
-];
-
-// ── ملفّاتي (تحت الحساب): الدعاوى · الاستشارات (سجلّ) · المرفقات — نُقلت من القائمة الرئيسية ──
-const myFilesItems: NavItem[] = [
-  { href: "/dashboard/cases", key: "nav.cases", icon: Briefcase },
-  { href: "/dashboard/consultations", key: "nav.consultations", icon: ShieldCheck },
-  { href: "/dashboard/attachments", key: "nav.attachments", icon: Paperclip },
 ];
 
 // عنصر تنقّل مسطّح واحد (رابط) — يُستعمل في كل الأقسام غير القابلة للطيّ.
@@ -97,27 +76,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          {/* ── القائمة الرئيسية: روابط مسطّحة (بلا هرميّة) ── */}
+          {/* ── القائمة النهائية: ثمانية عناصر مسطّحة ── */}
           <nav className="nav-section" aria-label={t("a11y.mainNav")}>
-            {primaryItems.map((item) => renderNavItem(item, t))}
-          </nav>
-
-          {/* ── أدوات متقدّمة ── */}
-          <nav className="nav-section" style={{ marginTop: 6 }} aria-label={t("nav.tools")}>
-            <div className="nav-section-label">{t("nav.tools")}</div>
-            {toolItems.map((item) => renderNavItem(item, t))}
-          </nav>
-
-          {/* ── الإدارة ── */}
-          <nav className="nav-section" style={{ marginTop: 6 }} aria-label={t("nav.admin")}>
-            <div className="nav-section-label">{t("nav.admin")}</div>
-            {adminItems.map((item) => renderNavItem(item, t))}
-          </nav>
-
-          {/* ── ملفّاتي (تحت الحساب) — تُدفع لأسفل بجوار كتلة الحساب ── */}
-          <nav className="nav-section nav-account" aria-label={t("nav.myFiles")}>
-            <div className="nav-section-label">{t("nav.myFiles")}</div>
-            {myFilesItems.map((item) => renderNavItem(item, t))}
+            {navItems.map((item) => renderNavItem(item, t))}
           </nav>
 
           <div className="sidebar-foot">

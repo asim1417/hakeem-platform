@@ -9,6 +9,7 @@ import {
   searchLegalArticles
 } from "@/lib/modules/library/library-service";
 import { LegalArticleCard, LegalCoreCard, LegalCorePageHeader, LegalCoreSearchBar, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 import { CoreIntelligenceDashboard } from "@/components/CoreIntelligenceDashboard";
 import { getLegalIssuesCount } from "@/lib/modules/legal-core/legal-issues";
 import { prisma } from "@/lib/prisma";
@@ -32,6 +33,7 @@ export default async function LegalCoreDashboardPage() {
 
   return (
     <LegalCoreShell>
+      <LegalCoreTabs />
       <div className="space-y-7">
         <LegalCorePageHeader
           title="النواة القانونية الموحدة"
