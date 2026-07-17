@@ -14,6 +14,7 @@ import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
 import { loadSystemsRegistry, matchSystemsInText, type SystemRef } from "./substrate/systems-registry";
 import { resolveGoverningSystems } from "./thinking/resolve-scope";
 import { detectBreadth, type BreadthClarification } from "./breadth-gate";
+import { buildScopeDisclosure, systemsFromArticles } from "./thinking/disclosure";
 import { detectNormativeConcept } from "./substrate/normative";
 import { search_articles, search_rulings, search_principles, scan_system_articles, scan_normative } from "./tools";
 import { detectDurationEnumeration, extractDurations, formatDurationTable, type DurationRow } from "./enumeration";
@@ -98,7 +99,8 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     }
     onStep({ id: "scan", status: "done", label: `مسحتُ ${scan.data.length.toLocaleString("ar-SA")} مادة · وجدتُ ${rows.length.toLocaleString("ar-SA")} مادة بمدد` });
     if (rows.length) {
-      const table = formatDurationTable(enumReq.systemName, rows);
+      // مسحٌ كاملٌ لنظامٍ واحدٍ → إفصاح «كامل» (بلا تنبيه «قد توجد أخرى»).
+      const table = formatDurationTable(enumReq.systemName, rows) + buildScopeDisclosure({ systems: [enumReq.systemName], dimension: "المدد", complete: true });
       return { intent: intent.type, issues: [], articles: [], mode, analysis: table };
     }
     // لا نتائج للمسح → نكمل بالمسار العادي (قد يجدها البحث الدلالي).
@@ -281,7 +283,14 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     };
     const an = await runAnalysis(query, report.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
     onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
-    analysis = an.analysis;
+    // المرحلة ٤ — الإفصاح الصادق: التحليل المتعمّق عيّنةٌ عبر الأنظمة (لا استقصاء كامل)،
+    // فنُذيّله بالأنظمة التي شملها البحث فعلًا + تنبيه أنّ غيرها قد يحوي المزيد.
+    if (an.analysis) {
+      const searched = (governingSystems?.map((g) => g.systemName) ?? []).concat(systemsFromArticles(articles));
+      analysis = an.analysis + buildScopeDisclosure({ systems: searched, complete: false });
+    } else {
+      analysis = an.analysis;
+    }
   }
 
   return { intent: intent.type, issues: tk.issues, articles, mode, governingSystems, rulings, principles, analysis, plan, coverage, verified };
