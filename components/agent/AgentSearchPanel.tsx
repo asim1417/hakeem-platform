@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
-import { AGENT_MODES, type AgentModeId } from "@/lib/modules/agents/modes";
+import { AGENT_MODES, getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
 
 type StepStatus = "running" | "done";
 type Step = { id: string; status: StepStatus; label: string; data?: any };
@@ -405,7 +405,7 @@ export function AgentSearchPanel({ userName, initialQuery = "" }: { userName?: s
               }
             }}
             rows={1}
-            placeholder={modeId === "analyze-case" ? "اذكر وقائع القضية وطلباتها للتحليل…" : "اسأل في القانون ما شئت…"}
+            placeholder={getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…"}
             className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <div className="flex items-center justify-between gap-2 px-1">
