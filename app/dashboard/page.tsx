@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Briefcase, ClipboardList, Gavel, GraduationCap, Paperclip, Scale, ScanSearch, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
@@ -38,9 +38,11 @@ async function getDashboardStats() {
       include: { actor: { select: { name: true, email: true } } }
     }),
     prisma.consultation.findMany({
+      // استشارات حقيقية مكتملة فقط — نستبعد المسوّدات والمحجوبة وبيانات الاختبار (BLOCKED/DRAFT)
+      where: { status: "GENERATED" },
       orderBy: { createdAt: "desc" },
       take: 5,
-      select: { id: true, facts: true, status: true, createdAt: true }
+      select: { id: true, facts: true, createdAt: true }
     }),
     prisma.caseFile.findMany({
       orderBy: { updatedAt: "desc" },
@@ -122,25 +124,25 @@ export default async function DashboardPage() {
           <section className="mt-4 grid gap-4 xl:grid-cols-3">
             <RecentList
               title="آخر الاستشارات"
-              empty="لا توجد استشارات حديثة."
+              empty="لا استشارات بعد."
               items={stats.recentConsultations.map((item) => ({
                 id: item.id,
                 title: item.facts.slice(0, 90),
-                meta: `${item.status} · ${item.createdAt.toLocaleString("ar-SA")}`
+                meta: `استشارة مؤصّلة · ${item.createdAt.toLocaleString("ar-SA")}`
               }))}
             />
             <RecentList
               title="آخر القضايا"
-              empty="لا توجد قضايا حديثة."
+              empty="لا قضايا بعد."
               items={stats.recentCases.map((item) => ({
                 id: item.id,
                 title: item.title,
-                meta: `${item.status} · ${item.updatedAt.toLocaleString("ar-SA")}`
+                meta: `${caseStatusLabel(item.status)} · ${item.updatedAt.toLocaleString("ar-SA")}`
               }))}
             />
             <RecentList
               title="آخر جلسات القاضي التفاعلي"
-              empty="لا توجد جلسات حديثة."
+              empty="لا جلسات بعد."
               items={stats.recentSimulations.map((item) => ({
                 id: item.id,
                 title: item.title,
@@ -151,29 +153,29 @@ export default async function DashboardPage() {
         </>
       )}
 
-      {/* خدمات حكيم */}
-      <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">خدمات حكيم</h2>
+      {/* الوجهات الرئيسية — إجراءات سريعة تطابق القائمة (بلا الخدمات التي صارت أوضاعًا) */}
+      <h2 className="mt-8 text-lg font-bold text-[var(--navy)]">الوجهات الرئيسية</h2>
       <section className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <ModuleCard
           href="/dashboard/legal-search"
-          title="البحث القانوني الشامل"
+          title="البحث الشامل"
           metric="بحث موحّد"
           icon={Search}
           description="ابحث في كامل القاعدة دفعةً واحدة: الأنظمة والمواد والأحكام والمبادئ — مع فلاتر وترتيب بالصلة."
         />
         <ModuleCard
-          href="/dashboard/legal-core/search"
+          href="/dashboard/legal-core"
           title="النواة القانونية"
           metric={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
           icon={BookOpen}
-          description="مصدر الحقيقة الوحيد لكل الاستشهادات والاسترجاع السياقي."
+          description="المكتبة النظامية ومصدر الحقيقة الوحيد — الأنظمة والمواد والأحكام والمبادئ والمسائل القانونية."
         />
         <ModuleCard
           href="/dashboard/ask"
           title="اسأل حكيم"
-          metric="وكيل قانوني شفّاف"
+          metric="٦ أوضاع ذكاء"
           icon={Sparkles}
-          description="اطرح واقعتك ليبحث في النواة ويصوغ إجابة مستندة بحالات توثيق."
+          description="مدخل واحد بأوضاع: اسأل · حلّل قضية · خطة عمل · تقدير حكم · استشارة · محادثة — يبحث في النواة ويصوغ إجابة مؤصّلة."
         />
         <ModuleCard
           href="/dashboard/simulations"
@@ -183,46 +185,11 @@ export default async function DashboardPage() {
           description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
         />
         <ModuleCard
-          href="/dashboard/judicial-simulation"
-          title="المحاكاة القضائية"
-          metric="تقدير الحكم المحتمل"
-          icon={Scale}
-          description="حلّل وقائعك ليحاكي حكيم نظر القاضي: التكييف، الدفوع، واتجاه الحكم المحتمل — بإسناد موثّق."
-        />
-        <ModuleCard
-          href="/dashboard/case-analysis"
-          title="تحليل القضايا"
-          metric="تحليل مُسنَد"
-          icon={ScanSearch}
-          description="توصيف النزاع، الوقائع المنتِجة، عبء الإثبات، المخاطر، ونقاط القوة والضعف — مع تقدير قوة الدعوى."
-        />
-        <ModuleCard
-          href="/dashboard/legal-agent"
-          title="الوكيل القانوني"
-          metric="خطة عمل عملية"
-          icon={ClipboardList}
-          description="يحوّل التحليل إلى خطة: استراتيجية، دفوع مصنّفة، بيّنات، خطة مرافعة، وتوصية — باستشهادات حقيقية فقط."
-        />
-        <ModuleCard
-          href="/dashboard/consultations"
-          title="الاستشارات"
-          metric={`${(stats?.consultations ?? 0).toLocaleString("ar-SA")} استشارة`}
-          icon={ShieldCheck}
-          description="تحويل الوقائع إلى مخرجات تعليمية مساعدة مستندة إلى مواد محفوظة."
-        />
-        <ModuleCard
-          href="/dashboard/cases"
-          title="القضايا والمرفقات"
-          metric={`${(stats?.cases ?? 0).toLocaleString("ar-SA")} قضية`}
-          icon={Briefcase}
-          description="ملفات قضايا حقيقية مع سجل عمليات وربط بالبينات."
-        />
-        <ModuleCard
-          href="/dashboard/training"
-          title="التدريب والتعلم"
-          metric="مسارات وتقييم"
-          icon={GraduationCap}
-          description="تمارين، اختبارات، شارات، نقاط، ومتابعة تقدم."
+          href="/documents"
+          title="منصة الوثائق"
+          metric="استخراج نصّ"
+          icon={FileText}
+          description="حمّل مستندك (Word · PDF · صور ممسوحة) واستخرج نصّه العربيّ فورًا مع دعم القراءة الضوئية."
         />
       </section>
 
@@ -288,6 +255,15 @@ function roleLabel(role: string) {
     TRAINEE: "متدرب"
   };
   return labels[role] ?? role;
+}
+
+function caseStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    OPEN: "مفتوحة",
+    UNDER_REVIEW: "قيد المراجعة",
+    CLOSED: "مغلقة"
+  };
+  return labels[status] ?? status;
 }
 
 function StatCard({ label, value, href }: { label: string; value: number; href?: string }) {
