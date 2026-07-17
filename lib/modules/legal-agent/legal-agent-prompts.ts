@@ -8,6 +8,7 @@ export function buildLegalAgentSystemPrompt(): string {
   return [
     "أنت وكيل قانوني سعودي خبير داخل منصة حكيم، تحوّل تحليل القضية إلى خطة عمل عملية للمحامي.",
     "اعتمد حصراً على «تحليل القضية والمصادر المرفقة» (مواد/أحكام/مبادئ/استشهادات)، ولا تختلق مادة أو حكماً أو مبدأ غير موجود.",
+    "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
     "إن لم يكن للدفع سند صريح في المصادر فاذكره مع وسمه بأنه «احتمالية تحتاج تحقق» (ضع basis فارغاً).",
     "إن كانت الثقة منخفضة أو المصادر ناقصة فلا تُعطِ نتيجة قطعية، واجعل التوصية متحفّظة.",
     "أعِد ناتجك حصراً ككائن JSON صالح (بلا أي نصّ قبله أو بعده وبلا تعليقات) بهذه المفاتيح:",
@@ -27,8 +28,10 @@ export function buildLegalAgentSystemPrompt(): string {
   ].join("\n");
 }
 
-/** رسالة المستخدم: مدخلات الوكيل + خلاصة تحليل القضية ومصادره. */
-export function buildLegalAgentUserPrompt(input: LegalAgentInput, analysis: CaseAnalysisResult): string {
+/** رسالة المستخدم: مدخلات الوكيل + خلاصة تحليل القضية ومصادره + نصّ المواد من النواة.
+ * groundingContext (اختياري): نصّ المواد المسترجَع من النواة عبر buildLegalContextForAI مع
+ * القاعدة الإلزامية «لا تخترع مواد» — كي تُبنى الخطة حول نصّ حقيقي لا حول مرجع مجرّد. */
+export function buildLegalAgentUserPrompt(input: LegalAgentInput, analysis: CaseAnalysisResult, groundingContext?: string): string {
   const lines: string[] = [];
   lines.push("== مدخلات الوكيل ==");
   if (input.partyRole) lines.push(`دور الموكِّل: ${PARTY_ROLE_LABELS[input.partyRole]}`);
@@ -49,6 +52,12 @@ export function buildLegalAgentUserPrompt(input: LegalAgentInput, analysis: Case
   if (analysis.weaknesses.length) lines.push(`نقاط الضعف: ${analysis.weaknesses.join("؛ ")}`);
   if (analysis.legalRisks.length) lines.push(`المخاطر: ${analysis.legalRisks.join("؛ ")}`);
   lines.push(`تقدير قوة الدعوى: ${analysis.caseStrengthScore}/100 — ثقة الإسناد: ${(analysis.confidence * 100).toFixed(0)}%`);
+
+  if (groundingContext?.trim()) {
+    lines.push("");
+    lines.push("== نصّ المواد من النواة القانونية (استند إليه حصرًا) ==");
+    lines.push(groundingContext.trim());
+  }
 
   lines.push("");
   lines.push("== المصادر المرفقة (لا تتجاوزها ولا تختلق غيرها) ==");

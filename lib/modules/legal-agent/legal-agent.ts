@@ -5,6 +5,7 @@
 // لا يعدّل أيّاً من المراحل السابقة؛ يستدعيها فقط.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
+import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { classifyDefense, type DefenseCategory } from "@/lib/modules/case-analysis/defense-classifier";
@@ -31,14 +32,20 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     analysis = fallbackAnalysis();
   }
 
-  // 2) الطبقة الاستراتيجية عبر المزوّد المركزي (JSON)، مع احتياط حتمي/mock.
+  // 2) تأريض إضافي: نصّ المواد من النواة القانونية الموحّدة (buildLegalContextForAI) +
+  //    القاعدة الإلزامية «لا تخترع مواد» — كي تُبنى الخطة حول نصّ حقيقي لا حول مرجع مجرّد.
+  //    سقوط آمن إلى بلا سياق عند أي تعذّر.
+  const groundingQuery = [input.caseFacts, input.claims, input.defenses].filter(Boolean).join("\n").slice(0, 1800) || input.caseFacts;
+  const grounding = await buildLegalContextForAI(groundingQuery, { limit: 8 }).catch(() => null);
+
+  // 3) الطبقة الاستراتيجية عبر المزوّد المركزي (JSON)، مع احتياط حتمي/mock.
   const det = buildDeterministicStrategy(input, analysis);
   let parsed: AgentStrategy | null = null;
   let generated = false;
   try {
     const llm = await callCentralProvider({
       systemPrompt: buildLegalAgentSystemPrompt(),
-      userPrompt: buildLegalAgentUserPrompt(input, analysis),
+      userPrompt: buildLegalAgentUserPrompt(input, analysis, grounding?.hasArticles ? grounding.contextText : undefined),
       maxTokens: 1800,
     });
     if (llm.ok && llm.content.trim()) {
@@ -51,10 +58,10 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
   }
   const strategy = parsed ? mergeStrategy(parsed, det) : det;
 
-  // 3) الدفوع: أساس من تحليل القضية + إضافات المزوّد، كلها موسومة بحالة الإسناد.
+  // 4) الدفوع: أساس من تحليل القضية + إضافات المزوّد، كلها موسومة بحالة الإسناد.
   const suggestedDefenses = buildAgentDefenses(analysis, strategy.additionalDefenses);
 
-  // 4) الحوكمة: تحفّظ صريح عند نقص المصادر/الثقة، وتوصية متحفّظة لا قطعية.
+  // 5) الحوكمة: تحفّظ صريح عند نقص المصادر/الثقة، وتوصية متحفّظة لا قطعية.
   const preliminary = !analysis.grounded || analysis.confidence < MIN_AGENT_CONFIDENCE;
   const disclaimer = preliminary ? PRELIMINARY_DISCLAIMER : null;
   const practicalRecommendation = preliminary
