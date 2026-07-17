@@ -1,11 +1,9 @@
-// محرك المحاكاة القضائية (المرحلة الثامنة).
+// محرك المحاكاة القضائية (المرحلة الثامنة → مُرقّى إلى الوكيل الكامل).
 // يحاكي تفكير القاضي من القبول الشكلي حتى تقدير الحكم المحتمل، مُسنَداً وقابلاً للتتبّع.
-// مسار: مدخلات → Case Analysis Engine → Legal Agent → Legal RAG → Citation Engine
-//       → Judicial Simulation → رؤية قضائية مُحاكاة.
-// لا يعدّل أيّاً من المراحل السابقة؛ يستدعيها فقط. كل المخرجات تدريبية لا حكم فعلي.
+// مسار: مدخلات → Case Analysis Engine (وكيل الأنظمة الكامل) → Legal Agent → Judicial Simulation.
+// يرث تأريض الوكيل (فهم النظام الحاكم + التحقّق) عبر analyzeCase. كل المخرجات تدريبية لا حكم فعلي.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
 import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
@@ -54,16 +52,13 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
     plan = null;
   }
 
-  // 3) تأريض إضافي: نصّ المواد من النواة القانونية الموحّدة (buildLegalContextForAI) +
-  //    القاعدة الإلزامية «لا تخترع مواد» — كي تُبنى المحاكاة حول نصّ حقيقي لا حول مرجع مجرّد.
-  //    سقوط آمن إلى بلا سياق عند أي تعذّر.
-  const groundingQuery = [input.caseFacts, input.claims, input.defenses, input.evidenceSummary].filter(Boolean).join("\n").slice(0, 1800) || input.caseFacts;
-  const grounding = await buildLegalContextForAI(groundingQuery, { limit: 8 }).catch(() => null);
+  // 3) تأريض المحاكاة من الوكيل عبر تحليل القضية (نصّ مواد النظام الحاكم + القاعدة الإلزامية) —
+  //    بلا إعادة تشغيل الوكيل. تُبنى المحاكاة حول نصّ مؤرَّض بفهم النظام لا حول مرجع مجرّد.
+  const groundingText = analysis.groundingContext;
 
-  // 4) الرؤية القضائية: مزوّد مركزي (JSON) + احتياط حتمي/mock.
-  // أرقام المواد المسموح بها = المسترجَع فعلاً من النواة (grounding) ⋃ مواد/استشهادات التحليل.
+  // 4) الرؤية القضائية: مزوّد مركزي (JSON) بوضع المحاكاة + احتياط حتمي/mock.
+  // أرقام المواد المسموح بها = مواد/استشهادات التحليل المُتحقَّقة عبر الوكيل.
   const allowedArticleNumbers = collectAllowedArticleNumbers({
-    numbers: (grounding?.articles ?? []).map((a) => a.articleNumber),
     references: [...analysis.influentialArticles.map((a) => a.reference), ...analysis.citations.map((c) => c.reference)],
   });
 
@@ -74,7 +69,7 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
     try {
       const llm = await callCentralProvider({
         systemPrompt: buildJudicialSystemPrompt(),
-        userPrompt: buildJudicialUserPrompt(input, analysis, plan, grounding?.hasArticles ? grounding.contextText : undefined),
+        userPrompt: buildJudicialUserPrompt(input, analysis, plan, groundingText),
         maxTokens: 2000,
       });
       if (llm.ok && llm.content.trim()) {
