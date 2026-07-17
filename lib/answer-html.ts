@@ -34,6 +34,17 @@ export const DOC_CSS = `
   .doc-foot { margin-top: 1.5rem; border-top: 1px solid #e6e1d6; padding-top: .6rem; color: #9a958a; font-size: 11px; }
 `;
 
+/** ترويسة المستند (مكتب أمان + العنوان + التاريخ). */
+export function answerHeaderHtml(title: string, dateStr: string): string {
+  const t = escapeHtml(title || "استشارة قانونية");
+  return `<div class="doc-head"><div class="doc-brand">مكتب أمان</div><div class="doc-title">${t}</div><div class="doc-date">التاريخ: ${escapeHtml(dateStr)}</div></div>`;
+}
+
+/** تذييل المستند. */
+export function answerFootHtml(): string {
+  return `<div class="doc-foot">مُولَّد من منصّة حكيم — مخرجات مساعدة وتعليمية، وليست رأيًا قانونيًّا نهائيًّا.</div>`;
+}
+
 /** يبني صفحة HTML كاملة مستقلّة من HTML الإجابة المُصيَّرة. */
 export function standaloneAnswerHtml(innerHTML: string, title: string, dateStr: string): string {
   const t = escapeHtml(title || "استشارة قانونية");
@@ -41,9 +52,9 @@ export function standaloneAnswerHtml(innerHTML: string, title: string, dateStr: 
     `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">` +
     `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${t}</title>` +
     `<style>${DOC_CSS}</style></head><body>` +
-    `<div class="doc-head"><div class="doc-brand">مكتب أمان</div><div class="doc-title">${t}</div><div class="doc-date">التاريخ: ${escapeHtml(dateStr)}</div></div>` +
+    answerHeaderHtml(title, dateStr) +
     `<div class="answer-prose">${innerHTML}</div>` +
-    `<div class="doc-foot">مُولَّد من منصّة حكيم — مخرجات مساعدة وتعليمية، وليست رأيًا قانونيًّا نهائيًّا.</div>` +
+    answerFootHtml() +
     `</body></html>`
   );
 }
