@@ -141,7 +141,10 @@
     "db:apply-normative": "tsx scripts/apply-normative-migration.ts",
     "test:resolve-scope": "tsx scripts/test-resolve-scope.ts",
     "test:breadth": "tsx scripts/test-breadth-gate.ts",
-    "test:disclosure": "tsx scripts/test-disclosure.ts"
+    "test:disclosure": "tsx scripts/test-disclosure.ts",
+    "test:runtime": "tsx scripts/test-agent-runtime.ts",
+    "agents:validate": "node agents/validate.mjs",
+    "agents:consistency": "node agents/consistency.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
