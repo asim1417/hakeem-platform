@@ -20,7 +20,9 @@ export function composeGrounded(
       enforcement: a.enforcement,
     }));
 
-  const scope = ctx.scope.length ? ctx.scope : er.scopeSystems;
+  // النطاق للحارس يجب أن يطابق أسماء الأنظمة المطبَّعة في مصادر المحرّك (لا صيغة النطاق الخام
+  // بالشُّرَط)، وإلا رصد حارس النطاق تسريبًا كاذبًا. نعتمد scopeSystems الذي طبّعه المحرّك.
+  const scope = er.scopeSystems.length ? er.scopeSystems : ctx.scope;
 
   if (!sources.length) {
     // امتناعٌ صريح عند غياب سندٍ نافذ — لا اختلاق ولا ملء فراغ.
