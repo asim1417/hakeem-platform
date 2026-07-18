@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const secure = process.env.NODE_ENV === "production";
   res.cookies.set(GOOGLE_STATE_COOKIE, state, { httpOnly: true, sameSite: "lax", secure, maxAge: 600, path: "/" });
   const next = request.nextUrl.searchParams.get("next");
-  if (next && next.startsWith("/")) {
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
     res.cookies.set(OAUTH_NEXT_COOKIE, next, { httpOnly: true, sameSite: "lax", secure, maxAge: 600, path: "/" });
   }
   return res;

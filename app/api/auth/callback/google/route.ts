@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
-import { auditEvent } from "@/lib/modules/audit/audit";
-import { createLoginSession } from "@/lib/modules/auth/session";
 import {
   getGoogleOAuthConfig,
   googleCallbackUrl,
   exchangeGoogleCodeForProfile,
-  isOAuthAdminEmail,
   GOOGLE_STATE_COOKIE,
   OAUTH_NEXT_COOKIE,
 } from "@/lib/modules/auth/google-oauth";
+import { safeNextPath } from "@/lib/modules/auth/oauth-shared";
+import { provisionOAuthUser } from "@/lib/modules/auth/oauth-user";
 
 export const dynamic = "force-dynamic";
 
@@ -45,38 +43,8 @@ export async function GET(request: NextRequest) {
   if (!profile || !email || profile.email_verified === false) return fail(origin, "google_profile");
 
   try {
-    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true, role: true } });
-    // دور الدخول: قائمة الأدمن (OAUTH_ADMIN_EMAILS) أولاً، ثم دور موجود، وإلا:
-    // أول مستخدم في القاعدة يُمنح SYSTEM_ADMIN (تمهيد)، وما بعده TRAINEE.
-    const bootstrapAdmin = !existing && (await prisma.user.count().catch(() => 1)) === 0;
-    const role = isOAuthAdminEmail(email)
-      ? "SYSTEM_ADMIN"
-      : existing?.role ?? (bootstrapAdmin ? "SYSTEM_ADMIN" : "TRAINEE");
-
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { isActive: true, role, ...(profile.name ? { name: profile.name } : {}) },
-      create: {
-        name: profile.name || email.split("@")[0],
-        email,
-        // مستخدم OAuth بلا كلمة مرور: قيمة غير صالحة كـ bcrypt فيتعذّر الدخول بكلمة مرور.
-        passwordHash: "oauth-google:no-password",
-        role,
-        isActive: true,
-      },
-      select: { id: true, name: true, email: true, role: true, isActive: true },
-    });
-
-    await createLoginSession(user);
-    await auditEvent({
-      actorId: user.id,
-      subject: "AUTH",
-      action: "LOGIN_SUCCESS",
-      metadata: { email: user.email, role: user.role, provider: "google" },
-    }).catch(() => undefined);
-
-    const dest = nextRaw && nextRaw.startsWith("/") ? nextRaw : "/dashboard";
-    return NextResponse.redirect(new URL(dest, origin));
+    await provisionOAuthUser({ email, name: profile.name, provider: "google" });
+    return NextResponse.redirect(new URL(safeNextPath(nextRaw), origin));
   } catch {
     return fail(origin, "oauth_user");
   }

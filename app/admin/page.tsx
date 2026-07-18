@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getAiStatus } from "@/lib/modules/ai/ai-config";
 import { sharePointConfigured, storageBackend } from "@/lib/modules/attachments/blob-storage";
+import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
+import { isMicrosoftOAuthConfigured } from "@/lib/modules/auth/microsoft-oauth";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,8 @@ async function getAdminStatus() {
     aiProviderName: ai?.provider ?? "offline",
     storage: storageBackend(),
     sharePoint: sharePointConfigured(),
+    microsoftSso: isMicrosoftOAuthConfigured(),
+    googleSso: isGoogleOAuthConfigured(),
     legalSystems,
     legalArticles,
     auditLogs,
@@ -46,8 +50,15 @@ export default async function AdminPage() {
   const status = await getAdminStatus();
 
   const services: { label: string; state: ServiceState; detail: string; href?: string }[] = [
+    {
+      label: "حساب المالك وبيانات الدخول",
+      state: "live",
+      detail: "توليد اسم مستخدم + كلمة مرور سهلة + صلاحيات — صفحة المالك",
+      href: "/admin/owner",
+    },
     { label: "إدارة المستخدمين", state: "live", detail: "إنشاء/تعديل دور/تفعيل — مُفعّلة", href: "/admin/users" },
     { label: "الصلاحيات المتقدمة (RBAC)", state: "live", detail: "محرّر مصفوفة الأدوار×الصلاحيات — مُفعّل", href: "/admin/roles" },
+    { label: "صفحة تسجيل الدخول", state: "live", detail: "منشورة ومتاحة على /login", href: "/login" },
     { label: "مفاتيح API (البوابة الخارجية)", state: "live", detail: "إنشاء مفاتيح للأطراف الخارجية وأنظمة الذكاء — مُفعّلة", href: "/admin/api-keys" },
     {
       label: "تفعيل الذكاء الحقيقي",
@@ -66,7 +77,20 @@ export default async function AdminPage() {
       state: status.sharePoint ? "live" : "config",
       detail: status.sharePoint ? "متصل عبر Microsoft Graph" : "يتطلب ضبط SHAREPOINT_DRIVE_ID + اعتماد التطبيق"
     },
-    { label: "ربط Microsoft 365 (تسجيل دخول SSO)", state: "tenant", detail: "يتطلب مستأجر Entra ID وتطبيق OAuth (تكامل مصادقة منفصل)" }
+    {
+      label: "بوابة الدخول (Microsoft Entra SSO)",
+      state: status.microsoftSso ? "live" : "config",
+      detail: status.microsoftSso
+        ? "مُفعّلة — AZURE_AD_CLIENT_ID/SECRET مضبوطة"
+        : "اضبط AZURE_AD_CLIENT_ID و AZURE_AD_CLIENT_SECRET و AZURE_AD_TENANT_ID",
+      href: "/login"
+    },
+    {
+      label: "دخول Google",
+      state: status.googleSso ? "live" : "config",
+      detail: status.googleSso ? "مُفعّل — GOOGLE_CLIENT_ID/SECRET مضبوطة" : "اضبط GOOGLE_CLIENT_ID و GOOGLE_CLIENT_SECRET",
+      href: "/login"
+    }
   ];
 
   return (

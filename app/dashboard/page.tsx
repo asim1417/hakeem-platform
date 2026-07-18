@@ -86,11 +86,25 @@ async function getDashboardStats() {
   };
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { welcome?: string };
+}) {
   const stats = await getDashboardStats().catch(() => null);
+  const showWelcome = searchParams?.welcome === "1";
 
   return (
     <div>
+      {showWelcome ? (
+        <div className="mb-4 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-5 py-4 text-sm leading-7 text-[var(--navy)]">
+          <p className="font-display-ar text-base font-bold">مرحبًا بك في حكيم — بدأت تجربتك المجانية</p>
+          <p className="mt-1 text-[var(--ink-70)]">
+            يمكنك الآن البحث في الأنظمة، سؤال حكيم، وتجربة المحاكاة القضائية. هذه التجربة مجانية للبدء دون بطاقة دفع.
+          </p>
+        </div>
+      ) : null}
+
       {/* الترويسة الموحّدة (نظام التصميم) — تحوي صندوق البحث المركزيّ بخياريه */}
       <Hero
         center

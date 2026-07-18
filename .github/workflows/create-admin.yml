@@ -1,11 +1,28 @@
 name: Create/Reset Admin (Neon) — فكّ قفل الدخول
 
 # ينشئ أو يُعيد تعيين مستخدم أدمن في قاعدة Neon (SYSTEM_ADMIN, isActive).
-# كلمة المرور تأتي من سرّ ADMIN_PASSWORD (مُقنّعة في السجلّ — لا تُطبع أبدًا).
-# يدوي فقط. اضبط الأسرار أولاً: ADMIN_EMAIL + ADMIN_PASSWORD (أو INITIAL_ADMIN_*).
+# يمكن تمرير البريد/كلمة المرور كمدخلات workflow، أو من الأسرار.
+# يدوي فقط.
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      admin_email:
+        description: "بريد الأدمن (مثال: aasemalfarsi@gmail.com)"
+        required: false
+        default: "aasemalfarsi@gmail.com"
+      admin_password:
+        description: "كلمة المرور (٨+ أحرف) — تُكتب في السرّ أو هنا لمرة واحدة"
+        required: false
+        default: ""
+      admin_name:
+        description: "الاسم الظاهر"
+        required: false
+        default: "عاصم الفارسي"
+      admin_username:
+        description: "اسم المستخدم للدخول"
+        required: false
+        default: "aasem.alfarsi"
 
 permissions:
   contents: read
@@ -15,8 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL || secrets.INITIAL_ADMIN_EMAIL }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || secrets.INITIAL_ADMIN_PASSWORD }}
+      ADMIN_EMAIL: ${{ inputs.admin_email || secrets.ADMIN_EMAIL || secrets.INITIAL_ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ inputs.admin_password || secrets.ADMIN_PASSWORD || secrets.INITIAL_ADMIN_PASSWORD }}
+      ADMIN_NAME: ${{ inputs.admin_name || 'مدير منصة حكيم' }}
+      ADMIN_USERNAME: ${{ inputs.admin_username }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -28,7 +47,11 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: npm run db:generate
+      - name: Ensure username column
+        run: npx tsx scripts/apply-username-column.ts || true
       - name: Create/Reset admin
         run: |
           if [ -z "$DATABASE_URL" ]; then echo "::error::NEON_DATABASE_URL غير مضبوط."; exit 1; fi
+          if [ -z "$ADMIN_EMAIL" ]; then echo "::error::ADMIN_EMAIL غير مضبوط."; exit 1; fi
+          if [ -z "$ADMIN_PASSWORD" ]; then echo "::error::ADMIN_PASSWORD غير مضبوطة — مرّرها كمدخل workflow."; exit 1; fi
           npx tsx scripts/create-admin.ts

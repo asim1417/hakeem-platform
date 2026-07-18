@@ -3,7 +3,7 @@
 // مباشر بلا مكتبة خارجية (fetch فقط) — أوثق وأخفّ من تثبيت مكتبة. اختياري بالكامل:
 // إن لم تُضبط GOOGLE_CLIENT_ID/SECRET يُعَدّ غير مُفعّل ولا يظهر زرّه ولا تعمل مساراته.
 // ─────────────────────────────────────────────────────────────────────────────
-import { randomBytes } from "crypto";
+import { newOAuthState, OAUTH_NEXT_COOKIE, isOAuthAdminEmail } from "@/lib/modules/auth/oauth-shared";
 
 export type GoogleOAuthConfig = { clientId: string; clientSecret: string };
 
@@ -28,24 +28,9 @@ export function googleCallbackUrl(origin: string): string {
   return `${base}/api/auth/callback/google`;
 }
 
-/** قائمة البُرد التي تُمنح دور SYSTEM_ADMIN عند دخولها عبر Google (OAUTH_ADMIN_EMAILS مفصولة بفواصل). */
-const ADMIN_EMAILS = (process.env.OAUTH_ADMIN_EMAILS || "")
-  .toLowerCase()
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-export function isOAuthAdminEmail(email: string): boolean {
-  return ADMIN_EMAILS.includes(email.toLowerCase().trim());
-}
+export { isOAuthAdminEmail, newOAuthState, OAUTH_NEXT_COOKIE };
 
 export const GOOGLE_STATE_COOKIE = "hakeem_g_state";
-export const OAUTH_NEXT_COOKIE = "hakeem_oauth_next";
-
-/** رمز state عشوائي لمنع CSRF — يُحفظ في كوكي httpOnly ويُقارَن في callback. */
-export function newOAuthState(): string {
-  return randomBytes(16).toString("hex");
-}
 
 /** يبني رابط تفويض Google. */
 export function buildGoogleAuthUrl(clientId: string, redirectUri: string, state: string): string {
