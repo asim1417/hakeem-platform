@@ -1,22 +1,24 @@
 /**
  * create-admin.ts — إنشاء/إعادة تعيين مستخدم أدمن في قاعدة البيانات (فكّ قفل الدخول).
  *
- * يقرأ البريد وكلمة المرور من متغيّرات البيئة (تُمرَّر كأسرار GitHub — مُقنّعة في السجلّ):
- *   ADMIN_EMAIL     (أو INITIAL_ADMIN_EMAIL)     — بريد الدخول.
- *   ADMIN_PASSWORD  (أو INITIAL_ADMIN_PASSWORD)  — كلمة المرور (لا تُطبع أبدًا).
- *
- * السلوك: upsert — ينشئ الأدمن إن غاب، ويُعيد تعيين كلمة مروره + يُفعّله + يرفعه
- * SYSTEM_ADMIN إن وُجد. لا يطبع كلمة المرور إطلاقًا (المستودع عام). قراءةٌ آمنة لكل شيء عداه.
- *
- * التشغيل عبر workflow: create-admin.yml (يملك NEON_DATABASE_URL + الأسرار).
+ * متغيّرات البيئة:
+ *   ADMIN_EMAIL / INITIAL_ADMIN_EMAIL
+ *   ADMIN_PASSWORD / INITIAL_ADMIN_PASSWORD
+ *   ADMIN_NAME (اختياري)
+ *   ADMIN_USERNAME (اختياري)
  */
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { slugifyUsername } from "@/lib/modules/auth/credentials";
 
 async function main() {
   const email = (process.env.ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL || "").toLowerCase().trim();
   const password = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD || "";
   const name = process.env.ADMIN_NAME || "مدير منصة حكيم";
+  let username = (process.env.ADMIN_USERNAME || "").toLowerCase().trim();
+  if (!username && email.includes("@")) {
+    username = slugifyUsername(email.split("@")[0] || "owner");
+  }
 
   if (!email || !email.includes("@")) {
     console.error("::error::ADMIN_EMAIL غير صالح — اضبط سرّ ADMIN_EMAIL (أو INITIAL_ADMIN_EMAIL).");
@@ -30,16 +32,41 @@ async function main() {
   const passwordHash = await bcrypt.hash(password, 12);
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
 
+  // تجنّب تصادم username مع مستخدم آخر.
+  if (username) {
+    const taken = await prisma.user.findFirst({
+      where: { username, NOT: { email } },
+      select: { id: true },
+    });
+    if (taken) username = `${username}.${String(1000 + Math.floor(Math.random() * 9000))}`;
+  }
+
   const user = await prisma.user.upsert({
     where: { email },
-    update: { passwordHash, role: "SYSTEM_ADMIN", isActive: true },
-    create: { name, email, passwordHash, role: "SYSTEM_ADMIN", isActive: true },
-    select: { id: true, email: true, role: true, isActive: true }
+    update: {
+      passwordHash,
+      role: "SYSTEM_ADMIN",
+      isActive: true,
+      name,
+      ...(username ? { username } : {}),
+    },
+    create: {
+      name,
+      email,
+      username: username || null,
+      passwordHash,
+      role: "SYSTEM_ADMIN",
+      isActive: true,
+    },
+    select: { id: true, email: true, username: true, role: true, isActive: true, name: true },
   });
 
-  // لا نطبع كلمة المرور أبدًا — فقط تأكيد العملية.
-  console.log(`✅ ${existing ? "أُعيد تعيين" : "أُنشئ"} أدمن: ${user.email} | role=${user.role} | active=${user.isActive}`);
-  console.log("سجّل الدخول بهذا البريد وكلمة المرور التي ضبطتها في السرّ ADMIN_PASSWORD.");
+  console.log(
+    `✅ ${existing ? "أُعيد تعيين" : "أُنشئ"} أدمن: ${user.email}` +
+      (user.username ? ` | username=${user.username}` : "") +
+      ` | role=${user.role} | active=${user.isActive}`
+  );
+  console.log("سجّل الدخول بهذا البريد (أو اسم المستخدم) وكلمة المرور التي مرّرتها — لا تُطبع هنا.");
 }
 
 main()

@@ -13,12 +13,14 @@ export function newOAuthState(): string {
 
 /** قائمة البُرد التي تُمنح دور SYSTEM_ADMIN عند دخولها عبر OAuth (OAUTH_ADMIN_EMAILS مفصولة بفواصل). */
 export function isOAuthAdminEmail(email: string): boolean {
-  const admins = (process.env.OAUTH_ADMIN_EMAILS || "")
+  const fromEnv = (process.env.OAUTH_ADMIN_EMAILS || "")
     .toLowerCase()
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  return admins.includes(email.toLowerCase().trim());
+  // بريد المالك الافتراضي إن لم تُضبط القائمة — يمكن تجاوزه بـ OAUTH_ADMIN_EMAILS.
+  const defaults = fromEnv.length > 0 ? fromEnv : ["aasemalfarsi@gmail.com"];
+  return defaults.includes(email.toLowerCase().trim());
 }
 
 /** مسار العودة الآمن بعد OAuth (مسار داخلي فقط). */

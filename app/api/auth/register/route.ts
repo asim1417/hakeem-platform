@@ -10,6 +10,7 @@ import {
   isValidUsername,
   slugifyUsername,
 } from "@/lib/modules/auth/credentials";
+import { isOAuthAdminEmail } from "@/lib/modules/auth/oauth-shared";
 
 export const dynamic = "force-dynamic";
 
