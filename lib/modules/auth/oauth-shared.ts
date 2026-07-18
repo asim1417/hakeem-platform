@@ -1,8 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // oauth-shared — مشترك نقي بين مزوّدي OAuth (Google / Microsoft Entra).
-// بلا اعتماد على Prisma/جلسات — آمن للاستيراد من وحدات الخادم فقط حالياً.
+// بلا اعتماد على Prisma/جلسات. يُستورَد أيضًا من مكوّنات العميل (صفحتا الدخول/التسجيل)،
+// لذا نتجنّب وحدة crypto العقديّة (تكسر حزمة المتصفّح/Edge) ونستخدم Web Crypto العامّة
+// المتوفّرة في Node وEdge والمتصفّح جميعًا.
 // ─────────────────────────────────────────────────────────────────────────────
-import { randomBytes } from "crypto";
 
 export const OAUTH_NEXT_COOKIE = "hakeem_oauth_next";
 
@@ -14,7 +15,9 @@ export const PLATFORM_OWNER_EMAILS = ["aasemalfarsi@gmail.com"] as const;
 
 /** رمز state عشوائي لمنع CSRF — يُحفظ في كوكي httpOnly ويُقارَن في callback. */
 export function newOAuthState(): string {
-  return randomBytes(16).toString("hex");
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /** هل هذا البريد مالك/مدير OAuth؟ (المالك الثابت + OAUTH_ADMIN_EMAILS). */
