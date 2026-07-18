@@ -3,6 +3,7 @@ import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard,
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
+import { SidebarNav } from "@/components/SidebarNav";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { getTranslator } from "@/lib/i18n/server";
@@ -33,17 +34,6 @@ const navItems: NavItem[] = [
 ];
 
 // عنصر تنقّل مسطّح واحد (رابط) — يُستعمل في كل الأقسام غير القابلة للطيّ.
-function renderNavItem(item: NavItem, t: (key: string) => string) {
-  const Icon = item.icon;
-  return (
-    <Link key={item.href} href={item.href} className={`nav-btn ${item.active ? "active" : ""}`}>
-      <Icon aria-hidden />
-      {t(item.key)}
-      {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
-    </Link>
-  );
-}
-
 const roleLabels: Record<string, string> = {
   SYSTEM_ADMIN: "مدير النظام",
   LAWYER: "حساب محام - تدريبي",
@@ -76,10 +66,14 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          {/* ── القائمة النهائية: ثمانية عناصر مسطّحة ── */}
-          <nav className="nav-section" aria-label={t("a11y.mainNav")}>
-            {navItems.map((item) => renderNavItem(item, t))}
-          </nav>
+          {/* ── القائمة النهائية: ثمانية عناصر مسطّحة، تُبرز الصفحة الحالية ── */}
+          <SidebarNav
+            label={t("a11y.mainNav")}
+            items={navItems.map((item) => {
+              const Icon = item.icon;
+              return { href: item.href, label: t(item.key), icon: <Icon aria-hidden /> };
+            })}
+          />
 
           <div className="sidebar-foot">
             <div className="user-av" aria-hidden>{initials}</div>
