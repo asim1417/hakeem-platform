@@ -13,9 +13,9 @@ export default async function AdminSettingsPage() {
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--navy)]">إعدادات المنصّة</h1>
         <p className="mt-2 text-sm leading-7 text-[#0E3435]/70">
-          أدِر مفاتيح التشغيل (الذكاء، البحث، دخول Google) من هنا — بدون الذهاب إلى Vercel. القيم
-          المحفوظة هنا تُحمَّل عند إقلاع الخادم. لتفعيل زر «الدخول عبر Google»: الصق Client ID و
-          Client Secret في قسم «دخول Google» واحفظ. Redirect URI في Google Cloud:
+          أدِر مفاتيح التشغيل من هنا بلا Vercel: الذكاء، البحث، Google/Microsoft، Moyasar، Resend،
+          Twilio، والحصّة المجانية. تُحمَّل عند إقلاع الخادم وتُطبَّق فور الحفظ على هذه النسخة.
+          Redirect URI لـ Google:
           <span dir="ltr" className="mx-1 font-mono text-xs">
             https://hakeem-platform.vercel.app/api/auth/callback/google
           </span>

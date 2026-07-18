@@ -41,6 +41,17 @@ export const MANAGED_KEYS: ManagedKey[] = [
     group: "الدخول الموحّد",
     placeholder: "aasemalfarsi@gmail.com",
   },
+  // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
+  { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
+  { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },
+  { key: "RESEND_API_KEY", label: "Resend API Key (بريد الترحيب)", secret: true, group: "البريد", placeholder: "re_..." },
+  { key: "RESEND_FROM", label: "عنوان المُرسِل", secret: false, group: "البريد", placeholder: "حكيم <onboarding@hakeem.sa>" },
+  { key: "TWILIO_ACCOUNT_SID", label: "Twilio Account SID", secret: true, group: "OTP الجوال (Twilio)", placeholder: "AC..." },
+  { key: "TWILIO_AUTH_TOKEN", label: "Twilio Auth Token", secret: true, group: "OTP الجوال (Twilio)" },
+  { key: "TWILIO_FROM_NUMBER", label: "رقم الإرسال Twilio", secret: false, group: "OTP الجوال (Twilio)", placeholder: "+9665..." },
+  { key: "OTP_DEV_REVEAL", label: "كشف رمز OTP للتطوير (true/false)", secret: false, group: "OTP الجوال (Twilio)", placeholder: "true" },
+  { key: "FREE_QUOTA", label: "حصّة الاستخدام المجانية", secret: false, group: "الاشتراك والحصّة", placeholder: "20" },
+  { key: "WARN_AT", label: "عتبة تنبيه نفاد الحصّة", secret: false, group: "الاشتراك والحصّة", placeholder: "3" },
 ];
 
 const MANAGED_SET = new Set(MANAGED_KEYS.map((k) => k.key));
