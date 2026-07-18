@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/modules/auth/session";
 import { listManifests } from "@/lib/agent-runtime/live/manifests";
 import { DeadlineCalculator } from "@/components/agents/DeadlineCalculator";
@@ -82,7 +83,15 @@ export default async function AgentsPage() {
                 </div>
               </div>
 
-              <p className="mt-4 font-mono-legal text-[11px] text-[var(--ink-40)]">/api/mcp/{a.agentId}</p>
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <Link
+                  href={`/dashboard/agents/${a.agentId}`}
+                  className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                >
+                  افتح وحدة التشغيل ←
+                </Link>
+                <span className="font-mono-legal text-[11px] text-[var(--ink-40)]">/api/mcp/{a.agentId}</span>
+              </div>
             </article>
           );
         })}
