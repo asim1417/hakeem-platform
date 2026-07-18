@@ -67,7 +67,7 @@ type OnStep = (step: AgentStep) => void;
  * تشغيل المنسّق الأوّلي (وضع سريع). للنوايا غير القانونية يردّ مباشرةً بلا بحث.
  * للسؤال القانوني: يكيّف المسائل ثم يخرّج (بحث) لكلّ مسألة، ويجمع المواد بلا تكرار.
  */
-export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep; skipBreadth?: boolean } = {}): Promise<OrchestratorResult> {
+export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep; skipBreadth?: boolean; skipAnalysis?: boolean } = {}): Promise<OrchestratorResult> {
   const mode: OrchestratorMode = opts.mode ?? "quick";
   const onStep: OnStep = opts.onStep ?? (() => {});
 
@@ -303,20 +303,25 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
       },
     });
 
-    onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
-    const supporting = {
-      rulings: (rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
-      principles: (principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet })),
-    };
-    const an = await runAnalysis(query, report.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
-    onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
-    // المرحلة ٤ — الإفصاح الصادق: التحليل المتعمّق عيّنةٌ عبر الأنظمة (لا استقصاء كامل)،
-    // فنُذيّله بالأنظمة التي شملها البحث فعلًا + تنبيه أنّ غيرها قد يحوي المزيد.
-    if (an.analysis) {
-      const searched = (governingSystems?.map((g) => g.systemName) ?? []).concat(systemsFromArticles(articles));
-      analysis = an.analysis + buildScopeDisclosure({ systems: searched, complete: false });
-    } else {
-      analysis = an.analysis;
+    // توليد التحليل العامّ (وضع «اسأل» العميق). أوضاع الإخراج (حلّل/خطة/تقدير) تتخطّاه
+    // (skipAnalysis) كي تُصاغ بتعليمة الوضع نفسها على استرجاعٍ عميقٍ + سوابق مُتحقَّقة، بدل
+    // أن يعترضها التحليل العامّ فيُقدَّم مكان مخرَج الوضع.
+    if (!opts.skipAnalysis) {
+      onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
+      const supporting = {
+        rulings: (rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
+        principles: (principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet })),
+      };
+      const an = await runAnalysis(query, report.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
+      onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
+      // المرحلة ٤ — الإفصاح الصادق: التحليل المتعمّق عيّنةٌ عبر الأنظمة (لا استقصاء كامل)،
+      // فنُذيّله بالأنظمة التي شملها البحث فعلًا + تنبيه أنّ غيرها قد يحوي المزيد.
+      if (an.analysis) {
+        const searched = (governingSystems?.map((g) => g.systemName) ?? []).concat(systemsFromArticles(articles));
+        analysis = an.analysis + buildScopeDisclosure({ systems: searched, complete: false });
+      } else {
+        analysis = an.analysis;
+      }
     }
   }
 
