@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
   } catch {
     /* تجاهل */
   }
-  const query = String(body?.query ?? "").trim().slice(0, 500);
+  // سقفٌ أوسع (٨٠٠٠) ليستوعب نصّ مستندٍ مُرفَق (لائحة/عقد) لا سؤالًا قصيرًا فقط.
+  const query = String(body?.query ?? "").trim().slice(0, 8000);
   const detailed = Boolean(body?.detailed);
   const skipBreadth = Boolean(body?.skipBreadth);
   // الوضع: «اسأل» (افتراضيّ) بلا تغيير، أو وضعٌ بتعليمة إخراج خاصّة (حلّل قضية…).
