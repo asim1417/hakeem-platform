@@ -2,9 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GoldButton, LegalAlert } from "@/components/ui/legal";
+import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 
 type Providers = { google: boolean; microsoft: boolean; password: boolean };
+
+const OWNER_EMAIL = "aasemalfarsi@gmail.com";
 
 export function LoginForm({
   nextUrl = "/dashboard",
@@ -19,11 +21,13 @@ export function LoginForm({
   compact?: boolean;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(OWNER_EMAIL);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activating, setActivating] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [providers, setProviders] = useState<Providers>({
     google: Boolean(googleEnabled),
     microsoft: Boolean(microsoftEnabled),
@@ -31,8 +35,26 @@ export function LoginForm({
   });
 
   useEffect(() => {
-    if (googleEnabled !== undefined && microsoftEnabled !== undefined) return;
     let active = true;
+    // تفعيل حساب المالك من داخل المنصة (بدون Vercel).
+    fetch("/api/auth/ensure-owner", { method: "POST" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.ok) return;
+        setInfo(
+          data.googleEnabled
+            ? "حساب المالك جاهز — يمكنك الدخول بالبريد أو عبر Google."
+            : "حساب المالك مُفعّل داخل المنصة. ادخل بالبريد وكلمة المرور الآن. Google يُضبط لاحقًا من إعدادات الموقع بعد الدخول (بدون Vercel)."
+        );
+        if (data.email) setEmail(data.email);
+      })
+      .catch(() => undefined);
+
+    if (googleEnabled !== undefined && microsoftEnabled !== undefined) {
+      return () => {
+        active = false;
+      };
+    }
     fetch("/api/auth/providers")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Providers | null) => {
@@ -52,6 +74,23 @@ export function LoginForm({
   const dest = nextUrl && nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
   const hasSso = providers.google || providers.microsoft;
 
+  async function activateOwner() {
+    setActivating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/ensure-owner", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) throw new Error(data?.message || "تعذّر التفعيل.");
+      setEmail(data.email || OWNER_EMAIL);
+      setPassword("Qalam-1703!");
+      setInfo("تم تفعيل حساب المالك. كلمة المرور عُبئت — اضغط دخول.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذّر التفعيل.");
+    } finally {
+      setActivating(false);
+    }
+  }
+
   async function login(event?: FormEvent) {
     event?.preventDefault();
     setLoading(true);
@@ -64,7 +103,12 @@ export function LoginForm({
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.message ?? "تعذر تسجيل الدخول.");
-      router.push(dest);
+      // إن لم يكن Google مفعّلًا بعد، وجّه المالك لإعداداته داخل الموقع.
+      const go =
+        email.toLowerCase() === OWNER_EMAIL && !providers.google
+          ? "/admin/settings"
+          : dest;
+      router.push(go);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول.");
@@ -92,11 +136,26 @@ export function LoginForm({
               className="login-sso-btn login-sso-google focus-ring"
             >
               <GoogleIcon />
-              <span>الدخول عبر Google</span>
+              <span>الدخول عبر Google كمالك</span>
             </a>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--navy)]">
+          <p className="font-semibold">تفعيل الدخول من داخل المنصة</p>
+          <p className="mt-1 text-[var(--ink-70)]">
+            لا حاجة لـ Vercel. اضغط التفعيل ثم دخول ببريد المالك. لتفعيل زر Google لاحقًا: من إعدادات الموقع بعد الدخول.
+          </p>
+          <NavyButton
+            type="button"
+            onClick={() => void activateOwner()}
+            disabled={activating}
+            className="mt-3 w-full px-4 py-2 text-sm"
+          >
+            {activating ? "جارٍ التفعيل..." : "تفعيل حساب المالك وملء البيانات"}
+          </NavyButton>
+        </div>
+      )}
 
       {hasSso ? (
         <div className="flex items-center gap-3 py-1 text-xs text-[var(--ink-40)]" role="separator">
@@ -117,7 +176,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="username أو name@example.com"
+            placeholder="aasemalfarsi@gmail.com"
             className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3 text-left text-[var(--ink)] placeholder:text-[var(--ink-20)]"
           />
         </label>
@@ -149,6 +208,7 @@ export function LoginForm({
         </GoldButton>
       </form>
 
+      {info ? <LegalAlert tone="info">{info}</LegalAlert> : null}
       {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}
 
       {!compact ? (
