@@ -13,7 +13,7 @@ import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
 import { loadSystemsRegistry, matchSystemsInText, type SystemRef } from "./substrate/systems-registry";
 import { resolveGoverningSystems } from "./thinking/resolve-scope";
-import { findDimension, buildClarificationForClass, type BreadthClarification } from "./breadth-gate";
+import { findDimension, type BreadthClarification } from "./breadth-gate";
 import { classifyBreadth } from "./breadth-classifier";
 import { buildScopeDisclosure, systemsFromArticles } from "./thinking/disclosure";
 import { isCrossSystemDurationQuery, scanDurationsAcrossSystems, type DurationGroup } from "./cross-system-enum";
@@ -86,19 +86,11 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     const registry = await loadSystemsRegistry().catch(() => []);
     const hasSystem = matchSystemsInText(query, registry).length > 0;
     const { breadthClass, source } = await classifyBreadth(query, { hasSystem, hasDimension: true });
-    onStep({ id: "breadth", status: "done", label: `صنّفتُ السؤال: ${breadthClass === "specific" ? "محدّد" : breadthClass === "exhaustive" ? "استقصائيّ" : "ملتبس"}`, data: { breadthClass, source } });
-    if (breadthClass === "specific") {
-      breadthSpecific = true; // جواب مباشر من المادة الحاكمة — لا استقصاء ولا جدول شامل
-    } else if (source === "model") {
-      // الاستيضاح يصدر من **قراءة النموذج للسؤال وفهمه** أنه ملتبس فعلًا — لا من مطابقة كلمةٍ
-      // مفتاحية. إن لم يقرأه النموذج (سقوط حتميّ بالكلمات) نُجيب مباشرةً بدل قائمةٍ مبنيّة على كلمة.
-      const clarify = buildClarificationForClass(query, breadthClass, { hasSystem });
-      if (clarify) {
-        return { intent: intent.type, clarify, issues: [], articles: [], mode };
-      }
-      // استقصائيّ + نظام مذكور → لا استيضاح؛ يتولّاه المسح الكامل للنظام أدناه.
-    }
-    // مصدرٌ حتميّ (كلمات) وغير محدّد → لا نُظهر قائمة استيضاحٍ مبنيّة على كلمة؛ نتابع للإجابة المباشرة.
+    onStep({ id: "breadth", status: "done", label: `فهمتُ السؤال: ${breadthClass === "specific" ? "محدّد" : breadthClass === "exhaustive" ? "استقصائيّ" : "واسع"}`, data: { breadthClass, source } });
+    // سياسة الفهم: نفترض التفسير الأرجح ونُجيب مباشرةً (مع إفصاح النطاق الصادق) بدل قائمة استيضاحٍ
+    // مُعلّبة. الغموض يُعالَج بأفضل تفسيرٍ لا بقائمة — والامتناع الصادق يكفي عند غياب السند.
+    // (breadthSpecific يمنع فقط إغراق السؤال المحدَّد بجدولٍ شامل لا لزوم له.)
+    if (breadthClass === "specific") breadthSpecific = true;
   }
 
   // ①.٦ الاستقصاء الشامل (المرحلة ٣): يُفعَّل فقط عند اختيار المستخدم (skipBreadth) لسؤال
