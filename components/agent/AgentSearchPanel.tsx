@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ClipboardList, MessagesSquare, NotebookPen, Scale, ScanSearch, Sparkles, Telescope, type LucideIcon } from "lucide-react";
+import { ClipboardList, MessagesSquare, NotebookPen, Paperclip, Scale, ScanSearch, Sparkles, Telescope, type LucideIcon } from "lucide-react";
+import { extractFile } from "@/lib/modules/doc-tool/extract";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
@@ -56,6 +57,9 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
   const [modeId, setModeId] = useState<AgentModeId>(getAgentMode(initialMode).id);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
+  // محلّل منصّة الوثائق (extractFile) — استخراجٌ محليّ في المتصفّح؛ الملفّ لا يغادر الجهاز.
+  const [extracting, setExtracting] = useState(false);
+  const [attachNote, setAttachNote] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   // على الجوّال: مغادرة المتصفّح تعلّق التبويب فينكسر بثّ الطلب. نرصد ذلك لتقديم رسالة لطيفة + إعادة محاولة.
   const abortRef = useRef<AbortController | null>(null);
@@ -77,6 +81,27 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       abortRef.current?.abort();
     };
   }, []);
+
+  async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setExtracting(true);
+    setAttachNote(`أقرأ «${file.name}»…`);
+    try {
+      const r = await extractFile(file, (label) => setAttachNote(label));
+      if (r.text.trim()) {
+        setValue((prev) => (prev.trim() ? `${prev.trim()}\n\n` : "") + r.text.trim());
+        setAttachNote(`أُدرج نصّ «${file.name}» (${r.kind}) — راجعه ثم أرسِل`);
+      } else {
+        setAttachNote("لم أستخرج نصًّا من الملف.");
+      }
+    } catch {
+      setAttachNote("تعذّر قراءة الملف.");
+    } finally {
+      setExtracting(false);
+    }
+  }
 
   function patchLastTurn(patch: (t: Turn) => Turn) {
     setTurns((prev) => {
@@ -550,18 +575,28 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
             className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <div className="flex items-center justify-between gap-2 px-1">
-            <button
-              type="button"
-              onClick={() => setDetailed((v) => !v)}
-              aria-pressed={detailed}
-              className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                detailed
-                  ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
-                  : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
-              }`}
-            >
-              <Telescope size={14} aria-hidden /> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDetailed((v) => !v)}
+                aria-pressed={detailed}
+                className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  detailed
+                    ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
+                    : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
+                }`}
+              >
+                <Telescope size={14} aria-hidden /> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
+              </button>
+              {/* محلّل الوثائق: أرفق مستندًا فيُستخرَج نصّه محليًّا (لا يغادر الجهاز) ويُدرَج في السؤال */}
+              <label
+                title="أرفق مستندًا لاستخراج نصّه محليًّا"
+                className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--ink-15)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-60)] transition hover:text-[var(--navy)]"
+              >
+                <Paperclip size={14} aria-hidden /> {extracting ? "جارٍ…" : "إرفاق"}
+                <input type="file" accept=".txt,.md,.csv,.json,.docx,.pdf,.png,.jpg,.jpeg,.webp" className="sr-only" onChange={onFile} disabled={extracting || busy} />
+              </label>
+            </div>
             <button
               type="submit"
               disabled={busy || !value.trim()}
@@ -571,6 +606,9 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
             </button>
           </div>
         </form>
+        {attachNote ? (
+          <p className="mt-2 px-1 text-center text-[11px] leading-6 text-[var(--gold-dark)]">{attachNote} · يُقرأ الملفّ في متصفّحك ولا يُرفع لأيّ خادم.</p>
+        ) : null}
         <p className="mt-2 px-1 text-center text-[11px] leading-6 text-[var(--ink-40)]">
           حكيم يبحث في النواة القانونية الموثّقة فقط ولا يولّد مواد غير موجودة. مخرجاته مساعدة وتعليمية وليست رأيًا قانونيًا نهائيًا.
         </p>
