@@ -6,6 +6,14 @@ import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { AGENT_MODES, getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
 
+// أمثلةٌ مؤصَّلة تُجيب عنها النواة القانونية — للحالة الفارغة (بدءٌ بلمسة).
+const STARTERS = [
+  "ما مدّة الاستئناف أمام المحاكم التجارية؟",
+  "متى يسقط الحقّ بالتقادم في المعاملات المدنية؟",
+  "ما أحكام الفصل التعسّفي في نظام العمل؟",
+  "ما شروط صحّة عقد البيع نظامًا؟"
+];
+
 type StepStatus = "running" | "done";
 type Step = { id: string; status: StepStatus; label: string; data?: any };
 
@@ -180,12 +188,35 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       {/* منطقة المحادثة */}
       <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto pb-6">
         {turns.length === 0 ? (
-          <div className="flex flex-col items-center pt-[8vh] text-center">
+          <div className="flex min-h-[60vh] flex-col items-center justify-center px-2 text-center">
             <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-3xl text-[var(--gold-bright)] shadow-[var(--sh-md)]">
               ✦
             </span>
             <h1 className="t-head mt-5 text-2xl font-bold text-[var(--navy)] md:text-3xl">{greeting}</h1>
-            <p className="mt-2 text-[var(--ink-60)]">كيف أساعدك اليوم؟ اسألني في الأنظمة السعودية وسأبحث في النواة القانونية الموثّقة.</p>
+            <p className="mt-2 max-w-md leading-7 text-[var(--ink-60)]">
+              كيف أساعدك اليوم؟ اسألني في الأنظمة السعودية وسأبحث في النواة القانونية الموثّقة.
+            </p>
+
+            {/* أمثلةٌ للبدء — تملأ الفراغ وتوجّه المستخدم بلمسةٍ واحدة */}
+            <div className="mt-7 grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {STARTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void ask(s)}
+                  className="focus-ring rounded-[var(--r-lg)] border border-[var(--ink-15)] bg-ivory px-4 py-3 text-right text-sm leading-6 text-[var(--ink-80)] shadow-[var(--sh-xs)] transition hover:-translate-y-0.5 hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            {/* تمييز الأوضاع عن الوكلاء المخصّصين */}
+            <p className="mt-6 max-w-md text-xs leading-6 text-[var(--ink-40)]">
+              الأزرار أسفل الصندوق <b className="font-semibold text-[var(--ink-60)]">أوضاعٌ</b> لعقلٍ واحد تغيّر زاوية الإجابة. وللوكلاء المخصّصين بنطاقاتٍ ومهاراتٍ مستقلّة، افتح{" "}
+              <a href="/dashboard/agents" className="font-semibold text-[var(--navy)] underline underline-offset-2 hover:text-[var(--navy-mid)]">صفحة الوكلاء</a>.
+            </p>
           </div>
         ) : (
           turns.map((turn, i) => (
