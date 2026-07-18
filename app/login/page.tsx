@@ -93,8 +93,14 @@ export default function LoginPage({
             />
 
             <p className="login-panel__hint">
-              الدخول محمي بجلسة خادمية. يمكنك استخدام اسم المستخدم أو البريد مع كلمة المرور التي يولّدها المالك من
-              إعدادات الموقع.
+              ليس لديك حساب؟{" "}
+              <Link
+                href={`/register?next=${encodeURIComponent(nextUrl)}`}
+                className="font-semibold text-[var(--navy)] underline underline-offset-4"
+              >
+                سجّل مجانًا وابدأ التجربة
+              </Link>
+              .
             </p>
 
             <p className="login-panel__links">

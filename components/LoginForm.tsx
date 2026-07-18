@@ -150,6 +150,18 @@ export function LoginForm({
       </form>
 
       {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}
+
+      {!compact ? (
+        <p className="text-center text-sm text-[var(--ink-60)]">
+          جديد على حكيم؟{" "}
+          <a
+            href={`/register?next=${encodeURIComponent(dest)}`}
+            className="font-semibold text-[var(--navy)] underline underline-offset-4"
+          >
+            إنشاء حساب وتجربة مجانية
+          </a>
+        </p>
+      ) : null}
     </div>
   );
 }
