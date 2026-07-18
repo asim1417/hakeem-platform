@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
@@ -35,6 +35,26 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // على الجوّال: مغادرة المتصفّح تعلّق التبويب فينكسر بثّ الطلب. نرصد ذلك لتقديم رسالة لطيفة + إعادة محاولة.
+  const abortRef = useRef<AbortController | null>(null);
+  const backgroundedRef = useRef(false);
+  const busyRef = useRef(false);
+
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
+
+  useEffect(() => {
+    // إن غادر المستخدم الصفحة أثناء بحثٍ جارٍ، نسِم أن الانقطاع سببه الخلفية لا خطأ فعليّ.
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden" && busyRef.current) backgroundedRef.current = true;
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      abortRef.current?.abort();
+    };
+  }, []);
 
   function patchLastTurn(patch: (t: Turn) => Turn) {
     setTurns((prev) => {
@@ -50,6 +70,9 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
     if (!question || busy) return;
     setBusy(true);
     setValue("");
+    backgroundedRef.current = false;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setTurns((prev) => [
       ...prev,
       { question, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
@@ -64,7 +87,8 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history })
+        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history }),
+        signal: controller.signal
       });
 
       if (!res.ok || !res.body) {
@@ -126,11 +150,27 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
       }
       patchLastTurn((t) => ({ ...t, streaming: false }));
-    } catch {
-      patchLastTurn((t) => ({ ...t, streaming: false, error: "انقطع الاتصال أثناء البحث." }));
+    } catch (e) {
+      // على الجوّال: مغادرة الصفحة/تبديل التطبيق أثناء البحث يعلّق التبويب فينكسر البثّ.
+      // نميّز هذه الحالة عن انقطاع فعليّ كي لا تظهر رسالة خطأ مقلقة، ونتيح إعادة المحاولة بلمسة.
+      const backgrounded = backgroundedRef.current || (e instanceof DOMException && e.name === "AbortError");
+      patchLastTurn((t) => ({
+        ...t,
+        streaming: false,
+        error: backgrounded
+          ? "توقّف البحث لأنك غادرت الصفحة على الجوّال قبل اكتماله — أعد المحاولة."
+          : "انقطع الاتصال أثناء البحث."
+      }));
     } finally {
       setBusy(false);
     }
+  }
+
+  // إعادة تشغيل آخر سؤال بعد فشلٍ أو مغادرة — نحذف الدور المتعثّر ثم نعيد الطرح.
+  function retry(question: string) {
+    if (busy) return;
+    setTurns((prev) => prev.slice(0, -1));
+    void ask(question);
   }
 
   const greeting = userName ? `أهلاً، ${userName}` : "أهلاً بك";
@@ -217,8 +257,16 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
 
                 {/* النتيجة المستندة */}
                 {turn.error ? (
-                  <div className="rounded-[var(--r-lg)] border border-[rgba(140,34,51,0.3)] bg-[var(--ruby-soft)] p-4 text-sm leading-7 text-[var(--ruby)]">
-                    {turn.error}
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[rgba(140,34,51,0.3)] bg-[var(--ruby-soft)] p-4 text-sm leading-7 text-[var(--ruby)]">
+                    <span>{turn.error}</span>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => retry(turn.question)}
+                      className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <span aria-hidden>↻</span> إعادة المحاولة
+                    </button>
                   </div>
                 ) : null}
 
