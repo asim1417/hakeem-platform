@@ -50,8 +50,15 @@ export default async function AdminPage() {
   const status = await getAdminStatus();
 
   const services: { label: string; state: ServiceState; detail: string; href?: string }[] = [
+    {
+      label: "حساب المالك وبيانات الدخول",
+      state: "live",
+      detail: "توليد اسم مستخدم + كلمة مرور سهلة + صلاحيات — صفحة المالك",
+      href: "/admin/owner",
+    },
     { label: "إدارة المستخدمين", state: "live", detail: "إنشاء/تعديل دور/تفعيل — مُفعّلة", href: "/admin/users" },
     { label: "الصلاحيات المتقدمة (RBAC)", state: "live", detail: "محرّر مصفوفة الأدوار×الصلاحيات — مُفعّل", href: "/admin/roles" },
+    { label: "صفحة تسجيل الدخول", state: "live", detail: "منشورة ومتاحة على /login", href: "/login" },
     { label: "مفاتيح API (البوابة الخارجية)", state: "live", detail: "إنشاء مفاتيح للأطراف الخارجية وأنظمة الذكاء — مُفعّلة", href: "/admin/api-keys" },
     {
       label: "تفعيل الذكاء الحقيقي",

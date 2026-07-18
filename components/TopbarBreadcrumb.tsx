@@ -12,8 +12,11 @@ const LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "/dashboard/training", label: "التدريب" },
   { prefix: "/dashboard", label: "الرئيسية" },
   { prefix: "/admin/ai", label: "إعدادات الذكاء" },
+  { prefix: "/admin/owner", label: "حساب المالك" },
   { prefix: "/admin/users", label: "المستخدمون" },
+  { prefix: "/admin/settings", label: "إعدادات التشغيل" },
   { prefix: "/admin", label: "الإعدادات" },
+  { prefix: "/login", label: "تسجيل الدخول" },
   { prefix: "/audit-logs", label: "سجل التدقيق" }
 ];
 

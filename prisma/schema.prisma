@@ -51,6 +51,8 @@ model User {
   id                String             @id @default(cuid())
   name              String
   email             String             @unique
+  /// اسم مستخدم اختياري للدخول (بدل/مع البريد) — يولَّد من لوحة المالك.
+  username          String?            @unique
   passwordHash      String
   role              UserRole           @default(TRAINEE)
   isActive          Boolean            @default(true)

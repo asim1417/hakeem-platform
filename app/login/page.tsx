@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
 import { LegalAlert } from "@/components/ui/legal";
 import { isAuthDisabled } from "@/lib/modules/auth/session";
@@ -29,8 +28,8 @@ export default function LoginPage({
   searchParams: { next?: string; error?: string };
 }) {
   const nextUrl = safeNextPath(searchParams?.next);
-  // عند تعطيل تسجيل الدخول نخفي الصفحة ونحوّل المستخدم مباشرة إلى لوحة التحكم.
-  if (isAuthDisabled()) redirect(nextUrl);
+  // صفحة الدخول منشورة دائمًا — لا تُخفى حتى في وضع التطوير.
+  const authDisabled = isAuthDisabled();
 
   const oauthError = searchParams?.error ? OAUTH_ERRORS[searchParams.error] ?? "تعذّر إكمال تسجيل الدخول." : null;
   const googleEnabled = isGoogleOAuthConfigured();
@@ -42,7 +41,6 @@ export default function LoginPage({
       <div aria-hidden className="login-page__pattern" />
 
       <div className="login-page__grid">
-        {/* لوحة العلامة — إشارة بصرية أولى لـ «حكيم» */}
         <aside className="login-brand">
           <div className="login-brand__inner">
             <p className="login-brand__mark" aria-hidden>
@@ -53,12 +51,11 @@ export default function LoginPage({
             <ul className="login-brand__points">
               <li>دخول موحّد عبر بوابة Microsoft Entra</li>
               <li>دخول سريع عبر Google</li>
-              <li>جلسة خادمية محمية — متوافقة مع PDPL</li>
+              <li>اسم مستخدم وكلمة مرور من إعدادات المالك</li>
             </ul>
           </div>
         </aside>
 
-        {/* نموذج الدخول — سطح تفاعل */}
         <section className="login-panel" aria-labelledby="login-heading">
           <div className="login-panel__card">
             <header className="login-panel__header">
@@ -66,8 +63,22 @@ export default function LoginPage({
               <h2 id="login-heading" className="login-panel__title">
                 تسجيل الدخول
               </h2>
-              <p className="login-panel__desc">اختر بوابة الدخول أو سجّل بالبريد الإلكتروني.</p>
+              <p className="login-panel__desc">
+                سجّل الدخول باسم المستخدم أو البريد، أو عبر بوابة Microsoft / Google.
+              </p>
             </header>
+
+            {authDisabled ? (
+              <div className="mb-4">
+                <LegalAlert tone="info">
+                  وضع التطوير مفتوح حاليًا (المصادقة غير مفروضة). يمكنك الدخول بحسابك، أو{" "}
+                  <Link href={nextUrl} className="font-semibold underline underline-offset-4">
+                    المتابعة مباشرة إلى المنصة
+                  </Link>
+                  .
+                </LegalAlert>
+              </div>
+            ) : null}
 
             {oauthError ? (
               <div className="mb-4">
@@ -82,7 +93,8 @@ export default function LoginPage({
             />
 
             <p className="login-panel__hint">
-              الدخول محمي بجلسة خادمية وكلمة مرور مشفّرة. عند تعطيل المستخدم من الإدارة لن يستطيع تسجيل الدخول.
+              الدخول محمي بجلسة خادمية. يمكنك استخدام اسم المستخدم أو البريد مع كلمة المرور التي يولّدها المالك من
+              إعدادات الموقع.
             </p>
 
             <p className="login-panel__links">

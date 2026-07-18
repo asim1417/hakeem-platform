@@ -1,41 +1,10 @@
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ROLE_PERMISSIONS, type Permission } from "@/lib/modules/auth/role-permissions";
 
-export type Permission =
-  | "CONSULTATIONS_FULL"
-  | "CONSULTATIONS_LIMITED"
-  | "SIMULATIONS_USE"
-  | "TRAINING_USE"
-  | "TRAINING_MANAGE"
-  | "LIBRARY_READ"
-  | "LEGAL_CORE_VIEW"
-  | "LEGAL_CORE_EDIT"
-  | "LEGAL_CORE_ADMIN"
-  | "ATTACHMENTS_FULL"
-  | "ATTACHMENTS_LIMITED"
-  | "USERS_MANAGE"
-  | "ADMIN_REPORTS_VIEW"
-  | "GOVERNANCE_AUDIT_VIEW";
+export type { Permission };
 
-const rolePermissions: Record<UserRole, Permission[]> = {
-  SYSTEM_ADMIN: [
-    "CONSULTATIONS_FULL",
-    "SIMULATIONS_USE",
-    "TRAINING_USE",
-    "TRAINING_MANAGE",
-    "LIBRARY_READ",
-    "LEGAL_CORE_VIEW",
-    "LEGAL_CORE_EDIT",
-    "LEGAL_CORE_ADMIN",
-    "ATTACHMENTS_FULL",
-    "USERS_MANAGE",
-    "ADMIN_REPORTS_VIEW",
-    "GOVERNANCE_AUDIT_VIEW"
-  ],
-  LAWYER: ["CONSULTATIONS_FULL", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL"],
-  TRAINER: ["SIMULATIONS_USE", "TRAINING_USE", "TRAINING_MANAGE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL", "ADMIN_REPORTS_VIEW"],
-  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_LIMITED"]
-};
+const rolePermissions = ROLE_PERMISSIONS as Record<UserRole, Permission[]>;
 
 export function hasPermission(role: UserRole, permission: Permission) {
   if (permission === "CONSULTATIONS_LIMITED" && rolePermissions[role].includes("CONSULTATIONS_FULL")) return true;
@@ -60,9 +29,9 @@ export async function canUser(userId: string | undefined, permission: Permission
     where: { key: user.role },
     include: {
       permissions: {
-        include: { permission: true }
-      }
-    }
+        include: { permission: true },
+      },
+    },
   });
 
   if (!role) return hasPermission(user.role, permission);

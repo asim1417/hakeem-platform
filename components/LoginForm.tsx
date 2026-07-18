@@ -108,17 +108,16 @@ export function LoginForm({
 
       <form className="space-y-4" onSubmit={(e) => void login(e)} noValidate>
         <label className="block">
-          <span className="text-sm font-semibold text-[var(--navy)]">البريد الإلكتروني</span>
+          <span className="text-sm font-semibold text-[var(--navy)]">اسم المستخدم أو البريد</span>
           <input
             dir="ltr"
-            type="email"
+            type="text"
             name="email"
-            autoComplete="email"
-            inputMode="email"
+            autoComplete="username"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="name@example.com"
+            placeholder="username أو name@example.com"
             className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3 text-left text-[var(--ink)] placeholder:text-[var(--ink-20)]"
           />
         </label>

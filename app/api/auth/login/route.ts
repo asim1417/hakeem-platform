@@ -8,7 +8,8 @@ import { createLoginSession } from "@/lib/modules/auth/session";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  email: z.string().email(),
+  // يقبل البريد أو اسم المستخدم في الحقل نفسه.
+  email: z.string().min(1),
   password: z.string().min(1),
 });
 
@@ -20,10 +21,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "صيغة بيانات الدخول غير صالحة." }, { status: 400 });
   }
 
-  const email = payload.email.toLowerCase().trim();
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, name: true, email: true, role: true, passwordHash: true, isActive: true },
+  const identifier = payload.email.toLowerCase().trim();
+  const looksLikeEmail = identifier.includes("@");
+
+  const user = await prisma.user.findFirst({
+    where: looksLikeEmail
+      ? { email: identifier }
+      : { OR: [{ username: identifier }, { email: identifier }] },
+    select: { id: true, name: true, email: true, username: true, role: true, passwordHash: true, isActive: true },
   });
 
   // رفض قيم OAuth الوهمية ككلمة مرور.
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
       subject: "AUTH",
       action: "LOGIN_FAILED",
       metadata: {
-        email,
+        email: identifier,
         reason: !user ? "USER_NOT_FOUND" : !user.isActive ? "USER_INACTIVE" : isOAuthOnly ? "OAUTH_ONLY" : "BAD_PASSWORD",
       },
     }).catch(() => undefined);
@@ -60,7 +65,9 @@ export async function POST(request: NextRequest) {
     actorId: user.id,
     subject: "AUTH",
     action: "LOGIN_SUCCESS",
-    metadata: { email: user.email, role: user.role, provider: "password" },
+    metadata: { email: user.email, username: user.username, role: user.role, provider: "password" },
   });
-  return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  return NextResponse.json({
+    user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role },
+  });
 }
