@@ -89,13 +89,16 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     onStep({ id: "breadth", status: "done", label: `صنّفتُ السؤال: ${breadthClass === "specific" ? "محدّد" : breadthClass === "exhaustive" ? "استقصائيّ" : "ملتبس"}`, data: { breadthClass, source } });
     if (breadthClass === "specific") {
       breadthSpecific = true; // جواب مباشر من المادة الحاكمة — لا استقصاء ولا جدول شامل
-    } else {
+    } else if (source === "model") {
+      // الاستيضاح يصدر من **قراءة النموذج للسؤال وفهمه** أنه ملتبس فعلًا — لا من مطابقة كلمةٍ
+      // مفتاحية. إن لم يقرأه النموذج (سقوط حتميّ بالكلمات) نُجيب مباشرةً بدل قائمةٍ مبنيّة على كلمة.
       const clarify = buildClarificationForClass(query, breadthClass, { hasSystem });
       if (clarify) {
         return { intent: intent.type, clarify, issues: [], articles: [], mode };
       }
       // استقصائيّ + نظام مذكور → لا استيضاح؛ يتولّاه المسح الكامل للنظام أدناه.
     }
+    // مصدرٌ حتميّ (كلمات) وغير محدّد → لا نُظهر قائمة استيضاحٍ مبنيّة على كلمة؛ نتابع للإجابة المباشرة.
   }
 
   // ①.٦ الاستقصاء الشامل (المرحلة ٣): يُفعَّل فقط عند اختيار المستخدم (skipBreadth) لسؤال
