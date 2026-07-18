@@ -38,6 +38,16 @@ const LEGAL_MARKERS = [
 ];
 const NON_LEGAL = ["طبخ", "وصفه", "طقس", "الجو", "كوره", "رياضه", "مباراه", "فيلم", "مسلسل", "اغنيه", "سفر", "مطعم", "وزن", "رجيم", "برمجه"];
 
+// طلبٌ عامّ للمساعدة بلا مسألةٍ محدّدة («أريد حلول قانونية»، «عندي قضية») — يُعامَل حواريًّا
+// (نطلب الوقائع/السؤال) لا بحثًا في النواة. فعل رغبة + مفعول عامّ، دون إشارةٍ قانونية ملموسة.
+const SOLICIT_VERBS = ["اريد", "ابي", "ابغي", "ابغى", "محتاج", "احتاج", "ساعدني", "ساعدوني", "ودي", "اطلب", "عندي", "لدي", "ممكن"];
+const SOLICIT_OBJECTS = ["حل", "حلول", "مساعده", "استشاره", "نصيحه", "قضيه", "سؤال", "سوال", "مشكله", "استفسار", "خدمه", "توجيه", "راي"];
+// إشارات قانونية «ملموسة» — بلا الكلمات العامّة (قانون/حقوق) التي تَرِد في طلبٍ بلا مضمون.
+const GENERIC_MARKERS = ["قانون", "حقوق", "التزام", "التزامات", "مسؤوليه"];
+const CONCRETE_MARKERS = LEGAL_MARKERS.filter((m) => !GENERIC_MARKERS.includes(m));
+const SOLICIT_REPLY =
+  "بالتأكيد، أنا هنا لمساعدتك. صِف لي وقائع مسألتك أو اطرح سؤالك القانونيّ بجملةٍ واضحة وسأحلّله مستندًا للأنظمة الموثّقة. مثال: «فُصلت من عملي دون إشعار، ما حقوقي؟» أو «ما شروط فسخ عقد الإيجار؟».";
+
 function includesAny(haystack: string, needles: string[]): boolean {
   return needles.some((n) => haystack.includes(n));
 }
@@ -64,6 +74,17 @@ export function classifyIntent(input: string): IntentResult {
   const words = n.split(" ").filter(Boolean);
 
   if (!n) return { type: "ambiguous", confidence: 1, reply: REPLIES.ambiguous, source: "deterministic" };
+
+  const hasConcrete = /\d{1,4}/.test(n) || includesAny(n, CONCRETE_MARKERS);
+
+  // طلبٌ عامّ بلا مضمون («أريد حلول قانونية»، «عندي قضية»، «ساعدني») — قبل فحص القانونية العامّ
+  // كي لا تخدعنا كلمة «قانون». قصيرٌ جدًّا (≤٤ كلمات) بلا إشارةٍ ملموسة → ردٌّ حواريّ يطلب الوقائع.
+  // أيّ جملةٍ أطول أو فيها وقائع تمرّ للبحث فلا نحجب مسألةً حقيقية.
+  const isBareHelp = includesAny(n, ["ساعدني", "ساعدوني", "ساعدونى"]);
+  const isSolicit = isBareHelp || (includesAny(n, SOLICIT_VERBS) && includesAny(n, SOLICIT_OBJECTS));
+  if (!hasConcrete && words.length <= 4 && isSolicit) {
+    return { type: "ambiguous", confidence: 0.8, reply: SOLICIT_REPLY, source: "deterministic" };
+  }
 
   const hasLegal = /\d{1,4}/.test(n) || includesAny(n, LEGAL_MARKERS);
 
