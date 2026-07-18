@@ -9,7 +9,11 @@
   },
   "practiceProfile": {
     "role": "معاون_قاضٍ",
-    "audience": ["محكمة", "جهة_حكومية", "فريق_داخلي"],
+    "audience": [
+      "محكمة",
+      "جهة_حكومية",
+      "فريق_داخلي"
+    ],
     "defaultDepth": "متعمق",
     "dialect": "فصحى"
   },
@@ -27,17 +31,32 @@
     {
       "skillId": "dispute-editing",
       "path": "skills/dispute-editing/SKILL.md",
-      "engineTools": ["legal_research", "read_article_in_context", "read_chapter", "build_citation"]
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "read_chapter",
+        "build_citation"
+      ]
     },
     {
       "skillId": "defenses-inventory",
       "path": "skills/defenses-inventory/SKILL.md",
-      "engineTools": ["exhaustive_scan", "read_article_in_context", "build_citation"]
+      "engineTools": [
+        "exhaustive_scan",
+        "read_article_in_context",
+        "build_citation"
+      ]
     },
     {
       "skillId": "reasoning-skeleton",
       "path": "skills/reasoning-skeleton/SKILL.md",
-      "engineTools": ["legal_research", "read_article_in_context", "takhrij_hukm", "build_citation", "hijri_date_calc"]
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "takhrij_hukm",
+        "build_citation",
+        "hijri_date_calc"
+      ]
     }
   ],
   "subRoles": [
@@ -45,11 +64,25 @@
       "subRoleId": "bench-aide",
       "displayName": "معاون الدائرة (تحضيريّ محايد)",
       "stance": "مشرف",
-      "skills": ["dispute-editing", "defenses-inventory", "reasoning-skeleton"],
-      "outputTemplates": ["dispute-brief", "defenses-table", "reasoning-skeleton"],
+      "skills": [
+        "dispute-editing",
+        "defenses-inventory",
+        "reasoning-skeleton"
+      ],
+      "outputTemplates": [
+        "dispute-brief",
+        "defenses-table",
+        "reasoning-skeleton"
+      ],
       "stanceGuard": {
         "rule": "معاون القاضي يجهّز العمل التحضيريّ محايدًا؛ القضاء لصاحب الولاية وحده. يرث محظور الحياد الأشدّ.",
-        "forbids": ["اقتراح_منطوق", "ترجيح_بين_الطرفين", "ملء_خانة_النتيجة", "تقدير_الحكم", "صياغة_ترافعية"],
+        "forbids": [
+          "اقتراح_منطوق",
+          "ترجيح_بين_الطرفين",
+          "ملء_خانة_النتيجة",
+          "تقدير_الحكم",
+          "صياغة_ترافعية"
+        ],
         "conformanceTest": "JDG-STANCE-BENCH-01"
       }
     }
@@ -57,21 +90,44 @@
   "outputTemplates": [
     {
       "templateId": "dispute-brief",
-      "structure": ["محل_النزاع", "المتفق_عليه", "المختلف_فيه", "الاختصاص_والشكل", "لوحة_المصادر"]
+      "structure": [
+        "محل_النزاع",
+        "المتفق_عليه",
+        "المختلف_فيه",
+        "الاختصاص_والشكل",
+        "لوحة_المصادر"
+      ]
     },
     {
       "templateId": "defenses-table",
-      "structure": ["الطلبات", "الدفوع_الشكلية", "الدفوع_الموضوعية", "موضع_الرد_في_هيكل_الحكم", "لوحة_المصادر"]
+      "structure": [
+        "الطلبات",
+        "الدفوع_الشكلية",
+        "الدفوع_الموضوعية",
+        "موضع_الرد_في_هيكل_الحكم",
+        "لوحة_المصادر"
+      ]
     },
     {
       "templateId": "reasoning-skeleton",
-      "structure": ["الوقائع", "الطلبات", "الدفوع_والرد_عليها", "الأسانيد_النظامية", "خانة_النتيجة_تُترك_للقاضي", "لوحة_المصادر"]
+      "structure": [
+        "الوقائع",
+        "الطلبات",
+        "الدفوع_والرد_عليها",
+        "الأسانيد_النظامية",
+        "خانة_النتيجة_تُترك_للقاضي",
+        "لوحة_المصادر"
+      ]
     }
   ],
   "mcp": {
     "endpoint": "https://hakeem-platform.vercel.app/api/mcp/aman-judge-aide",
     "authMethod": "oauth",
-    "exposedTools": ["حرّر_النزاع", "اجرد_الدفوع", "جهّز_هيكل_التسبيب"]
+    "exposedTools": [
+      "حرّر_النزاع",
+      "اجرد_الدفوع",
+      "جهّز_هيكل_التسبيب"
+    ]
   },
   "hlsCompliance": {
     "grounding": true,
@@ -82,8 +138,19 @@
     "explicitAbstention": true
   },
   "approval": {
-    "status": "draft",
-    "conformanceTestsPassed": [],
-    "agentConformanceTestsPassed": []
+    "status": "approved",
+    "approvedBy": "conformance-gate",
+    "approvedAt": "2026-07-18T14:34:16.490Z",
+    "conformanceTestsPassed": [
+      "HLS-8.1",
+      "HLS-8.2",
+      "HLS-8.3",
+      "HLS-8.4",
+      "HLS-8.5",
+      "HLS-8.6"
+    ],
+    "agentConformanceTestsPassed": [
+      "JDG-STANCE-BENCH-01"
+    ]
   }
 }

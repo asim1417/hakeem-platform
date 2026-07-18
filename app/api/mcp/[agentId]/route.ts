@@ -14,6 +14,9 @@ import {
 } from "@/lib/agent-runtime/live/manifests";
 import { createRunEngine } from "@/lib/agent-runtime/live/run-engine";
 import { composeGrounded } from "@/lib/agent-runtime/live/compose";
+import {
+  exhaustiveScan, readArticleInContext, readChapter, traceAmendments, buildCitation, takhrijHukm,
+} from "@/lib/agent-runtime/live/engine-tools";
 import { handleSearch, isForbiddenCell, type TaskMode } from "@/lib/agent-runtime/pipeline/searchRoute";
 import { computeDeadline, type HDate } from "@/lib/agent-runtime/tools/hijriDateCalc";
 import type { Stance } from "@/lib/agent-runtime/types";
@@ -115,6 +118,37 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
         note: "جمع الأيام دقيقٌ (JDN). قد يخالف أم القرى الرسميّ بيوم لمهلةٍ مُلزِمة.",
       },
     });
+  }
+
+  // ── أدوات المحرّك المصرَّح بها في مهارات الوكيل (قراءةٌ مقيّدةٌ بالنطاق) ──
+  const engineTools = new Set(m.skills.flatMap((s) => s.engineTools));
+  const scope = m.scope.defaultSystems;
+  const num = Number(body?.input?.articleNumber);
+  if (["exhaustive_scan", "read_article_in_context", "read_chapter", "trace_amendments", "build_citation", "takhrij_hukm"].includes(tool)) {
+    if (!engineTools.has(tool as never)) return json({ ok: false, error: `الأداة «${tool}» غير مصرَّحة لهذا الوكيل.` }, 403);
+    switch (tool) {
+      case "exhaustive_scan":
+        return json({ ok: true, tool, kind: "engine", result: await exhaustiveScan(scope) });
+      case "read_article_in_context":
+        if (!Number.isFinite(num)) return json({ ok: false, error: "input.articleNumber مطلوب (عدد)." }, 400);
+        return json({ ok: true, tool, kind: "engine", result: await readArticleInContext(scope, num) });
+      case "read_chapter": {
+        const chapter = String(body?.input?.chapter ?? "").trim();
+        if (!chapter) return json({ ok: false, error: "input.chapter مطلوب." }, 400);
+        return json({ ok: true, tool, kind: "engine", result: await readChapter(scope, chapter) });
+      }
+      case "trace_amendments":
+        if (!Number.isFinite(num)) return json({ ok: false, error: "input.articleNumber مطلوب (عدد)." }, 400);
+        return json({ ok: true, tool, kind: "engine", result: await traceAmendments(scope, num) });
+      case "build_citation":
+        if (!Number.isFinite(num)) return json({ ok: false, error: "input.articleNumber مطلوب (عدد)." }, 400);
+        return json({ ok: true, tool, kind: "engine", result: await buildCitation(scope, num) });
+      case "takhrij_hukm": {
+        const q = String(body?.input?.query ?? "").trim();
+        if (!q) return json({ ok: false, error: "input.query مطلوب." }, 400);
+        return json({ ok: true, tool, kind: "engine", result: await takhrijHukm(q) });
+      }
+    }
   }
 
   // ── أداة البحث المقيّد بالنطاق (تمرّ بالحرّاس على نتيجة المحرّك الفعليّة) ──

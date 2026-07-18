@@ -1,4 +1,4 @@
-import { Database, GraduationCap, Sparkles } from "lucide-react";
+import { Bot, Database, GraduationCap, Sparkles } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
 import { requireUser } from "@/lib/modules/auth/session";
 
@@ -43,6 +43,13 @@ export default async function LabPage() {
           badge="تجريبيّ"
           icon={GraduationCap}
           description="تمارين ومسارات تدريبية مع نقاط وشارات ومتابعة تقدّم."
+        />
+        <ModuleCard
+          href="/dashboard/agents"
+          title="الوكلاء المخصّصون"
+          metric="طبقة تكوين"
+          icon={Bot}
+          description="وكلاء ممارسة (تقاضٍ تجاريّ · إفلاس · معاون قاضٍ) فوق المحرّك الموحّد بحرّاسٍ برمجيّة، وحاسبة مهلة حيّة."
         />
       </section>
     </div>

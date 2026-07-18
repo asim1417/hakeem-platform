@@ -9,7 +9,11 @@
   },
   "practiceProfile": {
     "role": "محامي_تقاضي_تجاري",
-    "audience": ["محكمة", "عميل", "فريق_داخلي"],
+    "audience": [
+      "محكمة",
+      "عميل",
+      "فريق_داخلي"
+    ],
     "defaultDepth": "متعمق",
     "dialect": "فصحى"
   },
@@ -27,33 +31,70 @@
     {
       "skillId": "scoped-research",
       "path": "skills/scoped-research/SKILL.md",
-      "engineTools": ["legal_research", "read_article_in_context", "read_chapter", "exhaustive_scan", "build_citation"]
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "read_chapter",
+        "exhaustive_scan",
+        "build_citation"
+      ]
     },
     {
       "skillId": "memo-drafting",
       "path": "skills/memo-drafting/SKILL.md",
-      "engineTools": ["legal_research", "read_article_in_context", "takhrij_hukm", "build_citation"]
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "takhrij_hukm",
+        "build_citation"
+      ]
     },
     {
       "skillId": "deadline-audit",
       "path": "skills/deadline-audit/SKILL.md",
-      "engineTools": ["exhaustive_scan", "read_article_in_context", "trace_amendments", "build_citation"]
+      "engineTools": [
+        "exhaustive_scan",
+        "read_article_in_context",
+        "trace_amendments",
+        "build_citation"
+      ]
     }
   ],
   "outputTemplates": [
     {
       "templateId": "memo-litigation",
-      "structure": ["تحرير_المسألة", "الوقائع", "الطلبات", "الأساس_النظامي", "الدفوع_المتقابلة", "الحكم_النظامي_المطبق", "الأثر_العملي", "لوحة_المصادر"]
+      "structure": [
+        "تحرير_المسألة",
+        "الوقائع",
+        "الطلبات",
+        "الأساس_النظامي",
+        "الدفوع_المتقابلة",
+        "الحكم_النظامي_المطبق",
+        "الأثر_العملي",
+        "لوحة_المصادر"
+      ]
     },
     {
       "templateId": "deadline-inventory",
-      "structure": ["قاعدة_الحساب", "المدد_التنظيمية", "التقادم", "السقوط", "الآجال_الإجرائية", "الاستثناءات", "لوحة_المصادر"]
+      "structure": [
+        "قاعدة_الحساب",
+        "المدد_التنظيمية",
+        "التقادم",
+        "السقوط",
+        "الآجال_الإجرائية",
+        "الاستثناءات",
+        "لوحة_المصادر"
+      ]
     }
   ],
   "mcp": {
     "endpoint": "https://hakeem-platform.vercel.app/api/mcp/aman-commercial-litigator",
     "authMethod": "api_key",
-    "exposedTools": ["بحث_في_نطاقي", "أعد_مذكرة", "احصر_المهل"]
+    "exposedTools": [
+      "بحث_في_نطاقي",
+      "أعد_مذكرة",
+      "احصر_المهل"
+    ]
   },
   "hlsCompliance": {
     "grounding": true,
@@ -64,7 +105,17 @@
     "explicitAbstention": true
   },
   "approval": {
-    "status": "draft",
-    "conformanceTestsPassed": []
+    "status": "approved",
+    "approvedBy": "conformance-gate",
+    "approvedAt": "2026-07-18T14:34:16.490Z",
+    "conformanceTestsPassed": [
+      "HLS-8.1",
+      "HLS-8.2",
+      "HLS-8.3",
+      "HLS-8.4",
+      "HLS-8.5",
+      "HLS-8.6"
+    ],
+    "agentConformanceTestsPassed": []
   }
 }
