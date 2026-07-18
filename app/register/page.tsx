@@ -1,22 +1,31 @@
 import Link from "next/link";
 import { RegisterForm } from "@/components/RegisterForm";
+import { CREDIT_REWARDS } from "@/config/credits";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 import { isMicrosoftOAuthConfigured } from "@/lib/modules/auth/microsoft-oauth";
 import { safeNextPath } from "@/lib/modules/auth/oauth-shared";
 
 export const metadata = {
   title: "إنشاء حساب — حكيم",
-  description: "سجّل في منصة حكيم وابدأ تجربتك المجانية.",
+  description: "سجّل في منصة حكيم وابدأ تجربتك المجانية مع نقاط ترحيبية.",
 };
+
+function normalizeRef(raw?: string): string {
+  const code = (raw || "").trim().toUpperCase();
+  return code.startsWith("HKM-") && code.length <= 32 ? code : "";
+}
 
 export default function RegisterPage({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  searchParams: { next?: string; ref?: string };
 }) {
   const nextUrl = safeNextPath(searchParams?.next);
+  const referralCode = normalizeRef(searchParams?.ref);
   const googleEnabled = isGoogleOAuthConfigured();
   const microsoftEnabled = isMicrosoftOAuthConfigured();
+  const oauthQs = new URLSearchParams({ next: "/onboarding" });
+  if (referralCode) oauthQs.set("ref", referralCode);
 
   return (
     <main className="login-page">
@@ -30,11 +39,13 @@ export default function RegisterPage({
               ح
             </p>
             <h1 className="login-brand__title">حكيم</h1>
-            <p className="login-brand__tagline">ابدأ تجربتك المجانية — حلّل الوقائع واقترح الدفوع بمحاكاة قضائية.</p>
+            <p className="login-brand__tagline">
+              احصل على {CREDIT_REWARDS.welcome} نقطة ترحيبية — ثم أكمل ملفك لتحليل الوقائع واقتراح الدفوع.
+            </p>
             <ul className="login-brand__points">
+              <li>+{CREDIT_REWARDS.welcome} نقطة عند التسجيل + مكافآت إكمال الملف</li>
               <li>تسجيل للمحامي الفرد (ميزة أمام المنافسين)</li>
-              <li>تجربة مجانية مباشرة بعد إنشاء الحساب</li>
-              <li>أو سجّل عبر Google / Microsoft</li>
+              <li>تجربة مجانية مباشرة — بلا بطاقة دفع</li>
             </ul>
           </div>
         </aside>
@@ -42,18 +53,18 @@ export default function RegisterPage({
         <section className="login-panel" aria-labelledby="register-heading">
           <div className="login-panel__card">
             <header className="login-panel__header">
-              <p className="login-panel__eyebrow">تجربة مجانية</p>
+              <p className="login-panel__eyebrow">تجربة مجانية · +{CREDIT_REWARDS.welcome} نقطة</p>
               <h2 id="register-heading" className="login-panel__title">
                 إنشاء حساب
               </h2>
-              <p className="login-panel__desc">أنشئ حسابك خلال دقيقة، ثم ادخل المنصة مباشرة.</p>
+              <p className="login-panel__desc">أنشئ حسابك خلال دقيقة، ثم أكمل ملفك واكسب نقاطًا إضافية.</p>
             </header>
 
             {(googleEnabled || microsoftEnabled) && (
               <div className="mb-5 space-y-3">
                 {microsoftEnabled ? (
                   <a
-                    href={`/api/auth/microsoft?next=${encodeURIComponent(nextUrl)}`}
+                    href={`/api/auth/microsoft?${oauthQs.toString()}`}
                     className="login-sso-btn login-sso-microsoft focus-ring"
                   >
                     التسجيل عبر بوابة Microsoft
@@ -61,7 +72,7 @@ export default function RegisterPage({
                 ) : null}
                 {googleEnabled ? (
                   <a
-                    href={`/api/auth/google?next=${encodeURIComponent(nextUrl)}`}
+                    href={`/api/auth/google?${oauthQs.toString()}`}
                     className="login-sso-btn login-sso-google focus-ring"
                   >
                     التسجيل عبر Google
@@ -75,7 +86,7 @@ export default function RegisterPage({
               </div>
             )}
 
-            <RegisterForm nextUrl={nextUrl} />
+            <RegisterForm nextUrl={nextUrl} referralCode={referralCode} />
 
             <p className="login-panel__links mt-6">
               <Link href="/" className="focus-ring underline-offset-4 hover:underline">

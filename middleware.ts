@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedPrefixes = ["/dashboard", "/admin", "/audit-logs"];
+const protectedPrefixes = ["/dashboard", "/admin", "/audit-logs", "/onboarding"];
 
 /**
  * حماية المسارات الحساسة: بلا جلسة → صفحة التسجيل (فيها خيار تسجيل الدخول).
- * الرحلة من الرابط الرئيسي: سجّل / ادخل → ثم المنصة.
+ * الرحلة من الرابط الرئيسي: سجّل / ادخل → onboarding أو المنصة.
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (!protectedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (!protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return NextResponse.next();
   }
 
@@ -21,5 +21,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/audit-logs"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/audit-logs", "/onboarding"],
 };

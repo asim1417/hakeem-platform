@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
 import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
+import { QuotaCounter } from "@/components/billing/QuotaCounter";
+import { CreditsWidget } from "@/components/credits/CreditsWidget";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { activityLabel, statusLabel } from "@/lib/activity-labels";
@@ -104,6 +106,9 @@ export default async function DashboardPage({
           </p>
         </div>
       ) : null}
+
+      <QuotaCounter />
+      <CreditsWidget />
 
       {/* الترويسة الموحّدة (نظام التصميم) — تحوي صندوق البحث المركزيّ بخياريه */}
       <Hero

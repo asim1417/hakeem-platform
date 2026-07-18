@@ -8,23 +8,29 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { createLoginSession, type SafeUser } from "@/lib/modules/auth/session";
 import { isOAuthAdminEmail, PLATFORM_OWNER_EMAILS } from "@/lib/modules/auth/oauth-shared";
 import { slugifyUsername } from "@/lib/modules/auth/credentials";
+import { bootstrapNewUser } from "@/lib/modules/onboarding/bootstrap";
 
 export type OAuthProvider = "google" | "microsoft";
+
+export type ProvisionedOAuthUser = SafeUser & { isNew: boolean };
 
 /**
  * ينشئ أو يحدّث مستخدم OAuth، يفتح الجلسة، ويسجّل التدقيق.
  * بريد المالك (مثل aasemalfarsi@gmail.com) → SYSTEM_ADMIN دائمًا.
+ * المستخدمون الجدد يحصلون على نقاط ترحيب ويُوجَّهون لـ /onboarding.
  */
 export async function provisionOAuthUser(input: {
   email: string;
   name?: string | null;
   provider: OAuthProvider;
-}): Promise<SafeUser> {
+  referralCode?: string | null;
+}): Promise<ProvisionedOAuthUser> {
   const email = input.email.toLowerCase().trim();
   const existing = await prisma.user.findUnique({
     where: { email },
     select: { id: true, role: true, username: true },
   });
+  const isNew = !existing;
 
   const isOwner = isOAuthAdminEmail(email);
   const bootstrapAdmin = !existing && (await prisma.user.count().catch(() => 1)) === 0;
@@ -66,6 +72,14 @@ export async function provisionOAuthUser(input: {
   });
 
   await createLoginSession(user);
+
+  if (isNew) {
+    await bootstrapNewUser(user.id, {
+      referralCode: input.referralCode,
+      skipOnboarding: isOwner,
+    }).catch(() => undefined);
+  }
+
   await auditEvent({
     actorId: user.id,
     subject: "AUTH",
@@ -75,8 +89,9 @@ export async function provisionOAuthUser(input: {
       role: user.role,
       provider: input.provider,
       asOwner: isOwner,
+      isNew,
     },
   }).catch(() => undefined);
 
-  return user;
+  return { ...user, isNew };
 }

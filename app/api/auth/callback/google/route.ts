@@ -7,7 +7,7 @@ import {
   GOOGLE_STATE_COOKIE,
   OAUTH_NEXT_COOKIE,
 } from "@/lib/modules/auth/google-oauth";
-import { safeNextPath } from "@/lib/modules/auth/oauth-shared";
+import { isOAuthAdminEmail, OAUTH_REF_COOKIE, safeNextPath } from "@/lib/modules/auth/oauth-shared";
 import { provisionOAuthUser } from "@/lib/modules/auth/oauth-user";
 
 export const dynamic = "force-dynamic";
@@ -28,11 +28,13 @@ export async function GET(request: NextRequest) {
   const state = params.get("state");
   const cookieState = request.cookies.get(GOOGLE_STATE_COOKIE)?.value;
   const nextRaw = request.cookies.get(OAUTH_NEXT_COOKIE)?.value;
+  const refRaw = request.cookies.get(OAUTH_REF_COOKIE)?.value;
 
   // تنظيف كوكيّات التدفّق دائمًا.
   const store = cookies();
   store.set(GOOGLE_STATE_COOKIE, "", { maxAge: 0, path: "/" });
   store.set(OAUTH_NEXT_COOKIE, "", { maxAge: 0, path: "/" });
+  store.set(OAUTH_REF_COOKIE, "", { maxAge: 0, path: "/" });
 
   if (params.get("error")) return fail(origin, "google_denied");
   if (!code || !state || !cookieState || state !== cookieState) return fail(origin, "oauth_state");
@@ -43,8 +45,17 @@ export async function GET(request: NextRequest) {
   if (!profile || !email || profile.email_verified === false) return fail(origin, "google_profile");
 
   try {
-    await provisionOAuthUser({ email, name: profile.name, provider: "google" });
-    return NextResponse.redirect(new URL(safeNextPath(nextRaw), origin));
+    const user = await provisionOAuthUser({
+      email,
+      name: profile.name,
+      provider: "google",
+      referralCode: refRaw,
+    });
+    const dest =
+      user.isNew && !isOAuthAdminEmail(email)
+        ? "/onboarding"
+        : safeNextPath(nextRaw);
+    return NextResponse.redirect(new URL(dest, origin));
   } catch {
     return fail(origin, "oauth_user");
   }

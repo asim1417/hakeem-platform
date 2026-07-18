@@ -7,6 +7,7 @@ import {
   GOOGLE_STATE_COOKIE,
   OAUTH_NEXT_COOKIE,
 } from "@/lib/modules/auth/google-oauth";
+import { OAUTH_REF_COOKIE } from "@/lib/modules/auth/oauth-shared";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,10 @@ export async function GET(request: NextRequest) {
   const next = request.nextUrl.searchParams.get("next");
   if (next && next.startsWith("/") && !next.startsWith("//")) {
     res.cookies.set(OAUTH_NEXT_COOKIE, next, { httpOnly: true, sameSite: "lax", secure, maxAge: 600, path: "/" });
+  }
+  const ref = (request.nextUrl.searchParams.get("ref") || "").trim().toUpperCase();
+  if (ref.startsWith("HKM-") && ref.length <= 32) {
+    res.cookies.set(OAUTH_REF_COOKIE, ref, { httpOnly: true, sameSite: "lax", secure, maxAge: 600, path: "/" });
   }
   return res;
 }

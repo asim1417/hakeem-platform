@@ -11,6 +11,7 @@ import {
   slugifyUsername,
 } from "@/lib/modules/auth/credentials";
 import { isOAuthAdminEmail } from "@/lib/modules/auth/oauth-shared";
+import { bootstrapNewUser } from "@/lib/modules/onboarding/bootstrap";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ const schema = z.object({
   username: z.string().min(3).max(32).optional().or(z.literal("")),
   password: z.string().min(8, "كلمة المرور يجب ألا تقل عن 8 أحرف.").max(72),
   entityType: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).default("INDIVIDUAL"),
+  referralCode: z.string().max(32).optional().or(z.literal("")),
 });
 
 /**
@@ -78,6 +80,13 @@ export async function POST(request: NextRequest) {
     });
 
     await createLoginSession(user);
+
+    // نقاط ترحيب + رمز إحالة + تعليق onboarding — سقوط آمن إن لم تُطبَّق الهجرة.
+    await bootstrapNewUser(user.id, {
+      referralCode: payload.referralCode || null,
+      skipOnboarding: role === "SYSTEM_ADMIN" && isOAuthAdminEmail(email),
+    }).catch(() => undefined);
+
     await auditEvent({
       actorId: user.id,
       subject: "AUTH",
@@ -88,6 +97,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         entityType: payload.entityType,
         plan: "FREE_TRIAL",
+        referralCode: payload.referralCode || null,
       },
     }).catch(() => undefined);
 
@@ -101,7 +111,8 @@ export async function POST(request: NextRequest) {
           role: user.role,
         },
         plan: "FREE_TRIAL",
-        message: "تم إنشاء حسابك — بدأت تجربتك المجانية.",
+        next: "/onboarding",
+        message: "تم إنشاء حسابك — أكمل ملفك لتحصل على نقاط إضافية.",
       },
       { status: 201 }
     );

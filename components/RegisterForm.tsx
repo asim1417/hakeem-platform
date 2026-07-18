@@ -12,7 +12,13 @@ const ENTITIES = [
   { value: "OTHER", label: "أخرى" },
 ] as const;
 
-export function RegisterForm({ nextUrl = "/dashboard" }: { nextUrl?: string }) {
+export function RegisterForm({
+  nextUrl = "/onboarding",
+  referralCode = "",
+}: {
+  nextUrl?: string;
+  referralCode?: string;
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -23,7 +29,7 @@ export function RegisterForm({ nextUrl = "/dashboard" }: { nextUrl?: string }) {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const dest = nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
+  const loginNext = nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
 
   function fillGenerated() {
     const u = generateUsername(name || undefined);
@@ -47,11 +53,12 @@ export function RegisterForm({ nextUrl = "/dashboard" }: { nextUrl?: string }) {
           username: username || undefined,
           password,
           entityType,
+          referralCode: referralCode || undefined,
         }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.message ?? "تعذّر التسجيل.");
-      router.push(`${dest}${dest.includes("?") ? "&" : "?"}welcome=1`);
+      router.push("/onboarding");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التسجيل.");
@@ -63,7 +70,12 @@ export function RegisterForm({ nextUrl = "/dashboard" }: { nextUrl?: string }) {
   return (
     <div className="space-y-5">
       <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-3 text-sm leading-7 text-[var(--navy)]">
-        بعد التسجيل تبدأ <strong>تجربة مجانية</strong> داخل المنصة مباشرة — بلا بطاقة دفع.
+        بعد التسجيل تحصل على <strong>500 نقطة ترحيبية</strong> وتبدأ تجربة مجانية — بلا بطاقة دفع.
+        {referralCode ? (
+          <span className="mt-1 block text-xs">
+            رمز الإحالة المُطبَّق: <span dir="ltr">{referralCode}</span>
+          </span>
+        ) : null}
       </div>
 
       <form className="space-y-4" onSubmit={(e) => void onSubmit(e)} noValidate>
@@ -153,7 +165,7 @@ export function RegisterForm({ nextUrl = "/dashboard" }: { nextUrl?: string }) {
 
       <p className="text-center text-sm text-[var(--ink-60)]">
         لديك حساب؟{" "}
-        <Link href={`/login?next=${encodeURIComponent(dest)}`} className="font-semibold text-[var(--navy)] underline underline-offset-4">
+        <Link href={`/login?next=${encodeURIComponent(loginNext)}`} className="font-semibold text-[var(--navy)] underline underline-offset-4">
           تسجيل الدخول
         </Link>
       </p>
