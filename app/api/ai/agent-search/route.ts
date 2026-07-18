@@ -31,14 +31,22 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; history?: Array<{ role?: string; content?: string }> } = {};
+  let body: { query?: string; document?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; history?: Array<{ role?: string; content?: string }> } = {};
   try {
     body = await request.json();
   } catch {
     /* تجاهل */
   }
-  // سقفٌ أوسع (٨٠٠٠) ليستوعب نصّ مستندٍ مُرفَق (لائحة/عقد) لا سؤالًا قصيرًا فقط.
-  const query = String(body?.query ?? "").trim().slice(0, 8000);
+  // السؤال المكتوب منفصلٌ عن نصّ المستند المرفق — كي يُصنَّف المنطق على السؤال لا على المستند.
+  const typed = String(body?.query ?? "").trim().slice(0, 8000);
+  const attachedDoc = String(body?.document ?? "").trim().slice(0, 12000);
+  const hasDoc = attachedDoc.length > 0;
+  // مادّة التحليل: السؤال + المستند (إن وُجد). المستند لا يُصنَّف بوابة الاتّساع عليه.
+  const query = hasDoc
+    ? typed
+      ? `${typed}\n\n[نصّ المستند المرفق]\n${attachedDoc}`
+      : `حلّل المستند المرفق التالي وبيّن مركزه النظاميّ والمسائل التي يثيرها:\n\n${attachedDoc}`
+    : typed;
   const detailed = Boolean(body?.detailed);
   const skipBreadth = Boolean(body?.skipBreadth);
   // الوضع: «اسأل» (افتراضيّ) بلا تغيير، أو وضعٌ بتعليمة إخراج خاصّة (حلّل قضية…).
@@ -93,8 +101,9 @@ export async function POST(request: NextRequest) {
         // كي تُصاغ بتعليمة الوضع نفسها على هذا الأساس الأغنى بدل أن يعترضها التحليل العامّ.
         const deepModes = new Set(["analyze-case", "action-plan", "verdict-estimate"]);
         const isDeepMode = deepModes.has(agentMode.id);
-        const mode = agentMode.id === "ask" ? (detailed ? "deep" : suggestMode(query)) : isDeepMode ? "deep" : "quick";
-        const modeSkipBreadth = agentMode.id === "ask" ? skipBreadth : true;
+        const mode = agentMode.id === "ask" ? (detailed || hasDoc ? "deep" : suggestMode(query)) : isDeepMode ? "deep" : "quick";
+        // مع مستندٍ مرفَق: نتخطّى بوّابة الاتّساع دائمًا — المستخدم يريد تحليل مستنده لا قائمة استيضاح.
+        const modeSkipBreadth = hasDoc ? true : agentMode.id === "ask" ? skipBreadth : true;
         const result = await orchestrate(query, { mode, skipBreadth: modeSkipBreadth, skipAnalysis: isDeepMode, onStep: (s) => send({ type: "step", ...s }) });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
