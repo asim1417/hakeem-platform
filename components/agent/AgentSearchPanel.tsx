@@ -1,10 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ClipboardList, MessagesSquare, NotebookPen, Scale, ScanSearch, Sparkles, Telescope, type LucideIcon } from "lucide-react";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { AGENT_MODES, getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
+
+// أيقونات الأوضاع — Lucide بدل الإيموجي (اتساق الهوية: صفر إيموجي).
+const MODE_ICONS: Record<AgentModeId, LucideIcon> = {
+  ask: Sparkles,
+  "analyze-case": ScanSearch,
+  "action-plan": ClipboardList,
+  "verdict-estimate": Scale,
+  consultation: NotebookPen,
+  chat: MessagesSquare
+};
+
+type Precedents = { rulings: Array<{ title: string; snippet?: string }>; principles: Array<{ title: string; snippet?: string }> };
 
 // أمثلةٌ مؤصَّلة تُجيب عنها النواة القانونية — للحالة الفارغة (بدءٌ بلمسة).
 const STARTERS = [
@@ -31,6 +44,7 @@ type Turn = {
   visibleGroups?: number;
   message?: string;
   error?: string;
+  precedents?: Precedents;
   streaming: boolean;
   showMethod: boolean;
 };
@@ -145,7 +159,8 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
               groups: Array.isArray(evt.groups) ? evt.groups : undefined,
               disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
               visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
-              message: evt.message
+              message: evt.message,
+              precedents: evt.precedents && (evt.precedents.rulings?.length || evt.precedents.principles?.length) ? (evt.precedents as Precedents) : undefined
             }));
           } else if (evt.type === "clarify") {
             patchLastTurn((t) => ({ ...t, clarify: { message: evt.message, dimension: evt.dimension, options: evt.options ?? [] } }));
@@ -189,8 +204,8 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto pb-6">
         {turns.length === 0 ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center px-2 text-center">
-            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-3xl text-[var(--gold-bright)] shadow-[var(--sh-md)]">
-              ✦
+            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)] shadow-[var(--sh-md)]">
+              <Sparkles size={30} aria-hidden />
             </span>
             <h1 className="t-head mt-5 text-2xl font-bold text-[var(--navy)] md:text-3xl">{greeting}</h1>
             <p className="mt-2 max-w-md leading-7 text-[var(--ink-60)]">
@@ -384,7 +399,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                   <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5 shadow-[var(--sh-xs)]">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-[var(--ink-08)] pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
+                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)]"><Sparkles size={15} aria-hidden /></span>
                         <span className="text-sm font-bold text-[var(--navy)]">إجابة حكيم</span>
                         {turn.mode !== "intent" ? (
                           <span
@@ -459,6 +474,30 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                     </div>
                   )
                 ) : null}
+
+                {/* السوابق القضائية المُستأنَس بها — تُعرَض للشفافية (سياقٌ لا سندٌ نظاميّ للأرقام). */}
+                {turn.precedents ? (
+                  <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] p-4">
+                    <p className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--navy)]">
+                      <Scale size={15} aria-hidden /> سوابق قضائية استُؤنِس بها
+                    </p>
+                    <p className="mb-3 text-xs leading-6 text-[var(--ink-60)]">وجّهت التحليل والترجيح — سياقٌ استئناسيّ، لا سندٌ نظاميّ للأرقام (الأرقام من المواد أعلاه حصرًا).</p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {turn.precedents.rulings.map((r, k) => (
+                        <div key={`r-${k}`} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-2.5">
+                          <p className="text-xs font-semibold text-[var(--navy)]">حكم · {r.title}</p>
+                          {r.snippet ? <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--ink-60)]">{r.snippet}</p> : null}
+                        </div>
+                      ))}
+                      {turn.precedents.principles.map((p, k) => (
+                        <div key={`p-${k}`} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-2.5">
+                          <p className="text-xs font-semibold text-[var(--gold-dark)]">مبدأ · {p.title}</p>
+                          {p.snippet ? <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--ink-60)]">{p.snippet}</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           ))
@@ -478,6 +517,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
           <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">
             {AGENT_MODES.map((m) => {
               const active = m.id === modeId;
+              const Icon = MODE_ICONS[m.id] ?? Sparkles;
               return (
                 <button
                   key={m.id}
@@ -491,7 +531,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                       : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
                   }`}
                 >
-                  <span aria-hidden>{m.icon}</span> {m.name}
+                  <Icon size={14} aria-hidden /> {m.name}
                 </button>
               );
             })}
@@ -520,7 +560,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                   : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
               }`}
             >
-              <span aria-hidden>🔭</span> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
+              <Telescope size={14} aria-hidden /> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
             </button>
             <button
               type="submit"
