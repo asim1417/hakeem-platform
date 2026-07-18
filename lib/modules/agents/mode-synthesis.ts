@@ -72,10 +72,39 @@ export async function synthesizeWithMode(input: {
   }));
   if (!llm.ok || !llm.content.trim()) return null;
 
-  // حارس التلفيق: أيّ رقم مادة في الإخراج ليس ضمن المواد المرفقة ⇒ رفض (يسقط المستدعي للأساس الخام).
+  // حارس التلفيق — بتحمّلٍ أعلى: بدل رفض المخرَج كلّه عند أيّ رقم غير مؤرَّض، نحذف الأسطر
+  // المخالفة فقط ونُبقي المؤرَّض. نرفض للأساس الخام فقط إن انهار المخرَج (حُذف >٤٠٪ أو خلا).
   const allowed = collectAllowedArticleNumbers({ numbers: valid.map((c) => c.articleNumber ?? 0) });
-  if (!verifyNarrativeGrounding([llm.content], allowed).ok) return null;
+  let content = llm.content;
+  let pruned = false;
+  if (!verifyNarrativeGrounding([content], allowed).ok) {
+    const kept = pruneUngroundedLines(content, allowed);
+    if (!kept) return null; // اضطراب المخرَج → سقوطٌ للأساس الخام
+    content = kept;
+    pruned = true;
+  }
 
-  const output = llm.content.includes("تنبيه") ? llm.content : `${llm.content}\n\n${PRO_DISCLAIMER}`;
+  const note = pruned ? "\n\n> ملاحظة: حُذفت عباراتٌ أشارت إلى مواد خارج السند المتحقَّق." : "";
+  const output = (content.includes("تنبيه") ? content : `${content}\n\n${PRO_DISCLAIMER}`) + note;
   return { output, mode: "live" };
+}
+
+/**
+ * يحذف الأسطر التي تحمل رقم مادةٍ غير مؤرَّض ويُبقي الباقي — تحمّلٌ أعلى من الرفض الكامل.
+ * يعيد null إن حُذف أكثر من ٤٠٪ من الأسطر ذات المحتوى أو لم يبقَ شيء (يسقط المستدعي للأساس الخام).
+ */
+function pruneUngroundedLines(content: string, allowed: Set<number>): string | null {
+  const lines = content.split("\n");
+  const kept: string[] = [];
+  let contentLines = 0;
+  let removed = 0;
+  for (const line of lines) {
+    if (!line.trim()) { kept.push(line); continue; }
+    contentLines += 1;
+    if (verifyNarrativeGrounding([line], allowed).ok) kept.push(line);
+    else removed += 1;
+  }
+  if (!contentLines || removed / contentLines > 0.4) return null;
+  const text = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return text || null;
 }

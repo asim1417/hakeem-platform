@@ -249,7 +249,14 @@ export async function POST(request: NextRequest) {
           }
 
           consume();
-          send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
+          // السوابق القضائية التي استُؤنِس بها في الصياغة — تُعرَض للمستخدم (شفافية)، لا في الصياغة فقط.
+          const precedents = isDeepMode
+            ? {
+                rulings: (result.rulings ?? []).slice(0, 6).map((r) => ({ title: r.title, snippet: r.snippet })),
+                principles: (result.principles ?? []).slice(0, 6).map((p) => ({ title: p.title, snippet: p.snippet }))
+              }
+            : undefined;
+          send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue), precedents });
           send({ type: "done" });
           return;
         }
