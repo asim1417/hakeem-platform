@@ -248,8 +248,23 @@
     "explicitAbstention": true
   },
   "approval": {
-    "status": "draft",
-    "conformanceTestsPassed": [],
-    "agentConformanceTestsPassed": []
+    "status": "approved",
+    "approvedBy": "conformance-gate",
+    "approvedAt": "2026-07-18T14:34:16.490Z",
+    "conformanceTestsPassed": [
+      "HLS-8.1",
+      "HLS-8.2",
+      "HLS-8.3",
+      "HLS-8.4",
+      "HLS-8.5",
+      "HLS-8.6"
+    ],
+    "agentConformanceTestsPassed": [
+      "INS-STANCE-TRUSTEE-01",
+      "INS-STANCE-DEBTOR-01",
+      "INS-STANCE-CREDITOR-01",
+      "INS-STANCE-EXPERT-01",
+      "INS-STANCE-CHAMBER-01"
+    ]
   }
 }
