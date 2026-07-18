@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogIn } from "lucide-react";
 
 type AuthState = "loading" | "guest" | "user";
 
@@ -82,15 +83,24 @@ export function HomeHero() {
           </Link>
         ) : (
           <div className="flex items-center gap-2">
+            {/* أيقونة تخطّي سريعة لصفحة الدخول أثناء إعداد OAuth/البريد */}
             <Link
-              href="/login"
+              href="/login?next=/dashboard"
+              aria-label="تخطي إلى صفحة الدخول"
+              title="تخطي إلى صفحة الدخول"
+              className="focus-ring grid h-11 w-11 place-items-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory text-[var(--navy)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)]"
+            >
+              <LogIn size={18} aria-hidden />
+            </Link>
+            <Link
+              href="/login?next=/dashboard"
               className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
             >
               تسجيل الدخول
             </Link>
             <Link
               href="/register"
-              className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
+              className="focus-ring hidden items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white sm:inline-flex"
             >
               سجّل مجانًا
             </Link>
@@ -167,6 +177,17 @@ export function HomeHero() {
           تنبيه مهني: مخرجات الذكاء الاصطناعي في حكيم مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا أو حكمًا فعليًا.
         </p>
       </section>
+
+      {auth !== "user" ? (
+        <Link
+          href="/login?next=/dashboard"
+          className="focus-ring fixed bottom-5 start-5 z-20 inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-[var(--navy)] px-4 py-3 text-sm font-semibold text-white shadow-[var(--sh-md)] transition hover:opacity-95"
+          aria-label="تخطي إلى صفحة الدخول"
+        >
+          <LogIn size={16} aria-hidden />
+          تخطّي إلى الدخول
+        </Link>
+      ) : null}
     </main>
   );
 }

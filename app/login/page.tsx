@@ -15,6 +15,8 @@ const OAUTH_ERRORS: Record<string, string> = {
   microsoft_profile: "تعذّر جلب بريد الحساب من Microsoft أو أنه غير متاح.",
   oauth_state: "انتهت صلاحية جلسة الدخول أو تعذّر التحقق — أعد المحاولة.",
   oauth_user: "تعذّر تجهيز حساب المستخدم — حاول مرة أخرى.",
+  magic_invalid: "رابط الدخول بالبريد منتهٍ أو غير صالح — اطلب رابطًا جديدًا.",
+  magic_user: "تعذّر فتح جلسة المالك — فعّل الحساب ثم أعد المحاولة.",
 };
 
 export const metadata = {
