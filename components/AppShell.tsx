@@ -80,6 +80,12 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <div className="user-info min-w-0 flex-1">
               <div className="uname truncate">{user?.name ?? "المستخدم التجريبي"}</div>
               <div className="urole truncate">{user ? roleLabels[user.role] ?? user.role : "حساب محام - تدريبي"}</div>
+              <Link
+                href="/dashboard/billing"
+                className="mt-1 block truncate text-[11px] font-semibold text-[var(--gold-pale)] hover:underline"
+              >
+                الفوترة والخطط
+              </Link>
             </div>
           </div>
           {user ? <LogoutButton /> : null}
@@ -105,6 +111,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <footer className="app-foot">
           <span>{t("footer.tagline")}</span>
           <nav className="app-foot-links" aria-label={locale === "ar" ? "روابط نظامية" : "Legal links"}>
+            <Link href="/pricing">الأسعار</Link>
+            <Link href="/dashboard/billing">الحساب</Link>
             <Link href="/privacy">{t("footer.privacy")}</Link>
             <Link href="/terms">{t("footer.terms")}</Link>
           </nav>

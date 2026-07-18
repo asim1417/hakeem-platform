@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
+import { BookOpen, CreditCard, FileText, Gavel, Search, Sparkles } from "lucide-react";
 import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
+import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { activityLabel, statusLabel } from "@/lib/activity-labels";
@@ -105,6 +106,8 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
+      <QuotaCounter />
+
       {/* الترويسة الموحّدة (نظام التصميم) — تحوي صندوق البحث المركزيّ بخياريه */}
       <Hero
         center
@@ -190,6 +193,13 @@ export default async function DashboardPage({
           title="منصة الوثائق"
           icon={FileText}
           description="حمّل مستندك (Word · PDF · صور ممسوحة) واستخرج نصّه العربيّ فورًا مع دعم القراءة الضوئية."
+        />
+        <Card
+          href="/dashboard/billing"
+          title="الفوترة والحساب"
+          badge="تجربة مجانية"
+          icon={CreditCard}
+          description="رصيد الحصّة، خطتك الحالية، ومسار الترقية — أسعار معلنة للمحامي الفرد."
         />
       </CardGrid>
 

@@ -60,6 +60,7 @@
     "qa:gate": "tsx scripts/quality-gate.ts",
     "qa:security": "tsx scripts/qa-security.ts",
     "test:oauth": "tsx scripts/test-oauth-providers.ts",
+    "test:pricing": "tsx scripts/test-pricing-plans.ts",
     "test:credentials": "tsx scripts/test-credentials.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "qa:citations": "tsx scripts/qa-citations.ts",

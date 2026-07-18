@@ -145,6 +145,13 @@ export function HomeHero() {
             : "التجربة المجانية تبدأ مباشرة بعد إنشاء الحساب أو تسجيل الدخول."}
         </p>
 
+        <Link
+          href="/pricing"
+          className="focus-ring mt-5 text-sm font-semibold text-[var(--gold-dark)] underline-offset-4 hover:underline"
+        >
+          اطّلع على الأسعار والخطط المعلنة ←
+        </Link>
+
         <ul className="mt-12 grid w-full gap-3 text-right sm:grid-cols-3">
           {FEATURES.map((f) => (
             <li key={f.title}>
