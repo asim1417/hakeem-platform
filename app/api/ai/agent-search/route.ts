@@ -17,6 +17,7 @@ import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 import { getAgentMode } from "@/lib/modules/agents/modes";
 import { synthesizeWithMode } from "@/lib/modules/agents/mode-synthesis";
+import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -59,7 +60,30 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      // حصّة الاستخدام المجانيّة: خصمٌ مرّة واحدة بعد نجاح العملية فقط (سقوط مفتوح قبل الهجرة).
+      let consumed = false;
+      const consume = () => {
+        if (consumed) return;
+        consumed = true;
+        void consumeOne(user.id).catch(() => undefined);
+      };
       try {
+        // الحارس قبل التنفيذ: إن نفدت الحصّة → جدار اشتراك مبثوث (لا استثناء صامت). النواة تبقى مجانية.
+        const gate = await canConsume(user.id).catch(() => ({ allowed: true, remaining: -1, isSubscribed: false } as const));
+        if (!gate.allowed) {
+          send({
+            type: "result",
+            answer: null,
+            mode: "blocked",
+            blocked: true,
+            reason: "exhausted",
+            basis: [],
+            total: 0,
+            message: "انتهى رصيدك المجانيّ. للمتابعة في «اسأل حكيم» والقاضي والاستشارات، اشترك في حكيم. وتصفّح النواة القانونية يبقى مجانيًّا."
+          });
+          send({ type: "done" });
+          return;
+        }
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
         // المستوى: وضع «اسأل» — مبدّل «بحث تفصيلي» يفرض العميق وإلا يُقترَح تلقائيًّا. أوضاع الإخراج
         // الأخرى (حلّل قضية…) تشغّل الوكيل مرّة واحدة (quick) وتتخطّى الاتّساع، ثم تُصاغ بتعليمة الوضع.
@@ -83,6 +107,7 @@ export async function POST(request: NextRequest) {
 
         // الاستقصاء الشامل: مجموعات لكل نظام تُعرَض بالتدرّج (دفعات + «عرض المزيد»).
         if (result.enumGroups && result.enumGroups.length) {
+          consume();
           send({
             type: "result",
             mode: "live",
@@ -120,6 +145,7 @@ export async function POST(request: NextRequest) {
                 enforcement: a.status ?? null,
                 internalUrl: a.internalUrl
               })));
+          consume();
           send({
             type: "result",
             answer: result.analysis,
@@ -208,6 +234,7 @@ export async function POST(request: NextRequest) {
               .catch(() => undefined);
           }
 
+          consume();
           send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
           send({ type: "done" });
           return;
@@ -251,6 +278,7 @@ export async function POST(request: NextRequest) {
           internalUrl: `/dashboard/legal-core/articles/${c.articleId}`
         }));
 
+        consume();
         send({
           type: "result",
           answer: draft.output,

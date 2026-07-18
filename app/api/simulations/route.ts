@@ -5,6 +5,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { encodeClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { encodeTurnState } from "@/lib/modules/simulations/judge-engine";
+import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
-  const payload = schema.parse(await request.json().catch(() => ({})));
   const user = gate.user!;
+  // حصّة الاستخدام: إنشاء جلسة محاكاة قضائية استخدامٌ متقدّم. جدار اشتراك عند النفاد.
+  const quota = await canConsume(user.id).catch(() => ({ allowed: true, remaining: -1, isSubscribed: false } as const));
+  if (!quota.allowed) {
+    return NextResponse.json(
+      { blocked: true, reason: "exhausted", message: "انتهى رصيدك المجانيّ. للمتابعة في القاضي التفاعلي، اشترك في حكيم." },
+      { status: 402 }
+    );
+  }
+  const payload = schema.parse(await request.json().catch(() => ({})));
   const title = payload.title?.trim() || payload.subject?.trim() || payload.caseTitle?.trim() || "جلسة محاكاة قضائية";
   const claimContent = encodeClaim(payload);
 
@@ -96,6 +105,9 @@ export async function POST(request: NextRequest) {
       procedureAction: "تمكين المدعي من عرض الدعوى"
     }
   });
+
+  // الخصم بعد النجاح فقط (جلسة أُنشئت فعلًا).
+  void consumeOne(user.id).catch(() => undefined);
 
   return NextResponse.json({ sessionId: simulation.id, session: simulation }, { status: 201 });
 }

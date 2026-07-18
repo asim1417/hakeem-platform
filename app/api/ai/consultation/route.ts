@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,14 @@ export async function POST(request: NextRequest) {
   const gate = await requireApiPermission("CONSULTATIONS_LIMITED", request);
   if (gate.response) return gate.response;
   const actorId = gate.user!.id;
+  // حصّة الاستخدام: جدار اشتراك عند النفاد (النواة تبقى مجانية). سقوطٌ مفتوح قبل الهجرة.
+  const quota = await canConsume(actorId).catch(() => ({ allowed: true, remaining: -1, isSubscribed: false } as const));
+  if (!quota.allowed) {
+    return NextResponse.json(
+      { blocked: true, reason: "exhausted", message: "انتهى رصيدك المجانيّ. للمتابعة، اشترك في حكيم." },
+      { status: 200 }
+    );
+  }
   const payload = schema.parse(await request.json());
   const factsForAnalysis = [
     payload.title ? `عنوان الاستشارة: ${payload.title}` : "",
@@ -52,6 +61,9 @@ export async function POST(request: NextRequest) {
     }
   });
   consultationId = consultation.id;
+
+  // الخصم بعد النجاح فقط (استشارة مُولَّدة فعلًا، لا محجوبة).
+  if (!draft.blocked) void consumeOne(actorId).catch(() => undefined);
 
   await auditEvent({
     actorId,

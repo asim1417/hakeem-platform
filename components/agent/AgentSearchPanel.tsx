@@ -13,7 +13,7 @@ type Turn = {
   question: string;
   steps: Step[];
   answer: string | null;
-  mode?: "live" | "offline" | "intent";
+  mode?: "live" | "offline" | "intent" | "blocked";
   basis: LegalBasisItem[] | null;
   total: number;
   coverage?: { answered: number; total: number; issues?: Array<{ systemName?: string; status: string }> };
@@ -252,6 +252,22 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                   <div className="flex items-center gap-2 text-sm text-[var(--ink-60)]">
                     <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--gold)] border-t-transparent" />
                     جارٍ التحليل…
+                  </div>
+                ) : null}
+
+                {/* جدار الاشتراك — عند نفاد الحصّة المجانية */}
+                {turn.mode === "blocked" ? (
+                  <div className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center">
+                    <p className="text-sm font-bold text-[var(--navy)]">انتهى رصيدك المجانيّ</p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--ink-80)]">
+                      {turn.message ?? "للمتابعة في «اسأل حكيم» والقاضي والاستشارات، اشترك في حكيم. وتصفّح النواة القانونية يبقى مجانيًّا."}
+                    </p>
+                    <a
+                      href="/dashboard/subscribe"
+                      className="focus-ring mt-4 inline-block rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)]"
+                    >
+                      عرض خطط الاشتراك
+                    </a>
                   </div>
                 ) : null}
 
