@@ -95,7 +95,7 @@ export function LoginPopover() {
             ].join(" ")}
           >
             <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[var(--ink-15)] md:hidden" aria-hidden />
-            <LoginForm nextUrl="/dashboard" />
+            <LoginForm nextUrl="/dashboard" compact />
             <Link
               href="/login"
               className="focus-ring mt-3 block rounded-md px-2 py-1 text-center text-xs text-[var(--ink-60)] underline-offset-4 hover:text-[var(--navy)] hover:underline"
