@@ -1,0 +1,255 @@
+{
+  "$schema": "../schema/agent-manifest.schema.json",
+  "agentId": "aman-insolvency-practitioner",
+  "displayName": "وكيل ممارسي الإفلاس — مكتب أمان",
+  "version": "1.0.0",
+  "owner": {
+    "orgId": "aman-law-office",
+    "contactEmail": "legal@aman.example.sa"
+  },
+  "practiceProfile": {
+    "role": "ممارس_إفلاس",
+    "audience": [
+      "محكمة",
+      "عميل",
+      "فريق_داخلي",
+      "جهة_حكومية"
+    ],
+    "defaultDepth": "متعمق",
+    "dialect": "فصحى"
+  },
+  "scope": {
+    "defaultSystems": [
+      "نظام-الإفلاس",
+      "نظام-المحاكم-التجارية",
+      "نظام-التنفيذ",
+      "نظام-الشركات",
+      "نظام-العمل"
+    ],
+    "expandable": true
+  },
+  "skills": [
+    {
+      "skillId": "estate-inventory",
+      "path": "skills/estate-inventory/SKILL.md",
+      "engineTools": [
+        "exhaustive_scan",
+        "read_article_in_context",
+        "read_chapter",
+        "build_citation",
+        "hijri_date_calc"
+      ]
+    },
+    {
+      "skillId": "procedure-selection",
+      "path": "skills/procedure-selection/SKILL.md",
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "build_citation",
+        "hijri_date_calc"
+      ]
+    },
+    {
+      "skillId": "creditor-claim",
+      "path": "skills/creditor-claim/SKILL.md",
+      "engineTools": [
+        "legal_research",
+        "exhaustive_scan",
+        "read_article_in_context",
+        "trace_amendments",
+        "build_citation",
+        "hijri_date_calc"
+      ]
+    },
+    {
+      "skillId": "clawback-review",
+      "path": "skills/clawback-review/SKILL.md",
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "takhrij_hukm",
+        "build_citation",
+        "hijri_date_calc"
+      ]
+    },
+    {
+      "skillId": "chamber-brief",
+      "path": "skills/chamber-brief/SKILL.md",
+      "engineTools": [
+        "legal_research",
+        "read_article_in_context",
+        "read_chapter",
+        "build_citation"
+      ]
+    }
+  ],
+  "subRoles": [
+    {
+      "subRoleId": "trustee",
+      "displayName": "الأمين (تسوية/إعادة تنظيم/تصفية)",
+      "stance": "محايد",
+      "skills": [
+        "estate-inventory",
+        "creditor-claim",
+        "clawback-review"
+      ],
+      "outputTemplates": [
+        "estate-inventory",
+        "claim-register"
+      ],
+      "stanceGuard": {
+        "rule": "الأمين Office Holder محايد؛ يخدم التفليسة لا طرفًا. يرث محظور معاون القاضي.",
+        "forbids": [
+          "صياغة_ترافعية_لمصلحة_طرف",
+          "اقتراح_قرار_للمحكمة",
+          "انحياز_لدائن_أو_مدين",
+          "رقم_أولوية_أو_نسبة_من_الذاكرة"
+        ],
+        "conformanceTest": "INS-STANCE-TRUSTEE-01"
+      }
+    },
+    {
+      "subRoleId": "debtor-counsel",
+      "displayName": "محامي المدين",
+      "stance": "منازِع_مدين",
+      "skills": [
+        "procedure-selection"
+      ],
+      "outputTemplates": [
+        "procedure-matrix"
+      ],
+      "stanceGuard": {
+        "rule": "يدافع عن مصلحة المدين؛ يجوز الترجيح لمصلحته دون افتراض وقائع أو وعد بنتيجة.",
+        "forbids": [
+          "وقائع_أو_أصول_مفترضة",
+          "وعد_بقبول_الخطة",
+          "إغفال_ختم_الاعتماد"
+        ],
+        "conformanceTest": "INS-STANCE-DEBTOR-01"
+      }
+    },
+    {
+      "subRoleId": "creditor-counsel",
+      "displayName": "محامي الدائن",
+      "stance": "منازِع_دائن",
+      "skills": [
+        "creditor-claim",
+        "procedure-selection",
+        "clawback-review"
+      ],
+      "outputTemplates": [
+        "claim-register"
+      ],
+      "stanceGuard": {
+        "rule": "يدافع عن مصلحة الدائن؛ يجوز الترجيح لمصلحته دون تقديم دَين بلا سند إثبات ولا تقديمه على أولويته النظامية.",
+        "forbids": [
+          "دَين_بلا_سند_إثبات",
+          "تقديم_الدَّين_على_أولويته_النظامية",
+          "إغفال_ختم_الاعتماد"
+        ],
+        "conformanceTest": "INS-STANCE-CREDITOR-01"
+      }
+    },
+    {
+      "subRoleId": "expert",
+      "displayName": "الخبير",
+      "stance": "خبير",
+      "skills": [
+        "estate-inventory"
+      ],
+      "outputTemplates": [
+        "estate-inventory"
+      ],
+      "stanceGuard": {
+        "rule": "خبير محايد تقنيًا؛ رأيه في تخصصه لا يتعداه إلى ترجيح قانوني.",
+        "forbids": [
+          "رأي_قانوني_ترجيحي_خارج_التخصص",
+          "رقم_تقييم_بلا_أساس",
+          "إخفاء_حدود_الفحص"
+        ],
+        "conformanceTest": "INS-STANCE-EXPERT-01"
+      }
+    },
+    {
+      "subRoleId": "chamber-aide",
+      "displayName": "معاون الدائرة التجارية (نطاق الإفلاس)",
+      "stance": "مشرف",
+      "skills": [
+        "chamber-brief",
+        "estate-inventory"
+      ],
+      "outputTemplates": [
+        "procedure-matrix"
+      ],
+      "stanceGuard": {
+        "rule": "يجهّز عمل الدائرة التحضيري بنطاق الإفلاس بمنهجية معاون القاضي؛ لا يقترح منطوقًا.",
+        "forbids": [
+          "اقتراح_منطوق",
+          "ترجيح_بين_الطرفين",
+          "ملء_خانة_النتيجة"
+        ],
+        "conformanceTest": "INS-STANCE-CHAMBER-01"
+      }
+    }
+  ],
+  "outputTemplates": [
+    {
+      "templateId": "estate-inventory",
+      "structure": [
+        "حصر_الأصول",
+        "حصر_الديون",
+        "مطالبات_الدائنين_مقبول_مرفوض_متنازع",
+        "ترتيب_الأولوية",
+        "جدول_التوزيع",
+        "تقرير_فترة_الريبة",
+        "لوحة_المصادر"
+      ]
+    },
+    {
+      "templateId": "procedure-matrix",
+      "structure": [
+        "تكييف_الحالة",
+        "مقارنة_الإجراءات_المتاحة",
+        "من_يطلب_ومن_يدير",
+        "أثر_وضع_يد_المدين",
+        "المخاطر_والمدد",
+        "الإجراء_الموصى",
+        "لوحة_المصادر"
+      ]
+    },
+    {
+      "templateId": "claim-register",
+      "structure": [
+        "بيانات_الدَّين",
+        "سند_الإثبات",
+        "تصنيف_الدَّين_مضمون_ممتاز_عادي",
+        "موقعه_في_ترتيب_الأولوية",
+        "مُهَل_التقديم_والاعتراض",
+        "لوحة_المصادر"
+      ]
+    }
+  ],
+  "mcp": {
+    "endpoint": "https://hakeem-platform.vercel.app/api/mcp/aman-insolvency-practitioner",
+    "authMethod": "api_key",
+    "exposedTools": [
+      "احصر_التفليسة",
+      "اختر_الإجراء",
+      "جهّز_مطالبة_الدَّين"
+    ]
+  },
+  "hlsCompliance": {
+    "grounding": true,
+    "enforcementCheck": true,
+    "scopeBinding": true,
+    "coverageGate": true,
+    "noPersonalOpinion": true,
+    "explicitAbstention": true
+  },
+  "approval": {
+    "status": "draft",
+    "conformanceTestsPassed": [],
+    "agentConformanceTestsPassed": []
+  }
+}

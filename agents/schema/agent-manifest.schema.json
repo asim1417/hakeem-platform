@@ -1,0 +1,377 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hakeem-platform.vercel.app/schema/agent-manifest.schema.json",
+  "title": "Hakeem Custom Agent Manifest",
+  "description": "المخطط الملزم لكل وكيل مخصص في منصة حكيم (الإصدار 2.2). الوكيل طبقة تكوين فوق المحرك الموحد، ولا يجوز له تجاوز ثوابت معيار HLS-001. الجديد في 2.1: أدوارٌ فرعية بمواقف (subRoles) لتخصصاتٍ يختلف فيها موقف الممارس (كالإفلاس)، وبوابة اعتمادٍ خاصة بالوكلاء (agentConformanceTestsPassed) تختبر محظورات الوكيل لا أرضية المحرك فقط، وأداة hijri_date_calc.",
+  "type": "object",
+  "required": [
+    "agentId",
+    "version",
+    "owner",
+    "practiceProfile",
+    "scope",
+    "skills",
+    "outputTemplates",
+    "hlsCompliance",
+    "approval"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "مؤشر المخطط لأدوات المحرر (اختياري)"
+    },
+    "agentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "معرف فريد للوكيل، مثل: aman-insolvency-practitioner"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "الاسم الظاهر بالعربية"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "owner": {
+      "type": "object",
+      "required": [
+        "orgId",
+        "contactEmail"
+      ],
+      "properties": {
+        "orgId": {
+          "type": "string",
+          "description": "معرف المكتب/الجهة المالكة — أساس العزل بين العملاء"
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "practiceProfile": {
+      "type": "object",
+      "description": "ملف الممارسة المهنية الذي بُني عليه الوكيل",
+      "required": [
+        "role",
+        "audience",
+        "defaultDepth"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "محامي_تقاضي_تجاري",
+            "مستشار_امتثال",
+            "إدارة_قانونية",
+            "محامي_عمالي",
+            "محامي_جزائي",
+            "كاتب_عدل",
+            "باحث_قانوني",
+            "معاون_قاضٍ",
+            "ممارس_إفلاس",
+            "أخرى"
+          ]
+        },
+        "audience": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "محكمة",
+              "إدارة_عليا",
+              "عميل",
+              "جهة_حكومية",
+              "فريق_داخلي"
+            ]
+          },
+          "minItems": 1
+        },
+        "defaultDepth": {
+          "type": "string",
+          "enum": [
+            "سريع",
+            "متعمق"
+          ]
+        },
+        "dialect": {
+          "type": "string",
+          "default": "فصحى",
+          "description": "لغة التفاعل المفضلة؛ المخرج الرسمي فصحى دائمًا"
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "description": "قيد النطاق الافتراضي — يُمرَّر إلزاميًا إلى where:{legalSystemId} في كل استرجاع",
+      "required": [
+        "defaultSystems",
+        "expandable"
+      ],
+      "properties": {
+        "defaultSystems": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "معرفات الأنظمة من سجل systems الموحد (بعد تطبيع الأسماء)"
+        },
+        "expandable": {
+          "type": "boolean",
+          "description": "هل يجوز للمستخدم توسيع النطاق في الجلسة؟ التوسيع صريح دائمًا، لا صامت"
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "description": "مجمع المهارات الكامل للوكيل. الأدوار الفرعية (subRoles) تختار منها ولا تضيف خارجها",
+      "items": {
+        "type": "object",
+        "required": [
+          "skillId",
+          "path",
+          "engineTools"
+        ],
+        "properties": {
+          "skillId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "مسار SKILL.md داخل حزمة الوكيل"
+          },
+          "engineTools": {
+            "type": "array",
+            "description": "أدوات المحرك الموحد التي تستدعيها المهارة — لا أدوات خارج هذه القائمة",
+            "items": {
+              "type": "string",
+              "enum": [
+                "legal_research",
+                "read_article",
+                "read_article_in_context",
+                "read_chapter",
+                "takhrij_hukm",
+                "trace_amendments",
+                "link_bylaw",
+                "build_citation",
+                "exhaustive_scan",
+                "hijri_date_calc"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "subRoles": {
+      "type": "array",
+      "description": "الأدوار الفرعية داخل التخصص الواحد حين يختلف موقف الممارس (محايد/منازِع/خبير/مشرف). اختيار الدور الفرعي يضبط القالب والمهارات وحارس الموقف معًا. يُترك فارغًا للتخصصات ذات الموقف الواحد.",
+      "items": {
+        "type": "object",
+        "required": [
+          "subRoleId",
+          "stance",
+          "skills",
+          "stanceGuard"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "subRoleId": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "الاسم الظاهر بالعربية للدور الفرعي"
+          },
+          "stance": {
+            "type": "string",
+            "enum": [
+              "محايد",
+              "منازِع_مدين",
+              "منازِع_دائن",
+              "خبير",
+              "مشرف"
+            ],
+            "description": "موقف الممارس. المحايد والمشرف يرثان محظور معاون القاضي (لا ترافع/لا اقتراح قرار). المنازِع يجوز له الترجيح لمصلحة موكّله دون افتراض وقائع"
+          },
+          "skills": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            },
+            "description": "معرفات مهارات من skills أعلاه — subset لا يضيف خارج المجمع"
+          },
+          "outputTemplates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "معرفات قوالب من outputTemplates أعلاه"
+          },
+          "stanceGuard": {
+            "type": "object",
+            "description": "الحارس القابل للاختبار الذي يُفعَّل عند اختيار هذا الدور الفرعي",
+            "required": [
+              "forbids",
+              "conformanceTest"
+            ],
+            "properties": {
+              "rule": {
+                "type": "string",
+                "description": "وصف الحارس بجملة إنفاذية"
+              },
+              "forbids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "قائمة ما يرفضه الحارس آليًا (مثل: صياغة_ترافعية، اقتراح_منطوق)"
+              },
+              "conformanceTest": {
+                "type": "string",
+                "description": "معرف حالة المطابقة الخاصة بهذا الحارس، تُدرج في approval.agentConformanceTestsPassed"
+              }
+            }
+          }
+        }
+      }
+    },
+    "outputTemplates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "templateId",
+          "structure"
+        ],
+        "properties": {
+          "templateId": {
+            "type": "string"
+          },
+          "structure": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "خانات القالب بالترتيب — تُبنى فارغة ثم تُحقن (Skeleton)"
+          }
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "description": "إعدادات التسليم عبر الموصل",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "authMethod": {
+          "type": "string",
+          "enum": [
+            "api_key",
+            "oauth"
+          ]
+        },
+        "exposedTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "أسماء الأدوات كما تظهر للعميل في موصله، مثل: احصر_التفليسة"
+        }
+      }
+    },
+    "hlsCompliance": {
+      "type": "object",
+      "description": "الثوابت غير القابلة للتخصيص — قيمها true إلزاميًا وإلا رُفض الاعتماد",
+      "required": [
+        "grounding",
+        "enforcementCheck",
+        "scopeBinding",
+        "coverageGate",
+        "noPersonalOpinion",
+        "explicitAbstention"
+      ],
+      "properties": {
+        "grounding": {
+          "const": true,
+          "description": "HLS-3.3 التأريض: لا جملة قانونية بلا مصدر"
+        },
+        "enforcementCheck": {
+          "const": true,
+          "description": "HLS-4.2 النفاذ: لا مادة لاغية تُقدَّم قانونًا قائمًا"
+        },
+        "scopeBinding": {
+          "const": true,
+          "description": "HLS-3.4 النطاق: صفر تسريب بين الأنظمة"
+        },
+        "coverageGate": {
+          "const": true,
+          "description": "HLS-3.5 التغطية: لا تسليم قبل تغطية كل المسائل"
+        },
+        "noPersonalOpinion": {
+          "const": true,
+          "description": "HLS-5.10 لا ترجيح شخصي"
+        },
+        "explicitAbstention": {
+          "const": true,
+          "description": "HLS-3.6 الامتناع الصريح عند العدم"
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "status",
+        "conformanceTestsPassed"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "pending_review",
+            "approved",
+            "suspended"
+          ]
+        },
+        "approvedBy": {
+          "type": "string"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "conformanceTestsPassed": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "HLS-8.1",
+              "HLS-8.2",
+              "HLS-8.3",
+              "HLS-8.4",
+              "HLS-8.5",
+              "HLS-8.6"
+            ]
+          },
+          "description": "بوابة المحرك: لا اعتماد إلا باجتياز الحالات الست كاملة (أرضية HLS-001)"
+        },
+        "agentConformanceTestsPassed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "بوابة الوكيل: حالات المطابقة الخاصة بمحظورات هذا الوكيل وأدواره الفرعية (كحارس حياد الأمين). لكل subRole يجب أن يُدرَج stanceGuard.conformanceTest هنا قبل الاعتماد. تعالج ثغرة أن بوابة المحرك لا تختبر محظورات الوكيل"
+        }
+      }
+    }
+  }
+}
