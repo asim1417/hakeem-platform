@@ -58,11 +58,11 @@ export async function POST(request: NextRequest) {
 
   const passwordHash = await bcrypt.hash(payload.password, 12);
 
-  // أول حساب حقيقي في المنصة = مالك (SYSTEM_ADMIN) لتمهيد التشغيل؛ بعده متدرّب بتجربة مجانية.
+  // مالك معروف بالبريد، أو أول حساب حقيقي = SYSTEM_ADMIN؛ غيره متدرّب بتجربة مجانية.
   const realUsers = await prisma.user
     .count({ where: { email: { not: "guest@hakeem.local" } } })
     .catch(() => 1);
-  const role = realUsers === 0 ? "SYSTEM_ADMIN" : "TRAINEE";
+  const role = isOAuthAdminEmail(email) || realUsers === 0 ? "SYSTEM_ADMIN" : "TRAINEE";
 
   try {
     const user = await prisma.user.create({

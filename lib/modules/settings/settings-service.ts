@@ -34,7 +34,13 @@ export const MANAGED_KEYS: ManagedKey[] = [
   { key: "AZURE_AD_CLIENT_ID", label: "Microsoft Entra Client ID", secret: false, group: "بوابة الدخول (Microsoft)", placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" },
   { key: "AZURE_AD_CLIENT_SECRET", label: "Microsoft Entra Client Secret", secret: true, group: "بوابة الدخول (Microsoft)" },
   { key: "AZURE_AD_TENANT_ID", label: "Microsoft Entra Tenant ID", secret: false, group: "بوابة الدخول (Microsoft)", placeholder: "common أو معرف المستأجر" },
-  { key: "OAUTH_ADMIN_EMAILS", label: "بُرد مدراء OAuth (بفواصل)", secret: false, group: "الدخول الموحّد", placeholder: "you@gmail.com,you@org.com" },
+  {
+    key: "OAUTH_ADMIN_EMAILS",
+    label: "بُرد مدراء OAuth (بفواصل)",
+    secret: false,
+    group: "الدخول الموحّد",
+    placeholder: "aasemalfarsi@gmail.com",
+  },
 ];
 
 const MANAGED_SET = new Set(MANAGED_KEYS.map((k) => k.key));

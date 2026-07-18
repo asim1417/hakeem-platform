@@ -34,6 +34,10 @@ export default function LoginPage({
   const oauthError = searchParams?.error ? OAUTH_ERRORS[searchParams.error] ?? "تعذّر إكمال تسجيل الدخول." : null;
   const googleEnabled = isGoogleOAuthConfigured();
   const microsoftEnabled = isMicrosoftOAuthConfigured();
+  const ownerHint =
+    !googleEnabled
+      ? "لدخول المالك عبر Google (aasemalfarsi@gmail.com): اضبط GOOGLE_CLIENT_ID و GOOGLE_CLIENT_SECRET من إعدادات المنصة أو Vercel."
+      : "المالك aasemalfarsi@gmail.com يدخل عبر Google بصلاحية مدير النظام تلقائيًا.";
 
   return (
     <main className="login-page">
@@ -91,6 +95,8 @@ export default function LoginPage({
               googleEnabled={googleEnabled}
               microsoftEnabled={microsoftEnabled}
             />
+
+            <p className="login-panel__hint">{ownerHint}</p>
 
             <p className="login-panel__hint">
               ليس لديك حساب؟{" "}

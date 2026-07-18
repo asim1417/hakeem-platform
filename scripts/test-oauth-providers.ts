@@ -60,6 +60,9 @@ async function main() {
   assert.equal(shared.isOAuthAdminEmail("admin@hakeem.sa"), true);
   assert.equal(shared.isOAuthAdminEmail("owner@org.com"), true);
   assert.equal(shared.isOAuthAdminEmail("other@org.com"), false);
+  // المالك الثابت يبقى مديرًا حتى مع قائمة بيئة إضافية.
+  assert.equal(shared.isOAuthAdminEmail("aasemalfarsi@gmail.com"), true);
+  assert.ok(shared.PLATFORM_OWNER_EMAILS.includes("aasemalfarsi@gmail.com"));
   assert.equal(shared.safeNextPath("/dashboard/ask"), "/dashboard/ask");
   assert.equal(shared.safeNextPath("https://evil.com"), "/dashboard");
   assert.equal(shared.safeNextPath("//evil.com"), "/dashboard");

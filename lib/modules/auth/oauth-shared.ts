@@ -6,21 +6,28 @@ import { randomBytes } from "crypto";
 
 export const OAUTH_NEXT_COOKIE = "hakeem_oauth_next";
 
+/**
+ * بريد مالك المنصة — يُمنح SYSTEM_ADMIN دائمًا عند الدخول عبر Google / Microsoft / التسجيل.
+ * لا يُزال حتى لو ضُبطت OAUTH_ADMIN_EMAILS بقائمة أخرى (تُضاف إليها).
+ */
+export const PLATFORM_OWNER_EMAILS = ["aasemalfarsi@gmail.com"] as const;
+
 /** رمز state عشوائي لمنع CSRF — يُحفظ في كوكي httpOnly ويُقارَن في callback. */
 export function newOAuthState(): string {
   return randomBytes(16).toString("hex");
 }
 
-/** قائمة البُرد التي تُمنح دور SYSTEM_ADMIN عند دخولها عبر OAuth (OAUTH_ADMIN_EMAILS مفصولة بفواصل). */
+/** هل هذا البريد مالك/مدير OAuth؟ (المالك الثابت + OAUTH_ADMIN_EMAILS). */
 export function isOAuthAdminEmail(email: string): boolean {
+  const normalized = email.toLowerCase().trim();
+  if (!normalized) return false;
   const fromEnv = (process.env.OAUTH_ADMIN_EMAILS || "")
     .toLowerCase()
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  // بريد المالك الافتراضي إن لم تُضبط القائمة — يمكن تجاوزه بـ OAUTH_ADMIN_EMAILS.
-  const defaults = fromEnv.length > 0 ? fromEnv : ["aasemalfarsi@gmail.com"];
-  return defaults.includes(email.toLowerCase().trim());
+  const owners = new Set<string>([...PLATFORM_OWNER_EMAILS, ...fromEnv]);
+  return owners.has(normalized);
 }
 
 /** مسار العودة الآمن بعد OAuth (مسار داخلي فقط). */
