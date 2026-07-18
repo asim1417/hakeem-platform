@@ -14,9 +14,10 @@ import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 const STEPS = [
   { id: 1, title: "البيانات الأساسية", reward: CREDIT_REWARDS.onboarding_step_1 },
   { id: 2, title: "الخلفية المهنية", reward: CREDIT_REWARDS.onboarding_step_2 },
-  { id: 3, title: "تأكيد الجوال", reward: CREDIT_REWARDS.onboarding_step_3 },
+  { id: 3, title: "تحقق الجوال", reward: CREDIT_REWARDS.onboarding_step_3 },
   { id: 4, title: "الاهتمامات", reward: CREDIT_REWARDS.onboarding_step_4 },
-  { id: 5, title: "الموافقات", reward: CREDIT_REWARDS.onboarding_step_5 },
+  { id: 5, title: "الصورة والشهادات", reward: CREDIT_REWARDS.onboarding_step_5 },
+  { id: 6, title: "الموافقات", reward: CREDIT_REWARDS.onboarding_step_6 },
 ] as const;
 
 type Entity = "INDIVIDUAL" | "LAW_FIRM" | "OTHER";
@@ -31,7 +32,7 @@ export function OnboardingWizard({
   initialBalance?: number;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState(Math.min(5, Math.max(1, initialStep || 1)));
+  const [step, setStep] = useState(Math.min(6, Math.max(1, initialStep || 1)));
   const [balance, setBalance] = useState(initialBalance);
   const [earnedThisSession, setEarnedThisSession] = useState(0);
   const [error, setError] = useState("");
@@ -47,6 +48,11 @@ export function OnboardingWizard({
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [previewCode, setPreviewCode] = useState("");
+  const [certificates, setCertificates] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [otpHint, setOtpHint] = useState("");
 
   useEffect(() => {
     void fetch("/api/onboarding")
@@ -63,9 +69,10 @@ export function OnboardingWizard({
         if (typeof p.alertsEnabled === "boolean") setAlertsEnabled(p.alertsEnabled);
         if (p.phoneVerified) setPhoneVerified(true);
         if (p.termsAccepted) setTermsAccepted(true);
+        if (Array.isArray(p.certificates)) setCertificates(p.certificates.join("\n"));
         if (typeof p.creditsBalance === "number") setBalance(p.creditsBalance);
         if (p.onboardingCompleted) setDone(true);
-        else if (p.onboardingStep > 0) setStep(Math.min(5, p.onboardingStep + 1));
+        else if (p.onboardingStep > 0) setStep(Math.min(6, p.onboardingStep + 1));
       })
       .catch(() => undefined);
   }, []);
@@ -74,23 +81,76 @@ export function OnboardingWizard({
     setter(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
   }
 
-  async function submitStep() {
+  async function sendOtp() {
     setError("");
-    const payload: Record<string, unknown> = {
-      step,
-      complete: step === 5,
-      phone,
-      city,
-      entityType,
-      yearsExperience,
-      specialties,
-      interests,
-      alertsEnabled,
-      phoneVerified,
-      termsAccepted,
-    };
+    setOtpHint("");
+    const res = await fetch("/api/otp/phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "issue", phone }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message ?? "تعذّر إرسال الرمز.");
+    setOtpHint(data.message || "تم الإرسال.");
+    if (data.previewCode) setPreviewCode(data.previewCode);
+  }
 
+  async function confirmOtp() {
+    setError("");
+    const res = await fetch("/api/otp/phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "verify", code: otpCode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message ?? "رمز غير صحيح.");
+    setPhoneVerified(true);
+    setOtpHint(data.message || "تم التحقق.");
+  }
+
+  async function uploadAvatar() {
+    if (!avatarFile && !certificates.trim()) return 0;
+    const fd = new FormData();
+    if (avatarFile) fd.append("file", avatarFile);
+    if (certificates.trim()) fd.append("certificates", certificates);
+    const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message ?? "تعذّر رفع الصورة.");
+    if (typeof data.balance === "number") setBalance(data.balance);
+    return Number(data.awarded ?? 0);
+  }
+
+  async function submitStep(opts?: { skipAvatar?: boolean }) {
+    setError("");
     try {
+      if (step === 3 && !phoneVerified) {
+        throw new Error("تحقق من الجوال برمز OTP قبل المتابعة.");
+      }
+
+      let avatarAwarded = 0;
+      if (step === 5 && !opts?.skipAvatar) {
+        avatarAwarded = await uploadAvatar();
+      }
+
+      const payload: Record<string, unknown> = {
+        step,
+        complete: step === 6,
+        phone,
+        city,
+        entityType,
+        yearsExperience,
+        specialties,
+        interests,
+        alertsEnabled,
+        phoneVerified,
+        termsAccepted,
+        certificates: certificates
+          .split(/[\n,]/)
+          .map((s) => s.trim())
+          .filter(Boolean),
+        skipAvatar: opts?.skipAvatar === true,
+      };
+
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -99,15 +159,15 @@ export function OnboardingWizard({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message ?? "تعذّر حفظ الخطوة.");
 
-      const awarded = Number(data.awarded ?? 0);
+      const awarded = Number(data.awarded ?? 0) + avatarAwarded;
       setEarnedThisSession((n) => n + awarded);
       if (typeof data.balance === "number") setBalance(data.balance);
 
-      if (data.done || step === 5) {
+      if (data.done || step === 6) {
         setDone(true);
         return;
       }
-      setStep((s) => Math.min(5, s + 1));
+      setStep((s) => Math.min(6, s + 1));
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر حفظ الخطوة.");
     }
@@ -140,7 +200,7 @@ export function OnboardingWizard({
         <p className="text-sm font-semibold text-[var(--gold)]">إكمال الملف · +{CREDIT_REWARDS.welcome} نقطة ترحيبية</p>
         <h2 className="font-display text-2xl text-[var(--navy)] sm:text-3xl">أكمل ملفك واكسب المزيد</h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
-          الخطوة {step} من 5 — رصيدك الآن {balance.toLocaleString("ar-SA")} نقطة
+          الخطوة {step} من 6 — رصيدك الآن {balance.toLocaleString("ar-SA")} نقطة
         </p>
       </header>
 
@@ -166,11 +226,11 @@ export function OnboardingWizard({
         role="progressbar"
         aria-valuenow={step}
         aria-valuemin={1}
-        aria-valuemax={5}
+        aria-valuemax={6}
       >
         <div
           className="h-full bg-[var(--gold)] transition-all duration-500 ease-out"
-          style={{ width: `${(step / 5) * 100}%` }}
+          style={{ width: `${(step / 6) * 100}%` }}
         />
       </div>
 
@@ -263,19 +323,39 @@ export function OnboardingWizard({
       {step === 3 && (
         <div className="space-y-4">
           <p className="text-sm leading-7 text-[var(--ink-60)]">
-            رقمك المسجّل: <strong dir="ltr" className="text-[var(--navy)]">{phone || "—"}</strong>
-            <br />
-            التحقق برسالة OTP سيُفعَّل لاحقًا. أكّد الآن أن الرقم صحيح للمتابعة.
+            رقمك: <strong dir="ltr" className="text-[var(--navy)]">{phone || "—"}</strong>
           </p>
-          <label className="flex items-start gap-3 text-sm leading-7 text-[var(--navy)]">
-            <input
-              type="checkbox"
-              checked={phoneVerified}
-              onChange={(e) => setPhoneVerified(e.target.checked)}
-              className="mt-1"
-            />
-            <span>أؤكد أن رقم الجوال أعلاه صحيح ويمكن التواصل عبره.</span>
-          </label>
+          {phoneVerified ? (
+            <LegalAlert tone="success">تم التحقق من الجوال بنجاح.</LegalAlert>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <NavyButton type="button" onClick={() => void sendOtp().catch((e) => setError(e.message))}>
+                  إرسال رمز OTP
+                </NavyButton>
+              </div>
+              {otpHint ? <p className="text-sm text-[var(--ink-60)]">{otpHint}</p> : null}
+              {previewCode ? (
+                <p className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm text-[var(--navy)]">
+                  رمز التطوير: <strong dir="ltr">{previewCode}</strong>
+                </p>
+              ) : null}
+              <label className="block">
+                <span className="text-sm font-semibold text-[var(--navy)]">أدخل الرمز</span>
+                <input
+                  dir="ltr"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  maxLength={6}
+                  placeholder="000000"
+                  className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3 text-left tracking-widest"
+                />
+              </label>
+              <GoldButton type="button" onClick={() => void confirmOtp().catch((e) => setError(e.message))}>
+                تأكيد الرمز
+              </GoldButton>
+            </>
+          )}
         </div>
       )}
 
@@ -317,6 +397,31 @@ export function OnboardingWizard({
 
       {step === 5 && (
         <div className="space-y-4">
+          <label className="block">
+            <span className="text-sm font-semibold text-[var(--navy)]">صورة الملف (اختياري)</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+              className="mt-2 block w-full text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-semibold text-[var(--navy)]">شهادات مهنية (سطر لكل شهادة)</span>
+            <textarea
+              value={certificates}
+              onChange={(e) => setCertificates(e.target.value)}
+              rows={3}
+              placeholder="مثال: رخصة محاماة — رقم …"
+              className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3"
+            />
+          </label>
+          <p className="text-xs text-[var(--ink-40)]">يمكنك التخطي — مكافأة +{CREDIT_REWARDS.onboarding_step_5} عند الرفع.</p>
+        </div>
+      )}
+
+      {step === 6 && (
+        <div className="space-y-4">
           <label className="flex items-start gap-3 text-sm leading-7 text-[var(--navy)]">
             <input
               type="checkbox"
@@ -336,10 +441,6 @@ export function OnboardingWizard({
               .
             </span>
           </label>
-          <p className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-3 text-sm leading-7 text-[var(--navy)]">
-            عند الإكمال تحصل على +{CREDIT_REWARDS.onboarding_step_5} لهذه الخطوة و+{CREDIT_REWARDS.onboarding_complete}{" "}
-            لمكافأة الإكمال الكامل.
-          </p>
         </div>
       )}
 
@@ -352,9 +453,24 @@ export function OnboardingWizard({
         >
           السابق
         </button>
-        <GoldButton type="button" disabled={pending} onClick={() => void submitStep()}>
-          {pending ? "جارٍ الحفظ…" : step === 5 ? `إنهاء (+${CREDIT_REWARDS.onboarding_step_5})` : `التالي (+${STEPS[step - 1].reward})`}
-        </GoldButton>
+        <div className="flex flex-wrap gap-2">
+          {step === 5 ? (
+            <button
+              type="button"
+              className="focus-ring text-sm font-semibold text-[var(--ink-60)]"
+              onClick={() => void submitStep({ skipAvatar: true })}
+            >
+              تخطّي
+            </button>
+          ) : null}
+          <GoldButton type="button" disabled={pending} onClick={() => void submitStep()}>
+            {pending
+              ? "جارٍ الحفظ…"
+              : step === 6
+                ? `إنهاء (+${CREDIT_REWARDS.onboarding_step_6})`
+                : `التالي (+${STEPS[step - 1].reward})`}
+          </GoldButton>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ import { ExternalLink, FileText, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
+import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
+import { SpendCreditsButton } from "@/components/credits/SpendCreditsButton";
 import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 
@@ -43,6 +45,8 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
           actions={
             <>
               <LegalCopyButton text={citation || judgment.judgmentTitle || judgment.id} label="نسخ الاستشهاد" />
+              <LegalFavoriteButton documentType="ruling" documentId={judgment.id} label="حفظ للمفضلة" />
+              <SpendCreditsButton use="download_ruling" targetId={judgment.id} label="تحميل بالنقاط (50)" />
               {judgment.sourceLink ? (
                 <a className="btn ho-hero-outline" href={judgment.sourceLink} target="_blank" rel="noreferrer">
                   <ExternalLink size={16} />

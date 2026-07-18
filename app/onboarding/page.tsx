@@ -52,7 +52,7 @@ export default async function OnboardingPage() {
             </h2>
             <OnboardingWizard
               userName={user.name}
-              initialStep={profile.onboardingCompleted ? 1 : Math.max(1, profile.onboardingStep || 1)}
+              initialStep={profile.onboardingCompleted ? 1 : Math.min(6, Math.max(1, profile.onboardingStep || 1))}
               initialBalance={balance}
             />
             <p className="login-panel__links mt-6">

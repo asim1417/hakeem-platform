@@ -17,6 +17,8 @@ export interface UserProfile {
   referralCode: string | null;
   referredBy: string | null;
   creditsBalance: number;
+  avatarUrl: string | null;
+  certificates: string[];
   /** قبل الهجرة */
   unknown?: boolean;
 }
@@ -34,6 +36,8 @@ export type ProfilePatch = Partial<{
   onboardingCompleted: boolean;
   onboardingStep: number;
   referredBy: string | null;
+  avatarUrl: string | null;
+  certificates: string[];
 }>;
 
 function asStringArray(value: unknown): string[] {
@@ -57,13 +61,16 @@ function mapRow(row: Record<string, unknown>): UserProfile {
     referralCode: (row.referralCode as string | null) ?? null,
     referredBy: (row.referredBy as string | null) ?? null,
     creditsBalance: Number(row.creditsBalance ?? 0),
+    avatarUrl: (row.avatarUrl as string | null) ?? null,
+    certificates: asStringArray(row.certificates),
   };
 }
 
 const SELECT = `
   phone, city, "entityType", "yearsExperience", specialties, interests,
   "alertsEnabled", "phoneVerified", "termsAccepted",
-  "onboardingCompleted", "onboardingStep", "referralCode", "referredBy", "creditsBalance"
+  "onboardingCompleted", "onboardingStep", "referralCode", "referredBy", "creditsBalance",
+  "avatarUrl", certificates
 `;
 
 export async function getProfile(userId: string): Promise<UserProfile> {
@@ -76,7 +83,21 @@ export async function getProfile(userId: string): Promise<UserProfile> {
     if (!rows[0]) return { ...emptyProfile(), unknown: true };
     return mapRow(rows[0]);
   } catch {
-    return { ...emptyProfile(), unknown: true };
+    // محاولة بلا أعمدة الصورة إن فشلت الهجرة الثانية
+    try {
+      const { prisma } = await import("@/lib/prisma");
+      const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
+        `SELECT phone, city, "entityType", "yearsExperience", specialties, interests,
+                "alertsEnabled", "phoneVerified", "termsAccepted",
+                "onboardingCompleted", "onboardingStep", "referralCode", "referredBy", "creditsBalance"
+           FROM "users" WHERE id = $1 LIMIT 1`,
+        userId
+      );
+      if (!rows[0]) return { ...emptyProfile(), unknown: true };
+      return { ...mapRow(rows[0]), avatarUrl: null, certificates: [] };
+    } catch {
+      return { ...emptyProfile(), unknown: true };
+    }
   }
 }
 
@@ -91,11 +112,13 @@ function emptyProfile(): UserProfile {
     alertsEnabled: false,
     phoneVerified: false,
     termsAccepted: false,
-    onboardingCompleted: true, // سقوط مفتوح: لا نجبر onboarding قبل الهجرة
+    onboardingCompleted: true,
     onboardingStep: 0,
     referralCode: null,
     referredBy: null,
     creditsBalance: 0,
+    avatarUrl: null,
+    certificates: [],
   };
 }
 
@@ -121,12 +144,17 @@ export async function updateProfile(userId: string, patch: ProfilePatch): Promis
     sets.push(`interests = $${i++}::jsonb`);
     vals.push(JSON.stringify(patch.interests));
   }
+  if (patch.certificates !== undefined) {
+    sets.push(`certificates = $${i++}::jsonb`);
+    vals.push(JSON.stringify(patch.certificates));
+  }
   if (patch.alertsEnabled !== undefined) push(`"alertsEnabled"`, patch.alertsEnabled);
   if (patch.phoneVerified !== undefined) push(`"phoneVerified"`, patch.phoneVerified);
   if (patch.termsAccepted !== undefined) push(`"termsAccepted"`, patch.termsAccepted);
   if (patch.onboardingCompleted !== undefined) push(`"onboardingCompleted"`, patch.onboardingCompleted);
   if (patch.onboardingStep !== undefined) push(`"onboardingStep"`, patch.onboardingStep);
   if (patch.referredBy !== undefined) push(`"referredBy"`, patch.referredBy);
+  if (patch.avatarUrl !== undefined) push(`"avatarUrl"`, patch.avatarUrl);
 
   if (sets.length === 0) return getProfile(userId);
 
@@ -143,14 +171,12 @@ export async function updateProfile(userId: string, patch: ProfilePatch): Promis
   }
 }
 
-/** هل يجب توجيه المستخدم لـ /onboarding؟ */
 export function needsOnboarding(profile: UserProfile, email?: string): boolean {
   if (profile.unknown) return false;
   if (email === "guest@hakeem.local") return false;
   return profile.onboardingCompleted === false;
 }
 
-/** تعليم مستخدم جديد بأنه لم يُكمل onboarding بعد. */
 export async function markOnboardingPending(userId: string): Promise<void> {
   try {
     const { prisma } = await import("@/lib/prisma");

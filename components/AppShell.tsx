@@ -81,8 +81,14 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               <div className="uname truncate">{user?.name ?? "المستخدم التجريبي"}</div>
               <div className="urole truncate">{user ? roleLabels[user.role] ?? user.role : "حساب محام - تدريبي"}</div>
               <Link
-                href="/onboarding"
+                href="/dashboard/billing"
                 className="mt-1 block truncate text-[11px] font-semibold text-[var(--gold-pale)] hover:underline"
+              >
+                الفوترة والخطط
+              </Link>
+              <Link
+                href="/onboarding"
+                className="mt-0.5 block truncate text-[11px] font-semibold text-white/70 hover:underline"
               >
                 الملف والنقاط
               </Link>

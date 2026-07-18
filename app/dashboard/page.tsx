@@ -4,6 +4,8 @@ import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
+import { awardDailyVisit } from "@/lib/modules/credits/engagement";
+import { getCurrentUser } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { activityLabel, statusLabel } from "@/lib/activity-labels";
@@ -95,6 +97,8 @@ export default async function DashboardPage({
 }) {
   const stats = await getDashboardStats().catch(() => null);
   const showWelcome = searchParams?.welcome === "1";
+  const me = await getCurrentUser().catch(() => null);
+  if (me) void awardDailyVisit(me.id).catch(() => undefined);
 
   return (
     <div>

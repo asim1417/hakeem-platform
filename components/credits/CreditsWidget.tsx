@@ -25,7 +25,7 @@ export async function CreditsWidget() {
         <p className="text-xs font-semibold tracking-wide text-[var(--gold)]">نقاط حكيم</p>
         <p className="mt-2 font-display text-4xl tabular-nums">{ar(status.balance)}</p>
         <p className="mt-2 text-sm leading-7 text-white/75">
-          أكمل ملفك وادعُ زملاءك لزيادة رصيدك. الاستخدامات التحفيزية قريبًا مع الاشتراك.
+          أكمل ملفك وادعُ زملاءك. استخدم النقاط لتحميل الأحكام أو تجاوز الحصّة المجانية عند النفاد.
         </p>
         <ul className="mt-3 space-y-1 text-xs text-white/65">
           {CREDIT_USES.slice(0, 3).map((u) => (

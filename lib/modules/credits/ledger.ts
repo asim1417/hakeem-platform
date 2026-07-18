@@ -3,7 +3,12 @@
 // كل مصدر يُمنح مرة واحدة فقط (idempotent عبر source لكل user).
 // ─────────────────────────────────────────────────────────────────────────────
 import { randomBytes } from "crypto";
-import { CREDIT_REWARDS, type CreditSource } from "@/config/credits";
+import {
+  CREDIT_REWARDS,
+  CREDIT_SPENDS,
+  type CreditSource,
+  type CreditSpendId,
+} from "@/config/credits";
 
 export interface CreditTx {
   id: string;
@@ -125,4 +130,53 @@ export async function awardSignupBundle(userId: string): Promise<number> {
   const a = await awardCredits(userId, "welcome");
   const b = await awardCredits(userId, "signup");
   return a.awarded + b.awarded;
+}
+
+/**
+ * خصم نقاط لاستخدام كتالوج. يفشل إن الرصيد غير كافٍ.
+ * المصدر فريد لكل عملية اختيارية عبر `uniqueSuffix` (مثل معرف الحكم).
+ */
+export async function spendCredits(
+  userId: string,
+  spendId: CreditSpendId,
+  uniqueSuffix?: string
+): Promise<{ ok: boolean; spent: number; balance: number; message?: string }> {
+  const def = CREDIT_SPENDS[spendId];
+  if (!def) return { ok: false, spent: 0, balance: 0, message: "استخدام غير معروف." };
+  const pts = def.points;
+  const source = uniqueSuffix ? `spend_${spendId}_${uniqueSuffix}` : `spend_${spendId}_${Date.now()}`;
+
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    if (uniqueSuffix && (await hasAwarded(userId, source))) {
+      const bal = await getBalance(userId);
+      return { ok: true, spent: 0, balance: bal, message: "مدفوع مسبقًا." };
+    }
+
+    const rows = await prisma.$queryRawUnsafe<{ creditsBalance: number }[]>(
+      `UPDATE "users"
+         SET "creditsBalance" = "creditsBalance" - $2
+       WHERE id = $1 AND COALESCE("creditsBalance", 0) >= $2
+       RETURNING "creditsBalance"`,
+      userId,
+      pts
+    );
+    if (!rows[0]) {
+      const bal = await getBalance(userId);
+      return { ok: false, spent: 0, balance: bal, message: "رصيد النقاط غير كافٍ." };
+    }
+
+    const id = newId();
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "credit_transactions" (id, "userId", amount, source, status)
+       VALUES ($1, $2, $3, $4, 'active')`,
+      id,
+      userId,
+      -pts,
+      source
+    );
+    return { ok: true, spent: pts, balance: rows[0].creditsBalance };
+  } catch {
+    return { ok: false, spent: 0, balance: 0, message: "تعذّر الخصم — طبّق هجرة النقاط." };
+  }
 }

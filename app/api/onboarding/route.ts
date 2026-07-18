@@ -8,7 +8,7 @@ import { ensureReferralCode } from "@/lib/modules/referrals/codes";
 export const dynamic = "force-dynamic";
 
 const stepSchema = z.object({
-  step: z.number().int().min(1).max(5),
+  step: z.number().int().min(1).max(6),
   phone: z.string().max(32).optional(),
   city: z.string().max(64).optional(),
   entityType: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).optional(),
@@ -18,6 +18,8 @@ const stepSchema = z.object({
   alertsEnabled: z.boolean().optional(),
   phoneVerified: z.boolean().optional(),
   termsAccepted: z.boolean().optional(),
+  certificates: z.array(z.string().max(120)).max(20).optional(),
+  skipAvatar: z.boolean().optional(),
   complete: z.boolean().optional(),
 });
 
@@ -45,7 +47,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message }, { status: 400 });
   }
 
-  // تحقق خفيف حسب الخطوة
   if (body.step === 1) {
     if (!body.phone?.trim() || !body.city?.trim()) {
       return NextResponse.json({ message: "أدخل رقم الجوال والمدينة." }, { status: 400 });
@@ -57,8 +58,10 @@ export async function POST(request: NextRequest) {
     }
   }
   if (body.step === 3) {
-    if (!body.phoneVerified) {
-      return NextResponse.json({ message: "أكّد صحة رقم الجوال للمتابعة." }, { status: 400 });
+    // يجب التحقق عبر OTP أولًا — نقرأ الملف
+    const current = await getProfile(user.id);
+    if (!current.phoneVerified && !body.phoneVerified) {
+      return NextResponse.json({ message: "أكمل التحقق من الجوال برمز OTP أولًا." }, { status: 400 });
     }
   }
   if (body.step === 4) {
@@ -66,12 +69,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "اختر 3 اهتمامات على الأقل." }, { status: 400 });
     }
   }
-  if (body.step === 5) {
+  if (body.step === 6) {
     if (!body.termsAccepted) {
       return NextResponse.json({ message: "يلزم قبول الشروط وسياسة الخصوصية." }, { status: 400 });
     }
   }
 
+  const isComplete = body.complete === true || body.step === 6;
   const patch = {
     phone: body.phone?.trim(),
     city: body.city?.trim(),
@@ -82,24 +86,35 @@ export async function POST(request: NextRequest) {
     alertsEnabled: body.alertsEnabled,
     phoneVerified: body.phoneVerified,
     termsAccepted: body.termsAccepted,
+    certificates: body.certificates,
     onboardingStep: body.step,
-    onboardingCompleted: body.complete === true || body.step === 5,
+    onboardingCompleted: isComplete,
   };
 
   const profile = await updateProfile(user.id, patch);
 
-  const source = `onboarding_step_${body.step}` as const;
-  const stepAward = await awardCredits(user.id, source);
+  // خطوة 5 (صورة) تُكافأ عبر /api/profile/avatar أو عند التخطي بلا نقاط إضافية هنا إن سبق منحها
+  let awarded = 0;
+  if (body.step !== 5 || body.skipAvatar) {
+    const source = `onboarding_step_${body.step}` as const;
+    // للخطوة 5 عند التخطي: لا نمنح نقاط الصورة
+    if (!(body.step === 5 && body.skipAvatar)) {
+      const stepAward = await awardCredits(user.id, source);
+      awarded += stepAward.awarded;
+    }
+  }
 
-  let completeAward = { awarded: 0, balance: stepAward.balance };
-  if (body.complete || body.step === 5) {
-    completeAward = await awardCredits(user.id, "onboarding_complete");
+  let balance = profile.creditsBalance;
+  if (isComplete) {
+    const completeAward = await awardCredits(user.id, "onboarding_complete");
+    awarded += completeAward.awarded;
+    balance = completeAward.balance || balance;
   }
 
   return NextResponse.json({
     profile,
-    awarded: stepAward.awarded + completeAward.awarded,
-    balance: completeAward.balance || stepAward.balance,
+    awarded,
+    balance,
     done: profile.onboardingCompleted,
   });
 }
