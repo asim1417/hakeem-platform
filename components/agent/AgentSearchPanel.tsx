@@ -58,8 +58,10 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   // محلّل منصّة الوثائق (extractFile) — استخراجٌ محليّ في المتصفّح؛ الملفّ لا يغادر الجهاز.
+  // المستند يبقى منفصلًا عن مربّع السؤال (لا يُخلَط بما يكتبه المستخدم).
   const [extracting, setExtracting] = useState(false);
-  const [attachNote, setAttachNote] = useState<string | null>(null);
+  const [attachedDoc, setAttachedDoc] = useState("");
+  const [attachedName, setAttachedName] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   // على الجوّال: مغادرة المتصفّح تعلّق التبويب فينكسر بثّ الطلب. نرصد ذلك لتقديم رسالة لطيفة + إعادة محاولة.
   const abortRef = useRef<AbortController | null>(null);
@@ -87,17 +89,19 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
     event.target.value = "";
     if (!file) return;
     setExtracting(true);
-    setAttachNote(`أقرأ «${file.name}»…`);
     try {
-      const r = await extractFile(file, (label) => setAttachNote(label));
+      const r = await extractFile(file);
       if (r.text.trim()) {
-        setValue((prev) => (prev.trim() ? `${prev.trim()}\n\n` : "") + r.text.trim());
-        setAttachNote(`أُدرج نصّ «${file.name}» (${r.kind}) — راجعه ثم أرسِل`);
+        // المستند يُحفَظ منفصلًا (لا يُدرَج في مربّع السؤال) — فيتّضح الفرق بين سؤالك ونصّ الملفّ.
+        setAttachedDoc(r.text.trim());
+        setAttachedName(file.name);
       } else {
-        setAttachNote("لم أستخرج نصًّا من الملف.");
+        setAttachedDoc("");
+        setAttachedName(null);
       }
     } catch {
-      setAttachNote("تعذّر قراءة الملف.");
+      setAttachedDoc("");
+      setAttachedName(null);
     } finally {
       setExtracting(false);
     }
@@ -114,15 +118,18 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
 
   async function ask(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) {
     const question = (q ?? value).trim();
-    if (!question || busy) return;
+    const doc = attachedDoc;
+    if ((!question && !doc) || busy) return;
     setBusy(true);
     setValue("");
     backgroundedRef.current = false;
     const controller = new AbortController();
     abortRef.current = controller;
+    // ما يُعرَض للمستخدم: سؤاله كما كتبه؛ وإن أرفق مستندًا دون سؤال نُظهر أنه طلب تحليل المستند.
+    const shown = question || (attachedName ? `تحليل المستند: ${attachedName}` : "تحليل المستند المرفق");
     setTurns((prev) => [
       ...prev,
-      { question, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
+      { question: shown, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
     ]);
 
     // الأوضاع الحوارية: نمرّر تاريخ الأدوار السابقة (سؤال/جواب) للحفاظ على سياق المحادثة.
@@ -134,7 +141,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history }),
+        body: JSON.stringify({ query: question, document: doc || undefined, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history }),
         signal: controller.signal
       });
 
@@ -561,6 +568,24 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
               );
             })}
           </div>
+          {/* المستند المرفق يظهر منفصلًا عن مربّع السؤال — فيتّضح الفرق بين ما تكتبه ونصّ الملفّ */}
+          {attachedName ? (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-2 text-xs">
+              <span className="flex min-w-0 items-center gap-1.5 text-[var(--navy)]">
+                <Paperclip size={13} aria-hidden />
+                <span className="truncate font-semibold">{attachedName}</span>
+                <span className="shrink-0 text-[var(--ink-60)]">· مستند مُرفَق ({attachedDoc.length.toLocaleString("ar-SA")} حرف)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => { setAttachedDoc(""); setAttachedName(null); }}
+                className="focus-ring shrink-0 rounded-full px-2 py-0.5 font-semibold text-[var(--ink-60)] transition hover:text-[var(--ruby)]"
+                aria-label="إزالة المستند"
+              >
+                ✕ إزالة
+              </button>
+            </div>
+          ) : null}
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -571,7 +596,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
               }
             }}
             rows={1}
-            placeholder={getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…"}
+            placeholder={attachedName ? "اكتب سؤالك عن المستند المرفق (اختياريّ)…" : getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…"}
             className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <div className="flex items-center justify-between gap-2 px-1">
@@ -599,16 +624,13 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
             </div>
             <button
               type="submit"
-              disabled={busy || !value.trim()}
+              disabled={busy || (!value.trim() && !attachedDoc)}
               className="focus-ring rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? "جارٍ…" : "إرسال"}
             </button>
           </div>
         </form>
-        {attachNote ? (
-          <p className="mt-2 px-1 text-center text-[11px] leading-6 text-[var(--gold-dark)]">{attachNote} · يُقرأ الملفّ في متصفّحك ولا يُرفع لأيّ خادم.</p>
-        ) : null}
         <p className="mt-2 px-1 text-center text-[11px] leading-6 text-[var(--ink-40)]">
           حكيم يبحث في النواة القانونية الموثّقة فقط ولا يولّد مواد غير موجودة. مخرجاته مساعدة وتعليمية وليست رأيًا قانونيًا نهائيًا.
         </p>
