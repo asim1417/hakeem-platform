@@ -1,5 +1,6 @@
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { AgentSearchPanel } from "@/components/agent/AgentSearchPanel";
+import { QuotaCounter } from "@/components/billing/QuotaCounter";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function AskHakeemPage({ searchParams }: { searchParams: { 
 
   return (
     <div className="mx-auto max-w-3xl">
+      <QuotaCounter />
       <AgentSearchPanel userName={firstName} initialQuery={initialQuery} initialMode={initialMode} />
     </div>
   );

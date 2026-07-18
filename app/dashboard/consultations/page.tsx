@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ConsultationForm } from "@/components/ConsultationForm";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { QuotaCounter } from "@/components/billing/QuotaCounter";
 
 export default async function ConsultationsPage({ searchParams }: { searchParams: { facts?: string } }) {
   await requirePagePermission("CONSULTATIONS_LIMITED");
@@ -20,6 +21,7 @@ export default async function ConsultationsPage({ searchParams }: { searchParams
         </Link>
       </div>
       <div className="mt-6">
+        <QuotaCounter />
         <ConsultationForm defaultFacts={defaultFacts} />
       </div>
     </div>

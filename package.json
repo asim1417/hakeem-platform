@@ -149,7 +149,8 @@
     "agents:validate": "node agents/validate.mjs",
     "agents:consistency": "node agents/consistency.mjs",
     "agents:approve": "tsx scripts/approve-agents.ts",
-    "agents:demo": "tsx scripts/demo-agents.ts"
+    "agents:demo": "tsx scripts/demo-agents.ts",
+    "test:quota": "tsx scripts/test-quota.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
