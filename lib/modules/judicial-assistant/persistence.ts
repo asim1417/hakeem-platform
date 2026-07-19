@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ensureJudicialSchema } from "./schema-ensure";
 
 export interface SavedAnalysis {
   id: string;
@@ -24,6 +25,7 @@ export async function saveAnalysis(input: {
   actorId?: string;
 }): Promise<string | null> {
   try {
+    await ensureJudicialSchema();
     const row = await prisma.judicialAnalysis.create({
       data: {
         caseRef: input.caseRef,

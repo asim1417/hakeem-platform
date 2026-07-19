@@ -4,6 +4,7 @@
 // الوصول دفاعيّ (fail-open) وموقوفٌ على المالك (ABAC). المرفقات والخريطة في JSON.
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@/lib/prisma";
+import { ensureJudicialSchema } from "./schema-ensure";
 import { STAGE_META } from "./catalog";
 import type {
   CaseAttachment, CaseFact, CaseGap, CaseIssue, CaseRequest, CaseStage,
@@ -67,6 +68,7 @@ export async function createCase(
   input: { subject: string; caseNumber?: string; court?: string; circuit?: string; jurisdiction?: string; confidentiality?: string }
 ): Promise<string | null> {
   try {
+    await ensureJudicialSchema();
     const row = await prisma.judicialWorkCase.create({
       data: {
         ownerId,
@@ -88,6 +90,7 @@ export async function createCase(
 
 export async function getCase(caseId: string): Promise<JudicialCase | null> {
   try {
+    await ensureJudicialSchema();
     const row = await prisma.judicialWorkCase.findUnique({ where: { id: caseId }, select: SELECT });
     return row ? mapRow(row as Row) : null;
   } catch {
@@ -97,6 +100,7 @@ export async function getCase(caseId: string): Promise<JudicialCase | null> {
 
 export async function listCaseRows(ownerId: string): Promise<CaseSummaryRow[]> {
   try {
+    await ensureJudicialSchema();
     const rows = await prisma.judicialWorkCase.findMany({
       where: { ownerId },
       orderBy: { createdAt: "desc" },
@@ -213,6 +217,7 @@ export interface JudgeDashboard {
 
 export async function getJudgeDashboard(ownerId: string): Promise<JudgeDashboard> {
   try {
+    await ensureJudicialSchema();
     const rows = await prisma.judicialWorkCase.findMany({ where: { ownerId }, orderBy: { createdAt: "desc" }, select: SELECT });
     const cases = rows.map((r) => mapRow(r as Row));
     const upcomingHearings = cases
