@@ -49,12 +49,22 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
     .filter((f) => f.status === "established" || f.status === "admitted")
     .map((f) => f.text)
     .join("؛ ");
+  let budget = 8_000;
+  const docs = kase.attachments
+    .map((a) => {
+      const slice = a.text.slice(0, Math.max(0, budget));
+      budget -= slice.length;
+      return slice ? `— من «${a.name}»:\n${slice}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
   const reasoningPrompt = [
     `نوع القضاء: ${kase.jurisdiction}. الموضوع: ${kase.subject}.`,
     `المسائل محلّ الفصل: ${issues || "—"}.`,
     `الوقائع الثابتة/المُقرّة: ${established || "—"}.`,
+    docs ? `مقتطفات من مرفقات القضية:\n${docs}` : "",
     "المطلوب: بناء تسبيبٍ قضائيّ (واقعة-قاعدة-تطبيق) لكلّ مسألة، مؤصَّلًا بمواد النظام الحاكم فقط.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   const [reasoning, precedents] = await Promise.all([
     createAgentConsultationDraft({ facts: reasoningPrompt, actorId }).catch(() => null),

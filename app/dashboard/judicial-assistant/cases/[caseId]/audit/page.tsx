@@ -4,21 +4,27 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalPageHeader, LegalEmptyState } from "@/components/ui/legal";
 import { getCase } from "@/lib/modules/judicial-assistant/store";
+import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
 import { formatDateTime } from "@/lib/modules/judicial-assistant/labels";
 import { JaIcon } from "@/components/judicial-assistant/icons";
 
 export const dynamic = "force-dynamic";
 
 const ACTION_LABEL: Record<string, string> = {
+  JA_CASE_CREATED: "إنشاء القضية",
+  JA_ATTACHMENT_ADDED: "إضافة مرفق",
   JA_SUMMARY_GENERATED: "إنشاء ملخّص تنفيذيّ (JS-001)",
   JA_SUMMARY_BLOCKED: "ملخّص محجوب (لا سند)",
   JA_DETERMINISTIC_ACTION: "تشغيل عملٍ حتميّ",
+  JA_DRAFT_GENERATED: "مشروع حكم (JS-018)",
+  JA_DRAFT_BLOCKED: "مشروع حكم محجوب (لا سند)",
 };
 
 export default async function CaseAuditPage({ params }: { params: { caseId: string } }) {
-  await requirePagePermission("JUDICIAL_ASSISTANT_USE");
+  const user = await requirePagePermission("JUDICIAL_ASSISTANT_USE");
   const kase = await getCase(params.caseId);
   if (!kase) notFound();
+  if (!caseVisibleTo({ userId: user.id, role: user.role }, kase)) notFound();
 
   // سجلّ نشاط القضية من جدول التدقيق الفعليّ (§20 شاشة ١٧). سقوطٌ آمن إن تعذّر.
   const events = await prisma.auditEvent

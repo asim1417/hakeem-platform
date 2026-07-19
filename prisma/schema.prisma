@@ -972,3 +972,25 @@ model JudicialAnalysis {
   @@index([caseRef, createdAt])
   @@map("judicial_analyses")
 }
+
+// ── المعاون القضائي — القضية كمشروع/مجلّد يملكه القاضي (لا موصل تقاضي) ──
+// المدخل: مرفقات المستخدم (نصّ مُستخرَج في المتصفّح). الخريطة والمرفقات في JSON.
+// يُنشأ بسكربت idempotent؛ الوصول دفاعيّ (fail-open) وموقوفٌ على المالك (ABAC).
+model JudicialWorkCase {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId        String   @map("owner_id")
+  caseNumber     String?  @map("case_number")
+  court          String?
+  circuit        String?
+  jurisdiction   String   @default("general")
+  subject        String
+  stage          String   @default("active")
+  confidentiality String  @default("normal")
+  attachments    Json     @default("[]")
+  structured     Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerId, createdAt])
+  @@map("judicial_work_cases")
+}

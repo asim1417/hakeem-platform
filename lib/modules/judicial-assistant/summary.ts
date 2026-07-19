@@ -13,28 +13,37 @@ const HUMAN_REVIEW_NOTICE =
 const BLOCKED_NOTICE =
   "لم يُعثر على مادّةٍ نظاميّة مطابقة في النواة القانونيّة لتأصيل ملخّصٍ نظاميّ. عُرضت وقائع القضية دون جزمٍ نظاميّ (تعطّلٌ آمن).";
 
-/** يحوّل نموذج القضية إلى نصّ وقائع منظّم يُرسل للاسترجاع (بيانات صناعيّة في هذه المرحلة). */
+/**
+ * يحوّل القضية إلى نصّ وقائع يُرسل للاسترجاع. المادّة الأساسيّة **مرفقات المستخدم** (النصّ
+ * المُستخرَج)، تُضاف إليها الخريطة إن وُجدت. حدٌّ للطول كي لا نُغرِق النموذج.
+ */
 function buildFactsText(kase: JudicialCase): string {
   const parties = kase.parties.map((p) => `- ${p.role}: ${p.name}`).join("\n");
   const requests = kase.requests.map((r) => `- ${r.text}`).join("\n");
-  // الوقائع الثابتة/المُقرّة أولًا — لا نبني تأصيلًا على واقعةٍ غير مثبتة.
   const facts = kase.facts
     .filter((f) => f.status === "established" || f.status === "admitted")
     .map((f) => `- ${f.text}`)
     .join("\n");
   const issues = kase.issues.map((i) => `- ${i.statement}`).join("\n");
+  // مقتطفات من المرفقات (المادّة الحقيقيّة) — بسقفٍ إجماليّ.
+  let budget = 12_000;
+  const docs = kase.attachments
+    .map((a) => {
+      const slice = a.text.slice(0, Math.max(0, budget));
+      budget -= slice.length;
+      return slice ? `— من «${a.name}»:\n${slice}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
   return [
     `نوع القضاء: ${kase.jurisdiction}`,
     `موضوع القضية: ${kase.subject}`,
     `المرحلة: ${STAGE_META[kase.stage].label}`,
-    "الأطراف:",
-    parties,
-    "الطلبات:",
-    requests,
-    facts ? "الوقائع الثابتة/المُقرّة:" : "",
-    facts,
-    "المسائل محلّ الفصل:",
-    issues,
+    parties ? `الأطراف:\n${parties}` : "",
+    requests ? `الطلبات:\n${requests}` : "",
+    facts ? `الوقائع الثابتة/المُقرّة:\n${facts}` : "",
+    issues ? `المسائل محلّ الفصل:\n${issues}` : "",
+    docs ? `مقتطفات من مرفقات القضية:\n${docs}` : "",
   ]
     .filter(Boolean)
     .join("\n");

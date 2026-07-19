@@ -27,14 +27,17 @@ export async function POST(request: NextRequest) {
   }
 
   const kase = await getCase(caseId);
-  if (!kase) return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
+  // ABAC: القضية للمالك أو للمدير فقط.
+  if (!kase || (kase.ownerId !== actorId && gate.user!.role !== "SYSTEM_ADMIN")) {
+    return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
+  }
 
   const result = await generateExecutiveSummary(kase, actorId);
 
-  // حفظ المخرَج (المرحلة 1ب) — دفاعيّ: لا يكسر الاستجابة إن لم يوجد الجدول بعد.
+  // حفظ المخرَج — دفاعيّ: لا يكسر الاستجابة إن لم يوجد الجدول بعد.
   await saveAnalysis({
     caseRef: kase.id,
-    caseNumber: kase.caseNumber,
+    caseNumber: kase.caseNumber ?? kase.subject,
     serviceId: "JS-001",
     blocked: result.blocked,
     payload: { summary: result.summary, citations: result.citations, requestId: result.requestId },

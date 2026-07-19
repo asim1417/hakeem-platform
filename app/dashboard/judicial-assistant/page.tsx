@@ -4,108 +4,87 @@ import { LegalPageHeader, LegalAlert, LegalStatCard, LegalEmptyState } from "@/c
 import { getJudgeDashboard } from "@/lib/modules/judicial-assistant/store";
 import {
   CONFIDENTIALITY_LABEL, DEADLINE_STATUS_LABEL, DEADLINE_STATUS_TONE,
-  JURISDICTION_LABEL, formatDate, formatDateTime,
+  JURISDICTION_LABEL, formatDate,
 } from "@/lib/modules/judicial-assistant/labels";
 import { JaIcon } from "@/components/judicial-assistant/icons";
+import { CreateCaseForm } from "@/components/judicial-assistant/CreateCaseForm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "المعاون القضائيّ — لوحة القاضي" };
 
 export default async function JudicialAssistantDashboard() {
-  await requirePagePermission("JUDICIAL_ASSISTANT_USE");
-  const dash = await getJudgeDashboard();
+  const user = await requirePagePermission("JUDICIAL_ASSISTANT_USE");
+  const dash = await getJudgeDashboard(user.id);
+  const empty = dash.totalCases === 0;
 
   return (
     <div className="ja">
       <LegalPageHeader
         eyebrow="المعاون القضائيّ السعوديّ"
         title="لوحة القاضي"
-        description="مساحةُ عملٍ قضائيّة تقود العمل بحسب مرحلة القضية — لا محادثة. المصدر قبل الإجابة، والقاضي صاحب القرار."
-        actions={
-          <Link href="/dashboard/judicial-assistant/cases" className="btn btn-gold">
-            <JaIcon name="case" size={16} /> قائمة القضايا
-          </Link>
-        }
+        description="مساحةُ عملٍ قضائيّة تبدأ من قضاياك ومرفقاتك — تقود العمل بحسب المرحلة، والمصدر قبل الإجابة، والقاضي صاحب القرار."
+        actions={<Link href="/dashboard/judicial-assistant/cases" className="btn btn-gold"><JaIcon name="case" size={16} /> قضاياي</Link>}
       />
 
-      <div className="ja-syntbanner" role="status">
-        <JaIcon name="security" size={16} />
-        <span>
-          بيانات صناعيّة عبر موصلٍ تجريبيّ (<b>{dash.connector.note}</b>). لا اتّصال بنظامٍ رسميّ، ولا قضايا حقيقيّة.
-          {dash.connector.lastSync ? ` آخر مزامنة: ${formatDateTime(dash.connector.lastSync)}.` : ""}
-        </span>
-      </div>
+      {empty ? (
+        <div className="card ja-panel">
+          <LegalEmptyState title="ابدأ بإنشاء قضيتك الأولى" description="القضية مشروعٌ تملكه: أنشئه، ثم أضِف مرفقاتك (اللائحة، المذكّرات، المحاضر) ليحلّلها المعاون مؤصَّلًا بالنواة." />
+          <div className="ja-formactions"><CreateCaseForm /></div>
+        </div>
+      ) : (
+        <>
+          <div className="ja-stats">
+            <LegalStatCard label="قضاياك" value={String(dash.totalCases)} hint="مشاريع تملكها" />
+            <LegalStatCard label="المرفقات" value={String(dash.totalAttachments)} hint="وثائق مُحمّلة" />
+            <LegalStatCard label="جلساتٌ ومدد" value={String(dash.upcomingHearings.length + dash.deadlines.length)} hint="قيد المتابعة" />
+          </div>
 
-      <div className="ja-stats">
-        <LegalStatCard label="القضايا" value={String(dash.totalCases)} hint="في مساحة العمل" />
-        <LegalStatCard label="جلساتٌ قادمة" value={String(dash.upcomingHearings.length)} hint="مرتّبة زمنيًّا" />
-        <LegalStatCard label="مددٌ قيد المتابعة" value={String(dash.deadlines.length)} hint="مع حالة كلٍّ منها" />
-      </div>
-
-      <div className="ja-cols">
-        <section className="card ja-panel" aria-labelledby="ja-hearings">
-          <h2 id="ja-hearings" className="ja-panel__title"><JaIcon name="hearing" size={18} /> الجلسات القادمة</h2>
-          {dash.upcomingHearings.length === 0 ? (
-            <LegalEmptyState title="لا جلسات" description="لا توجد جلساتٌ مجدولة في البيانات الحاليّة." />
-          ) : (
+          <section className="card ja-panel" aria-labelledby="ja-ready">
+            <div className="ja-panel__row">
+              <h2 id="ja-ready" className="ja-panel__title"><JaIcon name="case" size={18} /> قضاياك</h2>
+              <CreateCaseForm />
+            </div>
             <ul className="ja-list">
-              {dash.upcomingHearings.map(({ caseId, caseNumber, court, hearing }) => (
-                <li key={hearing.id} className="ja-list__row">
+              {dash.cases.map((c) => (
+                <li key={c.id} className="ja-list__row">
                   <div>
-                    <Link href={`/dashboard/judicial-assistant/cases/${caseId}`} className="ja-list__title">{caseNumber}</Link>
-                    <div className="ja-list__sub">{court} — {hearing.purpose}</div>
+                    <Link href={`/dashboard/judicial-assistant/cases/${c.id}`} className="ja-list__title">{c.caseNumber || c.subject}</Link>
+                    <div className="ja-list__sub">{c.court ?? "—"} — {c.subject}</div>
                   </div>
-                  <span className="ja-when">{formatDate(hearing.date)}</span>
+                  <div className="ja-tags">
+                    <span className="ja-chip">{JURISDICTION_LABEL[c.jurisdiction]}</span>
+                    <span className="ja-chip">{CONFIDENTIALITY_LABEL[c.confidentiality]}</span>
+                    <span className="ja-chip">{c.attachmentCount} مرفق</span>
+                  </div>
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
 
-        <section className="card ja-panel" aria-labelledby="ja-deadlines">
-          <h2 id="ja-deadlines" className="ja-panel__title"><JaIcon name="deadline" size={18} /> المدد</h2>
-          {dash.deadlines.length === 0 ? (
-            <LegalEmptyState title="لا مدد" description="لا مدداً قيد المتابعة." />
-          ) : (
-            <ul className="ja-list">
-              {dash.deadlines.map(({ caseId, caseNumber, deadline }) => (
-                <li key={deadline.id} className="ja-list__row">
-                  <div>
-                    <Link href={`/dashboard/judicial-assistant/cases/${caseId}`} className="ja-list__title">{deadline.label}</Link>
-                    <div className="ja-list__sub">{caseNumber} — {deadline.basis}</div>
-                  </div>
-                  <span className={`ja-badge ja-badge--${DEADLINE_STATUS_TONE[deadline.status]}`}>
-                    {DEADLINE_STATUS_LABEL[deadline.status]} · {formatDate(deadline.dueDate)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      <section className="card ja-panel" aria-labelledby="ja-ready">
-        <h2 id="ja-ready" className="ja-panel__title"><JaIcon name="case" size={18} /> القضايا</h2>
-        <ul className="ja-list">
-          {dash.readyCases.map((c) => (
-            <li key={c.id} className="ja-list__row">
-              <div>
-                <Link href={`/dashboard/judicial-assistant/cases/${c.id}`} className="ja-list__title">{c.caseNumber}</Link>
-                <div className="ja-list__sub">{c.court} — {c.subject}</div>
-              </div>
-              <div className="ja-tags">
-                <span className="ja-chip">{JURISDICTION_LABEL[c.jurisdiction]}</span>
-                <span className="ja-chip">{CONFIDENTIALITY_LABEL[c.confidentiality]}</span>
-                {c.openIssues > 0 ? <span className="ja-chip ja-chip--warn">{c.openIssues} مسألة مفتوحة</span> : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+          {dash.deadlines.length > 0 ? (
+            <section className="card ja-panel" aria-labelledby="ja-deadlines">
+              <h2 id="ja-deadlines" className="ja-panel__title"><JaIcon name="deadline" size={18} /> المدد</h2>
+              <ul className="ja-list">
+                {dash.deadlines.map(({ caseId, deadline }) => (
+                  <li key={deadline.id} className="ja-list__row">
+                    <div>
+                      <Link href={`/dashboard/judicial-assistant/cases/${caseId}`} className="ja-list__title">{deadline.label}</Link>
+                      <div className="ja-list__sub">{deadline.basis}</div>
+                    </div>
+                    <span className={`ja-badge ja-badge--${DEADLINE_STATUS_TONE[deadline.status]}`}>
+                      {DEADLINE_STATUS_LABEL[deadline.status]} · {formatDate(deadline.dueDate)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </>
+      )}
 
       <LegalAlert tone="info">
-        الأعمال المتاحة حيًّا: الملخّص التنفيذيّ المؤصَّل (JS-001)، وحساب المدد (JS-009) ومصفوفة الإثبات (JS-010) بمحرّكٍ
-        حتميّ مستقلٍّ عن النموذج. بقيّة الأعمال (الاختصاص، التسبيب، مشروع الحكم، الاعتراض…) معروضةٌ كمقترحاتٍ وتُفعَّل تِباعًا.
+        المدخل مرفقاتك أنت — لا يعتمد المعاون على ربطٍ بنظامٍ خارجيّ. أعمالٌ حيّة: الملخّص (JS-001)، الخطّ الزمنيّ (JS-004)،
+        المدد (JS-009)، مصفوفة الإثبات (JS-010)، ومشروع الحكم (JS-018) مؤصَّلًا على أحكام النواة وموادها.
       </LegalAlert>
     </div>
   );

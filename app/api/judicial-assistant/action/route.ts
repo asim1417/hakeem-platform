@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
   }
 
   const kase = await getCase(body.caseId);
-  if (!kase) return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
+  if (!kase || (kase.ownerId !== actorId && gate.user!.role !== "SYSTEM_ADMIN")) {
+    return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
+  }
 
   const result =
     body.serviceId === "JS-009" ? computeDeadlines(kase)
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
 
   await saveAnalysis({
     caseRef: kase.id,
-    caseNumber: kase.caseNumber,
+    caseNumber: kase.caseNumber ?? kase.subject,
     serviceId: body.serviceId,
     blocked: false,
     payload: result as unknown as Record<string, unknown>,
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
     subject: "CASE",
     action: "JA_DETERMINISTIC_ACTION",
     entityId: kase.id,
-    metadata: { service: body.serviceId, caseNumber: kase.caseNumber, synthetic: true },
+    metadata: { service: body.serviceId, caseNumber: kase.caseNumber ?? kase.subject },
   }).catch(() => undefined);
 
   return NextResponse.json(result);

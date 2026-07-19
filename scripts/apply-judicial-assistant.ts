@@ -18,6 +18,22 @@ const STATEMENTS = [
     "created_at"  TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS "judicial_analyses_case_ref_created_at_idx" ON "judicial_analyses"("case_ref", "created_at")`,
+  `CREATE TABLE IF NOT EXISTS "judicial_work_cases" (
+    "id"              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "owner_id"        TEXT NOT NULL,
+    "case_number"     TEXT,
+    "court"           TEXT,
+    "circuit"         TEXT,
+    "jurisdiction"    TEXT NOT NULL DEFAULT 'general',
+    "subject"         TEXT NOT NULL,
+    "stage"           TEXT NOT NULL DEFAULT 'active',
+    "confidentiality" TEXT NOT NULL DEFAULT 'normal',
+    "attachments"     JSONB NOT NULL DEFAULT '[]',
+    "structured"      JSONB NOT NULL DEFAULT '{}',
+    "created_at"      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "updated_at"      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS "judicial_work_cases_owner_id_created_at_idx" ON "judicial_work_cases"("owner_id", "created_at")`,
 ];
 
 async function main() {

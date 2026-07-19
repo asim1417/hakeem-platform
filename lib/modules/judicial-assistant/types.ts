@@ -104,40 +104,52 @@ export interface CaseGap {
   severity: "info" | "warning" | "critical";
 }
 
-/** رأس القضية (§21) + خريطتها. نموذجٌ صناعيّ في هذه المرحلة (Mock Connector). */
+/** مرفقٌ رفعه المستخدم — المدخل الأساسيّ (لا موصل رسميّ). النصّ مُستخرَجٌ في المتصفّح (PDPL). */
+export interface CaseAttachment {
+  id: string;
+  name: string;
+  text: string; // النصّ المُستخرَج من الوثيقة (المادّة التي تُحلَّل)
+  chars: number;
+  addedAt: string; // ISO
+}
+
+/**
+ * رأس القضية (§21) + خريطتها. القضية **مشروع/مجلّد يملكه القاضي** ويبنيه من مرفقاته —
+ * لا موصل «تقاضي». الخريطة (أطراف/وقائع/…) تبدأ فارغة وتُثرى لاحقًا؛ المرفقات هي مادّة التحليل.
+ */
 export interface JudicialCase {
   id: string;
-  externalRef: string; // مرجع النظام الرسميّ (صناعيّ)
-  caseNumber: string;
-  court: string;
-  circuit: string;
+  ownerId: string; // مالك القضية (القاضي) — أساس ABAC
+  caseNumber?: string; // رقمٌ اختياريّ يُدخله المستخدم
+  court?: string;
+  circuit?: string;
   jurisdiction: Jurisdiction;
-  subject: string;
+  subject: string; // عنوان/موضوع القضية (يُدخله المستخدم)
   stage: CaseStage;
   confidentiality: Confidentiality;
-  lastSync: string; // ISO ثابت
-  synthetic: true; // وسمٌ صريح: بيانات صناعيّة، لا قضيةٌ حقيقيّة (§محظورات)
+  createdAt: string; // ISO
+  attachments: CaseAttachment[];
   parties: Party[];
   requests: CaseRequest[];
   facts: CaseFact[];
   hearings: Hearing[];
   deadlines: Deadline[];
   issues: CaseIssue[];
-  documents: CaseDocument[];
   gaps: CaseGap[];
 }
 
 /** بطاقةٌ مختصرة للقضية في القوائم. */
 export interface CaseSummaryRow {
   id: string;
-  caseNumber: string;
-  court: string;
+  caseNumber?: string;
+  court?: string;
   jurisdiction: Jurisdiction;
   subject: string;
   stage: CaseStage;
   confidentiality: Confidentiality;
   nextHearing?: string;
   openIssues: number;
+  attachmentCount: number;
 }
 
 /** تعريف خدمةٍ من كتالوج الأعمال (§16): JS-001 … JS-024. */
