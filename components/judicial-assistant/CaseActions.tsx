@@ -80,7 +80,9 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         setPanel({ kind: "deterministic", data });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر التشغيل.");
+      const m = err instanceof Error ? err.message : "";
+      const network = /load failed|failed to fetch|networkerror|aborted/i.test(m);
+      setError(network ? "تعذّر إكمال الطلب — قد تكون العمليّة طويلة أو الاتصال ضعيفًا. أعد المحاولة." : m || "تعذّر التشغيل.");
     } finally {
       setRunning(null);
     }

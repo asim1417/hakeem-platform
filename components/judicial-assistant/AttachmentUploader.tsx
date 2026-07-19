@@ -29,7 +29,9 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
       setStatus("أُضيف المرفق.");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذّر إضافة المرفق.");
+      const m = err instanceof Error ? err.message : "";
+      const network = /load failed|failed to fetch|networkerror/i.test(m);
+      setError(network ? "تعذّر رفع المرفق — تحقّق من الاتصال وأعد المحاولة." : m || "تعذّر إضافة المرفق.");
       setStatus("");
     } finally {
       setBusy(false);
