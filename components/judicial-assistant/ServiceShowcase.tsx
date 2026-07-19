@@ -1,4 +1,5 @@
 // عرضٌ بصريّ لكتالوج خدمات المعاون القضائي، مجموعةً في فئات — يُبرز قوّة المنتج (٢٤ خدمة).
+import Link from "next/link";
 import { SERVICE_GROUPS, SERVICE_BY_ID, SERVICES } from "@/lib/modules/judicial-assistant/catalog";
 import { JaIcon } from "./icons";
 
@@ -34,6 +35,14 @@ export function ServiceShowcase() {
             </div>
           </div>
         ))}
+      </div>
+      <div className="ja-showcase__foot">
+        <p className="ja-showcase__note">
+          <JaIcon name="security" size={14} /> تُشغَّل هذه الخدمات <b>داخل قضية</b>: افتح قضيةً وارفع مرفقاتك، فتصير مخرجاتها مؤصَّلةً على مادّة قضيتك والنواة.
+        </p>
+        <Link href="/dashboard/judicial-assistant/cases" className="btn btn-gold ja-showcase__cta">
+          <JaIcon name="case" size={16} /> افتح قضيةً لتشغيل الخدمات
+        </Link>
       </div>
     </section>
   );
