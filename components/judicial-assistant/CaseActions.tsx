@@ -1,30 +1,49 @@
 "use client";
 
 // لوحة الأعمال المقترحة (§21) — تقترح أعمالًا بحسب المرحلة، ولا تنفّذ تلقائيًّا.
-// JS-001 (الملخّص التنفيذيّ) متاحٌ حيًّا: يستدعي المسار المؤصَّل ويعرض النتيجة باستشهاداتٍ قابلة للفتح.
-// بقيّة الأعمال تُعرض كمقترحاتٍ على خارطة الطريق (غير قابلة للتشغيل بعد) — بشفافيّة.
+// المتاح حيًّا: JS-001 (ملخّص مؤصَّل عبر النموذج)، JS-009 (مدد حتميّة)، JS-010 (مصفوفة إثبات حتميّة).
+// الحتميّة مستقلّة عن النموذج وتُبنى من بيانات القضية. بقيّة الأعمال على خارطة الطريق بشفافيّة.
 import { useState } from "react";
 import { JaIcon } from "./icons";
-import type { ExecutiveSummaryResult, SuggestedAction } from "@/lib/modules/judicial-assistant/types";
+import type {
+  DeterministicActionResult, ExecutiveSummaryResult, SuggestedAction,
+} from "@/lib/modules/judicial-assistant/types";
+import { FACT_STATUS_LABEL, formatDate } from "@/lib/modules/judicial-assistant/labels";
 
-type SummaryState = { loading: boolean; error?: string; result?: ExecutiveSummaryResult };
+type Panel =
+  | { kind: "summary"; data: ExecutiveSummaryResult }
+  | { kind: "deterministic"; data: DeterministicActionResult };
 
 export function CaseActions({ caseId, actions }: { caseId: string; actions: SuggestedAction[] }) {
-  const [summary, setSummary] = useState<SummaryState>({ loading: false });
+  const [running, setRunning] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [panel, setPanel] = useState<Panel | null>(null);
 
-  async function runSummary() {
-    setSummary({ loading: true });
+  async function run(serviceId: string) {
+    setRunning(serviceId);
+    setError(null);
     try {
-      const res = await fetch("/api/judicial-assistant/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "تعذّر إنشاء الملخّص.");
-      setSummary({ loading: false, result: data as ExecutiveSummaryResult });
+      if (serviceId === "JS-001") {
+        const res = await fetch("/api/judicial-assistant/summary", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ caseId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
+        setPanel({ kind: "summary", data });
+      } else {
+        const res = await fetch("/api/judicial-assistant/action", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ caseId, serviceId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
+        setPanel({ kind: "deterministic", data });
+      }
     } catch (err) {
-      setSummary({ loading: false, error: err instanceof Error ? err.message : "تعذّر إنشاء الملخّص." });
+      setError(err instanceof Error ? err.message : "تعذّر التشغيل.");
+    } finally {
+      setRunning(null);
     }
   }
 
@@ -40,9 +59,9 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
                 <p>{a.reason}</p>
               </div>
             </div>
-            {a.available && a.serviceId === "JS-001" ? (
-              <button type="button" className="btn btn-gold ja-action__btn" onClick={() => void runSummary()} disabled={summary.loading}>
-                {summary.loading ? "جارٍ التأصيل…" : "تشغيل"}
+            {a.available ? (
+              <button type="button" className="btn btn-gold ja-action__btn" onClick={() => void run(a.serviceId)} disabled={running !== null}>
+                {running === a.serviceId ? "جارٍ التشغيل…" : "تشغيل"}
               </button>
             ) : (
               <span className="ja-action__soon">على خارطة الطريق</span>
@@ -51,43 +70,116 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         ))}
       </div>
 
-      {summary.error ? <div className="ja-alert ja-alert--danger">{summary.error}</div> : null}
+      {error ? <div className="ja-alert ja-alert--danger">{error}</div> : null}
 
-      {summary.result ? (
-        <div className="ja-summary">
-          <div className={`ja-summary__banner ${summary.result.blocked ? "ja-summary__banner--blocked" : ""}`}>
-            <JaIcon name={summary.result.blocked ? "security" : "quality"} size={16} />
-            <span>{summary.result.notice}</span>
-          </div>
+      {panel?.kind === "summary" ? <SummaryView data={panel.data} /> : null}
+      {panel?.kind === "deterministic" && panel.data.serviceId === "JS-009" ? <DeadlineView data={panel.data} /> : null}
+      {panel?.kind === "deterministic" && panel.data.serviceId === "JS-010" ? <EvidenceView data={panel.data} /> : null}
+    </div>
+  );
+}
 
-          <div className="ja-summary__head">
-            <h3>الملخّص التنفيذيّ <span className="ja-action__id">JS-001</span></h3>
-            <span className="ja-summary__stamp">{summary.result.generatedAtLabel}</span>
-          </div>
-
-          <div className="ja-summary__body">
-            {summary.result.summary.split("\n").filter(Boolean).map((line, i) => (
-              <p key={i}>{line}</p>
+function SummaryView({ data }: { data: ExecutiveSummaryResult }) {
+  return (
+    <div className="ja-summary">
+      <div className={`ja-summary__banner ${data.blocked ? "ja-summary__banner--blocked" : ""}`}>
+        <JaIcon name={data.blocked ? "security" : "quality"} size={16} />
+        <span>{data.notice}</span>
+      </div>
+      <div className="ja-summary__head">
+        <h3>الملخّص التنفيذيّ <span className="ja-action__id">JS-001</span></h3>
+        <span className="ja-summary__stamp">{data.generatedAtLabel}</span>
+      </div>
+      <div className="ja-summary__body">
+        {data.summary.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+      </div>
+      {data.citations.length > 0 ? (
+        <div className="ja-sources">
+          <h4><JaIcon name="sources" size={15} /> الأساس النظاميّ ({data.citations.length})</h4>
+          <ul>
+            {data.citations.map((c, i) => (
+              <li key={c.articleId + i}>
+                <span className="ja-src__law">{c.lawName} — المادة {c.articleNumber}</span>
+                <span className="ja-src__quote">{c.quote}</span>
+              </li>
             ))}
-          </div>
+          </ul>
+        </div>
+      ) : (
+        <p className="ja-sources__empty">لا استشهاد نظاميّ مؤصَّل — لم يُبنَ تأصيلٌ من الذاكرة.</p>
+      )}
+    </div>
+  );
+}
 
-          {summary.result.citations.length > 0 ? (
-            <div className="ja-sources">
-              <h4><JaIcon name="sources" size={15} /> الأساس النظاميّ ({summary.result.citations.length})</h4>
-              <ul>
-                {summary.result.citations.map((c, i) => (
-                  <li key={c.articleId + i}>
-                    <span className="ja-src__law">{c.lawName} — المادة {c.articleNumber}</span>
-                    <span className="ja-src__quote">{c.quote}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p className="ja-sources__empty">لا استشهاد نظاميّ مؤصَّل — لم يُبنَ تأصيلٌ من الذاكرة.</p>
-          )}
+function DeadlineView({ data }: { data: import("@/lib/modules/judicial-assistant/types").DeadlineResult }) {
+  return (
+    <div className="ja-summary">
+      <div className="ja-summary__banner">
+        <JaIcon name="deadline" size={16} />
+        <span>محرّكٌ حتميّ — الحساب مستقلٌّ عن النموذج ويشرح خطواته.</span>
+      </div>
+      <div className="ja-summary__head">
+        <h3>حساب المدد <span className="ja-action__id">JS-009</span></h3>
+      </div>
+      <div className="ja-detbody">
+        {data.computations.length === 0 ? (
+          <p className="ja-sources__empty">لا مدداً قابلةً للحساب من الأحداث الموثّقة الحاليّة (تعطّلٌ آمن عند نقص الحدث المرجعيّ).</p>
+        ) : (
+          <ul className="ja-det">
+            {data.computations.map((c) => (
+              <li key={c.ruleId} className="ja-det__row">
+                <div className="ja-det__head">
+                  <span className="ja-det__label">{c.label}</span>
+                  <span className="ja-det__due">{formatDate(c.dueDate)}</span>
+                </div>
+                <div className="ja-det__calc">{c.explanation}</div>
+                <div className="ja-det__basis"><span className="ja-badge ja-badge--warning">نموذجيّة</span> {c.basisNote}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <p className="ja-det__disc">{data.disclaimer}</p>
+    </div>
+  );
+}
+
+function EvidenceView({ data }: { data: import("@/lib/modules/judicial-assistant/types").EvidenceMatrixResult }) {
+  return (
+    <div className="ja-summary">
+      <div className="ja-summary__banner">
+        <JaIcon name="evidence" size={16} />
+        <span>محرّكٌ حتميّ — نتيجةٌ أوليّة لا تقرّر ثبوتًا نهائيًّا.</span>
+      </div>
+      <div className="ja-summary__head">
+        <h3>مصفوفة الإثبات <span className="ja-action__id">JS-010</span></h3>
+      </div>
+      <div className="ja-tablewrap">
+        <table className="ja-table">
+          <thead>
+            <tr><th>الواقعة</th><th>الحالة</th><th>العبء</th><th>الدليل</th><th>النتيجة الأوليّة</th></tr>
+          </thead>
+          <tbody>
+            {data.rows.map((r) => (
+              <tr key={r.factId}>
+                <td>{r.fact}<div className="ja-muted">{r.note}</div></td>
+                <td>{FACT_STATUS_LABEL[r.status]}</td>
+                <td>{r.burdenParty}</td>
+                <td>{r.hasEvidence ? "مرتبط" : "—"}</td>
+                <td>{r.tentative}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {data.gaps.length > 0 ? (
+        <div className="ja-sources">
+          <h4><JaIcon name="quality" size={15} /> وقائع بلا دليل ({data.gaps.length})</h4>
+          <ul>{data.gaps.map((g, i) => <li key={i}><span className="ja-src__quote">{g}</span></li>)}</ul>
         </div>
       ) : null}
+      <p className="ja-det__disc">{data.disclaimer}</p>
     </div>
   );
 }

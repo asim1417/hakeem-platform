@@ -159,6 +159,48 @@ export interface SuggestedAction {
   available: boolean;
 }
 
+/** JS-009 — حساب مدّةٍ إجرائيّة بمحرّكٍ حتميّ يشرح الحساب (§47، §48). */
+export interface DeadlineComputation {
+  ruleId: string;
+  label: string;
+  anchorLabel: string; // الحدث المرجعيّ (جلسة/حكم/إيداع…)
+  anchorDate: string; // ISO
+  offsetDays: number;
+  direction: "before" | "after";
+  dueDate: string; // ISO المحسوب
+  explanation: string; // شرح الحساب خطوةً بخطوة
+  basisNote: string; // الأساس (نموذجيّ غير معتمد في هذه المرحلة)
+  approved: boolean;
+}
+
+export interface DeadlineResult {
+  serviceId: "JS-009";
+  deterministic: true;
+  computations: DeadlineComputation[];
+  disclaimer: string;
+}
+
+/** JS-010 — صفٌّ في مصفوفة الإثبات (نتيجة أوليّة لا تقرّر ثبوتًا نهائيًّا، §18.5). */
+export interface EvidenceMatrixRow {
+  factId: string;
+  fact: string;
+  status: FactStatus;
+  burdenParty: string; // من يقع عليه عبء الإثبات (اشتقاقٌ من حالة الواقعة)
+  hasEvidence: boolean;
+  tentative: "محسومة" | "قابلة للإثبات" | "تحتاج دليلًا" | "محلّ نزاع";
+  note: string;
+}
+
+export interface EvidenceMatrixResult {
+  serviceId: "JS-010";
+  deterministic: true;
+  rows: EvidenceMatrixRow[];
+  gaps: string[]; // وقائع بلا دليلٍ مرتبط
+  disclaimer: string;
+}
+
+export type DeterministicActionResult = DeadlineResult | EvidenceMatrixResult;
+
 /** مخرَج JS-001 (الملخّص التنفيذيّ) — مؤصَّلٌ باستشهاداتٍ حقيقيّة أو حجبٌ صادق. */
 export interface ExecutiveSummaryResult {
   requestId: string;
