@@ -11,6 +11,7 @@ import {
 import { StageBar } from "@/components/judicial-assistant/StageBar";
 import { CaseActions } from "@/components/judicial-assistant/CaseActions";
 import { AttachmentUploader } from "@/components/judicial-assistant/AttachmentUploader";
+import { MapExtractor } from "@/components/judicial-assistant/MapExtractor";
 import { JaIcon } from "@/components/judicial-assistant/icons";
 import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
 import { listAnalyses } from "@/lib/modules/judicial-assistant/persistence";
@@ -74,6 +75,13 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
           </ul>
         )}
       </section>
+
+      {/* استخلاص الخريطة من المرفقات (JS-005) — يُثبّتها القاضي فتُفعّل الحتميّة */}
+      {kase.attachments.length > 0 ? (
+        <section className="card ja-panel">
+          <MapExtractor caseId={kase.id} hasMap={hasMap} />
+        </section>
+      ) : null}
 
       {/* لوحة الأعمال المقترحة */}
       <section className="card ja-panel" aria-labelledby="ja-suggested">

@@ -13,6 +13,8 @@ export const dynamic = "force-dynamic";
 const ACTION_LABEL: Record<string, string> = {
   JA_CASE_CREATED: "إنشاء القضية",
   JA_ATTACHMENT_ADDED: "إضافة مرفق",
+  JA_MAP_EXTRACTED: "استخلاص خريطة (JS-005)",
+  JA_MAP_CONFIRMED: "تثبيت الخريطة",
   JA_SUMMARY_GENERATED: "إنشاء ملخّص تنفيذيّ (JS-001)",
   JA_SUMMARY_BLOCKED: "ملخّص محجوب (لا سند)",
   JA_DETERMINISTIC_ACTION: "تشغيل عملٍ حتميّ",

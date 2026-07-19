@@ -1066,3 +1066,15 @@ body {
 .ja-uploader__err { font-size: 12.5px; color: var(--ruby); font-weight: 600; }
 .ja-uploader__hint { font-size: 11.5px; color: var(--ink-46); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* المعاون القضائي — استخلاص الخريطة (JS-005) */
+.ja-mapx { display: flex; flex-direction: column; gap: 12px; }
+.ja-mapx__title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 16px; font-weight: 700; color: var(--navy); }
+.ja-mapx__review { display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--gold-border); border-radius: var(--r-lg); padding: 14px 16px; }
+.ja-mapx__group h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--navy); }
+.ja-mapx__count { font-size: 11.5px; color: var(--ink-46); font-weight: 600; }
+.ja-mapx__group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ja-mapx__item { display: flex; align-items: flex-start; gap: 9px; padding: 6px 8px; border-radius: var(--r-sm); font-size: 13.5px; color: var(--ink-80); line-height: 1.7; cursor: pointer; }
+.ja-mapx__item:hover { background: var(--parchment); }
+.ja-mapx__item input { margin-top: 4px; flex: none; accent-color: var(--gold-dark); }
+.ja-mapx__item--off span { color: var(--ink-40); text-decoration: line-through; }

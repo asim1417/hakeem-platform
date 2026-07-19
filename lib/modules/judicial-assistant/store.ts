@@ -137,6 +137,23 @@ export async function addAttachment(
   }
 }
 
+/** يحفظ خريطة القضية المُثبَّتة (structured) — للمالك فقط. */
+export async function saveStructured(
+  caseId: string, ownerId: string,
+  structured: { parties?: Party[]; requests?: CaseRequest[]; facts?: CaseFact[]; issues?: CaseIssue[]; hearings?: Hearing[]; deadlines?: Deadline[]; gaps?: CaseGap[] }
+): Promise<boolean> {
+  try {
+    const row = await prisma.judicialWorkCase.findUnique({ where: { id: caseId }, select: { ownerId: true, structured: true } });
+    if (!row || row.ownerId !== ownerId) return false;
+    const current = (row.structured ?? {}) as Record<string, unknown>;
+    const merged = { ...current, ...structured };
+    await prisma.judicialWorkCase.update({ where: { id: caseId }, data: { structured: merged as unknown as object } });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface JudgeDashboard {
   totalCases: number;
   totalAttachments: number;
