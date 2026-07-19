@@ -127,8 +127,8 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
 
       {/* لوحة الأعمال المقترحة */}
       <section className="card ja-panel" aria-labelledby="ja-suggested">
-        <h2 id="ja-suggested" className="ja-panel__title"><JaIcon name="assistant" size={18} /> الأعمال المقترحة لهذه المرحلة</h2>
-        <p className="ja-panel__hint">تُقترح بحسب مرحلة القضية، وتُشغَّل باختيارك — لا تلقائيًّا. تعتمد على مرفقاتك والنواة.</p>
+        <h2 id="ja-suggested" className="ja-panel__title"><JaIcon name="assistant" size={18} /> الأعمال المقترحة لهذه القضية</h2>
+        <p className="ja-panel__hint">تُشتَقّ من واقع قضيتك الحيّ (مرفقاتها وخريطتها ووقائعها) لا من قالبٍ عامّ، وتُشغَّل باختيارك لا تلقائيًّا. تعتمد على مرفقاتك والنواة.</p>
         {kase.attachments.length === 0 ? (
           <LegalAlert tone="warning">أضِف مرفقًا واحدًا على الأقلّ لتُصبح المخرجات مؤصَّلةً على مادّة القضية.</LegalAlert>
         ) : null}

@@ -62,10 +62,17 @@ const ad = checkAdmissibility(CASE);
 check("يفحص الصفة والمصلحة والمدّة", ["capacity", "interest", "timing"].every((k) => ad.items.some((i) => i.key === k)));
 check("لا يرفع تنبيه نقصٍ (الخريطة مكتملة)", !ad.items.some((i) => i.outcome === "flag"));
 
-console.log("المنسّق (§15) اقتراح الأعمال بحسب المرحلة:");
+console.log("المنسّق (§15) اقتراح الأعمال من واقع القضية الحيّ:");
 const acts = suggestedActionsFor(CASE);
-check("يقترح أعمالًا لمرحلة تحضير الجلسة", acts.length >= 1);
+check("يقترح أعمالًا لقضيّةٍ مكتملة", acts.length >= 1);
 check("المتاح فعليًّا يتصدّر", acts.length === 0 || acts[0].available === true);
+// واقعيّة الاقتراح: لا يُقترَح ما لا مادّةَ له.
+const EMPTY_CASE: JudicialCase = { ...CASE, stage: "active", attachments: [], parties: [], requests: [], facts: [], hearings: [], deadlines: [], issues: [] };
+check("قضيّةٌ بلا مرفقاتٍ → لا أعمالَ مقترحة (لا اقتراح من فراغ)", suggestedActionsFor(EMPTY_CASE).length === 0);
+const DOCS_ONLY: JudicialCase = { ...EMPTY_CASE, attachments: [{ id: "a", name: "لائحة.pdf", text: "نصّ", chars: 4, addedAt: CASE.createdAt }] };
+const docActs = suggestedActionsFor(DOCS_ONLY);
+check("مرفقاتٌ بلا خريطة → أوّل اقتراحٍ استخلاص الخريطة (JS-005)", docActs[0]?.serviceId === "JS-005");
+check("مرفقاتٌ بلا خريطة → لا يُقترَح ما يحتاج خريطةً (JS-006/‏012/‏009)", !docActs.some((a) => ["JS-006", "JS-007", "JS-009", "JS-012"].includes(a.serviceId)));
 
 // حالة النقص: قضيّةٌ بلا خريطة → قوائم الفحص تُظهر النقص بأمانة (لا تجزم)
 console.log("سلوك النقص (قضيّة بلا خريطة):");

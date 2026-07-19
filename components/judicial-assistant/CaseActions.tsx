@@ -90,6 +90,11 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
 
   return (
     <div className="ja-actions">
+      {actions.length === 0 ? (
+        <p className="ja-actions__empty">
+          <JaIcon name="documents" size={15} /> لا أعمالَ مقترحةً بعد — أضِف مرفقًا أوّلًا لتُبنى الاقتراحات على مادّة قضيتك الحيّة، لا على قوالبَ عامّة. يمكنك أيضًا فتح «كلّ الأعمال» أدناه يدويًّا.
+        </p>
+      ) : null}
       <div className="ja-actions__grid">
         {actions.map((a) => (
           <div key={a.serviceId} className={`ja-action ${a.available ? "" : "ja-action--soon"}`}>
