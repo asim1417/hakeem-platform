@@ -14,6 +14,7 @@ enum UserRole {
   LAWYER
   TRAINER
   TRAINEE
+  JUDGE
 }
 
 enum AuditSubject {
@@ -953,4 +954,21 @@ model ApiRequestWindow {
   @@unique([apiKeyId, windowStart])
   @@index([windowStart])
   @@map("api_request_windows")
+}
+
+// ── المعاون القضائي — حفظ مخرجات التحليل (المرحلة 1ب) ──
+// يخزّن كلّ تشغيل عملٍ (JS-00x) لقضية كي يظهر سجلّ التحليلات وتُحفظ حالته (مسودّة/مثبّت).
+// الجدول يُنشأ بسكربت idempotent (لا `migrate deploy` في البناء)؛ الوصول دفاعيّ (fail-open).
+model JudicialAnalysis {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseRef    String   @map("case_ref")
+  caseNumber String   @map("case_number")
+  serviceId  String   @map("service_id")
+  blocked    Boolean  @default(false)
+  payload    Json
+  actorId    String?  @map("actor_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([caseRef, createdAt])
+  @@map("judicial_analyses")
 }

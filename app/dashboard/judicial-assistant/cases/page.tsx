@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "المعاون القضائيّ — القضايا" };
 
 export default async function JudicialCasesPage() {
-  await requirePagePermission("CONSULTATIONS_FULL");
+  await requirePagePermission("JUDICIAL_ASSISTANT_USE");
   const rows = await listCaseRows();
 
   return (

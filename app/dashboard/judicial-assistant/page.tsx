@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "المعاون القضائيّ — لوحة القاضي" };
 
 export default async function JudicialAssistantDashboard() {
-  await requirePagePermission("CONSULTATIONS_FULL");
+  await requirePagePermission("JUDICIAL_ASSISTANT_USE");
   const dash = await getJudgeDashboard();
 
   return (

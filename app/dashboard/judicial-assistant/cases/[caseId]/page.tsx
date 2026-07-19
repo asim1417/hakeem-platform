@@ -11,15 +11,22 @@ import {
 import { StageBar } from "@/components/judicial-assistant/StageBar";
 import { CaseActions } from "@/components/judicial-assistant/CaseActions";
 import { JaIcon } from "@/components/judicial-assistant/icons";
+import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
+import { listAnalyses } from "@/lib/modules/judicial-assistant/persistence";
+import { SERVICE_BY_ID } from "@/lib/modules/judicial-assistant/catalog";
 
 export const dynamic = "force-dynamic";
 
 export default async function CaseOverviewPage({ params }: { params: { caseId: string } }) {
-  await requirePagePermission("CONSULTATIONS_FULL");
+  const user = await requirePagePermission("JUDICIAL_ASSISTANT_USE");
   const kase = await getCase(params.caseId);
   if (!kase) notFound();
 
+  // ABAC (§12): لا يكفي الدور — تُفحَص رؤية هذه القضية بعينها.
+  if (!caseVisibleTo({ userId: user.id, role: user.role }, kase)) notFound();
+
   const actions = suggestedActionsFor(kase);
+  const history = await listAnalyses(kase.id);
   const nextHearing = [...kase.hearings].sort((a, b) => a.date.localeCompare(b.date))[0];
 
   return (
@@ -131,6 +138,24 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
           )}
         </section>
       </div>
+
+      {history.length > 0 ? (
+        <section className="card ja-panel" aria-labelledby="ja-history">
+          <h2 id="ja-history" className="ja-panel__title"><JaIcon name="audit" size={18} /> سجلّ التحليلات المحفوظة</h2>
+          <p className="ja-panel__hint">كلّ عملٍ شُغّل على هذه القضية محفوظٌ كمسودّة تحتاج تثبيتًا بشريًّا.</p>
+          <ul className="ja-list">
+            {history.map((h) => (
+              <li key={h.id} className="ja-list__row">
+                <div>
+                  <div className="ja-list__title">{SERVICE_BY_ID[h.serviceId]?.title ?? h.serviceId} <span className="ja-action__id">{h.serviceId}</span></div>
+                  <div className="ja-list__sub">{formatDateTime(h.createdAt)}</div>
+                </div>
+                <span className={`ja-badge ja-badge--${h.blocked ? "warning" : "info"}`}>{h.blocked ? "محجوب" : "مسودّة"}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <LegalAlert tone="info">
         كلّ عملٍ حسّاس يمرّ بمراجعتك واعتمادك. المصادر قابلة للفتح، والنظام لا يعتمد حكمًا ولا يولّد نصًّا نظاميًّا من ذاكرته.

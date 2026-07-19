@@ -6,6 +6,7 @@ import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { computeDeadlines } from "@/lib/modules/judicial-assistant/rules/deadline";
 import { buildEvidenceMatrix } from "@/lib/modules/judicial-assistant/rules/evidence";
 import { buildTimeline } from "@/lib/modules/judicial-assistant/rules/timeline";
+import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ const schema = z.object({
  * JS-009 حساب المدد، JS-010 مصفوفة الإثبات. RBAC + تدقيق. لا اختلاق: تُبنى من بيانات القضية.
  */
 export async function POST(request: NextRequest) {
-  const gate = await requireApiPermission("CONSULTATIONS_FULL", request);
+  const gate = await requireApiPermission("JUDICIAL_ASSISTANT_USE", request);
   if (gate.response) return gate.response;
   const actorId = gate.user!.id;
 
@@ -37,6 +38,15 @@ export async function POST(request: NextRequest) {
     body.serviceId === "JS-009" ? computeDeadlines(kase)
     : body.serviceId === "JS-004" ? buildTimeline(kase)
     : buildEvidenceMatrix(kase);
+
+  await saveAnalysis({
+    caseRef: kase.id,
+    caseNumber: kase.caseNumber,
+    serviceId: body.serviceId,
+    blocked: false,
+    payload: result as unknown as Record<string, unknown>,
+    actorId,
+  });
 
   await auditEvent({
     actorId,

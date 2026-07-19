@@ -16,7 +16,7 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 export default async function CaseAuditPage({ params }: { params: { caseId: string } }) {
-  await requirePagePermission("CONSULTATIONS_FULL");
+  await requirePagePermission("JUDICIAL_ASSISTANT_USE");
   const kase = await getCase(params.caseId);
   if (!kase) notFound();
 

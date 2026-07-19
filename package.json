@@ -150,7 +150,8 @@
     "agents:consistency": "node agents/consistency.mjs",
     "agents:approve": "tsx scripts/approve-agents.ts",
     "agents:demo": "tsx scripts/demo-agents.ts",
-    "test:quota": "tsx scripts/test-quota.ts"
+    "test:quota": "tsx scripts/test-quota.ts",
+    "db:judicial": "tsx scripts/apply-judicial-assistant.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

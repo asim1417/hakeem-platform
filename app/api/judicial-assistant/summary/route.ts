@@ -4,6 +4,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { generateExecutiveSummary } from "@/lib/modules/judicial-assistant/summary";
+import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ const schema = z.object({ caseId: z.string().min(1) });
  * مؤصَّلٌ بالنواة، حجبٌ صادق عند غياب السند، وسجلّ تدقيقٍ لكلّ تشغيل (§60، §16).
  */
 export async function POST(request: NextRequest) {
-  const gate = await requireApiPermission("CONSULTATIONS_FULL", request);
+  const gate = await requireApiPermission("JUDICIAL_ASSISTANT_USE", request);
   if (gate.response) return gate.response;
   const actorId = gate.user!.id;
 
@@ -29,6 +30,16 @@ export async function POST(request: NextRequest) {
   if (!kase) return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
 
   const result = await generateExecutiveSummary(kase, actorId);
+
+  // حفظ المخرَج (المرحلة 1ب) — دفاعيّ: لا يكسر الاستجابة إن لم يوجد الجدول بعد.
+  await saveAnalysis({
+    caseRef: kase.id,
+    caseNumber: kase.caseNumber,
+    serviceId: "JS-001",
+    blocked: result.blocked,
+    payload: { summary: result.summary, citations: result.citations, requestId: result.requestId },
+    actorId,
+  });
 
   await auditEvent({
     actorId,

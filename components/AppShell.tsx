@@ -39,7 +39,8 @@ const roleLabels: Record<string, string> = {
   SYSTEM_ADMIN: "مدير النظام",
   LAWYER: "حساب محام - تدريبي",
   TRAINER: "مدرب / مشرف",
-  TRAINEE: "متدرب"
+  TRAINEE: "متدرب",
+  JUDGE: "قاضٍ"
 };
 
 export async function AppShell({ children }: { children: React.ReactNode }) {

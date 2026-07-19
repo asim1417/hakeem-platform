@@ -8,7 +8,7 @@
 | §26 واجهة Next.js/TypeScript | Next.js 14 App Router + TS صارم | ✅ |
 | §25 نظام تصميم RTL + Tokens | `app/globals.css` (palette + spacing + shadows)، `components/ui/legal.tsx`, `ds-*` | ✅ |
 | §24 أيقونات Lucide | `lucide-react` مُعتمد في المنصّة | ✅ (خريطة §24 أُضيفت في `components/judicial-assistant/icons.tsx`) |
-| §12 RBAC | `lib/modules/auth/role-permissions.ts` + `requirePagePermission/requireApiPermission` | 🟡 لا يوجد دور «قاضٍ»؛ نُبِذ على `CONSULTATIONS_FULL` مؤقّتًا |
+| §12 RBAC + دور «قاضٍ» + ABAC | دور `JUDGE` + صلاحية `JUDICIAL_ASSISTANT_USE` (خريطة ثابتة يحترمها `canUser`) + `abac.ts` (`caseVisibleTo`) | ✅ الدور والصلاحية والآليّة قائمة؛ ترشيح الملكيّة يُفعَّل مع القضايا الحقيقيّة |
 | §57 تدقيق غير قابل للتعديل | `auditEvent` + جدول `AuditEvent` | ✅ (أُضيف `JA_SUMMARY_*`) |
 | §43 بوابة نماذج مجرّدة | `lib/modules/ai/ai-gateway` (`callCentralProvider`) | ✅ |
 | §46 استرجاع هجين + Exact lookup | وكيل الأنظمة المؤصَّل + حارس أرقام المواد | ✅ (أُعيد استخدامه في JS-001) |
@@ -31,7 +31,7 @@
 ## الفجوات المفتوحة (خارطة الطريق — لم تُنفَّذ في هذه المرحلة عمدًا)
 | المتطلب | ملاحظة |
 |---|---|
-| §31 نموذج بيانات قضائيّ مُخزَّن (Prisma) | هذه المرحلة تقرأ من الموصل (صناعيّ) دون هجرة جديدة، تجنّبًا لكسر النشر. المرحلة التالية: نماذج + migration. |
+| §31 نموذج بيانات قضائيّ مُخزَّن (Prisma) | 🟡 حُفظت مخرجات التحليل (`judicial_analyses`) عبر سكربت idempotent `npm run db:judicial` + وصول دفاعيّ. تطبيع القضية كاملةً (أطراف/وقائع/أدلّة جداول) لاحقًا. |
 | §16 JS-002…024 (خدمات) | معروضة كمقترحاتٍ «على خارطة الطريق»؛ تُفعَّل تِباعًا. |
 | §47–§50 محرّك القواعد الإجرائيّة الحتميّ | لم يُنشأ بعد (مطلوب لـ JS-006/007/008/009). |
 | §12 دور «قاضٍ» + ABAC (Row-Level Security) | نُبِذ مؤقّتًا على `CONSULTATIONS_FULL`؛ يلزم دورٌ ونطاقاتٌ لاحقًا. |
