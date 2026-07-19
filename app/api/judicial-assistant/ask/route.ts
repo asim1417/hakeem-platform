@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const result = await askAssistant(body.question, kase, actorId);
 
-  if (kase) {
+  if (kase && result.requestId !== "greeting") {
     await saveAnalysis({
       caseRef: kase.id, caseNumber: kase.caseNumber ?? kase.subject, serviceId: "ASK",
       blocked: result.blocked, payload: { question: body.question, answer: result.answer, citations: result.citations, requestId: result.requestId }, actorId,
