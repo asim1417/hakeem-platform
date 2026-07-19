@@ -10,9 +10,10 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   LAWYER: "محامٍ",
   TRAINER: "مدرّب",
   TRAINEE: "متدرّب",
+  JUDGE: "قاضٍ",
 };
 
-export const ROLE_ORDER: UserRole[] = ["SYSTEM_ADMIN", "LAWYER", "TRAINER", "TRAINEE"];
+export const ROLE_ORDER: UserRole[] = ["SYSTEM_ADMIN", "JUDGE", "LAWYER", "TRAINER", "TRAINEE"];
 
 export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "CONSULTATIONS_FULL", label: "الاستشارات (كامل)" },
@@ -29,6 +30,7 @@ export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "USERS_MANAGE", label: "إدارة المستخدمين" },
   { key: "ADMIN_REPORTS_VIEW", label: "تقارير الإدارة" },
   { key: "GOVERNANCE_AUDIT_VIEW", label: "سجل التدقيق والحوكمة" },
+  { key: "JUDICIAL_ASSISTANT_USE", label: "المعاون القضائي" },
 ];
 
 function labelFor(permission: Permission): string {
