@@ -62,6 +62,7 @@
     "test:oauth": "tsx scripts/test-oauth-providers.ts",
     "test:credentials": "tsx scripts/test-credentials.ts",
     "test:credits": "tsx scripts/test-credits-onboarding.ts",
+    "test:clerk": "tsx scripts/test-clerk-config.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",
     "db:clerk-id": "tsx scripts/apply-clerk-id.ts",

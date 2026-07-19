@@ -15,25 +15,37 @@ function clerkReady() {
   );
 }
 
-function legacyGate(request: NextRequest) {
-  if (isProtectedRoute(request)) {
-    const url = new URL("/sign-in", request.url);
-    url.searchParams.set("setup", "1");
-    return NextResponse.redirect(url);
-  }
-  return NextResponse.next();
+function hasOwnerSession(request: NextRequest) {
+  return Boolean(request.cookies.get("hakeem_session")?.value);
+}
+
+function ownerOrSetupGate(request: NextRequest) {
+  if (!isProtectedRoute(request)) return NextResponse.next();
+  // جلسة طوارئ المالك تسمح بالمرور بلا Clerk
+  if (hasOwnerSession(request)) return NextResponse.next();
+  const url = new URL("/sign-in", request.url);
+  url.searchParams.set("setup", "1");
+  url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  return NextResponse.redirect(url);
 }
 
 /**
- * Clerk هو بوابة المصادقة الوحيدة.
- * بلا مفاتيح: المسارات المحمية → /sign-in?setup=1
+ * Clerk إن وُجدت المفاتيح؛ وإلا جلسة المالك الطارئة (hakeem_session).
  */
 export default clerkMiddleware(async (auth, request) => {
-  if (!clerkReady()) return legacyGate(request);
+  if (!clerkReady()) return ownerOrSetupGate(request);
+
+  // مع Clerk: اسمح أيضًا بجلسة المالك الطارئة
+  if (isProtectedRoute(request) && hasOwnerSession(request)) {
+    return NextResponse.next();
+  }
 
   if (isProtectedRoute(request)) {
     await auth.protect({
-      unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
+      unauthenticatedUrl: new URL(
+        `/sign-in?next=${encodeURIComponent(request.nextUrl.pathname)}`,
+        request.url
+      ).toString(),
     });
   }
 });

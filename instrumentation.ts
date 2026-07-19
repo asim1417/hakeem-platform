@@ -18,8 +18,16 @@ export async function register() {
       `CREATE UNIQUE INDEX IF NOT EXISTS "users_clerk_id_key" ON "users" ("clerk_id")`
     );
     await prisma.$executeRawUnsafe(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "username" TEXT`);
-    console.log("[clerk] عمود clerk_id جاهز — المصادقة عبر Clerk فقط.");
   } catch (e) {
     console.warn("[clerk] تعذّر تجهيز عمود clerk_id:", (e as Error)?.message);
+  }
+
+  // يضمن حساب المالك لدخول الطوارئ (قبل Clerk).
+  try {
+    const { ensurePlatformOwner } = await import("@/lib/modules/auth/ensure-owner");
+    const owner = await ensurePlatformOwner();
+    console.log(`[owner] جاهز للدخول الطارئ: ${owner.email}`);
+  } catch (e) {
+    console.warn("[owner] تعذّر تجهيز المالك:", (e as Error)?.message);
   }
 }
