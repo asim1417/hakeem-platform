@@ -7,13 +7,14 @@ import { computeDeadlines } from "@/lib/modules/judicial-assistant/rules/deadlin
 import { buildEvidenceMatrix } from "@/lib/modules/judicial-assistant/rules/evidence";
 import { buildTimeline } from "@/lib/modules/judicial-assistant/rules/timeline";
 import { checkJurisdiction, checkAdmissibility } from "@/lib/modules/judicial-assistant/rules/admissibility";
+import { analyzeProcedure, checkOperative, checkQuality, buildTaskList } from "@/lib/modules/judicial-assistant/rules/checklists";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
   caseId: z.string().min(1),
-  serviceId: z.enum(["JS-004", "JS-006", "JS-007", "JS-009", "JS-010"]),
+  serviceId: z.enum(["JS-004", "JS-006", "JS-007", "JS-008", "JS-009", "JS-010", "JS-019", "JS-020", "JS-024"]),
 });
 
 /**
@@ -42,6 +43,10 @@ export async function POST(request: NextRequest) {
     : body.serviceId === "JS-004" ? buildTimeline(kase)
     : body.serviceId === "JS-006" ? checkJurisdiction(kase)
     : body.serviceId === "JS-007" ? checkAdmissibility(kase)
+    : body.serviceId === "JS-008" ? analyzeProcedure(kase)
+    : body.serviceId === "JS-019" ? checkOperative(kase)
+    : body.serviceId === "JS-020" ? checkQuality(kase)
+    : body.serviceId === "JS-024" ? buildTaskList(kase)
     : buildEvidenceMatrix(kase);
 
   await saveAnalysis({

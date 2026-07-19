@@ -1097,3 +1097,12 @@ body {
 .ja-textbtn--danger { color: var(--ruby); }
 .ja-textbtn--danger:hover { background: var(--ruby-soft); }
 .ja-attdel { display: inline-flex; align-items: center; gap: 6px; }
+
+/* المعاون القضائي — شبكة كلّ الأعمال */
+.ja-allworks { margin-top: 12px; border-top: 1px solid var(--ink-08); padding-top: 12px; }
+.ja-allworks__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 10px; }
+.ja-workchip { display: flex; align-items: center; gap: 8px; text-align: start; border: 1px solid var(--ink-08); background: var(--parchment); border-radius: var(--r-md); padding: 8px 11px; font: inherit; font-size: 13px; color: var(--navy); cursor: pointer; }
+.ja-workchip:hover { border-color: var(--gold-border); background: var(--gold-ghost); }
+.ja-workchip:disabled { opacity: .6; cursor: default; }
+.ja-workchip svg { color: var(--gold-dark); flex: none; }
+.ja-workchip span:first-of-type { flex: 1; }

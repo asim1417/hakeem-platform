@@ -237,7 +237,7 @@ export interface ChecklistItem {
 }
 
 export interface ChecklistResult {
-  serviceId: "JS-006" | "JS-007";
+  serviceId: "JS-006" | "JS-007" | "JS-008" | "JS-019" | "JS-020" | "JS-024";
   deterministic: true;
   title: string;
   items: ChecklistItem[];
@@ -261,6 +261,18 @@ export interface JudgmentDraftResult {
   serviceId: "JS-018";
   blocked: boolean;
   sections: JudgmentSection[];
+  citations: Array<{ articleId: string; lawName: string; articleNumber: number; quote: string }>;
+  precedents: Array<{ id: string; title: string; court?: string; decisionNo?: string; snippet: string; reviewed: boolean }>;
+  requestId: string;
+  notice: string;
+}
+
+/** مخرَجٌ مؤصَّلٌ موحَّد لخدمات النموذج (JS-002/003/011/012/014/015/016/017/021/022). */
+export interface GroundedWorkResult {
+  serviceId: string;
+  title: string;
+  blocked: boolean;
+  body: string;
   citations: Array<{ articleId: string; lawName: string; articleNumber: number; quote: string }>;
   precedents: Array<{ id: string; title: string; court?: string; decisionNo?: string; snippet: string; reviewed: boolean }>;
   requestId: string;

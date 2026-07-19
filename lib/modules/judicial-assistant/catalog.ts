@@ -5,32 +5,32 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CaseStage, ServiceDef, SuggestedAction, JudicialCase } from "./types";
 
-/** كتالوج الخدمات الرسميّ (§16). `available` = منفّذ في هذه المرحلة (الأولى: JS-001 فقط حيًّا). */
+/** كتالوج الخدمات الرسميّ (§16). كلّها منفّذة: نموذجيّة مؤصَّلة (works/summary/study/draft) أو حتميّة (rules) أو تصدير. */
 export const SERVICES: ServiceDef[] = [
   { id: "JS-001", title: "الملخّص التنفيذيّ", review: "optional", iconKey: "summary", available: true },
-  { id: "JS-002", title: "مذكّرة الإحاطة", review: "required", iconKey: "brief", available: false },
-  { id: "JS-003", title: "الملخّص التفصيليّ", review: "required", iconKey: "documents", available: false },
+  { id: "JS-002", title: "مذكّرة الإحاطة", review: "required", iconKey: "brief", available: true },
+  { id: "JS-003", title: "الملخّص التفصيليّ", review: "required", iconKey: "documents", available: true },
   { id: "JS-004", title: "الخطّ الزمنيّ", review: "required", iconKey: "procedure", available: true },
   { id: "JS-005", title: "خريطة القضية", review: "required", iconKey: "map", available: true },
   { id: "JS-006", title: "فحص الاختصاص", review: "mandatory", iconKey: "jurisdiction", available: true },
   { id: "JS-007", title: "فحص القبول", review: "mandatory", iconKey: "admissibility", available: true },
-  { id: "JS-008", title: "تحليل الإجراءات", review: "mandatory", iconKey: "procedure", available: false },
+  { id: "JS-008", title: "تحليل الإجراءات", review: "mandatory", iconKey: "procedure", available: true },
   { id: "JS-009", title: "حساب المدد", review: "mandatory", iconKey: "deadline", available: true },
   { id: "JS-010", title: "مصفوفة الإثبات", review: "mandatory", iconKey: "evidence", available: true },
-  { id: "JS-011", title: "تحضير جلسة", review: "required", iconKey: "hearing", available: false },
-  { id: "JS-012", title: "مقارنة الأقوال", review: "required", iconKey: "contradiction", available: false },
+  { id: "JS-011", title: "تحضير جلسة", review: "required", iconKey: "hearing", available: true },
+  { id: "JS-012", title: "مقارنة الأقوال", review: "required", iconKey: "contradiction", available: true },
   { id: "JS-013", title: "الدراسة القضائيّة", review: "mandatory", iconKey: "study", available: true },
-  { id: "JS-014", title: "مذكّرة مسألة", review: "mandatory", iconKey: "issue", available: false },
-  { id: "JS-015", title: "قرار إجرائيّ", review: "mandatory", iconKey: "procedure", available: false },
-  { id: "JS-016", title: "صياغة الوقائع", review: "mandatory", iconKey: "drafting", available: false },
-  { id: "JS-017", title: "بناء التسبيب", review: "mandatory", iconKey: "reasoning", available: false },
+  { id: "JS-014", title: "مذكّرة مسألة", review: "mandatory", iconKey: "issue", available: true },
+  { id: "JS-015", title: "قرار إجرائيّ", review: "mandatory", iconKey: "procedure", available: true },
+  { id: "JS-016", title: "صياغة الوقائع", review: "mandatory", iconKey: "drafting", available: true },
+  { id: "JS-017", title: "بناء التسبيب", review: "mandatory", iconKey: "reasoning", available: true },
   { id: "JS-018", title: "مشروع الحكم", review: "mandatory", iconKey: "judgment", available: true },
-  { id: "JS-019", title: "فحص المنطوق", review: "mandatory", iconKey: "operative", available: false },
-  { id: "JS-020", title: "فحص جودة الحكم", review: "mandatory", iconKey: "quality", available: false },
-  { id: "JS-021", title: "تحليل الاعتراض", review: "mandatory", iconKey: "appeal", available: false },
-  { id: "JS-022", title: "مذكّرة الردّ على الاعتراض", review: "mandatory", iconKey: "appeal", available: false },
-  { id: "JS-023", title: "التصدير القضائيّ", review: "optional", iconKey: "export", available: false },
-  { id: "JS-024", title: "قائمة عمل القاضي", review: "optional", iconKey: "tasks", available: false },
+  { id: "JS-019", title: "فحص المنطوق", review: "mandatory", iconKey: "operative", available: true },
+  { id: "JS-020", title: "فحص جودة الحكم", review: "mandatory", iconKey: "quality", available: true },
+  { id: "JS-021", title: "تحليل الاعتراض", review: "mandatory", iconKey: "appeal", available: true },
+  { id: "JS-022", title: "مذكّرة الردّ على الاعتراض", review: "mandatory", iconKey: "appeal", available: true },
+  { id: "JS-023", title: "التصدير القضائيّ", review: "optional", iconKey: "export", available: true },
+  { id: "JS-024", title: "قائمة عمل القاضي", review: "optional", iconKey: "tasks", available: true },
 ];
 
 export const SERVICE_BY_ID: Record<string, ServiceDef> = Object.fromEntries(SERVICES.map((s) => [s.id, s]));

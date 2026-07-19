@@ -25,6 +25,9 @@ const ACTION_LABEL: Record<string, string> = {
   JA_DRAFT_BLOCKED: "مشروع حكم محجوب (لا سند)",
   JA_STUDY_GENERATED: "دراسة قضائيّة (JS-013)",
   JA_STUDY_BLOCKED: "دراسة محجوبة (لا سند)",
+  JA_WORK_GENERATED: "عملٌ مؤصَّل",
+  JA_WORK_BLOCKED: "عملٌ محجوب (لا سند)",
+  JA_EXPORTED: "تصدير ملفّ القضية (JS-023)",
 };
 
 export default async function CaseAuditPage({ params }: { params: { caseId: string } }) {
