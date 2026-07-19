@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Search, Settings } from "lucide-react";
+import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Scale, Search, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
@@ -24,6 +24,7 @@ type NavItem = {
 // المسائل والمبادئ داخل المكتبة (تبويبات)؛ التجريبيّ داخل المختبر؛ الملفّات والإعدادات صفحتا تجميع.
 const navItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
+  { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
