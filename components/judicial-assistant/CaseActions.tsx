@@ -86,6 +86,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-004" ? <TimelineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-009" ? <DeadlineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-010" ? <EvidenceView data={panel.data} /> : null}
+      {panel?.kind === "deterministic" && (panel.data.serviceId === "JS-006" || panel.data.serviceId === "JS-007") ? <ChecklistView data={panel.data} /> : null}
     </div>
   );
 }
@@ -237,6 +238,34 @@ function DeadlineView({ data }: { data: import("@/lib/modules/judicial-assistant
           </ul>
         )}
       </div>
+      <p className="ja-det__disc">{data.disclaimer}</p>
+    </div>
+  );
+}
+
+function ChecklistView({ data }: { data: import("@/lib/modules/judicial-assistant/types").ChecklistResult }) {
+  const OUTCOME: Record<string, { label: string; tone: string }> = {
+    review: { label: "مراجعة", tone: "info" }, missing: { label: "ناقص", tone: "warning" }, flag: { label: "تنبيه", tone: "danger" },
+  };
+  return (
+    <div className="ja-summary">
+      <div className="ja-summary__banner"><JaIcon name={data.serviceId === "JS-006" ? "jurisdiction" : "admissibility"} size={16} /><span>محرّكٌ حتميّ — قائمة مراجعةٍ لا حكم.</span></div>
+      <div className="ja-summary__head"><h3>{data.title} <span className="ja-action__id">{data.serviceId}</span></h3></div>
+      <div className="ja-detbody">
+        <ul className="ja-check">
+          {data.items.map((it) => (
+            <li key={it.key} className="ja-check__row">
+              <span className={`ja-badge ja-badge--${OUTCOME[it.outcome]?.tone ?? "info"}`}>{OUTCOME[it.outcome]?.label ?? it.outcome}</span>
+              <div><div className="ja-check__q">{it.question}</div><div className="ja-check__note">{it.note}</div></div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {data.missing.length > 0 ? (
+        <div className="ja-sources"><h4><JaIcon name="quality" size={15} /> بياناتٌ ناقصة ({data.missing.length})</h4>
+          <ul>{data.missing.map((m, i) => <li key={i}><span className="ja-src__quote">{m}</span></li>)}</ul>
+        </div>
+      ) : null}
       <p className="ja-det__disc">{data.disclaimer}</p>
     </div>
   );

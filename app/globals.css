@@ -1078,3 +1078,10 @@ body {
 .ja-mapx__item:hover { background: var(--parchment); }
 .ja-mapx__item input { margin-top: 4px; flex: none; accent-color: var(--gold-dark); }
 .ja-mapx__item--off span { color: var(--ink-40); text-decoration: line-through; }
+
+/* المعاون القضائي — قائمة الفحص (JS-006/007) */
+.ja-check { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ja-check__row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--ink-08); }
+.ja-check__row:first-child { border-top: 0; }
+.ja-check__q { color: var(--ink-80); font-size: 14px; line-height: 1.7; }
+.ja-check__note { color: var(--ink-46); font-size: 12px; margin-top: 2px; }

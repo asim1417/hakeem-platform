@@ -228,7 +228,24 @@ export interface TimelineResult {
   disclaimer: string;
 }
 
-export type DeterministicActionResult = DeadlineResult | EvidenceMatrixResult | TimelineResult;
+/** بندٌ في قائمة فحصٍ إجرائيّة (JS-006/JS-007) — سؤال مراجعةٍ لا حكم. */
+export interface ChecklistItem {
+  key: string;
+  question: string;
+  outcome: "review" | "missing" | "flag"; // مراجعة | بيانات ناقصة | تنبيه
+  note: string;
+}
+
+export interface ChecklistResult {
+  serviceId: "JS-006" | "JS-007";
+  deterministic: true;
+  title: string;
+  items: ChecklistItem[];
+  missing: string[]; // بيانات ناقصة تمنع الجزم
+  disclaimer: string;
+}
+
+export type DeterministicActionResult = DeadlineResult | EvidenceMatrixResult | TimelineResult | ChecklistResult;
 
 /** قسمٌ في مسودّة الحكم (§51). */
 export interface JudgmentSection {
