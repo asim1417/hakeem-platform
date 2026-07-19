@@ -11,7 +11,9 @@ import {
 import { StageBar } from "@/components/judicial-assistant/StageBar";
 import { CaseActions } from "@/components/judicial-assistant/CaseActions";
 import { AttachmentUploader } from "@/components/judicial-assistant/AttachmentUploader";
+import { AttachmentList } from "@/components/judicial-assistant/AttachmentList";
 import { MapExtractor } from "@/components/judicial-assistant/MapExtractor";
+import { CaseManageBar } from "@/components/judicial-assistant/CaseManageBar";
 import { JaIcon } from "@/components/judicial-assistant/icons";
 import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
 import { listAnalyses } from "@/lib/modules/judicial-assistant/persistence";
@@ -62,18 +64,20 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         {kase.attachments.length === 0 ? (
           <LegalEmptyState title="لا مرفقات بعد" description="أضِف اللائحة والمذكّرات والمحاضر — الاستخراج محليّ في متصفّحك، ويصير المرفق مادّةً للتحليل." />
         ) : (
-          <ul className="ja-list">
-            {kase.attachments.map((a) => (
-              <li key={a.id} className="ja-list__row">
-                <div>
-                  <div className="ja-list__title">{a.name}</div>
-                  <div className="ja-list__sub">{a.chars.toLocaleString("ar-SA")} حرف · أُضيف {formatDateTime(a.addedAt)}</div>
-                </div>
-                <JaIcon name="documents" size={16} />
-              </li>
-            ))}
-          </ul>
+          <AttachmentList caseId={kase.id} attachments={kase.attachments} />
         )}
+      </section>
+
+      {/* لوحة تحكّم القضية — تعديل وحذف */}
+      <section className="card ja-panel" aria-labelledby="ja-manage">
+        <h2 id="ja-manage" className="ja-panel__title"><JaIcon name="security" size={18} /> إدارة القضية</h2>
+        <CaseManageBar
+          caseId={kase.id}
+          initial={{
+            subject: kase.subject, caseNumber: kase.caseNumber ?? "", court: kase.court ?? "", circuit: kase.circuit ?? "",
+            jurisdiction: kase.jurisdiction, confidentiality: kase.confidentiality, stage: kase.stage,
+          }}
+        />
       </section>
 
       {/* استخلاص الخريطة من المرفقات (JS-005) — يُثبّتها القاضي فتُفعّل الحتميّة */}

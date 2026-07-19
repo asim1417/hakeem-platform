@@ -1085,3 +1085,15 @@ body {
 .ja-check__row:first-child { border-top: 0; }
 .ja-check__q { color: var(--ink-80); font-size: 14px; line-height: 1.7; }
 .ja-check__note { color: var(--ink-46); font-size: 12px; margin-top: 2px; }
+
+/* المعاون القضائي — لوحة تحكّم القضية (تعديل/حذف) */
+.ja-managebar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ja-managebar--danger { background: var(--ruby-soft); border: 1px solid color-mix(in srgb, var(--ruby) 35%, transparent); border-radius: var(--r-md); padding: 12px 16px; font-size: 14px; color: var(--ink-80); }
+.ja-danger-btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid color-mix(in srgb, var(--ruby) 45%, transparent); background: var(--ruby-soft); color: var(--ruby); border-radius: var(--r-md); padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ja-danger-btn:hover { background: color-mix(in srgb, var(--ruby) 16%, transparent); }
+.ja-danger-btn--sm { padding: 4px 12px; font-size: 12.5px; }
+.ja-textbtn { border: 0; background: none; color: var(--ink-60); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: var(--r-sm); }
+.ja-textbtn:hover { background: var(--ink-04); color: var(--ink); }
+.ja-textbtn--danger { color: var(--ruby); }
+.ja-textbtn--danger:hover { background: var(--ruby-soft); }
+.ja-attdel { display: inline-flex; align-items: center; gap: 6px; }

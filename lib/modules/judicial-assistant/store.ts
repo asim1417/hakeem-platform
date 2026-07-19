@@ -137,6 +137,55 @@ export async function addAttachment(
   }
 }
 
+/** يعدّل بيانات القضية (العنوان/المحكمة/النوع/المرحلة…) — للمالك فقط. */
+export async function updateCaseMeta(
+  caseId: string, ownerId: string,
+  patch: { subject?: string; caseNumber?: string | null; court?: string | null; circuit?: string | null; jurisdiction?: string; confidentiality?: string; stage?: string }
+): Promise<boolean> {
+  try {
+    const row = await prisma.judicialWorkCase.findUnique({ where: { id: caseId }, select: { ownerId: true } });
+    if (!row || row.ownerId !== ownerId) return false;
+    const data: Record<string, unknown> = {};
+    if (patch.subject !== undefined && patch.subject.trim()) data.subject = patch.subject.trim();
+    if (patch.caseNumber !== undefined) data.caseNumber = patch.caseNumber?.trim() || null;
+    if (patch.court !== undefined) data.court = patch.court?.trim() || null;
+    if (patch.circuit !== undefined) data.circuit = patch.circuit?.trim() || null;
+    if (patch.jurisdiction !== undefined) data.jurisdiction = asJurisdiction(patch.jurisdiction);
+    if (patch.confidentiality !== undefined) data.confidentiality = asConfidentiality(patch.confidentiality);
+    if (patch.stage !== undefined) data.stage = asStage(patch.stage);
+    if (Object.keys(data).length === 0) return true;
+    await prisma.judicialWorkCase.update({ where: { id: caseId }, data });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** يحذف القضية بالكامل — للمالك فقط. */
+export async function deleteCase(caseId: string, ownerId: string): Promise<boolean> {
+  try {
+    const row = await prisma.judicialWorkCase.findUnique({ where: { id: caseId }, select: { ownerId: true } });
+    if (!row || row.ownerId !== ownerId) return false;
+    await prisma.judicialWorkCase.delete({ where: { id: caseId } });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** يحذف مرفقًا واحدًا من القضية — للمالك فقط. */
+export async function removeAttachment(caseId: string, ownerId: string, attId: string): Promise<boolean> {
+  try {
+    const row = await prisma.judicialWorkCase.findUnique({ where: { id: caseId }, select: { ownerId: true, attachments: true } });
+    if (!row || row.ownerId !== ownerId) return false;
+    const next = arr<CaseAttachment>(row.attachments).filter((a) => a.id !== attId);
+    await prisma.judicialWorkCase.update({ where: { id: caseId }, data: { attachments: next as unknown as object } });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** يحفظ خريطة القضية المُثبَّتة (structured) — للمالك فقط. */
 export async function saveStructured(
   caseId: string, ownerId: string,
