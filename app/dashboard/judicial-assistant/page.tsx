@@ -9,6 +9,7 @@ import {
 import { JaIcon } from "@/components/judicial-assistant/icons";
 import { CreateCaseForm } from "@/components/judicial-assistant/CreateCaseForm";
 import { ServiceShowcase } from "@/components/judicial-assistant/ServiceShowcase";
+import { AssistantPrompt } from "@/components/judicial-assistant/AssistantPrompt";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "المعاون القضائيّ — لوحة القاضي" };
@@ -45,6 +46,11 @@ export default async function JudicialAssistantDashboard() {
           </div>
         </div>
       </header>
+
+      {/* موجّه المعاون — عقلٌ حرّ مؤصَّل لأيّ سؤالٍ عامّ لا يتطلّب قضيةً بعينها */}
+      <section className="card ja-panel">
+        <AssistantPrompt />
+      </section>
 
       {empty ? (
         <>

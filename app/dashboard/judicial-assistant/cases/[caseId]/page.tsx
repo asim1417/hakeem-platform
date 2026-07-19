@@ -14,6 +14,7 @@ import { AttachmentUploader } from "@/components/judicial-assistant/AttachmentUp
 import { AttachmentList } from "@/components/judicial-assistant/AttachmentList";
 import { MapExtractor } from "@/components/judicial-assistant/MapExtractor";
 import { CaseManageBar } from "@/components/judicial-assistant/CaseManageBar";
+import { AssistantPrompt } from "@/components/judicial-assistant/AssistantPrompt";
 import { JaIcon } from "@/components/judicial-assistant/icons";
 import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
 import { listAnalyses } from "@/lib/modules/judicial-assistant/persistence";
@@ -54,6 +55,43 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         </div>
         <StageBar current={kase.stage} />
       </header>
+
+      {/* بطاقة القضية — الأطراف وملخّص الدعوى، ظاهرةٌ دائمًا (لا تُخفى عند فراغ الخريطة) */}
+      <section className="card ja-panel ja-infocard" aria-labelledby="ja-info">
+        <div className="ja-panel__row">
+          <h2 id="ja-info" className="ja-panel__title"><JaIcon name="brief" size={18} /> بطاقة القضية</h2>
+          <div className="ja-infocard__stats">
+            <span><b>{kase.attachments.length}</b> مرفق</span>
+            <span><b>{kase.facts.length}</b> واقعة</span>
+            <span><b>{kase.issues.length}</b> مسألة</span>
+            <span><b>{kase.hearings.length}</b> جلسة</span>
+            <span><b>{kase.deadlines.length}</b> مدّة</span>
+          </div>
+        </div>
+        {kase.parties.length === 0 && kase.requests.length === 0 ? (
+          <LegalEmptyState
+            title="لم تُستخلَص بيانات القضية بعد"
+            description={kase.attachments.length === 0
+              ? "أضِف مرفقًا (اللائحة/المذكّرة) أدناه، ثمّ استخلِص الخريطة لتظهر الأطراف وملخّص الدعوى هنا."
+              : "شغّل «استخلاص الخريطة» أدناه ليقرأ المعاون الأطرافَ والطلبات والوقائع من مرفقاتك، فتُثبّتها لتظهر في هذه البطاقة."}
+          />
+        ) : (
+          <div className="ja-infocard__grid">
+            <div className="ja-infocard__block">
+              <h3><JaIcon name="map" size={15} /> الأطراف</h3>
+              {kase.parties.length ? (
+                <ul className="ja-plain">{kase.parties.map((p) => <li key={p.id}><b>{p.role}:</b> {p.name}</li>)}</ul>
+              ) : <p className="ja-muted">لم تُحدَّد بعد.</p>}
+            </div>
+            <div className="ja-infocard__block">
+              <h3><JaIcon name="brief" size={15} /> ملخّص الدعوى — الطلبات</h3>
+              {kase.requests.length ? (
+                <ul className="ja-plain">{kase.requests.map((r) => <li key={r.id}>{r.text}</li>)}</ul>
+              ) : <p className="ja-muted">لم تُحدَّد بعد.</p>}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* المرفقات — المدخل الأساسيّ للقضية */}
       <section className="card ja-panel" aria-labelledby="ja-attach">
@@ -115,24 +153,9 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         </section>
       ) : null}
 
-      {/* خريطة القضية — تُعرض عند وجود عناصر (تُبنى من المرفقات لاحقًا) */}
+      {/* خريطة القضية — وقائع ومسائل وجلسات، تُعرض عند وجود عناصر (الأطراف والطلبات في البطاقة أعلاه) */}
       {hasMap ? (
         <>
-          {kase.parties.length > 0 || kase.requests.length > 0 ? (
-            <div className="ja-cols">
-              {kase.parties.length > 0 ? (
-                <section className="card ja-panel"><h2 className="ja-panel__title"><JaIcon name="map" size={18} /> الأطراف</h2>
-                  <ul className="ja-plain">{kase.parties.map((p) => <li key={p.id}><b>{p.role}:</b> {p.name}</li>)}</ul>
-                </section>
-              ) : null}
-              {kase.requests.length > 0 ? (
-                <section className="card ja-panel"><h2 className="ja-panel__title"><JaIcon name="brief" size={18} /> الطلبات</h2>
-                  <ul className="ja-plain">{kase.requests.map((r) => <li key={r.id}>{r.text}</li>)}</ul>
-                </section>
-              ) : null}
-            </div>
-          ) : null}
-
           {kase.facts.length > 0 ? (
             <section className="card ja-panel"><h2 className="ja-panel__title"><JaIcon name="evidence" size={18} /> الوقائع</h2>
               <ul className="ja-facts">
@@ -179,6 +202,11 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
           </ul>
         </section>
       ) : null}
+
+      {/* موجّه المعاون — عقلٌ حرّ مؤصَّل لما لا تغطّيه الخدمات المخصّصة، بسياق هذه القضية */}
+      <section className="card ja-panel">
+        <AssistantPrompt caseId={kase.id} />
+      </section>
 
       <LegalAlert tone="info">
         كلّ عملٍ حسّاس يمرّ بمراجعتك واعتمادك. المصادر قابلة للفتح، والنظام لا يعتمد حكمًا ولا يولّد نصًّا نظاميًّا من ذاكرته.
