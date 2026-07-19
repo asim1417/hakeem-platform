@@ -35,6 +35,15 @@ export const SERVICES: ServiceDef[] = [
 
 export const SERVICE_BY_ID: Record<string, ServiceDef> = Object.fromEntries(SERVICES.map((s) => [s.id, s]));
 
+/** تجميع الخدمات في فئاتٍ للعرض البصريّ (لوحة القاضي). */
+export const SERVICE_GROUPS: Array<{ title: string; iconKey: string; hint: string; ids: string[] }> = [
+  { title: "تحليل ودراسة", iconKey: "study", hint: "فهم القضية بعمق", ids: ["JS-001", "JS-002", "JS-003", "JS-013", "JS-012", "JS-005"] },
+  { title: "فحوص إجرائيّة", iconKey: "jurisdiction", hint: "محرّك قواعد حتميّ", ids: ["JS-006", "JS-007", "JS-008", "JS-009", "JS-010", "JS-004"] },
+  { title: "صياغة وأحكام", iconKey: "judgment", hint: "مؤصَّلة بالنواة", ids: ["JS-016", "JS-017", "JS-018", "JS-015", "JS-014"] },
+  { title: "اعتراض وجودة", iconKey: "appeal", hint: "بعد الحكم", ids: ["JS-019", "JS-020", "JS-021", "JS-022"] },
+  { title: "الجلسة والأدوات", iconKey: "tasks", hint: "متابعة يوميّة", ids: ["JS-011", "JS-024", "JS-023"] },
+];
+
 /** أسماء المراحل بالعربيّة + شرحٌ مقتضب (§14). */
 export const STAGE_META: Record<CaseStage, { label: string; hint: string; index: number }> = {
   imported: { label: "مستورَدة", hint: "استُلمت البيانات الأوليّة", index: 0 },

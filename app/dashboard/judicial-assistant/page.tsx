@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { LegalPageHeader, LegalAlert, LegalStatCard, LegalEmptyState } from "@/components/ui/legal";
+import { LegalStatCard } from "@/components/ui/legal";
 import { getJudgeDashboard } from "@/lib/modules/judicial-assistant/store";
 import {
   CONFIDENTIALITY_LABEL, DEADLINE_STATUS_LABEL, DEADLINE_STATUS_TONE,
@@ -8,9 +8,17 @@ import {
 } from "@/lib/modules/judicial-assistant/labels";
 import { JaIcon } from "@/components/judicial-assistant/icons";
 import { CreateCaseForm } from "@/components/judicial-assistant/CreateCaseForm";
+import { ServiceShowcase } from "@/components/judicial-assistant/ServiceShowcase";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "المعاون القضائيّ — لوحة القاضي" };
+
+const STEPS = [
+  { icon: "case", title: "أنشئ قضية", desc: "مشروعٌ تملكه: العنوان والمحكمة ونوع القضاء." },
+  { icon: "documents", title: "ارفع مرفقاتك", desc: "اللائحة والمذكّرات والمحاضر — الاستخراج محليّ في متصفّحك." },
+  { icon: "map", title: "استخلِص الخريطة", desc: "أطرافٌ ووقائع ومسائل تُثبّتها أنت قبل التحليل." },
+  { icon: "assistant", title: "شغّل الأعمال", desc: "ملخّص، مدد، إثبات، دراسة، مشروع حكم — مؤصَّلة بالنواة." },
+];
 
 export default async function JudicialAssistantDashboard() {
   const user = await requirePagePermission("JUDICIAL_ASSISTANT_USE");
@@ -19,18 +27,39 @@ export default async function JudicialAssistantDashboard() {
 
   return (
     <div className="ja">
-      <LegalPageHeader
-        eyebrow="المعاون القضائيّ السعوديّ"
-        title="لوحة القاضي"
-        description="مساحةُ عملٍ قضائيّة تبدأ من قضاياك ومرفقاتك — تقود العمل بحسب المرحلة، والمصدر قبل الإجابة، والقاضي صاحب القرار."
-        actions={<Link href="/dashboard/judicial-assistant/cases" className="btn btn-gold"><JaIcon name="case" size={16} /> قضاياي</Link>}
-      />
+      {/* بطلٌ قويّ */}
+      <header className="ja-hero2">
+        <div aria-hidden className="ja-hero2__pattern" />
+        <div className="ja-hero2__in">
+          <p className="ja-hero2__eyebrow">المعاون القضائيّ السعوديّ</p>
+          <h1>لوحة القاضي</h1>
+          <p className="ja-hero2__lede">مساحةُ عملٍ قضائيّة تبدأ من قضاياك ومرفقاتك — تقود العمل بحسب المرحلة، والمصدر قبل الإجابة، والقاضي صاحب القرار.</p>
+          <div className="ja-hero2__chips">
+            <span className="ja-hchip"><JaIcon name="assistant" size={14} /> ٢٤ خدمة قضائيّة</span>
+            <span className="ja-hchip"><JaIcon name="sources" size={14} /> مؤصَّلة بأحكام النواة</span>
+            <span className="ja-hchip"><JaIcon name="security" size={14} /> بلا نظامٍ خارجيّ</span>
+          </div>
+          <div className="ja-hero2__cta">
+            <CreateCaseForm />
+            <Link href="/dashboard/judicial-assistant/cases" className="btn btn-outline ja-hero2__ghost"><JaIcon name="case" size={16} /> قضاياي</Link>
+          </div>
+        </div>
+      </header>
 
       {empty ? (
-        <div className="card ja-panel">
-          <LegalEmptyState title="ابدأ بإنشاء قضيتك الأولى" description="القضية مشروعٌ تملكه: أنشئه، ثم أضِف مرفقاتك (اللائحة، المذكّرات، المحاضر) ليحلّلها المعاون مؤصَّلًا بالنواة." />
-          <div className="ja-formactions"><CreateCaseForm /></div>
-        </div>
+        <>
+          <section className="ja-steps2" aria-label="كيف تبدأ">
+            {STEPS.map((s, i) => (
+              <div key={s.title} className="ja-step2">
+                <span className="ja-step2__n">{i + 1}</span>
+                <span className="ja-step2__ic"><JaIcon name={s.icon} size={20} /></span>
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
+              </div>
+            ))}
+          </section>
+          <ServiceShowcase />
+        </>
       ) : (
         <>
           <div className="ja-stats">
@@ -79,13 +108,10 @@ export default async function JudicialAssistantDashboard() {
               </ul>
             </section>
           ) : null}
+
+          <ServiceShowcase />
         </>
       )}
-
-      <LegalAlert tone="info">
-        المدخل مرفقاتك أنت — لا يعتمد المعاون على ربطٍ بنظامٍ خارجيّ. أعمالٌ حيّة: الملخّص (JS-001)، الخطّ الزمنيّ (JS-004)،
-        المدد (JS-009)، مصفوفة الإثبات (JS-010)، ومشروع الحكم (JS-018) مؤصَّلًا على أحكام النواة وموادها.
-      </LegalAlert>
     </div>
   );
 }
