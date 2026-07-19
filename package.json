@@ -64,6 +64,7 @@
     "test:credits": "tsx scripts/test-credits-onboarding.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",
+    "db:clerk-id": "tsx scripts/apply-clerk-id.ts",
     "qa:citations": "tsx scripts/qa-citations.ts",
     "test:grounding": "tsx scripts/test-grounding-guard.ts",
     "test:kg": "tsx scripts/test-knowledge-graph.ts",
@@ -155,6 +156,7 @@
     "test:quota": "tsx scripts/test-quota.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.39.6",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
@@ -164,7 +166,6 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.468.0",
     "next": "^14.2.18",
-    "next-auth": "^4.24.10",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",
@@ -172,6 +173,7 @@
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "svix": "^1.98.0",
     "tesseract.js": "^5.1.1",
     "zod": "^3.24.1"
   },

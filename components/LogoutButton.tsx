@@ -1,32 +1,57 @@
 "use client";
 
+import { SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
-function useLogout() {
-  const router = useRouter();
-  return async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
-    router.push("/login");
-    router.refresh();
-  };
-}
+const btnClass =
+  "focus-ring mt-3 w-full rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30";
 
-export function LogoutButton() {
-  const logout = useLogout();
+/** تسجيل الخروج عبر Clerk — أو إعادة توجيه إن لم تُضبط المفاتيح. */
+export function LogoutButton({ clerkEnabled = true }: { clerkEnabled?: boolean }) {
+  const router = useRouter();
+  if (!clerkEnabled) {
+    return (
+      <button type="button" onClick={() => router.push("/sign-in")} className={btnClass}>
+        تسجيل الخروج
+      </button>
+    );
+  }
   return (
-    <button type="button" onClick={() => void logout()} className="focus-ring mt-3 w-full rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30">
-      تسجيل الخروج
-    </button>
+    <SignOutButton redirectUrl="/">
+      <button type="button" className={btnClass}>
+        تسجيل الخروج
+      </button>
+    </SignOutButton>
   );
 }
 
-/** زرّ أيقوني لتسجيل الخروج في الشريط العلوي — متاح بقارئ الشاشة. */
-export function LogoutIconButton({ label }: { label: string }) {
-  const logout = useLogout();
+export function LogoutIconButton({
+  label,
+  clerkEnabled = true,
+}: {
+  label: string;
+  clerkEnabled?: boolean;
+}) {
+  const router = useRouter();
+  if (!clerkEnabled) {
+    return (
+      <button
+        type="button"
+        onClick={() => router.push("/sign-in")}
+        className="icon-pill focus-ring"
+        aria-label={label}
+        title={label}
+      >
+        <LogOut size={16} aria-hidden />
+      </button>
+    );
+  }
   return (
-    <button type="button" onClick={() => void logout()} className="icon-pill focus-ring" aria-label={label} title={label}>
-      <LogOut size={16} aria-hidden />
-    </button>
+    <SignOutButton redirectUrl="/">
+      <button type="button" className="icon-pill focus-ring" aria-label={label} title={label}>
+        <LogOut size={16} aria-hidden />
+      </button>
+    </SignOutButton>
   );
 }

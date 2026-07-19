@@ -46,7 +46,7 @@ export default async function OwnerAdminPage() {
       <p className="mt-3 max-w-3xl leading-8 text-ink">
         من هنا تنشئ حساب المالك (مدير النظام) أو أي مستخدم، مع توليد{" "}
         <strong>اسم مستخدم</strong> و<strong>كلمة مرور سهلة</strong>، وتعيين الدور والصلاحيات. بعد الإنشاء استخدم{" "}
-        <Link href="/login" className="font-semibold text-[var(--gold-dark)] underline underline-offset-4">
+        <Link href="/sign-in" className="font-semibold text-[var(--gold-dark)] underline underline-offset-4">
           صفحة تسجيل الدخول
         </Link>{" "}
         بالبيانات المُولَّدة.
@@ -67,7 +67,7 @@ export default async function OwnerAdminPage() {
         </div>
         <div className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-ivory p-4">
           <p className="text-xs font-semibold text-[var(--ink-60)]">صفحة الدخول</p>
-          <Link href="/login" className="mt-2 inline-block text-sm font-semibold text-[var(--navy)] underline underline-offset-4">
+          <Link href="/sign-in" className="mt-2 inline-block text-sm font-semibold text-[var(--navy)] underline underline-offset-4">
             /login — منشورة ومتاحة
           </Link>
         </div>

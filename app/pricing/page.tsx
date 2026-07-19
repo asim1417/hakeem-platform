@@ -33,13 +33,13 @@ export default function PricingPage() {
         </Link>
         <div className="flex gap-2">
           <Link
-            href="/login"
+            href="/sign-in"
             className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
           >
             تسجيل الدخول
           </Link>
           <Link
-            href="/register"
+            href="/sign-up"
             className="focus-ring rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
           >
             سجّل مجانًا

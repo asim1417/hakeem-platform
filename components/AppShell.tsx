@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Search, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
+import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
@@ -44,6 +45,7 @@ const roleLabels: Record<string, string> = {
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const { locale, t } = getTranslator();
   const user = await getCurrentUser().catch(() => null);
+  const clerkEnabled = isClerkConfigured();
   const initials =
     user?.name
       ?.split(" ")
@@ -94,7 +96,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
           </div>
-          {user ? <LogoutButton /> : null}
+          {user ? <LogoutButton clerkEnabled={clerkEnabled} /> : null}
         </div>
       </aside>
 
@@ -110,7 +112,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               <input name="q" aria-label={t("topbar.search")} placeholder={t("topbar.searchPlaceholder")} />
             </form>
             <LanguageToggle current={locale} switchLabel={LOCALE_LABEL[locale === "ar" ? "en" : "ar"]} />
-            <LogoutIconButton label={t("topbar.logout")} />
+            <LogoutIconButton label={t("topbar.logout")} clerkEnabled={clerkEnabled} />
           </div>
         </header>
         <div className="content" id="main-content">{children}</div>

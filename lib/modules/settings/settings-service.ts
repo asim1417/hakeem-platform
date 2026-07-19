@@ -41,6 +41,16 @@ export const MANAGED_KEYS: ManagedKey[] = [
     group: "الدخول الموحّد",
     placeholder: "aasemalfarsi@gmail.com",
   },
+  // ── Clerk (المصادقة الوحيدة) — المفتاح العلني يُفضَّل في Vercel كـ NEXT_PUBLIC_ ──
+  { key: "CLERK_SECRET_KEY", label: "Clerk Secret Key", secret: true, group: "المصادقة (Clerk)", placeholder: "sk_live_..." },
+  {
+    key: "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    label: "Clerk Publishable Key",
+    secret: false,
+    group: "المصادقة (Clerk)",
+    placeholder: "pk_live_...",
+  },
+  { key: "CLERK_WEBHOOK_SECRET", label: "Clerk Webhook Secret (Svix)", secret: true, group: "المصادقة (Clerk)", placeholder: "whsec_..." },
   // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
   { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
   { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },

@@ -3,6 +3,7 @@ import "./identity.css";
 import "./globals.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
+import { ClerkAppProvider } from "@/components/providers/ClerkAppProvider";
 
 export const metadata: Metadata = {
   title: "حكيم",
@@ -18,6 +19,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = getLocale();
+  const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
   return (
     <html lang={locale} dir={DIR[locale]}>
       <head>
@@ -28,7 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ClerkAppProvider publishableKey={publishableKey || undefined}>{children}</ClerkAppProvider>
+      </body>
     </html>
   );
 }

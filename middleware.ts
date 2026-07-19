@@ -1,25 +1,46 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const protectedPrefixes = ["/dashboard", "/admin", "/audit-logs", "/onboarding"];
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard(.*)",
+  "/admin(.*)",
+  "/audit-logs(.*)",
+  "/onboarding(.*)",
+]);
 
-/**
- * حماية المسارات الحساسة: بلا جلسة → صفحة التسجيل (فيها خيار تسجيل الدخول).
- * الرحلة من الرابط الرئيسي: سجّل / ادخل → onboarding أو المنصة.
- */
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  if (!protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
-    return NextResponse.next();
-  }
-
-  const hasSession = Boolean(request.cookies.get("hakeem_session")?.value);
-  if (hasSession) return NextResponse.next();
-
-  const gate = new URL("/register", request.url);
-  gate.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
-  return NextResponse.redirect(gate);
+function clerkReady() {
+  return Boolean(
+    (process.env.CLERK_SECRET_KEY || "").trim() &&
+      (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim()
+  );
 }
 
+function legacyGate(request: NextRequest) {
+  if (isProtectedRoute(request)) {
+    const url = new URL("/sign-in", request.url);
+    url.searchParams.set("setup", "1");
+    return NextResponse.redirect(url);
+  }
+  return NextResponse.next();
+}
+
+/**
+ * Clerk هو بوابة المصادقة الوحيدة.
+ * بلا مفاتيح: المسارات المحمية → /sign-in?setup=1
+ */
+export default clerkMiddleware(async (auth, request) => {
+  if (!clerkReady()) return legacyGate(request);
+
+  if (isProtectedRoute(request)) {
+    await auth.protect({
+      unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
+    });
+  }
+});
+
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/audit-logs", "/onboarding"],
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
 };
