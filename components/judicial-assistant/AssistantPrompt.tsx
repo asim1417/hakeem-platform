@@ -6,13 +6,21 @@ import { FormEvent, useState } from "react";
 import { JaIcon } from "./icons";
 import type { AskResult } from "@/lib/modules/judicial-assistant/ask";
 
-const SUGGESTIONS = [
+// اقتراحاتٌ خاصّةٌ بالقضية (داخل صفحتها) — تعرف سياقها.
+const CASE_SUGGESTIONS = [
   "ما أبرز نقاط القوّة والضعف في هذه القضية؟",
   "ما الدفوع المحتملة للطرف الآخر؟",
   "لخّص لي موقف الإثبات الحاليّ.",
 ];
+// اقتراحاتٌ عامّة (الصفحة الرئيسية) — مسائل قضائيّة لا ترتبط بقضيّةٍ بعينها.
+const GENERAL_SUGGESTIONS = [
+  "ما مدّة الاعتراض على حكمٍ تجاريّ وبدايتها؟",
+  "ما شروط قبول دعوى المطالبة الماليّة؟",
+  "اشرح عبء الإثبات في الدعاوى العمّاليّة.",
+];
 
 export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; compact?: boolean }) {
+  const SUGGESTIONS = caseId ? CASE_SUGGESTIONS : GENERAL_SUGGESTIONS;
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -43,13 +51,17 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
   return (
     <div className="ja-ask">
       <div className="ja-ask__head">
-        <h2 className="ja-panel__title"><JaIcon name="assistant" size={18} /> موجّه المعاون</h2>
-        <p className="ja-panel__hint">اطلب أيّ شيءٍ لا تغطّيه الخدمات المخصّصة — يُجاب مؤصَّلًا بالنواة{caseId ? " وبسياق قضيتك" : ""}.</p>
+        <h2 className="ja-panel__title"><JaIcon name="assistant" size={18} /> {caseId ? "موجّه القضية" : "موجّه المعاون"}</h2>
+        <p className="ja-panel__hint">
+          {caseId
+            ? "اسأل أيّ شيءٍ يتعلّق بهذه القضية — يُجاب مؤصَّلًا بالنواة وبسياق قضيتك (الأطراف والطلبات والوقائع والمرفقات)."
+            : "اسأل أيّ مسألةٍ قضائيّة عامّة — يُجاب مؤصَّلًا بمواد النواة، أو يمتنع بصدقٍ إن لم يجد سندًا. للأسئلة الخاصّة بقضيّةٍ، افتحها واسأل داخلها."}
+        </p>
       </div>
       <form className="ja-ask__form" onSubmit={submit}>
         <textarea
           value={q} onChange={(e) => setQ(e.target.value)} disabled={busy} rows={compact ? 2 : 3}
-          placeholder="مثال: ما الدفوع المحتملة؟ أو صِغ لي سؤالًا للطرف الآخر…"
+          placeholder={caseId ? "مثال: ما الدفوع المحتملة للطرف الآخر؟ أو صِغ لي سؤالًا للخصم…" : "مثال: ما مدّة الاعتراض على حكمٍ تجاريّ؟ أو ما شروط قبول الدعوى؟"}
           className="ja-ask__ta"
         />
         <div className="ja-ask__actions">
