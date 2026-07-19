@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/modules/auth/session";
 import { getStatus } from "@/lib/modules/billing/quota";
 import { PRICING } from "@/config/pricing";
 
-// عدّاد الحصّة المجانية — شارةٌ أعلى الوحدات المتقدّمة. الحالة من الخادم (لا localStorage).
+// عدّاد الحصّة المجانية — شارةٌ أعلى الوحدات المتقدّمة. الحالة من الخادم لا من تخزين المتصفّح.
 // يختفي للمشتركين وقبل تطبيق الهجرة (unknown). يحمل تحذيرًا لطيفًا قرب النفاد.
 export async function QuotaCounter() {
   const user = await getCurrentUser().catch(() => null);

@@ -28,7 +28,10 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
       <header className="ja-casehead">
         <div className="ja-casehead__top">
           <Link href="/dashboard/judicial-assistant/cases" className="ja-back"><JaIcon name="case" size={15} /> القضايا</Link>
-          <span className="ja-stagepill ja-stagepill--lg">{STAGE_META[kase.stage].label}</span>
+          <div className="ja-casehead__actions">
+            <Link href={`/dashboard/judicial-assistant/cases/${kase.id}/audit`} className="ja-back"><JaIcon name="audit" size={15} /> سجلّ النشاط</Link>
+            <span className="ja-stagepill ja-stagepill--lg">{STAGE_META[kase.stage].label}</span>
+          </div>
         </div>
         <h1 className="ja-casehead__num">{kase.caseNumber}</h1>
         <p className="ja-casehead__subject">{kase.subject}</p>

@@ -10,7 +10,7 @@ export const SERVICES: ServiceDef[] = [
   { id: "JS-001", title: "الملخّص التنفيذيّ", review: "optional", iconKey: "summary", available: true },
   { id: "JS-002", title: "مذكّرة الإحاطة", review: "required", iconKey: "brief", available: false },
   { id: "JS-003", title: "الملخّص التفصيليّ", review: "required", iconKey: "documents", available: false },
-  { id: "JS-004", title: "الخطّ الزمنيّ", review: "required", iconKey: "procedure", available: false },
+  { id: "JS-004", title: "الخطّ الزمنيّ", review: "required", iconKey: "procedure", available: true },
   { id: "JS-005", title: "خريطة القضية", review: "required", iconKey: "map", available: false },
   { id: "JS-006", title: "فحص الاختصاص", review: "mandatory", iconKey: "jurisdiction", available: false },
   { id: "JS-007", title: "فحص القبول", review: "mandatory", iconKey: "admissibility", available: false },
@@ -74,11 +74,15 @@ const STAGE_ACTIONS: Record<CaseStage, Array<{ serviceId: string; reason: string
   review_required: [{ serviceId: "JS-005", reason: "تثبيت العناصر منخفضة الثقة في الخريطة" }],
   active: [
     { serviceId: "JS-001", reason: "ملخّصٌ تنفيذيّ محدَّث لحالة القضية" },
+    { serviceId: "JS-004", reason: "خطٌّ زمنيّ يرتّب الأحداث ويكشف تعارض المواعيد" },
+    { serviceId: "JS-009", reason: "التحقّق من المدد الإجرائيّة" },
     { serviceId: "JS-012", reason: "أثناء تبادل المذكّرات: مقارنة الادعاءات والدفوع" },
   ],
   hearing_preparation: [
     { serviceId: "JS-011", reason: "جلسةٌ قريبة: تحضير المحاور والأسئلة والنواقص" },
     { serviceId: "JS-001", reason: "استعادة السياق قبل الجلسة" },
+    { serviceId: "JS-004", reason: "الخطّ الزمنيّ للأحداث والمواعيد قبل الجلسة" },
+    { serviceId: "JS-009", reason: "حساب مدد ما قبل الجلسة والتحقّق منها" },
   ],
   deliberation: [
     { serviceId: "JS-013", reason: "قبل المداولة: دراسة المسائل والبدائل" },

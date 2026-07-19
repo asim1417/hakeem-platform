@@ -5,12 +5,13 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { computeDeadlines } from "@/lib/modules/judicial-assistant/rules/deadline";
 import { buildEvidenceMatrix } from "@/lib/modules/judicial-assistant/rules/evidence";
+import { buildTimeline } from "@/lib/modules/judicial-assistant/rules/timeline";
 
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
   caseId: z.string().min(1),
-  serviceId: z.enum(["JS-009", "JS-010"]),
+  serviceId: z.enum(["JS-004", "JS-009", "JS-010"]),
 });
 
 /**
@@ -32,7 +33,10 @@ export async function POST(request: NextRequest) {
   const kase = await getCase(body.caseId);
   if (!kase) return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
 
-  const result = body.serviceId === "JS-009" ? computeDeadlines(kase) : buildEvidenceMatrix(kase);
+  const result =
+    body.serviceId === "JS-009" ? computeDeadlines(kase)
+    : body.serviceId === "JS-004" ? buildTimeline(kase)
+    : buildEvidenceMatrix(kase);
 
   await auditEvent({
     actorId,

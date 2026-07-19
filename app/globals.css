@@ -1023,3 +1023,15 @@ body {
 .ja-table thead th { background: var(--navy); color: var(--cream); text-align: right; font-weight: 700; padding: 9px 12px; font-size: 12px; white-space: nowrap; }
 .ja-table tbody td { padding: 10px 12px; border-top: 1px solid var(--ink-08); vertical-align: top; color: var(--ink-80); }
 .ja-table tbody tr:nth-child(even) { background: var(--parchment); }
+
+/* المعاون القضائي — الخطّ الزمنيّ (JS-004) + ترويسة القضية */
+.ja-casehead__actions { display: flex; align-items: center; gap: 14px; }
+.ja-tl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.ja-tl__item { display: flex; gap: 14px; padding: 12px 0; position: relative; padding-inline-start: 14px; border-inline-start: 2px solid var(--ink-08); }
+.ja-tl__item::before { content: ""; position: absolute; inset-inline-start: -6px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); border: 2px solid var(--paper); }
+.ja-tl__item--hearing::before { background: var(--navy); }
+.ja-tl__date { font-family: var(--font-judicial); font-weight: 700; color: var(--gold-dark); font-size: 14px; white-space: nowrap; min-width: 96px; }
+.ja-tl__body { display: flex; flex-direction: column; gap: 2px; }
+.ja-tl__label { font-weight: 700; color: var(--navy); font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.ja-tl__flag { font-size: 10.5px; }
+.ja-tl__detail { color: var(--ink-70); font-size: 13px; }

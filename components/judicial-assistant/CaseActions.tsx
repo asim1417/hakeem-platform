@@ -73,6 +73,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
       {error ? <div className="ja-alert ja-alert--danger">{error}</div> : null}
 
       {panel?.kind === "summary" ? <SummaryView data={panel.data} /> : null}
+      {panel?.kind === "deterministic" && panel.data.serviceId === "JS-004" ? <TimelineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-009" ? <DeadlineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-010" ? <EvidenceView data={panel.data} /> : null}
     </div>
@@ -108,6 +109,40 @@ function SummaryView({ data }: { data: ExecutiveSummaryResult }) {
       ) : (
         <p className="ja-sources__empty">لا استشهاد نظاميّ مؤصَّل — لم يُبنَ تأصيلٌ من الذاكرة.</p>
       )}
+    </div>
+  );
+}
+
+function TimelineView({ data }: { data: import("@/lib/modules/judicial-assistant/types").TimelineResult }) {
+  return (
+    <div className="ja-summary">
+      <div className="ja-summary__banner">
+        <JaIcon name="procedure" size={16} />
+        <span>محرّكٌ حتميّ — خطٌّ زمنيّ مرتَّب من أحداث القضية.</span>
+      </div>
+      <div className="ja-summary__head">
+        <h3>الخطّ الزمنيّ <span className="ja-action__id">JS-004</span></h3>
+      </div>
+      <div className="ja-detbody">
+        <ol className="ja-tl">
+          {data.events.map((e, i) => (
+            <li key={i} className={`ja-tl__item ja-tl__item--${e.kind}`}>
+              <span className="ja-tl__date">{formatDate(e.date)}</span>
+              <div className="ja-tl__body">
+                <span className="ja-tl__label">{e.label}{e.flag ? <span className="ja-badge ja-badge--warning ja-tl__flag">{e.flag}</span> : null}</span>
+                <span className="ja-tl__detail">{e.detail}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+      {data.conflicts.length > 0 ? (
+        <div className="ja-sources">
+          <h4><JaIcon name="quality" size={15} /> تعارضاتٌ للمراجعة ({data.conflicts.length})</h4>
+          <ul>{data.conflicts.map((c, i) => <li key={i}><span className="ja-src__quote">{c}</span></li>)}</ul>
+        </div>
+      ) : null}
+      <p className="ja-det__disc">{data.disclaimer}</p>
     </div>
   );
 }

@@ -199,7 +199,24 @@ export interface EvidenceMatrixResult {
   disclaimer: string;
 }
 
-export type DeterministicActionResult = DeadlineResult | EvidenceMatrixResult;
+/** JS-004 — حدثٌ في الخطّ الزمنيّ الإجرائيّ. */
+export interface TimelineEvent {
+  date: string; // ISO
+  kind: "hearing" | "deadline";
+  label: string;
+  detail: string;
+  flag?: string; // ملاحظة اتساقٍ زمنيّ (تعارض/تأخّر) إن وُجدت
+}
+
+export interface TimelineResult {
+  serviceId: "JS-004";
+  deterministic: true;
+  events: TimelineEvent[];
+  conflicts: string[];
+  disclaimer: string;
+}
+
+export type DeterministicActionResult = DeadlineResult | EvidenceMatrixResult | TimelineResult;
 
 /** مخرَج JS-001 (الملخّص التنفيذيّ) — مؤصَّلٌ باستشهاداتٍ حقيقيّة أو حجبٌ صادق. */
 export interface ExecutiveSummaryResult {
