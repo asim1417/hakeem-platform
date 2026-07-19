@@ -218,6 +218,26 @@ export interface TimelineResult {
 
 export type DeterministicActionResult = DeadlineResult | EvidenceMatrixResult | TimelineResult;
 
+/** قسمٌ في مسودّة الحكم (§51). */
+export interface JudgmentSection {
+  key: string;
+  title: string;
+  body: string;
+  /** هل هذا القسم مُولَّد بالنموذج (يحتاج تدقيقًا) أم مبنيّ حتميًّا من بيانات القضية؟ */
+  generated: boolean;
+}
+
+/** JS-018 مشروع الحكم — هيكلٌ حتميّ + تسبيبٌ مؤصَّل + سوابق من النواة. مسودّةٌ تحتاج تثبيتًا. */
+export interface JudgmentDraftResult {
+  serviceId: "JS-018";
+  blocked: boolean;
+  sections: JudgmentSection[];
+  citations: Array<{ articleId: string; lawName: string; articleNumber: number; quote: string }>;
+  precedents: Array<{ id: string; title: string; court?: string; decisionNo?: string; snippet: string; reviewed: boolean }>;
+  requestId: string;
+  notice: string;
+}
+
 /** مخرَج JS-001 (الملخّص التنفيذيّ) — مؤصَّلٌ باستشهاداتٍ حقيقيّة أو حجبٌ صادق. */
 export interface ExecutiveSummaryResult {
   requestId: string;

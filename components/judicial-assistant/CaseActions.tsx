@@ -6,13 +6,14 @@
 import { useState } from "react";
 import { JaIcon } from "./icons";
 import type {
-  DeterministicActionResult, ExecutiveSummaryResult, SuggestedAction,
+  DeterministicActionResult, ExecutiveSummaryResult, JudgmentDraftResult, SuggestedAction,
 } from "@/lib/modules/judicial-assistant/types";
 import { FACT_STATUS_LABEL, formatDate } from "@/lib/modules/judicial-assistant/labels";
 
 type Panel =
   | { kind: "summary"; data: ExecutiveSummaryResult }
-  | { kind: "deterministic"; data: DeterministicActionResult };
+  | { kind: "deterministic"; data: DeterministicActionResult }
+  | { kind: "draft"; data: JudgmentDraftResult };
 
 export function CaseActions({ caseId, actions }: { caseId: string; actions: SuggestedAction[] }) {
   const [running, setRunning] = useState<string | null>(null);
@@ -31,6 +32,14 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
         setPanel({ kind: "summary", data });
+      } else if (serviceId === "JS-018") {
+        const res = await fetch("/api/judicial-assistant/draft", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ caseId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
+        setPanel({ kind: "draft", data });
       } else {
         const res = await fetch("/api/judicial-assistant/action", {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -73,9 +82,62 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
       {error ? <div className="ja-alert ja-alert--danger">{error}</div> : null}
 
       {panel?.kind === "summary" ? <SummaryView data={panel.data} /> : null}
+      {panel?.kind === "draft" ? <DraftView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-004" ? <TimelineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-009" ? <DeadlineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-010" ? <EvidenceView data={panel.data} /> : null}
+    </div>
+  );
+}
+
+function DraftView({ data }: { data: JudgmentDraftResult }) {
+  return (
+    <div className="ja-summary">
+      <div className={`ja-summary__banner ${data.blocked ? "ja-summary__banner--blocked" : ""}`}>
+        <JaIcon name="judgment" size={16} />
+        <span>{data.notice}</span>
+      </div>
+      <div className="ja-summary__head">
+        <h3>مشروع الحكم <span className="ja-action__id">JS-018</span></h3>
+        <span className="ja-summary__stamp">مسودّة — تحتاج تثبيتًا بشريًّا</span>
+      </div>
+
+      <div className="ja-draft">
+        {data.sections.map((s) => (
+          <section key={s.key} className="ja-draft__sec">
+            <h4>{s.title}{s.generated ? <span className="ja-badge ja-badge--warning ja-draft__gen">مُولَّد — دقّقه</span> : <span className="ja-badge ja-badge--info ja-draft__gen">من الملفّ</span>}</h4>
+            {s.body.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+          </section>
+        ))}
+      </div>
+
+      {data.citations.length > 0 ? (
+        <div className="ja-sources">
+          <h4><JaIcon name="sources" size={15} /> الأساس النظاميّ للتسبيب ({data.citations.length})</h4>
+          <ul>
+            {data.citations.map((c, i) => (
+              <li key={c.articleId + i}>
+                <span className="ja-src__law">{c.lawName} — المادة {c.articleNumber}</span>
+                <span className="ja-src__quote">{c.quote}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {data.precedents.length > 0 ? (
+        <div className="ja-sources">
+          <h4><JaIcon name="appeal" size={15} /> سوابق من النواة ({data.precedents.length})</h4>
+          <ul>
+            {data.precedents.map((p) => (
+              <li key={p.id}>
+                <a className="ja-src__law" href={`/dashboard/legal-core/judgments/${p.id}`}>{p.title}{p.court ? ` — ${p.court}` : ""}{p.reviewed ? "" : " (غير مُراجَع)"}</a>
+                <span className="ja-src__quote">{p.snippet}…</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

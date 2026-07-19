@@ -24,7 +24,7 @@ export const SERVICES: ServiceDef[] = [
   { id: "JS-015", title: "قرار إجرائيّ", review: "mandatory", iconKey: "procedure", available: false },
   { id: "JS-016", title: "صياغة الوقائع", review: "mandatory", iconKey: "drafting", available: false },
   { id: "JS-017", title: "بناء التسبيب", review: "mandatory", iconKey: "reasoning", available: false },
-  { id: "JS-018", title: "مشروع الحكم", review: "mandatory", iconKey: "judgment", available: false },
+  { id: "JS-018", title: "مشروع الحكم", review: "mandatory", iconKey: "judgment", available: true },
   { id: "JS-019", title: "فحص المنطوق", review: "mandatory", iconKey: "operative", available: false },
   { id: "JS-020", title: "فحص جودة الحكم", review: "mandatory", iconKey: "quality", available: false },
   { id: "JS-021", title: "تحليل الاعتراض", review: "mandatory", iconKey: "appeal", available: false },
@@ -90,9 +90,10 @@ const STAGE_ACTIONS: Record<CaseStage, Array<{ serviceId: string; reason: string
     { serviceId: "JS-014", reason: "مذكّرة مسألةٍ محدّدة محلّ الفصل" },
   ],
   drafting: [
+    { serviceId: "JS-018", reason: "تجميع مشروع الحكم: هيكلٌ حتميّ + تسبيبٌ مؤصَّل + سوابق من النواة" },
+    { serviceId: "JS-001", reason: "ملخّصٌ تنفيذيّ للسياق قبل الصياغة" },
     { serviceId: "JS-016", reason: "صياغة الوقائع من المصادر المثبتة" },
     { serviceId: "JS-017", reason: "بناء التسبيب: واقعة-قاعدة-تطبيق" },
-    { serviceId: "JS-018", reason: "تجميع مشروع الحكم" },
   ],
   quality_review: [
     { serviceId: "JS-020", reason: "فحص جودة الحكم قبل الاعتماد" },

@@ -14,6 +14,7 @@ import { JaIcon } from "@/components/judicial-assistant/icons";
 import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
 import { listAnalyses } from "@/lib/modules/judicial-assistant/persistence";
 import { SERVICE_BY_ID } from "@/lib/modules/judicial-assistant/catalog";
+import { findPrecedents } from "@/lib/modules/judicial-assistant/rulings";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
   if (!caseVisibleTo({ userId: user.id, role: user.role }, kase)) notFound();
 
   const actions = suggestedActionsFor(kase);
-  const history = await listAnalyses(kase.id);
+  const [history, precedents] = await Promise.all([listAnalyses(kase.id), findPrecedents(kase)]);
   const nextHearing = [...kase.hearings].sort((a, b) => a.date.localeCompare(b.date))[0];
 
   return (
@@ -63,6 +64,24 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         <p className="ja-panel__hint">تُقترح بحسب مرحلة القضية، وتُشغَّل باختيارك — لا تلقائيًّا.</p>
         <CaseActions caseId={kase.id} actions={actions} />
       </section>
+
+      {precedents.length > 0 ? (
+        <section className="card ja-panel" aria-labelledby="ja-precedents">
+          <h2 id="ja-precedents" className="ja-panel__title"><JaIcon name="appeal" size={18} /> سوابق من النواة</h2>
+          <p className="ja-panel__hint">أحكامٌ حقيقيّة من النواة مطابقةٌ لموضوع القضية — للاستئناس والتخريج، تُفتح للتحقّق.</p>
+          <ul className="ja-list">
+            {precedents.map((p) => (
+              <li key={p.id} className="ja-list__row">
+                <div>
+                  <Link href={`/dashboard/legal-core/judgments/${p.id}`} className="ja-list__title">{p.title}</Link>
+                  <div className="ja-list__sub">{p.court ?? "—"}{p.decisionNo ? ` · ${p.decisionNo}` : ""} — {p.snippet}…</div>
+                </div>
+                {!p.reviewed ? <span className="ja-badge ja-badge--warning">غير مُراجَع</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* خريطة القضية */}
       <div className="ja-cols">
