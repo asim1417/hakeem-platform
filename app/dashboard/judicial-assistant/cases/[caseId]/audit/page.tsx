@@ -23,6 +23,8 @@ const ACTION_LABEL: Record<string, string> = {
   JA_DETERMINISTIC_ACTION: "تشغيل عملٍ حتميّ",
   JA_DRAFT_GENERATED: "مشروع حكم (JS-018)",
   JA_DRAFT_BLOCKED: "مشروع حكم محجوب (لا سند)",
+  JA_STUDY_GENERATED: "دراسة قضائيّة (JS-013)",
+  JA_STUDY_BLOCKED: "دراسة محجوبة (لا سند)",
 };
 
 export default async function CaseAuditPage({ params }: { params: { caseId: string } }) {

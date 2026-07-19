@@ -267,6 +267,20 @@ export interface JudgmentDraftResult {
   notice: string;
 }
 
+/** JS-013 الدراسة القضائيّة المعمّقة — تحليلٌ مؤصَّلٌ للمسائل + بدائل + سوابق من النواة. */
+export type StudyDepth = "short" | "medium" | "extended";
+export interface JudicialStudyResult {
+  serviceId: "JS-013";
+  blocked: boolean;
+  depth: StudyDepth;
+  body: string; // الدراسة المؤصَّلة (أو رسالة الحجب الصادق)
+  citations: Array<{ articleId: string; lawName: string; articleNumber: number; quote: string }>;
+  precedents: Array<{ id: string; title: string; court?: string; decisionNo?: string; snippet: string; reviewed: boolean }>;
+  issues: string[]; // المسائل التي تناولتها الدراسة
+  requestId: string;
+  notice: string;
+}
+
 /** مخرَج JS-001 (الملخّص التنفيذيّ) — مؤصَّلٌ باستشهاداتٍ حقيقيّة أو حجبٌ صادق. */
 export interface ExecutiveSummaryResult {
   requestId: string;

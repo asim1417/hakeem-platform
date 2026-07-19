@@ -19,7 +19,7 @@ export const SERVICES: ServiceDef[] = [
   { id: "JS-010", title: "مصفوفة الإثبات", review: "mandatory", iconKey: "evidence", available: true },
   { id: "JS-011", title: "تحضير جلسة", review: "required", iconKey: "hearing", available: false },
   { id: "JS-012", title: "مقارنة الأقوال", review: "required", iconKey: "contradiction", available: false },
-  { id: "JS-013", title: "الدراسة القضائيّة", review: "mandatory", iconKey: "study", available: false },
+  { id: "JS-013", title: "الدراسة القضائيّة", review: "mandatory", iconKey: "study", available: true },
   { id: "JS-014", title: "مذكّرة مسألة", review: "mandatory", iconKey: "issue", available: false },
   { id: "JS-015", title: "قرار إجرائيّ", review: "mandatory", iconKey: "procedure", available: false },
   { id: "JS-016", title: "صياغة الوقائع", review: "mandatory", iconKey: "drafting", available: false },
