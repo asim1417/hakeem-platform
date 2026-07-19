@@ -968,6 +968,9 @@ body {
 
 /* لوحة الأعمال المقترحة */
 .ja-actions { display: flex; flex-direction: column; gap: 16px; }
+.ja-actions__empty { margin: 0; font-size: 13.5px; color: var(--ink-60); line-height: 1.8; display: flex; align-items: flex-start; gap: 8px;
+  padding: 13px 15px; background: var(--parchment); border: 1px dashed var(--ink-12, var(--ink-08)); border-radius: var(--r-md, 12px); }
+.ja-actions__empty svg { color: var(--gold-dark); flex: none; margin-top: 3px; }
 .ja-actions__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .ja-action { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--ink-08); border-radius: var(--r-md); background: var(--parchment); }
 .ja-action--soon { opacity: .72; }

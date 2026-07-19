@@ -115,19 +115,99 @@ const STAGE_ACTIONS: Record<CaseStage, Array<{ serviceId: string; reason: string
   closed: [],
 };
 
-/** يبني قائمة الأعمال المقترحة لقضيةٍ بحسب مرحلتها (§15). المتاح فعليًّا أوّلًا. */
+/** إشاراتٌ مشتقّة من **واقع القضية الحيّ** (لا من المرحلة المخزّنة). */
+interface CaseSignals {
+  hasAttachments: boolean;
+  attachmentCount: number;
+  hasMap: boolean;      // أطراف/طلبات/وقائع/مسائل مثبَّتة
+  hasParties: boolean;
+  hasRequests: boolean;
+  hasFacts: boolean;
+  hasIssues: boolean;
+  hasHearings: boolean;
+  hasDeadlines: boolean;
+}
+
+function deriveSignals(kase: JudicialCase): CaseSignals {
+  return {
+    hasAttachments: kase.attachments.length > 0,
+    attachmentCount: kase.attachments.length,
+    hasMap: kase.parties.length + kase.requests.length + kase.facts.length + kase.issues.length > 0,
+    hasParties: kase.parties.length > 0,
+    hasRequests: kase.requests.length > 0,
+    hasFacts: kase.facts.length > 0,
+    hasIssues: kase.issues.length > 0,
+    hasHearings: kase.hearings.length > 0,
+    hasDeadlines: kase.deadlines.length > 0,
+  };
+}
+
+/**
+ * شرطٌ واقعيٌّ لكلّ خدمة: ما الذي يجب أن **تحتويه القضية فعلًا** ليكون تشغيلها ذا معنى.
+ * يمنع اقتراح «مقارنة الأقوال» على قضيةٍ بلا مذكّرات، أو «حساب المدد» بلا حدثٍ مرجعيّ.
+ */
+const PREREQ: Record<string, (s: CaseSignals) => boolean> = {
+  "JS-001": (s) => s.hasAttachments,                    // ملخّص من نصّ المرفقات
+  "JS-002": (s) => s.hasAttachments,
+  "JS-003": (s) => s.hasAttachments,
+  "JS-004": (s) => s.hasHearings || s.hasDeadlines,     // خطٌّ زمنيّ يحتاج أحداثًا مؤرّخة
+  "JS-005": (s) => s.hasAttachments,                    // الخريطة تُستخرَج من المرفقات
+  "JS-006": (s) => s.hasMap,                            // اختصاص يحتاج أطرافًا وطلبات
+  "JS-007": (s) => s.hasMap,                            // قبول يحتاج صفةً ومصلحة
+  "JS-008": (s) => s.hasMap,
+  "JS-009": (s) => s.hasHearings || s.hasDeadlines,     // مدد تحتاج حدثًا مرجعيًّا
+  "JS-010": (s) => s.hasFacts,                          // مصفوفة إثبات تحتاج وقائع
+  "JS-011": (s) => s.hasAttachments,
+  "JS-012": (s) => s.attachmentCount >= 2,              // مقارنة أقوالٍ تحتاج مذكّرتين
+  "JS-013": (s) => s.hasMap,
+  "JS-014": (s) => s.hasIssues,
+  "JS-015": (s) => s.hasMap,
+  "JS-016": (s) => s.hasFacts,
+  "JS-017": (s) => s.hasMap,
+  "JS-018": (s) => s.hasMap,                            // مشروع حكم يحتاج وقائع ومسائل
+  "JS-019": (s) => s.hasMap,
+  "JS-020": (s) => s.hasMap,
+  "JS-021": (s) => s.hasAttachments,
+  "JS-022": (s) => s.hasAttachments,
+};
+
+function toAction(serviceId: string, reason: string): SuggestedAction {
+  const svc = SERVICE_BY_ID[serviceId];
+  return { serviceId, title: svc?.title ?? serviceId, reason, iconKey: svc?.iconKey ?? "summary", available: svc?.available ?? false };
+}
+
+/**
+ * يبني الأعمال المقترحة من **واقع القضية الحيّ** (§15): المرفقات والخريطة والوقائع والأحداث —
+ * لا من قاموس مرحلةٍ ثابت. فقضيةٌ بلا مرفقاتٍ لا تُقترَح لها أعمالٌ لا مادّةَ لها.
+ */
 export function suggestedActionsFor(kase: JudicialCase): SuggestedAction[] {
-  const rows = STAGE_ACTIONS[kase.stage] ?? [];
-  const actions = rows.map((r) => {
-    const svc = SERVICE_BY_ID[r.serviceId];
-    return {
-      serviceId: r.serviceId,
-      title: svc?.title ?? r.serviceId,
-      reason: r.reason,
-      iconKey: svc?.iconKey ?? "summary",
-      available: svc?.available ?? false,
-    };
-  });
+  const s = deriveSignals(kase);
+
+  // ① لا مرفقات → لا مادّةَ للعمل بعد. لا نقترح شيئًا نُشغِّله على فراغ؛ الخطوة الوحيدة إضافة مرفق.
+  if (!s.hasAttachments) return [];
+
+  // ② مرفقاتٌ بلا خريطة → الخطوة الواقعيّة الأولى استخلاص الخريطة، مع أعمالٍ تعمل على نصّ المرفقات مباشرةً.
+  if (!s.hasMap) {
+    return [
+      toAction("JS-005", "لديك مرفقاتٌ ولا خريطة بعد: استخلِص الأطراف والطلبات والوقائع أوّلًا"),
+      toAction("JS-001", "ملخّصٌ تنفيذيّ أوليّ من نصّ مرفقاتك"),
+      toAction("JS-003", "قراءةٌ تفصيليّة لمرفقاتك حسب المستند"),
+    ];
+  }
+
+  // ③ خريطةٌ مثبَّتة → أعمال المرحلة، لكن **مُصفّاةً بما تحتويه القضية فعلًا** (الشرط الواقعيّ).
+  const staged = (STAGE_ACTIONS[kase.stage] ?? []).filter((r) => (PREREQ[r.serviceId] ?? (() => true))(s));
+
+  // إن لم يبقَ من أعمال المرحلة ما تكتمل شروطه، اعرض الأعمال المؤصَّلة التي تتوفّر شروطها الآن.
+  const rows = staged.length
+    ? staged
+    : [
+        { serviceId: "JS-001", reason: "ملخّصٌ تنفيذيّ محدَّث لحالة القضية" },
+        { serviceId: "JS-013", reason: "دراسة مسائل القضية بعمق" },
+        s.hasFacts ? { serviceId: "JS-010", reason: "مصفوفة الإثبات على وقائع القضية" } : null,
+      ].filter((r): r is { serviceId: string; reason: string } => r !== null && (PREREQ[r.serviceId] ?? (() => true))(s));
+
+  const actions = rows.map((r) => toAction(r.serviceId, r.reason));
   // المتاح فعليًّا يتصدّر كي لا يواجه القاضي اقتراحاتٍ غير قابلة للتشغيل بعد.
   return actions.sort((a, b) => Number(b.available) - Number(a.available));
 }
