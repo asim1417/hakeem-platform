@@ -4,12 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-<<<<<<< HEAD
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
-=======
-import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
->>>>>>> origin/main
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +17,7 @@ const schema = z.object({
   userId: z.string().optional(),
   caseId: z.string().optional(),
   // موافقة صريحة على حفظ أسرار الموكّل كاملةً (القرار). بلا موافقة: يُخزَّن نصٌّ مُعمّى.
-  consentToStore: z.boolean().optional()
+  consentToStore: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -41,7 +37,7 @@ export async function POST(request: NextRequest) {
     payload.title ? `عنوان الاستشارة: ${payload.title}` : "",
     payload.matterType ? `نوع المسألة: ${payload.matterType}` : "",
     `الواقعة: ${payload.facts}`,
-    payload.question ? `طلب المستخدم: ${payload.question}` : ""
+    payload.question ? `طلب المستخدم: ${payload.question}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -66,12 +62,12 @@ export async function POST(request: NextRequest) {
         consentToStore: consented,
         title: payload.title,
         matterType: payload.matterType,
-        question: payload.question
+        question: payload.question,
       },
       citations: {
-        create: draft.citations
-      }
-    }
+        create: draft.citations,
+      },
+    },
   });
   consultationId = consultation.id;
 
@@ -88,8 +84,8 @@ export async function POST(request: NextRequest) {
       blocked: draft.blocked,
       citations: draft.citations.length,
       provider: draft.provider,
-      mode: draft.mode
-    }
+      mode: draft.mode,
+    },
   });
 
   const warning = "هذه المخرجات مساعدة أولية ولا تعد رأيًا قانونيًا نهائيًا أو بديلًا عن مراجعة محامٍ مختص.";
@@ -104,6 +100,6 @@ export async function POST(request: NextRequest) {
     consultationId,
     blocked: draft.blocked,
     requestId: draft.requestId,
-    qualityReport: draft.qualityReport
+    qualityReport: draft.qualityReport,
   });
 }
