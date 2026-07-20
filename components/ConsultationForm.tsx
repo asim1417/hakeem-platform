@@ -81,6 +81,17 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
       if (!response.ok) {
         throw new Error(payload?.message ?? "تعذر تحليل الواقعة.");
       }
+      if (payload?.blocked || payload?.reason === "exhausted") {
+        setResult({
+          summary: "",
+          analysis: "",
+          result: "",
+          citations: [],
+          warning: "انتهى رصيدك المجاني للوحدات المتقدّمة.",
+          blocked: true,
+        });
+        return;
+      }
 
       setResult(payload as ConsultationResult);
     } catch (err) {
@@ -172,7 +183,22 @@ export function ConsultationForm({ defaultFacts = "" }: { defaultFacts?: string 
 
       {error ? <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</div> : null}
 
-      {result ? (
+      {result?.blocked ? (
+        <section className="rounded-[var(--r-xl)] border border-[rgba(140,34,51,0.3)] bg-[var(--ruby-soft)] p-6">
+          <h2 className="t-head text-xl font-bold text-[var(--ruby)]">انتهى الرصيد المجاني</h2>
+          <p className="mt-2 text-sm leading-7 text-[var(--ruby)]">
+            الوحدات المتقدّمة تتطلب ترقية الخطة أو انتظار تفعيل الاشتراك. تصفّح النواة القانونية يبقى متاحًا.
+          </p>
+          <a
+            href="/dashboard/subscribe"
+            className="focus-ring mt-4 inline-flex rounded-[var(--r-md)] bg-[var(--navy)] px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            عرض خطط الاشتراك
+          </a>
+        </section>
+      ) : null}
+
+      {result && !result.blocked ? (
         <section className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-6 shadow-[var(--sh-xs)]">
           <p className="rounded-[var(--r-md)] border border-[var(--amber-soft)] bg-[var(--amber-soft)] p-4 text-sm leading-7 text-[var(--amber)]">
             {result.warning}
