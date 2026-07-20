@@ -1,5 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, type NextFetchEvent } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { plainAuthGate } from "@/lib/modules/auth/middleware-gate";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -8,47 +11,41 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
-function clerkReady() {
-  return Boolean(
-    (process.env.CLERK_SECRET_KEY || "").trim() &&
-      (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim()
-  );
-}
-
 function hasOwnerSession(request: NextRequest) {
   return Boolean(request.cookies.get("hakeem_session")?.value);
 }
 
-function ownerOrSetupGate(request: NextRequest) {
-  if (!isProtectedRoute(request)) return NextResponse.next();
-  // جلسة طوارئ المالك تسمح بالمرور بلا Clerk
-  if (hasOwnerSession(request)) return NextResponse.next();
-  const url = new URL("/sign-in", request.url);
-  url.searchParams.set("setup", "1");
-  url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-  return NextResponse.redirect(url);
+type ClerkMw = (req: NextRequest, event: NextFetchEvent) => Response | Promise<Response>;
+
+let clerkHandler: ClerkMw | null = null;
+
+function getClerkHandler(): ClerkMw {
+  if (clerkHandler) return clerkHandler;
+  clerkHandler = clerkMiddleware(async (auth, request) => {
+    if (isProtectedRoute(request) && hasOwnerSession(request)) {
+      return NextResponse.next();
+    }
+
+    if (isProtectedRoute(request)) {
+      await auth.protect({
+        unauthenticatedUrl: new URL(
+          `/sign-in?next=${encodeURIComponent(request.nextUrl.pathname)}`,
+          request.url
+        ).toString(),
+      });
+    }
+  }) as ClerkMw;
+  return clerkHandler;
 }
 
 /**
- * Clerk إن وُجدت المفاتيح؛ وإلا جلسة المالك الطارئة (hakeem_session).
+ * بدون مفاتيح Clerk لا نستدعي clerkMiddleware أصلًا —
+ * استدعاؤه بلا مفاتيح يُسقِط الإنتاج بـ MIDDLEWARE_INVOCATION_FAILED.
  */
-export default clerkMiddleware(async (auth, request) => {
-  if (!clerkReady()) return ownerOrSetupGate(request);
-
-  // مع Clerk: اسمح أيضًا بجلسة المالك الطارئة
-  if (isProtectedRoute(request) && hasOwnerSession(request)) {
-    return NextResponse.next();
-  }
-
-  if (isProtectedRoute(request)) {
-    await auth.protect({
-      unauthenticatedUrl: new URL(
-        `/sign-in?next=${encodeURIComponent(request.nextUrl.pathname)}`,
-        request.url
-      ).toString(),
-    });
-  }
-});
+export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  if (!isClerkConfigured()) return plainAuthGate(request);
+  return getClerkHandler()(request, event);
+}
 
 export const config = {
   matcher: [
