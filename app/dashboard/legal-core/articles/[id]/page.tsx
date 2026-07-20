@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, FileText, Link2, Pencil, Scale, ChevronRight, ChevronLeft, ShieldAlert, ScrollText } from "lucide-react";
-import { requirePagePermission } from "@/lib/modules/auth/session";
+import { getCurrentUser, requirePagePermission } from "@/lib/modules/auth/session";
+import { awardReadArticle } from "@/lib/modules/credits/engagement";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { HighlightedSearchText, countSearchMatches, joinSearchTerms } from "@/components/SearchHighlight";
@@ -87,6 +88,10 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
     .catch(() => null);
 
   if (!article) notFound();
+
+  // حافز قراءة مادة — مرة واحدة لكل مادة (سقوط آمن).
+  const reader = await getCurrentUser().catch(() => null);
+  if (reader) void awardReadArticle(reader.id, article.id).catch(() => undefined);
 
   // التنقّل بين مواد النظام نفسه (السابقة/اللاحقة).
   const [related, prevArticle, nextArticle] = await Promise.all([

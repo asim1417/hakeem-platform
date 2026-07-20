@@ -1,32 +1,90 @@
 "use client";
 
+import { SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
-function useLogout() {
+const btnClass =
+  "focus-ring mt-3 w-full rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30";
+
+async function clearOwnerSession() {
+  await fetch("/api/auth/owner-logout", { method: "POST" }).catch(() => undefined);
+}
+
+/** تسجيل الخروج: Clerk و/أو جلسة المالك الطارئة. */
+export function LogoutButton({ clerkEnabled = true }: { clerkEnabled?: boolean }) {
   const router = useRouter();
-  return async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
-    router.push("/login");
+
+  async function logoutOwner() {
+    await clearOwnerSession();
+    router.push("/sign-in");
     router.refresh();
-  };
-}
+  }
 
-export function LogoutButton() {
-  const logout = useLogout();
+  if (!clerkEnabled) {
+    return (
+      <button type="button" onClick={() => void logoutOwner()} className={btnClass}>
+        تسجيل الخروج
+      </button>
+    );
+  }
   return (
-    <button type="button" onClick={() => void logout()} className="focus-ring mt-3 w-full rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30">
-      تسجيل الخروج
-    </button>
+    <SignOutButton redirectUrl="/">
+      <button
+        type="button"
+        className={btnClass}
+        onClick={() => {
+          void clearOwnerSession();
+        }}
+      >
+        تسجيل الخروج
+      </button>
+    </SignOutButton>
   );
 }
 
-/** زرّ أيقوني لتسجيل الخروج في الشريط العلوي — متاح بقارئ الشاشة. */
-export function LogoutIconButton({ label }: { label: string }) {
-  const logout = useLogout();
+export function LogoutIconButton({
+  label,
+  clerkEnabled = true,
+}: {
+  label: string;
+  clerkEnabled?: boolean;
+}) {
+  const router = useRouter();
+
+  async function logoutOwner() {
+    await clearOwnerSession();
+    router.push("/sign-in");
+    router.refresh();
+  }
+
+  if (!clerkEnabled) {
+    return (
+      <button
+        type="button"
+        onClick={() => void logoutOwner()}
+        className="icon-pill focus-ring"
+        aria-label={label}
+        title={label}
+      >
+        <LogOut size={16} aria-hidden />
+      </button>
+    );
+  }
   return (
-    <button type="button" onClick={() => void logout()} className="icon-pill focus-ring" aria-label={label} title={label}>
-      <LogOut size={16} aria-hidden />
-    </button>
+    <SignOutButton redirectUrl="/">
+      <button
+        type="button"
+        className="icon-pill focus-ring"
+        aria-label={label}
+        title={label}
+        onClick={() => {
+          void clearOwnerSession();
+        }}
+      >
+        <LogOut size={16} aria-hidden />
+      </button>
+    </SignOutButton>
   );
 }
+

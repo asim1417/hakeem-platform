@@ -4,8 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+<<<<<<< HEAD
+import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
+=======
 import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
+>>>>>>> origin/main
 
 export const dynamic = "force-dynamic";
 
@@ -24,11 +28,11 @@ export async function POST(request: NextRequest) {
   const gate = await requireApiPermission("CONSULTATIONS_LIMITED", request);
   if (gate.response) return gate.response;
   const actorId = gate.user!.id;
-  // حصّة الاستخدام: جدار اشتراك عند النفاد (النواة تبقى مجانية). سقوطٌ مفتوح قبل الهجرة.
-  const quota = await canConsume(actorId).catch(() => ({ allowed: true, remaining: -1, isSubscribed: false } as const));
-  if (!quota.allowed) {
+  // حصّة أولًا، ثم نقاط advanced_use عند النفاد.
+  const access = await gateAdvancedUse(actorId);
+  if (!access.allowed) {
     return NextResponse.json(
-      { blocked: true, reason: "exhausted", message: "انتهى رصيدك المجانيّ. للمتابعة، اشترك في حكيم." },
+      { blocked: true, reason: "exhausted", message: access.message },
       { status: 200 }
     );
   }
@@ -71,8 +75,8 @@ export async function POST(request: NextRequest) {
   });
   consultationId = consultation.id;
 
-  // الخصم بعد النجاح فقط (استشارة مُولَّدة فعلًا، لا محجوبة).
-  if (!draft.blocked) void consumeOne(actorId).catch(() => undefined);
+  // الخصم بعد النجاح فقط (استشارة مُولَّدة فعلًا، لا محجوبة). النقاط خُصمت مسبقًا إن via=credits.
+  if (!draft.blocked) void settleAdvancedUse(actorId, access.via).catch(() => undefined);
 
   await auditEvent({
     actorId,

@@ -17,7 +17,7 @@ import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 import { getAgentMode } from "@/lib/modules/agents/modes";
 import { synthesizeWithMode } from "@/lib/modules/agents/mode-synthesis";
-import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
+import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -69,17 +69,17 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
-      // حصّة الاستخدام المجانيّة: خصمٌ مرّة واحدة بعد نجاح العملية فقط (سقوط مفتوح قبل الهجرة).
+      // حصّة أولًا ثم نقاط: خصم الحصّة مرّة بعد النجاح؛ النقاط تُخصم عند البوابة إن لزم.
+      let accessVia: "quota" | "credits" | "open" = "quota";
       let consumed = false;
       const consume = () => {
         if (consumed) return;
         consumed = true;
-        void consumeOne(user.id).catch(() => undefined);
+        void settleAdvancedUse(user.id, accessVia).catch(() => undefined);
       };
       try {
-        // الحارس قبل التنفيذ: إن نفدت الحصّة → جدار اشتراك مبثوث (لا استثناء صامت). النواة تبقى مجانية.
-        const gate = await canConsume(user.id).catch(() => ({ allowed: true, remaining: -1, isSubscribed: false } as const));
-        if (!gate.allowed) {
+        const access = await gateAdvancedUse(user.id);
+        if (!access.allowed) {
           send({
             type: "result",
             answer: null,
@@ -88,11 +88,12 @@ export async function POST(request: NextRequest) {
             reason: "exhausted",
             basis: [],
             total: 0,
-            message: "انتهى رصيدك المجانيّ. للمتابعة في «اسأل حكيم» والقاضي والاستشارات، اشترك في حكيم. وتصفّح النواة القانونية يبقى مجانيًّا."
+            message: access.message
           });
           send({ type: "done" });
           return;
         }
+        accessVia = access.via;
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
         // المستوى: وضع «اسأل» — مبدّل «بحث تفصيلي» يفرض العميق وإلا يُقترَح تلقائيًّا. أوضاع الإخراج
         // الأخرى (حلّل قضية…) تشغّل الوكيل مرّة واحدة (quick) وتتخطّى الاتّساع، ثم تُصاغ بتعليمة الوضع.

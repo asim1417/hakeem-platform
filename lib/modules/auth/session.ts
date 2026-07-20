@@ -9,40 +9,14 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import type { Permission } from "@/lib/modules/auth/rbac";
 import { canUser } from "@/lib/modules/auth/rbac";
+import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { ensureLocalUserFromClerk } from "@/lib/modules/auth/clerk-sync";
 
 const cookieName = "hakeem_session";
 const maxAgeSeconds = 60 * 60 * 8;
-
 const guestEmail = "guest@hakeem.local";
 
-// ⚠️ الدخول معطّل افتراضيًا (وصول المالك المباشر بلا تسجيل دخول، بدور مدير النظام).
-// لفرض المصادقة قبل الإطلاق العلني: اضبط REQUIRE_AUTH=true في Vercel. طالما لم تُضبَط،
-// يبقى الموقع مفتوحًا لأي زائر كمدير — مناسب للتطوير الحالي، خطير للإنتاج العلني.
-function authRequired(): boolean {
-  const f = (process.env.REQUIRE_AUTH ?? "").toLowerCase();
-  return f === "true" || f === "1" || f === "on";
-}
-
-// «بدون تسجيل دخول» = افتراضي. يُغلق فقط عند فرض المصادقة صراحةً بـ REQUIRE_AUTH=true.
-export function isAuthDisabled() {
-  return !authRequired();
-}
-
-// مستخدم الوصول المباشر: مدير النظام (المالك). عند فرض المصادقة (REQUIRE_AUTH) لا يُستخدم أصلًا.
-async function getGuestUser(): Promise<SafeUser> {
-  return prisma.user.upsert({
-    where: { email: guestEmail },
-    update: { isActive: true, role: "SYSTEM_ADMIN" },
-    create: {
-      name: "زائر النظام",
-      email: guestEmail,
-      passwordHash: "not-for-login",
-      role: "SYSTEM_ADMIN",
-      isActive: true
-    },
-    select: { id: true, name: true, email: true, role: true, isActive: true }
-  });
-}
+export type SafeUser = Pick<User, "id" | "name" | "email" | "role" | "isActive">;
 
 type SessionPayload = {
   userId: string;
@@ -53,16 +27,21 @@ type SessionPayload = {
   nonce: string;
 };
 
-export type SafeUser = Pick<User, "id" | "name" | "email" | "role" | "isActive">;
+function authRequired(): boolean {
+  if (isClerkConfigured()) return true;
+  const f = (process.env.REQUIRE_AUTH ?? "").toLowerCase();
+  return f === "true" || f === "1" || f === "on";
+}
 
-// [إصلاح تدقيق SEC-006: كان يعود لسرّ ثابت مكتوب → تزوير أي جلسة عند غياب المتغيّر.]
-// في الإنتاج: سرّ إلزامي (يفشل الإقلاع/التوقيع بدونه). خارج الإنتاج: سرّ تطوير غير آمن.
+export function isAuthDisabled() {
+  return !authRequired();
+}
+
 function authSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
-  // عند عدم فرض المصادقة (الوصول المباشر) لا تُوقَّع جلسات حقيقية، فلا نُسقط الموقع بغياب السرّ.
   if (process.env.NODE_ENV === "production" && authRequired()) {
-    throw new Error("AUTH_SECRET غير مضبوط — إلزامي في الإنتاج لتوقيع جلسات المستخدمين.");
+    throw new Error("AUTH_SECRET غير مضبوط.");
   }
   return "hakeem-dev-only-insecure-secret";
 }
@@ -97,45 +76,72 @@ function decodeSession(value?: string): SessionPayload | null {
   }
 }
 
-export async function createLoginSession(user: SafeUser) {
-  const payload: SessionPayload = {
-    userId: user.id,
-    role: user.role,
-    name: user.name,
-    email: user.email,
-    exp: Date.now() + maxAgeSeconds * 1000,
-    nonce: randomBytes(12).toString("hex")
-  };
-  cookies().set(cookieName, encodeSession(payload), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: maxAgeSeconds,
-    path: "/"
+async function getGuestUser(): Promise<SafeUser> {
+  return prisma.user.upsert({
+    where: { email: guestEmail },
+    update: { isActive: true, role: "SYSTEM_ADMIN" },
+    create: {
+      name: "زائر النظام",
+      email: guestEmail,
+      passwordHash: "not-for-login",
+      role: "SYSTEM_ADMIN",
+      isActive: true,
+    },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
 }
 
-export function clearLoginSession() {
-  cookies().set(cookieName, "", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 0, path: "/" });
-}
-
-export async function getCurrentUser(): Promise<SafeUser | null> {
-  const payload = decodeSession(cookies().get(cookieName)?.value);
-  if (!payload) {
-    if (isAuthDisabled()) return getGuestUser();
-    return null;
-  }
+async function userFromOwnerCookie(cookieValue?: string): Promise<SafeUser | null> {
+  const payload = decodeSession(cookieValue);
+  if (!payload) return null;
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, name: true, email: true, role: true, isActive: true }
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
   if (!user?.isActive) return null;
   return user;
 }
 
+async function resolveClerkUser(): Promise<SafeUser | null> {
+  const { auth, currentUser } = await import("@clerk/nextjs/server");
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const cu = await currentUser();
+  const email =
+    cu?.primaryEmailAddress?.emailAddress ||
+    cu?.emailAddresses?.[0]?.emailAddress ||
+    "";
+  if (!email) return null;
+
+  return ensureLocalUserFromClerk({
+    clerkId: userId,
+    email,
+    name: [cu?.firstName, cu?.lastName].filter(Boolean).join(" ") || cu?.username,
+  });
+}
+
+/** Clerk أولًا إن وُجد، ثم جلسة المالك الطارئة (hakeem_session). */
+export async function getCurrentUser(): Promise<SafeUser | null> {
+  if (isClerkConfigured()) {
+    try {
+      const user = await resolveClerkUser();
+      if (user?.isActive) return user;
+    } catch {
+      /* */
+    }
+  }
+
+  const fromCookie = await userFromOwnerCookie(cookies().get(cookieName)?.value).catch(() => null);
+  if (fromCookie) return fromCookie;
+
+  if (isAuthDisabled()) return getGuestUser();
+  return null;
+}
+
 export async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/sign-in");
   return user;
 }
 
@@ -147,22 +153,28 @@ export async function requirePagePermission(permission: Permission) {
 }
 
 export async function getApiUser(request?: NextRequest) {
-  const cookieValue = request?.cookies.get(cookieName)?.value ?? cookies().get(cookieName)?.value;
-  const payload = decodeSession(cookieValue);
-  if (!payload) {
-    if (isAuthDisabled()) return getGuestUser();
-    return null;
+  if (isClerkConfigured()) {
+    try {
+      const user = await resolveClerkUser();
+      if (user?.isActive) return user;
+    } catch {
+      /* */
+    }
   }
-  return prisma.user.findUnique({
-    where: { id: payload.userId },
-    select: { id: true, name: true, email: true, role: true, isActive: true }
-  });
+  const cookieValue = request?.cookies.get(cookieName)?.value ?? cookies().get(cookieName)?.value;
+  const fromCookie = await userFromOwnerCookie(cookieValue).catch(() => null);
+  if (fromCookie) return fromCookie;
+  if (isAuthDisabled()) return getGuestUser();
+  return null;
 }
 
 export async function requireApiPermission(permission: Permission, request?: NextRequest) {
   const user = await getApiUser(request);
   if (!user?.isActive) {
-    return { user: null, response: NextResponse.json({ message: "يلزم تسجيل الدخول للوصول إلى هذه العملية." }, { status: 401 }) };
+    return {
+      user: null,
+      response: NextResponse.json({ message: "يلزم تسجيل الدخول للوصول إلى هذه العملية." }, { status: 401 }),
+    };
   }
   const allowed = await canUser(user.id, permission);
   if (!allowed) {
@@ -170,9 +182,45 @@ export async function requireApiPermission(permission: Permission, request?: Nex
       actorId: user.id,
       subject: "AUTH",
       action: "ACCESS_DENIED",
-      metadata: { permission, path: request?.nextUrl.pathname }
+      metadata: { permission, path: request?.nextUrl.pathname },
     }).catch(() => undefined);
-    return { user, response: NextResponse.json({ message: "لا تملك الصلاحية المطلوبة لهذه العملية." }, { status: 403 }) };
+    return {
+      user,
+      response: NextResponse.json({ message: "لا تملك الصلاحية المطلوبة لهذه العملية." }, { status: 403 }),
+    };
   }
   return { user, response: null };
 }
+
+/** جلسة طوارئ للمالك (قبل ضبط Clerk أو كبديل). */
+export async function createLoginSession(user: SafeUser) {
+  const payload: SessionPayload = {
+    userId: user.id,
+    role: user.role,
+    name: user.name,
+    email: user.email,
+    exp: Date.now() + maxAgeSeconds * 1000,
+    nonce: randomBytes(12).toString("hex"),
+  };
+  cookies().set(cookieName, encodeSession(payload), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: maxAgeSeconds,
+    path: "/",
+  });
+}
+
+export function clearLoginSession() {
+  cookies().set(cookieName, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: "/",
+  });
+}
+
+export const OWNER_SESSION_COOKIE = cookieName;
+
+export type { UserRole };

@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import { auditEvent } from "@/lib/modules/audit/audit";
-import { clearLoginSession, getCurrentUser } from "@/lib/modules/auth/session";
 
-export const dynamic = "force-dynamic";
-
+/** أُلغي — استخدم SignOut من Clerk في الواجهة */
 export async function POST() {
-  const user = await getCurrentUser();
-  clearLoginSession();
-  if (user) {
-    await auditEvent({ actorId: user.id, subject: "AUTH", action: "LOGOUT", metadata: { email: user.email } }).catch(() => undefined);
-  }
-  return NextResponse.json({ message: "تم تسجيل الخروج." });
+  return NextResponse.json(
+    { message: "أُلغي تسجيل الخروج القديم. استخدم Clerk SignOut.", redirect: "/" },
+    { status: 410 }
+  );
 }

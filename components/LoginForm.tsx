@@ -26,6 +26,8 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activating, setActivating] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+  const [magicUrl, setMagicUrl] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [providers, setProviders] = useState<Providers>({
@@ -33,6 +35,7 @@ export function LoginForm({
     microsoft: Boolean(microsoftEnabled),
     password: true,
   });
+  const isOwnerEmail = email.trim().toLowerCase() === OWNER_EMAIL;
 
   useEffect(() => {
     let active = true;
@@ -88,6 +91,28 @@ export function LoginForm({
       setError(err instanceof Error ? err.message : "تعذّر التفعيل.");
     } finally {
       setActivating(false);
+    }
+  }
+
+  /** دخول المالك بقراءة البريد: يُرسل رابطًا أو يعرضه إن لم يُضبط Resend. */
+  async function requestMagicLink() {
+    setMagicLoading(true);
+    setError("");
+    setMagicUrl("");
+    try {
+      const res = await fetch("/api/auth/magic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email || OWNER_EMAIL, next: dest }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || "تعذّر إرسال رابط الدخول.");
+      setInfo(data.message || "تم تجهيز رابط الدخول.");
+      if (data.magicUrl) setMagicUrl(data.magicUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذّر إرسال رابط الدخول.");
+    } finally {
+      setMagicLoading(false);
     }
   }
 
@@ -207,6 +232,30 @@ export function LoginForm({
           {loading ? "جارٍ التحقق..." : "دخول إلى منصة حكيم"}
         </GoldButton>
       </form>
+
+      {isOwnerEmail ? (
+        <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--navy)]">
+          <p className="font-semibold">دخول المالك بالبريد</p>
+          <p className="mt-1 text-[var(--ink-70)]">
+            يُرسل رابط دخول إلى <span dir="ltr">{OWNER_EMAIL}</span> — أو يُعرض هنا إن لم يُضبط Resend بعد.
+          </p>
+          <NavyButton
+            type="button"
+            onClick={() => void requestMagicLink()}
+            disabled={magicLoading}
+            className="mt-3 w-full px-4 py-2 text-sm"
+          >
+            {magicLoading ? "جارٍ التجهيز..." : "أرسل رابط الدخول إلى بريدي"}
+          </NavyButton>
+          {magicUrl ? (
+            <p className="mt-3 break-all text-xs">
+              <a href={magicUrl} className="font-semibold underline underline-offset-4" dir="ltr">
+                افتح رابط الدخول الآن
+              </a>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {info ? <LegalAlert tone="info">{info}</LegalAlert> : null}
       {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}

@@ -6,6 +6,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const OAUTH_NEXT_COOKIE = "hakeem_oauth_next";
+/** رمز إحالة يُمرَّر عبر تدفّق OAuth من /register?ref= */
+export const OAUTH_REF_COOKIE = "hakeem_oauth_ref";
 
 /**
  * بريد مالك المنصة — يُمنح SYSTEM_ADMIN دائمًا عند الدخول عبر Google / Microsoft / التسجيل.
