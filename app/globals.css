@@ -1175,6 +1175,23 @@ body {
   border: 1px solid var(--ink-08); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: all .15s; }
 .ja-ask__chip:hover { color: var(--gold-dark); border-color: var(--gold); background: var(--gold-ghost); }
 
+/* البثّ الحيّ — شريط التفكير/البحث + النصّ المتدفّق */
+.ja-live { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border: 1px solid var(--ink-08);
+  border-radius: var(--r-md, 12px); background: var(--parchment); }
+.ja-live__stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.ja-live__stage { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--ink-60); }
+.ja-live__stage--done { color: var(--ink-80); }
+.ja-live__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ink-20, var(--ink-12)); }
+.ja-live__stage--done .ja-live__dot { background: var(--gold-dark); }
+.ja-live__stage--active .ja-live__dot { background: var(--gold); animation: jaPulse 1s ease-in-out infinite; }
+.ja-live__stage--active { color: var(--gold-dark); font-weight: 600; }
+@keyframes jaPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(1.5); } }
+.ja-live__stream { font-size: 14.5px; line-height: 1.9; color: var(--ink-90, var(--navy)); }
+.ja-live__stream p { margin: 0 0 8px; }
+.ja-live__caret { display: inline-block; width: 8px; height: 16px; background: var(--gold); vertical-align: text-bottom;
+  animation: jaBlink 1s step-start infinite; border-radius: 1px; }
+@keyframes jaBlink { 50% { opacity: 0; } }
+
 /* بطاقة القضية */
 .ja-infocard__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .ja-infocard__block h3 { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--navy); display: inline-flex; align-items: center; gap: 7px; }

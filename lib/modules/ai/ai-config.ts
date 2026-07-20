@@ -285,3 +285,82 @@ export async function completeWithConfig(
 
   return "";
 }
+
+/**
+ * بثٌّ حيّ (SSE) لمخرَج النموذج من الإعداد الفعّال — يعيد أجزاء النصّ فور وصولها لتجربةٍ حيّة.
+ * يدعم Anthropic وOpenAI/custom وGemini عبر واجهات البثّ الرسميّة. يرمي عند فشل الشبكة.
+ * offline ⇒ لا شيء. يستعمله موجّه المعاون لبثٍّ فوريّ كصناديق المحادثة الحيّة.
+ */
+export async function* streamWithConfig(
+  cfg: EffectiveAiConfig,
+  system: string,
+  user: string,
+  maxTokens: number
+): AsyncGenerator<string> {
+  if (cfg.provider === "offline" || !cfg.apiKey) return;
+  const model = cfg.model || defaultModelFor(cfg.provider);
+  const mt = Math.min(Math.max(maxTokens, 1), 8192);
+  const sys = (system ?? "").trim();
+  const usr = String(user ?? "");
+
+  let resp: Response;
+  let kind: "anthropic" | "openai" | "gemini";
+  if (cfg.provider === "anthropic") {
+    resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model, max_tokens: mt, stream: true, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
+    });
+    kind = "anthropic";
+  } else if (cfg.provider === "openai" || cfg.provider === "custom") {
+    const url = cfg.provider === "custom" && cfg.baseUrl ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions` : "https://api.openai.com/v1/chat/completions";
+    const messages = [...(sys ? [{ role: "system", content: sys }] : []), { role: "user", content: usr }];
+    resp = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, max_tokens: mt, messages, temperature: 0.2, stream: true })
+    });
+    kind = "openai";
+  } else {
+    resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": cfg.apiKey },
+      body: JSON.stringify({
+        ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}),
+        contents: [{ role: "user", parts: [{ text: usr }] }],
+        generationConfig: { maxOutputTokens: mt, temperature: 0.2 }
+      })
+    });
+    kind = "gemini";
+  }
+
+  if (!resp.ok || !resp.body) throw new Error(`provider ${resp.status}`);
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t.startsWith("data:")) continue;
+      const payload = t.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      let j: Record<string, unknown>;
+      try { j = JSON.parse(payload); } catch { continue; }
+      if (kind === "anthropic") {
+        const d = j as { type?: string; delta?: { type?: string; text?: string } };
+        if (d.type === "content_block_delta" && d.delta?.type === "text_delta" && d.delta.text) yield d.delta.text;
+      } else if (kind === "openai") {
+        const c = (j as { choices?: Array<{ delta?: { content?: string } }> }).choices?.[0]?.delta?.content;
+        if (c) yield c;
+      } else {
+        const parts = (j as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }).candidates?.[0]?.content?.parts;
+        if (parts) for (const p of parts) if (p.text) yield p.text;
+      }
+    }
+  }
+}
