@@ -31,13 +31,22 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let body: { query?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; history?: Array<{ role?: string; content?: string }> } = {};
+  let body: { query?: string; document?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; history?: Array<{ role?: string; content?: string }> } = {};
   try {
     body = await request.json();
   } catch {
     /* تجاهل */
   }
-  const query = String(body?.query ?? "").trim().slice(0, 500);
+  // السؤال المكتوب منفصلٌ عن نصّ المستند المرفق — كي يُصنَّف المنطق على السؤال لا على المستند.
+  const typed = String(body?.query ?? "").trim().slice(0, 8000);
+  const attachedDoc = String(body?.document ?? "").trim().slice(0, 12000);
+  const hasDoc = attachedDoc.length > 0;
+  // مادّة التحليل: السؤال + المستند (إن وُجد). المستند لا يُصنَّف بوابة الاتّساع عليه.
+  const query = hasDoc
+    ? typed
+      ? `${typed}\n\n[نصّ المستند المرفق]\n${attachedDoc}`
+      : `حلّل المستند المرفق التالي وبيّن مركزه النظاميّ والمسائل التي يثيرها:\n\n${attachedDoc}`
+    : typed;
   const detailed = Boolean(body?.detailed);
   const skipBreadth = Boolean(body?.skipBreadth);
   // الوضع: «اسأل» (افتراضيّ) بلا تغيير، أو وضعٌ بتعليمة إخراج خاصّة (حلّل قضية…).
@@ -88,9 +97,15 @@ export async function POST(request: NextRequest) {
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
         // المستوى: وضع «اسأل» — مبدّل «بحث تفصيلي» يفرض العميق وإلا يُقترَح تلقائيًّا. أوضاع الإخراج
         // الأخرى (حلّل قضية…) تشغّل الوكيل مرّة واحدة (quick) وتتخطّى الاتّساع، ثم تُصاغ بتعليمة الوضع.
-        const mode = agentMode.id === "ask" ? (detailed ? "deep" : suggestMode(query)) : "quick";
-        const modeSkipBreadth = agentMode.id === "ask" ? skipBreadth : true;
-        const result = await orchestrate(query, { mode, skipBreadth: modeSkipBreadth, onStep: (s) => send({ type: "step", ...s }) });
+        // أوضاع التحليل (حلّل قضية · خطة عمل · تقدير حكم) تستحقّ استرجاعًا عميقًا (٧ جولات +
+        // مسحة + تعميق بالمظانّ + سوابق + تحقّق)، لكن مع تخطّي التحليل العامّ (skipAnalysis)
+        // كي تُصاغ بتعليمة الوضع نفسها على هذا الأساس الأغنى بدل أن يعترضها التحليل العامّ.
+        const deepModes = new Set(["analyze-case", "action-plan", "verdict-estimate"]);
+        const isDeepMode = deepModes.has(agentMode.id);
+        const mode = agentMode.id === "ask" ? (detailed || hasDoc ? "deep" : suggestMode(query)) : isDeepMode ? "deep" : "quick";
+        // مع مستندٍ مرفَق: نتخطّى بوّابة الاتّساع دائمًا — المستخدم يريد تحليل مستنده لا قائمة استيضاح.
+        const modeSkipBreadth = hasDoc ? true : agentMode.id === "ask" ? skipBreadth : true;
+        const result = await orchestrate(query, { mode, skipBreadth: modeSkipBreadth, skipAnalysis: isDeepMode, onStep: (s) => send({ type: "step", ...s }) });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
@@ -205,7 +220,16 @@ export async function POST(request: NextRequest) {
             query,
             systemPrompt: agentMode.systemPrompt,
             citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote })),
-            history: agentMode.conversational ? history : undefined
+            history: agentMode.conversational ? history : undefined,
+            // أوضاع التحليل العميقة: نمرّر السوابق القضائية المُسترجَعة (سياقًا) ونرفع سقف الرموز
+            // لتفادي قصّ المخرَجات ذات العناوين السبعة/الثمانية.
+            supporting: isDeepMode
+              ? {
+                  rulings: (result.rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
+                  principles: (result.principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet }))
+                }
+              : undefined,
+            maxTokens: isDeepMode ? 2600 : undefined
           }).catch(() => null);
           if (!synth) {
             send({ type: "step", id: "synthesize", status: "done", label: "تعذّرت الصياغة المستندة؛ إليك المواد المُتحقَّقة", data: { blocked: true } });
@@ -236,7 +260,14 @@ export async function POST(request: NextRequest) {
           }
 
           consume();
-          send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue) });
+          // السوابق القضائية التي استُؤنِس بها في الصياغة — تُعرَض للمستخدم (شفافية)، لا في الصياغة فقط.
+          const precedents = isDeepMode
+            ? {
+                rulings: (result.rulings ?? []).slice(0, 6).map((r) => ({ title: r.title, snippet: r.snippet })),
+                principles: (result.principles ?? []).slice(0, 6).map((p) => ({ title: p.title, snippet: p.snippet }))
+              }
+            : undefined;
+          send({ type: "result", answer: synth.output, mode: synth.mode, basis: modeBasis, total: result.articles.length, issues: result.issues.map((i) => i.issue), precedents });
           send({ type: "done" });
           return;
         }

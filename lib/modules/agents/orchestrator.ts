@@ -13,7 +13,7 @@ import { rerankArticles } from "./thinking/rerank";
 import { buildPlan, describePlan, type QueryPlan } from "./thinking/planner";
 import { loadSystemsRegistry, matchSystemsInText, type SystemRef } from "./substrate/systems-registry";
 import { resolveGoverningSystems } from "./thinking/resolve-scope";
-import { findDimension, buildClarificationForClass, type BreadthClarification } from "./breadth-gate";
+import { findDimension, type BreadthClarification } from "./breadth-gate";
 import { classifyBreadth } from "./breadth-classifier";
 import { buildScopeDisclosure, systemsFromArticles } from "./thinking/disclosure";
 import { isCrossSystemDurationQuery, scanDurationsAcrossSystems, type DurationGroup } from "./cross-system-enum";
@@ -67,7 +67,7 @@ type OnStep = (step: AgentStep) => void;
  * تشغيل المنسّق الأوّلي (وضع سريع). للنوايا غير القانونية يردّ مباشرةً بلا بحث.
  * للسؤال القانوني: يكيّف المسائل ثم يخرّج (بحث) لكلّ مسألة، ويجمع المواد بلا تكرار.
  */
-export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep; skipBreadth?: boolean } = {}): Promise<OrchestratorResult> {
+export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep; skipBreadth?: boolean; skipAnalysis?: boolean } = {}): Promise<OrchestratorResult> {
   const mode: OrchestratorMode = opts.mode ?? "quick";
   const onStep: OnStep = opts.onStep ?? (() => {});
 
@@ -86,16 +86,11 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     const registry = await loadSystemsRegistry().catch(() => []);
     const hasSystem = matchSystemsInText(query, registry).length > 0;
     const { breadthClass, source } = await classifyBreadth(query, { hasSystem, hasDimension: true });
-    onStep({ id: "breadth", status: "done", label: `صنّفتُ السؤال: ${breadthClass === "specific" ? "محدّد" : breadthClass === "exhaustive" ? "استقصائيّ" : "ملتبس"}`, data: { breadthClass, source } });
-    if (breadthClass === "specific") {
-      breadthSpecific = true; // جواب مباشر من المادة الحاكمة — لا استقصاء ولا جدول شامل
-    } else {
-      const clarify = buildClarificationForClass(query, breadthClass, { hasSystem });
-      if (clarify) {
-        return { intent: intent.type, clarify, issues: [], articles: [], mode };
-      }
-      // استقصائيّ + نظام مذكور → لا استيضاح؛ يتولّاه المسح الكامل للنظام أدناه.
-    }
+    onStep({ id: "breadth", status: "done", label: `فهمتُ السؤال: ${breadthClass === "specific" ? "محدّد" : breadthClass === "exhaustive" ? "استقصائيّ" : "واسع"}`, data: { breadthClass, source } });
+    // سياسة الفهم: نفترض التفسير الأرجح ونُجيب مباشرةً (مع إفصاح النطاق الصادق) بدل قائمة استيضاحٍ
+    // مُعلّبة. الغموض يُعالَج بأفضل تفسيرٍ لا بقائمة — والامتناع الصادق يكفي عند غياب السند.
+    // (breadthSpecific يمنع فقط إغراق السؤال المحدَّد بجدولٍ شامل لا لزوم له.)
+    if (breadthClass === "specific") breadthSpecific = true;
   }
 
   // ①.٦ الاستقصاء الشامل (المرحلة ٣): يُفعَّل فقط عند اختيار المستخدم (skipBreadth) لسؤال
@@ -303,20 +298,25 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
       },
     });
 
-    onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
-    const supporting = {
-      rulings: (rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
-      principles: (principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet })),
-    };
-    const an = await runAnalysis(query, report.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
-    onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
-    // المرحلة ٤ — الإفصاح الصادق: التحليل المتعمّق عيّنةٌ عبر الأنظمة (لا استقصاء كامل)،
-    // فنُذيّله بالأنظمة التي شملها البحث فعلًا + تنبيه أنّ غيرها قد يحوي المزيد.
-    if (an.analysis) {
-      const searched = (governingSystems?.map((g) => g.systemName) ?? []).concat(systemsFromArticles(articles));
-      analysis = an.analysis + buildScopeDisclosure({ systems: searched, complete: false });
-    } else {
-      analysis = an.analysis;
+    // توليد التحليل العامّ (وضع «اسأل» العميق). أوضاع الإخراج (حلّل/خطة/تقدير) تتخطّاه
+    // (skipAnalysis) كي تُصاغ بتعليمة الوضع نفسها على استرجاعٍ عميقٍ + سوابق مُتحقَّقة، بدل
+    // أن يعترضها التحليل العامّ فيُقدَّم مكان مخرَج الوضع.
+    if (!opts.skipAnalysis) {
+      onStep({ id: "analysis", status: "running", label: "أحلّل: هيكلة المسألة ومطابقة الأركان وترجيح" });
+      const supporting = {
+        rulings: (rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
+        principles: (principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet })),
+      };
+      const an = await runAnalysis(query, report.verified, undefined, governingSystems?.map((g) => g.systemName), supporting);
+      onStep({ id: "analysis", status: "done", label: an.abstained ? "امتنعتُ (لا سند كافٍ)" : "أنجزت التحليل المستند", data: { source: an.source } });
+      // المرحلة ٤ — الإفصاح الصادق: التحليل المتعمّق عيّنةٌ عبر الأنظمة (لا استقصاء كامل)،
+      // فنُذيّله بالأنظمة التي شملها البحث فعلًا + تنبيه أنّ غيرها قد يحوي المزيد.
+      if (an.analysis) {
+        const searched = (governingSystems?.map((g) => g.systemName) ?? []).concat(systemsFromArticles(articles));
+        analysis = an.analysis + buildScopeDisclosure({ systems: searched, complete: false });
+      } else {
+        analysis = an.analysis;
+      }
     }
   }
 

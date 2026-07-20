@@ -154,7 +154,9 @@
     "agents:consistency": "node agents/consistency.mjs",
     "agents:approve": "tsx scripts/approve-agents.ts",
     "agents:demo": "tsx scripts/demo-agents.ts",
-    "test:quota": "tsx scripts/test-quota.ts"
+    "test:quota": "tsx scripts/test-quota.ts",
+    "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
+    "verify:judicial": "tsx scripts/verify-judicial-assistant.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.6",

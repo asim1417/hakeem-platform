@@ -27,6 +27,7 @@ type CredsReveal = {
 
 const roles = [
   { value: "SYSTEM_ADMIN", label: "مدير النظام (المالك)" },
+  { value: "JUDGE", label: "قاضٍ" },
   { value: "LAWYER", label: "محامٍ" },
   { value: "TRAINER", label: "مدرب / مشرف" },
   { value: "TRAINEE", label: "متدرب" },
@@ -52,6 +53,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   USERS_MANAGE: "إدارة المستخدمين",
   ADMIN_REPORTS_VIEW: "تقارير الإدارة",
   GOVERNANCE_AUDIT_VIEW: "سجل التدقيق والحوكمة",
+  JUDICIAL_ASSISTANT_USE: "المعاون القضائي",
 };
 
 export function AdminUsersManager({

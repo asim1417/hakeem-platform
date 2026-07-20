@@ -25,6 +25,10 @@ export async function synthesizeWithMode(input: {
   citations: ModeCitation[];
   /** تاريخ المحادثة السابق (للأوضاع الحوارية) — يُمرَّر للحفاظ على تعدّد الأدوار. */
   history?: Array<{ role: "user" | "assistant"; content: string }>;
+  /** سوابق قضائية استئناسيّة (أحكام/مبادئ) لأوضاع التحليل — سياقٌ لا سندٌ للاستشهاد بأرقام المواد. */
+  supporting?: { rulings?: Array<{ title: string; snippet?: string }>; principles?: Array<{ title: string; snippet?: string }> };
+  /** سقف الرموز — يُرفَع لأوضاع التحليل الطويلة (٧–٨ عناوين) لتفادي القصّ. */
+  maxTokens?: number;
 }): Promise<{ output: string; mode: "live" | "offline" } | null> {
   const valid = input.citations.filter((c) => typeof c.articleNumber === "number" && (c.articleNumber ?? 0) > 0);
   if (!valid.length) return null;
@@ -32,12 +36,17 @@ export async function synthesizeWithMode(input: {
   const block = valid
     .map((c) => `- ${c.systemName ?? ""}، المادة ${c.articleNumber}: ${(c.quote ?? "").slice(0, 400)}`)
     .join("\n");
+  // السوابق القضائية: سياقٌ استئناسيّ يوجّه التحليل والترجيح. لا تُضيف أرقام مواد فلا تمسّ حارس التأريض.
+  const rul = (input.supporting?.rulings ?? []).slice(0, 6).map((r) => `- حكم: ${r.title}${r.snippet ? " — " + r.snippet.slice(0, 220) : ""}`).join("\n");
+  const prin = (input.supporting?.principles ?? []).slice(0, 6).map((p) => `- مبدأ: ${p.title}${p.snippet ? " — " + p.snippet.slice(0, 220) : ""}`).join("\n");
+  const supportingBlock = [rul, prin].filter(Boolean).join("\n");
   // PDPL ④: تُعمّى معرّفات الأطراف من نصّ المسألة قبل الإرسال للنموذج (المواد سياق نظاميّ محلّي).
   const facts = sanitizeForModel(input.query).text;
   const system = [
     input.systemPrompt,
     "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
-  ].join("\n");
+    supportingBlock ? "الأحكام والمبادئ المرفقة سياقٌ قضائيّ استئناسيّ لتوجيه التحليل والترجيح؛ لا تستشهد منها بأرقام مواد — السند النظاميّ الوحيد للأرقام هو المواد المرفقة." : "",
+  ].filter(Boolean).join("\n");
   // سياق المحادثة السابق (للأوضاع الحوارية): يُعمّى ويُقتطَع لآخر ٦ رسائل حفظًا للكمون.
   const historyBlock = (input.history ?? [])
     .slice(-6)
@@ -48,13 +57,14 @@ export async function synthesizeWithMode(input: {
     `الرسالة/المسألة الحالية:\n${facts}`,
     "",
     `المواد المرفقة من النواة (السند الوحيد المسموح):\n${block}`,
+    supportingBlock ? `\nسياقٌ قضائيّ استئناسيّ (أحكام ومبادئ — لتوجيه التحليل فقط، لا للاستشهاد بأرقام مواد منها):\n${supportingBlock}` : "",
     "",
     "قاعدة إلزامية: لا تستشهد إلا بالمواد أعلاه، ولا تخترع مواد أو أرقام مواد.",
   ]
     .filter(Boolean)
     .join("\n");
 
-  const llm = await callCentralProvider({ systemPrompt: system, userPrompt: user, maxTokens: 1600 }).catch(() => ({
+  const llm = await callCentralProvider({ systemPrompt: system, userPrompt: user, maxTokens: Math.min(Math.max(input.maxTokens ?? 1600, 1600), 4000) }).catch(() => ({
     ok: false as const,
     content: "",
     mode: "offline" as const,
@@ -62,10 +72,39 @@ export async function synthesizeWithMode(input: {
   }));
   if (!llm.ok || !llm.content.trim()) return null;
 
-  // حارس التلفيق: أيّ رقم مادة في الإخراج ليس ضمن المواد المرفقة ⇒ رفض (يسقط المستدعي للأساس الخام).
+  // حارس التلفيق — بتحمّلٍ أعلى: بدل رفض المخرَج كلّه عند أيّ رقم غير مؤرَّض، نحذف الأسطر
+  // المخالفة فقط ونُبقي المؤرَّض. نرفض للأساس الخام فقط إن انهار المخرَج (حُذف >٤٠٪ أو خلا).
   const allowed = collectAllowedArticleNumbers({ numbers: valid.map((c) => c.articleNumber ?? 0) });
-  if (!verifyNarrativeGrounding([llm.content], allowed).ok) return null;
+  let content = llm.content;
+  let pruned = false;
+  if (!verifyNarrativeGrounding([content], allowed).ok) {
+    const kept = pruneUngroundedLines(content, allowed);
+    if (!kept) return null; // اضطراب المخرَج → سقوطٌ للأساس الخام
+    content = kept;
+    pruned = true;
+  }
 
-  const output = llm.content.includes("تنبيه") ? llm.content : `${llm.content}\n\n${PRO_DISCLAIMER}`;
+  const note = pruned ? "\n\n> ملاحظة: حُذفت عباراتٌ أشارت إلى مواد خارج السند المتحقَّق." : "";
+  const output = (content.includes("تنبيه") ? content : `${content}\n\n${PRO_DISCLAIMER}`) + note;
   return { output, mode: "live" };
+}
+
+/**
+ * يحذف الأسطر التي تحمل رقم مادةٍ غير مؤرَّض ويُبقي الباقي — تحمّلٌ أعلى من الرفض الكامل.
+ * يعيد null إن حُذف أكثر من ٤٠٪ من الأسطر ذات المحتوى أو لم يبقَ شيء (يسقط المستدعي للأساس الخام).
+ */
+function pruneUngroundedLines(content: string, allowed: Set<number>): string | null {
+  const lines = content.split("\n");
+  const kept: string[] = [];
+  let contentLines = 0;
+  let removed = 0;
+  for (const line of lines) {
+    if (!line.trim()) { kept.push(line); continue; }
+    contentLines += 1;
+    if (verifyNarrativeGrounding([line], allowed).ok) kept.push(line);
+    else removed += 1;
+  }
+  if (!contentLines || removed / contentLines > 0.4) return null;
+  const text = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return text || null;
 }

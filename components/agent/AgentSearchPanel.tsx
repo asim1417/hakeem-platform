@@ -1,10 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ClipboardList, MessagesSquare, NotebookPen, Paperclip, Scale, ScanSearch, Sparkles, Telescope, type LucideIcon } from "lucide-react";
+import { extractFile } from "@/lib/modules/doc-tool/extract";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { AGENT_MODES, getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
+
+// أيقونات الأوضاع — Lucide بدل الإيموجي (اتساق الهوية: صفر إيموجي).
+const MODE_ICONS: Record<AgentModeId, LucideIcon> = {
+  ask: Sparkles,
+  "analyze-case": ScanSearch,
+  "action-plan": ClipboardList,
+  "verdict-estimate": Scale,
+  consultation: NotebookPen,
+  chat: MessagesSquare
+};
+
+type Precedents = { rulings: Array<{ title: string; snippet?: string }>; principles: Array<{ title: string; snippet?: string }> };
+
+// أمثلةٌ مؤصَّلة تُجيب عنها النواة القانونية — للحالة الفارغة (بدءٌ بلمسة).
+const STARTERS = [
+  "ما مدّة الاستئناف أمام المحاكم التجارية؟",
+  "متى يسقط الحقّ بالتقادم في المعاملات المدنية؟",
+  "ما أحكام الفصل التعسّفي في نظام العمل؟",
+  "ما شروط صحّة عقد البيع نظامًا؟"
+];
 
 type StepStatus = "running" | "done";
 type Step = { id: string; status: StepStatus; label: string; data?: any };
@@ -23,6 +45,7 @@ type Turn = {
   visibleGroups?: number;
   message?: string;
   error?: string;
+  precedents?: Precedents;
   streaming: boolean;
   showMethod: boolean;
 };
@@ -34,6 +57,11 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
   const [modeId, setModeId] = useState<AgentModeId>(getAgentMode(initialMode).id);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
+  // محلّل منصّة الوثائق (extractFile) — استخراجٌ محليّ في المتصفّح؛ الملفّ لا يغادر الجهاز.
+  // المستند يبقى منفصلًا عن مربّع السؤال (لا يُخلَط بما يكتبه المستخدم).
+  const [extracting, setExtracting] = useState(false);
+  const [attachedDoc, setAttachedDoc] = useState("");
+  const [attachedName, setAttachedName] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   // على الجوّال: مغادرة المتصفّح تعلّق التبويب فينكسر بثّ الطلب. نرصد ذلك لتقديم رسالة لطيفة + إعادة محاولة.
   const abortRef = useRef<AbortController | null>(null);
@@ -56,6 +84,29 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
     };
   }, []);
 
+  async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setExtracting(true);
+    try {
+      const r = await extractFile(file);
+      if (r.text.trim()) {
+        // المستند يُحفَظ منفصلًا (لا يُدرَج في مربّع السؤال) — فيتّضح الفرق بين سؤالك ونصّ الملفّ.
+        setAttachedDoc(r.text.trim());
+        setAttachedName(file.name);
+      } else {
+        setAttachedDoc("");
+        setAttachedName(null);
+      }
+    } catch {
+      setAttachedDoc("");
+      setAttachedName(null);
+    } finally {
+      setExtracting(false);
+    }
+  }
+
   function patchLastTurn(patch: (t: Turn) => Turn) {
     setTurns((prev) => {
       if (!prev.length) return prev;
@@ -67,15 +118,18 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
 
   async function ask(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) {
     const question = (q ?? value).trim();
-    if (!question || busy) return;
+    const doc = attachedDoc;
+    if ((!question && !doc) || busy) return;
     setBusy(true);
     setValue("");
     backgroundedRef.current = false;
     const controller = new AbortController();
     abortRef.current = controller;
+    // ما يُعرَض للمستخدم: سؤاله كما كتبه؛ وإن أرفق مستندًا دون سؤال نُظهر أنه طلب تحليل المستند.
+    const shown = question || (attachedName ? `تحليل المستند: ${attachedName}` : "تحليل المستند المرفق");
     setTurns((prev) => [
       ...prev,
-      { question, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
+      { question: shown, steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: true }
     ]);
 
     // الأوضاع الحوارية: نمرّر تاريخ الأدوار السابقة (سؤال/جواب) للحفاظ على سياق المحادثة.
@@ -87,7 +141,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history }),
+        body: JSON.stringify({ query: question, document: doc || undefined, detailed: override?.detailed ?? detailed, skipBreadth: override?.skipBreadth ?? false, mode: modeId, history }),
         signal: controller.signal
       });
 
@@ -137,7 +191,8 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
               groups: Array.isArray(evt.groups) ? evt.groups : undefined,
               disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
               visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
-              message: evt.message
+              message: evt.message,
+              precedents: evt.precedents && (evt.precedents.rulings?.length || evt.precedents.principles?.length) ? (evt.precedents as Precedents) : undefined
             }));
           } else if (evt.type === "clarify") {
             patchLastTurn((t) => ({ ...t, clarify: { message: evt.message, dimension: evt.dimension, options: evt.options ?? [] } }));
@@ -180,12 +235,35 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
       {/* منطقة المحادثة */}
       <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto pb-6">
         {turns.length === 0 ? (
-          <div className="flex flex-col items-center pt-[8vh] text-center">
-            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-3xl text-[var(--gold-bright)] shadow-[var(--sh-md)]">
-              ✦
+          <div className="flex min-h-[60vh] flex-col items-center justify-center px-2 text-center">
+            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)] shadow-[var(--sh-md)]">
+              <Sparkles size={30} aria-hidden />
             </span>
             <h1 className="t-head mt-5 text-2xl font-bold text-[var(--navy)] md:text-3xl">{greeting}</h1>
-            <p className="mt-2 text-[var(--ink-60)]">كيف أساعدك اليوم؟ اسألني في الأنظمة السعودية وسأبحث في النواة القانونية الموثّقة.</p>
+            <p className="mt-2 max-w-md leading-7 text-[var(--ink-60)]">
+              كيف أساعدك اليوم؟ اسألني في الأنظمة السعودية وسأبحث في النواة القانونية الموثّقة.
+            </p>
+
+            {/* أمثلةٌ للبدء — تملأ الفراغ وتوجّه المستخدم بلمسةٍ واحدة */}
+            <div className="mt-7 grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {STARTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void ask(s)}
+                  className="focus-ring rounded-[var(--r-lg)] border border-[var(--ink-15)] bg-ivory px-4 py-3 text-right text-sm leading-6 text-[var(--ink-80)] shadow-[var(--sh-xs)] transition hover:-translate-y-0.5 hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            {/* تمييز الأوضاع عن الوكلاء المخصّصين */}
+            <p className="mt-6 max-w-md text-xs leading-6 text-[var(--ink-40)]">
+              الأزرار أسفل الصندوق <b className="font-semibold text-[var(--ink-60)]">أوضاعٌ</b> لعقلٍ واحد تغيّر زاوية الإجابة. وللوكلاء المخصّصين بنطاقاتٍ ومهاراتٍ مستقلّة، افتح{" "}
+              <a href="/dashboard/agents" className="font-semibold text-[var(--navy)] underline underline-offset-2 hover:text-[var(--navy-mid)]">صفحة الوكلاء</a>.
+            </p>
           </div>
         ) : (
           turns.map((turn, i) => (
@@ -353,7 +431,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                   <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5 shadow-[var(--sh-xs)]">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-[var(--ink-08)] pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-sm text-[var(--gold-bright)]">✦</span>
+                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)]"><Sparkles size={15} aria-hidden /></span>
                         <span className="text-sm font-bold text-[var(--navy)]">إجابة حكيم</span>
                         {turn.mode !== "intent" ? (
                           <span
@@ -428,6 +506,30 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                     </div>
                   )
                 ) : null}
+
+                {/* السوابق القضائية المُستأنَس بها — تُعرَض للشفافية (سياقٌ لا سندٌ نظاميّ للأرقام). */}
+                {turn.precedents ? (
+                  <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] p-4">
+                    <p className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--navy)]">
+                      <Scale size={15} aria-hidden /> سوابق قضائية استُؤنِس بها
+                    </p>
+                    <p className="mb-3 text-xs leading-6 text-[var(--ink-60)]">وجّهت التحليل والترجيح — سياقٌ استئناسيّ، لا سندٌ نظاميّ للأرقام (الأرقام من المواد أعلاه حصرًا).</p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {turn.precedents.rulings.map((r, k) => (
+                        <div key={`r-${k}`} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-2.5">
+                          <p className="text-xs font-semibold text-[var(--navy)]">حكم · {r.title}</p>
+                          {r.snippet ? <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--ink-60)]">{r.snippet}</p> : null}
+                        </div>
+                      ))}
+                      {turn.precedents.principles.map((p, k) => (
+                        <div key={`p-${k}`} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory p-2.5">
+                          <p className="text-xs font-semibold text-[var(--gold-dark)]">مبدأ · {p.title}</p>
+                          {p.snippet ? <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--ink-60)]">{p.snippet}</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           ))
@@ -447,6 +549,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
           <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">
             {AGENT_MODES.map((m) => {
               const active = m.id === modeId;
+              const Icon = MODE_ICONS[m.id] ?? Sparkles;
               return (
                 <button
                   key={m.id}
@@ -460,11 +563,29 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
                       : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
                   }`}
                 >
-                  <span aria-hidden>{m.icon}</span> {m.name}
+                  <Icon size={14} aria-hidden /> {m.name}
                 </button>
               );
             })}
           </div>
+          {/* المستند المرفق يظهر منفصلًا عن مربّع السؤال — فيتّضح الفرق بين ما تكتبه ونصّ الملفّ */}
+          {attachedName ? (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-2 text-xs">
+              <span className="flex min-w-0 items-center gap-1.5 text-[var(--navy)]">
+                <Paperclip size={13} aria-hidden />
+                <span className="truncate font-semibold">{attachedName}</span>
+                <span className="shrink-0 text-[var(--ink-60)]">· مستند مُرفَق ({attachedDoc.length.toLocaleString("ar-SA")} حرف)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => { setAttachedDoc(""); setAttachedName(null); }}
+                className="focus-ring shrink-0 rounded-full px-2 py-0.5 font-semibold text-[var(--ink-60)] transition hover:text-[var(--ruby)]"
+                aria-label="إزالة المستند"
+              >
+                ✕ إزالة
+              </button>
+            </div>
+          ) : null}
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -475,25 +596,35 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
               }
             }}
             rows={1}
-            placeholder={getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…"}
+            placeholder={attachedName ? "اكتب سؤالك عن المستند المرفق (اختياريّ)…" : getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…"}
             className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <div className="flex items-center justify-between gap-2 px-1">
-            <button
-              type="button"
-              onClick={() => setDetailed((v) => !v)}
-              aria-pressed={detailed}
-              className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                detailed
-                  ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
-                  : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
-              }`}
-            >
-              <span aria-hidden>🔭</span> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDetailed((v) => !v)}
+                aria-pressed={detailed}
+                className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  detailed
+                    ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
+                    : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
+                }`}
+              >
+                <Telescope size={14} aria-hidden /> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
+              </button>
+              {/* محلّل الوثائق: أرفق مستندًا فيُستخرَج نصّه محليًّا (لا يغادر الجهاز) ويُدرَج في السؤال */}
+              <label
+                title="أرفق مستندًا لاستخراج نصّه محليًّا"
+                className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--ink-15)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-60)] transition hover:text-[var(--navy)]"
+              >
+                <Paperclip size={14} aria-hidden /> {extracting ? "جارٍ…" : "إرفاق"}
+                <input type="file" accept=".txt,.md,.csv,.json,.docx,.pdf,.png,.jpg,.jpeg,.webp" className="sr-only" onChange={onFile} disabled={extracting || busy} />
+              </label>
+            </div>
             <button
               type="submit"
-              disabled={busy || !value.trim()}
+              disabled={busy || (!value.trim() && !attachedDoc)}
               className="focus-ring rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? "جارٍ…" : "إرسال"}

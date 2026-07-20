@@ -41,6 +41,10 @@ function scanFile(file: string) {
     const isServerAiGateway =
       rel.startsWith(path.join("lib", "modules", "ai")) ||
       rel.startsWith(path.join("app", "api")) ||
+      // طبقة إعدادات الخادم — تُعرّف أسماء مفاتيح البيئة ليُدخلها المدير، ولا تُرسل للواجهة
+      rel.startsWith(path.join("lib", "modules", "settings")) ||
+      // نصوص البناء/التقييم (Node) — لا تدخل حزمة الويب، تقرأ المفتاح من البيئة فقط
+      rel.startsWith("scripts" + path.sep) ||
       // خادم معالجة الوثائق (Node) — طبقة خادمية مستقلّة تقرأ المفتاح من البيئة فقط
       rel.startsWith(path.join("services", "doc-node"));
     // ألعاب الأطفال تخزن تقدم اللعب وإعداداته فقط محليًا — لا بيانات شخصية

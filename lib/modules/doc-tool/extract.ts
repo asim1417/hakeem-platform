@@ -110,14 +110,17 @@ async function cloudOcr(
 }
 
 async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<ExtractResult> {
-  const buffer = await file.arrayBuffer();
+  // لقطةٌ واحدة للبايتات، ثمّ نسخةٌ جديدة لكلّ مستهلِك: pdf.js يُحوّل (يفصل) الـArrayBuffer
+  // الذي يستقبله، فإعادة استخدام نفس المرجع لاحقًا تُسبّب «Buffer is already detached».
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const fresh = (): ArrayBuffer => bytes.slice().buffer;
   try {
     const { extractPdfText } = await import("@/lib/modules/document-inspection/file-extract");
     onProgress?.("قراءة نص الـ PDF…");
-    const result = await extractPdfText(buffer);
+    const result = await extractPdfText(fresh());
     // ممسوح بالكامل أو طبقة نص معطوبة → OCR على صور كل الصفحات
     if (result.emptyPages >= result.pages || result.needsOcr) {
-      return ocrPdf(buffer, onProgress);
+      return ocrPdf(fresh(), onProgress);
     }
     // مسح جزئي: بعض الصفحات نصّ سليم وبعضها صور — اقرأ الممسوحة فقط ضوئياً وادمجها،
     // فلا تبقى صفحاتٌ فارغةً صامتةً في المخرجات.
@@ -127,7 +130,7 @@ async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<Ext
       const { mergeScannedPages } = await import("@/lib/modules/document-inspection/file-extract");
       onProgress?.("قراءة الصفحات الممسوحة ضوئياً…");
       const ocr = await ocrScannedPdf(
-        buffer,
+        fresh(),
         (info) =>
           onProgress?.(
             `OCR صفحة ${info.page}/${info.pages} — ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`
@@ -144,7 +147,7 @@ async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<Ext
   } catch (err) {
     // فشل فك النص (ملف صور خالص مثلاً) — جرّب OCR قبل الاستسلام
     try {
-      return await ocrPdf(buffer, onProgress);
+      return await ocrPdf(fresh(), onProgress);
     } catch {
       return { text: "", kind: `تعذّر (${errMsg(err)})` };
     }

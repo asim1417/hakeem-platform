@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+<<<<<<< HEAD
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
+=======
+import { canConsume, consumeOne } from "@/lib/modules/billing/quota";
+import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
+>>>>>>> origin/main
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +19,9 @@ const schema = z.object({
   facts: z.string().min(20, "أدخل وقائع كافية لربطها بالمكتبة النظامية."),
   question: z.string().optional(),
   userId: z.string().optional(),
-  caseId: z.string().optional()
+  caseId: z.string().optional(),
+  // موافقة صريحة على حفظ أسرار الموكّل كاملةً (القرار). بلا موافقة: يُخزَّن نصٌّ مُعمّى.
+  consentToStore: z.boolean().optional()
 });
 
 export async function POST(request: NextRequest) {
@@ -41,16 +48,22 @@ export async function POST(request: NextRequest) {
 
   const draft = await createAgentConsultationDraft({ facts: factsForAnalysis, actorId });
 
+  // القرار: الحفظ الكامل يتطلّب موافقةً صريحة؛ بدونها يُخزَّن نصٌّ مُعمّى (بلا معرّفات الأطراف).
+  const consented = payload.consentToStore === true;
+  const storedFacts = consented ? factsForAnalysis : sanitizeForModel(factsForAnalysis).text;
+
   let consultationId: string | undefined;
   const consultation = await prisma.consultation.create({
     data: {
       userId: actorId,
       caseId: payload.caseId,
-      facts: factsForAnalysis,
+      facts: storedFacts,
       output: draft.output,
       status: draft.blocked ? "BLOCKED" : "GENERATED",
       qualityReport: {
         ...(draft.qualityReport as Record<string, unknown>),
+        storage: consented ? "full_with_consent" : "redacted",
+        consentToStore: consented,
         title: payload.title,
         matterType: payload.matterType,
         question: payload.question

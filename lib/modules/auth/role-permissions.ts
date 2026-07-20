@@ -1,6 +1,6 @@
 // خريطة الأدوار×الصلاحيات الأساسية — بلا اعتماد على Prisma (آمن للواجهة والخادم).
 
-export type AppRole = "SYSTEM_ADMIN" | "LAWYER" | "TRAINER" | "TRAINEE";
+export type AppRole = "SYSTEM_ADMIN" | "LAWYER" | "TRAINER" | "TRAINEE" | "JUDGE";
 
 export type Permission =
   | "CONSULTATIONS_FULL"
@@ -16,7 +16,9 @@ export type Permission =
   | "ATTACHMENTS_LIMITED"
   | "USERS_MANAGE"
   | "ADMIN_REPORTS_VIEW"
-  | "GOVERNANCE_AUDIT_VIEW";
+  | "GOVERNANCE_AUDIT_VIEW"
+  // المعاون القضائي (المرحلة 1ب): استخدام مساحة القضية وأعمالها.
+  | "JUDICIAL_ASSISTANT_USE";
 
 export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   SYSTEM_ADMIN: [
@@ -32,6 +34,16 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "USERS_MANAGE",
     "ADMIN_REPORTS_VIEW",
     "GOVERNANCE_AUDIT_VIEW",
+    "JUDICIAL_ASSISTANT_USE",
+  ],
+  // القاضي: المعاون القضائي + النواة والاستشارة للاطّلاع.
+  JUDGE: [
+    "JUDICIAL_ASSISTANT_USE",
+    "CONSULTATIONS_FULL",
+    "LIBRARY_READ",
+    "LEGAL_CORE_VIEW",
+    "ATTACHMENTS_FULL",
+    "GOVERNANCE_AUDIT_VIEW",
   ],
   LAWYER: [
     "CONSULTATIONS_FULL",
@@ -40,6 +52,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
+    "JUDICIAL_ASSISTANT_USE",
   ],
   TRAINER: [
     "SIMULATIONS_USE",
