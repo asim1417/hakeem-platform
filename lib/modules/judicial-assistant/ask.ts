@@ -1,9 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// موجّه المعاون — عقلٌ حرّ يستفيد من نموذج الذكاء للأمور التي لا خدمةَ مخصّصة لها.
-// يمرّ بخطّ التأصيل نفسه (createAgentConsultationDraft): استشهادٌ بمواد النواة أو حجبٌ صادق،
-// بلا نصٍّ نظاميّ من الذاكرة. مع سياق القضية (الخريطة + المرفقات) إن وُجدت. مسودّة human-in-loop.
+// موجّه المعاون — عقلٌ حرٌّ يجيب بنموذج الذكاء المضبوط في المنصّة مباشرةً.
+// يستفيد من ذكاء كلود للأمور التي لا خدمةَ مخصّصة لها، ويؤصّل إجابته بمواد النواة حين تتوفّر
+// (استرجاعٌ اختياريّ لا يحجب)، مع حارسٍ يمنع نسبة أرقام موادَّ غير موجودة (لا اختلاق).
+// إن لم تتوفّر مادّةٌ من النواة أجاب اجتهادًا عامًّا مُفصِحًا عن ذلك — لا امتناعَ مطلق.
 // ─────────────────────────────────────────────────────────────────────────────
-import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
+import { randomUUID } from "crypto";
+import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
+import { guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
+import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
+import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { JURISDICTION_LABEL } from "./labels";
 import type { JudicialCase } from "./types";
 
@@ -15,8 +20,11 @@ export interface AskResult {
   notice: string;
 }
 
-const NOTICE = "إجابةٌ مساعدة مسودّة، مؤصَّلةٌ بمواد النواة حيث أمكن. للمراجعة، لا حكمٌ ولا نصٌّ نظاميّ من الذاكرة.";
-const BLOCKED = "لم أجد سندًا نظاميًّا كافيًا في النواة لهذا الطلب، فامتنعت عن الجزم (تعطّلٌ آمن). أعِد صياغة السؤال أو أضِف مرفقًا.";
+const DISCLAIMER = "تنبيه: إجابةٌ مساعدة أوّليّة تحتاج مراجعة القاضي، ولا تُعدّ حكمًا ولا رأيًا نهائيًّا.";
+const NOTICE_GROUNDED = "إجابةٌ مؤصَّلةٌ بمواد النواة — مسودّة للمراجعة.";
+const NOTICE_GENERAL = "إجابةٌ اجتهاديّة عامّة (لا مادّةَ محدّدةً من النواة لهذا الطلب) — للاسترشاد ومراجعة القاضي.";
+const OFFLINE = "مزوّد النموذج غير مضبوطٍ في المنصّة، فتعذّرت الإجابة. اضبط المزوّد من إعدادات الذكاء (‏/admin/ai) ثمّ أعِد المحاولة.";
+const GUARD_FALLBACK = "أجبتُ اجتهادًا، لكن ورد في الإجابة إسنادٌ نظاميّ غير مؤكَّدٍ من النواة فحُجب حرصًا على عدم نسبة مادّةٍ غير موجودة. أعِد صياغة السؤال أو حدّد النظام محلّ السؤال.";
 
 // ── حارس المدخل: تحيّةٌ أو مجاملةٌ لا مسألةَ قضائيّةً فيها ⇒ لا تأصيل ولا استشهاد ⇒ ردٌّ ودّيّ. ──
 // يمنع أن تُسحَب مادّةٌ نظاميّة غير ذات صلة (أقرب متجهٍ) ردًّا على «السلام عليكم».
@@ -80,19 +88,69 @@ export async function askAssistant(question: string, kase: JudicialCase | null, 
     };
   }
 
-  const prompt = [
+  const requestId = randomUUID();
+
+  // ① استرجاعٌ اختياريّ من النواة (أفضل جهد، لا يحجب): مادّةٌ للتأصيل إن وُجدت لموضوع السؤال.
+  const retrieveQuery = [kase?.subject, kase?.issues.map((i) => i.statement).join(" "), question].filter(Boolean).join(" ").trim();
+  const articles = await retrieveGroundingArticles(retrieveQuery);
+  const sourcesBlock = articles.length
+    ? articles.map((a) => `- ${a.systemName}، المادة ${a.articleNumber}: ${a.articleText.slice(0, 350)}`).join("\n")
+    : "";
+
+  // ② استدعاء النموذج المضبوط في المنصّة مباشرةً (كلود عبر المزوّد المركزيّ).
+  const userPrompt = [
     kase ? caseContext(kase) : "",
     `طلب القاضي: ${question.trim()}`,
-    "أجِب مؤصَّلًا بمواد النظام الحاكم المرفقة من النواة. إن لم تكفِ فصرّح بذلك بدل الاختلاق. اكتب بالعربيّة بإيجازٍ منظّم.",
+    sourcesBlock ? `مواد النواة المتاحة للاستشهاد (لا تستشهد بغيرها ولا تخترع رقمًا):\n${sourcesBlock}` : "لا توجد موادُّ نظاميّة مسترجَعة لهذا الطلب — أجِب اجتهادًا عامًّا دون نسبة رقم مادّةٍ لأيّ نظام.",
   ].filter(Boolean).join("\n\n");
 
-  const draft = await createAgentConsultationDraft({ facts: prompt, actorId }).catch(() => null);
-  const blocked = !draft || draft.blocked;
-  return {
-    answer: blocked ? BLOCKED : draft!.output,
-    blocked,
-    citations: draft?.citations ?? [],
-    requestId: draft?.requestId ?? "no-ask",
-    notice: blocked ? BLOCKED : NOTICE,
-  };
+  const llm = await callCentralProvider({
+    systemPrompt: buildAskSystemPrompt(Boolean(sourcesBlock)),
+    userPrompt: sanitizeForModel(userPrompt).text,
+    maxTokens: 1400,
+  }).catch(() => null);
+
+  // ③ لا مزوّد مضبوط/تعذّر النموذج ⇒ إفصاحٌ صريح (لا تلفيق، لا امتناعٌ غامض).
+  if (!llm || !llm.ok || !llm.content.trim()) {
+    return { answer: OFFLINE, blocked: true, citations: [], requestId, notice: OFFLINE };
+  }
+
+  // ④ حارس التلفيق: أيّ رقم مادّةٍ في المخرَج ليس من المسترجَع ⇒ يُحجب المخرَج (لا مادّة غير موجودة).
+  const guard = guardOutputAgainstUnknownArticleNumbers(llm.content, articles);
+  if (!guard.ok) {
+    return { answer: GUARD_FALLBACK, blocked: false, citations: [], requestId, notice: NOTICE_GENERAL };
+  }
+
+  const grounded = articles.length > 0;
+  const citations = grounded
+    ? articles.slice(0, 6).map((a) => ({ articleId: a.articleId, lawName: a.systemName, articleNumber: a.articleNumber, quote: a.articleText.slice(0, 350) }))
+    : [];
+  const answer = /تنبيه|لا تُعدّ حكمًا/.test(llm.content) ? llm.content : `${llm.content}\n\n${DISCLAIMER}`;
+
+  return { answer, blocked: false, citations, requestId, notice: grounded ? NOTICE_GROUNDED : NOTICE_GENERAL };
+}
+
+/** تعليمة الموجّه: يجيب بذكاءٍ ويؤصّل بالمواد المتاحة، بلا اختلاق رقم مادّة. */
+function buildAskSystemPrompt(hasSources: boolean): string {
+  return [
+    "أنت «موجّه المعاون القضائيّ» داخل منصّة حكيم — مساعدٌ ذكيّ للقاضي السعوديّ.",
+    "أجِب على طلب القاضي بذكاءٍ وبأسلوبٍ عربيّ منظّمٍ وعمليّ، مباشرةً وبلا حشو.",
+    hasSources
+      ? "استند إلى مواد النواة المرفقة، واذكرها باسم النظام ورقم المادة كما وردت. لا تستشهد بمادّةٍ أو رقمٍ غير موجودٍ في المرفق."
+      : "لم تُرفَق موادُّ من النواة؛ أجِب اجتهادًا عامًّا مفيدًا دون نسبة رقم مادّةٍ لأيّ نظام، وصرّح بأنّ الإجابة عامّة تحتاج تحقّقًا نظاميًّا.",
+    "لا تختلق مادّةً ولا رقم مادّة ولا حكمًا. إن كان الطلب خارج المجال القضائيّ/القانونيّ فوجّه بلُطفٍ لطرح مسألةٍ قضائيّة.",
+    "اختم بسطرٍ يوضّح أنّ الإجابة مساعدة أوّليّة تحتاج مراجعة القاضي ولا تُعدّ حكمًا.",
+  ].join("\n");
+}
+
+/** استرجاعٌ اختياريّ لمواد النواة (أفضل جهد). فشلٌ ⇒ [] فلا يُعطَّل الموجّه. */
+async function retrieveGroundingArticles(query: string): Promise<LegalCoreResult[]> {
+  if (query.replace(/\s/g, "").length < 4) return [];
+  try {
+    const { runCaseAgent } = await import("@/lib/modules/agents/case-agent-bridge");
+    const agent = await runCaseAgent(query);
+    return agent.grounded ? agent.articles.slice(0, 6) : [];
+  } catch {
+    return [];
+  }
 }
