@@ -20,11 +20,11 @@ export interface AskResult {
   notice: string;
 }
 
-const DISCLAIMER = "تنبيه: إجابةٌ مساعدة أوّليّة تحتاج مراجعة القاضي، ولا تُعدّ حكمًا ولا رأيًا نهائيًّا.";
-const NOTICE_GROUNDED = "إجابةٌ مؤصَّلةٌ بمواد النواة — مسودّة للمراجعة.";
-const NOTICE_GENERAL = "إجابةٌ اجتهاديّة عامّة (لا مادّةَ محدّدةً من النواة لهذا الطلب) — للاسترشاد ومراجعة القاضي.";
-const OFFLINE = "مزوّد النموذج غير مضبوطٍ في المنصّة، فتعذّرت الإجابة. اضبط المزوّد من إعدادات الذكاء (‏/admin/ai) ثمّ أعِد المحاولة.";
-const GUARD_FALLBACK = "أجبتُ اجتهادًا، لكن ورد في الإجابة إسنادٌ نظاميّ غير مؤكَّدٍ من النواة فحُجب حرصًا على عدم نسبة مادّةٍ غير موجودة. أعِد صياغة السؤال أو حدّد النظام محلّ السؤال.";
+export const DISCLAIMER = "تنبيه: إجابةٌ مساعدة أوّليّة تحتاج مراجعة القاضي، ولا تُعدّ حكمًا ولا رأيًا نهائيًّا.";
+export const NOTICE_GROUNDED = "إجابةٌ مؤصَّلةٌ بمواد النواة — مسودّة للمراجعة.";
+export const NOTICE_GENERAL = "إجابةٌ اجتهاديّة عامّة (لا مادّةَ محدّدةً من النواة لهذا الطلب) — للاسترشاد ومراجعة القاضي.";
+export const OFFLINE = "مزوّد النموذج غير مضبوطٍ في المنصّة، فتعذّرت الإجابة. اضبط المزوّد من إعدادات الذكاء (‏/admin/ai) ثمّ أعِد المحاولة.";
+export const GUARD_FALLBACK = "أجبتُ اجتهادًا، لكن ورد في الإجابة إسنادٌ نظاميّ غير مؤكَّدٍ من النواة فحُجب حرصًا على عدم نسبة مادّةٍ غير موجودة. أعِد صياغة السؤال أو حدّد النظام محلّ السؤال.";
 
 // ── حارس المدخل: تحيّةٌ أو مجاملةٌ لا مسألةَ قضائيّةً فيها ⇒ لا تأصيل ولا استشهاد ⇒ ردٌّ ودّيّ. ──
 // يمنع أن تُسحَب مادّةٌ نظاميّة غير ذات صلة (أقرب متجهٍ) ردًّا على «السلام عليكم».
@@ -54,7 +54,19 @@ function isSmalltalk(q: string): boolean {
   return t.replace(/\s/g, "").length < 3;
 }
 
-function caseContext(kase: JudicialCase): string {
+export { isSmalltalk };
+
+/** المواد التي استشهد بها المخرَج فعلًا (رقمها وارد في النصّ) — فلا تُعرض موادُّ مسترجَعة تجاهلها النموذج. */
+export function citedArticles(answer: string, articles: LegalCoreResult[]): LegalCoreResult[] {
+  const nums = new Set<number>();
+  for (const m of answer.matchAll(/(?:المادة|مادة)\s*\(?\s*([0-9٠-٩]+)/g)) {
+    const n = Number(m[1].replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
+    if (n > 0) nums.add(n);
+  }
+  return articles.filter((a) => nums.has(a.articleNumber));
+}
+
+export function caseContext(kase: JudicialCase): string {
   const parties = kase.parties.map((p) => `${p.role}: ${p.name}`).join("، ");
   const requests = kase.requests.map((r) => r.text).join("؛ ");
   const facts = kase.facts.map((f) => f.text).join("؛ ");
@@ -71,9 +83,9 @@ function caseContext(kase: JudicialCase): string {
   ].filter(Boolean).join("\n");
 }
 
-const GREETING = "وعليكم السلام ورحمة الله وبركاته. أنا موجّه المعاون القضائيّ.";
-const GREETING_INVITE_CASE = "اطرح مسألتك عن هذه القضية — مثل: الدفوع المحتملة، موقف الإثبات، أو صياغة سؤالٍ للخصم — لأُجيبك مؤصَّلًا بالنواة وبسياق قضيتك.";
-const GREETING_INVITE_GENERAL = "اطرح مسألتك القضائيّة — مثل: مدّة الاعتراض على حكم، شروط قبول الدعوى، عبء الإثبات، أو الاختصاص — لأُجيبك مؤصَّلًا بمواد النواة.";
+export const GREETING = "وعليكم السلام ورحمة الله وبركاته. أنا موجّه المعاون القضائيّ.";
+export const GREETING_INVITE_CASE = "اطرح مسألتك عن هذه القضية — مثل: الدفوع المحتملة، موقف الإثبات، أو صياغة سؤالٍ للخصم — لأُجيبك مؤصَّلًا بالنواة وبسياق قضيتك.";
+export const GREETING_INVITE_GENERAL = "اطرح مسألتك القضائيّة — مثل: مدّة الاعتراض على حكم، شروط قبول الدعوى، عبء الإثبات، أو الاختصاص — لأُجيبك مؤصَّلًا بمواد النواة.";
 
 /** يجيب على طلبٍ حرٍّ من القاضي، مؤصَّلًا بالنواة، مع سياق القضية إن وُجد. */
 export async function askAssistant(question: string, kase: JudicialCase | null, actorId?: string): Promise<AskResult> {
@@ -131,7 +143,7 @@ export async function askAssistant(question: string, kase: JudicialCase | null, 
 }
 
 /** تعليمة الموجّه: يجيب بذكاءٍ ويؤصّل بالمواد المتاحة، بلا اختلاق رقم مادّة. */
-function buildAskSystemPrompt(hasSources: boolean): string {
+export function buildAskSystemPrompt(hasSources: boolean): string {
   return [
     "أنت «موجّه المعاون القضائيّ» داخل منصّة حكيم — مساعدٌ ذكيّ للقاضي السعوديّ.",
     "أجِب على طلب القاضي بذكاءٍ وبأسلوبٍ عربيّ منظّمٍ وعمليّ، مباشرةً وبلا حشو.",
@@ -144,7 +156,7 @@ function buildAskSystemPrompt(hasSources: boolean): string {
 }
 
 /** استرجاعٌ اختياريّ لمواد النواة (أفضل جهد). فشلٌ ⇒ [] فلا يُعطَّل الموجّه. */
-async function retrieveGroundingArticles(query: string): Promise<LegalCoreResult[]> {
+export async function retrieveGroundingArticles(query: string): Promise<LegalCoreResult[]> {
   if (query.replace(/\s/g, "").length < 4) return [];
   try {
     const { runCaseAgent } = await import("@/lib/modules/agents/case-agent-bridge");
