@@ -6,6 +6,7 @@
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { findPrecedents } from "./rulings";
 import { JURISDICTION_LABEL } from "./labels";
+import { buildRelevantDocs } from "./case-search";
 import type { GroundedWorkResult, JudicialCase } from "./types";
 
 interface WorkSpec {
@@ -30,20 +31,12 @@ export const WORK_SPECS: Record<string, WorkSpec> = {
 function buildBasePrompt(kase: JudicialCase, directive: string): string {
   const issues = kase.issues.map((i) => i.statement);
   const established = kase.facts.filter((f) => f.status === "established" || f.status === "admitted").map((f) => f.text);
-  let budget = 10_000;
-  const docs = kase.attachments
-    .map((a) => {
-      const slice = a.text.slice(0, Math.max(0, budget));
-      budget -= slice.length;
-      return slice ? `— «${a.name}»:\n${slice}` : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
+  const docs = buildRelevantDocs(kase, [kase.subject, ...issues, directive].join(" "), 10_000);
   return [
     `نوع القضاء: ${JURISDICTION_LABEL[kase.jurisdiction]}. موضوع القضية: ${kase.subject}.`,
     issues.length ? `المسائل محلّ الفصل:\n${issues.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : "",
     established.length ? `الوقائع الثابتة/المُقرّة:\n${established.map((t) => `- ${t}`).join("\n")}` : "",
-    docs ? `مقتطفات من مرفقات القضية:\n${docs}` : "",
+    docs ? `مقاطعُ ذات صلة من مستندات القضية:\n${docs}` : "",
     `المطلوب: ${directive}`,
     "استند حصريًّا لمواد النظام الحاكم المرفقة من النواة. إن لم تكفِ المواد فصرّح بذلك بدل الاختلاق.",
   ].filter(Boolean).join("\n");

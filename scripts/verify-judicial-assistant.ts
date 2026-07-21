@@ -7,6 +7,7 @@ import { buildTimeline } from "@/lib/modules/judicial-assistant/rules/timeline";
 import { buildEvidenceMatrix } from "@/lib/modules/judicial-assistant/rules/evidence";
 import { checkJurisdiction, checkAdmissibility } from "@/lib/modules/judicial-assistant/rules/admissibility";
 import { suggestedActionsFor } from "@/lib/modules/judicial-assistant/catalog";
+import { searchCaseDocuments } from "@/lib/modules/judicial-assistant/case-search";
 import type { JudicialCase } from "@/lib/modules/judicial-assistant/types";
 
 const CASE: JudicialCase = {
@@ -73,6 +74,18 @@ const DOCS_ONLY: JudicialCase = { ...EMPTY_CASE, attachments: [{ id: "a", name: 
 const docActs = suggestedActionsFor(DOCS_ONLY);
 check("مرفقاتٌ بلا خريطة → أوّل اقتراحٍ استخلاص الخريطة (JS-005)", docActs[0]?.serviceId === "JS-005");
 check("مرفقاتٌ بلا خريطة → لا يُقترَح ما يحتاج خريطةً (JS-006/‏012/‏009)", !docActs.some((a) => ["JS-006", "JS-007", "JS-009", "JS-012"].includes(a.serviceId)));
+
+console.log("البحث الفوريّ في مستندات القضية (محرّك منصّة الوثائق BM25):");
+const SEARCH_CASE: JudicialCase = {
+  ...EMPTY_CASE,
+  attachments: [{
+    id: "d1", name: "لائحة.txt", chars: 0, addedAt: CASE.createdAt,
+    text: "الفصل الأول: الاختصاص المكانيّ للمحكمة التجارية.\n\nالفصل الثاني: تأخّر المورّد في تسليم البضاعة وطلب التعويض عن الضرر.\n\nالفصل الثالث: أحكامٌ ختاميّة ونفاذ العقد.",
+  }],
+};
+const hits = searchCaseDocuments(SEARCH_CASE, "التعويض عن تأخّر تسليم البضاعة", 3);
+check("يعيد مقاطعَ ذات صلة من المستند", hits.length >= 1);
+check("أعلى مقطعٍ يخصّ التأخّر والتعويض (لا الاختصاص أو الأحكام الختاميّة)", hits.length > 0 && /تأخّر|التعويض|البضاعة/.test(hits[0].text));
 
 // حالة النقص: قضيّةٌ بلا خريطة → قوائم الفحص تُظهر النقص بأمانة (لا تجزم)
 console.log("سلوك النقص (قضيّة بلا خريطة):");

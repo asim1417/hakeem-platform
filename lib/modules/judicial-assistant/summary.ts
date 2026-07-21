@@ -7,6 +7,7 @@
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import type { ExecutiveSummaryResult, JudicialCase } from "./types";
 import { STAGE_META } from "./catalog";
+import { buildRelevantDocs } from "./case-search";
 
 const HUMAN_REVIEW_NOTICE =
   "هذا الملخّص عملٌ معاون يخضع لمراجعة القاضي؛ لا يعتمد حكمًا ولا يغني عن قراءة المصادر. كلّ إسنادٍ قابلٌ للفتح والتحقّق.";
@@ -25,16 +26,8 @@ function buildFactsText(kase: JudicialCase): string {
     .map((f) => `- ${f.text}`)
     .join("\n");
   const issues = kase.issues.map((i) => `- ${i.statement}`).join("\n");
-  // مقتطفات من المرفقات (المادّة الحقيقيّة) — بسقفٍ إجماليّ.
-  let budget = 12_000;
-  const docs = kase.attachments
-    .map((a) => {
-      const slice = a.text.slice(0, Math.max(0, budget));
-      budget -= slice.length;
-      return slice ? `— من «${a.name}»:\n${slice}` : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
+  // مقاطعُ ذات صلة من مستندات القضية (بحثٌ فوريّ بمحرّك منصّة الوثائق)، بسقفٍ إجماليّ.
+  const docs = buildRelevantDocs(kase, [kase.subject, ...kase.issues.map((i) => i.statement), ...kase.requests.map((r) => r.text)].join(" "), 12_000);
   return [
     `نوع القضاء: ${kase.jurisdiction}`,
     `موضوع القضية: ${kase.subject}`,

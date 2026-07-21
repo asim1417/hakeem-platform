@@ -7,6 +7,7 @@
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { findPrecedents } from "./rulings";
 import { JURISDICTION_LABEL } from "./labels";
+import { buildRelevantDocs } from "./case-search";
 import type { JudicialCase, JudicialStudyResult, StudyDepth } from "./types";
 
 const DEPTH_LABEL: Record<StudyDepth, string> = { short: "مختصرة", medium: "متوسّطة", extended: "موسّعة" };
@@ -29,21 +30,13 @@ export async function buildJudicialStudy(
     .filter((f) => f.status === "established" || f.status === "admitted")
     .map((f) => f.text);
 
-  let budget = 8_000;
-  const docs = kase.attachments
-    .map((a) => {
-      const slice = a.text.slice(0, Math.max(0, budget));
-      budget -= slice.length;
-      return slice ? `— «${a.name}»:\n${slice}` : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
+  const docs = buildRelevantDocs(kase, [kase.subject, ...issueList, ...established].join(" "), 8_000);
 
   const prompt = [
     `نوع القضاء: ${JURISDICTION_LABEL[kase.jurisdiction]}. موضوع القضية: ${kase.subject}.`,
     issueList.length ? `المسائل محلّ الفصل:\n${issueList.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : "المسائل: استخرِجها من الوقائع أدناه.",
     established.length ? `الوقائع الثابتة/المُقرّة:\n${established.map((t) => `- ${t}`).join("\n")}` : "",
-    docs ? `مقتطفات من مرفقات القضية:\n${docs}` : "",
+    docs ? `مقاطعُ ذات صلة من مستندات القضية:\n${docs}` : "",
     DEPTH_DIRECTIVE[depth],
     "استند حصريًّا لمواد النظام الحاكم المرفقة من النواة. أظهِر البدائل/التفسيرات المتنافسة حيث وُجدت. إن لم تكفِ المواد فصرّح بذلك.",
   ].filter(Boolean).join("\n");
