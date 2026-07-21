@@ -4,6 +4,7 @@
 // بتظليل المطابقات، وحذفٌ (المالك فقط). النصّ متاحٌ محليًّا (مُخزَّن مع القضية) فلا طلب إضافيّ.
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isGarbledArabicText } from "@/lib/modules/document-inspection/reshape";
 import { JaIcon } from "./icons";
 import { formatDateTime } from "@/lib/modules/judicial-assistant/labels";
 import type { CaseAttachment } from "@/lib/modules/judicial-assistant/types";
@@ -40,6 +41,7 @@ function AttachmentCard({ caseId, att, onRemoved }: { caseId: string; att: CaseA
   const preview = truncated ? att.text.slice(0, PREVIEW_CAP) : att.text;
   const segs = useMemo(() => segments(preview, find), [preview, find]);
   const matches = useMemo(() => segs.filter((s) => s.m).length, [segs]);
+  const poorQuality = useMemo(() => att.text.trim().length > 40 && isGarbledArabicText(att.text).garbled, [att.text]);
 
   async function remove() {
     setBusy(true); setError("");
@@ -58,7 +60,7 @@ function AttachmentCard({ caseId, att, onRemoved }: { caseId: string; att: CaseA
         <div className="ja-att__id">
           <span className="ja-att__ic"><JaIcon name="documents" size={16} /></span>
           <div>
-            <div className="ja-att__name">{att.name}</div>
+            <div className="ja-att__name">{att.name}{poorQuality ? <span className="ja-badge ja-badge--warning ja-att__q">نصٌّ مشوّه</span> : null}</div>
             <div className="ja-att__meta">{att.chars.toLocaleString("ar-SA")} حرف · أُضيف {formatDateTime(att.addedAt)}</div>
           </div>
         </div>
@@ -81,6 +83,9 @@ function AttachmentCard({ caseId, att, onRemoved }: { caseId: string; att: CaseA
 
       {open ? (
         <div className="ja-att__panel">
+          {poorQuality ? (
+            <div className="ja-alert ja-alert--warning">النصّ المقروء من هذه الوثيقة مشوّه (طبقة نصٍّ معطوبة أو مسحٌ ضوئيّ). احذفها وأعِد رفعها مع تفعيل «قراءة سحابيّة عالية الدقّة (Gemini)» للحصول على نصٍّ سليم.</div>
+          ) : null}
           <div className="ja-att__find">
             <JaIcon name="evidence" size={14} />
             <input
