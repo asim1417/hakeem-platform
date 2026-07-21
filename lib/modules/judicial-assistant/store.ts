@@ -171,6 +171,8 @@ export async function deleteCase(caseId: string, ownerId: string): Promise<boole
     const row = await prisma.judicialWorkCase.findUnique({ where: { id: caseId }, select: { ownerId: true } });
     if (!row || row.ownerId !== ownerId) return false;
     await prisma.judicialWorkCase.delete({ where: { id: caseId } });
+    // تنظيف فهرس المتجهات (أفضل جهد، لا يعطّل الحذف).
+    await import("./case-vector").then((m) => m.dropCaseVectors(caseId)).catch(() => undefined);
     return true;
   } catch {
     return false;

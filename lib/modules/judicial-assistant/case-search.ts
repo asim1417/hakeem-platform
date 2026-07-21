@@ -14,7 +14,7 @@ export interface CasePassage {
 }
 
 /** يقسّم نصّ مرفقٍ إلى مقاطعَ متقاربة الحجم (فقرات، مع تنويمٍ للطويل). */
-function chunkText(text: string, target = 700): string[] {
+export function chunkText(text: string, target = 700): string[] {
   const paras = text.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
   const chunks: string[] = [];
   let buf = "";
@@ -56,7 +56,11 @@ export function searchCaseDocuments(kase: JudicialCase, query: string, topK = 6)
  * محدودًا بسقفٍ إجماليّ، ومع سقوطٍ آمنٍ إلى مقتطفٍ مبتور عند غياب تطابق.
  */
 export function buildRelevantDocs(kase: JudicialCase, query: string, budget = 10_000, topK = 8): string {
-  const passages = searchCaseDocuments(kase, query, topK);
+  return formatPassages(kase, searchCaseDocuments(kase, query, topK), budget);
+}
+
+/** ينسّق مقاطعَ ضمن سقفٍ إجماليّ، مع سقوطٍ آمن إلى مقتطفٍ مبتور عند غياب المقاطع. */
+export function formatPassages(kase: JudicialCase, passages: CasePassage[], budget = 10_000): string {
   if (passages.length) {
     const parts: string[] = [];
     let used = 0;

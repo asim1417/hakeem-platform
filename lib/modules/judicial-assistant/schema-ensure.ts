@@ -34,6 +34,19 @@ const DDL = [
     "created_at"  TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS "judicial_analyses_case_ref_created_at_idx" ON "judicial_analyses"("case_ref", "created_at")`,
+  // مقاطع مستندات القضية للبحث الدلاليّ (embeddings مخزّنةٌ JSONB، والترتيب cosine في التطبيق —
+  // كتخزين النواة، بلا اعتماد نوع عمود vector). فهرسةٌ كسولة عند أوّل بحث. سقوطٌ آمن للمعجميّ.
+  `CREATE TABLE IF NOT EXISTS "judicial_doc_chunks" (
+    "id"         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "case_id"    UUID NOT NULL,
+    "att_id"     TEXT NOT NULL,
+    "ord"        INT  NOT NULL,
+    "text"       TEXT NOT NULL,
+    "embedding"  JSONB,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS "judicial_doc_chunks_case_idx" ON "judicial_doc_chunks"("case_id")`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "judicial_doc_chunks_uq" ON "judicial_doc_chunks"("case_id", "att_id", "ord")`,
 ];
 
 let ready: Promise<boolean> | null = null;

@@ -7,7 +7,7 @@
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { findPrecedents } from "./rulings";
 import { JURISDICTION_LABEL } from "./labels";
-import { buildRelevantDocs } from "./case-search";
+import { buildRelevantDocsAsync } from "./case-vector";
 import type { JudicialCase, JudicialStudyResult, StudyDepth } from "./types";
 
 const DEPTH_LABEL: Record<StudyDepth, string> = { short: "مختصرة", medium: "متوسّطة", extended: "موسّعة" };
@@ -30,7 +30,7 @@ export async function buildJudicialStudy(
     .filter((f) => f.status === "established" || f.status === "admitted")
     .map((f) => f.text);
 
-  const docs = buildRelevantDocs(kase, [kase.subject, ...issueList, ...established].join(" "), 8_000);
+  const docs = await buildRelevantDocsAsync(kase, [kase.subject, ...issueList, ...established].join(" "), 8_000);
 
   const prompt = [
     `نوع القضاء: ${JURISDICTION_LABEL[kase.jurisdiction]}. موضوع القضية: ${kase.subject}.`,
