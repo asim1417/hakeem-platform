@@ -242,6 +242,33 @@ export function isGarbledArabicText(rawText: string): GarbleReport {
 }
 
 /**
+ * كاشفٌ أقوى لاستخراجٍ معطوب — يشمل ما يفوت isGarbledArabicText: خطوطٌ تُرمَّز إلى
+ * حروفٍ لاتينيّة موسّعة/IPA/يونانيّة/سيريليّة/رسم صناديق (لا عربيّة أصلًا ولا PUA فقط).
+ * يعتمد على كثافة المحارف «الغريبة» عن نصٍّ عربيّ/إنجليزيّ سليم. لا يُفعَّل على النصوص القصيرة.
+ */
+export function isBrokenExtraction(rawText: string): boolean {
+  const t = (rawText || "").trim();
+  if (t.length < 40) return false;
+  if (isGarbledArabicText(t).garbled) return true;
+  let weird = 0;
+  let total = 0;
+  for (const ch of t) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (c <= 0x20) continue;
+    total += 1;
+    if (
+      (c >= 0x0100 && c <= 0x02ff) || // لاتينيّ موسّع + IPA
+      (c >= 0x0370 && c <= 0x03ff) || // يونانيّ
+      (c >= 0x0400 && c <= 0x04ff) || // سيريليّ
+      (c >= 0x2500 && c <= 0x25ff) || // رسم صناديق + أشكال هندسيّة
+      (c >= 0xe000 && c <= 0xf8ff) || // منطقة الاستخدام الخاص
+      c === 0xfffd || (c >= 0x80 && c <= 0x9f) // محرف الإحلال + تحكّم C1
+    ) weird += 1;
+  }
+  return total >= 40 && weird / total > 0.12;
+}
+
+/**
  * ينظّف نصّ طبقة PDF: إعادة تشكيل + إزالة التكرار. يعيد النصّ المُنظَّف ومؤشّراً
  * إلى بقاء عطب يستوجب OCR (رموز بديلة من خطّ مُجزّأ لا تُعالَج نصّياً).
  */

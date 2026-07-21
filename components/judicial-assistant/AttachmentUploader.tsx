@@ -6,12 +6,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
-import { isGarbledArabicText } from "@/lib/modules/document-inspection/reshape";
+import { isBrokenExtraction } from "@/lib/modules/document-inspection/reshape";
 import { JaIcon } from "./icons";
 
-/** نصٌّ عربيٌّ طويلٌ ومشوّه (طبقة نصٍّ معطوبة/ممسوحة) — لا يصلح مادّةً للقضية. */
+/** نصٌّ طويلٌ ومشوّه (طبقة نصٍّ معطوبة/ممسوحة/خطّ مُرمَّز) — لا يصلح مادّةً للقضية. */
 function garbled(text: string): boolean {
-  return text.trim().length > 40 && isGarbledArabicText(text).garbled;
+  return isBrokenExtraction(text);
 }
 
 export function AttachmentUploader({ caseId }: { caseId: string }) {

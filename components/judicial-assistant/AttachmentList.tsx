@@ -4,7 +4,7 @@
 // بتظليل المطابقات، وحذفٌ (المالك فقط). النصّ متاحٌ محليًّا (مُخزَّن مع القضية) فلا طلب إضافيّ.
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isGarbledArabicText } from "@/lib/modules/document-inspection/reshape";
+import { isBrokenExtraction } from "@/lib/modules/document-inspection/reshape";
 import { JaIcon } from "./icons";
 import { formatDateTime } from "@/lib/modules/judicial-assistant/labels";
 import type { CaseAttachment } from "@/lib/modules/judicial-assistant/types";
@@ -41,7 +41,7 @@ function AttachmentCard({ caseId, att, onRemoved }: { caseId: string; att: CaseA
   const preview = truncated ? att.text.slice(0, PREVIEW_CAP) : att.text;
   const segs = useMemo(() => segments(preview, find), [preview, find]);
   const matches = useMemo(() => segs.filter((s) => s.m).length, [segs]);
-  const poorQuality = useMemo(() => att.text.trim().length > 40 && isGarbledArabicText(att.text).garbled, [att.text]);
+  const poorQuality = useMemo(() => isBrokenExtraction(att.text), [att.text]);
 
   async function remove() {
     setBusy(true); setError("");
