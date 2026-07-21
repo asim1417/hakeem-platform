@@ -34,18 +34,21 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
   async function onFile(file: File) {
     setBusy(true); setError(""); setStatus("جارٍ قراءة الوثيقة…");
     try {
-      const isImage = /\.(png|jpe?g|webp|bmp|tiff?|gif)$/i.test(file.name);
-      // صورةٌ + سحابيّةٌ مفعّلة → قراءةٌ بصريّة مباشرةً (أدقّ للعربيّة من OCR المحليّ).
-      const primaryCloud = cloudAvailable && isImage;
+      const ext = (file.name.match(/\.([^.]+)$/)?.[1] ?? "").toLowerCase();
+      // PDF والصور تُقرأ **بصريًّا بـ Gemini افتراضيًّا** متى توفّر المفتاح — نفس القراءة القويّة
+      // في منصّة الوثائق (تتجاوز طبقات النصّ المعطوبة والمسح الضوئيّ). النصّ/‏Word يبقى محليًّا.
+      const visual = /^(pdf|png|jpe?g|webp|bmp|tiff?|gif)$/.test(ext);
+      const useCloud = cloudAvailable && visual;
       let { text, kind } = await extractFile(file, {
-        onProgress: (m) => setStatus(m), cloudOcr: primaryCloud, cloudModel: "pro",
+        onProgress: (m) => setStatus(m), cloudOcr: useCloud, cloudModel: "flash",
       });
 
-      // نصٌّ مشوّه من طبقةٍ معطوبة/ممسوح → تحويلٌ تلقائيّ لقراءة Gemini البصريّة عالية الدقّة.
-      if (garbled(text) && cloudAvailable && !primaryCloud) {
-        setStatus("النصّ مشوّه — أُحوّل تلقائيًّا لقراءة Gemini البصريّة…");
-        const cloud = await extractFile(file, { onProgress: (m) => setStatus(m), cloudOcr: true, cloudModel: "pro" });
-        if (cloud.text && cloud.text.trim().length >= 2) { text = cloud.text; kind = cloud.kind; }
+      // بقي مشوّهًا؟ ارفع الدقّة (Gemini Pro) بصريًّا — احتياطٌ أخير.
+      if (garbled(text) && cloudAvailable) {
+        setStatus("أرفع دقّة القراءة (Gemini Pro)…");
+        const hi = await extractFile(file, { onProgress: (m) => setStatus(m), cloudOcr: true, cloudModel: "pro" });
+        if (hi.text && hi.text.trim().length >= 2 && !garbled(hi.text)) { text = hi.text; kind = hi.kind; }
+        else if (hi.text && hi.text.trim().length >= 2) { text = hi.text; kind = hi.kind; }
       }
 
       if (!text || text.trim().length < 2) throw new Error(`تعذّرت قراءة نصٍّ من الملفّ (${kind}).`);
@@ -90,7 +93,9 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
         {error ? <span className="ja-uploader__err">{error}</span> : null}
       </div>
       <span className="ja-uploader__hint">
-        قراءةٌ تلقائيّة بمحرّك «منصّة الوثائق» — محليًّا في متصفّحك{cloudAvailable ? "، وتحويلٌ تلقائيّ لقراءة Gemini البصريّة للممسوح والخطّ اليدويّ" : ""}؛ يُرسَل النصّ فقط.
+        {cloudAvailable
+          ? "قراءةٌ بصريّة عالية الجودة بـ Gemini للـPDF والصور (كمنصّة الوثائق)، ومحليّة للنصّ وWord — تلقائيًّا بلا خيارات."
+          : "قراءةٌ محليّة بمحرّك «منصّة الوثائق» في متصفّحك؛ يُرسَل النصّ فقط. (فعّل مفتاح Gemini لقراءةٍ بصريّة أقوى للممسوح.)"}
       </span>
     </div>
   );
