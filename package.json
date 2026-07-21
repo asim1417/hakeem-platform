@@ -156,7 +156,8 @@
     "agents:demo": "tsx scripts/demo-agents.ts",
     "test:quota": "tsx scripts/test-quota.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
-    "verify:judicial": "tsx scripts/verify-judicial-assistant.ts"
+    "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
+    "smoke:judicial": "tsx scripts/smoke-judicial.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.6",
