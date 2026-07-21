@@ -1062,12 +1062,20 @@ body {
 }
 .ja-field input:focus, .ja-field select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
-.ja-uploader { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ja-uploader { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.ja-uploader__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ja-uploader__btn { cursor: pointer; }
 .ja-uploader__btn.is-busy { opacity: .7; pointer-events: none; }
 .ja-uploader__status { font-size: 12.5px; color: var(--ink-64); }
 .ja-uploader__err { font-size: 12.5px; color: var(--ruby); font-weight: 600; }
 .ja-uploader__hint { font-size: 11.5px; color: var(--ink-46); }
+.ja-readopts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.ja-readopt { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-70); cursor: pointer; }
+.ja-readopt input[type="checkbox"] { accent-color: var(--gold-dark); width: 15px; height: 15px; }
+.ja-readopt span { display: inline-flex; align-items: center; gap: 5px; }
+.ja-readopt span svg { color: var(--gold-dark); }
+.ja-readopt--range { gap: 6px; color: var(--ink-60); cursor: default; }
+.ja-readopt--range input { width: 56px; padding: 4px 8px; border: 1px solid var(--ink-12, var(--ink-08)); border-radius: 8px; font: inherit; font-size: 12px; background: var(--paper); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 /* المعاون القضائي — استخلاص الخريطة (JS-005) */

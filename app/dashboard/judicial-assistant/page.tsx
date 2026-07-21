@@ -43,7 +43,6 @@ export default async function JudicialAssistantDashboard() {
           <div className="ja-hero2__cta">
             <CreateCaseForm />
             <Link href="/dashboard/judicial-assistant/cases" className="btn btn-outline ja-hero2__ghost"><JaIcon name="case" size={16} /> قضاياي</Link>
-            <Link href="/documents/tool" className="btn btn-outline ja-hero2__ghost"><JaIcon name="documents" size={16} /> منصّة الوثائق</Link>
           </div>
         </div>
       </header>
