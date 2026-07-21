@@ -93,12 +93,16 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         )}
       </section>
 
-      {/* المرفقات — المدخل الأساسيّ للقضية */}
+      {/* المرفقات — المدخل الأساسيّ للقضية، مربوطٌ بمحرّك منصّة الوثائق (لا استخراجٌ مكرّر) */}
       <section className="card ja-panel" aria-labelledby="ja-attach">
         <div className="ja-panel__row">
           <h2 id="ja-attach" className="ja-panel__title"><JaIcon name="documents" size={18} /> مرفقات القضية</h2>
           <AttachmentUploader caseId={kase.id} />
         </div>
+        <p className="ja-linkhint">
+          <JaIcon name="documents" size={14} />
+          <span>القراءة والاستخراج يجريان بمحرّك <b>منصّة الوثائق</b> نفسه (محليًّا في متصفّحك). للفحص المتقدّم — قراءةٌ ضوئيّة، تلوين الأطراف والمبالغ، جداول مشتقّة ومقتطفات — <Link href="/documents/tool" target="_blank" className="ja-inlink">افتح منصّة الوثائق ↗</Link></span>
+        </p>
         {kase.attachments.length === 0 ? (
           <LegalEmptyState title="لا مرفقات بعد" description="أضِف اللائحة والمذكّرات والمحاضر — الاستخراج محليّ في متصفّحك، ويصير المرفق مادّةً للتحليل." />
         ) : (
