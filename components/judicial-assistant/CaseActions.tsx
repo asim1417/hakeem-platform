@@ -6,13 +6,11 @@
 import { useState } from "react";
 import { JaIcon } from "./icons";
 import { SERVICES } from "@/lib/modules/judicial-assistant/catalog";
+import { runnerFor } from "@/lib/modules/judicial-assistant/routing";
 import type {
   DeterministicActionResult, ExecutiveSummaryResult, GroundedWorkResult, JudgmentDraftResult, JudicialStudyResult, SuggestedAction,
 } from "@/lib/modules/judicial-assistant/types";
 import { FACT_STATUS_LABEL, formatDate } from "@/lib/modules/judicial-assistant/labels";
-
-// خدمات النموذج الموحَّدة (تذهب إلى /work) والحتميّة (تذهب إلى /action).
-const WORK_IDS = new Set(["JS-002", "JS-003", "JS-011", "JS-012", "JS-014", "JS-015", "JS-016", "JS-017", "JS-021", "JS-022"]);
 
 type Panel =
   | { kind: "summary"; data: ExecutiveSummaryResult }
@@ -28,15 +26,16 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const [showAll, setShowAll] = useState(false);
 
   async function run(serviceId: string) {
+    const runner = runnerFor(serviceId);
     // JS-005 استخلاص الخريطة له لوحته المخصّصة (MapExtractor) — انتقل إليها بدل مسار الأعمال.
-    if (serviceId === "JS-005") {
+    if (runner === "map") {
       document.getElementById("ja-map-extract")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     setRunning(serviceId);
     setError(null);
     try {
-      if (serviceId === "JS-001") {
+      if (runner === "summary") {
         const res = await fetch("/api/judicial-assistant/summary", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ caseId }),
@@ -44,7 +43,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
         setPanel({ kind: "summary", data });
-      } else if (serviceId === "JS-018") {
+      } else if (runner === "draft") {
         const res = await fetch("/api/judicial-assistant/draft", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ caseId }),
@@ -52,7 +51,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
         setPanel({ kind: "draft", data });
-      } else if (serviceId === "JS-013") {
+      } else if (runner === "study") {
         const res = await fetch("/api/judicial-assistant/study", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ caseId, depth: "medium" }),
@@ -60,7 +59,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
         setPanel({ kind: "study", data });
-      } else if (WORK_IDS.has(serviceId)) {
+      } else if (runner === "work") {
         const res = await fetch("/api/judicial-assistant/work", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ caseId, serviceId }),
@@ -68,7 +67,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
         setPanel({ kind: "work", data });
-      } else if (serviceId === "JS-023") {
+      } else if (runner === "export") {
         const res = await fetch(`/api/judicial-assistant/cases/${caseId}/export`);
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d?.message || "تعذّر التصدير."); }
         const text = await res.text();

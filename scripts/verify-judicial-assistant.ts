@@ -6,8 +6,9 @@ import { computeDeadlines } from "@/lib/modules/judicial-assistant/rules/deadlin
 import { buildTimeline } from "@/lib/modules/judicial-assistant/rules/timeline";
 import { buildEvidenceMatrix } from "@/lib/modules/judicial-assistant/rules/evidence";
 import { checkJurisdiction, checkAdmissibility } from "@/lib/modules/judicial-assistant/rules/admissibility";
-import { suggestedActionsFor } from "@/lib/modules/judicial-assistant/catalog";
+import { suggestedActionsFor, SERVICES, SERVICE_BY_ID } from "@/lib/modules/judicial-assistant/catalog";
 import { searchCaseDocuments } from "@/lib/modules/judicial-assistant/case-search";
+import { SERVICE_RUNNER, DETERMINISTIC_IDS } from "@/lib/modules/judicial-assistant/routing";
 import type { JudicialCase } from "@/lib/modules/judicial-assistant/types";
 
 const CASE: JudicialCase = {
@@ -62,6 +63,14 @@ console.log("JS-007 فحص القبول:");
 const ad = checkAdmissibility(CASE);
 check("يفحص الصفة والمصلحة والمدّة", ["capacity", "interest", "timing"].every((k) => ad.items.some((i) => i.key === k)));
 check("لا يرفع تنبيه نقصٍ (الخريطة مكتملة)", !ad.items.some((i) => i.outcome === "flag"));
+
+console.log("تغطية التوجيه — كلّ خدمةٍ متاحةٍ لها مُشغِّل (يلتقط أخطاء JS-005):");
+const available = SERVICES.filter((s) => s.available);
+check(`الكتالوج يعرض ٢٤ خدمة`, SERVICES.length === 24);
+check(`كلّ خدمةٍ متاحةٍ لها مُشغِّل في SERVICE_RUNNER`, available.every((s) => Boolean(SERVICE_RUNNER[s.id])), available.filter((s) => !SERVICE_RUNNER[s.id]).map((s) => s.id).join(","));
+check(`كلّ معرّفٍ في SERVICE_RUNNER موجودٌ في الكتالوج`, Object.keys(SERVICE_RUNNER).every((id) => Boolean(SERVICE_BY_ID[id])));
+check(`الخدمات الحتميّة تطابق enum مسار /action`, DETERMINISTIC_IDS.every((id) => SERVICE_RUNNER[id] === "deterministic"));
+check(`لا خدمةَ متاحةً بلا مُشغِّل معروف`, available.every((s) => ["summary", "study", "work", "draft", "deterministic", "export", "map"].includes(SERVICE_RUNNER[s.id] ?? "")));
 
 console.log("المنسّق (§15) اقتراح الأعمال من واقع القضية الحيّ:");
 const acts = suggestedActionsFor(CASE);
