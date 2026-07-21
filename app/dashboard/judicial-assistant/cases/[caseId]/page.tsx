@@ -101,7 +101,7 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         </div>
         <p className="ja-linkhint">
           <JaIcon name="documents" size={14} />
-          <span>القراءة والاستخراج يجريان بمحرّك <b>منصّة الوثائق</b> نفسه (محليًّا في متصفّحك). للفحص المتقدّم — قراءةٌ ضوئيّة، تلوين الأطراف والمبالغ، جداول مشتقّة ومقتطفات — <Link href="/documents/tool" target="_blank" className="ja-inlink">افتح منصّة الوثائق ↗</Link></span>
+          <span>القراءة والاستخراج بقوّة <b>منصّة الوثائق</b> نفسها — هنا داخل المعاون: استخراجٌ محليّ في متصفّحك، وقراءةٌ سحابيّةٌ فائقة الدقّة (Gemini) للممسوح والخطّ اليدويّ إن كانت مفعّلة.</span>
         </p>
         {kase.attachments.length === 0 ? (
           <LegalEmptyState title="لا مرفقات بعد" description="أضِف اللائحة والمذكّرات والمحاضر — الاستخراج محليّ في متصفّحك، ويصير المرفق مادّةً للتحليل." />
