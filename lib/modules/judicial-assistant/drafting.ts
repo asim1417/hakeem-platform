@@ -7,7 +7,7 @@ import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-
 import { findPrecedents } from "./rulings";
 import { STAGE_META } from "./catalog";
 import { JURISDICTION_LABEL, FACT_STATUS_LABEL } from "./labels";
-import { buildRelevantDocs } from "./case-search";
+import { buildRelevantDocsAsync } from "./case-vector";
 import type { JudgmentDraftResult, JudgmentSection, JudicialCase } from "./types";
 
 const NOTICE =
@@ -51,7 +51,7 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
     .map((f) => f.text)
     .join("؛ ");
   // بحثٌ فوريّ في مستندات القضية عن المقاطع المتعلّقة بالمسائل والوقائع (بمحرّك منصّة الوثائق).
-  const docs = buildRelevantDocs(kase, [kase.subject, issues, established].filter(Boolean).join(" "), 8_000);
+  const docs = await buildRelevantDocsAsync(kase, [kase.subject, issues, established].filter(Boolean).join(" "), 8_000);
   const reasoningPrompt = [
     `نوع القضاء: ${kase.jurisdiction}. الموضوع: ${kase.subject}.`,
     `المسائل محلّ الفصل: ${issues || "—"}.`,

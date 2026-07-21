@@ -13,7 +13,7 @@ import {
   GREETING, GREETING_INVITE_CASE, GREETING_INVITE_GENERAL,
   DISCLAIMER, NOTICE_GROUNDED, NOTICE_GENERAL, OFFLINE, GUARD_FALLBACK,
 } from "./ask";
-import { searchCaseDocuments } from "./case-search";
+import { retrieveCasePassages } from "./case-vector";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
@@ -38,8 +38,9 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
 
   yield { type: "stage", label: "أفهم طلبك", state: "done" };
 
-  // ① أ) بحثٌ فوريّ في مستندات القضية (مرفقاتها) — بمحرّك منصّة الوثائق.
-  const passages = kase ? searchCaseDocuments(kase, question, 6) : [];
+  // ① أ) بحثٌ في مستندات القضية (مرفقاتها) — دلاليٌّ إن أمكن، وإلا معجميّ.
+  if (kase && kase.attachments.length) yield { type: "stage", label: "أبحث في مستنداتك", state: "active" };
+  const passages = kase ? await retrieveCasePassages(kase, question, 6) : [];
   if (kase && kase.attachments.length) {
     yield { type: "stage", label: passages.length ? `بحثتُ مستنداتك: ${passages.length} مقطعًا ذا صلة` : "بحثتُ مستنداتك: لا مقطعَ مطابق", state: "done" };
   }

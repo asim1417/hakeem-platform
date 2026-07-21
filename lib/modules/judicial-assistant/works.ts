@@ -6,7 +6,7 @@
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { findPrecedents } from "./rulings";
 import { JURISDICTION_LABEL } from "./labels";
-import { buildRelevantDocs } from "./case-search";
+import { buildRelevantDocsAsync } from "./case-vector";
 import type { GroundedWorkResult, JudicialCase } from "./types";
 
 interface WorkSpec {
@@ -28,10 +28,10 @@ export const WORK_SPECS: Record<string, WorkSpec> = {
   "JS-022": { title: "مذكّرة الردّ على الاعتراض", directive: "صُغ مسودّة ردٍّ على أسباب الاعتراض الواردة في المرفقات، مؤصَّلةً بالمواد، مع بيان ما يدعم سلامة الحكم.", withPrecedents: true },
 };
 
-function buildBasePrompt(kase: JudicialCase, directive: string): string {
+async function buildBasePrompt(kase: JudicialCase, directive: string): Promise<string> {
   const issues = kase.issues.map((i) => i.statement);
   const established = kase.facts.filter((f) => f.status === "established" || f.status === "admitted").map((f) => f.text);
-  const docs = buildRelevantDocs(kase, [kase.subject, ...issues, directive].join(" "), 10_000);
+  const docs = await buildRelevantDocsAsync(kase, [kase.subject, ...issues, directive].join(" "), 10_000);
   return [
     `نوع القضاء: ${JURISDICTION_LABEL[kase.jurisdiction]}. موضوع القضية: ${kase.subject}.`,
     issues.length ? `المسائل محلّ الفصل:\n${issues.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : "",
@@ -50,7 +50,7 @@ export async function runGroundedWork(serviceId: string, kase: JudicialCase, act
   const spec = WORK_SPECS[serviceId];
   if (!spec) throw new Error(`خدمة غير معروفة: ${serviceId}`);
 
-  const prompt = buildBasePrompt(kase, spec.directive);
+  const prompt = await buildBasePrompt(kase, spec.directive);
   const [draft, precedents] = await Promise.all([
     createAgentConsultationDraft({ facts: prompt, actorId }).catch(() => null),
     spec.withPrecedents ? findPrecedents(kase) : Promise.resolve([]),

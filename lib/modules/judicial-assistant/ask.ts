@@ -10,7 +10,8 @@ import { guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-cor
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { JURISDICTION_LABEL } from "./labels";
-import { searchCaseDocuments, type CasePassage } from "./case-search";
+import type { CasePassage } from "./case-search";
+import { retrieveCasePassages } from "./case-vector";
 import type { JudicialCase } from "./types";
 
 export interface AskResult {
@@ -116,8 +117,8 @@ export async function askAssistant(question: string, kase: JudicialCase | null, 
     ? articles.map((a) => `- ${a.systemName}، المادة ${a.articleNumber}: ${a.articleText.slice(0, 350)}`).join("\n")
     : "";
 
-  // بحثٌ فوريّ في مستندات القضية عن أكثر المقاطع صلةً بالسؤال (بمحرّك منصّة الوثائق).
-  const passages = kase ? searchCaseDocuments(kase, question, 6) : [];
+  // بحثٌ في مستندات القضية عن أكثر المقاطع صلةً بالسؤال (دلاليٌّ إن أمكن، وإلا معجميّ).
+  const passages = kase ? await retrieveCasePassages(kase, question, 6) : [];
 
   // ② استدعاء النموذج المضبوط في المنصّة مباشرةً (كلود عبر المزوّد المركزيّ).
   const userPrompt = [
