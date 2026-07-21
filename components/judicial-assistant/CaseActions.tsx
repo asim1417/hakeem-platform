@@ -28,6 +28,11 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const [showAll, setShowAll] = useState(false);
 
   async function run(serviceId: string) {
+    // JS-005 استخلاص الخريطة له لوحته المخصّصة (MapExtractor) — انتقل إليها بدل مسار الأعمال.
+    if (serviceId === "JS-005") {
+      document.getElementById("ja-map-extract")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setRunning(serviceId);
     setError(null);
     try {

@@ -124,7 +124,7 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
 
       {/* استخلاص الخريطة من المرفقات (JS-005) — يُثبّتها القاضي فتُفعّل الحتميّة */}
       {kase.attachments.length > 0 ? (
-        <section className="card ja-panel">
+        <section id="ja-map-extract" className="card ja-panel">
           <MapExtractor caseId={kase.id} hasMap={hasMap} />
         </section>
       ) : null}
