@@ -9,12 +9,14 @@ import { buildTimeline } from "@/lib/modules/judicial-assistant/rules/timeline";
 import { checkJurisdiction, checkAdmissibility } from "@/lib/modules/judicial-assistant/rules/admissibility";
 import { analyzeProcedure, checkOperative, checkQuality, buildTaskList } from "@/lib/modules/judicial-assistant/rules/checklists";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
+import { DETERMINISTIC_IDS } from "@/lib/modules/judicial-assistant/routing";
 
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
   caseId: z.string().min(1),
-  serviceId: z.enum(["JS-004", "JS-006", "JS-007", "JS-008", "JS-009", "JS-010", "JS-019", "JS-020", "JS-024"]),
+  // مصدرٌ واحد مع التوجيه — لا تباعد بين المسار والواجهة.
+  serviceId: z.enum(DETERMINISTIC_IDS),
 });
 
 /**
