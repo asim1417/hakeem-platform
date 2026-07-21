@@ -10,6 +10,7 @@ import { guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-cor
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { JURISDICTION_LABEL } from "./labels";
+import { searchCaseDocuments, type CasePassage } from "./case-search";
 import type { JudicialCase } from "./types";
 
 export interface AskResult {
@@ -66,20 +67,26 @@ export function citedArticles(answer: string, articles: LegalCoreResult[]): Lega
   return articles.filter((a) => nums.has(a.articleNumber));
 }
 
-export function caseContext(kase: JudicialCase): string {
+export function caseContext(kase: JudicialCase, passages?: CasePassage[]): string {
   const parties = kase.parties.map((p) => `${p.role}: ${p.name}`).join("، ");
   const requests = kase.requests.map((r) => r.text).join("؛ ");
   const facts = kase.facts.map((f) => f.text).join("؛ ");
   const issues = kase.issues.map((i) => i.statement).join("؛ ");
-  let budget = 8_000;
-  const docs = kase.attachments.map((a) => { const s = a.text.slice(0, Math.max(0, budget)); budget -= s.length; return s ? `— «${a.name}»:\n${s}` : ""; }).filter(Boolean).join("\n\n");
+  // مقاطعُ ذات صلة من مستندات القضية (بحثٌ فوريّ) إن مُرِّرت، وإلا مقتطفٌ مبتور احتياطيّ.
+  let docs = "";
+  if (passages && passages.length) {
+    docs = passages.map((p) => `— «${p.attName}»:\n${p.text}`).join("\n\n");
+  } else {
+    let budget = 8_000;
+    docs = kase.attachments.map((a) => { const s = a.text.slice(0, Math.max(0, budget)); budget -= s.length; return s ? `— «${a.name}»:\n${s}` : ""; }).filter(Boolean).join("\n\n");
+  }
   return [
     `سياق القضية — نوع القضاء: ${JURISDICTION_LABEL[kase.jurisdiction]}؛ الموضوع: ${kase.subject}.`,
     parties ? `الأطراف: ${parties}.` : "",
     requests ? `الطلبات: ${requests}.` : "",
     facts ? `الوقائع: ${facts}.` : "",
     issues ? `المسائل: ${issues}.` : "",
-    docs ? `مقتطفات من المرفقات:\n${docs}` : "",
+    docs ? `مقاطعُ ذات صلة من مستندات القضية:\n${docs}` : "",
   ].filter(Boolean).join("\n");
 }
 
@@ -109,9 +116,12 @@ export async function askAssistant(question: string, kase: JudicialCase | null, 
     ? articles.map((a) => `- ${a.systemName}، المادة ${a.articleNumber}: ${a.articleText.slice(0, 350)}`).join("\n")
     : "";
 
+  // بحثٌ فوريّ في مستندات القضية عن أكثر المقاطع صلةً بالسؤال (بمحرّك منصّة الوثائق).
+  const passages = kase ? searchCaseDocuments(kase, question, 6) : [];
+
   // ② استدعاء النموذج المضبوط في المنصّة مباشرةً (كلود عبر المزوّد المركزيّ).
   const userPrompt = [
-    kase ? caseContext(kase) : "",
+    kase ? caseContext(kase, passages) : "",
     `طلب القاضي: ${question.trim()}`,
     sourcesBlock ? `مواد النواة المتاحة للاستشهاد (لا تستشهد بغيرها ولا تخترع رقمًا):\n${sourcesBlock}` : "لا توجد موادُّ نظاميّة مسترجَعة لهذا الطلب — أجِب اجتهادًا عامًّا دون نسبة رقم مادّةٍ لأيّ نظام.",
   ].filter(Boolean).join("\n\n");

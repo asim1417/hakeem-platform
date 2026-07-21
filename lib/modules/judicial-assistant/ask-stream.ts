@@ -13,6 +13,7 @@ import {
   GREETING, GREETING_INVITE_CASE, GREETING_INVITE_GENERAL,
   DISCLAIMER, NOTICE_GROUNDED, NOTICE_GENERAL, OFFLINE, GUARD_FALLBACK,
 } from "./ask";
+import { searchCaseDocuments } from "./case-search";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
@@ -37,6 +38,12 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
 
   yield { type: "stage", label: "أفهم طلبك", state: "done" };
 
+  // ① أ) بحثٌ فوريّ في مستندات القضية (مرفقاتها) — بمحرّك منصّة الوثائق.
+  const passages = kase ? searchCaseDocuments(kase, question, 6) : [];
+  if (kase && kase.attachments.length) {
+    yield { type: "stage", label: passages.length ? `بحثتُ مستنداتك: ${passages.length} مقطعًا ذا صلة` : "بحثتُ مستنداتك: لا مقطعَ مطابق", state: "done" };
+  }
+
   // ② تأصيلٌ اختياريّ من النواة (بحثٌ حيّ).
   yield { type: "stage", label: "أبحث في النواة", state: "active" };
   const retrieveQuery = [kase?.subject, kase?.issues.map((i) => i.statement).join(" "), question].filter(Boolean).join(" ").trim();
@@ -57,7 +64,7 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
   // ③ صياغة الإجابة بالنموذج — بثٌّ فوريّ.
   yield { type: "stage", label: "أصوغ الإجابة بالنموذج", state: "active" };
   const userPrompt = sanitizeForModel([
-    kase ? caseContext(kase) : "",
+    kase ? caseContext(kase, passages) : "",
     `طلب القاضي: ${question.trim()}`,
     sourcesBlock ? `مواد النواة المتاحة للاستشهاد (لا تستشهد بغيرها ولا تخترع رقمًا):\n${sourcesBlock}` : "لا توجد موادُّ نظاميّة مسترجَعة — أجِب اجتهادًا عامًّا دون نسبة رقم مادّةٍ لأيّ نظام.",
   ].filter(Boolean).join("\n\n")).text;
