@@ -6,7 +6,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
+import { isGarbledArabicText } from "@/lib/modules/document-inspection/reshape";
 import { JaIcon } from "./icons";
+
+/** نصٌّ عربيٌّ طويلٌ ومشوّه (طبقة نصٍّ معطوبة/ممسوحة) — لا يصلح لتخزينه مادّةً للقضية. */
+function garbled(text: string): boolean {
+  return text.trim().length > 40 && isGarbledArabicText(text).garbled;
+}
 
 export function AttachmentUploader({ caseId }: { caseId: string }) {
   const router = useRouter();
@@ -33,13 +39,27 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
   async function onFile(file: File) {
     setBusy(true); setError(""); setStatus("جارٍ استخراج النصّ…");
     try {
-      const { text, kind } = await extractFile(file, {
-        onProgress: (m) => setStatus(m),
-        cloudOcr: cloudAvailable && cloudOcr,
-        cloudModel: cloudHiQ ? "pro" : "flash",
-        cloudRange: { from: Number(rangeFrom) || undefined, to: Number(rangeTo) || undefined },
+      const range = { from: Number(rangeFrom) || undefined, to: Number(rangeTo) || undefined };
+      const wantCloud = cloudAvailable && cloudOcr;
+      let { text, kind } = await extractFile(file, {
+        onProgress: (m) => setStatus(m), cloudOcr: wantCloud, cloudModel: cloudHiQ ? "pro" : "flash", cloudRange: range,
       });
+
+      // كشف التشوّه: طبقة نصٍّ معطوبة/ممسوحة تُنتج خردةً غير مقروءة. إن توفّرت السحابيّة ولم
+      // تُستعمل، أعِد القراءة **بصريًّا عبر Gemini** (يتجاوز الطبقة المعطوبة) بأعلى دقّة.
+      if (garbled(text) && cloudAvailable && !wantCloud) {
+        setStatus("النصّ المُستخرَج مشوّه — أعيد القراءة سحابيًّا (Gemini) بصريًّا…");
+        const cloud = await extractFile(file, { onProgress: (m) => setStatus(m), cloudOcr: true, cloudModel: "pro", cloudRange: range });
+        if (cloud.text && cloud.text.trim().length >= 2) { text = cloud.text; kind = cloud.kind; }
+      }
+
       if (!text || text.trim().length < 2) throw new Error(`تعذّر استخراج نصٍّ من الملفّ (${kind}).`);
+      // رفضُ تخزين الخردة: لا تُلوَّث مستندات القضية بنصٍّ مشوّه.
+      if (garbled(text)) {
+        throw new Error(cloudAvailable
+          ? "النصّ المقروء مشوّه (الوثيقة ممسوحة أو خطّها غير قابل للنسخ). فعّل «قراءة سحابيّة عالية الدقّة (Gemini)» ثمّ أعِد الرفع، أو أرفق نسخةً أوضح."
+          : "النصّ المقروء مشوّه (الوثيقة ممسوحة أو خطّها غير قابل للنسخ). فعّل القراءة السحابيّة (Gemini) من إعدادات منصّة الوثائق، أو أرفق نسخةً نصّيّةً أوضح.");
+      }
       setStatus("جارٍ الحفظ…");
       const res = await fetch(`/api/judicial-assistant/cases/${caseId}/attachments`, {
         method: "POST", headers: { "Content-Type": "application/json" },
