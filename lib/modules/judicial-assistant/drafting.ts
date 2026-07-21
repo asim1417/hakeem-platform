@@ -7,6 +7,7 @@ import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-
 import { findPrecedents } from "./rulings";
 import { STAGE_META } from "./catalog";
 import { JURISDICTION_LABEL, FACT_STATUS_LABEL } from "./labels";
+import { buildRelevantDocs } from "./case-search";
 import type { JudgmentDraftResult, JudgmentSection, JudicialCase } from "./types";
 
 const NOTICE =
@@ -49,20 +50,13 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
     .filter((f) => f.status === "established" || f.status === "admitted")
     .map((f) => f.text)
     .join("؛ ");
-  let budget = 8_000;
-  const docs = kase.attachments
-    .map((a) => {
-      const slice = a.text.slice(0, Math.max(0, budget));
-      budget -= slice.length;
-      return slice ? `— من «${a.name}»:\n${slice}` : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
+  // بحثٌ فوريّ في مستندات القضية عن المقاطع المتعلّقة بالمسائل والوقائع (بمحرّك منصّة الوثائق).
+  const docs = buildRelevantDocs(kase, [kase.subject, issues, established].filter(Boolean).join(" "), 8_000);
   const reasoningPrompt = [
     `نوع القضاء: ${kase.jurisdiction}. الموضوع: ${kase.subject}.`,
     `المسائل محلّ الفصل: ${issues || "—"}.`,
     `الوقائع الثابتة/المُقرّة: ${established || "—"}.`,
-    docs ? `مقتطفات من مرفقات القضية:\n${docs}` : "",
+    docs ? `مقاطعُ ذات صلة من مستندات القضية:\n${docs}` : "",
     "المطلوب: بناء تسبيبٍ قضائيّ (واقعة-قاعدة-تطبيق) لكلّ مسألة، مؤصَّلًا بمواد النظام الحاكم فقط.",
   ].filter(Boolean).join("\n");
 
