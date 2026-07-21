@@ -1201,3 +1201,11 @@ body {
   border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
 .ja-infocard__stats b { color: var(--navy); font-weight: 700; margin-inline-end: 3px; }
 .ja-muted { margin: 0; font-size: 13px; color: var(--ink-46); }
+
+/* ربطُ خدمةٍ بخدمتها الأصليّة — تلميحٌ برابط */
+.ja-linkhint { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 4px; font-size: 12.5px; color: var(--ink-60); line-height: 1.8;
+  padding: 10px 13px; background: var(--gold-ghost); border: 1px dashed var(--gold-border); border-radius: var(--r-md, 12px); }
+.ja-linkhint svg { color: var(--gold-dark); flex: none; margin-top: 3px; }
+.ja-linkhint b { color: var(--navy); font-weight: 700; }
+.ja-inlink { color: var(--gold-dark); font-weight: 700; white-space: nowrap; }
+.ja-inlink:hover { text-decoration: underline; }

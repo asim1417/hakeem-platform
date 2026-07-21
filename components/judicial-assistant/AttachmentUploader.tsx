@@ -55,7 +55,7 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
       </label>
       {status ? <span className="ja-uploader__status">{status}</span> : null}
       {error ? <span className="ja-uploader__err">{error}</span> : null}
-      <span className="ja-uploader__hint">الاستخراج محليّ في متصفّحك؛ يُرسَل النصّ فقط.</span>
+      <span className="ja-uploader__hint">الاستخراج بمحرّك «منصّة الوثائق» — محليّ في متصفّحك؛ يُرسَل النصّ فقط.</span>
     </div>
   );
 }
