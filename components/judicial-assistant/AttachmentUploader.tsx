@@ -1,15 +1,15 @@
 "use client";
 
-// رفع مرفقٍ للقضية — بقوّة «منصّة الوثائق» نفسها داخل المعاون (لا انتقال):
-// استخراجٌ محليّ في المتصفّح (PDPL: الملفّ لا يغادر الجهاز، يُرسَل النصّ فقط)، مع خيار
-// **قراءةٍ سحابيّةٍ عالية الدقّة عبر Gemini** للوثائق الممسوحة والخطّ اليدويّ (كمنصّة الوثائق).
+// رفع مرفقٍ للقضية — **قراءةٌ تلقائيّة ذكيّة** بلا خياراتٍ يدويّة: استخراجٌ محليّ في المتصفّح
+// (PDPL: الملفّ لا يغادر الجهاز، يُرسَل النصّ فقط)، ومتى كان الملفّ صورةً أو خرج النصّ مشوّهًا
+// (طبقة نصٍّ معطوبة/ممسوح) يُحوَّل **تلقائيًّا** لقراءة Gemini البصريّة عالية الدقّة إن كانت مفعّلة.
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
 import { isGarbledArabicText } from "@/lib/modules/document-inspection/reshape";
 import { JaIcon } from "./icons";
 
-/** نصٌّ عربيٌّ طويلٌ ومشوّه (طبقة نصٍّ معطوبة/ممسوحة) — لا يصلح لتخزينه مادّةً للقضية. */
+/** نصٌّ عربيٌّ طويلٌ ومشوّه (طبقة نصٍّ معطوبة/ممسوحة) — لا يصلح مادّةً للقضية. */
 function garbled(text: string): boolean {
   return text.trim().length > 40 && isGarbledArabicText(text).garbled;
 }
@@ -20,12 +20,7 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  // قوّة منصّة الوثائق: القراءة السحابيّة (Gemini) — تُعرض إن كانت مفعّلة في المنصّة.
   const [cloudAvailable, setCloudAvailable] = useState(false);
-  const [cloudOcr, setCloudOcr] = useState(false);
-  const [cloudHiQ, setCloudHiQ] = useState(false); // نموذج Pro للخطّ اليدويّ والوثائق الصعبة
-  const [rangeFrom, setRangeFrom] = useState("");
-  const [rangeTo, setRangeTo] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -37,29 +32,29 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
   }, []);
 
   async function onFile(file: File) {
-    setBusy(true); setError(""); setStatus("جارٍ استخراج النصّ…");
+    setBusy(true); setError(""); setStatus("جارٍ قراءة الوثيقة…");
     try {
-      const range = { from: Number(rangeFrom) || undefined, to: Number(rangeTo) || undefined };
-      const wantCloud = cloudAvailable && cloudOcr;
+      const isImage = /\.(png|jpe?g|webp|bmp|tiff?|gif)$/i.test(file.name);
+      // صورةٌ + سحابيّةٌ مفعّلة → قراءةٌ بصريّة مباشرةً (أدقّ للعربيّة من OCR المحليّ).
+      const primaryCloud = cloudAvailable && isImage;
       let { text, kind } = await extractFile(file, {
-        onProgress: (m) => setStatus(m), cloudOcr: wantCloud, cloudModel: cloudHiQ ? "pro" : "flash", cloudRange: range,
+        onProgress: (m) => setStatus(m), cloudOcr: primaryCloud, cloudModel: "pro",
       });
 
-      // كشف التشوّه: طبقة نصٍّ معطوبة/ممسوحة تُنتج خردةً غير مقروءة. إن توفّرت السحابيّة ولم
-      // تُستعمل، أعِد القراءة **بصريًّا عبر Gemini** (يتجاوز الطبقة المعطوبة) بأعلى دقّة.
-      if (garbled(text) && cloudAvailable && !wantCloud) {
-        setStatus("النصّ المُستخرَج مشوّه — أعيد القراءة سحابيًّا (Gemini) بصريًّا…");
-        const cloud = await extractFile(file, { onProgress: (m) => setStatus(m), cloudOcr: true, cloudModel: "pro", cloudRange: range });
+      // نصٌّ مشوّه من طبقةٍ معطوبة/ممسوح → تحويلٌ تلقائيّ لقراءة Gemini البصريّة عالية الدقّة.
+      if (garbled(text) && cloudAvailable && !primaryCloud) {
+        setStatus("النصّ مشوّه — أُحوّل تلقائيًّا لقراءة Gemini البصريّة…");
+        const cloud = await extractFile(file, { onProgress: (m) => setStatus(m), cloudOcr: true, cloudModel: "pro" });
         if (cloud.text && cloud.text.trim().length >= 2) { text = cloud.text; kind = cloud.kind; }
       }
 
-      if (!text || text.trim().length < 2) throw new Error(`تعذّر استخراج نصٍّ من الملفّ (${kind}).`);
-      // رفضُ تخزين الخردة: لا تُلوَّث مستندات القضية بنصٍّ مشوّه.
+      if (!text || text.trim().length < 2) throw new Error(`تعذّرت قراءة نصٍّ من الملفّ (${kind}).`);
       if (garbled(text)) {
         throw new Error(cloudAvailable
-          ? "النصّ المقروء مشوّه (الوثيقة ممسوحة أو خطّها غير قابل للنسخ). فعّل «قراءة سحابيّة عالية الدقّة (Gemini)» ثمّ أعِد الرفع، أو أرفق نسخةً أوضح."
-          : "النصّ المقروء مشوّه (الوثيقة ممسوحة أو خطّها غير قابل للنسخ). فعّل القراءة السحابيّة (Gemini) من إعدادات منصّة الوثائق، أو أرفق نسخةً نصّيّةً أوضح.");
+          ? "النصّ المقروء مشوّه (الوثيقة ممسوحة أو خطّها غير قابل للنسخ). حاول بنسخةٍ أوضح."
+          : "النصّ المقروء مشوّه (الوثيقة ممسوحة). فعّل القراءة السحابيّة (Gemini) من إعدادات منصّة الوثائق، أو أرفق نسخةً نصّيّةً أوضح.");
       }
+
       setStatus("جارٍ الحفظ…");
       const res = await fetch(`/api/judicial-assistant/cases/${caseId}/attachments`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -84,12 +79,8 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
     <div className="ja-uploader">
       <div className="ja-uploader__row">
         <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
-          className="sr-only"
-          id={`ja-file-${caseId}`}
-          disabled={busy}
+          ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg" className="sr-only"
+          id={`ja-file-${caseId}`} disabled={busy}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) void onFile(f); }}
         />
         <label htmlFor={`ja-file-${caseId}`} className={`btn btn-gold ja-uploader__btn ${busy ? "is-busy" : ""}`}>
@@ -98,34 +89,8 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
         {status ? <span className="ja-uploader__status">{status}</span> : null}
         {error ? <span className="ja-uploader__err">{error}</span> : null}
       </div>
-
-      {/* قوّة القراءة — كمنصّة الوثائق، داخل المعاون */}
-      <div className="ja-readopts">
-        {cloudAvailable ? (
-          <>
-            <label className="ja-readopt">
-              <input type="checkbox" checked={cloudOcr} disabled={busy} onChange={(e) => setCloudOcr(e.target.checked)} />
-              <span><JaIcon name="evidence" size={13} /> قراءة سحابيّة عالية الدقّة (Gemini)</span>
-            </label>
-            {cloudOcr ? (
-              <>
-                <label className="ja-readopt">
-                  <input type="checkbox" checked={cloudHiQ} disabled={busy} onChange={(e) => setCloudHiQ(e.target.checked)} />
-                  <span>دقّة قصوى للخطّ اليدويّ والوثائق الصعبة (Pro)</span>
-                </label>
-                <span className="ja-readopt ja-readopt--range">
-                  صفحات PDF:
-                  <input type="number" min={1} inputMode="numeric" placeholder="من" value={rangeFrom} disabled={busy} onChange={(e) => setRangeFrom(e.target.value)} />
-                  <input type="number" min={1} inputMode="numeric" placeholder="إلى" value={rangeTo} disabled={busy} onChange={(e) => setRangeTo(e.target.value)} />
-                </span>
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-
       <span className="ja-uploader__hint">
-        بمحرّك «منصّة الوثائق» نفسه — محليٌّ في متصفّحك (يُرسَل النصّ فقط){cloudAvailable ? "، أو قراءةٌ سحابيّةٌ فائقة الدقّة للممسوح والخطّ اليدويّ" : ""}.
+        قراءةٌ تلقائيّة بمحرّك «منصّة الوثائق» — محليًّا في متصفّحك{cloudAvailable ? "، وتحويلٌ تلقائيّ لقراءة Gemini البصريّة للممسوح والخطّ اليدويّ" : ""}؛ يُرسَل النصّ فقط.
       </span>
     </div>
   );
