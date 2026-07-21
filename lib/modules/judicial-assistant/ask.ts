@@ -12,6 +12,7 @@ import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { JURISDICTION_LABEL } from "./labels";
 import type { CasePassage } from "./case-search";
 import { retrieveCasePassages } from "./case-vector";
+import { runJudicialAgent } from "./agent";
 import type { JudicialCase } from "./types";
 
 export interface AskResult {
@@ -110,47 +111,19 @@ export async function askAssistant(question: string, kase: JudicialCase | null, 
 
   const requestId = randomUUID();
 
-  // ① استرجاعٌ اختياريّ من النواة (أفضل جهد، لا يحجب): مادّةٌ للتأصيل إن وُجدت لموضوع السؤال.
-  const retrieveQuery = [kase?.subject, kase?.issues.map((i) => i.statement).join(" "), question].filter(Boolean).join(" ").trim();
-  const articles = await retrieveGroundingArticles(retrieveQuery);
-  const sourcesBlock = articles.length
-    ? articles.map((a) => `- ${a.systemName}، المادة ${a.articleNumber}: ${a.articleText.slice(0, 350)}`).join("\n")
-    : "";
-
-  // بحثٌ في مستندات القضية عن أكثر المقاطع صلةً بالسؤال (دلاليٌّ إن أمكن، وإلا معجميّ).
+  // بحثٌ في مستندات القضية (دلاليّ/معجميّ) → سياقٌ يُحقَن في محرّك «اسأل حكيم».
   const passages = kase ? await retrieveCasePassages(kase, question, 6) : [];
+  const agentQuery = [`مسألة القاضي: ${question.trim()}`, kase ? caseContext(kase, passages) : ""].filter(Boolean).join("\n\n");
 
-  // ② استدعاء النموذج المضبوط في المنصّة مباشرةً (كلود عبر المزوّد المركزيّ).
-  const userPrompt = [
-    kase ? caseContext(kase, passages) : "",
-    `طلب القاضي: ${question.trim()}`,
-    sourcesBlock ? `مواد النواة المتاحة للاستشهاد (لا تستشهد بغيرها ولا تخترع رقمًا):\n${sourcesBlock}` : "لا توجد موادُّ نظاميّة مسترجَعة لهذا الطلب — أجِب اجتهادًا عامًّا دون نسبة رقم مادّةٍ لأيّ نظام.",
-  ].filter(Boolean).join("\n\n");
-
-  const llm = await callCentralProvider({
-    systemPrompt: buildAskSystemPrompt(Boolean(sourcesBlock)),
-    userPrompt: sanitizeForModel(userPrompt).text,
-    maxTokens: 1400,
-  }).catch(() => null);
-
-  // ③ لا مزوّد مضبوط/تعذّر النموذج ⇒ إفصاحٌ صريح (لا تلفيق، لا امتناعٌ غامض).
-  if (!llm || !llm.ok || !llm.content.trim()) {
-    return { answer: OFFLINE, blocked: true, citations: [], requestId, notice: OFFLINE };
-  }
-
-  // ④ حارس التلفيق: أيّ رقم مادّةٍ في المخرَج ليس من المسترجَع ⇒ يُحجب المخرَج (لا مادّة غير موجودة).
-  const guard = guardOutputAgainstUnknownArticleNumbers(llm.content, articles);
-  if (!guard.ok) {
-    return { answer: GUARD_FALLBACK, blocked: false, citations: [], requestId, notice: NOTICE_GENERAL };
-  }
-
-  const grounded = articles.length > 0;
-  const citations = grounded
-    ? articles.slice(0, 6).map((a) => ({ articleId: a.articleId, lawName: a.systemName, articleNumber: a.articleNumber, quote: a.articleText.slice(0, 350) }))
-    : [];
-  const answer = /تنبيه|لا تُعدّ حكمًا/.test(llm.content) ? llm.content : `${llm.content}\n\n${DISCLAIMER}`;
-
-  return { answer, blocked: false, citations, requestId, notice: grounded ? NOTICE_GROUNDED : NOTICE_GENERAL };
+  // محرّك «اسأل حكيم» نفسه بوضع المعاون (نفس المزوّد ومفاتيحه).
+  const r = await runJudicialAgent(agentQuery);
+  return {
+    answer: r.answer || r.notice,
+    blocked: r.blocked || !r.answer,
+    citations: r.citations.map((c) => ({ articleId: c.articleId ?? "", lawName: c.systemName, articleNumber: c.articleNumber, quote: c.quote.slice(0, 350) })),
+    requestId,
+    notice: r.notice,
+  };
 }
 
 /** تعليمة الموجّه: يجيب بذكاءٍ ويؤصّل بالمواد المتاحة، بلا اختلاق رقم مادّة. */

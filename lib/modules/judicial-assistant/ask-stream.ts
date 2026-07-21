@@ -1,19 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// موجّه المعاون — البثّ الحيّ (كصناديق المحادثة الحيّة): مؤشّرات تفكيرٍ وبحثٍ حيّة،
-// ثمّ بثّ الإجابة كلمةً كلمةً فور وصولها من النموذج. نفس ضمانات ask.ts:
-// حارس التحيّة · تأصيلٌ اختياريّ · حارس التلفيق · تعمية PDPL · إفصاحٌ إن كان المزوّد غير مضبوط.
+// موجّه المعاون — البثّ الحيّ فوق **محرّك «اسأل حكيم» نفسه** (runJudicialAgent): مؤشّرات
+// خطوات المنسّق الحيّة (فهم/تخريج/تحقّق/صياغة)، ثمّ بثّ التحليل المؤصَّل كلمةً كلمةً.
+// بنفس المزوّد ومفاتيحه — لا مفاتيحَ جديدة. الاختلاف البسيط: سياق القضية + وضع المعاون.
 // ─────────────────────────────────────────────────────────────────────────────
 import { randomUUID } from "crypto";
-import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
-import { guardOutputAgainstUnknownArticleNumbers } from "@/lib/modules/legal-core/legal-citation-guard";
-import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 import type { JudicialCase } from "./types";
-import {
-  isSmalltalk, caseContext, buildAskSystemPrompt, retrieveGroundingArticles, citedArticles,
-  GREETING, GREETING_INVITE_CASE, GREETING_INVITE_GENERAL,
-  DISCLAIMER, NOTICE_GROUNDED, NOTICE_GENERAL, OFFLINE, GUARD_FALLBACK,
-} from "./ask";
+import { isSmalltalk, caseContext, GREETING, GREETING_INVITE_CASE, GREETING_INVITE_GENERAL } from "./ask";
 import { retrieveCasePassages } from "./case-vector";
+import { runJudicialAgent, type JudicialAgentStep } from "./agent";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
@@ -23,7 +17,7 @@ export type AskStreamEvent =
   | { type: "delta"; text: string }
   | { type: "done"; blocked: boolean; citations: AskCitation[]; notice: string; answer: string; requestId: string; greeting?: boolean };
 
-/** يبثّ إجابة الموجّه حيًّا: مراحل (فهم/بحث/صياغة/تحقّق) ثمّ أجزاء النصّ، ثمّ حدث الختام. */
+/** يبثّ إجابة الموجّه حيًّا: خطوات محرّك «اسأل حكيم» ثمّ التحليل كلمةً كلمةً، ثمّ الختام. */
 export async function* streamAsk(question: string, kase: JudicialCase | null, actorId?: string): AsyncGenerator<AskStreamEvent> {
   const requestId = randomUUID();
 
@@ -36,68 +30,53 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
     return;
   }
 
-  yield { type: "stage", label: "أفهم طلبك", state: "done" };
-
-  // ① أ) بحثٌ في مستندات القضية (مرفقاتها) — دلاليٌّ إن أمكن، وإلا معجميّ.
+  // ② بحثٌ في مستندات القضية (دلاليّ/معجميّ) → سياقٌ يُحقَن في محرّك الوكيل.
   if (kase && kase.attachments.length) yield { type: "stage", label: "أبحث في مستنداتك", state: "active" };
   const passages = kase ? await retrieveCasePassages(kase, question, 6) : [];
   if (kase && kase.attachments.length) {
     yield { type: "stage", label: passages.length ? `بحثتُ مستنداتك: ${passages.length} مقطعًا ذا صلة` : "بحثتُ مستنداتك: لا مقطعَ مطابق", state: "done" };
   }
 
-  // ② تأصيلٌ اختياريّ من النواة (بحثٌ حيّ).
-  yield { type: "stage", label: "أبحث في النواة", state: "active" };
-  const retrieveQuery = [kase?.subject, kase?.issues.map((i) => i.statement).join(" "), question].filter(Boolean).join(" ").trim();
-  const articles = await retrieveGroundingArticles(retrieveQuery);
-  yield { type: "stage", label: articles.length ? `عُثر على ${articles.length} مادّةً ذات صلة في النواة` : "لا مادّةَ مطابقةً في النواة — سأجيب اجتهادًا", state: "done" };
-
-  const sourcesBlock = articles.length
-    ? articles.map((a) => `- ${a.systemName}، المادة ${a.articleNumber}: ${a.articleText.slice(0, 350)}`).join("\n")
-    : "";
-
-  const cfg = await resolveAiConfig();
-  if (cfg.provider === "offline" || !cfg.apiKey) {
-    yield { type: "stage", label: "المزوّد غير مضبوط", state: "done" };
-    yield { type: "done", blocked: true, citations: [], notice: OFFLINE, answer: OFFLINE, requestId };
-    return;
-  }
-
-  // ③ صياغة الإجابة بالنموذج — بثٌّ فوريّ.
-  yield { type: "stage", label: "أصوغ الإجابة بالنموذج", state: "active" };
-  const userPrompt = sanitizeForModel([
+  // مادّة الوكيل: مسألة القاضي أوّلًا (لتصنيف النيّة الصحيح) ثمّ سياق القضية.
+  const agentQuery = [
+    `مسألة القاضي: ${question.trim()}`,
     kase ? caseContext(kase, passages) : "",
-    `طلب القاضي: ${question.trim()}`,
-    sourcesBlock ? `مواد النواة المتاحة للاستشهاد (لا تستشهد بغيرها ولا تخترع رقمًا):\n${sourcesBlock}` : "لا توجد موادُّ نظاميّة مسترجَعة — أجِب اجتهادًا عامًّا دون نسبة رقم مادّةٍ لأيّ نظام.",
-  ].filter(Boolean).join("\n\n")).text;
+  ].filter(Boolean).join("\n\n");
 
-  let full = "";
-  try {
-    for await (const delta of streamWithConfig(cfg, buildAskSystemPrompt(Boolean(sourcesBlock)), userPrompt, 1400)) {
-      full += delta;
-      yield { type: "delta", text: delta };
+  // ③ محرّك «اسأل حكيم» — نجسر خطواته الحيّة (callback) إلى البثّ عبر طابورٍ لا‑متزامن.
+  const queue: JudicialAgentStep[] = [];
+  let wake: (() => void) | null = null;
+  let finished = false;
+  const push = () => { const w = wake; wake = null; w?.(); };
+  const runP = runJudicialAgent(agentQuery, { onStep: (s) => { queue.push(s); push(); } })
+    .then((r) => r)
+    .finally(() => { finished = true; push(); });
+
+  let lastLabel = "";
+  for (;;) {
+    if (queue.length) {
+      const s = queue.shift()!;
+      if (s.label && s.label !== lastLabel) {
+        lastLabel = s.label;
+        yield { type: "stage", label: s.label, state: s.status === "done" ? "done" : "active" };
+      }
+      continue;
     }
-  } catch {
-    if (!full.trim()) {
-      yield { type: "done", blocked: true, citations: [], notice: OFFLINE, answer: OFFLINE, requestId };
-      return;
-    }
+    if (finished) break;
+    await new Promise<void>((res) => { wake = res; });
   }
 
-  if (!full.trim()) {
-    yield { type: "done", blocked: true, citations: [], notice: OFFLINE, answer: OFFLINE, requestId };
+  const r = await runP;
+
+  // ④ الحجب الصادق (لا سند مُتحقَّق) أو النيّة غير القانونية.
+  if (r.blocked || !r.answer) {
+    yield { type: "done", blocked: true, citations: [], notice: r.notice, answer: r.answer || r.notice, requestId };
     return;
   }
 
-  // ④ التحقّق من الإسناد.
-  yield { type: "stage", label: "أتحقّق من الإسناد", state: "done" };
-  const guard = guardOutputAgainstUnknownArticleNumbers(full, articles);
-  if (!guard.ok) {
-    yield { type: "done", blocked: false, citations: [], notice: NOTICE_GENERAL, answer: GUARD_FALLBACK, requestId };
-    return;
-  }
+  // ⑤ بثّ التحليل المؤصَّل كلمةً كلمةً (تجربةٌ حيّة).
+  for (const w of r.answer.split(/(\s+)/)) if (w) yield { type: "delta", text: w };
 
-  const cited = citedArticles(full, articles);
-  const citations: AskCitation[] = cited.map((a) => ({ articleId: a.articleId, lawName: a.systemName, articleNumber: a.articleNumber, quote: a.articleText.slice(0, 350) }));
-  const answer = /تنبيه|لا تُعدّ حكمًا/.test(full) ? full : `${full}\n\n${DISCLAIMER}`;
-  yield { type: "done", blocked: false, citations, notice: citations.length ? NOTICE_GROUNDED : NOTICE_GENERAL, answer, requestId };
+  const citations: AskCitation[] = r.citations.map((c) => ({ articleId: c.articleId ?? "", lawName: c.systemName, articleNumber: c.articleNumber, quote: c.quote.slice(0, 350) }));
+  yield { type: "done", blocked: false, citations, notice: r.notice, answer: r.answer, requestId };
 }
