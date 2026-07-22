@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePagePermission } from "@/lib/modules/auth/session";
@@ -6,7 +7,7 @@ import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { suggestedActionsFor, STAGE_META } from "@/lib/modules/judicial-assistant/catalog";
 import {
   CONFIDENTIALITY_LABEL, FACT_STATUS_LABEL, FACT_STATUS_TONE,
-  JURISDICTION_LABEL, formatDate, formatDateTime,
+  JURISDICTION_LABEL, formatDate,
 } from "@/lib/modules/judicial-assistant/labels";
 import { StageBar } from "@/components/judicial-assistant/StageBar";
 import { CaseActions } from "@/components/judicial-assistant/CaseActions";
@@ -15,11 +16,10 @@ import { AttachmentList } from "@/components/judicial-assistant/AttachmentList";
 import { MapExtractor } from "@/components/judicial-assistant/MapExtractor";
 import { CaseManageBar } from "@/components/judicial-assistant/CaseManageBar";
 import { AssistantPrompt } from "@/components/judicial-assistant/AssistantPrompt";
+import { CasePrecedents } from "@/components/judicial-assistant/CasePrecedents";
+import { CaseHistory } from "@/components/judicial-assistant/CaseHistory";
 import { JaIcon } from "@/components/judicial-assistant/icons";
 import { caseVisibleTo } from "@/lib/modules/judicial-assistant/abac";
-import { listAnalyses } from "@/lib/modules/judicial-assistant/persistence";
-import { SERVICE_BY_ID } from "@/lib/modules/judicial-assistant/catalog";
-import { findPrecedents } from "@/lib/modules/judicial-assistant/rulings";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,6 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
   if (!caseVisibleTo({ userId: user.id, role: user.role }, kase)) notFound();
 
   const actions = suggestedActionsFor(kase);
-  const [history, precedents] = await Promise.all([listAnalyses(kase.id), findPrecedents(kase)]);
   const nextHearing = [...kase.hearings].sort((a, b) => a.date.localeCompare(b.date))[0];
   const hasMap = kase.parties.length + kase.requests.length + kase.facts.length + kase.issues.length + kase.hearings.length + kase.gaps.length > 0;
 
@@ -144,23 +143,7 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         <CaseActions caseId={kase.id} actions={actions} />
       </section>
 
-      {precedents.length > 0 ? (
-        <section className="card ja-panel" aria-labelledby="ja-precedents">
-          <h2 id="ja-precedents" className="ja-panel__title"><JaIcon name="appeal" size={18} /> سوابق من النواة</h2>
-          <p className="ja-panel__hint">أحكامٌ حقيقيّة من النواة مطابقةٌ لموضوع القضية — للتخريج، تُفتح للتحقّق.</p>
-          <ul className="ja-list">
-            {precedents.map((p) => (
-              <li key={p.id} className="ja-list__row">
-                <div>
-                  <Link href={`/dashboard/legal-core/judgments/${p.id}`} className="ja-list__title">{p.title}</Link>
-                  <div className="ja-list__sub">{p.court ?? "—"}{p.decisionNo ? ` · ${p.decisionNo}` : ""} — {p.snippet}…</div>
-                </div>
-                {!p.reviewed ? <span className="ja-badge ja-badge--warning">غير مُراجَع</span> : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <Suspense fallback={null}><CasePrecedents kase={kase} /></Suspense>
 
       {/* خريطة القضية — وقائع ومسائل وجلسات، تُعرض عند وجود عناصر (الأطراف والطلبات في البطاقة أعلاه) */}
       {hasMap ? (
@@ -195,22 +178,7 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         </>
       ) : null}
 
-      {history.length > 0 ? (
-        <section className="card ja-panel" aria-labelledby="ja-history">
-          <h2 id="ja-history" className="ja-panel__title"><JaIcon name="audit" size={18} /> سجلّ التحليلات المحفوظة</h2>
-          <ul className="ja-list">
-            {history.map((h) => (
-              <li key={h.id} className="ja-list__row">
-                <div>
-                  <div className="ja-list__title">{SERVICE_BY_ID[h.serviceId]?.title ?? h.serviceId} <span className="ja-action__id">{h.serviceId}</span></div>
-                  <div className="ja-list__sub">{formatDateTime(h.createdAt)}</div>
-                </div>
-                <span className={`ja-badge ja-badge--${h.blocked ? "warning" : "info"}`}>{h.blocked ? "محجوب" : "مسودّة"}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <Suspense fallback={null}><CaseHistory caseId={kase.id} /></Suspense>
 
       <LegalAlert tone="info">
         كلّ عملٍ حسّاس يمرّ بمراجعتك واعتمادك. المصادر قابلة للفتح، والنظام لا يعتمد حكمًا ولا يولّد نصًّا نظاميًّا من ذاكرته.
