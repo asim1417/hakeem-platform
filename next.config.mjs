@@ -17,16 +17,18 @@ const nextConfig = {
   // ومحرّك OCR (WASM) والألعاب تحتاجها — فلا تتعطّل أي ميزة. أساس نشدّه لاحقًا
   // بـ nonces عند الحاجة لتصلّب أعلى ضد XSS.
   async headers() {
-    // Clerk يحمّل clerk.browser.js من *.clerk.accounts.dev — بدونها يبقى نموذج SignIn فارغًا.
-    const clerkScript = "https://*.clerk.accounts.dev https://*.clerk.com";
+    // Clerk: clerk.browser.js + CAPTCHA (Cloudflare Turnstile / protect.clerk.com)
+    const clerkHosts =
+      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com";
+    const turnstile = "https://challenges.cloudflare.com";
     const csp = [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: ${clerkScript}`,
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: ${clerkHosts} ${turnstile}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "connect-src 'self' https:",
-      `frame-src 'self' ${clerkScript}`,
+      `frame-src 'self' ${clerkHosts} ${turnstile}`,
       "worker-src 'self' blob:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
