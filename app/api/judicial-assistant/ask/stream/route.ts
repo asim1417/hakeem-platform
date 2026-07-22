@@ -5,6 +5,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { streamAsk, type AskStreamEvent } from "@/lib/modules/judicial-assistant/ask-stream";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
+import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,18 +36,43 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // مهمّةٌ خلفيّة قابلةٌ للاستئناف: يُكمل الخادم التوليد ويحفظه دوريًّا حتى لو انقطع العميل.
+  const jobId = await createJob(actorId, "ja-ask", body.question.slice(0, 120)).catch(() => null);
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (o: AskStreamEvent) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(o)}\n\n`));
+      // بثٌّ صامدٌ للانقطاع: إن تعذّر الإرسال (غادر العميل) نُكمل التوليد والحفظ في الخلفيّة.
+      let clientGone = false;
+      const send = (o: AskStreamEvent) => {
+        if (clientGone) return;
+        try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(o)}\n\n`)); }
+        catch { clientGone = true; }
+      };
       let done: Extract<AskStreamEvent, { type: "done" }> | null = null;
+      let acc = "";
+      let lastSave = 0;
+      if (jobId) send({ type: "job", jobId });
       try {
         for await (const ev of streamAsk(body.question, kase, actorId)) {
           if (ev.type === "done") done = ev;
+          if (ev.type === "delta") {
+            acc += ev.text;
+            const now = Date.now();
+            if (jobId && now - lastSave > 1500) { lastSave = now; void updateJob(jobId, { text: acc }); }
+          }
           send(ev);
         }
       } catch {
         send({ type: "done", blocked: true, citations: [], notice: "تعذّر التشغيل.", answer: "تعذّر إكمال الطلب — أعِد المحاولة.", requestId: "error" });
+      }
+      // ختم المهمّة الخلفيّة بالنتيجة النهائيّة (يجلبها العميل عند العودة).
+      if (jobId) {
+        await updateJob(jobId, {
+          text: done?.answer ?? acc,
+          meta: { citations: done?.citations ?? [], notice: done?.notice ?? "", blocked: done?.blocked ?? false, greeting: done?.greeting ?? false },
+          status: done && done.requestId !== "error" ? "done" : "error",
+        }).catch(() => undefined);
       }
 
       // آثارٌ جانبيّة بعد اكتمال البثّ: حفظٌ في سجلّ القضية (لا تُحفَظ التحيّة) + تدقيق.
@@ -61,7 +87,7 @@ export async function POST(request: NextRequest) {
         metadata: { requestId: done?.requestId, hasCase: Boolean(kase), citations: done?.citations.length ?? 0, streamed: true },
       }).catch(() => undefined);
 
-      controller.close();
+      try { controller.close(); } catch { /* أُغلق مسبقًا (غادر العميل) */ }
     },
   });
 

@@ -13,6 +13,7 @@ import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
 export type AskStreamEvent =
+  | { type: "job"; jobId: string }
   | { type: "stage"; label: string; state: "active" | "done" }
   | { type: "delta"; text: string }
   | { type: "done"; blocked: boolean; citations: AskCitation[]; notice: string; answer: string; requestId: string; greeting?: boolean };
