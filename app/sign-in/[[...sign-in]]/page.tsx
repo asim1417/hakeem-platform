@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { OwnerEmergencyLogin } from "@/components/auth/OwnerEmergencyLogin";
 import { AuthClerkSignIn } from "@/components/auth/AuthClerkSignIn";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
 
@@ -11,7 +10,7 @@ export const metadata = {
 export default function SignInPage({
   searchParams,
 }: {
-  searchParams?: { setup?: string; next?: string };
+  searchParams?: { next?: string };
 }) {
   const configured = isClerkConfigured();
   const nextUrl =
@@ -21,33 +20,28 @@ export default function SignInPage({
 
   return (
     <AuthJourneyShell
-      tagline={
-        configured
-          ? "ادخل إلى لوحتك، ثم أدخل الاسم والجوال والمهنة للمتابعة. باقي الملف اختياري للمكافآت."
-          : "دخول المالك متاح الآن — Clerk يُضبط لاحقًا."
-      }
+      compact
+      tagline="سجّل الدخول لمتابعة أعمالك القانونية"
       footer={
-        <p className="login-panel__links">
-          <Link href="/" className="underline-offset-4 hover:underline">
-            الرئيسية
-          </Link>
-          <span aria-hidden> · </span>
-          <Link href="/sign-up" className="underline-offset-4 hover:underline">
-            إنشاء حساب
-          </Link>
-        </p>
+        <nav className="login-panel__links" aria-label="روابط نظامية">
+          <Link href="/privacy">سياسة الخصوصية</Link>
+          <span aria-hidden>·</span>
+          <Link href="/terms">شروط الاستخدام</Link>
+        </nav>
       }
     >
-      {!configured ? (
-        <div className="w-full rounded-[var(--r-md)] border border-[var(--amber)]/40 bg-[var(--amber-soft)] px-4 py-3 text-sm leading-7 text-[var(--amber)]">
-          مفاتيح Clerk غير مضبوطة بعد. استخدم <strong>دخول المالك</strong> بالأسفل للوصول فورًا.
-        </div>
-      ) : null}
-
       {configured ? (
         <AuthClerkSignIn nextUrl={nextUrl} routing="path" path="/sign-in" />
       ) : (
-        <OwnerEmergencyLogin nextUrl={nextUrl} clerkEnabled={false} />
+        <div
+          className="w-full rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 py-5 text-center text-sm leading-7 text-[#0E3435]"
+          role="status"
+        >
+          <p className="font-semibold">تسجيل الدخول غير متاح مؤقتًا</p>
+          <p className="mt-2 text-[rgba(14,52,53,0.68)]">
+            يرجى المحاولة لاحقًا أو التواصل مع مسؤول المنصة.
+          </p>
+        </div>
       )}
     </AuthJourneyShell>
   );

@@ -707,33 +707,40 @@ body {
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
-  overflow: hidden;
-  /* نفس كريمة Clerk (#F9F5EC) — رحلة دخول موحّدة */
+  overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0);
   background:
-    radial-gradient(80% 60% at 100% 0%, rgba(198, 151, 99, 0.16) 0%, transparent 55%),
-    radial-gradient(70% 50% at 0% 100%, rgba(14, 52, 53, 0.08) 0%, transparent 50%),
-    linear-gradient(165deg, #F9F5EC 0%, #F3EDE0 48%, #EDE6D6 100%);
+    radial-gradient(70% 50% at 100% 0%, rgba(198, 151, 99, 0.08) 0%, transparent 55%),
+    radial-gradient(60% 40% at 0% 100%, rgba(14, 52, 53, 0.04) 0%, transparent 50%),
+    #F7F4EE;
+}
+.login-page--compact .login-panel {
+  padding: 1rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0));
+}
+.login-page--compact .login-panel__card {
+  gap: 0.75rem;
 }
 .login-page__glow {
   pointer-events: none;
   position: absolute;
-  inset: -20% 20% auto auto;
-  width: min(520px, 70vw);
-  height: min(520px, 70vw);
+  inset: -25% 25% auto auto;
+  width: min(420px, 60vw);
+  height: min(420px, 60vw);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(198, 151, 99, 0.22), transparent 68%);
-  animation: loginGlow 8s ease-in-out infinite alternate;
+  background: radial-gradient(circle, rgba(198, 151, 99, 0.12), transparent 70%);
+  animation: loginGlow 10s ease-in-out infinite alternate;
+  opacity: 0.7;
 }
 .login-page__pattern {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  opacity: 0.035;
+  opacity: 0.018;
   background-image:
     linear-gradient(var(--navy) 1px, transparent 1px),
     linear-gradient(90deg, var(--navy) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at 30% 40%, black 20%, transparent 75%);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at 30% 40%, black 15%, transparent 70%);
 }
 .login-page__grid {
   position: relative;
@@ -754,8 +761,8 @@ body {
   padding: 3rem;
   color: var(--cream);
   background:
-    linear-gradient(145deg, rgba(14, 52, 53, 0.96), rgba(31, 79, 76, 0.92)),
-    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C69763' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    linear-gradient(145deg, rgba(14, 52, 53, 0.97), rgba(31, 79, 76, 0.94)),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C69763' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 @media (min-width: 960px) {
   .login-brand { display: flex; }
@@ -770,9 +777,9 @@ body {
   width: 4.5rem;
   height: 4.5rem;
   margin-bottom: 1.5rem;
-  border-radius: var(--r-lg);
-  background: rgba(198, 151, 99, 0.16);
-  border: 1px solid rgba(198, 151, 99, 0.35);
+  border-radius: 0.75rem;
+  background: rgba(198, 151, 99, 0.14);
+  border: 1px solid rgba(198, 151, 99, 0.28);
   font-family: var(--font-judicial);
   font-size: 2.25rem;
   font-weight: 700;
@@ -822,14 +829,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1.25rem 2rem;
+  padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0));
 }
 .login-panel__card {
   width: 100%;
-  max-width: 28rem;
-  animation: loginRise 0.55s ease-out 0.08s both;
+  max-width: 26rem;
+  animation: loginRise 0.45s ease-out 0.05s both;
 }
-.login-panel__header { margin-bottom: 1.5rem; }
+.login-panel__header { margin-bottom: 1rem; }
 .login-panel__eyebrow {
   font-family: var(--font-judicial);
   font-size: 0.8rem;
@@ -851,7 +858,7 @@ body {
 }
 .login-panel__hint {
   margin-top: 1.25rem;
-  border-radius: var(--r-md);
+  border-radius: 0.75rem;
   border: 1px solid var(--gold-border);
   background: rgba(251, 250, 246, 0.72);
   padding: 0.9rem 1rem;
@@ -860,14 +867,23 @@ body {
   color: var(--ink-60);
 }
 .login-panel__links {
-  margin-top: 1rem;
+  margin-top: 0.25rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: var(--ink-40);
+  color: rgba(14, 52, 53, 0.5);
+}
+.login-panel__links a {
+  color: inherit;
+  text-decoration: none;
+  underline-offset: 3px;
+}
+.login-panel__links a:hover {
+  color: #0E3435;
+  text-decoration: underline;
 }
 
 .login-sso-btn {
@@ -876,10 +892,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  border-radius: var(--r-md);
+  border-radius: 0.75rem;
   border: 1px solid var(--gold-border);
   background: #FBFAF6;
   padding: 0.85rem 1rem;
+  min-height: 48px;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--navy);
@@ -895,8 +912,78 @@ body {
   background: linear-gradient(180deg, #FBFAF6, #F3F7F6);
 }
 
+/* ── تخصيصات Clerk داخل بطاقة الدخول ── */
+.auth-clerk-wrap,
+.auth-clerk-root {
+  width: 100%;
+}
+.auth-clerk-card {
+  box-sizing: border-box;
+}
+/* البريد/اسم المستخدم: LTR داخل حقل الكتابة مع بقاء الصفحة RTL */
+.auth-clerk-input,
+.cl-formFieldInput,
+.cl-input {
+  direction: ltr !important;
+  text-align: left !important;
+  font-size: 16px !important; /* منع تكبير iOS التلقائي */
+  min-height: 48px;
+}
+.cl-formFieldLabel {
+  text-align: start;
+}
+/* زر المتابعة في المنتصف بلا سهم مربك */
+.cl-formButtonPrimary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem;
+  min-height: 48px !important;
+}
+.cl-formButtonPrimary svg,
+.cl-buttonArrowIcon,
+.cl-formButtonPrimary .cl-internal-icon {
+  display: none !important;
+}
+/* شارة «آخر استخدام»: داخل الزر بلا تداخل خارج الحدود */
+.cl-socialButtonsBlockButton {
+  position: relative;
+  overflow: hidden;
+  min-height: 48px !important;
+}
+.cl-socialButtonsBlockButton .cl-badge,
+.cl-lastAuthenticationStrategyBadge,
+[class*="lastAuthenticationStrategy"] {
+  position: static !important;
+  margin-inline-start: 0.35rem !important;
+  transform: none !important;
+  inset: auto !important;
+  font-size: 0.65rem !important;
+  line-height: 1.2 !important;
+  padding: 0.15rem 0.4rem !important;
+  border-radius: 999px !important;
+  max-width: 100%;
+}
+/* صف اجتماعي متجاوب: عمود على الشاشات الضيقة */
+@media (max-width: 380px) {
+  .cl-socialButtons,
+  .auth-clerk-social {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .cl-socialButtonsBlockButton {
+    width: 100% !important;
+  }
+}
+/* إخفاء شارة Development mode إن ظهرت رغم الإعداد */
+.login-page [class*="cl-development"],
+.login-page [data-localization-key*="development"],
+.login-page .cl-internal-b3fm6y {
+  display: none !important;
+}
+
 @keyframes loginRise {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes loginMark {
@@ -904,15 +991,17 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 @keyframes loginGlow {
-  from { opacity: 0.55; transform: translate(0, 0); }
-  to { opacity: 1; transform: translate(-12px, 18px); }
+  from { opacity: 0.45; transform: translate(0, 0); }
+  to { opacity: 0.85; transform: translate(-8px, 12px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .login-page__glow,
   .login-brand__inner,
   .login-brand__mark,
-  .login-panel__card {
+  .login-panel__card,
+  .auth-clerk-skeleton [class*="animate-pulse"],
+  .auth-clerk-skeleton .animate-pulse {
     animation: none !important;
   }
 }

@@ -3,11 +3,11 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import {
   ensurePlatformOwner,
-  OWNER_DEFAULT_EMAIL,
   OWNER_DEFAULT_PASSWORD,
 } from "@/lib/modules/auth/ensure-owner";
 import { createLoginSession } from "@/lib/modules/auth/session";
 import { isOAuthAdminEmail } from "@/lib/modules/auth/oauth-shared";
+import { isOwnerEmergencyLoginEnabled } from "@/lib/modules/auth/owner-emergency";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 
@@ -19,10 +19,14 @@ const schema = z.object({
 });
 
 /**
- * POST /api/auth/owner-login — دخول طوارئ للمالك فقط (قبل/بدون Clerk).
- * البريد يجب أن يكون في PLATFORM_OWNER_EMAILS.
+ * POST /api/auth/owner-login — دخول طوارئ للمالك فقط.
+ * معطّل ما لم يُفعَّل OWNER_EMERGENCY_LOGIN_ENABLED (+ سماح الإنتاج إن لزم).
  */
 export async function POST(request: NextRequest) {
+  if (!isOwnerEmergencyLoginEnabled()) {
+    return NextResponse.json({ message: "هذا المسار غير متاح." }, { status: 404 });
+  }
+
   let body: z.infer<typeof schema>;
   try {
     body = schema.parse(await request.json());
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   const email = body.email.toLowerCase().trim();
   if (!isOAuthAdminEmail(email)) {
-    return NextResponse.json({ message: "هذا المسار مخصّص لمالك المنصة فقط." }, { status: 403 });
+    return NextResponse.json({ message: "تعذّر إكمال الدخول." }, { status: 403 });
   }
 
   await ensurePlatformOwner().catch(() => undefined);
@@ -43,20 +47,18 @@ export async function POST(request: NextRequest) {
   });
 
   if (!user?.isActive) {
-    return NextResponse.json({ message: "حساب المالك غير متاح." }, { status: 401 });
+    return NextResponse.json({ message: "تعذّر إكمال الدخول." }, { status: 401 });
   }
 
   const ok = await bcrypt.compare(body.password, user.passwordHash);
-  // قبول كلمة المرور الافتراضية حتى لو تغيّر الهاش في DB بعد ensure
   const fallback =
     !ok &&
     body.password === (process.env.OWNER_BOOTSTRAP_PASSWORD || OWNER_DEFAULT_PASSWORD).trim();
   if (!ok && !fallback) {
-    return NextResponse.json({ message: "كلمة المرور غير صحيحة." }, { status: 401 });
+    return NextResponse.json({ message: "تعذّر إكمال الدخول." }, { status: 401 });
   }
 
   if (fallback && !ok) {
-    // أعد ضبط الهاش ليطابق كلمة المرور المعروفة
     await ensurePlatformOwner().catch(() => undefined);
   }
 
@@ -72,7 +74,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     user: safe,
-    message: "تم دخول المالك.",
-    hint: email === OWNER_DEFAULT_EMAIL ? "بعد ضبط Clerk استخدم /sign-in كالمعتاد." : undefined,
+    message: "تم الدخول.",
   });
 }

@@ -9,15 +9,29 @@ const AFTER_AUTH = "/auth/continue";
 export function ClerkAppProvider({
   children,
   publishableKey,
+  hideDevelopmentMode = false,
 }: {
   children: React.ReactNode;
   publishableKey?: string;
+  /** من الخادم: أخفِ شارة Development mode في النشر الفعلي. */
+  hideDevelopmentMode?: boolean;
 }) {
   if (!publishableKey) return <>{children}</>;
+
+  const appearance = hideDevelopmentMode
+    ? {
+        ...clerkAppearance,
+        layout: {
+          ...clerkAppearance.layout,
+          unsafe_disableDevelopmentModeWarnings: true,
+        },
+      }
+    : clerkAppearance;
+
   return (
     <ClerkProvider
       publishableKey={publishableKey}
-      appearance={clerkAppearance}
+      appearance={appearance}
       localization={clerkLocalization}
       afterSignOutUrl="/sign-in"
       signInFallbackRedirectUrl={AFTER_AUTH}
