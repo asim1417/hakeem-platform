@@ -14,7 +14,8 @@ import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from 
 import { search_rulings, search_principles } from "./tools";
 import type { VerifiedCitation } from "./thinking/verifier";
 import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
-import { buildCitationBlock, noLegalArticleMessage, type LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
+import { buildCitationBlock, noLegalArticleMessage, getArticlesByNumber, type LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
+import { analyzeJudgmentCitations } from "@/lib/modules/legal-core/judgment-citation-extractor";
 
 /** حصيلة الوكيل المؤرَّضة الموحّدة التي تبني عليها الخدمات الثلاث إخراجها. */
 export interface AgentGroundedContext {
@@ -49,6 +50,39 @@ function emptyContext(): AgentGroundedContext {
   };
 }
 
+/** يزيل تكرار المواد بمعرّفها مع الحفاظ على الترتيب (الأوّل يبقى). */
+function dedupeArticlesById(articles: LegalCoreResult[]): LegalCoreResult[] {
+  const seen = new Set<string>();
+  const out: LegalCoreResult[] = [];
+  for (const a of articles) {
+    if (a && a.articleId && !seen.has(a.articleId)) { seen.add(a.articleId); out.push(a); }
+  }
+  return out;
+}
+
+/**
+ * استرجاعٌ موجَّهٌ بالاستشهاد الصريح: يستخرج إحالات «نظام كذا، المادة N» الواردة في نصّ القضية
+ * (مذكّرات الأطراف/الوقائع/الطلبات) ويجلب موادّها **مباشرةً** من النواة برقمها ونظامها. هذا سندٌ
+ * حقيقيّ — مواد موجودةٌ في قاعدة البيانات استشهد بها الأطراف — قد لا يُصعِّدها البحث الدلاليّ
+ * (المطابقة بالموضوع)، فيُكمِّل الاسترجاع بدل الامتناع الكاذب «غياب السند». لا اختلاق: نجلب النصّ
+ * الرسميّ من الجدول فقط، ولا نُضيف رقمًا لم يُحَلّ فعلًا في النواة.
+ */
+async function citationDrivenArticles(text: string): Promise<LegalCoreResult[]> {
+  const analysis = await analyzeJudgmentCitations(text).catch(() => null);
+  const resolved = (analysis?.citations ?? []).filter((c) => c.resolvedArticleId && c.articleNumber);
+  const out: LegalCoreResult[] = [];
+  const seen = new Set<string>();
+  for (const c of resolved) {
+    const id = c.resolvedArticleId as string;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const hits = await getArticlesByNumber(c.articleNumber as number, c.systemName ?? undefined).catch(() => [] as LegalCoreResult[]);
+    const match = hits.find((h) => h.articleId === id) ?? hits.find((h) => h.articleNumber === c.articleNumber);
+    if (match) out.push(match);
+  }
+  return out;
+}
+
 /**
  * يشغّل وكيل الأنظمة على استعلام (وقائع قضية/سؤال) ويعيد سياقًا مؤرَّضًا موحّدًا.
  * سقوط آمن في كل خطوة إلى سياق فارغ/جزئيّ — فلا يكسر الخدمة أبدًا، وعدم التأريض يُفصَح لا يُلفَّق.
@@ -57,10 +91,18 @@ export async function runCaseAgent(query: string): Promise<AgentGroundedContext>
   const q = (query || "").trim();
   if (!q) return emptyContext();
 
-  // ① نقطة دخول الوكيل: فهم النظام الحاكم (resolve-scope) + الاسترجاع المقيّد بالنطاق.
+  // ① تأصيلٌ مزدوج متوازٍ:
+  //    (أ) نقطة دخول الوكيل: فهم النظام الحاكم (resolve-scope) + الاسترجاع الدلاليّ المقيّد.
+  //    (ب) استرجاعٌ موجَّهٌ بالاستشهاد الصريح: جلبُ المواد المُحال إليها نصًّا مباشرةً من النواة
+  //        (يعالج «غياب السند» لموادَّ موجودةٍ فعلًا لكن لم يُصعِّدها الترتيب الدلاليّ).
   //    وضع «سريع»: نتجنّب توليد تحليل الوكيل (نموذج) لأنّ كل خدمة تصوغ إخراجها بوضعها الخاص.
-  const result = await orchestrate(q, { mode: "quick", skipBreadth: true }).catch(() => null);
-  const articles = result?.articles ?? [];
+  const [result, cited] = await Promise.all([
+    orchestrate(q, { mode: "quick", skipBreadth: true }).catch(() => null),
+    citationDrivenArticles(q).catch(() => [] as LegalCoreResult[]),
+  ]);
+  const semantic = result?.articles ?? [];
+  // الإحالات الصريحة أولًا (سندٌ مباشرٌ استشهد به الأطراف)، ثمّ نتائج البحث الدلاليّ.
+  const articles = dedupeArticlesById([...cited, ...semantic]);
   if (!articles.length) return emptyContext();
 
   // ② المظانّ (حتميّ، بلا نموذج): ترتيب الأنظمة الحاكمة من المواد المسترجَعة.
@@ -79,8 +121,10 @@ export async function runCaseAgent(query: string): Promise<AgentGroundedContext>
   const principles = prin.ok ? prin.data : [];
 
   // السياق النصّي للنموذج: نصّ المواد المُتحقَّقة (أو المسترجَعة) + القاعدة الإلزامية ضدّ الاختلاق.
+  // الإحالات الصريحة سندٌ مباشرٌ موجودٌ في النواة، فلا يُسقطها التحقّق: تُضمّ دائمًا مع المُتحقَّق.
   const verifiedIds = new Set(verified.map((v) => v.articleId));
-  const groundedArticles = verified.length ? articles.filter((a) => verifiedIds.has(a.articleId)) : articles;
+  const verifiedArticles = verified.length ? articles.filter((a) => verifiedIds.has(a.articleId)) : articles;
+  const groundedArticles = dedupeArticlesById([...cited, ...verifiedArticles]);
   const grounded = groundedArticles.length > 0;
   const groundingText = grounded
     ? [
