@@ -224,6 +224,19 @@ function maskKey(key: string): string {
   return `${key.slice(0, 4)}••••${key.slice(-4)}`;
 }
 
+/**
+ * مفتاح Gemini العامل (المضبوط للـOCR) كإعدادٍ احتياطيّ للنموذج — يُستعمل حين يفشل
+ * المزوّد الأساسيّ لسببٍ لا يتعافى (رصيدٌ منتهٍ/مصادقة). يوحّد «المفتاح العامل» عبر كلّ الخدمات.
+ */
+async function geminiFallbackConfig(): Promise<EffectiveAiConfig | null> {
+  try {
+    const { resolveGeminiOcrKey } = await import("@/lib/modules/ai/gemini-ocr");
+    const g = await resolveGeminiOcrKey();
+    if (g.key) return { provider: "gemini", apiKey: g.key, model: process.env.GEMINI_MODEL || "gemini-2.5-flash", baseUrl: null, source: g.source === "env" ? "env" : "db" };
+  } catch { /* لا مفتاح احتياطيّ */ }
+  return null;
+}
+
 /** النموذج الافتراضي لكل مزوّد عند غياب تحديد صريح في الإعداد. */
 export function defaultModelFor(provider: AiProvider): string {
   switch (provider) {
@@ -286,6 +299,9 @@ export async function completeWithConfig(
     }
     if (!resp.ok) {
       const t = await resp.text().catch(() => "");
+      // فشلٌ لا يتعافى بالموديل (رصيدٌ منتهٍ/مصادقة) ⇒ سقوطٌ للمفتاح العامل (Gemini) إن توفّر.
+      const gem = await geminiFallbackConfig();
+      if (gem) return completeWithConfig(gem, system, user, maxTokens);
       throw new Error(`anthropic ${resp.status}: ${t.slice(0, 160)}`);
     }
     const data = (await resp.json()) as { content?: Array<{ text?: string }> };
@@ -341,6 +357,11 @@ export async function* streamWithConfig(
     resp = await callAnthropic(model);
     // أيّ فشلٍ في الموديل المضبوط ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
     if (!resp.ok && model !== ANTHROPIC_FALLBACK_MODEL) resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
+    // فشلٌ لا يتعافى بالموديل (رصيدٌ منتهٍ/مصادقة) ⇒ سقوطٌ للمفتاح العامل (Gemini) إن توفّر — بثٌّ من Gemini بدلًا منه.
+    if (!resp.ok) {
+      const gem = await geminiFallbackConfig();
+      if (gem) { yield* streamWithConfig(gem, system, user, maxTokens); return; }
+    }
     kind = "anthropic";
   } else if (cfg.provider === "openai" || cfg.provider === "custom") {
     const url = cfg.provider === "custom" && cfg.baseUrl ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions` : "https://api.openai.com/v1/chat/completions";
