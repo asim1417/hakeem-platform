@@ -7,6 +7,7 @@ import { generateExecutiveSummary } from "@/lib/modules/judicial-assistant/summa
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export const maxDuration = 60; // التوليد المؤصَّل قد يتجاوز المهلة الافتراضية
 
 const schema = z.object({ caseId: z.string().min(1) });
