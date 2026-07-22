@@ -83,13 +83,18 @@ async function readStored(): Promise<StoredAiSettings | null> {
 }
 
 function envConfig(): EffectiveAiConfig {
-  const provider = (process.env.AI_PROVIDER || "offline").toLowerCase() as AiProvider;
   const keyByProvider: Record<string, string | undefined> = {
     openai: process.env.OPENAI_API_KEY,
     anthropic: process.env.ANTHROPIC_API_KEY,
     gemini: process.env.GEMINI_API_KEY,
     custom: process.env.CUSTOM_AI_API_KEY
   };
+  // اكتشافٌ تلقائيّ: إن لم يُحدَّد AI_PROVIDER صراحةً لكن وُجد مفتاحُ مزوّدٍ ما، فعّله تلقائيًّا
+  // (فلا يبقى الكلّ offline لمجرّد نسيان ضبط AI_PROVIDER). أولويّة: Anthropic ← OpenAI ← Gemini ← custom.
+  let provider = (process.env.AI_PROVIDER || "").toLowerCase() as AiProvider;
+  if (!provider || provider === "offline") {
+    provider = (["anthropic", "openai", "gemini", "custom"] as const).find((p) => keyByProvider[p]) ?? "offline";
+  }
   const modelByProvider: Record<string, string | undefined> = {
     openai: process.env.OPENAI_MODEL,
     anthropic: process.env.ANTHROPIC_MODEL,
