@@ -29,10 +29,12 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
   const m = getManifest(params.agentId);
   if (!m) return new Response(JSON.stringify({ type: "error", message: "وكيلٌ غير معروف." }), { status: 404, headers: { "Content-Type": "application/json; charset=utf-8" } });
 
-  let body: { message?: string; history?: Array<{ role?: string; content?: string }>; subRoleId?: string } = {};
+  let body: { message?: string; history?: Array<{ role?: string; content?: string }>; subRoleId?: string; context?: string } = {};
   try { body = await request.json(); } catch { /* تجاهل */ }
   const message = String(body?.message ?? "").trim().slice(0, 2000);
-  if (!message) return new Response(JSON.stringify({ type: "error", message: "اكتب رسالتك أولًا." }), { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } });
+  // مادّةٌ مرفقةٌ من المستخدم (نصٌّ ملصوقٌ أو مستخرَجٌ من مرفق) — يحلّلها الوكيل ضمن نطاقه.
+  const context = String(body?.context ?? "").trim().slice(0, 14000);
+  if (!message && !context) return new Response(JSON.stringify({ type: "error", message: "اكتب رسالتك أو أرفق نصًّا أولًا." }), { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } });
 
   const scope = m.scope.defaultSystems;
   const subRole = body?.subRoleId ? (m.subRoles ?? []).find((sr) => sr.subRoleId === body.subRoleId) : undefined;
@@ -49,8 +51,8 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
     async start(controller) {
       const send = (o: unknown) => controller.enqueue(encoder.encode(JSON.stringify(o) + "\n"));
       try {
-        // ⓪ تحيّةٌ أو سؤالٌ تعريفيّ: يتحاور الوكيل ويبيّن تخصصه ونطاقه وأدواره — بلا حاجة لسندٍ نظاميّ.
-        const meta = smalltalkOrMeta(message);
+        // ⓪ تحيّةٌ أو سؤالٌ تعريفيّ (بلا مرفق): يتحاور الوكيل ويبيّن تخصصه ونطاقه — بلا حاجة لسندٍ نظاميّ.
+        const meta = context ? null : smalltalkOrMeta(message);
         if (meta) {
           const roles = (m.subRoles ?? []).map((sr) => sr.displayName || sr.subRoleId).filter(Boolean);
           const scopeList = scope.map((s) => s.replace(/-/g, " ")).join(" · ");
@@ -70,7 +72,9 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
         // ① استرجاعٌ مقيّدٌ بنطاق الوكيل، مُرتّبٌ بالصلة (المواد النافذة فقط سندًا). مجموعةٌ أوسع
         //    (٤٠ مرشّحًا) ثمّ أفضل ١٠ صلةً — تأصيلٌ أقوى من لقطةٍ ضيّقة.
         const runEngine = createRunEngine({ limit: 40 });
-        const er = await runEngine(message, scope).catch(() => ({ articles: [], scopeSystems: [] as string[] }));
+        // إن أُرفقت مادّة، نُضمّها لاستعلام التأصيل كي يسترجع مواد النطاق ذات الصلة بها.
+        const retrievalQuery = context ? `${message} ${context.slice(0, 1500)}` : message;
+        const er = await runEngine(retrievalQuery, scope).catch(() => ({ articles: [], scopeSystems: [] as string[] }));
         const live = er.articles.filter((a) => a.enforcement !== "لاغٍ").slice(0, 10);
         send({ type: "basis", sources: live.map((a) => ({ system: a.system, article: a.article, enforcement: a.enforcement })), scope });
 
@@ -102,9 +106,10 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
         ].join("\n");
         const userPrompt = [
           history ? `سياق المحادثة السابق:\n${history}\n` : "",
-          `رسالة المستخدم:\n${message}`,
-          `\nالمواد المتاحة من نطاق الوكيل (السند الوحيد المسموح):\n${groundingText}`,
-          "\nقاعدة إلزامية: لا تستشهد إلا بالمواد أعلاه، ولا تخترع مواد أو أرقام مواد.",
+          message ? `رسالة المستخدم:\n${message}` : "المطلوب: حلّل المادّة المرفقة أدناه ضمن نطاق تخصصك.",
+          context ? `\nالمادّة المرفقة من المستخدم (نصٌّ/مستندٌ للتحليل — انسب الوقائع لها ولا تخترع خارجها):\n${context}` : "",
+          `\nالمواد النظاميّة المتاحة من نطاق الوكيل (السند الوحيد المسموح للاستشهاد):\n${groundingText}`,
+          "\nقاعدة إلزامية: لا تستشهد إلا بمواد النطاق أعلاه، ولا تخترع مواد أو أرقام مواد. حلّل وقائع المرفق واربطها بهذه المواد.",
         ].filter(Boolean).join("\n");
 
         // توليدٌ متعمّقٌ مفتوح: بحدّ النموذج الأقصى في كلّ نداء، ومواصلةٌ تلقائيّة إن اقتُطِع —
@@ -116,11 +121,11 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
           const meta = { truncated: false };
           const roundUser = round === 0 ? userPrompt : `${userPrompt}\n\n— ما كُتب حتى الآن (تابع من حيث توقفت تمامًا، دون تكرار):\n${acc}`;
           let produced = false;
-          for await (const chunk of streamWithConfig(cfg, system, roundUser, 6000, meta)) {
+          for await (const chunk of streamWithConfig(cfg, system, roundUser, 8192, meta)) {
             any = true; produced = true; acc += chunk; send({ type: "delta", text: chunk });
           }
           round += 1;
-          if (!meta.truncated || !produced || round >= 4) break;
+          if (!meta.truncated || !produced || round >= 6) break;
         }
         if (!any) send({ type: "delta", text: "تعذّر توليد ردٍّ نصيّ من النموذج؛ راجع المواد المؤصَّلة أعلاه." });
         send({ type: "done" });

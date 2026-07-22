@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { AnswerRenderer } from "@/components/AnswerRenderer";
 
 // صندوق محادثةٍ حيّ لوكيلٍ مخصّص — يبثّ ردًّا مؤصَّلًا بنطاق الوكيل (NDJSON) كصندوق «اسأل حكيم».
 export type ChatSubRole = { id: string; label: string; stance: string };
@@ -13,16 +14,49 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // مرفق/نصّ للتحليل: نصٌّ ملصوقٌ أو مستخرَجٌ من مستند عبر OCR — يبقى مُرفقًا للمتابعات حتى يُزال.
+  const [showAttach, setShowAttach] = useState(false);
+  const [context, setContext] = useState("");
+  const [attachName, setAttachName] = useState<string>("");
+  const [attaching, setAttaching] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const scrollDown = () => requestAnimationFrame(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); });
 
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    // نصوصٌ خام تُقرأ محليًّا؛ الصور/PDF تُستخرَج عبر خدمة OCR السحابيّة.
+    if (/\.(txt|md|csv|json)$/i.test(file.name) || file.type.startsWith("text/")) {
+      const t = await file.text().catch(() => "");
+      if (t.trim()) { setContext(t.slice(0, 14000)); setAttachName(file.name); setShowAttach(true); }
+      return;
+    }
+    setAttaching(true); setAttachName(file.name);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/doc-tool/ocr", { method: "POST", body: fd });
+      const j = await res.json().catch(() => null);
+      if (!res.ok || !j?.text) throw new Error(j?.error ?? "تعذّر استخراج نصّ المرفق.");
+      setContext(String(j.text).slice(0, 14000)); setShowAttach(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "تعذّر استخراج المرفق.");
+      setAttachName("");
+    } finally {
+      setAttaching(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
   async function send() {
     const text = input.trim();
-    if (!text || busy) return;
+    if ((!text && !context.trim()) || busy) return;
     setError(null);
     const history = msgs.map((m) => ({ role: m.role, content: m.content }));
-    setMsgs((prev) => [...prev, { role: "user", content: text }, { role: "assistant", content: "" }]);
+    const shownUser = text || (attachName ? `تحليل المرفق: ${attachName}` : "تحليل النصّ المرفق");
+    setMsgs((prev) => [...prev, { role: "user", content: shownUser }, { role: "assistant", content: "" }]);
     setInput("");
     setBusy(true);
     scrollDown();
@@ -30,7 +64,7 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
       const res = await fetch(`/api/agents/${agentId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history, subRoleId: subRoleId || undefined }),
+        body: JSON.stringify({ message: text, history, subRoleId: subRoleId || undefined, context: context.trim() || undefined }),
       });
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => null);
@@ -102,9 +136,18 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
         ) : null}
         {msgs.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-left" : "text-right"}>
-            <div className={`inline-block max-w-[92%] whitespace-pre-wrap rounded-[var(--r-md)] px-3 py-2 text-sm leading-7 ${m.role === "user" ? "bg-[var(--petrol)] text-white" : "border border-line bg-white text-[var(--ink-80)]"}`}>
-              {m.content || (busy && i === msgs.length - 1 ? "…" : "")}
-            </div>
+            {m.role === "user" ? (
+              <div className="inline-block max-w-[92%] whitespace-pre-wrap rounded-[var(--r-md)] bg-[var(--petrol)] px-3 py-2 text-sm leading-7 text-white">
+                {m.content}
+              </div>
+            ) : (
+              // تنسيقٌ فاخر كبقيّة المنصّة (محاماة حكيم): Markdown — عناوين وقوائم وجداول ومراجع.
+              <div className="inline-block w-full max-w-full rounded-[var(--r-md)] border border-line bg-white px-3 py-2 text-right">
+                {m.content
+                  ? <AnswerRenderer content={m.content} basis={(m.sources ?? []).map((s) => ({ articleNumber: Number(s.article) || 0, systemName: s.system }))} />
+                  : <span className="text-sm text-[var(--muted)]">{busy && i === msgs.length - 1 ? "…" : ""}</span>}
+              </div>
+            )}
             {m.role === "assistant" && m.sources?.length ? (
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {m.sources.map((s, j) => (
@@ -118,17 +161,54 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
 
       {error ? <div className="mt-2 rounded-[var(--r-sm)] bg-[var(--ruby-soft)] px-3 py-2 text-xs text-[var(--ruby)]">{error}</div> : null}
 
+      {/* شريط المرفق: مؤشّرٌ إن أُرفقت مادّة + إزالتها */}
+      {context.trim() ? (
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-[var(--r-sm)] border border-[var(--gold-border)] bg-[var(--gold-ghost,#faf7f0)] px-3 py-1.5 text-xs text-[var(--petrol)]">
+          <span>📎 مرفقٌ للتحليل: {attachName || "نصٌّ ملصوق"} ({context.trim().length.toLocaleString("ar-SA")} حرف)</span>
+          <button type="button" className="font-semibold text-[var(--ruby)] hover:underline" onClick={() => { setContext(""); setAttachName(""); }}>إزالة</button>
+        </div>
+      ) : null}
+
+      {/* لوحة الإرفاق: لصق نصّ أو رفع مستند (PDF/صورة → استخراج تلقائيّ) */}
+      {showAttach ? (
+        <div className="mt-2 rounded-[var(--r-md)] border border-[var(--ink-10)] bg-white p-2.5">
+          <textarea
+            value={context}
+            onChange={(e) => setContext(e.target.value.slice(0, 14000))}
+            rows={4}
+            placeholder="الصق نصّ المستند أو الوقائع هنا ليحلّلها الوكيل ضمن نطاقه…"
+            className="focus-ring w-full resize-y rounded-[var(--r-sm)] border border-[var(--ink-15)] bg-white px-2.5 py-2 text-xs"
+          />
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <button type="button" className="btn btn-outline px-3 py-1.5 text-xs" onClick={() => fileRef.current?.click()} disabled={attaching}>
+              {attaching ? "…جارٍ الاستخراج" : "⬆ رفع مستند (PDF/صورة/نص)"}
+            </button>
+            <button type="button" className="text-xs font-semibold text-[var(--petrol)] hover:underline" onClick={() => setShowAttach(false)}>إخفاء</button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mt-3 flex items-end gap-2">
+        <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.csv,.json,image/*,application/pdf,text/*" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
+        <button
+          type="button"
+          onClick={() => setShowAttach((v) => !v)}
+          disabled={busy}
+          title="أرفق مستندًا أو الصق نصًّا"
+          className="btn btn-outline shrink-0 px-3 py-2.5 text-sm disabled:opacity-50"
+        >
+          {attaching ? "…استخراج" : "📎 مرفق/نص"}
+        </button>
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }}
           rows={2}
-          placeholder="اكتب سؤالك للوكيل…"
+          placeholder={context.trim() ? "اكتب توجيهك حول المرفق (أو اترك الحقل واضغط إرسال لتحليله)…" : "اكتب سؤالك للوكيل…"}
           className="focus-ring min-h-[44px] flex-1 resize-y rounded-[var(--r-md)] border border-[var(--ink-15)] bg-white px-3 py-2 text-sm"
           disabled={busy}
         />
-        <button type="button" onClick={() => void send()} disabled={busy || !input.trim()} className="btn btn-gold shrink-0 px-5 py-2.5 text-sm font-semibold disabled:opacity-50">
+        <button type="button" onClick={() => void send()} disabled={busy || (!input.trim() && !context.trim())} className="btn btn-gold shrink-0 px-5 py-2.5 text-sm font-semibold disabled:opacity-50">
           {busy ? "…" : "إرسال"}
         </button>
       </div>
