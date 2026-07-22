@@ -1,13 +1,15 @@
 import { CasesManager } from "@/components/CasesManager";
 import { prisma } from "@/lib/prisma";
+import { caseListWhere } from "@/lib/modules/auth/ownership";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function CasesPage() {
-  await requirePagePermission("CONSULTATIONS_LIMITED");
+  const user = await requirePagePermission("CONSULTATIONS_LIMITED");
   const cases = await prisma.caseFile
     .findMany({
+      where: caseListWhere(user),
       orderBy: { updatedAt: "desc" },
       take: 50
     })

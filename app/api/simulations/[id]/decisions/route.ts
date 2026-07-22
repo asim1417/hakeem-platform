@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { encodeTurnState, extractTurnState, turnForDecision } from "@/lib/modules/simulations/judge-engine";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +27,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (gate.response) return gate.response;
   const payload = decisionSchema.parse(await request.json().catch(() => ({})));
   const user = gate.user!;
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: { messages: { orderBy: { createdAt: "asc" } } }
+  const session = await findOwnedSimulation(user, params.id, {
+    messages: { orderBy: { createdAt: "asc" } }
   });
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
 

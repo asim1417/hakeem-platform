@@ -6,14 +6,29 @@ import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
 import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 import { awardDailyVisit } from "@/lib/modules/credits/engagement";
-import { getCurrentUser } from "@/lib/modules/auth/session";
+import { getCurrentUser, type SafeUser } from "@/lib/modules/auth/session";
+import {
+  attachmentListWhere,
+  caseListWhere,
+  consultationListWhere,
+  isSystemAdmin,
+  simulationListWhere
+} from "@/lib/modules/auth/ownership";
 import { prisma } from "@/lib/prisma";
 import { formatFileSize, parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { activityLabel, statusLabel } from "@/lib/activity-labels";
 
 export const dynamic = "force-dynamic";
 
-async function getDashboardStats() {
+async function getDashboardStats(user: SafeUser | null) {
+  const admin = user ? isSystemAdmin(user) : false;
+  const caseWhere = user ? caseListWhere(user) : { ownerId: "__none__" };
+  const consultationWhere = user
+    ? { ...consultationListWhere(user), status: "GENERATED" as const }
+    : { userId: "__none__", status: "GENERATED" as const };
+  const simulationWhere = user ? simulationListWhere(user) : { userId: "__none__" };
+  const attachmentWhere = user ? attachmentListWhere(user) : { id: "__none__" };
+
   const [
     legalSystems,
     legalArticles,
@@ -29,48 +44,53 @@ async function getDashboardStats() {
     recentSimulations,
     recentAttachments,
     recentUsers
-  ] =
-    await Promise.all([
+  ] = await Promise.all([
     prisma.legalSystem.count(),
     prisma.legalArticle.count(),
-    prisma.consultation.count(),
-    prisma.simulation.count(),
-    prisma.auditEvent.count(),
-    prisma.caseFile.count(),
-    prisma.user.count(),
-    prisma.attachment.count(),
-    prisma.auditEvent.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      include: { actor: { select: { name: true, email: true } } }
-    }),
+    prisma.consultation.count({ where: consultationWhere }),
+    prisma.simulation.count({ where: simulationWhere }),
+    admin ? prisma.auditEvent.count() : Promise.resolve(0),
+    prisma.caseFile.count({ where: caseWhere }),
+    admin ? prisma.user.count() : Promise.resolve(0),
+    prisma.attachment.count({ where: attachmentWhere }),
+    admin
+      ? prisma.auditEvent.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          include: { actor: { select: { name: true, email: true } } }
+        })
+      : Promise.resolve([]),
     prisma.consultation.findMany({
-      // استشارات حقيقية مكتملة فقط — نستبعد المسوّدات والمحجوبة وبيانات الاختبار (BLOCKED/DRAFT)
-      where: { status: "GENERATED" },
+      where: consultationWhere,
       orderBy: { createdAt: "desc" },
       take: 5,
       select: { id: true, facts: true, createdAt: true }
     }),
     prisma.caseFile.findMany({
+      where: caseWhere,
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: { id: true, title: true, status: true, updatedAt: true }
     }),
     prisma.simulation.findMany({
+      where: simulationWhere,
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: { id: true, title: true, stage: true, updatedAt: true }
     }),
     prisma.attachment.findMany({
+      where: attachmentWhere,
       orderBy: { createdAt: "desc" },
       take: 5,
       select: { id: true, fileName: true, mimeType: true, extractedText: true, createdAt: true }
     }),
-    prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: { id: true, name: true, email: true, role: true, createdAt: true }
-    })
+    admin
+      ? prisma.user.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { id: true, name: true, email: true, role: true, createdAt: true }
+        })
+      : Promise.resolve([])
   ]);
 
   return {
@@ -87,18 +107,19 @@ async function getDashboardStats() {
     recentCases,
     recentSimulations,
     recentAttachments,
-    recentUsers
+    recentUsers,
+    isAdmin: admin
   };
 }
 
 export default async function DashboardPage({
-  searchParams,
+  searchParams
 }: {
   searchParams?: { welcome?: string };
 }) {
-  const stats = await getDashboardStats().catch(() => null);
-  const showWelcome = searchParams?.welcome === "1";
   const me = await getCurrentUser().catch(() => null);
+  const stats = await getDashboardStats(me).catch(() => null);
+  const showWelcome = searchParams?.welcome === "1";
   if (me) void awardDailyVisit(me.id).catch(() => undefined);
 
   return (
@@ -116,7 +137,6 @@ export default async function DashboardPage({
       <OnboardingBanner />
       <CreditsWidget />
 
-      {/* الترويسة الموحّدة (نظام التصميم) — تحوي صندوق البحث المركزيّ بخياريه */}
       <Hero
         center
         eyebrow="المصدر القانوني الموثّق · بحث ذكي"
@@ -126,7 +146,6 @@ export default async function DashboardPage({
         <CenterSearch />
       </Hero>
 
-      {/* تابع عملك — أهمّ ما يحتاجه المستخدم العائد */}
       {!stats ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
           تعذر تحميل بيانات الرئيسية.
@@ -166,7 +185,6 @@ export default async function DashboardPage({
         </>
       )}
 
-      {/* الوجهات الرئيسية — بطاقات نظام التصميم الموحّد */}
       <SectionTitle>الوجهات الرئيسية</SectionTitle>
       <CardGrid>
         <Card
@@ -204,54 +222,79 @@ export default async function DashboardPage({
         />
       </CardGrid>
 
-      {/* نظرة عامة — مؤشرات مصغّرة */}
       {stats ? (
         <>
           <SectionTitle>نظرة عامة</SectionTitle>
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard label="الأنظمة القانونية" value={stats.legalSystems} href="/dashboard/legal-core/systems" />
             <StatCard label="المواد النظامية" value={stats.legalArticles} href="/dashboard/legal-core/search" />
-            <StatCard label="القضايا" value={stats.cases} />
-            <StatCard label="الاستشارات" value={stats.consultations} />
-            <StatCard label="جلسات القاضي" value={stats.simulations} />
-            <StatCard label="المرفقات" value={stats.attachments} />
-            <StatCard label="المستخدمون" value={stats.users} />
-            <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
+            <StatCard label="قضاياي" value={stats.cases} />
+            <StatCard label="استشاراتي" value={stats.consultations} />
+            <StatCard label="جلساتي" value={stats.simulations} />
+            <StatCard label="مرفقاتي" value={stats.attachments} />
+            {stats.isAdmin ? (
+              <>
+                <StatCard label="المستخدمون" value={stats.users} />
+                <StatCard label="سجلات التدقيق" value={stats.auditLogs} />
+              </>
+            ) : null}
           </section>
 
-          <SectionTitle>نشاط النظام</SectionTitle>
-          <section className="grid gap-4 xl:grid-cols-3">
-            <RecentList
-              title="آخر الأنشطة"
-              empty="لا توجد أنشطة حديثة."
-              items={stats.recentActivities.map((item) => ({
-                id: item.id,
-                title: `${subjectLabel(item.subject)} · ${activityLabel(item.action)}`,
-                meta: `${item.actor?.name ?? "النظام"} · ${item.createdAt.toLocaleString("ar-SA")}`
-              }))}
-            />
-            <RecentList
-              title="آخر المرفقات"
-              empty="لا توجد مرفقات حديثة."
-              items={stats.recentAttachments.map((item) => {
-                const metadata = parseAttachmentMetadata(item.extractedText);
-                return {
-                  id: item.id,
-                  title: item.fileName,
-                  meta: `${item.mimeType} · ${formatFileSize(metadata.size)} · ${item.createdAt.toLocaleString("ar-SA")}`
-                };
-              })}
-            />
-            <RecentList
-              title="آخر المستخدمين"
-              empty="لا توجد إضافات مستخدمين حديثة."
-              items={stats.recentUsers.map((item) => ({
-                id: item.id,
-                title: item.name,
-                meta: `${roleLabel(item.role)} · ${item.createdAt.toLocaleString("ar-SA")}`
-              }))}
-            />
-          </section>
+          {stats.isAdmin ? (
+            <>
+              <SectionTitle>نشاط النظام</SectionTitle>
+              <section className="grid gap-4 xl:grid-cols-3">
+                <RecentList
+                  title="آخر الأنشطة"
+                  empty="لا توجد أنشطة حديثة."
+                  items={stats.recentActivities.map((item) => ({
+                    id: item.id,
+                    title: `${subjectLabel(item.subject)} · ${activityLabel(item.action)}`,
+                    meta: `${item.actor?.name ?? "النظام"} · ${item.createdAt.toLocaleString("ar-SA")}`
+                  }))}
+                />
+                <RecentList
+                  title="آخر المرفقات"
+                  empty="لا توجد مرفقات حديثة."
+                  items={stats.recentAttachments.map((item) => {
+                    const metadata = parseAttachmentMetadata(item.extractedText);
+                    return {
+                      id: item.id,
+                      title: item.fileName,
+                      meta: `${item.mimeType} · ${formatFileSize(metadata.size)} · ${item.createdAt.toLocaleString("ar-SA")}`
+                    };
+                  })}
+                />
+                <RecentList
+                  title="آخر المستخدمين"
+                  empty="لا توجد إضافات مستخدمين حديثة."
+                  items={stats.recentUsers.map((item) => ({
+                    id: item.id,
+                    title: item.name,
+                    meta: `${roleLabel(item.role)} · ${item.createdAt.toLocaleString("ar-SA")}`
+                  }))}
+                />
+              </section>
+            </>
+          ) : stats.recentAttachments.length > 0 ? (
+            <>
+              <SectionTitle>مرفقاتي الأخيرة</SectionTitle>
+              <section className="grid gap-4 xl:grid-cols-1">
+                <RecentList
+                  title="آخر المرفقات"
+                  empty="لا توجد مرفقات حديثة."
+                  items={stats.recentAttachments.map((item) => {
+                    const metadata = parseAttachmentMetadata(item.extractedText);
+                    return {
+                      id: item.id,
+                      title: item.fileName,
+                      meta: `${item.mimeType} · ${formatFileSize(metadata.size)} · ${item.createdAt.toLocaleString("ar-SA")}`
+                    };
+                  })}
+                />
+              </section>
+            </>
+          ) : null}
         </>
       ) : null}
     </div>
@@ -277,7 +320,10 @@ function StatCard({ label, value, href }: { label: string; value: number; href?:
   );
   if (href) {
     return (
-      <Link href={href} className="block rounded-[14px] border border-[var(--doc-line)] bg-[var(--doc-ivory)] p-4 transition hover:border-[var(--copper)] hover:shadow-[var(--sh-sm)]">
+      <Link
+        href={href}
+        className="block rounded-[14px] border border-[var(--doc-line)] bg-[var(--doc-ivory)] p-4 transition hover:border-[var(--copper)] hover:shadow-[var(--sh-sm)]"
+      >
         {inner}
       </Link>
     );

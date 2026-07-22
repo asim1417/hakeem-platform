@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { prisma } from "@/lib/prisma";
 import { PostJudgmentRemedyForm } from "@/components/PostJudgmentRemedyForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function SimulationReconsiderationPage({ params }: { params: { id: string } }) {
-  await requirePagePermission("SIMULATIONS_USE");
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: { judgments: { orderBy: { createdAt: "asc" } } }
+  const user = await requirePagePermission("SIMULATIONS_USE");
+  const session = await findOwnedSimulation(user, params.id, {
+    judgments: { orderBy: { createdAt: "asc" } }
   });
   if (!session) notFound();
   const judgment = session.judgments.at(-1);

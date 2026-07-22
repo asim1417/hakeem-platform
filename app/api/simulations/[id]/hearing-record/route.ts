@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { admissibilityCheck, buildHearingRecord, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
-  const session = await prisma.simulation.findUnique({ where: { id: params.id }, include: { messages: true } });
+  const session = await findOwnedSimulation(user, params.id, { messages: true });
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
   const claim = extractClaim(session.messages);
   const admissibility = admissibilityCheck(claim);

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { buildAppealDraft } from "@/lib/modules/simulations/hakeem-judge";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +21,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const payload = schema.parse(await request.json());
   const user = gate.user!;
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: { judgments: { orderBy: { createdAt: "desc" }, take: 1 } }
+  const session = await findOwnedSimulation(user, params.id, {
+    judgments: { orderBy: { createdAt: "desc" }, take: 1 }
   });
 
   if (!session) {

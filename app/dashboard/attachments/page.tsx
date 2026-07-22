@@ -1,15 +1,17 @@
 import { AttachmentsManager } from "@/components/AttachmentsManager";
 import { prisma } from "@/lib/prisma";
 import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { attachmentListWhere, caseListWhere } from "@/lib/modules/auth/ownership";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AttachmentsPage() {
-  await requirePagePermission("ATTACHMENTS_LIMITED");
+  const user = await requirePagePermission("ATTACHMENTS_LIMITED");
   const [attachments, cases] = await Promise.all([
     prisma.attachment
       .findMany({
+        where: attachmentListWhere(user),
         orderBy: { createdAt: "desc" },
         take: 100,
         include: { caseFile: { select: { id: true, title: true } } }
@@ -28,6 +30,7 @@ export default async function AttachmentsPage() {
       .catch(() => []),
     prisma.caseFile
       .findMany({
+        where: caseListWhere(user),
         orderBy: { updatedAt: "desc" },
         take: 50,
         select: { id: true, title: true }

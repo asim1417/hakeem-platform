@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
@@ -15,12 +16,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: {
-      messages: { orderBy: { createdAt: "asc" } },
-      decisions: { orderBy: { createdAt: "asc" } }
-    }
+  const session = await findOwnedSimulation(user, params.id, {
+    messages: { orderBy: { createdAt: "asc" } },
+    decisions: { orderBy: { createdAt: "asc" } }
   });
 
   if (!session) {

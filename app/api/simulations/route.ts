@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { simulationListWhere } from "@/lib/modules/auth/ownership";
 import { encodeClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { encodeTurnState } from "@/lib/modules/simulations/judge-engine";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
@@ -29,7 +30,9 @@ const schema = z.object({
 export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
+  // عزل المستأجرين: قائمة الجلسات تقتصر على مالكها (أو المدير يرى الجميع).
   const sessions = await prisma.simulation.findMany({
+    where: simulationListWhere(gate.user!),
     orderBy: { updatedAt: "desc" },
     take: 25,
     include: {
