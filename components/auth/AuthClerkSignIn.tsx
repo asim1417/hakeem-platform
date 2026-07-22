@@ -54,14 +54,24 @@ export function AuthClerkSignIn({
     <div className="flex w-full flex-col items-center gap-5">
       {!loaded ? <SignInSkeleton /> : null}
       <div className={loaded ? "w-full" : "hidden"} aria-hidden={!loaded}>
-        <SignIn
-          appearance={clerkAppearance}
-          routing={routing}
-          path={routing === "path" ? path : undefined}
-          signUpUrl={signUpUrl}
-          forceRedirectUrl={nextUrl}
-          fallbackRedirectUrl={nextUrl}
-        />
+        {routing === "path" ? (
+          <SignIn
+            appearance={clerkAppearance}
+            routing="path"
+            path={path}
+            signUpUrl={signUpUrl}
+            forceRedirectUrl={nextUrl}
+            fallbackRedirectUrl={nextUrl}
+          />
+        ) : (
+          <SignIn
+            appearance={clerkAppearance}
+            routing="hash"
+            signUpUrl={signUpUrl}
+            forceRedirectUrl={nextUrl}
+            fallbackRedirectUrl={nextUrl}
+          />
+        )}
       </div>
       {showEmergency ? <OwnerEmergencyLogin nextUrl={nextUrl} clerkEnabled /> : null}
     </div>
