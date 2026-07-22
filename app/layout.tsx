@@ -4,6 +4,7 @@ import "./globals.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 import { ClerkAppProvider } from "@/components/providers/ClerkAppProvider";
+import { shouldHideClerkDevelopmentModeUi } from "@/lib/modules/auth/owner-emergency";
 
 export const metadata: Metadata = {
   title: "حكيم",
@@ -20,6 +21,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = getLocale();
   const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
+  const hideDevelopmentMode = shouldHideClerkDevelopmentModeUi();
   return (
     <html lang={locale} dir={DIR[locale]}>
       <head>
@@ -31,7 +33,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <ClerkAppProvider publishableKey={publishableKey || undefined}>{children}</ClerkAppProvider>
+        <ClerkAppProvider
+          publishableKey={publishableKey || undefined}
+          hideDevelopmentMode={hideDevelopmentMode}
+        >
+          {children}
+        </ClerkAppProvider>
       </body>
     </html>
   );

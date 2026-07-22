@@ -1,53 +1,45 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { OwnerEmergencyLogin } from "@/components/auth/OwnerEmergencyLogin";
-import { AuthClerkSignIn } from "@/components/auth/AuthClerkSignIn";
-import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
 
 export const metadata = {
   title: "تسجيل الدخول — حكيم",
 };
 
+/**
+ * /login → إعادة توجيه موحّدة إلى /sign-in مع الحفاظ على next.
+ * لا يعرض دخول مالك ولا معلومات تقنية.
+ */
 export default function LoginPage({
   searchParams,
 }: {
   searchParams?: { next?: string };
 }) {
-  const configured = isClerkConfigured();
-  const nextUrl =
+  const next =
     searchParams?.next && searchParams.next.startsWith("/") && !searchParams.next.startsWith("//")
       ? searchParams.next
-      : "/dashboard";
+      : undefined;
+
+  if (isClerkConfigured()) {
+    const qs = next ? `?next=${encodeURIComponent(next)}` : "";
+    redirect(`/sign-in${qs}`);
+  }
 
   return (
-    <AuthJourneyShell
-      tagline={
-        configured
-          ? "دخول إلى اللوحة ثم البيانات الأساسية الإلزامية (اسم، جوال، مهنة)."
-          : "دخول المالك متاح فورًا — Clerk يُكمّل لاحقًا."
-      }
-      footer={
-        <p className="login-panel__links">
-          <Link href="/" className="underline-offset-4 hover:underline">
-            الرئيسية
-          </Link>
-          <span aria-hidden> · </span>
-          <Link href="/sign-in" className="underline-offset-4 hover:underline">
-            /sign-in
-          </Link>
-        </p>
-      }
-    >
-      <header className="login-panel__header w-full text-center">
-        <p className="login-panel__eyebrow">منصة المعرفة القضائية</p>
-        <h2 className="login-panel__title">تسجيل الدخول</h2>
-      </header>
-
-      {configured ? (
-        <AuthClerkSignIn nextUrl={nextUrl} routing="hash" />
-      ) : (
-        <OwnerEmergencyLogin nextUrl={nextUrl} clerkEnabled={false} />
-      )}
-    </AuthJourneyShell>
+    <main className="login-page login-page--compact" lang="ar" dir="rtl">
+      <div className="login-panel" style={{ minHeight: "100dvh" }}>
+        <div className="login-panel__card w-full max-w-md rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
+          <h1 className="text-xl font-bold text-[#0E3435]">تسجيل الدخول غير متاح مؤقتًا</h1>
+          <p className="mt-3 text-sm leading-7 text-[rgba(14,52,53,0.68)]">
+            يرجى المحاولة لاحقًا أو التواصل مع مسؤول المنصة.
+          </p>
+          <nav className="login-panel__links mt-6" aria-label="روابط نظامية">
+            <Link href="/privacy">سياسة الخصوصية</Link>
+            <span aria-hidden>·</span>
+            <Link href="/terms">شروط الاستخدام</Link>
+          </nav>
+        </div>
+      </div>
+    </main>
   );
 }
