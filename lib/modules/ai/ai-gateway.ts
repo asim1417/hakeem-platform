@@ -184,16 +184,17 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
  * (system + user) دون فرض قالب قضائي — يستعمله القاضي التفاعلي لكل أدواره
  * عبر مفتاح خادمي واحد بدل مفاتيح المتصفح. سقوط إلى offline عند غياب المفتاح.
  */
-export async function callCentralProvider(input: { systemPrompt?: string; userPrompt: string; maxTokens?: number }): Promise<{ ok: boolean; content: string; mode: "server" | "offline"; provider: string }> {
+export async function callCentralProvider(input: { systemPrompt?: string; userPrompt: string; maxTokens?: number }): Promise<{ ok: boolean; content: string; mode: "server" | "offline"; provider: string; error?: string }> {
   const cfg = await resolveAiConfig();
   if (cfg.provider === "offline" || !cfg.apiKey) {
-    return { ok: false, content: "", mode: "offline", provider: "offline" };
+    return { ok: false, content: "", mode: "offline", provider: "offline", error: "مزوّد النموذج غير مضبوط (لا مفتاح فعّال)." };
   }
   try {
     const content = await completeWithConfig(cfg, input.systemPrompt ?? "", String(input.userPrompt ?? ""), input.maxTokens ?? 1000);
-    return { ok: Boolean(content), content, mode: "server", provider: cfg.provider };
-  } catch {
-    return { ok: false, content: "", mode: "server", provider: cfg.provider };
+    if (!content) return { ok: false, content: "", mode: "server", provider: cfg.provider, error: "مخرَجٌ فارغ من النموذج." };
+    return { ok: true, content, mode: "server", provider: cfg.provider };
+  } catch (e) {
+    return { ok: false, content: "", mode: "server", provider: cfg.provider, error: e instanceof Error ? e.message : "خطأ في نداء النموذج" };
   }
 }
 

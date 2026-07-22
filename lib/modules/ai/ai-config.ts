@@ -280,11 +280,14 @@ export async function completeWithConfig(
       body: JSON.stringify({ model: m, max_tokens: mt, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
     });
     let resp = await callAnthropic(model);
-    // موديلٌ غير معروفٍ للحساب (404/400) ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
-    if (!resp.ok && (resp.status === 404 || resp.status === 400) && model !== ANTHROPIC_FALLBACK_MODEL) {
+    // أيّ فشلٍ في الموديل المضبوط ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
+    if (!resp.ok && model !== ANTHROPIC_FALLBACK_MODEL) {
       resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
     }
-    if (!resp.ok) throw new Error(`provider ${resp.status}`);
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => "");
+      throw new Error(`anthropic ${resp.status}: ${t.slice(0, 160)}`);
+    }
     const data = (await resp.json()) as { content?: Array<{ text?: string }> };
     return data.content?.map((p) => p.text).filter(Boolean).join("\n") || "";
   }
@@ -336,7 +339,8 @@ export async function* streamWithConfig(
       body: JSON.stringify({ model: m, max_tokens: mt, stream: true, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
     });
     resp = await callAnthropic(model);
-    if (!resp.ok && (resp.status === 404 || resp.status === 400) && model !== ANTHROPIC_FALLBACK_MODEL) resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
+    // أيّ فشلٍ في الموديل المضبوط ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
+    if (!resp.ok && model !== ANTHROPIC_FALLBACK_MODEL) resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
     kind = "anthropic";
   } else if (cfg.provider === "openai" || cfg.provider === "custom") {
     const url = cfg.provider === "custom" && cfg.baseUrl ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions` : "https://api.openai.com/v1/chat/completions";

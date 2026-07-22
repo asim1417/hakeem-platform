@@ -5,6 +5,7 @@ import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { extractCaseMap } from "@/lib/modules/judicial-assistant/extract-map";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /** POST /api/judicial-assistant/cases/[caseId]/extract-map — يقترح خريطةً من المرفقات (لا يحفظ). */
 export async function POST(request: NextRequest, { params }: { params: { caseId: string } }) {
