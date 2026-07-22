@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { JaIcon } from "./icons";
 import { SERVICES } from "@/lib/modules/judicial-assistant/catalog";
 import { runnerFor } from "@/lib/modules/judicial-assistant/routing";
+import { exportPdf, exportWord } from "@/lib/modules/judicial-assistant/export-doc";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import type {
   DeterministicActionResult, ExecutiveSummaryResult, GroundedWorkResult, JudgmentDraftResult, JudicialStudyResult, SuggestedAction,
@@ -70,6 +71,25 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const [copied, setCopied] = useState(false);
   const [approved, setApproved] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const docRef = useRef<HTMLDivElement>(null); // يلتقط HTML المخرَج المعروض للتصدير الفاخر (PDF/Word).
+
+  /** معرّف الخدمة وعنوانها للوثيقة المصدَّرة. */
+  function panelIdTitle(p: Panel): { id: string; title: string } {
+    const id =
+      p.kind === "stream" || p.kind === "deterministic" || p.kind === "work"
+        ? p.data.serviceId
+        : PANEL_SERVICE[p.kind] ?? activeId ?? "";
+    const title = SERVICES.find((s) => s.id === id)?.title ?? (p.kind === "stream" ? p.data.title : id);
+    return { id, title };
+  }
+
+  /** تصدير المخرَج المعروض وثيقةً فاخرة (RTL · Traditional Arabic · جداول · مصادر). */
+  function doExport(kind: "pdf" | "word") {
+    if (!panel || !docRef.current) return;
+    const { id, title } = panelIdTitle(panel);
+    const opts = { title, serviceId: id, bodyHtml: docRef.current.innerHTML };
+    if (kind === "pdf") exportPdf(opts); else exportWord(opts);
+  }
 
   // requestId للمخرَج الحاليّ (للتوثيق في سجلّ الاعتماد) إن توفّر.
   function panelRequestId(p: Panel): string | undefined {
@@ -222,15 +242,18 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
                 ? <span className="ja-result__approved">✓ معتمَدٌ من القاضي</span>
                 : <button type="button" className="ja-result__approve" onClick={() => void approve()}>اعتمد المسودّة</button>}
               <button type="button" className="ja-textbtn" onClick={() => { navigator.clipboard?.writeText(panelToText(panel)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => undefined); }}>{copied ? "نُسخ ✓" : "نسخ"}</button>
+              <button type="button" className="ja-textbtn" onClick={() => doExport("pdf")} title="تصدير PDF فاخر (RTL · تنسيق عربيّ)">PDF ⤓</button>
+              <button type="button" className="ja-textbtn" onClick={() => doExport("word")} title="تصدير Word قابل للتحرير">Word ⤓</button>
               <button type="button" className="ja-textbtn" onClick={() => {
                 const url = URL.createObjectURL(new Blob([panelToText(panel)], { type: "text/markdown;charset=utf-8" }));
                 const a = document.createElement("a"); a.href = url; a.download = `${activeId ?? "result"}.md`; a.click(); URL.revokeObjectURL(url);
-              }}>تصدير</button>
+              }}>‎.md</button>
               {activeId ? <button type="button" className="ja-textbtn" onClick={() => void run(activeId)} disabled={running !== null}>إعادة التشغيل</button> : null}
               <button type="button" className="ja-textbtn ja-textbtn--danger" onClick={() => setPanel(null)}>إغلاق</button>
             </div>
           </div>
 
+      <div className="ja-result__doc" ref={docRef}>
       {panel?.kind === "stream" ? <StreamView data={panel.data} /> : null}
       {panel?.kind === "summary" ? <SummaryView data={panel.data} /> : null}
       {panel?.kind === "study" ? <StudyView data={panel.data} /> : null}
@@ -240,6 +263,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-009" ? <DeadlineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-010" ? <EvidenceView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && ["JS-006", "JS-007", "JS-008", "JS-019", "JS-020", "JS-024"].includes(panel.data.serviceId) ? <ChecklistView data={panel.data as import("@/lib/modules/judicial-assistant/types").ChecklistResult} /> : null}
+          </div>
         </div>
       ) : null}
     </div>
