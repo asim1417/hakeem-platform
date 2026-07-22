@@ -8,7 +8,7 @@ import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const schema = z.object({ question: z.string().min(3, "اكتب طلبك."), caseId: z.string().optional() });
 

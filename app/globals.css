@@ -1244,6 +1244,16 @@ body {
 /* البثّ الحيّ — شريط التفكير/البحث + النصّ المتدفّق */
 .ja-live { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border: 1px solid var(--ink-08);
   border-radius: var(--r-md, 12px); background: var(--parchment); }
+/* مؤشّر الوقت الحيّ + مؤشّر الخطوات المصغّر (بلا سقف) */
+.ja-live__meter { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding-bottom: 10px; margin-bottom: 2px; border-bottom: 1px dashed var(--ink-08); }
+.ja-live__timer { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700;
+  color: var(--gold-dark); font-variant-numeric: tabular-nums; }
+.ja-live__spin { width: 11px; height: 11px; flex: none; border-radius: 50%; border: 2px solid var(--gold-ghost, var(--ink-08));
+  border-top-color: var(--gold); animation: jaSpin .8s linear infinite; }
+@keyframes jaSpin { to { transform: rotate(360deg); } }
+.ja-live__steps { font-size: 11.5px; font-weight: 600; color: var(--ink-60); background: var(--parchment);
+  border: 1px solid var(--ink-08); border-radius: 999px; padding: 3px 10px; font-variant-numeric: tabular-nums; }
 .ja-live__stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
 .ja-live__stage { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--ink-60); }
 .ja-live__stage--done { color: var(--ink-80); }

@@ -51,11 +51,23 @@ export async function* streamService(kase: JudicialCase, serviceId: string, dept
     return;
   }
 
+  // توليدٌ مفتوح بلا سقفٍ مصطنع: بحدّ النموذج الأقصى في كلّ نداء، ونواصل بجولةٍ تالية إن توقّف
+  // لبلوغ الحدّ (لا لانتهاء المعنى) — حتى يُكمل النموذج العمل القضائيّ مهما اتّسع.
   let any = false;
+  let acc = "";
   try {
-    for await (const chunk of streamWithConfig(cfg, system, user, 5000)) {
-      any = true;
-      yield { type: "delta", text: chunk };
+    let round = 0;
+    for (;;) {
+      const meta = { truncated: false };
+      const roundUser = round === 0
+        ? user
+        : `${user}\n\n— ما كُتب حتى الآن (تابع من حيث توقفت تمامًا، دون تكرارٍ ولا إعادة عنوان):\n${acc}`;
+      let produced = false;
+      for await (const chunk of streamWithConfig(cfg, system, roundUser, 8192, meta)) {
+        any = true; produced = true; acc += chunk; yield { type: "delta", text: chunk };
+      }
+      round += 1;
+      if (!meta.truncated || !produced) break;
     }
   } catch {
     /* يُعرَض ما تجمّع */

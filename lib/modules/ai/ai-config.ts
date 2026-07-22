@@ -395,7 +395,8 @@ export async function* streamWithConfig(
   cfg: EffectiveAiConfig,
   system: string,
   user: string,
-  maxTokens: number
+  maxTokens: number,
+  meta?: { truncated: boolean }
 ): AsyncGenerator<string> {
   if (cfg.provider === "offline" || !cfg.apiKey) return;
   const model = cfg.model || defaultModelFor(cfg.provider);
@@ -417,7 +418,7 @@ export async function* streamWithConfig(
     // فشلٌ لا يتعافى بالموديل (رصيدٌ منتهٍ/مصادقة) ⇒ سقوطٌ للمفتاح العامل (Gemini) إن توفّر — بثٌّ من Gemini بدلًا منه.
     if (!resp.ok) {
       const gem = await geminiFallbackConfig();
-      if (gem) { yield* streamWithConfig(gem, system, user, maxTokens); return; }
+      if (gem) { yield* streamWithConfig(gem, system, user, maxTokens, meta); return; }
     }
     kind = "anthropic";
   } else if (cfg.provider === "openai" || cfg.provider === "custom") {
@@ -460,14 +461,19 @@ export async function* streamWithConfig(
       let j: Record<string, unknown>;
       try { j = JSON.parse(payload); } catch { continue; }
       if (kind === "anthropic") {
-        const d = j as { type?: string; delta?: { type?: string; text?: string } };
+        const d = j as { type?: string; delta?: { type?: string; text?: string; stop_reason?: string } };
         if (d.type === "content_block_delta" && d.delta?.type === "text_delta" && d.delta.text) yield d.delta.text;
+        // بلوغ حدّ الرموز في هذا النداء ⇒ نُعلِم المُستدعي كي يواصل بجولةٍ تالية (لا سقف فعليّ).
+        if (d.type === "message_delta" && meta) meta.truncated = d.delta?.stop_reason === "max_tokens";
       } else if (kind === "openai") {
-        const c = (j as { choices?: Array<{ delta?: { content?: string } }> }).choices?.[0]?.delta?.content;
-        if (c) yield c;
+        const ch = (j as { choices?: Array<{ delta?: { content?: string }; finish_reason?: string }> }).choices?.[0];
+        if (ch?.delta?.content) yield ch.delta.content;
+        if (ch?.finish_reason && meta) meta.truncated = ch.finish_reason === "length";
       } else {
-        const parts = (j as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }).candidates?.[0]?.content?.parts;
+        const cand = (j as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }> }).candidates?.[0];
+        const parts = cand?.content?.parts;
         if (parts) for (const p of parts) if (p.text) yield p.text;
+        if (cand?.finishReason && meta) meta.truncated = cand.finishReason === "MAX_TOKENS";
       }
     }
   }

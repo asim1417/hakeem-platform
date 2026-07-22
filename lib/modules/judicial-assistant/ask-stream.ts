@@ -89,13 +89,29 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
   }
 
   yield { type: "stage", label: "أصوغ التحليل", state: "active" };
+  // توليدٌ مفتوح بلا سقفٍ مصطنع: نبثّ بحدّ النموذج الأقصى في كلّ نداء، وإن توقّف لبلوغ
+  // الحدّ (لا لانتهاء المعنى) نُواصل بجولةٍ تالية من حيث انتهى — حتى يُكمل النموذج طبيعيًّا.
   let acc = "";
   try {
-    for await (const chunk of streamWithConfig(cfg, system, user, 6000)) { acc += chunk; yield { type: "delta", text: chunk }; }
+    let round = 0;
+    for (;;) {
+      const meta = { truncated: false };
+      const roundUser = round === 0
+        ? user
+        : `${user}\n\n— ما كُتب حتى الآن (تابع من حيث توقفت تمامًا، دون تكرارٍ ولا إعادة عنوان):\n${acc}`;
+      let produced = false;
+      for await (const chunk of streamWithConfig(cfg, system, roundUser, 8192, meta)) {
+        produced = true; acc += chunk; yield { type: "delta", text: chunk };
+      }
+      round += 1;
+      // نتوقّف متى أكمل النموذج معناه (لا اقتطاع)، أو تعذّر إنتاج أيّ نصٍّ في الجولة.
+      if (!meta.truncated || !produced) break;
+      yield { type: "stage", label: `أواصل التحليل (المقطع ${round + 1})`, state: "active" };
+    }
   } catch {
     /* يُعرَض ما تجمّع */
   }
-  yield { type: "stage", label: "صغتُ التحليل", state: "done" };
+  yield { type: "stage", label: "اكتمل التحليل", state: "done" };
   const answer = acc.trim() || (grounded ? citations.map((c) => `- ${c.lawName}، المادة ${c.articleNumber}: ${c.quote}`).join("\n") : caseCtx.slice(0, 2000));
   yield {
     type: "done",
