@@ -9,7 +9,7 @@ import type { StudyDepth } from "@/lib/modules/judicial-assistant/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest, { params }: { params: { caseId: string } }) {
   const gate = await requireApiPermission("JUDICIAL_ASSISTANT_USE", request);

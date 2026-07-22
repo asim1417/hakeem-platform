@@ -2,7 +2,7 @@
 
 // موجّه المعاون — صندوقٌ حيٌّ (كصناديق المحادثة الحيّة): يبثّ مؤشّرات التفكير والبحث حيًّا،
 // ثمّ الإجابة كلمةً كلمةً فور وصولها من النموذج. يمرّ بالتأصيل والحجب الصادق نفسه.
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { JaIcon } from "./icons";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import type { AskCitation } from "@/lib/modules/judicial-assistant/ask-stream";
@@ -30,13 +30,26 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
   const [stages, setStages] = useState<Stage[]>([]);
   const [streamText, setStreamText] = useState("");
   const [result, setResult] = useState<{ answer: string; blocked: boolean; citations: AskCitation[]; notice: string } | null>(null);
+  const [elapsed, setElapsed] = useState(0); // ثوانٍ منذ الإرسال — مؤشّر وقتٍ حيّ (بلا سقف).
   const abortRef = useRef<AbortController | null>(null);
+  const startRef = useRef<number>(0);
+
+  // مؤشّر الوقت: يعدّ حيًّا أثناء العمل ويتوقّف عند الانتهاء.
+  useEffect(() => {
+    if (!busy) return;
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [busy]);
+
+  const fmtTime = (s: number) => (s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
+  const doneStages = stages.filter((s) => s.state === "done").length;
 
   async function submit(e?: FormEvent, preset?: string) {
     e?.preventDefault();
     const question = (preset ?? q).trim();
     if (question.length < 3) { setError("اكتب طلبك (٣ أحرف على الأقلّ)."); return; }
     setBusy(true); setError(""); setResult(null); setStages([]); setStreamText("");
+    setElapsed(0); startRef.current = Date.now();
     if (preset) setQ(preset);
 
     const ac = new AbortController();
@@ -146,6 +159,15 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
       {/* شريط التفكير الحيّ + النصّ المبثوث */}
       {showThinking ? (
         <div className="ja-live">
+          {/* مؤشّر وقتٍ حيّ + مؤشّر خطواتٍ مصغّر (بلا سقف — قد يتّسع النطاق) */}
+          <div className="ja-live__meter" dir="rtl">
+            <span className="ja-live__timer" aria-live="polite">
+              <span className="ja-live__spin" aria-hidden />الزمن: {fmtTime(elapsed)}
+            </span>
+            {stages.length > 0 ? (
+              <span className="ja-live__steps" title="الخطوات المنجزة">الخطوة {Math.max(doneStages, 1)}/{stages.length}</span>
+            ) : null}
+          </div>
           {stages.length > 0 ? (
             <ul className="ja-live__stages">
               {stages.map((s, i) => (
