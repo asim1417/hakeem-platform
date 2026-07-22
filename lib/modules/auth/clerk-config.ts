@@ -29,6 +29,22 @@ export const clerkLocalization: LocalizationResource = {
       subtitle: "ابدأ مع منصة المعرفة القضائية",
     },
   },
+  unstable__errors: {
+    ...arSA.unstable__errors,
+    form_username_invalid_length:
+      "يجب أن يكون اسم المستخدم بين {{min_length}} و{{max_length}} حرفًا.",
+    form_username_invalid_character: "اسم المستخدم يحتوي على أحرف غير مسموحة.",
+    form_password_length_too_short:
+      "كلمة المرور قصيرة جدًا. يجب أن تكون {{length}} أحرف على الأقل.",
+    form_password_incorrect: "كلمة المرور غير صحيحة.",
+    form_param_format_invalid__phone_number: "صيغة رقم الجوال غير صحيحة.",
+    form_param_type_invalid__phone_number: "رقم الجوال غير صالح.",
+    form_new_password_matches_current: "كلمة المرور الجديدة لا يجوز أن تطابق الحالية.",
+    action_blocked: "تعذّر إكمال هذا الإجراء. حاول لاحقًا أو تواصل مع الدعم.",
+    not_allowed_access:
+      arSA.unstable__errors?.not_allowed_access ||
+      "غير مسموح بالتسجيل بهذا المعرّف. إن كان الرقم سعوديًا، فعّل السعودية من إعدادات SMS في Clerk.",
+  },
 };
 
 /** مظهر Clerk بهوية حكيم (بترولي / نحاسي) — لا الأخضر الافتراضي. */

@@ -16,5 +16,9 @@ assert.ok(clerkAppearance.elements.formButtonPrimary.includes("#0E3435"));
 assert.equal(clerkLocalization.locale, "ar-SA");
 assert.equal(clerkLocalization.signIn?.start?.title, "تسجيل الدخول إلى حكيم");
 assert.equal(clerkLocalization.signUp?.start?.title, "إنشاء حساب في حكيم");
+assert.match(
+  String(clerkLocalization.unstable__errors?.form_username_invalid_length || ""),
+  /اسم المستخدم/
+);
 
 console.log("test-clerk-config: OK");
