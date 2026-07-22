@@ -62,6 +62,8 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
     "ADMIN_REPORTS_VIEW",
+    // المعاون القضائي متاحٌ للمدرّب أيضًا (تدريبٌ عمليّ على مساحة القضية).
+    "JUDICIAL_ASSISTANT_USE",
   ],
   TRAINEE: [
     "CONSULTATIONS_LIMITED",
@@ -70,5 +72,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_LIMITED",
+    // جمهور حكيم يشمل القضاة المتدربين وطلاب القانون — فالمعاون القضائي متاحٌ لهم.
+    "JUDICIAL_ASSISTANT_USE",
   ],
 };
