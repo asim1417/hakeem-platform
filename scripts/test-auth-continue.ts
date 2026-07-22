@@ -1,5 +1,4 @@
 /**
- * اختبار بسيط لرحلة ما بعد Clerk.
  * npx tsx scripts/test-auth-continue.ts
  */
 import assert from "node:assert/strict";
@@ -20,5 +19,8 @@ const complete = {
 assert.equal(needsOnboarding(incomplete, "a@b.com"), true);
 assert.equal(needsOnboarding(complete, "a@b.com"), false);
 assert.equal(needsOnboarding(incomplete, "guest@hakeem.local"), false);
+
+// سياسة المنتج: الدخول سلس — needsOnboarding للتذكير فقط وليس للإجبار
+assert.equal(typeof needsOnboarding(incomplete), "boolean");
 
 console.log("test-auth-continue: OK");

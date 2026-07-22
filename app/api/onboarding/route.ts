@@ -58,11 +58,7 @@ export async function POST(request: NextRequest) {
     }
   }
   if (body.step === 3) {
-    // يجب التحقق عبر OTP أولًا — نقرأ الملف
-    const current = await getProfile(user.id);
-    if (!current.phoneVerified && !body.phoneVerified) {
-      return NextResponse.json({ message: "أكمل التحقق من الجوال برمز OTP أولًا." }, { status: 400 });
-    }
+    // التحقق اختياري — يُسمح بالتخطّي دون OTP (قيود SMS لبعض الدول)
   }
   if (body.step === 4) {
     if (!body.interests || body.interests.length < 3) {

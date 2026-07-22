@@ -23,7 +23,7 @@ export default function LoginPage({
     <AuthJourneyShell
       tagline={
         configured
-          ? "الدخول عبر Clerk — ثم إكمال الملف والنقاط في مسار واحد."
+          ? "دخول سلس إلى اللوحة — البيانات الكاملة اختيارية للمكافآت."
           : "دخول المالك متاح فورًا — Clerk يُكمّل لاحقًا."
       }
       footer={
