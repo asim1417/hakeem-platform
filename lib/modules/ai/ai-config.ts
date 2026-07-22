@@ -13,6 +13,8 @@ import { prisma } from "@/lib/prisma";
 
 const SETTINGS_KEY = "ai_provider";
 const ENC_PREFIX = "enc:v1:";
+// موديلٌ ثابتٌ مؤكَّد التوفّر — إليه نسقط إن رفض الحساب الموديل المضبوط (نفس ما يعمل في «اسأل حكيم»).
+const ANTHROPIC_FALLBACK_MODEL = process.env.ANTHROPIC_FALLBACK_MODEL || "claude-3-5-haiku-latest";
 
 export type AiProvider = "openai" | "anthropic" | "gemini" | "custom" | "offline";
 
@@ -226,7 +228,8 @@ function maskKey(key: string): string {
 export function defaultModelFor(provider: AiProvider): string {
   switch (provider) {
     case "anthropic":
-      return "claude-sonnet-4-6";
+      // موديلٌ ثابتٌ صالحٌ للحساب (قابلٌ للتجاوز عبر إعداد /admin/ai أو ANTHROPIC_MODEL).
+      return process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest";
     case "openai":
     case "custom":
       return "gpt-4o-mini";
@@ -271,11 +274,16 @@ export async function completeWithConfig(
   }
 
   if (cfg.provider === "anthropic") {
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    const callAnthropic = (m: string) => fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: mt, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
+      headers: { "x-api-key": cfg.apiKey as string, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model: m, max_tokens: mt, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
     });
+    let resp = await callAnthropic(model);
+    // موديلٌ غير معروفٍ للحساب (404/400) ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
+    if (!resp.ok && (resp.status === 404 || resp.status === 400) && model !== ANTHROPIC_FALLBACK_MODEL) {
+      resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
+    }
     if (!resp.ok) throw new Error(`provider ${resp.status}`);
     const data = (await resp.json()) as { content?: Array<{ text?: string }> };
     return data.content?.map((p) => p.text).filter(Boolean).join("\n") || "";
@@ -322,11 +330,13 @@ export async function* streamWithConfig(
   let resp: Response;
   let kind: "anthropic" | "openai" | "gemini";
   if (cfg.provider === "anthropic") {
-    resp = await fetch("https://api.anthropic.com/v1/messages", {
+    const callAnthropic = (m: string) => fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: mt, stream: true, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
+      headers: { "x-api-key": cfg.apiKey as string, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model: m, max_tokens: mt, stream: true, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
     });
+    resp = await callAnthropic(model);
+    if (!resp.ok && (resp.status === 404 || resp.status === 400) && model !== ANTHROPIC_FALLBACK_MODEL) resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
     kind = "anthropic";
   } else if (cfg.provider === "openai" || cfg.provider === "custom") {
     const url = cfg.provider === "custom" && cfg.baseUrl ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions` : "https://api.openai.com/v1/chat/completions";
