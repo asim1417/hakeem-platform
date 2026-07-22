@@ -8,7 +8,8 @@ import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// أقصى مهلةٍ تسمح بها الخطّة (ليست سقفًا من عندنا) — كي لا يُقتطع التوليد المفتوح.
+export const maxDuration = 800;
 
 const schema = z.object({ question: z.string().min(3, "اكتب طلبك."), caseId: z.string().optional() });
 
