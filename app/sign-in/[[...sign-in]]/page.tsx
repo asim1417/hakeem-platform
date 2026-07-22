@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { SignIn } from "@clerk/nextjs";
-import { isClerkConfigured, clerkAppearance } from "@/lib/modules/auth/clerk-config";
+import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { OwnerEmergencyLogin } from "@/components/auth/OwnerEmergencyLogin";
+import { AuthClerkSignIn } from "@/components/auth/AuthClerkSignIn";
 
 export const metadata = {
   title: "تسجيل الدخول — حكيم",
@@ -43,17 +43,10 @@ export default function SignInPage({
             ) : null}
 
             {configured ? (
-              <SignIn
-                appearance={clerkAppearance}
-                routing="path"
-                path="/sign-in"
-                signUpUrl="/sign-up"
-                forceRedirectUrl={nextUrl}
-                fallbackRedirectUrl={nextUrl}
-              />
-            ) : null}
-
-            <OwnerEmergencyLogin nextUrl={nextUrl} clerkEnabled={configured} />
+              <AuthClerkSignIn nextUrl={nextUrl} routing="path" path="/sign-in" />
+            ) : (
+              <OwnerEmergencyLogin nextUrl={nextUrl} clerkEnabled={false} />
+            )}
 
             <p className="login-panel__links">
               <Link href="/" className="underline-offset-4 hover:underline">
