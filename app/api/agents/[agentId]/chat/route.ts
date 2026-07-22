@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/modules/auth/session";
 import { getManifest } from "@/lib/agent-runtime/live/manifests";
 import { createRunEngine } from "@/lib/agent-runtime/live/run-engine";
 import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
+import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -46,10 +47,28 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
     .map((h) => `${h.role === "user" ? "المستخدم" : "الوكيل"}: ${String(h.content).slice(0, 500)}`)
     .join("\n");
 
+  // مهمّةٌ خلفيّة قابلةٌ للاستئناف (يُكمل الخادم التوليد ويحفظه حتى لو غادر العميل).
+  const jobId = await createJob(user.id, `agent:${params.agentId}`, m.displayName ?? params.agentId).catch(() => null);
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (o: unknown) => controller.enqueue(encoder.encode(JSON.stringify(o) + "\n"));
+      let clientGone = false;
+      let acc = "";
+      let lastSave = 0;
+      const send = (o: unknown) => {
+        const e = o as { type?: string; text?: string };
+        if (e?.type === "delta" && typeof e.text === "string") {
+          acc += e.text;
+          const now = Date.now();
+          if (jobId && now - lastSave > 1500) { lastSave = now; void updateJob(jobId, { text: acc }); }
+        }
+        if (jobId && e?.type === "done") void updateJob(jobId, { text: acc, status: "done" });
+        if (jobId && e?.type === "error") void updateJob(jobId, { text: acc, status: "error" });
+        if (clientGone) return;
+        try { controller.enqueue(encoder.encode(JSON.stringify(o) + "\n")); } catch { clientGone = true; }
+      };
+      if (jobId) send({ type: "job", jobId });
       try {
         // ⓪ تحيّةٌ أو سؤالٌ تعريفيّ (بلا مرفق): يتحاور الوكيل ويبيّن تخصصه ونطاقه — بلا حاجة لسندٍ نظاميّ.
         const meta = context ? null : smalltalkOrMeta(message);
@@ -115,14 +134,14 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
         // توليدٌ متعمّقٌ مفتوح: بحدّ النموذج الأقصى في كلّ نداء، ومواصلةٌ تلقائيّة إن اقتُطِع —
         // فيقدّم الوكيل تحليل الخبير كاملًا لا ردًّا مبتورًا.
         let any = false;
-        let acc = "";
+        let genAcc = "";
         let round = 0;
         for (;;) {
           const meta = { truncated: false };
-          const roundUser = round === 0 ? userPrompt : `${userPrompt}\n\n— ما كُتب حتى الآن (تابع من حيث توقفت تمامًا، دون تكرار):\n${acc}`;
+          const roundUser = round === 0 ? userPrompt : `${userPrompt}\n\n— ما كُتب حتى الآن (تابع من حيث توقفت تمامًا، دون تكرار):\n${genAcc}`;
           let produced = false;
           for await (const chunk of streamWithConfig(cfg, system, roundUser, 8192, meta)) {
-            any = true; produced = true; acc += chunk; send({ type: "delta", text: chunk });
+            any = true; produced = true; genAcc += chunk; send({ type: "delta", text: chunk });
           }
           round += 1;
           if (!meta.truncated || !produced || round >= 6) break;
@@ -132,7 +151,7 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
       } catch {
         send({ type: "error", message: "تعذّر تنفيذ المحادثة حاليًا. أعد المحاولة." });
       } finally {
-        controller.close();
+        try { controller.close(); } catch { /* أُغلق مسبقًا (غادر العميل) */ }
       }
     },
   });
