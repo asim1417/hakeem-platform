@@ -254,6 +254,63 @@ export function defaultModelFor(provider: AiProvider): string {
 }
 
 /**
+ * اختبارٌ تشخيصيّ خام للمزوّد المضبوط — نداءٌ مباشرٌ صغير **دون أيّ سقوطٍ احتياطيّ**،
+ * يكشف الحقيقة الحرفيّة عن مفتاح الحساب المُخزَّن: نجاحٌ، أو خطأ المزوّد كما هو
+ * (مثل «credit balance too low» أو 401 مصادقة) مع رقم الحالة ومصدر المفتاح (db/env).
+ * يستعمله زرّ «تشخيص المفتاح» في /admin/ai ليرى المدير أيّ مفتاحٍ يعمل بلا لبس.
+ */
+export type ProviderDiagnosis = {
+  ok: boolean;
+  provider: AiProvider;
+  source: "db" | "env" | "offline";
+  model: string | null;
+  keyMasked: string | null;
+  status?: number;
+  error?: string;
+};
+
+export async function diagnoseConfiguredProvider(): Promise<ProviderDiagnosis> {
+  const cfg = await resolveAiConfig();
+  const keyMasked = cfg.apiKey ? maskKey(cfg.apiKey) : null;
+  const base = { provider: cfg.provider, source: cfg.source, model: cfg.model, keyMasked };
+  if (cfg.provider === "offline" || !cfg.apiKey) {
+    return { ...base, ok: false, error: "لا مفتاح فعّال — المزوّد غير مضبوط." };
+  }
+  const model = cfg.model || defaultModelFor(cfg.provider);
+  const fail = async (resp: Response): Promise<ProviderDiagnosis> => {
+    const t = await resp.text().catch(() => "");
+    return { ...base, model, ok: false, status: resp.status, error: t.slice(0, 300) };
+  };
+  try {
+    if (cfg.provider === "anthropic") {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+        body: JSON.stringify({ model, max_tokens: 8, messages: [{ role: "user", content: "قل: جاهز" }] })
+      });
+      return resp.ok ? { ...base, model, ok: true } : fail(resp);
+    }
+    if (cfg.provider === "openai" || cfg.provider === "custom") {
+      const url = cfg.provider === "custom" && cfg.baseUrl ? `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions` : "https://api.openai.com/v1/chat/completions";
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model, max_tokens: 8, messages: [{ role: "user", content: "قل: جاهز" }] })
+      });
+      return resp.ok ? { ...base, model, ok: true } : fail(resp);
+    }
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": cfg.apiKey },
+      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "قل: جاهز" }] }], generationConfig: { maxOutputTokens: 8 } })
+    });
+    return resp.ok ? { ...base, model, ok: true } : fail(resp);
+  } catch (e) {
+    return { ...base, model, ok: false, error: e instanceof Error ? e.message : "خطأ في النداء" };
+  }
+}
+
+/**
  * نداء إكمال خام موحّد لكل المزوّدين انطلاقاً من الإعداد الفعّال (DB أولاً ثم البيئة).
  * مصدر واحد لمنطق الشبكة يستعمله callCentralProvider وresolveAiProvider معاً.
  * يرمي عند فشل الشبكة/الاستجابة؛ يترك للمستدعي قرار السقوط المنظّم.
