@@ -12,7 +12,7 @@ import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /** يكشف التحيّة أو السؤال التعريفيّ (من أنت/ما تخصصك) — كي يتحاور الوكيل ويبيّن تخصصه بلا حاجة لسندٍ نظاميّ. */
 function smalltalkOrMeta(q: string): "greeting" | "meta" | null {
@@ -67,10 +67,11 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
           return;
         }
 
-        // ① استرجاعٌ مقيّدٌ بنطاق الوكيل (المواد النافذة فقط تُقدَّم سندًا).
-        const runEngine = createRunEngine({ limit: 12 });
+        // ① استرجاعٌ مقيّدٌ بنطاق الوكيل، مُرتّبٌ بالصلة (المواد النافذة فقط سندًا). مجموعةٌ أوسع
+        //    (٤٠ مرشّحًا) ثمّ أفضل ١٠ صلةً — تأصيلٌ أقوى من لقطةٍ ضيّقة.
+        const runEngine = createRunEngine({ limit: 40 });
         const er = await runEngine(message, scope).catch(() => ({ articles: [], scopeSystems: [] as string[] }));
-        const live = er.articles.filter((a) => a.enforcement !== "لاغٍ").slice(0, 8);
+        const live = er.articles.filter((a) => a.enforcement !== "لاغٍ").slice(0, 10);
         send({ type: "basis", sources: live.map((a) => ({ system: a.system, article: a.article, enforcement: a.enforcement })), scope });
 
         if (!live.length) {
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
         }
 
         const groundingText = live
-          .map((a, i) => `[${i + 1}] ${a.system} — المادة ${a.article} (${a.enforcement}):\n${a.text.slice(0, 500)}`)
+          .map((a, i) => `[${i + 1}] ${a.system} — المادة ${a.article} (${a.enforcement}):\n${a.text.slice(0, 700)}`)
           .join("\n\n");
 
         const cfg = await resolveAiConfig();
@@ -91,11 +92,13 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
           return;
         }
 
+        const scopeList = scope.map((s) => s.replace(/-/g, " ")).join(" · ");
         const system = [
-          `أنت «${m.displayName ?? roleName}» داخل منصّة حكيم — ${roleName || "معاونٌ قانونيّ"}، تكتب بالفصحى منضبطًا بالمصادر.`,
-          `موقفك المهنيّ: ${stanceAr}. لا تُبدِ رأيًا شخصيًّا ولا تقرّر حكمًا نهائيًّا؛ حلّل وأرشِد للقاضي/المستخدم.`,
-          "استند حصريًا للمواد المرفقة من نطاق الوكيل أدناه. لا تذكر مادةً ليست فيها، ولا رقم مادةٍ غير واردٍ في نصّها. إن لم تكفِ المواد فصرّح بذلك بدل الاختلاق.",
-          "اكتب بالعربية بأسلوبٍ منظّمٍ ومختصر، واختم بتنبيهٍ مهنيّ.",
+          `أنت «${m.displayName ?? roleName}» داخل منصّة حكيم — خبيرٌ ممارسٌ في: ${roleName || "القانون"}. تكتب بالفصحى منضبطًا بالمصادر، بعمق الخبير لا بإيجاز المُجمِل.`,
+          `نطاق تخصصك النظاميّ: ${scopeList}. موقفك المهنيّ: ${stanceAr}. لا تُبدِ رأيًا شخصيًّا ولا تقرّر حكمًا نهائيًّا؛ حلّل بعمقٍ وأرشِد.`,
+          "ابنِ التحليل بعمقٍ عمليّ: (١) تحرير المسألة وتكييفها، (٢) القاعدة النظاميّة الحاكمة من المواد المرفقة، (٣) التطبيق على وقائع السؤال، (٤) البدائل/المخاطر والترجيح، (٥) خلاصةٌ وتوصيةٌ عمليّة. استعمل عناوين Markdown وقوائم عند الحاجة.",
+          "استند حصريًا للمواد المرفقة من نطاق الوكيل أدناه. لا تذكر مادةً ليست فيها، ولا رقم مادةٍ غير واردٍ في نصّها. إن لم تكفِ المواد لجانبٍ من الجواب فصرّح بذلك صراحةً بدل الاختلاق.",
+          "اختم بتنبيهٍ مهنيّ مختصر أنّ المخرَج مسودّةٌ تحتاج مراجعة المختصّ.",
         ].join("\n");
         const userPrompt = [
           history ? `سياق المحادثة السابق:\n${history}\n` : "",
@@ -104,10 +107,20 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
           "\nقاعدة إلزامية: لا تستشهد إلا بالمواد أعلاه، ولا تخترع مواد أو أرقام مواد.",
         ].filter(Boolean).join("\n");
 
+        // توليدٌ متعمّقٌ مفتوح: بحدّ النموذج الأقصى في كلّ نداء، ومواصلةٌ تلقائيّة إن اقتُطِع —
+        // فيقدّم الوكيل تحليل الخبير كاملًا لا ردًّا مبتورًا.
         let any = false;
-        for await (const chunk of streamWithConfig(cfg, system, userPrompt, 1400)) {
-          any = true;
-          send({ type: "delta", text: chunk });
+        let acc = "";
+        let round = 0;
+        for (;;) {
+          const meta = { truncated: false };
+          const roundUser = round === 0 ? userPrompt : `${userPrompt}\n\n— ما كُتب حتى الآن (تابع من حيث توقفت تمامًا، دون تكرار):\n${acc}`;
+          let produced = false;
+          for await (const chunk of streamWithConfig(cfg, system, roundUser, 6000, meta)) {
+            any = true; produced = true; acc += chunk; send({ type: "delta", text: chunk });
+          }
+          round += 1;
+          if (!meta.truncated || !produced || round >= 4) break;
         }
         if (!any) send({ type: "delta", text: "تعذّر توليد ردٍّ نصيّ من النموذج؛ راجع المواد المؤصَّلة أعلاه." });
         send({ type: "done" });

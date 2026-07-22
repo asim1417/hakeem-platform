@@ -51,19 +51,27 @@ export function createRunEngine(opts: RunEngineOptions = {}) {
         take,
       });
 
-      const articles: RetrievedArticle[] = [];
+      const scored: Array<{ a: RetrievedArticle; score: number }> = [];
       for (const r of rows) {
         // انسب المادّة إلى مدخل النطاق الذي طابق اسمها (لا الاسم الخام) — منعًا لتسريب النطاق.
         const matched = scopeSystems.find((s) => (r.lawName ?? "").includes(s));
         if (!matched) continue;
-        articles.push({
-          system: matched,
-          article: String(r.articleNumber),
-          text: r.content ?? r.title ?? "",
-          enforcement: toEnforcement(r.status),
+        const hay = `${r.title ?? ""} ${r.content ?? ""}`;
+        // ترتيبٌ بالصلة: عدد كلمات الاستعلام المتمايزة الواردة فعلًا (بدل الترتيب الأبجديّ) —
+        // فتتصدّر المادّة الأوثق صلةً بالسؤال، وترتقي جودة تأصيل الوكيل.
+        const score = qTokens.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);
+        scored.push({
+          a: {
+            system: matched,
+            article: String(r.articleNumber),
+            text: r.content ?? r.title ?? "",
+            enforcement: toEnforcement(r.status),
+          },
+          score,
         });
       }
-      return { articles, scopeSystems };
+      scored.sort((x, y) => y.score - x.score);
+      return { articles: scored.map((s) => s.a), scopeSystems };
     } catch {
       return { articles: [], scopeSystems };
     }
