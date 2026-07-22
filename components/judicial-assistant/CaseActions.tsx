@@ -95,24 +95,27 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
     setCopied(false);
     setApproved(false);
     try {
+      // الخدمات النموذجيّة تمرّ عبر مسارٍ متداخل واحد (cases/[caseId]/run) — يُنشَر على Vercel
+      // بخلاف المسارات المسطّحة المكافئة. نفس المخرجات وشكل النتيجة، فلا تتغيّر لوحات العرض.
+      const runUrl = `/api/judicial-assistant/cases/${caseId}/run`;
       if (runner === "summary") {
-        const res = await fetch("/api/judicial-assistant/summary", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId }),
+        const res = await fetch(runUrl, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId }),
         });
         setPanel({ kind: "summary", data: (await readJson(res)) as unknown as ExecutiveSummaryResult });
       } else if (runner === "draft") {
-        const res = await fetch("/api/judicial-assistant/draft", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId }),
+        const res = await fetch(runUrl, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId }),
         });
         setPanel({ kind: "draft", data: (await readJson(res)) as unknown as JudgmentDraftResult });
       } else if (runner === "study") {
-        const res = await fetch("/api/judicial-assistant/study", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId, depth: "medium" }),
+        const res = await fetch(runUrl, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId, depth: "medium" }),
         });
         setPanel({ kind: "study", data: (await readJson(res)) as unknown as JudicialStudyResult });
       } else if (runner === "work") {
-        const res = await fetch("/api/judicial-assistant/work", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId, serviceId }),
+        const res = await fetch(runUrl, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId }),
         });
         setPanel({ kind: "work", data: (await readJson(res)) as unknown as GroundedWorkResult });
       } else if (runner === "export") {
