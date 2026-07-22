@@ -35,6 +35,8 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
   const [elapsed, setElapsed] = useState(0); // ثوانٍ منذ الإرسال — مؤشّر وقتٍ حيّ (بلا سقف).
   const abortRef = useRef<AbortController | null>(null);
   const startRef = useRef<number>(0);
+  const pollingRef = useRef(false);
+  const jobKey = `ja-ask-job:${caseId ?? "general"}`; // مفتاح استئناف المهمّة الخلفيّة (لهذا الصندوق).
 
   // مؤشّر الوقت: يعدّ حيًّا أثناء العمل ويتوقّف عند الانتهاء.
   useEffect(() => {
@@ -42,6 +44,53 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
     return () => clearInterval(id);
   }, [busy]);
+
+  // استئناف المهمّة الخلفيّة: إن غادرت الصفحة أثناء التوليد، يُكمله الخادم ويحفظه؛ وعند العودة
+  // نجلب النتيجة بمعرّف المهمّة المحفوظ ونعرضها (حتى لو انقطع البثّ الحيّ).
+  useEffect(() => {
+    async function resume() {
+      if (pollingRef.current) return;
+      let jobId = "";
+      try { jobId = sessionStorage.getItem(jobKey) ?? ""; } catch { /* لا تخزين */ }
+      if (!jobId) return;
+      pollingRef.current = true;
+      setBusy(true); setError("");
+      try {
+        for (let i = 0; i < 180; i += 1) {
+          let j: { status?: string; text?: string; meta?: Record<string, unknown> } | null = null;
+          try {
+            const r = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+            if (r.status === 404) { try { sessionStorage.removeItem(jobKey); } catch {} break; }
+            j = await r.json();
+          } catch { /* أعِد المحاولة */ }
+          if (j?.text) setStreamText(j.text);
+          if (j && (j.status === "done" || j.status === "error")) {
+            const meta = (j.meta ?? {}) as Record<string, unknown>;
+            if (!meta.greeting) {
+              setResult({
+                answer: String(j.text ?? ""),
+                blocked: Boolean(meta.blocked) || j.status === "error",
+                citations: (meta.citations as AskCitation[]) ?? [],
+                notice: String(meta.notice ?? (j.status === "error" ? "تعذّر إكمال الطلب — أعِد المحاولة." : "استُؤنفت المهمّة من الخلفيّة.")),
+              });
+            }
+            setStreamText("");
+            try { sessionStorage.removeItem(jobKey); } catch {}
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 2000));
+        }
+      } finally {
+        pollingRef.current = false;
+        setBusy(false);
+      }
+    }
+    const onVisible = () => { if (document.visibilityState === "visible" && !busy) void resume(); };
+    void resume(); // فحصٌ عند التركيب (عودةٌ بعد إعادة تحميل الصفحة)
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobKey]);
 
   const fmtTime = (s: number) => (s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
   const doneStages = stages.filter((s) => s.state === "done").length;
@@ -83,7 +132,10 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
           if (!line) continue;
           let ev: Record<string, unknown>;
           try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
-          if (ev.type === "stage") {
+          if (ev.type === "job" && ev.jobId) {
+            // خزّن معرّف المهمّة الخلفيّة كي نستأنفها إن غادرنا الصفحة أثناء التوليد.
+            try { sessionStorage.setItem(jobKey, String(ev.jobId)); } catch { /* لا تخزين */ }
+          } else if (ev.type === "stage") {
             const s = { label: String(ev.label), state: ev.state as Stage["state"] };
             setStages((prev) => {
               const next = prev.map((p) => ({ ...p, state: "done" as const }));
@@ -98,6 +150,7 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
             setStages((prev) => prev.map((p) => ({ ...p, state: "done" as const })));
             setResult({ answer: String(ev.answer), blocked: Boolean(ev.blocked), citations: lastCitations, notice: String(ev.notice) });
             setStreamText("");
+            try { sessionStorage.removeItem(jobKey); } catch { /* اكتملت */ }
           }
         }
       }
