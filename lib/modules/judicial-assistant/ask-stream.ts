@@ -8,6 +8,7 @@ import type { JudicialCase } from "./types";
 import { isSmalltalk, caseContext, GREETING, GREETING_INVITE_CASE, GREETING_INVITE_GENERAL } from "./ask";
 import { retrieveCasePassages } from "./case-vector";
 import { runJudicialAgent, type JudicialAgentStep } from "./agent";
+import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
@@ -68,8 +69,15 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
 
   const r = await runP;
 
-  // ④ الحجب الصادق (لا سند مُتحقَّق) أو النيّة غير القانونية.
+  // ④ لا سند نظاميّ في النواة: بدل الامتناع الكامل، إن كانت للقضية مادّةٌ (مستندات/وقائع) نجيب
+  //    منها مباشرةً — تلخيصٌ/تنظيمٌ لسؤال القاضي عن قضيته، لا حكمٌ ولا اختلاق مادّةٍ نظاميّة.
   if (r.blocked || !r.answer) {
+    const material = kase ? caseContext(kase, passages) : "";
+    const hasCaseMaterial = Boolean(kase && (passages.length || kase.attachments.length || kase.facts.length || kase.requests.length));
+    if (hasCaseMaterial && material.trim()) {
+      yield* streamFromCaseMaterial(question, material, requestId);
+      return;
+    }
     yield { type: "done", blocked: true, citations: [], notice: r.notice, answer: r.answer || r.notice, requestId };
     return;
   }
@@ -79,4 +87,42 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
 
   const citations: AskCitation[] = r.citations.map((c) => ({ articleId: c.articleId ?? "", lawName: c.systemName, articleNumber: c.articleNumber, quote: c.quote.slice(0, 350) }));
   yield { type: "done", blocked: false, citations, notice: r.notice, answer: r.answer, requestId };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// سقوطٌ على مادّة القضية: حين لا يُطابَق سندٌ نظاميّ في النواة، نجيب سؤال القاضي عن قضيته
+// اعتمادًا على **مستنداته ووقائعه** فقط (تلخيصٌ/تنظيمٌ)، بلا حكمٍ نهائيّ ولا اختلاق مادّةٍ
+// نظاميّة. مُعلَّمٌ بوضوح أنّه من مستندات القضية لا من النواة. سقوطٌ حتميّ لعرض المادّة عند غياب المفتاح.
+// ─────────────────────────────────────────────────────────────────────────────
+const CASE_MATERIAL_NOTICE =
+  "إجابةٌ مبنيّةٌ على مستندات قضيتك ووقائعها — لا على مادّةٍ نظاميّة من النواة (لم يُطابَق سندٌ نظاميّ بعد). مسودّةٌ تحتاج مراجعتك.";
+
+async function* streamFromCaseMaterial(question: string, material: string, requestId: string): AsyncGenerator<AskStreamEvent> {
+  yield { type: "stage", label: "ألخّص من مستندات قضيتك", state: "active" };
+  const system = [
+    "أنت المعاون القضائيّ في منصّة حكيم. أجب عن سؤال القاضي اعتمادًا على مستندات القضية ووقائعها المرفقة **فقط**.",
+    "لا تُصدر حكمًا نهائيًّا، ولا تخترع مادّةً نظاميّة أو رقم مادةٍ من الذاكرة. إن استلزم الجواب سندًا نظاميًّا ولم يُتَح فصرّح بذلك صراحةً.",
+    "انسب كلّ واقعةٍ لمصدرها في المستندات، وميّز الثابت عن المُدّعى. اكتب بالعربية بأسلوبٍ قضائيّ منظّم.",
+  ].join("\n");
+  const user = `سؤال القاضي:\n${question.trim()}\n\nمادّة القضية (مستندات ووقائع):\n${material}`;
+
+  const cfg = await resolveAiConfig();
+  if (cfg.provider === "offline" || !cfg.apiKey) {
+    // لا مفتاح نموذج: نعرض مادّة القضية كما هي (لا اختلاق).
+    const text = material.slice(0, 4000);
+    for (const w of text.split(/(\s+)/)) if (w) yield { type: "delta", text: w };
+    yield { type: "stage", label: "عرضٌ مباشرٌ لمادّة القضية (مزوّد النموذج غير مضبوط)", state: "done" };
+    yield { type: "done", blocked: false, citations: [], notice: CASE_MATERIAL_NOTICE, answer: text, requestId };
+    return;
+  }
+
+  let acc = "";
+  try {
+    for await (const chunk of streamWithConfig(cfg, system, user, 1400)) { acc += chunk; yield { type: "delta", text: chunk }; }
+  } catch {
+    /* يُعرَض ما تجمّع */
+  }
+  yield { type: "stage", label: "لخّصتُ من مستندات قضيتك", state: "done" };
+  const answer = acc.trim() || material.slice(0, 2000);
+  yield { type: "done", blocked: false, citations: [], notice: CASE_MATERIAL_NOTICE, answer, requestId };
 }
