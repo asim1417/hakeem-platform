@@ -11,6 +11,8 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
+const isAuthEntryRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/login"]);
+
 function hasOwnerSession(request: NextRequest) {
   return Boolean(request.cookies.get("hakeem_session")?.value);
 }
@@ -22,6 +24,13 @@ let clerkHandler: ClerkMw | null = null;
 function getClerkHandler(): ClerkMw {
   if (clerkHandler) return clerkHandler;
   clerkHandler = clerkMiddleware(async (auth, request) => {
+    const session = await auth();
+
+    // مسجّل بالفعل → لا تُبقِه في صفحات الدخول؛ وجّهه للوحة الرئيسية
+    if (session.userId && isAuthEntryRoute(request)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
     if (isProtectedRoute(request) && hasOwnerSession(request)) {
       return NextResponse.next();
     }
@@ -43,7 +52,13 @@ function getClerkHandler(): ClerkMw {
  * استدعاؤه بلا مفاتيح يُسقِط الإنتاج بـ MIDDLEWARE_INVOCATION_FAILED.
  */
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
-  if (!isClerkConfigured()) return plainAuthGate(request);
+  if (!isClerkConfigured()) {
+    // جلسة مالك على /sign-in → اللوحة
+    if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return plainAuthGate(request);
+  }
   return getClerkHandler()(request, event);
 }
 
