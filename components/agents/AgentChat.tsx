@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
+import { AnswerToolbar } from "@/components/AnswerToolbar";
 
 // صندوق محادثةٍ حيّ لوكيلٍ مخصّص — يبثّ ردًّا مؤصَّلًا بنطاق الوكيل (NDJSON) كصندوق «اسأل حكيم».
 export type ChatSubRole = { id: string; label: string; stance: string };
@@ -144,7 +145,7 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
               // تنسيقٌ فاخر كبقيّة المنصّة (محاماة حكيم): Markdown — عناوين وقوائم وجداول ومراجع.
               <div className="inline-block w-full max-w-full rounded-[var(--r-md)] border border-line bg-white px-3 py-2 text-right">
                 {m.content
-                  ? <AnswerRenderer content={m.content} basis={(m.sources ?? []).map((s) => ({ articleNumber: Number(s.article) || 0, systemName: s.system }))} />
+                  ? <AnswerRenderer content={m.content} id={`agent-ans-${i}`} basis={(m.sources ?? []).map((s) => ({ articleNumber: Number(s.article) || 0, systemName: s.system }))} />
                   : <span className="text-sm text-[var(--muted)]">{busy && i === msgs.length - 1 ? "…" : ""}</span>}
               </div>
             )}
@@ -153,6 +154,12 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
                 {m.sources.map((s, j) => (
                   <span key={j} className="rounded-full border border-line bg-white px-2 py-0.5 text-[10px] text-[var(--muted)]">{s.system} — م{s.article}</span>
                 ))}
+              </div>
+            ) : null}
+            {/* لوحة التحكّم: نسخ · مشاركة · طباعة · Word · PDF · HTML — تظهر بعد اكتمال ردّ الوكيل */}
+            {m.role === "assistant" && m.content && !(busy && i === msgs.length - 1) ? (
+              <div className="mt-2">
+                <AnswerToolbar answer={m.content} basis={(m.sources ?? []).map((s) => ({ articleNumber: Number(s.article) || 0, systemName: s.system }))} question={displayName} printTargetId={`agent-ans-${i}`} />
               </div>
             ) : null}
           </div>
