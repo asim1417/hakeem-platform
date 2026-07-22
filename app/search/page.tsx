@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { LoginPopover } from "@/components/home/LoginPopover";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,8 @@ export default async function PublicSearchPage({
 }: {
   searchParams: { q?: string };
 }) {
+  // إخفاء الباحث العامّ التقليديّ عن الزوّار: توجيهٌ آمن إلى الصفحة الرئيسيّة (صندوق اسأل حكيم).
+  if (!TRADITIONAL_SEARCH_ENABLED) redirect("/");
   const query = (searchParams.q ?? "").trim().slice(0, 200);
   // محرّك البحث: النواة (searchLegalCore) — نفس محرّك الشات والقاضي: خريطة مفاهيم + مكنز + ترتيب صلة.
   const response = query

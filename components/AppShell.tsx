@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Scale, Search, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
 import { LogoutButton, TopbarUserBar } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
@@ -50,7 +51,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser().catch(() => null);
   const clerkEnabled = isClerkConfigured();
   const isAdmin = user?.role === "SYSTEM_ADMIN";
-  const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
+  // إخفاء عنصر «البحث الشامل» التقليديّ من القائمة حين تُخفى واجهاته (راية مركزية).
+  const visibleNav = TRADITIONAL_SEARCH_ENABLED
+    ? baseNavItems
+    : baseNavItems.filter((i) => i.href !== "/dashboard/legal-search");
+  const navItems = isAdmin ? [...visibleNav, adminNavItem] : visibleNav;
   const initials =
     user?.name
       ?.split(" ")
@@ -116,7 +121,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <TopbarBreadcrumb />
           </div>
           <div className="topbar-right">
-            <form className="search-box" action="/dashboard/legal-search" role="search">
+            {/* صندوق البحث العلويّ: يوجَّه للبحث الذكيّ (اسأل حكيم) حين يُخفى البحث التقليديّ. */}
+            <form className="search-box" action={TRADITIONAL_SEARCH_ENABLED ? "/dashboard/legal-search" : AI_SEARCH_HOME} role="search">
               <span aria-hidden>⌕</span>
               <input name="q" aria-label={t("topbar.search")} placeholder={t("topbar.searchPlaceholder")} />
             </form>

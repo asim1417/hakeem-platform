@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookMarked, ExternalLink, Gavel, Search } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
@@ -123,10 +124,12 @@ export default async function LegalCoreJudgmentsPage({
           description="مستودع الأحكام المستوردة من قاعدة وزارة العدل، مع ربط آلي مبدئي بالمواد النظامية في النواة القانونية. كل ربط يحتاج مراجعة قانونية قبل اعتماده."
           actions={
             <>
-              <Link className="btn btn-gold" href="/dashboard/legal-core/search">
-                <Search size={16} />
-                البحث القانوني
-              </Link>
+              {TRADITIONAL_SEARCH_ENABLED ? (
+                <Link className="btn btn-gold" href="/dashboard/legal-core/search">
+                  <Search size={16} />
+                  البحث القانوني
+                </Link>
+              ) : null}
               <Link className="btn ho-hero-outline" href="/dashboard/legal-core/citations/dashboard">
                 <BookMarked size={16} />
                 تغطية الربط
@@ -208,10 +211,12 @@ export default async function LegalCoreJudgmentsPage({
                       <ExternalLink size={16} />
                       فتح الحكم
                     </Link>
-                    <Link className="btn btn-outline" href={`/dashboard/legal-core/search?q=${encodeURIComponent(query || judgment.judgmentTitle || judgment.caseNo || "")}&sourceType=judgment`}>
-                      <Gavel size={16} />
-                      البحث حول الحكم
-                    </Link>
+                    {TRADITIONAL_SEARCH_ENABLED ? (
+                      <Link className="btn btn-outline" href={`/dashboard/legal-core/search?q=${encodeURIComponent(query || judgment.judgmentTitle || judgment.caseNo || "")}&sourceType=judgment`}>
+                        <Gavel size={16} />
+                        البحث حول الحكم
+                      </Link>
+                    ) : null}
                   </div>
                 </article>
               ))}

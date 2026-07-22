@@ -160,7 +160,7 @@ export function HomeHero() {
             <li key={f.title}>
               <button
                 type="button"
-                onClick={() => goProtected(f.title === "اسأل حكيم" ? "/dashboard/ask" : f.title === "محاكاة قضائية" ? "/dashboard/simulations" : "/dashboard/legal-search")}
+                onClick={() => goProtected(f.title === "محاكاة قضائية" ? "/dashboard/simulations" : "/dashboard/ask")}
                 className="focus-ring w-full rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/90 px-4 py-4 text-start transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
               >
                 <p className="font-semibold text-[var(--navy)]">{f.title}</p>

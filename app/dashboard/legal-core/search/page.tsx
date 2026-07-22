@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookMarked, ChevronLeft, ChevronRight, ExternalLink, FileArchive, Search } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
 import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
@@ -54,6 +56,8 @@ export default async function LegalCoreSearchPage({
 }: {
   searchParams: { q?: string; system?: string; systemIds?: string; category?: string; searchType?: string; sourceType?: string; fields?: string | string[]; page?: string };
 }) {
+  // إخفاء البحث المتقدّم التقليديّ: توجيهٌ آمن إلى البحث الذكيّ (اسأل حكيم)، بلا 404.
+  if (!TRADITIONAL_SEARCH_ENABLED) redirect(`${AI_SEARCH_HOME}${searchParams.q ? `?q=${encodeURIComponent(searchParams.q.trim())}` : ""}`);
   await requirePagePermission("LEGAL_CORE_VIEW");
 
   const query = searchParams.q ?? "";

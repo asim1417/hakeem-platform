@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 
 /**
  * شريط أوضاع البحث الموحّد — يوحّد سطحَي البحث في اللوحة تحت مدخل واحد بوضعين،
@@ -16,6 +17,8 @@ const MODES: Array<{ mode: SearchMode; href: string; label: string; hint: string
 ];
 
 export function SearchModeTabs({ active, q = "" }: { active: SearchMode; q?: string }) {
+  // البحث التقليديّ مخفيّ ⇒ لا يُعرَض شريط أوضاعه (كلا الوضعين تقليديّان).
+  if (!TRADITIONAL_SEARCH_ENABLED) return null;
   const suffix = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
   return (
     <nav
