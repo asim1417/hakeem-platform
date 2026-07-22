@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Scale, Search, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { LogoutButton, LogoutIconButton } from "@/components/LogoutButton";
+import { LogoutButton, TopbarUserBar } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
@@ -80,10 +80,14 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           />
 
           <div className="sidebar-foot">
-            <div className="user-av" aria-hidden>{initials}</div>
+            <div className="user-av" aria-hidden>
+              {initials}
+            </div>
             <div className="user-info min-w-0 flex-1">
               <div className="uname truncate">{user?.name ?? "المستخدم التجريبي"}</div>
-              <div className="urole truncate">{user ? roleLabels[user.role] ?? user.role : "حساب محام - تدريبي"}</div>
+              <div className="urole truncate">
+                {user ? roleLabels[user.role] ?? user.role : "حساب محام - تدريبي"}
+              </div>
               <Link
                 href="/dashboard/billing"
                 className="mt-1 block truncate text-[11px] font-semibold text-[var(--gold-pale)] hover:underline"
@@ -114,7 +118,13 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               <input name="q" aria-label={t("topbar.search")} placeholder={t("topbar.searchPlaceholder")} />
             </form>
             <LanguageToggle current={locale} switchLabel={LOCALE_LABEL[locale === "ar" ? "en" : "ar"]} />
-            <LogoutIconButton label={t("topbar.logout")} clerkEnabled={clerkEnabled} />
+            {user ? (
+              <TopbarUserBar
+                name={user.name}
+                logoutLabel={t("topbar.logout")}
+                clerkEnabled={clerkEnabled}
+              />
+            ) : null}
           </div>
         </header>
         <div className="content" id="main-content">{children}</div>

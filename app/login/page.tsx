@@ -23,7 +23,7 @@ export default function LoginPage({
     <AuthJourneyShell
       tagline={
         configured
-          ? "دخول سلس إلى اللوحة — البيانات الكاملة اختيارية للمكافآت."
+          ? "دخول إلى اللوحة ثم البيانات الأساسية الإلزامية (اسم، جوال، مهنة)."
           : "دخول المالك متاح فورًا — Clerk يُكمّل لاحقًا."
       }
       footer={

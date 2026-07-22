@@ -12,7 +12,7 @@ export default function SignUpPage() {
 
   return (
     <AuthJourneyShell
-      tagline="أنشئ حسابك وادخل مباشرة. الاسم والجوال اختياريان — وإكمال الملف يزيد المكافآت إن رغبت."
+      tagline="أنشئ حسابك وادخل. بعد الدخول يلزم الاسم والجوال والمهنة — وباقي الملف اختياري للمكافآت."
       footer={
         <p className="login-panel__links">
           <Link href="/" className="underline-offset-4 hover:underline">
