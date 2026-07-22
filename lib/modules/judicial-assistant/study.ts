@@ -42,7 +42,7 @@ export async function buildJudicialStudy(
   ].filter(Boolean).join("\n");
 
   const [study, precedents] = await Promise.all([
-    createAgentConsultationDraft({ facts: prompt, actorId }).catch(() => null),
+    createAgentConsultationDraft({ facts: prompt, actorId, fallbackToFacts: true }).catch(() => null),
     findPrecedents(kase),
   ]);
 

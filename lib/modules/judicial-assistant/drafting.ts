@@ -61,7 +61,7 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
   ].filter(Boolean).join("\n");
 
   const [reasoning, precedents] = await Promise.all([
-    createAgentConsultationDraft({ facts: reasoningPrompt, actorId }).catch(() => null),
+    createAgentConsultationDraft({ facts: reasoningPrompt, actorId, fallbackToFacts: true }).catch(() => null),
     findPrecedents(kase),
   ]);
 

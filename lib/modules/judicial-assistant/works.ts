@@ -52,7 +52,7 @@ export async function runGroundedWork(serviceId: string, kase: JudicialCase, act
 
   const prompt = await buildBasePrompt(kase, spec.directive);
   const [draft, precedents] = await Promise.all([
-    createAgentConsultationDraft({ facts: prompt, actorId }).catch(() => null),
+    createAgentConsultationDraft({ facts: prompt, actorId, fallbackToFacts: true }).catch(() => null),
     spec.withPrecedents ? findPrecedents(kase) : Promise.resolve([]),
   ]);
 

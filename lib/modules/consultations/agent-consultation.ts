@@ -44,6 +44,35 @@ function buildSupportingBlock(agent: { rulings?: Array<{ title?: string; snippet
   return [...rul, ...prin].filter((l) => l && l !== "- حكم:" && l !== "- مبدأ:").join("\n");
 }
 
+const CASE_FACTS_NOTE = "\n\n— أُنجز هذا من مستندات قضيتك ووقائعها؛ لم يُطابَق سندٌ نظاميّ في النواة بعد (فلا استشهاد نظاميّ).";
+
+/**
+ * سقوطٌ على مادّة القضية: يُنجز المطلوب (تلخيص/دراسة/عمل) من نصّ المدخل نفسه — الذي يحمل
+ * مستندات القضية ووقائعها — دون اختلاق مادّةٍ نظاميّة أو رقم مادة. مُعلَّمٌ بوضوح أنّه من
+ * مستندات القضية لا النواة. سقوطٌ حتميّ لعرض المادّة الخام عند تعذّر النموذج.
+ */
+async function synthesizeFromFacts(facts: string, requestId: string): Promise<AgentConsultationResult> {
+  const system = [
+    "أنت المعاون القضائيّ في منصّة حكيم. أنجِز المطلوب أدناه اعتمادًا على مادّة القضية (المستندات والوقائع) الواردة في النصّ **فقط**.",
+    "لا تُصدر حكمًا نهائيًّا، ولا تخترع مادّةً نظاميّة أو رقم مادةٍ من الذاكرة. إن استلزم العمل سندًا نظاميًّا ولم يُتَح فصرّح بذلك صراحةً.",
+    "انسب كلّ واقعةٍ لمصدرها، وميّز الثابت عن المُدّعى. اكتب بالعربية بأسلوبٍ قضائيّ منظّم.",
+  ].join("\n");
+  const llm = await callCentralProvider({ systemPrompt: system, userPrompt: facts, maxTokens: 1600 }).catch(() => null);
+  if (llm?.ok && llm.content.trim()) {
+    return {
+      requestId, blocked: false, output: `${llm.content}${CASE_FACTS_NOTE}`, citations: [],
+      provider: llm.provider, mode: "live",
+      qualityReport: { sourceOfTruth: "case_documents", agent: true, fallback: "facts" },
+    };
+  }
+  // لا مفتاح نموذج: نعرض مادّة القضية كما وردت (لا اختلاق).
+  return {
+    requestId, blocked: false, output: `${facts.slice(0, 3500)}${CASE_FACTS_NOTE}`, citations: [],
+    provider: "offline", mode: "offline",
+    qualityReport: { sourceOfTruth: "case_documents", agent: true, fallback: "facts-raw" },
+  };
+}
+
 /** استشارة احتياطية مبنيّة حصريًا على المواد المُتحقَّقة (بلا نموذج) — لا اختلاق. */
 function offlineConsultation(citations: AgentConsultationResult["citations"]): string {
   return [
@@ -61,13 +90,13 @@ function offlineConsultation(citations: AgentConsultationResult["citations"]): s
  * ينشئ مسوّدة استشارة مؤرَّضة بوكيل الأنظمة. سقوط آمن إلى الحجب الصادق عند غياب السند،
  * وإلى الاستشارة الاحتياطية عند تعذّر النموذج أو رصد رقم مادة غير مؤرَّض في المخرَج.
  */
-export async function createAgentConsultationDraft(input: { facts: string; actorId?: string }): Promise<AgentConsultationResult> {
+export async function createAgentConsultationDraft(input: { facts: string; actorId?: string; fallbackToFacts?: boolean }): Promise<AgentConsultationResult> {
   const requestId = randomUUID();
   const { runCaseAgent } = await import("@/lib/modules/agents/case-agent-bridge");
   const agent = await runCaseAgent(input.facts).catch(() => null);
   const articles = agent?.articles ?? [];
 
-  // حارس السند: لا مواد من النواة ⇒ حجب صادق (لا استشارة ملفّقة).
+  // حارس السند: لا مواد من النواة.
   if (!agent?.grounded || !articles.length) {
     await recordGuardrail({
       subject: "AI_GATEWAY",
@@ -76,6 +105,9 @@ export async function createAgentConsultationDraft(input: { facts: string; actor
       result: "BLOCKED",
       details: { message: noLegalArticleMessage, retrievedArticles: 0, provider: "agent" },
     }).catch(() => undefined);
+    // خدمات المعاون: بدل الامتناع الكامل، أنجِز المطلوب من **مادّة القضية نفسها** (مستندات/وقائع)
+    // بلا اختلاق مادّةٍ نظاميّة — لأنّ ملخّص/دراسة القضية يُبنى على مستندات المستخدم لا النواة.
+    if (input.fallbackToFacts) return synthesizeFromFacts(input.facts, requestId);
     return {
       requestId,
       blocked: true,
