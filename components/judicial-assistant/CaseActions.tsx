@@ -7,6 +7,7 @@ import { useState } from "react";
 import { JaIcon } from "./icons";
 import { SERVICES } from "@/lib/modules/judicial-assistant/catalog";
 import { runnerFor } from "@/lib/modules/judicial-assistant/routing";
+import { AnswerRenderer } from "@/components/AnswerRenderer";
 import type {
   DeterministicActionResult, ExecutiveSummaryResult, GroundedWorkResult, JudgmentDraftResult, JudicialStudyResult, SuggestedAction,
 } from "@/lib/modules/judicial-assistant/types";
@@ -231,7 +232,7 @@ function WorkView({ data }: { data: GroundedWorkResult }) {
         <span className="ja-summary__stamp">مسودّة — تحتاج تثبيتًا</span>
       </div>
       <div className="ja-summary__body">
-        {data.body.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+        <AnswerRenderer content={data.body} basis={data.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} />
       </div>
       {data.citations.length > 0 ? (
         <div className="ja-sources">
@@ -265,7 +266,7 @@ function StudyView({ data }: { data: JudicialStudyResult }) {
         <span className="ja-summary__stamp">عمق: {DEPTH[data.depth] ?? data.depth} — مسودّة</span>
       </div>
       <div className="ja-summary__body">
-        {data.body.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+        <AnswerRenderer content={data.body} basis={data.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} />
       </div>
       {data.citations.length > 0 ? (
         <div className="ja-sources">
@@ -303,7 +304,7 @@ function DraftView({ data }: { data: JudgmentDraftResult }) {
         {data.sections.map((s) => (
           <section key={s.key} className="ja-draft__sec">
             <h4>{s.title}{s.generated ? <span className="ja-badge ja-badge--warning ja-draft__gen">مُولَّد — دقّقه</span> : <span className="ja-badge ja-badge--info ja-draft__gen">من الملفّ</span>}</h4>
-            {s.body.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+            <AnswerRenderer content={s.body} basis={data.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} />
           </section>
         ))}
       </div>
@@ -351,7 +352,7 @@ function SummaryView({ data }: { data: ExecutiveSummaryResult }) {
         <span className="ja-summary__stamp">{data.generatedAtLabel}</span>
       </div>
       <div className="ja-summary__body">
-        {data.summary.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+        <AnswerRenderer content={data.summary} basis={data.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} />
       </div>
       {data.citations.length > 0 ? (
         <div className="ja-sources">
