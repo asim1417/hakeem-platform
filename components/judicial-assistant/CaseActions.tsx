@@ -52,7 +52,25 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const [panel, setPanel] = useState<Panel | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [approved, setApproved] = useState(false);
   const [showAll, setShowAll] = useState(false);
+
+  // requestId للمخرَج الحاليّ (للتوثيق في سجلّ الاعتماد) إن توفّر.
+  function panelRequestId(p: Panel): string | undefined {
+    if (p.kind === "summary" || p.kind === "study" || p.kind === "work" || p.kind === "draft") return (p.data as { requestId?: string }).requestId;
+    return undefined;
+  }
+
+  async function approve() {
+    if (!activeId || !panel) return;
+    try {
+      const res = await fetch("/api/judicial-assistant/approve", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId, serviceId: activeId, requestId: panelRequestId(panel) }),
+      });
+      if (res.ok) setApproved(true);
+    } catch { /* تجاهل */ }
+  }
 
   async function run(serviceId: string) {
     const runner = runnerFor(serviceId);
@@ -65,6 +83,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
     setError(null);
     setActiveId(serviceId);
     setCopied(false);
+    setApproved(false);
     try {
       if (runner === "summary") {
         const res = await fetch("/api/judicial-assistant/summary", {
@@ -161,6 +180,9 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
           <div className="ja-result__bar">
             <span className="ja-result__id">نتيجة {activeId ?? (panel.kind === "deterministic" ? panel.data.serviceId : PANEL_SERVICE[panel.kind])}</span>
             <div className="ja-result__actions">
+              {approved
+                ? <span className="ja-result__approved">✓ معتمَدٌ من القاضي</span>
+                : <button type="button" className="ja-result__approve" onClick={() => void approve()}>اعتمد المسودّة</button>}
               <button type="button" className="ja-textbtn" onClick={() => { navigator.clipboard?.writeText(panelToText(panel)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => undefined); }}>{copied ? "نُسخ ✓" : "نسخ"}</button>
               <button type="button" className="ja-textbtn" onClick={() => {
                 const url = URL.createObjectURL(new Blob([panelToText(panel)], { type: "text/markdown;charset=utf-8" }));
