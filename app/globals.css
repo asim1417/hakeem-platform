@@ -968,6 +968,15 @@ body {
 
 /* لوحة الأعمال المقترحة */
 .ja-actions { display: flex; flex-direction: column; gap: 16px; }
+.ja-result { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line, var(--ink-08)); border-radius: var(--r-lg, 14px); overflow: hidden; margin-top: 4px; }
+.ja-result__bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; background: var(--navy); color: #fff; }
+.ja-result__id { font-size: 13px; font-weight: 700; color: var(--gold-bright); }
+.ja-result__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ja-result__actions .ja-textbtn { color: #fff; font-size: 12.5px; }
+.ja-result__actions .ja-textbtn:hover { color: var(--gold-bright); }
+.ja-result__actions .ja-textbtn--danger { color: var(--gold-pale); }
+.ja-result > .ja-summary { border: none; border-radius: 0; margin: 0; }
 .ja-actions__empty { margin: 0; font-size: 13.5px; color: var(--ink-60); line-height: 1.8; display: flex; align-items: flex-start; gap: 8px;
   padding: 13px 15px; background: var(--parchment); border: 1px dashed var(--ink-12, var(--ink-08)); border-radius: var(--r-md, 12px); }
 .ja-actions__empty svg { color: var(--gold-dark); flex: none; margin-top: 3px; }

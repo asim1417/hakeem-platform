@@ -19,6 +19,23 @@ type Panel =
   | { kind: "study"; data: JudicialStudyResult }
   | { kind: "work"; data: GroundedWorkResult };
 
+/** يحوّل نتيجة أيّ خدمةٍ إلى نصٍّ للنسخ/التصدير (عرضٌ موحَّد للمخرَج). */
+function panelToText(panel: Panel): string {
+  const cites = (c: Array<{ lawName: string; articleNumber: number; quote: string }>) =>
+    c.length ? "\n\nالأساس النظاميّ:\n" + c.map((x) => `- ${x.lawName}، المادة ${x.articleNumber}: ${x.quote}`).join("\n") : "";
+  if (panel.kind === "summary") return panel.data.summary + cites(panel.data.citations);
+  if (panel.kind === "study") return panel.data.body + cites(panel.data.citations);
+  if (panel.kind === "work") return `${panel.data.title}\n\n${panel.data.body}` + cites(panel.data.citations);
+  if (panel.kind === "draft") return panel.data.sections.map((s) => `## ${s.title}\n${s.body}`).join("\n\n") + cites(panel.data.citations);
+  const d = panel.data;
+  if (d.serviceId === "JS-004") return "الخطّ الزمنيّ:\n" + d.events.map((e) => `- ${e.date}: ${e.label} — ${e.detail}`).join("\n");
+  if (d.serviceId === "JS-009") return "المدد:\n" + d.computations.map((c) => `- ${c.label}: ${c.dueDate} (${c.explanation})`).join("\n");
+  if (d.serviceId === "JS-010") return "مصفوفة الإثبات:\n" + d.rows.map((r) => `- ${r.fact} | ${r.status} | ${r.tentative}`).join("\n");
+  return `${d.title}:\n` + d.items.map((it) => `- [${it.outcome}] ${it.question} — ${it.note}`).join("\n");
+}
+
+const PANEL_SERVICE: Record<string, string> = { summary: "JS-001", study: "JS-013", draft: "JS-018" };
+
 // قراءةٌ آمنة للاستجابة: لا نستدعي res.json() مباشرةً (يرمي «The string did not match the
 // expected pattern» في Safari عند جسمٍ فارغٍ/غير JSON مثل مهلة 504) — بل نقرأ نصًّا ونحلّله بأمان.
 async function readJson(res: Response): Promise<Record<string, unknown>> {
@@ -33,6 +50,8 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
   async function run(serviceId: string) {
@@ -44,6 +63,8 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
     }
     setRunning(serviceId);
     setError(null);
+    setActiveId(serviceId);
+    setCopied(false);
     try {
       if (runner === "summary") {
         const res = await fetch("/api/judicial-assistant/summary", {
@@ -134,6 +155,22 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
 
       {error ? <div className="ja-alert ja-alert--danger">{error}</div> : null}
 
+      {/* لوحة تحكّم النتيجة الموحَّدة — لكلّ خدمة: نسخ · تصدير · إعادة تشغيل · إغلاق */}
+      {panel ? (
+        <div className="ja-result">
+          <div className="ja-result__bar">
+            <span className="ja-result__id">نتيجة {activeId ?? (panel.kind === "deterministic" ? panel.data.serviceId : PANEL_SERVICE[panel.kind])}</span>
+            <div className="ja-result__actions">
+              <button type="button" className="ja-textbtn" onClick={() => { navigator.clipboard?.writeText(panelToText(panel)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => undefined); }}>{copied ? "نُسخ ✓" : "نسخ"}</button>
+              <button type="button" className="ja-textbtn" onClick={() => {
+                const url = URL.createObjectURL(new Blob([panelToText(panel)], { type: "text/markdown;charset=utf-8" }));
+                const a = document.createElement("a"); a.href = url; a.download = `${activeId ?? "result"}.md`; a.click(); URL.revokeObjectURL(url);
+              }}>تصدير</button>
+              {activeId ? <button type="button" className="ja-textbtn" onClick={() => void run(activeId)} disabled={running !== null}>إعادة التشغيل</button> : null}
+              <button type="button" className="ja-textbtn ja-textbtn--danger" onClick={() => setPanel(null)}>إغلاق</button>
+            </div>
+          </div>
+
       {panel?.kind === "summary" ? <SummaryView data={panel.data} /> : null}
       {panel?.kind === "study" ? <StudyView data={panel.data} /> : null}
       {panel?.kind === "work" ? <WorkView data={panel.data} /> : null}
@@ -142,6 +179,8 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-009" ? <DeadlineView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && panel.data.serviceId === "JS-010" ? <EvidenceView data={panel.data} /> : null}
       {panel?.kind === "deterministic" && ["JS-006", "JS-007", "JS-008", "JS-019", "JS-020", "JS-024"].includes(panel.data.serviceId) ? <ChecklistView data={panel.data as import("@/lib/modules/judicial-assistant/types").ChecklistResult} /> : null}
+        </div>
+      ) : null}
     </div>
   );
 }
