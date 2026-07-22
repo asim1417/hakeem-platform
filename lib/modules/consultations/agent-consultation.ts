@@ -30,9 +30,18 @@ function buildConsultationSystemPrompt(): string {
     "أنت مستشار قانوني تعليمي سعودي منضبط بالمصادر داخل منصة حكيم.",
     "حوّل الواقعة إلى استشارة تعليمية مؤصّلة: (١) وصف المسألة قانونيًا، (٢) المواد النظامية الحاكمة، (٣) التوجيه العملي.",
     "استند حصريًا للمواد المرفقة من النواة القانونية. لا تذكر مادة ليست فيها، ولا رقم مادة غير وارد في نصّها المرفق.",
+    // نفس قاعدة «اسأل حكيم» (synthesizeWithMode): الأحكام والمبادئ سياقٌ استئناسيّ لا مصدرٌ لأرقام المواد.
+    "الأحكام والمبادئ المرفقة (إن وُجدت) سياقٌ قضائيّ استئناسيّ لتوجيه التحليل والترجيح؛ لا تستشهد منها بأرقام مواد — السند النظاميّ الوحيد للأرقام هو المواد المرفقة.",
     "إن لم تكفِ المواد المرفقة فصرّح بذلك صراحةً بدل الاختلاق.",
     "اكتب بالعربية بأسلوب منظّم، وأضِف تنبيهًا مهنيًا في الختام.",
   ].join("\n");
+}
+
+/** سياقٌ قضائيّ استئناسيّ من أحكام النواة ومبادئها (كما يفعل «اسأل حكيم») — لتوجيه التحليل، لا للاستشهاد بأرقام مواد. */
+function buildSupportingBlock(agent: { rulings?: Array<{ title?: string; snippet?: string }>; principles?: Array<{ title?: string; snippet?: string }> }): string {
+  const rul = (agent.rulings ?? []).slice(0, 6).map((r) => `- حكم: ${r.title ?? ""}${r.snippet ? " — " + r.snippet.slice(0, 220) : ""}`.trim());
+  const prin = (agent.principles ?? []).slice(0, 6).map((p) => `- مبدأ: ${p.title ?? ""}${p.snippet ? " — " + p.snippet.slice(0, 220) : ""}`.trim());
+  return [...rul, ...prin].filter((l) => l && l !== "- حكم:" && l !== "- مبدأ:").join("\n");
 }
 
 /** استشارة احتياطية مبنيّة حصريًا على المواد المُتحقَّقة (بلا نموذج) — لا اختلاق. */
@@ -95,9 +104,18 @@ export async function createAgentConsultationDraft(input: { facts: string; actor
 
   // PDPL ④: تُعمّى معرّفات الأطراف من الواقعة قبل الإرسال للنموذج (السياق النظامي محلّي فيبقى).
   const modelFacts = sanitizeForModel(input.facts).text;
+  // سياقٌ قضائيّ استئناسيّ (أحكام + مبادئ من النواة) — نفس ما يمرّره «اسأل حكيم» في الصياغة.
+  const supportingBlock = buildSupportingBlock(agent);
+  const userPrompt = [
+    `الواقعة:\n${modelFacts}`,
+    agent.groundingText,
+    supportingBlock
+      ? `سياقٌ قضائيّ استئناسيّ (أحكام ومبادئ من النواة — لتوجيه التحليل والترجيح فقط، لا للاستشهاد بأرقام مواد منها):\n${supportingBlock}`
+      : "",
+  ].filter(Boolean).join("\n\n");
   const llm = await callCentralProvider({
     systemPrompt: buildConsultationSystemPrompt(),
-    userPrompt: `الواقعة:\n${modelFacts}\n\n${agent.groundingText}`,
+    userPrompt,
     maxTokens: 1300,
   }).catch(() => ({ ok: false as const, content: "", mode: "offline" as const, provider: "offline" }));
 
