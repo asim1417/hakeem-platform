@@ -27,7 +27,8 @@ function SignInSkeleton() {
 }
 
 function continueUrl(nextUrl: string) {
-  const safe = nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
+  const safe =
+    nextUrl.startsWith("/dashboard") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
   return `/auth/continue?next=${encodeURIComponent(safe)}`;
 }
 

@@ -77,11 +77,11 @@ export function EssentialsPrompt({
           className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[#F9F5EC] p-6 shadow-[var(--sh-sm)] sm:p-8"
           aria-label="بيانات أساسية إلزامية"
         >
-          <p className="login-panel__eyebrow">خطوة واحدة قبل البدء</p>
+          <p className="login-panel__eyebrow">الصفحة الرئيسية · /dashboard</p>
           <h1 className="login-panel__title mt-2">أدخل بياناتك الأساسية</h1>
           <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">
-            يلزم إدخال <strong>الاسم</strong> و<strong>رقم الجوال</strong> و<strong>المهنة</strong>{" "}
-            للمتابعة. يمكنك لاحقًا إكمال باقي الملف إن رغبت بالمكافآت.
+            وصلت إلى لوحة حكيم. يلزم إدخال <strong>الاسم</strong> و<strong>رقم الجوال</strong> و
+            <strong>المهنة</strong> لفتح الصفحة الرئيسية.
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={(e) => void onSubmit(e)}>

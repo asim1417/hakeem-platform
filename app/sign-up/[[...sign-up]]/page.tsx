@@ -26,7 +26,7 @@ export default function SignUpPage() {
       }
     >
       {configured ? (
-        <AuthClerkSignUp forceRedirectUrl="/auth/continue" />
+        <AuthClerkSignUp forceRedirectUrl="/auth/continue?next=%2Fdashboard" />
       ) : (
         <div className="w-full rounded-[var(--r-md)] border border-[var(--amber)]/40 bg-[var(--amber-soft)] px-4 py-3 text-sm leading-7 text-[var(--amber)]">
           اضبط مفاتيح Clerk في Vercel لتفعيل التسجيل.

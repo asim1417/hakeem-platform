@@ -4,8 +4,8 @@ import { requireUser } from "@/lib/modules/auth/session";
 export const dynamic = "force-dynamic";
 
 /**
- * بعد Clerk: دخول سلس إلى اللوحة (أو ?next=).
- * إكمال الملف والنقاط اختيارية — تُعرض كتذكير داخل اللوحة.
+ * بعد Clerk دائمًا → /dashboard (الصفحة الرئيسية للمنصة)
+ * إلا إذا طُلب مسار داخلي آمن صراحةً عبر ?next=
  */
 export default async function AuthContinuePage({
   searchParams,
@@ -15,6 +15,11 @@ export default async function AuthContinuePage({
   await requireUser();
   const nextRaw = searchParams?.next;
   const next =
-    nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/dashboard";
+    nextRaw &&
+    nextRaw.startsWith("/") &&
+    !nextRaw.startsWith("//") &&
+    (nextRaw === "/dashboard" || nextRaw.startsWith("/dashboard/"))
+      ? nextRaw
+      : "/dashboard";
   redirect(next);
 }
