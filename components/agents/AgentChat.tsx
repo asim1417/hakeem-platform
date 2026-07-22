@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { useWakeLock } from "@/components/hooks/useWakeLock";
@@ -103,9 +103,11 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
         for (const line of lines) {
           const t = line.trim();
           if (!t) continue;
-          let ev: { type?: string; text?: string; sources?: Msg["sources"]; message?: string };
+          let ev: { type?: string; text?: string; sources?: Msg["sources"]; message?: string; jobId?: string };
           try { ev = JSON.parse(t); } catch { continue; }
-          if (ev.type === "basis") sources = ev.sources;
+          if (ev.type === "job" && ev.jobId) {
+            try { sessionStorage.setItem(`agent-job:${agentId}`, String(ev.jobId)); } catch { /* لا تخزين */ }
+          } else if (ev.type === "basis") sources = ev.sources;
           else if (ev.type === "delta" && ev.text) {
             setMsgs((prev) => {
               const next = [...prev];
@@ -123,6 +125,7 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
         if (last?.role === "assistant") next[next.length - 1] = { ...last, sources };
         return next;
       });
+      try { sessionStorage.removeItem(`agent-job:${agentId}`); } catch { /* اكتملت */ }
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذّرت المحادثة.");
       setMsgs((prev) => prev.slice(0, -1)); // أزِل فقاعة الوكيل الفارغة
@@ -131,6 +134,38 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
       scrollDown();
     }
   }
+
+  // استئناف مهمّة الوكيل الخلفيّة: إن غادرت الصفحة أثناء التوليد، يُكمله الخادم؛ وعند العودة نجلبه.
+  useEffect(() => {
+    let stop = false;
+    const key = `agent-job:${agentId}`;
+    async function resume() {
+      if (busy) return;
+      let jobId = ""; try { jobId = sessionStorage.getItem(key) ?? ""; } catch { return; }
+      if (!jobId) return;
+      setBusy(true);
+      // فقاعة وكيلٍ للاستئناف
+      setMsgs((prev) => (prev[prev.length - 1]?.role === "assistant" && !prev[prev.length - 1]?.content ? prev : [...prev, { role: "assistant", content: "" }]));
+      try {
+        for (let i = 0; i < 180 && !stop; i += 1) {
+          let j: { status?: string; text?: string } | null = null;
+          try {
+            const r = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+            if (r.status === 404) { try { sessionStorage.removeItem(key); } catch {} break; }
+            j = await r.json();
+          } catch { /* أعِد */ }
+          if (j?.text) setMsgs((prev) => { const n = [...prev]; const l = n[n.length - 1]; if (l?.role === "assistant") n[n.length - 1] = { ...l, content: String(j!.text) }; return n; });
+          if (j && (j.status === "done" || j.status === "error")) { try { sessionStorage.removeItem(key); } catch {} break; }
+          await new Promise((res) => setTimeout(res, 2000));
+        }
+      } finally { setBusy(false); }
+    }
+    const onVisible = () => { if (document.visibilityState === "visible") void resume(); };
+    void resume();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { stop = true; document.removeEventListener("visibilitychange", onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentId]);
 
   return (
     <div className="rounded-[var(--r-xl)] border border-line bg-ivory p-4 shadow-sm" dir="rtl">

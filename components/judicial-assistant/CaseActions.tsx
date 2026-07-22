@@ -76,6 +76,45 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const docRef = useRef<HTMLDivElement>(null); // يلتقط HTML المخرَج المعروض للتصدير الفاخر (PDF/Word).
   useWakeLock(running !== null); // يمنع نوم الشاشة أثناء تشغيل الخدمة الحيّ
 
+  // استئناف مهمّة خدمةٍ خلفيّة: إن غادرت الصفحة أثناء التوليد، يُكمله الخادم؛ وعند العودة نجلبه ونعرضه.
+  useEffect(() => {
+    let stop = false;
+    const key = `ja-svc-job:${caseId}`;
+    async function resume() {
+      let raw = ""; try { raw = sessionStorage.getItem(key) ?? ""; } catch { return; }
+      if (!raw) return;
+      let p: { jobId?: string; serviceId?: string; title?: string } = {};
+      try { p = JSON.parse(raw); } catch { return; }
+      const jobId = p.jobId; if (!jobId) return;
+      const sid = p.serviceId ?? ""; const title = p.title ?? sid;
+      setActiveId(sid);
+      const paint = (body: string, done: boolean, cites: StreamCite[], notice: string, blocked: boolean) =>
+        setPanel({ kind: "stream", data: { serviceId: sid, title, body, citations: cites, notice, blocked, done, stages: [], startedAt: Date.now() } });
+      paint("", false, [], "أستأنف من الخلفيّة…", false);
+      for (let i = 0; i < 180 && !stop; i += 1) {
+        let j: { status?: string; text?: string; meta?: Record<string, unknown> } | null = null;
+        try {
+          const r = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+          if (r.status === 404) { try { sessionStorage.removeItem(key); } catch {} break; }
+          j = await r.json();
+        } catch { /* أعِد */ }
+        if (j?.text) paint(String(j.text), false, [], "أستأنف من الخلفيّة…", false);
+        if (j && (j.status === "done" || j.status === "error")) {
+          const meta = (j.meta ?? {}) as Record<string, unknown>;
+          paint(String(j.text ?? ""), true, (meta.citations as StreamCite[]) ?? [], String(meta.notice ?? (j.status === "error" ? "تعذّر إكمال الخدمة." : "استُؤنفت من الخلفيّة.")), Boolean(meta.blocked) || j.status === "error");
+          try { sessionStorage.removeItem(key); } catch {}
+          break;
+        }
+        await new Promise((res) => setTimeout(res, 2000));
+      }
+    }
+    const onVisible = () => { if (document.visibilityState === "visible" && running === null) void resume(); };
+    void resume();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { stop = true; document.removeEventListener("visibilitychange", onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId]);
+
   /** معرّف الخدمة وعنوانها للوثيقة المصدَّرة. */
   function panelIdTitle(p: Panel): { id: string; title: string } {
     const id =
@@ -150,9 +189,12 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
             for (const line of lines) {
               const t = line.trim();
               if (!t) continue;
-              let ev: { type?: string; text?: string; label?: string; state?: string; citations?: StreamCite[]; notice?: string; blocked?: boolean };
+              let ev: { type?: string; text?: string; label?: string; state?: string; citations?: StreamCite[]; notice?: string; blocked?: boolean; jobId?: string };
               try { ev = JSON.parse(t); } catch { continue; }
-              if (ev.type === "stage" && ev.label) {
+              if (ev.type === "job" && ev.jobId) {
+                // خزّن معرّف المهمّة الخلفيّة للاستئناف إن غادرنا الصفحة أثناء التوليد.
+                try { sessionStorage.setItem(`ja-svc-job:${caseId}`, JSON.stringify({ jobId: ev.jobId, serviceId, title })); } catch { /* لا تخزين */ }
+              } else if (ev.type === "stage" && ev.label) {
                 // خطوةٌ حيّة: نُتمّ السابقة ونُضيف الجديدة (قائمةٌ كـ«اسأل حكيم»).
                 for (const s of stages) s.state = "done";
                 stages.push({ label: ev.label, state: (ev.state as StreamStage["state"]) ?? "active" });
@@ -167,6 +209,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
                 }
               } else if (ev.type === "done") {
                 setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: ev.citations ?? [], notice: ev.notice ?? "", blocked: ev.blocked ?? false, done: true, startedAt } });
+                try { sessionStorage.removeItem(`ja-svc-job:${caseId}`); } catch { /* اكتملت */ }
               }
             }
           }
