@@ -7,7 +7,8 @@ import { streamAsk, type AskStreamEvent } from "@/lib/modules/judicial-assistant
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const schema = z.object({ question: z.string().min(3, "اكتب طلبك."), caseId: z.string().optional() });
 

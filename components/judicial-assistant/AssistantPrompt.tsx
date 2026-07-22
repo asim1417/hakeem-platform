@@ -53,6 +53,9 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
+      let acc = "";       // النصّ المتراكم — صمّام أمانٍ إن انقطع التدفّق دون حدث «done».
+      let gotDone = false;
+      let lastCitations: AskCitation[] = [];
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -71,13 +74,22 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
               return [...next, s];
             });
           } else if (ev.type === "delta") {
+            acc += String(ev.text);
             setStreamText((prev) => prev + String(ev.text));
           } else if (ev.type === "done") {
+            gotDone = true;
+            lastCitations = (ev.citations as AskCitation[]) ?? [];
             setStages((prev) => prev.map((p) => ({ ...p, state: "done" as const })));
-            setResult({ answer: String(ev.answer), blocked: Boolean(ev.blocked), citations: (ev.citations as AskCitation[]) ?? [], notice: String(ev.notice) });
+            setResult({ answer: String(ev.answer), blocked: Boolean(ev.blocked), citations: lastCitations, notice: String(ev.notice) });
             setStreamText("");
           }
         }
+      }
+      // انقطع التدفّق دون «done» (مهلة/شبكة) لكنّنا جمعنا نصًّا ⇒ لا نُخفيه: نُرقّيه لنتيجةٍ نهائيّة.
+      if (!gotDone && acc.trim()) {
+        setStages((prev) => prev.map((p) => ({ ...p, state: "done" as const })));
+        setResult({ answer: acc, blocked: false, citations: lastCitations, notice: "انقطع البثّ قبل الختام — عُرض ما اكتمل. أعِد المحاولة لإتمامه." });
+        setStreamText("");
       }
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
