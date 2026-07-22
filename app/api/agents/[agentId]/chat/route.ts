@@ -14,6 +14,14 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+/** يكشف التحيّة أو السؤال التعريفيّ (من أنت/ما تخصصك) — كي يتحاور الوكيل ويبيّن تخصصه بلا حاجة لسندٍ نظاميّ. */
+function smalltalkOrMeta(q: string): "greeting" | "meta" | null {
+  const t = q.replace(/[؟?.!،:]/g, " ").replace(/\s+/g, " ").trim();
+  if (/^(السلام عليكم|سلام|مرحبا|أهلا|اهلا|هلا|صباح|مساء|كيف حالك|كيفك|هلا والله|هاي|hi|hello|hey)\b/i.test(t)) return "greeting";
+  if (/(من أنت|من انت|ما تخصص|وش تخصص|ما هو تخصص|ماذا تفعل|وش تسوي|وش تعمل|ماذا تعمل|كيف تعمل|ما قدرات|قدراتك|ما نطاق|نطاقك|ما هي مهام|مهامك|بماذا تساعد|كيف تساعد|ما اسمك|عرّف بنفسك|عرف بنفسك|من تكون|وش انت)/.test(t)) return "meta";
+  return null;
+}
+
 export async function POST(request: NextRequest, { params }: { params: { agentId: string } }): Promise<Response> {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return new Response(JSON.stringify({ type: "error", message: "يلزم تسجيل الدخول." }), { status: 401, headers: { "Content-Type": "application/json; charset=utf-8" } });
@@ -41,6 +49,24 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
     async start(controller) {
       const send = (o: unknown) => controller.enqueue(encoder.encode(JSON.stringify(o) + "\n"));
       try {
+        // ⓪ تحيّةٌ أو سؤالٌ تعريفيّ: يتحاور الوكيل ويبيّن تخصصه ونطاقه وأدواره — بلا حاجة لسندٍ نظاميّ.
+        const meta = smalltalkOrMeta(message);
+        if (meta) {
+          const roles = (m.subRoles ?? []).map((sr) => sr.displayName || sr.subRoleId).filter(Boolean);
+          const scopeList = scope.map((s) => s.replace(/-/g, " ")).join(" · ");
+          const intro = [
+            meta === "greeting" ? "وعليكم السلام ورحمة الله وبركاته." : "",
+            `أنا «${m.displayName ?? roleName}»${roleName ? ` — ${roleName}` : ""} داخل منصّة حكيم.`,
+            `تخصّصي مقيّدٌ بنطاقٍ نظاميّ محدّد: ${scopeList}.`,
+            roles.length ? `أعمل بأدوارٍ فرعيّة يمكنك اختيارها: ${roles.join(" · ")}.` : "",
+            "أجيب مؤصَّلًا بمواد هذه الأنظمة النافذة حصريًّا — بلا اختلاقٍ ولا خروجٍ عن النطاق. اطرح مسألتك القانونيّة ضمن هذا النطاق لأحلّلها لك مستندًا للمواد، وما خرج عن نطاقي فوجِّهه إلى «اسأل حكيم» لبحثٍ أوسع.",
+          ].filter(Boolean).join(" ");
+          send({ type: "basis", sources: [], scope });
+          for (const w of intro.split(/(\s+)/)) if (w) send({ type: "delta", text: w });
+          send({ type: "done" });
+          return;
+        }
+
         // ① استرجاعٌ مقيّدٌ بنطاق الوكيل (المواد النافذة فقط تُقدَّم سندًا).
         const runEngine = createRunEngine({ limit: 12 });
         const er = await runEngine(message, scope).catch(() => ({ articles: [], scopeSystems: [] as string[] }));
