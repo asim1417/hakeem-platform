@@ -684,10 +684,11 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
+  /* نفس كريمة Clerk (#F9F5EC) — رحلة دخول موحّدة */
   background:
-    radial-gradient(80% 60% at 100% 0%, rgba(198, 151, 99, 0.14) 0%, transparent 55%),
-    radial-gradient(70% 50% at 0% 100%, rgba(14, 52, 53, 0.1) 0%, transparent 50%),
-    linear-gradient(165deg, #EAF1EF 0%, #EFF3F2 45%, #E2EAE8 100%);
+    radial-gradient(80% 60% at 100% 0%, rgba(198, 151, 99, 0.16) 0%, transparent 55%),
+    radial-gradient(70% 50% at 0% 100%, rgba(14, 52, 53, 0.08) 0%, transparent 50%),
+    linear-gradient(165deg, #F9F5EC 0%, #F3EDE0 48%, #EDE6D6 100%);
 }
 .login-page__glow {
   pointer-events: none;

@@ -124,7 +124,7 @@ export function OnboardingWizard({
     setError("");
     try {
       if (step === 3 && !phoneVerified) {
-        throw new Error("تحقق من الجوال برمز OTP قبل المتابعة.");
+        // الجوال اختياري — السعودية مقفلة في Clerk SMS افتراضيًا
       }
 
       let avatarAwarded = 0;
@@ -177,7 +177,7 @@ export function OnboardingWizard({
     return (
       <div className="space-y-6 text-center">
         <p className="text-sm font-semibold text-[var(--gold)]">اكتمل ملفك</p>
-        <h2 className="font-display text-3xl text-[var(--navy)]">مرحبًا {userName} في حكيم</h2>
+        <h2 className="font-display-ar text-3xl text-[var(--navy)]">مرحبًا {userName} في حكيم</h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
           رصيدك الحالي <strong className="text-[var(--navy)]">{balance.toLocaleString("ar-SA")}</strong> نقطة
           {earnedThisSession > 0 ? ` (+${earnedThisSession.toLocaleString("ar-SA")} في هذه الجلسة)` : ""}.
@@ -198,7 +198,7 @@ export function OnboardingWizard({
     <div className="space-y-6">
       <header className="space-y-2">
         <p className="text-sm font-semibold text-[var(--gold)]">إكمال الملف · +{CREDIT_REWARDS.welcome} نقطة ترحيبية</p>
-        <h2 className="font-display text-2xl text-[var(--navy)] sm:text-3xl">أكمل ملفك واكسب المزيد</h2>
+        <h2 className="font-display-ar text-2xl text-[var(--navy)] sm:text-3xl">أكمل ملفك واكسب المزيد</h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
           الخطوة {step} من 6 — رصيدك الآن {balance.toLocaleString("ar-SA")} نقطة
         </p>
@@ -324,6 +324,9 @@ export function OnboardingWizard({
         <div className="space-y-4">
           <p className="text-sm leading-7 text-[var(--ink-60)]">
             رقمك: <strong dir="ltr" className="text-[var(--navy)]">{phone || "—"}</strong>
+          </p>
+          <p className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-3 text-sm leading-7 text-[var(--navy)]">
+            التحقق بالجوال اختياري حاليًا. إن تعذّر OTP للسعودية من Clerk، يمكنك التخطّي والمتابعة لإكمال الملف والنقاط.
           </p>
           {phoneVerified ? (
             <LegalAlert tone="success">تم التحقق من الجوال بنجاح.</LegalAlert>
@@ -454,6 +457,15 @@ export function OnboardingWizard({
           السابق
         </button>
         <div className="flex flex-wrap gap-2">
+          {step === 3 && !phoneVerified ? (
+            <button
+              type="button"
+              className="focus-ring text-sm font-semibold text-[var(--ink-60)]"
+              onClick={() => void submitStep()}
+            >
+              تخطّي التحقق
+            </button>
+          ) : null}
           {step === 5 ? (
             <button
               type="button"
