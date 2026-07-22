@@ -58,7 +58,7 @@ async function synthesizeFromFacts(facts: string, requestId: string): Promise<Ag
     "لا تُصدر حكمًا نهائيًّا، ولا تخترع مادّةً نظاميّة أو رقم مادةٍ من الذاكرة. إن استلزم العمل سندًا نظاميًّا ولم يُتَح فصرّح بذلك صراحةً.",
     "انسب كلّ واقعةٍ لمصدرها، وميّز الثابت عن المُدّعى. اكتب بالعربية بأسلوبٍ قضائيّ منظّم.",
   ].join("\n");
-  const llm = await generateComplete(system, facts, { maxTokens: 6000 }).catch(() => null);
+  const llm = await generateComplete(system, facts, { maxTokens: 3500, maxRounds: 0 }).catch(() => null);
   if (llm?.ok && llm.content.trim()) {
     return {
       requestId, blocked: false, output: `${llm.content}${CASE_FACTS_NOTE}`, citations: [],
@@ -146,8 +146,9 @@ export async function createAgentConsultationDraft(input: { facts: string; actor
       ? `سياقٌ قضائيّ استئناسيّ (أحكام ومبادئ من النواة — لتوجيه التحليل والترجيح فقط، لا للاستشهاد بأرقام مواد منها):\n${supportingBlock}`
       : "",
   ].filter(Boolean).join("\n\n");
-  // توليدٌ كامل الطول مع إكمالٍ تلقائيّ عند البتر — نفس آليّة «اسأل حكيم» (بدل نداءٍ واحدٍ قصير).
-  const llm = await generateComplete(buildConsultationSystemPrompt(), userPrompt, { maxTokens: 6000 })
+  // توليدٌ أطول (نداءٌ واحدٌ بسقفٍ موسّع بلا جولات إكمالٍ إضافيّة) — أوفى من السابق ويكتمل
+  // ضمن مهلة الدالّة (60ث) فلا FUNCTION_INVOCATION_TIMEOUT. (maxRounds:0 ⇒ نداءٌ واحد.)
+  const llm = await generateComplete(buildConsultationSystemPrompt(), userPrompt, { maxTokens: 3500, maxRounds: 0 })
     .catch(() => ({ ok: false as const, content: "", mode: "offline" as const, provider: "offline", rounds: 0 }));
 
   let output: string;
