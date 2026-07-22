@@ -23,6 +23,24 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+/** طابورٌ لاتوقيتيّ: يجسر خطوات المنسّق (onStep وهو نداءٌ متزامن) إلى مولّدٍ يبثّها حيًّا. */
+function stepQueue() {
+  const buf: RunStreamEvent[] = [];
+  let wake: (() => void) | null = null;
+  let finished = false;
+  return {
+    push(ev: RunStreamEvent) { buf.push(ev); wake?.(); wake = null; },
+    finish() { finished = true; wake?.(); wake = null; },
+    async *drain(): AsyncGenerator<RunStreamEvent> {
+      for (;;) {
+        if (buf.length) { yield buf.shift()!; continue; }
+        if (finished) return;
+        await new Promise<void>((r) => { wake = r; });
+      }
+    },
+  };
+}
+
 const DEPTH_HINT: Record<StudyDepth, string> = { short: "بإيجازٍ مركّز", medium: "بتفصيلٍ متوسّط", extended: "بتوسّعٍ وتحليلٍ للبدائل" };
 
 /** تعليمة العمل لكلّ خدمة نموذجيّة (الأعمال من WORK_SPECS، والبقيّة معرّفةٌ هنا). */
@@ -39,13 +57,21 @@ export async function* streamService(kase: JudicialCase, serviceId: string, dept
   const directive = directiveFor(serviceId, depth);
   const facts = [`المطلوب: ${directive}`, caseContext(kase)].filter(Boolean).join("\n\n");
 
-  // التأصيل العميق يجري قبل أوّل حرفٍ مبثوث؛ نُظهر خطوةً حيّة كي لا يبدو التوليد متوقّفًا،
-  // ونحرسه بمهلةٍ (يُسقِط لمسار مادّة القضية) فلا يتجمّد البثّ إن تعثّر البحث العميق.
-  yield { type: "stage", label: "أبحث في النواة القانونيّة (بحثٌ عميق)", state: "active" };
-  const agent = await withTimeout(runCaseAgent(facts), 90_000).catch(() => null);
+  // التأصيل العميق يجري قبل أوّل حرفٍ مبثوث؛ نبثّ **خطوات المنسّق الحيّة** (كـ«اسأل حكيم»):
+  // فهم ← تكييف ← تخطيط ← نطاق ← جولات بحث ← استرجاع ← تحقّق. هذا يُظهر العمل خطوةً خطوة
+  // ويُبقي الاتّصال حيًّا (نبضٌ منتظم) فلا ينقطع البثّ فيبدو متوقّفًا. حارس مهلةٍ يمنع التجمّد.
+  const q = stepQueue();
+  const onStep = (s: { id?: string; status?: string; label?: string }) => {
+    if (s?.label) q.push({ type: "stage", label: s.label, state: s.status === "done" ? "done" : "active" });
+  };
+  const agentPromise = withTimeout(runCaseAgent(facts, { onStep }), 120_000)
+    .catch(() => null)
+    .then((r) => { q.finish(); return r; });
+  for await (const ev of q.drain()) yield ev;
+  const agent = await agentPromise;
   const articles = agent?.articles ?? [];
   const grounded = Boolean(agent?.grounded && articles.length);
-  yield { type: "stage", label: grounded ? `وجدتُ ${articles.length} مادّة مؤصِّلة` : "لا مادّة نظاميّة مطابقة — أعتمد مادّة القضية", state: "done" };
+  yield { type: "stage", label: grounded ? `اكتمل التأصيل — ${articles.length} مادّة مؤصِّلة` : "لا مادّة نظاميّة مطابقة — أعتمد مادّة القضية", state: "done" };
   const citations = articles.slice(0, 8).map((a) => ({ articleId: a.articleId, lawName: a.systemName, articleNumber: a.articleNumber, quote: a.articleText.slice(0, 350) }));
 
   const system = [

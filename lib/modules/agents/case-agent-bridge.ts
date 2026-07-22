@@ -9,6 +9,7 @@
 // فوق هذا السياق المؤرَّض — نفس الدماغ، زوايا إخراج مختلفة.
 // ─────────────────────────────────────────────────────────────────────────────
 import { orchestrate } from "./orchestrator";
+import type { AgentStep } from "./types";
 import { runVerification, type CoverageState } from "./thinking/verification";
 import { rankGoverningSystems, inferSpecialization, type GoverningSystem } from "./thinking/mazann";
 import { search_rulings, search_principles } from "./tools";
@@ -87,7 +88,7 @@ async function citationDrivenArticles(text: string): Promise<LegalCoreResult[]> 
  * يشغّل وكيل الأنظمة على استعلام (وقائع قضية/سؤال) ويعيد سياقًا مؤرَّضًا موحّدًا.
  * سقوط آمن في كل خطوة إلى سياق فارغ/جزئيّ — فلا يكسر الخدمة أبدًا، وعدم التأريض يُفصَح لا يُلفَّق.
  */
-export async function runCaseAgent(query: string): Promise<AgentGroundedContext> {
+export async function runCaseAgent(query: string, opts: { onStep?: (s: AgentStep) => void } = {}): Promise<AgentGroundedContext> {
   const q = (query || "").trim();
   if (!q) return emptyContext();
 
@@ -100,7 +101,7 @@ export async function runCaseAgent(query: string): Promise<AgentGroundedContext>
   //    (ب) استرجاعٌ موجَّهٌ بالاستشهاد الصريح: جلبُ المواد المُحال إليها نصًّا مباشرةً من النواة
   //        (يعالج «غياب السند» لموادَّ موجودةٍ فعلًا لكن لم يُصعِّدها الترتيب الدلاليّ).
   const [result, cited] = await Promise.all([
-    orchestrate(q, { mode: "deep", skipBreadth: true, skipAnalysis: true }).catch(() => null),
+    orchestrate(q, { mode: "deep", skipBreadth: true, skipAnalysis: true, onStep: opts.onStep }).catch(() => null),
     citationDrivenArticles(q).catch(() => [] as LegalCoreResult[]),
   ]);
   const semantic = result?.articles ?? [];
