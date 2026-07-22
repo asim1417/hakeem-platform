@@ -4,21 +4,30 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { GoldButton } from "@/components/ui/legal";
 
+const PROFESSIONS = [
+  { value: "INDIVIDUAL", label: "محامٍ / متدرب" },
+  { value: "LAW_FIRM", label: "مكتب محاماة" },
+  { value: "OTHER", label: "أخرى (قاضٍ، طالب، مستشار…)" },
+] as const;
+
 /**
- * بطاقة اختيارية بعد الدخول: الاسم + الجوال فقط.
- * باقي الملف للمكافآت الأفضل — دون إجبار.
+ * تنبيه بسيط اختياري: الاسم + الجوال + المهنة.
+ * باقي الملف للمكافآت — دون إجبار.
  */
 export function EssentialsPrompt({
   initialName,
   initialPhone,
+  initialProfession,
   showCreditsHint = true,
 }: {
   initialName: string;
   initialPhone: string | null;
+  initialProfession?: string | null;
   showCreditsHint?: boolean;
 }) {
   const [name, setName] = useState(initialName || "");
   const [phone, setPhone] = useState(initialPhone || "");
+  const [profession, setProfession] = useState(initialProfession || "");
   const [hidden, setHidden] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -38,7 +47,11 @@ export function EssentialsPrompt({
       const res = await fetch("/api/profile/essentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          profession: profession || undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "تعذّر الحفظ.");
@@ -56,17 +69,17 @@ export function EssentialsPrompt({
     <section
       dir="rtl"
       className="mb-6 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[#F9F5EC] p-5"
-      aria-label="بيانات أساسية اختيارية"
+      aria-label="تنبيه بيانات أساسية"
     >
-      <p className="text-sm font-semibold text-[var(--navy)]">بيانات أساسية (اختيارية)</p>
+      <p className="text-sm font-semibold text-[var(--navy)]">أضف بياناتك الأساسية</p>
       <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">
-        يكفي الاسم ورقم الجوال للبدء.{" "}
+        الاسم ورقم الجوال والمهنة — اختياري وسريع.{" "}
         {showCreditsHint
-          ? "إن رغبت بأقصى استفادة من الرصيد والمكافآت، يمكنك لاحقًا إكمال باقي الملف."
+          ? "إن رغبت برصيد ومكافآت أفضل يمكنك لاحقًا إكمال باقي الملف."
           : null}
       </p>
 
-      <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={(e) => void onSubmit(e)}>
+      <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={(e) => void onSubmit(e)}>
         <label className="block">
           <span className="text-xs font-semibold text-[var(--navy)]">الاسم</span>
           <input
@@ -87,7 +100,22 @@ export function EssentialsPrompt({
             className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2 text-left text-sm"
           />
         </label>
-        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+        <label className="block">
+          <span className="text-xs font-semibold text-[var(--navy)]">المهنة</span>
+          <select
+            value={profession}
+            onChange={(e) => setProfession(e.target.value)}
+            className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2 text-sm"
+          >
+            <option value="">اختر المهنة</option>
+            {PROFESSIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
           <GoldButton type="submit" disabled={saving}>
             {saving ? "جارٍ الحفظ…" : "حفظ"}
           </GoldButton>

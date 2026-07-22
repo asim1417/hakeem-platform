@@ -9,10 +9,11 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
   phone: z.string().trim().max(32).optional(),
+  profession: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).optional(),
   dismiss: z.boolean().optional(),
 });
 
-/** حفظ سريع للاسم والجوال فقط — دون إجبار باقي الملف. */
+/** حفظ سريع: الاسم + الجوال + المهنة — دون إجبار باقي الملف. */
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
@@ -31,13 +32,18 @@ export async function POST(request: NextRequest) {
   if (body.name && body.name !== user.name) {
     await prisma.user.update({ where: { id: user.id }, data: { name: body.name } }).catch(() => null);
   }
-  if (body.phone !== undefined) {
-    await updateProfile(user.id, { phone: body.phone || null });
+
+  const patch: { phone?: string | null; entityType?: string } = {};
+  if (body.phone !== undefined) patch.phone = body.phone || null;
+  if (body.profession) patch.entityType = body.profession;
+  if (Object.keys(patch).length) {
+    await updateProfile(user.id, patch);
   }
 
   return NextResponse.json({
     ok: true,
     name: body.name ?? user.name,
     phone: body.phone ?? null,
+    profession: body.profession ?? null,
   });
 }
