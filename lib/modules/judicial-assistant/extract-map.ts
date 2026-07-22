@@ -26,15 +26,69 @@ const SYSTEM = [
   "status ∈ alleged|admitted|denied|established|unresolved. لا نصّ خارج JSON.",
 ].join("\n");
 
-function extractJson(raw: string): unknown | null {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) return null;
+function tryParse(t: string): unknown | null {
   try {
-    return JSON.parse(raw.slice(start, end + 1));
+    return JSON.parse(t);
   } catch {
     return null;
   }
+}
+
+/**
+ * يُصلح JSON مبتورًا (تجاوز سقف الرموز): يوازن الأقواس/الأقواس المربّعة ويُغلق السلسلة المفتوحة،
+ * فتُستخرَج العناصر المكتملة على الأقلّ بدل الفشل الكليّ. يمرّ على النصّ حرفًا حرفًا مع تتبّع السلاسل.
+ */
+function repairTruncatedJson(s: string): string {
+  let inStr = false;
+  let esc = false;
+  const stack: string[] = [];
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === "{") stack.push("}");
+    else if (c === "[") stack.push("]");
+    else if (c === "}" || c === "]") stack.pop();
+  }
+  let out = s;
+  if (inStr) out += '"';
+  out = out.replace(/,\s*$/, ""); // فاصلةٌ متدلّية في الذيل
+  while (stack.length) out += stack.pop();
+  return out;
+}
+
+/** يستخرج كائن JSON من مخرَج النموذج بمرونة: أسوار ماركداون، فواصل زائدة، وبترٌ عند سقف الرموز. */
+function extractJson(raw: string): unknown | null {
+  if (!raw) return null;
+  // إزالة أسوار ماركداون ```json … ``` إن وُجدت.
+  const s = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  // محاولةٌ مباشرة (المخرَج JSON نقيّ).
+  const direct = tryParse(s);
+  if (direct) return direct;
+  // اقتطاع أوّل كائنٍ متوازن (موازنة الأقواس مع تجاهل ما داخل السلاسل).
+  const start = s.indexOf("{");
+  if (start < 0) return null;
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  let end = -1;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === "{") depth++;
+    else if (c === "}") { depth--; if (depth === 0) { end = i; break; } }
+  }
+  const slice = end > start ? s.slice(start, end + 1) : s.slice(start);
+  // إصلاحات شائعة: فواصل زائدة قبل } أو ].
+  const cleaned = slice.replace(/,\s*([}\]])/g, "$1");
+  return tryParse(cleaned) ?? tryParse(repairTruncatedJson(cleaned));
 }
 
 function str(v: unknown): string {
@@ -60,7 +114,8 @@ export async function extractCaseMap(kase: JudicialCase): Promise<MapProposal> {
   const res = await callCentralProvider({
     systemPrompt: SYSTEM,
     userPrompt: `موضوع القضية: ${kase.subject}\nنوع القضاء: ${kase.jurisdiction}\n\nنصّ المرفقات:\n${material}`,
-    maxTokens: 1500,
+    // سقفٌ أوسع كي لا يُبتَر JSON للقضايا كثيرة الأطراف/الوقائع (المرفقات الكبيرة).
+    maxTokens: 4000,
   }).catch(() => null);
 
   if (!res || !res.ok || !res.content) {
