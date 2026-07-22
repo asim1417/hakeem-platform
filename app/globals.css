@@ -976,6 +976,9 @@ body {
 .ja-result__actions .ja-textbtn { color: #fff; font-size: 12.5px; }
 .ja-result__actions .ja-textbtn:hover { color: var(--gold-bright); }
 .ja-result__actions .ja-textbtn--danger { color: var(--gold-pale); }
+.ja-result__approve { background: var(--gold); color: var(--navy); border: none; border-radius: 8px; padding: 5px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.ja-result__approve:hover { background: var(--gold-bright); }
+.ja-result__approved { font-size: 12.5px; font-weight: 700; color: var(--gold-bright); }
 .ja-result > .ja-summary { border: none; border-radius: 0; margin: 0; }
 .ja-actions__empty { margin: 0; font-size: 13.5px; color: var(--ink-60); line-height: 1.8; display: flex; align-items: flex-start; gap: 8px;
   padding: 13px 15px; background: var(--parchment); border: 1px dashed var(--ink-12, var(--ink-08)); border-radius: var(--r-md, 12px); }

@@ -106,7 +106,7 @@ function envConfig(): EffectiveAiConfig {
   };
 }
 
-/** الإعداد الفعّال: قاعدة البيانات أولاً (إن كان مفتاحها صالحاً) ثم البيئة. */
+/** الإعداد الفعّال: قاعدة البيانات أولاً (إن كان مفتاحها صالحاً) ثم البيئة، ثم مفتاح Gemini للـOCR. */
 export async function resolveAiConfig(): Promise<EffectiveAiConfig> {
   const stored = await readStored();
   if (stored?.provider && stored.provider !== "offline" && stored.apiKeyEnc) {
@@ -121,7 +121,18 @@ export async function resolveAiConfig(): Promise<EffectiveAiConfig> {
       };
     }
   }
-  return envConfig();
+  const env = envConfig();
+  if (env.provider !== "offline" && env.apiKey) return env;
+  // احتياطٌ موحِّد للمفاتيح: إن لم يُضبط مزوّد نموذجٍ صريح، يخدم **مفتاح Gemini المضبوط للـOCR**
+  // النموذجَ أيضًا (نفس واجهة Gemini للتوليد) — فمفتاحٌ واحدٌ يشغّل القراءة والموجّه والخدمات.
+  try {
+    const { resolveGeminiOcrKey } = await import("@/lib/modules/ai/gemini-ocr");
+    const g = await resolveGeminiOcrKey();
+    if (g.key) {
+      return { provider: "gemini", apiKey: g.key, model: process.env.GEMINI_MODEL || "gemini-2.5-flash", baseUrl: null, source: g.source === "env" ? "env" : "db" };
+    }
+  } catch { /* تجاهل — يبقى offline */ }
+  return env;
 }
 
 /** حالة الإعداد للعرض في الإدارة — دون كشف المفتاح. */
