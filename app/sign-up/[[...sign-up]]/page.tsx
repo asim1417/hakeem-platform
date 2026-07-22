@@ -12,7 +12,7 @@ export default function SignUpPage() {
 
   return (
     <AuthJourneyShell
-      tagline="أنشئ حسابك عبر Clerk ثم أكمل الملف لتحصل على نقاط الترحيب والمكافآت."
+      tagline="أنشئ حسابك وادخل مباشرة. الاسم والجوال اختياريان — وإكمال الملف يزيد المكافآت إن رغبت."
       footer={
         <p className="login-panel__links">
           <Link href="/" className="underline-offset-4 hover:underline">
@@ -26,7 +26,7 @@ export default function SignUpPage() {
       }
     >
       {configured ? (
-        <AuthClerkSignUp forceRedirectUrl="/auth/continue?next=%2Fonboarding" />
+        <AuthClerkSignUp forceRedirectUrl="/auth/continue" />
       ) : (
         <div className="w-full rounded-[var(--r-md)] border border-[var(--amber)]/40 bg-[var(--amber-soft)] px-4 py-3 text-sm leading-7 text-[var(--amber)]">
           اضبط مفاتيح Clerk في Vercel لتفعيل التسجيل.

@@ -23,7 +23,7 @@ export default function SignInPage({
     <AuthJourneyShell
       tagline={
         configured
-          ? "ادخل ثم أكمل ملفك لتحصل على نقاط حكيم وتجربة مخصّصة."
+          ? "ادخل مباشرة إلى لوحتك. تعبئة البيانات اختيارية لتحسين الرصيد."
           : "دخول المالك متاح الآن — Clerk يُضبط لاحقًا."
       }
       footer={
