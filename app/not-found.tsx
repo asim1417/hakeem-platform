@@ -15,7 +15,7 @@ export default function NotFound() {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link href="/dashboard" className="btn btn-gold">العودة إلى الرئيسية</Link>
-          <Link href="/dashboard/legal-search" className="btn btn-outline">البحث الشامل</Link>
+          <Link href="/dashboard/ask" className="btn btn-outline">اسأل حكيم</Link>
         </div>
       </div>
     </div>

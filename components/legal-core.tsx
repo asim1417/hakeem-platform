@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BookOpen, Copy, Database, ExternalLink, FileText, Filter, Fingerprint, History, Landmark, Scale, ScrollText, Search, ShieldCheck } from "lucide-react";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { buildArticleEli } from "@/lib/modules/legal-core/eli";
 import { buildFiqhCitation } from "@/lib/modules/legal-core/content-separation";
@@ -72,6 +73,8 @@ export function LegalCoreTable({ children }: { children: ReactNode }) {
 }
 
 export function LegalCoreSearchBar({ systems, defaultQuery, defaultSystem }: { systems: Array<{ lawName: string }>; defaultQuery?: string; defaultSystem?: string }) {
+  // نموذج البحث النصّيّ التقليديّ في النواة — يُخفى حين تُخفى واجهات البحث التقليديّ.
+  if (!TRADITIONAL_SEARCH_ENABLED) return null;
   return (
     <form action="/dashboard/legal-core/search" className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-4 shadow-[var(--sh-xs)]">
       <div className="grid gap-3 lg:grid-cols-[1fr_260px_auto]">
@@ -179,9 +182,11 @@ export function LegalSystemCard({ system }: { system: { id?: string | null; lawN
         <Link href={viewHref} className="btn btn-primary flex-1">
           عرض شجرة المواد
         </Link>
-        <Link href={`/dashboard/legal-core/search?system=${encodeURIComponent(system.lawName)}`} className="btn btn-outline">
-          بحث
-        </Link>
+        {TRADITIONAL_SEARCH_ENABLED ? (
+          <Link href={`/dashboard/legal-core/search?system=${encodeURIComponent(system.lawName)}`} className="btn btn-outline">
+            بحث
+          </Link>
+        ) : null}
       </div>
     </article>
   );

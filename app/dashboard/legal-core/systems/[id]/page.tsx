@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BookOpen, FileText } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { getSystemDetail } from "@/lib/modules/library/library-service";
 import { LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 
@@ -29,9 +30,11 @@ export default async function LegalSystemTreePage({ params }: { params: { id: st
               <Link href="/dashboard/legal-core/systems" className="btn ho-hero-outline">
                 <ArrowRight size={16} /> كل الأنظمة
               </Link>
-              <Link href={`/dashboard/legal-search?q=${encodeURIComponent(detail.lawName)}`} className="btn btn-gold">
-                البحث داخل النظام
-              </Link>
+              {TRADITIONAL_SEARCH_ENABLED ? (
+                <Link href={`/dashboard/legal-search?q=${encodeURIComponent(detail.lawName)}`} className="btn btn-gold">
+                  البحث داخل النظام
+                </Link>
+              ) : null}
             </>
           }
         />

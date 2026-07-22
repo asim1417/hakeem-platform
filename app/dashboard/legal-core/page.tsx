@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, Database, FileSearch, Gavel, Quote, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { canUser } from "@/lib/modules/auth/rbac";
 import {
   countArticlesNeedingReview,
@@ -44,7 +45,7 @@ export default async function LegalCoreDashboardPage() {
           description="مركز إدارة الأنظمة والمواد والشروح والتصنيفات والقانون المقارن، ومصدر المعرفة الموحد لخدمات حكيم."
           actions={
             <>
-              <Link href="/dashboard/legal-core/search" className="btn btn-gold"><FileSearch size={16} /> البحث القانوني</Link>
+              {TRADITIONAL_SEARCH_ENABLED ? <Link href="/dashboard/legal-core/search" className="btn btn-gold"><FileSearch size={16} /> البحث القانوني</Link> : null}
               <Link href="/dashboard/legal-core/citations" className="btn ho-hero-outline"><Quote size={16} /> التقاط الاستشهاد</Link>
               <Link href="/dashboard/legal-core/systems" className="btn ho-hero-outline"><BookOpen size={16} /> الأنظمة</Link>
               <Link href="/dashboard/legal-core/judgments" className="btn ho-hero-outline"><Scale size={16} /> الأحكام القضائية</Link>

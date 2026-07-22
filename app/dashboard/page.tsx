@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
 import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
+import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
 import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
@@ -187,12 +188,14 @@ export default async function DashboardPage({
 
       <SectionTitle>الوجهات الرئيسية</SectionTitle>
       <CardGrid>
-        <Card
-          href="/dashboard/legal-search"
-          title="البحث الشامل"
-          icon={Search}
-          description="ابحث في كامل القاعدة دفعةً واحدة: الأنظمة والمواد والأحكام والمبادئ — مع فلاتر وترتيب بالصلة."
-        />
+        {TRADITIONAL_SEARCH_ENABLED ? (
+          <Card
+            href="/dashboard/legal-search"
+            title="البحث الشامل"
+            icon={Search}
+            description="ابحث في كامل القاعدة دفعةً واحدة: الأنظمة والمواد والأحكام والمبادئ — مع فلاتر وترتيب بالصلة."
+          />
+        ) : null}
         <Card
           href="/dashboard/legal-core"
           title="النواة القانونية"
@@ -227,7 +230,7 @@ export default async function DashboardPage({
           <SectionTitle>نظرة عامة</SectionTitle>
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard label="الأنظمة القانونية" value={stats.legalSystems} href="/dashboard/legal-core/systems" />
-            <StatCard label="المواد النظامية" value={stats.legalArticles} href="/dashboard/legal-core/search" />
+            <StatCard label="المواد النظامية" value={stats.legalArticles} href={TRADITIONAL_SEARCH_ENABLED ? "/dashboard/legal-core/search" : "/dashboard/legal-core"} />
             <StatCard label="قضاياي" value={stats.cases} />
             <StatCard label="استشاراتي" value={stats.consultations} />
             <StatCard label="جلساتي" value={stats.simulations} />

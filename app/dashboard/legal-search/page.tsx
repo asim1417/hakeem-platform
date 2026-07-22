@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Search, FileText, Scale, Quote, ExternalLink, Filter, X, ArrowDownWideNarrow } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
 import { type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { searchLegalCoreComprehensive, type ComprehensiveResponse } from "@/lib/modules/legal-core/comprehensive-search";
 import { recordSearch } from "@/lib/modules/legal-search/search-log";
@@ -74,6 +76,8 @@ export default async function LegalSearchPage({
 }: {
   searchParams: { q?: string; type?: string; system?: string; court?: string; classification?: string; status?: string; year?: string; sort?: string };
 }) {
+  // إخفاء البحث التقليديّ: توجيهٌ آمن إلى واجهة البحث الذكيّ (اسأل حكيم)، بلا 404 ولا خطأ صلاحية.
+  if (!TRADITIONAL_SEARCH_ENABLED) redirect(`${AI_SEARCH_HOME}${searchParams.q ? `?q=${encodeURIComponent(searchParams.q.trim())}` : ""}`);
   await requirePagePermission("LEGAL_CORE_VIEW");
 
   const q = (searchParams.q ?? "").trim();
