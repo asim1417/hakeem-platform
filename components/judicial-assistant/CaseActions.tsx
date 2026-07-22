@@ -42,7 +42,17 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
   const raw = await res.text().catch(() => "");
   let data: Record<string, unknown> = {};
   if (raw) { try { data = JSON.parse(raw); } catch { /* ليست JSON */ } }
-  if (!res.ok) throw new Error((data.message as string) || `تعذّر التشغيل (رمز ${res.status}).`);
+  if (!res.ok) {
+    if (data.message) throw new Error(data.message as string);
+    // فشلٌ غير مُعلَّل (لا رسالة من التطبيق) ⇒ رفضٌ من حافة Vercel لا من الكود. نكشف سببه الحقيقيّ:
+    // ترويسة x-vercel-error (مثل NOT_FOUND / FUNCTION_INVOCATION_FAILED / DEPLOYMENT_NOT_FOUND)
+    // أو مقتطفٌ من الجسم — كي يظهر السبب في الواجهة مباشرةً بلا أدوات المطوّر.
+    const vercel = res.headers.get("x-vercel-error") || res.headers.get("x-vercel-error-code");
+    const ctype = res.headers.get("content-type") || "";
+    const snippet = !ctype.includes("json") && raw ? raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90) : "";
+    const hint = vercel ? ` · ${vercel}` : snippet ? ` · ${snippet}` : "";
+    throw new Error(`تعذّر التشغيل (رمز ${res.status}${hint}).`);
+  }
   return data;
 }
 
