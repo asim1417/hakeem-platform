@@ -9,8 +9,9 @@ import type { StudyDepth } from "@/lib/modules/judicial-assistant/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-// أقصى مهلةٍ تسمح بها الخطّة (ليست سقفًا من عندنا) — كي لا يُقتطع التوليد المفتوح.
-export const maxDuration = 800;
+// أقصى مهلةٍ تسمح بها الخطّة فعليًّا (ليست سقفًا من عندنا): جُرّب 800ث فرفضته بنية Vercel،
+// و300ث هو الأعلى المقبول والمنشور بنجاح. يُرفَع تلقائيًّا متى رفعت الخطّة حدّها.
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest, { params }: { params: { caseId: string } }) {
   const gate = await requireApiPermission("JUDICIAL_ASSISTANT_USE", request);
