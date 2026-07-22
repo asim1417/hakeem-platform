@@ -22,7 +22,8 @@ export async function OnboardingBanner() {
     >
       <p className="text-sm font-semibold text-[var(--navy)]">هل تريد الاستفادة الأفضل من الرصيد؟</p>
       <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">
-        تعبئة البيانات اختيارية. الاسم والجوال يكفيان للبداية — وإكمال الملف يزيد المكافآت والإحالة.
+        تعبئة البيانات اختيارية. أضف الاسم والجوال والمهنة للبداية — وإكمال الملف يزيد المكافآت إن
+        رغبت.
       </p>
       <Link
         href="/onboarding"
