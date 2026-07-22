@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { buildSimulationExport, toDocx, toPdf } from "@/lib/modules/exports/legal-documents";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +19,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ message: "نوع التصدير أو الصيغة غير مدعوم." }, { status: 400 });
   }
 
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: {
-      messages: { orderBy: { createdAt: "asc" } },
-      decisions: { orderBy: { createdAt: "asc" } },
-      judgments: { orderBy: { createdAt: "desc" } }
-    }
+  const session = await findOwnedSimulation(gate.user!, params.id, {
+    messages: { orderBy: { createdAt: "asc" } },
+    decisions: { orderBy: { createdAt: "asc" } },
+    judgments: { orderBy: { createdAt: "desc" } }
   });
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
 

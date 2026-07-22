@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { nextStageForRole } from "@/lib/modules/simulations/simulation-labels";
 import {
   encodeTurnState,
@@ -50,13 +51,10 @@ function closedTurn(stage: ReturnType<typeof nextStageForRole>): TurnState {
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: {
-      messages: { orderBy: { createdAt: "asc" } },
-      decisions: { orderBy: { createdAt: "asc" } },
-      judgments: { orderBy: { createdAt: "asc" } }
-    }
+  const session = await findOwnedSimulation(gate.user!, params.id, {
+    messages: { orderBy: { createdAt: "asc" } },
+    decisions: { orderBy: { createdAt: "asc" } },
+    judgments: { orderBy: { createdAt: "asc" } }
   });
 
   if (!session) {
@@ -72,12 +70,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const payload = messageSchema.parse(await request.json());
   const user = gate.user!;
   const stage = nextStageForRole(payload.role);
-  const session = await prisma.simulation.findUnique({
-    where: { id: params.id },
-    include: {
-      messages: { orderBy: { createdAt: "asc" } },
-      decisions: { orderBy: { createdAt: "asc" } }
-    }
+  const session = await findOwnedSimulation(user, params.id, {
+    messages: { orderBy: { createdAt: "asc" } },
+    decisions: { orderBy: { createdAt: "asc" } }
   });
 
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });

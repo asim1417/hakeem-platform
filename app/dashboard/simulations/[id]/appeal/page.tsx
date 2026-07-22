@@ -1,15 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { requirePagePermission } from "@/lib/modules/auth/session";
-import { prisma } from "@/lib/prisma";
 import { PostJudgmentRemedyForm } from "@/components/PostJudgmentRemedyForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function SimulationAppealPage({ params }: { params: { id: string } }) {
-  await requirePagePermission("SIMULATIONS_USE");
-  const session = await loadSession(params.id);
+  const user = await requirePagePermission("SIMULATIONS_USE");
+  const session = await findOwnedSimulation(user, params.id, {
+    judgments: { orderBy: { createdAt: "asc" } }
+  });
   if (!session) notFound();
   const judgment = session.judgments.at(-1);
 
@@ -24,13 +26,6 @@ export default async function SimulationAppealPage({ params }: { params: { id: s
       <PostJudgmentRemedyForm sessionId={session.id} remedyKind="appeal" disabled={!judgment} />
     </PostJudgmentLayout>
   );
-}
-
-async function loadSession(id: string) {
-  return prisma.simulation.findUnique({
-    where: { id },
-    include: { judgments: { orderBy: { createdAt: "asc" } } }
-  });
 }
 
 function PostJudgmentLayout({

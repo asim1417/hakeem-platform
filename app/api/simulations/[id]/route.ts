@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { admissibilityCheck, encodeClaim, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
 
@@ -27,15 +28,10 @@ const patchSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
-  // [إصلاح تدقيق SEC-004: كان بلا فحص ملكيّة → قراءة محاكاة مستخدم آخر بمعرّفها.]
-  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
-  const session = await prisma.simulation.findFirst({
-    where: isAdmin ? { id: params.id } : { id: params.id, userId: gate.user!.id },
-    include: {
-      messages: { orderBy: { createdAt: "asc" } },
-      decisions: { orderBy: { createdAt: "asc" } },
-      judgments: { orderBy: { createdAt: "asc" } }
-    }
+  const session = await findOwnedSimulation(gate.user!, params.id, {
+    messages: { orderBy: { createdAt: "asc" } },
+    decisions: { orderBy: { createdAt: "asc" } },
+    judgments: { orderBy: { createdAt: "asc" } }
   });
 
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
@@ -47,11 +43,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
-  // [إصلاح تدقيق SEC-004: تأكّد من ملكيّة الجلسة قبل التعديل — يمنع الكتابة على محاكاة الغير.]
-  const owned = await prisma.simulation.findFirst({
-    where: user.role === "SYSTEM_ADMIN" ? { id: params.id } : { id: params.id, userId: user.id },
-    select: { id: true }
-  });
+  const owned = await findOwnedSimulation(user, params.id);
   if (!owned) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
   const payload = patchSchema.parse(await request.json());
   const title = payload.title || payload.subject || "جلسة محاكاة قضائية";

@@ -23,7 +23,7 @@ type NavItem = {
 // ── القائمة النهائية: ثمانية عناصر مسطّحة، بأيقونات موحّدة، بلا هرميّة ──
 // «اسأل حكيم» وأوضاعه مدخلها الصفحة الرئيسية (صندوق البحث + الأوضاع)، فلا يظهر كعنصر مستقلّ.
 // المسائل والمبادئ داخل المكتبة (تبويبات)؛ التجريبيّ داخل المختبر؛ الملفّات والإعدادات صفحتا تجميع.
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
@@ -32,8 +32,9 @@ const navItems: NavItem[] = [
   { href: "/documents", key: "nav.docPlatform", icon: FileText },
   { href: "/dashboard/lab", key: "nav.lab", icon: FlaskConical },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
-  { href: "/admin", key: "nav.settings", icon: Settings },
 ];
+
+const adminNavItem: NavItem = { href: "/admin", key: "nav.settings", icon: Settings };
 
 // عنصر تنقّل مسطّح واحد (رابط) — يُستعمل في كل الأقسام غير القابلة للطيّ.
 const roleLabels: Record<string, string> = {
@@ -48,6 +49,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const { locale, t } = getTranslator();
   const user = await getCurrentUser().catch(() => null);
   const clerkEnabled = isClerkConfigured();
+  const isAdmin = user?.role === "SYSTEM_ADMIN";
+  const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
   const initials =
     user?.name
       ?.split(" ")
@@ -70,7 +73,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          {/* ── القائمة النهائية: ثمانية عناصر مسطّحة، تُبرز الصفحة الحالية ── */}
+          {/* ── القائمة: إعدادات الإدارة للمدير فقط ── */}
           <SidebarNav
             label={t("a11y.mainNav")}
             items={navItems.map((item) => {

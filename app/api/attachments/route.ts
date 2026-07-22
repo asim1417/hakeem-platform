@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { assertCaseOwnedForAttachment, attachmentListWhere } from "@/lib/modules/auth/ownership";
 import { uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,9 @@ const allowedTypes = new Set([
 export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
   if (gate.response) return gate.response;
+  // عزل المستأجرين: المرفقات عبر ملكيّة القضية أو uploadedBy للمستخدم.
   const attachments = await prisma.attachment.findMany({
+    where: attachmentListWhere(gate.user!),
     orderBy: { createdAt: "desc" },
     take: 100,
     include: { caseFile: { select: { id: true, title: true } } }
@@ -39,8 +42,10 @@ export async function POST(request: NextRequest) {
   const relationType = String(form.get("relationType") || "عام");
   const relationId = String(form.get("relationId") || "");
   const caseId = relationType === "قضية" && relationId ? relationId : undefined;
-  const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });
-  const metadata = {
+  // منع ربط مرفق بقضية مستخدم آخر (IDOR على POST).
+  const caseGate = await assertCaseOwnedForAttachment(user, caseId);
+  if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
+  const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });  const metadata = {
     size: file.size,
     relationType,
     relationId: relationId || undefined,
