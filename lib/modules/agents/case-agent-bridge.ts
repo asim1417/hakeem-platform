@@ -92,33 +92,46 @@ export async function runCaseAgent(query: string): Promise<AgentGroundedContext>
   if (!q) return emptyContext();
 
   // ① تأصيلٌ مزدوج متوازٍ:
-  //    (أ) نقطة دخول الوكيل: فهم النظام الحاكم (resolve-scope) + الاسترجاع الدلاليّ المقيّد.
+  //    (أ) نقطة دخول الوكيل بالوضع **العميق** — نفسه الذي يستخدمه «اسأل حكيم» (runJudicialAgent):
+  //        فهم النظام الحاكم (resolve-scope) + استرجاعٌ عميقٌ (٧ جولات + مسحة شاملة + تعميقٌ داخل
+  //        الأنظمة الحاكمة). الوضع السريع السابق (٣ جولات × ٦) كان يمسح النواة سطحيًّا فتفوته
+  //        المواد الحاكمة — فتصل «اسأل حكيم» للنواة ولا تصل الخدمات. skipAnalysis: كلّ خدمة تصوغ
+  //        إخراجها بوضعها الخاص فلا نولّد تحليل الوكيل العامّ.
   //    (ب) استرجاعٌ موجَّهٌ بالاستشهاد الصريح: جلبُ المواد المُحال إليها نصًّا مباشرةً من النواة
   //        (يعالج «غياب السند» لموادَّ موجودةٍ فعلًا لكن لم يُصعِّدها الترتيب الدلاليّ).
-  //    وضع «سريع»: نتجنّب توليد تحليل الوكيل (نموذج) لأنّ كل خدمة تصوغ إخراجها بوضعها الخاص.
   const [result, cited] = await Promise.all([
-    orchestrate(q, { mode: "quick", skipBreadth: true }).catch(() => null),
+    orchestrate(q, { mode: "deep", skipBreadth: true, skipAnalysis: true }).catch(() => null),
     citationDrivenArticles(q).catch(() => [] as LegalCoreResult[]),
   ]);
   const semantic = result?.articles ?? [];
-  // الإحالات الصريحة أولًا (سندٌ مباشرٌ استشهد به الأطراف)، ثمّ نتائج البحث الدلاليّ.
+  // الإحالات الصريحة أولًا (سندٌ مباشرٌ استشهد به الأطراف)، ثمّ نتائج البحث الدلاليّ العميق.
   const articles = dedupeArticlesById([...cited, ...semantic]);
   if (!articles.length) return emptyContext();
 
-  // ② المظانّ (حتميّ، بلا نموذج): ترتيب الأنظمة الحاكمة من المواد المسترجَعة.
-  const governingSystems = rankGoverningSystems(articles, inferSpecialization(q));
+  // ② المظانّ: نعيد استخدام مظانّ المنسّق العميق إن توفّرت، وإلا نحسبها (سقوطٌ آمن).
+  const governingSystems = result?.governingSystems?.length
+    ? result.governingSystems
+    : rankGoverningSystems(articles, inferSpecialization(q));
 
-  // ③ التحقّق (نطاق · نفاذ · تأريض): يقصر السند على مواد النظام الحاكم السارية المُتحقَّق ورودها.
-  const report = await runVerification({ articles, plan: result?.plan, targets: [] }).catch(() => null);
-  const verified = report?.verified ?? [];
+  // ③ التحقّق (نطاق · نفاذ · تأريض): نعيد استخدام تحقّق المنسّق العميق إن توفّر (يشمل المواد
+  //    الدلاليّة)، وإلا نُحقّق هنا. لا عملٌ مزدوج في المسار الشائع.
+  const report = result?.verified
+    ? null
+    : await runVerification({ articles, plan: result?.plan, targets: [] }).catch(() => null);
+  const verified = result?.verified ?? report?.verified ?? [];
+  const coverage = result?.coverage ?? report?.coverage;
 
-  // ④ السوابق الداعمة (أحكام · مبادئ) — أدوات الوكيل نفسها.
-  const [rul, prin] = await Promise.all([
-    search_rulings(q, 6).catch(() => ({ ok: false as const, data: [] as MergedResult[] })),
-    search_principles(q, 6).catch(() => ({ ok: false as const, data: [] as MergedResult[] })),
-  ]);
-  const rulings = rul.ok ? rul.data : [];
-  const principles = prin.ok ? prin.data : [];
+  // ④ السوابق الداعمة (أحكام · مبادئ): من المنسّق العميق إن توفّرت، وإلا نبحثها.
+  let rulings: MergedResult[] = result?.rulings ?? [];
+  let principles: MergedResult[] = result?.principles ?? [];
+  if (!rulings.length && !principles.length) {
+    const [rul, prin] = await Promise.all([
+      search_rulings(q, 6).catch(() => ({ ok: false as const, data: [] as MergedResult[] })),
+      search_principles(q, 6).catch(() => ({ ok: false as const, data: [] as MergedResult[] })),
+    ]);
+    rulings = rul.ok ? rul.data : [];
+    principles = prin.ok ? prin.data : [];
+  }
 
   // السياق النصّي للنموذج: نصّ المواد المُتحقَّقة (أو المسترجَعة) + القاعدة الإلزامية ضدّ الاختلاق.
   // الإحالات الصريحة سندٌ مباشرٌ موجودٌ في النواة، فلا يُسقطها التحقّق: تُضمّ دائمًا مع المُتحقَّق.
@@ -135,8 +148,8 @@ export async function runCaseAgent(query: string): Promise<AgentGroundedContext>
     : noLegalArticleMessage;
 
   // ثقة الإسناد: من نسبة تغطية المسائل (إن توفّرت) وإلا من وجود سند مُتحقَّق.
-  const answered = report?.coverage.answered ?? 0;
-  const totalIssues = report?.coverage.issues.length ?? 0;
+  const answered = coverage?.answered ?? 0;
+  const totalIssues = coverage?.issues.length ?? 0;
   const coverageRatio = totalIssues ? answered / totalIssues : verified.length ? 1 : 0;
   const confidence = grounded ? Math.max(0.35, Math.min(0.95, 0.4 + 0.55 * coverageRatio)) : 0;
 
@@ -146,7 +159,7 @@ export async function runCaseAgent(query: string): Promise<AgentGroundedContext>
     governingSystems,
     rulings,
     principles,
-    coverage: report?.coverage,
+    coverage,
     grounded,
     confidence,
     groundingText,
