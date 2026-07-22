@@ -4,6 +4,7 @@
 // ثمّ الإجابة كلمةً كلمةً فور وصولها من النموذج. يمرّ بالتأصيل والحجب الصادق نفسه.
 import { FormEvent, useRef, useState } from "react";
 import { JaIcon } from "./icons";
+import { AnswerRenderer } from "@/components/AnswerRenderer";
 import type { AskCitation } from "@/lib/modules/judicial-assistant/ask-stream";
 
 // اقتراحاتٌ خاصّةٌ بالقضية (داخل صفحتها) — تعرف سياقها.
@@ -145,7 +146,7 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
           ) : null}
           {streamText ? (
             <div className="ja-live__stream">
-              {streamText.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+              <AnswerRenderer content={streamText} />
               <span className="ja-live__caret" aria-hidden />
             </div>
           ) : null}
@@ -159,7 +160,10 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
             <JaIcon name={result.blocked ? "security" : "quality"} size={16} /><span>{result.notice}</span>
           </div>
           <div className="ja-summary__body">
-            {result.answer.split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+            <AnswerRenderer
+              content={result.answer}
+              basis={result.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))}
+            />
           </div>
           {result.citations.length > 0 ? (
             <div className="ja-sources">

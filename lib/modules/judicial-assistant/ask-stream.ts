@@ -1,24 +1,39 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// موجّه المعاون — البثّ الحيّ فوق **محرّك «اسأل حكيم» نفسه** (runJudicialAgent): مؤشّرات
-// خطوات المنسّق الحيّة (فهم/تخريج/تحقّق/صياغة)، ثمّ بثّ التحليل المؤصَّل كلمةً كلمةً.
-// بنفس المزوّد ومفاتيحه — لا مفاتيحَ جديدة. الاختلاف البسيط: سياق القضية + وضع المعاون.
+// موجّه المعاون — بثٌّ حيّ حقيقيّ: خطوات البحث ثمّ **التوليد كلمةً كلمةً من النموذج**
+// (streamWithConfig) بدل انتظار محرّكٍ عميقٍ يكتمل ثمّ يُعاد نصّه — فيظهر الناتج حيًّا
+// ويكتمل ضمن مهلة الدالّة (لا انقطاعٍ بعد البحث). مؤصَّلٌ بالنواة أو بمستندات القضية، بلا اختلاق.
 // ─────────────────────────────────────────────────────────────────────────────
 import { randomUUID } from "crypto";
 import type { JudicialCase } from "./types";
 import { isSmalltalk, caseContext, GREETING, GREETING_INVITE_CASE, GREETING_INVITE_GENERAL } from "./ask";
 import { retrieveCasePassages } from "./case-vector";
-import { runJudicialAgent, type JudicialAgentStep } from "./agent";
+import { runCaseAgent } from "@/lib/modules/agents/case-agent-bridge";
 import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
-/** حدثٌ من أحداث البثّ الحيّ. */
 export type AskStreamEvent =
   | { type: "stage"; label: string; state: "active" | "done" }
   | { type: "delta"; text: string }
   | { type: "done"; blocked: boolean; citations: AskCitation[]; notice: string; answer: string; requestId: string; greeting?: boolean };
 
-/** يبثّ إجابة الموجّه حيًّا: خطوات محرّك «اسأل حكيم» ثمّ التحليل كلمةً كلمةً، ثمّ الختام. */
+const JUDICIAL_PROMPT = [
+  "أنت «موجّه المعاون القضائيّ» داخل منصّة حكيم — تعين القاضي السعوديّ في تحليل مسألته.",
+  "اكتب بصيغة Markdown بأسلوبٍ قضائيّ منظّمٍ عمليّ: المسألة ← القاعدة ← التطبيق ← الخلاصة (عناوين ##، قوائم، غامق للمهمّ).",
+  "المخرَج مسودّةٌ تحتاج مراجعة القاضي واعتماده؛ لا تعتمد حكمًا ولا رأيًا نهائيًّا. اختم بتنبيهٍ مهنيّ مختصر.",
+].join("\n");
+
+const NOTICE_OK = "إجابةٌ مؤصَّلةٌ بمواد النواة — مسودّة لمراجعتك.";
+const NOTICE_CASE = "إجابةٌ مبنيّةٌ على مستندات قضيتك ووقائعها (لا سند نظاميّ مطابق في النواة بعد) — مسودّة لمراجعتك.";
+
+function supportingBlock(agent: { rulings?: Array<{ title?: string; snippet?: string }>; principles?: Array<{ title?: string; snippet?: string }> } | null): string {
+  if (!agent) return "";
+  const rul = (agent.rulings ?? []).slice(0, 5).map((r) => `- حكم: ${r.title ?? ""}${r.snippet ? " — " + r.snippet.slice(0, 200) : ""}`.trim());
+  const prin = (agent.principles ?? []).slice(0, 5).map((p) => `- مبدأ: ${p.title ?? ""}${p.snippet ? " — " + p.snippet.slice(0, 200) : ""}`.trim());
+  return [...rul, ...prin].filter((l) => l && l !== "- حكم:" && l !== "- مبدأ:").join("\n");
+}
+
+/** يبثّ إجابة الموجّه حيًّا: خطوات البحث ثمّ التوليد المتدفّق من النموذج، ثمّ الختام. */
 export async function* streamAsk(question: string, kase: JudicialCase | null, actorId?: string): AsyncGenerator<AskStreamEvent> {
   const requestId = randomUUID();
 
@@ -31,98 +46,63 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
     return;
   }
 
-  // ② بحثٌ في مستندات القضية (دلاليّ/معجميّ) → سياقٌ يُحقَن في محرّك الوكيل.
+  // ② بحثٌ في مستندات القضية (سياقٌ يُحقَن في التوليد).
   if (kase && kase.attachments.length) yield { type: "stage", label: "أبحث في مستنداتك", state: "active" };
-  const passages = kase ? await retrieveCasePassages(kase, question, 6) : [];
-  if (kase && kase.attachments.length) {
-    yield { type: "stage", label: passages.length ? `بحثتُ مستنداتك: ${passages.length} مقطعًا ذا صلة` : "بحثتُ مستنداتك: لا مقطعَ مطابق", state: "done" };
-  }
+  const passages = kase ? await retrieveCasePassages(kase, question, 6).catch(() => []) : [];
+  if (kase && kase.attachments.length) yield { type: "stage", label: passages.length ? `بحثتُ مستنداتك: ${passages.length} مقطعًا ذا صلة` : "بحثتُ مستنداتك", state: "done" };
 
-  // مادّة الوكيل: مسألة القاضي أوّلًا (لتصنيف النيّة الصحيح) ثمّ سياق القضية.
-  const agentQuery = [
-    `مسألة القاضي: ${question.trim()}`,
-    kase ? caseContext(kase, passages) : "",
-  ].filter(Boolean).join("\n\n");
+  // ③ تأصيلٌ سريع بالنواة (لا وضع «عميق» — كي يكتمل ضمن المهلة).
+  yield { type: "stage", label: "أبحث في النواة القانونيّة", state: "active" };
+  const caseCtx = kase ? caseContext(kase, passages) : "";
+  const agentQuery = [`مسألة القاضي: ${question.trim()}`, caseCtx].filter(Boolean).join("\n\n");
+  const agent = await runCaseAgent(agentQuery).catch(() => null);
+  const articles = agent?.articles ?? [];
+  const grounded = Boolean(agent?.grounded && articles.length);
+  yield { type: "stage", label: grounded ? `وجدتُ ${articles.length} مادّة مؤصِّلة` : "لا مادّة مطابقة — أعتمد مستنداتك", state: "done" };
+  const citations: AskCitation[] = articles.slice(0, 8).map((a) => ({ articleId: a.articleId, lawName: a.systemName, articleNumber: a.articleNumber, quote: a.articleText.slice(0, 350) }));
 
-  // ③ محرّك «اسأل حكيم» — نجسر خطواته الحيّة (callback) إلى البثّ عبر طابورٍ لا‑متزامن.
-  const queue: JudicialAgentStep[] = [];
-  let wake: (() => void) | null = null;
-  let finished = false;
-  const push = () => { const w = wake; wake = null; w?.(); };
-  const runP = runJudicialAgent(agentQuery, { onStep: (s) => { queue.push(s); push(); } })
-    .then((r) => r)
-    .finally(() => { finished = true; push(); });
-
-  let lastLabel = "";
-  for (;;) {
-    if (queue.length) {
-      const s = queue.shift()!;
-      if (s.label && s.label !== lastLabel) {
-        lastLabel = s.label;
-        yield { type: "stage", label: s.label, state: s.status === "done" ? "done" : "active" };
-      }
-      continue;
-    }
-    if (finished) break;
-    await new Promise<void>((res) => { wake = res; });
-  }
-
-  const r = await runP;
-
-  // ④ لا سند نظاميّ في النواة: بدل الامتناع الكامل، إن كانت للقضية مادّةٌ (مستندات/وقائع) نجيب
-  //    منها مباشرةً — تلخيصٌ/تنظيمٌ لسؤال القاضي عن قضيته، لا حكمٌ ولا اختلاق مادّةٍ نظاميّة.
-  if (r.blocked || !r.answer) {
-    const material = kase ? caseContext(kase, passages) : "";
-    const hasCaseMaterial = Boolean(kase && (passages.length || kase.attachments.length || kase.facts.length || kase.requests.length));
-    if (hasCaseMaterial && material.trim()) {
-      yield* streamFromCaseMaterial(question, material, requestId);
-      return;
-    }
-    yield { type: "done", blocked: true, citations: [], notice: r.notice, answer: r.answer || r.notice, requestId };
-    return;
-  }
-
-  // ⑤ بثّ التحليل المؤصَّل كلمةً كلمةً (تجربةٌ حيّة).
-  for (const w of r.answer.split(/(\s+)/)) if (w) yield { type: "delta", text: w };
-
-  const citations: AskCitation[] = r.citations.map((c) => ({ articleId: c.articleId ?? "", lawName: c.systemName, articleNumber: c.articleNumber, quote: c.quote.slice(0, 350) }));
-  yield { type: "done", blocked: false, citations, notice: r.notice, answer: r.answer, requestId };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// سقوطٌ على مادّة القضية: حين لا يُطابَق سندٌ نظاميّ في النواة، نجيب سؤال القاضي عن قضيته
-// اعتمادًا على **مستنداته ووقائعه** فقط (تلخيصٌ/تنظيمٌ)، بلا حكمٍ نهائيّ ولا اختلاق مادّةٍ
-// نظاميّة. مُعلَّمٌ بوضوح أنّه من مستندات القضية لا من النواة. سقوطٌ حتميّ لعرض المادّة عند غياب المفتاح.
-// ─────────────────────────────────────────────────────────────────────────────
-const CASE_MATERIAL_NOTICE =
-  "إجابةٌ مبنيّةٌ على مستندات قضيتك ووقائعها — لا على مادّةٍ نظاميّة من النواة (لم يُطابَق سندٌ نظاميّ بعد). مسودّةٌ تحتاج مراجعتك.";
-
-async function* streamFromCaseMaterial(question: string, material: string, requestId: string): AsyncGenerator<AskStreamEvent> {
-  yield { type: "stage", label: "ألخّص من مستندات قضيتك", state: "active" };
+  // ④ التوليد المتدفّق من النموذج (بثٌّ حقيقيّ).
   const system = [
-    "أنت المعاون القضائيّ في منصّة حكيم. أجب عن سؤال القاضي اعتمادًا على مستندات القضية ووقائعها المرفقة **فقط**.",
-    "لا تُصدر حكمًا نهائيًّا، ولا تخترع مادّةً نظاميّة أو رقم مادةٍ من الذاكرة. إن استلزم الجواب سندًا نظاميًّا ولم يُتَح فصرّح بذلك صراحةً.",
-    "انسب كلّ واقعةٍ لمصدرها في المستندات، وميّز الثابت عن المُدّعى. اكتب بالعربية بأسلوبٍ قضائيّ منظّم.",
+    JUDICIAL_PROMPT,
+    grounded
+      ? "استند حصريًّا لمواد النواة المرفقة عند الاستشهاد النظاميّ، ولا تخترع مادّةً أو رقم مادة. الأحكام والمبادئ سياقٌ استئناسيّ للترجيح لا للاستشهاد بأرقامٍ منها."
+      : "لا تتوفّر مادّةٌ نظاميّة مطابقة في النواة؛ أجب من مستندات القضية ووقائعها فقط وصرّح بذلك، ولا تخترع مادّةً أو رقم مادة.",
   ].join("\n");
-  const user = `سؤال القاضي:\n${question.trim()}\n\nمادّة القضية (مستندات ووقائع):\n${material}`;
+  const support = grounded ? supportingBlock(agent) : "";
+  const user = [
+    `مسألة القاضي:\n${question.trim()}`,
+    caseCtx ? `سياق القضية:\n${caseCtx}` : "",
+    grounded ? agent!.groundingText : "",
+    support ? `سياقٌ قضائيّ استئناسيّ (أحكام ومبادئ — لتوجيه الترجيح فقط):\n${support}` : "",
+  ].filter(Boolean).join("\n\n");
 
   const cfg = await resolveAiConfig();
   if (cfg.provider === "offline" || !cfg.apiKey) {
-    // لا مفتاح نموذج: نعرض مادّة القضية كما هي (لا اختلاق).
-    const text = material.slice(0, 4000);
+    if (!grounded && !caseCtx) {
+      yield { type: "done", blocked: true, citations: [], notice: "مزوّد النموذج غير مضبوط، ولا مادّة قضيّةٍ لعرضها.", answer: "", requestId };
+      return;
+    }
+    const text = (grounded ? citations.map((c) => `- ${c.lawName}، المادة ${c.articleNumber}: ${c.quote}`).join("\n") : caseCtx.slice(0, 3000));
     for (const w of text.split(/(\s+)/)) if (w) yield { type: "delta", text: w };
-    yield { type: "stage", label: "عرضٌ مباشرٌ لمادّة القضية (مزوّد النموذج غير مضبوط)", state: "done" };
-    yield { type: "done", blocked: false, citations: [], notice: CASE_MATERIAL_NOTICE, answer: text, requestId };
+    yield { type: "done", blocked: false, citations: grounded ? citations : [], notice: "مزوّد النموذج غير مضبوط — عُرضت المادّة المتاحة.", answer: text, requestId };
     return;
   }
 
+  yield { type: "stage", label: "أصوغ التحليل", state: "active" };
   let acc = "";
   try {
-    for await (const chunk of streamWithConfig(cfg, system, user, 1400)) { acc += chunk; yield { type: "delta", text: chunk }; }
+    for await (const chunk of streamWithConfig(cfg, system, user, 3000)) { acc += chunk; yield { type: "delta", text: chunk }; }
   } catch {
     /* يُعرَض ما تجمّع */
   }
-  yield { type: "stage", label: "لخّصتُ من مستندات قضيتك", state: "done" };
-  const answer = acc.trim() || material.slice(0, 2000);
-  yield { type: "done", blocked: false, citations: [], notice: CASE_MATERIAL_NOTICE, answer, requestId };
+  yield { type: "stage", label: "صغتُ التحليل", state: "done" };
+  const answer = acc.trim() || (grounded ? citations.map((c) => `- ${c.lawName}، المادة ${c.articleNumber}: ${c.quote}`).join("\n") : caseCtx.slice(0, 2000));
+  yield {
+    type: "done",
+    blocked: !answer,
+    citations: grounded ? citations : [],
+    notice: grounded ? NOTICE_OK : NOTICE_CASE,
+    answer,
+    requestId,
+  };
 }
