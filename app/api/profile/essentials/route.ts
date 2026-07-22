@@ -7,13 +7,12 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  name: z.string().trim().min(2).max(80).optional(),
-  phone: z.string().trim().max(32).optional(),
-  profession: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).optional(),
-  dismiss: z.boolean().optional(),
+  name: z.string().trim().min(2).max(80),
+  phone: z.string().trim().min(8).max(32),
+  profession: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]),
 });
 
-/** حفظ سريع: الاسم + الجوال + المهنة — دون إجبار باقي الملف. */
+/** حفظ إلزامي: الاسم + الجوال + المهنة. */
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
@@ -22,28 +21,24 @@ export async function POST(request: NextRequest) {
   try {
     body = schema.parse(await request.json());
   } catch {
-    return NextResponse.json({ message: "بيانات غير صالحة." }, { status: 400 });
+    return NextResponse.json(
+      { message: "يلزم إدخال الاسم ورقم الجوال والمهنة." },
+      { status: 400 }
+    );
   }
 
-  if (body.dismiss) {
-    return NextResponse.json({ ok: true, dismissed: true });
-  }
-
-  if (body.name && body.name !== user.name) {
+  if (body.name !== user.name) {
     await prisma.user.update({ where: { id: user.id }, data: { name: body.name } }).catch(() => null);
   }
-
-  const patch: { phone?: string | null; entityType?: string } = {};
-  if (body.phone !== undefined) patch.phone = body.phone || null;
-  if (body.profession) patch.entityType = body.profession;
-  if (Object.keys(patch).length) {
-    await updateProfile(user.id, patch);
-  }
+  await updateProfile(user.id, {
+    phone: body.phone,
+    entityType: body.profession,
+  });
 
   return NextResponse.json({
     ok: true,
-    name: body.name ?? user.name,
-    phone: body.phone ?? null,
-    profession: body.profession ?? null,
+    name: body.name,
+    phone: body.phone,
+    profession: body.profession,
   });
 }
