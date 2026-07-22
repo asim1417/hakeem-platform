@@ -64,7 +64,7 @@ export async function extractCaseMap(kase: JudicialCase): Promise<MapProposal> {
   }).catch(() => null);
 
   if (!res || !res.ok || !res.content) {
-    const why = !res || res.provider === "offline" ? "مزوّد النموذج غير مضبوط" : "تعذّر نداء النموذج، أعِد المحاولة";
+    const why = res?.error || (!res || res.provider === "offline" ? "مزوّد النموذج غير مضبوط" : "تعذّر نداء النموذج، أعِد المحاولة");
     return { parties: [], requests: [], facts: [], issues: [], blocked: true, note: `تعذّر الاستخلاص (${why}). يمكنك إضافة عناصر الخريطة يدويًّا لاحقًا.` };
   }
 
