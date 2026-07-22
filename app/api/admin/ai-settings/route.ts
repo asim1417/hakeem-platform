@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { getAiStatus, saveAiSettings, resolveAiConfig, revealAiKey, type AiProvider } from "@/lib/modules/ai/ai-config";
+import { getAiStatus, saveAiSettings, resolveAiConfig, revealAiKey, diagnoseConfiguredProvider, type AiProvider } from "@/lib/modules/ai/ai-config";
 import { createOriginalHakeemAiResponse } from "@/lib/modules/ai/ai-gateway";
 import { auditEvent } from "@/lib/modules/audit/audit";
 
@@ -25,6 +25,9 @@ const bodySchema = z.object({
 
 // إجراء كشف المفتاح المحفوظ (منفصل عن الحفظ) — للمدير فقط ومع تسجيل تدقيق.
 const revealSchema = z.object({ reveal: z.literal(true) });
+
+// تشخيصٌ خام للمفتاح المُخزَّن حاليًّا (نداءٌ مباشرٌ بلا سقوطٍ احتياطيّ) — يكشف خطأ المزوّد الحرفيّ.
+const diagnoseSchema = z.object({ diagnose: z.literal(true) });
 
 export async function GET(request: NextRequest) {
   const auth = await requireApiPermission("USERS_MANAGE", request);
@@ -54,6 +57,18 @@ export async function POST(request: NextRequest) {
       metadata: { provider: revealed.provider, source: revealed.source }
     }).catch(() => undefined);
     return NextResponse.json({ ok: true, revealedKey: revealed.key, provider: revealed.provider, source: revealed.source });
+  }
+
+  // تشخيصٌ خام للمفتاح المُخزَّن — يعيد النتيجة الحرفيّة من المزوّد (نجاح/خطأ) دون سقوطٍ احتياطيّ.
+  if (diagnoseSchema.safeParse(json).success) {
+    const result = await diagnoseConfiguredProvider();
+    await auditEvent({
+      actorId: auth.user?.id,
+      subject: "ADMIN",
+      action: "AI_PROVIDER_DIAGNOSED",
+      metadata: { provider: result.provider, source: result.source, ok: result.ok, status: result.status }
+    }).catch(() => undefined);
+    return NextResponse.json({ ok: true, diagnose: result });
   }
 
   const parsed = bodySchema.safeParse(json);

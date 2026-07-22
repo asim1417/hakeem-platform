@@ -29,7 +29,7 @@ const sourceLabel: Record<string, string> = {
 // النموذج الموصى به لكل مزوّد (يُقترح كـ placeholder ويُملأ تلقائياً إن تُرك فارغاً).
 const DEFAULT_MODELS: Record<string, string> = {
   openai: "gpt-4o-mini",
-  anthropic: "claude-sonnet-4-6",
+  anthropic: "claude-3-5-sonnet-latest",
   gemini: "gemini-2.5-flash",
   custom: ""
 };
@@ -52,6 +52,29 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [revealing, setRevealing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [diagnosing, setDiagnosing] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<{ ok: boolean; provider: string; source: string; model: string | null; keyMasked: string | null; status?: number; error?: string } | null>(null);
+
+  // تشخيصٌ خام للمفتاح المُخزَّن حاليًّا — نداءٌ مباشرٌ يعرض ردّ المزوّد الحرفيّ (بلا سقوطٍ احتياطيّ).
+  async function diagnose() {
+    setDiagnosing(true);
+    setDiagnosis(null);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/ai-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ diagnose: true })
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.ok || !payload.diagnose) throw new Error(payload?.message ?? "تعذّر التشخيص.");
+      setDiagnosis(payload.diagnose);
+    } catch (e) {
+      setMsg({ tone: "danger", text: e instanceof Error ? e.message : "تعذّر التشخيص." });
+    } finally {
+      setDiagnosing(false);
+    }
+  }
 
   // كشف المفتاح المحفوظ — خلف تأكيد صريح، ويُسجَّل في سجلّ التدقيق.
   async function revealStored() {
@@ -157,6 +180,34 @@ export function AiSettingsManager({ initialStatus }: { initialStatus: Status }) 
             )}
           </div>
         ) : null}
+
+        {/* تشخيصٌ حيّ: نداءٌ مباشرٌ للمفتاح المُخزَّن يعرض ردّ المزوّد الحرفيّ — يحسم أيّ مفتاحٍ يعمل. */}
+        <div className="mt-3 border-t border-[var(--ink-08)] pt-3">
+          <button type="button" onClick={() => void diagnose()} disabled={diagnosing} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--navy)] disabled:opacity-50">
+            {diagnosing ? "جارٍ التشخيص…" : "تشخيص المفتاح الحاليّ (نداءٌ مباشرٌ للمزوّد)"}
+          </button>
+          {diagnosis ? (
+            <div
+              className="mt-3 rounded-[var(--r-md)] p-3 text-sm leading-7"
+              style={diagnosis.ok ? { color: "var(--emerald)", background: "var(--emerald-soft)" } : { color: "var(--ruby)", background: "var(--ruby-soft)" }}
+            >
+              <p className="font-semibold">
+                {diagnosis.ok ? "✓ المفتاح يعمل — نجح نداء المزوّد فعليًّا." : "✕ فشل نداء المزوّد بالمفتاح الحاليّ."}
+              </p>
+              <div className="mt-1.5 grid gap-1 text-xs text-[var(--ink-70)] md:grid-cols-2" dir="rtl">
+                <div>المزوّد: <span className="font-semibold text-[var(--navy)]">{diagnosis.provider}</span></div>
+                <div>المصدر: <span className="font-semibold text-[var(--navy)]">{sourceLabel[diagnosis.source] ?? diagnosis.source}</span></div>
+                <div>النموذج: <span className="font-mono-legal">{diagnosis.model || "—"}</span></div>
+                <div dir="ltr" className="text-right"><span dir="rtl">المفتاح: </span><span className="font-mono-legal">{diagnosis.keyMasked ?? "—"}</span></div>
+              </div>
+              {!diagnosis.ok && diagnosis.error ? (
+                <p dir="ltr" className="mt-2 select-all break-all rounded bg-[var(--ink-04)] p-2 text-left font-mono-legal text-[11px] text-[var(--ink-70)]">
+                  {diagnosis.status ? `HTTP ${diagnosis.status} · ` : ""}{diagnosis.error}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {/* النموذج */}
