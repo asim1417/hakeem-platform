@@ -260,6 +260,30 @@ a.ds-card:hover { transform: translateY(-2px); box-shadow: var(--sh-md); border-
 .topbar-path .cur { color: var(--ink); font-weight: 600; }
 .topbar-path .sep { color: var(--ink-20); font-size: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(220px, 42vw);
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-08);
+  background: var(--paper);
+}
+.topbar-user__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.topbar-user .icon-pill {
+  border: none;
+  background: transparent;
+  flex-shrink: 0;
+}
 .search-box { width: 260px; height: 38px; border: 1px solid var(--ink-08); background: var(--paper); border-radius: 99px; display: flex; align-items: center; gap: 8px; padding: 0 14px; color: var(--ink-40); }
 .search-box input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--ink); }
 .icon-pill { width: 38px; height: 38px; border-radius: 99px; border: 1px solid var(--ink-08); background: var(--paper); color: var(--navy); display: grid; place-items: center; position: relative; }
