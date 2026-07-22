@@ -9,7 +9,8 @@ import type { StudyDepth } from "@/lib/modules/judicial-assistant/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// أقصى مهلةٍ تسمح بها الخطّة (ليست سقفًا من عندنا) — كي لا يُقتطع التوليد المفتوح.
+export const maxDuration = 800;
 
 export async function POST(request: NextRequest, { params }: { params: { caseId: string } }) {
   const gate = await requireApiPermission("JUDICIAL_ASSISTANT_USE", request);
