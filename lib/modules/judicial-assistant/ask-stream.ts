@@ -91,7 +91,7 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
   yield { type: "stage", label: "أصوغ التحليل", state: "active" };
   let acc = "";
   try {
-    for await (const chunk of streamWithConfig(cfg, system, user, 3000)) { acc += chunk; yield { type: "delta", text: chunk }; }
+    for await (const chunk of streamWithConfig(cfg, system, user, 6000)) { acc += chunk; yield { type: "delta", text: chunk }; }
   } catch {
     /* يُعرَض ما تجمّع */
   }
