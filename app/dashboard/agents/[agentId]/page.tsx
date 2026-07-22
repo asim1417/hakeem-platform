@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getManifest } from "@/lib/agent-runtime/live/manifests";
 import { AgentConsole, type ConsoleTool } from "@/components/agents/AgentConsole";
+import { AgentChat } from "@/components/agents/AgentChat";
 
 export const dynamic = "force-dynamic";
 
@@ -49,13 +50,29 @@ export default async function AgentConsolePage({ params }: { params: { agentId: 
         </p>
       </header>
 
-      <AgentConsole
-        agentId={m.agentId}
-        displayName={m.displayName ?? m.agentId}
-        scope={m.scope.defaultSystems}
-        subRoles={subRoles}
-        tools={tools}
-      />
+      {/* صندوق المحادثة الحيّ — مؤصَّلٌ بنطاق الوكيل، بثٌّ نموذجيّ حيّ كصندوق «اسأل حكيم». */}
+      <div className="mb-6">
+        <AgentChat
+          agentId={m.agentId}
+          displayName={m.displayName ?? m.agentId}
+          scope={m.scope.defaultSystems}
+          subRoles={subRoles}
+        />
+      </div>
+
+      {/* وحدة الأدوات الحتميّة (استدعاءٌ مباشرٌ لأدوات النطاق). */}
+      <details className="ja-allworks">
+        <summary className="ja-textbtn cursor-pointer">أدوات دقيقة (قراءة مادّة · فصل · تخريج · مهلة) ▾</summary>
+        <div className="mt-3">
+          <AgentConsole
+            agentId={m.agentId}
+            displayName={m.displayName ?? m.agentId}
+            scope={m.scope.defaultSystems}
+            subRoles={subRoles}
+            tools={tools}
+          />
+        </div>
+      </details>
     </div>
   );
 }
