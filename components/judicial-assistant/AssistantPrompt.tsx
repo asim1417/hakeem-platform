@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { JaIcon } from "./icons";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
+import { useWakeLock } from "@/components/hooks/useWakeLock";
 import type { AskCitation } from "@/lib/modules/judicial-assistant/ask-stream";
 
 // اقتراحاتٌ خاصّةٌ بالقضية (داخل صفحتها) — تعرف سياقها.
@@ -44,6 +45,7 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
 
   const fmtTime = (s: number) => (s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
   const doneStages = stages.filter((s) => s.state === "done").length;
+  useWakeLock(busy); // يمنع نوم الشاشة أثناء البحث/التوليد الحيّ
 
   async function submit(e?: FormEvent, preset?: string) {
     e?.preventDefault();
