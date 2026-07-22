@@ -8,8 +8,9 @@ import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-// أقصى مهلةٍ تسمح بها الخطّة (ليست سقفًا من عندنا) — كي لا يُقتطع التوليد المفتوح.
-export const maxDuration = 800;
+// أقصى مهلةٍ تسمح بها الخطّة فعليًّا (ليست سقفًا من عندنا): جُرّب 800ث فرفضته بنية Vercel،
+// و300ث هو الأعلى المقبول والمنشور بنجاح. يُرفَع تلقائيًّا متى رفعت الخطّة حدّها.
+export const maxDuration = 300;
 
 const schema = z.object({ question: z.string().min(3, "اكتب طلبك."), caseId: z.string().optional() });
 
