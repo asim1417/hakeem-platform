@@ -11,8 +11,17 @@ import { SERVICE_BY_ID } from "./catalog";
 import type { JudicialCase, StudyDepth } from "./types";
 
 export type RunStreamEvent =
+  | { type: "stage"; label: string; state: "active" | "done" }
   | { type: "delta"; text: string }
   | { type: "done"; blocked: boolean; citations: Array<{ articleId: string; lawName: string; articleNumber: number; quote: string }>; notice: string };
+
+/** سباقٌ بمهلة: يمنع تجميد البثّ إن تعثّر/تعلّق التأصيل العميق — يسقط لمسار مادّة القضية. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("grounding-timeout")), ms)),
+  ]);
+}
 
 const DEPTH_HINT: Record<StudyDepth, string> = { short: "بإيجازٍ مركّز", medium: "بتفصيلٍ متوسّط", extended: "بتوسّعٍ وتحليلٍ للبدائل" };
 
@@ -30,9 +39,13 @@ export async function* streamService(kase: JudicialCase, serviceId: string, dept
   const directive = directiveFor(serviceId, depth);
   const facts = [`المطلوب: ${directive}`, caseContext(kase)].filter(Boolean).join("\n\n");
 
-  const agent = await runCaseAgent(facts).catch(() => null);
+  // التأصيل العميق يجري قبل أوّل حرفٍ مبثوث؛ نُظهر خطوةً حيّة كي لا يبدو التوليد متوقّفًا،
+  // ونحرسه بمهلةٍ (يُسقِط لمسار مادّة القضية) فلا يتجمّد البثّ إن تعثّر البحث العميق.
+  yield { type: "stage", label: "أبحث في النواة القانونيّة (بحثٌ عميق)", state: "active" };
+  const agent = await withTimeout(runCaseAgent(facts), 90_000).catch(() => null);
   const articles = agent?.articles ?? [];
   const grounded = Boolean(agent?.grounded && articles.length);
+  yield { type: "stage", label: grounded ? `وجدتُ ${articles.length} مادّة مؤصِّلة` : "لا مادّة نظاميّة مطابقة — أعتمد مادّة القضية", state: "done" };
   const citations = articles.slice(0, 8).map((a) => ({ articleId: a.articleId, lawName: a.systemName, articleNumber: a.articleNumber, quote: a.articleText.slice(0, 350) }));
 
   const system = [
@@ -51,6 +64,7 @@ export async function* streamService(kase: JudicialCase, serviceId: string, dept
     return;
   }
 
+  yield { type: "stage", label: "أصوغ المخرَج", state: "active" };
   // توليدٌ مفتوح بلا سقفٍ مصطنع: بحدّ النموذج الأقصى في كلّ نداء، ونواصل بجولةٍ تالية إن توقّف
   // لبلوغ الحدّ (لا لانتهاء المعنى) — حتى يُكمل النموذج العمل القضائيّ مهما اتّسع.
   let any = false;

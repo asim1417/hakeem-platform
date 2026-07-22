@@ -3,7 +3,7 @@
 // لوحة الأعمال المقترحة (§21) — تقترح أعمالًا بحسب المرحلة، ولا تنفّذ تلقائيًّا.
 // المتاح حيًّا: JS-001 (ملخّص مؤصَّل عبر النموذج)، JS-009 (مدد حتميّة)، JS-010 (مصفوفة إثبات حتميّة).
 // الحتميّة مستقلّة عن النموذج وتُبنى من بيانات القضية. بقيّة الأعمال على خارطة الطريق بشفافيّة.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JaIcon } from "./icons";
 import { SERVICES } from "@/lib/modules/judicial-assistant/catalog";
 import { runnerFor } from "@/lib/modules/judicial-assistant/routing";
@@ -14,7 +14,7 @@ import type {
 import { FACT_STATUS_LABEL, formatDate } from "@/lib/modules/judicial-assistant/labels";
 
 type StreamCite = { articleId?: string; lawName: string; articleNumber: number; quote: string };
-type StreamData = { serviceId: string; title: string; body: string; citations: StreamCite[]; notice: string; blocked: boolean; done: boolean };
+type StreamData = { serviceId: string; title: string; body: string; citations: StreamCite[]; notice: string; blocked: boolean; done: boolean; stage?: string; startedAt?: number };
 
 type Panel =
   | { kind: "summary"; data: ExecutiveSummaryResult }
@@ -104,7 +104,8 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
       // الخدمات النموذجيّة تُبَثّ حيًّا (كتابةٌ تدريجيّة كـ«اسأل حكيم») عبر مسارٍ متداخل — بلا 504.
       if (runner === "summary" || runner === "draft" || runner === "study" || runner === "work") {
         const title = SERVICES.find((s) => s.id === serviceId)?.title ?? serviceId;
-        setPanel({ kind: "stream", data: { serviceId, title, body: "", citations: [], notice: "", blocked: false, done: false } });
+        const startedAt = Date.now();
+        setPanel({ kind: "stream", data: { serviceId, title, body: "", citations: [], notice: "", blocked: false, done: false, stage: "أبدأ…", startedAt } });
         const res = await fetch(`/api/judicial-assistant/cases/${caseId}/run/stream`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ serviceId, ...(runner === "study" ? { depth: "medium" } : {}) }),
@@ -114,6 +115,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
         const decoder = new TextDecoder();
         let buf = "";
         let acc = "";
+        let stage = "أبدأ…";
         let lastPaint = 0; // خنقٌ خفيف: نُعيد الرسم كلّ ~120ms لا مع كلّ جزء (تفادي ثقل إعادة تحليل Markdown).
         for (;;) {
           const { done, value } = await reader.read();
@@ -124,17 +126,20 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
           for (const line of lines) {
             const t = line.trim();
             if (!t) continue;
-            let ev: { type?: string; text?: string; citations?: StreamCite[]; notice?: string; blocked?: boolean };
+            let ev: { type?: string; text?: string; label?: string; state?: string; citations?: StreamCite[]; notice?: string; blocked?: boolean };
             try { ev = JSON.parse(t); } catch { continue; }
-            if (ev.type === "delta" && ev.text) {
+            if (ev.type === "stage" && ev.label) {
+              stage = ev.label;
+              setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: [], notice: "", blocked: false, done: false, stage, startedAt } });
+            } else if (ev.type === "delta" && ev.text) {
               acc += ev.text;
               const now = Date.now();
               if (now - lastPaint > 120) {
                 lastPaint = now;
-                setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: [], notice: "", blocked: false, done: false } });
+                setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: [], notice: "", blocked: false, done: false, stage, startedAt } });
               }
             } else if (ev.type === "done") {
-              setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: ev.citations ?? [], notice: ev.notice ?? "", blocked: ev.blocked ?? false, done: true } });
+              setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: ev.citations ?? [], notice: ev.notice ?? "", blocked: ev.blocked ?? false, done: true, startedAt } });
             }
           }
         }
@@ -361,6 +366,16 @@ function DraftView({ data }: { data: JudgmentDraftResult }) {
 }
 
 function StreamView({ data }: { data: StreamData }) {
+  // مؤشّر وقتٍ حيّ يعدّ أثناء العمل (بحثٌ عميق ثمّ صياغة) — كي لا يبدو التوليد متوقّفًا.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (data.done || !data.startedAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [data.done, data.startedAt]);
+  const secs = data.startedAt ? Math.max(0, Math.floor((now - data.startedAt) / 1000)) : 0;
+  const fmt = (s: number) => (s < 60 ? `${s}ث` : `${Math.floor(s / 60)}د ${s % 60}ث`);
+
   return (
     <div className="ja-summary">
       <div className={`ja-summary__banner ${data.blocked ? "ja-summary__banner--blocked" : ""}`}>
@@ -371,10 +386,17 @@ function StreamView({ data }: { data: StreamData }) {
         <h3>{data.title} <span className="ja-action__id">{data.serviceId}</span></h3>
         <span className="ja-summary__stamp">{data.done ? "مسودّة — تحتاج تثبيتًا" : "يكتب الآن…"}</span>
       </div>
+      {/* شريط حالةٍ حيّ: الخطوة الجارية + مؤشّر الوقت (يظهر أثناء العمل فقط) */}
+      {!data.done ? (
+        <div className="ja-live__meter" dir="rtl">
+          <span className="ja-live__timer"><span className="ja-live__spin" aria-hidden />{data.stage || "يعمل…"}</span>
+          <span className="ja-live__steps">الزمن: {fmt(secs)}</span>
+        </div>
+      ) : null}
       <div className="ja-summary__body">
         {data.body
           ? <AnswerRenderer content={data.body} basis={data.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} />
-          : <p className="ja-sources__empty">…</p>}
+          : <p className="ja-sources__empty">{data.stage ? "أُجهّز المخرَج… (بحثٌ عميق في النواة قد يستغرق ثوانيَ)" : "…"}</p>}
         {!data.done ? <span className="ja-stream-caret" aria-hidden>▍</span> : null}
       </div>
       {data.done && data.citations.length > 0 ? (
