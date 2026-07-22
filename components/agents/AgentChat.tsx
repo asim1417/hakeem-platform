@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
+import { useWakeLock } from "@/components/hooks/useWakeLock";
 
 // صندوق محادثةٍ حيّ لوكيلٍ مخصّص — يبثّ ردًّا مؤصَّلًا بنطاق الوكيل (NDJSON) كصندوق «اسأل حكيم».
 export type ChatSubRole = { id: string; label: string; stance: string };
@@ -22,6 +23,7 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
   const [attaching, setAttaching] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  useWakeLock(busy || attaching); // يمنع نوم الشاشة أثناء التوليد الحيّ أو استخراج المرفق
 
   const scrollDown = () => requestAnimationFrame(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); });
 

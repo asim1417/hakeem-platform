@@ -6,6 +6,7 @@ import { extractFile } from "@/lib/modules/doc-tool/extract";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
+import { useWakeLock } from "@/components/hooks/useWakeLock";
 import { AGENT_MODES, getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
 
 // أيقونات الأوضاع — Lucide بدل الإيموجي (اتساق الهوية: صفر إيموجي).
@@ -61,6 +62,7 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
   // المستند يبقى منفصلًا عن مربّع السؤال (لا يُخلَط بما يكتبه المستخدم).
   const [extracting, setExtracting] = useState(false);
   const [attachedDoc, setAttachedDoc] = useState("");
+  useWakeLock(busy || extracting); // يمنع نوم الشاشة أثناء البحث/التوليد الحيّ أو استخراج المرفق
   const [attachedName, setAttachedName] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   // على الجوّال: مغادرة المتصفّح تعلّق التبويب فينكسر بثّ الطلب. نرصد ذلك لتقديم رسالة لطيفة + إعادة محاولة.

@@ -9,6 +9,7 @@ import { SERVICES } from "@/lib/modules/judicial-assistant/catalog";
 import { runnerFor } from "@/lib/modules/judicial-assistant/routing";
 import { exportPdf, exportWord } from "@/lib/modules/judicial-assistant/export-doc";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
+import { useWakeLock } from "@/components/hooks/useWakeLock";
 import type {
   DeterministicActionResult, ExecutiveSummaryResult, GroundedWorkResult, JudgmentDraftResult, JudicialStudyResult, SuggestedAction,
 } from "@/lib/modules/judicial-assistant/types";
@@ -73,6 +74,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
   const [approved, setApproved] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const docRef = useRef<HTMLDivElement>(null); // يلتقط HTML المخرَج المعروض للتصدير الفاخر (PDF/Word).
+  useWakeLock(running !== null); // يمنع نوم الشاشة أثناء تشغيل الخدمة الحيّ
 
   /** معرّف الخدمة وعنوانها للوثيقة المصدَّرة. */
   function panelIdTitle(p: Panel): { id: string; title: string } {
