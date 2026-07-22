@@ -26,9 +26,14 @@ function SignInSkeleton() {
   );
 }
 
+function continueUrl(nextUrl: string) {
+  const safe = nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
+  return `/auth/continue?next=${encodeURIComponent(safe)}`;
+}
+
 /**
- * يمنع وميض «دخول المالك» قبل ظهور Clerk:
- * هيكل تحميل أولًا → SignIn بعد جاهزية clerk-js → الطوارئ لاحقًا ومطوي.
+ * يمنع وميض «دخول المالك» قبل ظهور Clerk،
+ * ويوجّه بعد الدخول عبر /auth/continue لربط إكمال الملف بالنقاط.
  */
 export function AuthClerkSignIn({
   nextUrl,
@@ -43,6 +48,7 @@ export function AuthClerkSignIn({
 }) {
   const { loaded } = useClerk();
   const [showEmergency, setShowEmergency] = useState(false);
+  const afterAuth = continueUrl(nextUrl);
 
   useEffect(() => {
     if (!loaded) return;
@@ -60,16 +66,16 @@ export function AuthClerkSignIn({
             routing="path"
             path={path}
             signUpUrl={signUpUrl}
-            forceRedirectUrl={nextUrl}
-            fallbackRedirectUrl={nextUrl}
+            forceRedirectUrl={afterAuth}
+            fallbackRedirectUrl={afterAuth}
           />
         ) : (
           <SignIn
             appearance={clerkAppearance}
             routing="hash"
             signUpUrl={signUpUrl}
-            forceRedirectUrl={nextUrl}
-            fallbackRedirectUrl={nextUrl}
+            forceRedirectUrl={afterAuth}
+            fallbackRedirectUrl={afterAuth}
           />
         )}
       </div>

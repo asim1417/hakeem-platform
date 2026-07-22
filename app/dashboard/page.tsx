@@ -4,6 +4,7 @@ import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
+import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 import { awardDailyVisit } from "@/lib/modules/credits/engagement";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -112,6 +113,7 @@ export default async function DashboardPage({
       ) : null}
 
       <QuotaCounter />
+      <OnboardingBanner />
       <CreditsWidget />
 
       {/* الترويسة الموحّدة (نظام التصميم) — تحوي صندوق البحث المركزيّ بخياريه */}
