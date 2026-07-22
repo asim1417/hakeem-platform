@@ -53,7 +53,7 @@ export default function SignInPage({
               />
             ) : null}
 
-            <OwnerEmergencyLogin nextUrl={nextUrl} />
+            <OwnerEmergencyLogin nextUrl={nextUrl} clerkEnabled={configured} />
 
             <p className="login-panel__links">
               <Link href="/" className="underline-offset-4 hover:underline">
