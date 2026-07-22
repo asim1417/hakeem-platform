@@ -51,7 +51,7 @@ export async function generateExecutiveSummary(
   actorId?: string
 ): Promise<ExecutiveSummaryResult> {
   const facts = await buildFactsText(kase);
-  const draft = await createAgentConsultationDraft({ facts, actorId });
+  const draft = await createAgentConsultationDraft({ facts, actorId, fallbackToFacts: true });
 
   return {
     requestId: draft.requestId,
