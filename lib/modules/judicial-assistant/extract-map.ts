@@ -64,7 +64,8 @@ export async function extractCaseMap(kase: JudicialCase): Promise<MapProposal> {
   }).catch(() => null);
 
   if (!res || !res.ok || !res.content) {
-    return { parties: [], requests: [], facts: [], issues: [], blocked: true, note: "تعذّر الاستخلاص (مزوّد النموذج غير مُفعّل). يمكنك إضافة عناصر الخريطة يدويًّا لاحقًا." };
+    const why = !res || res.provider === "offline" ? "مزوّد النموذج غير مضبوط" : "تعذّر نداء النموذج، أعِد المحاولة";
+    return { parties: [], requests: [], facts: [], issues: [], blocked: true, note: `تعذّر الاستخلاص (${why}). يمكنك إضافة عناصر الخريطة يدويًّا لاحقًا.` };
   }
 
   const parsed = extractJson(res.content) as Record<string, unknown> | null;
