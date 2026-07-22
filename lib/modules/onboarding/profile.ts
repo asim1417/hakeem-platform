@@ -177,6 +177,19 @@ export function needsOnboarding(profile: UserProfile, email?: string): boolean {
   return profile.onboardingCompleted === false;
 }
 
+/** هل نقص الاسم أو الجوال أو المهنة؟ (إلزامي قبل استخدام اللوحة) */
+export function needsEssentials(
+  user: { name: string; email?: string },
+  profile: UserProfile
+): boolean {
+  if (user.email === "guest@hakeem.local") return false;
+  if (profile.unknown) return false;
+  const hasName = Boolean(user.name?.trim()) && !user.name.includes("@");
+  const hasPhone = Boolean(profile.phone?.trim());
+  const hasProfession = Boolean(profile.entityType?.trim());
+  return !(hasName && hasPhone && hasProfession);
+}
+
 export async function markOnboardingPending(userId: string): Promise<void> {
   try {
     const { prisma } = await import("@/lib/prisma");

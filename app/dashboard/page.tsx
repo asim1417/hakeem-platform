@@ -5,7 +5,6 @@ import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-syste
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
 import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
-import { EssentialsPromptGate } from "@/components/onboarding/EssentialsPromptGate";
 import { awardDailyVisit } from "@/lib/modules/credits/engagement";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -114,7 +113,6 @@ export default async function DashboardPage({
       ) : null}
 
       <QuotaCounter />
-      <EssentialsPromptGate />
       <OnboardingBanner />
       <CreditsWidget />
 

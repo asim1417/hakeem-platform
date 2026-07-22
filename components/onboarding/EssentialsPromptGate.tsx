@@ -1,27 +1,30 @@
-import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/modules/auth/session";
-import { getProfile } from "@/lib/modules/onboarding/profile";
+import { getProfile, needsEssentials } from "@/lib/modules/onboarding/profile";
 import { EssentialsPrompt } from "@/components/onboarding/EssentialsPrompt";
 
-/** تنبيه بسيط إن نقص الاسم أو الجوال أو المهنة. */
-export async function EssentialsPromptGate() {
+/**
+ * إن نقصت البيانات الثلاثة: يعرض البوابة الإلزامية فقط (يحجب محتوى اللوحة).
+ * إن اكتملت: يعيد null ويُعرض المحتوى كالمعتاد.
+ */
+export async function EssentialsPromptGate({
+  mode = "banner",
+}: {
+  mode?: "banner" | "block";
+}) {
   const user = await getCurrentUser().catch(() => null);
   if (!user || user.email === "guest@hakeem.local") return null;
 
-  if (cookies().get("hakeem_essentials_dismissed")?.value === "1") return null;
-
   const profile = await getProfile(user.id);
-  const hasPhone = Boolean(profile.phone?.trim());
-  const hasName = Boolean(user.name?.trim()) && !user.name.includes("@");
-  const hasProfession = Boolean(profile.entityType?.trim());
+  if (!needsEssentials(user, profile)) return null;
 
-  if (hasPhone && hasName && hasProfession) return null;
-
-  return (
+  const form = (
     <EssentialsPrompt
       initialName={user.name}
       initialPhone={profile.phone}
       initialProfession={profile.entityType}
     />
   );
+
+  if (mode === "block") return form;
+  return form;
 }
