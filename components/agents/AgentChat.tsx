@@ -34,6 +34,23 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
       if (t.trim()) { setContext(t.slice(0, 14000)); setAttachName(file.name); setShowAttach(true); }
       return;
     }
+    // Word (‎.docx‏): استخراجٌ محليّ بكود منصّة الوثائق (بلا خادمٍ ولا مفتاح) — تحليل XML للمستند.
+    if (/\.docx$/i.test(file.name) || file.type.includes("wordprocessingml")) {
+      setAttaching(true); setAttachName(file.name);
+      try {
+        const { extractDocxText } = await import("@/lib/modules/document-inspection/file-extract");
+        const t = await extractDocxText(await file.arrayBuffer());
+        if (!t.trim()) throw new Error("ملف Word بلا نصٍّ قابلٍ للاستخراج.");
+        setContext(t.slice(0, 14000)); setShowAttach(true);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "تعذّر استخراج ملف Word.");
+        setAttachName("");
+      } finally {
+        setAttaching(false);
+        if (fileRef.current) fileRef.current.value = "";
+      }
+      return;
+    }
     setAttaching(true); setAttachName(file.name);
     try {
       const fd = new FormData();
@@ -183,12 +200,12 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
             value={context}
             onChange={(e) => setContext(e.target.value.slice(0, 14000))}
             rows={4}
-            placeholder="الصق نصّ المستند أو الوقائع هنا ليحلّلها الوكيل ضمن نطاقه…"
+            placeholder="الصق نصّ المستند أو الوقائع هنا، أو ارفع ملفًّا (Word · PDF · صورة) ليحلّله الوكيل ضمن نطاقه…"
             className="focus-ring w-full resize-y rounded-[var(--r-sm)] border border-[var(--ink-15)] bg-white px-2.5 py-2 text-xs"
           />
           <div className="mt-1.5 flex items-center justify-between gap-2">
             <button type="button" className="btn btn-outline px-3 py-1.5 text-xs" onClick={() => fileRef.current?.click()} disabled={attaching}>
-              {attaching ? "…جارٍ الاستخراج" : "⬆ رفع مستند (PDF/صورة/نص)"}
+              {attaching ? "…جارٍ الاستخراج" : "⬆ رفع مستند (Word · PDF · صورة · نص)"}
             </button>
             <button type="button" className="text-xs font-semibold text-[var(--petrol)] hover:underline" onClick={() => setShowAttach(false)}>إخفاء</button>
           </div>
@@ -196,7 +213,7 @@ export function AgentChat({ agentId, displayName, scope, subRoles }: { agentId: 
       ) : null}
 
       <div className="mt-3 flex items-end gap-2">
-        <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.csv,.json,image/*,application/pdf,text/*" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.csv,.json,.docx,image/*,application/pdf,text/*,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
         <button
           type="button"
           onClick={() => setShowAttach((v) => !v)}
