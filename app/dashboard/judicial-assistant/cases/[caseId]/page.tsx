@@ -93,6 +93,11 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
         )}
       </section>
 
+      {/* موجّه القضية — في صدر الصفحة: اسأل عن القضية مباشرةً بمحرّك «اسأل حكيم» وسياق القضية */}
+      <section className="card ja-panel">
+        <AssistantPrompt caseId={kase.id} />
+      </section>
+
       {/* المرفقات — المدخل الأساسيّ للقضية، مربوطٌ بمحرّك منصّة الوثائق (لا استخراجٌ مكرّر) */}
       <section className="card ja-panel" aria-labelledby="ja-attach">
         <div className="ja-panel__row">
@@ -206,11 +211,6 @@ export default async function CaseOverviewPage({ params }: { params: { caseId: s
           </ul>
         </section>
       ) : null}
-
-      {/* موجّه المعاون — عقلٌ حرّ مؤصَّل لما لا تغطّيه الخدمات المخصّصة، بسياق هذه القضية */}
-      <section className="card ja-panel">
-        <AssistantPrompt caseId={kase.id} />
-      </section>
 
       <LegalAlert tone="info">
         كلّ عملٍ حسّاس يمرّ بمراجعتك واعتمادك. المصادر قابلة للفتح، والنظام لا يعتمد حكمًا ولا يولّد نصًّا نظاميًّا من ذاكرته.

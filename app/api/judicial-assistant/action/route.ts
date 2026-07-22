@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
   }
 
+  try {
   const result =
     body.serviceId === "JS-009" ? computeDeadlines(kase)
     : body.serviceId === "JS-004" ? buildTimeline(kase)
@@ -69,4 +70,7 @@ export async function POST(request: NextRequest) {
   }).catch(() => undefined);
 
   return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json({ message: `تعذّر تشغيل الخدمة: ${err instanceof Error ? err.message.slice(0, 200) : "خطأٌ غير متوقّع"}` }, { status: 500 });
+  }
 }
