@@ -19,6 +19,16 @@ type Panel =
   | { kind: "study"; data: JudicialStudyResult }
   | { kind: "work"; data: GroundedWorkResult };
 
+// قراءةٌ آمنة للاستجابة: لا نستدعي res.json() مباشرةً (يرمي «The string did not match the
+// expected pattern» في Safari عند جسمٍ فارغٍ/غير JSON مثل مهلة 504) — بل نقرأ نصًّا ونحلّله بأمان.
+async function readJson(res: Response): Promise<Record<string, unknown>> {
+  const raw = await res.text().catch(() => "");
+  let data: Record<string, unknown> = {};
+  if (raw) { try { data = JSON.parse(raw); } catch { /* ليست JSON */ } }
+  if (!res.ok) throw new Error((data.message as string) || `تعذّر التشغيل (رمز ${res.status}).`);
+  return data;
+}
+
 export function CaseActions({ caseId, actions }: { caseId: string; actions: SuggestedAction[] }) {
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,51 +47,36 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
     try {
       if (runner === "summary") {
         const res = await fetch("/api/judicial-assistant/summary", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caseId }),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
-        setPanel({ kind: "summary", data });
+        setPanel({ kind: "summary", data: (await readJson(res)) as unknown as ExecutiveSummaryResult });
       } else if (runner === "draft") {
         const res = await fetch("/api/judicial-assistant/draft", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caseId }),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
-        setPanel({ kind: "draft", data });
+        setPanel({ kind: "draft", data: (await readJson(res)) as unknown as JudgmentDraftResult });
       } else if (runner === "study") {
         const res = await fetch("/api/judicial-assistant/study", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caseId, depth: "medium" }),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId, depth: "medium" }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
-        setPanel({ kind: "study", data });
+        setPanel({ kind: "study", data: (await readJson(res)) as unknown as JudicialStudyResult });
       } else if (runner === "work") {
         const res = await fetch("/api/judicial-assistant/work", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caseId, serviceId }),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId, serviceId }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
-        setPanel({ kind: "work", data });
+        setPanel({ kind: "work", data: (await readJson(res)) as unknown as GroundedWorkResult });
       } else if (runner === "export") {
         const res = await fetch(`/api/judicial-assistant/cases/${caseId}/export`);
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d?.message || "تعذّر التصدير."); }
+        if (!res.ok) { await readJson(res); }
         const text = await res.text();
         const url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
         const a = document.createElement("a"); a.href = url; a.download = `case-${caseId}.md`; a.click();
         URL.revokeObjectURL(url);
       } else {
         const res = await fetch("/api/judicial-assistant/action", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caseId, serviceId }),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId, serviceId }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "تعذّر التشغيل.");
-        setPanel({ kind: "deterministic", data });
+        setPanel({ kind: "deterministic", data: (await readJson(res)) as unknown as DeterministicActionResult });
       }
     } catch (err) {
       const m = err instanceof Error ? err.message : "";

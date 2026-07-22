@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
   }
 
+  try {
   const result = await buildJudgmentDraft(kase, actorId);
 
   await saveAnalysis({
@@ -63,4 +64,7 @@ export async function POST(request: NextRequest) {
   }).catch(() => undefined);
 
   return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json({ message: `تعذّر بناء مشروع الحكم: ${err instanceof Error ? err.message.slice(0, 200) : "خطأٌ غير متوقّع"}` }, { status: 500 });
+  }
 }
