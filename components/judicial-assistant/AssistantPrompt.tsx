@@ -5,6 +5,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { JaIcon } from "./icons";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
+import { AnswerToolbar } from "@/components/AnswerToolbar";
 import type { AskCitation } from "@/lib/modules/judicial-assistant/ask-stream";
 
 // اقتراحاتٌ خاصّةٌ بالقضية (داخل صفحتها) — تعرف سياقها.
@@ -196,9 +197,16 @@ export function AssistantPrompt({ caseId, compact = false }: { caseId?: string; 
           <div className="ja-summary__body">
             <AnswerRenderer
               content={result.answer}
+              id="ja-ask-answer"
               basis={result.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))}
             />
           </div>
+          {/* لوحة التحكّم: نسخ · مشاركة · طباعة · Word · PDF · HTML */}
+          {result.answer && !result.blocked ? (
+            <div className="mt-2">
+              <AnswerToolbar answer={result.answer} basis={result.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} question={caseId ? "موجّه القضية" : "موجّه المعاون"} printTargetId="ja-ask-answer" />
+            </div>
+          ) : null}
           {result.citations.length > 0 ? (
             <div className="ja-sources">
               <h4><JaIcon name="sources" size={15} /> الأساس النظاميّ ({result.citations.length})</h4>
