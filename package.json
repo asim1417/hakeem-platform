@@ -160,6 +160,7 @@
     "smoke:judicial": "tsx scripts/smoke-judicial.ts"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.13.6",
     "@clerk/nextjs": "^6.39.6",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",

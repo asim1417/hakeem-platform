@@ -1,9 +1,9 @@
 "use client";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import { clerkAppearance } from "@/lib/modules/auth/clerk-config";
+import { clerkAppearance, clerkLocalization } from "@/lib/modules/auth/clerk-config";
 
-/** يغلّف التطبيق بـ Clerk عند توفر المفتاح العلني. */
+/** يغلّف التطبيق بـ Clerk عند توفر المفتاح العلني — عربية + هوية حكيم. */
 export function ClerkAppProvider({
   children,
   publishableKey,
@@ -13,7 +13,12 @@ export function ClerkAppProvider({
 }) {
   if (!publishableKey) return <>{children}</>;
   return (
-    <ClerkProvider publishableKey={publishableKey} appearance={clerkAppearance} afterSignOutUrl="/">
+    <ClerkProvider
+      publishableKey={publishableKey}
+      appearance={clerkAppearance}
+      localization={clerkLocalization}
+      afterSignOutUrl="/"
+    >
       {children}
     </ClerkProvider>
   );
