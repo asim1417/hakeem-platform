@@ -13,17 +13,22 @@ import type {
 } from "@/lib/modules/judicial-assistant/types";
 import { FACT_STATUS_LABEL, formatDate } from "@/lib/modules/judicial-assistant/labels";
 
+type StreamCite = { articleId?: string; lawName: string; articleNumber: number; quote: string };
+type StreamData = { serviceId: string; title: string; body: string; citations: StreamCite[]; notice: string; blocked: boolean; done: boolean };
+
 type Panel =
   | { kind: "summary"; data: ExecutiveSummaryResult }
   | { kind: "deterministic"; data: DeterministicActionResult }
   | { kind: "draft"; data: JudgmentDraftResult }
   | { kind: "study"; data: JudicialStudyResult }
-  | { kind: "work"; data: GroundedWorkResult };
+  | { kind: "work"; data: GroundedWorkResult }
+  | { kind: "stream"; data: StreamData };
 
 /** يحوّل نتيجة أيّ خدمةٍ إلى نصٍّ للنسخ/التصدير (عرضٌ موحَّد للمخرَج). */
 function panelToText(panel: Panel): string {
   const cites = (c: Array<{ lawName: string; articleNumber: number; quote: string }>) =>
     c.length ? "\n\nالأساس النظاميّ:\n" + c.map((x) => `- ${x.lawName}، المادة ${x.articleNumber}: ${x.quote}`).join("\n") : "";
+  if (panel.kind === "stream") return `${panel.data.title}\n\n${panel.data.body}` + cites(panel.data.citations);
   if (panel.kind === "summary") return panel.data.summary + cites(panel.data.citations);
   if (panel.kind === "study") return panel.data.body + cites(panel.data.citations);
   if (panel.kind === "work") return `${panel.data.title}\n\n${panel.data.body}` + cites(panel.data.citations);
@@ -96,29 +101,43 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
     setCopied(false);
     setApproved(false);
     try {
-      // الخدمات النموذجيّة تمرّ عبر مسارٍ متداخل واحد (cases/[caseId]/run) — يُنشَر على Vercel
-      // بخلاف المسارات المسطّحة المكافئة. نفس المخرجات وشكل النتيجة، فلا تتغيّر لوحات العرض.
-      const runUrl = `/api/judicial-assistant/cases/${caseId}/run`;
-      if (runner === "summary") {
-        const res = await fetch(runUrl, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId }),
+      // الخدمات النموذجيّة تُبَثّ حيًّا (كتابةٌ تدريجيّة كـ«اسأل حكيم») عبر مسارٍ متداخل — بلا 504.
+      if (runner === "summary" || runner === "draft" || runner === "study" || runner === "work") {
+        const title = SERVICES.find((s) => s.id === serviceId)?.title ?? serviceId;
+        setPanel({ kind: "stream", data: { serviceId, title, body: "", citations: [], notice: "", blocked: false, done: false } });
+        const res = await fetch(`/api/judicial-assistant/cases/${caseId}/run/stream`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serviceId, ...(runner === "study" ? { depth: "medium" } : {}) }),
         });
-        setPanel({ kind: "summary", data: (await readJson(res)) as unknown as ExecutiveSummaryResult });
-      } else if (runner === "draft") {
-        const res = await fetch(runUrl, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId }),
-        });
-        setPanel({ kind: "draft", data: (await readJson(res)) as unknown as JudgmentDraftResult });
-      } else if (runner === "study") {
-        const res = await fetch(runUrl, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId, depth: "medium" }),
-        });
-        setPanel({ kind: "study", data: (await readJson(res)) as unknown as JudicialStudyResult });
-      } else if (runner === "work") {
-        const res = await fetch(runUrl, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serviceId }),
-        });
-        setPanel({ kind: "work", data: (await readJson(res)) as unknown as GroundedWorkResult });
+        if (!res.ok || !res.body) { await readJson(res); return; }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        let acc = "";
+        let lastPaint = 0; // خنقٌ خفيف: نُعيد الرسم كلّ ~120ms لا مع كلّ جزء (تفادي ثقل إعادة تحليل Markdown).
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            const t = line.trim();
+            if (!t) continue;
+            let ev: { type?: string; text?: string; citations?: StreamCite[]; notice?: string; blocked?: boolean };
+            try { ev = JSON.parse(t); } catch { continue; }
+            if (ev.type === "delta" && ev.text) {
+              acc += ev.text;
+              const now = Date.now();
+              if (now - lastPaint > 120) {
+                lastPaint = now;
+                setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: [], notice: "", blocked: false, done: false } });
+              }
+            } else if (ev.type === "done") {
+              setPanel({ kind: "stream", data: { serviceId, title, body: acc, citations: ev.citations ?? [], notice: ev.notice ?? "", blocked: ev.blocked ?? false, done: true } });
+            }
+          }
+        }
       } else if (runner === "export") {
         const res = await fetch(`/api/judicial-assistant/cases/${caseId}/export`);
         if (!res.ok) { await readJson(res); }
@@ -207,6 +226,7 @@ export function CaseActions({ caseId, actions }: { caseId: string; actions: Sugg
             </div>
           </div>
 
+      {panel?.kind === "stream" ? <StreamView data={panel.data} /> : null}
       {panel?.kind === "summary" ? <SummaryView data={panel.data} /> : null}
       {panel?.kind === "study" ? <StudyView data={panel.data} /> : null}
       {panel?.kind === "work" ? <WorkView data={panel.data} /> : null}
@@ -334,6 +354,35 @@ function DraftView({ data }: { data: JudgmentDraftResult }) {
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StreamView({ data }: { data: StreamData }) {
+  return (
+    <div className="ja-summary">
+      <div className={`ja-summary__banner ${data.blocked ? "ja-summary__banner--blocked" : ""}`}>
+        <JaIcon name={data.blocked ? "security" : "quality"} size={16} />
+        <span>{data.notice || (data.done ? "اكتمل." : "يجري التوليد الحيّ…")}</span>
+      </div>
+      <div className="ja-summary__head">
+        <h3>{data.title} <span className="ja-action__id">{data.serviceId}</span></h3>
+        <span className="ja-summary__stamp">{data.done ? "مسودّة — تحتاج تثبيتًا" : "يكتب الآن…"}</span>
+      </div>
+      <div className="ja-summary__body">
+        {data.body
+          ? <AnswerRenderer content={data.body} basis={data.citations.map((c) => ({ articleNumber: c.articleNumber, systemName: c.lawName }))} />
+          : <p className="ja-sources__empty">…</p>}
+        {!data.done ? <span className="ja-stream-caret" aria-hidden>▍</span> : null}
+      </div>
+      {data.done && data.citations.length > 0 ? (
+        <div className="ja-sources">
+          <h4><JaIcon name="sources" size={15} /> الأساس النظاميّ ({data.citations.length})</h4>
+          <ul>{data.citations.map((c, i) => (
+            <li key={(c.articleId ?? "") + i}><span className="ja-src__law">{c.lawName} — المادة {c.articleNumber}</span><span className="ja-src__quote">{c.quote}</span></li>
+          ))}</ul>
         </div>
       ) : null}
     </div>
