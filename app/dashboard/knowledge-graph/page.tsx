@@ -48,25 +48,21 @@ export default async function KnowledgeGraphPage({
 
   return (
     <div dir="rtl">
-      <p className="text-sm font-semibold text-gold">الرسم المعرفي القانوني (Knowledge Graph)</p>
-      <h1 className="mt-2 text-3xl font-bold text-olive">صفحة اختبار العلاقات والمتجهات</h1>
+      <p className="text-sm font-semibold text-gold">الرسم المعرفي القانوني</p>
+      <h1 className="mt-2 text-3xl font-bold text-olive">شبكة العلاقات القانونية</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
-        تعرض هذه الصفحة علاقات المواد بالأحكام والمبادئ ونوع العلاقة ودرجة الثقة، وحالة متجهات الدلالة (pgvector).
-        صفحة فنية للتحقق — لا تُغيّر الواجهات القائمة.
+        تعرض هذه الصفحة علاقات المواد بالأحكام والمبادئ، ونوع كل علاقة ودرجة الثقة فيها، إلى جانب مدى تغطية البحث الدلالي بالمعنى.
       </p>
 
       {!dbReady && (
         <div className="mt-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-800">
-          ⚠ جداول الرسم المعرفي/المتجهات غير مُفعّلة بعد على قاعدة البيانات. طبّق migration
-          <code className="mx-1">add_knowledge_graph_pgvector</code> (أو شغّل <code className="mx-1">prisma db push</code>) لإنشاء الجداول.
+          ⚠ شبكة العلاقات القانونية غير متاحة حاليًا. سيتم تفعيلها فور اكتمال تجهيز البيانات، وستظهر العلاقات هنا تلقائيًا.
         </div>
       )}
 
       {dbReady && (
         <div className="mt-6 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm leading-7 text-blue-800">
-          العلاقات تُشتق من الروابط القائمة (مادة↔حكم) والمبادئ (حكم↔مبدأ). إن ظهرت القائمة فارغة رغم وجود الأحكام،
-          فالعلاقات لم تُبذَر بعد — شغّل <code className="mx-1">workflow «Seed Knowledge Graph»</code> (أو
-          <code className="mx-1">npm run seed:kg -- --apply</code>) لتوليدها من البيانات الحقيقية.
+          تُشتق العلاقات تلقائيًا من الروابط القائمة بين المواد والأحكام، ومن المبادئ المستخرجة من الأحكام. إن ظهرت القائمة فارغة رغم وجود الأحكام، فالعلاقات لم تُولَّد بعد وستظهر فور تجهيزها من البيانات.
         </div>
       )}
 
@@ -83,11 +79,11 @@ export default async function KnowledgeGraphPage({
       {/* تصفية بعلاقات مادة */}
       <form className="mt-6 flex flex-wrap items-end gap-2" action="/dashboard/knowledge-graph">
         <label className="text-sm text-muted">
-          عرض علاقات مادة بمعرّفها:
+          عرض علاقات مادة محدّدة:
           <input
             name="articleId"
             defaultValue={articleId ?? ""}
-            placeholder="articleId"
+            placeholder="أدخل معرّف المادة"
             className="ms-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
           />
         </label>

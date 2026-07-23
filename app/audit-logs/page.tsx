@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { prisma } from "@/lib/prisma";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { auditActionLabel, auditSubjectLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -45,8 +46,8 @@ export default async function AuditLogsPage() {
                     key={log.id}
                     className="border-b border-[var(--ink-04)] align-top transition odd:bg-ivory even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]"
                   >
-                    <td className="px-4 py-3 font-mono-legal text-[var(--navy)]">{log.action}</td>
-                    <td className="px-4 py-3 text-[var(--ink-70)]">{log.subject}</td>
+                    <td className="px-4 py-3 text-[var(--navy)]">{auditActionLabel(log.action)}</td>
+                    <td className="px-4 py-3 text-[var(--ink-70)]">{auditSubjectLabel(log.subject)}</td>
                     <td className="px-4 py-3 text-[var(--ink-70)]">{describeLog(log.metadata)}</td>
                     <td className="px-4 py-3 text-[var(--ink-70)]">{log.actor?.name || log.actor?.email || "غير محدد"}</td>
                     <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-60)]">{log.createdAt.toLocaleString("ar-SA")}</td>
@@ -67,7 +68,7 @@ function describeLog(metadata: unknown) {
   const record = metadata as Record<string, unknown>;
   if (typeof record.description === "string") return record.description;
   if (typeof record.query === "string") return `بحث: ${record.query || "بدون عبارة بحث"}`;
-  if (typeof record.requestId === "string") return `طلب ذكاء: ${record.requestId}`;
+  if (typeof record.requestId === "string") return "طلب ذكاء اصطناعيّ";
   if (typeof record.results === "number") return `عدد النتائج: ${record.results.toLocaleString("ar-SA")}`;
 
   return "تم تسجيل العملية بنجاح";

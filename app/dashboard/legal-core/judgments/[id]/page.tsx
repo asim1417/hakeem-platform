@@ -8,6 +8,7 @@ import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
 import { SpendCreditsButton } from "@/components/credits/SpendCreditsButton";
 import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
+import { relationTypeLabel, reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -110,8 +111,8 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
                           <h3 className="mt-1 font-display-ar text-base font-bold text-[var(--navy)]">{link.article.title}</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <LegalTopicBadge>{relationLabel(link.relationType)}</LegalTopicBadge>
-                          <LegalTopicBadge tone="amber">{link.reviewStatus}</LegalTopicBadge>
+                          <LegalTopicBadge>{relationTypeLabel(link.relationType)}</LegalTopicBadge>
+                          <LegalTopicBadge tone="amber">{reviewStatusLabel(link.reviewStatus)}</LegalTopicBadge>
                         </div>
                       </div>
                       {link.excerpt ? <p className="mt-3 rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">{link.excerpt}</p> : null}
@@ -152,7 +153,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
                 <LegalTopicBadge tone={judgment.articleLinks.length ? "emerald" : "amber"}>
                   {judgment.articleLinks.length.toLocaleString("ar-SA")} مادة مرتبطة
                 </LegalTopicBadge>
-                <LegalTopicBadge tone="amber">{judgment.reviewStatus}</LegalTopicBadge>
+                <LegalTopicBadge tone="amber">{reviewStatusLabel(judgment.reviewStatus)}</LegalTopicBadge>
                 <p className="text-sm leading-7 text-[var(--ink-60)]">
                   الروابط أنشئت آليًا من نص الحكم، ويجب مراجعتها قبل استخدامها كمبدأ أو شرح معتمد.
                 </p>
@@ -174,13 +175,3 @@ function Info({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function relationLabel(value: string) {
-  const labels: Record<string, string> = {
-    applied: "أساس الحكم",
-    cited: "استشهاد",
-    procedural_reference: "إجرائي",
-    supporting_authority: "مرجع مؤيد",
-    unclear: "غير محدد"
-  };
-  return labels[value] ?? value;
-}

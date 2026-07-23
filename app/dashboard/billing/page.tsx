@@ -5,6 +5,7 @@ import { getStatus } from "@/lib/modules/billing/quota";
 import { BillingStatusCard } from "@/components/billing/BillingStatusCard";
 import { Card, CardGrid, Hero, SectionTitle } from "@/components/ui/design-system";
 import { PRICING } from "@/config/pricing";
+import { roleLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +79,7 @@ export default async function BillingDashboardPage() {
           </div>
           <div className="flex justify-between gap-2 border-b border-[var(--ink-04)] py-2">
             <dt className="text-[var(--ink-60)]">الدور</dt>
-            <dd className="font-semibold text-[var(--navy)]">{user.role}</dd>
+            <dd className="font-semibold text-[var(--navy)]">{roleLabel(user.role)}</dd>
           </div>
           <div className="flex justify-between gap-2 border-b border-[var(--ink-04)] py-2">
             <dt className="text-[var(--ink-60)]">حالة الاشتراك</dt>

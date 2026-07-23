@@ -6,6 +6,7 @@ import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { buildArticleEli } from "@/lib/modules/legal-core/eli";
 import { buildFiqhCitation } from "@/lib/modules/legal-core/content-separation";
 import { getCoreSystemMeta, formatHijri } from "@/lib/modules/legal-core/core-systems";
+import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export function LegalCoreShell({ children }: { children: ReactNode }) {
   return <div className="min-h-screen rounded-[var(--r-2xl)] bg-[linear-gradient(180deg,var(--cream),var(--parchment))] text-[var(--ink)]">{children}</div>;
@@ -320,7 +321,7 @@ export function AmendmentsPanel({ amendments }: { amendments: ArticleAmendmentVi
                   <span className="font-mono-legal text-xs text-[var(--gold)]">الإصدار {a.version.toLocaleString("ar-SA")}</span>
                   <div className="flex flex-wrap gap-2">
                     <LegalTopicBadge tone={meta.tone}>{meta.label}</LegalTopicBadge>
-                    {a.reviewStatus !== "reviewed" ? <LegalTopicBadge tone="amber">بانتظار المراجعة</LegalTopicBadge> : null}
+                    {a.reviewStatus !== "reviewed" ? <LegalTopicBadge tone="amber">{reviewStatusLabel(a.reviewStatus)}</LegalTopicBadge> : null}
                   </div>
                 </div>
                 {a.decreeRef ? <p className="mt-2 font-mono-legal text-xs text-[var(--navy)]">{a.decreeRef}</p> : null}

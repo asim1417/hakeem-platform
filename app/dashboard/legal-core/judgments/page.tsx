@@ -5,6 +5,7 @@ import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibili
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
+import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -145,7 +146,7 @@ export default async function LegalCoreJudgmentsPage({
         <section className="grid gap-4 md:grid-cols-3">
           <LegalCoreStatCard label="الأحكام المطابقة" value={total} hint="وفق المرشحات الحالية" />
           <LegalCoreStatCard label="روابط المواد" value={totalLinks} hint="استشهادات مرتبطة بمواد نظامية" tone="emerald" />
-          <LegalCoreStatCard label="حالة المراجعة" value="needs_review" hint="روابط الأحكام تحتاج تدقيقًا قانونيًا" tone="amber" />
+          <LegalCoreStatCard label="حالة المراجعة" value={reviewStatusLabel("needs_review")} hint="روابط الأحكام تحتاج تدقيقًا قانونيًا" tone="amber" />
         </section>
 
         <form action="/dashboard/legal-core/judgments" className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
@@ -197,7 +198,7 @@ export default async function LegalCoreJudgmentsPage({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <LegalTopicBadge tone="amber">{judgment.reviewStatus}</LegalTopicBadge>
+                      <LegalTopicBadge tone="amber">{reviewStatusLabel(judgment.reviewStatus)}</LegalTopicBadge>
                       <LegalTopicBadge tone={judgment._count.articleLinks ? "emerald" : "gold"}>
                         {judgment._count.articleLinks.toLocaleString("ar-SA")} رابط مادة
                       </LegalTopicBadge>
