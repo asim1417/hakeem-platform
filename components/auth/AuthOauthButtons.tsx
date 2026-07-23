@@ -26,24 +26,40 @@ function AppleIcon() {
 export function AuthOauthButtons({
   mode,
   nextUrl = "/dashboard",
+  id,
+  className = "",
+  embedded = false,
 }: {
   mode: "sign-in" | "sign-up";
   nextUrl?: string;
+  id?: string;
+  className?: string;
+  /** داخل الصفحة الرئيسية — بلا رابط «العودة» وبلا انتقال لصفحة دخول منفصلة */
+  embedded?: boolean;
 }) {
   const isSignIn = mode === "sign-in";
   const googleHref = buildOAuthStartPath({ provider: "google", nextUrl, mode });
   const appleHref = buildOAuthStartPath({ provider: "apple", nextUrl, mode });
 
   return (
-    <div className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
+    <div
+      id={id}
+      className={`w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 shadow-[0_8px_30px_rgba(14,52,53,0.06)] ${className}`.trim()}
+    >
       <header className="text-center">
         <h2 className="text-[1.35rem] font-semibold leading-8 text-[#0E3435]">
-          {isSignIn ? "مرحبًا بعودتك إلى حكيم" : "إنشاء حساب في حكيم"}
+          {embedded
+            ? "سجّل الدخول إلى حكيم"
+            : isSignIn
+              ? "مرحبًا بعودتك إلى حكيم"
+              : "إنشاء حساب في حكيم"}
         </h2>
         <p className="mt-2 text-[0.95rem] leading-7 text-[rgba(14,52,53,0.68)]">
-          {isSignIn
-            ? "تابع أعمالك القانونية وتقاريرك وخدماتك الذكية من مكان واحد"
-            : "أنشئ حسابك عبر Google أو Apple وابدأ تجربتك في دقائق"}
+          {embedded
+            ? "المتابعة باستخدام Google أو Apple — للحساب الجديد والقائم"
+            : isSignIn
+              ? "تابع أعمالك القانونية وتقاريرك وخدماتك الذكية من مكان واحد"
+              : "أنشئ حسابك عبر Google أو Apple وابدأ تجربتك في دقائق"}
         </p>
       </header>
 
@@ -67,32 +83,44 @@ export function AuthOauthButtons({
       </div>
 
       <p className="mt-5 text-center text-xs leading-6 text-[rgba(14,52,53,0.55)]">
-        باستمرارك، فإنك توافق على شروط الاستخدام وسياسة الخصوصية.
-      </p>
-
-      <p className="mt-3 text-center text-sm">
-        <a href="/" className="font-semibold text-[rgba(14,52,53,0.65)] hover:text-[#0E3435]">
-          العودة إلى الصفحة الرئيسية
+        باستمرارك، فإنك توافق على{" "}
+        <a href="/terms" className="underline-offset-2 hover:underline">
+          شروط الاستخدام
+        </a>{" "}
+        و
+        <a href="/privacy" className="underline-offset-2 hover:underline">
+          سياسة الخصوصية
         </a>
+        .
       </p>
 
-      <p className="mt-4 text-center text-sm text-[rgba(14,52,53,0.6)]">
-        {isSignIn ? (
-          <>
-            مستخدم جديد؟{" "}
-            <a href="/sign-up" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
-              أنشئ حسابك
+      {!embedded ? (
+        <>
+          <p className="mt-3 text-center text-sm">
+            <a href="/" className="font-semibold text-[rgba(14,52,53,0.65)] hover:text-[#0E3435]">
+              العودة إلى الصفحة الرئيسية
             </a>
-          </>
-        ) : (
-          <>
-            لديك حساب؟{" "}
-            <a href="/sign-in" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
-              تسجيل الدخول
-            </a>
-          </>
-        )}
-      </p>
+          </p>
+
+          <p className="mt-4 text-center text-sm text-[rgba(14,52,53,0.6)]">
+            {isSignIn ? (
+              <>
+                مستخدم جديد؟{" "}
+                <a href="/sign-up" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                  أنشئ حسابك
+                </a>
+              </>
+            ) : (
+              <>
+                لديك حساب؟{" "}
+                <a href="/sign-in" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                  تسجيل الدخول
+                </a>
+              </>
+            )}
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }
