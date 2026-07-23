@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkAppearance, clerkLocalization } from "@/lib/modules/auth/clerk-config";
+import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
 
 const AFTER_AUTH = "/auth/continue";
 
@@ -29,21 +30,47 @@ export function ClerkAppProvider({
     : clerkAppearance;
 
   return (
-    <ClerkProvider
-      publishableKey={publishableKey}
-      appearance={appearance}
-      localization={clerkLocalization}
-      // مسار داخل التطبيق — بدونها Clerk يحوّل إلى Account Portal (accounts.dev)
-      // بعد OAuth ويفشل الدخول على النطاق الحيّ.
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      afterSignOutUrl="/sign-in"
-      signInFallbackRedirectUrl={AFTER_AUTH}
-      signUpFallbackRedirectUrl={AFTER_AUTH}
-      signInForceRedirectUrl={AFTER_AUTH}
-      signUpForceRedirectUrl={AFTER_AUTH}
+    <ClientErrorBoundary
+      fallback={
+        <div dir="rtl" className="grid min-h-[100dvh] place-items-center bg-[#EFF3F2] p-6 text-center">
+          <div className="max-w-md rounded-2xl border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-8">
+            <p className="text-xl font-bold text-[#0E3435]">حكيم</p>
+            <p className="mt-3 text-sm leading-7 text-[rgba(14,52,53,0.65)]">
+              تعذّر تحميل نظام الدخول على هذا الجهاز. حدّث الصفحة أو افتح الرابط مباشرة.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <a
+                href="/"
+                className="inline-flex min-h-[44px] items-center rounded-xl border border-[rgba(14,52,53,0.12)] bg-white px-4 text-sm font-semibold text-[#0E3435]"
+              >
+                الرئيسية
+              </a>
+              <a
+                href="/sign-in"
+                className="inline-flex min-h-[44px] items-center rounded-xl bg-[#0E3435] px-4 text-sm font-semibold text-[#FFFcf7]"
+              >
+                تسجيل الدخول
+              </a>
+            </div>
+          </div>
+        </div>
+      }
     >
-      {children}
-    </ClerkProvider>
+      <ClerkProvider
+        publishableKey={publishableKey}
+        appearance={appearance}
+        localization={clerkLocalization}
+        // مسار داخل التطبيق — بدونها Clerk يحوّل إلى Account Portal (accounts.dev)
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        afterSignOutUrl="/sign-in"
+        signInFallbackRedirectUrl={AFTER_AUTH}
+        signUpFallbackRedirectUrl={AFTER_AUTH}
+        signInForceRedirectUrl={AFTER_AUTH}
+        signUpForceRedirectUrl={AFTER_AUTH}
+      >
+        {children}
+      </ClerkProvider>
+    </ClientErrorBoundary>
   );
 }

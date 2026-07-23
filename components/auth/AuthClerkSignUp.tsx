@@ -6,6 +6,7 @@ import { clerkAppearance } from "@/lib/modules/auth/clerk-config";
 import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
 import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
 import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
+import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
 
 function SignUpSkeleton() {
   return (
@@ -66,6 +67,7 @@ export function AuthClerkSignUp({
   signInUrl?: string;
   nextUrl?: string;
 }) {
+  let body: React.ReactNode;
   if (isAuthGatewayUxV2Enabled()) {
     let resolved = nextUrl || "/dashboard";
     if (!nextUrl) {
@@ -77,8 +79,9 @@ export function AuthClerkSignUp({
         resolved = "/dashboard";
       }
     }
-    return <AuthOauthOnly mode="sign-up" nextUrl={resolved} />;
+    body = <AuthOauthOnly mode="sign-up" nextUrl={resolved} />;
+  } else {
+    body = <LegacyClerkSignUp forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />;
   }
-
-  return <LegacyClerkSignUp forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />;
+  return <ClientErrorBoundary>{body}</ClientErrorBoundary>;
 }

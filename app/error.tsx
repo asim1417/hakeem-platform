@@ -22,7 +22,12 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button onClick={reset} className="btn btn-gold">إعادة المحاولة</button>
-          <a href="/dashboard" className="btn btn-outline">العودة إلى الرئيسية</a>
+          <a href="/" className="btn btn-outline">
+            الصفحة الرئيسية
+          </a>
+          <a href="/sign-in" className="btn btn-outline">
+            تسجيل الدخول
+          </a>
         </div>
       </div>
     </div>
