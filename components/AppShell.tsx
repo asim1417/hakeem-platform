@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, FileText, FlaskConical, FolderClosed, Gavel, LayoutDashboard, Scale, Search, Settings } from "lucide-react";
+import { BookOpen, Bot, FileText, FolderClosed, Gavel, LayoutDashboard, Scale, Search, Settings } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
@@ -31,7 +31,7 @@ const baseNavItems: NavItem[] = [
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
   { href: "/documents", key: "nav.docPlatform", icon: FileText },
-  { href: "/dashboard/lab", key: "nav.lab", icon: FlaskConical },
+  { href: "/dashboard/agents", key: "nav.agents", icon: Bot },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
 ];
 

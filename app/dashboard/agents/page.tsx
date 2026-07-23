@@ -101,6 +101,13 @@ export default async function AgentsPage() {
         <h2 className="t-head mb-3 text-xl font-bold text-[var(--petrol)]">أداةٌ حيّة — حساب المهلة</h2>
         <DeadlineCalculator />
       </section>
+
+      {/* قدرات تجريبية أخرى — مخفيّةٌ داخل المختبر (الرسم المعرفيّ · RAG · التدريب). */}
+      <section className="mt-8">
+        <Link href="/dashboard/lab" className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]">
+          🧪 المختبر التجريبيّ — قدرات قيد التطوير (الرسم المعرفيّ · الذكاء القانونيّ RAG · التدريب) ←
+        </Link>
+      </section>
     </div>
   );
 }
