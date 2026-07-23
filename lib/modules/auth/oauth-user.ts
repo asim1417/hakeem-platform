@@ -54,25 +54,52 @@ export async function provisionOAuthUser(input: {
     input.name ||
     ((PLATFORM_OWNER_EMAILS as readonly string[]).includes(email) ? "عاصم الفارسي" : email.split("@")[0] || "مستخدم");
 
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: {
-      isActive: true,
-      role,
-      ...(input.name ? { name: input.name } : {}),
-      ...(username && !existing?.username ? { username } : {}),
-    },
-    create: {
-      name: displayName,
-      email,
-      username,
-      // مستخدم OAuth بلا كلمة مرور: قيمة غير صالحة كـ bcrypt فيتعذّر الدخول بكلمة مرور.
-      passwordHash: `oauth-${input.provider}:no-password`,
-      role,
-      isActive: true,
-    },
-    select: { id: true, name: true, email: true, role: true, isActive: true },
-  });
+  let user;
+  try {
+    user = await prisma.user.upsert({
+      where: { email },
+      update: {
+        isActive: true,
+        role,
+        ...(input.name ? { name: input.name } : {}),
+        ...(username && !existing?.username ? { username } : {}),
+      },
+      create: {
+        name: displayName,
+        email,
+        username,
+        // مستخدم OAuth بلا كلمة مرور: قيمة غير صالحة كـ bcrypt فيتعذّر الدخول بكلمة مرور.
+        passwordHash: `oauth-${input.provider}:no-password`,
+        role,
+        isActive: true,
+      },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
+    });
+  } catch (err) {
+    // إن لم تُطبَّق هجرة SUPER_ADMIN بعد — لا تمنع دخول المالك.
+    if (isOwner && role === "SUPER_ADMIN") {
+      user = await prisma.user.upsert({
+        where: { email },
+        update: {
+          isActive: true,
+          role: "SYSTEM_ADMIN",
+          ...(input.name ? { name: input.name } : {}),
+          ...(username && !existing?.username ? { username } : {}),
+        },
+        create: {
+          name: displayName,
+          email,
+          username,
+          passwordHash: `oauth-${input.provider}:no-password`,
+          role: "SYSTEM_ADMIN",
+          isActive: true,
+        },
+        select: { id: true, name: true, email: true, role: true, isActive: true },
+      });
+    } else {
+      throw err;
+    }
+  }
 
   await createLoginSession(user);
 
