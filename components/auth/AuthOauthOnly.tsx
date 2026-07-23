@@ -6,6 +6,7 @@ import { useSignIn, useSignUp, useClerk } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/types";
 
 import { continueUrl as sharedContinueUrl } from "@/lib/modules/auth/safe-next";
+import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -65,11 +66,59 @@ function AuthCardSkeleton({ label }: { label: string }) {
   );
 }
 
+function AuthLoadFailed({ isSignIn }: { isSignIn: boolean }) {
+  return (
+    <div className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
+      <p className="text-sm font-semibold text-[#0E3435]">تعذّر تحميل بوابة الدخول</p>
+      <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">
+        الشبكة أو الجلسة لم تكتمل على هذا الجهاز. حدّث الصفحة أو جرّب متصفحًا آخر.
+      </p>
+      <button
+        type="button"
+        className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] bg-[#0E3435] px-5 text-sm font-semibold text-[#FFFcf7]"
+        onClick={() => window.location.reload()}
+      >
+        تحديث الصفحة
+      </button>
+      <p className="mt-3">
+        <Link href="/" className="text-sm font-semibold text-[rgba(14,52,53,0.65)]">
+          العودة إلى الرئيسية
+        </Link>
+      </p>
+      <p className="mt-2 text-xs text-[rgba(14,52,53,0.45)]">
+        {isSignIn ? "بوابة الدخول الموحّدة: /sign-in" : "بوابة التسجيل الموحّدة: /sign-up"}
+      </p>
+    </div>
+  );
+}
+
 /**
- * بطاقة دخول/تسجيل مخصّصة — Google وApple فقط.
- * لا تستخدم مكوّن Clerk الجاهز حتى لا يظهر حقل البريد المضلل.
+ * غلاف آمن: لا يستدعي hooks قبل تركيب Clerk على العميل.
  */
-export function AuthOauthOnly({
+export function AuthOauthOnly(props: { mode: AuthMode; nextUrl?: string }) {
+  const mounted = useClerkMounted();
+  const [waited, setWaited] = useState(false);
+  const isSignIn = props.mode === "sign-in";
+
+  useEffect(() => {
+    if (mounted) return;
+    const id = window.setTimeout(() => setWaited(true), 10000);
+    return () => window.clearTimeout(id);
+  }, [mounted]);
+
+  if (!mounted) {
+    if (waited) return <AuthLoadFailed isSignIn={isSignIn} />;
+    return (
+      <AuthCardSkeleton
+        label={isSignIn ? "جارٍ تحميل تسجيل الدخول…" : "جارٍ تحميل إنشاء الحساب…"}
+      />
+    );
+  }
+
+  return <AuthOauthOnlyInner {...props} />;
+}
+
+function AuthOauthOnlyInner({
   mode,
   nextUrl = "/dashboard",
 }: {
@@ -98,7 +147,6 @@ export function AuthOauthOnly({
     setError("");
     setBusy(strategy);
     try {
-      // عناوين مطلقة — تمنع عودة OAuth إلى نطاق Clerk (accounts.dev) بدل التطبيق.
       const origin = window.location.origin;
       const redirectUrl = `${origin}/sso-callback`;
       const redirectUrlComplete = afterAuth.startsWith("http")
@@ -132,28 +180,7 @@ export function AuthOauthOnly({
   }
 
   if (!ready) {
-    if (loadTimedOut) {
-      return (
-        <div className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
-          <p className="text-sm font-semibold text-[#0E3435]">تعذّر تحميل بوابة الدخول</p>
-          <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">
-            الشبكة أو الجلسة لم تكتمل على هذا الجهاز. حدّث الصفحة أو جرّب متصفحًا آخر.
-          </p>
-          <button
-            type="button"
-            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] bg-[#0E3435] px-5 text-sm font-semibold text-[#FFFcf7]"
-            onClick={() => window.location.reload()}
-          >
-            تحديث الصفحة
-          </button>
-          <p className="mt-3">
-            <Link href="/" className="text-sm font-semibold text-[rgba(14,52,53,0.65)]">
-              العودة إلى الرئيسية
-            </Link>
-          </p>
-        </div>
-      );
-    }
+    if (loadTimedOut) return <AuthLoadFailed isSignIn={isSignIn} />;
     return (
       <AuthCardSkeleton
         label={isSignIn ? "جارٍ تحميل تسجيل الدخول…" : "جارٍ تحميل إنشاء الحساب…"}
@@ -205,8 +232,8 @@ export function AuthOauthOnly({
       ) : null}
 
       <p className="mt-5 text-center text-xs leading-6 text-[rgba(14,52,53,0.55)]">
-        لا يتوفر الدخول بالبريد الإلكتروني. استخدم Google أو Apple للمتابعة.
-        بياناتك محمية وفق سياسة الخصوصية.
+        لا يتوفر الدخول بالبريد الإلكتروني. استخدم Google أو Apple للمتابعة. بياناتك محمية وفق
+        سياسة الخصوصية.
       </p>
 
       <p className="mt-3 text-center text-sm">

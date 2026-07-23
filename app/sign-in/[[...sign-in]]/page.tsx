@@ -2,19 +2,20 @@ import Link from "next/link";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { AuthClerkSignIn } from "@/components/auth/AuthClerkSignIn";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
-import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
+import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 
 export const metadata = {
   title: "تسجيل الدخول — حكيم",
 };
 
+/** بوابة الدخول الموحّدة للمنصة — المسار المعتمد /sign-in */
 export default function SignInPage({
   searchParams,
 }: {
-  searchParams?: { next?: string };
+  searchParams?: { next?: string; returnUrl?: string };
 }) {
   const configured = isClerkConfigured();
-  const nextUrl = safeDashboardNext(searchParams?.next);
+  const nextUrl = resolvePostAuthNext(searchParams);
 
   return (
     <AuthJourneyShell

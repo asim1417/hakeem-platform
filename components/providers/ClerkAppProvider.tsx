@@ -1,22 +1,80 @@
 "use client";
 
-import { ClerkProvider } from "@clerk/nextjs";
-import { clerkAppearance, clerkLocalization } from "@/lib/modules/auth/clerk-config";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
+import { clerkAppearance, clerkLocalization } from "@/lib/modules/auth/clerk-config";
 
 const AFTER_AUTH = "/auth/continue";
 
-/** يغلّف التطبيق بـ Clerk — عربية + هوية حكيم. */
+/** هل رُكِّب ClerkProvider على العميل؟ الصفحة العامة تعمل بدونه. */
+const ClerkMountContext = createContext(false);
+
+export function useClerkMounted(): boolean {
+  return useContext(ClerkMountContext);
+}
+
+type ClerkProviderProps = {
+  publishableKey: string;
+  appearance: unknown;
+  localization: unknown;
+  signInUrl: string;
+  signUpUrl: string;
+  afterSignOutUrl: string;
+  signInFallbackRedirectUrl: string;
+  signUpFallbackRedirectUrl: string;
+  telemetry: boolean;
+  children: ReactNode;
+};
+
+/**
+ * Clerk يُحمَّل على العميل فقط بعد أول رسم.
+ * هذا يمنع سقوط الصفحة الرئيسية على iOS (SSR/hydration + pk_test_).
+ */
 export function ClerkAppProvider({
   children,
   publishableKey,
   hideDevelopmentMode = false,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   publishableKey?: string;
   hideDevelopmentMode?: boolean;
 }) {
-  if (!publishableKey) return <>{children}</>;
+  const [ClerkProvider, setClerkProvider] = useState<ComponentType<ClerkProviderProps> | null>(
+    null
+  );
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!publishableKey) return;
+    let cancelled = false;
+    import("@clerk/nextjs")
+      .then((mod) => {
+        if (cancelled) return;
+        setClerkProvider(() => mod.ClerkProvider as ComponentType<ClerkProviderProps>);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [publishableKey]);
+
+  if (!publishableKey) {
+    return <ClerkMountContext.Provider value={false}>{children}</ClerkMountContext.Provider>;
+  }
+
+  // أول رسم + SSR: بدون Clerk — الرئيسية وHTML الثابت يبقيان ظاهرين
+  if (!ClerkProvider || failed) {
+    return <ClerkMountContext.Provider value={false}>{children}</ClerkMountContext.Provider>;
+  }
 
   const appearance = hideDevelopmentMode
     ? {
@@ -28,33 +86,9 @@ export function ClerkAppProvider({
       }
     : clerkAppearance;
 
-  // نستخدم fallback فقط (لا force) لتقليل حلقات التحويل على iOS Safari مع pk_test_
   return (
     <ClientErrorBoundary
-      fallback={
-        <div dir="rtl" className="grid min-h-[100dvh] place-items-center bg-[#EFF3F2] p-6 text-center">
-          <div className="max-w-md rounded-2xl border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-8">
-            <p className="text-xl font-bold text-[#0E3435]">حكيم</p>
-            <p className="mt-3 text-sm leading-7 text-[rgba(14,52,53,0.65)]">
-              تعذّر تحميل نظام الدخول على هذا الجهاز. حدّث الصفحة أو افتح الرابط مباشرة.
-            </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <a
-                href="/"
-                className="inline-flex min-h-[44px] items-center rounded-xl border border-[rgba(14,52,53,0.12)] bg-white px-4 text-sm font-semibold text-[#0E3435]"
-              >
-                الرئيسية
-              </a>
-              <a
-                href="/sign-in"
-                className="inline-flex min-h-[44px] items-center rounded-xl bg-[#0E3435] px-4 text-sm font-semibold text-[#FFFcf7]"
-              >
-                تسجيل الدخول
-              </a>
-            </div>
-          </div>
-        </div>
-      }
+      fallback={<ClerkMountContext.Provider value={false}>{children}</ClerkMountContext.Provider>}
     >
       <ClerkProvider
         publishableKey={publishableKey}
@@ -62,12 +96,12 @@ export function ClerkAppProvider({
         localization={clerkLocalization}
         signInUrl="/sign-in"
         signUpUrl="/sign-up"
-        afterSignOutUrl="/sign-in"
+        afterSignOutUrl="/"
         signInFallbackRedirectUrl={AFTER_AUTH}
         signUpFallbackRedirectUrl={AFTER_AUTH}
         telemetry={false}
       >
-        {children}
+        <ClerkMountContext.Provider value={true}>{children}</ClerkMountContext.Provider>
       </ClerkProvider>
     </ClientErrorBoundary>
   );
