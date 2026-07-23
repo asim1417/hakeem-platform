@@ -1,6 +1,6 @@
 /**
- * بدء OAuth عبر Clerk Frontend API من الخادم — بلا JavaScript على جهاز المستخدم.
- * يعمل مع pk_test_ و cookieless_dev حيث يتعثّر Clerk React على Safari/iPhone.
+ * بدء OAuth عبر Clerk — يفضّل Account Portal SSO (موثوق مع pk_test_/Safari)،
+ * مع احتياطي FAPI + كوكي __clerk_db_jwt لربط العميل بالمتصفح.
  */
 export type ClerkOAuthProvider = "google" | "apple";
 
@@ -34,15 +34,53 @@ type FapiSignInResponse = {
   errors?: Array<{ code?: string; message?: string }>;
 };
 
-/** يطلب من Clerk رابط Google/Apple ويعيده. */
+export type ClerkOAuthStartResult = {
+  /** رابط إعادة التوجيه النهائي (Portal أو Google/Apple) */
+  redirectTo: string;
+  /** JWT متصفح التطوير — يُضبط كوكي __clerk_db_jwt قبل المغادرة */
+  devBrowserJwt?: string;
+};
+
+/**
+ * المسار الأساسي: Account Portal /sign-in/sso?strategy=...
+ * Clerk JS يعمل على نطاق Clerk فيكتمل handshake عند العودة للمنصة.
+ */
+export function buildClerkPortalSsoUrl(opts: {
+  provider: ClerkOAuthProvider;
+  redirectUrlComplete: string;
+  publishableKey?: string;
+}): string | null {
+  const pk = (opts.publishableKey ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "").trim();
+  const fapi = decodeClerkFrontendApiHost(pk);
+  if (!fapi) return null;
+  const portal = clerkAccountPortalOrigin(fapi);
+  const url = new URL(`${portal}/sign-in/sso`);
+  url.searchParams.set("strategy", strategyFor(opts.provider));
+  url.searchParams.set("redirect_url", opts.redirectUrlComplete);
+  return url.toString();
+}
+
+/**
+ * احتياطي: إنشاء client + sign_in على FAPI مع JWT لربطه بالمتصفح.
+ */
 export async function fetchClerkOAuthAuthorizeUrl(opts: {
   provider: ClerkOAuthProvider;
   redirectUrl: string;
   redirectUrlComplete: string;
-}): Promise<string> {
+}): Promise<ClerkOAuthStartResult> {
   const pk = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
   const fapi = decodeClerkFrontendApiHost(pk);
   if (!fapi) throw new Error("invalid_publishable_key");
+
+  const clientRes = await fetch(`https://${fapi}/v1/client?_clerk_js_version=5.61.0`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "",
+    signal: AbortSignal.timeout(10000),
+    cache: "no-store",
+  });
+  if (!clientRes.ok) throw new Error("clerk_client_failed");
+  const devBrowserJwt = (clientRes.headers.get("authorization") || "").trim() || undefined;
 
   const body = new URLSearchParams({
     strategy: strategyFor(opts.provider),
@@ -50,9 +88,14 @@ export async function fetchClerkOAuthAuthorizeUrl(opts: {
     action_complete_redirect_url: opts.redirectUrlComplete,
   });
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+  if (devBrowserJwt) headers.Authorization = devBrowserJwt;
+
   const res = await fetch(`https://${fapi}/v1/client/sign_ins?_clerk_js_version=5.61.0`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers,
     body,
     signal: AbortSignal.timeout(10000),
     cache: "no-store",
@@ -64,7 +107,7 @@ export async function fetchClerkOAuthAuthorizeUrl(opts: {
     const code = data?.errors?.[0]?.code || "oauth_start_failed";
     throw new Error(code);
   }
-  return url;
+  return { redirectTo: url, devBrowserJwt };
 }
 
 export function buildOAuthStartPath(opts: {

@@ -126,7 +126,7 @@ function SsoMessage({
       <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">{body}</p>
       {showSignIn ? (
         <Link
-          href="/sign-in"
+          href="/#login"
           className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] bg-[#0E3435] px-5 text-sm font-semibold text-[#FFFcf7] hover:bg-[#164849]"
         >
           العودة لتسجيل الدخول
