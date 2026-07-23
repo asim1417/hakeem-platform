@@ -18,6 +18,7 @@ import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 import { getAgentMode } from "@/lib/modules/agents/modes";
 import { synthesizeWithMode } from "@/lib/modules/agents/mode-synthesis";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
+import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -65,10 +66,22 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // مهمّةٌ خلفيّة قابلةٌ للاستئناف (يُكمل الخادم البحث ويحفظ نتيجته حتى لو غادر العميل).
+  const jobId = await createJob(user.id, "hakeem-ask", typed.slice(0, 120) || "تحليل مستند").catch(() => null);
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+      let clientGone = false;
+      const send = (obj: unknown) => {
+        // «اسأل حكيم» يبثّ خطواتٍ ثمّ «result» واحدًا؛ نحفظ النتيجة كاملةً عند إرسالها.
+        const e = obj as { type?: string };
+        if (jobId && e?.type === "result") void updateJob(jobId, { text: "", meta: { result: obj }, status: "done" });
+        if (jobId && e?.type === "error") void updateJob(jobId, { status: "error" });
+        if (clientGone) return;
+        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n")); } catch { clientGone = true; }
+      };
+      if (jobId) send({ type: "job", jobId });
       // حصّة أولًا ثم نقاط: خصم الحصّة مرّة بعد النجاح؛ النقاط تُخصم عند البوابة إن لزم.
       let accessVia: "quota" | "credits" | "open" = "quota";
       let consumed = false;
@@ -324,7 +337,7 @@ export async function POST(request: NextRequest) {
         console.error("[agent-search] Error:", error);
         send({ type: "error", message: "تعذّر تنفيذ البحث الوكيلي حاليًا." });
       } finally {
-        controller.close();
+        try { controller.close(); } catch { /* أُغلق مسبقًا (غادر العميل) */ }
       }
     }
   });
