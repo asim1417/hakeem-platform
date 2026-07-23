@@ -1,7 +1,6 @@
 import { HomeAuthActions } from "@/components/home/HomeAuthActions";
-import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
-import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { buildOAuthStartPath } from "@/lib/modules/auth/clerk-oauth-start";
+import { hasAnySignInProvider } from "@/lib/modules/auth/auth-providers";
+import { signUpWithNext } from "@/lib/modules/auth/safe-next";
 
 const FEATURES = [
   {
@@ -22,11 +21,11 @@ const FEATURES = [
 ] as const;
 
 /**
- * الصفحة الرئيسية — لوحة الدخول مضمّنة هنا (بلا انتقال إلى /sign-in).
- * أزرار Google/Apple عبر SSR → /api/auth/oauth/start (بلا Clerk JS على الجهاز).
+ * الصفحة الرئيسية العامة — بلا Clerk وبلا OAuth.
+ * زر «تسجيل الدخول» ينتقل إلى بوابة `/sign-in` الموحّدة.
  */
 export function HomeHero() {
-  const clerkReady = isClerkConfigured();
+  const authReady = hasAnySignInProvider();
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden bg-[var(--hakeem-bg)]">
@@ -52,12 +51,20 @@ export function HomeHero() {
 
         <HomeAuthActions
           guest={
-            <a
-              href="#login"
-              className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
-            >
-              تسجيل الدخول
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href="/sign-in"
+                className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
+              >
+                تسجيل الدخول
+              </a>
+              <a
+                href="/sign-up"
+                className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                سجّل مجانًا
+              </a>
+            </div>
           }
           user={
             <a
@@ -70,7 +77,7 @@ export function HomeHero() {
         />
       </header>
 
-      <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[5vh] pb-16 text-center">
+      <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[7vh] pb-16 text-center">
         <p className="mb-4 font-judicial text-sm font-semibold text-[var(--gold-dark)]">حكيم</p>
         <h1 className="font-judicial text-4xl font-bold leading-tight text-[var(--navy)] md:text-6xl">
           رفيق المحامي في القاعة
@@ -81,17 +88,19 @@ export function HomeHero() {
 
         <HomeAuthActions
           guest={
-            <div className="mt-8 flex w-full flex-col items-center">
-              {clerkReady ? (
-                <AuthOauthButtons mode="sign-in" nextUrl="/dashboard" id="login" embedded />
-              ) : (
-                <div
-                  id="login"
-                  className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 text-center"
-                >
-                  <p className="font-semibold text-[#0E3435]">تسجيل الدخول غير متاح مؤقتًا</p>
-                </div>
-              )}
+            <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+              <a
+                href={authReady ? "/sign-up" : "/sign-in"}
+                className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--sh-sm)] transition hover:bg-[var(--navy-mid)]"
+              >
+                ابدأ مجانًا
+              </a>
+              <a
+                href="/sign-in"
+                className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]"
+              >
+                تسجيل الدخول
+              </a>
             </div>
           }
           user={
@@ -112,25 +121,21 @@ export function HomeHero() {
           }
         />
 
+        <p className="mt-4 text-sm text-[var(--ink-40)]">
+          بوابة دخول موحّدة — اختر Google من صفحة الدخول الآمنة.
+        </p>
+
         <ul className="mt-12 grid w-full gap-3 text-right sm:grid-cols-3">
           {FEATURES.map((f) => (
             <li key={f.title}>
               <a
-                href={
-                  clerkReady
-                    ? buildOAuthStartPath({
-                        provider: "google",
-                        nextUrl: f.next,
-                        mode: "sign-up",
-                      })
-                    : "#login"
-                }
+                href={signUpWithNext(f.next)}
                 className="focus-ring block w-full rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/90 px-4 py-4 text-start transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
               >
                 <p className="font-semibold text-[var(--navy)]">{f.title}</p>
                 <p className="mt-1 text-xs leading-6 text-[var(--ink-60)]">{f.desc}</p>
                 <p className="mt-2 text-[11px] font-semibold text-[var(--gold-dark)]">
-                  ادخل للمتابعة ←
+                  سجّل للمتابعة ←
                 </p>
               </a>
             </li>

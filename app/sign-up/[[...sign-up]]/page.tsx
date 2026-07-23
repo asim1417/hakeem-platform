@@ -1,20 +1,28 @@
 import Link from "next/link";
-import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import {
+  hasAnySignInProvider,
+  listVisibleAuthProviders,
+} from "@/lib/modules/auth/auth-providers";
 import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
-import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
+import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
+import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
 export const metadata = {
   title: "إنشاء حساب — حكيم",
 };
 
-export default function SignUpPage({
+/** بوابة التسجيل الموحّدة — /sign-up. */
+export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams?: { next?: string };
+  searchParams?: { next?: string; returnUrl?: string; ref?: string };
 }) {
-  const configured = isClerkConfigured();
-  const nextUrl = safeDashboardNext(searchParams?.next);
+  await hydrateEnvFromSettings().catch(() => 0);
+
+  const ready = hasAnySignInProvider();
+  const nextUrl = resolvePostAuthNext(searchParams);
+  const visibleProviders = listVisibleAuthProviders();
 
   return (
     <AuthJourneyShell
@@ -30,16 +38,25 @@ export default function SignUpPage({
         </nav>
       }
     >
-      {configured ? (
-        <AuthOauthButtons mode="sign-up" nextUrl={nextUrl} />
+      {ready ? (
+        <AuthOauthButtons
+          mode="sign-up"
+          nextUrl={nextUrl}
+          visibleProviders={visibleProviders}
+        />
       ) : (
         <div
-          className="w-full rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 py-5 text-center text-sm leading-7 text-[#0E3435]"
+          className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 py-5 text-center text-sm leading-7 text-[#0E3435]"
           role="status"
         >
           <p className="font-semibold">إنشاء الحساب غير متاح مؤقتًا</p>
           <p className="mt-2 text-[rgba(14,52,53,0.68)]">
-            يرجى المحاولة لاحقًا أو التواصل مع مسؤول المنصة.
+            تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية.
+          </p>
+          <p className="mt-4">
+            <Link href="/" className="font-semibold text-[#8B6914]">
+              العودة إلى الصفحة الرئيسية
+            </Link>
           </p>
         </div>
       )}

@@ -28,6 +28,8 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/terms(.*)",
   "/legal(.*)",
   "/api/auth/oauth/start(.*)",
+  "/api/auth/google(.*)",
+  "/api/auth/callback/google(.*)",
   "/api/auth/me(.*)",
   "/api/auth/providers(.*)",
 ]);

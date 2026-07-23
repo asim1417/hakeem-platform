@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 
 /**
  * بعد العودة من OAuth قد تتأخر الكوكيز/الـ handshake لحظات على Safari.
- * نعيد المحاولة قبل إظهار رسالة الفشل، ونوجّه للرئيسية (#login) لا لصفحة منفصلة.
+ * نعيد المحاولة قبل إظهار رسالة الفشل، ونوجّه لبوابة /sign-in الموحّدة.
  */
 export function AuthContinueClient({ nextPath }: { nextPath: string }) {
   const [status, setStatus] = useState<"wait" | "fail">("wait");
-  const loginHref = "/#login";
+  const signInHref = `/sign-in?next=${encodeURIComponent(nextPath)}`;
   const continueHref = `/auth/continue?next=${encodeURIComponent(nextPath)}`;
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function AuthContinueClient({ nextPath }: { nextPath: string }) {
           className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#0E3435]/20 border-t-[#0E3435]"
           aria-hidden
         />
-        <p className="mt-4 text-sm font-semibold text-[#0E3435]">جارٍ إكمال جلسة الدخول…</p>
+        <p className="mt-4 text-sm font-semibold text-[#0E3435]">جارٍ تحويلك بأمان…</p>
         <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">لا تغلق هذه النافذة.</p>
       </div>
     );
@@ -64,20 +64,20 @@ export function AuthContinueClient({ nextPath }: { nextPath: string }) {
     <div className="w-full max-w-sm rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-8 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
       <p className="text-lg font-bold text-[#0E3435]">حكيم</p>
       <p className="mt-3 text-sm leading-7 text-[rgba(14,52,53,0.65)]">
-        لم تكتمل جلسة الدخول بعد. أعد المحاولة من لوحة الدخول في الصفحة الرئيسية.
+        تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية.
       </p>
       <div className="mt-5 flex flex-col gap-2">
         <a
-          href={loginHref}
+          href={continueHref}
           className="inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] bg-[#0E3435] px-5 text-sm font-semibold text-[#FFFcf7]"
         >
-          العودة لتسجيل الدخول
+          إعادة المحاولة
         </a>
         <a
-          href={continueHref}
+          href={signInHref}
           className="inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-5 text-sm font-semibold text-[#0E3435]"
         >
-          إعادة المحاولة
+          العودة لتسجيل الدخول
         </a>
         <a
           href="/"

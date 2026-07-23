@@ -12,9 +12,11 @@ export function AuthGatewayFailCard({
 }) {
   return (
     <div className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
-      <p className="text-sm font-semibold text-[#0E3435]">تعذّر تحميل بوابة الدخول</p>
+      <p className="text-sm font-semibold text-[#0E3435]">
+        تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية.
+      </p>
       <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">
-        لم تكتمل خدمة تسجيل الدخول. أعد المحاولة، أو عد إلى الصفحة الرئيسية.
+        لم تكتمل خدمة تسجيل الدخول. يمكنك إعادة المحاولة دون مسح بيانات الجهاز.
       </p>
       <button
         type="button"

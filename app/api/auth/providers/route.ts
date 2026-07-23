@@ -1,14 +1,26 @@
 import { NextResponse } from "next/server";
-import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
+import {
+  isAppleSignInAvailable,
+  isGoogleSignInAvailable,
+  listVisibleAuthProviders,
+  isAuthLaunchReady,
+} from "@/lib/modules/auth/auth-providers";
 import { isMicrosoftOAuthConfigured } from "@/lib/modules/auth/microsoft-oauth";
+import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/auth/providers — يُعلِم الواجهة بالمزوّدين المُفعّلين (بدون كشف أسرار). */
+/** GET /api/auth/providers — الوسائل الظاهرة فعليًا (بدون كشف أسرار). */
 export async function GET() {
+  await hydrateEnvFromSettings().catch(() => 0);
+
   return NextResponse.json({
-    google: isGoogleOAuthConfigured(),
+    google: isGoogleSignInAvailable(),
+    apple: isAppleSignInAvailable(),
     microsoft: isMicrosoftOAuthConfigured(),
-    password: true,
+    /** كلمة المرور ليست بوابة عامة — تبقى للحقول الداخلية القديمة فقط. */
+    password: false,
+    providers: listVisibleAuthProviders(),
+    launchReady: isAuthLaunchReady(),
   });
 }

@@ -43,12 +43,12 @@ assert.ok(signInPage.includes("AuthOauthButtons"));
 
 const buttons = fs.readFileSync(path.join(root, "components/auth/AuthOauthButtons.tsx"), "utf8");
 assert.ok(buttons.includes("المتابعة باستخدام Google"));
-assert.ok(buttons.includes("/api/auth/oauth/start"));
+assert.ok(buttons.includes("/api/auth/google") || buttons.includes("buildOAuthStartPath"));
 assert.equal(buttons.includes("@clerk/nextjs"), false);
 
 const api = fs.readFileSync(path.join(root, "app/api/auth/oauth/start/route.ts"), "utf8");
-assert.ok(api.includes("buildClerkPortalSsoUrl"));
-assert.ok(api.includes("__clerk_db_jwt"));
+assert.ok(api.includes("buildClerkPortalSsoUrl") || api.includes("/api/auth/google"));
+assert.ok(api.includes("getGoogleOAuthConfig"));
 
 const continuePage = fs.readFileSync(path.join(root, "app/auth/continue/page.tsx"), "utf8");
 assert.ok(continuePage.includes("AuthContinueClient"));
@@ -57,7 +57,9 @@ const continueClient = fs.readFileSync(
   path.join(root, "components/auth/AuthContinueClient.tsx"),
   "utf8"
 );
-assert.ok(continueClient.includes("/#login"));
+assert.ok(continueClient.includes("/sign-in"));
+assert.ok(continueClient.includes("جارٍ تحويلك بأمان"));
 assert.ok(continueClient.includes("/api/auth/me"));
+assert.equal(continueClient.includes("/#login"), false);
 
 console.log("test-ssr-oauth-start: OK");

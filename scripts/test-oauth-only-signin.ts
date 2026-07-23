@@ -7,6 +7,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { isAuthGatewayUxV2Enabled } from "../lib/modules/config/auth-gateway";
 import { safeDashboardNext, continueUrl, signUpWithNext } from "../lib/modules/auth/safe-next";
+import {
+  isAppleAuthEnabled,
+  listVisibleAuthProviders,
+} from "../lib/modules/auth/auth-providers";
 
 const root = process.cwd();
 
@@ -23,10 +27,16 @@ assert.equal(safeDashboardNext("/documents"), "/documents");
 assert.equal(continueUrl("/dashboard/ask"), "/auth/continue?next=%2Fdashboard%2Fask");
 assert.ok(signUpWithNext("/dashboard/ask").includes("next="));
 
+assert.equal(isAppleAuthEnabled(), false);
+delete process.env.AUTH_APPLE_ENABLED;
+delete process.env.NEXT_PUBLIC_AUTH_APPLE_ENABLED;
+assert.equal(listVisibleAuthProviders().includes("apple"), false);
+
 const buttons = fs.readFileSync(path.join(root, "components/auth/AuthOauthButtons.tsx"), "utf8");
-assert.ok(buttons.includes("oauth") || buttons.includes("/api/auth/oauth/start"));
+assert.ok(buttons.includes("oauth") || buttons.includes("/api/auth/oauth/start") || buttons.includes("buildOAuthStartPath"));
 assert.ok(buttons.includes("المتابعة باستخدام Google"));
 assert.ok(buttons.includes("المتابعة باستخدام Apple"));
+assert.ok(buttons.includes("showApple"));
 assert.equal(buttons.includes('from "@clerk/nextjs"'), false);
 
 const api = fs.readFileSync(path.join(root, "app/api/auth/oauth/start/route.ts"), "utf8");
@@ -68,11 +78,10 @@ assert.ok(csp.includes("accounts.google.com"));
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes("تخطّي إلى الدخول"), false);
-assert.ok(home.includes("AuthOauthButtons"));
+assert.equal(home.includes("AuthOauthButtons"), false);
 assert.ok(home.includes("HomeAuthActions"));
-assert.ok(home.includes("embedded"));
+assert.ok(home.includes('href="/sign-in"'));
 assert.equal(home.includes('"use client"'), false);
-assert.equal(home.includes('href="/sign-in"'), false);
 
 const dash = fs.readFileSync(path.join(root, "app/dashboard/page.tsx"), "utf8");
 assert.ok(dash.includes("isNewUser"));
