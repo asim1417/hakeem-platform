@@ -121,8 +121,14 @@ async function resolveClerkUser(): Promise<SafeUser | null> {
   });
 }
 
-/** Clerk أولًا إن وُجد، ثم جلسة المالك الطارئة (hakeem_session). */
+/**
+ * جلسة أولى الطرف (hakeem_session) أولًا — مسار Google الأصلي ومالك المنصة.
+ * ثم Clerk إن وُجد. هذا يمنع فشل مزامنة Clerk من حجب دخول المالك بعد OAuth ناجح.
+ */
 export async function getCurrentUser(): Promise<SafeUser | null> {
+  const fromCookie = await userFromOwnerCookie(cookies().get(cookieName)?.value).catch(() => null);
+  if (fromCookie) return fromCookie;
+
   if (isClerkConfigured()) {
     try {
       const user = await resolveClerkUser();
@@ -131,9 +137,6 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
       /* */
     }
   }
-
-  const fromCookie = await userFromOwnerCookie(cookies().get(cookieName)?.value).catch(() => null);
-  if (fromCookie) return fromCookie;
 
   if (isAuthDisabled()) return getGuestUser();
   return null;
@@ -153,6 +156,10 @@ export async function requirePagePermission(permission: Permission) {
 }
 
 export async function getApiUser(request?: NextRequest) {
+  const cookieValue = request?.cookies.get(cookieName)?.value ?? cookies().get(cookieName)?.value;
+  const fromCookie = await userFromOwnerCookie(cookieValue).catch(() => null);
+  if (fromCookie) return fromCookie;
+
   if (isClerkConfigured()) {
     try {
       const user = await resolveClerkUser();
@@ -161,9 +168,6 @@ export async function getApiUser(request?: NextRequest) {
       /* */
     }
   }
-  const cookieValue = request?.cookies.get(cookieName)?.value ?? cookies().get(cookieName)?.value;
-  const fromCookie = await userFromOwnerCookie(cookieValue).catch(() => null);
-  if (fromCookie) return fromCookie;
   if (isAuthDisabled()) return getGuestUser();
   return null;
 }

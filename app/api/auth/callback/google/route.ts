@@ -22,7 +22,9 @@ export async function GET(request: NextRequest) {
 
   const cfg = getGoogleOAuthConfig();
   const fail = (reason: string) =>
-    NextResponse.redirect(new URL(`/?login_error=${encodeURIComponent(reason)}#login`, request.url));
+    NextResponse.redirect(
+      new URL(`/sign-in?login_error=${encodeURIComponent(reason)}`, request.url)
+    );
 
   if (!cfg) return fail("google_not_configured");
 

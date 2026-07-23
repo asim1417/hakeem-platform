@@ -12,9 +12,10 @@ const establish = fs.readFileSync(
   path.join(root, "lib/modules/auth/establish-session.ts"),
   "utf8"
 );
-assert.ok(establish.includes("createLoginSession"));
+assert.ok(establish.includes("provisionOAuthUser"));
 assert.ok(establish.includes("ensureLocalUserFromClerk"));
 assert.ok(establish.includes("__session"));
+assert.ok(establish.indexOf("provisionOAuthUser") < establish.indexOf("ensureLocalUserFromClerk"));
 
 const googleStart = fs.readFileSync(path.join(root, "app/api/auth/google/route.ts"), "utf8");
 assert.ok(googleStart.includes("buildGoogleAuthUrl"));
