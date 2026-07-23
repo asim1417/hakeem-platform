@@ -34,9 +34,9 @@ assert.equal(fallbackParentPath("/dashboard/judicial-assistant/cases/abc"), "/da
 assert.ok(withReturnUrl("/dashboard/ask", "/dashboard").includes("returnUrl="));
 
 assert.equal(isResponsiveUxV2Enabled(), true);
-process.env.RESPONSIVE_UX_V2 = "0";
+process.env.NEXT_PUBLIC_RESPONSIVE_UX_V2 = "0";
 assert.equal(isResponsiveUxV2Enabled(), false);
-delete process.env.RESPONSIVE_UX_V2;
+delete process.env.NEXT_PUBLIC_RESPONSIVE_UX_V2;
 assert.equal(isResponsiveUxV2Enabled(), true);
 
 const globals = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");

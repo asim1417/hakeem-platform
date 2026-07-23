@@ -5,6 +5,7 @@ import { clerkAppearance } from "@/lib/modules/auth/clerk-config";
 import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
 import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
 import { continueUrl } from "@/lib/modules/auth/safe-next";
+import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
 
 function SignInSkeleton() {
   return (
@@ -85,10 +86,13 @@ export function AuthClerkSignIn({
   path?: string;
   signUpUrl?: string;
 }) {
-  if (isAuthGatewayUxV2Enabled()) {
-    return <AuthOauthOnly mode="sign-in" nextUrl={nextUrl} />;
-  }
   return (
-    <LegacyClerkSignIn nextUrl={nextUrl} routing={routing} path={path} signUpUrl={signUpUrl} />
+    <ClientErrorBoundary>
+      {isAuthGatewayUxV2Enabled() ? (
+        <AuthOauthOnly mode="sign-in" nextUrl={nextUrl} />
+      ) : (
+        <LegacyClerkSignIn nextUrl={nextUrl} routing={routing} path={path} signUpUrl={signUpUrl} />
+      )}
+    </ClientErrorBoundary>
   );
 }
