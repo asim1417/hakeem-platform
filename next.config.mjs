@@ -18,21 +18,28 @@ const nextConfig = {
   // بـ nonces عند الحاجة لتصلّب أعلى ضد XSS.
   async headers() {
     // Clerk: clerk.browser.js + CAPTCHA (Cloudflare Turnstile / protect.clerk.com)
+    // + clerk.shared.lcl.dev لـ OAuth في Development instances
     const clerkHosts =
-      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com";
+      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com https://*.accounts.dev https://clerk.shared.lcl.dev";
     const turnstile = "https://challenges.cloudflare.com";
+    const googleFonts = "https://fonts.googleapis.com";
+    const googleFontsStatic = "https://fonts.gstatic.com";
+    const oauthFormTargets =
+      "https://accounts.google.com https://appleid.apple.com";
     const csp = [
       "default-src 'self'",
       `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: ${clerkHosts} ${turnstile}`,
-      "style-src 'self' 'unsafe-inline'",
+      // خطوط هوية حكيم تُحمَّل من Google Fonts في layout.tsx
+      `style-src 'self' 'unsafe-inline' ${googleFonts}`,
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
+      `font-src 'self' data: ${googleFontsStatic}`,
       "connect-src 'self' https:",
       `frame-src 'self' ${clerkHosts} ${turnstile}`,
       "worker-src 'self' blob:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      "form-action 'self'",
+      // OAuth: نماذج Clerk قد تُرسل إلى FAPI / مزوّدي Google وApple
+      `form-action 'self' ${clerkHosts} ${oauthFormTargets}`,
       "object-src 'none'"
     ].join("; ");
     return [

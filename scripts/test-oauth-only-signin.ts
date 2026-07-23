@@ -42,7 +42,25 @@ assert.ok(signUp.includes("AuthOauthOnly"));
 assert.ok(signUp.includes("isAuthGatewayUxV2Enabled"));
 
 const sso = fs.readFileSync(path.join(root, "app/sso-callback/page.tsx"), "utf8");
-assert.ok(sso.includes("AuthenticateWithRedirectCallback"));
+assert.ok(sso.includes("SsoCallbackClient"));
+
+const ssoClient = fs.readFileSync(path.join(root, "components/auth/SsoCallbackClient.tsx"), "utf8");
+assert.ok(ssoClient.includes("AuthenticateWithRedirectCallback"));
+assert.ok(ssoClient.includes('signInUrl="/sign-in"'));
+assert.ok(ssoClient.includes('signUpUrl="/sign-up"'));
+assert.ok(ssoClient.includes("/auth/continue"));
+
+const provider = fs.readFileSync(path.join(root, "components/providers/ClerkAppProvider.tsx"), "utf8");
+assert.ok(provider.includes('signInUrl="/sign-in"'));
+assert.ok(provider.includes('signUpUrl="/sign-up"'));
+
+const csp = fs.readFileSync(path.join(root, "next.config.mjs"), "utf8");
+assert.ok(csp.includes("fonts.googleapis.com"));
+assert.ok(csp.includes("fonts.gstatic.com"));
+assert.ok(csp.includes("accounts.google.com"));
+
+assert.ok(oauthOnly.includes("window.location.origin"));
+assert.ok(oauthOnly.includes("redirectUrlComplete"));
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes("تخطّي إلى الدخول"), false);
