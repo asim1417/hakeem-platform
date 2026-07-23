@@ -27,10 +27,12 @@ for (const rel of noStaticClerk) {
 
 const inner = fs.readFileSync(path.join(root, "components/auth/AuthOauthOnlyInner.tsx"), "utf8");
 assert.ok(inner.includes('from "@clerk/nextjs"'));
-assert.ok(inner.includes("مرحبًا بعودتك إلى حكيم"));
-assert.ok(inner.includes("المتابعة باستخدام Google"));
-assert.ok(inner.includes("المتابعة باستخدام Apple"));
-assert.ok(inner.includes("جارٍ تحويلك بأمان"));
+
+const buttons = fs.readFileSync(path.join(root, "components/auth/AuthOauthButtons.tsx"), "utf8");
+assert.ok(buttons.includes("مرحبًا بعودتك إلى حكيم"));
+assert.ok(buttons.includes("المتابعة باستخدام Google"));
+assert.ok(buttons.includes("المتابعة باستخدام Apple"));
+assert.equal(buttons.includes("@clerk/nextjs"), false);
 
 const globalError = fs.readFileSync(path.join(root, "app/global-error.tsx"), "utf8");
 assert.ok(globalError.includes("تعذّر فتح الصفحة"));

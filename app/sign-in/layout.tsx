@@ -1,5 +1,4 @@
-import { ClerkRoot } from "@/components/providers/ClerkRoot";
-
+/** صفحة الدخول بلا ClerkRoot — الأزرار SSR وتبدأ OAuth من الخادم. */
 export default function SignInLayout({ children }: { children: React.ReactNode }) {
-  return <ClerkRoot>{children}</ClerkRoot>;
+  return children;
 }

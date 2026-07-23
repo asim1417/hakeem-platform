@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { AuthClerkSignUp } from "@/components/auth/AuthClerkSignUp";
+import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
-import { continueUrl, safeDashboardNext } from "@/lib/modules/auth/safe-next";
+import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 
 export const metadata = {
   title: "إنشاء حساب — حكيم",
@@ -31,10 +31,7 @@ export default function SignUpPage({
       }
     >
       {configured ? (
-        <AuthClerkSignUp
-          nextUrl={nextUrl}
-          forceRedirectUrl={continueUrl(nextUrl)}
-        />
+        <AuthOauthButtons mode="sign-up" nextUrl={nextUrl} />
       ) : (
         <div
           className="w-full rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 py-5 text-center text-sm leading-7 text-[#0E3435]"

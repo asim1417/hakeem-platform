@@ -13,6 +13,25 @@ const isProtectedRoute = createRouteMatcher([
 
 const isAuthEntryRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/login"]);
 
+/**
+ * مسارات عامة لا تشغّل clerkMiddleware —
+ * يمنع تعليق Safari/iPhone بسبب handshake لـ dev-browser-missing على /sign-in.
+ */
+const isClerkMiddlewareBypass = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/login",
+  "/register",
+  "/pricing(.*)",
+  "/privacy(.*)",
+  "/terms(.*)",
+  "/legal(.*)",
+  "/api/auth/oauth/start(.*)",
+  "/api/auth/me(.*)",
+  "/api/auth/providers(.*)",
+]);
+
 function hasOwnerSession(request: NextRequest) {
   return Boolean(request.cookies.get("hakeem_session")?.value);
 }
@@ -26,7 +45,6 @@ function getClerkHandler(): ClerkMw {
   clerkHandler = clerkMiddleware(async (auth, request) => {
     const session = await auth();
 
-    // مسجّل بالفعل → لا تُبقِه في صفحات الدخول؛ احترم ?next إن كان آمنًا
     if (session.userId && isAuthEntryRoute(request)) {
       const nextRaw = request.nextUrl.searchParams.get("next");
       const next =
@@ -61,17 +79,24 @@ function getClerkHandler(): ClerkMw {
 }
 
 /**
- * بدون مفاتيح Clerk لا نستدعي clerkMiddleware أصلًا —
- * استدعاؤه بلا مفاتيح يُسقِط الإنتاج بـ MIDDLEWARE_INVOCATION_FAILED.
+ * بدون مفاتيح Clerk لا نستدعي clerkMiddleware أصلًا.
+ * صفحات الدخول العامة تتجاوز clerkMiddleware حتى مع وجود المفاتيح.
  */
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
   if (!isClerkConfigured()) {
-    // جلسة مالك على /sign-in → اللوحة
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return plainAuthGate(request);
   }
+
+  if (isClerkMiddlewareBypass(request)) {
+    if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
   return getClerkHandler()(request, event);
 }
 
