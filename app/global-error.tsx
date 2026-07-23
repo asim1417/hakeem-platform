@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * يلتقط أخطاء جذرية (layout / Clerk) التي لا يلتقطها error.tsx.
- * بدون هذا الملف يعرض Next الرسالة الإنجليزية Application error على الجوال.
+ * يلتقط أخطاء جذرية فقط (layout). أخطاء بوابة الدخول تُحتوى في app/sign-in/error.tsx.
  */
 export default function GlobalError({
   error,
@@ -40,19 +39,18 @@ export default function GlobalError({
           <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#0E3435" }}>حكيم</p>
           <h1 style={{ margin: "16px 0 8px", fontSize: 20, color: "#0E3435" }}>تعذّر فتح الصفحة</h1>
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "rgba(18,33,31,0.65)" }}>
-            حدث خطأ في التطبيق على هذا الجهاز. اضغط إعادة المحاولة، أو امسح بيانات الموقع ثم أعد
-            الفتح.
+            حدث خطأ غير متوقع أثناء تحميل الصفحة. أعد المحاولة، أو عد إلى الصفحة الرئيسية.
           </p>
           {error?.digest ? (
             <p
               style={{
                 marginTop: 12,
                 fontSize: 11,
-                color: "rgba(18,33,31,0.45)",
+                color: "rgba(18,33,31,0.4)",
                 wordBreak: "break-all",
               }}
             >
-              رمز: {error.digest}
+              رمز الدعم: {error.digest}
             </p>
           ) : null}
           <div
@@ -99,27 +97,7 @@ export default function GlobalError({
                 padding: "0 16px",
               }}
             >
-              الصفحة الرئيسية
-            </a>
-            <a
-              href="/sign-in"
-              style={{
-                minHeight: 44,
-                minWidth: 120,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 12,
-                border: "1px solid rgba(18,33,31,0.15)",
-                background: "#fff",
-                color: "#0E3435",
-                fontWeight: 700,
-                fontSize: 14,
-                textDecoration: "none",
-                padding: "0 16px",
-              }}
-            >
-              تسجيل الدخول
+              العودة إلى الرئيسية
             </a>
           </div>
         </div>
