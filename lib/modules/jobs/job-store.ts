@@ -37,7 +37,7 @@ async function ensure(): Promise<boolean> {
   return ready;
 }
 
-export type JobStatus = "running" | "done" | "error" | "cancelled";
+export type JobStatus = "running" | "done" | "error" | "cancelled" | "queued";
 export interface GenerationJob {
   id: string;
   ownerId: string;
@@ -49,23 +49,25 @@ export interface GenerationJob {
   updatedAt: string;
 }
 
-/** ينشئ مهمّةً جديدة (running) ويعيد معرّفها، أو null عند تعذّر القاعدة. */
+/** ينشئ مهمّةً جديدة (افتراضي running) ويعيد معرّفها، أو null عند تعذّر القاعدة. */
 export async function createJob(
   ownerId: string,
   kind: string,
   title?: string,
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown>,
+  initialStatus: JobStatus = "running"
 ): Promise<string | null> {
   if (!(await ensure())) return null;
   try {
     const rows = (await prisma.$queryRawUnsafe(
-      `INSERT INTO "generation_jobs"("owner_id","kind","title","meta")
-       VALUES ($1,$2,$3,COALESCE($4::jsonb,'{}'::jsonb))
+      `INSERT INTO "generation_jobs"("owner_id","kind","title","meta","status")
+       VALUES ($1,$2,$3,COALESCE($4::jsonb,'{}'::jsonb),$5)
        RETURNING "id"`,
       ownerId,
       kind,
       title ?? null,
-      meta ? JSON.stringify(meta) : null
+      meta ? JSON.stringify(meta) : null,
+      initialStatus
     )) as Array<{ id: string }>;
     return rows[0]?.id ?? null;
   } catch {
@@ -209,8 +211,9 @@ export async function cancelJob(
 }
 
 /**
- * إعادة تشغيل = مهمة جديدة بنفس النوع/العنوان مع ربط تدقيقي بالمصدر.
- * لا تُعدَّل المهمة الأصلية (سجلّ تدقيق محفوظ).
+ * إعادة تشغيل = مهمة جديدة بحالة queued (ليست running) بنفس النوع/العنوان.
+ * لا تُشغَّل تلقائيًا — لا يوجد عامل طابور بعد؛ تُسجَّل للتتبع ويعيد المستخدم الطلب من الواجهة.
+ * المهمة الأصلية تبقى دون تعديل (سجلّ تدقيق محفوظ).
  */
 export async function retryJob(
   id: string
@@ -219,11 +222,19 @@ export async function retryJob(
   if (!source) return { ok: false, reason: "not_found" };
   if (source.status === "running") return { ok: false, reason: "still_running" };
 
-  const newId = await createJob(source.ownerId, source.kind, source.title ?? undefined, {
-    retriedFrom: source.id,
-    retryOfKind: source.kind,
-    retriedAt: new Date().toISOString(),
-  });
+  const newId = await createJob(
+    source.ownerId,
+    source.kind,
+    source.title ?? undefined,
+    {
+      retriedFrom: source.id,
+      retryOfKind: source.kind,
+      retriedAt: new Date().toISOString(),
+      adminRetryQueued: true,
+      note: "إعادة تشغيل إدارية — أعد تنفيذ الطلب من واجهة المستخدم لإكمال التوليد",
+    },
+    "queued"
+  );
   if (!newId) return { ok: false, reason: "create_failed" };
   return { ok: true, jobId: newId, source };
 }
@@ -258,23 +269,27 @@ export async function listJobStats(): Promise<{
   done: number;
   error: number;
   cancelled: number;
+  queued: number;
 }> {
-  if (!(await ensure())) return { total: 0, running: 0, done: 0, error: 0, cancelled: 0 };
+  if (!(await ensure())) {
+    return { total: 0, running: 0, done: 0, error: 0, cancelled: 0, queued: 0 };
+  }
   try {
     const rows = (await prisma.$queryRawUnsafe(
       `SELECT "status", COUNT(*)::int AS c FROM "generation_jobs" GROUP BY "status"`
     )) as Array<{ status: string; c: number }>;
-    const out = { total: 0, running: 0, done: 0, error: 0, cancelled: 0 };
+    const out = { total: 0, running: 0, done: 0, error: 0, cancelled: 0, queued: 0 };
     for (const r of rows) {
       out.total += r.c;
       if (r.status === "running") out.running = r.c;
       else if (r.status === "done") out.done = r.c;
       else if (r.status === "error") out.error = r.c;
       else if (r.status === "cancelled") out.cancelled = r.c;
+      else if (r.status === "queued") out.queued = r.c;
     }
     return out;
   } catch {
-    return { total: 0, running: 0, done: 0, error: 0, cancelled: 0 };
+    return { total: 0, running: 0, done: 0, error: 0, cancelled: 0, queued: 0 };
   }
 }
 

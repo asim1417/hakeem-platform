@@ -41,9 +41,12 @@ assert.ok(shell.includes('variant="system"'));
 
 const store = fs.readFileSync(path.join(root, "lib/modules/jobs/job-store.ts"), "utf8");
 assert.ok(store.includes('"cancelled"'));
+assert.ok(store.includes('"queued"'));
 assert.ok(store.includes("cancelJob"));
 assert.ok(store.includes("retryJob"));
+assert.ok(store.includes("adminRetryQueued"));
 assert.ok(store.includes("reapStaleRunningJobs"));
+assert.ok(store.includes('"queued"'));
 
 const jobsPage = fs.readFileSync(path.join(root, "app/admin/jobs/page.tsx"), "utf8");
 assert.ok(jobsPage.includes("AdminJobRowActions"));

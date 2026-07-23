@@ -52,7 +52,14 @@ export async function getPlatformOverview() {
     prisma.consultation.count().catch(() => 0),
     prisma.simulation.count().catch(() => 0),
     listFeatureToggles().catch(() => []),
-    listJobStats().catch(() => ({ total: 0, running: 0, done: 0, error: 0, cancelled: 0 })),
+    listJobStats().catch(() => ({
+      total: 0,
+      running: 0,
+      done: 0,
+      error: 0,
+      cancelled: 0,
+      queued: 0,
+    })),
     listRecentJobs(12).catch(() => []),
     prisma.auditEvent
       .findMany({

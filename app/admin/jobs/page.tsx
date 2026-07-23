@@ -12,6 +12,7 @@ const STATUS_LABEL: Record<string, string> = {
   done: "مكتملة",
   error: "فاشلة",
   cancelled: "موقوفة",
+  queued: "بانتظار إعادة التنفيذ",
 };
 
 export default async function AdminJobsPage() {
@@ -38,12 +39,13 @@ export default async function AdminJobsPage() {
         التشغيل تنشئ مهمة جديدة مرتبطة بالمصدر.
       </p>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card label="الإجمالي" value={stats.total} />
         <Card label="جارية" value={stats.running} />
         <Card label="مكتملة" value={stats.done} />
         <Card label="فاشلة" value={stats.error} />
         <Card label="موقوفة" value={stats.cancelled} />
+        <Card label="بانتظار إعادة" value={stats.queued} />
       </section>
 
       <section className="mt-6">
@@ -92,11 +94,12 @@ export default async function AdminJobsPage() {
       </section>
 
       <p className="mt-4 text-sm text-[rgba(14,52,53,0.55)]">
-        استئناف المستخدم يبقى عبر{" "}
+        الإيقاف ناعم (cancelled) ولا يحذف السجل. «إعادة التشغيل» تسجّل مهمة{" "}
+        <strong>queued</strong> للتتبع — التنفيذ الفعلي بإعادة الطلب من{" "}
         <Link href="/dashboard" className="font-semibold text-[#8B6914]">
           واجهة المستخدم
-        </Link>
-        . الإيقاف هنا ناعم (حالة cancelled) ولا يحذف السجل.
+        </Link>{" "}
+        (لا يوجد عامل طابور مستقل بعد).
       </p>
     </AdminPageShell>
   );

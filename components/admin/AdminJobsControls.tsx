@@ -95,8 +95,9 @@ export function AdminJobRowActions({ jobId, status }: { jobId: string; status: s
             disabled={pending}
             onClick={() => act(`/api/admin/jobs/${jobId}/retry`)}
             className="rounded-md border border-[rgba(14,52,53,0.15)] bg-white px-3 py-1.5 text-xs font-semibold text-[#0E3435] disabled:opacity-50"
+            title="يسجّل مهمة بانتظار إعادة التنفيذ — أكمل من واجهة المستخدم"
           >
-            إعادة تشغيل
+            تسجيل إعادة
           </button>
         ) : null}
       </div>

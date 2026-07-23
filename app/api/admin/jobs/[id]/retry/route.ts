@@ -33,5 +33,11 @@ export async function POST(
     metadata: { retriedFrom: result.source.id, kind: result.source.kind },
   }).catch(() => undefined);
 
-  return NextResponse.json({ ok: true, jobId: result.jobId, sourceId: result.source.id });
+  return NextResponse.json({
+    ok: true,
+    jobId: result.jobId,
+    sourceId: result.source.id,
+    status: "queued",
+    message: "سُجّلت إعادة التشغيل بانتظار التنفيذ من واجهة المستخدم.",
+  });
 }
