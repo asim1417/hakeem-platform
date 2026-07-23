@@ -1,12 +1,35 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/modules/auth/session";
 import { listManifests } from "@/lib/agent-runtime/live/manifests";
-import { DeadlineCalculator } from "@/components/agents/DeadlineCalculator";
 
 export const dynamic = "force-dynamic";
 
-// كتالوج الوكلاء المخصّصين — طبقة تكوينٍ فوق المحرّك الموحّد. للعرض والاستكشاف؛
-// الاستدعاء الفعليّ عبر مدخل MCP بمفتاح API. حاسبة المهلة أداةٌ حيّة مباشرة.
+// كتالوج الوكلاء المتخصّصين — واجهةُ عرضٍ للمستخدم (بلا تفاصيل تقنيّة/أكواد). كلّ وكيلٍ مؤصَّلٌ
+// بنطاقه النظاميّ، ويُبدأ بمحادثةٍ حيّة داخل صفحته.
+
+/** أسماءٌ عربيّة لقدرات الوكيل (بدل معرّفات المحرّك الإنجليزيّة). */
+const TOOL_LABEL: Record<string, string> = {
+  legal_research: "البحث القانونيّ",
+  read_article: "قراءة المادة",
+  read_article_in_context: "قراءة المادة في سياقها",
+  read_chapter: "قراءة الفصل",
+  takhrij_hukm: "تخريج الحكم",
+  trace_amendments: "تتبّع التعديلات",
+  link_bylaw: "ربط اللائحة التنفيذيّة",
+  build_citation: "صياغة الاستشهاد",
+  exhaustive_scan: "المسح الشامل",
+  hijri_date_calc: "حساب المهلة (هجريّ)",
+};
+
+/** أسماءٌ عربيّة للمواقف المهنيّة (بلا شُرَط سفليّة). */
+const STANCE_LABEL: Record<string, string> = {
+  "محايد": "محايد",
+  "منازِع_دائن": "مُنازِع عن الدائن",
+  "منازِع_مدين": "مُنازِع عن المدين",
+  "خبير": "خبير",
+  "مشرف": "مشرف",
+};
+
 export default async function AgentsPage() {
   await requireUser();
   const agents = listManifests();
@@ -20,11 +43,11 @@ export default async function AgentsPage() {
   return (
     <div dir="rtl">
       <header className="hero">
-        <p className="text-sm text-[var(--gold-pale)]">طبقة الوكلاء</p>
-        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">الوكلاء المخصّصون</h1>
+        <p className="text-sm text-[var(--gold-pale)]">وكلاءُ حكيم المتخصّصون</p>
+        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">الوكلاء المتخصّصون</h1>
         <p className="mt-3 max-w-3xl leading-8 text-white/85">
-          وكلاءُ ممارسةٍ مبنيّون طبقةَ تكوينٍ فوق المحرّك الموحّد — نطاقٌ مقيّد، ومهاراتٌ مصرّحة،
-          وحرّاسٌ برمجيّة (تأريض · نطاق · نفاذ · موقف) تعمل على نتيجة النواة الفعليّة. يُستدعَون عبر مدخل MCP بمفتاح API.
+          مستشارون متخصّصون، لكلٍّ منهم مجالُ خبرةٍ محدَّد ومكتبةٌ نظاميّة مؤصَّلة. يحلّلون وقائعك،
+          ويستندون إلى المواد والأحكام الفعليّة، ويحاورونك في تخصّصهم عبر محادثةٍ حيّة داخل صفحة كلّ وكيل.
         </p>
       </header>
 
@@ -65,7 +88,7 @@ export default async function AgentsPage() {
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {a.subRoles.map((sr) => (
                       <span key={sr.subRoleId} className="rounded-full border border-line px-2.5 py-0.5 text-[11px] text-[var(--muted)]">
-                        {sr.displayName ?? sr.subRoleId} · {sr.stance}
+                        {sr.displayName ?? sr.subRoleId} · {STANCE_LABEL[sr.stance] ?? sr.stance.replace(/_/g, " ")}
                       </span>
                     ))}
                   </div>
@@ -73,33 +96,27 @@ export default async function AgentsPage() {
               ) : null}
 
               <div className="mt-3">
-                <p className="text-xs font-semibold text-[var(--ink-60)]">أدوات المحرّك</p>
+                <p className="text-xs font-semibold text-[var(--ink-60)]">قدرات الوكيل</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {engineTools.map((t) => (
-                    <span key={t} className="font-mono-legal rounded bg-[var(--copper-soft)] px-2 py-0.5 text-[11px] text-[var(--copper-deep)]">
-                      {t}
+                    <span key={t} className="rounded-full bg-[var(--copper-soft)] px-2.5 py-0.5 text-[11px] text-[var(--copper-deep)]">
+                      {TOOL_LABEL[t] ?? t}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-2">
+              <div className="mt-4">
                 <Link
                   href={`/dashboard/agents/${a.agentId}`}
-                  className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                  className="focus-ring inline-flex rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
                 >
-                  افتح وحدة التشغيل ←
+                  ابدأ المحادثة مع الوكيل ←
                 </Link>
-                <span className="font-mono-legal text-[11px] text-[var(--ink-40)]">/api/mcp/{a.agentId}</span>
               </div>
             </article>
           );
         })}
-      </section>
-
-      <section className="mt-8">
-        <h2 className="t-head mb-3 text-xl font-bold text-[var(--petrol)]">أداةٌ حيّة — حساب المهلة</h2>
-        <DeadlineCalculator />
       </section>
 
       {/* قدرات تجريبية أخرى — مخفيّةٌ داخل المختبر (الرسم المعرفيّ · RAG · التدريب). */}

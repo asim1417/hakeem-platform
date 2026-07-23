@@ -4,11 +4,12 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getManifest } from "@/lib/agent-runtime/live/manifests";
 import { AgentConsole, type ConsoleTool } from "@/components/agents/AgentConsole";
 import { AgentChat } from "@/components/agents/AgentChat";
+import { DeadlineCalculator } from "@/components/agents/DeadlineCalculator";
 
 export const dynamic = "force-dynamic";
 
-// وحدة تشغيل الوكيل — واجهةٌ تفاعلية تستدعي مدخل MCP بجلسة المستخدم (لا مفتاح API)،
-// فتعمل الحرّاس نفسها (تأريض/نطاق/نفاذ/موقف) على نتيجة النواة الفعليّة.
+// صفحة الوكيل — محادثةٌ حيّة مؤصَّلة بنطاقه النظاميّ، مع أدواتٍ دقيقة داخل صفحته.
+// كلّ مخرَجٍ مؤصَّلٌ بالمواد والأحكام الفعليّة، بلا اختلاق ولا خروجٍ عن النطاق.
 const ENGINE_TOOL_UI: Record<string, ConsoleTool> = {
   exhaustive_scan: { id: "exhaustive_scan", label: "مسحٌ شامل للنطاق", fields: [] },
   read_article_in_context: { id: "read_article_in_context", label: "قراءة مادّة في سياقها", fields: ["articleNumber"] },
@@ -43,10 +44,10 @@ export default async function AgentConsolePage({ params }: { params: { agentId: 
       </div>
 
       <header className="hero mb-6">
-        <p className="text-sm text-[var(--gold-pale)]">وكيلٌ مخصّص</p>
+        <p className="text-sm text-[var(--gold-pale)]">وكيلٌ متخصّص</p>
         <h1 className="t-display mt-2 text-2xl font-bold md:text-3xl">{m.displayName}</h1>
         <p className="mt-3 max-w-2xl leading-8 text-white/85">
-          استدعِ أدوات هذا الوكيل مباشرةً — كلّ مخرَجٍ يمرّ بالحرّاس البرمجيّة (تأريض · نطاق · نفاذ · موقف) على نتيجة النواة الفعليّة. لا اختلاق ولا تسريب نطاق.
+          حاوِر الوكيل في تخصّصه — يحلّل وقائعك ويستند إلى المواد والأحكام الفعليّة في نطاقه، بلا اختلاقٍ ولا خروجٍ عن مجاله.
         </p>
       </header>
 
@@ -59,6 +60,13 @@ export default async function AgentConsolePage({ params }: { params: { agentId: 
           subRoles={subRoles}
         />
       </div>
+
+      {/* حاسبة المهلة الحيّة — متضمَّنةٌ لدى الوكلاء الذين يملكون قدرة حساب المهلة (هجريّ). */}
+      {engineTools.includes("hijri_date_calc") ? (
+        <div className="mb-6">
+          <DeadlineCalculator />
+        </div>
+      ) : null}
 
       {/* وحدة الأدوات الحتميّة (استدعاءٌ مباشرٌ لأدوات النطاق). */}
       <details className="ja-allworks">
