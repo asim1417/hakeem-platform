@@ -28,6 +28,7 @@ import { getGraphNeighbors } from "@/lib/modules/knowledge-graph/relations";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import type { RelationType } from "@prisma/client";
 import { FIQH_NONBINDING_NOTICE } from "@/lib/modules/legal-core/content-separation";
+import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -159,7 +160,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 {[link.judicialCase.court, link.judicialCase.cityName, link.judicialCase.decisionDateText].filter(Boolean).join(" | ") || "بيانات الحكم غير مكتملة"}
               </p>
             </div>
-            <LegalTopicBadge tone={link.reviewStatus === "reviewed" ? "emerald" : "amber"}>{link.reviewStatus}</LegalTopicBadge>
+            <LegalTopicBadge tone={link.reviewStatus === "reviewed" ? "emerald" : "amber"}>{reviewStatusLabel(link.reviewStatus)}</LegalTopicBadge>
           </div>
           {link.excerpt ? <p className="mt-3 rounded-[var(--r-md)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--ink-70)]">{link.excerpt}</p> : null}
           <div className="mt-4 flex flex-wrap gap-2">

@@ -144,9 +144,7 @@ export default async function JudicialPrinciplesPage({
           ) : (
             <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-6 text-center text-sm leading-7 text-[var(--navy)]">
               <ShieldCheck className="mx-auto mb-2 text-[var(--gold)]" size={22} />
-              لا توجد مبادئ مطابقة بعد. تُستخرَج المبادئ من الأحكام عبر أداة الاستخراج
-              <span className="font-mono-legal" dir="ltr"> npm run extract:principles -- --apply</span>
-              ، ثم تُراجَع قبل الاعتماد.
+              لا توجد مبادئ قضائية بعد. تُستخرَج المبادئ من الأحكام القضائية وتُراجَع قبل اعتمادها، وستظهر هنا فور إضافتها.
             </div>
           )}
 

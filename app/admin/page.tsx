@@ -45,6 +45,18 @@ async function getAdminStatus() {
 
 type ServiceState = "live" | "config" | "tenant";
 
+const AI_PROVIDER_LABELS: Record<string, string> = {
+  anthropic: "Claude (Anthropic)",
+  offline: "غير متّصل"
+};
+const STORAGE_LABELS: Record<string, string> = {
+  "metadata-only": "بيانات وصفيّة فقط",
+  azure: "تخزين Azure",
+  sharepoint: "SharePoint"
+};
+const aiProviderLabel = (v: string) => AI_PROVIDER_LABELS[v] ?? "غير متّصل";
+const storageLabel = (v: string) => STORAGE_LABELS[v] ?? v;
+
 export default async function AdminPage() {
   await requirePagePermission("ADMIN_REPORTS_VIEW");
   const status = await getAdminStatus();
@@ -103,8 +115,8 @@ export default async function AdminPage() {
 
       <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <StatusCard label="قاعدة البيانات" value={status.database} />
-        <StatusCard label="مزوّد الذكاء" value={status.aiLive ? status.aiProviderName : "offline/mock"} />
-        <StatusCard label="تخزين المرفقات" value={status.storage} />
+        <StatusCard label="مزوّد الذكاء" value={status.aiLive ? aiProviderLabel(status.aiProviderName) : "غير متّصل"} />
+        <StatusCard label="تخزين المرفقات" value={storageLabel(status.storage)} />
         <StatusCard label="المستخدمون" value={status.users.toLocaleString("ar-SA")} />
         <StatusCard label="الأدوار" value={status.roles.toLocaleString("ar-SA")} />
         <StatusCard label="الصلاحيات" value={status.permissions.toLocaleString("ar-SA")} />

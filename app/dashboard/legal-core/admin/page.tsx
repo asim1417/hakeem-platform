@@ -37,7 +37,7 @@ export default async function LegalContentAdminPage() {
 
   const queues = [
     { key: "principles", label: "مبادئ قضائية بانتظار المراجعة", count: principlesPending, href: "/dashboard/legal-core/principles?status=needs_review", icon: Quote, tone: principlesPending ? "amber" : "emerald" },
-    { key: "fiqh", label: "مواءمات فقهية بانتظار المراجعة", count: fiqhAlignmentsPending, href: "/dashboard/legal-core/admin", icon: Scale, tone: fiqhAlignmentsPending ? "amber" : "emerald" },
+    { key: "fiqh", label: "مواءمات فقهية بانتظار المراجعة", count: fiqhAlignmentsPending, href: undefined, icon: Scale, tone: fiqhAlignmentsPending ? "amber" : "emerald" },
     { key: "caselinks", label: "استشهادات قضائية بانتظار الاعتماد", count: caseLinksPending, href: "/dashboard/legal-core/citations/dashboard", icon: ClipboardCheck, tone: caseLinksPending ? "amber" : "emerald" },
     { key: "enrich", label: "مواد تحتاج إثراء (تصنيف/باب/كلمات)", count: articlesNeedingEnrichment, href: "/dashboard/legal-core/quality", icon: AlertTriangle, tone: articlesNeedingEnrichment ? "amber" : "emerald" }
   ] as const;
@@ -65,13 +65,22 @@ export default async function LegalContentAdminPage() {
           <div className="grid gap-3 md:grid-cols-2">
             {queues.map((q) => {
               const Icon = q.icon;
-              return (
-                <Link key={q.key} href={q.href} className="flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4 transition hover:border-[var(--gold)]">
+              const inner = (
+                <>
                   <span className="inline-flex items-center gap-2 font-display-ar text-sm font-bold text-[var(--navy)]">
                     <Icon size={17} className="text-[var(--gold)]" /> {q.label}
                   </span>
                   <LegalTopicBadge tone={q.tone}>{q.count.toLocaleString("ar-SA")}</LegalTopicBadge>
+                </>
+              );
+              return q.href ? (
+                <Link key={q.key} href={q.href} className="flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4 transition hover:border-[var(--gold)]">
+                  {inner}
                 </Link>
+              ) : (
+                <div key={q.key} className="flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4">
+                  {inner}
+                </div>
               );
             })}
           </div>
@@ -89,8 +98,7 @@ export default async function LegalContentAdminPage() {
               <LegalTopicBadge tone={fiqhAlignmentsPending ? "amber" : "emerald"}>{fiqhAlignmentsPending.toLocaleString("ar-SA")} مواءمة بانتظار المراجعة</LegalTopicBadge>
             </div>
             <p className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-xs leading-6 text-[var(--navy)]">
-              للتعبئة من مكتبة تراث المفتوحة (محدودة ومُسنَدة، بلا سحب جماعي):
-              <span className="font-mono-legal" dir="ltr"> npm run import:fiqh -- --apply --limit 50 --q "خيار العيب"</span>
+              تُدخَل النصوص الفقهية من مصادر التراث المفتوحة بصورة محدودة ومُسنَدة (دفعات مختارة، بلا سحب جماعي)، ثم تُواءم بالمواد وتُراجَع بشريًا قبل الاعتماد.
             </p>
           </div>
         </LegalCoreCard>

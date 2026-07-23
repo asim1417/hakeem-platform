@@ -37,7 +37,7 @@ export default async function SubscribePage({
 
       {checkoutPending ? (
         <div className="mt-6 rounded-[var(--r-lg)] border border-[var(--amber)]/40 bg-[var(--amber-soft)] px-4 py-3 text-sm leading-7 text-[var(--amber)]">
-          بوابة الدفع (Moyasar) غير مفعّلة بعد — اضبط <code>MOYASAR_SECRET_KEY</code> في Vercel ليُفتح التحصيل تلقائيًا.
+          الدفع الإلكترونيّ قيد الربط النهائيّ — سيتوفّر التحصيل قريبًا. شكرًا لصبرك.
         </div>
       ) : null}
       {checkoutError ? (
@@ -73,8 +73,7 @@ export default async function SubscribePage({
       </section>
 
       <p className="mt-8 rounded-[var(--r-lg)] border border-dashed border-[var(--copper)] bg-[var(--copper-soft)] p-4 text-sm leading-7 text-[var(--copper-deep)]">
-        حصّة التجربة الافتراضية: {PRICING.freeQuota.toLocaleString("ar-SA")} استخدامًا. تُضبط من المالك عبر{" "}
-        <code className="font-mono text-xs">FREE_QUOTA</code> دون تغيير الواجهة.
+        تشمل التجربة المجانيّة {PRICING.freeQuota.toLocaleString("ar-SA")} استشارة من الوحدات المتقدّمة، ثم يمكنك المتابعة بالاشتراك.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-3">

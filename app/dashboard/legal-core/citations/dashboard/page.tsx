@@ -3,6 +3,7 @@ import { FileSearch, ScrollText } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { relationTypeLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export default async function LegalCoreCitationsDashboardPage() {
                 {relations.map((r) => (
                   <div key={r.relationType}>
                     <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="text-[var(--ink-80)]">{r.relationType || "غير محدّد"}</span>
+                      <span className="text-[var(--ink-80)]">{relationTypeLabel(r.relationType)}</span>
                       <span className="font-mono-legal text-[var(--navy)]">{ar(r._count._all)}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-[var(--ink-08)]">
