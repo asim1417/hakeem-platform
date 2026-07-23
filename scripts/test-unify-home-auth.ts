@@ -25,12 +25,14 @@ const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "u
 assert.equal(home.includes('"use client"'), false);
 assert.ok(home.includes('href="/sign-in"'));
 assert.ok(home.includes('href="/sign-up"'));
+assert.ok(home.includes("<a"));
+assert.equal(home.includes('from "next/link"'), false);
 
 const login = fs.readFileSync(path.join(root, "app/login/page.tsx"), "utf8");
-assert.ok(login.includes('redirect(`/sign-in'));
+assert.ok(login.includes("redirect(`/sign-in"));
 
 const register = fs.readFileSync(path.join(root, "app/register/page.tsx"), "utf8");
-assert.ok(register.includes('redirect(`/sign-up'));
+assert.ok(register.includes("redirect(`/sign-up"));
 
 const signIn = fs.readFileSync(path.join(root, "app/sign-in/[[...sign-in]]/page.tsx"), "utf8");
 assert.ok(signIn.includes("resolvePostAuthNext"));

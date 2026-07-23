@@ -36,5 +36,10 @@ assert.ok(docs.includes("ConversionIndicator"));
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes("@clerk"), false);
+assert.equal(
+  home.includes('from "next/link"'),
+  false,
+  "HomeHero must not use next/link — prefetch loads Clerk via auth layouts"
+);
 
 console.log("test-clerk-off-home: OK");
