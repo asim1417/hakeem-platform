@@ -6,7 +6,7 @@ import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary"
 
 const AFTER_AUTH = "/auth/continue";
 
-/** يغلّف التطبيق بـ Clerk — عربية + هوية حكيم + توجيه إجباري بعد الدخول للوحة. */
+/** يغلّف التطبيق بـ Clerk — عربية + هوية حكيم. */
 export function ClerkAppProvider({
   children,
   publishableKey,
@@ -14,7 +14,6 @@ export function ClerkAppProvider({
 }: {
   children: React.ReactNode;
   publishableKey?: string;
-  /** من الخادم: أخفِ شارة Development mode في النشر الفعلي. */
   hideDevelopmentMode?: boolean;
 }) {
   if (!publishableKey) return <>{children}</>;
@@ -29,6 +28,7 @@ export function ClerkAppProvider({
       }
     : clerkAppearance;
 
+  // نستخدم fallback فقط (لا force) لتقليل حلقات التحويل على iOS Safari مع pk_test_
   return (
     <ClientErrorBoundary
       fallback={
@@ -60,14 +60,12 @@ export function ClerkAppProvider({
         publishableKey={publishableKey}
         appearance={appearance}
         localization={clerkLocalization}
-        // مسار داخل التطبيق — بدونها Clerk يحوّل إلى Account Portal (accounts.dev)
         signInUrl="/sign-in"
         signUpUrl="/sign-up"
         afterSignOutUrl="/sign-in"
         signInFallbackRedirectUrl={AFTER_AUTH}
         signUpFallbackRedirectUrl={AFTER_AUTH}
-        signInForceRedirectUrl={AFTER_AUTH}
-        signUpForceRedirectUrl={AFTER_AUTH}
+        telemetry={false}
       >
         {children}
       </ClerkProvider>

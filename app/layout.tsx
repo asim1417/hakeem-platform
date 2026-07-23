@@ -4,15 +4,14 @@ import "./globals.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 import { ClerkAppProvider } from "@/components/providers/ClerkAppProvider";
+import { BootWatchdog } from "@/components/providers/BootWatchdog";
 import { shouldHideClerkDevelopmentModeUi } from "@/lib/modules/auth/owner-emergency";
 
 export const metadata: Metadata = {
   title: "حكيم",
-  description: "المنصة القانونية الموحدة"
+  description: "المنصة القانونية الموحدة",
 };
 
-// إعداد صريح للـviewport يضمن عرضًا متّسقًا على الجوّال (آيفون/أندرويد) والكمبيوتر.
-// لا نعطّل التكبير (maximumScale) — لكن الأيقونات والأزرار يجب أن تبقى مقروءة بلا تكبير.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -25,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
   const hideDevelopmentMode = shouldHideClerkDevelopmentModeUi();
   return (
-    <html lang={locale} dir={DIR[locale]}>
+    <html lang={locale} dir={DIR[locale]} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -34,12 +33,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ClerkAppProvider
           publishableKey={publishableKey || undefined}
           hideDevelopmentMode={hideDevelopmentMode}
         >
           {children}
+          <BootWatchdog />
         </ClerkAppProvider>
       </body>
     </html>

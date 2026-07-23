@@ -9,7 +9,6 @@ const FALLBACK_MS = 12_000;
 
 /**
  * يكمل جلسة OAuth داخل نطاق التطبيق ويعود لـ /auth/continue.
- * عند فشل الـ handshake لا يُترك المستخدم على Account Portal.
  */
 export function SsoCallbackClient() {
   const [timedOut, setTimedOut] = useState(false);
@@ -44,15 +43,12 @@ export function SsoCallbackClient() {
       />
       <p className="mt-4 text-sm font-semibold text-[#0E3435]">جارٍ إكمال الدخول…</p>
       <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">لا تغلق هذه النافذة.</p>
-      {/* يجب أن يبقى المكوّن مركّبًا في الشجرة — لا نضعه في sr-only فقط */}
       <AuthenticateWithRedirectCallback
         signInUrl="/sign-in"
         signUpUrl="/sign-up"
         continueSignUpUrl="/sign-up"
         signInFallbackRedirectUrl={AFTER_AUTH}
         signUpFallbackRedirectUrl={AFTER_AUTH}
-        signInForceRedirectUrl={AFTER_AUTH}
-        signUpForceRedirectUrl={AFTER_AUTH}
       />
     </div>
   );

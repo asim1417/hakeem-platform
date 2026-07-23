@@ -64,8 +64,10 @@ assert.ok(oauthOnly.includes("redirectUrlComplete"));
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes("تخطّي إلى الدخول"), false);
-assert.ok(home.includes("signUpWithNext"));
+assert.ok(home.includes("/sign-in"));
 assert.ok(home.includes("ابدأ مجانًا"));
+assert.ok(home.includes("HomeAuthActions"));
+assert.equal(home.includes('"use client"'), false);
 
 const dash = fs.readFileSync(path.join(root, "app/dashboard/page.tsx"), "utf8");
 assert.ok(dash.includes("isNewUser"));
