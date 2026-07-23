@@ -118,6 +118,74 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
     });
   }
 
+  // معالجة حدثٍ واحد من البثّ (step/result/clarify/error/done) — يُستعمل حيًّا وعند الاستئناف.
+  function applyEvent(evt: any) {
+    if (evt.type === "step") {
+      patchLastTurn((t) => {
+        const steps = t.steps.slice();
+        const idx = steps.findIndex((s) => s.id === evt.id);
+        const step: Step = { id: evt.id, status: evt.status, label: evt.label, data: evt.data };
+        if (idx >= 0) steps[idx] = step; else steps.push(step);
+        return { ...t, steps };
+      });
+    } else if (evt.type === "result") {
+      patchLastTurn((t) => ({
+        ...t,
+        answer: typeof evt.answer === "string" ? evt.answer : null,
+        mode: evt.mode,
+        basis: (evt.basis ?? []) as LegalBasisItem[],
+        total: evt.total ?? 0,
+        coverage: evt.coverage,
+        groups: Array.isArray(evt.groups) ? evt.groups : undefined,
+        disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
+        visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
+        message: evt.message,
+        precedents: evt.precedents && (evt.precedents.rulings?.length || evt.precedents.principles?.length) ? (evt.precedents as Precedents) : undefined
+      }));
+    } else if (evt.type === "clarify") {
+      patchLastTurn((t) => ({ ...t, clarify: { message: evt.message, dimension: evt.dimension, options: evt.options ?? [] } }));
+    } else if (evt.type === "error") {
+      patchLastTurn((t) => ({ ...t, error: evt.message ?? "خطأ غير متوقع." }));
+    } else if (evt.type === "done") {
+      patchLastTurn((t) => ({ ...t, streaming: false, showMethod: false }));
+    }
+  }
+
+  // استئناف مهمّة «اسأل حكيم» الخلفيّة: إن غادرت الصفحة أثناء البحث، يُكمله الخادم ويحفظ نتيجته؛
+  // وعند العودة نجلبها ونعرضها في دورٍ جديد.
+  useEffect(() => {
+    let stop = false;
+    async function resume() {
+      if (busyRef.current) return;
+      let raw = ""; try { raw = sessionStorage.getItem("hakeem-ask-job") ?? ""; } catch { return; }
+      if (!raw) return;
+      let p: { jobId?: string; question?: string } = {};
+      try { p = JSON.parse(raw); } catch { return; }
+      if (!p.jobId) return;
+      setTurns((prev) => [...prev, { question: p.question || "بحثٌ سابق", steps: [], answer: null, basis: null, total: 0, streaming: true, showMethod: false }]);
+      for (let i = 0; i < 180 && !stop; i += 1) {
+        let j: { status?: string; meta?: { result?: any } } | null = null;
+        try {
+          const r = await fetch(`/api/jobs/${p.jobId}`, { cache: "no-store" });
+          if (r.status === 404) { try { sessionStorage.removeItem("hakeem-ask-job"); } catch {} break; }
+          j = await r.json();
+        } catch { /* أعِد */ }
+        if (j && (j.status === "done" || j.status === "error")) {
+          if (j.meta?.result) applyEvent(j.meta.result);
+          applyEvent({ type: "done" });
+          try { sessionStorage.removeItem("hakeem-ask-job"); } catch {}
+          break;
+        }
+        await new Promise((res) => setTimeout(res, 2000));
+      }
+    }
+    const onVisible = () => { if (document.visibilityState === "visible") void resume(); };
+    void resume();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { stop = true; document.removeEventListener("visibilitychange", onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function ask(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) {
     const question = (q ?? value).trim();
     const doc = attachedDoc;
@@ -173,35 +241,12 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
           } catch {
             continue;
           }
-          if (evt.type === "step") {
-            patchLastTurn((t) => {
-              const steps = t.steps.slice();
-              const idx = steps.findIndex((s) => s.id === evt.id);
-              const step: Step = { id: evt.id, status: evt.status, label: evt.label, data: evt.data };
-              if (idx >= 0) steps[idx] = step;
-              else steps.push(step);
-              return { ...t, steps };
-            });
-          } else if (evt.type === "result") {
-            patchLastTurn((t) => ({
-              ...t,
-              answer: typeof evt.answer === "string" ? evt.answer : null,
-              mode: evt.mode,
-              basis: (evt.basis ?? []) as LegalBasisItem[],
-              total: evt.total ?? 0,
-              coverage: evt.coverage,
-              groups: Array.isArray(evt.groups) ? evt.groups : undefined,
-              disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
-              visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
-              message: evt.message,
-              precedents: evt.precedents && (evt.precedents.rulings?.length || evt.precedents.principles?.length) ? (evt.precedents as Precedents) : undefined
-            }));
-          } else if (evt.type === "clarify") {
-            patchLastTurn((t) => ({ ...t, clarify: { message: evt.message, dimension: evt.dimension, options: evt.options ?? [] } }));
-          } else if (evt.type === "error") {
-            patchLastTurn((t) => ({ ...t, error: evt.message ?? "خطأ غير متوقع." }));
-          } else if (evt.type === "done") {
-            patchLastTurn((t) => ({ ...t, streaming: false, showMethod: false }));
+          if (evt.type === "job" && evt.jobId) {
+            // خزّن معرّف المهمّة الخلفيّة (مع السؤال) للاستئناف إن غادرنا الصفحة أثناء البحث.
+            try { sessionStorage.setItem("hakeem-ask-job", JSON.stringify({ jobId: evt.jobId, question: shown })); } catch { /* لا تخزين */ }
+          } else {
+            applyEvent(evt);
+            if (evt.type === "done") { try { sessionStorage.removeItem("hakeem-ask-job"); } catch { /* اكتملت */ } }
           }
         }
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
