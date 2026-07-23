@@ -6,6 +6,7 @@ import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
 import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
 import { continueUrl } from "@/lib/modules/auth/safe-next";
 import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
+import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 
 function SignInSkeleton() {
   return (
@@ -41,6 +42,22 @@ function LegacyClerkSignIn({
   path: string;
   signUpUrl: string;
 }) {
+  const mounted = useClerkMounted();
+  if (!mounted) return <SignInSkeleton />;
+  return <LegacyClerkSignInInner nextUrl={nextUrl} routing={routing} path={path} signUpUrl={signUpUrl} />;
+}
+
+function LegacyClerkSignInInner({
+  nextUrl,
+  routing,
+  path,
+  signUpUrl,
+}: {
+  nextUrl: string;
+  routing: "path" | "hash";
+  path: string;
+  signUpUrl: string;
+}) {
   const { loaded } = useClerk();
   const afterAuth = continueUrl(nextUrl);
 
@@ -54,7 +71,6 @@ function LegacyClerkSignIn({
             routing="path"
             path={path}
             signUpUrl={signUpUrl}
-            forceRedirectUrl={afterAuth}
             fallbackRedirectUrl={afterAuth}
           />
         ) : (
@@ -62,7 +78,6 @@ function LegacyClerkSignIn({
             appearance={clerkAppearance}
             routing="hash"
             signUpUrl={signUpUrl}
-            forceRedirectUrl={afterAuth}
             fallbackRedirectUrl={afterAuth}
           />
         )}
@@ -72,8 +87,7 @@ function LegacyClerkSignIn({
 }
 
 /**
- * تسجيل الدخول — افتراضيًا Google/Apple فقط (AUTH_GATEWAY_UX_V2).
- * عند إيقاف العلم: يعود نموذج Clerk السابق (Rollback).
+ * تسجيل الدخول — بوابة موحّدة /sign-in (Google/Apple افتراضيًا).
  */
 export function AuthClerkSignIn({
   nextUrl,

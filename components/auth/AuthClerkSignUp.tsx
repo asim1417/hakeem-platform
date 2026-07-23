@@ -7,6 +7,7 @@ import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
 import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
 import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
+import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 
 function SignUpSkeleton() {
   return (
@@ -35,6 +36,18 @@ function LegacyClerkSignUp({
   forceRedirectUrl: string;
   signInUrl: string;
 }) {
+  const clerkMounted = useClerkMounted();
+  if (!clerkMounted) return <SignUpSkeleton />;
+  return <LegacyClerkSignUpInner forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />;
+}
+
+function LegacyClerkSignUpInner({
+  forceRedirectUrl,
+  signInUrl,
+}: {
+  forceRedirectUrl: string;
+  signInUrl: string;
+}) {
   const { loaded } = useClerk();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -49,7 +62,6 @@ function LegacyClerkSignUp({
           routing="path"
           path="/sign-up"
           signInUrl={signInUrl}
-          forceRedirectUrl={forceRedirectUrl}
           fallbackRedirectUrl={forceRedirectUrl}
         />
       </div>
@@ -57,7 +69,7 @@ function LegacyClerkSignUp({
   );
 }
 
-/** إنشاء حساب — OAuth فقط عند تفعيل العلم، وإلا Clerk السابق. */
+/** إنشاء حساب — بوابة موحّدة /sign-up */
 export function AuthClerkSignUp({
   forceRedirectUrl = "/auth/continue?next=%2Fdashboard",
   signInUrl = "/sign-in",

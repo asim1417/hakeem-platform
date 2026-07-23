@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
+import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 
 const AFTER_AUTH = "/auth/continue";
 const FALLBACK_MS = 12_000;
@@ -11,6 +12,7 @@ const FALLBACK_MS = 12_000;
  * يكمل جلسة OAuth داخل نطاق التطبيق ويعود لـ /auth/continue.
  */
 export function SsoCallbackClient() {
+  const clerkMounted = useClerkMounted();
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
@@ -31,6 +33,18 @@ export function SsoCallbackClient() {
         >
           العودة لتسجيل الدخول
         </Link>
+      </div>
+    );
+  }
+
+  if (!clerkMounted) {
+    return (
+      <div className="w-full max-w-sm rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-8 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
+        <div
+          className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#0E3435]/20 border-t-[#0E3435]"
+          aria-hidden
+        />
+        <p className="mt-4 text-sm font-semibold text-[#0E3435]">جارٍ تجهيز الجلسة…</p>
       </div>
     );
   }

@@ -66,6 +66,7 @@
     "test:owner-emergency": "tsx scripts/test-owner-emergency.ts",
     "test:oauth-only-signin": "tsx scripts/test-oauth-only-signin.ts",
     "test:responsive-nav": "tsx scripts/test-responsive-nav.ts",
+    "test:unify-home-auth": "tsx scripts/test-unify-home-auth.ts",
     "test:auth-continue": "tsx scripts/test-auth-continue.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",

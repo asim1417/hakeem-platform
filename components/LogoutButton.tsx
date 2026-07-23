@@ -3,6 +3,7 @@
 import { SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 
 async function clearOwnerSession() {
   await fetch("/api/auth/owner-logout", { method: "POST" }).catch(() => undefined);
@@ -11,26 +12,29 @@ async function clearOwnerSession() {
 const textBtnClass =
   "focus-ring mt-3 w-full rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30";
 
-/** تسجيل الخروج النصّي (السايدبار). */
+const AFTER_LOGOUT = "/";
+
+/** تسجيل الخروج النصّي (السايدبار) — يعود للصفحة الرئيسية العامة. */
 export function LogoutButton({ clerkEnabled = true }: { clerkEnabled?: boolean }) {
   const router = useRouter();
+  const clerkMounted = useClerkMounted();
 
-  async function logoutOwner() {
+  async function logoutPlain() {
     await clearOwnerSession();
-    router.push("/sign-in");
+    router.push(AFTER_LOGOUT);
     router.refresh();
   }
 
-  if (!clerkEnabled) {
+  if (!clerkEnabled || !clerkMounted) {
     return (
-      <button type="button" onClick={() => void logoutOwner()} className={textBtnClass}>
+      <button type="button" onClick={() => void logoutPlain()} className={textBtnClass}>
         تسجيل الخروج
       </button>
     );
   }
 
   return (
-    <SignOutButton redirectUrl="/sign-in">
+    <SignOutButton redirectUrl={AFTER_LOGOUT}>
       <button
         type="button"
         className={textBtnClass}
@@ -53,18 +57,19 @@ export function LogoutIconButton({
   clerkEnabled?: boolean;
 }) {
   const router = useRouter();
+  const clerkMounted = useClerkMounted();
 
-  async function logoutOwner() {
+  async function logoutPlain() {
     await clearOwnerSession();
-    router.push("/sign-in");
+    router.push(AFTER_LOGOUT);
     router.refresh();
   }
 
-  if (!clerkEnabled) {
+  if (!clerkEnabled || !clerkMounted) {
     return (
       <button
         type="button"
-        onClick={() => void logoutOwner()}
+        onClick={() => void logoutPlain()}
         className="icon-pill focus-ring"
         aria-label={label}
         title={label}
@@ -75,7 +80,7 @@ export function LogoutIconButton({
   }
 
   return (
-    <SignOutButton redirectUrl="/sign-in">
+    <SignOutButton redirectUrl={AFTER_LOGOUT}>
       <button
         type="button"
         className="icon-pill focus-ring"

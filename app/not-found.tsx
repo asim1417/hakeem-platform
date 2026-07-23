@@ -14,8 +14,12 @@ export default function NotFound() {
           تعذّر العثور على الصفحة المطلوبة. ربما نُقل المحتوى أو تغيّر الرابط.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <Link href="/dashboard" className="btn btn-gold">العودة إلى الرئيسية</Link>
-          <Link href="/dashboard/ask" className="btn btn-outline">اسأل حكيم</Link>
+          <Link href="/" className="btn btn-gold">
+            الصفحة الرئيسية
+          </Link>
+          <Link href="/sign-in" className="btn btn-outline">
+            تسجيل الدخول
+          </Link>
         </div>
       </div>
     </div>
