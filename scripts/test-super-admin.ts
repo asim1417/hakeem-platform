@@ -39,9 +39,12 @@ async function main() {
     "app/admin/page.tsx",
     "app/admin/services/page.tsx",
     "app/admin/jobs/page.tsx",
+    "app/admin/billing/page.tsx",
     "app/admin/audit/page.tsx",
     "app/api/admin/feature-toggles/route.ts",
     "app/api/admin/jobs/route.ts",
+    "app/api/admin/billing/route.ts",
+    "components/admin/AdminPageShell.tsx",
     "lib/modules/auth/super-admin.ts",
     "prisma/migrations/20260723160000_add_super_admin_role/migration.sql",
   ];

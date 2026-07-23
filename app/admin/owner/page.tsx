@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminUsersManager } from "@/components/AdminUsersManager";
 import { prisma } from "@/lib/prisma";
 import { requirePagePermission } from "@/lib/modules/auth/session";
@@ -40,7 +40,7 @@ export default async function OwnerAdminPage() {
   const owners = users.filter((u) => u.role === "SYSTEM_ADMIN" || u.role === "SUPER_ADMIN");
 
   return (
-    <AppShell>
+    <AdminPageShell currentPath="/admin/owner">
       <p className="text-sm font-semibold text-gold">إعدادات المالك</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">حساب المالك وبيانات الدخول</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
@@ -96,6 +96,6 @@ export default async function OwnerAdminPage() {
         </Link>
         .
       </p>
-    </AppShell>
+    </AdminPageShell>
   );
 }

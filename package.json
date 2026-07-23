@@ -87,6 +87,7 @@
     "test:simulation": "tsx scripts/test-judicial-simulation.ts",
     "test:admin": "tsx scripts/test-admin.ts",
     "test:super-admin": "tsx scripts/test-super-admin.ts",
+    "test:admin-ops": "tsx scripts/test-admin-ops-billing-nav.ts",
     "test:core-integration": "tsx scripts/test-core-integration.ts",
     "test:kg-seed": "tsx scripts/test-kg-seed.ts",
     "seed:kg": "tsx scripts/seed-knowledge-graph.ts",

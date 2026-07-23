@@ -1,5 +1,4 @@
-import { AppShell } from "@/components/AppShell";
-import { SuperAdminNav } from "@/components/admin/SuperAdminNav";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { FeatureTogglesManager } from "@/components/admin/FeatureTogglesManager";
 import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
 import { listFeatureToggles } from "@/lib/modules/admin/feature-toggles";
@@ -25,8 +24,7 @@ export default async function AdminServicesPage() {
   ];
 
   return (
-    <AppShell>
-      <SuperAdminNav currentPath="/admin/services" />
+    <AdminPageShell currentPath="/admin/services">
       <p className="text-sm font-semibold text-[#8B6914]">السوبر أدمن</p>
       <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">إدارة خدمات حكيم</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
@@ -57,6 +55,6 @@ export default async function AdminServicesPage() {
           <FeatureTogglesManager initial={toggles} />
         </div>
       </section>
-    </AppShell>
+    </AdminPageShell>
   );
 }

@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/AppShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { buildPermissionMatrix } from "@/lib/modules/auth/role-admin";
 import { RolePermissionsEditor } from "@/components/admin/RolePermissionsEditor";
@@ -10,7 +10,7 @@ export default async function AdminRolesPage() {
   const matrix = await buildPermissionMatrix();
 
   return (
-    <AppShell>
+    <AdminPageShell currentPath="/admin/roles">
       <p className="text-sm font-semibold text-gold">RBAC — صلاحيات متقدمة</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">الأدوار والصلاحيات</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
@@ -19,6 +19,6 @@ export default async function AdminRolesPage() {
       <div className="mt-6">
         <RolePermissionsEditor initialMatrix={matrix} />
       </div>
-    </AppShell>
+    </AdminPageShell>
   );
 }
