@@ -2,6 +2,7 @@ import { HomeAuthActions } from "@/components/home/HomeAuthActions";
 import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { buildOAuthStartPath } from "@/lib/modules/auth/clerk-oauth-start";
+import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 
 const FEATURES = [
   {
@@ -21,12 +22,19 @@ const FEATURES = [
   },
 ] as const;
 
+function featureHref(next: string): string {
+  if (isGoogleOAuthConfigured()) {
+    return `/api/auth/google?next=${encodeURIComponent(next)}`;
+  }
+  return buildOAuthStartPath({ provider: "google", nextUrl: next, mode: "sign-up" });
+}
+
 /**
- * الصفحة الرئيسية — لوحة الدخول مضمّنة هنا (بلا انتقال إلى /sign-in).
- * أزرار Google/Apple عبر SSR → /api/auth/oauth/start (بلا Clerk JS على الجهاز).
+ * الصفحة الرئيسية — لوحة الدخول مضمّنة.
+ * Google عبر OAuth أصلي + hakeem_session عند توفّر المفاتيح (حل جذري لـ iPhone).
  */
 export function HomeHero() {
-  const clerkReady = isClerkConfigured();
+  const clerkReady = isClerkConfigured() || isGoogleOAuthConfigured();
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden bg-[var(--hakeem-bg)]">
@@ -116,15 +124,7 @@ export function HomeHero() {
           {FEATURES.map((f) => (
             <li key={f.title}>
               <a
-                href={
-                  clerkReady
-                    ? buildOAuthStartPath({
-                        provider: "google",
-                        nextUrl: f.next,
-                        mode: "sign-up",
-                      })
-                    : "#login"
-                }
+                href={clerkReady ? featureHref(f.next) : "#login"}
                 className="focus-ring block w-full rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/90 px-4 py-4 text-start transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
               >
                 <p className="font-semibold text-[var(--navy)]">{f.title}</p>

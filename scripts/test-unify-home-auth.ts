@@ -41,7 +41,7 @@ assert.ok(signIn.includes("بوابة الدخول") || signIn.includes("AuthOau
 
 const oauth = fs.readFileSync(path.join(root, "components/auth/AuthOauthButtons.tsx"), "utf8");
 assert.ok(oauth.includes("المتابعة باستخدام Google"));
-assert.ok(oauth.includes("/api/auth/oauth/start"));
+assert.ok(oauth.includes("/api/auth/google") || oauth.includes("buildOAuthStartPath"));
 
 const logout = fs.readFileSync(path.join(root, "components/LogoutButton.tsx"), "utf8");
 assert.ok(logout.includes('AFTER_LOGOUT = "/"'));

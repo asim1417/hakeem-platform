@@ -1,4 +1,5 @@
 import { buildOAuthStartPath } from "@/lib/modules/auth/clerk-oauth-start";
+import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 
 function GoogleIcon() {
   return (
@@ -20,8 +21,7 @@ function AppleIcon() {
 }
 
 /**
- * أزرار دخول SSR — تظهر فورًا بلا Clerk JS.
- * الضغط يذهب إلى /api/auth/oauth/start ثم Google/Apple.
+ * أزرار دخول SSR — Google يفضّل المسار الأصلي (hakeem_session) عند توفّر المفاتيح.
  */
 export function AuthOauthButtons({
   mode,
@@ -34,11 +34,13 @@ export function AuthOauthButtons({
   nextUrl?: string;
   id?: string;
   className?: string;
-  /** داخل الصفحة الرئيسية — بلا رابط «العودة» وبلا انتقال لصفحة دخول منفصلة */
   embedded?: boolean;
 }) {
   const isSignIn = mode === "sign-in";
-  const googleHref = buildOAuthStartPath({ provider: "google", nextUrl, mode });
+  const googleNative = isGoogleOAuthConfigured();
+  const googleHref = googleNative
+    ? `/api/auth/google?next=${encodeURIComponent(nextUrl)}`
+    : buildOAuthStartPath({ provider: "google", nextUrl, mode });
   const appleHref = buildOAuthStartPath({ provider: "apple", nextUrl, mode });
 
   return (
@@ -101,7 +103,6 @@ export function AuthOauthButtons({
               العودة إلى الصفحة الرئيسية
             </a>
           </p>
-
           <p className="mt-4 text-center text-sm text-[rgba(14,52,53,0.6)]">
             {isSignIn ? (
               <>

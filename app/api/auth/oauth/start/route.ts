@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { getGoogleOAuthConfig } from "@/lib/modules/auth/google-oauth";
 import {
   buildClerkPortalSsoUrl,
   clerkAccountPortalOrigin,
@@ -8,6 +9,7 @@ import {
   type ClerkOAuthProvider,
 } from "@/lib/modules/auth/clerk-oauth-start";
 import { continueUrl, resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
+import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +30,11 @@ function withDevBrowserCookie(response: NextResponse, jwt?: string) {
 /**
  * GET /api/auth/oauth/start?provider=google|apple&next=/dashboard
  *
- * الأساسي: Clerk Account Portal SSO (يكتمل handshake عند العودة).
- * الاحتياطي: FAPI مباشر إلى Google/Apple مع كوكي __clerk_db_jwt.
+ * Google: إن وُجدت مفاتيح Google → OAuth أصلي (/api/auth/google) + hakeem_session.
+ * وإلا / لـ Apple: Clerk Portal SSO ثم claim عند العودة.
  */
 export async function GET(request: NextRequest) {
-  if (!isClerkConfigured()) {
-    return NextResponse.redirect(new URL("/#login", request.url));
-  }
+  await hydrateEnvFromSettings().catch(() => 0);
 
   const providerRaw = (request.nextUrl.searchParams.get("provider") || "google").toLowerCase();
   const provider: ClerkOAuthProvider = providerRaw === "apple" ? "apple" : "google";
@@ -43,11 +43,20 @@ export async function GET(request: NextRequest) {
     next: request.nextUrl.searchParams.get("next") || undefined,
   });
 
+  // ── المسار الجذري لـ Google: OAuth أصلي بلا Clerk JS ──
+  if (provider === "google" && getGoogleOAuthConfig()) {
+    const q = new URLSearchParams({ next: nextUrl });
+    return NextResponse.redirect(new URL(`/api/auth/google?${q}`, request.url));
+  }
+
+  if (!isClerkConfigured()) {
+    return NextResponse.redirect(new URL("/#login", request.url));
+  }
+
   const origin = request.nextUrl.origin;
   const redirectUrl = `${origin}/sso-callback`;
   const redirectUrlComplete = `${origin}${continueUrl(nextUrl)}`;
 
-  // 1) Account Portal SSO — الأكثر موثوقية مع pk_test_ و Safari
   const portalSso = buildClerkPortalSsoUrl({
     provider,
     redirectUrlComplete,
@@ -56,7 +65,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(portalSso);
   }
 
-  // 2) احتياطي FAPI + ربط JWT بالمتصفح
   try {
     const { redirectTo, devBrowserJwt } = await fetchClerkOAuthAuthorizeUrl({
       provider,
