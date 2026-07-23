@@ -174,8 +174,8 @@ export function AnswerToolbar({
   }
 
   const btn =
-    "focus-ring inline-flex items-center gap-1.5 rounded-lg border-2 border-[var(--gold)] bg-ivory px-2.5 py-1.5 text-xs font-bold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:border-[var(--navy)] hover:text-white disabled:opacity-50";
-  const ico = { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, "aria-hidden": true } as const;
+    "focus-ring touch-target inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border-2 border-[var(--gold)] bg-ivory px-3 py-2 text-sm font-bold text-[var(--navy)] shadow-[var(--sh-xs)] transition hover:bg-[var(--navy)] hover:border-[var(--navy)] hover:text-white disabled:opacity-50";
+  const ico = { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, "aria-hidden": true } as const;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">

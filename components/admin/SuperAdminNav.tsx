@@ -32,8 +32,8 @@ export function SuperAdminNav({ currentPath }: { currentPath: string }) {
             href={link.href}
             className={
               active
-                ? "rounded-md bg-[#0E3435] px-3 py-2 text-sm font-semibold text-[#FFFcf7]"
-                : "rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.1)] hover:bg-[#F7F2EA]"
+                ? "touch-target inline-flex min-h-[44px] items-center rounded-md bg-[#0E3435] px-3 py-2 text-sm font-semibold text-[#FFFcf7]"
+                : "touch-target inline-flex min-h-[44px] items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.1)] hover:bg-[#F7F2EA]"
             }
             aria-current={active ? "page" : undefined}
           >

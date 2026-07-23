@@ -69,7 +69,7 @@ export function LogoutIconButton({
         aria-label={label}
         title={label}
       >
-        <LogOut size={16} aria-hidden />
+        <LogOut size={20} aria-hidden />
       </button>
     );
   }
@@ -85,7 +85,7 @@ export function LogoutIconButton({
           void clearOwnerSession();
         }}
       >
-        <LogOut size={16} aria-hidden />
+        <LogOut size={20} aria-hidden />
       </button>
     </SignOutButton>
   );

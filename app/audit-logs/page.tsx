@@ -29,7 +29,7 @@ export default async function AuditLogsPage() {
         {logs.length === 0 ? (
           <div className="p-6 text-center text-[var(--ink-60)]">لا توجد سجلات تدقيق حتى الآن.</div>
         ) : (
-          <div className="max-h-[70vh] overflow-auto">
+          <div className="table-scroll max-h-[70vh] overflow-auto">
             <table className="w-full min-w-[760px] border-collapse text-right text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">

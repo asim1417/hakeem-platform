@@ -26,10 +26,10 @@ export function LanguageToggle({ current, switchLabel }: { current: "ar" | "en";
       disabled={pending}
       aria-label={`تبديل اللغة إلى ${switchLabel}`}
       title={switchLabel}
-      className="inline-flex h-[38px] items-center gap-1.5 rounded-full border border-[var(--ink-08)] bg-[var(--paper)] px-3 text-xs font-semibold text-[var(--navy)] transition hover:border-[var(--gold)] disabled:opacity-50"
+      className="touch-target inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--ink-08)] bg-[var(--paper)] px-3 text-sm font-semibold text-[var(--navy)] transition hover:border-[var(--gold)] disabled:opacity-50"
     >
-      <Languages size={15} aria-hidden />
-      {switchLabel}
+      <Languages size={20} aria-hidden />
+      <span className="lang-toggle-label">{switchLabel}</span>
     </button>
   );
 }

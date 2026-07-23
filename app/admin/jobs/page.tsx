@@ -48,7 +48,7 @@ export default async function AdminJobsPage() {
         {jobs.length === 0 ? (
           <p className="p-6 text-center text-sm text-[rgba(14,52,53,0.55)]">لا توجد مهام مسجّلة بعد.</p>
         ) : (
-          <div className="max-h-[70vh] overflow-auto">
+          <div className="table-scroll max-h-[70vh] overflow-auto">
             <table className="w-full min-w-[720px] border-collapse text-right text-sm">
               <thead className="sticky top-0 bg-[#F7F2EA]">
                 <tr className="border-b border-[rgba(14,52,53,0.08)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">

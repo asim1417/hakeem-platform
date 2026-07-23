@@ -12,10 +12,12 @@ export const metadata: Metadata = {
 };
 
 // إعداد صريح للـviewport يضمن عرضًا متّسقًا على الجوّال (آيفون/أندرويد) والكمبيوتر.
+// لا نعطّل التكبير (maximumScale) — لكن الأيقونات والأزرار يجب أن تبقى مقروءة بلا تكبير.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover"
+  viewportFit: "cover",
+  themeColor: "#0E3435",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
