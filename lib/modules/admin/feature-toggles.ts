@@ -47,6 +47,13 @@ export const TOGGLE_CATALOG: Array<Omit<ManagedToggle, "enabled">> = [
     description: "إشارة تشغيلية لفتح/إغلاق دعوة التسجيل في الواجهة (المصادقة عبر Clerk).",
     uiOnly: true,
   },
+  {
+    key: "ui.responsive_ux_v2",
+    label: "توافق الجوال والتنقل الموحّد",
+    description:
+      "أزرار رجوع/لوحة ومسار ملاحي محسّن. الإيقاف الطارئ أيضًا عبر RESPONSIVE_UX_V2=0 — لا يوقف الخدمات.",
+    uiOnly: true,
+  },
 ];
 
 const DEFAULT_ENABLED: Record<string, boolean> = {
@@ -55,6 +62,7 @@ const DEFAULT_ENABLED: Record<string, boolean> = {
   "ui.documents_nav": true,
   "ui.simulations_nav": true,
   "ui.registration_open": true,
+  "ui.responsive_ux_v2": true,
 };
 
 export async function ensureFeatureToggleDefaults(): Promise<void> {

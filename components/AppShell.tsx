@@ -5,11 +5,14 @@ import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
 import { isPlatformAdmin } from "@/lib/modules/auth/super-admin";
 import { getNavVisibility } from "@/lib/modules/admin/nav-visibility";
+import { Suspense } from "react";
 import { LogoutButton, TopbarUserBar } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { DashboardHomeLink, SafeBackButton } from "@/components/nav/SafeBackButton";
+import { ScrollRestorer } from "@/components/nav/ScrollRestorer";
 import { getTranslator } from "@/lib/i18n/server";
 import { DIR, LOCALE_LABEL } from "@/lib/i18n/dictionaries";
 import type { LucideIcon } from "lucide-react";
@@ -111,15 +114,15 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <Link
                 href="/dashboard/billing"
-                className="mt-1 block truncate text-[11px] font-semibold text-[var(--gold-pale)] hover:underline"
+                className="sidebar-foot-link mt-1 block truncate font-semibold text-[var(--gold-pale)] hover:underline"
               >
                 الفوترة والخطط
               </Link>
               <Link
                 href="/onboarding"
-                className="mt-0.5 block truncate text-[11px] font-semibold text-white/70 hover:underline"
+                className="sidebar-foot-link mt-0.5 block truncate font-semibold text-white/70 hover:underline"
               >
-                الملف والنقاط
+                الحساب والإعدادات
               </Link>
             </div>
           </div>
@@ -129,15 +132,19 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="main">
         <header className="topbar">
-          <div className="flex items-center gap-3">
+          <div className="topbar-left">
             <MobileNav />
+            <Suspense fallback={null}>
+              <SafeBackButton />
+            </Suspense>
+            <DashboardHomeLink />
             <TopbarBreadcrumb />
           </div>
           <div className="topbar-right">
             {/* صندوق البحث العلويّ: يوجَّه للبحث الذكيّ (اسأل حكيم) حين يُخفى البحث التقليديّ. */}
             <form className="search-box" action={TRADITIONAL_SEARCH_ENABLED ? "/dashboard/legal-search" : AI_SEARCH_HOME} role="search">
               <span aria-hidden>⌕</span>
-              <input name="q" aria-label={t("topbar.search")} placeholder={t("topbar.searchPlaceholder")} />
+              <input name="q" aria-label={t("topbar.search")} placeholder={t("topbar.searchPlaceholder")} autoComplete="off" />
             </form>
             <LanguageToggle current={locale} switchLabel={LOCALE_LABEL[locale === "ar" ? "en" : "ar"]} />
             {user ? (
@@ -149,6 +156,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
         </header>
+        <ScrollRestorer />
         <div className="content" id="main-content">{children}</div>
         <footer className="app-foot">
           <span>{t("footer.tagline")}</span>

@@ -1,3 +1,5 @@
+import { AppShell } from "@/components/AppShell";
+import { SuperAdminNav } from "@/components/admin/SuperAdminNav";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getSettingsStatus } from "@/lib/modules/settings/settings-service";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
@@ -9,7 +11,8 @@ export default async function AdminSettingsPage() {
   const settings = await getSettingsStatus().catch(() => []);
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8">
+    <AppShell>
+      <SuperAdminNav currentPath="/admin/settings" />
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--navy)]">إعدادات المنصّة</h1>
         <p className="mt-2 text-sm leading-7 text-[#0E3435]/70">
@@ -26,6 +29,6 @@ export default async function AdminSettingsPage() {
         ملاحظة: مفاتيح الإقلاع الأساسية (مثل AUTH_SECRET وREQUIRE_AUTH) تبقى في Vercel — لأنها تلزم قبل
         قراءة قاعدة البيانات. كل ما عداها يُدار من هنا.
       </p>
-    </main>
+    </AppShell>
   );
 }
