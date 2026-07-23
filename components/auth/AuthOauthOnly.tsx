@@ -91,20 +91,25 @@ export function AuthOauthOnly({
     setError("");
     setBusy(strategy);
     try {
-      const redirectUrl = `${window.location.origin}/sso-callback`;
+      // عناوين مطلقة — تمنع عودة OAuth إلى نطاق Clerk (accounts.dev) بدل التطبيق.
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/sso-callback`;
+      const redirectUrlComplete = afterAuth.startsWith("http")
+        ? afterAuth
+        : `${origin}${afterAuth.startsWith("/") ? "" : "/"}${afterAuth}`;
       if (isSignIn) {
         if (!signIn) throw new Error("تعذّر بدء الدخول.");
         await signIn.authenticateWithRedirect({
           strategy,
           redirectUrl,
-          redirectUrlComplete: afterAuth,
+          redirectUrlComplete,
         });
       } else {
         if (!signUp) throw new Error("تعذّر بدء إنشاء الحساب.");
         await signUp.authenticateWithRedirect({
           strategy,
           redirectUrl,
-          redirectUrlComplete: afterAuth,
+          redirectUrlComplete,
         });
       }
     } catch (err) {

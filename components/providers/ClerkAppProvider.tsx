@@ -33,6 +33,10 @@ export function ClerkAppProvider({
       publishableKey={publishableKey}
       appearance={appearance}
       localization={clerkLocalization}
+      // مسار داخل التطبيق — بدونها Clerk يحوّل إلى Account Portal (accounts.dev)
+      // بعد OAuth ويفشل الدخول على النطاق الحيّ.
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
       afterSignOutUrl="/sign-in"
       signInFallbackRedirectUrl={AFTER_AUTH}
       signUpFallbackRedirectUrl={AFTER_AUTH}
