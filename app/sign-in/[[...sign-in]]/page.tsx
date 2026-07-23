@@ -2,6 +2,7 @@ import Link from "next/link";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { AuthClerkSignIn } from "@/components/auth/AuthClerkSignIn";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
+import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 
 export const metadata = {
   title: "تسجيل الدخول — حكيم",
@@ -13,17 +14,16 @@ export default function SignInPage({
   searchParams?: { next?: string };
 }) {
   const configured = isClerkConfigured();
-  const nextUrl =
-    searchParams?.next && searchParams.next.startsWith("/") && !searchParams.next.startsWith("//")
-      ? searchParams.next
-      : "/dashboard";
+  const nextUrl = safeDashboardNext(searchParams?.next);
 
   return (
     <AuthJourneyShell
       compact
-      tagline="سجّل الدخول لمتابعة أعمالك القانونية"
+      tagline="تابع أعمالك القانونية وتقاريرك وخدماتك الذكية من مكان واحد"
       footer={
         <nav className="login-panel__links" aria-label="روابط نظامية">
+          <Link href="/">الرئيسية</Link>
+          <span aria-hidden>·</span>
           <Link href="/privacy">سياسة الخصوصية</Link>
           <span aria-hidden>·</span>
           <Link href="/terms">شروط الاستخدام</Link>

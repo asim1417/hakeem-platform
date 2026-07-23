@@ -3,19 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { signUpWithNext } from "@/lib/modules/auth/safe-next";
 
 type AuthState = "loading" | "guest" | "user";
 
 const FEATURES = [
-  { title: "بحث في الأنظمة", desc: "مواد وأحكام بمصدر موثّق" },
-  { title: "اسأل حكيم", desc: "تحليل واقعة واقتراح أساس نظامي" },
-  { title: "محاكاة قضائية", desc: "تدريب على تفكير القاضي" },
-];
+  { title: "اسأل حكيم", desc: "تحليل واقعة واقتراح أساس نظامي", path: "/dashboard/ask" },
+  { title: "المعاون القضائي", desc: "مساحة قضية وتحليل متكامل", path: "/dashboard/judicial-assistant" },
+  { title: "محاكاة قضائية", desc: "تدريب على تفكير القاضي", path: "/dashboard/simulations" },
+] as const;
 
 /**
- * الصفحة الرئيسية — بوابة الدخول للرحلة الكاملة:
- * زائر → يُطلب منه التسجيل أو الدخول → ثم التجربة المجانية داخل المنصة.
+ * الصفحة الرئيسية — بوابة دخول واضحة:
+ * زر أساسي واحد للتسجيل + دخول ثانوي، بلا تكرار FAB/أيقونات.
  */
 export function HomeHero() {
   const router = useRouter();
@@ -27,10 +27,7 @@ export function HomeHero() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;
-        if (data?.user && !data.isGuest && !data.authDisabled) {
-          setAuth("user");
-        } else if (data?.user && !data.isGuest) {
-          // جلسة حقيقية حتى لو المصادقة غير مفروضة
+        if (data?.user && !data.isGuest) {
           setAuth("user");
         } else {
           setAuth("guest");
@@ -49,7 +46,7 @@ export function HomeHero() {
       router.push(path);
       return;
     }
-    router.push(`/sign-up`);
+    router.push(signUpWithNext(path));
   }
 
   return (
@@ -77,30 +74,21 @@ export function HomeHero() {
         {auth === "user" ? (
           <Link
             href="/dashboard"
-            className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)]"
+            className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)]"
           >
             لوحة التحكم
           </Link>
         ) : (
           <div className="flex items-center gap-2">
-            {/* أيقونة تخطّي سريعة لصفحة الدخول أثناء إعداد OAuth/البريد */}
             <Link
               href="/sign-in"
-              aria-label="تخطي إلى صفحة الدخول"
-              title="تخطي إلى صفحة الدخول"
-              className="focus-ring grid h-11 w-11 place-items-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory text-[var(--navy)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)]"
-            >
-              <LogIn size={18} aria-hidden />
-            </Link>
-            <Link
-              href="/sign-in"
-              className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
+              className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
             >
               تسجيل الدخول
             </Link>
             <Link
               href="/sign-up"
-              className="focus-ring hidden items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white sm:inline-flex"
+              className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
             >
               سجّل مجانًا
             </Link>
@@ -114,35 +102,35 @@ export function HomeHero() {
           رفيق المحامي في القاعة
         </h1>
         <p className="mt-4 max-w-xl text-base leading-8 text-[var(--ink-60)] md:text-lg">
-          سجّل أو ادخل لتبدأ تجربتك المجانية: تحليل الوقائع، اقتراح الدفوع، ومحاكاة القضاء — بمصدر نظامي موثّق.
+          حلّل الوقائع، اقترح الدفوع، وتابع أعمالك القانونية من مكان واحد — بمصدر نظامي موثّق.
         </p>
 
         {auth !== "user" ? (
           <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/sign-up"
-              className="focus-ring inline-flex flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--sh-sm)] transition hover:bg-[var(--navy-mid)]"
+              className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--sh-sm)] transition hover:bg-[var(--navy-mid)]"
             >
-              سجّل وابدأ التجربة المجانية
+              ابدأ مجانًا
             </Link>
             <Link
               href="/sign-in"
-              className="focus-ring inline-flex flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]"
+              className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]"
             >
-              تسجيل الدخول
+              لدي حساب — دخول
             </Link>
           </div>
         ) : (
           <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/dashboard"
-              className="focus-ring inline-flex flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
+              className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
             >
               المتابعة إلى المنصة
             </Link>
             <Link
               href="/dashboard/ask"
-              className="focus-ring inline-flex flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)]"
+              className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)]"
             >
               اسأل حكيم
             </Link>
@@ -152,7 +140,7 @@ export function HomeHero() {
         <p className="mt-4 text-sm text-[var(--ink-40)]">
           {auth === "user"
             ? "أنت داخل جلسة نشطة — يمكنك استخدام المنصة الآن."
-            : "التجربة المجانية تبدأ مباشرة بعد إنشاء الحساب أو تسجيل الدخول."}
+            : "الدخول عبر Google أو Apple — بلا تعقيد، وبياناتك محمية."}
         </p>
 
         <ul className="mt-12 grid w-full gap-3 text-right sm:grid-cols-3">
@@ -160,13 +148,15 @@ export function HomeHero() {
             <li key={f.title}>
               <button
                 type="button"
-                onClick={() => goProtected(f.title === "محاكاة قضائية" ? "/dashboard/simulations" : "/dashboard/ask")}
+                onClick={() => goProtected(f.path)}
                 className="focus-ring w-full rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/90 px-4 py-4 text-start transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
               >
                 <p className="font-semibold text-[var(--navy)]">{f.title}</p>
                 <p className="mt-1 text-xs leading-6 text-[var(--ink-60)]">{f.desc}</p>
                 {auth !== "user" ? (
-                  <p className="mt-2 text-[11px] font-semibold text-[var(--gold-dark)]">يتطلب تسجيل الدخول ←</p>
+                  <p className="mt-2 text-[11px] font-semibold text-[var(--gold-dark)]">
+                    سجّل للمتابعة ←
+                  </p>
                 ) : null}
               </button>
             </li>
@@ -177,17 +167,6 @@ export function HomeHero() {
           تنبيه مهني: مخرجات الذكاء الاصطناعي في حكيم مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا أو حكمًا فعليًا.
         </p>
       </section>
-
-      {auth !== "user" ? (
-        <Link
-          href="/sign-in"
-          className="focus-ring fixed bottom-5 start-5 z-20 inline-flex items-center gap-2 rounded-full border border-[var(--gold-border)] bg-[var(--navy)] px-4 py-3 text-sm font-semibold text-white shadow-[var(--sh-md)] transition hover:opacity-95"
-          aria-label="تخطي إلى صفحة الدخول"
-        >
-          <LogIn size={16} aria-hidden />
-          تخطّي إلى الدخول
-        </Link>
-      ) : null}
     </main>
   );
 }

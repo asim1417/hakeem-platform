@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/modules/auth/session";
+import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 
 export const dynamic = "force-dynamic";
 
 /**
- * بعد Clerk دائمًا → /dashboard (الصفحة الرئيسية للمنصة)
- * إلا إذا طُلب مسار داخلي آمن صراحةً عبر ?next=
+ * بعد Clerk → وجهة آمنة محفوظة عبر ?next= أو /dashboard.
  */
 export default async function AuthContinuePage({
   searchParams,
@@ -13,13 +13,5 @@ export default async function AuthContinuePage({
   searchParams?: { next?: string };
 }) {
   await requireUser();
-  const nextRaw = searchParams?.next;
-  const next =
-    nextRaw &&
-    nextRaw.startsWith("/") &&
-    !nextRaw.startsWith("//") &&
-    (nextRaw === "/dashboard" || nextRaw.startsWith("/dashboard/"))
-      ? nextRaw
-      : "/dashboard";
-  redirect(next);
+  redirect(safeDashboardNext(searchParams?.next));
 }

@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const DEFAULT_POINTS = [
-  "بعد الدخول أدخل الاسم والجوال والمهنة",
-  "ثم استخدم اللوحة فورًا",
-  "إكمال باقي الملف اختياري للمكافآت",
+  "المعاون القضائي والتحليل الذكي",
+  "مكتبة الأنظمة والأحكام الموثّقة",
+  "أعمالك وتقاريرك في مكان واحد",
 ] as const;
 
 /**
@@ -48,6 +48,8 @@ export function AuthJourneyShell({
             {children}
             {footer ?? (
               <nav className="login-panel__links" aria-label="روابط نظامية">
+                <Link href="/">الرئيسية</Link>
+                <span aria-hidden>·</span>
                 <Link href="/privacy">سياسة الخصوصية</Link>
                 <span aria-hidden>·</span>
                 <Link href="/terms">شروط الاستخدام</Link>
