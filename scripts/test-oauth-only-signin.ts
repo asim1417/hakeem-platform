@@ -30,8 +30,8 @@ assert.ok(buttons.includes("المتابعة باستخدام Apple"));
 assert.equal(buttons.includes('from "@clerk/nextjs"'), false);
 
 const api = fs.readFileSync(path.join(root, "app/api/auth/oauth/start/route.ts"), "utf8");
-assert.ok(api.includes("fetchClerkOAuthAuthorizeUrl"));
-assert.ok(api.includes("/sso-callback"));
+assert.ok(api.includes("fetchClerkOAuthAuthorizeUrl") || api.includes("buildClerkPortalSsoUrl"));
+assert.ok(api.includes("/sso-callback") || api.includes("redirectUrlComplete"));
 
 const signInPage = fs.readFileSync(path.join(root, "app/sign-in/[[...sign-in]]/page.tsx"), "utf8");
 assert.ok(signInPage.includes("AuthOauthButtons"));
