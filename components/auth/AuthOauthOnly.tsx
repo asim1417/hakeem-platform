@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSignIn, useSignUp, useClerk } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/types";
@@ -81,10 +81,17 @@ export function AuthOauthOnly({
   const { isLoaded: signUpLoaded, signUp } = useSignUp();
   const [busy, setBusy] = useState<OAuthStrategy | null>(null);
   const [error, setError] = useState("");
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
 
   const ready = loaded && (mode === "sign-in" ? signInLoaded : signUpLoaded);
   const afterAuth = continueUrl(nextUrl);
   const isSignIn = mode === "sign-in";
+
+  useEffect(() => {
+    if (ready) return;
+    const id = window.setTimeout(() => setLoadTimedOut(true), 8000);
+    return () => window.clearTimeout(id);
+  }, [ready]);
 
   async function startOAuth(strategy: OAuthStrategy) {
     if (busy) return;
@@ -125,6 +132,28 @@ export function AuthOauthOnly({
   }
 
   if (!ready) {
+    if (loadTimedOut) {
+      return (
+        <div className="w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 text-center shadow-[0_8px_30px_rgba(14,52,53,0.06)]">
+          <p className="text-sm font-semibold text-[#0E3435]">تعذّر تحميل بوابة الدخول</p>
+          <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">
+            الشبكة أو الجلسة لم تكتمل على هذا الجهاز. حدّث الصفحة أو جرّب متصفحًا آخر.
+          </p>
+          <button
+            type="button"
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] bg-[#0E3435] px-5 text-sm font-semibold text-[#FFFcf7]"
+            onClick={() => window.location.reload()}
+          >
+            تحديث الصفحة
+          </button>
+          <p className="mt-3">
+            <Link href="/" className="text-sm font-semibold text-[rgba(14,52,53,0.65)]">
+              العودة إلى الرئيسية
+            </Link>
+          </p>
+        </div>
+      );
+    }
     return (
       <AuthCardSkeleton
         label={isSignIn ? "جارٍ تحميل تسجيل الدخول…" : "جارٍ تحميل إنشاء الحساب…"}
