@@ -2,6 +2,9 @@
 
 import { SignIn, useClerk } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/modules/auth/clerk-config";
+import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
+import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
+import { continueUrl } from "@/lib/modules/auth/safe-next";
 
 function SignInSkeleton() {
   return (
@@ -26,23 +29,16 @@ function SignInSkeleton() {
   );
 }
 
-function continueUrl(nextUrl: string) {
-  const safe =
-    nextUrl.startsWith("/dashboard") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
-  return `/auth/continue?next=${encodeURIComponent(safe)}`;
-}
-
-/** نموذج Clerk لتسجيل الدخول — بلا دخول مالك، مع هيكل تحميل ثابت الأبعاد. */
-export function AuthClerkSignIn({
+function LegacyClerkSignIn({
   nextUrl,
-  routing = "path",
-  path = "/sign-in",
-  signUpUrl = "/sign-up",
+  routing,
+  path,
+  signUpUrl,
 }: {
   nextUrl: string;
-  routing?: "path" | "hash";
-  path?: string;
-  signUpUrl?: string;
+  routing: "path" | "hash";
+  path: string;
+  signUpUrl: string;
 }) {
   const { loaded } = useClerk();
   const afterAuth = continueUrl(nextUrl);
@@ -71,5 +67,28 @@ export function AuthClerkSignIn({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * تسجيل الدخول — افتراضيًا Google/Apple فقط (AUTH_GATEWAY_UX_V2).
+ * عند إيقاف العلم: يعود نموذج Clerk السابق (Rollback).
+ */
+export function AuthClerkSignIn({
+  nextUrl,
+  routing = "path",
+  path = "/sign-in",
+  signUpUrl = "/sign-up",
+}: {
+  nextUrl: string;
+  routing?: "path" | "hash";
+  path?: string;
+  signUpUrl?: string;
+}) {
+  if (isAuthGatewayUxV2Enabled()) {
+    return <AuthOauthOnly mode="sign-in" nextUrl={nextUrl} />;
+  }
+  return (
+    <LegacyClerkSignIn nextUrl={nextUrl} routing={routing} path={path} signUpUrl={signUpUrl} />
   );
 }

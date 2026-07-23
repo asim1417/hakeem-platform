@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { SignUp, useClerk } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/modules/auth/clerk-config";
+import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
+import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
+import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 
 function SignUpSkeleton() {
   return (
@@ -24,18 +27,16 @@ function SignUpSkeleton() {
   );
 }
 
-/** بوابة تحميل لـ SignUp بنفس لغة صفحة الدخول. */
-export function AuthClerkSignUp({
-  forceRedirectUrl = "/auth/continue",
-  signInUrl = "/sign-in",
+function LegacyClerkSignUp({
+  forceRedirectUrl,
+  signInUrl,
 }: {
-  forceRedirectUrl?: string;
-  signInUrl?: string;
+  forceRedirectUrl: string;
+  signInUrl: string;
 }) {
   const { loaded } = useClerk();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-
   const ready = loaded && mounted;
 
   return (
@@ -53,4 +54,31 @@ export function AuthClerkSignUp({
       </div>
     </div>
   );
+}
+
+/** إنشاء حساب — OAuth فقط عند تفعيل العلم، وإلا Clerk السابق. */
+export function AuthClerkSignUp({
+  forceRedirectUrl = "/auth/continue?next=%2Fdashboard",
+  signInUrl = "/sign-in",
+  nextUrl,
+}: {
+  forceRedirectUrl?: string;
+  signInUrl?: string;
+  nextUrl?: string;
+}) {
+  if (isAuthGatewayUxV2Enabled()) {
+    let resolved = nextUrl || "/dashboard";
+    if (!nextUrl) {
+      try {
+        const q = forceRedirectUrl.includes("?") ? forceRedirectUrl.split("?")[1] : "";
+        const next = new URLSearchParams(q).get("next");
+        if (next) resolved = safeDashboardNext(next);
+      } catch {
+        resolved = "/dashboard";
+      }
+    }
+    return <AuthOauthOnly mode="sign-up" nextUrl={resolved} />;
+  }
+
+  return <LegacyClerkSignUp forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />;
 }

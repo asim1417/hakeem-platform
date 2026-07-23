@@ -64,6 +64,8 @@
     "test:credits": "tsx scripts/test-credits-onboarding.ts",
     "test:clerk": "tsx scripts/test-clerk-config.ts",
     "test:owner-emergency": "tsx scripts/test-owner-emergency.ts",
+    "test:oauth-only-signin": "tsx scripts/test-oauth-only-signin.ts",
+    "test:auth-continue": "tsx scripts/test-auth-continue.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",
     "db:clerk-id": "tsx scripts/apply-clerk-id.ts",

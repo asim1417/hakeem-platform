@@ -26,9 +26,22 @@ function getClerkHandler(): ClerkMw {
   clerkHandler = clerkMiddleware(async (auth, request) => {
     const session = await auth();
 
-    // مسجّل بالفعل → لا تُبقِه في صفحات الدخول؛ وجّهه للوحة الرئيسية
+    // مسجّل بالفعل → لا تُبقِه في صفحات الدخول؛ احترم ?next إن كان آمنًا
     if (session.userId && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      const nextRaw = request.nextUrl.searchParams.get("next");
+      const next =
+        nextRaw &&
+        nextRaw.startsWith("/") &&
+        !nextRaw.startsWith("//") &&
+        (nextRaw === "/dashboard" ||
+          nextRaw.startsWith("/dashboard/") ||
+          nextRaw === "/documents" ||
+          nextRaw.startsWith("/documents/") ||
+          nextRaw === "/admin" ||
+          nextRaw.startsWith("/admin/"))
+          ? nextRaw
+          : "/dashboard";
+      return NextResponse.redirect(new URL(next, request.url));
     }
 
     if (isProtectedRoute(request) && hasOwnerSession(request)) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, FileText, Gavel, Search, Sparkles } from "lucide-react";
+import { BookOpen, FileText, Gavel, Scale, Search, Sparkles } from "lucide-react";
 import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
@@ -123,20 +123,64 @@ export default async function DashboardPage({
   const showWelcome = searchParams?.welcome === "1";
   if (me) void awardDailyVisit(me.id).catch(() => undefined);
 
+  const firstName = me?.name?.split(/\s+/).filter(Boolean)[0] || "بك";
+  const hasRecentWork = Boolean(
+    stats &&
+      (stats.recentConsultations.length > 0 ||
+        stats.recentCases.length > 0 ||
+        stats.recentSimulations.length > 0)
+  );
+  const isNewUser = Boolean(stats && !hasRecentWork && stats.cases === 0 && stats.consultations === 0 && stats.simulations === 0);
+
   return (
     <div>
-      {showWelcome ? (
-        <div className="mb-4 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-5 py-4 text-sm leading-7 text-[var(--navy)]">
-          <p className="font-display-ar text-base font-bold">مرحبًا بك في حكيم — بدأت تجربتك المجانية</p>
-          <p className="mt-1 text-[var(--ink-70)]">
-            يمكنك الآن البحث في الأنظمة، سؤال حكيم، وتجربة المحاكاة القضائية. هذه التجربة مجانية للبدء دون بطاقة دفع.
+      {(showWelcome || isNewUser) && me ? (
+        <div className="mb-5 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-5 py-5 text-[var(--navy)]">
+          <p className="font-display-ar text-lg font-bold">
+            {showWelcome ? `مرحبًا ${firstName} — بدأت تجربتك في حكيم` : `مرحبًا ${firstName}`}
           </p>
+          <p className="mt-2 text-sm leading-7 text-[var(--ink-70)]">
+            تابع أعمالك، اسأل حكيم، أو ابدأ قضية في المعاون القضائي. ابدأ من أهم خدمة لك الآن.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/ask"
+              className="inline-flex min-h-[44px] items-center rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              اسأل حكيم
+            </Link>
+            <Link
+              href="/dashboard/judicial-assistant"
+              className="inline-flex min-h-[44px] items-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
+            >
+              المعاون القضائي
+            </Link>
+            <Link
+              href="/dashboard/legal-core"
+              className="inline-flex min-h-[44px] items-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
+            >
+              المكتبة القانونية
+            </Link>
+          </div>
+        </div>
+      ) : me ? (
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm text-[var(--ink-60)]">لوحة التحكم</p>
+            <h1 className="text-2xl font-bold text-[var(--navy)]">مرحبًا {firstName}</h1>
+          </div>
+          <Link
+            href="/dashboard/ask"
+            className="inline-flex min-h-[44px] items-center rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            اسأل حكيم
+          </Link>
         </div>
       ) : null}
 
       <QuotaCounter />
       <OnboardingBanner />
-      <CreditsWidget />
+      {!isNewUser ? <CreditsWidget /> : null}
 
       <Hero
         center
@@ -151,42 +195,48 @@ export default async function DashboardPage({
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
           تعذر تحميل بيانات الرئيسية.
         </div>
-      ) : (
+      ) : hasRecentWork ? (
         <>
           <SectionTitle>تابع عملك</SectionTitle>
           <section className="grid gap-4 xl:grid-cols-3">
-            <RecentList
-              title="آخر الاستشارات"
-              empty="لا استشارات بعد."
-              items={stats.recentConsultations.map((item) => ({
-                id: item.id,
-                title: item.facts.slice(0, 90),
-                meta: `استشارة مؤصّلة · ${item.createdAt.toLocaleString("ar-SA")}`
-              }))}
-            />
-            <RecentList
-              title="آخر القضايا"
-              empty="لا قضايا بعد."
-              items={stats.recentCases.map((item) => ({
-                id: item.id,
-                title: item.title,
-                meta: `${statusLabel(item.status)} · ${item.updatedAt.toLocaleString("ar-SA")}`
-              }))}
-            />
-            <RecentList
-              title="آخر جلسات القاضي التفاعلي"
-              empty="لا جلسات بعد."
-              items={stats.recentSimulations.map((item) => ({
-                id: item.id,
-                title: item.title,
-                meta: `${stageLabel(item.stage)} · ${item.updatedAt.toLocaleString("ar-SA")}`
-              }))}
-            />
+            {stats.recentConsultations.length > 0 ? (
+              <RecentList
+                title="آخر الاستشارات"
+                empty="لا استشارات بعد."
+                items={stats.recentConsultations.map((item) => ({
+                  id: item.id,
+                  title: item.facts.slice(0, 90),
+                  meta: `استشارة مؤصّلة · ${item.createdAt.toLocaleString("ar-SA")}`
+                }))}
+              />
+            ) : null}
+            {stats.recentCases.length > 0 ? (
+              <RecentList
+                title="آخر القضايا"
+                empty="لا قضايا بعد."
+                items={stats.recentCases.map((item) => ({
+                  id: item.id,
+                  title: item.title,
+                  meta: `${statusLabel(item.status)} · ${item.updatedAt.toLocaleString("ar-SA")}`
+                }))}
+              />
+            ) : null}
+            {stats.recentSimulations.length > 0 ? (
+              <RecentList
+                title="آخر جلسات القاضي التفاعلي"
+                empty="لا جلسات بعد."
+                items={stats.recentSimulations.map((item) => ({
+                  id: item.id,
+                  title: item.title,
+                  meta: `${stageLabel(item.stage)} · ${item.updatedAt.toLocaleString("ar-SA")}`
+                }))}
+              />
+            ) : null}
           </section>
         </>
-      )}
+      ) : null}
 
-      <SectionTitle>الوجهات الرئيسية</SectionTitle>
+      <SectionTitle>{isNewUser ? "ابدأ من هنا" : "الوجهات الرئيسية"}</SectionTitle>
       <CardGrid>
         {TRADITIONAL_SEARCH_ENABLED ? (
           <Card
@@ -197,35 +247,45 @@ export default async function DashboardPage({
           />
         ) : null}
         <Card
+          href="/dashboard/ask"
+          title="اسأل حكيم"
+          badge="الأهم"
+          icon={Sparkles}
+          description="مدخل واحد بأوضاع: اسأل · حلّل قضية · خطة عمل · تقدير حكم — يبحث في النواة ويصوغ إجابة مؤصّلة."
+        />
+        <Card
+          href="/dashboard/judicial-assistant"
+          title="المعاون القضائي"
+          icon={Scale}
+          description="مساحة قضية: وقائع، تحليل، ومخرجات قابلة للمتابعة."
+        />
+        <Card
           href="/dashboard/legal-core"
           title="النواة القانونية"
           badge={`${(stats?.legalArticles ?? 0).toLocaleString("ar-SA")} مادة`}
           icon={BookOpen}
-          description="المكتبة النظامية ومصدر الحقيقة الوحيد — الأنظمة والمواد والأحكام والمبادئ والمسائل القانونية."
+          description="المكتبة النظامية ومصدر الحقيقة — الأنظمة والمواد والأحكام والمبادئ."
         />
-        <Card
-          href="/dashboard/ask"
-          title="اسأل حكيم"
-          badge="٦ أوضاع"
-          icon={Sparkles}
-          description="مدخل واحد بأوضاع: اسأل · حلّل قضية · خطة عمل · تقدير حكم · استشارة · محادثة — يبحث في النواة ويصوغ إجابة مؤصّلة."
-        />
-        <Card
-          href="/dashboard/simulations"
-          title="القاضي التفاعلي"
-          badge={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
-          icon={Gavel}
-          description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
-        />
-        <Card
-          href="/documents"
-          title="منصة الوثائق"
-          icon={FileText}
-          description="حمّل مستندك (Word · PDF · صور ممسوحة) واستخرج نصّه العربيّ فورًا مع دعم القراءة الضوئية."
-        />
+        {!isNewUser ? (
+          <>
+            <Card
+              href="/dashboard/simulations"
+              title="القاضي التفاعلي"
+              badge={`${(stats?.simulations ?? 0).toLocaleString("ar-SA")} جلسة`}
+              icon={Gavel}
+              description="قاعة مرافعة افتراضية: تقييد الدعوى، الجلسات، الحكم، والاعتراض."
+            />
+            <Card
+              href="/documents"
+              title="منصة الوثائق"
+              icon={FileText}
+              description="حمّل مستندك واستخرج نصّه العربيّ فورًا مع دعم القراءة الضوئية."
+            />
+          </>
+        ) : null}
       </CardGrid>
 
-      {stats ? (
+      {stats && !isNewUser ? (
         <>
           <SectionTitle>نظرة عامة</SectionTitle>
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
