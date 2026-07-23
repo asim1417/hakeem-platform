@@ -15,9 +15,17 @@ assert.ok(layout.includes("BootWatchdog"));
 const clerkRoot = fs.readFileSync(path.join(root, "components/providers/ClerkRoot.tsx"), "utf8");
 assert.ok(clerkRoot.includes("ClerkAppProvider"));
 
+// /sign-in و /sign-up بلا ClerkRoot — أزرار SSR + OAuth من الخادم
+for (const rel of ["app/sign-in/layout.tsx", "app/sign-up/layout.tsx"]) {
+  const src = fs.readFileSync(path.join(root, rel), "utf8");
+  assert.equal(
+    src.includes('from "@/components/providers/ClerkRoot"'),
+    false,
+    `${rel} must not mount ClerkRoot`
+  );
+}
+
 for (const rel of [
-  "app/sign-in/layout.tsx",
-  "app/sign-up/layout.tsx",
   "app/sso-callback/layout.tsx",
   "app/auth/layout.tsx",
   "app/dashboard/layout.tsx",
@@ -41,5 +49,9 @@ assert.equal(
   false,
   "HomeHero must not use next/link — prefetch loads Clerk via auth layouts"
 );
+
+const mw = fs.readFileSync(path.join(root, "middleware.ts"), "utf8");
+assert.ok(mw.includes("isClerkMiddlewareBypass"));
+assert.ok(mw.includes("/sign-in(.*)"));
 
 console.log("test-clerk-off-home: OK");

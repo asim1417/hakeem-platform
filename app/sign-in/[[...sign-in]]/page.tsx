@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { AuthClerkSignIn } from "@/components/auth/AuthClerkSignIn";
+import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
 import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 
@@ -8,7 +8,7 @@ export const metadata = {
   title: "تسجيل الدخول — حكيم",
 };
 
-/** بوابة الدخول الموحّدة للمنصة — المسار المعتمد /sign-in */
+/** بوابة الدخول الموحّدة — أزرار SSR بلا Clerk JS على الجهاز */
 export default function SignInPage({
   searchParams,
 }: {
@@ -32,7 +32,7 @@ export default function SignInPage({
       }
     >
       {configured ? (
-        <AuthClerkSignIn nextUrl={nextUrl} routing="path" path="/sign-in" />
+        <AuthOauthButtons mode="sign-in" nextUrl={nextUrl} />
       ) : (
         <div
           className="w-full rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 py-5 text-center text-sm leading-7 text-[#0E3435]"

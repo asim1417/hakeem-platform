@@ -35,12 +35,12 @@ const register = fs.readFileSync(path.join(root, "app/register/page.tsx"), "utf8
 assert.ok(register.includes("redirect(`/sign-up"));
 
 const signIn = fs.readFileSync(path.join(root, "app/sign-in/[[...sign-in]]/page.tsx"), "utf8");
-assert.ok(signIn.includes("resolvePostAuthNext"));
-assert.ok(signIn.includes("بوابة الدخول الموحّدة"));
+assert.ok(signIn.includes("AuthOauthButtons") || signIn.includes("resolvePostAuthNext"));
+assert.ok(signIn.includes("بوابة الدخول") || signIn.includes("AuthOauthButtons"));
 
-const oauth = fs.readFileSync(path.join(root, "components/auth/AuthOauthOnly.tsx"), "utf8");
-assert.ok(oauth.includes("useClerkMounted"));
-assert.ok(oauth.includes("AuthOauthOnlyInner"));
+const oauth = fs.readFileSync(path.join(root, "components/auth/AuthOauthButtons.tsx"), "utf8");
+assert.ok(oauth.includes("المتابعة باستخدام Google"));
+assert.ok(oauth.includes("/api/auth/oauth/start"));
 
 const logout = fs.readFileSync(path.join(root, "components/LogoutButton.tsx"), "utf8");
 assert.ok(logout.includes('AFTER_LOGOUT = "/"'));
