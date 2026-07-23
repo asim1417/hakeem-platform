@@ -4,7 +4,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { isOAuthAdminEmail } from "@/lib/modules/auth/oauth-shared";
+import { isOAuthAdminEmail, isPlatformOwnerEmail } from "@/lib/modules/auth/oauth-shared";
 import { bootstrapNewUser } from "@/lib/modules/onboarding/bootstrap";
 import type { UserRole } from "@prisma/client";
 
@@ -23,8 +23,8 @@ type LocalUser = {
 };
 
 /**
- * يضمن صفًا محليًا لمستخدم Clerk. المالك بالبريد → SYSTEM_ADMIN.
- * عند الإنشاء الأول: bootstrap (نقاط + onboarding + إحالة).
+ * يضمن صفًا محليًا لمستخدم Clerk.
+ * مالك المنصة بالبريد → SUPER_ADMIN. مدراء OAUTH_ADMIN_EMAILS → SYSTEM_ADMIN عند الإنشاء.
  */
 export async function ensureLocalUserFromClerk(identity: ClerkIdentity): Promise<LocalUser> {
   const email = identity.email.toLowerCase().trim();
@@ -46,8 +46,11 @@ export async function ensureLocalUserFromClerk(identity: ClerkIdentity): Promise
       });
 
   const existing = existingByClerk ?? existingByEmail;
-  const isOwner = isOAuthAdminEmail(email);
-  const role = isOwner ? "SYSTEM_ADMIN" : existing?.role ?? "TRAINEE";
+  const isOwner = isPlatformOwnerEmail(email);
+  const isDelegatedAdmin = !isOwner && isOAuthAdminEmail(email);
+  const role: UserRole = isOwner
+    ? "SUPER_ADMIN"
+    : existing?.role ?? (isDelegatedAdmin ? "SYSTEM_ADMIN" : "TRAINEE");
   const displayName =
     identity.name?.trim() ||
     existing?.name ||

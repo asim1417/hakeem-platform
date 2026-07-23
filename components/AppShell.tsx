@@ -3,6 +3,8 @@ import { BookOpen, Bot, FileText, FolderClosed, Gavel, LayoutDashboard, Scale, S
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
+import { isPlatformAdmin } from "@/lib/modules/auth/super-admin";
+import { getNavVisibility } from "@/lib/modules/admin/nav-visibility";
 import { LogoutButton, TopbarUserBar } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
@@ -39,6 +41,7 @@ const adminNavItem: NavItem = { href: "/admin", key: "nav.settings", icon: Setti
 
 // عنصر تنقّل مسطّح واحد (رابط) — يُستعمل في كل الأقسام غير القابلة للطيّ.
 const roleLabels: Record<string, string> = {
+  SUPER_ADMIN: "سوبر أدمن",
   SYSTEM_ADMIN: "مدير النظام",
   LAWYER: "حساب محام - تدريبي",
   TRAINER: "مدرب / مشرف",
@@ -50,11 +53,21 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const { locale, t } = getTranslator();
   const user = await getCurrentUser().catch(() => null);
   const clerkEnabled = isClerkConfigured();
-  const isAdmin = user?.role === "SYSTEM_ADMIN";
-  // إخفاء عنصر «البحث الشامل» التقليديّ من القائمة حين تُخفى واجهاته (راية مركزية).
-  const visibleNav = TRADITIONAL_SEARCH_ENABLED
-    ? baseNavItems
-    : baseNavItems.filter((i) => i.href !== "/dashboard/legal-search");
+  const isAdmin = isPlatformAdmin(user);
+  const navVisibility = await getNavVisibility().catch(() => ({
+    agents: true,
+    documents: true,
+    simulations: true,
+    traditionalSearch: TRADITIONAL_SEARCH_ENABLED,
+  }));
+  // إخفاء عناصر القائمة حسب رايات السوبر أدمن (واجهة فقط — الخدمات الخلفية تعمل).
+  const visibleNav = baseNavItems.filter((i) => {
+    if (i.href === "/dashboard/legal-search") return navVisibility.traditionalSearch;
+    if (i.href === "/dashboard/agents") return navVisibility.agents;
+    if (i.href === "/documents") return navVisibility.documents;
+    if (i.href === "/dashboard/simulations") return navVisibility.simulations;
+    return true;
+  });
   const navItems = isAdmin ? [...visibleNav, adminNavItem] : visibleNav;
   const initials =
     user?.name

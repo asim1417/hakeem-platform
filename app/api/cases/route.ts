@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { isSystemAdmin } from "@/lib/modules/auth/ownership";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
   if (gate.response) return gate.response;
 
   // [إصلاح تدقيق SEC-003: كان يعيد قضايا جميع المستخدمين — قُصِر على مالكها (أو المدير).]
-  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
+  const isAdmin = isSystemAdmin(gate.user!);
   const cases = await prisma.caseFile.findMany({
     where: isAdmin ? undefined : { ownerId: gate.user!.id },
     orderBy: { updatedAt: "desc" },

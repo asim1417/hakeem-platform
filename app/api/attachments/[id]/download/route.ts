@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { isSystemAdmin } from "@/lib/modules/auth/ownership";
 import { signedDownloadUrl } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     include: { caseFile: { select: { ownerId: true } } }
   });
   // [إصلاح تدقيق SEC-005: تحقّق من الملكيّة قبل إصدار رابط التنزيل الموقّع.]
-  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
+  const isAdmin = isSystemAdmin(gate.user!);
   const ownerId = attachment?.caseFile?.ownerId ?? null;
   if (!attachment || (!isAdmin && ownerId !== gate.user!.id)) {
     return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });

@@ -1,6 +1,12 @@
 // خريطة الأدوار×الصلاحيات الأساسية — بلا اعتماد على Prisma (آمن للواجهة والخادم).
 
-export type AppRole = "SYSTEM_ADMIN" | "LAWYER" | "TRAINER" | "TRAINEE" | "JUDGE";
+export type AppRole =
+  | "SUPER_ADMIN"
+  | "SYSTEM_ADMIN"
+  | "LAWYER"
+  | "TRAINER"
+  | "TRAINEE"
+  | "JUDGE";
 
 export type Permission =
   | "CONSULTATIONS_FULL"
@@ -18,24 +24,29 @@ export type Permission =
   | "ADMIN_REPORTS_VIEW"
   | "GOVERNANCE_AUDIT_VIEW"
   // المعاون القضائي (المرحلة 1ب): استخدام مساحة القضية وأعمالها.
-  | "JUDICIAL_ASSISTANT_USE";
+  | "JUDICIAL_ASSISTANT_USE"
+  /** حصرية لمالك المنصة — لا تُمنح عبر مصفوفة SYSTEM_ADMIN. */
+  | "SUPER_ADMIN_ACCESS";
+
+const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
+  "CONSULTATIONS_FULL",
+  "SIMULATIONS_USE",
+  "TRAINING_USE",
+  "TRAINING_MANAGE",
+  "LIBRARY_READ",
+  "LEGAL_CORE_VIEW",
+  "LEGAL_CORE_EDIT",
+  "LEGAL_CORE_ADMIN",
+  "ATTACHMENTS_FULL",
+  "USERS_MANAGE",
+  "ADMIN_REPORTS_VIEW",
+  "GOVERNANCE_AUDIT_VIEW",
+  "JUDICIAL_ASSISTANT_USE",
+];
 
 export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
-  SYSTEM_ADMIN: [
-    "CONSULTATIONS_FULL",
-    "SIMULATIONS_USE",
-    "TRAINING_USE",
-    "TRAINING_MANAGE",
-    "LIBRARY_READ",
-    "LEGAL_CORE_VIEW",
-    "LEGAL_CORE_EDIT",
-    "LEGAL_CORE_ADMIN",
-    "ATTACHMENTS_FULL",
-    "USERS_MANAGE",
-    "ADMIN_REPORTS_VIEW",
-    "GOVERNANCE_AUDIT_VIEW",
-    "JUDICIAL_ASSISTANT_USE",
-  ],
+  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS"],
+  SYSTEM_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS],
   // القاضي: المعاون القضائي + النواة والاستشارة للاطّلاع.
   JUDGE: [
     "JUDICIAL_ASSISTANT_USE",

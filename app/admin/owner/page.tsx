@@ -37,24 +37,24 @@ export default async function OwnerAdminPage() {
     )
     .catch(() => []);
 
-  const owners = users.filter((u) => u.role === "SYSTEM_ADMIN");
+  const owners = users.filter((u) => u.role === "SYSTEM_ADMIN" || u.role === "SUPER_ADMIN");
 
   return (
     <AppShell>
       <p className="text-sm font-semibold text-gold">إعدادات المالك</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">حساب المالك وبيانات الدخول</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
-        من هنا تنشئ حساب المالك (مدير النظام) أو أي مستخدم، مع توليد{" "}
+        من هنا تنشئ حسابًا إداريًا (سوبر أدمن أو مدير نظام) أو أي مستخدم، مع توليد{" "}
         <strong>اسم مستخدم</strong> و<strong>كلمة مرور سهلة</strong>، وتعيين الدور والصلاحيات. بعد الإنشاء استخدم{" "}
         <Link href="/sign-in" className="font-semibold text-[var(--gold-dark)] underline underline-offset-4">
           صفحة تسجيل الدخول
-        </Link>{" "}
-        بالبيانات المُولَّدة.
+        </Link>
+        . منح دور السوبر أدمن محصور بمالك المنصة المخوّل من الخادم.
       </p>
 
       <section className="mt-6 grid gap-3 md:grid-cols-3">
         <div className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-ivory p-4">
-          <p className="text-xs font-semibold text-[var(--ink-60)]">حسابات المدراء</p>
+          <p className="text-xs font-semibold text-[var(--ink-60)]">الحسابات الإدارية</p>
           <p className="mt-1 font-display-ar text-2xl font-bold text-[var(--navy)]">
             {owners.length.toLocaleString("ar-SA")}
           </p>
@@ -67,8 +67,11 @@ export default async function OwnerAdminPage() {
         </div>
         <div className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-ivory p-4">
           <p className="text-xs font-semibold text-[var(--ink-60)]">صفحة الدخول</p>
-          <Link href="/sign-in" className="mt-2 inline-block text-sm font-semibold text-[var(--navy)] underline underline-offset-4">
-            /login — منشورة ومتاحة
+          <Link
+            href="/sign-in"
+            className="mt-2 inline-block text-sm font-semibold text-[var(--navy)] underline underline-offset-4"
+          >
+            /sign-in
           </Link>
         </div>
       </section>
@@ -77,7 +80,7 @@ export default async function OwnerAdminPage() {
         <AdminUsersManager
           initialUsers={users}
           defaultRole="SYSTEM_ADMIN"
-          title="إنشاء حساب المالك / مستخدم"
+          title="إنشاء حساب إداري / مستخدم"
           eyebrow="توليد بيانات الدخول والصلاحيات"
         />
       </div>
@@ -87,7 +90,7 @@ export default async function OwnerAdminPage() {
         <Link href="/admin/roles" className="font-semibold text-[var(--navy)] underline underline-offset-4">
           الأدوار والصلاحيات
         </Link>
-        . ولإعدادات Google / Microsoft:{" "}
+        . ولإعدادات التكامل:{" "}
         <Link href="/admin/settings" className="font-semibold text-[var(--navy)] underline underline-offset-4">
           إعدادات المنصة
         </Link>

@@ -6,7 +6,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { createLoginSession, type SafeUser } from "@/lib/modules/auth/session";
-import { isOAuthAdminEmail, PLATFORM_OWNER_EMAILS } from "@/lib/modules/auth/oauth-shared";
+import { isOAuthAdminEmail, isPlatformOwnerEmail, PLATFORM_OWNER_EMAILS } from "@/lib/modules/auth/oauth-shared";
 import { slugifyUsername } from "@/lib/modules/auth/credentials";
 import { bootstrapNewUser } from "@/lib/modules/onboarding/bootstrap";
 
@@ -16,7 +16,7 @@ export type ProvisionedOAuthUser = SafeUser & { isNew: boolean };
 
 /**
  * ينشئ أو يحدّث مستخدم OAuth، يفتح الجلسة، ويسجّل التدقيق.
- * بريد المالك (مثل aasemalfarsi@gmail.com) → SYSTEM_ADMIN دائمًا.
+ * بريد المالك (مثل aasemalfarsi@gmail.com) → SUPER_ADMIN دائمًا.
  * المستخدمون الجدد يحصلون على نقاط ترحيب ويُوجَّهون لـ /onboarding.
  */
 export async function provisionOAuthUser(input: {
@@ -32,9 +32,12 @@ export async function provisionOAuthUser(input: {
   });
   const isNew = !existing;
 
-  const isOwner = isOAuthAdminEmail(email);
+  const isOwner = isPlatformOwnerEmail(email);
+  const isDelegatedAdmin = !isOwner && isOAuthAdminEmail(email);
   const bootstrapAdmin = !existing && (await prisma.user.count().catch(() => 1)) === 0;
-  const role = isOwner ? "SYSTEM_ADMIN" : existing?.role ?? (bootstrapAdmin ? "SYSTEM_ADMIN" : "TRAINEE");
+  const role = isOwner
+    ? "SUPER_ADMIN"
+    : existing?.role ?? (bootstrapAdmin || isDelegatedAdmin ? "SYSTEM_ADMIN" : "TRAINEE");
 
   // اسم مستخدم افتراضي للمالك إن غاب.
   let username = existing?.username ?? null;
