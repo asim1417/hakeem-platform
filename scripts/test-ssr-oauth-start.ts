@@ -57,7 +57,9 @@ const continueClient = fs.readFileSync(
   path.join(root, "components/auth/AuthContinueClient.tsx"),
   "utf8"
 );
-assert.ok(continueClient.includes("/#login"));
+assert.ok(continueClient.includes("/sign-in"));
+assert.ok(continueClient.includes("جارٍ تحويلك بأمان"));
 assert.ok(continueClient.includes("/api/auth/me"));
+assert.equal(continueClient.includes("/#login"), false);
 
 console.log("test-ssr-oauth-start: OK");

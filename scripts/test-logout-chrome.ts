@@ -15,6 +15,7 @@ assert.doesNotMatch(shell, /LogoutIconButton label=\{t\("topbar\.logout"\)\}/);
 assert.match(logout, /SignOutButton/);
 assert.match(logout, /owner-logout/);
 assert.match(logout, /TopbarUserBar/);
-assert.match(logout, /redirectUrl="\/sign-in"/);
+assert.match(logout, /redirectUrl=\{AFTER_LOGOUT\}/);
+assert.match(logout, /AFTER_LOGOUT = "\/"/);
 
 console.log("test-logout-chrome: OK");

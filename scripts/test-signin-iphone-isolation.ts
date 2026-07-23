@@ -32,6 +32,7 @@ const buttons = fs.readFileSync(path.join(root, "components/auth/AuthOauthButton
 assert.ok(buttons.includes("المتابعة باستخدام Google"));
 assert.ok(buttons.includes("المتابعة باستخدام Apple"));
 assert.ok(buttons.includes("embedded"));
+assert.ok(buttons.includes("listVisibleAuthProviders"));
 assert.equal(buttons.includes("@clerk/nextjs"), false);
 
 const globalError = fs.readFileSync(path.join(root, "app/global-error.tsx"), "utf8");
@@ -53,7 +54,8 @@ assert.equal(layout.includes('from "@/components/providers/ClerkAppProvider"'), 
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes('from "next/link"'), false);
-assert.ok(home.includes("AuthOauthButtons"));
-assert.ok(home.includes('href="#login"'));
+assert.equal(home.includes("AuthOauthButtons"), false);
+assert.ok(home.includes('href="/sign-in"'));
+assert.equal(home.includes("@clerk"), false);
 
 console.log("test-signin-iphone-isolation: OK");

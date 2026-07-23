@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isClerkConfigured()) {
-    return NextResponse.redirect(new URL("/#login", request.url));
+    return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
   const origin = request.nextUrl.origin;
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     const pk = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
     const fapi = decodeClerkFrontendApiHost(pk);
     if (!fapi) {
-      return NextResponse.redirect(new URL("/#login", request.url));
+      return NextResponse.redirect(new URL("/sign-in", request.url));
     }
     const portal = clerkAccountPortalOrigin(fapi);
     const path = mode === "sign-up" ? "/sign-up" : "/sign-in";

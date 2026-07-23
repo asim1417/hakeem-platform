@@ -1,12 +1,17 @@
 import { redirect } from "next/navigation";
 
-/** أُلغي التسجيل القديم — إعادة توجيه دائمة إلى Clerk SignUp. */
+/** /register → /sign-up مع الحفاظ على ref و next. */
 export default function RegisterRedirectPage({
   searchParams,
 }: {
-  searchParams?: { ref?: string };
+  searchParams?: { ref?: string; next?: string; returnUrl?: string };
 }) {
-  const ref = searchParams?.ref ? `?ref=${encodeURIComponent(searchParams.ref)}` : "";
-  // Clerk لا يمرّر ref تلقائيًا؛ نحفظه في cookie عبر صفحة وسيطة بسيطة أو نمرّره لـ onboarding لاحقًا.
-  redirect(`/sign-up${ref}`);
+  const params = new URLSearchParams();
+  if (searchParams?.ref) params.set("ref", searchParams.ref);
+  const next = searchParams?.next || searchParams?.returnUrl;
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
+    params.set("next", next);
+  }
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  redirect(`/sign-up${qs}`);
 }
