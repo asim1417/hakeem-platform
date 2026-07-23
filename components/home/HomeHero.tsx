@@ -83,7 +83,7 @@ export function HomeHero() {
           </Link>
         ) : (
           <div className="flex items-center gap-2">
-            {/* أيقونة تخطّي سريعة لصفحة الدخول أثناء إعداد OAuth/البريد */}
+            {/* أيقونة تخطّي سريعة لصفحة الدخول (Google / Apple) */}
             <Link
               href="/sign-in"
               aria-label="تخطي إلى صفحة الدخول"
