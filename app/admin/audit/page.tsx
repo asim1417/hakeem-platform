@@ -1,5 +1,4 @@
-import { AppShell } from "@/components/AppShell";
-import { SuperAdminNav } from "@/components/admin/SuperAdminNav";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
 import { prisma } from "@/lib/prisma";
 import { auditActionLabel, auditSubjectLabel } from "@/lib/i18n/enum-labels";
@@ -43,8 +42,7 @@ export default async function AdminAuditPage({
   const subjects = ["ALL", "ADMIN", "AUTH", "AI_GATEWAY", "CASE", "CONSULTATION", "SIMULATION", "LIBRARY", "TRAINING"];
 
   return (
-    <AppShell>
-      <SuperAdminNav currentPath="/admin/audit" />
+    <AdminPageShell currentPath="/admin/audit">
       <p className="text-sm font-semibold text-[#8B6914]">السوبر أدمن</p>
       <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">سجل التدقيق الإداري</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
@@ -115,7 +113,7 @@ export default async function AdminAuditPage({
           </div>
         )}
       </section>
-    </AppShell>
+    </AdminPageShell>
   );
 }
 

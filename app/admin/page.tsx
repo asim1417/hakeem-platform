@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
-import { SuperAdminNav } from "@/components/admin/SuperAdminNav";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { requirePagePermission, getCurrentUser } from "@/lib/modules/auth/session";
 import {
   isSuperAdmin,
@@ -67,8 +66,7 @@ export default async function AdminPage() {
   if (showSuper) {
     const overview = await getPlatformOverview();
     return (
-      <AppShell>
-        <SuperAdminNav currentPath="/admin" />
+      <AdminPageShell currentPath="/admin">
         <p className="text-sm font-semibold text-[#8B6914]">لوحة السوبر أدمن</p>
         <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">نظرة عامة على المنصة</h1>
         <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.75)]">
@@ -114,9 +112,14 @@ export default async function AdminPage() {
               <Stat label="مكتملة" value={String(overview.jobs.done)} />
               <Stat label="فاشلة" value={String(overview.jobs.error)} />
             </div>
-            <Link href="/admin/jobs" className="mt-4 inline-block text-sm font-semibold text-[#8B6914] hover:text-[#0E3435]">
-              مراقبة المهام ←
-            </Link>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href="/admin/jobs" className="text-sm font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                تشغيل المهام ←
+              </Link>
+              <Link href="/admin/billing" className="text-sm font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                الفوترة ←
+              </Link>
+            </div>
           </div>
 
           <div className="rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-5 xl:col-span-2">
@@ -147,6 +150,8 @@ export default async function AdminPage() {
 
         <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AdminLink href="/admin/services" label="إدارة ظهور الخدمات" />
+          <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
+          <AdminLink href="/admin/jobs" label="تشغيل المهام" />
           <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
           <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
           <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
@@ -155,14 +160,14 @@ export default async function AdminPage() {
           <AdminLink href="/admin/roles" label="مصفوفة الصلاحيات" />
           <AdminLink href="/audit-logs" label="سجل التدقيق العام" />
         </section>
-      </AppShell>
+      </AdminPageShell>
     );
   }
 
   // مدير النظام / من يملك ADMIN_REPORTS_VIEW — اللوحة القائمة دون أقسام السوبر
   const status = await getLegacyAdminStatus();
   return (
-    <AppShell>
+    <AdminPageShell currentPath="/admin">
       <p className="text-sm font-semibold text-gold">الإدارة والتقارير</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">لوحة الإدارة</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
@@ -190,7 +195,7 @@ export default async function AdminPage() {
         <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
         <AdminLink href="/dashboard/attachments" label="المرفقات" />
       </section>
-    </AppShell>
+    </AdminPageShell>
   );
 }
 

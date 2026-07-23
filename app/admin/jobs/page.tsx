@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
-import { SuperAdminNav } from "@/components/admin/SuperAdminNav";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { AdminJobRowActions, AdminJobsToolbar } from "@/components/admin/AdminJobsControls";
 import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
 import { listJobStats, listRecentJobs } from "@/lib/modules/jobs/job-store";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +11,7 @@ const STATUS_LABEL: Record<string, string> = {
   running: "جارية",
   done: "مكتملة",
   error: "فاشلة",
+  cancelled: "موقوفة",
 };
 
 export default async function AdminJobsPage() {
@@ -29,67 +30,75 @@ export default async function AdminJobsPage() {
   const ownerMap = new Map(owners.map((o) => [o.id, o]));
 
   return (
-    <AppShell>
-      <SuperAdminNav currentPath="/admin/jobs" />
+    <AdminPageShell currentPath="/admin/jobs">
       <p className="text-sm font-semibold text-[#8B6914]">السوبر أدمن</p>
-      <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">مراقبة المهام الخلفية</h1>
+      <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">تشغيل المهام الخلفية</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
-        مهام التوليد والبحث المستأنفة من جدول generation_jobs — بيانات حقيقية من النظام.
+        مراقبة وإيقاف وإعادة تشغيل مهام التوليد من generation_jobs — إيقاف ناعم يحفظ السجل، وإعادة
+        التشغيل تنشئ مهمة جديدة مرتبطة بالمصدر.
       </p>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Card label="الإجمالي" value={stats.total} />
         <Card label="جارية" value={stats.running} />
         <Card label="مكتملة" value={stats.done} />
         <Card label="فاشلة" value={stats.error} />
+        <Card label="موقوفة" value={stats.cancelled} />
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7]">
-        {jobs.length === 0 ? (
-          <p className="p-6 text-center text-sm text-[rgba(14,52,53,0.55)]">لا توجد مهام مسجّلة بعد.</p>
-        ) : (
-          <div className="table-scroll max-h-[70vh] overflow-auto">
-            <table className="w-full min-w-[720px] border-collapse text-right text-sm">
-              <thead className="sticky top-0 bg-[#F7F2EA]">
-                <tr className="border-b border-[rgba(14,52,53,0.08)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
-                  <th>النوع</th>
-                  <th>الحالة</th>
-                  <th>العنوان</th>
-                  <th>المالك</th>
-                  <th>آخر تحديث</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job) => {
-                  const owner = ownerMap.get(job.ownerId);
-                  return (
-                    <tr key={job.id} className="border-b border-[rgba(14,52,53,0.06)]">
-                      <td className="px-4 py-3 font-semibold text-[#0E3435]">{job.kind}</td>
-                      <td className="px-4 py-3">{STATUS_LABEL[job.status] ?? job.status}</td>
-                      <td className="px-4 py-3 text-[rgba(14,52,53,0.7)]">{job.title || "—"}</td>
-                      <td className="px-4 py-3 text-[rgba(14,52,53,0.7)]">
-                        {owner?.name || owner?.email || job.ownerId.slice(0, 8)}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-[rgba(14,52,53,0.55)]">
-                        {new Date(job.updatedAt).toLocaleString("ar-SA")}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <section className="mt-6">
+        <AdminJobsToolbar />
+        <div className="overflow-hidden rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7]">
+          {jobs.length === 0 ? (
+            <p className="p-6 text-center text-sm text-[rgba(14,52,53,0.55)]">لا توجد مهام مسجّلة بعد.</p>
+          ) : (
+            <div className="table-scroll max-h-[70vh] overflow-auto">
+              <table className="w-full min-w-[860px] border-collapse text-right text-sm">
+                <thead className="sticky top-0 bg-[#F7F2EA]">
+                  <tr className="border-b border-[rgba(14,52,53,0.08)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
+                    <th>النوع</th>
+                    <th>الحالة</th>
+                    <th>العنوان</th>
+                    <th>المالك</th>
+                    <th>آخر تحديث</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jobs.map((job) => {
+                    const owner = ownerMap.get(job.ownerId);
+                    return (
+                      <tr key={job.id} className="border-b border-[rgba(14,52,53,0.06)]">
+                        <td className="px-4 py-3 font-semibold text-[#0E3435]">{job.kind}</td>
+                        <td className="px-4 py-3">{STATUS_LABEL[job.status] ?? job.status}</td>
+                        <td className="px-4 py-3 text-[rgba(14,52,53,0.7)]">{job.title || "—"}</td>
+                        <td className="px-4 py-3 text-[rgba(14,52,53,0.7)]">
+                          {owner?.name || owner?.email || job.ownerId.slice(0, 8)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[rgba(14,52,53,0.55)]">
+                          {new Date(job.updatedAt).toLocaleString("ar-SA")}
+                        </td>
+                        <td className="px-4 py-3">
+                          <AdminJobRowActions jobId={job.id} status={job.status} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </section>
 
       <p className="mt-4 text-sm text-[rgba(14,52,53,0.55)]">
-        استئناف مهمة فردية يبقى عبر{" "}
+        استئناف المستخدم يبقى عبر{" "}
         <Link href="/dashboard" className="font-semibold text-[#8B6914]">
           واجهة المستخدم
-        </Link>{" "}
-        بمعرّف المالك — هذه الصفحة للمراقبة فقط.
+        </Link>
+        . الإيقاف هنا ناعم (حالة cancelled) ولا يحذف السجل.
       </p>
-    </AppShell>
+    </AdminPageShell>
   );
 }
 

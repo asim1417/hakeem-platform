@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/AppShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminApiKeysManager } from "@/components/AdminApiKeysManager";
 import { prisma } from "@/lib/prisma";
 import { requirePagePermission } from "@/lib/modules/auth/session";
@@ -26,7 +26,7 @@ export default async function AdminApiKeysPage() {
     .catch(() => []);
 
   return (
-    <AppShell>
+    <AdminPageShell currentPath="/admin/api-keys">
       <p className="text-sm font-semibold text-gold">البوابة الخارجية</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">مفاتيح API</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
@@ -36,6 +36,6 @@ export default async function AdminApiKeysPage() {
       <div className="mt-6">
         <AdminApiKeysManager initialKeys={keys} scopes={[...API_SCOPES]} />
       </div>
-    </AppShell>
+    </AdminPageShell>
   );
 }
