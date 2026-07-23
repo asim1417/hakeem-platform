@@ -26,6 +26,7 @@ function labelFrom(map: Record<string, string>, raw: string | null | undefined, 
 
 // ── أدوار المستخدمين (UserRole) — منسوخة من components/AppShell.tsx ──
 export const roleLabels: Record<string, string> = {
+  SUPER_ADMIN: "سوبر أدمن (مالك المنصة)",
   SYSTEM_ADMIN: "مدير النظام",
   LAWYER: "حساب محام - تدريبي",
   TRAINER: "مدرب / مشرف",
@@ -115,7 +116,8 @@ export const auditActionLabels: Record<string, string> = {
   API_KEY_REVOKED: "إبطال مفتاح واجهة برمجية",
   SETTINGS_UPDATED: "تحديث الإعدادات",
   USER_CREATED: "إنشاء مستخدم",
-  USER_UPDATED: "تعديل مستخدم"
+  USER_UPDATED: "تعديل مستخدم",
+  FEATURE_TOGGLE_UPDATED: "تحديث راية خدمة"
 };
 
 export function auditActionLabel(action: string | null | undefined): string {

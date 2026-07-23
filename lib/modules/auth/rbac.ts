@@ -23,7 +23,8 @@ export async function canUser(userId: string | undefined, permission: Permission
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return false;
-  if (user.role === "SYSTEM_ADMIN") return true;
+  // مدير النظام ومالك المنصة يتجاوزان مصفوفة المنح الإضافية.
+  if (user.role === "SUPER_ADMIN" || user.role === "SYSTEM_ADMIN") return true;
 
   const role = await prisma.roleRecord.findUnique({
     where: { key: user.role },

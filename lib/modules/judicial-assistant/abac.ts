@@ -10,6 +10,6 @@ export interface JudicialAccessContext {
 }
 
 export function caseVisibleTo(ctx: JudicialAccessContext, kase: Pick<JudicialCase, "ownerId">): boolean {
-  if (ctx.role === "SYSTEM_ADMIN") return true;
+  if (ctx.role === "SYSTEM_ADMIN" || ctx.role === "SUPER_ADMIN") return true;
   return kase.ownerId === ctx.userId;
 }

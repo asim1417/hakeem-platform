@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { isSystemAdmin } from "@/lib/modules/auth/ownership";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const gate = await requireApiPermission("CONSULTATIONS_LIMITED", request);
   if (gate.response) return gate.response;
 
-  // القصر على مالك القضية (أو مدير النظام) — يمنع قراءة قضايا مستخدمين آخرين.
-  const isAdmin = gate.user!.role === "SYSTEM_ADMIN";
+  // القصر على مالك القضية (أو مدير النظام / السوبر أدمن) — يمنع قراءة قضايا مستخدمين آخرين.
+  const isAdmin = isSystemAdmin(gate.user!);
   const caseFile = await prisma.caseFile.findFirst({
     where: isAdmin ? { id: params.id } : { id: params.id, ownerId: gate.user!.id },
     include: {

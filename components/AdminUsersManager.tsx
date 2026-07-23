@@ -26,7 +26,8 @@ type CredsReveal = {
 };
 
 const roles = [
-  { value: "SYSTEM_ADMIN", label: "مدير النظام (المالك)" },
+  { value: "SUPER_ADMIN", label: "سوبر أدمن (مالك المنصة)" },
+  { value: "SYSTEM_ADMIN", label: "مدير النظام" },
   { value: "JUDGE", label: "قاضٍ" },
   { value: "LAWYER", label: "محامٍ" },
   { value: "TRAINER", label: "مدرب / مشرف" },
@@ -54,6 +55,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   ADMIN_REPORTS_VIEW: "تقارير الإدارة",
   GOVERNANCE_AUDIT_VIEW: "سجل التدقيق والحوكمة",
   JUDICIAL_ASSISTANT_USE: "المعاون القضائي",
+  SUPER_ADMIN_ACCESS: "لوحة السوبر أدمن (حصرية)",
 };
 
 export function AdminUsersManager({

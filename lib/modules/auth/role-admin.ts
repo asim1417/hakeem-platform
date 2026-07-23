@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { hasPermission, type Permission } from "./rbac";
 
 export const ROLE_LABELS: Record<UserRole, string> = {
+  SUPER_ADMIN: "سوبر أدمن (مالك المنصة)",
   SYSTEM_ADMIN: "مدير النظام",
   LAWYER: "محامٍ",
   TRAINER: "مدرّب",
@@ -13,7 +14,14 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   JUDGE: "قاضٍ",
 };
 
-export const ROLE_ORDER: UserRole[] = ["SYSTEM_ADMIN", "JUDGE", "LAWYER", "TRAINER", "TRAINEE"];
+export const ROLE_ORDER: UserRole[] = [
+  "SUPER_ADMIN",
+  "SYSTEM_ADMIN",
+  "JUDGE",
+  "LAWYER",
+  "TRAINER",
+  "TRAINEE",
+];
 
 export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "CONSULTATIONS_FULL", label: "الاستشارات (كامل)" },
@@ -31,6 +39,7 @@ export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "ADMIN_REPORTS_VIEW", label: "تقارير الإدارة" },
   { key: "GOVERNANCE_AUDIT_VIEW", label: "سجل التدقيق والحوكمة" },
   { key: "JUDICIAL_ASSISTANT_USE", label: "المعاون القضائي" },
+  { key: "SUPER_ADMIN_ACCESS", label: "لوحة السوبر أدمن (حصرية)" },
 ];
 
 function labelFor(permission: Permission): string {
@@ -91,6 +100,9 @@ export async function setRolePermission(
   permission: Permission,
   grant: boolean
 ): Promise<{ ok: boolean; message?: string }> {
+  if (permission === "SUPER_ADMIN_ACCESS" && role !== "SUPER_ADMIN") {
+    return { ok: false, message: "صلاحية السوبر أدمن حصرية ولا تُمنح لأدوار أخرى." };
+  }
   if (!grant && hasPermission(role, permission)) {
     return { ok: false, message: "هذه صلاحية أساسية للدور ولا يمكن سحبها." };
   }

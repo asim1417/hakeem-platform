@@ -306,10 +306,12 @@ export default async function DashboardPage({
 
 function roleLabel(role: string) {
   const labels: Record<string, string> = {
+    SUPER_ADMIN: "سوبر أدمن",
     SYSTEM_ADMIN: "مدير النظام",
     LAWYER: "محامٍ",
     TRAINER: "مدرب / مشرف",
-    TRAINEE: "متدرب"
+    TRAINEE: "متدرب",
+    JUDGE: "قاضٍ"
   };
   return labels[role] ?? role;
 }

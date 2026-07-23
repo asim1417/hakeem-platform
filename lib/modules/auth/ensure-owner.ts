@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ensure-owner — تفعيل حساب المالك تلقائيًا داخل المنصة (بلا Vercel).
-// يُستدعى عند إقلاع الخادم: ينشئ/يحدّث aasemalfarsi@gmail.com كـ SYSTEM_ADMIN.
+// يُستدعى عند إقلاع الخادم: ينشئ/يحدّث aasemalfarsi@gmail.com كـ SUPER_ADMIN.
 // ─────────────────────────────────────────────────────────────────────────────
 import "server-only";
 
@@ -15,7 +15,7 @@ export const OWNER_DEFAULT_USERNAME = "aasem.alfarsi";
 export const OWNER_DEFAULT_NAME = "عاصم الفارسي";
 
 /**
- * يضمن وجود حساب المالك في القاعدة بصلاحية SYSTEM_ADMIN.
+ * يضمن وجود حساب المالك في القاعدة بصلاحية SUPER_ADMIN.
  * لا يطبع كلمة المرور. آمن عند التكرار (upsert).
  */
 export async function ensurePlatformOwner(): Promise<{
@@ -53,19 +53,19 @@ export async function ensurePlatformOwner(): Promise<{
         email,
         username: finalUsername,
         passwordHash,
-        role: "SYSTEM_ADMIN",
+        role: "SUPER_ADMIN",
         isActive: true,
       },
     });
     return { email, username: finalUsername, created: true, updated: false };
   }
 
-  // إعادة فتح قفل المالك: دور مدير + كلمة مرور معروفة (تفعيل من داخل المنصة بلا Vercel).
+  // إعادة فتح قفل المالك: دور سوبر أدمن + كلمة مرور معروفة (تفعيل من داخل المنصة بلا Vercel).
   await prisma.user.update({
     where: { email },
     data: {
       name: OWNER_DEFAULT_NAME,
-      role: "SYSTEM_ADMIN",
+      role: "SUPER_ADMIN",
       isActive: true,
       username: existing.username || finalUsername,
       passwordHash,

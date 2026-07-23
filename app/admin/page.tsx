@@ -1,15 +1,23 @@
-import { AppShell } from "@/components/AppShell";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { requirePagePermission } from "@/lib/modules/auth/session";
+import { AppShell } from "@/components/AppShell";
+import { SuperAdminNav } from "@/components/admin/SuperAdminNav";
+import { requirePagePermission, getCurrentUser } from "@/lib/modules/auth/session";
+import {
+  isSuperAdmin,
+  isSuperAdminPanelEnabled,
+} from "@/lib/modules/auth/super-admin";
+import { getPlatformOverview } from "@/lib/modules/admin/platform-overview";
 import { getAiStatus } from "@/lib/modules/ai/ai-config";
 import { sharePointConfigured, storageBackend } from "@/lib/modules/attachments/blob-storage";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 import { isMicrosoftOAuthConfigured } from "@/lib/modules/auth/microsoft-oauth";
+import { prisma } from "@/lib/prisma";
+import { ROLE_LABELS } from "@/lib/modules/auth/role-admin";
+import { auditSubjectLabel, auditActionLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
-async function getAdminStatus() {
+async function getLegacyAdminStatus() {
   const database = await prisma.$queryRaw`SELECT 1`
     .then(() => "متصلة")
     .catch(() => "تعذر الاتصال");
@@ -20,13 +28,11 @@ async function getAdminStatus() {
     prisma.user.count().catch(() => 0),
     prisma.roleRecord.count().catch(() => 0),
     prisma.permissionRecord.count().catch(() => 0),
-    prisma.attachment.count().catch(() => 0)
+    prisma.attachment.count().catch(() => 0),
   ]);
   const ai = await getAiStatus().catch(() => null);
-
   return {
     database,
-    aiProvider: process.env.AI_PROVIDER || "offline",
     aiLive: Boolean(ai && ai.provider !== "offline" && ai.configured),
     aiProviderName: ai?.provider ?? "offline",
     storage: storageBackend(),
@@ -39,72 +45,122 @@ async function getAdminStatus() {
     users,
     roles,
     permissions,
-    attachments
+    attachments,
   };
 }
 
-type ServiceState = "live" | "config" | "tenant";
-
 const AI_PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Claude (Anthropic)",
-  offline: "غير متّصل"
+  offline: "غير متّصل",
 };
 const STORAGE_LABELS: Record<string, string> = {
   "metadata-only": "بيانات وصفيّة فقط",
   azure: "تخزين Azure",
-  sharepoint: "SharePoint"
+  sharepoint: "SharePoint",
 };
-const aiProviderLabel = (v: string) => AI_PROVIDER_LABELS[v] ?? "غير متّصل";
-const storageLabel = (v: string) => STORAGE_LABELS[v] ?? v;
 
 export default async function AdminPage() {
   await requirePagePermission("ADMIN_REPORTS_VIEW");
-  const status = await getAdminStatus();
+  const user = await getCurrentUser();
+  const showSuper = Boolean(user && isSuperAdmin(user) && isSuperAdminPanelEnabled());
 
-  const services: { label: string; state: ServiceState; detail: string; href?: string }[] = [
-    {
-      label: "حساب المالك وبيانات الدخول",
-      state: "live",
-      detail: "توليد اسم مستخدم + كلمة مرور سهلة + صلاحيات — صفحة المالك",
-      href: "/admin/owner",
-    },
-    { label: "إدارة المستخدمين", state: "live", detail: "إنشاء/تعديل دور/تفعيل — مُفعّلة", href: "/admin/users" },
-    { label: "الصلاحيات المتقدمة (RBAC)", state: "live", detail: "محرّر مصفوفة الأدوار×الصلاحيات — مُفعّل", href: "/admin/roles" },
-    { label: "صفحة تسجيل الدخول", state: "live", detail: "منشورة ومتاحة على /login", href: "/login" },
-    { label: "مفاتيح API (البوابة الخارجية)", state: "live", detail: "إنشاء مفاتيح للأطراف الخارجية وأنظمة الذكاء — مُفعّلة", href: "/admin/api-keys" },
-    {
-      label: "تفعيل الذكاء الحقيقي",
-      state: status.aiLive ? "live" : "config",
-      detail: status.aiLive ? `مُفعّل عبر ${status.aiProviderName}` : "جاهز — اضبط المزوّد والمفتاح من إعدادات الذكاء",
-      href: "/admin/ai"
-    },
-    {
-      label: "رفع المرفقات",
-      state: status.storage === "metadata-only" ? "config" : "live",
-      detail: status.storage === "metadata-only" ? "يعمل بوضع metadata — اضبط Azure أو SharePoint لتخزين الملفات" : `مُفعّل عبر ${status.storage}`,
-      href: "/dashboard/attachments"
-    },
-    {
-      label: "ربط SharePoint",
-      state: status.sharePoint ? "live" : "config",
-      detail: status.sharePoint ? "متصل عبر Microsoft Graph" : "يتطلب ضبط SHAREPOINT_DRIVE_ID + اعتماد التطبيق"
-    },
-    {
-      label: "بوابة الدخول (Microsoft Entra SSO)",
-      state: status.microsoftSso ? "live" : "config",
-      detail: status.microsoftSso
-        ? "مُفعّلة — AZURE_AD_CLIENT_ID/SECRET مضبوطة"
-        : "اضبط AZURE_AD_CLIENT_ID و AZURE_AD_CLIENT_SECRET و AZURE_AD_TENANT_ID",
-      href: "/login"
-    },
-    {
-      label: "دخول Google",
-      state: status.googleSso ? "live" : "config",
-      detail: status.googleSso ? "مُفعّل — GOOGLE_CLIENT_ID/SECRET مضبوطة" : "اضبط GOOGLE_CLIENT_ID و GOOGLE_CLIENT_SECRET",
-      href: "/login"
-    }
-  ];
+  if (showSuper) {
+    const overview = await getPlatformOverview();
+    return (
+      <AppShell>
+        <SuperAdminNav currentPath="/admin" />
+        <p className="text-sm font-semibold text-[#8B6914]">لوحة السوبر أدمن</p>
+        <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">نظرة عامة على المنصة</h1>
+        <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.75)]">
+          بيانات حقيقية من قاعدة البيانات والخدمات — بلا إحصاءات تجريبية.
+        </p>
 
+        <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Stat label="قاعدة البيانات" value={overview.database} />
+          <Stat label="المستخدمون النشطون" value={`${overview.counts.usersActive} / ${overview.counts.usersTotal}`} />
+          <Stat label="الذكاء" value={overview.ai.live ? AI_PROVIDER_LABELS[overview.ai.provider] ?? overview.ai.provider : "غير متّصل"} />
+          <Stat label="المهام الجارية" value={String(overview.jobs.running)} />
+          <Stat label="الأنظمة" value={overview.counts.legalSystems.toLocaleString("ar-SA")} />
+          <Stat label="المواد" value={overview.counts.legalArticles.toLocaleString("ar-SA")} />
+          <Stat label="الأحكام" value={overview.counts.judgments.toLocaleString("ar-SA")} />
+          <Stat label="المبادئ" value={overview.counts.principles.toLocaleString("ar-SA")} />
+          <Stat label="القضايا" value={overview.counts.cases.toLocaleString("ar-SA")} />
+          <Stat label="الاستشارات" value={overview.counts.consultations.toLocaleString("ar-SA")} />
+          <Stat label="المحاكاة" value={overview.counts.simulations.toLocaleString("ar-SA")} />
+          <Stat label="أحداث التدقيق" value={overview.counts.auditLogs.toLocaleString("ar-SA")} />
+        </section>
+
+        <section className="mt-6 grid gap-4 xl:grid-cols-2">
+          <div className="rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-5">
+            <h2 className="text-xl font-bold text-[#0E3435]">توزيع الأدوار</h2>
+            <ul className="mt-4 space-y-2">
+              {Object.entries(overview.counts.roleCounts).map(([role, count]) => (
+                <li key={role} className="flex justify-between text-sm text-[#0E3435]">
+                  <span>{ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role}</span>
+                  <span className="font-semibold">{Number(count).toLocaleString("ar-SA")}</span>
+                </li>
+              ))}
+              {Object.keys(overview.counts.roleCounts).length === 0 ? (
+                <li className="text-sm text-[rgba(14,52,53,0.55)]">لا بيانات أدوار بعد.</li>
+              ) : null}
+            </ul>
+          </div>
+
+          <div className="rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-5">
+            <h2 className="text-xl font-bold text-[#0E3435]">المهام الخلفية</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <Stat label="الإجمالي" value={String(overview.jobs.total)} />
+              <Stat label="جارية" value={String(overview.jobs.running)} />
+              <Stat label="مكتملة" value={String(overview.jobs.done)} />
+              <Stat label="فاشلة" value={String(overview.jobs.error)} />
+            </div>
+            <Link href="/admin/jobs" className="mt-4 inline-block text-sm font-semibold text-[#8B6914] hover:text-[#0E3435]">
+              مراقبة المهام ←
+            </Link>
+          </div>
+
+          <div className="rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-5 xl:col-span-2">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-bold text-[#0E3435]">آخر أحداث التدقيق</h2>
+              <Link href="/admin/audit" className="text-sm font-semibold text-[#8B6914]">
+                عرض المزيد
+              </Link>
+            </div>
+            <ul className="mt-4 divide-y divide-[rgba(14,52,53,0.08)]">
+              {overview.recentAudit.length === 0 ? (
+                <li className="py-3 text-sm text-[rgba(14,52,53,0.55)]">لا أحداث بعد.</li>
+              ) : (
+                overview.recentAudit.map((ev) => (
+                  <li key={ev.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm">
+                    <span className="font-semibold text-[#0E3435]">
+                      {auditSubjectLabel(ev.subject)} · {auditActionLabel(ev.action)}
+                    </span>
+                    <span className="text-[rgba(14,52,53,0.55)]">
+                      {ev.actor?.name || "نظام"} · {new Date(ev.createdAt).toLocaleString("ar-SA")}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AdminLink href="/admin/services" label="إدارة ظهور الخدمات" />
+          <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
+          <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
+          <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
+          <AdminLink href="/admin/settings" label="إعدادات المنصة" />
+          <AdminLink href="/admin/api-keys" label="مفاتيح API" />
+          <AdminLink href="/admin/roles" label="مصفوفة الصلاحيات" />
+          <AdminLink href="/audit-logs" label="سجل التدقيق العام" />
+        </section>
+      </AppShell>
+    );
+  }
+
+  // مدير النظام / من يملك ADMIN_REPORTS_VIEW — اللوحة القائمة دون أقسام السوبر
+  const status = await getLegacyAdminStatus();
   return (
     <AppShell>
       <p className="text-sm font-semibold text-gold">الإدارة والتقارير</p>
@@ -114,90 +170,45 @@ export default async function AdminPage() {
       </p>
 
       <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <StatusCard label="قاعدة البيانات" value={status.database} />
-        <StatusCard label="مزوّد الذكاء" value={status.aiLive ? aiProviderLabel(status.aiProviderName) : "غير متّصل"} />
-        <StatusCard label="تخزين المرفقات" value={storageLabel(status.storage)} />
-        <StatusCard label="المستخدمون" value={status.users.toLocaleString("ar-SA")} />
-        <StatusCard label="الأدوار" value={status.roles.toLocaleString("ar-SA")} />
-        <StatusCard label="الصلاحيات" value={status.permissions.toLocaleString("ar-SA")} />
-        <StatusCard label="الأنظمة" value={status.legalSystems.toLocaleString("ar-SA")} />
-        <StatusCard label="المواد" value={status.legalArticles.toLocaleString("ar-SA")} />
+        <Stat label="قاعدة البيانات" value={status.database} />
+        <Stat label="مزوّد الذكاء" value={status.aiLive ? AI_PROVIDER_LABELS[status.aiProviderName] ?? status.aiProviderName : "غير متّصل"} />
+        <Stat label="تخزين المرفقات" value={STORAGE_LABELS[status.storage] ?? status.storage} />
+        <Stat label="المستخدمون" value={status.users.toLocaleString("ar-SA")} />
+        <Stat label="الأدوار" value={status.roles.toLocaleString("ar-SA")} />
+        <Stat label="الصلاحيات" value={status.permissions.toLocaleString("ar-SA")} />
+        <Stat label="الأنظمة" value={status.legalSystems.toLocaleString("ar-SA")} />
+        <Stat label="المواد" value={status.legalArticles.toLocaleString("ar-SA")} />
       </section>
 
-      <section className="mt-6 grid gap-4 xl:grid-cols-2">
-        <div className="rounded-md border border-line bg-ivory p-5 xl:col-span-2">
-          <h2 className="text-xl font-bold text-olive">حالة الخدمات والتكاملات</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {services.map((s) => (
-              <ServiceRow key={s.label} {...s} />
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-md border border-line bg-ivory p-5">
-          <h2 className="text-xl font-bold text-olive">روابط الإدارة</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <AdminLink href="/admin/users" label="إدارة المستخدمين" />
-            <AdminLink href="/admin/roles" label="الأدوار والصلاحيات" />
-            <AdminLink href="/admin/api-keys" label="مفاتيح API" />
-            <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
-            <AdminLink href="/admin/settings" label="مفاتيح التكامل (البحث/الذكاء/Google)" />
-            <AdminLink href="/dashboard/attachments" label="المرفقات" />
-            <AdminLink href="/audit-logs" label="سجل التدقيق" />
-            <AdminLink href="/settings" label="إعدادات المنصة" />
-          </div>
-        </div>
-
-        <div className="rounded-md border border-gold bg-sand p-5">
-          <h2 className="text-xl font-bold text-olive">تنبيه MVP</h2>
-          <p className="mt-3 leading-8 text-ink">
-            المخرجات القانونية والتدريبية مساعدة أولية ولا تعد رأيًا قانونيًا نهائيًا أو حكمًا فعليًا. التكاملات المعلّمة بـ«يتطلب ضبط» تُفعَّل
-            تلقائيًا عند إضافة متغيّرات البيئة المقابلة.
-          </p>
-        </div>
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminLink href="/admin/users" label="إدارة المستخدمين" />
+        <AdminLink href="/admin/roles" label="الأدوار والصلاحيات" />
+        <AdminLink href="/admin/api-keys" label="مفاتيح API" />
+        <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
+        <AdminLink href="/admin/settings" label="مفاتيح التكامل" />
+        <AdminLink href="/audit-logs" label="سجل التدقيق" />
+        <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
+        <AdminLink href="/dashboard/attachments" label="المرفقات" />
       </section>
     </AppShell>
   );
 }
 
-const STATE_BADGE: Record<ServiceState, { text: string; cls: string }> = {
-  live: { text: "مُفعّلة", cls: "bg-emerald-50 text-emerald-700" },
-  config: { text: "تتطلب ضبطًا", cls: "bg-amber-50 text-amber-700" },
-  tenant: { text: "تتطلب مستأجرًا", cls: "bg-surface text-muted" }
-};
-
-function ServiceRow({ label, state, detail, href }: { label: string; state: ServiceState; detail: string; href?: string }) {
-  const badge = STATE_BADGE[state];
-  const body = (
-    <div className="flex h-full flex-col rounded-md border border-line bg-sand p-4">
-      <div className="flex items-center gap-2">
-        <span className="font-semibold text-olive">{label}</span>
-        <span className={`ms-auto rounded px-2 py-0.5 text-xs ${badge.cls}`}>{badge.text}</span>
-      </div>
-      <p className="mt-2 text-sm leading-7 text-muted">{detail}</p>
-    </div>
-  );
-  return href ? (
-    <Link href={href} className="focus-ring block hover:opacity-90">
-      {body}
-    </Link>
-  ) : (
-    body
-  );
-}
-
-function StatusCard({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-line bg-ivory p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 break-words text-2xl font-bold text-olive">{value}</p>
+    <div className="rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-4">
+      <p className="text-sm text-[rgba(14,52,53,0.55)]">{label}</p>
+      <p className="mt-2 break-words text-2xl font-bold text-[#0E3435]">{value}</p>
     </div>
   );
 }
 
 function AdminLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="focus-ring rounded-md bg-sand px-4 py-3 font-semibold text-olive hover:bg-gold/20">
+    <Link
+      href={href}
+      className="focus-ring rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] px-4 py-3 font-semibold text-[#0E3435] hover:bg-[#F7F2EA]"
+    >
       {label}
     </Link>
   );

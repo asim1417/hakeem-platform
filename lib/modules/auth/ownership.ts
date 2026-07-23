@@ -17,9 +17,9 @@ import type { SafeUser } from "@/lib/modules/auth/session";
 
 type Actor = Pick<SafeUser, "id" | "role">;
 
-/** مدير النظام يرى بيانات الجميع؛ غيره يُقيَّد بملكيّته فقط. */
+/** مدير النظام أو مالك المنصة (سوبر أدمن) يرى بيانات الجميع؛ غيره يُقيَّد بملكيّته فقط. */
 export function isSystemAdmin(user: Actor): boolean {
-  return user.role === "SYSTEM_ADMIN";
+  return user.role === "SYSTEM_ADMIN" || user.role === "SUPER_ADMIN";
 }
 
 /** شرط قائمة/عدّ جلسات المحاكاة للمستخدم الحالي. */

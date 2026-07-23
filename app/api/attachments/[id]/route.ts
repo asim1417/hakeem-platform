@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { isSystemAdmin } from "@/lib/modules/auth/ownership";
 import { signedDownloadUrl } from "@/lib/modules/attachments/blob-storage";
+import type { UserRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 // ملكيّة المرفق = ملكيّة القضية المرتبطة به. مرفق بلا قضية (ownerId=null) لا يقرؤه إلا المدير.
-function ownsAttachment(user: { id: string; role: string }, ownerId: string | null): boolean {
-  if (user.role === "SYSTEM_ADMIN") return true;
+function ownsAttachment(user: { id: string; role: UserRole | string }, ownerId: string | null): boolean {
+  if (isSystemAdmin({ id: user.id, role: user.role as UserRole })) return true;
   return ownerId !== null && ownerId === user.id;
 }
 

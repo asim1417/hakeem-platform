@@ -8,6 +8,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { generateEasyPassword, isValidUsername } from "@/lib/modules/auth/credentials";
 import { ROLE_PERMISSIONS } from "@/lib/modules/auth/role-permissions";
 import { PERMISSION_CATALOG, ROLE_LABELS } from "@/lib/modules/auth/role-admin";
+import { canAssignSuperAdmin } from "@/lib/modules/auth/super-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,32 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     payload = schema.parse(await request.json());
   } catch {
     return NextResponse.json({ message: "بيانات التحديث غير صالحة." }, { status: 400 });
+  }
+
+  if (payload.role && params.id === actor.id) {
+    return NextResponse.json({ message: "لا يمكنك تغيير دورك بنفسك." }, { status: 403 });
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: params.id },
+    select: { id: true, role: true },
+  });
+  if (!target) {
+    return NextResponse.json({ message: "المستخدم غير موجود." }, { status: 404 });
+  }
+
+  if (target.role === "SUPER_ADMIN" && !canAssignSuperAdmin(actor)) {
+    return NextResponse.json(
+      { message: "تعديل حساب السوبر أدمن محصور بمالك المنصة المخوّل." },
+      { status: 403 }
+    );
+  }
+
+  if (payload.role === "SUPER_ADMIN" && !canAssignSuperAdmin(actor)) {
+    return NextResponse.json(
+      { message: "منح دور السوبر أدمن محصور بمالك المنصة المخوّل فقط." },
+      { status: 403 }
+    );
   }
 
   const data: {

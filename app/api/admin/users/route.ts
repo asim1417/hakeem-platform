@@ -14,6 +14,7 @@ import {
 } from "@/lib/modules/auth/credentials";
 import { ROLE_PERMISSIONS } from "@/lib/modules/auth/role-permissions";
 import { ROLE_LABELS, PERMISSION_CATALOG } from "@/lib/modules/auth/role-admin";
+import { canAssignSuperAdmin } from "@/lib/modules/auth/super-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,13 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof z.ZodError ? err.errors[0]?.message ?? "بيانات غير صالحة." : "بيانات غير صالحة.";
     return NextResponse.json({ message }, { status: 400 });
+  }
+
+  if (payload.role === "SUPER_ADMIN" && !canAssignSuperAdmin(actor)) {
+    return NextResponse.json(
+      { message: "منح دور السوبر أدمن محصور بمالك المنصة المخوّل فقط." },
+      { status: 403 }
+    );
   }
 
   const shouldGenerate = payload.generateCredentials !== false;

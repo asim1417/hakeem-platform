@@ -69,6 +69,28 @@ export async function updateJob(id: string, patch: { text?: string; meta?: Recor
   } catch { /* تجاهل */ }
 }
 
+function mapJobRow(r: {
+  id: string;
+  owner_id: string;
+  kind: string;
+  status: string;
+  title: string | null;
+  text: string;
+  meta: unknown;
+  updated_at: Date;
+}): GenerationJob {
+  return {
+    id: r.id,
+    ownerId: r.owner_id,
+    kind: r.kind,
+    status: (r.status as JobStatus) ?? "running",
+    title: r.title,
+    text: r.text ?? "",
+    meta: typeof r.meta === "string" ? JSON.parse(r.meta) : ((r.meta as Record<string, unknown>) ?? {}),
+    updatedAt: new Date(r.updated_at).toISOString(),
+  };
+}
+
 /** يجلب مهمّةً بمعرّفها مقيّدةً بمالكها (استئناف آمن). */
 export async function getJob(id: string, ownerId: string): Promise<GenerationJob | null> {
   if (!id || !(await ensure())) return null;
@@ -80,11 +102,58 @@ export async function getJob(id: string, ownerId: string): Promise<GenerationJob
     )) as Array<{ id: string; owner_id: string; kind: string; status: string; title: string | null; text: string; meta: unknown; updated_at: Date }>;
     const r = rows[0];
     if (!r) return null;
-    return {
-      id: r.id, ownerId: r.owner_id, kind: r.kind, status: (r.status as JobStatus) ?? "running",
-      title: r.title, text: r.text ?? "",
-      meta: typeof r.meta === "string" ? JSON.parse(r.meta) : ((r.meta as Record<string, unknown>) ?? {}),
-      updatedAt: new Date(r.updated_at).toISOString(),
-    };
+    return mapJobRow(r);
   } catch { return null; }
+}
+
+/** إحصاءات المهام للمنصة (سوبر أدمن) — سقوط آمن إن غاب الجدول. */
+export async function listJobStats(): Promise<{
+  total: number;
+  running: number;
+  done: number;
+  error: number;
+}> {
+  if (!(await ensure())) return { total: 0, running: 0, done: 0, error: 0 };
+  try {
+    const rows = (await prisma.$queryRawUnsafe(
+      `SELECT "status", COUNT(*)::int AS c FROM "generation_jobs" GROUP BY "status"`
+    )) as Array<{ status: string; c: number }>;
+    const out = { total: 0, running: 0, done: 0, error: 0 };
+    for (const r of rows) {
+      out.total += r.c;
+      if (r.status === "running") out.running = r.c;
+      else if (r.status === "done") out.done = r.c;
+      else if (r.status === "error") out.error = r.c;
+    }
+    return out;
+  } catch {
+    return { total: 0, running: 0, done: 0, error: 0 };
+  }
+}
+
+/** أحدث المهام لكل المنصة (مراقبة سوبر أدمن فقط). */
+export async function listRecentJobs(limit = 30): Promise<GenerationJob[]> {
+  if (!(await ensure())) return [];
+  const take = Math.min(Math.max(limit, 1), 100);
+  try {
+    const rows = (await prisma.$queryRawUnsafe(
+      `SELECT "id","owner_id","kind","status","title","text","meta","updated_at"
+         FROM "generation_jobs"
+         ORDER BY "updated_at" DESC
+         LIMIT $1`,
+      take,
+    )) as Array<{
+      id: string;
+      owner_id: string;
+      kind: string;
+      status: string;
+      title: string | null;
+      text: string;
+      meta: unknown;
+      updated_at: Date;
+    }>;
+    return rows.map(mapJobRow);
+  } catch {
+    return [];
+  }
 }

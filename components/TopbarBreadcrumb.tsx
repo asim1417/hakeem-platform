@@ -14,8 +14,12 @@ const LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "/admin/ai", label: "إعدادات الذكاء" },
   { prefix: "/admin/owner", label: "حساب المالك" },
   { prefix: "/admin/users", label: "المستخدمون" },
+  { prefix: "/admin/services", label: "خدمات المنصة" },
+  { prefix: "/admin/jobs", label: "المهام الخلفية" },
+  { prefix: "/admin/audit", label: "تدقيق الإدارة" },
+  { prefix: "/admin/roles", label: "الأدوار والصلاحيات" },
   { prefix: "/admin/settings", label: "إعدادات التشغيل" },
-  { prefix: "/admin", label: "الإعدادات" },
+  { prefix: "/admin", label: "لوحة الإدارة" },
   { prefix: "/login", label: "تسجيل الدخول" },
   { prefix: "/register", label: "إنشاء حساب" },
   { prefix: "/audit-logs", label: "سجل التدقيق" }
