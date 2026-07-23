@@ -3,9 +3,7 @@ import "./identity.css";
 import "./globals.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
-import { ClerkAppProvider } from "@/components/providers/ClerkAppProvider";
 import { BootWatchdog } from "@/components/providers/BootWatchdog";
-import { shouldHideClerkDevelopmentModeUi } from "@/lib/modules/auth/owner-emergency";
 
 export const metadata: Metadata = {
   title: "حكيم",
@@ -19,10 +17,12 @@ export const viewport: Viewport = {
   themeColor: "#0E3435",
 };
 
+/**
+ * Layout جذري بلا Clerk — الصفحة الرئيسية العامة تبقى مستقرة على iPhone.
+ * المصادقة تُركَّب فقط عبر ClerkRoot في layouts المسارات المحمية/الدخول.
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = getLocale();
-  const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
-  const hideDevelopmentMode = shouldHideClerkDevelopmentModeUi();
   return (
     <html lang={locale} dir={DIR[locale]} suppressHydrationWarning>
       <head>
@@ -34,13 +34,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning>
-        <ClerkAppProvider
-          publishableKey={publishableKey || undefined}
-          hideDevelopmentMode={hideDevelopmentMode}
-        >
-          {children}
-          <BootWatchdog />
-        </ClerkAppProvider>
+        {children}
+        <BootWatchdog />
       </body>
     </html>
   );

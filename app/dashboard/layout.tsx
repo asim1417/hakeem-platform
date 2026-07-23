@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { EssentialsPromptGate } from "@/components/onboarding/EssentialsPromptGate";
+import { ClerkRoot } from "@/components/providers/ClerkRoot";
 import { requireUser } from "@/lib/modules/auth/session";
 import { getProfile, needsEssentials } from "@/lib/modules/onboarding/profile";
 
@@ -7,13 +8,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await requireUser();
   const profile = await getProfile(user.id);
 
-  if (needsEssentials(user, profile)) {
-    return (
-      <AppShell>
-        <EssentialsPromptGate mode="block" />
-      </AppShell>
-    );
-  }
+  const body = needsEssentials(user, profile) ? (
+    <AppShell>
+      <EssentialsPromptGate mode="block" />
+    </AppShell>
+  ) : (
+    <AppShell>{children}</AppShell>
+  );
 
-  return <AppShell>{children}</AppShell>;
+  return <ClerkRoot>{body}</ClerkRoot>;
 }

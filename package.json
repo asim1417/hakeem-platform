@@ -67,6 +67,7 @@
     "test:oauth-only-signin": "tsx scripts/test-oauth-only-signin.ts",
     "test:responsive-nav": "tsx scripts/test-responsive-nav.ts",
     "test:unify-home-auth": "tsx scripts/test-unify-home-auth.ts",
+    "test:clerk-off-home": "tsx scripts/test-clerk-off-home.ts",
     "test:auth-continue": "tsx scripts/test-auth-continue.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",
