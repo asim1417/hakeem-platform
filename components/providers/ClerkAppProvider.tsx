@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
-import { clerkAppearance, clerkLocalization } from "@/lib/modules/auth/clerk-config";
 
 const AFTER_AUTH = "/auth/continue";
 
@@ -33,9 +32,20 @@ type ClerkProviderProps = {
   children: ReactNode;
 };
 
+function isClerkRuntimeNoise(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("clerk") ||
+    m.includes("dev-browser") ||
+    m.includes("__clerk") ||
+    m.includes("failed to load") ||
+    m.includes("loading chunk")
+  );
+}
+
 /**
  * Clerk يُحمَّل على العميل فقط بعد أول رسم.
- * هذا يمنع سقوط الصفحة الرئيسية على iOS (SSR/hydration + pk_test_).
+ * يمنع سقوط الصفحة على iOS (SSR/hydration + pk_test_ + تقييم وحدة Clerk).
  */
 export function ClerkAppProvider({
   children,
@@ -49,42 +59,73 @@ export function ClerkAppProvider({
   const [ClerkProvider, setClerkProvider] = useState<ComponentType<ClerkProviderProps> | null>(
     null
   );
+  const [appearance, setAppearance] = useState<unknown>(null);
+  const [localization, setLocalization] = useState<unknown>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!publishableKey) return;
     let cancelled = false;
-    import("@clerk/nextjs")
-      .then((mod) => {
+
+    const onRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const msg =
+        reason instanceof Error
+          ? reason.message
+          : typeof reason === "string"
+            ? reason
+            : String(reason ?? "");
+      if (isClerkRuntimeNoise(msg)) {
+        event.preventDefault();
+        if (!cancelled) setFailed(true);
+      }
+    };
+    const onError = (event: ErrorEvent) => {
+      const msg = event.message || "";
+      if (isClerkRuntimeNoise(msg)) {
+        event.preventDefault();
+        if (!cancelled) setFailed(true);
+      }
+    };
+    window.addEventListener("unhandledrejection", onRejection);
+    window.addEventListener("error", onError);
+
+    Promise.all([import("@clerk/nextjs"), import("@/lib/modules/auth/clerk-config")])
+      .then(([clerkMod, configMod]) => {
         if (cancelled) return;
-        setClerkProvider(() => mod.ClerkProvider as ComponentType<ClerkProviderProps>);
+        const baseAppearance = configMod.clerkAppearance;
+        const nextAppearance = hideDevelopmentMode
+          ? {
+              ...baseAppearance,
+              layout: {
+                ...baseAppearance.layout,
+                unsafe_disableDevelopmentModeWarnings: true,
+              },
+            }
+          : baseAppearance;
+        setAppearance(nextAppearance);
+        setLocalization(configMod.clerkLocalization);
+        setClerkProvider(() => clerkMod.ClerkProvider as ComponentType<ClerkProviderProps>);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
       });
+
     return () => {
       cancelled = true;
+      window.removeEventListener("unhandledrejection", onRejection);
+      window.removeEventListener("error", onError);
     };
-  }, [publishableKey]);
+  }, [publishableKey, hideDevelopmentMode]);
 
   if (!publishableKey) {
     return <ClerkMountContext.Provider value={false}>{children}</ClerkMountContext.Provider>;
   }
 
-  // أول رسم + SSR: بدون Clerk — الرئيسية وHTML الثابت يبقيان ظاهرين
-  if (!ClerkProvider || failed) {
+  // أول رسم + فشل التحميل: بدون Clerk — بوابة الدخول تعرض Skeleton ثم FailCard
+  if (!ClerkProvider || !appearance || !localization || failed) {
     return <ClerkMountContext.Provider value={false}>{children}</ClerkMountContext.Provider>;
   }
-
-  const appearance = hideDevelopmentMode
-    ? {
-        ...clerkAppearance,
-        layout: {
-          ...clerkAppearance.layout,
-          unsafe_disableDevelopmentModeWarnings: true,
-        },
-      }
-    : clerkAppearance;
 
   return (
     <ClientErrorBoundary
@@ -93,7 +134,7 @@ export function ClerkAppProvider({
       <ClerkProvider
         publishableKey={publishableKey}
         appearance={appearance}
-        localization={clerkLocalization}
+        localization={localization}
         signInUrl="/sign-in"
         signUpUrl="/sign-up"
         afterSignOutUrl="/"

@@ -1,75 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { SignUp, useClerk } from "@clerk/nextjs";
-import { clerkAppearance } from "@/lib/modules/auth/clerk-config";
+import { useEffect, useState, type ComponentType } from "react";
 import { AuthOauthOnly } from "@/components/auth/AuthOauthOnly";
 import { isAuthGatewayUxV2Enabled } from "@/lib/modules/config/auth-gateway";
 import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
-import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
+import { AuthGatewayFailCard, AuthGatewaySkeleton } from "@/components/auth/AuthGatewayFailCard";
 
-function SignUpSkeleton() {
-  return (
-    <div
-      className="auth-clerk-skeleton w-full max-w-[25rem] space-y-4 rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 shadow-[0_8px_30px_rgba(14,52,53,0.06)]"
-      role="status"
-      aria-live="polite"
-      aria-label="جارٍ تحميل إنشاء الحساب"
-    >
-      <div className="mx-auto h-7 w-48 animate-pulse rounded bg-[#0E3435]/10" />
-      <div className="mx-auto h-4 w-56 animate-pulse rounded bg-[#0E3435]/8" />
-      <div className="mt-4 space-y-2.5">
-        <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
-        <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
-      </div>
-      <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/15" />
-      <p className="pt-1 text-center text-sm text-[#0E3435]/55">جارٍ تحميل إنشاء الحساب…</p>
-    </div>
-  );
-}
-
-function LegacyClerkSignUp({
-  forceRedirectUrl,
-  signInUrl,
-}: {
+type LegacyProps = {
   forceRedirectUrl: string;
   signInUrl: string;
-}) {
-  const clerkMounted = useClerkMounted();
-  if (!clerkMounted) return <SignUpSkeleton />;
-  return <LegacyClerkSignUpInner forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />;
-}
+};
 
-function LegacyClerkSignUpInner({
-  forceRedirectUrl,
-  signInUrl,
-}: {
-  forceRedirectUrl: string;
-  signInUrl: string;
-}) {
-  const { loaded } = useClerk();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const ready = loaded && mounted;
-
-  return (
-    <div className="auth-clerk-wrap flex w-full flex-col items-center">
-      {!ready ? <SignUpSkeleton /> : null}
-      <div className={ready ? "w-full" : "sr-only"} aria-hidden={!ready}>
-        <SignUp
-          appearance={clerkAppearance}
-          routing="path"
-          path="/sign-up"
-          signInUrl={signInUrl}
-          fallbackRedirectUrl={forceRedirectUrl}
-        />
-      </div>
-    </div>
-  );
-}
-
-/** إنشاء حساب — بوابة موحّدة /sign-up */
+/** إنشاء حساب — بوابة موحّدة /sign-up — بلا استيراد ثابت لـ @clerk/nextjs */
 export function AuthClerkSignUp({
   forceRedirectUrl = "/auth/continue?next=%2Fdashboard",
   signInUrl = "/sign-in",
@@ -93,7 +36,36 @@ export function AuthClerkSignUp({
     }
     body = <AuthOauthOnly mode="sign-up" nextUrl={resolved} />;
   } else {
-    body = <LegacyClerkSignUp forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />;
+    body = (
+      <LegacySignUpLoader forceRedirectUrl={forceRedirectUrl} signInUrl={signInUrl} />
+    );
   }
-  return <ClientErrorBoundary>{body}</ClientErrorBoundary>;
+  return (
+    <ClientErrorBoundary fallback={<AuthGatewayFailCard isSignIn={false} />}>
+      {body}
+    </ClientErrorBoundary>
+  );
+}
+
+function LegacySignUpLoader(props: LegacyProps) {
+  const [Comp, setComp] = useState<ComponentType<LegacyProps> | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    import("@/components/auth/AuthLegacyClerkSignUp")
+      .then((mod) => {
+        if (!cancelled) setComp(() => mod.LegacyClerkSignUp);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (failed) return <AuthGatewayFailCard isSignIn={false} />;
+  if (!Comp) return <AuthGatewaySkeleton label="جارٍ تحميل إنشاء الحساب…" />;
+  return <Comp {...props} />;
 }

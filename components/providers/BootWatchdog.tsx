@@ -52,7 +52,7 @@ export function BootWatchdog() {
       >
         <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#0E3435" }}>حكيم</p>
         <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.7, color: "rgba(18,33,31,0.7)" }}>
-          الصفحة لم تكتمل على هذا الجهاز. حدّث الشاشة أو افتح الدخول مباشرة.
+          الصفحة لم تكتمل التحميل. أعد المحاولة، أو عد إلى الصفحة الرئيسية.
         </p>
         <div
           style={{
