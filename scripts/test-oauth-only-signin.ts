@@ -68,9 +68,11 @@ assert.ok(csp.includes("accounts.google.com"));
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes("تخطّي إلى الدخول"), false);
-assert.ok(home.includes("/sign-in"));
+assert.ok(home.includes("AuthOauthButtons"));
 assert.ok(home.includes("HomeAuthActions"));
+assert.ok(home.includes("embedded"));
 assert.equal(home.includes('"use client"'), false);
+assert.equal(home.includes('href="/sign-in"'), false);
 
 const dash = fs.readFileSync(path.join(root, "app/dashboard/page.tsx"), "utf8");
 assert.ok(dash.includes("isNewUser"));
