@@ -13,18 +13,20 @@ function SignUpSkeleton() {
       aria-label="جارٍ تحميل إنشاء الحساب"
     >
       <div className="mx-auto h-7 w-48 animate-pulse rounded bg-[#0E3435]/10" />
-      <div className="mx-auto h-4 w-56 animate-pulse rounded bg-[#0E3435]/8" />
+      <div className="mx-auto h-4 w-64 animate-pulse rounded bg-[#0E3435]/8" />
       <div className="mt-4 space-y-2.5">
         <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
-        <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
+          <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
+        </div>
       </div>
-      <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/15" />
       <p className="pt-1 text-center text-sm text-[#0E3435]/55">جارٍ تحميل إنشاء الحساب…</p>
     </div>
   );
 }
 
-/** بوابة تحميل لـ SignUp بنفس لغة صفحة الدخول. */
+/** إنشاء حساب عبر SSO فقط — بلا حقل بريد مضلّل في شاشة البداية. */
 export function AuthClerkSignUp({
   forceRedirectUrl = "/auth/continue",
   signInUrl = "/sign-in",
@@ -51,6 +53,11 @@ export function AuthClerkSignUp({
           fallbackRedirectUrl={forceRedirectUrl}
         />
       </div>
+      {ready ? (
+        <p className="mt-1 max-w-[25rem] text-center text-xs leading-6 text-[rgba(14,52,53,0.55)]">
+          إنشاء الحساب متاح عبر Google أو Apple أو Microsoft فقط.
+        </p>
+      ) : null}
     </div>
   );
 }

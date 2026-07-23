@@ -12,7 +12,7 @@ function SignInSkeleton() {
       aria-label="جارٍ تحميل تسجيل الدخول"
     >
       <div className="mx-auto h-7 w-48 animate-pulse rounded bg-[#0E3435]/10" />
-      <div className="mx-auto h-4 w-56 animate-pulse rounded bg-[#0E3435]/8" />
+      <div className="mx-auto h-4 w-64 animate-pulse rounded bg-[#0E3435]/8" />
       <div className="mt-4 space-y-2.5">
         <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
         <div className="grid grid-cols-2 gap-2">
@@ -20,7 +20,6 @@ function SignInSkeleton() {
           <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
         </div>
       </div>
-      <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/15" />
       <p className="pt-1 text-center text-sm text-[#0E3435]/55">جارٍ تحميل تسجيل الدخول…</p>
     </div>
   );
@@ -32,7 +31,7 @@ function continueUrl(nextUrl: string) {
   return `/auth/continue?next=${encodeURIComponent(safe)}`;
 }
 
-/** نموذج Clerk لتسجيل الدخول — بلا دخول مالك، مع هيكل تحميل ثابت الأبعاد. */
+/** نموذج Clerk — دخول عبر Google / Apple / Microsoft فقط (بدون حقل بريد مضلّل). */
 export function AuthClerkSignIn({
   nextUrl,
   routing = "path",
@@ -70,6 +69,11 @@ export function AuthClerkSignIn({
           />
         )}
       </div>
+      {loaded ? (
+        <p className="mt-1 max-w-[25rem] text-center text-xs leading-6 text-[rgba(14,52,53,0.55)]">
+          الدخول متاح عبر Google أو Apple أو Microsoft فقط.
+        </p>
+      ) : null}
     </div>
   );
 }
