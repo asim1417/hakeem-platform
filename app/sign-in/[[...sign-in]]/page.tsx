@@ -8,7 +8,7 @@ export const metadata = {
   title: "تسجيل الدخول — حكيم",
 };
 
-/** بوابة الدخول الموحّدة — أزرار SSR بلا Clerk JS على الجهاز */
+/** بوابة الدخول — تُبقي /sign-in للروابط المحمية؛ الواجهة الأساسية على الرئيسية */
 export default function SignInPage({
   searchParams,
 }: {
@@ -17,6 +17,7 @@ export default function SignInPage({
   const configured = isClerkConfigured();
   const nextUrl = resolvePostAuthNext(searchParams);
 
+  // الروابط العميقة والـ middleware ما زالت تصل هنا — نفس لوحة الأزرار بلا Clerk JS
   return (
     <AuthJourneyShell
       compact

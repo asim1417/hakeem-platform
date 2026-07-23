@@ -23,10 +23,11 @@ assert.equal(provider.includes("signInForceRedirectUrl"), false);
 
 const home = fs.readFileSync(path.join(root, "components/home/HomeHero.tsx"), "utf8");
 assert.equal(home.includes('"use client"'), false);
-assert.ok(home.includes('href="/sign-in"'));
-assert.ok(home.includes('href="/sign-up"'));
-assert.ok(home.includes("<a"));
+assert.ok(home.includes("AuthOauthButtons"));
+assert.ok(home.includes('id="login"') || home.includes("id=\"login\"") || home.includes("embedded"));
+assert.ok(home.includes('href="#login"'));
 assert.equal(home.includes('from "next/link"'), false);
+assert.equal(home.includes('href="/sign-in"'), false);
 
 const login = fs.readFileSync(path.join(root, "app/login/page.tsx"), "utf8");
 assert.ok(login.includes("redirect(`/sign-in"));
