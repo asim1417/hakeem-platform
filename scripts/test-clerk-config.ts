@@ -17,14 +17,17 @@ assert.equal(clerkLocalization.locale, "ar-SA");
 assert.equal(clerkLocalization.signIn?.start?.title, "مرحبًا بعودتك إلى حكيم");
 assert.equal(
   clerkLocalization.signIn?.start?.subtitle,
-  "سجّل الدخول لمتابعة أعمالك القانونية"
+  "ادخل عبر Google أو Apple أو Microsoft"
 );
 assert.equal(clerkLocalization.signUp?.start?.title, "إنشاء حساب في حكيم");
-assert.equal(clerkLocalization.formButtonPrimary, "متابعة");
-assert.equal(clerkLocalization.dividerText, "أو");
 assert.match(
-  String(clerkLocalization.formFieldLabel__emailAddress_username || ""),
-  /البريد الإلكتروني/
+  String(clerkLocalization.signUp?.start?.subtitle || ""),
+  /Google أو Apple أو Microsoft/
+);
+assert.equal(clerkLocalization.formButtonPrimary, "متابعة");
+assert.ok(String(clerkAppearance.elements.dividerRow).includes("auth-clerk-hide-email-path"));
+assert.ok(
+  String(clerkAppearance.elements.formFieldRow__identifier).includes("auth-clerk-hide-email-path")
 );
 assert.match(
   String(clerkLocalization.unstable__errors?.form_username_invalid_length || ""),

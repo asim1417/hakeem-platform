@@ -920,6 +920,30 @@ body {
 .auth-clerk-card {
   box-sizing: border-box;
 }
+/* إخفاء مسار البريد الإلكتروني من شاشة البداية (مضلّل إن لم يكن مفعّلًا كقناة دخول). */
+.auth-clerk-hide-email-path {
+  display: none !important;
+}
+.login-page .cl-signIn-start .cl-dividerRow,
+.login-page .cl-signIn-start .cl-form,
+.login-page .cl-signIn-start .cl-formButtonPrimary,
+.login-page .cl-signUp-start .cl-dividerRow,
+.login-page .cl-signUp-start .cl-form,
+.login-page .cl-signUp-start .cl-formButtonPrimary,
+.login-page [class*="cl-signIn-start"] .cl-dividerRow,
+.login-page [class*="cl-signIn-start"] .cl-form,
+.login-page [class*="cl-signIn-start"] .cl-formButtonPrimary,
+.login-page [class*="cl-signUp-start"] .cl-dividerRow,
+.login-page [class*="cl-signUp-start"] .cl-form,
+.login-page [class*="cl-signUp-start"] .cl-formButtonPrimary {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+}
 /* البريد/اسم المستخدم: LTR داخل حقل الكتابة مع بقاء الصفحة RTL */
 .auth-clerk-input,
 .cl-formFieldInput,
@@ -932,13 +956,19 @@ body {
 .cl-formFieldLabel {
   text-align: start;
 }
-/* زر المتابعة في المنتصف بلا سهم مربك */
+/* زر المتابعة في المنتصف بلا سهم مربك (للخطوات اللاحقة إن لزم) */
 .cl-formButtonPrimary {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 0.5rem;
   min-height: 48px !important;
+}
+.login-page .cl-signIn-start .cl-formButtonPrimary,
+.login-page .cl-signUp-start .cl-formButtonPrimary,
+.login-page [class*="cl-signIn-start"] .cl-formButtonPrimary,
+.login-page [class*="cl-signUp-start"] .cl-formButtonPrimary {
+  display: none !important;
 }
 .cl-formButtonPrimary svg,
 .cl-buttonArrowIcon,
