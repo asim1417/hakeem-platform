@@ -9,8 +9,9 @@ async function clearOwnerSession() {
   await fetch("/api/auth/owner-logout", { method: "POST" }).catch(() => undefined);
 }
 
+/** أبعاد ثابتة قبل/بعد تركيب Clerk — يمنع تبدّل الحجم في السايدبار. */
 const textBtnClass =
-  "focus-ring mt-3 w-full rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30";
+  "focus-ring mt-3 flex min-h-[44px] w-full items-center justify-center rounded-md border border-[#C69763]/30 px-3 py-2 text-sm font-semibold text-[var(--navy)] hover:bg-[#E8D6BC]/30";
 
 const AFTER_LOGOUT = "/";
 

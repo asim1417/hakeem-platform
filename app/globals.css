@@ -319,6 +319,133 @@ a.ds-card:hover { transform: translateY(-2px); box-shadow: var(--sh-md); border-
   background: transparent;
   flex-shrink: 0;
 }
+
+/* قائمة الحساب الموحّدة — أبعاد ثابتة منذ أول رسم (لا وميض بعد Clerk) */
+.account-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+.account-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  max-width: min(240px, 48vw);
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-08);
+  background: var(--paper);
+  color: var(--navy);
+  cursor: pointer;
+}
+.account-menu__trigger--skeleton {
+  width: 148px;
+  pointer-events: none;
+  opacity: 0.55;
+  background: linear-gradient(90deg, var(--paper) 25%, var(--cream, #f3efe6) 50%, var(--paper) 75%);
+  background-size: 200% 100%;
+}
+.account-menu__avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: var(--gold-pale, #e8d6bc);
+  font-size: 12px;
+  font-weight: 700;
+}
+.account-menu__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.25;
+}
+.account-menu__name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.account-menu__role {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--ink-60);
+}
+.account-menu__chev {
+  flex-shrink: 0;
+  opacity: 0.65;
+  transition: transform 0.15s ease;
+}
+.account-menu__chev--open {
+  transform: rotate(180deg);
+}
+.account-menu__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 80;
+  width: min(280px, calc(100vw - 24px));
+  padding: 8px;
+  border-radius: var(--r-lg, 12px);
+  border: 1px solid var(--ink-08);
+  background: var(--paper);
+  box-shadow: var(--sh-md, 0 8px 28px rgba(14, 52, 53, 0.12));
+}
+.account-menu__header {
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--ink-08);
+  margin-bottom: 4px;
+}
+.account-menu__header-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.account-menu__header-role {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-60);
+}
+.account-menu__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--r-md, 8px);
+  background: transparent;
+  color: var(--navy);
+  text-align: start;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.account-menu__item:hover,
+.account-menu__item:focus-visible {
+  background: var(--cream, #f3efe6);
+}
+.account-menu__item--danger {
+  color: #8c2233;
+}
+.account-menu__sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--ink-08);
+}
 .search-box { width: min(260px, 36vw); min-height: 44px; height: 44px; border: 1px solid var(--ink-08); background: var(--paper); border-radius: 99px; display: flex; align-items: center; gap: 8px; padding: 0 14px; color: var(--ink-40); }
 .search-box input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 16px; color: var(--ink); }
 .icon-pill { width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 99px; border: 1px solid var(--ink-08); background: var(--paper); color: var(--navy); display: grid; place-items: center; position: relative; }
@@ -732,6 +859,8 @@ input[type=range] { width: 100%; accent-color: var(--navy); }
   /* إخفاء صندوق البحث العلوي على الشاشات الضيقة جدًا لتقليل الازدحام */
   .search-box { width: min(180px, 42vw); }
   .topbar-user__name { display: none; }
+  .account-menu__meta { display: none; }
+  .account-menu__trigger { padding-inline: 6px; max-width: none; }
   .lang-toggle-label { display: none; }
   .app-foot { padding-inline: 16px; }
 }

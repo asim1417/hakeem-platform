@@ -7,11 +7,14 @@ import { PlanCard } from "@/components/billing/PlanCard";
 export function PlansGrid({
   currentPlanId = "free",
   freeCtaHref = "/register",
-  paidCtaHref = "/dashboard/subscribe",
+  paidCtaHref = "/dashboard/billing",
+  paidUiEnabled = false,
 }: {
   currentPlanId?: PlanId | "none";
   freeCtaHref?: string;
   paidCtaHref?: string;
+  /** يُمرَّر من الخادم — لا تعتمد على السرّ في المتصفح. */
+  paidUiEnabled?: boolean;
 }) {
   const [interval, setInterval] = useState<PlanInterval>("monthly");
   const plans = getPlans();
@@ -23,7 +26,7 @@ export function PlansGrid({
           <button
             type="button"
             onClick={() => setInterval("monthly")}
-            className={`focus-ring rounded-full px-5 py-2 text-sm font-semibold transition ${
+            className={`focus-ring min-h-[44px] rounded-full px-5 py-2 text-sm font-semibold transition ${
               interval === "monthly" ? "bg-[var(--navy)] text-white" : "text-[var(--ink-60)]"
             }`}
           >
@@ -32,7 +35,7 @@ export function PlansGrid({
           <button
             type="button"
             onClick={() => setInterval("yearly")}
-            className={`focus-ring rounded-full px-5 py-2 text-sm font-semibold transition ${
+            className={`focus-ring min-h-[44px] rounded-full px-5 py-2 text-sm font-semibold transition ${
               interval === "yearly" ? "bg-[var(--navy)] text-white" : "text-[var(--ink-60)]"
             }`}
           >
@@ -45,13 +48,26 @@ export function PlansGrid({
         {plans.map((plan) => (
           <PlanCard
             key={plan.id}
-            plan={plan}
+            plan={{
+              ...plan,
+              // على العميل لا يُوثق بالسرّ — اعتمد راية الخادم
+              checkoutEnabled: paidUiEnabled && plan.id !== "free",
+              ctaLabel:
+                plan.id === "free"
+                  ? plan.ctaLabel
+                  : paidUiEnabled
+                    ? plan.id === "pro"
+                      ? "اشترك الآن"
+                      : "اشترك للمكتب"
+                    : "الخطط المدفوعة ستتاح قريبًا",
+            }}
             interval={interval}
             current={currentPlanId === plan.id}
+            paidUiEnabled={paidUiEnabled}
             ctaHref={
               plan.id === "free"
                 ? freeCtaHref
-                : plan.checkoutEnabled
+                : paidUiEnabled
                   ? `/api/billing/checkout?plan=${plan.id}&interval=${interval}`
                   : paidCtaHref
             }

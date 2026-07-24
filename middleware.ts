@@ -2,7 +2,14 @@ import { type NextRequest, type NextFetchEvent } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { plainAuthGate } from "@/lib/modules/auth/middleware-gate";
+import {
+  plainAuthGate,
+  resolveUnauthenticatedGate,
+} from "@/lib/modules/auth/middleware-gate";
+import {
+  HAKEEM_PATHNAME_HEADER,
+  HAKEEM_SEARCH_HEADER,
+} from "@/lib/modules/auth/request-path-headers";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -38,6 +45,14 @@ function hasOwnerSession(request: NextRequest) {
   return Boolean(request.cookies.get("hakeem_session")?.value);
 }
 
+/** يمرّر المسار للـ layouts عبر headers لتوجيه السوبر قبل رسم لوحة العميل. */
+function nextWithPath(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(HAKEEM_PATHNAME_HEADER, request.nextUrl.pathname);
+  requestHeaders.set(HAKEEM_SEARCH_HEADER, request.nextUrl.search);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 type ClerkMw = (req: NextRequest, event: NextFetchEvent) => Response | Promise<Response>;
 
 let clerkHandler: ClerkMw | null = null;
@@ -65,7 +80,7 @@ function getClerkHandler(): ClerkMw {
     }
 
     if (isProtectedRoute(request) && hasOwnerSession(request)) {
-      return NextResponse.next();
+      return nextWithPath(request);
     }
 
     if (isProtectedRoute(request)) {
@@ -76,6 +91,8 @@ function getClerkHandler(): ClerkMw {
         ).toString(),
       });
     }
+
+    return nextWithPath(request);
   }) as ClerkMw;
   return clerkHandler;
 }
@@ -89,14 +106,22 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    return plainAuthGate(request);
+    const decision = resolveUnauthenticatedGate(
+      request.nextUrl.pathname,
+      request.nextUrl.search,
+      request.headers.get("cookie")
+    );
+    if (decision === "redirect-login") {
+      return plainAuthGate(request);
+    }
+    return nextWithPath(request);
   }
 
   if (isClerkMiddlewareBypass(request)) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    return NextResponse.next();
+    return nextWithPath(request);
   }
 
   return getClerkHandler()(request, event);

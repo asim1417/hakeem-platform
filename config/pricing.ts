@@ -104,9 +104,9 @@ export function getPlans(): PlanDefinition[] {
         ? p.ctaLabel
         : live
           ? p.id === "pro"
-            ? "اشترك عبر Moyasar"
+            ? "اشترك الآن"
             : "اشترك للمكتب"
-          : "اشترك — قريبًا (اضبط Moyasar)",
+          : "الخطط المدفوعة ستتاح قريبًا",
   }));
 }
 
