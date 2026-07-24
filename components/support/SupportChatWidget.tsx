@@ -80,7 +80,7 @@ export function SupportChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-40 flex flex-col items-start gap-2 sm:bottom-6 sm:left-6">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] z-40 flex max-w-[calc(100vw-1.5rem)] flex-col items-start gap-2 sm:bottom-6 sm:left-6">
       {open ? (
         <section
           className="flex h-[min(420px,70vh)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-[#FFFcf7] shadow-[0_12px_40px_rgba(14,52,53,0.15)]"

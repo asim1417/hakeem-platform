@@ -85,6 +85,8 @@ assert.equal(home.includes('"use client"'), false);
 
 const dash = fs.readFileSync(path.join(root, "app/dashboard/page.tsx"), "utf8");
 assert.ok(dash.includes("isNewUser"));
-assert.ok(dash.includes("ابدأ من هنا") || dash.includes("مرحبًا"));
+assert.ok(dash.includes("DashboardWorkbench"));
+const wb = fs.readFileSync(path.join(root, "components/dashboard/DashboardWorkbench.tsx"), "utf8");
+assert.ok(wb.includes("ابدأ من الواقعة") || wb.includes("ماذا تعمل الآن"));
 
 console.log("test-oauth-only-signin: OK");

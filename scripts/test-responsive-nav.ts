@@ -43,10 +43,12 @@ const globals = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");
 assert.ok(globals.includes("touch-target"));
 assert.ok(globals.includes("safe-area-inset-top"));
 assert.ok(globals.includes("safe-area-inset-bottom"));
-assert.ok(globals.includes("overflow-x: hidden"));
+assert.ok(globals.includes("overflow-x: hidden") || globals.includes("overflow-x: clip"));
 assert.match(globals, /\.mobile-menu-btn[\s\S]*?44px/);
 assert.match(globals, /\.icon-pill[\s\S]*?44px/);
 assert.ok(globals.includes("font-size: 16px"));
+assert.ok(globals.includes("nav-drawer-open"));
+assert.ok(globals.includes("-webkit-text-size-adjust"));
 
 const layout = fs.readFileSync(path.join(root, "app/layout.tsx"), "utf8");
 assert.ok(layout.includes('viewportFit: "cover"'));
@@ -63,7 +65,7 @@ assert.ok(crumb.includes("مسار التنقّل"));
 assert.ok(crumb.includes("/dashboard/judicial-assistant"));
 
 const settings = fs.readFileSync(path.join(root, "app/admin/settings/page.tsx"), "utf8");
-assert.ok(settings.includes("AppShell"));
+assert.ok(settings.includes("AdminPageShell"));
 
 const docs = fs.readFileSync(path.join(root, "app/documents/layout.tsx"), "utf8");
 assert.ok(docs.includes("ServiceExitBar"));
