@@ -3,8 +3,7 @@
  */
 import { sendEmail } from "@/lib/modules/email/send";
 import { PLATFORM_OWNER_EMAILS } from "@/lib/modules/auth/oauth-shared";
-
-const APP_URL = (process.env.NEXTAUTH_URL || "https://hakeem-platform.vercel.app").replace(/\/$/, "");
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 
 export async function notifyAdminNewSupportMessage(opts: {
   userName: string;
@@ -18,7 +17,7 @@ export async function notifyAdminNewSupportMessage(opts: {
     <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#0E3435">
       <p><strong>${opts.userName}</strong> (${opts.userEmail})</p>
       <p style="white-space:pre-wrap;background:#F7F2EA;padding:12px;border-radius:8px">${escapeHtml(opts.preview)}</p>
-      <p><a href="${APP_URL}/admin/inbox">فتح صندوق التواصل</a></p>
+      <p><a href="${getSiteUrl()}/admin/inbox">فتح صندوق التواصل</a></p>
     </div>`;
   await sendEmail({
     to,
@@ -38,7 +37,7 @@ export async function notifyUserSupportReply(opts: {
     <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#0E3435">
       <p>وصلك رد من دعم حكيم:</p>
       <p style="white-space:pre-wrap;background:#F7F2EA;padding:12px;border-radius:8px">${escapeHtml(opts.preview)}</p>
-      <p><a href="${APP_URL}/dashboard">افتح المنصة ثم زر «الدعم» أسفل الصفحة لقراءة الرد</a></p>
+      <p><a href="${getSiteUrl()}/dashboard">افتح المنصة ثم زر «الدعم» أسفل الصفحة لقراءة الرد</a></p>
     </div>`;
   await sendEmail({
     to: opts.to,

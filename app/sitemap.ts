@@ -1,14 +1,14 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { resolveSystemSlug } from "@/lib/modules/legal-core/eli";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 
 export const revalidate = 3600;
-
-const BASE = "https://hakeem-platform.vercel.app";
 
 // خريطة الموقع للسطح العام (يساعد محرّكات البحث وأنظمة الذكاء على الاكتشاف).
 // الصفحات الثابتة + فهرس الأنظمة + صفحة كل نظام (المواد تُكتشَف بتتبّع روابط صفحات الأنظمة).
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const BASE = getSiteUrl();
   const now = new Date();
   const staticPages: Array<{ path: string; priority: number }> = [
     { path: "/", priority: 1 },

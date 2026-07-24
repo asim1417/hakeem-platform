@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { randomBytes } from "crypto";
 import { awardCredits } from "@/lib/modules/credits/ledger";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { updateProfile } from "@/lib/modules/onboarding/profile";
 
 export function buildReferralCode(userId: string): string {
@@ -49,9 +50,10 @@ export interface ReferralInfo {
   unknown?: boolean;
 }
 
-export function buildReferralLink(code: string | null, origin = "https://hakeem-platform.vercel.app"): string {
-  if (!code) return `${origin}/register`;
-  return `${origin}/register?ref=${encodeURIComponent(code)}`;
+export function buildReferralLink(code: string | null, origin = getSiteUrl()): string {
+  const base = (origin || getSiteUrl()).replace(/\/+$/, "");
+  if (!code) return `${base}/register`;
+  return `${base}/register?ref=${encodeURIComponent(code)}`;
 }
 
 export async function getReferralInfo(userId: string, origin?: string): Promise<ReferralInfo> {

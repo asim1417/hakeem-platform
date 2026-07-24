@@ -1,4 +1,25 @@
 /** @type {import('next').NextConfig} */
+
+/** أصل الموقع وقت البناء — NEXT_PUBLIC_ يُحسم عند build لا في التشغيل الحي. */
+function resolveSiteUrl() {
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "").trim();
+  const fallback = "https://hakeem-platform.vercel.app";
+  const normalized = (raw || fallback).replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(normalized)) return `https://${normalized}`;
+  return normalized;
+}
+
+function resolveSiteHost() {
+  try {
+    return new URL(resolveSiteUrl()).host;
+  } catch {
+    return "hakeem-platform.vercel.app";
+  }
+}
+
+const siteUrl = resolveSiteUrl();
+const siteHost = resolveSiteHost();
+
 const nextConfig = {
   // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل)
   outputFileTracingIncludes: {
@@ -15,7 +36,8 @@ const nextConfig = {
     // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
     instrumentationHook: true,
     serverActions: {
-      allowedOrigins: ["localhost:3000"]
+      // تطوير محلي + مضيف الموقع من NEXT_PUBLIC_SITE_URL (وقت البناء)
+      allowedOrigins: Array.from(new Set(["localhost:3000", siteHost]))
     }
   },
   // ترويسات أمنية على كل المسارات. القفل الصارم على object/base/form/frame؛
@@ -23,8 +45,7 @@ const nextConfig = {
   // ومحرّك OCR (WASM) والألعاب تحتاجها — فلا تتعطّل أي ميزة. أساس نشدّه لاحقًا
   // بـ nonces عند الحاجة لتصلّب أعلى ضد XSS.
   async headers() {
-    // Clerk: clerk.browser.js + CAPTCHA (Cloudflare Turnstile / protect.clerk.com)
-    // + clerk.shared.lcl.dev لـ OAuth في Development instances
+    // Clerk: لا تُحذف هذه النطاقات — نسخة التطوير الحالية تعتمد عليها في الإنتاج المؤقت
     const clerkHosts =
       "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com https://*.accounts.dev https://clerk.shared.lcl.dev";
     const turnstile = "https://challenges.cloudflare.com";
@@ -32,20 +53,20 @@ const nextConfig = {
     const googleFontsStatic = "https://fonts.gstatic.com";
     const oauthFormTargets =
       "https://accounts.google.com https://appleid.apple.com";
+    // أصل الموقع من المتغير (وقت البناء) — 'self' يغطي المضيف الحالي؛ الإضافة صريحة للتوثيق والتعدد لاحقًا
+    const siteOrigin = siteUrl;
     const csp = [
       "default-src 'self'",
       `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: ${clerkHosts} ${turnstile}`,
-      // خطوط هوية حكيم تُحمَّل من Google Fonts في layout.tsx
       `style-src 'self' 'unsafe-inline' ${googleFonts}`,
       "img-src 'self' data: blob: https:",
       `font-src 'self' data: ${googleFontsStatic}`,
-      "connect-src 'self' https:",
+      `connect-src 'self' ${siteOrigin} https:`,
       `frame-src 'self' ${clerkHosts} ${turnstile}`,
       "worker-src 'self' blob:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      // OAuth: نماذج Clerk قد تُرسل إلى FAPI / مزوّدي Google وApple
-      `form-action 'self' ${clerkHosts} ${oauthFormTargets}`,
+      `form-action 'self' ${siteOrigin} ${clerkHosts} ${oauthFormTargets}`,
       "object-src 'none'"
     ].join("; ");
     return [

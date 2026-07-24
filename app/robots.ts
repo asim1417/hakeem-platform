@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE = "https://hakeem-platform.vercel.app";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 
 // السماح الصريح لروبوتات محرّكات البحث وأنظمة الذكاء الاصطناعي بالزحف على السطح
 // العام، مع حجب المسارات الخاصة فقط (لوحات المستخدم/الإدارة والتدقيق وواجهات الإدارة).
@@ -25,6 +24,7 @@ const AI_AND_SEARCH_BOTS = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
+  const BASE = getSiteUrl();
   return {
     rules: [
       { userAgent: "*", allow: "/", disallow: DISALLOW },
