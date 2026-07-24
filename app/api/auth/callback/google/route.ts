@@ -10,12 +10,16 @@ import { OAUTH_REF_COOKIE, safeNextPath } from "@/lib/modules/auth/oauth-shared"
 import { establishFirstPartySession } from "@/lib/modules/auth/establish-session";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 import { continueUrl } from "@/lib/modules/auth/safe-next";
+import {
+  attachLoginSessionCookie,
+  mirrorLoginSessionCookie,
+} from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/auth/callback/google
- * بعد Google: تثبيت hakeem_session (+ مزامنة Clerk Backend) ثم التوجيه.
+ * بعد Google: تثبيت hakeem_session على استجابة Redirect صراحةً ثم /auth/continue.
  */
 export async function GET(request: NextRequest) {
   await hydrateEnvFromSettings().catch(() => 0);
@@ -45,8 +49,9 @@ export async function GET(request: NextRequest) {
   );
   if (!profile?.email) return fail("google_profile_failed");
 
+  let user;
   try {
-    await establishFirstPartySession({
+    user = await establishFirstPartySession({
       email: profile.email,
       name: profile.name,
       referralCode: ref,
@@ -57,7 +62,14 @@ export async function GET(request: NextRequest) {
   }
 
   const next = safeNextPath(nextRaw, "/dashboard");
+  const secure = request.nextUrl.protocol === "https:";
   const res = NextResponse.redirect(new URL(continueUrl(next), request.url));
+
+  // ثبت نفس قيمة الجلسة على استجابة التحويل (أو أنشئ واحدة إن غابت من المخزن)
+  if (!mirrorLoginSessionCookie(res, { secure })) {
+    attachLoginSessionCookie(res, user, { secure });
+  }
+
   res.cookies.set(GOOGLE_STATE_COOKIE, "", { path: "/", maxAge: 0 });
   res.cookies.set(OAUTH_NEXT_COOKIE, "", { path: "/", maxAge: 0 });
   res.cookies.set(OAUTH_REF_COOKIE, "", { path: "/", maxAge: 0 });

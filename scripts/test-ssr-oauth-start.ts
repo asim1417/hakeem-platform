@@ -58,8 +58,11 @@ const continueClient = fs.readFileSync(
   "utf8"
 );
 assert.ok(continueClient.includes("/sign-in"));
-assert.ok(continueClient.includes("جارٍ تحويلك بأمان"));
+assert.ok(
+  continueClient.includes("جارٍ إكمال تسجيل الدخول") || continueClient.includes("جارٍ تحويلك بأمان")
+);
 assert.ok(continueClient.includes("/api/auth/me"));
 assert.equal(continueClient.includes("/#login"), false);
+assert.equal(continueClient.includes("تعذّر تحميل بوابة الدخول"), false);
 
 console.log("test-ssr-oauth-start: OK");

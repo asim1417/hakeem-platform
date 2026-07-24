@@ -6,7 +6,8 @@ import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 import { ClientErrorBoundary } from "@/components/providers/ClientErrorBoundary";
 
 const AFTER_AUTH = "/auth/continue";
-const FALLBACK_MS = 12_000;
+/** تنبيه بطيء فقط — لا نُسقط AuthenticateWithRedirectCallback */
+const SLOW_MS = 15_000;
 
 type CallbackProps = {
   signInUrl: string;
@@ -38,12 +39,12 @@ export function SsoCallbackClient() {
 
 function SsoCallbackBody() {
   const clerkMounted = useClerkMounted();
-  const [timedOut, setTimedOut] = useState(false);
+  const [slow, setSlow] = useState(false);
   const [Callback, setCallback] = useState<ComponentType<CallbackProps> | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setTimedOut(true), FALLBACK_MS);
+    const id = window.setTimeout(() => setSlow(true), SLOW_MS);
     return () => window.clearTimeout(id);
   }, []);
 
@@ -64,11 +65,11 @@ function SsoCallbackBody() {
     };
   }, [clerkMounted]);
 
-  if (timedOut || loadFailed) {
+  if (loadFailed) {
     return (
       <SsoMessage
         title="تعذّر إكمال تسجيل الدخول"
-        body="انتهت مهلة الربط مع مزوّد الدخول. أعد المحاولة من صفحة الدخول."
+        body="تعذّر تحميل مكوّن إكمال الجلسة. أعد المحاولة من صفحة الدخول."
         showSignIn
       />
     );
@@ -77,7 +78,7 @@ function SsoCallbackBody() {
   if (!clerkMounted || !Callback) {
     return (
       <SsoMessage
-        title="جارٍ تجهيز الجلسة…"
+        title="جارٍ إكمال تسجيل الدخول…"
         body="لا تغلق هذه النافذة."
         spinning
       />
@@ -90,8 +91,19 @@ function SsoCallbackBody() {
         className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#0E3435]/20 border-t-[#0E3435]"
         aria-hidden
       />
-      <p className="mt-4 text-sm font-semibold text-[#0E3435]">جارٍ إكمال الدخول…</p>
+      <p className="mt-4 text-sm font-semibold text-[#0E3435]">
+        {slow ? "ما زلنا نكمل تسجيل الدخول…" : "جارٍ إكمال تسجيل الدخول…"}
+      </p>
       <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">لا تغلق هذه النافذة.</p>
+      {slow ? (
+        <Link
+          href="/sign-in"
+          className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-5 text-sm font-semibold text-[#0E3435]"
+        >
+          العودة لتسجيل الدخول
+        </Link>
+      ) : null}
+      {/* يبقى مركّبًا حتى بعد التنبيه البطيء — لا تُسقط عملية Clerk */}
       <Callback
         signInUrl="/sign-in"
         signUpUrl="/sign-up"
@@ -126,7 +138,7 @@ function SsoMessage({
       <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">{body}</p>
       {showSignIn ? (
         <Link
-          href="/#login"
+          href="/sign-in"
           className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-[0.75rem] bg-[#0E3435] px-5 text-sm font-semibold text-[#FFFcf7] hover:bg-[#164849]"
         >
           العودة لتسجيل الدخول

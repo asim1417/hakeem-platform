@@ -196,8 +196,7 @@ export async function requireApiPermission(permission: Permission, request?: Nex
   return { user, response: null };
 }
 
-/** جلسة طوارئ للمالك (قبل ضبط Clerk أو كبديل). */
-export async function createLoginSession(user: SafeUser) {
+function buildSessionToken(user: SafeUser): string {
   const payload: SessionPayload = {
     userId: user.id,
     role: user.role,
@@ -206,13 +205,45 @@ export async function createLoginSession(user: SafeUser) {
     exp: Date.now() + maxAgeSeconds * 1000,
     nonce: randomBytes(12).toString("hex"),
   };
-  cookies().set(cookieName, encodeSession(payload), {
+  return encodeSession(payload);
+}
+
+function sessionCookieOptions(secure: boolean) {
+  return {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    secure,
     maxAge: maxAgeSeconds,
     path: "/",
-  });
+  };
+}
+
+/** جلسة طوارئ للمالك (قبل ضبط Clerk أو كبديل). */
+export async function createLoginSession(user: SafeUser) {
+  const secure = process.env.NODE_ENV === "production";
+  cookies().set(cookieName, buildSessionToken(user), sessionCookieOptions(secure));
+}
+
+/**
+ * يُرفِق hakeem_session على استجابة Redirect صراحةً —
+ * لا تعتمد فقط على cookies().set مع NextResponse.redirect (سباق بعد Google).
+ */
+export function attachLoginSessionCookie(
+  res: NextResponse,
+  user: SafeUser,
+  opts?: { secure?: boolean }
+) {
+  const secure = opts?.secure ?? process.env.NODE_ENV === "production";
+  res.cookies.set(cookieName, buildSessionToken(user), sessionCookieOptions(secure));
+}
+
+/** ينسخ الكوكي الحالية من مخزن الطلب إلى استجابة التحويل إن وُجدت. */
+export function mirrorLoginSessionCookie(res: NextResponse, opts?: { secure?: boolean }) {
+  const value = cookies().get(cookieName)?.value;
+  if (!value) return false;
+  const secure = opts?.secure ?? process.env.NODE_ENV === "production";
+  res.cookies.set(cookieName, value, sessionCookieOptions(secure));
+  return true;
 }
 
 export function clearLoginSession() {
