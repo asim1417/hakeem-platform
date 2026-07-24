@@ -1,18 +1,22 @@
 /**
- * راية: الصفحة الرئيسية تتمحور حول «اسأل حكيم».
- * التعطيل: NEXT_PUBLIC_ASK_FIRST_HOME=0 أو ASK_FIRST_HOME_ENABLED=0
+ * راية: واجهة «اسأل حكيم» الكاملة في الصفحة الرئيسية.
+ *
+ * مصدر الحقيقة الوحيد للعميل والخادم:
+ *   NEXT_PUBLIC_ASK_FIRST_HOME=1 | 0
+ *
+ * مرادف خادمي اختياري (يُقرأ فقط عند غياب المتغير العام):
+ *   ASK_FIRST_HOME_ENABLED=1 | 0
+ *
  * الافتراضي: مفعّل.
- * عند التعطيل تعود واجهة العمل السابقة دون فقد بيانات.
+ * عند التعطيل تعود الواجهة السابقة فورًا بلا migration.
  */
 export function isAskFirstHomeEnabled(): boolean {
   const pub = process.env.NEXT_PUBLIC_ASK_FIRST_HOME;
   if (pub === "0") return false;
   if (pub === "1") return true;
-  if (typeof window === "undefined") {
-    const srv = process.env.ASK_FIRST_HOME_ENABLED;
-    if (srv === "0") return false;
-    if (srv === "1") return true;
-  }
+  const srv = process.env.ASK_FIRST_HOME_ENABLED;
+  if (srv === "0") return false;
+  if (srv === "1") return true;
   return true;
 }
 

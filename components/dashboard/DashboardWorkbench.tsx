@@ -1,4 +1,5 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { HomeAskSurface } from "@/components/home/HomeAskSurface";
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
@@ -6,6 +7,23 @@ import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { isHomeInlineAskEnabled } from "@/lib/modules/config/home-inline-ask";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
+
+const HakeemAskWorkspace = dynamic(
+  () =>
+    import("@/components/ask/HakeemAskWorkspace").then((m) => m.HakeemAskWorkspace),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex min-h-[48vh] items-center justify-center text-sm text-[var(--ink-60)]"
+        aria-busy="true"
+        aria-label="جارٍ تجهيز مساحة اسأل حكيم"
+      >
+        جارٍ تجهيز مساحة السؤال…
+      </div>
+    ),
+  }
+);
 
 export type WorkItem = {
   id: string;
@@ -27,38 +45,37 @@ type Dest = {
   title: string;
   hint: string;
   cta: string;
-  primary?: boolean;
 };
 
 const SUPPORTING_TOOLS: Dest[] = [
   {
     href: "/dashboard/judicial-assistant",
     title: "فتح قضية",
-    hint: "أنشئ ملف قضية، وأضف وقائعها ومستنداتها، وتابع دراستها وخطواتها.",
+    hint: "حوّل هذه المسألة إلى ملف قضية منظم.",
     cta: "فتح قضية",
   },
   {
     href: "/dashboard/judicial-assistant",
     title: "المعاون القضائي",
-    hint: "نظّم ملف القضية، واستخرج الإجراءات والأعمال القضائية المطلوبة.",
+    hint: "تابع دراسة القضية وإجراءاتها وأعمالها القضائية.",
     cta: "فتح المعاون",
   },
   {
     href: "/documents",
     title: "تحليل المستندات",
-    hint: "ارفع مستندًا قانونيًا للحصول على تلخيص وتحليل منظم.",
+    hint: "أرفق مستندًا للحصول على تحليل منظم.",
     cta: "تحليل مستند",
   },
   {
     href: "/dashboard/legal-core",
     title: "المكتبة القانونية",
-    hint: "ابحث في الأنظمة واللوائح والمواد القانونية المرتبطة بمسألتك.",
+    hint: "تصفّح النصوص والأنظمة والمصادر ذات الصلة.",
     cta: "فتح المكتبة",
   },
   {
     href: "/dashboard/files",
     title: "مساحتي",
-    hint: "ارجع إلى قضاياك ومحادثاتك وتقاريرك المحفوظة.",
+    hint: "ارجع إلى محادثاتك وقضاياك وتقاريرك المحفوظة.",
     cta: "فتح مساحتي",
   },
 ];
@@ -98,7 +115,8 @@ const LEGACY_DESTINATIONS: Array<{
 ];
 
 /**
- * الصفحة الأولى للمحامي — جلسة عمل تتمحور حول «اسأل حكيم» عند تفعيل الراية.
+ * بعد الدخول: عند ASK_FIRST_HOME تكون الواجهة هي مساحة اسأل حكيم الكاملة (نفس مكوّن /dashboard/ask).
+ * لا تحويل أثناء السؤال — التنفيذ داخل الصفحة.
  */
 export function DashboardWorkbench({
   firstName,
@@ -113,31 +131,15 @@ export function DashboardWorkbench({
   if (askFirst) {
     return (
       <div className="wb wb--ask-first">
-        <section className="wb-stage wb-stage--ask-first" aria-labelledby="wb-brand">
-          <div className="wb-stage__veil" aria-hidden />
-          <div className="wb-stage__inner">
-            <p id="wb-brand" className="wb-brand">
-              حكيم
-            </p>
-            <p className="wb-greet">
-              {showWelcome || isNewUser ? `مرحبًا ${firstName}` : `${firstName}`}
-            </p>
-            <h1 className="wb-title">ابدأ بسؤالك القانوني</h1>
-            <p className="wb-lede">
-              اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار
-              العمل عليها.
-            </p>
-            <div className="wb-ask">
-              <HomeAskSurface />
-            </div>
-          </div>
-        </section>
-
-        <div className="wb-meta">
+        <div className="wb-meta wb-meta--top">
           <QuotaCounter />
           <OnboardingBanner />
           {!isNewUser ? <CreditsWidget /> : null}
         </div>
+
+        <section className="wb-ask-full" aria-label="اسأل حكيم">
+          <HakeemAskWorkspace userName={firstName} variant="home" />
+        </section>
 
         {continueItems.length > 0 ? (
           <section className="wb-continue" aria-labelledby="wb-continue-title">
@@ -163,7 +165,7 @@ export function DashboardWorkbench({
             <h2 id="wb-tools-title">أدوات أعمق عندما تحتاجها</h2>
             <p>
               {legalArticles > 0
-                ? `خدمات مساندة بعد السؤال · النواة: ${legalArticles.toLocaleString("ar-SA")} مادة`
+                ? `خدمات مساندة · النواة: ${legalArticles.toLocaleString("ar-SA")} مادة`
                 : "استخدمها عند الحاجة دون أن تنافس مساحة السؤال."}
             </p>
           </div>
@@ -183,16 +185,6 @@ export function DashboardWorkbench({
               </Link>
             ) : null}
           </nav>
-          <p className="wb-tools__foot">
-            للأوضاع المتقدمة والمرفقات:{" "}
-            <Link href="/dashboard/ask" className="wb-tools__foot-link">
-              مساحة العمل الكاملة
-            </Link>
-            {" · "}
-            <Link href="/dashboard/simulations" className="wb-tools__foot-link">
-              القاضي التفاعلي
-            </Link>
-          </p>
         </section>
 
         <section className="wb-trust" aria-labelledby="wb-trust-title">
@@ -200,8 +192,8 @@ export function DashboardWorkbench({
             الثقة والخصوصية
           </h2>
           <p>
-            مخرجات حكيم مساعدة تعليمية وليست حكمًا أو قرارًا ملزمًا. لا تُرسل نصوص أسئلتك إلى أدوات
-            التحليلات، وتُطبَّق حدود الاستخدام والرصيد على الخادم.
+            مخرجات حكيم مساعدة تعليمية وليست حكمًا أو قرارًا ملزمًا. تُطبَّق حدود الاستخدام والرصيد على
+            الخادم.
           </p>
         </section>
       </div>

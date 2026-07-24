@@ -62,7 +62,12 @@ assert.ok(center.includes("/dashboard/ask"));
 assert.ok(center.includes("HOME_INLINE_ASK") || center.includes("احتياطي"));
 
 const panel = read("components/agent/AgentSearchPanel.tsx");
-assert.ok(panel.includes("hakeem-home-ask-handoff"));
+assert.ok(
+  panel.includes("hakeem-home-ask-handoff") ||
+    panel.includes("HakeemAskWorkspace") ||
+    read("components/ask/HakeemAskWorkspace.tsx").includes("HOME_ASK_HANDOFF_KEY") ||
+    read("components/ask/HakeemAskWorkspace.tsx").includes("hakeem-home-ask-handoff")
+);
 
 const api = read("app/api/ai/agent-search/route.ts");
 assert.ok(api.includes("gateAdvancedUse"));

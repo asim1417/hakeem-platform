@@ -2113,6 +2113,13 @@ body {
 
 /* Ask-first home */
 .wb--ask-first { gap: 1.35rem; }
+.wb-meta--top { margin-bottom: 0.25rem; }
+.wb-ask-full {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  min-width: 0;
+}
 .wb-stage--ask-first .wb-stage__inner { max-width: 760px; }
 .wb-greet {
   margin: 0.35rem 0 0;
