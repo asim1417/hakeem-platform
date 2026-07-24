@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireApiPermission } from "@/lib/modules/auth/session";
+import { requireSuperAdminApi } from "@/lib/modules/auth/super-admin";
 import { getAiStatus, saveAiSettings, resolveAiConfig, revealAiKey, diagnoseConfiguredProvider, type AiProvider } from "@/lib/modules/ai/ai-config";
 import { createOriginalHakeemAiResponse } from "@/lib/modules/ai/ai-gateway";
 import { auditEvent } from "@/lib/modules/audit/audit";
@@ -30,14 +30,14 @@ const revealSchema = z.object({ reveal: z.literal(true) });
 const diagnoseSchema = z.object({ diagnose: z.literal(true) });
 
 export async function GET(request: NextRequest) {
-  const auth = await requireApiPermission("USERS_MANAGE", request);
+  const auth = await requireSuperAdminApi(request);
   if (auth.response) return auth.response;
   const status = await getAiStatus();
   return NextResponse.json({ ok: true, status });
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireApiPermission("USERS_MANAGE", request);
+  const auth = await requireSuperAdminApi(request);
   if (auth.response) return auth.response;
 
   let json: unknown;

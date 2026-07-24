@@ -152,6 +152,7 @@ export default async function AdminPage() {
           <AdminLink href="/admin/services" label="إدارة ظهور الخدمات" />
           <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
           <AdminLink href="/admin/jobs" label="تشغيل المهام" />
+          <AdminLink href="/admin/reports" label="بلاغات الأخطاء" />
           <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
           <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
           <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
@@ -189,8 +190,7 @@ export default async function AdminPage() {
         <AdminLink href="/admin/users" label="إدارة المستخدمين" />
         <AdminLink href="/admin/roles" label="الأدوار والصلاحيات" />
         <AdminLink href="/admin/api-keys" label="مفاتيح API" />
-        <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
-        <AdminLink href="/admin/settings" label="مفاتيح التكامل" />
+        <AdminLink href="/admin/owner" label="المدراء" />
         <AdminLink href="/audit-logs" label="سجل التدقيق" />
         <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
         <AdminLink href="/dashboard/attachments" label="المرفقات" />

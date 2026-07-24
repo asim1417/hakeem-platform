@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { requireSuperAdminApi } from "@/lib/modules/auth/super-admin";
 import { auditEvent } from "@/lib/modules/audit/audit";
 
 export const dynamic = "force-dynamic";
@@ -72,9 +73,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET: عرض البلاغات للمالك فقط (صلاحية ADMIN_REPORTS_VIEW).
+// GET: عرض البلاغات للمالك فقط (سوبر أدمن) — الكتابة تبقى عبر POST + SIMULATIONS_USE.
 export async function GET(request: NextRequest) {
-  const auth = await requireApiPermission("ADMIN_REPORTS_VIEW", request);
+  const auth = await requireSuperAdminApi(request);
   if (auth.response) return auth.response;
 
   try {

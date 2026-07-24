@@ -1,18 +1,19 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { requirePagePermission } from "@/lib/modules/auth/session";
+import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
 import { getSettingsStatus } from "@/lib/modules/settings/settings-service";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  await requirePagePermission("USERS_MANAGE");
+  await requireSuperAdminPage();
   const settings = await getSettingsStatus().catch(() => []);
 
   return (
     <AdminPageShell currentPath="/admin/settings">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--navy)]">إعدادات المنصّة</h1>
+        <p className="text-sm font-semibold text-[#8B6914]">السوبر أدمن</p>
+        <h1 className="mt-2 text-2xl font-bold text-[var(--navy)]">إعدادات المنصّة</h1>
         <p className="mt-2 text-sm leading-7 text-[#0E3435]/70">
           أدِر مفاتيح التشغيل من هنا بلا Vercel: الذكاء، البحث، Google/Microsoft، Moyasar، Resend،
           Twilio، والحصّة المجانية. تُحمَّل عند إقلاع الخادم وتُطبَّق فور الحفظ على هذه النسخة.
