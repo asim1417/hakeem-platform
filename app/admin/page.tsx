@@ -74,7 +74,7 @@ export default async function AdminPage() {
         </p>
 
         <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <AdminLink href="/admin/inbox" label="التواصل مع العملاء" />
+          <AdminLink href="/admin/inbox" label="صندوق المراسلات" />
           <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
           <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
           <AdminLink href="/admin/settings" label="إعدادات التشغيل" />

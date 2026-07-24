@@ -16,14 +16,17 @@ const sendSchema = z.object({
   subject: z.string().trim().max(200).optional(),
 });
 
-/** GET — خيط المستخدم المفتوح + الرسائل (ينشئ خيطاً فارغاً عند الحاجة). */
+/** GET — خيط المستخدم المفتوح + الرسائل. */
 export async function GET(request: NextRequest) {
   const user = await getApiUser(request);
   if (!user?.isActive) {
     return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
   }
 
-  const thread = await getOrCreateOpenThread(user.id);
+  const thread = await getOrCreateOpenThread(user.id, {
+    userName: user.name,
+    userEmail: user.email,
+  });
   if (!thread) {
     return NextResponse.json({ ok: false, message: "تعذّر فتح المحادثة." }, { status: 503 });
   }
@@ -49,7 +52,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "نص الرسالة غير صالح." }, { status: 400 });
   }
 
-  const thread = await getOrCreateOpenThread(user.id, parsed.data.subject);
+  const thread = await getOrCreateOpenThread(user.id, {
+    subject: parsed.data.subject,
+    userName: user.name,
+    userEmail: user.email,
+  });
   if (!thread) {
     return NextResponse.json({ ok: false, message: "تعذّر فتح المحادثة." }, { status: 503 });
   }
@@ -58,6 +65,7 @@ export async function POST(request: NextRequest) {
     threadId: thread.id,
     senderRole: "user",
     senderId: user.id,
+    senderName: user.name,
     body: parsed.data.body,
   });
   if (!message) {

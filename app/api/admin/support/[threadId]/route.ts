@@ -62,6 +62,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     threadId: thread.id,
     senderRole: "admin",
     senderId: gate.user.id,
+    senderName: gate.user.name || "دعم حكيم",
     body: parsed.data.body,
   });
   if (!message) {
