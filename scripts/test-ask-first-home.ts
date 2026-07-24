@@ -69,6 +69,8 @@ assert.ok(hero.includes('href="/dashboard"'));
 
 const crumb = read("components/TopbarBreadcrumb.tsx");
 assert.ok(crumb.includes('{ prefix: "/dashboard", label: "الصفحة الرئيسية" }'));
+assert.ok(crumb.includes('label: "الصفحة الرئيسية"'));
+assert.equal(crumb.includes('label: "لوحة التحكم"'), false);
 
 const dict = read("lib/i18n/dictionaries.ts");
 assert.ok(dict.includes('"nav.home": "الصفحة الرئيسية"'));

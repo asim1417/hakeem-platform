@@ -122,7 +122,7 @@ export function ServiceExitBar({
   return (
     <div className="service-exit-bar">
       <Link href={dashboardHref} className="touch-target service-exit-bar__link">
-        ← لوحة التحكم
+        ← الصفحة الرئيسية
       </Link>
       <span className="service-exit-bar__title">{title}</span>
     </div>
