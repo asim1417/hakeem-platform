@@ -84,7 +84,7 @@ export type HakeemAskWorkspaceProps = {
   userName?: string;
   initialQuery?: string;
   initialMode?: string;
-  /** home = سطح الرئيسية داخل /dashboard؛ page = مساحة العمل الكاملة */
+  /** home = واجهة المنصة في /dashboard (ومسار التوافق /dashboard/ask عند ASK_FIRST) */
   variant?: "home" | "page";
 };
 
@@ -558,11 +558,11 @@ export function HakeemAskWorkspace({
     setValue(text.slice(0, HAKEEM_ASK_MAX_CHARS));
   }
 
-  const greeting = userName ? `أهلاً، ${userName}` : "أهلاً بك";
+  const greeting = userName ? `مرحبًا ${userName}` : "مرحبًا بك";
   const followUpMode = turns.length > 0 && Boolean(turns[turns.length - 1]?.answer) && !busy;
-  const emptyTitle = isHome ? "ابدأ بسؤالك القانوني" : greeting;
+  const emptyTitle = isHome ? "كيف يساعدك حكيم اليوم؟" : greeting;
   const emptyLede = isHome
-    ? "اكتب وقائع المسألة أو سؤالك القانوني، ودع حكيم يبحث في المصادر ويُعدّ التحليل."
+    ? "اكتب الواقعة أو السؤال القانوني، وسيبحث حكيم في مصادره ويعرض لك تحليلًا منظمًا وخطوات واضحة."
     : "كيف أساعدك اليوم؟ اسألني في الأنظمة السعودية وسأبحث في النواة القانونية الموثّقة.";
   const suggestions = isHome ? ASK_FIRST_SUGGESTIONS : null;
   const inputPlaceholder = followUpMode
@@ -578,11 +578,30 @@ export function HakeemAskWorkspace({
     <div className="flex min-h-[calc(100vh-9rem)] flex-col">
       <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto pb-6">
         {turns.length === 0 ? (
-          <div className="flex min-h-[60vh] flex-col items-center justify-center px-2 text-center">
-            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)] shadow-[var(--sh-md)]">
-              <Sparkles size={30} aria-hidden />
-            </span>
-            <h1 className="t-head mt-5 text-2xl font-bold text-[var(--navy)] md:text-3xl">{emptyTitle}</h1>
+          <div
+            className={`flex flex-col items-center justify-center px-2 text-center ${
+              isHome ? "min-h-[28vh] pt-4 pb-2" : "min-h-[60vh]"
+            }`}
+          >
+            {!isHome ? (
+              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)] shadow-[var(--sh-md)]">
+                <Sparkles size={30} aria-hidden />
+              </span>
+            ) : (
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-[var(--gold-bright)]">
+                <Sparkles size={20} aria-hidden />
+              </span>
+            )}
+            {isHome && userName ? (
+              <p className="mt-3 text-sm font-semibold text-[var(--gold-dark)]">{greeting}</p>
+            ) : null}
+            <h1
+              className={`t-head font-bold text-[var(--navy)] ${
+                isHome ? "mt-2 text-xl md:text-2xl" : "mt-5 text-2xl md:text-3xl"
+              }`}
+            >
+              {emptyTitle}
+            </h1>
             <p className="mt-2 max-w-md leading-7 text-[var(--ink-60)]">{emptyLede}</p>
 
             {suggestions ? (

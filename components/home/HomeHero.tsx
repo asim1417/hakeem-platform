@@ -118,12 +118,6 @@ export function HomeHero({
                 >
                   اسأل حكيم الآن
                 </a>
-                <a
-                  href="/dashboard/ask"
-                  className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)]"
-                >
-                  مساحة العمل الكاملة
-                </a>
               </div>
             }
           />
@@ -265,7 +259,7 @@ export function HomeHero({
                 المتابعة إلى المنصة
               </a>
               <a
-                href="/dashboard/ask"
+                href="/dashboard"
                 className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)]"
               >
                 اسأل حكيم
