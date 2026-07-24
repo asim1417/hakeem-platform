@@ -1,11 +1,10 @@
 import Link from "next/link";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 
 export const metadata = {
   title: "واجهة المطوّرين (API) — منصة حكيم",
   description: "بوابة المطوّرين لمنصة حكيم: تكامل خارجي مع النواة القانونية السعودية عبر API بمفتاح.",
 };
-
-const BASE = "https://hakeem-platform.vercel.app";
 
 const endpoints: Array<{ method: string; path: string; desc: string }> = [
   { method: "GET", path: "/api/legal/search?q=&limit=", desc: "بحث قانوني هجين في النواة (نصّي + دلالي + رسم معرفي)" },
@@ -25,6 +24,7 @@ const steps: Array<{ n: string; h: string; p: string }> = [
 const card = "rounded-2xl border border-[var(--gold-border,rgba(192,155,90,.28))] bg-ivory p-6 shadow-sm";
 
 export default function DevelopersPage() {
+  const BASE = getSiteUrl();
   return (
     <main dir="rtl" className="min-h-screen bg-[linear-gradient(180deg,var(--parchment),#F3EEE2)] text-[var(--navy)]">
       <div className="mx-auto max-w-5xl px-6 py-14">

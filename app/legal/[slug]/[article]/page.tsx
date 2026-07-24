@@ -2,12 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { absoluteUrl, getSiteUrl } from "@/lib/modules/config/site-url";
 import { resolveSystemSlug, buildArticleEli, lawSlug } from "@/lib/modules/legal-core/eli";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 
 export const revalidate = 3600;
-const BASE = "https://hakeem-platform.vercel.app";
 
 async function resolveSystem(slug: string) {
   const raw = slug.trim();
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: { slug: string; art
   return {
     title: `${data.system.name} — المادة ${data.n} | حكيم`,
     description: text,
-    alternates: { canonical: `${BASE}/legal/${encodeURIComponent(slug)}/${data.n}` },
+    alternates: { canonical: absoluteUrl(`/legal/${encodeURIComponent(slug)}/${data.n}`) },
   };
 }
 
@@ -59,6 +59,7 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
     prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { gt: n } }, orderBy: { articleNumber: "asc" }, select: { articleNumber: true } }).catch(() => null),
   ]);
 
+  const BASE = getSiteUrl();
   const ld = {
     "@context": "https://schema.org",
     "@type": "Legislation",

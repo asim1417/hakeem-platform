@@ -2,13 +2,14 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { resolveSystemSlug } from "@/lib/modules/legal-core/eli";
 import { PublicLegalShell } from "@/components/public/PublicLegalShell";
+import { absoluteUrl } from "@/lib/modules/config/site-url";
 
 export const revalidate = 3600; // ISR: محتوى نظامي شبه ثابت
 
 export const metadata = {
   title: "الأنظمة القانونية السعودية — منصّة حكيم",
   description: "فهرس عام للأنظمة القانونية السعودية وموادها: بحث ومطالعة نصوص المواد مع الإسناد الرسمي. مصدر موثّق داخل منصّة حكيم.",
-  alternates: { canonical: "https://hakeem-platform.vercel.app/legal" },
+  alternates: { canonical: absoluteUrl("/legal") },
 };
 
 export default async function LegalIndexPage() {
@@ -35,7 +36,7 @@ export default async function LegalIndexPage() {
     "@type": "CollectionPage",
     name: "الأنظمة القانونية السعودية",
     description: "فهرس الأنظمة القانونية السعودية وموادها في منصّة حكيم.",
-    url: "https://hakeem-platform.vercel.app/legal",
+    url: absoluteUrl("/legal"),
   };
 
   return (

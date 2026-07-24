@@ -4,10 +4,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { resolveSystemSlug, lawSlug } from "@/lib/modules/legal-core/eli";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 
 export const revalidate = 3600;
-
-const BASE = "https://hakeem-platform.vercel.app";
 
 // يحسم النظام من slug: eliSlug أولًا، ثم id، ثم مطابقة اشتقاق الاسم (احتياطي نادر).
 async function resolveSystem(slug: string) {
@@ -24,7 +23,7 @@ async function resolveSystem(slug: string) {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const system = await resolveSystem(decodeURIComponent(params.slug));
   if (!system) return { title: "نظام غير موجود — حكيم" };
-  const canonical = `${BASE}/legal/${encodeURIComponent(resolveSystemSlug(system.eliSlug, system.name))}`;
+  const canonical = `${getSiteUrl()}/legal/${encodeURIComponent(resolveSystemSlug(system.eliSlug, system.name))}`;
   return {
     title: `${system.name} — الأنظمة القانونية السعودية | حكيم`,
     description: `نصّ نظام ${system.name} وموادّه كاملة مع الإسناد الرسمي في منصّة حكيم.`,

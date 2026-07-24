@@ -7,6 +7,7 @@ import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 import { BootWatchdog } from "@/components/providers/BootWatchdog";
 import { SiteThemeStyle } from "@/components/site/SiteThemeStyle";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 
 const fontDisplay = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
@@ -37,6 +38,7 @@ const fontMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: "حكيم",
   description: "المنصة القانونية الموحدة",
   applicationName: "حكيم",

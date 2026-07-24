@@ -2,6 +2,8 @@
 // بريد حكيم — Resend عند توفر المفتاح، وإلا تسجيل خفيف (لا يكسر التدفق).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { absoluteUrl } from "@/lib/modules/config/site-url";
+
 export type SendEmailInput = {
   to: string;
   subject: string;
@@ -63,7 +65,7 @@ export async function sendWelcomeEmail(opts: {
       <h1 style="color:#0E3435">حكيم</h1>
       <p>مرحبًا ${opts.name}،</p>
       <p>تم إنشاء حسابك. رصيدك الافتتاحي <strong>${opts.credits.toLocaleString("ar-SA")}</strong> نقطة.</p>
-      <p>أكمل ملفك من <a href="${process.env.NEXTAUTH_URL || "https://hakeem-platform.vercel.app"}/onboarding">هنا</a> لزيادة رصيدك.</p>
+      <p>أكمل ملفك من <a href="${absoluteUrl("/onboarding")}">هنا</a> لزيادة رصيدك.</p>
       <p style="color:#C69763">رفيقك في القاعة.</p>
     </div>
   `;

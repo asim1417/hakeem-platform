@@ -1,5 +1,6 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
+import { absoluteUrl } from "@/lib/modules/config/site-url";
 import { getSettingsStatus } from "@/lib/modules/settings/settings-service";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminSettingsPage() {
   await requireSuperAdminPage();
   const settings = await getSettingsStatus().catch(() => []);
+  const googleCallbackUrl = absoluteUrl("/api/auth/callback/google");
 
   return (
     <AdminPageShell currentPath="/admin/settings">
@@ -19,7 +21,7 @@ export default async function AdminSettingsPage() {
           Twilio، والحصّة المجانية. تُحمَّل عند إقلاع الخادم وتُطبَّق فور الحفظ على هذه النسخة.
           Redirect URI لـ Google:
           <span dir="ltr" className="mx-1 font-mono text-xs">
-            https://hakeem-platform.vercel.app/api/auth/callback/google
+            {googleCallbackUrl}
           </span>
         </p>
       </header>
