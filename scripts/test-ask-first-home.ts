@@ -55,18 +55,22 @@ assert.ok(wb.includes('variant="home"'));
 const shell = read("components/AppShell.tsx");
 assert.ok(shell.includes("askFirstNavItems"));
 assert.ok(shell.includes('href: "/dashboard"'));
-assert.ok(shell.includes('key: "nav.ask"'));
-// لا يظهر رابط مساحة العمل المتقدمة في قائمة ask-first
+assert.ok(shell.includes('key: "nav.home"'));
+// لا يظهر رابط مساحة العمل المتقدمة ولا القضايا في قائمة ask-first
 const askFirstBlock = shell.slice(shell.indexOf("askFirstNavItems"), shell.indexOf("adminNavItem"));
 assert.equal(askFirstBlock.includes("/dashboard/ask"), false, "ask-first nav must not duplicate /dashboard/ask");
 assert.equal(askFirstBlock.includes("nav.workspace"), false);
-assert.ok(askFirstBlock.includes("/dashboard/cases"));
+assert.equal(askFirstBlock.includes("/dashboard/cases"), false, "cases hidden from ask-first nav");
+assert.equal(askFirstBlock.includes("nav.cases"), false);
 
 const hero = read("components/home/HomeHero.tsx");
 assert.equal(hero.includes("مساحة العمل الكاملة"), false);
 assert.ok(hero.includes('href="/dashboard"'));
 
 const crumb = read("components/TopbarBreadcrumb.tsx");
-assert.ok(crumb.includes('{ prefix: "/dashboard", label: "اسأل حكيم" }'));
+assert.ok(crumb.includes('{ prefix: "/dashboard", label: "الصفحة الرئيسية" }'));
+
+const dict = read("lib/i18n/dictionaries.ts");
+assert.ok(dict.includes('"nav.home": "الصفحة الرئيسية"'));
 
 console.log("test-ask-first-home: OK");
