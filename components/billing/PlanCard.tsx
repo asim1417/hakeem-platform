@@ -7,12 +7,15 @@ export function PlanCard({
   interval = "monthly",
   current = false,
   ctaHref,
+  paidUiEnabled = true,
 }: {
   plan: PlanDefinition;
   interval?: PlanInterval;
   current?: boolean;
   /** إن وُجد يُستخدم بدل سلوك الـ CTA الافتراضي. */
   ctaHref?: string;
+  /** إن false تُخفى دعوات الشراء المدفوعة وتُستبدل برسالة واضحة. */
+  paidUiEnabled?: boolean;
 }) {
   const price =
     plan.monthlySar === null
@@ -23,13 +26,16 @@ export function PlanCard({
   const period =
     plan.monthlySar === null ? "" : interval === "yearly" ? "/ سنة" : "/ شهر";
 
+  const isPaid = plan.id !== "free";
+  const showPaidCta = !isPaid || (paidUiEnabled && plan.checkoutEnabled);
+
   const href =
     ctaHref ??
     (plan.id === "free"
       ? "/register"
       : plan.checkoutEnabled
         ? `/api/billing/checkout?plan=${plan.id}&interval=${interval}`
-        : "/dashboard/subscribe");
+        : "/dashboard/billing");
 
   const isExternalCheckout = Boolean(plan.checkoutEnabled && plan.id !== "free");
 
@@ -52,7 +58,9 @@ export function PlanCard({
         <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">{plan.tagline}</p>
         <p className="mt-4 font-display-ar text-3xl font-bold text-[var(--navy)]">
           {formatSar(price)}
-          {period ? <span className="ms-1 text-sm font-normal text-[var(--ink-40)]">{period}</span> : null}
+          {period ? (
+            <span className="ms-1 text-sm font-normal text-[var(--ink-40)]">{period}</span>
+          ) : null}
         </p>
         {current ? (
           <p className="mt-2 inline-flex rounded-full border border-[var(--emerald)]/30 bg-[var(--emerald-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--emerald)]">
@@ -70,10 +78,17 @@ export function PlanCard({
         ))}
       </ul>
 
-      {plan.id === "free" || !plan.checkoutEnabled ? (
+      {!showPaidCta ? (
+        <p
+          className="mt-6 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-[var(--surface)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-60)]"
+          role="status"
+        >
+          الخطط المدفوعة ستتاح قريبًا
+        </p>
+      ) : plan.id === "free" || !plan.checkoutEnabled ? (
         <Link
           href={href}
-          className={`focus-ring mt-6 inline-flex items-center justify-center rounded-[var(--r-md)] px-4 py-3 text-sm font-semibold transition ${
+          className={`focus-ring mt-6 inline-flex min-h-[44px] items-center justify-center rounded-[var(--r-md)] px-4 py-3 text-sm font-semibold transition ${
             plan.highlighted
               ? "bg-[var(--navy)] text-white hover:bg-[var(--navy-mid)]"
               : "border border-[var(--gold-border)] bg-[var(--gold-ghost)] text-[var(--navy)] hover:border-[var(--gold)]"
@@ -84,7 +99,7 @@ export function PlanCard({
       ) : (
         <a
           href={href}
-          className="focus-ring mt-6 inline-flex items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-3 text-sm font-semibold text-white"
+          className="focus-ring mt-6 inline-flex min-h-[44px] items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-3 text-sm font-semibold text-white"
           {...(isExternalCheckout ? {} : {})}
         >
           {plan.ctaLabel}

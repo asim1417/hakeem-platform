@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PlansGrid } from "@/components/billing/PlansGrid";
 import { PRICING } from "@/config/pricing";
 import { assertBuiltinPageEnabled } from "@/lib/modules/site/page-gate";
+import { isPaidCheckoutUiEnabled } from "@/lib/modules/billing/checkout-visibility";
 
 export const metadata = {
   title: "الأسعار والخطط — حكيم",
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
   await assertBuiltinPageEnabled("pricing");
+  const paidUi = isPaidCheckoutUiEnabled();
   const ar = (n: number) => n.toLocaleString("ar-SA");
 
   return (
@@ -62,12 +64,18 @@ export default async function PricingPage() {
         </p>
 
         <div className="mt-12 text-start">
-          <PlansGrid currentPlanId="none" freeCtaHref="/register" paidCtaHref="/register?next=/dashboard/subscribe" />
+          <PlansGrid
+            currentPlanId="none"
+            freeCtaHref="/register"
+            paidCtaHref="/register?next=/dashboard/subscribe"
+            paidUiEnabled={paidUi}
+          />
         </div>
 
         <p className="mx-auto mt-10 max-w-xl text-xs leading-7 text-[var(--ink-40)]">
-          الدفع الإلكتروني (Moyasar) قيد الربط — الواجهة جاهزة والأسعار قابلة للتعديل من إعدادات التسعير دون إعادة
-          بناء التجربة.
+          {paidUi
+            ? "الأسعار قابلة للتعديل من إعدادات التسعير دون إعادة بناء التجربة."
+            : "الخطط المدفوعة ستتاح قريبًا — التجربة المجانية متاحة الآن بعد التسجيل."}
         </p>
       </section>
     </main>

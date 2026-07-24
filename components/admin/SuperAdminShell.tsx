@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { AccountMenu } from "@/components/AccountMenu";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { TopbarUserBar } from "@/components/LogoutButton";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { PLATFORM_WINDOW_HREF } from "@/lib/modules/auth/home-destination";
+import { isPaidCheckoutUiEnabled } from "@/lib/modules/billing/checkout-visibility";
 import type { SafeUser } from "@/lib/modules/auth/session";
 import { countUnreadForAdmin } from "@/lib/modules/support/support-store";
 
@@ -21,6 +22,14 @@ export async function SuperAdminShell({
 }) {
   const clerkEnabled = isClerkConfigured();
   const unread = await countUnreadForAdmin().catch(() => 0);
+  const billingLabel = isPaidCheckoutUiEnabled() ? "الفوترة والخطط" : "الحساب والرصيد";
+  const initials =
+    user?.name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("") || "ح";
 
   return (
     <div className="min-h-[100dvh] bg-[#F3EFE6]" dir="rtl" lang="ar">
@@ -56,10 +65,12 @@ export async function SuperAdminShell({
               نافذة المنصة
             </Link>
             {user ? (
-              <div className="[&_.topbar-user__name]:text-[#FFFcf7] [&_.icon-pill]:border-white/25 [&_.icon-pill]:text-[#FFFcf7]">
-                <TopbarUserBar
+              <div className="[&_.account-menu__trigger]:border-white/25 [&_.account-menu__trigger]:bg-white/10 [&_.account-menu__name]:text-[#FFFcf7] [&_.account-menu__role]:text-white/65 [&_.account-menu__chev]:text-[#FFFcf7] [&_.account-menu__panel]:text-[#0E3435]">
+                <AccountMenu
                   name={user.name}
-                  logoutLabel="خروج"
+                  roleLabel="سوبر أدمن"
+                  initials={initials}
+                  billingLabel={billingLabel}
                   clerkEnabled={clerkEnabled}
                 />
               </div>

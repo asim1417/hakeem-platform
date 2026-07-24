@@ -46,7 +46,7 @@ const DESTINATIONS: Dest[] = [
   },
   {
     href: "/dashboard/legal-core",
-    title: "المكتبة",
+    title: "المكتبة النظامية",
     hint: "أنظمة ومواد وأحكام",
   },
   {

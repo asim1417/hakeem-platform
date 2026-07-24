@@ -11,8 +11,8 @@ const PROFESSIONS = [
 ] as const;
 
 /**
- * بوابة إلزامية في صدر اللوحة: الاسم + الجوال + المهنة.
- * لا يمكن المتابعة دون حفظ الثلاثة.
+ * بوابة إلزامية داخل لوحة حكيم (ليست شاشة دخول منفصلة):
+ * الاسم + الجوال + المهنة قبل فتح المحتوى الإفتراضي.
  */
 export function EssentialsPrompt({
   initialName,
@@ -68,70 +68,75 @@ export function EssentialsPrompt({
   }
 
   return (
-    <div className="login-page min-h-[70vh]">
-      <div aria-hidden className="login-page__glow" />
-      <div aria-hidden className="login-page__pattern" />
-      <div className="relative z-[1] mx-auto flex min-h-[70vh] max-w-xl flex-col justify-center px-4 py-10">
-        <section
-          dir="rtl"
-          className="rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[#F9F5EC] p-6 shadow-[var(--sh-sm)] sm:p-8"
-          aria-label="بيانات أساسية إلزامية"
-        >
-          <p className="login-panel__eyebrow">الصفحة الرئيسية · /dashboard</p>
-          <h1 className="login-panel__title mt-2">أدخل بياناتك الأساسية</h1>
-          <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">
-            وصلت إلى لوحة حكيم. يلزم إدخال <strong>الاسم</strong> و<strong>رقم الجوال</strong> و
-            <strong>المهنة</strong> لفتح الصفحة الرئيسية.
-          </p>
+    <div className="essentials-gate mx-auto max-w-xl py-4 sm:py-8">
+      <p className="text-sm font-semibold text-[var(--gold-dark)]">استكمال ملفك في حكيم</p>
+      <h1 className="mt-2 font-display-ar text-2xl font-bold text-[var(--navy)] sm:text-3xl">
+        خطوة قصيرة قبل المتابعة
+      </h1>
+      <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">
+        أنت داخل المنصة. يلزم إدخال <strong>الاسم</strong> و<strong>رقم الجوال</strong> و
+        <strong>المهنة</strong> لفتح أدوات العمل — الشريط الجانبي والتنقّل يبقيان معك.
+      </p>
 
-          <form className="mt-6 space-y-4" onSubmit={(e) => void onSubmit(e)}>
-            <label className="block">
-              <span className="text-xs font-semibold text-[var(--navy)]">الاسم</span>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                minLength={2}
-                autoFocus
-                className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold text-[var(--navy)]">رقم الجوال</span>
-              <input
-                dir="ltr"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                placeholder="05xxxxxxxx"
-                className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-left text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold text-[var(--navy)]">المهنة</span>
-              <select
-                value={profession}
-                onChange={(e) => setProfession(e.target.value)}
-                required
-                className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-sm"
-              >
-                <option value="">اختر المهنة</option>
-                {PROFESSIONS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+      <section
+        dir="rtl"
+        className="mt-6 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--paper)] p-5 sm:p-7"
+        aria-label="استكمال البيانات الأساسية"
+      >
+        <ol className="mb-5 flex flex-wrap gap-2 text-xs font-semibold text-[var(--ink-60)]">
+          <li className="rounded-md bg-[var(--navy)] px-2.5 py-1 text-white">1 · بيانات أساسية</li>
+          <li className="rounded-md border border-[var(--ink-08)] bg-white px-2.5 py-1">
+            2 · لوحة العمل
+          </li>
+        </ol>
 
-            {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}
+        <form className="space-y-4" onSubmit={(e) => void onSubmit(e)}>
+          <label className="block">
+            <span className="text-xs font-semibold text-[var(--navy)]">الاسم</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              minLength={2}
+              autoFocus
+              className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold text-[var(--navy)]">رقم الجوال</span>
+            <input
+              dir="ltr"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              placeholder="05xxxxxxxx"
+              className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-left text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold text-[var(--navy)]">المهنة</span>
+            <select
+              value={profession}
+              onChange={(e) => setProfession(e.target.value)}
+              required
+              className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-sm"
+            >
+              <option value="">اختر المهنة</option>
+              {PROFESSIONS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-            <GoldButton type="submit" disabled={saving} className="w-full">
-              {saving ? "جارٍ الحفظ…" : "حفظ والمتابعة"}
-            </GoldButton>
-          </form>
-        </section>
-      </div>
+          {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}
+
+          <GoldButton type="submit" disabled={saving} className="w-full min-h-[44px]">
+            {saving ? "جارٍ الحفظ…" : "حفظ والمتابعة إلى لوحة العمل"}
+          </GoldButton>
+        </form>
+      </section>
     </div>
   );
 }
