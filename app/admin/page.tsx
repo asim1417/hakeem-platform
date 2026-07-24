@@ -153,6 +153,7 @@ export default async function AdminPage() {
           <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
           <AdminLink href="/admin/jobs" label="تشغيل المهام" />
           <AdminLink href="/admin/reports" label="بلاغات الأخطاء" />
+          <AdminLink href="/admin/inbox" label="صندوق التواصل" />
           <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
           <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
           <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
