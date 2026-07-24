@@ -1,14 +1,14 @@
 import Link from "next/link";
 
 const SUPER_LINKS = [
-  { href: "/admin", label: "نظرة عامة" },
-  { href: "/admin/services", label: "الخدمات" },
-  { href: "/admin/jobs", label: "المهام" },
-  { href: "/admin/billing", label: "الفوترة" },
-  { href: "/admin/reports", label: "البلاغات" },
+  { href: "/admin", label: "مركز الإدارة" },
   { href: "/admin/inbox", label: "التواصل" },
-  { href: "/admin/audit", label: "التدقيق" },
   { href: "/admin/users", label: "المستخدمون" },
+  { href: "/admin/billing", label: "الفوترة" },
+  { href: "/admin/jobs", label: "المهام" },
+  { href: "/admin/reports", label: "البلاغات" },
+  { href: "/admin/services", label: "الخدمات" },
+  { href: "/admin/audit", label: "التدقيق" },
   { href: "/admin/roles", label: "الأدوار" },
   { href: "/admin/owner", label: "المدراء" },
   { href: "/admin/ai", label: "الذكاء" },

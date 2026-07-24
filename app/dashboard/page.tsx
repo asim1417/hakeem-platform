@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookOpen, FileText, Gavel, Scale, Search, Sparkles } from "lucide-react";
 import { CenterSearch } from "@/components/CenterSearch";
 import { Hero, SectionTitle, Card, CardGrid } from "@/components/ui/design-system";
@@ -6,8 +7,13 @@ import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibili
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
 import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
+import { PlatformWindowBanner } from "@/components/admin/PlatformWindowBanner";
 import { awardDailyVisit } from "@/lib/modules/credits/engagement";
 import { getCurrentUser, type SafeUser } from "@/lib/modules/auth/session";
+import {
+  isSuperAdmin,
+  isSuperAdminPanelEnabled,
+} from "@/lib/modules/auth/super-admin";
 import {
   attachmentListWhere,
   caseListWhere,
@@ -116,9 +122,21 @@ async function getDashboardStats(user: SafeUser | null) {
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams?: { welcome?: string };
+  searchParams?: { welcome?: string; platform?: string };
 }) {
   const me = await getCurrentUser().catch(() => null);
+  const platformWindow =
+    searchParams?.platform === "1" || searchParams?.platform === "true";
+  // السوبر يدخل الإدارة افتراضياً — `/dashboard?platform=1` نافذة معاينة للمنصة.
+  if (
+    me &&
+    isSuperAdmin(me) &&
+    isSuperAdminPanelEnabled() &&
+    !platformWindow
+  ) {
+    redirect("/admin");
+  }
+
   const stats = await getDashboardStats(me).catch(() => null);
   const showWelcome = searchParams?.welcome === "1";
   if (me) void awardDailyVisit(me.id).catch(() => undefined);
@@ -131,9 +149,12 @@ export default async function DashboardPage({
         stats.recentSimulations.length > 0)
   );
   const isNewUser = Boolean(stats && !hasRecentWork && stats.cases === 0 && stats.consultations === 0 && stats.simulations === 0);
+  const showPlatformBanner =
+    Boolean(me && isSuperAdmin(me) && isSuperAdminPanelEnabled() && platformWindow);
 
   return (
     <div>
+      {showPlatformBanner ? <PlatformWindowBanner /> : null}
       {(showWelcome || isNewUser) && me ? (
         <div className="mb-5 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-5 py-5 text-[var(--navy)]">
           <p className="font-display-ar text-lg font-bold">

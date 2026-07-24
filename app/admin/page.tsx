@@ -67,11 +67,18 @@ export default async function AdminPage() {
     const overview = await getPlatformOverview();
     return (
       <AdminPageShell currentPath="/admin">
-        <p className="text-sm font-semibold text-[#8B6914]">لوحة السوبر أدمن</p>
-        <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">نظرة عامة على المنصة</h1>
+        <p className="text-sm font-semibold text-[#8B6914]">تشغيل المنصة</p>
+        <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">مركز الإدارة</h1>
         <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.75)]">
-          بيانات حقيقية من قاعدة البيانات والخدمات — بلا إحصاءات تجريبية.
+          هنا تدير المستخدمين والفوترة والتواصل والإعدادات. لتجربة العميل استخدم «نافذة المنصة» من الشريط العلوي.
         </p>
+
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AdminLink href="/admin/inbox" label="التواصل مع العملاء" />
+          <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
+          <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
+          <AdminLink href="/admin/settings" label="إعدادات التشغيل" />
+        </section>
 
         <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Stat label="قاعدة البيانات" value={overview.database} />
@@ -148,19 +155,18 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <AdminLink href="/admin/services" label="إدارة ظهور الخدمات" />
-          <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
-          <AdminLink href="/admin/jobs" label="تشغيل المهام" />
-          <AdminLink href="/admin/reports" label="بلاغات الأخطاء" />
-          <AdminLink href="/admin/inbox" label="صندوق التواصل" />
-          <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
-          <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
-          <AdminLink href="/dashboard/legal-core/admin" label="إدارة المحتوى القانوني" />
-          <AdminLink href="/admin/settings" label="إعدادات المنصة" />
-          <AdminLink href="/admin/api-keys" label="مفاتيح API" />
-          <AdminLink href="/admin/roles" label="مصفوفة الصلاحيات" />
-          <AdminLink href="/audit-logs" label="سجل التدقيق العام" />
+        <section className="mt-6">
+          <h2 className="text-lg font-bold text-[#0E3435]">أدوات إضافية</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <AdminLink href="/admin/services" label="ظهور الخدمات للعملاء" />
+            <AdminLink href="/admin/jobs" label="المهام الخلفية" />
+            <AdminLink href="/admin/reports" label="بلاغات الأخطاء" />
+            <AdminLink href="/admin/ai" label="إعدادات الذكاء" />
+            <AdminLink href="/dashboard/legal-core/admin" label="المحتوى القانوني" />
+            <AdminLink href="/admin/api-keys" label="مفاتيح API" />
+            <AdminLink href="/admin/roles" label="مصفوفة الصلاحيات" />
+            <AdminLink href="/admin/audit" label="سجل التدقيق" />
+          </div>
         </section>
       </AdminPageShell>
     );
