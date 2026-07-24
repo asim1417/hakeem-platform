@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   BookOpen,
   Bot,
-  ClipboardList,
   FileText,
   FolderClosed,
   Gavel,
@@ -54,10 +53,9 @@ const legacyNavItems: NavItem[] = [
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
 ];
 
-/** Ask-first: اسأل حكيم = /dashboard فقط — لا رابط مكرر لـ /dashboard/ask */
+/** Ask-first: الصفحة الرئيسية = /dashboard — بدون قضايا في القائمة حاليًا */
 const askFirstNavItems: NavItem[] = [
-  { href: "/dashboard", key: "nav.ask", icon: Sparkles },
-  { href: "/dashboard/cases", key: "nav.cases", icon: ClipboardList },
+  { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },

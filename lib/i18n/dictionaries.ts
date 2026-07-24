@@ -14,7 +14,7 @@ type Dict = Record<string, string>;
 
 const ar: Dict = {
   "brand.tagline": "منصة المحاكاة القضائية السعودية",
-  "nav.home": "الرئيسية",
+  "nav.home": "الصفحة الرئيسية",
   "nav.search": "البحث الشامل",
   "nav.cases": "القضايا",
   "nav.consultations": "الاستشارات",
