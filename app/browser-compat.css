@@ -1,0 +1,151 @@
+/* ═══════════════════════════════════════════════════════════
+   طبقة توافق المتصفحات (Safari / Chrome / Firefox / Edge / iOS)
+   تُحمَّل بعد globals — لا تكسر الهوية؛ تضيف بادئات واحتياطات.
+   ═══════════════════════════════════════════════════════════ */
+
+/* خطوط next/font إن وُجدت — مع سقوط لتاهوما/تايمز */
+:root {
+  --font-display: var(--font-display-loaded, "IBM Plex Sans Arabic"), "Tahoma", sans-serif;
+  --font-body-ar: var(--font-display-loaded, "IBM Plex Sans Arabic"), "Tahoma", sans-serif;
+  --font-judicial: var(--font-judicial-loaded, "Amiri"), "Times New Roman", serif;
+  --font-mono-legal: var(--font-mono-loaded, "IBM Plex Mono"), ui-monospace, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ارتفاع آمن لكل أغلفة التطبيق */
+.app,
+.main,
+.wb-page {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+/* Safari يحتاج -webkit-backdrop-filter */
+.topbar,
+.sidebar-overlay.is-open,
+.ja-chip {
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.topbar {
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.sidebar-overlay.is-open {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* جداول ووسائط — لا تكسر العرض على Firefox/Safari */
+table {
+  max-width: 100%;
+  border-collapse: collapse;
+}
+
+pre,
+code {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* حقول iOS/Safari: منع التكبير القسري + مظهر موحّد */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  max-width: 100%;
+}
+
+input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Flex/Grid: منع overflow الأفقي الشائع على Safari */
+.app > *,
+.main > *,
+.content > * {
+  min-width: 0;
+}
+
+/* روابط ولمس */
+a {
+  -webkit-touch-callout: default;
+}
+
+button,
+[role="button"],
+a.wb-cta__primary,
+a.wb-cta__ghost,
+a.wb-dest__link {
+  touch-action: manipulation;
+}
+
+/* وضع الطباعة الآمن */
+@media print {
+  .sidebar,
+  .topbar,
+  .mobile-menu-btn,
+  .sidebar-overlay,
+  .wb-cta,
+  [class*="SupportChat"] {
+    display: none !important;
+  }
+  .main {
+    margin: 0 !important;
+  }
+}
+
+/* تباين عالٍ / تقليل الحركة — احترام تفضيلات النظام */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-08: rgba(18, 33, 31, 0.22);
+    --doc-line: #8aa09c;
+  }
+}
+
+/* دعم الوضع الداكن للمتصفح فقط على عناصر النظام (لا نقلب الهوية) */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: light;
+  }
+}

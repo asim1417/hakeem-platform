@@ -53,6 +53,7 @@ assert.ok(globals.includes("-webkit-text-size-adjust"));
 const layout = fs.readFileSync(path.join(root, "app/layout.tsx"), "utf8");
 assert.ok(layout.includes('viewportFit: "cover"'));
 assert.ok(layout.includes('width: "device-width"'));
+assert.ok(layout.includes("browser-compat.css") || layout.includes("next/font"));
 
 const shell = fs.readFileSync(path.join(root, "components/AppShell.tsx"), "utf8");
 assert.ok(shell.includes("SafeBackButton"));

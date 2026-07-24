@@ -3,23 +3,51 @@
 import { useEffect, useState } from "react";
 
 /**
- * إذا بقيت الصفحة بلا محتوى ظاهر (فشل Clerk/hydration على iOS)،
- * نعرض إنقاذًا بعد مهلة قصيرة بدل الشاشة البيضاء الصامتة.
+ * إنقاذ من الشاشة البيضاء (فشل hydration / bfcache على Safari/iOS).
+ * تقنيات حديثة: pageshow + visibilitychange دون كسر التحميل الطبيعي.
  */
 export function BootWatchdog() {
   const [rescue, setRescue] = useState(false);
 
   useEffect(() => {
-    const id = window.setTimeout(() => {
+    let cancelled = false;
+
+    const looksEmpty = () => {
       try {
         const text = (document.body?.innerText || "").replace(/\s+/g, " ").trim();
-        // أقل من هذا يعني غالبًا شاشة فارغة أو خطأ صامت
-        if (text.length < 40) setRescue(true);
+        return text.length < 40;
       } catch {
-        setRescue(true);
+        return true;
       }
-    }, 4000);
-    return () => window.clearTimeout(id);
+    };
+
+    const maybeRescue = () => {
+      if (!cancelled && looksEmpty()) setRescue(true);
+    };
+
+    const id = window.setTimeout(maybeRescue, 4000);
+
+    // Safari: العودة من bfcache أحياناً تترك DOM فارغاً بصرياً
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        window.setTimeout(maybeRescue, 300);
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        window.setTimeout(maybeRescue, 500);
+      }
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   if (!rescue) return null;

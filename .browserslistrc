@@ -1,0 +1,9 @@
+# أهداف متصفحات حديثة لـ Autoprefixer / PostCSS — Safari/iOS/Chrome/Firefox/Edge
+defaults
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Edge versions
+last 2 Safari versions
+iOS >= 15
+not dead
+not op_mini all
