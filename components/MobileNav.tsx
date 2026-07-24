@@ -16,9 +16,12 @@ export function MobileNav() {
     const overlay = document.getElementById("sidebar-overlay");
     sidebar?.classList.toggle("is-open", open);
     overlay?.classList.toggle("is-open", open);
+    // قفل تمرير الصفحة على الجوال/Safari عند فتح الدرج
+    document.documentElement.classList.toggle("nav-drawer-open", open);
     return () => {
       sidebar?.classList.remove("is-open");
       overlay?.classList.remove("is-open");
+      document.documentElement.classList.remove("nav-drawer-open");
     };
   }, [open]);
 

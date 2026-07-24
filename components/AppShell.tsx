@@ -158,7 +158,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <ScrollRestorer />
-        <div className="content" id="main-content">{children}</div>
+        <div className="content wb-safe" id="main-content">
+          {children}
+        </div>
         <footer className="app-foot">
           <span>{t("footer.tagline")}</span>
           <nav className="app-foot-links" aria-label={locale === "ar" ? "روابط نظامية" : "Legal links"}>
