@@ -169,8 +169,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </footer>
       </main>
-      {/* تواصل خفيف عميل↔سوبر — يظهر لكل مستخدم مسجّل داخل الغلاف */}
-      {user ? <SupportChatWidget /> : null}
+      {/* تواصل للعملاء فقط — السوبر يستخدم /admin/inbox صندوق المراسلات */}
+      {user && user.role !== "SUPER_ADMIN" ? <SupportChatWidget /> : null}
     </div>
   );
 }

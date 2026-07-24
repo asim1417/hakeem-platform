@@ -4,12 +4,13 @@ import { TopbarUserBar } from "@/components/LogoutButton";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { PLATFORM_WINDOW_HREF } from "@/lib/modules/auth/home-destination";
 import type { SafeUser } from "@/lib/modules/auth/session";
+import { countUnreadForAdmin } from "@/lib/modules/support/support-store";
 
 /**
  * غلاف إدارة السوبر — ليس داشبورد العميل.
- * قائمة تشغيل + نافذة للمنصة عند الحاجة للمعاينة.
+ * قائمة تشغيل + صندوق مراسلات ظاهر + نافذة للمنصة.
  */
-export function SuperAdminShell({
+export async function SuperAdminShell({
   currentPath,
   user,
   children,
@@ -19,6 +20,7 @@ export function SuperAdminShell({
   children: React.ReactNode;
 }) {
   const clerkEnabled = isClerkConfigured();
+  const unread = await countUnreadForAdmin().catch(() => 0);
 
   return (
     <div className="min-h-[100dvh] bg-[#F3EFE6]" dir="rtl" lang="ar">
@@ -37,8 +39,19 @@ export function SuperAdminShell({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
+              href="/admin/inbox"
+              className="touch-target relative inline-flex min-h-[44px] items-center rounded-md bg-[#C9A84C] px-3 py-2 text-sm font-semibold text-[#0E3435] hover:bg-[#E0C06A]"
+            >
+              صندوق المراسلات
+              {unread > 0 ? (
+                <span className="mr-2 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded bg-[#0E3435] px-1 text-[11px] font-bold text-[#FFFcf7]">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              ) : null}
+            </Link>
+            <Link
               href={PLATFORM_WINDOW_HREF}
-              className="touch-target inline-flex min-h-[44px] items-center rounded-md bg-[#C9A84C] px-3 py-2 text-sm font-semibold text-[#0E3435] hover:bg-[#E0C06A]"
+              className="touch-target inline-flex min-h-[44px] items-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-[#FFFcf7] hover:bg-white/15"
             >
               نافذة المنصة
             </Link>

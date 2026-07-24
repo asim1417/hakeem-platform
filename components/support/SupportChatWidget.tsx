@@ -5,12 +5,13 @@ import { useEffect, useRef, useState, useTransition } from "react";
 type Msg = {
   id: string;
   senderRole: "user" | "admin";
+  senderName?: string | null;
   body: string;
   createdAt: string;
 };
 
 /**
- * نافذة تواصل خفيفة مع السوبر أدمن — تظهر في الداشبورد بعد تسجيل الدخول.
+ * نافذة تواصل خفيفة مع دعم حكيم — للعملاء فقط (ليس السوبر أدمن).
  */
 export function SupportChatWidget() {
   const [open, setOpen] = useState(false);
@@ -20,7 +21,6 @@ export function SupportChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
-  const loaded = useRef(false);
 
   async function load() {
     try {
@@ -42,11 +42,10 @@ export function SupportChatWidget() {
 
   useEffect(() => {
     if (!open) return;
-    loaded.current = true;
     void load();
     const t = setInterval(() => void load(), 8000);
     return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- إعادة التحميل عند الفتح فقط
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -88,8 +87,8 @@ export function SupportChatWidget() {
         >
           <header className="flex items-center justify-between border-b border-[rgba(14,52,53,0.08)] bg-[#0E3435] px-4 py-3 text-[#FFFcf7]">
             <div>
-              <p className="text-sm font-bold">تواصل مع حكيم</p>
-              <p className="text-xs text-white/70">رد مباشر من إدارة المنصة</p>
+              <p className="text-sm font-bold">تواصل مع دعم حكيم</p>
+              <p className="text-xs text-white/70">يصل رد الإدارة إلى صندوق المراسلات</p>
             </div>
             <button
               type="button"
@@ -104,27 +103,33 @@ export function SupportChatWidget() {
           <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
             {messages.length === 0 ? (
               <p className="px-1 py-6 text-center text-sm leading-7 text-[rgba(14,52,53,0.55)]">
-                اكتب استفسارك أو مشكلتك — سنرد عليك من هنا.
+                اكتب استفسارك — سيظهر اسمك وبريدك للإدارة مع الرسالة.
               </p>
             ) : (
-              messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={
-                    m.senderRole === "user"
-                      ? "mr-6 rounded-lg bg-[#0E3435] px-3 py-2 text-sm leading-6 text-[#FFFcf7]"
-                      : "ml-6 rounded-lg bg-white px-3 py-2 text-sm leading-6 text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.1)]"
-                  }
-                >
-                  <p className="whitespace-pre-wrap">{m.body}</p>
-                  <p className="mt-1 text-[10px] opacity-60">
-                    {new Date(m.createdAt).toLocaleString("ar-SA", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-              ))
+              messages.map((m) => {
+                const mine = m.senderRole === "user";
+                return (
+                  <div
+                    key={m.id}
+                    className={
+                      mine
+                        ? "mr-6 rounded-lg bg-[#0E3435] px-3 py-2 text-sm leading-6 text-[#FFFcf7]"
+                        : "ml-6 rounded-lg bg-white px-3 py-2 text-sm leading-6 text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.1)]"
+                    }
+                  >
+                    <p className="text-[11px] font-bold opacity-80">
+                      {mine ? "أنت" : m.senderName || "دعم حكيم"}
+                    </p>
+                    <p className="mt-0.5 whitespace-pre-wrap">{m.body}</p>
+                    <p className="mt-1 text-[10px] opacity-60">
+                      {new Date(m.createdAt).toLocaleString("ar-SA", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                );
+              })
             )}
             <div ref={bottomRef} />
           </div>
