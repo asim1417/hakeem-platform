@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 
-// صندوق البحث المركزيّ — «اسأل حكيم» (افتراضيّ)، ومعه «البحث النصّي» التقليديّ حين يكون ظاهرًا.
-// عرض الرئيسية فقط؛ لا يمسّ منطق الأوضاع/الوكيل/المصادقة — مجرّد توجيه إلى الوجهتين.
+/**
+ * السلوك السابق (احتياطي عند HOME_INLINE_ASK=0):
+ * توجيه إلى /dashboard/ask?q=… — لا يُستخدم عند تفعيل التنفيذ المضمّن.
+ */
 export function CenterSearch() {
   const [mode, setMode] = useState<"ask" | "text">("ask");
   const [q, setQ] = useState("");
 
   const submit = () => {
-    // البحث التقليديّ مخفيّ ⇒ كلّ الطلبات تذهب إلى البحث الذكيّ (اسأل حكيم).
     const dest = mode === "ask" || !TRADITIONAL_SEARCH_ENABLED ? "/dashboard/ask" : "/dashboard/legal-search";
     window.location.href = `${dest}?q=${encodeURIComponent(q.trim())}`;
   };

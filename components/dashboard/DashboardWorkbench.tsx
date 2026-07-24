@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { CenterSearch } from "@/components/CenterSearch";
+import { HomeAskSurface } from "@/components/home/HomeAskSurface";
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
 import { CreditsWidget } from "@/components/credits/CreditsWidget";
 import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
+import { isHomeInlineAskEnabled } from "@/lib/modules/config/home-inline-ask";
 
 export type WorkItem = {
   id: string;
@@ -58,7 +59,7 @@ const DESTINATIONS: Dest[] = [
 
 /**
  * الصفحة الأولى للمحامي — جلسة عمل لا فهرس خدمات.
- * الهوية: حكيم أولاً، سؤال واحد، ثم متابعة العمل.
+ * صندوق السؤال ينفّذ داخل الصفحة عند تفعيل HOME_INLINE_ASK.
  */
 export function DashboardWorkbench({
   firstName,
@@ -67,6 +68,8 @@ export function DashboardWorkbench({
   legalArticles,
   continueItems,
 }: WorkbenchProps) {
+  const inlineAsk = isHomeInlineAskEnabled();
+
   return (
     <div className="wb">
       <section className="wb-stage" aria-labelledby="wb-brand">
@@ -84,15 +87,31 @@ export function DashboardWorkbench({
             من الوقائع إلى التحليل والاستراتيجية — برفاقٍ يفكّر كما في القاعة.
           </p>
           <div className="wb-ask">
-            <CenterSearch />
+            <HomeAskSurface />
           </div>
           <div className="wb-cta">
-            <Link href="/dashboard/ask" className="wb-cta__primary">
-              اسأل حكيم
-            </Link>
-            <Link href="/dashboard/judicial-assistant" className="wb-cta__ghost">
+            {inlineAsk ? (
+              <p className="wb-cta__hint">
+                <span className="wb-cta__hint-ask">اسأل</span> للحصول على بحث وتحليل قانوني مباشر ·{" "}
+                <span className="wb-cta__hint-case">فتح قضية</span> لتنظيم ملف ومتابعة إجراءاته
+              </p>
+            ) : (
+              <Link href="/dashboard/ask" className="wb-cta__primary">
+                اسأل حكيم
+              </Link>
+            )}
+            <Link
+              href="/dashboard/judicial-assistant"
+              className={inlineAsk ? "wb-cta__primary" : "wb-cta__ghost"}
+              title="تنظيم ملف قضية ودراسة مستنداتها وإجراءاتها"
+            >
               فتح قضية
             </Link>
+            {inlineAsk ? (
+              <Link href="/dashboard/ask" className="wb-cta__ghost" title="الأوضاع المتقدمة والمرفقات">
+                مساحة العمل الكاملة
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>

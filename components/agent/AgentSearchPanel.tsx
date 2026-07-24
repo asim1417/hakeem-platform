@@ -74,6 +74,22 @@ export function AgentSearchPanel({ userName, initialQuery = "", initialMode = "a
     busyRef.current = busy;
   }, [busy]);
 
+  // تسليم من الرئيسية المضمّنة — يملأ الصندوق فقط دون إعادة تنفيذ تلقائي.
+  useEffect(() => {
+    if (initialQuery) return;
+    try {
+      const raw = sessionStorage.getItem("hakeem-home-ask-handoff");
+      if (!raw) return;
+      sessionStorage.removeItem("hakeem-home-ask-handoff");
+      const parsed = JSON.parse(raw) as { question?: string };
+      if (typeof parsed.question === "string" && parsed.question.trim()) {
+        setValue(parsed.question.trim().slice(0, 8000));
+      }
+    } catch {
+      /* تجاهل */
+    }
+  }, [initialQuery]);
+
   useEffect(() => {
     // إن غادر المستخدم الصفحة أثناء بحثٍ جارٍ، نسِم أن الانقطاع سببه الخلفية لا خطأ فعليّ.
     const onVisibility = () => {
