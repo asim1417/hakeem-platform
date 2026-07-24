@@ -54,6 +54,13 @@ export const MANAGED_KEYS: ManagedKey[] = [
   // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
   { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
   { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },
+  {
+    key: "MOYASAR_WEBHOOK_SECRET",
+    label: "Moyasar Webhook Secret",
+    secret: true,
+    group: "الدفع (Moyasar)",
+    placeholder: "اختياري — يفعّل التحقق عند الضبط",
+  },
   { key: "RESEND_API_KEY", label: "Resend API Key (بريد الترحيب)", secret: true, group: "البريد", placeholder: "re_..." },
   { key: "RESEND_FROM", label: "عنوان المُرسِل", secret: false, group: "البريد", placeholder: "حكيم <onboarding@hakeem.sa>" },
   { key: "TWILIO_ACCOUNT_SID", label: "Twilio Account SID", secret: true, group: "OTP الجوال (Twilio)", placeholder: "AC..." },

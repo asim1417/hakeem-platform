@@ -34,6 +34,10 @@ assert.ok(!systemBlock.includes('"/admin/jobs"'), "SYSTEM_ADMIN must not see job
 assert.ok(!systemBlock.includes('"/admin/billing"'), "SYSTEM_ADMIN must not see billing");
 assert.ok(!systemBlock.includes('"/admin/services"'), "SYSTEM_ADMIN must not see services");
 assert.ok(!systemBlock.includes('"/admin/audit"'), "SYSTEM_ADMIN must not see audit");
+assert.ok(!systemBlock.includes('"/admin/settings"'), "SYSTEM_ADMIN must not see settings");
+assert.ok(!systemBlock.includes('"/admin/ai"'), "SYSTEM_ADMIN must not see ai");
+assert.ok(!systemBlock.includes('"/admin/reports"'), "SYSTEM_ADMIN must not see reports");
+assert.ok(nav.includes('href: "/admin/reports"'), "super nav needs reports");
 
 const shell = fs.readFileSync(path.join(root, "components/admin/AdminPageShell.tsx"), "utf8");
 assert.ok(shell.includes("isSuperAdmin"));

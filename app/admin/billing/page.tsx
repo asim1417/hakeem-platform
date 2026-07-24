@@ -3,13 +3,17 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminBillingUserActions } from "@/components/admin/AdminBillingActions";
 import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
 import { getBillingAdminOverview } from "@/lib/modules/billing/admin-overview";
+import { listRecentBillingEvents } from "@/lib/modules/billing/billing-events";
 import { formatSar } from "@/config/pricing";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBillingPage() {
   await requireSuperAdminPage();
-  const overview = await getBillingAdminOverview();
+  const [overview, billingEvents] = await Promise.all([
+    getBillingAdminOverview(),
+    listRecentBillingEvents(40),
+  ]);
 
   return (
     <AdminPageShell currentPath="/admin/billing">
@@ -97,6 +101,62 @@ export default async function AdminBillingPage() {
                     </tr>
                   );
                 })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7]">
+        <div className="border-b border-[rgba(14,52,53,0.08)] px-5 py-4">
+          <h2 className="text-lg font-bold text-[#0E3435]">سجل مدفوعات Moyasar</h2>
+          <p className="mt-1 text-sm text-[rgba(14,52,53,0.55)]">
+            أحداث webhook المسجّلة (idempotent) — لا تكرار تفعيل عند إعادة الإرسال.
+          </p>
+        </div>
+        {billingEvents.length === 0 ? (
+          <p className="p-6 text-sm text-[rgba(14,52,53,0.55)]">
+            لا أحداث بعد، أو جدول billing_events غير جاهز بعد.
+          </p>
+        ) : (
+          <div className="table-scroll overflow-auto">
+            <table className="w-full min-w-[760px] border-collapse text-right text-sm">
+              <thead className="bg-[#F7F2EA]">
+                <tr className="[&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
+                  <th>الحالة</th>
+                  <th>الخطة</th>
+                  <th>المبلغ</th>
+                  <th>المستخدم</th>
+                  <th>الوقت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {billingEvents.map((ev) => (
+                  <tr key={ev.id} className="border-t border-[rgba(14,52,53,0.06)]">
+                    <td className="px-4 py-3 font-semibold text-[#0E3435]">
+                      {ev.status || "—"}
+                      {ev.eventType ? (
+                        <span className="mt-0.5 block text-xs font-normal text-[rgba(14,52,53,0.5)]">
+                          {ev.eventType}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3">
+                      {[ev.planId, ev.interval].filter(Boolean).join(" / ") || "—"}
+                    </td>
+                    <td className="px-4 py-3" dir="ltr">
+                      {ev.amount != null
+                        ? `${(ev.amount / 100).toLocaleString("ar-SA")} ${ev.currency || "SAR"}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3" dir="ltr">
+                      {ev.userId ? ev.userId.slice(0, 10) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-[rgba(14,52,53,0.55)]">
+                      {new Date(ev.createdAt).toLocaleString("ar-SA")}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

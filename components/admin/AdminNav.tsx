@@ -5,6 +5,7 @@ const SUPER_LINKS = [
   { href: "/admin/services", label: "الخدمات" },
   { href: "/admin/jobs", label: "المهام" },
   { href: "/admin/billing", label: "الفوترة" },
+  { href: "/admin/reports", label: "البلاغات" },
   { href: "/admin/audit", label: "التدقيق" },
   { href: "/admin/users", label: "المستخدمون" },
   { href: "/admin/roles", label: "الأدوار" },
@@ -15,15 +16,13 @@ const SUPER_LINKS = [
   { href: "/dashboard/legal-core/admin", label: "المحتوى القانوني" },
 ] as const;
 
-/** روابط مدير النظام — بدون أقسام السوبر الحصرية. */
+/** روابط مدير النظام — بدون أقسام السوبر الحصرية (فوترة/مهام/إعدادات/ذكاء/بلاغات). */
 const SYSTEM_LINKS = [
   { href: "/admin", label: "نظرة عامة" },
   { href: "/admin/users", label: "المستخدمون" },
   { href: "/admin/roles", label: "الأدوار" },
   { href: "/admin/owner", label: "المدراء" },
-  { href: "/admin/ai", label: "الذكاء" },
   { href: "/admin/api-keys", label: "مفاتيح API" },
-  { href: "/admin/settings", label: "الإعدادات" },
   { href: "/dashboard/legal-core/admin", label: "المحتوى القانوني" },
 ] as const;
 
