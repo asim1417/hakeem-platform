@@ -8,13 +8,21 @@ import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { useHakeemAsk } from "@/components/hooks/useHakeemAsk";
 import { trackHomeAskEvent } from "@/lib/modules/ask/home-ask-analytics";
+import { suggestAskNextActions } from "@/lib/modules/ask/next-actions";
+import {
+  ASK_FIRST_SUGGESTIONS,
+  ASK_TO_CASE_HANDOFF_KEY,
+  isAskFirstHomeEnabled,
+} from "@/lib/modules/config/ask-first-home";
 import { HOME_ASK_HANDOFF_KEY } from "@/lib/modules/config/home-inline-ask";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
+import { signInWithNext } from "@/lib/modules/auth/safe-next";
 
 /**
  * صندوق السؤال في الرئيسية — ينفّذ /api/ai/agent-search داخل الصفحة دون تحويل.
  */
 export function HomeInlineAsk() {
+  const askFirst = isAskFirstHomeEnabled();
   const {
     value,
     setInput,
@@ -25,23 +33,37 @@ export function HomeInlineAsk() {
     retryLast,
     startNew,
     askClarify,
+    saveConversation,
+    sessionSaved,
     resultAnchorRef,
     maxChars,
   } = useHakeemAsk();
   const formRef = useRef<HTMLFormElement>(null);
   const last = turns[turns.length - 1];
   const hasResult = turns.length > 0;
+  const followUpMode = hasResult && Boolean(last?.answer) && !last?.streaming;
 
   const statusLabel = useMemo(() => {
     if (!last?.streaming) return null;
     const running = [...last.steps].reverse().find((s) => s.status === "running");
-    if (running?.label) return running.label;
-    if (last.steps.some((s) => s.id.includes("retriev") || s.label.includes("بحث"))) {
-      return "جارٍ البحث في المصادر القانونية…";
+    if (running?.label) {
+      const label = running.label;
+      if (/فهم|تصنيف|intent/i.test(label)) return "جارٍ فهم السؤال…";
+      if (/بحث|استرجاع|retriev/i.test(label)) return "جارٍ البحث في المصادر…";
+      if (/تحليل|إعداد|توليد|synthesize/i.test(label)) return "جارٍ إعداد التحليل…";
+      return label;
     }
-    if (last.steps.length) return "جارٍ إعداد الإجابة…";
-    return "جارٍ فهم سؤالك…";
+    if (last.steps.some((s) => s.id.includes("retriev") || s.label.includes("بحث"))) {
+      return "جارٍ البحث في المصادر…";
+    }
+    if (last.steps.length) return "جارٍ إعداد التحليل…";
+    return "جارٍ فهم السؤال…";
   }, [last]);
+
+  const nextActions = useMemo(() => {
+    if (!askFirst || !last?.answer || last.streaming) return [];
+    return suggestAskNextActions(last.question, last.answer);
+  }, [askFirst, last]);
 
   function openWorkspace() {
     const q = last?.question || value.trim();
@@ -60,17 +82,42 @@ export function HomeInlineAsk() {
     window.location.assign(href);
   }
 
+  function convertToCase() {
+    const q = last?.question || value.trim();
+    if (!q) return;
+    try {
+      sessionStorage.setItem(
+        ASK_TO_CASE_HANDOFF_KEY,
+        JSON.stringify({
+          subject: q.slice(0, 120),
+          factsNote: q.slice(0, 4000),
+          at: Date.now(),
+        })
+      );
+    } catch {
+      /* تجاهل */
+    }
+    trackHomeAskEvent("home_ask_to_case");
+    window.location.assign("/dashboard/judicial-assistant");
+  }
+
+  function applySuggestion(text: string) {
+    setInput(text);
+    trackHomeAskEvent("home_ask_suggestion");
+    formRef.current?.querySelector("textarea")?.focus();
+  }
+
   return (
-    <div className="home-inline-ask">
+    <div className={`home-inline-ask${askFirst ? " home-inline-ask--first" : ""}`}>
       <form
         ref={formRef}
         className="center-search home-inline-ask__composer"
         onSubmit={(e) => {
           e.preventDefault();
-          void ask(undefined, { followUp: hasResult && Boolean(last?.answer) });
+          void ask(undefined, { followUp: followUpMode });
         }}
       >
-        {TRADITIONAL_SEARCH_ENABLED ? (
+        {TRADITIONAL_SEARCH_ENABLED && !askFirst ? (
           <p className="home-inline-ask__mode-hint">اسأل حكيم — تحليل قانوني مباشر داخل الصفحة</p>
         ) : null}
 
@@ -82,21 +129,39 @@ export function HomeInlineAsk() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (!busy) void ask(undefined, { followUp: hasResult && Boolean(last?.answer) });
+                if (!busy) void ask(undefined, { followUp: followUpMode });
               }
             }}
-            rows={1}
+            rows={askFirst ? 2 : 1}
             disabled={busy}
-            aria-label="اطرح واقعتك أو سؤالك القانوني"
+            aria-label={
+              followUpMode
+                ? "اسأل عن نقطة أخرى في السياق نفسه"
+                : "اكتب الواقعة أو السؤال القانوني"
+            }
             aria-invalid={Boolean(validationError)}
-            aria-describedby="home-ask-hint home-ask-error"
-            placeholder="اطرح واقعتك أو سؤالك القانوني…"
+            aria-describedby="home-ask-hint home-ask-error home-ask-help"
+            placeholder={
+              followUpMode
+                ? "اسأل عن نقطة أخرى في السياق نفسه…"
+                : askFirst
+                  ? "اكتب الواقعة أو السؤال القانوني بتفاصيله…"
+                  : "اطرح واقعتك أو سؤالك القانوني…"
+            }
             className="home-inline-ask__input"
           />
           <button type="submit" disabled={busy} aria-busy={busy}>
-            {busy ? "جارٍ…" : hasResult && last?.answer ? "متابعة" : "اسأل"}
+            {busy ? "جارٍ…" : followUpMode ? "إرسال" : "اسأل حكيم"}
           </button>
         </div>
+
+        {askFirst && !hasResult ? (
+          <p id="home-ask-help" className="home-inline-ask__help">
+            يمكنك طرح سؤال مختصر، أو كتابة وقائع المسألة بالتفصيل.
+          </p>
+        ) : (
+          <span id="home-ask-help" className="sr-only" />
+        )}
 
         <p id="home-ask-hint" className="home-inline-ask__hint">
           Enter للإرسال، وShift + Enter لسطر جديد
@@ -112,6 +177,18 @@ export function HomeInlineAsk() {
           <span id="home-ask-error" className="sr-only" />
         )}
       </form>
+
+      {askFirst && !hasResult && !busy ? (
+        <ul className="home-inline-ask__suggestions" aria-label="اقتراحات للبدء">
+          {ASK_FIRST_SUGGESTIONS.map((s) => (
+            <li key={s}>
+              <button type="button" className="home-inline-ask__chip" onClick={() => applySuggestion(s)}>
+                {s}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <div ref={resultAnchorRef} className="home-inline-ask__results" aria-live="polite">
         {hasResult ? (
@@ -158,20 +235,29 @@ export function HomeInlineAsk() {
                   <div className="home-inline-ask__err-box" role="alert">
                     <p>{turn.error}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="home-inline-ask__btn-primary"
-                        disabled={busy}
-                        onClick={() => retryLast()}
-                      >
-                        إعادة المحاولة
-                      </button>
+                      {/جلستك|تسجيل الدخول|انتهت/.test(turn.error) ? (
+                        <Link
+                          href={signInWithNext("/dashboard")}
+                          className="home-inline-ask__btn-primary"
+                        >
+                          تسجيل الدخول
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          className="home-inline-ask__btn-primary"
+                          disabled={busy}
+                          onClick={() => retryLast()}
+                        >
+                          إعادة المحاولة
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="home-inline-ask__btn-secondary"
                         onClick={() => setInput(turn.question)}
                       >
-                        الاحتفاظ بالسؤال
+                        تعديل السؤال
                       </button>
                     </div>
                   </div>
@@ -270,23 +356,88 @@ export function HomeInlineAsk() {
             ))}
 
             {!busy && last && !last.streaming ? (
-              <div className="home-inline-ask__actions">
-                {last.answer ? (
-                  <button
-                    type="button"
-                    className="home-inline-ask__btn-primary"
-                    onClick={() => formRef.current?.querySelector("textarea")?.focus()}
-                  >
-                    اسأل سؤالًا متابعًا
-                  </button>
+              <>
+                {nextActions.length > 0 ? (
+                  <div className="home-inline-ask__next" aria-label="خطوات تالية مقترحة">
+                    <p className="home-inline-ask__next-label">خطوات مقترحة حسب سؤالك</p>
+                    <div className="home-inline-ask__next-list">
+                      {nextActions.map((a) => {
+                        if (a.kind === "case") {
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              className="home-inline-ask__btn-secondary"
+                              onClick={convertToCase}
+                            >
+                              {a.label}
+                            </button>
+                          );
+                        }
+                        if (a.kind === "workspace") {
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              className="home-inline-ask__btn-secondary"
+                              onClick={openWorkspace}
+                            >
+                              {a.label}
+                            </button>
+                          );
+                        }
+                        return (
+                          <Link
+                            key={a.id}
+                            href={a.href || "/dashboard"}
+                            className="home-inline-ask__btn-secondary"
+                          >
+                            {a.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ) : null}
-                <button type="button" className="home-inline-ask__btn-secondary" onClick={startNew}>
-                  ابدأ سؤالًا جديدًا
-                </button>
-                <button type="button" className="home-inline-ask__btn-secondary" onClick={openWorkspace}>
-                  فتح في مساحة العمل
-                </button>
-              </div>
+
+                <div className="home-inline-ask__actions">
+                  {last.answer ? (
+                    <button
+                      type="button"
+                      className="home-inline-ask__btn-primary"
+                      onClick={() => formRef.current?.querySelector("textarea")?.focus()}
+                    >
+                      إرسال متابعة
+                    </button>
+                  ) : null}
+                  <button type="button" className="home-inline-ask__btn-secondary" onClick={startNew}>
+                    محادثة جديدة
+                  </button>
+                  {last.answer ? (
+                    <button
+                      type="button"
+                      className="home-inline-ask__btn-secondary"
+                      onClick={() => saveConversation()}
+                    >
+                      {sessionSaved ? "تم الحفظ في هذه الجلسة" : "حفظ المحادثة"}
+                    </button>
+                  ) : null}
+                  {askFirst && last.answer ? (
+                    <button
+                      type="button"
+                      className="home-inline-ask__btn-secondary"
+                      onClick={convertToCase}
+                    >
+                      تحويل إلى قضية
+                    </button>
+                  ) : null}
+                  {!askFirst ? (
+                    <button type="button" className="home-inline-ask__btn-secondary" onClick={openWorkspace}>
+                      فتح في مساحة العمل
+                    </button>
+                  ) : null}
+                </div>
+              </>
             ) : null}
           </div>
         ) : null}

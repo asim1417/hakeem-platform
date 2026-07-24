@@ -11,6 +11,10 @@ import {
   HAKEEM_ASK_MAX_CHARS,
   HOME_ASK_DRAFT_KEY,
 } from "@/lib/modules/config/home-inline-ask";
+import {
+  HOME_ASK_PENDING_RUN_KEY,
+  HOME_ASK_SESSION_KEY,
+} from "@/lib/modules/config/ask-first-home";
 
 function newTurnId(prefix: string) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -33,9 +37,68 @@ function readDraft(): string {
   }
 }
 
+function readPendingRun(): boolean {
+  try {
+    return sessionStorage.getItem(HOME_ASK_PENDING_RUN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function clearPendingRun() {
+  try {
+    sessionStorage.removeItem(HOME_ASK_PENDING_RUN_KEY);
+  } catch {
+    /* تجاهل */
+  }
+}
+
+function saveSession(turns: AskTurn[]) {
+  try {
+    if (!turns.length) {
+      sessionStorage.removeItem(HOME_ASK_SESSION_KEY);
+      return;
+    }
+    const slim = turns
+      .filter((t) => !t.streaming)
+      .map((t) => ({
+        id: t.id,
+        question: t.question,
+        answer: t.answer,
+        basis: t.basis,
+        total: t.total,
+        mode: t.mode,
+        message: t.message,
+        disclosure: t.disclosure,
+        groups: t.groups,
+        visibleGroups: t.visibleGroups,
+        steps: t.steps,
+        streaming: false,
+        showMethod: false,
+        error: t.error,
+        clarify: t.clarify,
+      }));
+    sessionStorage.setItem(HOME_ASK_SESSION_KEY, JSON.stringify({ turns: slim, at: Date.now() }));
+  } catch {
+    /* تجاهل */
+  }
+}
+
+function readSession(): AskTurn[] {
+  try {
+    const raw = sessionStorage.getItem(HOME_ASK_SESSION_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as { turns?: AskTurn[] };
+    return Array.isArray(parsed.turns) ? parsed.turns : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * منطق إرسال «اسأل حكيم» المشترك — يستدعي /api/ai/agent-search مرة واحدة لكل طلب.
- * محمي من الضغط المزدوج وStrict Mode (لا useEffect للإرسال).
+ * محمي من الضغط المزدوج وStrict Mode (لا useEffect للإرسال الاعتيادي).
+ * الاستثناء الوحيد: استعادة سؤال الزائر بعد الدخول (مرة واحدة).
  */
 export function useHakeemAsk() {
   const idPrefix = useId().replace(/:/g, "");
@@ -43,16 +106,26 @@ export function useHakeemAsk() {
   const [turns, setTurns] = useState<AskTurn[]>([]);
   const [busy, setBusy] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [sessionSaved, setSessionSaved] = useState(false);
   const busyRef = useRef(false);
   const turnsRef = useRef<AskTurn[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const requestTokenRef = useRef(0);
   const composedRef = useRef(false);
+  const pendingRunHandledRef = useRef(false);
   const resultAnchorRef = useRef<HTMLDivElement | null>(null);
+  const askRef = useRef<(raw?: string, opts?: { skipBreadth?: boolean; followUp?: boolean }) => Promise<void>>(
+    async () => undefined
+  );
 
   useEffect(() => {
     const draft = readDraft();
     if (draft) setValue(draft);
+    const saved = readSession();
+    if (saved.length) {
+      setTurns(saved);
+      setSessionSaved(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -110,6 +183,7 @@ export function useHakeemAsk() {
       busyRef.current = true;
       setBusy(true);
       setValidationError("");
+      setSessionSaved(false);
       const token = ++requestTokenRef.current;
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -181,10 +255,15 @@ export function useHakeemAsk() {
 
       if (!result.ok) {
         if (result.kind !== "aborted") {
+          const message =
+            result.kind === "auth"
+              ? "انتهت جلستك. سجّل الدخول للمتابعة دون فقد سؤالك."
+              : result.message ||
+                "تعذّر إكمال الإجابة الآن. بقي سؤالك محفوظًا ويمكنك إعادة المحاولة.";
           patchLastTurn((t) => ({
             ...t,
             streaming: false,
-            error: result.message,
+            error: message,
           }));
           // أعد السؤال للصندوق عند الفشل
           setValue(question);
@@ -203,6 +282,23 @@ export function useHakeemAsk() {
     },
     [value, idPrefix, patchLastTurn]
   );
+
+  askRef.current = ask;
+
+  // استعادة سؤال الزائر بعد الدخول — مرة واحدة فقط
+  useEffect(() => {
+    if (pendingRunHandledRef.current) return;
+    if (!readPendingRun()) return;
+    const draft = readDraft().trim();
+    if (!draft) {
+      clearPendingRun();
+      return;
+    }
+    pendingRunHandledRef.current = true;
+    clearPendingRun();
+    setValue(draft);
+    void askRef.current(draft);
+  }, []);
 
   const retryLast = useCallback(() => {
     const last = turnsRef.current[turnsRef.current.length - 1];
@@ -223,6 +319,12 @@ export function useHakeemAsk() {
     requestTokenRef.current += 1;
     setTurns([]);
     setValidationError("");
+    setSessionSaved(false);
+    try {
+      sessionStorage.removeItem(HOME_ASK_SESSION_KEY);
+    } catch {
+      /* تجاهل */
+    }
     trackHomeAskEvent("home_ask_new");
   }, []);
 
@@ -236,6 +338,15 @@ export function useHakeemAsk() {
     [ask]
   );
 
+  const saveConversation = useCallback(() => {
+    const current = turnsRef.current.filter((t) => !t.streaming && (t.answer || t.error || t.clarify));
+    if (!current.length) return false;
+    saveSession(current);
+    setSessionSaved(true);
+    trackHomeAskEvent("home_ask_save_session");
+    return true;
+  }, []);
+
   return {
     value,
     setInput,
@@ -247,6 +358,8 @@ export function useHakeemAsk() {
     retryLast,
     startNew,
     askClarify,
+    saveConversation,
+    sessionSaved,
     resultAnchorRef,
     maxChars: HAKEEM_ASK_MAX_CHARS,
   };
