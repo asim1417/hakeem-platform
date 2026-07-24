@@ -5,6 +5,7 @@ import {
   isSuperAdmin,
   isSuperAdminPanelEnabled,
 } from "@/lib/modules/auth/super-admin";
+import { PLATFORM_WINDOW_HREF } from "@/lib/modules/auth/home-destination";
 import { getPlatformOverview } from "@/lib/modules/admin/platform-overview";
 import { getAiStatus } from "@/lib/modules/ai/ai-config";
 import { sharePointConfigured, storageBackend } from "@/lib/modules/attachments/blob-storage";
@@ -70,8 +71,23 @@ export default async function AdminPage() {
         <p className="text-sm font-semibold text-[#8B6914]">تشغيل المنصة</p>
         <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">مركز الإدارة</h1>
         <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.75)]">
-          هنا تدير المستخدمين والفوترة والتواصل والإعدادات. لتجربة العميل استخدم «نافذة المنصة» من الشريط العلوي.
+          أنت في الإدارة — ليست لوحة العميل. جلسة العمل الجديدة تظهر عبر نافذة المنصة.
         </p>
+
+        <section className="mt-5 rounded-[0.75rem] border border-[#C9A84C]/45 bg-[#0E3435] p-5 text-[#FFFcf7]">
+          <p className="text-sm font-semibold text-[#C9A84C]">لوحة العميل الجديدة</p>
+          <h2 className="mt-1 text-xl font-bold">جلسة عمل «حكيم» — معاينة مباشرة</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/75">
+            التصميم الجديد على صفحة العميل (علامة حكيم الكبيرة + اسأل حكيم). لن تراه هنا لأن
+            دخول السوبر يفتح الإدارة عمداً.
+          </p>
+          <Link
+            href={PLATFORM_WINDOW_HREF}
+            className="mt-4 inline-flex min-h-[44px] items-center rounded-md bg-[#C9A84C] px-4 py-2.5 text-sm font-bold text-[#0E3435] hover:bg-[#E0C06A]"
+          >
+            افتح نافذة المنصة الآن
+          </Link>
+        </section>
 
         <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AdminLink href="/admin/inbox" label="التواصل مع العملاء" />
