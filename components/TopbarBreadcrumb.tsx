@@ -50,7 +50,7 @@ const SEGMENT_LABELS: Array<{ prefix: string; label: string }> = [
 ];
 
 function buildCrumbs(pathname: string): Crumb[] {
-  const crumbs: Crumb[] = [{ href: "/dashboard", label: "لوحة التحكم" }];
+  const crumbs: Crumb[] = [{ href: "/dashboard", label: "الصفحة الرئيسية" }];
   if (pathname === "/dashboard") return crumbs;
 
   // اجمع كل البادئات المطابقة من الأعمق للأقل عمقًا ثم اعكس للعرض
@@ -65,7 +65,7 @@ function buildCrumbs(pathname: string): Crumb[] {
     crumbs.push({ href: item.prefix, label: item.label });
   }
 
-  // إن لم يُطابق شيء سوى لوحة التحكم
+  // إن لم يُطابق شيء سوى الصفحة الرئيسية
   if (crumbs.length === 1) {
     const leaf = SEGMENT_LABELS.find((item) => pathname.startsWith(item.prefix));
     if (leaf && leaf.prefix !== "/dashboard") {
@@ -77,7 +77,7 @@ function buildCrumbs(pathname: string): Crumb[] {
 }
 
 /**
- * مسار ملاحي: لوحة التحكم ← … ← الصفحة الحالية (روابط قابلة للنقر).
+ * مسار ملاحي: الصفحة الرئيسية ← … ← الصفحة الحالية (روابط قابلة للنقر).
  */
 export function TopbarBreadcrumb() {
   const pathname = usePathname() || "/dashboard";

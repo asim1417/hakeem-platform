@@ -51,7 +51,7 @@ export function SafeBackButton({ className = "" }: { className?: string }) {
   );
 }
 
-/** رابط سريع للوحة التحكم — يظهر بجانب مسار التنقّل على الجوال. */
+/** رابط سريع للصفحة الرئيسية — يظهر بجانب مسار التنقّل على الجوال. */
 export function DashboardHomeLink() {
   const pathname = usePathname() || "/dashboard";
   if (!isResponsiveUxV2Enabled()) return null;
@@ -61,11 +61,11 @@ export function DashboardHomeLink() {
     <Link
       href="/dashboard"
       className="touch-target inline-flex items-center justify-center gap-1 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-[var(--paper)] px-2.5 text-sm font-semibold text-[var(--navy)] hover:bg-[var(--cream)]"
-      aria-label="لوحة التحكم"
-      title="لوحة التحكم"
+      aria-label="الصفحة الرئيسية"
+      title="الصفحة الرئيسية"
     >
       <LayoutDashboard size={20} aria-hidden className="shrink-0" />
-      <span className="hidden md:inline">اللوحة</span>
+      <span className="hidden md:inline">الرئيسية</span>
     </Link>
   );
 }
