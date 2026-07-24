@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 
-/** أصل الموقع وقت البناء — NEXT_PUBLIC_ يُحسم عند build لا في التشغيل الحي. */
+/**
+ * أصل الروابط القانونية (canonical وغيرها) وقت البناء.
+ * NEXT_PUBLIC_ يُحسم عند build — مصدر canonical فقط، لا يتحكم وحده بـ Server Actions.
+ */
 function resolveSiteUrl() {
   const raw = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "").trim();
   const fallback = "https://hakeem-platform.vercel.app";
@@ -9,16 +12,47 @@ function resolveSiteUrl() {
   return normalized;
 }
 
-function resolveSiteHost() {
+function hostFromUrlOrHost(raw) {
+  const t = (raw || "").trim().replace(/\/+$/, "");
+  if (!t) return "";
   try {
-    return new URL(resolveSiteUrl()).host;
+    const withProto = /^https?:\/\//i.test(t) ? t : `https://${t}`;
+    return new URL(withProto).host;
   } catch {
-    return "hakeem-platform.vercel.app";
+    return t.replace(/^https?:\/\//i, "").split("/")[0] || "";
   }
 }
 
 const siteUrl = resolveSiteUrl();
-const siteHost = resolveSiteHost();
+
+/**
+ * مضيفات Server Actions — قائمة تراكمية (يُضاف بجوار الحالي لا بدله).
+ * لا تُشتق كقيمة واحدة من NEXT_PUBLIC_SITE_URL حتى لا يسقط vercel.app عند القطع.
+ * اختياري: SERVER_ACTIONS_ALLOWED_ORIGINS=host1,host2 لإضافات وقت البناء.
+ */
+function resolveServerActionOrigins() {
+  const base = [
+    "localhost:3000",
+    "hakeem-platform.vercel.app",
+    "hakeemsa.com",
+    "www.hakeemsa.com",
+  ];
+  const extras = [];
+  const fromSite = hostFromUrlOrHost(siteUrl);
+  if (fromSite) extras.push(fromSite);
+  const vercelHost = hostFromUrlOrHost(process.env.VERCEL_URL || "");
+  if (vercelHost) extras.push(vercelHost);
+  const csv = (process.env.SERVER_ACTIONS_ALLOWED_ORIGINS || "").trim();
+  if (csv) {
+    for (const part of csv.split(",")) {
+      const h = hostFromUrlOrHost(part);
+      if (h) extras.push(h);
+    }
+  }
+  return Array.from(new Set([...base, ...extras]));
+}
+
+const serverActionOrigins = resolveServerActionOrigins();
 
 const nextConfig = {
   // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل)
@@ -36,8 +70,7 @@ const nextConfig = {
     // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
     instrumentationHook: true,
     serverActions: {
-      // تطوير محلي + مضيف الموقع من NEXT_PUBLIC_SITE_URL (وقت البناء)
-      allowedOrigins: Array.from(new Set(["localhost:3000", siteHost]))
+      allowedOrigins: serverActionOrigins
     }
   },
   // ترويسات أمنية على كل المسارات. القفل الصارم على object/base/form/frame؛

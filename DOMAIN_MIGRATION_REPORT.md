@@ -18,7 +18,7 @@
    - `NEXT_PUBLIC_SITE_URL` → ثم `NEXTAUTH_URL` → ثم `DEFAULT_SITE_URL`
 2. استبدال الترميز الصلب في المسارات التشغيلية (SEO / بريد / إحالات / إعدادات أدمن).
 3. `metadataBase` في `app/layout.tsx`.
-4. CSP و`serverActions.allowedOrigins` في `next.config.mjs` تقرآن أصل الموقع **وقت البناء** مع الإبقاء على نطاقات Clerk كما هي.
+4. CSP في `next.config.mjs` تُبنى وقت البناء مع الإبقاء على نطاقات Clerk؛ أما `serverActions.allowedOrigins` فـ**قائمة تراكمية** (vercel.app + hakeemsa.com + www + localhost + `VERCEL_URL` + extras) — لا تُستبدل بـ `NEXT_PUBLIC_SITE_URL`.
 5. توثيق المتغير في `.env.example` للبيئات الثلاث.
 6. إكمال نواقص جرد المرحلة صفر (أدناه + تحديث `DOMAIN_MIGRATION_AUDIT.md`).
 7. اختبار: `scripts/test-site-url.ts`.
@@ -33,7 +33,7 @@
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | **وقت البناء (build)** — يُضمَّن في الحزمة | تغيير القيمة في لوحة Vercel **alone لا يكفي**؛ يلزم **إعادة نشر** لكل بيئة تتأثر |
 | CSP في `next.config.mjs` | **وقت البناء** (`headers()` تُقيَّم عند بناء Next) | نفس الحكم: إعادة نشر بعد ضبط المتغير |
-| `serverActions.allowedOrigins` | **وقت البناء** | نفس الحكم |
+| `serverActions.allowedOrigins` | **وقت البناء — قائمة تراكمية ثابتة + إضافات** | يبقى `hakeem-platform.vercel.app` و`hakeemsa.com` معًا؛ تبديل `NEXT_PUBLIC_SITE_URL` لا يُسقط النطاق القديم |
 | `getSiteUrl()` على الخادم (RSC / Route Handlers) | يقرأ `process.env` وقت التشغيل إن وُجدت القيمة في بيئة الدالة | مع ذلك `NEXT_PUBLIC_*` على العميل مضمونة وقت البناء — اعتمد إعادة النشر دائمًا عند تغيير النطاق |
 
 **الخلاصة الصريحة:** التحول النهائي إلى `hakeemsa.com` يستلزم: ضبط المتغير في البيئات الثلاث **ثم إعادة نشر**، لا مجرد تعديل قيمة env.

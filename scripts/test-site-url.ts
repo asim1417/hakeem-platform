@@ -49,6 +49,20 @@ const nextCfg = read("next.config.mjs");
 assert.ok(nextCfg.includes("NEXT_PUBLIC_SITE_URL"));
 assert.ok(nextCfg.includes("*.clerk.accounts.dev"), "Clerk CSP hosts must remain");
 assert.ok(nextCfg.includes("clerk.shared.lcl.dev"), "Clerk lcl.dev must remain");
+// allowedOrigins تراكمية — لا قيمة واحدة من SITE_URL
+assert.ok(nextCfg.includes("hakeem-platform.vercel.app"), "current host must stay in Server Actions list");
+assert.ok(nextCfg.includes("hakeemsa.com"), "new host must be alongside current");
+assert.ok(nextCfg.includes("resolveServerActionOrigins"), "cumulative origins helper required");
+assert.ok(
+  !nextCfg.includes('allowedOrigins: Array.from(new Set(["localhost:3000", siteHost]))'),
+  "must not derive allowedOrigins from a single siteHost"
+);
+
+const siteUrlSrc = read("lib/modules/config/site-url.ts");
+assert.ok(
+  siteUrlSrc.includes("قيمة احتياط") || siteUrlSrc.includes("ليست مصدر الحقيقة"),
+  "DEFAULT_SITE_URL must be documented as fallback only"
+);
 
 for (const rel of [
   "app/sitemap.ts",

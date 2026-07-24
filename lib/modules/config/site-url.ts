@@ -1,9 +1,13 @@
 /**
- * أصل الموقع الموحّد — كل الروابط المطلقة تُشتق منه.
+ * أصل الموقع للروابط القانونية (canonical / sitemap / بريد / إحالات).
+ * المصدر التشغيلي: NEXT_PUBLIC_SITE_URL (ثم NEXTAUTH_URL).
  * يُقرأ وقت البناء للعميل (NEXT_PUBLIC_) ووقت التشغيل للخادم.
  *
- * الاحتياط الثابت يبقى النطاق الحالي حتى لا يتغيّر السلوك قبل ضبط المتغير.
+ * ملاحظة: serverActions.allowedOrigins قائمة تراكمية منفصلة في next.config.mjs
+ * ولا تُستبدل بهذا المتغير.
  */
+
+/** قيمة احتياط فقط عند غياب المتغير — ليست مصدر الحقيقة للنطاق. */
 export const DEFAULT_SITE_URL = "https://hakeem-platform.vercel.app";
 
 function normalizeSiteUrl(raw: string): string {
@@ -13,7 +17,7 @@ function normalizeSiteUrl(raw: string): string {
   return trimmed;
 }
 
-/** أصل الموقع المطلق بلا شرطة ختامية. */
+/** أصل الموقع المطلق بلا شرطة ختامية — للـ canonical والروابط المطلقة فقط. */
 export function getSiteUrl(): string {
   const fromEnv = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "").trim();
   return normalizeSiteUrl(fromEnv || DEFAULT_SITE_URL);
@@ -26,7 +30,7 @@ export function absoluteUrl(path = "/"): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** مضيف الموقع فقط (بدون بروتوكول) — لـ serverActions.allowedOrigins وغيرها. */
+/** مضيف من getSiteUrl() — للعرض/التشخيص؛ ليس قائمة Server Actions. */
 export function getSiteHost(): string {
   try {
     return new URL(getSiteUrl()).host;
