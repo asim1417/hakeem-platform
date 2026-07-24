@@ -20,7 +20,7 @@ export default async function AdminInboxPage() {
       <p className="text-sm font-semibold text-[#8B6914]">السوبر أدمن</p>
       <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">صندوق المراسلات</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
-        هنا تصل رسائل العملاء من زر «تواصل معنا» — مع اسم المرسل وبريده في كل محادثة.{" "}
+        هنا تصل رسائل العملاء من زر «الدعم» داخل المنصة — مع اسم المرسل وبريده في كل محادثة.{" "}
         {unread > 0 ? (
           <span className="font-semibold text-[#8B6914]">
             {unread.toLocaleString("ar-SA")} غير مقروءة

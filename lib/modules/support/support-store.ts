@@ -412,3 +412,22 @@ export async function countUnreadForAdmin(): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * عداد غير مقروء للعميل — لا ينشئ خيطًا ولا يصفّر العداد.
+ * للشارة على زر «تواصل معنا» والويدجت مغلق.
+ */
+export async function countUnreadForUser(userId: string): Promise<number> {
+  if (!(await ensure()) || !userId) return 0;
+  try {
+    const rows = (await prisma.$queryRawUnsafe(
+      `SELECT COALESCE(SUM("unread_user"),0)::int AS n
+         FROM "support_threads"
+        WHERE "user_id" = $1 AND "status" = 'open'`,
+      userId
+    )) as Array<{ n: number }>;
+    return Number(rows[0]?.n) || 0;
+  } catch {
+    return 0;
+  }
+}

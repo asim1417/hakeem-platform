@@ -59,4 +59,7 @@ assert.ok(appShell.includes('user.role !== "SUPER_ADMIN"'));
 const nav = read("components/admin/AdminNav.tsx");
 assert.ok(nav.includes("صندوق المراسلات"));
 
+const widget = read("components/support/SupportChatWidget.tsx");
+assert.ok(widget.includes("peek=1") || widget.includes("/api/support/thread"));
+
 console.log("test-support-inbox-light: OK");
