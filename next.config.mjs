@@ -5,6 +5,12 @@ const nextConfig = {
     "/search": ["./data/legal-bm25-index.json.gz"],
     "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
   },
+  // أحدث ممارسات Next: ضغط + إزالة X-Powered-By + صور حديثة
+  poweredByHeader: false,
+  compress: true,
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   experimental: {
     // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
     instrumentationHook: true,
