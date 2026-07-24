@@ -2,15 +2,17 @@ import { getCurrentUser } from "@/lib/modules/auth/session";
 import { resolvePostLoginNext } from "@/lib/modules/auth/home-destination";
 import { redirect } from "next/navigation";
 import { AuthContinueClient } from "@/components/auth/AuthContinueClient";
-import { claimSessionFromClerkReturn } from "@/lib/modules/auth/claim-clerk-return";
+import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 
 export const dynamic = "force-dynamic";
 
 /**
- * بعد OAuth:
- * 1) جلسة موجودة → وجهة حسب الدور (سوبر → /admin)
- * 2) معاملات Clerk handshake / db_jwt → تثبيت hakeem_session
- * 3) وإلا انتظار محايد على العميل (بلا فشل كاذب)
+ * بعد OAuth (Google الأصلي أو Clerk):
+ * 1) إن وُجدت معاملات handshake → Route Handler يثبت الكوكي (لا cookies().set من RSC)
+ * 2) جلسة موجودة → وجهة حسب الدور
+ * 3) وإلا انتظار محايد على العميل
+ *
+ * بدون مزوّد الجلسة على العميل في هذا المسار — يمنع انهيار iPhone → global-error.
  */
 export default async function AuthContinuePage({
   searchParams,
@@ -22,34 +24,30 @@ export default async function AuthContinuePage({
     __clerk_db_jwt?: string;
   };
 }) {
+  const nextSafe = safeDashboardNext(searchParams?.next, "/dashboard");
   const hasHandshake = Boolean(
     searchParams?.__clerk_handshake_nonce ||
       searchParams?.__clerk_handshake ||
       searchParams?.__clerk_db_jwt
   );
 
-  let user = null as Awaited<ReturnType<typeof getCurrentUser>>;
-
-  // إن وُجدت معاملات عودة Clerk — حاول المطالبة قبل قراءة الجلسة العادية
   if (hasHandshake) {
-    user = await claimSessionFromClerkReturn({
-      handshakeNonce: searchParams?.__clerk_handshake_nonce,
-      handshakeToken: searchParams?.__clerk_handshake,
-      sessionJwt: searchParams?.__clerk_db_jwt,
-    }).catch(() => null);
-  }
-  if (!user) {
-    user = await getCurrentUser().catch(() => null);
-  }
-  if (!user && !hasHandshake) {
-    user = await claimSessionFromClerkReturn({
-      handshakeNonce: searchParams?.__clerk_handshake_nonce,
-      handshakeToken: searchParams?.__clerk_handshake,
-      sessionJwt: searchParams?.__clerk_db_jwt,
-    }).catch(() => null);
+    const q = new URLSearchParams();
+    q.set("next", nextSafe);
+    if (searchParams?.__clerk_handshake_nonce) {
+      q.set("__clerk_handshake_nonce", searchParams.__clerk_handshake_nonce);
+    }
+    if (searchParams?.__clerk_handshake) {
+      q.set("__clerk_handshake", searchParams.__clerk_handshake);
+    }
+    if (searchParams?.__clerk_db_jwt) {
+      q.set("__clerk_db_jwt", searchParams.__clerk_db_jwt);
+    }
+    redirect(`/api/auth/claim-clerk-return?${q.toString()}`);
   }
 
-  const next = resolvePostLoginNext(user, searchParams?.next);
+  const user = await getCurrentUser().catch(() => null);
+  const next = resolvePostLoginNext(user, nextSafe);
 
   if (user) {
     redirect(next);

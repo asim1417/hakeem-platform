@@ -36,7 +36,20 @@ assert.ok(oauthStart.includes("getGoogleOAuthConfig"));
 assert.ok(oauthStart.includes("/api/auth/google"));
 
 const continuePage = fs.readFileSync(path.join(root, "app/auth/continue/page.tsx"), "utf8");
-assert.ok(continuePage.includes("claimSessionFromClerkReturn"));
+assert.ok(continuePage.includes("getCurrentUser"));
+assert.ok(continuePage.includes("/api/auth/claim-clerk-return"));
+assert.equal(continuePage.includes("claimSessionFromClerkReturn"), false);
+assert.equal(continuePage.includes('from "@/components/providers/ClerkRoot"'), false);
+
+const claimApi = fs.readFileSync(
+  path.join(root, "app/api/auth/claim-clerk-return/route.ts"),
+  "utf8"
+);
+assert.ok(claimApi.includes("claimSessionFromClerkReturn"));
+assert.ok(claimApi.includes("attachLoginSessionCookie") || claimApi.includes("mirrorLoginSessionCookie"));
+
+const authLayout = fs.readFileSync(path.join(root, "app/auth/layout.tsx"), "utf8");
+assert.equal(authLayout.includes('from "@/components/providers/ClerkRoot"'), false);
 
 const buttons = fs.readFileSync(path.join(root, "components/auth/AuthOauthButtons.tsx"), "utf8");
 assert.ok(buttons.includes("isGoogleOAuthConfigured"));

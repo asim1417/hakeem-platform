@@ -15,8 +15,8 @@ assert.ok(layout.includes("BootWatchdog"));
 const clerkRoot = fs.readFileSync(path.join(root, "components/providers/ClerkRoot.tsx"), "utf8");
 assert.ok(clerkRoot.includes("ClerkAppProvider"));
 
-// /sign-in و /sign-up بلا ClerkRoot — أزرار SSR + OAuth من الخادم
-for (const rel of ["app/sign-in/layout.tsx", "app/sign-up/layout.tsx"]) {
+// /sign-in و /sign-up و /auth بلا Clerk على العميل — OAuth/جلسة من الخادم
+for (const rel of ["app/sign-in/layout.tsx", "app/sign-up/layout.tsx", "app/auth/layout.tsx"]) {
   const src = fs.readFileSync(path.join(root, rel), "utf8");
   assert.equal(
     src.includes('from "@/components/providers/ClerkRoot"'),
@@ -27,7 +27,6 @@ for (const rel of ["app/sign-in/layout.tsx", "app/sign-up/layout.tsx"]) {
 
 for (const rel of [
   "app/sso-callback/layout.tsx",
-  "app/auth/layout.tsx",
   "app/dashboard/layout.tsx",
   "app/admin/layout.tsx",
   "app/onboarding/layout.tsx",
@@ -37,6 +36,8 @@ for (const rel of [
   const src = fs.readFileSync(path.join(root, rel), "utf8");
   assert.ok(src.includes("ClerkRoot"), `missing ClerkRoot in ${rel}`);
 }
+
+assert.ok(fs.existsSync(path.join(root, "app/auth/error.tsx")), "auth error boundary required");
 
 const docs = fs.readFileSync(path.join(root, "app/documents/layout.tsx"), "utf8");
 assert.ok(docs.includes("ServiceExitBar"));
@@ -55,5 +56,6 @@ assert.ok(mw.includes("isClerkMiddlewareBypass"));
 assert.ok(mw.includes("/sign-in(.*)"));
 assert.ok(mw.includes("/auth/continue(.*)"));
 assert.ok(mw.includes("/sso-callback(.*)"));
+assert.ok(mw.includes("/api/auth/claim-clerk-return(.*)"));
 
 console.log("test-clerk-off-home: OK");

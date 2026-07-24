@@ -20,6 +20,7 @@ assert.ok(/slowAfterAttempts\s*=\s*\d+/.test(continueClient) || continueClient.i
 const mw = read("middleware.ts");
 assert.ok(mw.includes("/auth/continue(.*)"));
 assert.ok(mw.includes("/sso-callback(.*)"));
+assert.ok(mw.includes("/api/auth/claim-clerk-return(.*)"));
 
 const callback = read("app/api/auth/callback/google/route.ts");
 assert.ok(callback.includes("attachLoginSessionCookie") || callback.includes("mirrorLoginSessionCookie"));
@@ -30,8 +31,19 @@ assert.ok(session.includes("attachLoginSessionCookie"));
 assert.ok(session.includes("mirrorLoginSessionCookie"));
 
 const continuePage = read("app/auth/continue/page.tsx");
-assert.ok(continuePage.includes("sessionJwt"));
-assert.ok(continuePage.includes("__clerk_db_jwt"));
+assert.ok(continuePage.includes("/api/auth/claim-clerk-return"));
+assert.equal(continuePage.includes("claimSessionFromClerkReturn"), false);
+assert.ok(continuePage.includes("getCurrentUser"));
+
+const claimApi = read("app/api/auth/claim-clerk-return/route.ts");
+assert.ok(claimApi.includes("claimSessionFromClerkReturn"));
+
+const authLayout = read("app/auth/layout.tsx");
+assert.equal(authLayout.includes('from "@/components/providers/ClerkRoot"'), false);
+
+const authError = read("app/auth/error.tsx");
+assert.ok(authError.includes("تعذّر إكمال تسجيل الدخول"));
+assert.equal(authError.includes("تعذّر فتح الصفحة"), false);
 
 const sso = read("components/auth/SsoCallbackClient.tsx");
 assert.equal(sso.includes("FALLBACK_MS"), false);
