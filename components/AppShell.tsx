@@ -13,6 +13,7 @@ import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { DashboardHomeLink, SafeBackButton } from "@/components/nav/SafeBackButton";
 import { ScrollRestorer } from "@/components/nav/ScrollRestorer";
+import { SupportChatWidget } from "@/components/support/SupportChatWidget";
 import { getTranslator } from "@/lib/i18n/server";
 import { DIR, LOCALE_LABEL } from "@/lib/i18n/dictionaries";
 import type { LucideIcon } from "lucide-react";
@@ -166,6 +167,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </footer>
       </main>
+      {/* تواصل خفيف عميل↔سوبر — يظهر لكل مستخدم مسجّل داخل الغلاف */}
+      {user ? <SupportChatWidget /> : null}
     </div>
   );
 }

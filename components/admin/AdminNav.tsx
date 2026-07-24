@@ -6,6 +6,7 @@ const SUPER_LINKS = [
   { href: "/admin/jobs", label: "المهام" },
   { href: "/admin/billing", label: "الفوترة" },
   { href: "/admin/reports", label: "البلاغات" },
+  { href: "/admin/inbox", label: "التواصل" },
   { href: "/admin/audit", label: "التدقيق" },
   { href: "/admin/users", label: "المستخدمون" },
   { href: "/admin/roles", label: "الأدوار" },
