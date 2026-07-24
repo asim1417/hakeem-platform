@@ -15,12 +15,10 @@ const HakeemAskWorkspace = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="flex min-h-[48vh] items-center justify-center text-sm text-[var(--ink-60)]"
+        className="min-h-[48vh] rounded-[var(--r-xl)] bg-[var(--hakeem-bg-soft)]"
         aria-busy="true"
         aria-label="جارٍ تجهيز مساحة اسأل حكيم"
-      >
-        جارٍ تجهيز مساحة السؤال…
-      </div>
+      />
     ),
   }
 );

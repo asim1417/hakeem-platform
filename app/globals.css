@@ -2290,7 +2290,7 @@ body {
   margin: 0.55rem 0 0;
   font-size: 0.8rem;
   line-height: 1.7;
-  color: var(--ink-60);
+  color: var(--ink-70);
   text-align: right;
 }
 .guest-ask__error {
@@ -2303,7 +2303,7 @@ body {
 .guest-ask__auth {
   margin: 0.85rem 0 0;
   font-size: 0.85rem;
-  color: var(--ink-60);
+  color: var(--ink-80);
   text-align: center;
 }
 .guest-ask__auth-link {

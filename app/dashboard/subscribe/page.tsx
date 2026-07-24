@@ -103,7 +103,7 @@ export default async function SubscribePage({
           href="/dashboard"
           className="focus-ring inline-flex min-h-[44px] items-center rounded-[var(--r-md)] bg-[var(--petrol)] px-5 py-2.5 text-sm font-semibold text-white"
         >
-          العودة إلى لوحة التحكم
+          العودة إلى الصفحة الرئيسية
         </Link>
       </div>
     </div>
