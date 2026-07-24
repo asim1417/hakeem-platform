@@ -16,7 +16,7 @@ const ar: Dict = {
   "brand.tagline": "منصة المحاكاة القضائية السعودية",
   "nav.home": "الرئيسية",
   "nav.search": "البحث الشامل",
-  "nav.cases": "الدعاوى",
+  "nav.cases": "القضايا",
   "nav.consultations": "الاستشارات",
   "nav.attachments": "المرفقات",
   "nav.docPlatform": "منصة الوثائق",

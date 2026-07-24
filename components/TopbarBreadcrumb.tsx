@@ -31,7 +31,7 @@ const SEGMENT_LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "/dashboard/billing", label: "الحساب والرصيد" },
   { prefix: "/dashboard/subscribe", label: "الاشتراك" },
   { prefix: "/dashboard/lab", label: "المختبر" },
-  { prefix: "/dashboard", label: "لوحة التحكم" },
+  { prefix: "/dashboard", label: "اسأل حكيم" },
   { prefix: "/admin/ai", label: "إعدادات الذكاء" },
   { prefix: "/admin/owner", label: "حساب المالك" },
   { prefix: "/admin/users", label: "المستخدمون" },

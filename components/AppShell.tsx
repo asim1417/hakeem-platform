@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   BookOpen,
   Bot,
+  ClipboardList,
   FileText,
   FolderClosed,
   Gavel,
@@ -53,14 +54,14 @@ const legacyNavItems: NavItem[] = [
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
 ];
 
-/** Ask-first: الرئيسية = اسأل حكيم، ومساحة العمل الكاملة تحت /dashboard/ask */
+/** Ask-first: اسأل حكيم = /dashboard فقط — لا رابط مكرر لـ /dashboard/ask */
 const askFirstNavItems: NavItem[] = [
   { href: "/dashboard", key: "nav.ask", icon: Sparkles },
-  { href: "/dashboard/ask", key: "nav.workspace", icon: LayoutDashboard },
+  { href: "/dashboard/cases", key: "nav.cases", icon: ClipboardList },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
-  { href: "/documents", key: "nav.docPlatform", icon: FileText },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
+  { href: "/documents", key: "nav.docPlatform", icon: FileText },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
   { href: "/dashboard/agents", key: "nav.agents", icon: Bot },
