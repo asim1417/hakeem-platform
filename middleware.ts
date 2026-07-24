@@ -69,9 +69,11 @@ function getClerkHandler(): ClerkMw {
     }
 
     if (isProtectedRoute(request)) {
+      // حافظ على query (مثل platform=1 لنافذة المنصة) في next=
+      const nextTarget = `${request.nextUrl.pathname}${request.nextUrl.search}`;
       await auth.protect({
         unauthenticatedUrl: new URL(
-          `/sign-in?next=${encodeURIComponent(request.nextUrl.pathname)}`,
+          `/sign-in?next=${encodeURIComponent(nextTarget)}`,
           request.url
         ).toString(),
       });
