@@ -140,7 +140,7 @@ export function AdminSupportInbox({
         <ul className="max-h-[70vh] divide-y divide-[rgba(14,52,53,0.06)] overflow-y-auto">
           {threads.length === 0 ? (
             <li className="p-4 text-sm leading-7 text-[rgba(14,52,53,0.55)]">
-              لا رسائل بعد. عندما يكتب عميل من «تواصل معنا» تظهر هنا مع اسمه وبريده.
+              لا رسائل بعد. عندما يكتب عميل من زر «الدعم» تظهر هنا مع اسمه وبريده.
             </li>
           ) : (
             threads.map((t) => (

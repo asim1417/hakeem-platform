@@ -38,7 +38,7 @@ export async function notifyUserSupportReply(opts: {
     <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#0E3435">
       <p>وصلك رد من دعم حكيم:</p>
       <p style="white-space:pre-wrap;background:#F7F2EA;padding:12px;border-radius:8px">${escapeHtml(opts.preview)}</p>
-      <p><a href="${APP_URL}/dashboard">افتح المنصة للمتابعة</a></p>
+      <p><a href="${APP_URL}/dashboard">افتح المنصة ثم زر «الدعم» أسفل الصفحة لقراءة الرد</a></p>
     </div>`;
   await sendEmail({
     to: opts.to,

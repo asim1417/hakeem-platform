@@ -18,12 +18,16 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           حدث خطأ غير متوقّع
         </h1>
         <p className="mt-3 leading-8 text-[var(--ink-60)]">
-          واجهت المنصة مشكلة أثناء معالجة طلبك. يمكنك إعادة المحاولة، فإن تكرّر الأمر فتواصل مع الدعم.
+          واجهت المنصة مشكلة أثناء معالجة طلبك. يمكنك إعادة المحاولة، فإن تكرّر الأمر سجّل الدخول
+          واستخدم زر «الدعم» أسفل الصفحة بعد الدخول.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button onClick={reset} className="btn btn-gold">إعادة المحاولة</button>
           <a href="/" className="btn btn-outline">
             الصفحة الرئيسية
+          </a>
+          <a href="/dashboard" className="btn btn-outline">
+            لوحة التحكم والدعم
           </a>
           <a href="/sign-in" className="btn btn-outline">
             تسجيل الدخول

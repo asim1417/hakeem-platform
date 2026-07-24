@@ -3,11 +3,13 @@ import { z } from "zod";
 import { getApiUser } from "@/lib/modules/auth/session";
 import {
   appendMessage,
+  countUnreadForUser,
   getOrCreateOpenThread,
   listMessages,
   markReadByUser,
 } from "@/lib/modules/support/support-store";
 import { notifyAdminNewSupportMessage } from "@/lib/modules/support/notify";
+import { consumeSupportSendLimit } from "@/lib/modules/support/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +18,20 @@ const sendSchema = z.object({
   subject: z.string().trim().max(200).optional(),
 });
 
-/** GET — خيط المستخدم المفتوح + الرسائل. */
+/**
+ * GET — خيط المستخدم + الرسائل (يفتح/يُنشئ عند الحاجة ويصفّر غير المقروء).
+ * GET ?peek=1 — عداد غير مقروء فقط بلا إنشاء خيط وبلا تعليم كمقروء.
+ */
 export async function GET(request: NextRequest) {
   const user = await getApiUser(request);
   if (!user?.isActive) {
     return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
+  }
+
+  const peek = request.nextUrl.searchParams.get("peek") === "1";
+  if (peek) {
+    const unread = await countUnreadForUser(user.id);
+    return NextResponse.json({ ok: true, unread });
   }
 
   const thread = await getOrCreateOpenThread(user.id, {
@@ -45,6 +56,20 @@ export async function POST(request: NextRequest) {
   const user = await getApiUser(request);
   if (!user?.isActive) {
     return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
+  }
+
+  const rl = consumeSupportSendLimit(user.id);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "أرسلت عددًا كبيرًا من الرسائل. انتظر دقيقة ثم أعد المحاولة.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rl.retryAfterSec) },
+      }
+    );
   }
 
   const parsed = sendSchema.safeParse(await request.json().catch(() => null));
