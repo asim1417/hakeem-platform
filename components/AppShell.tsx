@@ -14,6 +14,7 @@ import {
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
+import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 import { isPlatformAdmin } from "@/lib/modules/auth/super-admin";
 import { getNavVisibility } from "@/lib/modules/admin/nav-visibility";
 import { isPaidCheckoutUiEnabled } from "@/lib/modules/billing/checkout-visibility";
@@ -40,8 +41,7 @@ type NavItem = {
   active?: boolean;
 };
 
-// قائمة مسطّحة — «اسأل حكيم» ظاهر بوضوح كمدخل رئيسي.
-const baseNavItems: NavItem[] = [
+const legacyNavItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
@@ -51,6 +51,19 @@ const baseNavItems: NavItem[] = [
   { href: "/documents", key: "nav.docPlatform", icon: FileText },
   { href: "/dashboard/agents", key: "nav.agents", icon: Bot },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
+];
+
+/** Ask-first: الرئيسية = اسأل حكيم، ومساحة العمل الكاملة تحت /dashboard/ask */
+const askFirstNavItems: NavItem[] = [
+  { href: "/dashboard", key: "nav.ask", icon: Sparkles },
+  { href: "/dashboard/ask", key: "nav.workspace", icon: LayoutDashboard },
+  { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
+  { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
+  { href: "/documents", key: "nav.docPlatform", icon: FileText },
+  { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
+  { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
+  { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
+  { href: "/dashboard/agents", key: "nav.agents", icon: Bot },
 ];
 
 const adminNavItem: NavItem = { href: "/admin", key: "nav.platformAdmin", icon: Settings };
@@ -77,6 +90,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     simulations: true,
     traditionalSearch: TRADITIONAL_SEARCH_ENABLED,
   }));
+  const baseNavItems = isAskFirstHomeEnabled() ? askFirstNavItems : legacyNavItems;
   const visibleNav = baseNavItems.filter((i) => {
     if (i.href === "/dashboard/legal-search") return navVisibility.traditionalSearch;
     if (i.href === "/dashboard/agents") return navVisibility.agents;

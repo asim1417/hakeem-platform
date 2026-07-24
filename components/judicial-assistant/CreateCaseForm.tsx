@@ -1,9 +1,10 @@
 "use client";
 
 // إنشاء قضية (مشروع/مجلّد) يملكها القاضي — لا موصل «تقاضي». المدخل بيانات المستخدم.
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { JaIcon } from "./icons";
+import { ASK_TO_CASE_HANDOFF_KEY } from "@/lib/modules/config/ask-first-home";
 
 const JURISDICTIONS = [
   { v: "general", l: "عامّ" }, { v: "commercial", l: "تجاريّ" }, { v: "labor", l: "عمّاليّ" },
@@ -17,6 +18,24 @@ export function CreateCaseForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ subject: "", caseNumber: "", court: "", circuit: "", jurisdiction: "general", confidentiality: "normal" });
+  const [factsNote, setFactsNote] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ASK_TO_CASE_HANDOFF_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(ASK_TO_CASE_HANDOFF_KEY);
+      const data = JSON.parse(raw) as { subject?: string; factsNote?: string };
+      const subject = typeof data.subject === "string" ? data.subject.trim() : "";
+      const note = typeof data.factsNote === "string" ? data.factsNote.trim() : "";
+      if (!subject && !note) return;
+      setOpen(true);
+      setForm((f) => ({ ...f, subject: subject || note.slice(0, 120) }));
+      if (note) setFactsNote(note);
+    } catch {
+      /* تجاهل */
+    }
+  }, []);
 
   function upd(k: keyof typeof form, v: string) { setForm((f) => ({ ...f, [k]: v })); }
 
@@ -53,6 +72,18 @@ export function CreateCaseForm() {
           <span>موضوع القضية *</span>
           <input value={form.subject} onChange={(e) => upd("subject", e.target.value)} placeholder="مثال: مطالبة بقيمة عقد توريد" required />
         </label>
+        {factsNote ? (
+          <label className="ja-field ja-field--wide">
+            <span>سياق من «اسأل حكيم» (للمراجعة)</span>
+            <textarea
+              value={factsNote}
+              onChange={(e) => setFactsNote(e.target.value)}
+              rows={4}
+              className="ja-field__textarea"
+              aria-label="سياق السؤال المحوّل من اسأل حكيم"
+            />
+          </label>
+        ) : null}
         <label className="ja-field"><span>رقم القضية</span><input value={form.caseNumber} onChange={(e) => upd("caseNumber", e.target.value)} placeholder="اختياريّ" /></label>
         <label className="ja-field"><span>المحكمة</span><input value={form.court} onChange={(e) => upd("court", e.target.value)} placeholder="اختياريّ" /></label>
         <label className="ja-field"><span>الدائرة</span><input value={form.circuit} onChange={(e) => upd("circuit", e.target.value)} placeholder="اختياريّ" /></label>

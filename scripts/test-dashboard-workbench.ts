@@ -22,10 +22,15 @@ const wb = read("components/dashboard/DashboardWorkbench.tsx");
 assert.ok(wb.includes('className="wb-brand"'));
 assert.ok(wb.includes("حكيم"));
 assert.ok(wb.includes("HomeAskSurface") || wb.includes("CenterSearch"));
-assert.ok(wb.includes("ماذا تعمل الآن") || wb.includes("ابدأ من الواقعة"));
+assert.ok(
+  wb.includes("ماذا تعمل الآن") ||
+    wb.includes("ابدأ من الواقعة") ||
+    wb.includes("ابدأ بسؤالك القانوني")
+);
 assert.ok(wb.includes("/dashboard/ask"));
 assert.ok(wb.includes("/dashboard/judicial-assistant"));
 assert.ok(wb.includes("فتح قضية"));
+assert.ok(wb.includes("isAskFirstHomeEnabled") || wb.includes("HomeAskSurface"));
 
 const css = read("app/globals.css");
 assert.ok(css.includes(".wb-stage"));
