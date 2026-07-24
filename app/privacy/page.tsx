@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { assertBuiltinPageEnabled } from "@/lib/modules/site/page-gate";
 
 export const metadata = {
   title: "سياسة الخصوصية — منصة حكيم",
   description: "سياسة الخصوصية ومعالجة البيانات الشخصية في منصة حكيم وفق نظام حماية البيانات الشخصية (PDPL).",
 };
+
+export const dynamic = "force-dynamic";
 
 const sections: Array<{ h: string; p: string[] }> = [
   {
@@ -58,7 +61,9 @@ const sections: Array<{ h: string; p: string[] }> = [
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  await assertBuiltinPageEnabled("privacy");
+
   return (
     <main dir="rtl" className="min-h-screen bg-[var(--hakeem-bg)] px-6 py-12">
       <article className="mx-auto max-w-3xl rounded-[var(--r-2xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-8 shadow-[var(--sh-md)] md:p-12">

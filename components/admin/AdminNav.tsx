@@ -3,6 +3,7 @@ import Link from "next/link";
 const SUPER_LINKS = [
   { href: "/admin", label: "مركز الإدارة" },
   { href: "/admin/inbox", label: "صندوق المراسلات" },
+  { href: "/admin/site", label: "لوحة الموقع" },
   { href: "/admin/users", label: "المستخدمون" },
   { href: "/admin/billing", label: "الفوترة" },
   { href: "/admin/jobs", label: "المهام" },

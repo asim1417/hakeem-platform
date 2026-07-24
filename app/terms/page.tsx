@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { assertBuiltinPageEnabled } from "@/lib/modules/site/page-gate";
 
 export const metadata = {
   title: "شروط الاستخدام — منصة حكيم",
   description: "شروط وأحكام استخدام منصة حكيم للمعرفة القضائية، وحدود المسؤولية المهنية.",
 };
+
+export const dynamic = "force-dynamic";
+
 
 const sections: Array<{ h: string; p: string[] }> = [
   {
@@ -61,7 +65,9 @@ const sections: Array<{ h: string; p: string[] }> = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  await assertBuiltinPageEnabled("terms");
+
   return (
     <main dir="rtl" className="min-h-screen bg-[var(--hakeem-bg)] px-6 py-12">
       <article className="mx-auto max-w-3xl rounded-[var(--r-2xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-8 shadow-[var(--sh-md)] md:p-12">
