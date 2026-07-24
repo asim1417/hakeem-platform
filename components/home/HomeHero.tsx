@@ -1,31 +1,24 @@
 import { HomeAuthActions } from "@/components/home/HomeAuthActions";
 import { hasAnySignInProvider } from "@/lib/modules/auth/auth-providers";
 import { signUpWithNext } from "@/lib/modules/auth/safe-next";
-
-const FEATURES = [
-  {
-    title: "اسأل حكيم",
-    desc: "تحليل واقعة واقتراح أساس نظامي",
-    next: "/dashboard/ask",
-  },
-  {
-    title: "المعاون القضائي",
-    desc: "مساحة قضية وتحليل متكامل",
-    next: "/dashboard/judicial-assistant",
-  },
-  {
-    title: "محاكاة قضائية",
-    desc: "تدريب على تفكير القاضي",
-    next: "/dashboard/simulations",
-  },
-] as const;
+import {
+  DEFAULT_HOME,
+  type SiteHomeContent,
+} from "@/lib/modules/site/defaults";
 
 /**
  * الصفحة الرئيسية العامة — بلا Clerk وبلا OAuth.
- * زر «تسجيل الدخول» ينتقل إلى بوابة `/sign-in` الموحّدة.
+ * النصوص قابلة للتخصيص من /admin/site مع سقوط للهوية الحالية.
  */
-export function HomeHero() {
+export function HomeHero({
+  content = DEFAULT_HOME,
+}: {
+  content?: SiteHomeContent;
+}) {
   const authReady = hasAnySignInProvider();
+  const home = content;
+  const features =
+    home.features?.length > 0 ? home.features : DEFAULT_HOME.features;
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden bg-[var(--hakeem-bg)]">
@@ -44,8 +37,8 @@ export function HomeHero() {
             ح
           </span>
           <div className="leading-tight">
-            <p className="text-lg font-bold text-[var(--navy)]">حكيم</p>
-            <p className="text-[11px] text-[var(--ink-60)]">منصة المعرفة القضائية</p>
+            <p className="text-lg font-bold text-[var(--navy)]">{home.brandName}</p>
+            <p className="text-[11px] text-[var(--ink-60)]">{home.tagline}</p>
           </div>
         </div>
 
@@ -56,7 +49,7 @@ export function HomeHero() {
                 href="/sign-in"
                 className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
               >
-                تسجيل الدخول
+                {home.ctaSecondary}
               </a>
               <a
                 href="/sign-up"
@@ -78,12 +71,14 @@ export function HomeHero() {
       </header>
 
       <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[7vh] pb-16 text-center">
-        <p className="mb-4 font-judicial text-sm font-semibold text-[var(--gold-dark)]">حكيم</p>
+        <p className="mb-4 font-judicial text-sm font-semibold text-[var(--gold-dark)]">
+          {home.brandName}
+        </p>
         <h1 className="font-judicial text-4xl font-bold leading-tight text-[var(--navy)] md:text-6xl">
-          رفيق المحامي في القاعة
+          {home.headline}
         </h1>
         <p className="mt-4 max-w-xl text-base leading-8 text-[var(--ink-60)] md:text-lg">
-          حلّل الوقائع، اقترح الدفوع، وتابع أعمالك القانونية من مكان واحد — بمصدر نظامي موثّق.
+          {home.lede}
         </p>
 
         <HomeAuthActions
@@ -93,13 +88,13 @@ export function HomeHero() {
                 href={authReady ? "/sign-up" : "/sign-in"}
                 className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--sh-sm)] transition hover:bg-[var(--navy-mid)]"
               >
-                ابدأ مجانًا
+                {home.ctaPrimary}
               </a>
               <a
                 href="/sign-in"
                 className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]"
               >
-                تسجيل الدخول
+                {home.ctaSecondary}
               </a>
             </div>
           }
@@ -121,12 +116,10 @@ export function HomeHero() {
           }
         />
 
-        <p className="mt-4 text-sm text-[var(--ink-40)]">
-          بوابة دخول موحّدة — اختر Google من صفحة الدخول الآمنة.
-        </p>
+        <p className="mt-4 text-sm text-[var(--ink-40)]">{home.footnote}</p>
 
         <ul className="mt-12 grid w-full gap-3 text-right sm:grid-cols-3">
-          {FEATURES.map((f) => (
+          {features.map((f) => (
             <li key={f.title}>
               <a
                 href={signUpWithNext(f.next)}
@@ -143,8 +136,7 @@ export function HomeHero() {
         </ul>
 
         <p className="mx-auto mt-12 max-w-xl text-xs leading-7 text-[var(--ink-40)]">
-          تنبيه مهني: مخرجات الذكاء الاصطناعي في حكيم مساعدة وتعليمية ولا تُعدّ رأيًا قانونيًا نهائيًا أو
-          حكمًا فعليًا.
+          {home.disclaimer}
         </p>
       </section>
     </main>

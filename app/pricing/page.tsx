@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { PlansGrid } from "@/components/billing/PlansGrid";
 import { PRICING } from "@/config/pricing";
+import { assertBuiltinPageEnabled } from "@/lib/modules/site/page-gate";
 
 export const metadata = {
   title: "الأسعار والخطط — حكيم",
   description: "أسعار معلنة للمحامي الفرد والمكتب — تجربة مجانية ثم اشتراك.",
 };
 
-export default function PricingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function PricingPage() {
+  await assertBuiltinPageEnabled("pricing");
   const ar = (n: number) => n.toLocaleString("ar-SA");
 
   return (
