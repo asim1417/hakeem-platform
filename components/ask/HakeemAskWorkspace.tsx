@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
+import { isBrokenExtraction } from "@/lib/modules/document-inspection/reshape";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
@@ -147,7 +148,12 @@ export function HakeemAskWorkspace({
   const [attachedDoc, setAttachedDoc] = useState("");
   useWakeLock(busy || extracting);
   const [attachedName, setAttachedName] = useState<string | null>(null);
+  const [attachKind, setAttachKind] = useState<string | null>(null);
+  const [attachStatus, setAttachStatus] = useState("");
+  const [attachError, setAttachError] = useState("");
+  const [cloudOcrAvailable, setCloudOcrAvailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const backgroundedRef = useRef(false);
   const busyRef = useRef(false);
@@ -165,6 +171,22 @@ export function HakeemAskWorkspace({
   useEffect(() => {
     turnsRef.current = turns;
   }, [turns]);
+
+  // جاهزية القراءة السحابية — نفس مسار منصة الوثائق (/api/doc-tool/ocr)
+  useEffect(() => {
+    let active = true;
+    fetch("/api/doc-tool/ocr/available")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active) setCloudOcrAvailable(Boolean(d?.configured));
+      })
+      .catch(() => {
+        if (active) setCloudOcrAvailable(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // تسليم من الرئيسية — يملأ الصندوق فقط دون تنفيذ تلقائي.
   useEffect(() => {
@@ -218,21 +240,85 @@ export function HakeemAskWorkspace({
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    event.target.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    else event.target.value = "";
     if (!file) return;
+
     setExtracting(true);
+    setAttachError("");
+    setAttachStatus("جارٍ قراءة الوثيقة بمحرّك منصة الوثائق…");
+    setAttachedDoc("");
+    setAttachedName(null);
+    setAttachKind(null);
+
     try {
-      const r = await extractFile(file);
-      if (r.text.trim()) {
-        setAttachedDoc(r.text.trim());
-        setAttachedName(file.name);
-      } else {
-        setAttachedDoc("");
-        setAttachedName(null);
+      const ext = (file.name.match(/\.([^.]+)$/)?.[1] ?? "").toLowerCase();
+      // نفس مسار المعاون/منصة الوثائق: PDF والصور عبر OCR سحابي عند التوفّر، والنص/Word محليًا.
+      const visual = /^(pdf|png|jpe?g|webp|bmp|tiff?|gif)$/.test(ext);
+      const useCloud = cloudOcrAvailable && visual;
+
+      let { text, kind, warning } = await extractFile(file, {
+        onProgress: (m) => setAttachStatus(m),
+        cloudOcr: useCloud,
+        cloudModel: "flash",
+      });
+
+      if (isBrokenExtraction(text) && cloudOcrAvailable) {
+        setAttachStatus("أرفع دقّة القراءة (قراءة بصرية أقوى)…");
+        const hi = await extractFile(file, {
+          onProgress: (m) => setAttachStatus(m),
+          cloudOcr: true,
+          cloudModel: "pro",
+        });
+        if (hi.text && hi.text.trim().length >= 2) {
+          text = hi.text;
+          kind = hi.kind;
+          warning = hi.warning;
+        }
       }
-    } catch {
+
+      const trimmed = (text || "").trim();
+      if (trimmed.length < 2) {
+        throw new Error(
+          kind
+            ? `تعذّرت قراءة نص من الملف (${kind}).`
+            : "تعذّرت قراءة نص من الملف. جرّب PDF نصيًا أو Word أو صورة أوضح."
+        );
+      }
+      if (isBrokenExtraction(trimmed)) {
+        throw new Error(
+          cloudOcrAvailable
+            ? "النص المقروء مشوّه (وثيقة ممسوحة أو خط غير قابل للنسخ). جرّب نسخة أوضح."
+            : "النص المقروء مشوّه. فعّل القراءة السحابية من إعدادات منصة الوثائق، أو أرفق نسخة نصية أوضح."
+        );
+      }
+
+      // حد الإرسال في /api/ai/agent-search للمستند = 12000 حرفًا
+      const MAX_DOC = 12000;
+      const forSend = trimmed.length > MAX_DOC ? trimmed.slice(0, MAX_DOC) : trimmed;
+      setAttachedDoc(forSend);
+      setAttachedName(file.name);
+      setAttachKind(kind);
+      setAttachStatus(
+        trimmed.length > MAX_DOC
+          ? `أُرفق المستند (${kind}) — سيُرسل أول ${MAX_DOC.toLocaleString("ar-SA")} حرفًا فقط.`
+          : warning
+            ? `أُرفق المستند (${kind}) — ${warning}`
+            : `أُرفق المستند (${kind}).`
+      );
+      setAttachError("");
+    } catch (err) {
       setAttachedDoc("");
       setAttachedName(null);
+      setAttachKind(null);
+      const m = err instanceof Error ? err.message : "";
+      const network = /load failed|failed to fetch|networkerror/i.test(m);
+      setAttachError(
+        network
+          ? "تعذّر إكمال قراءة المستند — تحقّق من الاتصال ثم أعد المحاولة."
+          : m || "تعذّر إرفاق المستند."
+      );
+      setAttachStatus("");
     } finally {
       setExtracting(false);
     }
@@ -536,6 +622,9 @@ export function HakeemAskWorkspace({
     setTurns([]);
     setAttachedDoc("");
     setAttachedName(null);
+    setAttachKind(null);
+    setAttachStatus("");
+    setAttachError("");
   }
 
   function convertToCase(question: string) {
@@ -1087,7 +1176,8 @@ export function HakeemAskWorkspace({
                 <Paperclip size={13} aria-hidden />
                 <span className="truncate font-semibold">{attachedName}</span>
                 <span className="shrink-0 text-[var(--ink-60)]">
-                  · مستند مُرفَق ({attachedDoc.length.toLocaleString("ar-SA")} حرف)
+                  · مرفق ({attachedDoc.length.toLocaleString("ar-SA")} حرف
+                  {attachKind ? ` · ${attachKind}` : ""})
                 </span>
               </span>
               <button
@@ -1095,6 +1185,9 @@ export function HakeemAskWorkspace({
                 onClick={() => {
                   setAttachedDoc("");
                   setAttachedName(null);
+                  setAttachKind(null);
+                  setAttachStatus("");
+                  setAttachError("");
                 }}
                 className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-semibold text-[var(--ink-60)] transition hover:text-[var(--ruby)]"
                 aria-label="إزالة المستند"
@@ -1102,6 +1195,16 @@ export function HakeemAskWorkspace({
                 <X size={12} aria-hidden /> إزالة
               </button>
             </div>
+          ) : null}
+          {attachStatus && !attachError ? (
+            <p className="mb-2 px-1 text-right text-xs leading-6 text-[var(--ink-60)]" aria-live="polite">
+              {attachStatus}
+            </p>
+          ) : null}
+          {attachError ? (
+            <p className="mb-2 px-1 text-right text-xs font-semibold leading-6 text-[var(--ruby)]" role="alert">
+              {attachError}
+            </p>
           ) : null}
           <textarea
             value={value}
@@ -1121,12 +1224,12 @@ export function HakeemAskWorkspace({
             className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
           />
           <div className="flex items-center justify-between gap-2 px-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setDetailed((v) => !v)}
                 aria-pressed={detailed}
-                className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                className={`focus-ring inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   detailed
                     ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
                     : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
@@ -1135,11 +1238,20 @@ export function HakeemAskWorkspace({
                 <Telescope size={14} aria-hidden /> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
               </button>
               <label
-                title="أرفق مستندًا لاستخراج نصّه محليًّا"
-                className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--ink-15)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-60)] transition hover:text-[var(--navy)]"
+                title={
+                  cloudOcrAvailable
+                    ? "قراءة بمحرّك منصة الوثائق (محلي + قراءة بصرية عند الحاجة)"
+                    : "قراءة بمحرّك منصة الوثائق محليًا في المتصفح"
+                }
+                className={`focus-ring inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  extracting
+                    ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
+                    : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
+                }`}
               >
-                <Paperclip size={14} aria-hidden /> {extracting ? "جارٍ…" : "إضافة مستند"}
+                <Paperclip size={14} aria-hidden /> {extracting ? "جارٍ القراءة…" : "إضافة مستند"}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept=".txt,.md,.csv,.json,.docx,.pdf,.png,.jpg,.jpeg,.webp"
                   className="sr-only"
@@ -1150,16 +1262,16 @@ export function HakeemAskWorkspace({
             </div>
             <button
               type="submit"
-              disabled={busy || (!value.trim() && !attachedDoc)}
-              className="focus-ring rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={busy || extracting || (!value.trim() && !attachedDoc)}
+              className="focus-ring min-h-[44px] rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitLabel}
             </button>
           </div>
         </form>
         <p className="mt-2 px-1 text-center text-[11px] leading-6 text-[var(--ink-40)]">
-          حكيم يبحث في النواة القانونية الموثّقة فقط ولا يولّد مواد غير موجودة. مخرجاته مساعدة وتعليمية
-          وليست رأيًا قانونيًا نهائيًا.
+          Enter للإرسال، وShift + Enter لسطر جديد. إرفاق المستندات يستخدم محرّك «منصة الوثائق»
+          نفسه. مخرجات حكيم مساعدة تعليمية وليست حكمًا ملزمًا.
         </p>
       </div>
     </div>
