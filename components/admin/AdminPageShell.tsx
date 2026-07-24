@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { SuperAdminShell } from "@/components/admin/SuperAdminShell";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import {
   isPlatformAdmin,
@@ -8,8 +9,9 @@ import {
 } from "@/lib/modules/auth/super-admin";
 
 /**
- * غلاف موحّد لصفحات /admin — AppShell + تنقّل حسب الدور.
- * السوبر يرى القائمة الكاملة؛ مدير النظام يرى الروابط المسموحة فقط.
+ * غلاف صفحات /admin:
+ * - السوبر → غلاف إدارة مستقل (ليس واجهة عميل)
+ * - مدير النظام → AppShell + تنقّل محدود
  */
 export async function AdminPageShell({
   currentPath,
@@ -22,13 +24,17 @@ export async function AdminPageShell({
   const showSuper = Boolean(user && isSuperAdmin(user) && isSuperAdminPanelEnabled());
   const showSystem = Boolean(user && isPlatformAdmin(user));
 
+  if (showSuper) {
+    return (
+      <SuperAdminShell currentPath={currentPath} user={user}>
+        {children}
+      </SuperAdminShell>
+    );
+  }
+
   return (
     <AppShell>
-      {showSuper ? (
-        <AdminNav currentPath={currentPath} variant="super" />
-      ) : showSystem ? (
-        <AdminNav currentPath={currentPath} variant="system" />
-      ) : null}
+      {showSystem ? <AdminNav currentPath={currentPath} variant="system" /> : null}
       {children}
     </AppShell>
   );

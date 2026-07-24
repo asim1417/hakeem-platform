@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/modules/auth/session";
-import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
+import { resolvePostLoginNext } from "@/lib/modules/auth/home-destination";
 import { redirect } from "next/navigation";
 import { AuthContinueClient } from "@/components/auth/AuthContinueClient";
 import { claimSessionFromClerkReturn } from "@/lib/modules/auth/claim-clerk-return";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * بعد OAuth:
- * 1) جلسة موجودة → لوحة التحكم
+ * 1) جلسة موجودة → وجهة حسب الدور (سوبر → /admin)
  * 2) معاملات Clerk handshake → تثبيت hakeem_session
  * 3) وإلا انتظار قصير على العميل
  */
@@ -22,8 +22,6 @@ export default async function AuthContinuePage({
     __clerk_db_jwt?: string;
   };
 }) {
-  const next = safeDashboardNext(searchParams?.next);
-
   let user = await getCurrentUser().catch(() => null);
   if (!user) {
     user = await claimSessionFromClerkReturn({
@@ -31,6 +29,8 @@ export default async function AuthContinuePage({
       handshakeToken: searchParams?.__clerk_handshake,
     }).catch(() => null);
   }
+
+  const next = resolvePostLoginNext(user, searchParams?.next);
 
   if (user) {
     redirect(next);
