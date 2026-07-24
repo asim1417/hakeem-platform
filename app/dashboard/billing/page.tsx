@@ -134,7 +134,7 @@ export default async function BillingDashboardPage() {
             href="/dashboard"
             className="focus-ring inline-flex min-h-[44px] items-center rounded-[var(--r-md)] border border-[var(--gold-border)] px-5 py-2.5 text-sm font-semibold text-[var(--navy)]"
           >
-            العودة إلى لوحة التحكم
+            العودة إلى الصفحة الرئيسية
           </Link>
         </div>
       </section>
