@@ -34,6 +34,9 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/privacy(.*)",
   "/terms(.*)",
   "/legal(.*)",
+  // إكمال OAuth — عزل عن clerkMiddleware يمنع وميض الفشل مع dev-browser-missing
+  "/auth/continue(.*)",
+  "/sso-callback(.*)",
   "/api/auth/oauth/start(.*)",
   "/api/auth/google(.*)",
   "/api/auth/callback/google(.*)",

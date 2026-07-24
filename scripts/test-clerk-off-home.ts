@@ -53,5 +53,7 @@ assert.equal(
 const mw = fs.readFileSync(path.join(root, "middleware.ts"), "utf8");
 assert.ok(mw.includes("isClerkMiddlewareBypass"));
 assert.ok(mw.includes("/sign-in(.*)"));
+assert.ok(mw.includes("/auth/continue(.*)"));
+assert.ok(mw.includes("/sso-callback(.*)"));
 
 console.log("test-clerk-off-home: OK");

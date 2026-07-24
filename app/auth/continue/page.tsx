@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 /**
  * بعد OAuth:
  * 1) جلسة موجودة → وجهة حسب الدور (سوبر → /admin)
- * 2) معاملات Clerk handshake → تثبيت hakeem_session
- * 3) وإلا انتظار قصير على العميل
+ * 2) معاملات Clerk handshake / db_jwt → تثبيت hakeem_session
+ * 3) وإلا انتظار محايد على العميل (بلا فشل كاذب)
  */
 export default async function AuthContinuePage({
   searchParams,
@@ -22,11 +22,30 @@ export default async function AuthContinuePage({
     __clerk_db_jwt?: string;
   };
 }) {
-  let user = await getCurrentUser().catch(() => null);
-  if (!user) {
+  const hasHandshake = Boolean(
+    searchParams?.__clerk_handshake_nonce ||
+      searchParams?.__clerk_handshake ||
+      searchParams?.__clerk_db_jwt
+  );
+
+  let user = null as Awaited<ReturnType<typeof getCurrentUser>>;
+
+  // إن وُجدت معاملات عودة Clerk — حاول المطالبة قبل قراءة الجلسة العادية
+  if (hasHandshake) {
     user = await claimSessionFromClerkReturn({
       handshakeNonce: searchParams?.__clerk_handshake_nonce,
       handshakeToken: searchParams?.__clerk_handshake,
+      sessionJwt: searchParams?.__clerk_db_jwt,
+    }).catch(() => null);
+  }
+  if (!user) {
+    user = await getCurrentUser().catch(() => null);
+  }
+  if (!user && !hasHandshake) {
+    user = await claimSessionFromClerkReturn({
+      handshakeNonce: searchParams?.__clerk_handshake_nonce,
+      handshakeToken: searchParams?.__clerk_handshake,
+      sessionJwt: searchParams?.__clerk_db_jwt,
     }).catch(() => null);
   }
 
@@ -41,6 +60,8 @@ export default async function AuthContinuePage({
       className="grid min-h-[100dvh] place-items-center bg-[#F7F4EE] px-4"
       lang="ar"
       dir="rtl"
+      aria-busy="true"
+      aria-label="جارٍ إكمال تسجيل الدخول"
     >
       <AuthContinueClient nextPath={next} />
     </main>
