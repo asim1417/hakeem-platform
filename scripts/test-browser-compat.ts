@@ -25,6 +25,10 @@ assert.ok(layout.includes("formatDetection"));
 assert.ok(layout.includes("appleWebApp"));
 assert.ok(layout.includes('viewportFit: "cover"'));
 assert.equal(layout.includes("fonts.googleapis.com"), false, "external Google Fonts CSS removed");
+assert.ok(
+  /const fontJudicial = Amiri\(\{[\s\S]*?preload:\s*false/.test(layout),
+  "Amiri must not preload (home LCP)"
+);
 
 const compat = read("app/browser-compat.css");
 assert.ok(compat.includes("-webkit-backdrop-filter"));

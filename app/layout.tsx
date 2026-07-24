@@ -10,25 +10,26 @@ import { SiteThemeStyle } from "@/components/site/SiteThemeStyle";
 
 const fontDisplay = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
   variable: "--font-display-loaded",
   display: "swap",
   preload: true,
   fallback: ["Tahoma", "sans-serif"],
 });
 
+/** Amiri لللمسات القضائية فقط — بلا preload حتى لا يؤخّر LCP على الجوال. */
 const fontJudicial = Amiri({
   subsets: ["arabic"],
   weight: ["400", "700"],
   variable: "--font-judicial-loaded",
   display: "swap",
-  preload: true,
+  preload: false,
   fallback: ["Times New Roman", "serif"],
 });
 
 const fontMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "600"],
   variable: "--font-mono-loaded",
   display: "swap",
   preload: false,

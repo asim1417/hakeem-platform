@@ -93,13 +93,14 @@ export function HomeHero({
           id="ask"
           className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[5vh] pb-10 text-center"
         >
-          <p className="mb-3 font-judicial text-sm font-semibold text-[var(--gold-dark)]">
+          <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
             {home.brandName}
           </p>
-          <h1 className="font-judicial text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
+          {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
+          <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
             ابدأ بسؤالك القانوني
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-60)] md:text-lg">
+          <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
             اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
             عليها.
           </p>
@@ -216,20 +217,20 @@ export function HomeHero({
               href="/dashboard"
               className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)]"
             >
-              لوحة التحكم
+              الصفحة الرئيسية
             </a>
           }
         />
       </header>
 
       <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[7vh] pb-16 text-center">
-        <p className="mb-4 font-judicial text-sm font-semibold text-[var(--gold-dark)]">
+        <p className="mb-4 font-display text-sm font-semibold text-[var(--gold-dark)]">
           {home.brandName}
         </p>
-        <h1 className="font-judicial text-4xl font-bold leading-tight text-[var(--navy)] md:text-6xl">
+        <h1 className="font-display text-4xl font-bold leading-tight text-[var(--navy)] md:text-6xl">
           {home.headline}
         </h1>
-        <p className="mt-4 max-w-xl text-base leading-8 text-[var(--ink-60)] md:text-lg">
+        <p className="mt-4 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
           {home.lede}
         </p>
 
