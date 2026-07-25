@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ensureConversationSessionSchema } from "@/lib/modules/conversations/ensure-schema";
 import { generateConversationTitle, assertRenamableTitle } from "@/lib/modules/conversations/titles";
 import type {
   ConversationContext,
@@ -47,6 +48,7 @@ export async function listConversations(input: {
   offset?: number;
   take?: number;
 }): Promise<{ items: ConversationListItem[]; nextOffset: number | null }> {
+  await ensureConversationSessionSchema();
   const take = Math.min(Math.max(input.take ?? 30, 1), 50);
   const offset = Math.max(input.offset ?? 0, 0);
   const where: Prisma.ChatConversationWhereInput = {
@@ -120,6 +122,7 @@ async function getOwnedConversation(input: {
   serviceKey: ConversationService;
   includeDeleted?: boolean;
 }) {
+  await ensureConversationSessionSchema();
   const row = await prisma.chatConversation.findFirst({
     where: {
       id: input.conversationId,
@@ -235,6 +238,7 @@ export async function appendMessage(input: AppendMessageInput): Promise<{
   created: boolean;
   deduped: boolean;
 }> {
+  await ensureConversationSessionSchema();
   const content = input.content?.trim();
   if (!content || content.length < 1) {
     throw new ConversationEngineError("محتوى الرسالة فارغ.", "VALIDATION");

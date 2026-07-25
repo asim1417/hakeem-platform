@@ -167,6 +167,7 @@
     "test:quota": "tsx scripts/test-quota.ts",
     "test:conversation-engine": "tsx scripts/test-conversation-engine.ts",
     "test:conversation-api-surface": "tsx scripts/test-conversation-api-surface.ts",
+    "test:conversation-ensure-schema": "tsx scripts/test-conversation-ensure-schema.ts",
     "test:ask-sessions-3a": "tsx scripts/test-ask-sessions-3a.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
