@@ -8,9 +8,9 @@ import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibili
 import { isHomeInlineAskEnabled } from "@/lib/modules/config/home-inline-ask";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 
-const HakeemAskWorkspace = dynamic(
+const AskWorkspaceWithSessions = dynamic(
   () =>
-    import("@/components/ask/HakeemAskWorkspace").then((m) => m.HakeemAskWorkspace),
+    import("@/components/ask/AskWorkspaceWithSessions").then((m) => m.AskWorkspaceWithSessions),
   {
     ssr: false,
     loading: () => (
@@ -136,7 +136,7 @@ export function DashboardWorkbench({
         </div>
 
         <section className="wb-ask-full" aria-label="اسأل حكيم">
-          <HakeemAskWorkspace userName={firstName} variant="home" />
+          <AskWorkspaceWithSessions userName={firstName} variant="home" conversationId={null} />
         </section>
 
         {continueItems.length > 0 ? (

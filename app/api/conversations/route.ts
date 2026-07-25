@@ -51,6 +51,7 @@ const postSchema = z.object({
   attachments: z.array(messageAttachmentRefSchema).optional(),
   retrievedSources: z.array(retrievedSourceSchema).optional(),
   status: z.enum(["pending", "streaming", "completed", "failed", "cancelled"]).optional(),
+  statePatch: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       attachments: body.attachments,
       retrievedSources: body.retrievedSources,
       status: body.status,
+      statePatch: body.statePatch,
     });
     return NextResponse.json({ ok: true, ...result }, { status: result.created ? 201 : 200 });
   } catch (e) {

@@ -2370,3 +2370,211 @@ html {
   }
   html { scroll-behavior: auto; }
 }
+
+/* ── جلسات اسأل حكيم (المرحلة 3A) — قائمة أساسية فقط ── */
+.ask-page { width: 100%; max-width: 100%; min-width: 0; }
+.ask-sessions-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
+}
+.ask-sessions-layout__main {
+  flex: 1;
+  min-width: 0;
+}
+.ask-sessions-panel__desktop {
+  flex: 0 0 280px;
+  width: 280px;
+  max-width: 280px;
+  min-width: 0;
+}
+.ask-sessions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  height: 100%;
+  min-height: 50vh;
+  padding: 0.75rem;
+  border: 1px solid var(--ink-08, rgba(14, 52, 53, 0.08));
+  border-radius: var(--r-xl, 1rem);
+  background: var(--hakeem-bg-soft, #f7f3ea);
+}
+.ask-sessions-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.ask-sessions-panel__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy, #0e3435);
+}
+.ask-sessions-panel__head-actions { display: flex; gap: 0.25rem; }
+.ask-sessions-panel__icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--ink-15, rgba(14, 52, 53, 0.15));
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--navy, #0e3435);
+}
+.ask-sessions-panel__new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: var(--navy, #0e3435);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.ask-sessions-panel__new:hover { background: var(--navy-mid, #164748); }
+.ask-sessions-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-inline-end: 0.15rem;
+}
+.ask-sessions-panel__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.65rem;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+}
+.ask-sessions-panel__item:hover {
+  background: #fff;
+  border-color: rgba(201, 168, 76, 0.35);
+}
+.ask-sessions-panel__item--active {
+  background: #fff;
+  border-color: var(--gold, #c9a84c);
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.2);
+}
+.ask-sessions-panel__item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--navy, #0e3435);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ask-sessions-panel__item-preview {
+  font-size: 0.75rem;
+  color: rgba(14, 52, 53, 0.55);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ask-sessions-panel__item-meta {
+  font-size: 0.7rem;
+  color: rgba(14, 52, 53, 0.45);
+}
+.ask-sessions-panel__hint,
+.ask-sessions-panel__error {
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+  color: rgba(14, 52, 53, 0.6);
+  line-height: 1.6;
+}
+.ask-sessions-panel__error button {
+  margin-top: 0.35rem;
+  border: 0;
+  background: none;
+  color: var(--navy, #0e3435);
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ask-sessions-panel__mobile-open,
+.ask-sessions-panel__close-mobile,
+.ask-sessions-drawer { display: none; }
+.ask-sessions-panel__expand-desktop {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  padding: 0.65rem 0.4rem;
+  border: 1px solid var(--ink-08, rgba(14, 52, 53, 0.08));
+  border-radius: var(--r-xl, 1rem);
+  background: var(--hakeem-bg-soft, #f7f3ea);
+  color: var(--navy, #0e3435);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+@media (min-width: 901px) {
+  .ask-sessions-panel__expand-desktop {
+    display: inline-flex;
+  }
+}
+.ask-sessions-panel__collapse-desktop { display: inline-grid; }
+
+@media (max-width: 900px) {
+  .ask-sessions-layout { flex-direction: column; }
+  .ask-sessions-panel__desktop,
+  .ask-sessions-panel__expand-desktop,
+  .ask-sessions-panel__collapse-desktop { display: none !important; }
+  .ask-sessions-panel__mobile-open {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--ink-15, rgba(14, 52, 53, 0.15));
+    border-radius: 0.65rem;
+    background: #fff;
+    color: var(--navy, #0e3435);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .ask-sessions-drawer {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+  }
+  .ask-sessions-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: rgba(14, 52, 53, 0.45);
+  }
+  .ask-sessions-drawer__sheet {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: min(86vw, 320px);
+    max-width: 100%;
+    background: var(--hakeem-bg-soft, #f7f3ea);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    padding: 0.5rem;
+    overflow: auto;
+  }
+  .ask-sessions-panel__close-mobile { display: inline-grid; }
+  .ask-sessions-panel {
+    min-height: 100%;
+    border: 0;
+    background: transparent;
+  }
+}
