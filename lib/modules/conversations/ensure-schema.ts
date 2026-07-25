@@ -5,8 +5,29 @@
  */
 import { prisma } from "@/lib/prisma";
 
+type EnsureResult = { ok: boolean; error?: string; step?: number };
+
 const STATEMENTS: string[] = [
-  // 0) جداول قد تُنشأ خارج migrate
+  // 0) جداول الأساس إن لم تكن موجودة (Neon قد لا يملك تراث legal-chat)
+  `CREATE TABLE IF NOT EXISTS "chat_conversations" (
+    "id" TEXT PRIMARY KEY,
+    "title" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "mode" TEXT NOT NULL DEFAULT 'RESEARCHER',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS "chat_messages" (
+    "id" TEXT PRIMARY KEY,
+    "conversation_id" TEXT NOT NULL,
+    "role" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE INDEX IF NOT EXISTS "chat_conversations_user_id_idx" ON "chat_conversations"("user_id")`,
+  `CREATE INDEX IF NOT EXISTS "chat_messages_conversation_id_idx" ON "chat_messages"("conversation_id")`,
+
+  // 1) جداول مساعدة
   `CREATE TABLE IF NOT EXISTS "judicial_work_cases" (
     "id"              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "owner_id"        TEXT NOT NULL,
@@ -38,7 +59,7 @@ const STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS "generation_jobs_owner_idx"
     ON "generation_jobs"("owner_id","created_at")`,
 
-  // 1) أعمدة nullable
+  // 2) أعمدة nullable
   `ALTER TABLE "chat_conversations"
     ADD COLUMN IF NOT EXISTS "service_key" TEXT,
     ADD COLUMN IF NOT EXISTS "generated_title" TEXT,
@@ -46,6 +67,7 @@ const STATEMENTS: string[] = [
     ADD COLUMN IF NOT EXISTS "preview" TEXT,
     ADD COLUMN IF NOT EXISTS "state" JSONB,
     ADD COLUMN IF NOT EXISTS "status" TEXT,
+    ADD COLUMN IF NOT EXISTS "case_id" TEXT,
     ADD COLUMN IF NOT EXISTS "case_file_id" TEXT,
     ADD COLUMN IF NOT EXISTS "judicial_case_id" UUID,
     ADD COLUMN IF NOT EXISTS "parent_conversation_id" TEXT,
@@ -59,6 +81,8 @@ const STATEMENTS: string[] = [
     ADD COLUMN IF NOT EXISTS "mode" TEXT,
     ADD COLUMN IF NOT EXISTS "model" TEXT,
     ADD COLUMN IF NOT EXISTS "client_request_id" TEXT,
+    ADD COLUMN IF NOT EXISTS "attachments" JSONB,
+    ADD COLUMN IF NOT EXISTS "extracted_intent" JSONB,
     ADD COLUMN IF NOT EXISTS "input_snapshot" JSONB,
     ADD COLUMN IF NOT EXISTS "output_snapshot" JSONB,
     ADD COLUMN IF NOT EXISTS "tool_calls" JSONB,
@@ -71,7 +95,7 @@ const STATEMENTS: string[] = [
     ADD COLUMN IF NOT EXISTS "service_key" TEXT,
     ADD COLUMN IF NOT EXISTS "client_request_id" TEXT`,
 
-  // 2) backfill
+  // 3) backfill
   `UPDATE "chat_conversations" SET "service_key" = 'legal-chat' WHERE "service_key" IS NULL`,
   `UPDATE "chat_conversations"
      SET "generated_title" = "title"
@@ -94,7 +118,7 @@ const STATEMENTS: string[] = [
    WHERE m."id" = ordered."id"`,
   `UPDATE "chat_messages" SET "status" = 'completed' WHERE "status" IS NULL`,
 
-  // 3) قيود
+  // 4) قيود
   `ALTER TABLE "chat_conversations" ALTER COLUMN "service_key" DROP DEFAULT`,
   `ALTER TABLE "chat_conversations" ALTER COLUMN "service_key" SET NOT NULL`,
   `ALTER TABLE "chat_conversations" DROP CONSTRAINT IF EXISTS "chat_conversations_service_key_check"`,
@@ -237,28 +261,53 @@ END $$`,
      WHERE "job_id" IS NOT NULL`,
 ];
 
-let ready: Promise<boolean> | null = null;
+let ready: Promise<EnsureResult> | null = null;
+let lastResult: EnsureResult = { ok: false, error: "not-run" };
+
+function sanitizeError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  return msg
+    .split("\n")[0]
+    .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted]")
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/g, "[redacted]")
+    .slice(0, 220);
+}
 
 /** يطبّق مخطط محرك الجلسات مرّة لكل عملية (مع إعادة المحاولة عند الفشل). */
 export async function ensureConversationSessionSchema(): Promise<boolean> {
+  const result = await ensureConversationSessionSchemaDetailed();
+  return result.ok;
+}
+
+export async function ensureConversationSessionSchemaDetailed(): Promise<EnsureResult> {
   if (!ready) {
     ready = (async () => {
       try {
-        for (const sql of STATEMENTS) {
-          await prisma.$executeRawUnsafe(sql);
+        for (let i = 0; i < STATEMENTS.length; i++) {
+          try {
+            await prisma.$executeRawUnsafe(STATEMENTS[i]!);
+          } catch (e) {
+            const err = sanitizeError(e);
+            console.warn(`[conversations.schema] فشل الخطوة ${i}:`, err);
+            lastResult = { ok: false, error: err, step: i };
+            ready = null;
+            return lastResult;
+          }
         }
-        return true;
+        lastResult = { ok: true };
+        return lastResult;
       } catch (e) {
-        console.warn(
-          "[conversations.schema] تعذّر تجهيز مخطط الجلسات:",
-          e instanceof Error ? e.message.split("\n")[0] : e
-        );
+        lastResult = { ok: false, error: sanitizeError(e) };
         ready = null;
-        return false;
+        return lastResult;
       }
     })();
   }
   return ready;
+}
+
+export function getLastConversationSchemaEnsureResult(): EnsureResult {
+  return lastResult;
 }
 
 /** قراءة فقط — هل عمود service_key جاهز؟ */

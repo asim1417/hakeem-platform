@@ -4,7 +4,8 @@ import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 import { isMoyasarLive } from "@/lib/modules/billing/moyasar";
 import {
-  ensureConversationSessionSchema,
+  ensureConversationSessionSchemaDetailed,
+  getLastConversationSchemaEnsureResult,
   isConversationSessionSchemaReady,
 } from "@/lib/modules/conversations/ensure-schema";
 
@@ -26,13 +27,24 @@ export async function GET() {
   }
 
   let conversationSession: "ready" | "pending" | "error" = "pending";
+  let conversationSessionDetail: { step?: number; error?: string } | undefined;
   if (database === "up") {
     try {
-      const applied = await ensureConversationSessionSchema();
-      const ready = applied && (await isConversationSessionSchemaReady());
+      const applied = await ensureConversationSessionSchemaDetailed();
+      const ready = applied.ok && (await isConversationSessionSchemaReady());
       conversationSession = ready ? "ready" : "error";
-    } catch {
+      if (!ready) {
+        const last = getLastConversationSchemaEnsureResult();
+        conversationSessionDetail = {
+          step: last.step ?? applied.step,
+          error: last.error ?? applied.error ?? "unknown",
+        };
+      }
+    } catch (e) {
       conversationSession = "error";
+      conversationSessionDetail = {
+        error: e instanceof Error ? e.message.split("\n")[0].slice(0, 220) : "unknown",
+      };
     }
   }
 
@@ -49,6 +61,7 @@ export async function GET() {
         googleOAuth: isGoogleOAuthConfigured() ? "configured" : "missing",
         moyasar: isMoyasarLive() ? "configured" : "missing",
         conversationSession,
+        ...(conversationSessionDetail ? { conversationSessionDetail } : {}),
       },
     },
     { status: ok ? 200 : 503 }
