@@ -68,13 +68,13 @@ export function AskSessionSidebar({
   }, [mobileOpen]);
 
   const panel = (
-    <div className="ask-sessions-panel">
-      <div className="ask-sessions-panel__head">
-        <h2 className="ask-sessions-panel__title">الجلسات</h2>
-        <div className="ask-sessions-panel__head-actions">
+    <div className="hkm-sess-panel">
+      <div className="hkm-sess-panel-head">
+        <h2 className="hkm-sess-panel-title">الجلسات</h2>
+        <div className="hkm-sess-panel-head-actions">
           <button
             type="button"
-            className="ask-sessions-panel__icon-btn"
+            className="hkm-sess-panel-icon-btn"
             onClick={() => void load()}
             aria-label="تحديث قائمة الجلسات"
             title="تحديث"
@@ -84,7 +84,7 @@ export function AskSessionSidebar({
           {onCollapsedChange ? (
             <button
               type="button"
-              className="ask-sessions-panel__icon-btn ask-sessions-panel__collapse-desktop"
+              className="hkm-sess-panel-icon-btn hkm-sess-panel-collapse-desktop"
               onClick={() => onCollapsedChange(true)}
               aria-label="طي قائمة الجلسات"
             >
@@ -93,7 +93,7 @@ export function AskSessionSidebar({
           ) : null}
           <button
             type="button"
-            className="ask-sessions-panel__icon-btn ask-sessions-panel__close-mobile"
+            className="hkm-sess-panel-icon-btn hkm-sess-panel-close-mobile"
             onClick={() => setMobileOpen(false)}
             aria-label="إغلاق قائمة الجلسات"
           >
@@ -102,25 +102,25 @@ export function AskSessionSidebar({
         </div>
       </div>
 
-      <button type="button" className="ask-sessions-panel__new" onClick={onNewSession}>
+      <button type="button" className="hkm-sess-panel-new" onClick={onNewSession}>
         <MessageSquarePlus size={16} aria-hidden />
         جلسة جديدة
       </button>
 
-      <div className="ask-sessions-panel__list" role="list">
+      <div className="hkm-sess-panel-list" role="list">
         {loading ? (
-          <p className="ask-sessions-panel__hint" aria-busy="true">
+          <p className="hkm-sess-panel-hint" aria-busy="true">
             جارٍ التحميل…
           </p>
         ) : error ? (
-          <div className="ask-sessions-panel__error">
+          <div className="hkm-sess-panel-error">
             <p>{error}</p>
             <button type="button" onClick={() => void load()}>
               إعادة المحاولة
             </button>
           </div>
         ) : items.length === 0 ? (
-          <p className="ask-sessions-panel__hint">لا توجد جلسات بعد. ابدأ بسؤال جديد.</p>
+          <p className="hkm-sess-panel-hint">لا توجد جلسات بعد. ابدأ بسؤال جديد.</p>
         ) : (
           items.map((item) => {
             const active = item.id === activeConversationId;
@@ -131,17 +131,17 @@ export function AskSessionSidebar({
                 role="listitem"
                 className={
                   active
-                    ? "ask-sessions-panel__item ask-sessions-panel__item--active"
-                    : "ask-sessions-panel__item"
+                    ? "hkm-sess-panel-item hkm-sess-panel-item-active"
+                    : "hkm-sess-panel-item"
                 }
                 aria-current={active ? "page" : undefined}
                 onClick={() => setMobileOpen(false)}
               >
-                <span className="ask-sessions-panel__item-title">{item.title}</span>
+                <span className="hkm-sess-panel-item-title">{item.title}</span>
                 {item.preview ? (
-                  <span className="ask-sessions-panel__item-preview">{item.preview}</span>
+                  <span className="hkm-sess-panel-item-preview">{item.preview}</span>
                 ) : null}
-                <span className="ask-sessions-panel__item-meta">
+                <span className="hkm-sess-panel-item-meta">
                   {relativeTime(item.updatedAt)}
                   {item.messageCount > 0 ? ` · ${item.messageCount} رسالة` : ""}
                 </span>
@@ -157,7 +157,7 @@ export function AskSessionSidebar({
     <>
       <button
         type="button"
-        className="ask-sessions-panel__mobile-open"
+        className="hkm-sess-panel-mobile-open"
         onClick={() => setMobileOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={mobileOpen}
@@ -168,7 +168,7 @@ export function AskSessionSidebar({
       {collapsed ? (
         <button
           type="button"
-          className="ask-sessions-panel__expand-desktop"
+          className="hkm-sess-panel-expand-desktop"
           onClick={() => onCollapsedChange?.(false)}
           aria-label="إظهار قائمة الجلسات"
         >
@@ -176,20 +176,20 @@ export function AskSessionSidebar({
           <span>الجلسات</span>
         </button>
       ) : (
-        <aside className="ask-sessions-panel__desktop" aria-label="جلسات اسأل حكيم">
+        <aside className="hkm-sess-panel-desktop" aria-label="جلسات اسأل حكيم">
           {panel}
         </aside>
       )}
 
       {mobileOpen ? (
-        <div className="ask-sessions-drawer" role="dialog" aria-modal="true" aria-label="جلسات اسأل حكيم">
+        <div className="hkm-sess-drawer" role="dialog" aria-modal="true" aria-label="جلسات اسأل حكيم">
           <button
             type="button"
-            className="ask-sessions-drawer__backdrop"
+            className="hkm-sess-drawer-backdrop"
             aria-label="إغلاق"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="ask-sessions-drawer__sheet">{panel}</div>
+          <div className="hkm-sess-drawer-sheet">{panel}</div>
         </div>
       ) : null}
     </>

@@ -4,8 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AskSessionSidebar } from "@/components/ask/AskSessionSidebar";
 
-const COLLAPSE_KEY = "hakeem-ask-sessions-collapsed";
-
 export function AskSessionsLayout({
   activeConversationId,
   children,
@@ -17,21 +15,8 @@ export function AskSessionsLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
 
-  useEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
-    } catch {
-      /* تجاهل */
-    }
-  }, []);
-
   const onCollapsedChange = useCallback((next: boolean) => {
     setCollapsed(next);
-    try {
-      localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
-    } catch {
-      /* تجاهل */
-    }
   }, []);
 
   const onNewSession = useCallback(() => {
@@ -45,7 +30,7 @@ export function AskSessionsLayout({
   }, [activeConversationId]);
 
   return (
-    <div className="ask-sessions-layout">
+    <div className="hkm-sess-layout">
       <AskSessionSidebar
         activeConversationId={activeConversationId}
         onNewSession={onNewSession}
@@ -53,7 +38,7 @@ export function AskSessionsLayout({
         collapsed={collapsed}
         onCollapsedChange={onCollapsedChange}
       />
-      <div className="ask-sessions-layout__main">{children}</div>
+      <div className="hkm-sess-layout-main">{children}</div>
     </div>
   );
 }

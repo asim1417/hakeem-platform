@@ -2373,24 +2373,24 @@ html {
 
 /* ── جلسات اسأل حكيم (المرحلة 3A) — قائمة أساسية فقط ── */
 .ask-page { width: 100%; max-width: 100%; min-width: 0; }
-.ask-sessions-layout {
+.hkm-sess-layout {
   display: flex;
   align-items: stretch;
   gap: 0.85rem;
   width: 100%;
   min-width: 0;
 }
-.ask-sessions-layout__main {
+.hkm-sess-layout-main {
   flex: 1;
   min-width: 0;
 }
-.ask-sessions-panel__desktop {
+.hkm-sess-panel-desktop {
   flex: 0 0 280px;
   width: 280px;
   max-width: 280px;
   min-width: 0;
 }
-.ask-sessions-panel {
+.hkm-sess-panel {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -2401,20 +2401,20 @@ html {
   border-radius: var(--r-xl, 1rem);
   background: var(--hakeem-bg-soft, #f7f3ea);
 }
-.ask-sessions-panel__head {
+.hkm-sess-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
-.ask-sessions-panel__title {
+.hkm-sess-panel-title {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
   color: var(--navy, #0e3435);
 }
-.ask-sessions-panel__head-actions { display: flex; gap: 0.25rem; }
-.ask-sessions-panel__icon-btn {
+.hkm-sess-panel-head-actions { display: flex; gap: 0.25rem; }
+.hkm-sess-panel-icon-btn {
   display: inline-grid;
   place-items: center;
   width: 2rem;
@@ -2424,7 +2424,7 @@ html {
   background: #fff;
   color: var(--navy, #0e3435);
 }
-.ask-sessions-panel__new {
+.hkm-sess-panel-new {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2438,8 +2438,8 @@ html {
   font-weight: 600;
   font-size: 0.9rem;
 }
-.ask-sessions-panel__new:hover { background: var(--navy-mid, #164748); }
-.ask-sessions-panel__list {
+.hkm-sess-panel-new:hover { background: var(--navy-mid, #164748); }
+.hkm-sess-panel-list {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -2448,7 +2448,7 @@ html {
   min-height: 0;
   padding-inline-end: 0.15rem;
 }
-.ask-sessions-panel__item {
+.hkm-sess-panel-item {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -2459,16 +2459,16 @@ html {
   color: inherit;
   background: transparent;
 }
-.ask-sessions-panel__item:hover {
+.hkm-sess-panel-item:hover {
   background: #fff;
   border-color: rgba(201, 168, 76, 0.35);
 }
-.ask-sessions-panel__item--active {
+.hkm-sess-panel-item-active {
   background: #fff;
   border-color: var(--gold, #c9a84c);
   box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.2);
 }
-.ask-sessions-panel__item-title {
+.hkm-sess-panel-item-title {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--navy, #0e3435);
@@ -2478,7 +2478,7 @@ html {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.ask-sessions-panel__item-preview {
+.hkm-sess-panel-item-preview {
   font-size: 0.75rem;
   color: rgba(14, 52, 53, 0.55);
   line-height: 1.4;
@@ -2487,18 +2487,18 @@ html {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.ask-sessions-panel__item-meta {
+.hkm-sess-panel-item-meta {
   font-size: 0.7rem;
   color: rgba(14, 52, 53, 0.45);
 }
-.ask-sessions-panel__hint,
-.ask-sessions-panel__error {
+.hkm-sess-panel-hint,
+.hkm-sess-panel-error {
   margin: 0.5rem 0;
   font-size: 0.8rem;
   color: rgba(14, 52, 53, 0.6);
   line-height: 1.6;
 }
-.ask-sessions-panel__error button {
+.hkm-sess-panel-error button {
   margin-top: 0.35rem;
   border: 0;
   background: none;
@@ -2506,10 +2506,10 @@ html {
   font-weight: 700;
   text-decoration: underline;
 }
-.ask-sessions-panel__mobile-open,
-.ask-sessions-panel__close-mobile,
-.ask-sessions-drawer { display: none; }
-.ask-sessions-panel__expand-desktop {
+.hkm-sess-panel-mobile-open,
+.hkm-sess-panel-close-mobile,
+.hkm-sess-drawer { display: none; }
+.hkm-sess-panel-expand-desktop {
   display: none;
   flex-direction: column;
   align-items: center;
@@ -2524,18 +2524,18 @@ html {
   font-weight: 700;
 }
 @media (min-width: 901px) {
-  .ask-sessions-panel__expand-desktop {
+  .hkm-sess-panel-expand-desktop {
     display: inline-flex;
   }
 }
-.ask-sessions-panel__collapse-desktop { display: inline-grid; }
+.hkm-sess-panel-collapse-desktop { display: inline-grid; }
 
 @media (max-width: 900px) {
-  .ask-sessions-layout { flex-direction: column; }
-  .ask-sessions-panel__desktop,
-  .ask-sessions-panel__expand-desktop,
-  .ask-sessions-panel__collapse-desktop { display: none !important; }
-  .ask-sessions-panel__mobile-open {
+  .hkm-sess-layout { flex-direction: column; }
+  .hkm-sess-panel-desktop,
+  .hkm-sess-panel-expand-desktop,
+  .hkm-sess-panel-collapse-desktop { display: none !important; }
+  .hkm-sess-panel-mobile-open {
     display: inline-flex;
     align-self: flex-start;
     align-items: center;
@@ -2548,19 +2548,19 @@ html {
     font-weight: 700;
     font-size: 0.9rem;
   }
-  .ask-sessions-drawer {
+  .hkm-sess-drawer {
     display: block;
     position: fixed;
     inset: 0;
     z-index: 60;
   }
-  .ask-sessions-drawer__backdrop {
+  .hkm-sess-drawer-backdrop {
     position: absolute;
     inset: 0;
     border: 0;
     background: rgba(14, 52, 53, 0.45);
   }
-  .ask-sessions-drawer__sheet {
+  .hkm-sess-drawer-sheet {
     position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
@@ -2571,8 +2571,8 @@ html {
     padding: 0.5rem;
     overflow: auto;
   }
-  .ask-sessions-panel__close-mobile { display: inline-grid; }
-  .ask-sessions-panel {
+  .hkm-sess-panel-close-mobile { display: inline-grid; }
+  .hkm-sess-panel {
     min-height: 100%;
     border: 0;
     background: transparent;
