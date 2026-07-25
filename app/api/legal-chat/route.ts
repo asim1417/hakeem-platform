@@ -145,22 +145,53 @@ async function persistTurn(
 
   let convId = conversationId;
   if (!convId) {
+    const title = caseFile.title.slice(0, 200);
     const conv = await prisma.chatConversation.create({
-      data: { title: caseFile.title.slice(0, 200), userId, caseId: simCase.id, mode: data.mode },
+      data: {
+        title,
+        generatedTitle: title,
+        userId,
+        serviceKey: "legal-chat",
+        caseId: simCase.id,
+        mode: data.mode,
+        status: "active",
+        preview: data.message.slice(0, 160),
+      },
     });
     convId = conv.id;
   }
 
+  const agg = await prisma.chatMessage.aggregate({
+    where: { conversationId: convId },
+    _max: { sequence: true },
+  });
+  const nextSeq = (agg._max.sequence ?? 0) + 1;
+
   await prisma.chatMessage.create({
-    data: { conversationId: convId, role: "user", content: data.message, attachments: (data.attachments ?? []) as unknown as object },
+    data: {
+      conversationId: convId,
+      role: "user",
+      content: data.message,
+      sequence: nextSeq,
+      status: "completed",
+      mode: data.mode,
+      attachments: (data.attachments ?? []) as unknown as object,
+    },
   });
   await prisma.chatMessage.create({
     data: {
       conversationId: convId,
       role: "assistant",
       content: result.reply,
+      sequence: nextSeq + 1,
+      status: "completed",
+      mode: data.mode,
       extractedIntent: result.intent as unknown as object,
     },
+  });
+  await prisma.chatConversation.update({
+    where: { id: convId },
+    data: { preview: result.reply.slice(0, 160), updatedAt: new Date() },
   });
 
   await prisma.simulationRun.create({

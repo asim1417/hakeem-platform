@@ -165,6 +165,8 @@
     "agents:approve": "tsx scripts/approve-agents.ts",
     "agents:demo": "tsx scripts/demo-agents.ts",
     "test:quota": "tsx scripts/test-quota.ts",
+    "test:conversation-engine": "tsx scripts/test-conversation-engine.ts",
+    "test:conversation-api-surface": "tsx scripts/test-conversation-api-surface.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
     "smoke:judicial": "tsx scripts/smoke-judicial.ts"

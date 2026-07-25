@@ -304,6 +304,7 @@ model CaseFile {
   owner       User         @relation(fields: [ownerId], references: [id])
   attachments Attachment[]
   annotations Annotation[]
+  conversations ChatConversation[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -749,34 +750,96 @@ model FiqhArticleAlignment {
 // بحيث تعمل الواجهة حتى قبل تفعيل الجداول.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// محرك الجلسات الموحّد — يُفصَل بالخدمة عبر serviceKey (ask | judicial-assistant | legal-chat).
 model ChatConversation {
-  id        String          @id @default(cuid())
-  title     String
-  userId    String          @map("user_id")
-  user      User            @relation(fields: [userId], references: [id])
-  caseId    String?         @map("case_id")
-  case      SimulationCase? @relation(fields: [caseId], references: [id])
-  mode      String          @default("RESEARCHER")
-  createdAt DateTime        @default(now()) @map("created_at")
-  updatedAt DateTime        @updatedAt @map("updated_at")
+  id                   String    @id @default(cuid())
+  /// عنوان العرض — يُعدَّل عند إعادة التسمية
+  title                String
+  /// العنوان التلقائي الأصلي — لا يُستبدل عند إعادة التسمية
+  generatedTitle       String?   @map("generated_title")
 
-  messages ChatMessage[]
+  userId               String    @map("user_id")
+  user                 User      @relation(fields: [userId], references: [id])
 
+  /// ask | judicial-assistant | legal-chat — بلا default في القاعدة؛ التطبيق يمرّره صراحة
+  serviceKey           String    @map("service_key")
+
+  /// مفسَّر حسب serviceKey (AskMode أو وضع legal-chat أو سياق JA)
+  mode                 String    @default("RESEARCHER")
+
+  /// active | processing | error
+  status               String    @default("active")
+
+  summary              String?
+  preview              String?
+  state                Json?
+
+  /// تراث legal-chat فقط
+  caseId               String?         @map("case_id")
+  case                 SimulationCase? @relation(fields: [caseId], references: [id])
+
+  caseFileId           String?   @map("case_file_id")
+  caseFile             CaseFile? @relation(fields: [caseFileId], references: [id])
+
+  judicialCaseId       String?           @map("judicial_case_id") @db.Uuid
+  judicialCase         JudicialWorkCase? @relation(fields: [judicialCaseId], references: [id])
+
+  parentConversationId String?            @map("parent_conversation_id")
+  parentConversation   ChatConversation?  @relation("ConversationBranch", fields: [parentConversationId], references: [id])
+  branches             ChatConversation[] @relation("ConversationBranch")
+
+  branchFromMessageId  String?      @map("branch_from_message_id")
+  branchFromMessage    ChatMessage? @relation("BranchFromMessage", fields: [branchFromMessageId], references: [id])
+
+  pinnedAt             DateTime? @map("pinned_at")
+  archivedAt           DateTime? @map("archived_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  messages             ChatMessage[] @relation("ConversationMessages")
+
+  @@index([userId, serviceKey, updatedAt])
+  @@index([userId, serviceKey, pinnedAt])
+  @@index([judicialCaseId, updatedAt])
+  @@index([parentConversationId])
   @@index([userId])
   @@map("chat_conversations")
 }
 
 model ChatMessage {
-  id              String           @id @default(cuid())
-  conversationId  String           @map("conversation_id")
-  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role            String // user | assistant | system
-  content         String
-  attachments     Json?
-  extractedIntent Json?            @map("extracted_intent")
-  createdAt       DateTime         @default(now()) @map("created_at")
+  id               String           @id @default(cuid())
+  conversationId   String           @map("conversation_id")
+  conversation     ChatConversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
 
+  role             String // user | assistant | system | tool
+  content          String
+  sequence         Int
+  /// pending | streaming | completed | failed | cancelled
+  status           String           @default("completed")
+
+  mode             String?
+  model            String?
+  clientRequestId  String?          @map("client_request_id")
+
+  attachments      Json? // مرحلي — MessageAttachmentRef[]
+  extractedIntent  Json?            @map("extracted_intent")
+  inputSnapshot    Json?            @map("input_snapshot")
+  outputSnapshot   Json?            @map("output_snapshot")
+  toolCalls        Json?            @map("tool_calls")
+  retrievedSources Json?            @map("retrieved_sources")
+  warnings         Json?
+
+  jobId            String?          @map("job_id") @db.Uuid
+
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  branchedConversations ChatConversation[] @relation("BranchFromMessage")
+
+  @@unique([conversationId, sequence])
   @@index([conversationId])
+  @@index([jobId])
   @@map("chat_messages")
 }
 
@@ -994,6 +1057,8 @@ model JudicialWorkCase {
   structured     Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
+
+  conversations ChatConversation[]
 
   @@index([ownerId, createdAt])
   @@map("judicial_work_cases")
