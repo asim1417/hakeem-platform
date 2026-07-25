@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const conversations = await prisma.chatConversation.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, serviceKey: "legal-chat", deletedAt: null },
       orderBy: { updatedAt: "desc" },
       take: 50,
       include: {

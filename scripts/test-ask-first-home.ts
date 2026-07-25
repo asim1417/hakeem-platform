@@ -36,20 +36,27 @@ assert.ok(workspace.includes("اسأل عن نقطة أخرى في السياق 
 assert.ok(workspace.includes("HOME_ASK_PENDING_RUN_KEY"));
 assert.ok(workspace.includes("requestTokenRef"));
 assert.ok(workspace.includes("busyRef"));
-assert.doesNotMatch(workspace, /location\.assign\([^)]*\/dashboard\/ask/);
-assert.doesNotMatch(workspace, /router\.push/);
+assert.ok(workspace.includes("persistAskTurn"));
+assert.ok(workspace.includes("/api/ai/agent-search"));
+assert.doesNotMatch(workspace, /location\.assign\([^)]*\/dashboard\/ask[^/]/);
+// جلسة جديدة فقط — لا تحويل أعمى أثناء الكتابة
+assert.ok(workspace.includes('router.push("/dashboard/ask")'));
 
 const panel = read("components/agent/AgentSearchPanel.tsx");
 assert.ok(panel.includes("HakeemAskWorkspace as AgentSearchPanel"));
 
 const askPage = read("app/dashboard/ask/page.tsx");
-assert.ok(askPage.includes("HakeemAskWorkspace"));
+assert.ok(askPage.includes("AskWorkspaceWithSessions"));
 assert.ok(askPage.includes("isAskFirstHomeEnabled"));
 assert.ok(askPage.includes('variant={askFirst ? "home" : "page"}'));
 
+const askConv = read("app/dashboard/ask/c/[conversationId]/page.tsx");
+assert.ok(askConv.includes("AskWorkspaceWithSessions"));
+assert.ok(askConv.includes("conversationId"));
+
 const wb = read("components/dashboard/DashboardWorkbench.tsx");
 assert.ok(wb.includes("isAskFirstHomeEnabled"));
-assert.ok(wb.includes("HakeemAskWorkspace"));
+assert.ok(wb.includes("AskWorkspaceWithSessions"));
 assert.ok(wb.includes('variant="home"'));
 
 const shell = read("components/AppShell.tsx");

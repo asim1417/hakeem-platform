@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
   Check,
@@ -38,6 +39,11 @@ import {
   HOME_ASK_HANDOFF_KEY,
 } from "@/lib/modules/config/home-inline-ask";
 import { signInWithNext } from "@/lib/modules/auth/safe-next";
+import {
+  getAskSession,
+  persistAskTurn,
+  type AskSessionContext,
+} from "@/components/ask/ask-session-api";
 
 /** أيقونات الأوضاع — Lucide بدل الإيموجي. */
 const MODE_ICONS: Record<AgentModeId, LucideIcon> = {
@@ -87,7 +93,74 @@ export type HakeemAskWorkspaceProps = {
   initialMode?: string;
   /** home = واجهة المنصة في /dashboard (ومسار التوافق /dashboard/ask عند ASK_FIRST) */
   variant?: "home" | "page";
+  /** جلسة دائمة لاستعادتها — من /dashboard/ask/c/[id] */
+  conversationId?: string | null;
+  /** يُستدعى عند إنشاء/تغيير معرّف الجلسة بعد الحفظ */
+  onConversationIdChange?: (conversationId: string | null) => void;
 };
+
+function basisFromSources(sources: unknown): LegalBasisItem[] | null {
+  if (!Array.isArray(sources) || sources.length === 0) return null;
+  return sources.map((raw) => {
+    const s = raw as {
+      systemName?: string;
+      articleNumber?: string | number;
+      title?: string;
+      quote?: string;
+      url?: string;
+    };
+    return {
+      systemName: s.systemName || "مصدر",
+      articleNumber: s.articleNumber,
+      articleTitle: s.title,
+      quote: s.quote,
+      state: "auto" as const,
+      internalUrl: s.url,
+    };
+  });
+}
+
+function turnsFromContext(ctx: AskSessionContext): {
+  turns: Turn[];
+  modeId: AgentModeId;
+  detailed: boolean;
+} {
+  const turns: Turn[] = [];
+  const msgs = [...ctx.messages].sort((a, b) => a.sequence - b.sequence);
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i];
+    if (m.role !== "user") continue;
+    const next = msgs[i + 1];
+    const assistant = next && next.role === "assistant" ? next : null;
+    const snap =
+      assistant?.outputSnapshot && typeof assistant.outputSnapshot === "object"
+        ? (assistant.outputSnapshot as Record<string, unknown>)
+        : {};
+    turns.push({
+      question: m.content,
+      steps: [],
+      answer: assistant?.content ?? null,
+      mode: (typeof snap.answerMode === "string" ? snap.answerMode : snap.mode) as Turn["mode"],
+      basis: basisFromSources(assistant?.retrievedSources),
+      total: typeof snap.total === "number" ? snap.total : 0,
+      coverage: snap.coverage as Turn["coverage"],
+      groups: Array.isArray(snap.groups) ? (snap.groups as Turn["groups"]) : undefined,
+      disclosure: typeof snap.disclosure === "string" ? snap.disclosure : undefined,
+      message: typeof snap.message === "string" ? snap.message : undefined,
+      precedents: snap.precedents as Turn["precedents"],
+      streaming: false,
+      showMethod: false,
+    });
+    if (assistant) i += 1;
+  }
+  const state =
+    ctx.state && typeof ctx.state === "object" && !Array.isArray(ctx.state)
+      ? (ctx.state as Record<string, unknown>)
+      : {};
+  const detailed = Boolean(state.detailed);
+  const modeId = getAgentMode(ctx.mode || "ask").id;
+  return { turns, modeId, detailed };
+}
 
 /** تسميات ودّية لخطوات البث — ثلاث مراحل واضحة للمستخدم. */
 function friendlyStepLabel(step: Step): string {
@@ -137,7 +210,10 @@ export function HakeemAskWorkspace({
   initialQuery = "",
   initialMode = "ask",
   variant = "page",
+  conversationId: conversationIdProp = null,
+  onConversationIdChange,
 }: HakeemAskWorkspaceProps) {
+  const router = useRouter();
   const isHome = variant === "home";
   const [value, setValue] = useState(initialQuery);
   const [detailed, setDetailed] = useState(false);
@@ -152,6 +228,9 @@ export function HakeemAskWorkspace({
   const [attachStatus, setAttachStatus] = useState("");
   const [attachError, setAttachError] = useState("");
   const [cloudOcrAvailable, setCloudOcrAvailable] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(conversationIdProp);
+  const [sessionLoading, setSessionLoading] = useState(Boolean(conversationIdProp));
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -160,6 +239,11 @@ export function HakeemAskWorkspace({
   const requestTokenRef = useRef(0);
   const turnsRef = useRef<Turn[]>([]);
   const pendingRunHandledRef = useRef(false);
+  const conversationIdRef = useRef<string | null>(conversationIdProp);
+  const modeIdRef = useRef<AgentModeId>(getAgentMode(initialMode).id);
+  const detailedRef = useRef(false);
+  /** آخر نتيجة بث لاعتماد الحفظ دون انتظار مزامنة turnsRef */
+  const lastResultRef = useRef<Turn | null>(null);
   const askRef = useRef<(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) => Promise<void>>(
     async () => undefined
   );
@@ -171,6 +255,55 @@ export function HakeemAskWorkspace({
   useEffect(() => {
     turnsRef.current = turns;
   }, [turns]);
+
+  useEffect(() => {
+    modeIdRef.current = modeId;
+  }, [modeId]);
+
+  useEffect(() => {
+    detailedRef.current = detailed;
+  }, [detailed]);
+
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
+
+  // مزامنة معرّف الجلسة من المسار الدائم
+  useEffect(() => {
+    setConversationId(conversationIdProp ?? null);
+    conversationIdRef.current = conversationIdProp ?? null;
+  }, [conversationIdProp]);
+
+  // استعادة جلسة دائمة من المحرك (رسائل + وضع + سياق)
+  useEffect(() => {
+    if (!conversationIdProp) {
+      setSessionLoading(false);
+      setSessionError(null);
+      return;
+    }
+    let cancelled = false;
+    setSessionLoading(true);
+    setSessionError(null);
+    void getAskSession(conversationIdProp).then((res) => {
+      if (cancelled) return;
+      if (!res.ok || !res.context) {
+        setSessionError(res.message ?? "تعذّر استعادة الجلسة.");
+        setSessionLoading(false);
+        return;
+      }
+      const restored = turnsFromContext(res.context);
+      setTurns(restored.turns);
+      turnsRef.current = restored.turns;
+      setModeId(restored.modeId);
+      modeIdRef.current = restored.modeId;
+      setDetailed(restored.detailed);
+      detailedRef.current = restored.detailed;
+      setSessionLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationIdProp]);
 
   // جاهزية القراءة السحابية — نفس مسار منصة الوثائق (/api/doc-tool/ocr)
   useEffect(() => {
@@ -351,38 +484,50 @@ export function HakeemAskWorkspace({
       });
     } else if (type === "result") {
       const precedents = evt.precedents as Precedents | undefined;
-      patchLastTurn((t) => ({
-        ...t,
-        answer: typeof evt.answer === "string" ? evt.answer : null,
-        mode: evt.mode as Turn["mode"],
-        basis: (evt.basis ?? []) as LegalBasisItem[],
-        total: typeof evt.total === "number" ? evt.total : 0,
-        coverage: evt.coverage as Turn["coverage"],
-        groups: Array.isArray(evt.groups) ? (evt.groups as Turn["groups"]) : undefined,
-        disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
-        visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
-        message: typeof evt.message === "string" ? evt.message : undefined,
-        precedents:
-          precedents && (precedents.rulings?.length || precedents.principles?.length)
-            ? precedents
-            : undefined,
-      }));
+      patchLastTurn((t) => {
+        const next: Turn = {
+          ...t,
+          answer: typeof evt.answer === "string" ? evt.answer : null,
+          mode: evt.mode as Turn["mode"],
+          basis: (evt.basis ?? []) as LegalBasisItem[],
+          total: typeof evt.total === "number" ? evt.total : 0,
+          coverage: evt.coverage as Turn["coverage"],
+          groups: Array.isArray(evt.groups) ? (evt.groups as Turn["groups"]) : undefined,
+          disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
+          visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
+          message: typeof evt.message === "string" ? evt.message : undefined,
+          precedents:
+            precedents && (precedents.rulings?.length || precedents.principles?.length)
+              ? precedents
+              : undefined,
+        };
+        lastResultRef.current = next;
+        return next;
+      });
     } else if (type === "clarify") {
-      patchLastTurn((t) => ({
-        ...t,
-        clarify: {
-          message: String(evt.message ?? ""),
-          dimension: typeof evt.dimension === "string" ? evt.dimension : undefined,
-          options: Array.isArray(evt.options)
-            ? (evt.options as NonNullable<Turn["clarify"]>["options"])
-            : [],
-        },
-      }));
+      patchLastTurn((t) => {
+        const next: Turn = {
+          ...t,
+          clarify: {
+            message: String(evt.message ?? ""),
+            dimension: typeof evt.dimension === "string" ? evt.dimension : undefined,
+            options: Array.isArray(evt.options)
+              ? (evt.options as NonNullable<Turn["clarify"]>["options"])
+              : [],
+          },
+        };
+        lastResultRef.current = next;
+        return next;
+      });
     } else if (type === "error") {
-      patchLastTurn((t) => ({
-        ...t,
-        error: typeof evt.message === "string" ? evt.message : "خطأ غير متوقع.",
-      }));
+      patchLastTurn((t) => {
+        const next = {
+          ...t,
+          error: typeof evt.message === "string" ? evt.message : "خطأ غير متوقع.",
+        };
+        lastResultRef.current = next;
+        return next;
+      });
     } else if (type === "done") {
       patchLastTurn((t) => ({ ...t, streaming: false, showMethod: false }));
     }
@@ -481,6 +626,7 @@ export function HakeemAskWorkspace({
 
     const shown =
       question || (attachedName ? `تحليل المستند: ${attachedName}` : "تحليل المستند المرفق");
+    lastResultRef.current = null;
     setTurns((prev) => [
       ...prev,
       {
@@ -584,6 +730,58 @@ export function HakeemAskWorkspace({
       }
       if (token !== requestTokenRef.current) return;
       patchLastTurn((t) => ({ ...t, streaming: false }));
+
+      // حفظ دائم بعد اكتمال البث — دون تغيير طلب agent-search
+      const finished =
+        lastResultRef.current ?? turnsRef.current[turnsRef.current.length - 1] ?? null;
+      if (finished && !finished.error && (finished.answer || finished.clarify || finished.message)) {
+        const turnKey =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `ask-${Date.now()}`;
+        const persistResult = await persistAskTurn({
+          conversationId: conversationIdRef.current,
+          question: shown,
+          answer: finished.answer,
+          mode: modeIdRef.current,
+          detailed: override?.detailed ?? detailedRef.current,
+          basis: finished.basis ?? undefined,
+          turnKey,
+          attachments:
+            doc && attachedName
+              ? [
+                  {
+                    id: `att-${turnKey}`,
+                    fileName: attachedName,
+                    extractedText: doc.slice(0, 200_000),
+                    processingStatus: "inline",
+                  },
+                ]
+              : undefined,
+          outputSnapshot: {
+            answerMode: finished.mode,
+            total: finished.total,
+            coverage: finished.coverage,
+            groups: finished.groups,
+            disclosure: finished.disclosure,
+            message: finished.message,
+            precedents: finished.precedents,
+            clarify: finished.clarify,
+          },
+        });
+        if (persistResult.conversationId) {
+          const id = persistResult.conversationId;
+          conversationIdRef.current = id;
+          setConversationId(id);
+          onConversationIdChange?.(id);
+          if (typeof window !== "undefined") {
+            const target = `/dashboard/ask/c/${id}`;
+            if (window.location.pathname !== target) {
+              router.replace(target);
+            }
+          }
+        }
+      }
     } catch (e) {
       if (token !== requestTokenRef.current) return;
       const backgrounded =
@@ -620,11 +818,19 @@ export function HakeemAskWorkspace({
     }
     requestTokenRef.current += 1;
     setTurns([]);
+    turnsRef.current = [];
     setAttachedDoc("");
     setAttachedName(null);
     setAttachKind(null);
     setAttachStatus("");
     setAttachError("");
+    setSessionError(null);
+    conversationIdRef.current = null;
+    setConversationId(null);
+    onConversationIdChange?.(null);
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/dashboard/ask/c/")) {
+      router.push("/dashboard/ask");
+    }
   }
 
   function convertToCase(question: string) {
@@ -663,8 +869,26 @@ export function HakeemAskWorkspace({
         : getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…";
   const submitLabel = busy ? "جارٍ…" : followUpMode ? "إرسال" : "اسأل حكيم";
 
+  if (sessionLoading) {
+    return (
+      <div
+        className="min-h-[40vh] rounded-[var(--r-xl)] bg-[var(--hakeem-bg-soft)]"
+        aria-busy="true"
+        aria-label="جارٍ استعادة الجلسة"
+      />
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-9rem)] flex-col">
+      {sessionError ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {sessionError}{" "}
+          <button type="button" className="font-semibold underline" onClick={() => startNew()}>
+            جلسة جديدة
+          </button>
+        </div>
+      ) : null}
       <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto pb-6">
         {turns.length === 0 ? (
           <div

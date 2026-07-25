@@ -19,8 +19,13 @@ assert.equal(page.includes("CardGrid"), false, "old card catalog removed");
 assert.equal(page.includes("SectionTitle"), false);
 
 const wb = read("components/dashboard/DashboardWorkbench.tsx");
-assert.ok(wb.includes("HomeAskSurface") || wb.includes("HakeemAskWorkspace") || wb.includes("CenterSearch"));
-assert.ok(wb.includes("حكيم") || wb.includes("HakeemAskWorkspace"));
+assert.ok(
+  wb.includes("HomeAskSurface") ||
+    wb.includes("HakeemAskWorkspace") ||
+    wb.includes("AskWorkspaceWithSessions") ||
+    wb.includes("CenterSearch")
+);
+assert.ok(wb.includes("حكيم") || wb.includes("HakeemAskWorkspace") || wb.includes("AskWorkspaceWithSessions"));
 assert.ok(
   wb.includes("ماذا تعمل الآن") ||
     wb.includes("ابدأ من الواقعة") ||

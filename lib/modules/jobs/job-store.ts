@@ -19,6 +19,11 @@ const DDL = [
     "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS "generation_jobs_owner_idx" ON "generation_jobs"("owner_id","created_at")`,
+  // ربط محرك الجلسات (idempotent) — لا يغيّر منطق التوليد
+  `ALTER TABLE "generation_jobs" ADD COLUMN IF NOT EXISTS "conversation_id" TEXT`,
+  `ALTER TABLE "generation_jobs" ADD COLUMN IF NOT EXISTS "message_id" TEXT`,
+  `ALTER TABLE "generation_jobs" ADD COLUMN IF NOT EXISTS "service_key" TEXT`,
+  `ALTER TABLE "generation_jobs" ADD COLUMN IF NOT EXISTS "client_request_id" TEXT`,
 ];
 
 let ready: Promise<boolean> | null = null;

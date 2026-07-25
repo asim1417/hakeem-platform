@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { AskWorkspaceWithSessions } from "@/components/ask/AskWorkspaceWithSessions";
 import { QuotaCounter } from "@/components/billing/QuotaCounter";
@@ -6,17 +7,18 @@ import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 export const dynamic = "force-dynamic";
 
 /**
- * مسار توافق خلفي + جلسة جديدة.
- * عند ASK_FIRST_HOME يعرض نفس التجربة مع قائمة الجلسات الأساسية (المرحلة 3A).
+ * رابط دائم لجلسة «اسأل حكيم».
+ * /dashboard/ask/c/[conversationId]
  */
-export default async function AskHakeemPage({
-  searchParams,
+export default async function AskConversationPage({
+  params,
 }: {
-  searchParams: { q?: string; mode?: string };
+  params: { conversationId: string };
 }) {
   const user = await requirePagePermission("LEGAL_CORE_VIEW");
-  const initialQuery = typeof searchParams?.q === "string" ? searchParams.q : "";
-  const initialMode = typeof searchParams?.mode === "string" ? searchParams.mode : "ask";
+  const conversationId = params?.conversationId?.trim();
+  if (!conversationId || conversationId.length < 8) notFound();
+
   const firstName = user.name?.split(" ").filter(Boolean)[0] ?? user.name ?? "";
   const askFirst = isAskFirstHomeEnabled();
 
@@ -25,10 +27,8 @@ export default async function AskHakeemPage({
       <QuotaCounter />
       <AskWorkspaceWithSessions
         userName={firstName}
-        initialQuery={initialQuery}
-        initialMode={initialMode}
         variant={askFirst ? "home" : "page"}
-        conversationId={null}
+        conversationId={conversationId}
       />
     </div>
   );
