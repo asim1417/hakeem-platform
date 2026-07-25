@@ -30,4 +30,19 @@ export async function register() {
   } catch (e) {
     console.warn("[owner] تعذّر تجهيز المالك:", (e as Error)?.message);
   }
+
+  // محرك الجلسات — توسيع chat_conversations / chat_messages على Neon (idempotent).
+  try {
+    const { ensureConversationSessionSchema } = await import(
+      "@/lib/modules/conversations/ensure-schema"
+    );
+    const ok = await ensureConversationSessionSchema();
+    console.log(
+      ok
+        ? "[conversations.schema] مخطط محرك الجلسات جاهز."
+        : "[conversations.schema] تعذّر تجهيز مخطط محرك الجلسات."
+    );
+  } catch (e) {
+    console.warn("[conversations.schema] تعذّر التجهيز:", (e as Error)?.message);
+  }
 }
