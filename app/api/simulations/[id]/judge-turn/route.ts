@@ -5,7 +5,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { allowedSpeakerLabel, callJudge, encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { decideJudgeTurnAI, type AiJudgeMeta } from "@/lib/modules/simulations/ai-judge";
 
 export const dynamic = "force-dynamic";
 
@@ -25,17 +25,29 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const claim = extractClaim(session.messages);
   const previousTurn = extractTurnState(session.messages);
-  const legalQuery = [claim?.facts, claim?.requests, claim?.legalGrounds, claim?.subject, session.messages.slice(-4).map((message) => message.content).join(" ")]
-    .filter(Boolean)
-    .join(" ")
-    .slice(0, 900);
-  const legalContext = await buildLegalContextForAI(legalQuery, { limit: 5 });
-  const result = callJudge({
+
+  // القرار الحتميّ = الحارس المشروع (الترتيب الإجرائيّ الإلزاميّ + السقوط الآمن).
+  const det = callJudge({
     claim,
     messages: session.messages,
     decisions: session.decisions,
     attachmentsCount: 0
   });
+
+  // القاضي الذكيّ: يقرأ آخر إفادةٍ، يكيّفها، يقدّر البيّنة وفق نظام الإثبات، ثمّ يقرّر إجرائيًّا
+  // ضمن الظرف المشروع (det). عند أيّ فشلٍ أو خروجٍ عن التأريض ⇒ يسقط للحتميّ.
+  let result = det;
+  let judgeMode: AiJudgeMeta | null = null;
+  try {
+    const ai = await decideJudgeTurnAI({ claim, messages: session.messages, det });
+    if (ai) {
+      result = ai.result;
+      judgeMode = ai.meta;
+    }
+  } catch {
+    result = det;
+    judgeMode = null;
+  }
 
   const judgeMessage = await prisma.simulationMessage.create({
     data: {
@@ -106,8 +118,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       messageId: judgeMessage.id,
       turnMessageId: turnMessage.id,
       decisionId: decision?.id,
-      legalCore: {
-        retrievedArticles: legalContext.articles.length,
+      judge: {
+        mode: judgeMode ? "ai" : "deterministic",
+        action: judgeMode?.action,
+        classification: judgeMode?.classification,
+        retrievedArticles: judgeMode?.retrievedArticles ?? 0,
         source: "legal_core.legal_articles"
       }
     }
