@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ClipboardList, Download, FileText, Gauge, Gavel, Handshake, Plus, Scale, ScrollText, Eye } from "lucide-react";
+import { ArrowRight, ChevronLeft, ClipboardList, Copy, Check, Download, FileText, Gauge, Gavel, Handshake, Plus, Scale, ScrollText, Eye } from "lucide-react";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
 
 // القاضي التفاعليّ الحديث — واجهةٌ واحدةٌ موحَّدة تحفظ الجلسة في قاعدة البيانات (جداول
@@ -104,6 +104,10 @@ export function InteractiveJudge() {
   // الكتابة الحيّة (منقولة من القاعة الكلاسيكيّة): يُكشف نصّ القاضي حرفًا حرفًا بدل عرضه دفعةً.
   const [typing, setTyping] = useState<{ id: string; full: string } | null>(null);
   const [typedLen, setTypedLen] = useState(0);
+  // لوحة الأساس النظاميّ (منقولة من القاعة الكلاسيكيّة): مواد النواة ذات الصلة بروابط قابلة للتتبّع.
+  const [legalBasis, setLegalBasis] = useState<Array<{ articleNumber: number; systemName: string; citationLabel: string; internalUrl: string; snippet: string }> | null>(null);
+  const [activatedScope, setActivatedScope] = useState<string[]>([]);
+  const [showLegalBasis, setShowLegalBasis] = useState(false);
 
   const loadList = useCallback(async () => {
     try {
@@ -316,6 +320,21 @@ export function InteractiveJudge() {
     }
   }, [session, settlement, applyState]);
 
+  // لوحة الأساس النظاميّ: تجلب مواد النواة ذات الصلة بالقضية (مؤرَّضة، بروابط).
+  const toggleLegalBasis = useCallback(async () => {
+    const next = !showLegalBasis;
+    setShowLegalBasis(next);
+    if (next && !legalBasis && session) {
+      try {
+        const data = await api(`/api/simulations/${session.id}/legal-basis`);
+        setLegalBasis(data.articles ?? []);
+        setActivatedScope(data.activatedScope ?? []);
+      } catch {
+        setLegalBasis([]);
+      }
+    }
+  }, [showLegalBasis, legalBasis, session]);
+
   const toggleCatalog = useCallback(async () => {
     setCatalogOpen((v) => !v);
     if (catalog.length === 0) {
@@ -434,14 +453,20 @@ export function InteractiveJudge() {
           const shown = isTyping ? m.content.slice(0, typedLen) : m.content;
           return (
             <div key={m.id ?? i} className={`rounded-[var(--r-lg)] border p-3 text-sm leading-7 ${isJudge ? "border-[var(--gold-border)] bg-[var(--parchment)]" : isSystem ? "border-line bg-ivory text-[var(--muted)]" : "border-line bg-white"}`}>
-              <div className={`mb-1 inline-flex items-center gap-1 text-xs font-bold ${isJudge ? "text-[var(--gold)]" : "text-[var(--petrol)]"}`}>{isJudge ? <Gavel size={13} aria-hidden /> : null}{m.role}</div>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <div className={`inline-flex items-center gap-1 text-xs font-bold ${isJudge ? "text-[var(--gold)]" : "text-[var(--petrol)]"}`}>{isJudge ? <Gavel size={13} aria-hidden /> : null}{m.role}</div>
+                {isJudge ? <CopyBtn text={m.content} /> : null}
+              </div>
               <div className="whitespace-pre-wrap text-[var(--ink)]">{shown}{isTyping ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}</div>
             </div>
           );
         })}
         {judgment ? (
           <div className="rounded-[var(--r-lg)] border-2 border-[var(--gold)] bg-[var(--parchment)] p-4">
-            <div className="mb-2 font-bold text-[var(--gold)]">مسودة الحكم</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-bold text-[var(--gold)]">مسودة الحكم</div>
+              <CopyBtn text={judgment.content} />
+            </div>
             <div className="whitespace-pre-wrap text-sm leading-8 text-[var(--ink)]">
               {typing?.id === judgment.id ? judgment.content.slice(0, typedLen) : judgment.content}
               {typing?.id === judgment.id ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}
@@ -517,6 +542,7 @@ export function InteractiveJudge() {
         <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">أدوات الجلسة</p>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setShowClaimSheet((v) => !v)} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)] transition hover:opacity-90"><ScrollText size={15} aria-hidden /> صحيفة الدعوى</button>
+          <button onClick={toggleLegalBasis} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]"><Scale size={15} aria-hidden /> الأساس النظاميّ</button>
           <button onClick={computeStrength} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><Gauge size={15} aria-hidden /> تقييم قوّة الموقف</button>
           <button onClick={generateHearingRecord} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><FileText size={15} aria-hidden /> ضبط الجلسة</button>
           <button onClick={() => setShowSettlement((v) => !v)} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><Handshake size={15} aria-hidden /> مسودة صلح</button>
@@ -526,6 +552,29 @@ export function InteractiveJudge() {
 
         {showClaimSheet ? (
           <ClaimSheet claim={extractClaimClient(session?.messages ?? [])} title={session?.title ?? ""} exportHref={`/api/simulations/${session?.id}/export?type=claim-sheet&format=pdf`} />
+        ) : null}
+
+        {showLegalBasis ? (
+          <div className="mt-3 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm font-bold text-[var(--petrol)]">الأساس النظاميّ المسترجَع من النواة</div>
+              {activatedScope.length ? <div className="text-[11px] text-[var(--muted)]">النطاق المفعّل: {activatedScope.join("، ")}</div> : null}
+            </div>
+            {legalBasis === null ? (
+              <p className="p-3 text-center text-xs text-[var(--muted)]">جارٍ استرجاع المواد…</p>
+            ) : legalBasis.length === 0 ? (
+              <p className="p-3 text-center text-xs text-[var(--muted)]">لم يُعثر على مادّة نظاميّة مطابقة في النواة الحاليّة.</p>
+            ) : (
+              <div className="grid gap-1.5">
+                {legalBasis.map((a, i) => (
+                  <a key={i} href={a.internalUrl} target="_blank" rel="noreferrer" className="focus-ring block rounded-[var(--r-md)] border border-line p-2.5 transition hover:border-[var(--gold-border)]">
+                    <div className="text-sm font-semibold text-[var(--gold)]">{a.citationLabel}</div>
+                    <div className="mt-0.5 line-clamp-2 text-[11px] leading-5 text-[var(--muted)]">{a.snippet}</div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
         ) : null}
 
         {catalogOpen ? (
@@ -538,8 +587,17 @@ export function InteractiveJudge() {
             <div className="grid max-h-72 gap-1.5 overflow-y-auto">
               {catalog.filter((p) => catFilter === "الكل" || p.category === catFilter).map((p) => (
                 <button key={p.id} onClick={() => insertDefense(p)} title="إدراج في المرافعة" className="focus-ring rounded-[var(--r-md)] border border-line p-2.5 text-right transition hover:border-[var(--gold-border)]">
-                  <div className="text-sm font-semibold text-[var(--petrol)]">{p.title}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-sm font-semibold text-[var(--petrol)]">{p.title}</div>
+                    <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--muted)]">{p.category}</span>
+                  </div>
                   <div className="mt-0.5 line-clamp-2 text-[11px] leading-5 text-[var(--muted)]">{p.description}</div>
+                  {p.suggestedArticleNumbers?.length || p.preferredSystems?.length ? (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {(p.preferredSystems ?? []).slice(0, 2).map((s) => <span key={s} className="rounded bg-[var(--gold-ghost)] px-1.5 py-0.5 text-[10px] text-[var(--gold)]">{s}</span>)}
+                      {(p.suggestedArticleNumbers ?? []).slice(0, 4).map((n) => <span key={n} className="rounded bg-[var(--gold-ghost)] px-1.5 py-0.5 text-[10px] text-[var(--gold)]">م/{n}</span>)}
+                    </div>
+                  ) : null}
                 </button>
               ))}
               {catalog.length === 0 ? <p className="p-3 text-center text-xs text-[var(--muted)]">جارٍ تحميل الكتالوج…</p> : null}
@@ -588,6 +646,25 @@ export function InteractiveJudge() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// زرّ نسخ النصّ (منقول من copyVerdictToClipboard في القاعة الكلاسيكيّة).
+function CopyBtn({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  const copy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setDone(true);
+      setTimeout(() => setDone(false), 1600);
+    } catch {
+      /* المتصفّح قد يمنع النسخ — تجاهل بهدوء */
+    }
+  }, [text]);
+  return (
+    <button onClick={copy} className="focus-ring inline-flex items-center gap-1 rounded-[var(--r-md)] border border-line bg-white px-2 py-1 text-[11px] font-semibold text-[var(--muted)] transition hover:border-[var(--gold-border)]">
+      {done ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />} {done ? "نُسخ" : "نسخ"}
+    </button>
   );
 }
 

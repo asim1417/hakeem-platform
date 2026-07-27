@@ -13,6 +13,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
 import { groundForJudge, verifyJudgeGrounding, PROCEDURAL_DIGEST } from "./judicial-brain";
+import { OBJECTION_FORMULAS } from "./judicial-drafting";
 import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
@@ -206,6 +207,7 @@ export async function analyzeObjection(input: {
     caseType: input.claim?.caseType,
     systemPrompt: [
       `أنت مستشارٌ قضائيٌّ تدريبيّ يحلّل مسار «${input.kind}» على حكمٍ صدر في المحاكاة.`,
+      OBJECTION_FORMULAS,
       "بيّن: شروط قبول الاعتراض ومواعيده، ثمّ أسبابه المؤصَّلة، ونقاط القوّة والمخاطر.",
       "لا تختلق مادّة؛ استشهد فقط بالمواد المتاحة. أعِد JSON فقط:",
       '{"admissibilityOfAppeal":"","grounds":"","strengths":"","risks":"","citations":[]}'
