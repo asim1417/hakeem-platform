@@ -13,6 +13,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
 import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
+import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
 // توحيد السطح: المهارتان القائمتان تُعادان تصديرهما من هنا (مصدرٌ واحدٌ لكلّ المهارات).
@@ -58,9 +59,12 @@ async function runGroundedSkill<T extends object>(spec: {
   systemPrompt: string;
   buildUser: (citationBlock: string) => string;
   maxTokens?: number;
+  /** نوع الدعوى — لتفعيل نطاق التخصّص المناسب في التأريض. */
+  caseType?: string;
 }): Promise<{ data: T; grounded: boolean } | null> {
   if (!spec.groundText.trim()) return null;
-  const g = await groundForJudge(spec.groundText, 8);
+  const agent = resolveSpecializedAgent(spec.caseType);
+  const g = await groundForJudge(spec.groundText, 8, agent.scopeSystems);
   const llm = await callCentralProvider({
     systemPrompt: spec.systemPrompt,
     userPrompt: spec.buildUser(g.citationBlock),
@@ -83,6 +87,7 @@ type AdmissibilityOut = { jurisdiction?: string; capacityInterest?: string; form
 export async function assessAdmissibility(claim?: ClaimData): Promise<{ content: string; grounded: boolean } | null> {
   const res = await runGroundedSkill<AdmissibilityOut>({
     groundText: `${claim?.subject ?? ""} ${claim?.facts ?? ""} الاختصاص النوعيّ والمكانيّ وشروط قبول الدعوى والصفة والمصلحة وصحيفة الدعوى`,
+    caseType: claim?.caseType,
     systemPrompt: [
       "أنت قاضٍ افتراضيّ تدريبيّ يفحص قبول الدعوى شكلًا قبل الموضوع.",
       "قيّم: الاختصاص (النوعيّ والمكانيّ)، الصفة والمصلحة، الشروط الشكليّة لصحيفة الدعوى.",
@@ -115,6 +120,7 @@ export async function evaluateEvidence(claim: ClaimData | undefined, messages: M
   const defendant = partyText(messages, PARTY_DEFENDANT);
   const res = await runGroundedSkill<EvidenceOut>({
     groundText: `${claim?.subject ?? ""} ${claim?.facts ?? ""} ${plaintiff} ${defendant}`,
+    caseType: claim?.caseType,
     systemPrompt: [
       "أنت قاضٍ افتراضيّ تدريبيّ يقدّر البيّنة وفق نظام الإثبات.",
       "بيّن على من يقع عبء الإثبات، ثمّ زِن ما قدّمه كلّ طرف (حجّية المستند/الشهادة/اليمين/القرينة/الإقرار)، ثمّ اخلص لكفاية الإثبات من عدمها.",
@@ -154,6 +160,7 @@ export async function facilitateSettlement(
 ): Promise<{ content: string; grounded: boolean } | null> {
   const res = await runGroundedSkill<SettlementOut>({
     groundText: `${claim?.subject ?? ""} ${claim?.facts ?? ""} الصلح والتسوية وإنهاء النزاع وديًّا`,
+    caseType: claim?.caseType,
     systemPrompt: [
       "أنت قاضٍ افتراضيّ تدريبيّ يُيسّر الصلح بين الطرفين بحيادٍ تامّ.",
       "استخلص نقاط الالتقاء، واقترح بنود تسويةٍ عادلة تراعي مدخلات الطرفين، وبيّن أثر الصلح النظاميّ.",
@@ -195,6 +202,7 @@ export async function analyzeObjection(input: {
 }): Promise<{ content: string; grounded: boolean } | null> {
   const res = await runGroundedSkill<ObjectionOut>({
     groundText: `${input.claim?.subject ?? ""} ${input.kind} أسباب ${input.kind} ومواعيده وشروط قبوله ${(input.reasons ?? []).join(" ")}`,
+    caseType: input.claim?.caseType,
     systemPrompt: [
       `أنت مستشارٌ قضائيٌّ تدريبيّ يحلّل مسار «${input.kind}» على حكمٍ صدر في المحاكاة.`,
       "بيّن: شروط قبول الاعتراض ومواعيده، ثمّ أسبابه المؤصَّلة، ونقاط القوّة والمخاطر.",

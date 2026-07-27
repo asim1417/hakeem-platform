@@ -5,6 +5,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
 import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
+import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
 const TRAINING_DISCLAIMER =
@@ -121,7 +122,8 @@ export async function generateReasonedJudgment(input: {
   const groundText = [c?.subject, c?.facts, c?.requests, c?.legalGrounds, plaintiff, defendant].filter(Boolean).join(" ");
   if (!groundText.trim()) return null;
 
-  const g = await groundForJudge(groundText, 8);
+  const agent = resolveSpecializedAgent(c?.caseType);
+  const g = await groundForJudge(groundText, 8, agent.scopeSystems);
 
   const llm = await callCentralProvider({
     systemPrompt: buildSystemPrompt(),

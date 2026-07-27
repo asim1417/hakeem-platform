@@ -8,6 +8,7 @@ import type { SimulationMessage } from "@prisma/client";
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
 import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
+import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 import {
   allowedSpeakerLabel,
@@ -43,6 +44,8 @@ export type AiJudgeMeta = {
   action: AiAction;
   classification: string;
   retrievedArticles: number;
+  /** التخصّص المفعّل بناءً على نوع الدعوى (نطاق تأريض القاضي). */
+  activatedAgent: string;
 };
 
 function lastPartyStatement(messages: AiJudgeInput["messages"]) {
@@ -139,9 +142,12 @@ export async function decideJudgeTurnAI(
   const last = lastPartyStatement(input.messages);
   if (!last || input.det.canGenerateJudgment) return null;
 
-  // العقل القضائيّ المشترك: تأريضٌ موحَّد مع القاضي الحيّ (إبراز نظام الإثبات + المواد المسموحة).
+  // تفعيل التخصّص حسب نوع الدعوى: يُقيَّد تأريض القاضي في أنظمة الوكيل المتخصّص المناسب.
+  const agent = resolveSpecializedAgent(input.claim?.caseType);
   const grounding = await groundForJudge(
-    [input.claim?.subject, input.claim?.facts, last.content].filter(Boolean).join(" ")
+    [input.claim?.subject, input.claim?.facts, last.content].filter(Boolean).join(" "),
+    6,
+    agent.scopeSystems
   );
 
   const llm = await callCentralProvider({
@@ -164,7 +170,8 @@ export async function decideJudgeTurnAI(
     mode: "ai",
     action,
     classification: parsed.classification ?? "غير محدد",
-    retrievedArticles: grounding.articleCount
+    retrievedArticles: grounding.articleCount,
+    activatedAgent: agent.label
   };
 
   // ── طلب إيضاح أو بيّنة: يبقى الدور على الطرف نفسه، بلا انتقالٍ للمرحلة التالية ──

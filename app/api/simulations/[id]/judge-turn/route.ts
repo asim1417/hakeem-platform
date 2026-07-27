@@ -133,7 +133,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const judge = {
     mode: judgeMode ? "ai" : "deterministic",
     action: judgeMode?.action ?? null,
-    classification: judgeMode?.classification ?? null
+    classification: judgeMode?.classification ?? null,
+    activatedAgent: judgeMode?.activatedAgent ?? null
   };
 
   return NextResponse.json({ result, message: judgeMessage, decision, turnState, judge }, { status: 201 });
