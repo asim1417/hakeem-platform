@@ -58,7 +58,39 @@ const nextConfig = {
   // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل)
   outputFileTracingIncludes: {
     "/search": ["./data/legal-bm25-index.json.gz"],
-    "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
+    "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"],
+    // fixtures فقط لمسارات رصد التي قد تعمل fixtures-only على Preview — بدون snapshots
+    "/api/admin/rasd/runs": ["./data/rasd/fixtures/**/*"],
+    "/api/admin/rasd/health": ["./data/rasd/fixtures/**/*"],
+    "/api/cron/rasd-weekly": ["./data/rasd/fixtures/**/*"],
+    "/api/cron/rasd/weekly": ["./data/rasd/fixtures/**/*"]
+  },
+  // منع تضخم Serverless: مسارات رصد تستخدم fs+cwd فتسحب .git/.next/data بالكامل بدون هذا الاستثناء
+  outputFileTracingExcludes: {
+    "*": [
+      "./.git/**",
+      "./.next/**",
+      "./.npm-cache/**",
+      "./coverage/**",
+      "./docs/**",
+      "./scripts/**",
+      "./tools/**",
+      "./reports/**",
+      "./audit/**",
+      "./.github/**",
+      "./data/rasd/snapshots/**",
+      "./data/fiqh*/**",
+      "./data/saudi_systems.json",
+      "./data/legal_articles_export.json",
+      "./data/legal-issues-browse.json",
+      "./data/fiqh-nizam-links.json",
+      "./data/fiqh-issues-tree.json",
+      "./data/fiqh_issue_tree.json",
+      "./data/fiqh_issue_candidates.csv",
+      "./data/fiqh-article-index.json",
+      "./tsconfig.tsbuildinfo",
+      "./package-lock.json"
+    ]
   },
   // أحدث ممارسات Next: ضغط + إزالة X-Powered-By + صور حديثة
   poweredByHeader: false,
