@@ -1,0 +1,73 @@
+{
+  "target": "NCAR",
+  "checkedAt": "2026-07-27T19:38:38.456Z",
+  "environment": {
+    "runner": "github-actions",
+    "vercelEnv": null,
+    "node": "v24.18.0"
+  },
+  "connectivity": [
+    {
+      "host": "ncar.gov.sa",
+      "dns": {
+        "ok": true,
+        "detail": {
+          "addrs": [
+            "66.9.128.33"
+          ]
+        }
+      },
+      "tcp": {
+        "ok": false,
+        "error": "tcp_timeout"
+      },
+      "tls": {
+        "ok": false,
+        "error": "skipped_tcp"
+      },
+      "http": {
+        "ok": false,
+        "error": "skipped_tls"
+      }
+    },
+    {
+      "host": "www.ncar.gov.sa",
+      "dns": {
+        "ok": true,
+        "detail": {
+          "addrs": [
+            "66.9.128.33"
+          ]
+        }
+      },
+      "tcp": {
+        "ok": false,
+        "error": "tcp_timeout"
+      },
+      "tls": {
+        "ok": false,
+        "error": "skipped_tcp"
+      },
+      "http": {
+        "ok": false,
+        "error": "skipped_tls"
+      }
+    }
+  ],
+  "health": {
+    "ok": false,
+    "status": 0,
+    "error": "This operation was aborted",
+    "outcome": "FAILED"
+  },
+  "discoverError": "fetch failed",
+  "discoveredCount": 0,
+  "liveSuccessCount": 0,
+  "liveDocuments": [],
+  "certification": "DEGRADED",
+  "notes": [
+    "Fixtures are not counted as live evidence.",
+    "LIVE_VERIFIED requires TLS+HTTP success and >=10 live documents.",
+    "No CAPTCHA/WAF bypass or unofficial proxies were used."
+  ]
+}
