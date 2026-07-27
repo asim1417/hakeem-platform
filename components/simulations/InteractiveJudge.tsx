@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight, ChevronLeft, ClipboardList, Download, FileText, Gauge, Gavel, Handshake, Plus, Scale, ScrollText, Eye } from "lucide-react";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
 
 // القاضي التفاعليّ الحديث — واجهةٌ واحدةٌ موحَّدة تحفظ الجلسة في قاعدة البيانات (جداول
@@ -321,8 +322,8 @@ export function InteractiveJudge() {
           <p className="mt-3 max-w-3xl leading-8 text-white/85">
             جلسةٌ تفاعليّة مؤصَّلة في النواة القانونيّة: تُقيّد الدعوى، وتترافع أمام قاضٍ يقرأ كلّ إفادة ويكيّفها ويطبّق قواعد الإثبات ثمّ يقرّر إجرائيًّا — وتُحفظ جلستك في حسابك.
           </p>
-          <button onClick={() => { setForm({ subject: "", facts: "", requests: "", plaintiffName: "", defendantName: "", caseType: "تجاري" }); setError(null); setView("new"); }} className="focus-ring mt-5 rounded-[var(--r-md)] bg-[var(--gold)] px-5 py-2.5 text-sm font-bold text-[var(--navy)] transition hover:opacity-90">
-            + جلسة محاكاة جديدة
+          <button onClick={() => { setForm({ subject: "", facts: "", requests: "", plaintiffName: "", defendantName: "", caseType: "تجاري" }); setError(null); setView("new"); }} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-5 py-2.5 text-sm font-bold text-[var(--navy)] transition hover:opacity-90">
+            <Plus size={16} aria-hidden /> جلسة محاكاة جديدة
           </button>
         </header>
 
@@ -334,11 +335,14 @@ export function InteractiveJudge() {
           ) : (
             sessions.map((s) => (
               <button key={s.id} onClick={() => openSession(s.id)} className="focus-ring flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-line bg-ivory p-4 text-right transition hover:border-[var(--gold-border)]">
-                <div>
-                  <div className="font-bold text-[var(--petrol)]">{s.title}</div>
-                  <div className="mt-1 text-xs text-[var(--muted)]">المرحلة: {stageLabel(s.stage)}</div>
+                <div className="flex items-center gap-3">
+                  <Gavel size={18} className="text-[var(--gold)]" aria-hidden />
+                  <div>
+                    <div className="font-bold text-[var(--petrol)]">{s.title}</div>
+                    <div className="mt-1 text-xs text-[var(--muted)]">المرحلة: {stageLabel(s.stage)}</div>
+                  </div>
                 </div>
-                <span className="text-[var(--gold)]">فتح ←</span>
+                <ChevronLeft size={18} className="text-[var(--gold)]" aria-hidden />
               </button>
             ))
           )}
@@ -353,7 +357,7 @@ export function InteractiveJudge() {
   if (view === "new") {
     return (
       <div dir="rtl" className="mx-auto max-w-2xl space-y-4">
-        <button onClick={() => setView("list")} className="text-sm text-[var(--muted)] underline underline-offset-2 hover:text-[var(--petrol)]">→ كل الجلسات</button>
+        <button onClick={() => setView("list")} className="inline-flex items-center gap-1 text-sm text-[var(--muted)] underline underline-offset-2 hover:text-[var(--petrol)]"><ArrowRight size={14} aria-hidden /> كل الجلسات</button>
         <h1 className="t-display text-2xl font-bold text-[var(--petrol)]">تقييد دعوى جديدة</h1>
         {error ? <p className="rounded-[var(--r-md)] border border-[var(--ruby)] px-4 py-2 text-sm text-[var(--ruby)]">{error}</p> : null}
         <div className="grid gap-3">
@@ -377,7 +381,7 @@ export function InteractiveJudge() {
   return (
     <div dir="rtl" className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <button onClick={() => { setView("list"); void loadList(); }} className="text-sm text-[var(--muted)] underline underline-offset-2 hover:text-[var(--petrol)]">→ كل الجلسات</button>
+        <button onClick={() => { setView("list"); void loadList(); }} className="inline-flex items-center gap-1 text-sm text-[var(--muted)] underline underline-offset-2 hover:text-[var(--petrol)]"><ArrowRight size={14} aria-hidden /> كل الجلسات</button>
         <span className="rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-1 text-xs font-semibold text-[var(--gold)]">{stageLabel(session?.stage ?? "")}</span>
       </div>
 
@@ -396,7 +400,7 @@ export function InteractiveJudge() {
           const isSystem = m.role === "النظام";
           return (
             <div key={m.id ?? i} className={`rounded-[var(--r-lg)] border p-3 text-sm leading-7 ${isJudge ? "border-[var(--gold-border)] bg-[var(--parchment)]" : isSystem ? "border-line bg-ivory text-[var(--muted)]" : "border-line bg-white"}`}>
-              <div className={`mb-1 text-xs font-bold ${isJudge ? "text-[var(--gold)]" : "text-[var(--petrol)]"}`}>{m.role}</div>
+              <div className={`mb-1 inline-flex items-center gap-1 text-xs font-bold ${isJudge ? "text-[var(--gold)]" : "text-[var(--petrol)]"}`}>{isJudge ? <Gavel size={13} aria-hidden /> : null}{m.role}</div>
               <div className="whitespace-pre-wrap text-[var(--ink)]">{m.content}</div>
             </div>
           );
@@ -415,7 +419,7 @@ export function InteractiveJudge() {
       {/* شفافيّة قرار القاضي (يراها صانع القرار: قرأ المداخلة، كيّفها، ثمّ قرّر) */}
       {judgeMeta ? (
         <div className="flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-3 py-2 text-xs">
-          <span className="font-semibold text-[var(--ink-60)]">شفافيّة القاضي:</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-[var(--ink-60)]"><Eye size={14} aria-hidden /> شفافيّة القاضي:</span>
           <span className={`rounded-full px-2.5 py-0.5 font-semibold ${judgeMeta.mode === "ai" ? "bg-[var(--emerald-soft)] text-[var(--emerald)]" : "bg-[var(--surface)] text-[var(--muted)]"}`}>
             {judgeMeta.mode === "ai" ? "قرأ المداخلة وكيّفها ثمّ قرّر (ذكيّ مؤصَّل)" : "قرار إجرائيّ منضبط"}
           </span>
@@ -475,11 +479,11 @@ export function InteractiveJudge() {
       <div className="rounded-[var(--r-xl)] border border-line bg-ivory p-4">
         <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">أدوات الجلسة</p>
         <div className="flex flex-wrap gap-2">
-          <button onClick={computeStrength} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">تقييم قوّة الموقف</button>
-          <button onClick={generateHearingRecord} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">ضبط الجلسة</button>
-          <button onClick={() => setShowSettlement((v) => !v)} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">مسودة صلح</button>
-          <button onClick={toggleCatalog} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]">📋 كتالوج الدفوع</button>
-          <a href={`/api/simulations/${session?.id}/export?type=hearing-record&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:border-[var(--gold-border)]">تصدير ضبط الجلسة</a>
+          <button onClick={computeStrength} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><Gauge size={15} aria-hidden /> تقييم قوّة الموقف</button>
+          <button onClick={generateHearingRecord} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><FileText size={15} aria-hidden /> ضبط الجلسة</button>
+          <button onClick={() => setShowSettlement((v) => !v)} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><Handshake size={15} aria-hidden /> مسودة صلح</button>
+          <button onClick={toggleCatalog} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]"><ClipboardList size={15} aria-hidden /> كتالوج الدفوع</button>
+          <a href={`/api/simulations/${session?.id}/export?type=hearing-record&format=pdf`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:border-[var(--gold-border)]"><Download size={15} aria-hidden /> تصدير ضبط الجلسة</a>
         </div>
 
         {catalogOpen ? (
@@ -527,16 +531,16 @@ export function InteractiveJudge() {
       {judgment ? (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تصدير الحكم PDF</a>
-            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=docx`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تصدير الحكم Word</a>
-            <a href={`/api/simulations/${session?.id}/export?type=full-report&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تقرير الجلسة PDF</a>
+            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=pdf`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><Download size={15} aria-hidden /> تصدير الحكم PDF</a>
+            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=docx`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><ScrollText size={15} aria-hidden /> تصدير الحكم Word</a>
+            <a href={`/api/simulations/${session?.id}/export?type=full-report&format=pdf`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><FileText size={15} aria-hidden /> تقرير الجلسة PDF</a>
           </div>
           <div>
             <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">مرحلة ما بعد الحكم</p>
             <div className="flex flex-wrap gap-2">
-              <a href={`/dashboard/simulations/${session?.id}/appeal`} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">لائحة استئناف</a>
-              <a href={`/dashboard/simulations/${session?.id}/cassation`} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">طلب نقض</a>
-              <a href={`/dashboard/simulations/${session?.id}/reconsideration`} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">التماس إعادة نظر</a>
+              <a href={`/dashboard/simulations/${session?.id}/appeal`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]"><Scale size={15} aria-hidden /> لائحة استئناف</a>
+              <a href={`/dashboard/simulations/${session?.id}/cassation`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]"><Scale size={15} aria-hidden /> طلب نقض</a>
+              <a href={`/dashboard/simulations/${session?.id}/reconsideration`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]"><Scale size={15} aria-hidden /> التماس إعادة نظر</a>
             </div>
           </div>
         </div>
