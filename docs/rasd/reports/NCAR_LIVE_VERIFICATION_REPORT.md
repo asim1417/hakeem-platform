@@ -1,28 +1,32 @@
 # تقرير التحقق الحي — المركز الوطني للوثائق والمحفوظات (NCAR)
 
-**التاريخ:** 2026-07-27T19:35:00.291Z  
+**التاريخ:** 2026-07-27  
 **الفرع:** `feat/rasd-ncar-connector-live-verification`  
 **الـPR:** https://github.com/asim1417/hakeem-platform/pull/513  
+**Commit:** `62fe512`
 
-## الطبقات
+## البيئات المنفّذة فعليًا
 
-| الطبقة | النتيجة |
-|---|---|
-| DNS | PASS |
-| TCP :443 | PASS |
-| TLS handshake | FAIL — reset after ClientHello |
-| HTTP | FAIL |
+| البيئة | DNS | TCP | TLS | HTTP | وثائق حية |
+|---|---|---|---|---|---|
+| Cursor Cloud Agent | PASS | PASS | **FAIL** (ECONNRESET after ClientHello) | FAIL | 0/10 |
+| GitHub Actions `ubuntu-latest` | PASS | **FAIL** (tcp_timeout) | skipped | FAIL | 0/10 |
+| Vercel Preview Function | Deploy **PASS** | — | — | محظور بـ SSO Deployment Protection | لم يُنفَّذ جلب |
 
-## الوثائق الحية
+أوامر: openssl/curl + `verify-source-live.ts` + workflow `rasd-source-live.yml` + `/api/cron/rasd/live-probe`.
 
-| البند | القيمة |
-|---|---|
-| اكتشف | 0 |
-| نجاح حي | 0 / 10 |
-| discoverError | fetch failed |
+## الاكتشاف
 
-## القرار
+| البند | Cloud | GHA |
+|---|---|---|
+| discovered | 0 | 0 |
+| live success | 0 | 0 |
+| error | fetch failed | fetch failed |
 
-**DEGRADED**
+لم تُختبر فهارس/API/PDF حية بسبب تعذّر TLS/TCP من البيئات المتاحة.
 
-لا يوصف NCAR بأنه CONNECTED / WORKING / LIVE / VERIFIED.
+## القرار النهائي
+
+**DEGRADED** · **NOT_LIVE_VERIFIED** (0 وثائق حية)
+
+يحظر وصف NCAR: CONNECTED / WORKING / LIVE / VERIFIED.
