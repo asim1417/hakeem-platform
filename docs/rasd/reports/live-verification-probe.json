@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-07-27T13:26:46.898Z",
+  "mode": "live-dry-probe MEMORY_ONLY no Hakeem compare",
+  "databaseUrlPresent": false,
+  "publicEgressNote": "Cloud agent IP observed earlier ~AWS us-east; BOE/NCAR TLS ClientHello reset",
+  "results": {
+    "UQN": {
+      "code": "UQN",
+      "health": {
+        "ok": true,
+        "status": 200
+      },
+      "discoverOk": true,
+      "discoverError": null,
+      "discoveredCount": 10,
+      "documents": [
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001274",
+          "officialSourceIdentifier": "4001274",
+          "title": "مرسوم ملكي رقم (م/12) وتاريخ 1448/01/07هـ",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "c80fdbd1f15c5d039553021cfaed281bb830ffc2b800930f2ed0f8a618d228e4",
+          "normalizedTextHash": "e35d1c2feae42bc9a1bed5e159c985ad725b8bc6d2d69f9a754aa28128c0f670",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "e86674297a9665a77f4ad57b756217c5a6e638f6619e92d469a54f104913f9ad",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 787382,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158782848-06007dcd935f9f7b-c80fdbd1f15c5d03.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001277",
+          "officialSourceIdentifier": "4001277",
+          "title": "الموافقة على نظام الأنشطة الترفيهية والأنشطة المساندة لها",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "58040df5f96740736ce9e0d5edde8bba769bc79e66e0eb780a14a5ead24da66c",
+          "normalizedTextHash": "76db70c4bccedaf3f894f9c4238aa590470ae967d94aa7181714261dc3dc5be6",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "88e04e68a442c69f67102f7a1b5054084f2c5e37f1c4b85d30b99b9f7f39f740",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 790082,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158783288-cd34f620502fbb6a-58040df5f9674073.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001278",
+          "officialSourceIdentifier": "4001278",
+          "title": "نظام الأنشطة الترفيهية والأنشطة المساندة لها",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "REPEALED",
+          "rawSnapshotHash": "edc01feaa0f6dbaa1ec34b980bab15e396631c5fa13d48adf03a93a5c52a471c",
+          "normalizedTextHash": "66ca8dbe019f764d806321aab2cf9b20d9c2f1dbf1f5dff19b29c7034c0295fb",
+          "parseConfidence": 0.8500000000000001,
+          "provisionCount": 24,
+          "canonicalIdentityKey": "df798cd7efb616754ef0f1caa9c09d022a79900779c00cc7d98ae90b110f565d",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 795796,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158783740-8303a058f3af3331-edc01feaa0f6dbaa.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001280",
+          "officialSourceIdentifier": "4001280",
+          "title": "الموافقة على اللائحة التنفيذية لنظام تملك غير السعوديين للعقار",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "69726263dd1b725d6007672828d924633f0dc71e6dc290701ed6e2faf324472a",
+          "normalizedTextHash": "2e31b0ec7e3bccce54df34a4e5cfcdaf33043c0ca32917f5164529ecd324d235",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "d5eb3b447c19c02b4a9e6b7573bbbe46a69c0cbcddc13d5a0dd12e544398466f",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 788492,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158784162-91dedcf2a7757524-69726263dd1b725d.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001281",
+          "officialSourceIdentifier": "4001281",
+          "title": "اللائحة التنفيذية لنظام تملك غير السعوديين للعقار",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "16d05e0e8107624f23dd0b7e1d68ed9c5068eb24c358e5cb1c5d31f970f44b10",
+          "normalizedTextHash": "e3aec2a3d66445a40e82f0334042ec22de2c055ab3a578bc4a8c63cf34d90409",
+          "parseConfidence": 0.8500000000000001,
+          "provisionCount": 16,
+          "canonicalIdentityKey": "cc2696b98c10f723aebb9853e470beea9a0beffade633496f48e54149b2aada9",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 802793,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158784594-891e559565a5e876-16d05e0e8107624f.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001282",
+          "officialSourceIdentifier": "4001282",
+          "title": "إلزام الجهات الحكومية بتوفير احتياجاتها من سيارات الإسعاف من شركة نوبكو",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "3de35448acb970aa62e78d2e739e94beb20ea5dc41992ca0d825e55ce4618e30",
+          "normalizedTextHash": "11d2918866b6a0a24d64e854031767eb8a00d67c321f0f013c84cf5bfbb98441",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "1c886305452e43e73272197a4aea299d263cfcfd152a1b745cc094b923abb2b2",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 789091,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158785019-9be1653c4a691dc3-3de35448acb970aa.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001285",
+          "officialSourceIdentifier": "4001285",
+          "title": "تحويل الأرشيف الثقافي في وزارة الثقافة إلى مركز غير مستقل باسم ذاكرة الثقافة السعودية",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "dbbde5239e0ae56ccc0eb35e977f0c0ed685497df1f5b1323df51eb32c7e7512",
+          "normalizedTextHash": "9e06c47e0b5b1b3890c66680d7b97dd0221fc88cdc379f8ebabdc46250a81254",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "7d7945e892075524716cfb33d7165fd53a9caaa8f0fa7deb5d0a3baba4ee7074",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 789194,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158785437-726ce49597d72425-dbbde5239e0ae56c.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001288",
+          "officialSourceIdentifier": "4001288",
+          "title": "الترتيبات التنظيمية لمركز ذاكرة الثقافة السعودية",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "4bc0c91d3ea928224b76c6faad369744b4b0cddc6b51c6bd1eec95c79a62fb72",
+          "normalizedTextHash": "34ef63dbfd5ad4a15a752a5140a0d4ba60b8084f939058af289ece86d2396d1d",
+          "parseConfidence": 0.8500000000000001,
+          "provisionCount": 13,
+          "canonicalIdentityKey": "4881f482dbea56c1e9904ee2de28281a77ec0ba170e63a0db0ffb6782816aeb6",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 795523,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158785858-114ffc864ff1020f-4bc0c91d3ea92822.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001291",
+          "officialSourceIdentifier": "4001291",
+          "title": "تعديل المادة الثانية عشرة من الترتيبات التنظيمية لمجلس المخاطر الوطنية",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "7ee66954292e6f9754357bd573ad9195e7f1b1fa79f8bc700c71d13ab421de38",
+          "normalizedTextHash": "813b96bd4da0063fe1d2c467b9c79de3306cb6ba845f9e9a304befa23620f046",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "969d5eee6dd91b69498192eb030a350a15af9de5440e659b179081a4203bb5cf",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 788808,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158786278-e353b9b13b55b0f3-7ee66954292e6f97.html"
+        },
+        {
+          "source": "UQN",
+          "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001294",
+          "officialSourceIdentifier": "4001294",
+          "title": "اعتماد اللائحة التنفيذية لنظام الشركات الخاصة بشركات المساهمة المدرجة المعدّلة",
+          "discoverTitle": null,
+          "errors": [],
+          "warnings": [
+            "instrument number not extracted"
+          ],
+          "documentType": null,
+          "instrumentNumber": null,
+          "instrumentDate": null,
+          "publicationData": {
+            "publicationDateHijri": null,
+            "publicationDateGregorian": "2026-07-03",
+            "ummAlQuraIssue": null
+          },
+          "status": "AMENDED",
+          "rawSnapshotHash": "d247bfa2c58cb9e2873e1cb605471964739c9d949761f6b04040166b7987eafc",
+          "normalizedTextHash": "885b0cf478b7fcd631459665517d0518a1947c53f1ecba223038a0f67516b095",
+          "parseConfidence": 0.65,
+          "provisionCount": 1,
+          "canonicalIdentityKey": "7d1d417d256117ced58c48b9e4d98ff406d53d3ada6386e3ca625f415bdae5a8",
+          "matchCandidateInHakeem": null,
+          "matchScore": null,
+          "detectedDifferences": [
+            "NO_HAKEEM_COMPARE: DATABASE_URL unset in verification environment"
+          ],
+          "httpStatus": 200,
+          "bytes": 785705,
+          "snapshotPath": "/workspace/data/rasd/snapshots/verify-live/UQN/1785158786692-aa18ea34a44b0318-d247bfa2c58cb9e2.html"
+        }
+      ],
+      "elapsedMs": 5733
+    },
+    "BOE": {
+      "code": "BOE",
+      "health": {
+        "ok": false,
+        "status": 0,
+        "error": "fetch failed"
+      },
+      "discoverOk": false,
+      "discoverError": "fetch failed",
+      "discoveredCount": 0,
+      "documents": [],
+      "elapsedMs": 5011
+    },
+    "NCAR": {
+      "code": "NCAR",
+      "health": {
+        "ok": false,
+        "status": 0,
+        "error": "fetch failed"
+      },
+      "discoverOk": false,
+      "discoverError": "fetch failed",
+      "discoveredCount": 0,
+      "documents": [],
+      "elapsedMs": 5011
+    }
+  }
+}
