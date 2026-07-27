@@ -2,6 +2,7 @@
 // فيُقيَّد تأريض القاضي في أنظمة ذلك التخصّص (لا منطق موازٍ: يقرأ النطاق من مانيفستات الوكلاء).
 // يُدمج مع مرحلة الترافع (المهارة) ليكون القاضي «متخصّصًا بنوع الدعوى ومرحلته» معًا.
 import { listManifests } from "@/lib/agent-runtime/live/manifests";
+import { proceduralScopeFor } from "./judicial-brain";
 
 export type ActivatedAgent = {
   agentId: string;
@@ -38,9 +39,14 @@ export function resolveSpecializedAgent(caseType?: string): ActivatedAgent {
   else m = pickRole("معاون_قاضٍ");
   m = m ?? pickRole("معاون_قاضٍ") ?? listManifests()[0] ?? null;
 
+  // نطاق التأريض = أنظمة التخصّص الموضوعيّ (من المانيفست) ∪ الأنظمة الإجرائيّة الحاكمة للدعوى.
+  // فيبقى القاضي مؤرَّضًا في المواد الموضوعيّة ومحكومًا بالأنظمة الإجرائيّة الأربعة معًا.
+  const substantive = (m?.scope.defaultSystems ?? []).map(slugToLawName);
+  const scopeSystems = Array.from(new Set([...substantive, ...proceduralScopeFor(caseType)]));
+
   return {
     agentId: m?.agentId ?? "aman-judge-aide",
     label: DOMAIN_LABEL[m?.practiceProfile.role ?? ""] ?? "التخصّص العامّ",
-    scopeSystems: (m?.scope.defaultSystems ?? []).map(slugToLawName)
+    scopeSystems
   };
 }

@@ -99,6 +99,11 @@ export function InteractiveJudge() {
   const [catFilter, setCatFilter] = useState("الكل");
   // شفافيّة قرار القاضي (يراها صانع القرار): آخر وضع + تكييف + إجراء.
   const [judgeMeta, setJudgeMeta] = useState<{ mode: string; classification: string | null; action: string | null } | null>(null);
+  // صحيفة الدعوى (منقولة من ملفّ القضية في القاعة الكلاسيكيّة).
+  const [showClaimSheet, setShowClaimSheet] = useState(false);
+  // الكتابة الحيّة (منقولة من القاعة الكلاسيكيّة): يُكشف نصّ القاضي حرفًا حرفًا بدل عرضه دفعةً.
+  const [typing, setTyping] = useState<{ id: string; full: string } | null>(null);
+  const [typedLen, setTypedLen] = useState(0);
 
   const loadList = useCallback(async () => {
     try {
@@ -116,6 +121,30 @@ export function InteractiveJudge() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [session?.messages.length]);
+
+  // محرّك الكتابة الحيّة: يكشف النصّ تدريجيًّا بخطوةٍ متناسبة مع طوله (زمنٌ ثابتٌ تقريبًا ~6ث)،
+  // فيكتب القاضي «حيًّا ومباشرةً» بدل ظهور كتلةٍ طويلة دفعةً واحدة.
+  useEffect(() => {
+    if (!typing) return;
+    setTypedLen(0);
+    const step = Math.max(1, Math.floor(typing.full.length / 400));
+    const iv = setInterval(() => {
+      setTypedLen((n) => {
+        const next = n + step;
+        if (next >= typing.full.length) {
+          clearInterval(iv);
+          return typing.full.length;
+        }
+        return next;
+      });
+    }, 16);
+    return () => clearInterval(iv);
+  }, [typing]);
+
+  // متابعة التمرير أثناء الكتابة الحيّة.
+  useEffect(() => {
+    if (typing) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [typedLen, typing]);
 
   const applyState = useCallback((s: Session, t: TurnState) => {
     setSession(s);
@@ -173,9 +202,10 @@ export function InteractiveJudge() {
         body: JSON.stringify({ role: sendAs, content: input.trim() })
       });
       setInput("");
-      await runJudge(session.id); // القاضي يردّ بذكاءٍ مؤصَّل
+      const jr = await runJudge(session.id); // القاضي يردّ بذكاءٍ مؤصَّل
       const fresh = await api(`/api/simulations/${session.id}/messages`);
       applyState(fresh.session, fresh.turnState ?? null);
+      if (jr?.message?.id && jr?.message?.content) setTyping({ id: jr.message.id, full: jr.message.content });
     } catch (e) {
       setError((e as Error).message);
       // أعِد تحميل الحالة لتصحيح الدور المسموح عند الرفض (403).
@@ -195,9 +225,10 @@ export function InteractiveJudge() {
     setBusy(true);
     setError(null);
     try {
-      await runJudge(session.id);
+      const jr = await runJudge(session.id);
       const fresh = await api(`/api/simulations/${session.id}/messages`);
       applyState(fresh.session, fresh.turnState ?? null);
+      if (jr?.message?.id && jr?.message?.content) setTyping({ id: jr.message.id, full: jr.message.content });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -228,9 +259,10 @@ export function InteractiveJudge() {
     setBusy(true);
     setError(null);
     try {
-      await api(`/api/simulations/${session.id}/judgment`, { method: "POST", body: JSON.stringify({}) });
+      const data = await api(`/api/simulations/${session.id}/judgment`, { method: "POST", body: JSON.stringify({}) });
       const fresh = await api(`/api/simulations/${session.id}/messages`);
       applyState(fresh.session, fresh.turnState ?? null);
+      if (data?.judgment?.id && data?.judgment?.content) setTyping({ id: data.judgment.id, full: data.judgment.content });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -398,17 +430,22 @@ export function InteractiveJudge() {
         {visibleMessages.map((m, i) => {
           const isJudge = m.role === "القاضي الافتراضي";
           const isSystem = m.role === "النظام";
+          const isTyping = typing?.id === m.id;
+          const shown = isTyping ? m.content.slice(0, typedLen) : m.content;
           return (
             <div key={m.id ?? i} className={`rounded-[var(--r-lg)] border p-3 text-sm leading-7 ${isJudge ? "border-[var(--gold-border)] bg-[var(--parchment)]" : isSystem ? "border-line bg-ivory text-[var(--muted)]" : "border-line bg-white"}`}>
               <div className={`mb-1 inline-flex items-center gap-1 text-xs font-bold ${isJudge ? "text-[var(--gold)]" : "text-[var(--petrol)]"}`}>{isJudge ? <Gavel size={13} aria-hidden /> : null}{m.role}</div>
-              <div className="whitespace-pre-wrap text-[var(--ink)]">{m.content}</div>
+              <div className="whitespace-pre-wrap text-[var(--ink)]">{shown}{isTyping ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}</div>
             </div>
           );
         })}
         {judgment ? (
           <div className="rounded-[var(--r-lg)] border-2 border-[var(--gold)] bg-[var(--parchment)] p-4">
             <div className="mb-2 font-bold text-[var(--gold)]">مسودة الحكم</div>
-            <div className="whitespace-pre-wrap text-sm leading-8 text-[var(--ink)]">{judgment.content}</div>
+            <div className="whitespace-pre-wrap text-sm leading-8 text-[var(--ink)]">
+              {typing?.id === judgment.id ? judgment.content.slice(0, typedLen) : judgment.content}
+              {typing?.id === judgment.id ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}
+            </div>
           </div>
         ) : null}
         <div ref={bottomRef} />
@@ -479,12 +516,17 @@ export function InteractiveJudge() {
       <div className="rounded-[var(--r-xl)] border border-line bg-ivory p-4">
         <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">أدوات الجلسة</p>
         <div className="flex flex-wrap gap-2">
+          <button onClick={() => setShowClaimSheet((v) => !v)} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)] transition hover:opacity-90"><ScrollText size={15} aria-hidden /> صحيفة الدعوى</button>
           <button onClick={computeStrength} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><Gauge size={15} aria-hidden /> تقييم قوّة الموقف</button>
           <button onClick={generateHearingRecord} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><FileText size={15} aria-hidden /> ضبط الجلسة</button>
           <button onClick={() => setShowSettlement((v) => !v)} disabled={busy} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50"><Handshake size={15} aria-hidden /> مسودة صلح</button>
           <button onClick={toggleCatalog} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]"><ClipboardList size={15} aria-hidden /> كتالوج الدفوع</button>
           <a href={`/api/simulations/${session?.id}/export?type=hearing-record&format=pdf`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:border-[var(--gold-border)]"><Download size={15} aria-hidden /> تصدير ضبط الجلسة</a>
         </div>
+
+        {showClaimSheet ? (
+          <ClaimSheet claim={extractClaimClient(session?.messages ?? [])} title={session?.title ?? ""} exportHref={`/api/simulations/${session?.id}/export?type=claim-sheet&format=pdf`} />
+        ) : null}
 
         {catalogOpen ? (
           <div className="mt-3 rounded-[var(--r-lg)] border border-line bg-white p-3">
@@ -559,6 +601,42 @@ function Field({ label, value, onChange, textarea }: { label: string; value: str
         <input value={value} onChange={(e) => onChange(e.target.value)} className="rounded-[var(--r-md)] border border-line bg-white p-2.5 outline-none focus:border-[var(--gold)]" />
       )}
     </label>
+  );
+}
+
+// صحيفة الدعوى الكاملة — تعرض بيانات القضية المبنيَنة (الأطراف، الموضوع، الوقائع، الطلبات،
+// الأساس النظاميّ) كما في ملفّ القضية بالقاعة الكلاسيكيّة، مع تصديرها.
+function ClaimSheet({ claim, title, exportHref }: { claim: Record<string, string> | null; title: string; exportHref: string }) {
+  if (!claim) {
+    return <div className="mt-3 rounded-[var(--r-lg)] border border-line bg-white p-4 text-center text-sm text-[var(--muted)]">لم تُسجَّل صحيفة دعوى مبنيَنة لهذه الجلسة.</div>;
+  }
+  const rows: Array<[string, string | undefined]> = [
+    ["الموضوع", claim.subject || title],
+    ["نوع الدعوى", claim.caseType],
+    ["المدّعي", [claim.plaintiffName, claim.plaintiffCapacity].filter(Boolean).join(" — ")],
+    ["المدّعى عليه", [claim.defendantName, claim.defendantCapacity].filter(Boolean).join(" — ")],
+    ["قيمة المطالبة", claim.claimAmount],
+    ["الوقائع", claim.facts],
+    ["الطلبات", claim.requests],
+    ["الأساس النظاميّ المذكور", claim.legalGrounds],
+    ["الدفوع", claim.defenses]
+  ];
+  const shown = rows.filter(([, v]) => v && String(v).trim());
+  return (
+    <div className="mt-3 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--parchment)] p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="font-judicial text-base font-bold text-[var(--navy)]">صحيفة الدعوى</div>
+        <a href={exportHref} className="focus-ring inline-flex items-center gap-1 rounded-[var(--r-md)] border border-line bg-white px-3 py-1.5 text-xs font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><Download size={13} aria-hidden /> تصدير PDF</a>
+      </div>
+      <dl className="grid gap-2 text-sm">
+        {shown.map(([label, value]) => (
+          <div key={label} className="grid grid-cols-[7.5rem_1fr] gap-2 border-b border-line/60 pb-2 last:border-0">
+            <dt className="font-semibold text-[var(--ink-60)]">{label}</dt>
+            <dd className="whitespace-pre-wrap leading-7 text-[var(--ink)]">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
 

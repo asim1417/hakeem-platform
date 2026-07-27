@@ -11,7 +11,7 @@
 //     يُحيل القضية لجلسةٍ لاحقة، لا حكمٌ نهائيّ.
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
-import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
+import { groundForJudge, verifyJudgeGrounding, PROCEDURAL_DIGEST } from "./judicial-brain";
 import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
@@ -59,6 +59,8 @@ function buildSystemPrompt() {
   return [
     "أنت قاضٍ افتراضيّ تدريبيّ في منصّة حكيم، تعمل وفق الدليل الموحَّد للصياغة القضائيّة السعوديّة.",
     "أُقفل باب المرافعة، والمطلوب إصدار مخرَجٍ قضائيٍّ مسبَّب.",
+    "",
+    PROCEDURAL_DIGEST,
     "",
     "== القاعدة العامّة للصياغة ==",
     "- الحكم بنيةٌ واحدة مترابطة: الوقائع ← الأسباب ← المنطوق؛ كلّ فقرةٍ تترتّب على ما قبلها.",
