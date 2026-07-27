@@ -104,8 +104,8 @@ export function isRoleAllowedToSpeak(senderRole: string, turn: TurnState | null)
   if (!turn) return true;
   if (turn.allowedSpeakerRole === "both") return ["claimant", "claimant_agent", "defendant", "defendant_agent"].includes(speaker);
   if (turn.allowedSpeakerRole === "none" || turn.allowedSpeakerRole === "judge" || turn.allowedSpeakerRole === "system") return false;
-  if (turn.allowedSpeakerRole === "claimant") return speaker === "claimant" || speaker === "claimant_agent";
-  if (turn.allowedSpeakerRole === "defendant") return speaker === "defendant" || speaker === "defendant_agent";
+  if (turn.allowedSpeakerRole === "claimant" || turn.allowedSpeakerRole === "claimant_agent") return speaker === "claimant" || speaker === "claimant_agent";
+  if (turn.allowedSpeakerRole === "defendant" || turn.allowedSpeakerRole === "defendant_agent") return speaker === "defendant" || speaker === "defendant_agent";
   return speaker === turn.allowedSpeakerRole;
 }
 
