@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
-import { buildAppealDraft } from "@/lib/modules/simulations/hakeem-judge";
+import { buildAppealDraft, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { analyzeObjection } from "@/lib/modules/simulations/courtroom-skills";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const payload = schema.parse(await request.json());
   const user = gate.user!;
   const session = await findOwnedSimulation(user, params.id, {
+    messages: { orderBy: { createdAt: "asc" } },
     judgments: { orderBy: { createdAt: "desc" }, take: 1 }
   });
 
@@ -33,12 +35,27 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ message: "لا يمكن فتح مرحلة الاعتراض قبل صدور الحكم." }, { status: 400 });
   }
 
+  // مهارة تحليل الاعتراض المؤصَّلة (اسأل حكيم)؛ سقوطٌ آمنٌ للمسودة عند أيّ فشل.
+  let content = buildAppealDraft(payload.kind, payload.reasons);
+  try {
+    const skill = await analyzeObjection({
+      claim: extractClaim(session.messages),
+      messages: session.messages,
+      judgmentContent: session.judgments[0]?.content ?? "",
+      kind: payload.kind,
+      reasons: payload.reasons
+    });
+    if (skill) content = skill.content;
+  } catch {
+    content = buildAppealDraft(payload.kind, payload.reasons);
+  }
+
   const decision = await prisma.simulationDecision.create({
     data: {
       simulationId: params.id,
       stage: "OBJECTION",
       decisionType: payload.kind,
-      content: buildAppealDraft(payload.kind, payload.reasons)
+      content
     }
   });
 
