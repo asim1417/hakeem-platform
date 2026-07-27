@@ -12,7 +12,7 @@
 //   ⑥ تحليل الاعتراض analyzeObjection      (جديد — مؤصَّل، بدل الـstub)
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
-import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
+import { groundForJudge, verifyJudgeGrounding, PROCEDURAL_DIGEST } from "./judicial-brain";
 import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
@@ -66,7 +66,8 @@ async function runGroundedSkill<T extends object>(spec: {
   const agent = resolveSpecializedAgent(spec.caseType);
   const g = await groundForJudge(spec.groundText, 8, agent.scopeSystems);
   const llm = await callCentralProvider({
-    systemPrompt: spec.systemPrompt,
+    // استيعاب الأنظمة الإجرائيّة الأربعة يتصدّر كلّ مهارةٍ قضائيّة (نطاقٌ مؤرَّض + منهجٌ إجرائيّ).
+    systemPrompt: `${PROCEDURAL_DIGEST}\n\n${spec.systemPrompt}`,
     userPrompt: spec.buildUser(g.citationBlock),
     maxTokens: spec.maxTokens ?? 1800
   });

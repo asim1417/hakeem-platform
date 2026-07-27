@@ -7,7 +7,7 @@
 import type { SimulationMessage } from "@prisma/client";
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
-import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
+import { groundForJudge, verifyJudgeGrounding, PROCEDURAL_DIGEST } from "./judicial-brain";
 import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 import {
@@ -80,6 +80,9 @@ function buildSystemPrompt() {
   return [
     "أنت قاضٍ افتراضيّ تدريبيّ في منصّة حكيم، محايدٌ لا ينحاز لطرف.",
     "مهمّتك: اقرأ آخر مداخلةٍ من الخصم، وحلّلها وكيّفها قانونيًّا (طلب/دفع/بيّنة/إقرار/تعقيب)، وقدّر كفاية بيّنتها وعبء الإثبات وفق نظام الإثبات، ثمّ قرّر الإجراء التالي.",
+    "",
+    PROCEDURAL_DIGEST,
+    "",
     "قواعد صارمة:",
     "- لا تختلق مادّةً ولا رقم مادّة؛ لا تستشهد إلا بالمواد المسترجَعة المذكورة في «الأساس النظاميّ المتاح» أدناه.",
     "- إن كانت المداخلة غامضةً أو ناقصة، اطلب إيضاحًا من الطرف نفسه بدل الانتقال.",
