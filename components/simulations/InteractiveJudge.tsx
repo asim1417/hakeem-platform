@@ -25,6 +25,10 @@ type Session = {
   judgments?: Judgment[];
 };
 type SessionSummary = { id: string; title: string; stage: string; updatedAt?: string };
+type Playbook = { id: string; title: string; category: string; description: string; suggestedArticleNumbers?: number[]; preferredSystems?: string[] };
+
+// مسار المراحل المرئيّ (منقول من القاعة الكلاسيكيّة).
+const STAGE_FLOW = ["CLAIM_FILING", "PLAINTIFF_STATEMENT", "DEFENDANT_RESPONSE", "PROCEDURAL_DECISION", "CLOSE_PLEADING", "TRAINING_JUDGMENT"] as const;
 
 const SPEAKER_LABEL: Record<string, string> = {
   claimant: "المدعي",
@@ -68,6 +72,9 @@ export function InteractiveJudge() {
   const [strength, setStrength] = useState<{ score: number; notes: string[] } | null>(null);
   const [showSettlement, setShowSettlement] = useState(false);
   const [settlement, setSettlement] = useState({ amount: "", obligations: "", duration: "", waiver: "" });
+  const [catalog, setCatalog] = useState<Playbook[]>([]);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catFilter, setCatFilter] = useState("الكل");
 
   const loadList = useCallback(async () => {
     try {
@@ -252,6 +259,24 @@ export function InteractiveJudge() {
     }
   }, [session, settlement, applyState]);
 
+  const toggleCatalog = useCallback(async () => {
+    setCatalogOpen((v) => !v);
+    if (catalog.length === 0) {
+      try {
+        const res = await fetch("/original-hakeem/judicial-playbooks.json");
+        const data = await res.json();
+        setCatalog(Array.isArray(data?.playbooks) ? data.playbooks : []);
+      } catch {
+        /* الكتالوج اختياريّ — لا يكسر الجلسة */
+      }
+    }
+  }, [catalog.length]);
+
+  const insertDefense = useCallback((pb: Playbook) => {
+    setInput((prev) => `${prev ? prev + "\n" : ""}الدفع: ${pb.title} — ${pb.description}`.trim());
+    setCatalogOpen(false);
+  }, []);
+
   const closed = turn?.allowedSpeakerRole === "none";
   const judgment = session?.judgments?.[session.judgments.length - 1];
   const visibleMessages = (session?.messages ?? []).filter((m) => !isMarker(m.content) && !(m.role === "النظام" && m.content.includes("تقييد الدعوى")));
@@ -327,6 +352,9 @@ export function InteractiveJudge() {
       </div>
 
       <h1 className="t-display text-2xl font-bold text-[var(--petrol)]">{session?.title}</h1>
+
+      {/* شريط المراحل (منقول من القاعة الكلاسيكيّة) */}
+      <StageBar current={session?.stage ?? ""} hasJudgment={Boolean(judgment)} />
 
       {/* المحضر */}
       <div className="space-y-3 rounded-[var(--r-xl)] border border-line bg-[var(--surface)] p-4">
@@ -406,8 +434,28 @@ export function InteractiveJudge() {
           <button onClick={computeStrength} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">تقييم قوّة الموقف</button>
           <button onClick={generateHearingRecord} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">ضبط الجلسة</button>
           <button onClick={() => setShowSettlement((v) => !v)} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">مسودة صلح</button>
+          <button onClick={toggleCatalog} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]">📋 كتالوج الدفوع</button>
           <a href={`/api/simulations/${session?.id}/export?type=hearing-record&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:border-[var(--gold-border)]">تصدير ضبط الجلسة</a>
         </div>
+
+        {catalogOpen ? (
+          <div className="mt-3 rounded-[var(--r-lg)] border border-line bg-white p-3">
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {["الكل", ...Array.from(new Set(catalog.map((p) => p.category)))].map((cat) => (
+                <button key={cat} onClick={() => setCatFilter(cat)} className={`rounded-full border px-2.5 py-0.5 text-[11px] ${catFilter === cat ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--gold)]" : "border-line text-[var(--muted)]"}`}>{cat}</button>
+              ))}
+            </div>
+            <div className="grid max-h-72 gap-1.5 overflow-y-auto">
+              {catalog.filter((p) => catFilter === "الكل" || p.category === catFilter).map((p) => (
+                <button key={p.id} onClick={() => insertDefense(p)} title="إدراج في المرافعة" className="focus-ring rounded-[var(--r-md)] border border-line p-2.5 text-right transition hover:border-[var(--gold-border)]">
+                  <div className="text-sm font-semibold text-[var(--petrol)]">{p.title}</div>
+                  <div className="mt-0.5 line-clamp-2 text-[11px] leading-5 text-[var(--muted)]">{p.description}</div>
+                </button>
+              ))}
+              {catalog.length === 0 ? <p className="p-3 text-center text-xs text-[var(--muted)]">جارٍ تحميل الكتالوج…</p> : null}
+            </div>
+          </div>
+        ) : null}
 
         {strength ? (
           <div className="mt-3 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--parchment)] p-3 text-sm">
@@ -463,6 +511,26 @@ function Field({ label, value, onChange, textarea }: { label: string; value: str
         <input value={value} onChange={(e) => onChange(e.target.value)} className="rounded-[var(--r-md)] border border-line bg-white p-2.5 outline-none focus:border-[var(--gold)]" />
       )}
     </label>
+  );
+}
+
+function StageBar({ current, hasJudgment }: { current: string; hasJudgment: boolean }) {
+  const activeIdx = hasJudgment ? STAGE_FLOW.length - 1 : Math.max(0, STAGE_FLOW.indexOf(current as (typeof STAGE_FLOW)[number]));
+  return (
+    <div className="flex items-center gap-1 overflow-x-auto rounded-[var(--r-lg)] border border-line bg-ivory p-2">
+      {STAGE_FLOW.map((s, i) => {
+        const done = i < activeIdx;
+        const active = i === activeIdx;
+        return (
+          <div key={s} className="flex flex-none items-center gap-1">
+            <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${active ? "bg-[var(--gold)] text-[var(--navy)]" : done ? "bg-[var(--emerald-soft)] text-[var(--emerald)]" : "bg-[var(--surface)] text-[var(--muted)]"}`}>
+              {done ? "✓ " : ""}{stageLabel(s)}
+            </span>
+            {i < STAGE_FLOW.length - 1 ? <span className="text-[var(--ink-40)]">←</span> : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
