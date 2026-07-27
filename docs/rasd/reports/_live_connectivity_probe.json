@@ -1,0 +1,223 @@
+{
+  "checkedAt": "2026-07-27T19:29:24.540330+00:00",
+  "environment": "cursor-cloud-agent",
+  "sources": {
+    "BOE": [
+      {
+        "host": "laws.boe.gov.sa",
+        "dns": {
+          "ok": true,
+          "addrs": [
+            "66.9.136.215"
+          ]
+        },
+        "tcp": {
+          "ok": true,
+          "ms": 1,
+          "peer": [
+            "66.9.136.215",
+            443
+          ]
+        },
+        "tls": {
+          "ok": false,
+          "error": "ConnectionResetError(104, 'Connection reset by peer')",
+          "type": "ConnectionResetError"
+        },
+        "https_root": {
+          "ok": false,
+          "error": "URLError(ConnectionResetError(104, 'Connection reset by peer'))",
+          "type": "URLError"
+        }
+      },
+      {
+        "host": "boe.gov.sa",
+        "dns": {
+          "ok": true,
+          "addrs": [
+            "66.9.136.214"
+          ]
+        },
+        "tcp": {
+          "ok": true,
+          "ms": 1,
+          "peer": [
+            "66.9.136.214",
+            443
+          ]
+        },
+        "tls": {
+          "ok": false,
+          "error": "ConnectionResetError(104, 'Connection reset by peer')",
+          "type": "ConnectionResetError"
+        },
+        "https_root": {
+          "ok": false,
+          "error": "URLError(ConnectionResetError(104, 'Connection reset by peer'))",
+          "type": "URLError"
+        }
+      }
+    ],
+    "NCAR": [
+      {
+        "host": "ncar.gov.sa",
+        "dns": {
+          "ok": true,
+          "addrs": [
+            "66.9.128.33"
+          ]
+        },
+        "tcp": {
+          "ok": true,
+          "ms": 0,
+          "peer": [
+            "66.9.128.33",
+            443
+          ]
+        },
+        "tls": {
+          "ok": false,
+          "error": "ConnectionResetError(104, 'Connection reset by peer')",
+          "type": "ConnectionResetError"
+        },
+        "https_root": {
+          "ok": false,
+          "error": "URLError(ConnectionResetError(104, 'Connection reset by peer'))",
+          "type": "URLError"
+        }
+      },
+      {
+        "host": "www.ncar.gov.sa",
+        "dns": {
+          "ok": true,
+          "addrs": [
+            "66.9.128.33"
+          ]
+        },
+        "tcp": {
+          "ok": true,
+          "ms": 1,
+          "peer": [
+            "66.9.128.33",
+            443
+          ]
+        },
+        "tls": {
+          "ok": false,
+          "error": "ConnectionResetError(104, 'Connection reset by peer')",
+          "type": "ConnectionResetError"
+        },
+        "https_root": {
+          "ok": false,
+          "error": "URLError(ConnectionResetError(104, 'Connection reset by peer'))",
+          "type": "URLError"
+        }
+      }
+    ],
+    "UQN": [
+      {
+        "host": "www.uqn.gov.sa",
+        "dns": {
+          "ok": true,
+          "addrs": [
+            "212.138.183.159"
+          ]
+        },
+        "tcp": {
+          "ok": true,
+          "ms": 1,
+          "peer": [
+            "212.138.183.159",
+            443
+          ]
+        },
+        "tls": {
+          "ok": true,
+          "ms": 324,
+          "version": "TLSv1.3",
+          "cipher": [
+            "TLS_AES_256_GCM_SHA384",
+            "TLSv1.3",
+            256
+          ],
+          "subject": {
+            "countryName": "SA",
+            "localityName": "Riyadh",
+            "organizationName": "Saudi Press Agency",
+            "commonName": "*.uqn.gov.sa"
+          }
+        },
+        "https_root": {
+          "ok": true,
+          "status": 200,
+          "headers": {
+            "Server": "nginx",
+            "Content-Type": "text/html; charset=UTF-8",
+            "Vary": "Accept-Encoding",
+            "Set-Cookie": "device=web; expires=Thu, 24 Jul 2036 19:30:07 GMT; Max-Age=315360000; path=/; secure; HttpOnly; SameSite=strict",
+            "Cache-Control": "no-cache, private",
+            "Date": "Mon, 27 Jul 2026 19:30:07 GMT",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+            "Strict-Transport-Security": "max-age=15768000; includeSubDomains;preload",
+            "Connection": "close"
+          },
+          "ms": 704,
+          "url": "https://www.uqn.gov.sa/"
+        }
+      },
+      {
+        "host": "uqn.gov.sa",
+        "dns": {
+          "ok": true,
+          "addrs": [
+            "212.138.183.32"
+          ]
+        },
+        "tcp": {
+          "ok": true,
+          "ms": 1,
+          "peer": [
+            "212.138.183.32",
+            443
+          ]
+        },
+        "tls": {
+          "ok": true,
+          "ms": 6577,
+          "version": "TLSv1.3",
+          "cipher": [
+            "TLS_AES_256_GCM_SHA384",
+            "TLSv1.3",
+            256
+          ],
+          "subject": {
+            "countryName": "SA",
+            "localityName": "Riyadh",
+            "organizationName": "Saudi Press Agency",
+            "commonName": "*.uqn.gov.sa"
+          }
+        },
+        "https_root": {
+          "ok": true,
+          "status": 200,
+          "headers": {
+            "Server": "nginx",
+            "Content-Type": "text/html; charset=UTF-8",
+            "Transfer-Encoding": "chunked",
+            "Vary": "Accept-Encoding",
+            "Set-Cookie": "device=web; expires=Thu, 24 Jul 2036 19:30:19 GMT; Max-Age=315360000; path=/; secure; HttpOnly; SameSite=strict",
+            "Cache-Control": "no-cache, private",
+            "Date": "Mon, 27 Jul 2026 19:30:19 GMT",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+            "Strict-Transport-Security": "max-age=15768000; includeSubDomains;preload",
+            "Connection": "close"
+          },
+          "ms": 5556,
+          "url": "https://www.uqn.gov.sa/"
+        }
+      }
+    ]
+  }
+}
