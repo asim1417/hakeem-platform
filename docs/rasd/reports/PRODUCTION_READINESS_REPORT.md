@@ -1,116 +1,83 @@
 # PRODUCTION_READINESS_REPORT
 
-**Generated:** 2026-07-27  
-**Integration branch:** `cursor/rasd-production-integration-97b5`  
-**Agent run:** https://cursor.com/agents/bc-019fa384-d26e-7e8b-ad39-469bbb1597b5
+**Updated:** 2026-07-27  
+**PR:** https://github.com/asim1417/hakeem-platform/pull/519 (remains **Draft**)  
+**Branch:** `cursor/rasd-production-integration-97b5`
 
 ---
 
-## 1. PRs and commits
+## Executive summary
 
-| PR | Branch | State | Live certification |
-|---|---|---|---|
-| [#511](https://github.com/asim1417/hakeem-platform/pull/511) | `cursor/rasd-legislative-monitoring-97b5` | Ready for Review · CI/Vercel PASS | Core only · `CORE_READY_FOR_REVIEW` |
-| [#512](https://github.com/asim1417/hakeem-platform/pull/512) | `feat/rasd-boe-connector-live-verification` | **Draft** | **NOT_LIVE_VERIFIED** (0 docs) |
-| [#513](https://github.com/asim1417/hakeem-platform/pull/513) | `feat/rasd-ncar-connector-live-verification` | **Draft** | **NOT_LIVE_VERIFIED** (0 docs) |
-| Integration (this) | `cursor/rasd-production-integration-97b5` | Open via follow-up PR | Aggregates core + live tooling + worker + reports |
-
-Integration head includes merges of BOE/NCAR verification tooling plus:
-
-- `lib/modules/rasd/connectors/circuit-breaker.ts`
-- `scripts/rasd/worker.ts` + compose profile `rasd`
-- `scripts/rasd/production-uqn-live.ts`
-- `/admin/rasd/health`
-- This report suite
+Saudi/authorized runner **was not provisionable from this Cursor Cloud Agent**. Connectivity from available foreign egress still classifies **BOE=TLS_BLOCKED**, **NCAR=TLS_BLOCKED**, **UQN=HEALTHY**. Staging dry-run scan is **PARTIAL**. Production deploy/merge/auto-apply were **not** performed.
 
 ---
 
-## 2. Actual runtime environment
+## 1. Related PRs
 
-| Layer | What was used |
+| PR | Role | State |
+|---|---|---|
+| #511 | Core | Ready for review (core only) |
+| #512 | BOE live | Draft · NOT_LIVE_VERIFIED |
+| #513 | NCAR live | Draft · NOT_LIVE_VERIFIED |
+| #519 | Production integration | **Draft** · this report |
+
+## 2. Runner
+
+- Used: Cursor Cloud Agent (AWS) — playbook prepared for KSA VPS/self-hosted.
+- See `SAUDI_RUNNER_SETUP.md`, workflow `rasd-saudi-runner.yml`.
+
+## 3–7. Connectivity & live counts
+
+| Source | DNS/TCP/TLS/HTTP | Live docs this round |
+|---|---|---|
+| BOE | ✓/✓/✗/✗ · TLS_BLOCKED | **0** |
+| NCAR | ✓/✓/✗/✗ · TLS_BLOCKED | **0** |
+| UQN | ✓/✓/✓/✓ · HEALTHY | **7** legislative (filter tightened; prior staging had 10 sitemap-era samples) |
+
+Staging monitored docs total: **29**. Library unchanged (2/2).
+
+## 8–12. Worker / circuit / cron / migrate / compare
+
+| Gate | Result |
 |---|---|
-| Code runner | Cursor Cloud Agent (AWS egress; IPs observed `3.217.89.139` / `54.158.128.7`) |
-| Staging DB | Local PostgreSQL `rasd_preview` @ 127.0.0.1 (schema up to date) |
-| Production DB | **Not available / not written** |
-| Production worker | **Not deployed** (compose service defined only) |
-| Vercel | Preview historically OK for web; Deployment Protection blocks anonymous live-probe; **not** used as crawler |
+| Worker start + UQN once dry-run | PASS |
+| Worker stops if RASD_ENABLED=false | PASS |
+| Disabled sources not run | PASS |
+| Health token auth model | PASS (401/200) |
+| Circuit opens after 3 failures | PASS (unit proof) |
+| Staging cron automatic Sat 03:00 Riyadh | **NOT PROVEN** |
+| Neon staging migrate deploy | **NOT EXECUTED** (local surrogate only) |
+| 30-doc staging comparison | **FAIL** |
 
----
+## 13. Parser
 
-## 3. Live document counts
+- Warnings fields added; no invented metadata.
+- UQN discovery no longer treats nested sitemaps as documents.
+- Critical live BOE/NCAR parser warnings: N/A (unreachable).
 
-| Source | Live docs | TLS/HTTP | Staging persist |
-|---|---|---|---|
-| UQN | **10** | PASS / PASS | PASS (dedupe proven) |
-| BOE | **0** | FAIL / FAIL | N/A |
-| NCAR | **0** | FAIL / FAIL | N/A |
+## 14–16. CI / security / secrets
 
----
+- `test:rasd` PASS · `tsc --noEmit` PASS
+- SSRF/RBAC/cron-auth tests PASS
+- auto-apply forced false
+- No secrets published in reports
 
-## 4. Parser results
+## 17. Remaining risks
 
-- UQN: crash-free on 10 live XML sitemaps; fingerprint OK; metadata completeness weak (`OTHER`, null instruments).
-- BOE/NCAR: no live parse (unreachable).
-- Fixtures unit/integration: PASS (not live evidence).
+1. No Saudi egress runner → BOE/NCAR unverified.  
+2. No Neon staging URL in agent → migrate deploy unproven on Neon.  
+3. Cron not registered in staging.  
+4. External alert webhook not configured (file sink only).  
+5. UQN legislative yield may be <10 depending on sitemap content — need Decisions index enrichment on Saudi runner.
 
----
+## 18. Draft → Ready?
 
-## 5. Database results
+**No.** PR #519 stays Draft.
 
-- `prisma validate` / `generate` / `migrate status`: PASS on staging.
-- Rasd migration applied; library tables unchanged during UQN live (`legal_articles` 2→2).
-- Production `migrate deploy`: **NOT EXECUTED**.
+## 19. Safe production plan (only after all gates)
 
----
-
-## 6. Baseline results
-
-- UQN baseline `--dry-run`: COMPLETED; 10 NEW_DOCUMENT; 0 conflicts; no auto-apply.
-- Multi-source live baseline: **impossible** until BOE/NCAR TLS works.
-
----
-
-## 7. Cron proof
-
-- Scheduler flag default **false**.
-- No production cron registration with successful automatic per-source runs.
-- Worker loop code exists; not proven on a reachable host.
-
----
-
-## 8. Security results
-
-- SSRF allowlist, cron secret, RBAC, auto-apply off, circuit breaker: code + unit tests PASS.
-- Secret Manager / prod dependency audit / external alerting: **not closed**.
-
----
-
-## 9. Remaining risks
-
-1. **Hard network block:** BOE/NCAR TLS reset from cloud/GHA egress — requires regional/authorized runner.
-2. UQN parser may be ingesting sitemap index noise rather than high-quality legislative articles — needs parser hardening before library apply.
-3. No production secrets, Neon preview branch, or deployed worker in this environment.
-4. Alerting is UI/circuit-local only — no paging sink.
-5. Merging Draft #512/#513 while NOT_LIVE_VERIFIED would violate policy.
-
----
-
-## 10. Acceptance gates
-
-| Gate | Verdict |
-|---|---|
-| A UQN ≥10 live + staging + dedupe + baseline dry-run | **PASS (staging only)** |
-| B BOE ≥10 live | **FAIL** |
-| C NCAR ≥10 live | **FAIL** |
-| D Periodic cron proven | **FAIL** |
-| E DB migrate staging→prod | **FAIL** (staging only) |
-| F Quality (typecheck/tests) | **PASS** typecheck + `test:rasd` + integration; lint config interactive/not signed |
-| G Production deploy + health + alerts | **FAIL** |
-
----
+Phases A–G as required: migrate-only → worker disabled sources → UQN dry-run → BOE → NCAR → cron with auto-apply false → manual apply only. Each phase needs rollback (flags off / stop worker / revert release). **Not started.**
 
 ## Final decision
 
 PRODUCTION_NOT_READY
-
-Do not merge live connector PRs as verified. Do not enable production auto-apply or scheduler until a runner completes TLS to BOE and NCAR with ≥10 live documents each and gates D–G are re-proven with live evidence.

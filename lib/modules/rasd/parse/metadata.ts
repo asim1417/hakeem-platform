@@ -69,14 +69,27 @@ function detectStatus(text: string): RasdDocumentStatus | undefined {
 export function extractUqnPublicationFields(text: string): {
   uqnIssue?: string;
   publicationDateRaw?: string;
+  warnings: string[];
 } {
+  const warnings: string[] = [];
   const issueMatch =
-    text.match(/(?:أم\s+القرى|ام\s+القرى)?[^.\n،]{0,40}العدد\s*(?:رقم)?\s*\(?\s*([0-9٠-٩۰-۹]{3,6})\s*\)?/u) ??
+    text.match(/(?:أم\s+القرى|ام\s+القرى)[^.\n،]{0,40}العدد\s*(?:رقم)?\s*\(?\s*([0-9٠-٩۰-۹]{3,6})\s*\)?/u) ??
     text.match(/العدد\s*(?:رقم)?\s*\(?\s*([0-9٠-٩۰-۹]{3,6})\s*\)?/u);
+  const decreeLike = text.match(/(مرسوم|قرار|أمر|امر)\s*(?:ملكي|وزاري|مجلس\s+الوزراء)?\s*(?:رقم)?\s*\(?\s*([أ-يA-Za-z]?\/?[0-9٠-٩۰-۹]+)/u);
   const dateMatch = text.match(/(?:تاريخ\s+النشر|نشر\s+في|الصادر\s+في|بتاريخ)\s*[:：]?\s*([^.\n،]{6,40})/u);
+
+  const uqnIssue = issueMatch?.[1] ? easternToWesternDigits(issueMatch[1]) : undefined;
+  if (uqnIssue && decreeLike?.[2] && easternToWesternDigits(decreeLike[2]).replace(/\D/g, "") === uqnIssue.replace(/\D/g, "")) {
+    warnings.push("UQN_ISSUE_MAY_COLLIDE_WITH_INSTRUMENT_NUMBER");
+  }
+  if (issueMatch && !/(?:أم\s+القرى|ام\s+القرى)/u.test(issueMatch[0]) && !/(?:أم\s+القرى|ام\s+القرى)/u.test(text.slice(Math.max(0, (issueMatch.index ?? 0) - 40), (issueMatch.index ?? 0) + issueMatch[0].length))) {
+    warnings.push("UQN_ISSUE_WITHOUT_EXPLICIT_UMM_AL_QURA_CONTEXT");
+  }
+
   return {
-    uqnIssue: issueMatch?.[1] ? easternToWesternDigits(issueMatch[1]) : undefined,
-    publicationDateRaw: dateMatch?.[1]?.trim()
+    uqnIssue,
+    publicationDateRaw: dateMatch?.[1]?.trim(),
+    warnings
   };
 }
 
@@ -97,6 +110,14 @@ export function extractMetadataFromHtml(html: string): NormalizedMetadata {
       ? parseHijriGregorianDate(uqnPublication.publicationDateRaw)
       : parseHijriGregorianDate(text);
 
+  const warnings = [...uqnPublication.warnings];
+  if (!title) warnings.push("MISSING_TITLE");
+  if (title && /^https?:\/\//i.test(title)) warnings.push("TITLE_LOOKS_LIKE_URL");
+  if (!instrument?.number) warnings.push("MISSING_INSTRUMENT_NUMBER");
+  if (!instrument?.type) warnings.push("MISSING_INSTRUMENT_TYPE");
+  if (!parsedPublicationDate) warnings.push("MISSING_PUBLICATION_DATE");
+  // Never invent values — leave null/undefined and surface warnings.
+
   return {
     title,
     normalizedTitle: title ? normalizeForCompare(title) : undefined,
@@ -110,6 +131,7 @@ export function extractMetadataFromHtml(html: string): NormalizedMetadata {
     publicationDate: parsedPublicationDate?.raw,
     publicationDateHijri: parsedPublicationDate?.hijri,
     publicationDateGregorian: parsedPublicationDate?.gregorian,
-    uqnIssue: uqnPublication.uqnIssue
+    uqnIssue: uqnPublication.uqnIssue,
+    warnings: warnings.length ? warnings : undefined
   };
 }

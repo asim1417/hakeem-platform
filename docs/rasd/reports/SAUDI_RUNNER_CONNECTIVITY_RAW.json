@@ -1,0 +1,287 @@
+{
+  "generatedAt": "2026-07-27T22:32:28.974Z",
+  "runnerLabel": "cursor-cloud-agent-not-saudi",
+  "regionHint": "aws-us-foreign-egress",
+  "note": "Egress IP intentionally omitted from published report. Store privately if needed.",
+  "results": [
+    {
+      "source": "BOE",
+      "classification": "TLS_BLOCKED",
+      "layers": {
+        "dnsOk": true,
+        "tcpOk": true,
+        "tlsOk": false,
+        "httpOk": false,
+        "nodeOk": false
+      },
+      "hosts": [
+        {
+          "host": "laws.boe.gov.sa",
+          "dns": {
+            "ok": true,
+            "addrs": [
+              {
+                "family": 4,
+                "hash": "414dcd67bfb3"
+              }
+            ]
+          },
+          "tcp": {
+            "ok": true,
+            "ms": 3
+          },
+          "tls": {
+            "ok": false,
+            "error": "read ECONNRESET",
+            "ms": 5008
+          },
+          "openssl": {
+            "ok": false,
+            "error": "Command failed: openssl s_client -connect laws.boe.gov.sa:443 -servername laws.boe.gov.sa -brief\nwrite:errno=104\n"
+          },
+          "curl": {
+            "ok": false,
+            "error": "Command failed: curl -sS -L --max-redirs 5 -m 20 -A Hakeem-Rasd/1.0 (+legislative-monitoring) -o /dev/null -w %{http_code}|%{url_effective}|%{content_type}|%{time_total}|%{num_redirects}|%{ssl_verify_result} https://laws.boe.gov.sa/\ncurl: (35) Recv failure: Connection reset by peer\n"
+          },
+          "node": {
+            "ok": false,
+            "status": 0,
+            "error": "skipped_tls",
+            "contentType": null,
+            "bodyBytes": 0,
+            "ms": 0
+          }
+        },
+        {
+          "host": "boe.gov.sa",
+          "dns": {
+            "ok": true,
+            "addrs": [
+              {
+                "family": 4,
+                "hash": "31504c2bc472"
+              }
+            ]
+          },
+          "tcp": {
+            "ok": true,
+            "ms": 2
+          },
+          "tls": {
+            "ok": false,
+            "error": "read ECONNRESET",
+            "ms": 5009
+          },
+          "openssl": {
+            "ok": false,
+            "error": "Command failed: openssl s_client -connect boe.gov.sa:443 -servername boe.gov.sa -brief\nwrite:errno=104\n"
+          },
+          "curl": {
+            "ok": false,
+            "error": "Command failed: curl -sS -L --max-redirs 5 -m 20 -A Hakeem-Rasd/1.0 (+legislative-monitoring) -o /dev/null -w %{http_code}|%{url_effective}|%{content_type}|%{time_total}|%{num_redirects}|%{ssl_verify_result} https://boe.gov.sa/\ncurl: (35) Recv failure: Connection reset by peer\n"
+          },
+          "node": {
+            "ok": false,
+            "status": 0,
+            "error": "skipped_tls",
+            "contentType": null,
+            "bodyBytes": 0,
+            "ms": 0
+          }
+        }
+      ]
+    },
+    {
+      "source": "NCAR",
+      "classification": "TLS_BLOCKED",
+      "layers": {
+        "dnsOk": true,
+        "tcpOk": true,
+        "tlsOk": false,
+        "httpOk": false,
+        "nodeOk": false
+      },
+      "hosts": [
+        {
+          "host": "ncar.gov.sa",
+          "dns": {
+            "ok": true,
+            "addrs": [
+              {
+                "family": 4,
+                "hash": "71005908cd26"
+              }
+            ]
+          },
+          "tcp": {
+            "ok": true,
+            "ms": 2
+          },
+          "tls": {
+            "ok": false,
+            "error": "read ECONNRESET",
+            "ms": 5004
+          },
+          "openssl": {
+            "ok": false,
+            "error": "Command failed: openssl s_client -connect ncar.gov.sa:443 -servername ncar.gov.sa -brief\nwrite:errno=104\n"
+          },
+          "curl": {
+            "ok": false,
+            "error": "Command failed: curl -sS -L --max-redirs 5 -m 20 -A Hakeem-Rasd/1.0 (+legislative-monitoring) -o /dev/null -w %{http_code}|%{url_effective}|%{content_type}|%{time_total}|%{num_redirects}|%{ssl_verify_result} https://ncar.gov.sa/\ncurl: (35) Recv failure: Connection reset by peer\n"
+          },
+          "node": {
+            "ok": false,
+            "status": 0,
+            "error": "skipped_tls",
+            "contentType": null,
+            "bodyBytes": 0,
+            "ms": 0
+          }
+        },
+        {
+          "host": "www.ncar.gov.sa",
+          "dns": {
+            "ok": true,
+            "addrs": [
+              {
+                "family": 4,
+                "hash": "71005908cd26"
+              }
+            ]
+          },
+          "tcp": {
+            "ok": true,
+            "ms": 2
+          },
+          "tls": {
+            "ok": false,
+            "error": "read ECONNRESET",
+            "ms": 5006
+          },
+          "openssl": {
+            "ok": false,
+            "error": "Command failed: openssl s_client -connect www.ncar.gov.sa:443 -servername www.ncar.gov.sa -brief\nwrite:errno=104\n"
+          },
+          "curl": {
+            "ok": false,
+            "error": "Command failed: curl -sS -L --max-redirs 5 -m 20 -A Hakeem-Rasd/1.0 (+legislative-monitoring) -o /dev/null -w %{http_code}|%{url_effective}|%{content_type}|%{time_total}|%{num_redirects}|%{ssl_verify_result} https://www.ncar.gov.sa/\ncurl: (35) Recv failure: Connection reset by peer\n"
+          },
+          "node": {
+            "ok": false,
+            "status": 0,
+            "error": "skipped_tls",
+            "contentType": null,
+            "bodyBytes": 0,
+            "ms": 0
+          }
+        }
+      ]
+    },
+    {
+      "source": "UQN",
+      "classification": "HEALTHY",
+      "layers": {
+        "dnsOk": true,
+        "tcpOk": true,
+        "tlsOk": true,
+        "httpOk": true,
+        "nodeOk": true,
+        "httpStatus": 200
+      },
+      "hosts": [
+        {
+          "host": "www.uqn.gov.sa",
+          "dns": {
+            "ok": true,
+            "addrs": [
+              {
+                "family": 4,
+                "hash": "bf0006121d53"
+              }
+            ]
+          },
+          "tcp": {
+            "ok": true,
+            "ms": 2
+          },
+          "tls": {
+            "ok": true,
+            "ms": 332,
+            "protocol": "TLSv1.3",
+            "authorized": true
+          },
+          "openssl": {
+            "ok": false,
+            "error": "Command failed: openssl s_client -connect www.uqn.gov.sa:443 -servername www.uqn.gov.sa -brief\nCONNECTION ESTABLISHED\nProtocol version: TLSv1.3\nCiphersuite: TLS_AES_256_GCM_SHA384\nPeer certificate: C = SA, L = Riyadh, O = Saudi Press Agency, CN = *.uqn.gov.sa\nHash used: SHA256\nSignature type: RSA-PSS\nVerification: OK\nServer Temp Key: X25519, 253 bits\n"
+          },
+          "curl": {
+            "ok": true,
+            "httpCode": 200,
+            "finalUrlHost": "www.uqn.gov.sa",
+            "contentType": "text/html; charset=UTF-8",
+            "timeTotalSec": 2.525234,
+            "redirects": 0,
+            "sslVerifyResult": 0
+          },
+          "node": {
+            "ok": true,
+            "status": 200,
+            "error": null,
+            "contentType": "text/html; charset=UTF-8",
+            "bodyBytes": 848341,
+            "ms": 1408
+          }
+        },
+        {
+          "host": "uqn.gov.sa",
+          "dns": {
+            "ok": true,
+            "addrs": [
+              {
+                "family": 4,
+                "hash": "f2156c7e0e83"
+              }
+            ]
+          },
+          "tcp": {
+            "ok": true,
+            "ms": 2
+          },
+          "tls": {
+            "ok": true,
+            "ms": 8236,
+            "protocol": "TLSv1.3",
+            "authorized": true
+          },
+          "openssl": {
+            "ok": false,
+            "error": "Command failed: openssl s_client -connect uqn.gov.sa:443 -servername uqn.gov.sa -brief\nCONNECTION ESTABLISHED\nProtocol version: TLSv1.3\nCiphersuite: TLS_AES_256_GCM_SHA384\nPeer certificate: C = SA, L = Riyadh, O = Saudi Press Agency, CN = *.uqn.gov.sa\nHash used: SHA256\nSignature type: RSA-PSS\nVerification: OK\nServer Temp Key: X25519, 253 bits\n"
+          },
+          "curl": {
+            "ok": true,
+            "httpCode": 200,
+            "finalUrlHost": "www.uqn.gov.sa",
+            "contentType": "text/html; charset=UTF-8",
+            "timeTotalSec": 8.192482,
+            "redirects": 1,
+            "sslVerifyResult": 0
+          },
+          "node": {
+            "ok": true,
+            "status": 200,
+            "error": null,
+            "contentType": "text/html; charset=UTF-8",
+            "bodyBytes": 848341,
+            "ms": 10381
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "BOE": "TLS_BLOCKED",
+    "NCAR": "TLS_BLOCKED",
+    "UQN": "HEALTHY"
+  }
+}

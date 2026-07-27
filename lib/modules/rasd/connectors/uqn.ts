@@ -39,13 +39,24 @@ function isLegislativeUqnUrl(url: string): boolean {
   );
 }
 
+function isNestedSitemapUrl(url: string): boolean {
+  return /\/sitemaps?\//i.test(url) || /sitemap[^/]*\.xml/i.test(url);
+}
+
 function parseSitemap(xml: string, limit: number): DiscoveredDocument[] {
   const urls = [...xml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/giu)]
     .map((match) => decode(match[1] ?? ""))
-    .filter((url) => /uqn\.gov\.sa/i.test(url) && !/\/ajax\//i.test(url) && !/[?&]page=/i.test(url));
+    .filter(
+      (url) =>
+        /uqn\.gov\.sa/i.test(url) &&
+        !/\/ajax\//i.test(url) &&
+        !/[?&]page=/i.test(url) &&
+        !isNestedSitemapUrl(url)
+    );
 
   const legislative = urls.filter(isLegislativeUqnUrl);
-  const chosen = (legislative.length > 0 ? legislative : urls).slice(0, limit);
+  // Prefer legislative detail pages; do not fall back to sitemap/news noise as "documents".
+  const chosen = legislative.slice(0, limit);
 
   return chosen.map((url) => ({
     sourceCode: "UQN",

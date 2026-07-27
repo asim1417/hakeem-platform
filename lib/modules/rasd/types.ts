@@ -138,6 +138,7 @@ export interface NormalizedMetadata {
   publicationDateGregorian?: string;
   uqnIssue?: string;
   canonicalIdentityKey?: string;
+  warnings?: string[];
 }
 
 export interface DiscoveredDocument {

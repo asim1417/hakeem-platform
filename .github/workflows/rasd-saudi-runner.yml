@@ -1,0 +1,61 @@
+name: Rasd Saudi Runner Verification
+
+# Requires a self-hosted runner in an authorized Saudi/acceptable egress network.
+# Labels: self-hosted, linux, rasd, saudi
+# Until registered, this workflow will stay queued / unused — do not treat ubuntu-latest as Saudi proof.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Docs per source"
+        required: false
+        default: "10"
+      run_scan:
+        description: "Run staging dry-run live scan after connectivity"
+        type: boolean
+        default: false
+
+jobs:
+  saudi-connectivity:
+    runs-on: [self-hosted, linux, rasd, saudi]
+    timeout-minutes: 30
+    env:
+      RASD_ENABLED: "true"
+      RASD_AUTO_FETCH_ENABLED: "true"
+      RASD_AUTO_APPLY_ENABLED: "false"
+      RASD_REVIEW_REQUIRED: "true"
+      RASD_FIXTURES_ONLY: "false"
+      RASD_MEMORY_ONLY: "true"
+      RASD_RUNNER_LABEL: "gha-self-hosted-saudi"
+      RASD_RUNNER_REGION: ${{ vars.RASD_RUNNER_REGION || 'saudi' }}
+      RASD_SOURCE_BOE_ENABLED: "true"
+      RASD_SOURCE_NCAR_ENABLED: "true"
+      RASD_SOURCE_UQN_ENABLED: "true"
+      RASD_STAGING_LIMIT: ${{ github.event.inputs.limit || '10' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Connectivity (curl/openssl + Node rasdFetch)
+        run: npm run rasd:saudi:connectivity
+      - name: Staging live scan (optional)
+        if: ${{ github.event.inputs.run_scan == true || github.event.inputs.run_scan == 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.RASD_STAGING_DATABASE_URL }}
+          RASD_STAGING_OK: "1"
+          RASD_MEMORY_ONLY: "false"
+        run: npm run rasd:staging:live-scan
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rasd-saudi-runner-reports
+          path: |
+            docs/rasd/reports/SAUDI_RUNNER_CONNECTIVITY_RAW.json
+            docs/rasd/reports/STAGING_LIVE_SCAN_REPORT.json
+          if-no-files-found: warn

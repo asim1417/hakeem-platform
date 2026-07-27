@@ -232,7 +232,8 @@ export function parseDocumentStructure(rawTextOrHtml: string, sourceHint: string
   const articleConfidence = provisions.filter((provision) => provision.provisionType === "ARTICLE").length > 0 ? 0.2 : 0;
   const titleConfidence = metadata.title ? 0.2 : 0;
   const instrumentConfidence = metadata.normalizedInstrumentNumber ? 0.15 : 0;
-  const baseConfidence = Math.min(1, 0.45 + articleConfidence + titleConfidence + instrumentConfidence);
+  const warningPenalty = (metadata.warnings?.length ?? 0) > 0 ? Math.min(0.25, (metadata.warnings?.length ?? 0) * 0.05) : 0;
+  const baseConfidence = Math.max(0.1, Math.min(1, 0.45 + articleConfidence + titleConfidence + instrumentConfidence - warningPenalty));
 
   return {
     title: metadata.title,

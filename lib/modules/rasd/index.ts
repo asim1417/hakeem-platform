@@ -42,5 +42,6 @@ export * from "./reports/coverage";
 export * from "./reports/conflicts";
 
 export * from "./notify/digest";
+export * from "./notify/alerts";
 export * from "./scheduler/weekly";
 export * from "./health";
