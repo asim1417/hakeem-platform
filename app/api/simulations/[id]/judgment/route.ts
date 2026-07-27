@@ -5,6 +5,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { generateReasonedJudgment } from "@/lib/modules/simulations/reasoned-judgment";
 import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     ? await buildLegalContextForAI(query, { limit: 5 })
     : { hasArticles: false, articles: [], citationBlock: noLegalArticleMessage, contextText: noLegalArticleMessage };
   const citations = legalContext.citationBlock;
-  const content = [
+  const templateContent = [
     "مسودة حكم قضائي مسبب",
     "بسم الله الرحمن الرحيم",
     `رقم الجلسة: ${session.id}`,
@@ -68,6 +69,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     "القاضي حكيم - قاض افتراضي تدريبي"
   ].join("\n\n");
 
+  // الحكم المُعلَّل المؤصَّل (يزن بيّنة كلّ طرفٍ وفق عبء الإثبات ويصدر منطوقًا مسبَّبًا)؛
+  // وعند أيّ فشلٍ أو خروجٍ عن التأريض يسقط للقالب الآمن — لا كسر.
+  let content = templateContent;
+  let judgmentMode: "reasoned" | "template" = "template";
+  let judgmentConfidence = 0;
+  try {
+    const reasoned = await generateReasonedJudgment({ claim, messages: session.messages });
+    if (reasoned) {
+      content = reasoned.content;
+      judgmentMode = "reasoned";
+      judgmentConfidence = reasoned.confidence;
+    }
+  } catch {
+    content = templateContent;
+  }
+
   const judgment = await prisma.simulationJudgment.create({
     data: {
       simulationId: params.id,
@@ -90,6 +107,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     metadata: {
       judgmentId: judgment.id,
       title: "مسودة حكم قضائي مسبب",
+      mode: judgmentMode,
+      confidence: judgmentConfidence,
       citationsCount: legalContext.articles.length,
       source: "legal_core"
     }

@@ -129,5 +129,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
   });
 
-  return NextResponse.json({ result, message: judgeMessage, decision, turnState }, { status: 201 });
+  // شفافيّة القرار للواجهة: وضع القاضي (ذكيّ/حتميّ) وتكييفه للمداخلة وإجراؤه.
+  const judge = {
+    mode: judgeMode ? "ai" : "deterministic",
+    action: judgeMode?.action ?? null,
+    classification: judgeMode?.classification ?? null
+  };
+
+  return NextResponse.json({ result, message: judgeMessage, decision, turnState, judge }, { status: 201 });
 }
