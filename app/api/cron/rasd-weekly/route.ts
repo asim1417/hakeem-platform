@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { runScheduledWeeklyIfDue } from "@/lib/modules/rasd/scheduler/weekly";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
@@ -36,6 +36,7 @@ async function handle(request: NextRequest) {
   if (disabledReason) {
     return NextResponse.json({ ran: false, reason: disabledReason });
   }
+  const { runScheduledWeeklyIfDue } = await import("@/lib/modules/rasd/scheduler/weekly");
   const result = await runScheduledWeeklyIfDue(new Date());
   return NextResponse.json(result);
 }
