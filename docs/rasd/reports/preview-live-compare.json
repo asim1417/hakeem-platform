@@ -1,0 +1,300 @@
+{
+  "environment": "local-postgres-rasd_preview",
+  "librarySystems": 1,
+  "examined": 10,
+  "exactMatches": 0,
+  "probableMatches": 0,
+  "ambiguousMatches": 0,
+  "noMatch": 10,
+  "parserAnomalies": 4,
+  "rows": [
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001274",
+      "officialSourceIdentifier": "4001274",
+      "title": "مرسوم ملكي رقم (م/12) وتاريخ 1448/01/07هـ",
+      "documentType": null,
+      "instrumentNumber": "م/12",
+      "instrumentDate": "07/01/1448",
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "71c1d081dc1bee9fc7971673d38cf4409a3256bdc83da644361302212fc46636",
+      "normalizedTextHash": "e35d1c2feae42bc9a1bed5e159c985ad725b8bc6d2d69f9a754aa28128c0f670",
+      "parseConfidence": 0.8,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": []
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001277",
+      "officialSourceIdentifier": "4001277",
+      "title": "الموافقة على نظام الأنشطة الترفيهية والأنشطة المساندة لها",
+      "documentType": null,
+      "instrumentNumber": "18",
+      "instrumentDate": null,
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "77c1376556428f9635481d91f0f4fd6cec25d1e3fef6bb84b4fb95f24437afcd",
+      "normalizedTextHash": "76db70c4bccedaf3f894f9c4238aa590470ae967d94aa7181714261dc3dc5be6",
+      "parseConfidence": 0.8,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0.034545454545454546,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0.034545454545454546,
+      "detectedDifferences": [],
+      "warnings": []
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001278",
+      "officialSourceIdentifier": "4001278",
+      "title": "نظام الأنشطة الترفيهية والأنشطة المساندة لها",
+      "documentType": null,
+      "instrumentNumber": null,
+      "instrumentDate": null,
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "REPEALED",
+      "rawSnapshotHash": "6e2da8a996c0d8f343fc2621ad5b8465f69a3e9c2052459de70ebd264d5c0034",
+      "normalizedTextHash": "66ca8dbe019f764d806321aab2cf9b20d9c2f1dbf1f5dff19b29c7034c0295fb",
+      "parseConfidence": 0.8500000000000001,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0.04392434988179669,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0.04392434988179669,
+      "detectedDifferences": [],
+      "warnings": [
+        "instrument number missing/low-confidence"
+      ]
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001280",
+      "officialSourceIdentifier": "4001280",
+      "title": "الموافقة على اللائحة التنفيذية لنظام تملك غير السعوديين للعقار",
+      "documentType": null,
+      "instrumentNumber": "43",
+      "instrumentDate": null,
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "a5ee373f2f1ff5b6ae33e81423951ef6ef13fd3a26bb7fe3cdc928da6dd105b2",
+      "normalizedTextHash": "2e31b0ec7e3bccce54df34a4e5cfcdaf33043c0ca32917f5164529ecd324d235",
+      "parseConfidence": 0.8,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": []
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001281",
+      "officialSourceIdentifier": "4001281",
+      "title": "اللائحة التنفيذية لنظام تملك غير السعوديين للعقار",
+      "documentType": null,
+      "instrumentNumber": null,
+      "instrumentDate": null,
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "aedb37ebdb5975249d19ad9527364f62992e56a6f72bc77321d098a641250897",
+      "normalizedTextHash": "e3aec2a3d66445a40e82f0334042ec22de2c055ab3a578bc4a8c63cf34d90409",
+      "parseConfidence": 0.8500000000000001,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0.0008368200836820083,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0.0008368200836820083,
+      "detectedDifferences": [],
+      "warnings": [
+        "instrument number missing/low-confidence"
+      ]
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001282",
+      "officialSourceIdentifier": "4001282",
+      "title": "إلزام الجهات الحكومية بتوفير احتياجاتها من سيارات الإسعاف من شركة نوبكو",
+      "documentType": null,
+      "instrumentNumber": "53",
+      "instrumentDate": "08/01/1448",
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "62768047e352dac69742c3d2974bbfa64197a39093f03d570348d3ac8159ace3",
+      "normalizedTextHash": "11d2918866b6a0a24d64e854031767eb8a00d67c321f0f013c84cf5bfbb98441",
+      "parseConfidence": 0.8,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": []
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001285",
+      "officialSourceIdentifier": "4001285",
+      "title": "تحويل الأرشيف الثقافي في وزارة الثقافة إلى مركز غير مستقل باسم ذاكرة الثقافة السعودية",
+      "documentType": null,
+      "instrumentNumber": "46",
+      "instrumentDate": "08/01/1448",
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "2d8393d386c80950524c3834d2e14d049ed2a0e560f0530115108bd0f8689c17",
+      "normalizedTextHash": "9e06c47e0b5b1b3890c66680d7b97dd0221fc88cdc379f8ebabdc46250a81254",
+      "parseConfidence": 0.8,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": []
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001288",
+      "officialSourceIdentifier": "4001288",
+      "title": "الترتيبات التنظيمية لمركز ذاكرة الثقافة السعودية",
+      "documentType": null,
+      "instrumentNumber": null,
+      "instrumentDate": null,
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "bfae440e9d79336c7146edd00c84f60458ebef98475501ec00406993092b7d75",
+      "normalizedTextHash": "34ef63dbfd5ad4a15a752a5140a0d4ba60b8084f939058af289ece86d2396d1d",
+      "parseConfidence": 0.8500000000000001,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": [
+        "instrument number missing/low-confidence"
+      ]
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001291",
+      "officialSourceIdentifier": "4001291",
+      "title": "تعديل المادة الثانية عشرة من الترتيبات التنظيمية لمجلس المخاطر الوطنية",
+      "documentType": null,
+      "instrumentNumber": "49",
+      "instrumentDate": "08/01/1448",
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "c196a5898233a78a836c9769805f303e056dbec9e34cc4440681f6bd292445cb",
+      "normalizedTextHash": "4fdb08f533760ec3a369650ad4e497cff474524844cacd2279be5607879ca1eb",
+      "parseConfidence": 0.8,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": []
+    },
+    {
+      "source": "UQN",
+      "sourceUrl": "https://www.uqn.gov.sa/decisions-and-regulations/4001294",
+      "officialSourceIdentifier": "4001294",
+      "title": "اعتماد اللائحة التنفيذية لنظام الشركات الخاصة بشركات المساهمة المدرجة المعدّلة",
+      "documentType": null,
+      "instrumentNumber": null,
+      "instrumentDate": null,
+      "publicationData": {
+        "publicationDateHijri": null,
+        "publicationDateGregorian": "2026-07-03"
+      },
+      "status": "AMENDED",
+      "rawSnapshotHash": "fca80efdc48c29e49a538cb3fc424c435da7bf364217e31e8eb0d56b6ca67f44",
+      "normalizedTextHash": "885b0cf478b7fcd631459665517d0518a1947c53f1ecba223038a0f67516b095",
+      "parseConfidence": 0.65,
+      "matchCandidateInHakeem": {
+        "id": "sys_verify_1",
+        "name": "نظام تحقق رصد التجريبي",
+        "status": "NO_MATCH",
+        "score": 0,
+        "method": "NONE",
+        "reasons": []
+      },
+      "matchScore": 0,
+      "detectedDifferences": [],
+      "warnings": [
+        "instrument number missing/low-confidence"
+      ]
+    }
+  ]
+}

@@ -5,6 +5,9 @@
 **الـPR:** https://github.com/asim1417/hakeem-platform/pull/511  
 **قرار الدمج:** **NOT READY**
 
+> **تحديث جاهزية لاحق:** نُفّذت جولة إغلاق موانع (SSRF/RBAC/cron/UQN). التفاصيل في `READINESS_VERIFICATION_REPORT.md`. القرار ما زال **NOT READY** بسبب BOE/NCAR وغياب Neon Preview السحابي.
+
+
 > لم يُدمج الـPR ولم يُحوَّل إلى Ready for Review.
 
 ---

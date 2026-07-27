@@ -211,3 +211,8 @@ lib/modules/auth/role-permissions.ts          (+ RASD_*)
 الموانع التشغيلية (BOE/NCAR محجوبان، لا DATABASE_URL) تُوثَّق صراحةً وتُعالَج عبر fixtures + أوامر للبيئة المصرّح بها.
 
 **الخطوة التالية:** المرحلة 1 — Schema + محرك الأساس، دون أي كتابة في نصوص المكتبة المعتمدة.
+
+
+## Addendum — readiness pass (2026-07-27)
+
+See `docs/rasd/reports/READINESS_VERIFICATION_REPORT.md`. SSRF/RBAC/cron code closed partially; BOE/NCAR still unreachable from Codex; decision remains NOT READY.

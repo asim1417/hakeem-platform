@@ -15,7 +15,8 @@ const REPORT_PATH = path.join(process.cwd(), "docs/rasd/reports/live-source-prob
 const SOURCE_ENDPOINTS: Record<RasdSourceCode, string> = {
   BOE: "https://laws.boe.gov.sa/BoeLaws/Laws/LawsHome",
   NCAR: "https://ncar.gov.sa/",
-  UQN: "https://www.uqn.gov.sa/sitemap_0.xml"
+  // فهرس قرارات حديث (وليس فهرس خرائط المواقع الفرعية)
+  UQN: "https://www.uqn.gov.sa/sitemaps/2026/7/sitemap_0.xml?v=1.1"
 };
 
 interface LayerProbe {
@@ -131,17 +132,25 @@ async function probeSource(sourceCode: RasdSourceCode, limit: number): Promise<S
   const host = new URL(endpoint).hostname;
   const [dns, tcp, tlsResult, http] = await Promise.all([probeDns(host), socketProbe(host, "tcp"), socketProbe(host, "tls"), probeHttp(endpoint)]);
   const connector = getConnector(sourceCode);
-  const discovered = await connector.discover({ limit }).catch((error: unknown) => ({
-    sourceCode,
-    ok: false,
-    documents: [],
-    pagesVisited: 0,
-    error: classifyError(error)
-  }));
+  const discovered = await connector
+    .discover({
+      limit,
+      sitemapUrl: sourceCode === "UQN" ? endpoint : undefined,
+      indexUrl: sourceCode !== "UQN" ? endpoint : undefined
+    })
+    .catch((error: unknown) => ({
+      sourceCode,
+      ok: false,
+      documents: [],
+      pagesVisited: 0,
+      error: classifyError(error)
+    }));
 
   const documents: DocumentProbe[] = [];
   for (const document of discovered.documents.slice(0, limit)) {
-    const httpProbe = await probeHttp(document.url, "GET");
+    // تفضيل GET كامل للوثائق التشريعية لاستخراج العنوان لاحقًا عند الحاجة؛ HEAD يكفي لفحص الصحة.
+    const method = /decisions-and-regulations|LawDetails/i.test(document.url) ? "GET" : "HEAD";
+    const httpProbe = await probeHttp(document.url, method);
     documents.push({
       url: document.url,
       title: document.title,
