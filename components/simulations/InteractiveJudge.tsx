@@ -96,6 +96,8 @@ export function InteractiveJudge() {
   const [catalog, setCatalog] = useState<Playbook[]>([]);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catFilter, setCatFilter] = useState("الكل");
+  // شفافيّة قرار القاضي (يراها صانع القرار): آخر وضع + تكييف + إجراء.
+  const [judgeMeta, setJudgeMeta] = useState<{ mode: string; classification: string | null; action: string | null } | null>(null);
 
   const loadList = useCallback(async () => {
     try {
@@ -156,6 +158,7 @@ export function InteractiveJudge() {
   // بعد مداخلة الطرف: يُستدعى القاضي (العقل الموحَّد) ليقرأ ويكيّف ويقرّر إجرائيًّا.
   const runJudge = useCallback(async (id: string) => {
     const data = await api(`/api/simulations/${id}/judge-turn`, { method: "POST", body: JSON.stringify({}) });
+    if (data?.judge) setJudgeMeta(data.judge);
     return data;
   }, []);
 
@@ -408,6 +411,17 @@ export function InteractiveJudge() {
       </div>
 
       {error ? <p className="rounded-[var(--r-md)] border border-[var(--ruby)] px-4 py-2 text-sm text-[var(--ruby)]">{error}</p> : null}
+
+      {/* شفافيّة قرار القاضي (يراها صانع القرار: قرأ المداخلة، كيّفها، ثمّ قرّر) */}
+      {judgeMeta ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-3 py-2 text-xs">
+          <span className="font-semibold text-[var(--ink-60)]">شفافيّة القاضي:</span>
+          <span className={`rounded-full px-2.5 py-0.5 font-semibold ${judgeMeta.mode === "ai" ? "bg-[var(--emerald-soft)] text-[var(--emerald)]" : "bg-[var(--surface)] text-[var(--muted)]"}`}>
+            {judgeMeta.mode === "ai" ? "قرأ المداخلة وكيّفها ثمّ قرّر (ذكيّ مؤصَّل)" : "قرار إجرائيّ منضبط"}
+          </span>
+          {judgeMeta.classification ? <span className="rounded-full bg-[var(--gold-ghost)] px-2.5 py-0.5 font-semibold text-[var(--gold)]">تكييف المداخلة: {judgeMeta.classification}</span> : null}
+        </div>
+      ) : null}
 
       {/* شريط الدور والإجراءات */}
       {!judgment && (
