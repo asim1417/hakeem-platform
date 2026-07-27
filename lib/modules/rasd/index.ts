@@ -28,6 +28,7 @@ export * from "./runs/manager";
 export * from "./db/seed-sources";
 
 export * from "./scan/orchestrator";
+export * from "./scan/run-status";
 export * from "./scan/baseline";
 export * from "./scan/weekly";
 

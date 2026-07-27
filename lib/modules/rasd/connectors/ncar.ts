@@ -2,9 +2,17 @@ import { readdir } from "fs/promises";
 import path from "path";
 import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE, envBool } from "../flags";
 import type { ConnectorDiscoverOptions, ConnectorDiscoverResult, ConnectorFetchOptions, DiscoveredDocument, FetchResult } from "../types";
-import type { RasdConnector } from "./base";
+import {
+  defaultNormalizeDocument,
+  defaultParseSnapshot,
+  type LegislativeSourceConnector,
+  type NormalizedLegalDocument,
+  type ParsedLegalDocument,
+  type RawSourceSnapshot
+} from "./base";
 import { rasdFetch } from "./http";
 import { RateLimiter } from "./rate-limit";
+import { getConnectorStatus } from "./status";
 
 const NCAR_BASE = "https://ncar.gov.sa";
 const DEFAULT_INDEX = `${NCAR_BASE}/`;
@@ -66,8 +74,9 @@ async function discoverFixtures(limit: number): Promise<ConnectorDiscoverResult>
   }
 }
 
-export class NcarConnector implements RasdConnector {
+export class NcarConnector implements LegislativeSourceConnector {
   readonly code = "NCAR" as const;
+  readonly displayName = getConnectorStatus("NCAR").displayNameAr;
   private readonly limiter = new RateLimiter(RASD_RATE_LIMIT_PER_MINUTE);
 
   async discover(opts: ConnectorDiscoverOptions = {}): Promise<ConnectorDiscoverResult> {
@@ -114,8 +123,21 @@ export class NcarConnector implements RasdConnector {
     });
   }
 
-  async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string }> {
+  async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string; outcome?: "SUCCEEDED" | "FAILED" | "UNREACHABLE" | "DEGRADED" | "SKIPPED" }> {
     const result = await rasdFetch(DEFAULT_INDEX, { method: "HEAD", timeoutMs: 8_000 });
-    return { ok: result.ok, status: result.status, error: result.error };
+    const outcome = result.ok
+      ? ("SUCCEEDED" as const)
+      : /econnreset|tls|handshake/i.test(result.error ?? "")
+        ? ("UNREACHABLE" as const)
+        : ("FAILED" as const);
+    return { ok: result.ok, status: result.status, error: result.error, outcome };
+  }
+
+  async parse(snapshot: RawSourceSnapshot): Promise<ParsedLegalDocument> {
+    return defaultParseSnapshot(snapshot);
+  }
+
+  async normalize(document: ParsedLegalDocument): Promise<NormalizedLegalDocument> {
+    return defaultNormalizeDocument(document);
   }
 }

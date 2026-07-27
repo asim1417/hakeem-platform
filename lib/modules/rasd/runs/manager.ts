@@ -192,7 +192,7 @@ export async function startRun(id: string): Promise<RasdMonitoringRun | null> {
 
 export async function finishRun(
   id: string,
-  status: Exclude<RasdRunStatus, "PENDING" | "RUNNING" | "FAILED"> = "COMPLETED"
+  status: Exclude<RasdRunStatus, "PENDING" | "RUNNING"> = "COMPLETED"
 ): Promise<RasdMonitoringRun | null> {
   if (dbDisabled()) return updateMemoryRun(id, { status, finishedAt: now() });
   try {

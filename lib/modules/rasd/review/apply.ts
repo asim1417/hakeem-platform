@@ -1,7 +1,7 @@
 import type { AuditSubject, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { RASD_REVIEW_REQUIRED, envBool } from "../flags";
+import { RASD_REVIEW_REQUIRED, envBool, isRasdAutoApplyEnabled, requireNoProductionLibraryWrite } from "../flags";
 
 export interface ApplyPlanAction {
   type: string;
@@ -81,9 +81,15 @@ async function audit(actorId: string, entityId: string, metadata: Prisma.InputJs
 export async function applyApprovedChange(
   changeId: string,
   actorId: string,
-  options: { dryRun?: boolean } = {}
+  options: { dryRun?: boolean; auto?: boolean } = {}
 ): Promise<ApplyApprovedChangeResult> {
   const dryRun = options.dryRun ?? true;
+  if (options.auto && !isRasdAutoApplyEnabled()) {
+    throw new Error("RASD_AUTO_APPLY_ENABLED=false — التطبيق التلقائي معطّل.");
+  }
+  if (!dryRun) {
+    requireNoProductionLibraryWrite("applyApprovedChange");
+  }
   const delegate = changeDelegate();
   if (!delegate) throw new Error("جداول رصد غير متاحة بعد. طبّق الهجرة وشغّل prisma generate.");
 

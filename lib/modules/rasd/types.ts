@@ -2,7 +2,15 @@ export type RasdSourceCode = "BOE" | "NCAR" | "UQN";
 
 export type RasdRunType = "BASELINE" | "WEEKLY" | "MANUAL" | "RETRY" | "FULL_RESCAN";
 export type RasdTriggerType = "SCHEDULER" | "CLI" | "ADMIN" | "SYSTEM";
-export type RasdRunStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "PARTIAL" | "CANCELLED";
+export type RasdRunStatus =
+  | "PENDING"
+  | "RUNNING"
+  | "COMPLETED"
+  | "FAILED"
+  | "PARTIAL"
+  | "CANCELLED"
+  | "DEGRADED"
+  | "SKIPPED";
 
 export type RasdChangeType =
   | "NEW_DOCUMENT"

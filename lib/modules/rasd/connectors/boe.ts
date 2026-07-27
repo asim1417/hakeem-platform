@@ -2,9 +2,17 @@ import { readdir } from "fs/promises";
 import path from "path";
 import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE, envBool } from "../flags";
 import type { ConnectorDiscoverOptions, ConnectorDiscoverResult, ConnectorFetchOptions, DiscoveredDocument, FetchResult } from "../types";
-import type { RasdConnector } from "./base";
+import {
+  defaultNormalizeDocument,
+  defaultParseSnapshot,
+  type LegislativeSourceConnector,
+  type NormalizedLegalDocument,
+  type ParsedLegalDocument,
+  type RawSourceSnapshot
+} from "./base";
 import { rasdFetch } from "./http";
 import { RateLimiter } from "./rate-limit";
+import { getConnectorStatus } from "./status";
 
 const BOE_BASE = "https://laws.boe.gov.sa";
 const LAWS_HOME = `${BOE_BASE}/BoeLaws/Laws/LawsHome`;
@@ -65,8 +73,9 @@ async function discoverFixtures(limit: number): Promise<ConnectorDiscoverResult>
   }
 }
 
-export class BoeConnector implements RasdConnector {
+export class BoeConnector implements LegislativeSourceConnector {
   readonly code = "BOE" as const;
+  readonly displayName = getConnectorStatus("BOE").displayNameAr;
   private readonly limiter = new RateLimiter(RASD_RATE_LIMIT_PER_MINUTE);
 
   async discover(opts: ConnectorDiscoverOptions = {}): Promise<ConnectorDiscoverResult> {
@@ -120,8 +129,21 @@ export class BoeConnector implements RasdConnector {
     });
   }
 
-  async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string }> {
+  async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string; outcome?: "SUCCEEDED" | "FAILED" | "UNREACHABLE" | "DEGRADED" | "SKIPPED" }> {
     const result = await rasdFetch(LAWS_HOME, { method: "HEAD", timeoutMs: 8_000 });
-    return { ok: result.ok, status: result.status, error: result.error };
+    const outcome = result.ok
+      ? ("SUCCEEDED" as const)
+      : /econnreset|tls|handshake/i.test(result.error ?? "")
+        ? ("UNREACHABLE" as const)
+        : ("FAILED" as const);
+    return { ok: result.ok, status: result.status, error: result.error, outcome };
+  }
+
+  async parse(snapshot: RawSourceSnapshot): Promise<ParsedLegalDocument> {
+    return defaultParseSnapshot(snapshot);
+  }
+
+  async normalize(document: ParsedLegalDocument): Promise<NormalizedLegalDocument> {
+    return defaultNormalizeDocument(document);
   }
 }

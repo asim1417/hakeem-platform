@@ -7,6 +7,7 @@ import {
   RASD_FIXTURES_ONLY,
   RASD_FULL_RESCAN_ALLOWED,
   envBool,
+  isRasdSourceEnabled,
   requireRasdEnabled
 } from "../flags";
 import { fingerprintObject, sha256Hex } from "../hash";
@@ -18,8 +19,10 @@ import { rankMatches } from "../match/engine";
 import { parseDocumentStructure, PARSER_VERSION } from "../parse/structure";
 import { saveSnapshotLocal } from "../snapshot/store";
 import { getConnector, listConnectors } from "../connectors";
+import type { SourceRunOutcome } from "../connectors/status";
 import { acquireRunLock, releaseRunLock } from "../runs/lock";
 import { createRun, failRun, finishRun, getRun, startRun, updateRunCounts, type RasdMonitoringRun } from "../runs/manager";
+import { classifySourceFailure, resolveRunStatus } from "./run-status";
 import type {
   ChangeDetectionDraft,
   DiffResult,
@@ -29,6 +32,7 @@ import type {
   ParsedDocument,
   ParsedProvision,
   RasdChangeType,
+  RasdRunStatus,
   RasdRunType,
   RasdSeverity,
   RasdSourceCode,
@@ -48,18 +52,20 @@ export interface RunScanInput {
 export interface ScanSourceSummary {
   sourceCode: RasdSourceCode;
   ok: boolean;
+  outcome: SourceRunOutcome;
   discovered: number;
   fetched: number;
   changed: number;
   unchanged: number;
   failed: number;
   error?: string;
+  skippedReason?: string;
 }
 
 export interface ScanResult {
   runId: string;
   runType: RasdRunType;
-  status: "COMPLETED" | "PARTIAL" | "FAILED";
+  status: Extract<RasdRunStatus, "COMPLETED" | "PARTIAL" | "FAILED" | "DEGRADED" | "SKIPPED">;
   dryRun: boolean;
   fixturesOnly: boolean;
   dbAvailable: boolean;
@@ -199,8 +205,14 @@ function requireScanFlags(input: RunScanInput): void {
   }
 }
 
-function selectedSources(sources?: RasdSourceCode[]): RasdSourceCode[] {
-  if (sources?.length) return [...new Set(sources)];
+function selectedSources(sources?: RasdSourceCode[], fixturesOnly = false): RasdSourceCode[] {
+  const requested = sources?.length ? [...new Set(sources)] : listConnectors().map((connector) => connector.code);
+  // Fixtures exercise parsers for all connectors. Live/prod runs honor per-source flags.
+  if (fixturesOnly) return requested;
+  return requested.filter((code) => isRasdSourceEnabled(code));
+}
+
+function allKnownSources(): RasdSourceCode[] {
   return listConnectors().map((connector) => connector.code);
 }
 
@@ -625,7 +637,9 @@ function detectRunConflicts(documents: MemoryDocument[]): SourceConflictDraft[] 
 
 function urgentFlags(result: Omit<ScanResult, "urgentFlags">): string[] {
   const flags: string[] = [];
-  if (result.sources.length > 0 && result.sources.every((source) => !source.ok)) flags.push("ALL_SOURCES_FAILED");
+  if (result.sources.length > 0 && result.sources.every((source) => !source.ok && source.outcome !== "SKIPPED")) {
+    flags.push("ALL_SOURCES_FAILED");
+  }
   if (result.changes.some((change) => change.changeType === "REPEAL" || change.changeType === "ARTICLE_REPEALED")) flags.push("REPEALED");
   if (result.conflicts.some((conflict) => conflict.severity === "CRITICAL")) flags.push("CRITICAL_CONFLICT");
   return flags;
@@ -655,7 +669,7 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
   const fixturesOnly = isFixturesOnly(input.fixturesOnly);
   requireScanFlags({ ...input, dryRun, fixturesOnly });
 
-  const sourceCodes = selectedSources(input.sources);
+  const sourceCodes = selectedSources(input.sources, fixturesOnly);
   const run = input.resumeRunId
     ? (await getRun(input.resumeRunId)) ?? (await createRun({ runType: input.runType, triggerType: "CLI", dryRun, metadata: { resumed: true } }))
     : await createRun({ runType: input.runType, triggerType: input.actorId ? "ADMIN" : "CLI", dryRun, metadata: { fixturesOnly, actorId: input.actorId ?? null } });
@@ -684,6 +698,28 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
   const runDocuments: MemoryDocument[] = [];
   const checkpoint = checkpointOf(run);
 
+  // Record disabled sources as SKIPPED so operators see honest status without failing the run.
+  // Skip this bookkeeping in fixtures-only mode (all connectors are exercised locally).
+  const enabledSet = new Set(sourceCodes);
+  if (!fixturesOnly) {
+    for (const code of allKnownSources()) {
+      if (enabledSet.has(code)) continue;
+      if (input.sources?.length && !input.sources.includes(code)) continue;
+      summaries.push({
+        sourceCode: code,
+        ok: false,
+        outcome: "SKIPPED",
+        discovered: 0,
+        fetched: 0,
+        changed: 0,
+        unchanged: 0,
+        failed: 0,
+        skippedReason: `RASD_SOURCE_${code}_ENABLED=false`,
+        error: `source disabled by feature flag`
+      });
+    }
+  }
+
   try {
     if (dbAvailable) {
       await seedRasdRegistry().catch(() => {
@@ -696,7 +732,16 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
       const sourceCode = sourceCodes[sourceIndex];
       const connector = getConnector(sourceCode);
       const source = await getSourceRecord(sourceCode, dbAvailable);
-      const summary: ScanSourceSummary = { sourceCode, ok: true, discovered: 0, fetched: 0, changed: 0, unchanged: 0, failed: 0 };
+      const summary: ScanSourceSummary = {
+        sourceCode,
+        ok: true,
+        outcome: "SUCCEEDED",
+        discovered: 0,
+        fetched: 0,
+        changed: 0,
+        unchanged: 0,
+        failed: 0
+      };
       summaries.push(summary);
 
       try {
@@ -710,8 +755,9 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
         counts.pagesDiscovered += discover.pagesVisited;
         counts.documentsDiscovered += discover.documents.length;
         if (!discover.ok) {
-          failures.push(`${sourceCode}: ${discover.error ?? "discover failed"}`);
+          summary.outcome = classifySourceFailure(discover.error);
           summary.failed += 1;
+          failures.push(`${sourceCode}: ${discover.error ?? "discover failed"}`);
           continue;
         }
 
@@ -769,16 +815,32 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
             failures.push(`${sourceCode}: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
+
+        if (summary.failed > 0 && summary.fetched > 0) {
+          summary.outcome = "PARTIAL";
+          summary.ok = true;
+        } else if (summary.failed > 0 && summary.fetched === 0) {
+          summary.outcome = classifySourceFailure(summary.error ?? failures.find((item) => item.startsWith(`${sourceCode}:`)));
+          summary.ok = false;
+        } else {
+          summary.outcome = "SUCCEEDED";
+          summary.ok = true;
+        }
+
         if (dbAvailable) {
           await delegates().monitoringSource?.update({
             where: { code: sourceCode },
-            data: summary.failed > 0 ? { lastFailedScanAt: new Date(), healthStatus: "DEGRADED" } : { lastSuccessfulScanAt: new Date(), healthStatus: "OK" }
+            data:
+              summary.outcome === "SUCCEEDED"
+                ? { lastSuccessfulScanAt: new Date(), healthStatus: "OK" }
+                : { lastFailedScanAt: new Date(), healthStatus: summary.outcome === "UNREACHABLE" ? "UNREACHABLE" : "DEGRADED" }
           }).catch(() => undefined);
         }
       } catch (error) {
         summary.ok = false;
         summary.error = error instanceof Error ? error.message : String(error);
         summary.failed += 1;
+        summary.outcome = classifySourceFailure(summary.error);
         failures.push(`${sourceCode}: ${summary.error}`);
       }
       await updateRunCounts(run.id, counts);
@@ -789,7 +851,18 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
     await persistConflicts(conflicts, dbAvailable);
     await updateRunCounts(run.id, counts);
 
-    const status = failures.length > 0 ? "PARTIAL" : "COMPLETED";
+    const resolved = resolveRunStatus(
+      summaries.map((summary) => ({
+        sourceCode: summary.sourceCode,
+        outcome: summary.outcome,
+        ok: summary.ok,
+        discovered: summary.discovered,
+        fetched: summary.fetched,
+        failed: summary.failed,
+        error: summary.error
+      }))
+    );
+    const status = resolved.status;
     await finishRun(run.id, status);
     const partial: Omit<ScanResult, "urgentFlags"> = {
       runId: run.id,

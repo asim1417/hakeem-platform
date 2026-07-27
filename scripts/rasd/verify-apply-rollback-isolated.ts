@@ -6,15 +6,16 @@ import { rollbackAppliedBatch } from "@/lib/modules/rasd/review/rollback";
 
 async function main() {
   const actorId = "verify_actor_1";
+  const suffix = Date.now().toString(36);
   const beforeSystems = await prisma.legalSystem.count();
   const beforeArticles = await prisma.legalArticle.count();
 
   const system = await prisma.legalSystem.create({
-    data: { id: "sys_verify_1", name: "نظام تحقق رصد التجريبي", articleCount: 1 }
+    data: { id: `sys_verify_${suffix}`, name: `نظام تحقق رصد التجريبي ${suffix}`, articleCount: 1 }
   });
   const article = await prisma.legalArticle.create({
     data: {
-      id: "art_verify_1",
+      id: `art_verify_${suffix}`,
       legalSystemId: system.id,
       lawName: system.name,
       articleNumber: 2,
@@ -25,7 +26,7 @@ async function main() {
   });
   const v1 = await prisma.articleVersion.create({
     data: {
-      id: "ver_verify_1",
+      id: `ver_verify_${suffix}`,
       articleId: article.id,
       versionText: article.content,
       effectiveFrom: new Date("2020-01-01T00:00:00Z"),
@@ -35,10 +36,10 @@ async function main() {
   });
   const doc = await prisma.monitoredLegalDocument.create({
     data: {
-      id: "mdoc_verify_1",
-      normalizedTitle: "نظام تحقق رصد التجريبي",
+      id: `mdoc_verify_${suffix}`,
+      normalizedTitle: system.name,
       documentType: "LAW",
-      canonicalIdentityKey: "law|نظام تحقق رصد التجريبي|م|1|1440",
+      canonicalIdentityKey: `law|نظام تحقق رصد التجريبي|م|1|1440|${suffix}`,
       matchedLegalSystemId: system.id,
       matchStatus: "MANUALLY_CONFIRMED",
       status: "REQUIRES_REVIEW"
@@ -46,7 +47,7 @@ async function main() {
   });
   const change = await prisma.legalChangeDetection.create({
     data: {
-      id: "chg_verify_1",
+      id: `chg_verify_${suffix}`,
       documentId: doc.id,
       hakeemLegalSystemId: system.id,
       changeType: "ARTICLE_AMENDED",

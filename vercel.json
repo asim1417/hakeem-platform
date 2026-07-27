@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/rasd/weekly",
-      "schedule": "0 0 * * 6"
-    }
-  ]
-}
