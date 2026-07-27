@@ -98,7 +98,7 @@ export function InteractiveJudge() {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catFilter, setCatFilter] = useState("الكل");
   // شفافيّة قرار القاضي (يراها صانع القرار): آخر وضع + تكييف + إجراء.
-  const [judgeMeta, setJudgeMeta] = useState<{ mode: string; classification: string | null; action: string | null; activatedAgent: string | null } | null>(null);
+  const [judgeMeta, setJudgeMeta] = useState<{ mode: string; classification: string | null; action: string | null } | null>(null);
 
   const loadList = useCallback(async () => {
     try {
@@ -424,7 +424,6 @@ export function InteractiveJudge() {
             {judgeMeta.mode === "ai" ? "قرأ المداخلة وكيّفها ثمّ قرّر (ذكيّ مؤصَّل)" : "قرار إجرائيّ منضبط"}
           </span>
           {judgeMeta.classification ? <span className="rounded-full bg-[var(--gold-ghost)] px-2.5 py-0.5 font-semibold text-[var(--gold)]">تكييف المداخلة: {judgeMeta.classification}</span> : null}
-          {judgeMeta.activatedAgent ? <span className="rounded-full bg-[var(--copper-soft)] px-2.5 py-0.5 font-semibold text-[var(--copper-deep)]">التخصّص المفعّل: {judgeMeta.activatedAgent}</span> : null}
         </div>
       ) : null}
 
