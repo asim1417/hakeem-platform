@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-07-27T12:56:23.641689+00:00",
+  "mode": "fixtures-only dry-run memory-only",
+  "databaseUrlPresent": false,
+  "liveSourceHealthCheckedSeparately": {
+    "UQN": "ok HTTP 200",
+    "BOE": "unreachable TLS reset",
+    "NCAR": "unreachable TLS reset"
+  },
+  "run": {
+    "runId": "run_ms38dk42_3tba394p",
+    "status": "COMPLETED",
+    "dryRun": true,
+    "fixturesOnly": true,
+    "counts": {
+      "pagesDiscovered": 3,
+      "pagesFetched": 6,
+      "documentsDiscovered": 6,
+      "documentsNew": 6,
+      "documentsChanged": 6,
+      "documentsUnchanged": 0,
+      "documentsFailed": 0,
+      "conflictsFound": 0
+    },
+    "sources": [
+      {
+        "sourceCode": "BOE",
+        "ok": true,
+        "discovered": 4,
+        "fetched": 4,
+        "changed": 4,
+        "unchanged": 0,
+        "failed": 0
+      },
+      {
+        "sourceCode": "NCAR",
+        "ok": true,
+        "discovered": 1,
+        "fetched": 1,
+        "changed": 1,
+        "unchanged": 0,
+        "failed": 0
+      },
+      {
+        "sourceCode": "UQN",
+        "ok": true,
+        "discovered": 1,
+        "fetched": 1,
+        "changed": 1,
+        "unchanged": 0,
+        "failed": 0
+      }
+    ],
+    "changesCount": 6,
+    "conflictsCount": 0,
+    "failures": []
+  },
+  "honesty": [
+    "Fixtures baseline only — not a full live official corpus scan.",
+    "DATABASE_URL absent — no comparison against Hakeem production library.",
+    "No writes to legal_articles / legal_systems.",
+    "See reports/rasd/live-uqn-sample.json for a limited live UQN probe (3 documents)."
+  ]
+}

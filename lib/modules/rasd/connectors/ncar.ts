@@ -72,17 +72,20 @@ export class NcarConnector implements RasdConnector {
 
   async discover(opts: ConnectorDiscoverOptions = {}): Promise<ConnectorDiscoverResult> {
     const limit = opts.limit ?? 100;
-    if (envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY) || opts.fixturePath) {
-      if (!opts.fixturePath) return discoverFixtures(limit);
-      const fixture = await rasdFetch(`file://${opts.fixturePath}`);
-      return {
-        sourceCode: this.code,
-        ok: fixture.ok,
-        documents: fixture.ok ? parseIndex(fixture.bodyText, limit) : [],
-        pagesVisited: fixture.ok ? 1 : 0,
-        error: fixture.error,
-        metadata: { fixturePath: opts.fixturePath }
-      };
+    const fixturesOnly = Boolean(opts.fixturesOnly) || envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY);
+    if (fixturesOnly || opts.fixturePath) {
+      if (opts.fixturePath && !fixturesOnly) {
+        const fixture = await rasdFetch(`file://${opts.fixturePath}`);
+        return {
+          sourceCode: this.code,
+          ok: fixture.ok,
+          documents: fixture.ok ? parseIndex(fixture.bodyText, limit) : [],
+          pagesVisited: fixture.ok ? 1 : 0,
+          error: fixture.error,
+          metadata: { fixturePath: opts.fixturePath }
+        };
+      }
+      return discoverFixtures(limit);
     }
 
     await this.limiter.removeToken();

@@ -178,9 +178,10 @@ function isFixturesOnly(input?: boolean): boolean {
   return Boolean(input || RASD_FIXTURES_ONLY || envBool("RASD_FIXTURES_ONLY", false));
 }
 
-function shouldUseDb(dryRun: boolean): boolean {
-  // Dry-run may still write Rasd staging tables. It never applies changes to the legal library.
-  return !envBool("RASD_MEMORY_ONLY", false) || !dryRun;
+function shouldUseDb(_dryRun: boolean): boolean {
+  // Staging DB writes are allowed when DATABASE_URL is present and MEMORY_ONLY is off.
+  // Legal library writes remain blocked unless review/apply path is used.
+  return !envBool("RASD_MEMORY_ONLY", false) && Boolean(process.env.DATABASE_URL?.trim());
 }
 
 function requireScanFlags(input: RunScanInput): void {
@@ -699,7 +700,10 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
       summaries.push(summary);
 
       try {
-        const discover = await connector.discover({ limit: input.limit ?? (fixturesOnly ? 25 : 100) });
+        const discover = await connector.discover({
+          limit: input.limit ?? (fixturesOnly ? 25 : 100),
+          fixturesOnly
+        });
         summary.ok = discover.ok;
         summary.discovered = discover.documents.length;
         summary.error = discover.error;

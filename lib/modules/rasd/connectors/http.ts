@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import { fileURLToPath } from "url";
-import { RASD_FIXTURES_ONLY, RASD_USER_AGENT } from "../flags";
+import { RASD_FIXTURES_ONLY, RASD_USER_AGENT, envBool } from "../flags";
 import type { FetchResult } from "../types";
 
 export interface RasdFetchOptions {
@@ -50,7 +50,7 @@ export async function rasdFetch(url: string, opts: RasdFetchOptions = {}): Promi
     return fetchFixture(opts.fixturePath ?? url);
   }
 
-  if (RASD_FIXTURES_ONLY) {
+  if (envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY)) {
     return {
       ok: false,
       status: 0,

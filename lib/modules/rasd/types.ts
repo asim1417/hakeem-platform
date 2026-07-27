@@ -283,6 +283,8 @@ export interface ConnectorDiscoverOptions {
   sitemapUrl?: string;
   indexUrl?: string;
   fixturePath?: string;
+  /** Force fixture-only discovery even if RASD_FIXTURES_ONLY env is false. */
+  fixturesOnly?: boolean;
 }
 
 export interface ConnectorFetchOptions {

@@ -1,0 +1,5 @@
+{
+  "generatedAt": "2026-07-27T12:56:23.641689+00:00",
+  "baselineConflicts": [],
+  "unitTestNote": "BOE vs NCAR conflict detection covered by npm run test:rasd"
+}

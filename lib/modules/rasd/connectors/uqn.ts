@@ -25,13 +25,21 @@ function absoluteUrl(url: string): string {
   return new URL(url, UQN_BASE).toString();
 }
 
+function isLegislativeUqnUrl(url: string): boolean {
+  return /\/(decisions-and-regulations|decisions\/|royal-decrees|rules-and-regulations|council-of-ministers|ministerial-decisions|royal-orders)\b/i.test(
+    url
+  );
+}
+
 function parseSitemap(xml: string, limit: number): DiscoveredDocument[] {
   const urls = [...xml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/giu)]
     .map((match) => decode(match[1] ?? ""))
-    .filter((url) => /uqn\.gov\.sa/i.test(url) && !/\/ajax\//i.test(url) && !/[?&]page=/i.test(url))
-    .slice(0, limit);
+    .filter((url) => /uqn\.gov\.sa/i.test(url) && !/\/ajax\//i.test(url) && !/[?&]page=/i.test(url));
 
-  return urls.map((url) => ({
+  const legislative = urls.filter(isLegislativeUqnUrl);
+  const chosen = (legislative.length > 0 ? legislative : urls).slice(0, limit);
+
+  return chosen.map((url) => ({
     sourceCode: "UQN",
     url,
     sourceDocumentId: url.split("/").filter(Boolean).pop()
@@ -61,50 +69,13 @@ async function discoverFixtures(limit: number): Promise<ConnectorDiscoverResult>
   try {
     const entries = await readdir(FIXTURE_DIR);
     const preferred = entries.filter((entry) => /^decision-.*\.html?$/i.test(entry));
-    const indexFiles = entries.filter((entry) => /decisions-index|sitemap-sample/i.test(entry));
-    const documents: DiscoveredDocument[] = [];
-
-    for (const entry of preferred) {
-      documents.push({
-        sourceCode: "UQN",
-        url: `file://${path.join(FIXTURE_DIR, entry)}`,
-        title: entry.replace(/\.[^.]+$/, ""),
-        sourceDocumentId: entry.replace(/\.[^.]+$/, "")
-      });
-      if (documents.length >= limit) break;
-    }
-
-    if (documents.length < limit) {
-      for (const entry of indexFiles) {
-        const body = await readFile(path.join(FIXTURE_DIR, entry), "utf8");
-        const parsed = entry.endsWith(".xml") ? parseSitemap(body, limit - documents.length) : parseIndexHtml(body, limit - documents.length);
-        for (const doc of parsed) {
-          // Map remote UQN URLs back to local decision fixtures when available.
-          if (doc.sourceDocumentId && preferred.includes(`decision-${doc.sourceDocumentId}.html`)) {
-            documents.push({
-              ...doc,
-              url: `file://${path.join(FIXTURE_DIR, `decision-${doc.sourceDocumentId}.html`)}`
-            });
-          } else {
-            documents.push(doc);
-          }
-          if (documents.length >= limit) break;
-        }
-        if (documents.length >= limit) break;
-      }
-    }
-
-    if (documents.length === 0) {
-      for (const entry of entries.filter((e) => /\.html?$/i.test(e)).slice(0, limit)) {
-        documents.push({
-          sourceCode: "UQN",
-          url: `file://${path.join(FIXTURE_DIR, entry)}`,
-          title: entry.replace(/\.[^.]+$/, ""),
-          sourceDocumentId: entry
-        });
-      }
-    }
-
+    const htmlFiles = preferred.length > 0 ? preferred : entries.filter((entry) => /\.html?$/i.test(entry) && !/index/i.test(entry));
+    const documents: DiscoveredDocument[] = htmlFiles.slice(0, limit).map((entry) => ({
+      sourceCode: "UQN" as const,
+      url: `file://${path.join(FIXTURE_DIR, entry)}`,
+      title: entry.replace(/\.[^.]+$/, ""),
+      sourceDocumentId: entry.replace(/\.[^.]+$/, "")
+    }));
     return { sourceCode: "UQN", ok: true, documents, pagesVisited: 1, metadata: { fixtureDir: FIXTURE_DIR } };
   } catch (error) {
     return {
@@ -123,13 +94,15 @@ export class UqnConnector implements RasdConnector {
 
   async discover(opts: ConnectorDiscoverOptions = {}): Promise<ConnectorDiscoverResult> {
     const limit = opts.limit ?? 100;
-    if (opts.fixturePath) {
+    const fixturesOnly = Boolean(opts.fixturesOnly) || envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY);
+
+    if (opts.fixturePath && !fixturesOnly) {
       const body = await readFile(opts.fixturePath, "utf8");
       const documents = opts.fixturePath.endsWith(".xml") ? parseSitemap(body, limit) : parseIndexHtml(body, limit);
       return { sourceCode: this.code, ok: true, documents, pagesVisited: 1, metadata: { fixturePath: opts.fixturePath } };
     }
 
-    if (envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY)) return discoverFixtures(limit);
+    if (fixturesOnly || opts.fixturePath) return discoverFixtures(limit);
 
     await this.limiter.removeToken();
     const sitemap = await withRetry(() => rasdFetch(opts.sitemapUrl ?? DEFAULT_SITEMAP, { timeoutMs: 15_000 }), {
