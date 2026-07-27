@@ -12,6 +12,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
 import { groundForJudge, verifyJudgeGrounding, PROCEDURAL_DIGEST } from "./judicial-brain";
+import { JUDICIAL_DRAFTING_GUIDE } from "./judicial-drafting";
 import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
@@ -61,6 +62,8 @@ function buildSystemPrompt() {
     "أُقفل باب المرافعة، والمطلوب إصدار مخرَجٍ قضائيٍّ مسبَّب.",
     "",
     PROCEDURAL_DIGEST,
+    "",
+    JUDICIAL_DRAFTING_GUIDE,
     "",
     "== القاعدة العامّة للصياغة ==",
     "- الحكم بنيةٌ واحدة مترابطة: الوقائع ← الأسباب ← المنطوق؛ كلّ فقرةٍ تترتّب على ما قبلها.",
