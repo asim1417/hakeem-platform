@@ -64,6 +64,11 @@ export function InteractiveJudge() {
 
   const [form, setForm] = useState({ subject: "", facts: "", requests: "", plaintiffName: "", defendantName: "", caseType: "تجاري" });
 
+  // ── المرحلة الأولى من النقل التدريجيّ: خصائص القاعة (قوّة · ضبط · صلح) ──
+  const [strength, setStrength] = useState<{ score: number; notes: string[] } | null>(null);
+  const [showSettlement, setShowSettlement] = useState(false);
+  const [settlement, setSettlement] = useState({ amount: "", obligations: "", duration: "", waiver: "" });
+
   const loadList = useCallback(async () => {
     try {
       const data = await api("/api/simulations");
@@ -200,6 +205,52 @@ export function InteractiveJudge() {
       setBusy(false);
     }
   }, [session, applyState]);
+
+  const computeStrength = useCallback(async () => {
+    if (!session) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const data = await api(`/api/simulations/${session.id}/strength-score`, { method: "POST", body: JSON.stringify({}) });
+      setStrength(data.score ?? null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }, [session]);
+
+  const generateHearingRecord = useCallback(async () => {
+    if (!session) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/api/simulations/${session.id}/hearing-record`, { method: "POST", body: JSON.stringify({}) });
+      const fresh = await api(`/api/simulations/${session.id}/messages`);
+      applyState(fresh.session, fresh.turnState ?? null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }, [session, applyState]);
+
+  const submitSettlement = useCallback(async () => {
+    if (!session) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/api/simulations/${session.id}/settlement`, { method: "POST", body: JSON.stringify(settlement) });
+      setShowSettlement(false);
+      setSettlement({ amount: "", obligations: "", duration: "", waiver: "" });
+      const fresh = await api(`/api/simulations/${session.id}/messages`);
+      applyState(fresh.session, fresh.turnState ?? null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }, [session, settlement, applyState]);
 
   const closed = turn?.allowedSpeakerRole === "none";
   const judgment = session?.judgments?.[session.judgments.length - 1];
@@ -348,12 +399,54 @@ export function InteractiveJudge() {
         </div>
       )}
 
-      {/* التصدير */}
-      {judgment ? (
+      {/* أدوات الجلسة (منقولة من القاعة الكلاسيكيّة) */}
+      <div className="rounded-[var(--r-xl)] border border-line bg-ivory p-4">
+        <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">أدوات الجلسة</p>
         <div className="flex flex-wrap gap-2">
-          <a href={`/api/simulations/${session?.id}/export?type=judgment&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تصدير الحكم PDF</a>
-          <a href={`/api/simulations/${session?.id}/export?type=judgment&format=docx`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تصدير الحكم Word</a>
-          <a href={`/api/simulations/${session?.id}/export?type=full-report&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تقرير الجلسة PDF</a>
+          <button onClick={computeStrength} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">تقييم قوّة الموقف</button>
+          <button onClick={generateHearingRecord} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">ضبط الجلسة</button>
+          <button onClick={() => setShowSettlement((v) => !v)} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">مسودة صلح</button>
+          <a href={`/api/simulations/${session?.id}/export?type=hearing-record&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:border-[var(--gold-border)]">تصدير ضبط الجلسة</a>
+        </div>
+
+        {strength ? (
+          <div className="mt-3 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--parchment)] p-3 text-sm">
+            <div className="font-bold text-[var(--gold)]">قوّة الموقف: {strength.score}٪</div>
+            <ul className="mt-1 grid gap-0.5 text-xs text-[var(--muted)]">
+              {strength.notes?.map((n, i) => <li key={i}>• {n}</li>)}
+            </ul>
+          </div>
+        ) : null}
+
+        {showSettlement ? (
+          <div className="mt-3 grid gap-2 rounded-[var(--r-lg)] border border-line bg-white p-3">
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="مبلغ التسوية" value={settlement.amount} onChange={(v) => setSettlement({ ...settlement, amount: v })} />
+              <Field label="مدّة التنفيذ" value={settlement.duration} onChange={(v) => setSettlement({ ...settlement, duration: v })} />
+            </div>
+            <Field label="الالتزامات" value={settlement.obligations} onChange={(v) => setSettlement({ ...settlement, obligations: v })} />
+            <Field label="شرط التنازل/الإنهاء" value={settlement.waiver} onChange={(v) => setSettlement({ ...settlement, waiver: v })} />
+            <button onClick={submitSettlement} disabled={busy} className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">حفظ مسودة الصلح</button>
+          </div>
+        ) : null}
+      </div>
+
+      {/* التصدير ومسارات ما بعد الحكم */}
+      {judgment ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تصدير الحكم PDF</a>
+            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=docx`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تصدير الحكم Word</a>
+            <a href={`/api/simulations/${session?.id}/export?type=full-report&format=pdf`} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]">تقرير الجلسة PDF</a>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">مرحلة ما بعد الحكم</p>
+            <div className="flex flex-wrap gap-2">
+              <a href={`/dashboard/simulations/${session?.id}/appeal`} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">لائحة استئناف</a>
+              <a href={`/dashboard/simulations/${session?.id}/cassation`} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">طلب نقض</a>
+              <a href={`/dashboard/simulations/${session?.id}/reconsideration`} className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">التماس إعادة نظر</a>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
