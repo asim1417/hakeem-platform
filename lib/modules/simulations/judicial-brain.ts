@@ -24,8 +24,10 @@ export type JudicialGrounding = {
  * يسترجع مواد النواة الحقيقيّة ذات الصلة (مع إبراز نظام الإثبات) ويجمع أرقام المواد المسموحة.
  * يُستعمَل لحقن السياق المؤرَّض في توجيه القاضي قبل التوليد.
  */
-export async function groundForJudge(text: string, limit = 6): Promise<JudicialGrounding> {
-  const ctx = await buildLegalContextForAI(`${text} ${EVIDENCE_HINTS}`.slice(0, 900), { limit });
+export async function groundForJudge(text: string, limit = 6, scopeSystems?: string[]): Promise<JudicialGrounding> {
+  // تقييدٌ ناعمٌ بنطاق التخصّص المفعّل (أنظمة الوكيل) — يحيّز الاسترجاع نحو أنظمة نوع الدعوى.
+  const scopeHint = scopeSystems?.length ? ` (ضمن الأنظمة ذات الصلة: ${scopeSystems.join("، ")})` : "";
+  const ctx = await buildLegalContextForAI(`${text}${scopeHint} ${EVIDENCE_HINTS}`.slice(0, 900), { limit });
   if (!ctx.hasArticles) {
     return { hasArticles: false, contextText: "", citationBlock: "", allowedNumbers: new Set<number>(), articleCount: 0 };
   }
