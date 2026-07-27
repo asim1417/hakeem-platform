@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createOriginalHakeemAiResponse, callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { requireApiPermission } from "@/lib/modules/auth/session";
+import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { collectAllowedArticleNumbers, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 
 export const dynamic = "force-dynamic";
+
+// تأريض القاضي التفاعليّ الحيّ: عند نداءٍ قضائيٍّ ذي وقائع، يسترجع الخادم مواد النواة
+// الحقيقيّة (مع إبراز نظام الإثبات) ويحقنها في التوجيه، ثمّ يحرس المخرَج من أرقام المواد
+// المختلَقة — دون تعديل واجهة الـ iframe. شفّافٌ وآمن: يسقط بلا تأصيل عند فشل الاسترجاع.
+const JUDGE_EVIDENCE_HINTS =
+  "قواعد الإثبات وعبء الإثبات والبيّنة والشهادة واليمين والقرينة وحجيّة المستند والإقرار في نظام الإثبات";
+const GROUND_SIGNAL =
+  /الوقائع|الطلب|الدعوى|الدفع|المدّع|المدع|الجواب|البيّن|البين|الإثبات|إثبات|الحكم|المرافعة/;
 
 const messageSchema = z.object({
   role: z.string().optional(),
@@ -38,11 +48,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // وضع التمرير الأمين للقاضي التفاعلي: نصوصه الخاصة + المفتاح المركزي
+  // وضع التمرير الأمين للقاضي التفاعلي: نصوصه الخاصة + المفتاح المركزي (مع تأريضٍ شفّاف)
   if (parsed.data.raw) {
+    const userPrompt = parsed.data.prompt ?? "";
+    let systemPrompt = parsed.data.systemPrompt ?? "";
+
+    // تأريض النداءات القضائيّة ذات الوقائع فقط (يستثني نداءات الاختبار القصيرة).
+    let allowedNumbers = new Set<number>();
+    const shouldGround = userPrompt.length > 120 && GROUND_SIGNAL.test(userPrompt);
+    if (shouldGround) {
+      try {
+        const ctx = await buildLegalContextForAI(`${userPrompt} ${JUDGE_EVIDENCE_HINTS}`.slice(0, 900), { limit: 6 });
+        if (ctx.hasArticles) {
+          allowedNumbers = collectAllowedArticleNumbers({ numbers: ctx.articles.map((a) => a.articleNumber) });
+          systemPrompt = `${systemPrompt}\n\n${ctx.contextText}`;
+        }
+      } catch {
+        // فشل الاسترجاع لا يكسر القاضي — يبقى بلا تأصيل هذه المرّة.
+      }
+    }
+
     const raw = await callCentralProvider({
-      systemPrompt: parsed.data.systemPrompt,
-      userPrompt: parsed.data.prompt ?? "",
+      systemPrompt,
+      userPrompt,
       maxTokens: parsed.data.maxTokens
     });
     if (!raw.ok) {
@@ -51,7 +79,15 @@ export async function POST(request: NextRequest) {
         { status: raw.mode === "offline" ? 409 : 502 }
       );
     }
-    return NextResponse.json({ ok: true, mode: raw.mode, provider: raw.provider, content: raw.content });
+
+    // حارس التأريض: أرقام مواد في مخرَج القاضي ليست ضمن المسترجَع ⇒ تنبيه شفافيّة (لا حذف مدمّر).
+    const grounded = allowedNumbers.size > 0;
+    const groundingOk = !grounded || verifyNarrativeGrounding([raw.content], allowedNumbers).ok;
+    const content = groundingOk
+      ? raw.content
+      : `${raw.content}\n\n— ملاحظة: بعض الإشارات النظاميّة في هذا النصّ غير مؤكَّدة من النواة، ويُتحقّق منها قبل الاعتماد.`;
+
+    return NextResponse.json({ ok: true, mode: raw.mode, provider: raw.provider, content, grounded, groundingOk });
   }
 
   const result = await createOriginalHakeemAiResponse({
