@@ -33,6 +33,17 @@ export function extractClaim(messages?: Array<Pick<SimulationMessage, "content">
   }
 }
 
+// إشارة بيّنة مشتقّة من مداخلات الأطراف والسند النظاميّ — بديلٌ عن عدّ مرفقاتٍ غير مرتبطة
+// بالجلسة (لا يوجد ربط Attachment↔Simulation في المخطّط). يُغذّي فرع البيّنة في القاضي ومقياس القوّة.
+const EVIDENCE_TERMS = /بيّنة|بينة|مستند|سند|شاهد|شهادة|إقرار|دليل|أدلة|عقد|فاتورة|إيصال|كشف|محضر|صك|خبرة/;
+const PARTY_ROLES = ["المدعي", "وكيل المدعي", "المدعى عليه", "وكيل المدعى عليه"];
+
+export function countEvidenceSignals(messages: Array<{ role: string; content: string }>, claim?: ClaimData): number {
+  let n = messages.filter((m) => PARTY_ROLES.includes(m.role) && EVIDENCE_TERMS.test(m.content)).length;
+  if (claim?.legalGrounds && claim.legalGrounds.trim()) n += 1;
+  return n;
+}
+
 export function extractDecision(decisions: Array<Pick<SimulationDecision, "decisionType" | "content">>, decisionType: string) {
   return [...decisions].reverse().find((decision) => decision.decisionType === decisionType)?.content;
 }
