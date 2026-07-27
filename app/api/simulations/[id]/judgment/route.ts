@@ -74,12 +74,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   let content = templateContent;
   let judgmentMode: "reasoned" | "template" = "template";
   let judgmentConfidence = 0;
+  // نوع المخرَج: حكمٌ نهائيّ أم قرارٌ إجرائيّ (توجيه يمين/ندب خبير) لم يجهز معه الفصل.
+  let judgmentKind: "judgment" | "procedural" = "judgment";
   try {
     const reasoned = await generateReasonedJudgment({ claim, messages: session.messages });
     if (reasoned) {
       content = reasoned.content;
       judgmentMode = "reasoned";
       judgmentConfidence = reasoned.confidence;
+      judgmentKind = reasoned.kind;
     }
   } catch {
     content = templateContent;
@@ -106,13 +109,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     entityId: params.id,
     metadata: {
       judgmentId: judgment.id,
-      title: "مسودة حكم قضائي مسبب",
+      title: judgmentKind === "procedural" ? "قرار إجرائي في جلسة المحاكاة" : "مسودة حكم قضائي مسبب",
       mode: judgmentMode,
+      kind: judgmentKind,
       confidence: judgmentConfidence,
       citationsCount: legalContext.articles.length,
       source: "legal_core"
     }
   });
 
-  return NextResponse.json({ judgment }, { status: 201 });
+  return NextResponse.json({ judgment, kind: judgmentKind }, { status: 201 });
 }
