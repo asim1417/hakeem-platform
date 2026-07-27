@@ -52,3 +52,16 @@
 
 - عند نجاح `readiness` + `Vercel` → `CORE_READY_FOR_REVIEW` وتحويل Draft→Ready.
 - وإلا → `CORE_NOT_READY`.
+
+
+## نتيجة ما بعد الإصلاح (commit `3c717cb`)
+
+| الفحص | الحالة |
+|---|---|
+| readiness (Deploy Readiness Check) | **PASS** |
+| Vercel Deployment | **PASS** |
+| Vercel Preview Comments | **PASS** |
+
+**قرار الجاهزية:** `CORE_READY_FOR_REVIEW`  
+**Draft→Ready:** نعم (بعد نجاح Checks)  
+**Production:** `PRODUCTION_NOT_READY`
