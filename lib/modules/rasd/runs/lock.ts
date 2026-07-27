@@ -26,6 +26,10 @@ function getRasdRunLockDelegate(): RasdRunLockDelegate | undefined {
 
 const memoryLocks = new Map<string, MemoryLock>();
 
+function dbDisabled(): boolean {
+  return process.env.RASD_MEMORY_ONLY === "true" || process.env.RASD_MEMORY_ONLY === "1" || !process.env.DATABASE_URL;
+}
+
 function nowPlus(ttlMs: number): Date {
   return new Date(Date.now() + ttlMs);
 }
@@ -38,6 +42,7 @@ function acquireMemoryLock(key: string, runId: string, ttlMs: number): boolean {
 }
 
 export async function acquireRunLock(key: string, runId: string, ttlMs: number): Promise<boolean> {
+  if (dbDisabled()) return acquireMemoryLock(key, runId, ttlMs);
   try {
     const delegate = getRasdRunLockDelegate();
     if (!delegate) return acquireMemoryLock(key, runId, ttlMs);
@@ -67,6 +72,10 @@ export async function acquireRunLock(key: string, runId: string, ttlMs: number):
 }
 
 export async function releaseRunLock(key: string): Promise<void> {
+  if (dbDisabled()) {
+    memoryLocks.delete(key);
+    return;
+  }
   try {
     const delegate = getRasdRunLockDelegate();
     if (delegate) await delegate.delete({ where: { lockKey: key } });

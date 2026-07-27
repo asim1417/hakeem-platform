@@ -27,6 +27,7 @@ enum AuditSubject {
   TRAINING
   AI_GATEWAY
   ADMIN
+  RASD
 }
 
 enum CaseStatus {
@@ -118,6 +119,9 @@ model LegalSystem {
   eliSlug        String?        @unique @map("eli_slug") // slug تشريعي ثابت (يُجمّد عند الإنشاء) — أساس معرّف ELI الدائم
   articleCount   Int            @default(0)
   articles       LegalArticle[]
+  /// مطابقات محرك رصد — لا تُستخدم كمصدر حقيقة للنص النظامي.
+  rasdMatches    LegalDocumentMatch[]
+  rasdDocuments  MonitoredLegalDocument[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -1062,4 +1066,313 @@ model JudicialWorkCase {
 
   @@index([ownerId, createdAt])
   @@map("judicial_work_cases")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// محرك رصد — Rasd Legislative Monitoring Engine
+// طبقة مراقبة ومطابقة وتحديث منضبط. ليست مصدر حقيقة موازيًا للمكتبة القانونية.
+// الكتابة إلى legal_* المعتمدة تتم فقط بعد اعتماد بشري صريح (RASD_REVIEW_REQUIRED).
+// ═══════════════════════════════════════════════════════════════════════════
+
+model MonitoringSource {
+  id                   String   @id @default(cuid())
+  code                 String   @unique // BOE | NCAR | UQN
+  nameAr               String   @map("name_ar")
+  baseDomain           String   @map("base_domain")
+  sourceRole           String   @map("source_role") // PUBLICATION | CONSOLIDATED_TEXT | ARCHIVAL
+  trustPriority        Int      @map("trust_priority")
+  isActive             Boolean  @default(true) @map("is_active")
+  supportsApi          Boolean  @default(false) @map("supports_api")
+  supportsRss          Boolean  @default(false) @map("supports_rss")
+  supportsSitemap      Boolean  @default(true) @map("supports_sitemap")
+  crawlPolicy          String?  @map("crawl_policy")
+  rateLimitPerMinute   Int      @default(20) @map("rate_limit_per_minute")
+  lastSuccessfulScanAt DateTime? @map("last_successful_scan_at")
+  lastFailedScanAt     DateTime? @map("last_failed_scan_at")
+  healthStatus         String   @default("UNKNOWN") @map("health_status")
+  parserVersion        String   @default("1.0.0") @map("parser_version")
+  metadata             Json?
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  runs      MonitoringRun[]
+  snapshots SourceSnapshot[]
+  versions  MonitoredDocumentVersion[]
+
+  @@map("monitoring_sources")
+}
+
+model MonitoringRun {
+  id                   String    @id @default(cuid())
+  runType              String    @map("run_type") // BASELINE | WEEKLY | MANUAL | RETRY | FULL_RESCAN
+  triggerType          String    @map("trigger_type") // SCHEDULER | CLI | ADMIN | SYSTEM
+  status               String    @default("PENDING") // PENDING|RUNNING|COMPLETED|FAILED|PARTIAL|CANCELLED
+  startedAt            DateTime? @map("started_at")
+  finishedAt           DateTime? @map("finished_at")
+  sourceId             String?   @map("source_id")
+  source               MonitoringSource? @relation(fields: [sourceId], references: [id])
+  pagesDiscovered      Int       @default(0) @map("pages_discovered")
+  pagesFetched         Int       @default(0) @map("pages_fetched")
+  documentsDiscovered  Int       @default(0) @map("documents_discovered")
+  documentsNew         Int       @default(0) @map("documents_new")
+  documentsChanged     Int       @default(0) @map("documents_changed")
+  documentsUnchanged   Int       @default(0) @map("documents_unchanged")
+  documentsFailed      Int       @default(0) @map("documents_failed")
+  conflictsFound       Int       @default(0) @map("conflicts_found")
+  retryCount           Int       @default(0) @map("retry_count")
+  dryRun               Boolean   @default(true) @map("dry_run")
+  errorSummary         String?   @map("error_summary") @db.Text
+  checkpoint           Json?
+  metadata             Json?
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  snapshots SourceSnapshot[]
+
+  @@index([status, startedAt])
+  @@index([runType, createdAt])
+  @@map("monitoring_runs")
+}
+
+model SourceSnapshot {
+  id             String   @id @default(cuid())
+  sourceId       String   @map("source_id")
+  source         MonitoringSource @relation(fields: [sourceId], references: [id])
+  runId          String?  @map("run_id")
+  run            MonitoringRun? @relation(fields: [runId], references: [id])
+  sourceUrl      String   @map("source_url") @db.Text
+  canonicalUrl   String?  @map("canonical_url") @db.Text
+  httpStatus     Int?     @map("http_status")
+  contentType    String?  @map("content_type")
+  etag           String?
+  lastModified   String?  @map("last_modified")
+  fetchedAt      DateTime @default(now()) @map("fetched_at")
+  rawStoragePath String?  @map("raw_storage_path")
+  rawText        String?  @map("raw_text") @db.Text
+  contentHash    String   @map("content_hash")
+  parserVersion  String   @map("parser_version")
+  parseStatus    String   @default("PENDING") @map("parse_status")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  versions MonitoredDocumentVersion[]
+
+  @@index([sourceId, contentHash])
+  @@index([runId])
+  @@index([fetchedAt])
+  @@map("source_snapshots")
+}
+
+model MonitoredLegalDocument {
+  id                       String   @id @default(cuid())
+  normalizedTitle          String   @map("normalized_title")
+  documentType             String   @map("document_type")
+  issuingAuthority         String?  @map("issuing_authority")
+  approvalInstrumentType   String?  @map("approval_instrument_type")
+  approvalInstrumentNumber String?  @map("approval_instrument_number")
+  approvalDateHijri        String?  @map("approval_date_hijri")
+  approvalDateGregorian    DateTime? @map("approval_date_gregorian")
+  publicationDateHijri     String?  @map("publication_date_hijri")
+  publicationDateGregorian DateTime? @map("publication_date_gregorian")
+  effectiveDateHijri       String?  @map("effective_date_hijri")
+  effectiveDateGregorian   DateTime? @map("effective_date_gregorian")
+  ummAlQuraIssueNumber     String?  @map("umm_al_qura_issue_number")
+  status                   String   @default("REQUIRES_REVIEW")
+  subjectCategory          String?  @map("subject_category")
+  canonicalIdentityKey     String   @unique @map("canonical_identity_key")
+  currentSourceVersionId   String?  @map("current_source_version_id")
+  matchedLegalSystemId     String?  @map("matched_legal_system_id")
+  matchedLegalSystem       LegalSystem? @relation(fields: [matchedLegalSystemId], references: [id])
+  matchStatus              String   @default("NO_MATCH") @map("match_status")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  versions  MonitoredDocumentVersion[]
+  matches   LegalDocumentMatch[]
+  changes   LegalChangeDetection[]
+  conflicts SourceConflict[]
+
+  @@index([normalizedTitle])
+  @@index([documentType, status])
+  @@index([matchStatus])
+  @@map("monitored_legal_documents")
+}
+
+model MonitoredDocumentVersion {
+  id                       String   @id @default(cuid())
+  documentId               String   @map("document_id")
+  document                 MonitoredLegalDocument @relation(fields: [documentId], references: [id])
+  sourceId                 String   @map("source_id")
+  source                   MonitoringSource @relation(fields: [sourceId], references: [id])
+  snapshotId               String?  @map("snapshot_id")
+  snapshot                 SourceSnapshot? @relation(fields: [snapshotId], references: [id])
+  sourceDocumentId         String?  @map("source_document_id")
+  sourceTitle              String   @map("source_title")
+  sourceUrl                String   @map("source_url") @db.Text
+  versionHash              String   @map("version_hash")
+  normalizedTextHash       String   @map("normalized_text_hash")
+  structureHash            String   @map("structure_hash")
+  metadataHash             String   @map("metadata_hash")
+  fullNormalizedText       String?  @map("full_normalized_text") @db.Text
+  detectedAt               DateTime @default(now()) @map("detected_at")
+  validFrom                DateTime? @map("valid_from")
+  validTo                  DateTime? @map("valid_to")
+  isCurrentAtSource        Boolean  @default(true) @map("is_current_at_source")
+  isOfficialPublicationCopy Boolean @default(false) @map("is_official_publication_copy")
+  parserVersion            String   @map("parser_version")
+  parseConfidence          Float    @default(0) @map("parse_confidence")
+  metadata                 Json?
+  createdAt                DateTime @default(now()) @map("created_at")
+
+  provisions MonitoredProvision[]
+
+  @@index([documentId, sourceId])
+  @@index([versionHash])
+  @@index([normalizedTextHash])
+  @@map("monitored_document_versions")
+}
+
+model MonitoredProvision {
+  id                      String   @id @default(cuid())
+  documentVersionId       String   @map("document_version_id")
+  documentVersion         MonitoredDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+  provisionType           String   @map("provision_type") // PREAMBLE|CHAPTER|SECTION|ARTICLE|PARAGRAPH|CLAUSE|TABLE|APPENDIX|EFFECT|REPEAL
+  articleNumberRaw        String?  @map("article_number_raw")
+  articleNumberNormalized String?  @map("article_number_normalized")
+  paragraphNumber         String?  @map("paragraph_number")
+  parentProvisionId       String?  @map("parent_provision_id")
+  parent                  MonitoredProvision? @relation("ProvisionTree", fields: [parentProvisionId], references: [id])
+  children                MonitoredProvision[] @relation("ProvisionTree")
+  heading                 String?
+  textRaw                 String   @map("text_raw") @db.Text
+  textNormalized          String   @map("text_normalized") @db.Text
+  textHash                String   @map("text_hash")
+  sequence                Int      @default(0)
+  pageNumber              Int?     @map("page_number")
+  metadata                Json?
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  @@index([documentVersionId, sequence])
+  @@index([articleNumberNormalized])
+  @@index([textHash])
+  @@map("monitored_provisions")
+}
+
+model LegalDocumentMatch {
+  id                   String   @id @default(cuid())
+  monitoredDocumentId  String   @map("monitored_document_id")
+  monitoredDocument    MonitoredLegalDocument @relation(fields: [monitoredDocumentId], references: [id])
+  legalSystemId        String?  @map("legal_system_id")
+  legalSystem          LegalSystem? @relation(fields: [legalSystemId], references: [id])
+  matchMethod          String   @map("match_method") // EXACT_INSTRUMENT|TITLE_META|CONTENT|SEMANTIC_HINT|MANUAL
+  matchScore           Float    @default(0) @map("match_score")
+  titleScore           Float    @default(0) @map("title_score")
+  instrumentScore      Float    @default(0) @map("instrument_score")
+  dateScore            Float    @default(0) @map("date_score")
+  contentScore         Float    @default(0) @map("content_score")
+  status               String   @default("AMBIGUOUS") // EXACT_MATCH|PROBABLE_MATCH|AMBIGUOUS|NO_MATCH|REJECTED_MATCH|MANUALLY_CONFIRMED
+  reviewedBy           String?  @map("reviewed_by")
+  reviewedAt           DateTime? @map("reviewed_at")
+  reviewNotes          String?  @map("review_notes") @db.Text
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@index([monitoredDocumentId])
+  @@index([legalSystemId])
+  @@index([status])
+  @@map("legal_document_matches")
+}
+
+model LegalChangeDetection {
+  id                   String   @id @default(cuid())
+  documentId           String   @map("document_id")
+  document             MonitoredLegalDocument @relation(fields: [documentId], references: [id])
+  sourceVersionId      String?  @map("source_version_id")
+  hakeemLegalSystemId  String?  @map("hakeem_legal_system_id")
+  changeType           String   @map("change_type")
+  severity             String   @default("MEDIUM") // LOW|MEDIUM|HIGH|CRITICAL
+  oldValue             String?  @map("old_value") @db.Text
+  newValue             String?  @map("new_value") @db.Text
+  diffJson             Json?    @map("diff_json")
+  diffHtml             String?  @map("diff_html") @db.Text
+  evidenceSnapshotId   String?  @map("evidence_snapshot_id")
+  detectedAt           DateTime @default(now()) @map("detected_at")
+  reviewStatus         String   @default("PENDING") @map("review_status") // PENDING|IN_REVIEW|APPROVED|REJECTED|DEFERRED|ESCALATED
+  reviewedBy           String?  @map("reviewed_by")
+  reviewedAt           DateTime? @map("reviewed_at")
+  reviewDecision       String?  @map("review_decision")
+  reviewNotes          String?  @map("review_notes") @db.Text
+  appliedAt            DateTime? @map("applied_at")
+  appliedBatchId       String?  @map("applied_batch_id")
+  rolledBackAt         DateTime? @map("rolled_back_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  reviews LegalUpdateReview[]
+
+  @@index([documentId, changeType])
+  @@index([reviewStatus, detectedAt])
+  @@index([severity])
+  @@map("legal_change_detections")
+}
+
+model SourceConflict {
+  id           String   @id @default(cuid())
+  documentId   String   @map("document_id")
+  document     MonitoredLegalDocument @relation(fields: [documentId], references: [id])
+  fieldName    String   @map("field_name")
+  boeValue     String?  @map("boe_value") @db.Text
+  ncarValue    String?  @map("ncar_value") @db.Text
+  uqnValue     String?  @map("uqn_value") @db.Text
+  conflictType String   @map("conflict_type")
+  severity     String   @default("MEDIUM")
+  status       String   @default("OPEN") // OPEN|RESOLVED|DEFERRED
+  resolution   String?  @db.Text
+  resolvedBy   String?  @map("resolved_by")
+  resolvedAt   DateTime? @map("resolved_at")
+  evidence     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([documentId, status])
+  @@map("source_conflicts")
+}
+
+model LegalUpdateReview {
+  id                 String   @id @default(cuid())
+  changeDetectionId  String   @map("change_detection_id")
+  changeDetection    LegalChangeDetection @relation(fields: [changeDetectionId], references: [id])
+  decision           String // APPROVE|REJECT|REQUEST_RECHECK|DEFER|MERGE_WITH_EXISTING|MARK_AS_FALSE_POSITIVE|ESCALATE_LEGAL_REVIEW
+  reviewerId         String?  @map("reviewer_id")
+  reviewerRole       String?  @map("reviewer_role")
+  reason             String?  @db.Text
+  approvedPayload    Json?    @map("approved_payload")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([changeDetectionId])
+  @@map("legal_update_reviews")
+}
+
+model RasdDocumentType {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nameAr      String   @map("name_ar")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("rasd_document_types")
+}
+
+model RasdRunLock {
+  id         String   @id @default(cuid())
+  lockKey    String   @unique @map("lock_key")
+  runId      String?  @map("run_id")
+  holder     String?
+  acquiredAt DateTime @default(now()) @map("acquired_at")
+  expiresAt  DateTime @map("expires_at")
+
+  @@map("rasd_run_locks")
 }

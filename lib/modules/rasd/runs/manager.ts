@@ -82,6 +82,10 @@ function rasdDelegates(): RasdPrismaDelegates {
 
 const memoryRuns = new Map<string, RasdMonitoringRun>();
 
+function dbDisabled(): boolean {
+  return process.env.RASD_MEMORY_ONLY === "true" || process.env.RASD_MEMORY_ONLY === "1" || !process.env.DATABASE_URL;
+}
+
 function cuid(prefix = "rasd"): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -135,6 +139,11 @@ async function sourceIdForCode(sourceCode?: RasdSourceCode): Promise<string | un
 }
 
 export async function createRun(input: CreateRunInput): Promise<RasdMonitoringRun> {
+  if (dbDisabled()) {
+    const run = baseMemoryRun(input);
+    memoryRuns.set(run.id, run);
+    return run;
+  }
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");
@@ -166,6 +175,7 @@ function updateMemoryRun(id: string, patch: Partial<RasdMonitoringRun>): RasdMon
 }
 
 export async function startRun(id: string): Promise<RasdMonitoringRun | null> {
+  if (dbDisabled()) return updateMemoryRun(id, { status: "RUNNING", startedAt: now() });
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");
@@ -184,6 +194,7 @@ export async function finishRun(
   id: string,
   status: Exclude<RasdRunStatus, "PENDING" | "RUNNING" | "FAILED"> = "COMPLETED"
 ): Promise<RasdMonitoringRun | null> {
+  if (dbDisabled()) return updateMemoryRun(id, { status, finishedAt: now() });
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");
@@ -199,6 +210,7 @@ export async function finishRun(
 }
 
 export async function failRun(id: string, error: string): Promise<RasdMonitoringRun | null> {
+  if (dbDisabled()) return updateMemoryRun(id, { status: "FAILED", finishedAt: now(), errorSummary: error.slice(0, 4000) });
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");
@@ -214,6 +226,7 @@ export async function failRun(id: string, error: string): Promise<RasdMonitoring
 }
 
 export async function updateRunCounts(id: string, counts: RunCounts): Promise<RasdMonitoringRun | null> {
+  if (dbDisabled()) return updateMemoryRun(id, counts);
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");
@@ -224,6 +237,7 @@ export async function updateRunCounts(id: string, counts: RunCounts): Promise<Ra
 }
 
 export async function getRun(id: string): Promise<RasdMonitoringRun | null> {
+  if (dbDisabled()) return memoryRuns.get(id) ?? null;
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");
@@ -235,6 +249,12 @@ export async function getRun(id: string): Promise<RasdMonitoringRun | null> {
 
 export async function listRuns(options: { status?: RasdRunStatus; limit?: number } = {}): Promise<RasdMonitoringRun[]> {
   const limit = options.limit ?? 50;
+  if (dbDisabled()) {
+    return [...memoryRuns.values()]
+      .filter((run) => (options.status ? run.status === options.status : true))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
   try {
     const delegate = rasdDelegates().monitoringRun;
     if (!delegate) throw new Error("monitoringRun delegate is unavailable");

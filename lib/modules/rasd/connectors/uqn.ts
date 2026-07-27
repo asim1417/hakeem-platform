@@ -1,6 +1,6 @@
 import { readdir, readFile } from "fs/promises";
 import path from "path";
-import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE } from "../flags";
+import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE, envBool } from "../flags";
 import type { ConnectorDiscoverOptions, ConnectorDiscoverResult, ConnectorFetchOptions, DiscoveredDocument, FetchResult } from "../types";
 import type { RasdConnector } from "./base";
 import { rasdFetch } from "./http";
@@ -8,8 +8,8 @@ import { RateLimiter } from "./rate-limit";
 import { withRetry } from "./retry";
 
 const UQN_BASE = "https://www.uqn.gov.sa";
-const DEFAULT_SITEMAP = `${UQN_BASE}/sitemap.xml`;
-const DEFAULT_INDEX = `${UQN_BASE}/articles`;
+const DEFAULT_SITEMAP = `${UQN_BASE}/sitemap_0.xml`;
+const DEFAULT_INDEX = `${UQN_BASE}/Decisions`;
 const FIXTURE_DIR = path.join(process.cwd(), "data/rasd/fixtures/uqn");
 
 function stripTags(html: string): string {
@@ -60,15 +60,51 @@ function parseIndexHtml(html: string, limit: number): DiscoveredDocument[] {
 async function discoverFixtures(limit: number): Promise<ConnectorDiscoverResult> {
   try {
     const entries = await readdir(FIXTURE_DIR);
-    const documents = entries
-      .filter((entry) => /\.(html?|xml|txt)$/i.test(entry))
-      .slice(0, limit)
-      .map((entry): DiscoveredDocument => ({
+    const preferred = entries.filter((entry) => /^decision-.*\.html?$/i.test(entry));
+    const indexFiles = entries.filter((entry) => /decisions-index|sitemap-sample/i.test(entry));
+    const documents: DiscoveredDocument[] = [];
+
+    for (const entry of preferred) {
+      documents.push({
         sourceCode: "UQN",
         url: `file://${path.join(FIXTURE_DIR, entry)}`,
         title: entry.replace(/\.[^.]+$/, ""),
-        sourceDocumentId: entry
-      }));
+        sourceDocumentId: entry.replace(/\.[^.]+$/, "")
+      });
+      if (documents.length >= limit) break;
+    }
+
+    if (documents.length < limit) {
+      for (const entry of indexFiles) {
+        const body = await readFile(path.join(FIXTURE_DIR, entry), "utf8");
+        const parsed = entry.endsWith(".xml") ? parseSitemap(body, limit - documents.length) : parseIndexHtml(body, limit - documents.length);
+        for (const doc of parsed) {
+          // Map remote UQN URLs back to local decision fixtures when available.
+          if (doc.sourceDocumentId && preferred.includes(`decision-${doc.sourceDocumentId}.html`)) {
+            documents.push({
+              ...doc,
+              url: `file://${path.join(FIXTURE_DIR, `decision-${doc.sourceDocumentId}.html`)}`
+            });
+          } else {
+            documents.push(doc);
+          }
+          if (documents.length >= limit) break;
+        }
+        if (documents.length >= limit) break;
+      }
+    }
+
+    if (documents.length === 0) {
+      for (const entry of entries.filter((e) => /\.html?$/i.test(e)).slice(0, limit)) {
+        documents.push({
+          sourceCode: "UQN",
+          url: `file://${path.join(FIXTURE_DIR, entry)}`,
+          title: entry.replace(/\.[^.]+$/, ""),
+          sourceDocumentId: entry
+        });
+      }
+    }
+
     return { sourceCode: "UQN", ok: true, documents, pagesVisited: 1, metadata: { fixtureDir: FIXTURE_DIR } };
   } catch (error) {
     return {
@@ -93,7 +129,7 @@ export class UqnConnector implements RasdConnector {
       return { sourceCode: this.code, ok: true, documents, pagesVisited: 1, metadata: { fixturePath: opts.fixturePath } };
     }
 
-    if (RASD_FIXTURES_ONLY) return discoverFixtures(limit);
+    if (envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY)) return discoverFixtures(limit);
 
     await this.limiter.removeToken();
     const sitemap = await withRetry(() => rasdFetch(opts.sitemapUrl ?? DEFAULT_SITEMAP, { timeoutMs: 15_000 }), {

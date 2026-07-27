@@ -25,3 +25,19 @@ export * from "./snapshot/store";
 export * from "./runs/lock";
 export * from "./runs/manager";
 export * from "./db/seed-sources";
+
+export * from "./scan/orchestrator";
+export * from "./scan/baseline";
+export * from "./scan/weekly";
+
+export * from "./review/workflow";
+export * from "./review/apply";
+export * from "./review/rollback";
+
+export * from "./reports/gaps";
+export * from "./reports/coverage";
+export * from "./reports/conflicts";
+
+export * from "./notify/digest";
+export * from "./scheduler/weekly";
+export * from "./health";

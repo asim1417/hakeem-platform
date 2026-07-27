@@ -1,13 +1,13 @@
 import { readdir } from "fs/promises";
 import path from "path";
-import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE } from "../flags";
+import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE, envBool } from "../flags";
 import type { ConnectorDiscoverOptions, ConnectorDiscoverResult, ConnectorFetchOptions, DiscoveredDocument, FetchResult } from "../types";
 import type { RasdConnector } from "./base";
 import { rasdFetch } from "./http";
 import { RateLimiter } from "./rate-limit";
 
-const NCAR_BASE = "https://istitlaa.ncc.gov.sa";
-const DEFAULT_INDEX = `${NCAR_BASE}/ar/Legislation`;
+const NCAR_BASE = "https://ncar.gov.sa";
+const DEFAULT_INDEX = `${NCAR_BASE}/`;
 const FIXTURE_DIR = path.join(process.cwd(), "data/rasd/fixtures/ncar");
 
 function stripTags(value: string): string {
@@ -72,7 +72,7 @@ export class NcarConnector implements RasdConnector {
 
   async discover(opts: ConnectorDiscoverOptions = {}): Promise<ConnectorDiscoverResult> {
     const limit = opts.limit ?? 100;
-    if (RASD_FIXTURES_ONLY || opts.fixturePath) {
+    if (envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY) || opts.fixturePath) {
       if (!opts.fixturePath) return discoverFixtures(limit);
       const fixture = await rasdFetch(`file://${opts.fixturePath}`);
       return {

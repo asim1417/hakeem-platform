@@ -48,14 +48,14 @@ export const DEFAULT_SOURCES: DefaultMonitoringSource[] = [
   },
   {
     code: "NCAR",
-    nameAr: "المركز الوطني للتنافسية",
-    baseDomain: "istitlaa.ncc.gov.sa",
+    nameAr: "المركز الوطني للوثائق والمحفوظات",
+    baseDomain: "ncar.gov.sa",
     sourceRole: "ARCHIVAL",
     trustPriority: 3,
     supportsApi: false,
     supportsRss: false,
     supportsSitemap: false,
-    crawlPolicy: "Auxiliary regulatory source; never auto-resolve conflicts against BOE/UQN.",
+    crawlPolicy: "Archival metadata, related documents, and Umm Al-Qura issue linkage. Never auto-resolve conflicts against BOE/UQN.",
     rateLimitPerMinute: 15
   }
 ];

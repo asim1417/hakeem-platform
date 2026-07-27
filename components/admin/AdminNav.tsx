@@ -8,6 +8,7 @@ const SUPER_LINKS = [
   { href: "/admin/billing", label: "الفوترة" },
   { href: "/admin/jobs", label: "المهام" },
   { href: "/admin/reports", label: "البلاغات" },
+  { href: "/admin/rasd", label: "رصد" },
   { href: "/admin/services", label: "الخدمات" },
   { href: "/admin/audit", label: "التدقيق" },
   { href: "/admin/roles", label: "الأدوار" },
@@ -26,6 +27,7 @@ const SYSTEM_LINKS = [
   { href: "/admin/owner", label: "المدراء" },
   { href: "/admin/api-keys", label: "مفاتيح API" },
   { href: "/dashboard/legal-core/admin", label: "المحتوى القانوني" },
+  { href: "/admin/rasd", label: "رصد" },
 ] as const;
 
 export type AdminNavVariant = "super" | "system";
