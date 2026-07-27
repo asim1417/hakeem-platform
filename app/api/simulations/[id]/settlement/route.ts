@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
-import { buildSettlementDraft } from "@/lib/modules/simulations/hakeem-judge";
+import { buildSettlementDraft, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { facilitateSettlement } from "@/lib/modules/simulations/courtroom-skills";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,20 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (gate.response) return gate.response;
   const payload = schema.parse(await request.json());
   const user = gate.user!;
-  const session = await findOwnedSimulation(user, params.id);
+  const session = await findOwnedSimulation(user, params.id, { messages: { orderBy: { createdAt: "asc" } } });
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
+
+  // مهارة تيسير الصلح المؤصَّلة (اسأل حكيم)؛ سقوطٌ آمنٌ للقالب عند أيّ فشل.
+  let content = buildSettlementDraft(payload);
+  try {
+    const skill = await facilitateSettlement(extractClaim(session.messages), session.messages, payload);
+    if (skill) content = skill.content;
+  } catch {
+    content = buildSettlementDraft(payload);
+  }
+
   const decision = await prisma.simulationDecision.create({
-    data: { simulationId: params.id, stage: "SETTLEMENT", decisionType: "مسودة صلح تدريبية", content: buildSettlementDraft(payload) }
+    data: { simulationId: params.id, stage: "SETTLEMENT", decisionType: "مسودة صلح تدريبية", content }
   });
   await prisma.simulation.update({ where: { id: params.id }, data: { stage: "SETTLEMENT" } });
   await auditEvent({
