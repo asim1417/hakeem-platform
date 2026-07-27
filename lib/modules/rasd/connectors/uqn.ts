@@ -1,4 +1,4 @@
-import { readdir, readFile } from "fs/promises";
+import { readdir } from "fs/promises";
 import path from "path";
 import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE, envBool } from "../flags";
 import type { ConnectorDiscoverOptions, ConnectorDiscoverResult, ConnectorFetchOptions, DiscoveredDocument, FetchResult } from "../types";
@@ -97,9 +97,16 @@ export class UqnConnector implements RasdConnector {
     const fixturesOnly = Boolean(opts.fixturesOnly) || envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY);
 
     if (opts.fixturePath && !fixturesOnly) {
-      const body = await readFile(opts.fixturePath, "utf8");
-      const documents = opts.fixturePath.endsWith(".xml") ? parseSitemap(body, limit) : parseIndexHtml(body, limit);
-      return { sourceCode: this.code, ok: true, documents, pagesVisited: 1, metadata: { fixturePath: opts.fixturePath } };
+      const fixture = await rasdFetch(`file://${opts.fixturePath}`, { allowFixtureFileUrl: true });
+      const documents = fixture.ok ? (opts.fixturePath.endsWith(".xml") ? parseSitemap(fixture.bodyText, limit) : parseIndexHtml(fixture.bodyText, limit)) : [];
+      return {
+        sourceCode: this.code,
+        ok: fixture.ok,
+        documents,
+        pagesVisited: fixture.ok ? 1 : 0,
+        error: fixture.error,
+        metadata: { fixturePath: opts.fixturePath }
+      };
     }
 
     if (fixturesOnly || opts.fixturePath) return discoverFixtures(limit);
@@ -131,7 +138,13 @@ export class UqnConnector implements RasdConnector {
 
   async fetchDocument(url: string, opts: ConnectorFetchOptions = {}): Promise<FetchResult> {
     await this.limiter.removeToken();
-    return rasdFetch(url, { timeoutMs: opts.timeoutMs, fixturePath: opts.fixturePath, headers: opts.headers, includeBuffer: true });
+    return rasdFetch(url, {
+      timeoutMs: opts.timeoutMs,
+      fixturePath: opts.fixturePath,
+      headers: opts.headers,
+      includeBuffer: true,
+      allowFixtureFileUrl: Boolean(opts.fixturePath || url.startsWith("file://"))
+    });
   }
 
   async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string }> {

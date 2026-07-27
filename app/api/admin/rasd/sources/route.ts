@@ -6,13 +6,13 @@ import { listRasdSources } from "@/lib/modules/rasd/admin-data";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const gate = await requireApiPermission("ADMIN_REPORTS_VIEW", request);
+  const gate = await requireApiPermission("RASD_VIEW", request);
   if (gate.response) return gate.response;
   return NextResponse.json({ sources: await listRasdSources() });
 }
 
 export async function PATCH(request: NextRequest) {
-  const gate = await requireApiPermission("LEGAL_CORE_ADMIN", request);
+  const gate = await requireApiPermission("RASD_ADMIN", request);
   if (gate.response) return gate.response;
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const code = typeof body.code === "string" ? body.code : "";

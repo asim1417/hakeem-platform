@@ -75,7 +75,7 @@ export class NcarConnector implements RasdConnector {
     const fixturesOnly = Boolean(opts.fixturesOnly) || envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY);
     if (fixturesOnly || opts.fixturePath) {
       if (opts.fixturePath && !fixturesOnly) {
-        const fixture = await rasdFetch(`file://${opts.fixturePath}`);
+        const fixture = await rasdFetch(`file://${opts.fixturePath}`, { allowFixtureFileUrl: true });
         return {
           sourceCode: this.code,
           ok: fixture.ok,
@@ -105,7 +105,13 @@ export class NcarConnector implements RasdConnector {
 
   async fetchDocument(url: string, opts: ConnectorFetchOptions = {}): Promise<FetchResult> {
     await this.limiter.removeToken();
-    return rasdFetch(url, { timeoutMs: opts.timeoutMs, fixturePath: opts.fixturePath, headers: opts.headers, includeBuffer: true });
+    return rasdFetch(url, {
+      timeoutMs: opts.timeoutMs,
+      fixturePath: opts.fixturePath,
+      headers: opts.headers,
+      includeBuffer: true,
+      allowFixtureFileUrl: Boolean(opts.fixturePath || url.startsWith("file://"))
+    });
   }
 
   async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string }> {

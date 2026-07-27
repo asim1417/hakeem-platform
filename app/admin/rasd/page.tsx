@@ -15,7 +15,7 @@ const links = [
 ];
 
 export default async function RasdAdminPage() {
-  await requirePagePermission("ADMIN_REPORTS_VIEW");
+  await requirePagePermission("RASD_VIEW");
   const overview = await getRasdOverview();
 
   return (

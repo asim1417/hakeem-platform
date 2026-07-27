@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { listRasdRuns } from "@/lib/modules/rasd/admin-data";
+import { RASD_FULL_RESCAN_ALLOWED, envBool } from "@/lib/modules/rasd/flags";
 import { runScan } from "@/lib/modules/rasd/scan/orchestrator";
 import type { RasdRunType, RasdSourceCode } from "@/lib/modules/rasd/types";
 
@@ -15,16 +16,19 @@ function asSources(value: unknown): RasdSourceCode[] | undefined {
 }
 
 export async function GET(request: NextRequest) {
-  const gate = await requireApiPermission("ADMIN_REPORTS_VIEW", request);
+  const gate = await requireApiPermission("RASD_VIEW", request);
   if (gate.response) return gate.response;
   return NextResponse.json({ runs: await listRasdRuns() });
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireApiPermission("LEGAL_CORE_ADMIN", request);
+  const gate = await requireApiPermission("RASD_ADMIN", request);
   if (gate.response) return gate.response;
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const runType = typeof body.runType === "string" && runTypes.has(body.runType) ? (body.runType as RasdRunType) : "MANUAL";
+  if (runType === "FULL_RESCAN" && !envBool("RASD_FULL_RESCAN_ALLOWED", RASD_FULL_RESCAN_ALLOWED)) {
+    return NextResponse.json({ message: "FULL_RESCAN غير مفعّل. اضبط RASD_FULL_RESCAN_ALLOWED=true." }, { status: 403 });
+  }
   const result = await runScan({
     runType,
     dryRun: body.dryRun !== false,

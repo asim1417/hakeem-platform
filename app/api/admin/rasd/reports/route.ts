@@ -7,7 +7,7 @@ import { buildGapReport } from "@/lib/modules/rasd/reports/gaps";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const gate = await requireApiPermission("ADMIN_REPORTS_VIEW", request);
+  const gate = await requireApiPermission("RASD_VIEW", request);
   if (gate.response) return gate.response;
   const type = request.nextUrl.searchParams.get("type") ?? "coverage";
   if (type === "gaps") return NextResponse.json({ report: await buildGapReport({ write: true }) });

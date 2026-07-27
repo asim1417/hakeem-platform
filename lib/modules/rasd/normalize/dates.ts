@@ -2,7 +2,7 @@ import type { HijriGregorianDate, InstrumentMetadata } from "../types";
 import { normalizeForCompare } from "./arabic";
 import { easternToWesternDigits } from "./numbers";
 
-const HIJRI_DATE = /([0-9٠-٩۰-۹]{1,2})\s*[\/\-]\s*([0-9٠-٩۰-۹]{1,2})\s*[\/\-]\s*([0-9٠-٩۰-۹]{3,4})\s*هـ?/u;
+const HIJRI_DATE = /([0-9٠-٩۰-۹]{1,4})\s*[\/\-]\s*([0-9٠-٩۰-۹]{1,2})\s*[\/\-]\s*([0-9٠-٩۰-۹]{1,4})\s*هـ?/u;
 const GREGORIAN_DATE = /([0-9٠-٩۰-۹]{1,2})\s*[\/\-]\s*([0-9٠-٩۰-۹]{1,2})\s*[\/\-]\s*([0-9٠-٩۰-۹]{4})\s*م?/u;
 const ISO_DATE = /([12][0-9]{3})-([01][0-9])-([0-3][0-9])/u;
 
@@ -32,6 +32,14 @@ function pad2(value: string): string {
 
 function normalizeDateParts(day: string, month: string, year: string): string {
   return `${pad2(easternToWesternDigits(day))}/${pad2(easternToWesternDigits(month))}/${easternToWesternDigits(year)}`;
+}
+
+function normalizeFlexibleDateParts(first: string, second: string, third: string): string {
+  const a = easternToWesternDigits(first);
+  const b = easternToWesternDigits(second);
+  const c = easternToWesternDigits(third);
+  if (a.length === 4 && c.length <= 2) return normalizeDateParts(c, b, a);
+  return normalizeDateParts(a, b, c);
 }
 
 function dateFromDmy(day: string, month: string, year: string): Date | undefined {
@@ -71,7 +79,7 @@ export function parseHijriGregorianDate(text: string): HijriGregorianDate | unde
 
   return {
     raw: [hijri?.[0], gregorian?.[0]].filter(Boolean).join(" / "),
-    hijri: hijri ? normalizeDateParts(hijri[1] ?? "", hijri[2] ?? "", hijri[3] ?? "") : undefined,
+    hijri: hijri ? normalizeFlexibleDateParts(hijri[1] ?? "", hijri[2] ?? "", hijri[3] ?? "") : undefined,
     gregorian: gregorian ? normalizeDateParts(gregorian[1] ?? "", gregorian[2] ?? "", gregorian[3] ?? "") : undefined,
     date: gregorian ? dateFromDmy(gregorian[1] ?? "", gregorian[2] ?? "", gregorian[3] ?? "") : undefined
   };
@@ -80,6 +88,7 @@ export function parseHijriGregorianDate(text: string): HijriGregorianDate | unde
 export function normalizeInstrumentNumber(value: string): string {
   const normalized = easternToWesternDigits(value)
     .replace(/رقم/gu, "")
+    .replace(/[()（）]/g, "")
     .replace(/\s+/g, "")
     .replace(/[\\-]+/g, "/")
     .replace(/م(?=[0-9])/u, "م/")
@@ -92,7 +101,7 @@ export function normalizeInstrumentNumber(value: string): string {
 export function extractInstrument(text: string): InstrumentMetadata | undefined {
   const normalized = easternToWesternDigits(text);
   const instrumentPattern =
-    /(مرسوم\s+ملكي|أمر\s+ملكي|قرار\s+مجلس\s+الوزراء|قرار\s+وزاري|قرار)\s*(?:رقم)?\s*([أ-يA-Za-z]?\s*\/?\s*[0-9]+(?:\s*\/\s*[0-9]+)?)?(?:\s*(?:و)?\s*تاريخ\s*([^،.\n]+))?/u;
+    /(مرسوم\s+ملكي|أمر\s+ملكي|امر\s+ملكي|قرار\s+مجلس\s+الوزراء|قرار\s+وزاري|قرار)\s*(?:رقم)?\s*(?:\(\s*)?([أ-يA-Za-z]?\s*\/?\s*[0-9]+(?:\s*\/\s*[0-9]+)?)(?:\s*\))?(?:\s*(?:و)?\s*تاريخ\s*([0-9]{1,4}\s*[\/\-]\s*[0-9]{1,2}\s*[\/\-]\s*[0-9]{1,4}\s*هـ?))?/u;
   const match = normalized.match(instrumentPattern);
   if (!match) return undefined;
 

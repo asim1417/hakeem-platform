@@ -8,6 +8,7 @@ import { buildDiffResult } from "@/lib/modules/rasd/diff/engine";
 import { detectSourceConflicts } from "@/lib/modules/rasd/conflict/engine";
 import { scoreMatch } from "@/lib/modules/rasd/match/engine";
 import { contentFingerprint, fingerprintObject } from "@/lib/modules/rasd/hash";
+import { validateRasdUrlSyntax } from "@/lib/modules/rasd/connectors/url-guard";
 
 let passed = 0;
 let failed = 0;
@@ -49,6 +50,38 @@ async function main(): Promise<void> {
   await test("instrument parse through structure parser", async () => {
     const parsed = parseDocumentStructure(await fixture("boe/law-sample.html"), "BOE");
     assert(Boolean(parsed.metadata.instrumentNumber || parsed.metadata.normalizedInstrumentNumber), "instrument number should be extracted");
+  });
+
+  await test("UQN instrument extraction variants", async () => {
+    const cases = [
+      { file: "royal-decree.html", type: "مرسوم ملكي", number: "م/12", issue: "5123" },
+      { file: "cabinet-decision.html", type: "قرار مجلس الوزراء", number: "77", issue: "5128" },
+      { file: "ministerial.html", type: "قرار وزاري", number: "144", issue: "5130" },
+      { file: "regulation.html", type: "قرار وزاري", number: "22", issue: "5135" },
+      { file: "amendment.html", type: "قرار مجلس الوزراء", number: "310", issue: "5140" }
+    ];
+    for (const item of cases) {
+      const parsed = parseDocumentStructure(await fixture(`uqn/instruments/${item.file}`), "UQN");
+      assert(parsed.metadata.instrumentType === item.type, `${item.file} should extract ${item.type}`);
+      assert(parsed.metadata.normalizedInstrumentNumber === item.number, `${item.file} should extract instrument ${item.number}`);
+      assert(parsed.metadata.instrumentDateHijri?.endsWith("/1448"), `${item.file} should normalize Hijri date`);
+      assert(parsed.metadata.uqnIssue === item.issue, `${item.file} should keep UQN issue separate`);
+      assert(parsed.metadata.normalizedInstrumentNumber !== item.issue, `${item.file} issue must not become instrument number`);
+    }
+  });
+
+  await test("UQN issue without instrument stays separate", async () => {
+    const parsed = parseDocumentStructure(await fixture("uqn/instruments/no-instrument.html"), "UQN");
+    assert(parsed.metadata.uqnIssue === "5145", "UQN issue should be extracted");
+    assert(!parsed.metadata.instrumentNumber, "issue-only page must not invent an instrument number");
+  });
+
+  await test("Rasd URL syntax guard", () => {
+    assert(validateRasdUrlSyntax("https://www.uqn.gov.sa/decisions-and-regulations/example").ok, "official UQN HTTPS URL should pass");
+    assert(!validateRasdUrlSyntax("http://www.uqn.gov.sa/").ok, "HTTP should fail");
+    assert(!validateRasdUrlSyntax("https://127.0.0.1/").ok, "IP literals should fail");
+    assert(!validateRasdUrlSyntax("https://evil.example/").ok, "non-allowlisted host should fail");
+    assert(!validateRasdUrlSyntax("file:///tmp/fixture.html").ok, "file URLs should fail syntax guard");
   });
 
   await test("fingerprints", () => {

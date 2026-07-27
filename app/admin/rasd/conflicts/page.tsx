@@ -5,7 +5,7 @@ import { buildConflictReport } from "@/lib/modules/rasd/reports/conflicts";
 export const dynamic = "force-dynamic";
 
 export default async function RasdConflictsPage() {
-  await requirePagePermission("ADMIN_REPORTS_VIEW");
+  await requirePagePermission("RASD_VIEW");
   const report = await buildConflictReport();
 
   return (

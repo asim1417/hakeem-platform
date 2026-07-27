@@ -15,7 +15,7 @@ const decisions = new Set([
 ]);
 
 export async function POST(request: NextRequest) {
-  const gate = await requireApiPermission("LEGAL_CORE_ADMIN", request);
+  const gate = await requireApiPermission("RASD_REVIEW", request);
   if (gate.response) return gate.response;
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const changeId = typeof body.changeId === "string" ? body.changeId : "";

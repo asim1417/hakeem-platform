@@ -823,6 +823,6 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
     };
     return { ...partial, urgentFlags: urgentFlags(partial) };
   } finally {
-    await releaseRunLock(lockKey);
+    await releaseRunLock(lockKey, run.id);
   }
 }

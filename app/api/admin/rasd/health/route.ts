@@ -5,7 +5,7 @@ import { healthCheckAllSources } from "@/lib/modules/rasd/health";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const gate = await requireApiPermission("ADMIN_REPORTS_VIEW", request);
+  const gate = await requireApiPermission("RASD_VIEW", request);
   if (gate.response) return gate.response;
   return NextResponse.json({ sources: await healthCheckAllSources() });
 }

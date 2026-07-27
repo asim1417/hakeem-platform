@@ -5,7 +5,7 @@ import { buildCoverageReport } from "@/lib/modules/rasd/reports/coverage";
 export const dynamic = "force-dynamic";
 
 export default async function RasdComparisonsPage() {
-  await requirePagePermission("ADMIN_REPORTS_VIEW");
+  await requirePagePermission("RASD_VIEW");
   const report = await buildCoverageReport();
 
   return (

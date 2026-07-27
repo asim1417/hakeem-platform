@@ -1,6 +1,7 @@
 import type { NormalizedMetadata, RasdDocumentStatus } from "../types";
 import { normalizeForCompare } from "../normalize/arabic";
 import { extractInstrument, parseHijriGregorianDate } from "../normalize/dates";
+import { easternToWesternDigits } from "../normalize/numbers";
 
 function decodeEntities(value: string): string {
   return value
@@ -16,11 +17,20 @@ function stripTags(html: string): string {
   return decodeEntities(html.replace(/<script[\s\S]*?<\/script>/giu, " ").replace(/<style[\s\S]*?<\/style>/giu, " ").replace(/<[^>]+>/g, " "));
 }
 
-function findTitle(html: string): string | undefined {
+function findTitleCandidates(html: string): string[] {
   const og = html.match(/<meta\s+(?:property|name)=["']og:title["']\s+content=["']([^"']+)["']/iu)?.[1];
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/iu)?.[1];
   const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/iu)?.[1];
-  return [og, h1, title].map((value) => (value ? stripTags(value).replace(/\s+/g, " ").trim() : undefined)).find(Boolean);
+  const seen = new Set<string>();
+  return [og, h1, title]
+    .map((value) => (value ? stripTags(value).replace(/\s+/g, " ").trim() : undefined))
+    .filter((value): value is string => Boolean(value))
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 function parseJsonLd(html: string): Record<string, unknown> | undefined {
@@ -56,13 +66,36 @@ function detectStatus(text: string): RasdDocumentStatus | undefined {
   return undefined;
 }
 
+export function extractUqnPublicationFields(text: string): {
+  uqnIssue?: string;
+  publicationDateRaw?: string;
+} {
+  const issueMatch =
+    text.match(/(?:أم\s+القرى|ام\s+القرى)?[^.\n،]{0,40}العدد\s*(?:رقم)?\s*\(?\s*([0-9٠-٩۰-۹]{3,6})\s*\)?/u) ??
+    text.match(/العدد\s*(?:رقم)?\s*\(?\s*([0-9٠-٩۰-۹]{3,6})\s*\)?/u);
+  const dateMatch = text.match(/(?:تاريخ\s+النشر|نشر\s+في|الصادر\s+في|بتاريخ)\s*[:：]?\s*([^.\n،]{6,40})/u);
+  return {
+    uqnIssue: issueMatch?.[1] ? easternToWesternDigits(issueMatch[1]) : undefined,
+    publicationDateRaw: dateMatch?.[1]?.trim()
+  };
+}
+
 export function extractMetadataFromHtml(html: string): NormalizedMetadata {
   const text = stripTags(html);
   const jsonLd = parseJsonLd(html);
-  const title = findTitle(html) ?? asString(jsonLd?.headline) ?? asString(jsonLd?.name);
-  const instrument = extractInstrument(text);
+  const titleCandidates = findTitleCandidates(html);
+  const jsonLdHeadline = asString(jsonLd?.headline);
+  const jsonLdName = asString(jsonLd?.name);
+  const title = titleCandidates[0] ?? jsonLdHeadline ?? jsonLdName;
+  const instrumentCandidates = [...titleCandidates, jsonLdHeadline, jsonLdName, text].filter((value): value is string => Boolean(value));
+  const instrument = instrumentCandidates.map((candidate) => extractInstrument(candidate)).find(Boolean);
+  const uqnPublication = extractUqnPublicationFields([title, text].filter(Boolean).join("\n"));
   const datePublished = asString(jsonLd?.datePublished) ?? asString(jsonLd?.dateCreated);
-  const parsedPublicationDate = datePublished ? parseHijriGregorianDate(datePublished) : parseHijriGregorianDate(text);
+  const parsedPublicationDate = datePublished
+    ? parseHijriGregorianDate(datePublished)
+    : uqnPublication.publicationDateRaw
+      ? parseHijriGregorianDate(uqnPublication.publicationDateRaw)
+      : parseHijriGregorianDate(text);
 
   return {
     title,
@@ -76,6 +109,7 @@ export function extractMetadataFromHtml(html: string): NormalizedMetadata {
     instrumentDateGregorian: instrument?.dateGregorian,
     publicationDate: parsedPublicationDate?.raw,
     publicationDateHijri: parsedPublicationDate?.hijri,
-    publicationDateGregorian: parsedPublicationDate?.gregorian
+    publicationDateGregorian: parsedPublicationDate?.gregorian,
+    uqnIssue: uqnPublication.uqnIssue
   };
 }

@@ -10,7 +10,7 @@ function text(value: unknown): string {
 }
 
 export default async function RasdRunsPage() {
-  await requirePagePermission("ADMIN_REPORTS_VIEW");
+  await requirePagePermission("RASD_VIEW");
   const runs = await listRasdRuns();
 
   return (
