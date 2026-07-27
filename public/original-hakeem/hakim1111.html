@@ -2911,7 +2911,7 @@ img, video, table { max-width: 100%; }
 
             <div class="field" id="pmCorsProxyField" style="display:none;">
               <label class="flabel">CORS Proxy (اختياري — للاستخدام خارج Claude.ai)</label>
-              <input class="finput" id="pmCorsProxy" placeholder="https://corsproxy.io/?https://api.anthropic.com/v1/messages" style="font-family:'IBM Plex Mono';font-size:11px;"/>
+              <input class="finput" id="pmCorsProxy" placeholder="بروكسي خاصّ بك (اختياريّ) — لا يُنصح بوسيط طرفٍ ثالث" style="font-family:'IBM Plex Mono';font-size:11px;"/>
               <div style="margin-top:5px;font-size:11px;color:var(--amber);line-height:1.6;">⚠ استخدم proxy موثوقاً — مفتاحك سيمر عبره. الأفضل هو فتح الملف من داخل Claude.ai مباشرةً.</div>
             </div>
 
@@ -4302,17 +4302,16 @@ function saveProviderFromModal() {
 
 // --- Unified API call ---
 // Anthropic blocks direct browser CORS requests - always proxy in browser context
-const ANTHROPIC_CORS_PROXIES = [
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url='
-];
+// أمان: أُزيلت بروكسيّات الطرف الثالث (corsproxy.io / allorigins.win) لأنها كانت ترى
+// مفتاح المستخدم. المسار المعتمد هو البوّابة الخادميّة (مفتاح الموقع)؛ ومفتاح المستخدم —
+// إن استُعمل — لا يمرّ إلا ببروكسيٍّ خاصٍّ يحدّده المستخدم نفسه، وإلّا فاتّصالٌ مباشر بلا وسيط.
+const ANTHROPIC_CORS_PROXIES = [];
 let _proxyIndex = 0;
 
 function getAnthropicUrl(provider) {
-  // User defined their own proxy endpoint
+  // بروكسي المستخدم الخاصّ فقط (إن وُجد)، وإلّا اتّصالٌ مباشر — لا وسيطَ طرفٍ ثالث يرى المفتاح.
   if (provider.corsProxy) return provider.corsProxy;
-  // Use rotating CORS proxy
-  return ANTHROPIC_CORS_PROXIES[_proxyIndex] + encodeURIComponent('https://api.anthropic.com/v1/messages');
+  return 'https://api.anthropic.com/v1/messages';
 }
 
 async function callProviderRaw(provider, userPrompt, systemPrompt, maxTokens = 1000) {
@@ -4327,8 +4326,8 @@ async function callProviderRaw(provider, userPrompt, systemPrompt, maxTokens = 1
         ...(systemPrompt ? { system: systemPrompt } : {}),
         messages: [{ role:'user', content: userPrompt }] })
     });
-    // If first proxy fails, try next one
-    if (!resp.ok && resp.status === 0) {
+    // If first proxy fails, try next one (only when user-side proxies are configured).
+    if (!resp.ok && resp.status === 0 && ANTHROPIC_CORS_PROXIES.length) {
       _proxyIndex = (_proxyIndex + 1) % ANTHROPIC_CORS_PROXIES.length;
       const url2 = getAnthropicUrl(provider);
       return fetch(url2, {
@@ -5033,7 +5032,7 @@ function appendMessage(role, content, type = '', isTyping = false) {
   const senders = { judge:'القاضي الافتراضي', plaintiff:'المدعي', defendant:'المدعى عليه' };
 
   if (role === 'system') {
-    div.innerHTML = `<div class="msg-body"><div class="msg-bubble">${content}</div></div>`;
+    div.innerHTML = `<div class="msg-body"><div class="msg-bubble">${esc(content)}</div></div>`;
   } else {
     const senderName = role === 'plaintiff'
       ? (document.getElementById('plaintiffNameBar')?.textContent || senders.plaintiff)
@@ -5043,8 +5042,8 @@ function appendMessage(role, content, type = '', isTyping = false) {
     div.innerHTML = `
       <div class="msg-avatar">${avatars[role]||'?'}</div>
       <div class="msg-body">
-        <div class="msg-sender">${senderName}${type ? ` · <span style="color:var(--gold);font-size:10px;font-family:'IBM Plex Mono';">${type}</span>` : ''}</div>
-        <div class="msg-bubble" ${isTyping?'id="typingBubble"':''}>${content}</div>
+        <div class="msg-sender">${esc(senderName)}${type ? ` · <span style="color:var(--gold);font-size:10px;font-family:'IBM Plex Mono';">${esc(type)}</span>` : ''}</div>
+        <div class="msg-bubble" ${isTyping?'id="typingBubble"':''}>${esc(content)}</div>
         ${!isTyping ? `<div class="msg-time">${getTime()}</div>` : ''}
       </div>`;
   }

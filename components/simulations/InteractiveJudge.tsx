@@ -45,6 +45,16 @@ function isMarker(content: string) {
   return content.startsWith("HAKEEM_");
 }
 
+function extractClaimClient(messages: Msg[]): Record<string, string> | null {
+  const m = [...messages].reverse().find((x) => x.content.startsWith("HAKEEM_CLAIM::"));
+  if (!m) return null;
+  try {
+    return JSON.parse(m.content.slice("HAKEEM_CLAIM::".length));
+  } catch {
+    return null;
+  }
+}
+
 async function api(path: string, init?: RequestInit) {
   const res = await fetch(path, {
     ...init,
@@ -356,6 +366,9 @@ export function InteractiveJudge() {
       {/* شريط المراحل (منقول من القاعة الكلاسيكيّة) */}
       <StageBar current={session?.stage ?? ""} hasJudgment={Boolean(judgment)} />
 
+      {/* الديباجة الرسميّة (منقولة من القاعة الكلاسيكيّة) */}
+      <FormalPreamble claim={extractClaimClient(session?.messages ?? [])} title={session?.title ?? ""} />
+
       {/* المحضر */}
       <div className="space-y-3 rounded-[var(--r-xl)] border border-line bg-[var(--surface)] p-4">
         {visibleMessages.map((m, i) => {
@@ -511,6 +524,30 @@ function Field({ label, value, onChange, textarea }: { label: string; value: str
         <input value={value} onChange={(e) => onChange(e.target.value)} className="rounded-[var(--r-md)] border border-line bg-white p-2.5 outline-none focus:border-[var(--gold)]" />
       )}
     </label>
+  );
+}
+
+function FormalPreamble({ claim, title }: { claim: Record<string, string> | null; title: string }) {
+  if (!claim) return null;
+  const line = (label: string, name?: string, cap?: string) =>
+    name ? `${label}: ${name}${cap ? ` — بصفته ${cap}` : ""}` : null;
+  const rows = [
+    line("المدّعي", claim.plaintiffName, claim.plaintiffCapacity),
+    line("المدّعى عليه", claim.defendantName, claim.defendantCapacity),
+    claim.caseType ? `نوع الدعوى: ${claim.caseType}` : null,
+    claim.claimAmount ? `قيمة المطالبة: ${claim.claimAmount}` : null
+  ].filter(Boolean) as string[];
+  return (
+    <div className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--parchment)] p-4 text-center">
+      <div className="font-judicial text-lg font-bold text-[var(--navy)]">بسم الله الرحمن الرحيم</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--gold)]">الدائرة الافتراضيّة — منصّة حكيم للمحاكاة القضائيّة</div>
+      <div className="mt-2 text-sm text-[var(--ink)]">موضوع الدعوى: {claim.subject || title}</div>
+      {rows.length ? (
+        <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-[var(--muted)]">
+          {rows.map((r, i) => <span key={i}>{r}</span>)}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
