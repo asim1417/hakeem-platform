@@ -20,6 +20,7 @@ import { parseDocumentStructure, PARSER_VERSION } from "../parse/structure";
 import { saveSnapshotLocal } from "../snapshot/store";
 import { getConnector, listConnectors } from "../connectors";
 import type { SourceRunOutcome } from "../connectors/status";
+import { canAttemptSource, recordSourceFailure, recordSourceSuccess } from "../connectors/circuit-breaker";
 import { acquireRunLock, releaseRunLock } from "../runs/lock";
 import { createRun, failRun, finishRun, getRun, startRun, updateRunCounts, type RasdMonitoringRun } from "../runs/manager";
 import { classifySourceFailure, resolveRunStatus } from "./run-status";
@@ -744,6 +745,15 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
       };
       summaries.push(summary);
 
+      if (!fixturesOnly && !canAttemptSource(sourceCode)) {
+        summary.ok = false;
+        summary.outcome = "SKIPPED";
+        summary.skippedReason = "circuit_breaker_open";
+        summary.error = "circuit breaker OPEN — source temporarily skipped";
+        failures.push(`${sourceCode}: circuit breaker open`);
+        continue;
+      }
+
       try {
         const discover = await connector.discover({
           limit: input.limit ?? (fixturesOnly ? 25 : 100),
@@ -758,6 +768,7 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
           summary.outcome = classifySourceFailure(discover.error);
           summary.failed += 1;
           failures.push(`${sourceCode}: ${discover.error ?? "discover failed"}`);
+          if (!fixturesOnly) recordSourceFailure(sourceCode, discover.error);
           continue;
         }
 
@@ -819,12 +830,15 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
         if (summary.failed > 0 && summary.fetched > 0) {
           summary.outcome = "PARTIAL";
           summary.ok = true;
+          if (!fixturesOnly) recordSourceSuccess(sourceCode);
         } else if (summary.failed > 0 && summary.fetched === 0) {
           summary.outcome = classifySourceFailure(summary.error ?? failures.find((item) => item.startsWith(`${sourceCode}:`)));
           summary.ok = false;
+          if (!fixturesOnly) recordSourceFailure(sourceCode, summary.error);
         } else {
           summary.outcome = "SUCCEEDED";
           summary.ok = true;
+          if (!fixturesOnly) recordSourceSuccess(sourceCode);
         }
 
         if (dbAvailable) {
@@ -842,6 +856,7 @@ export async function runScan(input: RunScanInput): Promise<ScanResult> {
         summary.failed += 1;
         summary.outcome = classifySourceFailure(summary.error);
         failures.push(`${sourceCode}: ${summary.error}`);
+        if (!fixturesOnly) recordSourceFailure(sourceCode, summary.error);
       }
       await updateRunCounts(run.id, counts);
     }

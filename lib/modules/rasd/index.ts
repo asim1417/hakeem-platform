@@ -21,6 +21,7 @@ export * from "./connectors/http";
 export * from "./connectors/url-guard";
 export * from "./connectors/rate-limit";
 export * from "./connectors/retry";
+export * from "./connectors/circuit-breaker";
 
 export * from "./snapshot/store";
 export * from "./runs/lock";

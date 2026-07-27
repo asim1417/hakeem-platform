@@ -175,6 +175,8 @@
     "rasd:baseline": "tsx scripts/rasd/cli.ts baseline --dry-run --fixtures",
     "rasd:weekly": "tsx scripts/rasd/cli.ts weekly --dry-run --fixtures",
     "rasd:health": "tsx scripts/rasd/cli.ts health",
+    "rasd:worker": "tsx scripts/rasd/worker.ts",
+    "rasd:uqn:live": "tsx scripts/rasd/production-uqn-live.ts",
     "test:rasd": "tsx scripts/rasd/test-rasd-unit.ts && tsx scripts/rasd/test-rasd-acceptance.ts && tsx scripts/rasd/test-rasd-isolation.ts && tsx scripts/rasd/test-rasd-cron-auth.ts && tsx scripts/rasd/test-rasd-rbac.ts",
     "test:rasd:integration": "tsx scripts/rasd/test-rasd-integration.ts",
     "test:rasd:unit": "tsx scripts/rasd/test-rasd-unit.ts",

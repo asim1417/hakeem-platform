@@ -14,8 +14,29 @@ import { contentFingerprint } from "@/lib/modules/rasd/hash";
 import { saveSnapshotLocal } from "@/lib/modules/rasd/snapshot/store";
 import type { RasdSourceCode } from "@/lib/modules/rasd/types";
 
-const TARGET = (process.env.RASD_LIVE_TARGET || "BOE").toUpperCase() as RasdSourceCode;
-const LIMIT = Number(process.env.RASD_LIVE_LIMIT || 10);
+function parseCliTarget(): RasdSourceCode {
+  const argv = process.argv.slice(2);
+  for (let i = 0; i < argv.length; i += 1) {
+    if ((argv[i] === "--source" || argv[i] === "--target") && argv[i + 1]) {
+      return argv[i + 1].toUpperCase() as RasdSourceCode;
+    }
+  }
+  return (process.env.RASD_LIVE_TARGET || "BOE").toUpperCase() as RasdSourceCode;
+}
+
+function parseCliLimit(): number {
+  const argv = process.argv.slice(2);
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--limit" && argv[i + 1]) {
+      const n = Number(argv[i + 1]);
+      if (Number.isInteger(n) && n > 0) return n;
+    }
+  }
+  return Number(process.env.RASD_LIVE_LIMIT || 10);
+}
+
+const TARGET = parseCliTarget();
+const LIMIT = parseCliLimit();
 const HOSTS: Record<RasdSourceCode, string[]> = {
   BOE: ["laws.boe.gov.sa", "boe.gov.sa"],
   NCAR: ["ncar.gov.sa", "www.ncar.gov.sa"],

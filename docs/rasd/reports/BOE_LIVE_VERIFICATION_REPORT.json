@@ -1,10 +1,10 @@
 {
   "target": "BOE",
-  "checkedAt": "2026-07-27T19:34:13.412Z",
+  "checkedAt": "2026-07-27T20:14:50.068Z",
   "environment": {
     "runner": "local-or-cloud-agent",
     "vercelEnv": null,
-    "node": "v22.14.0"
+    "node": "v22.22.2"
   },
   "connectivity": [
     {
