@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { getRasdMemoryStaging } from "../scan/orchestrator";
 import { writeRasdReport } from "./gaps";
 
 export interface CoverageReportRow {
@@ -47,23 +46,28 @@ export async function buildCoverageReport(options: { write?: boolean } = {}): Pr
       });
     }
   } catch {
-    const grouped = new Map<string, CoverageReportRow>();
-    for (const document of getRasdMemoryStaging().documents) {
-      const row = grouped.get(document.sourceCode) ?? {
-        sourceCode: document.sourceCode,
-        documents: 0,
-        currentVersions: 0,
-        matched: 0,
-        unmatched: 0
-      };
-      row.documents += 1;
-      row.currentVersions += 1;
-      const best = document.matches[0];
-      if (best?.status === "EXACT_MATCH" || best?.status === "PROBABLE_MATCH") row.matched += 1;
-      else row.unmatched += 1;
-      grouped.set(document.sourceCode, row);
+    try {
+      const { getRasdMemoryStaging } = await import("../scan/orchestrator");
+      const grouped = new Map<string, CoverageReportRow>();
+      for (const document of getRasdMemoryStaging().documents) {
+        const row = grouped.get(document.sourceCode) ?? {
+          sourceCode: document.sourceCode,
+          documents: 0,
+          currentVersions: 0,
+          matched: 0,
+          unmatched: 0
+        };
+        row.documents += 1;
+        row.currentVersions += 1;
+        const best = document.matches[0];
+        if (best?.status === "EXACT_MATCH" || best?.status === "PROBABLE_MATCH") row.matched += 1;
+        else row.unmatched += 1;
+        grouped.set(document.sourceCode, row);
+      }
+      rows.push(...grouped.values());
+    } catch {
+      // no memory staging available
     }
-    rows.push(...grouped.values());
   }
 
   const totals = rows.reduce(

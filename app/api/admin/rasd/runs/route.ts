@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { listRasdRuns } from "@/lib/modules/rasd/admin-data";
 import { RASD_FULL_RESCAN_ALLOWED, envBool } from "@/lib/modules/rasd/flags";
-import { runScan } from "@/lib/modules/rasd/scan/orchestrator";
 import type { RasdRunType, RasdSourceCode } from "@/lib/modules/rasd/types";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const runTypes = new Set(["BASELINE", "WEEKLY", "MANUAL", "RETRY", "FULL_RESCAN"]);
 const sourceCodes = new Set(["BOE", "NCAR", "UQN"]);
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
   if (runType === "FULL_RESCAN" && !envBool("RASD_FULL_RESCAN_ALLOWED", RASD_FULL_RESCAN_ALLOWED)) {
     return NextResponse.json({ message: "FULL_RESCAN غير مفعّل. اضبط RASD_FULL_RESCAN_ALLOWED=true." }, { status: 403 });
   }
+  const { runScan } = await import("@/lib/modules/rasd/scan/orchestrator");
   const result = await runScan({
     runType,
     dryRun: body.dryRun !== false,

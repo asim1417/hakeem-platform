@@ -27,7 +27,11 @@ function safeSegment(value: string): string {
 
 export async function saveSnapshotLocal(input: SaveSnapshotLocalInput): Promise<{ path: string; contentHash: string }> {
   const contentHash = contentFingerprint(input.body);
-  const dir = path.join(process.cwd(), RASD_SNAPSHOT_DIR, safeSegment(input.runId), safeSegment(input.sourceCode));
+  const root =
+    process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+      ? path.join("/tmp", "rasd-snapshots")
+      : path.join(process.cwd(), RASD_SNAPSHOT_DIR);
+  const dir = path.join(root, safeSegment(input.runId), safeSegment(input.sourceCode));
   await mkdir(dir, { recursive: true });
 
   const urlKey = contentFingerprint(input.url).slice(0, 16);

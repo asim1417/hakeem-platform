@@ -1,7 +1,6 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
-import { getRasdMemoryStaging } from "../scan/orchestrator";
 
 export interface GapReportRow {
   documentId: string;
@@ -22,8 +21,20 @@ function csvEscape(value: string | number): string {
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-export async function writeRasdReport(name: string, report: unknown, rows: Array<Record<string, string | number | null | undefined>> = []): Promise<{ jsonPath: string; csvPath?: string }> {
-  const dir = path.join(process.cwd(), "reports/rasd");
+function rasdReportsDir(): string {
+  // On Vercel the deploy FS is read-only except /tmp — never write under process.cwd()/reports.
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join("/tmp", "rasd-reports");
+  }
+  return path.join(process.cwd(), "reports", "rasd");
+}
+
+export async function writeRasdReport(
+  name: string,
+  report: unknown,
+  rows: Array<Record<string, string | number | null | undefined>> = []
+): Promise<{ jsonPath: string; csvPath?: string }> {
+  const dir = rasdReportsDir();
   await mkdir(dir, { recursive: true });
   const jsonPath = path.join(dir, `${name}.json`);
   await writeFile(jsonPath, JSON.stringify(report, null, 2), "utf8");
@@ -33,6 +44,24 @@ export async function writeRasdReport(name: string, report: unknown, rows: Array
   const csvPath = path.join(dir, `${name}.csv`);
   await writeFile(csvPath, csv, "utf8");
   return { jsonPath, csvPath };
+}
+
+async function memoryGapFallback(): Promise<GapReportRow[]> {
+  try {
+    const { getRasdMemoryStaging } = await import("../scan/orchestrator");
+    return getRasdMemoryStaging().documents
+      .filter((doc) => doc.matches.every((match) => match.status === "NO_MATCH" || match.status === "AMBIGUOUS"))
+      .map((doc) => ({
+        documentId: doc.id,
+        title: doc.parsed.title ?? doc.discovered.title ?? doc.identityKey,
+        documentType: String(doc.parsed.metadata.documentType ?? "OTHER"),
+        matchStatus: doc.matches[0]?.status ?? "NO_MATCH",
+        sourceCount: 1,
+        reason: "memory-staging unmatched"
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export async function buildGapReport(options: { write?: boolean } = {}): Promise<GapReport> {
@@ -66,18 +95,7 @@ export async function buildGapReport(options: { write?: boolean } = {}): Promise
       });
     }
   } catch {
-    for (const document of getRasdMemoryStaging().documents) {
-      const best = document.matches[0];
-      if (best && best.status !== "NO_MATCH" && best.status !== "AMBIGUOUS") continue;
-      rows.push({
-        documentId: document.id,
-        title: document.parsed.title ?? document.discovered.title ?? document.discovered.url,
-        documentType: String(document.parsed.metadata.documentType ?? "OTHER"),
-        matchStatus: best?.status ?? "NO_MATCH",
-        sourceCount: 1,
-        reason: "ذاكرة تشغيل fixtures/dry-run"
-      });
-    }
+    rows.push(...(await memoryGapFallback()));
   }
   const report = { generatedAt: new Date().toISOString(), rows };
   if (options.write) await writeRasdReport("gaps", report, rows.map((row) => ({ ...row })));

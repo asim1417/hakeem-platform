@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { getRasdMemoryStaging } from "../scan/orchestrator";
 import { writeRasdReport } from "./gaps";
 
 export interface ConflictReportRow {
@@ -58,19 +57,24 @@ export async function buildConflictReport(options: { write?: boolean; status?: s
       });
     }
   } catch {
-    for (const conflict of getRasdMemoryStaging().conflicts) {
-      if (options.status && conflict.status !== options.status) continue;
-      rows.push({
-        conflictId: `memory-${rows.length + 1}`,
-        documentId: conflict.documentId ?? "memory",
-        fieldName: conflict.fieldName,
-        conflictType: conflict.conflictType,
-        severity: conflict.severity,
-        status: conflict.status,
-        boeValue: conflict.valuesBySource.BOE,
-        ncarValue: conflict.valuesBySource.NCAR,
-        uqnValue: conflict.valuesBySource.UQN
-      });
+    try {
+      const { getRasdMemoryStaging } = await import("../scan/orchestrator");
+      for (const conflict of getRasdMemoryStaging().conflicts) {
+        if (options.status && conflict.status !== options.status) continue;
+        rows.push({
+          conflictId: `memory-${rows.length + 1}`,
+          documentId: conflict.documentId ?? "memory",
+          fieldName: conflict.fieldName,
+          conflictType: conflict.conflictType,
+          severity: conflict.severity,
+          status: conflict.status,
+          boeValue: conflict.valuesBySource.BOE,
+          ncarValue: conflict.valuesBySource.NCAR,
+          uqnValue: conflict.valuesBySource.UQN
+        });
+      }
+    } catch {
+      // no memory staging available
     }
   }
   const report = {
