@@ -6,6 +6,7 @@ import { getRasdOverview } from "@/lib/modules/rasd/admin-data";
 export const dynamic = "force-dynamic";
 
 const links = [
+  { href: "/admin/rasd/agents", label: "أجهزة الرصد (الجسر المحلي)" },
   { href: "/admin/rasd/runs", label: "التشغيلات" },
   { href: "/admin/rasd/gaps", label: "الفجوات" },
   { href: "/admin/rasd/comparisons", label: "المقارنات" },

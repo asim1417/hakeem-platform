@@ -43,3 +43,5 @@ export * from "./reports/conflicts";
 export * from "./notify/digest";
 export * from "./scheduler/weekly";
 export * from "./health";
+export * as rasdBridge from "./bridge";
+export * from "./connectors/transport";

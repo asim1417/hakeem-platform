@@ -1,0 +1,26 @@
+{
+  "name": "@hakeem/rasd-local-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hakeem Rasd Local Bridge — Saudi-side execution agent (no inbound ports)",
+  "bin": {
+    "hakeem-rasd-agent": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx src/cli.ts",
+    "dev": "tsx src/cli.ts",
+    "pair": "tsx src/cli.ts pair",
+    "run": "tsx src/cli.ts run",
+    "self-test": "tsx src/cli.ts self-test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "@types/node": "^20.17.9"
+  }
+}
