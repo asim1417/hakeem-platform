@@ -1,0 +1,210 @@
+{
+  "generatedAt": "2026-07-27T15:11:59.993Z",
+  "mode": "MEMORY_ONLY",
+  "limit": 10,
+  "sources": [
+    {
+      "sourceCode": "BOE",
+      "endpoint": "https://laws.boe.gov.sa/BoeLaws/Laws/LawsHome",
+      "dns": {
+        "ok": true,
+        "classification": "DNS_OK",
+        "detail": "1 record(s): IPv4",
+        "elapsedMs": 22
+      },
+      "tcp": {
+        "ok": true,
+        "classification": "TCP_OK",
+        "elapsedMs": 20
+      },
+      "tls": {
+        "ok": false,
+        "classification": "TLS_FAILED",
+        "detail": "ECONNRESET",
+        "elapsedMs": 5023
+      },
+      "http": {
+        "ok": false,
+        "classification": "HTTP_NON_2XX",
+        "detail": "fetch failed",
+        "status": 0,
+        "elapsedMs": 5027
+      },
+      "discovered": 0,
+      "documents": [],
+      "discoverError": "fetch failed"
+    },
+    {
+      "sourceCode": "NCAR",
+      "endpoint": "https://ncar.gov.sa/",
+      "dns": {
+        "ok": true,
+        "classification": "DNS_OK",
+        "detail": "1 record(s): IPv4",
+        "elapsedMs": 310
+      },
+      "tcp": {
+        "ok": true,
+        "classification": "TCP_OK",
+        "elapsedMs": 310
+      },
+      "tls": {
+        "ok": false,
+        "classification": "TLS_FAILED",
+        "detail": "ECONNRESET",
+        "elapsedMs": 5319
+      },
+      "http": {
+        "ok": false,
+        "classification": "HTTP_NON_2XX",
+        "detail": "fetch failed",
+        "status": 0,
+        "elapsedMs": 5319
+      },
+      "discovered": 0,
+      "documents": [],
+      "discoverError": "fetch failed"
+    },
+    {
+      "sourceCode": "UQN",
+      "endpoint": "https://www.uqn.gov.sa/sitemaps/2026/7/sitemap_0.xml?v=1.1",
+      "dns": {
+        "ok": true,
+        "classification": "DNS_OK",
+        "detail": "1 record(s): IPv4",
+        "elapsedMs": 1
+      },
+      "tcp": {
+        "ok": true,
+        "classification": "TCP_OK",
+        "elapsedMs": 1
+      },
+      "tls": {
+        "ok": true,
+        "classification": "TLS_OK",
+        "detail": "TLSv1.3",
+        "elapsedMs": 327
+      },
+      "http": {
+        "ok": true,
+        "classification": "HTTP_OK",
+        "detail": "text/xml; charset=utf-8",
+        "status": 200,
+        "elapsedMs": 496
+      },
+      "discovered": 10,
+      "documents": [
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001274",
+          "sourceDocumentId": "4001274",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 879
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001277",
+          "sourceDocumentId": "4001277",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 495
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001278",
+          "sourceDocumentId": "4001278",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 416
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001280",
+          "sourceDocumentId": "4001280",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 428
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001281",
+          "sourceDocumentId": "4001281",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 517
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001282",
+          "sourceDocumentId": "4001282",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 417
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001285",
+          "sourceDocumentId": "4001285",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 399
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001288",
+          "sourceDocumentId": "4001288",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 504
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001291",
+          "sourceDocumentId": "4001291",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 404
+          }
+        },
+        {
+          "url": "https://www.uqn.gov.sa/decisions-and-regulations/4001294",
+          "sourceDocumentId": "4001294",
+          "http": {
+            "ok": true,
+            "classification": "HTTP_OK",
+            "detail": "text/html; charset=UTF-8",
+            "status": 200,
+            "elapsedMs": 401
+          }
+        }
+      ]
+    }
+  ]
+}
