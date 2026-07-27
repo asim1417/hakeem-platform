@@ -4,7 +4,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { allowedSpeakerLabel, callJudge, encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
-import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { extractClaim, countEvidenceSignals } from "@/lib/modules/simulations/hakeem-judge";
 import { decideJudgeTurnAI, type AiJudgeMeta } from "@/lib/modules/simulations/ai-judge";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     claim,
     messages: session.messages,
     decisions: session.decisions,
-    attachmentsCount: 0
+    // إشارة بيّنة مشتقّة من المداخلات والسند (بدل صفرٍ ثابت) — يفعّل فرع البيّنة/القرار الإجرائيّ.
+    attachmentsCount: countEvidenceSignals(session.messages, claim)
   });
 
   // القاضي الذكيّ: يقرأ آخر إفادةٍ، يكيّفها، يقدّر البيّنة وفق نظام الإثبات، ثمّ يقرّر إجرائيًّا

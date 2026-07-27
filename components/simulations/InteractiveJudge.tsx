@@ -30,6 +30,17 @@ type Playbook = { id: string; title: string; category: string; description: stri
 // مسار المراحل المرئيّ (منقول من القاعة الكلاسيكيّة).
 const STAGE_FLOW = ["CLAIM_FILING", "PLAINTIFF_STATEMENT", "DEFENDANT_RESPONSE", "PROCEDURAL_DECISION", "CLOSE_PLEADING", "TRAINING_JUDGMENT"] as const;
 
+// تحويل كلّ مراحل المحرّك إلى أقرب خطوةٍ في الشريط (يمنع السقوط الصامت للخطوة الأولى
+// عند مراحل خارج المسار المرئيّ مثل SETTLEMENT/HEARING_RECORD).
+const STAGE_INDEX: Record<string, number> = {
+  CLAIM_FILING: 0, INITIAL_ADMISSIBILITY: 0, HEARING_RECORD: 0,
+  PLEADING: 1, PLAINTIFF_STATEMENT: 1,
+  DEFENDANT_RESPONSE: 2,
+  PROCEDURAL_DECISION: 3, SETTLEMENT: 3,
+  CLOSE_PLEADING: 4,
+  TRAINING_JUDGMENT: 5, OBJECTION: 5
+};
+
 const SPEAKER_LABEL: Record<string, string> = {
   claimant: "المدعي",
   claimant_agent: "وكيل المدعي",
@@ -291,6 +302,12 @@ export function InteractiveJudge() {
   const judgment = session?.judgments?.[session.judgments.length - 1];
   const visibleMessages = (session?.messages ?? []).filter((m) => !isMarker(m.content) && !(m.role === "النظام" && m.content.includes("تقييد الدعوى")));
 
+  // حارس الكفاية: لا يُقفل باب المرافعة قبل أن ينطق الطرفان (المدعي والمدعى عليه).
+  const partyMsgs = (session?.messages ?? []).filter((m) => ["المدعي", "وكيل المدعي", "المدعى عليه", "وكيل المدعى عليه"].includes(m.role));
+  const hasPlaintiff = partyMsgs.some((m) => m.role === "المدعي" || m.role === "وكيل المدعي");
+  const hasDefendant = partyMsgs.some((m) => m.role === "المدعى عليه" || m.role === "وكيل المدعى عليه");
+  const canClose = hasPlaintiff && hasDefendant;
+
   // ── قائمة الجلسات ──
   if (view === "list") {
     return (
@@ -431,7 +448,7 @@ export function InteractiveJudge() {
                 <button onClick={submitStatement} disabled={busy || input.trim().length < 2} className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
                   {busy ? "القاضي ينظر…" : `أرسل بصفتك ${sendAs}`}
                 </button>
-                <button onClick={closePleading} disabled={busy} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold-border)] disabled:opacity-50">
+                <button onClick={closePleading} disabled={busy || !canClose} title={canClose ? "" : "لا يُقفل باب المرافعة قبل نطق الطرفين"} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold-border)] disabled:opacity-50">
                   قفل باب المرافعة
                 </button>
               </div>
@@ -552,7 +569,7 @@ function FormalPreamble({ claim, title }: { claim: Record<string, string> | null
 }
 
 function StageBar({ current, hasJudgment }: { current: string; hasJudgment: boolean }) {
-  const activeIdx = hasJudgment ? STAGE_FLOW.length - 1 : Math.max(0, STAGE_FLOW.indexOf(current as (typeof STAGE_FLOW)[number]));
+  const activeIdx = hasJudgment ? STAGE_FLOW.length - 1 : STAGE_INDEX[current] ?? 0;
   return (
     <div className="flex items-center gap-1 overflow-x-auto rounded-[var(--r-lg)] border border-line bg-ivory p-2">
       {STAGE_FLOW.map((s, i) => {
