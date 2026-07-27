@@ -2,18 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createOriginalHakeemAiResponse, callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
-import { collectAllowedArticleNumbers, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
+import { groundForJudge, verifyJudgeGrounding, JUDICIAL_SIGNAL } from "@/lib/modules/simulations/judicial-brain";
 
 export const dynamic = "force-dynamic";
 
-// تأريض القاضي التفاعليّ الحيّ: عند نداءٍ قضائيٍّ ذي وقائع، يسترجع الخادم مواد النواة
-// الحقيقيّة (مع إبراز نظام الإثبات) ويحقنها في التوجيه، ثمّ يحرس المخرَج من أرقام المواد
-// المختلَقة — دون تعديل واجهة الـ iframe. شفّافٌ وآمن: يسقط بلا تأصيل عند فشل الاسترجاع.
-const JUDGE_EVIDENCE_HINTS =
-  "قواعد الإثبات وعبء الإثبات والبيّنة والشهادة واليمين والقرينة وحجيّة المستند والإقرار في نظام الإثبات";
-const GROUND_SIGNAL =
-  /الوقائع|الطلب|الدعوى|الدفع|المدّع|المدع|الجواب|البيّن|البين|الإثبات|إثبات|الحكم|المرافعة/;
+// تأريض القاضي التفاعليّ الحيّ عبر العقل القضائيّ المشترك (نفسه الذي يستعمله القاضي الحديث):
+// عند نداءٍ قضائيٍّ ذي وقائع، يسترجع مواد النواة الحقيقيّة (مع إبراز نظام الإثبات) ويحقنها في
+// التوجيه، ثمّ يحرس المخرَج من أرقام المواد المختلَقة — دون تعديل واجهة الـ iframe.
 
 const messageSchema = z.object({
   role: z.string().optional(),
@@ -55,13 +50,13 @@ export async function POST(request: NextRequest) {
 
     // تأريض النداءات القضائيّة ذات الوقائع فقط (يستثني نداءات الاختبار القصيرة).
     let allowedNumbers = new Set<number>();
-    const shouldGround = userPrompt.length > 120 && GROUND_SIGNAL.test(userPrompt);
+    const shouldGround = userPrompt.length > 120 && JUDICIAL_SIGNAL.test(userPrompt);
     if (shouldGround) {
       try {
-        const ctx = await buildLegalContextForAI(`${userPrompt} ${JUDGE_EVIDENCE_HINTS}`.slice(0, 900), { limit: 6 });
-        if (ctx.hasArticles) {
-          allowedNumbers = collectAllowedArticleNumbers({ numbers: ctx.articles.map((a) => a.articleNumber) });
-          systemPrompt = `${systemPrompt}\n\n${ctx.contextText}`;
+        const g = await groundForJudge(userPrompt);
+        if (g.hasArticles) {
+          allowedNumbers = g.allowedNumbers;
+          systemPrompt = `${systemPrompt}\n\n${g.contextText}`;
         }
       } catch {
         // فشل الاسترجاع لا يكسر القاضي — يبقى بلا تأصيل هذه المرّة.
@@ -80,9 +75,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // حارس التأريض: أرقام مواد في مخرَج القاضي ليست ضمن المسترجَع ⇒ تنبيه شفافيّة (لا حذف مدمّر).
+    // حارس التأريض المشترك: أرقام مواد في مخرَج القاضي ليست ضمن المسترجَع ⇒ تنبيه شفافيّة (لا حذف مدمّر).
     const grounded = allowedNumbers.size > 0;
-    const groundingOk = !grounded || verifyNarrativeGrounding([raw.content], allowedNumbers).ok;
+    const groundingOk = verifyJudgeGrounding([raw.content], allowedNumbers);
     const content = groundingOk
       ? raw.content
       : `${raw.content}\n\n— ملاحظة: بعض الإشارات النظاميّة في هذا النصّ غير مؤكَّدة من النواة، ويُتحقّق منها قبل الاعتماد.`;

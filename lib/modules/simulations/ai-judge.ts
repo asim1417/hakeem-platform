@@ -6,8 +6,8 @@
 // وحارس التأريض يرفض أيّ رقم مادّة غير مسترجَع — وعند أيّ فشلٍ يسقط للحتميّ الآمن.
 import type { SimulationMessage } from "@prisma/client";
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
-import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { collectStrings } from "@/lib/modules/grounding/verify-guard";
+import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
 import type { ClaimData } from "./hakeem-judge";
 import {
   allowedSpeakerLabel,
@@ -44,9 +44,6 @@ export type AiJudgeMeta = {
   classification: string;
   retrievedArticles: number;
 };
-
-const EVIDENCE_HINTS =
-  "قواعد الإثبات وعبء الإثبات والبيّنة والشهادة واليمين والقرينة وحجيّة المستند والإقرار في نظام الإثبات";
 
 function lastPartyStatement(messages: AiJudgeInput["messages"]) {
   const visible = messages.filter((m) => !m.content.startsWith("HAKEEM_") && PARTY_ROLES.includes(m.role));
@@ -142,19 +139,14 @@ export async function decideJudgeTurnAI(
   const last = lastPartyStatement(input.messages);
   if (!last || input.det.canGenerateJudgment) return null;
 
-  const query = [input.claim?.subject, input.claim?.facts, last.content, EVIDENCE_HINTS]
-    .filter(Boolean)
-    .join(" ")
-    .slice(0, 900);
-
-  const legalContext = await buildLegalContextForAI(query, { limit: 6 });
-  const allowed = collectAllowedArticleNumbers({
-    numbers: legalContext.articles.map((a) => a.articleNumber)
-  });
+  // العقل القضائيّ المشترك: تأريضٌ موحَّد مع القاضي الحيّ (إبراز نظام الإثبات + المواد المسموحة).
+  const grounding = await groundForJudge(
+    [input.claim?.subject, input.claim?.facts, last.content].filter(Boolean).join(" ")
+  );
 
   const llm = await callCentralProvider({
     systemPrompt: buildSystemPrompt(),
-    userPrompt: buildUserPrompt(input, last.content, legalContext.citationBlock),
+    userPrompt: buildUserPrompt(input, last.content, grounding.citationBlock),
     maxTokens: 1400
   });
   if (!llm.ok || !llm.content.trim()) return null;
@@ -162,8 +154,8 @@ export async function decideJudgeTurnAI(
   const parsed = extractJson(llm.content);
   if (!parsed) return null;
 
-  // حارس التأريض: أيّ رقم مادّة في مخرَج النموذج ليس ضمن المسترجَع ⇒ رفض والسقوط للحتميّ.
-  if (!verifyNarrativeGrounding(collectStrings(parsed), allowed).ok) return null;
+  // حارس التأريض المشترك: أيّ رقم مادّة في مخرَج النموذج ليس ضمن المسترجَع ⇒ رفض والسقوط للحتميّ.
+  if (!verifyJudgeGrounding(collectStrings(parsed), grounding.allowedNumbers)) return null;
 
   const action: AiAction = parsed.recommendedAction ?? "PROCEED";
   const side = sideOf(last.role);
@@ -172,7 +164,7 @@ export async function decideJudgeTurnAI(
     mode: "ai",
     action,
     classification: parsed.classification ?? "غير محدد",
-    retrievedArticles: legalContext.articles.length
+    retrievedArticles: grounding.articleCount
   };
 
   // ── طلب إيضاح أو بيّنة: يبقى الدور على الطرف نفسه، بلا انتقالٍ للمرحلة التالية ──
