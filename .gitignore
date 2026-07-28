@@ -39,6 +39,8 @@ ahkam_moj.sql.gz
 .link-judgments-checkpoint.json
 .import-judgments.lock
 .link-judgments.lock
+data/rasd/snapshots/
+reports/rasd/
 
 # Python
 __pycache__/

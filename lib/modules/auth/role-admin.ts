@@ -38,6 +38,10 @@ export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "USERS_MANAGE", label: "إدارة المستخدمين" },
   { key: "ADMIN_REPORTS_VIEW", label: "تقارير الإدارة" },
   { key: "GOVERNANCE_AUDIT_VIEW", label: "سجل التدقيق والحوكمة" },
+  { key: "RASD_VIEW", label: "رصد التشريعات — عرض" },
+  { key: "RASD_REVIEW", label: "رصد التشريعات — مراجعة" },
+  { key: "RASD_APPLY", label: "رصد التشريعات — تطبيق" },
+  { key: "RASD_ADMIN", label: "رصد التشريعات — إدارة" },
   { key: "JUDICIAL_ASSISTANT_USE", label: "المعاون القضائي" },
   { key: "SUPER_ADMIN_ACCESS", label: "لوحة السوبر أدمن (حصرية)" },
 ];

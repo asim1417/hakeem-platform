@@ -1,0 +1,109 @@
+{
+  "database": "local isolated rasd_verify @ 127.0.0.1 (NOT production Neon)",
+  "beforeSystems": 0,
+  "beforeArticles": 0,
+  "afterSystems": 1,
+  "afterArticles": 1,
+  "blockedBeforeApproval": true,
+  "review": {
+    "ok": true,
+    "status": "APPROVED"
+  },
+  "dryRunActionTypes": [
+    "CREATE_ARTICLE_AMENDMENT",
+    "CLOSE_CURRENT_ARTICLE_VERSION",
+    "CREATE_ARTICLE_VERSION"
+  ],
+  "applied": {
+    "applied": true,
+    "batchId": "rasd_apply_ms3d6con_chg_veri",
+    "actionTypes": [
+      "CREATE_ARTICLE_AMENDMENT",
+      "CLOSE_CURRENT_ARTICLE_VERSION",
+      "CREATE_ARTICLE_VERSION",
+      "MARK_CHANGE_APPLIED"
+    ]
+  },
+  "versionsAfterApply": [
+    {
+      "id": "ver_verify_1",
+      "source": "manual",
+      "effectiveFrom": "2020-01-01T00:00:00.000Z",
+      "effectiveTo": "2026-07-27T15:10:45.435Z",
+      "preview": "النص الأصلي للمادة الثانية قبل التعديل."
+    },
+    {
+      "id": "cms3d6cos0008fxzc6w01nftu",
+      "source": "rasd:rasd_apply_ms3d6con_chg_veri",
+      "effectiveFrom": "2026-07-27T15:10:45.436Z",
+      "effectiveTo": null,
+      "preview": "النص الجديد للمادة الثانية بعد التعديل التجريبي."
+    }
+  ],
+  "currentAfterApplyCount": 1,
+  "rasdVersionId": "cms3d6cos0008fxzc6w01nftu",
+  "amendmentsAfterApply": [
+    {
+      "id": "cms3d6coq0006fxzc4jgthq60",
+      "version": 1,
+      "source": "rasd:rasd_apply_ms3d6con_chg_veri",
+      "reviewStatus": "approved"
+    }
+  ],
+  "changeAppliedAt": "2026-07-27T15:10:45.436Z",
+  "changeAppliedBatchId": "rasd_apply_ms3d6con_chg_veri",
+  "rollbackDryActionTypes": [
+    "CLOSE_RASD_VERSION",
+    "RESTORE_PREVIOUS_CURRENT",
+    "MARK_AMENDMENT_ROLLED_BACK"
+  ],
+  "rollback": {
+    "rolledBack": true,
+    "actionTypes": [
+      "CLOSE_RASD_VERSION",
+      "RESTORE_PREVIOUS_CURRENT",
+      "MARK_AMENDMENT_ROLLED_BACK"
+    ]
+  },
+  "versionsAfterRollback": [
+    {
+      "id": "ver_verify_1",
+      "source": "manual",
+      "effectiveFrom": "2020-01-01T00:00:00.000Z",
+      "effectiveTo": null,
+      "preview": "النص الأصلي للمادة الثانية قبل التعديل."
+    },
+    {
+      "id": "cms3d6cos0008fxzc6w01nftu",
+      "source": "rasd:rasd_apply_ms3d6con_chg_veri",
+      "effectiveFrom": "2026-07-27T15:10:45.436Z",
+      "effectiveTo": "2026-07-27T15:10:45.453Z",
+      "preview": "النص الجديد للمادة الثانية بعد التعديل التجريبي."
+    }
+  ],
+  "currentAfterRollback": [
+    {
+      "id": "ver_verify_1",
+      "source": "manual"
+    }
+  ],
+  "amendmentsAfterRollback": [
+    {
+      "id": "cms3d6coq0006fxzc4jgthq60",
+      "reviewStatus": "rolled_back",
+      "source": "rasd:rasd_apply_ms3d6con_chg_veri"
+    }
+  ],
+  "changeRolledBackAt": "2026-07-27T15:10:45.456Z",
+  "assertions": {
+    "blockedBeforeApproval": true,
+    "reviewOk": true,
+    "originalVersionRowStillExists": true,
+    "rasdVersionNotDeleted": true,
+    "previousRestoredAsCurrent": true,
+    "rasdVersionClosed": true,
+    "amendmentMarkedRolledBack": true,
+    "isolatedDbOnly": true
+  },
+  "allPass": true
+}

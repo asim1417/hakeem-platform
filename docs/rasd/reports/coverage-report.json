@@ -1,0 +1,7 @@
+{
+  "generatedAt": "2026-07-27T12:56:23.641689+00:00",
+  "officialDocumentsCounted": "N/A (fixtures-only)",
+  "hakeemDocumentsCounted": "N/A (no DATABASE_URL)",
+  "matchRate": "N/A",
+  "nextStep": "Apply migration 20260727120000_add_rasd_monitoring on authorized Neon, set DATABASE_URL, then: RASD_ENABLED=true RASD_BASELINE_ENABLED=true npm run rasd:baseline (without --fixtures for live; keep --dry-run until review)."
+}

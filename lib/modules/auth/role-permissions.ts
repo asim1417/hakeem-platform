@@ -23,6 +23,10 @@ export type Permission =
   | "USERS_MANAGE"
   | "ADMIN_REPORTS_VIEW"
   | "GOVERNANCE_AUDIT_VIEW"
+  | "RASD_VIEW"
+  | "RASD_REVIEW"
+  | "RASD_APPLY"
+  | "RASD_ADMIN"
   // المعاون القضائي (المرحلة 1ب): استخدام مساحة القضية وأعمالها.
   | "JUDICIAL_ASSISTANT_USE"
   /** حصرية لمالك المنصة — لا تُمنح عبر مصفوفة SYSTEM_ADMIN. */
@@ -41,6 +45,10 @@ const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
   "USERS_MANAGE",
   "ADMIN_REPORTS_VIEW",
   "GOVERNANCE_AUDIT_VIEW",
+  "RASD_VIEW",
+  "RASD_REVIEW",
+  "RASD_APPLY",
+  "RASD_ADMIN",
   "JUDICIAL_ASSISTANT_USE",
 ];
 
@@ -53,6 +61,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "CONSULTATIONS_FULL",
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
+    "RASD_VIEW",
     "ATTACHMENTS_FULL",
     "GOVERNANCE_AUDIT_VIEW",
   ],
@@ -62,6 +71,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "TRAINING_USE",
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
+    "RASD_VIEW",
     "ATTACHMENTS_FULL",
     "JUDICIAL_ASSISTANT_USE",
   ],
@@ -73,6 +83,8 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
     "ADMIN_REPORTS_VIEW",
+    "RASD_VIEW",
+    "RASD_REVIEW",
     // المعاون القضائي متاحٌ للمدرّب أيضًا (تدريبٌ عمليّ على مساحة القضية).
     "JUDICIAL_ASSISTANT_USE",
   ],

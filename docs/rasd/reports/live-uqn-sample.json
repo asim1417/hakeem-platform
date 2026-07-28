@@ -1,0 +1,37 @@
+{
+  "note": "Partial live UQN probe only (limit=3). Not a full baseline. BOE/NCAR excluded. dryRun=true. No Hakeem library writes.",
+  "result": {
+    "runId": "run_ms38cvre_nenwctuf",
+    "status": "COMPLETED",
+    "dryRun": true,
+    "fixturesOnly": false,
+    "counts": {
+      "pagesDiscovered": 1,
+      "pagesFetched": 3,
+      "documentsDiscovered": 3,
+      "documentsNew": 3,
+      "documentsChanged": 3,
+      "documentsUnchanged": 0,
+      "documentsFailed": 0,
+      "conflictsFound": 0
+    },
+    "sources": [
+      {
+        "sourceCode": "UQN",
+        "ok": true,
+        "discovered": 3,
+        "fetched": 3,
+        "changed": 3,
+        "unchanged": 0,
+        "failed": 0
+      }
+    ],
+    "changesCount": 3,
+    "failures": [],
+    "sampleChangeTypes": [
+      "NEW_DOCUMENT",
+      "NEW_DOCUMENT",
+      "NEW_DOCUMENT"
+    ]
+  }
+}
