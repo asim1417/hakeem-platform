@@ -269,6 +269,39 @@ export function determineNextTurn(input: JudgeTurnInput): JudgeTurnResult {
     );
   }
 
+  // إشارة الاكتفاء («لا أضيف»/«اكتفيت»): إن نطق الطرفان وأبدى آخرُهما اكتفاءه ⇒ القضية مهيّأةٌ
+  // لقفل باب المرافعة (منقول من isDoneSignal الكلاسيكيّ) — فلا يدور التعقيب بلا نهاية.
+  const DONE_SIGNAL = /لا\s*أ?ضيف|اكتفيت|أكتفي|ليس\s*لدي[ّ]?\s*ما\s*أ?ضيف|لا\s*جديد|لا\s*مزيد|اكتفي\s*بما|ما\s*لدي[ّ]?\s*إضافة/;
+  if (hasPlaintiff && hasDefendant && lastParty && DONE_SIGNAL.test(lastParty.content)) {
+    return buildResult(
+      {
+        hearingStage: "CLOSE_PLEADING",
+        currentTurn: "القاضي الافتراضي",
+        nextRole: "القاضي الافتراضي",
+        nextProceduralStep: "قفل باب المرافعة",
+        decisionType: "تهيئة قفل المرافعة",
+        decisionContent: "أبدى الطرفان اكتفاءهما بما قُدّم، فالقضية مهيّأة لقفل باب المرافعة.",
+        decisionReason: "اكتفاء الطرفين بما قدّماه يُهيّئ القضية لقفل المرافعة.",
+        judgeMessage: "وبسؤال الطرفين عمّا لديهما من إضافة، أبدى كلٌّ منهما الاكتفاء بما سبق تقديمه؛ فالقضية مهيّأة لقفل باب المرافعة.",
+        needsDocument: false,
+        needsPlaintiffReply: false,
+        needsDefendantAnswer: false,
+        canOfferSettlement: true,
+        availableActions: ["قفل باب المرافعة", "عرض الصلح"],
+        canClosePleading: true,
+        canGenerateJudgment: false
+      },
+      {
+        currentStage: "PLEADING",
+        nextStage: "CLOSE_PLEADING",
+        procedureAction: "تهيئة قفل المرافعة",
+        allowedSpeakerRole: "both",
+        requiredInput: "يمكن الآن قفل باب المرافعة أو عرض الصلح.",
+        reason: "أبدى الطرفان اكتفاءهما بما قُدّم."
+      }
+    );
+  }
+
   if (partyMessages.length < 4) {
     return buildResult(
       {

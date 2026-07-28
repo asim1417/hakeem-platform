@@ -27,6 +27,7 @@ function buildSystemPrompt(): string {
     "== بنية الحكم المطلوبة ==",
     "وحدةٌ واحدة متّصلة بثلاثة أقسام: (أولًا: الوقائع) ← (ثانيًا: الأسباب) ← (ثالثًا: المنطوق).",
     "• الوقائع: لخّص صحيفة الدعوى (الطلبات وسببها وما قُدّم من بيّنة)، ثمّ جواب المدّعى عليه ودفوعه.",
+    "• إن لم يُسجَّل جوابٌ أو دفعٌ للمدّعى عليه فاذكر غيابه صراحةً بصيغة: «وحيث تغيّب المدّعى عليه (أو لم يُبدِ جوابًا) رغم تمكينه، فقد سارت الدائرة في نظر الدعوى بحالتها وفق الأصول» — ثمّ افصل على ضوء بيّنة المدّعي وعبء الإثبات.",
     "• الأسباب (إلزاميّة): ①حرّر محلّ النزاع. ②ناقش دفوع الطرف الذي سيُحكَم ضدّه صراحةً — أورِد كلّ دفعٍ وبيّن وجه ردّه أو قبوله. ③زِن بيّنة كلّ طرفٍ وعبء الإثبات وفق نظام الإثبات. ④ادمج المواد النظاميّة من «الأساس المتاح» أدناه داخل الأسباب مرتبطةً بالواقعة بصيغة «وحيث إنّ المادة (..) من نظام (..) تقضي بأنّ ...، فإنّ الدائرة تنتهي إلى ...».",
     "• المنطوق: جازمٌ محدّدٌ قابلٌ للتنفيذ يبدأ بـ«لذلك حكمت الدائرة بـ...»، وهو واحدٌ من: (إلزام المدّعى عليه بأداءٍ محدّد) أو (رفض الدعوى) أو (عدم قبولها) أو (صرف النظر عنها لعدم تحريرها). ولا يُدرَج فيه أيّ إجراءٍ (يمين/خبير/إحالة/إمهال).",
     "",
@@ -74,20 +75,33 @@ function isComplete(text: string): boolean {
   return /المنطوق|حكمت الدائرة|لذلك حكمت|لذلك قضت/.test(text);
 }
 
+function hijriToday(): string {
+  try {
+    return new Date().toLocaleDateString("ar-SA-u-ca-islamic", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  } catch {
+    return new Date().toLocaleDateString("ar-SA");
+  }
+}
+
 function wrapJudgment(text: string, c: ClaimData | undefined): string {
-  const parties = `${c?.plaintiffName || "المدّعي"} ضدّ ${c?.defendantName || "المدّعى عليه"}`;
+  const plaintiff = `${c?.plaintiffName || "المدّعي"}${c?.plaintiffCapacity ? " (" + c.plaintiffCapacity + ")" : ""}`;
+  const defendant = `${c?.defendantName || "المدّعى عليه"}${c?.defendantCapacity ? " (" + c.defendantCapacity + ")" : ""}`;
   return [
     "مسودة حكم قضائيّ مسبَّب — بيئة محاكاة تدريبيّة",
     "بسم الله الرحمن الرحيم",
-    `أطراف الدعوى: ${parties}`,
+    `التاريخ: ${hijriToday()}`,
+    `أطراف الدعوى: ${plaintiff} ضدّ ${defendant}`,
     `نوع الدعوى: ${c?.caseType || "غير محدد"}`,
+    c?.attendance && c.attendance.trim() ? `إثبات الحضور والصفة: ${c.attendance.trim()}` : null,
     "",
     text.trim(),
     "",
     "التنبيه:",
     TRAINING_DISCLAIMER,
     "القاضي حكيم — قاضٍ افتراضيّ تدريبيّ"
-  ].join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 export async function generateReasonedJudgment(input: {

@@ -13,7 +13,7 @@
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { collectStrings } from "@/lib/modules/grounding/verify-guard";
 import { groundForJudge, verifyJudgeGrounding, PROCEDURAL_DIGEST } from "./judicial-brain";
-import { OBJECTION_FORMULAS } from "./judicial-drafting";
+import { OBJECTION_FORMULAS, JUDICIAL_DRAFTING_GUIDE } from "./judicial-drafting";
 import { resolveSpecializedAgent } from "./specialized-agents";
 import type { ClaimData } from "./hakeem-judge";
 
@@ -192,8 +192,17 @@ export async function facilitateSettlement(
   };
 }
 
-// ─────────────────────────── ⑥ تحليل الاعتراض ───────────────────────────
-type ObjectionOut = { admissibilityOfAppeal?: string; grounds?: string; strengths?: string; risks?: string; citations?: string[] };
+// ─────────────────────────── ⑥ صياغة حكم الاعتراض ───────────────────────────
+// (منقول من submitAppeal/submitNaqd/submitIltimas الكلاسيكيّة): مخرَجٌ نصّيٌّ كامل بالصياغة
+// القضائيّة السعوديّة ومصطلحات كلّ مسارٍ حصريًّا — لا تحليلٌ رباعيّ. وقائع مُحالة، أسبابٌ
+// مؤصَّلة تناقش كلّ سبب، ومنطوقٌ جازم، مع قاعدة اكتمالٍ وحارس اختلاق.
+type ObjectionTerms = { court: string; appellant: string; respondent: string; note: string };
+
+function objectionTerms(kind: string): ObjectionTerms {
+  if (/نقض/.test(kind)) return { court: "المحكمة العليا", appellant: "طالب النقض", respondent: "المطعون ضدّه", note: "النقض يقتصر على مراقبة صحّة تطبيق النظام والمبادئ القضائيّة، ولا يُعيد محاكمة الوقائع." };
+  if (/التماس/.test(kind)) return { court: "محكمة الاستئناف المؤيِّدة", appellant: "الملتمِس", respondent: "الملتمَس ضدّه", note: "الالتماس طريقٌ غير عاديّ لا يُقبل إلا بتحقّق سببٍ من أسبابه النظاميّة." };
+  return { court: "دائرة الاستئناف", appellant: "المستأنِف", respondent: "المستأنَف ضدّه", note: "دائرة الاستئناف تُحيل لوقائع الحكم محلّ الاعتراض ولا تُعيد سردها." };
+}
 
 export async function analyzeObjection(input: {
   claim?: ClaimData;
@@ -202,35 +211,52 @@ export async function analyzeObjection(input: {
   kind: string; // استئناف | نقض | التماس إعادة نظر
   reasons?: string[];
 }): Promise<{ content: string; grounded: boolean } | null> {
-  const res = await runGroundedSkill<ObjectionOut>({
-    groundText: `${input.claim?.subject ?? ""} ${input.kind} أسباب ${input.kind} ومواعيده وشروط قبوله ${(input.reasons ?? []).join(" ")}`,
-    caseType: input.claim?.caseType,
-    systemPrompt: [
-      `أنت مستشارٌ قضائيٌّ تدريبيّ يحلّل مسار «${input.kind}» على حكمٍ صدر في المحاكاة.`,
-      OBJECTION_FORMULAS,
-      "بيّن: شروط قبول الاعتراض ومواعيده، ثمّ أسبابه المؤصَّلة، ونقاط القوّة والمخاطر.",
-      "لا تختلق مادّة؛ استشهد فقط بالمواد المتاحة. أعِد JSON فقط:",
-      '{"admissibilityOfAppeal":"","grounds":"","strengths":"","risks":"","citations":[]}'
-    ].join("\n"),
-    buildUser: (cb) => [
-      "== الدعوى ==", claimBlock(input.claim), "",
-      "== منطوق الحكم محلّ الاعتراض (مقتطف) ==", input.judgmentContent.slice(0, 1200), "",
-      input.reasons?.length ? `== أسبابٌ اقترحها المستخدم ==\n${input.reasons.join("، ")}` : "",
-      "== الأساس النظاميّ المتاح ==", cb, "", `حلّل مسار ${input.kind} بصيغة JSON.`
-    ].filter(Boolean).join("\n")
-  });
-  if (!res) return null;
-  const d = res.data;
+  const t = objectionTerms(input.kind);
+  const reasons = (input.reasons ?? []).filter(Boolean);
+  const agent = resolveSpecializedAgent(input.claim?.caseType);
+  const groundText = `${input.claim?.subject ?? ""} ${input.kind} ${reasons.join(" ")} أسباب ومواعيد وشروط قبول ${input.kind}`;
+  const g = await groundForJudge(groundText, 8, agent.scopeSystems);
+
+  const sys = [
+    `أنت قاضٍ في «${t.court}» بمنصّة حكيم للمحاكاة القضائيّة التدريبيّة، تصدر حكمًا في «${input.kind}» على حكمٍ سابق.`,
+    "",
+    JUDICIAL_DRAFTING_GUIDE,
+    "",
+    OBJECTION_FORMULAS,
+    "",
+    "== إلزامات هذا المسار ==",
+    `- استعمل مصطلحات هذا الطريق حصرًا: «${t.appellant}» و«${t.respondent}» و«${t.court}» — ولا تخلطها بمصطلحات طريقٍ آخر.`,
+    `- ${t.note}`,
+    "- بنية المخرَج: (أولًا: قبول الاعتراض شكلًا — الميعاد والشروط) ← (ثانيًا: الوقائع محالةً للحكم محلّ الاعتراض بإيجاز) ← (ثالثًا: الأسباب: ناقش كلّ سببٍ مؤصَّلًا وبيّن وجه قبوله أو ردّه) ← (رابعًا: المنطوق الجازم: تأييد/تعديل/إلغاء/نقض/عدم قبول، وعند التأييد «محمولًا على أسبابه»).",
+    "- لا تستشهد بمادّةٍ ليست في «الأساس النظاميّ المتاح»، ولا تخترع رقمًا. أكمل الحكم حتى المنطوق والخاتمة «والله الموفّق». اكتب نصًّا مباشرًا لا JSON."
+  ].join("\n");
+
+  const usr = [
+    "== الدعوى ==",
+    claimBlock(input.claim),
+    "",
+    "== الحكم محلّ الاعتراض (مقتطف) ==",
+    (input.judgmentContent || "").slice(0, 1500) || "لم يُتَح نصّ الحكم.",
+    "",
+    reasons.length ? `== أسباب الاعتراض التي اختارها ${t.appellant} ==\n${reasons.join("\n")}` : `لم يحدّد ${t.appellant} أسبابًا مبنيَنة.`,
+    "",
+    "== الأساس النظاميّ المتاح (استشهد منه حصرًا) ==",
+    g.citationBlock,
+    "",
+    `أصدر حكم «${input.kind}» الكامل بالبنية والمصطلحات المذكورة.`
+  ].join("\n");
+
+  const llm = await callCentralProvider({ systemPrompt: sys, userPrompt: usr, maxTokens: 3200 });
+  if (!llm.ok || !llm.content.trim()) return null;
+  let text = llm.content.trim();
+  if (!/المنطوق|حكمت|قضت|الموفّق|الموفق/.test(text)) {
+    const cont = await callCentralProvider({ systemPrompt: sys, userPrompt: `أكمِل المنطوق والخاتمة فقط لِما سبق:\n«${text.slice(-400)}»`, maxTokens: 900 });
+    if (cont.ok && cont.content.trim()) text = `${text}\n${cont.content.trim()}`;
+  }
+  if (!verifyJudgeGrounding([text], g.allowedNumbers)) return null;
+
   return {
-    grounded: res.grounded,
-    content: [
-      `تحليل مسار ${input.kind} (تدريبيّ)`,
-      sec("قبول الاعتراض ومواعيده", d.admissibilityOfAppeal),
-      sec("الأسباب المؤصَّلة", d.grounds),
-      sec("نقاط القوّة", d.strengths),
-      sec("المخاطر", d.risks),
-      sec("الأساس النظاميّ", d.citations?.join("، ")),
-      DISCLAIMER
-    ].filter(Boolean).join("\n\n")
+    grounded: g.allowedNumbers.size > 0,
+    content: [`حكم ${input.kind} — بيئة محاكاة تدريبيّة`, "بسم الله الرحمن الرحيم", text.trim(), DISCLAIMER].join("\n\n")
   };
 }
