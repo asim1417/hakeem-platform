@@ -6,7 +6,6 @@ import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { generateReasonedJudgment } from "@/lib/modules/simulations/reasoned-judgment";
-import { buildLegalContextForAI, noLegalArticleMessage } from "@/lib/modules/legal-core/legal-retrieval";
 
 export const dynamic = "force-dynamic";
 
@@ -31,62 +30,29 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 
   const claim = extractClaim(session.messages);
-  const plaintiff = session.messages.find((message) => message.role === "المدعي" || message.role === "وكيل المدعي")?.content;
-  const defendant = session.messages.find((message) => message.role === "المدعى عليه" || message.role === "وكيل المدعى عليه")?.content;
-  const query = [claim?.facts, claim?.requests, claim?.legalGrounds, claim?.subject, plaintiff, defendant].filter(Boolean).join(" ").slice(0, 900);
-  const legalContext = query
-    ? await buildLegalContextForAI(query, { limit: 5 })
-    : { hasArticles: false, articles: [], citationBlock: noLegalArticleMessage, contextText: noLegalArticleMessage };
-  const citations = legalContext.citationBlock;
-  const templateContent = [
-    "مسودة حكم قضائي مسبب",
-    "بسم الله الرحمن الرحيم",
-    `رقم الجلسة: ${session.id}`,
-    `التاريخ: ${new Date().toLocaleString("ar-SA")}`,
-    `نوع الدعوى: ${claim?.caseType || "غير محدد"}`,
-    `أطراف الدعوى: ${claim?.plaintiffName || "المدعي"} ضد ${claim?.defendantName || "المدعى عليه"}`,
-    "أولًا: الديباجة",
-    "بناءً على ملف المحاكاة المقيد في منصة حكيم، وبعد قفل باب المرافعة في البيئة التدريبية، أعدت هذه المسودة لأغراض المحاكاة والتعلم.",
-    "ثانيًا: الوقائع",
-    claim?.facts || "لم تسجل وقائع تفصيلية كافية.",
-    "ثالثًا: الطلبات والدفوع",
-    `طلبات المدعي: ${claim?.requests || plaintiff || "غير محددة"}`,
-    `دفوع المدعى عليه: ${claim?.defenses || defendant || "غير محددة"}`,
-    "رابعًا: الأسباب",
-    [
-      "استندت هذه المسودة إلى ما أدخله المستخدمون في جلسة المحاكاة وما ظهر من مداخلات وقرارات إجرائية.",
-      "المواد النظامية المسترجعة من قاعدة بيانات حكيم:",
-      citations,
-      "ولا يجوز اعتبار هذه المسودة منشئة لاستشهاد نظامي غير موجود في قاعدة البيانات."
-    ].join("\n"),
-    "خامسًا: المنطوق",
-    legalContext.articles.length
-      ? "لأغراض التدريب، تميل المسودة إلى قبول الطلبات في حدود ما تؤيده الوقائع والبينات المدخلة، مع بقاء التقدير النهائي مرهونًا بالمستندات والإجراءات النظامية الفعلية."
-      : "لأغراض التدريب، لا تتكون نتيجة نظامية كافية لعدم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية أو لعدم اكتمال الوقائع.",
-    "سادسًا: التنبيه",
-    disclaimer,
-    "التوقيع",
-    "القاضي حكيم - قاض افتراضي تدريبي"
-  ].join("\n\n");
 
-  // الحكم المُعلَّل المؤصَّل (يزن بيّنة كلّ طرفٍ وفق عبء الإثبات ويصدر منطوقًا مسبَّبًا)؛
-  // وعند أيّ فشلٍ أو خروجٍ عن التأريض يسقط للقالب الآمن — لا كسر.
-  let content = templateContent;
-  let judgmentMode: "reasoned" | "template" = "template";
-  let judgmentConfidence = 0;
-  // نوع المخرَج: حكمٌ نهائيّ أم قرارٌ إجرائيّ (توجيه يمين/ندب خبير) لم يجهز معه الفصل.
-  let judgmentKind: "judgment" | "procedural" = "judgment";
+  // الحكم المُعلَّل المؤصَّل بالصياغة القضائيّة السعوديّة (يناقش دفوع المحكوم ضدّه ويصدر منطوقًا
+  // جازمًا مؤصَّلًا من النواة). حُذف القالب الاحتياطيّ الضعيف: عند تعذّر الحكم المؤصَّل يُرَدّ
+  // خطأٌ صريح — لا حكمٌ زائفٌ ولا منطوقٌ صوريّ.
+  let reasoned: Awaited<ReturnType<typeof generateReasonedJudgment>> = null;
   try {
-    const reasoned = await generateReasonedJudgment({ claim, messages: session.messages });
-    if (reasoned) {
-      content = reasoned.content;
-      judgmentMode = "reasoned";
-      judgmentConfidence = reasoned.confidence;
-      judgmentKind = reasoned.kind;
-    }
+    reasoned = await generateReasonedJudgment({ claim, messages: session.messages });
   } catch {
-    content = templateContent;
+    reasoned = null;
   }
+  if (!reasoned) {
+    return NextResponse.json(
+      {
+        message:
+          "تعذّر إصدار الحكم المعلَّل: يتطلّب تفعيل القاضي الذكيّ (Claude) وتوفّر أساسٍ نظاميٍّ مؤصَّلٍ للقضية من النواة. تأكّد من حالة المزوّد ومن اكتمال وقائع الدعوى وطلباتها ثمّ أعِد المحاولة."
+      },
+      { status: 503 }
+    );
+  }
+  const content = reasoned.content;
+  const judgmentMode = "reasoned" as const;
+  const judgmentConfidence = reasoned.confidence;
+  const judgmentKind = reasoned.kind;
 
   const judgment = await prisma.simulationJudgment.create({
     data: {
@@ -109,11 +75,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     entityId: params.id,
     metadata: {
       judgmentId: judgment.id,
-      title: judgmentKind === "procedural" ? "قرار إجرائي في جلسة المحاكاة" : "مسودة حكم قضائي مسبب",
+      title: "مسودة حكم قضائي مسبب",
       mode: judgmentMode,
       kind: judgmentKind,
       confidence: judgmentConfidence,
-      citationsCount: legalContext.articles.length,
+      citationsCount: reasoned.articleCount,
       source: "legal_core"
     }
   });
