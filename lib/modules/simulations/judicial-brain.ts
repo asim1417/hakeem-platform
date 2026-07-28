@@ -1,7 +1,9 @@
 // العقل القضائيّ المشترك — مصدر الحقيقة الوحيد لتأريض القاضي وإبراز قواعد الإثبات وحارس
 // المخرَج. يستدعيه القاضيان: الحيّ (عبر /api/original-hakeem/ai) والحديث (عبر ai-judge.ts).
 // فكرةٌ واحدة بجلدين: أيّ تحسينٍ في التأريض/الإثبات هنا ينعكس على الواجهتين معًا.
-import { buildLegalContextForAI } from "@/lib/modules/legal-core/legal-retrieval";
+import { buildLegalContextForAI, buildCitationBlock, searchLegalCore, type LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
+import { rerankArticles } from "@/lib/modules/agents/thinking/rerank";
+import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { collectAllowedArticleNumbers, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 
 // مصطلحاتٌ تُبرز نظام الإثبات في الاسترجاع (عبء الإثبات · البيّنة · الشهادة · اليمين …).
@@ -57,20 +59,79 @@ export type JudicialGrounding = {
  * يسترجع مواد النواة الحقيقيّة ذات الصلة (مع إبراز نظام الإثبات) ويجمع أرقام المواد المسموحة.
  * يُستعمَل لحقن السياق المؤرَّض في توجيه القاضي قبل التوليد.
  */
-export async function groundForJudge(text: string, limit = 6, scopeSystems?: string[]): Promise<JudicialGrounding> {
-  // تقييدٌ ناعمٌ بنطاق التخصّص المفعّل (أنظمة الوكيل) — يحيّز الاسترجاع نحو أنظمة نوع الدعوى.
-  const scopeHint = scopeSystems?.length ? ` (ضمن الأنظمة ذات الصلة: ${scopeSystems.join("، ")})` : "";
-  const ctx = await buildLegalContextForAI(`${text}${scopeHint} ${EVIDENCE_HINTS}`.slice(0, 900), { limit });
-  if (!ctx.hasArticles) {
-    return { hasArticles: false, contextText: "", citationBlock: "", allowedNumbers: new Set<number>(), articleCount: 0 };
-  }
+const EMPTY_GROUNDING: JudicialGrounding = {
+  hasArticles: false,
+  contextText: "",
+  citationBlock: "",
+  allowedNumbers: new Set<number>(),
+  articleCount: 0
+};
+
+function toGrounding(top: LegalCoreResult[]): JudicialGrounding {
+  const citationBlock = buildCitationBlock(top);
   return {
     hasArticles: true,
-    contextText: ctx.contextText,
-    citationBlock: ctx.citationBlock,
-    allowedNumbers: collectAllowedArticleNumbers({ numbers: ctx.articles.map((a) => a.articleNumber) }),
-    articleCount: ctx.articles.length
+    contextText: [
+      "السياق النظاميّ المسترجَع من النواة القانونيّة الموحّدة:",
+      citationBlock,
+      "قاعدة إلزاميّة: لا تستشهد إلا بالمواد أعلاه، ولا تخترع مواد أو أرقام مواد."
+    ].join("\n"),
+    citationBlock,
+    allowedNumbers: collectAllowedArticleNumbers({ numbers: top.map((a) => a.articleNumber) }),
+    articleCount: top.length
   };
+}
+
+/**
+ * تأريض القاضي وفق فلسفة «اسأل حكيم» نفسها (فكرةٌ واحدة بجلدين):
+ *  ① تقييدٌ صلبٌ بالنطاق عبر systemIds (لا تلميحًا نصّيًّا) — يمنع تسرّب أنظمةٍ غير ذات صلة.
+ *  ② تغطية المفاهيم (requireConceptCoverage) وإبراز نظام الإثبات.
+ *  ③ إسقاط المنسوخ ثمّ إعادة ترتيبٍ بالسلطة والحالة (rerankArticles) قبل أفضل limit.
+ *  ④ سقوطٌ آمن: إن أفرغ التقييد الصلب النتائج ⇒ استرجاعٌ موسَّع، ثمّ المسار الأساسيّ — لا يُكسَر التأريض.
+ */
+export async function groundForJudge(text: string, limit = 6, scopeSystems?: string[]): Promise<JudicialGrounding> {
+  const query = `${text} ${EVIDENCE_HINTS}`.slice(0, 900);
+  const pool = Math.max(limit * 3, 18);
+
+  let results: LegalCoreResult[] = [];
+  try {
+    const scoped = await searchLegalCore({
+      query,
+      systemIds: scopeSystems?.length ? scopeSystems : undefined,
+      sourceTypes: ["article"],
+      requireConceptCoverage: true,
+      semantic: true,
+      includeSnippets: true,
+      limit: pool
+    });
+    results = scoped.results ?? [];
+    // احتياطٌ: التقييد الصلب قد يُفرِغ النتائج إن ضاق النطاق ⇒ أعِد الاسترجاع موسَّعًا.
+    if (results.length === 0 && scopeSystems?.length) {
+      const wide = await searchLegalCore({ query, sourceTypes: ["article"], requireConceptCoverage: true, semantic: true, includeSnippets: true, limit: pool });
+      results = wide.results ?? [];
+    }
+  } catch {
+    results = [];
+  }
+
+  // سقوطٌ آمنٌ نهائيّ للمسار الأساسيّ عند تعذّر الاسترجاع المتقدّم.
+  if (results.length === 0) {
+    const ctx = await buildLegalContextForAI(query, { limit });
+    if (!ctx.hasArticles) return EMPTY_GROUNDING;
+    return {
+      hasArticles: true,
+      contextText: ctx.contextText,
+      citationBlock: ctx.citationBlock,
+      allowedNumbers: collectAllowedArticleNumbers({ numbers: ctx.articles.map((a) => a.articleNumber) }),
+      articleCount: ctx.articles.length
+    };
+  }
+
+  // إسقاط المنسوخ ما لم يُفقِر النتائج (شبكة أمان)، ثمّ إعادة ترتيبٍ بالسلطة والحالة.
+  const inForce = results.filter((r) => articleStatusBadge(r.status)?.label !== "منسوخة");
+  const pooled = inForce.length >= Math.min(limit, 3) ? inForce : results;
+  const top = rerankArticles(pooled).slice(0, limit);
+  return toGrounding(top);
 }
 
 /**
