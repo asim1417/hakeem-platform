@@ -43,7 +43,7 @@ export type AskTurn = {
   question: string;
   steps: AskStep[];
   answer: string | null;
-  mode?: "live" | "offline" | "intent" | "blocked";
+  mode?: "live" | "offline" | "intent" | "blocked" | "native-agent";
   basis: AskBasisItem[] | null;
   total: number;
   coverage?: {
