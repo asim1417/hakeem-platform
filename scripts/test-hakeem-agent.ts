@@ -62,13 +62,15 @@ async function main() {
     assert(!r.ok, "أداة مجهولة → ok=false");
   });
 
-  await check("العلم: مطفأٌ افتراضًا، ويُقرأ من البيئة", () => {
+  await check("العلم: مفعّلٌ افتراضًا، ومفتاح إطفاءٍ طارئ من البيئة", () => {
     delete process.env.CLAUDE_NATIVE_AGENT_ENABLED;
-    assert(nativeAgentEnabled() === false, "مطفأ افتراضًا");
-    process.env.CLAUDE_NATIVE_AGENT_ENABLED = "1";
-    assert(nativeAgentEnabled() === true, "يُشغَّل بـ 1");
+    assert(nativeAgentEnabled() === true, "مفعّل افتراضًا");
+    process.env.CLAUDE_NATIVE_AGENT_ENABLED = "0";
+    assert(nativeAgentEnabled() === false, "0 = إطفاء طارئ");
     process.env.CLAUDE_NATIVE_AGENT_ENABLED = "off";
-    assert(nativeAgentEnabled() === false, "off = مطفأ");
+    assert(nativeAgentEnabled() === false, "off = إطفاء");
+    process.env.CLAUDE_NATIVE_AGENT_ENABLED = "1";
+    assert(nativeAgentEnabled() === true, "1 = مفعّل");
     delete process.env.CLAUDE_NATIVE_AGENT_ENABLED;
     assert(hakeemAgentMaxToolTurns() >= 1, "حدّ الدورات موجب");
   });

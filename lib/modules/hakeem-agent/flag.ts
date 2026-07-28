@@ -1,9 +1,11 @@
-// علم الميزة «الوكيل الأصيل» (HKM-CLAUDE-NATIVE-001). خلفه فقط يُدار الحوار بـ Claude
-// عبر حلقة أدوات حقيقية بدل المسار الحتميّ القديم. مطفأً افتراضيًّا؛ يُشغَّل للمختبرين
-// بضبط CLAUDE_NATIVE_AGENT_ENABLED=1. لا يُشغَّل المساران معًا لنفس الرسالة.
+// علم الميزة «الوكيل الأصيل» (HKM-CLAUDE-NATIVE-001). خلفه يُدار الحوار بـ Claude عبر
+// حلقة أدوات حقيقية بدل المسار الحتميّ القديم. **مفعّلٌ افتراضيًّا** (بقرار المالك)؛ مع
+// مفتاح إطفاءٍ طارئ: CLAUDE_NATIVE_AGENT_ENABLED=0 (أو false/off) يعيد المسار القديم فورًا.
+// آمنٌ حتى قبل تفعيل مفتاح Anthropic: عند تعطّل المزوّد يسقط الوكيل سقوطًا آمنًا للمسار القديم.
 export function nativeAgentEnabled(): boolean {
   const v = (process.env.CLAUDE_NATIVE_AGENT_ENABLED ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
+  if (v === "0" || v === "false" || v === "off" || v === "no") return false;
+  return true;
 }
 
 /** نموذج الوكيل — قابلٌ للضبط بيئيًّا؛ «فاخر» افتراضًا (Sonnet-class). */
