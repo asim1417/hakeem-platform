@@ -25,7 +25,7 @@ async function main() {
       assert(t.input_schema && (t.input_schema as { type?: string }).type === "object", `مخطّط أداة: ${t.name}`);
     }
     const names = HAKEEM_TOOL_DEFS.map((t) => t.name);
-    for (const need of ["resolve_scope", "legal_search", "comprehensive_legal_scan", "deep_legal_study", "fetch_legal_source", "read_attachment", "load_skill"]) {
+    for (const need of ["resolve_scope", "legal_search", "comprehensive_legal_scan", "deep_legal_study", "fetch_legal_source", "read_attachment", "islamic_library_scan", "load_skill"]) {
       assert(names.includes(need as (typeof names)[number]), `أداة مفقودة: ${need}`);
     }
   });
@@ -55,6 +55,12 @@ async function main() {
     assert(withDoc.ok && (withDoc.data as { hasAttachment: boolean }).hasAttachment === true, "مع مستند");
     const noDoc = await executeTool("read_attachment", {}, createAgentContext(""));
     assert(noDoc.ok && (noDoc.data as { hasAttachment: boolean }).hasAttachment === false, "بلا مستند");
+  });
+
+  await check("islamic_library_scan: بلا ربطٍ يعيد configured=false (لا اختراع)", async () => {
+    delete process.env.ALBAHITH_API_URL;
+    const r = await executeTool("islamic_library_scan", { query: "الغرر في البيوع" }, createAgentContext(""));
+    assert(r.ok && (r.data as { configured: boolean }).configured === false, "غير مربوطة → configured=false");
   });
 
   await check("executeTool: أداةٌ غير معروفة → فشلٌ محكوم (لا رمي)", async () => {
