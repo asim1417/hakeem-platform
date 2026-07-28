@@ -3,6 +3,7 @@
 // فكرةٌ واحدة بجلدين: أيّ تحسينٍ في التأريض/الإثبات هنا ينعكس على الواجهتين معًا.
 import { buildLegalContextForAI, buildCitationBlock, searchLegalCore, type LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { rerankArticles } from "@/lib/modules/agents/thinking/rerank";
+import { resolveGoverningSystems } from "@/lib/modules/agents/thinking/resolve-scope";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { collectAllowedArticleNumbers, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 
@@ -93,11 +94,23 @@ export async function groundForJudge(text: string, limit = 6, scopeSystems?: str
   const query = `${text} ${EVIDENCE_HINTS}`.slice(0, 900);
   const pool = Math.max(limit * 3, 18);
 
+  // فهم Claude يقود اختيار الأنظمة الحاكمة من الوقائع (resolveGoverningSystems)، مؤصَّلًا
+  // بسجلّ القاعدة (منع اختلاق)، ثمّ يُدمج مع نطاق تخصّص الوكيل شبكةَ أمان. عند تعذّر النموذج
+  // (offline) يسقط لمكنزٍ جامدٍ ثمّ لنطاق الوكيل وحده — فلا يُكسَر التأريض.
+  const scope = new Set<string>(scopeSystems ?? []);
+  try {
+    const governing = await resolveGoverningSystems(text);
+    for (const s of governing.systems) scope.add(s.name);
+  } catch {
+    /* نطاق الوكيل يكفي */
+  }
+  const scopeIds = [...scope];
+
   let results: LegalCoreResult[] = [];
   try {
     const scoped = await searchLegalCore({
       query,
-      systemIds: scopeSystems?.length ? scopeSystems : undefined,
+      systemIds: scopeIds.length ? scopeIds : undefined,
       sourceTypes: ["article"],
       requireConceptCoverage: true,
       semantic: true,
@@ -106,7 +119,7 @@ export async function groundForJudge(text: string, limit = 6, scopeSystems?: str
     });
     results = scoped.results ?? [];
     // احتياطٌ: التقييد الصلب قد يُفرِغ النتائج إن ضاق النطاق ⇒ أعِد الاسترجاع موسَّعًا.
-    if (results.length === 0 && scopeSystems?.length) {
+    if (results.length === 0 && scopeIds.length) {
       const wide = await searchLegalCore({ query, sourceTypes: ["article"], requireConceptCoverage: true, semantic: true, includeSnippets: true, limit: pool });
       results = wide.results ?? [];
     }
