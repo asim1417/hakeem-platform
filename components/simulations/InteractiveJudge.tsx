@@ -478,6 +478,9 @@ export function InteractiveJudge() {
 
       {error ? <p className="rounded-[var(--r-md)] border border-[var(--ruby)] px-4 py-2 text-sm text-[var(--ruby)]">{error}</p> : null}
 
+      {/* سجلّ القرارات الإجرائيّة (منقول من القاعة الكلاسيكيّة): كلّ قرارٍ إجرائيّ ككتلةٍ مميّزة */}
+      <DecisionsLog decisions={session?.decisions ?? []} />
+
       {/* شفافيّة قرار القاضي (يراها صانع القرار: قرأ المداخلة، كيّفها، ثمّ قرّر) */}
       {judgeMeta ? (
         <div className="flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-3 py-2 text-xs">
@@ -645,6 +648,26 @@ export function InteractiveJudge() {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// سجلّ القرارات الإجرائيّة — يعرض كلّ قرارٍ إجرائيّ (توجيه يمين/ندب خبير/حصر محل نزاع/طلب
+// بيّنة/قفل مرافعة/عرض صلح) ككتلةٍ مميّزة عن الحكم، تمييزًا للإجراء عن المنطوق.
+function DecisionsLog({ decisions }: { decisions: Array<{ decisionType: string; content: string }> }) {
+  const shown = decisions.filter((d) => !d.decisionType.includes("فتح"));
+  if (!shown.length) return null;
+  return (
+    <div className="rounded-[var(--r-xl)] border border-line bg-ivory p-4">
+      <p className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--ink-60)]"><Gavel size={13} aria-hidden /> سجلّ القرارات الإجرائيّة</p>
+      <div className="grid gap-2">
+        {shown.map((d, i) => (
+          <div key={i} className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--parchment)] p-3">
+            <div className="mb-1 inline-flex rounded-full bg-[var(--gold-ghost)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--gold)]">قرارٌ إجرائيّ: {d.decisionType}</div>
+            <div className="whitespace-pre-wrap text-sm leading-7 text-[var(--ink)]">{d.content}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
