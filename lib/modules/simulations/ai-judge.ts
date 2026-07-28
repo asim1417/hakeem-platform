@@ -20,7 +20,21 @@ import {
 
 const PARTY_ROLES = ["المدعي", "وكيل المدعي", "المدعى عليه", "وكيل المدعى عليه"];
 
-type AiAction = "PROCEED" | "REQUEST_CLARIFICATION" | "REQUEST_EVIDENCE" | "OFFER_SETTLEMENT";
+type AiAction =
+  | "PROCEED"
+  | "REQUEST_CLARIFICATION"
+  | "REQUEST_EVIDENCE"
+  | "OFFER_SETTLEMENT"
+  | "FRAME_DISPUTE"
+  | "DIRECT_OATH"
+  | "APPOINT_EXPERT";
+
+// خريطة القرار الإجرائيّ إلى مسمّاه القضائيّ (يُخزَّن ويُعرَض ككتلةٍ مميّزة عن الحكم).
+const PROCEDURAL_DECISION_LABEL: Record<string, string> = {
+  FRAME_DISPUTE: "حصر محل النزاع",
+  DIRECT_OATH: "توجيه اليمين الحاسمة",
+  APPOINT_EXPERT: "ندب خبير"
+};
 
 type AiJudgeNarrative = {
   classification?: string;
@@ -91,8 +105,12 @@ function buildSystemPrompt() {
     "- إن كانت المداخلة غامضةً أو ناقصة، اطلب إيضاحًا من الطرف نفسه بدل الانتقال.",
     "- إن كان الادّعاء يفتقر إلى بيّنةٍ يوجب النظام تقديمها، اطلب البيّنة وبيّن على من يقع عبؤها.",
     "- لا تصدر حكمًا ولا تقفل باب المرافعة في هذا الرد؛ قرارك إجرائيٌّ فقط.",
+    "القرارات الإجرائيّة المتاحة (استعملها بصياغتها القضائيّة في judgeMessage عند اقتضائها):",
+    "- FRAME_DISPUTE (حصر محل النزاع): بعد سماع الدعوى والإجابة، إذا اتّضح محلّ النزاع فحرّره: «محلّ النزاع ينحصر في: هل (...) أم (...)؟».",
+    "- DIRECT_OATH (توجيه اليمين الحاسمة): إذا عجز المدّعي عن البيّنة الموصلة وطلب يمين المدّعى عليه، فوجّهها بصيغة: «واللهِ العظيم إنّي (...)». قرارٌ إجرائيّ لا حكم.",
+    "- APPOINT_EXPERT (ندب خبير): إذا توقّف الفصل على مسألةٍ فنّيّة، فاندب خبيرًا وحدّد مهمّته.",
     "أعِد الجواب بصيغة JSON فقط، بلا أيّ نصٍّ خارجها، بالمفاتيح:",
-    '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT", "judgeMessage": "...", "citations": ["نظام الإثبات المادة ..."]}',
+    '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT|FRAME_DISPUTE|DIRECT_OATH|APPOINT_EXPERT", "judgeMessage": "...", "citations": ["نظام الإثبات المادة ..."]}',
     "judgeMessage = خطاب القاضي المسبَّب بالعربية الفصحى (2-4 جمل). citations = أرقام موادّ من المتاح فقط."
   ].join("\n");
 }
@@ -208,6 +226,23 @@ export async function decideJudgeTurnAI(
         : "الادّعاء يفتقر إلى بيّنةٍ يوجب النظام تقديمها.",
       canClosePleading: false,
       canGenerateJudgment: false
+    };
+    return { result, meta };
+  }
+
+  // ── قرارٌ إجرائيّ مميّز (حصر محل النزاع/توجيه اليمين/ندب خبير): يُسجَّل ككتلةٍ متمايزة عن
+  // الحكم، مع الإبقاء على الترتيب المشروع من الحارس الحتميّ (لا ابتداعَ انتقالٍ باطل) ──
+  if (action === "FRAME_DISPUTE" || action === "DIRECT_OATH" || action === "APPOINT_EXPERT") {
+    const decisionType = PROCEDURAL_DECISION_LABEL[action];
+    const body = (parsed.judgeMessage && parsed.judgeMessage.trim()) || det.judgeMessage;
+    const result: JudgeTurnResult = {
+      ...det,
+      decisionType,
+      decisionContent: body,
+      decisionReason: `تكييف المداخلة: ${meta.classification}.${parsed.evidenceAssessment ? " " + parsed.evidenceAssessment : ""}`,
+      procedureAction: decisionType,
+      nextProceduralStep: decisionType,
+      judgeMessage: composeJudgeMessage(parsed, det.judgeMessage)
     };
     return { result, meta };
   }
