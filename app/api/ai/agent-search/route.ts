@@ -24,6 +24,7 @@ import { getAgentMode } from "@/lib/modules/agents/modes";
 import { synthesizeWithMode } from "@/lib/modules/agents/mode-synthesis";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
+import { waitUntil } from "@vercel/functions";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -81,17 +82,33 @@ export async function POST(request: NextRequest) {
   const jobId = await createJob(user.id, "hakeem-ask", typed.slice(0, 120) || "تحليل مستند").catch(() => null);
 
   const encoder = new TextEncoder();
-  const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      let clientGone = false;
-      const send = (obj: unknown) => {
-        // «اسأل حكيم» يبثّ خطواتٍ ثمّ «result» واحدًا؛ نحفظ النتيجة كاملةً عند إرسالها.
-        const e = obj as { type?: string };
-        if (jobId && e?.type === "result") void updateJob(jobId, { text: "", meta: { result: obj }, status: "done" });
-        if (jobId && e?.type === "error") void updateJob(jobId, { status: "error" });
-        if (clientGone) return;
-        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n")); } catch { clientGone = true; }
-      };
+
+  // ── فصل التنفيذ عن الاتّصال (استمرار العمل في الخلفية) ──
+  // العمل يُنتِج أحداثه في طابورٍ داخليّ، لا مباشرةً إلى controller الاتّصال. لو غادر المستخدم
+  // (أغلق التبويب أو خفت المتصفّح على الجوّال) وانقطع البثّ، لا يتوقّف العمل: نُسجّله بـ waitUntil
+  // فتُبقيه المنصّة حيًّا حتى ينتهي ويُحفظ ناتجه في المهمّة (job) + الغرفة، فيستأنفه العميل بالعودة.
+  const queue: Uint8Array[] = [];
+  let finished = false;
+  let wake: (() => void) | null = null;
+  const push = (u: Uint8Array) => {
+    queue.push(u);
+    if (wake) { const w = wake; wake = null; w(); }
+  };
+  const finish = () => {
+    finished = true;
+    if (wake) { const w = wake; wake = null; w(); }
+  };
+  const send = (obj: unknown) => {
+    // «اسأل حكيم» يبثّ خطواتٍ ثمّ «result» واحدًا؛ نحفظ النتيجة كاملةً عند إرسالها — قبل أيّ
+    // اعتبارٍ لحال الاتّصال، فيُحفظ الناتج ولو غادر العميل.
+    const e = obj as { type?: string };
+    if (jobId && e?.type === "result") void updateJob(jobId, { text: "", meta: { result: obj }, status: "done" });
+    if (jobId && e?.type === "error") void updateJob(jobId, { status: "error" });
+    try { push(encoder.encode(JSON.stringify(obj) + "\n")); } catch { /* تجاهل */ }
+  };
+
+  const work = (async () => {
+    {
       if (jobId) send({ type: "job", jobId });
       // حصّة أولًا ثم نقاط: خصم الحصّة مرّة بعد النجاح؛ النقاط تُخصم عند البوابة إن لزم.
       let accessVia: "quota" | "credits" | "open" = "quota";
@@ -429,7 +446,25 @@ export async function POST(request: NextRequest) {
         console.error("[agent-search] Error:", error);
         send({ type: "error", message: "تعذّر تنفيذ البحث الوكيلي حاليًا." });
       } finally {
-        try { controller.close(); } catch { /* أُغلق مسبقًا (غادر العميل) */ }
+        finish();
+      }
+    }
+  })();
+
+  // نُبقي العمل حيًّا بعد انقطاع الاتّصال حتى يكتمل ويُحفَظ ناتجه. غير متاحٍ محليًّا → لا يضرّ:
+  // العمل (IIFE) يجري أصلًا؛ waitUntil يمنع المنصّة من قتله مبكّرًا فقط.
+  try { waitUntil(work); } catch { /* بيئةٌ لا تدعمه — العمل مستمرّ على أيّ حال */ }
+
+  // البثّ يستنزف الطابور: يوقظه العمل عند كلّ حدث، ويُغلق حين ينتهي العمل ويفرغ الطابور.
+  // إن انقطع (غادر العميل) يبقى العمل يعمل عبر waitUntil؛ الطابور يُهمَل ويُجمَع تلقائيًّا.
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      if (!queue.length && !finished) {
+        await new Promise<void>((resolve) => { wake = resolve; });
+      }
+      while (queue.length) controller.enqueue(queue.shift()!);
+      if (finished && !queue.length) {
+        try { controller.close(); } catch { /* أُغلق مسبقًا */ }
       }
     }
   });
