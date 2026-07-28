@@ -25,7 +25,7 @@ async function main() {
       assert(t.input_schema && (t.input_schema as { type?: string }).type === "object", `مخطّط أداة: ${t.name}`);
     }
     const names = HAKEEM_TOOL_DEFS.map((t) => t.name);
-    for (const need of ["resolve_scope", "legal_search", "fetch_legal_source", "read_attachment", "load_skill"]) {
+    for (const need of ["resolve_scope", "legal_search", "deep_legal_study", "fetch_legal_source", "read_attachment", "load_skill"]) {
       assert(names.includes(need as (typeof names)[number]), `أداة مفقودة: ${need}`);
     }
   });
