@@ -1,0 +1,183 @@
+// سجلّ الأدوات — قدرات Claude التنفيذيّة بمخطّطات صارمة. Claude يختارها بنفسه؛ الكود
+// يتحقّق من المدخلات وينفّذ ويعيد النتيجة إليه. كلّ مصدرٍ قانونيّ يعود بمعرّفه الحقيقيّ
+// (sourceId = معرّف المادة في النواة) فيبقى الإسناد مؤصَّلًا ولا يخترع Claude رقمًا.
+import { prisma } from "@/lib/prisma";
+import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
+import { resolveGoverningSystems } from "@/lib/modules/agents/thinking/resolve-scope";
+import { loadSkillGuide, skillsIndex } from "./skills";
+
+/** مصدرٌ استُرجِع خلال الجلسة — يُجمَّع للأساس (basis) ولحارس الإسناد. */
+export interface RetrievedSource {
+  sourceId: string;
+  systemName: string;
+  articleNumber: number;
+  articleTitle: string;
+  snippet: string;
+  status: string | null;
+  internalUrl: string;
+}
+
+/** سياق الجلسة الذي تعمل عليه الأدوات — يحمل المستند المرفق ويجمع المصادر المستَرجَعة. */
+export interface AgentContext {
+  document: string;
+  /** المصادر المستَرجَعة عبر الجلسة، مفهرسةً بمعرّفها (منع التكرار). */
+  sources: Map<string, RetrievedSource>;
+}
+
+export function createAgentContext(document: string): AgentContext {
+  return { document: document ?? "", sources: new Map() };
+}
+
+// ── تعريفات الأدوات (مخطّط Anthropic) ──
+export const HAKEEM_TOOL_DEFS = [
+  {
+    name: "resolve_scope",
+    description:
+      "حدّد الأنظمة السعودية الحاكمة لمسألةٍ قانونية قبل البحث. استعملها حين لا يكون النطاق واضحًا لتضييق البحث. لا تستعملها للتحية أو الحديث العام.",
+    input_schema: {
+      type: "object",
+      required: ["question"],
+      properties: { question: { type: "string", description: "المسألة القانونية بصياغةٍ واضحة." } },
+    },
+  },
+  {
+    name: "legal_search",
+    description:
+      "ابحث في مصادر الأنظمة السعودية الموثّقة (النواة القانونية) حين يحتاج المستخدم إلى حكمٍ أو مادةٍ أو نظامٍ مؤصَّل. لا تستعملها للتحية أو الاستماع أو تلخيص كلام المستخدم أو الصياغة اللغوية المجرّدة. كلّ نتيجةٍ تعود بمعرّفها (sourceId) لتستشهد به.",
+    input_schema: {
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: { type: "string", description: "عبارة البحث القانونية." },
+        systemIds: { type: "array", items: { type: "string" }, description: "معرّفات الأنظمة من resolve_scope لتضييق النطاق (اختياري)." },
+        limit: { type: "integer", minimum: 1, maximum: 30, description: "أقصى عدد نتائج (افتراضي 8)." },
+      },
+    },
+  },
+  {
+    name: "fetch_legal_source",
+    description: "اقرأ النصّ الكامل لمادةٍ بمعرّفها (sourceId) الذي أعاده legal_search، قبل الاستشهاد الدقيق بها.",
+    input_schema: {
+      type: "object",
+      required: ["sourceId"],
+      properties: { sourceId: { type: "string", description: "معرّف المادة من نتيجة legal_search." } },
+    },
+  },
+  {
+    name: "read_attachment",
+    description: "اقرأ نصّ المستند الذي أرفقه المستخدم في هذه الجلسة (إن وُجد).",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "load_skill",
+    description:
+      "حمّل منهج عملٍ متخصّص (مهارة) لتتّبعه في مهمّةٍ معيّنة. المهارات المتاحة: " +
+      skillsIndex().map((s) => `«${s.name}» (${s.description})`).join(" · "),
+    input_schema: {
+      type: "object",
+      required: ["name"],
+      properties: { name: { type: "string", description: "اسم المهارة كما في القائمة." } },
+    },
+  },
+] as const;
+
+export type ToolName = (typeof HAKEEM_TOOL_DEFS)[number]["name"];
+
+// ── منفّذ الأدوات ──
+export interface ToolExecResult {
+  ok: boolean;
+  /** حمولةٌ تعود إلى Claude كـ tool_result (JSON-صديقة). */
+  data: unknown;
+  /** ملصقٌ قصير للعرض في مؤشّر الخطوات. */
+  label: string;
+}
+
+export async function executeTool(name: string, rawInput: unknown, ctx: AgentContext): Promise<ToolExecResult> {
+  const input = (rawInput ?? {}) as Record<string, unknown>;
+  try {
+    if (name === "resolve_scope") {
+      const question = String(input.question ?? "").trim();
+      if (!question) return { ok: false, data: { error: "question مطلوب" }, label: "تحديد النطاق" };
+      const res = await resolveGoverningSystems(question);
+      return {
+        ok: true,
+        data: { systems: res.systems.map((s) => ({ id: s.id, name: s.name })), reasoning: res.reasoning, source: res.source },
+        label: `النطاق: ${res.systems.map((s) => s.name).slice(0, 3).join("، ") || "غير محدَّد"}`,
+      };
+    }
+
+    if (name === "legal_search") {
+      const query = String(input.query ?? "").trim();
+      if (!query) return { ok: false, data: { error: "query مطلوب" }, label: "بحث نظاميّ" };
+      const systemIds = Array.isArray(input.systemIds) ? input.systemIds.map(String).filter(Boolean) : undefined;
+      const limit = Math.min(Math.max(Number(input.limit) || 8, 1), 30);
+      const res = await searchLegalCore({
+        query,
+        systemIds: systemIds?.length ? systemIds : undefined,
+        limit,
+        semantic: true,
+        requireConceptCoverage: true,
+        includeSnippets: true,
+      });
+      const results = res.results.map((r) => {
+        const src: RetrievedSource = {
+          sourceId: r.articleId,
+          systemName: r.systemName,
+          articleNumber: r.articleNumber,
+          articleTitle: r.articleTitle,
+          snippet: (r.snippet || r.articleText || "").slice(0, 500),
+          status: r.status,
+          internalUrl: r.internalUrl,
+        };
+        ctx.sources.set(src.sourceId, src);
+        return src;
+      });
+      return {
+        ok: true,
+        data: { total: res.total, exhaustive: res.exhaustive ?? false, count: results.length, results },
+        label: `بحث «${query.slice(0, 30)}» → ${results.length} مادة`,
+      };
+    }
+
+    if (name === "fetch_legal_source") {
+      const sourceId = String(input.sourceId ?? "").trim();
+      if (!sourceId) return { ok: false, data: { error: "sourceId مطلوب" }, label: "قراءة مصدر" };
+      const a = await prisma.legalArticle.findUnique({
+        where: { id: sourceId },
+        select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true },
+      });
+      if (!a) return { ok: false, data: { error: "لم يُعثر على المادة بهذا المعرّف" }, label: "قراءة مصدر" };
+      const src: RetrievedSource = {
+        sourceId: a.id,
+        systemName: a.lawName,
+        articleNumber: a.articleNumber,
+        articleTitle: a.title,
+        snippet: a.content.slice(0, 500),
+        status: a.status,
+        internalUrl: `/dashboard/legal-core/articles/${a.id}`,
+      };
+      ctx.sources.set(src.sourceId, src);
+      return {
+        ok: true,
+        data: { sourceId: a.id, systemName: a.lawName, articleNumber: a.articleNumber, title: a.title, content: a.content, status: a.status },
+        label: `قراءة ${a.lawName} م/${a.articleNumber}`,
+      };
+    }
+
+    if (name === "read_attachment") {
+      if (!ctx.document.trim()) return { ok: true, data: { hasAttachment: false, text: "" }, label: "لا مستند مرفق" };
+      return { ok: true, data: { hasAttachment: true, text: ctx.document.slice(0, 80000) }, label: "قراءة المستند المرفق" };
+    }
+
+    if (name === "load_skill") {
+      const skillName = String(input.name ?? "").trim();
+      const guide = loadSkillGuide(skillName);
+      if (!guide) return { ok: false, data: { error: `لا مهارة بهذا الاسم. المتاح: ${skillsIndex().map((s) => s.name).join(", ")}` }, label: "تحميل مهارة" };
+      return { ok: true, data: { name: skillName, guide }, label: `تحميل مهارة «${skillName}»` };
+    }
+
+    return { ok: false, data: { error: `أداةٌ غير معروفة: ${name}` }, label: "أداة غير معروفة" };
+  } catch (e) {
+    return { ok: false, data: { error: e instanceof Error ? e.message : "خطأ في تنفيذ الأداة" }, label: `خطأ في ${name}` };
+  }
+}
