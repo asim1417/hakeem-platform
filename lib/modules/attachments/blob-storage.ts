@@ -1,11 +1,27 @@
 import { randomUUID } from "crypto";
+import { createReadStream } from "node:fs";
+import { readFile } from "node:fs/promises";
 
 type UploadInput = {
   file: File;
   prefix?: string;
 };
 
+export type StreamUploadInput = {
+  filePath: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  prefix?: string;
+};
+
 export type StorageBackend = "azure-blob" | "sharepoint" | "metadata-only";
+
+export type UploadResult = {
+  storageMode: StorageBackend;
+  storageKey: string;
+  url?: string;
+};
 
 export function azureConfigured() {
   return Boolean(process.env.AZURE_STORAGE_ACCOUNT && process.env.AZURE_STORAGE_CONTAINER && process.env.AZURE_STORAGE_SAS_TOKEN);
@@ -47,12 +63,16 @@ async function graphToken(): Promise<string> {
   return data.access_token;
 }
 
+function buildStorageKey(prefix: string | undefined, fileName: string) {
+  const safeName = fileName.replace(/[^\w.\-ء-ي]+/g, "-");
+  return `${prefix || "attachments"}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${safeName}`;
+}
+
 async function uploadToSharePoint(input: UploadInput) {
   const driveId = process.env.SHAREPOINT_DRIVE_ID!;
-  const safeName = input.file.name.replace(/[^\w.\-ء-ي]+/g, "-");
-  const path = `${input.prefix || "attachments"}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${safeName}`;
+  const pathKey = buildStorageKey(input.prefix, input.file.name);
   const token = await graphToken();
-  const url = `https://graph.microsoft.com/v1.0/drives/${encodeURIComponent(driveId)}/root:/${path
+  const url = `https://graph.microsoft.com/v1.0/drives/${encodeURIComponent(driveId)}/root:/${pathKey
     .split("/")
     .map(encodeURIComponent)
     .join("/")}:/content`;
@@ -63,10 +83,10 @@ async function uploadToSharePoint(input: UploadInput) {
   });
   if (!response.ok) throw new Error(`تعذّر رفع الملف إلى SharePoint: ${response.status}`);
   const item = (await response.json()) as { webUrl?: string };
-  return { storageMode: "sharepoint" as const, storageKey: `sharepoint/${path}`, url: item.webUrl };
+  return { storageMode: "sharepoint" as const, storageKey: `sharepoint/${pathKey}`, url: item.webUrl };
 }
 
-export async function uploadAttachmentBlob(input: UploadInput) {
+export async function uploadAttachmentBlob(input: UploadInput): Promise<UploadResult> {
   if (!azureConfigured()) {
     if (sharePointConfigured()) return uploadToSharePoint(input);
     const storageKey = `metadata-only/${Date.now()}-${input.file.name}`;
@@ -76,8 +96,7 @@ export async function uploadAttachmentBlob(input: UploadInput) {
   const account = process.env.AZURE_STORAGE_ACCOUNT!;
   const container = process.env.AZURE_STORAGE_CONTAINER!;
   const sas = normalizeSas(process.env.AZURE_STORAGE_SAS_TOKEN!);
-  const safeName = input.file.name.replace(/[^\w.\-ء-ي]+/g, "-");
-  const storageKey = `${input.prefix || "attachments"}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${safeName}`;
+  const storageKey = buildStorageKey(input.prefix, input.file.name);
   const url = `https://${account}.blob.core.windows.net/${container}/${encodeURIComponent(storageKey).replace(/%2F/g, "/")}${sas}`;
   const response = await fetch(url, {
     method: "PUT",
@@ -87,6 +106,43 @@ export async function uploadAttachmentBlob(input: UploadInput) {
     },
     body: Buffer.from(await input.file.arrayBuffer())
   });
+  if (!response.ok) throw new Error(`تعذر رفع الملف إلى Azure Blob: ${response.status}`);
+  return { storageMode: "azure-blob", storageKey, url: publicBlobUrl(storageKey) };
+}
+
+/**
+ * رفع من مسار ملف مؤقت.
+ * Azure: دفق من القرص. SharePoint: قراءة ملف مرة للـ PUT (قيد Graph الحالي).
+ * يُبقي uploadAttachmentBlob دون كسر.
+ */
+export async function uploadAttachmentFromPath(input: StreamUploadInput): Promise<UploadResult> {
+  if (!azureConfigured()) {
+    if (sharePointConfigured()) {
+      const buf = await readFile(input.filePath);
+      const file = new File([buf], input.fileName, { type: input.mimeType });
+      return uploadToSharePoint({ file, prefix: input.prefix });
+    }
+    const storageKey = `metadata-only/${Date.now()}-${input.fileName}`;
+    return { storageMode: "metadata-only", storageKey, url: undefined };
+  }
+
+  const account = process.env.AZURE_STORAGE_ACCOUNT!;
+  const container = process.env.AZURE_STORAGE_CONTAINER!;
+  const sas = normalizeSas(process.env.AZURE_STORAGE_SAS_TOKEN!);
+  const storageKey = buildStorageKey(input.prefix, input.fileName);
+  const url = `https://${account}.blob.core.windows.net/${container}/${encodeURIComponent(storageKey).replace(/%2F/g, "/")}${sas}`;
+  const stream = createReadStream(input.filePath);
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "x-ms-blob-type": "BlockBlob",
+      "Content-Type": input.mimeType || "application/octet-stream",
+      "Content-Length": String(input.size)
+    },
+    body: stream as unknown as BodyInit,
+    // undici يتطلب duplex عند إرسال جسم متدفق
+    duplex: "half"
+  } as RequestInit & { duplex: "half" });
   if (!response.ok) throw new Error(`تعذر رفع الملف إلى Azure Blob: ${response.status}`);
   return { storageMode: "azure-blob", storageKey, url: publicBlobUrl(storageKey) };
 }
