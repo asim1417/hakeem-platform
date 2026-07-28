@@ -158,6 +158,18 @@ check("الجودة: نص قانوني سليم يقيَّم عالياً، وم
   assert.equal(garbled.grade, "review");
 });
 
+check("الجودة: يحدّد آليّة التعامل — سليم يُستعمَل، معطوب يلزمه OCR", () => {
+  // نصّ رقميّ سليم ⇐ آليّة «text-usable».
+  const clean = assessQuality(JUDGMENT_TEXT + " " + JUDGMENT_TEXT);
+  assert.equal(clean.mechanism, "text-usable");
+  // طبقة معطوبة (خريطة ToUnicode مفقودة → يونانيّ/IPA بدل العربية) ⇐ آليّة «ocr-required»
+  // مع تشخيصٍ صريحٍ يذكر OCR بدل «تحتاج مراجعة» الغامضة.
+  const broken = assessQuality("2¢Pµ dGⱧƶúφµ dɣɛʈφµꞤ¢àǭ ᶙ Ÿ Ÿ Ꝫᴦᴦᶙ dɣɛʈφµ Òɛ? ñ ¢Pµ dGⱧƶúφµ ɛΩλɥannjφµ");
+  assert.equal(broken.mechanism, "ocr-required");
+  assert.equal(broken.grade, "review");
+  assert.ok(/OCR|صورة الصفحة/.test(broken.label));
+});
+
 // ── العينة عبر الخط الكامل ──
 check("العينة: ستّ وثائق كلها مصنّفة وبرموز فريدة", () => {
   const docs = sampleCaseDocuments();

@@ -99,10 +99,21 @@ export interface ExtractedEntity {
 
 export type QualityGrade = "high" | "medium" | "review";
 
+/**
+ * آليّة التعامل الموصى بها مع الوثيقة — القرار الصريح الذي «يفرّق» بين الوثائق:
+ *  - text-usable: طبقة نصّ رقميّة سليمة → تُستعمَل مباشرةً (لا OCR).
+ *  - review:      نصّ مقروء لكن يُستحسن تدقيقه (جودة متوسطة/منخفضة غير معطوبة).
+ *  - ocr-required: النصّ غير صالح (طبقة معطوبة/ترتيب بصريّ/صفحات مفقودة) →
+ *                  المصدر الصحيح الوحيد هو OCR على صورة الصفحة (Gemini السحابيّ أو المحليّ).
+ */
+export type DocMechanism = "text-usable" | "review" | "ocr-required";
+
 export interface QualityAssessment {
   score: number; // 0–100 — مؤشر إرشادي (heuristic)، ليس قياس OCR فعلياً
   grade: QualityGrade;
   label: string;
+  /** آليّة التعامل الموصى بها — يحدّدها المصنّف حسب حالة استخراج الوثيقة. */
+  mechanism: DocMechanism;
   /** عدد الصفحات التي تعذّرت قراءتها (نصّها مفقود فعلياً) — يخفض التقييم ويستوجب المراجعة */
   failedPages?: number;
 }
