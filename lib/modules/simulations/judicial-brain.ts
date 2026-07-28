@@ -60,6 +60,12 @@ export type JudicialGrounding = {
  * يسترجع مواد النواة الحقيقيّة ذات الصلة (مع إبراز نظام الإثبات) ويجمع أرقام المواد المسموحة.
  * يُستعمَل لحقن السياق المؤرَّض في توجيه القاضي قبل التوليد.
  */
+// ضوضاءٌ تنظيميّة/إداريّة لا تصلح سندًا موضوعيًّا للحكم (منقول من lcIsAdminNoise الكلاسيكيّ).
+function isAdminNoise(r: LegalCoreResult): boolean {
+  const hay = `${r.systemName ?? ""} ${r.articleText ?? ""}`;
+  return /آلية العمل التنفيذية|ديوان المظالم|استحداث|السلك القضائي|المجلس الأعلى للقضاء|الترتيبات التنظيميّة|الترتيبات التنظيمية|الوظائف الإداريّة|الوظائف الإدارية|نفاذ نظام القضاء/.test(hay);
+}
+
 const EMPTY_GROUNDING: JudicialGrounding = {
   hasArticles: false,
   contextText: "",
@@ -140,9 +146,12 @@ export async function groundForJudge(text: string, limit = 6, scopeSystems?: str
     };
   }
 
-  // إسقاط المنسوخ ما لم يُفقِر النتائج (شبكة أمان)، ثمّ إعادة ترتيبٍ بالسلطة والحالة.
-  const inForce = results.filter((r) => articleStatusBadge(r.status)?.label !== "منسوخة");
-  const pooled = inForce.length >= Math.min(limit, 3) ? inForce : results;
+  // إسقاط الضوضاء التنظيميّة/الإداريّة (منقول من lcIsAdminNoise) ثمّ المنسوخ (شبكةُ أمانٍ لكلٍّ)،
+  // ثمّ إعادة ترتيبٍ بالسلطة والحالة — فلا تتسرّب موادُّ تنظيميّة لا تصلح سندًا موضوعيًّا للحكم.
+  const denoised = results.filter((r) => !isAdminNoise(r));
+  const noiseFree = denoised.length >= Math.min(limit, 3) ? denoised : results;
+  const inForce = noiseFree.filter((r) => articleStatusBadge(r.status)?.label !== "منسوخة");
+  const pooled = inForce.length >= Math.min(limit, 3) ? inForce : noiseFree;
   const top = rerankArticles(pooled).slice(0, limit);
   return toGrounding(top);
 }
