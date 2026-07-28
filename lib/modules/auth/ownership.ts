@@ -14,6 +14,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { SafeUser } from "@/lib/modules/auth/session";
+import { resolveAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 
 type Actor = Pick<SafeUser, "id" | "role">;
 
@@ -83,6 +84,32 @@ export function attachmentListWhere(user: Actor): Prisma.AttachmentWhereInput | 
 /** شرط الاستشارات. */
 export function consultationListWhere(user: Actor): Prisma.ConsultationWhereInput | undefined {
   return isSystemAdmin(user) ? undefined : { userId: user.id };
+}
+
+/**
+ * ملكيّة مرفق واحد (GET/DELETE/download).
+ *
+ * القاعدة:
+ * - المدير يتجاوز.
+ * - إن وُجدت قضية مرتبطة (caseId غير null): ملكيّة القضية فقط — لا يُستخدم uploadedBy للتجاوز.
+ * - إن حُذفت القضية أو فُقدت العلاقة: الرفض لغير المدير.
+ * - المرفق اليتيم (caseId null): uploadedBy في metadata / JSON القديم فقط.
+ */
+export function ownsAttachment(
+  user: Actor,
+  input: {
+    caseId: string | null;
+    caseOwnerId: string | null;
+    extractedText: string | null;
+    metadata: unknown;
+  }
+): boolean {
+  if (isSystemAdmin(user)) return true;
+  if (input.caseId !== null) {
+    return input.caseOwnerId !== null && input.caseOwnerId === user.id;
+  }
+  const meta = resolveAttachmentMetadata(input.extractedText, input.metadata);
+  return meta.uploadedBy === user.id;
 }
 
 /**

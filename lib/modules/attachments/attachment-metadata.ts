@@ -82,7 +82,8 @@ export function metadataToDtoFields(metadata: Record<string, unknown>): Attachme
 }
 
 /**
- * توافق خلفي: يقرأ JSON من extractedText فقط (السلوك السابق).
+ * توافق خلفي: يقرأ JSON metadata القديم من extractedText فقط.
+ * JSON العام (بلا مفاتيح metadata المعروفة) لا يُعامل كـ metadata.
  * للمسارات الجديدة فضّل resolveAttachmentMetadata.
  */
 export function parseAttachmentMetadata(value: string | null): AttachmentMetadata {
@@ -92,10 +93,13 @@ export function parseAttachmentMetadata(value: string | null): AttachmentMetadat
   }
   if (!value) return {};
   try {
-    return JSON.parse(value) as AttachmentMetadata;
+    const parsed = JSON.parse(value);
+    // JSON صالح لكنه ليس metadata مرفقات — لا تسرّبه كحقول DTO.
+    if (parsed && typeof parsed === "object") return {};
   } catch {
     return { note: value };
   }
+  return {};
 }
 
 /** دمج عمود metadata الصريح مع التوافق الخلفي لـ extractedText. */

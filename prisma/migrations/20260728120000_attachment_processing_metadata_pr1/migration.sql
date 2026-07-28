@@ -56,15 +56,5 @@ ALTER TABLE "attachments"
   ADD COLUMN IF NOT EXISTS "extractionCompletedAt" TIMESTAMP(3),
   ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
--- Ensure existing rows keep defaults without rewriting extractedText.
-UPDATE "attachments"
-SET "processingStatus" = 'UPLOADED'
-WHERE "processingStatus" IS NULL;
-
-UPDATE "attachments"
-SET "sourceProvider" = 'LOCAL_UPLOAD'
-WHERE "sourceProvider" IS NULL;
-
-UPDATE "attachments"
-SET "updatedAt" = COALESCE("updatedAt", "createdAt", CURRENT_TIMESTAMP)
-WHERE "updatedAt" IS NULL;
+-- لا إعادة كتابة extractedText ولا تحديثات بيانات ضخمة.
+-- القيم الافتراضية تُطبَّق على الصفوف القائمة عبر DEFAULT عند إضافة العمود (PG 11+ بلا rewrite للثوابت).

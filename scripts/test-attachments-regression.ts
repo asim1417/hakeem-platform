@@ -17,7 +17,8 @@ import {
   resolveStoredAttachmentUrl,
   toAttachmentDto
 } from "@/lib/modules/attachments/attachment-metadata";
-import { attachmentListWhere, assertCaseOwnedForAttachment } from "@/lib/modules/auth/ownership";
+import { decideAttachmentMetadataMigration } from "@/lib/modules/attachments/migrate-attachment-metadata-core";
+import { attachmentListWhere, assertCaseOwnedForAttachment, ownsAttachment } from "@/lib/modules/auth/ownership";
 import { processExtractedText } from "@/lib/modules/document-inspection/pipeline";
 
 let passed = 0;
@@ -159,11 +160,149 @@ check("DTO: عمود metadata يتفوّق على مفاتيح JSON القديم
   assert.equal(decoded.metadata.size, 2);
 });
 
-check("parseAttachmentMetadata يبقى متوافقًا مع المستهلكين القدامى", () => {
+check("parseAttachmentMetadata: JSON عام ليس metadata + نص حر كملاحظة", () => {
   const parsed = parseAttachmentMetadata(JSON.stringify({ size: 10, storageMode: "azure-blob", uploadedBy: "u" }));
   assert.equal(parsed.size, 10);
   assert.equal(parseAttachmentMetadata(null).size, undefined);
   assert.equal(parseAttachmentMetadata("نص حر").note, "نص حر");
+  assert.deepEqual(parseAttachmentMetadata(JSON.stringify({ foo: 1 })), {});
+  assert.deepEqual(parseAttachmentMetadata("{not-json"), { note: "{not-json" });
+});
+
+check("decoder: extractedText=null وmetadata صريح", () => {
+  const d = decodeLegacyAttachmentPayload(null, { uploadedBy: "u", storageMode: "azure-blob" });
+  assert.equal(d.legacyMetadataDetected, false);
+  assert.equal(d.actualText, null);
+  assert.equal(d.metadata.uploadedBy, "u");
+});
+
+check("الأولوية عند التعارض: metadata الجديد يغلب JSON القديم", () => {
+  const legacy = JSON.stringify({ uploadedBy: "legacy", storageMode: "metadata-only", storageUrl: "https://old.example/x" });
+  const fields = resolveAttachmentMetadata(legacy, {
+    uploadedBy: "explicit",
+    storageMode: "sharepoint",
+    storageUrl: "https://new.example/x"
+  });
+  assert.equal(fields.uploadedBy, "explicit");
+  assert.equal(fields.storageMode, "sharepoint");
+  assert.equal(fields.storageUrl, "https://new.example/x");
+});
+
+// ── ملكية حقيقية (طبقة ownsAttachment) ──
+check("يتيم يملكه الـ uploader: مسموح", () => {
+  assert.equal(
+    ownsAttachment(
+      { id: "u1", role: "LAWYER" },
+      { caseId: null, caseOwnerId: null, extractedText: null, metadata: { uploadedBy: "u1" } }
+    ),
+    true
+  );
+});
+
+check("يتيم لمستخدم آخر: مرفوض", () => {
+  assert.equal(
+    ownsAttachment(
+      { id: "u1", role: "LAWYER" },
+      {
+        caseId: null,
+        caseOwnerId: null,
+        extractedText: JSON.stringify({ uploadedBy: "u2", storageMode: "azure-blob" }),
+        metadata: null
+      }
+    ),
+    false
+  );
+});
+
+check("مرتبط بقضية مستخدم آخر: مرفوض حتى لو uploadedBy للمهاجم", () => {
+  assert.equal(
+    ownsAttachment(
+      { id: "attacker", role: "LAWYER" },
+      {
+        caseId: "case-1",
+        caseOwnerId: "owner",
+        extractedText: null,
+        metadata: { uploadedBy: "attacker" }
+      }
+    ),
+    false
+  );
+});
+
+check("مرتبط بقضية المالك: مسموح", () => {
+  assert.equal(
+    ownsAttachment(
+      { id: "owner", role: "LAWYER" },
+      { caseId: "case-1", caseOwnerId: "owner", extractedText: null, metadata: { uploadedBy: "other" } }
+    ),
+    true
+  );
+});
+
+check("قضية محذوفة (caseId موجود بلا owner): مرفوض لغير المدير", () => {
+  assert.equal(
+    ownsAttachment(
+      { id: "u1", role: "LAWYER" },
+      { caseId: "gone", caseOwnerId: null, extractedText: null, metadata: { uploadedBy: "u1" } }
+    ),
+    false
+  );
+  assert.equal(
+    ownsAttachment(
+      { id: "admin", role: "SYSTEM_ADMIN" },
+      { caseId: "gone", caseOwnerId: null, extractedText: null, metadata: { uploadedBy: "u1" } }
+    ),
+    true
+  );
+});
+
+check("تنزيل SharePoint قديم: resolveStoredAttachmentUrl من JSON", () => {
+  const legacy = JSON.stringify({
+    storageMode: "sharepoint",
+    storageUrl: "https://contoso.sharepoint.com/sites/x/doc.pdf",
+    uploadedBy: "u1"
+  });
+  assert.equal(
+    resolveStoredAttachmentUrl(legacy, null),
+    "https://contoso.sharepoint.com/sites/x/doc.pdf"
+  );
+  assert.ok(downloadSrc.includes("ownsAttachment"));
+  assert.ok(downloadSrc.includes("resolveStoredAttachmentUrl"));
+});
+
+check("ترحيل: JSON قديم مؤهل · نص عادي يُتخطى · idempotent بعد التفريغ", () => {
+  const legacy = JSON.stringify({ uploadedBy: "u", storageMode: "azure-blob" });
+  const migrate = decideAttachmentMetadataMigration({
+    id: "1",
+    fileName: "a.pdf",
+    extractedText: legacy,
+    metadata: null
+  });
+  assert.equal(migrate.action, "migrate");
+  assert.equal(
+    decideAttachmentMetadataMigration({
+      id: "2",
+      fileName: "b.pdf",
+      extractedText: "نص وثيقة",
+      metadata: null
+    }).action,
+    "skip"
+  );
+  assert.equal(
+    decideAttachmentMetadataMigration({
+      id: "3",
+      fileName: "c.pdf",
+      extractedText: null,
+      metadata: { uploadedBy: "u", storageMode: "azure-blob" }
+    }).action,
+    "skip"
+  );
+});
+
+check("مسارات [id] تستخدم ownsAttachment الموحّد", () => {
+  assert.ok(idRouteSrc.includes("ownsAttachment"));
+  assert.ok(idRouteSrc.includes("caseId:"));
+  assert.ok(downloadSrc.includes("caseId:"));
 });
 
 // ── 10 تراجع runEngine / ExtractOut ──
@@ -209,11 +348,15 @@ check("الواجهة لا تزال تستدعي /api/attachments للرفع و�
   assert.ok(managerSrc.includes('accept=".pdf,.docx,.txt,.png,.jpg,.jpeg'));
 });
 
-check("سكربت الترحيل يدعم dry-run وapply", () => {
+check("سكربت الترحيل: dry-run افتراضي + دفعات + لا تسريب قيم", () => {
   const migrate = read("scripts/migrate-attachment-metadata.ts");
-  assert.ok(migrate.includes("--dry-run") || migrate.includes("dry-run"));
+  assert.ok(migrate.includes("dry-run"));
   assert.ok(migrate.includes("--apply"));
-  assert.ok(migrate.includes("decodeLegacyAttachmentPayload"));
+  assert.ok(migrate.includes("BATCH_SIZE"));
+  assert.ok(migrate.includes("decideAttachmentMetadataMigration"));
+  assert.ok(migrate.includes("eligible"));
+  assert.ok(migrate.includes("failed"));
+  assert.doesNotMatch(migrate, /console\.log\([^\)]*storageUrl/);
 });
 
 console.log(`\nكل اختبارات regression المرفقات ناجحة (${passed})`);
