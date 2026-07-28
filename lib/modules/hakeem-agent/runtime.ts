@@ -153,7 +153,9 @@ export async function runHakeemAgent(input: {
       toolResults.push({
         type: "tool_result",
         tool_use_id: tu.id,
-        content: JSON.stringify(exec.data).slice(0, 60000),
+        // سقفٌ واسع (٢٤٠ ألف حرف) ليستوعب المستند المرفق كاملًا عند read_attachment؛
+        // بقيّة الأدوات تحدّ مخرجاتها ذاتيًّا فلا تبلغه.
+        content: JSON.stringify(exec.data).slice(0, 240000),
         is_error: !exec.ok,
       });
     }

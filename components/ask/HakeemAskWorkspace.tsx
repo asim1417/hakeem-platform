@@ -426,18 +426,19 @@ export function HakeemAskWorkspace({
         );
       }
 
-      // حد الإرسال في /api/ai/agent-search للمستند = 12000 حرفًا
-      const MAX_DOC = 12000;
+      // حدّ إرسال المستند إلى /api/ai/agent-search: رُفِع إلى 200000 حرفًا ليستوعب الوثيقة
+      // القانونية كاملةً (حكمٌ/عقدٌ طويل). الأضخم من ذلك (مئات الصفحات) مساره منصّة الوثائق.
+      const MAX_DOC = 200_000;
       const forSend = trimmed.length > MAX_DOC ? trimmed.slice(0, MAX_DOC) : trimmed;
       setAttachedDoc(forSend);
       setAttachedName(file.name);
       setAttachKind(kind);
       setAttachStatus(
         trimmed.length > MAX_DOC
-          ? `أُرفق المستند (${kind}) — سيُرسل أول ${MAX_DOC.toLocaleString("ar-SA")} حرفًا فقط.`
+          ? `أُرفق المستند (${kind}) — طويلٌ جدًّا؛ سيُرسل أوّل ${MAX_DOC.toLocaleString("ar-SA")} حرفٍ منه.`
           : warning
             ? `أُرفق المستند (${kind}) — ${warning}`
-            : `أُرفق المستند (${kind}).`
+            : `أُرفق المستند (${kind}) كاملًا (${trimmed.length.toLocaleString("ar-SA")} حرفًا).`
       );
       setAttachError("");
     } catch (err) {

@@ -216,7 +216,8 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
 
     if (name === "read_attachment") {
       if (!ctx.document.trim()) return { ok: true, data: { hasAttachment: false, text: "" }, label: "لا مستند مرفق" };
-      return { ok: true, data: { hasAttachment: true, text: ctx.document.slice(0, 80000) }, label: "قراءة المستند المرفق" };
+      // المستند كاملًا (مُقتطَعٌ أصلًا عند حدّ المسار 200 ألف حرف) — لا نقتطعه هنا ثانيةً.
+      return { ok: true, data: { hasAttachment: true, chars: ctx.document.length, text: ctx.document }, label: "قراءة المستند المرفق كاملًا" };
     }
 
     if (name === "load_skill") {
