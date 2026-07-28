@@ -367,6 +367,26 @@ model Attachment {
   @@map("attachments")
 }
 
+/// سجلات Idempotency لعمليات الاستيراد — لا تخزن URL خامًا.
+model ApiIdempotencyRecord {
+  id           String   @id @default(cuid())
+  userId       String
+  scope        String
+  keyHash      String
+  requestHash  String
+  responseCode Int?
+  responseBody Json?
+  entityId     String?
+  status       String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, scope, keyHash])
+  @@index([expiresAt])
+  @@map("api_idempotency_records")
+}
+
 model Consultation {
   id            String                 @id @default(cuid())
   userId        String

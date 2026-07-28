@@ -14,6 +14,8 @@
     "test:document-inspection": "tsx scripts/test-document-inspection.ts",
     "test:attachments-regression": "tsx scripts/test-attachments-regression.ts",
     "test:direct-url": "tsx scripts/test-direct-url.ts",
+    "test:document-hardening": "tsx scripts/test-document-hardening.ts",
+    "documents:cleanup-temp": "tsx scripts/documents-cleanup-temp.ts",
     "migrate:attachment-metadata": "tsx scripts/migrate-attachment-metadata.ts",
     "accuracy": "tsx scripts/measure-accuracy.ts",
     "doc-node": "tsx services/doc-node/server.ts",
