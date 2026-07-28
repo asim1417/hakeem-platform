@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
+import { resolveStoredAttachmentUrl } from "@/lib/modules/attachments/attachment-metadata";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { isSystemAdmin } from "@/lib/modules/auth/ownership";
+import { ownsAttachment } from "@/lib/modules/auth/ownership";
 import { signedDownloadUrl } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +15,21 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     where: { id: params.id },
     include: { caseFile: { select: { ownerId: true } } }
   });
-  // [إصلاح تدقيق SEC-005: تحقّق من الملكيّة قبل إصدار رابط التنزيل الموقّع.]
-  const isAdmin = isSystemAdmin(gate.user!);
-  const ownerId = attachment?.caseFile?.ownerId ?? null;
-  if (!attachment || (!isAdmin && ownerId !== gate.user!.id)) {
+  if (
+    !attachment ||
+    !ownsAttachment(gate.user!, {
+      caseId: attachment.caseId,
+      caseOwnerId: attachment.caseFile?.ownerId ?? null,
+      extractedText: attachment.extractedText,
+      metadata: attachment.metadata
+    })
+  ) {
     return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
   }
-  // Azure: رابط موقّع. SharePoint: رابط webUrl المخزَّن في الميتاداتا.
+  // Azure: رابط موقّع. SharePoint: رابط webUrl المخزَّن في metadata (أو JSON القديم).
   let url = signedDownloadUrl(attachment.storageKey);
   if (!url && attachment.storageKey.startsWith("sharepoint/")) {
-    url = readStoredUrl(attachment.extractedText);
+    url = resolveStoredAttachmentUrl(attachment.extractedText, attachment.metadata);
   }
   if (!url) return NextResponse.json({ message: "هذا المرفق مسجل metadata-only ولا يحتوي ملفًا مخزنًا للتنزيل." }, { status: 404 });
 
@@ -36,14 +42,4 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   });
 
   return NextResponse.redirect(url);
-}
-
-function readStoredUrl(extractedText: string | null): string | null {
-  if (!extractedText) return null;
-  try {
-    const meta = JSON.parse(extractedText) as { storageUrl?: string };
-    return typeof meta.storageUrl === "string" && meta.storageUrl ? meta.storageUrl : null;
-  } catch {
-    return null;
-  }
 }

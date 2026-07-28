@@ -15,7 +15,8 @@ import { prisma } from "@/lib/prisma";
 type NodeCrypto = typeof import("node:crypto");
 let _nodeCrypto: NodeCrypto | null = null;
 function nodeCrypto(): NodeCrypto {
-  // eslint-disable-next-line no-eval — indirect eval لجلب require الحقيقي بعيدًا عن التحزيم
+  // indirect eval لجلب require الحقيقي بعيدًا عن التحزيم
+  // eslint-disable-next-line no-eval
   if (!_nodeCrypto) _nodeCrypto = (0, eval)("require")("node:crypto") as NodeCrypto;
   return _nodeCrypto;
 }
