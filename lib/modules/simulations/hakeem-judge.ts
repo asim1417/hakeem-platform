@@ -103,6 +103,26 @@ export function buildHearingRecord(session: { id: string; title: string }, claim
     .join("\n");
 }
 
+// الافتتاح القضائيّ المنمَّق (منقولٌ من launchJudgeOpening الكلاسيكيّ): خطابُ قاضٍ يفتتح
+// الجلسة، يثبت حضور الأطراف وصفاتهم، يتحقّق من انعقاد الخصومة، ثمّ يمكّن المدّعي — يُعرَض
+// كأوّل رسالةٍ في المحضر لتجربةٍ مهيبة وواقعيّة.
+export function buildJudgeOpening(claim?: ClaimData, title?: string) {
+  const plaintiff = claim?.plaintiffName || "المدّعي";
+  const defendant = claim?.defendantName || "المدّعى عليه";
+  const pcap = claim?.plaintiffCapacity ? ` بصفته ${claim.plaintiffCapacity}` : "";
+  const dcap = claim?.defendantCapacity ? ` بصفته ${claim.defendantCapacity}` : "";
+  const attend = claim?.attendance && claim.attendance.trim() ? ` ${claim.attendance.trim()}.` : "";
+  return [
+    "بسم الله الرحمن الرحيم",
+    "افتتحت الدائرة الافتراضيّة جلستها بمنصّة حكيم للمحاكاة القضائيّة.",
+    `حضر المدّعي ${plaintiff}${pcap}، والمدّعى عليه ${defendant}${dcap}.${attend}`,
+    "وبعد التحقّق من صفة الحاضرين وسلامة انعقاد الخصومة، شرعت الدائرة في نظر الدعوى.",
+    `وموضوع الدعوى: ${claim?.subject || title || "غير محدد"}.`,
+    "وتُفهِم الدائرة الطرفين بالتقيّد بالنظام وحسن الأدب في المرافعة، وأنّ القرارات الإجرائيّة تُتّخذ في محالّها قبل الحكم.",
+    "والدور الآن للمدّعي لعرض دعواه ووقائعها وطلباته."
+  ].join("\n");
+}
+
 export function strengthScore(claim?: ClaimData, attachmentsCount = 0) {
   const checks = [
     [Boolean(claim?.facts && claim.facts.length > 30), "وضوح الوقائع"],
