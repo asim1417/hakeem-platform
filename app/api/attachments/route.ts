@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import {
+  isAllowedAttachmentMimeType,
+  toAttachmentDto
+} from "@/lib/modules/attachments/attachment-metadata";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { assertCaseOwnedForAttachment, attachmentListWhere } from "@/lib/modules/auth/ownership";
 import { uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
 
 export const dynamic = "force-dynamic";
-
-const allowedTypes = new Set([
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/plain",
-  "image/png",
-  "image/jpeg"
-]);
 
 export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
@@ -27,7 +22,7 @@ export async function GET(request: NextRequest) {
     include: { caseFile: { select: { id: true, title: true } } }
   });
 
-  return NextResponse.json({ attachments: attachments.map(toDto) });
+  return NextResponse.json({ attachments: attachments.map(toAttachmentDto) });
 }
 
 export async function POST(request: NextRequest) {
@@ -37,7 +32,9 @@ export async function POST(request: NextRequest) {
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
-  if (!allowedTypes.has(file.type)) return NextResponse.json({ message: "نوع الملف غير مدعوم. الصيغ المتاحة: PDF, DOCX, TXT, PNG, JPG." }, { status: 400 });
+  if (!isAllowedAttachmentMimeType(file.type)) {
+    return NextResponse.json({ message: "نوع الملف غير مدعوم. الصيغ المتاحة: PDF, DOCX, TXT, PNG, JPG." }, { status: 400 });
+  }
 
   const relationType = String(form.get("relationType") || "عام");
   const relationId = String(form.get("relationId") || "");
@@ -45,7 +42,8 @@ export async function POST(request: NextRequest) {
   // منع ربط مرفق بقضية مستخدم آخر (IDOR على POST).
   const caseGate = await assertCaseOwnedForAttachment(user, caseId);
   if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
-  const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });  const metadata = {
+  const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });
+  const metadata = {
     size: file.size,
     relationType,
     relationId: relationId || undefined,
@@ -55,13 +53,20 @@ export async function POST(request: NextRequest) {
     note: "TODO: استخراج نص PDF/DOCX لاحقًا وربطه بتحليل الاستشارة والمحاكاة."
   };
 
+  // PR-1: metadata في العمود الصريح؛ extractedText يبقى null حتى تكتمل القراءة (لا JSON داخله).
+  // الاستخراج والقراءة الضوئية خارج دورة طلب الرفع — لا استدعاء لمحركات الاستخراج هنا.
   const attachment = await prisma.attachment.create({
     data: {
       caseId,
       fileName: file.name,
       mimeType: file.type,
       storageKey: uploaded.storageKey,
-      extractedText: JSON.stringify(metadata)
+      extractedText: null,
+      metadata,
+      processingStatus: "UPLOADED",
+      sourceProvider: "LOCAL_UPLOAD",
+      fileSize: BigInt(file.size),
+      detectedMimeType: file.type || null
     },
     include: { caseFile: { select: { id: true, title: true } } }
   });
@@ -78,22 +83,10 @@ export async function POST(request: NextRequest) {
       size: file.size,
       relationType,
       relationId: relationId || undefined,
-      storageMode: uploaded.storageMode
+      storageMode: uploaded.storageMode,
+      processingStatus: attachment.processingStatus
     }
   });
 
-  return NextResponse.json({ attachment: toDto(attachment) }, { status: 201 });
-}
-
-function toDto(attachment: {
-  id: string;
-  fileName: string;
-  mimeType: string;
-  storageKey: string;
-  extractedText: string | null;
-  createdAt: Date;
-  caseFile?: { id: string; title: string } | null;
-}) {
-  const metadata = parseAttachmentMetadata(attachment.extractedText);
-  return { id: attachment.id, fileName: attachment.fileName, mimeType: attachment.mimeType, storageKey: attachment.storageKey, createdAt: attachment.createdAt, caseFile: attachment.caseFile, ...metadata };
+  return NextResponse.json({ attachment: toAttachmentDto(attachment) }, { status: 201 });
 }

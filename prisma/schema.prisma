@@ -311,15 +311,58 @@ model CaseFile {
   @@map("cases")
 }
 
+enum AttachmentProcessingStatus {
+  UPLOADED
+  QUEUED
+  DOWNLOADING
+  SECURITY_SCAN
+  EXTRACTING
+  OCR
+  QUALITY_CHECK
+  READY
+  PARTIAL
+  FAILED
+  QUARANTINED
+}
+
+enum AttachmentSourceProvider {
+  LOCAL_UPLOAD
+  DIRECT_URL
+  GOOGLE_DRIVE
+  MICROSOFT_ONEDRIVE
+  MICROSOFT_SHAREPOINT
+  DROPBOX
+  BOX
+}
+
 model Attachment {
-  id            String    @id @default(cuid())
-  caseId        String?
-  caseFile      CaseFile? @relation(fields: [caseId], references: [id])
-  fileName      String
-  mimeType      String
-  storageKey    String
-  extractedText String?
-  createdAt     DateTime  @default(now())
+  id                     String                       @id @default(cuid())
+  caseId                 String?
+  caseFile               CaseFile?                    @relation(fields: [caseId], references: [id])
+  fileName               String
+  mimeType               String
+  storageKey             String
+  /// نص الوثيقة المستخرج. السجلات القديمة قد تحتوي JSON metadata — استخدم decodeLegacyAttachmentPayload.
+  extractedText          String?
+  /// بيانات وصفية صريحة (تخزين/ملكية/ارتباط). لا تُخلط مع نص الاستخراج.
+  metadata               Json?
+  processingStatus       AttachmentProcessingStatus   @default(UPLOADED)
+  sourceProvider         AttachmentSourceProvider     @default(LOCAL_UPLOAD)
+  sourceExternalId       String?
+  sourceConnectionId     String?
+  sourceVersionId        String?
+  sourceEtag             String?
+  sourceUrlEncrypted     String?
+  sha256                 String?
+  fileSize               BigInt?
+  detectedMimeType       String?
+  extractionEngine       String?
+  extractionConfidence   Float?
+  extractionErrorCode    String?
+  extractionStartedAt    DateTime?
+  extractionCompletedAt  DateTime?
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @default(now()) @updatedAt
 
   @@map("attachments")
 }

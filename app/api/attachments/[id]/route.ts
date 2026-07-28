@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
-import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import {
+  resolveAttachmentMetadata,
+  resolveStoredAttachmentUrl,
+  toAttachmentDto
+} from "@/lib/modules/attachments/attachment-metadata";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { isSystemAdmin } from "@/lib/modules/auth/ownership";
 import { signedDownloadUrl } from "@/lib/modules/attachments/blob-storage";
@@ -9,10 +13,21 @@ import type { UserRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-// ملكيّة المرفق = ملكيّة القضية المرتبطة به. مرفق بلا قضية (ownerId=null) لا يقرؤه إلا المدير.
-function ownsAttachment(user: { id: string; role: UserRole | string }, ownerId: string | null): boolean {
+// ملكيّة المرفق = ملكيّة القضية المرتبطة به. مرفق بلا قضية (ownerId=null) لا يقرؤه إلا المدير
+// ما لم يُثبت uploadedBy في metadata / JSON القديم (تقوية غير كاسرة لمسار اليتيم).
+function ownsAttachment(
+  user: { id: string; role: UserRole | string },
+  ownerId: string | null,
+  extractedText: string | null,
+  metadata: unknown
+): boolean {
   if (isSystemAdmin({ id: user.id, role: user.role as UserRole })) return true;
-  return ownerId !== null && ownerId === user.id;
+  if (ownerId !== null && ownerId === user.id) return true;
+  if (ownerId === null) {
+    const meta = resolveAttachmentMetadata(extractedText, metadata);
+    return meta.uploadedBy === user.id;
+  }
+  return false;
 }
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -24,19 +39,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   });
 
   // [إصلاح تدقيق SEC-005: كان بلا فحص ملكيّة → قراءة/تنزيل مرفقات مستخدمين آخرين.]
-  if (!attachment || !ownsAttachment(gate.user!, attachment.caseFile?.ownerId ?? null)) {
+  if (
+    !attachment ||
+    !ownsAttachment(gate.user!, attachment.caseFile?.ownerId ?? null, attachment.extractedText, attachment.metadata)
+  ) {
     return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
   }
+  const dto = toAttachmentDto(attachment);
   return NextResponse.json({
     attachment: {
-      id: attachment.id,
-      fileName: attachment.fileName,
-      mimeType: attachment.mimeType,
-      storageKey: attachment.storageKey,
-      downloadUrl: signedDownloadUrl(attachment.storageKey),
-      createdAt: attachment.createdAt,
-      caseFile: attachment.caseFile,
-      ...parseAttachmentMetadata(attachment.extractedText)
+      ...dto,
+      downloadUrl: signedDownloadUrl(attachment.storageKey) ?? resolveStoredAttachmentUrl(attachment.extractedText, attachment.metadata)
     }
   });
 }
@@ -50,7 +63,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     where: { id: params.id },
     include: { caseFile: { select: { ownerId: true } } }
   });
-  if (!existing || !ownsAttachment(user, existing.caseFile?.ownerId ?? null)) {
+  if (
+    !existing ||
+    !ownsAttachment(user, existing.caseFile?.ownerId ?? null, existing.extractedText, existing.metadata)
+  ) {
     return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
   }
   const attachment = await prisma.attachment.delete({ where: { id: params.id } });

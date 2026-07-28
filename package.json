@@ -12,6 +12,8 @@
     "tool:docs:install": "python3 -m pip install -r tools/arabic-doc-tool/requirements_tool.txt",
     "test": "tsx scripts/test-conversation.ts",
     "test:document-inspection": "tsx scripts/test-document-inspection.ts",
+    "test:attachments-regression": "tsx scripts/test-attachments-regression.ts",
+    "migrate:attachment-metadata": "tsx scripts/migrate-attachment-metadata.ts",
     "accuracy": "tsx scripts/measure-accuracy.ts",
     "doc-node": "tsx services/doc-node/server.ts",
     "test:doc-node": "tsx services/doc-node/test-doc-node.ts",

@@ -1,6 +1,6 @@
 import { AttachmentsManager } from "@/components/AttachmentsManager";
 import { prisma } from "@/lib/prisma";
-import { parseAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { toAttachmentDto } from "@/lib/modules/attachments/attachment-metadata";
 import { attachmentListWhere, caseListWhere } from "@/lib/modules/auth/ownership";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
@@ -17,15 +17,13 @@ export default async function AttachmentsPage() {
         include: { caseFile: { select: { id: true, title: true } } }
       })
       .then((items) =>
-        items.map((item) => ({
-          id: item.id,
-          fileName: item.fileName,
-          mimeType: item.mimeType,
-          storageKey: item.storageKey,
-          createdAt: item.createdAt.toISOString(),
-          caseFile: item.caseFile,
-          ...parseAttachmentMetadata(item.extractedText)
-        }))
+        items.map((item) => {
+          const dto = toAttachmentDto(item);
+          return {
+            ...dto,
+            createdAt: typeof dto.createdAt === "string" ? dto.createdAt : dto.createdAt.toISOString()
+          };
+        })
       )
       .catch(() => []),
     prisma.caseFile
@@ -40,10 +38,10 @@ export default async function AttachmentsPage() {
 
   return (
     <div>
-      <p className="text-sm font-semibold text-gold">المرفقات والبينات</p>
-      <h1 className="mt-2 text-3xl font-bold text-olive">المرفقات</h1>
+      <p className="text-sm font-semibold text-gold">منصة الوثائق</p>
+      <h1 className="mt-2 text-3xl font-bold text-olive">منصة الوثائق</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
-        واجهة MVP لتسجيل بيانات المرفقات وربطها بالقضايا أو المسارات الأخرى دون تخزين دائم للملفات.
+        رفع المرفقات وربطها بالقضايا أو المسارات الأخرى. المسار القديم `/dashboard/attachments` محفوظ دون كسر.
       </p>
       <div className="mt-6">
         <AttachmentsManager initialAttachments={attachments} cases={cases} />

@@ -64,7 +64,7 @@ export function caseListWhere(user: Actor): Prisma.CaseFileWhereInput | undefine
   return isSystemAdmin(user) ? undefined : { ownerId: user.id };
 }
 
-/** شرط قائمة/عدّ المرفقات عبر ملكيّة القضية أو uploadedBy في metadata. */
+/** شرط قائمة/عدّ المرفقات عبر ملكيّة القضية أو uploadedBy في metadata (عمود أو JSON قديم). */
 export function attachmentListWhere(user: Actor): Prisma.AttachmentWhereInput | undefined {
   if (isSystemAdmin(user)) return undefined;
   return {
@@ -72,6 +72,9 @@ export function attachmentListWhere(user: Actor): Prisma.AttachmentWhereInput | 
       { caseFile: { ownerId: user.id } },
       {
         AND: [{ caseId: null }, { extractedText: { contains: `"uploadedBy":"${user.id}"` } }]
+      },
+      {
+        AND: [{ caseId: null }, { metadata: { path: ["uploadedBy"], equals: user.id } }]
       }
     ]
   };
