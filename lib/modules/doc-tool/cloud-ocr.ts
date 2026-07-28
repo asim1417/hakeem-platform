@@ -9,8 +9,26 @@
 // حد المعدل (429) مع إعادة محاولة بانتظار متزايد — يناسب المفاتيح المجانية والمدفوعة معاً.
 
 import { runAdaptive } from "@/lib/modules/document-inspection/throughput";
+import { isBrokenExtraction } from "@/lib/modules/document-inspection/reshape";
 
 export type CloudProgress = (label: string) => void;
+
+/** طبقات نموذج القراءة السحابيّة — lite الأسرع (افتراضيّ للمطبوع)، pro الأدقّ (لليدويّ). */
+export type CloudModel = "lite" | "flash" | "pro";
+
+/** الطبقة الأعلى للتصعيد التلقائيّ عند ضعف ناتج الصفحة (lite→flash→pro). */
+function nextTier(model: CloudModel): CloudModel | null {
+  return model === "lite" ? "flash" : model === "flash" ? "pro" : null;
+}
+
+/** صفحةٌ «ضعيفة»: بلا نصّ، أو نصٌّ ضئيلٌ جدًّا، أو استخراجٌ معطوب (رموز غريبة) —
+ *  تستحقّ إعادةً بطبقةٍ أقوى. الناتج السليم يمرّ بلا تصعيد فتبقى القراءة سريعة. */
+function isWeakOcr(text: string | null): boolean {
+  if (!text) return true;
+  const body = text.replace(/\[صفحة \d+\]/g, "").trim();
+  if (body.length < 20) return true;
+  return isBrokenExtraction(body);
+}
 
 /** علامة الصفحة المتعذرة في النص — تُستخدم لاحقاً لإعادة قراءتها وحدها */
 export const CLOUD_PAGE_FAILED = "(تعذّرت قراءة هذه الصفحة سحابياً)";
@@ -57,7 +75,7 @@ interface PostResult {
   error?: string;
 }
 
-async function postToCloud(blob: Blob, name: string, model?: "flash" | "pro"): Promise<PostResult> {
+async function postToCloud(blob: Blob, name: string, model?: CloudModel): Promise<PostResult> {
   try {
     if (blob.size > MAX_UPLOAD_BYTES) {
       return { text: null, rateLimited: false, error: "حجم الصفحة يتجاوز حدّ الرفع السحابي" };
@@ -149,21 +167,32 @@ function waitMsFor(attempt: PostResult, fallbackMs: number): number {
   return Math.min(Math.max(Math.round(attempt.retryDelaySec * 1000), 3_000), 60_000);
 }
 
-/** قراءة صورة (ملف مرفوع) سحابياً */
-export async function cloudOcrImage(file: File, onProgress?: CloudProgress, model?: "flash" | "pro"): Promise<CloudImageResult> {
-  onProgress?.(model === "pro" ? "قراءة سحابية فائقة الدقة (Gemini Pro)…" : "قراءة سحابية فائقة الدقة (Gemini)…");
+/** قراءة صورة (ملف مرفوع) سحابياً — تبدأ بالطبقة السريعة (lite) وتُصعّد تلقائيًّا عند الضعف. */
+export async function cloudOcrImage(file: File, onProgress?: CloudProgress, model?: CloudModel): Promise<CloudImageResult> {
+  const baseModel: CloudModel = model ?? "lite";
+  onProgress?.(baseModel === "pro" ? "قراءة سحابية فائقة الدقة (Gemini Pro)…" : "قراءة سحابية سريعة (Gemini)…");
   const fitted = await fitImageForCloud(file);
   if (!fitted) return { text: null, error: "تعذّر تحضير الصورة لحدّ الرفع السحابي" };
-  let attempt = await postToCloud(fitted.blob, fitted.name, model);
+  let attempt = await postToCloud(fitted.blob, fitted.name, baseModel);
   if (attempt.dailyLimitExceeded) return { text: null, error: attempt.error };
   if (attempt.rateLimited) {
     for (const wait of RATE_WAITS_MS) {
       const waitMs = waitMsFor(attempt, wait);
       await sleepWithCountdown(waitMs, (remaining) => onProgress?.(`حد المعدل — انتظار ${remaining} ثانية…`));
-      attempt = await postToCloud(fitted.blob, fitted.name, model);
-      if (attempt.text) return { text: attempt.text };
+      attempt = await postToCloud(fitted.blob, fitted.name, baseModel);
+      if (attempt.text) break;
       if (attempt.dailyLimitExceeded) return { text: null, error: attempt.error };
       if (!attempt.rateLimited) break;
+    }
+  }
+  // تصعيدٌ تلقائيّ: صورةٌ خرجت ضعيفة/معطوبة على الطبقة السريعة تُعاد بطبقةٍ أقوى مرّةً واحدة.
+  if (!attempt.rateLimited && isWeakOcr(attempt.text)) {
+    const stronger = nextTier(baseModel);
+    if (stronger) {
+      onProgress?.("رفعُ الدقّة لصفحةٍ غير واضحة…");
+      const esc = await postToCloud(fitted.blob, fitted.name, stronger);
+      if (esc.dailyLimitExceeded) return { text: null, error: esc.error };
+      if (esc.text && (!attempt.text || !isWeakOcr(esc.text))) attempt = esc;
     }
   }
   return { text: attempt.text, error: attempt.text ? undefined : attempt.error };
@@ -176,7 +205,7 @@ export interface CloudPdfOptions {
   /** صفحات محددة فقط — لإعادة قراءة المتعذر */
   onlyPages?: number[];
   /** النموذج: flash (اقتصادي) أو pro (دقة قصوى — VIP) */
-  model?: "flash" | "pro";
+  model?: CloudModel;
   /** درجة التوازي المطلوبة — للمفاتيح المدفوعة (حدّ معدلٍ أعلى). يهبط تلقائياً عند 429. */
   concurrency?: number;
   /** إلغاء تعاوني — تتوقف الحلقة عند أول صفحة تالية */
@@ -266,11 +295,31 @@ export async function cloudOcrPdfPages(
       canvas.width = 0;
       canvas.height = 0;
       if (!blob) return { value: null, rateLimited: false };
-      const attempt = await postToCloud(blob, `page-${p}.jpg`, opts.model);
+
+      // الافتراضيّ الأسرع: lite لكلّ الصفحات. إن طلب المستخدم صراحةً pro (فائق الدقّة)
+      // نبدأ به مباشرةً. الطبقة السريعة تُنجز المطبوع النظيف في ثوانٍ.
+      const baseModel: CloudModel = opts.model ?? "lite";
+      let attempt = await postToCloud(blob, `page-${p}.jpg`, baseModel);
       if (attempt.dailyLimitExceeded) {
         dailyBlocked = true; // يوقف الجدولة عبر signal أدناه
         lastError = attempt.error;
         return { value: null, rateLimited: false };
+      }
+      // تصعيدٌ تلقائيّ للصفحة الضعيفة فقط: إن خرجت هزيلة/معطوبة على الطبقة السريعة
+      // (ولم تكن مجرّد حدّ معدّل عابر) نعيدها بطبقةٍ أقوى مرّةً واحدة — فالنظيفة تبقى
+      // سريعة، والصعبة وحدها تُكلّف وقتًا إضافيًّا. نعيد استعمال الصورة نفسها (بلا رسمٍ ثانٍ).
+      if (!attempt.rateLimited && isWeakOcr(attempt.text)) {
+        const stronger = nextTier(baseModel);
+        if (stronger) {
+          const esc = await postToCloud(blob, `page-${p}.jpg`, stronger);
+          if (esc.dailyLimitExceeded) {
+            dailyBlocked = true;
+            lastError = esc.error;
+            return { value: null, rateLimited: false };
+          }
+          // نأخذ الأقوى إن تحسّن، وإلا نُبقي الأصل (قد يكون الأصل أفضل من فشلٍ لاحق).
+          if (esc.text && (!attempt.text || !isWeakOcr(esc.text))) attempt = esc;
+        }
       }
       if (!attempt.text && attempt.error) lastError = attempt.error;
       return { value: attempt.text, rateLimited: attempt.rateLimited };

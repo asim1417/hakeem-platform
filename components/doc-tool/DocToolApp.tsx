@@ -214,7 +214,7 @@ export function DocToolApp() {
             setStatus(`${f.name}: ${label}`);
           },
           cloudOcr,
-          cloudModel: cloudHiQ ? "pro" : "flash",
+          cloudModel: cloudHiQ ? "pro" : "lite",
           cloudRange: {
             from: rangeFrom ? Number(rangeFrom) : undefined,
             to: rangeTo ? Number(rangeTo) : undefined
@@ -272,7 +272,7 @@ export function DocToolApp() {
         const result = await cloudOcrPdfPages(
           await file.arrayBuffer(),
           (label) => setStatus(label),
-          { onlyPages: failed, model: cloudHiQ ? "pro" : "flash" }
+          { onlyPages: failed, model: cloudHiQ ? "pro" : "lite" }
         );
         if (!result.text) {
           setError(result.error ?? "تعذّرت إعادة القراءة — تحقق من المفتاح أو أعد المحاولة لاحقاً");

@@ -828,7 +828,7 @@ export function CaseBrowser() {
   async function cloudRead(file: File): Promise<{ text: string | null; error?: string }> {
     try {
       const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
-      const model = cloudHiQ ? "pro" : "flash";
+      const model = cloudHiQ ? "pro" : "lite";
       if ((file.name.split(".").pop() ?? "").toLowerCase() === "pdf") {
         const result = await cloudOcrPdfPages(await file.arrayBuffer(), (label) => setOcrProgress(label), {
           from: cloudFrom ? Number(cloudFrom) : undefined,
@@ -955,7 +955,7 @@ export function CaseBrowser() {
           baseText: plan.cleanPages > 0 ? plan.baseText : undefined,
           options: {
             onlyPages: plan.needOcrPages,
-            model: cloudHiQ ? "pro" : "flash",
+            model: cloudHiQ ? "pro" : "lite",
             concurrency: cloudFast ? 10 : undefined
           },
           onComplete: () => undefined // التسوية عبر المشترك أدناه
@@ -974,7 +974,7 @@ export function CaseBrowser() {
         void startConversion({
           title: baseName,
           buffer: buf,
-          options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "flash", concurrency: cloudFast ? 10 : undefined },
+          options: { from: rFrom, to: rTo, model: cloudHiQ ? "pro" : "lite", concurrency: cloudFast ? 10 : undefined },
           onComplete: () => undefined
         });
         setStatusMsg("بدأت القراءة السحابية — تابع المؤشر");
@@ -1055,7 +1055,7 @@ export function CaseBrowser() {
               options: {
                 from: cloudFrom ? Number(cloudFrom) : undefined,
                 to: cloudTo ? Number(cloudTo) : undefined,
-                model: cloudHiQ ? "pro" : "flash",
+                model: cloudHiQ ? "pro" : "lite",
                 concurrency: cloudFast ? 10 : undefined
               },
               // الإضافة تتم عبر تسوية النتيجة (أدناه) لتعمل حتى لو انتقل المستخدم

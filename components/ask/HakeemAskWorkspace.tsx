@@ -393,7 +393,7 @@ export function HakeemAskWorkspace({
       let { text, kind, warning } = await extractFile(file, {
         onProgress: (m) => setAttachStatus(m),
         cloudOcr: useCloud,
-        cloudModel: "flash",
+        cloudModel: "lite",
       });
 
       if (isBrokenExtraction(text) && cloudOcrAvailable) {

@@ -29,9 +29,9 @@ export interface ExtractOptions {
   cloudOcr?: boolean;
   /** نطاق صفحات للقراءة السحابية للـ PDF (شامل الطرفين) */
   cloudRange?: { from?: number; to?: number };
-  /** نموذج القراءة السحابية: flash (اقتصادي) · pro (خطّ يدوي/أختام/وثائق صعبة).
-      الافتراضي flash. متاح في كل مسارات الرفع (محطة العمل والبحث السريع). */
-  cloudModel?: "flash" | "pro";
+  /** نموذج القراءة السحابية: lite (الأسرع للمطبوع النظيف) · flash (عادي) · pro (خطّ
+      يدوي/أختام/وثائق صعبة). الافتراضي lite مع تصعيدٍ تلقائيّ للصفحة الضعيفة. */
+  cloudModel?: "lite" | "flash" | "pro";
 }
 
 const TEXT_EXTS = ["txt", "md", "csv", "json"];
@@ -83,7 +83,7 @@ async function cloudOcr(
   file: File,
   onProgress?: ExtractProgress,
   range?: { from?: number; to?: number },
-  model?: "flash" | "pro"
+  model?: "lite" | "flash" | "pro"
 ): Promise<{ result: ExtractResult | null; error?: string }> {
   const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
   const tag = model === "pro" ? "Gemini pro" : "Gemini";

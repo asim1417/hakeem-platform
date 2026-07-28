@@ -146,15 +146,22 @@ export function genConfig(modelType: GeminiOcrModel, mime?: GeminiOcrMime) {
     temperature: 0.1,
     topP: 0.95,
     maxOutputTokens: isImage ? 16384 : 65536,
-    ...(modelType === "flash" ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+    // OCR إدراكٌ لا استدلال؛ نعطّل «التفكير» على الطبقات السريعة (lite/flash) فتُنسَخ
+    // مباشرةً أدقّ وأسرع. (pro لا يقبل 0 — نتركه على التفكير الديناميكي للخطّ اليدويّ.)
+    ...(modelType === "pro" ? {} : { thinkingConfig: { thinkingBudget: 0 } })
   };
 }
 
 export const GEMINI_OCR_MIME_TYPES = ["image/png", "image/jpeg", "application/pdf"] as const;
 export type GeminiOcrMime = (typeof GEMINI_OCR_MIME_TYPES)[number];
 
-/** flash للوثائق العادية (سريع واقتصادي) · pro للخط اليدوي والمعقد */
-export type GeminiOcrModel = "flash" | "pro";
+/** lite الأسرع للوثائق المطبوعة النظيفة · flash للعادية · pro للخط اليدوي والمعقد */
+export type GeminiOcrModel = "lite" | "flash" | "pro";
+
+/** معرّف نموذج Gemini حسب الطبقة. lite أسرع طبقة (للمطبوع النظيف)، pro أدقّها (لليدويّ). */
+export function geminiModelId(modelType: GeminiOcrModel): string {
+  return modelType === "pro" ? "gemini-2.5-pro" : modelType === "lite" ? "gemini-2.5-flash-lite" : "gemini-2.5-flash";
+}
 
 /** توافقية: فحص بيئة فقط (متزامن). الفحص الكامل عبر getGeminiOcrStatus. */
 export function isGeminiOcrConfigured(): boolean {
@@ -209,7 +216,7 @@ export async function extractTextWithGemini(
   const { key: apiKey } = await resolveGeminiOcrKey();
   if (!apiKey) throw new Error("مفتاح Gemini غير مضبوط — أضفه من إعدادات منصة الوثائق");
 
-  const model = modelType === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash";
+  const model = geminiModelId(modelType);
   const res = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },

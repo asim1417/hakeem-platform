@@ -40,7 +40,7 @@ export function AttachmentUploader({ caseId }: { caseId: string }) {
       const visual = /^(pdf|png|jpe?g|webp|bmp|tiff?|gif)$/.test(ext);
       const useCloud = cloudAvailable && visual;
       let { text, kind } = await extractFile(file, {
-        onProgress: (m) => setStatus(m), cloudOcr: useCloud, cloudModel: "flash",
+        onProgress: (m) => setStatus(m), cloudOcr: useCloud, cloudModel: "lite",
       });
 
       // بقي مشوّهًا؟ ارفع الدقّة (Gemini Pro) بصريًّا — احتياطٌ أخير.
