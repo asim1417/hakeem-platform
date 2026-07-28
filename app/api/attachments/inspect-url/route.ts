@@ -6,7 +6,7 @@ import { isDirectUrlImportEnabled } from "@/lib/modules/documents/feature-flags"
 import { consumeDirectUrlRateLimit } from "@/lib/modules/documents/rate-limit";
 import { resolveConnectorForUrl } from "@/lib/modules/documents/connectors/registry";
 import { DirectUrlError } from "@/lib/modules/documents/connectors/direct-url";
-import { urlContainsSensitiveQuery } from "@/lib/modules/documents/url-security";
+import { redactSensitiveUrl, urlContainsSensitiveQuery } from "@/lib/modules/documents/url-security";
 
 export const dynamic = "force-dynamic";
 
@@ -67,13 +67,14 @@ export async function POST(request: NextRequest) {
         reportedMimeType: inspected.reportedMimeType,
         redirects: inspected.redirects,
         accessible: inspected.accessible,
-        hadSensitiveQuery: urlContainsSensitiveQuery(parsed.data.url)
+        hadSensitiveQuery: urlContainsSensitiveQuery(parsed.data.url),
+        displayHost: inspected.finalHost
       }
     });
 
     return NextResponse.json({
       provider: inspected.provider,
-      normalizedUrl: inspected.safeDisplayUrl,
+      normalizedUrl: redactSensitiveUrl(inspected.safeDisplayUrl),
       fileName: inspected.fileName,
       reportedMimeType: inspected.reportedMimeType,
       reportedSize: inspected.reportedSize,

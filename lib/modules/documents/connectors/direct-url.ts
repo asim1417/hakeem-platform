@@ -13,7 +13,9 @@ import {
 import {
   directUrlMaxBytes,
   directUrlMaxRedirects,
-  directUrlTimeoutMs
+  directUrlTimeoutMs,
+  urlInspectMaxBytes,
+  urlInspectTimeoutMs
 } from "@/lib/modules/documents/feature-flags";
 import { resolveDownloadFileName } from "@/lib/modules/documents/filename";
 import { sniffAllowedMime } from "@/lib/modules/documents/mime-sniff";
@@ -24,14 +26,21 @@ export type FetchLike = typeof fetch;
 export class DirectUrlError extends Error {
   constructor(
     public readonly code:
+      | "URL_REJECTED"
       | "URL_BLOCKED"
-      | "TOO_MANY_REDIRECTS"
+      | "DNS_RESOLUTION_FAILED"
+      | "REMOTE_TIMEOUT"
       | "TIMEOUT"
+      | "TOO_MANY_REDIRECTS"
       | "FILE_TOO_LARGE"
+      | "UNSUPPORTED_MIME"
+      | "CONTENT_TYPE_MISMATCH"
       | "REMOTE_CONTENT_NOT_A_FILE"
       | "MIME_NOT_ALLOWED"
       | "MIME_MISMATCH_HTML"
       | "DOWNLOAD_FAILED"
+      | "DOWNLOAD_INTERRUPTED"
+      | "STORAGE_UPLOAD_FAILED"
       | "EMPTY_BODY",
     message: string,
     public readonly securityReason?: string
@@ -47,12 +56,17 @@ export type DirectUrlDeps = {
   maxBytes?: number;
   timeoutMs?: number;
   maxRedirects?: number;
+  inspectMaxBytes?: number;
 };
 
 async function validateUrl(url: string, resolver?: DnsResolver) {
   const result = await assertUrlSafeForFetch(url, { resolver });
   if (!result.allowed || !result.normalizedUrl) {
-    throw new DirectUrlError("URL_BLOCKED", "الرابط مرفوض أمنيًا.", result.reasonCode);
+    const code =
+      result.reasonCode === "DNS_RESOLUTION_FAILED"
+        ? "DNS_RESOLUTION_FAILED"
+        : "URL_REJECTED";
+    throw new DirectUrlError(code, "الرابط مرفوض أمنيًا.", result.reasonCode);
   }
   return result;
 }
@@ -100,7 +114,7 @@ async function followHeadOrGet(opts: {
       clearTimeout(timer);
       if (err instanceof DirectUrlError) throw err;
       if ((err as Error)?.name === "AbortError") {
-        throw new DirectUrlError("TIMEOUT", "انتهت مهلة الاتصال بالرابط.");
+        throw new DirectUrlError("REMOTE_TIMEOUT", "انتهت مهلة الاتصال بالرابط.");
       }
       throw new DirectUrlError("DOWNLOAD_FAILED", "تعذّر الاتصال بالرابط.");
     } finally {
@@ -120,7 +134,7 @@ async function followHeadOrGet(opts: {
         throw new DirectUrlError("TOO_MANY_REDIRECTS", "تجاوز الحد الأقصى لإعادة التوجيه.");
       }
       if (new URL(next).protocol !== "https:") {
-        throw new DirectUrlError("URL_BLOCKED", "إعادة التوجيه إلى بروتوكول غير HTTPS مرفوضة.", "HTTPS_REQUIRED");
+        throw new DirectUrlError("URL_REJECTED", "إعادة التوجيه إلى بروتوكول غير HTTPS مرفوضة.", "HTTPS_REQUIRED");
       }
       current = next;
       continue;
@@ -130,15 +144,47 @@ async function followHeadOrGet(opts: {
   }
 }
 
-/** فحص الرابط بدون تنزيل كامل — HEAD ثم GET جزئي عند الحاجة. */
+/** يقرأ حتى maxBytes من جسم الاستجابة ثم يلغي الباقي — لـ inspect فقط. */
+async function drainBodyLimited(body: ReadableStream<Uint8Array> | null, maxBytes: number): Promise<void> {
+  if (!body) return;
+  const reader = body.getReader();
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value?.byteLength ?? 0;
+      if (total > maxBytes) {
+        await reader.cancel();
+        break;
+      }
+    }
+  } catch {
+    try {
+      await reader.cancel();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/** فحص الرابط بدون تنزيل كامل — HEAD ثم GET محدود عند الحاجة. */
 export async function inspectDirectUrl(url: string, deps: DirectUrlDeps = {}): Promise<InspectedDirectFile> {
+  const inspectTimeout = deps.timeoutMs ?? urlInspectTimeoutMs();
+  const inspectCap = deps.inspectMaxBytes ?? urlInspectMaxBytes();
+  const inspectDeps: DirectUrlDeps = { ...deps, timeoutMs: inspectTimeout };
   const initial = await validateUrl(url, deps.resolver);
   let hop;
   try {
-    hop = await followHeadOrGet({ url: initial.normalizedUrl!, method: "HEAD", deps });
+    hop = await followHeadOrGet({ url: initial.normalizedUrl!, method: "HEAD", deps: inspectDeps });
   } catch (err) {
     if (err instanceof DirectUrlError && err.code === "DOWNLOAD_FAILED") {
-      hop = await followHeadOrGet({ url: initial.normalizedUrl!, method: "GET", deps, range: "bytes=0-0" });
+      hop = await followHeadOrGet({
+        url: initial.normalizedUrl!,
+        method: "GET",
+        deps: inspectDeps,
+        range: `bytes=0-${Math.max(0, inspectCap - 1)}`
+      });
     } else {
       throw err;
     }
@@ -158,11 +204,8 @@ export async function inspectDirectUrl(url: string, deps: DirectUrlDeps = {}): P
     mimeType: reportedMimeType || "application/octet-stream"
   });
 
-  try {
-    await response.body?.cancel();
-  } catch {
-    /* ignore */
-  }
+  // لا تُحمَّل الاستجابة كاملة — أقصى inspectCap ثم إلغاء
+  await drainBodyLimited(response.body, inspectCap);
 
   if (reportedSize && reportedSize > (deps.maxBytes ?? directUrlMaxBytes())) {
     warnings.push("FILE_SIZE_EXCEEDS_LIMIT");
@@ -245,7 +288,7 @@ export async function downloadDirectUrlStreaming(url: string, deps: DirectUrlDep
   } catch (err) {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
     if (err instanceof DirectUrlError) throw err;
-    throw new DirectUrlError("DOWNLOAD_FAILED", "انقطع التنزيل.");
+    throw new DirectUrlError("DOWNLOAD_INTERRUPTED", "انقطع التنزيل.");
   }
 
   if (size === 0) {
@@ -256,7 +299,13 @@ export async function downloadDirectUrlStreaming(url: string, deps: DirectUrlDep
   const sniff = await sniffAllowedMime(Buffer.concat(headChunks), reportedMimeType);
   if (!sniff.ok) {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
-    throw new DirectUrlError(sniff.reasonCode, "نوع الملف غير مقبول بعد الفحص.");
+    const code =
+      sniff.reasonCode === "REMOTE_CONTENT_NOT_A_FILE"
+        ? "REMOTE_CONTENT_NOT_A_FILE"
+        : sniff.reasonCode === "MIME_MISMATCH_HTML"
+          ? "CONTENT_TYPE_MISMATCH"
+          : "UNSUPPORTED_MIME";
+    throw new DirectUrlError(code, "نوع الملف غير مقبول بعد الفحص.");
   }
 
   const fileName = resolveDownloadFileName({

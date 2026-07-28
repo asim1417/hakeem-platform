@@ -13,7 +13,7 @@ import {
   cleanupDownloadedFile,
   DirectUrlError
 } from "@/lib/modules/documents/connectors/direct-url";
-import { toSafeDisplayUrl, urlContainsSensitiveQuery } from "@/lib/modules/documents/url-security";
+import { redactSensitiveUrl, urlContainsSensitiveQuery } from "@/lib/modules/documents/url-security";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           relationId: relationId || undefined,
           uploadedBy: user.id,
           source: "direct-url",
-          safeDisplayUrl: toSafeDisplayUrl(parsed.data.url)
+          safeDisplayUrl: redactSensitiveUrl(parsed.data.url)
         },
         processingStatus: "DOWNLOADING",
         sourceProvider: "DIRECT_URL"
@@ -114,13 +114,18 @@ export async function POST(request: NextRequest) {
 
     const downloaded = await connector.download({ url: parsed.data.url });
     try {
-      const uploaded = await uploadAttachmentFromPath({
-        filePath: downloaded.temporaryPath,
-        fileName: downloaded.fileName,
-        mimeType: downloaded.detectedMimeType,
-        size: downloaded.size,
-        prefix: relationType
-      });
+      let uploaded;
+      try {
+        uploaded = await uploadAttachmentFromPath({
+          filePath: downloaded.temporaryPath,
+          fileName: downloaded.fileName,
+          mimeType: downloaded.detectedMimeType,
+          size: downloaded.size,
+          prefix: relationType
+        });
+      } catch {
+        throw new DirectUrlError("STORAGE_UPLOAD_FAILED", "تعذّر حفظ الملف في التخزين.");
+      }
 
       const metadata = {
         size: downloaded.size,
@@ -130,7 +135,7 @@ export async function POST(request: NextRequest) {
         storageMode: uploaded.storageMode,
         storageUrl: uploaded.url,
         source: "direct-url",
-        safeDisplayUrl: toSafeDisplayUrl(parsed.data.url),
+        safeDisplayUrl: redactSensitiveUrl(parsed.data.url),
         sha256Prefix: downloaded.sha256.slice(0, 12)
       };
 

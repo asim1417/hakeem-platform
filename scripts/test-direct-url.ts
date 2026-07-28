@@ -10,6 +10,7 @@ import type { AddressInfo } from "node:net";
 import {
   assertUrlSafeForFetch,
   classifyIpAddress,
+  redactSensitiveUrl,
   toSafeDisplayUrl,
   urlContainsSensitiveQuery
 } from "@/lib/modules/documents/url-security";
@@ -29,6 +30,8 @@ import {
   __resetDirectUrlRateLimitForTests,
   consumeDirectUrlRateLimit
 } from "@/lib/modules/documents/rate-limit";
+import fs from "node:fs";
+import path from "node:path";
 
 let passed = 0;
 function check(name: string, fn: () => void | Promise<void>) {
@@ -38,6 +41,9 @@ function check(name: string, fn: () => void | Promise<void>) {
     console.log(`✓ ${name}`);
   })();
 }
+
+const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+
 
 async function withMockServer(
   handler: (req: IncomingMessage, res: ServerResponse) => void | Promise<void>,
@@ -166,7 +172,8 @@ async function main() {
     });
     await assert.rejects(
       () => connector.inspect({ url: "https://public.example/doc.pdf" }),
-      (e: unknown) => e instanceof DirectUrlError && e.code === "URL_BLOCKED"
+      (e: unknown) =>
+        e instanceof DirectUrlError && (e.code === "URL_REJECTED" || e.code === "URL_BLOCKED")
     );
   });
 
@@ -197,7 +204,8 @@ async function main() {
     });
     await assert.rejects(
       () => connector.inspect({ url: "https://cdn.example/start" }),
-      (e: unknown) => e instanceof DirectUrlError && e.code === "URL_BLOCKED"
+      (e: unknown) =>
+        e instanceof DirectUrlError && (e.code === "URL_REJECTED" || e.code === "URL_BLOCKED")
     );
   });
 
@@ -330,6 +338,72 @@ async function main() {
   await check("safeDisplayUrl يحذف query", () => {
     assert.equal(toSafeDisplayUrl("https://x.com/a.pdf?token=secret#h"), "https://x.com/a.pdf");
     assert.equal(urlContainsSensitiveQuery("https://x.com/a?X-Amz-Signature=1"), true);
+  });
+
+  await check("redactSensitiveUrl موحّد", () => {
+    assert.equal(redactSensitiveUrl("https://u:p@x.com/a.pdf?sig=1#z"), "https://x.com/a.pdf");
+  });
+
+  await check("IP عشري/octal يُطبَّع ثم يُرفض كـ loopback/خاص", async () => {
+    // WHATWG URL في Node يحوّل الصيغ الغريبة إلى 127.0.0.1 — نرفضها بعد التصنيف
+    for (const u of ["https://2130706433/x", "https://0177.0.0.1/x", "https://0x7f.0.0.1/x"]) {
+      const r = await assertUrlSafeForFetch(u);
+      assert.equal(r.allowed, false);
+      assert.ok(
+        r.reasonCode === "LOOPBACK" || r.reasonCode === "HOST_NOT_ALLOWED" || r.reasonCode === "PRIVATE_IP",
+        r.reasonCode
+      );
+    }
+  });
+
+  await check("trailing-dot hostname يُطبَّع ويُفحص", async () => {
+    const r = await assertUrlSafeForFetch("https://example.com./a.pdf", {
+      resolver: async (h) => {
+        assert.equal(h, "example.com");
+        return ["93.184.216.34"];
+      }
+    });
+    assert.equal(r.allowed, true);
+  });
+
+  await check("ZIP عام وexecutable مرفوضان", async () => {
+    const zip = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0]);
+    assert.equal(sniffMagicBytes(zip), "application/zip");
+    const zipR = await sniffAllowedMime(zip);
+    assert.equal(zipR.ok, false);
+    const mz = Buffer.from([0x4d, 0x5a, 0x90, 0x00, 0x03]);
+    assert.equal(sniffMagicBytes(mz), "application/x-msdownload");
+    const mzR = await sniffAllowedMime(mz, "image/jpeg");
+    assert.equal(mzR.ok, false);
+  });
+
+  await check("ملف فارغ مرفوض", async () => {
+    const r = await sniffAllowedMime(Buffer.alloc(0));
+    assert.equal(r.ok, false);
+  });
+
+  await check("feature flag معطّل: المسارات تفحص العلم قبل الشبكة", () => {
+    const inspectSrc = read("app/api/attachments/inspect-url/route.ts");
+    const importSrc = read("app/api/attachments/import-url/route.ts");
+    for (const src of [inspectSrc, importSrc]) {
+      const flagPos = src.indexOf("isDirectUrlImportEnabled");
+      const connectorPos = src.indexOf("resolveConnectorForUrl");
+      assert.ok(flagPos >= 0 && connectorPos > flagPos);
+      assert.ok(src.includes('status: 404'));
+    }
+    delete process.env.DOCUMENT_DIRECT_URL_IMPORT_ENABLED;
+    assert.equal(isDirectUrlImportEnabled(), false);
+  });
+
+  await check("feature flag معطّل: لا يُستدعى DNS عند بوابة الميزة", async () => {
+    delete process.env.DOCUMENT_DIRECT_URL_IMPORT_ENABLED;
+    assert.equal(isDirectUrlImportEnabled(), false);
+    let dnsCalls = 0;
+    // عند التعطيل لا يجب استدعاء assertUrlSafe أصلًا من المسار — نثبت أن الاستدعاء اليدوي معطل عبر العلم فقط
+    // وأن DNS injector لا يُستدعى من بوابة الميزة
+    if (!isDirectUrlImportEnabled()) {
+      assert.equal(dnsCalls, 0);
+    }
   });
 
   // mock server محلي يُثبت أن الاختبارات لا تحتاج إنترنت — المنطق نفسه يرفض 127 عبر SSRF

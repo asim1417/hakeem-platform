@@ -1,20 +1,22 @@
 # PR-2 Test Report
 
-## الأوامر
+**Commit:** `13b027c741c16dfb51055da4cc9310a509146920`
 
-```
-npm run test:direct-url
-npm run test:attachments-regression
-npm run typecheck
-npm run lint
-npm test
-npm run test:document-inspection
-npm run accuracy
-npm run test:doc-node
-npm run build
-```
+## النتائج الفعلية
 
-## تغطية SSRF (وحدة + DNS محقون)
+| الأمر | النتيجة |
+|---|---|
+| typecheck | ✅ |
+| lint | ✅ |
+| test | ✅ |
+| test:document-inspection | ✅ 81 |
+| accuracy | ✅ |
+| test:doc-node | ✅ 7 |
+| test:attachments-regression | ✅ 28 |
+| test:direct-url | ✅ 30 |
+| build | ✅ |
+
+## تغطية SSRF
 
 HTTPS · HTTP · file · localhost · 127.0.0.1 · 10/8 · 172.16/12 · 192.168/16 · 169.254.169.254 · IPv6 loopback/link-local · credentials · port 8080 · DNS fail · DNS rebinding mix · redirect→private · redirect→http · >5 redirects
 

@@ -71,12 +71,10 @@ export function classifyIpAddress(ip: string): UrlSecurityReasonCode | null {
     const lower = ip.toLowerCase();
     if (lower === "::1") return "LOOPBACK";
     if (lower.startsWith("fe80:")) return "LINK_LOCAL";
-    if (lower.startsWith("fc") || lower.startsWith("fd")) return "PRIVATE_IP"; // ULA fc00::/7
+    if (lower.startsWith("fc") || lower.startsWith("fd")) return "PRIVATE_IP";
     if (lower.startsWith("ff")) return "MULTICAST";
-    // IPv4-mapped
     if (lower.startsWith("::ffff:")) {
-      const v4 = lower.slice("::ffff:".length);
-      return classifyIpAddress(v4);
+      return classifyIpAddress(lower.slice("::ffff:".length));
     }
     return null;
   }
@@ -84,8 +82,18 @@ export function classifyIpAddress(ip: string): UrlSecurityReasonCode | null {
 }
 
 function isLocalhostName(hostname: string): boolean {
-  const h = hostname.toLowerCase().replace(/\.$/, "");
+  const h = hostname.toLowerCase();
   return h === "localhost" || h.endsWith(".localhost") || h === "0.0.0.0";
+}
+
+/** يرفض صيغ IP غير المعيارية (عشري/hex/octal) التي قد يتجاوز بها الفحص. */
+function looksLikeNonCanonicalIpHost(hostname: string): boolean {
+  if (/^\d+$/.test(hostname)) return true; // 2130706433
+  if (/^0x[0-9a-f]+$/i.test(hostname)) return true;
+  if (/^(0x[0-9a-f]+\.){1,3}0x[0-9a-f]+$/i.test(hostname)) return true;
+  // رباعي يبدو كـ IP لكن ليس IPv4 صالحًا لدى isIP (مثل 0177.0.0.1)
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) && !isIP(hostname)) return true;
+  return false;
 }
 
 /**
@@ -115,7 +123,11 @@ export async function assertUrlSafeForFetch(
     return { allowed: false, reasonCode: "DISALLOWED_PORT" };
   }
 
-  const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+  let hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+  // طبّع النقطة اللاحقة (DNS absolute)
+  while (hostname.endsWith(".")) hostname = hostname.slice(0, -1);
+  hostname = hostname.toLowerCase();
+
   if (!hostname || hostname.includes(" ")) {
     return { allowed: false, reasonCode: "INVALID_URL" };
   }
@@ -124,23 +136,26 @@ export async function assertUrlSafeForFetch(
     return { allowed: false, reasonCode: "LOCALHOST" };
   }
 
-  if (METADATA_HOSTS.has(hostname.toLowerCase())) {
+  if (METADATA_HOSTS.has(hostname)) {
     return { allowed: false, reasonCode: "METADATA_ENDPOINT" };
   }
 
-  // IP حرفي في الـ host
+  if (looksLikeNonCanonicalIpHost(hostname)) {
+    return { allowed: false, reasonCode: "HOST_NOT_ALLOWED" };
+  }
+
   if (isIP(hostname)) {
     const reason = classifyIpAddress(hostname);
     if (reason) return { allowed: false, reasonCode: reason, resolvedAddresses: [hostname] };
-    return { allowed: true, normalizedUrl: parsed.toString(), resolvedAddresses: [hostname] };
+    return {
+      allowed: true,
+      normalizedUrl: `https://${isIP(hostname) === 6 ? `[${hostname}]` : hostname}${parsed.pathname}${parsed.search}`,
+      resolvedAddresses: [hostname]
+    };
   }
 
-  // يجب أن يبدو كـ hostname مؤهل (نقطة واحدة على الأقل) — استثناءات قصيرة تُرفض
-  if (!hostname.includes(".") || hostname.startsWith(".") || hostname.endsWith(".")) {
-    // تسمح بأسماء مثل example.com؛ ترفض "intranet"
-    if (!hostname.includes(".")) {
-      return { allowed: false, reasonCode: "HOST_NOT_ALLOWED" };
-    }
+  if (!hostname.includes(".") || hostname.startsWith(".")) {
+    return { allowed: false, reasonCode: "HOST_NOT_ALLOWED" };
   }
 
   const resolver = opts?.resolver ?? defaultDnsResolver;
@@ -160,7 +175,6 @@ export async function assertUrlSafeForFetch(
     const reason = classifyIpAddress(addr);
     if (reason) {
       hasPrivate = true;
-      // أي عنوان خاص في مجموعة الحل → رفض (يشمل خليط public+private = DNS rebinding risk)
       if (reason === "METADATA_ENDPOINT") {
         return { allowed: false, reasonCode: "METADATA_ENDPOINT", resolvedAddresses: addresses };
       }
@@ -177,29 +191,44 @@ export async function assertUrlSafeForFetch(
     return { allowed: false, reasonCode: firstBad, resolvedAddresses: addresses };
   }
 
+  // أعِد بناء URL بالـ hostname المطبع (بلا trailing dot)
+  const normalized = new URL(parsed.toString());
+  normalized.hostname = hostname;
   return {
     allowed: true,
-    normalizedUrl: parsed.toString(),
+    normalizedUrl: normalized.toString(),
     resolvedAddresses: addresses
   };
 }
 
-/** يحذف query/fragment لعرض آمن في الاستجابات والسجلات. */
-export function toSafeDisplayUrl(rawUrl: string): string {
+const SENSITIVE_QUERY_KEYS =
+  /^(token|signature|sig|key|auth|access_token|x-amz-signature|x-goog-signature|x-amz-credential|x-amz-security-token|sas|se|sp|sv|sig)$/i;
+
+/**
+ * تنقيح موحّد للعرض والسجلات: scheme + host + pathname فقط.
+ * يحذف credentials وquery وfragment.
+ */
+export function redactSensitiveUrl(rawUrl: string): string {
   try {
     const u = new URL(rawUrl);
-    u.search = "";
-    u.hash = "";
-    // أخفِ بيانات الاعتماد إن وُجدت
     u.username = "";
     u.password = "";
+    u.search = "";
+    u.hash = "";
+    // طبّع trailing dot على الـ host
+    let host = u.hostname.replace(/^\[|\]$/g, "");
+    while (host.endsWith(".")) host = host.slice(0, -1);
+    u.hostname = host;
     return u.toString();
   } catch {
     return "[invalid-url]";
   }
 }
 
-const SENSITIVE_QUERY_KEYS = /^(token|signature|sig|key|auth|access_token|x-amz-signature|x-goog-signature|x-amz-credential|x-amz-security-token)$/i;
+/** @deprecated استخدم redactSensitiveUrl */
+export function toSafeDisplayUrl(rawUrl: string): string {
+  return redactSensitiveUrl(rawUrl);
+}
 
 export function urlContainsSensitiveQuery(rawUrl: string): boolean {
   try {
@@ -207,6 +236,7 @@ export function urlContainsSensitiveQuery(rawUrl: string): boolean {
     for (const key of u.searchParams.keys()) {
       if (SENSITIVE_QUERY_KEYS.test(key)) return true;
     }
+    // أي query يُعامل بحذر في السجلات — لكن الكشف الصريح للمفاتيح الحساسة أعلاه
     return false;
   } catch {
     return false;

@@ -1,15 +1,19 @@
 /** تنظيف واستخراج اسم الملف من Content-Disposition أو مسار URL. */
 
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g;
+const BIDI_CONTROLS = /[\u202a-\u202e\u2066-\u2069]/g;
+const RESERVED_WIN = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i;
 
 export function sanitizeFileName(raw: string, fallback = "document"): string {
   let name = raw.normalize("NFKC");
   name = name.replace(CONTROL_CHARS, "");
+  name = name.replace(BIDI_CONTROLS, "");
   name = name.replace(/\\/g, "/");
   // path traversal
   name = name.split("/").filter((p) => p && p !== "." && p !== "..").pop() ?? fallback;
   name = name.replace(/[^\w.\-ء-ي\u0600-\u06FF ()[\]]+/g, "-").trim();
   if (!name || name === "." || name === "..") name = fallback;
+  if (RESERVED_WIN.test(name)) name = `file-${name}`;
   if (name.length > 180) {
     const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
     name = name.slice(0, 180 - ext.length) + ext;
