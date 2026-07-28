@@ -9,7 +9,7 @@ import { facilitateSettlement } from "@/lib/modules/simulations/courtroom-skills
 
 export const dynamic = "force-dynamic";
 
-const schema = z.object({ amount: z.string().optional(), obligations: z.string().optional(), duration: z.string().optional(), waiver: z.string().optional() });
+const schema = z.object({ amount: z.string().optional(), obligations: z.string().optional(), duration: z.string().optional(), waiver: z.string().optional(), plaintiffProposal: z.string().optional(), defendantProposal: z.string().optional() });
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);

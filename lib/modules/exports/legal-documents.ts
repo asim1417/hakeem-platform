@@ -89,6 +89,48 @@ function ensureReasonedJudgment(content: string) {
   return content.includes("مسودة حكم قضائي مسبب") ? content : `مسودة حكم قضائي مسبب\n\n${content}`;
 }
 
+// تصدير نصّيّ صِرف (TXT) — يعرض العربية دون أيّ اعتماد على خطوط PDF؛ الأنسب للأرشفة واللصق.
+export function toText(payload: ReturnType<typeof documentPayload>) {
+  const lines = [
+    "منصّة حكيم",
+    payload.title,
+    `تاريخ ووقت التصدير: ${payload.exportedAt.toLocaleString("ar-SA")}`,
+    "".padEnd(48, "─"),
+    ""
+  ];
+  payload.sections.forEach((section) => {
+    lines.push(`【 ${section.heading} 】`, "");
+    lines.push(section.body, "");
+  });
+  lines.push("".padEnd(48, "─"), payload.disclaimer);
+  return Buffer.from("﻿" + lines.join("\n"), "utf8");
+}
+
+// تصدير HTML مؤصَّل RTL — عربيّةٌ سليمة، قابلٌ للطباعة إلى PDF من المتصفّح بجودة الخطوط الكاملة.
+export function toHtml(payload: ReturnType<typeof documentPayload>) {
+  const body = payload.sections
+    .map(
+      (section) =>
+        `<section><h2>${xml(section.heading)}</h2>${section.body
+          .split("\n")
+          .map((line) => `<p>${xml(line) || "&nbsp;"}</p>`)
+          .join("")}</section>`
+    )
+    .join("");
+  const html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${xml(payload.title)} — حكيم</title><style>
+body{font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,serif;background:#f7f5ef;color:#0d1321;margin:0;padding:32px;line-height:1.9}
+.sheet{max-width:820px;margin:0 auto;background:#fff;border:1px solid #e6e0d4;border-radius:14px;padding:40px 48px;box-shadow:0 8px 30px rgba(11,31,58,.06)}
+.brand{color:#0b1f3a;font-weight:800;font-size:22px}
+h1{color:#0b1f3a;font-size:26px;margin:.2em 0}
+.meta{color:#6b7280;font-size:13px;border-bottom:2px solid #d4b876;padding-bottom:14px;margin-bottom:18px}
+h2{color:#0b1f3a;font-size:18px;margin:26px 0 8px;padding-inline-start:10px;border-inline-start:4px solid #d4b876}
+p{margin:.25em 0;white-space:pre-wrap}
+.disclaimer{margin-top:32px;padding:14px 16px;background:#fbeef0;border:1px solid #e7c3cb;border-radius:10px;color:#8c2233;font-size:13px}
+@media print{body{background:#fff;padding:0}.sheet{border:none;box-shadow:none}}
+</style></head><body><div class="sheet"><div class="brand">منصّة حكيم</div><h1>${xml(payload.title)}</h1><div class="meta">تاريخ ووقت التصدير: ${xml(payload.exportedAt.toLocaleString("ar-SA"))}</div>${body}<div class="disclaimer">${xml(payload.disclaimer)}</div></div></body></html>`;
+  return Buffer.from(html, "utf8");
+}
+
 export function toDocx(payload: ReturnType<typeof documentPayload>) {
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>

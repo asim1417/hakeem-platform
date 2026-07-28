@@ -3,12 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
-import { buildSimulationExport, toDocx, toPdf } from "@/lib/modules/exports/legal-documents";
+import { buildSimulationExport, toDocx, toPdf, toText, toHtml } from "@/lib/modules/exports/legal-documents";
 
 export const dynamic = "force-dynamic";
 
 const allowedTypes = new Set(["claim-sheet", "hearing-record", "judgment", "settlement", "objection", "full-report"]);
-const allowedFormats = new Set(["docx", "pdf"]);
+const allowedFormats = new Set(["docx", "pdf", "txt", "html"]);
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
@@ -27,8 +27,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
 
   const payload = buildSimulationExport(session, type);
-  const file = format === "docx" ? toDocx(payload) : toPdf(payload);
-  const contentType = format === "docx" ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "application/pdf";
+  const file =
+    format === "docx" ? toDocx(payload) : format === "txt" ? toText(payload) : format === "html" ? toHtml(payload) : toPdf(payload);
+  const contentType =
+    format === "docx"
+      ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      : format === "txt"
+        ? "text/plain; charset=utf-8"
+        : format === "html"
+          ? "text/html; charset=utf-8"
+          : "application/pdf";
+  // HTML يُعرض داخل المتصفّح (للطباعة إلى PDF)، والبقيّة تنزيلٌ مباشر.
+  const disposition = format === "html" ? "inline" : "attachment";
   const filename = `hakeem-${type}-${params.id}.${format}`;
 
   await auditEvent({
@@ -42,7 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return new NextResponse(file, {
     headers: {
       "Content-Type": contentType,
-      "Content-Disposition": `attachment; filename="${filename}"`
+      "Content-Disposition": `${disposition}; filename="${filename}"`
     }
   });
 }
