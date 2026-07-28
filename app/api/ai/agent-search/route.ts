@@ -12,7 +12,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
 import { orchestrate, suggestMode } from "@/lib/modules/agents/orchestrator";
-import { intentNeedsSearch } from "@/lib/modules/agents/intent-gate";
+import { intentNeedsSearch, isCaseHelpWithoutFacts } from "@/lib/modules/agents/intent-gate";
+import { assessCaseIntake } from "@/lib/modules/agents/thinking/intake";
 import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 import { getAgentMode } from "@/lib/modules/agents/modes";
@@ -39,8 +40,10 @@ export async function POST(request: NextRequest) {
     /* تجاهل */
   }
   // السؤال المكتوب منفصلٌ عن نصّ المستند المرفق — كي يُصنَّف المنطق على السؤال لا على المستند.
-  const typed = String(body?.query ?? "").trim().slice(0, 8000);
-  const attachedDoc = String(body?.document ?? "").trim().slice(0, 12000);
+  const typed = String(body?.query ?? "").trim().slice(0, 16000);
+  // حدّ المستند المرفق: رُفِع من 12000 إلى 80000 حرفًا (وثيقةٌ قانونية كاملة كحكمٍ أو عقدٍ
+  // طويل)؛ يظلّ سقفًا يحمي ميزانية الرموز عند الصياغة، والوثائق الأضخم مسارها منصّة الوثائق.
+  const attachedDoc = String(body?.document ?? "").trim().slice(0, 80000);
   const hasDoc = attachedDoc.length > 0;
   // مادّة التحليل: السؤال + المستند (إن وُجد). المستند لا يُصنَّف بوابة الاتّساع عليه.
   const query = hasDoc
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
   const history = Array.isArray(body?.history)
     ? body!.history!
         .filter((m) => (m?.role === "user" || m?.role === "assistant") && typeof m?.content === "string" && m.content.trim())
-        .map((m) => ({ role: m.role as "user" | "assistant", content: String(m.content).slice(0, 1200) }))
+        .map((m) => ({ role: m.role as "user" | "assistant", content: String(m.content).slice(0, 4000) }))
         .slice(-8)
     : [];
   if (!query) {
@@ -115,10 +118,32 @@ export async function POST(request: NextRequest) {
         // كي تُصاغ بتعليمة الوضع نفسها على هذا الأساس الأغنى بدل أن يعترضها التحليل العامّ.
         const deepModes = new Set(["analyze-case", "action-plan", "verdict-estimate"]);
         const isDeepMode = deepModes.has(agentMode.id);
-        const mode = agentMode.id === "ask" ? (detailed || hasDoc ? "deep" : suggestMode(query)) : isDeepMode ? "deep" : "quick";
+
+        // «المستقبِل الأوّل» (Claude): يستقبل طلبَ المساعدة بقضيةٍ بلا وقائع **قبل** التفكيك
+        // والدراسة الموسّعة، فيقيّم الكفاية. إن نقص عنصرٌ جوهريّ استوضحه بأسئلةٍ مُوجّهة؛ وإن
+        // كفت وحّد الوقائع وأذِن بالدراسة على هذا الأساس الأغنى. سقوطٌ آمن: إن كان Claude غير
+        // مفعّل يتولّى المنسّق (بوّابة النيّة) الاستيضاح الحتميّ الثابت بلا انقطاع.
+        let studyQuery = query;
+        if (agentMode.id === "ask" && !hasDoc && isCaseHelpWithoutFacts(typed)) {
+          send({ type: "step", id: "intake", status: "running", label: "المستقبِل الأوّل: أقيّم كفاية معلومات القضية" });
+          const intake = await assessCaseIntake({ query: typed, history }).catch(() => ({ ok: false, ready: false, message: "", consolidatedFacts: undefined }));
+          if (intake.ok && !intake.ready) {
+            send({ type: "step", id: "intake", status: "done", label: "أحتاج تفاصيلَ قبل بدء الدراسة الموسّعة" });
+            send({ type: "result", answer: intake.message, mode: "intake", basis: [], total: 0 });
+            send({ type: "done" });
+            return;
+          }
+          if (intake.ok && intake.ready && intake.consolidatedFacts) {
+            send({ type: "step", id: "intake", status: "done", label: "المعلومات كافية — أبدأ الدراسة الموسّعة" });
+            studyQuery = intake.consolidatedFacts;
+          }
+          // intake.ok=false (المزوّد غير مفعّل) → نُكمل بـ studyQuery=query فيتولّى المنسّق الاستيضاح الحتميّ.
+        }
+
+        const mode = agentMode.id === "ask" ? (detailed || hasDoc ? "deep" : suggestMode(studyQuery)) : isDeepMode ? "deep" : "quick";
         // مع مستندٍ مرفَق: نتخطّى بوّابة الاتّساع دائمًا — المستخدم يريد تحليل مستنده لا قائمة استيضاح.
         const modeSkipBreadth = hasDoc ? true : agentMode.id === "ask" ? skipBreadth : true;
-        const result = await orchestrate(query, { mode, skipBreadth: modeSkipBreadth, skipAnalysis: isDeepMode, onStep: (s) => send({ type: "step", ...s }) });
+        const result = await orchestrate(studyQuery, { mode, skipBreadth: modeSkipBreadth, skipAnalysis: isDeepMode, onStep: (s) => send({ type: "step", ...s }) });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
@@ -230,7 +255,7 @@ export async function POST(request: NextRequest) {
             internalUrl: c.articleId ? `/dashboard/legal-core/articles/${c.articleId}` : undefined
           }));
           const synth = await synthesizeWithMode({
-            query,
+            query: studyQuery,
             systemPrompt: agentMode.systemPrompt,
             citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote })),
             history: agentMode.conversational ? history : undefined,
@@ -262,7 +287,7 @@ export async function POST(request: NextRequest) {
               .create({
                 data: {
                   userId: user.id,
-                  facts: query,
+                  facts: studyQuery,
                   output: synth.output,
                   status: "GENERATED",
                   qualityReport: { sourceOfTruth: "legal_core.legal_articles", mode: "consultation", agent: true, citations: consultCitations.length },
@@ -286,7 +311,7 @@ export async function POST(request: NextRequest) {
         }
 
         send({ type: "step", id: "synthesize", status: "running", label: "أصوغ إجابة مستندة للمواد فقط" });
-        const draft = await createConsultationDraft({ facts: query, actorId: user.id }).catch(() => null);
+        const draft = await createConsultationDraft({ facts: studyQuery, actorId: user.id }).catch(() => null);
 
         if (!draft || draft.blocked) {
           const rawBasis = result.articles.map((a) => ({

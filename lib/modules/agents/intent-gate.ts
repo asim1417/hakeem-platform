@@ -81,6 +81,20 @@ function greetingReply(n: string): string {
 }
 
 /**
+ * طلبُ مساعدةٍ بقضيةٍ **بلا وقائع ملموسة**: «فعل رغبة (لدي/عندي/أريد…) + اسم قضية
+ * (قضية/دعوى/نزاع/مشكلة)» دون رقمٍ/تاريخٍ/مبلغٍ ولا مصطلح تقاضٍ محدَّد (فسخ/تعويض/إخلاء…).
+ * يستعمله المسار ليُسلّم هذه الحالة إلى «المستقبِل الأوّل» (Claude) للاستيضاح الذكيّ،
+ * ويسقط للاستيضاح الحتميّ عند تعطّل المزوّد. لا يلتقط القضية التي تحمل وقائع (تمرّ للبحث).
+ */
+export function isCaseHelpWithoutFacts(input: string): boolean {
+  const n = normalize(input || "");
+  if (!n) return false;
+  const hasConcrete = /\d{1,4}/.test(n) || includesAny(n, CONCRETE_MARKERS);
+  const isCaseHelp = includesAny(n, SOLICIT_VERBS) && includesAny(n, CASE_NOUNS);
+  return isCaseHelp && !hasConcrete;
+}
+
+/**
  * يصنّف نيّة المدخل حتميًّا (سريع، دون اتصال). القاعدة الحاكمة: أي إشارة قانونية حقيقية
  * (رقم مادة/اسم نظام/مصطلح تقاضٍ) **تمرّ للبحث** ولو سبقتها تحية — فلا نحجب سؤالًا قانونيًا.
  */
@@ -106,8 +120,7 @@ export function classifyIntent(input: string): IntentResult {
   // (لا رقم/تاريخ/مبلغ ولا مصطلح تقاضٍ محدَّد كفسخ/تعويض/إخلاء) — أو تصريحٌ بجهل التفاصيل
   // («لا أعلم تفاصيلها»). لا نبحث النواة ولا نصوغ مذكرةً جوفاء تُكرّر المدخل، بل نستوضح
   // الوقائع أوّلًا مهما طال المدخل. الجملة التي فيها وقائعُ ملموسة تمرّ للبحث فلا نحجب مسألة.
-  const isCaseHelp = includesAny(n, SOLICIT_VERBS) && includesAny(n, CASE_NOUNS);
-  if (isCaseHelp && !hasConcrete) {
+  if (isCaseHelpWithoutFacts(raw)) {
     return { type: "ambiguous", confidence: 0.75, reply: INTAKE_REPLY, source: "deterministic" };
   }
 
