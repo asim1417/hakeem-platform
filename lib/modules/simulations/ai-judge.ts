@@ -137,7 +137,10 @@ function buildSystemPrompt() {
     "أعِد الجواب بصيغة JSON فقط، بلا أيّ نصٍّ خارجها، بالمفاتيح:",
     '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "directedTo": "المدعي|المدعى عليه", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT|PROCEDURAL_DECISION", "proceduralDecisionType": "...", "proceduralDecisionText": "...", "turnGoesTo": "المدعي|المدعى عليه|الطرفان", "judgeMessage": "...", "citations": ["نظام ... المادة ..."]}',
     "لا تجعل الدور لطرفٍ بينما توجّه الطلب/القرار لغيره؛ يجب توافق directedTo/turnGoesTo مع خطابك في judgeMessage.",
-    "judgeMessage = خطاب القاضي المسبَّب بالعربية الفصحى (2-4 جمل). citations = أرقام موادّ من المتاح فقط."
+    "judgeMessage = فقرةٌ قضائيّةٌ سرديّةٌ سعوديّة موجزة (جملتان إلى ثلاث، لا أكثر)، بصيغة الغائب:",
+    "  ابدأ بعرض ما جرى ثمّ القرار، مثل: «وبعرض [المداخلة/صحيفة الدعوى] على [الطرف] أفاد بأنّ [ملخّصٌ دقيقٌ لما قاله]، وحيث إنّ [تنزيلٌ موجزٌ على النظام]؛ فقد قرّرت الدائرة [القرار الإجرائيّ]».",
+    "  ممنوعٌ: التكرار، وذكر عناوين (تكييف/تقدير/أساس)، وإدراج أرقام مواد أو قوائم داخله، وإعادة صياغة ما سبق. اجعله نصًّا واحدًا متّصلًا لا نقاطًا.",
+    "citations = أرقام موادّ من المتاح فقط (تُستعمل للتأريض والتحقّق، لا تُكتب داخل judgeMessage)."
   ].join("\n");
 }
 
@@ -172,13 +175,10 @@ function buildUserPrompt(input: AiJudgeInput, statement: string, citationBlock: 
   ].join("\n");
 }
 
+// خطاب القاضي = فقرةٌ قضائيّة سرديّة موجزة فقط. لا تُلحَق عناوين (تكييف/تقدير/أساس) داخله —
+// فالتكييف يظهر في شريط الشفافيّة، والمواد في لوحة الأساس النظاميّ. (يمنع الطول والتكرار.)
 function composeJudgeMessage(n: AiJudgeNarrative, fallbackText: string): string {
-  const parts: string[] = [];
-  parts.push((n.judgeMessage && n.judgeMessage.trim()) || fallbackText);
-  if (n.classification) parts.push(`\nتكييف المداخلة: ${n.classification}.`);
-  if (n.evidenceAssessment) parts.push(`تقدير البيّنة وعبء الإثبات: ${n.evidenceAssessment}`);
-  if (n.citations && n.citations.length) parts.push(`الأساس النظاميّ: ${n.citations.join("، ")}`);
-  return parts.join("\n");
+  return (n.judgeMessage && n.judgeMessage.trim()) || fallbackText;
 }
 
 /**

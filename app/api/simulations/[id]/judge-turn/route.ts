@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
-import { allowedSpeakerLabel, callJudge, encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
+import { callJudge, encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim, countEvidenceSignals } from "@/lib/modules/simulations/hakeem-judge";
 import { decideJudgeTurnAI, type AiJudgeMeta } from "@/lib/modules/simulations/ai-judge";
 
@@ -55,13 +55,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       simulationId: params.id,
       role: "القاضي الافتراضي",
       stage: result.hearingStage,
-      content: [
-        result.judgeMessage,
-        "",
-        `الطرف الممكّن من الكلام: ${allowedSpeakerLabel(result.allowedSpeakerRole)}.`,
-        `المطلوب: ${result.requiredInput}`,
-        `سبب القرار: ${result.reason}`
-      ].join("\n")
+      // خطاب القاضي فقط (فقرة قضائيّة موجزة)؛ الدور والمطلوب يظهران في شريط الدور بالواجهة،
+      // فلا يُكرَّران هنا (يمنع الطول والتكرار).
+      content: result.judgeMessage
     }
   });
 
