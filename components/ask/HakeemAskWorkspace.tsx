@@ -1363,8 +1363,8 @@ export function HakeemAskWorkspace({
                     <LegalBasisPanel
                       items={turn.basis}
                       anchorPrefix={`t${i}-src-`}
-                      title="الأساس النظامي من النواة"
-                      note={`المواد التي استندت إليها الإجابة — كلٌّ منها قائم فعلاً في النواة القانونية (إجمالي ${turn.total.toLocaleString("ar-SA")} نتيجة بحث).`}
+                      title="الحواشي — الأساس النظامي من النواة"
+                      note={`الأرقام المُظلّلة أعلاه هوامشُ الدراسة: كلّ رقمٍ [n] في المتن يشير إلى مادّته هنا بنصّها. جميعها قائمةٌ فعلاً في النواة القانونية (إجمالي ${turn.total.toLocaleString("ar-SA")} نتيجة بحث).`}
                     />
                   ) : turn.answer ? null : (
                     <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-center text-sm leading-7 text-[var(--navy)]">

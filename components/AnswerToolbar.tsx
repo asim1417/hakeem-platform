@@ -8,16 +8,17 @@
 import { useState } from "react";
 import type { AnswerSource } from "./AnswerRenderer";
 import { standaloneAnswerHtml, answerHeaderHtml, answerFootHtml, escapeHtml, DOC_CSS } from "@/lib/answer-html";
+import { footnotesText, footnotesHtml } from "@/lib/answer-footnotes";
 
-/** يحوّل Markdown الإجابة إلى نصّ نظيف مع المراجع «(م/رقم المادة)». */
+/** يحوّل Markdown الإجابة إلى نصّ نظيف مع هوامش [n] مرقّمة + قائمة الحواشي أسفل النصّ. */
 export function toPlainText(content: string, basis: AnswerSource[] = []): string {
   let t = content || "";
-  t = t.replace(/\[(\d{1,3})\]/g, (m, n) => {
-    const num = basis[Number(n) - 1]?.articleNumber;
-    if (num === undefined || num === "") return m;
-    return `(م/${typeof num === "number" ? num.toLocaleString("ar-SA") : num})`;
+  // نُبقي هامش [n] رقمًا مرقّمًا (عربيًّا) مرتبطًا بقائمة الحواشي أسفل النصّ — لا نستبدله بالرقم النظاميّ.
+  t = t.replace(/\[([0-9٠-٩]{1,3})\]/g, (m, n) => {
+    const idx = Number(String(n).replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
+    return Number.isFinite(idx) && idx > 0 ? `[${idx.toLocaleString("ar-SA")}]` : m;
   });
-  return t
+  t = t
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/^\s*---\s*$/gm, "")
@@ -25,6 +26,7 @@ export function toPlainText(content: string, basis: AnswerSource[] = []): string
     .replace(/\|/g, " · ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  return t + footnotesText(basis);
 }
 
 function safeName(title: string, ext: string): string {
@@ -74,7 +76,12 @@ export function AnswerToolbar({
   const [busy, setBusy] = useState<null | "word" | "pdf" | "html">(null);
   const docTitle = (question || "استشارة قانونية").trim();
 
-  const renderedHtml = () => (printTargetId ? document.getElementById(printTargetId)?.innerHTML ?? "" : "");
+  // المتن المُصيَّر (بهوامشه العلويّة) + قائمة الحواشي بنصوص المواد أسفلها — فتُطبَع/تُصدَّر
+  // الدراسة كاملةً بالربط بين رقم الهامش ونصّه (لوحة الأساس ليست ضمن منطقة العرض المُلتقَطة).
+  const renderedHtml = () => {
+    const base = printTargetId ? document.getElementById(printTargetId)?.innerHTML ?? "" : "";
+    return base ? base + footnotesHtml(basis) : "";
+  };
   const fallbackHtml = () => escapeHtml(toPlainText(answer, basis)).replace(/\n/g, "<br/>");
   const dateStr = () => new Date().toLocaleDateString("ar-SA");
 

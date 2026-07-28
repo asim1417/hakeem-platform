@@ -61,15 +61,18 @@ function pruneUngrounded(text: string, allowed: Set<number>): string | null {
 }
 
 function buildBasis(sources: Map<string, RetrievedSource>): AgentBasisItem[] {
-  return Array.from(sources.values()).map((s) => ({
-    systemName: s.systemName,
-    articleNumber: s.articleNumber,
-    articleTitle: s.articleTitle,
-    quote: s.snippet,
-    state: "official" as const,
-    enforcement: s.status,
-    internalUrl: s.internalUrl,
-  }));
+  // مرتَّبٌ برقم الحاشية (cite) فيطابق ذيل [n] في النصّ ترتيبَ البطاقة أسفل الدراسة (الحاشية n).
+  return Array.from(sources.values())
+    .sort((a, b) => a.cite - b.cite)
+    .map((s) => ({
+      systemName: s.systemName,
+      articleNumber: s.articleNumber,
+      articleTitle: s.articleTitle,
+      quote: s.snippet,
+      state: "official" as const,
+      enforcement: s.status,
+      internalUrl: s.internalUrl,
+    }));
 }
 
 /**

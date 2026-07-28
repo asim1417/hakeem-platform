@@ -15,6 +15,8 @@ export interface RetrievedSource {
   snippet: string;
   status: string | null;
   internalUrl: string;
+  /** رقم الحاشية الثابت (١..n) بترتيب أوّل استرجاع — يستشهد به Claude كـ[n] فيُربَط بالنصّ أسفل الدراسة. */
+  cite: number;
 }
 
 /** سياق الجلسة الذي تعمل عليه الأدوات — يحمل المستند المرفق ويجمع المصادر المستَرجَعة. */
@@ -26,6 +28,18 @@ export interface AgentContext {
 
 export function createAgentContext(document: string): AgentContext {
   return { document: document ?? "", sources: new Map() };
+}
+
+/**
+ * يضيف مصدرًا إلى سياق الجلسة ويمنحه رقم حاشيةٍ ثابتًا (cite) بترتيب أوّل استرجاع. عند تكرار
+ * المعرّف يُعيد المصدر القائم بحاشيته الأصليّة (لا يُعيد الترقيم) — فيبقى [n] ثابتًا عبر الأدوار.
+ */
+function addSource(ctx: AgentContext, src: Omit<RetrievedSource, "cite">): RetrievedSource {
+  const existing = ctx.sources.get(src.sourceId);
+  if (existing) return existing;
+  const withCite: RetrievedSource = { ...src, cite: ctx.sources.size + 1 };
+  ctx.sources.set(withCite.sourceId, withCite);
+  return withCite;
 }
 
 // ── تعريفات الأدوات (مخطّط Anthropic) ──
@@ -155,8 +169,8 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         requireConceptCoverage: true,
         includeSnippets: true,
       });
-      const results = res.results.map((r) => {
-        const src: RetrievedSource = {
+      const results = res.results.map((r) =>
+        addSource(ctx, {
           sourceId: r.articleId,
           systemName: r.systemName,
           articleNumber: r.articleNumber,
@@ -164,12 +178,11 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
           snippet: (r.snippet || r.articleText || "").slice(0, 500),
           status: r.status,
           internalUrl: r.internalUrl,
-        };
-        ctx.sources.set(src.sourceId, src);
-        return src;
-      });
+        })
+      );
       return {
         ok: true,
+        // cite = رقم الحاشية: استشهد به كـ[n] فيُربَط تلقائيًّا بنصّ المادة أسفل الدراسة.
         data: { total: res.total, exhaustive: res.exhaustive ?? false, count: results.length, results },
         label: `بحث «${query.slice(0, 30)}» → ${results.length} مادة`,
       };
@@ -181,8 +194,8 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
       const limit = Math.min(Math.max(Number(input.limit) || 40, 10), 60);
       // مسحٌ عبر كلّ الأنظمة: بلا systemIds، سقفٌ عالٍ، بلا فرض تغطية المفاهيم (أوسع) — كمسح المكتبة.
       const res = await searchLegalCore({ query, limit, semantic: true, includeSnippets: true });
-      const results = res.results.map((r) => {
-        const s: RetrievedSource = {
+      const results = res.results.map((r) =>
+        addSource(ctx, {
           sourceId: r.articleId,
           systemName: r.systemName,
           articleNumber: r.articleNumber,
@@ -190,10 +203,8 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
           snippet: (r.snippet || r.articleText || "").slice(0, 400),
           status: r.status,
           internalUrl: r.internalUrl,
-        };
-        ctx.sources.set(s.sourceId, s);
-        return s;
-      });
+        })
+      );
       // تغطيةٌ لكلّ نظام: عدد المواد المطابقة — فيعرف Claude أين يتركّز الحكم وأين يعمّق.
       const bySystem = new Map<string, number>();
       for (const r of results) bySystem.set(r.systemName, (bySystem.get(r.systemName) ?? 0) + 1);
@@ -219,8 +230,8 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
       // استيرادٌ كسول: سلسلة المنظّم تستورد server-only، فلا نحمّلها إلا عند استخدام الأداة فعلًا.
       const { orchestrate } = await import("@/lib/modules/agents/orchestrator");
       const res = await orchestrate(question, { mode: "deep", skipBreadth: true, skipAnalysis: true });
-      const src = (res.articles ?? []).slice(0, 18).map((a) => {
-        const s: RetrievedSource = {
+      const src = (res.articles ?? []).slice(0, 18).map((a) =>
+        addSource(ctx, {
           sourceId: a.articleId,
           systemName: a.systemName,
           articleNumber: a.articleNumber,
@@ -228,10 +239,8 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
           snippet: (a.snippet || a.articleText || "").slice(0, 600),
           status: a.status,
           internalUrl: a.internalUrl,
-        };
-        ctx.sources.set(s.sourceId, s);
-        return s;
-      });
+        })
+      );
       const verifiedNums = new Set((res.verified ?? []).map((v) => v.articleNumber));
       return {
         ok: true,
@@ -259,7 +268,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true },
       });
       if (!a) return { ok: false, data: { error: "لم يُعثر على المادة بهذا المعرّف" }, label: "قراءة مصدر" };
-      const src: RetrievedSource = {
+      const src = addSource(ctx, {
         sourceId: a.id,
         systemName: a.lawName,
         articleNumber: a.articleNumber,
@@ -267,11 +276,10 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         snippet: a.content.slice(0, 500),
         status: a.status,
         internalUrl: `/dashboard/legal-core/articles/${a.id}`,
-      };
-      ctx.sources.set(src.sourceId, src);
+      });
       return {
         ok: true,
-        data: { sourceId: a.id, systemName: a.lawName, articleNumber: a.articleNumber, title: a.title, content: a.content, status: a.status },
+        data: { sourceId: a.id, cite: src.cite, systemName: a.lawName, articleNumber: a.articleNumber, title: a.title, content: a.content, status: a.status },
         label: `قراءة ${a.lawName} م/${a.articleNumber}`,
       };
     }
