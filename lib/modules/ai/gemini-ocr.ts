@@ -27,13 +27,30 @@ async function readStoredOcrKey(): Promise<string | null> {
 
 export type GeminiOcrKeySource = "db" | "env" | "none";
 
-/** المفتاح الفعّال ومصدره — قاعدة البيانات أولاً ثم البيئة. */
+// تخزينٌ مؤقّت للمفتاح المُحلَّل (TTL قصير): تفريغ مستندٍ بعشرات الصفحات كان يقرأ
+// قاعدة البيانات ويفكّ التشفير مرّتين لكلّ صفحة (status ثمّ resolve) — إهدارٌ في زمن
+// الاستجابة والاتصال. نُبقيه في الذاكرة 60 ثانية فيخدم كلّ صفحات الدفعة بقراءةٍ واحدة.
+// يُبطَل صراحةً عند حفظ/إزالة المفتاح من الإعدادات فلا يبقى قديمًا.
+let keyCache: { value: { key: string | null; source: GeminiOcrKeySource }; at: number } | null = null;
+const KEY_TTL_MS = 60_000;
+
+/** يُبطِل التخزين المؤقّت للمفتاح — يُستدعى عند تغيّره من الإعدادات. */
+export function invalidateGeminiOcrKeyCache(): void {
+  keyCache = null;
+}
+
+/** المفتاح الفعّال ومصدره — قاعدة البيانات أولاً ثم البيئة (مع تخزينٍ مؤقّت قصير). */
 export async function resolveGeminiOcrKey(): Promise<{ key: string | null; source: GeminiOcrKeySource }> {
+  const nowMs = Date.now();
+  if (keyCache && nowMs - keyCache.at < KEY_TTL_MS) return keyCache.value;
   const stored = await readStoredOcrKey();
-  if (stored) return { key: stored, source: "db" };
-  const env = process.env.GEMINI_API_KEY?.trim();
-  if (env) return { key: env, source: "env" };
-  return { key: null, source: "none" };
+  const value: { key: string | null; source: GeminiOcrKeySource } = stored
+    ? { key: stored, source: "db" }
+    : process.env.GEMINI_API_KEY?.trim()
+      ? { key: process.env.GEMINI_API_KEY.trim(), source: "env" }
+      : { key: null, source: "none" };
+  keyCache = { value, at: nowMs };
+  return value;
 }
 
 /** حالة الخدمة للعرض — دون كشف المفتاح (آخر 4 خانات فقط). */
@@ -58,6 +75,7 @@ export async function saveGeminiOcrKey(plainKey: string): Promise<{ ok: boolean;
       create: { key: OCR_KEY_SETTING, value },
       update: { value }
     });
+    invalidateGeminiOcrKeyCache();
     return { ok: true };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "تعذّر الحفظ." };
@@ -71,6 +89,7 @@ export async function clearGeminiOcrKey(): Promise<{ ok: boolean }> {
   } catch {
     /* غير موجود أصلاً */
   }
+  invalidateGeminiOcrKeyCache();
   return { ok: true };
 }
 
@@ -117,11 +136,16 @@ const OCR_PROMPT =
 // - thinkingBudget=0 على flash: OCR مهمّة إدراكٍ لا استدلال؛ «التفكير» يستهلك رصيد
 //   المخرجات (فيعيد نصّاً فارغاً/مبتوراً) ويبطّئ الاستجابة. تعطيله يعطي نسخاً مباشراً
 //   أدقّ وأسرع. (gemini-2.5-pro لا يقبل 0 — نتركه على التفكير الديناميكي للخط اليدوي.)
-export function genConfig(modelType: GeminiOcrModel) {
+export function genConfig(modelType: GeminiOcrModel, mime?: GeminiOcrMime) {
+  // سقف المخرجات: مسار الصفحات السحابي يرسل صورةَ صفحةٍ واحدة لكلّ طلب — صفحةٌ واحدة
+  // لا تتجاوز ~16k رمزًا مهما كثُف نصّها، فسقفُ 65536 (اللازم لـ PDF كاملٍ متعدّد
+  // الصفحات) إهدارٌ يبطّئ جدولة النموذج. نُضيّقه للصور فتنخفض زمن الاستجابة، ونُبقيه
+  // مرتفعًا لـ PDF المُرسَل كاملًا.
+  const isImage = mime === "image/png" || mime === "image/jpeg";
   return {
     temperature: 0.1,
     topP: 0.95,
-    maxOutputTokens: 65536,
+    maxOutputTokens: isImage ? 16384 : 65536,
     ...(modelType === "flash" ? { thinkingConfig: { thinkingBudget: 0 } } : {})
   };
 }
@@ -198,7 +222,7 @@ export async function extractTextWithGemini(
           ]
         }
       ],
-      generationConfig: genConfig(modelType)
+      generationConfig: genConfig(modelType, mimeType)
     })
   });
 
