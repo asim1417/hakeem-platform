@@ -279,11 +279,20 @@ export function cleanPdfTextLayer(rawText: string): { text: string; needsOcr: bo
   // إعادة التشكيل تُصلح الحالة الشائعة (صيغ عرض بحدود كلمات سليمة). لكنها لا تستطيع
   // استرجاع حدود الكلمات حين تُفصل كلّ صورة حرف بمسافة (singleLetterRatio عالٍ)،
   // ولا إصلاح الخطّ المُجزّأ (رموز بديلة). في هاتين الحالتين المصدر الصحيح هو OCR.
+  //
+  // حالةٌ ثالثة تفوت المؤشّرات أعلاه: خريطة ToUnicode معطوبة/غائبة في خطوط CID
+  // (Identity-H) — كثيرٌ من مخرجات Microsoft Reporting Services وغيرها للعربية —
+  // فيُخرِج pdfjs محارف لاتينيّة موسّعة/يونانيّة/IPA/رموزًا بدل العربية (النصّ يظهر
+  // عربيًّا سليمًا للعين لكنّه في الطبقة النصّية «موجَرة» تمامًا). لا يلتقطها فحص
+  // substitution (لاتينيّ أساسيّ فقط ومشروطٌ بوجود 40+ حرفًا عربيًّا لا تُوجد أصلًا).
+  // نعتمد isBrokenExtraction الأوسع (يعدّ اليونانيّ/السيريليّ/اللاتينيّ الموسّع/الرسوم)
+  // فيُوجَّه هذا الصنف إلى OCR بدل عرض رموزٍ مشوّهة بجودةٍ منخفضة.
   const needsOcr =
     report.substitutionRatio > 0.12 ||
     report.singleLetterRatio > 0.45 ||
     report.unmappedRatio > 0.2 ||
-    report.fragmentRatio > 0.08;
+    report.fragmentRatio > 0.08 ||
+    isBrokenExtraction(rawText);
   return { text, needsOcr, report };
 }
 
