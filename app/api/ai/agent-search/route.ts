@@ -26,6 +26,10 @@ import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+// الدراسة الموسّعة (حلقة أدوات Claude متعدّدة الجولات) قد تطول — نمنحها حتى 300 ثانية كي
+// تُكمل ولو غادر المستخدم الصفحة: التنفيذ يستمرّ ويُحفظ ناتجه في المهمّة (job) فيستأنفه
+// العميل عند العودة عبر /api/jobs/{id}. بلا هذا الحدّ كان الطويل يُقتل قبل الحفظ.
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
