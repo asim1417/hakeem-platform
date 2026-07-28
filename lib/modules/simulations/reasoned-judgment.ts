@@ -75,20 +75,33 @@ function isComplete(text: string): boolean {
   return /المنطوق|حكمت الدائرة|لذلك حكمت|لذلك قضت/.test(text);
 }
 
+function hijriToday(): string {
+  try {
+    return new Date().toLocaleDateString("ar-SA-u-ca-islamic", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  } catch {
+    return new Date().toLocaleDateString("ar-SA");
+  }
+}
+
 function wrapJudgment(text: string, c: ClaimData | undefined): string {
-  const parties = `${c?.plaintiffName || "المدّعي"} ضدّ ${c?.defendantName || "المدّعى عليه"}`;
+  const plaintiff = `${c?.plaintiffName || "المدّعي"}${c?.plaintiffCapacity ? " (" + c.plaintiffCapacity + ")" : ""}`;
+  const defendant = `${c?.defendantName || "المدّعى عليه"}${c?.defendantCapacity ? " (" + c.defendantCapacity + ")" : ""}`;
   return [
     "مسودة حكم قضائيّ مسبَّب — بيئة محاكاة تدريبيّة",
     "بسم الله الرحمن الرحيم",
-    `أطراف الدعوى: ${parties}`,
+    `التاريخ: ${hijriToday()}`,
+    `أطراف الدعوى: ${plaintiff} ضدّ ${defendant}`,
     `نوع الدعوى: ${c?.caseType || "غير محدد"}`,
+    c?.attendance && c.attendance.trim() ? `إثبات الحضور والصفة: ${c.attendance.trim()}` : null,
     "",
     text.trim(),
     "",
     "التنبيه:",
     TRAINING_DISCLAIMER,
     "القاضي حكيم — قاضٍ افتراضيّ تدريبيّ"
-  ].join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 export async function generateReasonedJudgment(input: {

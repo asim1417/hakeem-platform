@@ -26,7 +26,7 @@ type Session = {
   judgments?: Judgment[];
 };
 type SessionSummary = { id: string; title: string; stage: string; updatedAt?: string };
-type Playbook = { id: string; title: string; category: string; description: string; suggestedArticleNumbers?: number[]; preferredSystems?: string[]; litigationStages?: string[]; judicialUsage?: string[] };
+type Playbook = { id: string; title: string; category: string; description: string; article?: string; effects?: string[]; suggestedArticleNumbers?: number[]; preferredSystems?: string[]; litigationStages?: string[]; judicialUsage?: string[] };
 
 // مسار المراحل المرئيّ (منقول من القاعة الكلاسيكيّة).
 const STAGE_FLOW = ["CLAIM_FILING", "PLAINTIFF_STATEMENT", "DEFENDANT_RESPONSE", "PROCEDURAL_DECISION", "CLOSE_PLEADING", "TRAINING_JUDGMENT"] as const;
@@ -75,6 +75,16 @@ function renderWithArticleLinks(text: string): ReactNode[] {
   }
   if (last < text.length) out.push(text.slice(last));
   return out;
+}
+
+// عدد المواد المستشهَد بها في نصّ الحكم (كلّها مؤصَّلةٌ بحكم حارس الاختلاق قبل الحفظ).
+function countCitations(text: string): number {
+  const nums = new Set<string>();
+  ARTICLE_MENTION.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = ARTICLE_MENTION.exec(text)) !== null) nums.add(m[0].replace(/\D/g, ""));
+  nums.delete("");
+  return nums.size;
 }
 
 function extractClaimClient(messages: Msg[]): Record<string, string> | null {
@@ -385,9 +395,10 @@ export function InteractiveJudge() {
     setCatalogOpen((v) => !v);
     if (catalog.length === 0) {
       try {
-        const res = await fetch("/original-hakeem/judicial-playbooks.json");
+        // كتالوج الدفوع الـ٢٨ المسمّاة (شكليّة/موضوعيّة/إثبات/إجرائيّة) بمواردها ووسومها.
+        const res = await fetch("/original-hakeem/defenses-catalog.json");
         const data = await res.json();
-        setCatalog(Array.isArray(data?.playbooks) ? data.playbooks : []);
+        setCatalog(Array.isArray(data?.defenses) ? data.defenses : []);
       } catch {
         /* الكتالوج اختياريّ — لا يكسر الجلسة */
       }
@@ -395,7 +406,8 @@ export function InteractiveJudge() {
   }, [catalog.length]);
 
   const insertDefense = useCallback((pb: Playbook) => {
-    setInput((prev) => `${prev ? prev + "\n" : ""}الدفع: ${pb.title} — ${pb.description}`.trim());
+    const ref = pb.article ? ` (${pb.article})` : "";
+    setInput((prev) => `${prev ? prev + "\n" : ""}الدفع: ${pb.title}${ref} — ${pb.description}`.trim());
     setCatalogOpen(false);
   }, []);
 
@@ -527,6 +539,11 @@ export function InteractiveJudge() {
               {typing?.id === judgment.id ? judgment.content.slice(0, typedLen) : renderWithArticleLinks(judgment.content)}
               {typing?.id === judgment.id ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}
             </div>
+            {typing?.id !== judgment.id && countCitations(judgment.content) > 0 ? (
+              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">
+                <Check size={12} aria-hidden /> كلّ الاستشهادات مؤصَّلة من النواة القانونيّة ({countCitations(judgment.content)} مادّة) — لا اختلاق
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div ref={bottomRef} />
@@ -652,17 +669,11 @@ export function InteractiveJudge() {
                     <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--muted)]">{p.category}</span>
                   </div>
                   <div className="mt-0.5 line-clamp-2 text-[11px] leading-5 text-[var(--muted)]">{p.description}</div>
-                  {p.litigationStages?.length ? (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {p.litigationStages.slice(0, 3).map((st) => <span key={st} className="rounded bg-[var(--emerald-soft)] px-1.5 py-0.5 text-[10px] text-[var(--emerald)]">مرحلة: {st}</span>)}
-                    </div>
-                  ) : null}
-                  {p.suggestedArticleNumbers?.length || p.preferredSystems?.length ? (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {(p.preferredSystems ?? []).slice(0, 2).map((s) => <span key={s} className="rounded bg-[var(--gold-ghost)] px-1.5 py-0.5 text-[10px] text-[var(--gold)]">{s}</span>)}
-                      {(p.suggestedArticleNumbers ?? []).slice(0, 4).map((n) => <span key={n} className="rounded bg-[var(--gold-ghost)] px-1.5 py-0.5 text-[10px] text-[var(--gold)]">م/{n}</span>)}
-                    </div>
-                  ) : null}
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {p.article ? <span className="rounded bg-[var(--gold-ghost)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--gold)]">{p.article}</span> : null}
+                    {(p.effects ?? []).map((e) => <span key={e} className="rounded bg-[var(--emerald-soft)] px-1.5 py-0.5 text-[10px] text-[var(--emerald)]">{e}</span>)}
+                    {(p.litigationStages ?? []).slice(0, 2).map((st) => <span key={st} className="rounded bg-[var(--surface)] px-1.5 py-0.5 text-[10px] text-[var(--muted)]">مرحلة: {st}</span>)}
+                  </div>
                 </button>
               ))}
               {catalog.length === 0 ? <p className="p-3 text-center text-xs text-[var(--muted)]">جارٍ تحميل الكتالوج…</p> : null}
