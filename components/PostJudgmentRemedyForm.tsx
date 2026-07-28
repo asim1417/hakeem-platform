@@ -10,13 +10,19 @@ type RemedyConfig = {
   title: string;
   description: string;
   reasonLabel: string;
-  // أسبابٌ مؤصَّلة: لكلّ سببٍ مرجعُه النظاميّ الإرشاديّ (منقولٌ من تبويبات القاعة الكلاسيكيّة).
-  reasons: Array<{ label: string; ref: string }>;
-  // مسار مراحل الاعتراض (شريط تتبّع منقول من apS0–apS3 في النسخة السابقة).
-  stages: string[];
-  // مواد اللائحة المرجعيّة للنطاق.
-  refNote: string;
+  reasonHint: string;
+  // أسبابٌ مؤصَّلة (منقولة كاملةً من النسخة القديمة): عنوانٌ + وصفٌ + المرجع النظاميّ.
+  reasons: Array<{ label: string; desc: string; ref: string }>;
+  // مسار المراحل الكامل (منقول من appeal-timeline / مسار النقض والالتماس).
+  stages: Array<{ title: string; note?: string }>;
+  // خيارات الطلب في هذا المسار (select).
+  requests: string[];
+  // حقولٌ إضافيّة (تاريخ التسلّم/العلم، مواضع المخالفة…).
   extraFields: Array<{ key: string; label: string; placeholder: string }>;
+  // مواد اللائحة المرجعيّة (side card).
+  refMaterials: Array<{ article: string; note: string }>;
+  // ملاحظاتٌ وشروطٌ مسبقة ومُهَل.
+  notes: string[];
 };
 
 const configs: Record<RemedyKind, RemedyConfig> = {
@@ -24,64 +30,134 @@ const configs: Record<RemedyKind, RemedyConfig> = {
     kind: "appeal",
     apiKind: "استئناف",
     title: "لائحة الاستئناف",
-    description: "مسودة تدريبية لمراجعة الحكم من حيث الوقائع والتسبيب وتطبيق النظام. دائرة الاستئناف تُحيل للحكم الابتدائيّ ولا تُعيد سرد الوقائع.",
-    reasonLabel: "أسباب الاستئناف",
+    description: "طريق اعتراضٍ عاديّ يُراجع الحكم من حيث الوقائع والتسبيب وتطبيق النظام. دائرة الاستئناف تُحيل للحكم الابتدائيّ ولا تُعيد سرد الوقائع.",
+    reasonLabel: "أسباب الطعن بالاستئناف",
+    reasonHint: "اختر أسباب طعنك — يجب أن يكون لكلّ سببٍ مستندٌ في وقائع القضية وإلا رُدّ شكلًا.",
     reasons: [
-      { label: "خطأ في التكييف", ref: "نظام المرافعات الشرعية" },
-      { label: "قصور في التسبيب", ref: "نظام المحاكم التجارية — التسبيب" },
-      { label: "مخالفة الثابت بالأوراق", ref: "نظام الإثبات" },
-      { label: "خطأ في تطبيق النظام", ref: "نظام المعاملات المدنية" },
-      { label: "عدم الرد على دفوع جوهرية", ref: "نظام المرافعات الشرعية" },
-      { label: "الحكم بما لم يُطلَب", ref: "نظام المرافعات الشرعية — حظر الحكم بما لم يُطلَب" }
+      { label: "خطأ في تطبيق النظام أو تفسيره", desc: "المحكمة طبّقت نصًّا نظاميًّا خاطئًا أو فسّرته تفسيرًا مغايرًا للثابت قضاءً", ref: "نظام المعاملات المدنية / نظام المحاكم التجارية" },
+      { label: "خطأ في تقدير الأدلة", desc: "أُغفل دليلٌ جوهريّ أو أُعطي دليلٌ ثقلًا لا يستحقّه وفق نظام الإثبات", ref: "نظام الإثبات" },
+      { label: "قصور في التسبيب", desc: "الحكم خلا من الرد على دفعٍ جوهريّ أو التسبيب الكافي لإلغاء طلب", ref: "نظام المحاكم التجارية — التسبيب" },
+      { label: "مخالفة مبدأ المواجهة", desc: "بُنيَ الحكم على وقائع أو أدلّة لم يُتَح للطرف الآخر مناقشتها", ref: "نظام المرافعات الشرعية" },
+      { label: "الحكم بما لم يُطلب", desc: "تجاوز الحكم نطاق الطلبات المقدَّمة خلافًا لنظام المرافعات م/97", ref: "نظام المرافعات الشرعية م/97" },
+      { label: "دليل جديد لم يكن متاحًا", desc: "ظهر دليلٌ جوهريّ لم يكن بالإمكان تقديمه أمام الدرجة الأولى لسببٍ قاهر (م/21: لا تُقبل الأدلّة التي كان ممكنًا تقديمها ابتداءً)", ref: "لائحة الاعتراض م/21" }
     ],
-    stages: ["نافذة الاستئناف (المهلة)", "تقديم لائحة الطعن", "نظر الاستئناف", "حكم الاستئناف"],
-    refNote: "مواد لائحة الاعتراض على الأحكام — الاستئناف.",
+    stages: [
+      { title: "نافذة الاستئناف", note: "30 يومًا" },
+      { title: "تقديم الطعن", note: "أسباب الاستئناف" },
+      { title: "المراجعة القضائية", note: "تحليل الأسباب" },
+      { title: "حكم الاستئناف", note: "تأييد / تعديل / إلغاء" }
+    ],
+    requests: [
+      "إلغاء الحكم الابتدائي والقضاء في الموضوع (م/32)",
+      "تعديل الحكم وزيادة المبلغ المحكوم به",
+      "تعديل الحكم وتخفيض المبلغ المحكوم به",
+      "إلغاء الحكم وإعادة القضية للمحكمة الابتدائية (في حالات م/34 الحصرية)",
+      "تأييد الحكم مع تصحيح التسبيب فقط (م/18)"
+    ],
     extraFields: [
-      { key: "requests", label: "الطلبات", placeholder: "مثال: إلغاء الحكم محل الاعتراض، الحكم مجددًا بالطلبات، أو إعادته للنظر." },
-      { key: "attachments", label: "المرفقات", placeholder: "اذكر المستندات أو المرفقات المؤيدة للاعتراض إن وجدت." }
+      { key: "reasonsDetail", label: "تفصيل أسباب الطعن", placeholder: "اشرح بالتفصيل كيف أخطأت المحكمة الابتدائية في كلّ سببٍ اخترته، مع الإشارة إلى الصفحة أو الفقرة في الحكم المطعون فيه…" },
+      { key: "notifyDate", label: "تاريخ تسلّم صك الحكم (م/7)", placeholder: "تبدأ مدّة الاعتراض من اليوم التالي لتسلّم الصك." }
+    ],
+    refMaterials: [
+      { article: "م/7", note: "بدء مدّة الاعتراض من تسلّم صك الحكم" },
+      { article: "م/11", note: "طلب وقف التنفيذ خلال مدّة الاعتراض فقط" },
+      { article: "م/18", note: "تأييد الحكم مع تصحيح التسبيب" },
+      { article: "م/21", note: "لا تُقبل أدلّة كان ممكنًا تقديمها ابتداءً" },
+      { article: "م/28", note: "غياب المستأنف 60 يومًا دون طلب سير ⇒ سقوط الحق" },
+      { article: "م/32", note: "إلغاء والقضاء في الموضوع" },
+      { article: "م/34", note: "حالات الإلغاء والإعادة الحصرية" }
+    ],
+    notes: [
+      "تبدأ مدّة الاعتراض من اليوم التالي لتسلّم صك الحكم (م/7)، ومدّتها 30 يومًا.",
+      "طلب وقف التنفيذ يكون خلال مدّة الاعتراض فقط (م/11).",
+      "غياب المستأنف 60 يومًا دون طلب سيرٍ يُسقط حقّ الاستئناف (م/28)."
     ]
   },
   cassation: {
     kind: "cassation",
     apiKind: "نقض",
-    title: "طلب النقض",
-    description: "مسودة تدريبية مركزة على مخالفة النظام أو الخطأ في تطبيقه أو تكييفه أو الإخلال بإجراءٍ جوهريّ. النقض ≠ الاستئناف: لا يُعاد بحث الموضوع.",
-    reasonLabel: "أسباب النقض",
+    title: "طلب النقض أمام المحكمة العليا",
+    description: "طريق اعتراضٍ أمام المحكمة العليا يركّز على الأسباب النظاميّة المؤثّرة في الحكم، ولا يُعدّ إعادة نظرٍ كاملة في موضوع النزاع (م/40-47 لائحة الاعتراض).",
+    reasonLabel: "سبب النقض — وفق م/193 من نظام المحاكم التجارية",
+    reasonHint: "أسباب النقض حصريّة — لا تقبل المحكمة العليا إلا هذه الأسباب.",
     reasons: [
-      { label: "مخالفة النظام أو الخطأ في تطبيقه", ref: "نظام المحاكم التجارية م/193" },
-      { label: "القصور في التسبيب", ref: "نظام المحاكم التجارية — التسبيب" },
-      { label: "مخالفة قواعد الاختصاص", ref: "نظام المرافعات الشرعية" },
-      { label: "مخالفة إجراءٍ جوهريّ أثّر في الحكم", ref: "نظام المرافعات الشرعية" },
-      { label: "الخطأ في تكييف الواقعة", ref: "نظام المعاملات المدنية" }
+      { label: "مخالفة مبدأ قضائي صادر من المحكمة العليا — م/40", desc: "الحكم خالف مبدأً أخذت به المحكمة العليا في قضايا سابقة — يُعدّ بحكم مخالفة النظام", ref: "لائحة الاعتراض م/40" },
+      { label: "مخالفة نصّ نظاميّ صريح — م/193 فقرة 1", desc: "الحكم خالف حكمًا نظاميًّا واجب التطبيق تطبيقًا مباشرًا على محلّ النزاع", ref: "نظام المحاكم التجارية م/193" },
+      { label: "الخطأ في الاختصاص النوعيّ أو المكانيّ — م/46", desc: "الحكم صدر من جهةٍ قضائيّة غير مختصّة نوعيًّا أو مكانيًّا — أثره: تعيين المحكمة المختصّة", ref: "لائحة الاعتراض م/46" }
     ],
-    stages: ["نافذة النقض (المهلة)", "تقديم أسباب النقض", "نظر المحكمة العليا", "قرار النقض / التأييد"],
-    refNote: "أسباب النقض وطلباته وفق لائحة الاعتراض — النقض.",
+    stages: [
+      { title: "تقديم مذكرة النقض", note: "شروط م/42" },
+      { title: "فحص القبول", note: "م/44 — الموعد والشروط" },
+      { title: "المحكمة العليا", note: "الأسباب النظامية" },
+      { title: "الفصل", note: "رفض / نقض / إحالة (م/45)" }
+    ],
+    requests: [
+      "نقض الحكم والحكم في الموضوع (م/47)",
+      "نقض الحكم وإحالته للدائرة التي أصدرته (م/45 فقرة 2)",
+      "نقض الحكم لمخالفة الاختصاص وتعيين المحكمة المختصة (م/46)"
+    ],
     extraFields: [
-      { key: "systemViolation", label: "مخالفة النظام أو الخطأ في تطبيقه", placeholder: "بيّن وجه مخالفة الحكم للنظام أو خطأه في التطبيق." },
-      { key: "reasoningDefect", label: "القصور في التسبيب", placeholder: "بيّن موضع القصور أو عدم معالجة الدفوع الجوهرية." },
-      { key: "requests", label: "الطلبات", placeholder: "مثال: نقض الحكم وإعادة القضية أو الحكم وفق الطلبات." }
+      { key: "location", label: "موضع المخالفة من الحكم", placeholder: "حدّد الفقرة أو الصفحة بدقّة — مثال: في الصفحة الثالثة من الحكم، في تسبيب الدائرة، جاء: «...» في حين أنّ المبدأ القضائي الصادر عن المحكمة العليا في القضية رقم (...) ينصّ على «...»" },
+      { key: "effect", label: "وجه المخالفة وأثرها في منطوق الحكم — م/42", placeholder: "وضّح كيف أثّرت المخالفة في النتيجة النهائية — لو لم تقع المخالفة هل كان الحكم سيختلف؟" }
+    ],
+    refMaterials: [
+      { article: "م/40", note: "مخالفة مبدأ قضائي = مخالفة النظام" },
+      { article: "م/41", note: "لا سبب جديد لم يُبدَ في الاستئناف" },
+      { article: "م/42", note: "شروط المذكرة — إلزامية" },
+      { article: "م/44", note: "الرد إذا فات الموعد أو تخلّفت الشروط" },
+      { article: "م/45", note: "الفصل: رفض أو نقض مع التسبيب" },
+      { article: "م/46", note: "النقض لاختصاص: تعيين محكمة مختصة" },
+      { article: "م/47", note: "الحكم في الموضوع: نطق علني" }
+    ],
+    notes: [
+      "شرطٌ مسبق — م/41: لا يُقبل في النقض سببٌ لم يُبدَ في الاستئناف وكان ممكنًا إبداؤه فيه.",
+      "شروط مذكرة النقض — م/42 (إلزامية وإلا رُدّت تلقائيًّا): تحديد أسباب الاعتراض وموضعها بدقّة؛ بيان وجه المخالفة وأثرها في النتيجة؛ ما يُثبت سبق إبداء الأسباب في الاستئناف أو تعذّره.",
+      "النقض ≠ الاستئناف: لا يُعيد محاكمة الوقائع، بل يقتصر على مراقبة صحّة تطبيق النظام والمبادئ القضائية."
     ]
   },
   reconsideration: {
     kind: "reconsideration",
     apiKind: "التماس إعادة نظر",
     title: "التماس إعادة النظر",
-    description: "مسودة تدريبية للأسباب الاستثنائية التي تفتح مراجعة الحكم بعد صدوره. يُحسب الميعاد من تاريخ العلم بسبب الالتماس.",
-    reasonLabel: "حالات الالتماس المقبولة",
+    description: "طريق اعتراضٍ غير عاديّ، مستقلٌّ عن الاستئناف والنقض، لا يُقبل إلا عند تحقّق سببٍ من أسبابه النظاميّة، ويُقدَّم لمحكمة الاستئناف التي أيّدت الحكم (م/48-59 لائحة الاعتراض).",
+    reasonLabel: "حالات الالتماس المقبولة (م/200 من النظام)",
+    reasonHint: "لا يُقبل الالتماس إلا عند تحقّق حالةٍ من الحالات النظاميّة الآتية.",
     reasons: [
-      { label: "ظهور أوراق قاطعة بعد الحكم", ref: "حالات الالتماس" },
-      { label: "وقوع غش أو تدليس أثّر في الحكم", ref: "حالات الالتماس" },
-      { label: "بناء الحكم على شهادة أو أوراق مزوّرة", ref: "حالات الالتماس" },
-      { label: "تناقض منطوق الحكم", ref: "حالات الالتماس" },
-      { label: "الحكم بما لم يطلبه الخصوم أو بأكثر منه", ref: "حالات الالتماس" },
-      { label: "عدم التمثيل الصحيح للخصم", ref: "حالات الالتماس" }
+      { label: "أ — تزوير ورقة أو شهادة زور (م/51-أ)", desc: "ثبت تزوير ورقةٍ بُني عليها الحكم أو صدر حكمٌ بأنّ الشهادة زور", ref: "لائحة الاعتراض م/51-أ" },
+      { label: "ب — أوراق قاطعة تعذّر إبرازها (م/51-ب)", desc: "ظهرت أوراقٌ قاطعة في الدعوى كانت محتجزةً من الخصم أو تعذّر تقديمها", ref: "لائحة الاعتراض م/51-ب" },
+      { label: "ج — غشّ من الخصم أثّر في الحكم (م/51-ج)", desc: "تبيّن أنّ الخصم استعمل طرقًا احتياليّة أدّت إلى الحكم", ref: "لائحة الاعتراض م/51-ج" },
+      { label: "د — حكم بما لم يُطلب أو بأكثر مما طُلب (م/51-د)", desc: "تجاوز منطوق الحكم حدود الطلبات أو قضى بشيءٍ لم يُطلَب", ref: "لائحة الاعتراض م/51-د" },
+      { label: "هـ — تناقض في منطوق الحكم (م/51-هـ)", desc: "تعارض أجزاء المنطوق بعضها مع بعض تعارضًا يتعذّر معه التنفيذ", ref: "لائحة الاعتراض م/51-هـ" },
+      { label: "ز — عدم صحّة التمثيل في الدعوى (م/51-ز)", desc: "الملتمس لم يكن ممثَّلًا تمثيلًا صحيحًا في الدعوى", ref: "لائحة الاعتراض م/51-ز" },
+      { label: "ح — سبب آخر مقرَّر نظامًا", desc: "أيّ سببٍ آخر من أسباب الالتماس المقرَّرة نظامًا — يُحدَّد في الوقائع أدناه", ref: "لائحة الاعتراض" }
     ],
-    stages: ["العلم بسبب الالتماس", "احتساب الميعاد", "تقديم الالتماس", "نظر الالتماس"],
-    refNote: "حالات الالتماس وميعاده (تاريخ العلم) وفق لائحة الاعتراض — الالتماس.",
+    stages: [
+      { title: "العلم بسبب الالتماس", note: "م/52 — بدء المدّة" },
+      { title: "تقديم المذكرة", note: "شروط م/51" },
+      { title: "فحص القبول", note: "خلال 20 يومًا (م/53)" },
+      { title: "إعادة النظر", note: "رفض / نقض كلّي أو جزئي (م/59)" }
+    ],
+    requests: [
+      "قبول الالتماس ونقض الحكم والحكم في الموضوع",
+      "قبول الالتماس ونقض الحكم جزئيًّا",
+      "قبول الالتماس وإعادة النظر في الدعوى مرافعةً"
+    ],
     extraFields: [
-      { key: "newEvidence", label: "الأوراق أو الواقعة الجديدة", placeholder: "صف الورقة القاطعة أو الواقعة التي ظهرت بعد الحكم." },
-      { key: "knowledgeDate", label: "تاريخ العلم بسبب الالتماس", placeholder: "يُحسب الميعاد من هذا التاريخ." },
-      { key: "requests", label: "الطلبات", placeholder: "حدد طلبات الملتمس من المحكمة." }
+      { key: "details", label: "الوقائع محلّ الالتماس وأثرها في الحكم (م/51-1)", placeholder: "حدّد الواقعة بدقّة وأثرها في الحكم — مثال: ثبت بالحكم الجزائي رقم (...) صدوره بتاريخ (...) أنّ الشاهد (فلان) حُكم عليه بشهادة الزور في هذه الدعوى، وقد بُني الحكم على تلك الشهادة…" },
+      { key: "knowDate", label: "تاريخ العلم بسبب الالتماس (م/52)", placeholder: "مثال: ١٠ محرم ١٤٤٧هـ — تُحسب المدّة من تاريخ العلم لا من تاريخ الحكم" }
+    ],
+    refMaterials: [
+      { article: "م/48", note: "تختصّ محكمة الاستئناف المؤيِّدة بنظره" },
+      { article: "م/51", note: "شروط المذكرة والمرافقات الإلزامية" },
+      { article: "م/53", note: "تفصل في القبول خلال 20 يومًا" },
+      { article: "م/55", note: "إذا تخلّفت الشروط: عدم القبول تلقائيًّا" },
+      { article: "م/58", note: "وقف التنفيذ عند قبول الالتماس" },
+      { article: "م/59", note: "القضاء: رفض أو نقض كلّي أو جزئي" }
+    ],
+    notes: [
+      "التماس إعادة النظر طريقٌ غير عاديّ، مستقلٌّ عن الاستئناف والنقض.",
+      "تُحسب المدّة من تاريخ العلم بسبب الالتماس (م/52)، لا من تاريخ الحكم.",
+      "يُقدَّم لمحكمة الاستئناف التي أيّدت الحكم (م/48)."
     ]
   }
 };
@@ -90,6 +166,7 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
   const config = configs[remedyKind];
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [request, setRequest] = useState<string>(config.requests[0] ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -105,8 +182,9 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
     try {
       const detailedReasons = [
         ...selectedReasons,
-        ...config.extraFields.map((field) => fields[field.key]?.trim()).filter(Boolean)
-      ];
+        ...config.extraFields.map((field) => (fields[field.key]?.trim() ? `${field.label}: ${fields[field.key]!.trim()}` : "")).filter(Boolean),
+        request ? `الطلب: ${request}` : ""
+      ].filter(Boolean);
       const response = await fetch(`/api/simulations/${sessionId}/appeal`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -147,11 +225,14 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
         <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">{config.description}</p>
       </div>
 
-      {/* شريط مراحل الاعتراض (منقول من apS0–apS3) */}
+      {/* مسار المراحل الكامل (منقول من النسخة القديمة) */}
       <div className="flex items-center gap-1 overflow-x-auto rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-2">
         {config.stages.map((stage, index) => (
-          <div key={stage} className="flex flex-none items-center gap-1">
-            <span className="whitespace-nowrap rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-semibold text-[var(--navy)]">{index + 1}. {stage}</span>
+          <div key={stage.title} className="flex flex-none items-center gap-1">
+            <span className="whitespace-nowrap rounded-[var(--r-md)] bg-[var(--surface)] px-3 py-1.5 text-center text-[11px] font-semibold leading-4 text-[var(--navy)]">
+              {index + 1}. {stage.title}
+              {stage.note ? <span className="block text-[10px] font-normal text-[var(--ink-40)]">{stage.note}</span> : null}
+            </span>
             {index < config.stages.length - 1 ? <span className="text-[var(--ink-40)]">←</span> : null}
           </div>
         ))}
@@ -161,7 +242,8 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
         <div className="min-w-0 space-y-5">
           <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5">
             <h3 className="font-display-ar text-lg font-bold text-[var(--navy)]">{config.reasonLabel}</h3>
-            <div className="mt-4 grid w-full max-w-full gap-3 sm:grid-cols-2">
+            <p className="mt-1 text-xs leading-6 text-[var(--ink-60)]">{config.reasonHint}</p>
+            <div className="mt-4 grid w-full max-w-full gap-3">
               {config.reasons.map((reason) => (
                 <label key={reason.label} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-start gap-3 rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/65 p-4">
                   <input
@@ -173,22 +255,33 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
                   />
                   <span className="min-w-0 [overflow-wrap:anywhere]">
                     <span className="block text-sm font-semibold leading-7 text-[var(--navy)]">{reason.label}</span>
-                    <span className="mt-0.5 block text-[11px] font-semibold text-[var(--gold)]">المرجع النظاميّ (إرشاديّ): {reason.ref}</span>
+                    <span className="mt-0.5 block text-[12px] leading-6 text-[var(--ink-60)]">{reason.desc}</span>
+                    <span className="mt-1 block text-[11px] font-semibold text-[var(--gold)]">المرجع النظاميّ (إرشاديّ): {reason.ref}</span>
                   </span>
                 </label>
               ))}
             </div>
-            <p className="mt-3 text-[11px] leading-6 text-[var(--ink-60)]">{config.refNote} المراجع أعلاه إرشاديّة؛ والاستشهاد النهائيّ في المسودة يُسترجَع مؤصَّلًا من النواة.</p>
           </div>
 
           <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5">
             <h3 className="font-display-ar text-lg font-bold text-[var(--navy)]">تفاصيل الطلب</h3>
             <div className="mt-4 space-y-4">
+              <label className="block">
+                <span className="font-display-ar text-sm font-bold text-[var(--navy)]">الطلب في هذا المسار</span>
+                <select
+                  className="mt-2 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] p-3 outline-none focus:border-[var(--gold)]"
+                  value={request}
+                  onChange={(event) => setRequest(event.target.value)}
+                  disabled={disabled}
+                >
+                  {config.requests.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </label>
               {config.extraFields.map((field) => (
                 <label key={field.key} className="block">
                   <span className="font-display-ar text-sm font-bold text-[var(--navy)]">{field.label}</span>
                   <textarea
-                    className="mt-2 min-h-[120px] w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] p-4 leading-8 outline-none focus:border-[var(--gold)]"
+                    className="mt-2 min-h-[110px] w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] p-4 leading-8 outline-none focus:border-[var(--gold)]"
                     placeholder={field.placeholder}
                     value={fields[field.key] ?? ""}
                     onChange={(event) => setFields((current) => ({ ...current, [field.key]: event.target.value }))}
@@ -201,10 +294,25 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
         </div>
 
         <aside className="min-w-0 space-y-4">
-          <div className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-sm leading-7 text-[var(--navy)]">
-            <strong className="font-display-ar">تنبيه مهني:</strong>
-            <p className="mt-2">هذه المسودة تدريبية وغير ملزمة، ولا تعد إجراءً قضائيًا فعليًا أو رأيًا قانونيًا نهائيًا.</p>
+          {config.notes.length ? (
+            <div className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-4 text-xs leading-7 text-[var(--navy)]">
+              <p className="mb-1.5 font-display-ar font-bold">شروطٌ ومُهَل</p>
+              <ul className="space-y-1.5">
+                {config.notes.map((n, i) => <li key={i}>• {n}</li>)}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-4">
+            <p className="mb-2 font-display-ar text-sm font-bold text-[var(--navy)]">مواد اللائحة المرجعيّة</p>
+            <div className="space-y-2">
+              {config.refMaterials.map((m) => (
+                <div key={m.article} className="text-xs leading-6 text-[var(--ink-60)]"><strong className="text-[var(--gold)]">{m.article}</strong> — {m.note}</div>
+              ))}
+            </div>
+            <p className="mt-3 text-[11px] leading-5 text-[var(--ink-40)]">المراجع إرشاديّة؛ والاستشهاد النهائيّ في المسودة يُسترجَع مؤصَّلًا من النواة.</p>
           </div>
+
           <button className="btn btn-gold w-full justify-center" type="button" onClick={() => void submit()} disabled={disabled || busy}>
             {busy ? "جار توليد المسودة..." : `توليد مسودة ${config.title}`}
           </button>
@@ -225,7 +333,6 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
               <a href={`/api/simulations/${sessionId}/export?type=objection&format=pdf`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">PDF</a>
               <a href={`/api/simulations/${sessionId}/export?type=objection&format=docx`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">Word</a>
             </div>
-            <p className="mt-2 text-[11px] leading-5 text-[var(--ink-60)]">يُصدَّر ما حُفظ من لوائح الاعتراض في هذه الجلسة (بعد توليد المسودة وحفظها).</p>
           </div>
         </aside>
       </div>
