@@ -153,27 +153,32 @@ export async function evaluateEvidence(claim: ClaimData | undefined, messages: M
 }
 
 // ─────────────────────────── ④ تيسير الصلح ───────────────────────────
-type SettlementOut = { commonGround?: string; proposedTerms?: string; obligations?: string; caution?: string; citations?: string[] };
+// (مطوَّرٌ من settAnswer/analyzeSettlement الكلاسيكيّ): يقارن مقترحَي الطرفين، يقيس الفجوة،
+// ويوصي بالقبول أو المضي، مع بنود تسويةٍ عادلة مؤصَّلة.
+type SettlementOut = { commonGround?: string; gapAnalysis?: string; proposedTerms?: string; obligations?: string; recommendation?: string; caution?: string; citations?: string[] };
 
 export async function facilitateSettlement(
   claim: ClaimData | undefined,
   messages: Msg[],
-  inputs: { amount?: string; obligations?: string; duration?: string; waiver?: string }
+  inputs: { amount?: string; obligations?: string; duration?: string; waiver?: string; plaintiffProposal?: string; defendantProposal?: string }
 ): Promise<{ content: string; grounded: boolean } | null> {
+  const hasDual = Boolean(inputs.plaintiffProposal?.trim() || inputs.defendantProposal?.trim());
   const res = await runGroundedSkill<SettlementOut>({
     groundText: `${claim?.subject ?? ""} ${claim?.facts ?? ""} الصلح والتسوية وإنهاء النزاع وديًّا`,
     caseType: claim?.caseType,
     systemPrompt: [
       "أنت قاضٍ افتراضيّ تدريبيّ يُيسّر الصلح بين الطرفين بحيادٍ تامّ.",
-      "استخلص نقاط الالتقاء، واقترح بنود تسويةٍ عادلة تراعي مدخلات الطرفين، وبيّن أثر الصلح النظاميّ.",
+      "قارن مقترح المدّعي بمقترح المدّعى عليه: هل يتقاطعان؟ ما حجم الفجوة؟ ثمّ استخلص نقاط الالتقاء، واقترح بنود تسويةٍ عادلة، وأوصِ صراحةً بالقبول أو المضي في الدعوى، وبيّن أثر الصلح النظاميّ.",
       "لا تفرض على طرفٍ ولا تختلق مادّة. أعِد JSON فقط:",
-      '{"commonGround":"","proposedTerms":"","obligations":"","caution":"","citations":[]}'
+      '{"commonGround":"","gapAnalysis":"","proposedTerms":"","obligations":"","recommendation":"","caution":"","citations":[]}'
     ].join("\n"),
     buildUser: (cb) => [
       "== الدعوى ==", claimBlock(claim), "",
-      "== مقترحات الطرف/المستخدم ==",
+      "== مقترح المدّعي ==", inputs.plaintiffProposal?.trim() || "لم يُقدَّم.",
+      "== مقترح المدّعى عليه ==", inputs.defendantProposal?.trim() || "لم يُقدَّم.",
+      "== معطياتٌ عامّة ==",
       `المبلغ: ${inputs.amount || "غير محدد"} | المدّة: ${inputs.duration || "غير محددة"} | الالتزامات: ${inputs.obligations || "غير محددة"} | التنازل: ${inputs.waiver || "غير محدد"}`,
-      "", "== الأساس النظاميّ المتاح ==", cb, "", "يسّر الصلح بصيغة JSON."
+      "", "== الأساس النظاميّ المتاح ==", cb, "", "يسّر الصلح وقارن المقترحين بصيغة JSON."
     ].join("\n")
   });
   if (!res) return null;
@@ -182,9 +187,11 @@ export async function facilitateSettlement(
     grounded: res.grounded,
     content: [
       "مسودة صلحٍ تدريبيّة مؤصَّلة",
+      hasDual ? sec("تحليل الفجوة بين مقترحَي الطرفين", d.gapAnalysis) : null,
       sec("نقاط الالتقاء", d.commonGround),
       sec("بنود التسوية المقترحة", d.proposedTerms),
       sec("الالتزامات", d.obligations),
+      sec("التوصية", d.recommendation),
       sec("تنبيه", d.caution),
       sec("الأساس النظاميّ", d.citations?.join("، ")),
       DISCLAIMER

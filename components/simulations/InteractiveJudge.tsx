@@ -124,7 +124,7 @@ export function InteractiveJudge() {
   // ── المرحلة الأولى من النقل التدريجيّ: خصائص القاعة (قوّة · ضبط · صلح) ──
   const [strength, setStrength] = useState<{ score: number; notes: string[] } | null>(null);
   const [showSettlement, setShowSettlement] = useState(false);
-  const [settlement, setSettlement] = useState({ amount: "", obligations: "", duration: "", waiver: "" });
+  const [settlement, setSettlement] = useState({ amount: "", obligations: "", duration: "", waiver: "", plaintiffProposal: "", defendantProposal: "" });
   const [catalog, setCatalog] = useState<Playbook[]>([]);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catFilter, setCatFilter] = useState("الكل");
@@ -366,7 +366,7 @@ export function InteractiveJudge() {
     try {
       await api(`/api/simulations/${session.id}/settlement`, { method: "POST", body: JSON.stringify(settlement) });
       setShowSettlement(false);
-      setSettlement({ amount: "", obligations: "", duration: "", waiver: "" });
+      setSettlement({ amount: "", obligations: "", duration: "", waiver: "", plaintiffProposal: "", defendantProposal: "" });
       const fresh = await api(`/api/simulations/${session.id}/messages`);
       applyState(fresh.session, fresh.turnState ?? null);
     } catch (e) {
@@ -698,6 +698,11 @@ export function InteractiveJudge() {
             </div>
             <Field label="الالتزامات" value={settlement.obligations} onChange={(v) => setSettlement({ ...settlement, obligations: v })} />
             <Field label="شرط التنازل/الإنهاء" value={settlement.waiver} onChange={(v) => setSettlement({ ...settlement, waiver: v })} />
+            <div className="grid grid-cols-2 gap-2 border-t border-line pt-2">
+              <Field label="مقترح المدّعي" value={settlement.plaintiffProposal} onChange={(v) => setSettlement({ ...settlement, plaintiffProposal: v })} />
+              <Field label="مقترح المدّعى عليه" value={settlement.defendantProposal} onChange={(v) => setSettlement({ ...settlement, defendantProposal: v })} />
+            </div>
+            <p className="text-[11px] text-muted">عند إدخال المقترحَين يُجري حكيم تحليل الفجوة ويوصي بالقبول أو المضي في المرافعة.</p>
             <button onClick={submitSettlement} disabled={busy} className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">حفظ مسودة الصلح</button>
           </div>
         ) : null}
@@ -710,6 +715,8 @@ export function InteractiveJudge() {
             <a href={`/api/simulations/${session?.id}/export?type=judgment&format=pdf`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><Download size={15} aria-hidden /> تصدير الحكم PDF</a>
             <a href={`/api/simulations/${session?.id}/export?type=judgment&format=docx`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><ScrollText size={15} aria-hidden /> تصدير الحكم Word</a>
             <a href={`/api/simulations/${session?.id}/export?type=full-report&format=pdf`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><FileText size={15} aria-hidden /> تقرير الجلسة PDF</a>
+            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=html`} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><FileText size={15} aria-hidden /> عرض/طباعة HTML</a>
+            <a href={`/api/simulations/${session?.id}/export?type=judgment&format=txt`} className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] hover:border-[var(--gold-border)]"><FileText size={15} aria-hidden /> نصّ TXT</a>
           </div>
           <div>
             <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">مرحلة ما بعد الحكم</p>

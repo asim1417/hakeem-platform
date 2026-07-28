@@ -189,6 +189,29 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
     return { ok: false, text: `انقضت مدّة الاعتراض بـ ${Math.abs(remaining)} يومًا — يُرَدّ الاعتراض شكلًا لانقضاء الميعاد (${config.deadline.ref}).` };
   }
 
+  // 💡 اقتراح المواد المرجعيّة — يُدرج هيكلًا من مواد اللائحة وأسباب الطعن المختارة في حقل الصياغة،
+  // ليبني عليه المتدرّب (منقول من زرّ الاقتراح في النسخة القديمة). المرجع النهائيّ يُؤصَّل من النواة.
+  function suggestMaterials(fieldKey: string) {
+    if (disabled) return;
+    const chosen = config.reasons.filter((r) => selectedReasons.includes(r.label));
+    const reasonLines = (chosen.length ? chosen : config.reasons.slice(0, 2)).map((r) => `• ${r.label} — ${r.ref}`);
+    const materialLines = config.refMaterials.map((m) => `• ${m.article} — ${m.note}`);
+    const scaffold = [
+      "— المواد المرجعيّة المقترحة (إرشاديّة، تُصاغ وتُؤصَّل من النواة) —",
+      ...reasonLines,
+      "",
+      "— مواد اللائحة ذات الصلة —",
+      ...materialLines,
+      "",
+      "— بيان وجه المخالفة —",
+      ""
+    ].join("\n");
+    setFields((current) => {
+      const existing = current[fieldKey]?.trim();
+      return { ...current, [fieldKey]: existing ? `${existing}\n\n${scaffold}` : scaffold };
+    });
+  }
+
   async function submit() {
     if (disabled) return;
     setBusy(true);
@@ -310,9 +333,22 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
                   ) : null}
                 </div>
               ) : null}
-              {config.extraFields.map((field) => (
+              {config.extraFields.map((field, fieldIndex) => (
                 <label key={field.key} className="block">
-                  <span className="font-display-ar text-sm font-bold text-[var(--navy)]">{field.label}</span>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-display-ar text-sm font-bold text-[var(--navy)]">{field.label}</span>
+                    {fieldIndex === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => suggestMaterials(field.key)}
+                        disabled={disabled}
+                        title="إدراج المواد المرجعيّة لهذا المسار كهيكلٍ للصياغة"
+                        className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-2.5 py-1 text-[11px] font-semibold text-[var(--gold)] hover:opacity-90 disabled:opacity-50"
+                      >
+                        💡 اقترح المواد
+                      </button>
+                    ) : null}
+                  </span>
                   <textarea
                     className="mt-2 min-h-[110px] w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] p-4 leading-8 outline-none focus:border-[var(--gold)]"
                     placeholder={field.placeholder}
@@ -365,6 +401,8 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
             <div className="flex flex-wrap gap-2">
               <a href={`/api/simulations/${sessionId}/export?type=objection&format=pdf`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">PDF</a>
               <a href={`/api/simulations/${sessionId}/export?type=objection&format=docx`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">Word</a>
+              <a href={`/api/simulations/${sessionId}/export?type=objection&format=html`} target="_blank" rel="noreferrer" className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">HTML</a>
+              <a href={`/api/simulations/${sessionId}/export?type=objection&format=txt`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">TXT</a>
             </div>
           </div>
         </aside>
