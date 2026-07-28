@@ -575,12 +575,26 @@ check("كشف العطب: خطّ مُجزّأ (رموز بديلة) → توجي
   assert.equal(cleanPdfTextLayer(g).needsOcr, true);
 });
 
+check("كشف العطب: خريطة ToUnicode معطوبة (لاتينيّ موسّع/يونانيّ/IPA) → توجيه OCR", () => {
+  // نمط مخرجات Microsoft Reporting Services لخطوط CID عربيّة بخريطة ToUnicode غائبة:
+  // النصّ يظهر عربيًّا للعين لكنّ الطبقة النصّية موجَرةٌ إلى محارف يونانيّة/IPA/رموز.
+  const g = "2¢Pµ dGⱧƶúφµ dɣɛʈφµꞤ¢àǭ ᶙ Ÿ Ÿ Ꝫᴦᴦᶙ dɣɛʈφµ Òɛ? ñ ¢Pµ dGⱧƶúφµ ɛΩλɥ�annjφµ";
+  assert.equal(cleanPdfTextLayer(g).needsOcr, true);
+});
+
 check("كشف العطب: نص سليم ليس معطوباً ولا يحتاج OCR", () => {
   const good = "حكمت الدائرة برفض الدعوى المقامة من شركة الأفق التجارية بمبلغ مليون ريال";
   const c = cleanPdfTextLayer(good);
   assert.equal(c.report.garbled, false);
   assert.equal(c.needsOcr, false);
   assert.equal(c.text, good);
+});
+
+check("كشف العطب: عربيّ سليم بمصطلحٍ إنجليزيّ أساسيّ لا يُوجَّه خطأً إلى OCR", () => {
+  // حراسةٌ ضدّ الإيجابيّ الكاذب: اللاتينيّ الأساسيّ (ASCII) مقبولٌ ولا يُعدّ عطبًا —
+  // فالكاشف الأوسع يعدّ اللاتينيّ الموسّع/اليونانيّ لا محارف ASCII السليمة.
+  const mixed = "حكمت الدائرة التجارية بإلزام المدّعى عليه بدفع مبلغٍ وقدره خمسمائة ألف ريال وفق العقد المبرم بين الطرفين ورقمه Ref-19 مع تحميله المصاريف";
+  assert.equal(cleanPdfTextLayer(mixed).needsOcr, false);
 });
 
 // ── توجيه OCR ──
