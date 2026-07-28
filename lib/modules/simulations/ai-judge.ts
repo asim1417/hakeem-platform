@@ -20,21 +20,14 @@ import {
 
 const PARTY_ROLES = ["المدعي", "وكيل المدعي", "المدعى عليه", "وكيل المدعى عليه"];
 
+// القرار الإجرائيّ مفتوحٌ غير محصور: PROCEDURAL_DECISION يحمل نوعًا ونصًّا يحدّدهما القاضي بحرّية
+// بناءً على الفهم والتكييف وتنزيل الإفادة على الأنظمة والقواعد القضائيّة.
 type AiAction =
   | "PROCEED"
   | "REQUEST_CLARIFICATION"
   | "REQUEST_EVIDENCE"
   | "OFFER_SETTLEMENT"
-  | "FRAME_DISPUTE"
-  | "DIRECT_OATH"
-  | "APPOINT_EXPERT";
-
-// خريطة القرار الإجرائيّ إلى مسمّاه القضائيّ (يُخزَّن ويُعرَض ككتلةٍ مميّزة عن الحكم).
-const PROCEDURAL_DECISION_LABEL: Record<string, string> = {
-  FRAME_DISPUTE: "حصر محل النزاع",
-  DIRECT_OATH: "توجيه اليمين الحاسمة",
-  APPOINT_EXPERT: "ندب خبير"
-};
+  | "PROCEDURAL_DECISION";
 
 type AiJudgeNarrative = {
   classification?: string;
@@ -45,6 +38,10 @@ type AiJudgeNarrative = {
   recommendedAction?: AiAction;
   /** الطرف المُوجَّه إليه طلب الإيضاح/البيّنة (المدعي | المدعى عليه) — قد يخالف آخر متحدّث. */
   directedTo?: string;
+  /** القرار الإجرائيّ المفتوح: اسمه ونصّه ولمن ينتقل الدور بعده. */
+  proceduralDecisionType?: string;
+  proceduralDecisionText?: string;
+  turnGoesTo?: string;
   judgeMessage?: string;
   citations?: string[];
 };
@@ -54,6 +51,16 @@ function resolveDirectedSide(directedTo: string | undefined, fallback: AllowedSp
   const t = (directedTo ?? "").trim();
   if (!t) return fallback;
   if (/عليه|مدّعى عليه|مدعى عليه|defendant/i.test(t)) return "defendant";
+  if (/مدّعي|مدعي|claimant|plaintiff/i.test(t)) return "claimant";
+  return fallback;
+}
+
+// لمن ينتقل الدور بعد قرارٍ إجرائيّ مفتوح — يقبل الطرفين معًا؛ يسقط للحتميّ عند الالتباس.
+function resolveTurnGoesTo(turnGoesTo: string | undefined, fallback: AllowedSpeakerRole): AllowedSpeakerRole {
+  const t = (turnGoesTo ?? "").trim();
+  if (!t) return fallback;
+  if (/الطرفان|الطرفين|كلا|both/i.test(t)) return "both";
+  if (/عليه|defendant/i.test(t)) return "defendant";
   if (/مدّعي|مدعي|claimant|plaintiff/i.test(t)) return "claimant";
   return fallback;
 }
@@ -110,7 +117,7 @@ function extractJson(raw: string): AiJudgeNarrative | null {
 function buildSystemPrompt() {
   return [
     "أنت قاضٍ افتراضيّ تدريبيّ في منصّة حكيم، محايدٌ لا ينحاز لطرف.",
-    "مهمّتك: اقرأ آخر مداخلةٍ من الخصم، وحلّلها وكيّفها قانونيًّا (طلب/دفع/بيّنة/إقرار/تعقيب)، وقدّر كفاية بيّنتها وعبء الإثبات وفق نظام الإثبات، ثمّ قرّر الإجراء التالي.",
+    "منهجك في كلّ دور: (١) افهم إفادة الخصم/النصّ فهمًا دقيقًا، (٢) وصِّفها وكيّفها قانونيًّا (طلب/دفع شكليّ أو موضوعيّ/بيّنة/إقرار/إنكار/تعقيب/يمين...)، (٣) نزِّلها على الأنظمة والقواعد القضائيّة (الإثبات/المرافعات الشرعيّة/الإجراءات الجزائيّة/المحاكم التجاريّة) مؤصَّلًا بالمواد المتاحة، (٤) ثمّ أصدر القرار الإجرائيّ المناسب.",
     "",
     PROCEDURAL_DIGEST,
     "",
@@ -118,16 +125,18 @@ function buildSystemPrompt() {
     "",
     "قواعد صارمة:",
     "- لا تختلق مادّةً ولا رقم مادّة؛ لا تستشهد إلا بالمواد المسترجَعة المذكورة في «الأساس النظاميّ المتاح» أدناه.",
-    "- إن كانت المداخلة غامضةً أو ناقصة، اطلب الإيضاح، وحدّد في directedTo الطرفَ المُلزَم بالإيضاح: فإن كان محلّ الاستفسار من شأن الطرف الآخر (كأن يسأل المدّعى عليه عن مستنداتٍ يملكها المدّعي) فوجِّه الطلب إلى ذلك الطرف لا إلى من تكلّم.",
-    "- إن كان الادّعاء يفتقر إلى بيّنةٍ يوجب النظام تقديمها، اطلب البيّنة، وحدّد في directedTo مَن يقع عليه عبء تقديمها (المدعي غالبًا هو المكلَّف بإثبات دعواه).",
-    "- لا تصدر حكمًا ولا تقفل باب المرافعة في هذا الرد؛ قرارك إجرائيٌّ فقط.",
-    "القرارات الإجرائيّة المتاحة (استعملها بصياغتها القضائيّة في judgeMessage عند اقتضائها):",
-    "- FRAME_DISPUTE (حصر محل النزاع): بعد سماع الدعوى والإجابة، إذا اتّضح محلّ النزاع فحرّره: «محلّ النزاع ينحصر في: هل (...) أم (...)؟».",
-    "- DIRECT_OATH (توجيه اليمين الحاسمة): إذا عجز المدّعي عن البيّنة الموصلة وطلب يمين المدّعى عليه، فوجّهها بصيغة: «واللهِ العظيم إنّي (...)». قرارٌ إجرائيّ لا حكم.",
-    "- APPOINT_EXPERT (ندب خبير): إذا توقّف الفصل على مسألةٍ فنّيّة، فاندب خبيرًا وحدّد مهمّته.",
+    "- إن كانت المداخلة غامضةً أو ناقصة، اطلب الإيضاح (REQUEST_CLARIFICATION)، وحدّد في directedTo الطرفَ المُلزَم بالإيضاح ولو كان غير المتكلّم (كأن يسأل المدّعى عليه عن مستنداتٍ يملكها المدّعي).",
+    "- إن لزمت بيّنةٌ يوجب النظام تقديمها، اطلبها (REQUEST_EVIDENCE) وحدّد في directedTo من يقع عليه عبؤها.",
+    "- لا تصدر حكمًا نهائيًّا ولا تقفل باب المرافعة في هذا الرد.",
+    "",
+    "== القرار الإجرائيّ المفتوح (PROCEDURAL_DECISION) ==",
+    "القرارات الإجرائيّة واسعةٌ غير محصورة؛ لا تُقيّد نفسك بقائمة. متى اقتضى تنزيلُ الإفادة على الأنظمة قرارًا إجرائيًّا، اضبط recommendedAction=PROCEDURAL_DECISION واملأ:",
+    "- proceduralDecisionType: اسم القرار (مثالًا لا حصرًا: حصر محل النزاع، توجيه اليمين الحاسمة، ندب خبير، الإحالة لعدم الاختصاص، ضمّ الدعوى، وقفها تعليقيًّا، قبول دفعٍ شكليّ أو ردّه، الأمر بإحضار مستند، التصريح بسماع البيّنة/الشهود، الإمهال، طلب تحرير الجواب...).",
+    "- proceduralDecisionText: نصّ القرار بالصيغة القضائيّة السعوديّة، مؤصَّلًا بالمواد المتاحة فقط، مبيّنًا سنده من تنزيل الإفادة على النظام.",
+    "- turnGoesTo: لمن ينتقل الدور بعد القرار (المدعي | المدعى عليه | الطرفان). وفي توجيه اليمين ينتقل الدور لمن وُجّهت إليه ليؤدّيها أو ينكل.",
     "أعِد الجواب بصيغة JSON فقط، بلا أيّ نصٍّ خارجها، بالمفاتيح:",
-    '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "directedTo": "المدعي|المدعى عليه", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT|FRAME_DISPUTE|DIRECT_OATH|APPOINT_EXPERT", "judgeMessage": "...", "citations": ["نظام الإثبات المادة ..."]}',
-    "directedTo (عند REQUEST_CLARIFICATION/REQUEST_EVIDENCE): الطرف المُلزَم بالردّ، ويجب أن يوافق خطابَك في judgeMessage — لا تجعل الدور لطرفٍ بينما توجّه الطلب لغيره.",
+    '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "directedTo": "المدعي|المدعى عليه", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT|PROCEDURAL_DECISION", "proceduralDecisionType": "...", "proceduralDecisionText": "...", "turnGoesTo": "المدعي|المدعى عليه|الطرفان", "judgeMessage": "...", "citations": ["نظام ... المادة ..."]}',
+    "لا تجعل الدور لطرفٍ بينما توجّه الطلب/القرار لغيره؛ يجب توافق directedTo/turnGoesTo مع خطابك في judgeMessage.",
     "judgeMessage = خطاب القاضي المسبَّب بالعربية الفصحى (2-4 جمل). citations = أرقام موادّ من المتاح فقط."
   ].join("\n");
 }
@@ -252,37 +261,34 @@ export async function decideJudgeTurnAI(
 
   // ── قرارٌ إجرائيّ مميّز (حصر محل النزاع/توجيه اليمين/ندب خبير): يُسجَّل ككتلةٍ متمايزة عن
   // الحكم، مع الإبقاء على الترتيب المشروع من الحارس الحتميّ (لا ابتداعَ انتقالٍ باطل) ──
-  if (action === "FRAME_DISPUTE" || action === "DIRECT_OATH" || action === "APPOINT_EXPERT") {
-    const decisionType = PROCEDURAL_DECISION_LABEL[action];
-    const body = (parsed.judgeMessage && parsed.judgeMessage.trim()) || det.judgeMessage;
-    const base: JudgeTurnResult = {
+  // ── قرارٌ إجرائيٌّ مفتوح: نوعُه ونصّه يحدّدهما القاضي بناءً على تنزيل الإفادة على الأنظمة،
+  // ويُنقَل الدور تلقائيًّا بحسب turnGoesTo (وفي اليمين لمن وُجّهت إليه). يُسجَّل ككتلةٍ مميّزة ──
+  if (action === "PROCEDURAL_DECISION") {
+    const decisionType = (parsed.proceduralDecisionType || "").trim() || "قرارٌ إجرائيّ";
+    const body = (parsed.proceduralDecisionText || parsed.judgeMessage || det.judgeMessage || "").trim();
+    const isOath = /يمين/.test(decisionType) || /يمين/.test(body);
+    // نقلٌ تلقائيّ للدور: يمينٌ ⇒ الطرف المُوجَّهة إليه؛ وإلا ما حدّده turnGoesTo؛ وإلا الحتميّ.
+    const target = isOath
+      ? resolveDirectedSide(parsed.directedTo, opposite(side))
+      : resolveTurnGoesTo(parsed.turnGoesTo, det.allowedSpeakerRole);
+    const result: JudgeTurnResult = {
       ...det,
       decisionType,
       decisionContent: body,
-      decisionReason: `تكييف المداخلة: ${meta.classification}.${parsed.evidenceAssessment ? " " + parsed.evidenceAssessment : ""}`,
+      decisionReason: `تكييف المداخلة: ${meta.classification}؛ تنزيلٌ على الأنظمة والقواعد القضائيّة.${parsed.evidenceAssessment ? " " + parsed.evidenceAssessment : ""}`,
       procedureAction: decisionType,
       nextProceduralStep: decisionType,
-      judgeMessage: composeJudgeMessage(parsed, det.judgeMessage)
+      judgeMessage: composeJudgeMessage(parsed, body || det.judgeMessage),
+      currentTurn: allowedSpeakerLabel(target),
+      nextRole: allowedSpeakerLabel(target),
+      allowedSpeakerRole: target,
+      disabledRoles: disabledRolesFor(target),
+      requiredInput: isOath ? `أداء اليمين الحاسمة أو النكول عنها من ${allowedSpeakerLabel(target)}.` : body || det.requiredInput,
+      reason: `قرارٌ إجرائيّ مؤصَّل (${decisionType})؛ نُقل الدور تلقائيًّا إلى ${allowedSpeakerLabel(target)}.`,
+      canClosePleading: false,
+      canGenerateJudgment: false
     };
-    // نقلٌ تلقائيّ للدور بناءً على القرار الإجرائيّ: توجيه اليمين ⇒ الدور للطرف المُوجَّهة إليه
-    // اليمين (يؤدّيها أو ينكل)؛ افتراضًا الطرف المقابل لمن طلبها. حصر النزاع/ندب الخبير يتّبعان
-    // الترتيب المشروع من الحارس الحتميّ.
-    if (action === "DIRECT_OATH") {
-      const oathTarget = resolveDirectedSide(parsed.directedTo, opposite(side));
-      const result: JudgeTurnResult = {
-        ...base,
-        allowedSpeakerRole: oathTarget,
-        disabledRoles: disabledRolesFor(oathTarget),
-        currentTurn: allowedSpeakerLabel(oathTarget),
-        nextRole: allowedSpeakerLabel(oathTarget),
-        requiredInput: `أداء اليمين الحاسمة أو النكول عنها من ${allowedSpeakerLabel(oathTarget)}.`,
-        reason: `توجيه اليمين الحاسمة إلى ${allowedSpeakerLabel(oathTarget)}؛ فينتقل الدور إليه لأدائها أو النكول عنها.`,
-        canClosePleading: false,
-        canGenerateJudgment: false
-      };
-      return { result, meta };
-    }
-    return { result: base, meta };
+    return { result, meta };
   }
 
   // ── عرض الصلح: مسموحٌ فقط إن أجازه الحارس الحتميّ ──
