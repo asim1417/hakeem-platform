@@ -7,7 +7,7 @@ import { buildSimulationExport, toDocx, toPdf } from "@/lib/modules/exports/lega
 
 export const dynamic = "force-dynamic";
 
-const allowedTypes = new Set(["claim-sheet", "hearing-record", "judgment", "settlement", "full-report"]);
+const allowedTypes = new Set(["claim-sheet", "hearing-record", "judgment", "settlement", "objection", "full-report"]);
 const allowedFormats = new Set(["docx", "pdf"]);
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
