@@ -17,6 +17,7 @@ import { assessCaseIntake } from "@/lib/modules/agents/thinking/intake";
 import { nativeAgentEnabled } from "@/lib/modules/hakeem-agent/flag";
 import { runHakeemAgent } from "@/lib/modules/hakeem-agent/runtime";
 import { loadRoomContext } from "@/lib/modules/hakeem-agent/session";
+import { appendMessage } from "@/lib/modules/conversations/engine";
 import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 import { getAgentMode } from "@/lib/modules/agents/modes";
@@ -144,7 +145,29 @@ export async function POST(request: NextRequest) {
           }).catch((e) => ({ ok: false as const, answer: "", basis: [], toolTurns: 0, error: e instanceof Error ? e.message : "خطأ" }));
           if (agent.ok) {
             consume();
-            send({ type: "result", answer: agent.answer, mode: "native-agent", basis: agent.basis, total: agent.basis.length });
+            // حفظٌ خادميّ للدور في «الغرفة» (سجلّ المحادثة الدائم) — فيبقى الردّ محفوظًا
+            // حتى لو غادر المستخدم ولم يعُد أبدًا (أُغلق التبويب مثلًا). العميل لا يحفظ هذا
+            // الدور ثانيةً (يتخطّاه عند mode=native-agent) فلا ازدواج. أفضل-جهد.
+            let roomConvId = convId;
+            try {
+              const attachRefs = attachedDoc ? [{ id: `att-${jobId ?? "x"}`, fileName: "المرفق", extractedText: attachedDoc.slice(0, 200_000), processingStatus: "inline" as const }] : undefined;
+              const u = await appendMessage({ userId: user.id, serviceKey: "ask", conversationId: convId, role: "user", content: typed, mode: "ask", attachments: attachRefs });
+              roomConvId = u.conversationId;
+              await appendMessage({
+                userId: user.id,
+                serviceKey: "ask",
+                conversationId: roomConvId,
+                role: "assistant",
+                content: agent.answer,
+                mode: "ask",
+                model: "hakeem-agent",
+                retrievedSources: agent.basis.map((b) => ({ kind: "article" as const, systemName: b.systemName, articleNumber: b.articleNumber, title: b.articleTitle, quote: b.quote, url: b.internalUrl })),
+                outputSnapshot: { answerMode: "native-agent", total: agent.basis.length },
+              });
+            } catch {
+              /* أفضل-جهد: إن تعذّر الحفظ (سكيمة/شبكة) يبقى الناتج في المهمّة (job) */
+            }
+            send({ type: "result", answer: agent.answer, mode: "native-agent", basis: agent.basis, total: agent.basis.length, conversationId: roomConvId ?? undefined });
             send({ type: "done" });
             return;
           }

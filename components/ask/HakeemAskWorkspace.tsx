@@ -67,7 +67,7 @@ type Turn = {
   question: string;
   steps: Step[];
   answer: string | null;
-  mode?: "live" | "offline" | "intent" | "blocked";
+  mode?: "live" | "offline" | "intent" | "blocked" | "native-agent";
   basis: LegalBasisItem[] | null;
   total: number;
   coverage?: { answered: number; total: number; issues?: Array<{ systemName?: string; status: string }> };
@@ -484,6 +484,18 @@ export function HakeemAskWorkspace({
         return { ...t, steps };
       });
     } else if (type === "result") {
+      // الوكيل الأصيل يحفظ الدور في «الغرفة» من الخادم ويعيد conversationId — نضبطه هنا
+      // (ونحدّث المسار) فيصمد بعد الإغلاق الكامل، دون حفظٍ ثانٍ من العميل (يُتخطّى أدناه).
+      if (typeof evt.conversationId === "string" && evt.conversationId && evt.conversationId !== conversationIdRef.current) {
+        const id = evt.conversationId;
+        conversationIdRef.current = id;
+        setConversationId(id);
+        onConversationIdChange?.(id);
+        if (typeof window !== "undefined") {
+          const target = `/dashboard/ask/c/${id}`;
+          if (window.location.pathname !== target) router.replace(target);
+        }
+      }
       const precedents = evt.precedents as Precedents | undefined;
       patchLastTurn((t) => {
         const next: Turn = {
@@ -734,10 +746,11 @@ export function HakeemAskWorkspace({
       if (token !== requestTokenRef.current) return;
       patchLastTurn((t) => ({ ...t, streaming: false }));
 
-      // حفظ دائم بعد اكتمال البث — دون تغيير طلب agent-search
+      // حفظ دائم بعد اكتمال البث — دون تغيير طلب agent-search.
+      // الوكيل الأصيل (mode=native-agent) يحفظ الدور من الخادم فلا نحفظه ثانيةً هنا (منع الازدواج).
       const finished =
         lastResultRef.current ?? turnsRef.current[turnsRef.current.length - 1] ?? null;
-      if (finished && !finished.error && (finished.answer || finished.clarify || finished.message)) {
+      if (finished && finished.mode !== "native-agent" && !finished.error && (finished.answer || finished.clarify || finished.message)) {
         const turnKey =
           typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
@@ -1189,17 +1202,17 @@ export function HakeemAskWorkspace({
                           <span
                             className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                             style={
-                              turn.mode === "live"
+                              (turn.mode === "live" || turn.mode === "native-agent")
                                 ? { color: "var(--emerald)", background: "var(--emerald-soft)" }
                                 : { color: "var(--amber)", background: "var(--amber-soft)" }
                             }
                             title={
-                              turn.mode === "live"
+                              (turn.mode === "live" || turn.mode === "native-agent")
                                 ? "صياغة ذكية مستندة للمواد"
                                 : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"
                             }
                           >
-                            {turn.mode === "live" ? "صياغة مستندة" : "صياغة تدريبية"}
+                            {(turn.mode === "live" || turn.mode === "native-agent") ? "صياغة مستندة" : "صياغة تدريبية"}
                           </span>
                         ) : null}
                       </div>
