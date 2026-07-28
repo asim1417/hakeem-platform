@@ -48,6 +48,22 @@ const CONCRETE_MARKERS = LEGAL_MARKERS.filter((m) => !GENERIC_MARKERS.includes(m
 const SOLICIT_REPLY =
   "بالتأكيد، أنا هنا لمساعدتك. صِف لي وقائع مسألتك أو اطرح سؤالك القانونيّ بجملةٍ واضحة وسأحلّله مستندًا للأنظمة الموثّقة. مثال: «فُصلت من عملي دون إشعار، ما حقوقي؟» أو «ما شروط فسخ عقد الإيجار؟».";
 
+// أسماء «القضية» في طلب المساعدة — «لدي قضية/دعوى/نزاع/مشكلة» بلا وقائع.
+const CASE_NOUNS = ["قضيه", "دعوى", "دعوي", "نزاع", "خصومه", "مشكله"];
+// طلبُ مساعدةٍ بقضيةٍ **بلا وقائع** («لدي قضية عقارية ولا أعلم تفاصيلها»): لا نبحث ولا نصوغ
+// مذكرةً جوفاء، بل نُجري **استيضاحًا موجّهًا** يجمع الوقائع أوّلًا — فالتحليل بلا وقائعَ سرابٌ.
+const INTAKE_REPLY = [
+  "لأحلّل قضيتك بدقّة وأُسندها للأنظمة الصحيحة أحتاج تفاصيل موجزة — أجب بما تعرفه ولو جزئيًّا:",
+  "",
+  "١) نوع النزاع بدقّة (مثلًا في العقار: بيعُ عقارٍ؟ إيجار؟ ملكيّةٌ مشتركة؟ وساطةٌ عقاريّة؟ مقاولة؟).",
+  "٢) صفتك في النزاع (مدّعٍ أم مدّعى عليه) وصفة الطرف الآخر.",
+  "٣) ملخّص الواقعة: ماذا حدث؟ ومتى؟",
+  "٤) طلبك المحدّد (فسخ؟ تعويض؟ إخلاء؟ مبلغٌ معيّن؟ تنفيذ التزام؟).",
+  "٥) المستندات المتوفّرة (عقد؟ صكّ؟ مراسلات؟) — يمكنك إرفاقها فيقرؤها حكيم.",
+  "",
+  "كلّما زادت التفاصيل دقّ التحليل والموادّ النظاميّة المستنَد إليها. أرسل ما لديك وسأتابع معك.",
+].join("\n");
+
 function includesAny(haystack: string, needles: string[]): boolean {
   return needles.some((n) => haystack.includes(n));
 }
@@ -84,6 +100,15 @@ export function classifyIntent(input: string): IntentResult {
   const isSolicit = isBareHelp || (includesAny(n, SOLICIT_VERBS) && includesAny(n, SOLICIT_OBJECTS));
   if (!hasConcrete && words.length <= 4 && isSolicit) {
     return { type: "ambiguous", confidence: 0.8, reply: SOLICIT_REPLY, source: "deterministic" };
+  }
+
+  // «لدي قضية… بلا وقائع»: طلبُ مساعدةٍ بقضيةٍ (فعل رغبة + اسم قضية) دون أيّ وقيعةٍ ملموسة
+  // (لا رقم/تاريخ/مبلغ ولا مصطلح تقاضٍ محدَّد كفسخ/تعويض/إخلاء) — أو تصريحٌ بجهل التفاصيل
+  // («لا أعلم تفاصيلها»). لا نبحث النواة ولا نصوغ مذكرةً جوفاء تُكرّر المدخل، بل نستوضح
+  // الوقائع أوّلًا مهما طال المدخل. الجملة التي فيها وقائعُ ملموسة تمرّ للبحث فلا نحجب مسألة.
+  const isCaseHelp = includesAny(n, SOLICIT_VERBS) && includesAny(n, CASE_NOUNS);
+  if (isCaseHelp && !hasConcrete) {
+    return { type: "ambiguous", confidence: 0.75, reply: INTAKE_REPLY, source: "deterministic" };
   }
 
   const hasLegal = /\d{1,4}/.test(n) || includesAny(n, LEGAL_MARKERS);

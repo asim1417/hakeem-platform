@@ -18,6 +18,12 @@ const cases: Case[] = [
   { input: "شروط فسخ عقد الإيجار", expect: "legal_question", search: true },
   // تحية + سؤال قانوني → يمرّ (لا يُحجب)
   { input: "السلام عليكم، ما شروط الشفعة؟", expect: "legal_question", search: true },
+  // طلب مساعدة بقضية بلا وقائع → استيضاح (لا بحث ولا مذكرة جوفاء)
+  { input: "لدي قضية عقارية ولا اعلم عن تفاصيلها", expect: "ambiguous", search: false },
+  { input: "عندي مشكلة قانونية أريد مساعدة", expect: "ambiguous", search: false },
+  // قضية **بوقائع ملموسة** → تمرّ للبحث (لا تُحجب بالاستيضاح)
+  { input: "لدي قضية عمالية، فُصلت تعسفياً وأريد التعويض", expect: "legal_question", search: true },
+  { input: "لدي دعوى إيجار وأريد فسخ العقد لعدم سداد الأجرة", expect: "legal_question", search: true },
   // غامض قصير
   { input: "؟", expect: "ambiguous", search: false },
 ];
