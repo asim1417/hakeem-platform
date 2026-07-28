@@ -92,6 +92,19 @@ export const HAKEEM_TOOL_DEFS = [
     input_schema: { type: "object", properties: {} },
   },
   {
+    name: "islamic_library_scan",
+    description:
+      "ابحث في المكتبة الإسلامية (الشاملة) للبُعد الفقهيّ الاستئناسيّ — نصوصٌ فقهيّة/حديثيّة بمصادرها (كتاب/مؤلّف). استعمله حين يحتاج التحليل تأصيلًا فقهيًّا مكمّلًا للنظام (لا بديلًا عنه)؛ المصدر النظاميّ الحاكم يبقى النواة القانونيّة. استشهد بالكتاب والمؤلّف كما وردا من النتيجة — لا تخترع.",
+    input_schema: {
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: { type: "string", description: "موضوع البحث الفقهيّ/الحديثيّ." },
+        limit: { type: "integer", minimum: 1, maximum: 20, description: "أقصى نصوص (افتراضي 8)." },
+      },
+    },
+  },
+  {
     name: "load_skill",
     description:
       "حمّل منهج عملٍ متخصّص (مهارة) لتتّبعه في مهمّةٍ معيّنة. المهارات المتاحة: " +
@@ -261,6 +274,49 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         data: { sourceId: a.id, systemName: a.lawName, articleNumber: a.articleNumber, title: a.title, content: a.content, status: a.status },
         label: `قراءة ${a.lawName} م/${a.articleNumber}`,
       };
+    }
+
+    if (name === "islamic_library_scan") {
+      const query = String(input.query ?? "").trim();
+      if (!query) return { ok: false, data: { error: "query مطلوب" }, label: "مسح المكتبة الإسلامية" };
+      // تكاملٌ قابلٌ للتفعيل: يُضبَط ALBAHITH_API_URL (+ مفتاح اختياريّ) على المنصّة. حين لا
+      // يكون مربوطًا نعيد configured=false صراحةً فلا ينسب Claude نصًّا فقهيًّا بلا مصدرٍ حقيقيّ.
+      const base = process.env.ALBAHITH_API_URL?.trim();
+      if (!base) {
+        return {
+          ok: true,
+          data: { configured: false, message: "مصدر المكتبة الإسلامية (الشاملة) غير مربوطٍ بالمنصّة بعد؛ لا تنسب نصًّا فقهيًّا دون هذا المصدر." },
+          label: "المكتبة الإسلامية غير مربوطة",
+        };
+      }
+      const limit = Math.min(Math.max(Number(input.limit) || 8, 1), 20);
+      try {
+        const resp = await fetch(base, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(process.env.ALBAHITH_API_KEY ? { Authorization: `Bearer ${process.env.ALBAHITH_API_KEY}` } : {}),
+          },
+          body: JSON.stringify({ query, limit }),
+          signal: AbortSignal.timeout(20000),
+        });
+        if (!resp.ok) return { ok: false, data: { error: `مصدر المكتبة أعاد ${resp.status}` }, label: "خطأ المكتبة الإسلامية" };
+        const json = (await resp.json()) as unknown;
+        const arr = Array.isArray(json) ? json : Array.isArray((json as { results?: unknown[] })?.results) ? (json as { results: unknown[] }).results : [];
+        const passages = arr.slice(0, limit).map((raw) => {
+          const p = (raw ?? {}) as Record<string, unknown>;
+          return {
+            text: String(p.text ?? p.snippet ?? p.content ?? "").slice(0, 700),
+            book: (p.book ?? p.bookTitle ?? p.source ?? null) as string | null,
+            author: (p.author ?? null) as string | null,
+            citation: (p.citation ?? p.ref ?? null) as string | null,
+            page: (p.page ?? null) as string | number | null,
+          };
+        });
+        return { ok: true, data: { configured: true, count: passages.length, passages }, label: `المكتبة الإسلامية → ${passages.length} نصًّا` };
+      } catch (e) {
+        return { ok: false, data: { error: e instanceof Error ? e.message : "تعذّر الاتصال بمصدر المكتبة الإسلامية" }, label: "خطأ المكتبة الإسلامية" };
+      }
     }
 
     if (name === "read_attachment") {
