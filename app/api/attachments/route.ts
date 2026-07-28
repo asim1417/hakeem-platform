@@ -8,13 +8,17 @@ import {
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { assertCaseOwnedForAttachment, attachmentListWhere } from "@/lib/modules/auth/ownership";
 import { uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
+import { getDocumentLimits } from "@/lib/modules/documents/document-limits";
+import { consumeDocumentRateLimit } from "@/lib/modules/rate-limit";
+import { incDocumentMetric } from "@/lib/modules/observability/metrics";
+import { logDocumentEvent, newCorrelationId } from "@/lib/modules/observability/document-logger";
+import { dispatchDocumentJob } from "@/lib/modules/documents/jobs/dispatcher";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
   if (gate.response) return gate.response;
-  // عزل المستأجرين: المرفقات عبر ملكيّة القضية أو uploadedBy للمستخدم.
   const attachments = await prisma.attachment.findMany({
     where: attachmentListWhere(gate.user!),
     orderBy: { createdAt: "desc" },
@@ -29,17 +33,42 @@ export async function POST(request: NextRequest) {
   const gate = await requireApiPermission("ATTACHMENTS_FULL", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
+  const correlationId = newCorrelationId();
+  const limits = getDocumentLimits();
+
+  const rate = await consumeDocumentRateLimit({
+    userId: user.id,
+    scope: "upload",
+    limit: limits.rateLimitUploadMax,
+    windowSeconds: limits.rateLimitWindowSeconds
+  });
+  if (!("skipped" in rate) && !rate.allowed) {
+    await auditEvent({
+      actorId: user.id,
+      subject: "ADMIN",
+      action: "ATTACHMENT_RATE_LIMITED",
+      metadata: { scope: "upload", correlationId }
+    }).catch(() => undefined);
+    incDocumentMetric("document_rate_limited_total", { scope: "upload" });
+    return NextResponse.json(
+      { message: "تجاوزت حد الطلبات.", code: "RATE_LIMITED" },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds ?? 1) } }
+    );
+  }
+
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
   if (!isAllowedAttachmentMimeType(file.type)) {
     return NextResponse.json({ message: "نوع الملف غير مدعوم. الصيغ المتاحة: PDF, DOCX, TXT, PNG, JPG." }, { status: 400 });
   }
+  if (file.size > limits.maxUploadBytes) {
+    return NextResponse.json({ message: "حجم الملف يتجاوز الحد المسموح.", code: "FILE_TOO_LARGE" }, { status: 413 });
+  }
 
   const relationType = String(form.get("relationType") || "عام");
   const relationId = String(form.get("relationId") || "");
   const caseId = relationType === "قضية" && relationId ? relationId : undefined;
-  // منع ربط مرفق بقضية مستخدم آخر (IDOR على POST).
   const caseGate = await assertCaseOwnedForAttachment(user, caseId);
   if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
   const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });
@@ -53,8 +82,6 @@ export async function POST(request: NextRequest) {
     note: "TODO: استخراج نص PDF/DOCX لاحقًا وربطه بتحليل الاستشارة والمحاكاة."
   };
 
-  // PR-1: metadata في العمود الصريح؛ extractedText يبقى null حتى تكتمل القراءة (لا JSON داخله).
-  // الاستخراج والقراءة الضوئية خارج دورة طلب الرفع — لا استدعاء لمحركات الاستخراج هنا.
   const attachment = await prisma.attachment.create({
     data: {
       caseId,
@@ -84,9 +111,36 @@ export async function POST(request: NextRequest) {
       relationType,
       relationId: relationId || undefined,
       storageMode: uploaded.storageMode,
-      processingStatus: attachment.processingStatus
+      processingStatus: attachment.processingStatus,
+      correlationId
     }
   });
+
+  const job = await dispatchDocumentJob("DOCUMENT_IMPORTED", {
+    attachmentId: attachment.id,
+    userId: user.id,
+    correlationId
+  }).catch(() => null);
+  if (job) {
+    await auditEvent({
+      actorId: user.id,
+      subject: "ADMIN",
+      action: "ATTACHMENT_JOB_DISPATCHED",
+      entityId: attachment.id,
+      metadata: { jobId: job.jobId, mode: job.mode, type: "DOCUMENT_IMPORTED", correlationId }
+    }).catch(() => undefined);
+  }
+
+  logDocumentEvent({
+    event: "attachment_uploaded",
+    correlationId,
+    userId: user.id,
+    attachmentId: attachment.id,
+    bytes: file.size,
+    status: "UPLOADED",
+    provider: "LOCAL_UPLOAD"
+  });
+  incDocumentMetric("document_import_total", { provider: "LOCAL_UPLOAD", status: "ok" });
 
   return NextResponse.json({ attachment: toAttachmentDto(attachment) }, { status: 201 });
 }

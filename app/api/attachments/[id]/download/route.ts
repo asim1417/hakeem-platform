@@ -26,6 +26,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   ) {
     return NextResponse.json({ message: "لم يتم العثور على المرفق." }, { status: 404 });
   }
+  if (attachment.processingStatus === "QUARANTINED") {
+    return NextResponse.json({ message: "هذا المرفق معزول ولا يمكن تنزيله.", code: "QUARANTINED" }, { status: 403 });
+  }
   // Azure: رابط موقّع. SharePoint: رابط webUrl المخزَّن في metadata (أو JSON القديم).
   let url = signedDownloadUrl(attachment.storageKey);
   if (!url && attachment.storageKey.startsWith("sharepoint/")) {
