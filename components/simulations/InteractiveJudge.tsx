@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, ChevronLeft, ClipboardList, Copy, Check, Download, FileText, Gauge, Gavel, Handshake, Paperclip, Plus, Scale, ScrollText, Eye } from "lucide-react";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
 
@@ -26,7 +26,7 @@ type Session = {
   judgments?: Judgment[];
 };
 type SessionSummary = { id: string; title: string; stage: string; updatedAt?: string };
-type Playbook = { id: string; title: string; category: string; description: string; suggestedArticleNumbers?: number[]; preferredSystems?: string[] };
+type Playbook = { id: string; title: string; category: string; description: string; suggestedArticleNumbers?: number[]; preferredSystems?: string[]; litigationStages?: string[]; judicialUsage?: string[] };
 
 // مسار المراحل المرئيّ (منقول من القاعة الكلاسيكيّة).
 const STAGE_FLOW = ["CLAIM_FILING", "PLAINTIFF_STATEMENT", "DEFENDANT_RESPONSE", "PROCEDURAL_DECISION", "CLOSE_PLEADING", "TRAINING_JUDGMENT"] as const;
@@ -55,6 +55,26 @@ const SPEAKER_LABEL: Record<string, string> = {
 
 function isMarker(content: string) {
   return content.startsWith("HAKEEM_");
+}
+
+// تحويل ذكر المواد داخل نصّ القاضي إلى روابط قابلة للنقر إلى بحث النواة (تتبّع الاستشهاد).
+const ARTICLE_MENTION = /(الما?دّ?ة\s*\(?\s*\d+\s*\)?|م\/\s*\d+)/g;
+function renderWithArticleLinks(text: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  ARTICLE_MENTION.lastIndex = 0;
+  while ((m = ARTICLE_MENTION.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const label = m[0];
+    out.push(
+      <a key={key++} href={`/search?q=${encodeURIComponent(label)}`} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)] underline decoration-dotted underline-offset-2">{label}</a>
+    );
+    last = m.index + label.length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
 }
 
 function extractClaimClient(messages: Msg[]): Record<string, string> | null {
@@ -89,7 +109,7 @@ export function InteractiveJudge() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({ subject: "", facts: "", requests: "", plaintiffName: "", defendantName: "", caseType: "تجاري" });
+  const [form, setForm] = useState({ subject: "", facts: "", requests: "", plaintiffName: "", plaintiffCapacity: "", defendantName: "", defendantCapacity: "", caseType: "تجاري" });
 
   // ── المرحلة الأولى من النقل التدريجيّ: خصائص القاعة (قوّة · ضبط · صلح) ──
   const [strength, setStrength] = useState<{ score: number; notes: string[] } | null>(null);
@@ -399,7 +419,7 @@ export function InteractiveJudge() {
           <p className="mt-3 max-w-3xl leading-8 text-white/85">
             جلسةٌ تفاعليّة مؤصَّلة في النواة القانونيّة: تُقيّد الدعوى، وتترافع أمام قاضٍ يقرأ كلّ إفادة ويكيّفها ويطبّق قواعد الإثبات ثمّ يقرّر إجرائيًّا — وتُحفظ جلستك في حسابك.
           </p>
-          <button onClick={() => { setForm({ subject: "", facts: "", requests: "", plaintiffName: "", defendantName: "", caseType: "تجاري" }); setError(null); setView("new"); }} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-5 py-2.5 text-sm font-bold text-[var(--navy)] transition hover:opacity-90">
+          <button onClick={() => { setForm({ subject: "", facts: "", requests: "", plaintiffName: "", plaintiffCapacity: "", defendantName: "", defendantCapacity: "", caseType: "تجاري" }); setError(null); setView("new"); }} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-5 py-2.5 text-sm font-bold text-[var(--navy)] transition hover:opacity-90">
             <Plus size={16} aria-hidden /> جلسة محاكاة جديدة
           </button>
         </header>
@@ -442,6 +462,10 @@ export function InteractiveJudge() {
           <div className="grid grid-cols-2 gap-3">
             <Field label="اسم المدعي" value={form.plaintiffName} onChange={(v) => setForm({ ...form, plaintiffName: v })} />
             <Field label="اسم المدعى عليه" value={form.defendantName} onChange={(v) => setForm({ ...form, defendantName: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="صفة المدعي (أصالةً/وكالةً…)" value={form.plaintiffCapacity} onChange={(v) => setForm({ ...form, plaintiffCapacity: v })} />
+            <Field label="صفة المدعى عليه" value={form.defendantCapacity} onChange={(v) => setForm({ ...form, defendantCapacity: v })} />
           </div>
           <Field label="نوع الدعوى" value={form.caseType} onChange={(v) => setForm({ ...form, caseType: v })} />
           <Field label="الوقائع *" value={form.facts} onChange={(v) => setForm({ ...form, facts: v })} textarea />
@@ -486,7 +510,7 @@ export function InteractiveJudge() {
                 <div className={`inline-flex items-center gap-1 text-xs font-bold ${isJudge ? "text-[var(--gold)]" : "text-[var(--petrol)]"}`}>{isJudge ? <Gavel size={13} aria-hidden /> : null}{m.role}</div>
                 {isJudge ? <CopyBtn text={m.content} /> : null}
               </div>
-              <div className="whitespace-pre-wrap text-[var(--ink)]">{shown}{isTyping ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}</div>
+              <div className="whitespace-pre-wrap text-[var(--ink)]">{isTyping ? shown : isJudge ? renderWithArticleLinks(m.content) : m.content}{isTyping ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}</div>
             </div>
           );
         })}
@@ -497,7 +521,7 @@ export function InteractiveJudge() {
               <CopyBtn text={judgment.content} />
             </div>
             <div className="whitespace-pre-wrap text-sm leading-8 text-[var(--ink)]">
-              {typing?.id === judgment.id ? judgment.content.slice(0, typedLen) : judgment.content}
+              {typing?.id === judgment.id ? judgment.content.slice(0, typedLen) : renderWithArticleLinks(judgment.content)}
               {typing?.id === judgment.id ? <span className="ml-0.5 inline-block animate-pulse font-bold text-[var(--gold)]">▌</span> : null}
             </div>
           </div>
@@ -628,6 +652,11 @@ export function InteractiveJudge() {
                     <span className="rounded-full bg-[var(--surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--muted)]">{p.category}</span>
                   </div>
                   <div className="mt-0.5 line-clamp-2 text-[11px] leading-5 text-[var(--muted)]">{p.description}</div>
+                  {p.litigationStages?.length ? (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {p.litigationStages.slice(0, 3).map((st) => <span key={st} className="rounded bg-[var(--emerald-soft)] px-1.5 py-0.5 text-[10px] text-[var(--emerald)]">مرحلة: {st}</span>)}
+                    </div>
+                  ) : null}
                   {p.suggestedArticleNumbers?.length || p.preferredSystems?.length ? (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {(p.preferredSystems ?? []).slice(0, 2).map((s) => <span key={s} className="rounded bg-[var(--gold-ghost)] px-1.5 py-0.5 text-[10px] text-[var(--gold)]">{s}</span>)}

@@ -40,6 +40,12 @@ export function buildSimulationExport(session: ExportSession, type: string) {
   }
 
   if (type === "claim-sheet") return documentPayload("صحيفة الدعوى", sections);
+  if (type === "objection") {
+    const objections = session.decisions.filter((item) => /استئناف|نقض|التماس|اعتراض/.test(item.decisionType));
+    if (objections.length === 0) sections.push({ heading: "لوائح الاعتراض", body: "لم تُسجّل بعد أيّ لائحة اعتراض في هذه الجلسة." });
+    else objections.forEach((item) => sections.push({ heading: item.decisionType, body: item.content }));
+    return documentPayload("لوائح الاعتراض", sections);
+  }
   if (hearingRecord && (type === "hearing-record" || type === "full-report")) sections.push({ heading: "ضبط الجلسة", body: hearingRecord.content });
   if (settlement && (type === "settlement" || type === "full-report")) sections.push({ heading: "مسودة الصلح", body: settlement.content });
   if (type === "full-report") {

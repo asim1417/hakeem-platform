@@ -219,8 +219,13 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
               <pre className="mt-3 whitespace-pre-wrap font-judicial text-lg leading-9 text-[var(--ink)]">{draft}</pre>
             </div>
           ) : null}
-          <div className="rounded-[var(--r-xl)] border border-dashed border-[var(--gold-border)] bg-ivory/60 p-4 text-xs leading-6 text-[var(--ink-60)]">
-            التصدير PDF/DOCX متاح حاليًا للحكم وضبط الجلسة عبر صفحة الحكم. تصدير لوائح الاعتراض كملفات مستقلة يحتاج مسار تصدير مخصص لاحقًا.
+          <div className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory/60 p-4">
+            <p className="mb-2 text-xs font-semibold text-[var(--ink-60)]">تصدير لوائح الاعتراض</p>
+            <div className="flex flex-wrap gap-2">
+              <a href={`/api/simulations/${sessionId}/export?type=objection&format=pdf`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">PDF</a>
+              <a href={`/api/simulations/${sessionId}/export?type=objection&format=docx`} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] px-3 py-1.5 text-xs font-semibold text-[var(--navy)] hover:border-[var(--gold)]">Word</a>
+            </div>
+            <p className="mt-2 text-[11px] leading-5 text-[var(--ink-60)]">يُصدَّر ما حُفظ من لوائح الاعتراض في هذه الجلسة (بعد توليد المسودة وحفظها).</p>
           </div>
         </aside>
       </div>
