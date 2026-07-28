@@ -186,8 +186,20 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
  */
 export async function callCentralProvider(input: { systemPrompt?: string; userPrompt: string; maxTokens?: number }): Promise<{ ok: boolean; content: string; mode: "server" | "offline"; provider: string; error?: string }> {
   const cfg = await resolveAiConfig();
-  if (cfg.provider === "offline" || !cfg.apiKey) {
-    return { ok: false, content: "", mode: "offline", provider: "offline", error: "مزوّد النموذج غير مضبوط (لا مفتاح فعّال)." };
+  // قاعدة CLAUDE.md (Claude حصريًّا): التوليد القانونيّ لا يعمل إلا بمزوّد Anthropic. أيّ مزوّدٍ
+  // آخر (OpenAI/Gemini/custom) — حتى لو كان مفتاحُه مضبوطًا — يُعامَل offline فيسقط القاضي للحتميّ
+  // الآمن بدل استعمال نموذجٍ غير Claude. (خدمات القراءة/OCR تبقى مستقلّةً عن هذا القيد.)
+  if (cfg.provider !== "anthropic" || !cfg.apiKey) {
+    const nonClaudeConfigured = cfg.provider !== "anthropic" && cfg.provider !== "offline" && Boolean(cfg.apiKey);
+    return {
+      ok: false,
+      content: "",
+      mode: "offline",
+      provider: "offline",
+      error: nonClaudeConfigured
+        ? `التوليد مقيَّدٌ بـ Claude حصريًّا؛ المزوّد المضبوط (${cfg.provider}) ليس Anthropic.`
+        : "مزوّد النموذج غير مضبوط (لا مفتاح Claude فعّال)."
+    };
   }
   try {
     const content = await completeWithConfig(cfg, input.systemPrompt ?? "", String(input.userPrompt ?? ""), input.maxTokens ?? 1000);

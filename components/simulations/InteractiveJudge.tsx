@@ -104,6 +104,8 @@ export function InteractiveJudge() {
   // الكتابة الحيّة (منقولة من القاعة الكلاسيكيّة): يُكشف نصّ القاضي حرفًا حرفًا بدل عرضه دفعةً.
   const [typing, setTyping] = useState<{ id: string; full: string } | null>(null);
   const [typedLen, setTypedLen] = useState(0);
+  // حالة المزوّد: هل القاضي يعمل بذكاء Claude «server» أم يسقط للوضع الحتميّ «offline»؟
+  const [provider, setProvider] = useState<{ active: boolean; provider: string; model: string | null; nonClaudeConfigured: boolean } | null>(null);
   // لوحة الأساس النظاميّ (منقولة من القاعة الكلاسيكيّة): مواد النواة ذات الصلة بروابط قابلة للتتبّع.
   const [legalBasis, setLegalBasis] = useState<Array<{ articleNumber: number; systemName: string; citationLabel: string; internalUrl: string; snippet: string }> | null>(null);
   const [activatedScope, setActivatedScope] = useState<string[]>([]);
@@ -120,6 +122,7 @@ export function InteractiveJudge() {
 
   useEffect(() => {
     void loadList();
+    void api("/api/simulations/provider-status").then((d) => setProvider(d)).catch(() => setProvider(null));
   }, [loadList]);
 
   useEffect(() => {
@@ -433,7 +436,10 @@ export function InteractiveJudge() {
     <div dir="rtl" className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
         <button onClick={() => { setView("list"); void loadList(); }} className="inline-flex items-center gap-1 text-sm text-[var(--muted)] underline underline-offset-2 hover:text-[var(--petrol)]"><ArrowRight size={14} aria-hidden /> كل الجلسات</button>
-        <span className="rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-1 text-xs font-semibold text-[var(--gold)]">{stageLabel(session?.stage ?? "")}</span>
+        <div className="flex items-center gap-2">
+          <ProviderBadge provider={provider} />
+          <span className="rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-1 text-xs font-semibold text-[var(--gold)]">{stageLabel(session?.stage ?? "")}</span>
+        </div>
       </div>
 
       <h1 className="t-display text-2xl font-bold text-[var(--petrol)]">{session?.title}</h1>
@@ -649,6 +655,24 @@ export function InteractiveJudge() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// مؤشّر حالة المزوّد: أخضر «Claude نشط (server)» أو رماديّ «حتميّ (لا مزوّد Claude)». عند ضبط
+// مزوّدٍ غير Claude يُنبَّه صراحةً بأنّ القاضي حتميّ حتى يُضبط Anthropic.
+function ProviderBadge({ provider }: { provider: { active: boolean; provider: string; model: string | null; nonClaudeConfigured: boolean } | null }) {
+  if (!provider) return null;
+  if (provider.active) {
+    return (
+      <span title={`المزوّد: Claude${provider.model ? " · " + provider.model : ""}`} className="inline-flex items-center gap-1 rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--emerald)]" /> القاضي الذكيّ (Claude) نشط
+      </span>
+    );
+  }
+  return (
+    <span title={provider.nonClaudeConfigured ? `المزوّد المضبوط (${provider.provider}) ليس Claude — القاضي حتميّ حتى يُضبط Anthropic` : "لا مفتاح Claude مضبوط — القاضي حتميّ"} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--muted)]">
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted)]" /> {provider.nonClaudeConfigured ? "حتميّ (المزوّد ليس Claude)" : "حتميّ (لا مزوّد Claude)"}
+    </span>
   );
 }
 
