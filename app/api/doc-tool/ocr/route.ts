@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   extractTextWithGemini,
+  geminiModelId,
   getGeminiOcrStatus,
   GeminiApiError,
   GEMINI_OCR_MIME_TYPES,
@@ -54,10 +55,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "يُقبل: PNG أو JPG أو PDF" }, { status: 400 });
     }
     const modelParam = form.get("model");
-    const model: GeminiOcrModel = modelParam === "pro" ? "pro" : "flash";
+    const model: GeminiOcrModel = modelParam === "pro" ? "pro" : modelParam === "lite" ? "lite" : "flash";
 
     const text = await extractTextWithGemini(Buffer.from(await file.arrayBuffer()), mime, model);
-    return NextResponse.json({ text, model: model === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash" });
+    return NextResponse.json({ text, model: geminiModelId(model) });
   } catch (error) {
     if (error instanceof GeminiApiError) {
       // حصة يومية مستهلَكة: 429 لكن بعلمٍ صريح — العميل يتوقّف عن إعادة المحاولة العمياء
