@@ -180,6 +180,7 @@
     "@clerk/localizations": "^4.13.6",
     "@clerk/nextjs": "^6.39.6",
     "@prisma/client": "^5.22.0",
+    "@vercel/functions": "^3.7.6",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "docx": "^9.7.1",
