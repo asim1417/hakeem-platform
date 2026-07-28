@@ -20,6 +20,8 @@ import {
 export interface DocxSource {
   articleNumber?: number | string;
   systemName?: string;
+  articleTitle?: string;
+  quote?: string;
 }
 
 const AR_FONT = "Traditional Arabic";
@@ -27,13 +29,64 @@ const NAVY = "1B3A5B";
 const GOLD = "9A7B2E";
 const BODY = 36; // 18pt (نصف-نقاط)
 
-/** يستبدل مراجع [n] بـ«(م/رقم المادة)» من المصادر. */
-function withRefs(text: string, basis: DocxSource[]): string {
-  return (text || "").replace(/\[(\d{1,3})\]/g, (m, n) => {
-    const num = basis[Number(n) - 1]?.articleNumber;
-    if (num === undefined || num === "") return m;
-    return `(م/${typeof num === "number" ? num.toLocaleString("ar-SA") : num})`;
+/** يُبقي هامش [n] رقمًا مرقّمًا (عربيًّا) مرتبطًا بقائمة الحواشي أسفل المستند — لا يستبدله بالرقم النظاميّ. */
+function withRefs(text: string, _basis: DocxSource[]): string {
+  return (text || "").replace(/\[([0-9٠-٩]{1,3})\]/g, (m, n) => {
+    const idx = Number(String(n).replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
+    return Number.isFinite(idx) && idx > 0 ? `[${idx.toLocaleString("ar-SA")}]` : m;
   });
+}
+
+/** مرجع الهامش: «النظام · المادة رقم — العنوان». */
+function docxRefLabel(s: DocxSource): string {
+  const num =
+    s.articleNumber !== undefined && s.articleNumber !== ""
+      ? typeof s.articleNumber === "number"
+        ? s.articleNumber.toLocaleString("ar-SA")
+        : String(s.articleNumber)
+      : "";
+  const sys = s.systemName || "مصدر";
+  const head = num ? `${sys} · المادة ${num}` : sys;
+  return s.articleTitle ? `${head} — ${s.articleTitle}` : head;
+}
+
+/** قسم «الحواشي (الأساس النظاميّ)» أسفل المستند — رقمٌ لكلّ مصدرٍ يليه نصّ مادته. */
+function footnoteBlocks(basis: DocxSource[]): Paragraph[] {
+  if (!basis.length) return [];
+  const blocks: Paragraph[] = [
+    new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: GOLD, space: 1 } }, spacing: { before: 240, after: 120 }, children: [] }),
+    new Paragraph({
+      bidirectional: true,
+      alignment: AlignmentType.RIGHT,
+      heading: HeadingLevel.HEADING_2,
+      spacing: { after: 120 },
+      children: inlineRuns("الحواشي — الأساس النظاميّ من النواة", { bold: true, size: 34, color: NAVY }),
+    }),
+  ];
+  basis.forEach((s, i) => {
+    const marker = `[${(i + 1).toLocaleString("ar-SA")}] `;
+    blocks.push(
+      new Paragraph({
+        bidirectional: true,
+        alignment: AlignmentType.RIGHT,
+        spacing: { after: (s.quote || "").trim() ? 40 : 120 },
+        children: inlineRuns(`${marker}${docxRefLabel(s)}`, { bold: true, size: 30, color: NAVY }),
+      })
+    );
+    const quote = (s.quote || "").trim();
+    if (quote) {
+      blocks.push(
+        new Paragraph({
+          bidirectional: true,
+          alignment: AlignmentType.RIGHT,
+          spacing: { after: 140 },
+          indent: { start: 240 },
+          children: inlineRuns(`«${quote}»`, { size: 30 }),
+        })
+      );
+    }
+  });
+  return blocks;
 }
 
 /** يقسّم نصًّا إلى مقاطع TextRun مع دعم الغامق (**...**). */
@@ -177,7 +230,7 @@ export async function buildAnswerDocx(input: { content: string; basis?: DocxSour
     sections: [
       {
         properties: {},
-        children: [...header, ...contentToBlocks(input.content, basis)],
+        children: [...header, ...contentToBlocks(input.content, basis), ...footnoteBlocks(basis)],
       },
     ],
   });

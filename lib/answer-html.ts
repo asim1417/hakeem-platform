@@ -27,10 +27,19 @@ export const DOC_CSS = `
   .answer-prose th { background: #1B3A5B; color: #fff; border: 1px solid #c9c4b8; padding: .4rem .6rem; text-align: right; }
   .answer-prose td { border: 1px solid #c9c4b8; padding: .4rem .6rem; text-align: right; vertical-align: top; }
   .answer-prose tr:nth-child(even) td { background: #f7f5f0; }
-  .answer-prose .cite-ref { color: #9a7b2e; font-weight: 700; font-size: .78em; text-decoration: none;
+  .answer-prose .cite-ref { color: #9a7b2e; font-weight: 700; font-size: .72em; text-decoration: none;
     background: #f5ecd8; border: 1px solid rgba(212,175,110,.4); border-radius: 5px; padding: 0 .3em; vertical-align: super; }
-  .answer-prose .cite-ref::before { content: "م/"; opacity: .7; }
   .answer-prose hr { border: none; border-top: 1px solid #d4af6e; margin: 1rem 0; }
+  .answer-footnotes { margin-top: 1.6rem; border-top: 2px solid #d4af6e; padding-top: .8rem; }
+  .answer-footnotes .fn-title { font-size: 16px; color: #1B3A5B; font-weight: 700; margin: 0 0 .7rem; }
+  .answer-footnotes .fn-list { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+  .answer-footnotes .fn-item { display: flex; gap: .6rem; margin: 0 0 .7rem; page-break-inside: avoid; }
+  .answer-footnotes .fn-num { flex: 0 0 auto; min-width: 1.6em; height: 1.6em; display: inline-flex;
+    align-items: center; justify-content: center; border-radius: 999px; background: #f5ecd8;
+    color: #9a7b2e; font-weight: 700; font-size: 13px; }
+  .answer-footnotes .fn-ref { color: #1B3A5B; font-weight: 700; font-size: 14px; margin: 0 0 .2rem; }
+  .answer-footnotes .fn-quote { color: #333; font-size: 14px; margin: 0; padding: .4rem .6rem;
+    background: #f7f5f0; border-radius: 6px; }
   .doc-foot { margin-top: 1.5rem; border-top: 1px solid #e6e1d6; padding-top: .6rem; color: #9a958a; font-size: 11px; }
 `;
 

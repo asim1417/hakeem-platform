@@ -164,7 +164,16 @@ export function LegalBasisPanel({
                 style={{ borderInlineStartColor: meta.fg, borderInlineStartWidth: 3 }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="font-mono-legal text-sm text-[var(--navy)]">{ref}</p>
+                  <p className="flex items-center gap-2 font-mono-legal text-sm text-[var(--navy)]">
+                    {/* رقم الهامش — يطابق الرقم العلويّ [n] في متن الدراسة (ربطٌ بصريّ). */}
+                    <span
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--gold-ghost)] text-xs font-bold text-[var(--gold-dark)]"
+                      aria-hidden
+                    >
+                      {(index + 1).toLocaleString("ar-SA")}
+                    </span>
+                    {ref}
+                  </p>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <EnforcementBadge status={item.enforcement} />
                     <DocumentationBadge state={item.state} />

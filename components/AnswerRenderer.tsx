@@ -13,11 +13,27 @@ import type { AnchorHTMLAttributes } from "react";
 export interface AnswerSource {
   articleNumber?: number | string;
   systemName?: string;
+  /** عنوان المادة ونصّها وحالتها — تُستعمل لبناء قائمة الحواشي أسفل الدراسة في التصدير. */
+  articleTitle?: string;
+  quote?: string;
+  status?: string | null;
 }
 
-/** يحوّل مراجع «[24]» إلى روابط Markdown آمنة «[24](#cite-24)» لتُعالَج كمرجع مادة قابل للنقر. */
+/** يحوّل الأرقام العربية-الهنديّة إلى لاتينيّة (٣→3) كي يُطابَق رقم الهامش بترتيب المصادر. */
+function toAsciiDigits(s: string): string {
+  return s.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+}
+
+/**
+ * يحوّل هوامش «[24]» أو «[٢٤]» إلى روابط Markdown آمنة «[24](#cite-24)» لتُعالَج هوامشَ قابلة للنقر.
+ * يقبل الأرقام اللاتينيّة والعربية-الهنديّة معًا (Claude يكتب بالعربيّة فقد يستعمل ٠-٩).
+ */
 function linkifyRefs(md: string): string {
-  return (md || "").replace(/(!?)\[(\d{1,3})\](?!\()/g, (m, bang, n) => (bang ? m : `[${n}](#cite-${n})`));
+  return (md || "").replace(/(!?)\[([0-9٠-٩]{1,3})\](?!\()/g, (m, bang, n) => {
+    if (bang) return m;
+    const ascii = toAsciiDigits(n);
+    return `[${ascii}](#cite-${ascii})`;
+  });
 }
 
 /**
@@ -60,28 +76,28 @@ export function AnswerRenderer({
           blockquote: ({ children }) => <blockquote className="ans-quote">{children}</blockquote>,
           code: ({ children }) => <code className="ans-code">{children}</code>,
           a: ({ href, children, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href?: string }) => {
-            // مرجع مادة [n] → «م/رقم المادة» قابل للنقر يُبرز بطاقة المصدر في لوحة الأساس.
+            // هامش [n] → رقمٌ علويٌّ قابلٌ للنقر يقفز إلى نصّ المادة في «الأساس النظاميّ» أسفل الدراسة.
             if (href?.startsWith("#cite-")) {
               const n = Number(href.slice("#cite-".length));
               const src = Number.isFinite(n) && n > 0 ? basis[n - 1] : undefined;
-              const num = src?.articleNumber;
               const target = anchorPrefix ? `#${anchorPrefix}${n}` : undefined;
-              // نعرض «م/رقم المادة» فقط حين نعرف رقم المادة الحقيقيّ (تفادي إيهام رقم غير صحيح).
-              if (num !== undefined && num !== "") {
-                const label = typeof num === "number" ? num.toLocaleString("ar-SA") : String(num);
-                return (
-                  <a
-                    className="cite-ref"
-                    href={target}
-                    title={src?.systemName ? `${src.systemName} · المادة ${label}` : `المادة ${label}`}
-                    aria-label={`المادة ${label} — اعرض المصدر`}
-                  >
-                    {label}
-                  </a>
-                );
-              }
-              // لا رقم مادة معروف → رقم علويّ محايد (بلا «م/» كي لا نُوهم).
-              return <sup className="ans-ref">{children}</sup>;
+              const seq = Number.isFinite(n) && n > 0 ? n.toLocaleString("ar-SA") : String(children ?? "");
+              // العنوان يكشف المادّة المرتبطة بالهامش (النظام + رقم المادة) عند المرور/الوصول.
+              const num = src?.articleNumber;
+              const numLabel = num !== undefined && num !== "" ? (typeof num === "number" ? num.toLocaleString("ar-SA") : String(num)) : "";
+              const title = src?.systemName
+                ? `الهامش ${seq}: ${src.systemName}${numLabel ? ` · المادة ${numLabel}` : ""}`
+                : `الهامش ${seq}`;
+              return (
+                <a
+                  className="cite-ref"
+                  href={target}
+                  title={title}
+                  aria-label={`الهامش رقم ${seq} — اعرض نصّ المادة أسفل الدراسة`}
+                >
+                  {seq}
+                </a>
+              );
             }
             const internal = href?.startsWith("/") || href?.startsWith("#");
             return (

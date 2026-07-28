@@ -988,18 +988,27 @@ body {
 .ans-td { border: 1px solid var(--ink-15); padding: .55rem .8rem; text-align: right; vertical-align: top; }
 .ans-table tr:nth-child(even) { background: var(--paper, #f7f5f0); }
 
-/* ── الإضافة ١: مراجع المواد القابلة للنقر («م/٣٩») + إبراز بطاقة المصدر ── */
+/* ── الإضافة ١: هوامش [n] القابلة للنقر — رقمٌ علويٌّ يقفز إلى نصّ المادة أسفل الدراسة ── */
 .cite-ref {
-  display: inline-flex; align-items: center;
-  font-size: .72em; font-weight: 700; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.15em;
+  font-size: .68em; font-weight: 700; line-height: 1;
   color: var(--gold-dark, #9a7b2e); background: var(--gold-ghost, #f5ecd8);
   border: 1px solid var(--gold-border, rgba(212,175,110,.4));
-  border-radius: 5px; padding: .05em .4em; margin: 0 .15em;
+  border-radius: 5px; padding: .1em .35em; margin: 0 .12em;
   cursor: pointer; vertical-align: super; text-decoration: none;
   transition: background .15s, color .15s;
 }
-.cite-ref::before { content: "م/"; opacity: .7; }
 .cite-ref:hover, .cite-ref:focus-visible { background: var(--gold, #d4af6e); color: #fff; outline: none; }
+/* قائمة الحواشي (الأساس النظاميّ) — تُعرَض في التصدير/الطباعة أسفل الدراسة (على الشاشة تُغني عنها لوحة الأساس) */
+.answer-footnotes { margin-top: 1.6rem; border-top: 2px solid var(--gold, #d4af6e); padding-top: .8rem; }
+.answer-footnotes .fn-title { font-size: 1rem; color: var(--navy, #1B3A5B); font-weight: 700; margin: 0 0 .7rem; }
+.answer-footnotes .fn-list { list-style: none; margin: 0; padding: 0; }
+.answer-footnotes .fn-item { display: flex; gap: .6rem; margin: 0 0 .7rem; }
+.answer-footnotes .fn-num { flex: 0 0 auto; min-width: 1.6em; height: 1.6em; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--gold-ghost, #f5ecd8); color: var(--gold-dark, #9a7b2e); font-weight: 700; font-size: .82em; }
+.answer-footnotes .fn-ref { color: var(--navy, #1B3A5B); font-weight: 700; font-size: .9rem; margin: 0 0 .2rem; }
+.answer-footnotes .fn-quote { color: #333; font-size: .9rem; margin: 0; padding: .4rem .6rem; background: var(--paper, #f7f5f0); border-radius: 6px; }
+@media print { .answer-footnotes .fn-item { page-break-inside: avoid; } }
 /* بطاقة المصدر تُبرز عند القفز إليها من مرجع، ولا تختبئ خلف الرأس الثابت */
 .basis-src { scroll-margin-top: 90px; transition: box-shadow .3s, background .3s; }
 .basis-src:target {
@@ -1022,7 +1031,6 @@ body {
   #hakeem-print-area .doc-date { color: #777; font-size: 11pt; }
   #hakeem-print-area .doc-foot { margin-top: 1.4rem; border-top: 1px solid #ddd; padding-top: .5rem; color: #999; font-size: 9pt; }
   #hakeem-print-area .answer-prose { line-height: 1.9; }
-  #hakeem-print-area .cite-ref::before { content: "م/"; }
   @page { margin: 1.6cm; }
 }
 
