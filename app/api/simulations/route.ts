@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { simulationListWhere } from "@/lib/modules/auth/ownership";
-import { encodeClaim, buildJudgeOpening } from "@/lib/modules/simulations/hakeem-judge";
+import { encodeClaim, buildJudgeOpening, buildClaimStatement } from "@/lib/modules/simulations/hakeem-judge";
 import { encodeTurnState } from "@/lib/modules/simulations/judge-engine";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 
@@ -84,16 +84,23 @@ export async function POST(request: NextRequest) {
             content: buildJudgeOpening(payload, title)
           },
           {
-            role: "النظام",
+            // نسخُ صحيفة الدعوى بيانًا للمدّعي في المحضر (تُثبَت دعواه من صحيفته دون إعادة عرض).
+            role: "المدعي",
             stage: "PLAINTIFF_STATEMENT",
+            content: buildClaimStatement(payload)
+          },
+          {
+            // الدور الأوّل للمدّعى عليه للجواب عن صحيفة الدعوى (أُثبتت الدعوى من الصحيفة).
+            role: "النظام",
+            stage: "DEFENDANT_RESPONSE",
             content: encodeTurnState({
-              allowedSpeakerRole: "claimant",
-              disabledRoles: ["defendant", "defendant_agent"],
-              requiredInput: "بيان المدعي لدعواه ووقائعها وطلباته.",
-              procedureAction: "تمكين المدعي من عرض الدعوى",
+              allowedSpeakerRole: "defendant",
+              disabledRoles: ["claimant", "claimant_agent"],
+              requiredInput: "جواب المدعى عليه عن صحيفة الدعوى ووقائعها وطلباتها.",
+              procedureAction: "عرض صحيفة الدعوى على المدعى عليه وطلب الجواب",
               currentStage: "CLAIM_FILING",
-              nextStage: "PLAINTIFF_STATEMENT",
-              reason: "بدأت الجلسة بتقييد الدعوى، والدور الأول للمدعي."
+              nextStage: "DEFENDANT_RESPONSE",
+              reason: "أُثبتت الدعوى من صحيفتها المقيّدة، وأُحيل عليها، والدور للمدعى عليه للجواب."
             })
           }
         ]
@@ -108,9 +115,9 @@ export async function POST(request: NextRequest) {
     entityId: simulation.id,
     metadata: {
       description: `تم إنشاء جلسة محاكاة: ${title}`,
-      stage: "CLAIM_FILING",
-      nextAllowedRole: "claimant",
-      procedureAction: "تمكين المدعي من عرض الدعوى"
+      stage: "DEFENDANT_RESPONSE",
+      nextAllowedRole: "defendant",
+      procedureAction: "عرض صحيفة الدعوى على المدعى عليه وطلب الجواب"
     }
   });
 
