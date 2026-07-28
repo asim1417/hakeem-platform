@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ClipboardList, Copy, Check, Download, FileText, Gauge, Gavel, Handshake, Plus, Scale, ScrollText, Eye } from "lucide-react";
+import { ArrowRight, ChevronLeft, ClipboardList, Copy, Check, Download, FileText, Gauge, Gavel, Handshake, Paperclip, Plus, Scale, ScrollText, Eye } from "lucide-react";
 import { stageLabel } from "@/lib/modules/simulations/simulation-labels";
 
 // القاضي التفاعليّ الحديث — واجهةٌ واحدةٌ موحَّدة تحفظ الجلسة في قاعدة البيانات (جداول
@@ -87,6 +87,7 @@ export function InteractiveJudge() {
   const [input, setInput] = useState("");
   const [sendAs, setSendAs] = useState<"المدعي" | "المدعى عليه">("المدعي");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ subject: "", facts: "", requests: "", plaintiffName: "", defendantName: "", caseType: "تجاري" });
 
@@ -226,6 +227,28 @@ export function InteractiveJudge() {
       setBusy(false);
     }
   }, [session, input, sendAs, runJudge, applyState]);
+
+  // رفع بيّنة مُرفَقة (مستند): يُستخرَج نصّها خادِميًّا وتُسجَّل باسم الطرف الحاليّ ضمن المحضر.
+  const attachEvidence = useCallback(async (file: File) => {
+    if (!session) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("role", sendAs);
+      const res = await fetch(`/api/simulations/${session.id}/evidence`, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || "تعذّر رفع البيّنة.");
+      const fresh = await api(`/api/simulations/${session.id}/messages`);
+      applyState(fresh.session, fresh.turnState ?? null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }, [session, sendAs, applyState]);
 
   const advanceJudge = useCallback(async () => {
     if (!session) return;
@@ -536,6 +559,10 @@ export function InteractiveJudge() {
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <button onClick={submitStatement} disabled={busy || input.trim().length < 2} className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
                   {busy ? "القاضي ينظر…" : `أرسل بصفتك ${sendAs}`}
+                </button>
+                <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void attachEvidence(f); }} />
+                <button onClick={() => fileRef.current?.click()} disabled={busy} title="رفع مستند بيّنة (PDF/Word/نص/صورة)" className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)] disabled:opacity-50">
+                  <Paperclip size={15} aria-hidden /> إرفاق بيّنة
                 </button>
                 <button onClick={closePleading} disabled={busy || !canClose} title={canClose ? "" : "لا يُقفل باب المرافعة قبل نطق الطرفين"} className="focus-ring rounded-[var(--r-md)] border border-line px-4 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold-border)] disabled:opacity-50">
                   قفل باب المرافعة
