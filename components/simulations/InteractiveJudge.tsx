@@ -481,7 +481,9 @@ export function InteractiveJudge() {
 
   // ── الجلسة ──
   return (
-    <div dir="rtl" className="mx-auto max-w-3xl space-y-4">
+    <div dir="rtl" className="mx-auto max-w-6xl">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <button onClick={() => { setView("list"); void loadList(); }} className="inline-flex items-center gap-1 text-sm text-[var(--muted)] underline underline-offset-2 hover:text-[var(--petrol)]"><ArrowRight size={14} aria-hidden /> كل الجلسات</button>
         <div className="flex items-center gap-2">
@@ -531,9 +533,6 @@ export function InteractiveJudge() {
       </div>
 
       {error ? <p className="rounded-[var(--r-md)] border border-[var(--ruby)] px-4 py-2 text-sm text-[var(--ruby)]">{error}</p> : null}
-
-      {/* سجلّ القرارات الإجرائيّة (منقول من القاعة الكلاسيكيّة): كلّ قرارٍ إجرائيّ ككتلةٍ مميّزة */}
-      <DecisionsLog decisions={session?.decisions ?? []} />
 
       {/* شفافيّة قرار القاضي (يراها صانع القرار: قرأ المداخلة، كيّفها، ثمّ قرّر) */}
       {judgeMeta ? (
@@ -711,6 +710,13 @@ export function InteractiveJudge() {
           </div>
         </div>
       ) : null}
+        </div>
+
+        {/* سجلّ القرارات الإجرائيّة — قائمةٌ مستقلّة في جانب الصفحة، منفصلةٌ عن تسلسل المحضر */}
+        <aside className="lg:sticky lg:top-4 lg:self-start">
+          <DecisionsLog decisions={session?.decisions ?? []} />
+        </aside>
+      </div>
     </div>
   );
 }
