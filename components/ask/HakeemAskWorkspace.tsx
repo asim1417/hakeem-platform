@@ -89,6 +89,10 @@ type Turn = {
   precedents?: Precedents;
   streaming: boolean;
   showMethod: boolean;
+  /** معرّف المهمّة الخلفيّة لهذا الدور — للاستئناف من /api/jobs/{id} بعد انقطاع الاتّصال. */
+  jobId?: string;
+  /** الدور يُكمل في الخلفية (غادر المستخدم الصفحة) — نعرض إشعارًا هادئًا لا خطأً. */
+  background?: boolean;
 };
 
 export type HakeemAskWorkspaceProps = {
@@ -248,7 +252,13 @@ export function HakeemAskWorkspace({
   const detailedRef = useRef(false);
   /** آخر نتيجة بث لاعتماد الحفظ دون انتظار مزامنة turnsRef */
   const lastResultRef = useRef<Turn | null>(null);
+  /** المهمّة الجاري استطلاعها الآن (منع ازدواج الاستطلاع من مصدرين: catch + مؤثّر الرؤية). */
+  const pollingRef = useRef<string | null>(null);
+  const pollStopRef = useRef(false);
   const askRef = useRef<(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) => Promise<void>>(
+    async () => undefined
+  );
+  const pollJobRef = useRef<(jobId: string, question: string, opts?: { append?: boolean }) => Promise<void>>(
     async () => undefined
   );
 
@@ -471,10 +481,27 @@ export function HakeemAskWorkspace({
     });
   }
 
-  function applyEvent(evt: Record<string, unknown>) {
+  /** يُطبّق التعديل على الدور صاحب jobId (استئنافٌ خلفيّ) وإلا على آخر دور. */
+  function patchJobTurn(jobId: string | undefined, patch: (t: Turn) => Turn) {
+    setTurns((prev) => {
+      if (!prev.length) return prev;
+      let idx = prev.length - 1;
+      if (jobId) {
+        const found = prev.map((t) => t.jobId).lastIndexOf(jobId);
+        if (found >= 0) idx = found;
+      }
+      const next = prev.slice();
+      next[idx] = patch(next[idx]);
+      return next;
+    });
+  }
+
+  // jobId (اختياريّ): عند الاستئناف الخلفيّ نوجّه الحدث إلى الدور صاحب المهمّة لا آخر دورٍ ظاهر.
+  function applyEvent(evt: Record<string, unknown>, jobId?: string) {
+    const patch = (fn: (t: Turn) => Turn) => patchJobTurn(jobId, fn);
     const type = evt.type;
     if (type === "step") {
-      patchLastTurn((t) => {
+      patch((t) => {
         const steps = t.steps.slice();
         const idx = steps.findIndex((s) => s.id === evt.id);
         const step: Step = {
@@ -501,7 +528,7 @@ export function HakeemAskWorkspace({
         }
       }
       const precedents = evt.precedents as Precedents | undefined;
-      patchLastTurn((t) => {
+      patch((t) => {
         const next: Turn = {
           ...t,
           answer: typeof evt.answer === "string" ? evt.answer : null,
@@ -513,6 +540,9 @@ export function HakeemAskWorkspace({
           disclosure: typeof evt.disclosure === "string" ? evt.disclosure : undefined,
           visibleGroups: Array.isArray(evt.groups) ? 3 : undefined,
           message: typeof evt.message === "string" ? evt.message : undefined,
+          // نتيجةٌ وصلت → لم يعُد خلفيًّا ولا خطأً؛ نُزيل أيّ خطأ سابق (كان «غادرت الصفحة»).
+          background: false,
+          error: undefined,
           precedents:
             precedents && (precedents.rulings?.length || precedents.principles?.length)
               ? precedents
@@ -522,9 +552,11 @@ export function HakeemAskWorkspace({
         return next;
       });
     } else if (type === "clarify") {
-      patchLastTurn((t) => {
+      patch((t) => {
         const next: Turn = {
           ...t,
+          background: false,
+          error: undefined,
           clarify: {
             message: String(evt.message ?? ""),
             dimension: typeof evt.dimension === "string" ? evt.dimension : undefined,
@@ -537,7 +569,7 @@ export function HakeemAskWorkspace({
         return next;
       });
     } else if (type === "error") {
-      patchLastTurn((t) => {
+      patch((t) => {
         const next = {
           ...t,
           error: typeof evt.message === "string" ? evt.message : "خطأ غير متوقع.",
@@ -546,77 +578,88 @@ export function HakeemAskWorkspace({
         return next;
       });
     } else if (type === "done") {
-      patchLastTurn((t) => ({ ...t, streaming: false, showMethod: false }));
+      patch((t) => ({ ...t, streaming: false, showMethod: false, background: false }));
     }
   }
 
-  // استئناف مهمّة «اسأل حكيم» الخلفيّة من sessionStorage.
-  useEffect(() => {
-    let stop = false;
-    async function resume() {
-      if (busyRef.current) return;
-      let raw = "";
-      try {
-        raw = sessionStorage.getItem("hakeem-ask-job") ?? "";
-      } catch {
-        return;
-      }
-      if (!raw) return;
-      let p: { jobId?: string; question?: string } = {};
-      try {
-        p = JSON.parse(raw);
-      } catch {
-        return;
-      }
-      if (!p.jobId) return;
-      setTurns((prev) => [
-        ...prev,
-        {
-          question: p.question || "بحثٌ سابق",
-          steps: [],
-          answer: null,
-          basis: null,
-          total: 0,
-          streaming: true,
-          showMethod: false,
-        },
-      ]);
-      for (let i = 0; i < 180 && !stop; i += 1) {
+  // استطلاع مهمّةٍ خلفيّة حتى تكتمل ثم تطبيق نتيجتها. مصدرٌ واحدٌ للاستئناف: يُستدعى من
+  // catch البحث (عند مغادرة الصفحة) ومن مؤثّر الرؤية (عند العودة/إعادة التحميل). يمنع الازدواج
+  // عبر pollingRef، فلا يتصادم المصدران. append=true يُنشئ دورًا مستأنِفًا إن لم يوجد.
+  async function pollJob(jobId: string, question: string, opts?: { append?: boolean }) {
+    if (pollingRef.current === jobId) return;
+    pollingRef.current = jobId;
+    if (opts?.append) {
+      setTurns((prev) => {
+        if (prev.some((t) => t.jobId === jobId)) return prev; // دورٌ يتتبّعها أصلًا — لا تُكرّر
+        return [
+          ...prev,
+          {
+            question: question || "بحثٌ سابق",
+            steps: [],
+            answer: null,
+            basis: null,
+            total: 0,
+            streaming: true,
+            background: true,
+            showMethod: false,
+            jobId,
+          },
+        ];
+      });
+    }
+    try {
+      for (let i = 0; i < 180 && !pollStopRef.current; i += 1) {
         let j: { status?: string; meta?: { result?: Record<string, unknown> } } | null = null;
         try {
-          const r = await fetch(`/api/jobs/${p.jobId}`, { cache: "no-store" });
+          const r = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
           if (r.status === 404) {
-            try {
-              sessionStorage.removeItem("hakeem-ask-job");
-            } catch {
-              /* تجاهل */
-            }
+            try { sessionStorage.removeItem("hakeem-ask-job"); } catch { /* تجاهل */ }
+            patchJobTurn(jobId, (t) => ({
+              ...t,
+              streaming: false,
+              background: false,
+              error: t.answer ? t.error : "تعذّر استئناف البحث الخلفيّ — أعد المحاولة.",
+            }));
             break;
           }
           j = await r.json();
         } catch {
-          /* أعِد */
+          /* أعِد المحاولة */
         }
         if (j && (j.status === "done" || j.status === "error")) {
-          if (j.meta?.result) applyEvent(j.meta.result);
-          applyEvent({ type: "done" });
-          try {
-            sessionStorage.removeItem("hakeem-ask-job");
-          } catch {
-            /* تجاهل */
-          }
+          if (j.meta?.result) applyEvent(j.meta.result, jobId);
+          applyEvent({ type: "done" }, jobId);
+          try { sessionStorage.removeItem("hakeem-ask-job"); } catch { /* تجاهل */ }
           break;
         }
         await new Promise((res) => setTimeout(res, 2000));
       }
+    } finally {
+      if (pollingRef.current === jobId) pollingRef.current = null;
     }
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void resume();
+  }
+  pollJobRef.current = pollJob;
+
+  // استئناف مهمّة «اسأل حكيم» الخلفيّة من sessionStorage عند التحميل والعودة إلى الصفحة.
+  useEffect(() => {
+    pollStopRef.current = false;
+    const resumeFromStore = () => {
+      if (busyRef.current) return; // بثٌّ حيٌّ جارٍ — لا حاجة للاستطلاع
+      let raw = "";
+      try { raw = sessionStorage.getItem("hakeem-ask-job") ?? ""; } catch { return; }
+      if (!raw) return;
+      let p: { jobId?: string; question?: string } = {};
+      try { p = JSON.parse(raw); } catch { return; }
+      if (!p.jobId) return;
+      void pollJobRef.current(p.jobId, p.question || "بحثٌ سابق", { append: true });
     };
-    void resume();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") resumeFromStore();
+    };
+    resumeFromStore();
     document.addEventListener("visibilitychange", onVisible);
     return () => {
-      stop = true;
+      pollStopRef.current = true;
       document.removeEventListener("visibilitychange", onVisible);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -726,6 +769,9 @@ export function HakeemAskWorkspace({
             continue;
           }
           if (evt.type === "job" && evt.jobId) {
+            // نربط المهمّة بهذا الدور — فلو انقطع الاتّصال استأنفناها على الدور نفسه لا على دورٍ جديد.
+            const jid = String(evt.jobId);
+            patchLastTurn((t) => ({ ...t, jobId: jid }));
             try {
               sessionStorage.setItem(
                 "hakeem-ask-job",
@@ -806,13 +852,30 @@ export function HakeemAskWorkspace({
       if (token !== requestTokenRef.current) return;
       const backgrounded =
         backgroundedRef.current || (e instanceof DOMException && e.name === "AbortError");
-      patchLastTurn((t) => ({
-        ...t,
-        streaming: false,
-        error: backgrounded
-          ? "توقّف البحث لأنك غادرت الصفحة على الجوّال قبل اكتماله — أعد المحاولة."
-          : "انقطع الاتصال أثناء البحث.",
-      }));
+      // مهمّةٌ خلفيّة قائمة؟ إن غادر المستخدم الصفحة وانقطع البثّ، فالخادم يُكمل العمل ويحفظ
+      // ناتجه (waitUntil). لا نُظهر خطأً — نُبقي الدور «يعمل في الخلفية» ونستأنف من المهمّة،
+      // فيظهر الجواب فور اكتماله دون «أعد المحاولة».
+      let pendingJobId = "";
+      try {
+        const raw = sessionStorage.getItem("hakeem-ask-job") ?? "";
+        if (raw) pendingJobId = JSON.parse(raw).jobId ?? "";
+      } catch {
+        /* تجاهل */
+      }
+      if (backgrounded && pendingJobId) {
+        patchLastTurn((t) => ({ ...t, streaming: true, background: true, error: undefined }));
+        busyRef.current = false;
+        setBusy(false);
+        void pollJobRef.current(pendingJobId, shown);
+      } else {
+        patchLastTurn((t) => ({
+          ...t,
+          streaming: false,
+          error: backgrounded
+            ? "توقّف البحث لأنك غادرت الصفحة على الجوّال قبل اكتماله — أعد المحاولة."
+            : "انقطع الاتصال أثناء البحث.",
+        }));
+      }
     } finally {
       if (token === requestTokenRef.current) {
         busyRef.current = false;
@@ -1069,10 +1132,18 @@ export function HakeemAskWorkspace({
                       </ol>
                     ) : null}
                   </div>
-                ) : turn.streaming ? (
+                ) : turn.streaming && !turn.background ? (
                   <div className="flex items-center gap-2 text-sm text-[var(--ink-60)]">
                     <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--gold)] border-t-transparent" />
                     جارٍ فهم السؤال…
+                  </div>
+                ) : null}
+
+                {/* استمرار في الخلفية: غادر المستخدم الصفحة والخادم يُكمل — إشعارٌ هادئ لا خطأ. */}
+                {turn.background && turn.streaming ? (
+                  <div className="flex items-center gap-2 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2.5 text-sm leading-7 text-[var(--navy)]">
+                    <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[var(--gold)] border-t-transparent" />
+                    <span>يكمل البحث في الخلفية — سيظهر الجواب هنا فور اكتماله، ولو غادرتَ الصفحة.</span>
                   </div>
                 ) : null}
 
