@@ -23,6 +23,8 @@ type RemedyConfig = {
   refMaterials: Array<{ article: string; note: string }>;
   // ملاحظاتٌ وشروطٌ مسبقة ومُهَل.
   notes: string[];
+  // احتساب مدّة الاعتراض (القبول الشكلي) — منقول من computeAppealDeadline.
+  deadline?: { days: number; label: string; ref: string };
 };
 
 const configs: Record<RemedyKind, RemedyConfig> = {
@@ -55,9 +57,9 @@ const configs: Record<RemedyKind, RemedyConfig> = {
       "تأييد الحكم مع تصحيح التسبيب فقط (م/18)"
     ],
     extraFields: [
-      { key: "reasonsDetail", label: "تفصيل أسباب الطعن", placeholder: "اشرح بالتفصيل كيف أخطأت المحكمة الابتدائية في كلّ سببٍ اخترته، مع الإشارة إلى الصفحة أو الفقرة في الحكم المطعون فيه…" },
-      { key: "notifyDate", label: "تاريخ تسلّم صك الحكم (م/7)", placeholder: "تبدأ مدّة الاعتراض من اليوم التالي لتسلّم الصك." }
+      { key: "reasonsDetail", label: "تفصيل أسباب الطعن", placeholder: "اشرح بالتفصيل كيف أخطأت المحكمة الابتدائية في كلّ سببٍ اخترته، مع الإشارة إلى الصفحة أو الفقرة في الحكم المطعون فيه…" }
     ],
+    deadline: { days: 30, label: "تاريخ تسلّم صك الحكم (م/7)", ref: "م/7 وم/36" },
     refMaterials: [
       { article: "م/7", note: "بدء مدّة الاعتراض من تسلّم صك الحكم" },
       { article: "م/11", note: "طلب وقف التنفيذ خلال مدّة الاعتراض فقط" },
@@ -109,6 +111,7 @@ const configs: Record<RemedyKind, RemedyConfig> = {
       { article: "م/46", note: "النقض لاختصاص: تعيين محكمة مختصة" },
       { article: "م/47", note: "الحكم في الموضوع: نطق علني" }
     ],
+    deadline: { days: 30, label: "تاريخ تسلّم صك حكم الاستئناف", ref: "لائحة الاعتراض — يُرد لانقضاء الميعاد" },
     notes: [
       "شرطٌ مسبق — م/41: لا يُقبل في النقض سببٌ لم يُبدَ في الاستئناف وكان ممكنًا إبداؤه فيه.",
       "شروط مذكرة النقض — م/42 (إلزامية وإلا رُدّت تلقائيًّا): تحديد أسباب الاعتراض وموضعها بدقّة؛ بيان وجه المخالفة وأثرها في النتيجة؛ ما يُثبت سبق إبداء الأسباب في الاستئناف أو تعذّره.",
@@ -167,11 +170,24 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [request, setRequest] = useState<string>(config.requests[0] ?? "");
+  const [notifyDate, setNotifyDate] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [draft, setDraft] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // احتساب مدّة الاعتراض (القبول الشكلي) — منقول من computeAppealDeadline: تبقّى/انقضى مع الحالة.
+  function deadlineStatus(): { ok: boolean; text: string } | null {
+    if (!config.deadline || !notifyDate) return null;
+    const start = new Date(notifyDate);
+    if (Number.isNaN(start.getTime())) return null;
+    const due = new Date(start);
+    due.setDate(due.getDate() + config.deadline.days);
+    const remaining = Math.ceil((due.getTime() - Date.now()) / 86400000);
+    if (remaining >= 0) return { ok: true, text: `تبقّى ${remaining} يومًا على انتهاء ميعاد الاعتراض (المدّة ${config.deadline.days} يومًا من ${config.deadline.label}).` };
+    return { ok: false, text: `انقضت مدّة الاعتراض بـ ${Math.abs(remaining)} يومًا — يُرَدّ الاعتراض شكلًا لانقضاء الميعاد (${config.deadline.ref}).` };
+  }
 
   async function submit() {
     if (disabled) return;
@@ -180,10 +196,12 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
     setNotice("");
     setDraft("");
     try {
+      const dl = deadlineStatus();
       const detailedReasons = [
         ...selectedReasons,
         ...config.extraFields.map((field) => (fields[field.key]?.trim() ? `${field.label}: ${fields[field.key]!.trim()}` : "")).filter(Boolean),
-        request ? `الطلب: ${request}` : ""
+        request ? `الطلب: ${request}` : "",
+        dl ? `الفصل في الشكل (مُلزم): ${dl.ok ? "قُدّم الاعتراض داخل الميعاد النظاميّ." : dl.text}` : ""
       ].filter(Boolean);
       const response = await fetch(`/api/simulations/${sessionId}/appeal`, {
         method: "POST",
@@ -277,6 +295,21 @@ export function PostJudgmentRemedyForm({ sessionId, remedyKind, disabled = false
                   {config.requests.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
               </label>
+              {config.deadline ? (
+                <div className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory/60 p-4">
+                  <span className="font-display-ar text-sm font-bold text-[var(--navy)]">احتساب مدّة الاعتراض — القبول الشكلي</span>
+                  <div className="mt-2 flex flex-wrap items-end gap-3">
+                    <label className="min-w-[180px] flex-1">
+                      <span className="block text-[11px] text-[var(--ink-60)]">{config.deadline.label}</span>
+                      <input type="date" className="mt-1 w-full rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--paper)] p-2.5 outline-none focus:border-[var(--gold)]" value={notifyDate} onChange={(e) => setNotifyDate(e.target.value)} disabled={disabled} />
+                    </label>
+                    <span className="text-xs text-[var(--ink-60)]">المدّة: {config.deadline.days} يومًا</span>
+                  </div>
+                  {deadlineStatus() ? (
+                    <p className={`mt-2 rounded-[var(--r-md)] px-3 py-2 text-xs font-semibold leading-6 ${deadlineStatus()!.ok ? "bg-[var(--emerald-soft)] text-[var(--emerald)]" : "bg-[var(--ruby-soft)] text-[var(--ruby)]"}`}>{deadlineStatus()!.text}</p>
+                  ) : null}
+                </div>
+              ) : null}
               {config.extraFields.map((field) => (
                 <label key={field.key} className="block">
                   <span className="font-display-ar text-sm font-bold text-[var(--navy)]">{field.label}</span>
