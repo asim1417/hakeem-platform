@@ -55,6 +55,19 @@ export const HAKEEM_TOOL_DEFS = [
     },
   },
   {
+    name: "comprehensive_legal_scan",
+    description:
+      "مسحٌ شاملٌ عبر **كلّ الأنظمة** (بلا حصر نطاق) بسقفٍ عالٍ — كمسح المكتبة الكاملة. استعمله حين تحتاج تغطيةً استقصائيّة لا تفوّت نظامًا (مثل «كلّ الأنظمة المتعلّقة بـ…» أو للتأكّد من عدم إغفال نظامٍ حاكم). يعيد إجماليّ المطابقات، وهل الترتيب شامل، وتوزيعًا لكلّ نظامٍ وعدد مواده — فتعرف أين تعمّق.",
+    input_schema: {
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: { type: "string", description: "موضوع المسح القانونيّ." },
+        limit: { type: "integer", minimum: 10, maximum: 60, description: "أقصى مواد تُعاد (افتراضي 40)." },
+      },
+    },
+  },
+  {
     name: "deep_legal_study",
     description:
       "الدراسة الموسّعة القويّة: للقضايا الحقيقية المكتملة الوقائع. يُجري تفكيكًا أصوليًّا للمسائل (المناط + الكلمات) وتحديدًا للأنظمة الحاكمة (المظانّ) واسترجاعًا شاملًا للمواد المؤصَّلة والسوابق والمبادئ وحالة التغطية — دفعةً واحدة. استعمله حين تقرّر إعداد دراسةٍ قانونية كاملة (تفكيك/تكييف/تأصيل)، لا لسؤالٍ بسيط (استعمل legal_search).",
@@ -146,6 +159,42 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         ok: true,
         data: { total: res.total, exhaustive: res.exhaustive ?? false, count: results.length, results },
         label: `بحث «${query.slice(0, 30)}» → ${results.length} مادة`,
+      };
+    }
+
+    if (name === "comprehensive_legal_scan") {
+      const query = String(input.query ?? "").trim();
+      if (!query) return { ok: false, data: { error: "query مطلوب" }, label: "مسح شامل" };
+      const limit = Math.min(Math.max(Number(input.limit) || 40, 10), 60);
+      // مسحٌ عبر كلّ الأنظمة: بلا systemIds، سقفٌ عالٍ، بلا فرض تغطية المفاهيم (أوسع) — كمسح المكتبة.
+      const res = await searchLegalCore({ query, limit, semantic: true, includeSnippets: true });
+      const results = res.results.map((r) => {
+        const s: RetrievedSource = {
+          sourceId: r.articleId,
+          systemName: r.systemName,
+          articleNumber: r.articleNumber,
+          articleTitle: r.articleTitle,
+          snippet: (r.snippet || r.articleText || "").slice(0, 400),
+          status: r.status,
+          internalUrl: r.internalUrl,
+        };
+        ctx.sources.set(s.sourceId, s);
+        return s;
+      });
+      // تغطيةٌ لكلّ نظام: عدد المواد المطابقة — فيعرف Claude أين يتركّز الحكم وأين يعمّق.
+      const bySystem = new Map<string, number>();
+      for (const r of results) bySystem.set(r.systemName, (bySystem.get(r.systemName) ?? 0) + 1);
+      const coverage = Array.from(bySystem.entries()).map(([systemName, count]) => ({ systemName, count })).sort((a, b) => b.count - a.count);
+      return {
+        ok: true,
+        data: {
+          total: res.total,
+          exhaustive: res.exhaustive ?? false, // هل رُتِّبت كلّ المطابقات (تغطية كاملة)؟
+          scanned: results.length,
+          systemsCoverage: coverage, // توزيع المواد عبر الأنظمة
+          results,
+        },
+        label: `مسح شامل «${query.slice(0, 24)}» → ${results.length} مادة عبر ${coverage.length} نظامًا`,
       };
     }
 
