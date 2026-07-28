@@ -2,7 +2,7 @@
 // مع طبقة استخراج كيانات حتمية (regex) بلا أي توليد — «لا hallucination».
 
 import { legalDocumentReference, thesaurusCategories } from "./reference";
-import { isGarbledArabicText } from "./reshape";
+import { isGarbledArabicText, isBrokenExtraction } from "./reshape";
 import { cleanPdfTextLayer } from "./reshape";
 import type {
   AnalyzedDocument,
@@ -249,6 +249,14 @@ export function assessQuality(text: string): QualityAssessment {
   if (visualOrder) score -= Math.min(70, Math.round(garble.fragmentRatio * 180));
   else if (garble.garbled) score -= 25;
 
+  // «طبقة نصّ معطوبة» (خريطة ToUnicode غائبة/خاطئة في خطوط CID — كثيرٌ من مخرجات
+  // Microsoft Reporting Services للعربية): تُخرِج محارف يونانيّة/IPA/لاتينيّة موسّعة
+  // بدل العربية، فالوثيقة تظهر عربيّةً للعين لكنّ طبقتها النصّية موجَرةٌ تمامًا. لا
+  // يلتقطها فحص الترتيب البصريّ (لا كلمات عربيّة أصلًا)، فنكشفها صراحةً ونحسمها:
+  // آليّة التعامل الوحيدة الصحيحة OCR على صورة الصفحة، لا عرضٌ نصّيّ.
+  const brokenLayer = !visualOrder && isBrokenExtraction(trimmed);
+  if (brokenLayer) score = Math.min(score, 25);
+
   // صفحاتٌ تعذّرت قراءتها (سحابياً أو ممسوحة بلا OCR): نصّها مفقودٌ فعلياً — كان المؤشّر
   // يتجاهلها فيمنح 100% كاذبة بينما سُدسُ الوثيقة مثلاً ضائع. نعدّها ونعاقب بنسبة الفقد،
   // ونمنع أي تقييمٍ «ممتاز» ما دامت هناك صفحةٌ مفقودة (تستوجب إعادة استخراج/مراجعة).
@@ -262,18 +270,28 @@ export function assessQuality(text: string): QualityAssessment {
 
   score = Math.max(0, Math.min(100, score));
 
-  const grade = failedPages > 0 ? "review" : score >= 85 ? "high" : score >= 65 ? "medium" : "review";
+  const grade = failedPages > 0 || brokenLayer ? "review" : score >= 85 ? "high" : score >= 65 ? "medium" : "review";
+  // آليّة التعامل الصريحة: النصّ المعطوب/الناقص/بالترتيب البصريّ ⇐ يلزم OCR؛
+  // السليم عالي الجودة ⇐ يُستعمَل مباشرةً؛ ما بينهما ⇐ يُدقَّق.
+  const needsOcr = failedPages > 0 || brokenLayer || visualOrder;
+  const mechanism: "text-usable" | "review" | "ocr-required" = needsOcr
+    ? "ocr-required"
+    : grade === "high"
+      ? "text-usable"
+      : "review";
   const label =
     failedPages > 0
       ? `ناقصة — تعذّرت قراءة ${failedPages} صفحة (نصّها مفقود)؛ أعد استخراجها قبل الاعتماد على الوثيقة`
-      : grade === "high"
-        ? "ممتازة — لا تحتاج إعادة استخراج"
-        : visualOrder
-          ? "منخفضة — طبقة نص بترتيب بصري معطوب (كلمات مبعثرة الأجزاء)؛ أعد القراءة بالـ OCR السحابي أو المحلي"
-          : grade === "medium"
-            ? "متوسطة — يُستحسن التدقيق"
-            : "منخفضة — تحتاج مراجعة";
-  return { score, grade, label, failedPages: failedPages || undefined };
+      : brokenLayer
+        ? "معطوبة — طبقة النصّ لا تُعبّر عن الحروف العربية (خريطة يونيكود مفقودة في المصدر)؛ لا تُقرأ نصّيًّا — أعد القراءة بالـ OCR السحابي (Gemini) على صورة الصفحة"
+        : grade === "high"
+          ? "ممتازة — لا تحتاج إعادة استخراج"
+          : visualOrder
+            ? "منخفضة — طبقة نص بترتيب بصري معطوب (كلمات مبعثرة الأجزاء)؛ أعد القراءة بالـ OCR السحابي أو المحلي"
+            : grade === "medium"
+              ? "متوسطة — يُستحسن التدقيق"
+              : "منخفضة — تحتاج مراجعة";
+  return { score, grade, label, mechanism, failedPages: failedPages || undefined };
 }
 
 // ── التحليل الكامل لوثيقة ──

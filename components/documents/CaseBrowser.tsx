@@ -2110,6 +2110,12 @@ CONCURRENCY=6 DOCUMENTS_FOLDER="./وثائقي" node processDriveDocuments.js`}<
                       ? ` · كلمات غير واضحة: ${suspByDoc[docs.indexOf(current)].size}`
                       : ""}
                   </div>
+                  {current.quality.mechanism === "ocr-required" ? (
+                    <div className={`${styles.qcbox} ${styles.qcWarn}`} style={{ marginTop: 6 }}>
+                      آليّة التعامل: هذه الوثيقة لا تُقرأ من طبقتها النصّية — أعد رفع الملف الأصليّ مع تفعيل
+                      «القراءة السحابية (Gemini)» فتُقرأ من صورة الصفحة نصًّا سليمًا ثم تُصنَّف وتُفهرَس.
+                    </div>
+                  ) : null}
                   <div className={styles.actions}>
                     <button
                       onClick={() =>
