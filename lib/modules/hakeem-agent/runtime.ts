@@ -113,7 +113,7 @@ export async function runHakeemAgent(input: {
       system,
       messages,
       tools: HAKEEM_TOOL_DEFS as unknown as { name: string; description: string; input_schema: unknown }[],
-      maxTokens: 4096,
+      maxTokens: 8192, // الدراسة الموسّعة الكاملة (٦ أقسام + جداول) طويلة — سقفٌ أعلى يمنع البتر.
     });
     if (!res.ok) return { ok: false, answer: "", basis: [], toolTurns, error: res.error };
 
