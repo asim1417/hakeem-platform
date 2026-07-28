@@ -1,0 +1,18 @@
+[Unit]
+Description=Hakeem Rasd Local Bridge Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/opt/hakeem-rasd-agent
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npx tsx src/cli.ts run
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1376,3 +1376,88 @@ model RasdRunLock {
 
   @@map("rasd_run_locks")
 }
+
+// ── Local Bridge (Saudi agent control plane) ──
+model RasdAgent {
+  id                        String    @id
+  displayName               String    @map("display_name")
+  ownerId                   String    @map("owner_id")
+  publicKeyPem              String    @map("public_key_pem") @db.Text
+  platform                  String
+  version                   String
+  capabilities              Json
+  status                    String    @default("PENDING_PAIRING")
+  lastSeenAt                DateTime? @map("last_seen_at")
+  lastEgressCountry         String?   @map("last_egress_country")
+  egressVerifiedAt          DateTime? @map("egress_verified_at")
+  egressVerificationMethod  String?   @map("egress_verification_method")
+  approvedSources           Json      @map("approved_sources")
+  boeHealth                 String?   @map("boe_health")
+  ncarHealth                String?   @map("ncar_health")
+  uqnHealth                 String?   @map("uqn_health")
+  isDefault                 Boolean   @default(false) @map("is_default")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  revokedAt                 DateTime? @map("revoked_at")
+  pausedAt                  DateTime? @map("paused_at")
+  metadata                  Json?
+
+  jobs RasdAgentJob[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@map("rasd_agents")
+}
+
+model RasdPairingCode {
+  id        String    @id
+  code      String    @unique
+  ownerId   String    @map("owner_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  agentId   String?   @map("agent_id")
+
+  @@index([ownerId])
+  @@map("rasd_pairing_codes")
+}
+
+model RasdAgentJob {
+  id              String    @id
+  agentId         String    @map("agent_id")
+  agent           RasdAgent @relation(fields: [agentId], references: [id])
+  requestedBy     String    @map("requested_by")
+  type            String
+  sourceCodes     Json      @map("source_codes")
+  parameters      Json?
+  dryRun          Boolean   @default(true) @map("dry_run")
+  priority        Int       @default(100)
+  status          String    @default("QUEUED")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  availableAt     DateTime  @default(now()) @map("available_at")
+  expiresAt       DateTime  @map("expires_at")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  attemptCount    Int       @default(0) @map("attempt_count")
+  maxAttempts     Int       @default(3) @map("max_attempts")
+  resultSummary   Json?     @map("result_summary")
+  errorCode       String?   @map("error_code")
+  signature       String
+  nonce           String
+  cancelRequested Boolean   @default(false) @map("cancel_requested")
+
+  @@index([agentId, status])
+  @@index([expiresAt])
+  @@map("rasd_agent_jobs")
+}
+
+model RasdAgentResultChunk {
+  id         String   @id @default(cuid())
+  jobId      String   @map("job_id")
+  chunkIndex Int      @map("chunk_index")
+  checksum   String
+  payloadB64 String   @map("payload_b64") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([jobId, chunkIndex])
+  @@map("rasd_agent_result_chunks")
+}
