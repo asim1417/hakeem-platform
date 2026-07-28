@@ -83,6 +83,11 @@ function sideOf(role: string): AllowedSpeakerRole {
   return role === "المدعي" || role === "وكيل المدعي" ? "claimant" : "defendant";
 }
 
+// الطرف المقابل — تُستعمل في النقل التلقائيّ للدور (توجيه اليمين للخصم مثلًا).
+function opposite(side: AllowedSpeakerRole): AllowedSpeakerRole {
+  return side === "claimant" ? "defendant" : "claimant";
+}
+
 function transcript(messages: AiJudgeInput["messages"], limit = 8) {
   return messages
     .filter((m) => !m.content.startsWith("HAKEEM_") && m.role !== "النظام")
@@ -250,7 +255,7 @@ export async function decideJudgeTurnAI(
   if (action === "FRAME_DISPUTE" || action === "DIRECT_OATH" || action === "APPOINT_EXPERT") {
     const decisionType = PROCEDURAL_DECISION_LABEL[action];
     const body = (parsed.judgeMessage && parsed.judgeMessage.trim()) || det.judgeMessage;
-    const result: JudgeTurnResult = {
+    const base: JudgeTurnResult = {
       ...det,
       decisionType,
       decisionContent: body,
@@ -259,7 +264,25 @@ export async function decideJudgeTurnAI(
       nextProceduralStep: decisionType,
       judgeMessage: composeJudgeMessage(parsed, det.judgeMessage)
     };
-    return { result, meta };
+    // نقلٌ تلقائيّ للدور بناءً على القرار الإجرائيّ: توجيه اليمين ⇒ الدور للطرف المُوجَّهة إليه
+    // اليمين (يؤدّيها أو ينكل)؛ افتراضًا الطرف المقابل لمن طلبها. حصر النزاع/ندب الخبير يتّبعان
+    // الترتيب المشروع من الحارس الحتميّ.
+    if (action === "DIRECT_OATH") {
+      const oathTarget = resolveDirectedSide(parsed.directedTo, opposite(side));
+      const result: JudgeTurnResult = {
+        ...base,
+        allowedSpeakerRole: oathTarget,
+        disabledRoles: disabledRolesFor(oathTarget),
+        currentTurn: allowedSpeakerLabel(oathTarget),
+        nextRole: allowedSpeakerLabel(oathTarget),
+        requiredInput: `أداء اليمين الحاسمة أو النكول عنها من ${allowedSpeakerLabel(oathTarget)}.`,
+        reason: `توجيه اليمين الحاسمة إلى ${allowedSpeakerLabel(oathTarget)}؛ فينتقل الدور إليه لأدائها أو النكول عنها.`,
+        canClosePleading: false,
+        canGenerateJudgment: false
+      };
+      return { result, meta };
+    }
+    return { result: base, meta };
   }
 
   // ── عرض الصلح: مسموحٌ فقط إن أجازه الحارس الحتميّ ──
