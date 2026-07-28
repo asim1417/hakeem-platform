@@ -169,10 +169,10 @@ export function InteractiveJudge() {
     return () => clearInterval(iv);
   }, [typing]);
 
-  // متابعة التمرير أثناء الكتابة الحيّة.
+  // تمريرٌ واحدٌ عند بدء الكتابة الحيّة فقط (لا مع كلّ حرف) — يمنع قفز الصندوق واهتزازه.
   useEffect(() => {
     if (typing) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [typedLen, typing]);
+  }, [typing]);
 
   const applyState = useCallback((s: Session, t: TurnState) => {
     setSession(s);
