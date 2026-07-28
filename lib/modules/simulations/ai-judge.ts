@@ -43,9 +43,20 @@ type AiJudgeNarrative = {
   evidenceRequest?: string;
   evidenceAssessment?: string;
   recommendedAction?: AiAction;
+  /** الطرف المُوجَّه إليه طلب الإيضاح/البيّنة (المدعي | المدعى عليه) — قد يخالف آخر متحدّث. */
+  directedTo?: string;
   judgeMessage?: string;
   citations?: string[];
 };
+
+// يحدّد الطرف المُوجَّه إليه الطلب من نصّ القاضي؛ يسقط لآخر متحدّثٍ إن لم يُحدَّد أو التبس.
+function resolveDirectedSide(directedTo: string | undefined, fallback: AllowedSpeakerRole): AllowedSpeakerRole {
+  const t = (directedTo ?? "").trim();
+  if (!t) return fallback;
+  if (/عليه|مدّعى عليه|مدعى عليه|defendant/i.test(t)) return "defendant";
+  if (/مدّعي|مدعي|claimant|plaintiff/i.test(t)) return "claimant";
+  return fallback;
+}
 
 export type AiJudgeInput = {
   claim?: ClaimData;
@@ -102,15 +113,16 @@ function buildSystemPrompt() {
     "",
     "قواعد صارمة:",
     "- لا تختلق مادّةً ولا رقم مادّة؛ لا تستشهد إلا بالمواد المسترجَعة المذكورة في «الأساس النظاميّ المتاح» أدناه.",
-    "- إن كانت المداخلة غامضةً أو ناقصة، اطلب إيضاحًا من الطرف نفسه بدل الانتقال.",
-    "- إن كان الادّعاء يفتقر إلى بيّنةٍ يوجب النظام تقديمها، اطلب البيّنة وبيّن على من يقع عبؤها.",
+    "- إن كانت المداخلة غامضةً أو ناقصة، اطلب الإيضاح، وحدّد في directedTo الطرفَ المُلزَم بالإيضاح: فإن كان محلّ الاستفسار من شأن الطرف الآخر (كأن يسأل المدّعى عليه عن مستنداتٍ يملكها المدّعي) فوجِّه الطلب إلى ذلك الطرف لا إلى من تكلّم.",
+    "- إن كان الادّعاء يفتقر إلى بيّنةٍ يوجب النظام تقديمها، اطلب البيّنة، وحدّد في directedTo مَن يقع عليه عبء تقديمها (المدعي غالبًا هو المكلَّف بإثبات دعواه).",
     "- لا تصدر حكمًا ولا تقفل باب المرافعة في هذا الرد؛ قرارك إجرائيٌّ فقط.",
     "القرارات الإجرائيّة المتاحة (استعملها بصياغتها القضائيّة في judgeMessage عند اقتضائها):",
     "- FRAME_DISPUTE (حصر محل النزاع): بعد سماع الدعوى والإجابة، إذا اتّضح محلّ النزاع فحرّره: «محلّ النزاع ينحصر في: هل (...) أم (...)؟».",
     "- DIRECT_OATH (توجيه اليمين الحاسمة): إذا عجز المدّعي عن البيّنة الموصلة وطلب يمين المدّعى عليه، فوجّهها بصيغة: «واللهِ العظيم إنّي (...)». قرارٌ إجرائيّ لا حكم.",
     "- APPOINT_EXPERT (ندب خبير): إذا توقّف الفصل على مسألةٍ فنّيّة، فاندب خبيرًا وحدّد مهمّته.",
     "أعِد الجواب بصيغة JSON فقط، بلا أيّ نصٍّ خارجها، بالمفاتيح:",
-    '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT|FRAME_DISPUTE|DIRECT_OATH|APPOINT_EXPERT", "judgeMessage": "...", "citations": ["نظام الإثبات المادة ..."]}',
+    '{"classification": "...", "isClear": true|false, "clarificationRequest": "...", "evidenceRequest": "...", "directedTo": "المدعي|المدعى عليه", "evidenceAssessment": "...", "recommendedAction": "PROCEED|REQUEST_CLARIFICATION|REQUEST_EVIDENCE|OFFER_SETTLEMENT|FRAME_DISPUTE|DIRECT_OATH|APPOINT_EXPERT", "judgeMessage": "...", "citations": ["نظام الإثبات المادة ..."]}',
+    "directedTo (عند REQUEST_CLARIFICATION/REQUEST_EVIDENCE): الطرف المُلزَم بالردّ، ويجب أن يوافق خطابَك في judgeMessage — لا تجعل الدور لطرفٍ بينما توجّه الطلب لغيره.",
     "judgeMessage = خطاب القاضي المسبَّب بالعربية الفصحى (2-4 جمل). citations = أرقام موادّ من المتاح فقط."
   ].join("\n");
 }
@@ -198,9 +210,12 @@ export async function decideJudgeTurnAI(
     activatedAgent: agent.label
   };
 
-  // ── طلب إيضاح أو بيّنة: يبقى الدور على الطرف نفسه، بلا انتقالٍ للمرحلة التالية ──
+  // ── طلب إيضاح أو بيّنة: يُوجَّه الدور للطرف المُلزَم بالردّ (قد يكون غير آخر متحدّث) ──
   if (action === "REQUEST_CLARIFICATION" || action === "REQUEST_EVIDENCE") {
     const isClarify = action === "REQUEST_CLARIFICATION";
+    // الطرف المُوجَّه إليه الطلب: من نصّ القاضي (directedTo)، وإلا فآخر متحدّث. يمنع تناقض
+    // «الدور لطرفٍ والطلب موجَّهٌ لغيره».
+    const target = resolveDirectedSide(parsed.directedTo, side);
     const ask =
       (isClarify ? parsed.clarificationRequest : parsed.evidenceRequest)?.trim() ||
       (isClarify ? "المطلوب إيضاح المداخلة وتحديد وجه الطلب." : "المطلوب تقديم البيّنة أو سند الإثبات.");
@@ -208,9 +223,9 @@ export async function decideJudgeTurnAI(
     const result: JudgeTurnResult = {
       ...det,
       hearingStage: det.currentStage,
-      currentTurn: allowedSpeakerLabel(side),
-      nextRole: allowedSpeakerLabel(side),
-      nextProceduralStep: isClarify ? "طلب إيضاح من الطرف قبل الانتقال" : "طلب بيّنة/سند إثبات",
+      currentTurn: allowedSpeakerLabel(target),
+      nextRole: allowedSpeakerLabel(target),
+      nextProceduralStep: isClarify ? `طلب إيضاح من ${allowedSpeakerLabel(target)} قبل الانتقال` : `طلب بيّنة/سند إثبات من ${allowedSpeakerLabel(target)}`,
       decisionType,
       decisionContent: ask,
       decisionReason: `تكييف المداخلة: ${meta.classification}.${parsed.evidenceAssessment ? " " + parsed.evidenceAssessment : ""}`,
@@ -218,12 +233,12 @@ export async function decideJudgeTurnAI(
       currentStage: det.currentStage,
       nextStage: det.currentStage,
       procedureAction: decisionType,
-      allowedSpeakerRole: side,
-      disabledRoles: disabledRolesFor(side),
+      allowedSpeakerRole: target,
+      disabledRoles: disabledRolesFor(target),
       requiredInput: ask,
       reason: isClarify
-        ? "المداخلة غير واضحة، فطُلب الإيضاح قبل الانتقال."
-        : "الادّعاء يفتقر إلى بيّنةٍ يوجب النظام تقديمها.",
+        ? `المداخلة تستوجب إيضاحًا من ${allowedSpeakerLabel(target)} قبل الانتقال.`
+        : `الفصل يتوقّف على بيّنةٍ يقع عبء تقديمها على ${allowedSpeakerLabel(target)}.`,
       canClosePleading: false,
       canGenerateJudgment: false
     };
