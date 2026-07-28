@@ -38,7 +38,7 @@ async function main() {
 
   await check("load_skill: يعيد المنهج لاسمٍ صحيح", () => {
     const g = loadSkillGuide("case-analysis");
-    assert(g && g.includes("تحليل القضية"), "منهج case-analysis");
+    assert(g && g.includes("تحرير المسألة") && g.includes("الدفوع المتقابلة"), "منهج case-analysis (الدراسة الموسّعة)");
     assert(loadSkillGuide("لا-توجد") === null, "مهارة غير موجودة → null");
   });
 
