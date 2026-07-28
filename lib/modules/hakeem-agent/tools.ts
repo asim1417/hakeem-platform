@@ -55,6 +55,16 @@ export const HAKEEM_TOOL_DEFS = [
     },
   },
   {
+    name: "deep_legal_study",
+    description:
+      "الدراسة الموسّعة القويّة: للقضايا الحقيقية المكتملة الوقائع. يُجري تفكيكًا أصوليًّا للمسائل (المناط + الكلمات) وتحديدًا للأنظمة الحاكمة (المظانّ) واسترجاعًا شاملًا للمواد المؤصَّلة والسوابق والمبادئ وحالة التغطية — دفعةً واحدة. استعمله حين تقرّر إعداد دراسةٍ قانونية كاملة (تفكيك/تكييف/تأصيل)، لا لسؤالٍ بسيط (استعمل legal_search).",
+    input_schema: {
+      type: "object",
+      required: ["question"],
+      properties: { question: { type: "string", description: "المسألة/القضية بوقائعها وطلبها، بصياغةٍ وافية (كلّما زادت الوقائع دقّ التفكيك والتأصيل)." } },
+    },
+  },
+  {
     name: "fetch_legal_source",
     description: "اقرأ النصّ الكامل لمادةٍ بمعرّفها (sourceId) الذي أعاده legal_search، قبل الاستشهاد الدقيق بها.",
     input_schema: {
@@ -136,6 +146,46 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         ok: true,
         data: { total: res.total, exhaustive: res.exhaustive ?? false, count: results.length, results },
         label: `بحث «${query.slice(0, 30)}» → ${results.length} مادة`,
+      };
+    }
+
+    if (name === "deep_legal_study") {
+      const question = String(input.question ?? "").trim();
+      if (!question) return { ok: false, data: { error: "question مطلوب" }, label: "دراسة موسّعة" };
+      // نستدعي المنظّم القديم القويّ (تفكيك + تخريج شامل + تحقّق + تغطية) في وضعه العميق،
+      // ونتخطّى بوّابة الاتّساع والتحليل العامّ — فيُغذّي Claude بالمادّة الخام المؤصَّلة ليصوغها.
+      // استيرادٌ كسول: سلسلة المنظّم تستورد server-only، فلا نحمّلها إلا عند استخدام الأداة فعلًا.
+      const { orchestrate } = await import("@/lib/modules/agents/orchestrator");
+      const res = await orchestrate(question, { mode: "deep", skipBreadth: true, skipAnalysis: true });
+      const src = (res.articles ?? []).slice(0, 18).map((a) => {
+        const s: RetrievedSource = {
+          sourceId: a.articleId,
+          systemName: a.systemName,
+          articleNumber: a.articleNumber,
+          articleTitle: a.articleTitle,
+          snippet: (a.snippet || a.articleText || "").slice(0, 600),
+          status: a.status,
+          internalUrl: a.internalUrl,
+        };
+        ctx.sources.set(s.sourceId, s);
+        return s;
+      });
+      const verifiedNums = new Set((res.verified ?? []).map((v) => v.articleNumber));
+      return {
+        ok: true,
+        data: {
+          // التفكيك الأصوليّ: كلّ مسألة بمناطها وكلماتها.
+          issues: (res.issues ?? []).map((i) => ({ issue: i.issue, manat: i.manat, keywords: i.keywords })),
+          // المظانّ: الأنظمة الحاكمة مرتّبةً (خاصّ/عامّ + عدد المواد).
+          governingSystems: (res.governingSystems ?? []).map((g) => ({ systemName: g.systemName, scope: g.scope, articleCount: g.articleCount })),
+          // المواد المؤصَّلة (استشهد بها بمعرّفها؛ المؤكَّدة موسومة).
+          materials: src.map((s) => ({ ...s, verified: verifiedNums.has(s.articleNumber) })),
+          // سوابق ومبادئ استئناسيّة (لا تستشهد منها بأرقام مواد).
+          rulings: (res.rulings ?? []).slice(0, 6).map((r) => ({ title: r.title, snippet: r.snippet })),
+          principles: (res.principles ?? []).slice(0, 6).map((p) => ({ title: p.title, snippet: p.snippet })),
+          coverage: res.coverage ?? null,
+        },
+        label: `دراسة موسّعة: ${(res.issues ?? []).length} مسألة · ${src.length} مادة · ${(res.rulings ?? []).length} سابقة`,
       };
     }
 
