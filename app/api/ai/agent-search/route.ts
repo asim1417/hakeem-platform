@@ -136,8 +136,11 @@ export async function POST(request: NextRequest) {
               roomSummary = room.summary ?? undefined;
             }
           }
+          // زرّ «دراسة موسّعة» (detailed) = تلميحٌ صريحٌ للوكيل بتفضيل الدراسة العميقة؛ Claude يبقى
+          // هو من يقرّر، لكن يُعلَم برغبة المستخدم. لا يُحفظ التلميح في الغرفة (نحفظ نصّ المستخدم فقط).
+          const agentQuery = detailed ? `${typed}\n\n(يطلب المستخدم دراسةً موسّعة مفصّلة قدر ما تسمح به الوقائع.)` : typed;
           const agent = await runHakeemAgent({
-            query: typed,
+            query: agentQuery,
             document: attachedDoc,
             history: roomHistory,
             summary: roomSummary,

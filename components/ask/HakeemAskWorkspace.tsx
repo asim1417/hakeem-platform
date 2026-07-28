@@ -55,6 +55,10 @@ const MODE_ICONS: Record<AgentModeId, LucideIcon> = {
   chat: MessagesSquare,
 };
 
+// تبسيطٌ يوازي المنصّات العالميّة: مع الوكيل الأصيل يقرّر Claude الخدمة من الحوار، فلا حاجة
+// لشريط أوضاعٍ ظاهر. مخفيٌّ افتراضًا؛ لاستعادته (للمسار القديم) اضبط NEXT_PUBLIC_ASK_SHOW_MODES=1.
+const SHOW_MODE_BAR = (process.env.NEXT_PUBLIC_ASK_SHOW_MODES ?? "").trim() === "1";
+
 type Precedents = {
   rulings: Array<{ title: string; snippet?: string }>;
   principles: Array<{ title: string; snippet?: string }>;
@@ -1388,28 +1392,30 @@ export function HakeemAskWorkspace({
           }}
           className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-ivory p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
         >
-          <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">
-            {AGENT_MODES.map((m) => {
-              const active = m.id === modeId;
-              const Icon = MODE_ICONS[m.id] ?? Sparkles;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setModeId(m.id)}
-                  aria-pressed={active}
-                  title={m.hint}
-                  className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                    active
-                      ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
-                      : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
-                  }`}
-                >
-                  <Icon size={14} aria-hidden /> {m.name}
-                </button>
-              );
-            })}
-          </div>
+          {SHOW_MODE_BAR ? (
+            <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">
+              {AGENT_MODES.map((m) => {
+                const active = m.id === modeId;
+                const Icon = MODE_ICONS[m.id] ?? Sparkles;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setModeId(m.id)}
+                    aria-pressed={active}
+                    title={m.hint}
+                    className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      active
+                        ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
+                        : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
+                    }`}
+                  >
+                    <Icon size={14} aria-hidden /> {m.name}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
           {attachedName ? (
             <div className="mb-2 flex items-center justify-between gap-2 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-2 text-xs">
               <span className="flex min-w-0 items-center gap-1.5 text-[var(--navy)]">
@@ -1475,7 +1481,7 @@ export function HakeemAskWorkspace({
                     : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
                 }`}
               >
-                <Telescope size={14} aria-hidden /> بحث تفصيلي {detailed ? "(مُفعّل)" : ""}
+                <Telescope size={14} aria-hidden /> دراسة موسّعة {detailed ? "(مُفعّلة)" : ""}
               </button>
               <label
                 title={
