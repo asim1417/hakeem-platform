@@ -80,10 +80,16 @@ export async function runHakeemAgent(input: {
   query: string;
   document?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
+  /** ملخّصٌ متدرّج لما قبل الأدوار الأخيرة (غرفةٌ طويلة) — يُحقن في التوجيه فيبقى السياق المبكّر حاضرًا. */
+  summary?: string;
   onStep?: (step: AgentStep) => void;
 }): Promise<AgentResult> {
   const onStep = input.onStep ?? (() => {});
   const ctx = createAgentContext(input.document ?? "");
+  // توجيه النظام + ملخّص الجلسة (إن وُجد) فيرى الوكيل الحوار من أوّله لا آخر أدواره فقط.
+  const system = input.summary?.trim()
+    ? `${HAKEEM_SYSTEM_PROMPT}\n\n# ملخّص هذه الجلسة حتى الآن (سياقٌ سابق، اعتمِد عليه)\n${input.summary.trim()}`
+    : HAKEEM_SYSTEM_PROMPT;
 
   // بناء المحادثة: التاريخ (مُعمّى) ثمّ الرسالة الحالية. المستند لا يُحقن في النصّ — يقرؤه
   // Claude عند الحاجة عبر read_attachment (فلا نُثقل السياق ولا نفرض قراءته).
@@ -104,7 +110,7 @@ export async function runHakeemAgent(input: {
 
   for (let turn = 0; turn <= maxTurns; turn += 1) {
     const res = await callAnthropicWithTools({
-      system: HAKEEM_SYSTEM_PROMPT,
+      system,
       messages,
       tools: HAKEEM_TOOL_DEFS as unknown as { name: string; description: string; input_schema: unknown }[],
       maxTokens: 4096,

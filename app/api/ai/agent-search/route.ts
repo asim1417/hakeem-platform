@@ -16,6 +16,7 @@ import { intentNeedsSearch, isCaseHelpWithoutFacts } from "@/lib/modules/agents/
 import { assessCaseIntake } from "@/lib/modules/agents/thinking/intake";
 import { nativeAgentEnabled } from "@/lib/modules/hakeem-agent/flag";
 import { runHakeemAgent } from "@/lib/modules/hakeem-agent/runtime";
+import { loadRoomContext } from "@/lib/modules/hakeem-agent/session";
 import { verifyCitations } from "@/lib/modules/agents/thinking/verifier";
 import { buildScopeDisclosure } from "@/lib/modules/agents/thinking/disclosure";
 import { getAgentMode } from "@/lib/modules/agents/modes";
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let body: { query?: string; document?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; history?: Array<{ role?: string; content?: string }> } = {};
+  let body: { query?: string; document?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; conversationId?: string; history?: Array<{ role?: string; content?: string }> } = {};
   try {
     body = await request.json();
   } catch {
@@ -118,10 +119,23 @@ export async function POST(request: NextRequest) {
         // بنفسه ردًّا مباشرًا أو استيضاحًا أو دراسةً موسّعة (بحث/قراءة مصادر). لا يصنّف الكود
         // النيّة ولا يفرض أداة. سقوطٌ آمن للمسار القياسيّ عند تعطّل المزوّد أو أيّ خطأ.
         if (nativeAgentEnabled() && agentMode.id === "ask") {
+          // «الغرفة»: إن وُجدت جلسةٌ قائمة نحمّل حوارها كاملًا من المحرّك الدائم فيرى الوكيل
+          // السياق من أوّل المحادثة (لا آخر ٨ أدوار). سقوطٌ آمن لتاريخ العميل عند التعذّر.
+          let roomHistory = history;
+          let roomSummary: string | undefined;
+          const convId = typeof body?.conversationId === "string" ? body.conversationId : null;
+          if (convId) {
+            const room = await loadRoomContext({ userId: user.id, conversationId: convId }).catch(() => null);
+            if (room) {
+              roomHistory = room.history;
+              roomSummary = room.summary ?? undefined;
+            }
+          }
           const agent = await runHakeemAgent({
             query: typed,
             document: attachedDoc,
-            history,
+            history: roomHistory,
+            summary: roomSummary,
             onStep: (s) => send({ type: "step", ...s }),
           }).catch((e) => ({ ok: false as const, answer: "", basis: [], toolTurns: 0, error: e instanceof Error ? e.message : "خطأ" }));
           if (agent.ok) {

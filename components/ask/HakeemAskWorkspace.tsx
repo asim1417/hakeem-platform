@@ -659,6 +659,8 @@ export function HakeemAskWorkspace({
           detailed: override?.detailed ?? detailed,
           skipBreadth: override?.skipBreadth ?? false,
           mode: modeId,
+          // «الغرفة»: نمرّر مُعرّف الجلسة فيحمّل الخادم كامل حوارها (لا آخر ٨ أدوار فقط).
+          conversationId: conversationIdRef.current || undefined,
           history: history.length ? history : undefined,
         }),
         signal: controller.signal,
