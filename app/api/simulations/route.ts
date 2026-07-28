@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { simulationListWhere } from "@/lib/modules/auth/ownership";
-import { encodeClaim } from "@/lib/modules/simulations/hakeem-judge";
+import { encodeClaim, buildJudgeOpening } from "@/lib/modules/simulations/hakeem-judge";
 import { encodeTurnState } from "@/lib/modules/simulations/judge-engine";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 
@@ -76,6 +76,12 @@ export async function POST(request: NextRequest) {
             role: "النظام",
             stage: "CLAIM_FILING",
             content: claimContent
+          },
+          {
+            // الافتتاح القضائيّ المنمَّق كأوّل رسالةٍ من القاضي في المحضر.
+            role: "القاضي الافتراضي",
+            stage: "CLAIM_FILING",
+            content: buildJudgeOpening(payload, title)
           },
           {
             role: "النظام",

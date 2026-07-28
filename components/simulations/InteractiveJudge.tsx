@@ -109,7 +109,7 @@ export function InteractiveJudge() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({ subject: "", facts: "", requests: "", plaintiffName: "", plaintiffCapacity: "", defendantName: "", defendantCapacity: "", caseType: "تجاري" });
+  const [form, setForm] = useState({ subject: "", facts: "", requests: "", plaintiffName: "", plaintiffCapacity: "", defendantName: "", defendantCapacity: "", caseType: "تجاري", attendance: "" });
 
   // ── المرحلة الأولى من النقل التدريجيّ: خصائص القاعة (قوّة · ضبط · صلح) ──
   const [strength, setStrength] = useState<{ score: number; notes: string[] } | null>(null);
@@ -419,7 +419,7 @@ export function InteractiveJudge() {
           <p className="mt-3 max-w-3xl leading-8 text-white/85">
             جلسةٌ تفاعليّة مؤصَّلة في النواة القانونيّة: تُقيّد الدعوى، وتترافع أمام قاضٍ يقرأ كلّ إفادة ويكيّفها ويطبّق قواعد الإثبات ثمّ يقرّر إجرائيًّا — وتُحفظ جلستك في حسابك.
           </p>
-          <button onClick={() => { setForm({ subject: "", facts: "", requests: "", plaintiffName: "", plaintiffCapacity: "", defendantName: "", defendantCapacity: "", caseType: "تجاري" }); setError(null); setView("new"); }} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-5 py-2.5 text-sm font-bold text-[var(--navy)] transition hover:opacity-90">
+          <button onClick={() => { setForm({ subject: "", facts: "", requests: "", plaintiffName: "", plaintiffCapacity: "", defendantName: "", defendantCapacity: "", caseType: "تجاري", attendance: "" }); setError(null); setView("new"); }} className="focus-ring mt-5 inline-flex items-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-5 py-2.5 text-sm font-bold text-[var(--navy)] transition hover:opacity-90">
             <Plus size={16} aria-hidden /> جلسة محاكاة جديدة
           </button>
         </header>
@@ -470,6 +470,7 @@ export function InteractiveJudge() {
           <Field label="نوع الدعوى" value={form.caseType} onChange={(v) => setForm({ ...form, caseType: v })} />
           <Field label="الوقائع *" value={form.facts} onChange={(v) => setForm({ ...form, facts: v })} textarea />
           <Field label="الطلبات" value={form.requests} onChange={(v) => setForm({ ...form, requests: v })} textarea />
+          <Field label="إثبات الحضور والصفة (اختياري)" value={form.attendance} onChange={(v) => setForm({ ...form, attendance: v })} textarea />
         </div>
         <button onClick={createSession} disabled={busy} className="focus-ring rounded-[var(--r-md)] bg-[var(--petrol)] px-6 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
           {busy ? "جارٍ التقييد…" : "تقييد الدعوى وبدء الجلسة"}
