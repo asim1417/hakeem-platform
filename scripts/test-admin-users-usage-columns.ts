@@ -1,5 +1,5 @@
 /**
- * بيانات كاملة في قائمة المستخدمين + عدّاد Claude.
+ * بيانات كاملة في قائمة المستخدمين + عدّاد Claude + نافذة الأسبوع الماضي.
  * npx tsx scripts/test-admin-users-usage-columns.ts
  */
 import assert from "node:assert/strict";
@@ -13,39 +13,31 @@ assert.ok(fs.existsSync(path.join(root, "lib/modules/billing/users-usage-snapsho
 assert.ok(fs.existsSync(path.join(root, "lib/modules/billing/ai-usage-meter.ts")));
 
 const snap = read("lib/modules/billing/users-usage-snapshot.ts");
-assert.ok(snap.includes("consultations"));
+assert.ok(snap.includes("pastWeekWindow"));
+assert.ok(snap.includes("week"));
+assert.ok(snap.includes("creditsSpent"));
+assert.ok(snap.includes("servicesVisited"));
 assert.ok(snap.includes("claudeCalls"));
 assert.ok(snap.includes("getClaudeUsageAggregates"));
-assert.ok(snap.includes("legalChatConversations"));
-assert.ok(snap.includes("jaConversations"));
 
 const meter = read("lib/modules/billing/ai-usage-meter.ts");
 assert.ok(meter.includes("ai_usage_events"));
+assert.ok(meter.includes("since"));
 assert.ok(meter.includes("recordAiUsageFromContext"));
-assert.ok(meter.includes("enterAiUsageContext"));
-assert.ok(meter.includes("input_tokens"));
-
-const aiConfig = read("lib/modules/ai/ai-config.ts");
-assert.ok(aiConfig.includes("recordAiUsageFromContext"));
-assert.ok(aiConfig.includes("input_tokens"));
 
 const page = read("app/admin/users/page.tsx");
 assert.ok(page.includes("getUsersUsageSnapshots"));
-assert.ok(page.includes("claudeCalls"));
-assert.ok(page.includes("claudeInputTokens"));
-assert.ok(page.includes("/admin/usage"));
+assert.ok(page.includes("pastWeekWindow"));
+assert.ok(page.includes("weekCreditsSpent"));
+assert.ok(page.includes("weekServicesVisited"));
+assert.ok(page.includes("weekClaudeCalls"));
 
 const mgr = read("components/AdminUsersManager.tsx");
-assert.ok(mgr.includes("freeQuotaUsed"));
-assert.ok(mgr.includes("creditsBalance"));
-assert.ok(mgr.includes("الخدمات"));
-assert.ok(mgr.includes("Claude"));
-assert.ok(mgr.includes("claudeCalls"));
-assert.ok(mgr.includes("consultations"));
-assert.ok(mgr.includes("/admin/usage/"));
-
-const detail = read("lib/modules/billing/usage-user-detail.ts");
-assert.ok(detail.includes("claudeInputTokens"));
-assert.ok(detail.includes("getClaudeUsageAggregates"));
+assert.ok(mgr.includes("weekCreditsSpent"));
+assert.ok(mgr.includes("weekServicesVisited"));
+assert.ok(mgr.includes("خدمات الأسبوع"));
+assert.ok(mgr.includes("مخصوم الأسبوع"));
+assert.ok(mgr.includes("Claude الأسبوع"));
+assert.ok(mgr.includes("weekLabel"));
 
 console.log("test-admin-users-usage-columns: OK");

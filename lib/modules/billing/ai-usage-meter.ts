@@ -137,26 +137,42 @@ export type UserClaudeAggregate = {
   totalTokens: number;
 };
 
-/** تجميع رموز Claude الفعلية لمجموعة مستخدمين. */
+/** تجميع رموز Claude الفعلية لمجموعة مستخدمين (اختياريًا منذ تاريخ). */
 export async function getClaudeUsageAggregates(
-  userIds: string[]
+  userIds: string[],
+  opts?: { since?: Date }
 ): Promise<Map<string, UserClaudeAggregate>> {
   const map = new Map<string, UserClaudeAggregate>();
   if (!userIds.length) return map;
   try {
     const ok = await ensureAiUsageSchema();
     if (!ok) return map;
-    const rows = (await prisma.$queryRawUnsafe(
-      `SELECT "user_id" AS uid,
-              COUNT(*)::int AS calls,
-              COALESCE(SUM("input_tokens"),0)::int AS inp,
-              COALESCE(SUM("output_tokens"),0)::int AS outp
-         FROM "ai_usage_events"
-        WHERE "user_id" = ANY($1::text[])
-          AND "provider" = 'anthropic'
-        GROUP BY "user_id"`,
-      userIds
-    )) as Array<{ uid: string; calls: number; inp: number; outp: number }>;
+    const since = opts?.since;
+    const rows = since
+      ? ((await prisma.$queryRawUnsafe(
+          `SELECT "user_id" AS uid,
+                  COUNT(*)::int AS calls,
+                  COALESCE(SUM("input_tokens"),0)::int AS inp,
+                  COALESCE(SUM("output_tokens"),0)::int AS outp
+             FROM "ai_usage_events"
+            WHERE "user_id" = ANY($1::text[])
+              AND "provider" = 'anthropic'
+              AND "created_at" >= $2::timestamptz
+            GROUP BY "user_id"`,
+          userIds,
+          since
+        )) as Array<{ uid: string; calls: number; inp: number; outp: number }>)
+      : ((await prisma.$queryRawUnsafe(
+          `SELECT "user_id" AS uid,
+                  COUNT(*)::int AS calls,
+                  COALESCE(SUM("input_tokens"),0)::int AS inp,
+                  COALESCE(SUM("output_tokens"),0)::int AS outp
+             FROM "ai_usage_events"
+            WHERE "user_id" = ANY($1::text[])
+              AND "provider" = 'anthropic'
+            GROUP BY "user_id"`,
+          userIds
+        )) as Array<{ uid: string; calls: number; inp: number; outp: number }>);
     for (const r of rows) {
       const inputTokens = Number(r.inp) || 0;
       const outputTokens = Number(r.outp) || 0;
@@ -174,41 +190,75 @@ export async function getClaudeUsageAggregates(
 }
 
 /** تقديرات تاريخية من metadata في audit_logs (tokenEstimate + provider). */
-export async function getClaudeAuditProxies(userIds: string[]): Promise<
-  Map<string, { calls: number; tokenEstimate: number }>
-> {
+export async function getClaudeAuditProxies(
+  userIds: string[],
+  opts?: { since?: Date }
+): Promise<Map<string, { calls: number; tokenEstimate: number }>> {
   const map = new Map<string, { calls: number; tokenEstimate: number }>();
   if (!userIds.length) return map;
+  const since = opts?.since;
   try {
-    const rows = (await prisma.$queryRawUnsafe(
-      `SELECT "actorId" AS uid,
-              COUNT(*)::int AS calls,
-              COALESCE(SUM(
-                CASE
-                  WHEN metadata ? 'tokenEstimate'
-                    THEN NULLIF(metadata->>'tokenEstimate','')::int
-                  ELSE 0
-                END
-              ),0)::int AS est
-         FROM "audit_logs"
-        WHERE "actorId" = ANY($1::text[])
-          AND (
-            (metadata->>'provider') = 'anthropic'
-            OR (
-              subject::text = 'AI_GATEWAY'
-              AND COALESCE(metadata->>'provider','') IN ('anthropic','')
-            )
-          )
-          AND (
-            subject::text = 'AI_GATEWAY'
-            OR action LIKE 'JA_ASK%'
-            OR action = 'LEGAL_CHAT_TURN'
-            OR action LIKE 'AI_%'
-            OR action LIKE 'ORIGINAL_HAKEEM_AI%'
-          )
-        GROUP BY "actorId"`,
-      userIds
-    )) as Array<{ uid: string; calls: number; est: number }>;
+    const rows = since
+      ? ((await prisma.$queryRawUnsafe(
+          `SELECT "actorId" AS uid,
+                  COUNT(*)::int AS calls,
+                  COALESCE(SUM(
+                    CASE
+                      WHEN metadata ? 'tokenEstimate'
+                        THEN NULLIF(metadata->>'tokenEstimate','')::int
+                      ELSE 0
+                    END
+                  ),0)::int AS est
+             FROM "audit_logs"
+            WHERE "actorId" = ANY($1::text[])
+              AND "createdAt" >= $2::timestamptz
+              AND (
+                (metadata->>'provider') = 'anthropic'
+                OR (
+                  subject::text = 'AI_GATEWAY'
+                  AND COALESCE(metadata->>'provider','') IN ('anthropic','')
+                )
+              )
+              AND (
+                subject::text = 'AI_GATEWAY'
+                OR action LIKE 'JA_ASK%'
+                OR action = 'LEGAL_CHAT_TURN'
+                OR action LIKE 'AI_%'
+                OR action LIKE 'ORIGINAL_HAKEEM_AI%'
+              )
+            GROUP BY "actorId"`,
+          userIds,
+          since
+        )) as Array<{ uid: string; calls: number; est: number }>)
+      : ((await prisma.$queryRawUnsafe(
+          `SELECT "actorId" AS uid,
+                  COUNT(*)::int AS calls,
+                  COALESCE(SUM(
+                    CASE
+                      WHEN metadata ? 'tokenEstimate'
+                        THEN NULLIF(metadata->>'tokenEstimate','')::int
+                      ELSE 0
+                    END
+                  ),0)::int AS est
+             FROM "audit_logs"
+            WHERE "actorId" = ANY($1::text[])
+              AND (
+                (metadata->>'provider') = 'anthropic'
+                OR (
+                  subject::text = 'AI_GATEWAY'
+                  AND COALESCE(metadata->>'provider','') IN ('anthropic','')
+                )
+              )
+              AND (
+                subject::text = 'AI_GATEWAY'
+                OR action LIKE 'JA_ASK%'
+                OR action = 'LEGAL_CHAT_TURN'
+                OR action LIKE 'AI_%'
+                OR action LIKE 'ORIGINAL_HAKEEM_AI%'
+              )
+            GROUP BY "actorId"`,
+          userIds
+        )) as Array<{ uid: string; calls: number; est: number }>);
     for (const r of rows) {
       map.set(r.uid, {
         calls: Number(r.calls) || 0,
@@ -217,18 +267,33 @@ export async function getClaudeAuditProxies(userIds: string[]): Promise<
     }
   } catch {
     try {
-      const rows = (await prisma.$queryRawUnsafe(
-        `SELECT "actorId" AS uid, COUNT(*)::int AS calls
-           FROM "audit_logs"
-          WHERE "actorId" = ANY($1::text[])
-            AND (
-              subject::text = 'AI_GATEWAY'
-              OR action LIKE 'JA_ASK%'
-              OR action = 'LEGAL_CHAT_TURN'
-            )
-          GROUP BY "actorId"`,
-        userIds
-      )) as Array<{ uid: string; calls: number }>;
+      const rows = since
+        ? ((await prisma.$queryRawUnsafe(
+            `SELECT "actorId" AS uid, COUNT(*)::int AS calls
+               FROM "audit_logs"
+              WHERE "actorId" = ANY($1::text[])
+                AND "createdAt" >= $2::timestamptz
+                AND (
+                  subject::text = 'AI_GATEWAY'
+                  OR action LIKE 'JA_ASK%'
+                  OR action = 'LEGAL_CHAT_TURN'
+                )
+              GROUP BY "actorId"`,
+            userIds,
+            since
+          )) as Array<{ uid: string; calls: number }>)
+        : ((await prisma.$queryRawUnsafe(
+            `SELECT "actorId" AS uid, COUNT(*)::int AS calls
+               FROM "audit_logs"
+              WHERE "actorId" = ANY($1::text[])
+                AND (
+                  subject::text = 'AI_GATEWAY'
+                  OR action LIKE 'JA_ASK%'
+                  OR action = 'LEGAL_CHAT_TURN'
+                )
+              GROUP BY "actorId"`,
+            userIds
+          )) as Array<{ uid: string; calls: number }>);
       for (const r of rows) {
         map.set(r.uid, { calls: Number(r.calls) || 0, tokenEstimate: 0 });
       }
