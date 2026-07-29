@@ -7,6 +7,8 @@ import { BillingStatusCard } from "@/components/billing/BillingStatusCard";
 import { Card, CardGrid, Hero, SectionTitle } from "@/components/ui/design-system";
 import { PRICING } from "@/config/pricing";
 import { roleLabel } from "@/lib/i18n/enum-labels";
+import { getUsageCreditStatus } from "@/lib/modules/credits/usage-ledger";
+import { milliUnitsToUnits } from "@/config/usage-credits";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,7 @@ export default async function BillingDashboardPage() {
     isSubscribed: false,
     unknown: true as const,
   }));
+  const usage = await getUsageCreditStatus(user.id);
 
   return (
     <div>
@@ -40,6 +43,26 @@ export default async function BillingDashboardPage() {
       <div className="mt-6">
         <BillingStatusCard status={status} userName={user.name} />
       </div>
+
+      <section className="mt-6 rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-ivory p-5">
+        <h2 className="font-display-ar text-lg font-bold text-[var(--navy)]">وحدات الاستخدام</h2>
+        {usage.unknown ? (
+          <p className="mt-3 text-sm leading-7 text-[var(--ink-60)]">
+            النظام الجديد جاهز للرولأوت، ولم تُطبّق هجرته بعد. الاستخدام الحالي مستمر دون تعطيل.
+          </p>
+        ) : (
+          <>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <UsageStat label="الرصيد" value={milliUnitsToUnits(usage.balanceMilliUnits)} />
+              <UsageStat label="محجوز مؤقتًا" value={milliUnitsToUnits(usage.reservedMilliUnits)} />
+              <UsageStat label="المتاح" value={milliUnitsToUnits(usage.availableMilliUnits)} />
+            </div>
+            <p className="mt-3 text-xs text-[var(--ink-60)]">
+              كل وحدة تعادل قرابة ١٠٠٠ توكن موزون، والخصم لا يثبت إلا بعد نجاح الخدمة.
+            </p>
+          </>
+        )}
+      </section>
 
       <SectionTitle>الوحدات المشمولة بالحصّة</SectionTitle>
       <CardGrid>
@@ -103,18 +126,18 @@ export default async function BillingDashboardPage() {
               {status.unknown ? "غير مفعّل بعد" : status.isSubscribed ? "نشط" : "تجربة مجانية"}
             </dd>
           </div>
-          <div className="flex justify-between gap-2 border-b border-[var(--ink-04)] py-2">
+          {!status.unknown && !usage.enabled ? <div className="flex justify-between gap-2 border-b border-[var(--ink-04)] py-2">
             <dt className="text-[var(--ink-60)]">حد التجربة</dt>
             <dd className="font-semibold text-[var(--navy)]">
               {PRICING.freeQuota.toLocaleString("ar-SA")} استخدامًا
             </dd>
-          </div>
-          <div className="flex justify-between gap-2 border-b border-[var(--ink-04)] py-2">
+          </div> : null}
+          {!status.unknown && !usage.enabled ? <div className="flex justify-between gap-2 border-b border-[var(--ink-04)] py-2">
             <dt className="text-[var(--ink-60)]">المتبقي</dt>
             <dd className="font-semibold text-[var(--navy)]">
               {status.remaining.toLocaleString("ar-SA")}
             </dd>
-          </div>
+          </div> : null}
         </dl>
 
         <div className="mt-5 flex flex-wrap gap-3">
@@ -138,6 +161,17 @@ export default async function BillingDashboardPage() {
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+function UsageStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-[var(--ink-08)] bg-white p-3">
+      <p className="text-xs text-[var(--ink-60)]">{label}</p>
+      <p className="mt-1 text-xl font-bold text-[var(--navy)]">
+        {value.toLocaleString("ar-SA")} وحدة
+      </p>
     </div>
   );
 }
