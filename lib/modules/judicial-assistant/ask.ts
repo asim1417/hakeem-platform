@@ -113,7 +113,9 @@ export async function askAssistant(question: string, kase: JudicialCase | null, 
 
   // بحثٌ في مستندات القضية (دلاليّ/معجميّ) → سياقٌ يُحقَن في محرّك «اسأل حكيم».
   const passages = kase ? await retrieveCasePassages(kase, question, 6) : [];
-  const agentQuery = [`مسألة القاضي: ${question.trim()}`, kase ? caseContext(kase, passages) : ""].filter(Boolean).join("\n\n");
+  const safeQuestion = sanitizeForModel(question).text.trim();
+  const safeCase = kase ? sanitizeForModel(caseContext(kase, passages)).text : "";
+  const agentQuery = [`مسألة القاضي: ${safeQuestion}`, safeCase].filter(Boolean).join("\n\n");
 
   // محرّك «اسأل حكيم» نفسه بوضع المعاون (نفس المزوّد ومفاتيحه).
   const r = await runJudicialAgent(agentQuery);

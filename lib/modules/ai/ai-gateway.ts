@@ -225,7 +225,14 @@ export async function callCentralProvider(input: {
     };
   }
   try {
-    const content = await completeWithConfig(cfg, input.systemPrompt ?? "", String(input.userPrompt ?? ""), input.maxTokens ?? 1000);
+    // PDPL: تنقية مدخل المستخدم قبل مغادرة الحدود إلى Claude.
+    const safeUser = sanitizeForModel(String(input.userPrompt ?? "")).text;
+    const content = await completeWithConfig(
+      cfg,
+      input.systemPrompt ?? "",
+      safeUser,
+      input.maxTokens ?? 1000
+    );
     if (!content) return { ok: false, content: "", mode: "server", provider: cfg.provider, error: "مخرَجٌ فارغ من النموذج." };
     return { ok: true, content, mode: "server", provider: cfg.provider };
   } catch (e) {

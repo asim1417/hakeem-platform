@@ -10,6 +10,7 @@ import { retrieveCasePassages } from "./case-vector";
 import { runCaseAgent } from "@/lib/modules/agents/case-agent-bridge";
 import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
 import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
+import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
@@ -74,9 +75,11 @@ export async function* streamAsk(question: string, kase: JudicialCase | null, ac
       : "لا تتوفّر مادّةٌ نظاميّة مطابقة في النواة؛ أجب من مستندات القضية ووقائعها فقط وصرّح بذلك، ولا تخترع مادّةً أو رقم مادة.",
   ].join("\n");
   const support = grounded ? supportingBlock(agent) : "";
+  const safeQuestion = sanitizeForModel(question).text.trim();
+  const safeCaseCtx = sanitizeForModel(caseCtx).text;
   const user = [
-    `مسألة القاضي:\n${question.trim()}`,
-    caseCtx ? `سياق القضية:\n${caseCtx}` : "",
+    `مسألة القاضي:\n${safeQuestion}`,
+    safeCaseCtx ? `سياق القضية:\n${safeCaseCtx}` : "",
     grounded ? agent!.groundingText : "",
     support ? `سياقٌ قضائيّ استئناسيّ (أحكام ومبادئ — لتوجيه الترجيح فقط):\n${support}` : "",
   ].filter(Boolean).join("\n\n");
