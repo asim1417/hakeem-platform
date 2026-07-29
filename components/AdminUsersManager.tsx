@@ -62,6 +62,10 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   GOVERNANCE_AUDIT_VIEW: "سجل التدقيق والحوكمة",
   JUDICIAL_ASSISTANT_USE: "المعاون القضائي",
   SUPER_ADMIN_ACCESS: "لوحة السوبر أدمن (حصرية)",
+  RASD_VIEW: "رصد التشريعات — عرض",
+  RASD_REVIEW: "رصد التشريعات — مراجعة",
+  RASD_APPLY: "رصد التشريعات — تطبيق",
+  RASD_ADMIN: "رصد التشريعات — إدارة",
 };
 
 export function AdminUsersManager({

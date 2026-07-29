@@ -1,0 +1,220 @@
+{
+  "generatedAt": "2026-07-27T22:33:14.704Z",
+  "environment": "staging-only",
+  "dryRun": true,
+  "autoApply": false,
+  "limit": 10,
+  "sources": [
+    "UQN",
+    "BOE",
+    "NCAR"
+  ],
+  "pass1": {
+    "runId": "cms3syq960000e7zhsx0ckhi8",
+    "status": "PARTIAL",
+    "counts": {
+      "pagesDiscovered": 2,
+      "pagesFetched": 7,
+      "documentsDiscovered": 7,
+      "documentsNew": 7,
+      "documentsChanged": 7,
+      "documentsUnchanged": 0,
+      "documentsFailed": 0,
+      "conflictsFound": 0
+    },
+    "sources": [
+      {
+        "sourceCode": "UQN",
+        "ok": true,
+        "outcome": "SUCCEEDED",
+        "discovered": 7,
+        "fetched": 7,
+        "changed": 7,
+        "unchanged": 0,
+        "failed": 0
+      },
+      {
+        "sourceCode": "BOE",
+        "ok": false,
+        "outcome": "FAILED",
+        "discovered": 0,
+        "fetched": 0,
+        "changed": 0,
+        "unchanged": 0,
+        "failed": 1,
+        "error": "fetch failed"
+      },
+      {
+        "sourceCode": "NCAR",
+        "ok": false,
+        "outcome": "FAILED",
+        "discovered": 0,
+        "fetched": 0,
+        "changed": 0,
+        "unchanged": 0,
+        "failed": 1,
+        "error": "fetch failed"
+      }
+    ],
+    "failures": [
+      "BOE: fetch failed",
+      "NCAR: fetch failed"
+    ],
+    "changesSample": [
+      {
+        "documentId": "cms3syrrv000je7zhkcxlhvc2",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      },
+      {
+        "documentId": "cms3sys7w000ve7zhdbmu3bnc",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      },
+      {
+        "documentId": "cms3sysnt0017e7zh854rhm54",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      },
+      {
+        "documentId": "cms3syt38001je7zhdhvqvtes",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      },
+      {
+        "documentId": "cms3sytja001ve7zhtjaxhobt",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      },
+      {
+        "documentId": "cms3syu19004ce7zhe4zrjnm2",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      },
+      {
+        "documentId": "cms3syugs004oe7zh93swnlms",
+        "changeType": "NEW_DOCUMENT",
+        "severity": "HIGH",
+        "reviewStatus": "PENDING"
+      }
+    ]
+  },
+  "pass2": {
+    "runId": "cms3sz2gs004ze7zhrmi4dssh",
+    "status": "PARTIAL",
+    "counts": {
+      "pagesDiscovered": 2,
+      "pagesFetched": 7,
+      "documentsDiscovered": 7,
+      "documentsNew": 0,
+      "documentsChanged": 0,
+      "documentsUnchanged": 7,
+      "documentsFailed": 0,
+      "conflictsFound": 0
+    },
+    "sources": [
+      {
+        "sourceCode": "UQN",
+        "ok": true,
+        "outcome": "SUCCEEDED",
+        "discovered": 7,
+        "fetched": 7,
+        "changed": 0,
+        "unchanged": 7,
+        "failed": 0
+      },
+      {
+        "sourceCode": "BOE",
+        "ok": false,
+        "outcome": "FAILED",
+        "discovered": 0,
+        "fetched": 0,
+        "changed": 0,
+        "unchanged": 0,
+        "failed": 1,
+        "error": "fetch failed"
+      },
+      {
+        "sourceCode": "NCAR",
+        "ok": false,
+        "outcome": "FAILED",
+        "discovered": 0,
+        "fetched": 0,
+        "changed": 0,
+        "unchanged": 0,
+        "failed": 1,
+        "error": "fetch failed"
+      }
+    ],
+    "failures": [
+      "BOE: fetch failed",
+      "NCAR: fetch failed"
+    ]
+  },
+  "dedupe": {
+    "pass1New": 7,
+    "pass2Unchanged": 7,
+    "pass2New": 0
+  },
+  "libraryGuard": {
+    "before": {
+      "systems": 2,
+      "articles": 2
+    },
+    "after": {
+      "systems": 2,
+      "articles": 2
+    },
+    "unchanged": true
+  },
+  "monitoring": {
+    "before": {
+      "documents": 22,
+      "snapshots": 40,
+      "runs": 3
+    },
+    "after": {
+      "documents": 29,
+      "snapshots": 59,
+      "runs": 6
+    }
+  },
+  "circuits": [
+    {
+      "sourceCode": "UQN",
+      "state": "CLOSED",
+      "failures": 0,
+      "successes": 2,
+      "openedAt": null,
+      "lastFailureAt": null,
+      "lastSuccessAt": "2026-07-27T22:33:04.673Z",
+      "lastError": null
+    },
+    {
+      "sourceCode": "BOE",
+      "state": "CLOSED",
+      "failures": 2,
+      "successes": 0,
+      "openedAt": null,
+      "lastFailureAt": "2026-07-27T22:33:09.681Z",
+      "lastSuccessAt": null,
+      "lastError": "fetch failed"
+    },
+    {
+      "sourceCode": "NCAR",
+      "state": "CLOSED",
+      "failures": 2,
+      "successes": 0,
+      "openedAt": null,
+      "lastFailureAt": "2026-07-27T22:33:14.692Z",
+      "lastSuccessAt": null,
+      "lastError": "fetch failed"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+User-agent: Baiduspider
+Disallow: /
+User-agent: Baiduspider-video
+Disallow: /
+User-agent: Baiduspider-image
+Disallow: /
+User-agent: istellabot
+Disallow: /
+User-agent: SemrushBot
+Disallow: /
+User-agent: DotBot
+Disallow: /
+
+User-agent: Twitterbot
+Crawl-delay: 25
+
+User-agent: *
+Disallow: /*page=
+Disallow: /*redirect=
+Disallow: /ajax/
+
+Sitemap: https://www.uqn.gov.sa/sitemap_0.xml

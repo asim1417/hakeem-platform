@@ -1,0 +1,143 @@
+import { readdir } from "fs/promises";
+import path from "path";
+import { RASD_FIXTURES_ONLY, RASD_RATE_LIMIT_PER_MINUTE, envBool } from "../flags";
+import type { ConnectorDiscoverOptions, ConnectorDiscoverResult, ConnectorFetchOptions, DiscoveredDocument, FetchResult } from "../types";
+import {
+  defaultNormalizeDocument,
+  defaultParseSnapshot,
+  type LegislativeSourceConnector,
+  type NormalizedLegalDocument,
+  type ParsedLegalDocument,
+  type RawSourceSnapshot
+} from "./base";
+import { rasdFetch } from "./http";
+import { RateLimiter } from "./rate-limit";
+import { getConnectorStatus } from "./status";
+
+const NCAR_BASE = "https://ncar.gov.sa";
+const DEFAULT_INDEX = `${NCAR_BASE}/`;
+const FIXTURE_DIR = path.join(process.cwd(), "data/rasd/fixtures/ncar");
+
+function stripTags(value: string): string {
+  return value.replace(/<script[\s\S]*?<\/script>/giu, " ").replace(/<style[\s\S]*?<\/style>/giu, " ").replace(/<[^>]+>/g, " ");
+}
+
+function decode(value: string): string {
+  return value.replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function absoluteUrl(href: string): string {
+  if (/^https?:\/\//i.test(href)) return href;
+  return new URL(href, NCAR_BASE).toString();
+}
+
+function parseIndex(html: string, limit: number): DiscoveredDocument[] {
+  const documents = new Map<string, DiscoveredDocument>();
+  for (const match of html.matchAll(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu)) {
+    const href = match[1] ?? "";
+    if (!/(Legislation|laws?|regulation|Details)/i.test(href)) continue;
+    const title = decode(stripTags(match[2] ?? ""));
+    if (title && !/(نظام|لائحة|تنظيم|قواعد|قرار)/u.test(title)) continue;
+    const url = absoluteUrl(href);
+    documents.set(url, {
+      sourceCode: "NCAR",
+      url,
+      title: title || undefined,
+      sourceDocumentId: url.split("/").filter(Boolean).pop()
+    });
+    if (documents.size >= limit) break;
+  }
+  return [...documents.values()];
+}
+
+async function discoverFixtures(limit: number): Promise<ConnectorDiscoverResult> {
+  try {
+    const entries = await readdir(FIXTURE_DIR);
+    const documents = entries
+      .filter((entry) => /\.(html?|txt|json)$/i.test(entry))
+      .slice(0, limit)
+      .map((entry): DiscoveredDocument => ({
+        sourceCode: "NCAR",
+        url: `file://${path.join(FIXTURE_DIR, entry)}`,
+        title: entry.replace(/\.[^.]+$/, ""),
+        sourceDocumentId: entry
+      }));
+    return { sourceCode: "NCAR", ok: true, documents, pagesVisited: 1, metadata: { fixtureDir: FIXTURE_DIR } };
+  } catch (error) {
+    return {
+      sourceCode: "NCAR",
+      ok: false,
+      documents: [],
+      pagesVisited: 0,
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+export class NcarConnector implements LegislativeSourceConnector {
+  readonly code = "NCAR" as const;
+  readonly displayName = getConnectorStatus("NCAR").displayNameAr;
+  private readonly limiter = new RateLimiter(RASD_RATE_LIMIT_PER_MINUTE);
+
+  async discover(opts: ConnectorDiscoverOptions = {}): Promise<ConnectorDiscoverResult> {
+    const limit = opts.limit ?? 100;
+    const fixturesOnly = Boolean(opts.fixturesOnly) || envBool("RASD_FIXTURES_ONLY", RASD_FIXTURES_ONLY);
+    if (fixturesOnly || opts.fixturePath) {
+      if (opts.fixturePath && !fixturesOnly) {
+        const fixture = await rasdFetch(`file://${opts.fixturePath}`, { allowFixtureFileUrl: true });
+        return {
+          sourceCode: this.code,
+          ok: fixture.ok,
+          documents: fixture.ok ? parseIndex(fixture.bodyText, limit) : [],
+          pagesVisited: fixture.ok ? 1 : 0,
+          error: fixture.error,
+          metadata: { fixturePath: opts.fixturePath }
+        };
+      }
+      return discoverFixtures(limit);
+    }
+
+    await this.limiter.removeToken();
+    const result = await rasdFetch(opts.indexUrl ?? DEFAULT_INDEX, { timeoutMs: 20_000 });
+    if (!result.ok) {
+      return {
+        sourceCode: this.code,
+        ok: false,
+        documents: [],
+        pagesVisited: 0,
+        error: result.error ?? `NCAR unreachable (${result.status})`
+      };
+    }
+
+    return { sourceCode: this.code, ok: true, documents: parseIndex(result.bodyText, limit), pagesVisited: 1 };
+  }
+
+  async fetchDocument(url: string, opts: ConnectorFetchOptions = {}): Promise<FetchResult> {
+    await this.limiter.removeToken();
+    return rasdFetch(url, {
+      timeoutMs: opts.timeoutMs,
+      fixturePath: opts.fixturePath,
+      headers: opts.headers,
+      includeBuffer: true,
+      allowFixtureFileUrl: Boolean(opts.fixturePath || url.startsWith("file://"))
+    });
+  }
+
+  async healthCheck(): Promise<{ ok: boolean; status?: number; error?: string; outcome?: "SUCCEEDED" | "FAILED" | "UNREACHABLE" | "DEGRADED" | "SKIPPED" }> {
+    const result = await rasdFetch(DEFAULT_INDEX, { method: "HEAD", timeoutMs: 8_000 });
+    const outcome = result.ok
+      ? ("SUCCEEDED" as const)
+      : /econnreset|tls|handshake/i.test(result.error ?? "")
+        ? ("UNREACHABLE" as const)
+        : ("FAILED" as const);
+    return { ok: result.ok, status: result.status, error: result.error, outcome };
+  }
+
+  async parse(snapshot: RawSourceSnapshot): Promise<ParsedLegalDocument> {
+    return defaultParseSnapshot(snapshot);
+  }
+
+  async normalize(document: ParsedLegalDocument): Promise<NormalizedLegalDocument> {
+    return defaultNormalizeDocument(document);
+  }
+}

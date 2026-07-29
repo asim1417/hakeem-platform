@@ -1,0 +1,77 @@
+{
+  "target": "NCAR",
+  "checkedAt": "2026-07-27T20:15:27.618Z",
+  "environment": {
+    "runner": "local-or-cloud-agent",
+    "vercelEnv": null,
+    "node": "v22.22.2"
+  },
+  "connectivity": [
+    {
+      "host": "ncar.gov.sa",
+      "dns": {
+        "ok": true,
+        "detail": {
+          "addrs": [
+            "66.9.128.33"
+          ]
+        }
+      },
+      "tcp": {
+        "ok": true,
+        "detail": {
+          "ms": 3
+        }
+      },
+      "tls": {
+        "ok": false,
+        "error": "read ECONNRESET"
+      },
+      "http": {
+        "ok": false,
+        "error": "skipped_tls"
+      }
+    },
+    {
+      "host": "www.ncar.gov.sa",
+      "dns": {
+        "ok": true,
+        "detail": {
+          "addrs": [
+            "66.9.128.33"
+          ]
+        }
+      },
+      "tcp": {
+        "ok": true,
+        "detail": {
+          "ms": 2
+        }
+      },
+      "tls": {
+        "ok": false,
+        "error": "read ECONNRESET"
+      },
+      "http": {
+        "ok": false,
+        "error": "skipped_tls"
+      }
+    }
+  ],
+  "health": {
+    "ok": false,
+    "status": 0,
+    "error": "fetch failed",
+    "outcome": "FAILED"
+  },
+  "discoverError": "fetch failed",
+  "discoveredCount": 0,
+  "liveSuccessCount": 0,
+  "liveDocuments": [],
+  "certification": "DEGRADED",
+  "notes": [
+    "Fixtures are not counted as live evidence.",
+    "LIVE_VERIFIED requires TLS+HTTP success and >=10 live documents.",
+    "No CAPTCHA/WAF bypass or unofficial proxies were used."
+  ]
+}

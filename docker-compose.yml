@@ -65,12 +65,46 @@ services:
       memlock: { soft: -1, hard: -1 }
       nofile: { soft: 65536, hard: 65536 }
     volumes:
-      - hakeem-opensearch-data:/usr/share/opensearch/data
+      - hakeem-opensearch-data:/var/lib/opensearch/data
     ports:
       - "9200:9200"
+
+  # ── عامل رصد تشريعي (منفصل عن واجهة Next.js) ──
+  # لا يعمل افتراضياً. شغّله على runner يستطيع إكمال TLS إلى BOE/NCAR/UQN:
+  #   docker compose --profile rasd up -d rasd-worker
+  # الأسرار عبر البيئة فقط — لا تُكتب في المستودع.
+  rasd-worker:
+    image: node:24-bookworm
+    container_name: hakeem-rasd-worker
+    profiles: ["rasd"]
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - hakeem-rasd-snapshots:/app/data/rasd/snapshots
+      - hakeem-rasd-reports:/app/reports/rasd
+    environment:
+      DATABASE_URL: ${RASD_DATABASE_URL:-${DATABASE_URL}}
+      RASD_ENABLED: ${RASD_ENABLED:-false}
+      RASD_WORKER_ENABLED: ${RASD_WORKER_ENABLED:-false}
+      RASD_AUTO_FETCH_ENABLED: ${RASD_AUTO_FETCH_ENABLED:-false}
+      RASD_WORKER_DRY_RUN: ${RASD_WORKER_DRY_RUN:-true}
+      RASD_AUTO_APPLY_ENABLED: "false"
+      RASD_REVIEW_REQUIRED: "true"
+      RASD_SOURCE_UQN_ENABLED: ${RASD_SOURCE_UQN_ENABLED:-true}
+      RASD_SOURCE_BOE_ENABLED: ${RASD_SOURCE_BOE_ENABLED:-false}
+      RASD_SOURCE_NCAR_ENABLED: ${RASD_SOURCE_NCAR_ENABLED:-false}
+      RASD_CIRCUIT_BREAKER_ENABLED: "true"
+      RASD_WORKER_POLL_MS: ${RASD_WORKER_POLL_MS:-3600000}
+      RASD_WORKER_LIMIT: ${RASD_WORKER_LIMIT:-25}
+    command: ["bash", "-lc", "npm ci && npx prisma generate && npx tsx scripts/rasd/worker.ts"]
+    restart: unless-stopped
+    depends_on:
+      - postgres
 
 volumes:
   hakeem-postgres-data:
   hakeem-doc-tool-data:
   hakeem-stirling-data:
   hakeem-opensearch-data:
+  hakeem-rasd-snapshots:
+  hakeem-rasd-reports:

@@ -1,0 +1,159 @@
+{
+  "target": "UQN",
+  "checkedAt": "2026-07-27T20:15:46.367Z",
+  "environment": {
+    "runner": "local-or-cloud-agent",
+    "vercelEnv": null,
+    "node": "v22.22.2"
+  },
+  "connectivity": [
+    {
+      "host": "www.uqn.gov.sa",
+      "dns": {
+        "ok": true,
+        "detail": {
+          "addrs": [
+            "212.138.183.159"
+          ]
+        }
+      },
+      "tcp": {
+        "ok": true,
+        "detail": {
+          "ms": 3
+        }
+      },
+      "tls": {
+        "ok": true,
+        "detail": {
+          "ms": 328,
+          "protocol": "TLSv1.3",
+          "authorized": true,
+          "cipher": {
+            "name": "TLS_AES_256_GCM_SHA384",
+            "standardName": "TLS_AES_256_GCM_SHA384",
+            "version": "TLSv1.3"
+          }
+        }
+      },
+      "http": {
+        "ok": true,
+        "detail": {
+          "status": 200,
+          "contentType": "text/html; charset=UTF-8",
+          "location": null,
+          "redirected": false
+        }
+      }
+    },
+    {
+      "host": "uqn.gov.sa",
+      "dns": {
+        "ok": true,
+        "detail": {
+          "addrs": [
+            "212.138.183.32"
+          ]
+        }
+      },
+      "tcp": {
+        "ok": true,
+        "detail": {
+          "ms": 1
+        }
+      },
+      "tls": {
+        "ok": true,
+        "detail": {
+          "ms": 7000,
+          "protocol": "TLSv1.3",
+          "authorized": true,
+          "cipher": {
+            "name": "TLS_AES_256_GCM_SHA384",
+            "standardName": "TLS_AES_256_GCM_SHA384",
+            "version": "TLSv1.3"
+          }
+        }
+      },
+      "http": {
+        "ok": true,
+        "detail": {
+          "status": 301,
+          "contentType": "text/html",
+          "location": "https://www.uqn.gov.sa/",
+          "redirected": false
+        }
+      }
+    }
+  ],
+  "health": {
+    "ok": true,
+    "status": 200,
+    "outcome": "SUCCEEDED"
+  },
+  "discoverError": null,
+  "discoveredCount": 3,
+  "liveSuccessCount": 3,
+  "liveDocuments": [
+    {
+      "url": "https://www.uqn.gov.sa/sitemaps/2025/8/sitemap_0.xml?v=1.1",
+      "title": "https://www.uqn.gov.sa/infographic/4000209",
+      "type": null,
+      "instrumentType": null,
+      "instrumentNumber": null,
+      "date": null,
+      "uqnIssue": null,
+      "rawHash": "4cb69c8ea446eb93612d34414e62e7d84989a6f42e5abfc400a47cbe884a91f7",
+      "normalizedHash": "4029ff7f55c31802e54c8699a764c43e87689f6f2a388840cb28033d7559a91f",
+      "parserConfidence": 0.65,
+      "warnings": [],
+      "snapshotPath": "/workspace/data/rasd/snapshots/live_uqn_ms3o2lin/UQN/1785183346032-d21032cf7814188b-4cb69c8ea446eb93.xml",
+      "contentHash": "4cb69c8ea446eb93612d34414e62e7d84989a6f42e5abfc400a47cbe884a91f7",
+      "ok": true,
+      "httpStatus": 200,
+      "contentType": "text/xml; charset=utf-8"
+    },
+    {
+      "url": "https://www.uqn.gov.sa/sitemaps/2025/9/sitemap_0.xml?v=1.1",
+      "title": "https://www.uqn.gov.sa/infographic/4000261",
+      "type": null,
+      "instrumentType": null,
+      "instrumentNumber": null,
+      "date": null,
+      "uqnIssue": null,
+      "rawHash": "b7f46b01f9fe3290f9c4458a9248540a006ef9d4e0009e400716561169ebdde1",
+      "normalizedHash": "c56c14ed01c7cf520c7410dddada8e6bcaa67cd52d19da5f76fa3341f4196169",
+      "parserConfidence": 0.65,
+      "warnings": [],
+      "snapshotPath": "/workspace/data/rasd/snapshots/live_uqn_ms3o2lnb/UQN/1785183346199-f4dee8e060eca068-b7f46b01f9fe3290.xml",
+      "contentHash": "b7f46b01f9fe3290f9c4458a9248540a006ef9d4e0009e400716561169ebdde1",
+      "ok": true,
+      "httpStatus": 200,
+      "contentType": "text/xml; charset=utf-8"
+    },
+    {
+      "url": "https://www.uqn.gov.sa/sitemaps/2025/10/sitemap_0.xml?v=1.1",
+      "title": "https://www.uqn.gov.sa/infographic/4000260",
+      "type": null,
+      "instrumentType": null,
+      "instrumentNumber": null,
+      "date": null,
+      "uqnIssue": null,
+      "rawHash": "2f8920c9f63239c70d3cad8b886d9a1cae107286e2053ccf8abfd6b5222214c9",
+      "normalizedHash": "1b8dbd365e4a87907f445561f94000967be522bdff2e7617bff214474b3fb9ae",
+      "parserConfidence": 0.65,
+      "warnings": [],
+      "snapshotPath": "/workspace/data/rasd/snapshots/live_uqn_ms3o2lrx/UQN/1785183346366-758ad6dce9674a2a-2f8920c9f63239c7.xml",
+      "contentHash": "2f8920c9f63239c70d3cad8b886d9a1cae107286e2053ccf8abfd6b5222214c9",
+      "ok": true,
+      "httpStatus": 200,
+      "contentType": "text/xml; charset=utf-8"
+    }
+  ],
+  "certification": "DEGRADED",
+  "notes": [
+    "Fixtures are not counted as live evidence.",
+    "LIVE_VERIFIED requires TLS+HTTP success and >=10 live documents.",
+    "No CAPTCHA/WAF bypass or unofficial proxies were used."
+  ]
+}

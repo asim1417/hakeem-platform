@@ -1,0 +1,71 @@
+name: Rasd Source Live Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Source code to verify live"
+        required: true
+        default: "BOE"
+        type: choice
+        options:
+          - BOE
+          - NCAR
+          - UQN
+      limit:
+        description: "Max live documents"
+        required: false
+        default: "10"
+  pull_request:
+    paths:
+      - "scripts/rasd/verify-source-live.ts"
+      - "scripts/rasd/probe-sources-live.ts"
+      - "lib/modules/rasd/connectors/**"
+      - ".github/workflows/rasd-source-live.yml"
+  push:
+    branches:
+      - "feat/rasd-boe-connector-live-verification"
+      - "feat/rasd-ncar-connector-live-verification"
+
+jobs:
+  live-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RASD_ENABLED: "true"
+      RASD_AUTO_FETCH_ENABLED: "true"
+      RASD_FIXTURES_ONLY: "false"
+      RASD_MEMORY_ONLY: "true"
+      RASD_LIVE_TARGET: ${{ github.event.inputs.target || (contains(github.ref, 'ncar') && 'NCAR' || 'BOE') }}
+      RASD_LIVE_LIMIT: ${{ github.event.inputs.limit || '10' }}
+      RASD_SOURCE_BOE_ENABLED: "true"
+      RASD_SOURCE_NCAR_ENABLED: "true"
+      RASD_SOURCE_UQN_ENABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: OpenSSL / curl baseline
+        run: |
+          set +e
+          for host in laws.boe.gov.sa ncar.gov.sa www.ncar.gov.sa www.uqn.gov.sa; do
+            echo "==== $host ===="
+            echo | timeout 12 openssl s_client -connect "$host:443" -servername "$host" 2>&1 | sed -n '1,40p'
+            curl -sS -m 15 -o /dev/null -w "curl_http=%{http_code} ssl=%{ssl_verify_result} time=%{time_total}\n" -A "Hakeem-Rasd/1.0" "https://$host/" || true
+          done
+      - name: Run live verification script
+        run: npx tsx scripts/rasd/verify-source-live.ts
+        continue-on-error: true
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rasd-live-${{ env.RASD_LIVE_TARGET }}
+          path: |
+            docs/rasd/reports/${{ env.RASD_LIVE_TARGET }}_LIVE_VERIFICATION_REPORT.json
+            data/rasd/snapshots/**
+          if-no-files-found: warn

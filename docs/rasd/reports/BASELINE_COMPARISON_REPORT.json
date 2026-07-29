@@ -1,0 +1,29 @@
+{
+  "runId": "cms3nzhwz0000d3k0emcvsp58",
+  "status": "COMPLETED",
+  "dryRun": true,
+  "counts": {
+    "pagesDiscovered": 1,
+    "pagesFetched": 20,
+    "documentsDiscovered": 20,
+    "documentsNew": 10,
+    "documentsChanged": 10,
+    "documentsUnchanged": 10,
+    "documentsFailed": 0,
+    "conflictsFound": 0
+  },
+  "sources": [
+    {
+      "code": "UQN",
+      "outcome": "SUCCEEDED",
+      "fetched": 20,
+      "error": null
+    }
+  ],
+  "changes": 10,
+  "changeTypes": {
+    "NEW_DOCUMENT": 10
+  },
+  "conflicts": 0,
+  "failures": []
+}

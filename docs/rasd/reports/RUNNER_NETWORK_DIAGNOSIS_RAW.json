@@ -1,0 +1,301 @@
+{
+  "checkedAt": "2026-07-27T20:03:14.139237+00:00",
+  "environment": "cursor-cloud-agent",
+  "egressPublicIp": "3.217.89.139",
+  "sources": {
+    "BOE": [
+      {
+        "host": "laws.boe.gov.sa",
+        "dns": {
+          "ipv4": [
+            "66.9.136.215"
+          ],
+          "ipv6": []
+        },
+        "tcp": {
+          "66.9.136.215": {
+            "ok": true,
+            "ms": 0
+          }
+        },
+        "tls": {
+          "66.9.136.215": [
+            {
+              "variant": "default",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_2_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_3_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "no_sni",
+              "ok": false,
+              "error": "ValueError('check_hostname requires server_hostname')",
+              "type": "ValueError"
+            }
+          ]
+        }
+      },
+      {
+        "host": "boe.gov.sa",
+        "dns": {
+          "ipv4": [
+            "66.9.136.214"
+          ],
+          "ipv6": []
+        },
+        "tcp": {
+          "66.9.136.214": {
+            "ok": true,
+            "ms": 0
+          }
+        },
+        "tls": {
+          "66.9.136.214": [
+            {
+              "variant": "default",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_2_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_3_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "no_sni",
+              "ok": false,
+              "error": "ValueError('check_hostname requires server_hostname')",
+              "type": "ValueError"
+            }
+          ]
+        }
+      }
+    ],
+    "NCAR": [
+      {
+        "host": "ncar.gov.sa",
+        "dns": {
+          "ipv4": [
+            "66.9.128.33"
+          ],
+          "ipv6": []
+        },
+        "tcp": {
+          "66.9.128.33": {
+            "ok": true,
+            "ms": 0
+          }
+        },
+        "tls": {
+          "66.9.128.33": [
+            {
+              "variant": "default",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_2_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_3_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "no_sni",
+              "ok": false,
+              "error": "ValueError('check_hostname requires server_hostname')",
+              "type": "ValueError"
+            }
+          ]
+        }
+      },
+      {
+        "host": "www.ncar.gov.sa",
+        "dns": {
+          "ipv4": [
+            "66.9.128.33"
+          ],
+          "ipv6": []
+        },
+        "tcp": {
+          "66.9.128.33": {
+            "ok": true,
+            "ms": 0
+          }
+        },
+        "tls": {
+          "66.9.128.33": [
+            {
+              "variant": "default",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_2_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "tls1_3_only",
+              "ok": false,
+              "error": "ConnectionResetError(104, 'Connection reset by peer')",
+              "type": "ConnectionResetError"
+            },
+            {
+              "variant": "no_sni",
+              "ok": false,
+              "error": "ValueError('check_hostname requires server_hostname')",
+              "type": "ValueError"
+            }
+          ]
+        }
+      }
+    ],
+    "UQN": [
+      {
+        "host": "www.uqn.gov.sa",
+        "dns": {
+          "ipv4": [
+            "212.138.183.159"
+          ],
+          "ipv6": []
+        },
+        "tcp": {
+          "212.138.183.159": {
+            "ok": true,
+            "ms": 0
+          }
+        },
+        "tls": {
+          "212.138.183.159": [
+            {
+              "variant": "default",
+              "ok": true,
+              "ms": 327,
+              "protocol": "TLSv1.3",
+              "cipher": [
+                "TLS_AES_256_GCM_SHA384",
+                "TLSv1.3",
+                256
+              ]
+            },
+            {
+              "variant": "tls1_2_only",
+              "ok": true,
+              "ms": 488,
+              "protocol": "TLSv1.2",
+              "cipher": [
+                "ECDHE-RSA-AES256-GCM-SHA384",
+                "TLSv1.2",
+                256
+              ]
+            },
+            {
+              "variant": "tls1_3_only",
+              "ok": true,
+              "ms": 326,
+              "protocol": "TLSv1.3",
+              "cipher": [
+                "TLS_AES_256_GCM_SHA384",
+                "TLSv1.3",
+                256
+              ]
+            },
+            {
+              "variant": "no_sni",
+              "ok": false,
+              "error": "ValueError('check_hostname requires server_hostname')",
+              "type": "ValueError"
+            }
+          ]
+        }
+      },
+      {
+        "host": "uqn.gov.sa",
+        "dns": {
+          "ipv4": [
+            "212.138.183.32"
+          ],
+          "ipv6": []
+        },
+        "tcp": {
+          "212.138.183.32": {
+            "ok": true,
+            "ms": 0
+          }
+        },
+        "tls": {
+          "212.138.183.32": [
+            {
+              "variant": "default",
+              "ok": true,
+              "ms": 3920,
+              "protocol": "TLSv1.3",
+              "cipher": [
+                "TLS_AES_256_GCM_SHA384",
+                "TLSv1.3",
+                256
+              ]
+            },
+            {
+              "variant": "tls1_2_only",
+              "ok": true,
+              "ms": 8882,
+              "protocol": "TLSv1.2",
+              "cipher": [
+                "ECDHE-RSA-AES256-GCM-SHA384",
+                "TLSv1.2",
+                256
+              ]
+            },
+            {
+              "variant": "tls1_3_only",
+              "ok": true,
+              "ms": 2829,
+              "protocol": "TLSv1.3",
+              "cipher": [
+                "TLS_AES_256_GCM_SHA384",
+                "TLSv1.3",
+                256
+              ]
+            },
+            {
+              "variant": "no_sni",
+              "ok": false,
+              "error": "ValueError('check_hostname requires server_hostname')",
+              "type": "ValueError"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

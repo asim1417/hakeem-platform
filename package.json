@@ -174,7 +174,19 @@
     "test:ask-sessions-3a": "tsx scripts/test-ask-sessions-3a.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
-    "smoke:judicial": "tsx scripts/smoke-judicial.ts"
+    "smoke:judicial": "tsx scripts/smoke-judicial.ts",
+    "rasd:baseline": "tsx scripts/rasd/cli.ts baseline --dry-run --fixtures",
+    "rasd:weekly": "tsx scripts/rasd/cli.ts weekly --dry-run --fixtures",
+    "rasd:health": "tsx scripts/rasd/cli.ts health",
+    "rasd:worker": "tsx scripts/rasd/worker.ts",
+    "rasd:uqn:live": "tsx scripts/rasd/production-uqn-live.ts",
+    "rasd:saudi:connectivity": "tsx scripts/rasd/saudi-runner-connectivity.ts",
+    "rasd:staging:live-scan": "tsx scripts/rasd/staging-live-scan.ts",
+    "test:rasd": "tsx scripts/rasd/test-rasd-unit.ts && tsx scripts/rasd/test-rasd-acceptance.ts && tsx scripts/rasd/test-rasd-isolation.ts && tsx scripts/rasd/test-rasd-cron-auth.ts && tsx scripts/rasd/test-rasd-rbac.ts",
+    "test:rasd:integration": "tsx scripts/rasd/test-rasd-integration.ts",
+    "test:rasd:unit": "tsx scripts/rasd/test-rasd-unit.ts",
+    "test:rasd:acceptance": "tsx scripts/rasd/test-rasd-acceptance.ts",
+    "rasd:coverage": "tsx scripts/rasd/cli.ts coverage-report"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
