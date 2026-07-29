@@ -35,6 +35,16 @@ export default async function AdminUsersPage() {
       creditsBalance: 0,
       subscriptionStatus: "free",
       exhausted: false,
+      consultations: 0,
+      simulations: 0,
+      askConversations: 0,
+      legalChatConversations: 0,
+      jaConversations: 0,
+      claudeCalls: 0,
+      claudeInputTokens: 0,
+      claudeOutputTokens: 0,
+      claudeTokenEstimate: 0,
+      claudeMetered: false,
     };
     return {
       ...item,
@@ -46,6 +56,16 @@ export default async function AdminUsersPage() {
       creditsBalance: usage.creditsBalance,
       subscriptionStatus: usage.subscriptionStatus,
       exhausted: usage.exhausted,
+      consultations: usage.consultations,
+      simulations: usage.simulations,
+      askConversations: usage.askConversations,
+      legalChatConversations: usage.legalChatConversations,
+      jaConversations: usage.jaConversations,
+      claudeCalls: usage.claudeCalls,
+      claudeInputTokens: usage.claudeInputTokens,
+      claudeOutputTokens: usage.claudeOutputTokens,
+      claudeTokenEstimate: usage.claudeTokenEstimate,
+      claudeMetered: usage.claudeMetered,
     };
   });
 
@@ -54,7 +74,9 @@ export default async function AdminUsersPage() {
       <p className="text-sm font-semibold text-gold">إدارة المستخدمين</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">المستخدمون</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
-        أنشئ مستخدمين وعيّن الدور، وتابع هنا الحصّة المجانية والنقاط لكل حساب. للتقرير الكامل:{" "}
+        لكل مستخدم: الحصّة والنقاط، والخدمات التي نفّذها (استشارات، محاكاة، اسأل حكيم، محادثة
+        قانونية، معاون)، واستهلاك مفتاح Claude (نداءات ورموز). الرموز الفعلية تُسجَّل من الآن؛
+        السابق يُعرض من سجل التدقيق كتقدير. التقرير الكامل:{" "}
         <Link href="/admin/usage" className="font-semibold text-[var(--gold-dark)] underline underline-offset-4">
           لوحة الاستهلاك
         </Link>

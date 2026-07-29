@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { runChatTurn } from "@/lib/modules/legal-chat/chat-orchestrator";
 import type { ChatTurnInput, SimulationCaseFile } from "@/lib/modules/legal-chat/types";
+import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,9 @@ export async function POST(request: NextRequest) {
   }
 
   const data = parsed.data;
+  if (user?.id) {
+    enterAiUsageContext({ userId: user.id, serviceKey: "legal-chat" });
+  }
   const turnInput: ChatTurnInput = {
     message: data.message,
     mode: data.mode,

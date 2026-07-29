@@ -25,6 +25,7 @@ import { synthesizeWithMode } from "@/lib/modules/agents/mode-synthesis";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 import { waitUntil } from "@vercel/functions";
+import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json; charset=utf-8" }
     });
   }
+  enterAiUsageContext({ userId: user.id, serviceKey: "ask" });
 
   let body: { query?: string; document?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; conversationId?: string; history?: Array<{ role?: string; content?: string }> } = {};
   try {

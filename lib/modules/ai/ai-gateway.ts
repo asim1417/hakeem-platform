@@ -6,6 +6,7 @@ import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from 
 import { parseArticleNumberCandidates } from "@/lib/modules/legal-core/judgment-citation-extractor";
 import { resolveAiConfig, completeWithConfig } from "@/lib/modules/ai/ai-config";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
+import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
 
 type AiResult = {
   requestId: string;
@@ -39,6 +40,9 @@ export type OriginalHakeemAiResult = {
 
 export async function createConsultationDraft(input: { facts: string; actorId?: string }): Promise<AiResult> {
   const requestId = randomUUID();
+  if (input.actorId) {
+    enterAiUsageContext({ userId: input.actorId, serviceKey: "consultation", requestId });
+  }
   const cfg = await resolveAiConfig();
   const provider = cfg.provider;
   const legalContext = await buildLegalContextForAI(input.facts, { limit: 8 });
@@ -105,6 +109,13 @@ export async function createConsultationDraft(input: { facts: string; actorId?: 
 }
 export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInput): Promise<OriginalHakeemAiResult> {
   const requestId = randomUUID();
+  if (input.actorId) {
+    enterAiUsageContext({
+      userId: input.actorId,
+      serviceKey: input.module || "original-hakeem",
+      requestId,
+    });
+  }
   const cfg = await resolveAiConfig();
   const requestedProvider = (input.provider || cfg.provider || "offline").toLowerCase();
   const provider = normalizeOriginalProvider(requestedProvider);
@@ -184,7 +195,19 @@ export async function createOriginalHakeemAiResponse(input: OriginalHakeemAiInpu
  * (system + user) دون فرض قالب قضائي — يستعمله القاضي التفاعلي لكل أدواره
  * عبر مفتاح خادمي واحد بدل مفاتيح المتصفح. سقوط إلى offline عند غياب المفتاح.
  */
-export async function callCentralProvider(input: { systemPrompt?: string; userPrompt: string; maxTokens?: number }): Promise<{ ok: boolean; content: string; mode: "server" | "offline"; provider: string; error?: string }> {
+export async function callCentralProvider(input: {
+  systemPrompt?: string;
+  userPrompt: string;
+  maxTokens?: number;
+  actorId?: string;
+  serviceKey?: string;
+}): Promise<{ ok: boolean; content: string; mode: "server" | "offline"; provider: string; error?: string }> {
+  if (input.actorId) {
+    enterAiUsageContext({
+      userId: input.actorId,
+      serviceKey: input.serviceKey || "central",
+    });
+  }
   const cfg = await resolveAiConfig();
   // قاعدة CLAUDE.md (Claude حصريًّا): التوليد القانونيّ لا يعمل إلا بمزوّد Anthropic. أيّ مزوّدٍ
   // آخر (OpenAI/Gemini/custom) — حتى لو كان مفتاحُه مضبوطًا — يُعامَل offline فيسقط القاضي للحتميّ

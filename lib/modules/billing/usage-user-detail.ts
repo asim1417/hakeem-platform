@@ -4,6 +4,10 @@
 import { PRICING } from "@/config/pricing";
 import { activityLabel } from "@/lib/activity-labels";
 import { prisma } from "@/lib/prisma";
+import {
+  getClaudeAuditProxies,
+  getClaudeUsageAggregates,
+} from "@/lib/modules/billing/ai-usage-meter";
 
 export type UsageUserDetail = {
   user: {
@@ -29,6 +33,11 @@ export type UsageUserDetail = {
     auditEvents: number;
     creditsSpent: number;
     creditsEarned: number;
+    claudeCalls: number;
+    claudeInputTokens: number;
+    claudeOutputTokens: number;
+    claudeTokenEstimate: number;
+    claudeMetered: boolean;
   };
   recentConsultations: Array<{
     id: string;
@@ -83,6 +92,11 @@ function emptyDetail(userId: string): UsageUserDetail {
       auditEvents: 0,
       creditsSpent: 0,
       creditsEarned: 0,
+      claudeCalls: 0,
+      claudeInputTokens: 0,
+      claudeOutputTokens: 0,
+      claudeTokenEstimate: 0,
+      claudeMetered: false,
     },
     recentConsultations: [],
     recentSimulations: [],
@@ -225,6 +239,28 @@ export async function getUsageUserDetail(userId: string): Promise<UsageUserDetai
     )) as Array<{ spent: number; earned: number }>;
     out.stats.creditsSpent = spent[0]?.spent ?? 0;
     out.stats.creditsEarned = spent[0]?.earned ?? 0;
+  } catch {
+    /* */
+  }
+
+  try {
+    const [aggMap, proxyMap] = await Promise.all([
+      getClaudeUsageAggregates([id]),
+      getClaudeAuditProxies([id]),
+    ]);
+    const metered = aggMap.get(id);
+    const proxy = proxyMap.get(id);
+    if (metered && metered.calls > 0) {
+      out.stats.claudeMetered = true;
+      out.stats.claudeCalls = metered.calls;
+      out.stats.claudeInputTokens = metered.inputTokens;
+      out.stats.claudeOutputTokens = metered.outputTokens;
+      out.stats.claudeTokenEstimate = proxy?.tokenEstimate ?? 0;
+    } else {
+      out.stats.claudeMetered = false;
+      out.stats.claudeCalls = proxy?.calls ?? 0;
+      out.stats.claudeTokenEstimate = proxy?.tokenEstimate ?? 0;
+    }
   } catch {
     /* */
   }

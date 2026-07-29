@@ -9,6 +9,7 @@ import { isSmalltalk, caseContext, GREETING, GREETING_INVITE_CASE, GREETING_INVI
 import { retrieveCasePassages } from "./case-vector";
 import { runCaseAgent } from "@/lib/modules/agents/case-agent-bridge";
 import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
+import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
 
 export type AskCitation = { articleId: string; lawName: string; articleNumber: number; quote: string };
 
@@ -37,6 +38,9 @@ function supportingBlock(agent: { rulings?: Array<{ title?: string; snippet?: st
 /** يبثّ إجابة الموجّه حيًّا: خطوات البحث ثمّ التوليد المتدفّق من النموذج، ثمّ الختام. */
 export async function* streamAsk(question: string, kase: JudicialCase | null, actorId?: string): AsyncGenerator<AskStreamEvent> {
   const requestId = randomUUID();
+  if (actorId) {
+    enterAiUsageContext({ userId: actorId, serviceKey: "judicial-assistant", requestId });
+  }
 
   // ① حارس التحيّة — ردٌّ ودّيّ مبثوثٌ كلمةً كلمةً، بلا تأصيل.
   if (isSmalltalk(question)) {

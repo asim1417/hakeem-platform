@@ -10,6 +10,7 @@ import { getManifest } from "@/lib/agent-runtime/live/manifests";
 import { createRunEngine } from "@/lib/agent-runtime/live/run-engine";
 import { resolveAiConfig, streamWithConfig } from "@/lib/modules/ai/ai-config";
 import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
+import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: { agentId
 
   // مهمّةٌ خلفيّة قابلةٌ للاستئناف (يُكمل الخادم التوليد ويحفظه حتى لو غادر العميل).
   const jobId = await createJob(user.id, `agent:${params.agentId}`, m.displayName ?? params.agentId).catch(() => null);
+  enterAiUsageContext({ userId: user.id, serviceKey: `agent:${params.agentId}` });
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({

@@ -20,6 +20,16 @@ type UserItem = {
   creditsBalance?: number;
   subscriptionStatus?: string;
   exhausted?: boolean;
+  consultations?: number;
+  simulations?: number;
+  askConversations?: number;
+  legalChatConversations?: number;
+  jaConversations?: number;
+  claudeCalls?: number;
+  claudeInputTokens?: number;
+  claudeOutputTokens?: number;
+  claudeTokenEstimate?: number;
+  claudeMetered?: boolean;
 };
 
 type CredsReveal = {
@@ -313,7 +323,7 @@ export function AdminUsersManager({
           <LegalAlert>لا يوجد مستخدمون مسجلون حتى الآن.</LegalAlert>
         ) : (
           <div className="max-h-[68vh] overflow-auto rounded-[var(--r-lg)] border border-[var(--ink-08)]">
-            <table className="w-full min-w-[1180px] border-collapse text-right text-sm">
+            <table className="w-full min-w-[1480px] border-collapse text-right text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-3 [&>th]:py-3 [&>th]:font-semibold">
                   <th scope="col">الاسم</th>
@@ -322,6 +332,8 @@ export function AdminUsersManager({
                   <th scope="col">الحصّة</th>
                   <th scope="col">النقاط</th>
                   <th scope="col">الاشتراك</th>
+                  <th scope="col">الخدمات</th>
+                  <th scope="col">Claude</th>
                   <th scope="col">الحالة</th>
                   <th scope="col">إجراء</th>
                 </tr>
@@ -334,6 +346,18 @@ export function AdminUsersManager({
                   const credits = user.creditsBalance ?? 0;
                   const sub = user.subscriptionStatus || "free";
                   const exhausted = Boolean(user.exhausted);
+                  const services = [
+                    { label: "استشارات", n: user.consultations ?? 0 },
+                    { label: "محاكاة", n: user.simulations ?? 0 },
+                    { label: "اسأل", n: user.askConversations ?? 0 },
+                    { label: "قانوني", n: user.legalChatConversations ?? 0 },
+                    { label: "معاون", n: user.jaConversations ?? 0 },
+                  ];
+                  const claudeCalls = user.claudeCalls ?? 0;
+                  const inTok = user.claudeInputTokens ?? 0;
+                  const outTok = user.claudeOutputTokens ?? 0;
+                  const estTok = user.claudeTokenEstimate ?? 0;
+                  const metered = Boolean(user.claudeMetered);
                   return (
                     <tr
                       key={user.id}
@@ -374,6 +398,50 @@ export function AdminUsersManager({
                           <span className="font-semibold text-[var(--ruby)]">مستنفد</span>
                         ) : (
                           <span>مجاني</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        <ul className="space-y-0.5 text-xs leading-5 text-[var(--ink-70)]">
+                          {services.map((s) => (
+                            <li key={s.label}>
+                              <span className="text-[var(--ink-60)]">{s.label}:</span>{" "}
+                              <span className={s.n > 0 ? "font-semibold text-[var(--navy)]" : ""}>
+                                {s.n.toLocaleString("ar-SA")}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td className="px-3 py-3">
+                        {claudeCalls === 0 && inTok === 0 && outTok === 0 && estTok === 0 ? (
+                          <span className="text-xs text-[var(--ink-60)]">—</span>
+                        ) : (
+                          <div className="space-y-0.5 text-xs leading-5">
+                            <p>
+                              <span className="text-[var(--ink-60)]">نداءات:</span>{" "}
+                              <span className="font-semibold text-[var(--navy)]">
+                                {claudeCalls.toLocaleString("ar-SA")}
+                              </span>
+                            </p>
+                            {metered ? (
+                              <>
+                                <p dir="ltr" className="font-mono-legal text-[11px] text-[var(--ink-70)]">
+                                  in {inTok.toLocaleString("en-US")} / out {outTok.toLocaleString("en-US")}
+                                </p>
+                                <p className="text-[10px] text-[var(--ink-60)]">رموز فعلية من المفتاح</p>
+                              </>
+                            ) : (
+                              <>
+                                {estTok > 0 ? (
+                                  <p>
+                                    <span className="text-[var(--ink-60)]">تقدير:</span>{" "}
+                                    {estTok.toLocaleString("ar-SA")}
+                                  </p>
+                                ) : null}
+                                <p className="text-[10px] text-[var(--ink-60)]">من سجل التدقيق</p>
+                              </>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="px-3 py-3">
