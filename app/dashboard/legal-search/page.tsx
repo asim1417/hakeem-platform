@@ -21,7 +21,7 @@ const SOURCE_LABELS: Record<string, string> = {
   postgres: "نصّي",
   vector: "دلالي",
   knowledge_graph: "رسم معرفي",
-  opensearch: "OpenSearch",
+  opensearch: "بحث متقدم",
 };
 
 type EntityType = "article" | "ruling" | "principle";
@@ -412,7 +412,7 @@ export default async function LegalSearchPage({
       {data && counts.ruling > 0 && (
         <div className="mt-4">
           <LegalAlert tone="warning">
-            بعض نتائج الأحكام والمبادئ هي <strong>عيّنة تجريبية موسومة</strong> 【عيّنة تجريبية】 لأغراض العرض، وتُستبدل تلقائياً ببيانات الأحكام الحقيقية عند استيرادها.
+            بعض نتائج الأحكام موسومة كعيّنة للعرض فقط وليست أحكامًا نهائية من قاعدة الإنتاج.
           </LegalAlert>
         </div>
       )}

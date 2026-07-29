@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpen, FileText, Link2, Pencil, Scale, ChevronRight, ChevronLeft, ShieldAlert, ScrollText } from "lucide-react";
+import { BookOpen, FileText, Link2, Scale, ChevronRight, ChevronLeft, ShieldAlert, ScrollText } from "lucide-react";
 import { getCurrentUser, requirePagePermission } from "@/lib/modules/auth/session";
 import { awardReadArticle } from "@/lib/modules/credits/engagement";
 import { prisma } from "@/lib/prisma";
@@ -210,7 +210,6 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
             <div className="reading-hideable flex flex-wrap items-center gap-2">
               <LegalCopyButton text={content} label="نسخ نص المادة" />
               <LegalCopyButton text={officialCitation} label="نسخ الإحالة" />
-              <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Pencil size={16} /> تحرير</button>
               <Link className="btn btn-gold" href={`/dashboard/simulations?article=${article.id}`}><Scale size={16} /> استخدام في القاضي حكيم</Link>
               <Link className="btn ho-hero-outline" href={`/dashboard/consultations?article=${article.id}`}><FileText size={16} /> استخدام في الاستشارة</Link>
             </div>
@@ -278,10 +277,6 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">تاريخ النفاذ</dt><dd>{article.effectiveFrom ? article.effectiveFrom.toLocaleDateString("ar-SA") : "غير مدخل"}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">الحالة</dt><dd><LegalTopicBadge tone={statusTone(article.status)}>{article.status || "سارية"}</LegalTopicBadge></dd></div>
               </dl>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Link2 size={16} /> ربط بمسألة</button>
-                <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Scale size={16} /> ربط بحكم</button>
-              </div>
             </LegalCoreCard>
 
             <LegalCitationBlock lawName={article.lawName} articleNumber={article.articleNumber} content={content} royalDecree={article.royalDecree} effectiveFrom={article.effectiveFrom} eliSlug={article.legalSystem?.eliSlug} />

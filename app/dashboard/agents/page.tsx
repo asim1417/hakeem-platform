@@ -122,7 +122,7 @@ export default async function AgentsPage() {
       {/* قدرات تجريبية أخرى — مخفيّةٌ داخل المختبر (الرسم المعرفيّ · RAG · التدريب). */}
       <section className="mt-8">
         <Link href="/dashboard/lab" className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]">
-          🧪 المختبر التجريبيّ — قدرات قيد التطوير (الرسم المعرفيّ · الذكاء القانونيّ RAG · التدريب) ←
+          المختبر — قدرات قيد الاستكشاف ←
         </Link>
       </section>
     </div>

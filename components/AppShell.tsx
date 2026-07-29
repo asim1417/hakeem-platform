@@ -98,8 +98,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     return true;
   });
   const navItems = isAdmin ? [...visibleNav, adminNavItem] : visibleNav;
-  const displayName = user?.name ?? "المستخدم التجريبي";
-  const roleLabel = user ? roleLabels[user.role] ?? user.role : "حساب محام - تدريبي";
+  const displayName = user?.name ?? "مستخدم";
+  const roleLabel = user ? roleLabels[user.role] ?? "حساب" : "حساب";
   const initials =
     displayName
       .split(" ")

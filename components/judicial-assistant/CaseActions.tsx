@@ -57,10 +57,17 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
     // ترويسة x-vercel-error (مثل NOT_FOUND / FUNCTION_INVOCATION_FAILED / DEPLOYMENT_NOT_FOUND)
     // أو مقتطفٌ من الجسم — كي يظهر السبب في الواجهة مباشرةً بلا أدوات المطوّر.
     const vercel = res.headers.get("x-vercel-error") || res.headers.get("x-vercel-error-code");
-    const ctype = res.headers.get("content-type") || "";
-    const snippet = !ctype.includes("json") && raw ? raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90) : "";
-    const hint = vercel ? ` · ${vercel}` : snippet ? ` · ${snippet}` : "";
-    throw new Error(`تعذّر التشغيل (رمز ${res.status}${hint}).`);
+    // لا تُعرض رموز الحافة أو مقتطفات HTML للمستخدم — سجّل داخليًا فقط.
+    if (vercel && typeof console !== "undefined") {
+      console.warn("[ja] edge error", res.status, vercel);
+    }
+    throw new Error(
+      res.status === 402
+        ? "انتهت حصتك أو رصيدك. راجع صفحة الحساب ثم أعد المحاولة."
+        : res.status >= 500
+          ? "تعذّر إكمال الطلب مؤقتًا. حاول مرة أخرى بعد لحظات."
+          : "تعذّر تشغيل الخدمة. تحقق من الاتصال وأعد المحاولة."
+    );
   }
   return data;
 }

@@ -1284,10 +1284,10 @@ export function HakeemAskWorkspace({
                             title={
                               (turn.mode === "live" || turn.mode === "native-agent")
                                 ? "صياغة ذكية مستندة للمواد"
-                                : "صياغة تدريبية مُركّبة من المواد (دون مزوّد ذكاء مفعّل)"
+                                : "صياغة مستندة إلى المواد المسترجعة"
                             }
                           >
-                            {(turn.mode === "live" || turn.mode === "native-agent") ? "صياغة مستندة" : "صياغة تدريبية"}
+                            {(turn.mode === "live" || turn.mode === "native-agent") ? "صياغة مستندة" : "صياغة من المصادر"}
                           </span>
                         ) : null}
                       </div>

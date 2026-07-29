@@ -41,7 +41,6 @@ export function RolePermissionsEditor({ initialMatrix }: { initialMatrix: RoleMa
         {matrix.map((row) => (
           <article key={row.role} className="rounded-lg border border-gray-200 bg-ivory p-4">
             <div className="flex items-center gap-2">
-              <span className="rounded bg-gold/10 px-2 py-0.5 text-xs text-gold">{row.role}</span>
               <h3 className="text-lg font-bold text-olive">{row.label}</h3>
               <span className="ms-auto text-xs text-muted">
                 {row.cells.filter((c) => c.effective).length}/{row.cells.length} فعّالة

@@ -4,6 +4,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getUsageUserDetail } from "@/lib/modules/billing/usage-user-detail";
 import { statusLabel } from "@/lib/activity-labels";
+import { roleLabels } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export default async function AdminUsageUserPage({
         {user.email || user.id}
       </p>
       <p className="mt-1 text-sm text-[rgba(14,52,53,0.55)]">
-        دور: {user.role || "—"} · حساب: {user.isActive ? "نشط" : "موقوف"} · إنشاء:{" "}
+        دور: {(user.role && roleLabels[user.role]) || user.role || "—"} · حساب: {user.isActive ? "نشط" : "موقوف"} · إنشاء:{" "}
         {new Date(user.createdAt).toLocaleDateString("ar-SA")}
       </p>
 

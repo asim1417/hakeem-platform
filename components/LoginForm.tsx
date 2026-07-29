@@ -6,8 +6,6 @@ import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 
 type Providers = { google: boolean; microsoft: boolean; password: boolean };
 
-const OWNER_EMAIL = "aasemalfarsi@gmail.com";
-
 export function LoginForm({
   nextUrl = "/dashboard",
   googleEnabled,
@@ -21,13 +19,12 @@ export function LoginForm({
   compact?: boolean;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState(OWNER_EMAIL);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activating, setActivating] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
-  const [magicUrl, setMagicUrl] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [providers, setProviders] = useState<Providers>({
@@ -35,7 +32,6 @@ export function LoginForm({
     microsoft: Boolean(microsoftEnabled),
     password: true,
   });
-  const isOwnerEmail = email.trim().toLowerCase() === OWNER_EMAIL;
 
   useEffect(() => {
     let active = true;
@@ -94,11 +90,10 @@ export function LoginForm({
     setError("");
     try {
       const res = await fetch("/api/auth/ensure-owner", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.message || "تعذّر التفعيل.");
-      setEmail(data.email || OWNER_EMAIL);
-      setPassword("");
-      setInfo("تم تفعيل حساب المالك. أدخل كلمة المرور ثم اضغط دخول.");
+      const data = await res.json().catch(() => ({}));
+      throw new Error(
+        data?.message || "تفعيل المالك من هذه الواجهة لم يعد متاحًا. استخدم صفحة الدخول."
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التفعيل.");
     } finally {
@@ -106,21 +101,21 @@ export function LoginForm({
     }
   }
 
-  /** دخول المالك بقراءة البريد: يُرسل رابطًا أو يعرضه إن لم يُضبط Resend. */
+  /** طلب رابط دخول بالبريد — لا يُعرض الرابط في الواجهة. */
   async function requestMagicLink() {
     setMagicLoading(true);
     setError("");
-    setMagicUrl("");
     try {
+      if (!email.trim()) throw new Error("أدخل البريد الإلكتروني أولًا.");
       const res = await fetch("/api/auth/magic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email || OWNER_EMAIL, next: dest }),
+        body: JSON.stringify({ email: email.trim(), next: dest }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "تعذّر إرسال رابط الدخول.");
-      setInfo(data.message || "تم تجهيز رابط الدخول.");
-      if (data.magicUrl) setMagicUrl(data.magicUrl);
+      setInfo(data.message || "إن وُجد حساب مطابق، سيصلك رابط الدخول على بريدك.");
+      // لا تُعرض magicUrl في الواجهة أبدًا.
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر إرسال رابط الدخول.");
     } finally {
@@ -140,12 +135,7 @@ export function LoginForm({
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.message ?? "تعذر تسجيل الدخول.");
-      // إن لم يكن Google مفعّلًا بعد، وجّه المالك لإعداداته داخل الموقع.
-      const go =
-        email.toLowerCase() === OWNER_EMAIL && !providers.google
-          ? "/admin/settings"
-          : dest;
-      router.push(go);
+      router.push(dest);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول.");
@@ -173,15 +163,15 @@ export function LoginForm({
               className="login-sso-btn login-sso-google focus-ring"
             >
               <GoogleIcon />
-              <span>الدخول عبر Google كمالك</span>
+              <span>الدخول عبر Google</span>
             </a>
           ) : null}
         </div>
       ) : (
         <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--navy)]">
-          <p className="font-semibold">تفعيل الدخول من داخل المنصة</p>
+          <p className="font-semibold">تسجيل الدخول</p>
           <p className="mt-1 text-[var(--ink-70)]">
-            لا حاجة لـ Vercel. اضغط التفعيل ثم دخول ببريد المالك. لتفعيل زر Google لاحقًا: من إعدادات الموقع بعد الدخول.
+            استخدم البريد وكلمة المرور أدناه، أو فعّل مزوّد الدخول من إعدادات المنصة.
           </p>
           <NavyButton
             type="button"
@@ -189,7 +179,7 @@ export function LoginForm({
             disabled={activating}
             className="mt-3 w-full px-4 py-2 text-sm"
           >
-            {activating ? "جارٍ التفعيل..." : "تفعيل حساب المالك وملء البيانات"}
+            {activating ? "جارٍ التحقق..." : "المساعدة في تفعيل الحساب"}
           </NavyButton>
         </div>
       )}
@@ -213,7 +203,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="aasemalfarsi@gmail.com"
+            placeholder="name@example.com"
             className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3 text-left text-[var(--ink)] placeholder:text-[var(--ink-20)]"
           />
         </label>
@@ -245,11 +235,11 @@ export function LoginForm({
         </GoldButton>
       </form>
 
-      {isOwnerEmail ? (
+      {email.trim() ? (
         <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--navy)]">
-          <p className="font-semibold">دخول المالك بالبريد</p>
+          <p className="font-semibold">دخول برابط البريد</p>
           <p className="mt-1 text-[var(--ink-70)]">
-            يُرسل رابط دخول إلى <span dir="ltr">{OWNER_EMAIL}</span> — أو يُعرض هنا إن لم يُضبط Resend بعد.
+            يُرسل رابط دخول إلى بريدك إن كان الحساب موجودًا — دون عرض الرابط هنا.
           </p>
           <NavyButton
             type="button"
@@ -259,13 +249,6 @@ export function LoginForm({
           >
             {magicLoading ? "جارٍ التجهيز..." : "أرسل رابط الدخول إلى بريدي"}
           </NavyButton>
-          {magicUrl ? (
-            <p className="mt-3 break-all text-xs">
-              <a href={magicUrl} className="font-semibold underline underline-offset-4" dir="ltr">
-                افتح رابط الدخول الآن
-              </a>
-            </p>
-          ) : null}
         </div>
       ) : null}
 

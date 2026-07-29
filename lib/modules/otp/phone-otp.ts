@@ -18,10 +18,11 @@ export function isSmsConfigured(): boolean {
 }
 
 export function shouldRevealOtp(): boolean {
+  // لا يُكشف الرمز أبدًا في الإنتاج — حتى مع OTP_DEV_REVEAL.
+  if (process.env.NODE_ENV === "production") return false;
   if (isSmsConfigured()) return false;
   const flag = (process.env.OTP_DEV_REVEAL || "").toLowerCase();
-  if (flag === "true" || flag === "1" || flag === "on") return true;
-  return process.env.NODE_ENV !== "production";
+  return flag === "true" || flag === "1" || flag === "on" || !flag;
 }
 
 async function sendSms(to: string, body: string): Promise<boolean> {

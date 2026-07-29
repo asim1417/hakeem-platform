@@ -326,7 +326,7 @@ export function OnboardingWizard({
             رقمك: <strong dir="ltr" className="text-[var(--navy)]">{phone || "—"}</strong>
           </p>
           <p className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-3 text-sm leading-7 text-[var(--navy)]">
-            التحقق بالجوال اختياري حاليًا. إن تعذّر OTP للسعودية من Clerk، يمكنك التخطّي والمتابعة لإكمال الملف والنقاط.
+            التحقق بالجوال اختياري حاليًا. إن تعذّر إرسال رمز التحقق، يمكنك التخطّي والمتابعة لإكمال الملف.
           </p>
           {phoneVerified ? (
             <LegalAlert tone="success">تم التحقق من الجوال بنجاح.</LegalAlert>
@@ -334,13 +334,13 @@ export function OnboardingWizard({
             <>
               <div className="flex flex-wrap gap-2">
                 <NavyButton type="button" onClick={() => void sendOtp().catch((e) => setError(e.message))}>
-                  إرسال رمز OTP
+                  إرسال رمز التحقق
                 </NavyButton>
               </div>
               {otpHint ? <p className="text-sm text-[var(--ink-60)]">{otpHint}</p> : null}
-              {previewCode ? (
+              {previewCode && process.env.NODE_ENV !== "production" ? (
                 <p className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-sm text-[var(--navy)]">
-                  رمز التطوير: <strong dir="ltr">{previewCode}</strong>
+                  رمز التطوير (محلي فقط): <strong dir="ltr">{previewCode}</strong>
                 </p>
               ) : null}
               <label className="block">

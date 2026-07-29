@@ -765,14 +765,14 @@ export function CaseBrowser() {
       const out: { engine: string; text: string; score: number; ms: number }[] = [];
 
       // محلي (Tesseract) — يعمل دائماً، بلا مفتاح
-      setCmpBusy("القراءة المحلية (Tesseract)…");
+      setCmpBusy("القراءة المحلية…");
       const t0 = Date.now();
       try {
         if (ext === "pdf") {
           const { ocrScannedPdf } = await import("@/lib/modules/document-inspection/ocr");
           const r = await ocrScannedPdf(buf.slice(0), undefined, { onlyPages: [page] });
           const t = strip(r.text);
-          out.push({ engine: "محلي (Tesseract)", text: t, score: analyzeTextIssues(t).q, ms: Date.now() - t0 });
+          out.push({ engine: "محلي", text: t, score: analyzeTextIssues(t).q, ms: Date.now() - t0 });
         } else {
           const { ocrImageBest } = await import("@/lib/modules/document-inspection/ocr");
           const bmp = await createImageBitmap(staged);
@@ -782,10 +782,10 @@ export function CaseBrowser() {
           c.getContext("2d")?.drawImage(bmp, 0, 0);
           bmp.close();
           const r = await ocrImageBest(c);
-          out.push({ engine: "محلي (Tesseract)", text: r.text, score: analyzeTextIssues(r.text).q, ms: Date.now() - t0 });
+          out.push({ engine: "محلي", text: r.text, score: analyzeTextIssues(r.text).q, ms: Date.now() - t0 });
         }
       } catch {
-        out.push({ engine: "محلي (Tesseract)", text: "تعذّرت القراءة المحلية", score: 0, ms: Date.now() - t0 });
+        out.push({ engine: "محلي", text: "تعذّرت القراءة المحلية", score: 0, ms: Date.now() - t0 });
       }
       setCmpRes([...out]);
 
@@ -1143,7 +1143,7 @@ export function CaseBrowser() {
       );
       const payload: LockedPayload = { locked: true, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
       download("وثائق_مقفلة.json", JSON.stringify(payload), "application/json;charset=utf-8");
-      window.alert("أُنشئت نسخة مقفلة (AES-GCM). افتحها من زر «رفع ملف» وستُطلب كلمة المرور.");
+      window.alert("أُنشئت نسخة مقفلة بكلمة مرور. افتحها من زر «رفع ملف» وستُطلب كلمة المرور.");
     } catch {
       window.alert("تعذّر التشفير في هذا المتصفح.");
     }
@@ -1589,7 +1589,7 @@ export function CaseBrowser() {
             </select>
           </span>
           <span className={styles.grp}>
-            <button onClick={lockAndDownload} title="حفظ نسخة مقفلة بكلمة مرور (AES-GCM)">
+            <button onClick={lockAndDownload} title="حفظ نسخة مقفلة بكلمة مرور">
               <LockIcon size={14} /> قفل
             </button>
           </span>
@@ -1710,7 +1710,7 @@ export function CaseBrowser() {
                   ))}
                 </select>
                 <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="الترتيب">
-                  <option value="relevance">الترتيب: الصلة (BM25)</option>
+                  <option value="relevance">الترتيب: الصلة</option>
                   <option value="none">الأصل</option>
                   <option value="date">التاريخ</option>
                   <option value="title">الأبجدية</option>
@@ -1931,24 +1931,16 @@ export function CaseBrowser() {
 
                   {cloudAvail && cloudOcrOn ? (
                     <button className={styles.stageCompare} onClick={() => void runComparison()} disabled={fileBusy || Boolean(cmpBusy)}>
-                      <ScanIcon size={14} /> قارن الجودة على صفحة واحدة (محلي · flash · pro)
+                      <ScanIcon size={14} /> قارن جودة القراءة على صفحة واحدة
                     </button>
                   ) : null}
 
                   {estimate?.heavy ? (
                     <details className={styles.stageGuide}>
-                      <summary>دفعة كبيرة جداً؟ استخدم الخادم الدائم (يصمد أمام إغلاق التبويب)</summary>
+                      <summary>دفعة كبيرة جداً؟ نصيحة للمعالجة الطويلة</summary>
                       <p>
-                        المعالجة هنا تعمل في متصفحك وتصمد أثناء تنقّلك بين الشاشات، لكن إغلاق التبويب يوقفها. للدفعات
-                        الضخمة (مئات الوثائق) استخدم الخدمة المستقلّة التي تعمل على جهازك/خادمك وتُكمل بلا متصفح — مجلد
-                        محلّي أو Google Drive مباشرةً. اضبط مفتاح Gemini في بيئة الطرفية (انظر الـ README) ثم شغّل:
-                      </p>
-                      <code>{`cd tools/gemini-ocr-service
-npm install
-CONCURRENCY=6 DOCUMENTS_FOLDER="./وثائقي" node processDriveDocuments.js`}</code>
-                      <p>
-                        CONCURRENCY=6 يُسرّع الدفعة للمفاتيح المدفوعة (اتركه 1 للمجاني). ثم استورد النصوص الناتجة إلى
-                        المنصّة. خطوة المفتاح والتفاصيل في tools/gemini-ocr-service/README.md.
+                        المعالجة هنا تعمل في متصفحك. إغلاق التبويب قد يوقفها. للدفعات الضخمة استخدم المعالجة على دفعات
+                        أصغر، أو تواصل مع الدعم لتفعيل معالجة الخلفية على الخادم.
                       </p>
                     </details>
                   ) : null}

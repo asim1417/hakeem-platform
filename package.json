@@ -169,6 +169,7 @@
     "agents:demo": "tsx scripts/demo-agents.ts",
     "test:quota": "tsx scripts/test-quota.ts",
     "test:pre-launch-security": "tsx scripts/test-pre-launch-security.ts",
+    "test:ui-surface-leaks": "tsx scripts/test-ui-surface-leaks.ts",
     "test:conversation-engine": "tsx scripts/test-conversation-engine.ts",
     "test:conversation-api-surface": "tsx scripts/test-conversation-api-surface.ts",
     "test:conversation-ensure-schema": "tsx scripts/test-conversation-ensure-schema.ts",

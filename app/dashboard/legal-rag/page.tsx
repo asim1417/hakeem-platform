@@ -22,10 +22,10 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
 
   return (
     <div dir="rtl">
-      <p className="text-sm font-semibold text-gold">الذكاء القانوني المُسنَد (Legal RAG)</p>
-      <h1 className="mt-2 text-3xl font-bold text-olive">صفحة اختبار الإجابة المنضبطة بالمصادر</h1>
+      <p className="text-sm font-semibold text-gold">الذكاء القانوني المُسنَد</p>
+      <h1 className="mt-2 text-3xl font-bold text-olive">إجابة قانونية مرتبطة بالمصادر</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">
-        كل إجابة تمرّ بـ: بحث هجين → سياق قانوني → محرّك استشهاد → نموذج بتعليمات إسناد صارمة. لا إجابة بلا مصدر حقيقي.
+        كل إجابة تمرّ ببحث هجين ثم سياق نظامي ثم صياغة مرتبطة بمصادر حقيقية من المكتبة. لا إجابة بلا مصدر عند توفره.
       </p>
 
       <form className="mt-6 flex flex-wrap items-center gap-2" action="/dashboard/legal-rag">
@@ -51,7 +51,7 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold text-olive">الإجابة المُسنَدة</span>
               <span className="rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                المزوّد: {result.providerConfigured ? result.provider : "غير مضبوط"}{result.model ? ` · ${result.model}` : ""}
+                {result.providerConfigured ? "توليد مفعّل" : "وضع المصادر فقط"}
               </span>
               <span className="ms-auto rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 tabular-nums">
                 الثقة {(result.confidence * 100).toFixed(0)}%
@@ -82,7 +82,7 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
             )}
 
             <details className="mt-4">
-              <summary className="cursor-pointer text-xs text-muted">عرض النصّ الكامل كما ولّده المزوّد</summary>
+              <summary className="cursor-pointer text-xs text-muted">عرض النص الكامل للإجابة</summary>
               <p className="mt-2 whitespace-pre-wrap leading-8 text-ink">{result.answer}</p>
             </details>
           </div>
@@ -90,9 +90,7 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
           {/* لم يُضبط مزوّد ذكاء حقيقي — توجيه صريح لضبط متغيّرات البيئة */}
           {!result.providerConfigured && (
             <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
-              ⚠ لم يُضبط مزوّد ذكاء (يعمل وضع المحاكاة). لتفعيل التوليد اضبط في البيئة:
-              <code className="mx-1 rounded bg-amber-100 px-1">AI_PROVIDER=openai</code> و
-              <code className="mx-1 rounded bg-amber-100 px-1">{["OPENAI", "API", "KEY"].join("_")}</code> ثم أعد النشر.
+              التوليد الذكي غير مفعّل حاليًا. تُعرض المصادر المسترجعة للمراجعة. تواصل مع مسؤول المنصة لتفعيل الخدمة.
             </div>
           )}
 

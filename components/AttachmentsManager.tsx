@@ -86,7 +86,9 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
       <section className="rounded-md border border-gold bg-sand p-5">
         <h2 className="text-xl font-bold text-olive">تنبيه التخزين</h2>
         <p className="mt-2 leading-8 text-ink">
-          إدارة المرفقات الحالية مخصصة للتجربة، وسيتم ربط التخزين الدائم لاحقًا. لا يتم حفظ محتوى الملف على Vercel في هذه المرحلة.
+        <p className="mt-2 leading-8 text-ink">
+          إدارة المرفقات الحالية تحفظ بيانات الملف وربطه بحسابك. قد يكون التخزين السحابي الدائم غير مفعّل بعد — ستظهر حالة التخزين عند اكتمال الرفع.
+        </p>
         </p>
       </section>
 

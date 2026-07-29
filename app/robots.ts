@@ -24,6 +24,7 @@ const DISALLOW = [
   "/training",
   "/library",
   "/documents/app",
+  "/original-hakeem/",
 ];
 
 // روبوتات الذكاء الاصطناعي ومحرّكات البحث المعروفة — ترحيب صريح.

@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
-import { isMoyasarLive } from "@/lib/modules/billing/moyasar";
 import {
   ensureConversationSessionSchemaDetailed,
   getLastConversationSchemaEnsureResult,
@@ -12,9 +9,7 @@ import {
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/health — فحص صحة المنصة للمراقبة الخارجية (بلا أسرار).
- * عام عمدًا — لا يعيد مفاتيح ولا بيانات مستخدمين.
- * يضمن مخطط محرك الجلسات (idempotent) ثم يبلّغ جاهزيته.
+ * GET /api/health — فحص صحة المنصة للمراقبة الخارجية (بلا أسرار ولا تفاصيل تكاملات).
  */
 export async function GET() {
   const started = Date.now();
@@ -57,9 +52,6 @@ export async function GET() {
       latencyMs: Date.now() - started,
       checks: {
         database,
-        clerk: isClerkConfigured() ? "configured" : "missing",
-        googleOAuth: isGoogleOAuthConfigured() ? "configured" : "missing",
-        moyasar: isMoyasarLive() ? "configured" : "missing",
         conversationSession,
         ...(conversationSessionDetail ? { conversationSessionDetail } : {}),
       },

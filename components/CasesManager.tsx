@@ -185,8 +185,8 @@ function TextArea({ label, value, onChange }: { label: string; value: string; on
 }
 
 function statusLabel(status: string) {
-  if (status === "OPEN") return "مسودة";
-  if (status === "UNDER_REVIEW") return "نشطة";
-  if (status === "CLOSED") return "مغلقة";
-  return status;
+  if (status === "OPEN" || status === "DRAFT") return "مسودة";
+  if (status === "UNDER_REVIEW" || status === "ACTIVE") return "نشطة";
+  if (status === "CLOSED" || status === "ARCHIVED") return "مغلقة";
+  return "حالة غير معروفة";
 }

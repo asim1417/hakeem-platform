@@ -1435,7 +1435,7 @@ body {
 .ja-action__head { display: flex; gap: 10px; align-items: flex-start; }
 .ja-action__ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--gold-ghost); color: var(--gold-dark); flex: none; }
 .ja-action__meta h4 { margin: 0 0 3px; font-size: 14.5px; font-weight: 700; color: var(--navy); }
-.ja-action__id { font-size: 11px; color: var(--ink-40); font-weight: 600; }
+.ja-action__id { display: none; }
 .ja-action__meta p { margin: 0; font-size: 12.5px; color: var(--ink-60); line-height: 1.6; }
 .ja-action__btn { align-self: flex-start; padding: 6px 18px; font-size: 13px; }
 .ja-action__soon { align-self: flex-start; font-size: 11.5px; font-weight: 600; color: var(--ink-46); background: var(--ink-04); padding: 3px 10px; border-radius: 999px; }

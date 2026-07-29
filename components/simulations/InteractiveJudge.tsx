@@ -745,14 +745,14 @@ function ProviderBadge({ provider }: { provider: { active: boolean; provider: st
   if (!provider) return null;
   if (provider.active) {
     return (
-      <span title={`المزوّد: Claude${provider.model ? " · " + provider.model : ""}`} className="inline-flex items-center gap-1 rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--emerald)]" /> القاضي الذكيّ (Claude) نشط
+      <span title="الذكاء القضائي مفعّل" className="inline-flex items-center gap-1 rounded-full bg-[var(--emerald-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--emerald)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--emerald)]" /> الذكاء القضائي نشط
       </span>
     );
   }
   return (
-    <span title={provider.nonClaudeConfigured ? `المزوّد المضبوط (${provider.provider}) ليس Claude — القاضي حتميّ حتى يُضبط Anthropic` : "لا مفتاح Claude مضبوط — القاضي حتميّ"} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--muted)]">
-      <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted)]" /> {provider.nonClaudeConfigured ? "حتميّ (المزوّد ليس Claude)" : "حتميّ (لا مزوّد Claude)"}
+    <span title="وضع تدريبي — راجع إعدادات الذكاء مع المسؤول" className="inline-flex items-center gap-1 rounded-full bg-[var(--surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--muted)]">
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted)]" /> وضع تدريبي
     </span>
   );
 }
@@ -893,7 +893,7 @@ function ClassicLink() {
   return (
     <details className="mt-6">
       <summary className="cursor-pointer text-xs text-[var(--ink-40)]">الواجهة الكلاسيكيّة (النسخة القديمة)</summary>
-      <a href="/original-hakeem/hakim1111.html?embed=1" target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-[var(--muted)] underline">فتح القاعة الكلاسيكيّة في تبويب جديد ←</a>
+      <a href="/dashboard/simulations" className="mt-2 inline-block text-xs text-[var(--muted)] underline">العودة إلى القاضي التفاعلي ←</a>
     </details>
   );
 }

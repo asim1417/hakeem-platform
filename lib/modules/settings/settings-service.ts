@@ -40,7 +40,7 @@ export const MANAGED_KEYS: ManagedKey[] = [
     label: "بُرد مدراء OAuth (بفواصل)",
     secret: false,
     group: "الدخول الموحّد",
-    placeholder: "aasemalfarsi@gmail.com",
+    placeholder: "admin@example.com",
   },
   // ── Clerk (المصادقة الوحيدة) — المفتاح العلني يُفضَّل في Vercel كـ NEXT_PUBLIC_ ──
   { key: "CLERK_SECRET_KEY", label: "Clerk Secret Key", secret: true, group: "المصادقة (Clerk)", placeholder: "sk_live_..." },

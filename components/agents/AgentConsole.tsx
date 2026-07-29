@@ -211,7 +211,11 @@ function ResultView({ data }: { data: ApiResult }) {
     if (typeof r.note === "string") return <Card tone="warn">{r.note}</Card>;
   }
 
-  return <pre className="mt-4 overflow-x-auto rounded-[var(--r-lg)] border border-line bg-[var(--surface)] p-3 text-xs">{JSON.stringify(data, null, 2)}</pre>;
+  return (
+    <div className="mt-4 rounded-[var(--r-lg)] border border-line bg-[var(--surface)] p-4 text-sm leading-7 text-[var(--ink-60)]">
+      تعذّر عرض النتيجة بهذه الصيغة. أعد المحاولة أو جرّب صياغة أخرى للطلب.
+    </div>
+  );
 }
 
 function EngineList({ title, items, note }: { title: string; items: string[]; note?: string }) {
