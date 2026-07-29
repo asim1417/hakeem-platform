@@ -8,6 +8,7 @@ import {
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { assertCaseOwnedForAttachment, attachmentListWhere } from "@/lib/modules/auth/ownership";
 import { uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
+import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,16 @@ export async function POST(request: NextRequest) {
   // منع ربط مرفق بقضية مستخدم آخر (IDOR على POST).
   const caseGate = await assertCaseOwnedForAttachment(user, caseId);
   if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
+  const access = await gateAdvancedUse(user.id, {
+    serviceCode: "DOCUMENT_UPLOAD",
+    idempotencyKey: `document-upload:${request.headers.get("idempotency-key") || crypto.randomUUID()}`
+  });
+  if (!access.allowed) {
+    return NextResponse.json(
+      { blocked: true, reason: "exhausted", message: access.message },
+      { status: 402 }
+    );
+  }
   const uploaded = await uploadAttachmentBlob({ file, prefix: relationType });
   const metadata = {
     size: file.size,
@@ -86,6 +97,10 @@ export async function POST(request: NextRequest) {
       storageMode: uploaded.storageMode,
       processingStatus: attachment.processingStatus
     }
+  });
+  await settleAdvancedUse(user.id, access.via, {
+    reservationId: access.reservationId,
+    referenceId: attachment.id
   });
 
   return NextResponse.json({ attachment: toAttachmentDto(attachment) }, { status: 201 });
