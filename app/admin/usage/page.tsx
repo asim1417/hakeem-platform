@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getUsageReport } from "@/lib/modules/billing/usage-report";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export default async function AdminUsagePage({
 }: {
   searchParams?: Search;
 }) {
-  await requireSuperAdminPage();
+  await requirePagePermission("ADMIN_REPORTS_VIEW");
   const status = (searchParams?.status || "all").trim();
   const q = (searchParams?.q || "").trim();
   const sort = (searchParams?.sort || "activity").trim();
@@ -28,7 +28,7 @@ export default async function AdminUsagePage({
 
   return (
     <AdminPageShell currentPath="/admin/usage">
-      <p className="text-sm font-semibold text-[#8B6914]">السوبر أدمن</p>
+      <p className="text-sm font-semibold text-[#8B6914]">الإدارة والتقارير</p>
       <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">لوحة الاستهلاك</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
         نظرة كاملة على الاستخدام الفعلي: الحصّة المجانية، النقاط، الاستشارات، المحاكاة، اسأل حكيم،

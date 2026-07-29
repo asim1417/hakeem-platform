@@ -38,9 +38,9 @@ assert.ok(nav.includes('href: "/admin/usage"'), "super nav needs usage report");
 assert.ok(nav.includes("SYSTEM_LINKS"));
 assert.ok(nav.includes('variant === "super"'));
 const systemBlock = nav.split("const SYSTEM_LINKS")[1] || "";
+assert.ok(systemBlock.includes('"/admin/usage"'), "SYSTEM_ADMIN must see usage");
 assert.ok(!systemBlock.includes('"/admin/jobs"'), "SYSTEM_ADMIN must not see jobs");
 assert.ok(!systemBlock.includes('"/admin/billing"'), "SYSTEM_ADMIN must not see billing");
-assert.ok(!systemBlock.includes('"/admin/usage"'), "SYSTEM_ADMIN must not see usage");
 assert.ok(!systemBlock.includes('"/admin/services"'), "SYSTEM_ADMIN must not see services");
 assert.ok(!systemBlock.includes('"/admin/audit"'), "SYSTEM_ADMIN must not see audit");
 assert.ok(!systemBlock.includes('"/admin/settings"'), "SYSTEM_ADMIN must not see settings");
@@ -91,10 +91,12 @@ for (const rel of [
 }
 
 const usagePage = fs.readFileSync(path.join(root, "app/admin/usage/page.tsx"), "utf8");
-assert.ok(usagePage.includes("requireSuperAdminPage"));
+assert.ok(usagePage.includes("requirePagePermission"));
+assert.ok(usagePage.includes("ADMIN_REPORTS_VIEW"));
 assert.ok(usagePage.includes("getUsageReport"));
 assert.ok(usagePage.includes("/api/admin/usage/export"));
 assert.ok(usagePage.includes("/admin/usage/"));
+assert.equal(usagePage.includes("requireSuperAdminPage"), false);
 
 const usageMod = fs.readFileSync(path.join(root, "lib/modules/billing/usage-report.ts"), "utf8");
 assert.ok(usageMod.includes("usageReportToCsv"));

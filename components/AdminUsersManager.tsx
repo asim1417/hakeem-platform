@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { GoldButton, LegalAlert, LegalCard, NavyButton } from "@/components/ui/legal";
 import { generateEasyPassword, generateUsername } from "@/lib/modules/auth/credentials";
@@ -14,6 +15,11 @@ type UserItem = {
   status?: string;
   isActive?: boolean;
   createdAt: string;
+  freeQuotaUsed?: number;
+  freeQuotaTotal?: number;
+  creditsBalance?: number;
+  subscriptionStatus?: string;
+  exhausted?: boolean;
 };
 
 type CredsReveal = {
@@ -307,13 +313,15 @@ export function AdminUsersManager({
           <LegalAlert>لا يوجد مستخدمون مسجلون حتى الآن.</LegalAlert>
         ) : (
           <div className="max-h-[68vh] overflow-auto rounded-[var(--r-lg)] border border-[var(--ink-08)]">
-            <table className="w-full min-w-[920px] border-collapse text-right text-sm">
+            <table className="w-full min-w-[1180px] border-collapse text-right text-sm">
               <thead className="sticky top-0 z-10">
-                <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
+                <tr className="border-b border-[var(--ink-08)] bg-[var(--hakeem-bg-soft)] text-[var(--navy)] [&>th]:px-3 [&>th]:py-3 [&>th]:font-semibold">
                   <th scope="col">الاسم</th>
-                  <th scope="col">اسم المستخدم</th>
                   <th scope="col">البريد</th>
                   <th scope="col">الدور</th>
+                  <th scope="col">الحصّة</th>
+                  <th scope="col">النقاط</th>
+                  <th scope="col">الاشتراك</th>
                   <th scope="col">الحالة</th>
                   <th scope="col">إجراء</th>
                 </tr>
@@ -321,19 +329,26 @@ export function AdminUsersManager({
               <tbody>
                 {users.map((user) => {
                   const inactive = user.status === "INACTIVE" || user.isActive === false;
+                  const used = user.freeQuotaUsed ?? 0;
+                  const total = user.freeQuotaTotal ?? 20;
+                  const credits = user.creditsBalance ?? 0;
+                  const sub = user.subscriptionStatus || "free";
+                  const exhausted = Boolean(user.exhausted);
                   return (
                     <tr
                       key={user.id}
                       className="border-b border-[var(--ink-04)] transition odd:bg-ivory even:bg-[var(--hakeem-bg-soft)] hover:bg-[var(--gold-ghost)]"
                     >
-                      <td className="px-4 py-3 font-semibold text-[var(--navy)]">{user.name}</td>
-                      <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">
-                        {user.username || "—"}
+                      <td className="px-3 py-3">
+                        <p className="font-semibold text-[var(--navy)]">{user.name}</p>
+                        <p className="mt-0.5 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">
+                          {user.username || "—"}
+                        </p>
                       </td>
-                      <td className="px-4 py-3 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">
+                      <td className="px-3 py-3 font-mono-legal text-xs text-[var(--ink-70)]" dir="ltr">
                         {user.email}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <select
                           value={user.role}
                           onChange={(e) => void updateUser(user.id, { role: e.target.value })}
@@ -346,7 +361,22 @@ export function AdminUsersManager({
                           ))}
                         </select>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
+                        <span className={exhausted ? "font-semibold text-[var(--ruby)]" : ""}>
+                          {used.toLocaleString("ar-SA")} / {total.toLocaleString("ar-SA")}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">{credits.toLocaleString("ar-SA")}</td>
+                      <td className="px-3 py-3">
+                        {sub === "active" ? (
+                          <span className="font-semibold text-[var(--navy)]">مشترك</span>
+                        ) : exhausted ? (
+                          <span className="font-semibold text-[var(--ruby)]">مستنفد</span>
+                        ) : (
+                          <span>مجاني</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
                         <span
                           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
                           style={
@@ -367,8 +397,14 @@ export function AdminUsersManager({
                           {inactive ? "غير نشط" : "نشط"}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={`/admin/usage/${encodeURIComponent(user.id)}`}
+                            className="focus-ring inline-flex items-center rounded-md border border-[var(--gold-border)] bg-ivory px-3 py-2 text-xs font-semibold text-[var(--navy)] hover:bg-[var(--gold-ghost)]"
+                          >
+                            الاستهلاك
+                          </Link>
                           <NavyButton
                             type="button"
                             onClick={() => void updateUser(user.id, { status: inactive ? "ACTIVE" : "INACTIVE" })}
