@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import fs from "node:fs/promises";
 import path from "node:path";
 import zlib from "node:zlib";
+import { fileURLToPath } from "node:url";
+import { PREAMBLE_ARTICLE_NUMBER, PREAMBLE_TITLE } from "@/lib/modules/legal-core/article-ref";
 
 const prisma = new PrismaClient();
 const checkpointPath = path.join(process.cwd(), ".import-hoqoqi-checkpoint.json");
@@ -17,6 +19,12 @@ type HoqoqiSystem = {
   name: string;
   classification?: string;
   description?: string;
+  // ── ما قبل المادة (HKM-LAW-PREAMBLE-002): يُحفظ لا يُسقَط ──
+  preamble?: string; // نصّ ديباجة النظام (laws_lang.law_preamble)
+  royalDecree?: string; // مرجع أداة الإصدار «مرسوم ملكي م/191» (tools_issuance_law)
+  issueDateH?: string; // تاريخ أداة الإصدار الهجريّ
+  issuingAuthority?: string; // الجهة المُصدِرة
+  instrumentText?: string; // نصّ أداة الإصدار (حيثيات/موافقة/نشر) إن ورد
 };
 
 type HoqoqiArticle = {
@@ -30,6 +38,7 @@ type HoqoqiArticle = {
   chapter?: string;
   classification?: string;
   keywords: string[];
+  royalDecree?: string; // للديباجة/المادة حين تُعرف أداة الإصدار
 };
 
 type ImportModel = {
@@ -269,24 +278,100 @@ function rowFromValues(columns: string[], values: Array<string | number | null>)
   return row;
 }
 
-function buildImportModel(parsed: ParsedSql): ImportModel {
+export function buildImportModel(parsed: ParsedSql): ImportModel {
   const categories = buildCategories(parsed);
   const systems = buildSystems(parsed, categories);
-  const articles = buildArticles(parsed, systems, categories);
+  // أداة الإصدار (المراسيم) — تُدمَج في الأنظمة فلا تُسقَط (كانت تُعدّ ولا تُربَط).
+  mergeIssuanceInstruments(systems, buildIssuanceInstruments(parsed));
+  const bodyArticles = buildArticles(parsed, systems, categories);
+  // الديباجة/أداة الإصدار مادّةً رقم صفر — كي تركب خطّ الأنابيب (بحث/تضمين/استشهاد) دون إسقاط.
+  const preambleArticles = buildPreambleArticles(systems);
+  const articles = [...preambleArticles, ...bodyArticles];
+
+  // مادّة صالحة: لها نظام ونصّ ورقمٌ **منتهٍ** (0 للديباجة مقبولٌ — لا نُسقطه بشرط الصدق «truthy»).
+  const isValid = (a: HoqoqiArticle) => Boolean(a.sourceSystemId) && Boolean(a.content) && Number.isFinite(a.articleNumber);
   const duplicateArticles = findDuplicateArticleKeys(articles);
-  const invalidArticles = articles
-    .filter((article) => !article.sourceSystemId || !article.content || !article.articleNumber)
-    .map((article) => article.sourceId);
+  const invalidArticles = articles.filter((article) => !isValid(article)).map((article) => article.sourceId);
 
   return {
     systems,
-    articles: articles.filter((article) => article.sourceSystemId && article.content && article.articleNumber),
+    articles: articles.filter(isValid),
     categories,
     nounsCount: (parsed.tables.get("nouns") ?? []).length,
     verbsCount: (parsed.tables.get("verbs") ?? []).length,
     invalidArticles,
     duplicateArticles
   };
+}
+
+/** يستخرج أداة الإصدار (نوع/رقم/تاريخ/جهة/نصّ) لكلّ نظام من tools_issuance_law — بلا اختلاق. */
+export function buildIssuanceInstruments(parsed: ParsedSql): Map<string, {
+  royalDecree?: string; issueDateH?: string; issuingAuthority?: string; instrumentText?: string;
+}> {
+  const byLaw = new Map<string, { royalDecree?: string; issueDateH?: string; issuingAuthority?: string; instrumentText?: string }>();
+  for (const row of parsed.tables.get("tools_issuance_law") ?? []) {
+    const lawId = stringValue(pick(row, ["law_id", "id_law", "laws_id"]));
+    if (!lawId) continue;
+    const type = stringValue(pick(row, ["tool_type", "type", "instrument_type", "tool_name", "name"]));
+    const number = stringValue(pick(row, ["tool_number", "number", "no", "decree_no", "tool_no", "reference", "ref"]));
+    const dateH = stringValue(pick(row, ["date_h", "hijri_date", "tool_date", "date", "issue_date_h"]));
+    const authority = stringValue(pick(row, ["authority", "issuing_authority", "issuer", "source_authority"]));
+    const text = stringValue(pick(row, ["text", "content", "preamble", "recitals", "body", "details"]));
+    const royalDecree = [type, number].filter(Boolean).join(" ").trim() || undefined;
+    const prev = byLaw.get(lawId);
+    byLaw.set(lawId, {
+      royalDecree: prev?.royalDecree || royalDecree,
+      issueDateH: prev?.issueDateH || dateH || undefined,
+      issuingAuthority: prev?.issuingAuthority || authority || undefined,
+      instrumentText: prev?.instrumentText || text || undefined
+    });
+  }
+  return byLaw;
+}
+
+function mergeIssuanceInstruments(systems: HoqoqiSystem[], instruments: ReturnType<typeof buildIssuanceInstruments>) {
+  for (const system of systems) {
+    const inst = instruments.get(system.sourceId);
+    if (!inst) continue;
+    system.royalDecree = system.royalDecree || inst.royalDecree;
+    system.issueDateH = system.issueDateH || inst.issueDateH;
+    system.issuingAuthority = system.issuingAuthority || inst.issuingAuthority;
+    system.instrumentText = system.instrumentText || inst.instrumentText;
+  }
+}
+
+/**
+ * يبني «مادّة الديباجة» (رقم صفر) لكلّ نظامٍ له نصّ ديباجةٍ أو أداة إصدار — بنصّه الخام دون
+ * إعادة صياغة. لا يُنشئ ديباجةً لنظامٍ بلا مصدرٍ لها (منع الاختلاق).
+ */
+export function buildPreambleArticles(systems: HoqoqiSystem[]): HoqoqiArticle[] {
+  const out: HoqoqiArticle[] = [];
+  for (const s of systems) {
+    const parts: string[] = [];
+    if (s.preamble?.trim()) parts.push(s.preamble.trim());
+    const instrumentLines = [
+      s.royalDecree ? `أداة الإصدار: ${s.royalDecree}` : "",
+      s.issueDateH ? `التاريخ: ${s.issueDateH}` : "",
+      s.issuingAuthority ? `الجهة المُصدِرة: ${s.issuingAuthority}` : "",
+      s.instrumentText?.trim() ? s.instrumentText.trim() : ""
+    ].filter(Boolean);
+    if (instrumentLines.length) parts.push(instrumentLines.join("\n"));
+    const content = parts.join("\n\n").trim();
+    if (!content) continue; // بلا نصّ ⇒ لا ديباجة (لا نختلق)
+    out.push({
+      sourceId: `preamble:${s.sourceId}`,
+      sourceSystemId: s.sourceId,
+      lawName: s.name,
+      articleNumber: PREAMBLE_ARTICLE_NUMBER,
+      articleNumberText: String(PREAMBLE_ARTICLE_NUMBER),
+      title: PREAMBLE_TITLE,
+      content,
+      classification: s.classification,
+      royalDecree: s.royalDecree,
+      keywords: ["source:hoqoqi_sql", "review:needs_review", "type:preamble"]
+    });
+  }
+  return out;
 }
 
 function buildCategories(parsed: ParsedSql) {
@@ -325,11 +410,15 @@ function buildSystems(parsed: ParsedSql, categories: Map<string, string>) {
     const name = stringValue(pick(row, ["name", "title", "law_name", "lang_name", "ar_name"]));
     if (!sourceId || !name) continue;
     const current = systems.get(sourceId);
+    // الديباجة تُحفَظ في حقلٍ خاصّ (preamble) لا تُطوى في description ثمّ تُرمى (الخلل الأصليّ).
+    const preamble = stringValue(pick(row, ["law_preamble", "preamble", "recitals", "intro_text"]));
     systems.set(sourceId, {
+      ...current,
       sourceId,
       name,
       classification: current?.classification,
-      description: current?.description ?? stringValue(pick(row, ["law_preamble", "description", "summary", "details", "intro"]))
+      description: current?.description ?? stringValue(pick(row, ["description", "summary", "details", "intro"])),
+      preamble: current?.preamble || preamble || undefined
     });
   }
 
@@ -550,15 +639,17 @@ async function importArticles(
       .map((article) => {
         const lawName = article.lawName ?? model.systems.find((system) => system.sourceId === article.sourceSystemId)?.name;
         const legalSystemId = systemIdBySource.get(article.sourceSystemId);
-        if (!lawName || !legalSystemId || !article.articleNumber || !article.content) return null;
+        // نقبل رقم المادة صفر (الديباجة) — الشرط «!articleNumber» كان يُسقطها؛ نستعمل الانتهاء لا الصدق.
+        if (!lawName || !legalSystemId || !Number.isFinite(article.articleNumber) || !article.content) return null;
         return {
           legalSystemId,
           lawName,
           classification: article.classification,
-          articleNumber: article.articleNumber,
+          articleNumber: article.articleNumber as number,
           title: article.title ?? `المادة ${article.articleNumber}`,
           content: article.content,
           chapter: article.chapter,
+          royalDecree: article.royalDecree,
           status: "needs_review",
           keywords: article.keywords
         };
@@ -682,6 +773,8 @@ function sleep(ms: number) {
 function countArticlesBySystem(articles: HoqoqiArticle[]) {
   const counts = new Map<string, number>();
   for (const article of articles) {
+    // الديباجة (رقم صفر) ليست مادّةً موضوعيّة — لا تُحتسب في articleCount كي يبقى العدّ دقيقًا.
+    if (article.articleNumber === PREAMBLE_ARTICLE_NUMBER) continue;
     counts.set(article.sourceSystemId, (counts.get(article.sourceSystemId) ?? 0) + 1);
   }
   return counts;
@@ -724,11 +817,22 @@ function stringValue(value: unknown) {
   return String(value).trim();
 }
 
-main()
-  .catch((error) => {
-    console.error(error instanceof Error ? error.message : error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+/** يُشغَّل main فقط عند الاستدعاء المباشر (لا عند الاستيراد للاختبار). */
+function isDirectRun(): boolean {
+  try {
+    return Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectRun()) {
+  main()
+    .catch((error) => {
+      console.error(error instanceof Error ? error.message : error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
