@@ -1,20 +1,23 @@
 name: Import hoqoqi.sql into النواة (preamble-aware)
 
-# يُفعّل «الجلب»: ينزّل hoqoqi.sql من رابط مشاركة OneDrive (مُدخَل، لا يُخزَّن)، ويشغّل المستورد
-# المُصلَح (HKM-LAW-PREAMBLE-002) الذي يحفظ الديباجة (مادّة رقم صفر) وأداة الإصدار — على قاعدة
-# النواة (Neon).
+# يُفعّل «الجلب»: ينزّل hoqoqi.sql(.zip) من Google Drive (أو OneDrive)، ويشغّل المستورد المُصلَح
+# (HKM-LAW-PREAMBLE-002) الذي يحفظ الديباجة (مادّة رقم صفر) وأداة الإصدار — على قاعدة النواة (Neon).
 #
 # الأمان (§22): الافتراض «فحص فقط» (dry-run) — يُظهر كم ديباجةً/مرسومًا سيُلتقَط دون كتابة.
-# لا يكتب إلا حين apply=true صراحةً. المستورد idempotent (upsert للأنظمة، skipDuplicates للمواد).
+# لا يكتب إلا حين apply=true صراحةً. المستورد idempotent (upsert للأنظمة، skipDuplicates + resume للمواد).
 # ⚠ قبل apply=true: خذ لقطة/فرع Neon كي يتوفّر rollback.
 
 on:
   workflow_dispatch:
     inputs:
-      share_url:
-        description: "رابط مشاركة OneDrive لملف hoqoqi.sql"
+      gdrive:
+        description: "رابط مشاركة Google Drive أو معرّف الملفّ (hoqoqi.sql.zip)"
         type: string
-        required: true
+        default: ""
+      share_url:
+        description: "بديل: رابط مشاركة OneDrive لملف hoqoqi.sql (إن لم تستعمل Google Drive)"
+        type: string
+        default: ""
       apply:
         description: "الكتابة إلى القاعدة؟ (false = فحص فقط/dry-run)"
         type: boolean
@@ -48,33 +51,49 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
-      - name: Download hoqoqi.sql from share link
+      - name: Download hoqoqi source
         env:
+          GDRIVE: ${{ inputs.gdrive }}
           SHARE_URL: ${{ inputs.share_url }}
         run: |
           set -e
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
           is_ok() { local sz; sz=$(stat -c%s "$1" 2>/dev/null || echo 0); local h; h=$(head -c 200 "$1" | tr -d '\0')
             echo "   حجم=$sz"; case "$h" in *"<!DOCTYPE"*|*"<html"*|*"<HTML"*) return 1;; esac; [ "$sz" -gt 500000 ]; }
-          dl() { echo ">> $1"; curl -sSL -c /tmp/cj -b /tmp/cj -A "$UA" --max-time 600 -o hoqoqi.sql \
-                   -w "   HTTP %{http_code} · %{content_type} · %{size_download}B\n" "$2" || true; }
-          case "$SHARE_URL" in *\?*) U1="$SHARE_URL&download=1";; *) U1="$SHARE_URL?download=1";; esac
-          dl "download=1" "$U1"
-          if ! is_ok hoqoqi.sql; then
-            BASE=$(echo "$SHARE_URL" | sed -E 's#(/personal/[^/]+)/.*#\1#')
-            TOKEN=$(echo "$SHARE_URL" | sed -E 's#.*/personal/[^/]+/([^/?]+).*#\1#')
-            dl "download.aspx" "$BASE/_layouts/15/download.aspx?share=$TOKEN"
-            is_ok hoqoqi.sql || { echo "::error::تعذّر تنزيل الملف (قد يتطلّب مصادقة/نطاق «أي شخص لديه الرابط»)."; exit 1; }
+          if [ -n "$GDRIVE" ]; then
+            echo ">> Google Drive عبر gdown"
+            python3 -m pip install --quiet --upgrade gdown
+            # --fuzzy يقبل روابط /file/d/ID/view مباشرةً ويتولّى رمز تأكيد فحص الفيروسات.
+            python3 -m gdown --fuzzy "$GDRIVE" -O hoqoqi.sql.zip || python3 -m gdown "$GDRIVE" -O hoqoqi.sql.zip
+            is_ok hoqoqi.sql.zip || { echo "::error::تعذّر تنزيل الملفّ من Google Drive (تأكّد أنّ المشاركة «أي شخص لديه الرابط»)."; exit 1; }
+            echo "HOQOQI_FILE=hoqoqi.sql.zip" >> "$GITHUB_ENV"
+            echo "أوّل بايتات (PK = zip):"; head -c 4 hoqoqi.sql.zip | xxd | head -1 || true
+          elif [ -n "$SHARE_URL" ]; then
+            echo ">> OneDrive عبر curl"
+            UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+            dl() { echo ">> $1"; curl -sSL -c /tmp/cj -b /tmp/cj -A "$UA" --max-time 600 -o hoqoqi.sql \
+                     -w "   HTTP %{http_code} · %{content_type} · %{size_download}B\n" "$2" || true; }
+            case "$SHARE_URL" in *\?*) U1="$SHARE_URL&download=1";; *) U1="$SHARE_URL?download=1";; esac
+            dl "download=1" "$U1"
+            if ! is_ok hoqoqi.sql; then
+              BASE=$(echo "$SHARE_URL" | sed -E 's#(/personal/[^/]+)/.*#\1#')
+              TOKEN=$(echo "$SHARE_URL" | sed -E 's#.*/personal/[^/]+/([^/?]+).*#\1#')
+              dl "download.aspx" "$BASE/_layouts/15/download.aspx?share=$TOKEN"
+              is_ok hoqoqi.sql || { echo "::error::تعذّر تنزيل الملفّ من OneDrive."; exit 1; }
+            fi
+            echo "HOQOQI_FILE=hoqoqi.sql" >> "$GITHUB_ENV"
+          else
+            echo "::error::مرّر gdrive (Google Drive) أو share_url (OneDrive)."; exit 1
           fi
-          echo "✔ جاهز"
+          echo "✔ جاهز: $HOQOQI_FILE"
       - name: Import (dry-run or apply)
         run: |
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          FILE="${HOQOQI_FILE:-hoqoqi.sql.zip}"
           if [ "${{ inputs.apply }}" = "true" ]; then
             if [ -z "$DATABASE_URL" ]; then echo "::error::apply=true يتطلّب DATABASE_URL (سرّ Neon) — غير مضبوط."; exit 1; fi
             echo "::warning::الكتابة مُفعّلة (apply). تأكّد من وجود لقطة/فرع Neon للتراجع."
-            npx tsx scripts/import-hoqoqi-sql.ts --file=hoqoqi.sql --apply --batch-size=${{ inputs.batch_size }} --resume
+            npx tsx scripts/import-hoqoqi-sql.ts --file="$FILE" --apply --batch-size=${{ inputs.batch_size }} --resume
           else
             echo "وضع الفحص فقط (dry-run): يُظهر preamblesDiscovered/instrumentsDiscovered دون كتابة."
-            npx tsx scripts/import-hoqoqi-sql.ts --file=hoqoqi.sql
+            npx tsx scripts/import-hoqoqi-sql.ts --file="$FILE"
           fi
