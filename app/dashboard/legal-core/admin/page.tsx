@@ -4,6 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
+import { PreambleManager } from "@/components/legal-core/PreambleManager";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,10 @@ export default async function LegalContentAdminPage() {
               );
             })}
           </div>
+        </LegalCoreCard>
+
+        <LegalCoreCard title="ديباجات الأنظمة" subtitle="ديباجة/مرسوم كلّ نظام — قابلةٌ للبحث والاستشهاد (تُخزَّن مادّةً رقم صفر)" icon={<Quote size={18} />}>
+          <PreambleManager />
         </LegalCoreCard>
 
         <LegalCoreCard title="الطبقة الفقهية المنضبطة" subtitle="مساندة غير ملزمة — منفصلة تمامًا عن النص النظامي" icon={<BookOpen size={18} />}>
