@@ -1,0 +1,49 @@
+name: Import full preambles (نصوص الديباجات الرسميّة)
+
+# يستورد نصوص الديباجات الكاملة من data/preambles.json (وملفّات data/preambles/*.txt) إلى النواة
+# (Neon) مادّةً رقم صفر — النصّ رسميّ يُدخِله المشرف من مصدره، لا يُختلَق. يطبع محتوى مادّة‑صفر
+# السابق (إثبات ما كان مخزَّنًا)، ثمّ يستبدله ويُعيد ضبط التضمين/الفهرس ليُعاد بناؤهما.
+#
+# بعده (لجعلها قابلةً للبحث): شغّل build-search-vector ثمّ backfill-embeddings (scope=missing).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: import-preambles
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::سرّ NEON_DATABASE_URL غير مضبوط."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Import full preambles
+        run: npx tsx scripts/import-preambles.ts data/preambles.json

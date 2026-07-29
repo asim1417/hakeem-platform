@@ -23,13 +23,17 @@ interface PreambleInput {
   effectiveFrom?: string | null;
 }
 
-function parseEntries(raw: unknown): PreambleInput[] {
+/** يقرأ المدخلات؛ يدعم حقل `file` (نصّ خامّ نسبةً لمجلد ملف JSON) لتفادي هروب النصوص الطويلة. */
+async function parseEntries(raw: unknown, baseDir: string): Promise<PreambleInput[]> {
   const arr = Array.isArray(raw) ? raw : Array.isArray((raw as { preambles?: unknown[] })?.preambles) ? (raw as { preambles: unknown[] }).preambles : [];
   const out: PreambleInput[] = [];
   for (const r of arr) {
     const o = (r ?? {}) as Record<string, unknown>;
     const lawName = String(o.lawName ?? o.law_name ?? o.system ?? "").trim();
-    const preamble = String(o.preamble ?? o.law_preamble ?? o.text ?? o.content ?? "").trim();
+    let preamble = String(o.preamble ?? o.law_preamble ?? o.text ?? o.content ?? "").trim();
+    if (!preamble && o.file) {
+      preamble = (await fs.readFile(path.resolve(baseDir, String(o.file)), "utf8").catch(() => "")).trim();
+    }
     if (!lawName || !preamble) continue;
     out.push({
       lawName,
@@ -52,20 +56,35 @@ async function main() {
     process.exit(1);
   }
 
-  const entries = parseEntries(raw);
+  const entries = await parseEntries(raw, path.dirname(file));
   if (!entries.length) {
-    console.error("لا مدخلاتٍ صالحة (يلزم lawName + preamble لكلّ عنصر).");
+    console.error("لا مدخلاتٍ صالحة (يلزم lawName + preamble/file لكلّ عنصر).");
     process.exit(1);
   }
 
   let imported = 0;
   const missing: string[] = [];
   for (const e of entries) {
-    const system = await prisma.legalSystem.findUnique({ where: { name: e.lawName } });
+    // مطابقة الاسم: حرفيّة ثمّ احتواء (فتُصيب ولو اختلفت تهجئة الاسم قليلًا في hoqoqi).
+    let system = await prisma.legalSystem.findUnique({ where: { name: e.lawName } });
+    if (!system) {
+      system = await prisma.legalSystem.findFirst({ where: { name: { contains: e.lawName, mode: "insensitive" } } });
+      if (system) console.log(`ℹ طابقتُ «${e.lawName}» بالنظام «${system.name}» (احتواء).`);
+    }
     if (!system) {
       missing.push(e.lawName);
       continue;
     }
+    const lawName = system.name;
+
+    // إثباتٌ لسؤال «هل كان موجودًا؟»: نطبع محتوى مادّة‑صفر السابق (طوله ومقتطفه) قبل الاستبدال.
+    const prev = await prisma.legalArticle.findUnique({
+      where: { lawName_articleNumber: { lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER } },
+      select: { id: true, content: true },
+    });
+    if (prev) console.log(`  ↪ مادّة‑صفر السابقة: ${prev.content.length.toLocaleString("ar-SA")} حرفًا — مقتطف: «${prev.content.slice(0, 140).replace(/\n/g, " ")}…»`);
+    else console.log(`  ↪ لا مادّة‑صفر سابقة لهذا النظام (لم تكن الديباجة مخزَّنة).`);
+
     const effectiveFrom = e.effectiveFrom ? new Date(e.effectiveFrom) : undefined;
     const data = {
       legalSystemId: system.id,
@@ -75,13 +94,19 @@ async function main() {
       royalDecree: e.royalDecree ?? undefined,
       effectiveFrom: effectiveFrom && !Number.isNaN(effectiveFrom.getTime()) ? effectiveFrom : undefined,
     };
-    await prisma.legalArticle.upsert({
-      where: { lawName_articleNumber: { lawName: e.lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER } },
+    const art = await prisma.legalArticle.upsert({
+      where: { lawName_articleNumber: { lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER } },
       update: data,
-      create: { lawName: e.lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER, ...data },
+      create: { lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER, ...data },
+      select: { id: true },
     });
+    // نُعيد ضبط المتجه والفهرس المعجميّ ليُعاد توليدهما على النصّ الجديد (لا يبقيان بائتين):
+    // حذف صفّ pgvector ⇒ backfill-embeddings (scope=missing) يعيد تضمينه؛ تصفير search_norm ⇒ build-search-vector يُعيد فهرسته.
+    await prisma.$executeRawUnsafe(`DELETE FROM "embeddings" WHERE "owner_type" = 'article' AND "owner_id" = $1`, art.id).catch(() => undefined);
+    await prisma.$executeRawUnsafe(`UPDATE legal_articles SET search_norm = NULL WHERE id = $1`, art.id).catch(() => undefined);
+
     imported += 1;
-    console.log(`✓ ديباجة: ${e.lawName} (${e.preamble.length.toLocaleString("ar-SA")} حرفًا)`);
+    console.log(`✓ ديباجة كاملة: ${lawName} (${e.preamble.length.toLocaleString("ar-SA")} حرفًا) — أُعيد ضبط التضمين والفهرس.`);
   }
 
   console.log(`\nاكتمل: ${imported} ديباجة مستوردة (مادّة رقم ${PREAMBLE_ARTICLE_NUMBER}).`);
@@ -90,7 +115,7 @@ async function main() {
     console.warn("تأكّد أنّ lawName يطابق name في legal_systems حرفيًّا.");
   }
   if (imported) {
-    console.log("\nالخطوة التالية (لجعلها قابلةً للبحث الدلاليّ): npx tsx scripts/backfill-embeddings-table.ts");
+    console.log("\nالخطوة التالية (لجعلها قابلةً للبحث): شغّل build-search-vector (معجميّ) + backfill-embeddings scope=missing (دلاليّ).");
   }
   await prisma.$disconnect();
 }
