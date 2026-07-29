@@ -5,6 +5,7 @@ import {
   verifyMoyasarWebhookSecret,
 } from "@/lib/modules/billing/billing-events";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
+import { recordReferralFirstPurchase } from "@/lib/modules/referrals/usage-referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
   // فعّل الاشتراك فقط عند حدث جديد مدفوع (منع التكرار عند إعادة الإرسال).
   if (paid && userId && recorded.inserted) {
     await activateSubscription(userId);
+    await recordReferralFirstPurchase(userId, eventId).catch(() => false);
   } else if (paid && userId && !recorded.ok) {
     // إن تعذّر التسجيل — لا نحجب التفعيل (توافق خلفي).
     await activateSubscription(userId);

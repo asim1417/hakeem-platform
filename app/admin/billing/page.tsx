@@ -5,6 +5,7 @@ import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
 import { getBillingAdminOverview } from "@/lib/modules/billing/admin-overview";
 import { listRecentBillingEvents } from "@/lib/modules/billing/billing-events";
 import { formatSar } from "@/config/pricing";
+import { UsageCreditsAdmin } from "@/components/admin/UsageCreditsAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,7 @@ export default async function AdminBillingPage() {
           href="/admin/settings"
         />
       </section>
+      <UsageCreditsAdmin />
 
       <section className="mt-6 rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-5">
         <h2 className="text-xl font-bold text-[#0E3435]">الخطط المعتمدة</h2>

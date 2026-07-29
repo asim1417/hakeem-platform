@@ -26,6 +26,7 @@ import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access
 import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 import { waitUntil } from "@vercel/functions";
 import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
+import { getUsageServiceCost } from "@/lib/modules/credits/usage-ledger";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -113,15 +114,36 @@ export async function POST(request: NextRequest) {
     {
       if (jobId) send({ type: "job", jobId });
       // حصّة أولًا ثم نقاط: خصم الحصّة مرّة بعد النجاح؛ النقاط تُخصم عند البوابة إن لزم.
-      let accessVia: "quota" | "credits" | "open" = "quota";
+      let accessVia: "usage" | "quota" | "credits" | "open" = "quota";
+      let accessReservationId: string | null = null;
       let consumed = false;
       const consume = () => {
         if (consumed) return;
         consumed = true;
-        void settleAdvancedUse(user.id, accessVia).catch(() => undefined);
+        void (async () => {
+          const actualMilliUnits =
+            accessVia === "usage"
+              ? (await getUsageServiceCost(
+                  "ASK_HAKEEM",
+                  Math.max(1_000, Math.ceil(query.length / 4) + 3_000)
+                )) +
+                (await getUsageServiceCost("HYBRID_SEARCH", 1)) +
+                (await getUsageServiceCost("RERANK", 1))
+              : undefined;
+          await settleAdvancedUse(user.id, accessVia, {
+            reservationId: accessReservationId,
+            actualMilliUnits,
+            referenceId: jobId ?? undefined,
+          });
+        })().catch(() => undefined);
       };
       try {
-        const access = await gateAdvancedUse(user.id);
+        const access = await gateAdvancedUse(user.id, {
+          serviceCode: "ASK_HAKEEM",
+          quantity: Math.max(1_000, Math.ceil(query.length / 4) + 3_000),
+          idempotencyKey: `ask:${request.headers.get("idempotency-key") || jobId || crypto.randomUUID()}`,
+          referenceId: jobId ?? undefined,
+        });
         if (!access.allowed) {
           send({
             type: "result",
@@ -137,6 +159,7 @@ export async function POST(request: NextRequest) {
           return;
         }
         accessVia = access.via;
+        accessReservationId = access.reservationId ?? null;
 
         // ── الوكيل الأصيل (HKM-CLAUDE-NATIVE-001، خلف علم CLAUDE_NATIVE_AGENT_ENABLED) ──
         // في وضع «اسأل» فقط: Claude يستقبل الرسالة ويدير الحوار بحلقة أدوات حقيقية — يقرّر

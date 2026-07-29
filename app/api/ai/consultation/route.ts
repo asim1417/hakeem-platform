@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { createAgentConsultationDraft } from "@/lib/modules/consultations/agent-consultation";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
+import { gateAdvancedUse, releaseAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
+import { getUsageServiceCost } from "@/lib/modules/credits/usage-ledger";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,11 @@ export async function POST(request: NextRequest) {
   if (gate.response) return gate.response;
   const actorId = gate.user!.id;
   // حصّة أولًا، ثم نقاط advanced_use عند النفاد.
-  const access = await gateAdvancedUse(actorId);
+  const access = await gateAdvancedUse(actorId, {
+    serviceCode: "CONSULTATION",
+    quantity: 4_000,
+    idempotencyKey: `consultation:${request.headers.get("idempotency-key") || crypto.randomUUID()}`,
+  });
   if (!access.allowed) {
     return NextResponse.json(
       { blocked: true, reason: "exhausted", message: access.message },
@@ -72,7 +77,24 @@ export async function POST(request: NextRequest) {
   consultationId = consultation.id;
 
   // الخصم بعد النجاح فقط (استشارة مُولَّدة فعلًا، لا محجوبة). النقاط خُصمت مسبقًا إن via=credits.
-  if (!draft.blocked) void settleAdvancedUse(actorId, access.via).catch(() => undefined);
+  if (!draft.blocked) {
+    const tokenEstimate = Number(
+      (draft.qualityReport as Record<string, unknown>).tokenEstimate ?? 1_000
+    );
+    const actualMilliUnits =
+      access.via === "usage"
+        ? (await getUsageServiceCost("CONSULTATION", tokenEstimate)) +
+          (await getUsageServiceCost("HYBRID_SEARCH", 1)) +
+          (await getUsageServiceCost("RERANK", 1))
+        : undefined;
+    await settleAdvancedUse(actorId, access.via, {
+      reservationId: access.reservationId,
+      actualMilliUnits,
+      referenceId: consultationId,
+    });
+  } else {
+    await releaseAdvancedUse(access).catch(() => undefined);
+  }
 
   await auditEvent({
     actorId,
