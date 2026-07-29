@@ -53,6 +53,36 @@ async function main() {
     );
     console.log(JSON.stringify(sample, null, 1));
   }
+
+  // ④ تدقيق تغطية الديباجة السرديّة (law_preamble) عبر كلّ الأنظمة — إثباتٌ لما يحمله المصدر فعلًا،
+  //    لا اعتمادًا على عيّنة صفٍّ واحد. يُجيب: كم نظامًا يحمل نصًّا سرديًّا كاملًا قبل المادة الأولى؟
+  const langRows = [...(parsed.tables.get("laws_lang") ?? []), ...(parsed.tables.get("lang_laws") ?? [])];
+  const field = (r: Record<string, unknown>, keys: string[]) => {
+    const map = new Map(Object.entries(r).map(([k, v]) => [k.toLowerCase(), v]));
+    for (const k of keys) { const v = map.get(k.toLowerCase()); if (v != null && String(v).trim()) return String(v).trim(); }
+    return "";
+  };
+  let withPreamble = 0, withKing = 0, withInstrument = 0;
+  const preambleSamples: Array<{ len: number; text: string }> = [];
+  for (const r of langRows) {
+    const p = field(r, ["law_preamble", "preamble", "recitals", "intro_text"]);
+    if (field(r, ["king_name", "king", "issuer_name"])) withKing++;
+    if (p) { withPreamble++; if (preambleSamples.length < 5) preambleSamples.push({ len: p.length, text: p.slice(0, 220) }); }
+  }
+  for (const r of parsed.tables.get("law_issuance_tools") ?? []) {
+    if (field(r, ["title", "text", "tool_title", "name", "content"])) withInstrument++;
+  }
+  console.log("\n=== تدقيق تغطية «ما قبل المادة الأولى» عبر كلّ الأنظمة (من المصدر مباشرةً) ===");
+  console.log(`صفوف laws_lang المُحلَّلة: ${langRows.length}`);
+  console.log(`أنظمة بـ law_preamble (نصّ سرديّ كامل) غير فارغ: ${withPreamble}`);
+  console.log(`أنظمة بـ king_name غير فارغ: ${withKing}`);
+  console.log(`صفوف أداة إصدار (law_issuance_tools) بعنوان غير فارغ: ${withInstrument}`);
+  if (preambleSamples.length) {
+    console.log("عيّنات law_preamble غير الفارغة:");
+    preambleSamples.forEach((s, i) => console.log(`  [${i + 1}] (${s.len} حرفًا) «${s.text.replace(/\s+/g, " ")}…»`));
+  } else {
+    console.log("النتيجة: لا قيمة law_preamble غير فارغة إطلاقًا — النصّ السرديّ الكامل غير مخزَّن في hoqoqi (يُبنى «ما قبل المادة» من أداة الإصدار + الملك + التواريخ فقط).");
+  }
 }
 
 void main().catch((e) => { console.error(e); process.exit(1); });
