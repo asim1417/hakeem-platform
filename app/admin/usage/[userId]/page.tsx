@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { requireSuperAdminPage } from "@/lib/modules/auth/super-admin";
+import { requirePagePermission } from "@/lib/modules/auth/session";
 import { getUsageUserDetail } from "@/lib/modules/billing/usage-user-detail";
 import { statusLabel } from "@/lib/activity-labels";
 
@@ -18,7 +18,7 @@ export default async function AdminUsageUserPage({
 }: {
   params: { userId: string };
 }) {
-  await requireSuperAdminPage();
+  await requirePagePermission("ADMIN_REPORTS_VIEW");
   const detail = await getUsageUserDetail(decodeURIComponent(params.userId));
   if (!detail) notFound();
   const { user, stats, timeline, recentConsultations, recentSimulations, recentConversations } =

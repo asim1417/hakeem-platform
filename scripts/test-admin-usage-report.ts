@@ -36,17 +36,23 @@ assert.ok(detail.includes("timeline"));
 assert.ok(detail.includes("activityLabel"));
 
 const page = read("app/admin/usage/page.tsx");
-assert.ok(page.includes("requireSuperAdminPage"));
+assert.ok(page.includes("requirePagePermission"));
+assert.ok(page.includes("ADMIN_REPORTS_VIEW"));
 assert.ok(page.includes("/admin/usage/"));
 assert.ok(page.includes("activityScore") || page.includes("النشاط"));
 assert.ok(page.includes("active_users"));
+assert.equal(page.includes("requireSuperAdminPage"), false);
 
 const userPage = read("app/admin/usage/[userId]/page.tsx");
 assert.ok(userPage.includes("getUsageUserDetail"));
 assert.ok(userPage.includes("الخط الزمني"));
-assert.ok(userPage.includes("requireSuperAdminPage"));
+assert.ok(userPage.includes("requirePagePermission"));
+assert.ok(userPage.includes("ADMIN_REPORTS_VIEW"));
 
+assert.ok(read("app/api/admin/usage/route.ts").includes("requireApiPermission"));
 assert.ok(read("app/api/admin/usage/[userId]/route.ts").includes("getUsageUserDetail"));
 assert.ok(read("components/admin/AdminNav.tsx").includes('"/admin/usage"'));
+const systemNav = read("components/admin/AdminNav.tsx").split("SYSTEM_LINKS")[1] || "";
+assert.ok(systemNav.includes('"/admin/usage"'), "system admin nav must include usage");
 
 console.log("test-admin-usage-report: OK");

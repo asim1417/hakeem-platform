@@ -23,6 +23,7 @@ const SUPER_LINKS = [
 const SYSTEM_LINKS = [
   { href: "/admin", label: "نظرة عامة" },
   { href: "/admin/users", label: "المستخدمون" },
+  { href: "/admin/usage", label: "الاستهلاك" },
   { href: "/admin/roles", label: "الأدوار" },
   { href: "/admin/owner", label: "المدراء" },
   { href: "/admin/api-keys", label: "مفاتيح API" },
