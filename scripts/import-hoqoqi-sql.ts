@@ -598,8 +598,9 @@ async function importSystems(model: ImportModel, articleCountBySystem: Map<strin
     await withRetry(async () => {
       await prisma.legalSystem.upsert({
         where: { name: system.name },
+        // على التحديث: لا نطمس التصنيف المُنسَّق القائم (نُحدّث العدد فقط) — «لا تكسر القائم» (§22).
+        // التصنيف يُضبَط عند الإنشاء فقط (نظامٌ جديد لم يكن موجودًا).
         update: {
-          classification: system.classification,
           articleCount: articleCountBySystem.get(system.sourceId) ?? 0
         },
         create: {
