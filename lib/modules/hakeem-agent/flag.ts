@@ -13,8 +13,12 @@ export function hakeemAgentModel(configModel?: string | null): string {
   return (process.env.HAKEEM_AGENT_MODEL || configModel || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5").trim();
 }
 
-/** أقصى دورات أداةٍ في الحلقة — يمنع الدوران اللانهائي (قابلٌ للضبط). */
+/**
+ * أقصى دورات أداةٍ في الحلقة — سقفٌ أمانٍ (لا حدٌّ مُلزِم للعمق): يبحث الوكيل بقدر ما تحتاجه
+ * المسألة (جولاتٌ متعدّدة: مسح ← قراءة ← فهم ← كشف نقصٍ في الأركان ← إعادة) ويتوقّف حين يستوعب
+ * كلّ الأركان، لا عند رقمٍ ثابت. السقف يمنع الدوران اللانهائي فقط. افتراضيّ ٢٠، قابلٌ للرفع بيئيًّا.
+ */
 export function hakeemAgentMaxToolTurns(): number {
   const n = Number.parseInt(process.env.HAKEEM_AGENT_MAX_TOOL_TURNS ?? "", 10);
-  return Number.isFinite(n) && n > 0 && n <= 24 ? n : 10;
+  return Number.isFinite(n) && n > 0 && n <= 40 ? n : 20;
 }
