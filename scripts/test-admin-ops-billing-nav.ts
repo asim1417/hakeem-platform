@@ -14,8 +14,12 @@ const mustExist = [
   "components/admin/AdminJobsControls.tsx",
   "components/admin/AdminBillingActions.tsx",
   "app/admin/billing/page.tsx",
+  "app/admin/usage/page.tsx",
   "app/api/admin/billing/route.ts",
   "app/api/admin/billing/subscription/route.ts",
+  "app/api/admin/usage/route.ts",
+  "app/api/admin/usage/export/route.ts",
+  "lib/modules/billing/usage-report.ts",
   "app/api/admin/jobs/[id]/cancel/route.ts",
   "app/api/admin/jobs/[id]/retry/route.ts",
   "app/api/admin/jobs/reap-stale/route.ts",
@@ -27,11 +31,13 @@ for (const f of mustExist) {
 
 const nav = fs.readFileSync(path.join(root, "components/admin/AdminNav.tsx"), "utf8");
 assert.ok(nav.includes('href: "/admin/billing"'));
+assert.ok(nav.includes('href: "/admin/usage"'), "super nav needs usage report");
 assert.ok(nav.includes("SYSTEM_LINKS"));
 assert.ok(nav.includes('variant === "super"'));
 const systemBlock = nav.split("const SYSTEM_LINKS")[1] || "";
 assert.ok(!systemBlock.includes('"/admin/jobs"'), "SYSTEM_ADMIN must not see jobs");
 assert.ok(!systemBlock.includes('"/admin/billing"'), "SYSTEM_ADMIN must not see billing");
+assert.ok(!systemBlock.includes('"/admin/usage"'), "SYSTEM_ADMIN must not see usage");
 assert.ok(!systemBlock.includes('"/admin/services"'), "SYSTEM_ADMIN must not see services");
 assert.ok(!systemBlock.includes('"/admin/audit"'), "SYSTEM_ADMIN must not see audit");
 assert.ok(!systemBlock.includes('"/admin/settings"'), "SYSTEM_ADMIN must not see settings");
@@ -74,11 +80,22 @@ for (const rel of [
   "app/admin/api-keys/page.tsx",
   "app/admin/owner/page.tsx",
   "app/admin/billing/page.tsx",
+  "app/admin/usage/page.tsx",
 ]) {
   const src = fs.readFileSync(path.join(root, rel), "utf8");
   assert.ok(src.includes("AdminPageShell"), `${rel} must use AdminPageShell`);
   assert.equal(src.includes("<AppShell>"), false, `${rel} must not use raw AppShell`);
 }
+
+const usagePage = fs.readFileSync(path.join(root, "app/admin/usage/page.tsx"), "utf8");
+assert.ok(usagePage.includes("requireSuperAdminPage"));
+assert.ok(usagePage.includes("getUsageReport"));
+assert.ok(usagePage.includes("/api/admin/usage/export"));
+
+const usageMod = fs.readFileSync(path.join(root, "lib/modules/billing/usage-report.ts"), "utf8");
+assert.ok(usageMod.includes("usageReportToCsv"));
+assert.ok(usageMod.includes("freeQuotaUsed"));
+assert.ok(usageMod.includes("creditsBalance"));
 
 const cancelApi = fs.readFileSync(
   path.join(root, "app/api/admin/jobs/[id]/cancel/route.ts"),

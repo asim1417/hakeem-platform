@@ -77,6 +77,7 @@ export default async function AdminPage() {
           <AdminLink href="/admin/inbox" label="صندوق المراسلات" />
           <AdminLink href="/admin/users" label="المستخدمون والأدوار" />
           <AdminLink href="/admin/billing" label="الفوترة والاشتراكات" />
+          <AdminLink href="/admin/usage" label="تقرير الاستهلاك" />
           <AdminLink href="/admin/settings" label="إعدادات التشغيل" />
         </section>
 

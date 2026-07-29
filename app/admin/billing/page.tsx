@@ -21,7 +21,11 @@ export default async function AdminBillingPage() {
       <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">الفوترة والاشتراكات</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
         نظرة تشغيلية على الاشتراكات والحصص والنقاط فوق البنية الحالية (Moyasar + quota + credits) — بلا
-        مسار دفع موازٍ.
+        مسار دفع موازٍ. لتقرير كل المستخدمين:{" "}
+        <Link href="/admin/usage" className="font-semibold text-[#8B6914]">
+          تقرير الاستهلاك
+        </Link>
+        .
       </p>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
