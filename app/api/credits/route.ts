@@ -3,6 +3,7 @@ import { z } from "zod";
 import { CREDIT_REWARDS, type CreditSource } from "@/config/credits";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { awardCredits, getCreditsStatus } from "@/lib/modules/credits/ledger";
+import { getUsageCreditStatus } from "@/lib/modules/credits/usage-ledger";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +17,16 @@ export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
 
-  const status = await getCreditsStatus(user.id);
+  const [status, usage] = await Promise.all([
+    getCreditsStatus(user.id),
+    getUsageCreditStatus(user.id),
+  ]);
   return NextResponse.json({
     balance: status.balance,
     transactions: status.transactions,
     unknown: status.unknown ?? false,
     catalog: CREDIT_REWARDS,
+    usage,
   });
 }
 
