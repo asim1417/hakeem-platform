@@ -230,7 +230,9 @@ export function buildOfficialCitation(input: {
   royalDecree?: string | null;
   effectiveFrom?: Date | string | null;
 }): string {
-  const parts = [`${input.lawName}، المادة (${input.articleNumber.toLocaleString("ar-SA")})`];
+  // الديباجة (رقم صفر) تُنسب «{النظام}، الديباجة» لا «المادة (٠)».
+  const unit = input.articleNumber === 0 ? "الديباجة" : `المادة (${input.articleNumber.toLocaleString("ar-SA")})`;
+  const parts = [`${input.lawName}، ${unit}`];
   if (input.royalDecree?.trim()) parts.push(`الصادر بالمرسوم الملكي رقم ${input.royalDecree.trim()}`);
   if (input.effectiveFrom) {
     const d = typeof input.effectiveFrom === "string" ? new Date(input.effectiveFrom) : input.effectiveFrom;

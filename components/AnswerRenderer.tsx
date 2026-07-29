@@ -82,11 +82,16 @@ export function AnswerRenderer({
               const src = Number.isFinite(n) && n > 0 ? basis[n - 1] : undefined;
               const target = anchorPrefix ? `#${anchorPrefix}${n}` : undefined;
               const seq = Number.isFinite(n) && n > 0 ? n.toLocaleString("ar-SA") : String(children ?? "");
-              // العنوان يكشف المادّة المرتبطة بالهامش (النظام + رقم المادة) عند المرور/الوصول.
+              // العنوان يكشف المادّة المرتبطة بالهامش (النظام + رقم المادة، أو «الديباجة» للرقم صفر).
               const num = src?.articleNumber;
-              const numLabel = num !== undefined && num !== "" ? (typeof num === "number" ? num.toLocaleString("ar-SA") : String(num)) : "";
+              const unit =
+                Number(num) === 0
+                  ? "الديباجة"
+                  : num !== undefined && num !== ""
+                    ? `المادة ${typeof num === "number" ? num.toLocaleString("ar-SA") : String(num)}`
+                    : "";
               const title = src?.systemName
-                ? `الهامش ${seq}: ${src.systemName}${numLabel ? ` · المادة ${numLabel}` : ""}`
+                ? `الهامش ${seq}: ${src.systemName}${unit ? ` · ${unit}` : ""}`
                 : `الهامش ${seq}`;
               return (
                 <a

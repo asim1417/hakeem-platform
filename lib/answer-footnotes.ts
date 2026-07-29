@@ -16,17 +16,19 @@ function toArabicDigits(n: number): string {
   return n.toLocaleString("ar-SA");
 }
 
-/** مرجع الهامش: «النظام · المادة رقم — العنوان». */
+/** مرجع الهامش: «النظام · المادة رقم — العنوان» (أو «النظام · الديباجة» للرقم صفر). */
 function refLabel(s: FootnoteSource): string {
-  const num =
-    s.articleNumber !== undefined && s.articleNumber !== ""
-      ? typeof s.articleNumber === "number"
-        ? toArabicDigits(s.articleNumber)
-        : String(s.articleNumber)
-      : "";
   const sys = s.systemName || "مصدر";
-  const head = num ? `${sys} · المادة ${num}` : sys;
-  return s.articleTitle ? `${head} — ${s.articleTitle}` : head;
+  const hasNum = s.articleNumber !== undefined && s.articleNumber !== "";
+  const isPreamble = Number(s.articleNumber) === 0;
+  const unit = isPreamble
+    ? "الديباجة"
+    : hasNum
+      ? `المادة ${typeof s.articleNumber === "number" ? toArabicDigits(s.articleNumber) : String(s.articleNumber)}`
+      : "";
+  const head = unit ? `${sys} · ${unit}` : sys;
+  // عنوان الديباجة «الديباجة» لا يُكرَّر بعد الوحدة نفسها.
+  return s.articleTitle && !(isPreamble && s.articleTitle === "الديباجة") ? `${head} — ${s.articleTitle}` : head;
 }
 
 const HTML_ESCAPE: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };

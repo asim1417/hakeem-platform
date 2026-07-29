@@ -7,6 +7,7 @@ import {
   getArabicStem,
   normalizeArabicText
 } from "./arabic-morphology";
+import { formatArticleRef } from "./article-ref";
 
 // إسقاط خفيف للترتيب الكامل (بلا نصّ المادة `content`): يكفي العنوان/الاسم/التصنيف/
 // الكلمات المفتاحية للتهديف على مستوى النظام، فيُرتَّب آلاف المطابقات بنقلٍ خفيف.
@@ -814,7 +815,8 @@ export function buildCitationBlock(articles: LegalCoreResult[]) {
 }
 
 function buildSingleCitationLabel(systemName: string, articleNumber: number) {
-  return `${systemName}، المادة ${articleNumber}`;
+  // الديباجة (رقم صفر) تُعرَض «{النظام}، الديباجة» لا «المادة ٠».
+  return formatArticleRef(systemName, articleNumber);
 }
 
 function normalizeFields(fields?: string[]) {
