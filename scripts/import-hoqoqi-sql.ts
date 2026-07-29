@@ -21,10 +21,11 @@ type HoqoqiSystem = {
   description?: string;
   // ── ما قبل المادة (HKM-LAW-PREAMBLE-002): يُحفظ لا يُسقَط ──
   preamble?: string; // نصّ ديباجة النظام (laws_lang.law_preamble)
-  royalDecree?: string; // مرجع أداة الإصدار «مرسوم ملكي م/191» (tools_issuance_law)
-  issueDateH?: string; // تاريخ أداة الإصدار الهجريّ
-  issuingAuthority?: string; // الجهة المُصدِرة
-  instrumentText?: string; // نصّ أداة الإصدار (حيثيات/موافقة/نشر) إن ورد
+  kingName?: string; // اسم الملك المُصدِر (laws_lang.king_name)
+  royalDecree?: string; // مرجع أداة الإصدار (law_issuance_tools.title)
+  instrumentText?: string; // نصّ أداة الإصدار كاملًا (law_issuance_tools.title)
+  issueDateH?: string; // تاريخ الإصدار الهجريّ (laws.issuance_date_hj)
+  effectiveFrom?: string; // تاريخ الإصدار الميلاديّ (laws.issuance_date_gr) — ISO
 };
 
 type HoqoqiArticle = {
@@ -39,6 +40,7 @@ type HoqoqiArticle = {
   classification?: string;
   keywords: string[];
   royalDecree?: string; // للديباجة/المادة حين تُعرف أداة الإصدار
+  effectiveFrom?: string; // تاريخ نفاذ النظام الميلاديّ (ISO) — من laws.issuance_date_gr
 };
 
 type ImportModel = {
@@ -84,8 +86,10 @@ const targetTables = [
   "lang_categories_law",
   "law_chapters",
   "law_chapters_lang",
-  "tools_issuance_law",
-  "amendment_articles_law",
+  // أسماء hoqoqi الحقيقيّة (من فحص البنية): أداة الإصدار والتعديلات.
+  "law_issuance_tools",
+  "law_articles_amendment",
+  "law_articles_amendment_lang",
   "nouns",
   "verbs"
 ];
@@ -304,27 +308,18 @@ export function buildImportModel(parsed: ParsedSql): ImportModel {
   };
 }
 
-/** يستخرج أداة الإصدار (نوع/رقم/تاريخ/جهة/نصّ) لكلّ نظام من tools_issuance_law — بلا اختلاق. */
-export function buildIssuanceInstruments(parsed: ParsedSql): Map<string, {
-  royalDecree?: string; issueDateH?: string; issuingAuthority?: string; instrumentText?: string;
-}> {
-  const byLaw = new Map<string, { royalDecree?: string; issueDateH?: string; issuingAuthority?: string; instrumentText?: string }>();
-  for (const row of parsed.tables.get("tools_issuance_law") ?? []) {
+/** يستخرج أداة الإصدار لكلّ نظام من law_issuance_tools (law_id, title) — الاسم الحقيقيّ في hoqoqi. */
+export function buildIssuanceInstruments(parsed: ParsedSql): Map<string, { royalDecree?: string; instrumentText?: string }> {
+  const byLaw = new Map<string, { royalDecree?: string; instrumentText?: string }>();
+  for (const row of parsed.tables.get("law_issuance_tools") ?? []) {
     const lawId = stringValue(pick(row, ["law_id", "id_law", "laws_id"]));
     if (!lawId) continue;
-    const type = stringValue(pick(row, ["tool_type", "type", "instrument_type", "tool_name", "name"]));
-    const number = stringValue(pick(row, ["tool_number", "number", "no", "decree_no", "tool_no", "reference", "ref"]));
-    const dateH = stringValue(pick(row, ["date_h", "hijri_date", "tool_date", "date", "issue_date_h"]));
-    const authority = stringValue(pick(row, ["authority", "issuing_authority", "issuer", "source_authority"]));
-    const text = stringValue(pick(row, ["text", "content", "preamble", "recitals", "body", "details"]));
-    const royalDecree = [type, number].filter(Boolean).join(" ").trim() || undefined;
+    const title = stringValue(pick(row, ["title", "text", "tool_title", "name", "content"]));
+    if (!title) continue;
     const prev = byLaw.get(lawId);
-    byLaw.set(lawId, {
-      royalDecree: prev?.royalDecree || royalDecree,
-      issueDateH: prev?.issueDateH || dateH || undefined,
-      issuingAuthority: prev?.issuingAuthority || authority || undefined,
-      instrumentText: prev?.instrumentText || text || undefined
-    });
+    // نجمع أدوات الإصدار المتعدّدة لنظامٍ واحد (قد يكون له مرسوم + قرار…).
+    const merged = prev?.instrumentText ? `${prev.instrumentText}\n${title}` : title;
+    byLaw.set(lawId, { royalDecree: prev?.royalDecree || title.slice(0, 160), instrumentText: merged });
   }
   return byLaw;
 }
@@ -334,8 +329,6 @@ function mergeIssuanceInstruments(systems: HoqoqiSystem[], instruments: ReturnTy
     const inst = instruments.get(system.sourceId);
     if (!inst) continue;
     system.royalDecree = system.royalDecree || inst.royalDecree;
-    system.issueDateH = system.issueDateH || inst.issueDateH;
-    system.issuingAuthority = system.issuingAuthority || inst.issuingAuthority;
     system.instrumentText = system.instrumentText || inst.instrumentText;
   }
 }
@@ -349,11 +342,12 @@ export function buildPreambleArticles(systems: HoqoqiSystem[]): HoqoqiArticle[] 
   for (const s of systems) {
     const parts: string[] = [];
     if (s.preamble?.trim()) parts.push(s.preamble.trim());
+    // كتلة أداة الإصدار: الملك + المرسوم/القرار (نصّه الكامل) + التاريخان (هجريّ/ميلاديّ).
     const instrumentLines = [
-      s.royalDecree ? `أداة الإصدار: ${s.royalDecree}` : "",
-      s.issueDateH ? `التاريخ: ${s.issueDateH}` : "",
-      s.issuingAuthority ? `الجهة المُصدِرة: ${s.issuingAuthority}` : "",
-      s.instrumentText?.trim() ? s.instrumentText.trim() : ""
+      s.kingName?.trim() ? `المُصدِر: ${s.kingName.trim()}` : "",
+      s.instrumentText?.trim() ? `أداة الإصدار:\n${s.instrumentText.trim()}` : "",
+      s.issueDateH ? `تاريخ الإصدار (هجريّ): ${s.issueDateH}` : "",
+      s.effectiveFrom ? `تاريخ الإصدار (ميلاديّ): ${s.effectiveFrom}` : ""
     ].filter(Boolean);
     if (instrumentLines.length) parts.push(instrumentLines.join("\n"));
     const content = parts.join("\n\n").trim();
@@ -368,6 +362,7 @@ export function buildPreambleArticles(systems: HoqoqiSystem[]): HoqoqiArticle[] 
       content,
       classification: s.classification,
       royalDecree: s.royalDecree,
+      effectiveFrom: s.effectiveFrom,
       keywords: ["source:hoqoqi_sql", "review:needs_review", "type:preamble"]
     });
   }
@@ -397,28 +392,36 @@ function buildSystems(parsed: ParsedSql, categories: Map<string, string>) {
     const categoryId = stringValue(pick(row, ["category_id", "law_category_id", "id_category"]));
     const description = stringValue(pick(row, ["description", "summary", "details", "intro"]));
     const current = systems.get(sourceId);
+    // تواريخ الإصدار من جدول laws نفسه (الهجريّ + الميلاديّ الحقيقيّ) — لا تُسقَط.
+    const dateH = stringValue(pick(row, ["issuance_date_hj", "issue_date_h", "date_h"]));
+    const dateG = stringValue(pick(row, ["issuance_date_gr", "issue_date_g", "date_g"]));
     systems.set(sourceId, {
+      ...current,
       sourceId,
       name: current?.name ?? "",
       classification: current?.classification ?? (categoryId ? categories.get(categoryId) : undefined),
-      description: current?.description ?? description
+      description: current?.description ?? description,
+      issueDateH: current?.issueDateH || dateH || undefined,
+      effectiveFrom: current?.effectiveFrom || dateG || undefined
     });
   }
 
   for (const row of langRows) {
     const sourceId = stringValue(pick(row, ["law_id", "id_law", "laws_id"]));
-    const name = stringValue(pick(row, ["name", "title", "law_name", "lang_name", "ar_name"]));
+    const name = stringValue(pick(row, ["title", "name", "law_name", "lang_name", "ar_name"]));
     if (!sourceId || !name) continue;
     const current = systems.get(sourceId);
-    // الديباجة تُحفَظ في حقلٍ خاصّ (preamble) لا تُطوى في description ثمّ تُرمى (الخلل الأصليّ).
+    // الديباجة (law_preamble) واسم الملك (king_name) — يُحفظان لا يُطويان في description ثمّ يُرميان.
     const preamble = stringValue(pick(row, ["law_preamble", "preamble", "recitals", "intro_text"]));
+    const kingName = stringValue(pick(row, ["king_name", "king", "issuer_name"]));
     systems.set(sourceId, {
       ...current,
       sourceId,
       name,
       classification: current?.classification,
       description: current?.description ?? stringValue(pick(row, ["description", "summary", "details", "intro"])),
-      preamble: current?.preamble || preamble || undefined
+      preamble: current?.preamble || preamble || undefined,
+      kingName: current?.kingName || kingName || undefined
     });
   }
 
@@ -427,6 +430,8 @@ function buildSystems(parsed: ParsedSql, categories: Map<string, string>) {
 
 function buildArticles(parsed: ParsedSql, systems: HoqoqiSystem[], categories: Map<string, string>) {
   const systemNames = new Map(systems.map((system) => [system.sourceId, system.name]));
+  // مرسوم/تاريخ النظام يُنسبان لكلّ مادّةٍ فيه (حقلٌ لكلّ مادّة) — فيصير كلّ نصٍّ قابلًا للنسبة لأداته.
+  const systemMeta = new Map(systems.map((s) => [s.sourceId, { royalDecree: s.royalDecree, effectiveFrom: s.effectiveFrom }]));
   const baseRows = parsed.tables.get("law_articles") ?? [];
   const langRows = [...(parsed.tables.get("law_articles_lang") ?? []), ...(parsed.tables.get("lang_articles_law") ?? [])];
   const langByArticleId = new Map<string, SqlRow>();
@@ -458,6 +463,8 @@ function buildArticles(parsed: ParsedSql, systems: HoqoqiSystem[], categories: M
       content,
       chapter,
       classification: categoryId ? categories.get(categoryId) : undefined,
+      royalDecree: systemMeta.get(sourceSystemId)?.royalDecree,
+      effectiveFrom: systemMeta.get(sourceSystemId)?.effectiveFrom,
       keywords: ["source:hoqoqi_sql", "review:needs_review", articleNumberText ? `article:${articleNumberText}` : ""].filter(Boolean)
     };
   });
@@ -650,6 +657,7 @@ async function importArticles(
           content: article.content,
           chapter: article.chapter,
           royalDecree: article.royalDecree,
+          effectiveFrom: parseGregorianDate(article.effectiveFrom),
           status: "needs_review",
           keywords: article.keywords
         };
@@ -818,6 +826,14 @@ function pick(row: SqlRow, keys: string[]) {
 function stringValue(value: unknown) {
   if (value === null || value === undefined) return "";
   return String(value).trim();
+}
+
+/** يحوّل تاريخًا ميلاديًّا (مثل «1992-03-01») إلى Date؛ يعيد undefined لغير الصالح (لا اختلاق). */
+function parseGregorianDate(value: string | undefined): Date | undefined {
+  const s = (value ?? "").trim();
+  if (!/^\d{4}-\d{1,2}-\d{1,2}/.test(s)) return undefined;
+  const d = new Date(s.slice(0, 10));
+  return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
 /** يُشغَّل main فقط عند الاستدعاء المباشر (لا عند الاستيراد للاختبار). */
