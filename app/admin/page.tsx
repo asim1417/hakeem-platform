@@ -196,6 +196,7 @@ export default async function AdminPage() {
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <AdminLink href="/admin/users" label="إدارة المستخدمين" />
+        <AdminLink href="/admin/usage" label="لوحة الاستهلاك" />
         <AdminLink href="/admin/roles" label="الأدوار والصلاحيات" />
         <AdminLink href="/admin/api-keys" label="مفاتيح API" />
         <AdminLink href="/admin/owner" label="المدراء" />
