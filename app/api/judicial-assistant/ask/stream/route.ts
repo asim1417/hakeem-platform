@@ -6,6 +6,7 @@ import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { streamAsk, type AskStreamEvent } from "@/lib/modules/judicial-assistant/ask-stream";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
+import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,10 +29,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "اكتب طلبًا واضحًا (٣ أحرف على الأقلّ)." }, { status: 400 });
   }
 
+  const access = await gateAdvancedUse(actorId);
+  if (!access.allowed) {
+    return NextResponse.json({ message: access.message, reason: access.reason }, { status: 402 });
+  }
+
   let kase = null;
   if (body.caseId) {
     kase = await getCase(body.caseId);
-    if (!kase || (kase.ownerId !== actorId && gate.user!.role !== "SYSTEM_ADMIN")) {
+    if (
+      !kase ||
+      (kase.ownerId !== actorId &&
+        gate.user!.role !== "SYSTEM_ADMIN" &&
+        gate.user!.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
     }
   }
@@ -76,6 +87,9 @@ export async function POST(request: NextRequest) {
       }
 
       // آثارٌ جانبيّة بعد اكتمال البثّ: حفظٌ في سجلّ القضية (لا تُحفَظ التحيّة) + تدقيق.
+      if (done && !done.blocked && !done.greeting && done.requestId !== "error") {
+        void settleAdvancedUse(actorId, access.via).catch(() => undefined);
+      }
       if (kase && done && !done.greeting && done.requestId !== "error") {
         await saveAnalysis({
           caseRef: kase.id, caseNumber: kase.caseNumber ?? kase.subject, serviceId: "ASK",

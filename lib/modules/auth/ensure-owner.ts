@@ -8,15 +8,24 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { PLATFORM_OWNER_EMAILS } from "@/lib/modules/auth/oauth-shared";
 
-/** كلمة مرور المالك الافتراضية — يمكن تجاوزها بـ OWNER_BOOTSTRAP_PASSWORD في البيئة. */
+/**
+ * كلمة مرور أولية عند الإنشاء فقط — لا تُعاد كتابتها عند كل إقلاع.
+ * الإنتاج: يلزم OWNER_BOOTSTRAP_PASSWORD صريح عند إنشاء الحساب لأول مرة.
+ * إعادة التعيين لاحقًا فقط عبر OWNER_FORCE_PASSWORD_RESET=true + OWNER_BOOTSTRAP_PASSWORD.
+ */
 export const OWNER_DEFAULT_PASSWORD = "Qalam-1703!";
 export const OWNER_DEFAULT_EMAIL = PLATFORM_OWNER_EMAILS[0];
 export const OWNER_DEFAULT_USERNAME = "aasem.alfarsi";
 export const OWNER_DEFAULT_NAME = "عاصم الفارسي";
 
+function flagOn(raw: string | undefined): boolean {
+  const f = (raw ?? "").toLowerCase();
+  return f === "true" || f === "1" || f === "on";
+}
+
 /**
  * يضمن وجود حساب المالك في القاعدة بصلاحية SUPER_ADMIN.
- * لا يطبع كلمة المرور. آمن عند التكرار (upsert).
+ * لا يطبع كلمة المرور. لا يعيد ضبط كلمة المرور في كل إقلاع.
  */
 export async function ensurePlatformOwner(): Promise<{
   email: string;
@@ -26,17 +35,13 @@ export async function ensurePlatformOwner(): Promise<{
 }> {
   const email = OWNER_DEFAULT_EMAIL;
   const username = OWNER_DEFAULT_USERNAME;
-  const password = (process.env.OWNER_BOOTSTRAP_PASSWORD || OWNER_DEFAULT_PASSWORD).trim();
-  if (password.length < 8) {
-    throw new Error("OWNER_BOOTSTRAP_PASSWORD قصيرة جدًا.");
-  }
+  const bootstrap = (process.env.OWNER_BOOTSTRAP_PASSWORD || "").trim();
+  const forceReset = flagOn(process.env.OWNER_FORCE_PASSWORD_RESET);
 
   const existing = await prisma.user.findUnique({
     where: { email },
     select: { id: true, role: true, isActive: true, username: true, passwordHash: true },
   });
-
-  const passwordHash = await bcrypt.hash(password, 12);
 
   // تجنّب تصادم اسم المستخدم.
   let finalUsername = username;
@@ -47,6 +52,15 @@ export async function ensurePlatformOwner(): Promise<{
   if (taken) finalUsername = `${username}.owner`;
 
   if (!existing) {
+    const password =
+      bootstrap ||
+      (process.env.NODE_ENV === "production" ? "" : OWNER_DEFAULT_PASSWORD);
+    if (password.length < 8) {
+      throw new Error(
+        "OWNER_BOOTSTRAP_PASSWORD مطلوبة لإنشاء حساب المالك (٨ أحرف على الأقل)."
+      );
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
     await prisma.user.create({
       data: {
         name: OWNER_DEFAULT_NAME,
@@ -60,17 +74,28 @@ export async function ensurePlatformOwner(): Promise<{
     return { email, username: finalUsername, created: true, updated: false };
   }
 
-  // إعادة فتح قفل المالك: دور سوبر أدمن + كلمة مرور معروفة (تفعيل من داخل المنصة بلا Vercel).
-  await prisma.user.update({
-    where: { email },
-    data: {
-      name: OWNER_DEFAULT_NAME,
-      role: "SUPER_ADMIN",
-      isActive: true,
-      username: existing.username || finalUsername,
-      passwordHash,
-    },
-  });
+  const data: {
+    name: string;
+    role: "SUPER_ADMIN";
+    isActive: boolean;
+    username: string;
+    passwordHash?: string;
+  } = {
+    name: OWNER_DEFAULT_NAME,
+    role: "SUPER_ADMIN",
+    isActive: true,
+    username: existing.username || finalUsername,
+  };
+
+  // إعادة ضبط كلمة المرور فقط بقرار صريح — لا عند كل إقلاع.
+  if (forceReset) {
+    if (bootstrap.length < 8) {
+      throw new Error("OWNER_FORCE_PASSWORD_RESET يتطلّب OWNER_BOOTSTRAP_PASSWORD (≥٨).");
+    }
+    data.passwordHash = await bcrypt.hash(bootstrap, 12);
+  }
+
+  await prisma.user.update({ where: { email }, data });
 
   return { email, username: existing.username || finalUsername, created: false, updated: true };
 }

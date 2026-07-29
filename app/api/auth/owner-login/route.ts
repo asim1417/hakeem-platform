@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import {
-  ensurePlatformOwner,
-  OWNER_DEFAULT_PASSWORD,
-} from "@/lib/modules/auth/ensure-owner";
+import { ensurePlatformOwner } from "@/lib/modules/auth/ensure-owner";
 import { createLoginSession } from "@/lib/modules/auth/session";
 import { isOAuthAdminEmail } from "@/lib/modules/auth/oauth-shared";
 import { isOwnerEmergencyLoginEnabled } from "@/lib/modules/auth/owner-emergency";
@@ -50,16 +47,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "تعذّر إكمال الدخول." }, { status: 401 });
   }
 
+  // التحقق من تجزئة القاعدة فقط — لا سقوط لكلمة مرور ثابتة في الشيفرة.
   const ok = await bcrypt.compare(body.password, user.passwordHash);
-  const fallback =
-    !ok &&
-    body.password === (process.env.OWNER_BOOTSTRAP_PASSWORD || OWNER_DEFAULT_PASSWORD).trim();
-  if (!ok && !fallback) {
+  if (!ok) {
     return NextResponse.json({ message: "تعذّر إكمال الدخول." }, { status: 401 });
-  }
-
-  if (fallback && !ok) {
-    await ensurePlatformOwner().catch(() => undefined);
   }
 
   const safe = { id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.isActive };

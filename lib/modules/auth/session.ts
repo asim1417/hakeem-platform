@@ -27,10 +27,26 @@ type SessionPayload = {
   nonce: string;
 };
 
+function flagOn(raw: string | undefined): boolean {
+  const f = (raw ?? "").toLowerCase();
+  return f === "true" || f === "1" || f === "on";
+}
+
+/**
+ * المصادقة إلزامية عندما:
+ * - مفاتيح Clerk مضبوطة، أو
+ * - REQUIRE_AUTH=true، أو
+ * - بيئة الإنتاج (إلا بمخرج طوارئ صريح ALLOW_UNAUTHENTICATED_GUEST=true).
+ * التطوير المحلي يبقى مفتوحًا ما لم يُضبط REQUIRE_AUTH.
+ */
 function authRequired(): boolean {
   if (isClerkConfigured()) return true;
-  const f = (process.env.REQUIRE_AUTH ?? "").toLowerCase();
-  return f === "true" || f === "1" || f === "on";
+  if (flagOn(process.env.REQUIRE_AUTH)) return true;
+  if (process.env.NODE_ENV === "production") {
+    if (flagOn(process.env.ALLOW_UNAUTHENTICATED_GUEST)) return false;
+    return true;
+  }
+  return false;
 }
 
 export function isAuthDisabled() {
@@ -40,7 +56,7 @@ export function isAuthDisabled() {
 function authSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
-  if (process.env.NODE_ENV === "production" && authRequired()) {
+  if (process.env.NODE_ENV === "production") {
     throw new Error("AUTH_SECRET غير مضبوط.");
   }
   return "hakeem-dev-only-insecure-secret";
@@ -76,15 +92,20 @@ function decodeSession(value?: string): SessionPayload | null {
   }
 }
 
+/**
+ * زائر التطوير فقط (عند تعطيل المصادقة محليًا).
+ * دور TRAINEE بأدنى صلاحية — لا SYSTEM_ADMIN أبدًا.
+ * إن وُجد صف قديم بدور أعلى يُخفَّض عند كل upsert.
+ */
 async function getGuestUser(): Promise<SafeUser> {
   return prisma.user.upsert({
     where: { email: guestEmail },
-    update: { isActive: true, role: "SYSTEM_ADMIN" },
+    update: { isActive: true, role: "TRAINEE" },
     create: {
       name: "زائر النظام",
       email: guestEmail,
       passwordHash: "not-for-login",
-      role: "SYSTEM_ADMIN",
+      role: "TRAINEE",
       isActive: true,
     },
     select: { id: true, name: true, email: true, role: true, isActive: true },

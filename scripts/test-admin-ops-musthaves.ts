@@ -87,17 +87,28 @@ async function assertWebhookSecret() {
   const { verifyMoyasarWebhookSecret } = await import(
     "../lib/modules/billing/billing-events"
   );
-  const prev = process.env.MOYASAR_WEBHOOK_SECRET;
+  const prevSecret = process.env.MOYASAR_WEBHOOK_SECRET;
+  const prevLive = process.env.MOYASAR_SECRET_KEY;
   delete process.env.MOYASAR_WEBHOOK_SECRET;
+  delete process.env.MOYASAR_SECRET_KEY;
   assert.equal(verifyMoyasarWebhookSecret({}).ok, true);
   assert.equal(verifyMoyasarWebhookSecret({}).enforced, false);
+
+  // دفع حيّ بلا webhook secret → رفض
+  process.env.MOYASAR_SECRET_KEY = "sk_test_live";
+  assert.equal(verifyMoyasarWebhookSecret({}).ok, false);
+  assert.equal(verifyMoyasarWebhookSecret({}).reason, "webhook_secret_required");
+  delete process.env.MOYASAR_SECRET_KEY;
+
   process.env.MOYASAR_WEBHOOK_SECRET = "tok_test";
   assert.equal(verifyMoyasarWebhookSecret({}).ok, false);
   assert.equal(verifyMoyasarWebhookSecret({ secret_token: "wrong" }).ok, false);
   assert.equal(verifyMoyasarWebhookSecret({ secret_token: "tok_test" }).ok, true);
   assert.equal(verifyMoyasarWebhookSecret({ secret_token: "tok_test" }).enforced, true);
-  if (prev === undefined) delete process.env.MOYASAR_WEBHOOK_SECRET;
-  else process.env.MOYASAR_WEBHOOK_SECRET = prev;
+  if (prevSecret === undefined) delete process.env.MOYASAR_WEBHOOK_SECRET;
+  else process.env.MOYASAR_WEBHOOK_SECRET = prevSecret;
+  if (prevLive === undefined) delete process.env.MOYASAR_SECRET_KEY;
+  else process.env.MOYASAR_SECRET_KEY = prevLive;
 }
 
 assertWebhookSecret()

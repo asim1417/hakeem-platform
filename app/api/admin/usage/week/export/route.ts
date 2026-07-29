@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import {
   getWeekVerifiedReport,
@@ -7,7 +7,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("ADMIN_REPORTS_VIEW", request);
   if (gate.response) return gate.response;
 

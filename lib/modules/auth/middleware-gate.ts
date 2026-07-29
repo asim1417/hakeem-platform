@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { hasValidOwnerSessionCookie } from "@/lib/modules/auth/session-cookie-verify";
+import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/audit-logs", "/onboarding"] as const;
 
@@ -9,8 +11,7 @@ export function isProtectedPath(pathname: string): boolean {
 }
 
 export function hasOwnerSessionCookie(cookieHeader: string | null | undefined): boolean {
-  if (!cookieHeader) return false;
-  return /(?:^|;\s*)hakeem_session=/.test(cookieHeader);
+  return hasValidOwnerSessionCookie(cookieHeader);
 }
 
 /**
@@ -35,6 +36,7 @@ export function plainAuthGate(request: NextRequest) {
   if (decision === "allow") return NextResponse.next();
   const url = new URL("/login", request.url);
   url.searchParams.set("setup", "1");
-  url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  const intended = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  url.searchParams.set("next", safeDashboardNext(intended));
   return NextResponse.redirect(url);
 }

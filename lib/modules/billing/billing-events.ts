@@ -137,14 +137,25 @@ export async function listRecentBillingEvents(limit = 40): Promise<BillingEventR
   }
 }
 
-/** تحقق ناعم من سر Moyasar — يُفعَّل فقط عند ضبط MOYASAR_WEBHOOK_SECRET. */
+/** تحقق من سر Moyasar.
+ * - إن وُجد MOYASAR_WEBHOOK_SECRET → يُفرض المطابقة.
+ * - إن وُجد MOYASAR_SECRET_KEY (دفع حيّ) بلا webhook secret → يُرفض (لا تفعيل مجاني).
+ * - بلا أي مفتاح Moyasar → متوافق للتطوير (ok بلا إنفاذ).
+ */
 export function verifyMoyasarWebhookSecret(body: unknown): {
   ok: boolean;
   enforced: boolean;
   reason?: string;
 } {
   const expected = (process.env.MOYASAR_WEBHOOK_SECRET || "").trim();
-  if (!expected) return { ok: true, enforced: false };
+  const liveCheckout = Boolean((process.env.MOYASAR_SECRET_KEY || "").trim());
+
+  if (!expected) {
+    if (liveCheckout) {
+      return { ok: false, enforced: true, reason: "webhook_secret_required" };
+    }
+    return { ok: true, enforced: false };
+  }
 
   const token =
     body && typeof body === "object"

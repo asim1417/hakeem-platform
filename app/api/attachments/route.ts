@@ -35,6 +35,15 @@ export async function POST(request: NextRequest) {
   if (!isAllowedAttachmentMimeType(file.type)) {
     return NextResponse.json({ message: "نوع الملف غير مدعوم. الصيغ المتاحة: PDF, DOCX, TXT, PNG, JPG." }, { status: 400 });
   }
+  const maxBytes = Number(process.env.ATTACHMENT_MAX_BYTES || 25 * 1024 * 1024);
+  if (!Number.isFinite(maxBytes) || file.size <= 0 || file.size > maxBytes) {
+    return NextResponse.json(
+      {
+        message: `حجم الملف غير مقبول. الحد الأقصى ${(Math.round(maxBytes / (1024 * 1024)) || 25)} ميجابايت.`,
+      },
+      { status: 400 }
+    );
+  }
 
   const relationType = String(form.get("relationType") || "عام");
   const relationId = String(form.get("relationId") || "");

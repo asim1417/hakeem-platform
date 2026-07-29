@@ -4,10 +4,11 @@
 // الأعمدة (freeQuotaUsed · freeQuotaTotal · subscriptionStatus) **خارج موديل Prisma**
 // عمدًا — كي لا يُجبَر أيّ findUnique/findMany بلا select على SELECTها فيكسر على قاعدةٍ
 // لم تُطبَّق عليها الهجرة. القراءة/الكتابة عبر SQL خام داخل try/catch:
-//   • قبل الهجرة (لا أعمدة) → **سقوط مفتوح** (allowed=true) فلا يتعطّل أحد.
-//   • الإنفاذ يُفعَّل تلقائيًّا بعد تطبيق الهجرة + ضبط FREE_QUOTA.
+//   • التطوير: سقوط مفتوح (allowed=true) إن غابت الأعمدة — لا يتعطّل المطور.
+//   • الإنتاج: سقوط مغلق (allowed=false) — لا استخدام بلا حد عند فشل الهجرة.
 //
-// القاعدة: الخصم مرّة واحدة بعد نجاح العملية فقط (consumeOne)، بزيادةٍ ذرّية تمنع التسابق.
+// القاعدة: الخصم مرّة واحدة بعد نجاح العملية فقط (consumeOne)، بزيادةٍ ذرّية تمنع التسابق
+// مع شرط freeQuotaUsed < freeQuotaTotal.
 // ─────────────────────────────────────────────────────────────────────────────
 import { PRICING } from "@/config/pricing";
 
@@ -18,9 +19,13 @@ export interface QuotaRow {
 }
 export interface QuotaDecision {
   allowed: boolean;
-  remaining: number; // -1 = غير محدود (مشترك) أو غير معروف (قبل الهجرة)
+  remaining: number; // -1 = غير محدود (مشترك) أو غير معروف (قبل الهجرة في التطوير)
   isSubscribed: boolean;
-  reason?: "exhausted";
+  reason?: "exhausted" | "quota_unavailable";
+}
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === "production";
 }
 
 /** المنطق النقيّ (قابل للاختبار بلا قاعدة): يقرّر السماح من صفّ الحصّة + الإعداد. */
@@ -44,33 +49,48 @@ async function readRow(userId: string): Promise<QuotaRow | null> {
   return rows[0] ?? null;
 }
 
-/** هل يجوز الاستهلاك؟ سقوطٌ مفتوح (allowed) عند غياب الأعمدة/الخطأ — لا نحجب قبل الرولأوت. */
+function openFailDecision(): QuotaDecision {
+  if (isProduction()) {
+    return {
+      allowed: false,
+      remaining: 0,
+      isSubscribed: false,
+      reason: "quota_unavailable",
+    };
+  }
+  return { allowed: true, remaining: -1, isSubscribed: false };
+}
+
+/** هل يجوز الاستهلاك؟ في الإنتاج يُرفض عند غياب الأعمدة/الخطأ. */
 export async function canConsume(userId: string): Promise<QuotaDecision> {
   try {
     const row = await readRow(userId);
-    if (!row) return { allowed: true, remaining: -1, isSubscribed: false };
+    if (!row) return openFailDecision();
     return evaluateQuota(row);
   } catch {
-    return { allowed: true, remaining: -1, isSubscribed: false };
+    return openFailDecision();
   }
 }
 
-/** خصمٌ ذرّيّ لاستخدامٍ واحد (بعد النجاح). لا يخصم للمشتركين. سقوطٌ آمن. */
+/** خصمٌ ذرّيّ لاستخدامٍ واحد (بعد النجاح). لا يخصم للمشتركين. لا يتجاوز الحد. */
 export async function consumeOne(userId: string): Promise<{ remaining: number }> {
   try {
     const { prisma } = await import("@/lib/prisma");
+    const totalExpr = `COALESCE("freeQuotaTotal", ${PRICING.freeQuota})`;
     const rows = await prisma.$queryRawUnsafe<{ freeQuotaUsed: number; freeQuotaTotal: number | null }[]>(
       `UPDATE "users"
          SET "freeQuotaUsed" = "freeQuotaUsed" + 1
-       WHERE id = $1 AND COALESCE("subscriptionStatus", 'free') <> 'active'
+       WHERE id = $1
+         AND COALESCE("subscriptionStatus", 'free') <> 'active'
+         AND "freeQuotaUsed" < ${totalExpr}
        RETURNING "freeQuotaUsed", "freeQuotaTotal"`,
       userId
     );
-    if (!rows[0]) return { remaining: -1 }; // مشترك أو لا صفّ
+    if (!rows[0]) return { remaining: -1 }; // مشترك أو نفاد أو لا صفّ
     const total = rows[0].freeQuotaTotal ?? PRICING.freeQuota;
     return { remaining: Math.max(0, total - rows[0].freeQuotaUsed) };
   } catch {
-    return { remaining: -1 };
+    return { remaining: isProduction() ? 0 : -1 };
   }
 }
 
@@ -87,12 +107,26 @@ export interface QuotaStatus {
 export async function getStatus(userId: string): Promise<QuotaStatus> {
   try {
     const row = await readRow(userId);
-    if (!row) return { total: PRICING.freeQuota, used: 0, remaining: PRICING.freeQuota, isSubscribed: false };
+    if (!row) {
+      return {
+        total: PRICING.freeQuota,
+        used: 0,
+        remaining: PRICING.freeQuota,
+        isSubscribed: false,
+        unknown: true,
+      };
+    }
     const isSubscribed = row.subscriptionStatus === "active";
     const total = row.freeQuotaTotal ?? PRICING.freeQuota;
     const used = row.freeQuotaUsed ?? 0;
     return { total, used, remaining: Math.max(0, total - used), isSubscribed };
   } catch {
-    return { total: PRICING.freeQuota, used: 0, remaining: PRICING.freeQuota, isSubscribed: false, unknown: true };
+    return {
+      total: PRICING.freeQuota,
+      used: 0,
+      remaining: isProduction() ? 0 : PRICING.freeQuota,
+      isSubscribed: false,
+      unknown: true,
+    };
   }
 }

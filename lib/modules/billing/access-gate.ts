@@ -11,8 +11,10 @@ export type AccessDecision =
 
 /** هل يُسمح بالاستخدام؟ يتحقق من الحصّة أو كفاية النقاط دون خصم. */
 export async function gateAdvancedUse(userId: string): Promise<AccessDecision> {
-  const quota = await canConsume(userId).catch(
-    () => ({ allowed: true, remaining: -1, isSubscribed: false }) as const
+  const quota = await canConsume(userId).catch((): Awaited<ReturnType<typeof canConsume>> =>
+    process.env.NODE_ENV === "production"
+      ? { allowed: false, remaining: 0, isSubscribed: false, reason: "quota_unavailable" }
+      : { allowed: true, remaining: -1, isSubscribed: false }
   );
   if (quota.allowed) {
     return { allowed: true, via: quota.remaining === -1 ? "open" : "quota", remaining: quota.remaining };
@@ -27,7 +29,10 @@ export async function gateAdvancedUse(userId: string): Promise<AccessDecision> {
   return {
     allowed: false,
     reason: "exhausted",
-    message: "انتهى رصيدك المجاني ونقاطك غير كافية. اشترك أو أكمل ملفك لزيادة النقاط.",
+    message:
+      quota.reason === "quota_unavailable"
+        ? "تعذّر التحقق من الحصّة حاليًا. حاول لاحقًا أو تواصل مع الدعم."
+        : "انتهى رصيدك المجاني ونقاطك غير كافية. اشترك أو أكمل ملفك لزيادة النقاط.",
   };
 }
 

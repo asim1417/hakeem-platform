@@ -74,7 +74,19 @@ export function LoginForm({
     };
   }, [googleEnabled, microsoftEnabled]);
 
-  const dest = nextUrl && nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
+  const dest =
+    nextUrl && nextUrl.startsWith("/") && !nextUrl.startsWith("//")
+      ? nextUrl === "/dashboard" ||
+        nextUrl.startsWith("/dashboard/") ||
+        nextUrl === "/documents" ||
+        nextUrl.startsWith("/documents/") ||
+        nextUrl === "/admin" ||
+        nextUrl.startsWith("/admin/") ||
+        nextUrl === "/onboarding" ||
+        nextUrl.startsWith("/onboarding/")
+        ? nextUrl
+        : "/dashboard"
+      : "/dashboard";
   const hasSso = providers.google || providers.microsoft;
 
   async function activateOwner() {
@@ -85,8 +97,8 @@ export function LoginForm({
       const data = await res.json();
       if (!res.ok || !data?.ok) throw new Error(data?.message || "تعذّر التفعيل.");
       setEmail(data.email || OWNER_EMAIL);
-      setPassword("Qalam-1703!");
-      setInfo("تم تفعيل حساب المالك. كلمة المرور عُبئت — اضغط دخول.");
+      setPassword("");
+      setInfo("تم تفعيل حساب المالك. أدخل كلمة المرور ثم اضغط دخول.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التفعيل.");
     } finally {

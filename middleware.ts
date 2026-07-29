@@ -6,6 +6,7 @@ import {
   plainAuthGate,
   resolveUnauthenticatedGate,
 } from "@/lib/modules/auth/middleware-gate";
+import { isValidOwnerSessionToken } from "@/lib/modules/auth/session-cookie-verify";
 import {
   HAKEEM_PATHNAME_HEADER,
   HAKEEM_SEARCH_HEADER,
@@ -45,8 +46,9 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/api/auth/providers(.*)",
 ]);
 
+/** جلسة مالك موقّعة فقط — وجود كوكي عشوائية لا يتجاوز حماية Clerk. */
 function hasOwnerSession(request: NextRequest) {
-  return Boolean(request.cookies.get("hakeem_session")?.value);
+  return isValidOwnerSessionToken(request.cookies.get("hakeem_session")?.value);
 }
 
 /** يمرّر المسار للـ layouts عبر headers لتوجيه السوبر قبل رسم لوحة العميل. */
