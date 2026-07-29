@@ -18,6 +18,10 @@ on:
         description: "بديل: رابط مشاركة OneDrive لملف hoqoqi.sql (إن لم تستعمل Google Drive)"
         type: string
         default: ""
+      inspect:
+        description: "فحص بنية المصدر فقط (يطبع أعمدة الجداول لضبط المستورد)؟"
+        type: boolean
+        default: false
       apply:
         description: "الكتابة إلى القاعدة؟ (false = فحص فقط/dry-run)"
         type: boolean
@@ -108,7 +112,10 @@ jobs:
         run: |
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           FILE="${HOQOQI_FILE:-hoqoqi.sql.zip}"
-          if [ "${{ inputs.apply }}" = "true" ]; then
+          if [ "${{ inputs.inspect }}" = "true" ]; then
+            echo "فحص بنية المصدر (أعمدة الجداول):"
+            npx tsx scripts/inspect-hoqoqi-schema.ts "$FILE"
+          elif [ "${{ inputs.apply }}" = "true" ]; then
             if [ -z "$DATABASE_URL" ]; then echo "::error::apply=true يتطلّب DATABASE_URL (سرّ Neon) — غير مضبوط."; exit 1; fi
             echo "::warning::الكتابة مُفعّلة (apply). تأكّد من وجود لقطة/فرع Neon للتراجع."
             npx tsx scripts/import-hoqoqi-sql.ts --file="$FILE" --apply --batch-size=${{ inputs.batch_size }} --resume
