@@ -67,6 +67,15 @@ export default async function AdminUsageUserPage({
         <Stat label="أحداث ذكاء" value={stats.aiEvents.toLocaleString("ar-SA")} />
         <Stat label="محادثة قانونية" value={stats.legalChatConversations.toLocaleString("ar-SA")} />
         <Stat label="مساعد قضائي" value={stats.jaConversations.toLocaleString("ar-SA")} />
+        <Stat label="نداءات Claude" value={stats.claudeCalls.toLocaleString("ar-SA")} />
+        <Stat
+          label={stats.claudeMetered ? "رموز Claude (داخل/خارج)" : "تقدير رموز Claude"}
+          value={
+            stats.claudeMetered
+              ? `${stats.claudeInputTokens.toLocaleString("ar-SA")} / ${stats.claudeOutputTokens.toLocaleString("ar-SA")}`
+              : stats.claudeTokenEstimate.toLocaleString("ar-SA")
+          }
+        />
         <Stat label="كل أحداث التدقيق" value={stats.auditEvents.toLocaleString("ar-SA")} />
       </section>
 

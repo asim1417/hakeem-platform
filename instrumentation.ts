@@ -45,4 +45,17 @@ export async function register() {
   } catch (e) {
     console.warn("[conversations.schema] تعذّر التجهيز:", (e as Error)?.message);
   }
+
+  // عدّاد استهلاك Claude — جدول ai_usage_events (idempotent).
+  try {
+    const { ensureAiUsageSchema } = await import("@/lib/modules/billing/ai-usage-meter");
+    const ok = await ensureAiUsageSchema();
+    console.log(
+      ok
+        ? "[ai.usage] جدول استهلاك Claude جاهز."
+        : "[ai.usage] تعذّر تجهيز جدول استهلاك Claude."
+    );
+  } catch (e) {
+    console.warn("[ai.usage] تعذّر التجهيز:", (e as Error)?.message);
+  }
 }

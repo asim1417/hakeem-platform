@@ -10,6 +10,7 @@
 
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { recordAiUsageFromContext } from "@/lib/modules/billing/ai-usage-meter";
 
 const SETTINGS_KEY = "ai_provider";
 const ENC_PREFIX = "enc:v1:";
@@ -344,6 +345,7 @@ export async function completeWithConfig(
   }
 
   if (cfg.provider === "anthropic") {
+    let usedModel = model;
     const callAnthropic = (m: string) => fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": cfg.apiKey as string, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
@@ -352,6 +354,7 @@ export async function completeWithConfig(
     let resp = await callAnthropic(model);
     // أيّ فشلٍ في الموديل المضبوط ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
     if (!resp.ok && model !== ANTHROPIC_FALLBACK_MODEL) {
+      usedModel = ANTHROPIC_FALLBACK_MODEL;
       resp = await callAnthropic(ANTHROPIC_FALLBACK_MODEL);
     }
     if (!resp.ok) {
@@ -361,7 +364,18 @@ export async function completeWithConfig(
       if (gem) return completeWithConfig(gem, system, user, maxTokens);
       throw new Error(`anthropic ${resp.status}: ${t.slice(0, 160)}`);
     }
-    const data = (await resp.json()) as { content?: Array<{ text?: string }> };
+    const data = (await resp.json()) as {
+      content?: Array<{ text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    const inputTokens = Number(data.usage?.input_tokens) || 0;
+    const outputTokens = Number(data.usage?.output_tokens) || 0;
+    if (inputTokens > 0 || outputTokens > 0) {
+      void recordAiUsageFromContext(
+        { inputTokens, outputTokens },
+        { provider: "anthropic", model: usedModel, streamed: false }
+      );
+    }
     return data.content?.map((p) => p.text).filter(Boolean).join("\n") || "";
   }
 
@@ -447,6 +461,8 @@ export async function* streamWithConfig(
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
+  let anthropicInput = 0;
+  let anthropicOutput = 0;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -461,10 +477,20 @@ export async function* streamWithConfig(
       let j: Record<string, unknown>;
       try { j = JSON.parse(payload); } catch { continue; }
       if (kind === "anthropic") {
-        const d = j as { type?: string; delta?: { type?: string; text?: string; stop_reason?: string } };
+        const d = j as {
+          type?: string;
+          message?: { usage?: { input_tokens?: number; output_tokens?: number }; model?: string };
+          delta?: { type?: string; text?: string; stop_reason?: string };
+          usage?: { input_tokens?: number; output_tokens?: number };
+        };
+        if (d.type === "message_start" && d.message?.usage) {
+          anthropicInput = Number(d.message.usage.input_tokens) || anthropicInput;
+        }
+        if (d.type === "message_delta") {
+          if (d.usage?.output_tokens != null) anthropicOutput = Number(d.usage.output_tokens) || anthropicOutput;
+          if (meta) meta.truncated = d.delta?.stop_reason === "max_tokens";
+        }
         if (d.type === "content_block_delta" && d.delta?.type === "text_delta" && d.delta.text) yield d.delta.text;
-        // بلوغ حدّ الرموز في هذا النداء ⇒ نُعلِم المُستدعي كي يواصل بجولةٍ تالية (لا سقف فعليّ).
-        if (d.type === "message_delta" && meta) meta.truncated = d.delta?.stop_reason === "max_tokens";
       } else if (kind === "openai") {
         const ch = (j as { choices?: Array<{ delta?: { content?: string }; finish_reason?: string }> }).choices?.[0];
         if (ch?.delta?.content) yield ch.delta.content;
@@ -476,5 +502,11 @@ export async function* streamWithConfig(
         if (cand?.finishReason && meta) meta.truncated = cand.finishReason === "MAX_TOKENS";
       }
     }
+  }
+  if (kind === "anthropic" && (anthropicInput > 0 || anthropicOutput > 0)) {
+    void recordAiUsageFromContext(
+      { inputTokens: anthropicInput, outputTokens: anthropicOutput },
+      { provider: "anthropic", model, streamed: true }
+    );
   }
 }
