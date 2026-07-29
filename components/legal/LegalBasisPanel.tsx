@@ -152,10 +152,13 @@ export function LegalBasisPanel({
         <ul className="mt-4 space-y-3">
           {items.map((item, index) => {
             const meta = STATE_META[item.state];
-            const ref =
-              item.articleNumber !== undefined && item.articleNumber !== ""
-                ? `${item.systemName} · المادة ${typeof item.articleNumber === "number" ? item.articleNumber.toLocaleString("ar-SA") : item.articleNumber}`
-                : item.systemName;
+            const unit =
+              Number(item.articleNumber) === 0
+                ? "الديباجة"
+                : item.articleNumber !== undefined && item.articleNumber !== ""
+                  ? `المادة ${typeof item.articleNumber === "number" ? item.articleNumber.toLocaleString("ar-SA") : item.articleNumber}`
+                  : "";
+            const ref = unit ? `${item.systemName} · ${unit}` : item.systemName;
             return (
               <li
                 key={`${item.systemName}-${item.articleNumber ?? index}`}

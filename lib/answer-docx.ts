@@ -37,17 +37,18 @@ function withRefs(text: string, _basis: DocxSource[]): string {
   });
 }
 
-/** مرجع الهامش: «النظام · المادة رقم — العنوان». */
+/** مرجع الهامش: «النظام · المادة رقم — العنوان» (أو «النظام · الديباجة» للرقم صفر). */
 function docxRefLabel(s: DocxSource): string {
-  const num =
-    s.articleNumber !== undefined && s.articleNumber !== ""
-      ? typeof s.articleNumber === "number"
-        ? s.articleNumber.toLocaleString("ar-SA")
-        : String(s.articleNumber)
-      : "";
   const sys = s.systemName || "مصدر";
-  const head = num ? `${sys} · المادة ${num}` : sys;
-  return s.articleTitle ? `${head} — ${s.articleTitle}` : head;
+  const hasNum = s.articleNumber !== undefined && s.articleNumber !== "";
+  const isPreamble = Number(s.articleNumber) === 0;
+  const unit = isPreamble
+    ? "الديباجة"
+    : hasNum
+      ? `المادة ${typeof s.articleNumber === "number" ? s.articleNumber.toLocaleString("ar-SA") : String(s.articleNumber)}`
+      : "";
+  const head = unit ? `${sys} · ${unit}` : sys;
+  return s.articleTitle && !(isPreamble && s.articleTitle === "الديباجة") ? `${head} — ${s.articleTitle}` : head;
 }
 
 /** قسم «الحواشي (الأساس النظاميّ)» أسفل المستند — رقمٌ لكلّ مصدرٍ يليه نصّ مادته. */
