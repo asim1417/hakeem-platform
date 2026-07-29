@@ -136,7 +136,7 @@ function parsePositiveOption(args: string[], name: string, fallback: number) {
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
-async function readSqlFromZip(filePath: string) {
+export async function readSqlFromZip(filePath: string) {
   const buffer = await fs.readFile(filePath).catch((error: NodeJS.ErrnoException) => {
     if (error.code === "ENOENT") {
       throw new Error(`لم يتم العثور على ملف حقوقي: ${filePath}`);
@@ -188,7 +188,7 @@ function findEndOfCentralDirectory(buffer: Buffer) {
   throw new Error("تعذر قراءة ملف ZIP: لم يتم العثور على نهاية الفهرس.");
 }
 
-function parseSqlInserts(sql: string): ParsedSql {
+export function parseSqlInserts(sql: string): ParsedSql {
   const tables = new Map<string, SqlRow[]>();
   const tableNames = Array.from(sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([A-Za-z0-9_]+)`?/gi)).map((match) => match[1]);
   const insertRegex = /INSERT\s+INTO\s+`?([A-Za-z0-9_]+)`?\s*(?:\(([^)]+)\))?\s*VALUES\s*([\s\S]*?);/gi;
