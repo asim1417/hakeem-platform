@@ -1,15 +1,44 @@
 /**
  * وجهة آمنة بعد المصادقة — مسارات المنصة الداخلية فقط.
- * يقبل `next` أو `returnUrl` كمرادفين.
+ * يقبل `next` أو `returnUrl` كمرادفين، ويحافظ على query آمِن (مثل platform=1).
+ */
+
+const ALLOWED_PREFIXES = ["/dashboard", "/documents", "/admin", "/onboarding"] as const;
+
+function pathOnly(raw: string): string {
+  return raw.split("?")[0]?.split("#")[0] || "";
+}
+
+function isAllowedPath(pathname: string): boolean {
+  return ALLOWED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
+/** يصفّي الاستعلام إلى مفاتيح معروفة فقط — يمنع حقن بارامترات غريبة. */
+function sanitizeSearch(raw: string): string {
+  const qIndex = raw.indexOf("?");
+  if (qIndex < 0) return "";
+  const params = new URLSearchParams(raw.slice(qIndex + 1));
+  const out = new URLSearchParams();
+  for (const key of ["platform", "welcome", "q", "mode"]) {
+    const v = params.get(key);
+    if (v != null && v.length <= 200) out.set(key, v);
+  }
+  const s = out.toString();
+  return s ? `?${s}` : "";
+}
+
+/**
+ * وجهة آمنة بعد المصادقة.
+ * يدعم `/dashboard?platform=1` (نافذة المنصة للسوبر).
  */
 export function safeDashboardNext(raw?: string | null, fallback = "/dashboard"): string {
   if (!raw) return fallback;
   if (!raw.startsWith("/") || raw.startsWith("//")) return fallback;
-  if (raw === "/dashboard" || raw.startsWith("/dashboard/")) return raw;
-  if (raw === "/documents" || raw.startsWith("/documents/")) return raw;
-  if (raw === "/admin" || raw.startsWith("/admin/")) return raw;
-  if (raw === "/onboarding" || raw.startsWith("/onboarding/")) return raw;
-  return fallback;
+  const pathname = pathOnly(raw);
+  if (!pathname || !isAllowedPath(pathname)) return fallback;
+  return `${pathname}${sanitizeSearch(raw)}`;
 }
 
 /** يختار next أو returnUrl أيهما وُجد بأمان. */

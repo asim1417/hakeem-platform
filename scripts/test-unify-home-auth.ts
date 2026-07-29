@@ -11,6 +11,8 @@ const root = process.cwd();
 
 assert.equal(safeDashboardNext("/dashboard/ask"), "/dashboard/ask");
 assert.equal(safeDashboardNext("//evil"), "/dashboard");
+assert.equal(safeDashboardNext("/dashboard?platform=1"), "/dashboard?platform=1");
+assert.equal(safeDashboardNext("/dashboard?evil=1"), "/dashboard");
 assert.equal(resolvePostAuthNext({ returnUrl: "/admin" }), "/admin");
 assert.equal(resolvePostAuthNext({ next: "/documents" }), "/documents");
 assert.ok(signInWithNext("/dashboard/ask").startsWith("/sign-in?next="));
