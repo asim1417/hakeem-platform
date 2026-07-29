@@ -1,0 +1,86 @@
+name: Apply Usage Credits v2 (Vercel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "اكتب APPLY_USAGE_CREDITS لتأكيد الهجرة"
+        type: string
+        required: true
+        default: ""
+      target:
+        description: "اكتب VERCEL_PRODUCTION لتأكيد قاعدة الإنتاج"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: apply-usage-credits-v2-vercel
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      PGURL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Validate confirmation and target
+        run: |
+          if [ "${{ inputs.confirm }}" != "APPLY_USAGE_CREDITS" ]; then
+            echo "::error::Confirmation does not match."
+            exit 1
+          fi
+          if [ "${{ inputs.target }}" != "VERCEL_PRODUCTION" ]; then
+            echo "::error::Target confirmation does not match."
+            exit 1
+          fi
+          if [ -z "$PGURL" ]; then
+            echo "::error::DATABASE_URL secret is missing."
+            exit 1
+          fi
+          case "$PGURL" in
+            *localhost*|*127.0.0.1*) echo "::error::Refusing a local database target."; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Preflight (read only)
+        run: |
+          psql "$PGURL" -v ON_ERROR_STOP=1 -c "SELECT current_database(), current_user;"
+          psql "$PGURL" -v ON_ERROR_STOP=1 -c "SELECT to_regclass('public.users') AS users_table, to_regclass('public.feature_toggles') AS toggles_table;"
+          USERS=$(psql "$PGURL" -t -A -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM users;")
+          echo "Existing users: $USERS"
+
+      - name: Apply additive migration atomically
+        run: |
+          psql "$PGURL" -v ON_ERROR_STOP=1 --single-transaction \
+            -f prisma/migrations/20260729130000_usage_credits_v2/migration.sql
+
+      - name: Verify schema and disabled flag
+        run: |
+          psql "$PGURL" -v ON_ERROR_STOP=1 -c "
+            SELECT
+              to_regclass('public.usage_credit_accounts') AS accounts,
+              to_regclass('public.usage_credit_ledger') AS ledger,
+              to_regclass('public.usage_credit_reservations') AS reservations,
+              to_regclass('public.usage_service_prices') AS prices,
+              to_regclass('public.usage_credit_packages') AS packages,
+              to_regclass('public.usage_credit_quotas') AS quotas;"
+          ENABLED=$(psql "$PGURL" -t -A -v ON_ERROR_STOP=1 -c "SELECT enabled FROM feature_toggles WHERE key='usage_credits_v2';")
+          if [ "$ENABLED" != "f" ]; then
+            echo "::error::usage_credits_v2 must remain disabled after migration."
+            exit 1
+          fi
+          COUNT=$(psql "$PGURL" -t -A -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM usage_service_prices;")
+          if [ "$COUNT" -lt "9" ]; then
+            echo "::error::Expected at least 9 service prices, found $COUNT."
+            exit 1
+          fi
+          echo "Migration verified; feature remains disabled."
