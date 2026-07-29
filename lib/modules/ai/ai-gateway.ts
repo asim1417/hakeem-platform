@@ -6,7 +6,7 @@ import { assertHasLegalArticles, guardOutputAgainstUnknownArticleNumbers } from 
 import { parseArticleNumberCandidates } from "@/lib/modules/legal-core/judgment-citation-extractor";
 import { resolveAiConfig, completeWithConfig } from "@/lib/modules/ai/ai-config";
 import { sanitizeForModel } from "@/lib/modules/legal-chat/redaction";
-import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
+import { enterAiUsageContext, recordAiUsageFromContext } from "@/lib/modules/billing/ai-usage-meter";
 
 type AiResult = {
   requestId: string;
@@ -266,19 +266,31 @@ async function callLiveProvider(provider: string, facts: string, citations: AiRe
   if (provider === "anthropic") {
     const key = cfg?.apiKey || process.env.ANTHROPIC_API_KEY;
     if (!key) throw new Error("مفتاح Anthropic غير مضبوط.");
+    const model = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest",
+        model,
         max_tokens: 1200,
         system,
         messages: [{ role: "user", content: user }]
       })
     });
     if (!response.ok) throw new Error(`Anthropic ${response.status}`);
-    const payload = await response.json();
-    return { ok: true as const, text: payload.content?.map((part: { text?: string }) => part.text).filter(Boolean).join("\n") || "" };
+    const payload = (await response.json()) as {
+      content?: Array<{ text?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
+    const inputTokens = Number(payload.usage?.input_tokens) || 0;
+    const outputTokens = Number(payload.usage?.output_tokens) || 0;
+    if (inputTokens > 0 || outputTokens > 0) {
+      void recordAiUsageFromContext(
+        { inputTokens, outputTokens },
+        { provider: "anthropic", model, serviceKey: "consultation", streamed: false }
+      );
+    }
+    return { ok: true as const, text: payload.content?.map((part) => part.text).filter(Boolean).join("\n") || "" };
   }
 
   return { ok: false as const, text: `المزود ${provider} غير مدعوم، تم استخدام الوضع offline.` };

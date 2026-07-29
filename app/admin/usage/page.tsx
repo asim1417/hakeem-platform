@@ -32,7 +32,11 @@ export default async function AdminUsagePage({
       <h1 className="mt-2 text-3xl font-bold text-[#0E3435]">لوحة الاستهلاك</h1>
       <p className="mt-3 max-w-3xl leading-8 text-[rgba(14,52,53,0.72)]">
         نظرة كاملة على الاستخدام الفعلي: الحصّة المجانية، النقاط، الاستشارات، المحاكاة، اسأل حكيم،
-        وأحداث الذكاء. اضغط على مستخدم لفتح التفاصيل والخط الزمني. حد التجربة:{" "}
+        وأحداث الذكاء. لرصد{" "}
+        <Link href="/admin/usage/week" className="font-semibold text-[#8B6914] underline underline-offset-4">
+          الأسبوع الماضي ببيانات مؤكّدة فقط
+        </Link>
+        ، أو اضغط على مستخدم للتفاصيل. حد التجربة:{" "}
         {summary.freeQuotaDefault.toLocaleString("ar-SA")} (
         <code className="text-xs">FREE_QUOTA</code>).
       </p>
