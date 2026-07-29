@@ -692,6 +692,9 @@ function printReport(inputPath: string, parsed: ParsedSql, model: ImportModel, a
       allCreateTables: parsed.tableNames.length,
       systemsDiscovered: model.systems.length,
       articlesConvertible: model.articles.length,
+      // كشف الجلب: كم ديباجةً (مادّة رقم صفر) وكم أداة إصدار (مرسوم) التُقِطت من المصدر؟
+      preamblesDiscovered: model.articles.filter((a) => a.articleNumber === PREAMBLE_ARTICLE_NUMBER).length,
+      instrumentsDiscovered: model.systems.filter((s) => Boolean(s.royalDecree)).length,
       categoriesDiscovered: model.categories.size,
       nouns: model.nounsCount,
       verbs: model.verbsCount,
