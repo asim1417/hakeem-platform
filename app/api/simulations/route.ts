@@ -49,7 +49,10 @@ export async function POST(request: NextRequest) {
   const gate = await requireApiPermission("SIMULATIONS_USE", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
-  const access = await gateAdvancedUse(user.id);
+  const access = await gateAdvancedUse(user.id, {
+    serviceCode: "SIMULATION",
+    idempotencyKey: `simulation:${request.headers.get("idempotency-key") || crypto.randomUUID()}`
+  });
   if (!access.allowed) {
     return NextResponse.json(
       { blocked: true, reason: "exhausted", message: access.message },
@@ -122,7 +125,10 @@ export async function POST(request: NextRequest) {
   });
 
   // الخصم بعد النجاح فقط (جلسة أُنشئت فعلًا).
-  void settleAdvancedUse(user.id, access.via).catch(() => undefined);
+  await settleAdvancedUse(user.id, access.via, {
+    reservationId: access.reservationId,
+    referenceId: simulation.id
+  });
 
   return NextResponse.json({ sessionId: simulation.id, session: simulation }, { status: 201 });
 }
