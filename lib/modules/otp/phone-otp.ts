@@ -135,6 +135,10 @@ export async function verifyPhoneOtp(
        WHERE id = $1`,
       userId
     );
+    const { reconcileTrialRewards } = await import("@/lib/modules/credits/usage-ledger");
+    const { evaluateUsageReferral } = await import("@/lib/modules/referrals/usage-referrals");
+    await reconcileTrialRewards(userId).catch(() => undefined);
+    await evaluateUsageReferral(userId).catch(() => false);
     return { ok: true, message: "تم التحقق من الجوال." };
   } catch {
     return { ok: false, message: "تعذّر التحقق — جرّب لاحقًا." };
