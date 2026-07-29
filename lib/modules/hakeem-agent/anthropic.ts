@@ -1,6 +1,7 @@
 // عميلٌ خام لواجهة Anthropic Messages مع دعم الأدوات (tool_use/tool_result). لقطةٌ واحدة
 // لكلّ نداء؛ الحلقة في runtime.ts. Claude حصريًّا (قاعدة CLAUDE.md) — لا مزوّد آخر.
 import { resolveAiConfig } from "@/lib/modules/ai/ai-config";
+import { recordAiUsageFromContext } from "@/lib/modules/billing/ai-usage-meter";
 import { hakeemAgentModel } from "./flag";
 
 export type AnthropicContentBlock =
@@ -62,7 +63,25 @@ export async function callAnthropicWithTools(input: {
       const body = await response.text().catch(() => "");
       return { ok: false, stopReason: null, content: [], error: `Anthropic ${response.status}: ${body.slice(0, 300)}` };
     }
-    const json = (await response.json()) as { stop_reason?: string; content?: AnthropicContentBlock[] };
+    const json = (await response.json()) as {
+      stop_reason?: string;
+      content?: AnthropicContentBlock[];
+      usage?: { input_tokens?: number; output_tokens?: number };
+      model?: string;
+    };
+    const inputTokens = Number(json.usage?.input_tokens) || 0;
+    const outputTokens = Number(json.usage?.output_tokens) || 0;
+    if (inputTokens > 0 || outputTokens > 0) {
+      void recordAiUsageFromContext(
+        { inputTokens, outputTokens },
+        {
+          provider: "anthropic",
+          model: json.model || hakeemAgentModel(cfg.model),
+          serviceKey: "ask",
+          streamed: false,
+        }
+      );
+    }
     return { ok: true, stopReason: json.stop_reason ?? null, content: Array.isArray(json.content) ? json.content : [] };
   } catch (e) {
     return { ok: false, stopReason: null, content: [], error: e instanceof Error ? e.message : "خطأ في نداء Anthropic" };

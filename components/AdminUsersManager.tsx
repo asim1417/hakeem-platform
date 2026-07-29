@@ -424,7 +424,7 @@ export function AdminUsersManager({
                         ) : (
                           <div className="space-y-1">
                             <p className="text-xs font-semibold text-[var(--navy)]">
-                              زار: {visited.join(" · ")}
+                              استخدم: {visited.join(" · ")}
                             </p>
                             <ul className="space-y-0.5 text-xs leading-5 text-[var(--ink-70)]">
                               {services.map((s) => (
