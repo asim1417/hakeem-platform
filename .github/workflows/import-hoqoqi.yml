@@ -60,13 +60,32 @@ jobs:
           is_ok() { local sz; sz=$(stat -c%s "$1" 2>/dev/null || echo 0); local h; h=$(head -c 200 "$1" | tr -d '\0')
             echo "   حجم=$sz"; case "$h" in *"<!DOCTYPE"*|*"<html"*|*"<HTML"*) return 1;; esac; [ "$sz" -gt 500000 ]; }
           if [ -n "$GDRIVE" ]; then
-            echo ">> Google Drive عبر gdown"
-            python3 -m pip install --quiet --upgrade gdown
-            # --fuzzy يقبل روابط /file/d/ID/view مباشرةً ويتولّى رمز تأكيد فحص الفيروسات.
-            python3 -m gdown --fuzzy "$GDRIVE" -O hoqoqi.sql.zip || python3 -m gdown "$GDRIVE" -O hoqoqi.sql.zip
-            is_ok hoqoqi.sql.zip || { echo "::error::تعذّر تنزيل الملفّ من Google Drive (تأكّد أنّ المشاركة «أي شخص لديه الرابط»)."; exit 1; }
-            echo "HOQOQI_FILE=hoqoqi.sql.zip" >> "$GITHUB_ENV"
-            echo "أوّل بايتات (PK = zip):"; head -c 4 hoqoqi.sql.zip | xxd | head -1 || true
+            echo ">> Google Drive"
+            OUT=hoqoqi.sql.zip
+            # استخراج معرّف Drive (سلسلة طويلة) من الرابط أو استعماله كما هو.
+            ID=$(printf '%s' "$GDRIVE" | grep -oE '[-_a-zA-Z0-9]{25,}' | head -1)
+            [ -z "$ID" ] && ID="$GDRIVE"
+            echo "   Drive id: $ID"
+            is_zip() { head -c2 "$1" 2>/dev/null | grep -q "PK"; }
+            # محاولة 1: نقطة usercontent مع confirm=t (تكفي للملفّات الصغيرة/المتوسطة العامّة).
+            curl -sSL -c /tmp/gcj "https://drive.usercontent.google.com/download?id=$ID&export=download&confirm=t" -o "$OUT" \
+              -w "   م1 HTTP %{http_code} · %{content_type} · %{size_download}B\n" || true
+            if ! is_zip "$OUT"; then
+              echo "   >> تحليل نموذج التأكيد"
+              curl -sSL -c /tmp/gcj "https://drive.usercontent.google.com/download?id=$ID&export=download" -o page.html || true
+              CONFIRM=$(sed -n 's/.*name="confirm"[^>]*value="\([^"]*\)".*/\1/p' page.html | head -1)
+              UUID=$(sed -n 's/.*name="uuid"[^>]*value="\([^"]*\)".*/\1/p' page.html | head -1)
+              curl -sSL -b /tmp/gcj "https://drive.usercontent.google.com/download?id=$ID&export=download&confirm=${CONFIRM}&uuid=${UUID}" -o "$OUT" \
+                -w "   م2 HTTP %{http_code} · %{content_type} · %{size_download}B\n" || true
+            fi
+            if ! is_zip "$OUT"; then
+              echo "   >> fallback: gdown أحدث"
+              python3 -m pip install --quiet --upgrade "gdown>=5.1.0" || true
+              python3 -m gdown --fuzzy "$GDRIVE" -O "$OUT" || python3 -m gdown "$ID" -O "$OUT" || true
+            fi
+            { is_ok "$OUT" && is_zip "$OUT"; } || { echo "::error::تعذّر تنزيل الملفّ من Google Drive — تأكّد أنّ المشاركة «أيّ شخص لديه الرابط»."; head -c 300 "$OUT" | tr -d '\0'; exit 1; }
+            echo "HOQOQI_FILE=$OUT" >> "$GITHUB_ENV"
+            echo "أوّل بايتات (PK = zip):"; head -c 4 "$OUT" | xxd | head -1 || true
           elif [ -n "$SHARE_URL" ]; then
             echo ">> OneDrive عبر curl"
             UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
