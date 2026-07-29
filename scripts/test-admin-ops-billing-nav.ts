@@ -20,6 +20,9 @@ const mustExist = [
   "app/api/admin/usage/route.ts",
   "app/api/admin/usage/export/route.ts",
   "lib/modules/billing/usage-report.ts",
+  "lib/modules/billing/usage-user-detail.ts",
+  "app/admin/usage/[userId]/page.tsx",
+  "app/api/admin/usage/[userId]/route.ts",
   "app/api/admin/jobs/[id]/cancel/route.ts",
   "app/api/admin/jobs/[id]/retry/route.ts",
   "app/api/admin/jobs/reap-stale/route.ts",
@@ -91,11 +94,17 @@ const usagePage = fs.readFileSync(path.join(root, "app/admin/usage/page.tsx"), "
 assert.ok(usagePage.includes("requireSuperAdminPage"));
 assert.ok(usagePage.includes("getUsageReport"));
 assert.ok(usagePage.includes("/api/admin/usage/export"));
+assert.ok(usagePage.includes("/admin/usage/"));
 
 const usageMod = fs.readFileSync(path.join(root, "lib/modules/billing/usage-report.ts"), "utf8");
 assert.ok(usageMod.includes("usageReportToCsv"));
 assert.ok(usageMod.includes("freeQuotaUsed"));
 assert.ok(usageMod.includes("creditsBalance"));
+assert.ok(usageMod.includes("activityScore"));
+
+const usageDetail = fs.readFileSync(path.join(root, "lib/modules/billing/usage-user-detail.ts"), "utf8");
+assert.ok(usageDetail.includes("getUsageUserDetail"));
+assert.ok(fs.existsSync(path.join(root, "app/admin/usage/[userId]/page.tsx")));
 
 const cancelApi = fs.readFileSync(
   path.join(root, "app/api/admin/jobs/[id]/cancel/route.ts"),

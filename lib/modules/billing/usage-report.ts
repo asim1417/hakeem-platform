@@ -1,6 +1,5 @@
 /**
- * تقرير استهلاك جميع المستخدمين — حصّة مجانية + نقاط + حالة الاشتراك.
- * قراءة SQL خام مع سقوط آمن إن لم تُطبَّق هجرة الأعمدة.
+ * تقرير استهلاك جميع المستخدمين — حصّة + نقاط + نشاط فعلي (استشارات/محاكاة/محادثات/AI).
  */
 import { PRICING } from "@/config/pricing";
 import { prisma } from "@/lib/prisma";
@@ -16,7 +15,15 @@ export type UsageUserRow = {
   freeQuotaUsed: number;
   freeQuotaTotal: number;
   creditsBalance: number;
+  creditsSpent: number;
   exhausted: boolean;
+  consultations: number;
+  simulations: number;
+  askConversations: number;
+  aiEvents: number;
+  /** مجموع مؤشرات النشاط الفعلي */
+  activityScore: number;
+  lastActiveAt: string | null;
 };
 
 export type UsageReportSummary = {
@@ -27,8 +34,13 @@ export type UsageReportSummary = {
   quotaExhausted: number;
   totalQuotaUsed: number;
   totalCreditsBalance: number;
+  totalCreditsSpent: number;
+  totalConsultations: number;
+  totalSimulations: number;
+  totalAskConversations: number;
+  totalAiEvents: number;
+  usersWithActivity: number;
   freeQuotaDefault: number;
-  /** هل أعمدة الحصّة متاحة في القاعدة */
   quotaColumnsReady: boolean;
 };
 
@@ -46,27 +58,209 @@ const EMPTY_SUMMARY = (): UsageReportSummary => ({
   quotaExhausted: 0,
   totalQuotaUsed: 0,
   totalCreditsBalance: 0,
+  totalCreditsSpent: 0,
+  totalConsultations: 0,
+  totalSimulations: 0,
+  totalAskConversations: 0,
+  totalAiEvents: 0,
+  usersWithActivity: 0,
   freeQuotaDefault: PRICING.freeQuota,
   quotaColumnsReady: false,
 });
 
 export type UsageReportFilter = {
-  /** all | free | active | exhausted */
+  /** all | free | active | exhausted | active_users */
   status?: string;
   q?: string;
   limit?: number;
+  /** ترتيب: quota | activity | credits | recent */
+  sort?: string;
 };
 
 function normalizeFilter(input?: UsageReportFilter) {
   const status = (input?.status || "all").trim().toLowerCase();
   const q = (input?.q || "").trim().slice(0, 120);
+  const sort = (input?.sort || "activity").trim().toLowerCase();
   const limitRaw = input?.limit ?? 500;
-  const limit = Math.min(2000, Math.max(1, Number.isFinite(limitRaw) ? limitRaw : 500));
-  return { status, q, limit };
+  const limit = Math.min(2000, Math.max(1, Number.isFinite(limitRaw) ? Number(limitRaw) : 500));
+  return { status, q, sort, limit };
+}
+
+async function countMap(
+  sql: string,
+  ids: string[]
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (!ids.length) return map;
+  try {
+    const rows = (await prisma.$queryRawUnsafe(sql, ids)) as Array<{
+      uid: string;
+      c: number;
+    }>;
+    for (const r of rows) map.set(r.uid, Number(r.c) || 0);
+  } catch {
+    /* جدول غير موجود */
+  }
+  return map;
+}
+
+async function dateMap(
+  sql: string,
+  ids: string[]
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (!ids.length) return map;
+  try {
+    const rows = (await prisma.$queryRawUnsafe(sql, ids)) as Array<{
+      uid: string;
+      ts: Date | string | null;
+    }>;
+    for (const r of rows) {
+      if (!r.ts) continue;
+      map.set(r.uid, new Date(r.ts).toISOString());
+    }
+  } catch {
+    /* */
+  }
+  return map;
+}
+
+async function loadPlatformActivityTotals(summary: UsageReportSummary) {
+  try {
+    summary.totalConsultations = await prisma.consultation.count();
+  } catch {
+    /* */
+  }
+  try {
+    summary.totalSimulations = await prisma.simulation.count();
+  } catch {
+    /* */
+  }
+  try {
+    summary.totalAskConversations = await prisma.chatConversation.count({
+      where: { serviceKey: "ask", deletedAt: null },
+    });
+  } catch {
+    try {
+      summary.totalAskConversations = await prisma.chatConversation.count({
+        where: { serviceKey: "ask" },
+      });
+    } catch {
+      /* */
+    }
+  }
+  try {
+    summary.totalAiEvents = await prisma.auditEvent.count({
+      where: {
+        OR: [
+          { subject: "AI_GATEWAY" },
+          { action: { startsWith: "JA_ASK" } },
+          { action: "LEGAL_CHAT_TURN" },
+        ],
+      },
+    });
+  } catch {
+    /* */
+  }
+  try {
+    const spent = (await prisma.$queryRawUnsafe(
+      `SELECT COALESCE(SUM(ABS(amount)),0)::int AS s
+         FROM "credit_transactions"
+        WHERE amount < 0 AND status = 'active'`
+    )) as Array<{ s: number }>;
+    summary.totalCreditsSpent = spent[0]?.s ?? 0;
+  } catch {
+    /* */
+  }
+}
+
+async function enrichUsers(users: UsageUserRow[]): Promise<void> {
+  const ids = users.map((u) => u.id);
+  if (!ids.length) return;
+
+  const asksPrimary = await countMap(
+    `SELECT user_id AS uid, COUNT(*)::int AS c FROM "chat_conversations"
+      WHERE user_id = ANY($1::text[])
+        AND service_key = 'ask'
+        AND deleted_at IS NULL
+      GROUP BY user_id`,
+    ids
+  );
+  const asksFallback =
+    asksPrimary.size > 0
+      ? asksPrimary
+      : await countMap(
+          `SELECT user_id AS uid, COUNT(*)::int AS c FROM "chat_conversations"
+            WHERE user_id = ANY($1::text[]) AND service_key = 'ask'
+            GROUP BY user_id`,
+          ids
+        );
+
+  const [consultations, simulations, aiEvents, creditsSpent, lastAudit, lastCredit] =
+    await Promise.all([
+      countMap(
+        `SELECT "userId" AS uid, COUNT(*)::int AS c FROM "consultations"
+          WHERE "userId" = ANY($1::text[]) GROUP BY "userId"`,
+        ids
+      ),
+      countMap(
+        `SELECT "userId" AS uid, COUNT(*)::int AS c FROM "simulation_sessions"
+          WHERE "userId" = ANY($1::text[]) GROUP BY "userId"`,
+        ids
+      ),
+      countMap(
+        `SELECT "actorId" AS uid, COUNT(*)::int AS c FROM "audit_logs"
+          WHERE "actorId" = ANY($1::text[])
+            AND (
+              subject::text = 'AI_GATEWAY'
+              OR action LIKE 'JA_ASK%'
+              OR action = 'LEGAL_CHAT_TURN'
+            )
+          GROUP BY "actorId"`,
+        ids
+      ),
+      countMap(
+        `SELECT "userId" AS uid, COALESCE(SUM(ABS(amount)),0)::int AS c
+           FROM "credit_transactions"
+          WHERE "userId" = ANY($1::text[]) AND amount < 0 AND status = 'active'
+          GROUP BY "userId"`,
+        ids
+      ),
+      dateMap(
+        `SELECT "actorId" AS uid, MAX("createdAt") AS ts FROM "audit_logs"
+          WHERE "actorId" = ANY($1::text[]) GROUP BY "actorId"`,
+        ids
+      ),
+      dateMap(
+        `SELECT "userId" AS uid, MAX("createdAt") AS ts FROM "credit_transactions"
+          WHERE "userId" = ANY($1::text[]) GROUP BY "userId"`,
+        ids
+      ),
+    ]);
+
+  const asks = asksFallback;
+
+  for (const u of users) {
+    u.consultations = consultations.get(u.id) ?? 0;
+    u.simulations = simulations.get(u.id) ?? 0;
+    u.askConversations = asks.get(u.id) ?? 0;
+    u.aiEvents = aiEvents.get(u.id) ?? 0;
+    u.creditsSpent = creditsSpent.get(u.id) ?? 0;
+    u.activityScore =
+      u.freeQuotaUsed +
+      u.consultations +
+      u.simulations +
+      u.askConversations +
+      u.aiEvents;
+    const a = lastAudit.get(u.id);
+    const c = lastCredit.get(u.id);
+    if (a && c) u.lastActiveAt = a > c ? a : c;
+    else u.lastActiveAt = a || c || null;
+  }
 }
 
 export async function getUsageReport(filter?: UsageReportFilter): Promise<UsageReport> {
-  const { status, q, limit } = normalizeFilter(filter);
+  const { status, q, sort, limit } = normalizeFilter(filter);
   const generatedAt = new Date().toISOString();
   const summary = EMPTY_SUMMARY();
 
@@ -76,6 +270,8 @@ export async function getUsageReport(filter?: UsageReportFilter): Promise<UsageR
   } catch {
     return { summary, users: [], generatedAt };
   }
+
+  await loadPlatformActivityTotals(summary);
 
   try {
     const agg = (await prisma.$queryRawUnsafe(
@@ -120,9 +316,7 @@ export async function getUsageReport(filter?: UsageReportFilter): Promise<UsageR
       where.push(`COALESCE(u."subscriptionStatus",'free') <> 'active'`);
     } else if (status === "exhausted") {
       where.push(`COALESCE(u."subscriptionStatus",'free') <> 'active'`);
-      where.push(
-        `COALESCE(u."freeQuotaUsed",0) >= COALESCE(u."freeQuotaTotal", $1)`
-      );
+      where.push(`COALESCE(u."freeQuotaUsed",0) >= COALESCE(u."freeQuotaTotal", $1)`);
     }
 
     if (q) {
@@ -131,7 +325,9 @@ export async function getUsageReport(filter?: UsageReportFilter): Promise<UsageR
       where.push(`(u.email ILIKE $${i} OR u.name ILIKE $${i})`);
     }
 
-    params.push(limit);
+    // نجلب أكثر قليلًا إن رُشِّح «نشطون فعليًا» ثم نصفي بعد الإثراء
+    const fetchLimit = status === "active_users" ? Math.min(2000, limit * 3) : limit;
+    params.push(fetchLimit);
     const limitParam = `$${params.length}`;
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
@@ -175,14 +371,20 @@ export async function getUsageReport(filter?: UsageReportFilter): Promise<UsageR
         freeQuotaUsed: used,
         freeQuotaTotal: total,
         creditsBalance: r.creditsBalance ?? 0,
+        creditsSpent: 0,
         exhausted: sub !== "active" && used >= total,
+        consultations: 0,
+        simulations: 0,
+        askConversations: 0,
+        aiEvents: 0,
+        activityScore: used,
+        lastActiveAt: null,
       };
     });
     if (!summary.quotaColumnsReady && users.length > 0) {
       summary.quotaColumnsReady = true;
     }
   } catch {
-    // أعمدة الحصّة غير موجودة — أظهر المستخدمين بلا استهلاك
     try {
       const basic = await prisma.user.findMany({
         select: {
@@ -207,12 +409,38 @@ export async function getUsageReport(filter?: UsageReportFilter): Promise<UsageR
         freeQuotaUsed: 0,
         freeQuotaTotal: PRICING.freeQuota,
         creditsBalance: 0,
+        creditsSpent: 0,
         exhausted: false,
+        consultations: 0,
+        simulations: 0,
+        askConversations: 0,
+        aiEvents: 0,
+        activityScore: 0,
+        lastActiveAt: null,
       }));
     } catch {
       users = [];
     }
   }
+
+  await enrichUsers(users);
+
+  if (status === "active_users") {
+    users = users.filter((u) => u.activityScore > 0).slice(0, limit);
+  }
+
+  summary.usersWithActivity = users.filter((u) => u.activityScore > 0).length;
+
+  users.sort((a, b) => {
+    if (sort === "quota") return b.freeQuotaUsed - a.freeQuotaUsed || b.activityScore - a.activityScore;
+    if (sort === "credits") return b.creditsSpent - a.creditsSpent || b.creditsBalance - a.creditsBalance;
+    if (sort === "recent") {
+      const at = a.lastActiveAt || a.createdAt;
+      const bt = b.lastActiveAt || b.createdAt;
+      return bt.localeCompare(at);
+    }
+    return b.activityScore - a.activityScore || b.freeQuotaUsed - a.freeQuotaUsed;
+  });
 
   return { summary, users, generatedAt };
 }
@@ -223,7 +451,6 @@ function csvEscape(value: string | number | boolean | null | undefined): string 
   return s;
 }
 
-/** CSV بترميز UTF-8 مع BOM لتوافق Excel. */
 export function usageReportToCsv(report: UsageReport): string {
   const header = [
     "id",
@@ -235,6 +462,13 @@ export function usageReportToCsv(report: UsageReport): string {
     "freeQuotaUsed",
     "freeQuotaTotal",
     "creditsBalance",
+    "creditsSpent",
+    "consultations",
+    "simulations",
+    "askConversations",
+    "aiEvents",
+    "activityScore",
+    "lastActiveAt",
     "exhausted",
     "createdAt",
   ];
@@ -251,6 +485,13 @@ export function usageReportToCsv(report: UsageReport): string {
         csvEscape(u.freeQuotaUsed),
         csvEscape(u.freeQuotaTotal),
         csvEscape(u.creditsBalance),
+        csvEscape(u.creditsSpent),
+        csvEscape(u.consultations),
+        csvEscape(u.simulations),
+        csvEscape(u.askConversations),
+        csvEscape(u.aiEvents),
+        csvEscape(u.activityScore),
+        csvEscape(u.lastActiveAt),
         csvEscape(u.exhausted),
         csvEscape(u.createdAt),
       ].join(",")

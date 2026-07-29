@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   const report = await getUsageReport({
     status: sp.get("status") || undefined,
     q: sp.get("q") || undefined,
+    sort: sp.get("sort") || undefined,
     limit: Number(sp.get("limit") || 500),
   });
   return NextResponse.json(report);
