@@ -103,9 +103,17 @@ export function LegalCoreSearchBar({ systems, defaultQuery, defaultSystem }: { s
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         {["التصنيف", "الموضوع", "نوع المصدر", "يحتوي على شروح", "يحتوي على أحكام", "قانون مقارن"].map((filter) => (
-          <div key={filter} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 px-3 py-2 text-sm text-[var(--ink-60)]">
-            <Filter className="ml-2 inline h-4 w-4 text-[var(--gold)]" />
+          <div
+            key={filter}
+            className="rounded-[var(--r-md)] border border-dashed border-amber-200 bg-amber-50/50 px-3 py-2 text-sm text-[var(--ink-60)] opacity-90"
+            title="قريبًا"
+            aria-disabled="true"
+          >
+            <Filter className="ml-2 inline h-4 w-4 text-[var(--gold)]" aria-hidden />
             {filter}
+            <span className="ms-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 align-middle">
+              قريبًا
+            </span>
           </div>
         ))}
       </div>
@@ -349,11 +357,14 @@ export function AmendmentsPanel({ amendments }: { amendments: ArticleAmendmentVi
 export function ComparativeLawPanel() {
   return (
     <LegalCoreCard title="القانون المقارن" subtitle="مساحة منظمة للمقارنة عند إثراء المادة" icon={<Scale size={18} />}>
+      <div className="mb-3">
+        <LegalTopicBadge tone="amber">قريبًا</LegalTopicBadge>
+      </div>
       <div className="grid gap-3">
         {[
           ["الدولة أو النظام المقارن", "لم يتم ربط مصدر مقارن بعد."],
-          ["أوجه الشبه", "تضاف عند اعتماد المقارنة القانونية."],
-          ["أوجه الاختلاف", "تضاف بعد المراجعة القانونية."],
+          ["أوجه الشبه", "تُضاف عند اعتماد المقارنة القانونية."],
+          ["أوجه الاختلاف", "تُضاف بعد المراجعة القانونية."],
           ["الفائدة العملية", "تحديد أثر المقارنة على الاستشارة أو المحاكاة."],
           ["المصدر", "غير محدد حاليًا."]
         ].map(([label, value]) => (
@@ -369,10 +380,10 @@ export function ComparativeLawPanel() {
 
 export function ExplanationPanel() {
   return (
-    <LegalCoreCard title="الشرح وشروط التطبيق" subtitle="لوحة شرح معرفية هادئة قابلة للإثراء" icon={<FileText size={18} />}>
+    <LegalCoreCard title="الشرح وشروط التطبيق" subtitle="لوحة شرح معرفية قابلة للإثراء" icon={<FileText size={18} />}>
       <div className="space-y-3 text-sm leading-8 text-[var(--ink-70)]">
-        <p>لم يتم إدخال شرح معتمد لهذه المادة بعد. تظهر المادة كمصدر نظامي أصلي، ويمكن لاحقًا إضافة شرح، شروط تطبيق، آثار، واستثناءات مع مصدر مراجعة.</p>
-        <LegalTopicBadge tone="amber">تحتاج إثراء معرفي</LegalTopicBadge>
+        <LegalTopicBadge tone="amber">قريبًا</LegalTopicBadge>
+        <p>لم يتم إدخال شرح معتمد لهذه المادة بعد. تظهر المادة كمصدر نظامي أصلي، وسيُضاف الشرح وشروط التطبيق عند اكتمال الطبقة المعرفية.</p>
       </div>
     </LegalCoreCard>
   );

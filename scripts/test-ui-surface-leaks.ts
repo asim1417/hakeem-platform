@@ -85,4 +85,9 @@ assert.doesNotMatch(docs, /DOC_SERVICE_URL/);
 assert.doesNotMatch(docs, /Tesseract/);
 assert.doesNotMatch(docs, /AES-GCM/);
 
+// No raw TODO: in end-user workspaces
+for (const rel of ["components/TrainingWorkspace.tsx", "components/AttachmentsManager.tsx"]) {
+  assert.doesNotMatch(read(rel), /\bTODO:/, `${rel} must not show TODO to users`);
+}
+
 console.log(`test-ui-surface-leaks: OK (${uiFiles.length} UI files scanned)`);

@@ -1,21 +1,22 @@
 import { Database, GraduationCap, Sparkles } from "lucide-react";
 import { ModuleCard } from "@/components/ModuleCard";
+import { ComingSoonBadge } from "@/components/ui/ComingSoon";
 import { requireUser } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
-// المختبر التجريبي — يجمع القدرات التجريبية (غير المكتملة) في مكان واحد موسوم،
-// بدل بعثرتها في القائمة الرئيسية. خدمات الذكاء المكتملة أوضاعٌ داخل «اسأل حكيم».
+/** المختبر — قدرات غير مكتملة تُعرض بوسم «قريبًا» كإجراء تسويقي. */
 export default async function LabPage() {
   await requireUser();
 
   return (
     <div dir="rtl">
       <header className="hero">
-        <p className="text-sm text-[var(--gold-pale)]">قيد التطوير</p>
-        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">المختبر التجريبي</h1>
+        <p className="text-sm text-[var(--gold-pale)]">تحديثات قادمة</p>
+        <h1 className="t-display mt-2 text-3xl font-bold md:text-4xl">المختبر</h1>
         <p className="mt-3 max-w-3xl leading-8 text-white/85">
-          قدرات تجريبية تحت التطوير — نعرضها للاستكشاف مع وسمها بوضوح. قد تتغيّر مخرجاتها أو تكتمل لاحقًا.
+          خدمات تحت التجهيز النهائي. نعرضها مسبقًا بوسم{" "}
+          <ComingSoonBadge className="align-middle" /> لتعريفك بما سيصل قريبًا.
         </p>
       </header>
 
@@ -24,23 +25,23 @@ export default async function LabPage() {
           href="/dashboard/knowledge-graph"
           title="الرسم المعرفي"
           metric="علاقات قانونية"
-          badge="تجريبيّ"
+          comingSoon
           icon={Database}
           description="استكشاف العلاقات بين المواد والأحكام والمبادئ (يدعم/يفسّر/يعارض) كشبكة معرفية."
         />
         <ModuleCard
           href="/dashboard/legal-rag"
-          title="الذكاء القانوني RAG"
+          title="الذكاء القانوني المُسنَد"
           metric="استرجاع وتوليد"
-          badge="تجريبيّ"
+          comingSoon
           icon={Sparkles}
-          description="خطّ استرجاع هجين ثمّ توليد مؤصَّل باستشهادات — بيئة اختبار للاسترجاع المعزّز."
+          description="خطّ استرجاع هجين ثمّ توليد مؤصَّل باستشهادات من المكتبة القانونية."
         />
         <ModuleCard
           href="/dashboard/training"
           title="التدريب والتعلّم"
           metric="مسارات ونقاط"
-          badge="تجريبيّ"
+          comingSoon
           icon={GraduationCap}
           description="تمارين ومسارات تدريبية مع نقاط وشارات ومتابعة تقدّم."
         />

@@ -1,4 +1,5 @@
 import { TrainingWorkspace } from "@/components/TrainingWorkspace";
+import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 import { prisma } from "@/lib/prisma";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 
@@ -11,6 +12,10 @@ export default async function TrainingPage() {
 
   return (
     <div>
+      <ComingSoonBanner
+        title="التدريب والتعلّم — قريبًا"
+        description="مسارات التقييم التفصيلي والشارات قيد التجهيز. يمكنك تجربة التمارين الأولية مع العلم أنها معاينة تسويقية."
+      />
       <p className="text-sm font-semibold text-gold">تعلم وتقييم</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">التدريب</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">

@@ -30,12 +30,16 @@ export async function CreditsWidget() {
           {ar(status.balance)}
         </p>
         <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">
-          أكمل ملفك وادعُ زملاءك. استخدم النقاط لتحميل الأحكام أو تجاوز الحصّة المجانية عند النفاد.
+          أكمل ملفك وادعُ زملاءك. صرف النقاط على الخدمات المميزة{" "}
+          <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 align-middle">
+            قريبًا
+          </span>
         </p>
         <ul className="mt-3 space-y-1 text-xs text-[var(--ink-40)]">
           {CREDIT_USES.slice(0, 3).map((u) => (
             <li key={u.points}>
-              {ar(u.points)} نقطة — {u.label}
+              {ar(u.points)} نقطة — {u.label}{" "}
+              <span className="text-amber-800">(قريبًا)</span>
             </li>
           ))}
         </ul>

@@ -62,7 +62,7 @@ export default async function LegalCoreDashboardPage() {
           <LegalCoreStatCard label="عدد الأنظمة" value={stats.systemCount} hint="مصادر نظامية معتمدة (من قاعدة الإنتاج)" />
           <LegalCoreStatCard label="عدد المواد" value={stats.total} hint="مصدر الحقيقة للاستشهادات (من قاعدة الإنتاج)" />
           <LegalCoreStatCard label="عدد التصنيفات" value={classificationCount} hint="تصنيف معرفي أولي" />
-          <LegalCoreStatCard label="عدد الشروح" value={0} hint="جاهزة للإثراء لاحقًا" tone="amber" />
+          <LegalCoreStatCard label="عدد الشروح" value={0} hint="قريبًا — جاهزة للإثراء" tone="amber" />
           <LegalCoreStatCard label="مواد تحتاج مراجعة" value={needsReview} hint="مؤشر جودة البيانات" tone={needsReview ? "amber" : "emerald"} />
           <LegalCoreStatCard label="عدد المسائل القانونية" value={legalIssuesCount} hint="مربوطة بمواد الأنظمة" tone={legalIssuesCount ? "emerald" : "amber"} />
           <LegalCoreStatCard label="عدد الأحكام" value={judgmentsCount} hint="أحكام مستوردة من مصدر وزارة العدل" tone={judgmentsCount ? "emerald" : "amber"} />
@@ -88,7 +88,7 @@ export default async function LegalCoreDashboardPage() {
               {["الأنظمة والمواد", "الشروح وشروط التطبيق", "الأحكام والمبادئ", "القانون المقارن", "القوالب المرتبطة"].map((item, index) => (
                 <div key={item} className="flex items-center justify-between rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-4">
                   <span className="font-display-ar text-sm font-bold text-[var(--navy)]">{item}</span>
-                  <LegalTopicBadge tone={index === 0 ? "emerald" : "amber"}>{index === 0 ? "نشط" : "مرحلي"}</LegalTopicBadge>
+                  <LegalTopicBadge tone={index === 0 ? "emerald" : "amber"}>{index === 0 ? "نشط" : "قريبًا"}</LegalTopicBadge>
                 </div>
               ))}
             </div>

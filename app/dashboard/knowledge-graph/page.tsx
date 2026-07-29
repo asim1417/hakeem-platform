@@ -6,6 +6,7 @@ import {
   listRelations,
   type HydratedRelation,
 } from "@/lib/modules/knowledge-graph/relations";
+import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,10 @@ export default async function KnowledgeGraphPage({
 
   return (
     <div dir="rtl">
+      <ComingSoonBanner
+        title="الرسم المعرفي — قريبًا"
+        description="شبكة العلاقات بين المواد والأحكام والمبادئ قيد الإثراء. نعرض المعاينة الحالية دون اعتبارها خدمة مكتملة."
+      />
       <p className="text-sm font-semibold text-gold">الرسم المعرفي القانوني</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">شبكة العلاقات القانونية</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">

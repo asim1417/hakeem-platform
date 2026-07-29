@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, FileText, Scale } from "lucide-react";
+import { Download, ExternalLink, FileText, Scale } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
-import { SpendCreditsButton } from "@/components/credits/SpendCreditsButton";
 import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
+import { ComingSoonControl } from "@/components/ui/ComingSoon";
 import { relationTypeLabel, reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +47,10 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
             <>
               <LegalCopyButton text={citation || judgment.judgmentTitle || judgment.id} label="نسخ الاستشهاد" />
               <LegalFavoriteButton documentType="ruling" documentId={judgment.id} label="حفظ للمفضلة" />
-              <SpendCreditsButton use="download_ruling" targetId={judgment.id} label="تحميل بالنقاط (50)" />
+              <ComingSoonControl className="btn btn-outline" title="تحميل الحكم بالنقاط سيُتاح قريبًا">
+                <Download size={16} aria-hidden />
+                تحميل بالنقاط
+              </ComingSoonControl>
               {judgment.sourceLink ? (
                 <a className="btn ho-hero-outline" href={judgment.sourceLink} target="_blank" rel="noreferrer">
                   <ExternalLink size={16} />

@@ -71,11 +71,10 @@ export default async function BillingDashboardPage() {
           />
         ) : (
           <Card
-            href="/dashboard/ask"
             icon={CreditCard}
             title="الخطة الحالية"
             description="تجربة مجانية ضمن الحصّة أعلاه. الخطط المدفوعة ستتاح قريبًا."
-            badge={status.isSubscribed ? "مشترك" : "تجربة"}
+            badge="قريبًا"
           />
         )}
       </CardGrid>

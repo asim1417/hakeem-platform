@@ -121,8 +121,14 @@ export default async function AgentsPage() {
 
       {/* قدرات تجريبية أخرى — مخفيّةٌ داخل المختبر (الرسم المعرفيّ · RAG · التدريب). */}
       <section className="mt-8">
-        <Link href="/dashboard/lab" className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]">
-          المختبر — قدرات قيد الاستكشاف ←
+        <Link
+          href="/dashboard/lab"
+          className="focus-ring inline-flex items-center gap-2 rounded-[var(--r-md)] border border-line bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--petrol)] transition hover:border-[var(--gold-border)]"
+        >
+          المختبر — خدمات قادمة
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+            قريبًا
+          </span>
         </Link>
       </section>
     </div>

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { BookmarkPlus, Check } from "lucide-react";
+import { ComingSoonControl } from "@/components/ui/ComingSoon";
 
 /**
- * حفظ حكم/مستند عبر annotations + منح نقاط save_ruling.
+ * حفظ حكم/مستند عبر annotations — يتطلّب معرّف مستند حقيقي.
+ * بلا معرّف: وسم «قريبًا» بدل ادّعاء نجاح وهمي.
  */
 export function LegalFavoriteButton({
   label = "إضافة للمفضلة",
@@ -19,12 +21,17 @@ export function LegalFavoriteButton({
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
+  if (!documentId) {
+    return (
+      <ComingSoonControl className="btn btn-outline" title="حفظ المفضلة لهذه النتيجة سيُتاح قريبًا">
+        <BookmarkPlus size={16} aria-hidden />
+        {label}
+      </ComingSoonControl>
+    );
+  }
+
   async function onSave() {
-    if (saved || loading) return;
-    if (!documentId) {
-      setSaved(true);
-      return;
-    }
+    if (saved || loading || !documentId) return;
     setLoading(true);
     setMsg("");
     try {

@@ -56,7 +56,10 @@ function relationLabel(r: RelationType): string {
 function Placeholder({ note }: { note: string }) {
   return (
     <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-5 text-sm leading-7 text-[var(--navy)]">
-      {note} يبقى نصّ المادة هو المصدر النظامي الأصلي.
+      <span className="mb-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
+        قريبًا
+      </span>
+      <p className="mt-2">{note} يبقى نصّ المادة هو المصدر النظامي الأصلي.</p>
     </div>
   );
 }

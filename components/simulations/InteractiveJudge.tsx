@@ -890,10 +890,5 @@ function StageBar({ current, hasJudgment }: { current: string; hasJudgment: bool
 }
 
 function ClassicLink() {
-  return (
-    <details className="mt-6">
-      <summary className="cursor-pointer text-xs text-[var(--ink-40)]">الواجهة الكلاسيكيّة (النسخة القديمة)</summary>
-      <a href="/dashboard/simulations" className="mt-2 inline-block text-xs text-[var(--muted)] underline">العودة إلى القاضي التفاعلي ←</a>
-    </details>
-  );
+  return null;
 }

@@ -86,9 +86,10 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
       <section className="rounded-md border border-gold bg-sand p-5">
         <h2 className="text-xl font-bold text-olive">تنبيه التخزين</h2>
         <p className="mt-2 leading-8 text-ink">
-        <p className="mt-2 leading-8 text-ink">
-          إدارة المرفقات الحالية تحفظ بيانات الملف وربطه بحسابك. قد يكون التخزين السحابي الدائم غير مفعّل بعد — ستظهر حالة التخزين عند اكتمال الرفع.
-        </p>
+          إدارة المرفقات الحالية تحفظ بيانات الملف وربطه بحسابك. التخزين السحابي الدائم واستخراج النص الكامل{" "}
+          <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 align-middle">
+            قريبًا
+          </span>
         </p>
       </section>
 
@@ -208,7 +209,8 @@ export function AttachmentsManager({ initialAttachments, cases }: { initialAttac
           </div>
         )}
         <p className="mt-4 text-xs leading-6 text-muted">
-          TODO: التخزين في Azure Blob أو SharePoint، استخراج النص من PDF/DOCX، وربط المرفقات بتحليل الاستشارة والمحاكاة.
+          استخراج النص من PDF/DOCX وربط المرفقات بالتحليل الذكي —{" "}
+          <span className="font-bold text-amber-800">قريبًا</span>.
         </p>
       </section>
     </div>

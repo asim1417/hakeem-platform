@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { getStatus } from "@/lib/modules/billing/quota";
+import { isPaidCheckoutUiEnabled } from "@/lib/modules/billing/checkout-visibility";
 import { PRICING } from "@/config/pricing";
 
 // عدّاد الحصّة المجانية — شارةٌ أعلى الوحدات المتقدّمة. الحالة من الخادم لا من تخزين المتصفّح.
@@ -14,6 +15,7 @@ export async function QuotaCounter() {
   const ar = (n: number) => n.toLocaleString("ar-SA");
   const exhausted = s.remaining <= 0;
   const warn = !exhausted && s.remaining <= PRICING.warnAt;
+  const paidUi = isPaidCheckoutUiEnabled();
 
   return (
     <div
@@ -32,12 +34,18 @@ export async function QuotaCounter() {
           : `متبقٍّ لك ${ar(s.remaining)} من ${ar(s.total)} استخدامًا مجانيًّا${warn ? " — يقترب من النفاد" : ""}`}
       </span>
       {exhausted || warn ? (
-        <Link
-          href="/dashboard/subscribe"
-          className="focus-ring shrink-0 rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
-        >
-          عرض خطط الاشتراك
-        </Link>
+        paidUi ? (
+          <Link
+            href="/dashboard/subscribe"
+            className="focus-ring shrink-0 rounded-[var(--r-md)] bg-[var(--petrol)] px-4 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+          >
+            عرض خطط الاشتراك
+          </Link>
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-3 rounded-[var(--r-md)] border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800">
+            الخطط المدفوعة — قريبًا
+          </span>
+        )
       ) : null}
     </div>
   );

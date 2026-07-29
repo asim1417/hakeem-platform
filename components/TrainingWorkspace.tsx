@@ -86,7 +86,8 @@ export function TrainingWorkspace({ initialPoints }: { initialPoints: number }) 
         {status ? <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">{status}</p> : null}
         {error ? <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{error}</p> : null}
         <p className="mt-4 text-xs leading-6 text-muted">
-          TODO: عند إضافة جدول محاولات تفصيلي لاحقًا، سيتم حفظ نص الإجابة والتقييم لكل تمرين بدل الاكتفاء بتحديث التقدم والنقاط.
+          حفظ نص الإجابة والتقييم التفصيلي لكل تمرين —{" "}
+          <span className="font-bold text-amber-800">قريبًا</span>. حاليًا يُحدَّث التقدم والنقاط فقط.
         </p>
       </section>
     </div>

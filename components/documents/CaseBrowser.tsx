@@ -1633,7 +1633,17 @@ export function CaseBrowser() {
               <button onClick={openDrive} title={driveConnected ? "استيراد من Google Drive" : "ربط Google Drive"}>
                 {driveConnected ? "▲ استيراد من Drive" : "▲ ربط Drive"}
               </button>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                disabled
+                title="ربط Google Drive سيُتاح قريبًا"
+                aria-disabled="true"
+                style={{ opacity: 0.7, cursor: "not-allowed" }}
+              >
+                ▲ Drive — قريبًا
+              </button>
+            )}
           </span>
         </div>
         <span className={styles.meta} role="status" aria-live="polite">

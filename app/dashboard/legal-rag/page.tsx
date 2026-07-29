@@ -1,6 +1,7 @@
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { legalRag, type RagResult } from "@/lib/modules/legal-rag/legal-rag-service";
 import { GroundingWarning, LegalCitationBox, RelatedJudgmentsList } from "@/components/legal/legal-intelligence";
+import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,12 @@ export default async function LegalRagPage({ searchParams }: { searchParams: { q
 
   return (
     <div dir="rtl">
+      <ComingSoonBanner
+        title="الذكاء القانوني المُسنَد — قريبًا"
+        description="خط الاسترجاع والتوليد المؤصّل قيد التجهيز النهائي. للإجابات الجاهزة استخدم «اسأل حكيم»."
+        backHref="/dashboard/ask"
+        backLabel="الانتقال إلى اسأل حكيم"
+      />
       <p className="text-sm font-semibold text-gold">الذكاء القانوني المُسنَد</p>
       <h1 className="mt-2 text-3xl font-bold text-olive">إجابة قانونية مرتبطة بالمصادر</h1>
       <p className="mt-3 max-w-3xl leading-8 text-ink">

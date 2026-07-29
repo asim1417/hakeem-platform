@@ -13,6 +13,7 @@ import { LegalFavoriteButton } from "@/components/LegalFavoriteButton";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { LegalCoreCard, LegalCoreFilterPanel, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 import { SearchModeTabs } from "@/components/search/SearchModeTabs";
+import { ComingSoonControl } from "@/components/ui/ComingSoon";
 
 export const dynamic = "force-dynamic";
 
@@ -176,9 +177,9 @@ export default async function LegalCoreSearchPage({
             <select name="sourceType" aria-label="نوع المصدر" defaultValue={selectedSourceType} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
               <option value="article">مادة نظامية</option>
               <option value="hoqoqi_sql">مصدر حقوقي المستورد</option>
-              <option value="explanation" disabled>شرح - لاحقًا</option>
-              <option value="judgment" disabled>حكم - لاحقًا</option>
-              <option value="comparative" disabled>قانون مقارن - لاحقًا</option>
+              <option value="explanation" disabled>شرح — قريبًا</option>
+              <option value="judgment" disabled>حكم — قريبًا</option>
+              <option value="comparative" disabled>قانون مقارن — قريبًا</option>
             </select>
             <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/55 px-4 py-3 text-sm text-[var(--ink-60)]">
               نطاق البحث: {selectedFields.length ? selectedFields.map(fieldLabel).join("، ") : "كل الحقول القانونية"}
@@ -279,10 +280,10 @@ export default async function LegalCoreSearchPage({
                       <LegalCopyButton text={article.citationLabel} label="نسخ الاستشهاد" />
                       <LegalFavoriteButton />
                       <LegalFavoriteButton label="إضافة النص كاملًا" />
-                      <button className="btn btn-outline" type="button" title="سيتم ربط الملفات الداعمة عند تفعيل مستودع المرفقات للنواة القانونية.">
-                        <FileArchive size={16} />
-                        ملفات داعمة لاحقًا
-                      </button>
+                      <ComingSoonControl className="btn btn-outline" title="ربط الملفات الداعمة سيُتاح قريبًا">
+                        <FileArchive size={16} aria-hidden />
+                        ملفات داعمة
+                      </ComingSoonControl>
                     </div>
                   </article>
                   );

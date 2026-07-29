@@ -186,26 +186,37 @@ export function JudgmentCitationCapture() {
                     text={`${citation.systemName ?? "نظام غير محدد"}، المادة ${citation.articleNumber ?? "غير محددة"}: ${citation.rawText}`}
                     label="نسخ الاستشهاد"
                   />
-                  <button className="btn btn-primary" type="button" onClick={() => setDecisions((current) => ({ ...current, [index]: "approved" }))}>
+                  <button className="btn btn-primary" type="button" onClick={() => setDecisions((current) => ({ ...current, [index]: "approved" }))} title="اعتماد مؤقت في الجلسة — الحفظ الدائم قريبًا">
                     <CheckCircle2 size={16} />
                     اعتماد
                   </button>
-                  <button className="btn btn-outline" type="button" onClick={() => setDecisions((current) => ({ ...current, [index]: "rejected" }))}>
+                  <button className="btn btn-outline" type="button" onClick={() => setDecisions((current) => ({ ...current, [index]: "rejected" }))} title="رفض مؤقت في الجلسة — الحفظ الدائم قريبًا">
                     <XCircle size={16} />
                     رفض
                   </button>
-                  <button className="btn btn-outline" type="button" onClick={() => setDecisions((current) => ({ ...current, [index]: "manual" }))}>
+                  <button className="btn btn-outline" type="button" onClick={() => setDecisions((current) => ({ ...current, [index]: "manual" }))} title="تعديل مؤقت في الجلسة — الحفظ الدائم قريبًا">
                     تعديل يدوي
                   </button>
-                  {decisions[index] ? <span className="rounded-full border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-2 text-xs font-bold text-[var(--navy)]">الحالة المؤقتة: {decisionLabel(decisions[index])}</span> : null}
+                  {decisions[index] ? (
+                    <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
+                      حالة الجلسة: {decisionLabel(decisions[index])} — الحفظ قريبًا
+                    </span>
+                  ) : null}
                 </div>
               </article>
             ))}
           </div>
 
           <section className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
-            <h2 className="font-display-ar text-lg font-bold text-[var(--navy)]">الفهرس العكسي المؤقت</h2>
-            <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">المادة ← الإشارات التي استشهدت بها في النص الملصق. هذا عرض مؤقت قابل لاحقًا للحفظ في جدول دائم.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-display-ar text-lg font-bold text-[var(--navy)]">الفهرس العكسي</h2>
+              <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
+                قريبًا
+              </span>
+            </div>
+            <p className="mt-1 text-sm leading-7 text-[var(--ink-60)]">
+              المادة ← الإشارات التي استشهدت بها في النص الملصق. الحفظ الدائم في قاعدة البيانات سيُتاح قريبًا — العرض الحالي مؤقت في الجلسة فقط.
+            </p>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {analysis.reverseIndex.length ? analysis.reverseIndex.map((item) => (
                 <div key={item.articleId} className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/60 p-3">
