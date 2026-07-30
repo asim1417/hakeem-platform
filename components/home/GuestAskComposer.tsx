@@ -48,11 +48,11 @@ export function GuestAskComposer() {
 
     const question = value.trim();
     if (!question) {
-      setError("اكتب سؤالك أو ملخص الوقائع أولًا.");
+      setError("اكتب السؤال أو ملخص الوقائع قبل المتابعة.");
       return;
     }
     if (question.length > HAKEEM_ASK_MAX_CHARS) {
-      setError("النص أطول من الحد المتاح. اختصره قبل المتابعة.");
+      setError("تجاوز النص الحد المتاح. اختصره ثم أعد المحاولة.");
       return;
     }
 
@@ -60,7 +60,7 @@ export function GuestAskComposer() {
       sessionStorage.setItem(HOME_ASK_DRAFT_KEY, question.slice(0, HAKEEM_ASK_MAX_CHARS));
       sessionStorage.setItem(HOME_ASK_PENDING_RUN_KEY, "1");
     } catch {
-      setError("تعذّر حفظ السؤال مؤقتًا على هذا الجهاز. أعد المحاولة.");
+      setError("تعذّر حفظ النص مؤقتًا على هذا الجهاز. أعد المحاولة.");
       return;
     }
 
@@ -93,7 +93,7 @@ export function GuestAskComposer() {
             maxLength={HAKEEM_ASK_MAX_CHARS}
             aria-label="اكتب السؤال أو ملخص الوقائع"
             aria-describedby="guest-ask-hint guest-ask-error"
-            placeholder="مثال: أبرمت عقدًا ولم ينفّذ الطرف الآخر التزامه، ما الخيارات النظامية؟"
+            placeholder="مثال: أخلّ الطرف الآخر بالتزامه في العقد، وأرغب في معرفة الخيارات النظامية والإجراءات المتاحة."
             className="guest-ask__input"
           />
           <button
@@ -107,12 +107,12 @@ export function GuestAskComposer() {
                 جاري فتح Google…
               </span>
             ) : (
-              "ابدأ التحليل عبر Google"
+              "تابع إلى حكيم عبر Google"
             )}
           </button>
         </div>
         <p id="guest-ask-hint" className="guest-ask__hint">
-          Enter للمتابعة · Shift + Enter لسطر جديد
+          Enter للمتابعة، وShift + Enter لسطر جديد
         </p>
         {error ? (
           <p id="guest-ask-error" className="guest-ask__error" role="alert" aria-live="polite">
@@ -139,7 +139,7 @@ export function GuestAskComposer() {
       </ul>
 
       <p className="guest-ask__auth">
-        تُحفظ المسألة على جهازك، وتعود إليها بعد موافقة Google.
+        يُحفظ النص على جهازك، ثم تعود إليه بعد اكتمال الدخول.
       </p>
     </div>
   );
