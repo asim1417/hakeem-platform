@@ -113,6 +113,36 @@ async function main() {
   preLike.slice(0, 8).forEach((r, i) =>
     console.log(`  [${i + 1}] عنوان=«${field(r, ["title"]).slice(0, 70)}» نصّ=«${field(r, ["text"]).slice(0, 180).replace(/\s+/g, " ")}…»`)
   );
+
+  // ⑦ فحصٌ موجَّه: أوّل ما هو مخزَّن عن نظامٍ بعينه (افتراضيًّا «الإثبات») — بترتيب وروده في المصدر حرفيًّا.
+  const probe = (process.env.PROBE_LAW ?? "الإثبات").trim();
+  const langAll = parsed.tables.get("laws_lang") ?? [];
+  const matches = langAll.filter((r) => field(r, ["title"]).includes(probe));
+  console.log(`\n=== فحص موجَّه: «${probe}» (مطابقات=${matches.length}) ===`);
+  if (!matches.length) {
+    const near = langAll.map((r) => field(r, ["title"])).filter((t) => /إثبات|اثبات/.test(t));
+    console.log(near.length ? `عناوين مقاربة: ${near.slice(0, 10).join(" | ")}` : "لا عنوان مقارب.");
+  }
+  for (const target of matches.slice(0, 3)) {
+    const lawId = field(target, ["law_id"]);
+    console.log(`\n▼ law_id=${lawId} — العنوان: «${field(target, ["title"])}»`);
+    console.log(`  king_name: ${field(target, ["king_name"]) || "(فارغ)"}`);
+    const pre = field(target, ["law_preamble"]);
+    console.log(`  law_preamble: ${pre ? `«${pre.slice(0, 400)}»` : "(فارغ)"}`);
+    const base = (parsed.tables.get("laws") ?? []).find((r) => field(r, ["id"]) === lawId);
+    if (base) console.log(`  تواريخ laws: هجري=${field(base, ["issuance_date_hj"]) || "-"} · ميلادي=${field(base, ["issuance_date_gr"]) || "-"}`);
+    const tools = (parsed.tables.get("law_issuance_tools") ?? []).filter((r) => field(r, ["law_id"]) === lawId);
+    console.log(`  أدوات الإصدار (${tools.length}):`);
+    tools.slice(0, 5).forEach((r, i) => console.log(`     [${i + 1}] «${field(r, ["title"]).slice(0, 220).replace(/\s+/g, " ")}»`));
+    const arts = (parsed.tables.get("law_articles") ?? []).filter((r) => field(r, ["law_id"]) === lawId);
+    const langById = new Map((parsed.tables.get("law_articles_lang") ?? []).map((r) => [field(r, ["article_id"]), r]));
+    console.log(`  عدد المواد=${arts.length} — أوّل ٤ مواد مخزَّنة (بترتيب المصدر):`);
+    arts.slice(0, 4).forEach((a, i) => {
+      const l = langById.get(field(a, ["id"]));
+      console.log(`     #${i + 1} [article_id=${field(a, ["id"])}] عنوان=«${(l ? field(l, ["title"]) : "").slice(0, 90)}»`);
+      console.log(`          نصّ=«${(l ? field(l, ["text"]) : "").slice(0, 320).replace(/\s+/g, " ")}…»`);
+    });
+  }
 }
 
 void main().catch((e) => { console.error(e); process.exit(1); });
