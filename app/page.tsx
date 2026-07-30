@@ -6,9 +6,9 @@ import { getPublicPlatformStats } from "@/lib/modules/site/public-platform-stats
 import { getSiteConfig } from "@/lib/modules/site/site-store";
 
 export const metadata: Metadata = {
-  title: "حكيم — حوّل الوقائع إلى موقف قانوني مسند",
+  title: "حكيم — منصة تقنية قانونية للممارسة السعودية",
   description:
-    "حرّر المسألة، ابحث في الأنظمة والأحكام، حلّل المستندات، وابنِ ملف القضية في مساحة عمل صُممت للممارسة القانونية السعودية.",
+    "بحث في الأنظمة والأحكام، تحليل للوقائع والمستندات، وإدارة لملف القضية في مساحة عمل واحدة قابلة للمراجعة والاستكمال.",
 };
 
 export const dynamic = "force-dynamic";
