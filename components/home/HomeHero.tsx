@@ -15,8 +15,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { DirectGoogleEntry } from "@/components/auth/DirectGoogleEntry";
-import { HomeAuthActions } from "@/components/home/HomeAuthActions";
 import { GuestAskComposer } from "@/components/home/GuestAskComposer";
+import { HomeAuthActions } from "@/components/home/HomeAuthActions";
+import { HomeVideoShowcase } from "@/components/home/HomeVideoShowcase";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 import {
   DEFAULT_HOME,
@@ -36,54 +37,48 @@ type ServiceCard = {
 const SERVICES: ServiceCard[] = [
   {
     title: "اسأل حكيم",
-    description:
-      "اكتب الوقائع أو السؤال بصيغتك المعتادة. يحدد حكيم المسائل النظامية، ويستوضح البيانات الناقصة، ثم يعرض تحليلًا مرتبًا مع مصادره.",
-    evidence: "تحرير المسألة · استيضاح الوقائع · بحث متعدد الجولات · جلسة محفوظة",
+    description: "حرّر المسألة، استكمل الوقائع المؤثرة، واحصل على تحليل مرتبط بمصادره.",
+    evidence: "تحرير · استيضاح · بحث متعدد الجولات",
     href: "/dashboard/ask",
     action: "ابدأ مسألتك",
     icon: MessageSquareText,
   },
   {
     title: "النواة القانونية",
-    description:
-      "ابحث في الأنظمة واللوائح والمواد والأحكام والمبادئ، ثم افتح النص الكامل والعلاقات المرتبطة به قبل الاستناد إليه.",
-    evidence: "بحث معجمي ودلالي · نصوص كاملة · مسح نظامي موسع",
+    description: "ابحث في الأنظمة واللوائح والأحكام والمبادئ، ثم افتح النص الكامل.",
+    evidence: "بحث معجمي ودلالي · نصوص مترابطة",
     href: "/dashboard/legal-core",
     action: "ابحث في النواة",
     icon: BookOpenCheck,
   },
   {
     title: "منصة الوثائق",
-    description:
-      "ارفع المستند ليُستخرج نصه وتُفحص جودة القراءة، مع استخدام OCR للملفات المصورة أو التي لا تحتوي على طبقة نص سليمة.",
-    evidence: "استخراج النص · فحص الجودة · OCR عند الحاجة",
+    description: "استخرج النص، افحص جودة القراءة، واستخدم OCR عند الحاجة.",
+    evidence: "استخراج · فحص جودة · OCR",
     href: "/documents",
     action: "حلّل مستندًا",
     icon: FileSearch,
   },
   {
     title: "المعاون القضائي",
-    description:
-      "أنشئ ملفًا يجمع بيانات القضية والأطراف والطلبات والوقائع والمستندات والدفوع والمخرجات في مسار واحد.",
-    evidence: "ملف قضية موحّد · مستندات · دفوع · مخرجات قابلة للاستكمال",
+    description: "اجمع الوقائع والطلبات والمستندات والدفوع في ملف قضية واحد.",
+    evidence: "ملف موحّد · مستندات · دفوع · مخرجات",
     href: "/dashboard/judicial-assistant",
     action: "افتح ملف قضية",
     icon: Scale,
   },
   {
     title: "القاضي التفاعلي",
-    description:
-      "حاكِ مراحل الدعوى، واختبر الطلبات والدفوع وطرق الاعتراض ضمن سيناريو إجرائي مخصص للتدريب والمراجعة.",
-    evidence: "٢٨ دفعًا · استئناف · طلب نقض · التماس إعادة النظر",
+    description: "راجع بناء الدعوى والدفوع وطرق الاعتراض ضمن محاكاة إجرائية.",
+    evidence: "٢٨ دفعًا · استئناف · نقض · التماس",
     href: "/dashboard/simulations",
     action: "ابدأ المحاكاة",
     icon: Gavel,
   },
   {
     title: "الاستشارات القانونية",
-    description:
-      "أنشئ استشارة ترتب الوقائع، وتحدد التكييف النظامي، وتعرض السند والمخاطر والبدائل والخطوات العملية المقترحة.",
-    evidence: "وقائع · تكييف · سند نظامي · مخاطر وتوصيات",
+    description: "رتّب الوقائع والتكييف والسند والمخاطر والخطوات العملية.",
+    evidence: "تكييف · سند · مخاطر · توصيات",
     href: "/dashboard/consultations",
     action: "أنشئ استشارة",
     icon: FileText,
@@ -91,16 +86,16 @@ const SERVICES: ServiceCard[] = [
 ];
 
 const OPERATING_CAPABILITIES = [
-  { value: "٢٠٠٬٠٠٠", label: "حرف حد قراءة المرفق في اسأل حكيم" },
-  { value: "٦٠", label: "مادة في جولة المسح النظامي الموسع" },
-  { value: "٢٨", label: "دفعًا ضمن كتالوج المحاكاة" },
-  { value: "٣", label: "مسارات للاعتراض على الأحكام" },
+  { value: "٢٠٠٬٠٠٠", label: "حرف للمرفق" },
+  { value: "٦٠", label: "مادة في المسح الموسع" },
+  { value: "٢٨", label: "دفعًا في المحاكاة" },
+  { value: "٣", label: "مسارات للاعتراض" },
 ];
 
 const ENTRY_ASSURANCES = [
-  "تُحفظ المسألة على جهازك قبل الانتقال",
-  "تعود مباشرة إلى العمل بعد التحقق",
-  "لا تطلب المنصة كلمة مرور Google",
+  "تُحفظ المسألة قبل الانتقال",
+  "تعود إلى العمل بعد التحقق",
+  "لا نطلب كلمة مرور Google",
 ];
 
 function BrandMark({ inverse = false }: { inverse?: boolean }) {
@@ -140,7 +135,6 @@ export function HomeHero({
   loginError?: string;
 }) {
   const askFirst = isAskFirstHomeEnabled();
-
   const databaseStats = [
     { value: stats.legalSystems, label: "نظام ولائحة" },
     { value: stats.legalArticles, label: "مادة نظامية" },
@@ -159,7 +153,7 @@ export function HomeHero({
 
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[650px] opacity-[0.09]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[620px] opacity-[0.09]"
         style={{
           background:
             "radial-gradient(55% 78% at 50% 0%, var(--navy) 0%, transparent 72%), radial-gradient(38% 55% at 88% 4%, var(--gold) 0%, transparent 68%)",
@@ -173,9 +167,9 @@ export function HomeHero({
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-semibold text-[var(--navy)] lg:flex" aria-label="التنقل العام">
-            <a href="#database" className="focus-ring rounded px-1 py-2 transition hover:text-[var(--gold-dark)]">المحتوى القانوني</a>
+            <a href="#tour" className="focus-ring rounded px-1 py-2 transition hover:text-[var(--gold-dark)]">جولة مرئية</a>
             <a href="#services" className="focus-ring rounded px-1 py-2 transition hover:text-[var(--gold-dark)]">الخدمات</a>
-            <a href="#difference" className="focus-ring rounded px-1 py-2 transition hover:text-[var(--gold-dark)]">منهج العمل</a>
+            <a href="#database" className="focus-ring rounded px-1 py-2 transition hover:text-[var(--gold-dark)]">المحتوى القانوني</a>
             <Link href="/pricing" className="focus-ring rounded px-1 py-2 transition hover:text-[var(--gold-dark)]">الأسعار</Link>
           </nav>
 
@@ -201,21 +195,21 @@ export function HomeHero({
 
       <section id="main-content" className="relative scroll-mt-24 px-4 pb-14 pt-12 sm:px-6 sm:pt-16 lg:pb-20 lg:pt-20">
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-5xl text-center">
+          <div className="mx-auto max-w-4xl text-center">
             <p className="text-sm font-semibold text-[var(--gold-dark)]">منصة تقنية قانونية للممارسة السعودية</p>
             <h1 className="mt-4 font-display text-4xl font-bold leading-[1.22] text-[var(--navy)] sm:text-5xl lg:text-6xl">
-              من الوقائع إلى المخرج القانوني
-              <span className="block text-[var(--gold-dark)]">بحث وتحليل وسند في مسار واحد</span>
+              حرّر المسألة. راجع السند.
+              <span className="block text-[var(--gold-dark)]">وأكمل العمل في ملف واحد.</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[var(--ink-70)] sm:text-lg sm:leading-9">
-              يحرر حكيم المسألة، ويبحث في الأنظمة والأحكام، ويقرأ المستندات، ويحفظ العمل في ملف قابل للمراجعة والاستكمال.
+            <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-[var(--ink-70)] sm:text-lg">
+              بحث نظامي، تحليل مستندات، وإدارة ملف القضية في مساحة عمل مترابطة.
             </p>
           </div>
 
           <div className="mx-auto mt-9 max-w-4xl">
             {loginError ? (
               <div className="mb-4 rounded-[var(--r-lg)] border border-[rgba(140,34,51,0.2)] bg-[var(--ruby-soft)] px-4 py-3 text-start text-sm leading-7 text-[var(--ruby)]" role="alert">
-                لم يكتمل الدخول عبر Google. بقيت المسألة محفوظة على جهازك، ويمكنك المحاولة مرة أخرى. {loginError}
+                لم يكتمل الدخول عبر Google. بقيت المسألة محفوظة على جهازك. {loginError}
               </div>
             ) : null}
 
@@ -225,10 +219,8 @@ export function HomeHero({
                   <div className="rounded-[var(--r-2xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-3 shadow-[var(--sh-md)] sm:p-5">
                     <div className="mb-3 flex items-center justify-between gap-3 px-1 text-start">
                       <div>
-                        <p className="text-sm font-bold text-[var(--navy)]">اكتب المسألة بصيغتك المعتادة</p>
-                        <p className="mt-1 text-xs leading-6 text-[var(--ink-60)]">
-                          اذكر الوقائع والطلب والبيانات المؤثرة؛ يتولى حكيم ترتيب عناصر المسألة قبل البحث.
-                        </p>
+                        <p className="text-sm font-bold text-[var(--navy)]">ابدأ بالوقائع والطلب</p>
+                        <p className="mt-1 text-xs leading-6 text-[var(--ink-60)]">يحدد حكيم عناصر المسألة قبل البحث.</p>
                       </div>
                       <MessageSquareText className="hidden h-6 w-6 text-[var(--gold-dark)] sm:block" aria-hidden />
                     </div>
@@ -237,8 +229,8 @@ export function HomeHero({
                 }
                 user={
                   <div className="rounded-[var(--r-2xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-6 text-center shadow-[var(--sh-md)]">
-                    <p className="font-bold text-[var(--navy)]">تابع عملك من حيث توقفت</p>
-                    <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">جلساتك وملفاتك ومخرجاتك محفوظة داخل مساحة العمل.</p>
+                    <p className="font-bold text-[var(--navy)]">تابع من حيث توقفت</p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">جلساتك وملفاتك محفوظة في مساحة العمل.</p>
                     <Link
                       href="/dashboard"
                       className="focus-ring mt-5 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-6 text-sm font-semibold text-white"
@@ -258,10 +250,10 @@ export function HomeHero({
                       className="focus-ring inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-7 text-base font-semibold text-white"
                     />
                     <a
-                      href="#services"
+                      href="#tour"
                       className="focus-ring inline-flex min-h-[52px] items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--paper)] px-7 text-base font-semibold text-[var(--navy)]"
                     >
-                      استعرض الخدمات
+                      شاهد الجولة
                     </a>
                   </div>
                 }
@@ -293,44 +285,19 @@ export function HomeHero({
         </div>
       </section>
 
-      <section id="database" className="scroll-mt-24 border-y border-[var(--ink-08)] bg-[var(--navy)] px-4 py-11 text-white sm:px-6">
+      <HomeVideoShowcase />
+
+      <section id="services" className="scroll-mt-24 px-4 py-16 sm:px-6 lg:py-20">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl text-start">
-            <p className="text-sm font-semibold text-[var(--gold-pale)]">المحتوى القانوني</p>
-            <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">قاعدة تُظهر النص الذي بُني عليه التحليل</h2>
-            <p className="mt-2 text-sm leading-7 text-white/65">
-              تُعرض المؤشرات من قاعدة حكيم مباشرة، وتشمل الأنظمة والمواد والأحكام والمبادئ المتاحة داخل المنصة.
+            <p className="text-sm font-semibold text-[var(--gold-dark)]">الخدمات</p>
+            <h2 className="mt-2 font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">مسار قانوني مترابط</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--ink-60)] sm:text-base">
+              سؤال، مستند، قضية، استشارة، ومحاكاة داخل سياق واحد.
             </p>
           </div>
 
-          {databaseStats.length > 0 ? (
-            <dl className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--r-xl)] border border-white/10 bg-white/10 lg:grid-cols-4">
-              {databaseStats.map((item) => (
-                <div key={item.label} className="bg-[var(--navy)] px-5 py-6 text-start">
-                  <dd className="font-mono text-3xl font-bold text-[var(--gold-bright)] sm:text-4xl">
-                    {formatCount(item.value)}
-                  </dd>
-                  <dt className="mt-2 text-sm text-white/70">{item.label}</dt>
-                </div>
-              ))}
-            </dl>
-          ) : null}
-        </div>
-      </section>
-
-      <section id="services" className="scroll-mt-24 px-4 py-16 sm:px-6 lg:py-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-4xl text-start">
-            <p className="text-sm font-semibold text-[var(--gold-dark)]">خدمات مترابطة</p>
-            <h2 className="mt-2 font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">
-              أدوات تغطي مراحل العمل القانوني
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--ink-60)] sm:text-base">
-              ابدأ بسؤال أو مستند، ثم انقل العمل إلى ملف قضية أو استشارة أو محاكاة مع الاحتفاظ بسياق المسألة.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {SERVICES.map(({ title, description, evidence, href, action, icon: Icon }) => (
               <Link
                 key={title}
@@ -342,9 +309,7 @@ export function HomeHero({
                 </span>
                 <h3 className="mt-5 font-display text-xl font-bold text-[var(--navy)]">{title}</h3>
                 <p className="mt-3 flex-1 text-sm leading-7 text-[var(--ink-60)]">{description}</p>
-                <p className="mt-5 border-t border-[var(--ink-08)] pt-4 text-xs font-semibold leading-6 text-[var(--gold-dark)]">
-                  {evidence}
-                </p>
+                <p className="mt-5 border-t border-[var(--ink-08)] pt-4 text-xs font-semibold leading-6 text-[var(--gold-dark)]">{evidence}</p>
                 <span className="mt-4 inline-flex min-h-[32px] items-center gap-2 text-sm font-bold text-[var(--navy)]">
                   {action}
                   <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" aria-hidden />
@@ -352,9 +317,67 @@ export function HomeHero({
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section id="database" className="scroll-mt-24 border-y border-[var(--ink-08)] bg-[var(--navy)] px-4 py-12 text-white sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div className="text-start">
+              <p className="text-sm font-semibold text-[var(--gold-pale)]">المحتوى القانوني</p>
+              <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">مصادر يمكن فتحها ومراجعتها</h2>
+              <p className="mt-2 text-sm leading-7 text-white/65">المؤشرات تُقرأ مباشرة من قاعدة حكيم.</p>
+            </div>
+
+            {databaseStats.length > 0 ? (
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--r-xl)] border border-white/10 bg-white/10 lg:grid-cols-4">
+                {databaseStats.map((item) => (
+                  <div key={item.label} className="bg-[var(--navy)] px-5 py-5 text-start">
+                    <dd className="font-mono text-3xl font-bold text-[var(--gold-bright)]">{formatCount(item.value)}</dd>
+                    <dt className="mt-2 text-xs text-white/70">{item.label}</dt>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section id="difference" className="scroll-mt-24 bg-[var(--paper)] px-4 py-16 sm:px-6 lg:py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-3xl text-start">
+            <p className="text-sm font-semibold text-[var(--gold-dark)]">منهج العمل</p>
+            <h2 className="mt-2 font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">مخرج قابل للمراجعة</h2>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "تحرير المسألة",
+                description: "فصل الوقائع والطلبات والمسائل النظامية.",
+                icon: SearchCheck,
+              },
+              {
+                title: "إظهار السند",
+                description: "فتح النصوص والأحكام المرتبطة بالتحليل.",
+                icon: ShieldCheck,
+              },
+              {
+                title: "استمرار السياق",
+                description: "حفظ الجلسات والملفات والمخرجات معًا.",
+                icon: Workflow,
+              },
+            ].map(({ title, description, icon: Icon }) => (
+              <article key={title} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--hakeem-bg)] p-6 text-start shadow-[var(--sh-xs)]">
+                <Icon className="h-6 w-6 text-[var(--gold-dark)]" aria-hidden />
+                <h3 className="mt-5 font-display text-xl font-bold text-[var(--navy)]">{title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[var(--ink-60)]">{description}</p>
+              </article>
+            ))}
+          </div>
 
           <div className="mt-8">
-            <p className="mb-3 text-sm font-bold text-[var(--navy)]">حدود وقدرات تشغيلية معلنة</p>
+            <p className="mb-3 text-sm font-bold text-[var(--navy)]">قدرات تشغيلية معلنة</p>
             <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {OPERATING_CAPABILITIES.map((item) => (
                 <div key={item.label} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-[var(--paper)] px-5 py-4 text-start">
@@ -367,91 +390,40 @@ export function HomeHero({
         </div>
       </section>
 
-      <section id="difference" className="scroll-mt-24 border-y border-[var(--ink-08)] bg-[var(--paper)] px-4 py-16 sm:px-6 lg:py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-4xl text-start">
-            <p className="text-sm font-semibold text-[var(--gold-dark)]">منهج العمل</p>
-            <h2 className="mt-2 font-display text-3xl font-bold text-[var(--navy)] sm:text-4xl">
-              مخرج يمكن مراجعته واستكماله
-            </h2>
-          </div>
-
-          <div className="mt-9 grid gap-4 md:grid-cols-3">
-            {[
-              {
-                title: "تحرير المسألة",
-                description: "يميز بين الوقائع والطلبات والمسائل النظامية، ويستوضح البيانات التي تؤثر في التكييف.",
-                icon: SearchCheck,
-              },
-              {
-                title: "إسناد التحليل",
-                description: "يعرض النصوص والأحكام المسترجعة بجوار النتيجة لتتمكن من الرجوع إليها والتحقق منها.",
-                icon: ShieldCheck,
-              },
-              {
-                title: "استمرار السياق",
-                description: "يحفظ الجلسات والملفات والمخرجات، ويتيح الانتقال بينها دون بدء المسألة من جديد.",
-                icon: Workflow,
-              },
-            ].map(({ title, description, icon: Icon }) => (
-              <article key={title} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--hakeem-bg)] p-6 text-start shadow-[var(--sh-xs)]">
-                <Icon className="h-6 w-6 text-[var(--gold-dark)]" aria-hidden />
-                <h3 className="mt-5 font-display text-xl font-bold text-[var(--navy)]">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[var(--ink-60)]">{description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-16 sm:px-6 lg:py-24">
-        <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[var(--r-2xl)] bg-[var(--navy)] shadow-[var(--sh-lg)] lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="px-4 py-16 sm:px-6 lg:py-20">
+        <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[var(--r-2xl)] bg-[var(--navy)] shadow-[var(--sh-lg)] lg:grid-cols-[1.15fr_0.85fr]">
           <div className="p-7 text-start sm:p-10 lg:p-12">
-            <p className="text-sm font-semibold text-[var(--gold-pale)]">ابدأ بمسألة تعمل عليها الآن</p>
-            <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
-              اكتب الوقائع، ثم انتقل مباشرة إلى مساحة العمل
-            </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-8 text-white/70 sm:text-base">
-              يُحفظ النص على جهازك قبل الدخول، ويعيدك حكيم إليه بعد التحقق عبر Google.
-            </p>
-            <ul className="mt-7 grid gap-3 text-sm text-white/80 sm:grid-cols-3">
-              {["مصادر قابلة للفتح", "جلسات محفوظة", "عودة مباشرة إلى المسألة"].map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--gold-bright)]" aria-hidden />
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm font-semibold text-[var(--gold-pale)]">ابدأ بمسألتك الحالية</p>
+            <h2 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">اكتب الوقائع وانتقل إلى مساحة العمل</h2>
+            <p className="mt-4 text-sm leading-7 text-white/70">يُحفظ النص قبل الدخول ويعود معك بعد التحقق.</p>
           </div>
 
           <div className="border-t border-white/10 bg-white/[0.05] p-7 sm:p-10 lg:border-r lg:border-t-0 lg:p-12">
-            <div className="flex h-full flex-col justify-center text-start">
-              <HomeAuthActions
-                guest={
-                  <div className="flex flex-col gap-3">
-                    <DirectGoogleEntry
-                      label="ابدأ عبر Google"
-                      className="focus-ring inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-6 text-sm font-bold text-[var(--navy)]"
-                    />
-                    <Link
-                      href="/pricing"
-                      className="focus-ring inline-flex min-h-[50px] items-center justify-center rounded-[var(--r-md)] border border-white/15 px-6 text-sm font-semibold text-white"
-                    >
-                      استعرض الأسعار
-                    </Link>
-                  </div>
-                }
-                user={
-                  <Link
-                    href="/dashboard"
+            <HomeAuthActions
+              guest={
+                <div className="flex h-full flex-col justify-center gap-3">
+                  <DirectGoogleEntry
+                    label="ابدأ عبر Google"
                     className="focus-ring inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-6 text-sm font-bold text-[var(--navy)]"
+                  />
+                  <Link
+                    href="/pricing"
+                    className="focus-ring inline-flex min-h-[50px] items-center justify-center rounded-[var(--r-md)] border border-white/15 px-6 text-sm font-semibold text-white"
                   >
-                    افتح مساحة العمل
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
+                    استعرض الأسعار
                   </Link>
-                }
-              />
-            </div>
+                </div>
+              }
+              user={
+                <Link
+                  href="/dashboard"
+                  className="focus-ring inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] px-6 text-sm font-bold text-[var(--navy)]"
+                >
+                  افتح مساحة العمل
+                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                </Link>
+              }
+            />
           </div>
         </div>
       </section>
