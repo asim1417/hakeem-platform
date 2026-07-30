@@ -5,9 +5,9 @@ import { getPublicPlatformStats } from "@/lib/modules/site/public-platform-stats
 import { getSiteConfig } from "@/lib/modules/site/site-store";
 
 export const metadata: Metadata = {
-  title: "حكيم — منصة المعرفة القضائية السعودية",
+  title: "حكيم — منصة العمل القانوني السعودي",
   description:
-    "ابحث في الأنظمة السعودية، حلّل المستندات، ونظّم ملف القضية في مساحة قانونية واحدة مبنية للممارس السعودي.",
+    "ابحث في الأنظمة والأحكام، حلّل المستندات، وأدر ملف القضية في مساحة قانونية سعودية واحدة بمخرجات مرتبطة بسندها.",
 };
 
 export const dynamic = "force-dynamic";
