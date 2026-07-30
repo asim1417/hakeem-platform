@@ -10,12 +10,9 @@ import {
   HAKEEM_ASK_MAX_CHARS,
   HOME_ASK_DRAFT_KEY,
 } from "@/lib/modules/config/home-inline-ask";
-import { signInWithNext, signUpWithNext } from "@/lib/modules/auth/safe-next";
+import { signInWithNext } from "@/lib/modules/auth/safe-next";
 
-/**
- * صندوق سؤال للزائر على الصفحة العامة — يحفظ المسودة بأمان ويفتح بوابة الدخول
- * دون وضع نص الواقعة في URL، ثم يُنفَّذ مرة واحدة بعد العودة إلى /dashboard.
- */
+/** صندوق السؤال العام: يحفظ المسودة محليًا ويعيد المستخدم إليها بعد الدخول. */
 export function GuestAskComposer() {
   const enabled = isAskFirstHomeEnabled();
   const [value, setValue] = useState("");
@@ -26,7 +23,7 @@ export function GuestAskComposer() {
       const draft = sessionStorage.getItem(HOME_ASK_DRAFT_KEY) || "";
       if (draft) setValue(draft);
     } catch {
-      /* تجاهل */
+      /* التخزين المحلي تحسين اختياري؛ لا يكسر الصفحة. */
     }
   }, []);
 
@@ -39,87 +36,86 @@ export function GuestAskComposer() {
       if (!next.trim()) sessionStorage.removeItem(HOME_ASK_DRAFT_KEY);
       else sessionStorage.setItem(HOME_ASK_DRAFT_KEY, next.slice(0, HAKEEM_ASK_MAX_CHARS));
     } catch {
-      /* تجاهل */
+      /* تجاهل تعذّر التخزين حتى لحظة المتابعة. */
     }
   }
 
-  function goAuth(mode: "in" | "up") {
-    const q = value.trim();
-    if (!q) {
-      setError("اكتب سؤالك أو وقائعك أولًا.");
+  function continueToAuth() {
+    const question = value.trim();
+    if (!question) {
+      setError("اكتب سؤالك أو ملخص الوقائع أولًا.");
       return;
     }
-    if (q.length > HAKEEM_ASK_MAX_CHARS) {
+    if (question.length > HAKEEM_ASK_MAX_CHARS) {
       setError("النص أطول من الحد المتاح. اختصره قبل المتابعة.");
       return;
     }
+
     try {
-      sessionStorage.setItem(HOME_ASK_DRAFT_KEY, q.slice(0, HAKEEM_ASK_MAX_CHARS));
+      sessionStorage.setItem(HOME_ASK_DRAFT_KEY, question.slice(0, HAKEEM_ASK_MAX_CHARS));
       sessionStorage.setItem(HOME_ASK_PENDING_RUN_KEY, "1");
     } catch {
-      setError("تعذّر حفظ السؤال مؤقتًا. حاول مرة أخرى.");
+      setError("تعذّر حفظ السؤال مؤقتًا على هذا الجهاز. أعد المحاولة.");
       return;
     }
-    window.location.assign(mode === "up" ? signUpWithNext("/dashboard") : signInWithNext("/dashboard"));
+
+    window.location.assign(signInWithNext("/dashboard"));
   }
 
   return (
     <div className="guest-ask">
       <form
         className="guest-ask__form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          goAuth("in");
+        onSubmit={(event) => {
+          event.preventDefault();
+          continueToAuth();
         }}
       >
         <div className="guest-ask__box">
           <textarea
             value={value}
-            onChange={(e) => persistDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                goAuth("in");
+            onChange={(event) => persistDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                continueToAuth();
               }
             }}
             rows={3}
-            aria-label="اكتب الواقعة أو السؤال القانوني"
+            maxLength={HAKEEM_ASK_MAX_CHARS}
+            aria-label="اكتب السؤال أو ملخص الوقائع"
             aria-describedby="guest-ask-hint guest-ask-error"
-            placeholder="اكتب الواقعة أو السؤال القانوني بتفاصيله…"
+            placeholder="مثال: أبرمت عقدًا ولم ينفّذ الطرف الآخر التزامه، ما الخيارات النظامية؟"
             className="guest-ask__input"
           />
           <button type="submit" className="guest-ask__submit">
-            اسأل حكيم
+            ابدأ التحليل
           </button>
         </div>
         <p id="guest-ask-hint" className="guest-ask__hint">
-          يمكنك طرح سؤال مختصر، أو كتابة وقائع المسألة بالتفصيل. Enter للإرسال بعد تسجيل الدخول،
-          وShift + Enter لسطر جديد.
+          Enter للمتابعة · Shift + Enter لسطر جديد
         </p>
         {error ? (
-          <p id="guest-ask-error" className="guest-ask__error" role="alert">
+          <p id="guest-ask-error" className="guest-ask__error" role="alert" aria-live="polite">
             {error}
           </p>
         ) : (
-          <span id="guest-ask-error" className="sr-only" />
+          <span id="guest-ask-error" className="sr-only" aria-live="polite" />
         )}
       </form>
 
-      <ul className="guest-ask__suggestions" aria-label="اقتراحات للبدء">
-        {ASK_FIRST_SUGGESTIONS.slice(0, 4).map((s) => (
-          <li key={s}>
-            <button type="button" className="guest-ask__chip" onClick={() => persistDraft(s)}>
-              {s}
+      <ul className="guest-ask__suggestions" aria-label="أمثلة للبدء">
+        {ASK_FIRST_SUGGESTIONS.slice(0, 4).map((suggestion) => (
+          <li key={suggestion}>
+            <button type="button" className="guest-ask__chip" onClick={() => persistDraft(suggestion)}>
+              {suggestion}
             </button>
           </li>
         ))}
       </ul>
 
       <p className="guest-ask__auth">
-        سجّل الدخول لبدء التحليل داخل الصفحة.{" "}
-        <a href={signUpWithNext("/dashboard")} className="guest-ask__auth-link">
-          سجّل مجانًا
-        </a>
+        يُحفظ النص على جهازك، ولا يُضاف إلى رابط الدخول.
       </p>
     </div>
   );
