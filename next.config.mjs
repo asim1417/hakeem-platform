@@ -55,11 +55,6 @@ function resolveServerActionOrigins() {
 const serverActionOrigins = resolveServerActionOrigins();
 
 const nextConfig = {
-  // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل)
-  outputFileTracingIncludes: {
-    "/search": ["./data/legal-bm25-index.json.gz"],
-    "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
-  },
   // أحدث ممارسات Next: ضغط + إزالة X-Powered-By + صور حديثة
   poweredByHeader: false,
   compress: true,
@@ -67,11 +62,17 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
+    // Next 14: خيارات التتبّع تقع داخل experimental.
+    // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل).
+    outputFileTracingIncludes: {
+      "/search": ["./data/legal-bm25-index.json.gz"],
+      "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"],
+    },
     // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
     instrumentationHook: true,
     serverActions: {
-      allowedOrigins: serverActionOrigins
-    }
+      allowedOrigins: serverActionOrigins,
+    },
   },
   // ترويسات أمنية على كل المسارات. القفل الصارم على object/base/form/frame؛
   // وscript/style مرنة (unsafe-inline) وworker/blob مسموحة لأن Next/Tailwind
@@ -100,7 +101,7 @@ const nextConfig = {
       "frame-ancestors 'self'",
       "base-uri 'self'",
       `form-action 'self' ${siteOrigin} ${clerkHosts} ${oauthFormTargets}`,
-      "object-src 'none'"
+      "object-src 'none'",
     ].join("; ");
     return [
       {
@@ -111,9 +112,9 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }
-        ]
-      }
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+        ],
+      },
     ];
   },
   // لعبة نجوم البلنتيات — ملف ثابت في public يُقدَّم على مسار نظيف
@@ -125,14 +126,14 @@ const nextConfig = {
     const docToolProxy = docToolUrl
       ? [
           { source: "/doc-tool", destination: `${docToolUrl}/` },
-          { source: "/doc-tool/:path*", destination: `${docToolUrl}/:path*` }
+          { source: "/doc-tool/:path*", destination: `${docToolUrl}/:path*` },
         ]
       : [];
     return {
       beforeFiles: docToolProxy,
-      afterFiles: []
+      afterFiles: [],
     };
-  }
+  },
 };
 
 export default nextConfig;
