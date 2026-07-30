@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoaderCircle } from "lucide-react";
 import {
   ASK_FIRST_SUGGESTIONS,
   HOME_ASK_PENDING_RUN_KEY,
@@ -10,13 +11,15 @@ import {
   HAKEEM_ASK_MAX_CHARS,
   HOME_ASK_DRAFT_KEY,
 } from "@/lib/modules/config/home-inline-ask";
-import { signInWithNext } from "@/lib/modules/auth/safe-next";
 
-/** صندوق السؤال العام: يحفظ المسودة محليًا ويعيد المستخدم إليها بعد الدخول. */
+const GOOGLE_ENTRY_PATH = `/api/auth/google?next=${encodeURIComponent("/dashboard")}`;
+
+/** صندوق السؤال العام: يحفظ المسودة محليًا وينقل المستخدم مباشرة إلى Google. */
 export function GuestAskComposer() {
   const enabled = isAskFirstHomeEnabled();
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     try {
@@ -40,7 +43,9 @@ export function GuestAskComposer() {
     }
   }
 
-  function continueToAuth() {
+  function continueToGoogle() {
+    if (isRedirecting) return;
+
     const question = value.trim();
     if (!question) {
       setError("اكتب سؤالك أو ملخص الوقائع أولًا.");
@@ -59,26 +64,29 @@ export function GuestAskComposer() {
       return;
     }
 
-    window.location.assign(signInWithNext("/dashboard"));
+    setIsRedirecting(true);
+    window.location.assign(GOOGLE_ENTRY_PATH);
   }
 
   return (
     <div className="guest-ask">
       <form
         className="guest-ask__form"
+        aria-busy={isRedirecting}
         onSubmit={(event) => {
           event.preventDefault();
-          continueToAuth();
+          continueToGoogle();
         }}
       >
         <div className="guest-ask__box">
           <textarea
             value={value}
+            disabled={isRedirecting}
             onChange={(event) => persistDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
-                continueToAuth();
+                continueToGoogle();
               }
             }}
             rows={3}
@@ -88,8 +96,19 @@ export function GuestAskComposer() {
             placeholder="مثال: أبرمت عقدًا ولم ينفّذ الطرف الآخر التزامه، ما الخيارات النظامية؟"
             className="guest-ask__input"
           />
-          <button type="submit" className="guest-ask__submit">
-            ابدأ التحليل
+          <button
+            type="submit"
+            disabled={isRedirecting}
+            className="guest-ask__submit"
+          >
+            {isRedirecting ? (
+              <span className="inline-flex items-center gap-2">
+                <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                جاري فتح Google…
+              </span>
+            ) : (
+              "ابدأ التحليل عبر Google"
+            )}
           </button>
         </div>
         <p id="guest-ask-hint" className="guest-ask__hint">
@@ -107,7 +126,12 @@ export function GuestAskComposer() {
       <ul className="guest-ask__suggestions" aria-label="أمثلة للبدء">
         {ASK_FIRST_SUGGESTIONS.slice(0, 4).map((suggestion) => (
           <li key={suggestion}>
-            <button type="button" className="guest-ask__chip" onClick={() => persistDraft(suggestion)}>
+            <button
+              type="button"
+              disabled={isRedirecting}
+              className="guest-ask__chip"
+              onClick={() => persistDraft(suggestion)}
+            >
               {suggestion}
             </button>
           </li>
@@ -115,7 +139,7 @@ export function GuestAskComposer() {
       </ul>
 
       <p className="guest-ask__auth">
-        يُحفظ النص على جهازك، ولا يُضاف إلى رابط الدخول.
+        تُحفظ المسألة على جهازك، وتعود إليها بعد موافقة Google.
       </p>
     </div>
   );
