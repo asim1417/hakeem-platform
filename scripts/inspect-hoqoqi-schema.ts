@@ -132,8 +132,8 @@ async function main() {
     const base = (parsed.tables.get("laws") ?? []).find((r) => field(r, ["id"]) === lawId);
     if (base) console.log(`  تواريخ laws: هجري=${field(base, ["issuance_date_hj"]) || "-"} · ميلادي=${field(base, ["issuance_date_gr"]) || "-"}`);
     const tools = (parsed.tables.get("law_issuance_tools") ?? []).filter((r) => field(r, ["law_id"]) === lawId);
-    console.log(`  أدوات الإصدار (${tools.length}):`);
-    tools.slice(0, 5).forEach((r, i) => console.log(`     [${i + 1}] «${field(r, ["title"]).slice(0, 220).replace(/\s+/g, " ")}»`));
+    console.log(`  أدوات الإصدار (${tools.length}) — النصّ الكامل بلا اقتطاع:`);
+    tools.forEach((r, i) => { const t = field(r, ["title"]); console.log(`     [${i + 1}] (${t.length} حرفًا) «${t.replace(/\s+/g, " ")}»`); });
     const arts = (parsed.tables.get("law_articles") ?? []).filter((r) => field(r, ["law_id"]) === lawId);
     const langById = new Map((parsed.tables.get("law_articles_lang") ?? []).map((r) => [field(r, ["article_id"]), r]));
     console.log(`  عدد المواد=${arts.length} — أوّل ٤ مواد مخزَّنة (بترتيب المصدر):`);
@@ -143,6 +143,16 @@ async function main() {
       console.log(`          نصّ=«${(l ? field(l, ["text"]) : "").slice(0, 320).replace(/\s+/g, " ")}…»`);
     });
   }
+
+  // ⑧ هل يوجد نصّ مرسومٍ طويل في أيّ مكان؟ أطول قيمة law_issuance_tools.title في كلّ البيانات + توزيع الأطوال.
+  const allTools = parsed.tables.get("law_issuance_tools") ?? [];
+  const lens = allTools.map((r) => field(r, ["title"]).length).sort((a, b) => b - a);
+  const longest = allTools.map((r) => field(r, ["title"])).sort((a, b) => b.length - a.length)[0] ?? "";
+  const over = (n: number) => lens.filter((l) => l > n).length;
+  console.log(`\n=== توزيع أطوال أداة الإصدار (law_issuance_tools.title) عبر كلّ الأنظمة ===`);
+  console.log(`  إجمالي الأدوات=${allTools.length} · أطول قيمة=${lens[0] ?? 0} حرفًا · وسيط تقريبيّ=${lens[Math.floor(lens.length / 2)] ?? 0}`);
+  console.log(`  أطول من 200 حرف: ${over(200)} · أطول من 500: ${over(500)} · أطول من 1000: ${over(1000)}`);
+  console.log(`  أطول نصّ أداة إصدار في كلّ الملفّ: «${longest.replace(/\s+/g, " ").slice(0, 500)}»`);
 }
 
 void main().catch((e) => { console.error(e); process.exit(1); });
