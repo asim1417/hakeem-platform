@@ -28,14 +28,34 @@ assert.ok(home.includes('from "next/link"'));
 assert.ok(home.includes('href="/sign-in"'));
 assert.ok(home.includes('href="/sign-up"'));
 assert.ok(home.includes("GuestAskComposer"));
-assert.ok(home.includes('id="why"'));
-assert.ok(home.includes('id="capabilities"'));
-assert.ok(home.includes('id="how"'));
-assert.ok(home.includes('id="trust"'));
-assert.ok(home.includes("من الواقعة إلى السند"));
-assert.ok(home.includes("أسئلة شائعة"));
+assert.ok(home.includes('id="database"'));
+assert.ok(home.includes('id="services"'));
+assert.ok(home.includes('id="method"'));
+assert.ok(home.includes("PublicPlatformStats"));
+assert.ok(home.includes("stats.legalSystems"));
+assert.ok(home.includes("stats.legalArticles"));
+assert.ok(home.includes("اسأل حكيم"));
+assert.ok(home.includes("النواة القانونية"));
+assert.ok(home.includes("منصة الوثائق"));
+assert.ok(home.includes("المعاون القضائي"));
+assert.ok(home.includes("القاضي التفاعلي"));
+assert.ok(home.includes("٢٨ دفعًا"));
+assert.ok(home.includes("٢٠٠٬٠٠٠"));
 assert.ok(home.includes('href="/privacy"'));
 assert.ok(home.includes('href="/terms"'));
+
+const publicStats = fs.readFileSync(
+  path.join(root, "lib/modules/site/public-platform-stats.ts"),
+  "utf8"
+);
+assert.ok(publicStats.includes("prisma.legalSystem.count"));
+assert.ok(publicStats.includes("prisma.legalArticle.count"));
+assert.ok(publicStats.includes("prisma.judicialCase.count"));
+assert.ok(publicStats.includes("prisma.judicialPrinciple.count"));
+
+const page = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
+assert.ok(page.includes("getPublicPlatformStats"));
+assert.ok(page.includes("stats={stats}"));
 
 const login = fs.readFileSync(path.join(root, "app/login/page.tsx"), "utf8");
 assert.ok(login.includes("redirect(`/sign-in"));
