@@ -34,7 +34,7 @@ export function AuthJourneyShell({
       <div className="login-page__grid">
         <aside className="login-brand" aria-label="تعريف حكيم">
           <div className="login-brand__inner">
-            <Link href="/" className="login-brand__home focus-ring" aria-label="حكيم — الصفحة الرئيسية">
+            <Link href="/" className="focus-ring inline-flex flex-col items-start rounded-[var(--r-md)]" aria-label="حكيم — الصفحة الرئيسية">
               <span className="login-brand__mark" aria-hidden>ح</span>
               <span className="login-brand__title">حكيم</span>
             </Link>
@@ -49,9 +49,15 @@ export function AuthJourneyShell({
 
         <section id="auth-panel" className="login-panel" aria-label="بوابة الدخول">
           <div className="login-panel__card flex w-full flex-col items-center gap-4">
-            <Link href="/" className="login-panel__brand focus-ring" aria-label="حكيم — الصفحة الرئيسية">
-              <span aria-hidden>ح</span>
-              <strong>حكيم</strong>
+            <Link
+              href="/"
+              className="focus-ring inline-flex min-h-[48px] items-center gap-3 rounded-[var(--r-md)] px-2 text-[var(--navy)] lg:hidden"
+              aria-label="حكيم — الصفحة الرئيسية"
+            >
+              <span className="grid h-10 w-10 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] font-judicial text-lg font-bold text-[var(--gold-bright)]" aria-hidden>
+                ح
+              </span>
+              <strong className="text-lg">حكيم</strong>
             </Link>
             {children}
             {footer ?? (
