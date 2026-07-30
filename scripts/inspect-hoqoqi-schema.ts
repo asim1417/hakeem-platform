@@ -81,8 +81,38 @@ async function main() {
     console.log("عيّنات law_preamble غير الفارغة:");
     preambleSamples.forEach((s, i) => console.log(`  [${i + 1}] (${s.len} حرفًا) «${s.text.replace(/\s+/g, " ")}…»`));
   } else {
-    console.log("النتيجة: لا قيمة law_preamble غير فارغة إطلاقًا — النصّ السرديّ الكامل غير مخزَّن في hoqoqi (يُبنى «ما قبل المادة» من أداة الإصدار + الملك + التواريخ فقط).");
+    console.log("law_preamble فارغ في كلّ الصفوف — لكن نُتابع البحث في بقيّة الجداول قبل الحكم.");
   }
+
+  // ⑤ مسحٌ شاملٌ للنصّ الخامّ كلّه عن عبارات الديباجة السرديّة — أينما كانت (مادّة، تعديل، أداة، أيّ عمود).
+  //    هذا يتجاوز افتراض «العمود المعيَّن»: يبحث في كامل ملفّ SQL عن بصمات الديباجة الرسميّة السعوديّة.
+  const markers = [
+    "بعون الله", "بعد الاطلاع", "بعد الإطلاع", "وبعد الاطلاع", "رسمنا بما هو آت",
+    "رسمنا بما هو آتٍ", "تقرر ما يلي", "قرر ما يلي", "المملكة العربية السعودية", "مجلس الوزراء"
+  ];
+  console.log("\n=== مسح كامل النصّ الخامّ عن بصمات الديباجة (أينما وُجدت) ===");
+  for (const mk of markers) console.log(`  «${mk}» → ${sql.split(mk).length - 1} مرّة`);
+
+  const insertAt = [...sql.matchAll(/INSERT\s+INTO\s+`?([A-Za-z0-9_]+)`?/gi)].map((m) => ({ i: m.index ?? 0, t: m[1] }));
+  const tableOf = (pos: number) => { let name = "?"; for (const s of insertAt) { if (s.i <= pos) name = s.t; else break; } return name; };
+  for (const strong of ["بعون الله", "رسمنا بما هو آت", "بعد الاطلاع"]) {
+    let idx = sql.indexOf(strong), shown = 0;
+    while (idx !== -1 && shown < 3) {
+      console.log(`  ▸ «${strong}» في [${tableOf(idx)}]: «…${sql.slice(Math.max(0, idx - 20), idx + 150).replace(/\s+/g, " ")}…»`);
+      idx = sql.indexOf(strong, idx + strong.length); shown++;
+    }
+  }
+
+  // ⑥ فحص مواد law_articles_lang: هل الديباجة مخزَّنة كمادّةٍ (عنوانها ديباجة/مقدمة أو نصّها سرديّ)؟
+  const artLang = parsed.tables.get("law_articles_lang") ?? [];
+  const preLike = artLang.filter((r) => {
+    const t = field(r, ["title"]); const x = field(r, ["text"]);
+    return /ديباج|مقدم|تمهيد|توطئ|تصدير/.test(t) || /بعون الله|بعد الا?طلاع|رسمنا بما هو/.test(x);
+  });
+  console.log(`\n=== مواد شبيهة بالديباجة داخل law_articles_lang: ${preLike.length} من ${artLang.length} ===`);
+  preLike.slice(0, 8).forEach((r, i) =>
+    console.log(`  [${i + 1}] عنوان=«${field(r, ["title"]).slice(0, 70)}» نصّ=«${field(r, ["text"]).slice(0, 180).replace(/\s+/g, " ")}…»`)
+  );
 }
 
 void main().catch((e) => { console.error(e); process.exit(1); });
