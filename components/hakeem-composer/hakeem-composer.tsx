@@ -191,13 +191,6 @@ export function HakeemComposer({
     if (cmd.detailed) onDetailedChange(true);
   }
 
-  function handleMentionSelect(id: string) {
-    const m = mentions.find((x) => x.id === id) ?? mentions[mentionIndex];
-    if (!m) return;
-    const applied = applyMention(value, caret, m);
-    updateValue(applied.text, applied.caret);
-  }
-
   function handleTool(tool: ToolAction) {
     if (tool.modeId) onModeChange(tool.modeId);
     if (tool.detailed) onDetailedChange(true);

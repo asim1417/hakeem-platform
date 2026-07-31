@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  ASK_FIRST_SUGGESTIONS,
   HOME_ASK_PENDING_RUN_KEY,
   isAskFirstHomeEnabled,
 } from "@/lib/modules/config/ask-first-home";
@@ -11,6 +10,7 @@ import {
   HOME_ASK_DRAFT_KEY,
 } from "@/lib/modules/config/home-inline-ask";
 import { signInWithNext, signUpWithNext } from "@/lib/modules/auth/safe-next";
+import { suggestionsForSurface } from "@/lib/modules/hakeem-composer/constants";
 
 /**
  * صندوق سؤال للزائر على الصفحة العامة — يحفظ المسودة بأمان ويفتح بوابة الدخول
@@ -106,13 +106,15 @@ export function GuestAskComposer() {
       </form>
 
       <ul className="guest-ask__suggestions" aria-label="اقتراحات للبدء">
-        {ASK_FIRST_SUGGESTIONS.slice(0, 4).map((s) => (
-          <li key={s}>
-            <button type="button" className="guest-ask__chip" onClick={() => persistDraft(s)}>
-              {s}
-            </button>
-          </li>
-        ))}
+        {suggestionsForSurface("guest")
+          .slice(0, 4)
+          .map((s) => (
+            <li key={s.id}>
+              <button type="button" className="guest-ask__chip" onClick={() => persistDraft(s.insertText)}>
+                {s.label}
+              </button>
+            </li>
+          ))}
       </ul>
 
       <p className="guest-ask__auth">
