@@ -2586,3 +2586,524 @@ html {
     background: transparent;
   }
 }
+
+/* ── HakeemComposer — صندوق حكيم الذكي ── */
+:root {
+  --composer-bg: var(--hakeem-paper, var(--paper, #fffdf8));
+  --composer-border: var(--ink-15);
+  --composer-border-focus: var(--gold);
+  --composer-shadow: var(--sh-md);
+  --composer-text: var(--ink);
+  --composer-muted: var(--ink-60);
+  --composer-accent: var(--navy);
+  --composer-danger: var(--ruby);
+  --composer-radius: var(--r-xl);
+}
+
+.hkm-composer {
+  width: 100%;
+  position: relative;
+}
+
+.hkm-composer__offline {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--r-md);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hkm-composer__box {
+  border: 1px solid var(--composer-border);
+  border-radius: var(--composer-radius);
+  background: var(--composer-bg);
+  box-shadow: var(--composer-shadow);
+  padding: 0.55rem 0.65rem 0.65rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.hkm-composer__box:focus-within {
+  border-color: var(--composer-border-focus);
+  box-shadow: 0 0 0 3px var(--gold-ghost, rgba(201, 162, 39, 0.18)), var(--composer-shadow);
+}
+
+.hkm-composer__context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.hkm-composer__context-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-ghost);
+  color: var(--navy);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.hkm-composer__context-remove {
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-60);
+  cursor: pointer;
+  padding: 0.1rem;
+}
+
+.hkm-composer__attachments {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.15rem 0.15rem 0.45rem;
+  margin-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+.hkm-composer__att {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: min(240px, 78vw);
+  max-width: 280px;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--gold-border);
+  background: var(--gold-ghost);
+}
+.hkm-composer__att--error {
+  border-color: rgba(140, 34, 51, 0.35);
+  background: var(--ruby-soft);
+}
+.hkm-composer__att-icon {
+  display: grid;
+  place-items: center;
+  color: var(--navy);
+  flex-shrink: 0;
+}
+.hkm-composer__att-body { min-width: 0; flex: 1; }
+.hkm-composer__att-name {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hkm-composer__att-meta {
+  margin: 0.1rem 0 0;
+  font-size: 0.68rem;
+  color: var(--ink-60);
+  line-height: 1.4;
+}
+.hkm-composer__att-remove {
+  border: 0;
+  background: transparent;
+  color: var(--ink-60);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 999px;
+}
+.hkm-composer__att-remove:hover { color: var(--ruby); }
+
+.hkm-composer__status { padding: 0 0.25rem 0.35rem; }
+.hkm-composer__status-info {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-60);
+  line-height: 1.6;
+}
+.hkm-composer__status-error {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ruby);
+  line-height: 1.6;
+}
+
+.hkm-composer__input-wrap { position: relative; }
+.hkm-composer__textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  max-height: 220px;
+  resize: none;
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 2rem 0.45rem 0.45rem;
+  color: var(--composer-text);
+  font-size: 1rem;
+  line-height: 1.7;
+  outline: none;
+  overflow-y: auto;
+}
+.hkm-composer__textarea::placeholder { color: var(--ink-40); }
+.hkm-composer__clear {
+  position: absolute;
+  inset-inline-end: 0.35rem;
+  inset-block-start: 0.45rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-40);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 999px;
+}
+.hkm-composer__clear:hover { color: var(--ruby); }
+
+.hkm-composer__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  flex-wrap: wrap;
+}
+.hkm-composer__toolbar-start,
+.hkm-composer__toolbar-end {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.hkm-composer__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--ink-15);
+  background: transparent;
+  color: var(--ink-60);
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.hkm-composer__tool-btn:hover,
+.hkm-composer__tool-btn.is-active {
+  color: var(--navy);
+  border-color: var(--gold);
+  background: var(--gold-ghost);
+}
+.hkm-composer__tool-btn.is-recording {
+  color: var(--ruby);
+  border-color: rgba(140, 34, 51, 0.4);
+  background: var(--ruby-soft);
+}
+.hkm-composer__tool-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.hkm-composer__tool-label { white-space: nowrap; }
+
+.hkm-composer__menu-wrap { position: relative; }
+.hkm-composer__menu {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: calc(100% + 0.4rem);
+  z-index: 40;
+  min-width: 240px;
+  max-width: min(92vw, 320px);
+  max-height: 280px;
+  overflow: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--ink-15);
+  background: var(--composer-bg);
+  box-shadow: var(--sh-lg);
+}
+.hkm-composer__menu--wide { min-width: min(92vw, 300px); }
+.hkm-composer__menu-group + .hkm-composer__menu-group {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--ink-08);
+}
+.hkm-composer__menu-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0.4rem 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-40);
+}
+.hkm-composer__menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: right;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-md);
+  padding: 0.55rem 0.6rem;
+  cursor: pointer;
+  color: var(--ink);
+}
+.hkm-composer__menu-item:hover,
+.hkm-composer__menu-item.is-active {
+  background: var(--gold-ghost);
+}
+.hkm-composer__menu-item strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.hkm-composer__menu-item em {
+  display: block;
+  margin-top: 0.1rem;
+  font-style: normal;
+  font-size: 0.68rem;
+  color: var(--ink-60);
+  line-height: 1.45;
+}
+.hkm-composer__check {
+  width: 1rem;
+  color: var(--gold-dark);
+  font-weight: 800;
+}
+
+.hkm-composer__counter {
+  font-size: 0.7rem;
+  color: var(--ink-40);
+  font-variant-numeric: tabular-nums;
+}
+.hkm-composer__send,
+.hkm-composer__stop,
+.hkm-composer__primary,
+.hkm-composer__secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.45rem 1rem;
+  border-radius: var(--r-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 0;
+}
+.hkm-composer__send,
+.hkm-composer__primary {
+  background: var(--composer-accent);
+  color: #fff;
+}
+.hkm-composer__send:hover,
+.hkm-composer__primary:hover { background: var(--navy-mid); }
+.hkm-composer__send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.hkm-composer__stop {
+  background: var(--ruby);
+  color: #fff;
+}
+.hkm-composer__secondary {
+  background: transparent;
+  border: 1px solid var(--ink-15);
+  color: var(--ink-80);
+}
+
+.hkm-composer__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  justify-content: center;
+}
+.hkm-composer__chip {
+  border: 1px solid var(--ink-15);
+  background: var(--composer-bg);
+  color: var(--ink-80);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+.hkm-composer__chip:hover {
+  border-color: var(--gold);
+  color: var(--navy);
+  background: var(--gold-ghost);
+}
+
+.hkm-composer__hint {
+  margin: 0.55rem 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: var(--ink-40);
+}
+
+.hkm-composer__popup {
+  position: absolute;
+  inset-inline: 0.25rem auto;
+  bottom: calc(100% + 0.25rem);
+  z-index: 45;
+  width: min(100%, 360px);
+  max-height: 240px;
+  overflow: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--ink-15);
+  background: var(--composer-bg);
+  box-shadow: var(--sh-lg);
+}
+.hkm-composer__popup-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: right;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-md);
+  padding: 0.5rem 0.55rem;
+  cursor: pointer;
+}
+.hkm-composer__popup-item code {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--gold-dark);
+  background: var(--gold-ghost);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+}
+.hkm-composer__popup-item strong {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--navy);
+}
+.hkm-composer__popup-item em {
+  display: block;
+  font-style: normal;
+  font-size: 0.68rem;
+  color: var(--ink-60);
+}
+.hkm-composer__popup-item:hover,
+.hkm-composer__popup-item.is-active {
+  background: var(--gold-ghost);
+}
+
+.hkm-composer__voice { display: inline-flex; align-items: center; gap: 0.35rem; }
+.hkm-composer__voice-error {
+  font-size: 0.68rem;
+  color: var(--ruby);
+  font-weight: 600;
+}
+
+.hkm-composer__expand-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(14, 52, 53, 0.45);
+  display: grid;
+  place-items: end center;
+  padding: 0.75rem;
+}
+.hkm-composer__expand {
+  width: min(920px, 100%);
+  max-height: min(92vh, 820px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-xl);
+  background: var(--composer-bg);
+  border: 1px solid var(--ink-15);
+  box-shadow: var(--sh-lg);
+  padding: 0.85rem;
+}
+.hkm-composer__expand-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.hkm-composer__expand-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--navy);
+}
+.hkm-composer__icon-btn {
+  border: 0;
+  background: transparent;
+  color: var(--ink-60);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 999px;
+}
+.hkm-composer__expand-input {
+  flex: 1;
+  width: 100%;
+  min-height: 280px;
+  border: 1px solid var(--ink-15);
+  border-radius: var(--r-lg);
+  padding: 0.85rem;
+  resize: vertical;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+}
+.hkm-composer__expand-input:focus { border-color: var(--gold); }
+.hkm-composer__expand-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+.hkm-composer__expand-foot p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-60);
+}
+.hkm-composer__expand-actions { display: flex; gap: 0.45rem; }
+
+@media (max-width: 720px) {
+  .hkm-composer__tool-label { display: none; }
+  .hkm-composer__toolbar-start { gap: 0.25rem; }
+  .hkm-composer__tool-btn {
+    min-height: 42px;
+    min-width: 42px;
+    justify-content: center;
+    padding: 0.4rem;
+  }
+  .hkm-composer__send span,
+  .hkm-composer__stop span { display: none; }
+  .hkm-composer__send,
+  .hkm-composer__stop {
+    min-width: 44px;
+    justify-content: center;
+    padding-inline: 0.75rem;
+  }
+  .hkm-composer__expand-backdrop {
+    place-items: stretch;
+    padding: 0;
+  }
+  .hkm-composer__expand {
+    max-height: 100%;
+    height: 100%;
+    border-radius: 0;
+    padding-bottom: max(0.85rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hkm-composer__box,
+  .hkm-composer__tool-btn,
+  .hkm-composer__chip { transition: none; }
+}
