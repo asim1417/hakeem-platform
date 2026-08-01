@@ -312,7 +312,8 @@ export function HakeemAskWorkspace({
         {
           type: "session",
           id: conversationId,
-          label: `جلسة: ${conversationId.slice(0, 8)}…`,
+          // لا نعرض المعرّف الخام (cuid) للمستخدم — تسميةٌ عربيّة واضحة.
+          label: "الجلسة الحالية",
           removable: false,
         },
       ];
