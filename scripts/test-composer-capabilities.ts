@@ -147,6 +147,23 @@ async function main() {
   process.env.JDS_DRAFTING_SHADOW = "1";
   t(isCapabilityEnabled(shadow), "ظل JDS يُفعَّل تدريجيًا");
 
+  t(Boolean(getCapability("jds.records")), "قدرة محاضر JDS (§18)");
+  t(Boolean(getCapability("jds.objections")), "قدرة اعتراضات JDS (§20)");
+  t(Boolean(getCapability("jds.statement_trace")), "قدرة تتبّع عبارات (§22)");
+  t(Boolean(getCapability("jds.durable_agent")), "قدرة وكيل دائم (§25)");
+  t(getCapability("jds.records")?.independent === true, "محرّكات JDS تبقى مستقلة");
+
+  delete process.env.JDS_RECORD_V2;
+  t(!isCapabilityEnabled(getCapability("jds.records")!), "محاضر JDS OFF افتراضيًا");
+  process.env.JDS_RECORD_V2 = "1";
+  t(isCapabilityEnabled(getCapability("jds.records")!), "محاضر JDS تدريجيًا");
+
+  const draftHandoff = suggestJdsHandoff({ intentCategory: "legal-drafting", stage: "drafting" });
+  t(
+    Boolean(draftHandoff?.suggestedServiceIds.includes("JS-018")),
+    "صياغة → اقتراح JS-018 دون تنفيذ"
+  );
+
   console.log(`\nنتيجة: ${ok} نجح، ${fail} فشل`);
   if (fail) process.exit(1);
 }

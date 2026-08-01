@@ -274,6 +274,89 @@ export const COMPOSER_CAPABILITIES: ComposerCapability[] = [
     flags: ["JDS_DRAFTING_SHADOW", "JDS_ENFORCE"],
     auth: [],
     grounding: "preferred",
+    linksTo: ["jds.quality_gates", "jds.statement_trace"],
+  },
+  {
+    id: "jds.quality_gates",
+    titleAr: "بوّابات جودة الصياغة القضائية",
+    ownerService: "jds-gates",
+    independent: true,
+    entry: { kind: "fn", ref: "lib/modules/judicial/gate-executor.ts#executeQualityGates" },
+    composer: {
+      surfaces: ["ask", "drafting", "simulation"],
+      modes: ["action-plan", "verdict-estimate", "analyze-case"],
+    },
+    flags: ["JDS_DRAFTING_SHADOW", "JDS_ENFORCE"],
+    auth: [],
+    grounding: "preferred",
+    linksTo: ["jds.shadow_review"],
+  },
+  {
+    id: "jds.records",
+    titleAr: "محاضر قضائية (§18) — مستقل",
+    ownerService: "jds-gates",
+    independent: true,
+    entry: { kind: "fn", ref: "lib/modules/judicial/records.ts#buildRecordScaffold" },
+    composer: { surfaces: ["case", "drafting"], modes: ["action-plan", "analyze-case"] },
+    flags: ["JDS_RECORD_V2"],
+    auth: [],
+    grounding: "preferred",
+    linksTo: ["jds.handoff"],
+  },
+  {
+    id: "jds.objections",
+    titleAr: "مسارات الاعتراض (§20) — مستقل",
+    ownerService: "jds-gates",
+    independent: true,
+    entry: { kind: "fn", ref: "lib/modules/judicial/objections.ts#buildObjection" },
+    composer: {
+      surfaces: ["case", "drafting"],
+      modes: ["action-plan", "verdict-estimate", "analyze-case"],
+      intentCategories: ["legal-drafting", "case-analysis"],
+    },
+    flags: ["JDS_OBJECTION_ROUTES_V2"],
+    auth: [],
+    grounding: "preferred",
+    linksTo: ["jds.handoff", "jds.service_catalog"],
+  },
+  {
+    id: "jds.statement_trace",
+    titleAr: "تتبّع العبارات القضائية (§22)",
+    ownerService: "jds-gates",
+    independent: true,
+    entry: { kind: "fn", ref: "lib/modules/judicial/statement-trace.ts#traceStatements" },
+    composer: {
+      surfaces: ["ask", "drafting", "simulation"],
+      modes: ["action-plan", "verdict-estimate", "analyze-case"],
+    },
+    flags: ["JDS_REASONING_V2"],
+    auth: [],
+    grounding: "required",
+    linksTo: ["citations.verify", "jds.quality_gates"],
+  },
+  {
+    id: "jds.procedure_graph",
+    titleAr: "رسم الإجراءات (§23 مرورات)",
+    ownerService: "jds-gates",
+    independent: true,
+    entry: { kind: "fn", ref: "lib/modules/judicial/procedure-graph.ts#buildProcedureGraph" },
+    composer: { surfaces: ["case"], modes: ["analyze-case", "action-plan"] },
+    flags: ["JDS_PROCEDURE_V2"],
+    auth: [],
+    grounding: "preferred",
+    linksTo: ["jds.handoff"],
+  },
+  {
+    id: "jds.durable_agent",
+    titleAr: "وكيل قضائي دائم (§25) — مستقل",
+    ownerService: "jds-gates",
+    independent: true,
+    entry: { kind: "fn", ref: "lib/modules/judicial/durable-agent.ts#initJudicialAgentRun" },
+    composer: { surfaces: ["case"], modes: ["analyze-case", "action-plan", "verdict-estimate"] },
+    flags: ["JDS_BACKGROUND_AGENT_V2"],
+    auth: [],
+    grounding: "none",
+    linksTo: ["jds.handoff"],
   },
   {
     id: "sim.courtroom",
@@ -349,8 +432,8 @@ function envOn(name: string): boolean {
  */
 export function isCapabilityEnabled(cap: ComposerCapability): boolean {
   if (!cap.flags.length) return true;
-  // ظل/إنفاذ JDS: يكفي أحدهما
-  if (cap.id === "jds.shadow_review") {
+  // ظل/إنفاذ JDS: يكفي أحدهما لبوّابات الجودة والظل
+  if (cap.id === "jds.shadow_review" || cap.id === "jds.quality_gates") {
     return envOn("JDS_DRAFTING_SHADOW") || envOn("JDS_ENFORCE");
   }
   // باقي القدرات: كل الأعلام مطلوبة

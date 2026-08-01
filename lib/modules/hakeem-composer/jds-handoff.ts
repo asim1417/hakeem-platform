@@ -16,12 +16,12 @@ export function isComposerJdsHandoffEnabled(): boolean {
   return envOn("HAKEEM_COMPOSER_JDS_HANDOFF_V1");
 }
 
-/** اقتراحات خدمات حسب مقصد Composer — لا تنفيذ تلقائي */
+/** اقتراحات خدمات حسب مقصد Composer — لا تنفيذ تلقائي (كتالوج المعاون يبقى المالك) */
 const INTENT_SERVICE_HINTS: Partial<Record<HakeemIntentCategory, string[]>> = {
   "case-analysis": ["JS-001", "JS-005", "JS-013"],
-  "judicial-simulation": ["JS-013", "JS-017", "JS-018"],
+  "judicial-simulation": ["JS-013", "JS-017", "JS-018", "JS-020"],
   "document-review": ["JS-003", "JS-005"],
-  "legal-drafting": ["JS-016", "JS-017"],
+  "legal-drafting": ["JS-016", "JS-017", "JS-018"],
 };
 
 export type JdsHandoffSuggestion = {
@@ -47,6 +47,8 @@ export function suggestJdsHandoff(input: {
   const relevant =
     input.intentCategory === "case-analysis" ||
     input.intentCategory === "judicial-simulation" ||
+    input.intentCategory === "legal-drafting" ||
+    input.intentCategory === "document-review" ||
     Boolean(input.judicialCaseId);
   if (!relevant) return null;
 
@@ -55,9 +57,20 @@ export function suggestJdsHandoff(input: {
     : "/dashboard/judicial-assistant";
 
   const stage = input.stage ?? "active";
-  const ids = validateJdsServiceIds(
-    INTENT_SERVICE_HINTS[input.intentCategory ?? "case-analysis"] ?? ["JS-001", "JS-013"]
-  );
+  const fromIntent =
+    INTENT_SERVICE_HINTS[input.intentCategory ?? "case-analysis"] ?? ["JS-001", "JS-013"];
+  // عند وجود مرحلة: اربط باقتراحات الكتالوج المستقل دون تنفيذ
+  const fromStage =
+    stage === "drafting" || stage === "deliberation"
+      ? ["JS-013", "JS-017", "JS-018"]
+      : stage === "quality_review"
+        ? ["JS-019", "JS-020"]
+        : stage === "appeal_review"
+          ? ["JS-021", "JS-022"]
+          : stage === "hearing_preparation"
+            ? ["JS-011", "JS-001", "JS-009"]
+            : [];
+  const ids = validateJdsServiceIds([...new Set([...fromIntent, ...fromStage])]);
 
   return {
     enabled: true,
