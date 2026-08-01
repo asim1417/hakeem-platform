@@ -320,7 +320,8 @@ export interface JudicialQualityGate {
   appliesToFunctions: DocumentFunction[] | "ALL";
 }
 
-export type GateOutcome = "PASS" | "FAIL" | "NOT_APPLICABLE";
+// NEEDS_REVIEW: البوّابة لا تُجتاز آليًّا (تتطلّب تحقّقًا خارجيًّا/بشريًّا) — ليست PASS ولا FAIL.
+export type GateOutcome = "PASS" | "FAIL" | "NOT_APPLICABLE" | "NEEDS_REVIEW";
 
 export interface QualityGateResult {
   gateId: string;

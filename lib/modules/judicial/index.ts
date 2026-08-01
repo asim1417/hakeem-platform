@@ -34,6 +34,8 @@ export { buildDomainPackRows, seedDomainPacks } from "./seed";
 export type { DomainPackSeedRow, SeedResult } from "./seed";
 export { buildProcedureGraph } from "./procedure-graph";
 export type { BuildProcedureGraphInput } from "./procedure-graph";
+export { executeQualityGates, isReleaseReady } from "./gate-executor";
+export type { GateExecutionInput, DraftStatement } from "./gate-executor";
 
 /** إصدار طبقة JDS ومرجع الأمر الحاكم — للتتبّع والتدقيق. */
 export const JDS_META = {
