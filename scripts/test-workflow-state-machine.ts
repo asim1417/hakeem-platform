@@ -27,5 +27,11 @@ assert(canAdvance(SIMULATION_WORKFLOW, "PLEADING", "SETTLEMENT"), "مسار ال
 assert(nextStates(SIMULATION_WORKFLOW, "PLEADING").includes("SETTLEMENT"), "الصلح ضمن التالي من المرافعة");
 assert(isTerminal(SIMULATION_WORKFLOW, "OBJECTION"), "الاعتراض نهائيّ");
 
+// مرونة القاعة (تعكس judge-engine الحقيقيّ) — انتقالات مشروعة يجب ألا تُحجب في enforce.
+assert(canAdvance(SIMULATION_WORKFLOW, "DEFENDANT_RESPONSE", "PLAINTIFF_STATEMENT"), "القاضي يعيد الكلمة للمدعي");
+assert(canAdvance(SIMULATION_WORKFLOW, "PROCEDURAL_DECISION", "SETTLEMENT"), "من القرار الإجرائيّ إلى الصلح");
+assert(canAdvance(SIMULATION_WORKFLOW, "CLOSE_PLEADING", "TRAINING_JUDGMENT"), "قفل المرافعة → الحكم التدريبيّ");
+assert(!canAdvance(SIMULATION_WORKFLOW, "CLAIM_FILING", "OBJECTION"), "لا قفزة من التقييد إلى الاعتراض");
+
 if (failures) { console.error(`\nفشل ${failures} تحقّق.`); process.exit(1); }
 console.log("\nآلة حالة سير العمل: كل التحقّقات ناجحة.");
