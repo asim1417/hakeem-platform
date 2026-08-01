@@ -27,7 +27,10 @@ const SEMVER = /^\d+\.\d+\.\d+$/;
 const ID_RE = /^[a-z0-9]+(\.[a-z0-9-]+)+$/;
 
 /** الحزم المعروفة (مسارات نسبيّة لجذر المشروع). يُوسَّع عند إضافة مؤسسات/مجالات. */
-export const KNOWN_PACKAGE_PATHS = ["packages/legal/domain.package.json"];
+export const KNOWN_PACKAGE_PATHS = [
+  "packages/legal/domain.package.json",
+  "packages/aman/institution.package.json",
+];
 
 export function validateManifest(m: unknown): { ok: boolean; errors: string[] } {
   const errors: string[] = [];

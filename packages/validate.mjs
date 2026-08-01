@@ -5,7 +5,10 @@ import path from "node:path";
 
 const SEMVER = /^\d+\.\d+\.\d+$/;
 const ID_RE = /^[a-z0-9]+(\.[a-z0-9-]+)+$/;
-const KNOWN = ["packages/legal/domain.package.json"];
+const KNOWN = [
+  "packages/legal/domain.package.json",
+  "packages/aman/institution.package.json",
+];
 
 let failures = 0;
 for (const rel of KNOWN) {
