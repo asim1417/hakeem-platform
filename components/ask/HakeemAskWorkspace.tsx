@@ -1274,42 +1274,33 @@ export function HakeemAskWorkspace({
             </h1>
             <p className="mt-2 max-w-md leading-7 text-[var(--ink-60)]">{emptyLede}</p>
 
-            {suggestions ? (
-              <div className="mt-7 grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => fillSuggestion(s)}
-                    className="focus-ring rounded-[var(--r-lg)] border border-[var(--ink-15)] bg-ivory px-4 py-3 text-right text-sm leading-6 text-[var(--ink-80)] shadow-[var(--sh-xs)] transition hover:-translate-y-0.5 hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-7 grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {(
-                  [
+            {/* تلميحاتٌ بالمعيار العالميّ: رقائقُ مُدمجة مركزيّة (لا بطاقاتٌ عملاقة تدفع الصندوق للأسفل). */}
+            {(() => {
+              const chips = suggestions
+                ? suggestions.slice(0, 4)
+                : [
                     "ما مدّة الاستئناف أمام المحاكم التجارية؟",
-                    "متى يسقط الحقّ بالتقادم في المعاملات المدنية؟",
-                    "ما أحكام الفصل التعسّفي في نظام العمل؟",
-                    "ما شروط صحّة عقد البيع نظامًا؟",
-                  ] as const
-                ).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void ask(s)}
-                    className="focus-ring rounded-[var(--r-lg)] border border-[var(--ink-15)] bg-ivory px-4 py-3 text-right text-sm leading-6 text-[var(--ink-80)] shadow-[var(--sh-xs)] transition hover:-translate-y-0.5 hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] disabled:opacity-50"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+                    "متى يسقط الحقّ بالتقادم؟",
+                    "أحكام الفصل التعسّفي في نظام العمل",
+                    "شروط صحّة عقد البيع نظامًا",
+                  ];
+              const onChip = (s: string) => (suggestions ? fillSuggestion(s) : void ask(s));
+              return (
+                <div className="mt-6 flex w-full max-w-xl flex-wrap items-center justify-center gap-2">
+                  {chips.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onChip(s)}
+                      className="focus-ring rounded-full border border-[var(--ink-15)] bg-ivory px-3.5 py-2 text-[13px] leading-5 text-[var(--ink-70)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] hover:text-[var(--navy)] disabled:opacity-50"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
 
             {!isHome ? (
               <p className="mt-6 max-w-md text-xs leading-6 text-[var(--ink-40)]">

@@ -2522,47 +2522,63 @@ html {
   padding-inline-end: 0.15rem;
 }
 .hkm-sess-panel-item {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.65rem 0.7rem;
-  border-radius: 0.65rem;
-  border: 1px solid transparent;
+  gap: 0.25rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--ink-08, rgba(14, 52, 53, 0.08));
   text-decoration: none;
   color: inherit;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.5);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 .hkm-sess-panel-item:hover {
   background: #fff;
-  border-color: rgba(201, 168, 76, 0.35);
+  border-color: rgba(201, 168, 76, 0.5);
+  box-shadow: 0 4px 14px -8px rgba(14, 52, 53, 0.18);
 }
 .hkm-sess-panel-item-active {
   background: #fff;
   border-color: var(--gold, #c9a84c);
-  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.2);
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.25);
+}
+/* شارةٌ جانبيّة للجلسة النشطة (تمييزٌ واضح بلا إزعاج). */
+.hkm-sess-panel-item-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.7rem;
+  bottom: 0.7rem;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--gold, #c9a84c);
 }
 .hkm-sess-panel-item-title {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--navy, #0e3435);
-  line-height: 1.45;
+  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .hkm-sess-panel-item-preview {
   font-size: 0.75rem;
   color: rgba(14, 52, 53, 0.55);
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .hkm-sess-panel-item-meta {
+  margin-top: 0.15rem;
   font-size: 0.7rem;
   color: rgba(14, 52, 53, 0.45);
+  font-variant-numeric: tabular-nums;
 }
 .hkm-sess-panel-hint,
 .hkm-sess-panel-error {
