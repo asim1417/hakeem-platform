@@ -437,6 +437,16 @@ function JdsReviewPanel({ review }: { review: NonNullable<JudgmentDraftResult["j
           يحتاج تحقّقًا خارجيًّا/بشريًّا: {needsReview.map((f) => GATE_AR[f.gateId] ?? f.gateId).join("، ")}.
         </p>
       ) : null}
+      {review.statementTrace || review.drafting ? (
+        <p className="ja-det__disc">
+          {review.statementTrace ? (
+            <>تتبّع العبارات (§22): {review.statementTrace.total} عبارة، منها {review.statementTrace.unsupported} بلا سندٍ ظاهر. </>
+          ) : null}
+          {review.drafting ? (
+            <>مرورات الصياغة (§23): {review.drafting.total} مرحلة، {review.drafting.delegated} بالتوليد المؤصَّل{review.drafting.blocked > 0 ? `، ${review.drafting.blocked} محجوزة بمتطلّب ناقص` : ""}.</>
+          ) : null}
+        </p>
+      ) : null}
     </div>
   );
 }

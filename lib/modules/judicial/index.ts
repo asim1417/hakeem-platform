@@ -25,6 +25,45 @@ export {
 export { JUDICIAL_DOMAIN_PACKS, getDomainPack, domainPackForTrack } from "./domain-packs";
 export { PACK_GOVERNING_SYSTEMS, resolvePackCurrentness } from "./currentness";
 export type { GovSystemRecord, PackCurrentnessResult } from "./currentness";
+export { segmentStatements, traceStatements, unsupportedCount } from "./statement-trace";
+export type { TraceContext } from "./statement-trace";
+export { runDraftingPasses } from "./drafting-passes";
+export type {
+  DraftingPass,
+  DraftingRunInput,
+  JudicialDraftingRun,
+  PassStatus,
+} from "./drafting-passes";
+export { buildObjection, objectionRouteSpec } from "./objections";
+export type {
+  ObjectionRoute,
+  ObjectionRouteSpec,
+  BuildObjectionInput,
+  JudicialObjectionScaffold,
+  ObjectionElementCheck,
+} from "./objections";
+export { buildRecordScaffold, recordElementSpecs } from "./records";
+export type {
+  RecordElementKey,
+  RecordElementSpec,
+  BuildRecordInput,
+  JudicialRecordScaffold,
+  RecordElementCheck,
+} from "./records";
+export {
+  initJudicialAgentRun,
+  advanceJudicialAgentRun,
+  approveJudicialAgentRun,
+  serializeAgentRun,
+  deserializeAgentRun,
+} from "./durable-agent";
+export type {
+  AgentRunStatus,
+  AgentCheckpoint,
+  JudicialAgentRun,
+  InitAgentRunInput,
+  AdvanceInput,
+} from "./durable-agent";
 export {
   characterizeJudicialTask,
   voiceProfileFor,
