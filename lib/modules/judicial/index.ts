@@ -44,7 +44,7 @@ export { planJudicialTask, reviewJudicialDraft } from "./orchestrator";
 export type { PlanJudicialTaskInput, JudicialTaskPlan } from "./orchestrator";
 export { JUDICIAL_EVAL_CASES } from "./eval-cases";
 export type { JudicialEvalCase } from "./eval-cases";
-export { JDS_FLAGS, isJdsFlagOn, isJdsDraftingShadowEnabled } from "./flag";
+export { JDS_FLAGS, isJdsFlagOn, isJdsDraftingShadowEnabled, isJdsEnforceEnabled } from "./flag";
 export type { JdsFlagKey } from "./flag";
 export { judicialShadowReview } from "./shadow";
 export type { JdsShadowReview, ShadowReviewInput } from "./shadow";

@@ -405,12 +405,20 @@ function JdsReviewPanel({ review }: { review: NonNullable<JudgmentDraftResult["j
   };
   const flagged = review.findings.filter((f) => f.outcome === "FAIL");
   const needsReview = review.findings.filter((f) => f.outcome === "NEEDS_REVIEW");
+  const enforced = review.enforced === true;
   return (
     <div className="ja-sources">
+      {enforced && review.banner ? (
+        <div className="ja-summary__banner ja-summary__banner--blocked" style={{ fontWeight: 700 }}>
+          <JaIcon name="security" size={16} /><span>{review.banner}</span>
+        </div>
+      ) : null}
       <h4>
         <JaIcon name={review.ready ? "quality" : "security"} size={15} />{" "}
-        فحص جودة JDS الاسترشاديّ — {review.ready ? "لا مانع للمراجعة" : `${flagged.length} ملاحظة مانعة`}
-        <span className="ja-badge ja-badge--info" style={{ marginInlineStart: 8 }}>ظلّ · لا يغيّر النصّ</span>
+        فحص جودة JDS{enforced ? " الفعّال" : " الاسترشاديّ"} — {review.ready ? "لا مانع للاعتماد" : `${flagged.length} مخالفة مانعة`}
+        <span className={`ja-badge ${enforced ? "ja-badge--danger" : "ja-badge--info"}`} style={{ marginInlineStart: 8 }}>
+          {enforced ? "وصلٌ فعّال · يمنع الاعتماد" : "ظلّ · لا يغيّر النصّ"}
+        </span>
       </h4>
       {flagged.length > 0 ? (
         <ul>
