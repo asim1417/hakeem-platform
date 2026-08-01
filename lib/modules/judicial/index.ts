@@ -34,6 +34,36 @@ export type {
   JudicialDraftingRun,
   PassStatus,
 } from "./drafting-passes";
+export { buildObjection, objectionRouteSpec } from "./objections";
+export type {
+  ObjectionRoute,
+  ObjectionRouteSpec,
+  BuildObjectionInput,
+  JudicialObjectionScaffold,
+  ObjectionElementCheck,
+} from "./objections";
+export { buildRecordScaffold, recordElementSpecs } from "./records";
+export type {
+  RecordElementKey,
+  RecordElementSpec,
+  BuildRecordInput,
+  JudicialRecordScaffold,
+  RecordElementCheck,
+} from "./records";
+export {
+  initJudicialAgentRun,
+  advanceJudicialAgentRun,
+  approveJudicialAgentRun,
+  serializeAgentRun,
+  deserializeAgentRun,
+} from "./durable-agent";
+export type {
+  AgentRunStatus,
+  AgentCheckpoint,
+  JudicialAgentRun,
+  InitAgentRunInput,
+  AdvanceInput,
+} from "./durable-agent";
 export {
   characterizeJudicialTask,
   voiceProfileFor,
