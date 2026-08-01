@@ -22,7 +22,11 @@ function asOfDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** يجد الأنظمة الحاكمة المرشّحة في النواة، ويتحقّق من سريانها (مواد سارية) وتاريخها. */
+// حالاتٌ تدلّ على أنّ المادّة/النظام لم يعد ساريًا (إلغاء/نسخ) — تُستبعَد من إثبات السريان.
+// «needs_review» وسمٌ تحريريّ داخليّ (لا يعني الإلغاء)، فلا يُسقِط سريان النظام القائم.
+const REPEALED_STATUSES = ["ملغاة", "ملغي", "مُلغاة", "ملغية", "منسوخة", "منسوخ", "معطلة"];
+
+/** يجد الأنظمة الحاكمة المرشّحة في النواة، ويتحقّق من سريانها (وجودٌ بمواد غير ملغاة) وتاريخها. */
 async function lookupGoverning(candidates: string[]): Promise<GovSystemRecord[]> {
   const out: GovSystemRecord[] = [];
   const seen = new Set<string>();
@@ -35,9 +39,10 @@ async function lookupGoverning(candidates: string[]): Promise<GovSystemRecord[]>
     for (const s of systems) {
       if (seen.has(s.name)) continue;
       seen.add(s.name);
-      // ساري = له مادّةٌ واحدة على الأقلّ حالتها «سارية».
+      // ساري = نظامٌ قائمٌ (له مواد) وله مادّةٌ واحدة على الأقلّ غير ملغاة/منسوخة.
+      // لا نشترط الوسم التحريريّ «سارية»: النواة تستورد أنظمةً سارية بحالة needs_review.
       const activeArticle = await prisma.legalArticle.findFirst({
-        where: { lawName: s.name, status: "سارية" },
+        where: { lawName: s.name, status: { notIn: REPEALED_STATUSES } },
         select: { id: true },
       });
       // تاريخ السريان = أقدم effectiveFrom غير فارغ لمواد النظام (إن وُجد).
