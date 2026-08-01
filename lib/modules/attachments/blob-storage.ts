@@ -166,7 +166,7 @@ export async function downloadAttachmentBytes(
   if (!storageKey || storageKey.startsWith("metadata-only/")) return null;
 
   if (storageKey.startsWith("sharepoint/")) {
-    const { decideSharePointDownloadUrl, fetchWithAuthNoExternalRedirect } = await import(
+    const { decideSharePointDownloadUrl, fetchGraphContentFollowingRedirects } = await import(
       "@/lib/modules/attachments/sharepoint-download"
     );
     const decision = decideSharePointDownloadUrl({
@@ -176,9 +176,9 @@ export async function downloadAttachmentBytes(
     if (!decision.allow) return null;
     const token = await graphToken().catch(() => null);
     if (!token) return null;
-    const res = await fetchWithAuthNoExternalRedirect(decision.url, token);
-    if (!res || !res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
+    const result = await fetchGraphContentFollowingRedirects(decision.url, token);
+    if (!result.ok) return null;
+    return result.body;
   }
 
   const url = signedDownloadUrl(storageKey);

@@ -1066,6 +1066,19 @@ model ApiRequestWindow {
   @@map("api_request_windows")
 }
 
+// حد معدّل عام (رفع مرفقات وغيره) — مفتاح نصي بلا FK؛ يُنشأ بسكربت idempotent إن لزم.
+model GenericRateLimitWindow {
+  id          String   @id @default(cuid())
+  bucketKey   String   @map("bucket_key")
+  windowStart Int      @map("window_start")
+  count       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([bucketKey, windowStart])
+  @@index([windowStart])
+  @@map("generic_rate_limit_windows")
+}
+
 // ── المعاون القضائي — حفظ مخرجات التحليل (المرحلة 1ب) ──
 // يخزّن كلّ تشغيل عملٍ (JS-00x) لقضية كي يظهر سجلّ التحليلات وتُحفظ حالته (مسودّة/مثبّت).
 // الجدول يُنشأ بسكربت idempotent (لا `migrate deploy` في البناء)؛ الوصول دفاعيّ (fail-open).

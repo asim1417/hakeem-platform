@@ -53,6 +53,10 @@ import {
 } from "@/lib/modules/attachments/attachment-classify";
 import { ownsAttachment } from "@/lib/modules/auth/ownership";
 import type { DocumentPageResult } from "@/lib/modules/attachments/extraction-provenance";
+import {
+  decideAgentSearchAttachmentsMode,
+  readAttachmentsVersionClaim,
+} from "@/lib/modules/hakeem-composer/attachments-version";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -93,11 +97,34 @@ export async function POST(request: NextRequest) {
   // حدّ المستند المرفق: 200000 حرفًا ليستوعب الوثيقة القانونية كاملةً (حكمٌ/عقدٌ طويل).
   // الوكيل لا يحقنه تلقائيًّا — يقرؤه Claude عبر read_attachment عند الحاجة فقط. الأضخم مساره منصّة الوثائق.
   let requestDoc = String(body?.document ?? "").trim().slice(0, 200_000);
-  const documentsEnabled = isComposerDocumentsV1Enabled() || isAttachmentsV2Enabled();
-  const attachmentsV2 = isAttachmentsV2Enabled();
+  const versionClaim = readAttachmentsVersionClaim(request, body as Record<string, unknown>);
   const rawAttachmentIds = Array.isArray(body.attachmentIds)
     ? body.attachmentIds.map(String).filter(Boolean).slice(0, 10)
     : [];
+
+  const searchMode = decideAgentSearchAttachmentsMode({
+    clientClaimsV2: versionClaim.clientClaimsV2,
+    hasAttachmentIds: rawAttachmentIds.length > 0,
+  });
+  if (searchMode.mode === "reject_v2_claim") {
+    return new Response(
+      JSON.stringify({
+        type: "error",
+        message: searchMode.message,
+        code: searchMode.code,
+        alignment: searchMode.alignment,
+      }),
+      { status: 409, headers: { "Content-Type": "application/json; charset=utf-8" } }
+    );
+  }
+
+  const documentsEnabled = isComposerDocumentsV1Enabled() || isAttachmentsV2Enabled();
+  const attachmentsV2 = searchMode.mode === "v2" || (isAttachmentsV2Enabled() && rawAttachmentIds.length > 0);
+
+  // عند وجود attachmentIds في مسار V2: لا تثق بـ document المحلي (يمنع تجاوز NOT_READY)
+  if (attachmentsV2 && rawAttachmentIds.length > 0) {
+    requestDoc = "";
+  }
 
   // مزامنة سريعة لمهام doc-node الجارية قبل القراءة (لا تنتظر OCR الطويل)
   if (attachmentsV2 && rawAttachmentIds.length) {
@@ -189,10 +216,16 @@ export async function POST(request: NextRequest) {
     0;
   const hasReadyAttachmentContentFlag = hasReadyAttachmentContent(attachmentBuckets);
 
-  // نص المستند: أولوية المرفقات الجاهزة؛ ثم legacy document خلف DOCUMENTS_V1 أو عند تعطيل V2
+  // نص المستند: أولوية المرفقات الجاهزة؛ عند ids خادمية V2 لا يُستخدم document العميل أبدًا
   const resolvedDoc = resolveAskDocumentText({
     requestDocument:
-      !attachmentsV2 || isComposerDocumentsV1Enabled() ? requestDoc : readyLoaded.length ? null : requestDoc,
+      attachmentsV2 && rawAttachmentIds.length > 0
+        ? null
+        : !attachmentsV2 || isComposerDocumentsV1Enabled()
+          ? requestDoc
+          : readyLoaded.length
+            ? null
+            : requestDoc,
     attachmentDocuments: readyLoaded.map((a) => ({ fileName: a.fileName, text: a.text })),
   });
   const attachedDoc = resolvedDoc.text;
@@ -270,7 +303,11 @@ export async function POST(request: NextRequest) {
     sourcePolicy.attachments
   ) {
     const attErr = resolveAttachedOnlyError(attachmentBuckets, {
-      hasLegacyDocument: attachedDoc.length > 0 && readyLoaded.length === 0,
+      // لا تسمح لنص محلي بتجاوز NOT_READY عند وجود attachmentIds
+      hasLegacyDocument:
+        !(attachmentsV2 && rawAttachmentIds.length > 0) &&
+        attachedDoc.length > 0 &&
+        readyLoaded.length === 0,
     });
     // عند وجود نص legacy جاهز بدون ids نتخطى أخطاء المرفقات
     if (attErr && !(attachedDoc.length > 0 && rawAttachmentIds.length === 0)) {

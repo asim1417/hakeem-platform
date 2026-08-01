@@ -79,8 +79,10 @@ check("POST لا يستورد محركات الاستخراج ولا ينتظر 
   const authIdx = routeSrc.indexOf("getCurrentUser");
   const formIdx = routeSrc.indexOf("request.formData");
   assert.ok(authIdx >= 0 && formIdx > authIdx, "الجلسة قبل formData");
-  assert.ok(routeSrc.includes("consumeAttachmentUploadRateLimit"));
+  assert.ok(routeSrc.includes("getAttachmentUploadRateLimiter") || routeSrc.includes("consumeAttachmentUploadRateLimit"));
   assert.ok(routeSrc.includes("CONTENT_LENGTH_EXCEEDED") || routeSrc.includes("content-length"));
+  assert.ok(routeSrc.includes("decideAttachmentsRuntime") || routeSrc.includes("CLIENT_V2_SERVER_LEGACY"));
+  assert.ok(routeSrc.includes("x-hakeem-attachments-version") || routeSrc.includes("ATTACHMENTS_VERSION_HEADER") || routeSrc.includes("readAttachmentsVersionClaim"));
 });
 
 // ── 4–5 ملكية وعرض ──

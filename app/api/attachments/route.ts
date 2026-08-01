@@ -10,13 +10,21 @@ import { assertCaseOwnedForAttachment, attachmentListWhere } from "@/lib/modules
 import { storageBackend, uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
 import {
-  isAttachmentsV2Enabled,
   isDocumentProcessingV2Enabled,
   queueAttachmentProcessing,
 } from "@/lib/modules/attachments/document-processing-adapter";
 import { ATTACHMENT_MAX_BYTES, validateAttachmentUpload } from "@/lib/modules/attachments/secure-upload";
-import { consumeAttachmentUploadRateLimit } from "@/lib/modules/attachments/upload-rate-limit";
+import {
+  assertAttachmentsV2RateLimitReady,
+  buildAttachmentUploadRateKey,
+  getAttachmentUploadRateLimiter,
+} from "@/lib/modules/attachments/upload-rate-limit";
 import { ASK_ATTACHMENT_RELATION_TYPE } from "@/lib/modules/hakeem-composer/document-bridge";
+import {
+  decideAttachmentsRuntime,
+  readAttachmentsVersionClaim,
+} from "@/lib/modules/hakeem-composer/attachments-version";
+import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -66,15 +74,61 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const rate = consumeAttachmentUploadRateLimit(user.id);
+  // محاذاة مبكرة من الترويسة قبل قراءة البايتات
+  const headerClaim = readAttachmentsVersionClaim(request, null);
+  const earlyRuntime = decideAttachmentsRuntime({ clientClaimsV2: headerClaim.clientClaimsV2 });
+  if (!earlyRuntime.ok) {
+    return NextResponse.json(
+      {
+        message: earlyRuntime.message,
+        code: earlyRuntime.code,
+        alignment: earlyRuntime.alignment,
+      },
+      { status: earlyRuntime.status }
+    );
+  }
+
+  const prodRl = assertAttachmentsV2RateLimitReady();
+  if (earlyRuntime.enforceV2 && !prodRl.ok) {
+    return NextResponse.json(
+      { message: prodRl.message, code: prodRl.code },
+      { status: 503 }
+    );
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
+  const ipHash = ip
+    ? createHash("sha256").update(ip).digest("hex").slice(0, 16)
+    : null;
+  const rate = await getAttachmentUploadRateLimiter().consume(
+    buildAttachmentUploadRateKey(user.id, ipHash)
+  );
   if (!rate.allowed) {
     return NextResponse.json(
-      { message: "تجاوزت حد معدّل الرفع. حاول لاحقًا.", code: "RATE_LIMITED", limit: rate.limit },
+      {
+        message: "تجاوزت حد معدّل الرفع. حاول لاحقًا.",
+        code: "RATE_LIMITED",
+        limit: rate.limit,
+        provider: rate.provider,
+      },
       { status: 429, headers: { "Retry-After": String(rate.retryAfterSec) } }
     );
   }
 
   const form = await request.formData();
+  const claim = readAttachmentsVersionClaim(request, form);
+  const runtime = decideAttachmentsRuntime({ clientClaimsV2: claim.clientClaimsV2 });
+  if (!runtime.ok) {
+    return NextResponse.json(
+      {
+        message: runtime.message,
+        code: runtime.code,
+        alignment: runtime.alignment,
+      },
+      { status: runtime.status }
+    );
+  }
+
   const file = form.get("file");
   if (!(file instanceof File)) {
     return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
@@ -100,7 +154,7 @@ export async function POST(request: NextRequest) {
   const caseGate = await assertCaseOwnedForAttachment(actor, caseId);
   if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
 
-  const v2 = isAttachmentsV2Enabled();
+  const v2 = runtime.enforceV2;
   let detectedMimeType = file.type || null;
   let sha256: string | null = null;
   let safeName = file.name;
@@ -175,6 +229,7 @@ export async function POST(request: NextRequest) {
     sha256: sha256 || undefined,
     detectedMimeType: detectedMimeType || undefined,
     attachmentsV2: v2 || undefined,
+    flagAlignment: runtime.alignment.reason,
     note: isAskOrphan
       ? "مرفق Ask — معالجة عبر Adapter/doc-node أو جسر الاستخراج"
       : v2
@@ -217,6 +272,8 @@ export async function POST(request: NextRequest) {
       sha256: sha256 || undefined,
       attachmentsV2: v2 || undefined,
       permissionUsed: isAskOrphan ? "ASK_ATTACHMENT_UPLOAD" : "ATTACHMENTS_FULL",
+      flagAlignment: runtime.alignment.reason,
+      rateLimitProvider: rate.provider,
     }
   });
   await settleAdvancedUse(actor.id, access.via, {
@@ -238,6 +295,8 @@ export async function POST(request: NextRequest) {
       attachment: toAttachmentDto(attachment),
       processing: processing || undefined,
       storageConfigured: backend !== "metadata-only",
+      flagAlignment: runtime.alignment.reason,
+      enforceV2: v2,
     },
     { status: 201 }
   );

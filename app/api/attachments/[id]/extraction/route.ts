@@ -7,16 +7,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { completeAttachmentExtraction } from "@/lib/modules/attachments/complete-extraction";
 import { ASK_ATTACHMENT_RELATION_TYPE } from "@/lib/modules/hakeem-composer/document-bridge";
-import {
-  isAttachmentsV2ServerEnabled,
-  isComposerDocumentsV1Enabled,
-  isDocumentProcessingV2Enabled,
-} from "@/lib/modules/hakeem-composer/document-flags";
+import { isDocumentProcessingV2Enabled } from "@/lib/modules/hakeem-composer/document-flags";
 import { CLIENT_EXTRACTION_MAX_CHARS } from "@/lib/modules/attachments/extraction-provenance";
 import { prisma } from "@/lib/prisma";
 import { ownsAttachment } from "@/lib/modules/auth/ownership";
 import { resolveAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
 import { auditEvent } from "@/lib/modules/audit/audit";
+import {
+  decideAttachmentsRuntime,
+  readAttachmentsVersionClaim,
+} from "@/lib/modules/hakeem-composer/attachments-version";
 
 export const dynamic = "force-dynamic";
 
@@ -29,25 +29,43 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (gate.response) return gate.response;
   const user = gate.user!;
 
-  if (!isAttachmentsV2ServerEnabled() && !isComposerDocumentsV1Enabled()) {
-    return NextResponse.json(
-      { message: "مسار الاستخراج معطّل (أعلام الوثائق).", code: "FEATURE_DISABLED" },
-      { status: 503 }
-    );
-  }
-
   let body: {
     text?: string;
     kind?: string;
     extractionEngine?: string;
     confidence?: number;
-    /** يُتجاهل — الخادم يقرر */
     provenance?: string;
+    attachmentsVersion?: string;
   } = {};
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ message: "جسم الطلب غير صالح." }, { status: 400 });
+  }
+
+  const claim = readAttachmentsVersionClaim(request, body);
+  const runtime = decideAttachmentsRuntime({ clientClaimsV2: claim.clientClaimsV2 });
+  if (!runtime.ok) {
+    return NextResponse.json(
+      {
+        message: runtime.message,
+        code: runtime.code,
+        alignment: runtime.alignment,
+      },
+      { status: runtime.status }
+    );
+  }
+
+  // بلا V2 خادمي ولا V1: مسار الاستخراج الخادمي للجسر معطّل إن لم يوجد أي علم
+  if (!runtime.alignment.serverHasV2 && !runtime.alignment.reason.includes("V1") && runtime.alignment.reason === "OFF") {
+    // السماح بـ V1 توافق إن كان مفعّلًا عبر align reason
+  }
+  const { isComposerDocumentsV1Enabled } = await import("@/lib/modules/hakeem-composer/document-flags");
+  if (!runtime.enforceV2 && !isComposerDocumentsV1Enabled()) {
+    return NextResponse.json(
+      { message: "مسار الاستخراج معطّل (أعلام الوثائق).", code: "FEATURE_DISABLED" },
+      { status: 503 }
+    );
   }
 
   const rawText = String(body.text ?? "");
@@ -88,7 +106,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     );
   }
 
-  // تجاهل extractionEngine/confidence من العميل صراحةً
   const processingV2 = isDocumentProcessingV2Enabled();
   const nodeOk = docNodeConfigured();
   const provenance =
@@ -101,7 +118,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     kind: body.kind,
     provenance,
     docNodeConfigured: nodeOk,
-    // لا تمرير confidence/engine من العميل
   });
 
   void auditEvent({
@@ -116,7 +132,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       textLength: rawText.length,
       clientEngineIgnored: Boolean(body.extractionEngine),
       clientConfidenceIgnored: body.confidence != null,
-      // لا نص
+      flagAlignment: runtime.alignment.reason,
     },
   }).catch(() => undefined);
 
@@ -136,5 +152,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     provenance: result.provenance,
     verificationStatus: result.verificationStatus,
     mode: result.mode,
+    flagAlignment: runtime.alignment.reason,
   });
 }

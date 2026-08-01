@@ -18,6 +18,15 @@ export {
   resolveComposerDocumentsMode,
 } from "./document-flags";
 
+export {
+  planAskAttachmentSend,
+  deriveComposerAttachmentStatus,
+  isAttachmentReadyForModel,
+  canStartAskWithAttachments,
+} from "./attachment-send-policy";
+
+export { ATTACHMENTS_VERSION_HEADER } from "./attachments-version";
+
 export function mapExtractKindToTextSource(kind: string | null | undefined): TextSource {
   const k = (kind || "").toLowerCase();
   if (k.includes("cloud") || k.includes("gemini") || k.includes("vision")) return "cloud";

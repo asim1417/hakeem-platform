@@ -51,9 +51,16 @@ import { composerSourcesToPolicy } from "@/lib/modules/hakeem-composer/source-po
 import { routeComposerIntent } from "@/lib/modules/hakeem-composer/intent-router";
 import {
   isComposerAttachmentClientPersistEnabled,
+  isAttachmentsV2ClientEnabled,
   toMessageAttachmentRef,
 } from "@/lib/modules/hakeem-composer/document-bridge";
 import { persistAskAttachmentToServer } from "@/lib/modules/hakeem-composer/persist-ask-attachment";
+import {
+  canStartAskWithAttachments,
+  deriveComposerAttachmentStatus,
+  planAskAttachmentSend,
+} from "@/lib/modules/hakeem-composer/attachment-send-policy";
+import { ATTACHMENTS_VERSION_HEADER } from "@/lib/modules/hakeem-composer/attachments-version";
 import type {
   ComposerAttachment,
   ComposerContextItem,
@@ -510,11 +517,19 @@ export function HakeemAskWorkspace({
 
         let serverAttachmentId: string | undefined;
         let storageKey: string | undefined;
+        let serverProcessingStatus: string | undefined;
+        let serverVerificationStatus: string | undefined;
+        let extractionMode: string | undefined;
         if (isComposerAttachmentClientPersistEnabled()) {
           setAttachments((prev) =>
             prev.map((a) =>
               a.id === id
-                ? { ...a, status: "uploading", progressMessage: "جارٍ حفظ المرفق على المنصة…" }
+                ? {
+                    ...a,
+                    status: "uploading",
+                    localExtractionStatus: "ok",
+                    progressMessage: "جارٍ حفظ المرفق على المنصة…",
+                  }
                 : a
             )
           );
@@ -523,11 +538,27 @@ export function HakeemAskWorkspace({
             extractedText: forSend,
             kind,
           });
-          if (persisted) {
+          if (persisted?.rejectedAsLegacy) {
+            setAttachStatus("الخادم بوضع Legacy — سيُستخدم النص المحلي دون مرفق V2.");
+          } else if (persisted?.serverAttachmentId) {
             serverAttachmentId = persisted.serverAttachmentId;
             storageKey = persisted.storageKey;
+            serverProcessingStatus = persisted.processingStatus;
+            serverVerificationStatus = persisted.verificationStatus;
+            extractionMode = persisted.extractionMode;
           }
         }
+
+        const localExtractionStatus = "ok" as const;
+        const derivedStatus = deriveComposerAttachmentStatus({
+          localExtractionStatus,
+          serverAttachmentId,
+          serverProcessingStatus,
+          serverVerificationStatus,
+          processingV2: isAttachmentsV2ClientEnabled(),
+        });
+        const isPreviewOnly =
+          serverVerificationStatus === "PREVIEW_ONLY" || extractionMode === "preview_only";
 
         setAttachments((prev) =>
           prev.map((a) =>
@@ -536,16 +567,24 @@ export function HakeemAskWorkspace({
                   ...a,
                   kind,
                   extractedText: forSend,
-                  status: "ready",
+                  previewText: isPreviewOnly ? forSend.slice(0, 2000) : undefined,
+                  localExtractionStatus,
                   serverAttachmentId,
                   storageKey,
+                  serverProcessingStatus,
+                  serverVerificationStatus,
+                  status: derivedStatus,
                   progressMessage:
                     trimmed.length > COMPOSER_MAX_DOC_CHARS
-                      ? `طويل جدًا — سيُرسل أوّل ${COMPOSER_MAX_DOC_CHARS.toLocaleString("ar-SA")} حرف`
+                      ? `طويل جدًا — سيُقطع لاحقًا عند الجاهزية الخادمية`
                       : serverAttachmentId
-                        ? warning
-                          ? `${warning} · حُفظ على المنصة`
-                          : "حُفظ على المنصة"
+                        ? isPreviewOnly || derivedStatus === "processing"
+                          ? warning
+                            ? `${warning} · قيد المعالجة على المنصة`
+                            : "قيد المعالجة على المنصة (معاينة محلية لا تُرسل للنموذج)"
+                          : warning
+                            ? `${warning} · جاهز على المنصة`
+                            : "جاهز على المنصة"
                         : warning || undefined,
                   error: undefined,
                 }
@@ -553,11 +592,13 @@ export function HakeemAskWorkspace({
           )
         );
         setAttachStatus(
-          trimmed.length > COMPOSER_MAX_DOC_CHARS
-            ? `أُرفق المستند (${kind}) — طويلٌ جدًّا؛ سيُرسل أوّل ${COMPOSER_MAX_DOC_CHARS.toLocaleString("ar-SA")} حرفٍ منه.`
-            : warning
-              ? `أُرفق المستند (${kind}) — ${warning}`
-              : `أُرفق المستند (${kind}) كاملًا (${trimmed.length.toLocaleString("ar-SA")} حرفًا).`
+          derivedStatus === "processing" && serverAttachmentId
+            ? `أُرفق المستند (${kind}) — بانتظار اكتمال المعالجة الخادمية.`
+            : trimmed.length > COMPOSER_MAX_DOC_CHARS
+              ? `أُرفق المستند (${kind}) — طويلٌ جدًّا.`
+              : warning
+                ? `أُرفق المستند (${kind}) — ${warning}`
+                : `أُرفق المستند (${kind}) كاملًا (${trimmed.length.toLocaleString("ar-SA")} حرفًا).`
         );
       } catch (err) {
         const m = err instanceof Error ? err.message : "";
@@ -585,6 +626,15 @@ export function HakeemAskWorkspace({
   }
 
   function combinedDocument(list: ComposerAttachment[]): { text: string; name: string | null } {
+    const plan = planAskAttachmentSend({
+      attachments: list,
+      attachmentsV2: isAttachmentsV2ClientEnabled(),
+      processingV2: isAttachmentsV2ClientEnabled(),
+    });
+    if (plan.suppressLocalDocument) {
+      const named = list.find((a) => a.serverAttachmentId);
+      return { text: plan.document || "", name: named?.name ?? null };
+    }
     const ready = list.filter((a) => a.status === "ready" && a.extractedText.trim());
     if (!ready.length) return { text: "", name: null };
     if (ready.length === 1) return { text: ready[0].extractedText, name: ready[0].name };
@@ -792,8 +842,17 @@ export function HakeemAskWorkspace({
 
   async function ask(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) {
     const question = (q ?? value).trim();
+    const sendPlan = planAskAttachmentSend({
+      attachments: attachmentsRef.current,
+      attachmentsV2: isAttachmentsV2ClientEnabled(),
+      processingV2: isAttachmentsV2ClientEnabled(),
+    });
     const { text: doc, name: attachedName } = combinedDocument(attachmentsRef.current);
-    if ((!question && !doc) || busyRef.current) return;
+    if ((!question && !canStartAskWithAttachments(attachmentsRef.current, question)) || busyRef.current) {
+      return;
+    }
+    // مع مرفق خادمي معلّق: نسمح بالإرسال ليُرجع الخادم ATTACHMENT_NOT_READY
+    if (!question && !doc && !sendPlan.attachmentIds.length) return;
 
     if (question.length > HAKEEM_ASK_MAX_CHARS) {
       return;
@@ -802,7 +861,7 @@ export function HakeemAskWorkspace({
     const intent = routeComposerIntent({
       text: question,
       mode: modeIdRef.current,
-      hasAttachment: Boolean(doc),
+      hasAttachment: Boolean(doc) || sendPlan.attachmentIds.length > 0,
       sources: sourcesRef.current,
     });
     const effectiveMode = resolveEffectiveMode(
@@ -852,21 +911,22 @@ export function HakeemAskWorkspace({
       .slice(-8);
 
     try {
-      const readyForSend = attachmentsRef.current.filter(
-        (a) => a.status === "ready" && a.extractedText.trim()
-      );
-      const attachmentIds = readyForSend
-        .map((a) => a.serverAttachmentId)
-        .filter((id): id is string => Boolean(id));
+      const attachmentIds = sendPlan.attachmentIds;
+      const documentToSend = sendPlan.suppressLocalDocument ? undefined : doc || undefined;
       const sourcePolicy = composerSourcesToPolicy(sourcesRef.current);
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (isAttachmentsV2ClientEnabled()) {
+        headers[ATTACHMENTS_VERSION_HEADER] = "2";
+      }
 
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           query: queryForAgent,
-          document: doc || undefined,
+          document: documentToSend,
           attachmentIds: attachmentIds.length ? attachmentIds : undefined,
+          attachmentsVersion: isAttachmentsV2ClientEnabled() ? "2" : undefined,
           detailed: override?.detailed ?? detailed,
           skipBreadth: override?.skipBreadth ?? false,
           mode: effectiveMode,
@@ -882,9 +942,21 @@ export function HakeemAskWorkspace({
 
       if (!res.ok || !res.body) {
         const auth = res.status === 401;
-        const msg = auth
+        let msg = auth
           ? "انتهت الجلسة — يلزم تسجيل الدخول."
           : "تعذّر تنفيذ البحث الوكيلي.";
+        try {
+          const errJson = (await res.json()) as { message?: string; code?: string };
+          if (errJson.code === "ATTACHMENT_NOT_READY") {
+            msg = errJson.message || "المرفق لم يكتمل معالجته بعد.";
+          } else if (errJson.code === "CLIENT_V2_SERVER_LEGACY") {
+            msg = errJson.message || "محاذاة أعلام المرفقات غير متوافقة.";
+          } else if (errJson.message) {
+            msg = errJson.message;
+          }
+        } catch {
+          /* ignore */
+        }
         if (auth) {
           saveDraft(shown);
           setValue(shown);
