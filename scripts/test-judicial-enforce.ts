@@ -42,13 +42,21 @@ function withEnv(env: Record<string, string | undefined>, fn: () => void) {
 }
 
 function main() {
-  // ① بلا أعلام ⇒ لا مراجعة.
+  // ⓪ الافتراض المُعتمَد: الإنفاذ مفعَّلٌ بلا أيّ ضبطٍ للبيئة (قرارٌ صريح 2026-08-01).
   withEnv({ JDS_DRAFTING_SHADOW: undefined, JDS_ENFORCE: undefined }, () => {
-    check("بلا عَلَم: undefined (لا مراجعة)", judicialShadowReview(violating) === undefined);
+    const r = judicialShadowReview(violating)!;
+    check("الافتراض: مراجعةٌ موجودة بلا ضبط", !!r);
+    check("الافتراض: enforced=true", r.enforced === true);
+    check("الافتراض: يمنع اعتماد المخالف", r.releaseBlocked === true);
   });
 
-  // ② الظلّ فقط ⇒ يرصد المخالفة لكن لا يمنع الاعتماد ولا إشعار.
-  withEnv({ JDS_DRAFTING_SHADOW: "1", JDS_ENFORCE: undefined }, () => {
+  // ① إطفاءٌ صريح (JDS_ENFORCE=0) وبلا ظلّ ⇒ لا مراجعة.
+  withEnv({ JDS_DRAFTING_SHADOW: "0", JDS_ENFORCE: "0" }, () => {
+    check("إطفاءٌ صريح (JDS_ENFORCE=0): undefined (لا مراجعة)", judicialShadowReview(violating) === undefined);
+  });
+
+  // ② الظلّ فقط (إنفاذٌ مُطفأ صراحةً) ⇒ يرصد المخالفة لكن لا يمنع الاعتماد ولا إشعار.
+  withEnv({ JDS_DRAFTING_SHADOW: "1", JDS_ENFORCE: "0" }, () => {
     const r = judicialShadowReview(violating)!;
     check("الظلّ: يوجد", !!r);
     check("الظلّ: يرصد مخالفةً مانعة (JG13)", r.blocking.includes("JG13"));

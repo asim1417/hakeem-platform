@@ -1,11 +1,25 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// §31-I — أعلام تفعيل JDS (Feature Flags). كلّها **مطفأة افتراضيًّا** → لا تغيّر أيّ سلوكٍ
-// حيّ حتى تُفعَّل صراحةً (Shadow Mode ثمّ Pilot). التفعيل عبر متغيّرات البيئة "1"/"true".
+// §31-I — أعلام تفعيل JDS (Feature Flags). أغلبها مطفأٌ افتراضيًّا؛ استثناءً: **الوصل
+// الفعّال (JDS_ENFORCE) مفعَّلٌ افتراضيًّا** بقرارٍ صريحٍ من مالك المنصّة (2026-08-01) —
+// يُبرز المخالفات المانعة ويمنع اعتماد المخرج حتى تُصحَّح. للإطفاء: JDS_ENFORCE=0.
+// التفعيل/الإطفاء عبر متغيّرات البيئة ("1"/"true"/"on"/"yes" مقابل "0"/"false"/"off").
 // ─────────────────────────────────────────────────────────────────────────────
 
 function on(name: string): boolean {
   const v = (process.env[name] ?? "").trim().toLowerCase();
   return v === "1" || v === "true" || v === "on" || v === "yes";
+}
+
+function off(name: string): boolean {
+  const v = (process.env[name] ?? "").trim().toLowerCase();
+  return v === "0" || v === "false" || v === "off" || v === "no";
+}
+
+/** عَلَمٌ ذو افتراضٍ صريح: يُقرأ من البيئة، وإلا يعود إلى الافتراض المُمرَّر. */
+function flagWithDefault(name: string, dflt: boolean): boolean {
+  if (on(name)) return true;
+  if (off(name)) return false;
+  return dflt;
 }
 
 export const JDS_FLAGS = {
@@ -35,8 +49,12 @@ export function isJdsDraftingShadowEnabled(): boolean {
   return on(JDS_FLAGS.DRAFTING_SHADOW);
 }
 
-/** الوصل الفعّال (يُصحّح: يُبرز المخالفات المانعة ويمنع الاعتماد) — OFF افتراضًا.
- *  تفعيله يُفعّل الظلّ ضمنًا (لا إنفاذ بلا مراجعة). */
+/** الافتراض المُعتمَد للوصل الفعّال: مفعَّلٌ بقرارٍ صريحٍ من مالك المنصّة (2026-08-01).
+ *  للإطفاء الفوريّ دون تعديل كود: اضبط JDS_ENFORCE=0 في بيئة الإنتاج. */
+export const JDS_ENFORCE_DEFAULT = true;
+
+/** الوصل الفعّال (يُصحّح: يُبرز المخالفات المانعة ويمنع الاعتماد) — ON افتراضًا (قرارٌ صريح).
+ *  تفعيله يُفعّل الظلّ ضمنًا (لا إنفاذ بلا مراجعة). للإطفاء: JDS_ENFORCE=0. */
 export function isJdsEnforceEnabled(): boolean {
-  return on(JDS_FLAGS.ENFORCE);
+  return flagWithDefault(JDS_FLAGS.ENFORCE, JDS_ENFORCE_DEFAULT);
 }
