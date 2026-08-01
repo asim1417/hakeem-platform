@@ -2865,6 +2865,20 @@ html {
 .hkm-composer__tool-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .hkm-composer__tool-label { white-space: nowrap; }
 
+/* زرّ «دراسة موسّعة» — مميّزٌ ومعنون دائمًا (لا يختفي على الجوّال) كي يجده المستخدم. */
+.hkm-composer__tool-btn--deep {
+  border-color: rgba(198, 151, 99, 0.55);
+  color: var(--navy);
+  font-weight: 700;
+}
+.hkm-composer__tool-btn--deep.is-active {
+  background: linear-gradient(135deg, var(--gold, #c69763), #b5854f);
+  border-color: transparent;
+  color: #241a0c;
+  box-shadow: 0 4px 14px -6px rgba(198, 151, 99, 0.7);
+}
+.hkm-composer__tool-label--always { display: inline !important; }
+
 .hkm-composer__menu-wrap { position: relative; }
 .hkm-composer__menu {
   position: absolute;
