@@ -61,6 +61,8 @@
     "test:event-envelope": "tsx scripts/test-event-envelope.ts",
     "test:model-registry": "tsx scripts/test-model-registry.ts",
     "test:data-classification": "tsx scripts/test-data-classification.ts",
+    "test:prompt-registry": "tsx scripts/test-prompt-registry.ts",
+    "packages:validate": "node packages/validate.mjs",
     "test:dialogue-acceptance": "tsx scripts/test-model-led-dialogue.ts",
     "test:search-fixes": "tsx scripts/test-search-fixes.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",

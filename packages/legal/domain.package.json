@@ -1,0 +1,34 @@
+{
+  "id": "hakeem.domain.legal-sa",
+  "name": "القانون السعودي — حزمة المجال",
+  "version": "1.0.0",
+  "schemaVersion": "1",
+  "publisher": "hakeem",
+  "kind": "domain",
+  "capabilities": [
+    "legal-search",
+    "consultation",
+    "judicial-simulation",
+    "knowledge-graph",
+    "citations"
+  ],
+  "permissions": [
+    "LIBRARY_READ",
+    "CONSULTATIONS_FULL",
+    "SIMULATIONS_USE",
+    "JUDICIAL_ASSISTANT_USE"
+  ],
+  "dependencies": [],
+  "conflicts": [],
+  "compatibility": { "platform": ">=0.1.0" },
+  "terminology": ["نظام", "لائحة", "مادة", "حكم", "مبدأ قضائي", "مذكرة", "واقعة", "دفع", "دليل", "ديباجة"],
+  "entityTypes": ["LegalSystem", "LegalArticle", "JudicialRuling", "JudicialPrinciple", "LegalCase"],
+  "evidenceTypes": ["article", "ruling", "principle", "attachment"],
+  "sourceTypes": ["moj", "hoqoqi", "turath", "manual-upload"],
+  "workflows": ["consultation", "judicial-simulation", "judicial-assistant"],
+  "qualityDimensions": ["structure", "evidence", "compliance", "security", "delivery"],
+  "complianceRules": [],
+  "aiAgents": ["commercial-litigator", "insolvency-practitioner", "judge-aide"],
+  "entrypoints": { "search": "/dashboard/legal-search", "consult": "/dashboard/ask" },
+  "signatures": []
+}
