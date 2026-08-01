@@ -1,0 +1,51 @@
+name: Prove domain-pack currentness (إثبات السريان §7)
+
+# يُثبت تاريخ سريان حزم المجال من النواة (Neon): لكلّ حزمة، إن وُجد نظامها الحاكم ساريًا،
+# يُحدَّث law_as_of_date وتُسجَّل لقطة سلطةٍ حقيقيّة. الحزم بلا حاكمٍ ساري تبقى PENDING (لا اختلاق).
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد الكتابة على Neon"
+        type: string
+        required: true
+        default: ""
+      as_of_date:
+        description: "تاريخ الإسناد YYYY-MM-DD (افتراضيّ: تاريخ اليوم)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prove-currentness
+  cancel-in-progress: false
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      AS_OF_DATE: ${{ inputs.as_of_date }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."
+            exit 1
+          fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::سرّ NEON_DATABASE_URL غير مضبوط."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Prove currentness
+        run: npx tsx scripts/prove-currentness.ts
