@@ -64,6 +64,8 @@ export type {
   InitAgentRunInput,
   AdvanceInput,
 } from "./durable-agent";
+export { buildAgentRunRow, saveAgentRun, loadAgentRun } from "./agent-run-store";
+export type { AgentRunRow, StoreResult } from "./agent-run-store";
 export {
   characterizeJudicialTask,
   voiceProfileFor,

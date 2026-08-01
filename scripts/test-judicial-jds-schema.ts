@@ -3,7 +3,14 @@
 // يفحص سلامة DDL، وتطابق أسماء الجداول، واشتقاق صفوف البذر من السجلّ (لا اختلاق).
 //   npm run test:jds-schema
 // ─────────────────────────────────────────────────────────────────────────────
-import { JDS_DDL, JDS_TABLES, buildDomainPackRows, JUDICIAL_DOMAIN_PACKS } from "@/lib/modules/judicial";
+import {
+  JDS_DDL,
+  JDS_TABLES,
+  buildDomainPackRows,
+  JUDICIAL_DOMAIN_PACKS,
+  buildAgentRunRow,
+  initJudicialAgentRun,
+} from "@/lib/modules/judicial";
 
 let pass = 0,
   fail = 0;
@@ -46,6 +53,17 @@ function main() {
   check("لا تاريخ سريان مُختلَق في البذر (PENDING)", rows.every((r) => r.lawAsOfDate === "PENDING"));
   check("كلّ صفٍّ يحمل معرّفًا وفئات playbooks", rows.every((r) => r.id && r.playbookCategories.length > 0));
   check("معرّفات صفوف البذر فريدة", new Set(rows.map((r) => r.id)).size === rows.length);
+
+  // ⑥ §25 — جدول تشغيلات الوكيل يحمل عمود الحالة الكاملة (state JSONB) للاستئناف.
+  const agentDdl = JDS_DDL.find((sql) => sql.includes(`CREATE TABLE IF NOT EXISTS "jds_agent_runs"`)) ?? "";
+  check("jds_agent_runs يحمل عمود state (JSONB)", agentDdl.includes(`"state"       JSONB`));
+  check("jds_agent_runs مفهرسٌ بالحالة", JDS_DDL.some((s) => s.includes(`"jds_agent_runs_status_idx"`)));
+
+  // ⑦ بانٍ نقيّ: صفّ تشغيلٍ يشتقّ من حالةٍ مهيّأة (بلا قاعدة).
+  const run = initJudicialAgentRun({ runId: "r1", taskId: "t1", role: "LAWYER", text: "دعوى تجاريّة" });
+  const row = buildAgentRunRow(run);
+  check("صفّ التشغيل يطابق المعرّفات", row.runId === "r1" && row.taskId === "t1");
+  check("صفّ التشغيل يحفظ الحالة الكاملة", row.state.passes.length === 22 && row.status === "INITIALIZED");
 
   console.log(`\nنتيجة JDS PR2 (schema): ${pass} ناجحة / ${fail} فاشلة`);
   if (fail > 0) process.exit(1);
