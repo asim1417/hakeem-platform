@@ -59,7 +59,42 @@ Client sources / sourcePolicy
 | orchestrator judgments | مسار أحكام فقط أو تخطّي عند `judgments=false` |
 | native → orchestrator fallback | نفس `effectivePolicy` + `usedFallback` |
 
-## 7–10) انظر ملخص PR والاختبارات في نهاية الملف.
+## 7) نتائج الاختبارات
 
-### مؤجّل للمرحلة الثانية
+| أمر | نتيجة |
+|---|---|
+| `test:source-policy` | 71/71 |
+| `test:source-policy-e2e` | 16/16 |
+| `test:hakeem-composer` | 40/40 |
+| `test:runtime` | 20/20 |
+| `test:intent-gate` | 17/17 |
+| `tsc --noEmit` | ناجح |
+| `lint` | ناجح (تحذيرات قديمة غير متعلقة) |
+| `build` | ناجح |
+
+لا يوجد Playwright في المستودع؛ عُوّض بعقد API e2e حتمي (`test:source-policy-e2e`).
+
+## 8) الملفات المعدّلة
+
+- `lib/modules/hakeem-composer/source-policy.ts`
+- `lib/modules/hakeem-composer/constants.ts`
+- `app/api/ai/agent-search/route.ts`
+- `lib/modules/agents/orchestrator.ts`
+- `scripts/test-source-policy.ts`
+- `scripts/test-source-policy-api-e2e.ts`
+- `scripts/test-hakeem-composer.ts`
+- `package.json`
+- `reports/hakeem-composer-source-policy-closure.md`
+
+## 9) مخاطر متبقية
+
+- اختيار المصادر ما زال يمرّ تلميحًا نصيًا أيضًا عبر `composeAgentQuery` حتى يُزال انتقاليًا بعد استقرار العلم.
+- `caseFiles` و`organizationLibrary` و`web` بلا مسار منح إنتاجي بعد — ممنوعة فقط.
+- مسار `createConsultationDraft` بعد المنسّق ما زال يعتمد على مواد المنسّق؛ عند حظر المكتبة يُقطع قبلًا عبر `reply`/`isOrchestratorLibraryBlocked`.
+- لا اختبار HTTP حي ضد خادم Next في هذه الجولة (عقد قرار حتمي بدلًا منه).
+
+## 10) مؤجّل للمرحلة الثانية
+
 مرفقات/OCR، بحث هجين، استشهادات V2، ملفات قضايا، مكتبة مؤسسة مربوطة، أداة ويب، صوت، ربط صفحات.
+
+**لم يُدمج · لم يُضغط Mark Ready · لم يُنشر.**

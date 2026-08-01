@@ -491,6 +491,27 @@ export function isRetrievalTool(toolName: string): boolean {
   );
 }
 
+/** هل يُسمح للمنسّق/البحث النظامي بالمرور؟ */
+export function isLibraryRetrievalAllowed(policy: SourcePolicy): boolean {
+  return policy.legalLibrary || policy.regulations;
+}
+
+/** أحكام فقط — بلا مكتبة أنظمة/لوائح */
+export function isJudgmentsOnlyRetrieval(policy: SourcePolicy): boolean {
+  return !isLibraryRetrievalAllowed(policy) && policy.judgments;
+}
+
+/**
+ * حظر استرجاع المكتبة بالكامل (مرفقات فقط / بلا مصادر).
+ * يستخدمه المنسّق ومسار السقوط من الوكيل الأصيل — منطق نقي قابل للاختبار بلا server-only.
+ */
+export function isOrchestratorLibraryBlocked(policy: SourcePolicy): boolean {
+  return !isLibraryRetrievalAllowed(policy) && !policy.judgments;
+}
+
+export const ORCHESTRATOR_LIBRARY_BLOCKED_REPLY =
+  "لا يمكن البحث في مكتبة الأنظمة لأن نطاق المصادر المحدّد لهذا الطلب لا يشملها. أرفق مستندًا أو وسّع نطاق المصادر ثم أعد المحاولة.";
+
 export function describeSourcePolicy(policy: SourcePolicy): string[] {
   const labels: string[] = [];
   if (policy.legalLibrary) labels.push("مكتبة الأنظمة");

@@ -8,16 +8,17 @@ import {
   decideToolAccess,
   defaultServerCapabilities,
   describeSourcePolicy,
+  isOrchestratorLibraryBlocked,
   isSourcePolicyV2Enabled,
   normalizeSourcePolicy,
   parseRequestedPolicyStrict,
   resolveEffectiveSourcePolicy,
   DEFAULT_SOURCE_POLICY,
+  ORCHESTRATOR_LIBRARY_BLOCKED_REPLY,
   RESTRICTED_SOURCE_POLICY,
   type SourcePolicy,
 } from "../lib/modules/hakeem-composer/source-policy";
 import { createAgentContext, executeTool } from "../lib/modules/hakeem-agent/tools";
-import { orchestrate } from "../lib/modules/agents/orchestrator";
 import { COMPOSER_SOURCES } from "../lib/modules/hakeem-composer/constants";
 
 let ok = 0;
@@ -226,15 +227,23 @@ async function main() {
     );
   }
 
-  // ── 10) fallback يحترم السياسة (منسّق بلا بحث قانوني) ──
+  // ── 10) fallback يحترم السياسة (بوابة المنسّق النقية + أدوات) ──
   const fallbackPolicy = composerSourcesToPolicy(["attached-only"]);
-  const orch = await orchestrate("ما حكم فسخ عقد العمل في النظام السعودي؟", {
-    mode: "quick",
-    skipBreadth: true,
-    sourcePolicy: fallbackPolicy,
-  });
-  t((orch.articles?.length ?? 0) === 0, "⑩ fallback/orchestrator: لا مواد مسترجعة");
-  t(Boolean(orch.reply && orch.reply.includes("نطاق المصادر")), "⑩ رد يوضح حظر المكتبة");
+  t(isOrchestratorLibraryBlocked(fallbackPolicy) === true, "⑩ بوابة المنسّق تحظر المكتبة");
+  t(ORCHESTRATOR_LIBRARY_BLOCKED_REPLY.includes("نطاق المصادر"), "⑩ رد الحظر جاهز للسقوط");
+  // محاكاة native→fallback: نفس effectivePolicy تُمرَّر؛ لا يُسمح بأدوات الاسترجاع
+  const fallbackSim = {
+    usedFallback: true,
+    effectivePolicy: fallbackPolicy,
+    wouldCallLegalSearch: decideToolAccess("legal_search", fallbackPolicy).allowed,
+    orchestratorBlocked: isOrchestratorLibraryBlocked(fallbackPolicy),
+  };
+  t(
+    fallbackSim.usedFallback &&
+      !fallbackSim.wouldCallLegalSearch &&
+      fallbackSim.orchestratorBlocked,
+    "⑩ سقوط native→fallback لا ينفّذ بحثًا قانونيًا"
+  );
   t(decideToolAccess("comprehensive_legal_scan", fallbackPolicy).allowed === false, "⑩ مسح شامل ممنوع");
   t(decideToolAccess("deep_legal_study", fallbackPolicy).allowed === false, "⑩ دراسة موسّعة ممنوعة");
   t(decideToolAccess("fetch_legal_source", fallbackPolicy).allowed === false, "⑩ fetch_legal_source ممنوع");

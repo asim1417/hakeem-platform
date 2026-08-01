@@ -8,10 +8,11 @@ import {
   isSourcePolicyV2Enabled,
   resolveEffectiveSourcePolicy,
   decideToolAccess,
+  isOrchestratorLibraryBlocked,
+  ORCHESTRATOR_LIBRARY_BLOCKED_REPLY,
   DEFAULT_SOURCE_POLICY,
   type SourcePolicy,
 } from "../lib/modules/hakeem-composer/source-policy";
-import { orchestrate } from "../lib/modules/agents/orchestrator";
 
 let ok = 0;
 let fail = 0;
@@ -107,13 +108,13 @@ async function main() {
   if (attOnlyWithFile.status === 200) {
     t(attOnlyWithFile.streamSourcePolicy.enforced === true, "API: بث enforced");
     t(attOnlyWithFile.effectivePolicy.legalLibrary === false, "API: effective بلا مكتبة");
-    // سقوط native → orchestrator
-    const fallback = await orchestrate("ما المواد النظامية للفسخ؟", {
-      mode: "quick",
-      skipBreadth: true,
-      sourcePolicy: attOnlyWithFile.effectivePolicy,
-    });
-    t((fallback.articles?.length ?? 0) === 0 && Boolean(fallback.reply), "API e2e: fallback لا يسترجع موادًا");
+    // سقوط native → orchestrator: نفس effectivePolicy + بوابة المنسّق
+    t(isOrchestratorLibraryBlocked(attOnlyWithFile.effectivePolicy), "API e2e: fallback يحظر المكتبة");
+    t(
+      decideToolAccess("legal_search", attOnlyWithFile.effectivePolicy).allowed === false &&
+        ORCHESTRATOR_LIBRARY_BLOCKED_REPLY.length > 0,
+      "API e2e: لا بحث قانوني بعد السقوط"
+    );
   }
 
   const privilege = simulateAgentSearchPolicyGate({

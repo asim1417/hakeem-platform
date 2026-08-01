@@ -23,6 +23,11 @@ import { detectDurationEnumeration, extractDurations, formatDurationTable, type 
 import type { AgentStep, IntentType } from "./types";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import {
+  isJudgmentsOnlyRetrieval,
+  isOrchestratorLibraryBlocked,
+  ORCHESTRATOR_LIBRARY_BLOCKED_REPLY,
+} from "@/lib/modules/hakeem-composer/source-policy";
 
 export type OrchestratorMode = "quick" | "deep";
 
@@ -89,40 +94,38 @@ export async function orchestrate(
     return { intent: intent.type, reply: intent.reply, issues: [], articles: [], mode };
   }
 
-  // سياسة مصادر فعّالة فقط: بلا مكتبة أنظمة/لوائح
-  if (policy && !policy.legalLibrary && !policy.regulations) {
-    // أحكام ومبادئ فقط — استرجاع سوابق دون بحث مواد
-    if (policy.judgments) {
-      onStep({
-        id: "source-policy",
-        status: "done",
-        label: "نطاق المصادر: أحكام ومبادئ فقط",
-        data: { sourcePolicy: policy, judgmentsOnly: true },
-      });
-      onStep({ id: "precedents", status: "running", label: "أجمع الأحكام والمبادئ القضائية" });
-      const [rul, prin] = await Promise.all([search_rulings(query, 6), search_principles(query, 6)]);
-      const rulingsOnly = rul.ok ? rul.data : [];
-      const principlesOnly = prin.ok ? prin.data : [];
-      onStep({
-        id: "precedents",
-        status: "done",
-        label: `أحكام ${rulingsOnly.length.toLocaleString("ar-SA")} · مبادئ ${principlesOnly.length.toLocaleString("ar-SA")}`,
-      });
-      return {
-        intent: intent.type,
-        issues: [],
-        articles: [],
-        mode,
-        rulings: rulingsOnly,
-        principles: principlesOnly,
-        analysis:
-          rulingsOnly.length || principlesOnly.length
-            ? "وفق نطاق المصادر المحدد، اقتصر الاسترجاع على الأحكام والمبادئ القضائية دون البحث في مكتبة الأنظمة."
-            : "لم يُعثر على أحكام أو مبادئ مطابقة ضمن النطاق المحدد (بلا بحث في مكتبة الأنظمة).",
-      };
-    }
+  // سياسة مصادر فعّالة فقط — نفس البوابة النقية المستخدمة في الاختبارات/السقوط
+  if (policy && isJudgmentsOnlyRetrieval(policy)) {
+    onStep({
+      id: "source-policy",
+      status: "done",
+      label: "نطاق المصادر: أحكام ومبادئ فقط",
+      data: { sourcePolicy: policy, judgmentsOnly: true },
+    });
+    onStep({ id: "precedents", status: "running", label: "أجمع الأحكام والمبادئ القضائية" });
+    const [rul, prin] = await Promise.all([search_rulings(query, 6), search_principles(query, 6)]);
+    const rulingsOnly = rul.ok ? rul.data : [];
+    const principlesOnly = prin.ok ? prin.data : [];
+    onStep({
+      id: "precedents",
+      status: "done",
+      label: `أحكام ${rulingsOnly.length.toLocaleString("ar-SA")} · مبادئ ${principlesOnly.length.toLocaleString("ar-SA")}`,
+    });
+    return {
+      intent: intent.type,
+      issues: [],
+      articles: [],
+      mode,
+      rulings: rulingsOnly,
+      principles: principlesOnly,
+      analysis:
+        rulingsOnly.length || principlesOnly.length
+          ? "وفق نطاق المصادر المحدد، اقتصر الاسترجاع على الأحكام والمبادئ القضائية دون البحث في مكتبة الأنظمة."
+          : "لم يُعثر على أحكام أو مبادئ مطابقة ضمن النطاق المحدد (بلا بحث في مكتبة الأنظمة).",
+    };
+  }
 
-    // مرفقات فقط / بلا مصادر استرجاع مكتبة — لا بحث قانوني
+  if (policy && isOrchestratorLibraryBlocked(policy)) {
     onStep({
       id: "source-policy",
       status: "done",
@@ -131,8 +134,7 @@ export async function orchestrate(
     });
     return {
       intent: intent.type,
-      reply:
-        "لا يمكن البحث في مكتبة الأنظمة لأن نطاق المصادر المحدّد لهذا الطلب لا يشملها. أرفق مستندًا أو وسّع نطاق المصادر ثم أعد المحاولة.",
+      reply: ORCHESTRATOR_LIBRARY_BLOCKED_REPLY,
       issues: [],
       articles: [],
       mode,
