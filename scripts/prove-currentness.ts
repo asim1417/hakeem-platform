@@ -10,6 +10,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   ensureJudicialCoreSchema,
+  seedDomainPacks,
   PACK_GOVERNING_SYSTEMS,
   resolvePackCurrentness,
   type GovSystemRecord,
@@ -62,6 +63,9 @@ async function main() {
     console.error("تعذّر ضمان مخطّط JDS.");
     process.exit(1);
   }
+  // ابذر الحزم أوّلًا (idempotent) كي توجد صفوفٌ لتحديث تاريخ سريانها.
+  const seed = await seedDomainPacks();
+  console.log(`بذر الحزم: ${seed.ok ? `${seed.upserted} حزمة` : `فشل (${seed.error})`}\n`);
   const date = asOfDate();
   console.log(`إثبات السريان — as-of ${date}\n`);
 
