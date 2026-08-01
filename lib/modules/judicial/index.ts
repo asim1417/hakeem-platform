@@ -40,6 +40,8 @@ export { synthesizeDocumentRecipe } from "./recipe-synthesizer";
 export type { SynthesizeRecipeInput } from "./recipe-synthesizer";
 export { planJudicialTask, reviewJudicialDraft } from "./orchestrator";
 export type { PlanJudicialTaskInput, JudicialTaskPlan } from "./orchestrator";
+export { JUDICIAL_EVAL_CASES } from "./eval-cases";
+export type { JudicialEvalCase } from "./eval-cases";
 
 /** إصدار طبقة JDS ومرجع الأمر الحاكم — للتتبّع والتدقيق. */
 export const JDS_META = {
