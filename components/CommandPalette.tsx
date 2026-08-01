@@ -7,7 +7,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WORKSPACES } from "@/lib/modules/workspaces/registry";
-import { WORKSPACE_STATE_KEY } from "@/lib/modules/workspaces/registry";
 
 type Command = { id: string; title: string; hint?: string; href: string; group: string };
 
@@ -76,17 +75,7 @@ export function CommandPalette() {
   const run = useCallback(
     (cmd: Command) => {
       setOpen(false);
-      // حفظ آخر مساحة عمل إن كان أمرًا لمساحة.
-      if (cmd.id.startsWith("ws-")) {
-        try {
-          localStorage.setItem(
-            WORKSPACE_STATE_KEY,
-            JSON.stringify({ workspaceId: cmd.id.slice(3), lastPath: cmd.href, updatedAt: new Date().toISOString() })
-          );
-        } catch {
-          /* تجاهل */
-        }
-      }
+      // سياسة المستودع: لا تخزين متصفّح في الويب. التنقّل فقط؛ حفظ الحالة (إن لزم) خادميّ لاحقًا.
       if (cmd.href.startsWith("/api/")) window.location.href = cmd.href;
       else router.push(cmd.href);
     },
