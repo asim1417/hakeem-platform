@@ -67,15 +67,44 @@ type OnStep = (step: AgentStep) => void;
  * تشغيل المنسّق الأوّلي (وضع سريع). للنوايا غير القانونية يردّ مباشرةً بلا بحث.
  * للسؤال القانوني: يكيّف المسائل ثم يخرّج (بحث) لكلّ مسألة، ويجمع المواد بلا تكرار.
  */
-export async function orchestrate(query: string, opts: { mode?: OrchestratorMode; onStep?: OnStep; skipBreadth?: boolean; skipAnalysis?: boolean } = {}): Promise<OrchestratorResult> {
+export async function orchestrate(
+  query: string,
+  opts: {
+    mode?: OrchestratorMode;
+    onStep?: OnStep;
+    skipBreadth?: boolean;
+    skipAnalysis?: boolean;
+    /** سياسة مصادر خادمية اختيارية — خلف HAKEEM_COMPOSER_SOURCE_POLICY_V2 */
+    sourcePolicy?: import("@/lib/modules/hakeem-composer/source-policy").SourcePolicy;
+  } = {}
+): Promise<OrchestratorResult> {
   const mode: OrchestratorMode = opts.mode ?? "quick";
   const onStep: OnStep = opts.onStep ?? (() => {});
+  const policy = opts.sourcePolicy;
 
   // ① بوّابة النيّة
   const intent = classifyIntent(query);
   onStep({ id: "intent", status: "done", label: "فهمت رسالتك", data: { intent: intent.type } });
   if (!intentNeedsSearch(intent.type)) {
     return { intent: intent.type, reply: intent.reply, issues: [], articles: [], mode };
+  }
+
+  // سياسة مصادر: مرفقات فقط / بلا مكتبة → لا بحث في النواة
+  if (policy && !policy.legalLibrary && !policy.regulations) {
+    onStep({
+      id: "source-policy",
+      status: "done",
+      label: "نطاق المصادر لا يشمل مكتبة الأنظمة",
+      data: { sourcePolicy: policy },
+    });
+    return {
+      intent: intent.type,
+      reply:
+        "لا يمكن البحث في مكتبة الأنظمة لأن نطاق المصادر المحدّد لهذا الطلب لا يشملها. أرفق مستندًا أو وسّع نطاق المصادر ثم أعد المحاولة.",
+      issues: [],
+      articles: [],
+      mode,
+    };
   }
 
   // ①.٤ بوّابة الاتّساع: تصنيف ٣-فئات **يقوده النموذج** (محدّد/استقصائي/ملتبس). وجود بُعد قابل
@@ -253,12 +282,21 @@ export async function orchestrate(query: string, opts: { mode?: OrchestratorMode
     }
     onStep({ id: "deepen", status: "done", label: `التعميق أضاف ${(byId.size - before).toLocaleString("ar-SA")} مادة` });
 
-    // السوابق: أحكام ومبادئ قضائية داعمة (أدوات كانت مبنيّة وغير موصولة — تُوصَل الآن).
-    onStep({ id: "precedents", status: "running", label: "أجمع الأحكام والمبادئ القضائية الداعمة" });
-    const [rul, prin] = await Promise.all([search_rulings(query, 6), search_principles(query, 6)]);
-    rulings = rul.ok ? rul.data : [];
-    principles = prin.ok ? prin.data : [];
-    onStep({ id: "precedents", status: "done", label: `أحكام ${rulings.length.toLocaleString("ar-SA")} · مبادئ ${principles.length.toLocaleString("ar-SA")}` });
+    // السوابق: أحكام ومبادئ قضائية داعمة — تُتخطّى إن منعتها سياسة المصادر.
+    if (policy && !policy.judgments) {
+      onStep({
+        id: "precedents",
+        status: "done",
+        label: "تُخطّيت الأحكام والمبادئ وفق نطاق المصادر",
+        data: { skipped: true, sourcePolicy: policy },
+      });
+    } else {
+      onStep({ id: "precedents", status: "running", label: "أجمع الأحكام والمبادئ القضائية الداعمة" });
+      const [rul, prin] = await Promise.all([search_rulings(query, 6), search_principles(query, 6)]);
+      rulings = rul.ok ? rul.data : [];
+      principles = prin.ok ? prin.data : [];
+      onStep({ id: "precedents", status: "done", label: `أحكام ${rulings.length.toLocaleString("ar-SA")} · مبادئ ${principles.length.toLocaleString("ar-SA")}` });
+    }
   }
 
   // بثّ `retrieved` (المرحلة ٣): حصيلة الاسترجاع النهائية مع الحفاظ على شكل العناصر

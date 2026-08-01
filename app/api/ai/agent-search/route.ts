@@ -27,6 +27,16 @@ import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
 import { waitUntil } from "@vercel/functions";
 import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
 import { getUsageServiceCost } from "@/lib/modules/credits/usage-ledger";
+import { auditEvent } from "@/lib/modules/audit/audit";
+import {
+  DEFAULT_SOURCE_POLICY,
+  composerSourcesToPolicy,
+  describeSourcePolicy,
+  isSourcePolicyV2Enabled,
+  normalizeSourcePolicy,
+  type SourcePolicy,
+} from "@/lib/modules/hakeem-composer/source-policy";
+import type { ComposerSourceId } from "@/lib/modules/hakeem-composer/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -45,7 +55,17 @@ export async function POST(request: NextRequest) {
   }
   enterAiUsageContext({ userId: user.id, serviceKey: "ask" });
 
-  let body: { query?: string; document?: string; detailed?: boolean; skipBreadth?: boolean; mode?: string; conversationId?: string; history?: Array<{ role?: string; content?: string }> } = {};
+  let body: {
+    query?: string;
+    document?: string;
+    detailed?: boolean;
+    skipBreadth?: boolean;
+    mode?: string;
+    conversationId?: string;
+    history?: Array<{ role?: string; content?: string }>;
+    sources?: unknown;
+    sourcePolicy?: unknown;
+  } = {};
   try {
     body = await request.json();
   } catch {
@@ -57,6 +77,23 @@ export async function POST(request: NextRequest) {
   // الوكيل لا يحقنه تلقائيًّا — يقرؤه Claude عبر read_attachment عند الحاجة فقط. الأضخم مساره منصّة الوثائق.
   const attachedDoc = String(body?.document ?? "").trim().slice(0, 200_000);
   const hasDoc = attachedDoc.length > 0;
+
+  // سياسة المصادر: إنفاذ خادمي خلف العلم — وإلا افتراضي متوافق (لا يغيّر السلوك التاريخي).
+  const policyEnabled = isSourcePolicyV2Enabled();
+  let sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY;
+  if (policyEnabled) {
+    if (body.sourcePolicy != null) {
+      sourcePolicy = normalizeSourcePolicy(body.sourcePolicy);
+    } else if (Array.isArray(body.sources)) {
+      sourcePolicy = composerSourcesToPolicy(
+        body.sources.filter((s): s is ComposerSourceId => typeof s === "string") as ComposerSourceId[]
+      );
+    }
+    // caseFiles بلا ربط قضية مصرّح: لا نفعّل الوصول بعد — يبقى مغلقًا حتى مرحلة السياق
+    if (sourcePolicy.caseFiles) {
+      sourcePolicy = { ...sourcePolicy, caseFiles: false };
+    }
+  }
   // مادّة التحليل: السؤال + المستند (إن وُجد). المستند لا يُصنَّف بوابة الاتّساع عليه.
   const query = hasDoc
     ? typed
@@ -79,6 +116,25 @@ export async function POST(request: NextRequest) {
       status: 400,
       headers: { "Content-Type": "application/json; charset=utf-8" }
     });
+  }
+
+  if (
+    policyEnabled &&
+    !sourcePolicy.legalLibrary &&
+    !sourcePolicy.regulations &&
+    !sourcePolicy.judgments &&
+    sourcePolicy.attachments &&
+    !hasDoc
+  ) {
+    return new Response(
+      JSON.stringify({
+        type: "error",
+        message: "نطاق المصادر «المرفقات فقط» يتطلّب إرفاق مستند قبل الإرسال.",
+        code: "SOURCE_POLICY_REQUIRES_ATTACHMENT",
+        sourcePolicy,
+      }),
+      { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
+    );
   }
 
   // مهمّةٌ خلفيّة قابلةٌ للاستئناف (يُكمل الخادم البحث ويحفظ نتيجته حتى لو غادر العميل).
@@ -161,6 +217,29 @@ export async function POST(request: NextRequest) {
         accessVia = access.via;
         accessReservationId = access.reservationId ?? null;
 
+        if (policyEnabled) {
+          send({
+            type: "step",
+            id: "source-policy",
+            status: "done",
+            label: `نطاق المصادر: ${describeSourcePolicy(sourcePolicy).join(" · ") || "افتراضي"}`,
+            data: { sourcePolicy, enforced: true },
+          });
+          void auditEvent({
+            actorId: user.id,
+            subject: "AI_GATEWAY",
+            action: "AGENT_SEARCH_SOURCE_POLICY",
+            entityId: jobId ?? undefined,
+            metadata: {
+              sourcePolicy,
+              sources: body.sources ?? null,
+              mode: agentMode.id,
+              hasDocument: hasDoc,
+              queryPreview: typed.slice(0, 120),
+            },
+          }).catch(() => undefined);
+        }
+
         // ── الوكيل الأصيل (HKM-CLAUDE-NATIVE-001، خلف علم CLAUDE_NATIVE_AGENT_ENABLED) ──
         // في وضع «اسأل» فقط: Claude يستقبل الرسالة ويدير الحوار بحلقة أدوات حقيقية — يقرّر
         // بنفسه ردًّا مباشرًا أو استيضاحًا أو دراسةً موسّعة (بحث/قراءة مصادر). لا يصنّف الكود
@@ -186,8 +265,18 @@ export async function POST(request: NextRequest) {
             document: attachedDoc,
             history: roomHistory,
             summary: roomSummary,
+            sourcePolicy: policyEnabled ? sourcePolicy : undefined,
             onStep: (s) => send({ type: "step", ...s }),
-          }).catch((e) => ({ ok: false as const, answer: "", basis: [], toolTurns: 0, error: e instanceof Error ? e.message : "خطأ" }));
+          }).catch((e) => ({
+            ok: false as const,
+            answer: "",
+            basis: [],
+            toolTurns: 0,
+            error: e instanceof Error ? e.message : "خطأ",
+            deniedTools: [] as Array<{ tool: string; reason: string }>,
+            invokedTools: [] as string[],
+            sourcePolicy,
+          }));
           if (agent.ok) {
             consume();
             // حفظٌ خادميّ للدور في «الغرفة» (سجلّ المحادثة الدائم) — فيبقى الردّ محفوظًا
@@ -196,7 +285,18 @@ export async function POST(request: NextRequest) {
             let roomConvId = convId;
             try {
               const attachRefs = attachedDoc ? [{ id: `att-${jobId ?? "x"}`, fileName: "المرفق", extractedText: attachedDoc.slice(0, 200_000), processingStatus: "inline" as const }] : undefined;
-              const u = await appendMessage({ userId: user.id, serviceKey: "ask", conversationId: convId, role: "user", content: typed, mode: "ask", attachments: attachRefs });
+              const u = await appendMessage({
+                userId: user.id,
+                serviceKey: "ask",
+                conversationId: convId,
+                role: "user",
+                content: typed,
+                mode: "ask",
+                attachments: attachRefs,
+                inputSnapshot: policyEnabled
+                  ? { detailed, mode: "ask", sources: body.sources ?? null, sourcePolicy }
+                  : undefined,
+              });
               roomConvId = u.conversationId;
               await appendMessage({
                 userId: user.id,
@@ -207,12 +307,42 @@ export async function POST(request: NextRequest) {
                 mode: "ask",
                 model: "hakeem-agent",
                 retrievedSources: agent.basis.map((b) => ({ kind: "article" as const, systemName: b.systemName, articleNumber: b.articleNumber, title: b.articleTitle, quote: b.quote, url: b.internalUrl })),
-                outputSnapshot: { answerMode: "native-agent", total: agent.basis.length },
+                outputSnapshot: {
+                  answerMode: "native-agent",
+                  total: agent.basis.length,
+                  sourcePolicy: policyEnabled ? sourcePolicy : undefined,
+                  invokedTools: agent.invokedTools ?? [],
+                  deniedTools: agent.deniedTools ?? [],
+                },
               });
             } catch {
               /* أفضل-جهد: إن تعذّر الحفظ (سكيمة/شبكة) يبقى الناتج في المهمّة (job) */
             }
-            send({ type: "result", answer: agent.answer, mode: "native-agent", basis: agent.basis, total: agent.basis.length, conversationId: roomConvId ?? undefined });
+            if (policyEnabled) {
+              void auditEvent({
+                actorId: user.id,
+                subject: "AI_GATEWAY",
+                action: "AGENT_SEARCH_SOURCES_USED",
+                entityId: roomConvId ?? jobId ?? undefined,
+                metadata: {
+                  sourcePolicy,
+                  invokedTools: agent.invokedTools ?? [],
+                  deniedTools: agent.deniedTools ?? [],
+                  basisCount: agent.basis.length,
+                },
+              }).catch(() => undefined);
+            }
+            send({
+              type: "result",
+              answer: agent.answer,
+              mode: "native-agent",
+              basis: agent.basis,
+              total: agent.basis.length,
+              conversationId: roomConvId ?? undefined,
+              sourcePolicy: policyEnabled ? sourcePolicy : undefined,
+              invokedTools: agent.invokedTools ?? [],
+              deniedTools: agent.deniedTools ?? [],
+            });
             send({ type: "done" });
             return;
           }
@@ -252,7 +382,13 @@ export async function POST(request: NextRequest) {
         const mode = agentMode.id === "ask" ? (detailed || hasDoc ? "deep" : suggestMode(studyQuery)) : isDeepMode ? "deep" : "quick";
         // مع مستندٍ مرفَق: نتخطّى بوّابة الاتّساع دائمًا — المستخدم يريد تحليل مستنده لا قائمة استيضاح.
         const modeSkipBreadth = hasDoc ? true : agentMode.id === "ask" ? skipBreadth : true;
-        const result = await orchestrate(studyQuery, { mode, skipBreadth: modeSkipBreadth, skipAnalysis: isDeepMode, onStep: (s) => send({ type: "step", ...s }) });
+        const result = await orchestrate(studyQuery, {
+          mode,
+          skipBreadth: modeSkipBreadth,
+          skipAnalysis: isDeepMode,
+          sourcePolicy: policyEnabled ? sourcePolicy : undefined,
+          onStep: (s) => send({ type: "step", ...s }),
+        });
 
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
