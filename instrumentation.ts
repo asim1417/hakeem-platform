@@ -58,4 +58,19 @@ export async function register() {
   } catch (e) {
     console.warn("[ai.usage] تعذّر التجهيز:", (e as Error)?.message);
   }
+
+  // مواءمة المخطط السيادي — أعمدة/جداول إضافيّة idempotent (يزيل خطر ترتيب الهجرة).
+  try {
+    const { ensureBlueprintSchema } = await import(
+      "@/lib/modules/observability/ensure-blueprint-schema"
+    );
+    const ok = await ensureBlueprintSchema();
+    console.log(
+      ok
+        ? "[blueprint.schema] مخطط المواءمة جاهز."
+        : "[blueprint.schema] بعض العبارات تُخطّيت — راجع السجلّ."
+    );
+  } catch (e) {
+    console.warn("[blueprint.schema] تعذّر التجهيز:", (e as Error)?.message);
+  }
 }
