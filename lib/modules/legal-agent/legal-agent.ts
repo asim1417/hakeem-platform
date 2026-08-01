@@ -77,6 +77,14 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     : strategy.practicalRecommendation;
 
   const aiMeta = await resolveAiProvider();
+  // مراجعة JDS (§27): ظلٌّ أو وصلٌ فعّال بصوت المحامي. الوصل الفعّال يُبرز الإشعار التصحيحيّ.
+  const jdsReview = judicialShadowReview({
+    role: "LAWYER",
+    documentFunction: "DEFENSE",
+    subject: strategy.caseSummary,
+    draftText: [strategy.litigationStrategy, ...strategy.pleadingPlan, ...suggestedDefenses.map((d) => d.text)].join("\n"),
+  });
+  const finalRecommendation = jdsReview?.banner ? `${jdsReview.banner}\n\n${practicalRecommendation}` : practicalRecommendation;
   return {
     caseSummary: strategy.caseSummary,
     disputeCharacterization: analysis.disputeCharacterization,
@@ -91,7 +99,7 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     pleadingPlan: strategy.pleadingPlan,
     suggestedQuestions: strategy.suggestedQuestions,
     gapsToClose: strategy.gapsToClose,
-    practicalRecommendation,
+    practicalRecommendation: finalRecommendation,
     confidence: analysis.confidence, // 16
     citations: analysis.citations, // 17 — من Citation Engine عبر RAG (لا اختلاق)
     influentialArticles: analysis.influentialArticles,
@@ -103,14 +111,7 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     generated,
     provider: generated ? analysis.provider || "central" : aiMeta.name,
     model: aiMeta.model,
-    // ظلّ JDS (§27): مراجعةٌ استرشاديّة بصوت المحامي — تُرصد خلطَ صوت المحكمة في مذكّرة طرف.
-    // undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW ⇒ لا تغيير في المخرج.
-    jdsReview: judicialShadowReview({
-      role: "LAWYER",
-      documentFunction: "DEFENSE",
-      subject: strategy.caseSummary,
-      draftText: [strategy.litigationStrategy, ...strategy.pleadingPlan, ...suggestedDefenses.map((d) => d.text)].join("\n"),
-    }),
+    jdsReview,
   };
 }
 

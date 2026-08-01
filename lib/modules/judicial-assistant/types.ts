@@ -266,15 +266,10 @@ export interface JudgmentDraftResult {
   requestId: string;
   notice: string;
   /**
-   * مراجعة بوّابات JDS الاسترشاديّة (§27) — تُملأ فقط حين تفعيل العَلَم JDS_DRAFTING_SHADOW،
-   * وإلّا undefined. استرشاديّة لا تُغيّر النصّ ولا تمنع الإخراج (ظلّ §31-I).
+   * مراجعة بوّابات JDS (§27) — تُملأ حين تفعيل JDS_DRAFTING_SHADOW (استرشاديّة) أو
+   * JDS_ENFORCE (فعّالة: تُبرز المخالفات وتمنع الاعتماد)، وإلّا undefined.
    */
-  jdsReview?: {
-    ready: boolean;
-    blocking: string[];
-    review: string[];
-    findings: Array<{ gateId: string; outcome: string; findings: string[] }>;
-  };
+  jdsReview?: import("@/lib/modules/judicial").JdsShadowReview;
 }
 
 /** مخرَجٌ مؤصَّلٌ موحَّد لخدمات النموذج (JS-002/003/011/012/014/015/016/017/021/022). */

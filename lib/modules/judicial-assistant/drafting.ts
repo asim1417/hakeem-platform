@@ -81,6 +81,11 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
     { key: "operative", title: "المنطوق المقترح", body: operativeScaffold(kase), generated: false },
   ];
 
+  // مراجعة JDS (§27): ظلٌّ استرشاديّ أو وصلٌ فعّال بحسب العَلَم. مطفأٌ افتراضيًّا ⇒ لا تغيير.
+  const jdsReview = buildJdsShadowReview(kase, sections);
+  const baseNotice = blocked ? BLOCKED_NOTICE : NOTICE;
+  // الوصل الفعّال: يُبرَز الإشعار التصحيحيّ فوق النصّ ويمنع الاعتماد (لا يحذف المحتوى).
+  const notice = jdsReview?.banner ? `${jdsReview.banner}\n\n${baseNotice}` : baseNotice;
   return {
     serviceId: "JS-018",
     blocked,
@@ -88,10 +93,8 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
     citations: reasoning?.citations ?? [],
     precedents,
     requestId: reasoning?.requestId ?? "no-reasoning",
-    notice: blocked ? BLOCKED_NOTICE : NOTICE,
-    // ظلّ JDS (§27/§31-I): مراجعة بوّابات الجودة كبياناتٍ استرشاديّة، فقط عند تفعيل العَلَم.
-    // مطفأٌ افتراضيًّا ⇒ لا تغيير في المخرج. مغلَّفٌ بحمايةٍ فلا يكسر الصياغة أبدًا.
-    jdsReview: buildJdsShadowReview(kase, sections),
+    notice,
+    jdsReview,
   };
 }
 

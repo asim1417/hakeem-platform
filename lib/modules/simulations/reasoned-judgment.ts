@@ -148,22 +148,24 @@ export async function generateReasonedJudgment(input: {
     text = retry.content.trim();
   }
 
-  const content = wrapJudgment(text, c);
+  // مراجعة JDS (§27): ظلٌّ أو وصلٌ فعّال بصوت المحكمة على نصّ الحكم.
+  const jdsReview = judicialShadowReview({
+    role: "JUDGE",
+    documentFunction: "DISPOSITION",
+    litigationStage: "JUDGMENT",
+    subject: c?.subject,
+    draftText: text,
+    hasNonBindingLabel: true, // wrapJudgment يُلحق تنبيه عدم الإلزام
+  });
+  const wrapped = wrapJudgment(text, c);
+  // الوصل الفعّال: يُبرَز الإشعار التصحيحيّ فوق نصّ الحكم (لا يُحذف المحتوى).
+  const content = jdsReview?.banner ? `${jdsReview.banner}\n\n${wrapped}` : wrapped;
   return {
     content,
     grounded: g.allowedNumbers.size > 0,
     confidence: g.articleCount > 0 ? 0.75 : 0.4,
     articleCount: g.articleCount,
     kind: "judgment",
-    // ظلّ JDS (§27): مراجعةٌ استرشاديّة بصوت المحكمة على نصّ الحكم (لغة/وسم) —
-    // undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW ⇒ لا تغيير في المخرج.
-    jdsReview: judicialShadowReview({
-      role: "JUDGE",
-      documentFunction: "DISPOSITION",
-      litigationStage: "JUDGMENT",
-      subject: c?.subject,
-      draftText: text,
-      hasNonBindingLabel: true, // wrapJudgment يُلحق تنبيه عدم الإلزام
-    }),
+    jdsReview,
   };
 }

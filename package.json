@@ -184,6 +184,7 @@
     "test:jds-orchestrator": "tsx scripts/test-judicial-orchestrator.ts",
     "eval:jds": "tsx scripts/eval-judicial-jds.ts",
     "test:jds-currentness": "tsx scripts/test-judicial-currentness.ts",
+    "test:jds-enforce": "tsx scripts/test-judicial-enforce.ts",
     "db:jds": "tsx scripts/seed-judicial-jds.ts",
     "prove:currentness": "tsx scripts/prove-currentness.ts"
   },

@@ -19,6 +19,8 @@ export const JDS_FLAGS = {
   BACKGROUND_AGENT_V2: "JDS_BACKGROUND_AGENT_V2",
   /** ظلّيّ: يرفق مراجعة بوّابات JDS على مخرجات الصياغة القائمة (دون تغيير النصّ). */
   DRAFTING_SHADOW: "JDS_DRAFTING_SHADOW",
+  /** فعّالٌ: يُصحّح — يُبرز المخالفات المانعة ويمنع اعتماد المخرج حتى تُصحَّح (§27). */
+  ENFORCE: "JDS_ENFORCE",
 } as const;
 
 export type JdsFlagKey = keyof typeof JDS_FLAGS;
@@ -31,4 +33,10 @@ export function isJdsFlagOn(key: JdsFlagKey): boolean {
 /** الظلّ الصياغيّ (يُلحق مراجعة الجودة كبياناتٍ استرشاديّة فقط) — OFF افتراضًا. */
 export function isJdsDraftingShadowEnabled(): boolean {
   return on(JDS_FLAGS.DRAFTING_SHADOW);
+}
+
+/** الوصل الفعّال (يُصحّح: يُبرز المخالفات المانعة ويمنع الاعتماد) — OFF افتراضًا.
+ *  تفعيله يُفعّل الظلّ ضمنًا (لا إنفاذ بلا مراجعة). */
+export function isJdsEnforceEnabled(): boolean {
+  return on(JDS_FLAGS.ENFORCE);
 }

@@ -93,6 +93,18 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
   const outcome = wrapOutcome(narrative.probableDirection, narrative.tentativeRuling, narrative.draftReasoning, reliable);
 
   const aiMeta = await resolveAiProvider();
+  // مراجعة JDS (§27): ظلٌّ أو وصلٌ فعّال بصوت المحكمة على الأسباب/المنطوق المحتمَلين.
+  const jdsReview = judicialShadowReview({
+    role: "JUDGE",
+    documentFunction: "DISPOSITION",
+    litigationStage: "JUDGMENT",
+    subject: plan?.caseSummary || narrative.disputeSubject,
+    draftText: [...outcome.draftReasoning, outcome.tentativeRuling].join("\n"),
+    dispositionItems: outcome.tentativeRuling.split("\n").map((l) => l.trim()).filter(Boolean),
+    hasNonBindingLabel: true,
+  });
+  const baseInsufficient = reliable ? null : INSUFFICIENT_DISCLAIMER;
+  const insufficientNote = jdsReview?.banner ? [jdsReview.banner, baseInsufficient].filter(Boolean).join("\n\n") : baseInsufficient;
   return {
     caseSummary: plan?.caseSummary || det.disputeSubject || analysis.disputeCharacterization,
     preliminaryCharacterization: narrative.preliminaryCharacterization,
@@ -123,21 +135,11 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
     grounded: analysis.grounded,
     reliable,
     trainingDisclaimer: TRAINING_DISCLAIMER,
-    insufficientNote: reliable ? null : INSUFFICIENT_DISCLAIMER,
+    insufficientNote,
     generated,
     provider: generated ? plan?.provider || "central" : aiMeta.name,
     model: aiMeta.model,
-    // ظلّ JDS (§27): مراجعةٌ استرشاديّة بصوت المحكمة على الأسباب/المنطوق المحتمَلين —
-    // undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW ⇒ لا تغيير في المخرج.
-    jdsReview: judicialShadowReview({
-      role: "JUDGE",
-      documentFunction: "DISPOSITION",
-      litigationStage: "JUDGMENT",
-      subject: plan?.caseSummary || narrative.disputeSubject,
-      draftText: [...outcome.draftReasoning, outcome.tentativeRuling].join("\n"),
-      dispositionItems: outcome.tentativeRuling.split("\n").map((l) => l.trim()).filter(Boolean),
-      hasNonBindingLabel: true, // المحاكاة تحمل دائمًا TRAINING_DISCLAIMER
-    }),
+    jdsReview,
   };
 }
 

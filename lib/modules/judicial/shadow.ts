@@ -7,15 +7,28 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CourtTrack, DocumentFunction, JudicialRole, LitigationStage } from "./contracts";
 import type { DraftStatement } from "./gate-executor";
-import { isJdsDraftingShadowEnabled } from "./flag";
+import { getQualityGate } from "./quality-gates";
+import { isJdsDraftingShadowEnabled, isJdsEnforceEnabled } from "./flag";
 import { planJudicialTask, reviewJudicialDraft } from "./orchestrator";
 
-/** شكل المراجعة الاسترشاديّة المرفقة بمخرجات الخدمات. */
+/** شكل المراجعة المرفقة بمخرجات الخدمات (استرشاديّة في الظلّ، مُلزِمة في الوصل الفعّال). */
 export interface JdsShadowReview {
   ready: boolean;
   blocking: string[];
   review: string[];
   findings: Array<{ gateId: string; outcome: string; findings: string[] }>;
+  /** الوصل الفعّال (§27): مفعَّلٌ حين JDS_ENFORCE. */
+  enforced: boolean;
+  /** بلغ الاعتماد؟ في الإنفاذ = false حين توجد مخالفةٌ مانعة (يمنع الاعتماد). */
+  releaseBlocked: boolean;
+  /** إشعارٌ تصحيحيّ يُبرَز في المخرج حين الإنفاذ ووجود مخالفة (وإلا null). */
+  banner: string | null;
+}
+
+/** يبني الإشعار التصحيحيّ من البوّابات المانعة (بعناوينها العربيّة). */
+function buildBanner(blocking: string[]): string {
+  const titles = blocking.map((id) => getQualityGate(id)?.titleAr ?? id);
+  return `⛔ مخالفاتٌ مانعة يجب تصحيحها قبل اعتماد هذا المخرج: ${titles.join("، ")}. (وصل JDS الفعّال — لا يُعتمَد حتى تُصحَّح)`;
 }
 
 export interface ShadowReviewInput {
@@ -32,9 +45,11 @@ export interface ShadowReviewInput {
   statements?: DraftStatement[];
 }
 
-/** مراجعةٌ ظلّيّة موحّدة — undefined ما لم يُفعَّل العَلَم؛ لا ترمي. */
+/** مراجعةٌ موحّدة — undefined ما لم يُفعَّل الظلّ أو الإنفاذ؛ لا ترمي. */
 export function judicialShadowReview(input: ShadowReviewInput): JdsShadowReview | undefined {
-  if (!isJdsDraftingShadowEnabled()) return undefined;
+  const enforce = isJdsEnforceEnabled();
+  // الإنفاذ يُفعّل الظلّ ضمنًا؛ بلا أيّهما لا مراجعة.
+  if (!isJdsDraftingShadowEnabled() && !enforce) return undefined;
   try {
     const plan = planJudicialTask({
       taskId: "shadow",
@@ -52,11 +67,15 @@ export function judicialShadowReview(input: ShadowReviewInput): JdsShadowReview 
       hasNonBindingLabel: input.hasNonBindingLabel,
       statements: input.statements,
     });
+    const releaseBlocked = enforce && r.blocking.length > 0;
     return {
       ready: r.ready,
       blocking: r.blocking,
       review: r.review,
       findings: r.results.map((g) => ({ gateId: g.gateId, outcome: g.outcome, findings: g.findings })),
+      enforced: enforce,
+      releaseBlocked,
+      banner: releaseBlocked ? buildBanner(r.blocking) : null,
     };
   } catch {
     return undefined;
