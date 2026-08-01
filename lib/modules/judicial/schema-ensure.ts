@@ -156,6 +156,21 @@ export const JDS_DDL: readonly string[] = [
     "created_at"  TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS "jds_quality_findings_task_idx" ON "jds_quality_findings"("task_id")`,
+
+  // ── تشغيلات الوكيل الخلفيّ الدائم (§25) — حالةٌ قابلةٌ للحفظ والاستئناف ──
+  `CREATE TABLE IF NOT EXISTS "jds_agent_runs" (
+    "run_id"      TEXT PRIMARY KEY,
+    "task_id"     TEXT NOT NULL,
+    "status"      TEXT NOT NULL DEFAULT 'INITIALIZED',
+    "cursor"      INT NOT NULL DEFAULT 0,
+    "pending_delegate_step" INT,
+    "pending_blocked_step"  INT,
+    "blocked_steps" JSONB NOT NULL DEFAULT '[]',
+    "completed_steps" JSONB NOT NULL DEFAULT '[]',
+    "state"       JSONB NOT NULL,${TRACE_COLUMNS}
+  )`,
+  `CREATE INDEX IF NOT EXISTS "jds_agent_runs_task_idx" ON "jds_agent_runs"("task_id")`,
+  `CREATE INDEX IF NOT EXISTS "jds_agent_runs_status_idx" ON "jds_agent_runs"("status")`,
 ];
 
 let ready: Promise<boolean> | null = null;
@@ -187,4 +202,5 @@ export const JDS_TABLES: readonly string[] = [
   "jds_recipe_sections",
   "jds_statement_traces",
   "jds_quality_findings",
+  "jds_agent_runs",
 ];
