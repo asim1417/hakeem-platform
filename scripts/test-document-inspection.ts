@@ -651,6 +651,55 @@ check("الفساد الدلالي: نصّ قصير أو غير عربيّ → �
   );
 });
 
+// ── ذاكرة القراءة الضوئية بمفتاح البصمة (PR-2: تسريع مئات الصفحات) ──
+import { hashBytes, MemoryOcrCache, NULL_OCR_CACHE } from "../lib/modules/document-inspection/ocr-cache";
+
+async function ocrCacheChecks() {
+  const a = new TextEncoder().encode("صفحة مطابقة");
+  const b = new TextEncoder().encode("صفحة مطابقة");
+  const c = new TextEncoder().encode("صفحة مختلفة");
+  const [ha, hb, hc] = [await hashBytes(a), await hashBytes(b), await hashBytes(c)];
+  check("ذاكرة OCR: البصمة حتميّة لنفس البايتات ومختلفة للمختلف", () => {
+    assert.equal(ha, hb, "نفس المحتوى → نفس البصمة");
+    assert.notEqual(ha, hc, "محتوى مختلف → بصمة مختلفة");
+    assert.match(ha, /^[0-9a-f]{64}$/, "SHA-256 hex");
+  });
+
+  const big = new Uint8Array([1, 2, 3, 4, 5, 6]);
+  const viewHash = await hashBytes(big.subarray(2, 5)); // [3,4,5] بإزاحة 2
+  const standaloneHash = await hashBytes(new Uint8Array([3, 4, 5]));
+  check("ذاكرة OCR: البصمة لا تتأثر بإزاحة العرض داخل مخزنٍ أكبر", () => {
+    assert.equal(viewHash, standaloneHash);
+  });
+
+  check("ذاكرة OCR: إصابة/إخفاق ولا تخزّن فراغًا", () => {
+    const cache = new MemoryOcrCache(3);
+    cache.set("k1", "نصّ الصفحة");
+    assert.equal(cache.get("k1"), "نصّ الصفحة");
+    assert.equal(cache.get("مفقود"), undefined);
+    cache.set("k2", "   "); // فراغ → لا يُخزَّن (يُسمح بإعادة المحاولة)
+    assert.equal(cache.get("k2"), undefined);
+    assert.equal(cache.size, 1);
+  });
+
+  check("ذاكرة OCR: إخلاء بترتيب الإدخال عند تجاوز الحدّ", () => {
+    const cache = new MemoryOcrCache(2);
+    cache.set("a", "A");
+    cache.set("b", "B");
+    cache.set("c", "C"); // يتجاوز الحدّ → يُخلى أقدم إدخال (a)
+    assert.equal(cache.get("a"), undefined, "الأقدم أُخلي");
+    assert.equal(cache.get("b"), "B");
+    assert.equal(cache.get("c"), "C");
+    assert.equal(cache.size, 2);
+  });
+
+  check("ذاكرة OCR: الذاكرة الفارغة لا تُصيب أبدًا (للعلم المطفأ)", () => {
+    NULL_OCR_CACHE.set("x", "y");
+    assert.equal(NULL_OCR_CACHE.get("x"), undefined);
+    assert.equal(NULL_OCR_CACHE.size, 0);
+  });
+}
+
 // ── توجيه OCR ──
 import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
 
@@ -942,6 +991,7 @@ check("أرقام الهامش: يحترم علامات الصفحات [صفحة
 
 async function asyncChecks() {
   await adaptiveAll();
+  await ocrCacheChecks();
   const xml = "<w:p><w:t>وثيقة مضغوطة للاختبار داخل أرشيف</w:t></w:p>";
   const zip = buildZip("word/document.xml", new TextEncoder().encode(xml));
   const entry = await extractZipEntry(zip, "word/document.xml");

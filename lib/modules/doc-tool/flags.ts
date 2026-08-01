@@ -21,3 +21,11 @@ function on(v: string | undefined): boolean {
 export function isPageLevelOcrV1Enabled(): boolean {
   return on(process.env.NEXT_PUBLIC_HAKEEM_PAGE_LEVEL_OCR_V1);
 }
+
+/**
+ * ذاكرة القراءة الضوئية بمفتاح البصمة: الصفحة المتطابقة (بيضاء/ترويسة/ختم مكرّر أو
+ * إعادة رفع الملف نفسه) تُستردّ فورًا بلا نداءٍ سحابيّ. مطفأ افتراضيًا.
+ */
+export function isOcrCacheV1Enabled(): boolean {
+  return on(process.env.NEXT_PUBLIC_HAKEEM_OCR_CACHE_V1);
+}
