@@ -544,6 +544,7 @@ check("استخراج الحقول حسب النوع: حكم مقابل عقد (
 
 // ── إعادة تشكيل نصّ PDF المعطوب (صيغ العرض/التكرار/توجيه OCR) ──
 import {
+  arabicSemanticCorruptionScore,
   cleanPdfTextLayer,
   dedupeAdjacentDuplicates,
   isGarbledArabicText,
@@ -607,6 +608,47 @@ check("كشف العطب: عربيّ سليم بمصطلحٍ إنجليزيّ أ
   // فالكاشف الأوسع يعدّ اللاتينيّ الموسّع/اليونانيّ لا محارف ASCII السليمة.
   const mixed = "حكمت الدائرة التجارية بإلزام المدّعى عليه بدفع مبلغٍ وقدره خمسمائة ألف ريال وفق العقد المبرم بين الطرفين ورقمه Ref-19 مع تحميله المصاريف";
   assert.equal(cleanPdfTextLayer(mixed).needsOcr, false);
+});
+
+// ── الفساد الدلالي العربي (§11): حروف عربية صحيحة يونيكوديًّا لكن كلمات غير موجودة ──
+const SEMANTIC_GOOD =
+  "المادة الأولى: تسري أحكام هذا النظام على جميع العاملين في القطاع الخاص، ويقصد " +
+  "بالعامل كل شخص طبيعي يعمل لمصلحة صاحب عمل وتحت إدارته أو إشرافه مقابل أجر. ويجب " +
+  "على صاحب العمل أن يلتزم بأحكام هذا النظام وأن يوفر بيئة عمل آمنة. وإذا خالف صاحب " +
+  "العمل هذه الأحكام فإنه يتعرض للعقوبات المنصوص عليها في النظام. كما تختص المحكمة " +
+  "العمالية بالنظر في المنازعات التي تنشأ بين العامل وصاحب العمل، وتكون أحكامها " +
+  "قابلة للاستئناف أمام محكمة الاستئناف خلال المدة المحددة نظاماً.";
+
+// خريطة إبدال حرفيّة ثابتة تحاكي ToUnicode معطوبة: حروف عربية سليمة، معنى مُدمَّر
+function substituteArabicLetters(src: string): string {
+  const from = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+  const to = "يوهنملكقفغعظطضصشسزردذخحجثتبا";
+  const map = new Map<string, string>();
+  for (let i = 0; i < from.length; i += 1) map.set(from[i], to[i]);
+  return [...src].map((c) => map.get(c) ?? c).join("");
+}
+
+check("الفساد الدلالي: نصّ عربيّ سليم → غير معطوب (لا إنذار كاذب)", () => {
+  const r = arabicSemanticCorruptionScore(SEMANTIC_GOOD);
+  assert.equal(r.skipped, false);
+  assert.equal(r.corrupt, false);
+  assert.ok(r.structureCoverage > 0.15, "التغطية البنيويّة عالية في العربية السليمة");
+});
+
+check("الفساد الدلالي: إبدال حرفيّ (حروف صحيحة/معنى مُدمَّر) → معطوب + توجيه OCR", () => {
+  const corrupt = substituteArabicLetters(SEMANTIC_GOOD);
+  const r = arabicSemanticCorruptionScore(corrupt);
+  assert.equal(r.corrupt, true);
+  assert.ok(r.structureCoverage < 0.05, "لا كلمات وظيفيّة/مُعرّفة بأل في النصّ المُبدَّل");
+  assert.equal(cleanPdfTextLayer(corrupt).needsOcr, true); // البنيويّ يفوت الكواشف الأخرى
+});
+
+check("الفساد الدلالي: نصّ قصير أو غير عربيّ → يُتخطّى (لا حكم)", () => {
+  assert.equal(arabicSemanticCorruptionScore("قصير").skipped, true);
+  assert.equal(
+    arabicSemanticCorruptionScore("This is a plain English paragraph ".repeat(6)).skipped,
+    true
+  );
 });
 
 // ── توجيه OCR ──

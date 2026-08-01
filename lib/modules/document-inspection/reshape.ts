@@ -292,8 +292,136 @@ export function cleanPdfTextLayer(rawText: string): { text: string; needsOcr: bo
     report.singleLetterRatio > 0.45 ||
     report.unmappedRatio > 0.2 ||
     report.fragmentRatio > 0.08 ||
-    isBrokenExtraction(rawText);
+    isBrokenExtraction(rawText) ||
+    arabicSemanticCorruptionScore(rawText).corrupt;
   return { text, needsOcr, report };
+}
+
+// ── كاشف الفساد الدلالي العربي (§11) ────────────────────────────────────────
+//
+// يعالج الصنف الذي تفوته الكواشف أعلاه: طبقةٌ نصّية بحروف عربية «صحيحة» يونيكوديّاً
+// (0620–064A، لا PUA ولا لاتينيّ ولا صيغ عرض) لكنّها تُشكّل كلماتٍ غير موجودة —
+// ناتج خريطة ToUnicode معطوبة تُبدّل كلّ محرف بمحرفٍ عربيّ آخر ثابت. النصّ يبدو
+// «عربيًّا» للفحوص البنيويّة، لكنه لا يحوي بنية اللغة: لا كلمات وظيفيّة، ولا أداة
+// تعريف، وتوزيع أطوال الكلمات وثنائيّات الحروف شاذّ. المصدر الصحيح لهذا الصنف OCR.
+//
+// نعتمد إشارات لغويّة حتميّة (لا نموذج/عشوائيّة) ونطلب عربيّة كثيفة قبل التفعيل حتى
+// لا نُنذر خطأً على نصٍّ إنجليزيّ أو جدولٍ رقميّ أو نصٍّ قصير.
+
+// أكثر ~60 كلمة وظيفيّة شيوعاً في العربية المكتوبة — حروف جرّ وعطف وموصولات وإشارة
+// وأفعال ناقصة. حضورها كثيفٌ في أي نصّ عربيّ سليم، وغيابُه شبه التامّ سمةُ العطب.
+const ARABIC_FUNCTION_WORDS = new Set<string>([
+  "في", "من", "على", "إلى", "الى", "عن", "مع", "أن", "ان", "إن", "أنّ", "إنّ", "أنه",
+  "ما", "لا", "لم", "لن", "قد", "كان", "كانت", "يكون", "تكون", "هو", "هي", "هم", "هذا",
+  "هذه", "ذلك", "تلك", "التي", "الذي", "الذين", "اللاتي", "و", "أو", "او", "ثم", "بل",
+  "حتى", "إذا", "اذا", "إذ", "كما", "لكن", "غير", "بين", "بعد", "قبل", "عند", "كل",
+  "بعض", "كذلك", "أي", "أيّ", "له", "لها", "به", "بها", "فيه", "فيها", "عليه", "عليها",
+  "منه", "منها", "إليه", "إليها", "هنا", "هناك", "حيث", "لأن", "لان", "لذلك", "فإن", "فان",
+]);
+
+// بادئات أداة التعريف مع حروف الجرّ/العطف المدمجة (ال، وال، بال، كال، فال، لل، وب…)
+const DEF_ARTICLE_PREFIXES = ["ال", "وال", "بال", "كال", "فال", "لل", "ولل", "بلا"];
+
+function isDefiniteWord(w: string): boolean {
+  for (const p of DEF_ARTICLE_PREFIXES) {
+    if (w.length >= p.length + 2 && w.startsWith(p)) return true;
+  }
+  return false;
+}
+
+export interface ArabicSemanticReport {
+  corrupt: boolean;
+  /** درجة الفساد 0..1 (أعلى = أكثر فساداً) */
+  score: number;
+  /** نسبة الرموز (تقييمها فقط عند كثافة عربية كافية) */
+  arabicRatio: number;
+  /** نسبة الكلمات الوظيفيّة + المُعرّفة بأل من مجموع الكلمات العربية */
+  structureCoverage: number;
+  /** نسبة الكلمات المكوّنة من حرف واحد */
+  singleCharRatio: number;
+  /** نسبة الكلمات المفرطة الطول (>14 حرفاً) — التصاقٌ ناتج عن فقد المسافات */
+  longWordRatio: number;
+  /** true إذا كان النصّ أقصر/أقلّ عربيةً من أن يُقيَّم بثقة */
+  skipped: boolean;
+}
+
+const ARABIC_LETTER_RE = /[ؠ-ي]/;
+
+/**
+ * يقيس الفساد الدلالي في طبقة نصّ عربية «سليمة الترميز» لكن مُخرَّبة المعنى.
+ * حتميّ بالكامل. للمستندات الطويلة نأخذ عيّنة من البداية والوسط والنهاية بدل المسح
+ * الكامل (كفاية للحكم مع كبح التكلفة). لا يسجّل النصّ الخام في أي مكان.
+ */
+export function arabicSemanticCorruptionScore(rawText: string): ArabicSemanticReport {
+  const empty: ArabicSemanticReport = {
+    corrupt: false, score: 0, arabicRatio: 0, structureCoverage: 0,
+    singleCharRatio: 0, longWordRatio: 0, skipped: true,
+  };
+  const cleaned = (rawText || "").replace(/\[صفحة \d+\]/g, " ").trim();
+  if (cleaned.length < 60) return empty;
+
+  // عيّنة للمستندات الطويلة: أول/وسط/آخر 4000 محرف (يكفي للحكم على بنية اللغة)
+  const CHUNK = 4000;
+  let sample = cleaned;
+  if (cleaned.length > CHUNK * 3) {
+    const mid = Math.floor(cleaned.length / 2);
+    sample = [
+      cleaned.slice(0, CHUNK),
+      cleaned.slice(mid - CHUNK / 2, mid + CHUNK / 2),
+      cleaned.slice(cleaned.length - CHUNK),
+    ].join(" ");
+  }
+
+  // كثافة العربية: نُقيّم فقط النصوص التي غالبها عربيّ (تجنّب الإنذار على إنجليزيّ/أرقام)
+  let arabicChars = 0;
+  let visible = 0;
+  for (const ch of sample) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (c <= 0x20) continue;
+    visible += 1;
+    if (c >= 0x0620 && c <= 0x064a) arabicChars += 1;
+  }
+  const arabicRatio = visible > 0 ? arabicChars / visible : 0;
+  if (arabicRatio < 0.5 || arabicChars < 80) {
+    return { ...empty, arabicRatio, skipped: true };
+  }
+
+  const words = sample.split(/\s+/).filter(Boolean);
+  const arabicWords = words.filter((w) => ARABIC_LETTER_RE.test(w));
+  if (arabicWords.length < 40) return { ...empty, arabicRatio, skipped: true };
+
+  // إشارة 1 — تغطية البنية: كلمات وظيفيّة + مُعرّفة بأل. عاليةٌ في العربية السليمة،
+  // شبه معدومة في النصّ المُبدَّل حرفاً بحرف.
+  let structural = 0;
+  let single = 0;
+  let longWords = 0;
+  for (const w of arabicWords) {
+    const core = w.replace(/[^ؠ-ي]/g, "");
+    if (!core) continue;
+    if (ARABIC_FUNCTION_WORDS.has(core) || isDefiniteWord(core)) structural += 1;
+    if (core.length === 1) single += 1;
+    if (core.length > 14) longWords += 1;
+  }
+  const structureCoverage = structural / arabicWords.length;
+  const singleCharRatio = single / arabicWords.length;
+  const longWordRatio = longWords / arabicWords.length;
+
+  // النصّ العربيّ الحقيقيّ يحوي عادةً >15% كلمات بنيويّة. تحت 6% إشارةٌ قويّة على العطب.
+  const coverageSignal = clamp01((0.12 - structureCoverage) / 0.12);
+  const singleSignal = clamp01((singleCharRatio - 0.15) / 0.25);
+  const longSignal = clamp01((longWordRatio - 0.1) / 0.2);
+
+  // التغطية البنيويّة هي الإشارة الأقوى والأكثر تمييزاً؛ نمنحها الوزن الأكبر.
+  const score = clamp01(coverageSignal * 0.7 + singleSignal * 0.2 + longSignal * 0.1);
+
+  // نُعلن العطب حين تنهار البنية اللغويّة: تغطية بنيويّة شديدة الانخفاض والدرجة مرتفعة.
+  const corrupt = structureCoverage < 0.05 && score >= 0.6;
+
+  return { corrupt, score, arabicRatio, structureCoverage, singleCharRatio, longWordRatio, skipped: false };
+}
+
+function clamp01(x: number): number {
+  return x < 0 ? 0 : x > 1 ? 1 : x;
 }
 
 /**
