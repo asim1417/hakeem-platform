@@ -29,6 +29,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { DashboardHomeLink, SafeBackButton } from "@/components/nav/SafeBackButton";
 import { ScrollRestorer } from "@/components/nav/ScrollRestorer";
 import { SupportChatWidget } from "@/components/support/SupportChatWidget";
+import { CommandPalette } from "@/components/CommandPalette";
 import { getTranslator } from "@/lib/i18n/server";
 import { DIR, LOCALE_LABEL } from "@/lib/i18n/dictionaries";
 import type { LucideIcon } from "lucide-react";
@@ -121,6 +122,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app" dir={DIR[locale]}>
       <a href="#main-content" className="skip-link">{t("a11y.skipToContent")}</a>
+      <CommandPalette />
       <div className="sidebar-overlay" id="sidebar-overlay" aria-hidden />
       <aside className="sidebar" id="sidebar" aria-label={t("a11y.mainNav")}>
         <div className="sidebar-inner">

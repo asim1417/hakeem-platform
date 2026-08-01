@@ -96,6 +96,17 @@ export function complianceRuleStats(rules: ComplianceRule[] = COMPLIANCE_RULES) 
     total: rules.length,
     authoritative: rules.filter((r) => r.approval === "authoritative").length,
     demo: rules.filter((r) => r.approval === "demo").length,
+    grounded: rules.filter((r) => r.basis != null).length, // مربوطة بأساس نظاميّ
     subjects: Array.from(new Set(rules.map((r) => r.scope.subjectType))),
   };
+}
+
+/**
+ * حارس الاعتماد (§15/§76): قاعدةٌ لا يجوز أن تكون authoritative دون basis نظاميّ.
+ * يمنع «اختلاق» قاعدة رسميّة بلا سند. يُستدعى عند إدخال قواعد معتمدة مستقبلًا.
+ */
+export function canApproveRule(rule: ComplianceRule): { ok: boolean; reason: string } {
+  if (rule.approval !== "authoritative") return { ok: true, reason: "قاعدة نموذجيّة" };
+  if (!rule.basis) return { ok: false, reason: "قاعدة معتمدة بلا أساس نظاميّ — مرفوضة (§76)." };
+  return { ok: true, reason: "معتمدة بأساس نظاميّ." };
 }
