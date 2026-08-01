@@ -71,16 +71,35 @@ export const SIMULATION_STAGES = [
 ] as const;
 export type SimulationStageName = (typeof SIMULATION_STAGES)[number];
 
+// المراحل «النشطة» في القاعة التي يتنقّل القاضي بينها بمرونة (تعكس judge-engine الحقيقيّ).
+const SIM_ACTIVE: SimulationStageName[] = [
+  "HEARING_RECORD",
+  "PLAINTIFF_STATEMENT",
+  "DEFENDANT_RESPONSE",
+  "PROCEDURAL_DECISION",
+  "PLEADING",
+];
+
 export const SIMULATION_WORKFLOW: WorkflowDefinition<SimulationStageName> = {
   id: "judicial.simulation",
   states: SIMULATION_STAGES,
   initial: "CLAIM_FILING",
   terminal: ["OBJECTION"],
   transitions: [
-    ...linear(SIMULATION_STAGES),
-    // الصلح مسارٌ بديل يمكن بلوغه من المرافعة، ويقفز إلى قفل المرافعة.
-    { from: "PLEADING", to: "SETTLEMENT" },
+    // العمود الفقريّ الخطّيّ.
+    { from: "CLAIM_FILING", to: "INITIAL_ADMISSIBILITY" },
+    { from: "INITIAL_ADMISSIBILITY", to: "HEARING_RECORD" },
+    // مرونة القاعة: من أي مرحلة نشطة يجوز الانتقال إلى مرحلة نشطة أخرى،
+    // أو إلى الصلح، أو إلى قفل المرافعة (يعكس تنقّل القاضي الفعليّ).
+    ...SIM_ACTIVE.flatMap((from) => [
+      ...SIM_ACTIVE.filter((to) => to !== from).map((to) => ({ from, to })),
+      { from, to: "SETTLEMENT" as SimulationStageName },
+      { from, to: "CLOSE_PLEADING" as SimulationStageName },
+    ]),
     { from: "SETTLEMENT", to: "CLOSE_PLEADING" },
+    { from: "SETTLEMENT", to: "TRAINING_JUDGMENT" },
+    { from: "CLOSE_PLEADING", to: "TRAINING_JUDGMENT" },
+    { from: "TRAINING_JUDGMENT", to: "OBJECTION" },
   ],
 };
 
