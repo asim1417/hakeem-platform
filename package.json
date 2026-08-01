@@ -182,6 +182,7 @@
     "test:extraction-race": "tsx scripts/test-extraction-race.ts",
     "test:composer-attachments-contract": "HAKEEM_COMPOSER_ATTACHMENTS_V2=1 HAKEEM_DOCUMENT_PROCESSING_V2=1 tsx scripts/test-composer-attachments-contract.ts",
     "test:composer-attachments-closure": "tsx scripts/test-composer-attachments-closure.ts",
+    "test:composer-capabilities": "tsx scripts/test-composer-capabilities.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
     "smoke:judicial": "tsx scripts/smoke-judicial.ts",
