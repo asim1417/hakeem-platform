@@ -7,6 +7,7 @@ import {
   Gavel,
   LayoutDashboard,
   Scale,
+  ClipboardCheck,
   Search,
   Settings,
   Sparkles,
@@ -45,6 +46,7 @@ const legacyNavItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
+  { href: "/dashboard/review", key: "nav.review", icon: ClipboardCheck },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
@@ -57,6 +59,7 @@ const legacyNavItems: NavItem[] = [
 const askFirstNavItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
+  { href: "/dashboard/review", key: "nav.review", icon: ClipboardCheck },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
   { href: "/documents", key: "nav.docPlatform", icon: FileText },

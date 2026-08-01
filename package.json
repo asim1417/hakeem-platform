@@ -62,6 +62,7 @@
     "test:model-registry": "tsx scripts/test-model-registry.ts",
     "test:data-classification": "tsx scripts/test-data-classification.ts",
     "test:prompt-registry": "tsx scripts/test-prompt-registry.ts",
+    "test:review-center": "tsx scripts/test-review-center.ts",
     "packages:validate": "node packages/validate.mjs",
     "test:dialogue-acceptance": "tsx scripts/test-model-led-dialogue.ts",
     "test:search-fixes": "tsx scripts/test-search-fixes.ts",

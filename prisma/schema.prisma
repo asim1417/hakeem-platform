@@ -1140,3 +1140,96 @@ model JudicialWorkCase {
   @@index([ownerId, createdAt])
   @@map("judicial_work_cases")
 }
+
+// ══════════════════════════════════════════════════════════
+// مركز المراجعة — المخطط السيادي §12. جداول جديدة بالكامل، إضافيّة.
+// «لا تعديل صامت»: الاقتراح يمرّ بدورة suggested→accepted/rejected/deferred بموافقة بشرية.
+// ══════════════════════════════════════════════════════════
+
+enum ReviewSessionStatus {
+  OPEN
+  COMPLETED
+  ARCHIVED
+}
+
+enum FindingSeverity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SuggestionStatus {
+  SUGGESTED
+  ACCEPTED
+  REJECTED
+  DEFERRED
+}
+
+model ReviewSession {
+  id         String              @id @default(cuid())
+  ownerId    String              @map("owner_id") // نصّ مباشر (كنمط judicial_work_cases) — بلا علاقة على User
+  title      String
+  entityType String              @map("entity_type") // consultation | judgment | document | case | other
+  entityId   String?             @map("entity_id")
+  status     ReviewSessionStatus @default(OPEN)
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+
+  findings    Finding[]
+  suggestions Suggestion[]
+  report      ReviewReport?
+
+  @@index([ownerId, createdAt])
+  @@index([status])
+  @@map("review_sessions")
+}
+
+model Finding {
+  id               String          @id @default(cuid())
+  sessionId        String          @map("session_id")
+  session          ReviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category         String
+  severity         FindingSeverity @default(MEDIUM)
+  description      String
+  evidence         Json            @default("[]") // §13 Evidence-First: مصادر/مواضع داعمة
+  confidence       Float?
+  affectedLocation Json?           @map("affected_location")
+  ruleId           String?         @map("rule_id")
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  suggestions Suggestion[]
+
+  @@index([sessionId])
+  @@map("review_findings")
+}
+
+model Suggestion {
+  id           String           @id @default(cuid())
+  sessionId    String           @map("session_id")
+  session      ReviewSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  findingId    String?          @map("finding_id")
+  finding      Finding?         @relation(fields: [findingId], references: [id], onDelete: SetNull)
+  title        String
+  body         String
+  status       SuggestionStatus @default(SUGGESTED) // لا تعديل صامت — القرار بشريّ
+  decidedById  String?          @map("decided_by_id")
+  decidedAt    DateTime?        @map("decided_at")
+  decisionNote String?          @map("decision_note")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@index([sessionId, status])
+  @@map("review_suggestions")
+}
+
+model ReviewReport {
+  id        String        @id @default(cuid())
+  sessionId String        @unique @map("session_id")
+  session   ReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  summary   String
+  metrics   Json          @default("{}")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("review_reports")
+}

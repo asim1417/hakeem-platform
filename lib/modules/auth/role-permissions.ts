@@ -25,6 +25,8 @@ export type Permission =
   | "GOVERNANCE_AUDIT_VIEW"
   // المعاون القضائي (المرحلة 1ب): استخدام مساحة القضية وأعمالها.
   | "JUDICIAL_ASSISTANT_USE"
+  // مركز المراجعة (المخطط السيادي §12): جلسات مراجعة، ملاحظات، واقتراحات بموافقة بشرية.
+  | "REVIEW_USE"
   /** حصرية لمالك المنصة — لا تُمنح عبر مصفوفة SYSTEM_ADMIN. */
   | "SUPER_ADMIN_ACCESS";
 
@@ -42,6 +44,7 @@ const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
   "ADMIN_REPORTS_VIEW",
   "GOVERNANCE_AUDIT_VIEW",
   "JUDICIAL_ASSISTANT_USE",
+  "REVIEW_USE",
 ];
 
 export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
@@ -55,6 +58,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
     "GOVERNANCE_AUDIT_VIEW",
+    "REVIEW_USE",
   ],
   LAWYER: [
     "CONSULTATIONS_FULL",
@@ -64,6 +68,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
     "JUDICIAL_ASSISTANT_USE",
+    "REVIEW_USE",
   ],
   TRAINER: [
     "SIMULATIONS_USE",
@@ -75,6 +80,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "ADMIN_REPORTS_VIEW",
     // المعاون القضائي متاحٌ للمدرّب أيضًا (تدريبٌ عمليّ على مساحة القضية).
     "JUDICIAL_ASSISTANT_USE",
+    "REVIEW_USE",
   ],
   TRAINEE: [
     "CONSULTATIONS_LIMITED",
@@ -85,5 +91,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "ATTACHMENTS_LIMITED",
     // جمهور حكيم يشمل القضاة المتدربين وطلاب القانون — فالمعاون القضائي متاحٌ لهم.
     "JUDICIAL_ASSISTANT_USE",
+    "REVIEW_USE",
   ],
 };

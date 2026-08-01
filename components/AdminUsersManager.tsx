@@ -75,6 +75,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   ADMIN_REPORTS_VIEW: "تقارير الإدارة",
   GOVERNANCE_AUDIT_VIEW: "سجل التدقيق والحوكمة",
   JUDICIAL_ASSISTANT_USE: "المعاون القضائي",
+  REVIEW_USE: "مركز المراجعة",
   SUPER_ADMIN_ACCESS: "لوحة السوبر أدمن (حصرية)",
 };
 
