@@ -17,9 +17,10 @@ export interface ExtractOut {
 
 const SCANNED_MARK = "[[صفحة تحتاج مسحًا ضوئيًّا]]";
 
+// مُفعَّل افتراضيًا (توجيه الصفحة تحسينٌ آمن)؛ إيقافٌ طارئ: HAKEEM_DOC_NODE_PAGE_LEVEL_V1=0
 function pageLevelEnabled(): boolean {
   const v = (process.env.HAKEEM_DOC_NODE_PAGE_LEVEL_V1 ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
+  return !(v === "0" || v === "false" || v === "off" || v === "no");
 }
 
 /**
