@@ -59,6 +59,7 @@
     "test:policy-gate": "tsx scripts/test-policy-gate.ts",
     "test:response-verifier": "tsx scripts/test-response-verifier.ts",
     "test:event-envelope": "tsx scripts/test-event-envelope.ts",
+    "test:model-registry": "tsx scripts/test-model-registry.ts",
     "test:dialogue-acceptance": "tsx scripts/test-model-led-dialogue.ts",
     "test:search-fixes": "tsx scripts/test-search-fixes.ts",
     "qa:gate": "tsx scripts/quality-gate.ts",

@@ -11,6 +11,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { recordAiUsageFromContext } from "@/lib/modules/billing/ai-usage-meter";
+import { registryDefaultModel } from "@/lib/modules/ai/model-registry";
 
 const SETTINGS_KEY = "ai_provider";
 const ENC_PREFIX = "enc:v1:";
@@ -238,17 +239,21 @@ async function geminiFallbackConfig(): Promise<EffectiveAiConfig | null> {
   return null;
 }
 
-/** النموذج الافتراضي لكل مزوّد عند غياب تحديد صريح في الإعداد. */
+/**
+ * النموذج الافتراضي لكل مزوّد عند غياب تحديد صريح في الإعداد.
+ * الأولوية: متغيّر البيئة → سجلّ النماذج (§17) → الثابت القديم. لا يتغيّر أي سلوك
+ * لأن القيمة المسجَّلة تطابق الثابت القديم؛ السجلّ يضيف حوكمة/بيانات وصفية فقط.
+ */
 export function defaultModelFor(provider: AiProvider): string {
+  const registryDefault = registryDefaultModel(provider);
   switch (provider) {
     case "anthropic":
-      // موديلٌ ثابتٌ صالحٌ للحساب (قابلٌ للتجاوز عبر إعداد /admin/ai أو ANTHROPIC_MODEL).
-      return process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest";
+      return process.env.ANTHROPIC_MODEL || registryDefault || "claude-3-5-sonnet-latest";
     case "openai":
     case "custom":
-      return "gpt-4o-mini";
+      return registryDefault || "gpt-4o-mini";
     case "gemini":
-      return "gemini-2.5-flash";
+      return registryDefault || "gemini-2.5-flash";
     default:
       return "offline";
   }
