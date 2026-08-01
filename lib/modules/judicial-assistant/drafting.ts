@@ -8,6 +8,7 @@ import { findPrecedents } from "./rulings";
 import { STAGE_META } from "./catalog";
 import { JURISDICTION_LABEL, FACT_STATUS_LABEL } from "./labels";
 import { buildRelevantDocsAsync } from "./case-vector";
+import { judicialShadowReview } from "@/lib/modules/judicial";
 import type { JudgmentDraftResult, JudgmentSection, JudicialCase } from "./types";
 
 const NOTICE =
@@ -88,5 +89,24 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
     precedents,
     requestId: reasoning?.requestId ?? "no-reasoning",
     notice: blocked ? BLOCKED_NOTICE : NOTICE,
+    // ظلّ JDS (§27/§31-I): مراجعة بوّابات الجودة كبياناتٍ استرشاديّة، فقط عند تفعيل العَلَم.
+    // مطفأٌ افتراضيًّا ⇒ لا تغيير في المخرج. مغلَّفٌ بحمايةٍ فلا يكسر الصياغة أبدًا.
+    jdsReview: buildJdsShadowReview(kase, sections),
   };
+}
+
+/** مراجعة ظلّيّة (§27) لمسودّة الحكم عبر المساعد المشترك — undefined ما لم يُفعَّل العَلَم. */
+function buildJdsShadowReview(kase: JudicialCase, sections: JudgmentSection[]): JudgmentDraftResult["jdsReview"] {
+  const operative = sections.find((s) => s.key === "operative")?.body ?? "";
+  const reasoningBody = sections.find((s) => s.key === "reasoning")?.body ?? "";
+  return judicialShadowReview({
+    role: "JUDGE",
+    documentFunction: "DISPOSITION",
+    litigationStage: "JUDGMENT",
+    subject: kase.subject,
+    draftText: `${reasoningBody}\n${operative}`,
+    requests: kase.requests.map((r) => r.text),
+    dispositionItems: operative.split("\n").map((l) => l.trim()).filter(Boolean),
+    hasNonBindingLabel: true, // JS-018 يحمل دائمًا إشعارًا بعدم الإلزام (NOTICE)
+  });
 }

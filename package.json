@@ -175,7 +175,15 @@
     "test:ask-sessions-3a": "tsx scripts/test-ask-sessions-3a.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
-    "smoke:judicial": "tsx scripts/smoke-judicial.ts"
+    "smoke:judicial": "tsx scripts/smoke-judicial.ts",
+    "test:jds": "tsx scripts/test-judicial-jds.ts",
+    "test:jds-schema": "tsx scripts/test-judicial-jds-schema.ts",
+    "test:jds-procedure": "tsx scripts/test-judicial-procedure-graph.ts",
+    "test:jds-gates": "tsx scripts/test-judicial-gates.ts",
+    "test:jds-recipe": "tsx scripts/test-judicial-recipe.ts",
+    "test:jds-orchestrator": "tsx scripts/test-judicial-orchestrator.ts",
+    "eval:jds": "tsx scripts/eval-judicial-jds.ts",
+    "db:jds": "tsx scripts/seed-judicial-jds.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",

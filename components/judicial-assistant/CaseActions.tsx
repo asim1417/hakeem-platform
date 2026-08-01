@@ -395,6 +395,44 @@ function StudyView({ data }: { data: JudicialStudyResult }) {
   );
 }
 
+// لوحة مراجعة JDS الاسترشاديّة (§27، ظلّ §31-I). تظهر فقط حين تفعيل JDS_DRAFTING_SHADOW
+// (وإلّا jdsReview = undefined فلا تُعرَض) — استرشاديّة لا تغيّر نصّ المسودّة.
+function JdsReviewPanel({ review }: { review: NonNullable<JudgmentDraftResult["jdsReview"]> }) {
+  const GATE_AR: Record<string, string> = {
+    JG13: "أمانة اللغة القضائيّة", JG14: "مصطلح طريق الاعتراض", JG15: "عدم تجاوز الطلبات",
+    JG16: "اتّساق الأسباب والمنطوق", JG19: "وسم عدم الإلزام", JG8: "سريان السلطة",
+    JG9: "مطابقة الاستشهاد", JG6: "سلامة حالة الوقائع", JG18: "الخصوصيّة",
+  };
+  const flagged = review.findings.filter((f) => f.outcome === "FAIL");
+  const needsReview = review.findings.filter((f) => f.outcome === "NEEDS_REVIEW");
+  return (
+    <div className="ja-sources">
+      <h4>
+        <JaIcon name={review.ready ? "quality" : "security"} size={15} />{" "}
+        فحص جودة JDS الاسترشاديّ — {review.ready ? "لا مانع للمراجعة" : `${flagged.length} ملاحظة مانعة`}
+        <span className="ja-badge ja-badge--info" style={{ marginInlineStart: 8 }}>ظلّ · لا يغيّر النصّ</span>
+      </h4>
+      {flagged.length > 0 ? (
+        <ul>
+          {flagged.map((f, i) => (
+            <li key={f.gateId + i}>
+              <span className="ja-badge ja-badge--danger">{GATE_AR[f.gateId] ?? f.gateId}</span>{" "}
+              <span className="ja-src__quote">{f.findings.join(" · ")}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="ja-src__quote">لم تُرصد مخالفةٌ مانعةٌ في اللغة أو المنطوق أو طريق الاعتراض.</p>
+      )}
+      {needsReview.length > 0 ? (
+        <p className="ja-det__disc">
+          يحتاج تحقّقًا خارجيًّا/بشريًّا: {needsReview.map((f) => GATE_AR[f.gateId] ?? f.gateId).join("، ")}.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function DraftView({ data }: { data: JudgmentDraftResult }) {
   return (
     <div className="ja-summary">
@@ -415,6 +453,8 @@ function DraftView({ data }: { data: JudgmentDraftResult }) {
           </section>
         ))}
       </div>
+
+      {data.jdsReview ? <JdsReviewPanel review={data.jdsReview} /> : null}
 
       {data.citations.length > 0 ? (
         <div className="ja-sources">

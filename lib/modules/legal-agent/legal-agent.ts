@@ -10,6 +10,7 @@ import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { classifyDefense, type DefenseCategory } from "@/lib/modules/case-analysis/defense-classifier";
 import type { Citation } from "@/lib/modules/citations/citation-engine";
+import { judicialShadowReview } from "@/lib/modules/judicial";
 import { buildLegalAgentSystemPrompt, buildLegalAgentUserPrompt } from "./legal-agent-prompts";
 import type { AgentDefense, AgentStrategy, LegalActionPlan, LegalAgentInput, PartyRole } from "./types";
 
@@ -102,6 +103,14 @@ export async function runLegalAgent(input: LegalAgentInput): Promise<LegalAction
     generated,
     provider: generated ? analysis.provider || "central" : aiMeta.name,
     model: aiMeta.model,
+    // ظلّ JDS (§27): مراجعةٌ استرشاديّة بصوت المحامي — تُرصد خلطَ صوت المحكمة في مذكّرة طرف.
+    // undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW ⇒ لا تغيير في المخرج.
+    jdsReview: judicialShadowReview({
+      role: "LAWYER",
+      documentFunction: "DEFENSE",
+      subject: strategy.caseSummary,
+      draftText: [strategy.litigationStrategy, ...strategy.pleadingPlan, ...suggestedDefenses.map((d) => d.text)].join("\n"),
+    }),
   };
 }
 

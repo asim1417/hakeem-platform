@@ -6,6 +6,7 @@ import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
 import { collectAllowedArticleNumbers, collectStrings, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 import { analyzeCase } from "@/lib/modules/case-analysis/case-analysis-engine";
+import { judicialShadowReview } from "@/lib/modules/judicial";
 import type { CaseAnalysisResult } from "@/lib/modules/case-analysis/types";
 import { runLegalAgent } from "@/lib/modules/legal-agent/legal-agent";
 import type { LegalActionPlan } from "@/lib/modules/legal-agent/types";
@@ -126,6 +127,17 @@ export async function runJudicialSimulation(input: JudicialSimulationInput): Pro
     generated,
     provider: generated ? plan?.provider || "central" : aiMeta.name,
     model: aiMeta.model,
+    // ظلّ JDS (§27): مراجعةٌ استرشاديّة بصوت المحكمة على الأسباب/المنطوق المحتمَلين —
+    // undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW ⇒ لا تغيير في المخرج.
+    jdsReview: judicialShadowReview({
+      role: "JUDGE",
+      documentFunction: "DISPOSITION",
+      litigationStage: "JUDGMENT",
+      subject: plan?.caseSummary || narrative.disputeSubject,
+      draftText: [...outcome.draftReasoning, outcome.tentativeRuling].join("\n"),
+      dispositionItems: outcome.tentativeRuling.split("\n").map((l) => l.trim()).filter(Boolean),
+      hasNonBindingLabel: true, // المحاكاة تحمل دائمًا TRAINING_DISCLAIMER
+    }),
   };
 }
 
