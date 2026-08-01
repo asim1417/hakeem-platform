@@ -44,6 +44,9 @@ import { SmartSuggestions } from "./smart-suggestions";
 import { SourcesSelector } from "./sources-selector";
 import { ToolsMenu, type ToolAction } from "./tools-menu";
 import { VoiceButton } from "./voice-recorder";
+import { VoiceNoteButton } from "./voice/VoiceNoteButton";
+import { insertTranscriptAtCaret } from "@/lib/modules/voice/insert-transcript";
+import { isVoiceNoteV2Enabled } from "@/lib/modules/config/voice";
 
 function saveDraft(key: string, text: string, maxChars: number) {
   try {
@@ -95,6 +98,8 @@ export function HakeemComposer({
   const fileRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [caret, setCaret] = useState(0);
+  // §17 — المسجّل الصوتي V2 خلف علمٍ مطفأ افتراضيًّا (وإلا المسار الحاليّ دون تغيير).
+  const voiceNoteV2 = isVoiceNoteV2Enabled();
   const [modeOpen, setModeOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -418,10 +423,27 @@ export function HakeemComposer({
               <span className="hkm-composer__tool-label hkm-composer__tool-label--always">دراسة موسّعة</span>
             </button>
 
-            <VoiceButton
-              disabled={busy || disabled}
-              onTranscript={(t) => updateValue(t.slice(0, maxChars), Math.min(t.length, maxChars))}
-            />
+            {voiceNoteV2 ? (
+              <VoiceNoteButton
+                disabled={busy || disabled}
+                onInsertTranscript={(t) => {
+                  // §16 — إدراجٌ عند المؤشّر لا يمسح النصّ السابق ولا يُرسِل.
+                  const applied = insertTranscriptAtCaret({
+                    currentText: value,
+                    transcript: t,
+                    selectionStart: caret,
+                    selectionEnd: caret,
+                    maxChars,
+                  });
+                  updateValue(applied.text, applied.caret);
+                }}
+              />
+            ) : (
+              <VoiceButton
+                disabled={busy || disabled}
+                onTranscript={(t) => updateValue(t.slice(0, maxChars), Math.min(t.length, maxChars))}
+              />
+            )}
 
             <ExpandButton visible={showExpand} onClick={() => setExpanded(true)} />
           </div>
