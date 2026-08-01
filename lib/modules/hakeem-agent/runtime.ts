@@ -86,7 +86,14 @@ export async function runHakeemAgent(input: {
   query: string;
   document?: string;
   /** مرفقات دائمة جاهزة للقراءة بالمعرّف */
-  attachments?: Array<{ id: string; fileName: string; text: string; status?: string }>;
+  attachments?: Array<{
+    id: string;
+    fileName: string;
+    text: string;
+    status?: string;
+    pages?: Array<{ pageNumber: number; text: string; status: string; confidence?: number; warning?: string }>;
+    provenance?: string;
+  }>;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   /** ملخّصٌ متدرّج لما قبل الأدوار الأخيرة (غرفةٌ طويلة) — يُحقن في التوجيه فيبقى السياق المبكّر حاضرًا. */
   summary?: string;

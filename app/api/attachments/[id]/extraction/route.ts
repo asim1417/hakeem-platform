@@ -1,28 +1,48 @@
 /**
  * POST /api/attachments/[id]/extraction
- * يُكمل استخراج نص المرفق بنص قادم من extractFile (بدون إعادة بناء OCR).
+ * نص عميل → CLIENT_PREVIEW أو CLIENT_FALLBACK فقط.
+ * الخادم يحدد provenance/engine/confidence — لا يثق بمدخلات العميل.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { completeAttachmentExtraction } from "@/lib/modules/attachments/complete-extraction";
 import { ASK_ATTACHMENT_RELATION_TYPE } from "@/lib/modules/hakeem-composer/document-bridge";
+import {
+  isAttachmentsV2ServerEnabled,
+  isComposerDocumentsV1Enabled,
+  isDocumentProcessingV2Enabled,
+} from "@/lib/modules/hakeem-composer/document-flags";
+import { CLIENT_EXTRACTION_MAX_CHARS } from "@/lib/modules/attachments/extraction-provenance";
 import { prisma } from "@/lib/prisma";
 import { ownsAttachment } from "@/lib/modules/auth/ownership";
 import { resolveAttachmentMetadata } from "@/lib/modules/attachments/attachment-metadata";
+import { auditEvent } from "@/lib/modules/audit/audit";
 
 export const dynamic = "force-dynamic";
 
+function docNodeConfigured(): boolean {
+  return Boolean((process.env.DOC_NODE_URL || process.env.DOC_TOOL_URL || "").trim());
+}
+
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  // LIMITED يكفي لمرفقات Ask اليتيمة؛ FULL يغطيها عبر rbac.
-  const gate = await requireApiPermission("ATTACHMENTS_LIMITED", request);
+  const gate = await requireApiPermission("ASK_ATTACHMENT_UPLOAD", request);
   if (gate.response) return gate.response;
   const user = gate.user!;
+
+  if (!isAttachmentsV2ServerEnabled() && !isComposerDocumentsV1Enabled()) {
+    return NextResponse.json(
+      { message: "مسار الاستخراج معطّل (أعلام الوثائق).", code: "FEATURE_DISABLED" },
+      { status: 503 }
+    );
+  }
 
   let body: {
     text?: string;
     kind?: string;
     extractionEngine?: string;
     confidence?: number;
+    /** يُتجاهل — الخادم يقرر */
+    provenance?: string;
   } = {};
   try {
     body = await request.json();
@@ -30,7 +50,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ message: "جسم الطلب غير صالح." }, { status: 400 });
   }
 
-  // تحقق ملكية سريع + تمييز مرفق Ask (للاستخدام في التدقيق فقط)
+  const rawText = String(body.text ?? "");
+  if (rawText.length > CLIENT_EXTRACTION_MAX_CHARS) {
+    return NextResponse.json(
+      { message: "نص الاستخراج يتجاوز الحد.", code: "TEXT_TOO_LARGE" },
+      { status: 413 }
+    );
+  }
+
   const existing = await prisma.attachment.findUnique({
     where: { id: params.id },
     include: { caseFile: { select: { ownerId: true } } },
@@ -51,23 +78,51 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const isAsk =
     meta.relationType === ASK_ATTACHMENT_RELATION_TYPE || meta.relationType === "ask";
 
-  // مرفقات القضايا تتطلب FULL إن لم تكن Ask يتيمة — LIMITED يكفي لـ Ask
-  if (!isAsk && existing.caseId) {
-    const full = await requireApiPermission("ATTACHMENTS_FULL", request);
-    if (full.response) return full.response;
+  if (!isAsk) {
+    return NextResponse.json(
+      {
+        message: "مسار /extraction مخصص لمرفقات Ask فقط.",
+        code: "ASK_ATTACHMENT_ONLY",
+      },
+      { status: 403 }
+    );
   }
+
+  // تجاهل extractionEngine/confidence من العميل صراحةً
+  const processingV2 = isDocumentProcessingV2Enabled();
+  const nodeOk = docNodeConfigured();
+  const provenance =
+    processingV2 && nodeOk ? ("CLIENT_PREVIEW" as const) : ("CLIENT_FALLBACK" as const);
 
   const result = await completeAttachmentExtraction({
     attachmentId: params.id,
     user,
-    rawText: String(body.text ?? ""),
+    rawText,
     kind: body.kind,
-    extractionEngine: body.extractionEngine,
-    confidence: body.confidence,
+    provenance,
+    docNodeConfigured: nodeOk,
+    // لا تمرير confidence/engine من العميل
   });
 
+  void auditEvent({
+    actorId: user.id,
+    subject: "ADMIN",
+    action: "ATTACHMENT_CLIENT_EXTRACTION_POST",
+    entityId: params.id,
+    metadata: {
+      provenance,
+      mode: result.ok ? result.mode : "error",
+      code: result.ok ? undefined : result.code,
+      textLength: rawText.length,
+      clientEngineIgnored: Boolean(body.extractionEngine),
+      clientConfidenceIgnored: body.confidence != null,
+      // لا نص
+    },
+  }).catch(() => undefined);
+
   if (!result.ok) {
-    const status = result.code === "NOT_FOUND" ? 404 : 400;
+    const status =
+      result.code === "NOT_FOUND" ? 404 : result.code === "SERVER_AUTHORITATIVE" ? 409 : 400;
     return NextResponse.json({ message: result.message, code: result.code }, { status });
   }
 
@@ -78,6 +133,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     textLength: result.textLength,
     preview: result.preview,
     needsOcr: result.needsOcr,
-    source: result.source,
+    provenance: result.provenance,
+    verificationStatus: result.verificationStatus,
+    mode: result.mode,
   });
 }

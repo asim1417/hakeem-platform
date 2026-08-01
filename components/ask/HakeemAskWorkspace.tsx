@@ -50,7 +50,7 @@ import {
 import { composerSourcesToPolicy } from "@/lib/modules/hakeem-composer/source-policy";
 import { routeComposerIntent } from "@/lib/modules/hakeem-composer/intent-router";
 import {
-  isComposerDocumentsClientEnabled,
+  isComposerAttachmentClientPersistEnabled,
   toMessageAttachmentRef,
 } from "@/lib/modules/hakeem-composer/document-bridge";
 import { persistAskAttachmentToServer } from "@/lib/modules/hakeem-composer/persist-ask-attachment";
@@ -510,7 +510,7 @@ export function HakeemAskWorkspace({
 
         let serverAttachmentId: string | undefined;
         let storageKey: string | undefined;
-        if (isComposerDocumentsClientEnabled()) {
+        if (isComposerAttachmentClientPersistEnabled()) {
           setAttachments((prev) =>
             prev.map((a) =>
               a.id === id

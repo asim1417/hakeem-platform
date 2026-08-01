@@ -45,6 +45,14 @@ import {
   isAttachmentsV2Enabled,
   syncAttachmentProcessing,
 } from "@/lib/modules/attachments/document-processing-adapter";
+import {
+  classifyAttachmentIds,
+  hasReadyAttachmentContent,
+  resolveAttachedOnlyError,
+  type OwnedAttachmentRow,
+} from "@/lib/modules/attachments/attachment-classify";
+import { ownsAttachment } from "@/lib/modules/auth/ownership";
+import type { DocumentPageResult } from "@/lib/modules/attachments/extraction-provenance";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -104,60 +112,82 @@ export async function POST(request: NextRequest) {
     text: string;
     storageKey: string;
     status?: string;
+    pages?: DocumentPageResult[];
+    provenance?: string;
   }> = [];
+  let attachmentBuckets = classifyAttachmentIds([], []);
+
   if (documentsEnabled && rawAttachmentIds.length) {
     loadedAttachments = await loadOwnedAttachmentDocuments({
       user,
       attachmentIds: rawAttachmentIds,
     }).catch(() => []);
 
-    if (attachmentsV2) {
-      const rows = await prisma.attachment.findMany({
-        where: { id: { in: rawAttachmentIds } },
-        include: { caseFile: { select: { ownerId: true } } },
+    const rows = await prisma.attachment.findMany({
+      where: { id: { in: rawAttachmentIds } },
+      include: { caseFile: { select: { ownerId: true } } },
+    });
+    const ownedRows: OwnedAttachmentRow[] = [];
+    for (const row of rows) {
+      const owned = ownsAttachment(user, {
+        caseId: row.caseId,
+        caseOwnerId: row.caseFile?.ownerId ?? null,
+        extractedText: row.extractedText,
+        metadata: row.metadata,
       });
-      const { ownsAttachment } = await import("@/lib/modules/auth/ownership");
-      for (const row of rows) {
-        if (
-          !ownsAttachment(user, {
-            caseId: row.caseId,
-            caseOwnerId: row.caseFile?.ownerId ?? null,
-            extractedText: row.extractedText,
-            metadata: row.metadata,
-          })
-        ) {
-          continue;
-        }
-        const existing = loadedAttachments.find((a) => a.id === row.id);
-        if (existing) {
-          existing.status = row.processingStatus;
-        } else {
-          loadedAttachments.push({
-            id: row.id,
-            fileName: row.fileName,
-            text: String(row.extractedText ?? "").trim(),
-            storageKey: row.storageKey,
-            status: row.processingStatus,
-          });
-        }
+      const text = String(row.extractedText ?? "").trim();
+      ownedRows.push({
+        id: row.id,
+        processingStatus: row.processingStatus,
+        owned,
+        hasText: Boolean(text),
+      });
+      if (!owned) continue;
+      const existing = loadedAttachments.find((a) => a.id === row.id);
+      const meta =
+        row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+          ? (row.metadata as Record<string, unknown>)
+          : {};
+      const pages = Array.isArray(meta.pages) ? (meta.pages as DocumentPageResult[]) : undefined;
+      if (existing) {
+        existing.status = row.processingStatus;
+        existing.pages = pages ?? existing.pages;
+        existing.provenance =
+          typeof meta.extractionProvenance === "string" ? meta.extractionProvenance : existing.provenance;
+      } else {
+        loadedAttachments.push({
+          id: row.id,
+          fileName: row.fileName,
+          text,
+          storageKey: row.storageKey,
+          status: row.processingStatus,
+          pages,
+          provenance: typeof meta.extractionProvenance === "string" ? meta.extractionProvenance : undefined,
+        });
       }
     }
+    // المعرفات المطلوبة وغير الموجودة في DB → missing
+    for (const id of rawAttachmentIds) {
+      if (!ownedRows.some((r) => r.id === id)) {
+        ownedRows.push({ id, processingStatus: "MISSING", owned: false, hasText: false });
+      }
+    }
+    attachmentBuckets = classifyAttachmentIds(rawAttachmentIds, ownedRows);
   }
 
   const readyLoaded = loadedAttachments.filter(
-    (a) => a.text?.trim() && (!a.status || ["READY", "PARTIAL"].includes(String(a.status)))
+    (a) =>
+      a.text?.trim() &&
+      (!a.status || ["READY", "PARTIAL"].includes(String(a.status)))
   );
-  const notReadyIds =
-    attachmentsV2 && rawAttachmentIds.length > 0
-      ? rawAttachmentIds.filter((id) => {
-          const row = loadedAttachments.find((a) => a.id === id);
-          return row && row.status && !["READY", "PARTIAL"].includes(String(row.status));
-        })
-      : [];
-  const forbiddenIds =
-    attachmentsV2 && rawAttachmentIds.length > 0
-      ? rawAttachmentIds.filter((id) => !loadedAttachments.some((a) => a.id === id))
-      : [];
+  const hasAttachmentReference =
+    attachmentBuckets.readyIds.length +
+      attachmentBuckets.partialIds.length +
+      attachmentBuckets.pendingIds.length +
+      attachmentBuckets.failedIds.length +
+      attachmentBuckets.quarantinedIds.length >
+    0;
+  const hasReadyAttachmentContentFlag = hasReadyAttachmentContent(attachmentBuckets);
 
   // نص المستند: أولوية المرفقات الجاهزة؛ ثم legacy document خلف DOCUMENTS_V1 أو عند تعطيل V2
   const resolvedDoc = resolveAskDocumentText({
@@ -166,7 +196,9 @@ export async function POST(request: NextRequest) {
     attachmentDocuments: readyLoaded.map((a) => ({ fileName: a.fileName, text: a.text })),
   });
   const attachedDoc = resolvedDoc.text;
-  const hasDoc = attachedDoc.length > 0;
+  /** محتوى نصي جاهز أو مرجع مرفق مملوك (حتى لو قيد المعالجة) لسياسة attached-only */
+  const hasDoc = attachedDoc.length > 0 || hasReadyAttachmentContentFlag;
+  const hasAttachmentForPolicy = hasDoc || hasAttachmentReference;
 
   // سياسة المصادر: الخادم يبني effectivePolicy ولا يثق بـ boolean من العميل.
   const policyEnabled = isSourcePolicyV2Enabled();
@@ -181,9 +213,12 @@ export async function POST(request: NextRequest) {
     const resolved = resolveEffectiveSourcePolicy({
       requestedSources: body.sources,
       requestedPolicy: body.sourcePolicy,
-      hasAttachment: hasDoc,
+      hasAttachment: hasAttachmentForPolicy,
       caseContext: null, // ربط القضايا في مرحلة لاحقة
-      serverCapabilities: defaultServerCapabilities({ hasAttachment: hasDoc, caseOwned: false }),
+      serverCapabilities: defaultServerCapabilities({
+        hasAttachment: hasAttachmentForPolicy,
+        caseOwned: false,
+      }),
       failOnInvalidPolicy: true,
     });
     if (!resolved.ok) {
@@ -232,55 +267,44 @@ export async function POST(request: NextRequest) {
     !sourcePolicy.legalLibrary &&
     !sourcePolicy.regulations &&
     !sourcePolicy.judgments &&
-    sourcePolicy.attachments &&
-    !hasDoc
+    sourcePolicy.attachments
   ) {
-    return new Response(
-      JSON.stringify({
-        type: "error",
-        message: "نطاق المصادر «المرفقات فقط» يتطلّب إرفاق مستند قبل الإرسال.",
-        code: "SOURCE_POLICY_REQUIRES_ATTACHMENT",
-        requestedPolicy,
-        effectivePolicy: sourcePolicy,
-        deniedSources,
-      }),
-      { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
-    );
-  }
-
-  if (attachmentsV2 && policyEnabled && sourcePolicy.attachments && forbiddenIds.length) {
-    return new Response(
-      JSON.stringify({
-        type: "error",
-        message: "مرفق غير مملوك أو غير موجود.",
-        code: "ATTACHMENT_FORBIDDEN",
-        attachmentIds: forbiddenIds,
-        effectivePolicy: sourcePolicy,
-      }),
-      { status: 403, headers: { "Content-Type": "application/json; charset=utf-8" } }
-    );
-  }
-
-  if (
-    attachmentsV2 &&
-    policyEnabled &&
-    !sourcePolicy.legalLibrary &&
-    !sourcePolicy.regulations &&
-    !sourcePolicy.judgments &&
-    sourcePolicy.attachments &&
-    notReadyIds.length &&
-    !hasDoc
-  ) {
-    return new Response(
-      JSON.stringify({
-        type: "error",
-        message: "المرفق لم يكتمل معالجته بعد.",
-        code: "ATTACHMENT_NOT_READY",
-        attachmentIds: notReadyIds,
-        effectivePolicy: sourcePolicy,
-      }),
-      { status: 409, headers: { "Content-Type": "application/json; charset=utf-8" } }
-    );
+    const attErr = resolveAttachedOnlyError(attachmentBuckets, {
+      hasLegacyDocument: attachedDoc.length > 0 && readyLoaded.length === 0,
+    });
+    // عند وجود نص legacy جاهز بدون ids نتخطى أخطاء المرفقات
+    if (attErr && !(attachedDoc.length > 0 && rawAttachmentIds.length === 0)) {
+      // إذا كان الخطأ REQUIRES فقط ولا ids — أو أخطاء ids
+      if (
+        attErr.code === "SOURCE_POLICY_REQUIRES_ATTACHMENT" ||
+        rawAttachmentIds.length > 0 ||
+        attachmentsV2
+      ) {
+        return new Response(
+          JSON.stringify({
+            type: "error",
+            message: attErr.message,
+            code: attErr.code,
+            attachmentIds: attErr.attachmentIds,
+            buckets: attachmentsV2
+              ? {
+                  missingIds: attachmentBuckets.missingIds,
+                  forbiddenIds: attachmentBuckets.forbiddenIds,
+                  pendingIds: attachmentBuckets.pendingIds,
+                  failedIds: attachmentBuckets.failedIds,
+                  quarantinedIds: attachmentBuckets.quarantinedIds,
+                  partialIds: attachmentBuckets.partialIds,
+                  readyIds: attachmentBuckets.readyIds,
+                }
+              : undefined,
+            requestedPolicy,
+            effectivePolicy: sourcePolicy,
+            deniedSources,
+          }),
+          { status: attErr.status, headers: { "Content-Type": "application/json; charset=utf-8" } }
+        );
+      }
+    }
   }
 
   // مهمّةٌ خلفيّة قابلةٌ للاستئناف (يُكمل الخادم البحث ويحفظ نتيجته حتى لو غادر العميل).
@@ -451,6 +475,8 @@ export async function POST(request: NextRequest) {
               fileName: a.fileName,
               text: a.text,
               status: a.status,
+              pages: a.pages,
+              provenance: a.provenance,
             })),
             history: roomHistory,
             summary: roomSummary,

@@ -13,10 +13,21 @@ HAKEEM_DOC_NODE_CALLBACK_V1=0
 
 النتيجة: Ask يعود لمسار `document` النصي + `extractFile` المحلي دون الاعتماد على doc-node.
 
+## محاذاة الأعلام
+
+إن بقي `NEXT_PUBLIC_HAKEEM_COMPOSER_ATTACHMENTS_V2=1` والخادم `HAKEEM_COMPOSER_ATTACHMENTS_V2=0`:
+- الواجهة قد تحاول الرفع؛ الخادم لا يفرض مسار V2 (`enforceV2=false`).
+- عطّل علم العميل أيضًا لتجنّب تجربة مضلّلة.
+
+## صلاحية ASK_ATTACHMENT_UPLOAD
+
+عند rollback الكامل للرفع عبر API، يمكن إبقاء الصلاحية في البذرة دون أثر طالما مسار الرفع غير مستخدم من الواجهة.
+
 ## ما لا يُحذف تلقائيًا
 
-سجلات `Attachment` التي أُنشئت تبقى. يمكن حذفها يدويًا عبر واجهة المرفقات أو API الحذف.
+سجلات `Attachment` التي أُنشئت تبقى (بما فيها `metadata.clientPreviewText` و`extractionProvenance`).  
+يمكن حذفها يدويًا عبر واجهة المرفقات أو API الحذف.
 
 ## لا Migration إلزامية
 
-الصفحات في `metadata.pages` — لا يتطلب rollback schema.
+الصفحات وprovenance في `metadata` — لا يتطلب rollback schema.

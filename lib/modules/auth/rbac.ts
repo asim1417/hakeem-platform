@@ -9,6 +9,8 @@ const rolePermissions = ROLE_PERMISSIONS as Record<UserRole, Permission[]>;
 export function hasPermission(role: UserRole, permission: Permission) {
   if (permission === "CONSULTATIONS_LIMITED" && rolePermissions[role].includes("CONSULTATIONS_FULL")) return true;
   if (permission === "ATTACHMENTS_LIMITED" && rolePermissions[role].includes("ATTACHMENTS_FULL")) return true;
+  // FULL يغطي رفع Ask؛ ASK_ATTACHMENT_UPLOAD أدق من LIMITED التاريخي (عرض/تنزيل فقط).
+  if (permission === "ASK_ATTACHMENT_UPLOAD" && rolePermissions[role].includes("ATTACHMENTS_FULL")) return true;
   return rolePermissions[role].includes(permission);
 }
 
@@ -39,6 +41,7 @@ export async function canUser(userId: string | undefined, permission: Permission
   const keys = role.permissions.map((item) => item.permission.key);
   if (permission === "CONSULTATIONS_LIMITED" && keys.includes("CONSULTATIONS_FULL")) return true;
   if (permission === "ATTACHMENTS_LIMITED" && keys.includes("ATTACHMENTS_FULL")) return true;
+  if (permission === "ASK_ATTACHMENT_UPLOAD" && keys.includes("ATTACHMENTS_FULL")) return true;
   if (!keys.includes(permission) && hasPermission(user.role, permission)) return true;
   return keys.includes(permission);
 }

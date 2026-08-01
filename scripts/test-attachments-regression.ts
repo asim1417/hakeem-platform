@@ -73,6 +73,14 @@ check("POST لا يستورد محركات الاستخراج ولا ينتظر 
   assert.doesNotMatch(routeSrc, /\bextractLocal\b|\brunEngine\b/);
   assert.ok(routeSrc.includes("requireApiPermission"));
   assert.ok(routeSrc.includes("ATTACHMENTS_FULL"));
+  assert.ok(routeSrc.includes("ASK_ATTACHMENT_UPLOAD"));
+  assert.ok(routeSrc.includes("getCurrentUser"));
+  // المصادقة قبل قراءة الملف
+  const authIdx = routeSrc.indexOf("getCurrentUser");
+  const formIdx = routeSrc.indexOf("request.formData");
+  assert.ok(authIdx >= 0 && formIdx > authIdx, "الجلسة قبل formData");
+  assert.ok(routeSrc.includes("consumeAttachmentUploadRateLimit"));
+  assert.ok(routeSrc.includes("CONTENT_LENGTH_EXCEEDED") || routeSrc.includes("content-length"));
 });
 
 // ── 4–5 ملكية وعرض ──

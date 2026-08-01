@@ -5,7 +5,7 @@ import {
   isAllowedAttachmentMimeType,
   toAttachmentDto
 } from "@/lib/modules/attachments/attachment-metadata";
-import { requireApiPermission } from "@/lib/modules/auth/session";
+import { getCurrentUser, requireApiPermission } from "@/lib/modules/auth/session";
 import { assertCaseOwnedForAttachment, attachmentListWhere } from "@/lib/modules/auth/ownership";
 import { storageBackend, uploadAttachmentBlob } from "@/lib/modules/attachments/blob-storage";
 import { gateAdvancedUse, settleAdvancedUse } from "@/lib/modules/billing/access-gate";
@@ -14,7 +14,9 @@ import {
   isDocumentProcessingV2Enabled,
   queueAttachmentProcessing,
 } from "@/lib/modules/attachments/document-processing-adapter";
-import { validateAttachmentUpload } from "@/lib/modules/attachments/secure-upload";
+import { ATTACHMENT_MAX_BYTES, validateAttachmentUpload } from "@/lib/modules/attachments/secure-upload";
+import { consumeAttachmentUploadRateLimit } from "@/lib/modules/attachments/upload-rate-limit";
+import { ASK_ATTACHMENT_RELATION_TYPE } from "@/lib/modules/hakeem-composer/document-bridge";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +33,72 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ attachments: attachments.map(toAttachmentDto) });
 }
 
+/**
+ * ترتيب الحماية:
+ * 1) جلسة مستخدم
+ * 2) Content-Length مبكر (إن وُجد)
+ * 3) Rate limit
+ * 4) قراءة FormData
+ * 5) صلاحية ASK_ATTACHMENT_UPLOAD أو ATTACHMENTS_FULL
+ * 6) تحقق البايتات الحقيقي
+ *
+ * قرار موثّق: ATTACHMENTS_LIMITED = عرض/تنزيل فقط.
+ * رفع Ask اليتيم يستخدم ASK_ATTACHMENT_UPLOAD (أدق).
+ */
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser().catch(() => null);
+  if (!user) {
+    return NextResponse.json({ message: "يلزم تسجيل الدخول.", code: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader) {
+    const cl = Number(contentLengthHeader);
+    if (Number.isFinite(cl) && cl > ATTACHMENT_MAX_BYTES + 64_000) {
+      // هامش لحقول FormData الأخرى
+      return NextResponse.json(
+        {
+          message: `حجم الطلب يتجاوز الحد المعلن (${ATTACHMENT_MAX_BYTES.toLocaleString("ar-SA")} بايت).`,
+          code: "CONTENT_LENGTH_EXCEEDED",
+        },
+        { status: 413 }
+      );
+    }
+  }
+
+  const rate = consumeAttachmentUploadRateLimit(user.id);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { message: "تجاوزت حد معدّل الرفع. حاول لاحقًا.", code: "RATE_LIMITED", limit: rate.limit },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSec) } }
+    );
+  }
+
   const form = await request.formData();
   const file = form.get("file");
-  if (!(file instanceof File)) return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
+  if (!(file instanceof File)) {
+    return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
+  }
+
+  const relationType = String(form.get("relationType") || "عام");
+  const relationId = String(form.get("relationId") || "");
+  const caseId = relationType === "قضية" && relationId ? relationId : undefined;
+  const isAskOrphan =
+    !caseId &&
+    (relationType === ASK_ATTACHMENT_RELATION_TYPE ||
+      relationType === "ask" ||
+      relationType === "ASK" ||
+      relationType === "اسأل");
+
+  // LIMITED لا يكفي للرفع — Ask يستخدم ASK_ATTACHMENT_UPLOAD؛ القضايا FULL
+  const gate = await requireApiPermission(
+    isAskOrphan ? "ASK_ATTACHMENT_UPLOAD" : "ATTACHMENTS_FULL",
+    request
+  );
+  if (gate.response) return gate.response;
+  const actor = gate.user!;
+  const caseGate = await assertCaseOwnedForAttachment(actor, caseId);
+  if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
 
   const v2 = isAttachmentsV2Enabled();
   let detectedMimeType = file.type || null;
@@ -58,24 +122,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "نوع الملف غير مدعوم. الصيغ المتاحة: PDF, DOCX, TXT, PNG, JPG." }, { status: 400 });
   }
 
-  const relationType = String(form.get("relationType") || "عام");
-  const relationId = String(form.get("relationId") || "");
-  const caseId = relationType === "قضية" && relationId ? relationId : undefined;
-  const isAskOrphan =
-    !caseId && (relationType === "اسأل" || relationType === "ask" || relationType === "ASK");
-  const gate = await requireApiPermission(isAskOrphan ? "ATTACHMENTS_LIMITED" : "ATTACHMENTS_FULL", request);
-  if (gate.response) return gate.response;
-  const user = gate.user!;
-  const caseGate = await assertCaseOwnedForAttachment(user, caseId);
-  if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
-
   // منع التكرار داخل نطاق ملكية المستخدم (V2)
   if (v2 && sha256) {
     const dup = await prisma.attachment.findFirst({
       where: {
         sha256,
         OR: [
-          { metadata: { path: ["uploadedBy"], equals: user.id } },
+          { metadata: { path: ["uploadedBy"], equals: actor.id } },
           ...(caseId ? [{ caseId }] : []),
         ],
       },
@@ -93,7 +146,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const access = await gateAdvancedUse(user.id, {
+  const access = await gateAdvancedUse(actor.id, {
     serviceCode: "DOCUMENT_UPLOAD",
     idempotencyKey: `document-upload:${request.headers.get("idempotency-key") || crypto.randomUUID()}`
   });
@@ -104,7 +157,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // إعادة تسمية آمنة للملف قبل الرفع
   const uploadFile =
     safeName !== file.name
       ? new File([await file.arrayBuffer()], safeName, { type: detectedMimeType || file.type })
@@ -117,7 +169,7 @@ export async function POST(request: NextRequest) {
     size: fileSize,
     relationType,
     relationId: relationId || undefined,
-    uploadedBy: user.id,
+    uploadedBy: actor.id,
     storageMode: uploaded.storageMode,
     storageUrl: uploaded.url,
     sha256: sha256 || undefined,
@@ -148,7 +200,7 @@ export async function POST(request: NextRequest) {
   });
 
   await auditEvent({
-    actorId: user.id,
+    actorId: actor.id,
     subject: "ADMIN",
     action: "ATTACHMENT_UPLOADED",
     entityId: attachment.id,
@@ -164,9 +216,10 @@ export async function POST(request: NextRequest) {
       askOrphan: isAskOrphan || undefined,
       sha256: sha256 || undefined,
       attachmentsV2: v2 || undefined,
+      permissionUsed: isAskOrphan ? "ASK_ATTACHMENT_UPLOAD" : "ATTACHMENTS_FULL",
     }
   });
-  await settleAdvancedUse(user.id, access.via, {
+  await settleAdvancedUse(actor.id, access.via, {
     reservationId: access.reservationId,
     referenceId: attachment.id
   });
@@ -175,7 +228,7 @@ export async function POST(request: NextRequest) {
   if (v2 && isDocumentProcessingV2Enabled() && backend !== "metadata-only") {
     processing = await queueAttachmentProcessing({
       attachmentId: attachment.id,
-      user,
+      user: actor,
       preferredProvider: "auto",
     }).catch(() => null);
   }

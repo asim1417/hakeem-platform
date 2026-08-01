@@ -7,18 +7,16 @@ import type { ComposerAttachment } from "./types";
 import type { MessageAttachmentRef } from "@/lib/modules/conversations/types";
 import { COMPOSER_MAX_DOC_CHARS } from "./constants";
 
-export function isComposerDocumentsV1Enabled(): boolean {
-  const v = (process.env.HAKEEM_COMPOSER_DOCUMENTS_V1 ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
-/** هل يُسمح للعميل بمحاولة الإصرار؟ (متوافق مع تعطيل العلم = false) */
-export function isComposerDocumentsClientEnabled(): boolean {
-  const pub = (process.env.NEXT_PUBLIC_HAKEEM_COMPOSER_DOCUMENTS_V1 ?? "").trim().toLowerCase();
-  if (pub === "1" || pub === "true" || pub === "on" || pub === "yes") return true;
-  // في التطوير المحلي بدون NEXT_PUBLIC: لا نفعّل تلقائيًا — العلم الخادمي يكفي للمسار الخلفي
-  return false;
-}
+export {
+  isComposerDocumentsV1Enabled,
+  isComposerDocumentsClientEnabled,
+  isComposerAttachmentClientPersistEnabled,
+  isAttachmentsV2ClientEnabled,
+  isAttachmentsV2ServerEnabled,
+  isDocumentProcessingV2Enabled,
+  alignClientServerDocumentFlags,
+  resolveComposerDocumentsMode,
+} from "./document-flags";
 
 export function mapExtractKindToTextSource(kind: string | null | undefined): TextSource {
   const k = (kind || "").toLowerCase();

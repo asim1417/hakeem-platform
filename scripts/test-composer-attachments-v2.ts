@@ -126,6 +126,39 @@ async function main() {
   const injSearch = await executeTool("legal_search", { query: "فسخ" }, injCtx);
   t(injSearch.ok === false, "حقن المرفق لا يفعّل legal_search");
 
+  const pagesCtx = createAgentContext("", DEFAULT_SOURCE_POLICY, [
+    {
+      id: "paged",
+      fileName: "م.pdf",
+      text: "كامل",
+      status: "READY",
+      pages: [
+        { pageNumber: 1, text: "ص1", status: "ready" },
+        { pageNumber: 2, text: "ص2 مادة", status: "ready" },
+      ],
+    },
+  ]);
+  const ranged = await executeTool(
+    "read_attachment",
+    { attachmentIds: ["paged"], pageRange: { from: 2, to: 2 } },
+    pagesCtx
+  );
+  t(
+    (ranged.data as { items: Array<{ usedPageNumbers?: number[]; text: string }> }).items[0]
+      .usedPageNumbers?.[0] === 2,
+    "pageRange يطبّق فعليًا"
+  );
+
+  const badRange = await executeTool(
+    "read_attachment",
+    { attachmentIds: ["paged"], pageRange: { from: 5, to: 9 } },
+    pagesCtx
+  );
+  t(
+    (badRange.data as { items: Array<{ warning?: string }> }).items[0].warning === "PAGE_OUT_OF_RANGE",
+    "نطاق خارج المستند"
+  );
+
   console.log(`\nنتيجة: ${ok} نجح، ${fail} فشل`);
   if (fail) process.exit(1);
 }

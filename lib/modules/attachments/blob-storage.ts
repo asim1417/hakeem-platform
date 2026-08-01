@@ -156,7 +156,8 @@ export function signedDownloadUrl(storageKey: string) {
 
 /**
  * يجلب بايتات المرفق من التخزين للاستخدام الخادمي (Adapter/doc-node).
- * metadata-only → null. SharePoint: عبر storageUrl في metadata إن وُجد عند المستدعي.
+ * metadata-only → null.
+ * SharePoint: Graph drive content من storageKey فقط — لا يُرسل التوكين إلى webUrl/metadata عام.
  */
 export async function downloadAttachmentBytes(
   storageKey: string,
@@ -165,16 +166,18 @@ export async function downloadAttachmentBytes(
   if (!storageKey || storageKey.startsWith("metadata-only/")) return null;
 
   if (storageKey.startsWith("sharepoint/")) {
-    const url = opts?.sharePointUrl;
-    if (!url) return null;
+    const { decideSharePointDownloadUrl, fetchWithAuthNoExternalRedirect } = await import(
+      "@/lib/modules/attachments/sharepoint-download"
+    );
+    const decision = decideSharePointDownloadUrl({
+      storageKey,
+      metadataUrl: opts?.sharePointUrl,
+    });
+    if (!decision.allow) return null;
     const token = await graphToken().catch(() => null);
     if (!token) return null;
-    // تنزيل عبر Graph إن كان المسار معروفًا — وإلا الرابط المباشر إن كان صالحًا
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(120_000),
-    });
-    if (!res.ok) return null;
+    const res = await fetchWithAuthNoExternalRedirect(decision.url, token);
+    if (!res || !res.ok) return null;
     return new Uint8Array(await res.arrayBuffer());
   }
 

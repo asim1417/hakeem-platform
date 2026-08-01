@@ -10,9 +10,17 @@ import type { SafeUser } from "@/lib/modules/auth/session";
 import { processExtractedText } from "@/lib/modules/document-inspection/pipeline";
 import { COMPOSER_MAX_DOC_CHARS } from "@/lib/modules/hakeem-composer/constants";
 import { downloadAttachmentBytes, storageBackend } from "@/lib/modules/attachments/blob-storage";
-import { completeAttachmentExtraction } from "@/lib/modules/attachments/complete-extraction";
+import { completeAttachmentExtraction, provenanceFromDocNodeKind } from "@/lib/modules/attachments/complete-extraction";
+import {
+  isAttachmentsV2ServerEnabled,
+  isDocumentProcessingV2Enabled,
+  isDocNodeCallbackEnabled,
+} from "@/lib/modules/hakeem-composer/document-flags";
+import type { DocumentPageResult } from "@/lib/modules/attachments/extraction-provenance";
 
 type Actor = Pick<SafeUser, "id" | "role">;
+
+export type { DocumentPageResult };
 
 export type DocumentProcessingRequest = {
   attachmentId: string;
@@ -21,15 +29,6 @@ export type DocumentProcessingRequest = {
   preferredModel?: string;
   pageRange?: { from?: number; to?: number };
   forceReprocess?: boolean;
-};
-
-export type DocumentPageResult = {
-  pageNumber: number;
-  text: string;
-  confidence?: number;
-  status: "ready" | "partial" | "failed";
-  extractionKind?: string;
-  warnings?: string[];
 };
 
 export type DocumentProcessingResult = {
@@ -49,22 +48,15 @@ export type DocumentProcessingResult = {
   errorMessage?: string;
   jobId?: string;
   mode?: "doc-node" | "local-fallback" | "client-bridge" | "noop";
+  provenance?: string;
+  verificationStatus?: string;
 };
 
 export function isAttachmentsV2Enabled(): boolean {
-  const v = (process.env.HAKEEM_COMPOSER_ATTACHMENTS_V2 ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
+  return isAttachmentsV2ServerEnabled();
 }
 
-export function isDocumentProcessingV2Enabled(): boolean {
-  const v = (process.env.HAKEEM_DOCUMENT_PROCESSING_V2 ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
-
-export function isDocNodeCallbackEnabled(): boolean {
-  const v = (process.env.HAKEEM_DOC_NODE_CALLBACK_V1 ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
-}
+export { isDocumentProcessingV2Enabled, isDocNodeCallbackEnabled };
 
 function docNodeBaseUrl(): string | null {
   const raw = (process.env.DOC_NODE_URL || process.env.DOC_TOOL_URL || "").trim().replace(/\/$/, "");
@@ -256,10 +248,17 @@ export async function queueAttachmentProcessing(
     };
   }
 
+  const nextGeneration =
+    (typeof meta.docNodeGeneration === "number" ? meta.docNodeGeneration : 0) + 1;
   await updateAttachmentStatus(existing.id, "QUEUED", {
     extractionStartedAt: existing.extractionStartedAt ?? new Date(),
     extractionErrorCode: null,
-  }, { ...meta, queuedAt: new Date().toISOString() });
+  }, {
+    ...meta,
+    queuedAt: new Date().toISOString(),
+    docNodeGeneration: nextGeneration,
+    authoritativeSource: "doc-node",
+  });
 
   const bytes = await downloadAttachmentBytes(existing.storageKey, {
     sharePointUrl: typeof meta.storageUrl === "string" ? meta.storageUrl : null,
@@ -306,7 +305,12 @@ export async function queueAttachmentProcessing(
           user: input.user,
           rawText: processed.body,
           kind: local.kind,
-          extractionEngine: `local-fallback:${local.kind}`,
+          provenance: "SERVER_LOCAL",
+          provider: "local",
+          model: local.kind,
+          pages,
+          runningText: processed.running ?? null,
+          docNodeConfigured: false,
         });
         if (completed.ok) {
           await prisma.attachment.update({
@@ -318,19 +322,23 @@ export async function queueAttachmentProcessing(
                 runningText: processed.running ?? null,
                 pageCount: pages.length,
                 processingMode: "local-fallback",
+                authoritativeSource: "server-local",
               },
             },
           });
           return {
             attachmentId: existing.id,
             status: completed.processingStatus,
-            text: completed.preview,
-            pages,
+            text: completed.text,
+            pages: completed.pages ?? pages,
             pageCount: pages.length,
-            engine: `local-fallback:${local.kind}`,
+            engine: completed.provenance,
             provider: "local",
             mode: "local-fallback",
             runningText: processed.running,
+            provenance: completed.provenance,
+            verificationStatus: completed.verificationStatus,
+            confidence: undefined,
           };
         }
       } catch (e) {
@@ -369,7 +377,9 @@ export async function queueAttachmentProcessing(
     docNodeJobId: job.jobId,
     docNodeProvider: provider,
     docNodeModel: model,
+    docNodeGeneration: nextGeneration,
     processingMode: "doc-node",
+    authoritativeSource: "doc-node",
   });
 
   void auditEvent({
@@ -419,6 +429,7 @@ export async function syncAttachmentProcessing(
 
   const meta = asMeta(existing.metadata);
   const jobId = typeof meta.docNodeJobId === "string" ? meta.docNodeJobId : null;
+  const verification = meta.verificationStatus;
 
   if (!jobId) {
     return {
@@ -427,12 +438,15 @@ export async function syncAttachmentProcessing(
       text: existing.extractedText ?? undefined,
       engine: existing.extractionEngine ?? undefined,
       mode: "noop",
+      provenance: typeof meta.extractionProvenance === "string" ? meta.extractionProvenance : undefined,
+      verificationStatus: typeof verification === "string" ? verification : undefined,
     };
   }
 
-  // لا يكتب Job قديم فوق READY أحدث إلا مع forceReprocess
+  // لا يمنع ترقية CLIENT_UNVERIFIED؛ يمنع فقط إعادة كتابة SERVER_VERIFIED الجاهز بلا force
   if (
     !input.forceReprocess &&
+    verification === "SERVER_VERIFIED" &&
     (existing.processingStatus === "READY" || existing.processingStatus === "PARTIAL") &&
     existing.extractedText
   ) {
@@ -442,6 +456,9 @@ export async function syncAttachmentProcessing(
       text: existing.extractedText,
       jobId,
       mode: "doc-node",
+      pages: Array.isArray(meta.pages) ? (meta.pages as DocumentPageResult[]) : undefined,
+      provenance: typeof meta.extractionProvenance === "string" ? meta.extractionProvenance : undefined,
+      verificationStatus: "SERVER_VERIFIED",
     };
   }
 
@@ -498,16 +515,34 @@ export async function syncAttachmentProcessing(
   const pages = parsePagesFromText(processed.body);
   const failedPages = pages.filter((p) => p.status === "failed").map((p) => p.pageNumber);
   const hasPartial = pages.some((p) => p.status === "partial" || p.status === "failed");
+  const provenance = provenanceFromDocNodeKind(file.kind);
 
   const completed = await completeAttachmentExtraction({
     attachmentId: existing.id,
     user: input.user,
     rawText: processed.body.slice(0, COMPOSER_MAX_DOC_CHARS),
     kind: file.kind,
-    extractionEngine: `doc-node:${file.kind || "unknown"}`,
+    provenance,
+    provider: typeof meta.docNodeProvider === "string" ? meta.docNodeProvider : "doc-node",
+    model: typeof meta.docNodeModel === "string" ? meta.docNodeModel : file.kind,
+    pages,
+    runningText: processed.running ?? null,
+    jobId,
+    forceReprocess: input.forceReprocess,
+    docNodeConfigured: true,
   });
 
   if (!completed.ok) {
+    if (completed.code === "STALE_JOB") {
+      return {
+        attachmentId: existing.id,
+        status: existing.processingStatus,
+        jobId,
+        mode: "doc-node",
+        warnings: [completed.message],
+        text: existing.extractedText ?? undefined,
+      };
+    }
     return {
       attachmentId: existing.id,
       status: "FAILED",
@@ -520,18 +555,22 @@ export async function syncAttachmentProcessing(
 
   // PARTIAL إذا وُجدت صفحات فاشلة — لا نعرضها READY
   const finalStatus = hasPartial || completed.processingStatus === "PARTIAL" ? "PARTIAL" : "READY";
+  const freshMeta = asMeta(
+    (await prisma.attachment.findUnique({ where: { id: existing.id }, select: { metadata: true } }))?.metadata
+  );
   await prisma.attachment.update({
     where: { id: existing.id },
     data: {
       processingStatus: finalStatus,
       metadata: {
-        ...asMeta((await prisma.attachment.findUnique({ where: { id: existing.id }, select: { metadata: true } }))?.metadata),
+        ...freshMeta,
         pages,
         pageCount: pages.length,
         runningText: processed.running ?? null,
         failedPages,
         docNodeJobStatus: "done",
         processingMode: "doc-node",
+        authoritativeSource: "doc-node",
       },
     },
   });
@@ -547,14 +586,16 @@ export async function syncAttachmentProcessing(
       pageCount: pages.length,
       engine: file.kind,
       textLength: completed.textLength,
+      provenance,
+      // لا نص كامل
     },
   }).catch(() => undefined);
 
   return {
     attachmentId: existing.id,
     status: finalStatus,
-    text: existing.extractedText ?? undefined,
-    pages,
+    text: completed.text,
+    pages: completed.pages ?? pages,
     pageCount: pages.length,
     failedPages,
     engine: `doc-node:${file.kind || "unknown"}`,
@@ -563,6 +604,9 @@ export async function syncAttachmentProcessing(
     jobId,
     mode: "doc-node",
     runningText: processed.running,
+    provenance: completed.provenance,
+    verificationStatus: completed.verificationStatus,
+    confidence: undefined,
     warnings: hasPartial ? ["بعض الصفحات جزئية أو فاشلة."] : undefined,
   };
 }

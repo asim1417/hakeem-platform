@@ -26,7 +26,8 @@ const permissions = [
   ["LEGAL_CORE_EDIT", "Legal core edit"],
   ["LEGAL_CORE_ADMIN", "Legal core admin"],
   ["ATTACHMENTS_FULL", "إدارة المرفقات كاملة"],
-  ["ATTACHMENTS_LIMITED", "إدارة مرفقات محدودة"],
+  ["ATTACHMENTS_LIMITED", "إدارة مرفقات محدودة (عرض/تنزيل)"],
+  ["ASK_ATTACHMENT_UPLOAD", "رفع مرفقات Ask اليتيمة"],
   ["USERS_MANAGE", "إدارة المستخدمين"],
   ["ADMIN_REPORTS_VIEW", "عرض الإدارة والتقارير"],
   ["GOVERNANCE_AUDIT_VIEW", "عرض الحوكمة والتدقيق"]
@@ -36,7 +37,7 @@ const rolePermissionMap = {
   SYSTEM_ADMIN: permissions.map(([key]) => key),
   LAWYER: ["CONSULTATIONS_FULL", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL"],
   TRAINER: ["SIMULATIONS_USE", "TRAINING_USE", "TRAINING_MANAGE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_FULL", "ADMIN_REPORTS_VIEW"],
-  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_LIMITED"]
+  TRAINEE: ["CONSULTATIONS_LIMITED", "SIMULATIONS_USE", "TRAINING_USE", "LIBRARY_READ", "LEGAL_CORE_VIEW", "ATTACHMENTS_LIMITED", "ASK_ATTACHMENT_UPLOAD"]
 } as const;
 
 const classifications: Record<string, string> = {
