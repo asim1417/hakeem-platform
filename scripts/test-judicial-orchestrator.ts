@@ -3,7 +3,7 @@
 // يفحص أنّ نداءً واحدًا يعطي الخطّة الكاملة، وأنّ المراجعة بعد التوليد تمنع المخالف.
 //   npm run test:jds-orchestrator
 // ─────────────────────────────────────────────────────────────────────────────
-import { planJudicialTask, reviewJudicialDraft } from "@/lib/modules/judicial";
+import { planJudicialTask, reviewJudicialDraft, isJdsFlagOn, isJdsDraftingShadowEnabled } from "@/lib/modules/judicial";
 
 let pass = 0,
   fail = 0;
@@ -67,6 +67,16 @@ function main() {
   });
   check("مسودّة نظيفة: لا بوّابة مانعة", good.ready === true);
   check("مسودّة نظيفة: تبقى بوّابات مراجعةٍ خارجيّة (سريان/استشهاد)", good.review.length > 0);
+
+  // ⑤ §31-I — أعلام التفعيل مطفأةٌ افتراضيًّا (لا تغيير سلوكٍ حيّ ما لم تُضبط بيئةً).
+  const wasSet = process.env.JDS_DRAFTING_SHADOW;
+  delete process.env.JDS_DRAFTING_SHADOW;
+  check("الظلّ الصياغيّ مطفأٌ افتراضيًّا", isJdsDraftingShadowEnabled() === false);
+  check("أعلام JDS مطفأةٌ افتراضيًّا", isJdsFlagOn("PROCEDURE_V2") === false && isJdsFlagOn("DISPOSITION_V2") === false);
+  process.env.JDS_DRAFTING_SHADOW = "1";
+  check("الظلّ يُفعَّل صراحةً بالبيئة", isJdsDraftingShadowEnabled() === true);
+  if (wasSet === undefined) delete process.env.JDS_DRAFTING_SHADOW;
+  else process.env.JDS_DRAFTING_SHADOW = wasSet;
 
   console.log(`\nنتيجة JDS §23/§28 (orchestrator): ${pass} ناجحة / ${fail} فاشلة`);
   if (fail > 0) process.exit(1);

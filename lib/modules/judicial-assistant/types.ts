@@ -265,6 +265,16 @@ export interface JudgmentDraftResult {
   precedents: Array<{ id: string; title: string; court?: string; decisionNo?: string; snippet: string; reviewed: boolean }>;
   requestId: string;
   notice: string;
+  /**
+   * مراجعة بوّابات JDS الاسترشاديّة (§27) — تُملأ فقط حين تفعيل العَلَم JDS_DRAFTING_SHADOW،
+   * وإلّا undefined. استرشاديّة لا تُغيّر النصّ ولا تمنع الإخراج (ظلّ §31-I).
+   */
+  jdsReview?: {
+    ready: boolean;
+    blocking: string[];
+    review: string[];
+    findings: Array<{ gateId: string; outcome: string; findings: string[] }>;
+  };
 }
 
 /** مخرَجٌ مؤصَّلٌ موحَّد لخدمات النموذج (JS-002/003/011/012/014/015/016/017/021/022). */

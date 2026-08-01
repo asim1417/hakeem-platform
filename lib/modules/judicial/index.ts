@@ -42,6 +42,8 @@ export { planJudicialTask, reviewJudicialDraft } from "./orchestrator";
 export type { PlanJudicialTaskInput, JudicialTaskPlan } from "./orchestrator";
 export { JUDICIAL_EVAL_CASES } from "./eval-cases";
 export type { JudicialEvalCase } from "./eval-cases";
+export { JDS_FLAGS, isJdsFlagOn, isJdsDraftingShadowEnabled } from "./flag";
+export type { JdsFlagKey } from "./flag";
 
 /** إصدار طبقة JDS ومرجع الأمر الحاكم — للتتبّع والتدقيق. */
 export const JDS_META = {
