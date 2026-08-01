@@ -36,6 +36,27 @@ import {
   resolveEffectiveSourcePolicy,
   type SourcePolicy,
 } from "@/lib/modules/hakeem-composer/source-policy";
+import {
+  isComposerDocumentsV1Enabled,
+  resolveAskDocumentText,
+} from "@/lib/modules/hakeem-composer/document-bridge";
+import { loadOwnedAttachmentDocuments } from "@/lib/modules/attachments/complete-extraction";
+import {
+  isAttachmentsV2Enabled,
+  syncAttachmentProcessing,
+} from "@/lib/modules/attachments/document-processing-adapter";
+import {
+  classifyAttachmentIds,
+  hasReadyAttachmentContent,
+  resolveAttachedOnlyError,
+  type OwnedAttachmentRow,
+} from "@/lib/modules/attachments/attachment-classify";
+import { ownsAttachment } from "@/lib/modules/auth/ownership";
+import type { DocumentPageResult } from "@/lib/modules/attachments/extraction-provenance";
+import {
+  decideAgentSearchAttachmentsMode,
+  readAttachmentsVersionClaim,
+} from "@/lib/modules/hakeem-composer/attachments-version";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -57,6 +78,7 @@ export async function POST(request: NextRequest) {
   let body: {
     query?: string;
     document?: string;
+    attachmentIds?: unknown;
     detailed?: boolean;
     skipBreadth?: boolean;
     mode?: string;
@@ -74,8 +96,142 @@ export async function POST(request: NextRequest) {
   const typed = String(body?.query ?? "").trim().slice(0, 16000);
   // حدّ المستند المرفق: 200000 حرفًا ليستوعب الوثيقة القانونية كاملةً (حكمٌ/عقدٌ طويل).
   // الوكيل لا يحقنه تلقائيًّا — يقرؤه Claude عبر read_attachment عند الحاجة فقط. الأضخم مساره منصّة الوثائق.
-  const attachedDoc = String(body?.document ?? "").trim().slice(0, 200_000);
-  const hasDoc = attachedDoc.length > 0;
+  let requestDoc = String(body?.document ?? "").trim().slice(0, 200_000);
+  const versionClaim = readAttachmentsVersionClaim(request, body as Record<string, unknown>);
+  const rawAttachmentIds = Array.isArray(body.attachmentIds)
+    ? body.attachmentIds.map(String).filter(Boolean).slice(0, 10)
+    : [];
+
+  const searchMode = decideAgentSearchAttachmentsMode({
+    clientClaimsV2: versionClaim.clientClaimsV2,
+    hasAttachmentIds: rawAttachmentIds.length > 0,
+  });
+  if (searchMode.mode === "reject_v2_claim") {
+    return new Response(
+      JSON.stringify({
+        type: "error",
+        message: searchMode.message,
+        code: searchMode.code,
+        alignment: searchMode.alignment,
+      }),
+      { status: 409, headers: { "Content-Type": "application/json; charset=utf-8" } }
+    );
+  }
+
+  const documentsEnabled = isComposerDocumentsV1Enabled() || isAttachmentsV2Enabled();
+  const attachmentsV2 = searchMode.mode === "v2" || (isAttachmentsV2Enabled() && rawAttachmentIds.length > 0);
+
+  // عند وجود attachmentIds في مسار V2: لا تثق بـ document المحلي (يمنع تجاوز NOT_READY)
+  if (attachmentsV2 && rawAttachmentIds.length > 0) {
+    requestDoc = "";
+  }
+
+  // مزامنة سريعة لمهام doc-node الجارية قبل القراءة (لا تنتظر OCR الطويل)
+  if (attachmentsV2 && rawAttachmentIds.length) {
+    for (const id of rawAttachmentIds) {
+      await syncAttachmentProcessing({ attachmentId: id, user }).catch(() => undefined);
+    }
+  }
+
+  let loadedAttachments: Array<{
+    id: string;
+    fileName: string;
+    text: string;
+    storageKey: string;
+    status?: string;
+    pages?: DocumentPageResult[];
+    provenance?: string;
+  }> = [];
+  let attachmentBuckets = classifyAttachmentIds([], []);
+
+  if (documentsEnabled && rawAttachmentIds.length) {
+    loadedAttachments = await loadOwnedAttachmentDocuments({
+      user,
+      attachmentIds: rawAttachmentIds,
+    }).catch(() => []);
+
+    const rows = await prisma.attachment.findMany({
+      where: { id: { in: rawAttachmentIds } },
+      include: { caseFile: { select: { ownerId: true } } },
+    });
+    const ownedRows: OwnedAttachmentRow[] = [];
+    for (const row of rows) {
+      const owned = ownsAttachment(user, {
+        caseId: row.caseId,
+        caseOwnerId: row.caseFile?.ownerId ?? null,
+        extractedText: row.extractedText,
+        metadata: row.metadata,
+      });
+      const text = String(row.extractedText ?? "").trim();
+      ownedRows.push({
+        id: row.id,
+        processingStatus: row.processingStatus,
+        owned,
+        hasText: Boolean(text),
+      });
+      if (!owned) continue;
+      const existing = loadedAttachments.find((a) => a.id === row.id);
+      const meta =
+        row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+          ? (row.metadata as Record<string, unknown>)
+          : {};
+      const pages = Array.isArray(meta.pages) ? (meta.pages as DocumentPageResult[]) : undefined;
+      if (existing) {
+        existing.status = row.processingStatus;
+        existing.pages = pages ?? existing.pages;
+        existing.provenance =
+          typeof meta.extractionProvenance === "string" ? meta.extractionProvenance : existing.provenance;
+      } else {
+        loadedAttachments.push({
+          id: row.id,
+          fileName: row.fileName,
+          text,
+          storageKey: row.storageKey,
+          status: row.processingStatus,
+          pages,
+          provenance: typeof meta.extractionProvenance === "string" ? meta.extractionProvenance : undefined,
+        });
+      }
+    }
+    // المعرفات المطلوبة وغير الموجودة في DB → missing
+    for (const id of rawAttachmentIds) {
+      if (!ownedRows.some((r) => r.id === id)) {
+        ownedRows.push({ id, processingStatus: "MISSING", owned: false, hasText: false });
+      }
+    }
+    attachmentBuckets = classifyAttachmentIds(rawAttachmentIds, ownedRows);
+  }
+
+  const readyLoaded = loadedAttachments.filter(
+    (a) =>
+      a.text?.trim() &&
+      (!a.status || ["READY", "PARTIAL"].includes(String(a.status)))
+  );
+  const hasAttachmentReference =
+    attachmentBuckets.readyIds.length +
+      attachmentBuckets.partialIds.length +
+      attachmentBuckets.pendingIds.length +
+      attachmentBuckets.failedIds.length +
+      attachmentBuckets.quarantinedIds.length >
+    0;
+  const hasReadyAttachmentContentFlag = hasReadyAttachmentContent(attachmentBuckets);
+
+  // نص المستند: أولوية المرفقات الجاهزة؛ عند ids خادمية V2 لا يُستخدم document العميل أبدًا
+  const resolvedDoc = resolveAskDocumentText({
+    requestDocument:
+      attachmentsV2 && rawAttachmentIds.length > 0
+        ? null
+        : !attachmentsV2 || isComposerDocumentsV1Enabled()
+          ? requestDoc
+          : readyLoaded.length
+            ? null
+            : requestDoc,
+    attachmentDocuments: readyLoaded.map((a) => ({ fileName: a.fileName, text: a.text })),
+  });
+  const attachedDoc = resolvedDoc.text;
+  /** محتوى نصي جاهز أو مرجع مرفق مملوك (حتى لو قيد المعالجة) لسياسة attached-only */
+  const hasDoc = attachedDoc.length > 0 || hasReadyAttachmentContentFlag;
+  const hasAttachmentForPolicy = hasDoc || hasAttachmentReference;
 
   // سياسة المصادر: الخادم يبني effectivePolicy ولا يثق بـ boolean من العميل.
   const policyEnabled = isSourcePolicyV2Enabled();
@@ -90,9 +246,12 @@ export async function POST(request: NextRequest) {
     const resolved = resolveEffectiveSourcePolicy({
       requestedSources: body.sources,
       requestedPolicy: body.sourcePolicy,
-      hasAttachment: hasDoc,
+      hasAttachment: hasAttachmentForPolicy,
       caseContext: null, // ربط القضايا في مرحلة لاحقة
-      serverCapabilities: defaultServerCapabilities({ hasAttachment: hasDoc, caseOwned: false }),
+      serverCapabilities: defaultServerCapabilities({
+        hasAttachment: hasAttachmentForPolicy,
+        caseOwned: false,
+      }),
       failOnInvalidPolicy: true,
     });
     if (!resolved.ok) {
@@ -141,20 +300,48 @@ export async function POST(request: NextRequest) {
     !sourcePolicy.legalLibrary &&
     !sourcePolicy.regulations &&
     !sourcePolicy.judgments &&
-    sourcePolicy.attachments &&
-    !hasDoc
+    sourcePolicy.attachments
   ) {
-    return new Response(
-      JSON.stringify({
-        type: "error",
-        message: "نطاق المصادر «المرفقات فقط» يتطلّب إرفاق مستند قبل الإرسال.",
-        code: "SOURCE_POLICY_REQUIRES_ATTACHMENT",
-        requestedPolicy,
-        effectivePolicy: sourcePolicy,
-        deniedSources,
-      }),
-      { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
-    );
+    const attErr = resolveAttachedOnlyError(attachmentBuckets, {
+      // لا تسمح لنص محلي بتجاوز NOT_READY عند وجود attachmentIds
+      hasLegacyDocument:
+        !(attachmentsV2 && rawAttachmentIds.length > 0) &&
+        attachedDoc.length > 0 &&
+        readyLoaded.length === 0,
+    });
+    // عند وجود نص legacy جاهز بدون ids نتخطى أخطاء المرفقات
+    if (attErr && !(attachedDoc.length > 0 && rawAttachmentIds.length === 0)) {
+      // إذا كان الخطأ REQUIRES فقط ولا ids — أو أخطاء ids
+      if (
+        attErr.code === "SOURCE_POLICY_REQUIRES_ATTACHMENT" ||
+        rawAttachmentIds.length > 0 ||
+        attachmentsV2
+      ) {
+        return new Response(
+          JSON.stringify({
+            type: "error",
+            message: attErr.message,
+            code: attErr.code,
+            attachmentIds: attErr.attachmentIds,
+            buckets: attachmentsV2
+              ? {
+                  missingIds: attachmentBuckets.missingIds,
+                  forbiddenIds: attachmentBuckets.forbiddenIds,
+                  pendingIds: attachmentBuckets.pendingIds,
+                  failedIds: attachmentBuckets.failedIds,
+                  quarantinedIds: attachmentBuckets.quarantinedIds,
+                  partialIds: attachmentBuckets.partialIds,
+                  readyIds: attachmentBuckets.readyIds,
+                }
+              : undefined,
+            requestedPolicy,
+            effectivePolicy: sourcePolicy,
+            deniedSources,
+          }),
+          { status: attErr.status, headers: { "Content-Type": "application/json; charset=utf-8" } }
+        );
+      }
+    }
   }
 
   // مهمّةٌ خلفيّة قابلةٌ للاستئناف (يُكمل الخادم البحث ويحفظ نتيجته حتى لو غادر العميل).
@@ -268,8 +455,33 @@ export async function POST(request: NextRequest) {
               mode: agentMode.id,
               hasDocument: hasDoc,
               queryPreview: typed.slice(0, 80),
+              documentsV1: documentsEnabled || undefined,
+              attachmentIds: loadedAttachments.map((a) => a.id).slice(0, 10),
+              documentSource: resolvedDoc.source,
             },
           }).catch(() => undefined);
+        }
+
+        if (documentsEnabled && (rawAttachmentIds.length > 0 || resolvedDoc.source !== "none")) {
+          send({
+            type: "step",
+            id: "documents",
+            status: "done",
+            label:
+              resolvedDoc.source === "attachments"
+                ? `مرفقات المنصة: ${loadedAttachments.length.toLocaleString("ar-SA")}`
+                : resolvedDoc.source === "request"
+                  ? "مستند الطلب (مسار توافق)"
+                  : "بلا مستند",
+            data: {
+              enforced: true,
+              featureFlag: "HAKEEM_COMPOSER_DOCUMENTS_V1",
+              source: resolvedDoc.source,
+              attachmentIds: loadedAttachments.map((a) => a.id),
+              requestedAttachmentIds: rawAttachmentIds,
+              textLength: attachedDoc.length,
+            },
+          });
         }
 
         // ── الوكيل الأصيل (HKM-CLAUDE-NATIVE-001، خلف علم CLAUDE_NATIVE_AGENT_ENABLED) ──
@@ -295,6 +507,14 @@ export async function POST(request: NextRequest) {
           const agent = await runHakeemAgent({
             query: agentQuery,
             document: attachedDoc,
+            attachments: readyLoaded.map((a) => ({
+              id: a.id,
+              fileName: a.fileName,
+              text: a.text,
+              status: a.status,
+              pages: a.pages,
+              provenance: a.provenance,
+            })),
             history: roomHistory,
             summary: roomSummary,
             sourcePolicy: policyEnabled ? sourcePolicy : undefined,
@@ -316,7 +536,24 @@ export async function POST(request: NextRequest) {
             // الدور ثانيةً (يتخطّاه عند mode=native-agent) فلا ازدواج. أفضل-جهد.
             let roomConvId = convId;
             try {
-              const attachRefs = attachedDoc ? [{ id: `att-${jobId ?? "x"}`, fileName: "المرفق", extractedText: attachedDoc.slice(0, 200_000), processingStatus: "inline" as const }] : undefined;
+              const attachRefs = attachedDoc
+                ? loadedAttachments.length
+                  ? loadedAttachments.map((a) => ({
+                      id: a.id,
+                      fileName: a.fileName,
+                      extractedText: a.text.slice(0, 2_000),
+                      storageKey: a.storageKey,
+                      processingStatus: "ready" as const,
+                    }))
+                  : [
+                      {
+                        id: `att-${jobId ?? "x"}`,
+                        fileName: "المرفق",
+                        extractedText: attachedDoc.slice(0, 200_000),
+                        processingStatus: "inline" as const,
+                      },
+                    ]
+                : undefined;
               const u = await appendMessage({
                 userId: user.id,
                 serviceKey: "ask",

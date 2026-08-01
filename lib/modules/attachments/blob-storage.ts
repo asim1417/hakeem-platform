@@ -154,6 +154,40 @@ export function signedDownloadUrl(storageKey: string) {
   return `https://${account}.blob.core.windows.net/${container}/${encodeURIComponent(storageKey).replace(/%2F/g, "/")}${normalizeSas(process.env.AZURE_STORAGE_SAS_TOKEN!)}`;
 }
 
+/**
+ * يجلب بايتات المرفق من التخزين للاستخدام الخادمي (Adapter/doc-node).
+ * metadata-only → null.
+ * SharePoint: Graph drive content من storageKey فقط — لا يُرسل التوكين إلى webUrl/metadata عام.
+ */
+export async function downloadAttachmentBytes(
+  storageKey: string,
+  opts?: { sharePointUrl?: string | null }
+): Promise<Uint8Array | null> {
+  if (!storageKey || storageKey.startsWith("metadata-only/")) return null;
+
+  if (storageKey.startsWith("sharepoint/")) {
+    const { decideSharePointDownloadUrl, fetchGraphContentFollowingRedirects } = await import(
+      "@/lib/modules/attachments/sharepoint-download"
+    );
+    const decision = decideSharePointDownloadUrl({
+      storageKey,
+      metadataUrl: opts?.sharePointUrl,
+    });
+    if (!decision.allow) return null;
+    const token = await graphToken().catch(() => null);
+    if (!token) return null;
+    const result = await fetchGraphContentFollowingRedirects(decision.url, token);
+    if (!result.ok) return null;
+    return result.body;
+  }
+
+  const url = signedDownloadUrl(storageKey);
+  if (!url) return null;
+  const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+  if (!res.ok) return null;
+  return new Uint8Array(await res.arrayBuffer());
+}
+
 function publicBlobUrl(storageKey: string) {
   if (!azureConfigured()) return undefined;
   return `https://${process.env.AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${process.env.AZURE_STORAGE_CONTAINER}/${encodeURIComponent(storageKey).replace(/%2F/g, "/")}`;

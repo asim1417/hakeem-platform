@@ -38,6 +38,15 @@ export type AttachmentStatus =
   | "unsupported"
   | "encrypted";
 
+/** حالة نجاح القراءة المحلية (extractFile) — ليست READY خادميًا */
+export type LocalExtractionStatus = "pending" | "extracting" | "ok" | "failed";
+
+export type ServerVerificationStatus =
+  | "SERVER_VERIFIED"
+  | "CLIENT_UNVERIFIED"
+  | "PREVIEW_ONLY"
+  | "CLIENT_PREVIEW";
+
 export type ComposerAttachment = {
   id: string;
   name: string;
@@ -45,9 +54,21 @@ export type ComposerAttachment = {
   size?: number;
   kind?: string | null;
   extractedText: string;
+  /** حالة واجهة مشتقة — لا تُضبط ready لمجرد نجاح extractFile مع server id */
   status: AttachmentStatus;
+  /** نتيجة الاستخراج المحلي فقط */
+  localExtractionStatus?: LocalExtractionStatus;
+  /** processingStatus الحقيقي من الخادم */
+  serverProcessingStatus?: string;
+  /** verificationStatus / provenance من الخادم */
+  serverVerificationStatus?: ServerVerificationStatus | string;
+  /** معاينة محلية — لا تدخل إجابة النموذج */
+  previewText?: string;
   progressMessage?: string;
   error?: string;
+  /** معرف Prisma Attachment بعد الرفع الخادمي (جسر DOCUMENTS-004) */
+  serverAttachmentId?: string;
+  storageKey?: string;
 };
 
 export type ComposerContextItem = {

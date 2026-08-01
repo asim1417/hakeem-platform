@@ -26,8 +26,25 @@ export interface RetrievedSource {
 }
 
 /** سياق الجلسة الذي تعمل عليه الأدوات — يحمل المستند المرفق ويجمع المصادر المستَرجَعة. */
+export interface AgentAttachmentDoc {
+  id: string;
+  fileName: string;
+  text: string;
+  status?: string;
+  pages?: Array<{
+    pageNumber: number;
+    text: string;
+    status: string;
+    confidence?: number;
+    warning?: string;
+  }>;
+  provenance?: string;
+}
+
 export interface AgentContext {
   document: string;
+  /** مرفقات دائمة محمّلة بالمعرّف (ATTACHMENTS_V2) */
+  attachments: Map<string, AgentAttachmentDoc>;
   /** المصادر المستَرجَعة عبر الجلسة، مفهرسةً بمعرّفها (منع التكرار). */
   sources: Map<string, RetrievedSource>;
   /** سياسة مصادر مُنفَّذة خادميًا (لا تعتمد على امتثال النموذج) */
@@ -36,18 +53,27 @@ export interface AgentContext {
   deniedTools: Array<{ tool: string; reason: string }>;
   /** أدوات استرجاع استُدعيت فعلًا بنجاح */
   invokedTools: string[];
+  /** صفحات استُخدمت عبر read_attachment (للتدقيق) */
+  auditedPageReads: Array<{ attachmentId: string; pageNumbers: number[]; textFallback: boolean }>;
 }
 
 export function createAgentContext(
   document: string,
-  sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY
+  sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY,
+  attachments?: AgentAttachmentDoc[]
 ): AgentContext {
+  const map = new Map<string, AgentAttachmentDoc>();
+  for (const a of attachments ?? []) {
+    if (a.id) map.set(a.id, a);
+  }
   return {
     document: document ?? "",
+    attachments: map,
     sources: new Map(),
     sourcePolicy,
     deniedTools: [],
     invokedTools: [],
+    auditedPageReads: [],
   };
 }
 
@@ -123,8 +149,27 @@ export const HAKEEM_TOOL_DEFS = [
   },
   {
     name: "read_attachment",
-    description: "اقرأ نصّ المستند الذي أرفقه المستخدم في هذه الجلسة (إن وُجد).",
-    input_schema: { type: "object", properties: {} },
+    description:
+      "اقرأ نصّ المستند المرفق في هذه الجلسة. مرّر attachmentIds لمعرفات المرفقات الدائمة إن وُجدت، أو اتركها فارغة لقراءة مستند الجلسة.",
+    input_schema: {
+      type: "object",
+      properties: {
+        attachmentIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "معرفات Attachment المملوكة في هذه الجلسة.",
+        },
+        pageRange: {
+          type: "object",
+          properties: {
+            from: { type: "integer", minimum: 1 },
+            to: { type: "integer", minimum: 1 },
+          },
+          description: "نطاق صفحات اختياري (إن توفّرت صفحات).",
+        },
+        queryHint: { type: "string", description: "تلميح موضوعي لاختيار المقتطف (اختياري)." },
+      },
+    },
   },
   {
     name: "islamic_library_scan",
@@ -387,10 +432,166 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
     }
 
     if (name === "read_attachment") {
-      if (!ctx.document.trim()) return { ok: true, data: { hasAttachment: false, text: "" }, label: "لا مستند مرفق" };
-      // المستند كاملًا (مُقتطَعٌ أصلًا عند حدّ المسار 200 ألف حرف) — لا نقتطعه هنا ثانيةً.
+      const { selectAttachmentPagesForRead } = await import(
+        "@/lib/modules/attachments/read-attachment-pages"
+      );
+      const ids = Array.isArray(input.attachmentIds)
+        ? input.attachmentIds.map(String).filter(Boolean).slice(0, 10)
+        : [];
+      const pageRange =
+        input.pageRange && typeof input.pageRange === "object"
+          ? {
+              from: typeof (input.pageRange as { from?: unknown }).from === "number"
+                ? (input.pageRange as { from: number }).from
+                : undefined,
+              to: typeof (input.pageRange as { to?: unknown }).to === "number"
+                ? (input.pageRange as { to: number }).to
+                : undefined,
+            }
+          : undefined;
+      const queryHint = typeof input.queryHint === "string" ? input.queryHint : undefined;
+      const MAX_TOOL_CHARS = 120_000;
+
+      // مسار V2: قراءة بالمعرّف من المرفقات المحمّلة خادميًا (ملكية تحقّقَت عند التحميل)
+      if (ids.length && ctx.attachments.size) {
+        const items: Array<{
+          attachmentId: string;
+          fileName: string;
+          status?: string;
+          chars: number;
+          text: string;
+          pages?: Array<{
+            pageNumber: number | null;
+            text: string;
+            status: string;
+            confidence?: number | null;
+            warning?: string | null;
+          }>;
+          warning?: string;
+          usedPageNumbers?: number[];
+          textFallback?: boolean;
+        }> = [];
+        for (const id of ids) {
+          const att = ctx.attachments.get(id);
+          if (!att) {
+            items.push({
+              attachmentId: id,
+              fileName: "",
+              chars: 0,
+              text: "",
+              warning: "ATTACHMENT_FORBIDDEN_OR_MISSING",
+            });
+            continue;
+          }
+          if (att.status && !["READY", "PARTIAL", "ready", "partial"].includes(att.status)) {
+            items.push({
+              attachmentId: id,
+              fileName: att.fileName,
+              status: att.status,
+              chars: 0,
+              text: "",
+              warning:
+                att.status === "FAILED" || att.status === "failed"
+                  ? "ATTACHMENT_PROCESSING_FAILED"
+                  : att.status === "QUARANTINED"
+                    ? "ATTACHMENT_QUARANTINED"
+                    : "ATTACHMENT_NOT_READY",
+            });
+            continue;
+          }
+
+          const selected = selectAttachmentPagesForRead({
+            pages: att.pages?.map((p) => ({
+              pageNumber: p.pageNumber,
+              text: p.text,
+              status: (p.status === "FAILED" || p.status === "failed"
+                ? "failed"
+                : p.status === "PARTIAL" || p.status === "partial"
+                  ? "partial"
+                  : "ready") as "ready" | "partial" | "failed",
+              confidence: p.confidence,
+            })),
+            fullText: att.text,
+            pageRange,
+            queryHint,
+            maxChars: MAX_TOOL_CHARS,
+          });
+
+          if (!selected.ok) {
+            items.push({
+              attachmentId: id,
+              fileName: att.fileName,
+              status: att.status,
+              chars: 0,
+              text: "",
+              warning: selected.code,
+            });
+            continue;
+          }
+
+          const combined = selected.items.map((p) => p.text).filter(Boolean).join("\n\n");
+          ctx.auditedPageReads.push({
+            attachmentId: id,
+            pageNumbers: selected.usedPageNumbers,
+            textFallback: selected.textFallback,
+          });
+
+          items.push({
+            attachmentId: id,
+            fileName: att.fileName,
+            status: att.status,
+            chars: combined.length,
+            text: combined,
+            pages: selected.items,
+            usedPageNumbers: selected.usedPageNumbers,
+            textFallback: selected.textFallback,
+            warning:
+              att.status === "PARTIAL" || att.status === "partial"
+                ? "PARTIAL_CONTENT"
+                : selected.textFallback
+                  ? "NO_PAGE_STRUCTURE_FALLBACK_FULL_TEXT"
+                  : selected.truncated
+                    ? "TRUNCATED"
+                    : undefined,
+          });
+        }
+        ctx.invokedTools.push(name);
+        return {
+          ok: true,
+          data: {
+            hasAttachment: items.some((i) => i.chars > 0),
+            items,
+            usedAttachmentIds: items.filter((i) => i.chars > 0).map((i) => i.attachmentId),
+            auditedPages: ctx.auditedPageReads.slice(-ids.length),
+          },
+          label: `قراءة ${items.filter((i) => i.chars > 0).length} مرفقًا`,
+        };
+      }
+
+      // Legacy: نص الجلسة المضمّن (خلف التوافق) — بلا ادّعاء أرقام صفحات
+      if (!ctx.document.trim()) {
+        return { ok: true, data: { hasAttachment: false, text: "", legacy: true }, label: "لا مستند مرفق" };
+      }
+      let text = ctx.document;
+      if (queryHint) {
+        const token = queryHint.trim().toLowerCase().split(/\s+/)[0] || "";
+        const idx = token ? text.toLowerCase().indexOf(token) : -1;
+        if (idx >= 0) text = text.slice(Math.max(0, idx - 400));
+      }
+      if (text.length > MAX_TOOL_CHARS) text = text.slice(0, MAX_TOOL_CHARS);
       ctx.invokedTools.push(name);
-      return { ok: true, data: { hasAttachment: true, chars: ctx.document.length, text: ctx.document }, label: "قراءة المستند المرفق كاملًا" };
+      return {
+        ok: true,
+        data: {
+          hasAttachment: true,
+          chars: text.length,
+          text,
+          legacy: true,
+          pages: [{ pageNumber: null, text, status: "READY", warning: "NO_PAGE_STRUCTURE_FALLBACK_FULL_TEXT" }],
+          textFallback: true,
+        },
+        label: "قراءة المستند المرفق (مسار توافق)",
+      };
     }
 
     if (name === "load_skill") {

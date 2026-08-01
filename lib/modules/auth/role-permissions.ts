@@ -20,6 +20,8 @@ export type Permission =
   | "LEGAL_CORE_ADMIN"
   | "ATTACHMENTS_FULL"
   | "ATTACHMENTS_LIMITED"
+  /** رفع مرفقات Ask اليتيمة فقط — أدق من LIMITED (عرض/تنزيل). */
+  | "ASK_ATTACHMENT_UPLOAD"
   | "USERS_MANAGE"
   | "ADMIN_REPORTS_VIEW"
   | "GOVERNANCE_AUDIT_VIEW"
@@ -38,6 +40,7 @@ const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
   "LEGAL_CORE_EDIT",
   "LEGAL_CORE_ADMIN",
   "ATTACHMENTS_FULL",
+  "ASK_ATTACHMENT_UPLOAD",
   "USERS_MANAGE",
   "ADMIN_REPORTS_VIEW",
   "GOVERNANCE_AUDIT_VIEW",
@@ -54,6 +57,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
+    "ASK_ATTACHMENT_UPLOAD",
     "GOVERNANCE_AUDIT_VIEW",
   ],
   LAWYER: [
@@ -63,6 +67,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
+    "ASK_ATTACHMENT_UPLOAD",
     "JUDICIAL_ASSISTANT_USE",
   ],
   TRAINER: [
@@ -72,6 +77,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_FULL",
+    "ASK_ATTACHMENT_UPLOAD",
     "ADMIN_REPORTS_VIEW",
     // المعاون القضائي متاحٌ للمدرّب أيضًا (تدريبٌ عمليّ على مساحة القضية).
     "JUDICIAL_ASSISTANT_USE",
@@ -83,6 +89,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     "LIBRARY_READ",
     "LEGAL_CORE_VIEW",
     "ATTACHMENTS_LIMITED",
+    "ASK_ATTACHMENT_UPLOAD",
     // جمهور حكيم يشمل القضاة المتدربين وطلاب القانون — فالمعاون القضائي متاحٌ لهم.
     "JUDICIAL_ASSISTANT_USE",
   ],
