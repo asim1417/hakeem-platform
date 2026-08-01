@@ -72,4 +72,7 @@ export interface LegalActionPlan {
   generated: boolean; // وُلّد من مزوّد ذكاء حقيقي؟
   provider: string;
   model: string;
+
+  // مراجعة JDS الاسترشاديّة (§27، ظلّ §31-I) — تُملأ فقط عند تفعيل JDS_DRAFTING_SHADOW.
+  jdsReview?: import("@/lib/modules/judicial").JdsShadowReview;
 }

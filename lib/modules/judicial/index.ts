@@ -44,6 +44,8 @@ export { JUDICIAL_EVAL_CASES } from "./eval-cases";
 export type { JudicialEvalCase } from "./eval-cases";
 export { JDS_FLAGS, isJdsFlagOn, isJdsDraftingShadowEnabled } from "./flag";
 export type { JdsFlagKey } from "./flag";
+export { judicialShadowReview } from "./shadow";
+export type { JdsShadowReview, ShadowReviewInput } from "./shadow";
 
 /** إصدار طبقة JDS ومرجع الأمر الحاكم — للتتبّع والتدقيق. */
 export const JDS_META = {

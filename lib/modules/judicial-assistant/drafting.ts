@@ -8,7 +8,7 @@ import { findPrecedents } from "./rulings";
 import { STAGE_META } from "./catalog";
 import { JURISDICTION_LABEL, FACT_STATUS_LABEL } from "./labels";
 import { buildRelevantDocsAsync } from "./case-vector";
-import { planJudicialTask, reviewJudicialDraft, isJdsDraftingShadowEnabled } from "@/lib/modules/judicial";
+import { judicialShadowReview } from "@/lib/modules/judicial";
 import type { JudgmentDraftResult, JudgmentSection, JudicialCase } from "./types";
 
 const NOTICE =
@@ -95,32 +95,18 @@ export async function buildJudgmentDraft(kase: JudicialCase, actorId?: string): 
   };
 }
 
-/** مراجعة ظلّيّة (§27) لمسودّة الحكم — undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW. لا ترمي. */
+/** مراجعة ظلّيّة (§27) لمسودّة الحكم عبر المساعد المشترك — undefined ما لم يُفعَّل العَلَم. */
 function buildJdsShadowReview(kase: JudicialCase, sections: JudgmentSection[]): JudgmentDraftResult["jdsReview"] {
-  if (!isJdsDraftingShadowEnabled()) return undefined;
-  try {
-    const plan = planJudicialTask({
-      taskId: `jsdraft:${kase.id}`,
-      role: "JUDGE",
-      documentFunction: "DISPOSITION",
-      litigationStage: "JUDGMENT",
-      text: kase.subject,
-    });
-    const operative = sections.find((s) => s.key === "operative")?.body ?? "";
-    const reasoningBody = sections.find((s) => s.key === "reasoning")?.body ?? "";
-    const review = reviewJudicialDraft(plan, {
-      draftText: `${reasoningBody}\n${operative}`,
-      requests: kase.requests.map((r) => r.text),
-      dispositionItems: operative.split("\n").map((l) => l.trim()).filter(Boolean),
-      hasNonBindingLabel: true, // JS-018 يحمل دائمًا إشعارًا بعدم الإلزام (NOTICE)
-    });
-    return {
-      ready: review.ready,
-      blocking: review.blocking,
-      review: review.review,
-      findings: review.results.map((r) => ({ gateId: r.gateId, outcome: r.outcome, findings: r.findings })),
-    };
-  } catch {
-    return undefined; // الظلّ لا يكسر الصياغة أبدًا
-  }
+  const operative = sections.find((s) => s.key === "operative")?.body ?? "";
+  const reasoningBody = sections.find((s) => s.key === "reasoning")?.body ?? "";
+  return judicialShadowReview({
+    role: "JUDGE",
+    documentFunction: "DISPOSITION",
+    litigationStage: "JUDGMENT",
+    subject: kase.subject,
+    draftText: `${reasoningBody}\n${operative}`,
+    requests: kase.requests.map((r) => r.text),
+    dispositionItems: operative.split("\n").map((l) => l.trim()).filter(Boolean),
+    hasNonBindingLabel: true, // JS-018 يحمل دائمًا إشعارًا بعدم الإلزام (NOTICE)
+  });
 }
