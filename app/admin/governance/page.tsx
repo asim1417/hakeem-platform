@@ -6,6 +6,7 @@ import { listPrompts } from "@/lib/modules/ai/prompts/registry";
 import { loadPackages } from "@/lib/modules/packages/manifest-loader";
 import { DATA_CLASS_LABELS_AR } from "@/lib/modules/security/data-classification";
 import { complianceRuleStats } from "@/lib/modules/compliance/engine";
+import { COMPATIBILITY_MATRIX, DEPRECATIONS } from "@/lib/modules/governance/compatibility";
 
 export const dynamic = "force-dynamic";
 
@@ -164,6 +165,24 @@ export default async function GovernancePage() {
               القواعد الحالية نموذجيّة غير معتمدة — تُستبدل بأساسٍ رسميّ عند اعتماده (§75/§76).
             </p>
           </div>
+        </section>
+
+        {/* التوافق والإصدارات (§27) */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold text-[#0E3435]">التوافق والإصدارات (§27)</h2>
+          <div className="flex flex-wrap gap-2">
+            {COMPATIBILITY_MATRIX.map((c) => (
+              <span
+                key={c.component}
+                className="rounded-md bg-white px-2 py-1 font-mono text-xs text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.1)]"
+              >
+                {c.component}@{c.version}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-[rgba(14,52,53,0.55)]">
+            إهمالات مُعلنة: {DEPRECATIONS.length} · مقاييس التشغيل عبر <code className="rounded bg-[#F7F2EA] px-1">/api/metrics</code>
+          </p>
         </section>
 
         {/* تصنيف البيانات (§21) */}

@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { evaluateCompliance } from "@/lib/modules/compliance/engine";
 import { buildUri } from "@/lib/modules/knowledge/uri";
+import { increment } from "@/lib/modules/observability/metrics";
 
 export type { FindingSeverity, SuggestionStatus, ReviewSessionStatus };
 
@@ -50,6 +51,7 @@ export async function createSession(input: CreateSessionInput) {
       complianceViolations: compliance.violations.length,
     },
   });
+  increment("review.session.created");
   return session;
 }
 
