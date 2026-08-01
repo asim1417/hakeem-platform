@@ -29,3 +29,12 @@ export function isPageLevelOcrV1Enabled(): boolean {
 export function isOcrCacheV1Enabled(): boolean {
   return on(process.env.NEXT_PUBLIC_HAKEEM_OCR_CACHE_V1);
 }
+
+/**
+ * عرضٌ تدريجيّ للنصّ أثناء القراءة السحابية: تظهر الصفحات في المعاينة فور اكتمالها
+ * (أوّل صفحة في ثانية) بدل انتظار الوثيقة كاملةً. مطفأ افتراضيًا. لا يغيّر زمن المعالجة
+ * الكليّ ولا الناتج النهائيّ — تحسينُ إحساسٍ بالسرعة فقط.
+ */
+export function isOcrStreamV1Enabled(): boolean {
+  return on(process.env.NEXT_PUBLIC_HAKEEM_OCR_STREAM_V1);
+}

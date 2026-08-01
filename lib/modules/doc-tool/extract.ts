@@ -32,6 +32,8 @@ export interface ExtractOptions {
   /** نموذج القراءة السحابية: lite (الأسرع للمطبوع النظيف) · flash (عادي) · pro (خطّ
       يدوي/أختام/وثائق صعبة). الافتراضي lite مع تصعيدٍ تلقائيّ للصفحة الضعيفة. */
   cloudModel?: "lite" | "flash" | "pro";
+  /** بثّ لكل صفحة سحابية عند اكتمالها — لعرضٍ تدريجيّ (أوّل صفحة في ثانية) بدل انتظار الكلّ. */
+  onPage?: (pageNumber: number, text: string, fromCache: boolean) => void;
 }
 
 const TEXT_EXTS = ["txt", "md", "csv", "json"];
@@ -63,7 +65,7 @@ export async function extractFile(
 
   // المسار السحابي (اختياري صراحةً): Gemini يقرأ الصور وPDF بأنواعه
   if (opts.cloudOcr && CLOUD_EXTS.includes(ext)) {
-    const { result: cloud, error: cloudError } = await cloudOcr(file, onProgress, opts.cloudRange, opts.cloudModel);
+    const { result: cloud, error: cloudError } = await cloudOcr(file, onProgress, opts.cloudRange, opts.cloudModel, opts.onPage);
     if (cloud) return cloud;
     onProgress?.(cloudError ? `⚠ ${cloudError} — متابعة بالمعالجة المحلية…` : "السحابي غير متاح — متابعة بالمعالجة المحلية…");
   }
@@ -83,13 +85,14 @@ async function cloudOcr(
   file: File,
   onProgress?: ExtractProgress,
   range?: { from?: number; to?: number },
-  model?: "lite" | "flash" | "pro"
+  model?: "lite" | "flash" | "pro",
+  onPage?: (pageNumber: number, text: string, fromCache: boolean) => void
 ): Promise<{ result: ExtractResult | null; error?: string }> {
   const { cloudOcrImage, cloudOcrPdfPages } = await import("@/lib/modules/doc-tool/cloud-ocr");
   const tag = model === "pro" ? "Gemini pro" : "Gemini";
   if (file.name.toLowerCase().endsWith(".pdf")) {
     // صفحات كصور — رؤية حقيقية تتجاوز طبقات النص المعطوبة (الترتيب البصري)
-    const result = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress, { ...(range ?? {}), model });
+    const result = await cloudOcrPdfPages(await file.arrayBuffer(), onProgress, { ...(range ?? {}), model, onPage });
     if (!result.text) return { result: null, error: result.error };
     const sep = separateRunningLines(result.text);
     const ranged = range?.from || range?.to ? ` · ص ${range.from ?? 1}–${range.to ?? result.total}` : "";
