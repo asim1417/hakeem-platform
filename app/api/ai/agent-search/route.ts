@@ -36,6 +36,11 @@ import {
   resolveEffectiveSourcePolicy,
   type SourcePolicy,
 } from "@/lib/modules/hakeem-composer/source-policy";
+import {
+  isComposerDocumentsV1Enabled,
+  resolveAskDocumentText,
+} from "@/lib/modules/hakeem-composer/document-bridge";
+import { loadOwnedAttachmentDocuments } from "@/lib/modules/attachments/complete-extraction";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -57,6 +62,7 @@ export async function POST(request: NextRequest) {
   let body: {
     query?: string;
     document?: string;
+    attachmentIds?: unknown;
     detailed?: boolean;
     skipBreadth?: boolean;
     mode?: string;
@@ -74,7 +80,26 @@ export async function POST(request: NextRequest) {
   const typed = String(body?.query ?? "").trim().slice(0, 16000);
   // حدّ المستند المرفق: 200000 حرفًا ليستوعب الوثيقة القانونية كاملةً (حكمٌ/عقدٌ طويل).
   // الوكيل لا يحقنه تلقائيًّا — يقرؤه Claude عبر read_attachment عند الحاجة فقط. الأضخم مساره منصّة الوثائق.
-  const attachedDoc = String(body?.document ?? "").trim().slice(0, 200_000);
+  let requestDoc = String(body?.document ?? "").trim().slice(0, 200_000);
+  const documentsEnabled = isComposerDocumentsV1Enabled();
+  const rawAttachmentIds = Array.isArray(body.attachmentIds)
+    ? body.attachmentIds.map(String).filter(Boolean).slice(0, 10)
+    : [];
+
+  let loadedAttachments: Array<{ id: string; fileName: string; text: string; storageKey: string }> =
+    [];
+  if (documentsEnabled && rawAttachmentIds.length) {
+    loadedAttachments = await loadOwnedAttachmentDocuments({
+      user,
+      attachmentIds: rawAttachmentIds,
+    }).catch(() => []);
+  }
+
+  const resolvedDoc = resolveAskDocumentText({
+    requestDocument: requestDoc,
+    attachmentDocuments: loadedAttachments.map((a) => ({ fileName: a.fileName, text: a.text })),
+  });
+  const attachedDoc = resolvedDoc.text;
   const hasDoc = attachedDoc.length > 0;
 
   // سياسة المصادر: الخادم يبني effectivePolicy ولا يثق بـ boolean من العميل.
@@ -268,8 +293,33 @@ export async function POST(request: NextRequest) {
               mode: agentMode.id,
               hasDocument: hasDoc,
               queryPreview: typed.slice(0, 80),
+              documentsV1: documentsEnabled || undefined,
+              attachmentIds: loadedAttachments.map((a) => a.id).slice(0, 10),
+              documentSource: resolvedDoc.source,
             },
           }).catch(() => undefined);
+        }
+
+        if (documentsEnabled && (rawAttachmentIds.length > 0 || resolvedDoc.source !== "none")) {
+          send({
+            type: "step",
+            id: "documents",
+            status: "done",
+            label:
+              resolvedDoc.source === "attachments"
+                ? `مرفقات المنصة: ${loadedAttachments.length.toLocaleString("ar-SA")}`
+                : resolvedDoc.source === "request"
+                  ? "مستند الطلب (مسار توافق)"
+                  : "بلا مستند",
+            data: {
+              enforced: true,
+              featureFlag: "HAKEEM_COMPOSER_DOCUMENTS_V1",
+              source: resolvedDoc.source,
+              attachmentIds: loadedAttachments.map((a) => a.id),
+              requestedAttachmentIds: rawAttachmentIds,
+              textLength: attachedDoc.length,
+            },
+          });
         }
 
         // ── الوكيل الأصيل (HKM-CLAUDE-NATIVE-001، خلف علم CLAUDE_NATIVE_AGENT_ENABLED) ──
@@ -316,7 +366,24 @@ export async function POST(request: NextRequest) {
             // الدور ثانيةً (يتخطّاه عند mode=native-agent) فلا ازدواج. أفضل-جهد.
             let roomConvId = convId;
             try {
-              const attachRefs = attachedDoc ? [{ id: `att-${jobId ?? "x"}`, fileName: "المرفق", extractedText: attachedDoc.slice(0, 200_000), processingStatus: "inline" as const }] : undefined;
+              const attachRefs = attachedDoc
+                ? loadedAttachments.length
+                  ? loadedAttachments.map((a) => ({
+                      id: a.id,
+                      fileName: a.fileName,
+                      extractedText: a.text.slice(0, 2_000),
+                      storageKey: a.storageKey,
+                      processingStatus: "ready" as const,
+                    }))
+                  : [
+                      {
+                        id: `att-${jobId ?? "x"}`,
+                        fileName: "المرفق",
+                        extractedText: attachedDoc.slice(0, 200_000),
+                        processingStatus: "inline" as const,
+                      },
+                    ]
+                : undefined;
               const u = await appendMessage({
                 userId: user.id,
                 serviceKey: "ask",

@@ -27,9 +27,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireApiPermission("ATTACHMENTS_FULL", request);
-  if (gate.response) return gate.response;
-  const user = gate.user!;
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.json({ message: "اختر ملفًا صالحًا للرفع." }, { status: 400 });
@@ -40,6 +37,12 @@ export async function POST(request: NextRequest) {
   const relationType = String(form.get("relationType") || "عام");
   const relationId = String(form.get("relationId") || "");
   const caseId = relationType === "قضية" && relationId ? relationId : undefined;
+  // مرفقات Ask اليتيمة: يكفي ATTACHMENTS_LIMITED (يشمل المتدرب). غير ذلك: FULL.
+  const isAskOrphan =
+    !caseId && (relationType === "اسأل" || relationType === "ask" || relationType === "ASK");
+  const gate = await requireApiPermission(isAskOrphan ? "ATTACHMENTS_LIMITED" : "ATTACHMENTS_FULL", request);
+  if (gate.response) return gate.response;
+  const user = gate.user!;
   // منع ربط مرفق بقضية مستخدم آخر (IDOR على POST).
   const caseGate = await assertCaseOwnedForAttachment(user, caseId);
   if (!caseGate.ok) return NextResponse.json({ message: caseGate.message }, { status: 403 });
@@ -61,7 +64,9 @@ export async function POST(request: NextRequest) {
     uploadedBy: user.id,
     storageMode: uploaded.storageMode,
     storageUrl: uploaded.url,
-    note: "TODO: استخراج نص PDF/DOCX لاحقًا وربطه بتحليل الاستشارة والمحاكاة."
+    note: isAskOrphan
+      ? "مرفق Ask — يُكمل الاستخراج عبر /api/attachments/[id]/extraction"
+      : "TODO: استخراج نص PDF/DOCX لاحقًا وربطه بتحليل الاستشارة والمحاكاة."
   };
 
   // PR-1: metadata في العمود الصريح؛ extractedText يبقى null حتى تكتمل القراءة (لا JSON داخله).
@@ -95,7 +100,8 @@ export async function POST(request: NextRequest) {
       relationType,
       relationId: relationId || undefined,
       storageMode: uploaded.storageMode,
-      processingStatus: attachment.processingStatus
+      processingStatus: attachment.processingStatus,
+      askOrphan: isAskOrphan || undefined
     }
   });
   await settleAdvancedUse(user.id, access.via, {

@@ -48,6 +48,9 @@ export type ComposerAttachment = {
   status: AttachmentStatus;
   progressMessage?: string;
   error?: string;
+  /** معرف Prisma Attachment بعد الرفع الخادمي (جسر DOCUMENTS-004) */
+  serverAttachmentId?: string;
+  storageKey?: string;
 };
 
 export type ComposerContextItem = {

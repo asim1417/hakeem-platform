@@ -49,6 +49,11 @@ import {
 } from "@/lib/modules/hakeem-composer/constants";
 import { composerSourcesToPolicy } from "@/lib/modules/hakeem-composer/source-policy";
 import { routeComposerIntent } from "@/lib/modules/hakeem-composer/intent-router";
+import {
+  isComposerDocumentsClientEnabled,
+  toMessageAttachmentRef,
+} from "@/lib/modules/hakeem-composer/document-bridge";
+import { persistAskAttachmentToServer } from "@/lib/modules/hakeem-composer/persist-ask-attachment";
 import type {
   ComposerAttachment,
   ComposerContextItem,
@@ -502,6 +507,28 @@ export function HakeemAskWorkspace({
           trimmed.length > COMPOSER_MAX_DOC_CHARS
             ? trimmed.slice(0, COMPOSER_MAX_DOC_CHARS)
             : trimmed;
+
+        let serverAttachmentId: string | undefined;
+        let storageKey: string | undefined;
+        if (isComposerDocumentsClientEnabled()) {
+          setAttachments((prev) =>
+            prev.map((a) =>
+              a.id === id
+                ? { ...a, status: "uploading", progressMessage: "جارٍ حفظ المرفق على المنصة…" }
+                : a
+            )
+          );
+          const persisted = await persistAskAttachmentToServer({
+            file,
+            extractedText: forSend,
+            kind,
+          });
+          if (persisted) {
+            serverAttachmentId = persisted.serverAttachmentId;
+            storageKey = persisted.storageKey;
+          }
+        }
+
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === id
@@ -510,10 +537,16 @@ export function HakeemAskWorkspace({
                   kind,
                   extractedText: forSend,
                   status: "ready",
+                  serverAttachmentId,
+                  storageKey,
                   progressMessage:
                     trimmed.length > COMPOSER_MAX_DOC_CHARS
                       ? `طويل جدًا — سيُرسل أوّل ${COMPOSER_MAX_DOC_CHARS.toLocaleString("ar-SA")} حرف`
-                      : warning || undefined,
+                      : serverAttachmentId
+                        ? warning
+                          ? `${warning} · حُفظ على المنصة`
+                          : "حُفظ على المنصة"
+                        : warning || undefined,
                   error: undefined,
                 }
               : a
@@ -819,17 +852,28 @@ export function HakeemAskWorkspace({
       .slice(-8);
 
     try {
+      const readyForSend = attachmentsRef.current.filter(
+        (a) => a.status === "ready" && a.extractedText.trim()
+      );
+      const attachmentIds = readyForSend
+        .map((a) => a.serverAttachmentId)
+        .filter((id): id is string => Boolean(id));
+      const sourcePolicy = composerSourcesToPolicy(sourcesRef.current);
+
       const res = await fetch("/api/ai/agent-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: queryForAgent,
           document: doc || undefined,
+          attachmentIds: attachmentIds.length ? attachmentIds : undefined,
           detailed: override?.detailed ?? detailed,
           skipBreadth: override?.skipBreadth ?? false,
           mode: effectiveMode,
           conversationId: conversationIdRef.current || undefined,
           history: history.length ? history : undefined,
+          sources: sourcesRef.current,
+          sourcePolicy,
         }),
         signal: controller.signal,
       });
@@ -922,13 +966,12 @@ export function HakeemAskWorkspace({
           basis: finished.basis ?? undefined,
           turnKey,
           attachments: readyAtts.length
-            ? readyAtts.map((a) => ({
-                id: a.id,
-                fileName: a.name,
-                mimeType: a.mimeType,
-                extractedText: a.extractedText.slice(0, 200_000),
-                processingStatus: "inline",
-              }))
+            ? readyAtts.map((a) =>
+                toMessageAttachmentRef(a, {
+                  preferServerId: true,
+                  previewOnly: Boolean(a.serverAttachmentId),
+                })
+              )
             : undefined,
           outputSnapshot: {
             answerMode: finished.mode,
@@ -941,6 +984,9 @@ export function HakeemAskWorkspace({
             clarify: finished.clarify,
             sources: sourcesRef.current,
             intentCategory: intent.category,
+            attachmentIds: readyAtts
+              .map((a) => a.serverAttachmentId)
+              .filter((id): id is string => Boolean(id)),
           },
         });
         if (persistResult.conversationId) {

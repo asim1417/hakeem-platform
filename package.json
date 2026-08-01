@@ -176,6 +176,7 @@
     "test:hakeem-composer": "tsx scripts/test-hakeem-composer.ts",
     "test:source-policy": "HAKEEM_COMPOSER_SOURCE_POLICY_V2=1 tsx scripts/test-source-policy.ts",
     "test:source-policy-e2e": "HAKEEM_COMPOSER_SOURCE_POLICY_V2=1 tsx scripts/test-source-policy-api-e2e.ts",
+    "test:composer-documents": "HAKEEM_COMPOSER_DOCUMENTS_V1=1 tsx scripts/test-composer-documents.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
     "smoke:judicial": "tsx scripts/smoke-judicial.ts"

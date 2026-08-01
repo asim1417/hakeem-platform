@@ -185,8 +185,10 @@ export async function persistAskTurn(input: {
     id: string;
     fileName: string;
     mimeType?: string;
+    size?: number;
     extractedText?: string;
-    processingStatus?: "inline";
+    storageKey?: string;
+    processingStatus?: "inline" | "pending" | "ready" | "failed";
   }>;
   turnKey: string;
 }): Promise<{ conversationId: string | null; error?: string }> {
