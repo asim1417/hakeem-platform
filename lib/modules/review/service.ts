@@ -12,6 +12,7 @@ import type {
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { evaluateCompliance } from "@/lib/modules/compliance/engine";
+import { buildUri } from "@/lib/modules/knowledge/uri";
 
 export type { FindingSeverity, SuggestionStatus, ReviewSessionStatus };
 
@@ -43,6 +44,7 @@ export async function createSession(input: CreateSessionInput) {
     action: "REVIEW_SESSION_CREATED",
     entityId: session.id,
     metadata: {
+      uri: buildUri("review_session", session.id),
       entityType: input.entityType,
       compliancePassed: compliance.passed,
       complianceViolations: compliance.violations.length,
