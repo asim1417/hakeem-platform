@@ -181,6 +181,7 @@
     "test:jds-procedure": "tsx scripts/test-judicial-procedure-graph.ts",
     "test:jds-gates": "tsx scripts/test-judicial-gates.ts",
     "test:jds-recipe": "tsx scripts/test-judicial-recipe.ts",
+    "test:jds-orchestrator": "tsx scripts/test-judicial-orchestrator.ts",
     "db:jds": "tsx scripts/seed-judicial-jds.ts"
   },
   "dependencies": {
