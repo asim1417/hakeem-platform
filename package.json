@@ -186,6 +186,7 @@
     "test:jds-currentness": "tsx scripts/test-judicial-currentness.ts",
     "test:jds-enforce": "tsx scripts/test-judicial-enforce.ts",
     "test:jds-trace": "tsx scripts/test-judicial-trace.ts",
+    "test:jds-passes": "tsx scripts/test-judicial-passes.ts",
     "db:jds": "tsx scripts/seed-judicial-jds.ts",
     "prove:currentness": "tsx scripts/prove-currentness.ts"
   },

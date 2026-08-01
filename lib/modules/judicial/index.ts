@@ -27,6 +27,13 @@ export { PACK_GOVERNING_SYSTEMS, resolvePackCurrentness } from "./currentness";
 export type { GovSystemRecord, PackCurrentnessResult } from "./currentness";
 export { segmentStatements, traceStatements, unsupportedCount } from "./statement-trace";
 export type { TraceContext } from "./statement-trace";
+export { runDraftingPasses } from "./drafting-passes";
+export type {
+  DraftingPass,
+  DraftingRunInput,
+  JudicialDraftingRun,
+  PassStatus,
+} from "./drafting-passes";
 export {
   characterizeJudicialTask,
   voiceProfileFor,

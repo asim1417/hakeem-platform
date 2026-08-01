@@ -77,6 +77,22 @@ function main() {
     check("الإنفاذ+نظيف: بلا إشعار", clean.banner === null);
   });
 
+  // ⑤ الظلّ يُرفق خلاصة §22 (تتبّع العبارات) و§23 (مرورات الصياغة) — كلّ خدمةٍ تنتفع.
+  withEnv({ JDS_DRAFTING_SHADOW: "1" }, () => {
+    const r = judicialShadowReview({
+      role: "LAWYER",
+      documentFunction: "CLAIM_FORMULATION",
+      draftText: "الثابت من عقد التوريد أنّ الأجرة مستحقّة. تقضي الدائرة بموجب المادة الخامسة بالإلزام.",
+      knownFacts: ["أبرم الطرفان عقد توريد"],
+      evidence: ["عقد التوريد"],
+      authorities: [],
+    })!;
+    check("§22 مرفقة: إجماليّ العبارات > 0", r.statementTrace.total > 0);
+    check("§22 ترصد إسنادًا بلا سند (unsupported ≥ 1)", r.statementTrace.unsupported >= 1);
+    check("§23 مرفقة: ٢٢ مرحلة", r.drafting.total === 22);
+    check("§23 فيها مراحل مفوَّضة", r.drafting.delegated > 0);
+  });
+
   console.log(`\nنتيجة §27 (enforce): ${pass} ناجحة / ${fail} فاشلة`);
   if (fail > 0) process.exit(1);
 }
