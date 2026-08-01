@@ -77,7 +77,18 @@ async function main() {
   let proven = 0;
   const pending: string[] = [];
   for (const packId of Object.keys(PACK_GOVERNING_SYSTEMS)) {
-    const found = await lookupGoverning(PACK_GOVERNING_SYSTEMS[packId]);
+    const candidates = PACK_GOVERNING_SYSTEMS[packId];
+    // تدقيق المطابقة (قراءة): لكلّ مرشّحٍ، ما طابقه في النواة بالاسم (بأيّ حالة).
+    for (const cand of candidates) {
+      const hits = await prisma.legalSystem.findMany({
+        where: { name: { contains: cand } },
+        select: { name: true, articleCount: true },
+        take: 5,
+      });
+      const shown = hits.map((h) => `${h.name}[${h.articleCount}]`).join("، ");
+      console.log(`   · مرشّح «${cand}» ⇐ ${hits.length ? shown : "لا مطابق"}`);
+    }
+    const found = await lookupGoverning(candidates);
     const res = resolvePackCurrentness(packId, date, found);
 
     if (res.proven) {
@@ -104,6 +115,7 @@ async function main() {
       }
       proven += 1;
       console.log(`✓ ${packId} — ساري (${res.governingFound.join("، ")}) → law_as_of_date=${res.lawAsOfDate}`);
+      if (res.missing.length) console.log(`   ⚠ مرشّحاتٌ لم تُطابَق (تحتاج تصحيح المطابقة): ${res.missing.join("، ")}`);
     } else {
       pending.push(`${packId} (مفقود: ${res.missing.join("، ")})`);
       console.log(`… ${packId} — يبقى PENDING (لم يُثبت حاكمٌ ساري)`);
