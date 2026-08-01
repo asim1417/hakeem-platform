@@ -573,6 +573,15 @@ enum RelationType {
   RELATED_TO
 }
 
+// دورة حياة العلاقة (المخطط السيادي §8): المستنتَج آليًّا يبدأ PROPOSED،
+// ولا يصبح VERIFIED إلا بمراجعة. الافتراضي VERIFIED يحفظ سلوك السجلات القائمة.
+enum RelationStatus {
+  PROPOSED
+  VERIFIED
+  REJECTED
+  SUPERSEDED
+}
+
 // ── Knowledge Graph: علاقات قانونية متعدّدة الأشكال (polymorphic) ──
 // تربط (مادة/حكم/مبدأ/نظام) بأخرى عبر النوع+المعرّف، دون مفاتيح أجنبية
 // صارمة لمرونة الربط بين الجداول المختلفة. تُستخدم النماذج القائمة كمصدر
@@ -586,11 +595,16 @@ model LegalRelation {
   relation    RelationType
   strength    Float        @default(1.0)
   description String?
+  // ── دورة الحياة والحجية (§8) — إضافيّة، تحفظ سلوك القائم.
+  status      RelationStatus @default(VERIFIED)
+  authority   Float?        // وزن حجية اختياريّ منفصل عن strength
+  evidenceId  String?       @map("evidence_id") // مرجع دليل داعم اختياريّ
   createdAt   DateTime     @default(now()) @map("created_at")
 
   @@index([sourceType, sourceId])
   @@index([targetType, targetId])
   @@index([relation])
+  @@index([status])
   @@map("legal_relations")
 }
 
@@ -994,6 +1008,8 @@ model LegalGraphEdge {
   confidence Float             @default(0.9)
   source     RelationSource    @default(STRUCTURAL)
   verifiedBy String?
+  // دورة الحياة (§8) — الافتراضي VERIFIED يحفظ سلوك الحواف القائمة.
+  status     RelationStatus    @default(VERIFIED)
   createdAt  DateTime          @default(now())
 
   sourceNode LegalGraphNode @relation("RelSource", fields: [sourceId], references: [id], onDelete: Cascade)

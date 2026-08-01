@@ -1,6 +1,6 @@
 // اشتقاق علاقات الرسم المعرفي من الروابط القائمة (دوال نقيّة قابلة للاختبار).
 // لا تلمس القاعدة — تحوّل بيانات الروابط/المبادئ إلى مواصفات علاقات legal_relations.
-import type { RelationType } from "@prisma/client";
+import type { RelationType, RelationStatus } from "@prisma/client";
 
 export interface RelationSpec {
   sourceType: "article" | "ruling" | "principle";
@@ -10,6 +10,16 @@ export interface RelationSpec {
   relation: RelationType;
   strength: number;
   description?: string;
+  /**
+   * دورة الحياة (§8): كل ما يُشتَقّ آليًّا هنا يبدأ PROPOSED — لا يصبح VERIFIED
+   * إلا بمراجعة بشرية. الحقل اختياريّ حفاظًا على توافق المستهلكين القدامى.
+   */
+  status?: RelationStatus;
+}
+
+/** كل مواصفة علاقة مُشتَقّة آليًّا تُوسَم PROPOSED (§8). */
+export function asProposed(spec: RelationSpec): RelationSpec {
+  return { ...spec, status: "PROPOSED" };
 }
 
 const KEYWORD_RELATION: { keys: string[]; relation: RelationType }[] = [
