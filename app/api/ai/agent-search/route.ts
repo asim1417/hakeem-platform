@@ -41,6 +41,10 @@ import {
   resolveAskDocumentText,
 } from "@/lib/modules/hakeem-composer/document-bridge";
 import { loadOwnedAttachmentDocuments } from "@/lib/modules/attachments/complete-extraction";
+import {
+  isAttachmentsV2Enabled,
+  syncAttachmentProcessing,
+} from "@/lib/modules/attachments/document-processing-adapter";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -81,23 +85,85 @@ export async function POST(request: NextRequest) {
   // حدّ المستند المرفق: 200000 حرفًا ليستوعب الوثيقة القانونية كاملةً (حكمٌ/عقدٌ طويل).
   // الوكيل لا يحقنه تلقائيًّا — يقرؤه Claude عبر read_attachment عند الحاجة فقط. الأضخم مساره منصّة الوثائق.
   let requestDoc = String(body?.document ?? "").trim().slice(0, 200_000);
-  const documentsEnabled = isComposerDocumentsV1Enabled();
+  const documentsEnabled = isComposerDocumentsV1Enabled() || isAttachmentsV2Enabled();
+  const attachmentsV2 = isAttachmentsV2Enabled();
   const rawAttachmentIds = Array.isArray(body.attachmentIds)
     ? body.attachmentIds.map(String).filter(Boolean).slice(0, 10)
     : [];
 
-  let loadedAttachments: Array<{ id: string; fileName: string; text: string; storageKey: string }> =
-    [];
+  // مزامنة سريعة لمهام doc-node الجارية قبل القراءة (لا تنتظر OCR الطويل)
+  if (attachmentsV2 && rawAttachmentIds.length) {
+    for (const id of rawAttachmentIds) {
+      await syncAttachmentProcessing({ attachmentId: id, user }).catch(() => undefined);
+    }
+  }
+
+  let loadedAttachments: Array<{
+    id: string;
+    fileName: string;
+    text: string;
+    storageKey: string;
+    status?: string;
+  }> = [];
   if (documentsEnabled && rawAttachmentIds.length) {
     loadedAttachments = await loadOwnedAttachmentDocuments({
       user,
       attachmentIds: rawAttachmentIds,
     }).catch(() => []);
+
+    if (attachmentsV2) {
+      const rows = await prisma.attachment.findMany({
+        where: { id: { in: rawAttachmentIds } },
+        include: { caseFile: { select: { ownerId: true } } },
+      });
+      const { ownsAttachment } = await import("@/lib/modules/auth/ownership");
+      for (const row of rows) {
+        if (
+          !ownsAttachment(user, {
+            caseId: row.caseId,
+            caseOwnerId: row.caseFile?.ownerId ?? null,
+            extractedText: row.extractedText,
+            metadata: row.metadata,
+          })
+        ) {
+          continue;
+        }
+        const existing = loadedAttachments.find((a) => a.id === row.id);
+        if (existing) {
+          existing.status = row.processingStatus;
+        } else {
+          loadedAttachments.push({
+            id: row.id,
+            fileName: row.fileName,
+            text: String(row.extractedText ?? "").trim(),
+            storageKey: row.storageKey,
+            status: row.processingStatus,
+          });
+        }
+      }
+    }
   }
 
+  const readyLoaded = loadedAttachments.filter(
+    (a) => a.text?.trim() && (!a.status || ["READY", "PARTIAL"].includes(String(a.status)))
+  );
+  const notReadyIds =
+    attachmentsV2 && rawAttachmentIds.length > 0
+      ? rawAttachmentIds.filter((id) => {
+          const row = loadedAttachments.find((a) => a.id === id);
+          return row && row.status && !["READY", "PARTIAL"].includes(String(row.status));
+        })
+      : [];
+  const forbiddenIds =
+    attachmentsV2 && rawAttachmentIds.length > 0
+      ? rawAttachmentIds.filter((id) => !loadedAttachments.some((a) => a.id === id))
+      : [];
+
+  // نص المستند: أولوية المرفقات الجاهزة؛ ثم legacy document خلف DOCUMENTS_V1 أو عند تعطيل V2
   const resolvedDoc = resolveAskDocumentText({
-    requestDocument: requestDoc,
-    attachmentDocuments: loadedAttachments.map((a) => ({ fileName: a.fileName, text: a.text })),
+    requestDocument:
+      !attachmentsV2 || isComposerDocumentsV1Enabled() ? requestDoc : readyLoaded.length ? null : requestDoc,
+    attachmentDocuments: readyLoaded.map((a) => ({ fileName: a.fileName, text: a.text })),
   });
   const attachedDoc = resolvedDoc.text;
   const hasDoc = attachedDoc.length > 0;
@@ -179,6 +245,41 @@ export async function POST(request: NextRequest) {
         deniedSources,
       }),
       { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
+    );
+  }
+
+  if (attachmentsV2 && policyEnabled && sourcePolicy.attachments && forbiddenIds.length) {
+    return new Response(
+      JSON.stringify({
+        type: "error",
+        message: "مرفق غير مملوك أو غير موجود.",
+        code: "ATTACHMENT_FORBIDDEN",
+        attachmentIds: forbiddenIds,
+        effectivePolicy: sourcePolicy,
+      }),
+      { status: 403, headers: { "Content-Type": "application/json; charset=utf-8" } }
+    );
+  }
+
+  if (
+    attachmentsV2 &&
+    policyEnabled &&
+    !sourcePolicy.legalLibrary &&
+    !sourcePolicy.regulations &&
+    !sourcePolicy.judgments &&
+    sourcePolicy.attachments &&
+    notReadyIds.length &&
+    !hasDoc
+  ) {
+    return new Response(
+      JSON.stringify({
+        type: "error",
+        message: "المرفق لم يكتمل معالجته بعد.",
+        code: "ATTACHMENT_NOT_READY",
+        attachmentIds: notReadyIds,
+        effectivePolicy: sourcePolicy,
+      }),
+      { status: 409, headers: { "Content-Type": "application/json; charset=utf-8" } }
     );
   }
 
@@ -345,6 +446,12 @@ export async function POST(request: NextRequest) {
           const agent = await runHakeemAgent({
             query: agentQuery,
             document: attachedDoc,
+            attachments: readyLoaded.map((a) => ({
+              id: a.id,
+              fileName: a.fileName,
+              text: a.text,
+              status: a.status,
+            })),
             history: roomHistory,
             summary: roomSummary,
             sourcePolicy: policyEnabled ? sourcePolicy : undefined,

@@ -85,6 +85,8 @@ function buildBasis(sources: Map<string, RetrievedSource>): AgentBasisItem[] {
 export async function runHakeemAgent(input: {
   query: string;
   document?: string;
+  /** مرفقات دائمة جاهزة للقراءة بالمعرّف */
+  attachments?: Array<{ id: string; fileName: string; text: string; status?: string }>;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   /** ملخّصٌ متدرّج لما قبل الأدوار الأخيرة (غرفةٌ طويلة) — يُحقن في التوجيه فيبقى السياق المبكّر حاضرًا. */
   summary?: string;
@@ -93,7 +95,7 @@ export async function runHakeemAgent(input: {
   onStep?: (step: AgentStep) => void;
 }): Promise<AgentResult> {
   const onStep = input.onStep ?? (() => {});
-  const ctx = createAgentContext(input.document ?? "", input.sourcePolicy);
+  const ctx = createAgentContext(input.document ?? "", input.sourcePolicy, input.attachments);
   const withPolicy = (r: AgentResult): AgentResult => ({
     ...r,
     deniedTools: ctx.deniedTools.slice(),
@@ -112,11 +114,19 @@ export async function runHakeemAgent(input: {
     const content = sanitizeForModel(m.content).text.slice(0, 4000);
     if (content.trim()) messages.push({ role: m.role, content });
   }
-  const hasDoc = Boolean(ctx.document.trim());
+  const hasDoc = Boolean(ctx.document.trim()) || ctx.attachments.size > 0;
+  const attachmentHint =
+    ctx.attachments.size > 0
+      ? `\n\n(مرفقات دائمة: ${Array.from(ctx.attachments.values())
+          .map((a) => `${a.fileName} [${a.id}]`)
+          .join(" · ")} — اقرأها بـ read_attachment مع attachmentIds.)`
+      : hasDoc
+        ? "\n\n(أرفق المستخدم مستندًا — اقرأه بأداة read_attachment إن لزم.)"
+        : "";
   const currentText = sanitizeForModel(input.query).text.trim();
   messages.push({
     role: "user",
-    content: hasDoc ? `${currentText}\n\n(أرفق المستخدم مستندًا — اقرأه بأداة read_attachment إن لزم.)` : currentText,
+    content: `${currentText}${attachmentHint}`,
   });
 
   const maxTurns = hakeemAgentMaxToolTurns();

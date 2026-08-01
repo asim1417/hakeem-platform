@@ -154,6 +154,37 @@ export function signedDownloadUrl(storageKey: string) {
   return `https://${account}.blob.core.windows.net/${container}/${encodeURIComponent(storageKey).replace(/%2F/g, "/")}${normalizeSas(process.env.AZURE_STORAGE_SAS_TOKEN!)}`;
 }
 
+/**
+ * يجلب بايتات المرفق من التخزين للاستخدام الخادمي (Adapter/doc-node).
+ * metadata-only → null. SharePoint: عبر storageUrl في metadata إن وُجد عند المستدعي.
+ */
+export async function downloadAttachmentBytes(
+  storageKey: string,
+  opts?: { sharePointUrl?: string | null }
+): Promise<Uint8Array | null> {
+  if (!storageKey || storageKey.startsWith("metadata-only/")) return null;
+
+  if (storageKey.startsWith("sharepoint/")) {
+    const url = opts?.sharePointUrl;
+    if (!url) return null;
+    const token = await graphToken().catch(() => null);
+    if (!token) return null;
+    // تنزيل عبر Graph إن كان المسار معروفًا — وإلا الرابط المباشر إن كان صالحًا
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (!res.ok) return null;
+    return new Uint8Array(await res.arrayBuffer());
+  }
+
+  const url = signedDownloadUrl(storageKey);
+  if (!url) return null;
+  const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+  if (!res.ok) return null;
+  return new Uint8Array(await res.arrayBuffer());
+}
+
 function publicBlobUrl(storageKey: string) {
   if (!azureConfigured()) return undefined;
   return `https://${process.env.AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${process.env.AZURE_STORAGE_CONTAINER}/${encodeURIComponent(storageKey).replace(/%2F/g, "/")}`;

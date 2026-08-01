@@ -28,6 +28,8 @@ export interface RetrievedSource {
 /** سياق الجلسة الذي تعمل عليه الأدوات — يحمل المستند المرفق ويجمع المصادر المستَرجَعة. */
 export interface AgentContext {
   document: string;
+  /** مرفقات دائمة محمّلة بالمعرّف (ATTACHMENTS_V2) */
+  attachments: Map<string, { id: string; fileName: string; text: string; status?: string }>;
   /** المصادر المستَرجَعة عبر الجلسة، مفهرسةً بمعرّفها (منع التكرار). */
   sources: Map<string, RetrievedSource>;
   /** سياسة مصادر مُنفَّذة خادميًا (لا تعتمد على امتثال النموذج) */
@@ -40,10 +42,16 @@ export interface AgentContext {
 
 export function createAgentContext(
   document: string,
-  sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY
+  sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY,
+  attachments?: Array<{ id: string; fileName: string; text: string; status?: string }>
 ): AgentContext {
+  const map = new Map<string, { id: string; fileName: string; text: string; status?: string }>();
+  for (const a of attachments ?? []) {
+    if (a.id) map.set(a.id, a);
+  }
   return {
     document: document ?? "",
+    attachments: map,
     sources: new Map(),
     sourcePolicy,
     deniedTools: [],
@@ -123,8 +131,27 @@ export const HAKEEM_TOOL_DEFS = [
   },
   {
     name: "read_attachment",
-    description: "اقرأ نصّ المستند الذي أرفقه المستخدم في هذه الجلسة (إن وُجد).",
-    input_schema: { type: "object", properties: {} },
+    description:
+      "اقرأ نصّ المستند المرفق في هذه الجلسة. مرّر attachmentIds لمعرفات المرفقات الدائمة إن وُجدت، أو اتركها فارغة لقراءة مستند الجلسة.",
+    input_schema: {
+      type: "object",
+      properties: {
+        attachmentIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "معرفات Attachment المملوكة في هذه الجلسة.",
+        },
+        pageRange: {
+          type: "object",
+          properties: {
+            from: { type: "integer", minimum: 1 },
+            to: { type: "integer", minimum: 1 },
+          },
+          description: "نطاق صفحات اختياري (إن توفّرت صفحات).",
+        },
+        queryHint: { type: "string", description: "تلميح موضوعي لاختيار المقتطف (اختياري)." },
+      },
+    },
   },
   {
     name: "islamic_library_scan",
@@ -387,10 +414,88 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
     }
 
     if (name === "read_attachment") {
-      if (!ctx.document.trim()) return { ok: true, data: { hasAttachment: false, text: "" }, label: "لا مستند مرفق" };
-      // المستند كاملًا (مُقتطَعٌ أصلًا عند حدّ المسار 200 ألف حرف) — لا نقتطعه هنا ثانيةً.
+      const ids = Array.isArray(input.attachmentIds)
+        ? input.attachmentIds.map(String).filter(Boolean).slice(0, 10)
+        : [];
+      const MAX_TOOL_CHARS = 120_000;
+
+      // مسار V2: قراءة بالمعرّف من المرفقات المحمّلة خادميًا (ملكية تحقّقَت عند التحميل)
+      if (ids.length && ctx.attachments.size) {
+        const items: Array<{
+          attachmentId: string;
+          fileName: string;
+          status?: string;
+          chars: number;
+          text: string;
+          warning?: string;
+        }> = [];
+        for (const id of ids) {
+          const att = ctx.attachments.get(id);
+          if (!att) {
+            items.push({
+              attachmentId: id,
+              fileName: "",
+              chars: 0,
+              text: "",
+              warning: "ATTACHMENT_FORBIDDEN_OR_MISSING",
+            });
+            continue;
+          }
+          if (att.status && !["READY", "PARTIAL", "ready", "partial"].includes(att.status)) {
+            items.push({
+              attachmentId: id,
+              fileName: att.fileName,
+              status: att.status,
+              chars: 0,
+              text: "",
+              warning:
+                att.status === "FAILED" || att.status === "failed"
+                  ? "ATTACHMENT_PROCESSING_FAILED"
+                  : "ATTACHMENT_NOT_READY",
+            });
+            continue;
+          }
+          let text = att.text;
+          if (att.status === "PARTIAL" || att.status === "partial") {
+            // يُسمح بنص جزئي مع تحذير
+          }
+          if (text.length > MAX_TOOL_CHARS) text = text.slice(0, MAX_TOOL_CHARS);
+          items.push({
+            attachmentId: id,
+            fileName: att.fileName,
+            status: att.status,
+            chars: text.length,
+            text,
+            warning:
+              att.status === "PARTIAL" || att.status === "partial"
+                ? "PARTIAL_CONTENT"
+                : undefined,
+          });
+        }
+        ctx.invokedTools.push(name);
+        return {
+          ok: true,
+          data: {
+            hasAttachment: items.some((i) => i.chars > 0),
+            items,
+            usedAttachmentIds: items.filter((i) => i.chars > 0).map((i) => i.attachmentId),
+          },
+          label: `قراءة ${items.filter((i) => i.chars > 0).length} مرفقًا`,
+        };
+      }
+
+      // Legacy: نص الجلسة المضمّن (خلف التوافق)
+      if (!ctx.document.trim()) {
+        return { ok: true, data: { hasAttachment: false, text: "", legacy: true }, label: "لا مستند مرفق" };
+      }
+      const text =
+        ctx.document.length > MAX_TOOL_CHARS ? ctx.document.slice(0, MAX_TOOL_CHARS) : ctx.document;
       ctx.invokedTools.push(name);
-      return { ok: true, data: { hasAttachment: true, chars: ctx.document.length, text: ctx.document }, label: "قراءة المستند المرفق كاملًا" };
+      return {
+        ok: true,
+        data: { hasAttachment: true, chars: text.length, text, legacy: true },
+        label: "قراءة المستند المرفق (مسار توافق)",
+      };
     }
 
     if (name === "load_skill") {
