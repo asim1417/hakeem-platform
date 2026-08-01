@@ -1,0 +1,36 @@
+name: Diagnose arbitration system (تشخيص §7 — قراءة فقط)
+
+# قراءةٌ فقط على النواة (Neon): يطبع أنظمة التحكيم وحالات موادها وتواريخها،
+# لنعرف الاسم/الحالة الفعليّين ونصحّح مطابقة السريان. لا يكتب أيّ شيء.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnose-arbitration
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: "🔒 Secret present gate"
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::سرّ NEON_DATABASE_URL غير مضبوط."; exit 1; fi
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Diagnose arbitration
+        run: npx tsx scripts/diagnose-arbitration.ts
