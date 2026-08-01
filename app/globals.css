@@ -2567,7 +2567,7 @@ html {
 }
 .hkm-sess-panel-item-preview {
   font-size: 0.75rem;
-  color: rgba(14, 52, 53, 0.55);
+  color: rgba(14, 52, 53, 0.66);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2577,7 +2577,7 @@ html {
 .hkm-sess-panel-item-meta {
   margin-top: 0.15rem;
   font-size: 0.7rem;
-  color: rgba(14, 52, 53, 0.45);
+  color: rgba(14, 52, 53, 0.58);
   font-variant-numeric: tabular-nums;
 }
 .hkm-sess-panel-hint,

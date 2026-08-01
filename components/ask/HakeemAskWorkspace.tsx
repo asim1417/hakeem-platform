@@ -1236,8 +1236,9 @@ export function HakeemAskWorkspace({
     );
   }
 
+  const isEmpty = turns.length === 0;
   return (
-    <div className="flex min-h-[calc(100vh-9rem)] flex-col">
+    <div className={`flex min-h-[calc(100vh-9rem)] flex-col ${isEmpty ? "justify-center" : ""}`}>
       {sessionError ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {sessionError}{" "}
@@ -1246,11 +1247,11 @@ export function HakeemAskWorkspace({
           </button>
         </div>
       ) : null}
-      <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto pb-6">
+      <div ref={scrollRef} className={`space-y-6 overflow-y-auto pb-6 ${isEmpty ? "flex-none" : "flex-1"}`}>
         {turns.length === 0 ? (
           <div
             className={`flex flex-col items-center justify-center px-2 text-center ${
-              isHome ? "min-h-[28vh] pt-4 pb-2" : "min-h-[60vh]"
+              isHome ? "pt-2 pb-3" : "pt-4 pb-4"
             }`}
           >
             {!isHome ? (
@@ -1272,7 +1273,7 @@ export function HakeemAskWorkspace({
             >
               {emptyTitle}
             </h1>
-            <p className="mt-2 max-w-md leading-7 text-[var(--ink-60)]">{emptyLede}</p>
+            <p className="mt-2 max-w-md leading-7 text-[var(--ink-70)]">{emptyLede}</p>
 
             {/* تلميحاتٌ بالمعيار العالميّ: رقائقُ مُدمجة مركزيّة (لا بطاقاتٌ عملاقة تدفع الصندوق للأسفل). */}
             {(() => {
@@ -1709,7 +1710,7 @@ export function HakeemAskWorkspace({
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-gradient-to-t from-[var(--hakeem-bg)] via-[var(--hakeem-bg)] to-transparent pt-3 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+      <div className={`bg-gradient-to-t from-[var(--hakeem-bg)] via-[var(--hakeem-bg)] to-transparent pt-3 pb-[max(0.25rem,env(safe-area-inset-bottom))] ${isEmpty ? "" : "sticky bottom-0"}`}>
         {turns.length > 0 && !busy ? (
           <div className="mb-2 flex justify-end px-1">
             <button
