@@ -80,6 +80,8 @@ export async function createAskSessionWithFirstMessage(input: {
   mode: string;
   clientRequestId: string;
   detailed?: boolean;
+  sources?: string[];
+  sourcePolicy?: Record<string, unknown>;
   attachments?: Array<{
     id: string;
     fileName: string;
@@ -100,7 +102,18 @@ export async function createAskSessionWithFirstMessage(input: {
       clientRequestId: input.clientRequestId,
       status: "completed",
       attachments: input.attachments,
-      statePatch: { detailed: Boolean(input.detailed), contextVersion: 1 },
+      inputSnapshot: {
+        detailed: Boolean(input.detailed),
+        mode: input.mode,
+        sources: input.sources,
+        sourcePolicy: input.sourcePolicy,
+      },
+      statePatch: {
+        detailed: Boolean(input.detailed),
+        contextVersion: 1,
+        sources: input.sources,
+        sourcePolicy: input.sourcePolicy,
+      },
     }),
   });
   const data = await parseJson(res);
@@ -164,6 +177,8 @@ export async function persistAskTurn(input: {
   answer: string | null;
   mode: string;
   detailed: boolean;
+  sources?: string[];
+  sourcePolicy?: Record<string, unknown>;
   basis?: unknown[];
   outputSnapshot?: Record<string, unknown>;
   attachments?: Array<{
@@ -176,6 +191,12 @@ export async function persistAskTurn(input: {
   turnKey: string;
 }): Promise<{ conversationId: string | null; error?: string }> {
   let conversationId = input.conversationId;
+  const inputSnapshot = {
+    detailed: input.detailed,
+    mode: input.mode,
+    sources: input.sources,
+    sourcePolicy: input.sourcePolicy,
+  };
 
   if (!conversationId) {
     const created = await createAskSessionWithFirstMessage({
@@ -184,6 +205,8 @@ export async function persistAskTurn(input: {
       clientRequestId: `${input.turnKey}-user`,
       detailed: input.detailed,
       attachments: input.attachments,
+      sourcePolicy: input.sourcePolicy,
+      sources: input.sources,
     });
     if (!created.ok || !created.conversationId) {
       return { conversationId: null, error: created.message ?? "فشل إنشاء الجلسة" };
@@ -197,7 +220,7 @@ export async function persistAskTurn(input: {
       mode: input.mode,
       clientRequestId: `${input.turnKey}-user`,
       attachments: input.attachments,
-      inputSnapshot: { detailed: input.detailed, mode: input.mode },
+      inputSnapshot,
     });
     if (!userMsg.ok) {
       return { conversationId, error: userMsg.message };

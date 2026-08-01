@@ -8,18 +8,12 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  ClipboardList,
   Compass,
   MessagesSquare,
-  NotebookPen,
-  Paperclip,
   RotateCcw,
   Scale,
-  ScanSearch,
   Sparkles,
   Telescope,
-  X,
-  type LucideIcon,
 } from "lucide-react";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
 import { isBrokenExtraction } from "@/lib/modules/document-inspection/reshape";
@@ -27,7 +21,7 @@ import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBa
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { useWakeLock } from "@/components/hooks/useWakeLock";
-import { AGENT_MODES, getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
+import { getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
 import {
   ASK_FIRST_SUGGESTIONS,
   ASK_TO_CASE_HANDOFF_KEY,
@@ -44,20 +38,23 @@ import {
   persistAskTurn,
   type AskSessionContext,
 } from "@/components/ask/ask-session-api";
-
-/** أيقونات الأوضاع — Lucide بدل الإيموجي. */
-const MODE_ICONS: Record<AgentModeId, LucideIcon> = {
-  ask: Sparkles,
-  "analyze-case": ScanSearch,
-  "action-plan": ClipboardList,
-  "verdict-estimate": Scale,
-  consultation: NotebookPen,
-  chat: MessagesSquare,
-};
-
-// تبسيطٌ يوازي المنصّات العالميّة: مع الوكيل الأصيل يقرّر Claude الخدمة من الحوار، فلا حاجة
-// لشريط أوضاعٍ ظاهر. مخفيٌّ افتراضًا؛ لاستعادته (للمسار القديم) اضبط NEXT_PUBLIC_ASK_SHOW_MODES=1.
-const SHOW_MODE_BAR = (process.env.NEXT_PUBLIC_ASK_SHOW_MODES ?? "").trim() === "1";
+import { HakeemComposer } from "@/components/hakeem-composer";
+import {
+  COMPOSER_MAX_ATTACHMENTS,
+  COMPOSER_MAX_DOC_CHARS,
+  DEFAULT_SOURCES,
+  buildSourceHint,
+  composeAgentQuery,
+  resolveEffectiveMode,
+} from "@/lib/modules/hakeem-composer/constants";
+import { composerSourcesToPolicy } from "@/lib/modules/hakeem-composer/source-policy";
+import { routeComposerIntent } from "@/lib/modules/hakeem-composer/intent-router";
+import type {
+  ComposerAttachment,
+  ComposerContextItem,
+  ComposerModeId,
+  ComposerSourceId,
+} from "@/lib/modules/hakeem-composer/types";
 
 type Precedents = {
   rulings: Array<{ title: string; snippet?: string }>;
@@ -225,14 +222,16 @@ export function HakeemAskWorkspace({
   const isHome = variant === "home";
   const [value, setValue] = useState(initialQuery);
   const [detailed, setDetailed] = useState(false);
-  const [modeId, setModeId] = useState<AgentModeId>(getAgentMode(initialMode).id);
+  const initialComposerMode: ComposerModeId =
+    initialMode && initialMode !== "ask" ? getAgentMode(initialMode).id : "auto";
+  const [modeId, setModeId] = useState<ComposerModeId>(initialComposerMode);
+  const [sources, setSources] = useState<ComposerSourceId[]>(DEFAULT_SOURCES);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const [attachedDoc, setAttachedDoc] = useState("");
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const [contextItems, setContextItems] = useState<ComposerContextItem[]>([]);
   useWakeLock(busy || extracting);
-  const [attachedName, setAttachedName] = useState<string | null>(null);
-  const [attachKind, setAttachKind] = useState<string | null>(null);
   const [attachStatus, setAttachStatus] = useState("");
   const [attachError, setAttachError] = useState("");
   const [cloudOcrAvailable, setCloudOcrAvailable] = useState(false);
@@ -240,15 +239,17 @@ export function HakeemAskWorkspace({
   const [sessionLoading, setSessionLoading] = useState(Boolean(conversationIdProp));
   const [sessionError, setSessionError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const backgroundedRef = useRef(false);
+  const userStoppedRef = useRef(false);
   const busyRef = useRef(false);
   const requestTokenRef = useRef(0);
   const turnsRef = useRef<Turn[]>([]);
   const pendingRunHandledRef = useRef(false);
   const conversationIdRef = useRef<string | null>(conversationIdProp);
-  const modeIdRef = useRef<AgentModeId>(getAgentMode(initialMode).id);
+  const modeIdRef = useRef<ComposerModeId>(initialComposerMode);
+  const sourcesRef = useRef<ComposerSourceId[]>(DEFAULT_SOURCES);
+  const attachmentsRef = useRef<ComposerAttachment[]>([]);
   const detailedRef = useRef(false);
   /** آخر نتيجة بث لاعتماد الحفظ دون انتظار مزامنة turnsRef */
   const lastResultRef = useRef<Turn | null>(null);
@@ -275,8 +276,36 @@ export function HakeemAskWorkspace({
   }, [modeId]);
 
   useEffect(() => {
+    sourcesRef.current = sources;
+  }, [sources]);
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(() => {
     detailedRef.current = detailed;
   }, [detailed]);
+
+  // سياق الجلسة النشطة في شريط الصندوق
+  useEffect(() => {
+    if (!conversationId) {
+      setContextItems((prev) => prev.filter((c) => c.type !== "session"));
+      return;
+    }
+    setContextItems((prev) => {
+      const without = prev.filter((c) => c.type !== "session");
+      return [
+        ...without,
+        {
+          type: "session",
+          id: conversationId,
+          label: `جلسة: ${conversationId.slice(0, 8)}…`,
+          removable: false,
+        },
+      ];
+    });
+  }, [conversationId]);
 
   useEffect(() => {
     conversationIdRef.current = conversationId;
@@ -385,91 +414,154 @@ export function HakeemAskWorkspace({
     };
   }, []);
 
-  async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    else event.target.value = "";
-    if (!file) return;
+  async function processFiles(fileList: FileList | File[]) {
+    const files = Array.from(fileList).slice(0, COMPOSER_MAX_ATTACHMENTS);
+    if (!files.length) return;
+
+    const room = Math.max(0, COMPOSER_MAX_ATTACHMENTS - attachmentsRef.current.length);
+    const toProcess = files.slice(0, room || COMPOSER_MAX_ATTACHMENTS);
+    if (!toProcess.length) {
+      setAttachError(`الحد الأقصى للمرفقات ${COMPOSER_MAX_ATTACHMENTS.toLocaleString("ar-SA")}.`);
+      return;
+    }
 
     setExtracting(true);
     setAttachError("");
-    setAttachStatus("جارٍ قراءة الوثيقة بمحرّك منصة الوثائق…");
-    setAttachedDoc("");
-    setAttachedName(null);
-    setAttachKind(null);
+    setAttachStatus("جارٍ قراءة الوثائق بمحرّك منصة الوثائق…");
 
-    try {
-      const ext = (file.name.match(/\.([^.]+)$/)?.[1] ?? "").toLowerCase();
-      // نفس مسار المعاون/منصة الوثائق: PDF والصور عبر OCR سحابي عند التوفّر، والنص/Word محليًا.
-      const visual = /^(pdf|png|jpe?g|webp|bmp|tiff?|gif)$/.test(ext);
-      const useCloud = cloudOcrAvailable && visual;
+    for (const file of toProcess) {
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `att-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setAttachments((prev) => [
+        ...prev.filter((a) => a.id !== id),
+        {
+          id,
+          name: file.name,
+          size: file.size,
+          mimeType: file.type,
+          extractedText: "",
+          status: "processing",
+          progressMessage: "جارٍ القراءة…",
+        },
+      ]);
 
-      let { text, kind, warning } = await extractFile(file, {
-        onProgress: (m) => setAttachStatus(m),
-        cloudOcr: useCloud,
-        cloudModel: "lite",
-      });
+      try {
+        const ext = (file.name.match(/\.([^.]+)$/)?.[1] ?? "").toLowerCase();
+        const visual = /^(pdf|png|jpe?g|webp|bmp|tiff?|gif)$/.test(ext);
+        const useCloud = cloudOcrAvailable && visual;
 
-      if (isBrokenExtraction(text) && cloudOcrAvailable) {
-        setAttachStatus("أرفع دقّة القراءة (قراءة بصرية أقوى)…");
-        const hi = await extractFile(file, {
-          onProgress: (m) => setAttachStatus(m),
-          cloudOcr: true,
-          cloudModel: "pro",
+        let { text, kind, warning } = await extractFile(file, {
+          onProgress: (m) => {
+            setAttachStatus(m);
+            setAttachments((prev) =>
+              prev.map((a) => (a.id === id ? { ...a, progressMessage: m, status: "processing" } : a))
+            );
+          },
+          cloudOcr: useCloud,
+          cloudModel: "lite",
         });
-        if (hi.text && hi.text.trim().length >= 2) {
-          text = hi.text;
-          kind = hi.kind;
-          warning = hi.warning;
+
+        if (isBrokenExtraction(text) && cloudOcrAvailable) {
+          setAttachStatus("أرفع دقّة القراءة (قراءة بصرية أقوى)…");
+          const hi = await extractFile(file, {
+            onProgress: (m) => {
+              setAttachStatus(m);
+              setAttachments((prev) =>
+                prev.map((a) => (a.id === id ? { ...a, progressMessage: m } : a))
+              );
+            },
+            cloudOcr: true,
+            cloudModel: "pro",
+          });
+          if (hi.text && hi.text.trim().length >= 2) {
+            text = hi.text;
+            kind = hi.kind;
+            warning = hi.warning;
+          }
         }
-      }
 
-      const trimmed = (text || "").trim();
-      if (trimmed.length < 2) {
-        throw new Error(
-          kind
-            ? `تعذّرت قراءة نص من الملف (${kind}).`
-            : "تعذّرت قراءة نص من الملف. جرّب PDF نصيًا أو Word أو صورة أوضح."
-        );
-      }
-      if (isBrokenExtraction(trimmed)) {
-        throw new Error(
-          cloudOcrAvailable
-            ? "النص المقروء مشوّه (وثيقة ممسوحة أو خط غير قابل للنسخ). جرّب نسخة أوضح."
-            : "النص المقروء مشوّه. فعّل القراءة السحابية من إعدادات منصة الوثائق، أو أرفق نسخة نصية أوضح."
-        );
-      }
+        const trimmed = (text || "").trim();
+        if (trimmed.length < 2) {
+          throw new Error(
+            kind
+              ? `تعذّرت قراءة نص من الملف (${kind}).`
+              : "تعذّرت قراءة نص من الملف. جرّب PDF نصيًا أو Word أو صورة أوضح."
+          );
+        }
+        if (isBrokenExtraction(trimmed)) {
+          throw new Error(
+            cloudOcrAvailable
+              ? "النص المقروء مشوّه (وثيقة ممسوحة أو خط غير قابل للنسخ). جرّب نسخة أوضح."
+              : "النص المقروء مشوّه. فعّل القراءة السحابية من إعدادات منصة الوثائق، أو أرفق نسخة نصية أوضح."
+          );
+        }
 
-      // حدّ إرسال المستند إلى /api/ai/agent-search: رُفِع إلى 200000 حرفًا ليستوعب الوثيقة
-      // القانونية كاملةً (حكمٌ/عقدٌ طويل). الأضخم من ذلك (مئات الصفحات) مساره منصّة الوثائق.
-      const MAX_DOC = 200_000;
-      const forSend = trimmed.length > MAX_DOC ? trimmed.slice(0, MAX_DOC) : trimmed;
-      setAttachedDoc(forSend);
-      setAttachedName(file.name);
-      setAttachKind(kind);
-      setAttachStatus(
-        trimmed.length > MAX_DOC
-          ? `أُرفق المستند (${kind}) — طويلٌ جدًّا؛ سيُرسل أوّل ${MAX_DOC.toLocaleString("ar-SA")} حرفٍ منه.`
-          : warning
-            ? `أُرفق المستند (${kind}) — ${warning}`
-            : `أُرفق المستند (${kind}) كاملًا (${trimmed.length.toLocaleString("ar-SA")} حرفًا).`
-      );
-      setAttachError("");
-    } catch (err) {
-      setAttachedDoc("");
-      setAttachedName(null);
-      setAttachKind(null);
-      const m = err instanceof Error ? err.message : "";
-      const network = /load failed|failed to fetch|networkerror/i.test(m);
-      setAttachError(
-        network
+        const forSend =
+          trimmed.length > COMPOSER_MAX_DOC_CHARS
+            ? trimmed.slice(0, COMPOSER_MAX_DOC_CHARS)
+            : trimmed;
+        setAttachments((prev) =>
+          prev.map((a) =>
+            a.id === id
+              ? {
+                  ...a,
+                  kind,
+                  extractedText: forSend,
+                  status: "ready",
+                  progressMessage:
+                    trimmed.length > COMPOSER_MAX_DOC_CHARS
+                      ? `طويل جدًا — سيُرسل أوّل ${COMPOSER_MAX_DOC_CHARS.toLocaleString("ar-SA")} حرف`
+                      : warning || undefined,
+                  error: undefined,
+                }
+              : a
+          )
+        );
+        setAttachStatus(
+          trimmed.length > COMPOSER_MAX_DOC_CHARS
+            ? `أُرفق المستند (${kind}) — طويلٌ جدًّا؛ سيُرسل أوّل ${COMPOSER_MAX_DOC_CHARS.toLocaleString("ar-SA")} حرفٍ منه.`
+            : warning
+              ? `أُرفق المستند (${kind}) — ${warning}`
+              : `أُرفق المستند (${kind}) كاملًا (${trimmed.length.toLocaleString("ar-SA")} حرفًا).`
+        );
+      } catch (err) {
+        const m = err instanceof Error ? err.message : "";
+        const network = /load failed|failed to fetch|networkerror/i.test(m);
+        const msg = network
           ? "تعذّر إكمال قراءة المستند — تحقّق من الاتصال ثم أعد المحاولة."
-          : m || "تعذّر إرفاق المستند."
-      );
-      setAttachStatus("");
-    } finally {
-      setExtracting(false);
+          : m || "تعذّر إرفاق المستند.";
+        setAttachments((prev) =>
+          prev.map((a) =>
+            a.id === id ? { ...a, status: "failed", error: msg, progressMessage: undefined } : a
+          )
+        );
+        setAttachError(msg);
+        setAttachStatus("");
+      }
     }
+
+    setExtracting(false);
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+    setAttachError("");
+    setAttachStatus("");
+  }
+
+  function combinedDocument(list: ComposerAttachment[]): { text: string; name: string | null } {
+    const ready = list.filter((a) => a.status === "ready" && a.extractedText.trim());
+    if (!ready.length) return { text: "", name: null };
+    if (ready.length === 1) return { text: ready[0].extractedText, name: ready[0].name };
+    const text = ready
+      .map((a, i) => `—— المستند ${i + 1}: ${a.name} ——\n${a.extractedText}`)
+      .join("\n\n");
+    return {
+      text: text.slice(0, COMPOSER_MAX_DOC_CHARS),
+      name: `${ready.length} مستندات`,
+    };
   }
 
   function patchLastTurn(patch: (t: Turn) => Turn) {
@@ -667,14 +759,32 @@ export function HakeemAskWorkspace({
 
   async function ask(q?: string, override?: { detailed?: boolean; skipBreadth?: boolean }) {
     const question = (q ?? value).trim();
-    const doc = attachedDoc;
+    const { text: doc, name: attachedName } = combinedDocument(attachmentsRef.current);
     if ((!question && !doc) || busyRef.current) return;
 
     if (question.length > HAKEEM_ASK_MAX_CHARS) {
       return;
     }
 
+    const intent = routeComposerIntent({
+      text: question,
+      mode: modeIdRef.current,
+      hasAttachment: Boolean(doc),
+      sources: sourcesRef.current,
+    });
+    const effectiveMode = resolveEffectiveMode(
+      modeIdRef.current === "auto" ? intent.suggestedMode : modeIdRef.current
+    );
+
+    const sourceHint = buildSourceHint(sourcesRef.current);
+    const contextLabels = contextItems.map((c) => c.label);
+    const queryForAgent = composeAgentQuery(question, {
+      sourceHint,
+      contextLabels,
+    });
+
     busyRef.current = true;
+    userStoppedRef.current = false;
     setBusy(true);
     const token = ++requestTokenRef.current;
     setValue("");
@@ -700,7 +810,6 @@ export function HakeemAskWorkspace({
       },
     ]);
 
-    // دائمًا: آخر 8 أزواج سؤال/جواب للمتابعة — لكل الأوضاع لا الحوارية فقط.
     const history = turnsRef.current
       .filter((t) => t.answer)
       .flatMap((t) => [
@@ -714,12 +823,11 @@ export function HakeemAskWorkspace({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: question,
+          query: queryForAgent,
           document: doc || undefined,
           detailed: override?.detailed ?? detailed,
           skipBreadth: override?.skipBreadth ?? false,
-          mode: modeId,
-          // «الغرفة»: نمرّر مُعرّف الجلسة فيحمّل الخادم كامل حوارها (لا آخر ٨ أدوار فقط).
+          mode: effectiveMode,
           conversationId: conversationIdRef.current || undefined,
           history: history.length ? history : undefined,
         }),
@@ -769,7 +877,6 @@ export function HakeemAskWorkspace({
             continue;
           }
           if (evt.type === "job" && evt.jobId) {
-            // نربط المهمّة بهذا الدور — فلو انقطع الاتّصال استأنفناها على الدور نفسه لا على دورٍ جديد.
             const jid = String(evt.jobId);
             patchLastTurn((t) => ({ ...t, jobId: jid }));
             try {
@@ -786,7 +893,7 @@ export function HakeemAskWorkspace({
               try {
                 sessionStorage.removeItem("hakeem-ask-job");
               } catch {
-                /* اكتملت */
+                /* لا تخزين */
               }
             }
           }
@@ -796,8 +903,6 @@ export function HakeemAskWorkspace({
       if (token !== requestTokenRef.current) return;
       patchLastTurn((t) => ({ ...t, streaming: false }));
 
-      // حفظ دائم بعد اكتمال البث — دون تغيير طلب agent-search.
-      // الوكيل الأصيل (mode=native-agent) يحفظ الدور من الخادم فلا نحفظه ثانيةً هنا (منع الازدواج).
       const finished =
         lastResultRef.current ?? turnsRef.current[turnsRef.current.length - 1] ?? null;
       if (finished && finished.mode !== "native-agent" && !finished.error && (finished.answer || finished.clarify || finished.message)) {
@@ -805,25 +910,26 @@ export function HakeemAskWorkspace({
           typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `ask-${Date.now()}`;
+        const readyAtts = attachmentsRef.current.filter(
+          (a) => a.status === "ready" && a.extractedText.trim()
+        );
         const persistResult = await persistAskTurn({
           conversationId: conversationIdRef.current,
           question: shown,
           answer: finished.answer,
-          mode: modeIdRef.current,
+          mode: effectiveMode,
           detailed: override?.detailed ?? detailedRef.current,
           basis: finished.basis ?? undefined,
           turnKey,
-          attachments:
-            doc && attachedName
-              ? [
-                  {
-                    id: `att-${turnKey}`,
-                    fileName: attachedName,
-                    extractedText: doc.slice(0, 200_000),
-                    processingStatus: "inline",
-                  },
-                ]
-              : undefined,
+          attachments: readyAtts.length
+            ? readyAtts.map((a) => ({
+                id: a.id,
+                fileName: a.name,
+                mimeType: a.mimeType,
+                extractedText: a.extractedText.slice(0, 200_000),
+                processingStatus: "inline",
+              }))
+            : undefined,
           outputSnapshot: {
             answerMode: finished.mode,
             total: finished.total,
@@ -833,6 +939,8 @@ export function HakeemAskWorkspace({
             message: finished.message,
             precedents: finished.precedents,
             clarify: finished.clarify,
+            sources: sourcesRef.current,
+            intentCategory: intent.category,
           },
         });
         if (persistResult.conversationId) {
@@ -848,13 +956,29 @@ export function HakeemAskWorkspace({
           }
         }
       }
+      setAttachments([]);
+      attachmentsRef.current = [];
     } catch (e) {
       if (token !== requestTokenRef.current) return;
+      if (userStoppedRef.current) {
+        patchLastTurn((t) => ({
+          ...t,
+          streaming: false,
+          background: false,
+          error: undefined,
+          message: t.answer
+            ? t.message
+            : "أُوقف التوليد بناءً على طلبك. يمكنك متابعة الكتابة أو إعادة المحاولة.",
+        }));
+        try {
+          sessionStorage.removeItem("hakeem-ask-job");
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
       const backgrounded =
         backgroundedRef.current || (e instanceof DOMException && e.name === "AbortError");
-      // مهمّةٌ خلفيّة قائمة؟ إن غادر المستخدم الصفحة وانقطع البثّ، فالخادم يُكمل العمل ويحفظ
-      // ناتجه (waitUntil). لا نُظهر خطأً — نُبقي الدور «يعمل في الخلفية» ونستأنف من المهمّة،
-      // فيظهر الجواب فور اكتماله دون «أعد المحاولة».
       let pendingJobId = "";
       try {
         const raw = sessionStorage.getItem("hakeem-ask-job") ?? "";
@@ -893,8 +1017,34 @@ export function HakeemAskWorkspace({
     void ask(question);
   }
 
+  function stopGeneration() {
+    if (!busyRef.current) return;
+    userStoppedRef.current = true;
+    requestTokenRef.current += 1;
+    abortRef.current?.abort();
+    busyRef.current = false;
+    setBusy(false);
+    pollStopRef.current = true;
+    pollingRef.current = null;
+    patchLastTurn((t) => ({
+      ...t,
+      streaming: false,
+      background: false,
+      error: undefined,
+      message: t.answer
+        ? t.message
+        : "أُوقف التوليد بناءً على طلبك. يمكنك متابعة الكتابة أو إعادة المحاولة.",
+    }));
+    try {
+      sessionStorage.removeItem("hakeem-ask-job");
+    } catch {
+      /* ignore */
+    }
+  }
+
   function startNew() {
     if (busyRef.current) {
+      userStoppedRef.current = true;
       abortRef.current?.abort();
       busyRef.current = false;
       setBusy(false);
@@ -902,9 +1052,8 @@ export function HakeemAskWorkspace({
     requestTokenRef.current += 1;
     setTurns([]);
     turnsRef.current = [];
-    setAttachedDoc("");
-    setAttachedName(null);
-    setAttachKind(null);
+    setAttachments([]);
+    attachmentsRef.current = [];
     setAttachStatus("");
     setAttachError("");
     setSessionError(null);
@@ -945,12 +1094,18 @@ export function HakeemAskWorkspace({
   const suggestions = isHome ? ASK_FIRST_SUGGESTIONS : null;
   const inputPlaceholder = followUpMode
     ? "اسأل عن نقطة أخرى في السياق نفسه…"
-    : attachedName
-      ? "اكتب سؤالك عن المستند المرفق (اختياريّ)…"
+    : attachments.some((a) => a.status === "ready")
+      ? "اكتب سؤالك عن المستند المرفق (اختياري)…"
       : isHome
         ? "اكتب سؤالك أو وقائع المسألة القانونية…"
-        : getAgentMode(modeId).placeholder ?? "اسأل في القانون ما شئت…";
-  const submitLabel = busy ? "جارٍ…" : followUpMode ? "إرسال" : "اسأل حكيم";
+        : getAgentMode(resolveEffectiveMode(modeId)).placeholder ?? "اسأل في القانون ما شئت…";
+  const submitLabel = followUpMode ? "إرسال" : "اسأل حكيم";
+  const streamingStatus =
+    busy && turns.length
+      ? turns[turns.length - 1]?.steps?.length
+        ? friendlyStepLabel(turns[turns.length - 1].steps[turns[turns.length - 1].steps.length - 1])
+        : "يفهم الطلب…"
+      : attachStatus;
 
   if (sessionLoading) {
     return (
@@ -1444,7 +1599,7 @@ export function HakeemAskWorkspace({
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-gradient-to-t from-[var(--hakeem-bg)] via-[var(--hakeem-bg)] to-transparent pt-3">
+      <div className="sticky bottom-0 bg-gradient-to-t from-[var(--hakeem-bg)] via-[var(--hakeem-bg)] to-transparent pt-3 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
         {turns.length > 0 && !busy ? (
           <div className="mb-2 flex justify-end px-1">
             <button
@@ -1456,139 +1611,40 @@ export function HakeemAskWorkspace({
             </button>
           </div>
         ) : null}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void ask();
+        <HakeemComposer
+          surface={isHome ? "home" : "ask"}
+          value={value}
+          onChange={(next) => {
+            setValue(next);
+            saveDraft(next);
           }}
-          className="rounded-[var(--r-xl)] border border-[var(--ink-15)] bg-ivory p-2 shadow-[var(--sh-md)] focus-within:border-[var(--gold)]"
-        >
-          {SHOW_MODE_BAR ? (
-            <div className="flex flex-wrap items-center gap-1.5 px-1 pb-2">
-              {AGENT_MODES.map((m) => {
-                const active = m.id === modeId;
-                const Icon = MODE_ICONS[m.id] ?? Sparkles;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setModeId(m.id)}
-                    aria-pressed={active}
-                    title={m.hint}
-                    className={`focus-ring inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      active
-                        ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
-                        : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
-                    }`}
-                  >
-                    <Icon size={14} aria-hidden /> {m.name}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-          {attachedName ? (
-            <div className="mb-2 flex items-center justify-between gap-2 rounded-[var(--r-lg)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-3 py-2 text-xs">
-              <span className="flex min-w-0 items-center gap-1.5 text-[var(--navy)]">
-                <Paperclip size={13} aria-hidden />
-                <span className="truncate font-semibold">{attachedName}</span>
-                <span className="shrink-0 text-[var(--ink-60)]">
-                  · مرفق ({attachedDoc.length.toLocaleString("ar-SA")} حرف
-                  {attachKind ? ` · ${attachKind}` : ""})
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setAttachedDoc("");
-                  setAttachedName(null);
-                  setAttachKind(null);
-                  setAttachStatus("");
-                  setAttachError("");
-                }}
-                className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-semibold text-[var(--ink-60)] transition hover:text-[var(--ruby)]"
-                aria-label="إزالة المستند"
-              >
-                <X size={12} aria-hidden /> إزالة
-              </button>
-            </div>
-          ) : null}
-          {attachStatus && !attachError ? (
-            <p className="mb-2 px-1 text-right text-xs leading-6 text-[var(--ink-60)]" aria-live="polite">
-              {attachStatus}
-            </p>
-          ) : null}
-          {attachError ? (
-            <p className="mb-2 px-1 text-right text-xs font-semibold leading-6 text-[var(--ruby)]" role="alert">
-              {attachError}
-            </p>
-          ) : null}
-          <textarea
-            value={value}
-            onChange={(e) => {
-              const next = e.target.value.slice(0, HAKEEM_ASK_MAX_CHARS);
-              setValue(next);
-              saveDraft(next);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void ask();
-              }
-            }}
-            rows={isHome && turns.length === 0 ? 2 : 1}
-            placeholder={inputPlaceholder}
-            className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[var(--ink-40)]"
-          />
-          <div className="flex items-center justify-between gap-2 px-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setDetailed((v) => !v)}
-                aria-pressed={detailed}
-                className={`focus-ring inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  detailed
-                    ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
-                    : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
-                }`}
-              >
-                <Telescope size={14} aria-hidden /> دراسة موسّعة {detailed ? "(مُفعّلة)" : ""}
-              </button>
-              <label
-                title={
-                  cloudOcrAvailable
-                    ? "قراءة بمحرّك منصة الوثائق (محلي + قراءة بصرية عند الحاجة)"
-                    : "قراءة بمحرّك منصة الوثائق محليًا في المتصفح"
-                }
-                className={`focus-ring inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  extracting
-                    ? "border-[var(--gold)] bg-[var(--gold-ghost)] text-[var(--navy)]"
-                    : "border-[var(--ink-15)] text-[var(--ink-60)] hover:text-[var(--navy)]"
-                }`}
-              >
-                <Paperclip size={14} aria-hidden /> {extracting ? "جارٍ القراءة…" : "إضافة مستند"}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".txt,.md,.csv,.json,.docx,.pdf,.png,.jpg,.jpeg,.webp"
-                  className="sr-only"
-                  onChange={onFile}
-                  disabled={extracting || busy}
-                />
-              </label>
-            </div>
-            <button
-              type="submit"
-              disabled={busy || extracting || (!value.trim() && !attachedDoc)}
-              className="focus-ring min-h-[44px] rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-mid)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submitLabel}
-            </button>
-          </div>
-        </form>
+          onSubmit={() => void ask()}
+          onStop={stopGeneration}
+          busy={busy}
+          extracting={extracting}
+          placeholder={inputPlaceholder}
+          maxChars={HAKEEM_ASK_MAX_CHARS}
+          draftKey={HOME_ASK_DRAFT_KEY}
+          persistDraft
+          modeId={modeId}
+          onModeChange={setModeId}
+          showModeSelector
+          detailed={detailed}
+          onDetailedChange={setDetailed}
+          sources={sources}
+          onSourcesChange={setSources}
+          attachments={attachments}
+          onAttachFiles={(files) => void processFiles(files)}
+          onRemoveAttachment={removeAttachment}
+          contextItems={contextItems}
+          onRemoveContext={(id) => setContextItems((prev) => prev.filter((c) => c.id !== id))}
+          followUp={followUpMode}
+          submitLabel={submitLabel}
+          statusMessage={streamingStatus || null}
+          errorMessage={attachError || null}
+        />
         <p className="mt-2 px-1 text-center text-[11px] leading-6 text-[var(--ink-40)]">
-          Enter للإرسال، وShift + Enter لسطر جديد. إرفاق المستندات يستخدم محرّك «منصة الوثائق»
-          نفسه. مخرجات حكيم مساعدة تعليمية وليست حكمًا ملزمًا.
+          مخرجات حكيم مساعدة تعليمية وليست حكمًا ملزمًا. إرفاق المستندات يستخدم محرّك «منصة الوثائق».
         </p>
       </div>
     </div>
