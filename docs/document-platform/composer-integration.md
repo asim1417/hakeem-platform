@@ -18,17 +18,28 @@ HakeemComposer
  → read_attachment({ attachmentIds, pageRange, queryHint })
 ```
 
-## الأعلام (موحّدة)
+## الأعلام (موحّدة + إنفاذ Runtime)
 
 | علم | الوظيفة |
 |---|---|
-| `HAKEEM_COMPOSER_ATTACHMENTS_V2` / `NEXT_PUBLIC_…` | مسار V2 الحالي — الرفع بالمعرّف |
+| `HAKEEM_COMPOSER_ATTACHMENTS_V2` / `NEXT_PUBLIC_…` | مسار V2 — الرفع بالمعرّف |
 | `HAKEEM_COMPOSER_DOCUMENTS_V1` / `NEXT_PUBLIC_…` | توافق خلفي فقط — ليس شرطًا لـ V2 |
 | `HAKEEM_DOCUMENT_PROCESSING_V2` | Adapter → doc-node / fallback محلي |
+| `HAKEEM_ATTACHMENT_RATE_LIMIT_DISTRIBUTED` | Rate limiter Prisma إنتاجي |
 | `HAKEEM_DOC_NODE_CALLBACK_V1` | محجوز Webhook؛ المزامنة Polling |
 
-`isComposerAttachmentClientPersistEnabled()` = عميل V2 **أو** عميل V1.  
-عند عميل V2 وخادم بلا V2 → `alignClientServerDocumentFlags` يضع `misaligned` ويمنع `enforceV2`.
+العميل يرسل `x-hakeem-attachments-version: 2`.  
+`CLIENT_V2_SERVER_LEGACY` → رفض 409 دون إنشاء مرفق يبدو V2.
+
+## Local vs Server
+
+- `localExtractionStatus` ≠ READY خادمي  
+- مع `serverAttachmentId` تحت V2: أرسل `attachmentIds` فقط؛ لا `document` inline أثناء Pending/PREVIEW  
+- `CLIENT_FALLBACK` فقط عند غياب doc-node أو تعطيل PROCESSING_V2
+
+## Rate limit
+
+ذاكرة داخلية = تطوير فقط. الإنتاج يتطلّب الموزّع (`generic_rate_limit_windows`).
 
 ## مصدر الحقيقة (browser ↔ doc-node)
 

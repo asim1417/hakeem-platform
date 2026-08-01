@@ -9,6 +9,16 @@ HAKEEM_COMPOSER_DOCUMENTS_V1=0
 NEXT_PUBLIC_HAKEEM_COMPOSER_DOCUMENTS_V1=0
 NEXT_PUBLIC_HAKEEM_COMPOSER_ATTACHMENTS_V2=0
 HAKEEM_DOC_NODE_CALLBACK_V1=0
+HAKEEM_ATTACHMENT_RATE_LIMIT_DISTRIBUTED=0
+```
+
+## Rate limiter
+
+الذاكرة الداخلية **ليست** حماية إنتاج. قبل تفعيل V2 إنتاجيًا:
+
+```bash
+HAKEEM_ATTACHMENT_RATE_LIMIT_DISTRIBUTED=1
+npx tsx scripts/apply-generic-rate-limit-windows.ts
 ```
 
 النتيجة: Ask يعود لمسار `document` النصي + `extractFile` المحلي دون الاعتماد على doc-node.

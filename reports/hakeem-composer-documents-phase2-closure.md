@@ -1,80 +1,78 @@
 # تقرير إغلاق تحصين — Composer Documents Phase 2 (PR #594)
 
-**التاريخ:** 2026-08-01  
+**التاريخ:** 2026-08-01 (جولة الإغلاق النهائي المحدود)  
 **الفرع:** `cursor/composer-documents-da55`  
 **PR:** [#594](https://github.com/asim1417/hakeem-platform/pull/594)  
-**الحالة:** تحصين مكتمل للاختبار — **لا Mark Ready · لا دمج · لا نشر · لا مرحلة ثالثة**
+**الحالة:** تحصين مكتمل — **لا Mark Ready · لا دمج · لا نشر · لا مرحلة ثالثة**
 
 ---
 
-## 1. توحيد الأعلام
+## 1. الفرق بين Local extraction وServer processing
 
-- مصدر القرار: `lib/modules/hakeem-composer/document-flags.ts`
-- `isComposerAttachmentClientPersistEnabled()` = `NEXT_PUBLIC_ATTACHMENTS_V2` **أو** `NEXT_PUBLIC_DOCUMENTS_V1`
-- V2 **لا يشترط** DOCUMENTS_V1
-- `alignClientServerDocumentFlags()` يمنع `enforceV2` عندما يبدو العميل V2 والخادم Legacy
-- DOCUMENTS_V1 توافق خلفي فقط
-
-## 2. مصدر الحقيقة بين browser وdoc-node
-
-| شرط | المصدر النهائي |
+| الحقل | المعنى |
 |---|---|
-| `DOCUMENT_PROCESSING_V2` + doc-node متاح/نشط | **doc-node**؛ المتصفح معاينة فقط |
-| doc-node غير متاح أو المعالجة معطّلة | `CLIENT_FALLBACK` / `CLIENT_UNVERIFIED` مع سبب |
-| اكتمال doc-node لاحقًا | ترقية/استبدال مسموح لـ Job الحالي فقط |
+| `localExtractionStatus` | نجاح/فشل `extractFile` في المتصفح فقط |
+| `serverProcessingStatus` | `UPLOADED` / `QUEUED` / `EXTRACTING` / `READY`… من الخادم |
+| `serverVerificationStatus` | `PREVIEW_ONLY` / `CLIENT_UNVERIFIED` / `SERVER_VERIFIED` |
+| `status` (واجهة) | **مشتق** عبر `deriveComposerAttachmentStatus` — لا يُختزل إلى `ready` عند نجاح محلي + مرفق خادمي معلّق |
 
-## 3. Provenance
+**قاعدة الإرسال (V2 + PROCESSING):**  
+مع `serverAttachmentId` → `attachmentIds` فقط، **بلا** `document` inline.  
+`CLIENT_PREVIEW` / Pending → الخادم يعيد `ATTACHMENT_NOT_READY`؛ النص المحلي لا يتجاوز ذلك.
 
-```
-SERVER_LOCAL | SERVER_GEMINI | SERVER_QARI | CLIENT_PREVIEW | CLIENT_FALLBACK
-```
+## 2. متى يُسمح بـ CLIENT_FALLBACK
 
-الخادم يحدد: extractionEngine، provider، model، confidence، verificationStatus.  
-`POST /extraction` يتجاهل engine/confidence من العميل ويقيّد Ask + حد النص.
+فقط عندما يقرر الخادم:
 
-## 4. منع السباق
+- `DOCUMENT_PROCESSING_V2` معطّل، **أو**
+- doc-node غير مضبوط (`DOC_NODE_URL` / `DOC_TOOL_URL` فارغ)
 
-- `decideClientExtractionWrite` / `decideServerJobWrite`
-- `docNodeJobId` + `docNodeGeneration` / `docNodeCompletedGeneration`
-- Job قديم بعد forceReprocess → رفض `STALE_JOB_ID`
-- المعاينة في `metadata.clientPreviewText` دون كتابة `extractedText` النهائي
+عندها: `CLIENT_UNVERIFIED` + كتابة نص مسموحة.  
+لاحقًا يمكن لـ doc-node الترقية إن وصل.  
+`CLIENT_PREVIEW` = عرض فقط في `metadata.clientPreviewText` — **لا يدخل إجابة النموذج**.
 
-## 5. pageRange الحقيقي
+## 3. إنفاذ محاذاة الأعلام في Runtime
 
-- `read-attachment-pages.ts` + تحميل `metadata.pages` في AgentContext
-- تحقق from/to صحيحين وضمن المستند
-- إرجاع pageNumber/text/status/confidence/warning
-- queryHint حتمي بسيط (بلا هجين)
-- بلا صفحات → نص مجمّع + تحذير دون ادّعاء رقم صفحة
-- `auditedPageReads` في السياق (أرقام فقط)
+- ترويسة: `x-hakeem-attachments-version: 2` (+ حقل `attachmentsVersion`)
+- `decideAttachmentsRuntime` / `decideAgentSearchAttachmentsMode` في:
+  - `POST /api/attachments`
+  - `POST /api/attachments/[id]/extraction`
+  - `POST /api/ai/agent-search`
+- **CLIENT_V2_SERVER_LEGACY** → `409` قبل إنشاء attachmentId يبدو V2
+- **SERVER_V2_CLIENT_LEGACY** → لا ادّعاء V2 للعميل؛ ids تُفرض خادميًا إن وُجدت وإلا legacy document
 
-## 6. ترتيب أخطاء المرفقات
+## 4. منع تسريب Graph token
 
-قوائم: missing / forbidden / pending / failed / quarantined / partial / ready  
-`hasAttachmentReference` ≠ `hasReadyAttachmentContent`  
+`fetchGraphContentFollowingRedirects`:
 
-ترتيب attached-only:  
-1 FORBIDDEN → 2 REQUIRES_ATTACHMENT → 3 QUARANTINED → 4 PROCESSING_FAILED → 5 NOT_READY → PARTIAL مسموح
+1. الطلب الأول إلى `graph.microsoft.com` **فقط** يحمل `Authorization`
+2. `302/303` إلى `*.sharepoint.com` → يُتبع **بلا** token
+3. redirect خارجي / HTTP downgrade / حلقات → رفض
 
-## 7. المصادقة وRate Limit
+## 5. نوع Rate Limiter
 
-ترتيب POST `/api/attachments`:  
-جلسة → Content-Length مبكر → Rate limit → FormData → صلاحية → تحقق بايتات  
+| مزود | متى |
+|---|---|
+| `InMemoryAttachmentUploadRateLimiter` | تطوير/اختبارات — **ليس حماية إنتاج** |
+| `PrismaAttachmentUploadRateLimiter` | خلف `HAKEEM_ATTACHMENT_RATE_LIMIT_DISTRIBUTED=1` + جدول `generic_rate_limit_windows` |
 
-**قرار موثّق:** `ATTACHMENTS_LIMITED` = عرض/تنزيل.  
-رفع Ask = `ASK_ATTACHMENT_UPLOAD` (FULL يغطيها عبر RBAC).
+**إنتاج:** بدون الموزّع → `RATE_LIMITER_NOT_PRODUCTION_READY` ورفض مسار V2 (`assertAttachmentsV2RateLimitReady`).  
+سكربت: `scripts/apply-generic-rate-limit-windows.ts`.
 
-## 8. حماية SharePoint
+## 6. ما اختُبر حيًا وما اختُبر بعقود
 
-- `sharepoint-download.ts`: بناء Graph `/content` من storageKey
-- رفض webUrl العام مع Authorization
-- `fetchWithAuthNoExternalRedirect` يمنع redirect خارج allowlist
-- لا SSRF عبر metadata.storageUrl
+| حي / بيئة كاملة | عقود / mocks |
+|---|---|
+| — لا HTTP حي لـ Vercel+DB+doc-node | قبول الإغلاق 29 · أعلام · سباق · Graph redirect traces · memory limiter · send-policy |
+| build / tsc / lint | document-inspection · doc-node · source-policy · composer |
 
-## 9. الاختبارات ونتائجها
+**صراحة:** ليست اختبارات End-to-End متصفحية حية.
+
+## 7. نتائج الاختبارات (جولة الإغلاق النهائي)
 
 | أمر | نتيجة |
 |---|---|
+| test:composer-attachments-closure | 29/29 |
 | test:document-flags | 19/19 |
 | test:extraction-race | 32/32 |
 | test:composer-attachments-contract | 13/13 |
@@ -88,46 +86,20 @@ SERVER_LOCAL | SERVER_GEMINI | SERVER_QARI | CLIENT_PREVIEW | CLIENT_FALLBACK
 | test:hakeem-composer | 40/40 |
 | test:intent-gate | 17/17 |
 | test:runtime | 20/20 |
-| tsc --noEmit | ✅ |
-| lint | تحذيرات قديمة فقط (لا حجب) |
-| build | ✅ |
+| tsc / lint / build | ✅ |
 
-## 10. ما اختُبر حيًا وما اختُبر بعقود
+## 8. المخاطر المتبقية
 
-| حي / بيئة كاملة | عقود / mocks / فحص مصدر |
-|---|---|
-| — لا HTTP حي لـ Vercel+DB+doc-node في هذه الجولة | مصفوفة الأعلام، السباق، الصفحات، التصنيف، SharePoint URL، rate limit، read_attachment، regression مصدر المسارات |
-| doc-node unit (خدمات محلية) | محاكاة دورة upload→queue→sync→read كعقد |
+- جدول `generic_rate_limit_windows` يحتاج apply قبل تفعيل الموزّع في الإنتاج
+- بلا DB حية: مسارات Prisma للـ limiter الموزّع لم تُثبت تكامليًا هنا
+- صلاحية `ASK_ATTACHMENT_UPLOAD` قد تحتاج seed على بيئات قديمة
+- لا Webhook HMAC · لا هجين · لا مرحلة ثالثة
 
-**صراحة:** ليست اختبارات End-to-End متصفحية حية.
+## 9. الملفات الجديدة/المعدّلة (أبرزها)
 
-## 11. المخاطر المتبقية
-
-- بدون DB اختبارية حية: مسارات Prisma في complete/sync لم تُثبت تكامليًا على بيانات حقيقية هنا
-- Webhook HMAC ما زال مؤجّلًا (polling)
-- TRAINEE يحتاج منح `ASK_ATTACHMENT_UPLOAD` في بيئات DB قديمة (البذرة محدّثة؛ قد يلزم seed/migrate صلاحيات)
-- queryHint حتمي بسيط — ليس بحثًا هجينًا
-- Content-Length قد يغيب عن بعض الوكلاء؛ التحقق الحقيقي بعد البايتات يبقى
-
-## 12. الملفات المعدّلة (أبرزها)
-
-- `lib/modules/hakeem-composer/document-flags.ts` (جديد)
-- `lib/modules/attachments/extraction-provenance.ts` (جديد)
-- `lib/modules/attachments/attachment-classify.ts` (جديد)
-- `lib/modules/attachments/read-attachment-pages.ts` (جديد)
-- `lib/modules/attachments/sharepoint-download.ts` (جديد)
-- `lib/modules/attachments/upload-rate-limit.ts` (جديد)
-- `lib/modules/attachments/complete-extraction.ts`
-- `lib/modules/attachments/document-processing-adapter.ts`
-- `lib/modules/attachments/blob-storage.ts`
-- `lib/modules/hakeem-composer/document-bridge.ts` / `persist-ask-attachment.ts`
-- `lib/modules/hakeem-agent/tools.ts` / `runtime.ts`
-- `app/api/attachments/route.ts` / `[id]/extraction/route.ts`
-- `app/api/ai/agent-search/route.ts`
-- `lib/modules/auth/role-permissions.ts` / `rbac.ts` / `role-admin.ts`
-- `components/ask/HakeemAskWorkspace.tsx` / `AdminUsersManager.tsx`
-- اختبارات + docs + هذا التقرير
-
----
-
-**خارج النطاق (متعمد):** Webhook HMAC كامل · جدول Pages · هجين · embeddings · استشهادات V2 · صوت · قضايا كاملة · OCR جديد · Dashboard
+- `attachment-send-policy.ts` · `attachments-version.ts`
+- `upload-rate-limit.ts` (واجهة + memory/prisma)
+- `sharepoint-download.ts` (Auth على Graph فقط)
+- `HakeemAskWorkspace.tsx` · مسارات attachments / extraction / agent-search
+- `prisma` + `apply-generic-rate-limit-windows.ts`
+- `scripts/test-composer-attachments-closure.ts`
