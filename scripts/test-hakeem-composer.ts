@@ -123,7 +123,7 @@ const coreOnly = composerSourcesToPolicy(["legal-core"]);
 t(coreOnly.legalLibrary === true && coreOnly.judgments === false, "أنظمة فقط بلا أحكام");
 t(decideToolAccess("islamic_library_scan", coreOnly).allowed === false, "منع مصدر خارجي بلا ويب");
 const bad = normalizeSourcePolicy({ legalLibrary: true });
-t(bad.legalLibrary === true && bad.web === false, "تطبيع سياسة ناقصة → افتراضات آمنة");
+t(bad.legalLibrary === false && bad.strictScope === true, "تطبيع سياسة ناقصة → مقيدة (لا Default واسع)");
 const iAttached = routeComposerIntent({ text: "حلّل", mode: "auto", hasAttachment: true, sources: ["attached-only"] });
 t(iAttached.requiredTools.includes("read_attachment") && !iAttached.requiredTools.includes("legal_search"), "intent يحترم attached-only");
 

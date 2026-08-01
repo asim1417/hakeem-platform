@@ -89,13 +89,45 @@ export async function orchestrate(
     return { intent: intent.type, reply: intent.reply, issues: [], articles: [], mode };
   }
 
-  // سياسة مصادر: مرفقات فقط / بلا مكتبة → لا بحث في النواة
+  // سياسة مصادر فعّالة فقط: بلا مكتبة أنظمة/لوائح
   if (policy && !policy.legalLibrary && !policy.regulations) {
+    // أحكام ومبادئ فقط — استرجاع سوابق دون بحث مواد
+    if (policy.judgments) {
+      onStep({
+        id: "source-policy",
+        status: "done",
+        label: "نطاق المصادر: أحكام ومبادئ فقط",
+        data: { sourcePolicy: policy, judgmentsOnly: true },
+      });
+      onStep({ id: "precedents", status: "running", label: "أجمع الأحكام والمبادئ القضائية" });
+      const [rul, prin] = await Promise.all([search_rulings(query, 6), search_principles(query, 6)]);
+      const rulingsOnly = rul.ok ? rul.data : [];
+      const principlesOnly = prin.ok ? prin.data : [];
+      onStep({
+        id: "precedents",
+        status: "done",
+        label: `أحكام ${rulingsOnly.length.toLocaleString("ar-SA")} · مبادئ ${principlesOnly.length.toLocaleString("ar-SA")}`,
+      });
+      return {
+        intent: intent.type,
+        issues: [],
+        articles: [],
+        mode,
+        rulings: rulingsOnly,
+        principles: principlesOnly,
+        analysis:
+          rulingsOnly.length || principlesOnly.length
+            ? "وفق نطاق المصادر المحدد، اقتصر الاسترجاع على الأحكام والمبادئ القضائية دون البحث في مكتبة الأنظمة."
+            : "لم يُعثر على أحكام أو مبادئ مطابقة ضمن النطاق المحدد (بلا بحث في مكتبة الأنظمة).",
+      };
+    }
+
+    // مرفقات فقط / بلا مصادر استرجاع مكتبة — لا بحث قانوني
     onStep({
       id: "source-policy",
       status: "done",
       label: "نطاق المصادر لا يشمل مكتبة الأنظمة",
-      data: { sourcePolicy: policy },
+      data: { sourcePolicy: policy, retrievalBlocked: true },
     });
     return {
       intent: intent.type,

@@ -30,13 +30,12 @@ import { getUsageServiceCost } from "@/lib/modules/credits/usage-ledger";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import {
   DEFAULT_SOURCE_POLICY,
-  composerSourcesToPolicy,
+  defaultServerCapabilities,
   describeSourcePolicy,
   isSourcePolicyV2Enabled,
-  normalizeSourcePolicy,
+  resolveEffectiveSourcePolicy,
   type SourcePolicy,
 } from "@/lib/modules/hakeem-composer/source-policy";
-import type { ComposerSourceId } from "@/lib/modules/hakeem-composer/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -78,21 +77,40 @@ export async function POST(request: NextRequest) {
   const attachedDoc = String(body?.document ?? "").trim().slice(0, 200_000);
   const hasDoc = attachedDoc.length > 0;
 
-  // سياسة المصادر: إنفاذ خادمي خلف العلم — وإلا افتراضي متوافق (لا يغيّر السلوك التاريخي).
+  // سياسة المصادر: الخادم يبني effectivePolicy ولا يثق بـ boolean من العميل.
   const policyEnabled = isSourcePolicyV2Enabled();
   let sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY;
+  let requestedPolicy: SourcePolicy | null = null;
+  let requestedSources: string[] = [];
+  let deniedSources: Array<{ source: string; reason: string }> = [];
+  let policyReasons: string[] = [];
+  let usedFallback = false;
+
   if (policyEnabled) {
-    if (body.sourcePolicy != null) {
-      sourcePolicy = normalizeSourcePolicy(body.sourcePolicy);
-    } else if (Array.isArray(body.sources)) {
-      sourcePolicy = composerSourcesToPolicy(
-        body.sources.filter((s): s is ComposerSourceId => typeof s === "string") as ComposerSourceId[]
+    const resolved = resolveEffectiveSourcePolicy({
+      requestedSources: body.sources,
+      requestedPolicy: body.sourcePolicy,
+      hasAttachment: hasDoc,
+      caseContext: null, // ربط القضايا في مرحلة لاحقة
+      serverCapabilities: defaultServerCapabilities({ hasAttachment: hasDoc, caseOwned: false }),
+      failOnInvalidPolicy: true,
+    });
+    if (!resolved.ok) {
+      return new Response(
+        JSON.stringify({
+          type: "error",
+          message: resolved.message,
+          code: "INVALID_SOURCE_POLICY",
+          details: resolved.details,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
       );
     }
-    // caseFiles بلا ربط قضية مصرّح: لا نفعّل الوصول بعد — يبقى مغلقًا حتى مرحلة السياق
-    if (sourcePolicy.caseFiles) {
-      sourcePolicy = { ...sourcePolicy, caseFiles: false };
-    }
+    requestedPolicy = resolved.requestedPolicy;
+    requestedSources = resolved.requestedSources;
+    sourcePolicy = resolved.effectivePolicy; // التنفيذ يعتمد على هذه فقط
+    deniedSources = resolved.deniedSources.map((d) => ({ source: String(d.source), reason: d.reason }));
+    policyReasons = resolved.reasons;
   }
   // مادّة التحليل: السؤال + المستند (إن وُجد). المستند لا يُصنَّف بوابة الاتّساع عليه.
   const query = hasDoc
@@ -131,7 +149,9 @@ export async function POST(request: NextRequest) {
         type: "error",
         message: "نطاق المصادر «المرفقات فقط» يتطلّب إرفاق مستند قبل الإرسال.",
         code: "SOURCE_POLICY_REQUIRES_ATTACHMENT",
-        sourcePolicy,
+        requestedPolicy,
+        effectivePolicy: sourcePolicy,
+        deniedSources,
       }),
       { status: 400, headers: { "Content-Type": "application/json; charset=utf-8" } }
     );
@@ -223,7 +243,14 @@ export async function POST(request: NextRequest) {
             id: "source-policy",
             status: "done",
             label: `نطاق المصادر: ${describeSourcePolicy(sourcePolicy).join(" · ") || "افتراضي"}`,
-            data: { sourcePolicy, enforced: true },
+            data: {
+              requestedPolicy,
+              effectivePolicy: sourcePolicy,
+              deniedSources,
+              reasons: policyReasons,
+              enforced: true,
+              featureFlag: "HAKEEM_COMPOSER_SOURCE_POLICY_V2",
+            },
           });
           void auditEvent({
             actorId: user.id,
@@ -231,11 +258,16 @@ export async function POST(request: NextRequest) {
             action: "AGENT_SEARCH_SOURCE_POLICY",
             entityId: jobId ?? undefined,
             metadata: {
-              sourcePolicy,
-              sources: body.sources ?? null,
+              requestedSources: requestedSources.slice(0, 20),
+              requestedPolicy,
+              effectivePolicy: sourcePolicy,
+              deniedSources,
+              reasons: policyReasons,
+              featureFlagEnabled: true,
+              usedFallback: false,
               mode: agentMode.id,
               hasDocument: hasDoc,
-              queryPreview: typed.slice(0, 120),
+              queryPreview: typed.slice(0, 80),
             },
           }).catch(() => undefined);
         }
@@ -294,7 +326,13 @@ export async function POST(request: NextRequest) {
                 mode: "ask",
                 attachments: attachRefs,
                 inputSnapshot: policyEnabled
-                  ? { detailed, mode: "ask", sources: body.sources ?? null, sourcePolicy }
+                  ? {
+                      detailed,
+                      mode: "ask",
+                      sources: body.sources ?? null,
+                      requestedPolicy,
+                      effectivePolicy: sourcePolicy,
+                    }
                   : undefined,
               });
               roomConvId = u.conversationId;
@@ -310,9 +348,12 @@ export async function POST(request: NextRequest) {
                 outputSnapshot: {
                   answerMode: "native-agent",
                   total: agent.basis.length,
-                  sourcePolicy: policyEnabled ? sourcePolicy : undefined,
+                  requestedPolicy: policyEnabled ? requestedPolicy : undefined,
+                  effectivePolicy: policyEnabled ? sourcePolicy : undefined,
+                  deniedSources: policyEnabled ? deniedSources : undefined,
                   invokedTools: agent.invokedTools ?? [],
                   deniedTools: agent.deniedTools ?? [],
+                  usedFallback: false,
                 },
               });
             } catch {
@@ -325,10 +366,14 @@ export async function POST(request: NextRequest) {
                 action: "AGENT_SEARCH_SOURCES_USED",
                 entityId: roomConvId ?? jobId ?? undefined,
                 metadata: {
-                  sourcePolicy,
+                  requestedPolicy,
+                  effectivePolicy: sourcePolicy,
+                  deniedSources,
                   invokedTools: agent.invokedTools ?? [],
                   deniedTools: agent.deniedTools ?? [],
                   basisCount: agent.basis.length,
+                  usedFallback: false,
+                  featureFlagEnabled: true,
                 },
               }).catch(() => undefined);
             }
@@ -339,17 +384,31 @@ export async function POST(request: NextRequest) {
               basis: agent.basis,
               total: agent.basis.length,
               conversationId: roomConvId ?? undefined,
-              sourcePolicy: policyEnabled ? sourcePolicy : undefined,
+              requestedPolicy: policyEnabled ? requestedPolicy : undefined,
+              effectivePolicy: policyEnabled ? sourcePolicy : undefined,
+              deniedSources: policyEnabled ? deniedSources : undefined,
               invokedTools: agent.invokedTools ?? [],
               deniedTools: agent.deniedTools ?? [],
             });
             send({ type: "done" });
             return;
           }
-          send({ type: "step", id: "native-fallback", status: "done", label: "تعذّر الوكيل الأصيل — متابعةٌ بالمسار القياسيّ", data: { error: agent.error } });
+          usedFallback = true;
+          send({
+            type: "step",
+            id: "native-fallback",
+            status: "done",
+            label: "تعذّر الوكيل الأصيل — متابعةٌ بالمسار القياسيّ",
+            data: {
+              error: agent.error,
+              usedFallback: true,
+              effectivePolicy: policyEnabled ? sourcePolicy : undefined,
+            },
+          });
         }
 
         // ①→③ المنسّق: بوّابة النيّة + التكييف + التخريج، ويبثّ خطواته حيًّا.
+        // يستقبل effectivePolicy فقط — لا يُمرَّر body.sourcePolicy الخام.
         // المستوى: وضع «اسأل» — مبدّل «بحث تفصيلي» يفرض العميق وإلا يُقترَح تلقائيًّا. أوضاع الإخراج
         // الأخرى (حلّل قضية…) تشغّل الوكيل مرّة واحدة (quick) وتتخطّى الاتّساع، ثم تُصاغ بتعليمة الوضع.
         // أوضاع التحليل (حلّل قضية · خطة عمل · تقدير حكم) تستحقّ استرجاعًا عميقًا (٧ جولات +
@@ -393,6 +452,51 @@ export async function POST(request: NextRequest) {
         // نيّة غير قانونية (تحية/شكر/تعريف/خارج النطاق) → ردّ مباشر بلا بحث.
         if (!intentNeedsSearch(result.intent)) {
           send({ type: "result", answer: result.reply ?? null, mode: "intent", basis: [], total: 0, intent: result.intent });
+          send({ type: "done" });
+          return;
+        }
+
+        // حظر استرجاع بالمكتبة وفق effectivePolicy (مثل مرفقات فقط أو سقوط من الوكيل الأصيل)
+        if (
+          policyEnabled &&
+          result.reply &&
+          !result.articles.length &&
+          !result.analysis &&
+          !result.clarify &&
+          !(result.enumGroups && result.enumGroups.length)
+        ) {
+          if (policyEnabled) {
+            void auditEvent({
+              actorId: user.id,
+              subject: "AI_GATEWAY",
+              action: "AGENT_SEARCH_SOURCES_USED",
+              entityId: jobId ?? undefined,
+              metadata: {
+                requestedSources: requestedSources.slice(0, 20),
+                requestedPolicy,
+                effectivePolicy: sourcePolicy,
+                deniedSources,
+                reasons: policyReasons,
+                deniedTools: [],
+                invokedTools: [],
+                usedFallback,
+                featureFlagEnabled: true,
+                retrievalBlockedByPolicy: true,
+              },
+            }).catch(() => undefined);
+          }
+          send({
+            type: "result",
+            answer: result.reply,
+            mode: usedFallback ? "source-policy-fallback" : "source-policy",
+            basis: [],
+            total: 0,
+            requestedPolicy,
+            effectivePolicy: sourcePolicy,
+            deniedSources,
+            enforced: true,
+            usedFallback,
+          });
           send({ type: "done" });
           return;
         }
@@ -445,6 +549,24 @@ export async function POST(request: NextRequest) {
                 internalUrl: a.internalUrl
               })));
           consume();
+          if (policyEnabled) {
+            void auditEvent({
+              actorId: user.id,
+              subject: "AI_GATEWAY",
+              action: "AGENT_SEARCH_SOURCES_USED",
+              entityId: jobId ?? undefined,
+              metadata: {
+                requestedSources: requestedSources.slice(0, 20),
+                requestedPolicy,
+                effectivePolicy: sourcePolicy,
+                deniedSources,
+                reasons: policyReasons,
+                usedFallback,
+                featureFlagEnabled: true,
+                basisCount: basis.length,
+              },
+            }).catch(() => undefined);
+          }
           send({
             type: "result",
             answer: result.analysis,
@@ -452,7 +574,12 @@ export async function POST(request: NextRequest) {
             basis,
             total: result.articles.length,
             issues: result.issues.map((i) => i.issue),
-            coverage: result.coverage ? { answered: result.coverage.answered, total: result.coverage.issues.length, issues: result.coverage.issues } : undefined
+            coverage: result.coverage ? { answered: result.coverage.answered, total: result.coverage.issues.length, issues: result.coverage.issues } : undefined,
+            requestedPolicy: policyEnabled ? requestedPolicy : undefined,
+            effectivePolicy: policyEnabled ? sourcePolicy : undefined,
+            deniedSources: policyEnabled ? deniedSources : undefined,
+            enforced: policyEnabled || undefined,
+            usedFallback: usedFallback || undefined,
           });
           send({ type: "done" });
           return;
