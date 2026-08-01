@@ -1,80 +1,162 @@
-{
- "PROCEDURAL_SEQUENCE": {
-  "تسمع الدعوي": {
-   "khudayri-B": {
-    "count": 4,
-    "firstPage": 39
-   }
-  },
-  "تعرض الدعوي": {
-   "khudayri-B": {
-    "count": 6,
-    "firstPage": 10
-   }
-  },
-  "فتطلب البينه": {
-   "khudayri-B": {
-    "count": 3,
-    "firstPage": 43
-   }
-  },
-  "فان احضر بينه": {
-   "khudayri-B": {
-    "count": 3,
-    "firstPage": 64
-   }
-  },
-  "فان حلف": {
-   "khudayri-B": {
-    "count": 1,
-    "firstPage": 70
-   }
-  },
-  "وان نكل": {
-   "khudayri-B": {
-    "count": 1,
-    "firstPage": 70
-   }
-  },
-  "يحكم بثبوت": {
-   "khudayri-B": {
-    "count": 3,
-    "firstPage": 10
-   }
-  },
-  "يصرف النظر": {
-   "khudayri-B": {
-    "count": 12,
-    "firstPage": 33
-   }
-  }
+[
+ {
+  "disp": "تُسمع الدعوى",
+  "cls": "PROCEDURAL_SEQUENCE",
+  "func": "افتتاح سماع الدعوى",
+  "page": 39,
+  "count": 4,
+  "pages": [
+   39,
+   53,
+   60,
+   74
+  ]
  },
- "ANSWER_FORMULATION": {
-  "فان اقر": {
-   "khudayri-B": {
-    "count": 1,
-    "firstPage": 59
-   }
-  },
-  "او صادق": {
-   "khudayri-B": {
-    "count": 1,
-    "firstPage": 10
-   }
-  }
+ {
+  "disp": "تُعرض الدعوى",
+  "cls": "PROCEDURAL_SEQUENCE",
+  "func": "عرض الدعوى على الخصم",
+  "page": 10,
+  "count": 6,
+  "pages": [
+   10,
+   70,
+   72,
+   82,
+   88,
+   90
+  ]
  },
- "ISSUE_PRESENTATION": {
-  "وعليه العمل": {
-   "khudayri-B": {
-    "count": 1,
-    "firstPage": 38
-   }
-  },
-  "الفوايد": {
-   "khudayri-B": {
-    "count": 14,
-    "firstPage": 11
-   }
-  }
+ {
+  "disp": "فإن أقرّ",
+  "cls": "ANSWER_FORMULATION",
+  "func": "فرع الإقرار",
+  "page": 59,
+  "count": 1,
+  "pages": [
+   59
+  ]
+ },
+ {
+  "disp": "أو صادَق",
+  "cls": "ANSWER_FORMULATION",
+  "func": "المصادقة",
+  "page": 10,
+  "count": 1,
+  "pages": [
+   10
+  ]
+ },
+ {
+  "disp": "فتُطلب البيّنة",
+  "cls": "EVIDENCE_EXPRESSION",
+  "func": "طلب البيّنة",
+  "page": 43,
+  "count": 3,
+  "pages": [
+   43,
+   70,
+   91
+  ]
+ },
+ {
+  "disp": "فإن أحضر بيّنة",
+  "cls": "CONDITIONAL_BRANCH",
+  "func": "فرع إحضار البيّنة",
+  "page": 64,
+  "count": 3,
+  "pages": [
+   64,
+   70,
+   88
+  ]
+ },
+ {
+  "disp": "فإن حلف",
+  "cls": "OATH_EXPRESSION",
+  "func": "فرع الحلف",
+  "page": 70,
+  "count": 1,
+  "pages": [
+   70
+  ]
+ },
+ {
+  "disp": "وإن نكل",
+  "cls": "OATH_EXPRESSION",
+  "func": "فرع النكول",
+  "page": 70,
+  "count": 1,
+  "pages": [
+   70
+  ]
+ },
+ {
+  "disp": "يُحكم بثبوت",
+  "cls": "DISPOSITION_EXPRESSION",
+  "func": "الحكم بالثبوت",
+  "page": 10,
+  "count": 3,
+  "pages": [
+   10,
+   88,
+   91
+  ]
+ },
+ {
+  "disp": "يُصرف النظر",
+  "cls": "DISPOSITION_EXPRESSION",
+  "func": "صرف النظر عن الدعوى",
+  "page": 33,
+  "count": 12,
+  "pages": [
+   33,
+   35,
+   40,
+   43,
+   49,
+   56,
+   57,
+   68
+  ]
+ },
+ {
+  "disp": "والراجح",
+  "cls": "ISSUE_PRESENTATION",
+  "func": "الترجيح",
+  "page": 45,
+  "count": 3,
+  "pages": [
+   45,
+   62,
+   88
+  ]
+ },
+ {
+  "disp": "وعليه العمل",
+  "cls": "ISSUE_PRESENTATION",
+  "func": "ترجيح ما عليه العمل",
+  "page": 38,
+  "count": 1,
+  "pages": [
+   38
+  ]
+ },
+ {
+  "disp": "الفوائد",
+  "cls": "BENEFIT_PRESENTATION",
+  "func": "عرض الفوائد",
+  "page": 11,
+  "count": 14,
+  "pages": [
+   11,
+   16,
+   26,
+   36,
+   41,
+   44,
+   48,
+   54
+  ]
  }
-}
+]
