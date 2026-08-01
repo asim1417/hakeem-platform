@@ -5,6 +5,7 @@ import { listModels } from "@/lib/modules/ai/model-registry";
 import { listPrompts } from "@/lib/modules/ai/prompts/registry";
 import { loadPackages } from "@/lib/modules/packages/manifest-loader";
 import { DATA_CLASS_LABELS_AR } from "@/lib/modules/security/data-classification";
+import { complianceRuleStats } from "@/lib/modules/compliance/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function GovernancePage() {
   const models = listModels();
   const prompts = listPrompts();
   const packages = loadPackages();
+  const compliance = complianceRuleStats();
 
   return (
     <AdminPageShell currentPath="/admin/governance">
@@ -143,6 +145,24 @@ export default async function GovernancePage() {
                 ) : null}
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* محرك الامتثال (§15) */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold text-[#0E3435]">محرك الامتثال (§15)</h2>
+          <div className="rounded-xl border border-[rgba(14,52,53,0.1)] bg-white p-3">
+            <p className="text-sm text-[#0E3435]">
+              قواعد مسجّلة: <strong>{compliance.total}</strong> · معتمدة:{" "}
+              <strong>{compliance.authoritative}</strong> · نموذجيّة:{" "}
+              <strong>{compliance.demo}</strong>
+            </p>
+            <p className="mt-1 text-xs text-[rgba(14,52,53,0.6)]">
+              النطاقات: {compliance.subjects.join("، ")}
+            </p>
+            <p className="mt-2 rounded bg-[#FEF3C7] px-2 py-1 text-xs text-[#92400E]">
+              القواعد الحالية نموذجيّة غير معتمدة — تُستبدل بأساسٍ رسميّ عند اعتماده (§75/§76).
+            </p>
           </div>
         </section>
 

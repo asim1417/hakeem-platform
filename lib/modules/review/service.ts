@@ -11,6 +11,7 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auditEvent } from "@/lib/modules/audit/audit";
+import { evaluateCompliance } from "@/lib/modules/compliance/engine";
 
 export type { FindingSeverity, SuggestionStatus, ReviewSessionStatus };
 
@@ -30,12 +31,22 @@ export async function createSession(input: CreateSessionInput) {
       entityId: input.entityId ?? null,
     },
   });
+  // §15: فحص امتثال غير حاجب — يُسجَّل فقط، لا يمنع الإنشاء (منفصل عن الجودة).
+  const compliance = evaluateCompliance(
+    "review_session",
+    { title: input.title, entityType: input.entityType },
+    new Date().toISOString()
+  );
   await auditEvent({
     actorId: input.ownerId,
     subject: "ADMIN",
     action: "REVIEW_SESSION_CREATED",
     entityId: session.id,
-    metadata: { entityType: input.entityType },
+    metadata: {
+      entityType: input.entityType,
+      compliancePassed: compliance.passed,
+      complianceViolations: compliance.violations.length,
+    },
   });
   return session;
 }
