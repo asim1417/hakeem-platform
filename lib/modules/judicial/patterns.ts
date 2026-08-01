@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { JudicialPattern } from "./contracts";
 import { BENCH_LEXICON, PARTY_LEXICON } from "./language-kernel";
+import { REFERENCE_PATTERNS } from "./patterns-from-references";
 
 let seq = 0;
 function nextId(prefix: string): string {
@@ -63,7 +64,11 @@ const partyPatterns: JudicialPattern[] = PARTY_LEXICON.map((l) => ({
   negativeExamples: [],
 }));
 
-export const JUDICIAL_PATTERNS: readonly JudicialPattern[] = [...benchVerbPatterns, ...partyPatterns];
+// السجلّ = أنماط النواة اللغويّة (§13) + الأنماط المستخرَجة من المراجع بصفحاتها (§10-11).
+export const JUDICIAL_PATTERNS: readonly JudicialPattern[] = [...benchVerbPatterns, ...partyPatterns, ...REFERENCE_PATTERNS];
+
+/** الأنماط المستخرَجة من المراجع القضائيّة (بمصدرٍ وصفحة) — منفصلةً للتدقيق. */
+export const REFERENCE_DERIVED_PATTERNS = REFERENCE_PATTERNS;
 
 export function getPattern(id: string): JudicialPattern | undefined {
   return JUDICIAL_PATTERNS.find((p) => p.id === id);

@@ -60,7 +60,15 @@ function main() {
     "أفعال المحكمة تتطلّب سلطةً ساريةً وفحص سريان",
     benchVerbs.every((p) => p.currentLawCheckRequired && p.requiredAuthorityTypes.includes("CURRENT_OFFICIAL_AUTHORITY")),
   );
-  check("لا نمطٌ يدّعي مصدرًا خارجيًّا (لا اختلاق في PR1)", JUDICIAL_PATTERNS.every((p) => p.sourceLayer === "INTERNAL_HAKEEM_POLICY"));
+  // لا اختلاق: كلّ نمطٍ إمّا سياسةٌ داخليّة (نواة §13)، وإمّا مستخرَجٌ من مرجعٍ **بإسنادٍ حقيقيّ**
+  // (ملفّ + صفحة). لا نمطَ يدّعي مرجعًا بلا صفحة.
+  check(
+    "كلّ نمطٍ مؤصَّل: داخليّ أو مرجعيّ بصفحةٍ مثبتة",
+    JUDICIAL_PATTERNS.every(
+      (p) => p.sourceLayer === "INTERNAL_HAKEEM_POLICY" || (Boolean(p.sourceFileId) && typeof p.sourcePage === "number"),
+    ),
+  );
+  check("توجد أنماطٌ مستخرَجةٌ من المراجع بإسناد", JUDICIAL_PATTERNS.some((p) => p.sourceLayer.includes("REFERENCE") && p.sourcePage));
 
   // ⑤ §15 — التصنيف يشتقّ المسار والمرحلة من النصّ.
   const tc = characterizeJudicialTask({ text: "مذكرة اعتراض على حكم تجاري بطلب نقض" });

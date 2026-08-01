@@ -1,0 +1,80 @@
+{
+ "PROCEDURAL_SEQUENCE": {
+  "تسمع الدعوي": {
+   "khudayri-B": {
+    "count": 4,
+    "firstPage": 39
+   }
+  },
+  "تعرض الدعوي": {
+   "khudayri-B": {
+    "count": 6,
+    "firstPage": 10
+   }
+  },
+  "فتطلب البينه": {
+   "khudayri-B": {
+    "count": 3,
+    "firstPage": 43
+   }
+  },
+  "فان احضر بينه": {
+   "khudayri-B": {
+    "count": 3,
+    "firstPage": 64
+   }
+  },
+  "فان حلف": {
+   "khudayri-B": {
+    "count": 1,
+    "firstPage": 70
+   }
+  },
+  "وان نكل": {
+   "khudayri-B": {
+    "count": 1,
+    "firstPage": 70
+   }
+  },
+  "يحكم بثبوت": {
+   "khudayri-B": {
+    "count": 3,
+    "firstPage": 10
+   }
+  },
+  "يصرف النظر": {
+   "khudayri-B": {
+    "count": 12,
+    "firstPage": 33
+   }
+  }
+ },
+ "ANSWER_FORMULATION": {
+  "فان اقر": {
+   "khudayri-B": {
+    "count": 1,
+    "firstPage": 59
+   }
+  },
+  "او صادق": {
+   "khudayri-B": {
+    "count": 1,
+    "firstPage": 10
+   }
+  }
+ },
+ "ISSUE_PRESENTATION": {
+  "وعليه العمل": {
+   "khudayri-B": {
+    "count": 1,
+    "firstPage": 38
+   }
+  },
+  "الفوايد": {
+   "khudayri-B": {
+    "count": 14,
+    "firstPage": 11
+   }
+  }
+ }
+}
