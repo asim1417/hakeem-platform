@@ -36,6 +36,8 @@ export { buildProcedureGraph } from "./procedure-graph";
 export type { BuildProcedureGraphInput } from "./procedure-graph";
 export { executeQualityGates, isReleaseReady } from "./gate-executor";
 export type { GateExecutionInput, DraftStatement } from "./gate-executor";
+export { synthesizeDocumentRecipe } from "./recipe-synthesizer";
+export type { SynthesizeRecipeInput } from "./recipe-synthesizer";
 
 /** إصدار طبقة JDS ومرجع الأمر الحاكم — للتتبّع والتدقيق. */
 export const JDS_META = {
