@@ -408,13 +408,14 @@ export function HakeemComposer({
 
             <button
               type="button"
-              className={`hkm-composer__tool-btn focus-ring ${detailed ? "is-active" : ""}`}
+              className={`hkm-composer__tool-btn hkm-composer__tool-btn--deep focus-ring ${detailed ? "is-active" : ""}`}
               aria-pressed={detailed}
-              title="دراسة موسّعة"
+              aria-label="دراسة موسّعة تفصيلية"
+              title="دراسة موسّعة تفصيلية — بحثٌ أعمق وسوابق وتحقّق (أبطأ وأدقّ)"
               onClick={() => onDetailedChange(!detailed)}
             >
               <Telescope size={15} aria-hidden />
-              <span className="hkm-composer__tool-label">موسّعة</span>
+              <span className="hkm-composer__tool-label hkm-composer__tool-label--always">دراسة موسّعة</span>
             </button>
 
             <VoiceButton
