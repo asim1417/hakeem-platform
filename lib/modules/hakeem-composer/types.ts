@@ -25,6 +25,9 @@ export type ComposerSourceId =
   | "user-docs"
   | "case-files";
 
+/** يُعاد تصديره من وحدة السياسة — عقد خادمي موحّد */
+export type { SourcePolicy } from "./source-policy";
+
 export type AttachmentStatus =
   | "queued"
   | "uploading"
@@ -103,12 +106,15 @@ export type HakeemComposerRequest = {
     extractedText?: string;
   }>;
   sources: ComposerSourceId[];
+  /** عقد مصادر مهيكل — الإنفاذ على الخادم عند تفعيل العلم */
+  sourcePolicy?: import("./source-policy").SourcePolicy;
   context: Array<{ type: string; id: string; label: string }>;
   client: ComposerClientMeta;
   preferences: {
     responseLength?: "concise" | "balanced" | "detailed";
     citationMode?: "required" | "preferred" | "off";
     legalJurisdiction?: string;
+    /** انتقالي إلى حين اكتمال الإنفاذ الخادمي */
     sourceHint?: string;
   };
 };

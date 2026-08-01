@@ -47,6 +47,7 @@ import {
   composeAgentQuery,
   resolveEffectiveMode,
 } from "@/lib/modules/hakeem-composer/constants";
+import { composerSourcesToPolicy } from "@/lib/modules/hakeem-composer/source-policy";
 import { routeComposerIntent } from "@/lib/modules/hakeem-composer/intent-router";
 import type {
   ComposerAttachment,

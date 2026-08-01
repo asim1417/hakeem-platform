@@ -12,6 +12,11 @@ import {
   DEFAULT_SOURCES,
 } from "../lib/modules/hakeem-composer/constants";
 import {
+  composerSourcesToPolicy,
+  decideToolAccess,
+  normalizeSourcePolicy,
+} from "../lib/modules/hakeem-composer/source-policy";
+import {
   applySlashCommand,
   detectSlashTrigger,
   filterSlashCommands,
@@ -108,6 +113,19 @@ function nextBusy(busy: boolean, action: "send" | "stop"): boolean {
 }
 t(nextBusy(false, "send") === true, "بعد الإرسال: busy");
 t(nextBusy(true, "stop") === false, "بعد الإيقاف: ليس busy");
+
+// سياسة المصادر (عقد)
+const attOnly = composerSourcesToPolicy(["attached-only"]);
+t(attOnly.attachments === true && attOnly.legalLibrary === false && attOnly.strictScope === true, "مرفقات فقط → نطاق صارم بلا مكتبة");
+t(decideToolAccess("legal_search", attOnly).allowed === false, "مرفقات فقط تمنع legal_search");
+t(decideToolAccess("read_attachment", attOnly).allowed === true, "مرفقات فقط تسمح read_attachment");
+const coreOnly = composerSourcesToPolicy(["legal-core"]);
+t(coreOnly.legalLibrary === true && coreOnly.judgments === false, "أنظمة فقط بلا أحكام");
+t(decideToolAccess("islamic_library_scan", coreOnly).allowed === false, "منع مصدر خارجي بلا ويب");
+const bad = normalizeSourcePolicy({ legalLibrary: true });
+t(bad.legalLibrary === true && bad.web === false, "تطبيع سياسة ناقصة → افتراضات آمنة");
+const iAttached = routeComposerIntent({ text: "حلّل", mode: "auto", hasAttachment: true, sources: ["attached-only"] });
+t(iAttached.requiredTools.includes("read_attachment") && !iAttached.requiredTools.includes("legal_search"), "intent يحترم attached-only");
 
 console.log(`\nنتيجة: ${ok} نجح، ${fail} فشل`);
 if (fail) process.exit(1);

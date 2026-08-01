@@ -6,6 +6,7 @@ import type {
   ComposerSurface,
   HakeemComposerRequest,
 } from "./types";
+import { composerSourcesToPolicy } from "./source-policy";
 
 export const COMPOSER_CSS_VARS = {
   bg: "var(--composer-bg, var(--hakeem-paper, var(--paper, #fff)))",
@@ -349,6 +350,7 @@ export function buildComposerRequest(input: {
       ? crypto.randomUUID()
       : `msg-${Date.now()}`;
   const sourceHint = buildSourceHint(input.sources);
+  const sourcePolicy = composerSourcesToPolicy(input.sources);
   return {
     conversationId: input.conversationId || undefined,
     messageId,
@@ -364,6 +366,7 @@ export function buildComposerRequest(input: {
         extractedText: a.extractedText,
       })),
     sources: input.sources,
+    sourcePolicy,
     context: input.context,
     client: {
       locale: "ar-SA",
@@ -375,6 +378,7 @@ export function buildComposerRequest(input: {
       responseLength: input.detailed ? "detailed" : "balanced",
       citationMode: "required",
       legalJurisdiction: "SA",
+      /** انتقالي: يُزال بعد تفعيل HAKEEM_COMPOSER_SOURCE_POLICY_V2 بالكامل */
       sourceHint: sourceHint || undefined,
     },
   };

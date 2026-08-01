@@ -40,14 +40,18 @@ export function routeComposerIntent(input: {
   sources?: ComposerSourceId[];
 }): HakeemIntent {
   const text = (input.text || "").trim();
+  const sources = input.sources ?? [];
+  const attachedOnly = sources.includes("attached-only");
   const slash = resolveAgentSlash(text);
   if (slash) {
     return {
       category: "workflow-action",
-      requiresRetrieval: true,
-      requiresCitations: true,
-      requiresFiles: /حكم|عقد|مرفق|مستند/.test(text) || input.hasAttachment,
-      requiredTools: [slash.spec.target, slash.spec.skill],
+      requiresRetrieval: !attachedOnly,
+      requiresCitations: !attachedOnly,
+      requiresFiles: /حكم|عقد|مرفق|مستند/.test(text) || input.hasAttachment || attachedOnly,
+      requiredTools: attachedOnly
+        ? ["read_attachment"]
+        : [slash.spec.target, slash.spec.skill],
       outputType: slash.spec.target.includes("drafter") ? "memo" : "report",
       riskLevel: "medium",
       confidence: 0.95,
@@ -58,16 +62,26 @@ export function routeComposerIntent(input: {
 
   if (input.mode !== "auto") {
     const mode = resolveEffectiveMode(input.mode);
-    return intentFromMode(mode, text, input.hasAttachment);
+    const base = intentFromMode(mode, text, input.hasAttachment);
+    if (attachedOnly) {
+      return {
+        ...base,
+        requiresRetrieval: false,
+        requiresFiles: true,
+        requiredTools: ["read_attachment"],
+        category: "document-review",
+      };
+    }
+    return base;
   }
 
-  if (!text && input.hasAttachment) {
+  if ((!text && input.hasAttachment) || attachedOnly) {
     return {
       category: "document-review",
-      requiresRetrieval: true,
-      requiresCitations: true,
+      requiresRetrieval: !attachedOnly,
+      requiresCitations: !attachedOnly,
       requiresFiles: true,
-      requiredTools: ["read_attachment", "legal_search"],
+      requiredTools: attachedOnly ? ["read_attachment"] : ["read_attachment", "legal_search"],
       outputType: "report",
       riskLevel: "medium",
       confidence: 0.8,

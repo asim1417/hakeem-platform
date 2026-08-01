@@ -52,6 +52,8 @@ const postSchema = z.object({
   retrievedSources: z.array(retrievedSourceSchema).optional(),
   status: z.enum(["pending", "streaming", "completed", "failed", "cancelled"]).optional(),
   statePatch: z.record(z.unknown()).optional(),
+  /** لقطة مدخلات الطلب (مصادر/سياسة/وضع) — توافق خلفي اختياري */
+  inputSnapshot: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
       retrievedSources: body.retrievedSources,
       status: body.status,
       statePatch: body.statePatch,
+      inputSnapshot: body.inputSnapshot,
     });
     return NextResponse.json({ ok: true, ...result }, { status: result.created ? 201 : 200 });
   } catch (e) {
