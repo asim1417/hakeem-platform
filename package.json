@@ -66,6 +66,7 @@
     "test:compliance-engine": "tsx scripts/test-compliance-engine.ts",
     "test:knowledge-uri": "tsx scripts/test-knowledge-uri.ts",
     "test:workflow-sm": "tsx scripts/test-workflow-state-machine.ts",
+    "test:optional-contracts": "tsx scripts/test-optional-contracts.ts",
     "packages:validate": "node packages/validate.mjs",
     "test:dialogue-acceptance": "tsx scripts/test-model-led-dialogue.ts",
     "test:search-fixes": "tsx scripts/test-search-fixes.ts",
