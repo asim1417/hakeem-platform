@@ -300,6 +300,7 @@ model CaseFile {
   title       String
   summary     String?
   status      CaseStatus   @default(OPEN)
+  dataClass   DataClass?   @map("data_class") // §21 — اختياريّ (null=INTERNAL)
   ownerId     String
   owner       User         @relation(fields: [ownerId], references: [id])
   attachments Attachment[]
@@ -361,6 +362,7 @@ model Attachment {
   extractionErrorCode    String?
   extractionStartedAt    DateTime?
   extractionCompletedAt  DateTime?
+  dataClass              DataClass?                   @map("data_class") // §21 — اختياريّ
   createdAt              DateTime                     @default(now())
   updatedAt              DateTime                     @default(now()) @updatedAt
 
@@ -374,6 +376,7 @@ model Consultation {
   caseId        String?
   facts         String
   status        String                 @default("DRAFT")
+  dataClass     DataClass?             @map("data_class") // §21 — اختياريّ
   output        String?
   qualityReport Json?
   citations     ConsultationCitation[]
@@ -580,6 +583,15 @@ enum RelationStatus {
   VERIFIED
   REJECTED
   SUPERSEDED
+}
+
+// تصنيف البيانات الأمنيّ (المخطط السيادي §21). اختياريّ على الكيانات الحسّاسة؛
+// غيابه (null) يُعامَل INTERNAL عبر مساعد data-classification. وسمٌ لا حجب في البداية.
+enum DataClass {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  RESTRICTED
 }
 
 // ── Knowledge Graph: علاقات قانونية متعدّدة الأشكال (polymorphic) ──
@@ -1117,6 +1129,7 @@ model JudicialWorkCase {
   subject        String
   stage          String   @default("active")
   confidentiality String  @default("normal")
+  dataClass      DataClass? @map("data_class") // §21 — تصنيف أمنيّ اختياريّ فوق confidentiality
   attachments    Json     @default("[]")
   structured     Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at")
