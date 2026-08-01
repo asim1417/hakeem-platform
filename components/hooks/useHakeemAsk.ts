@@ -107,6 +107,9 @@ export function useHakeemAsk() {
   const [busy, setBusy] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [sessionSaved, setSessionSaved] = useState(false);
+  // «دراسة موسّعة»: يُفعّل الوضع العميق (بحثٌ أعمق ٧ جولات + سوابق + تحقّق) في نفس صندوق الرئيسية.
+  const [detailed, setDetailed] = useState(false);
+  const detailedRef = useRef(false);
   const busyRef = useRef(false);
   const turnsRef = useRef<AskTurn[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -114,7 +117,7 @@ export function useHakeemAsk() {
   const composedRef = useRef(false);
   const pendingRunHandledRef = useRef(false);
   const resultAnchorRef = useRef<HTMLDivElement | null>(null);
-  const askRef = useRef<(raw?: string, opts?: { skipBreadth?: boolean; followUp?: boolean }) => Promise<void>>(
+  const askRef = useRef<(raw?: string, opts?: { skipBreadth?: boolean; followUp?: boolean; detailed?: boolean }) => Promise<void>>(
     async () => undefined
   );
 
@@ -131,6 +134,10 @@ export function useHakeemAsk() {
   useEffect(() => {
     busyRef.current = busy;
   }, [busy]);
+
+  useEffect(() => {
+    detailedRef.current = detailed;
+  }, [detailed]);
 
   useEffect(() => {
     turnsRef.current = turns;
@@ -164,7 +171,7 @@ export function useHakeemAsk() {
   const ask = useCallback(
     async (
       raw?: string,
-      opts?: { skipBreadth?: boolean; followUp?: boolean }
+      opts?: { skipBreadth?: boolean; followUp?: boolean; detailed?: boolean }
     ) => {
       const question = (raw ?? value).trim();
       if (busyRef.current) return;
@@ -224,6 +231,7 @@ export function useHakeemAsk() {
       const result = await runAgentSearch({
         query: question,
         mode: "ask",
+        detailed: opts?.detailed ?? detailedRef.current,
         skipBreadth: opts?.skipBreadth,
         history: history.length ? history : undefined,
         signal: controller.signal,
@@ -330,13 +338,13 @@ export function useHakeemAsk() {
 
   const askClarify = useCallback(
     (query: string, exhaustive?: boolean) => {
-      void ask(query, { skipBreadth: true, followUp: true });
-      if (exhaustive) {
-        /* detailed غير مفعّل في الرئيسية المصغّرة — نفس مسار ask */
-      }
+      // خيار «الأعمق» في بطاقة الاستيضاح يشغّل الدراسة الموسّعة (detailed) في الرئيسية أيضًا.
+      void ask(query, { skipBreadth: true, followUp: true, detailed: exhaustive || detailedRef.current });
     },
     [ask]
   );
+
+  const toggleDetailed = useCallback(() => setDetailed((v) => !v), []);
 
   const saveConversation = useCallback(() => {
     const current = turnsRef.current.filter((t) => !t.streaming && (t.answer || t.error || t.clarify));
@@ -360,6 +368,9 @@ export function useHakeemAsk() {
     askClarify,
     saveConversation,
     sessionSaved,
+    detailed,
+    setDetailed,
+    toggleDetailed,
     resultAnchorRef,
     maxChars: HAKEEM_ASK_MAX_CHARS,
   };

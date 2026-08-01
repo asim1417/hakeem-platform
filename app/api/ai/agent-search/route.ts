@@ -490,10 +490,10 @@ export async function POST(request: NextRequest) {
         // لا نحجب سؤالًا قانونيًّا: أيّ إشارةٍ قانونية تُصنَّف legal_question فتمرّ للوكيل كالمعتاد.
         if (agentMode.id === "ask" && !hasDoc) {
           const gate = classifyIntent(typed);
-          const alwaysReplyDirect =
-            gate.type === "greeting" || gate.type === "thanks" || gate.type === "meta" || gate.type === "non_legal";
-          const ambiguousFirstTurn = gate.type === "ambiguous" && history.length === 0;
-          if (!intentNeedsSearch(gate.type) && gate.reply && (alwaysReplyDirect || ambiguousFirstTurn)) {
+          // أيّ نيّةٍ لا تستدعي بحثًا (تحية/شكر/تعريف/خارج النطاق/**غامض أو ناقص**) → ردٌّ مباشرٌ
+          // بلا أساسٍ نظاميّ ودون تشغيل الوكيل: لا نجلب شيئًا من النواة لموضوعٍ غير مكتمل.
+          // أيّ إشارةٍ قانونية تُصنَّف legal_question فتمرّ للوكيل كالمعتاد (لا نحجب سؤالًا حقيقيًّا).
+          if (!intentNeedsSearch(gate.type) && gate.reply) {
             send({ type: "result", answer: gate.reply, mode: "intent", basis: [], total: 0, intent: gate.type });
             send({ type: "done" });
             return;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useRef } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Telescope } from "lucide-react";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
@@ -35,6 +35,8 @@ export function HomeInlineAsk() {
     askClarify,
     saveConversation,
     sessionSaved,
+    detailed,
+    toggleDetailed,
     resultAnchorRef,
     maxChars,
   } = useHakeemAsk();
@@ -121,7 +123,7 @@ export function HomeInlineAsk() {
           <p className="home-inline-ask__mode-hint">اسأل حكيم — تحليل قانوني مباشر داخل الصفحة</p>
         ) : null}
 
-        <div className="cs-box home-inline-ask__box">
+        <div className="cs-box home-inline-ask__box home-inline-ask__box--featured">
           <span aria-hidden="true">⌕</span>
           <textarea
             value={value}
@@ -153,6 +155,24 @@ export function HomeInlineAsk() {
           <button type="submit" disabled={busy} aria-busy={busy}>
             {busy ? "جارٍ…" : followUpMode ? "إرسال" : "اسأل حكيم"}
           </button>
+        </div>
+
+        <div className="home-inline-ask__controls">
+          <button
+            type="button"
+            className={`home-inline-ask__deep-toggle${detailed ? " is-active" : ""}`}
+            aria-pressed={detailed}
+            title="دراسة تفصيلية موسّعة — بحثٌ أعمق وسوابق وتحقّق (أبطأ وأدقّ)"
+            onClick={toggleDetailed}
+            disabled={busy}
+          >
+            <Telescope size={15} aria-hidden />
+            <span>دراسة موسّعة</span>
+            <span className="home-inline-ask__deep-state" aria-hidden>{detailed ? "مُفعّلة" : "إيقاف"}</span>
+          </button>
+          {detailed ? (
+            <span className="home-inline-ask__deep-hint">ستُعدّ دراسةً تفصيليّةً موسّعة لسؤالك القادم.</span>
+          ) : null}
         </div>
 
         {askFirst && !hasResult ? (

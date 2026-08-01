@@ -1798,6 +1798,71 @@ body {
   padding: 0.45rem 0.75rem;
   box-shadow: var(--sh-md);
 }
+
+/* صندوق البحث المميّز: إطارٌ ذهبيّ متدرّج + توهّجٌ خفيف عند التركيز (هويّة حكيم). */
+.home-inline-ask__box--featured {
+  position: relative;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, rgba(198,151,99,0.85), rgba(30,41,59,0.35) 55%, rgba(198,151,99,0.85)) border-box;
+  box-shadow: 0 8px 30px -12px rgba(198,151,99,0.45), var(--sh-md);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.home-inline-ask__box--featured:focus-within {
+  box-shadow: 0 12px 40px -12px rgba(198,151,99,0.6), var(--sh-lg);
+}
+.home-inline-ask__box--featured > span[aria-hidden] {
+  color: var(--copper, #c69763);
+  font-size: 1.25rem;
+}
+
+/* شريط أدوات الصندوق (دراسة موسّعة) */
+.home-inline-ask__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.55rem 0 0;
+}
+.home-inline-ask__deep-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(198, 151, 99, 0.5);
+  background: rgba(255, 252, 247, 0.9);
+  color: var(--navy, #1e293b);
+  padding: 0.4rem 0.85rem;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.home-inline-ask__deep-toggle:hover:not(:disabled) {
+  border-color: var(--copper, #c69763);
+  background: #fff;
+}
+.home-inline-ask__deep-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
+.home-inline-ask__deep-toggle.is-active {
+  background: linear-gradient(135deg, var(--copper, #c69763), #b5854f);
+  border-color: transparent;
+  color: #241a0c;
+  box-shadow: 0 4px 14px -6px rgba(198,151,99,0.7);
+}
+.home-inline-ask__deep-state {
+  font-size: 10.5px;
+  font-weight: 600;
+  opacity: 0.72;
+  border-inline-start: 1px solid currentColor;
+  padding-inline-start: 0.4rem;
+  margin-inline-start: 0.1rem;
+}
+.home-inline-ask__deep-hint {
+  font-size: 11.5px;
+  color: rgba(255, 252, 247, 0.72);
+  font-weight: 600;
+}
 .home-inline-ask__input {
   flex: 1;
   min-height: 44px;
