@@ -110,6 +110,34 @@ async function main() {
     assert.equal(await pdfPageCount(chunks[2].bytes), 2);
   });
 
+  await acheck("pdf-split: extractSinglePages يستخرج الصفحات المطلوبة فقط بأرقامها", async () => {
+    const { extractSinglePages } = await import("./pdf-split");
+    // نطلب صفحات خارج الترتيب ومكرّرة وخارج المدى — يجب الترتيب والتفريد والتقييد بالمدى
+    const singles = await extractSinglePages(pdfBytes, [3, 1, 3, 99, 0]);
+    assert.equal(singles.length, 2);
+    assert.equal(singles[0].page, 1);
+    assert.equal(singles[1].page, 3);
+    assert.equal(await pdfPageCount(singles[0].bytes), 1);
+    assert.equal(await pdfPageCount(singles[1].bytes), 1);
+  });
+
+  await acheck("خطّة الصفحات: mergePlanWithOcr يدمج نصّ المسح في محلّه ويُبقي النظيف", async () => {
+    const { mergePlanWithOcr } = await import("./extract");
+    const plan = {
+      total: 3,
+      needOcrPages: [2],
+      pageBodies: ["نصّ رقميّ نظيف للصفحة الأولى", "[[صفحة تحتاج مسحًا ضوئيًّا]]", "نصّ الصفحة الثالثة"]
+    };
+    const merged = mergePlanWithOcr(plan, new Map([[2, "نصّ الصفحة الثانية بعد المسح"]]));
+    assert.ok(merged.includes("[صفحة 1]\nنصّ رقميّ نظيف للصفحة الأولى"));
+    assert.ok(merged.includes("[صفحة 2]\nنصّ الصفحة الثانية بعد المسح"), "المسح حلّ محلّ العلامة");
+    assert.ok(merged.includes("[صفحة 3]\nنصّ الصفحة الثالثة"));
+    assert.ok(!merged.includes("تحتاج مسحًا"), "لم تبقَ علامة الصفحة الممسوحة");
+    // صفحةٌ محتاجة بلا نصّ مسح → علامةُ تعذّرٍ صريحة لا فراغ صامت
+    const merged2 = mergePlanWithOcr(plan, new Map());
+    assert.ok(merged2.includes("[صفحة 2]\n[صفحة تعذّرت قراءتها ضوئيًّا]"));
+  });
+
   await fs.rm(process.env.DOC_NODE_DATA!, { recursive: true, force: true }).catch(() => undefined);
   console.log(`\nكل اختبارات خادم Node ناجحة (${passed})`);
 }

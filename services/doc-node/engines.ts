@@ -5,7 +5,7 @@
 // GEMINI_API_KEY) · qari (مقبس GPU عبر QARI_ENDPOINT). إضافة محرّكٍ = register() واحدة.
 
 import { processExtractedText, runAdaptive } from "@/lib/modules/document-inspection";
-import { extractLocal, RemoteNeeded, type ExtractOut } from "./extract";
+import { extractLocal, mergePlanWithOcr, RemoteNeeded, type ExtractOut, type PdfPagePlan } from "./extract";
 
 // إعدادات الإنتاجية العالية للـ PDF عبر Gemini (قابلة للضبط بيئياً).
 const CHUNK_PAGES = Math.max(1, Number(process.env.GEMINI_CHUNK_PAGES ?? "4") || 4);
@@ -143,6 +143,42 @@ async function runGemini(name: string, data: Uint8Array, model: string): Promise
   return { text: processed.body, kind: `Gemini ${model === "pro" ? "pro" : "flash"}` };
 }
 
+/**
+ * يقرأ ضوئيًّا عبر Gemini الصفحات المحتاجة فقط (من خطّة صفحات) ويدمجها في النصّ
+ * الرقميّ السليم. كل صفحةٍ محتاجة تُستخرَج كـ PDF بصفحةٍ واحدة فيُطابَق ناتجُها برقمها
+ * بلا لبس، وتُجدوَل متوازيةً بالتكيّف. المصدرُ الصحيح للصفحة المعطوبة صورةُ الصفحة.
+ */
+async function geminiPagesFromPlan(data: Uint8Array, plan: PdfPagePlan, model: string): Promise<ExtractOut> {
+  const { extractSinglePages } = await import("./pdf-split");
+  const singles = await extractSinglePages(data, plan.needOcrPages);
+  if (!singles.length) throw new Error("تعذّر استخراج الصفحات المحتاجة");
+  const texts = await runAdaptive(
+    singles,
+    async (single) => {
+      const r = await callGemini(single.bytes, "application/pdf", model);
+      if (r.ok) return { value: r.text, rateLimited: false };
+      return { value: null, rateLimited: r.rateLimited };
+    },
+    { start: Math.min(8, GEMINI_MAX_CONCURRENCY), max: GEMINI_MAX_CONCURRENCY, min: 1, cooldownMs: [2_000, 5_000, 12_000] }
+  );
+  const ocrByPage = new Map<number, string>();
+  let okPages = 0;
+  singles.forEach((single, i) => {
+    const t = (texts[i] ?? "").trim();
+    if (t) {
+      ocrByPage.set(single.page, t);
+      okPages += 1;
+    }
+  });
+  const merged = mergePlanWithOcr(plan, ocrByPage);
+  const processed = processExtractedText(merged, { source: "cloud" });
+  const cleanPages = plan.total - plan.needOcrPages.length;
+  return {
+    text: processed.body,
+    kind: `PDF مختلط · ${cleanPages} نصّ · Gemini ${model === "pro" ? "pro" : "flash"} ${okPages}/${singles.length} صفحة`
+  };
+}
+
 register({
   name: "gemini",
   label: "Gemini (رؤية سحابية)",
@@ -202,6 +238,18 @@ export async function runEngine(provider: string, model: string, name: string, d
     return await extractLocal(name, data);
   } catch (e) {
     if (e instanceof RemoteNeeded) {
+      // حالةٌ مختلطة (خطّة صفحات): اقرأ ضوئيًّا الصفحات المحتاجة فقط وادمجها في النصّ
+      // الرقميّ السليم — بدل إرسال المستند كلّه إلى المحرّك البعيد لأجل صفحاتٍ قليلة.
+      if (e.plan && e.plan.needOcrPages.length > 0) {
+        const gemini = getEngine("gemini");
+        if (gemini && gemini.available()) {
+          try {
+            return await geminiPagesFromPlan(data, e.plan, model);
+          } catch {
+            /* اسقط لقراءة الملف كاملًا أدناه */
+          }
+        }
+      }
       for (const fallback of ["gemini", "qari"]) {
         const fe = getEngine(fallback);
         if (fe && fe.available()) {
