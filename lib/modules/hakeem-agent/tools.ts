@@ -4,6 +4,12 @@
 import { prisma } from "@/lib/prisma";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { resolveGoverningSystems } from "@/lib/modules/agents/thinking/resolve-scope";
+import {
+  DEFAULT_SOURCE_POLICY,
+  decideToolAccess,
+  isRetrievalTool,
+  type SourcePolicy,
+} from "@/lib/modules/hakeem-composer/source-policy";
 import { loadSkillGuide, skillsIndex } from "./skills";
 
 /** مصدرٌ استُرجِع خلال الجلسة — يُجمَّع للأساس (basis) ولحارس الإسناد. */
@@ -24,10 +30,25 @@ export interface AgentContext {
   document: string;
   /** المصادر المستَرجَعة عبر الجلسة، مفهرسةً بمعرّفها (منع التكرار). */
   sources: Map<string, RetrievedSource>;
+  /** سياسة مصادر مُنفَّذة خادميًا (لا تعتمد على امتثال النموذج) */
+  sourcePolicy: SourcePolicy;
+  /** أدوات رُفضت بسبب السياسة */
+  deniedTools: Array<{ tool: string; reason: string }>;
+  /** أدوات استرجاع استُدعيت فعلًا بنجاح */
+  invokedTools: string[];
 }
 
-export function createAgentContext(document: string): AgentContext {
-  return { document: document ?? "", sources: new Map() };
+export function createAgentContext(
+  document: string,
+  sourcePolicy: SourcePolicy = DEFAULT_SOURCE_POLICY
+): AgentContext {
+  return {
+    document: document ?? "",
+    sources: new Map(),
+    sourcePolicy,
+    deniedTools: [],
+    invokedTools: [],
+  };
 }
 
 /**
@@ -145,6 +166,20 @@ export interface ToolExecResult {
 export async function executeTool(name: string, rawInput: unknown, ctx: AgentContext): Promise<ToolExecResult> {
   const input = (rawInput ?? {}) as Record<string, unknown>;
   try {
+    const access = decideToolAccess(name, ctx.sourcePolicy);
+    if (!access.allowed) {
+      ctx.deniedTools.push({ tool: name, reason: access.reason });
+      return {
+        ok: false,
+        data: {
+          error: access.reason,
+          code: access.code,
+          sourcePolicy: ctx.sourcePolicy,
+        },
+        label: `مرفوض بالسياسة: ${name}`,
+      };
+    }
+
     if (name === "resolve_scope") {
       const question = String(input.question ?? "").trim();
       if (!question) return { ok: false, data: { error: "question مطلوب" }, label: "تحديد النطاق" };
@@ -180,6 +215,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
           internalUrl: r.internalUrl,
         })
       );
+      if (isRetrievalTool(name)) ctx.invokedTools.push(name);
       return {
         ok: true,
         // cite = رقم الحاشية: استشهد به كـ[n] فيُربَط تلقائيًّا بنصّ المادة أسفل الدراسة.
@@ -191,6 +227,15 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
     if (name === "comprehensive_legal_scan") {
       const query = String(input.query ?? "").trim();
       if (!query) return { ok: false, data: { error: "query مطلوب" }, label: "مسح شامل" };
+      // في النطاق الصارم بلا مكتبة واسعة نرفض المسح الشامل حتى لو مُرِّر بالخطأ
+      if (ctx.sourcePolicy.strictScope && !ctx.sourcePolicy.legalLibrary) {
+        ctx.deniedTools.push({ tool: name, reason: "المسح الشامل خارج النطاق الصارم." });
+        return {
+          ok: false,
+          data: { error: "المسح الشامل خارج النطاق الصارم.", code: "SOURCE_POLICY_DENIED" },
+          label: "مرفوض بالسياسة: مسح شامل",
+        };
+      }
       const limit = Math.min(Math.max(Number(input.limit) || 40, 10), 60);
       // مسحٌ عبر كلّ الأنظمة: بلا systemIds، سقفٌ عالٍ، بلا فرض تغطية المفاهيم (أوسع) — كمسح المكتبة.
       const res = await searchLegalCore({ query, limit, semantic: true, includeSnippets: true });
@@ -209,6 +254,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
       const bySystem = new Map<string, number>();
       for (const r of results) bySystem.set(r.systemName, (bySystem.get(r.systemName) ?? 0) + 1);
       const coverage = Array.from(bySystem.entries()).map(([systemName, count]) => ({ systemName, count })).sort((a, b) => b.count - a.count);
+      ctx.invokedTools.push(name);
       return {
         ok: true,
         data: {
@@ -229,7 +275,12 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
       // ونتخطّى بوّابة الاتّساع والتحليل العامّ — فيُغذّي Claude بالمادّة الخام المؤصَّلة ليصوغها.
       // استيرادٌ كسول: سلسلة المنظّم تستورد server-only، فلا نحمّلها إلا عند استخدام الأداة فعلًا.
       const { orchestrate } = await import("@/lib/modules/agents/orchestrator");
-      const res = await orchestrate(question, { mode: "deep", skipBreadth: true, skipAnalysis: true });
+      const res = await orchestrate(question, {
+        mode: "deep",
+        skipBreadth: true,
+        skipAnalysis: true,
+        sourcePolicy: ctx.sourcePolicy,
+      });
       const src = (res.articles ?? []).slice(0, 18).map((a) =>
         addSource(ctx, {
           sourceId: a.articleId,
@@ -242,6 +293,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         })
       );
       const verifiedNums = new Set((res.verified ?? []).map((v) => v.articleNumber));
+      ctx.invokedTools.push(name);
       return {
         ok: true,
         data: {
@@ -252,9 +304,14 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
           // المواد المؤصَّلة (استشهد بها بمعرّفها؛ المؤكَّدة موسومة).
           materials: src.map((s) => ({ ...s, verified: verifiedNums.has(s.articleNumber) })),
           // سوابق ومبادئ استئناسيّة (لا تستشهد منها بأرقام مواد).
-          rulings: (res.rulings ?? []).slice(0, 6).map((r) => ({ title: r.title, snippet: r.snippet })),
-          principles: (res.principles ?? []).slice(0, 6).map((p) => ({ title: p.title, snippet: p.snippet })),
+          rulings: ctx.sourcePolicy.judgments
+            ? (res.rulings ?? []).slice(0, 6).map((r) => ({ title: r.title, snippet: r.snippet }))
+            : [],
+          principles: ctx.sourcePolicy.judgments
+            ? (res.principles ?? []).slice(0, 6).map((p) => ({ title: p.title, snippet: p.snippet }))
+            : [],
           coverage: res.coverage ?? null,
+          sourcePolicy: ctx.sourcePolicy,
         },
         label: `دراسة موسّعة: ${(res.issues ?? []).length} مسألة · ${src.length} مادة · ${(res.rulings ?? []).length} سابقة`,
       };
@@ -277,6 +334,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
         status: a.status,
         internalUrl: `/dashboard/legal-core/articles/${a.id}`,
       });
+      ctx.invokedTools.push(name);
       return {
         ok: true,
         data: { sourceId: a.id, cite: src.cite, systemName: a.lawName, articleNumber: a.articleNumber, title: a.title, content: a.content, status: a.status },
@@ -321,6 +379,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
             page: (p.page ?? null) as string | number | null,
           };
         });
+        ctx.invokedTools.push(name);
         return { ok: true, data: { configured: true, count: passages.length, passages }, label: `المكتبة الإسلامية → ${passages.length} نصًّا` };
       } catch (e) {
         return { ok: false, data: { error: e instanceof Error ? e.message : "تعذّر الاتصال بمصدر المكتبة الإسلامية" }, label: "خطأ المكتبة الإسلامية" };
@@ -330,6 +389,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
     if (name === "read_attachment") {
       if (!ctx.document.trim()) return { ok: true, data: { hasAttachment: false, text: "" }, label: "لا مستند مرفق" };
       // المستند كاملًا (مُقتطَعٌ أصلًا عند حدّ المسار 200 ألف حرف) — لا نقتطعه هنا ثانيةً.
+      ctx.invokedTools.push(name);
       return { ok: true, data: { hasAttachment: true, chars: ctx.document.length, text: ctx.document }, label: "قراءة المستند المرفق كاملًا" };
     }
 

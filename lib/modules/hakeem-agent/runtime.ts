@@ -34,6 +34,9 @@ export interface AgentResult {
   toolTurns: number;
   /** سبب الفشل عند ok=false (يتيح للمسار السقوط للمسار القديم). */
   error?: string;
+  deniedTools?: Array<{ tool: string; reason: string }>;
+  invokedTools?: string[];
+  sourcePolicy?: import("@/lib/modules/hakeem-composer/source-policy").SourcePolicy;
 }
 
 function textOf(content: AnthropicContentBlock[]): string {
@@ -85,10 +88,18 @@ export async function runHakeemAgent(input: {
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   /** ملخّصٌ متدرّج لما قبل الأدوار الأخيرة (غرفةٌ طويلة) — يُحقن في التوجيه فيبقى السياق المبكّر حاضرًا. */
   summary?: string;
+  /** سياسة مصادر خادمية — تُفرض على الأدوات ولا تُترك للنموذج */
+  sourcePolicy?: import("@/lib/modules/hakeem-composer/source-policy").SourcePolicy;
   onStep?: (step: AgentStep) => void;
 }): Promise<AgentResult> {
   const onStep = input.onStep ?? (() => {});
-  const ctx = createAgentContext(input.document ?? "");
+  const ctx = createAgentContext(input.document ?? "", input.sourcePolicy);
+  const withPolicy = (r: AgentResult): AgentResult => ({
+    ...r,
+    deniedTools: ctx.deniedTools.slice(),
+    invokedTools: ctx.invokedTools.slice(),
+    sourcePolicy: ctx.sourcePolicy,
+  });
   // توجيه النظام + ملخّص الجلسة (إن وُجد) فيرى الوكيل الحوار من أوّله لا آخر أدواره فقط.
   const system = input.summary?.trim()
     ? `${HAKEEM_SYSTEM_PROMPT}\n\n# ملخّص هذه الجلسة حتى الآن (سياقٌ سابق، اعتمِد عليه)\n${input.summary.trim()}`
@@ -118,31 +129,31 @@ export async function runHakeemAgent(input: {
       tools: HAKEEM_TOOL_DEFS as unknown as { name: string; description: string; input_schema: unknown }[],
       maxTokens: 8192, // الدراسة الموسّعة الكاملة (٦ أقسام + جداول) طويلة — سقفٌ أعلى يمنع البتر.
     });
-    if (!res.ok) return { ok: false, answer: "", basis: [], toolTurns, error: res.error };
+    if (!res.ok) return withPolicy({ ok: false, answer: "", basis: [], toolTurns, error: res.error });
 
     const toolUses = res.content.filter((b): b is { type: "tool_use"; id: string; name: string; input: unknown } => b.type === "tool_use");
 
     // لا أدوات → هذا هو الجواب النهائيّ (ردّ مباشر أو سؤال استيضاح أو تحليل).
     if (!toolUses.length) {
       const answer = textOf(res.content);
-      if (!answer) return { ok: false, answer: "", basis: [], toolTurns, error: "مخرَجٌ فارغ من النموذج." };
+      if (!answer) return withPolicy({ ok: false, answer: "", basis: [], toolTurns, error: "مخرَجٌ فارغ من النموذج." });
       // حارس الإسناد: أرقام المواد في الجواب يجب أن تكون ضمن المصادر المستَرجَعة فعلًا.
       const allowed = collectAllowedArticleNumbers({ numbers: Array.from(ctx.sources.values()).map((s) => s.articleNumber) });
       let finalText = answer;
       if (!verifyNarrativeGrounding([finalText], allowed).ok) {
         const pruned = pruneUngrounded(finalText, allowed);
         // انهيار الجواب بعد التنقية (اختراعٌ كثيف) → فشلٌ صريح لا مخرَجٌ ملفَّق.
-        if (!pruned) return { ok: false, answer: "", basis: buildBasis(ctx.sources), toolTurns, error: "حجب حارس الإسناد المخرَج (استشهادٌ غير مؤرَّض)." };
+        if (!pruned) return withPolicy({ ok: false, answer: "", basis: buildBasis(ctx.sources), toolTurns, error: "حجب حارس الإسناد المخرَج (استشهادٌ غير مؤرَّض)." });
         finalText = pruned + "\n\n> ملاحظة: حُذفت عباراتٌ أشارت إلى مواد خارج المصادر المتحقَّقة.";
       }
-      return { ok: true, answer: finalText, basis: buildBasis(ctx.sources), toolTurns };
+      return withPolicy({ ok: true, answer: finalText, basis: buildBasis(ctx.sources), toolTurns });
     }
 
     // بلغنا الحدّ الآمن ولا يزال يطلب أدوات → نتوقّف: نعيد ما كتبه نصًّا إن وُجد، وإلا فشلٌ صريح.
     if (turn === maxTurns) {
       const partial = textOf(res.content);
-      if (partial) return { ok: true, answer: partial, basis: buildBasis(ctx.sources), toolTurns };
-      return { ok: false, answer: "", basis: buildBasis(ctx.sources), toolTurns, error: "بلغ الوكيل حدّ استدعاءات الأدوات دون حسم." };
+      if (partial) return withPolicy({ ok: true, answer: partial, basis: buildBasis(ctx.sources), toolTurns });
+      return withPolicy({ ok: false, answer: "", basis: buildBasis(ctx.sources), toolTurns, error: "بلغ الوكيل حدّ استدعاءات الأدوات دون حسم." });
     }
 
     // نفّذ الأدوات وأعِد نتائجها إلى Claude ليقرّر الخطوة التالية.
@@ -165,7 +176,7 @@ export async function runHakeemAgent(input: {
     messages.push({ role: "user", content: toolResults });
   }
 
-  return { ok: false, answer: "", basis: buildBasis(ctx.sources), toolTurns, error: "انتهت الحلقة دون جواب." };
+  return withPolicy({ ok: false, answer: "", basis: buildBasis(ctx.sources), toolTurns, error: "انتهت الحلقة دون جواب." });
 }
 
 function labelFor(tool: string): string {

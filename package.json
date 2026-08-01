@@ -174,6 +174,8 @@
     "test:conversation-ensure-schema": "tsx scripts/test-conversation-ensure-schema.ts",
     "test:ask-sessions-3a": "tsx scripts/test-ask-sessions-3a.ts",
     "test:hakeem-composer": "tsx scripts/test-hakeem-composer.ts",
+    "test:source-policy": "HAKEEM_COMPOSER_SOURCE_POLICY_V2=1 tsx scripts/test-source-policy.ts",
+    "test:source-policy-e2e": "HAKEEM_COMPOSER_SOURCE_POLICY_V2=1 tsx scripts/test-source-policy-api-e2e.ts",
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
     "smoke:judicial": "tsx scripts/smoke-judicial.ts",
