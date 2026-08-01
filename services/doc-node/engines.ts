@@ -11,9 +11,10 @@ import { extractLocal, mergePlanWithOcr, RemoteNeeded, type ExtractOut, type Pdf
 // ذاكرة قراءةٍ ضوئية على مستوى العملية (تدوم لعمر الخادم): الصفحة المتطابقة بصمةً
 // تُستردّ فورًا عبر المهام بلا نداء Gemini. مطفأة بعلمٍ (HAKEEM_OCR_CACHE_V1).
 const PAGE_OCR_CACHE = new MemoryOcrCache(10_000);
+// مُفعَّلة افتراضيًا (تحسينٌ صرفٌ آمن)؛ إيقافٌ طارئ: HAKEEM_OCR_CACHE_V1=0
 function ocrCacheEnabled(): boolean {
   const v = (process.env.HAKEEM_OCR_CACHE_V1 ?? "").trim().toLowerCase();
-  return v === "1" || v === "true" || v === "on" || v === "yes";
+  return !(v === "0" || v === "false" || v === "off" || v === "no");
 }
 
 // إعدادات الإنتاجية العالية للـ PDF عبر Gemini (قابلة للضبط بيئياً).
