@@ -5,6 +5,7 @@
 // عند تعذّر الحكم المؤصَّل ⇒ يعيد null (فيبيّن المسار أنّ الحكم يتطلّب القاضي الذكيّ — لا قالبَ
 // حكمٍ زائف).
 import { callCentralProvider } from "@/lib/modules/ai/ai-gateway";
+import { judicialShadowReview, type JdsShadowReview } from "@/lib/modules/judicial";
 import { groundForJudge, verifyJudgeGrounding } from "./judicial-brain";
 import { JUDICIAL_DRAFTING_GUIDE } from "./judicial-drafting";
 import { resolveSpecializedAgent } from "./specialized-agents";
@@ -107,7 +108,7 @@ function wrapJudgment(text: string, c: ClaimData | undefined): string {
 export async function generateReasonedJudgment(input: {
   claim?: ClaimData;
   messages: Array<{ role: string; content: string }>;
-}): Promise<{ content: string; grounded: boolean; confidence: number; articleCount: number; kind: JudgmentKind } | null> {
+}): Promise<{ content: string; grounded: boolean; confidence: number; articleCount: number; kind: JudgmentKind; jdsReview?: JdsShadowReview } | null> {
   const plaintiff = input.messages.filter((m) => PARTY_PLAINTIFF.includes(m.role)).map((m) => m.content).join("\n");
   const defendant = input.messages.filter((m) => PARTY_DEFENDANT.includes(m.role)).map((m) => m.content).join("\n");
   const c = input.claim;
@@ -147,11 +148,22 @@ export async function generateReasonedJudgment(input: {
     text = retry.content.trim();
   }
 
+  const content = wrapJudgment(text, c);
   return {
-    content: wrapJudgment(text, c),
+    content,
     grounded: g.allowedNumbers.size > 0,
     confidence: g.articleCount > 0 ? 0.75 : 0.4,
     articleCount: g.articleCount,
-    kind: "judgment"
+    kind: "judgment",
+    // ظلّ JDS (§27): مراجعةٌ استرشاديّة بصوت المحكمة على نصّ الحكم (لغة/وسم) —
+    // undefined ما لم يُفعَّل JDS_DRAFTING_SHADOW ⇒ لا تغيير في المخرج.
+    jdsReview: judicialShadowReview({
+      role: "JUDGE",
+      documentFunction: "DISPOSITION",
+      litigationStage: "JUDGMENT",
+      subject: c?.subject,
+      draftText: text,
+      hasNonBindingLabel: true, // wrapJudgment يُلحق تنبيه عدم الإلزام
+    }),
   };
 }
