@@ -513,10 +513,15 @@ model AuditEvent {
   entityId  String?
   metadata  Json?
   ipAddress String?
+  // ── مغلّف الحدث (المخطط السيادي §6/§23) — أعمدة اختيارية، لا تُغيّر أي سلوك قائم.
+  correlationId String? @map("correlation_id") // يربط كل أحداث الطلب الواحد
+  causationId   String? @map("causation_id")   // الحدث الذي تسبّب في هذا الحدث
+  schemaVersion String? @map("schema_version") // نسخة مخطط الحمولة
   createdAt DateTime     @default(now())
 
   @@index([subject, action])
   @@index([createdAt])
+  @@index([correlationId])
   @@map("audit_logs")
 }
 
