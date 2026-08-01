@@ -156,7 +156,8 @@ export default async function GovernancePage() {
             <p className="text-sm text-[#0E3435]">
               قواعد مسجّلة: <strong>{compliance.total}</strong> · معتمدة:{" "}
               <strong>{compliance.authoritative}</strong> · نموذجيّة:{" "}
-              <strong>{compliance.demo}</strong>
+              <strong>{compliance.demo}</strong> · مربوطة بأساس نظاميّ:{" "}
+              <strong>{compliance.grounded}</strong>
             </p>
             <p className="mt-1 text-xs text-[rgba(14,52,53,0.6)]">
               النطاقات: {compliance.subjects.join("، ")}

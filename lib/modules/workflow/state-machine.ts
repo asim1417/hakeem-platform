@@ -102,3 +102,37 @@ export function entryGates<S extends string>(def: WorkflowDefinition<S>, from: S
 export function isTerminal<S extends string>(def: WorkflowDefinition<S>, state: S): boolean {
   return def.terminal.includes(state);
 }
+
+export interface AdvanceDecision<S extends string> {
+  allowed: boolean;
+  from: S;
+  to: S;
+  gates: string[];
+  reason: string;
+}
+
+/**
+ * يتحقّق من انتقال مقترح دون تنفيذه (§14) — طبقة تحقّق opt-in.
+ * لا يكتب حالة أيّ محرّك؛ يرفع القرار لمن يستدعيه (كما يقتضي §14: المحرّك يرفع
+ * نتيجة لا يغيّر الحالة مباشرة). المنطق القائم للمحاكاة يبقى دون مساس.
+ */
+export function validateAdvance<S extends string>(
+  def: WorkflowDefinition<S>,
+  from: S,
+  to: S
+): AdvanceDecision<S> {
+  if (!def.states.includes(from)) {
+    return { allowed: false, from, to, gates: [], reason: `الحالة «${from}» غير معرّفة` };
+  }
+  if (!def.states.includes(to)) {
+    return { allowed: false, from, to, gates: [], reason: `الحالة «${to}» غير معرّفة` };
+  }
+  const ok = canAdvance(def, from, to);
+  return {
+    allowed: ok,
+    from,
+    to,
+    gates: entryGates(def, from, to),
+    reason: ok ? "انتقال مسموح في التعريف" : `لا انتقال معرّف من «${from}» إلى «${to}»`,
+  };
+}

@@ -15,6 +15,13 @@ export type RuleValidation =
   | { kind: "regex"; field: string; pattern: string; message?: string }
   | { kind: "enum"; field: string; values: string[] };
 
+/** أساس نظاميّ يربط القاعدة بمادّة حقيقيّة — يُملأ عند اعتماد القاعدة (§75/§76). */
+export interface RuleBasis {
+  system: string; // اسم النظام
+  articleNumber: number;
+  articleVersionRef?: string; // معرّف نسخة المادّة (ArticleVersion) عند توفّره
+}
+
 export interface ComplianceRule {
   ruleId: string;
   title: string;
@@ -26,6 +33,11 @@ export interface ComplianceRule {
   scope: { subjectType: string }; // نوع الكيان الذي تنطبق عليه القاعدة
   severity: ComplianceSeverity;
   validation: RuleValidation;
+  /**
+   * الأساس النظاميّ (اختياريّ). قاعدةٌ لا تحمل basis تبقى «نموذجيّة» ولا يجوز اعتمادها.
+   * تُعتمَد القاعدة (approval="authoritative") فقط حين تُربط بأساسٍ حقيقيّ — قرارٌ قانونيّ.
+   */
+  basis?: RuleBasis;
 }
 
 export interface ComplianceViolation {
