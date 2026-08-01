@@ -32,6 +32,8 @@ export { JUDICIAL_PATTERNS, getPattern, patternsForClass } from "./patterns";
 export { JDS_DDL, JDS_TABLES, ensureJudicialCoreSchema } from "./schema-ensure";
 export { buildDomainPackRows, seedDomainPacks } from "./seed";
 export type { DomainPackSeedRow, SeedResult } from "./seed";
+export { buildProcedureGraph } from "./procedure-graph";
+export type { BuildProcedureGraphInput } from "./procedure-graph";
 
 /** إصدار طبقة JDS ومرجع الأمر الحاكم — للتتبّع والتدقيق. */
 export const JDS_META = {
