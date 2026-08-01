@@ -126,7 +126,8 @@ export function LegalBasisPanel({
   title = "الأساس النظامي",
   note,
   children,
-  anchorPrefix
+  anchorPrefix,
+  defaultOpen = false
 }: {
   items: LegalBasisItem[];
   title?: string;
@@ -134,19 +135,42 @@ export function LegalBasisPanel({
   children?: ReactNode;
   /** بادئة مرساة لبطاقات المصادر (للنقر من مراجع الإجابة). يجب أن تتفرّد عبر الأدوار. */
   anchorPrefix?: string;
+  /** تُفتَح مبدئيًّا؟ الافتراض مطويّة (تأخذ مساحةً أقلّ) — يوسّعها المستخدم بالنقر. */
+  defaultOpen?: boolean;
 }) {
   const overall = overallState(items);
+  const count = items.length;
 
   return (
-    <section
-      className="rounded-[var(--r-xl)] border bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]"
+    <details
+      className="group basis-collapse rounded-[var(--r-xl)] border bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]"
       style={{ borderColor: "var(--gold-border)" }}
-      aria-label={title}
+      open={defaultOpen}
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ink-08)] pb-3">
-        <h3 className="font-display-ar text-base font-bold text-[var(--navy)]">{title}</h3>
-        <DocumentationBadge state={overall} />
-      </header>
+      <summary
+        className="basis-collapse__summary flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 border-b border-[var(--ink-08)] pb-3 focus-ring"
+        aria-label={`${title} — ${count.toLocaleString("ar-SA")} سند (اضغط للطيّ أو العرض)`}
+      >
+        <span className="flex items-center gap-2">
+          <span
+            className="grid h-6 w-6 place-items-center rounded-md bg-[var(--gold-ghost)] text-[var(--gold-dark)] transition-transform group-open:rotate-90"
+            aria-hidden
+          >
+            ›
+          </span>
+          <h3 className="font-display-ar text-base font-bold text-[var(--navy)]">{title}</h3>
+          <span className="rounded-full bg-[var(--ink-04)] px-2 py-0.5 text-xs font-semibold text-[var(--ink-60)]">
+            {count.toLocaleString("ar-SA")} سند
+          </span>
+        </span>
+        <span className="flex items-center gap-2">
+          <DocumentationBadge state={overall} />
+          <span className="text-xs font-semibold text-[var(--ink-40)]">
+            <span className="group-open:hidden">عرض</span>
+            <span className="hidden group-open:inline">طيّ</span>
+          </span>
+        </span>
+      </summary>
 
       {items.length ? (
         <ul className="mt-4 space-y-3">
@@ -215,6 +239,6 @@ export function LegalBasisPanel({
         حالات التوثيق وصفية للمصدر ولا تُعبّر عن نسبة ثقة رقمية. «موثّق رسميًا» يعني مطابقة مادة قائمة في النواة القانونية،
         و«مسترجع آليًا» يحتاج مراجعة بشرية قبل الاعتماد.
       </p>
-    </section>
+    </details>
   );
 }
