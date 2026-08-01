@@ -176,7 +176,9 @@
     "db:judicial": "tsx scripts/apply-judicial-assistant.ts",
     "verify:judicial": "tsx scripts/verify-judicial-assistant.ts",
     "smoke:judicial": "tsx scripts/smoke-judicial.ts",
-    "test:jds": "tsx scripts/test-judicial-jds.ts"
+    "test:jds": "tsx scripts/test-judicial-jds.ts",
+    "test:jds-schema": "tsx scripts/test-judicial-jds-schema.ts",
+    "db:jds": "tsx scripts/seed-judicial-jds.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
