@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, LogOut, UserRound, Wallet } from "lucide-react";
+import { ChevronDown, Download, LogOut, UserRound, Wallet } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
@@ -133,6 +133,16 @@ export function AccountMenu({
             <Wallet size={18} aria-hidden className="shrink-0" />
             <span>{billingLabel}</span>
           </Link>
+
+          <a
+            href="/api/account/export"
+            role="menuitem"
+            className="account-menu__item touch-target"
+            onClick={() => setOpen(false)}
+          >
+            <Download size={18} aria-hidden className="shrink-0" />
+            <span>تصدير بياناتي</span>
+          </a>
 
           <div className="account-menu__sep" role="separator" />
 

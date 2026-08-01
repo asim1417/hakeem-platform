@@ -1,0 +1,32 @@
+{
+  "id": "hakeem.institution.aman",
+  "name": "مكتب أمان — حزمة المؤسسة",
+  "version": "1.0.0",
+  "schemaVersion": "1",
+  "publisher": "aman",
+  "kind": "institution",
+  "capabilities": ["review", "judicial-assistant", "consultation", "training"],
+  "permissions": [
+    "CONSULTATIONS_FULL",
+    "SIMULATIONS_USE",
+    "JUDICIAL_ASSISTANT_USE",
+    "REVIEW_USE",
+    "GOVERNANCE_AUDIT_VIEW"
+  ],
+  "dependencies": ["hakeem.domain.legal-sa"],
+  "conflicts": [],
+  "compatibility": { "platform": ">=0.1.0", "domain": "hakeem.domain.legal-sa@>=1.0.0" },
+  "roles": ["SYSTEM_ADMIN", "LAWYER", "TRAINER", "TRAINEE", "JUDGE"],
+  "policies": [
+    { "id": "human-approval", "note": "كل مخرج AI مسودّة تحتاج تثبيتًا بشريًّا (§13)." },
+    { "id": "evidence-first", "note": "لا اقتراح/ملاحظة بلا دليل مؤصَّل (§13)." },
+    { "id": "pdpl-redaction", "note": "حجب البيانات الشخصية قبل إرسالها للنموذج (§21)." }
+  ],
+  "templates": ["مذكّرة جوابية", "لائحة اعتراضية", "تقرير مراجعة"],
+  "retentionRules": [
+    { "subjectType": "audit", "note": "سجلّ التدقيق دائم غير قابل للتعديل." }
+  ],
+  "integrations": ["microsoft-365", "sharepoint"],
+  "entrypoints": { "review": "/dashboard/review", "governance": "/admin/governance" },
+  "signatures": []
+}

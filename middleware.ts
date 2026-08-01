@@ -9,6 +9,7 @@ import {
 import {
   HAKEEM_PATHNAME_HEADER,
   HAKEEM_SEARCH_HEADER,
+  HAKEEM_CORRELATION_HEADER,
 } from "@/lib/modules/auth/request-path-headers";
 
 const isProtectedRoute = createRouteMatcher([
@@ -54,7 +55,13 @@ function nextWithPath(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(HAKEEM_PATHNAME_HEADER, request.nextUrl.pathname);
   requestHeaders.set(HAKEEM_SEARCH_HEADER, request.nextUrl.search);
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  // مغلّف الحدث (§6): معرّف ارتباط لكل طلب — يُحترم الوارد إن وُجد، وإلا يُولَّد.
+  const correlationId =
+    request.headers.get(HAKEEM_CORRELATION_HEADER) || crypto.randomUUID();
+  requestHeaders.set(HAKEEM_CORRELATION_HEADER, correlationId);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set(HAKEEM_CORRELATION_HEADER, correlationId);
+  return res;
 }
 
 type ClerkMw = (req: NextRequest, event: NextFetchEvent) => Response | Promise<Response>;

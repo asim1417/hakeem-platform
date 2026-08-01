@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { LegalRelation, RelationType } from "@prisma/client";
+import type { LegalRelation, RelationType, RelationStatus } from "@prisma/client";
 
 // أنواع الكيانات في الرسم المعرفي — تُحَلّ إلى النماذج القائمة.
 export const ENTITY_TYPES = ["article", "ruling", "principle", "system"] as const;
@@ -22,6 +22,8 @@ export interface CreateRelationInput {
   relation: RelationType;
   strength?: number;
   description?: string;
+  /** دورة الحياة (§8) — الإنشاء اليدويّ VERIFIED افتراضًا؛ المُشتَقّ يمرّر PROPOSED. */
+  status?: RelationStatus;
 }
 
 export interface ResolvedEntity {
@@ -42,6 +44,7 @@ export async function createRelation(input: CreateRelationInput): Promise<LegalR
       relation: input.relation,
       strength: input.strength ?? 1.0,
       description: input.description ?? null,
+      status: input.status ?? "VERIFIED",
     },
   });
 }

@@ -60,7 +60,8 @@ async function main() {
   let created = 0;
   for (const s of toCreate) {
     await prisma.legalRelation
-      .create({ data: { sourceType: s.sourceType, sourceId: s.sourceId, targetType: s.targetType, targetId: s.targetId, relation: s.relation, strength: s.strength, description: s.description ?? null } })
+      // §8: العلاقات المُشتَقّة آليًّا تدخل PROPOSED — تنتظر مراجعة قبل VERIFIED.
+      .create({ data: { sourceType: s.sourceType, sourceId: s.sourceId, targetType: s.targetType, targetId: s.targetId, relation: s.relation, strength: s.strength, description: s.description ?? null, status: "PROPOSED" } })
       .then(() => created++)
       .catch(() => undefined);
   }

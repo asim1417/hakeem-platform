@@ -1,6 +1,8 @@
 /** أسماء رؤوس المسار — مشتركة بين middleware والـ layout (بلا server-only). */
 export const HAKEEM_PATHNAME_HEADER = "x-hakeem-pathname";
 export const HAKEEM_SEARCH_HEADER = "x-hakeem-search";
+/** معرّف الارتباط — يُحقَن في كل طلب عبر middleware ويُقرأ في مغلّف الحدث (§6). */
+export const HAKEEM_CORRELATION_HEADER = "x-correlation-id";
 
 export function isBareDashboardPath(pathname: string, search: string): boolean {
   const path = (pathname || "").split("?")[0].replace(/\/$/, "") || "";

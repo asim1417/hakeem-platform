@@ -300,6 +300,7 @@ model CaseFile {
   title       String
   summary     String?
   status      CaseStatus   @default(OPEN)
+  dataClass   DataClass?   @map("data_class") // §21 — اختياريّ (null=INTERNAL)
   ownerId     String
   owner       User         @relation(fields: [ownerId], references: [id])
   attachments Attachment[]
@@ -361,6 +362,7 @@ model Attachment {
   extractionErrorCode    String?
   extractionStartedAt    DateTime?
   extractionCompletedAt  DateTime?
+  dataClass              DataClass?                   @map("data_class") // §21 — اختياريّ
   createdAt              DateTime                     @default(now())
   updatedAt              DateTime                     @default(now()) @updatedAt
 
@@ -374,6 +376,7 @@ model Consultation {
   caseId        String?
   facts         String
   status        String                 @default("DRAFT")
+  dataClass     DataClass?             @map("data_class") // §21 — اختياريّ
   output        String?
   qualityReport Json?
   citations     ConsultationCitation[]
@@ -513,10 +516,15 @@ model AuditEvent {
   entityId  String?
   metadata  Json?
   ipAddress String?
+  // ── مغلّف الحدث (المخطط السيادي §6/§23) — أعمدة اختيارية، لا تُغيّر أي سلوك قائم.
+  correlationId String? @map("correlation_id") // يربط كل أحداث الطلب الواحد
+  causationId   String? @map("causation_id")   // الحدث الذي تسبّب في هذا الحدث
+  schemaVersion String? @map("schema_version") // نسخة مخطط الحمولة
   createdAt DateTime     @default(now())
 
   @@index([subject, action])
   @@index([createdAt])
+  @@index([correlationId])
   @@map("audit_logs")
 }
 
@@ -568,6 +576,24 @@ enum RelationType {
   RELATED_TO
 }
 
+// دورة حياة العلاقة (المخطط السيادي §8): المستنتَج آليًّا يبدأ PROPOSED،
+// ولا يصبح VERIFIED إلا بمراجعة. الافتراضي VERIFIED يحفظ سلوك السجلات القائمة.
+enum RelationStatus {
+  PROPOSED
+  VERIFIED
+  REJECTED
+  SUPERSEDED
+}
+
+// تصنيف البيانات الأمنيّ (المخطط السيادي §21). اختياريّ على الكيانات الحسّاسة؛
+// غيابه (null) يُعامَل INTERNAL عبر مساعد data-classification. وسمٌ لا حجب في البداية.
+enum DataClass {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  RESTRICTED
+}
+
 // ── Knowledge Graph: علاقات قانونية متعدّدة الأشكال (polymorphic) ──
 // تربط (مادة/حكم/مبدأ/نظام) بأخرى عبر النوع+المعرّف، دون مفاتيح أجنبية
 // صارمة لمرونة الربط بين الجداول المختلفة. تُستخدم النماذج القائمة كمصدر
@@ -581,11 +607,16 @@ model LegalRelation {
   relation    RelationType
   strength    Float        @default(1.0)
   description String?
+  // ── دورة الحياة والحجية (§8) — إضافيّة، تحفظ سلوك القائم.
+  status      RelationStatus @default(VERIFIED)
+  authority   Float?        // وزن حجية اختياريّ منفصل عن strength
+  evidenceId  String?       @map("evidence_id") // مرجع دليل داعم اختياريّ
   createdAt   DateTime     @default(now()) @map("created_at")
 
   @@index([sourceType, sourceId])
   @@index([targetType, targetId])
   @@index([relation])
+  @@index([status])
   @@map("legal_relations")
 }
 
@@ -989,6 +1020,8 @@ model LegalGraphEdge {
   confidence Float             @default(0.9)
   source     RelationSource    @default(STRUCTURAL)
   verifiedBy String?
+  // دورة الحياة (§8) — الافتراضي VERIFIED يحفظ سلوك الحواف القائمة.
+  status     RelationStatus    @default(VERIFIED)
   createdAt  DateTime          @default(now())
 
   sourceNode LegalGraphNode @relation("RelSource", fields: [sourceId], references: [id], onDelete: Cascade)
@@ -1109,6 +1142,7 @@ model JudicialWorkCase {
   subject        String
   stage          String   @default("active")
   confidentiality String  @default("normal")
+  dataClass      DataClass? @map("data_class") // §21 — تصنيف أمنيّ اختياريّ فوق confidentiality
   attachments    Json     @default("[]")
   structured     Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at")
@@ -1118,4 +1152,97 @@ model JudicialWorkCase {
 
   @@index([ownerId, createdAt])
   @@map("judicial_work_cases")
+}
+
+// ══════════════════════════════════════════════════════════
+// مركز المراجعة — المخطط السيادي §12. جداول جديدة بالكامل، إضافيّة.
+// «لا تعديل صامت»: الاقتراح يمرّ بدورة suggested→accepted/rejected/deferred بموافقة بشرية.
+// ══════════════════════════════════════════════════════════
+
+enum ReviewSessionStatus {
+  OPEN
+  COMPLETED
+  ARCHIVED
+}
+
+enum FindingSeverity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SuggestionStatus {
+  SUGGESTED
+  ACCEPTED
+  REJECTED
+  DEFERRED
+}
+
+model ReviewSession {
+  id         String              @id @default(cuid())
+  ownerId    String              @map("owner_id") // نصّ مباشر (كنمط judicial_work_cases) — بلا علاقة على User
+  title      String
+  entityType String              @map("entity_type") // consultation | judgment | document | case | other
+  entityId   String?             @map("entity_id")
+  status     ReviewSessionStatus @default(OPEN)
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+
+  findings    Finding[]
+  suggestions Suggestion[]
+  report      ReviewReport?
+
+  @@index([ownerId, createdAt])
+  @@index([status])
+  @@map("review_sessions")
+}
+
+model Finding {
+  id               String          @id @default(cuid())
+  sessionId        String          @map("session_id")
+  session          ReviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category         String
+  severity         FindingSeverity @default(MEDIUM)
+  description      String
+  evidence         Json            @default("[]") // §13 Evidence-First: مصادر/مواضع داعمة
+  confidence       Float?
+  affectedLocation Json?           @map("affected_location")
+  ruleId           String?         @map("rule_id")
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  suggestions Suggestion[]
+
+  @@index([sessionId])
+  @@map("review_findings")
+}
+
+model Suggestion {
+  id           String           @id @default(cuid())
+  sessionId    String           @map("session_id")
+  session      ReviewSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  findingId    String?          @map("finding_id")
+  finding      Finding?         @relation(fields: [findingId], references: [id], onDelete: SetNull)
+  title        String
+  body         String
+  status       SuggestionStatus @default(SUGGESTED) // لا تعديل صامت — القرار بشريّ
+  decidedById  String?          @map("decided_by_id")
+  decidedAt    DateTime?        @map("decided_at")
+  decisionNote String?          @map("decision_note")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@index([sessionId, status])
+  @@map("review_suggestions")
+}
+
+model ReviewReport {
+  id        String        @id @default(cuid())
+  sessionId String        @unique @map("session_id")
+  session   ReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  summary   String
+  metrics   Json          @default("{}")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("review_reports")
 }

@@ -1,0 +1,77 @@
+name: Apply Blueprint Migrations (Neon) — تطبيق مهاجرات المخطط السيادي
+
+# يطبّق مهاجرات المواءمة مع المخطط السيادي على Neon — كلّها إضافيّة idempotent
+# (IF NOT EXISTS / DEFAULT يحفظ السلوك القائم)، لا حذف ولا إعادة تسمية ولا مساس ببيانات:
+#   1) مغلّف الحدث على audit_logs (§6)
+#   2) دورة حياة العلاقة على legal_relations/legal_graph_edges (§8)
+#   3) تصنيف البيانات على cases/attachments/consultations/judicial_work_cases (§21)
+#   4) جداول مركز المراجعة (§12)
+# مُقفَل بتأكيد APPLY + تأكيد هدف Neon. يجب تشغيله مع/قبل نشر الكود الذي يقرأ الأعمدة الجديدة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'اكتب APPLY لتأكيد التطبيق على Neon'
+        type: string
+        required: true
+        default: ""
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: 'اكتب NEON_RUNTIME_CONFIRMED لتأكيد أن الهدف هو Neon'
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: apply-blueprint-migrations
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      PGURL: ${{ secrets.NEON_DATABASE_URL }}
+      CONFIRM_RUNTIME_DB_ALIGNMENT: ${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}
+    steps:
+      - name: "تحقّق"
+        run: |
+          if [ "${{ inputs.confirm }}" != "APPLY" ]; then echo "::error::اكتب APPLY للتأكيد."; exit 1; fi
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then echo "::error::اكتب NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$PGURL" ]; then echo "::error::NEON_DATABASE_URL مفقود."; exit 1; fi
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+
+      - name: "🛡️ حارس هدف Neon"
+        run: npx tsx scripts/verify-neon-target.ts
+
+      - name: "تثبيت psql"
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: "① مغلّف الحدث (audit_logs)"
+        run: psql "$PGURL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260801100000_event_envelope_audit/migration.sql
+
+      - name: "② دورة حياة العلاقة"
+        run: psql "$PGURL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260801101000_relation_status_lifecycle/migration.sql
+
+      - name: "③ تصنيف البيانات"
+        run: psql "$PGURL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260801102000_data_classification/migration.sql
+
+      - name: "④ جداول مركز المراجعة"
+        run: psql "$PGURL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260801103000_review_center/migration.sql
+
+      - name: "تحقّق: الأعمدة/الجداول أُنشئت"
+        run: |
+          psql "$PGURL" -c "SELECT column_name FROM information_schema.columns WHERE table_name='audit_logs' AND column_name IN ('correlation_id','causation_id','schema_version');"
+          psql "$PGURL" -c "SELECT column_name FROM information_schema.columns WHERE table_name='legal_relations' AND column_name='status';"
+          psql "$PGURL" -c "SELECT table_name FROM information_schema.columns WHERE column_name='data_class' GROUP BY table_name;"
+          psql "$PGURL" -c "SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'review_%';"
