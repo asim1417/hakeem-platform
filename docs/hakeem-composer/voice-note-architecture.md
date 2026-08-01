@@ -29,12 +29,15 @@ HakeemComposer
 | `provider-registry.ts` + `provider-health.ts` + `providers/*` | اختيار مزوّدٍ بالإتاحة (لا رأي) | 11 |
 | `lib/modules/config/voice.ts` | الأعلام (كلّها OFF افتراضيًّا) | 17 |
 
-## الطبقات المتبقّية (مراحل تالية)
-- **الواجهة:** `components/hakeem-composer/voice/` (Button/RecordingBar/Waveform/LockedRecorder/Preview/PermissionHelp + `useVoiceRecorder`/`useVoiceGestures`) — MediaRecorder + wavesurfer + Pointer Events.
+## الطبقات المبنيّة (الواجهة + الخادم)
+- **الواجهة:** `components/hakeem-composer/voice/` — `useVoiceRecorder` (getUserMedia + MediaRecorder + آلة الحالات + تنظيف §9/§10) · `useVoiceGestures` (Pointer §6) · `VoiceWaveform` (AnalyserNode حيّ) · `VoiceRecordingBar` · `VoiceLockedRecorder` · `VoicePreview` (wavesurfer §7) · `VoicePermissionHelp` · `VoiceNoteButton` (المتحكّم). موصولةٌ في `HakeemComposer` خلف `NEXT_PUBLIC_HAKEEM_VOICE_NOTE_V2`.
 - **الخادم:** `app/api/voice/transcribe/route.ts` (§14) + `providers/health/route.ts`.
-- **المزوّدات:** وصل Azure/OpenAI/Google الفعليّ خلف العلم.
-- **Benchmark:** `scripts/eval-voice-saudi-legal.ts` + `data/evals/voice-saudi-legal/` (يحتاج أصواتًا من المالك).
-- **iPhone الحيّ:** مصفوفة اختبارٍ بشريّة (لا يمكن آليًّا).
+- **مزوّد OpenAI:** موصولٌ فعليًّا (`gpt-4o-transcribe`, language=ar, prompt = تلميحات قانونيّة) — يعمل عند ضبط `OPENAI_API_KEY`.
+
+## الطبقات المتبقّية (تحتاج المالك)
+- **Azure/Google:** واجهاتٌ جاهزة؛ الوصل الفعليّ عند توفّر مفاتيحهما.
+- **Benchmark:** `scripts/eval-voice-saudi-legal.ts` + `data/evals/voice-saudi-legal/` (يحتاج أصواتًا حقيقيّة من المالك).
+- **iPhone الحيّ:** مصفوفة اختبارٍ بشريّة (لا يمكن آليًّا) — شرطُ التفعيل الحقيقيّ.
 
 ## مبادئ التصميم
 - **مصدر حالةٍ واحد** (§5): لا `isRecording/isPaused/isLocked` متعارضة.
