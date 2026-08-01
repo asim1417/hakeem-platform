@@ -1,0 +1,57 @@
+name: UX Entry Quality
+
+on:
+  pull_request:
+    paths:
+      - "app/page.tsx"
+      - "app/sign-in/**"
+      - "app/sign-up/**"
+      - "components/home/**"
+      - "components/auth/**"
+      - "lib/modules/auth/**"
+      - "lib/modules/site/public-platform-stats.ts"
+      - "scripts/test-unify-home-auth.ts"
+      - ".github/workflows/ux-entry-quality.yml"
+  push:
+    branches:
+      - main
+      - "agent/public-landing-page"
+    paths:
+      - "app/page.tsx"
+      - "app/sign-in/**"
+      - "app/sign-up/**"
+      - "components/home/**"
+      - "components/auth/**"
+      - "lib/modules/auth/**"
+      - "lib/modules/site/public-platform-stats.ts"
+      - "scripts/test-unify-home-auth.ts"
+      - ".github/workflows/ux-entry-quality.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ux-entry-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-entry-regression:
+    name: Public entry regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify public page and unified entry
+        run: npm run test:unify-home-auth

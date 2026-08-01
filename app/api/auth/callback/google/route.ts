@@ -25,10 +25,12 @@ export async function GET(request: NextRequest) {
   await hydrateEnvFromSettings().catch(() => 0);
 
   const cfg = getGoogleOAuthConfig();
-  const fail = (reason: string) =>
-    NextResponse.redirect(
-      new URL(`/sign-in?login_error=${encodeURIComponent(reason)}`, request.url)
-    );
+  const fail = (reason: string) => {
+    const recoveryUrl = new URL("/", request.url);
+    recoveryUrl.searchParams.set("login_error", reason);
+    recoveryUrl.hash = "main-content";
+    return NextResponse.redirect(recoveryUrl);
+  };
 
   if (!cfg) return fail("google_not_configured");
 
