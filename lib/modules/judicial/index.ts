@@ -23,6 +23,8 @@ export {
   blockingGatesFor,
 } from "./quality-gates";
 export { JUDICIAL_DOMAIN_PACKS, getDomainPack, domainPackForTrack } from "./domain-packs";
+export { PACK_GOVERNING_SYSTEMS, resolvePackCurrentness } from "./currentness";
+export type { GovSystemRecord, PackCurrentnessResult } from "./currentness";
 export {
   characterizeJudicialTask,
   voiceProfileFor,

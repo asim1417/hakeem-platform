@@ -183,7 +183,9 @@
     "test:jds-recipe": "tsx scripts/test-judicial-recipe.ts",
     "test:jds-orchestrator": "tsx scripts/test-judicial-orchestrator.ts",
     "eval:jds": "tsx scripts/eval-judicial-jds.ts",
-    "db:jds": "tsx scripts/seed-judicial-jds.ts"
+    "test:jds-currentness": "tsx scripts/test-judicial-currentness.ts",
+    "db:jds": "tsx scripts/seed-judicial-jds.ts",
+    "prove:currentness": "tsx scripts/prove-currentness.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
