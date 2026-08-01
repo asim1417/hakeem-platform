@@ -15,6 +15,7 @@ import {
   type HighlightRange
 } from "@/lib/modules/doc-tool/normalize";
 import { extractFile } from "@/lib/modules/doc-tool/extract";
+import { isOcrStreamV1Enabled } from "@/lib/modules/doc-tool/flags";
 import {
   AlertIcon,
   CheckSealIcon,
@@ -86,8 +87,19 @@ export function DocToolApp() {
   const [rangeFrom, setRangeFrom] = useState("");
   const [rangeTo, setRangeTo] = useState("");
   const [retryBusy, setRetryBusy] = useState(false);
+  // معاينةٌ تدريجيّة أثناء القراءة السحابية (خلف علم): تُعرض الصفحات فور اكتمالها.
+  const [livePreview, setLivePreview] = useState<{ title: string; text: string; pages: number } | null>(null);
+  const livePagesRef = useRef<Map<number, string>>(new Map());
   const retryRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // حارسٌ ضدّ تحديث الحالة بعد التفكيك (setState-after-unmount) أثناء رفعٍ طويل
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // الخيار السحابي يظهر فقط إن كانت الخدمة السحابية مفعّلة على الخادم.
   // التفضيل يُحفظ في كوكي (قيمة 0/1 فقط — لا بيانات شخصية).
@@ -204,38 +216,75 @@ export function DocToolApp() {
       const list = Array.from(files);
       if (!list.length) return;
       setStatus("جارٍ المعالجة…");
+      setError("");
       setStage(1);
       const added: ToolDoc[] = [];
+      const failures: string[] = [];
+      // كل ملفٍ في try/catch مستقلّ: فشل ملفٍ واحد لا يُسقط بقيّة الدفعة، والحلقة
+      // تُكمل، ثم نُبلّغ عن المتعذِّر باسمه بدل ابتلاع الخطأ صامتًا.
+      const streamOn = isOcrStreamV1Enabled();
       for (const f of list) {
+        if (!mountedRef.current) return;
         setStage(2);
-        const r = await extractFile(f, {
-          onProgress: (label) => {
-            setStage(/OCR|ضوئية|تعرّف|Gemini/.test(label) ? 3 : 2);
-            setStatus(`${f.name}: ${label}`);
-          },
-          cloudOcr,
-          cloudModel: cloudHiQ ? "pro" : "lite",
-          cloudRange: {
-            from: rangeFrom ? Number(rangeFrom) : undefined,
-            to: rangeTo ? Number(rangeTo) : undefined
-          }
-        });
-        added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text), running: r.running });
-        if (r.warning) setError(`${f.name}: ${r.warning}`);
+        // معاينةٌ تدريجيّة: نُظهر صفحات هذا الملف فور اكتمالها بدل انتظاره كاملًا.
+        const streaming = streamOn && cloudOcr && /\.pdf$/i.test(f.name);
+        if (streaming) {
+          livePagesRef.current = new Map();
+          setLivePreview({ title: f.name, text: "", pages: 0 });
+        }
+        try {
+          const r = await extractFile(f, {
+            onProgress: (label) => {
+              if (!mountedRef.current) return;
+              setStage(/OCR|ضوئية|تعرّف|Gemini/.test(label) ? 3 : 2);
+              setStatus(`${f.name}: ${label}`);
+            },
+            cloudOcr,
+            cloudModel: cloudHiQ ? "pro" : "lite",
+            cloudRange: {
+              from: rangeFrom ? Number(rangeFrom) : undefined,
+              to: rangeTo ? Number(rangeTo) : undefined
+            },
+            onPage: streaming
+              ? (pageNumber, text) => {
+                  if (!mountedRef.current) return;
+                  const map = livePagesRef.current;
+                  map.set(pageNumber, text);
+                  // نُعيد بناء المعاينة بترتيب الصفحات (البثّ قد يصل غير مرتّب مع التوازي).
+                  const ordered = [...map.keys()].sort((a, b) => a - b);
+                  const preview = ordered.map((p) => `[صفحة ${p}]\n${map.get(p) ?? ""}`).join("\n\n");
+                  setLivePreview({ title: f.name, text: preview, pages: map.size });
+                }
+              : undefined
+          });
+          added.push({ title: f.name, kind: r.kind, rawText: cleanText(r.text), running: r.running });
+          if (r.warning) failures.push(`${f.name}: ${r.warning}`);
+          else if (!r.text.trim()) failures.push(`${f.name}: لم يُستخرَج نصّ`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          failures.push(`${f.name}: تعذّر (${msg.slice(0, 80)})`);
+        }
       }
+      if (!mountedRef.current) return;
+      setLivePreview(null); // المعاينة انتهت؛ الوثائق المكتملة في القائمة الآن
       setStage(4);
-      setTimeout(() => setStage(0), 3000);
+      setTimeout(() => {
+        if (mountedRef.current) setStage(0);
+      }, 3000);
       const ok = added.filter((d) => d.rawText.trim()).length;
-      setDocs((prev) => {
-        const next = [...added, ...prev];
-        persist(next);
-        return next;
-      });
+      if (added.length) {
+        setDocs((prev) => {
+          const next = [...added, ...prev];
+          persist(next);
+          return next;
+        });
+      }
+      if (failures.length) setError(failures.slice(0, 5).join(" · "));
       setStatus(
         `أُضيف ${list.length.toLocaleString(AR)} (نجح استخراج ${ok.toLocaleString(AR)})`
       );
     },
-    [persist, cloudOcr, rangeFrom, rangeTo]
+    [persist, cloudOcr, cloudHiQ, rangeFrom, rangeTo]
   );
 
   const removeDoc = useCallback(
@@ -460,7 +509,24 @@ export function DocToolApp() {
       ) : null}
       <div className={styles.wrap}>
         <main className={styles.main}>
-          {current ? (
+          {!current && livePreview ? (
+            <div className={styles.docView} aria-live="polite">
+              <h2 className={styles.docTitle}>
+                {livePreview.title}{" "}
+                <span className={styles.kind}>
+                  قراءة جارية — {livePreview.pages.toLocaleString(AR)} صفحة
+                </span>
+              </h2>
+              <div className={styles.aiWarn}>
+                <AlertIcon size={18} />
+                <span>معاينة تدريجيّة أثناء القراءة السحابية — النصّ النهائيّ يُحفظ عند اكتمال الوثيقة.</span>
+              </div>
+              <hr className={styles.rule} />
+              <div className={styles.txt}>
+                {livePreview.text ? livePreview.text : "تجهيز الصفحات…"}
+              </div>
+            </div>
+          ) : current ? (
             <div className={styles.docView}>
               <h2 className={styles.docTitle}>
                 {current.title} <span className={styles.kind}>{current.kind}</span>{" "}

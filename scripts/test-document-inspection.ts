@@ -544,6 +544,7 @@ check("استخراج الحقول حسب النوع: حكم مقابل عقد (
 
 // ── إعادة تشكيل نصّ PDF المعطوب (صيغ العرض/التكرار/توجيه OCR) ──
 import {
+  arabicSemanticCorruptionScore,
   cleanPdfTextLayer,
   dedupeAdjacentDuplicates,
   isGarbledArabicText,
@@ -608,6 +609,96 @@ check("كشف العطب: عربيّ سليم بمصطلحٍ إنجليزيّ أ
   const mixed = "حكمت الدائرة التجارية بإلزام المدّعى عليه بدفع مبلغٍ وقدره خمسمائة ألف ريال وفق العقد المبرم بين الطرفين ورقمه Ref-19 مع تحميله المصاريف";
   assert.equal(cleanPdfTextLayer(mixed).needsOcr, false);
 });
+
+// ── الفساد الدلالي العربي (§11): حروف عربية صحيحة يونيكوديًّا لكن كلمات غير موجودة ──
+const SEMANTIC_GOOD =
+  "المادة الأولى: تسري أحكام هذا النظام على جميع العاملين في القطاع الخاص، ويقصد " +
+  "بالعامل كل شخص طبيعي يعمل لمصلحة صاحب عمل وتحت إدارته أو إشرافه مقابل أجر. ويجب " +
+  "على صاحب العمل أن يلتزم بأحكام هذا النظام وأن يوفر بيئة عمل آمنة. وإذا خالف صاحب " +
+  "العمل هذه الأحكام فإنه يتعرض للعقوبات المنصوص عليها في النظام. كما تختص المحكمة " +
+  "العمالية بالنظر في المنازعات التي تنشأ بين العامل وصاحب العمل، وتكون أحكامها " +
+  "قابلة للاستئناف أمام محكمة الاستئناف خلال المدة المحددة نظاماً.";
+
+// خريطة إبدال حرفيّة ثابتة تحاكي ToUnicode معطوبة: حروف عربية سليمة، معنى مُدمَّر
+function substituteArabicLetters(src: string): string {
+  const from = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+  const to = "يوهنملكقفغعظطضصشسزردذخحجثتبا";
+  const map = new Map<string, string>();
+  for (let i = 0; i < from.length; i += 1) map.set(from[i], to[i]);
+  return [...src].map((c) => map.get(c) ?? c).join("");
+}
+
+check("الفساد الدلالي: نصّ عربيّ سليم → غير معطوب (لا إنذار كاذب)", () => {
+  const r = arabicSemanticCorruptionScore(SEMANTIC_GOOD);
+  assert.equal(r.skipped, false);
+  assert.equal(r.corrupt, false);
+  assert.ok(r.structureCoverage > 0.15, "التغطية البنيويّة عالية في العربية السليمة");
+});
+
+check("الفساد الدلالي: إبدال حرفيّ (حروف صحيحة/معنى مُدمَّر) → معطوب + توجيه OCR", () => {
+  const corrupt = substituteArabicLetters(SEMANTIC_GOOD);
+  const r = arabicSemanticCorruptionScore(corrupt);
+  assert.equal(r.corrupt, true);
+  assert.ok(r.structureCoverage < 0.05, "لا كلمات وظيفيّة/مُعرّفة بأل في النصّ المُبدَّل");
+  assert.equal(cleanPdfTextLayer(corrupt).needsOcr, true); // البنيويّ يفوت الكواشف الأخرى
+});
+
+check("الفساد الدلالي: نصّ قصير أو غير عربيّ → يُتخطّى (لا حكم)", () => {
+  assert.equal(arabicSemanticCorruptionScore("قصير").skipped, true);
+  assert.equal(
+    arabicSemanticCorruptionScore("This is a plain English paragraph ".repeat(6)).skipped,
+    true
+  );
+});
+
+// ── ذاكرة القراءة الضوئية بمفتاح البصمة (PR-2: تسريع مئات الصفحات) ──
+import { hashBytes, MemoryOcrCache, NULL_OCR_CACHE } from "../lib/modules/document-inspection/ocr-cache";
+
+async function ocrCacheChecks() {
+  const a = new TextEncoder().encode("صفحة مطابقة");
+  const b = new TextEncoder().encode("صفحة مطابقة");
+  const c = new TextEncoder().encode("صفحة مختلفة");
+  const [ha, hb, hc] = [await hashBytes(a), await hashBytes(b), await hashBytes(c)];
+  check("ذاكرة OCR: البصمة حتميّة لنفس البايتات ومختلفة للمختلف", () => {
+    assert.equal(ha, hb, "نفس المحتوى → نفس البصمة");
+    assert.notEqual(ha, hc, "محتوى مختلف → بصمة مختلفة");
+    assert.match(ha, /^[0-9a-f]{64}$/, "SHA-256 hex");
+  });
+
+  const big = new Uint8Array([1, 2, 3, 4, 5, 6]);
+  const viewHash = await hashBytes(big.subarray(2, 5)); // [3,4,5] بإزاحة 2
+  const standaloneHash = await hashBytes(new Uint8Array([3, 4, 5]));
+  check("ذاكرة OCR: البصمة لا تتأثر بإزاحة العرض داخل مخزنٍ أكبر", () => {
+    assert.equal(viewHash, standaloneHash);
+  });
+
+  check("ذاكرة OCR: إصابة/إخفاق ولا تخزّن فراغًا", () => {
+    const cache = new MemoryOcrCache(3);
+    cache.set("k1", "نصّ الصفحة");
+    assert.equal(cache.get("k1"), "نصّ الصفحة");
+    assert.equal(cache.get("مفقود"), undefined);
+    cache.set("k2", "   "); // فراغ → لا يُخزَّن (يُسمح بإعادة المحاولة)
+    assert.equal(cache.get("k2"), undefined);
+    assert.equal(cache.size, 1);
+  });
+
+  check("ذاكرة OCR: إخلاء بترتيب الإدخال عند تجاوز الحدّ", () => {
+    const cache = new MemoryOcrCache(2);
+    cache.set("a", "A");
+    cache.set("b", "B");
+    cache.set("c", "C"); // يتجاوز الحدّ → يُخلى أقدم إدخال (a)
+    assert.equal(cache.get("a"), undefined, "الأقدم أُخلي");
+    assert.equal(cache.get("b"), "B");
+    assert.equal(cache.get("c"), "C");
+    assert.equal(cache.size, 2);
+  });
+
+  check("ذاكرة OCR: الذاكرة الفارغة لا تُصيب أبدًا (للعلم المطفأ)", () => {
+    NULL_OCR_CACHE.set("x", "y");
+    assert.equal(NULL_OCR_CACHE.get("x"), undefined);
+    assert.equal(NULL_OCR_CACHE.size, 0);
+  });
+}
 
 // ── توجيه OCR ──
 import { isImageExtension, translateOcrStatus } from "../lib/modules/document-inspection/ocr";
@@ -900,6 +991,7 @@ check("أرقام الهامش: يحترم علامات الصفحات [صفحة
 
 async function asyncChecks() {
   await adaptiveAll();
+  await ocrCacheChecks();
   const xml = "<w:p><w:t>وثيقة مضغوطة للاختبار داخل أرشيف</w:t></w:p>";
   const zip = buildZip("word/document.xml", new TextEncoder().encode(xml));
   const entry = await extractZipEntry(zip, "word/document.xml");

@@ -9,5 +9,6 @@ export * from "./sample-case";
 export * from "./pipeline";
 export * from "./accuracy";
 export * from "./throughput";
+export * from "./ocr-cache";
 export * from "./margin-numbers";
 export * from "./line-reflow";

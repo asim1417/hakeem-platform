@@ -10,6 +10,12 @@
 
 import { runAdaptive } from "@/lib/modules/document-inspection/throughput";
 import { isBrokenExtraction } from "@/lib/modules/document-inspection/reshape";
+import { hashBytes, MemoryOcrCache } from "@/lib/modules/document-inspection/ocr-cache";
+import { isOcrCacheV1Enabled } from "@/lib/modules/doc-tool/flags";
+
+// ذاكرة قراءةٍ ضوئية على مستوى الوحدة (تدوم لعمر التبويب): الصفحة المتطابقة بصمةً —
+// بيضاء، ترويسة/ختم مكرّر، أو إعادة رفع الملف نفسه — تُستردّ فورًا بلا نداءٍ سحابيّ.
+const PAGE_OCR_CACHE = new MemoryOcrCache(5_000);
 
 export type CloudProgress = (label: string) => void;
 
@@ -210,6 +216,8 @@ export interface CloudPdfOptions {
   concurrency?: number;
   /** إلغاء تعاوني — تتوقف الحلقة عند أول صفحة تالية */
   shouldCancel?: () => boolean;
+  /** بثّ لكل صفحة عند اكتمالها (رقم الصفحة ونصّها) — لعرضٍ تدريجيّ بدل انتظار الكلّ. */
+  onPage?: (pageNumber: number, text: string, fromCache: boolean) => void;
 }
 
 /** أقصى توازٍ مسموح في المتصفح. رُفِع إلى 20: الـ canvas الكبير يُحرَّر فورًا بعد
@@ -298,6 +306,23 @@ export async function cloudOcrPdfPages(
       canvas.height = 0;
       if (!blob) return { value: null, rateLimited: false };
 
+      // ذاكرة البصمة: بصمةُ بايتات الصورة المرسومة حتميّةٌ لنفس محتوى الصفحة. إن سبقت
+      // قراءتُها (صفحةٌ متطابقة داخل الوثيقة أو إعادة رفع الملف) نُعيدها فورًا بلا نداء.
+      const cacheOn = isOcrCacheV1Enabled();
+      let cacheKey: string | null = null;
+      if (cacheOn) {
+        try {
+          cacheKey = await hashBytes(new Uint8Array(await blob.arrayBuffer()));
+          const cached = PAGE_OCR_CACHE.get(cacheKey);
+          if (cached) {
+            opts.onPage?.(p, cached, true);
+            return { value: cached, rateLimited: false };
+          }
+        } catch {
+          cacheKey = null; // تعذّر حساب البصمة → تجاهُل الذاكرة، قراءةٌ عادية
+        }
+      }
+
       // الافتراضيّ الأسرع: lite لكلّ الصفحات. إن طلب المستخدم صراحةً pro (فائق الدقّة)
       // نبدأ به مباشرةً. الطبقة السريعة تُنجز المطبوع النظيف في ثوانٍ.
       const baseModel: CloudModel = opts.model ?? "lite";
@@ -324,6 +349,10 @@ export async function cloudOcrPdfPages(
         }
       }
       if (!attempt.text && attempt.error) lastError = attempt.error;
+      if (attempt.text) {
+        if (cacheOn && cacheKey) PAGE_OCR_CACHE.set(cacheKey, attempt.text);
+        opts.onPage?.(p, attempt.text, false);
+      }
       return { value: attempt.text, rateLimited: attempt.rateLimited };
     };
 
