@@ -115,6 +115,12 @@ async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<Ext
   const bytes = new Uint8Array(await file.arrayBuffer());
   const fresh = (): ArrayBuffer => bytes.slice().buffer;
   try {
+    const { isPageLevelOcrV1Enabled } = await import("@/lib/modules/doc-tool/flags");
+    if (isPageLevelOcrV1Enabled()) {
+      const perPage = await extractPdfPerPage(fresh, onProgress);
+      if (perPage) return perPage;
+      // perPage=null يعني تعذّر التخطيط (مثلاً ملف تالف) — نسقط للمسار القديم أدناه
+    }
     const { extractPdfText } = await import("@/lib/modules/document-inspection/file-extract");
     onProgress?.("قراءة نص الـ PDF…");
     const result = await extractPdfText(fresh());
@@ -152,6 +158,55 @@ async function extractPdf(file: File, onProgress?: ExtractProgress): Promise<Ext
       return { text: "", kind: `تعذّر (${errMsg(err)})` };
     }
   }
+}
+
+/**
+ * توجيه OCR على مستوى الصفحة (خلف علم NEXT_PUBLIC_HAKEEM_PAGE_LEVEL_OCR_V1).
+ * يُخطّط لكل صفحة: النظيفة تُقرأ من طبقة النصّ، والفارغة/المعطوبة/المُفسَدة دلاليًّا
+ * تُقرأ ضوئيًّا وتُدمَج في محلّها — بدل إرسال المستند كلّه إلى OCR لأجل صفحةٍ واحدة.
+ * يعيد null عند تعذّر التخطيط ليسقط النداء إلى المسار القديم.
+ */
+async function extractPdfPerPage(
+  fresh: () => ArrayBuffer,
+  onProgress?: ExtractProgress
+): Promise<ExtractResult | null> {
+  const { planPdfPageOcr, mergeScannedPages } = await import("@/lib/modules/document-inspection/file-extract");
+  onProgress?.("قراءة نص الـ PDF صفحةً صفحة…");
+  let plan;
+  try {
+    plan = await planPdfPageOcr(fresh());
+  } catch {
+    return null; // تعذّر فتح/تخطيط الملف — دع المسار القديم يحاول (قد ينجح OCR كامل)
+  }
+  // كل الصفحات نصّ رقميّ سليم → لا حاجة لأيّ OCR
+  if (plan.needOcrPages.length === 0) {
+    const sep = separateRunningLines(plan.baseText);
+    return { text: sep.body, kind: "PDF (نص)", running: sep.running };
+  }
+  // كل الصفحات تحتاج OCR (ممسوح بالكامل أو طبقة نصّ معطوبة تمامًا) → OCR كامل
+  if (plan.cleanPages === 0) {
+    return ocrPdf(fresh(), onProgress);
+  }
+  // مختلط: اقرأ ضوئيًّا الصفحات المحتاجة فقط وادمجها في النصّ الرقميّ السليم
+  const { ocrScannedPdf, translateOcrStatus } = await import("@/lib/modules/document-inspection/ocr");
+  const { fixReversedArabicLines } = await import("@/lib/modules/document-inspection/text-quality");
+  onProgress?.(`قراءة ${plan.needOcrPages.length} صفحة محتاجة للمسح…`);
+  const ocr = await ocrScannedPdf(
+    fresh(),
+    (info) =>
+      onProgress?.(
+        `OCR صفحة ${info.page}/${info.pages} — ${translateOcrStatus(info.status)} ${Math.round((info.progress || 0) * 100)}٪`
+      ),
+    { onlyPages: plan.needOcrPages }
+  );
+  const fixed = fixReversedArabicLines(ocr.text);
+  const merged = mergeScannedPages(plan.baseText, fixed.text);
+  const sep = separateRunningLines(merged);
+  return {
+    text: sep.body,
+    kind: `PDF مختلط (نص + OCR ${Math.round(ocr.avgConfidence)}٪ · ${plan.cleanPages} نصّ · ${plan.needOcrPages.length} مسح)`,
+    running: sep.running
+  };
 }
 
 async function ocrPdf(buffer: ArrayBuffer, onProgress?: ExtractProgress): Promise<ExtractResult> {
