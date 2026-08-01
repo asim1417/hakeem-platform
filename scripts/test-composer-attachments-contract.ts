@@ -16,6 +16,8 @@ import {
   hasReadyAttachmentContent,
   resolveAttachedOnlyError,
 } from "../lib/modules/attachments/attachment-classify";
+import { createAgentContext, executeTool } from "../lib/modules/hakeem-agent/tools";
+import { DEFAULT_SOURCE_POLICY } from "../lib/modules/hakeem-composer/source-policy";
 import { decideSharePointDownloadUrl } from "../lib/modules/attachments/sharepoint-download";
 import { ATTACHMENT_MAX_BYTES } from "../lib/modules/attachments/secure-upload";
 
