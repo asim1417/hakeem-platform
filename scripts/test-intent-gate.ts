@@ -7,6 +7,10 @@ const cases: Case[] = [
   { input: "السلام عليكم", expect: "greeting", search: false },
   { input: "مرحبا", expect: "greeting", search: false },
   { input: "صباح الخير", expect: "greeting", search: false },
+  // تحيّات كانت تسقط للبحث فتجلب مواد عشوائية (إصلاح خلل صندوق البحث)
+  { input: "اهلين سالكر", expect: "greeting", search: false },
+  { input: "أهلين", expect: "greeting", search: false },
+  { input: "كيفك", expect: "greeting", search: false },
   { input: "شكرا جزيلا", expect: "thanks", search: false },
   { input: "من انت؟", expect: "meta", search: false },
   { input: "ماذا تستطيع أن تفعل؟", expect: "meta", search: false },

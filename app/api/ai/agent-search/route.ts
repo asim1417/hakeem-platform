@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { createConsultationDraft } from "@/lib/modules/ai/ai-gateway";
 import { orchestrate, suggestMode } from "@/lib/modules/agents/orchestrator";
-import { intentNeedsSearch, isCaseHelpWithoutFacts } from "@/lib/modules/agents/intent-gate";
+import { classifyIntent, intentNeedsSearch, isCaseHelpWithoutFacts } from "@/lib/modules/agents/intent-gate";
 import { assessCaseIntake } from "@/lib/modules/agents/thinking/intake";
 import { nativeAgentEnabled } from "@/lib/modules/hakeem-agent/flag";
 import { runHakeemAgent } from "@/lib/modules/hakeem-agent/runtime";
@@ -482,6 +482,22 @@ export async function POST(request: NextRequest) {
               textLength: attachedDoc.length,
             },
           });
+        }
+
+        // بوّابة النيّة قبل الوكيل الأصيل — تُصلح خلل «تحية/سؤال ناقص → مواد عشوائية من النواة».
+        // التحية/الشكر/التعريف/خارج النطاق لا تستدعي بحثًا أبدًا؛ والغامض في أوّل الحوار (بلا تاريخ)
+        // كذلك. نردّ مباشرةً بلا أساسٍ نظاميّ ودون تشغيل حلقة الأدوات (أسرع + بلا استرجاعٍ لا صلة له).
+        // لا نحجب سؤالًا قانونيًّا: أيّ إشارةٍ قانونية تُصنَّف legal_question فتمرّ للوكيل كالمعتاد.
+        if (agentMode.id === "ask" && !hasDoc) {
+          const gate = classifyIntent(typed);
+          const alwaysReplyDirect =
+            gate.type === "greeting" || gate.type === "thanks" || gate.type === "meta" || gate.type === "non_legal";
+          const ambiguousFirstTurn = gate.type === "ambiguous" && history.length === 0;
+          if (!intentNeedsSearch(gate.type) && gate.reply && (alwaysReplyDirect || ambiguousFirstTurn)) {
+            send({ type: "result", answer: gate.reply, mode: "intent", basis: [], total: 0, intent: gate.type });
+            send({ type: "done" });
+            return;
+          }
         }
 
         // ── الوكيل الأصيل (HKM-CLAUDE-NATIVE-001، خلف علم CLAUDE_NATIVE_AGENT_ENABLED) ──
