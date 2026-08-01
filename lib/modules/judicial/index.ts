@@ -25,6 +25,8 @@ export {
 export { JUDICIAL_DOMAIN_PACKS, getDomainPack, domainPackForTrack } from "./domain-packs";
 export { PACK_GOVERNING_SYSTEMS, resolvePackCurrentness } from "./currentness";
 export type { GovSystemRecord, PackCurrentnessResult } from "./currentness";
+export { segmentStatements, traceStatements, unsupportedCount } from "./statement-trace";
+export type { TraceContext } from "./statement-trace";
 export {
   characterizeJudicialTask,
   voiceProfileFor,
