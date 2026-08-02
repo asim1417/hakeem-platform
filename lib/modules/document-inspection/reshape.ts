@@ -406,16 +406,20 @@ export function arabicSemanticCorruptionScore(rawText: string): ArabicSemanticRe
   const singleCharRatio = single / arabicWords.length;
   const longWordRatio = longWords / arabicWords.length;
 
-  // النصّ العربيّ الحقيقيّ يحوي عادةً >15% كلمات بنيويّة. تحت 6% إشارةٌ قويّة على العطب.
-  const coverageSignal = clamp01((0.12 - structureCoverage) / 0.12);
-  const singleSignal = clamp01((singleCharRatio - 0.15) / 0.25);
+  // العربية السليمة (40+ كلمة) تغطيتها البنيويّة ~0.4–0.6؛ حروف الجرّ/العطف وأداة
+  // التعريف لا تغيب. المنحنى أوسع (0.30) ليُعطي إشارةً قويّة حتى حين تحوي الطبقةُ
+  // المعطوبة «جزرًا سليمة» متفرّقة (أجزاء صفحةٍ قُرئت صحيحةً) ترفع التغطية قليلًا.
+  const coverageSignal = clamp01((0.3 - structureCoverage) / 0.3);
+  const singleSignal = clamp01((singleCharRatio - 0.12) / 0.25);
   const longSignal = clamp01((longWordRatio - 0.1) / 0.2);
 
   // التغطية البنيويّة هي الإشارة الأقوى والأكثر تمييزاً؛ نمنحها الوزن الأكبر.
   const score = clamp01(coverageSignal * 0.7 + singleSignal * 0.2 + longSignal * 0.1);
 
-  // نُعلن العطب حين تنهار البنية اللغويّة: تغطية بنيويّة شديدة الانخفاض والدرجة مرتفعة.
-  const corrupt = structureCoverage < 0.05 && score >= 0.6;
+  // عطبٌ حين تنهار البنية اللغويّة: تغطيةٌ بنيويّة شديدة الانخفاض (أقلّ من ثُلث السليم)
+  // ودرجةٌ مرتفعة. الفجوة بين الخربشة الواقعيّة (~0.06) والسليم (~0.5) واسعةٌ فالعتبة
+  // آمنةٌ ضدّ الإيجابيّ الكاذب مع الحسّاسيّة للعطب الجزئيّ الذي يفوت العتبةَ الصارمة.
+  const corrupt = structureCoverage < 0.15 && score >= 0.5;
 
   return { corrupt, score, arabicRatio, structureCoverage, singleCharRatio, longWordRatio, skipped: false };
 }
