@@ -27,6 +27,7 @@ enum AuditSubject {
   TRAINING
   AI_GATEWAY
   ADMIN
+  BILLING
 }
 
 enum CaseStatus {
@@ -72,6 +73,14 @@ model User {
   folders           Folder[]
   chatConversations ChatConversation[]
   simulationCases   SimulationCase[]
+
+  // ── الفوترة (HKM-BILLING-UX-001) ──
+  subscriptions     Subscription[]
+  orders            Order[]
+  paymentMethods    PaymentMethod[]
+  invoices          Invoice[]
+  ownedWorkspaces   TenantWorkspace[]  @relation("WorkspaceOwner")
+  workspaceMembers  WorkspaceMember[]
 
   @@map("users")
 }
@@ -1245,4 +1254,368 @@ model ReviewReport {
   createdAt DateTime      @default(now()) @map("created_at")
 
   @@map("review_reports")
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  منظومة الفوترة والنقاط والاشتراكات — HKM-BILLING-UX-001 (المرحلة 0)
+//  الطبقة المالية بنماذج Prisma. محرك الرصيد يبقى على جداول usage_credit_*
+//  الخام (تُدار عبر ensure-billing-schema.ts). كل المبالغ بالهللات (Int).
+// ════════════════════════════════════════════════════════════════════
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  PAYMENT_RETRY
+  CANCELED
+  EXPIRED
+  PAUSED
+}
+
+enum OrderType {
+  SUBSCRIPTION_NEW
+  SUBSCRIPTION_RENEWAL
+  SUBSCRIPTION_UPGRADE
+  SUBSCRIPTION_DOWNGRADE
+  POINTS_PACKAGE
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  FAILED
+  CANCELED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethodStatus {
+  ACTIVE
+  EXPIRED
+  REMOVED
+}
+
+enum InvoiceType {
+  TAX_INVOICE
+  SIMPLIFIED_TAX_INVOICE
+  CREDIT_NOTE
+}
+
+enum InvoiceStatus {
+  ISSUED
+  CANCELED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  DUPLICATE
+  DEAD_LETTER
+}
+
+enum ZatcaStatus {
+  NOT_APPLICABLE
+  PENDING
+  REPORTED
+  CLEARED
+  FAILED
+}
+
+// ── الباقات ──
+model Plan {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  nameAr        String   @map("name_ar")
+  nameEn        String?  @map("name_en")
+  description   String?
+  isActive      Boolean  @default(true) @map("is_active")
+  sortOrder     Int      @default(0) @map("sort_order")
+  monthlyPoints Int      @default(0) @map("monthly_points")
+  includedSeats Int      @default(1) @map("included_seats")
+  entitlements  Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  prices        PlanPrice[]
+  subscriptions Subscription[]
+  orders        Order[]
+
+  @@map("billing_plans")
+}
+
+// ── أسعار الباقات (مؤرّخة بإصدارات) ──
+model PlanPrice {
+  id              String        @id @default(cuid())
+  planId          String        @map("plan_id")
+  billingPeriod   BillingPeriod @map("billing_period")
+  currency        String        @default("SAR")
+  subtotalHalalas Int           @map("subtotal_halalas")
+  vatHalalas      Int           @map("vat_halalas")
+  totalHalalas    Int           @map("total_halalas")
+  effectiveFrom   DateTime      @default(now()) @map("effective_from")
+  effectiveTo     DateTime?     @map("effective_to")
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  plan            Plan          @relation(fields: [planId], references: [id])
+
+  @@index([planId, billingPeriod, isActive])
+  @@map("billing_plan_prices")
+}
+
+// ── مساحات العمل (مقاعد OFFICE/ENTERPRISE) ──
+model TenantWorkspace {
+  id            String            @id @default(cuid())
+  name          String
+  ownerId       String            @map("owner_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  owner         User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members       WorkspaceMember[]
+  subscriptions Subscription[]
+
+  @@map("billing_workspaces")
+}
+
+model WorkspaceMember {
+  id          String          @id @default(cuid())
+  workspaceId String          @map("workspace_id")
+  userId      String          @map("user_id")
+  role        String          @default("member")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  workspace   TenantWorkspace @relation(fields: [workspaceId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
+
+  @@unique([workspaceId, userId])
+  @@map("billing_workspace_members")
+}
+
+// ── الاشتراكات ──
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String?            @map("user_id")
+  workspaceId            String?            @map("workspace_id")
+  planId                 String             @map("plan_id")
+  provider               String?
+  providerSubscriptionId String?            @map("provider_subscription_id")
+  status                 SubscriptionStatus @default(TRIALING)
+  currentPeriodStart     DateTime?          @map("current_period_start")
+  currentPeriodEnd       DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd      Boolean            @default(false) @map("cancel_at_period_end")
+  canceledAt             DateTime?          @map("canceled_at")
+  trialEndsAt            DateTime?          @map("trial_ends_at")
+  paymentMethodId        String?            @map("payment_method_id")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  user                   User?              @relation(fields: [userId], references: [id])
+  workspace              TenantWorkspace?   @relation(fields: [workspaceId], references: [id])
+  plan                   Plan               @relation(fields: [planId], references: [id])
+  orders                 Order[]
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+  @@map("billing_subscriptions")
+}
+
+// ── الطلبات ──
+model Order {
+  id                String        @id @default(cuid())
+  userId            String        @map("user_id")
+  workspaceId       String?       @map("workspace_id")
+  subscriptionId    String?       @map("subscription_id")
+  type              OrderType
+  status            OrderStatus   @default(PENDING)
+  currency          String        @default("SAR")
+  subtotalHalalas   Int           @map("subtotal_halalas")
+  vatHalalas        Int           @map("vat_halalas")
+  totalHalalas      Int           @map("total_halalas")
+  planId            String?       @map("plan_id")
+  pointsPackageCode String?       @map("points_package_code")
+  pointsGranted     Int?          @map("points_granted")
+  idempotencyKey    String        @unique @map("idempotency_key")
+  metadata          Json?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  user              User          @relation(fields: [userId], references: [id])
+  plan              Plan?         @relation(fields: [planId], references: [id])
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id])
+  payments          Payment[]
+  invoice           Invoice?
+
+  @@index([userId, status])
+  @@map("billing_orders")
+}
+
+// ── المدفوعات ──
+model Payment {
+  id                 String        @id @default(cuid())
+  orderId            String        @map("order_id")
+  provider           String
+  providerPaymentId  String?       @map("provider_payment_id")
+  status             PaymentStatus @default(INITIATED)
+  amountHalalas      Int           @map("amount_halalas")
+  currency           String        @default("SAR")
+  paymentMethodType  String?       @map("payment_method_type")
+  providerFeeHalalas Int?          @map("provider_fee_halalas")
+  paidAt             DateTime?     @map("paid_at")
+  failedAt           DateTime?     @map("failed_at")
+  failureCode        String?       @map("failure_code")
+  failureMessage     String?       @map("failure_message")
+  rawMetadata        Json?         @map("raw_metadata")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  order              Order         @relation(fields: [orderId], references: [id])
+  refunds            Refund[]
+
+  @@index([provider, providerPaymentId])
+  @@map("billing_payments")
+}
+
+// ── وسائل الدفع المرمّزة (لا PAN/CVC خام) ──
+model PaymentMethod {
+  id                 String              @id @default(cuid())
+  userId             String              @map("user_id")
+  provider           String
+  providerCustomerId String?             @map("provider_customer_id")
+  providerToken      String?             @map("provider_token")
+  brand              String?
+  network            String?
+  lastFour           String?             @map("last_four")
+  expiryMonth        Int?                @map("expiry_month")
+  expiryYear         Int?                @map("expiry_year")
+  isDefault          Boolean             @default(false) @map("is_default")
+  status             PaymentMethodStatus @default(ACTIVE)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  user               User                @relation(fields: [userId], references: [id])
+
+  @@index([userId, isDefault])
+  @@map("billing_payment_methods")
+}
+
+// ── الفواتير ──
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique @map("invoice_number")
+  userId          String        @map("user_id")
+  orderId         String?       @unique @map("order_id")
+  type            InvoiceType   @default(TAX_INVOICE)
+  status          InvoiceStatus @default(ISSUED)
+  currency        String        @default("SAR")
+  subtotalHalalas Int           @map("subtotal_halalas")
+  vatRateBps      Int           @map("vat_rate_bps")
+  vatHalalas      Int           @map("vat_halalas")
+  totalHalalas    Int           @map("total_halalas")
+  sellerSnapshot  Json          @map("seller_snapshot")
+  buyerSnapshot   Json          @map("buyer_snapshot")
+  issuedAt        DateTime      @default(now()) @map("issued_at")
+  pdfUrl          String?       @map("pdf_url")
+  xmlUrl          String?       @map("xml_url")
+  zatcaStatus     ZatcaStatus   @default(NOT_APPLICABLE) @map("zatca_status")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  user            User          @relation(fields: [userId], references: [id])
+  order           Order?        @relation(fields: [orderId], references: [id])
+  refunds         Refund[]
+
+  @@map("billing_invoices")
+}
+
+// ── الاستردادات ──
+model Refund {
+  id               String       @id @default(cuid())
+  paymentId        String       @map("payment_id")
+  invoiceId        String?      @map("invoice_id")
+  providerRefundId String?      @map("provider_refund_id")
+  amountHalalas    Int          @map("amount_halalas")
+  reason           String?
+  status           RefundStatus @default(PENDING)
+  pointsReversed   Int          @default(0) @map("points_reversed")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  payment          Payment      @relation(fields: [paymentId], references: [id])
+  invoice          Invoice?     @relation(fields: [invoiceId], references: [id])
+
+  @@map("billing_refunds")
+}
+
+// ── أحداث Webhook (منع التكرار) ──
+model WebhookEvent {
+  id                String        @id @default(cuid())
+  provider          String
+  providerEventId   String        @map("provider_event_id")
+  eventType         String?       @map("event_type")
+  signatureVerified Boolean       @default(false) @map("signature_verified")
+  payload           Json
+  status            WebhookStatus @default(RECEIVED)
+  attempts          Int           @default(0)
+  processingError   String?       @map("processing_error")
+  receivedAt        DateTime      @default(now()) @map("received_at")
+  processedAt       DateTime?     @map("processed_at")
+
+  @@unique([provider, providerEventId])
+  @@map("billing_webhook_events")
+}
+
+// ── تدقيق الفوترة ──
+model BillingAuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?  @map("actor_user_id")
+  action      String
+  targetType  String?  @map("target_type")
+  targetId    String?  @map("target_id")
+  reason      String?
+  before      Json?
+  after       Json?
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([action, createdAt])
+  @@map("billing_audit_logs")
+}
+
+// ── أسعار نماذج Claude (مؤرّخة) — لقياس التكلفة الفعلية ──
+model ModelPrice {
+  id                      String    @id @default(cuid())
+  provider                String    @default("anthropic")
+  model                   String
+  inputUsdPerMillion      Float     @map("input_usd_per_million")
+  outputUsdPerMillion     Float     @map("output_usd_per_million")
+  cacheWriteUsdPerMillion Float     @default(0) @map("cache_write_usd_per_million")
+  cacheReadUsdPerMillion  Float     @default(0) @map("cache_read_usd_per_million")
+  webSearchUsdPerRequest  Float     @default(0) @map("web_search_usd_per_request")
+  effectiveFrom           DateTime  @default(now()) @map("effective_from")
+  effectiveTo             DateTime? @map("effective_to")
+  isActive                Boolean   @default(true) @map("is_active")
+  createdAt               DateTime  @default(now()) @map("created_at")
+
+  @@index([provider, model, isActive])
+  @@map("billing_model_prices")
 }

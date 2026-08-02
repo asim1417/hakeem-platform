@@ -59,6 +59,19 @@ export async function register() {
     console.warn("[ai.usage] تعذّر التجهيز:", (e as Error)?.message);
   }
 
+  // منظومة الفوترة — جداول الطبقة المالية + طبقة Buckets (idempotent). المرحلة 0.
+  try {
+    const { ensureBillingSchema } = await import("@/lib/modules/billing/ensure-billing-schema");
+    const ok = await ensureBillingSchema();
+    console.log(
+      ok
+        ? "[billing.schema] مخطط الفوترة جاهز."
+        : "[billing.schema] تعذّر تجهيز مخطط الفوترة — راجع السجلّ."
+    );
+  } catch (e) {
+    console.warn("[billing.schema] تعذّر التجهيز:", (e as Error)?.message);
+  }
+
   // مواءمة المخطط السيادي — أعمدة/جداول إضافيّة idempotent (يزيل خطر ترتيب الهجرة).
   try {
     const { ensureBlueprintSchema } = await import(
