@@ -23,7 +23,6 @@ import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { useWakeLock } from "@/components/hooks/useWakeLock";
 import { getAgentMode, type AgentModeId } from "@/lib/modules/agents/modes";
 import {
-  ASK_FIRST_SUGGESTIONS,
   ASK_TO_CASE_HANDOFF_KEY,
   HOME_ASK_PENDING_RUN_KEY,
 } from "@/lib/modules/config/ask-first-home";
@@ -1200,17 +1199,12 @@ export function HakeemAskWorkspace({
     window.location.assign("/dashboard/judicial-assistant");
   }
 
-  function fillSuggestion(text: string) {
-    setValue(text.slice(0, HAKEEM_ASK_MAX_CHARS));
-  }
-
   const greeting = userName ? `مرحبًا ${userName}` : "مرحبًا بك";
   const followUpMode = turns.length > 0 && Boolean(turns[turns.length - 1]?.answer) && !busy;
   const emptyTitle = isHome ? "كيف يساعدك حكيم اليوم؟" : greeting;
   const emptyLede = isHome
     ? "اكتب الواقعة أو السؤال القانوني، وسيبحث حكيم في مصادره ويعرض لك تحليلًا منظمًا وخطوات واضحة."
     : "كيف أساعدك اليوم؟ اسألني في الأنظمة السعودية وسأبحث في النواة القانونية الموثّقة.";
-  const suggestions = isHome ? ASK_FIRST_SUGGESTIONS : null;
   const inputPlaceholder = followUpMode
     ? "اسأل عن نقطة أخرى في السياق نفسه…"
     : attachments.some((a) => a.status === "ready")
@@ -1274,34 +1268,7 @@ export function HakeemAskWorkspace({
               {emptyTitle}
             </h1>
             <p className="mt-2 max-w-md leading-7 text-[var(--ink-70)]">{emptyLede}</p>
-
-            {/* تلميحاتٌ بالمعيار العالميّ: رقائقُ مُدمجة مركزيّة (لا بطاقاتٌ عملاقة تدفع الصندوق للأسفل). */}
-            {(() => {
-              const chips = suggestions
-                ? suggestions.slice(0, 4)
-                : [
-                    "ما مدّة الاستئناف أمام المحاكم التجارية؟",
-                    "متى يسقط الحقّ بالتقادم؟",
-                    "أحكام الفصل التعسّفي في نظام العمل",
-                    "شروط صحّة عقد البيع نظامًا",
-                  ];
-              const onChip = (s: string) => (suggestions ? fillSuggestion(s) : void ask(s));
-              return (
-                <div className="mt-6 flex w-full max-w-xl flex-wrap items-center justify-center gap-2">
-                  {chips.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      disabled={busy}
-                      onClick={() => onChip(s)}
-                      className="focus-ring rounded-full border border-[var(--ink-15)] bg-ivory px-3.5 py-2 text-[13px] leading-5 text-[var(--ink-70)] transition hover:border-[var(--gold)] hover:bg-[var(--gold-ghost)] hover:text-[var(--navy)] disabled:opacity-50"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              );
-            })()}
+            {/* التلميحات موحّدة في شريط اقتراحات المحرّك أسفل العنوان — لا تكرار يشوّه المنتصف. */}
 
             {!isHome ? (
               <p className="mt-6 max-w-md text-xs leading-6 text-[var(--ink-40)]">
