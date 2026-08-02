@@ -289,7 +289,7 @@ export function HakeemComposer({
       <ComposerContextBar items={contextItems} onRemove={onRemoveContext} />
 
       {!followUp && !value.trim() && !attachments.length ? (
-        <SmartSuggestions suggestions={defaultSuggestions} onSelect={handleSuggestion} />
+        <SmartSuggestions suggestions={defaultSuggestions.slice(0, 4)} onSelect={handleSuggestion} />
       ) : null}
 
       <form
@@ -486,9 +486,11 @@ export function HakeemComposer({
         <SmartSuggestions suggestions={defaultSuggestions.slice(0, 4)} onSelect={handleSuggestion} />
       ) : null}
 
-      <p className="hkm-composer__hint">
-        Enter للإرسال · Shift+Enter لسطر جديد · / للأوامر · @ للإشارات · Esc للإيقاف أو إغلاق القائمة
-      </p>
+      {surface !== "home" ? (
+        <p className="hkm-composer__hint">
+          Enter للإرسال · Shift+Enter لسطر جديد · / للأوامر · @ للإشارات · Esc للإيقاف أو إغلاق القائمة
+        </p>
+      ) : null}
 
       <ExpandedComposerDialog
         open={expanded}
