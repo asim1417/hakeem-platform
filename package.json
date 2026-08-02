@@ -86,6 +86,7 @@
     "test:billing-ratewindow": "tsx scripts/test-billing-ratewindow.ts",
     "test:billing-integration": "tsx scripts/test-billing-integration.ts",
     "billing:cron": "tsx scripts/billing-cron.ts",
+    "billing:backfill-buckets": "tsx scripts/billing-backfill-buckets.ts",
     "seed:billing": "tsx prisma/seed-billing.ts",
     "test:clerk": "tsx scripts/test-clerk-config.ts",
     "test:owner-emergency": "tsx scripts/test-owner-emergency.ts",
