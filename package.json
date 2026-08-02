@@ -83,6 +83,7 @@
     "test:billing-invoicing": "tsx scripts/test-billing-invoicing.ts",
     "test:billing-proration": "tsx scripts/test-billing-proration.ts",
     "test:billing-trial": "tsx scripts/test-billing-trial.ts",
+    "test:billing-integration": "tsx scripts/test-billing-integration.ts",
     "billing:cron": "tsx scripts/billing-cron.ts",
     "seed:billing": "tsx prisma/seed-billing.ts",
     "test:clerk": "tsx scripts/test-clerk-config.ts",
