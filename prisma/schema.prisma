@@ -1043,8 +1043,27 @@ model DocWorkspace {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   cases     DocCase[]
+  snapshots DocToolSnapshot[]
 
   @@map("doc_workspaces")
+}
+
+// أرشيف نسخ أداة الوثائق: لقطةٌ كاملة عند كل حفظ (تاريخٌ لا يُستبدَل، بخلاف DocCase
+// الذي يُستبدَل). يُبقى آخر N لكل مساحة عمل (تقليمٌ في الكود لكبح النموّ). القراءة/
+// الكتابة مغلّفة بـ try/catch، فإن لم يُنشأ الجدول بعد لا يتعطّل التطبيق. التفعيل:
+// prisma db push. جدولٌ إضافيّ صرف لا يمسّ أيّ جدولٍ قائم (migration آمنة).
+model DocToolSnapshot {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  actorId     String?  @map("actor_id") // المستخدم المُصادَق وقت الحفظ (null للضيف)
+  docs        Json // لقطة كاملة للوثائق [{title, rawText, …}]
+  docCount    Int      @default(0) @map("doc_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   DocWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@map("doc_tool_snapshots")
 }
 
 // «قضية» محفوظة: مجموعة وثائق + ملاحظاتها وأعلامها ومقتطفاتها

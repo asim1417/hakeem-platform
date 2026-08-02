@@ -31,15 +31,17 @@ function clientIp(request?: NextRequest): string | undefined {
  */
 export async function auditDocToolOp(input: {
   action: string;
+  /** هويّة المستخدم إن سبق استخراجها (يتجنّب استعلامًا ثانيًا)؛ وإلا نستخرجها هنا. */
+  actorId?: string;
   workspaceId?: string;
   request?: NextRequest;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   if (!enabled()) return;
   try {
-    const user = await getApiUser(input.request).catch(() => null);
+    const actorId = input.actorId ?? (await getApiUser(input.request).catch(() => null))?.id;
     await auditEvent({
-      actorId: user?.id,
+      actorId,
       subject: "LIBRARY",
       action: input.action,
       entityId: input.workspaceId,

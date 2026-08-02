@@ -1,6 +1,7 @@
 // اختبار مُلخِّص فرق الوثائق (تدقيق أداة الوثائق) — دالّةٌ نقيّة بلا قاعدة بيانات.
 import assert from "node:assert/strict";
 import { summarizeDocDelta } from "../lib/modules/doc-tool/doc-delta";
+import { retainRecentCount } from "../lib/modules/doc-tool/snapshot-retention";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -51,6 +52,22 @@ check("مدخلٌ مُشوَّه (ليس مصفوفة / عناصر بلا عنو
   const r = summarizeDocDelta([{ title: 5 }, {}], [{ title: "صالح" }, { nope: 1 }]);
   assert.equal(r.docCount, 1);
   assert.deepEqual(r.addedTitles, ["صالح"]);
+});
+
+check("تقليم النسخ: تحت الحدّ → لا حذف", () => {
+  assert.deepEqual(retainRecentCount([1, 2, 3], 10), []);
+  assert.deepEqual(retainRecentCount([1, 2, 3], 3), []);
+});
+
+check("تقليم النسخ: فوق الحدّ → يُحذف الأقدم (ما بعد آخر keep)", () => {
+  // الأحدث أوّلًا؛ نُبقي أوّل ٢ ونحذف الباقي
+  assert.deepEqual(retainRecentCount(["ح3", "ح2", "ح1"], 2), ["ح1"]);
+  assert.deepEqual(retainRecentCount([5, 4, 3, 2, 1], 2), [3, 2, 1]);
+});
+
+check("تقليم النسخ: حدٌّ غير موجب → حذف الكلّ", () => {
+  assert.deepEqual(retainRecentCount([1, 2, 3], 0), [1, 2, 3]);
+  assert.deepEqual(retainRecentCount([1, 2], -1), [1, 2]);
 });
 
 console.log(`\nكل اختبارات تدقيق أداة الوثائق ناجحة (${passed})`);

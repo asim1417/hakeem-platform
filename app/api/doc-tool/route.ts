@@ -8,8 +8,19 @@ import {
   MISSING_TABLE_MESSAGE
 } from "@/lib/modules/doc-platform/workspace";
 import { auditDocToolOp, summarizeDocDelta } from "@/lib/modules/doc-tool/audit-log";
+import { archiveSnapshot } from "@/lib/modules/doc-tool/snapshots";
+import { getApiUser } from "@/lib/modules/auth/session";
 
 export const dynamic = "force-dynamic";
+
+// إلزام تسجيل الدخول لاستخدام أداة الوثائق — مطفأ افتراضيًا (تغيير سياسة وصولٍ كاسر
+// يُفعَّل عمدًا لا تلقائيًّا). للتفعيل: HAKEEM_DOC_TOOL_REQUIRE_AUTH_V1=1.
+function requireAuthEnabled(): boolean {
+  const v = (process.env.HAKEEM_DOC_TOOL_REQUIRE_AUTH_V1 ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "on" || v === "yes";
+}
+
+const UNAUTH = { error: "يلزم تسجيل الدخول لاستخدام أداة الوثائق" };
 
 // وثائق أداة معالجة الوثائق تُحفَظ كسجل DocCase واحد بعنوان حارس لكل مساحة عمل —
 // إعادة استخدام لجداول منصة الوثائق القائمة (doc_workspaces/doc_cases) بلا migration.
@@ -49,8 +60,11 @@ async function findToolCase(workspaceId: string) {
 }
 
 /** وثائق المستخدم المحفوظة (مساحة العمل عبر الكوكي) */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    if (requireAuthEnabled() && !(await getApiUser(request).catch(() => null))) {
+      return NextResponse.json(UNAUTH, { status: 401 });
+    }
     const ws = await getWorkspace();
     if (!ws) return NextResponse.json({ docs: [] });
     const found = await findToolCase(ws.id);
@@ -66,6 +80,10 @@ export async function GET() {
 /** حفظ القائمة الكاملة للوثائق (يستبدل المخزَّن) */
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getApiUser(request).catch(() => null);
+    if (requireAuthEnabled() && !user) {
+      return NextResponse.json(UNAUTH, { status: 401 });
+    }
     const body = (await request.json()) as { docs?: unknown };
     const docs = sanitizeDocs(body.docs);
     if (docs === null) {
@@ -87,14 +105,16 @@ export async function PUT(request: NextRequest) {
         data: { workspaceId: ws.id, title: CASE_MARKER, ...data }
       });
     }
-    // تدقيقٌ لعمليّة الحفظ: يربط العمليّة بالمستخدم ويؤرشفها في سجلّ التدقيق المركزيّ
-    // (fail-open، بيانات وصفيّة فقط — لا نصّ خام). كل حفظٍ سجلٌّ تاريخيّ لا يُستبدَل.
+    // تدقيقٌ لعمليّة الحفظ (بيانات وصفيّة) + أرشفةُ لقطةٍ كاملة (المحتوى، تاريخٌ لا
+    // يُستبدَل). كلاهما fail-open ولا يعطّل الحفظ. نمرّر هويّة المستخدم المُستخرَجة مرّةً.
     await auditDocToolOp({
       action: "DOC_TOOL_SAVE",
+      actorId: user?.id,
       workspaceId: ws.id,
       request,
       metadata: summarizeDocDelta(existing?.docs, docs)
     });
+    await archiveSnapshot({ workspaceId: ws.id, actorId: user?.id, docs, docCount: docs.length });
     return NextResponse.json({ ok: true, count: docs.length });
   } catch (error) {
     if (isMissingTableError(error)) {
@@ -107,12 +127,17 @@ export async function PUT(request: NextRequest) {
 /** مسح كل الوثائق المحفوظة لمساحة العمل */
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getApiUser(request).catch(() => null);
+    if (requireAuthEnabled() && !user) {
+      return NextResponse.json(UNAUTH, { status: 401 });
+    }
     const ws = await getWorkspace();
     if (ws) {
       const existing = await findToolCase(ws.id);
       await prisma.docCase.deleteMany({ where: { workspaceId: ws.id, title: CASE_MARKER } });
       await auditDocToolOp({
         action: "DOC_TOOL_CLEAR",
+        actorId: user?.id,
         workspaceId: ws.id,
         request,
         metadata: { removed: summarizeDocDelta(existing?.docs, []).removed }
