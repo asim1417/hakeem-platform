@@ -57,6 +57,12 @@ import {
   decideAgentSearchAttachmentsMode,
   readAttachmentsVersionClaim,
 } from "@/lib/modules/hakeem-composer/attachments-version";
+import { resolveComposerCapabilities } from "@/lib/modules/hakeem-composer/capability-registry";
+import { resolveComposerCaseContext } from "@/lib/modules/hakeem-composer/case-context-bridge";
+import { suggestJdsHandoff } from "@/lib/modules/hakeem-composer/jds-handoff";
+import { routeComposerIntent } from "@/lib/modules/hakeem-composer/intent-router";
+import type { ComposerSourceId } from "@/lib/modules/hakeem-composer/types";
+import { buildUnifiedCitationSet } from "@/lib/modules/hakeem-composer/unified-citations";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -86,6 +92,8 @@ export async function POST(request: NextRequest) {
     history?: Array<{ role?: string; content?: string }>;
     sources?: unknown;
     sourcePolicy?: unknown;
+    caseId?: string;
+    judicialCaseId?: string;
   } = {};
   try {
     body = await request.json();
@@ -460,6 +468,68 @@ export async function POST(request: NextRequest) {
               documentSource: resolvedDoc.source,
             },
           }).catch(() => undefined);
+        }
+
+        // Capability Registry — ربط دون ابتلاع
+        const intent = routeComposerIntent({
+          text: typed,
+          mode: agentMode.id,
+          hasAttachment: hasAttachmentForPolicy,
+          sources: (Array.isArray(body.sources) ? body.sources : requestedSources).map(String) as ComposerSourceId[],
+        });
+        const caseCtx = await resolveComposerCaseContext({
+          userId: user.id,
+          caseId: typeof body.caseId === "string" ? body.caseId : null,
+          judicialCaseId: typeof body.judicialCaseId === "string" ? body.judicialCaseId : null,
+        }).catch(() => null);
+        const caps = resolveComposerCapabilities({
+          mode: agentMode.id,
+          intentCategory: intent.category,
+          sources: (Array.isArray(body.sources) ? body.sources : requestedSources).map(String) as ComposerSourceId[],
+          hasAttachment: hasAttachmentForPolicy,
+          hasCaseContext: Boolean(caseCtx),
+        });
+        send({
+          type: "step",
+          id: "capability-registry",
+          status: "done",
+          label: `قدرات الصندوق: ${caps.capabilities.length.toLocaleString("ar-SA")}`,
+          data: {
+            mode: caps.mode,
+            intentCategory: caps.intentCategory,
+            capabilityIds: caps.capabilities.map((c) => c.id),
+            toolNames: caps.toolNames,
+            redirects: caps.redirects,
+            independentOwners: [...new Set(caps.capabilities.map((c) => c.ownerService))],
+          },
+        });
+
+        const jdsHint = suggestJdsHandoff({
+          intentCategory: intent.category,
+          judicialCaseId: caseCtx?.source === "judicial-work-case" ? caseCtx.caseId : null,
+        });
+        if (jdsHint) {
+          send({
+            type: "step",
+            id: "jds-handoff",
+            status: "done",
+            label: jdsHint.titleAr,
+            data: jdsHint,
+          });
+        }
+        if (caseCtx) {
+          send({
+            type: "step",
+            id: "case-context",
+            status: "done",
+            label: `سياق القضية: ${caseCtx.title}`,
+            data: {
+              caseId: caseCtx.caseId,
+              source: caseCtx.source,
+              jdsHref: caseCtx.jdsHref,
+              featureFlag: "HAKEEM_COMPOSER_CASE_CONTEXT_V1",
+            },
+          });
         }
 
         if (documentsEnabled && (rawAttachmentIds.length > 0 || resolvedDoc.source !== "none")) {
