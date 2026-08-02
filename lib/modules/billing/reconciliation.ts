@@ -107,6 +107,14 @@ export async function runReconciliation(now: Date = new Date()): Promise<Reconci
     /* */
   }
 
+  // (5) تنقية الحمولات الخام القديمة (PDPL — احتفاظ).
+  try {
+    const { redactOldRawPayloads } = await import("@/lib/modules/billing/data-lifecycle");
+    await redactOldRawPayloads();
+  } catch {
+    /* */
+  }
+
   if (report.mismatches > 0) {
     await recordBillingAudit({
       action: "RECONCILIATION_MISMATCHES",

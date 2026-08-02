@@ -29,8 +29,12 @@ export async function recordBillingAudit(input: BillingAuditInput): Promise<void
         metadata: (input.metadata ?? undefined) as never,
       },
     });
-  } catch {
-    /* لا نكسر المسار المالي إن فشل التدقيق */
+  } catch (e) {
+    // لا نكسر المسار المالي، لكن لا نبتلع الفشل صامتًا — نُنبّه (§14).
+    console.error(
+      `[billing.audit] فشل كتابة سجل تدقيق مالي action=${input.action} target=${input.targetId ?? ""}:`,
+      (e as Error)?.message
+    );
   }
   // عكس إلى سجل التدقيق العام (subject=BILLING).
   try {

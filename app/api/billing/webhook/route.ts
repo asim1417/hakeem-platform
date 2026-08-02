@@ -6,6 +6,7 @@ import {
 } from "@/lib/modules/billing/billing-events";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 import { recordReferralFirstPurchase } from "@/lib/modules/referrals/usage-referrals";
+import { enforceRateLimit, rateLimitKeyFromRequest } from "@/lib/modules/billing/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,8 @@ type MoyasarBody = {
  * التحقق من السر ناعم: إن وُجد MOYASAR_WEBHOOK_SECRET يُرفض غير المطابق؛ وإلا يبقى متوافقًا.
  */
 export async function POST(request: NextRequest) {
+  const rl = await enforceRateLimit(rateLimitKeyFromRequest("wh-legacy", null, request), 240, 60);
+  if (!rl.allowed) return NextResponse.json({ ok: false, message: "rate limited" }, { status: 429 });
   await hydrateEnvFromSettings().catch(() => 0);
 
   let body: MoyasarBody;

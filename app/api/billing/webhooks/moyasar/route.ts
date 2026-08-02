@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processPaymentWebhook } from "@/lib/modules/billing/webhook-processor";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
+import { enforceRateLimit, rateLimitKeyFromRequest } from "@/lib/modules/billing/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
  * تحقق توقيع → تسجيل خام → منع تكرار → إعادة تحقق من البوابة → مطابقة مبلغ → إيفاء idempotent.
  */
 export async function POST(request: NextRequest) {
+  const rl = await enforceRateLimit(rateLimitKeyFromRequest("wh-moyasar", null, request), 240, 60);
+  if (!rl.allowed) return NextResponse.json({ status: "rate_limited" }, { status: 429 });
   await hydrateEnvFromSettings().catch(() => 0);
   const rawBody = await request.text();
   const headers: Record<string, string | undefined> = {};

@@ -84,6 +84,7 @@
     "test:billing-proration": "tsx scripts/test-billing-proration.ts",
     "test:billing-trial": "tsx scripts/test-billing-trial.ts",
     "test:billing-ratewindow": "tsx scripts/test-billing-ratewindow.ts",
+    "test:billing-zatca": "tsx scripts/test-billing-zatca.ts",
     "test:billing-integration": "tsx scripts/test-billing-integration.ts",
     "billing:cron": "tsx scripts/billing-cron.ts",
     "billing:backfill-buckets": "tsx scripts/billing-backfill-buckets.ts",

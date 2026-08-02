@@ -334,6 +334,11 @@ ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "effective
 ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "effectiveTo" TIMESTAMPTZ;
 ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_plan_id" TEXT;
 ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_period" TEXT;
+ALTER TABLE IF EXISTS "billing_invoices" ADD COLUMN IF NOT EXISTS "zatca_uuid" TEXT;
+ALTER TABLE IF EXISTS "billing_invoices" ADD COLUMN IF NOT EXISTS "zatca_qr" TEXT;
+ALTER TABLE IF EXISTS "billing_invoices" ADD COLUMN IF NOT EXISTS "zatca_pih" TEXT;
+ALTER TABLE IF EXISTS "billing_invoices" ADD COLUMN IF NOT EXISTS "zatca_hash" TEXT;
+ALTER TABLE IF EXISTS "billing_invoices" ADD COLUMN IF NOT EXISTS "zatca_xml" TEXT;
 `;
 
 // ── منع التعديل (immutability) على الفواتير وسجل التدقيق — §9/§14 ──

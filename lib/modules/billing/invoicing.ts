@@ -6,8 +6,84 @@ import "server-only";
 
 import type { Prisma } from "@prisma/client";
 import { formatInvoiceNumber } from "@/lib/modules/billing/invoice-format";
+import {
+  buildQrTlv,
+  buildUblXml,
+  halalasToSarString,
+  invoiceHash,
+  invoiceUuid,
+} from "@/lib/modules/billing/zatca";
 
 export { formatInvoiceNumber };
+
+function zatcaEnabled(): boolean {
+  return /^(1|true|on)$/i.test(process.env.ZATCA_INTEGRATION_ENABLED || "");
+}
+
+interface ZatcaFields {
+  uuid: string | null;
+  qr: string | null;
+  pih: string | null;
+  hash: string | null;
+  xml: string | null;
+}
+
+const EMPTY_ZATCA: ZatcaFields = { uuid: null, qr: null, pih: null, hash: null, xml: null };
+
+/** توليد عناصر ZATCA المرحلة 1 (عند تفعيل العلم) مع سلسلة PIH. */
+async function computeZatca(
+  tx: Prisma.TransactionClient,
+  input: {
+    invoiceNumber: string;
+    issuedAtIso: string;
+    currency: string;
+    seller: CompanySnapshot;
+    buyer: { nameAr?: string; vatNumber?: string };
+    subtotalHalalas: number;
+    vatHalalas: number;
+    totalHalalas: number;
+    vatRateBps: number;
+    type: "TAX_INVOICE" | "SIMPLIFIED_TAX_INVOICE" | "CREDIT_NOTE";
+  }
+): Promise<ZatcaFields> {
+  if (!zatcaEnabled()) return EMPTY_ZATCA;
+  const prev = await tx.$queryRawUnsafe<{ zatca_hash: string | null }[]>(
+    `SELECT "zatca_hash" FROM "billing_invoices"
+      WHERE "zatca_hash" IS NOT NULL ORDER BY "created_at" DESC LIMIT 1`
+  );
+  const previousHash = prev[0]?.zatca_hash ?? null;
+  const uuid = invoiceUuid();
+  const hash = invoiceHash({
+    uuid,
+    invoiceNumber: input.invoiceNumber,
+    issuedAtIso: input.issuedAtIso,
+    totalHalalas: input.totalHalalas,
+    vatHalalas: input.vatHalalas,
+    previousHash,
+  });
+  const qr = buildQrTlv({
+    sellerName: input.seller.legalNameAr,
+    vatNumber: input.seller.vatNumber,
+    timestampIso: input.issuedAtIso,
+    totalWithVatSar: halalasToSarString(input.totalHalalas),
+    vatTotalSar: halalasToSarString(input.vatHalalas),
+  });
+  const xml = buildUblXml({
+    uuid,
+    invoiceNumber: input.invoiceNumber,
+    issuedAtIso: input.issuedAtIso,
+    currency: input.currency,
+    seller: { legalNameAr: input.seller.legalNameAr, vatNumber: input.seller.vatNumber, crNumber: input.seller.crNumber },
+    buyer: { nameAr: input.buyer.nameAr || "", vatNumber: input.buyer.vatNumber },
+    subtotalHalalas: input.subtotalHalalas,
+    vatHalalas: input.vatHalalas,
+    totalHalalas: input.totalHalalas,
+    vatRateBps: input.vatRateBps,
+    type: input.type,
+    previousHash,
+  });
+  return { uuid, qr, pih: previousHash, hash, xml };
+}
 
 export interface CompanySnapshot {
   legalNameAr: string;
@@ -76,18 +152,33 @@ export async function issueInvoiceForOrder(input: IssueInvoiceInput) {
     const invoiceNumber = await nextInvoiceNumber(tx, input.issuedYear);
     const seller = sellerSnapshot();
     const id = `inv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    const invType = input.type || "TAX_INVOICE";
+    const issuedAtIso = new Date().toISOString();
+    const z = await computeZatca(tx, {
+      invoiceNumber,
+      issuedAtIso,
+      currency: input.currency,
+      seller,
+      buyer: { nameAr: input.buyer.nameAr, vatNumber: input.buyer.vatNumber },
+      subtotalHalalas: input.subtotalHalalas,
+      vatHalalas: input.vatHalalas,
+      totalHalalas: input.totalHalalas,
+      vatRateBps: input.vatRateBps,
+      type: invType,
+    });
     await tx.$executeRawUnsafe(
       `INSERT INTO "billing_invoices"
         ("id","invoice_number","user_id","order_id","type","status","currency",
          "subtotal_halalas","vat_rate_bps","vat_halalas","total_halalas",
-         "seller_snapshot","buyer_snapshot","issued_at","zatca_status")
+         "seller_snapshot","buyer_snapshot","issued_at","zatca_status",
+         "zatca_uuid","zatca_qr","zatca_pih","zatca_hash","zatca_xml")
        VALUES ($1,$2,$3,$4,$5,'ISSUED',$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,NOW(),
-         CASE WHEN $13 THEN 'PENDING' ELSE 'NOT_APPLICABLE' END)`,
+         CASE WHEN $13 THEN 'PENDING' ELSE 'NOT_APPLICABLE' END,$14,$15,$16,$17,$18)`,
       id,
       invoiceNumber,
       input.userId,
       input.orderId,
-      input.type || "TAX_INVOICE",
+      invType,
       input.currency,
       input.subtotalHalalas,
       input.vatRateBps,
@@ -99,7 +190,12 @@ export async function issueInvoiceForOrder(input: IssueInvoiceInput) {
         email: input.buyer.email || "",
         vatNumber: input.buyer.vatNumber || "",
       }),
-      /^(1|true|on)$/i.test(process.env.ZATCA_INTEGRATION_ENABLED || "")
+      zatcaEnabled(),
+      z.uuid,
+      z.qr,
+      z.pih,
+      z.hash,
+      z.xml
     );
     return { id, invoiceNumber, reused: false };
   });
@@ -134,13 +230,27 @@ export async function issueCreditNote(input: {
     const invoiceNumber = await nextInvoiceNumber(tx, input.issuedYear);
     const seller = sellerSnapshot();
     const id = `cn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    const issuedAtIso = new Date().toISOString();
+    const z = await computeZatca(tx, {
+      invoiceNumber,
+      issuedAtIso,
+      currency: input.currency,
+      seller,
+      buyer: { nameAr: input.buyer.nameAr, vatNumber: input.buyer.vatNumber },
+      subtotalHalalas: input.subtotalHalalas,
+      vatHalalas: input.vatHalalas,
+      totalHalalas: input.totalHalalas,
+      vatRateBps: input.vatRateBps,
+      type: "CREDIT_NOTE",
+    });
     await tx.$executeRawUnsafe(
       `INSERT INTO "billing_invoices"
         ("id","invoice_number","user_id","order_id","type","status","currency",
          "subtotal_halalas","vat_rate_bps","vat_halalas","total_halalas",
-         "seller_snapshot","buyer_snapshot","issued_at","zatca_status")
+         "seller_snapshot","buyer_snapshot","issued_at","zatca_status",
+         "zatca_uuid","zatca_qr","zatca_pih","zatca_hash","zatca_xml")
        VALUES ($1,$2,$3,NULL,'CREDIT_NOTE','ISSUED',$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,NOW(),
-         CASE WHEN $11 THEN 'PENDING' ELSE 'NOT_APPLICABLE' END)`,
+         CASE WHEN $11 THEN 'PENDING' ELSE 'NOT_APPLICABLE' END,$12,$13,$14,$15,$16)`,
       id,
       invoiceNumber,
       input.userId,
@@ -157,7 +267,12 @@ export async function issueCreditNote(input: {
         refundId: input.refundId,
         originalInvoiceNumber: input.originalInvoiceNumber || "",
       }),
-      /^(1|true|on)$/i.test(process.env.ZATCA_INTEGRATION_ENABLED || "")
+      zatcaEnabled(),
+      z.uuid,
+      z.qr,
+      z.pih,
+      z.hash,
+      z.xml
     );
     return { id, invoiceNumber, reused: false };
   });

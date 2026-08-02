@@ -14,6 +14,12 @@ function autoRenewalEnabled(): boolean {
   return /^(1|true|on)$/i.test(process.env.AUTO_RENEWAL_ENABLED || "");
 }
 
+/** أيام مهلة السماح قبل تحويل المشترك المتعثّر إلى المجانية. */
+function graceDays(): number {
+  const raw = Number(process.env.PAYMENT_RETRY_GRACE_DAYS);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 7;
+}
+
 export interface RenewalReport {
   processed: number;
   renewed: number;
@@ -65,6 +71,19 @@ export async function runRenewals(now: Date = new Date()): Promise<RenewalReport
   for (const sub of due) {
     report.processed++;
     if (!sub.userId) continue;
+
+    // Dunning: متعثّر تجاوز مهلة السماح → انتهاء + تحويل للمجانية (بلا حذف ملفات).
+    if (
+      sub.status === "PAYMENT_RETRY" &&
+      sub.currentPeriodEnd &&
+      sub.currentPeriodEnd.getTime() < now.getTime() - graceDays() * 24 * 60 * 60 * 1000
+    ) {
+      await prisma.subscription.update({ where: { id: sub.id }, data: { status: "EXPIRED" } });
+      await prisma.$executeRawUnsafe(`UPDATE "users" SET "subscriptionStatus" = 'free' WHERE id = $1`, sub.userId).catch(() => undefined);
+      await notify({ userId: sub.userId, event: "subscription_canceled", dedupeKey: `dunning_expired:${sub.id}`, email: true });
+      report.expired++;
+      continue;
+    }
 
     // إلغاء → انتهاء + تحويل للمجانية (بلا حذف ملفات).
     if (sub.cancelAtPeriodEnd) {

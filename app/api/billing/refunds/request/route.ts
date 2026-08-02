@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiUser } from "@/lib/modules/auth/session";
 import { recordBillingAudit } from "@/lib/modules/billing/billing-audit";
+import { enforceRateLimit } from "@/lib/modules/billing/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,8 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   const user = await getApiUser(request);
   if (!user?.isActive) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
+  const rl = await enforceRateLimit(`refund-req:u:${user.id}`, 5, 3600);
+  if (!rl.allowed) return NextResponse.json({ message: "طلبات استرداد كثيرة. حاول لاحقًا." }, { status: 429 });
   const body = (await request.json().catch(() => ({}))) as { paymentId?: string; reason?: string };
   if (!body.paymentId) return NextResponse.json({ message: "paymentId مطلوب." }, { status: 400 });
 

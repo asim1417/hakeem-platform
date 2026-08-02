@@ -12,7 +12,7 @@ import {
   type DocumentTier,
 } from "@/lib/modules/billing/credit-engine";
 import { usageCreditsEnabled } from "@/lib/modules/credits/usage-ledger";
-import { rateLimitWindowStart } from "@/lib/modules/billing/rate-window";
+import { enforceRateLimit } from "@/lib/modules/billing/rate-limit";
 import { newIdempotencyKey } from "@/lib/modules/billing/credit-engine";
 import { resolveWalletOwner } from "@/lib/modules/billing/workspace";
 
@@ -35,38 +35,6 @@ export interface GuardResult {
 
 const NOOP_SETTLE = async (): Promise<void> => {};
 
-/** تحديد المعدّل (نافذة ثابتة عبر generic_rate_limit_windows). */
-async function checkRateLimit(
-  bucketKey: string,
-  limit: number,
-  windowSec: number
-): Promise<{ allowed: boolean; retryAfterSec: number }> {
-  try {
-    const { prisma } = await import("@/lib/prisma");
-    const nowSec = Math.floor(Date.now() / 1000);
-    const windowStart = rateLimitWindowStart(nowSec, windowSec);
-    const rows = await prisma.$queryRawUnsafe<{ count: number }[]>(
-      `INSERT INTO "generic_rate_limit_windows" ("id","bucket_key","window_start","count")
-       VALUES ($1,$2,$3,1)
-       ON CONFLICT ("bucket_key","window_start")
-       DO UPDATE SET "count" = "generic_rate_limit_windows"."count" + 1
-       RETURNING "count"`,
-      newIdempotencyKey("grl"),
-      bucketKey,
-      windowStart
-    );
-    const count = Number(rows[0]?.count ?? 1);
-    if (count > limit) {
-      const retryAfterSec = windowStart + windowSec - nowSec;
-      return { allowed: false, retryAfterSec: Math.max(1, retryAfterSec) };
-    }
-    return { allowed: true, retryAfterSec: 0 };
-  } catch {
-    // فشل البنية → لا نحجب (fail-open للحد المعدّل فقط).
-    return { allowed: true, retryAfterSec: 0 };
-  }
-}
-
 export interface GuardOptions {
   userId: string;
   serviceCode: string;
@@ -87,7 +55,7 @@ export interface GuardOptions {
 export async function guardAiService(opts: GuardOptions): Promise<GuardResult> {
   // 1) تحديد المعدّل (يعمل دائمًا إن مُرِّر).
   if (opts.rateLimit) {
-    const rl = await checkRateLimit(
+    const rl = await enforceRateLimit(
       `ai:${opts.serviceCode}:${opts.userId}`,
       opts.rateLimit.limit,
       opts.rateLimit.windowSec

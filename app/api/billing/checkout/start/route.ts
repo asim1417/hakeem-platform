@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiUser } from "@/lib/modules/auth/session";
 import { startCheckout, paidCheckoutEnabled } from "@/lib/modules/billing/checkout";
+import { enforceRateLimit } from "@/lib/modules/billing/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,10 @@ export async function POST(request: NextRequest) {
   }
   if (!paidCheckoutEnabled()) {
     return NextResponse.json({ message: "الدفع غير مفعّل حاليًا." }, { status: 403 });
+  }
+  const rl = await enforceRateLimit(`checkout:u:${user.id}`, 10, 60);
+  if (!rl.allowed) {
+    return NextResponse.json({ message: "طلبات كثيرة. حاول بعد قليل." }, { status: 429 });
   }
   const body = (await request.json().catch(() => ({}))) as {
     type?: "SUBSCRIPTION" | "PACKAGE";
