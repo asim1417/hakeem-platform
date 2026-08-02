@@ -7,6 +7,11 @@ import {
   USAGE_REWARDS,
   type UsageServiceCode,
 } from "@/config/usage-credits";
+import {
+  allocateConsumption,
+  type CreditBucketRow,
+  type CreditSourceType,
+} from "./bucket-allocation";
 
 type Tx = Prisma.TransactionClient;
 
@@ -445,6 +450,219 @@ export async function getUsageCreditStatus(userId: string, limit = 100): Promise
       availableMilliUnits: 0,
       ledger: [],
     };
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  طبقة Buckets — HKM-BILLING-UX-001 (§4/§5). إضافية فوق المحرك المُثبَت.
+//  المحفظة (usage_credit_accounts) تبقى مصدر الإنفاذ؛ الـBuckets للمصدر/الانتهاء.
+// ════════════════════════════════════════════════════════════════════
+
+/** منح رصيد بمصدر مستقل (Bucket) + رفع رصيد المحفظة + قيد دفتر. idempotent. */
+export async function grantUsageCreditsToBucket(input: {
+  userId: string;
+  milliUnits: number;
+  sourceType: CreditSourceType;
+  sourceReferenceId?: string;
+  expiresAt?: Date | null;
+  priority?: number;
+  idempotencyKey: string;
+  description?: string;
+}): Promise<number> {
+  const amount = Math.max(0, Math.floor(input.milliUnits));
+  if (amount <= 0) return 0;
+  const { prisma } = await import("@/lib/prisma");
+  return prisma.$transaction(async (tx) => {
+    const prior = await tx.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT id FROM "usage_credit_ledger" WHERE "idempotencyKey" = $1 LIMIT 1`,
+      input.idempotencyKey
+    );
+    if (prior[0]) return 0;
+    await ensureAccount(tx, input.userId);
+    const account = await lockAccount(tx, input.userId);
+    const concurrent = await tx.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT id FROM "usage_credit_ledger" WHERE "idempotencyKey" = $1 LIMIT 1`,
+      input.idempotencyKey
+    );
+    if (concurrent[0]) return 0;
+
+    const bucketId = id("ucb");
+    await tx.$executeRawUnsafe(
+      `INSERT INTO "usage_credit_buckets"
+        (id, "userId", "sourceType", "sourceReferenceId", "grantedMilliUnits",
+         "remainingMilliUnits", status, "startsAt", "expiresAt", priority)
+       VALUES ($1,$2,$3,$4,$5,$5,'active',NOW(),$6,$7)`,
+      bucketId,
+      input.userId,
+      input.sourceType,
+      input.sourceReferenceId ?? null,
+      amount,
+      input.expiresAt ?? null,
+      input.priority ?? 100
+    );
+    const nextBalance = Number(account.balanceMilliUnits) + amount;
+    await tx.$executeRawUnsafe(
+      `UPDATE "usage_credit_accounts"
+          SET "balanceMilliUnits" = "balanceMilliUnits" + $2,
+              "lifetimeCreditMilliUnits" = "lifetimeCreditMilliUnits" + $2,
+              version = version + 1, "updatedAt" = NOW()
+        WHERE "userId" = $1`,
+      input.userId,
+      amount
+    );
+    await appendLedger(tx, {
+      userId: input.userId,
+      entryType: "credit",
+      amountMilliUnits: amount,
+      balanceAfterMilliUnits: nextBalance,
+      source: `grant:${input.sourceType}`,
+      description: input.description,
+      idempotencyKey: input.idempotencyKey,
+      referenceType: "bucket",
+      referenceId: bucketId,
+    });
+    return amount;
+  });
+}
+
+/** توزيع مبلغ مُستهلَك على الـBuckets (الأقرب انتهاءً أولًا). بعد capture. best-effort. */
+export async function consumeBucketsFor(userId: string, milliUnits: number): Promise<void> {
+  const amount = Math.max(0, Math.floor(milliUnits));
+  if (amount <= 0) return;
+  const { prisma } = await import("@/lib/prisma");
+  try {
+    await prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRawUnsafe<
+        {
+          id: string;
+          sourceType: CreditSourceType;
+          remainingMilliUnits: bigint | number;
+          expiresAt: Date | null;
+          priority: number;
+          createdAt: Date;
+        }[]
+      >(
+        `SELECT id, "sourceType", "remainingMilliUnits", "expiresAt", priority, "createdAt"
+           FROM "usage_credit_buckets"
+          WHERE "userId" = $1 AND status = 'active' AND "remainingMilliUnits" > 0
+          FOR UPDATE`,
+        userId
+      );
+      const buckets: CreditBucketRow[] = rows.map((r) => ({
+        id: r.id,
+        sourceType: r.sourceType,
+        remainingMilliUnits: Number(r.remainingMilliUnits),
+        expiresAt: r.expiresAt ? new Date(r.expiresAt) : null,
+        priority: Number(r.priority),
+        createdAt: new Date(r.createdAt),
+      }));
+      const { allocations } = allocateConsumption(buckets, amount);
+      for (const a of allocations) {
+        await tx.$executeRawUnsafe(
+          `UPDATE "usage_credit_buckets"
+              SET "remainingMilliUnits" = GREATEST(0, "remainingMilliUnits" - $2),
+                  status = CASE WHEN "remainingMilliUnits" - $2 <= 0 THEN 'depleted' ELSE status END,
+                  "updatedAt" = NOW()
+            WHERE id = $1`,
+          a.bucketId,
+          a.amount
+        );
+      }
+    });
+  } catch {
+    // best-effort: المحفظة مصدر الإنفاذ؛ لا نكسر المسار إن غابت الـBuckets.
+  }
+}
+
+/** انتهاء الأرصدة المنتهية: خفض المحفظة + قيد دفتر + إغلاق الـBucket. */
+export async function expireBuckets(userId?: string): Promise<number> {
+  const { prisma } = await import("@/lib/prisma");
+  let totalExpired = 0;
+  try {
+    const targets = await prisma.$queryRawUnsafe<{ userId: string; id: string; remainingMilliUnits: bigint | number }[]>(
+      userId
+        ? `SELECT "userId", id, "remainingMilliUnits" FROM "usage_credit_buckets"
+             WHERE status = 'active' AND "expiresAt" IS NOT NULL AND "expiresAt" <= NOW()
+               AND "remainingMilliUnits" > 0 AND "userId" = $1`
+        : `SELECT "userId", id, "remainingMilliUnits" FROM "usage_credit_buckets"
+             WHERE status = 'active' AND "expiresAt" IS NOT NULL AND "expiresAt" <= NOW()
+               AND "remainingMilliUnits" > 0`,
+      ...(userId ? [userId] : [])
+    );
+    for (const t of targets) {
+      const amt = Number(t.remainingMilliUnits);
+      if (amt <= 0) continue;
+      await prisma.$transaction(async (tx) => {
+        // إغلاق ذرّي للـBucket (يمنع الازدواج عبر شرط status).
+        const closed = await tx.$executeRawUnsafe(
+          `UPDATE "usage_credit_buckets"
+              SET "remainingMilliUnits" = 0, status = 'expired', "updatedAt" = NOW()
+            WHERE id = $1 AND status = 'active'`,
+          t.id
+        );
+        if (!closed) return;
+        const account = await lockAccount(tx, t.userId);
+        const reduce = Math.min(amt, Number(account.balanceMilliUnits));
+        if (reduce <= 0) return;
+        const nextBalance = Number(account.balanceMilliUnits) - reduce;
+        await tx.$executeRawUnsafe(
+          `UPDATE "usage_credit_accounts"
+              SET "balanceMilliUnits" = "balanceMilliUnits" - $2,
+                  "lifetimeDebitMilliUnits" = "lifetimeDebitMilliUnits" + $2,
+                  version = version + 1, "updatedAt" = NOW()
+            WHERE "userId" = $1`,
+          t.userId,
+          reduce
+        );
+        await appendLedger(tx, {
+          userId: t.userId,
+          entryType: "adjustment",
+          amountMilliUnits: -reduce,
+          balanceAfterMilliUnits: nextBalance,
+          source: "expire",
+          idempotencyKey: `expire:${t.id}`,
+          referenceType: "bucket",
+          referenceId: t.id,
+        });
+        totalExpired += reduce;
+      });
+    }
+  } catch {
+    /* best-effort */
+  }
+  return totalExpired;
+}
+
+/** قراءة أرصدة المستخدم (للملخّص والتوزيع). */
+export async function getUserBuckets(userId: string): Promise<CreditBucketRow[]> {
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const rows = await prisma.$queryRawUnsafe<
+      {
+        id: string;
+        sourceType: CreditSourceType;
+        remainingMilliUnits: bigint | number;
+        expiresAt: Date | null;
+        priority: number;
+        createdAt: Date;
+      }[]
+    >(
+      `SELECT id, "sourceType", "remainingMilliUnits", "expiresAt", priority, "createdAt"
+         FROM "usage_credit_buckets"
+        WHERE "userId" = $1 AND status = 'active' AND "remainingMilliUnits" > 0
+        ORDER BY ("expiresAt" IS NULL), "expiresAt" ASC, priority DESC, "createdAt" ASC`,
+      userId
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      sourceType: r.sourceType,
+      remainingMilliUnits: Number(r.remainingMilliUnits),
+      expiresAt: r.expiresAt ? new Date(r.expiresAt) : null,
+      priority: Number(r.priority),
+      createdAt: new Date(r.createdAt),
+    }));
+  } catch {
+    return [];
   }
 }
 
