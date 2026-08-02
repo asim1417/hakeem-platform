@@ -283,3 +283,5 @@ ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "displayNa
 ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "displayNameEn" TEXT;
 ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "effectiveFrom" TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "effectiveTo" TIMESTAMPTZ;
+ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_plan_id" TEXT;
+ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_period" TEXT;

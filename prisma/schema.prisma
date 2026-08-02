@@ -1428,6 +1428,8 @@ model Subscription {
   canceledAt             DateTime?          @map("canceled_at")
   trialEndsAt            DateTime?          @map("trial_ends_at")
   paymentMethodId        String?            @map("payment_method_id")
+  pendingPlanId          String?            @map("pending_plan_id")
+  pendingPeriod          String?            @map("pending_period")
   createdAt              DateTime           @default(now()) @map("created_at")
   updatedAt              DateTime           @updatedAt @map("updated_at")
 
