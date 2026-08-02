@@ -7,6 +7,7 @@ import {
   isMissingTableError,
   MISSING_TABLE_MESSAGE
 } from "@/lib/modules/doc-platform/workspace";
+import { auditDocToolOp, summarizeDocDelta } from "@/lib/modules/doc-tool/audit-log";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,14 @@ export async function PUT(request: NextRequest) {
         data: { workspaceId: ws.id, title: CASE_MARKER, ...data }
       });
     }
+    // تدقيقٌ لعمليّة الحفظ: يربط العمليّة بالمستخدم ويؤرشفها في سجلّ التدقيق المركزيّ
+    // (fail-open، بيانات وصفيّة فقط — لا نصّ خام). كل حفظٍ سجلٌّ تاريخيّ لا يُستبدَل.
+    await auditDocToolOp({
+      action: "DOC_TOOL_SAVE",
+      workspaceId: ws.id,
+      request,
+      metadata: summarizeDocDelta(existing?.docs, docs)
+    });
     return NextResponse.json({ ok: true, count: docs.length });
   } catch (error) {
     if (isMissingTableError(error)) {
@@ -96,11 +105,18 @@ export async function PUT(request: NextRequest) {
 }
 
 /** مسح كل الوثائق المحفوظة لمساحة العمل */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
     const ws = await getWorkspace();
     if (ws) {
+      const existing = await findToolCase(ws.id);
       await prisma.docCase.deleteMany({ where: { workspaceId: ws.id, title: CASE_MARKER } });
+      await auditDocToolOp({
+        action: "DOC_TOOL_CLEAR",
+        workspaceId: ws.id,
+        request,
+        metadata: { removed: summarizeDocDelta(existing?.docs, []).removed }
+      });
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
