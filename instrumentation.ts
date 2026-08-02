@@ -73,4 +73,18 @@ export async function register() {
   } catch (e) {
     console.warn("[blueprint.schema] تعذّر التجهيز:", (e as Error)?.message);
   }
+
+  // أرشيف نسخ أداة الوثائق — جدول doc_tool_snapshots (idempotent). يُنشأ تلقائيًّا
+  // عند الإقلاع فلا حاجة لخطوة migration يدويّة على قاعدة الإنتاج.
+  try {
+    const { ensureDocToolSnapshotSchema } = await import("@/lib/modules/doc-tool/ensure-schema");
+    const ok = await ensureDocToolSnapshotSchema();
+    console.log(
+      ok
+        ? "[doc-tool.schema] جدول أرشيف النسخ جاهز."
+        : "[doc-tool.schema] بعض العبارات تُخطّيت — راجع السجلّ."
+    );
+  } catch (e) {
+    console.warn("[doc-tool.schema] تعذّر التجهيز:", (e as Error)?.message);
+  }
 }
