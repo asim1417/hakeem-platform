@@ -16,10 +16,15 @@ CREATE TABLE IF NOT EXISTS "doc_tool_snapshots" (
     "actor_id" TEXT,
     "docs" JSONB NOT NULL,
     "doc_count" INTEGER NOT NULL DEFAULT 0,
+    "content_hash" TEXT,
+    "byte_size" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "doc_tool_snapshots_pkey" PRIMARY KEY ("id")
 );
+
+ALTER TABLE "doc_tool_snapshots" ADD COLUMN IF NOT EXISTS "content_hash" TEXT;
+ALTER TABLE "doc_tool_snapshots" ADD COLUMN IF NOT EXISTS "byte_size" INTEGER;
 
 CREATE INDEX IF NOT EXISTS "doc_tool_snapshots_workspace_id_created_at_idx"
     ON "doc_tool_snapshots"("workspace_id", "created_at");

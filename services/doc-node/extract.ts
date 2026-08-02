@@ -46,7 +46,10 @@ function extOf(name: string): string {
 async function extractPdfTextNode(data: Uint8Array): Promise<{ text: string; arabicChars: number }> {
   // البناء legacy يعمل في بيئة Node (بلا DOM). لا نضبط workerSrc — pdfjs يعمل بلا عامل.
   const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const doc = await pdfjs.getDocument({ data, useSystemFonts: true, isEvalSupported: false }).promise;
+  // نسخةٌ خاصّة لـ pdfjs: getDocument يُحوّل (يفصل) الـArrayBuffer الذي يستقبله (pdfjs 4)،
+  // فلو مرّرنا data نفسها لَفَقَدها المستهلِكون التالون (pdf-lib في splitPdf/extractSinglePages)
+  // وأخرجوا نصًّا فارغًا لكل PDF ممسوح/مختلط. نمرّر نسخةً فتبقى data سليمةً للبقيّة.
+  const doc = await pdfjs.getDocument({ data: data.slice(), useSystemFonts: true, isEvalSupported: false }).promise;
   const parts: string[] = [];
   for (let p = 1; p <= doc.numPages; p += 1) {
     const page = await doc.getPage(p);
@@ -67,7 +70,10 @@ async function extractPdfTextNode(data: Uint8Array): Promise<{ text: string; ara
 /** خطّةٌ لكل صفحة عبر pdfjs على Node: تصنيفٌ نظيف/محتاج-مسح لكل صفحة. */
 async function planPdfPagesNode(data: Uint8Array): Promise<PdfPagePlan> {
   const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const doc = await pdfjs.getDocument({ data, useSystemFonts: true, isEvalSupported: false }).promise;
+  // نسخةٌ خاصّة لـ pdfjs: getDocument يُحوّل (يفصل) الـArrayBuffer الذي يستقبله (pdfjs 4)،
+  // فلو مرّرنا data نفسها لَفَقَدها المستهلِكون التالون (pdf-lib في splitPdf/extractSinglePages)
+  // وأخرجوا نصًّا فارغًا لكل PDF ممسوح/مختلط. نمرّر نسخةً فتبقى data سليمةً للبقيّة.
+  const doc = await pdfjs.getDocument({ data: data.slice(), useSystemFonts: true, isEvalSupported: false }).promise;
   const total = doc.numPages;
   const needOcrPages: number[] = [];
   const pageBodies: string[] = [];

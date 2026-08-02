@@ -1,7 +1,7 @@
 // اختبار مُلخِّص فرق الوثائق (تدقيق أداة الوثائق) — دالّةٌ نقيّة بلا قاعدة بيانات.
 import assert from "node:assert/strict";
 import { summarizeDocDelta } from "../lib/modules/doc-tool/doc-delta";
-import { retainRecentCount } from "../lib/modules/doc-tool/snapshot-retention";
+import { retainRecentCount, retainWithinBudget } from "../lib/modules/doc-tool/snapshot-retention";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -68,6 +68,43 @@ check("تقليم النسخ: فوق الحدّ → يُحذف الأقدم (م�
 check("تقليم النسخ: حدٌّ غير موجب → حذف الكلّ", () => {
   assert.deepEqual(retainRecentCount([1, 2, 3], 0), [1, 2, 3]);
   assert.deepEqual(retainRecentCount([1, 2], -1), [1, 2]);
+});
+
+check("ميزانيّة النسخ: تحت الحدّين → لا حذف", () => {
+  const items = [
+    { id: "a", bytes: 100 },
+    { id: "b", bytes: 100 },
+    { id: "c", bytes: 100 }
+  ];
+  assert.deepEqual(retainWithinBudget(items, 10, 1000), []);
+});
+
+check("ميزانيّة النسخ: تجاوز العدد → حذف الأقدم", () => {
+  const items = [
+    { id: "n3", bytes: 10 },
+    { id: "n2", bytes: 10 },
+    { id: "n1", bytes: 10 }
+  ];
+  assert.deepEqual(retainWithinBudget(items, 2, 1_000_000).map((s) => s.id), ["n1"]);
+});
+
+check("ميزانيّة النسخ: تجاوز البايت → حذف الأقدم حتى الحدّ", () => {
+  // الأحدث أوّلًا؛ ميزانيّة 250: نُبقي أوّل ٢ (100+100)، ونحذف الثالث (تراكم 300>250)
+  const items = [
+    { id: "n3", bytes: 100 },
+    { id: "n2", bytes: 100 },
+    { id: "n1", bytes: 100 }
+  ];
+  assert.deepEqual(retainWithinBudget(items, 100, 250).map((s) => s.id), ["n1"]);
+});
+
+check("ميزانيّة النسخ: الأحدث يبقى دائمًا ولو تجاوز الميزانيّة وحده", () => {
+  const items = [
+    { id: "big", bytes: 10_000 },
+    { id: "old", bytes: 10 }
+  ];
+  // الأحدث (big) يبقى رغم تجاوزه؛ والأقدم يُحذف لتجاوز الميزانيّة
+  assert.deepEqual(retainWithinBudget(items, 100, 1000).map((s) => s.id), ["old"]);
 });
 
 console.log(`\nكل اختبارات تدقيق أداة الوثائق ناجحة (${passed})`);

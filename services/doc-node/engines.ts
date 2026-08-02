@@ -99,9 +99,11 @@ async function callGemini(bytes: Uint8Array, mime: string, model: string): Promi
   const modelId = model === "pro" ? "gemini-2.5-pro" : "gemini-2.5-flash";
   let res: Response;
   try {
-    res = await fetch(`${GEMINI_BASE}/${modelId}:generateContent?key=${key}`, {
+    // المفتاح في ترويسة x-goog-api-key لا في مسار الـURL: عناوين الـURL أكثر ما يُسجَّل
+    // في السجلّات والوسطاء، وقد تظهر في رسالة خطأ fetch تُعاد للعميل — فلا نضعه فيها.
+    res = await fetch(`${GEMINI_BASE}/${modelId}:generateContent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         contents: [{ parts: [{ inline_data: { data: Buffer.from(bytes).toString("base64"), mime_type: mime } }, { text: OCR_PROMPT }] }],
         generationConfig: geminiConfig(model)
