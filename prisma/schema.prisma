@@ -1058,6 +1058,8 @@ model DocToolSnapshot {
   actorId     String?  @map("actor_id") // المستخدم المُصادَق وقت الحفظ (null للضيف)
   docs        Json // لقطة كاملة للوثائق [{title, rawText, …}]
   docCount    Int      @default(0) @map("doc_count")
+  contentHash String?  @map("content_hash") // بصمة المحتوى — لتخطّي اللقطات المتطابقة
+  byteSize    Int?     @map("byte_size") // حجم اللقطة بالبايت — لتقليمٍ بميزانيّةٍ لا بالعدد فقط
   createdAt   DateTime @default(now()) @map("created_at")
 
   workspace   DocWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)

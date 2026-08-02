@@ -278,6 +278,9 @@ export function DocToolApp() {
           persist(next);
           return next;
         });
+        // الهويّة بالفهرس والإضافة تسبق القائمة: نُزيح تحديد الوثيقة المفتوحة بمقدار
+        // المُضاف كي يبقى المؤشّر على وثيقة المستخدم نفسها (لا يُحذف/يُعرَض الخطأ).
+        setSelected((sel) => (sel === null ? null : sel + added.length));
       }
       if (failures.length) setError(failures.slice(0, 5).join(" · "));
       setStatus(
