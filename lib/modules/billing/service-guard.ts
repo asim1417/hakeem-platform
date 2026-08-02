@@ -126,6 +126,8 @@ export async function guardAiService(opts: GuardOptions): Promise<GuardResult> {
       quantity: opts.quantity,
       idempotencyKey: idem,
       referenceId: opts.referenceId,
+      // احجز التكلفة الكاملة المعروضة (شاملة Opus/التصدير/الشرائح) لا الأساسية فقط.
+      estimatedPoints: estimate.points,
     });
     if (!reservation.enabled) {
       // العلم أُطفئ بين الفحصين — مرّ بلا خصم.

@@ -56,6 +56,16 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
+  // Fail-closed: لا نقبل webhook غير موقّع في الإنتاج / عند تفعيل الفوترة (منع تزوير الاشتراك).
+  const billingLive =
+    process.env.NODE_ENV === "production" ||
+    /^(1|true|on)$/i.test(process.env.BILLING_ENABLED || "");
+  if (billingLive && !secretCheck.enforced) {
+    return NextResponse.json(
+      { ok: false, message: "webhook secret required" },
+      { status: 401 }
+    );
+  }
 
   const status = body.status || body.data?.status || "";
   const userId = body.metadata?.userId || body.data?.metadata?.userId || null;
@@ -63,7 +73,8 @@ export async function POST(request: NextRequest) {
   const interval = body.metadata?.interval || body.data?.metadata?.interval || null;
   const amount = body.amount ?? body.data?.amount ?? null;
   const currency = body.currency || body.data?.currency || null;
-  const eventId = body.id || body.data?.id || `moyasar_${Date.now()}`;
+  const paymentId = body.data?.id || body.id || "";
+  const eventId = paymentId || `moyasar_${Date.now()}`;
   const paid = ["paid", "captured", "verified"].includes(status.toLowerCase());
 
   const recorded = await recordBillingEvent({
@@ -79,19 +90,29 @@ export async function POST(request: NextRequest) {
     payload: body as Record<string, unknown>,
   });
 
-  // فعّل الاشتراك فقط عند حدث جديد مدفوع (منع التكرار عند إعادة الإرسال).
-  if (paid && userId && recorded.inserted) {
+  // إعادة التحقق من البوابة قبل التفعيل — لا نثق بجسم الـwebhook (مصدر الحقيقة).
+  let gatewayConfirmedPaid = paid;
+  try {
+    const { getPaymentProvider } = await import("@/lib/payments/payment-provider");
+    const provider = await getPaymentProvider();
+    if (provider.isLive() && paymentId) {
+      const verified = await provider.verifyPayment(paymentId);
+      gatewayConfirmedPaid = verified?.status === "paid";
+    }
+  } catch {
+    // تعذّر التحقق من البوابة — لا نُفعّل بناءً على الجسم وحده إن كانت البوابة حيّة.
+  }
+
+  // فعّل الاشتراك فقط عند حدث جديد مدفوع ومؤكَّد من البوابة (لا تفعيل عند فشل التسجيل).
+  if (gatewayConfirmedPaid && userId && recorded.inserted) {
     await activateSubscription(userId);
     await recordReferralFirstPurchase(userId, eventId).catch(() => false);
-  } else if (paid && userId && !recorded.ok) {
-    // إن تعذّر التسجيل — لا نحجب التفعيل (توافق خلفي).
-    await activateSubscription(userId);
   }
 
   return NextResponse.json({
     ok: true,
     received: true,
-    paid,
+    paid: gatewayConfirmedPaid,
     userId: userId || null,
     eventId,
     recorded: recorded.ok,

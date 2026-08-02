@@ -76,8 +76,16 @@ const MANAGED_SET = new Set(MANAGED_KEYS.map((k) => k.key));
 const SECRET_SET = new Set(MANAGED_KEYS.filter((k) => k.secret).map((k) => k.key));
 
 // ── التشفير ──
+const DEV_FALLBACK_SECRET = "hakeem-settings-dev-only";
+
 function encKey(): Buffer {
-  const secret = process.env.SETTINGS_SECRET || process.env.AUTH_SECRET || "hakeem-settings-dev-only";
+  const secret = process.env.SETTINGS_SECRET || process.env.AUTH_SECRET || DEV_FALLBACK_SECRET;
+  // Fail-closed: لا نشفّر الأسرار (ومنها توكنات الدفع) بثابت عام في الإنتاج.
+  if (secret === DEV_FALLBACK_SECRET && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "SETTINGS_SECRET (أو AUTH_SECRET) مطلوب في الإنتاج لتشفير الأسرار — رُفض استخدام المفتاح الافتراضي."
+    );
+  }
   return nodeCrypto().scryptSync(secret, "hakeem-app-settings-salt", 32);
 }
 

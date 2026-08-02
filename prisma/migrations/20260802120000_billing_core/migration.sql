@@ -307,3 +307,31 @@ ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "effective
 ALTER TABLE IF EXISTS "usage_service_prices" ADD COLUMN IF NOT EXISTS "effectiveTo" TIMESTAMPTZ;
 ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_plan_id" TEXT;
 ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_period" TEXT;
+
+-- ── منع التعديل: الفواتير (حقول مالية) وسجل التدقيق (append-only) ──
+CREATE OR REPLACE FUNCTION billing_invoices_guard() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'billing_invoices are immutable (issue a credit note instead)'; END IF;
+  IF OLD."invoice_number" IS DISTINCT FROM NEW."invoice_number"
+     OR OLD."user_id" IS DISTINCT FROM NEW."user_id"
+     OR OLD."type" IS DISTINCT FROM NEW."type"
+     OR OLD."subtotal_halalas" IS DISTINCT FROM NEW."subtotal_halalas"
+     OR OLD."vat_halalas" IS DISTINCT FROM NEW."vat_halalas"
+     OR OLD."total_halalas" IS DISTINCT FROM NEW."total_halalas"
+     OR OLD."issued_at" IS DISTINCT FROM NEW."issued_at"
+     OR OLD."seller_snapshot" IS DISTINCT FROM NEW."seller_snapshot"
+     OR OLD."buyer_snapshot" IS DISTINCT FROM NEW."buyer_snapshot" THEN
+    RAISE EXCEPTION 'issued invoice core fields are immutable';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS billing_invoices_no_mutation ON "billing_invoices";
+CREATE TRIGGER billing_invoices_no_mutation BEFORE UPDATE OR DELETE ON "billing_invoices" FOR EACH ROW EXECUTE FUNCTION billing_invoices_guard();
+CREATE OR REPLACE FUNCTION billing_audit_logs_guard() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'billing_audit_logs is append-only';
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS billing_audit_logs_no_mutation ON "billing_audit_logs";
+CREATE TRIGGER billing_audit_logs_no_mutation BEFORE UPDATE OR DELETE ON "billing_audit_logs" FOR EACH ROW EXECUTE FUNCTION billing_audit_logs_guard();

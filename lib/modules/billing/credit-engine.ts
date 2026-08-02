@@ -9,7 +9,6 @@ import {
   reserveUsageCredits,
   captureUsageCredits,
   releaseUsageCredits,
-  consumeBucketsFor,
   grantUsageCreditsToBucket,
   adjustUsageCredits,
   expireBuckets,
@@ -218,6 +217,8 @@ export async function reserveCredits(input: {
   quantity?: number;
   idempotencyKey: string;
   referenceId?: string;
+  /** نقاط مُقدَّرة كاملة (شاملة الزيادات) لحجزها مقدّمًا بدل السعر الأساسي. */
+  estimatedPoints?: number;
 }): Promise<{ enabled: boolean; reservationId: string | null; estimatedPoints: number }> {
   // reserveUsageCredits يقرأ السعر من الجدول بالكود؛ الأكواد الجديدة مبذورة فيه.
   const res = await reserveUsageCredits({
@@ -226,6 +227,10 @@ export async function reserveCredits(input: {
     quantity: input.quantity,
     idempotencyKey: input.idempotencyKey,
     referenceId: input.referenceId,
+    overrideMilliUnits:
+      input.estimatedPoints && input.estimatedPoints > 0
+        ? Number(pointsToMilli(input.estimatedPoints))
+        : undefined,
   });
   return {
     enabled: res.enabled,
@@ -245,16 +250,13 @@ export async function captureReservation(input: {
   if (!input.reservationId) return;
   const actualMilli =
     input.actualPoints != null ? Number(pointsToMilli(input.actualPoints)) : undefined;
+  // captureUsageCredits يستهلك الـBuckets ذرّيًا داخل معاملته (لا توزيع منفصل).
   await captureUsageCredits({
     reservationId: input.reservationId,
     actualMilliUnits: actualMilli,
     referenceId: input.referenceId,
     metadata: input.metadata,
   });
-  // توزيع المبلغ المُثبَّت على الـBuckets (best-effort، بعد نجاح الخصم).
-  if (actualMilli && actualMilli > 0) {
-    await consumeBucketsFor(input.userId, actualMilli);
-  }
 }
 
 /** تحرير الحجز عند الفشل/الحجب (release). */

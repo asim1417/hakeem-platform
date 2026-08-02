@@ -12,6 +12,7 @@ import {
   type CreditBucketRow,
   type CreditSourceType,
 } from "./bucket-allocation";
+import { SEED_SERVICE_RATES } from "@/config/billing-plans";
 
 type Tx = Prisma.TransactionClient;
 
@@ -79,7 +80,16 @@ export async function getUsageServiceCost(
     // قبل الهجرة: نستخدم الكتالوج، لكن الإنفاذ نفسه يبقى متوقفًا.
   }
   const fallback = DEFAULT_USAGE_PRICES[serviceCode];
-  return Math.max(1, Math.ceil(Math.max(0, quantity) / fallback.unitSize)) * fallback.milliUnits;
+  if (fallback) {
+    return Math.max(1, Math.ceil(Math.max(0, quantity) / fallback.unitSize)) * fallback.milliUnits;
+  }
+  // أكواد الأمر التنفيذي (ASK_SOURCED…) ليست في DEFAULT_USAGE_PRICES القديم؛
+  // نسقط إلى كتالوج البذر بدل رمي TypeError صامت يتحوّل إلى fail-open في الحارس.
+  const seed = SEED_SERVICE_RATES.find((s) => s.serviceCode === serviceCode);
+  if (seed) {
+    return Math.max(1, Math.ceil(Math.max(0, quantity) / 1)) * seed.points * 1000;
+  }
+  throw new Error(`سعر خدمة غير معروف: ${serviceCode}`);
 }
 
 export async function reserveUsageCredits(input: {
@@ -88,12 +98,17 @@ export async function reserveUsageCredits(input: {
   quantity?: number;
   idempotencyKey: string;
   referenceId?: string;
+  /** تجاوز المبلغ المُقدَّر (يشمل زيادات Opus/التصدير/الشرائح) — يُحجز الكامل مقدّمًا. */
+  overrideMilliUnits?: number;
 }): Promise<{ enabled: boolean; reservationId: string | null; estimatedMilliUnits: number }> {
   if (!(await usageCreditsEnabled())) {
     return { enabled: false, reservationId: null, estimatedMilliUnits: 0 };
   }
   await reconcileTrialRewards(input.userId);
-  const estimatedMilliUnits = await getUsageServiceCost(input.serviceCode, input.quantity);
+  const estimatedMilliUnits =
+    input.overrideMilliUnits && input.overrideMilliUnits > 0
+      ? Math.floor(input.overrideMilliUnits)
+      : await getUsageServiceCost(input.serviceCode, input.quantity);
   const { prisma } = await import("@/lib/prisma");
 
   return prisma.$transaction(async (tx) => {
@@ -224,6 +239,9 @@ export async function captureUsageCredits(input: {
       actual,
       input.referenceId ?? null
     );
+    // توزيع المُستهلَك على الـBuckets ذرّيًا في نفس المعاملة (الأقرب انتهاءً أولًا).
+    // يمنع انحراف الحساب عن الـBuckets وسحب الانتهاء لرصيد مُستهلَك (§مراجعة الصحّة).
+    await consumeBucketsInTx(tx, reservation.userId, actual);
   });
   const reservationUser = await prisma.$queryRawUnsafe<{ userId: string }[]>(
     `SELECT "userId" FROM "usage_credit_reservations" WHERE id = $1 LIMIT 1`,
@@ -295,6 +313,14 @@ export async function grantUsageReward(input: {
       input.userId,
       amount
     );
+    // Bucket مقابل للمكافأة (يحافظ على تطابق الحساب مع مجموع الـBuckets).
+    await insertBucketInTx(tx, {
+      userId: input.userId,
+      amount,
+      sourceType: "PROMOTION",
+      sourceReferenceId: input.sourceId ?? input.rewardCode,
+      priority: 150,
+    });
     await appendLedger(tx, {
       userId: input.userId,
       entryType: "credit",
@@ -345,6 +371,18 @@ export async function adjustUsageCredits(input: {
       input.userId,
       input.amountMilliUnits
     );
+    // مزامنة الـBuckets: موجب ينشئ bucket إداري، سالب يستهلك من الـBuckets.
+    if (input.amountMilliUnits > 0) {
+      await insertBucketInTx(tx, {
+        userId: input.userId,
+        amount: input.amountMilliUnits,
+        sourceType: "ADMIN_GRANT",
+        sourceReferenceId: input.actorId,
+        priority: 120,
+      });
+    } else if (input.amountMilliUnits < 0) {
+      await consumeBucketsInTx(tx, input.userId, -input.amountMilliUnits);
+    }
     await appendLedger(tx, {
       userId: input.userId,
       entryType: "adjustment",
@@ -458,6 +496,35 @@ export async function getUsageCreditStatus(userId: string, limit = 100): Promise
 //  المحفظة (usage_credit_accounts) تبقى مصدر الإنفاذ؛ الـBuckets للمصدر/الانتهاء.
 // ════════════════════════════════════════════════════════════════════
 
+/** إدراج Bucket داخل معاملة قائمة (يُستخدم من كل مسارات المنح لضمان التطابق). */
+async function insertBucketInTx(
+  tx: Tx,
+  input: {
+    userId: string;
+    amount: number;
+    sourceType: CreditSourceType;
+    sourceReferenceId?: string | null;
+    expiresAt?: Date | null;
+    priority?: number;
+  }
+): Promise<string> {
+  const bucketId = id("ucb");
+  await tx.$executeRawUnsafe(
+    `INSERT INTO "usage_credit_buckets"
+      (id, "userId", "sourceType", "sourceReferenceId", "grantedMilliUnits",
+       "remainingMilliUnits", status, "startsAt", "expiresAt", priority)
+     VALUES ($1,$2,$3,$4,$5,$5,'active',NOW(),$6,$7)`,
+    bucketId,
+    input.userId,
+    input.sourceType,
+    input.sourceReferenceId ?? null,
+    Math.max(0, Math.floor(input.amount)),
+    input.expiresAt ?? null,
+    input.priority ?? 100
+  );
+  return bucketId;
+}
+
 /** منح رصيد بمصدر مستقل (Bucket) + رفع رصيد المحفظة + قيد دفتر. idempotent. */
 export async function grantUsageCreditsToBucket(input: {
   userId: string;
@@ -486,20 +553,14 @@ export async function grantUsageCreditsToBucket(input: {
     );
     if (concurrent[0]) return 0;
 
-    const bucketId = id("ucb");
-    await tx.$executeRawUnsafe(
-      `INSERT INTO "usage_credit_buckets"
-        (id, "userId", "sourceType", "sourceReferenceId", "grantedMilliUnits",
-         "remainingMilliUnits", status, "startsAt", "expiresAt", priority)
-       VALUES ($1,$2,$3,$4,$5,$5,'active',NOW(),$6,$7)`,
-      bucketId,
-      input.userId,
-      input.sourceType,
-      input.sourceReferenceId ?? null,
+    const bucketId = await insertBucketInTx(tx, {
+      userId: input.userId,
       amount,
-      input.expiresAt ?? null,
-      input.priority ?? 100
-    );
+      sourceType: input.sourceType,
+      sourceReferenceId: input.sourceReferenceId ?? null,
+      expiresAt: input.expiresAt ?? null,
+      priority: input.priority,
+    });
     const nextBalance = Number(account.balanceMilliUnits) + amount;
     await tx.$executeRawUnsafe(
       `UPDATE "usage_credit_accounts"
@@ -525,52 +586,61 @@ export async function grantUsageCreditsToBucket(input: {
   });
 }
 
-/** توزيع مبلغ مُستهلَك على الـBuckets (الأقرب انتهاءً أولًا). بعد capture. best-effort. */
+/** توزيع مبلغ مُستهلَك على الـBuckets داخل معاملة قائمة (الأقرب انتهاءً أولًا). */
+async function consumeBucketsInTx(tx: Tx, userId: string, milliUnits: number): Promise<void> {
+  const amount = Math.max(0, Math.floor(milliUnits));
+  if (amount <= 0) return;
+  const rows = await tx.$queryRawUnsafe<
+    {
+      id: string;
+      sourceType: CreditSourceType;
+      remainingMilliUnits: bigint | number;
+      expiresAt: Date | null;
+      priority: number;
+      createdAt: Date;
+    }[]
+  >(
+    `SELECT id, "sourceType", "remainingMilliUnits", "expiresAt", priority, "createdAt"
+       FROM "usage_credit_buckets"
+      WHERE "userId" = $1 AND status = 'active' AND "remainingMilliUnits" > 0
+      FOR UPDATE`,
+    userId
+  );
+  if (!rows.length) return;
+  const buckets: CreditBucketRow[] = rows.map((r) => ({
+    id: r.id,
+    sourceType: r.sourceType,
+    remainingMilliUnits: Number(r.remainingMilliUnits),
+    expiresAt: r.expiresAt ? new Date(r.expiresAt) : null,
+    priority: Number(r.priority),
+    createdAt: new Date(r.createdAt),
+  }));
+  const { allocations } = allocateConsumption(buckets, amount);
+  for (const a of allocations) {
+    await tx.$executeRawUnsafe(
+      `UPDATE "usage_credit_buckets"
+          SET "remainingMilliUnits" = GREATEST(0, "remainingMilliUnits" - $2),
+              status = CASE WHEN "remainingMilliUnits" - $2 <= 0 THEN 'depleted' ELSE status END,
+              "updatedAt" = NOW()
+        WHERE id = $1`,
+      a.bucketId,
+      a.amount
+    );
+  }
+}
+
+/**
+ * توزيع مبلغ مُستهلَك على الـBuckets (يفتح معاملة). للاستخدام الخارجي/المصالحة.
+ * ملاحظة: مسار capture الآن يستهلك الـBuckets داخل معاملته نفسها (ذرّيًا).
+ */
 export async function consumeBucketsFor(userId: string, milliUnits: number): Promise<void> {
   const amount = Math.max(0, Math.floor(milliUnits));
   if (amount <= 0) return;
   const { prisma } = await import("@/lib/prisma");
   try {
-    await prisma.$transaction(async (tx) => {
-      const rows = await tx.$queryRawUnsafe<
-        {
-          id: string;
-          sourceType: CreditSourceType;
-          remainingMilliUnits: bigint | number;
-          expiresAt: Date | null;
-          priority: number;
-          createdAt: Date;
-        }[]
-      >(
-        `SELECT id, "sourceType", "remainingMilliUnits", "expiresAt", priority, "createdAt"
-           FROM "usage_credit_buckets"
-          WHERE "userId" = $1 AND status = 'active' AND "remainingMilliUnits" > 0
-          FOR UPDATE`,
-        userId
-      );
-      const buckets: CreditBucketRow[] = rows.map((r) => ({
-        id: r.id,
-        sourceType: r.sourceType,
-        remainingMilliUnits: Number(r.remainingMilliUnits),
-        expiresAt: r.expiresAt ? new Date(r.expiresAt) : null,
-        priority: Number(r.priority),
-        createdAt: new Date(r.createdAt),
-      }));
-      const { allocations } = allocateConsumption(buckets, amount);
-      for (const a of allocations) {
-        await tx.$executeRawUnsafe(
-          `UPDATE "usage_credit_buckets"
-              SET "remainingMilliUnits" = GREATEST(0, "remainingMilliUnits" - $2),
-                  status = CASE WHEN "remainingMilliUnits" - $2 <= 0 THEN 'depleted' ELSE status END,
-                  "updatedAt" = NOW()
-            WHERE id = $1`,
-          a.bucketId,
-          a.amount
-        );
-      }
-    });
+    await prisma.$transaction((tx) => consumeBucketsInTx(tx, userId, amount));
   } catch {
-    // best-effort: المحفظة مصدر الإنفاذ؛ لا نكسر المسار إن غابت الـBuckets.
+    // best-effort للمصالحة؛ لا نكسر المسار.
   }
 }
 
@@ -602,7 +672,10 @@ export async function expireBuckets(userId?: string): Promise<number> {
         );
         if (!closed) return;
         const account = await lockAccount(tx, t.userId);
-        const reduce = Math.min(amt, Number(account.balanceMilliUnits));
+        // القصّ إلى المتاح (balance − reserved) لا الرصيد كله — يتجنّب انتهاك CHECK(reserved<=balance)
+        // ويمنع سحب رصيد يخصّ مصدرًا آخر ما زال محجوزًا.
+        const available = Number(account.balanceMilliUnits) - Number(account.reservedMilliUnits);
+        const reduce = Math.min(amt, Math.max(0, available));
         if (reduce <= 0) return;
         const nextBalance = Number(account.balanceMilliUnits) - reduce;
         await tx.$executeRawUnsafe(

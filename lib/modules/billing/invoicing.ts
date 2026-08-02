@@ -104,3 +104,61 @@ export async function issueInvoiceForOrder(input: IssueInvoiceInput) {
     return { id, invoiceNumber, reused: false };
   });
 }
+
+/**
+ * إصدار إشعار دائن (CREDIT_NOTE) عند الاسترداد — بدل تعديل الفاتورة الأصلية (§9، ZATCA).
+ * يشير إلى الفاتورة الأصلية عبر رقمها. idempotent عبر مفتاح الاسترداد في buyerSnapshot.
+ */
+export async function issueCreditNote(input: {
+  refundId: string;
+  userId: string;
+  currency: string;
+  subtotalHalalas: number;
+  vatRateBps: number;
+  vatHalalas: number;
+  totalHalalas: number;
+  originalInvoiceNumber: string | null;
+  buyer: { nameAr?: string; email?: string; vatNumber?: string };
+  issuedYear: number;
+}) {
+  const { prisma } = await import("@/lib/prisma");
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.$queryRawUnsafe<{ id: string; invoice_number: string }[]>(
+      `SELECT id, "invoice_number" FROM "billing_invoices"
+        WHERE "type" = 'CREDIT_NOTE' AND "buyer_snapshot"->>'refundId' = $1 LIMIT 1`,
+      input.refundId
+    );
+    if (existing[0]) {
+      return { id: existing[0].id, invoiceNumber: existing[0].invoice_number, reused: true };
+    }
+    const invoiceNumber = await nextInvoiceNumber(tx, input.issuedYear);
+    const seller = sellerSnapshot();
+    const id = `cn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    await tx.$executeRawUnsafe(
+      `INSERT INTO "billing_invoices"
+        ("id","invoice_number","user_id","order_id","type","status","currency",
+         "subtotal_halalas","vat_rate_bps","vat_halalas","total_halalas",
+         "seller_snapshot","buyer_snapshot","issued_at","zatca_status")
+       VALUES ($1,$2,$3,NULL,'CREDIT_NOTE','ISSUED',$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,NOW(),
+         CASE WHEN $11 THEN 'PENDING' ELSE 'NOT_APPLICABLE' END)`,
+      id,
+      invoiceNumber,
+      input.userId,
+      input.currency,
+      input.subtotalHalalas,
+      input.vatRateBps,
+      input.vatHalalas,
+      input.totalHalalas,
+      JSON.stringify(seller),
+      JSON.stringify({
+        nameAr: input.buyer.nameAr || "",
+        email: input.buyer.email || "",
+        vatNumber: input.buyer.vatNumber || "",
+        refundId: input.refundId,
+        originalInvoiceNumber: input.originalInvoiceNumber || "",
+      }),
+      /^(1|true|on)$/i.test(process.env.ZATCA_INTEGRATION_ENABLED || "")
+    );
+    return { id, invoiceNumber, reused: false };
+  });
+}

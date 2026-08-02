@@ -80,12 +80,42 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       : []),
   ]);
 
+  // 4) إشعار دائن (بدل تعديل الفاتورة الأصلية) — §9/ZATCA.
+  let creditNoteNumber: string | null = null;
+  try {
+    const { issueCreditNote } = await import("@/lib/modules/billing/invoicing");
+    const { splitVatInclusive, vatRateBps } = await import("@/lib/modules/credits/points");
+    const originalInvoice = payment.order
+      ? await prisma.invoice.findFirst({ where: { orderId: payment.order.id }, select: { invoiceNumber: true } })
+      : null;
+    const user = payment.order
+      ? await prisma.user.findUnique({ where: { id: payment.order.userId }, select: { name: true, email: true } })
+      : null;
+    const bps = vatRateBps();
+    const split = splitVatInclusive(refund.amountHalalas, bps);
+    const note = await issueCreditNote({
+      refundId: refund.id,
+      userId: payment.order!.userId,
+      currency: payment.currency,
+      subtotalHalalas: split.subtotalHalalas,
+      vatRateBps: bps,
+      vatHalalas: split.vatHalalas,
+      totalHalalas: split.totalHalalas,
+      originalInvoiceNumber: originalInvoice?.invoiceNumber ?? null,
+      buyer: { nameAr: user?.name, email: user?.email },
+      issuedYear: new Date().getUTCFullYear(),
+    });
+    creditNoteNumber = note.invoiceNumber;
+  } catch {
+    // لا نُفشل الاسترداد إن تعذّر إصدار الإشعار الدائن — تلتقطه المصالحة.
+  }
+
   await recordBillingAudit({
     action: "REFUND_APPROVED",
     actorUserId: gate.user.id,
     targetType: "refund",
     targetId: refund.id,
-    metadata: { amountHalalas: refund.amountHalalas, pointsReversed, fullyRefunded },
+    metadata: { amountHalalas: refund.amountHalalas, pointsReversed, fullyRefunded, creditNoteNumber },
   });
-  return NextResponse.json({ ok: true, pointsReversed, fullyRefunded });
+  return NextResponse.json({ ok: true, pointsReversed, fullyRefunded, creditNoteNumber });
 }

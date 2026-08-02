@@ -336,6 +336,36 @@ ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_
 ALTER TABLE IF EXISTS "billing_subscriptions" ADD COLUMN IF NOT EXISTS "pending_period" TEXT;
 `;
 
+// ── منع التعديل (immutability) على الفواتير وسجل التدقيق — §9/§14 ──
+const IMMUTABILITY_TRIGGERS = `
+CREATE OR REPLACE FUNCTION billing_invoices_guard() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'billing_invoices are immutable (issue a credit note instead)'; END IF;
+  IF OLD."invoice_number" IS DISTINCT FROM NEW."invoice_number"
+     OR OLD."user_id" IS DISTINCT FROM NEW."user_id"
+     OR OLD."type" IS DISTINCT FROM NEW."type"
+     OR OLD."subtotal_halalas" IS DISTINCT FROM NEW."subtotal_halalas"
+     OR OLD."vat_halalas" IS DISTINCT FROM NEW."vat_halalas"
+     OR OLD."total_halalas" IS DISTINCT FROM NEW."total_halalas"
+     OR OLD."issued_at" IS DISTINCT FROM NEW."issued_at"
+     OR OLD."seller_snapshot" IS DISTINCT FROM NEW."seller_snapshot"
+     OR OLD."buyer_snapshot" IS DISTINCT FROM NEW."buyer_snapshot" THEN
+    RAISE EXCEPTION 'issued invoice core fields are immutable';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS billing_invoices_no_mutation ON "billing_invoices";
+CREATE TRIGGER billing_invoices_no_mutation BEFORE UPDATE OR DELETE ON "billing_invoices" FOR EACH ROW EXECUTE FUNCTION billing_invoices_guard();
+CREATE OR REPLACE FUNCTION billing_audit_logs_guard() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'billing_audit_logs is append-only';
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS billing_audit_logs_no_mutation ON "billing_audit_logs";
+CREATE TRIGGER billing_audit_logs_no_mutation BEFORE UPDATE OR DELETE ON "billing_audit_logs" FOR EACH ROW EXECUTE FUNCTION billing_audit_logs_guard();
+`;
+
 let ready: Promise<boolean> | null = null;
 
 async function runBlock(sql: string): Promise<void> {
@@ -387,6 +417,7 @@ async function ensure(): Promise<boolean> {
     await runBlock(INVOICE_COUNTER);
     await runBlock(PHASE_E_TABLES);
     await runBlock(V2_EXTENSIONS);
+    await runBlock(IMMUTABILITY_TRIGGERS);
     return true;
   } catch (e) {
     console.warn("[billing.schema] تعذّر تجهيز مخطط الفوترة:", (e as Error)?.message);
