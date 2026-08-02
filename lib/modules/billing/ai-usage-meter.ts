@@ -14,6 +14,9 @@ export type AiUsageContext = {
 export type AiTokenUsage = {
   inputTokens: number;
   outputTokens: number;
+  cacheCreationTokens?: number;
+  cacheReadTokens?: number;
+  webSearchCount?: number;
 };
 
 export type AiUsageRecordInput = {
@@ -24,6 +27,16 @@ export type AiUsageRecordInput = {
   requestId?: string | null;
   inputTokens: number;
   outputTokens: number;
+  cacheCreationTokens?: number;
+  cacheReadTokens?: number;
+  webSearchCount?: number;
+  /** تكلفة المزوّد الفعلية بالـ micros USD (تُحسب تلقائيًا إن غابت ووُجد model). */
+  providerCostMicrosUsd?: number;
+  chargedPoints?: number;
+  serviceRateVersion?: number;
+  status?: string;
+  latencyMs?: number;
+  errorCode?: string | null;
   streamed?: boolean;
 };
 
@@ -48,6 +61,16 @@ const STATEMENTS = [
   ON "ai_usage_events" ("user_id", "created_at" DESC)`,
   `CREATE INDEX IF NOT EXISTS "ai_usage_events_provider_idx"
   ON "ai_usage_events" ("provider")`,
+  // ── توسعة المرحلة A: التكلفة الفعلية + cache/web-search ──
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "cache_creation_tokens" INT NOT NULL DEFAULT 0`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "cache_read_tokens" INT NOT NULL DEFAULT 0`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "web_search_count" INT NOT NULL DEFAULT 0`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "provider_cost_micros_usd" BIGINT NOT NULL DEFAULT 0`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "charged_points" INT`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "service_rate_version" INT`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "status" TEXT`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "latency_ms" INT`,
+  `ALTER TABLE "ai_usage_events" ADD COLUMN IF NOT EXISTS "error_code" TEXT`,
 ];
 
 export function getAiUsageContext(): AiUsageContext | undefined {
@@ -84,17 +107,45 @@ export async function recordAiUsage(input: AiUsageRecordInput): Promise<void> {
   if (!userId) return;
   const inputTokens = Math.max(0, Math.floor(Number(input.inputTokens) || 0));
   const outputTokens = Math.max(0, Math.floor(Number(input.outputTokens) || 0));
-  if (inputTokens === 0 && outputTokens === 0) return;
+  const cacheCreation = Math.max(0, Math.floor(Number(input.cacheCreationTokens) || 0));
+  const cacheRead = Math.max(0, Math.floor(Number(input.cacheReadTokens) || 0));
+  const webSearch = Math.max(0, Math.floor(Number(input.webSearchCount) || 0));
+  const hasError = Boolean(input.errorCode) || input.status === "error";
+  if (inputTokens === 0 && outputTokens === 0 && !hasError) return;
 
   const ok = await ensureAiUsageSchema();
   if (!ok) return;
+
+  // تكلفة المزوّد: تُمرّر صراحةً أو تُحسب من النموذج (المرحلة A — قياس الظل).
+  let costMicros = Math.max(0, Math.floor(Number(input.providerCostMicrosUsd) || 0));
+  if (!costMicros && input.model && (input.provider || "").toLowerCase() === "anthropic") {
+    try {
+      const { costFromUsage } = await import("./model-pricing");
+      const { costMicrosUsd } = await costFromUsage(
+        {
+          inputTokens,
+          outputTokens,
+          cacheCreationTokens: cacheCreation,
+          cacheReadTokens: cacheRead,
+          webSearchCount: webSearch,
+        },
+        String(input.model),
+        "anthropic"
+      );
+      costMicros = costMicrosUsd;
+    } catch {
+      /* السعر غير متاح — نُبقي 0 */
+    }
+  }
 
   const id = `aiu_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   try {
     await prisma.$executeRawUnsafe(
       `INSERT INTO "ai_usage_events"
-        ("id","user_id","provider","model","service_key","request_id","input_tokens","output_tokens","streamed")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        ("id","user_id","provider","model","service_key","request_id","input_tokens","output_tokens",
+         "cache_creation_tokens","cache_read_tokens","web_search_count","provider_cost_micros_usd",
+         "charged_points","service_rate_version","status","latency_ms","error_code","streamed")
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
       id,
       userId,
       (input.provider || "unknown").slice(0, 40),
@@ -103,6 +154,15 @@ export async function recordAiUsage(input: AiUsageRecordInput): Promise<void> {
       input.requestId ? String(input.requestId).slice(0, 80) : null,
       inputTokens,
       outputTokens,
+      cacheCreation,
+      cacheRead,
+      webSearch,
+      costMicros,
+      input.chargedPoints != null ? Math.floor(Number(input.chargedPoints)) : null,
+      input.serviceRateVersion != null ? Math.floor(Number(input.serviceRateVersion)) : null,
+      input.status ? String(input.status).slice(0, 40) : null,
+      input.latencyMs != null ? Math.floor(Number(input.latencyMs)) : null,
+      input.errorCode ? String(input.errorCode).slice(0, 80) : null,
       Boolean(input.streamed)
     );
   } catch {
@@ -126,6 +186,9 @@ export async function recordAiUsageFromContext(
     requestId: meta.requestId ?? ctx?.requestId,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
+    cacheCreationTokens: usage.cacheCreationTokens,
+    cacheReadTokens: usage.cacheReadTokens,
+    webSearchCount: usage.webSearchCount,
     streamed: meta.streamed,
   });
 }

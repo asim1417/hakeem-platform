@@ -11,6 +11,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { recordAiUsageFromContext } from "@/lib/modules/billing/ai-usage-meter";
+import { extractAnthropicUsage } from "@/lib/modules/billing/model-pricing";
 import { registryDefaultModel } from "@/lib/modules/ai/model-registry";
 
 const SETTINGS_KEY = "ai_provider";
@@ -371,15 +372,15 @@ export async function completeWithConfig(
     }
     const data = (await resp.json()) as {
       content?: Array<{ text?: string }>;
-      usage?: { input_tokens?: number; output_tokens?: number };
+      usage?: Record<string, unknown>;
     };
-    const inputTokens = Number(data.usage?.input_tokens) || 0;
-    const outputTokens = Number(data.usage?.output_tokens) || 0;
-    if (inputTokens > 0 || outputTokens > 0) {
-      void recordAiUsageFromContext(
-        { inputTokens, outputTokens },
-        { provider: "anthropic", model: usedModel, streamed: false }
-      );
+    const usage = extractAnthropicUsage(data.usage);
+    if (usage.inputTokens > 0 || usage.outputTokens > 0) {
+      void recordAiUsageFromContext(usage, {
+        provider: "anthropic",
+        model: usedModel,
+        streamed: false,
+      });
     }
     return data.content?.map((p) => p.text).filter(Boolean).join("\n") || "";
   }
@@ -468,6 +469,9 @@ export async function* streamWithConfig(
   let buf = "";
   let anthropicInput = 0;
   let anthropicOutput = 0;
+  let anthropicCacheCreation = 0;
+  let anthropicCacheRead = 0;
+  let anthropicWebSearch = 0;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -484,15 +488,33 @@ export async function* streamWithConfig(
       if (kind === "anthropic") {
         const d = j as {
           type?: string;
-          message?: { usage?: { input_tokens?: number; output_tokens?: number }; model?: string };
+          message?: {
+            usage?: {
+              input_tokens?: number;
+              output_tokens?: number;
+              cache_creation_input_tokens?: number;
+              cache_read_input_tokens?: number;
+            };
+            model?: string;
+          };
           delta?: { type?: string; text?: string; stop_reason?: string };
-          usage?: { input_tokens?: number; output_tokens?: number };
+          usage?: {
+            output_tokens?: number;
+            server_tool_use?: { web_search_requests?: number };
+          };
         };
         if (d.type === "message_start" && d.message?.usage) {
           anthropicInput = Number(d.message.usage.input_tokens) || anthropicInput;
+          anthropicCacheCreation =
+            Number(d.message.usage.cache_creation_input_tokens) || anthropicCacheCreation;
+          anthropicCacheRead =
+            Number(d.message.usage.cache_read_input_tokens) || anthropicCacheRead;
         }
         if (d.type === "message_delta") {
           if (d.usage?.output_tokens != null) anthropicOutput = Number(d.usage.output_tokens) || anthropicOutput;
+          if (d.usage?.server_tool_use?.web_search_requests != null) {
+            anthropicWebSearch = Number(d.usage.server_tool_use.web_search_requests) || anthropicWebSearch;
+          }
           if (meta) meta.truncated = d.delta?.stop_reason === "max_tokens";
         }
         if (d.type === "content_block_delta" && d.delta?.type === "text_delta" && d.delta.text) yield d.delta.text;
@@ -510,7 +532,13 @@ export async function* streamWithConfig(
   }
   if (kind === "anthropic" && (anthropicInput > 0 || anthropicOutput > 0)) {
     void recordAiUsageFromContext(
-      { inputTokens: anthropicInput, outputTokens: anthropicOutput },
+      {
+        inputTokens: anthropicInput,
+        outputTokens: anthropicOutput,
+        cacheCreationTokens: anthropicCacheCreation,
+        cacheReadTokens: anthropicCacheRead,
+        webSearchCount: anthropicWebSearch,
+      },
       { provider: "anthropic", model, streamed: true }
     );
   }
