@@ -284,6 +284,14 @@ CREATE INDEX IF NOT EXISTS "usage_credit_buckets_source_idx"
   ON "usage_credit_buckets" ("sourceType", "sourceReferenceId");
 `;
 
+// ── عدّاد ترقيم الفواتير المتسلسل (لكل سنة، ذرّي) ──
+const INVOICE_COUNTER = `
+CREATE TABLE IF NOT EXISTS "billing_invoice_counters" (
+  "year" INTEGER PRIMARY KEY,
+  "last_seq" INTEGER NOT NULL DEFAULT 0
+);
+`;
+
 // ── توسعة جداول v2 القائمة (أعمدة إضافية آمنة) ──
 // ALTER TABLE IF EXISTS: لا يكسر الإقلاع إن لم تُطبَّق هجرة usage_credits_v2 بعد.
 const V2_EXTENSIONS = `
@@ -346,6 +354,7 @@ async function ensure(): Promise<boolean> {
     await runBlock(INDEXES);
     await runBlock(FOREIGN_KEYS);
     await runBlock(CREDIT_BUCKETS);
+    await runBlock(INVOICE_COUNTER);
     await runBlock(V2_EXTENSIONS);
     return true;
   } catch (e) {

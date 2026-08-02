@@ -267,6 +267,12 @@ CREATE TABLE IF NOT EXISTS "usage_credit_buckets" (
 CREATE INDEX IF NOT EXISTS "usage_credit_buckets_consume_idx" ON "usage_credit_buckets" ("userId","status","expiresAt","priority");
 CREATE INDEX IF NOT EXISTS "usage_credit_buckets_source_idx" ON "usage_credit_buckets" ("sourceType","sourceReferenceId");
 
+-- ── عدّاد ترقيم الفواتير المتسلسل ──
+CREATE TABLE IF NOT EXISTS "billing_invoice_counters" (
+  "year" INTEGER PRIMARY KEY,
+  "last_seq" INTEGER NOT NULL DEFAULT 0
+);
+
 -- ── توسعة جداول v2 (IF EXISTS: لا يكسر إن لم تُطبَّق هجرة usage_credits_v2 بعد) ──
 ALTER TABLE IF EXISTS "usage_credit_ledger" ADD COLUMN IF NOT EXISTS "bucketId" TEXT;
 ALTER TABLE IF EXISTS "usage_credit_ledger" ADD COLUMN IF NOT EXISTS "serviceCode" TEXT;
