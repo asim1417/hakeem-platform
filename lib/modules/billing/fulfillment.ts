@@ -121,15 +121,27 @@ export async function fulfillPaidOrder(input: {
   // 4) إصدار الفاتورة (idempotent عبر order_id).
   try {
     const user = await prisma.user.findUnique({ where: { id: order.userId } });
+    // نوع الفاتورة حسب المشتري (ZATCA): منشأة مسجّلة بالضريبة → فاتورة ضريبية؛ فرد → مبسّطة.
+    let entityType: string | null = null;
+    try {
+      const rows = await prisma.$queryRawUnsafe<{ entityType: string | null }[]>(
+        `SELECT "entityType" FROM "users" WHERE id = $1 LIMIT 1`,
+        order.userId
+      );
+      entityType = rows[0]?.entityType ?? null;
+    } catch {
+      /* عمود اختياري */
+    }
+    const isBusiness = entityType != null && ["LAW_FIRM", "COMPANY", "GOVERNMENT"].includes(entityType);
     await issueInvoiceForOrder({
       orderId: order.id,
       userId: order.userId,
       currency: order.currency,
       subtotalHalalas: order.subtotalHalalas,
-      vatRateBps: order.totalHalalas > 0 ? Math.round((order.vatHalalas * 10000) / order.subtotalHalalas) : 1500,
+      vatRateBps: order.subtotalHalalas > 0 ? Math.round((order.vatHalalas * 10000) / order.subtotalHalalas) : 1500,
       vatHalalas: order.vatHalalas,
       totalHalalas: order.totalHalalas,
-      type: order.type === "POINTS_PACKAGE" ? "SIMPLIFIED_TAX_INVOICE" : "TAX_INVOICE",
+      type: isBusiness ? "TAX_INVOICE" : "SIMPLIFIED_TAX_INVOICE",
       buyer: { nameAr: user?.name, email: user?.email },
       issuedYear: now.getUTCFullYear(),
     });
