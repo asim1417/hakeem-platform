@@ -6,6 +6,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { buildSettlementDraft, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { facilitateSettlement } from "@/lib/modules/simulations/courtroom-skills";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const session = await findOwnedSimulation(user, params.id, { messages: { orderBy: { createdAt: "asc" } } });
   if (!session) return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
 
+  const guard = await guardAiService({ userId: user.id, serviceCode: "JUDGE_SIMULATION", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json({ message: guard.message, reason: guard.reason }, { status: guard.reason === "rate_limited" ? 429 : 402 });
+  }
+
+  try {
   // مهارة تيسير الصلح المؤصَّلة (اسأل حكيم)؛ سقوطٌ آمنٌ للقالب عند أيّ فشل.
   let content = buildSettlementDraft(payload);
   try {
@@ -39,5 +46,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     entityId: params.id,
     metadata: { description: "تم توليد مسودة صلح تدريبية.", decisionId: decision.id }
   });
+  await guard.settle();
   return NextResponse.json({ decision });
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

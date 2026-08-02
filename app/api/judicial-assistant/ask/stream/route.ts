@@ -97,8 +97,14 @@ export async function POST(request: NextRequest) {
         metadata: { requestId: done?.requestId, hasCase: Boolean(kase), citations: done?.citations.length ?? 0, streamed: true },
       }).catch(() => undefined);
 
-      // نقطة التثبيت: البثّ اكتمل (streamAsk يبتلع الأخطاء ويُنهي بحدث done) فنُثبّت الحجز هنا.
-      await guard.settle().catch(() => undefined);
+      // نقطة التثبيت: نُثبّت الحجز فقط عند إجابةٍ فعليّةٍ مكتملة. أمّا الردّ المحجوب/المرفوض
+      // أو تعثّر التوليد (requestId==="error") أو انقطاع البثّ قبل الاكتمال (done===null)
+      // فيُحرَّر الحجز ولا يُحاسَب المستخدم.
+      if (done && !done.blocked && done.requestId !== "error") {
+        await guard.settle().catch(() => undefined);
+      } else {
+        await guard.release().catch(() => undefined);
+      }
 
       try { controller.close(); } catch { /* أُغلق مسبقًا (غادر العميل) */ }
     },

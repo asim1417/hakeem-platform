@@ -6,6 +6,7 @@ import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { callJudge, encodeTurnState, extractTurnState } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim, countEvidenceSignals } from "@/lib/modules/simulations/hakeem-judge";
 import { decideJudgeTurnAI, type AiJudgeMeta } from "@/lib/modules/simulations/ai-judge";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ message: "لم يتم العثور على جلسة المحاكاة." }, { status: 404 });
   }
 
+  const guard = await guardAiService({ userId: user.id, serviceCode: "JUDGE_SIMULATION", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json({ message: guard.message, reason: guard.reason }, { status: guard.reason === "rate_limited" ? 429 : 402 });
+  }
+
+  try {
   const claim = extractClaim(session.messages);
   const previousTurn = extractTurnState(session.messages);
 
@@ -133,5 +140,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     activatedAgent: judgeMode?.activatedAgent ?? null
   };
 
+  await guard.settle();
   return NextResponse.json({ result, message: judgeMessage, decision, turnState, judge }, { status: 201 });
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

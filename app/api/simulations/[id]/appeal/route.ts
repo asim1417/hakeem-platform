@@ -6,6 +6,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { buildAppealDraft, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { analyzeObjection } from "@/lib/modules/simulations/courtroom-skills";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ message: "لا يمكن فتح مرحلة الاعتراض قبل صدور الحكم." }, { status: 400 });
   }
 
+  const guard = await guardAiService({ userId: user.id, serviceCode: "JUDGE_SIMULATION", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json({ message: guard.message, reason: guard.reason }, { status: guard.reason === "rate_limited" ? 429 : 402 });
+  }
+
+  try {
   // مهارة تحليل الاعتراض المؤصَّلة (اسأل حكيم)؛ سقوطٌ آمنٌ للمسودة عند أيّ فشل.
   let content = buildAppealDraft(payload.kind, payload.reasons);
   try {
@@ -67,5 +74,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     metadata: { description: `تم إنشاء مسودة ${payload.kind} تدريبية.`, reasons: payload.reasons }
   });
 
+  await guard.settle();
   return NextResponse.json({ decision });
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

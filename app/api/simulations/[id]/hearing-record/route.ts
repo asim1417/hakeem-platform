@@ -5,6 +5,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { admissibilityCheck, buildHearingRecord, extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { assessAdmissibility } from "@/lib/modules/simulations/courtroom-skills";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const admissibility = admissibilityCheck(claim);
   if (!admissibility.complete) return NextResponse.json({ message: admissibility.message, admissibility }, { status: 400 });
 
+  const guard = await guardAiService({ userId: user.id, serviceCode: "JUDGE_SIMULATION", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json({ message: guard.message, reason: guard.reason }, { status: guard.reason === "rate_limited" ? 429 : 402 });
+  }
+
+  try {
   let content = buildHearingRecord(session, claim);
   try {
     const skill = await assessAdmissibility(claim);
@@ -37,5 +44,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     entityId: params.id,
     metadata: { description: "تم توليد ضبط جلسة تدريبي.", decisionId: decision.id }
   });
+  await guard.settle();
   return NextResponse.json({ decision });
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

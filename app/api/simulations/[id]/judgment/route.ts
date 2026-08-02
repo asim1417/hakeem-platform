@@ -6,6 +6,7 @@ import { findOwnedSimulation } from "@/lib/modules/auth/ownership";
 import { isPleadingClosed } from "@/lib/modules/simulations/judge-engine";
 import { extractClaim } from "@/lib/modules/simulations/hakeem-judge";
 import { generateReasonedJudgment } from "@/lib/modules/simulations/reasoned-judgment";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ message: "لا يمكن توليد مسودة الحكم قبل قفل باب المرافعة." }, { status: 400 });
   }
 
+  const guard = await guardAiService({ userId: user.id, serviceCode: "JUDGE_SIMULATION", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json({ message: guard.message, reason: guard.reason }, { status: guard.reason === "rate_limited" ? 429 : 402 });
+  }
+
+  try {
   const claim = extractClaim(session.messages);
 
   // الحكم المُعلَّل المؤصَّل بالصياغة القضائيّة السعوديّة (يناقش دفوع المحكوم ضدّه ويصدر منطوقًا
@@ -41,6 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     reasoned = null;
   }
   if (!reasoned) {
+    await guard.release();
     return NextResponse.json(
       {
         message:
@@ -84,5 +92,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
   });
 
+  await guard.settle();
   return NextResponse.json({ judgment, kind: judgmentKind }, { status: 201 });
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

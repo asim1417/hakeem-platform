@@ -56,7 +56,12 @@ export async function POST(request: NextRequest) {
       metadata: { requestId: result.requestId, hasCase: Boolean(kase), citations: result.citations.length },
     }).catch(() => undefined);
 
-    await guard.settle();
+    // لا يُحاسَب المستخدم على ردٍّ محجوب/مرفوض من حارس النموذج — يُحرَّر الحجز بدل تثبيته.
+    if (result.blocked) {
+      await guard.release();
+    } else {
+      await guard.settle();
+    }
     return NextResponse.json(result);
   } catch (e) {
     await guard.release();
