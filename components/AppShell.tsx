@@ -26,6 +26,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { BalancePill } from "@/components/billing/BalancePill";
 import { DashboardHomeLink, SafeBackButton } from "@/components/nav/SafeBackButton";
 import { ScrollRestorer } from "@/components/nav/ScrollRestorer";
 import { SupportChatWidget } from "@/components/support/SupportChatWidget";
@@ -195,6 +196,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 autoComplete="off"
               />
             </form>
+            {user ? (
+              <Suspense fallback={null}>
+                <BalancePill userId={user.id} />
+              </Suspense>
+            ) : null}
             <LanguageToggle
               current={locale}
               switchLabel={LOCALE_LABEL[locale === "ar" ? "en" : "ar"]}

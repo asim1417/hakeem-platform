@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PlansGrid } from "@/components/billing/PlansGrid";
+import { PointPackages } from "@/components/billing/PointPackages";
 import { PRICING } from "@/config/pricing";
 import { assertBuiltinPageEnabled } from "@/lib/modules/site/page-gate";
 import { isPaidCheckoutUiEnabled } from "@/lib/modules/billing/checkout-visibility";
@@ -70,6 +71,15 @@ export default async function PricingPage() {
             paidCtaHref="/register?next=/dashboard/subscribe"
             paidUiEnabled={paidUi}
           />
+        </div>
+
+        <div className="mt-16 text-start">
+          <h2 className="text-xl font-bold text-[var(--ink-90)]">حزم النقاط</h2>
+          <p className="mt-2 mb-6 max-w-2xl text-sm leading-7 text-[var(--ink-60)]">
+            نفدت نقاطك أو تريد رصيدًا إضافيًا دون ترقية الباقة؟ اشترِ حزمة نقاط تُضاف فورًا إلى رصيدك.
+            الأسعار شاملة ضريبة القيمة المضافة.
+          </p>
+          <PointPackages />
         </div>
 
         <p className="mx-auto mt-10 max-w-xl text-xs leading-7 text-[var(--ink-40)]">
