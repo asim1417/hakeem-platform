@@ -273,6 +273,28 @@ CREATE TABLE IF NOT EXISTS "billing_invoice_counters" (
   "last_seq" INTEGER NOT NULL DEFAULT 0
 );
 
+-- ── منح التجربة + الإشعارات (المرحلة E) ──
+CREATE TABLE IF NOT EXISTS "billing_trial_grants" (
+  "identityHash" TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "kind" TEXT NOT NULL,
+  "grantedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS "billing_trial_grants_user_idx" ON "billing_trial_grants" ("userId");
+CREATE TABLE IF NOT EXISTS "billing_notifications" (
+  "id" TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "event" TEXT NOT NULL,
+  "channel" TEXT NOT NULL DEFAULT 'in_app',
+  "titleAr" TEXT NOT NULL,
+  "bodyAr" TEXT,
+  "data" JSONB,
+  "dedupeKey" TEXT UNIQUE,
+  "readAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS "billing_notifications_user_idx" ON "billing_notifications" ("userId", "createdAt" DESC);
+
 -- ── توسعة جداول v2 (IF EXISTS: لا يكسر إن لم تُطبَّق هجرة usage_credits_v2 بعد) ──
 ALTER TABLE IF EXISTS "usage_credit_ledger" ADD COLUMN IF NOT EXISTS "bucketId" TEXT;
 ALTER TABLE IF EXISTS "usage_credit_ledger" ADD COLUMN IF NOT EXISTS "serviceCode" TEXT;

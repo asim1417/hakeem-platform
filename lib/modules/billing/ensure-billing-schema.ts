@@ -294,6 +294,32 @@ CREATE TABLE IF NOT EXISTS "billing_invoice_counters" (
 );
 `;
 
+// ── منح التجربة (منع إعادة المنح بالهوية) + الإشعارات — المرحلة E ──
+const PHASE_E_TABLES = `
+CREATE TABLE IF NOT EXISTS "billing_trial_grants" (
+  "identityHash" TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "kind" TEXT NOT NULL,
+  "grantedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS "billing_trial_grants_user_idx" ON "billing_trial_grants" ("userId");
+
+CREATE TABLE IF NOT EXISTS "billing_notifications" (
+  "id" TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "event" TEXT NOT NULL,
+  "channel" TEXT NOT NULL DEFAULT 'in_app',
+  "titleAr" TEXT NOT NULL,
+  "bodyAr" TEXT,
+  "data" JSONB,
+  "dedupeKey" TEXT UNIQUE,
+  "readAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS "billing_notifications_user_idx"
+  ON "billing_notifications" ("userId", "createdAt" DESC);
+`;
+
 // ── توسعة جداول v2 القائمة (أعمدة إضافية آمنة) ──
 // ALTER TABLE IF EXISTS: لا يكسر الإقلاع إن لم تُطبَّق هجرة usage_credits_v2 بعد.
 const V2_EXTENSIONS = `
@@ -359,6 +385,7 @@ async function ensure(): Promise<boolean> {
     await runBlock(FOREIGN_KEYS);
     await runBlock(CREDIT_BUCKETS);
     await runBlock(INVOICE_COUNTER);
+    await runBlock(PHASE_E_TABLES);
     await runBlock(V2_EXTENSIONS);
     return true;
   } catch (e) {

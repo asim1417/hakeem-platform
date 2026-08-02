@@ -82,6 +82,8 @@
     "test:billing-buckets": "tsx scripts/test-billing-buckets.ts",
     "test:billing-invoicing": "tsx scripts/test-billing-invoicing.ts",
     "test:billing-proration": "tsx scripts/test-billing-proration.ts",
+    "test:billing-trial": "tsx scripts/test-billing-trial.ts",
+    "billing:cron": "tsx scripts/billing-cron.ts",
     "seed:billing": "tsx prisma/seed-billing.ts",
     "test:clerk": "tsx scripts/test-clerk-config.ts",
     "test:owner-emergency": "tsx scripts/test-owner-emergency.ts",
