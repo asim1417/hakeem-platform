@@ -5,6 +5,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { buildJudgmentDraft } from "@/lib/modules/judicial-assistant/drafting";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,6 +32,14 @@ export async function POST(request: NextRequest) {
   const kase = await getCase(caseId);
   if (!kase || (kase.ownerId !== actorId && gate.user!.role !== "SYSTEM_ADMIN")) {
     return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
+  }
+
+  const guard = await guardAiService({ userId: actorId, serviceCode: "ADVANCED_DRAFT", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json(
+      { message: guard.message, reason: guard.reason },
+      { status: guard.reason === "rate_limited" ? 429 : 402 }
+    );
   }
 
   try {
@@ -64,8 +73,10 @@ export async function POST(request: NextRequest) {
     },
   }).catch(() => undefined);
 
+  await guard.settle();
   return NextResponse.json(result);
   } catch (err) {
+    await guard.release();
     return NextResponse.json({ message: `تعذّر بناء مشروع الحكم: ${err instanceof Error ? err.message.slice(0, 200) : "خطأٌ غير متوقّع"}` }, { status: 500 });
   }
 }

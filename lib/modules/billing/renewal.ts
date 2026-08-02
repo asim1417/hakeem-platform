@@ -114,14 +114,16 @@ export async function runRenewals(now: Date = new Date()): Promise<RenewalReport
     });
 
     let charged = false;
-    if (autoRenewalEnabled() && pm?.providerToken) {
+    const { decryptPaymentToken } = await import("@/lib/modules/billing/payment-token");
+    const rawToken = pm?.providerToken ? decryptPaymentToken(pm.providerToken) : null;
+    if (autoRenewalEnabled() && rawToken) {
       const provider = await getPaymentProvider();
       const result = await provider.chargeSavedPaymentMethod({
         orderId: order.id,
         amountHalalas: order.totalHalalas,
         currency: order.currency,
         descriptionAr: `تجديد اشتراك حكيم — ${planCode}`,
-        providerToken: pm.providerToken,
+        providerToken: rawToken,
         callbackUrl: process.env.PAYMENT_WEBHOOK_URL || "",
         metadata: { orderId: order.id },
       });

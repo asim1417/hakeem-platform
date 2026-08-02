@@ -148,8 +148,10 @@ export interface WalletSummary {
   }>;
 }
 
-/** ملخّص المحفظة بالنقاط + التوزيع حسب المصدر. */
-export async function getWalletSummary(userId: string): Promise<WalletSummary> {
+/** ملخّص المحفظة بالنقاط + التوزيع حسب المصدر. الأعضاء يرون محفظة مساحة العمل. */
+export async function getWalletSummary(rawUserId: string): Promise<WalletSummary> {
+  const { resolveWalletOwner } = await import("@/lib/modules/billing/workspace");
+  const userId = await resolveWalletOwner(rawUserId);
   const enabled = await usageCreditsEnabled();
   let balanceMilli = 0;
   let reservedMilli = 0;

@@ -6,6 +6,7 @@ import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { streamAsk, type AskStreamEvent } from "@/lib/modules/judicial-assistant/ask-stream";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
 import { createJob, updateJob } from "@/lib/modules/jobs/job-store";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -34,6 +35,15 @@ export async function POST(request: NextRequest) {
     if (!kase || (kase.ownerId !== actorId && gate.user!.role !== "SYSTEM_ADMIN")) {
       return NextResponse.json({ message: "القضية غير موجودة." }, { status: 404 });
     }
+  }
+
+  // حارس الرصيد/الحدّ يُفحَص قبل بدء البثّ؛ الحجز مُعلّق ويُثبَّت بعد اكتمال التوليد داخل البثّ.
+  const guard = await guardAiService({ userId: actorId, serviceCode: "ASK_SOURCED", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json(
+      { message: guard.message, reason: guard.reason },
+      { status: guard.reason === "rate_limited" ? 429 : 402 }
+    );
   }
 
   // مهمّةٌ خلفيّة قابلةٌ للاستئناف: يُكمل الخادم التوليد ويحفظه دوريًّا حتى لو انقطع العميل.
@@ -86,6 +96,9 @@ export async function POST(request: NextRequest) {
         actorId, subject: "CASE", action: done?.blocked ? "JA_ASK_BLOCKED" : "JA_ASK", entityId: kase?.id,
         metadata: { requestId: done?.requestId, hasCase: Boolean(kase), citations: done?.citations.length ?? 0, streamed: true },
       }).catch(() => undefined);
+
+      // نقطة التثبيت: البثّ اكتمل (streamAsk يبتلع الأخطاء ويُنهي بحدث done) فنُثبّت الحجز هنا.
+      await guard.settle().catch(() => undefined);
 
       try { controller.close(); } catch { /* أُغلق مسبقًا (غادر العميل) */ }
     },

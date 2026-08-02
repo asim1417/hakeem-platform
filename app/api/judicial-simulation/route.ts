@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiPermission } from "@/lib/modules/auth/session";
 import { runJudicialSimulation } from "@/lib/modules/judicial-simulation/judicial-simulation";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "أرسل وقائع الدعوى (١٠ أحرف فأكثر) مع المرحلة والدور والطلبات اختياراً." }, { status: 400 });
   }
 
-  const view = await runJudicialSimulation(parsed.data);
-  return NextResponse.json({ ok: true, ...view });
+  const guard = await guardAiService({ userId: gate.user!.id, serviceCode: "VERDICT_ESTIMATE", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json(
+      { message: guard.message, reason: guard.reason },
+      { status: guard.reason === "rate_limited" ? 429 : 402 }
+    );
+  }
+
+  try {
+    const view = await runJudicialSimulation(parsed.data);
+    await guard.settle();
+    return NextResponse.json({ ok: true, ...view });
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

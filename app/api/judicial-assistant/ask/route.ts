@@ -5,6 +5,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { getCase } from "@/lib/modules/judicial-assistant/store";
 import { askAssistant } from "@/lib/modules/judicial-assistant/ask";
 import { saveAnalysis } from "@/lib/modules/judicial-assistant/persistence";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -32,19 +33,33 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const result = await askAssistant(body.question, kase, actorId);
-
-  if (kase && result.requestId !== "greeting") {
-    await saveAnalysis({
-      caseRef: kase.id, caseNumber: kase.caseNumber ?? kase.subject, serviceId: "ASK",
-      blocked: result.blocked, payload: { question: body.question, answer: result.answer, citations: result.citations, requestId: result.requestId }, actorId,
-    });
+  const guard = await guardAiService({ userId: actorId, serviceCode: "ASK_SOURCED", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json(
+      { message: guard.message, reason: guard.reason },
+      { status: guard.reason === "rate_limited" ? 429 : 402 }
+    );
   }
 
-  await auditEvent({
-    actorId, subject: "CASE", action: result.blocked ? "JA_ASK_BLOCKED" : "JA_ASK", entityId: kase?.id,
-    metadata: { requestId: result.requestId, hasCase: Boolean(kase), citations: result.citations.length },
-  }).catch(() => undefined);
+  try {
+    const result = await askAssistant(body.question, kase, actorId);
 
-  return NextResponse.json(result);
+    if (kase && result.requestId !== "greeting") {
+      await saveAnalysis({
+        caseRef: kase.id, caseNumber: kase.caseNumber ?? kase.subject, serviceId: "ASK",
+        blocked: result.blocked, payload: { question: body.question, answer: result.answer, citations: result.citations, requestId: result.requestId }, actorId,
+      });
+    }
+
+    await auditEvent({
+      actorId, subject: "CASE", action: result.blocked ? "JA_ASK_BLOCKED" : "JA_ASK", entityId: kase?.id,
+      metadata: { requestId: result.requestId, hasCase: Boolean(kase), citations: result.citations.length },
+    }).catch(() => undefined);
+
+    await guard.settle();
+    return NextResponse.json(result);
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 }

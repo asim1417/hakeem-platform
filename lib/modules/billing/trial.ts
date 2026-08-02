@@ -7,6 +7,7 @@ import "server-only";
 import { grantCredits } from "@/lib/modules/billing/credit-engine";
 import { notify } from "@/lib/modules/billing/notifications";
 import { trialIdentityHash } from "@/lib/modules/billing/trial-identity";
+import { usageCreditsEnabled } from "@/lib/modules/credits/usage-ledger";
 
 export { trialIdentityHash };
 
@@ -55,6 +56,8 @@ export async function grantInitialTrial(input: {
   email?: string | null;
   phone?: string | null;
 }): Promise<{ granted: boolean; points: number }> {
+  // التجربة تُمنح فقط عندما يكون نظام النقاط مُفعّلًا (لا كتابة قبل الرولأوت).
+  if (!(await usageCreditsEnabled())) return { granted: false, points: 0 };
   const hash = trialIdentityHash(input.email, input.phone);
   if (await alreadyGrantedForIdentity(hash, "initial")) return { granted: false, points: 0 };
 
@@ -81,6 +84,7 @@ export async function grantProfileCompletionTrial(input: {
   email?: string | null;
   phone?: string | null;
 }): Promise<{ granted: boolean; points: number }> {
+  if (!(await usageCreditsEnabled())) return { granted: false, points: 0 };
   const hash = trialIdentityHash(input.email, input.phone);
   if (await alreadyGrantedForIdentity(hash, "profile")) return { granted: false, points: 0 };
 

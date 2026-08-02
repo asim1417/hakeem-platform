@@ -6,6 +6,7 @@ import { auditEvent } from "@/lib/modules/audit/audit";
 import { runChatTurn } from "@/lib/modules/legal-chat/chat-orchestrator";
 import type { ChatTurnInput, SimulationCaseFile } from "@/lib/modules/legal-chat/types";
 import { enterAiUsageContext } from "@/lib/modules/billing/ai-usage-meter";
+import { guardAiService } from "@/lib/modules/billing/service-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,21 @@ export async function POST(request: NextRequest) {
     history: data.history,
   };
 
-  const result = await runChatTurn(turnInput);
+  const guard = await guardAiService({ userId: user!.id, serviceCode: "ASK_QUICK", rateLimit: { limit: 30, windowSec: 60 } });
+  if (!guard.allowed) {
+    return NextResponse.json(
+      { message: guard.message, reason: guard.reason },
+      { status: guard.reason === "rate_limited" ? 429 : 402 }
+    );
+  }
+
+  let result: Awaited<ReturnType<typeof runChatTurn>>;
+  try {
+    result = await runChatTurn(turnInput);
+  } catch (e) {
+    await guard.release();
+    throw e;
+  }
 
   // الحفظ best-effort: لا يُفشل الرد إن لم تكن جداول الشات مفعّلة بعد.
   let conversationId = data.conversationId ?? null;
@@ -117,6 +132,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  await guard.settle();
   return NextResponse.json({ ok: true, conversationId, ...result });
 }
 
