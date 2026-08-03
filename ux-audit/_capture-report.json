@@ -1,0 +1,254 @@
+[
+  {
+    "page": "home",
+    "path": "/",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/home-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "home",
+    "path": "/",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/home-tablet.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "home",
+    "path": "/",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/home-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "langDir": {
+        "lang": "ar",
+        "dir": "rtl"
+      },
+      "title": "حكيم",
+      "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "h1": 1,
+      "headings": "H1,H2,H2",
+      "links": 10,
+      "emptyLinks": 0,
+      "imgsNoAlt": 0,
+      "inputsNoLabel": [],
+      "btnsNoName": 0,
+      "bodyText": "ح حكيم منصة المعرفة القضائية اسأل حكيم الخدمات لماذا حكيم الأسعار تسجيل الدخول ابدأ الآن حكيم ابدأ بسؤالك القانوني اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل عليها. اسأل حكيم يمكنك طرح سؤال مختصر، أو كتابة وقائع المسألة بالتفصيل. Enter للإرسال بعد تسجيل الدخول، وShift + Enter لسطر جديد. ابحث عن مادة نظامية حلّل قضية راجع عقدًا راجع حكمًا سجّل الدخول لبدء"
+    }
+  },
+  {
+    "page": "login",
+    "path": "/login",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/login-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "login",
+    "path": "/login",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/login-tablet.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "login",
+    "path": "/login",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/login-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "langDir": {
+        "lang": "ar",
+        "dir": "rtl"
+      },
+      "title": "تسجيل الدخول — حكيم",
+      "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "h1": 1,
+      "headings": "H1",
+      "links": 3,
+      "emptyLinks": 0,
+      "imgsNoAlt": 0,
+      "inputsNoLabel": [],
+      "btnsNoName": 0,
+      "bodyText": "تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية. يرجى المحاولة لاحقًا أو التواصل مع مسؤول المنصة. الرئيسية · سياسة الخصوصية · شروط الاستخدام"
+    }
+  },
+  {
+    "page": "register",
+    "path": "/register",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/register-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "register",
+    "path": "/register",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/register-tablet.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "register",
+    "path": "/register",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/register-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "langDir": {
+        "lang": "ar",
+        "dir": "rtl"
+      },
+      "title": "إنشاء حساب — حكيم",
+      "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "h1": 1,
+      "headings": "H1",
+      "links": 4,
+      "emptyLinks": 0,
+      "imgsNoAlt": 0,
+      "inputsNoLabel": [],
+      "btnsNoName": 0,
+      "bodyText": "ح حكيم أنشئ حسابك وابدأ تجربتك المجانية في دقائق المعاون القضائي والتحليل الذكي مكتبة الأنظمة والأحكام الموثّقة أعمالك وتقاريرك في مكان واحد إنشاء الحساب غير متاح مؤقتًا تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية. العودة إلى الصفحة الرئيسية الرئيسية · سياسة الخصوصية · شروط الاستخدام"
+    }
+  },
+  {
+    "page": "pricing",
+    "path": "/pricing",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/pricing-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "pricing",
+    "path": "/pricing",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/pricing-tablet.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "pricing",
+    "path": "/pricing",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/pricing-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "langDir": {
+        "lang": "ar",
+        "dir": "rtl"
+      },
+      "title": "الأسعار والخطط — حكيم",
+      "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "h1": 1,
+      "headings": "H1",
+      "links": 4,
+      "emptyLinks": 0,
+      "imgsNoAlt": 0,
+      "inputsNoLabel": [],
+      "btnsNoName": 0,
+      "bodyText": "ح حكيم الأسعار والخطط تسجيل الدخول سجّل مجانًا حكيم أسعار معلنة — بلا غموض ابدأ بـ ٢٠ استخدامًا مجانيًا للوحدات المتقدّمة. تصفّح الأنظمة والمواد يبقى مجانيًا دائمًا. الاشتراك المدفوع يُفعَّل عبر الدفع السعودي عند جاهزية البوابة. شهري سنوي تجربة مجانية ابدأ فورًا دون بطاقة دفع مجاني حصّة 20 استخدامًا للوحدات المتقدّمة تصفّح النواة القانونية بلا حد بحث في الأنظمة والمواد والأحكام اسأل حكيم · استشارا"
+    }
+  },
+  {
+    "page": "privacy",
+    "path": "/privacy",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/privacy-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "privacy",
+    "path": "/privacy",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/privacy-tablet.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "privacy",
+    "path": "/privacy",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/privacy-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "langDir": {
+        "lang": "ar",
+        "dir": "rtl"
+      },
+      "title": "سياسة الخصوصية — منصة حكيم",
+      "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "h1": 1,
+      "headings": "H1,H2,H2,H2,H2,H2,H2,H2,H2",
+      "links": 2,
+      "emptyLinks": 0,
+      "imgsNoAlt": 0,
+      "inputsNoLabel": [],
+      "btnsNoName": 0,
+      "bodyText": "منصة حكيم سياسة الخصوصية معالجة البيانات الشخصية وفق نظام حماية البيانات الشخصية السعودي (PDPL). ١) مقدمة تلتزم منصة حكيم بحماية خصوصية مستخدميها ومعالجة بياناتهم الشخصية وفق نظام حماية البيانات الشخصية السعودي (PDPL) ولائحته التنفيذية. توضّح هذه السياسة أنواع البيانات التي نعالجها، وأغراض المعالجة، وحقوق صاحب البيانات. ٢) البيانات التي نعالجها بيانات الحساب: الاسم، البريد الإلكتروني، الدور (محامٍ"
+    }
+  },
+  {
+    "page": "terms",
+    "path": "/terms",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/terms-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "terms",
+    "path": "/terms",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/terms-tablet.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "page": "terms",
+    "path": "/terms",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/terms-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "langDir": {
+        "lang": "ar",
+        "dir": "rtl"
+      },
+      "title": "شروط الاستخدام — منصة حكيم",
+      "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "h1": 1,
+      "headings": "H1,H2,H2,H2,H2,H2,H2,H2,H2",
+      "links": 2,
+      "emptyLinks": 0,
+      "imgsNoAlt": 0,
+      "inputsNoLabel": [],
+      "btnsNoName": 0,
+      "bodyText": "منصة حكيم شروط الاستخدام الشروط والأحكام المنظِّمة لاستخدام منصّة حكيم وحدود المسؤولية المهنية. ١) قبول الشروط باستخدامك منصة حكيم فإنك تقرّ بموافقتك على هذه الشروط والأحكام وعلى سياسة الخصوصية المرتبطة بها. إن لم توافق على أيٍّ منها، فالرجاء عدم استخدام المنصّة. ٢) طبيعة الخدمة حكيم منصّة معرفة قضائية تساعد المختصّين على البحث القانوني وتحليل القضايا ومحاكاة التقاضي والتدريب. مخرجات الذكاء الاصطن"
+    }
+  }
+]
