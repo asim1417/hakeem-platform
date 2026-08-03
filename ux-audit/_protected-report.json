@@ -1,0 +1,704 @@
+[
+  {
+    "id": "legal",
+    "path": "/legal",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "الأنظمة القانونية السعودية — منصّة حكيم",
+      "h1": 1,
+      "headings": "H1,H2",
+      "links": 16,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 2,
+      "bodyLen": 545,
+      "bodyHead": "الأنظمة القانونية واجهة المطوّرين (API) الأنظمة القانونية السعودية مطالعة عامة لنصوص الأنظمة ومَوادّها مع الإسناد الرسمي. ٩ نظامًا متاحًا للمطالعة. للتكامل البر"
+    }
+  },
+  {
+    "id": "legal",
+    "path": "/legal",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "developers",
+    "path": "/developers",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-developers-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "واجهة المطوّرين (API) — منصة حكيم",
+      "h1": 1,
+      "headings": "H1,H2,H2,H2,H3,H3,H3,H2",
+      "links": 6,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 0,
+      "bodyLen": 2086,
+      "bodyHead": "حكيم · واجهة المطوّرين API المعرفة القانونية السعودية تكامل موقعك أو نظام الذكاء الاصطناعي لديك مع النواة القانونية لمنصّة حكيم: بحث في الأنظمة والمواد والمبادئ"
+    }
+  },
+  {
+    "id": "api-docs",
+    "path": "/api-docs",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-api-docs-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "توثيق الواجهات البرمجية — منصة حكيم",
+      "h1": 1,
+      "headings": "H1,H2,H2,H2,H2,H2",
+      "links": 3,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 0,
+      "bodyLen": 3023,
+      "bodyHead": "منصة حكيم واجهات منصة حكيم — API واجهات المعرفة القضائية في منصة حكيم: البحث الموحّد، الاقتراحات، مكتبة تراث، المبادئ القضائية، والمعرّف التشريعي (ELI). تتطلّب "
+    }
+  },
+  {
+    "id": "documents",
+    "path": "/documents",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-documents-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "منصة الوثائق — قراءة وفحص المستندات القانونية",
+      "h1": 1,
+      "headings": "H1,H2,H3,H3,H2,H3,H3,H3,H3,H3,H3,H3,H3,H3,H3,H3,H2,H3,H3,H3,H3,H2",
+      "links": 7,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 0,
+      "bodyLen": 2935,
+      "bodyHead": "← الصفحة الرئيسية منصة الوثائق منصة الوثائق· قراءة وفحص المستندات القانونية البحث السريع محطة العمل — ابدأ الآن مخرج آلي يحتاج مراجعة بشرية — وخصوصية بلا مساومة"
+    }
+  },
+  {
+    "id": "notfound",
+    "path": "/this-route-does-not-exist-xyz",
+    "viewport": "desktop",
+    "status": 404,
+    "screenshot": "ux-audit/screenshots/p-notfound-desktop.png",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "dom": {
+      "title": "حكيم",
+      "h1": 1,
+      "headings": "H1",
+      "links": 2,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 0,
+      "bodyLen": 121,
+      "bodyHead": "٤٠٤ الصفحة غير موجودة تعذّر العثور على الصفحة المطلوبة. ربما نُقل المحتوى أو تغيّر الرابط. الصفحة الرئيسية تسجيل الدخول"
+    }
+  },
+  {
+    "id": "notfound",
+    "path": "/this-route-does-not-exist-xyz",
+    "viewport": "mobile",
+    "status": 404,
+    "screenshot": "ux-audit/screenshots/p-notfound-mobile.png",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "dom": null
+  },
+  {
+    "id": "dashboard",
+    "path": "/dashboard?platform=1",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-dashboard-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H2,H1,H2,H2",
+      "links": 21,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 16,
+      "bodyLen": 1635,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "dashboard",
+    "path": "/dashboard?platform=1",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-dashboard-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "ask",
+    "path": "/dashboard/ask",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-ask-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H2,H1",
+      "links": 17,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 1076,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "ask",
+    "path": "/dashboard/ask",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-ask-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "review",
+    "path": "/dashboard/review",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-review-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "مركز المراجعة — حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2",
+      "links": 16,
+      "emptyLinks": 0,
+      "noLabel": [
+        "INPUT",
+        "SELECT"
+      ],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 11,
+      "bodyLen": 591,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "review",
+    "path": "/dashboard/review",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-review-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "review-empty",
+    "path": "/dashboard/review",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-review-empty-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "مركز المراجعة — حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2",
+      "links": 16,
+      "emptyLinks": 0,
+      "noLabel": [
+        "INPUT",
+        "SELECT"
+      ],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 11,
+      "bodyLen": 591,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "judicial-assistant",
+    "path": "/dashboard/judicial-assistant",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-judicial-assistant-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "المعاون القضائيّ — لوحة القاضي",
+      "h1": 2,
+      "headings": "H1,H1,H2,H3,H3,H3,H3,H2,H3,H3,H3,H3,H3",
+      "links": 19,
+      "emptyLinks": 0,
+      "noLabel": [
+        "TEXTAREA"
+      ],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 1910,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "judicial-assistant",
+    "path": "/dashboard/judicial-assistant",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-judicial-assistant-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "simulations",
+    "path": "/dashboard/simulations",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-simulations-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1",
+      "links": 18,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 725,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "legal-search",
+    "path": "/dashboard/legal-search",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-search-desktop.png",
+    "consoleErrors": [
+      "Failed to fetch RSC payload for http://localhost:3000/admin. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_next/static/chunks/2117",
+      "Failed to fetch RSC payload for http://localhost:3000/dashboard/billing. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_next/static",
+      "Failed to fetch RSC payload for http://localhost:3000/documents. Falling back to browser navigation. TypeError: network error",
+      "Failed to fetch RSC payload for http://localhost:3000/dashboard/agents. Falling back to browser navigation. TypeError: network error",
+      "Failed to fetch RSC payload for http://localhost:3000/dashboard/simulations. Falling back to browser navigation. TypeError: network error"
+    ],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H2,H1",
+      "links": 17,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 1076,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "legal-search",
+    "path": "/dashboard/legal-search",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-search-mobile.png",
+    "consoleErrors": [
+      "Failed to fetch RSC payload for http://localhost:3000/terms. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_next/static/chunks/2117",
+      "Failed to fetch RSC payload for http://localhost:3000/privacy. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_next/static/chunks/21",
+      "Failed to fetch RSC payload for http://localhost:3000/onboarding. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_next/static/chunks"
+    ],
+    "dom": null
+  },
+  {
+    "id": "legal-core",
+    "path": "/dashboard/legal-core",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-core-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2,H2,H2,H2,H2,H2",
+      "links": 37,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 16,
+      "bodyLen": 3002,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "legal-core",
+    "path": "/dashboard/legal-core",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-core-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "legal-core-systems",
+    "path": "/dashboard/legal-core/systems",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-legal-core-systems-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2,H2,H2,H2,H2,H2,H2,H2,H2",
+      "links": 40,
+      "emptyLinks": 0,
+      "noLabel": [
+        "q"
+      ],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 13,
+      "bodyLen": 1691,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "knowledge-graph",
+    "path": "/dashboard/knowledge-graph",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-knowledge-graph-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1",
+      "links": 17,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 938,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "files",
+    "path": "/dashboard/files",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-files-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H3,H3,H3,H3,H3,H3",
+      "links": 23,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 1076,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "files",
+    "path": "/dashboard/files",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-files-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "training",
+    "path": "/dashboard/training",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-training-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2",
+      "links": 17,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 1136,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "billing",
+    "path": "/dashboard/billing",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-billing-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "الحساب والرصيد — حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2,H2,H3,H3,H3,H3,H2",
+      "links": 22,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 12,
+      "bodyLen": 1250,
+      "bodyHead": "تخطٍّ إلى المحتوى الرئيسي ح حكيم منصة المحاكاة القضائية السعودية الصفحة الرئيسية المعاون القضائيّ مركز المراجعة المكتبة النظامية مساحتي منصة الوثائق القاضي التف"
+    }
+  },
+  {
+    "id": "billing",
+    "path": "/dashboard/billing",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-billing-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "onboarding",
+    "path": "/onboarding",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-onboarding-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "إكمال الملف — حكيم",
+      "h1": 1,
+      "headings": "H1,H2,H2",
+      "links": 2,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 0,
+      "bodyLen": 277,
+      "bodyHead": "ح حكيم أكمل ملفك لتحصل على نقاط إضافية وتجربة مخصّصة لتخصصك. +500 نقطة ترحيبية عند التسجيل مكافآت لكل خطوة تُكملها دعوة زملاء برمز إحالة خاص بك إكمال الملف اكتم"
+    }
+  },
+  {
+    "id": "admin",
+    "path": "/admin",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2,H2,H2",
+      "links": 37,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 1167,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin",
+    "path": "/admin",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "admin-users",
+    "path": "/admin/users",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-users-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2",
+      "links": 24,
+      "emptyLinks": 0,
+      "noLabel": [
+        "SELECT",
+        "SELECT"
+      ],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 1673,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin-usage",
+    "path": "/admin/usage",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-usage-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2",
+      "links": 25,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 1274,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin-roles",
+    "path": "/admin/roles",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-roles-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H3,H3,H3,H3,H3,H3",
+      "links": 21,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 3607,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin-ai",
+    "path": "/admin/ai",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-ai-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2",
+      "links": 21,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 1192,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin-governance",
+    "path": "/admin/governance",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-governance-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2,H2,H2,H2,H2,H2",
+      "links": 21,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 2104,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin-governance",
+    "path": "/admin/governance",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-governance-mobile.png",
+    "consoleErrors": [],
+    "dom": null
+  },
+  {
+    "id": "admin-audit",
+    "path": "/admin/audit",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-audit-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1",
+      "links": 21,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 721,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  },
+  {
+    "id": "admin-services",
+    "path": "/admin/services",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "ux-audit/screenshots/p-admin-services-desktop.png",
+    "consoleErrors": [],
+    "dom": {
+      "title": "حكيم",
+      "h1": 2,
+      "headings": "H1,H1,H2,H2",
+      "links": 21,
+      "emptyLinks": 0,
+      "noLabel": [],
+      "btnsNoName": 0,
+      "iconBtnsNoAria": 0,
+      "navItems": 18,
+      "bodyLen": 1604,
+      "bodyHead": "إدارة حكيم لوحة التشغيل عاصم الفارسي · سوبر أدمن صندوق المراسلات نافذة المنصة عا عاصم الفارسي سوبر أدمن مركز الإدارة صندوق المراسلات لوحة الموقع المستخدمون الفو"
+    }
+  }
+]
