@@ -46,7 +46,10 @@ function scanFile(file: string) {
       // نصوص البناء/التقييم (Node) — لا تدخل حزمة الويب، تقرأ المفتاح من البيئة فقط
       rel.startsWith("scripts" + path.sep) ||
       // خادم معالجة الوثائق (Node) — طبقة خادمية مستقلّة تقرأ المفتاح من البيئة فقط
-      rel.startsWith(path.join("services", "doc-node"));
+      rel.startsWith(path.join("services", "doc-node")) ||
+      // مزوّدات التفريغ الصوتيّ (خادميّة) — تقرأ المفتاح من البيئة وتستعمله في ترويسة
+      // Authorization على الخادم فقط، ولا تصل الواجهة أبدًا
+      rel.startsWith(path.join("lib", "modules", "voice"));
     // ألعاب الأطفال تخزن تقدم اللعب وإعداداته فقط محليًا — لا بيانات شخصية
     // يشمل نسخها المنشورة تحت public/penalty-stars وpublic/football-future
     const isKidsGame =
