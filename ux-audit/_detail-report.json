@@ -1,0 +1,399 @@
+[
+  {
+    "id": "system-detail",
+    "path": "/dashboard/legal-core/systems/cmscsfi5y002ilbeedhu4784a",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 399,
+      "loadComplete": 457,
+      "fcpMs": 284,
+      "resourceCount": 53,
+      "transferKB": 498,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 276,
+      "smallTargets": 8
+    }
+  },
+  {
+    "id": "system-detail",
+    "path": "/dashboard/legal-core/systems/cmscsfi5y002ilbeedhu4784a",
+    "viewport": "mobile",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 142,
+      "loadComplete": 237,
+      "fcpMs": 88,
+      "resourceCount": 47,
+      "transferKB": 26,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 276,
+      "smallTargets": 7
+    }
+  },
+  {
+    "id": "article-detail",
+    "path": "/dashboard/legal-core/articles/cmscsfi6l002slbeejmf4vxwf",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 358,
+      "loadComplete": 468,
+      "fcpMs": 108,
+      "resourceCount": 46,
+      "transferKB": 152,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 52,
+      "smallTargets": 22
+    }
+  },
+  {
+    "id": "article-detail",
+    "path": "/dashboard/legal-core/articles/cmscsfi6l002slbeejmf4vxwf",
+    "viewport": "mobile",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 67,
+      "loadComplete": 175,
+      "fcpMs": 100,
+      "resourceCount": 44,
+      "transferKB": 18,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 52,
+      "smallTargets": 21
+    }
+  },
+  {
+    "id": "legal-core-judgments",
+    "path": "/dashboard/legal-core/judgments",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 63,
+      "loadComplete": 166,
+      "fcpMs": 112,
+      "resourceCount": 41,
+      "transferKB": 19,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 25,
+      "smallTargets": 7
+    }
+  },
+  {
+    "id": "legal-core-principles",
+    "path": "/dashboard/legal-core/principles",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 48,
+      "loadComplete": 157,
+      "fcpMs": 204,
+      "resourceCount": 42,
+      "transferKB": 21,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 28,
+      "smallTargets": 11
+    }
+  },
+  {
+    "id": "legal-core-citations",
+    "path": "/dashboard/legal-core/citations",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 104,
+      "loadComplete": 155,
+      "fcpMs": 196,
+      "resourceCount": 44,
+      "transferKB": 22,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 26,
+      "smallTargets": 7
+    }
+  },
+  {
+    "id": "legal-core-search",
+    "path": "/dashboard/legal-core/search",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [
+      "Failed to fetch RSC payload for http://localhost:3000/terms. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_nex",
+      "Failed to fetch RSC payload for http://localhost:3000/dashboard/billing. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localho",
+      "Failed to fetch RSC payload for http://localhost:3000/privacy. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_n",
+      "Failed to fetch RSC payload for http://localhost:3000/onboarding. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000",
+      "Failed to fetch RSC payload for http://localhost:3000/admin. Falling back to browser navigation. TypeError: network error"
+    ],
+    "metrics": {
+      "domContentLoaded": 148,
+      "loadComplete": 171,
+      "fcpMs": 120,
+      "resourceCount": 51,
+      "transferKB": 124,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 41,
+      "smallTargets": 13
+    }
+  },
+  {
+    "id": "legal-core-search",
+    "path": "/dashboard/legal-core/search",
+    "viewport": "mobile",
+    "status": 200,
+    "consoleErrors": [
+      "Failed to fetch RSC payload for http://localhost:3000/dashboard/billing. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localho",
+      "Failed to fetch RSC payload for http://localhost:3000/privacy. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_n",
+      "Failed to fetch RSC payload for http://localhost:3000/terms. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_nex",
+      "Failed to fetch RSC payload for http://localhost:3000/onboarding. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000"
+    ],
+    "metrics": {
+      "domContentLoaded": 100,
+      "loadComplete": 152,
+      "fcpMs": 100,
+      "resourceCount": 49,
+      "transferKB": 12,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 40,
+      "smallTargets": 11
+    }
+  },
+  {
+    "id": "consultations",
+    "path": "/dashboard/consultations",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 115,
+      "loadComplete": 196,
+      "fcpMs": 212,
+      "resourceCount": 40,
+      "transferKB": 18,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 23,
+      "smallTargets": 7
+    }
+  },
+  {
+    "id": "case-analysis",
+    "path": "/dashboard/case-analysis",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [
+      "Failed to fetch RSC payload for http://localhost:3000/onboarding. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000",
+      "Failed to fetch RSC payload for http://localhost:3000/privacy. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_n",
+      "Failed to fetch RSC payload for http://localhost:3000/terms. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_nex"
+    ],
+    "metrics": {
+      "domContentLoaded": 94,
+      "loadComplete": 139,
+      "fcpMs": 108,
+      "resourceCount": 51,
+      "transferKB": 14,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 41,
+      "smallTargets": 13
+    }
+  },
+  {
+    "id": "legal-chat",
+    "path": "/dashboard/legal-chat",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [
+      "Failed to fetch RSC payload for http://localhost:3000/terms. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_nex",
+      "Failed to fetch RSC payload for http://localhost:3000/onboarding. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000",
+      "Failed to fetch RSC payload for http://localhost:3000/privacy. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (http://localhost:3000/_n"
+    ],
+    "metrics": {
+      "domContentLoaded": 98,
+      "loadComplete": 143,
+      "fcpMs": 112,
+      "resourceCount": 51,
+      "transferKB": 14,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 41,
+      "smallTargets": 13
+    }
+  },
+  {
+    "id": "agents",
+    "path": "/dashboard/agents",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 42,
+      "loadComplete": 160,
+      "fcpMs": 212,
+      "resourceCount": 43,
+      "transferKB": 17,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 25,
+      "smallTargets": 9
+    }
+  },
+  {
+    "id": "agents",
+    "path": "/dashboard/agents",
+    "viewport": "mobile",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 109,
+      "loadComplete": 159,
+      "fcpMs": 136,
+      "resourceCount": 38,
+      "transferKB": 11,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 26,
+      "smallTargets": 9
+    }
+  },
+  {
+    "id": "attachments",
+    "path": "/dashboard/attachments",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 44,
+      "loadComplete": 172,
+      "fcpMs": 196,
+      "resourceCount": 47,
+      "transferKB": 16,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 22,
+      "smallTargets": 6
+    }
+  },
+  {
+    "id": "admin-api-keys",
+    "path": "/admin/api-keys",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 37,
+      "loadComplete": 127,
+      "fcpMs": 180,
+      "resourceCount": 55,
+      "transferKB": 35,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 23,
+      "smallTargets": 0
+    }
+  },
+  {
+    "id": "admin-inbox",
+    "path": "/admin/inbox",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 40,
+      "loadComplete": 118,
+      "fcpMs": 156,
+      "resourceCount": 53,
+      "transferKB": 29,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 22,
+      "smallTargets": 0
+    }
+  },
+  {
+    "id": "admin-jobs",
+    "path": "/admin/jobs",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 39,
+      "loadComplete": 126,
+      "fcpMs": 156,
+      "resourceCount": 53,
+      "transferKB": 29,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 24,
+      "smallTargets": 1
+    }
+  },
+  {
+    "id": "admin-settings",
+    "path": "/admin/settings",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 43,
+      "loadComplete": 157,
+      "fcpMs": 204,
+      "resourceCount": 52,
+      "transferKB": 29,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 23,
+      "smallTargets": 0
+    }
+  },
+  {
+    "id": "admin-settings",
+    "path": "/admin/settings",
+    "viewport": "mobile",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 76,
+      "loadComplete": 125,
+      "fcpMs": 104,
+      "resourceCount": 52,
+      "transferKB": 26,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 23,
+      "smallTargets": 0
+    }
+  },
+  {
+    "id": "admin-site",
+    "path": "/admin/site",
+    "viewport": "desktop",
+    "status": 200,
+    "consoleErrors": [],
+    "metrics": {
+      "domContentLoaded": 37,
+      "loadComplete": 129,
+      "fcpMs": 164,
+      "resourceCount": 52,
+      "transferKB": 30,
+      "overflowX": false,
+      "overflowBy": 0,
+      "clickables": 25,
+      "smallTargets": 0
+    }
+  }
+]
