@@ -137,16 +137,8 @@ function withAuth(h: (req: Request) => Promise<Response>) {
       // يُقبل المفتاح من هيدر x-api-key أو من ?key= — مع تشذيب الطرفين قبل المقارنة.
       const raw = req.headers.get("x-api-key") ?? url.searchParams.get("key");
       const provided = raw?.trim();
-      if (provided !== expected) {
-        // TEMP-DIAG (يُحذف بعد التشخيص): أطوال فقط بلا كشف القيم + مصدر المفتاح.
-        // وجود هذا الهيدر يؤكّد أيضًا أن الشيفرة الجديدة صارت منشورة على Vercel.
-        // 403 بلا WWW-Authenticate: رفض صريح لا يُفسَّر لدى عميل MCP كدعوة OAuth (401).
-        const src = req.headers.get("x-api-key") ? "header" : url.searchParams.get("key") ? "query" : "none";
-        return new Response("Forbidden", {
-          status: 403,
-          headers: { "x-mcp-key-debug": `plen=${provided?.length ?? -1};elen=${expected.length};src=${src}` },
-        });
-      }
+      // 403 بلا WWW-Authenticate: رفض صريح لا يُفسَّر لدى عميل MCP كدعوة OAuth (401).
+      if (provided !== expected) return new Response("Forbidden", { status: 403 });
     }
     return h(req);
   };
