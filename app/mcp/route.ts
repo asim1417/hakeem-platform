@@ -134,7 +134,8 @@ function withAuth(h: (req: Request) => Promise<Response>) {
     if (key) {
       const url = new URL(req.url);
       const provided = req.headers.get("x-api-key") ?? url.searchParams.get("key");
-      if (provided !== key) return new Response("Unauthorized", { status: 401 });
+      // 403 بلا WWW-Authenticate: رفض صريح لا يُفسَّر لدى عميل MCP كدعوة OAuth (401).
+      if (provided !== key) return new Response("Forbidden", { status: 403 });
     }
     return h(req);
   };
