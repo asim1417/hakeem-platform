@@ -57,6 +57,7 @@
     "derive:article-versions": "tsx scripts/derive-article-versions.ts",
     "test:versions": "tsx scripts/test-article-versions.ts",
     "test:document-units": "tsx scripts/test-document-units.ts",
+    "test:legal-parser": "tsx scripts/test-legal-parser.ts",
     "test:dialogue-brain": "tsx scripts/test-dialogue-brain.ts",
     "test:policy-gate": "tsx scripts/test-policy-gate.ts",
     "test:response-verifier": "tsx scripts/test-response-verifier.ts",
