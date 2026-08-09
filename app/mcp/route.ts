@@ -131,10 +131,14 @@ const handler = createMcpHandler(
           extra_terms: z.array(z.string()).max(8).optional().describe("صيغ إضافية يضمّها المستخدم يدويًّا"),
           per_term_limit: z.number().int().min(3).max(20).default(8),
           law_id: z.string().optional().describe("اختياري: حصر البحث في نظام واحد"),
+          strict: z
+            .boolean()
+            .default(true)
+            .describe("افتراضي true: يُقصر التجميع على المواد التي تحتوي رأس الموضوع لفظًا؛ false يعرض نتائج الدلالي موسومة lexical_match=false"),
         }),
       },
-      async ({ topic, extra_terms, per_term_limit, law_id }) =>
-        json(await handleResearch({ topic, extra_terms, per_term_limit, law_id }))
+      async ({ topic, extra_terms, per_term_limit, law_id, strict }) =>
+        json(await handleResearch({ topic, extra_terms, per_term_limit, law_id, strict }))
     );
 
     // ٩) الحصر الشامل (كل المواد المطابقة لفظيًا، مع عداد إجمالي وترقيم cursor)
