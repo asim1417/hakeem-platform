@@ -117,7 +117,11 @@ model LegalSystem {
   sortOrder      Int            @default(0) @map("sort_order")
   eliSlug        String?        @unique @map("eli_slug") // slug تشريعي ثابت (يُجمّد عند الإنشاء) — أساس معرّف ELI الدائم
   articleCount   Int            @default(0)
+  // ── وكيل تحديث قاعدة الأنظمة (إضافة غير كاسرة) ──
+  completeness   SystemCompleteness @default(IN_PROGRESS) @map("completeness") // كامل/ناقص الأداة/ناقص التمهيد/قيد الاستكمال
   articles       LegalArticle[]
+  documents      LegalDocument[]
+  documentUnits  DocumentUnit[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -153,6 +157,7 @@ model LegalArticle {
   amendments     ArticleAmendment[]
   versions       ArticleVersion[]
   graphNodes     LegalGraphNode[]
+  docUnits       DocumentUnit[]
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
@@ -1266,4 +1271,168 @@ model ReviewReport {
   createdAt DateTime      @default(now()) @map("created_at")
 
   @@map("review_reports")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// وكيل تحديث قاعدة الأنظمة (Legal DB Update Agent) — طبقة الأمانة الكاملة.
+// إضافة غير كاسرة: جداول جديدة تتعايش مع legal_articles (وحدة الاسترجاع) ولا تحلّ
+// محلّها. legal_documents = وثائق الحزمة الواحدة؛ document_units = شجرة الوحدات من
+// أول حرف حتى التوقيع؛ document_relations = العلاقات المُسنَدة حرفيًّا؛ ingest_runs =
+// تقارير دورات التشغيل. المرجع: docs/architecture/LEGAL_SYSTEMS_UPDATE_AGENT.md
+// ═══════════════════════════════════════════════════════════════════════════
+
+// وثيقة ضمن حزمة النظام (مرسوم/قرار/نص نظام/لائحة). بنود أدوات الإصدار أحكام ملزمة.
+model LegalDocument {
+  id            String       @id @default(cuid())
+  systemId      String       @map("system_id")
+  system        LegalSystem  @relation(fields: [systemId], references: [id])
+  docType       DocumentType @map("doc_type")
+  number        String? // رقم الأداة/الوثيقة (مثل م/191)
+  hijriDate     String?      @map("hijri_date") // كما ورد (18/11/1431هـ)
+  gregorianDate DateTime?    @map("gregorian_date")
+  publishedAt   DateTime?    @map("published_at") // pubDate من التغذية (مناط النفاذ)
+  sourceGuid    String?      @unique @map("source_guid")
+  sourceUrl     String?      @map("source_url")
+  rawText       String       @map("raw_text") // الخام قبل أي معالجة (حجّة)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  units DocumentUnit[]
+
+  @@index([systemId])
+  @@index([docType])
+  @@map("legal_documents")
+}
+
+// شجرة الوحدات — صفٌّ لكل وحدة (تمهيد/باب/مادة/فقرة/بند إصدار...). تُبلِّط النص
+// حرفيًّا: مجموع text_raw بترتيب ordinal لكل وثيقة = النص الأصلي (قاعدة عدم السقوط).
+model DocumentUnit {
+  id             String        @id @default(cuid())
+  systemId       String        @map("system_id")
+  system         LegalSystem   @relation(fields: [systemId], references: [id])
+  documentId     String        @map("document_id")
+  document       LegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  parentId       String?       @map("parent_id")
+  parent         DocumentUnit? @relation("UnitTree", fields: [parentId], references: [id])
+  children       DocumentUnit[] @relation("UnitTree")
+  unitType       DocUnitType   @map("unit_type")
+  ordinal        Int // ترتيب القراءة داخل الوثيقة (شرط صحّة إعادة التركيب)
+  labelAr        String?       @map("label_ar") // التسمية كما وردت
+  number         String? // الرقم المعياري ("12"، ومكرر = "12.1")
+  textRaw        String        @map("text_raw") // الحرفي بلا مساس
+  textNormalized String?       @map("text_normalized") // مطبَّع للفهرسة (بلا RLM/LRM)
+  path           String // مسار مادي: doc/part:1/chapter:2/article:12/para:3
+  charStart      Int?          @map("char_start")
+  charEnd        Int?          @map("char_end")
+  status         DocUnitStatus @default(IN_FORCE)
+  validFrom      DateTime?     @map("valid_from")
+  validTo        DateTime?     @map("valid_to") // null = النافذ حاليًا
+  sourceGuid     String?       @map("source_guid")
+  sourceUrl      String?       @map("source_url")
+  articleId      String?       @map("article_id") // جسر لوحدات نوع article
+  article        LegalArticle? @relation(fields: [articleId], references: [id])
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  sourceRelations DocumentRelation[] @relation("DocRelSource")
+  targetRelations DocumentRelation[] @relation("DocRelTarget")
+
+  @@index([systemId])
+  @@index([documentId, ordinal])
+  @@index([parentId])
+  @@index([unitType])
+  @@index([status])
+  @@index([articleId])
+  @@map("document_units")
+}
+
+// علاقة مُستخرَجة من نصّ عنصر، مُسنَدة إلى موضعها الحرفي (evidence_quote إلزاميّ).
+// الهدف قد يكون وحدة محلولة (targetUnit) أو مرجعًا خامًا قبل الحل (targetRef).
+model DocumentRelation {
+  id            String          @id @default(cuid())
+  relationType  DocRelationType @map("relation_type")
+  sourceUnitId  String          @map("source_unit_id")
+  sourceUnit    DocumentUnit    @relation("DocRelSource", fields: [sourceUnitId], references: [id], onDelete: Cascade)
+  targetUnitId  String?         @map("target_unit_id")
+  targetUnit    DocumentUnit?   @relation("DocRelTarget", fields: [targetUnitId], references: [id])
+  targetRef     String?         @map("target_ref") // نصّ المرجع الخام (اسم نظام/رقم مرسوم) قبل الحل
+  targetPath    String?         @map("target_path") // مسار الوحدة المستهدفة إن حُدّد
+  evidenceQuote String          @map("evidence_quote") // الإسناد الحرفي — بلا إسناد لا تُعتمد
+  sourceGuid    String?         @map("source_guid")
+  reviewStatus  String          @default("needs_review") @map("review_status")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  @@index([relationType])
+  @@index([sourceUnitId])
+  @@index([targetUnitId])
+  @@map("document_relations")
+}
+
+// تقرير دورة تشغيل (التقاط/فحص تقادم/استكمال) — الملتقط/المُدخل/الموسوم/المرفوع.
+model IngestRun {
+  id         String    @id @default(cuid())
+  source     String // uqn | boe | manual
+  runType    String    @map("run_type") // ingest | stale_audit | backfill
+  startedAt  DateTime  @default(now()) @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  captured   Int       @default(0)
+  classified Int       @default(0)
+  inserted   Int       @default(0)
+  flagged    Int       @default(0) // موسوم (تقادم/حالة)
+  raised     Int       @default(0) // مرفوع للمراجعة
+  notes      String?
+  metadata   Json?
+
+  @@index([source])
+  @@index([runType])
+  @@map("ingest_runs")
+}
+
+// ── Enums الوكيل ──
+enum DocumentType {
+  ROYAL_DECREE // مرسوم ملكي
+  COUNCIL_DECISION // قرار مجلس الوزراء
+  AGENCY_DECISION // قرار جهة
+  SYSTEM_TEXT // نص نظام
+  BYLAW // لائحة تنفيذية / قواعد
+}
+
+enum DocUnitType {
+  INSTRUMENT_OPENING // افتتاحية الأداة
+  RECITAL // استناد واحد (بناءً على / وبعد الاطلاع على)
+  INSTRUMENT_CLAUSE // بند منطوق (أولًا/ثانيًا)
+  INSTRUMENT_CLOSING
+  SIGNATURE
+  SYSTEM_PREAMBLE // تمهيد النظام
+  PART // باب
+  CHAPTER // فصل
+  SECTION // قسم
+  ARTICLE // مادة
+  PARAGRAPH // فقرة
+  SUBPARAGRAPH // فقرة فرعية
+  DEFINITION_ITEM // زوج تعريف
+  UNCLASSIFIED // ما لم تلتقطه مرساة
+}
+
+enum DocUnitStatus {
+  IN_FORCE // نافذ
+  AMENDED // معدَّل
+  REPEALED // ملغى
+  NOT_YET_IN_FORCE // لم يدخل حيز النفاذ
+  STALE_UNVERIFIED // متقادم-قيد التحقق
+}
+
+enum DocRelationType {
+  REPLACES // إحلال
+  REPEALS // إلغاء
+  AMENDS // تعديل
+  IMPLEMENTS // تنفيذ (لائحة ← نظام)
+  CITES // استناد (من recital)
+}
+
+enum SystemCompleteness {
+  COMPLETE // كامل
+  MISSING_INSTRUMENT // ناقص الأداة
+  MISSING_PREAMBLE // ناقص التمهيد
+  IN_PROGRESS // قيد الاستكمال
 }
