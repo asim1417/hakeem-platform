@@ -13,7 +13,7 @@ https://<host>/mcp
 المسار مُطبَّق كـ Next.js App Router Route Handler في `app/mcp/route.ts`
 (GET / POST / DELETE، بيئة تشغيل Node لأن Prisma لا يعمل على Edge).
 
-## الأدوات السبع
+## الأدوات (١١ أداة)
 
 | الأداة | الوظيفة | المصدر في المشروع |
 |---|---|---|
@@ -24,13 +24,20 @@ https://<host>/mcp
 | `hakeem_expand_terms` | توسيع مصطلح من المكنز SKOS | `legal-thesaurus` |
 | `hakeem_search_rulings` | بحث في الأحكام القضائية | `hybridSearch` (نوع ruling) |
 | `hakeem_verify_citation` | التحقق من صحة إحالة قبل عزوها | `LegalSystem` + `LegalArticle` |
+| `hakeem_research` | بحث موضوعي شامل (توسيع مكنز + هجين + حصر لفظي، مجمّع حسب النظام) | `adapter` + `tools/research` |
+| `hakeem_enumerate` | حصر لفظي كامل مع عداد إجمالي وترقيم cursor | `tools/enumerate` (SQL خام) |
+| `hakeem_get_articles_range` | قراءة نطاق مواد متتابع بالنص الكامل (حتى ٢٠) | `LegalArticle` |
+| `hakeem_guide` | دليل سير العمل للوكيل (نصّ ثابت) | `tools/range-and-guide` |
 
-`hakeem_search` و`hakeem_search_rulings` يعيدان استخدام محرّك البحث الهجين القائم
-(postgres + vector + knowledge-graph مع دمج RRF) — لا استعلام `contains` مبسّط.
+`hakeem_search` و`hakeem_search_rulings` و`hakeem_research` تعيد استخدام محرّك البحث
+الهجين القائم (postgres + vector + knowledge-graph مع دمج RRF) — لا استعلام `contains` مبسّط.
 
-طبقة الوصول للبيانات في `lib/mcp/adapter.ts`، وهي مطابِقة لمخطط
-`prisma/schema.prisma` الفعلي. عقود المخرجات (أسماء حقول JSON) ثابتة —
-هي الواجهة الرسمية للخادم فلا تُغيَّر.
+طبقة الوصول للبيانات في `lib/mcp/adapter.ts` وأدوات الإصدار الثاني في
+`lib/mcp/tools/`، وكلها مطابِقة لمخطط `prisma/schema.prisma` الفعلي. عقود المخرجات
+(أسماء حقول JSON) ثابتة — هي الواجهة الرسمية للخادم فلا تُغيَّر.
+
+`hakeem_enumerate` يطبّع العربية داخل SQL (تشكيل + صور الهمزة/الألف/التاء) عبر
+`translate` نقيّ ليطابق `normalizeAr` — ويرتّب بالمعرّف لضمان ثبات الـ cursor.
 
 ## المصادقة (اختيارية)
 

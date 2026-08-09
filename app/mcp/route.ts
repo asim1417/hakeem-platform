@@ -12,6 +12,9 @@ import { createMcpHandler } from "mcp-handler";
 // نستورد Zod v4 باسم مستعار (zodv4) هنا فقط — دون المساس بـ zod v3 في سائر الكود.
 import { z } from "zodv4";
 import * as hakeem from "@/lib/mcp/adapter";
+import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
+import { handleResearch } from "@/lib/mcp/tools/research";
+import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -115,6 +118,72 @@ const handler = createMcpHandler(
       },
       async ({ law_name, article_number, claimed_text }) =>
         json(await hakeem.verifyCitation(law_name, article_number, claimed_text))
+    );
+
+    // ٨) البحث الموضوعي الشامل (توسيع مكنز + بحث هجين + حصر لفظي، مجمّع حسب النظام)
+    server.registerTool(
+      "hakeem_research",
+      {
+        description:
+          "بحث موضوعي شامل باستدعاء واحد: يوسّع المصطلح من المكنز القانوني السعودي ثم يشغّل بحثات متوازية (دلالية + حصر لفظي) بكل النظائر، ويرجع النتائج مجمّعة حسب النظام مع إحصاء تغطية وقائمة الصيغ المستعملة. الأداة المفضلة لإعداد الدراسات والمذكرات.",
+        inputSchema: z.object({
+          topic: z.string().describe("المفهوم محل البحث، مثال: فسخ العقد"),
+          extra_terms: z.array(z.string()).max(8).optional().describe("صيغ إضافية يضمّها المستخدم يدويًّا"),
+          per_term_limit: z.number().int().min(3).max(20).default(8),
+          law_id: z.string().optional().describe("اختياري: حصر البحث في نظام واحد"),
+        }),
+      },
+      async ({ topic, extra_terms, per_term_limit, law_id }) =>
+        json(await handleResearch({ topic, extra_terms, per_term_limit, law_id }))
+    );
+
+    // ٩) الحصر الشامل (كل المواد المطابقة لفظيًا، مع عداد إجمالي وترقيم cursor)
+    server.registerTool(
+      "hakeem_enumerate",
+      {
+        description:
+          "حصر شامل (غير مرتَّب دلاليًا) لكل المواد التي تحتوي لفظًا أو أكثر. يرجع العدد الإجمالي، وتوزيعًا حسب النظام، وصفحة نتائج مع cursor للمتابعة. استخدمه للدراسات الحصرية بدل hakeem_search.",
+        inputSchema: z.object({
+          terms: z
+            .array(z.string())
+            .min(1)
+            .max(12)
+            .describe('الألفاظ المطلوب حصرها (OR بينها). مثال: ["فسخ","انفساخ","ينفسخ"]'),
+          law_id: z.string().optional().describe("اختياري: حصر النتائج في نظام واحد"),
+          page_size: z.number().int().min(1).max(50).default(25),
+          cursor: z.string().optional().describe("معرّف آخر مادة من الصفحة السابقة للمتابعة"),
+          snippet_len: z.number().int().min(120).max(2000).default(700),
+        }),
+      },
+      async ({ terms, law_id, page_size, cursor, snippet_len }) =>
+        json(await handleEnumerate({ terms, law_id, page_size, cursor, snippet_len }))
+    );
+
+    // ١٠) قراءة نطاق مواد متتابع بالنص الكامل (حتى ٢٠ مادة)
+    server.registerTool(
+      "hakeem_get_articles_range",
+      {
+        description:
+          "قراءة نطاق متتابع من مواد نظام واحد بالنص الكامل (بحد أقصى ٢٠ مادة) — لقراءة سياق تشريعي كامل مثل فصلٍ بعينه، بدل جلب المواد واحدةً واحدة.",
+        inputSchema: z.object({
+          law_id: z.string(),
+          from_article: z.number().int().min(1),
+          to_article: z.number().int().min(1),
+        }),
+      },
+      async ({ law_id, from_article, to_article }) =>
+        json(await handleRange({ law_id, from_article, to_article }))
+    );
+
+    // ١١) دليل سير العمل للوكيل
+    server.registerTool(
+      "hakeem_guide",
+      {
+        description:
+          "دليل استخدام مختصر: سير العمل الأمثل لأدوات حكيم بحسب نوع المهمة. استدعه أولًا عند المهام المركبة.",
+        inputSchema: z.object({}),
+      },
+      async () => json(handleGuide())
     );
   },
   {
