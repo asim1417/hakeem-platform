@@ -15,6 +15,7 @@ import * as hakeem from "@/lib/mcp/adapter";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
+import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -188,6 +189,45 @@ const handler = createMcpHandler(
         inputSchema: z.object({}),
       },
       async () => json(handleGuide())
+    );
+
+    // ١٢) جلب نص حكم قضائي كاملًا بمعرّفه مع تقطيع
+    server.registerTool(
+      "hakeem_get_ruling",
+      {
+        description:
+          "جلب نص الحكم القضائي كاملًا بمعرّفه (ruling_id كما يرجع من hakeem_search_rulings أو hakeem_enumerate_rulings). الأحكام الطويلة تُرجَع مقطّعة: استخدم offset مع next_offset للمتابعة.",
+        inputSchema: z.object({
+          ruling_id: z.string().describe("معرّف الحكم"),
+          offset: z.number().int().min(0).default(0).describe("موضع البداية بالحرف داخل النص (للمتابعة في الأحكام الطويلة)"),
+          max_chars: z.number().int().min(1000).max(60000).default(30000).describe("أقصى عدد أحرف تُرجَع في الاستدعاء الواحد"),
+        }),
+      },
+      async ({ ruling_id, offset, max_chars }) => json(await getRuling(ruling_id, offset, max_chars))
+    );
+
+    // ١٣) حصر شامل غير مسقوف للأحكام (عدّ حقيقيّ + توزيع بالمحكمة + ترقيم cursor)
+    server.registerTool(
+      "hakeem_enumerate_rulings",
+      {
+        description:
+          "حصر شامل (غير مرتَّب دلاليًا) لكل الأحكام القضائية التي يرد فيها لفظ أو أكثر (OR بينها). يرجع العدد الإجمالي الحقيقي فوق كامل القاعدة، وتوزيعًا بحسب المحكمة، وصفحة نتائج مع cursor للمتابعة بلا سقف — يصلح للدراسات الحصرية (مئات أو آلاف الأحكام). استخدم count_only=true إذا أردت الأعداد فقط بسرعة.",
+        inputSchema: z.object({
+          terms: z
+            .array(z.string().min(2))
+            .min(1)
+            .max(12)
+            .describe('الألفاظ المطلوب حصرها (OR بينها). مثال: ["غبن","الغبن","مغبون"]'),
+          court: z.string().optional().describe("حصر بمحكمة (مطابقة جزئية، اختياري)"),
+          year_h: z.number().int().optional().describe("حصر بسنة هجرية (اختياري)"),
+          count_only: z.boolean().default(false).describe("true = إرجاع الإجمالي والتوزيع فقط دون صفحة نتائج"),
+          page_size: z.number().int().min(1).max(100).default(50),
+          cursor: z.string().optional().describe("معرّف آخر حكم من الصفحة السابقة للمتابعة"),
+          snippet_len: z.number().int().min(120).max(2000).default(500),
+        }),
+      },
+      async ({ terms, court, year_h, count_only, page_size, cursor, snippet_len }) =>
+        json(await enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
     );
   },
   {
