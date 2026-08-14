@@ -65,6 +65,24 @@ export const runtime = "nodejs";
 // العميل عند العودة عبر /api/jobs/{id}. بلا هذا الحدّ كان الطويل يُقتل قبل الحفظ.
 export const maxDuration = 300;
 
+// حارس مهلة للخطوة الختامية (الصياغة). نداء النموذج في مسار التوليف بلا مهلة داخليّة؛ فلو
+// تعثّر اتّصال المزوّد (تعليقٌ بلا رفض) لَما رجع الـ await أبدًا، فتُقتل الدالّة عند maxDuration
+// قبل إرسال «result/done» → توقّفٌ صامت لدى المستخدم (العرَض المُبلَّغ). نلفّ الاستدعاء بسباقٍ
+// مع مؤقّت: عند تجاوز المهلة نرجع القيمة الاحتياطيّة (null) فيسلك المسار سقوطه الآمن الموجود
+// أصلًا (عرض المواد المُتحقَّقة + رسالة + done) بدل الموت الصامت. لا يمسّ منطق البحث المشترك.
+const SYNTHESIS_TIMEOUT_MS = 90_000;
+async function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) {
@@ -879,21 +897,25 @@ export async function POST(request: NextRequest) {
             enforcement: c.status ?? null,
             internalUrl: c.articleId ? `/dashboard/legal-core/articles/${c.articleId}` : undefined
           }));
-          const synth = await synthesizeWithMode({
-            query: studyQuery,
-            systemPrompt: agentMode.systemPrompt,
-            citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote })),
-            history: agentMode.conversational ? history : undefined,
-            // أوضاع التحليل العميقة: نمرّر السوابق القضائية المُسترجَعة (سياقًا) ونرفع سقف الرموز
-            // لتفادي قصّ المخرَجات ذات العناوين السبعة/الثمانية.
-            supporting: isDeepMode
-              ? {
-                  rulings: (result.rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
-                  principles: (result.principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet }))
-                }
-              : undefined,
-            maxTokens: isDeepMode ? 2600 : undefined
-          }).catch(() => null);
+          const synth = await withTimeout(
+            synthesizeWithMode({
+              query: studyQuery,
+              systemPrompt: agentMode.systemPrompt,
+              citations: outcome.verified.map((c) => ({ articleId: c.articleId, systemName: c.systemName, articleNumber: c.articleNumber, quote: c.quote })),
+              history: agentMode.conversational ? history : undefined,
+              // أوضاع التحليل العميقة: نمرّر السوابق القضائية المُسترجَعة (سياقًا) ونرفع سقف الرموز
+              // لتفادي قصّ المخرَجات ذات العناوين السبعة/الثمانية.
+              supporting: isDeepMode
+                ? {
+                    rulings: (result.rulings ?? []).map((r) => ({ title: r.title, snippet: r.snippet })),
+                    principles: (result.principles ?? []).map((p) => ({ title: p.title, snippet: p.snippet }))
+                  }
+                : undefined,
+              maxTokens: isDeepMode ? 2600 : undefined
+            }).catch(() => null),
+            SYNTHESIS_TIMEOUT_MS,
+            null
+          );
           if (!synth) {
             send({ type: "step", id: "synthesize", status: "done", label: "تعذّرت الصياغة المستندة؛ إليك المواد المُتحقَّقة", data: { blocked: true } });
             send({ type: "result", answer: null, mode: "offline", basis: modeBasis, total: result.articles.length, message: modeBasis.length ? "تعذّرت الصياغة المستندة؛ إليك المواد المُتحقَّقة من النواة." : undefined });
@@ -936,7 +958,11 @@ export async function POST(request: NextRequest) {
         }
 
         send({ type: "step", id: "synthesize", status: "running", label: "أصوغ إجابة مستندة للمواد فقط" });
-        const draft = await createConsultationDraft({ facts: studyQuery, actorId: user.id }).catch(() => null);
+        const draft = await withTimeout(
+          createConsultationDraft({ facts: studyQuery, actorId: user.id }).catch(() => null),
+          SYNTHESIS_TIMEOUT_MS,
+          null
+        );
 
         if (!draft || draft.blocked) {
           const rawBasis = result.articles.map((a) => ({

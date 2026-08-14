@@ -975,6 +975,9 @@ export function HakeemAskWorkspace({
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      // هل وصل حدثٌ ختاميّ (result/done/error)؟ لو انتهى البثّ دونه فالدالّة قُطعت في الخادم
+      // (مهلة/قتل) → نُظهر خطأً صريحًا بدل التوقّف الصامت الذي يترك المستخدم أمام تحميلٍ لا ينتهي.
+      let sawTerminal = false;
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
@@ -991,6 +994,9 @@ export function HakeemAskWorkspace({
             evt = JSON.parse(line) as Record<string, unknown>;
           } catch {
             continue;
+          }
+          if (evt.type === "result" || evt.type === "done" || evt.type === "error") {
+            sawTerminal = true;
           }
           if (evt.type === "job" && evt.jobId) {
             const jid = String(evt.jobId);
@@ -1018,6 +1024,23 @@ export function HakeemAskWorkspace({
       }
       if (token !== requestTokenRef.current) return;
       patchLastTurn((t) => ({ ...t, streaming: false }));
+
+      // انتهى البثّ دون حدثٍ ختاميّ (result/done/error) ولا جواب ⇒ قُطعت الدالّة في الخادم
+      // (مهلة منصّة/قتل مبكّر). لا نترك المستخدم أمام توقّفٍ صامت: نُظهر خطأً عربيًّا صريحًا،
+      // ونحيله إلى استئناف المهمّة إن كان لها jobId محفوظ (العمل قد يكون أكمل في الخلفية).
+      if (!sawTerminal) {
+        const lastTurn = turnsRef.current[turnsRef.current.length - 1];
+        const hasContent = Boolean(lastTurn?.answer || lastTurn?.clarify || lastTurn?.message);
+        if (!hasContent && !lastTurn?.error) {
+          patchLastTurn((t) => ({
+            ...t,
+            streaming: false,
+            error: t.jobId
+              ? "طال البحث الموسّع أكثر من المتاح، وقد يكون اكتمل في الخلفية — أعد المحاولة أو حدّث الصفحة لاستئناف النتيجة."
+              : "تعذّر إكمال البحث الموسّع (انقطع قبل تسليم النتيجة). جرّب مجددًا، وإن تكرّر فبسّط السؤال قليلًا.",
+          }));
+        }
+      }
 
       const finished =
         lastResultRef.current ?? turnsRef.current[turnsRef.current.length - 1] ?? null;

@@ -139,11 +139,19 @@ export async function runHakeemAgent(input: {
   const maxTurns = hakeemAgentMaxToolTurns();
   let toolTurns = 0;
 
+  // ميزانيّة زمنيّة كلّيّة للحلقة: بلا سقفٍ زمنيّ كانت ٢٠ جولةً من نداءات النموذج + الأدوات قد
+  // تتجاوز maxDuration، فتُقتل الدالّة قبل تسليم النتيجة (التوقّف الصامت المُبلَّغ). عند تجاوز
+  // الميزانيّة نُجرّد الأدوات من النداء التالي، فيُجبَر النموذج على صياغة إجابةٍ نهائيّة ممّا جُمع
+  // (يسلك مسار «لا أدوات» أدناه بحارس الإسناد نفسه) بدل جولةٍ أخرى — إنهاءٌ رشيقٌ ضمن الحدّ.
+  const deadlineAt = Date.now() + (Number(process.env.HAKEEM_AGENT_BUDGET_MS) || 210_000);
+
   for (let turn = 0; turn <= maxTurns; turn += 1) {
+    const overBudget = Date.now() >= deadlineAt;
     const res = await callAnthropicWithTools({
       system,
       messages,
-      tools: HAKEEM_TOOL_DEFS as unknown as { name: string; description: string; input_schema: unknown }[],
+      // عند تجاوز الميزانيّة: بلا أدوات ⇒ يُنتِج النموذج نصًّا نهائيًّا فورًا (لا جولةً جديدة).
+      tools: overBudget ? [] : (HAKEEM_TOOL_DEFS as unknown as { name: string; description: string; input_schema: unknown }[]),
       maxTokens: 8192, // الدراسة الموسّعة الكاملة (٦ أقسام + جداول) طويلة — سقفٌ أعلى يمنع البتر.
     });
     if (!res.ok) return withPolicy({ ok: false, answer: "", basis: [], toolTurns, error: res.error });
