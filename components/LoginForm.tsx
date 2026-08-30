@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
+import { openOAuthPopup } from "@/lib/modules/auth/oauth-popup";
 
 type Providers = { google: boolean; microsoft: boolean; password: boolean };
 
@@ -25,6 +26,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [activating, setActivating] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicUrl, setMagicUrl] = useState("");
@@ -158,10 +160,37 @@ export function LoginForm({
           {providers.google ? (
             <a
               href={`/api/auth/google?next=${encodeURIComponent(dest)}`}
+              onClick={(e) => {
+                e.preventDefault();
+                if (googleLoading) return;
+                setGoogleLoading(true);
+                setError("");
+                const opened = openOAuthPopup({
+                  url: `/api/auth/google?popup=1&next=${encodeURIComponent(dest)}`,
+                  title: "google_owner_login_popup",
+                  onSuccess: (p) => {
+                    setGoogleLoading(false);
+                    router.push(p.next || dest);
+                    router.refresh();
+                  },
+                  onError: () => {
+                    setGoogleLoading(false);
+                    setError("تعذّر تسجيل الدخول عبر Google.");
+                  },
+                  onClose: () => {
+                    setGoogleLoading(false);
+                  },
+                });
+                if (!opened) {
+                  window.location.href = `/api/auth/google?next=${encodeURIComponent(dest)}`;
+                }
+              }}
               className="login-sso-btn login-sso-google focus-ring"
             >
               <GoogleIcon />
-              <span>الدخول عبر Google كمالك</span>
+              <span>
+                {googleLoading ? "جارٍ تسجيل الدخول عبر Google..." : "الدخول عبر Google كمالك"}
+              </span>
             </a>
           ) : null}
         </div>

@@ -3,6 +3,7 @@ import {
   buildGoogleAuthUrl,
   getGoogleOAuthConfig,
   googleCallbackUrl,
+  GOOGLE_POPUP_COOKIE,
   GOOGLE_STATE_COOKIE,
   newOAuthState,
   OAUTH_NEXT_COOKIE,
@@ -14,17 +15,19 @@ import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/auth/google?next=/dashboard
- * بدء Google OAuth الأصلي — بدون Clerk JS (موثوق على Safari/iPhone).
+ * GET /api/auth/google?next=/dashboard&popup=1
+ * بدء Google OAuth الأصلي — بدون Clerk JS (موثوق على Safari/iPhone ويدعم النوافذ المنبثقة).
  */
 export async function GET(request: NextRequest) {
   await hydrateEnvFromSettings().catch(() => 0);
 
+  const isPopup = request.nextUrl.searchParams.get("popup") === "1";
   const cfg = getGoogleOAuthConfig();
   if (!cfg) {
     // لا مفاتيح Google — أعد التوجيه لمسار Clerk العام
     const next = resolvePostAuthNext({ next: request.nextUrl.searchParams.get("next") });
     const q = new URLSearchParams({ provider: "google", mode: "sign-in", next });
+    if (isPopup) q.set("popup", "1");
     return NextResponse.redirect(new URL(`/api/auth/oauth/start?${q}`, request.url));
   }
 
@@ -46,6 +49,7 @@ export async function GET(request: NextRequest) {
   };
   res.cookies.set(GOOGLE_STATE_COOKIE, state, cookieOpts);
   res.cookies.set(OAUTH_NEXT_COOKIE, safeNextPath(next), cookieOpts);
+  if (isPopup) res.cookies.set(GOOGLE_POPUP_COOKIE, "1", cookieOpts);
   if (ref) res.cookies.set(OAUTH_REF_COOKIE, ref, cookieOpts);
   return res;
 }

@@ -1,9 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import { buildOAuthStartPath } from "@/lib/modules/auth/clerk-oauth-start";
 import {
   listVisibleAuthProviders,
   type VisibleAuthProvider,
 } from "@/lib/modules/auth/auth-providers";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
+import { openOAuthPopup } from "@/lib/modules/auth/oauth-popup";
 
 function GoogleIcon() {
   return (
@@ -36,8 +40,17 @@ function AppleIcon() {
   );
 }
 
+function ButtonSpinner() {
+  return (
+    <span
+      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#0E3435]/20 border-t-[#0E3435]"
+      aria-hidden
+    />
+  );
+}
+
 /**
- * أزرار دخول SSR — تعرض فقط الوسائل المفعّلة.
+ * أزرار دخول SSR مع دعم التوثيق عبر نافذة منبثقة تفاعلية (Popup Window).
  * Google يفضّل المسار الأصلي (/api/auth/google → hakeem_session) عند توفّر المفاتيح.
  * Apple مخفي افتراضيًا حتى AUTH_APPLE_ENABLED=1.
  */
@@ -66,6 +79,39 @@ export function AuthOauthButtons({
   const googleHref = `/api/auth/google?next=${encodeURIComponent(nextUrl)}`;
   const appleHref = buildOAuthStartPath({ provider: "apple", nextUrl, mode });
   const googleNativePreferred = isGoogleOAuthConfigured();
+
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
+  function handleGoogleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    if (loadingProvider) return;
+
+    setLoadingProvider("google");
+    setErrorMessage("");
+
+    const popupUrl = `/api/auth/google?popup=1&next=${encodeURIComponent(nextUrl)}`;
+    const opened = openOAuthPopup({
+      url: popupUrl,
+      title: "google_login_popup",
+      onSuccess: (payload) => {
+        setLoadingProvider(null);
+        window.location.href = payload.next || nextUrl || "/dashboard";
+      },
+      onError: () => {
+        setLoadingProvider(null);
+        setErrorMessage("تعذّر تسجيل الدخول باستخدام Google. يُرجى المحاولة مجددًا.");
+      },
+      onClose: () => {
+        setLoadingProvider(null);
+      },
+    });
+
+    if (!opened) {
+      // تم حظر النوافذ المنبثقة من قبل المتصفح — الانتقال للصفحة بالكامل كبديل تلقائي
+      window.location.href = googleHref;
+    }
+  }
 
   if (!showGoogle && !showApple) {
     return (
@@ -109,15 +155,32 @@ export function AuthOauthButtons({
         </p>
       </header>
 
+      {errorMessage ? (
+        <div
+          className="mt-4 rounded-[0.5rem] border border-red-200 bg-red-50 p-3 text-center text-xs font-semibold leading-5 text-red-700"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      ) : null}
+
       <div className="mt-6 flex flex-col gap-3">
         {showGoogle ? (
           <a
             href={googleHref}
+            onClick={handleGoogleClick}
             aria-label="المتابعة باستخدام Google"
-            className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E3435]/35"
+            aria-busy={loadingProvider === "google"}
+            className={`flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E3435]/35 ${
+              loadingProvider === "google" ? "opacity-75 cursor-wait" : ""
+            }`}
           >
-            <GoogleIcon />
-            <span>المتابعة باستخدام Google</span>
+            {loadingProvider === "google" ? <ButtonSpinner /> : <GoogleIcon />}
+            <span>
+              {loadingProvider === "google"
+                ? "جارٍ تسجيل الدخول عبر Google..."
+                : "المتابعة باستخدام Google"}
+            </span>
           </a>
         ) : null}
 
@@ -174,3 +237,4 @@ export function AuthOauthButtons({
     </div>
   );
 }
+

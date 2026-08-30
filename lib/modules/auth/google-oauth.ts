@@ -31,6 +31,7 @@ export function googleCallbackUrl(origin: string): string {
 export { isOAuthAdminEmail, newOAuthState, OAUTH_NEXT_COOKIE };
 
 export const GOOGLE_STATE_COOKIE = "hakeem_g_state";
+export const GOOGLE_POPUP_COOKIE = "hakeem_g_popup";
 
 /** يبني رابط تفويض Google. */
 export function buildGoogleAuthUrl(clientId: string, redirectUri: string, state: string): string {
