@@ -182,6 +182,15 @@ function turnsFromContext(ctx: AskSessionContext): {
 function friendlyStepLabel(step: Step): string {
   const id = step.id || "";
   const label = step.label || "";
+  // خطوات الربط (سجل القدرات / تسليم JDS / سياق قضية / وثائق) — احتفظ بتسميتها
+  if (
+    id === "capability-registry" ||
+    id === "jds-handoff" ||
+    id === "case-context" ||
+    id === "documents"
+  ) {
+    return label || id;
+  }
   if (
     /intent|breadth|takyeef|scope|classif|فهم/.test(id) ||
     /فهم|تصنيف|تكييف|رسالت|سؤال|intent/i.test(label)
@@ -202,6 +211,34 @@ function friendlyStepLabel(step: Step): string {
   }
   if (step.status === "running") return "إعداد التحليل";
   return label || "إعداد التحليل";
+}
+
+/** اقتراح تسليم للمعاون من خطوة البث — رابط فقط، بلا تنفيذ تلقائي */
+function jdsHandoffFromTurn(turn: Turn): {
+  href: string;
+  titleAr: string;
+  reason?: string;
+  suggestedServiceIds?: string[];
+} | null {
+  const step = turn.steps.find((s) => s.id === "jds-handoff");
+  if (!step?.data || typeof step.data !== "object") return null;
+  const d = step.data as {
+    href?: unknown;
+    titleAr?: unknown;
+    reason?: unknown;
+    suggestedServiceIds?: unknown;
+    autoExecute?: unknown;
+  };
+  if (typeof d.href !== "string" || !d.href.startsWith("/dashboard/judicial-assistant")) return null;
+  if (d.autoExecute === true) return null;
+  return {
+    href: d.href,
+    titleAr: typeof d.titleAr === "string" ? d.titleAr : "فتح المعاون القضائي",
+    reason: typeof d.reason === "string" ? d.reason : undefined,
+    suggestedServiceIds: Array.isArray(d.suggestedServiceIds)
+      ? d.suggestedServiceIds.filter((x): x is string => typeof x === "string")
+      : undefined,
+  };
 }
 
 function saveDraft(text: string) {
@@ -1642,7 +1679,22 @@ export function HakeemAskWorkspace({
 
                 {/* مخارج متخصصة بعد الإجابة — فقط بضغطة المستخدم، بلا تحويل تلقائي لـ /dashboard/ask */}
                 {!turn.streaming && turn.answer && i === turns.length - 1 ? (
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                  (() => {
+                    const handoff = jdsHandoffFromTurn(turn);
+                    return (
+                  <div className="flex flex-col gap-2 pt-1">
+                    {handoff ? (
+                        <div className="rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory/80 px-3 py-2 text-xs text-[var(--ink-70)]">
+                          <p className="font-semibold text-[var(--navy)]">{handoff.titleAr}</p>
+                          {handoff.reason ? <p className="mt-0.5 leading-5">{handoff.reason}</p> : null}
+                          {handoff.suggestedServiceIds?.length ? (
+                            <p className="mt-1 text-[11px] text-[var(--ink-50)]">
+                              خدمات مقترحة (يدويًا): {handoff.suggestedServiceIds.join(" · ")}
+                            </p>
+                          ) : null}
+                        </div>
+                    ) : null}
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => convertToCase(turn.question)}
@@ -1651,10 +1703,10 @@ export function HakeemAskWorkspace({
                       <Scale size={14} aria-hidden /> تحويل إلى قضية
                     </button>
                     <Link
-                      href="/dashboard/judicial-assistant"
+                      href={handoff?.href ?? "/dashboard/judicial-assistant"}
                       className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--ink-15)] bg-ivory px-3.5 py-2 text-xs font-semibold text-[var(--ink-80)] transition hover:border-[var(--navy)] hover:text-[var(--navy)]"
                     >
-                      فتح المعاون
+                      {handoff?.titleAr ?? "فتح المعاون"}
                     </Link>
                     <Link
                       href="/dashboard/legal-core"
@@ -1670,6 +1722,9 @@ export function HakeemAskWorkspace({
                       <MessagesSquare size={14} aria-hidden /> محادثة جديدة
                     </button>
                   </div>
+                  </div>
+                    );
+                  })()
                 ) : null}
               </div>
             </div>
