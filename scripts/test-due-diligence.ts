@@ -62,12 +62,15 @@ async function main() {
   assert.equal(conflict.status, "REJECTED");
   assert.ok(conflict.rejectionReasons.includes("تعارض الرقم الموحد"));
 
-  const staticConnector = new StaticDueDiligenceConnector(source, [baseObservation, {
-    ...baseObservation,
-    sourceRecordId: "record-2",
-    unifiedNumber: "7009999999",
-    sourceUrl: "https://example.com/public-record/2",
-  }]);
+  const staticConnector = new StaticDueDiligenceConnector(source, [
+    baseObservation,
+    {
+      ...baseObservation,
+      sourceRecordId: "record-2",
+      unifiedNumber: "7009999999",
+      sourceUrl: "https://example.com/public-record/2",
+    },
+  ]);
 
   const report = await runDueDiligence(query, [staticConnector]);
   assert.equal(report.coverage.verifiedEvidence, 1);
@@ -85,9 +88,11 @@ async function main() {
   assert.ok(MC_GIS_ENDPOINT.includes("GetByTitle('GISInfo')"));
 
   let requestedUrl = "";
-  const mockGet = async (url: URL) => {
+  const mockGet = async <T>(url: URL): Promise<T> => {
     requestedUrl = url.toString();
-    return { value: [{ CityName: "الرياض", BusinessType: "Establishment", CRsCount: 123 }] };
+    return {
+      value: [{ CityName: "الرياض", BusinessType: "Establishment", CRsCount: 123 }],
+    } as T;
   };
   const gisConnector = new SaudiCommerceGisConnector(mockGet);
   const gisReport = await runDueDiligence(query, [gisConnector]);
