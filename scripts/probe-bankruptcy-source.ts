@@ -1,8 +1,8 @@
 const pages = [
   "https://bankruptcy.gov.sa/ar/Other/BankruptcyRecord",
-  "https://bankruptcy.gov.sa/ar/Other/BankruptcyRecord/Pages/default.aspx",
+  "https://www.bankruptcy.gov.sa/ar/Other/BankruptcyRecord",
   "https://bankruptcy.gov.sa/ar/Announcements",
-  "https://bankruptcy.gov.sa/ar/Announcements/Pages/default.aspx",
+  "https://www.bankruptcy.gov.sa/ar/Announcements",
 ];
 
 function extractInteresting(html: string) {
@@ -25,11 +25,32 @@ function extractInteresting(html: string) {
   return [...found];
 }
 
+function describeError(error: unknown) {
+  if (!(error instanceof Error)) return String(error);
+  const cause = "cause" in error ? (error as Error & { cause?: unknown }).cause : undefined;
+  if (cause instanceof Error) {
+    const coded = cause as Error & { code?: string; errno?: string | number; syscall?: string; hostname?: string };
+    return [
+      error.message,
+      `CAUSE_NAME=${coded.name}`,
+      `CAUSE_MESSAGE=${coded.message}`,
+      `CAUSE_CODE=${coded.code ?? ""}`,
+      `CAUSE_ERRNO=${coded.errno ?? ""}`,
+      `CAUSE_SYSCALL=${coded.syscall ?? ""}`,
+      `CAUSE_HOST=${coded.hostname ?? ""}`,
+    ].join("\n");
+  }
+  return error.stack ?? error.message;
+}
+
 async function inspect(url: string) {
   try {
     const response = await fetch(url, {
       redirect: "follow",
-      headers: { "user-agent": "Hakeem-Due-Diligence/0.1 (public-source-probe)" },
+      headers: {
+        accept: "text/html,application/xhtml+xml",
+        "user-agent": "Mozilla/5.0 Hakeem-Due-Diligence-Public-Source-Probe/0.1",
+      },
       signal: AbortSignal.timeout(12_000),
     });
     const html = await response.text();
@@ -45,7 +66,7 @@ async function inspect(url: string) {
     lines.push("SCRIPT_SRCS=" + scripts.slice(0, 80).join(" | "));
     return lines.join("\n");
   } catch (error) {
-    return `\n=== ${url} ===\nERROR=${error instanceof Error ? error.message : String(error)}`;
+    return `\n=== ${url} ===\nERROR=${describeError(error)}`;
   }
 }
 
