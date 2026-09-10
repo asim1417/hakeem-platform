@@ -1,6 +1,6 @@
 const candidates = [
-  "https://mc.gov.sa/_api/web/lists/GetByTitle('GIS')/items",
-  "https://www.mc.gov.sa/_api/web/lists/GetByTitle('GIS')/items",
+  "https://mc.gov.sa/ar/About/Statistics/_api/web/lists/GetByTitle('GISInfo')/items",
+  "https://www.mc.gov.sa/ar/About/Statistics/_api/web/lists/GetByTitle('GISInfo')/items",
 ];
 
 async function probe(url: string): Promise<boolean> {
@@ -22,6 +22,10 @@ async function probe(url: string): Promise<boolean> {
     console.log(`MC_GIS_FINAL_URL=${response.url}`);
     if (!response.ok) return false;
 
+    const contentType = response.headers.get("content-type") ?? "";
+    console.log(`MC_GIS_CONTENT_TYPE=${contentType}`);
+    if (!contentType.toLowerCase().includes("json")) return false;
+
     const json = (await response.json()) as { value?: unknown[]; d?: { results?: unknown[] } };
     const rows = Array.isArray(json.value)
       ? json.value
@@ -36,6 +40,9 @@ async function probe(url: string): Promise<boolean> {
 
     console.log(`MC_GIS_RESPONSE_ROWS=${rows.length}`);
     console.log(`MC_GIS_RESPONSE_SHAPE=${shape}`);
+    if (rows[0] && typeof rows[0] === "object") {
+      console.log(`MC_GIS_FIRST_ROW_KEYS=${Object.keys(rows[0] as Record<string, unknown>).sort().join(",")}`);
+    }
     return shape !== "unknown";
   } catch (error) {
     const cause = error instanceof Error && "cause" in error ? (error as Error & { cause?: unknown }).cause : undefined;
@@ -50,7 +57,7 @@ async function main() {
   for (const candidate of candidates) {
     if (await probe(candidate)) return;
   }
-  throw new Error("No official Ministry of Commerce GIS host passed the secure Node connectivity probe");
+  throw new Error("No official Ministry of Commerce GISInfo endpoint passed the secure Node connectivity probe");
 }
 
 main().catch((error) => {
