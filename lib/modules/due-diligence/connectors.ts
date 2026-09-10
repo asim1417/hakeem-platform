@@ -31,11 +31,102 @@ type NormalizedSourcePayload = {
 
 type ConnectorEnvironment = Record<string, string | undefined>;
 
+type SharePointCollection = {
+  value?: unknown[];
+  d?: { results?: unknown[] };
+};
+
+const MC_GIS_ENDPOINT = "https://mc.gov.sa/_api/web/lists/GetByTitle('GIS')/items";
+const MC_GIS_DOC_URL = "https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx";
+
 function assertHttpsUrl(value: string): URL {
   const url = new URL(value);
   if (url.protocol !== "https:") throw new Error("Due diligence connector endpoints must use HTTPS.");
   if (url.username || url.password) throw new Error("Credentials must not be embedded in connector URLs.");
   return url;
+}
+
+function odataString(value: string): string {
+  if (/[\u0000-\u001f\u007f]/.test(value)) throw new Error("Invalid control character in OData filter.");
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+/**
+ * Official Ministry of Commerce open-data connector.
+ *
+ * IMPORTANT: the published GIS API is aggregate market/registry context. It is
+ * NOT treated as proof that a named entity owns or holds a particular CR.
+ * Therefore it deliberately returns zero entity observations; its result is
+ * surfaced only through source warnings/coverage until an official entity-level
+ * API/authorized adapter is configured.
+ */
+export class SaudiCommerceGisConnector implements DueDiligenceConnector {
+  public readonly source: DataSourceDefinition = {
+    key: "saudi_commerce_gis",
+    nameAr: "بيانات السجلات التجارية الجغرافية المفتوحة",
+    authority: "وزارة التجارة",
+    accessType: "OPEN_DATA",
+    status: "APPROVED",
+    reliability: 1,
+    baseUrl: "https://mc.gov.sa",
+  };
+
+  async collect(query: EntityQuery, signal?: AbortSignal): Promise<SourceRunResult> {
+    const startedAt = Date.now();
+    const city = query.city?.trim();
+    if (!city) {
+      return {
+        source: this.source,
+        observations: [],
+        warnings: [
+          "مصدر وزارة التجارة للبيانات الجغرافية متصل، لكن يلزم تحديد المدينة لاسترجاع السياق التجاري المجمع.",
+        ],
+        durationMs: Date.now() - startedAt,
+      };
+    }
+
+    const endpoint = assertHttpsUrl(MC_GIS_ENDPOINT);
+    endpoint.searchParams.set("$filter", `(CityName eq ${odataString(city)})`);
+    endpoint.searchParams.set("$top", "200");
+
+    const response = await fetch(endpoint, {
+      method: "GET",
+      signal,
+      headers: {
+        accept: "application/json;odata=nometadata, application/json",
+        "user-agent": "Hakeem-Due-Diligence/0.1 (official-open-data-client)",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`saudi_commerce_gis: Ministry of Commerce returned HTTP ${response.status}`);
+    }
+
+    const payload = (await response.json()) as SharePointCollection;
+    const rows = Array.isArray(payload.value)
+      ? payload.value
+      : Array.isArray(payload.d?.results)
+        ? payload.d.results
+        : [];
+
+    const warnings = rows.length
+      ? [
+          `اتصال وزارة التجارة ناجح: أُعيد ${rows.length} صف/صفوف GIS مجمعة للمدينة «${city}». هذه بيانات سياقية ولا تثبت تسجيل الكيان محل الفحص.`,
+          `مرجع المنهج والـAPI الرسمي: ${MC_GIS_DOC_URL}`,
+        ]
+      : [
+          `اتصال وزارة التجارة ناجح، ولم يُعد API صفوف GIS للمدينة «${city}». لا تُفسَّر هذه النتيجة على أنها نفي لوجود سجل تجاري للكيان.`,
+          `مرجع المنهج والـAPI الرسمي: ${MC_GIS_DOC_URL}`,
+        ];
+
+    return {
+      source: this.source,
+      observations: [],
+      warnings,
+      durationMs: Date.now() - startedAt,
+    };
+  }
 }
 
 export class NormalizedJsonConnector implements DueDiligenceConnector {
@@ -119,9 +210,9 @@ const SOURCE_CATALOG: Array<{
     tokenEnvKey: "DUE_DILIGENCE_COMMERCE_ADAPTER_TOKEN",
     source: {
       key: "saudi_commerce",
-      nameAr: "بيانات المنشأة التجارية",
+      nameAr: "بيانات المنشأة التجارية — مستوى الكيان",
       authority: "وزارة التجارة / المصدر التجاري المعتمد",
-      accessType: "OFFICIAL_API",
+      accessType: "AUTHORIZED",
       status: "APPROVED",
       reliability: 1,
     },
@@ -164,11 +255,11 @@ const SOURCE_CATALOG: Array<{
   },
 ];
 
-/** Only server-side environment configuration can enable a source. */
+/** Only server-side environment configuration can enable entity-level adapters. */
 export function buildConfiguredConnectors(
   env: ConnectorEnvironment = process.env
 ): DueDiligenceConnector[] {
-  const connectors: DueDiligenceConnector[] = [];
+  const connectors: DueDiligenceConnector[] = [new SaudiCommerceGisConnector()];
   for (const entry of SOURCE_CATALOG) {
     const endpoint = env[entry.envKey]?.trim();
     if (!endpoint) continue;
@@ -185,5 +276,8 @@ export function buildConfiguredConnectors(
 }
 
 export function dueDiligenceSourceCatalog(): DataSourceDefinition[] {
-  return SOURCE_CATALOG.map((entry) => ({ ...entry.source }));
+  return [
+    new SaudiCommerceGisConnector().source,
+    ...SOURCE_CATALOG.map((entry) => ({ ...entry.source })),
+  ];
 }
