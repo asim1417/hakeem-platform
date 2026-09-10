@@ -30,25 +30,28 @@ async function inspect(url: string) {
     const response = await fetch(url, {
       redirect: "follow",
       headers: { "user-agent": "Hakeem-Due-Diligence/0.1 (public-source-probe)" },
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(12_000),
     });
     const html = await response.text();
-    console.log(`\n=== ${url} ===`);
-    console.log(`STATUS=${response.status}`);
-    console.log(`FINAL_URL=${response.url}`);
-    console.log(`CONTENT_TYPE=${response.headers.get("content-type") ?? ""}`);
-    console.log(`LENGTH=${html.length}`);
-    for (const line of extractInteresting(html)) console.log(line);
+    const lines = [
+      `\n=== ${url} ===`,
+      `STATUS=${response.status}`,
+      `FINAL_URL=${response.url}`,
+      `CONTENT_TYPE=${response.headers.get("content-type") ?? ""}`,
+      `LENGTH=${html.length}`,
+      ...extractInteresting(html),
+    ];
     const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((m) => m[1]);
-    console.log("SCRIPT_SRCS=" + scripts.slice(0, 80).join(" | "));
+    lines.push("SCRIPT_SRCS=" + scripts.slice(0, 80).join(" | "));
+    return lines.join("\n");
   } catch (error) {
-    console.log(`\n=== ${url} ===`);
-    console.log(`ERROR=${error instanceof Error ? error.message : String(error)}`);
+    return `\n=== ${url} ===\nERROR=${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
 async function main() {
-  for (const page of pages) await inspect(page);
+  const results = await Promise.all(pages.map(inspect));
+  for (const result of results) console.log(result);
 }
 
 main().catch((error) => {
