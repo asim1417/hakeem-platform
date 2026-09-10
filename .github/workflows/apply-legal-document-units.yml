@@ -1,0 +1,85 @@
+name: Apply Legal Document Units Migration (#631 → Neon) — تطبيق هجرة طبقة الوحدات
+
+# يطبّق هجرة المرحلة الأولى (PR #631: 20260809120000_legal_document_units) على Neon
+# **قبل** دمج #631 — لمنع تعطّل الإنتاج:
+#   schema.prisma في #631 يضيف عمودًا عدديًّا `legal_systems.completeness`. وPrisma يختار
+#   كل الحقول العدديّة تلقائيًّا، فلو نُشر كود #631 قبل وجود العمود على Neon لانهارت كل
+#   قراءات legal_systems (النواة/البحث/المواد) = تعطّل إنتاج. فهذا الـ workflow يطبّق الهجرة أوّلًا.
+#
+# الهجرة إضافيّة تمامًا وidempotent (IF NOT EXISTS / EXCEPTION WHEN duplicate_object):
+#   • عمود واحد على legal_systems بقيمة افتراضيّة (لا يمسّ الصفوف القائمة).
+#   • أربعة جداول جديدة (legal_documents/document_units/document_relations/ingest_runs).
+#   • مفاتيح أجنبيّة RESTRICT/SET NULL — لا حذف ولا تعديل هدميّ. آمنة للتكرار.
+#
+# مقفولة: APPLY + NEON_RUNTIME_CONFIRMED + حارس مضيف Neon.
+# التسلسل الصحيح: شغّل هذا → تحقّق من الأخضر → ادمج #631 → شغّل test:document-units حيًّا.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'اكتب APPLY لتأكيد التطبيق على Neon'
+        type: string
+        required: true
+        default: ""
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: 'اكتب NEON_RUNTIME_CONFIRMED لتأكيد أن الهدف هو Neon'
+        type: string
+        required: true
+        default: ""
+      source_ref:
+        description: 'الفرع الذي يحوي ملفّ الهجرة (فرع #631)'
+        type: string
+        required: true
+        default: "aman/legal-db-update"
+
+concurrency:
+  group: apply-legal-document-units
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      PGURL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: "تحقّق من التأكيدات"
+        run: |
+          if [ "${{ inputs.confirm }}" != "APPLY" ]; then echo "::error::اكتب APPLY للتأكيد."; exit 1; fi
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then echo "::error::اكتب NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$PGURL" ]; then echo "::error::سرّ NEON_DATABASE_URL مفقود."; exit 1; fi
+
+      - name: "🛡️ حارس مضيف Neon"
+        run: |
+          host=$(printf '%s' "$PGURL" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "المضيف: $host"
+          echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::PGURL لا يبدو مضيف Neon — أوقفتُ التطبيق."; exit 1; }
+
+      - name: "جلب ملفّ الهجرة من فرع #631"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+
+      - name: "تثبيت psql"
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: "تطبيق الهجرة (idempotent، آمنة للتكرار)"
+        run: |
+          MIG="prisma/migrations/20260809120000_legal_document_units/migration.sql"
+          if [ ! -f "$MIG" ]; then echo "::error::ملفّ الهجرة غير موجود على الفرع '${{ inputs.source_ref }}': $MIG"; exit 1; fi
+          echo "── تطبيق $MIG ──"
+          psql "$PGURL" -v ON_ERROR_STOP=1 --no-psqlrc -f "$MIG"
+
+      - name: "تحقّق ما بعد التطبيق (يجب أن تكون كل القيم 1)"
+        run: |
+          psql "$PGURL" -v ON_ERROR_STOP=1 --no-psqlrc -A -F' | ' -P footer=off -c \
+            "SELECT 'legal_systems.completeness' AS check, count(*) AS present
+               FROM information_schema.columns WHERE table_name='legal_systems' AND column_name='completeness'
+             UNION ALL SELECT 'table legal_documents',  count(*) FROM information_schema.tables WHERE table_name='legal_documents'
+             UNION ALL SELECT 'table document_units',   count(*) FROM information_schema.tables WHERE table_name='document_units'
+             UNION ALL SELECT 'table document_relations',count(*) FROM information_schema.tables WHERE table_name='document_relations'
+             UNION ALL SELECT 'table ingest_runs',      count(*) FROM information_schema.tables WHERE table_name='ingest_runs';"
+          echo "✅ إن كانت كل القيم = 1 فالهجرة طُبِّقت. الآن آمنٌ دمج #631."
