@@ -209,6 +209,7 @@
     "test:jds-enforce": "tsx scripts/test-judicial-enforce.ts",
     "test:jds-trace": "tsx scripts/test-judicial-trace.ts",
     "test:jds-passes": "tsx scripts/test-judicial-passes.ts",
+    "test:legal-work": "node --experimental-strip-types --test test/legal-work/*.test.ts",
     "test:voice-state-machine": "tsx scripts/test-voice-state-machine.ts",
     "test:voice-mime-negotiation": "tsx scripts/test-voice-mime-negotiation.ts",
     "test:voice-legal-normalization": "tsx scripts/test-voice-legal-normalization.ts",
