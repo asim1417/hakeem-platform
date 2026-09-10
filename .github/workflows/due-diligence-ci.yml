@@ -25,21 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare verified DigiCert intermediate
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --location \
-            https://cacerts.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crt.pem \
-            --output /tmp/digicert-intermediate.pem
-          ACTUAL="$(openssl x509 -in /tmp/digicert-intermediate.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')"
-          EXPECTED="C8025F9FC65FDFC95B3CA8CC7867B9A587B5277973957917463FC813D0B625A9"
-          test "$ACTUAL" = "$EXPECTED"
-          echo "DIGICERT_INTERMEDIATE_B64=$(base64 -w0 /tmp/digicert-intermediate.pem)"
-
-      - name: Ministry of Commerce GIS live connectivity probe
-        env:
-          NODE_EXTRA_CA_CERTS: /tmp/digicert-intermediate.pem
+      - name: Ministry of Commerce production connector probe
         run: npx tsx scripts/probe-mc-gis.ts
 
       - name: Due diligence acceptance test
