@@ -25,17 +25,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Inspect Ministry of Commerce TLS certificate
+      - name: Prepare verified DigiCert intermediate
         shell: bash
         run: |
-          set -o pipefail
-          echo | openssl s_client -connect mc.gov.sa:443 -servername mc.gov.sa -showcerts 2>/dev/null \
-            | openssl x509 -noout -subject -issuer -serial -dates -ext authorityInfoAccess
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://cacerts.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crt.pem \
+            --output /tmp/digicert-intermediate.pem
+          ACTUAL="$(openssl x509 -in /tmp/digicert-intermediate.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')"
+          EXPECTED="C8025F9FC65FDFC95B3CA8CC7867B9A587B5277973957917463FC813D0B625A9"
+          test "$ACTUAL" = "$EXPECTED"
+          openssl x509 -in /tmp/digicert-intermediate.pem -noout -subject -issuer -dates
 
       - name: Ministry of Commerce GIS live connectivity probe
-        continue-on-error: true
         env:
-          NODE_OPTIONS: --use-system-ca
+          NODE_EXTRA_CA_CERTS: /tmp/digicert-intermediate.pem
         run: npx tsx scripts/probe-mc-gis.ts
 
       - name: Due diligence acceptance test
