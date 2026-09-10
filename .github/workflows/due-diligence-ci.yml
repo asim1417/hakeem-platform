@@ -6,6 +6,7 @@ on:
       - "lib/modules/due-diligence/**"
       - "app/api/due-diligence/**"
       - "scripts/test-due-diligence.ts"
+      - "scripts/probe-mc-gis.ts"
       - ".github/workflows/due-diligence-ci.yml"
 
 jobs:
@@ -23,6 +24,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Ministry of Commerce GIS live connectivity probe
+        run: npx tsx scripts/probe-mc-gis.ts
 
       - name: Due diligence acceptance test
         run: npx tsx scripts/test-due-diligence.ts
