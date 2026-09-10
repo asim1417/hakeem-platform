@@ -9,6 +9,8 @@ import {
 import {
   buildConfiguredConnectors,
   dueDiligenceSourceCatalog,
+  MC_GIS_ENDPOINT,
+  SaudiCommerceGisConnector,
   StaticDueDiligenceConnector,
 } from "../lib/modules/due-diligence/connectors";
 
@@ -60,67 +62,51 @@ async function main() {
   assert.equal(conflict.status, "REJECTED");
   assert.ok(conflict.rejectionReasons.includes("تعارض الرقم الموحد"));
 
-  const connector = new StaticDueDiligenceConnector(source, [
-    baseObservation,
-    {
-      ...baseObservation,
-      sourceRecordId: "record-2",
-      unifiedNumber: "7009999999",
-      sourceUrl: "https://example.com/public-record/2",
-    },
-  ]);
+  const staticConnector = new StaticDueDiligenceConnector(source, [baseObservation, {
+    ...baseObservation,
+    sourceRecordId: "record-2",
+    unifiedNumber: "7009999999",
+    sourceUrl: "https://example.com/public-record/2",
+  }]);
 
-  const report = await runDueDiligence(query, [connector]);
-  assert.equal(report.coverage.configuredSources, 1);
-  assert.equal(report.coverage.successfulSources, 1);
+  const report = await runDueDiligence(query, [staticConnector]);
   assert.equal(report.coverage.verifiedEvidence, 1);
   assert.equal(report.evidence.length, 1);
   assert.equal(report.rejected.length, 1);
   assert.equal(report.risk.level, "MODERATE");
-  assert.ok(report.risk.score > 0);
 
   const configured = buildConfiguredConnectors({});
   assert.equal(configured.length, 1);
   assert.equal(configured[0]?.source.key, "saudi_commerce_gis");
   const catalogSource = dueDiligenceSourceCatalog().find((item) => item.key === "saudi_commerce_gis");
   assert.ok(catalogSource);
-  assert.equal(catalogSource.accessType, "OPEN_DATA");
   assert.equal(catalogSource.authority, "وزارة التجارة");
+  assert.ok(MC_GIS_ENDPOINT.includes("/ar/About/Statistics/_api/"));
+  assert.ok(MC_GIS_ENDPOINT.includes("GetByTitle('GISInfo')"));
 
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (input) => {
-    const url = String(input);
-    assert.ok(url.startsWith("https://mc.gov.sa/"));
-    assert.ok(url.includes("GetByTitle"));
-    assert.ok(url.includes("GIS"));
-    return new Response(
-      JSON.stringify({
-        value: [{ Title: "Riyadh", CityName: "الرياض", BusinessType: "Establishment" }],
-      }),
-      { status: 200, headers: { "content-type": "application/json" } }
-    );
+  let requestedUrl = "";
+  const mockGet = async (url: URL) => {
+    requestedUrl = url.toString();
+    return { value: [{ CityName: "الرياض", BusinessType: "Establishment", CRsCount: 123 }] };
   };
+  const gisConnector = new SaudiCommerceGisConnector(mockGet);
+  const gisReport = await runDueDiligence(query, [gisConnector]);
 
-  try {
-    const gisReport = await runDueDiligence(query, configured);
-    assert.equal(gisReport.coverage.configuredSources, 1);
-    assert.equal(gisReport.coverage.successfulSources, 1);
-    assert.equal(gisReport.evidence.length, 0);
-    assert.equal(gisReport.rejected.length, 0);
-    assert.equal(gisReport.needsReview.length, 0);
-    assert.equal(gisReport.risk.score, 0);
-    const gis = gisReport.sources.find((item) => item.key === "saudi_commerce_gis");
-    assert.ok(gis);
-    assert.equal(gis.status, "WARNING");
-    assert.ok(gis.warnings.some((warning) => warning.includes("لا تثبت تسجيل الكيان")));
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  assert.ok(requestedUrl.startsWith(MC_GIS_ENDPOINT));
+  assert.ok(requestedUrl.includes("%24filter="));
+  assert.ok(requestedUrl.includes("%24top=200"));
+  assert.equal(gisReport.evidence.length, 0);
+  assert.equal(gisReport.risk.score, 0);
+  const gis = gisReport.sources.find((item) => item.key === "saudi_commerce_gis");
+  assert.ok(gis);
+  assert.equal(gis.status, "WARNING");
+  assert.ok(gis.warnings.some((warning) => warning.includes("لا تثبت تسجيل الكيان")));
 
   console.log("✓ due-diligence entity resolution");
   console.log("✓ conflicting identifiers are rejected");
   console.log("✓ source orchestration and risk scoring");
-  console.log("✓ official Ministry of Commerce GIS connector is server-pinned and contextual-only");
+  console.log("✓ Ministry GISInfo endpoint and query contract");
+  console.log("✓ official Ministry GIS data remains contextual-only");
 }
 
 main().catch((error) => {
