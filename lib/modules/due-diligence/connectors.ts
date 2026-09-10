@@ -6,6 +6,7 @@ import type {
   SourceRunResult,
 } from "./core";
 import { ministryCommerceGetJson } from "./mc-tls";
+import { SAUDI_BANKRUPTCY_SOURCE, SaudiBankruptcyConnector } from "./bankruptcy";
 
 /**
  * Contract expected from a trusted source adapter.
@@ -37,7 +38,7 @@ type SharePointCollection = {
   d?: { results?: unknown[] };
 };
 
-type MinistryJsonGet = <T>(url: URL, signal?: AbortSignal) => Promise<T>;
+type MinistryJsonGet = (url: URL, signal?: AbortSignal) => Promise<SharePointCollection>;
 
 /** Current endpoint is taken from the live GISInfo page JavaScript. */
 export const MC_GIS_ENDPOINT =
@@ -95,7 +96,7 @@ export class SaudiCommerceGisConnector implements DueDiligenceConnector {
     endpoint.searchParams.set("$filter", `(CityName eq ${odataString(city)})`);
     endpoint.searchParams.set("$top", "200");
 
-    const payload = await this.getJson<SharePointCollection>(endpoint, signal);
+    const payload = await this.getJson(endpoint, signal);
     const rows = Array.isArray(payload.value)
       ? payload.value
       : Array.isArray(payload.d?.results)
@@ -210,18 +211,6 @@ const SOURCE_CATALOG: Array<{
     },
   },
   {
-    envKey: "DUE_DILIGENCE_BANKRUPTCY_ADAPTER_URL",
-    tokenEnvKey: "DUE_DILIGENCE_BANKRUPTCY_ADAPTER_TOKEN",
-    source: {
-      key: "saudi_bankruptcy",
-      nameAr: "سجل وإعلانات الإفلاس",
-      authority: "لجنة الإفلاس / المصدر الرسمي المعتمد",
-      accessType: "OFFICIAL_API",
-      status: "APPROVED",
-      reliability: 1,
-    },
-  },
-  {
     envKey: "DUE_DILIGENCE_IP_ADAPTER_URL",
     tokenEnvKey: "DUE_DILIGENCE_IP_ADAPTER_TOKEN",
     source: {
@@ -252,6 +241,17 @@ export function buildConfiguredConnectors(
   env: ConnectorEnvironment = process.env
 ): DueDiligenceConnector[] {
   const connectors: DueDiligenceConnector[] = [new SaudiCommerceGisConnector()];
+
+  const bankruptcyEndpoint = env.DUE_DILIGENCE_BANKRUPTCY_ADAPTER_URL?.trim();
+  if (bankruptcyEndpoint) {
+    connectors.push(
+      new SaudiBankruptcyConnector(
+        bankruptcyEndpoint,
+        env.DUE_DILIGENCE_BANKRUPTCY_ADAPTER_TOKEN?.trim()
+      )
+    );
+  }
+
   for (const entry of SOURCE_CATALOG) {
     const endpoint = env[entry.envKey]?.trim();
     if (!endpoint) continue;
@@ -270,6 +270,7 @@ export function buildConfiguredConnectors(
 export function dueDiligenceSourceCatalog(): DataSourceDefinition[] {
   return [
     new SaudiCommerceGisConnector().source,
+    SAUDI_BANKRUPTCY_SOURCE,
     ...SOURCE_CATALOG.map((entry) => ({ ...entry.source })),
   ];
 }
