@@ -25,7 +25,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Inspect Ministry of Commerce TLS certificate
+        shell: bash
+        run: |
+          set -o pipefail
+          echo | openssl s_client -connect mc.gov.sa:443 -servername mc.gov.sa -showcerts 2>/dev/null \
+            | openssl x509 -noout -subject -issuer -serial -dates -ext authorityInfoAccess
+
       - name: Ministry of Commerce GIS live connectivity probe
+        continue-on-error: true
         env:
           NODE_OPTIONS: --use-system-ca
         run: npx tsx scripts/probe-mc-gis.ts
