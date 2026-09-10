@@ -26,6 +26,8 @@ jobs:
         run: npm ci
 
       - name: Ministry of Commerce GIS live connectivity probe
+        env:
+          NODE_OPTIONS: --use-system-ca
         run: npx tsx scripts/probe-mc-gis.ts
 
       - name: Due diligence acceptance test
