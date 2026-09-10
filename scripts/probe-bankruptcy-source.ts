@@ -47,4 +47,11 @@ async function inspect(url: string) {
   }
 }
 
-for (const page of pages) await inspect(page);
+async function main() {
+  for (const page of pages) await inspect(page);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
