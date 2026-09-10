@@ -13,6 +13,7 @@ import {
   SaudiCommerceGisConnector,
   StaticDueDiligenceConnector,
 } from "../lib/modules/due-diligence/connectors";
+import { SaudiBankruptcyConnector } from "../lib/modules/due-diligence/bankruptcy";
 
 const source: DataSourceDefinition = {
   key: "test_official",
@@ -88,11 +89,11 @@ async function main() {
   assert.ok(MC_GIS_ENDPOINT.includes("GetByTitle('GISInfo')"));
 
   let requestedUrl = "";
-  const mockGet = async <T>(url: URL): Promise<T> => {
+  const mockGet = async (url: URL) => {
     requestedUrl = url.toString();
     return {
       value: [{ CityName: "الرياض", BusinessType: "Establishment", CRsCount: 123 }],
-    } as T;
+    };
   };
   const gisConnector = new SaudiCommerceGisConnector(mockGet);
   const gisReport = await runDueDiligence(query, [gisConnector]);
@@ -107,11 +108,79 @@ async function main() {
   assert.equal(gis.status, "WARNING");
   assert.ok(gis.warnings.some((warning) => warning.includes("لا تثبت تسجيل الكيان")));
 
+  let bankruptcyAdapterUrl = "";
+  let bankruptcyRequestCr = "";
+  const bankruptcyConnector = new SaudiBankruptcyConnector(
+    "https://adapter.example.com/bankruptcy",
+    "fixture-token",
+    async (endpoint, body) => {
+      bankruptcyAdapterUrl = endpoint.toString();
+      bankruptcyRequestCr = body.commercialRegistration ?? "";
+      return {
+        checkedAt: now,
+        records: [
+          {
+            id: "fixture-bankruptcy-1",
+            debtorName: "شركة المثال للتجارة المحدودة",
+            commercialRegistration: "1010123456",
+            procedureType: "إعادة التنظيم المالي",
+            title: "واقعة إفلاس رسمية للاختبار فقط",
+            sourceUrl:
+              "https://bankruptcy.gov.sa/ar/Other/BankruptcyRecord/Pages/recordDetails.aspx?recordid=fixture-1",
+            documentDate: now,
+          },
+          {
+            id: "fixture-bankruptcy-conflict",
+            debtorName: "شركة المثال للتجارة المحدودة",
+            commercialRegistration: "1010999999",
+            procedureType: "التصفية",
+            sourceUrl:
+              "https://bankruptcy.gov.sa/ar/Announcements/Pages/announcementDetails.aspx?AdID=fixture-2",
+            documentDate: now,
+          },
+          {
+            id: "fixture-external-link",
+            debtorName: "شركة المثال للتجارة المحدودة",
+            commercialRegistration: "1010123456",
+            sourceUrl: "https://example.com/not-official-evidence",
+          },
+        ],
+      };
+    }
+  );
+
+  const bankruptcyReport = await runDueDiligence(query, [bankruptcyConnector]);
+  assert.equal(bankruptcyAdapterUrl, "https://adapter.example.com/bankruptcy");
+  assert.equal(bankruptcyRequestCr, "1010123456");
+  assert.equal(bankruptcyReport.evidence.length, 1);
+  assert.equal(bankruptcyReport.evidence[0]?.category, "bankruptcy");
+  assert.equal(bankruptcyReport.evidence[0]?.status, "VERIFIED");
+  assert.equal(bankruptcyReport.rejected.length, 1);
+  assert.ok(bankruptcyReport.rejected[0]?.rejectionReasons.includes("تعارض السجل التجاري"));
+  assert.equal(bankruptcyReport.risk.level, "MODERATE");
+  assert.ok(bankruptcyReport.risk.score > 0);
+  const bankruptcySource = bankruptcyReport.sources.find((item) => item.key === "saudi_bankruptcy");
+  assert.ok(bankruptcySource);
+  assert.ok(bankruptcySource.warnings.some((warning) => warning.includes("رابط الإثبات")));
+
+  const configuredWithBankruptcy = buildConfiguredConnectors({
+    DUE_DILIGENCE_BANKRUPTCY_ADAPTER_URL: "https://adapter.example.com/bankruptcy",
+    DUE_DILIGENCE_BANKRUPTCY_ADAPTER_TOKEN: "fixture-token",
+  });
+  assert.equal(configuredWithBankruptcy.length, 2);
+  assert.equal(configuredWithBankruptcy[1]?.source.key, "saudi_bankruptcy");
+  assert.equal(configuredWithBankruptcy[1]?.source.accessType, "AUTHORIZED");
+  const bankruptcyCatalog = dueDiligenceSourceCatalog().find((item) => item.key === "saudi_bankruptcy");
+  assert.ok(bankruptcyCatalog);
+  assert.equal(bankruptcyCatalog.authority, "لجنة الإفلاس — إيسار");
+
   console.log("✓ due-diligence entity resolution");
   console.log("✓ conflicting identifiers are rejected");
   console.log("✓ source orchestration and risk scoring");
   console.log("✓ Ministry GISInfo endpoint and query contract");
   console.log("✓ official Ministry GIS data remains contextual-only");
+  console.log("✓ Saudi bankruptcy adapter accepts only official Commission evidence URLs");
+  console.log("✓ bankruptcy CR conflicts are rejected and excluded from risk scoring");
 }
 
 main().catch((error) => {
