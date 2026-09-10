@@ -6,6 +6,7 @@ on:
       - "lib/modules/due-diligence/**"
       - "app/api/due-diligence/**"
       - "scripts/test-due-diligence.ts"
+      - "scripts/probe-bankruptcy-source.ts"
       - ".github/workflows/due-diligence-ci.yml"
   workflow_dispatch:
 
@@ -24,6 +25,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Inspect Bankruptcy Commission public sources
+        run: npx tsx scripts/probe-bankruptcy-source.ts
 
       - name: Due diligence acceptance test
         run: npx tsx scripts/test-due-diligence.ts
