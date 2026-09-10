@@ -35,13 +35,14 @@ jobs:
           ACTUAL="$(openssl x509 -in /tmp/digicert-intermediate.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')"
           EXPECTED="C8025F9FC65FDFC95B3CA8CC7867B9A587B5277973957917463FC813D0B625A9"
           test "$ACTUAL" = "$EXPECTED"
+          cat /etc/ssl/certs/ca-certificates.crt /tmp/digicert-intermediate.pem > /tmp/mc-ca-bundle.pem
           openssl x509 -in /tmp/digicert-intermediate.pem -noout -subject -issuer -dates
 
       - name: Inspect current Ministry GIS frontend
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --location \
+          curl --cacert /tmp/mc-ca-bundle.pem --fail --silent --show-error --location \
             https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx \
             --output /tmp/gis.html
           echo '--- GIS/API references in page ---'
