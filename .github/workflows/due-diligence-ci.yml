@@ -37,7 +37,20 @@ jobs:
           test "$ACTUAL" = "$EXPECTED"
           openssl x509 -in /tmp/digicert-intermediate.pem -noout -subject -issuer -dates
 
-      - name: Ministry of Commerce GIS live connectivity probe
+      - name: Inspect current Ministry GIS frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx \
+            --output /tmp/gis.html
+          echo '--- GIS/API references in page ---'
+          grep -Ein '_api|GIS|ajax|api/|Commercial-data|\.js' /tmp/gis.html | head -n 120 || true
+          echo '--- Script sources ---'
+          grep -Eo '<script[^>]+src="[^"]+"' /tmp/gis.html | sed -E 's/.*src="([^"]+)"/\1/' | head -n 100 || true
+
+      - name: Ministry of Commerce legacy GIS API probe
+        continue-on-error: true
         env:
           NODE_EXTRA_CA_CERTS: /tmp/digicert-intermediate.pem
         run: npx tsx scripts/probe-mc-gis.ts
