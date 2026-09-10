@@ -5,6 +5,7 @@ import type {
   RawObservation,
   SourceRunResult,
 } from "./core";
+import { ministryCommerceGetJson } from "./mc-tls";
 
 /**
  * Contract expected from a trusted source adapter.
@@ -36,8 +37,12 @@ type SharePointCollection = {
   d?: { results?: unknown[] };
 };
 
-const MC_GIS_ENDPOINT = "https://mc.gov.sa/_api/web/lists/GetByTitle('GIS')/items";
-const MC_GIS_DOC_URL = "https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx";
+type MinistryJsonGet = <T>(url: URL, signal?: AbortSignal) => Promise<T>;
+
+/** Current endpoint is taken from the live GISInfo page JavaScript. */
+export const MC_GIS_ENDPOINT =
+  "https://mc.gov.sa/ar/About/Statistics/_api/web/lists/GetByTitle('GISInfo')/items";
+export const MC_GIS_DOC_URL = "https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx";
 
 function assertHttpsUrl(value: string): URL {
   const url = new URL(value);
@@ -54,11 +59,10 @@ function odataString(value: string): string {
 /**
  * Official Ministry of Commerce open-data connector.
  *
- * IMPORTANT: the published GIS API is aggregate market/registry context. It is
- * NOT treated as proof that a named entity owns or holds a particular CR.
- * Therefore it deliberately returns zero entity observations; its result is
- * surfaced only through source warnings/coverage until an official entity-level
- * API/authorized adapter is configured.
+ * IMPORTANT: GISInfo contains aggregate commercial-registry context such as
+ * CityName, BusinessType and CRsCount. It is NOT proof that a named entity owns
+ * or holds a particular CR. Consequently this connector deliberately returns
+ * zero entity observations and cannot change an entity's risk score.
  */
 export class SaudiCommerceGisConnector implements DueDiligenceConnector {
   public readonly source: DataSourceDefinition = {
@@ -70,6 +74,8 @@ export class SaudiCommerceGisConnector implements DueDiligenceConnector {
     reliability: 1,
     baseUrl: "https://mc.gov.sa",
   };
+
+  constructor(private readonly getJson: MinistryJsonGet = ministryCommerceGetJson) {}
 
   async collect(query: EntityQuery, signal?: AbortSignal): Promise<SourceRunResult> {
     const startedAt = Date.now();
@@ -89,21 +95,7 @@ export class SaudiCommerceGisConnector implements DueDiligenceConnector {
     endpoint.searchParams.set("$filter", `(CityName eq ${odataString(city)})`);
     endpoint.searchParams.set("$top", "200");
 
-    const response = await fetch(endpoint, {
-      method: "GET",
-      signal,
-      headers: {
-        accept: "application/json;odata=nometadata, application/json",
-        "user-agent": "Hakeem-Due-Diligence/0.1 (official-open-data-client)",
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error(`saudi_commerce_gis: Ministry of Commerce returned HTTP ${response.status}`);
-    }
-
-    const payload = (await response.json()) as SharePointCollection;
+    const payload = await this.getJson<SharePointCollection>(endpoint, signal);
     const rows = Array.isArray(payload.value)
       ? payload.value
       : Array.isArray(payload.d?.results)
@@ -112,12 +104,12 @@ export class SaudiCommerceGisConnector implements DueDiligenceConnector {
 
     const warnings = rows.length
       ? [
-          `اتصال وزارة التجارة ناجح: أُعيد ${rows.length} صف/صفوف GIS مجمعة للمدينة «${city}». هذه بيانات سياقية ولا تثبت تسجيل الكيان محل الفحص.`,
-          `مرجع المنهج والـAPI الرسمي: ${MC_GIS_DOC_URL}`,
+          `اتصال وزارة التجارة ناجح: أُعيد ${rows.length} صف/صفوف GISInfo مجمعة للمدينة «${city}». هذه بيانات سياقية ولا تثبت تسجيل الكيان محل الفحص.`,
+          `مرجع المصدر الرسمي: ${MC_GIS_DOC_URL}`,
         ]
       : [
-          `اتصال وزارة التجارة ناجح، ولم يُعد API صفوف GIS للمدينة «${city}». لا تُفسَّر هذه النتيجة على أنها نفي لوجود سجل تجاري للكيان.`,
-          `مرجع المنهج والـAPI الرسمي: ${MC_GIS_DOC_URL}`,
+          `اتصال وزارة التجارة ناجح، ولم يُعد GISInfo صفوفًا للمدينة «${city}». لا تُفسَّر هذه النتيجة على أنها نفي لوجود سجل تجاري للكيان.`,
+          `مرجع المصدر الرسمي: ${MC_GIS_DOC_URL}`,
         ];
 
     return {
