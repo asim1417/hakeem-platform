@@ -35,23 +35,9 @@ jobs:
           ACTUAL="$(openssl x509 -in /tmp/digicert-intermediate.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')"
           EXPECTED="C8025F9FC65FDFC95B3CA8CC7867B9A587B5277973957917463FC813D0B625A9"
           test "$ACTUAL" = "$EXPECTED"
-          cat /etc/ssl/certs/ca-certificates.crt /tmp/digicert-intermediate.pem > /tmp/mc-ca-bundle.pem
-          openssl x509 -in /tmp/digicert-intermediate.pem -noout -subject -issuer -dates
+          echo "DIGICERT_INTERMEDIATE_B64=$(base64 -w0 /tmp/digicert-intermediate.pem)"
 
-      - name: Inspect current Ministry GIS frontend
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --cacert /tmp/mc-ca-bundle.pem --fail --silent --show-error --location \
-            https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx \
-            --output /tmp/gis.html
-          echo '--- GIS/API references in page ---'
-          grep -Ein '_api|GIS|ajax|api/|Commercial-data|\.js' /tmp/gis.html | head -n 120 || true
-          echo '--- Script sources ---'
-          grep -Eo '<script[^>]+src="[^"]+"' /tmp/gis.html | sed -E 's/.*src="([^"]+)"/\1/' | head -n 100 || true
-
-      - name: Ministry of Commerce legacy GIS API probe
-        continue-on-error: true
+      - name: Ministry of Commerce GIS live connectivity probe
         env:
           NODE_EXTRA_CA_CERTS: /tmp/digicert-intermediate.pem
         run: npx tsx scripts/probe-mc-gis.ts
