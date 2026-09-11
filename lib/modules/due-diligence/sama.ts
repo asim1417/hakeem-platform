@@ -66,8 +66,13 @@ function extractField(windowText: string, label: string, stopLabels: string[]): 
   return value ? value.slice(0, 220) : undefined;
 }
 
-function entityNameNearUnifiedNumber(pageText: string, unifiedNumber: string): string | undefined {
-  const index = pageText.indexOf(unifiedNumber);
+function labeledUnifiedNumberIndex(pageText: string, unifiedNumber: string): number {
+  const escaped = unifiedNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = new RegExp(`الرقم\\s+الموحد\\s+${escaped}(?!\\d)`).exec(pageText);
+  return match?.index ?? -1;
+}
+
+function entityNameNearIndex(pageText: string, index: number): string | undefined {
   if (index < 0) return undefined;
   const windowText = takeWindow(pageText, index);
   return extractField(windowText, "اسم الشركة", [
@@ -80,8 +85,7 @@ function entityNameNearUnifiedNumber(pageText: string, unifiedNumber: string): s
   ]);
 }
 
-function licenseNearUnifiedNumber(pageText: string, unifiedNumber: string): string | undefined {
-  const index = pageText.indexOf(unifiedNumber);
+function licenseNearIndex(pageText: string, index: number): string | undefined {
   if (index < 0) return undefined;
   const windowText = takeWindow(pageText, index, 120, 500);
   return extractField(windowText, "رقم الترخيص", ["قم بزيارة موقع الشركة", "اسم الشركة", "شركات التمويل"]);
@@ -107,39 +111,39 @@ export class SamaFinanceEntitiesConnector implements DueDiligenceConnector {
 
     if (query.unifiedNumber) {
       const unified = query.unifiedNumber.replace(/\D/g, "");
-      const index = unified ? pageText.indexOf(unified) : -1;
+      const index = unified ? labeledUnifiedNumberIndex(pageText, unified) : -1;
       if (index >= 0) {
-        const extractedName = entityNameNearUnifiedNumber(pageText, unified);
-        const licence = licenseNearUnifiedNumber(pageText, unified);
-        const sourceName = extractedName ?? query.name;
+        const extractedName = entityNameNearIndex(pageText, index);
+        const licence = licenseNearIndex(pageText, index);
         const queryName = normalizeArabicEntityName(query.name);
-        const sourceNameNormalized = normalizeArabicEntityName(sourceName);
+        const sourceNameNormalized = extractedName ? normalizeArabicEntityName(extractedName) : "";
 
-        // If the page structure did not expose the name, we keep the user's name only as a label,
-        // but the exact official unified-number hit remains explicitly documented in matchReasons.
         observations.push({
           sourceKey: this.source.key,
           sourceRecordId: `unified:${unified}`,
-          entityName: sourceName,
+          // Never borrow the user's name as though SAMA published it. Without an extracted
+          // official name, the unified-number hit remains NEEDS_REVIEW rather than VERIFIED.
+          entityName: extractedName ?? `كيان مرخص — الرقم الموحد ${unified}`,
           unifiedNumber: unified,
           category: "regulatory_license_listing",
           title: licence
             ? `ترخيص تمويل منشور لدى البنك المركزي — ${licence}`
             : "ظهر الرقم الموحد في قائمة شركات التمويل المرخصة",
-          summary:
-            extractedName && queryName !== sourceNameNormalized
+          summary: extractedName
+            ? queryName !== sourceNameNormalized
               ? `الاسم المنشور قرب الرقم الموحد: ${extractedName}. يجب مراجعة اختلاف الاسم قبل الاعتماد النهائي.`
-              : "مطابقة إيجابية للرقم الموحد في القائمة الرسمية العامة لشركات التمويل المرخصة لدى البنك المركزي السعودي.",
+              : "مطابقة إيجابية للرقم الموحد والاسم في القائمة الرسمية العامة لشركات التمويل المرخصة لدى البنك المركزي السعودي."
+            : "مطابقة إيجابية لحقل الرقم الموحد في القائمة الرسمية، لكن تعذر استخراج اسم الشركة من بنية الصفحة؛ يلزم التحقق البشري قبل نسبة الترخيص للكيان.",
           sourceUrl: SAMA_FINANCE_ENTITIES_URL,
           fetchedAt,
           raw: {
-            matchType: "exact_unified_number_in_public_list",
+            matchType: "labeled_exact_unified_number_in_public_list",
             extractedName: extractedName ?? null,
             licenceNumber: licence ?? null,
           },
         });
         if (!extractedName) {
-          warnings.push("تم العثور على الرقم الموحد، لكن تعذر استخراج اسم الشركة من بنية الصفحة؛ راجع المصدر الرسمي قبل الاعتماد النهائي.");
+          warnings.push("تم العثور على حقل الرقم الموحد، لكن تعذر استخراج اسم الشركة من بنية الصفحة؛ النتيجة تحتاج مراجعة ولا تُعتمد تلقائيًا.");
         }
       } else {
         warnings.push(
