@@ -10,7 +10,7 @@ on:
       - "components/due-diligence/**"
       - "components/AppShell.tsx"
       - "lib/i18n/dictionaries.ts"
-      - "scripts/test-due-diligence.ts"
+      - "scripts/test-due-diligence*.ts"
       - ".github/workflows/due-diligence-ci.yml"
   workflow_dispatch:
 
@@ -32,6 +32,9 @@ jobs:
 
       - name: Due diligence acceptance test
         run: npx tsx scripts/test-due-diligence.ts
+
+      - name: Due diligence phase 3 regulator test
+        run: npx tsx scripts/test-due-diligence-phase3.ts
 
       - name: Typecheck
         run: npm run typecheck
