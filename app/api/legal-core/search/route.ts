@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
+import { normalizeArabicText, type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -75,8 +76,53 @@ export async function GET(request: NextRequest) {
   });
 }
 
+/** كلمات tsquery مُطبَّعة (نفس تطبيع search_norm) بصيغة OR — نظير بحث المواد. */
+function judgmentTsQuery(query: string): string {
+  const words = new Set<string>();
+  for (const w of normalizeArabicText(query).split(/\s+/)) if (w.length >= 2) words.add(w);
+  return [...words].slice(0, 40).join(" | ");
+}
+
+/**
+ * بحث الأحكام:
+ *   ① مفهرس أوّلًا: search_norm العربيّ المُطبَّع عبر فهرس GIN (نظير المواد) — يعالج تباين
+ *      الصرف («مقاولات» ⇄ «للمقاولات»)، يرتّب بـ ts_rank_cd، ويبحث في المتن كلّه لا حقلٍ ضيّق.
+ *   ② سقوط آمن للبحث المعجميّ (ILIKE) عند غياب العمود (قبل الهجرة/التعبئة) أو عدم وجود مطابقة —
+ *      فلا ينكسر شيءٌ قبل تشغيل الهجرة والتعبئة، ويبقى الاستدعاء قائمًا أثناء الانتقال.
+ */
 async function searchJudgments(query: string, page: number, limit: number) {
   if (!query.trim()) return [];
+  const tsq = judgmentTsQuery(query);
+  if (tsq) {
+    try {
+      const ranked = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
+        // التعبير يطابق حرفيًّا فهرس idx_judicial_cases_search_norm_tsv (وإلّا مسحٌ تسلسليّ).
+        `SELECT id FROM judicial_cases
+         WHERE search_norm IS NOT NULL
+           AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
+         ORDER BY ts_rank_cd(to_tsvector('simple', coalesce(search_norm, '')), to_tsquery('simple', $1)) DESC
+         LIMIT ${limit} OFFSET ${(page - 1) * limit}`,
+        tsq
+      );
+      if (ranked.length) {
+        const ids = ranked.map((r) => r.id);
+        const rows = await prisma.judicialCase.findMany({
+          where: { id: { in: ids } },
+          include: { articleLinks: { include: { article: true }, take: 5 } }
+        });
+        const rank = new Map(ids.map((id, i) => [id, i]));
+        rows.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+        return rows.map((judgment) => mapJudgment(judgment, query));
+      }
+    } catch {
+      /* العمود/الفهرس غير مطبَّق بعد → سقوط للمعجميّ */
+    }
+  }
+  return searchJudgmentsLexical(query, page, limit);
+}
+
+/** المسار المعجميّ الاحتياطيّ (السلوك السابق) — ILIKE على أعمدة الحكم الخام. */
+async function searchJudgmentsLexical(query: string, page: number, limit: number) {
   const judgments = await prisma.judicialCase.findMany({
     where: {
       OR: [
@@ -92,8 +138,15 @@ async function searchJudgments(query: string, page: number, limit: number) {
     skip: (page - 1) * limit,
     take: limit
   });
+  return judgments.map((judgment) => mapJudgment(judgment, query));
+}
 
-  return judgments.map((judgment) => ({
+type JudgmentWithLinks = Prisma.JudicialCaseGetPayload<{
+  include: { articleLinks: { include: { article: true } } };
+}>;
+
+function mapJudgment(judgment: JudgmentWithLinks, query: string) {
+  return ({
     id: judgment.id,
     type: "judgment",
     resultType: "judicial_case",
@@ -102,7 +155,7 @@ async function searchJudgments(query: string, page: number, limit: number) {
     articleNumber: null,
     title: judgment.judgmentTitle ?? "حكم قضائي مستورد",
     articleTitle: judgment.judgmentTitle ?? "حكم قضائي مستورد",
-    snippet: buildJudgmentSnippet(judgment.judgmentText, query),
+    snippet: buildJudgmentSnippet(judgment.judgmentText ?? "", query),
     matchedParagraphs: [],
     matchedTerms: [query],
     category: judgment.classification,
@@ -115,7 +168,7 @@ async function searchJudgments(query: string, page: number, limit: number) {
     matchType: "contains",
     relevanceReason: "تطابق داخل مستودع الأحكام القضائية",
     relevanceScore: judgment.articleLinks.length ? 18 : 10
-  }));
+  });
 }
 
 function buildJudgmentSnippet(text: string, query: string) {
