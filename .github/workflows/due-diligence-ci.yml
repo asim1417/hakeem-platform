@@ -5,6 +5,10 @@ on:
     paths:
       - "lib/modules/due-diligence/**"
       - "app/api/due-diligence/**"
+      - "app/dashboard/due-diligence/**"
+      - "components/due-diligence/**"
+      - "components/AppShell.tsx"
+      - "lib/i18n/dictionaries.ts"
       - "scripts/test-due-diligence.ts"
       - ".github/workflows/due-diligence-ci.yml"
   workflow_dispatch:
