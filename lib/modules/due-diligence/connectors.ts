@@ -216,10 +216,11 @@ const SOURCE_CATALOG: Array<{
     source: {
       key: "saudi_ip",
       nameAr: "الملكية الفكرية والعلامات",
-      authority: "الهيئة السعودية للملكية الفكرية / المصدر المعتمد",
-      accessType: "OFFICIAL_API",
+      authority: "الهيئة السعودية للملكية الفكرية / محرك البحث المعتمد",
+      accessType: "AUTHORIZED",
       status: "APPROVED",
       reliability: 1,
+      baseUrl: "https://www.saip.gov.sa",
     },
   },
   {
@@ -229,7 +230,7 @@ const SOURCE_CATALOG: Array<{
       key: "saudi_regulatory",
       nameAr: "التراخيص والقرارات التنظيمية",
       authority: "الجهة التنظيمية المختصة / المصدر المعتمد",
-      accessType: "OFFICIAL_API",
+      accessType: "AUTHORIZED",
       status: "APPROVED",
       reliability: 1,
     },
