@@ -58,6 +58,20 @@ function decode(value: string) {
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function pageSearchText(value: string) {
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/\\u([0-9a-f]{4})/gi, (_match, hex: string) => String.fromCharCode(Number.parseInt(hex, 16)))
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -97,12 +111,13 @@ export class NcecQualifiedAgenciesConnector implements DueDiligenceConnector {
     const started = Date.now();
     const html = await this.get(new URL(NCEC_QUALIFIED_ORGS_URL), signal);
     const needle = normalizeArabicEntityName(query.name);
-    const matches = parseAgencies(html).filter((agency) => {
+    const structuredMatches = parseAgencies(html).filter((agency) => {
       const candidate = normalizeArabicEntityName(agency.name);
       return needle.length >= 3 && (candidate.includes(needle) || needle.includes(candidate));
     });
     const fetchedAt = new Date().toISOString();
-    const observations: RawObservation[] = matches.map((agency) => ({
+
+    const observations: RawObservation[] = structuredMatches.map((agency) => ({
       sourceKey: this.source.key,
       entityName: agency.name,
       category: "regulatory_license_listing",
@@ -114,8 +129,26 @@ export class NcecQualifiedAgenciesConnector implements DueDiligenceConnector {
       ].filter(Boolean).join(" | ") || undefined,
       sourceUrl: NCEC_QUALIFIED_ORGS_URL,
       fetchedAt,
-      raw: { matchType: "published-name", service: agency.service, classification: agency.classification },
+      raw: { matchType: "structured-published-name", service: agency.service, classification: agency.classification },
     }));
+
+    if (!observations.length && needle.length >= 3) {
+      const normalizedPage = normalizeArabicEntityName(pageSearchText(html));
+      if (normalizedPage.includes(needle)) {
+        observations.push({
+          sourceKey: this.source.key,
+          sourceRecordId: `name:${needle}`,
+          entityName: query.name,
+          category: "regulatory_license_listing",
+          title: "ظهر اسم الكيان في قائمة الجهات المؤهلة للخدمات البيئية لدى NCEC",
+          summary:
+            "تم إثبات ظهور الاسم في الصفحة الرسمية، لكن تخطيط الصفحة الحالي لم يسمح باستخراج حقول الخدمة والتصنيف بصورة موثوقة؛ لذلك تبقى النتيجة للمراجعة دون تخمين أي بيانات إضافية.",
+          sourceUrl: NCEC_QUALIFIED_ORGS_URL,
+          fetchedAt,
+          raw: { matchType: "official-page-name-fallback" },
+        });
+      }
+    }
 
     return {
       source: this.source,
@@ -131,4 +164,4 @@ export class NcecQualifiedAgenciesConnector implements DueDiligenceConnector {
   }
 }
 
-export const __ncecTest = { parseAgencies };
+export const __ncecTest = { parseAgencies, pageSearchText };
