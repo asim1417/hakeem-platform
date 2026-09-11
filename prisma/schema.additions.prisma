@@ -1,0 +1,189 @@
+// ————————————————————————————————————————————————————————————
+// المرحلة الثانية — الترميز والزمنية
+// تُضاف إلى schema.prisma القائم. لا تحذف ولا تُعدّل جدولًا قائمًا.
+// DocumentUnit المُنشأ في المرحلة الأولى يُوسَّع بأربعة حقول في آخر الملف.
+// ————————————————————————————————————————————————————————————
+
+enum WorkType {
+  ACT          // نظام
+  BYLAW        // لائحة تنفيذية
+  REGULATION   // تنظيم / ترتيبات تنظيمية
+  RULES        // قواعد
+  GUIDE        // دليل
+  TREATY       // اتفاقية
+}
+
+enum InstrumentType {
+  ROYAL_DECREE     // مرسوم ملكي
+  ROYAL_ORDER      // أمر ملكي
+  CABINET_DECISION // قرار مجلس الوزراء
+  MINISTERIAL      // قرار وزاري
+  BOARD_DECISION   // قرار مجلس إدارة جهة
+}
+
+enum WorkStatus {
+  IN_FORCE   // سارٍ
+  AMENDED    // سارٍ ومعدَّل
+  REPEALED   // ملغى
+  DEFERRED   // مؤجل النفاذ
+  UNKNOWN    // لم يُتحقق بعد
+}
+
+enum EffectType {
+  SUBSTITUTE_UNIT
+  SUBSTITUTE_PHRASE
+  INSERT_UNIT
+  DELETE_UNIT
+  REPEAL_FULL
+  REPEAL_PARTIAL
+  RENUMBER
+  CORRECTION
+  COMMENCE
+  DEFER
+  SUSPEND
+  EXTEND
+  EXCEPT
+  APPLY_TO
+  DELEGATE
+  INTERPRET
+}
+
+enum ApplicationStatus {
+  APPLIED         // مُدمج في نص التعبير
+  PENDING         // صدر ولم يُدمج بعد — يُعرض شارةً على المادة
+  NEEDS_REVIEW    // غامض أو متعدد الأهداف — لا يُنشر حتى يُراجَع
+  NOT_APPLICABLE  // أثر غير نصي يُعرض حاشيةً ولا يُدمج
+}
+
+enum LinkDirection {
+  IMPLEMENTS_UNIT // من مادة اللائحة إلى مادة النظام
+  DELEGATES_TO    // من مادة النظام إلى مادة اللائحة
+}
+
+/// النظام أو اللائحة ككيان دائم — لا نصًّا
+model LegalWork {
+  id            String   @id @default(cuid())
+  uri           String   @unique              // hkm:/sa/act/marsoum/1428-10-26/م-85
+  titleAr       String
+  titleEn       String?
+  workType      WorkType
+  instrument    InstrumentType
+  instrumentNo  String?                       // م-85
+  hijriDate     String                        // 1428-10-26
+  gregDate      DateTime?                     // للفرز والمقارنة فقط
+  issuingBodyCode String?                     // كود الجهة وفق دليل الترميز الوطني
+  issuingBodyRaw  String?                     // التسمية كما وردت في المصدر
+  domainCode    String?                       // كود التصنيف القائم
+  status        WorkStatus @default(UNKNOWN)
+  gazetteIssue  String?                       // رقم عدد أم القرى
+  gazetteDate   String?                       // هجري
+  lastAmendment String?                       // «م/50 — 1447-03-02» مرساة فحص التقادم
+  completeness  String   @default("unknown")  // unknown | missing_instrument | partial | complete
+  legacyLawId   String?  @unique              // الربط بالسجل القديم أثناء الانتقال
+  expressions   LegalExpression[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([workType, domainCode])
+  @@index([lastAmendment])
+}
+
+/// نسخة النص عند تاريخ نفاذ معيّن
+model LegalExpression {
+  id              String   @id @default(cuid())
+  uri             String   @unique            // .../ar@1446-07-07
+  workId          String
+  work            LegalWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+  lang            String   @default("ar")
+
+  // زمن النفاذ — يجيب: ما النص يوم كذا؟
+  effectiveFrom   String                      // هجري
+  effectiveTo     String?                     // فارغ = النسخة السارية
+
+  // زمن التسجيل — يجيب: ماذا كنا نعرض يوم أفتينا؟
+  recordedAt      DateTime @default(now())
+  supersededAt    DateTime?
+
+  isOriginal      Boolean  @default(false)    // «كما صدر»
+  createdByEffect String?                     // الأثر المُنشئ لهذه النسخة
+  sourceUrl       String?
+  sourceSnapshot  String?  @db.Text           // لقطة النص كما وردت — لا يُكتفى بالرابط
+  fetchedAt       DateTime?
+
+  @@unique([workId, lang, effectiveFrom])
+  @@index([workId, effectiveFrom])
+  @@index([effectiveTo])
+}
+
+/// الأثر: التعديل والإلغاء والتصويب والتأجيل — نواة المشروع
+model LegalEffect {
+  id                String   @id @default(cuid())
+  sourceWorkUri     String                      // الأداة المُحدِثة للأثر
+  sourceUnitUri     String?                     // البند المحدَّد فيها
+  targetWorkUri     String                      // العمل المتأثر — للفهرسة السريعة
+  targetUnitUri     String                      // الوحدة المتأثرة بالمعرّف الدائم
+
+  effectType        EffectType
+  isTextual         Boolean                     // نصي يُدمج، أو غير نصي يُعرض حاشية
+  textBefore        String?  @db.Text
+  textAfter         String?  @db.Text
+
+  publishedAt       String?                     // هجري — تاريخ النشر
+  effectiveAt       String?                     // هجري — تاريخ بدء النفاذ
+
+  applicationStatus ApplicationStatus @default(NEEDS_REVIEW)
+  authorityRef      String                      // رقم الأداة وتاريخها ومرجع النشر
+  extractionSource  String?  @db.Text           // نص الحاشية التي استُخرج منها
+  confidence        Float?
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([targetUnitUri, effectiveAt])
+  @@index([targetWorkUri])
+  @@index([applicationStatus])
+  @@index([sourceWorkUri])
+}
+
+/// ربط اللائحة بالنظام مادةً بمادة، في اتجاهي التفويض والتنفيذ
+model BylawLink {
+  id            String   @id @default(cuid())
+  bylawUnitUri  String
+  actUnitUri    String
+  direction     LinkDirection
+  anchorPhrase  String?                        // المرساة اللفظية المستخرَج منها
+  confidence    Float?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@unique([bylawUnitUri, actUnitUri, direction])
+  @@index([actUnitUri])
+  @@index([bylawUnitUri])
+}
+
+// ————————————————————————————————————————————————————————————
+// توسعة DocumentUnit القائم — أربعة حقول، كلها اختيارية حتى يكتمل التعبئة
+//
+//   uri           String?  @unique   // المعرّف الدائم الكامل للوحدة
+//   eId           String?            // art_74__para_2 — مستقر ولو أُلغي النص
+//   contentHash   String?            // بصمة كشف التغيير الصامت
+//   expressionId  String?            // الربط بالتعبير
+//   expression    LegalExpression? @relation(fields: [expressionId], references: [id])
+//
+//   @@index([eId])
+//   @@index([contentHash])
+//
+// وتُضاف في LegalExpression:  units DocumentUnit[]
+// ————————————————————————————————————————————————————————————
+
+// ————————————————————————————————————————————————————————————
+// ⛔ حالة الإدراج (المرحلة الثانية — الجلسة الحاليّة): staged، لم يُدمج في schema.prisma بعد.
+// السبب: توسعة `DocumentUnit` تتطلّب وجوده، وهو من المرحلة الأولى (PR #631) **غير المدموجة**.
+// Prisma لا يقرأ هذا الملفّ (schema.additions.prisma) — فهو خاملٌ لا يؤثّر على العميل ولا على
+// `prisma validate`. يُدمَج محتواه في schema.prisma **بعد** دمج #631، ثم:
+//   • تُضاف الحقول الأربعة إلى DocumentUnit (uri/eId/contentHash/expressionId) — كلها String? اختياريّة.
+//   • يُضاف backlink:  units DocumentUnit[]  في LegalExpression.
+//   • `npx prisma migrate dev --name legal-work-expression` (يحتاج DATABASE_URL) ثم validate + tsc.
+// ملاحظة توافق: النماذج أعلاه تستخدم cuid() — متّسقةٌ مع اصطلاح المخطّط القائم (49 نموذج cuid).
+// ————————————————————————————————————————————————————————————
