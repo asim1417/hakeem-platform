@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicDueDiligenceDemo } from "@/components/due-diligence/PublicDueDiligenceDemo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "العناية الواجبة القانونية والتجارية — حكيم",
+  description:
+    "جرّب محرك حكيم للعناية الواجبة القانونية والتجارية على بيانات صناعية: مطابقة الكيان، الأدلة، الاستبعاد، ودرجة المخاطر.",
+  alternates: { canonical: "/demo/due-diligence" },
+  robots: { index: true, follow: true },
+};
 
 export default function PublicDueDiligenceDemoPage() {
   return (
