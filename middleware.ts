@@ -27,6 +27,9 @@ const isAuthEntryRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/l
  */
 const isClerkMiddlewareBypass = createRouteMatcher([
   "/",
+  // العرض العام للعناية الواجبة صناعي بالكامل ولا يحتاج هوية مستخدم أو Clerk.
+  "/demo(.*)",
+  "/api/due-diligence/demo(.*)",
   // خادم MCP: مسار عام تمامًا — لا يمسّه Clerk إطلاقًا (مستثنى أيضًا من matcher أدناه).
   // يمنع اعتراض clerkMiddleware الذي يردّ 401 فيُفسَّر لدى عميل MCP كدعوة OAuth.
   "/mcp(.*)",
@@ -93,17 +96,16 @@ function getClerkHandler(): ClerkMw {
       return NextResponse.redirect(new URL(next, request.url));
     }
 
-    if (isProtectedRoute(request) && hasOwnerSession(request)) {
-      return nextWithPath(request);
-    }
-
-    if (isProtectedRoute(request)) {
-      await auth.protect({
-        unauthenticatedUrl: new URL(
-          `/sign-in?next=${encodeURIComponent(request.nextUrl.pathname)}`,
-          request.url
-        ).toString(),
+    if (!session.userId && isProtectedRoute(request)) {
+      const gate = resolveUnauthenticatedGate({
+        pathname: request.nextUrl.pathname,
+        search: request.nextUrl.search,
+        hasOwnerSession: hasOwnerSession(request),
       });
+      if (gate.kind === "redirect") {
+        return NextResponse.redirect(new URL(gate.location, request.url));
+      }
+      return gate.response;
     }
 
     return nextWithPath(request);
@@ -111,31 +113,11 @@ function getClerkHandler(): ClerkMw {
   return clerkHandler;
 }
 
-/**
- * بدون مفاتيح Clerk لا نستدعي clerkMiddleware أصلًا.
- * صفحات الدخول العامة تتجاوز clerkMiddleware حتى مع وجود المفاتيح.
- */
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
-  if (!isClerkConfigured()) {
-    if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    const decision = resolveUnauthenticatedGate(
-      request.nextUrl.pathname,
-      request.nextUrl.search,
-      request.headers.get("cookie")
-    );
-    if (decision === "redirect-login") {
-      return plainAuthGate(request);
-    }
-    return nextWithPath(request);
-  }
+  if (isClerkMiddlewareBypass(request)) return nextWithPath(request);
 
-  if (isClerkMiddlewareBypass(request)) {
-    if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    return nextWithPath(request);
+  if (!isClerkConfigured()) {
+    return plainAuthGate(request, isProtectedRoute(request));
   }
 
   return getClerkHandler()(request, event);
@@ -143,9 +125,9 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
 
 export const config = {
   matcher: [
-    // استثناء /mcp (وكل ما تحته) من الـ middleware نهائيًا — يمرّ الطلب مباشرةً إلى
-    // app/mcp/route.ts بلا اعتراض Clerk ولا تحويل.
-    "/((?!_next|mcp(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Skip Next.js internals and static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };
