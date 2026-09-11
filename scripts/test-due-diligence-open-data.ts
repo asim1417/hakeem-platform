@@ -4,6 +4,16 @@ import { CstIotEntitiesConnector } from "../lib/modules/due-diligence/cst";
 import { governmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data";
 import { SfdaLicensedEstablishmentsConnector } from "../lib/modules/due-diligence/sfda";
 
+const SFDA_ROW = `
+<table><tbody><tr>
+<td>شركة المثال للدواء</td>
+<td>1010123456</td>
+<td>Local Manufacturer</td>
+<td>Drug</td>
+<td>LIC-42</td>
+<td>Details</td>
+</tr></tbody></table>`;
+
 async function main() {
   const registry = governmentOpenDataRegistry();
   assert.ok(registry.length >= 10);
@@ -12,36 +22,13 @@ async function main() {
   assert.ok(registry.some((item) => item.key === "saudi_commerce_gis" && item.scope === "CONTEXT"));
 
   const sfdaGet = async (url: URL) => {
-    if (url.hostname === "sfda.gov.sa") {
-      return {
-        contentType: "text/html; charset=utf-8",
-        body: '<a href="https://api.sfda.gov.sa:9001/v1/LicensedEstablishments/Search?apikey=PUBLICKEY123">web service</a>',
-      };
-    }
-    assert.equal(url.hostname, "api.sfda.gov.sa");
-    assert.ok(url.searchParams.get("crNumber"));
-    assert.equal(url.searchParams.get("companyNameAR"), null);
-    return {
-      contentType: "application/json; charset=utf-8",
-      body: JSON.stringify({
-        data: [
-          {
-            companyNameAR: "شركة المثال للدواء",
-            companyNameEN: "Example Pharma Co",
-            crNumber: "1010123456",
-            licenseType: "Local Manufacturer",
-            typeSector: "Drug",
-            licenseNumber: "LIC-42",
-            city_EN: "Riyadh",
-            expiryDate: "2027-12-31",
-          },
-        ],
-      }),
-    };
+    assert.equal(url.hostname, "sfda.gov.sa");
+    assert.equal(url.searchParams.get("crNumber"), "1010123456");
+    return SFDA_ROW;
   };
   const sfda = new SfdaLicensedEstablishmentsConnector(sfdaGet);
   const sfdaReport = await runDueDiligence(
-    { name: "شركة المثال للدواء", commercialRegistration: "1010123456", city: "الرياض" },
+    { name: "شركة المثال للدواء", commercialRegistration: "1010123456" },
     [sfda]
   );
   assert.equal(sfdaReport.evidence.length, 1);
@@ -49,13 +36,14 @@ async function main() {
   assert.equal(sfdaReport.evidence[0]?.commercialRegistration, "1010123456");
   assert.equal(sfdaReport.risk.score, 0, "positive licence listing must not raise adverse risk");
 
-  const sfdaConflict = await runDueDiligence(
+  const sfdaConflict = new SfdaLicensedEstablishmentsConnector(async () => SFDA_ROW);
+  const conflictReport = await runDueDiligence(
     { name: "شركة المثال للدواء", commercialRegistration: "9999999999" },
-    [sfda]
+    [sfdaConflict]
   );
-  assert.equal(sfdaConflict.evidence.length, 0);
-  assert.equal(sfdaConflict.rejected.length, 1);
-  assert.ok(sfdaConflict.rejected[0]?.rejectionReasons.some((reason) => reason.includes("السجل التجاري")));
+  assert.equal(conflictReport.evidence.length, 0);
+  assert.equal(conflictReport.rejected.length, 1);
+  assert.ok(conflictReport.rejected[0]?.rejectionReasons.some((reason) => reason.includes("السجل التجاري")));
 
   const cst = new CstIotEntitiesConnector(async () => '<html><body><h3>شركة إنترنت الأشياء المتقدمة</h3><p>IoT Platform</p></body></html>');
   const cstReport = await runDueDiligence({ name: "شركة إنترنت الأشياء المتقدمة" }, [cst]);
@@ -69,7 +57,7 @@ async function main() {
   assert.equal(cstNegative.needsReview.length, 0);
 
   console.log("✓ government open-data registry separates ENTITY, CONTEXT and CATALOG sources");
-  console.log("✓ SFDA official-license records verify by name + CR and reject CR conflicts");
+  console.log("✓ SFDA official public directory verifies by name + CR and rejects CR conflicts");
   console.log("✓ positive licence listings never create adverse risk by themselves");
   console.log("✓ CST IoT name-only discovery stays NEEDS_REVIEW and negative lookup fabricates nothing");
 }
