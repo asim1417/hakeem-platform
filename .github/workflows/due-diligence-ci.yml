@@ -6,6 +6,7 @@ on:
       - "lib/modules/due-diligence/**"
       - "app/api/due-diligence/**"
       - "app/dashboard/due-diligence/**"
+      - "app/demo/due-diligence/**"
       - "components/due-diligence/**"
       - "components/AppShell.tsx"
       - "lib/i18n/dictionaries.ts"
