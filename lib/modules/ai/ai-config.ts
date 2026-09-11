@@ -115,8 +115,29 @@ function envConfig(): EffectiveAiConfig {
   };
 }
 
+const OFFLINE_CONFIG: EffectiveAiConfig = { provider: "offline", apiKey: null, model: null, baseUrl: null, source: "offline" };
+
+/**
+ * حوكمة CLAUDE.md: «التوليد بـ Claude حصريًّا — لا OpenAI ولا Gemini». هذا العلم يفرضها
+ * مركزيًّا: عند تفعيله، أيّ مزوّدٍ غير Anthropic (حتى لو ضُبط مفتاحُه أو سقط لمفتاح Gemini
+ * للـOCR) يُعامَل offline فيسقط التوليد للحتميّ الآمن. **افتراضيًّا OFF** حفاظًا على السلوك
+ * الحاليّ حتى يقرّر المالك تفعيله (لا يمسّ التضمين ولا OCR — لهما مساراتٌ مستقلّة).
+ */
+function enforceClaudeOnly(): boolean {
+  const f = (process.env.ENFORCE_CLAUDE_ONLY ?? "").toLowerCase();
+  return f === "1" || f === "true" || f === "on";
+}
+
 /** الإعداد الفعّال: قاعدة البيانات أولاً (إن كان مفتاحها صالحاً) ثم البيئة، ثم مفتاح Gemini للـOCR. */
 export async function resolveAiConfig(): Promise<EffectiveAiConfig> {
+  const cfg = await resolveAiConfigRaw();
+  if (enforceClaudeOnly() && cfg.provider !== "anthropic" && cfg.provider !== "offline") {
+    return OFFLINE_CONFIG;
+  }
+  return cfg;
+}
+
+async function resolveAiConfigRaw(): Promise<EffectiveAiConfig> {
   const stored = await readStored();
   if (stored?.provider && stored.provider !== "offline" && stored.apiKeyEnc) {
     const apiKey = decryptSecret(stored.apiKeyEnc);
