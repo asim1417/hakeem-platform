@@ -332,6 +332,9 @@ export async function completeWithConfig(
   const mt = Math.min(Math.max(maxTokens, 1), 8192);
   const sys = (system ?? "").trim();
   const usr = String(user ?? "");
+  // مهلة لكلّ نداء مزوّد: بلا AbortSignal كان اتّصالٌ متعثّرٌ يُبقي الـ await معلّقًا حتى تُقتل
+  // الدالّة عند maxDuration (توقّفٌ صامت). قابلة للضبط بـ AI_CALL_TIMEOUT_MS.
+  const timeoutMs = Number(process.env.AI_CALL_TIMEOUT_MS) || 90_000;
 
   if (cfg.provider === "openai" || cfg.provider === "custom") {
     const url =
@@ -342,7 +345,8 @@ export async function completeWithConfig(
     const resp = await fetch(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: mt, messages, temperature: 0.2 })
+      body: JSON.stringify({ model, max_tokens: mt, messages, temperature: 0.2 }),
+      signal: AbortSignal.timeout(timeoutMs)
     });
     if (!resp.ok) throw new Error(`provider ${resp.status}`);
     const data = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -354,7 +358,8 @@ export async function completeWithConfig(
     const callAnthropic = (m: string) => fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": cfg.apiKey as string, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: m, max_tokens: mt, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] })
+      body: JSON.stringify({ model: m, max_tokens: mt, ...(sys ? { system: sys } : {}), messages: [{ role: "user", content: usr }] }),
+      signal: AbortSignal.timeout(timeoutMs)
     });
     let resp = await callAnthropic(model);
     // أيّ فشلٍ في الموديل المضبوط ⇒ سقوطٌ لموديلٍ ثابتٍ مؤكَّد التوفّر (نفس ما يعمل في «اسأل حكيم»).
@@ -394,7 +399,8 @@ export async function completeWithConfig(
           ...(sys ? { systemInstruction: { parts: [{ text: sys }] } } : {}),
           contents: [{ role: "user", parts: [{ text: usr }] }],
           generationConfig: { maxOutputTokens: mt, temperature: 0.2 }
-        })
+        }),
+        signal: AbortSignal.timeout(timeoutMs)
       }
     );
     if (!resp.ok) throw new Error(`provider ${resp.status}`);

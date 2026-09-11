@@ -144,7 +144,14 @@ export function verifyMoyasarWebhookSecret(body: unknown): {
   reason?: string;
 } {
   const expected = (process.env.MOYASAR_WEBHOOK_SECRET || "").trim();
-  if (!expected) return { ok: true, enforced: false };
+  if (!expected) {
+    // فشلٌ مغلق في الإنتاج: بلا سرٍّ مضبوط لا نقبل أحداثًا غير موقّعة — فقبولها يفعّل اشتراكًا
+    // باحتيالٍ محتمل. في التطوير يبقى ناعمًا. اضبط MOYASAR_WEBHOOK_SECRET قبل تشغيل الدفع.
+    if (process.env.NODE_ENV === "production") {
+      return { ok: false, enforced: true, reason: "webhook_secret_not_configured" };
+    }
+    return { ok: true, enforced: false };
+  }
 
   const token =
     body && typeof body === "object"
