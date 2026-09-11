@@ -81,6 +81,11 @@ export const DEFAULT_HOME: SiteHomeContent = {
       desc: "تدريب على تفكير القاضي",
       next: "/dashboard/simulations",
     },
+    {
+      title: "العناية الواجبة",
+      desc: "فحص قانوني وتجاري للكيانات ومصادر المخاطر",
+      next: "/dashboard/due-diligence",
+    },
   ],
 };
 
