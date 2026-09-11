@@ -11,10 +11,13 @@ import { htmlToSearchText } from "./cma";
 /**
  * Server-rendered official list of finance companies. Unlike the newer dynamic
  * page, the company names are present in the HTTP response and can therefore be
- * verified reliably by Hakim's server runtime.
+ * verified reliably by Hakim's server runtime when SAMA's public web tier is reachable.
  */
 export const SAMA_FINANCE_ENTITIES_URL =
   "https://www.sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/MultiActivitiesLicensedEntities.aspx";
+
+const SAMA_FINANCE_ENTITIES_FALLBACK_URL =
+  "https://sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/MultiActivitiesLicensedEntities.aspx";
 
 export const SAMA_FINANCE_ENTITIES_SOURCE: DataSourceDefinition = {
   key: "sama_finance_entities",
@@ -32,7 +35,11 @@ function isOfficialSamaHost(hostname: string): boolean {
   return hostname === "sama.gov.sa" || hostname === "www.sama.gov.sa";
 }
 
-async function fetchOfficialSamaPage(url: string, signal?: AbortSignal): Promise<string> {
+function isRetryableStatus(status: number) {
+  return status === 408 || status === 425 || status === 429 || status >= 500;
+}
+
+async function fetchOfficialSamaPageOnce(url: string, signal?: AbortSignal): Promise<string> {
   const parsed = new URL(url);
   if (parsed.protocol !== "https:" || !isOfficialSamaHost(parsed.hostname) || parsed.port) {
     throw new Error("SAMA connector refused a non-official host.");
@@ -47,7 +54,11 @@ async function fetchOfficialSamaPage(url: string, signal?: AbortSignal): Promise
       "user-agent": "HakeemDueDiligence/1.0 (+https://hakeemai.net)",
     },
   });
-  if (!response.ok) throw new Error(`SAMA licensed-entities page returned HTTP ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(`SAMA licensed-entities page returned HTTP ${response.status}`);
+    (error as Error & { retryable?: boolean }).retryable = isRetryableStatus(response.status);
+    throw error;
+  }
 
   const finalUrl = new URL(response.url || parsed.toString());
   if (finalUrl.protocol !== "https:" || !isOfficialSamaHost(finalUrl.hostname)) {
@@ -63,6 +74,32 @@ async function fetchOfficialSamaPage(url: string, signal?: AbortSignal): Promise
   const html = await response.text();
   if (html.length > 5_000_000) throw new Error("SAMA licensed-entities response exceeded the safe size limit.");
   return html;
+}
+
+async function fetchOfficialSamaPage(_url: string, signal?: AbortSignal): Promise<string> {
+  const candidates = [
+    SAMA_FINANCE_ENTITIES_URL,
+    SAMA_FINANCE_ENTITIES_URL,
+    SAMA_FINANCE_ENTITIES_FALLBACK_URL,
+  ];
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < candidates.length; attempt += 1) {
+    if (signal?.aborted) throw signal.reason ?? new Error("SAMA request aborted.");
+    try {
+      return await fetchOfficialSamaPageOnce(candidates[attempt]!, signal);
+    } catch (error) {
+      lastError = error;
+      const retryable =
+        !(error instanceof Error) ||
+        (error as Error & { retryable?: boolean }).retryable !== false;
+      if (!retryable || attempt === candidates.length - 1) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt === 0 ? 250 : 750));
+    }
+  }
+
+  const detail = lastError instanceof Error ? lastError.message : String(lastError ?? "unknown error");
+  throw new Error(`تعذر الوصول إلى القائمة العامة للبنك المركزي بعد محاولات آمنة على النطاق الرسمي فقط: ${detail}`);
 }
 
 /**

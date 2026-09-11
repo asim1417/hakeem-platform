@@ -39,5 +39,8 @@ jobs:
       - name: Due diligence phase 4 change-detection test
         run: npx tsx scripts/test-due-diligence-phase4.ts
 
+      - name: Government open-data connector test
+        run: npx tsx scripts/test-due-diligence-open-data.ts
+
       - name: Typecheck
         run: npm run typecheck

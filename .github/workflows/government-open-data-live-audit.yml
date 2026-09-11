@@ -1,0 +1,31 @@
+name: Government Open Data Live Audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "lib/modules/due-diligence/sfda.ts"
+      - "lib/modules/due-diligence/cst.ts"
+      - "lib/modules/due-diligence/government-open-data.ts"
+      - "scripts/audit-government-open-data-live.ts"
+      - ".github/workflows/government-open-data-live-audit.yml"
+
+jobs:
+  live-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Probe official government open-data sources
+        run: npx tsx scripts/audit-government-open-data-live.ts
