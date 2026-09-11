@@ -10,5 +10,12 @@ export function buildPhase3Connectors(): DueDiligenceConnector[] {
 }
 
 export function phase3SourceCatalog(): DataSourceDefinition[] {
-  return [...phase2SourceCatalog(), { ...CMA_CAPITAL_MARKET_INSTITUTIONS_SOURCE }];
+  const prior = phase2SourceCatalog();
+  const genericRegulator = prior.find((source) => source.key === "saudi_regulatory");
+  const concrete = prior.filter((source) => source.key !== "saudi_regulatory");
+  return [
+    ...concrete,
+    { ...CMA_CAPITAL_MARKET_INSTITUTIONS_SOURCE },
+    ...(genericRegulator ? [genericRegulator] : []),
+  ];
 }
