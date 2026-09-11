@@ -148,8 +148,8 @@ export class SfdaLicensedEstablishmentsConnector implements DueDiligenceConnecto
     const started = Date.now();
     const page = await this.get(new URL(SFDA_DIRECTORY_PAGE), signal);
     const apiUrl = discoverApiUrl(page.body);
-    apiUrl.searchParams.set("companyNameAR", query.name);
     if (query.commercialRegistration) apiUrl.searchParams.set("crNumber", query.commercialRegistration);
+    else apiUrl.searchParams.set("companyNameAR", query.name);
     apiUrl.searchParams.set("limit", String(MAX_ROWS));
     apiUrl.searchParams.set("offset", "0");
     const api = await this.get(apiUrl, signal);
