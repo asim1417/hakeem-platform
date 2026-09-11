@@ -6,6 +6,7 @@ import {
   buildConfiguredConnectors,
   dueDiligenceSourceCatalog,
 } from "@/lib/modules/due-diligence/connectors";
+import { buildDemoConnectors } from "@/lib/modules/due-diligence/demo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,18 +17,18 @@ const entitySchema = z
     unifiedNumber: z.string().trim().min(4).max(32).optional(),
     commercialRegistration: z.string().trim().min(4).max(32).optional(),
     city: z.string().trim().min(2).max(120).optional(),
+    mode: z.enum(["LIVE", "DEMO"]).default("LIVE"),
   })
   .strict();
 
-/**
- * GET — exposes source readiness without exposing endpoint URLs or credentials.
- */
+/** GET — source readiness without endpoint URLs or secrets. */
 export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
 
   const configured = new Set(buildConfiguredConnectors().map((connector) => connector.source.key));
   return NextResponse.json({
+    demoAvailable: true,
     sources: dueDiligenceSourceCatalog().map((source) => ({
       key: source.key,
       nameAr: source.nameAr,
@@ -39,17 +40,16 @@ export async function GET() {
 }
 
 /**
- * POST — runs entity due diligence against server-configured, approved sources only.
- * The request can never supply a source URL; this intentionally prevents SSRF and
- * ensures source access remains governed by Hakeem configuration.
+ * POST — LIVE runs approved server-configured sources only. DEMO runs clearly
+ * labelled synthetic fixtures. The request can never supply a source URL.
  */
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
 
-  let entity: z.infer<typeof entitySchema>;
+  let payload: z.infer<typeof entitySchema>;
   try {
-    entity = entitySchema.parse(await request.json());
+    payload = entitySchema.parse(await request.json());
   } catch (error) {
     return NextResponse.json(
       {
@@ -60,12 +60,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const connectors = buildConfiguredConnectors();
+  const { mode, ...entity } = payload;
+  const connectors = mode === "DEMO" ? buildDemoConnectors(entity) : buildConfiguredConnectors();
+
   if (!connectors.length) {
     return NextResponse.json(
       {
-        message: "محرك العناية الواجبة جاهز، لكن لم يتم تهيئة أي مصدر بيانات بعد.",
+        message: "محرك العناية الواجبة جاهز، لكن لم يتم تهيئة أي مصدر حي بعد. يمكنك تجربة وضع العرض التجريبي.",
         setupRequired: true,
+        demoAvailable: true,
         sources: dueDiligenceSourceCatalog().map(({ key, nameAr, authority, accessType }) => ({
           key,
           nameAr,
@@ -78,5 +81,13 @@ export async function POST(request: NextRequest) {
   }
 
   const report = await runDueDiligence(entity, connectors);
-  return NextResponse.json({ report });
+  return NextResponse.json({
+    mode,
+    demo: mode === "DEMO",
+    demoNotice:
+      mode === "DEMO"
+        ? "جميع الوقائع والنتائج في هذا التقرير بيانات صناعية لأغراض العرض ولا تخص أي كيان حقيقي."
+        : undefined,
+    report,
+  });
 }
