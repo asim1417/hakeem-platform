@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { runDueDiligence } from "@/lib/modules/due-diligence/core";
 import { buildDemoConnectors } from "@/lib/modules/due-diligence/demo";
+import { persistDueDiligenceSnapshot } from "@/lib/modules/due-diligence/history";
 import {
   buildPhase2Connectors,
   phase2SourceCatalog,
@@ -81,9 +82,24 @@ export async function POST(request: NextRequest) {
   }
 
   const report = await runDueDiligence(entity, connectors);
+  let snapshotId: string | undefined;
+  let persistenceWarning: string | undefined;
+
+  if (mode === "LIVE") {
+    try {
+      const snapshot = await persistDueDiligenceSnapshot(user.id, report);
+      snapshotId = snapshot.id;
+    } catch {
+      persistenceWarning =
+        "تم إنشاء التقرير، لكن تعذر حفظ نسخته التاريخية هذه المرة. لا يؤثر ذلك في نتائج الفحص الحالية.";
+    }
+  }
+
   return NextResponse.json({
     mode,
     demo: mode === "DEMO",
+    snapshotId,
+    persistenceWarning,
     demoNotice:
       mode === "DEMO"
         ? "جميع الوقائع والنتائج في هذا التقرير بيانات صناعية لأغراض العرض ولا تخص أي كيان حقيقي."
