@@ -1,26 +1,28 @@
-import type {
-  DataSourceDefinition,
-  DueDiligenceConnector,
-  EntityQuery,
-  RawObservation,
-  SourceRunResult,
-} from "./core";
-import { normalizeArabicEntityName } from "./core";
+import type { DataSourceDefinition } from "./core";
 
+/** Legacy public directory page. Kept as a human-verification link only. */
 export const CMA_INSTITUTIONS_URL =
-  "https://cma.org.sa/Market/AuthorisedPersons/Pages/default.aspx";
+  "https://cma.gov.sa/Market/AuthorisedPersons/Pages/default.aspx";
 
+/** Official CMA Open Data API documented in the Authority's Swagger portal. */
+export const CMA_OPEN_DATA_API_URL =
+  "https://opendataapi.cma.gov.sa/api/Licenses/GetAllOrganizations";
+
+/**
+ * CMA is an official public source, but live audit from Hakim's current cloud
+ * egress showed that the legacy directory can return a maintenance page and
+ * the Open Data API can time out. Until a stable approved egress/adapter is
+ * provisioned, the catalog must NOT present this source as an active connector.
+ */
 export const CMA_CAPITAL_MARKET_INSTITUTIONS_SOURCE: DataSourceDefinition = {
   key: "cma_capital_market_institutions",
   nameAr: "مؤسسات السوق المالية المرخصة",
   authority: "هيئة السوق المالية",
-  accessType: "PUBLIC_WEB",
-  status: "APPROVED",
+  accessType: "OFFICIAL_API",
+  status: "REVIEW_REQUIRED",
   reliability: 1,
-  baseUrl: "https://cma.org.sa",
+  baseUrl: "https://opendataapi.cma.gov.sa",
 };
-
-type TextFetcher = (url: string, signal?: AbortSignal) => Promise<string>;
 
 function decodeHtmlEntities(value: string): string {
   const named: Record<string, string> = {
@@ -45,6 +47,7 @@ function decodeHtmlEntities(value: string): string {
     .replace(/&([a-z]+);/gi, (full, name: string) => named[name.toLowerCase()] ?? full);
 }
 
+/** Shared inert HTML-to-text helper used by public-web connectors. */
 export function htmlToSearchText(html: string): string {
   return decodeHtmlEntities(
     html
@@ -55,87 +58,4 @@ export function htmlToSearchText(html: string): string {
   )
     .replace(/\s+/g, " ")
     .trim();
-}
-
-async function fetchOfficialCmaPage(url: string, signal?: AbortSignal): Promise<string> {
-  const parsed = new URL(url);
-  if (parsed.protocol !== "https:" || parsed.hostname !== "cma.org.sa") {
-    throw new Error("CMA connector refused a non-official host.");
-  }
-  const response = await fetch(parsed, {
-    method: "GET",
-    signal,
-    cache: "no-store",
-    headers: {
-      accept: "text/html,application/xhtml+xml",
-      "user-agent": "HakeemDueDiligence/1.0 (+https://hakeemai.net)",
-    },
-  });
-  if (!response.ok) throw new Error(`CMA public list returned HTTP ${response.status}`);
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!/text\/html|application\/xhtml\+xml/i.test(contentType)) {
-    throw new Error("CMA public list returned an unexpected content type.");
-  }
-  const declaredLength = Number(response.headers.get("content-length") ?? "0");
-  if (declaredLength > 4_000_000) throw new Error("CMA public list response is unexpectedly large.");
-  const html = await response.text();
-  if (html.length > 4_000_000) throw new Error("CMA public list response exceeded the safe size limit.");
-  return html;
-}
-
-/**
- * Positive-match connector for the official public list of Capital Market Institutions.
- *
- * It never treats "not found" as proof that an entity is unlicensed: most Saudi entities
- * are outside CMA's licensing perimeter, and the public page may paginate/transform data.
- */
-export class CmaCapitalMarketInstitutionsConnector implements DueDiligenceConnector {
-  public readonly source = CMA_CAPITAL_MARKET_INSTITUTIONS_SOURCE;
-
-  constructor(private readonly fetchText: TextFetcher = fetchOfficialCmaPage) {}
-
-  async collect(query: EntityQuery, signal?: AbortSignal): Promise<SourceRunResult> {
-    const startedAt = Date.now();
-    const html = await this.fetchText(CMA_INSTITUTIONS_URL, signal);
-    const pageText = htmlToSearchText(html);
-    const normalizedPage = normalizeArabicEntityName(pageText);
-    const normalizedName = normalizeArabicEntityName(query.name);
-    const found = normalizedName.length >= 3 && normalizedPage.includes(normalizedName);
-
-    const observations: RawObservation[] = found
-      ? [
-          {
-            sourceKey: this.source.key,
-            sourceRecordId: `name:${normalizedName}`,
-            entityName: query.name,
-            city: query.city,
-            category: "regulatory_license_listing",
-            title: "ظهر اسم الكيان في القائمة الرسمية لمؤسسات السوق المالية",
-            summary:
-              "مطابقة اسم إيجابية في القائمة العامة المنشورة لهيئة السوق المالية. يلزم تأكيد هوية الكيان ونطاق النشاط المرخص قبل الاعتماد النهائي، خصوصًا عند تشابه الأسماء.",
-            sourceUrl: CMA_INSTITUTIONS_URL,
-            fetchedAt: new Date().toISOString(),
-            raw: {
-              matchType: "normalized_exact_name_in_public_list",
-              officialPage: CMA_INSTITUTIONS_URL,
-            },
-          },
-        ]
-      : [];
-
-    const warnings = found
-      ? [
-          "الاسم ظهر في القائمة الرسمية لهيئة السوق المالية؛ تُعامل النتيجة كإشارة ترخيص إيجابية تحتاج مطابقة الهوية ونطاق النشاط.",
-        ]
-      : [
-          "لم يظهر الاسم في المحتوى العام الذي أمكن فحصه من قائمة هيئة السوق المالية. لا تُفسر النتيجة كنفي للترخيص أو كمخالفة؛ قد يكون الكيان خارج نطاق الهيئة أو يتطلب بحثًا أعمق في القائمة.",
-        ];
-
-    return {
-      source: this.source,
-      observations,
-      warnings,
-      durationMs: Date.now() - startedAt,
-    };
-  }
 }
