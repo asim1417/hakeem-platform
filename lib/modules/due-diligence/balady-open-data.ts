@@ -9,7 +9,7 @@ export type BaladyOpenDataItem = {
   title?: string;
   year?: string;
   category?: string;
-  file?: string;
+  files?: string[];
   created?: string;
   changed?: string;
 };
@@ -20,8 +20,31 @@ function asString(value: unknown): string | undefined {
   return undefined;
 }
 
+function asStrings(value: unknown): string[] | undefined {
+  if (Array.isArray(value)) {
+    const items = value.map(asString).filter((item): item is string => Boolean(item)).slice(0, 20);
+    return items.length ? items : undefined;
+  }
+  const single = asString(value);
+  return single ? [single] : undefined;
+}
+
+function maybeParseJsonString(value: string): unknown {
+  const trimmed = value.trim();
+  if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) return value;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+}
+
 function collectObjects(value: unknown, depth = 0): JsonRecord[] {
-  if (depth > 4 || value == null) return [];
+  if (depth > 6 || value == null) return [];
+  if (typeof value === "string") {
+    const parsed = maybeParseJsonString(value);
+    return parsed === value ? [] : collectObjects(parsed, depth + 1);
+  }
   if (Array.isArray(value)) {
     const direct = value.filter((item): item is JsonRecord => Boolean(item) && typeof item === "object" && !Array.isArray(item));
     if (direct.length) return direct.slice(0, MAX_ITEMS);
@@ -29,15 +52,15 @@ function collectObjects(value: unknown, depth = 0): JsonRecord[] {
   }
   if (typeof value === "object") {
     const object = value as JsonRecord;
-    for (const key of ["data", "items", "results", "result", "records", "rows"]) {
+    for (const key of ["rows", "data", "items", "results", "result", "records"]) {
       if (key in object) {
         const found = collectObjects(object[key], depth + 1);
-        if (found.length) return found;
+        if (found.length) return found.slice(0, MAX_ITEMS);
       }
     }
     for (const child of Object.values(object)) {
       const found = collectObjects(child, depth + 1);
-      if (found.length) return found;
+      if (found.length) return found.slice(0, MAX_ITEMS);
     }
   }
   return [];
@@ -47,9 +70,9 @@ function normalize(record: JsonRecord): BaladyOpenDataItem {
   return {
     id: asString(record.nid) ?? asString(record.id),
     title: asString(record.title) ?? asString(record.name),
-    year: asString(record.year),
-    category: asString(record.category) ?? asString(record.type),
-    file: asString(record.file) ?? asString(record.url),
+    year: asString(record.field_year_g) ?? asString(record.year),
+    category: asString(record.field_opendata_category) ?? asString(record.category) ?? asString(record.type),
+    files: asStrings(record.field_file) ?? asStrings(record.file) ?? asStrings(record.url),
     created: asString(record.created),
     changed: asString(record.changed) ?? asString(record.updated),
   };
@@ -92,4 +115,4 @@ export async function fetchBaladyOpenDataCatalog(options: { limit?: number; sign
   };
 }
 
-export const __baladyOpenDataTest = { collectObjects, normalize };
+export const __baladyOpenDataTest = { collectObjects, normalize, maybeParseJsonString };
