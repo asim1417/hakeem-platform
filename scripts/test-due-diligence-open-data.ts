@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { __baladyOpenDataTest } from "../lib/modules/due-diligence/balady-open-data";
 import { runDueDiligence } from "../lib/modules/due-diligence/core";
 import { CstIotEntitiesConnector } from "../lib/modules/due-diligence/cst";
 import { governmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data";
@@ -16,10 +17,39 @@ const SFDA_ROW = `
 
 async function main() {
   const registry = governmentOpenDataRegistry();
-  assert.ok(registry.length >= 10);
+  assert.ok(registry.length >= 20);
   assert.ok(registry.some((item) => item.key === "national_open_data" && item.scope === "CATALOG"));
   assert.ok(registry.some((item) => item.key === "sfda_licensed_establishments" && item.scope === "ENTITY"));
   assert.ok(registry.some((item) => item.key === "saudi_commerce_gis" && item.scope === "CONTEXT"));
+  assert.ok(registry.some((item) => item.key === "balady_open_data_api" && item.integration === "LIVE"));
+
+  const documentedBaladyShape = {
+    statusDetails: { code: 200, message: "Ok" },
+    data: {
+      responseCode: "1",
+      responseMessage: "success",
+      result: {
+        rows: [
+          {
+            nid: "6231",
+            title: "نشاطات التفتيش الصحي 1439",
+            field_year_g: "2015",
+            created: "2020/01/02",
+            changed: "2021/10/26",
+            field_opendata_category: "التفتيش الصحي",
+            field_file: ["https://example.gov.sa/report.xlsx", "https://example.gov.sa/report.csv"],
+          },
+        ],
+      },
+    },
+  };
+  const baladyRows = __baladyOpenDataTest.collectObjects(documentedBaladyShape);
+  assert.equal(baladyRows.length, 1);
+  const baladyItem = __baladyOpenDataTest.normalize(baladyRows[0]!);
+  assert.equal(baladyItem.id, "6231");
+  assert.equal(baladyItem.year, "2015");
+  assert.equal(baladyItem.category, "التفتيش الصحي");
+  assert.equal(baladyItem.files?.length, 2);
 
   const sfdaGet = async (url: URL) => {
     assert.equal(url.hostname, "sfda.gov.sa");
@@ -57,6 +87,7 @@ async function main() {
   assert.equal(cstNegative.needsReview.length, 0);
 
   console.log("✓ government open-data registry separates ENTITY, CONTEXT and CATALOG sources");
+  console.log("✓ Balady documented nested response shape normalizes correctly");
   console.log("✓ SFDA official public directory verifies by name + CR and rejects CR conflicts");
   console.log("✓ positive licence listings never create adverse risk by themselves");
   console.log("✓ CST IoT name-only discovery stays NEEDS_REVIEW and negative lookup fabricates nothing");
