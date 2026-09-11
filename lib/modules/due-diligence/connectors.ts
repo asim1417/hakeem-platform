@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type {
   DataSourceDefinition,
   DueDiligenceConnector,
@@ -14,23 +15,30 @@ import { SAUDI_BANKRUPTCY_SOURCE, SaudiBankruptcyConnector } from "./bankruptcy"
  * We normalize them outside the orchestration core so the core never receives
  * an arbitrary URL from the end user and cannot become an SSRF/open-proxy surface.
  */
-type NormalizedSourcePayload = {
-  records?: Array<{
-    id?: string;
-    entityName: string;
-    unifiedNumber?: string;
-    commercialRegistration?: string;
-    city?: string;
-    category: string;
-    title: string;
-    summary?: string;
-    sourceUrl: string;
-    occurredAt?: string;
-    raw?: unknown;
-  }>;
-  warnings?: string[];
-};
+const normalizedRecordSchema = z
+  .object({
+    id: z.union([z.string(), z.number()]).optional(),
+    entityName: z.string().trim().min(1).max(240),
+    unifiedNumber: z.string().trim().max(64).optional(),
+    commercialRegistration: z.string().trim().max(64).optional(),
+    city: z.string().trim().max(160).optional(),
+    category: z.string().trim().min(1).max(80),
+    title: z.string().trim().min(1).max(500),
+    summary: z.string().trim().max(5_000).optional(),
+    sourceUrl: z.string().url().max(2_000),
+    occurredAt: z.string().max(100).optional(),
+    raw: z.unknown().optional(),
+  })
+  .strict();
 
+const normalizedSourcePayloadSchema = z
+  .object({
+    records: z.array(normalizedRecordSchema).max(250).optional(),
+    warnings: z.array(z.string().max(1_000)).max(50).optional(),
+  })
+  .strict();
+
+type NormalizedSourcePayload = z.infer<typeof normalizedSourcePayloadSchema>;
 type ConnectorEnvironment = Record<string, string | undefined>;
 
 type SharePointCollection = {
@@ -44,6 +52,8 @@ type MinistryJsonGet = (url: URL, signal?: AbortSignal) => Promise<SharePointCol
 export const MC_GIS_ENDPOINT =
   "https://mc.gov.sa/ar/About/Statistics/_api/web/lists/GetByTitle('GISInfo')/items";
 export const MC_GIS_DOC_URL = "https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx";
+
+const MAX_ADAPTER_RESPONSE_BYTES = 2 * 1024 * 1024;
 
 function assertHttpsUrl(value: string): URL {
   const url = new URL(value);
@@ -122,13 +132,26 @@ export class SaudiCommerceGisConnector implements DueDiligenceConnector {
   }
 }
 
+/**
+ * Server-configured normalized adapter with a strict trust boundary.
+ *
+ * Besides HTTPS and server-only configuration, the adapter payload is schema
+ * validated, bounded in size/count and restricted to source-specific categories.
+ * This prevents a malformed or compromised adapter from inventing an unexpected
+ * adverse category that would silently alter Hakim's risk score.
+ */
 export class NormalizedJsonConnector implements DueDiligenceConnector {
+  private readonly allowedCategories: ReadonlySet<string>;
+
   constructor(
     public readonly source: DataSourceDefinition,
     private readonly endpoint: string,
-    private readonly bearerToken?: string
+    private readonly bearerToken: string | undefined,
+    allowedCategories: readonly string[]
   ) {
     assertHttpsUrl(endpoint);
+    if (!allowedCategories.length) throw new Error(`${source.key}: allowedCategories cannot be empty.`);
+    this.allowedCategories = new Set(allowedCategories);
   }
 
   async collect(query: EntityQuery, signal?: AbortSignal): Promise<SourceRunResult> {
@@ -155,28 +178,73 @@ export class NormalizedJsonConnector implements DueDiligenceConnector {
       throw new Error(`${this.source.key}: source adapter returned HTTP ${response.status}`);
     }
 
-    const payload = (await response.json()) as NormalizedSourcePayload;
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!/application\/json|\+json/i.test(contentType)) {
+      throw new Error(`${this.source.key}: source adapter returned a non-JSON content type.`);
+    }
+    const declaredLength = Number(response.headers.get("content-length") ?? "0");
+    if (declaredLength > MAX_ADAPTER_RESPONSE_BYTES) {
+      throw new Error(`${this.source.key}: source adapter response exceeded the size limit.`);
+    }
+
+    const text = await response.text();
+    if (Buffer.byteLength(text, "utf8") > MAX_ADAPTER_RESPONSE_BYTES) {
+      throw new Error(`${this.source.key}: source adapter response exceeded the size limit.`);
+    }
+
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`${this.source.key}: source adapter returned invalid JSON.`);
+    }
+    const parsed = normalizedSourcePayloadSchema.safeParse(json);
+    if (!parsed.success) {
+      throw new Error(`${this.source.key}: source adapter payload failed schema validation.`);
+    }
+
+    const payload: NormalizedSourcePayload = parsed.data;
     const fetchedAt = new Date().toISOString();
-    const observations: RawObservation[] = (payload.records ?? []).map((record) => ({
-      sourceKey: this.source.key,
-      sourceRecordId: record.id,
-      entityName: record.entityName,
-      unifiedNumber: record.unifiedNumber,
-      commercialRegistration: record.commercialRegistration,
-      city: record.city,
-      category: record.category,
-      title: record.title,
-      summary: record.summary,
-      sourceUrl: record.sourceUrl,
-      occurredAt: record.occurredAt,
-      fetchedAt,
-      raw: record.raw ?? record,
-    }));
+    const warnings = [...(payload.warnings ?? [])];
+    const observations: RawObservation[] = [];
+
+    for (const record of payload.records ?? []) {
+      if (!this.allowedCategories.has(record.category)) {
+        warnings.push(
+          `استُبعد سجل من ${this.source.nameAr} لأن الفئة «${record.category}» غير مسموحة لهذا التكامل.`
+        );
+        continue;
+      }
+
+      let evidenceUrl: URL;
+      try {
+        evidenceUrl = assertHttpsUrl(record.sourceUrl);
+      } catch {
+        warnings.push(`استُبعد سجل من ${this.source.nameAr} لأن رابط الإثبات غير صالح أو غير آمن.`);
+        continue;
+      }
+
+      observations.push({
+        sourceKey: this.source.key,
+        sourceRecordId: record.id === undefined ? undefined : String(record.id),
+        entityName: record.entityName,
+        unifiedNumber: record.unifiedNumber,
+        commercialRegistration: record.commercialRegistration,
+        city: record.city,
+        category: record.category,
+        title: record.title,
+        summary: record.summary,
+        sourceUrl: evidenceUrl.toString(),
+        occurredAt: record.occurredAt,
+        fetchedAt,
+        raw: record.raw ?? record,
+      });
+    }
 
     return {
       source: this.source,
       observations,
-      warnings: payload.warnings ?? [],
+      warnings,
       durationMs: Date.now() - startedAt,
     };
   }
@@ -196,11 +264,13 @@ export class StaticDueDiligenceConnector implements DueDiligenceConnector {
 const SOURCE_CATALOG: Array<{
   envKey: string;
   tokenEnvKey?: string;
+  allowedCategories: readonly string[];
   source: DataSourceDefinition;
 }> = [
   {
     envKey: "DUE_DILIGENCE_COMMERCE_ADAPTER_URL",
     tokenEnvKey: "DUE_DILIGENCE_COMMERCE_ADAPTER_TOKEN",
+    allowedCategories: ["corporate_identity", "registration", "business_activity", "address"],
     source: {
       key: "saudi_commerce",
       nameAr: "بيانات المنشأة التجارية — مستوى الكيان",
@@ -213,6 +283,7 @@ const SOURCE_CATALOG: Array<{
   {
     envKey: "DUE_DILIGENCE_IP_ADAPTER_URL",
     tokenEnvKey: "DUE_DILIGENCE_IP_ADAPTER_TOKEN",
+    allowedCategories: ["trademark", "ip_asset"],
     source: {
       key: "saudi_ip",
       nameAr: "الملكية الفكرية والعلامات",
@@ -226,6 +297,7 @@ const SOURCE_CATALOG: Array<{
   {
     envKey: "DUE_DILIGENCE_REGULATORY_ADAPTER_URL",
     tokenEnvKey: "DUE_DILIGENCE_REGULATORY_ADAPTER_TOKEN",
+    allowedCategories: ["regulatory_license_listing", "regulatory_action", "license_issue"],
     source: {
       key: "saudi_regulatory",
       nameAr: "التراخيص والقرارات التنظيمية",
@@ -261,7 +333,8 @@ export function buildConfiguredConnectors(
       new NormalizedJsonConnector(
         source,
         endpoint,
-        entry.tokenEnvKey ? env[entry.tokenEnvKey]?.trim() : undefined
+        entry.tokenEnvKey ? env[entry.tokenEnvKey]?.trim() : undefined,
+        entry.allowedCategories
       )
     );
   }
