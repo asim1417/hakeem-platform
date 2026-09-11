@@ -149,6 +149,9 @@ export class SfdaLicensedEstablishmentsConnector implements DueDiligenceConnecto
     const page = await this.get(new URL(SFDA_DIRECTORY_PAGE), signal);
     const apiUrl = discoverApiUrl(page.body);
     apiUrl.searchParams.set("companyNameAR", query.name);
+    if (query.commercialRegistration) apiUrl.searchParams.set("crNumber", query.commercialRegistration);
+    apiUrl.searchParams.set("limit", String(MAX_ROWS));
+    apiUrl.searchParams.set("offset", "0");
     const api = await this.get(apiUrl, signal);
     if (api.contentType && !/json|text\/plain/i.test(api.contentType)) {
       throw new Error(`Unexpected SFDA API content-type: ${api.contentType}`);
