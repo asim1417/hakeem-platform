@@ -19,10 +19,10 @@ const EXTENDED_GOVERNMENT_OPEN_DATA_SOURCES: GovernmentOpenDataPlatform[] = [
     nameAr: "الجهات المؤهلة في مجال الخدمات البيئية",
     authority: "المركز الوطني للرقابة على الالتزام البيئي",
     scope: "ENTITY",
-    integration: "LIVE",
+    integration: "ADAPTER",
     officialUrl: "https://violation.ncec.gov.sa/orgsdata",
     notesAr:
-      "قائمة رسمية للجهات المؤهلة في الخدمات البيئية. يحتفظ حكيم باسم الجهة ونطاق الخدمة والتصنيف فقط، ويستبعد بيانات الاتصال غير اللازمة للعناية الواجبة.",
+      "القائمة الرسمية متاحة للعرض، لكن سجلات المنشآت لا تظهر بصورة مستقرة في استجابة الخادم من بيئة حكيم. يبقى المصدر Adapter حتى يتوفر endpoint منظم ومصرح أو مسار وصول ثابت؛ لا تُفسر النتيجة غير المتاحة كنفي للتأهيل.",
   },
   {
     key: "insurance_authority_licensed_companies",
