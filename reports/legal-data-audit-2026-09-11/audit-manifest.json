@@ -4,7 +4,7 @@
   "verdict": "حرج",
   "mode": "read-only — لم تُنفَّذ أي كتابة على أي قاعدة بيانات",
   "repo": {
-    "commit": "b70c9a5e0ef1db73ffecc542870cb73050a97950",
+    "commit": "9bb3653963200ce5cd3d17b0319736ec75fb7965",
     "branch": "claude/hakeem-legal-database-audit-rg7zx8",
     "node": "v22.22.2",
     "worktree": "clean at audit time"
@@ -80,14 +80,15 @@
   "tooling_added": [
     "lib/modules/legal-core/arabic-ordinal.ts",
     "scripts/test-arabic-ordinal.ts (40 tests, passing)",
-    "scripts/audit/audit-legal-data.ts"
+    "scripts/audit/audit-legal-data.ts",
+    "scripts/audit/check-derived-drift.ts (CI-ready drift gate)"
   ],
   "decision": "إبقاء حظر الدراسات القانونية المعتمدة على نظام المعاملات المدنية",
   "acceptance_criteria_met": "1/22",
   "files": {
     "00-executive-summary.md": {
-      "bytes": 8651,
-      "sha256": "1688182606aafd74cb73976c6eedb9a7afbc8bb9f98d238ba363d8a230bb191c"
+      "bytes": 9610,
+      "sha256": "2474980aaf277f5249e5709f56db03578188ba5d6bca01038d63769e43094270"
     },
     "01-environments-and-storage-map.md": {
       "bytes": 4152,
@@ -153,9 +154,64 @@
       "bytes": 3458,
       "sha256": "23d6a40072611e091830a20b529baa8c7502500a1bc57faa57964966199dc0b9"
     },
+    "17-source-of-truth-consolidation.md": {
+      "bytes": 9384,
+      "sha256": "5a9daeb4a4bb7e868e3314b1c3353d77f40d20f59b210811f08ad233be0b587d"
+    },
     "production-toc.json": {
       "bytes": 108143,
       "sha256": "7424bcd4bb52cff57de7e631c40821e31113f92d2c2f261d0f176b577ecc3736"
     }
+  },
+  "core_finding_2_index_staleness": {
+    "defect": "derived retrieval index stale vs production",
+    "bm25_articles": 15902,
+    "production_articles_derived": 17323,
+    "delta": 1421,
+    "missing_systems": 15,
+    "nature": "كلها لوائح تنفيذية وأدوات إجرائية غائبة كليًا عن البحث والاسترجاع",
+    "largest": [
+      {
+        "law": "اللوائح التنفيذية لنظام المرافعات الشرعية",
+        "articles": 639
+      },
+      {
+        "law": "اللائحة التنفيذية لنظام المحاكم التجارية",
+        "articles": 281
+      },
+      {
+        "law": "الأدلة الإجرائية لنظام الإثبات",
+        "articles": 135
+      }
+    ],
+    "verified_present_in_production_via_mcp": [
+      "اللائحة التنفيذية لنظام المحاكم التجارية م(5)",
+      "اللوائح التنفيذية لنظام المرافعات الشرعية م(10)"
+    ],
+    "arithmetic_check": "15902 + 1421 = 17323"
+  },
+  "consolidation_decision": {
+    "single_source_of_truth": "Neon",
+    "rationale": "الأكمل (تنفرد بـ1,421 مادة) والوحيدة المحتفظة بالعناوين الترتيبية ⇒ الوحيدة القابلة للتدقيق",
+    "derived_rebuilt_from_neon": [
+      "BM25",
+      "saudi_systems.json",
+      "pgvector",
+      "OpenSearch",
+      "knowledge graph",
+      "thesaurus",
+      "fiqh alignments"
+    ],
+    "frozen_read_only": [
+      "Supabase",
+      "Hostinger",
+      "data/legal_articles_export.json"
+    ],
+    "binding_rules": [
+      "الكتابة في Neon فقط",
+      "الاتجاه واحد — ممنوع الاستيراد من طبقة مشتقّة",
+      "الأرشيف مجمَّد تقنيًا"
+    ],
+    "document": "17-source-of-truth-consolidation.md"
   }
 }
