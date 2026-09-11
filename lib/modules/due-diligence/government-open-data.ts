@@ -12,9 +12,9 @@ export type GovernmentOpenDataPlatform = {
 };
 
 /**
- * Registry of official Saudi public/open-data sources relevant to corporate due diligence.
- * ENTITY sources may produce entity observations when an identifier/name match is present.
- * CONTEXT/CATALOG sources never become adverse entity evidence merely because the dataset exists.
+ * Official Saudi public/open-data sources relevant to corporate due diligence.
+ * ENTITY = may support entity matching when identifiers are available.
+ * CONTEXT/CATALOG = discovery/market context only; never adverse entity evidence by existence alone.
  */
 export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
   {
@@ -24,7 +24,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CATALOG",
     integration: "DISCOVERY",
     officialUrl: "https://open.data.gov.sa/ar/home",
-    notesAr: "بوابة مركزية لاكتشاف مجموعات البيانات الحكومية المفتوحة وواجهات البيانات الفورية. تُستخدم للاكتشاف والإسناد ولا تُحوَّل مجموعاتها العامة تلقائيًا إلى أدلة على كيان بعينه.",
+    notesAr: "البوابة الوطنية المركزية لاكتشاف مجموعات البيانات الحكومية والواجهات الفورية. تستخدم للاكتشاف والإسناد، ولا تتحول مجموعاتها العامة تلقائيًا إلى أدلة على كيان بعينه.",
   },
   {
     key: "saudi_commerce_gis",
@@ -33,7 +33,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "LIVE",
     officialUrl: "https://mc.gov.sa/ar/About/Statistics/Pages/GISInfo.aspx",
-    notesAr: "بيانات GIS مجمعة ومباشرة؛ سياقية فقط ولا تثبت تسجيل شركة محددة.",
+    notesAr: "GIS رسمي مباشر ومجمع؛ سياقي فقط ولا يثبت تسجيل شركة محددة.",
   },
   {
     key: "sfda_licensed_establishments",
@@ -41,8 +41,8 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     authority: "الهيئة العامة للغذاء والدواء",
     scope: "ENTITY",
     integration: "LIVE",
-    officialUrl: "https://sfda.gov.sa/en/node/17597",
-    notesAr: "مصدر رسمي ينشر اسم المنشأة والسجل التجاري ونوع القطاع والترخيص ورقمه والمدينة وتاريخ الانتهاء عبر Web Service معلن.",
+    officialUrl: "https://sfda.gov.sa/en/licensed-establishments-list",
+    notesAr: "قائمة رسمية عامة عبر HTTPS تعرض اسم المنشأة والسجل التجاري ونوع القطاع والترخيص ورقمه؛ حكيم يفضل البحث بالسجل التجاري عند توفره.",
   },
   {
     key: "sama_finance_entities",
@@ -51,7 +51,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "ENTITY",
     integration: "LIVE",
     officialUrl: "https://www.sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/MultiActivitiesLicensedEntities.aspx",
-    notesAr: "قائمة رسمية منشورة لبعض شركات التمويل؛ مطابقة الاسم وحدها تبقى للمراجعة.",
+    notesAr: "قائمة رسمية لبعض شركات التمويل؛ مطابقة الاسم وحدها تبقى للمراجعة ولا تستعير الرقم الموحد من المستخدم.",
   },
   {
     key: "sama_open_data",
@@ -60,7 +60,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "DISCOVERY",
     officialUrl: "https://www.sama.gov.sa/ar-sa/Statistics/Pages/Summary.aspx",
-    notesAr: "بيانات اقتصادية ومالية دورية مع API؛ سياقية للسوق ما لم تحمل مجموعة محددة معرفات كيان.",
+    notesAr: "بيانات اقتصادية ومالية دورية وواجهات API؛ سياقية للسوق ما لم تحمل مجموعة محددة معرفات كيان.",
   },
   {
     key: "cma_open_data",
@@ -69,7 +69,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "ENTITY",
     integration: "DEGRADED",
     officialUrl: "https://opendataapi.cma.gov.sa/",
-    notesAr: "API رسمي معروف، لكن الاتصال من بيئة حكيم السحابية غير مستقر حاليًا؛ لا يظهر كمصدر حي حتى يستقر مسار الوصول.",
+    notesAr: "API رسمي، لكن الاتصال من بيئة حكيم السحابية غير مستقر حاليًا؛ لا يظهر كمصدر حي حتى يستقر مسار الوصول.",
   },
   {
     key: "saip_open_data",
@@ -78,7 +78,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CATALOG",
     integration: "ADAPTER",
     officialUrl: "https://www.saip.gov.sa/ar/resources/tools-and-research/open-data",
-    notesAr: "الهيئة تعلن إتاحة بيانات ملكية فكرية بصيغ مفتوحة وتربط بالمنصة الوطنية؛ موصل الكيان ينتظر endpoint/مجموعة مستقرة للعلامات.",
+    notesAr: "بيانات ملكية فكرية مفتوحة وربط بالمنصة الوطنية؛ موصل كيان العلامات ينتظر مجموعة/endpoint مستقرة ومصرحًا بها.",
   },
   {
     key: "cst_iot_entities",
@@ -87,7 +87,61 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "ENTITY",
     integration: "LIVE",
     officialUrl: "https://www.cst.gov.sa/en/knowledge-center/digital-knowledge/IOT/IoT-Landscape/IoT-Service-Providers",
-    notesAr: "قائمة رسمية محدودة النطاق لمقدمي خدمات IoT المسجلين/المصرح لهم/المرخصين؛ لا تعمم على جميع تراخيص CST.",
+    notesAr: "قائمة رسمية محدودة النطاق لمقدمي IoT المسجلين/المصرح لهم/المرخصين؛ المطابقة بالاسم فقط تبقى للمراجعة ولا تعمم على جميع تراخيص CST.",
+  },
+  {
+    key: "rega_fal_inquiry",
+    nameAr: "الاستعلام عن رخص فال",
+    authority: "الهيئة العامة للعقار",
+    scope: "ENTITY",
+    integration: "ADAPTER",
+    officialUrl: "https://rega.gov.sa/en/rega-services/real-estate-enquiries/enquiring-about-the-fal-license/",
+    notesAr: "خدمة رسمية فورية للتحقق من صلاحية واستخدام رخص فال للأفراد والمنشآت. لا يوجد endpoint عام موثق مثبت في حكيم حتى الآن، لذلك لا نجري التفافًا على الواجهة.",
+  },
+  {
+    key: "zatca_open_data",
+    nameAr: "واجهات البيانات المفتوحة للزكاة والضريبة والجمارك",
+    authority: "هيئة الزكاة والضريبة والجمارك",
+    scope: "CONTEXT",
+    integration: "DISCOVERY",
+    officialUrl: "https://zatca.gov.sa/ar/e-participation/PublicData/Pages/APIs.aspx",
+    notesAr: "واجهات رسمية لفسوحات المنافذ والواردات والصادرات وحالة المنافذ وبيانات استكشافية؛ سياق تجاري ولوجستي لا يثبت حالة منشأة بعينها دون معرف كيان صريح.",
+  },
+  {
+    key: "gastat_open_data_api",
+    nameAr: "واجهات البيانات المفتوحة للإحصاء",
+    authority: "الهيئة العامة للإحصاء",
+    scope: "CONTEXT",
+    integration: "ADAPTER",
+    officialUrl: "https://dp.stats.gov.sa/?locale=en",
+    notesAr: "بوابة مطورين رسمية لواجهات المؤشرات والبيانات الإحصائية. تتطلب إنشاء تطبيق والحصول على مفتاح مصادقة قبل تفعيل الجلب في حكيم.",
+  },
+  {
+    key: "hrsd_open_data",
+    nameAr: "البيانات المفتوحة للموارد البشرية والتنمية الاجتماعية",
+    authority: "وزارة الموارد البشرية والتنمية الاجتماعية",
+    scope: "CONTEXT",
+    integration: "DISCOVERY",
+    officialUrl: "https://www.hrsd.gov.sa/open-data",
+    notesAr: "مجموعات وتقارير قابلة لإعادة الاستخدام، وترتبط بالمنصة الوطنية. تعامل كسياق سوق وعمل ما لم تتضمن مجموعة معرفات منشآت مناسبة.",
+  },
+  {
+    key: "monshaat_open_data",
+    nameAr: "البيانات المفتوحة لمنشآت",
+    authority: "الهيئة العامة للمنشآت الصغيرة والمتوسطة",
+    scope: "CATALOG",
+    integration: "ADAPTER",
+    officialUrl: "https://www.monshaat.gov.sa/en/node/12825",
+    notesAr: "منصة رسمية مجانية للبيانات المفتوحة. أي بيانات مؤسسة/سجل لا تصبح Entity-level حتى تثبت مجموعة بيانات مستقرة وحقول معرفات مناسبة.",
+  },
+  {
+    key: "balady_open_data_api",
+    nameAr: "واجهة البيانات المفتوحة لبلدي",
+    authority: "وزارة البلديات والإسكان / منصة بلدي",
+    scope: "CATALOG",
+    integration: "LIVE",
+    officialUrl: "https://apiservices.balady.gov.sa/v1/momrah-services/open-data",
+    notesAr: "API رسمي موثق لمجموعات البيانات البلدية. متصل عبر Open Data Hub للاكتشاف؛ بيانات الرخص المجمعة لا تُعامل كرخصة منشأة بعينها دون موصل كيان مستقل.",
   },
   {
     key: "moj_open_data",
@@ -96,7 +150,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "DISCOVERY",
     officialUrl: "https://www.moj.gov.sa/ar/OpenData/Pages/Request.aspx",
-    notesAr: "تقارير ومجموعات بيانات عدلية مفتوحة؛ الأحكام المنشورة في حكيم لها موصل مستقل وأكثر ملاءمة لمطابقة الكيان.",
+    notesAr: "تقارير ومجموعات عدلية مفتوحة؛ الأحكام المنشورة في حكيم لها موصل مستقل وأكثر ملاءمة لمطابقة الكيان.",
   },
   {
     key: "mof_open_data",
@@ -105,7 +159,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "DISCOVERY",
     officialUrl: "https://www.mof.gov.sa/generalservcies/open-data/Pages/default.aspx",
-    notesAr: "ميزانية واقتصاد كلي ومالية عامة؛ تستخدم كسياق اقتصادي لا كدليل مباشر على منشأة.",
+    notesAr: "ميزانية واقتصاد كلي ومالية عامة؛ سياق اقتصادي لا دليل مباشر على منشأة.",
   },
   {
     key: "mofa_open_data",
@@ -114,7 +168,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CATALOG",
     integration: "DISCOVERY",
     officialUrl: "https://www.mofa.gov.sa/ar/OpenData/Pages/default.aspx",
-    notesAr: "بوابة بيانات مفتوحة رسمية؛ تُفهرس للاكتشاف ولا تدخل Risk Score دون مجموعة كيان محددة.",
+    notesAr: "بوابة بيانات مفتوحة رسمية؛ مفهرسة للاكتشاف ولا تدخل Risk Score دون مجموعة كيان محددة.",
   },
   {
     key: "riyadh_open_data",
@@ -123,7 +177,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "DISCOVERY",
     officialUrl: "https://www.alriyadh.gov.sa/ar/open-data",
-    notesAr: "بيانات بلدية وجيومكانية ووقت فعلي؛ يمكن توسيعها لاحقًا إلى موصلات تراخيص بلدية محددة عند توفر معرفات منشآت.",
+    notesAr: "بيانات بلدية وجيومكانية؛ يمكن ترقيتها إلى Entity-level فقط عند وجود معرف منشأة موثق في مجموعة محددة.",
   },
   {
     key: "tourism_open_data",
@@ -132,7 +186,16 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "DISCOVERY",
     officialUrl: "https://www.mt.gov.sa/",
-    notesAr: "إحصاءات منشآت الضيافة المرخصة والأداء السياحي؛ سياقية ما لم تتوفر قائمة منشآت بمعرفات قابلة للمطابقة.",
+    notesAr: "إحصاءات قطاع الضيافة والأداء السياحي؛ سياقية إلى أن تتوفر قائمة منشآت بمعرفات قابلة للمطابقة.",
+  },
+  {
+    key: "mim_industry_open_data",
+    nameAr: "بيانات الصناعة والثروة المعدنية المفتوحة",
+    authority: "وزارة الصناعة والثروة المعدنية",
+    scope: "CONTEXT",
+    integration: "DISCOVERY",
+    officialUrl: "https://mim.gov.sa/en/",
+    notesAr: "الوزارة تعرض مؤشرات صناعية وتعدينية وروابط بيانات مفتوحة؛ تعامل كسياق قطاعي إلى أن تثبت مجموعة تراخيص منشآت قابلة للمطابقة المباشرة.",
   },
   {
     key: "bog_open_data_api",
@@ -141,7 +204,7 @@ export const GOVERNMENT_OPEN_DATA_REGISTRY: GovernmentOpenDataPlatform[] = [
     scope: "CONTEXT",
     integration: "DISCOVERY",
     officialUrl: "https://www.bog.gov.sa/EServices/OpenData/Pages/APIDetails.aspx",
-    notesAr: "الديوان يعلن خدمة API للبيانات المفتوحة؛ تُفهرس حاليًا إلى أن تحدد مجموعة قابلة لمطابقة كيان تجاري.",
+    notesAr: "خدمة API معلنة للبيانات المفتوحة؛ مفهرسة إلى أن تحدد مجموعة تصلح لمطابقة كيان تجاري.",
   },
   {
     key: "shc_open_data",
