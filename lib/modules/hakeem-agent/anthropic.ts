@@ -48,6 +48,10 @@ export async function callAnthropicWithTools(input: {
     return { ok: false, stopReason: null, content: [], error: "مزوّد Claude غير مفعّل (لا مفتاح Anthropic)." };
   }
   try {
+    // مهلة لكلّ نداء: بلا AbortSignal كان اتّصالٌ متعثّرٌ (تعليقٌ بلا رفض) يُبقي الـ await معلّقًا
+    // إلى ما لا نهاية، فتُقتل دالّة الخادم عند maxDuration قبل تسليم أيّ نتيجة (توقّفٌ صامت لدى
+    // المستخدم). الآن يُجهَض النداء بعد المهلة فيعود خطأً تتعامل معه الحلقة (سقوطٌ للمسار القياسيّ).
+    const perCallMs = Number(process.env.HAKEEM_AGENT_CALL_TIMEOUT_MS) || 75_000;
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
@@ -58,6 +62,7 @@ export async function callAnthropicWithTools(input: {
         tools: input.tools,
         messages: input.messages,
       }),
+      signal: AbortSignal.timeout(perCallMs),
     });
     if (!response.ok) {
       const body = await response.text().catch(() => "");
