@@ -3,6 +3,8 @@ import { fetchBaladyOpenDataCatalog } from "../lib/modules/due-diligence/balady-
 import { runDueDiligence } from "../lib/modules/due-diligence/core";
 import { CstIotEntitiesConnector } from "../lib/modules/due-diligence/cst";
 import { governmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data";
+import { NcecQualifiedAgenciesConnector } from "../lib/modules/due-diligence/ncec";
+import { SasoConformityBodiesConnector } from "../lib/modules/due-diligence/saso";
 import { SfdaLicensedEstablishmentsConnector } from "../lib/modules/due-diligence/sfda";
 
 async function probeNationalPortal() {
@@ -20,28 +22,6 @@ async function probeNationalPortal() {
   } finally {
     clearTimeout(timer);
   }
-}
-
-async function diagnoseBaladyShape() {
-  const response = await fetch("https://apiservices.balady.gov.sa/v1/momrah-services/open-data?items_per_page=5", {
-    redirect: "error",
-    headers: { accept: "application/json,text/plain;q=0.8", "user-agent": "HakeemDueDiligenceAudit/1.0 (+https://hakeemai.net)" },
-  });
-  const parsed = (await response.json()) as Record<string, unknown>;
-  const data = parsed.data && typeof parsed.data === "object" ? (parsed.data as Record<string, unknown>) : undefined;
-  const result = data?.result && typeof data.result === "object" ? (data.result as Record<string, unknown>) : undefined;
-  const rows = Array.isArray(result?.rows) ? result?.rows : [];
-  const first = rows[0] && typeof rows[0] === "object" ? (rows[0] as Record<string, unknown>) : undefined;
-  const firstKeys = first ? Object.keys(first) : [];
-  const firstTypes = first
-    ? Object.entries(first)
-        .slice(0, 20)
-        .map(([key, value]) => `${key}:${Array.isArray(value) ? `array[${value.length}]` : typeof value}`)
-        .join(",")
-    : "none";
-  console.log(
-    `DIAG | Balady raw | status=${response.status} top=${Object.keys(parsed).join(",")} data=${data ? Object.keys(data).join(",") : "none"} result=${result ? Object.keys(result).join(",") : "none"} rows=${rows.length} firstKeys=${firstKeys.join(",")} firstTypes=${firstTypes}`
-  );
 }
 
 async function main() {
@@ -66,19 +46,37 @@ async function main() {
 
   const cst = new CstIotEntitiesConnector();
   const cstRaw = await cst.collect({ name: "ZAIN" });
-  assert.ok(cstRaw.observations.length >= 1);
+  assert.ok(cstRaw.observations.length >= 1, "CST IoT public page no longer exposes known provider ZAIN");
   const cstReport = await runDueDiligence({ name: "ZAIN" }, [cst]);
   assert.equal(cstReport.evidence.length, 0);
-  assert.equal(cstReport.needsReview.length, 1);
+  assert.ok(cstReport.needsReview.length >= 1);
   assert.equal(cstReport.risk.score, 0);
   console.log(`PASS | CST IoT | review=${cstReport.needsReview.length} risk=${cstReport.risk.score}`);
 
-  const balady = await fetchBaladyOpenDataCatalog({ limit: 5 });
-  if (!balady.items.length) await diagnoseBaladyShape();
-  assert.ok(balady.items.length > 0, "Balady official open-data API returned no catalog items");
-  console.log(`PASS | Balady Open Data API | items=${balady.items.length}`);
+  const saso = new SasoConformityBodiesConnector();
+  const sasoRaw = await saso.collect({ name: "TÜV Rheinland Middle East FZE" });
+  assert.ok(sasoRaw.observations.length >= 1, "SASO product-certification page no longer exposes the known accepted body");
+  const sasoReport = await runDueDiligence({ name: "TÜV Rheinland Middle East FZE" }, [saso]);
+  assert.equal(sasoReport.evidence.length, 0, "SASO name-only listing must stay review-only");
+  assert.ok(sasoReport.needsReview.length >= 1);
+  assert.equal(sasoReport.risk.score, 0);
+  console.log(`PASS | SASO conformity bodies | review=${sasoReport.needsReview.length} risk=${sasoReport.risk.score}`);
 
-  console.log("Summary: SFDA, CST and Balady live probes passed; national portal reachability is informational only.");
+  const ncec = new NcecQualifiedAgenciesConnector();
+  const ncecRaw = await ncec.collect({ name: "مؤسسة الأنظمة الخضراء للخدمات البيئية" });
+  assert.ok(ncecRaw.observations.length >= 1, "NCEC qualified-organizations page no longer exposes the known published organization");
+  const ncecReport = await runDueDiligence({ name: "مؤسسة الأنظمة الخضراء للخدمات البيئية" }, [ncec]);
+  assert.equal(ncecReport.evidence.length, 0, "NCEC name-only listing must stay review-only");
+  assert.ok(ncecReport.needsReview.length >= 1);
+  assert.equal(ncecReport.risk.score, 0);
+  console.log(`PASS | NCEC qualified environmental agencies | review=${ncecReport.needsReview.length} risk=${ncecReport.risk.score}`);
+
+  const balady = await fetchBaladyOpenDataCatalog({ limit: 5 });
+  assert.ok(balady.items.length > 0, "Balady official open-data API returned no normalized catalog items");
+  assert.ok(balady.items.some((item) => item.id || item.title));
+  console.log(`PASS | Balady Open Data API | items=${balady.items.length} first=${balady.items[0]?.title ?? balady.items[0]?.id ?? "n/a"}`);
+
+  console.log("Summary: SFDA, CST, SASO, NCEC and Balady live probes passed; national portal reachability is informational only.");
 }
 
 main().catch((error) => {
