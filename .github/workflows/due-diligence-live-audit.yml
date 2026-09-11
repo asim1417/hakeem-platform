@@ -1,0 +1,30 @@
+name: Due Diligence Live Integration Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/audit-due-diligence-live.ts"
+      - ".github/workflows/due-diligence-live-audit.yml"
+      - "lib/modules/due-diligence/**"
+  workflow_dispatch:
+
+jobs:
+  live-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Live integration probes
+        run: npx tsx scripts/audit-due-diligence-live.ts
