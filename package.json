@@ -221,7 +221,10 @@
     "test:jds-records": "tsx scripts/test-judicial-records.ts",
     "test:jds-durable": "tsx scripts/test-judicial-durable.ts",
     "db:jds": "tsx scripts/seed-judicial-jds.ts",
-    "prove:currentness": "tsx scripts/prove-currentness.ts"
+    "prove:currentness": "tsx scripts/prove-currentness.ts",
+    "audit:legal-data": "tsx scripts/audit/audit-legal-data.ts",
+    "audit:derived-drift": "tsx scripts/audit/check-derived-drift.ts",
+    "test:arabic-ordinal": "tsx scripts/test-arabic-ordinal.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
