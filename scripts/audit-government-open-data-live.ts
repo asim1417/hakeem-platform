@@ -22,28 +22,39 @@ async function probeNationalPortal() {
   }
 }
 
+function describeValue(value: unknown, depth = 0): string {
+  if (depth > 3) return "…";
+  if (value === null) return "null";
+  if (Array.isArray(value)) {
+    const first = value[0];
+    return `[${value.length}]${first === undefined ? "" : ` first=${describeValue(first, depth + 1)}`}`;
+  }
+  if (typeof value === "object") {
+    const object = value as Record<string, unknown>;
+    return `{${Object.entries(object)
+      .slice(0, 12)
+      .map(([key, child]) => `${key}:${describeValue(child, depth + 1)}`)
+      .join(",")}}`;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const looksJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+    return looksJson ? `string-json(len=${value.length},head=${JSON.stringify(trimmed.slice(0, 180))})` : `string(len=${value.length})`;
+  }
+  return typeof value;
+}
+
 async function diagnoseBaladyShape() {
   const response = await fetch("https://apiservices.balady.gov.sa/v1/momrah-services/open-data?items_per_page=5", {
     redirect: "error",
     headers: { accept: "application/json,text/plain;q=0.8", "user-agent": "HakeemDueDiligenceAudit/1.0 (+https://hakeemai.net)" },
   });
   const text = await response.text();
-  let shape = "non-json";
+  let shape = `non-json len=${text.length}`;
   try {
-    const parsed = JSON.parse(text) as unknown;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      const object = parsed as Record<string, unknown>;
-      const nested: string[] = [];
-      for (const [key, value] of Object.entries(object).slice(0, 12)) {
-        if (value && typeof value === "object" && !Array.isArray(value)) {
-          nested.push(`${key}:{${Object.keys(value as Record<string, unknown>).slice(0, 12).join(",")}}`);
-        } else if (Array.isArray(value)) nested.push(`${key}:[${value.length}]`);
-        else nested.push(`${key}:${typeof value}`);
-      }
-      shape = nested.join(" | ");
-    } else if (Array.isArray(parsed)) shape = `array[${parsed.length}]`;
+    shape = describeValue(JSON.parse(text));
   } catch {
-    shape = `non-json len=${text.length}`;
+    // Keep non-JSON diagnostic without dumping the response body.
   }
   console.log(`DIAG | Balady raw | status=${response.status} content-type=${response.headers.get("content-type") ?? "n/a"} len=${text.length} shape=${shape}`);
 }
@@ -60,10 +71,7 @@ async function main() {
   console.log(`${portal.ok ? "PASS" : "INFO"} | National Open Data portal | status=${portal.status} ${portal.finalUrl || portal.error || ""}`);
 
   const sfda = new SfdaLicensedEstablishmentsConnector();
-  const sfdaRaw = await sfda.collect({
-    name: "AL MADAR MEDICAL SERVICES COMPANY",
-    commercialRegistration: "7001583587",
-  });
+  const sfdaRaw = await sfda.collect({ name: "AL MADAR MEDICAL SERVICES COMPANY", commercialRegistration: "7001583587" });
   const sfdaMatch = sfdaRaw.observations.find((item) => item.commercialRegistration === "7001583587");
   assert.ok(sfdaMatch, "SFDA public licensed-establishments directory did not return known published CR 7001583587");
   console.log(`PASS | SFDA directory | observations=${sfdaRaw.observations.length} cr=${sfdaMatch?.commercialRegistration} license=${sfdaMatch?.sourceRecordId ?? "n/a"}`);
