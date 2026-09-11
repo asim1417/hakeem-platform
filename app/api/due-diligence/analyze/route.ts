@@ -5,9 +5,9 @@ import { runDueDiligence } from "@/lib/modules/due-diligence/core";
 import { buildDemoConnectors } from "@/lib/modules/due-diligence/demo";
 import { persistDueDiligenceSnapshot } from "@/lib/modules/due-diligence/history";
 import {
-  buildPhase2Connectors,
-  phase2SourceCatalog,
-} from "@/lib/modules/due-diligence/phase2";
+  buildPhase3Connectors,
+  phase3SourceCatalog,
+} from "@/lib/modules/due-diligence/phase3";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,10 +27,10 @@ export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
 
-  const configured = new Set(buildPhase2Connectors().map((connector) => connector.source.key));
+  const configured = new Set(buildPhase3Connectors().map((connector) => connector.source.key));
   return NextResponse.json({
     demoAvailable: true,
-    sources: phase2SourceCatalog().map((source) => ({
+    sources: phase3SourceCatalog().map((source) => ({
       key: source.key,
       nameAr: source.nameAr,
       authority: source.authority,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { mode, ...entity } = payload;
-  const connectors = mode === "DEMO" ? buildDemoConnectors(entity) : buildPhase2Connectors();
+  const connectors = mode === "DEMO" ? buildDemoConnectors(entity) : buildPhase3Connectors();
 
   if (!connectors.length) {
     return NextResponse.json(
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         message: "محرك العناية الواجبة جاهز، لكن لم يتم تهيئة أي مصدر حي بعد. يمكنك تجربة وضع العرض التجريبي.",
         setupRequired: true,
         demoAvailable: true,
-        sources: phase2SourceCatalog().map(({ key, nameAr, authority, accessType }) => ({
+        sources: phase3SourceCatalog().map(({ key, nameAr, authority, accessType }) => ({
           key,
           nameAr,
           authority,
