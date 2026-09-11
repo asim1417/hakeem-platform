@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { runDueDiligence } from "@/lib/modules/due-diligence/core";
-import {
-  buildConfiguredConnectors,
-  dueDiligenceSourceCatalog,
-} from "@/lib/modules/due-diligence/connectors";
 import { buildDemoConnectors } from "@/lib/modules/due-diligence/demo";
+import { persistDueDiligenceSnapshot } from "@/lib/modules/due-diligence/history";
+import {
+  buildPhase2Connectors,
+  phase2SourceCatalog,
+} from "@/lib/modules/due-diligence/phase2";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,10 +27,10 @@ export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
 
-  const configured = new Set(buildConfiguredConnectors().map((connector) => connector.source.key));
+  const configured = new Set(buildPhase2Connectors().map((connector) => connector.source.key));
   return NextResponse.json({
     demoAvailable: true,
-    sources: dueDiligenceSourceCatalog().map((source) => ({
+    sources: phase2SourceCatalog().map((source) => ({
       key: source.key,
       nameAr: source.nameAr,
       authority: source.authority,
@@ -40,8 +41,8 @@ export async function GET() {
 }
 
 /**
- * POST — LIVE runs approved server-configured sources only. DEMO runs clearly
- * labelled synthetic fixtures. The request can never supply a source URL.
+ * POST — LIVE runs approved server-configured and Hakim-native public sources only.
+ * DEMO runs clearly labelled synthetic fixtures. The request can never supply a source URL.
  */
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { mode, ...entity } = payload;
-  const connectors = mode === "DEMO" ? buildDemoConnectors(entity) : buildConfiguredConnectors();
+  const connectors = mode === "DEMO" ? buildDemoConnectors(entity) : buildPhase2Connectors();
 
   if (!connectors.length) {
     return NextResponse.json(
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
         message: "محرك العناية الواجبة جاهز، لكن لم يتم تهيئة أي مصدر حي بعد. يمكنك تجربة وضع العرض التجريبي.",
         setupRequired: true,
         demoAvailable: true,
-        sources: dueDiligenceSourceCatalog().map(({ key, nameAr, authority, accessType }) => ({
+        sources: phase2SourceCatalog().map(({ key, nameAr, authority, accessType }) => ({
           key,
           nameAr,
           authority,
@@ -81,9 +82,24 @@ export async function POST(request: NextRequest) {
   }
 
   const report = await runDueDiligence(entity, connectors);
+  let snapshotId: string | undefined;
+  let persistenceWarning: string | undefined;
+
+  if (mode === "LIVE") {
+    try {
+      const snapshot = await persistDueDiligenceSnapshot(user.id, report);
+      snapshotId = snapshot.id;
+    } catch {
+      persistenceWarning =
+        "تم إنشاء التقرير، لكن تعذر حفظ نسخته التاريخية هذه المرة. لا يؤثر ذلك في نتائج الفحص الحالية.";
+    }
+  }
+
   return NextResponse.json({
     mode,
     demo: mode === "DEMO",
+    snapshotId,
+    persistenceWarning,
     demoNotice:
       mode === "DEMO"
         ? "جميع الوقائع والنتائج في هذا التقرير بيانات صناعية لأغراض العرض ولا تخص أي كيان حقيقي."
