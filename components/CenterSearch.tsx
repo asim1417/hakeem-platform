@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Search, Sparkles } from "lucide-react";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
+
+const iconLabel = { display: "inline-flex", alignItems: "center", gap: "0.35rem" } as const;
 
 /**
  * السلوك السابق (احتياطي عند HOME_INLINE_ASK=0):
@@ -28,7 +31,7 @@ export function CenterSearch() {
             data-active={mode === "ask"}
             onClick={() => setMode("ask")}
           >
-            ✦ اسأل حكيم
+            <span style={iconLabel}><Sparkles size={15} aria-hidden /> اسأل حكيم</span>
           </button>
           <button
             type="button"
@@ -37,12 +40,12 @@ export function CenterSearch() {
             data-active={mode === "text"}
             onClick={() => setMode("text")}
           >
-            ⌕ البحث النصّي
+            <span style={iconLabel}><Search size={15} aria-hidden /> البحث النصّي</span>
           </button>
         </div>
       ) : null}
       <div className="cs-box">
-        <span aria-hidden="true">⌕</span>
+        <Search size={16} aria-hidden />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}

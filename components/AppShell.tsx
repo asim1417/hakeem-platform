@@ -187,7 +187,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               action={TRADITIONAL_SEARCH_ENABLED ? "/dashboard/legal-search" : AI_SEARCH_HOME}
               role="search"
             >
-              <span aria-hidden>⌕</span>
+              <Search size={16} aria-hidden />
               <input
                 name="q"
                 aria-label={searchAria}
