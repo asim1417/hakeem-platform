@@ -30,7 +30,15 @@ type SessionPayload = {
 function authRequired(): boolean {
   if (isClerkConfigured()) return true;
   const f = (process.env.REQUIRE_AUTH ?? "").toLowerCase();
-  return f === "true" || f === "1" || f === "on";
+  if (f === "true" || f === "1" || f === "on") return true;
+  // فشلٌ مغلق في الإنتاج: بلا Clerk وبلا REQUIRE_AUTH كان كلّ زائرٍ مجهولٍ يصير ضيفًا بصلاحية
+  // SYSTEM_ADMIN (ثغرة فتحٍ صامت). في الإنتاج نطلب المصادقة افتراضيًّا، ولا يُفتح مسار الضيف
+  // إلا بعلمٍ صريحٍ خطير ALLOW_INSECURE_GUEST=1 (للتطوير/المعاينة فقط، لا للإنتاج).
+  if (process.env.NODE_ENV === "production") {
+    const allow = (process.env.ALLOW_INSECURE_GUEST ?? "").toLowerCase();
+    return !(allow === "1" || allow === "true" || allow === "on");
+  }
+  return false;
 }
 
 export function isAuthDisabled() {
