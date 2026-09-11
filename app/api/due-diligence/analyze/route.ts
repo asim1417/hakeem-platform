@@ -3,7 +3,16 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { runDueDiligence } from "@/lib/modules/due-diligence/core";
 import { buildDemoConnectors } from "@/lib/modules/due-diligence/demo";
-import { persistDueDiligenceSnapshot } from "@/lib/modules/due-diligence/history";
+import {
+  buildDueDiligenceSnapshotMeta,
+  compareDueDiligenceSnapshots,
+  parseDueDiligenceSnapshotMeta,
+  type DueDiligenceChangeSummary,
+} from "@/lib/modules/due-diligence/changes";
+import {
+  getLatestDueDiligenceSnapshot,
+  persistDueDiligenceSnapshot,
+} from "@/lib/modules/due-diligence/history";
 import {
   buildPhase3Connectors,
   phase3SourceCatalog,
@@ -30,6 +39,7 @@ export async function GET() {
   const configured = new Set(buildPhase3Connectors().map((connector) => connector.source.key));
   return NextResponse.json({
     demoAvailable: true,
+    changeDetection: true,
     sources: phase3SourceCatalog().map((source) => ({
       key: source.key,
       nameAr: source.nameAr,
@@ -84,14 +94,20 @@ export async function POST(request: NextRequest) {
   const report = await runDueDiligence(entity, connectors);
   let snapshotId: string | undefined;
   let persistenceWarning: string | undefined;
+  let changes: DueDiligenceChangeSummary | undefined;
 
   if (mode === "LIVE") {
     try {
-      const snapshot = await persistDueDiligenceSnapshot(user.id, report);
+      const previous = await getLatestDueDiligenceSnapshot(user.id, report);
+      const previousMeta = parseDueDiligenceSnapshotMeta(previous?.metadata ?? null);
+      const currentMeta = buildDueDiligenceSnapshotMeta(report);
+      changes = compareDueDiligenceSnapshots(currentMeta, previousMeta);
+
+      const snapshot = await persistDueDiligenceSnapshot(user.id, report, changes);
       snapshotId = snapshot.id;
     } catch {
       persistenceWarning =
-        "تم إنشاء التقرير، لكن تعذر حفظ نسخته التاريخية هذه المرة. لا يؤثر ذلك في نتائج الفحص الحالية.";
+        "تم إنشاء التقرير، لكن تعذر حفظ نسخته التاريخية أو مقارنة التغييرات هذه المرة. لا يؤثر ذلك في نتائج الفحص الحالية.";
     }
   }
 
@@ -99,6 +115,7 @@ export async function POST(request: NextRequest) {
     mode,
     demo: mode === "DEMO",
     snapshotId,
+    changes,
     persistenceWarning,
     demoNotice:
       mode === "DEMO"
