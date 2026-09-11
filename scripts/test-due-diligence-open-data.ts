@@ -25,7 +25,7 @@ async function main() {
   assert.ok(registry.some((item) => item.key === "saudi_commerce_gis" && item.scope === "CONTEXT"));
   assert.ok(registry.some((item) => item.key === "balady_open_data_api" && item.integration === "LIVE"));
   assert.ok(registry.some((item) => item.key === "saso_conformity_bodies" && item.integration === "LIVE"));
-  assert.ok(registry.some((item) => item.key === "ncec_qualified_environmental_agencies" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "ncec_qualified_environmental_agencies" && item.integration === "ADAPTER"));
   assert.ok(registry.some((item) => item.key === "insurance_authority_licensed_companies" && item.integration === "ADAPTER"));
   assert.ok(registry.some((item) => item.key === "misa_open_data" && item.scope === "CONTEXT"));
 
