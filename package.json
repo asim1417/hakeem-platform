@@ -122,6 +122,7 @@
     "eval:known-item": "tsx scripts/eval-known-item.ts",
     "clean:keywords": "tsx scripts/clean-keywords.ts",
     "backfill:search-norm": "tsx scripts/backfill-search-norm.ts",
+    "backfill:rulings-search-norm": "tsx scripts/backfill-rulings-search-norm.ts",
     "inspect:vercel": "tsx scripts/inspect-vercel-db.ts",
     "audit:db-env": "tsx scripts/audit-db-environments.ts",
     "test:diversity": "tsx scripts/test-candidate-diversity.ts",
