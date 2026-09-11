@@ -19,7 +19,8 @@ async function main() {
       };
     }
     assert.equal(url.hostname, "api.sfda.gov.sa");
-    assert.equal(url.searchParams.get("companyNameAR"), "شركة المثال للدواء");
+    assert.ok(url.searchParams.get("crNumber"));
+    assert.equal(url.searchParams.get("companyNameAR"), null);
     return {
       contentType: "application/json; charset=utf-8",
       body: JSON.stringify({
