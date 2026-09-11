@@ -14,6 +14,7 @@ import {
   StaticDueDiligenceConnector,
 } from "../lib/modules/due-diligence/connectors";
 import { SaudiBankruptcyConnector } from "../lib/modules/due-diligence/bankruptcy";
+import { buildDemoConnectors } from "../lib/modules/due-diligence/demo";
 
 const source: DataSourceDefinition = {
   key: "test_official",
@@ -87,6 +88,11 @@ async function main() {
   assert.equal(catalogSource.authority, "وزارة التجارة");
   assert.ok(MC_GIS_ENDPOINT.includes("/ar/About/Statistics/_api/"));
   assert.ok(MC_GIS_ENDPOINT.includes("GetByTitle('GISInfo')"));
+
+  const ipCatalog = dueDiligenceSourceCatalog().find((item) => item.key === "saudi_ip");
+  assert.ok(ipCatalog);
+  assert.equal(ipCatalog.accessType, "AUTHORIZED");
+  assert.equal(ipCatalog.baseUrl, "https://www.saip.gov.sa");
 
   let requestedUrl = "";
   const mockGet = async (url: URL) => {
@@ -174,13 +180,24 @@ async function main() {
   assert.ok(bankruptcyCatalog);
   assert.equal(bankruptcyCatalog.authority, "لجنة الإفلاس — إيسار");
 
+  const demoReport = await runDueDiligence(query, buildDemoConnectors(query));
+  assert.equal(demoReport.coverage.configuredSources, 4);
+  assert.ok(demoReport.evidence.some((item) => item.category === "trademark"));
+  assert.ok(demoReport.evidence.some((item) => item.category === "bankruptcy"));
+  assert.ok(demoReport.evidence.some((item) => item.category === "license_issue"));
+  assert.equal(demoReport.rejected.length, 1);
+  assert.ok(demoReport.risk.score >= 25);
+  assert.ok(demoReport.risk.factors.some((factor) => factor.key === "bankruptcy"));
+
   console.log("✓ due-diligence entity resolution");
   console.log("✓ conflicting identifiers are rejected");
   console.log("✓ source orchestration and risk scoring");
   console.log("✓ Ministry GISInfo endpoint and query contract");
   console.log("✓ official Ministry GIS data remains contextual-only");
+  console.log("✓ SAIP source is authorized, not falsely presented as a public API");
   console.log("✓ Saudi bankruptcy adapter accepts only official Commission evidence URLs");
   console.log("✓ bankruptcy CR conflicts are rejected and excluded from risk scoring");
+  console.log("✓ demo pipeline covers identity, IP, bankruptcy, licensing and rejected conflicts");
 }
 
 main().catch((error) => {
