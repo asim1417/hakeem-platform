@@ -1,0 +1,64 @@
+name: Extract Article Amendments (data) — استخراج تعديلات المواد
+
+# يملأ جدول article_amendments من حواشي التعديل المضمَّنة في نصّ المواد على Neon.
+# لا يجلب خارجيًّا، ولا يلمس نصّ المادة. المصدر «extractor» والحالة «needs_review» للمراجعة.
+# idempotent: لا يكرّر حدثًا موجودًا. تجربة أوّلًا (mode=dry) ثمّ تطبيق (mode=apply).
+# التسلسل المقترح قبله: backfill:decrees ثم derive:article-versions (اختياريّ) — انظر الدليل.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry (تجربة، قراءة فقط) أو apply (كتابة)"
+        type: choice
+        options: ["dry", "apply"]
+        default: "dry"
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "لِلتطبيق فقط: اكتب NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: false
+        default: ""
+      limit:
+        description: "سقف عدد المواد (0 = الكل)"
+        type: string
+        required: false
+        default: "0"
+
+concurrency:
+  group: extract-amendments
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: "تحقّق"
+        run: |
+          if [ "${{ inputs.mode }}" = "apply" ] && [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::للتطبيق اكتب NEON_RUNTIME_CONFIRMED."; exit 1;
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ حارس مضيف Neon"
+        run: |
+          url="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$url" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          host=$(printf '%s' "$url" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "المضيف: $host"; echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
+      - name: "تشغيل المُستخرِج"
+        run: |
+          export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          if [ "${{ inputs.mode }}" = "apply" ]; then
+            CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED npx tsx scripts/extract-amendments.ts --apply --limit=${{ inputs.limit }}
+          else
+            npx tsx scripts/extract-amendments.ts --limit=${{ inputs.limit }}
+          fi

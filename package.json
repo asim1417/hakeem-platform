@@ -27,6 +27,8 @@
     "test:governance": "tsx scripts/test-legal-governance.ts",
     "test:pdpl": "tsx scripts/test-pdpl-redaction.ts",
     "backfill:decrees": "tsx scripts/backfill-decrees.ts",
+    "extract:amendments": "tsx scripts/extract-amendments.ts",
+    "test:amendment-extractor": "tsx scripts/test-amendment-extractor.ts",
     "extract:principles": "tsx scripts/extract-principles.ts",
     "triage:principles": "tsx scripts/triage-principles.ts",
     "retitle:principles": "tsx scripts/retitle-principles.ts",
