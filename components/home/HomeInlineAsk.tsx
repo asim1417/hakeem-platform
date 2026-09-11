@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useRef } from "react";
-import { Sparkles, Telescope } from "lucide-react";
+import { Search, Sparkles, Telescope } from "lucide-react";
 import { AnswerRenderer } from "@/components/AnswerRenderer";
 import { AnswerToolbar } from "@/components/AnswerToolbar";
 import { LegalBasisPanel, type LegalBasisItem } from "@/components/legal/LegalBasisPanel";
@@ -124,7 +124,7 @@ export function HomeInlineAsk() {
         ) : null}
 
         <div className="cs-box home-inline-ask__box home-inline-ask__box--featured">
-          <span aria-hidden="true">⌕</span>
+          <Search size={18} aria-hidden />
           <textarea
             value={value}
             onChange={(e) => setInput(e.target.value)}

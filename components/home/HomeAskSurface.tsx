@@ -1,4 +1,5 @@
 "use client";
+import { Search } from "lucide-react";
 
 import dynamic from "next/dynamic";
 import { CenterSearch } from "@/components/CenterSearch";
@@ -13,7 +14,7 @@ const HomeInlineAsk = dynamic(
     loading: () => (
       <div className="center-search" aria-busy="true" aria-label="جارٍ تجهيز صندوق السؤال">
         <div className="cs-box">
-          <span aria-hidden>⌕</span>
+          <Search size={18} aria-hidden />
           <input
             disabled
             placeholder="اكتب الواقعة أو السؤال القانوني بتفاصيله…"
