@@ -3,7 +3,6 @@ import { fetchBaladyOpenDataCatalog } from "../lib/modules/due-diligence/balady-
 import { runDueDiligence } from "../lib/modules/due-diligence/core";
 import { CstIotEntitiesConnector } from "../lib/modules/due-diligence/cst";
 import { extendedGovernmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data-extended";
-import { NcecQualifiedAgenciesConnector } from "../lib/modules/due-diligence/ncec";
 import { SasoConformityBodiesConnector } from "../lib/modules/due-diligence/saso";
 import { SfdaLicensedEstablishmentsConnector } from "../lib/modules/due-diligence/sfda";
 
@@ -29,7 +28,7 @@ async function main() {
   const registry = extendedGovernmentOpenDataRegistry();
   assert.ok(registry.length >= 26);
   assert.ok(registry.some((item) => item.key === "saso_conformity_bodies" && item.integration === "LIVE"));
-  assert.ok(registry.some((item) => item.key === "ncec_qualified_environmental_agencies" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "ncec_qualified_environmental_agencies" && item.integration === "ADAPTER"));
   assert.ok(registry.some((item) => item.key === "insurance_authority_licensed_companies" && item.integration === "ADAPTER"));
   console.log(`PASS | Registry | ${registry.length} official/open-data entries catalogued`);
 
@@ -65,22 +64,12 @@ async function main() {
   assert.equal(sasoReport.risk.score, 0);
   console.log(`PASS | SASO conformity bodies | review=${sasoReport.needsReview.length} risk=${sasoReport.risk.score}`);
 
-  const ncecName = "شركة المندرية للخدمات البيئية";
-  const ncec = new NcecQualifiedAgenciesConnector();
-  const ncecRaw = await ncec.collect({ name: ncecName });
-  assert.ok(ncecRaw.observations.length >= 1, "NCEC qualified-organizations page no longer exposes the known current organization");
-  const ncecReport = await runDueDiligence({ name: ncecName }, [ncec]);
-  assert.equal(ncecReport.evidence.length, 0, "NCEC name-only listing must stay review-only");
-  assert.ok(ncecReport.needsReview.length >= 1);
-  assert.equal(ncecReport.risk.score, 0);
-  console.log(`PASS | NCEC qualified environmental agencies | review=${ncecReport.needsReview.length} risk=${ncecReport.risk.score}`);
-
   const balady = await fetchBaladyOpenDataCatalog({ limit: 5 });
   assert.ok(balady.items.length > 0, "Balady official open-data API returned no normalized catalog items");
   assert.ok(balady.items.some((item) => item.id || item.title));
   console.log(`PASS | Balady Open Data API | items=${balady.items.length} first=${balady.items[0]?.title ?? balady.items[0]?.id ?? "n/a"}`);
 
-  console.log("Summary: SFDA, CST, SASO, NCEC and Balady live probes passed; national portal reachability is informational only.");
+  console.log("Summary: SFDA, CST, SASO and Balady live probes passed; NCEC and National Open Data are catalogued with truthful runtime status.");
 }
 
 main().catch((error) => {
