@@ -27,6 +27,9 @@ const isAuthEntryRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/l
  */
 const isClerkMiddlewareBypass = createRouteMatcher([
   "/",
+  // العرض العام للعناية الواجبة صناعي بالكامل ولا يحتاج هوية مستخدم أو Clerk.
+  "/demo(.*)",
+  "/api/due-diligence/demo(.*)",
   // خادم MCP: مسار عام تمامًا — لا يمسّه Clerk إطلاقًا (مستثنى أيضًا من matcher أدناه).
   // يمنع اعتراض clerkMiddleware الذي يردّ 401 فيُفسَّر لدى عميل MCP كدعوة OAuth.
   "/mcp(.*)",

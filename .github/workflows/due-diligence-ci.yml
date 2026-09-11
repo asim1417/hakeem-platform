@@ -1,0 +1,37 @@
+name: Due Diligence CI
+
+on:
+  pull_request:
+    paths:
+      - "lib/modules/due-diligence/**"
+      - "app/api/due-diligence/**"
+      - "app/dashboard/due-diligence/**"
+      - "app/demo/due-diligence/**"
+      - "components/due-diligence/**"
+      - "components/AppShell.tsx"
+      - "lib/i18n/dictionaries.ts"
+      - "scripts/test-due-diligence.ts"
+      - ".github/workflows/due-diligence-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Due diligence acceptance test
+        run: npx tsx scripts/test-due-diligence.ts
+
+      - name: Typecheck
+        run: npm run typecheck

@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
@@ -48,6 +49,7 @@ const legacyNavItems: NavItem[] = [
   { href: "/dashboard/ask", key: "nav.ask", icon: Sparkles },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
   { href: "/dashboard/review", key: "nav.review", icon: ClipboardCheck },
+  { href: "/dashboard/due-diligence", key: "nav.dueDiligence", icon: ShieldCheck },
   { href: "/dashboard/legal-search", key: "nav.search", icon: Search },
   { href: "/dashboard/simulations", key: "nav.interactiveJudge", icon: Gavel },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
@@ -61,6 +63,7 @@ const askFirstNavItems: NavItem[] = [
   { href: "/dashboard", key: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/judicial-assistant", key: "nav.judicialAssistant", icon: Scale },
   { href: "/dashboard/review", key: "nav.review", icon: ClipboardCheck },
+  { href: "/dashboard/due-diligence", key: "nav.dueDiligence", icon: ShieldCheck },
   { href: "/dashboard/legal-core", key: "nav.library", icon: BookOpen },
   { href: "/dashboard/files", key: "nav.myFiles", icon: FolderClosed },
   { href: "/documents", key: "nav.docPlatform", icon: FileText },
