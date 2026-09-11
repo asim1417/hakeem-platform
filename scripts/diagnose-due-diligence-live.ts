@@ -3,6 +3,7 @@ import { SAMA_FINANCE_ENTITIES_URL } from "../lib/modules/due-diligence/sama";
 
 const CMA_OPEN_DATA_API = "https://opendataapi.cma.gov.sa/api/Licenses/GetAllOrganizations";
 const SAMA_WWW_URL = "https://www.sama.gov.sa/ar-sa/Supervision/LicenseEntities/Pages/FinanceLicencedEntities.aspx";
+const SAMA_STATIC_FINANCE_URL = "https://www.sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/MultiActivitiesLicensedEntities.aspx";
 
 async function inspect(url: string, needle: string) {
   try {
@@ -43,10 +44,12 @@ async function main() {
   await inspect(CMA_INSTITUTIONS_URL, "شركة وزان النمو");
   console.log("=== CMA Open Data API diagnostics ===");
   await inspect(CMA_OPEN_DATA_API, "وزان");
-  console.log("=== SAMA apex-host diagnostics ===");
+  console.log("=== SAMA dynamic apex-host diagnostics ===");
   await inspect(SAMA_FINANCE_ENTITIES_URL, "7001455307");
-  console.log("=== SAMA www-host diagnostics ===");
+  console.log("=== SAMA dynamic www-host diagnostics ===");
   await inspect(SAMA_WWW_URL, "7001455307");
+  console.log("=== SAMA static licensed-finance page diagnostics ===");
+  await inspect(SAMA_STATIC_FINANCE_URL, "شركة آجل للخدمات التمويلية");
 }
 
 main().catch((error) => {
