@@ -1,9 +1,18 @@
 /**
  * export-saudi-systems.ts — تصدير الأنظمة وموادها إلى data/saudi_systems.json
  * ──────────────────────────────────────────────────────────────────
- * المصدر:
- *   • إن توفّر DATABASE_URL → قراءة legal_systems + legal_articles عبر Prisma (المصدر الأدق).
- *   • وإلا → اشتقاق الأنظمة من data/legal_articles_export.json (تجميع حسب law_name).
+ * المصدر: قاعدة البيانات (Neon) **حصراً** في الوضع الافتراضي.
+ *
+ * ⚠️ تاريخياً كان هذا السكربت يسقط بصمت إلى فهرس BM25 ثم إلى ملف البذرة عند
+ * تعذّر الاتصال بالقاعدة، بتحذير console.warn فقط. وهذا ما أنتج الملف الحالي
+ * من الفهرس لا من القاعدة، فضاعت العناوين الترتيبية الرسمية التي كانت الدليل
+ * الوحيد الكاشف لانزياح مواد نظام المعاملات المدنية (٢٣٧–٧٢٠).
+ * انظر: reports/legal-data-audit-2026-09-11/08-root-cause-analysis.md
+ *
+ * الآن: يفشل السكربت بوضوح بدل أن يتدهور صامتاً.
+ *   --allow-degraded : يسمح بالاشتقاق من فهرس BM25 (نصّ مقتطع وبلا عناوين).
+ *   --allow-seed     : يسمح بالاشتقاق من ملف البذرة (جزئي — ٩ أنظمة فقط).
+ *   --force          : يتجاوز حارس الانكماش (انظر assertNoShrink).
  *
  * المخرج: data/saudi_systems.json (meta + توصيف السكيمة + الأنظمة مع موادها ومجالها المُصنَّف).
  *
@@ -123,7 +132,10 @@ function fromBm25Index(): { systems: SaudiSystem[]; source: string } | null {
       rows.push({
         law_name: m.law_name,
         article_number: m.article_number,
-        title: `المادة ${m.article_number ?? ""}`.trim(),
+        // ⚠️ لا يُشتقّ العنوان من الرقم أبداً: اشتقاقه يجعل فحص «هل يطابق العنوان
+        // الرقم؟» دائرياً وناجحاً دوماً بحكم البناء، فيُخفي أي انزياح.
+        // الفهرس لا يحفظ العنوان الترتيبي ⇒ يُترك فارغاً ويُعلَّم في meta.
+        title: "",
         content: m.snippet ?? "",
         keywords: []
       });
@@ -142,17 +154,78 @@ function fromArticlesFile(): { systems: SaudiSystem[]; source: string } {
   return { systems: aggregate(rows), source: "data/legal_articles_export.json (جزئي)" };
 }
 
+/**
+ * حارس الانكماش: يرفض الكتابة إذا كان الناتج أصغر جوهرياً من الملف القائم.
+ * بدونه، تشغيلة واحدة من مصدر ناقص تمحو الكوربوس (١٥٬٩٠٢ ← ١٬٩٨١ مثلاً)
+ * دون أن ينتبه أحد، لأن الملف يُكتب فوق السابق.
+ */
+function assertNoShrink(newArticles: number, newSystems: number): void {
+  const outPath = join(DATA, "saudi_systems.json");
+  if (!existsSync(outPath)) return;
+  let prev: { meta?: { articlesCount?: number; systemsCount?: number } };
+  try {
+    prev = JSON.parse(readFileSync(outPath, "utf-8"));
+  } catch {
+    return; // ملف قائم غير صالح — لا مرجع للمقارنة
+  }
+  const prevArticles = prev.meta?.articlesCount ?? 0;
+  const prevSystems = prev.meta?.systemsCount ?? 0;
+  if (!prevArticles) return;
+
+  const ratio = newArticles / prevArticles;
+  if (ratio >= 0.9) return;
+
+  if (process.argv.includes("--force")) {
+    console.warn(`⚠️  انكماش مقبول بـ--force: ${prevArticles} ← ${newArticles} مادة.`);
+    return;
+  }
+  console.error("");
+  console.error("❌ رُفضت الكتابة: الناتج أصغر جوهرياً من الملف القائم.");
+  console.error(`   الأنظمة: ${prevSystems} ← ${newSystems}`);
+  console.error(`   المواد : ${prevArticles} ← ${newArticles}  (${Math.round(ratio * 100)}%)`);
+  console.error("   هذا نمط فقدان بيانات لا تحديث. راجع المصدر قبل المتابعة.");
+  console.error("   إن كان الانكماش مقصوداً فمرّر --force.");
+  process.exit(1);
+}
+
 async function main() {
   console.log("📤 تصدير الأنظمة وموادها → data/saudi_systems.json");
   console.log("=".repeat(56));
 
+  const allowDegraded = process.argv.includes("--allow-degraded");
+  const allowSeed = process.argv.includes("--allow-seed");
+
   let systems = await fromDatabase();
   let source = "database (legal_systems + legal_articles)";
+
   if (!systems) {
-    const f = fromBm25Index() ?? fromArticlesFile();
+    if (!allowDegraded && !allowSeed) {
+      console.error("");
+      console.error("❌ تعذّرت القراءة من قاعدة البيانات، ولن أتدهور بصمت.");
+      console.error("   المصدر المعتمد الوحيد هو Neon. أصلح DATABASE_URL وأعد المحاولة.");
+      console.error("");
+      console.error("   إن كنت تقصد التوليد من مصدر ناقص عمداً، مرّر راية صريحة:");
+      console.error("     --allow-degraded  → من فهرس BM25 (نصّ مقتطع، بلا عناوين ترتيبية)");
+      console.error("     --allow-seed      → من ملف البذرة (٩ أنظمة فقط — ناقص جداً)");
+      process.exit(1);
+    }
+    const f = (allowDegraded ? fromBm25Index() : null) ?? (allowSeed ? fromArticlesFile() : null);
+    if (!f) {
+      console.error("❌ تعذّر أيضاً قراءة المصدر البديل المسموح به. لم يُكتب شيء.");
+      process.exit(1);
+    }
     systems = f.systems;
     source = f.source;
+    console.warn("");
+    console.warn("⚠️ ".repeat(18));
+    console.warn("⚠️  تحذير: التوليد من مصدر متدهور، لا من قاعدة البيانات.");
+    console.warn(`⚠️  المصدر: ${source}`);
+    console.warn("⚠️  الناتج غير صالح للتدقيق ولا لإعادة بناء الفهارس.");
+    console.warn("⚠️ ".repeat(18));
+    console.warn("");
   }
+
+  assertNoShrink(systems.reduce((n, s) => n + s.articleCount, 0), systems.length);
   const contentIsSnippet = source.includes("bm25");
 
   const articlesCount = systems.reduce((n, s) => n + s.articleCount, 0);
