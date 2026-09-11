@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/audit-due-diligence-live.ts"
+      - "scripts/diagnose-due-diligence-live.ts"
       - ".github/workflows/due-diligence-live-audit.yml"
       - "lib/modules/due-diligence/**"
   workflow_dispatch:
@@ -25,6 +26,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Diagnose live source responses
+        run: npx tsx scripts/diagnose-due-diligence-live.ts
 
       - name: Live integration probes
         run: npx tsx scripts/audit-due-diligence-live.ts
