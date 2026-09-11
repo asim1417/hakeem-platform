@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { fetchBaladyOpenDataCatalog } from "../lib/modules/due-diligence/balady-open-data";
 import { runDueDiligence } from "../lib/modules/due-diligence/core";
 import { CstIotEntitiesConnector } from "../lib/modules/due-diligence/cst";
-import { governmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data";
+import { extendedGovernmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data-extended";
 import { NcecQualifiedAgenciesConnector } from "../lib/modules/due-diligence/ncec";
 import { SasoConformityBodiesConnector } from "../lib/modules/due-diligence/saso";
 import { SfdaLicensedEstablishmentsConnector } from "../lib/modules/due-diligence/sfda";
@@ -26,8 +26,11 @@ async function probeNationalPortal() {
 
 async function main() {
   console.log("=== Saudi Government Open Data live audit ===");
-  const registry = governmentOpenDataRegistry();
-  assert.ok(registry.length >= 20);
+  const registry = extendedGovernmentOpenDataRegistry();
+  assert.ok(registry.length >= 26);
+  assert.ok(registry.some((item) => item.key === "saso_conformity_bodies" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "ncec_qualified_environmental_agencies" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "insurance_authority_licensed_companies" && item.integration === "ADAPTER"));
   console.log(`PASS | Registry | ${registry.length} official/open-data entries catalogued`);
 
   const portal = await probeNationalPortal();
@@ -62,10 +65,11 @@ async function main() {
   assert.equal(sasoReport.risk.score, 0);
   console.log(`PASS | SASO conformity bodies | review=${sasoReport.needsReview.length} risk=${sasoReport.risk.score}`);
 
+  const ncecName = "شركة المندرية للخدمات البيئية";
   const ncec = new NcecQualifiedAgenciesConnector();
-  const ncecRaw = await ncec.collect({ name: "مؤسسة الأنظمة الخضراء للخدمات البيئية" });
-  assert.ok(ncecRaw.observations.length >= 1, "NCEC qualified-organizations page no longer exposes the known published organization");
-  const ncecReport = await runDueDiligence({ name: "مؤسسة الأنظمة الخضراء للخدمات البيئية" }, [ncec]);
+  const ncecRaw = await ncec.collect({ name: ncecName });
+  assert.ok(ncecRaw.observations.length >= 1, "NCEC qualified-organizations page no longer exposes the known current organization");
+  const ncecReport = await runDueDiligence({ name: ncecName }, [ncec]);
   assert.equal(ncecReport.evidence.length, 0, "NCEC name-only listing must stay review-only");
   assert.ok(ncecReport.needsReview.length >= 1);
   assert.equal(ncecReport.risk.score, 0);
