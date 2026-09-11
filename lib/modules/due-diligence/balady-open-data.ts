@@ -14,19 +14,57 @@ export type BaladyOpenDataItem = {
   changed?: string;
 };
 
-function asString(value: unknown): string | undefined {
+function primitiveString(value: unknown): string | undefined {
   if (typeof value === "string" && value.trim()) return value.trim();
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   return undefined;
 }
 
-function asStrings(value: unknown): string[] | undefined {
+function asString(value: unknown, depth = 0): string | undefined {
+  if (depth > 4 || value == null) return undefined;
+  const direct = primitiveString(value);
+  if (direct) return direct;
   if (Array.isArray(value)) {
-    const items = value.map(asString).filter((item): item is string => Boolean(item)).slice(0, 20);
-    return items.length ? items : undefined;
+    for (const item of value) {
+      const found = asString(item, depth + 1);
+      if (found) return found;
+    }
+    return undefined;
   }
-  const single = asString(value);
-  return single ? [single] : undefined;
+  if (typeof value === "object") {
+    const object = value as JsonRecord;
+    for (const key of ["value", "title", "name", "uri", "url", "filename", "target_id"]) {
+      if (key in object) {
+        const found = asString(object[key], depth + 1);
+        if (found) return found;
+      }
+    }
+  }
+  return undefined;
+}
+
+function collectStrings(value: unknown, depth = 0): string[] {
+  if (depth > 4 || value == null) return [];
+  const direct = primitiveString(value);
+  if (direct) return [direct];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectStrings(item, depth + 1)).slice(0, 50);
+  }
+  if (typeof value === "object") {
+    const object = value as JsonRecord;
+    const preferredKeys = ["uri", "url", "value", "filename", "title", "name", "target_id"];
+    const results: string[] = [];
+    for (const key of preferredKeys) {
+      if (key in object) results.push(...collectStrings(object[key], depth + 1));
+    }
+    return results.slice(0, 50);
+  }
+  return [];
+}
+
+function asStrings(value: unknown): string[] | undefined {
+  const unique = [...new Set(collectStrings(value).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
+  return unique.length ? unique : undefined;
 }
 
 function maybeParseJsonString(value: string): unknown {
@@ -115,4 +153,4 @@ export async function fetchBaladyOpenDataCatalog(options: { limit?: number; sign
   };
 }
 
-export const __baladyOpenDataTest = { collectObjects, normalize, maybeParseJsonString };
+export const __baladyOpenDataTest = { collectObjects, normalize, maybeParseJsonString, asString, asStrings };
