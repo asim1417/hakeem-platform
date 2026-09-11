@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { fetchBaladyOpenDataCatalog } from "@/lib/modules/due-diligence/balady-open-data";
-import { governmentOpenDataRegistry } from "@/lib/modules/due-diligence/government-open-data";
+import { extendedGovernmentOpenDataRegistry } from "@/lib/modules/due-diligence/government-open-data-extended";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 });
 
-  const registry = governmentOpenDataRegistry();
+  const registry = extendedGovernmentOpenDataRegistry();
   const source = request.nextUrl.searchParams.get("source");
   if (!source) {
     return NextResponse.json({
@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
         context: registry.filter((item) => item.scope === "CONTEXT").length,
         catalog: registry.filter((item) => item.scope === "CATALOG").length,
         live: registry.filter((item) => item.integration === "LIVE").length,
+        adapter: registry.filter((item) => item.integration === "ADAPTER").length,
+        discovery: registry.filter((item) => item.integration === "DISCOVERY").length,
+        degraded: registry.filter((item) => item.integration === "DEGRADED").length,
       },
     });
   }
