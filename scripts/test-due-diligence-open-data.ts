@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { __baladyOpenDataTest } from "../lib/modules/due-diligence/balady-open-data";
 import { runDueDiligence } from "../lib/modules/due-diligence/core";
 import { CstIotEntitiesConnector } from "../lib/modules/due-diligence/cst";
-import { governmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data";
+import { extendedGovernmentOpenDataRegistry } from "../lib/modules/due-diligence/government-open-data-extended";
 import { NcecQualifiedAgenciesConnector } from "../lib/modules/due-diligence/ncec";
 import { SasoConformityBodiesConnector } from "../lib/modules/due-diligence/saso";
 import { SfdaLicensedEstablishmentsConnector } from "../lib/modules/due-diligence/sfda";
@@ -18,12 +18,16 @@ const SFDA_ROW = `
 </tr></tbody></table>`;
 
 async function main() {
-  const registry = governmentOpenDataRegistry();
-  assert.ok(registry.length >= 20);
+  const registry = extendedGovernmentOpenDataRegistry();
+  assert.ok(registry.length >= 26);
   assert.ok(registry.some((item) => item.key === "national_open_data" && item.scope === "CATALOG"));
   assert.ok(registry.some((item) => item.key === "sfda_licensed_establishments" && item.scope === "ENTITY"));
   assert.ok(registry.some((item) => item.key === "saudi_commerce_gis" && item.scope === "CONTEXT"));
   assert.ok(registry.some((item) => item.key === "balady_open_data_api" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "saso_conformity_bodies" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "ncec_qualified_environmental_agencies" && item.integration === "LIVE"));
+  assert.ok(registry.some((item) => item.key === "insurance_authority_licensed_companies" && item.integration === "ADAPTER"));
+  assert.ok(registry.some((item) => item.key === "misa_open_data" && item.scope === "CONTEXT"));
 
   const liveBaladyShape = {
     statusDetails: { code: 200, message: "Ok" },
@@ -106,7 +110,7 @@ async function main() {
   assert.equal(ncecReport.needsReview.length, 1);
   assert.equal(ncecReport.risk.score, 0);
 
-  console.log("✓ government open-data registry separates ENTITY, CONTEXT and CATALOG sources");
+  console.log("✓ extended government registry separates ENTITY, CONTEXT and CATALOG sources");
   console.log("✓ Balady live Drupal field-array response normalizes correctly");
   console.log("✓ SFDA official public directory verifies by name + CR and rejects CR conflicts");
   console.log("✓ positive licence listings never create adverse risk by themselves");
