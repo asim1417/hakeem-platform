@@ -8,8 +8,13 @@ import type {
 import { normalizeArabicEntityName } from "./core";
 import { htmlToSearchText } from "./cma";
 
+/**
+ * Server-rendered official list of finance companies. Unlike the newer dynamic
+ * page, the company names are present in the HTTP response and can therefore be
+ * verified reliably by Hakim's server runtime.
+ */
 export const SAMA_FINANCE_ENTITIES_URL =
-  "https://sama.gov.sa/ar-sa/Supervision/LicenseEntities/Pages/FinanceLicencedEntities.aspx";
+  "https://www.sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/MultiActivitiesLicensedEntities.aspx";
 
 export const SAMA_FINANCE_ENTITIES_SOURCE: DataSourceDefinition = {
   key: "sama_finance_entities",
@@ -18,26 +23,37 @@ export const SAMA_FINANCE_ENTITIES_SOURCE: DataSourceDefinition = {
   accessType: "PUBLIC_WEB",
   status: "APPROVED",
   reliability: 1,
-  baseUrl: "https://sama.gov.sa",
+  baseUrl: "https://www.sama.gov.sa",
 };
 
 type TextFetcher = (url: string, signal?: AbortSignal) => Promise<string>;
 
+function isOfficialSamaHost(hostname: string): boolean {
+  return hostname === "sama.gov.sa" || hostname === "www.sama.gov.sa";
+}
+
 async function fetchOfficialSamaPage(url: string, signal?: AbortSignal): Promise<string> {
   const parsed = new URL(url);
-  if (parsed.protocol !== "https:" || parsed.hostname !== "sama.gov.sa") {
+  if (parsed.protocol !== "https:" || !isOfficialSamaHost(parsed.hostname) || parsed.port) {
     throw new Error("SAMA connector refused a non-official host.");
   }
   const response = await fetch(parsed, {
     method: "GET",
     signal,
     cache: "no-store",
+    redirect: "follow",
     headers: {
       accept: "text/html,application/xhtml+xml",
       "user-agent": "HakeemDueDiligence/1.0 (+https://hakeemai.net)",
     },
   });
   if (!response.ok) throw new Error(`SAMA licensed-entities page returned HTTP ${response.status}`);
+
+  const finalUrl = new URL(response.url || parsed.toString());
+  if (finalUrl.protocol !== "https:" || !isOfficialSamaHost(finalUrl.hostname)) {
+    throw new Error("SAMA connector refused an off-domain redirect.");
+  }
+
   const contentType = response.headers.get("content-type") ?? "";
   if (!/text\/html|application\/xhtml\+xml/i.test(contentType)) {
     throw new Error("SAMA licensed-entities page returned an unexpected content type.");
@@ -49,52 +65,13 @@ async function fetchOfficialSamaPage(url: string, signal?: AbortSignal): Promise
   return html;
 }
 
-function takeWindow(text: string, center: number, before = 450, after = 850): string {
-  return text.slice(Math.max(0, center - before), Math.min(text.length, center + after));
-}
-
-function extractField(windowText: string, label: string, stopLabels: string[]): string | undefined {
-  const start = windowText.indexOf(label);
-  if (start < 0) return undefined;
-  const remainder = windowText.slice(start + label.length).trim();
-  let end = remainder.length;
-  for (const stop of stopLabels) {
-    const index = remainder.indexOf(stop);
-    if (index >= 0 && index < end) end = index;
-  }
-  const value = remainder.slice(0, end).replace(/\s+/g, " ").trim();
-  return value ? value.slice(0, 220) : undefined;
-}
-
-function labeledUnifiedNumberIndex(pageText: string, unifiedNumber: string): number {
-  const escaped = unifiedNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = new RegExp(`الرقم\\s+الموحد\\s+${escaped}(?!\\d)`).exec(pageText);
-  return match?.index ?? -1;
-}
-
-function entityNameNearIndex(pageText: string, index: number): string | undefined {
-  if (index < 0) return undefined;
-  const windowText = takeWindow(pageText, index);
-  return extractField(windowText, "اسم الشركة", [
-    "شركات التمويل",
-    "شركات النشاطات المساندة للتمويل",
-    "نوع النشاط",
-    "الرقم الموحد",
-    "رقم الترخيص",
-    "قم بزيارة موقع الشركة",
-  ]);
-}
-
-function licenseNearIndex(pageText: string, index: number): string | undefined {
-  if (index < 0) return undefined;
-  const windowText = takeWindow(pageText, index, 120, 500);
-  return extractField(windowText, "رقم الترخيص", ["قم بزيارة موقع الشركة", "اسم الشركة", "شركات التمويل"]);
-}
-
 /**
- * Positive-only verification against SAMA's public finance-company list.
- * Exact unified-number matches are much stronger than name-only matches.
- * A miss is never converted to an adverse finding or a claim of no licence.
+ * Positive-only discovery against SAMA's public finance-company directory.
+ *
+ * The stable public page currently exposes company names but not a reliably
+ * machine-readable unified number in the server response. We therefore NEVER
+ * manufacture an identifier match from the user's query: positive hits remain
+ * NEEDS_REVIEW until a stronger identifier is confirmed from another source.
  */
 export class SamaFinanceEntitiesConnector implements DueDiligenceConnector {
   public readonly source = SAMA_FINANCE_ENTITIES_SOURCE;
@@ -105,72 +82,41 @@ export class SamaFinanceEntitiesConnector implements DueDiligenceConnector {
     const startedAt = Date.now();
     const html = await this.fetchText(SAMA_FINANCE_ENTITIES_URL, signal);
     const pageText = htmlToSearchText(html);
+    const normalizedPage = normalizeArabicEntityName(pageText);
+    const normalizedName = normalizeArabicEntityName(query.name);
+    const found = normalizedName.length >= 3 && normalizedPage.includes(normalizedName);
     const fetchedAt = new Date().toISOString();
-    const observations: RawObservation[] = [];
-    const warnings: string[] = [];
 
-    if (query.unifiedNumber) {
-      const unified = query.unifiedNumber.replace(/\D/g, "");
-      const index = unified ? labeledUnifiedNumberIndex(pageText, unified) : -1;
-      if (index >= 0) {
-        const extractedName = entityNameNearIndex(pageText, index);
-        const licence = licenseNearIndex(pageText, index);
-        const queryName = normalizeArabicEntityName(query.name);
-        const sourceNameNormalized = extractedName ? normalizeArabicEntityName(extractedName) : "";
-
-        observations.push({
-          sourceKey: this.source.key,
-          sourceRecordId: `unified:${unified}`,
-          // Never borrow the user's name as though SAMA published it. Without an extracted
-          // official name, the unified-number hit remains NEEDS_REVIEW rather than VERIFIED.
-          entityName: extractedName ?? `كيان مرخص — الرقم الموحد ${unified}`,
-          unifiedNumber: unified,
-          category: "regulatory_license_listing",
-          title: licence
-            ? `ترخيص تمويل منشور لدى البنك المركزي — ${licence}`
-            : "ظهر الرقم الموحد في قائمة شركات التمويل المرخصة",
-          summary: extractedName
-            ? queryName !== sourceNameNormalized
-              ? `الاسم المنشور قرب الرقم الموحد: ${extractedName}. يجب مراجعة اختلاف الاسم قبل الاعتماد النهائي.`
-              : "مطابقة إيجابية للرقم الموحد والاسم في القائمة الرسمية العامة لشركات التمويل المرخصة لدى البنك المركزي السعودي."
-            : "مطابقة إيجابية لحقل الرقم الموحد في القائمة الرسمية، لكن تعذر استخراج اسم الشركة من بنية الصفحة؛ يلزم التحقق البشري قبل نسبة الترخيص للكيان.",
-          sourceUrl: SAMA_FINANCE_ENTITIES_URL,
-          fetchedAt,
-          raw: {
-            matchType: "labeled_exact_unified_number_in_public_list",
-            extractedName: extractedName ?? null,
-            licenceNumber: licence ?? null,
+    const observations: RawObservation[] = found
+      ? [
+          {
+            sourceKey: this.source.key,
+            sourceRecordId: `name:${normalizedName}`,
+            entityName: query.name,
+            category: "regulatory_license_listing",
+            title: "ظهر اسم الكيان في القائمة الرسمية لشركات التمويل المرخصة",
+            summary:
+              "مطابقة اسم إيجابية في قائمة البنك المركزي السعودي العامة. لا تُنسب للنتيجة مطابقة رقم موحد أو سجل تجاري ما لم ينشره مصدر رسمي قابل للتحقق؛ يلزم التحقق من هوية الكيان ونطاق الترخيص قبل الاعتماد النهائي.",
+            sourceUrl: SAMA_FINANCE_ENTITIES_URL,
+            fetchedAt,
+            raw: {
+              matchType: "normalized_name_in_server_rendered_public_list",
+              officialPage: SAMA_FINANCE_ENTITIES_URL,
+            },
           },
-        });
-        if (!extractedName) {
-          warnings.push("تم العثور على حقل الرقم الموحد، لكن تعذر استخراج اسم الشركة من بنية الصفحة؛ النتيجة تحتاج مراجعة ولا تُعتمد تلقائيًا.");
-        }
-      } else {
-        warnings.push(
-          "لم يظهر الرقم الموحد في صفحة شركات التمويل التي أمكن فحصها. لا تُفسر النتيجة كنفي للترخيص أو كمخالفة؛ قد يكون نشاط الكيان خارج فئة شركات التمويل أو في قائمة تنظيمية أخرى."
-        );
-      }
-    } else {
-      const normalizedPage = normalizeArabicEntityName(pageText);
-      const normalizedName = normalizeArabicEntityName(query.name);
-      if (normalizedName.length >= 3 && normalizedPage.includes(normalizedName)) {
-        observations.push({
-          sourceKey: this.source.key,
-          sourceRecordId: `name:${normalizedName}`,
-          entityName: query.name,
-          category: "regulatory_license_listing",
-          title: "ظهر اسم الكيان في قائمة شركات التمويل لدى البنك المركزي",
-          summary: "مطابقة اسم إيجابية فقط؛ يلزم الرقم الموحد أو مراجعة بشرية لرفع الثقة في هوية الكيان.",
-          sourceUrl: SAMA_FINANCE_ENTITIES_URL,
-          fetchedAt,
-          raw: { matchType: "normalized_name_in_public_list" },
-        });
-      } else {
-        warnings.push(
-          "لم يظهر الاسم في صفحة شركات التمويل التي أمكن فحصها. لا تُفسر النتيجة كنفي للترخيص؛ يُفضّل إدخال الرقم الموحد والتحقق من القوائم الأخرى للبنك المركزي حسب النشاط."
-        );
-      }
-    }
+        ]
+      : [];
+
+    const warnings = found
+      ? [
+          "ظهر اسم الكيان في قائمة شركات التمويل المرخصة المنشورة لدى البنك المركزي. النتيجة مطابقة اسم فقط وتبقى للمراجعة ولا ترفع المخاطر.",
+          ...(query.unifiedNumber
+            ? ["أُدخل رقم موحد في البحث، لكن هذه الصفحة العامة لا تعرضه بصورة قابلة للتحقق في استجابة الخادم؛ لم يُستخدم الرقم لرفع الثقة."]
+            : []),
+        ]
+      : [
+          "لم يظهر الاسم في قائمة شركات التمويل التي أمكن فحصها. لا تُفسر النتيجة كنفي للترخيص أو كمخالفة؛ قد يكون الكيان خارج هذه الفئة أو مدرجًا في قائمة تنظيمية أخرى لدى البنك المركزي.",
+        ];
 
     return {
       source: this.source,
