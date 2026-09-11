@@ -8,7 +8,7 @@
  */
 
 /** قيمة احتياط فقط عند غياب المتغير — ليست مصدر الحقيقة للنطاق. */
-export const DEFAULT_SITE_URL = "https://hakeem-platform.vercel.app";
+export const DEFAULT_SITE_URL = "https://hakeemai.net";
 
 function normalizeSiteUrl(raw: string): string {
   const trimmed = raw.trim().replace(/\/+$/, "");
@@ -35,6 +35,6 @@ export function getSiteHost(): string {
   try {
     return new URL(getSiteUrl()).host;
   } catch {
-    return "hakeem-platform.vercel.app";
+    return "hakeemai.net";
   }
 }

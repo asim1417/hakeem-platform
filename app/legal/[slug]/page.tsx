@@ -44,6 +44,7 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
     })
     .catch(() => []);
 
+  const BASE = getSiteUrl();
   const ld = {
     "@context": "https://schema.org",
     "@type": "Legislation",
