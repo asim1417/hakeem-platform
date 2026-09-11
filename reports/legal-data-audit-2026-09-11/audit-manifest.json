@@ -4,7 +4,7 @@
   "verdict": "حرج",
   "mode": "read-only — لم تُنفَّذ أي كتابة على أي قاعدة بيانات",
   "repo": {
-    "commit": "9bb3653963200ce5cd3d17b0319736ec75fb7965",
+    "commit": "9159f83fa4d0913c3238959c82081090966f4520",
     "branch": "claude/hakeem-legal-database-audit-rg7zx8",
     "node": "v22.22.2",
     "worktree": "clean at audit time"
@@ -158,6 +158,14 @@
       "bytes": 9384,
       "sha256": "5a9daeb4a4bb7e868e3314b1c3353d77f40d20f59b210811f08ad233be0b587d"
     },
+    "18-sources-and-duplicates-report.md": {
+      "bytes": 12362,
+      "sha256": "d262fcd37dad56c15af9479c9b6891b45a76afe50d88ca888b5a137ebbf75dee"
+    },
+    "19-dedupe-and-supersede.sql": {
+      "bytes": 9577,
+      "sha256": "98c135867b06722ae87e6855c64bb705c139cb06c7e58cd666efe63df9fea41e"
+    },
     "production-toc.json": {
       "bytes": 108143,
       "sha256": "7424bcd4bb52cff57de7e631c40821e31113f92d2c2f261d0f176b577ecc3736"
@@ -213,5 +221,83 @@
       "الأرشيف مجمَّد تقنيًا"
     ],
     "document": "17-source-of-truth-consolidation.md"
+  },
+  "sources_inventory": {
+    "live_operational_databases": 1,
+    "neon": {
+      "role": "الوحيدة الحيّة",
+      "articles": "~17323"
+    },
+    "supabase": {
+      "role": "قديمة — يجب تجميدها",
+      "articles": "~1981",
+      "systems": 9,
+      "evidence": "scripts/verify-neon-target.ts يوثّق: Neon ≈ 15,902 ؛ Supabase B ≈ 1,981"
+    },
+    "hostinger_mysql": {
+      "role": "تاريخية — يجب تجميدها",
+      "size": "غير معلوم"
+    },
+    "derived_layers": [
+      "legal-bm25-index.json.gz",
+      "saudi_systems.json",
+      "legal_articles_export.json",
+      "pgvector",
+      "OpenSearch"
+    ],
+    "existing_tooling": "npm run audit:db-env (scripts/audit-db-environments.ts) يطبع بصمة آمنة لكل بيئة"
+  },
+  "duplication_findings": {
+    "type_a_true_duplicate_text": {
+      "confirmed_groups": 6,
+      "needs_full_text_check": 3,
+      "confirmed": [
+        "المعاملات المدنية 720=721",
+        "الشركات 155=219",
+        "غسل الأموال 7=8",
+        "الإفلاس 29=74",
+        "الميداليات 12=24",
+        "الميداليات 15=21"
+      ],
+      "uncertain_truncated_at_320": [
+        "ديوان المظالم 14=50",
+        "غسل الأموال 5=6",
+        "غسل الأموال 9=10"
+      ],
+      "action": "يُصحَّح النص — لا حذف"
+    },
+    "type_b_superseded_versions": {
+      "pairs": 7,
+      "shared_text_between_pairs": 0,
+      "finding": "تداخل النصوص صفر ⇒ أنظمة مختلفة فعلًا لا نسخًا مكررة",
+      "pairs_list": [
+        "التسجيل العيني للعقار 1423هـ (78) / (40)",
+        "البريد 1406هـ (23) / (37)",
+        "إعانة البحث عن عمل 1432هـ (15) / (13)",
+        "صندوق التنمية العقارية 1394هـ (7) / (18)",
+        "وكالة الأنباء 1433هـ (15) / (16)",
+        "الغرف التجارية والصناعية (42) / الغرف التجارية (66)",
+        "ملكية الوحدات العقارية وفرزها (19) / وفرزها وإدارتها (33)"
+      ],
+      "action": "تُوسم ملغاة وتُربط بالنظام الذي حلّ محلها — لا تُحذف لأنها واجبة التطبيق على الوقائع السابقة لإلغائها"
+    },
+    "type_c_statute_and_its_regulation": {
+      "name_similar_pairs": 70,
+      "finding": "أغلبها علاقة نظام بلائحته التنفيذية — ليست تكرارًا",
+      "action": "تُربط بـparentSystemId لا تُدمج"
+    },
+    "explicit_repeal_language_articles": 164
+  },
+  "schema_gap": {
+    "model": "LegalSystem",
+    "missing_fields": [
+      "status",
+      "supersededById",
+      "parentSystemId",
+      "royalDecree",
+      "effectiveFrom"
+    ],
+    "consequence": "كل مواد الكوربوس الـ15,902 status='سارية' ⇒ الأنظمة الملغاة تُقدَّم على أنها سارية",
+    "note": "يخالف CLAUDE.md الذي يوجب هذه الحقول"
   }
 }
