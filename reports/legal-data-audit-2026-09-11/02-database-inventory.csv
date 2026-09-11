@@ -1,0 +1,9 @@
+﻿layer,role,systems,articles,generated_at,source,reachable_in_this_session,notes
+Neon (الإنتاج),Runtime,—,721 (المعاملات المدنية),—,DATABASE_URL,غير مباشر — عبر MCP فقط,لا توجد بيانات اعتماد في هذه الجلسة؛ قُرئ فهرس النظام عبر أدوات MCP الحيّة
+Supabase (قديمة),Legacy,غير معروف,غير معروف,—,—,لا,لا بيانات اعتماد — لم تُفحص؛ يجب فحصها قبل أي إعادة فهرسة
+Hostinger MySQL,Historical,غير معروف,غير معروف,—,—,لا,لا بيانات اعتماد — لم تُفحص
+BM25,Derived,485,15902,—,data/legal-bm25-index.json.gz,نعم,يغذّي الاسترجاع والاستشهاد
+saudi_systems.json,Derived,485,15902,2026-06-20T04:07:33.390Z,data/legal-bm25-index.json.gz (meta — الكوربوس الكامل),نعم,العناوين مُفبركة من الأرقام — لا تصلح للتدقيق
+legal_articles_export.json,Seed,9,1981,—,—,نعم,يحتفظ بالعناوين الترتيبية الأصلية — صالح للتدقيق
+OpenSearch,Derived,—,—,—,OPENSEARCH_URL,لا,غير مُهيّأ في هذه الجلسة — لم يُفحص
+pgvector,Derived,—,—,—,جدول embeddings,لا,داخل PostgreSQL — لم يُفحص

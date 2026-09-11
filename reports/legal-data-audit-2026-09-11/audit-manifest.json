@@ -1,0 +1,161 @@
+{
+  "audit": "تدقيق قواعد البيانات القانونية — منصة حكيم",
+  "date": "2026-09-11",
+  "verdict": "حرج",
+  "mode": "read-only — لم تُنفَّذ أي كتابة على أي قاعدة بيانات",
+  "repo": {
+    "commit": "b70c9a5e0ef1db73ffecc542870cb73050a97950",
+    "branch": "claude/hakeem-legal-database-audit-rg7zx8",
+    "node": "v22.22.2",
+    "worktree": "clean at audit time"
+  },
+  "layers_examined": {
+    "neon_production": {
+      "method": "MCP live tools (read-only)",
+      "law_audited": "نظام المعاملات المدنية",
+      "articles": 721,
+      "preamble_row": true
+    },
+    "bm25_index": {
+      "file": "data/legal-bm25-index.json.gz",
+      "systems": 485,
+      "articles": 15902
+    },
+    "saudi_systems_json": {
+      "file": "data/saudi_systems.json",
+      "systems": 485,
+      "articles": 15902,
+      "generatedAt": "2026-06-20T04:07:33.390Z"
+    },
+    "seed_export": {
+      "file": "data/legal_articles_export.json",
+      "systems": 9,
+      "articles": 1981,
+      "civil_articles": 720
+    }
+  },
+  "layers_not_examined": [
+    "Supabase (legacy)",
+    "Hostinger MySQL",
+    "OpenSearch",
+    "pgvector/embeddings",
+    "judicial_* tables",
+    "legal_thesaurus_* tables",
+    "fiqh_* tables"
+  ],
+  "blocked_sources": [
+    "laws.boe.gov.sa",
+    "laws.moj.gov.sa",
+    "uqn.gov.sa",
+    "ncar.gov.sa",
+    "hakeemai.net"
+  ],
+  "core_finding": {
+    "law": "نظام المعاملات المدنية",
+    "correct_range": "1-236",
+    "shifted_range": "237-720",
+    "shifted_count": 484,
+    "offset": "+1",
+    "missing_official_article": 237,
+    "duplicated_official_article": 721,
+    "duplicate_rows": [
+      720,
+      721
+    ],
+    "duplicate_text_sha256_16": "04a3aef87bea76de",
+    "origin": "data/legal_articles_export.json (pre-dates Neon migration)",
+    "appended_row_evidence": {
+      "bm25_code_of_article_721": "a11178",
+      "cluster_of_articles_1_720": "a1260-a1980"
+    }
+  },
+  "other_confirmed_defects": [
+    "نظام المرافعات أمام ديوان المظالم — استيراد مكرر؛ المادتان 14 و50 بنص متطابق",
+    "نظام مكافحة غسل الأموال — 3 مجموعات نصوص مكررة",
+    "تنظيم إعانة البحث عن عمل — مادة برقم 14041؛ نسختان متعايشتان للتنظيم",
+    "نظام الشركات 155/219 · نظام الإفلاس 29/74 · نظام الميداليات 12/24 و15/21 — نصوص مكررة",
+    "app/legal/[slug]/page.tsx — BASE غير معرَّف (ReferenceError) في السطرين 53-54",
+    "lib/modules/config/site-url.ts:11 — النطاق الافتراضي ما زال hakeem-platform.vercel.app"
+  ],
+  "tooling_added": [
+    "lib/modules/legal-core/arabic-ordinal.ts",
+    "scripts/test-arabic-ordinal.ts (40 tests, passing)",
+    "scripts/audit/audit-legal-data.ts"
+  ],
+  "decision": "إبقاء حظر الدراسات القانونية المعتمدة على نظام المعاملات المدنية",
+  "acceptance_criteria_met": "1/22",
+  "files": {
+    "00-executive-summary.md": {
+      "bytes": 8651,
+      "sha256": "1688182606aafd74cb73976c6eedb9a7afbc8bb9f98d238ba363d8a230bb191c"
+    },
+    "01-environments-and-storage-map.md": {
+      "bytes": 4152,
+      "sha256": "5be8bd2fc6b112d5651e4fb0d0c34dc4c54fd0b52fe92c9e292524fbb0affc3b"
+    },
+    "02-database-inventory.csv": {
+      "bytes": 1353,
+      "sha256": "cc52851bd01f6564131288304d8342a5500b522e39dc54c03b70d4eb668e06bd"
+    },
+    "03-systems-audit.csv": {
+      "bytes": 52757,
+      "sha256": "9ecc1caff173c71b0db386399ab6f0862ade1075b0d8f45b8348ea60fca4f501"
+    },
+    "04-articles-audit.csv": {
+      "bytes": 153906,
+      "sha256": "ccdda8b0ad9ed12917a717ad229272b9e465c6fc9448b3ba2e936ab475980c05"
+    },
+    "05-civil-transactions-1-721.csv": {
+      "bytes": 331174,
+      "sha256": "2a68341aebb6fb393160b9e73c7427792ab9087b0c25c103f6f24941f63ae69e"
+    },
+    "06-judicial-data-audit.md": {
+      "bytes": 4562,
+      "sha256": "3ee44b563f3d5da2f8216f78b384b86484572b07d07e38eaec0df9f065b9e5b7"
+    },
+    "07-citation-impact-analysis.csv": {
+      "bytes": 172793,
+      "sha256": "6bc3e832a3de4023801ae3b531f6b9ba1ca0a692ec15a7b846e4068bfc20c796"
+    },
+    "08-root-cause-analysis.md": {
+      "bytes": 7444,
+      "sha256": "ec79b53f70263b5baf6a4f6b4b43cdff71321d3dc6e55abfc97d1f5e4d980067"
+    },
+    "09-remediation-plan.md": {
+      "bytes": 5017,
+      "sha256": "3f2dddbb006a88f6b7e373e2967376a6abffd28bc839976b1fa1e04ed6f79cf3"
+    },
+    "10-dry-run.sql": {
+      "bytes": 5452,
+      "sha256": "6137f586799f5885f0878651430950212c6c1e3ed4860d3ba79418de01c66bdf"
+    },
+    "11-apply.sql": {
+      "bytes": 6877,
+      "sha256": "db15b0b2803998d80683278ec296c9cafe5c4f62e0fc57d776c987f6739094e4"
+    },
+    "12-rollback.sql": {
+      "bytes": 2110,
+      "sha256": "996b7544347912c8f3da5c999aefcd8a750d9a19acc3df9025d182475ccb512c"
+    },
+    "13-rebuild-indexes.md": {
+      "bytes": 2747,
+      "sha256": "42357907acd74add4411a53daa14669315c64714b12d0b954b677663d9355189"
+    },
+    "14-automated-tests.md": {
+      "bytes": 3859,
+      "sha256": "b3ded88f154d658621c26645fc32c576ae6db80970834c26708d13ccd00302e9"
+    },
+    "15-post-fix-verification.md": {
+      "bytes": 2696,
+      "sha256": "2c1c11d9dc8cac6be9cdbf1a2d142b6ce26e96b6c1013d3b535135ae2dbc382c"
+    },
+    "16-client-correction-letter.md": {
+      "bytes": 3458,
+      "sha256": "23d6a40072611e091830a20b529baa8c7502500a1bc57faa57964966199dc0b9"
+    },
+    "production-toc.json": {
+      "bytes": 108143,
+      "sha256": "7424bcd4bb52cff57de7e631c40821e31113f92d2c2f261d0f176b577ecc3736"
+    }
+  }
+}
