@@ -1,7 +1,7 @@
 import type { DataSourceDefinition, DueDiligenceConnector } from "./core";
 import { CMA_CAPITAL_MARKET_INSTITUTIONS_SOURCE } from "./cma";
 import { CST_IOT_ENTITIES_SOURCE, CstIotEntitiesConnector } from "./cst";
-import { NCEC_QUALIFIED_AGENCIES_SOURCE, NcecQualifiedAgenciesConnector } from "./ncec";
+import { NCEC_QUALIFIED_AGENCIES_SOURCE } from "./ncec";
 import { SASO_CONFORMITY_BODIES_SOURCE, SasoConformityBodiesConnector } from "./saso";
 import { SFDA_LICENSED_ESTABLISHMENTS_SOURCE, SfdaLicensedEstablishmentsConnector } from "./sfda";
 import {
@@ -12,8 +12,8 @@ import { buildPhase2Connectors, phase2SourceCatalog } from "./phase2";
 
 /**
  * Only sources with a stable public/runtime path are instantiated here.
- * CMA remains catalogued but is intentionally not instantiated until its
- * official Open Data API is reachable through an approved stable egress/adapter.
+ * CMA and NCEC remain catalogued but are intentionally not instantiated until
+ * their official data can be consumed through a stable approved server path.
  */
 export function buildPhase3Connectors(): DueDiligenceConnector[] {
   return [
@@ -22,7 +22,6 @@ export function buildPhase3Connectors(): DueDiligenceConnector[] {
     new SfdaLicensedEstablishmentsConnector(),
     new CstIotEntitiesConnector(),
     new SasoConformityBodiesConnector(),
-    new NcecQualifiedAgenciesConnector(),
   ];
 }
 
@@ -36,7 +35,7 @@ export function phase3SourceCatalog(): DataSourceDefinition[] {
     { ...SFDA_LICENSED_ESTABLISHMENTS_SOURCE },
     { ...CST_IOT_ENTITIES_SOURCE },
     { ...SASO_CONFORMITY_BODIES_SOURCE },
-    { ...NCEC_QUALIFIED_AGENCIES_SOURCE },
+    { ...NCEC_QUALIFIED_AGENCIES_SOURCE, status: "REVIEW_REQUIRED" },
     { ...CMA_CAPITAL_MARKET_INSTITUTIONS_SOURCE },
     ...(genericRegulator ? [genericRegulator] : []),
   ];
