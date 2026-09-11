@@ -36,5 +36,8 @@ jobs:
       - name: Due diligence phase 3 regulator test
         run: npx tsx scripts/test-due-diligence-phase3.ts
 
+      - name: Due diligence phase 4 change-detection test
+        run: npx tsx scripts/test-due-diligence-phase4.ts
+
       - name: Typecheck
         run: npm run typecheck
