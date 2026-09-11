@@ -22,6 +22,32 @@ async function probeNationalPortal() {
   }
 }
 
+async function diagnoseBaladyShape() {
+  const response = await fetch("https://apiservices.balady.gov.sa/v1/momrah-services/open-data?items_per_page=5", {
+    redirect: "error",
+    headers: { accept: "application/json,text/plain;q=0.8", "user-agent": "HakeemDueDiligenceAudit/1.0 (+https://hakeemai.net)" },
+  });
+  const text = await response.text();
+  let shape = "non-json";
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const object = parsed as Record<string, unknown>;
+      const nested: string[] = [];
+      for (const [key, value] of Object.entries(object).slice(0, 12)) {
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          nested.push(`${key}:{${Object.keys(value as Record<string, unknown>).slice(0, 12).join(",")}}`);
+        } else if (Array.isArray(value)) nested.push(`${key}:[${value.length}]`);
+        else nested.push(`${key}:${typeof value}`);
+      }
+      shape = nested.join(" | ");
+    } else if (Array.isArray(parsed)) shape = `array[${parsed.length}]`;
+  } catch {
+    shape = `non-json len=${text.length}`;
+  }
+  console.log(`DIAG | Balady raw | status=${response.status} content-type=${response.headers.get("content-type") ?? "n/a"} len=${text.length} shape=${shape}`);
+}
+
 async function main() {
   console.log("=== Saudi Government Open Data live audit ===");
 
@@ -61,6 +87,7 @@ async function main() {
 
   const balady = await fetchBaladyOpenDataCatalog({ limit: 5 });
   assert.ok(Array.isArray(balady.items), "Balady open-data catalog response was not normalized");
+  if (!balady.items.length) await diagnoseBaladyShape();
   assert.ok(balady.items.length > 0, "Balady official open-data API returned no catalog items");
   console.log(`PASS | Balady Open Data API | items=${balady.items.length}`);
 
