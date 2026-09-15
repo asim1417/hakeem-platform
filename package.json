@@ -224,7 +224,8 @@
     "prove:currentness": "tsx scripts/prove-currentness.ts",
     "audit:legal-data": "tsx scripts/audit/audit-legal-data.ts",
     "audit:derived-drift": "tsx scripts/audit/check-derived-drift.ts",
-    "test:arabic-ordinal": "tsx scripts/test-arabic-ordinal.ts"
+    "test:arabic-ordinal": "tsx scripts/test-arabic-ordinal.ts",
+    "verify:civil-renumber": "tsx scripts/audit/verify-civil-renumber.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
