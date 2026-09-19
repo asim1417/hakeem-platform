@@ -34,6 +34,15 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Official legal sources policy QA
+        run: npm run test:official-sources
+
+      - name: Legal parser QA
+        run: npm run test:legal-parser
+
+      - name: Arabic article numbering QA
+        run: npm run test:arabic-ordinal
+
       - name: Build
         run: npm run build
 
