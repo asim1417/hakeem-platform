@@ -69,7 +69,7 @@ async function main() {
 
     // ⑤ مراجع مخزَّنة بأرقام مُفكَّكة
     const stale = await prisma.consultationCitation.count({
-      where: { lawName: LAW, article: { isNot: undefined } },
+      where: { lawName: LAW },
     }).catch(() => -1);
     if (stale >= 0) console.log(`استشهادات الاستشارات لهذا النظام: ${stale}`);
 
