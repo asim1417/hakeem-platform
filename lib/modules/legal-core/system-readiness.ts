@@ -96,6 +96,30 @@ function normalizedStartsWith(actual: string, expected: string): boolean {
   return normalizeArabic(actual).trim().startsWith(normalizeArabic(expected).trim());
 }
 
+function canonicalLegalText(value: string): string {
+  return normalizeArabic(value)
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function officialArticleSlices(units: Array<{ unitType: string; number: string | null; path: string; ordinal: number; textRaw: string }>): Map<number, string> {
+  const sorted = [...units].sort((a, b) => a.ordinal - b.ordinal);
+  const out = new Map<number, string>();
+  for (const unit of sorted) {
+    if (unit.unitType !== "ARTICLE" || !unit.number) continue;
+    const n = Number(unit.number);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    const subtree = sorted
+      .filter((candidate) => candidate.path === unit.path || candidate.path.startsWith(unit.path + "/"))
+      .map((candidate) => candidate.textRaw)
+      .join("");
+    if (subtree.trim()) out.set(n, subtree);
+  }
+  return out;
+}
+
 const KNOWN_LAW_GUARDS: Record<string, {
   expectedCount: number;
   anchors: Array<[number, string, string]>;
@@ -184,7 +208,7 @@ export async function auditSystemReadiness(systemId: string): Promise<SystemRead
           verificationStatus: true,
           units: {
             orderBy: { ordinal: "asc" },
-            select: { id: true, unitType: true, ordinal: true, number: true, labelAr: true, textRaw: true },
+            select: { id: true, unitType: true, ordinal: true, number: true, labelAr: true, textRaw: true, path: true },
           },
         },
       },
@@ -254,11 +278,46 @@ export async function auditSystemReadiness(systemId: string): Promise<SystemRead
     inspectProvenance(issues, doc, "نص النظام");
     if (!documentReconstructs(doc)) addIssue(issues, "SYSTEM_TEXT_RECONSTRUCTION_FAILED", "BLOCKER", "وحدات نص النظام لا تعيد تكوين النص الرسمي حرفياً.");
     const articleUnits = doc.units.filter((u) => u.unitType === "ARTICLE");
-    const unitNumbers = articleUnits.map((u) => Number(u.number)).filter(Number.isFinite);
+    const unitNumbers = articleUnits.map((u) => Number(u.number)).filter((n) => Number.isFinite(n) && n > 0);
     if (unitNumbers.length && unitNumbers.length !== articles.length) {
       addIssue(issues, "SYSTEM_TEXT_ARTICLE_COUNT_MISMATCH", "BLOCKER", "عدد وحدات ARTICLE في الوثيقة الرسمية لا يساوي عدد legal_articles.", {
         documentArticles: unitNumbers.length, legalArticles: articles.length,
       });
+    }
+
+    if (unitNumbers.length) {
+      const officialSlices = officialArticleSlices(doc.units);
+      const dbNumbers = new Set(articles.map((a) => a.articleNumber));
+      const officialNumbers = new Set(officialSlices.keys());
+      const missingInDb = [...officialNumbers].filter((n) => !dbNumbers.has(n));
+      const missingInOfficial = [...dbNumbers].filter((n) => !officialNumbers.has(n));
+      if (missingInDb.length || missingInOfficial.length) {
+        addIssue(issues, "SYSTEM_TEXT_NUMBER_SET_MISMATCH", "BLOCKER", "مجموعة أرقام المواد في النص الرسمي لا تطابق مجموعة أرقام legal_articles.", {
+          officialOnly: missingInDb.slice(0, 100),
+          databaseOnly: missingInOfficial.slice(0, 100),
+        });
+      }
+
+      const textMismatches: Array<{ articleNumber: number; databaseHead: string; officialHead: string }> = [];
+      for (const article of articles) {
+        const official = officialSlices.get(article.articleNumber);
+        if (!official || article.content.trim().length < 15) continue;
+        const dbText = canonicalLegalText(article.content);
+        const officialText = canonicalLegalText(official);
+        if (dbText.length >= 20 && !officialText.includes(dbText)) {
+          textMismatches.push({
+            articleNumber: article.articleNumber,
+            databaseHead: article.content.slice(0, 100),
+            officialHead: official.slice(0, 140),
+          });
+        }
+      }
+      if (textMismatches.length) {
+        addIssue(issues, "ARTICLE_OFFICIAL_TEXT_MISMATCH", "BLOCKER", "نص مادة في legal_articles لا يطابق المادة ذات الرقم نفسه في النص الرسمي؛ قد يكون زحفاً أو نسخة قديمة.", {
+          count: textMismatches.length,
+          mismatches: textMismatches.slice(0, 50),
+        });
+      }
     }
   }
 
