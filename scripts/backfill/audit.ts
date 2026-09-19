@@ -1,18 +1,16 @@
 /**
- * scripts/backfill/audit.ts — حصر النواقص (ثامنًا-١). قراءة فقط.
- *
- * يكشف كل نظام تنقصه أداة الإصدار و/أو التمهيد بالاعتماد على البيانات القائمة:
- *   - ناقص التمهيد  : لا مادة رقمها 0 «الديباجة» (اصطلاح import-preambles).
- *   - ناقص الأداة   : لا وثيقة إصدار (legal_documents من نوع مرسوم/قرار).
- * يكتب تقرير CSV إلى reports/legal-completeness-audit.csv ويطبع ملخّصًا.
- *
- * ⚠️ يحتاج DATABASE_URL حيًّا (يتخطّى بأمان إن غاب). لا يكتب على القاعدة.
- * تشغيل: npx tsx scripts/backfill/audit.ts
+ * تدقيق شامل لاكتمال حزمة كل نظام.
+ * هذا الملف استُبدل بالبوابة الجديدة: لا يعتبر النظام كاملاً لمجرد وجود تمهيد وأداة إصدار.
+ * يفحص تسلسل المواد + النص الرسمي + المرسوم بكامل وحداته + قرار مجلس الوزراء المشار إليه + المصدر والبصمة.
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import fs from "node:fs";
 import { prisma } from "@/lib/prisma";
+import { auditSystemReadiness } from "@/lib/modules/legal-core/system-readiness";
 
-const PREAMBLE_ARTICLE_NUMBER = 0;
+function cell(v: unknown) {
+  const s = String(v ?? "").replace(/\r?\n/g, " ").replace(/"/g, '""');
+  return /[",]/.test(s) ? '"' + s + '"' : s;
+}
 
 async function main() {
   const url = process.env.DATABASE_URL ?? "";
@@ -22,50 +20,41 @@ async function main() {
   }
 
   const systems = await prisma.legalSystem.findMany({
-    select: { id: true, name: true, articleCount: true },
+    select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
 
-  const rows: string[] = ["system_id,name,has_preamble,has_instrument,completeness"];
-  let missingPreamble = 0;
-  let missingInstrument = 0;
-  let complete = 0;
-
+  const rows: unknown[][] = [];
+  let ready = 0, review = 0, notReady = 0;
   for (const s of systems) {
-    const [preamble, instrument] = await Promise.all([
-      prisma.legalArticle.findFirst({ where: { legalSystemId: s.id, articleNumber: PREAMBLE_ARTICLE_NUMBER }, select: { id: true } }),
-      prisma.legalDocument.findFirst({
-        where: { systemId: s.id, docType: { in: ["ROYAL_DECREE", "COUNCIL_DECISION", "AGENCY_DECISION"] } },
-        select: { id: true },
-      }),
+    const report = await auditSystemReadiness(s.id);
+    if (report.status === "READY") ready++;
+    else if (report.status === "REVIEW_REQUIRED") review++;
+    else notReady++;
+    rows.push([
+      s.id,
+      s.name,
+      report.status,
+      report.articleCount,
+      report.documentCount,
+      report.issues.filter((i) => i.severity === "BLOCKER").length,
+      report.issues.filter((i) => i.severity === "WARNING").length,
+      report.councilDecisionRefs.map((r) => r.number).join("|"),
+      report.issues.map((i) => i.code).join("|"),
     ]);
-    const hasPreamble = Boolean(preamble);
-    const hasInstrument = Boolean(instrument);
-    const completeness = hasPreamble && hasInstrument
-      ? "COMPLETE"
-      : !hasInstrument
-        ? "MISSING_INSTRUMENT"
-        : "MISSING_PREAMBLE";
-    if (completeness === "COMPLETE") complete++;
-    if (!hasPreamble) missingPreamble++;
-    if (!hasInstrument) missingInstrument++;
-    const safeName = `"${s.name.replace(/"/g, '""')}"`;
-    rows.push(`${s.id},${safeName},${hasPreamble},${hasInstrument},${completeness}`);
+    console.log((report.status === "READY" ? "✅" : report.status === "REVIEW_REQUIRED" ? "⚠️" : "❌") + " " + s.name + " — " + report.status);
   }
 
-  mkdirSync("reports", { recursive: true });
+  fs.mkdirSync("reports", { recursive: true });
   const out = "reports/legal-completeness-audit.csv";
-  writeFileSync(out, rows.join("\n") + "\n", "utf-8");
+  const header = ["system_id","name","launch_status","articles","documents","blockers","warnings","cabinet_decisions","issue_codes"];
+  fs.writeFileSync(out, "\ufeff" + [header.join(","), ...rows.map((r) => r.map(cell).join(","))].join("\n") + "\n", "utf8");
 
-  console.log(`الأنظمة: ${systems.length}`);
-  console.log(`كامل: ${complete} | ناقص الأداة: ${missingInstrument} | ناقص التمهيد: ${missingPreamble}`);
-  console.log(`التقرير: ${out}`);
-  console.log(`التقدّم: ${complete}/${systems.length} بحالة «كامل».`);
+  console.log("\nالأنظمة: " + systems.length);
+  console.log("READY=" + ready + " | REVIEW_REQUIRED=" + review + " | NOT_READY=" + notReady);
+  console.log("التقرير: " + out);
 }
 
 main()
-  .catch((e) => {
-    console.error("ERROR:", e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  .catch((e) => { console.error("ERROR:", e); process.exitCode = 1; })
+  .finally(() => prisma.$disconnect().catch(() => undefined));
