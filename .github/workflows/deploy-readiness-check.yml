@@ -37,6 +37,10 @@ jobs:
       - name: Official legal sources policy QA
         run: npm run test:official-sources
 
+      - name: Live Civil Transactions numbering guard
+        if: ${{ secrets.DATABASE_URL != '' }}
+        run: npm run verify:civil-renumber
+
       - name: Legal parser QA
         run: npm run test:legal-parser
 
