@@ -475,7 +475,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !lightById.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
     if (missingOccIds.length) {
       const extraOcc = await prisma.legalArticle
-        .findMany({ where: { id: { in: missingOccIds } }, select: LIGHT_ARTICLE_SELECT })
+        .findMany({ where: { AND: [{ id: { in: missingOccIds } }, buildReadySystemFilter(readyOnly)] }, select: LIGHT_ARTICLE_SELECT })
         .catch(() => [] as LightArticle[]);
       for (const r of extraOcc) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
@@ -489,7 +489,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     const extraIds = [...semMap.keys()].filter((id) => !lightById.has(id));
     if (extraIds.length) {
       const extra = await prisma.legalArticle
-        .findMany({ where: { id: { in: extraIds } }, select: LIGHT_ARTICLE_SELECT })
+        .findMany({ where: { AND: [{ id: { in: extraIds } }, buildReadySystemFilter(readyOnly)] }, select: LIGHT_ARTICLE_SELECT })
         .catch(() => [] as LightArticle[]);
       for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
@@ -675,10 +675,14 @@ async function applySemanticRerank(query: string, results: LegalCoreResult[]): P
 // بحث مباشر بالرقم للتحقق من وجود مادة مذكورة في الحكم (دقيق — لا يعتمد المطابقة النصية).
 export async function getArticlesByNumber(articleNumber: number, systemHint?: string): Promise<LegalCoreResult[]> {
   if (!Number.isFinite(articleNumber) || articleNumber <= 0) return [];
-  const where: Record<string, unknown> = { articleNumber };
+  const where: Record<string, unknown> = {
+    AND: [{ articleNumber }, buildReadySystemFilter(readyOnlyEnabled())]
+  };
   const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
   if (hint) {
-    where.OR = [
+    where.AND = [
+      ...((where.AND as Record<string, unknown>[]) ?? []),
+      { OR: [
       { lawName: { contains: hint, mode: "insensitive" } },
       { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
     ];
@@ -855,6 +859,14 @@ function buildTextFilter(variants: string[], fields: string[]) {
   }
 
   return orFilters.length ? { OR: orFilters } : {};
+}
+
+function readyOnlyEnabled(explicit?: boolean): boolean {
+  return explicit ?? process.env.LEGAL_READY_ONLY === "1";
+}
+
+function buildReadySystemFilter(readyOnly: boolean) {
+  return readyOnly ? { legalSystem: { is: { launchStatus: "READY" as const } } } : {};
 }
 
 function buildSystemFilter(systemIds?: string[]) {
