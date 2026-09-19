@@ -18,6 +18,7 @@ import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { prisma } from "@/lib/prisma";
 import { persistParsedDocument, type DbDocType } from "@/lib/modules/legal-core/document-persist";
 import { auditSystemReadiness, persistSystemReadiness } from "@/lib/modules/legal-core/system-readiness";
+import { linkCouncilDecisionReferences } from "@/lib/modules/legal-core/instrument-relations";
 
 const APPLY = process.argv.includes("--apply");
 const DIR = "data/backfill/text";
@@ -141,6 +142,8 @@ async function main() {
     }
 
     if (APPLY) {
+      const links = await linkCouncilDecisionReferences(system.id);
+      console.log("  روابط المرسوم→قرار مجلس الوزراء: created=" + links.created + " existing=" + links.existing + " unresolved=" + links.unresolved.length);
       const report = await auditSystemReadiness(system.id);
       await persistSystemReadiness(report);
       console.log("  بوابة الإطلاق: " + report.status + " · issues=" + report.issues.length);
