@@ -231,7 +231,8 @@
     "audit:legal-completeness": "tsx scripts/backfill/audit.ts",
     "prepare:official-bundles": "tsx scripts/backfill/prepare-official-bundles.ts",
     "test:official-bundle": "tsx scripts/test-official-bundle.ts",
-    "qa:legal-release": "tsx scripts/legal-release-gate.ts"
+    "qa:legal-release": "tsx scripts/legal-release-gate.ts",
+    "backfill:instrument-relations": "tsx scripts/backfill/link-instrument-relations.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
