@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic, parseArabicOrdinal } from "./arabic-ordinal";
 
@@ -346,7 +347,7 @@ export async function persistSystemReadiness(report: SystemReadinessReport): Pro
     data: {
       launchStatus: report.status,
       launchValidatedAt: new Date(report.checkedAt),
-      launchIssues: report.issues,
+      launchIssues: report.issues as Prisma.InputJsonValue,
       completeness: report.status === "READY" ? "COMPLETE" : "IN_PROGRESS",
     },
   });
