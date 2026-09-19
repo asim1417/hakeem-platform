@@ -8,13 +8,17 @@ export type CitationGuardResult =
   | { ok: false; message: string };
 
 export async function validateLegalCitation(input: { articleId?: string; systemName?: string; articleNumber?: number }): Promise<CitationGuardResult> {
+  const readyOnly = process.env.LEGAL_READY_ONLY === "1";
+  const ready = readyOnly ? { legalSystem: { is: { launchStatus: "READY" as const } } } : {};
   const article = input.articleId
-    ? await prisma.legalArticle.findUnique({ where: { id: input.articleId } })
+    ? await prisma.legalArticle.findFirst({ where: { AND: [{ id: input.articleId }, ready] } })
     : input.systemName && input.articleNumber
       ? await prisma.legalArticle.findFirst({
           where: {
-            lawName: input.systemName,
-            articleNumber: input.articleNumber
+            AND: [
+              { lawName: input.systemName, articleNumber: input.articleNumber },
+              ready
+            ]
           }
         })
       : null;
