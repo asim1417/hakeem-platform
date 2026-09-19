@@ -223,7 +223,10 @@
     "verify:civil-renumber": "tsx scripts/audit/verify-civil-renumber.ts",
     "audit:numbering": "tsx scripts/audit/audit-all-numbering.ts",
     "fetch:official": "tsx scripts/backfill/fetch-official.ts",
-    "test:official-sources": "tsx scripts/test-official-source-policy.ts"
+    "test:official-sources": "tsx scripts/test-official-source-policy.ts",
+    "audit:legal-launch": "tsx scripts/audit/legal-launch-readiness.ts",
+    "backfill:doc-provenance": "tsx scripts/backfill/document-provenance.ts",
+    "test:system-readiness": "tsx scripts/test-system-readiness.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
