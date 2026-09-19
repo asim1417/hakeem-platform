@@ -41,9 +41,9 @@ export async function searchInstrumentProvisions(opts: {
     where: {
       unitType: { in: [...NORMATIVE_UNIT_TYPES] },
       ...(opts.systemIds?.length ? { systemId: { in: opts.systemIds } } : {}),
-      ...(readyOnly ? { system: { launchStatus: "READY" } } : {}),
+      ...(readyOnly ? { system: { is: { launchStatus: "READY" } } } : {}),
       document: {
-        verificationStatus: { in: ["SOURCE_MATCHED", "CROSS_SOURCE_MATCHED"] },
+        is: { verificationStatus: { in: ["SOURCE_MATCHED", "CROSS_SOURCE_MATCHED"] } },
       },
       OR: [
         { textRaw: { contains: query, mode: "insensitive" } },
