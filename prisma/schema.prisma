@@ -130,6 +130,7 @@ model LegalSystem {
 
   @@index([domain])
   @@index([sortOrder])
+  @@index([launchStatus])
   @@map("legal_systems")
 }
 
@@ -1310,6 +1311,7 @@ model LegalDocument {
   @@index([systemId])
   @@index([docType])
   @@index([sourceCode])
+  @@index([sourceCode, sourceDocumentId])
   @@index([verificationStatus])
   @@map("legal_documents")
 }
