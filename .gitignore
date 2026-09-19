@@ -46,3 +46,4 @@ __pycache__/
 
 # خام المصادر الرسمية — حجمه كبير ومحلي/تشغيلي
 data/backfill/official-raw/
+data/backfill/text/
