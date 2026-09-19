@@ -9,6 +9,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseDocument } from "@/lib/legal-parser";
 import type { DocKind } from "@/lib/legal-parser";
+import { sha256Text } from "@/lib/modules/legal-core/official-source-policy";
 
 export type DbDocType = "ROYAL_DECREE" | "COUNCIL_DECISION" | "AGENCY_DECISION" | "SYSTEM_TEXT" | "BYLAW";
 
@@ -33,6 +34,9 @@ export async function persistParsedDocument(params: {
   sourceGuid?: string | null;
   sourceUrl?: string | null;
   publishedAt?: Date | null;
+  sourceCode?: string | null;
+  sourceDocumentId?: string | null;
+  verificationStatus?: "UNVERIFIED" | "SOURCE_MATCHED" | "CROSS_SOURCE_MATCHED" | "REVIEW_REQUIRED";
 }): Promise<PersistResult> {
   const doc = await prisma.legalDocument.create({
     data: {
@@ -43,6 +47,11 @@ export async function persistParsedDocument(params: {
       hijriDate: params.hijriDate ?? null,
       sourceGuid: params.sourceGuid ?? null,
       sourceUrl: params.sourceUrl ?? null,
+      sourceCode: params.sourceCode ?? null,
+      sourceDocumentId: params.sourceDocumentId ?? null,
+      contentSha256: sha256Text(params.rawText),
+      verificationStatus: params.verificationStatus ?? "UNVERIFIED",
+      verifiedAt: params.verificationStatus && params.verificationStatus !== "UNVERIFIED" ? new Date() : null,
       publishedAt: params.publishedAt ?? null,
     },
   });
