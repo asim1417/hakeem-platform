@@ -370,6 +370,20 @@ export async function auditSystemReadiness(systemId: string): Promise<SystemRead
         decreeReference: ref.hijriDate, documentDate: match.hijriDate,
       });
     }
+
+    const linked = await prisma.documentRelation.count({
+      where: {
+        relationType: "CITES",
+        sourceUnit: { is: { document: { is: { systemId: system.id, docType: "ROYAL_DECREE" } } } },
+        targetUnit: { is: { documentId: match.id } },
+      },
+    });
+    if (!linked) {
+      addIssue(issues, "CABINET_DECISION_LINK_MISSING", "BLOCKER", "قرار مجلس الوزراء موجود لكن لم تُثبت علاقة الاستناد من المرسوم إليه.", {
+        decisionNumber: ref.number,
+        documentId: match.id,
+      });
+    }
   }
 
   const blockers = issues.filter((i) => i.severity === "BLOCKER").length;
