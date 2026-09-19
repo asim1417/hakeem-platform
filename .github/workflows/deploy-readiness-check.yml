@@ -40,6 +40,9 @@ jobs:
       - name: System readiness logic QA
         run: npm run test:system-readiness
 
+      - name: Official bundle splitter QA
+        run: npm run test:official-bundle
+
       - name: Live Civil Transactions numbering guard
         if: ${{ env.DATABASE_URL != 'postgresql://user:password@localhost:5432/hakeem?schema=public' }}
         run: npm run verify:civil-renumber
