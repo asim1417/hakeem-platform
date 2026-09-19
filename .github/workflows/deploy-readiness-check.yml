@@ -37,6 +37,9 @@ jobs:
       - name: Official legal sources policy QA
         run: npm run test:official-sources
 
+      - name: System readiness logic QA
+        run: npm run test:system-readiness
+
       - name: Live Civil Transactions numbering guard
         if: ${{ secrets.DATABASE_URL != '' }}
         run: npm run verify:civil-renumber
