@@ -1,83 +1,152 @@
 /**
- * scripts/backfill/ingest.ts — إدخال المجلوب عبر القارئ وربطه بسجل النظام (ثامنًا-٣)
- * وتحديث completeness. لا يمسّ وحدات المواد القائمة.
+ * إدخال حزمة الوثائق الرسمية لنظام واحد أو أكثر:
+ * المرسوم + قرار مجلس الوزراء + نص النظام + أي أداة أخرى، دون افتراض وثيقة واحدة لكل نظام.
  *
- * المصدر: ملفات نصّ مُستخلَصة data/backfill/text/<systemId>.json بالشكل:
- *   { "docType": "ROYAL_DECREE", "rawText": "...", "number": "م/191", "hijriDate": "..." }
- * (خطوة الاستخلاص من HTML البوابة في fetch-boe/عمل بشريّ — النصّ الخام هو المدخل.)
- *
- * ⚠️ كتابة على القاعدة ⇒ مقفولة خلف CONFIRM_RUNTIME_DB_ALIGNMENT + --apply.
- *   npx tsx scripts/backfill/ingest.ts                                   # معاينة
- *   CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED \
- *     npx tsx scripts/backfill/ingest.ts --apply                          # إدخال
+ * الملف:
+ * data/backfill/text/<systemId>.json
+ * إما وثيقة واحدة (توافق خلفي) أو:
+ * {
+ *   "systemId": "...",
+ *   "documents": [
+ *     {"docType":"ROYAL_DECREE","number":"م/191","hijriDate":"29/11/1444","rawText":"...","sourceCode":"UQN","sourceUrl":"...","verificationStatus":"SOURCE_MATCHED"},
+ *     {"docType":"COUNCIL_DECISION","number":"820","hijriDate":"24/11/1444","rawText":"...","sourceCode":"UQN","sourceUrl":"...","verificationStatus":"SOURCE_MATCHED"},
+ *     {"docType":"SYSTEM_TEXT","rawText":"...","sourceCode":"NCAR","sourceUrl":"...","verificationStatus":"SOURCE_MATCHED"}
+ *   ]
+ * }
  */
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { prisma } from "@/lib/prisma";
 import { persistParsedDocument, type DbDocType } from "@/lib/modules/legal-core/document-persist";
+import { auditSystemReadiness, persistSystemReadiness } from "@/lib/modules/legal-core/system-readiness";
 
 const APPLY = process.argv.includes("--apply");
 const DIR = "data/backfill/text";
 
-interface BackfillFile {
+type VerificationStatus = "UNVERIFIED" | "SOURCE_MATCHED" | "CROSS_SOURCE_MATCHED" | "REVIEW_REQUIRED";
+
+interface BackfillDocument {
   docType: DbDocType;
   rawText: string;
   number?: string;
   hijriDate?: string;
+  sourceGuid?: string;
   sourceUrl?: string;
+  sourceCode?: string;
+  sourceDocumentId?: string;
+  verificationStatus?: VerificationStatus;
+  publishedAt?: string;
+}
+
+interface BackfillBundle {
+  systemId?: string;
+  documents: BackfillDocument[];
 }
 
 function assertWritable() {
   if (APPLY && process.env.CONFIRM_RUNTIME_DB_ALIGNMENT !== "NEON_RUNTIME_CONFIRMED") {
-    console.error("✗ الكتابة مقفولة. اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED مع --apply.");
-    process.exit(1);
+    throw new Error("الكتابة مقفولة. اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED مع --apply.");
   }
+}
+
+function asBundle(raw: BackfillDocument | BackfillBundle, fallbackSystemId: string): { systemId: string; documents: BackfillDocument[] } {
+  if ("documents" in raw && Array.isArray(raw.documents)) {
+    return { systemId: raw.systemId?.trim() || fallbackSystemId, documents: raw.documents };
+  }
+  return { systemId: fallbackSystemId, documents: [raw] };
+}
+
+async function existsAlready(systemId: string, d: BackfillDocument): Promise<boolean> {
+  if (d.sourceGuid) {
+    const found = await prisma.legalDocument.findUnique({ where: { sourceGuid: d.sourceGuid }, select: { id: true } });
+    if (found) return true;
+  }
+  const found = await prisma.legalDocument.findFirst({
+    where: {
+      systemId,
+      docType: d.docType,
+      ...(d.sourceCode ? { sourceCode: d.sourceCode } : {}),
+      ...(d.sourceDocumentId ? { sourceDocumentId: d.sourceDocumentId } :
+        d.sourceUrl ? { sourceUrl: d.sourceUrl } :
+        d.number ? { number: d.number } : {}),
+    },
+    select: { id: true },
+  });
+  return Boolean(found);
 }
 
 async function main() {
   assertWritable();
   if (!existsSync(DIR)) {
-    console.log(`⏭️  لا مجلد ${DIR} — لا مدخلات للاستكمال.`);
+    console.log("⏭️  لا مجلد " + DIR + " — لا مدخلات للاستكمال.");
     return;
   }
-  const files = readdirSync(DIR).filter((f) => f.endsWith(".json"));
-  console.log(`ملفات الاستكمال: ${files.length}. apply=${APPLY}`);
+  const files = readdirSync(DIR).filter((name) => name.endsWith(".json"));
+  console.log("ملفات الاستكمال: " + files.length + ". apply=" + APPLY);
 
-  let done = 0;
+  let inserted = 0;
+  let skipped = 0;
   let raised = 0;
-  for (const f of files) {
-    const systemId = f.replace(/\.json$/, "");
-    const data = JSON.parse(readFileSync(`${DIR}/${f}`, "utf-8")) as BackfillFile;
-    const system = await prisma.legalSystem.findUnique({ where: { id: systemId }, select: { id: true, name: true } });
-    if (!system) { console.log(`  ⚠️ نظام غير موجود: ${systemId}`); continue; }
 
-    if (!APPLY) {
-      console.log(`  - ${system.name}: ${data.docType} (${data.rawText.length} حرفًا)`);
+  for (const file of files) {
+    const fallbackSystemId = file.replace(/\.json$/, "").split("__")[0];
+    const raw = JSON.parse(readFileSync(DIR + "/" + file, "utf-8")) as BackfillDocument | BackfillBundle;
+    const bundle = asBundle(raw, fallbackSystemId);
+    const system = await prisma.legalSystem.findUnique({ where: { id: bundle.systemId }, select: { id: true, name: true } });
+    if (!system) {
+      console.log("  ⚠️ نظام غير موجود: " + bundle.systemId + " (" + file + ")");
       continue;
     }
 
-    const res = await persistParsedDocument({
-      systemId, docType: data.docType, rawText: data.rawText,
-      number: data.number ?? null, hijriDate: data.hijriDate ?? null, sourceUrl: data.sourceUrl ?? null,
-    });
-    // تحديث الاكتمال: كامل إذا صحّت إعادة التركيب ووُجدت أداة إصدار.
-    const hasInstrument = ["ROYAL_DECREE", "COUNCIL_DECISION", "AGENCY_DECISION"].includes(data.docType);
-    if (!res.reconstructionOk || res.warnings.length) {
-      raised++;
-      console.log(`  ⚠️ رُفع للمراجعة: ${system.name} (تحذيرات: ${res.warnings.length})`);
+    console.log("\n" + system.name + " — " + bundle.documents.length + " وثيقة");
+    for (const d of bundle.documents) {
+      if (!d.rawText?.trim()) {
+        raised++;
+        console.log("  ✗ " + d.docType + ": نص فارغ — مرفوض");
+        continue;
+      }
+      if (!APPLY) {
+        console.log("  → " + d.docType + " " + (d.number ?? "") + " (" + d.rawText.length + " حرفًا) source=" + (d.sourceCode ?? "—"));
+        continue;
+      }
+      if (await existsAlready(system.id, d)) {
+        skipped++;
+        console.log("  ↷ موجودة مسبقًا: " + d.docType + " " + (d.number ?? ""));
+        continue;
+      }
+
+      const res = await persistParsedDocument({
+        systemId: system.id,
+        docType: d.docType,
+        rawText: d.rawText,
+        number: d.number ?? null,
+        hijriDate: d.hijriDate ?? null,
+        sourceGuid: d.sourceGuid ?? null,
+        sourceUrl: d.sourceUrl ?? null,
+        sourceCode: d.sourceCode ?? null,
+        sourceDocumentId: d.sourceDocumentId ?? null,
+        verificationStatus: d.verificationStatus ?? "UNVERIFIED",
+        publishedAt: d.publishedAt ? new Date(d.publishedAt) : null,
+      });
+      inserted++;
+      if (!res.reconstructionOk || res.warnings.length) {
+        raised++;
+        console.log("  ⚠️ " + d.docType + ": reconstruction=" + res.reconstructionOk + " warnings=" + res.warnings.length);
+      } else {
+        console.log("  ✓ " + d.docType + ": " + res.unitCount + " وحدة");
+      }
     }
-    await prisma.legalSystem.update({
-      where: { id: systemId },
-      data: { completeness: hasInstrument && res.reconstructionOk ? "COMPLETE" : "IN_PROGRESS" },
-    });
-    done++;
-    console.log(`  ✓ ${system.name}: ${res.unitCount} وحدة، إعادة تركيب=${res.reconstructionOk}`);
+
+    if (APPLY) {
+      const report = await auditSystemReadiness(system.id);
+      await persistSystemReadiness(report);
+      console.log("  بوابة الإطلاق: " + report.status + " · issues=" + report.issues.length);
+    }
   }
-  console.log(`تم: ${done} | مرفوع للمراجعة: ${raised}.`);
+
+  console.log("\nتم: inserted=" + inserted + " · skipped=" + skipped + " · raised=" + raised);
+  if (!APPLY) console.log("معاينة فقط — لم تُكتب بيانات.");
 }
 
 main()
-  .catch((e) => {
-    console.error("ERROR:", e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  .catch((e) => { console.error("ERROR:", e); process.exitCode = 1; })
+  .finally(() => prisma.$disconnect().catch(() => undefined));
