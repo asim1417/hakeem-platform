@@ -226,7 +226,9 @@
     "test:official-sources": "tsx scripts/test-official-source-policy.ts",
     "audit:legal-launch": "tsx scripts/audit/legal-launch-readiness.ts",
     "backfill:doc-provenance": "tsx scripts/backfill/document-provenance.ts",
-    "test:system-readiness": "tsx scripts/test-system-readiness.ts"
+    "test:system-readiness": "tsx scripts/test-system-readiness.ts",
+    "backfill:legal-bundle": "tsx scripts/backfill/ingest.ts",
+    "audit:legal-completeness": "tsx scripts/backfill/audit.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
