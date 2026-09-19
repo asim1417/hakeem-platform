@@ -370,6 +370,7 @@ function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
+  const readyOnly = readyOnlyEnabled();
   const page = Math.max(Number(options.page ?? 1), 1);
   // سقف الصفحة 200 (كان 80): يتيح سحب دفعات أكبر عند تصدير «كامل النتائج».
   const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 200);
@@ -413,6 +414,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const where: Record<string, unknown> = {
     AND: [
+      buildReadySystemFilter(readyOnly),
       buildSystemFilter(options.systemIds),
       buildDomainFilter(options.domain),
       buildCategoryFilter(options.categoryIds),
@@ -437,6 +439,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر
   // بنيوي أو تعطيله بـ IN_DB_RECALL=0 نعود للمسار المعجمي (ILIKE) دون تغيير سلوك.
   const noStructuralFilter =
+    !readyOnly &&
     !cleanList(options.systemIds).length &&
     !cleanList(options.categoryIds).length &&
     !options.domain &&
