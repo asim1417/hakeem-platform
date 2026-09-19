@@ -22,5 +22,6 @@ ALTER TABLE "legal_documents"
   ADD COLUMN IF NOT EXISTS "verified_at" TIMESTAMP(3);
 
 CREATE INDEX IF NOT EXISTS "legal_documents_source_code_idx" ON "legal_documents" ("source_code");
+CREATE INDEX IF NOT EXISTS "legal_documents_source_code_source_document_id_idx" ON "legal_documents" ("source_code","source_document_id");
 CREATE INDEX IF NOT EXISTS "legal_documents_verification_status_idx" ON "legal_documents" ("verification_status");
 CREATE INDEX IF NOT EXISTS "legal_systems_launch_status_idx" ON "legal_systems" ("launch_status");
