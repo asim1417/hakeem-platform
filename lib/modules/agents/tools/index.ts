@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// أدوات الوكلاء (المرحلة ٢) — ١٦ أداة، كلٌّ يُرجع ToolResult{ok,data,source,confidence,note}.
+// أدوات الوكلاء (المرحلة ٢) — أدوات النواة + أدوات الوثائق النظامية، كلٌّ يُرجع ToolResult{ok,data,source,confidence,note}.
 // أغلفة رفيعة **فوق دوالّ النواة القائمة** (بحث/جلب/زمن/عزو) + استعلامات prisma مباشرة حيث لزم.
 // لا تُسرّب embedding ولا الحالات الداخلية. أي تعذّر → ok:false مع note (لا فشل صامت).
 // المصدر الوحيد للحقيقة: قاعدة البيانات القانونية. لا تلمس الأمن ولا نواة الترتيب.
@@ -20,6 +20,7 @@ import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { queryNormative } from "../substrate/queries";
+import { searchInstrumentProvisions, getSystemInstrumentBundle } from "@/lib/modules/legal-core/instrument-retrieval";
 import type { NormativeModality } from "../substrate/normative";
 
 function ok<T>(data: T, source: string, confidence = 0.9, note?: string): ToolResult<T> {
@@ -60,6 +61,27 @@ export async function semantic_search(query: string, limit = 8): Promise<ToolRes
     return ok(r.results, "pgvector.embeddings(threshold≥0.6)", r.results.length ? 0.85 : 0.4);
   } catch (e) {
     return fail<LegalCoreResult[]>([], "pgvector.embeddings", `تعذّر البحث الدلالي: ${(e as Error).message}`);
+  }
+}
+
+export async function search_instrument_provisions(query: string, limit = 8, systemIds?: string[]): Promise<ToolResult<unknown[]>> {
+  try {
+    const rows = await searchInstrumentProvisions({ query, limit, systemIds, readyOnly: true });
+    return ok(rows, "legal_documents.document_units", rows.length ? 0.95 : 0.4, rows.length ? undefined : "لا نتائج في المراسيم/القرارات الرسمية المتحققة");
+  } catch (e) {
+    return fail<unknown[]>([], "legal_documents.document_units", "تعذّر بحث المراسيم والقرارات: " + (e as Error).message);
+  }
+}
+
+export async function get_system_instruments(systemName: string): Promise<ToolResult<unknown>> {
+  try {
+    const bundle = await getSystemInstrumentBundle(systemName);
+    return bundle
+      ? ok(bundle, "legal_documents.document_units", bundle.launchStatus === "READY" ? 0.98 : 0.7,
+          bundle.launchStatus === "READY" ? undefined : "الحزمة موجودة لكنها ليست READY بعد")
+      : fail(null, "legal_documents.document_units", "لم يُوجد النظام أو حزمة أدواته");
+  } catch (e) {
+    return fail(null, "legal_documents.document_units", "تعذّر جلب حزمة النظام: " + (e as Error).message);
   }
 }
 
@@ -264,6 +286,8 @@ export const TOOLS = {
   search_rulings,
   search_principles,
   semantic_search,
+  search_instrument_provisions,
+  get_system_instruments,
   get_article_by_eli,
   get_system_toc,
   get_articles_range,
