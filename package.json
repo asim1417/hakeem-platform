@@ -230,7 +230,8 @@
     "backfill:legal-bundle": "tsx scripts/backfill/ingest.ts",
     "audit:legal-completeness": "tsx scripts/backfill/audit.ts",
     "prepare:official-bundles": "tsx scripts/backfill/prepare-official-bundles.ts",
-    "test:official-bundle": "tsx scripts/test-official-bundle.ts"
+    "test:official-bundle": "tsx scripts/test-official-bundle.ts",
+    "qa:legal-release": "tsx scripts/legal-release-gate.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
