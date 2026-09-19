@@ -80,12 +80,22 @@ function findSystemHeading(text: string, systemName: string): number {
   return last;
 }
 
+function nextNonEmptyLine(text: string, after: number): string {
+  return text
+    .slice(after, after + 500)
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .find(Boolean) ?? "";
+}
+
 function findRoyalHeading(text: string, before: number): number {
   const prefix = text.slice(0, before);
   const re = /مرسوم\s+ملكي\s+رقم\s*\([^)]+\)\s*(?:و?تاريخ)\s*[^\n]+/gu;
   for (const m of prefix.matchAll(re)) {
     const i = m.index ?? -1;
-    if (i >= 0 && /بعون\s+الله/u.test(prefix.slice(i, i + 1000))) return i;
+    if (i < 0) continue;
+    const next = nextNonEmptyLine(prefix, i + (m[0]?.length ?? 0));
+    if (/^بعون\s+الله/u.test(next)) return i;
   }
   return -1;
 }
@@ -95,7 +105,8 @@ function findCouncilHeading(text: string, from: number, before: number): number 
   const re = /قرار\s+مجلس\s+الوزراء\s+رقم\s*\([^)]+\)\s*(?:و?تاريخ)\s*[^\n]+/gu;
   for (const m of part.matchAll(re)) {
     const i = (m.index ?? 0) + Math.max(0, from);
-    if (/إن\s+مجلس\s+الوزراء/u.test(text.slice(i, i + 800))) return i;
+    const next = nextNonEmptyLine(text, i + (m[0]?.length ?? 0));
+    if (/^إن\s+مجلس\s+الوزراء/u.test(next)) return i;
   }
   return -1;
 }
