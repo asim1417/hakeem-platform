@@ -221,7 +221,9 @@
     "prove:currentness": "tsx scripts/prove-currentness.ts",
     "test:arabic-ordinal": "tsx scripts/test-arabic-ordinal.ts",
     "verify:civil-renumber": "tsx scripts/audit/verify-civil-renumber.ts",
-    "audit:numbering": "tsx scripts/audit/audit-all-numbering.ts"
+    "audit:numbering": "tsx scripts/audit/audit-all-numbering.ts",
+    "fetch:official": "tsx scripts/backfill/fetch-official.ts",
+    "test:official-sources": "tsx scripts/test-official-source-policy.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
