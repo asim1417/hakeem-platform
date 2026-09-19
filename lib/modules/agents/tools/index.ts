@@ -30,6 +30,27 @@ function fail<T>(data: T, source: string, note: string): ToolResult<T> {
   return { ok: false, data, source, confidence: 0, note };
 }
 
+async function requireReadySystemName(systemName: string): Promise<boolean> {
+  if (process.env.LEGAL_READY_ONLY !== "1") return true;
+  const system = await prisma.legalSystem.findFirst({
+    where: {
+      name: { contains: systemName.trim(), mode: "insensitive" },
+      launchStatus: "READY"
+    },
+    select: { id: true }
+  });
+  return Boolean(system);
+}
+
+async function requireReadyArticle(articleId: string): Promise<boolean> {
+  if (process.env.LEGAL_READY_ONLY !== "1") return true;
+  const article = await prisma.legalArticle.findFirst({
+    where: { id: articleId, legalSystem: { is: { launchStatus: "READY" } } },
+    select: { id: true }
+  });
+  return Boolean(article);
+}
+
 // ── بحث (٤) ──────────────────────────────────────────────────────────────────
 // systemIds اختياريّ = **قيد النطاق** (المرحلة ٣): يُمرَّر لفلتر النواة القائم فلا تتسرّب
 // مادةٌ من نظامٍ إلى سؤالٍ عن نظامٍ آخر. لا يلمس نواة الترتيب — يستعمل خطّافها الموجود فقط.
@@ -100,6 +121,7 @@ export async function get_article_by_eli(eliSegments: string[]): Promise<ToolRes
 
 export async function get_system_toc(systemName: string): Promise<ToolResult<Array<{ articleNumber: number; title: string }>>> {
   try {
+    if (!(await requireReadySystemName(systemName))) return fail([], "legal_core", "النظام غير مجتاز لبوابة الإطلاق READY");
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName, mode: "insensitive" } },
       select: { articleNumber: true, title: true },
@@ -114,6 +136,7 @@ export async function get_system_toc(systemName: string): Promise<ToolResult<Arr
 
 export async function get_articles_range(systemName: string, from: number, to: number): Promise<ToolResult<unknown[]>> {
   try {
+    if (!(await requireReadySystemName(systemName))) return fail([], "legal_core", "النظام غير مجتاز لبوابة الإطلاق READY");
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName, mode: "insensitive" }, articleNumber: { gte: Math.min(from, to), lte: Math.max(from, to) } },
       select: { id: true, articleNumber: true, title: true, content: true, status: true },
@@ -129,6 +152,7 @@ export async function get_articles_range(systemName: string, from: number, to: n
 // ── علاقات (٣) ───────────────────────────────────────────────────────────────
 export async function get_related_articles(articleId: string): Promise<ToolResult<unknown>> {
   try {
+    if (!(await requireReadyArticle(articleId))) return fail(null, "legal_core", "المادة تتبع نظامًا غير READY");
     const ctx = await getArticleFullContext(articleId);
     if (!ctx) return fail(null, "legal_core", "المادة غير موجودة");
     return ok(ctx.related ?? [], "legal_core.related", 0.8);
@@ -163,6 +187,7 @@ export async function get_applying_rulings(articleId: string): Promise<ToolResul
 
 // ── زمن (٣) — تعتمد على التوسيم الزمني الموجود (article_versions / article_amendments) ──
 export async function get_article_at_date(articleId: string, iso: string): Promise<ToolResult<unknown>> {
+  if (!(await requireReadyArticle(articleId))) return fail(null, "article_versions", "المادة تتبع نظامًا غير READY");
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return fail(null, "article_versions", "تاريخ غير صالح");
   try {
@@ -175,6 +200,7 @@ export async function get_article_at_date(articleId: string, iso: string): Promi
 
 export async function get_amendment_history(articleId: string): Promise<ToolResult<unknown[]>> {
   try {
+    if (!(await requireReadyArticle(articleId))) return fail([], "article_amendments", "المادة تتبع نظامًا غير READY");
     const rows = await prisma.articleAmendment.findMany({
       where: { articleId },
       orderBy: { version: "asc" },
@@ -230,6 +256,7 @@ export async function scan_system_articles(
   limit = 1200
 ): Promise<ToolResult<Array<{ articleNumber: number; title: string; content: string }>>> {
   try {
+    if (!(await requireReadySystemName(systemName))) return fail([], "legal_core", "النظام غير مجتاز لبوابة الإطلاق READY");
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName.trim(), mode: "insensitive" } },
       select: { articleNumber: true, title: true, content: true },
