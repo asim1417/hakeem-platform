@@ -119,6 +119,9 @@ model LegalSystem {
   articleCount   Int            @default(0)
   // ── وكيل تحديث قاعدة الأنظمة (إضافة غير كاسرة) ──
   completeness   SystemCompleteness @default(IN_PROGRESS) @map("completeness") // كامل/ناقص الأداة/ناقص التمهيد/قيد الاستكمال
+  launchStatus   LegalSystemLaunchStatus @default(NOT_READY) @map("launch_status")
+  launchValidatedAt DateTime?        @map("launch_validated_at")
+  launchIssues   Json?               @map("launch_issues")
   articles       LegalArticle[]
   documents      LegalDocument[]
   documentUnits  DocumentUnit[]
@@ -1293,6 +1296,11 @@ model LegalDocument {
   publishedAt   DateTime?    @map("published_at") // pubDate من التغذية (مناط النفاذ)
   sourceGuid    String?      @unique @map("source_guid")
   sourceUrl     String?      @map("source_url")
+  sourceCode    String?      @map("source_code") // NCAR | BOE | UQN | manual
+  sourceDocumentId String?   @map("source_document_id")
+  contentSha256 String?      @map("content_sha256")
+  verificationStatus DocumentVerificationStatus @default(UNVERIFIED) @map("verification_status")
+  verifiedAt    DateTime?    @map("verified_at")
   rawText       String       @map("raw_text") // الخام قبل أي معالجة (حجّة)
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
@@ -1301,6 +1309,8 @@ model LegalDocument {
 
   @@index([systemId])
   @@index([docType])
+  @@index([sourceCode])
+  @@index([verificationStatus])
   @@map("legal_documents")
 }
 
@@ -1435,4 +1445,17 @@ enum SystemCompleteness {
   MISSING_INSTRUMENT // ناقص الأداة
   MISSING_PREAMBLE // ناقص التمهيد
   IN_PROGRESS // قيد الاستكمال
+}
+
+enum LegalSystemLaunchStatus {
+  NOT_READY
+  REVIEW_REQUIRED
+  READY
+}
+
+enum DocumentVerificationStatus {
+  UNVERIFIED
+  SOURCE_MATCHED
+  CROSS_SOURCE_MATCHED
+  REVIEW_REQUIRED
 }
