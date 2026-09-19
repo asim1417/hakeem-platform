@@ -43,3 +43,6 @@ ahkam_moj.sql.gz
 # Python
 __pycache__/
 *.pyc
+
+# خام المصادر الرسمية — حجمه كبير ومحلي/تشغيلي
+data/backfill/official-raw/
