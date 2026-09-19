@@ -48,8 +48,12 @@ function assertWritable() {
   }
 }
 
+function isBackfillBundle(raw: BackfillDocument | BackfillBundle): raw is BackfillBundle {
+  return Object.prototype.hasOwnProperty.call(raw, "documents") && Array.isArray((raw as BackfillBundle).documents);
+}
+
 function asBundle(raw: BackfillDocument | BackfillBundle, fallbackSystemId: string): { systemId: string; documents: BackfillDocument[] } {
-  if ("documents" in raw && Array.isArray(raw.documents)) {
+  if (isBackfillBundle(raw)) {
     return { systemId: raw.systemId?.trim() || fallbackSystemId, documents: raw.documents };
   }
   return { systemId: fallbackSystemId, documents: [raw] };
