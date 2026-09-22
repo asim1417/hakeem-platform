@@ -25,6 +25,7 @@ const NORMATIVE_UNIT_TYPES = [
   "INSTRUMENT_CLOSING",
   "SYSTEM_PREAMBLE",
 ] as const;
+const APPROVAL_DOCUMENT_TYPES = ["ROYAL_DECREE", "COUNCIL_DECISION", "AGENCY_DECISION"] as const;
 
 export async function searchInstrumentProvisions(opts: {
   query: string;
@@ -39,7 +40,13 @@ export async function searchInstrumentProvisions(opts: {
 
   const rows = await prisma.documentUnit.findMany({
     where: {
-      unitType: { in: [...NORMATIVE_UNIT_TYPES] },
+      AND: [{ OR: [
+        { unitType: { in: [...NORMATIVE_UNIT_TYPES] } },
+        {
+          document: { is: { docType: { in: [...APPROVAL_DOCUMENT_TYPES] } } },
+          unitType: { in: ["PARAGRAPH", "SUBPARAGRAPH"] },
+        },
+      ] }],
       ...(opts.systemIds?.length ? { systemId: { in: opts.systemIds } } : {}),
       ...(readyOnly ? { system: { is: { launchStatus: "READY" } } } : {}),
       document: {
@@ -127,7 +134,13 @@ export async function getSystemInstrumentBundle(systemName: string) {
           contentSha256: true,
           verificationStatus: true,
           units: {
-            where: { unitType: { in: [...NORMATIVE_UNIT_TYPES] } },
+            // The complete approval instrument includes nested numbered clauses
+            // and signatures. Filtering only normative headings silently omitted
+            // their text from the system introduction returned to Hakeem.
+            where: { OR: [
+              { unitType: { in: [...NORMATIVE_UNIT_TYPES] } },
+              { document: { is: { docType: { in: [...APPROVAL_DOCUMENT_TYPES] } } } },
+            ] },
             orderBy: { ordinal: "asc" },
             select: {
               id: true,

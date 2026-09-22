@@ -53,6 +53,10 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
 }
 
+function systemNamePattern(value: string): string {
+  return value.split(/\s+/).map(word => [...word].map(escapeRegExp).join("[ـ\\u200B-\\u200F]*")).join("\\s+");
+}
+
 function stripFooter(text: string): string {
   const markers = [
     "\nجميع الحقوق محفوظة",
@@ -69,12 +73,12 @@ function stripFooter(text: string): string {
 }
 
 function findSystemHeading(text: string, systemName: string): number {
-  const escaped = escapeRegExp(systemName);
-  const re = new RegExp("(?:^|\\n)\\s*" + escaped + "\\s*\\n(?=\\s*(?:باب|الفصل|المادة))", "gu");
+  const escaped = systemNamePattern(systemName);
+  const re = new RegExp("(?:^|\\n)\\s*(" + escaped + ")\\s*\\n(?=\\s*(?:الباب|باب|الفصل|المادة))", "gu");
   let last = -1;
   for (const m of text.matchAll(re)) {
     const raw = m[0] ?? "";
-    const within = raw.lastIndexOf(systemName);
+    const within = raw.lastIndexOf(m[1]);
     last = (m.index ?? 0) + Math.max(0, within);
   }
   return last;
@@ -88,37 +92,42 @@ function nextNonEmptyLine(text: string, after: number): string {
     .find(Boolean) ?? "";
 }
 
+// Only standalone headings qualify; references inside recitals are not boundaries.
+const INSTRUMENT_NUMBER = String.raw`(?:\(([^)\n]+)\)|([^()\n]+?))`;
+function instrumentHeadingPattern(kind: "ROYAL_DECREE" | "COUNCIL_DECISION", flags: string): RegExp {
+  const label = kind === "ROYAL_DECREE" ? String.raw`مرسوم\s+ملكي` : String.raw`قرار(?:\s+مجلس\s+الوزراء)?`;
+  return new RegExp(String.raw`(?:^|\n)[^\S\n\r]*[\u200B-\u200F\uFEFF]*(${label}\s+رقم\s*${INSTRUMENT_NUMBER}\s+(?:و?تاريخ)\s*[:：]?\s*([0-9٠-٩۰-۹\s/\-]+)هـ?[^\n]*)`, flags);
+}
+
+function withOpening(text: string, heading: number): number {
+  const opening = text.slice(0, heading).match(/(?:^|\n)[\s\u200B-\u200F\uFEFF]*(بسم\s+الله\s+الرحمن\s+الرحيم)[\s\u200B-\u200F\uFEFF]*$/u);
+  return opening ? (opening.index ?? 0) + opening[0].indexOf(opening[1]) : heading;
+}
+
 function findRoyalHeading(text: string, before: number): number {
   const prefix = text.slice(0, before);
-  const re = /مرسوم\s+ملكي\s+رقم\s*\([^)]+\)\s*(?:و?تاريخ)\s*[^\n]+/gu;
-  for (const m of prefix.matchAll(re)) {
-    const i = m.index ?? -1;
-    if (i < 0) continue;
-    const next = nextNonEmptyLine(prefix, i + (m[0]?.length ?? 0));
-    if (/^بعون\s+الله/u.test(next)) return i;
+  for (const m of prefix.matchAll(instrumentHeadingPattern("ROYAL_DECREE", "gu"))) {
+    const i = (m.index ?? 0) + m[0].indexOf(m[1]);
+    const next = nextNonEmptyLine(prefix, (m.index ?? 0) + m[0].length);
+    if (/^بعون\s+الله/u.test(next)) return withOpening(prefix, i);
   }
   return -1;
 }
 
 function findCouncilHeading(text: string, from: number, before: number): number {
-  const part = text.slice(Math.max(0, from), before);
-  const re = /قرار\s+مجلس\s+الوزراء\s+رقم\s*\([^)]+\)\s*(?:و?تاريخ)\s*[^\n]+/gu;
-  for (const m of part.matchAll(re)) {
-    const i = (m.index ?? 0) + Math.max(0, from);
-    const next = nextNonEmptyLine(text, i + (m[0]?.length ?? 0));
-    if (/^إن\s+مجلس\s+الوزراء/u.test(next)) return i;
+  const start = Math.max(0, from);
+  const part = text.slice(start, before);
+  for (const m of part.matchAll(instrumentHeadingPattern("COUNCIL_DECISION", "gu"))) {
+    const i = (m.index ?? 0) + start + m[0].indexOf(m[1]);
+    const next = nextNonEmptyLine(text, (m.index ?? 0) + start + m[0].length);
+    if (/^إن\s+مجلس\s+الوزراء/u.test(next)) return withOpening(text, i);
   }
   return -1;
 }
 
 function instrumentMeta(text: string, kind: "ROYAL_DECREE" | "COUNCIL_DECISION"): { number?: string; hijriDate?: string } {
-  const label = kind === "ROYAL_DECREE" ? "مرسوم\\s+ملكي" : "قرار\\s+مجلس\\s+الوزراء";
-  const re = new RegExp(label + "\\s+رقم\\s*\\(([^)]+)\\)\\s*(?:و?تاريخ)\\s*([0-9٠-٩۰-۹\\s/\\-]+)\\s*هـ?", "u");
-  const m = text.match(re);
-  return {
-    number: m?.[1]?.trim(),
-    hijriDate: m?.[2]?.trim(),
-  };
+  const m = text.match(instrumentHeadingPattern(kind, "u"));
+  return { number: (m?.[2] ?? m?.[3])?.trim(), hijriDate: m?.[4]?.trim() };
 }
 
 function sourceBaseId(sourceUrl: string): string {
@@ -187,7 +196,7 @@ export function splitOfficialSystemBundle(input: {
   }
 
   const systemText = text.slice(systemStart).trim();
-  if (!new RegExp("^" + escapeRegExp(input.systemName) + "\\s*\\n", "u").test(systemText)) {
+  if (!new RegExp("^" + systemNamePattern(input.systemName) + "\\s*\\n", "u").test(systemText)) {
     issues.push("SYSTEM_TEXT_BOUNDARY_WEAK");
   }
   documents.push({
@@ -202,7 +211,7 @@ export function splitOfficialSystemBundle(input: {
   const royal = documents.find((d) => d.docType === "ROYAL_DECREE");
   const council = documents.find((d) => d.docType === "COUNCIL_DECISION");
   if (royal) {
-    if (!/رسمنا\s+بما\s+هو\s+آت/u.test(royal.rawText)) issues.push("ROYAL_DECREE_OPERATIVE_FORMULA_MISSING");
+    if (!/رسمنا\s+بما\s+هو\s+آت/u.test(royal.rawText.replace(/[\u200B-\u200F\uFEFF]/g, ""))) issues.push("ROYAL_DECREE_OPERATIVE_FORMULA_MISSING");
     if (!/آل\s+سعود/u.test(royal.rawText)) issues.push("ROYAL_DECREE_SIGNATURE_BOUNDARY_WEAK");
     const refs = extractCouncilDecisionRefs(royal.rawText);
     if (refs.length && council) {
@@ -210,7 +219,7 @@ export function splitOfficialSystemBundle(input: {
       if (!refs.some((r) => r.number === n)) issues.push("COUNCIL_DECISION_NUMBER_DOES_NOT_MATCH_DECREE");
     }
   }
-  if (council && !/يقرر\s+ما\s+يلي/u.test(council.rawText)) issues.push("COUNCIL_DECISION_OPERATIVE_FORMULA_MISSING");
+  if (council && !/(?:^|\n)\s*يقرر(?:\s+ما\s+يلي)?\s*[:：]?\s*(?:\n|$)/u.test(council.rawText.replace(/[\u064B-\u065F\u200B-\u200F\uFEFF]/g, ""))) issues.push("COUNCIL_DECISION_OPERATIVE_FORMULA_MISSING");
   if (!/المادة\s+(?:الأولى|1|١)/u.test(systemText)) issues.push("SYSTEM_FIRST_ARTICLE_NOT_FOUND");
 
   const blockers = issues.filter((x) => !x.endsWith("_WEAK"));

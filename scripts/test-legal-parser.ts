@@ -116,5 +116,29 @@ console.log("عيّنة ٣: لائحة بفقرات فرعية");
   check("مسار هرمي للفقرة الفرعية", Boolean(sub && /article:2\/para:1\/sub:1/.test(sub.path)), sub?.path ?? "");
 }
 
+// Regression from the live NCAR Civil Transactions text: the alternate spelling
+// المائتين must not silently turn 236 into 36.
+{
+  const sample = "المادة المائتان:\nنص\nالمادة السادسة والثلاثون بعد المائتين:\nنص\nالمادة السابعة والثلاثون بعد المائتين:\nنص\nالمادة الثامنة والثلاثون بعد المائتين:\nنص\n";
+  const r = parseDocument(sample, { kind: "SYSTEM_TEXT" });
+  check("مائتان ومائتين في النص الرسمي", r.units.filter(u => u.type === "ARTICLE").map(u => u.number).join(",") === "200,236,237,238");
+  check("حفظ النص في اختبار المائتين", r.reconstructionOk);
+}
+
+{
+  const sample = "المادة الخامسة بعد المائتين:\nالفرع الوارث هو من استحق الإرث.\nالمادة السادسة بعد المائتين:\nالأصل الوارث.\n";
+  const r = parseDocument(sample, { kind: "SYSTEM_TEXT" });
+  check("الفرع الوارث متن المادة وليس عنوان فرع", !r.units.some(u => u.type === "SECTION"));
+  check("حفظ متن المادة 205", r.units.find(u => u.type === "ARTICLE" && u.number === "205")?.textRaw.includes("الفرع الوارث") === true);
+}
+
+for (const operative of ["الموافقة على النظام بالصيغة المرافقة.", "1- الموافقة على النظام.\n2- تنفيذ القرار."]) {
+  const sample = `بسم الله الرحمن الرحيم\nقرار رقم (219) وتاريخ 22/8/1426هـ\nإن مجلس الوزراء\nوبناء على النظام.\nوبعد الاطلاع على المشروع.\nيُقرِّر\n\n${operative}\nرئيس\u200b مجلس الوزراء\n`;
+  const r = parseDocument(sample, { kind: "COUNCIL_DECISION" });
+  check("منطوق القرار منفصل عن الاستنادات", r.units.some(u => u.type === "INSTRUMENT_CLAUSE" && u.textRaw.includes("الموافقة")) && !r.units.filter(u => u.type === "RECITAL").some(u => u.textRaw.includes("الموافقة")));
+  check("الاستناد ببناء مسبوقة بالواو", r.units.filter(u => u.type === "RECITAL").length === 2);
+  check("الخاتمة منفصلة عن المنطوق", r.units.some(u => u.type === "SIGNATURE"));
+  check("المقدمة والمنطوق والتشكيل تعيد الأصل حرفيًا", r.reconstructionOk);
+}
 console.log(`\n${failures === 0 ? "✓ PASS" : "✗ FAIL"} — ${failures} إخفاق(ات).`);
 process.exit(failures === 0 ? 0 : 1);

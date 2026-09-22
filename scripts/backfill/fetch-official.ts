@@ -24,9 +24,13 @@ import {
   mayAutomateSource,
   sanitizeOfficialRequestHeaders,
   sha256Text,
-  type OfficialLegalSource,
 } from "@/lib/modules/legal-core/official-source-policy";
 
+import { discoverOfficialLinks, explicitCandidates, requireDiscoveredDocuments,
+  type CollectableSource as Source, type OfficialCandidate as Candidate,
+} from "@/lib/modules/legal-core/official-source-discovery";
+
+const DIRECT_URLS = process.argv.filter((a) => a.startsWith("--url=")).map((a) => a.slice("--url=".length));
 const APPLY = process.argv.includes("--apply");
 const SOURCE_ARG = process.argv.find((a) => a.startsWith("--source="))?.split("=")[1]?.toLowerCase();
 const LIMIT_ARG = Number(process.argv.find((a) => a.startsWith("--limit="))?.split("=")[1] ?? "100");
@@ -35,8 +39,6 @@ const DELAY_MS = Math.max(500, Number(process.env.OFFICIAL_SOURCE_DELAY_MS ?? "1
 const MAX_BYTES = Math.max(1024 * 1024, Number(process.env.OFFICIAL_SOURCE_MAX_BYTES ?? String(12 * 1024 * 1024)));
 const UA = process.env.OFFICIAL_SOURCE_USER_AGENT ?? "Hakeem-LegalData/1.0 (+https://hakeem.sa)";
 
-type Source = Exclude<OfficialLegalSource, "UQN">;
-type Candidate = { source: Source; url: string; title?: string; id?: string };
 
 const DEFAULT_INDEX: Record<Source, string> = {
   NCAR: "https://ncar.gov.sa/rules-regulations",
@@ -52,39 +54,6 @@ function selectedSources(): Source[] {
   if (SOURCE_ARG === "ncar") return ["NCAR"];
   if (SOURCE_ARG === "boe") return ["BOE"];
   throw new Error("استخدم --source=ncar أو --source=boe أو --source=all");
-}
-
-function stripTags(v: string): string {
-  return v.replace(/<script[\s\S]*?<\/script>/giu, " ")
-    .replace(/<style[\s\S]*?<\/style>/giu, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function discoverLinks(source: Source, html: string, baseUrl: string): Candidate[] {
-  const out = new Map<string, Candidate>();
-  for (const m of html.matchAll(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/giu)) {
-    const href = m[1] ?? "";
-    const title = stripTags(m[2] ?? "");
-    let absolute: string;
-    try { absolute = new URL(href, baseUrl).toString(); } catch { continue; }
-    try { assertOfficialSourceUrl(source, absolute); } catch { continue; }
-
-    const relevant = source === "BOE"
-      ? /LawDetails|BoeLaws\/Laws/i.test(absolute)
-      : /(document-details|rules-regulations|legislation|regulation)/i.test(absolute);
-    if (!relevant) continue;
-    if (title && !/(نظام|لائحة|تنظيم|قواعد|قرار|تعديل|وثيقة)/u.test(title) && source === "NCAR") continue;
-
-    const u = new URL(absolute);
-    const id = u.searchParams.get("lawId") ?? u.pathname.split("/").filter(Boolean).pop() ?? undefined;
-    out.set(absolute, { source, url: absolute, title: title || undefined, id });
-    if (out.size >= LIMIT) break;
-  }
-  return [...out.values()];
 }
 
 async function getText(source: Source, rawUrl: string): Promise<{ text: string; contentType: string; status: number }> {
@@ -155,8 +124,15 @@ async function collectNcarOpenData(): Promise<boolean> {
   if (!APPLY) return true;
   const res = await getText("NCAR", url);
   await save("NCAR", { source: "NCAR", url, title: "NCAR open data", id: "open-data" }, res.text, res.contentType, res.status);
+  await recordRun("NCAR", { result: "ENTRY_SAVED_UNPARSED", fetched: 1, coverage: "NOT_VERIFIED", url });
   console.log(`✓ حُفظ مدخل البيانات المفتوحة — SHA256=${sha256Text(res.text).slice(0, 16)}…`);
   return true;
+}
+
+async function recordRun(source: Source, report: Record<string, unknown>) {
+  const dir = join(process.cwd(), "data/backfill/official-raw", source.toLowerCase());
+  await mkdir(dir, { recursive: true });
+  await appendFile(join(dir, "runs.jsonl"), JSON.stringify({ source, finishedAt: new Date().toISOString(), ...report }) + "\n", "utf8");
 }
 
 async function collectIndex(source: Source) {
@@ -166,17 +142,26 @@ async function collectIndex(source: Source) {
       ? process.env.BOE_INDEX_URL
       : DEFAULT_INDEX[source];
   const safeIndex = assertOfficialSourceUrl(source, indexUrl).toString();
-  console.log(`[${source}] الفهرس: ${safeIndex}`);
+  console.log(`[${source}] ${DIRECT_URLS.length ? "روابط مباشرة: " + DIRECT_URLS.length : "الفهرس: " + safeIndex}`);
   if (!APPLY) {
     console.log(`[${source}] معاينة فقط؛ لن تُرسل طلبات شبكة. الحد ${LIMIT}.`);
     return;
   }
 
-  const index = await getText(source, safeIndex);
-  const candidates = discoverLinks(source, index.text, safeIndex).slice(0, LIMIT);
+  let discovered: Candidate[];
+  if (DIRECT_URLS.length) {
+    discovered = explicitCandidates(source, DIRECT_URLS);
+  } else {
+    const index = await getText(source, safeIndex);
+    await save(source, { source, url: safeIndex, id: "index", title: "Discovery index (not a legal document)" }, index.text, index.contentType, index.status);
+    discovered = discoverOfficialLinks(source, index.text, safeIndex);
+  }
+  requireDiscoveredDocuments(discovered);
+  const candidates = discovered.slice(0, LIMIT);
   console.log(`[${source}] اكتُشف ${candidates.length} رابطًا مرشحًا.`);
 
   let ok = 0, failed = 0;
+  const errors: Array<{ url: string; error: string }> = [];
   for (const candidate of candidates) {
     try {
       const res = await getText(source, candidate.url);
@@ -185,20 +170,36 @@ async function collectIndex(source: Source) {
       console.log(`  ✓ ${ok}/${candidates.length} ${candidate.title ?? candidate.id ?? candidate.url}`);
     } catch (error) {
       failed++;
+      errors.push({ url: candidate.url, error: error instanceof Error ? error.message : String(error) });
       console.warn(`  ✗ ${candidate.url}: ${error instanceof Error ? error.message : String(error)}`);
     }
     await sleep(DELAY_MS);
   }
-  console.log(`[${source}] تم: ${ok} · أخفق: ${failed}`);
+  await recordRun(source, { result: failed ? "PARTIAL_FAILURE" : "FETCHED_UNVERIFIED", discovered: discovered.length,
+    attempted: candidates.length, fetched: ok, failed, deferred: discovered.length - candidates.length,
+    coverage: "NOT_VERIFIED", errors });
+  if (failed) process.exitCode = 1;
+  console.log(`[${source}] تم: ${ok} · أخفق: ${failed} — اكتمال الكوربوس وسلامة النصوص لم يُتحقّق منهما.`);
 }
 
 async function main() {
   console.log(`جامع المصادر الرسمية — الوضع: ${APPLY ? "تنفيذ" : "dry-run"}`);
   console.log("UQN: مستبعد من الكشط الشامل؛ RSS المنشور له مسار منفصل.");
 
-  for (const source of selectedSources()) {
-    if (source === "NCAR" && await collectNcarOpenData()) continue;
-    await collectIndex(source);
+  const sources = selectedSources();
+  if (DIRECT_URLS.length && sources.length !== 1) throw new Error("--url requires exactly one --source=ncar or --source=boe");
+  // Validate every supplied URL before the first request or write.
+  if (DIRECT_URLS.length) explicitCandidates(sources[0], DIRECT_URLS);
+  for (const source of sources) {
+    try {
+      if (!DIRECT_URLS.length && source === "NCAR" && await collectNcarOpenData()) continue;
+      await collectIndex(source);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.error(`[${source}] ${reason}`);
+      if (APPLY) await recordRun(source, { result: "BLOCKED", error: reason, coverage: "NOT_VERIFIED" });
+      process.exitCode = 1;
+    }
   }
 }
 

@@ -53,4 +53,36 @@ check("القرار يحافظ على منطوقه", Boolean(cabinet?.rawText.in
 check("نص النظام يبدأ بعنوانه", Boolean(system?.rawText.startsWith("نظام المعاملات المدنية")));
 check("النظام يحوي المادة الأولى", Boolean(system?.rawText.includes("المادة الأولى")));
 
+const withOpening = splitOfficialSystemBundle({
+  htmlOrText: html.replace("<html><body>", "<html><body><p>بسم الله الرحمن الرحيم</p>"),
+  systemName: "نظام المعاملات المدنية",
+  sourceUrl: "https://ncar.gov.sa/document-details/example",
+  sourceCode: "NCAR",
+});
+check("لا تسقط البسملة السابقة لعنوان المرسوم", Boolean(withOpening.documents.find(d => d.docType === "ROYAL_DECREE")?.rawText.startsWith("بسم الله الرحمن الرحيم")));
+const definiteChapter = splitOfficialSystemBundle({
+  htmlOrText: html.replace("باب تمهيدي", "الباب الأول"),
+  systemName: "نظام المعاملات المدنية", sourceUrl: "https://ncar.gov.sa/document-details/example", sourceCode: "NCAR",
+});
+check("يتعرف عنوان النظام قبل الباب المعرف", definiteChapter.ok, definiteChapter.issues);
+const stretched = splitOfficialSystemBundle({
+  htmlOrText: html.replace("<h2>نظام المعاملات المدنية</h2>", "<h2>نظام المعـاملات المدنيـة</h2>"),
+  systemName: "نظام المعاملات المدنية", sourceUrl: "https://ncar.gov.sa/document-details/example", sourceCode: "NCAR",
+});
+check("التطويل لا يمنع التعرف على العنوان", stretched.ok, stretched.issues);
+check("يحفظ التطويل في المصدر", stretched.documents.find(d => d.docType === "SYSTEM_TEXT")?.rawText.startsWith("نظام المعـاملات المدنيـة") === true);
+const variants = splitOfficialSystemBundle({
+  htmlOrText: html.replace("رقم (م/191)", "رقم م/191")
+    .replace("<p>قرار مجلس الوزراء رقم (820)", "<p>بسم الله الرحمن الرحيم</p><p>قرار رقم (820)")
+    .replace("وتاريخ 24/ 11 /1444هـ</p>", "وتاريخ : 24/ 11 /1444هـ</p>")
+    .replace("يقرر ما يلي:", "يُقرِّر"),
+  systemName: "نظام المعاملات المدنية", sourceUrl: "https://ncar.gov.sa/document-details/example", sourceCode: "NCAR",
+});
+const variantCouncil = variants.documents.find(d => d.docType === "COUNCIL_DECISION");
+check("صيغ عناوين العمل والتنفيذ والمحاماة", variants.ok, variants.issues);
+check("رقم المرسوم بلا أقواس", variants.documents.find(d => d.docType === "ROYAL_DECREE")?.number === "م/191");
+check("عنوان القرار المختصر يحفظ رقمه", variantCouncil?.number === "820");
+check("بسملة القرار في وثيقته", variantCouncil?.rawText.startsWith("بسم الله الرحمن الرحيم") === true);
+check("لا يلحق القرار المختصر بالمرسوم", !variants.documents.find(d => d.docType === "ROYAL_DECREE")?.rawText.includes("إن مجلس الوزراء"));
+check("التشكيل محفوظ في المنطوق", variantCouncil?.rawText.includes("يُقرِّر") === true);
 process.exit(failed ? 1 : 0);

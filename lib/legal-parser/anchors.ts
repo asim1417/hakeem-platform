@@ -4,6 +4,7 @@
  * «أولاً/ثانياً»)، والتسمية تُؤخذ من السطر الخام.
  */
 import type { DocUnitType } from "./types";
+import { parseArabicNumber } from "./ordinals";
 
 export interface LineAnchor {
   type: DocUnitType;
@@ -21,7 +22,7 @@ const RE_DIVISION = /^\s*(الباب|الفصل|القسم|الفرع)\s+([^\n:�
 // بند المنطوق: أولًا/ثانيًا ... (التشكيل مُزال قبل المطابقة).
 const RE_CLAUSE = /^\s*(اولا|ثانيا|ثالثا|رابعا|خامسا|سادسا|سابعا|ثامنا|تاسعا|عاشرا)\s*[:：]/;
 // الاستناد (recital).
-const RE_RECITAL = /^\s*(?:و?بعد\s+الاطلاع\s+على|بناء\s+على|و?بعد\s+النظر\s+في|و?بعد\s+الاطلاع)/;
+const RE_RECITAL = /^\s*(?:و?بعد\s+الاطلاع\s+على|و?بناء\s+على|و?بعد\s+النظر\s+في|و?بعد\s+الاطلاع)/;
 // الفقرة: «1-» / «١-».
 const RE_PARAGRAPH = /^\s*([0-9٠-٩]{1,3})\s*[-–—]\s*/;
 // الفقرة الفرعية: حرف عربي مفرد + شرطة «أ-».
@@ -48,6 +49,10 @@ export function classifyLine(line: string): LineAnchor | null {
   let m: RegExpMatchArray | null;
 
   if ((m = b.match(RE_DIVISION))) {
+    // A legal sentence such as «الفرع الوارث هو ...» is article content,
+    // not a section heading. Require an ordinal/numeric opening (or تمهيدي).
+    const first = m[2].trim().split(/\s+/)[0];
+    if (!parseArabicNumber(first) && !/^تمهيدي$/u.test(first)) return null;
     const kindMap: Record<string, DocUnitType> = { الباب: "PART", الفصل: "CHAPTER", القسم: "SECTION", الفرع: "SECTION" };
     return { type: kindMap[m[1]] ?? "SECTION", label, numberExpr: m[2], title: m[3]?.trim() || undefined };
   }

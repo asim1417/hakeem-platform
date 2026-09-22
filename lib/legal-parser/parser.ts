@@ -28,7 +28,7 @@ function splitLines(text: string): Line[] {
 }
 
 const REAL_ANCHORS = new Set<DocUnitType>([
-  "ARTICLE", "PART", "CHAPTER", "SECTION", "INSTRUMENT_CLAUSE", "RECITAL", "PARAGRAPH", "SUBPARAGRAPH",
+  "ARTICLE", "PART", "CHAPTER", "SECTION", "INSTRUMENT_CLAUSE", "RECITAL", "PARAGRAPH", "SUBPARAGRAPH", "SIGNATURE",
 ]);
 
 /** استخراج إحالة الاستناد من نصّ recital (نوع الوثيقة، رقمها، تاريخها الهجري). */
@@ -59,10 +59,30 @@ export function parseDocument(raw: string, opts: ParseOptions = {}): ParseResult
   let definitionsMode = false;
   let articleBuf = ""; // لتفعيل نمط التعريفات من نصّ المادة الجاري
   let inArticle = false;
+  const instrumentMode = opts.kind
+    ? ["ROYAL_DECREE", "COUNCIL_DECISION", "AGENCY_DECISION"].includes(opts.kind)
+    : /(?:^|\n)\s*(?:رسمنا\s+بما\s+هو|إن\s+مجلس\s+الوزراء)/u.test(raw) && !/(?:^|\n)\s*المادة\s/u.test(raw);
+  let awaitingOperativeClause = false;
+  let operativeStarted = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].text;
-    const a = classifyLine(line);
+    let a = classifyLine(line);
+    if (instrumentMode) {
+      const normalized = line.replace(/[\u064B-\u065F\u0670\u200B-\u200F\uFEFFـ]/g, "").trim();
+      if (/^(?:رسمنا\s+بما\s+هو\s+آت|يقرر(?:\s+ما\s+يلي)?)\s*[:：]?$/u.test(normalized)) {
+        awaitingOperativeClause = true;
+      } else if (normalized && awaitingOperativeClause) {
+        // Single unnumbered decisions and digit-numbered decisions have real
+        // operative content too; do not leave it attached to the last recital.
+        a = { ...(a ?? { label: line.trim() }), type: "INSTRUMENT_CLAUSE" };
+        awaitingOperativeClause = false;
+        operativeStarted = true;
+      } else if (operativeStarted && /^(?:رئيس\s+مجلس\s+الوزراء|[\p{Script=Arabic}\s]+\sآل\s+سعود)$/u.test(normalized)) {
+        a = { type: "SIGNATURE", label: line.trim() };
+        operativeStarted = false;
+      }
+    }
     if (a && REAL_ANCHORS.has(a.type)) {
       definitionsMode = false;
       inArticle = a.type === "ARTICLE";
