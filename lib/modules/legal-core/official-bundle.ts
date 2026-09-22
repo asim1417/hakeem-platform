@@ -8,7 +8,7 @@ export type PreparedOfficialDocument = {
   sourceUrl: string;
   sourceCode: "NCAR" | "BOE";
   sourceDocumentId: string;
-  verificationStatus: "SOURCE_MATCHED";
+  verificationStatus: "REVIEW_REQUIRED";
 };
 
 export type OfficialBundleSplit = {
@@ -109,7 +109,9 @@ function findRoyalHeading(text: string, before: number): number {
   for (const m of prefix.matchAll(instrumentHeadingPattern("ROYAL_DECREE", "gu"))) {
     const i = (m.index ?? 0) + m[0].indexOf(m[1]);
     const next = nextNonEmptyLine(prefix, (m.index ?? 0) + m[0].length);
-    if (/^بعون\s+الله/u.test(next)) return withOpening(prefix, i);
+    // Normalize only the recognition probe; keep the source and offsets intact.
+    const openingProbe = next.replace(/[\u0640\u064B-\u065F\u0670\u200B-\u200F\uFEFF]/gu, "");
+    if (/^بعون\s+الله/u.test(openingProbe)) return withOpening(prefix, i);
   }
   return -1;
 }
@@ -171,7 +173,7 @@ export function splitOfficialSystemBundle(input: {
       sourceUrl: input.sourceUrl,
       sourceCode: input.sourceCode,
       sourceDocumentId: baseId + ":royal-decree",
-      verificationStatus: "SOURCE_MATCHED",
+      verificationStatus: "REVIEW_REQUIRED",
     });
 
     const refs = extractCouncilDecisionRefs(rawText);
@@ -191,7 +193,7 @@ export function splitOfficialSystemBundle(input: {
       sourceUrl: input.sourceUrl,
       sourceCode: input.sourceCode,
       sourceDocumentId: baseId + ":council-decision:" + (meta.number ? normalizeInstrumentNumber(meta.number) : "unknown"),
-      verificationStatus: "SOURCE_MATCHED",
+      verificationStatus: "REVIEW_REQUIRED",
     });
   }
 
@@ -205,7 +207,7 @@ export function splitOfficialSystemBundle(input: {
     sourceUrl: input.sourceUrl,
     sourceCode: input.sourceCode,
     sourceDocumentId: baseId + ":system-text",
-    verificationStatus: "SOURCE_MATCHED",
+    verificationStatus: "REVIEW_REQUIRED",
   });
 
   const royal = documents.find((d) => d.docType === "ROYAL_DECREE");

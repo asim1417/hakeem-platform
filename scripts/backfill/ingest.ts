@@ -109,6 +109,13 @@ async function main() {
         console.log("  ✗ " + d.docType + ": نص فارغ — مرفوض");
         continue;
       }
+      // Structural parsing alone is not a source/legal review. Do not import
+      // quarantined or unreviewed captures, even when --apply was requested.
+      if (d.verificationStatus !== "SOURCE_MATCHED" && d.verificationStatus !== "CROSS_SOURCE_MATCHED") {
+        raised++;
+        console.log("  ✗ " + d.docType + ": محجوز حتى اكتمال مطابقة المصدر");
+        continue;
+      }
       if (!APPLY) {
         console.log("  → " + d.docType + " " + (d.number ?? "") + " (" + d.rawText.length + " حرفًا) source=" + (d.sourceCode ?? "—"));
         continue;

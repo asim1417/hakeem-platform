@@ -43,6 +43,7 @@ function check(name: string, ok: boolean, detail?: unknown) {
 
 check("الحزمة صالحة", result.ok, result.issues);
 check("ثلاث وثائق", result.documents.length === 3, result.documents.map((d) => d.docType));
+check("الفصل البنيوي لا يمنح مطابقة قانونية", result.documents.every(d => d.verificationStatus === "REVIEW_REQUIRED"));
 const royal = result.documents.find((d) => d.docType === "ROYAL_DECREE");
 const cabinet = result.documents.find((d) => d.docType === "COUNCIL_DECISION");
 const system = result.documents.find((d) => d.docType === "SYSTEM_TEXT");
@@ -85,4 +86,10 @@ check("عنوان القرار المختصر يحفظ رقمه", variantCouncil
 check("بسملة القرار في وثيقته", variantCouncil?.rawText.startsWith("بسم الله الرحمن الرحيم") === true);
 check("لا يلحق القرار المختصر بالمرسوم", !variants.documents.find(d => d.docType === "ROYAL_DECREE")?.rawText.includes("إن مجلس الوزراء"));
 check("التشكيل محفوظ في المنطوق", variantCouncil?.rawText.includes("يُقرِّر") === true);
+const stretchedOpening = splitOfficialSystemBundle({
+  htmlOrText: html.replace("بعون الله تعالى", "بـعُـــون الله تعالى"),
+  systemName: "نظام المعاملات المدنية", sourceUrl: "https://ncar.gov.sa/document-details/example", sourceCode: "NCAR",
+});
+check("يتعرف افتتاحية المرسوم المطولة والمشكولة", stretchedOpening.ok, stretchedOpening.issues);
+check("يحفظ افتتاحية المرسوم حرفياً", stretchedOpening.documents.find(d => d.docType === "ROYAL_DECREE")?.rawText.includes("بـعُـــون الله تعالى") === true);
 process.exit(failed ? 1 : 0);
