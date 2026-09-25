@@ -39,7 +39,7 @@ function pct(part: number, whole: number): number {
 
 /** يبني مؤشّر الصحّة. now يُمرَّر من المستدعي (المسار) لتفادي Date.now في النواة. */
 export async function buildHealthIndex(now: string): Promise<HealthIndex> {
-  const [systems, articles, relationsTotal, relationsVerified, guardTotal, guardPass, auditCount] =
+  const [systems, articles, relationsTotal, relationsVerified, guardTotal, guardPass, auditCount, rulings, rulingLinks] =
     await Promise.all([
       prisma.legalSystem.count().catch(() => 0),
       prisma.legalArticle.count().catch(() => 0),
@@ -48,6 +48,9 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
       prisma.guardrailDecision.count().catch(() => 0),
       prisma.guardrailDecision.count({ where: { result: "pass" } }).catch(() => 0),
       prisma.auditEvent.count().catch(() => 0),
+      // OBS-001: عدّ الأحكام القضائية وروابطها بالمواد ضمن مؤشّر الصحّة الإداري.
+      prisma.judicialCase.count().catch(() => -1),
+      prisma.legalArticleCaseLink.count().catch(() => -1),
     ]);
 
   let database = true;
@@ -86,7 +89,9 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
       key: "evidence",
       labelAr: "الدليل",
       score: evidenceScore,
-      detail: guardTotal > 0 ? `حراس ناجحة ${guardPass}/${guardTotal}` : "لا قرارات حُرّاس بعد",
+      detail:
+        (guardTotal > 0 ? `حراس ناجحة ${guardPass}/${guardTotal}` : "لا قرارات حُرّاس بعد") +
+        ` · أحكام ${rulings < 0 ? "؟" : rulings} (روابط ${rulingLinks < 0 ? "؟" : rulingLinks})`,
     },
     {
       key: "compliance",

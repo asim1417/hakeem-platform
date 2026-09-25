@@ -41,30 +41,35 @@ function assert(cond: unknown, msg: string) { if (!cond) throw new Error(msg); }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const model = buildImportModel(parsed as any);
-const preamble1 = model.articles.find((a) => a.sourceSystemId === "1" && a.articleNumber === 0);
-const preamble2 = model.articles.find((a) => a.sourceSystemId === "2" && a.articleNumber === 0);
-const body1 = model.articles.filter((a) => a.sourceSystemId === "1" && a.articleNumber !== 0);
+// DATA-001 (الخيار الثاني): الديباجة تُخزَّن على مستوى النظام (preambleContent) لا كمادة صفر.
+const sys1 = model.systems.find((s) => s.sourceId === "1");
+const sys2 = model.systems.find((s) => s.sourceId === "2");
+const preamble1 = sys1?.preambleContent ?? "";
+const body1 = model.articles.filter((a) => a.sourceSystemId === "1");
 
-check("الديباجة/أداة الإصدار تُلتقط مادّةً رقم صفر (لا تُسقَط)", () => {
-  assert(preamble1, "يجب وجود مادّة ديباجة (رقم صفر) للنظام ذي المصدر");
-  assert(preamble1!.title === "الديباجة", "عنوان الديباجة");
+check("لا تُنشأ «مادة صفر» إطلاقًا (لا ديباجة كمادة)", () => {
+  assert(!model.articles.some((a) => a.articleNumber === 0), "يجب ألا توجد أي مادة رقمها صفر في النموذج");
+});
+
+check("الديباجة تُحفظ على مستوى النظام (preambleContent)", () => {
+  assert(preamble1.length > 0, "يجب وجود نصّ ديباجة للنظام ذي المصدر");
 });
 
 check("نصّ الديباجة الخام + اسم الملك محفوظان", () => {
-  assert(preamble1!.content.includes("بعون الله تعالى"), "نصّ ديباجة النظام محفوظ");
-  assert(preamble1!.content.includes("سلمان بن عبدالعزيز"), "اسم الملك المُصدِر محفوظ");
+  assert(preamble1.includes("بعون الله تعالى"), "نصّ ديباجة النظام محفوظ");
+  assert(preamble1.includes("سلمان بن عبدالعزيز"), "اسم الملك المُصدِر محفوظ");
 });
 
 check("أداة الإصدار (law_issuance_tools.title) لا تُسقَط — نصّها ورقمها محفوظان", () => {
-  assert((preamble1!.royalDecree ?? "").includes("م/191"), "رقم المرسوم في royalDecree");
-  assert(preamble1!.content.includes("م/191"), "المرسوم داخل نصّ الديباجة/أداة الإصدار");
-  assert(preamble1!.content.includes("أداة الإصدار"), "عنوان كتلة أداة الإصدار");
+  assert((sys1?.royalDecree ?? "").includes("م/191"), "رقم المرسوم في royalDecree للنظام");
+  assert(preamble1.includes("م/191"), "المرسوم داخل نصّ الديباجة/أداة الإصدار");
+  assert(preamble1.includes("أداة الإصدار"), "عنوان كتلة أداة الإصدار");
 });
 
 check("تاريخ الإصدار (laws.issuance_date_*) محفوظ — هجريّ وميلاديّ", () => {
-  assert(preamble1!.content.includes("1444-11-29"), "التاريخ الهجريّ في النصّ");
-  assert(preamble1!.content.includes("2023-12-16"), "التاريخ الميلاديّ في النصّ");
-  assert(preamble1!.effectiveFrom === "2023-12-16", "effectiveFrom = التاريخ الميلاديّ");
+  assert(preamble1.includes("1444-11-29"), "التاريخ الهجريّ في النصّ");
+  assert(preamble1.includes("2023-12-16"), "التاريخ الميلاديّ في النصّ");
+  assert(sys1?.effectiveFrom === "2023-12-16", "effectiveFrom = التاريخ الميلاديّ على النظام");
 });
 
 check("المواد الموضوعيّة تبقى مرقّمةً من عنوانها (١، ٢) منفصلةً عن الديباجة", () => {
@@ -78,20 +83,12 @@ check("المرسوم/التاريخ يُنسبان لكلّ مادّةٍ في �
 });
 
 check("لا اختلاق: نظامٌ بلا ديباجةٍ/أداةٍ/تاريخٍ في المصدر لا تُصنَع له ديباجة", () => {
-  assert(!preamble2, "لا يجوز إنشاء مادّة ديباجة لنظامٍ بلا مصدرٍ لها");
-});
-
-check("الديباجة ليست ضمن invalidArticles (لم تُرفَض كرقمٍ ساقط)", () => {
-  assert(!model.invalidArticles.includes("preamble:1"), "الديباجة صالحة لا مرفوضة");
+  assert(!sys2?.preambleContent, "لا يجوز تأليف ديباجة لنظامٍ بلا مصدرٍ لها");
 });
 
 // منع الانحدار (§24): مصدرٌ فيه نصّ ما-قبل-المادة ⇒ يُحفَظ لا يُسقَط.
 check("منع الانحدار: مصدرٌ فيه نصّ ما-قبل-المادة ⇒ ديباجةٌ محفوظة", () => {
-  const sourceHasPreArticleContent = true;
-  if (sourceHasPreArticleContent) {
-    assert(preamble1, "إسقاط نصّ ما-قبل-المادة انحدارٌ محظور");
-    assert(preamble1!.content.length > 0, "نصّ ما-قبل-المادة غير فارغ");
-  }
+  assert(preamble1.length > 0, "إسقاط نصّ ما-قبل-المادة انحدارٌ محظور");
 });
 
 console.log(`\nنتيجة: ${pass} نجح، ${fails.length} فشل`);

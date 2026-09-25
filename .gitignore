@@ -43,3 +43,6 @@ ahkam_moj.sql.gz
 # Python
 __pycache__/
 *.pyc
+
+# Preamble migration backups (rollback artifacts)
+reports/legal-source-integrity/preamble-zero-backup-*.json

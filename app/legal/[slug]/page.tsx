@@ -16,7 +16,7 @@ async function resolveSystem(slug: string) {
   if (byEli) return byEli;
   const byId = await prisma.legalSystem.findUnique({ where: { id: raw } }).catch(() => null);
   if (byId) return byId;
-  const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true, articleCount: true, sortOrder: true, domainTitle: true } }).catch(() => []);
+  const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true, articleCount: true, sortOrder: true, domainTitle: true, preamble: true, preambleRoyalDecree: true, preambleEffectiveFrom: true } }).catch(() => []);
   return all.find((x) => resolveSystemSlug(x.eliSlug, x.name) === norm) ?? null;
 }
 
@@ -38,12 +38,16 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const articles = await prisma.legalArticle
     .findMany({
-      where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }] },
-      select: { id: true, articleNumber: true, title: true },
+      // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
+      // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
+      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
+      select: { id: true, articleNumber: true, title: true, status: true },
       orderBy: { articleNumber: "asc" },
     })
     .catch(() => []);
 
+  // LIVE-001: تعريف BASE من عنوان الموقع قبل استعماله في JSON-LD (كان غير معرّف فيتعطل).
+  const BASE = getSiteUrl();
   const ld = {
     "@context": "https://schema.org",
     "@type": "Legislation",
@@ -64,13 +68,26 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
         </p>
       </header>
 
+      {system.preamble?.trim() ? (
+        <section className="mt-6 rounded-xl border border-[#C69763]/25 bg-ivory p-5" aria-label="الديباجة">
+          <h2 className="text-lg font-bold text-[var(--navy)]">الديباجة</h2>
+          {system.preambleRoyalDecree ? (
+            <p className="mt-1 text-sm text-muted">{system.preambleRoyalDecree}</p>
+          ) : null}
+          <p className="mt-3 whitespace-pre-line leading-8 text-[var(--navy)]">{system.preamble}</p>
+        </section>
+      ) : null}
+
       {articles.length ? (
         <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C69763]/25 bg-ivory">
           {articles.map((a) => (
             <li key={a.id}>
               <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
                 <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
-                <span className="leading-7 text-[var(--navy)]">{a.title}</span>
+                <span className={`leading-7 ${String(a.status ?? "").trim() === "ملغاة" ? "text-red-700 line-through decoration-red-400" : "text-[var(--navy)]"}`}>{a.title}</span>
+                {String(a.status ?? "").trim() === "ملغاة" ? (
+                  <span className="mt-0.5 shrink-0 rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>ملغاة</span>
+                ) : null}
               </Link>
             </li>
           ))}

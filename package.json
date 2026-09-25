@@ -2,12 +2,17 @@
   "name": "hakeem-platform",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "db:ensure-schema": "tsx scripts/db-ensure-schema.ts",
+    "owner:ensure": "tsx scripts/ensure-owner-cli.ts",
     "tool:docs": "cd tools/arabic-doc-tool && python3 -m uvicorn tool_app:app --host 0.0.0.0 --port 8080",
     "tool:docs:install": "python3 -m pip install -r tools/arabic-doc-tool/requirements_tool.txt",
     "test": "tsx scripts/test-conversation.ts",

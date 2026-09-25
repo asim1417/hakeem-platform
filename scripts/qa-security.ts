@@ -72,6 +72,28 @@ function scanFile(file: string) {
     if (!isExample && !isServerAiGateway && /(OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY)/.test(line)) {
       findings.push({ file: rel, line: index + 1, reason: "اسم مفتاح ذكاء خارج طبقة الخادم المخصصة", text: trimmed });
     }
+
+    // ── QA-001: كشف كلمات المرور والأسرار المضمّنة في المصدر (حرفيًّا) ──
+    // يُستثنى: التوثيق، ‎.env.example، وملفات الاختبار (تحمل fixtures)، والأسطر التي تقرأ
+    // من process.env (لا حرفية). يُلتقط تعيين قيمة حرفية لاسم يشبه كلمة مرور/سرّ.
+    const isTestFixture = /(^|[\\/])(test|scripts[\\/]test-)/i.test(rel) || /\.test\.[cm]?[jt]sx?$/.test(rel);
+    if (!isExample && !isTestFixture) {
+      // مفتاح خاص PEM.
+      if (/-----BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----/.test(line)) {
+        findings.push({ file: rel, line: index + 1, reason: "مفتاح خاص مضمّن في المصدر", text: "[REDACTED]" });
+      }
+      // Bearer token حرفي — مع استثناء الأمثلة/العناصر النائبة في التوثيق (XXXX، example، <...>).
+      const isPlaceholder = /X{4,}|example|<[^>]+>|\.\.\.|\bYOUR_\b/i.test(line);
+      if (/Bearer\s+[A-Za-z0-9._\-]{20,}/.test(line) && !/process\.env/.test(line) && !isPlaceholder) {
+        findings.push({ file: rel, line: index + 1, reason: "توكن Bearer حرفي مضمّن", text: "[REDACTED]" });
+      }
+      // تعيين قيمة حرفية لكلمة مرور: نقصر على أسماء كلمات المرور بقيمة تشبه اعتمادًا (ASCII بلا فراغ)
+      // لتفادي إيجابيات كاذبة على تسميات عربية مثل «secret: "سرّيّة"».
+      const pwAssign = /[A-Za-z_]*(?:password|passwd)\s*[:=]\s*["'`][A-Za-z0-9!@#$%^&*()_+\-=.]{6,}["'`]/i;
+      if (pwAssign.test(line) && !/process\.env/.test(line) && !isPlaceholder && !/z\.(string|object)/.test(line)) {
+        findings.push({ file: rel, line: index + 1, reason: "كلمة مرور حرفية مضمّنة في المصدر", text: "[REDACTED]" });
+      }
+    }
   });
 }
 

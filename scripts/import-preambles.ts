@@ -14,7 +14,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
-import { PREAMBLE_ARTICLE_NUMBER, PREAMBLE_TITLE } from "@/lib/modules/legal-core/article-ref";
 
 interface PreambleInput {
   lawName: string;
@@ -77,45 +76,30 @@ async function main() {
     }
     const lawName = system.name;
 
-    // إثباتٌ لسؤال «هل كان موجودًا؟»: نطبع محتوى مادّة‑صفر السابق (طوله ومقتطفه) قبل الاستبدال.
-    const prev = await prisma.legalArticle.findUnique({
-      where: { lawName_articleNumber: { lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER } },
-      select: { id: true, content: true },
-    });
-    if (prev) console.log(`  ↪ مادّة‑صفر السابقة: ${prev.content.length.toLocaleString("ar-SA")} حرفًا — مقتطف: «${prev.content.slice(0, 140).replace(/\n/g, " ")}…»`);
-    else console.log(`  ↪ لا مادّة‑صفر سابقة لهذا النظام (لم تكن الديباجة مخزَّنة).`);
+    // الديباجة تُخزَّن حقلًا على مستوى النظام (لا «مادة صفر») — DATA-001 الخيار الثاني.
+    const prevLen = system.preamble?.length ?? 0;
+    if (prevLen) console.log(`  ↪ ديباجة سابقة: ${prevLen.toLocaleString("ar-SA")} حرفًا (ستُستبدل).`);
 
     const effectiveFrom = e.effectiveFrom ? new Date(e.effectiveFrom) : undefined;
-    const data = {
-      legalSystemId: system.id,
-      title: PREAMBLE_TITLE,
-      content: e.preamble,
-      status: "سارية",
-      royalDecree: e.royalDecree ?? undefined,
-      effectiveFrom: effectiveFrom && !Number.isNaN(effectiveFrom.getTime()) ? effectiveFrom : undefined,
-    };
-    const art = await prisma.legalArticle.upsert({
-      where: { lawName_articleNumber: { lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER } },
-      update: data,
-      create: { lawName, articleNumber: PREAMBLE_ARTICLE_NUMBER, ...data },
+    await prisma.legalSystem.update({
+      where: { id: system.id },
+      data: {
+        preamble: e.preamble,
+        preambleRoyalDecree: e.royalDecree ?? undefined,
+        preambleEffectiveFrom: effectiveFrom && !Number.isNaN(effectiveFrom.getTime()) ? effectiveFrom : undefined,
+        preambleUpdatedAt: new Date(),
+      },
       select: { id: true },
     });
-    // نُعيد ضبط المتجه والفهرس المعجميّ ليُعاد توليدهما على النصّ الجديد (لا يبقيان بائتين):
-    // حذف صفّ pgvector ⇒ backfill-embeddings (scope=missing) يعيد تضمينه؛ تصفير search_norm ⇒ build-search-vector يُعيد فهرسته.
-    await prisma.$executeRawUnsafe(`DELETE FROM "embeddings" WHERE "owner_type" = 'article' AND "owner_id" = $1`, art.id).catch(() => undefined);
-    await prisma.$executeRawUnsafe(`UPDATE legal_articles SET search_norm = NULL WHERE id = $1`, art.id).catch(() => undefined);
 
     imported += 1;
-    console.log(`✓ ديباجة كاملة: ${lawName} (${e.preamble.length.toLocaleString("ar-SA")} حرفًا) — أُعيد ضبط التضمين والفهرس.`);
+    console.log(`✓ ديباجة النظام: ${lawName} (${e.preamble.length.toLocaleString("ar-SA")} حرفًا).`);
   }
 
-  console.log(`\nاكتمل: ${imported} ديباجة مستوردة (مادّة رقم ${PREAMBLE_ARTICLE_NUMBER}).`);
+  console.log(`\nاكتمل: ${imported} ديباجة مستوردة (حقل preamble على مستوى النظام).`);
   if (missing.length) {
     console.warn(`\n⚠ أنظمةٌ لم تُوجَد بهذا الاسم في legal_systems (تُخطّت): \n - ${missing.join("\n - ")}`);
     console.warn("تأكّد أنّ lawName يطابق name في legal_systems حرفيًّا.");
-  }
-  if (imported) {
-    console.log("\nالخطوة التالية (لجعلها قابلةً للبحث): شغّل build-search-vector (معجميّ) + backfill-embeddings scope=missing (دلاليّ).");
   }
   await prisma.$disconnect();
 }

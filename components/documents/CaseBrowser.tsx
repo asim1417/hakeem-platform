@@ -374,10 +374,10 @@ export function CaseBrowser() {
     else if (sort === "title") list = [...list].sort((a, b) => a.title.localeCompare(b.title, "ar"));
     else if (sort === "type") list = [...list].sort((a, b) => a.type.name.localeCompare(b.type.name, "ar"));
     return list;
-  }, [docs, haystacks, parsed, fams, typeFilter, onlyFlagged, sort, bm25, flags, morphReady]);
+  }, [docs, haystacks, parsed, fams, typeFilter, onlyFlagged, sort, bm25, flags]);
 
   const current = docs.find((d) => d.code === currentCode) ?? null;
-  const needles = useMemo(() => (parsed.empty ? [] : highlightNeedles(parsed, fams)), [parsed, fams, morphReady]);
+  const needles = useMemo(() => (parsed.empty ? [] : highlightNeedles(parsed, fams)), [parsed, fams]);
 
   const types = useMemo(() => {
     const m = new Map<string, number>();
