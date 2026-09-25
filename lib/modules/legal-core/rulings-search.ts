@@ -25,21 +25,41 @@ export interface RulingHit {
   score: number; // 0..1 نسبة الألفاظ المتطابقة (+ حافز العنوان)
 }
 
-/** حجب البيانات الشخصية الحساسة (PDPL): أرقام الهوية/الإقامة (10 خانات) والجوال. */
+const PII_DIGIT = "[0-9\\u0660-\\u0669]";
+const PII_GAP = "[\\s\\u00a0\\u200c]*";
+
+/** يحمي أرقام المواد والصكوك والتواريخ من الحجب ثم يعيدها. */
+function shieldLegalNumbers(text: string): { text: string; restore: (s: string) => string } {
+  const held: string[] = [];
+  const keep = (chunk: string) => {
+    const token = `\u0000H${held.length}\u0000`;
+    held.push(chunk);
+    return token;
+  };
+  let src = text;
+  src = src.replace(new RegExp(`${PII_DIGIT}{1,2}${PII_GAP}[\\/\\-]${PII_GAP}${PII_DIGIT}{1,2}${PII_GAP}[\\/\\-]${PII_GAP}${PII_DIGIT}{3,4}`, "g"), keep);
+  src = src.replace(new RegExp(`(?:المادة|مادة|صك|صكوك)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), keep);
+  return {
+    text: src,
+    restore: (s) => s.replace(/\u0000H(\d+)\u0000/g, (_, i) => held[Number(i)] ?? ""),
+  };
+}
+
+/** حجب الهوية والجوال والآيبان والبريد في طبقة العرض. النص الأصلي في القاعدة لا يُمس. */
 export function redactPII(text: string): string {
   if (!text) return "";
-  // التطويل يكسر تسلسل الأرقام فيُفلت من النمط ثم يُحذف عند التطبيع فيلتصق الرقم.
   const src = String(text).replace(/\u0640/g, "");
-  const digit = "[0-9\\u0660-\\u0669]";
+  const shielded = shieldLegalNumbers(src);
+  const digit = PII_DIGIT;
+  const gap = PII_GAP;
   const notDigit = `(?<!${digit})`;
   const notDigitAfter = `(?!${digit})`;
-  return src
-    // هوية/إقامة: 10 خانات تبدأ بـ 1 أو 2، لاتينية أو عربية-هندية، ومن أي موضع في التسلسل.
-    .replace(new RegExp(`${notDigit}[12\\u0661\\u0662]${digit}{9}${notDigitAfter}`, "g"), "•••••••••• [هوية محجوبة]")
-    // جوال سعودي: 05######## أو +9665######## أو 009665######## (أرقام لاتينية أو هندية)
-    .replace(new RegExp(`(?:\\+?966|00966)?[0\\u0660]?[5\\u0665]${digit}{8}${notDigitAfter}`, "g"), "[جوال محجوب]")
-    // آيبان سعودي SA + 22 خانة
-    .replace(new RegExp(`\\bSA${digit}{22}\\b`, "gi"), "[آيبان محجوب]");
+  const redacted = shielded.text
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[بريد محجوب]")
+    .replace(new RegExp(`${notDigit}[12\\u0661\\u0662](?:${gap}${digit}){9}${notDigitAfter}`, "g"), "•••••••••• [هوية محجوبة]")
+    .replace(new RegExp(`(?:\\+?966|00966)?${gap}[0\\u0660]${gap}[5\\u0665](?:${gap}${digit}){8}${notDigitAfter}`, "g"), "[جوال محجوب]")
+    .replace(new RegExp(`\\bSA(?:${gap}${digit}){22}\\b`, "gi"), "[آيبان محجوب]");
+  return shielded.restore(redacted);
 }
 
 /**

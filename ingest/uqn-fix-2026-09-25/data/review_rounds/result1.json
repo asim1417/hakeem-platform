@@ -1,0 +1,233 @@
+[
+ {
+  "op_id": "OP-00279",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00257",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00127",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00405",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. The source is the cabinet decision (453). The operative royal decree M/67 (p=17316) has near-identical text (spacing around عمداً differs).",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00114",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. The instrument also renames the law (item أولاً).",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00145",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00159",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. The new organization text is 'بالصيغة المرافقة' and is not on the page. The transitional items (رابعاً, خامساً) are not captured, but they are not amendments.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00085",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00055",
+  "verdict": "error",
+  "fields_wrong": [
+   "scope/exception"
+  ],
+  "explanation": "Item 1(5) of M/190 applies the substitution 'wherever it appears, except as provided by these amendments' (عدا ما نصت عليه هذه التعديلات). The op is an unconditional 'wherever' replacement, which conflicts with the same decree's item-specific substitutions of الجهة المشرفة -> الهيئة in arts 4, 10, 21, 34, 35 and in the السجل definition. Applied as-is, it writes الوزارة where the decree requires الهيئة.",
+  "correct_value": "scope=wherever with exclusions: art 1 (السجل definition), art 4, 10, 21, 34, 35 (these take «الهيئة»); apply after the item-specific ops"
+ },
+ {
+  "op_id": "OP-00160",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00259",
+  "verdict": "error",
+  "fields_wrong": [
+   "target_law_title",
+   "scope",
+   "article_number"
+  ],
+  "explanation": "The evidence is item رابعاً, which amends Cabinet Decision 162 of 16/7/1407 (with a carve-out for its item سابعاً), not نظام حماية المرافق العامة. For that law, item ثالثاً substitutes the phrase only in article 12, and OP-00258 already captures that. This op wrongly applies a law-wide 'wherever' substitution to نظام حماية المرافق العامة.",
+  "correct_value": "target = قرار مجلس الوزراء رقم (162) وتاريخ 16/7/1407هـ; scope wherever except item سابعاً (there -> «الهيئة العامة للنقل», and الوزارة->الهيئة at the end of the item); or drop it as a duplicate/misattribution"
+ },
+ {
+  "op_id": "OP-00360",
+  "verdict": "error",
+  "fields_wrong": [
+   "target_law_title"
+  ],
+  "explanation": "Decision 185/1443 amends paragraph (a) of article 16 of النظام الصحي (the Health Law, M/11 of 1423). نظام مجلس الوزراء is cited only as the legal basis (art 24(2)). Hakeem code ADM-007 is therefore also likely wrong.",
+  "correct_value": "target_law_title = النظام الصحي"
+ },
+ {
+  "op_id": "OP-00365",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00056",
+  "verdict": "error",
+  "fields_wrong": [
+   "scope/exception"
+  ],
+  "explanation": "Same 'except as provided by these amendments' carve-out is missing. Item 14(1) replaces الرئيس with «المجلس» in art 35, not الوزير. A blind replacement would also turn «الرئيس التنفيذي», which this decree adds to arts 27/28, into «الوزير التنفيذي».",
+  "correct_value": "scope=wherever excluding art 35 (-> «المجلس») and the new phrase «الرئيس التنفيذي»; whole-word match only"
+ },
+ {
+  "op_id": "OP-00419",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00337",
+  "verdict": "error",
+  "fields_wrong": [
+   "missed_scope"
+  ],
+  "explanation": "Item ثالثاً substitutes المحافظ with الرئيس التنفيذي in art 5 para 11 AND in art 6 para 8. Only art 5(11) is captured, and no sibling op in amendment_operations.jsonl covers art 6(8).",
+  "correct_value": "add substitute_phrase op: art 6, para 8, المحافظ -> الرئيس التنفيذي"
+ },
+ {
+  "op_id": "OP-00291",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type"
+  ],
+  "explanation": "The instrument amends only the lead-in (صدر) of paragraph (a) of article 4. As replace_paragraph_text, the op replaces the whole paragraph (a) with the lead-in sentence and drops the list of board members that follows. The schema has no lead-in-only op type.",
+  "correct_value": "op_type = replace_paragraph_lead/chapeau (keep the enumerated members); new_text unchanged"
+ },
+ {
+  "op_id": "OP-00412",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. evidence_quote is the whole page rather than the item. The source is a cabinet decision that prepared a draft royal decree, so the operative instrument is that royal decree.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00396",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00136",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00253",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00263",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00133",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00098",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00320",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type"
+  ],
+  "explanation": "Item 4(a) is 'تعديل الفقرة (1) لتكون بالنص الآتي', a full replacement of paragraph 1 of article 5. Nothing is appended, so append_text is the wrong type. Applying it would append the new text after the old board composition.",
+  "correct_value": "op_type = replace_paragraph_text (art 5, para 1)"
+ },
+ {
+  "op_id": "OP-00380",
+  "verdict": "error",
+  "fields_wrong": [
+   "renumber",
+   "target_law_title"
+  ],
+  "explanation": "The item says 'وإعادة ترتيب فقرات تلك المادة تبعاً لذلك', so the existing paragraphs from 5 onward must be renumbered. The op lacks renumber=true even though the schema has that field. The target title is also merged with the Financial and Administrative Bylaws, which this decision does not amend (it amends only تنظيم هيئات تطوير المناطق والمدن). evidence_quote is the whole page, not the item.",
+  "correct_value": "renumber=true; target_law_title = تنظيم هيئات تطوير المناطق والمدن"
+ },
+ {
+  "op_id": "OP-00230",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. The source is a cabinet decision with a draft royal decree, so the effective date should follow that royal decree.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00050",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match source verbatim.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00358",
+  "verdict": "error",
+  "fields_wrong": [
+   "effective_date"
+  ],
+  "explanation": "Item رابعاً sets an explicit effective date: items أولاً–ثالثاً apply from 28/5/1443هـ. The op instead uses the default 'from publication' assumption (1443-04-21 / 2021-11-26).",
+  "correct_value": "effective_from_hijri = 1443-05-28 (≈ 2022-01-01); effective_rule = per item رابعاً"
+ },
+ {
+  "op_id": "OP-00326",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct as a single substitution. The same item also inserts «وفقاً للمدد التي يحددها صندوق التنمية الوطني» and gives the full new text, and no op captures that insertion.",
+  "correct_value": null
+ }
+]

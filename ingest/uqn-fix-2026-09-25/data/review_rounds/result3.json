@@ -1,0 +1,225 @@
+[
+ {
+  "op_id": "OP-7e5b73da4a",
+  "verdict": "error",
+  "fields_wrong": [
+   "effective_from_hijri",
+   "effective_rule"
+  ],
+  "explanation": "Item رابعاً of M/43 says the article 218(1) change takes effect together with the entry into force of the new نظام الإثبات (item أولاً), not on publication. The op uses the publication date, 1443-06-04. Under the round-3 rules this conditional date should have forced needs_review.",
+  "correct_value": "effective_rule = in force together with نظام الإثبات (M/43); effective_from_hijri = that law's entry-into-force date, not 1443-06-04; confidence = needs_review"
+ },
+ {
+  "op_id": "OP-e1bb492669",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-6007c4c470",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-31a48f2d4f",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-d1eb77f017",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-8403593e64",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-fe53d8cfd8",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-559033edb5",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-f3c7ab1817",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-afd392dbe7",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-de60e0cdf6",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-b87aa07254",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-b6245320ba",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-767f97a29b",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Decision 255 item ثالثاً deletes paragraph (17) of article 3 of تنظيم الهيئة العامة للمنشآت الصغيرة والمتوسطة. The companion royal decree concerns the new bank law only.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-9ed19455b4",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-a0c3a271cc",
+  "verdict": "error",
+  "fields_wrong": [
+   "paragraph_label"
+  ],
+  "explanation": "M/60 item أولاً limits the substitution to paragraph (4) of article 6 and also gives the full resulting paragraph text. The op leaves paragraph_label empty, so its scope is all of article 6.",
+  "correct_value": "paragraph_label = 4 (or replace_paragraph_text art 6 para 4 with the full text given in the item)"
+ },
+ {
+  "op_id": "OP-577b049dad",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-0a1c4a95d4",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-5951da63cc",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. The text is from the operative royal decree M/109 (no comma before «حال»); the cabinet-decision duplicate was dropped as intended.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-a96d8aac92",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-ccc6e45e0c",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-fe59c5deb8",
+  "verdict": "error",
+  "fields_wrong": [
+   "effective_from_hijri",
+   "effective_rule"
+  ],
+  "explanation": "Item ثانياً of M/87 says: 'يكون نفاذ تعديل النظام… بمضي (سنة) من تاريخ نشره'. The op uses the publication date, 1446-04-08, and the default rule text. All 8 article changes in this decree are affected, not only article 21.",
+  "correct_value": "effective_from_hijri = 1447-04-08 (one year after publication 1446-04-08); effective_rule = one year from publication (item ثانياً)"
+ },
+ {
+  "op_id": "OP-1ad19ef05b",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-9cb2f06679",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct (fixed since round 2: whole article 21). Metadata still off: instrument_no is empty (should be م/272), and also_in has 'cabinet_decision::EFF-00275' with no number.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-39bd36d416",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type",
+   "article_number"
+  ],
+  "explanation": "Item خامساً of decision 412 amends the SUB-HEADING that comes before article 13 (العنوان الفرعي الوارد قبل المادة (الثالثة عشرة)), not the text of article 13. As replace_article_text, it would overwrite article 13 with the heading 'المحافظ ونائبا المحافظ وموظفو البنك'.",
+  "correct_value": "op_type = replace_heading (sub-heading preceding art 13) — or needs_review; article 13 text unchanged"
+ },
+ {
+  "op_id": "OP-2786149811",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. M/89 item ثانياً: the GCC unified volunteer-work law replaces نظام العمل التطوعي (M/70). The new text is not in the page.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-0c27a4bba9",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type"
+  ],
+  "explanation": "Item أولاً of decision 650 deletes only the definition of (الوزير) in article 1 (حذف تعريف (الوزير) الوارد في المادة (الأولى)). As repeal_article on article 1, it would remove the entire definitions article.",
+  "correct_value": "op_type = delete_definition, article 1, term = الوزير"
+ },
+ {
+  "op_id": "OP-4b2b313da8",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-dc326f64dd",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-f6a7908597",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ }
+]

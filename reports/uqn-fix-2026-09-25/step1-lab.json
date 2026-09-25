@@ -1,0 +1,65 @@
+{
+  "step": 1,
+  "target": "local postgresql hakeem @ 127.0.0.1:5432",
+  "production_writes": 0,
+  "loaded_at": "2026-09-25",
+  "row_counts": {
+    "source_snapshot": 370,
+    "supersession_evidence": 17,
+    "issuance_instrument": 16,
+    "amendment_op": 395,
+    "amendment_review": 0,
+    "amendment_manual": 176
+  },
+  "pg_stat_uqn_fix": {
+    "n_tup_ins": 974,
+    "n_tup_upd": 0,
+    "n_tup_del": 0
+  },
+  "public_table_deltas_during_load": {
+    "ins": 0,
+    "upd": 0,
+    "del": 0
+  },
+  "invariants": {
+    "F1": 0,
+    "F2": 0,
+    "F3": 0,
+    "F4": 0,
+    "F5": 0,
+    "F6": 0,
+    "F7": 0,
+    "F8_update_rejected": true,
+    "F9_confidence": { "rule_exact": 182, "needs_review": 213 },
+    "F9_supersession": {
+      "proven_replace": 13,
+      "proven_repeal": 2,
+      "proven_repeal_with_saving": 1,
+      "not_proven_replace": 1
+    }
+  },
+  "hijri_umm_al_qura_delta_days": {
+    "1447-10-15": 0,
+    "1448-02-28": 0,
+    "1445-11-09": 0,
+    "1447-03-27": 0,
+    "1448-05-17": 0,
+    "1446-10-04": 0,
+    "1447-07-28": 0,
+    "1447-08-02": 0,
+    "1446-08-08": 0,
+    "1448-02-29": 0,
+    "1445-12-07": 0,
+    "1447-08-23": 0,
+    "1446-05-05": 0
+  },
+  "review_xlsx_valid_decisions": 0,
+  "amendments_applied": 0,
+  "verification_rows_inserted": 0,
+  "stopped_before_step_2": [
+    "نظام التنفيذ ENF-002: العنوان يطابق النظام القديم، وسند حكيم المخزّن هو م/237 بتاريخ 1447-11-03 (65 مادة) لا م/53. المادة 96 سندها م/21 وتاريخ 20/5/1421هـ.",
+    "نظام السجل التجاري COM-014: سند حكيم م/83 بتاريخ 1446-03-19 (29 مادة) لا م/1.",
+    "نظام الأسماء التجارية COM-015: سند حكيم م/83 بتاريخ 1446-03-19 (23 مادة) لا م/15.",
+    "نظام تأديب الموظفين: لا عمل بهذا العنوان في الإنتاج."
+  ]
+}

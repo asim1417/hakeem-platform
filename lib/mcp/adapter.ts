@@ -15,13 +15,16 @@
  */
 import { prisma } from "@/lib/prisma";
 import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve-law";
+import { redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
+import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
 function snippet(text?: string | null): string | undefined {
-  return text ? text.slice(0, SNIPPET) : undefined;
+  return text ? redactPII(text.slice(0, SNIPPET)) : undefined;
 }
 
 /** تطبيع رقم المادة القادم كنصّ إلى عدد صحيح (المخطط يخزّنه Int). */
@@ -260,7 +263,7 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
     where: system
       ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n }
       : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n },
-    select: { articleNumber: true, content: true, lawName: true, status: true, legalSystem: { select: { name: true } } },
+    select: { id: true, articleNumber: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
   });
 
   const resolvedLaw = system?.name ?? article?.legalSystem?.name ?? article?.lawName ?? lawName;
@@ -268,8 +271,7 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
   if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
 
-  // تفضيل النافذ: المادة الملغاة لا يُعتدّ بها نافذة.
-  const repealed = String(article.status ?? "").trim() === "ملغاة";
+  const flags = citationFlagsFromVerification(await latestVerification("unit", article.id));
 
   if (claimedText) {
     // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة.
@@ -277,21 +279,21 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
     const match = norm(article.content ?? "").includes(norm(claimedText));
     return {
       verdict: match
-        ? (repealed ? "الإحالة صحيحة والنص مطابق — لكن المادة ملغاة" : "الإحالة صحيحة والنص مطابق")
+        ? (flags.repealed ? "الإحالة صحيحة والنص مطابق — لكن المادة ملغاة" : flags.inForce ? "الإحالة صحيحة والنص مطابق" : "الإحالة صحيحة والنص مطابق — الحالة قيد التحقق")
         : "المادة موجودة لكن النص المنسوب غير مطابق",
       law: resolvedLaw,
       article_number: articleNumber,
-      repealed,
-      status: repealed ? "ملغاة" : (article.status ?? "سارية"),
+      repealed: flags.repealed,
+      status: flags.statusLabel,
       actual_text: article.content,
     };
   }
   return {
-    verdict: repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : "الإحالة صحيحة",
+    verdict: flags.repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : flags.inForce ? "الإحالة صحيحة" : "الإحالة صحيحة — الحالة قيد التحقق",
     law: resolvedLaw,
     article_number: articleNumber,
-    repealed,
-    status: repealed ? "ملغاة" : (article.status ?? "سارية"),
+    repealed: flags.repealed,
+    status: flags.statusLabel,
     actual_text: article.content,
   };
 }

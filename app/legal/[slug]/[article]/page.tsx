@@ -6,7 +6,9 @@ import { absoluteUrl, getSiteUrl } from "@/lib/modules/config/site-url";
 import { resolveSystemSlug, buildArticleEli, lawSlug } from "@/lib/modules/legal-core/eli";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
-import { ArticleStatusBanner } from "@/components/legal/ArticleStatusBanner";
+import { ArticlePresentation, AsOfForm } from "@/components/legal/ArticlePresentation";
+import { presentArticle } from "@/lib/modules/legal-core/verified-status";
+import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
 
 export const revalidate = 3600;
 
@@ -46,23 +48,27 @@ export async function generateMetadata({ params }: { params: { slug: string; art
   };
 }
 
-export default async function LegalArticlePage({ params }: { params: { slug: string; article: string } }) {
+export default async function LegalArticlePage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string; article: string };
+  searchParams?: { asOf?: string };
+}) {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) notFound();
   const { system, article, n } = data;
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const content = sanitizeDisplayText(article.content);
-  // تعديلات/إلغاءات المادة (تُعرض المعتمَدة verified فقط في الشارة).
-  const amendments = await prisma.articleAmendment
-    .findMany({
-      where: { articleId: article.id },
-      select: { changeType: true, decreeRef: true, hijriDate: true, summary: true, previousText: true, newText: true, reviewStatus: true },
-      orderBy: { version: "asc" },
-    })
-    .catch(() => []);
-  const isRepealed = String(article.status ?? "").trim() === "ملغاة";
+  const asOfRaw = searchParams?.asOf?.trim() ?? "";
+  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
+  const [verification, versions] = await Promise.all([
+    latestVerification("unit", article.id),
+    unitVersions(article.id),
+  ]);
+  const view = presentArticle({ baseText: content, versions, verification, asOf });
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
-  const citation = `${system.name}، المادة (${n})${article.royalDecree ? ` — ${article.royalDecree}` : ""}`;
+  const citation = `${system.name}، المادة (${n}) — ${view.citationSuffix}`;
 
   const [prev, next] = await Promise.all([
     prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n, gt: 0 } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
@@ -89,18 +95,8 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
         <h1 className="mt-2 text-3xl font-bold">المادة {n.toLocaleString("ar-SA")}</h1>
         {article.title && article.title !== String(n) ? <p className="mt-2 text-lg text-ink">{article.title}</p> : null}
 
-        <div className="mt-6">
-          <ArticleStatusBanner status={article.status} amendments={amendments} />
-        </div>
-
-        <div
-          className="whitespace-pre-wrap rounded-xl border p-6 text-lg leading-9"
-          style={isRepealed
-            ? { borderColor: "#dc2626", background: "#fef2f2", color: "#7f1d1d", textDecoration: "line-through", textDecorationColor: "rgba(220,38,38,0.5)" }
-            : { borderColor: "rgba(198,151,99,0.25)", background: "var(--ivory)", color: "var(--navy)" }}
-        >
-          {content}
-        </div>
+        <AsOfForm asOf={asOfRaw} />
+        <ArticlePresentation view={view} versions={versions} baseText={content} />
 
         <div className="mt-4 rounded-lg border border-[#C69763]/40 bg-[#FBFAF6] p-4 text-sm leading-7 text-[var(--navy)]">
           <p><b>الاستناد الرسمي:</b> {citation}</p>

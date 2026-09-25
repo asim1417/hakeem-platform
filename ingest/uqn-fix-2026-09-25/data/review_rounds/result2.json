@@ -1,0 +1,228 @@
+[
+ {
+  "op_id": "OP-00366",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00127",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Item ثانياً of M/101 deletes paragraph (ج) of article 152 of نظام الطرق والمباني.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00238",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00140",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00327",
+  "verdict": "error",
+  "fields_wrong": [
+   "paragraph_label"
+  ],
+  "explanation": "Decision 507/1443 amends sub-paragraph (أ) of paragraph (2) of article 2 (الفقرة الفرعية (أ) من الفقرة (2)). The op targets the whole paragraph 2, so applying it would replace the entire paragraph, including its other sub-paragraphs, with the text of (أ).",
+  "correct_value": "article 2, paragraph 2, sub-paragraph أ (label '2/أ')"
+ },
+ {
+  "op_id": "OP-00198",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Format differs from OP-00106: here new_text omits the term prefix «الرئيس:», which matches the source quote.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00413",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Item رابعاً's delayed start applies only to article 4, not article 6, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00179",
+  "verdict": "error",
+  "fields_wrong": [
+   "paragraph_label",
+   "renumber",
+   "missed_op"
+  ],
+  "explanation": "Item ثانياً has two parts. Part 1 deletes paragraph 6 of article 8 and renumbers the paragraphs. Part 2 deletes the lead-in of paragraph 7, leaving «الموافقة على الحسابات الختامية للهيئة». The op writes paragraph 7's new text into paragraph 6 and carries part 1's renumber flag, and there is no delete op for paragraph 6 anywhere in the output. Applied, it overwrites paragraph 6 and leaves the old paragraph 7 unchanged.",
+  "correct_value": "two ops: delete_paragraph art 8 para 6 (renumber=true); replace_paragraph_text art 8 para 7 (original numbering) = «الموافقة على الحسابات الختامية للهيئة». Mark needs_review because it amends only the lead-in (حذف صدر)."
+ },
+ {
+  "op_id": "OP-00385",
+  "verdict": "error",
+  "fields_wrong": [
+   "target_law_title",
+   "op_type"
+  ],
+  "explanation": "Decision 618/1442 item خامس عشر REPEALS لائحة منح الإعانات للجمعيات الخيرية. The phrase substitution belongs to item سابع عشر and targets لائحة جمع التبرعات للوجوه الخيرية, which OP-00389 already captures. The op substitutes text in a regulation that is being repealed, and no repeal op exists. Its risk flag 'operative_instrument_is_companion_royal_decree' is also wrong: the draft royal decree covers only items 11(2) and 12.",
+  "correct_value": "repeal_law: لائحة منح الإعانات للجمعيات الخيرية (item خامس عشر); drop this substitution as a misattributed duplicate of OP-00389"
+ },
+ {
+  "op_id": "OP-00288",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00330",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00407",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct content (art 73; source is cabinet decision 453). The 'companion royal decree' risk flag is justified, since M/67 (p=17316) is the operative instrument. It should probably not be rule_exact/approvable alongside the M/67 op, or the two will duplicate.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00161",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00242",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00264",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. new_text writes the paragraph label «هـ» as «ه» (tatweel stripped). The letter is the same, so this is cosmetic, but the text is not byte-exact.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00402",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00051",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00147",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00365",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00106",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00155",
+  "verdict": "error",
+  "fields_wrong": [
+   "paragraph_label",
+   "renumber",
+   "missed_op"
+  ],
+  "explanation": "Item ثامناً(2) replaces clause (البند) ثالثاً of article 5 of تنظيم المركز الوطني لتنمية القطاع غير الربحي, not paragraph 8. Paragraph 8 of clause أولاً is DELETED with renumbering by item ثامناً(1), and no op captures that deletion. The renumber=true flag belongs to the deletion.",
+  "correct_value": "two ops: delete_paragraph art 5 clause أولاً para 8 (renumber=true); replace_paragraph_text art 5 clause ثالثاً = «يعين الأعضاء المشار إليهم في الفقرات (6) و(7) و(8) و(9) …» (renumber=false)"
+ },
+ {
+  "op_id": "OP-00328",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00037",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type",
+   "paragraph_label"
+  ],
+  "explanation": "M/272 item 12 replaces the WHOLE article 21 (تعديل المادة (الحادية والعشرين)… لتكون بالنص الآتي), not paragraph 2 of it. instrument_no is also empty (it should be م/272), and also_in carries 'cabinet_decision::EFF-00275' with no decision number.",
+  "correct_value": "op_type=replace_article_text, article 21, paragraph_label=null; instrument_no=م/272"
+ },
+ {
+  "op_id": "OP-00282",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00332",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00364",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Same cosmetic tatweel stripping of the label «هـ» to «ه».",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00093",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00102",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00262",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-00315",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim. The instrument has no explicit effective clause, so the publication date is right.",
+  "correct_value": null
+ }
+]
