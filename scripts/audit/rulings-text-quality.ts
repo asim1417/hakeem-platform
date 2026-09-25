@@ -254,6 +254,8 @@ async function quality() {
   const per: Array<{ id: string; ref: string; score: number; tier: QualityTier; m: Omit<RulingMetrics, "examples"> }> = [];
   const examples: Array<Record<string, unknown>> = [];
   const hashCount = new Map<string, number>();
+  // أكثر الأخطاء الإملائية تكرارًا في العيّنة: «الكلمة → الاقتراح» مع النوع وعدد الأحكام.
+  const misspell = new Map<string, { word: string; suggestions: string[]; kind: string; rulings: Set<string> }>();
 
   for (const r of rows) {
     const m = measureRuling(lex, r.judgmentText);
@@ -263,15 +265,21 @@ async function quality() {
     const ref = r.decisionNo || r.caseNo || r.id;
     per.push({ id: r.id, ref, score, tier, m: rest });
     hashCount.set(m.normHash, (hashCount.get(m.normHash) ?? 0) + 1);
+    for (const f of ex.spelling) {
+      const key = `${f.kind}:${f.word}`;
+      const e = misspell.get(key) ?? { word: f.word, suggestions: f.suggestions, kind: f.kind, rulings: new Set<string>() };
+      e.rulings.add(ref);
+      misspell.set(key, e);
+    }
     const sim = simulateClean(lex, r.judgmentText);
-    if (sim.edits.length || ex.reversed.length || ex.ocr.length) {
+    if (sim.edits.length || ex.reversed.length || ex.spelling.length) {
       const first = sim.edits[0];
       const at = first ? r.judgmentText.normalize("NFKC").indexOf(first.before.split(" ")[0]) : 0;
       const from = Math.max(0, at - 120);
       examples.push({
         id: r.id, ref, court: r.court, score, tier,
         edits: sim.edits.slice(0, 8),
-        glued: ex.glued, broken: ex.broken, reversed: ex.reversed, ocr: ex.ocr,
+        glued: ex.glued, broken: ex.broken, reversed: ex.reversed, spelling: ex.spelling,
         before: redact(r.judgmentText.normalize("NFKC").slice(from, from + 320)),
         after: redact(sim.text.slice(Math.max(0, sim.text.indexOf(first?.after.split(" ")[0] ?? "") - 120), Math.max(0, sim.text.indexOf(first?.after.split(" ")[0] ?? "") - 120) + 320)),
       });
@@ -304,8 +312,13 @@ async function quality() {
       indicator("reversed_words", (m) => m.reversedWords),
       indicator("glued_words", (m) => m.gluedWords),
       indicator("broken_pairs", (m) => m.brokenPairs),
-      indicator("ocr_ya_alif", (m) => m.ocrYaAlif),
-      indicator("ocr_ta_ha", (m) => m.ocrTaHa),
+      indicator("spelling_hamza_initial", (m) => m.spelling.hamzaInitial),
+      indicator("spelling_hamza_medial", (m) => m.spelling.hamzaMedial),
+      indicator("spelling_ya_alif", (m) => m.spelling.yaAlif),
+      indicator("spelling_ta_ha", (m) => m.spelling.taHa),
+      indicator("spelling_alef_fariqa_missing", (m) => m.spelling.alefFariqaMissing),
+      indicator("spelling_alef_fariqa_extra", (m) => m.spelling.alefFariqaExtra),
+      indicator("spelling_confusable_letters", (m) => m.spelling.confusable),
       indicator("ocr_latin_digit_in_word", (m) => m.ocrLatinDigitInWord),
       indicator("ocr_bad_symbols", (m) => m.ocrBadSymbols),
     ],
@@ -317,6 +330,14 @@ async function quality() {
     },
     duplicates: { groups: dupGroups.length, rulingsInGroups: dupGroups.reduce((a, b) => a + b, 0) },
     tiers,
+    spelling: {
+      note: "قياس فقط؛ confusable مرشّح (قد يكون علمًا)، و«علي» مستثناة لأنها قد تكون علمًا.",
+      rulingsWithAny: per.filter((p) => Object.values(p.m.spelling).some((v) => v > 0)).length,
+      topMisspellings: [...misspell.values()]
+        .map((e) => ({ word: e.word, suggestions: e.suggestions, kind: e.kind, rulings: e.rulings.size, examples: [...e.rulings].slice(0, 3) }))
+        .sort((a, b) => b.rulings - a.rulings)
+        .slice(0, 60),
+    },
     scoreFormula: "lib/rulings/audit/metrics.ts#qualityScore",
   };
   save("sample-metrics.json", per);
