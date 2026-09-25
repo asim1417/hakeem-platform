@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
-import { PREAMBLE_ARTICLE_NUMBER, PREAMBLE_TITLE } from "@/lib/modules/legal-core/article-ref";
+import { PREAMBLE_ARTICLE_NUMBER } from "@/lib/modules/legal-core/article-ref";
 
 const prisma = new PrismaClient();
 const checkpointPath = path.join(process.cwd(), ".import-hoqoqi-checkpoint.json");
@@ -26,6 +26,7 @@ type HoqoqiSystem = {
   instrumentText?: string; // نصّ أداة الإصدار كاملًا (law_issuance_tools.title)
   issueDateH?: string; // تاريخ الإصدار الهجريّ (laws.issuance_date_hj)
   effectiveFrom?: string; // تاريخ الإصدار الميلاديّ (laws.issuance_date_gr) — ISO
+  preambleContent?: string; // نصّ الديباجة المؤلَّف (يُخزَّن على مستوى النظام لا كمادة صفر)
 };
 
 type HoqoqiArticle = {
@@ -288,9 +289,9 @@ export function buildImportModel(parsed: ParsedSql): ImportModel {
   // أداة الإصدار (المراسيم) — تُدمَج في الأنظمة فلا تُسقَط (كانت تُعدّ ولا تُربَط).
   mergeIssuanceInstruments(systems, buildIssuanceInstruments(parsed));
   const bodyArticles = buildArticles(parsed, systems, categories);
-  // الديباجة/أداة الإصدار مادّةً رقم صفر — كي تركب خطّ الأنابيب (بحث/تضمين/استشهاد) دون إسقاط.
-  const preambleArticles = buildPreambleArticles(systems);
-  const articles = [...preambleArticles, ...bodyArticles];
+  // DATA-001 (الخيار الثاني): الديباجة/أداة الإصدار تُحفظ حقلًا على مستوى النظام (لا «مادة صفر»).
+  for (const s of systems) s.preambleContent = composePreamble(s);
+  const articles = [...bodyArticles];
 
   // مادّة صالحة: لها نظام ونصّ ورقمٌ **منتهٍ** (0 للديباجة مقبولٌ — لا نُسقطه بشرط الصدق «truthy»).
   const isValid = (a: HoqoqiArticle) => Boolean(a.sourceSystemId) && Boolean(a.content) && Number.isFinite(a.articleNumber);
@@ -337,36 +338,21 @@ function mergeIssuanceInstruments(systems: HoqoqiSystem[], instruments: ReturnTy
  * يبني «مادّة الديباجة» (رقم صفر) لكلّ نظامٍ له نصّ ديباجةٍ أو أداة إصدار — بنصّه الخام دون
  * إعادة صياغة. لا يُنشئ ديباجةً لنظامٍ بلا مصدرٍ لها (منع الاختلاق).
  */
-export function buildPreambleArticles(systems: HoqoqiSystem[]): HoqoqiArticle[] {
-  const out: HoqoqiArticle[] = [];
-  for (const s of systems) {
-    const parts: string[] = [];
-    if (s.preamble?.trim()) parts.push(s.preamble.trim());
-    // كتلة أداة الإصدار: الملك + المرسوم/القرار (نصّه الكامل) + التاريخان (هجريّ/ميلاديّ).
-    const instrumentLines = [
-      s.kingName?.trim() ? `المُصدِر: ${s.kingName.trim()}` : "",
-      s.instrumentText?.trim() ? `أداة الإصدار:\n${s.instrumentText.trim()}` : "",
-      s.issueDateH ? `تاريخ الإصدار (هجريّ): ${s.issueDateH}` : "",
-      s.effectiveFrom ? `تاريخ الإصدار (ميلاديّ): ${s.effectiveFrom}` : ""
-    ].filter(Boolean);
-    if (instrumentLines.length) parts.push(instrumentLines.join("\n"));
-    const content = parts.join("\n\n").trim();
-    if (!content) continue; // بلا نصّ ⇒ لا ديباجة (لا نختلق)
-    out.push({
-      sourceId: `preamble:${s.sourceId}`,
-      sourceSystemId: s.sourceId,
-      lawName: s.name,
-      articleNumber: PREAMBLE_ARTICLE_NUMBER,
-      articleNumberText: String(PREAMBLE_ARTICLE_NUMBER),
-      title: PREAMBLE_TITLE,
-      content,
-      classification: s.classification,
-      royalDecree: s.royalDecree,
-      effectiveFrom: s.effectiveFrom,
-      keywords: ["source:hoqoqi_sql", "review:needs_review", "type:preamble"]
-    });
-  }
-  return out;
+/**
+ * يؤلّف نصّ ديباجة النظام (الديباجة + كتلة أداة الإصدار والتواريخ) — يُخزَّن على
+ * مستوى النظام (LegalSystem.preamble) لا كمادّة رقمها صفر. يعيد "" إن لا نصّ (لا نختلق).
+ */
+export function composePreamble(s: HoqoqiSystem): string {
+  const parts: string[] = [];
+  if (s.preamble?.trim()) parts.push(s.preamble.trim());
+  const instrumentLines = [
+    s.kingName?.trim() ? `المُصدِر: ${s.kingName.trim()}` : "",
+    s.instrumentText?.trim() ? `أداة الإصدار:\n${s.instrumentText.trim()}` : "",
+    s.issueDateH ? `تاريخ الإصدار (هجريّ): ${s.issueDateH}` : "",
+    s.effectiveFrom ? `تاريخ الإصدار (ميلاديّ): ${s.effectiveFrom}` : ""
+  ].filter(Boolean);
+  if (instrumentLines.length) parts.push(instrumentLines.join("\n"));
+  return parts.join("\n\n").trim();
 }
 
 function buildCategories(parsed: ParsedSql) {
@@ -601,12 +587,29 @@ async function importSystems(model: ImportModel, articleCountBySystem: Map<strin
         // على التحديث: لا نطمس التصنيف المُنسَّق القائم (نُحدّث العدد فقط) — «لا تكسر القائم» (§22).
         // التصنيف يُضبَط عند الإنشاء فقط (نظامٌ جديد لم يكن موجودًا).
         update: {
-          articleCount: articleCountBySystem.get(system.sourceId) ?? 0
+          articleCount: articleCountBySystem.get(system.sourceId) ?? 0,
+          // الديباجة على مستوى النظام (تُحدَّث فقط عند توفّر نصّ — لا تطمس القائم بفراغ).
+          ...(system.preambleContent
+            ? {
+                preamble: system.preambleContent,
+                preambleRoyalDecree: system.royalDecree ?? undefined,
+                preambleEffectiveFrom: system.effectiveFrom ? new Date(system.effectiveFrom) : undefined,
+                preambleUpdatedAt: new Date(),
+              }
+            : {})
         },
         create: {
           name: system.name,
           classification: system.classification,
-          articleCount: articleCountBySystem.get(system.sourceId) ?? 0
+          articleCount: articleCountBySystem.get(system.sourceId) ?? 0,
+          ...(system.preambleContent
+            ? {
+                preamble: system.preambleContent,
+                preambleRoyalDecree: system.royalDecree ?? undefined,
+                preambleEffectiveFrom: system.effectiveFrom ? new Date(system.effectiveFrom) : undefined,
+                preambleUpdatedAt: new Date(),
+              }
+            : {})
         }
       });
     });
@@ -702,7 +705,7 @@ function printReport(inputPath: string, parsed: ParsedSql, model: ImportModel, a
       systemsDiscovered: model.systems.length,
       articlesConvertible: model.articles.length,
       // كشف الجلب: كم ديباجةً (مادّة رقم صفر) وكم أداة إصدار (مرسوم) التُقِطت من المصدر؟
-      preamblesDiscovered: model.articles.filter((a) => a.articleNumber === PREAMBLE_ARTICLE_NUMBER).length,
+      preamblesDiscovered: model.systems.filter((s) => Boolean(s.preambleContent)).length,
       instrumentsDiscovered: model.systems.filter((s) => Boolean(s.royalDecree)).length,
       categoriesDiscovered: model.categories.size,
       nouns: model.nounsCount,
