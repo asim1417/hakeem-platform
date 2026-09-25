@@ -9,7 +9,7 @@ import {
 } from "@/lib/modules/site/defaults";
 
 /**
- * الصفحة الرئيسية العامة — بلا Clerk وبلا OAuth.
+ * الصفحة الرئيسية العامة.
  * عند ASK_FIRST_HOME: جوهر الصفحة صندوق «اسأل حكيم» للزائر.
  */
 export function HomeHero({
@@ -36,17 +36,12 @@ export function HomeHero({
         />
 
         <header className="relative mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] font-judicial text-xl font-bold text-[var(--gold-bright)]">
-              ح
-            </span>
-            <div className="leading-tight">
-              <p className="text-lg font-bold text-[var(--navy)]">{home.brandName}</p>
-              <p className="text-[11px] text-[var(--ink-60)]">{home.tagline}</p>
-            </div>
-          </div>
+          <BrandMark name={home.brandName} tagline={home.tagline} />
 
-          <nav className="hidden items-center gap-4 text-sm font-semibold text-[var(--navy)] md:flex" aria-label="التنقل العام">
+          <nav
+            className="hidden items-center gap-4 text-sm font-semibold text-[var(--navy)] md:flex"
+            aria-label="التنقل العام"
+          >
             <a href="#ask" className="hover:text-[var(--gold-dark)]">
               اسأل حكيم
             </a>
@@ -96,7 +91,6 @@ export function HomeHero({
           <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
             {home.brandName}
           </p>
-          {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
           <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
             ابدأ بسؤالك القانوني
           </h1>
@@ -114,7 +108,7 @@ export function HomeHero({
             user={
               <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
                 <a
-                  href="/dashboard"
+                  href="/dashboard/ask"
                   className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
                 >
                   اسأل حكيم الآن
@@ -152,7 +146,7 @@ export function HomeHero({
 
         <section
           id="trust"
-          className="relative mx-auto max-w-3xl px-6 pb-16 text-center"
+          className="relative mx-auto max-w-3xl px-6 pb-10 text-center"
           aria-labelledby="home-trust-title"
         >
           <h2 id="home-trust-title" className="font-display text-lg font-bold text-[var(--navy)]">
@@ -169,6 +163,8 @@ export function HomeHero({
             <p className="mt-4 text-xs text-[var(--ink-40)]">{home.footnote}</p>
           ) : null}
         </section>
+
+        <HomePublicFooter />
       </main>
     );
   }
@@ -185,15 +181,7 @@ export function HomeHero({
       />
 
       <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-5">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] font-judicial text-xl font-bold text-[var(--gold-bright)]">
-            ح
-          </span>
-          <div className="leading-tight">
-            <p className="text-lg font-bold text-[var(--navy)]">{home.brandName}</p>
-            <p className="text-[11px] text-[var(--ink-60)]">{home.tagline}</p>
-          </div>
-        </div>
+        <BrandMark name={home.brandName} tagline={home.tagline} />
 
         <HomeAuthActions
           guest={
@@ -217,13 +205,13 @@ export function HomeHero({
               href="/dashboard"
               className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-5 py-2.5 text-sm font-semibold text-[var(--navy)]"
             >
-              الصفحة الرئيسية
+              لوحة التحكم
             </a>
           }
         />
       </header>
 
-      <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[7vh] pb-16 text-center">
+      <section className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[7vh] pb-12 text-center">
         <p className="mb-4 font-display text-sm font-semibold text-[var(--gold-dark)]">
           {home.brandName}
         </p>
@@ -260,7 +248,7 @@ export function HomeHero({
                 المتابعة إلى المنصة
               </a>
               <a
-                href="/dashboard"
+                href="/dashboard/ask"
                 className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)]"
               >
                 اسأل حكيم
@@ -292,6 +280,49 @@ export function HomeHero({
           {home.disclaimer}
         </p>
       </section>
+
+      <HomePublicFooter />
     </main>
+  );
+}
+
+function BrandMark({ name, tagline }: { name: string; tagline: string }) {
+  return (
+    <a href="/" className="focus-ring flex items-center gap-3 rounded-[var(--r-md)]">
+      <span className="grid h-11 w-11 place-items-center rounded-[var(--r-md)] bg-[var(--navy)] font-judicial text-xl font-bold text-[var(--gold-bright)]">
+        ح
+      </span>
+      <div className="leading-tight text-start">
+        <p className="text-lg font-bold text-[var(--navy)]">{name}</p>
+        <p className="text-[11px] text-[var(--ink-60)]">{tagline}</p>
+      </div>
+    </a>
+  );
+}
+
+function HomePublicFooter() {
+  return (
+    <footer className="relative border-t border-[var(--ink-08)] bg-ivory/60">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-8 text-sm text-[var(--ink-60)] md:flex-row md:items-center md:justify-between">
+        <p className="font-semibold text-[var(--navy)]">حكيم — رفيق المحامي في القاعة</p>
+        <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="روابط التذييل">
+          <a href="/sign-in" className="hover:text-[var(--navy)]">
+            تسجيل الدخول
+          </a>
+          <a href="/forgot-password" className="hover:text-[var(--navy)]">
+            استعادة كلمة المرور
+          </a>
+          <a href="/pricing" className="hover:text-[var(--navy)]">
+            الأسعار
+          </a>
+          <a href="/privacy" className="hover:text-[var(--navy)]">
+            الخصوصية
+          </a>
+          <a href="/terms" className="hover:text-[var(--navy)]">
+            الشروط
+          </a>
+        </nav>
+      </div>
+    </footer>
   );
 }

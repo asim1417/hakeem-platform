@@ -19,7 +19,13 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
-const isAuthEntryRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/login"]);
+const isAuthEntryRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/login",
+  "/forgot-password(.*)",
+  "/reset-password(.*)",
+]);
 
 /**
  * مسارات عامة لا تشغّل clerkMiddleware —
@@ -39,6 +45,8 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/sign-up(.*)",
   "/login",
   "/register",
+  "/forgot-password(.*)",
+  "/reset-password(.*)",
   "/pricing(.*)",
   "/privacy(.*)",
   "/terms(.*)",
@@ -52,6 +60,9 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/api/auth/claim-clerk-return(.*)",
   "/api/auth/me(.*)",
   "/api/auth/providers(.*)",
+  "/api/auth/password-login(.*)",
+  "/api/auth/forgot-password(.*)",
+  "/api/auth/reset-password(.*)",
 ]);
 
 function hasOwnerSession(request: NextRequest) {
