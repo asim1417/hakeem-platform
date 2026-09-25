@@ -1,6 +1,10 @@
 import { HomeAuthActions } from "@/components/home/HomeAuthActions";
 import { GuestAskComposer } from "@/components/home/GuestAskComposer";
-import { hasAnySignInProvider } from "@/lib/modules/auth/auth-providers";
+import { HomeGoogleSignIn } from "@/components/home/HomeGoogleSignIn";
+import {
+  hasAnySignInProvider,
+  isGoogleSignInAvailable,
+} from "@/lib/modules/auth/auth-providers";
 import { signUpWithNext } from "@/lib/modules/auth/safe-next";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 import {
@@ -10,7 +14,7 @@ import {
 
 /**
  * الصفحة الرئيسية العامة.
- * عند ASK_FIRST_HOME: جوهر الصفحة صندوق «اسأل حكيم» للزائر.
+ * الدخول عبر Google مباشرة من الرئيسية (نافذة منبثقة) — بدون صفحة /sign-in وسيطة.
  */
 export function HomeHero({
   content = DEFAULT_HOME,
@@ -18,6 +22,7 @@ export function HomeHero({
   content?: SiteHomeContent;
 }) {
   const authReady = hasAnySignInProvider();
+  const googleReady = isGoogleSignInAvailable();
   const home = content;
   const features =
     home.features?.length > 0 ? home.features : DEFAULT_HOME.features;
@@ -57,22 +62,7 @@ export function HomeHero({
           </nav>
 
           <HomeAuthActions
-            guest={
-              <div className="flex items-center gap-2">
-                <a
-                  href="/sign-in"
-                  className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
-                >
-                  {home.ctaSecondary}
-                </a>
-                <a
-                  href="/sign-up"
-                  className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
-                >
-                  ابدأ الآن
-                </a>
-              </div>
-            }
+            guest={<HomeGuestAuth compact googleReady={googleReady} />}
             user={
               <a
                 href="/dashboard"
@@ -101,8 +91,20 @@ export function HomeHero({
 
           <HomeAuthActions
             guest={
-              <div className="mt-8 w-full max-w-2xl text-right">
+              <div className="mt-8 w-full max-w-2xl space-y-4 text-right">
                 <GuestAskComposer />
+                {googleReady ? (
+                  <div className="mx-auto max-w-sm text-center">
+                    <HomeGoogleSignIn
+                      nextUrl="/dashboard/ask"
+                      label="دخول سريع عبر Google"
+                      size="md"
+                    />
+                    <p className="mt-2 text-xs text-[var(--ink-40)]">
+                      تفتح نافذة Google صغيرة ثم تعود مباشرة إلى حكيم
+                    </p>
+                  </div>
+                ) : null}
               </div>
             }
             user={
@@ -184,22 +186,7 @@ export function HomeHero({
         <BrandMark name={home.brandName} tagline={home.tagline} />
 
         <HomeAuthActions
-          guest={
-            <div className="flex items-center gap-2">
-              <a
-                href="/sign-in"
-                className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
-              >
-                {home.ctaSecondary}
-              </a>
-              <a
-                href="/sign-up"
-                className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
-              >
-                سجّل مجانًا
-              </a>
-            </div>
-          }
+          guest={<HomeGuestAuth compact googleReady={googleReady} />}
           user={
             <a
               href="/dashboard"
@@ -224,19 +211,41 @@ export function HomeHero({
 
         <HomeAuthActions
           guest={
-            <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
-              <a
-                href={authReady ? "/sign-up" : "/sign-in"}
-                className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--sh-sm)] transition hover:bg-[var(--navy-mid)]"
-              >
-                {home.ctaPrimary}
-              </a>
-              <a
-                href="/sign-in"
-                className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]"
-              >
-                {home.ctaSecondary}
-              </a>
+            <div className="mt-8 flex w-full max-w-md flex-col items-stretch gap-3">
+              {googleReady ? (
+                <>
+                  <HomeGoogleSignIn
+                    nextUrl="/dashboard"
+                    label="المتابعة باستخدام Google"
+                    size="lg"
+                  />
+                  <p className="text-xs leading-6 text-[var(--ink-40)]">
+                    نافذة Google صغيرة للبريد والمصادقة — ثم العودة مباشرة إلى حكيم دون صفحة دخول
+                    وسيطة.
+                  </p>
+                  <a
+                    href="/sign-in"
+                    className="text-sm font-semibold text-[var(--ink-60)] underline-offset-4 hover:text-[var(--navy)] hover:underline"
+                  >
+                    خيارات دخول أخرى (بريد وكلمة مرور)
+                  </a>
+                </>
+              ) : (
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <a
+                    href="/sign-up"
+                    className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
+                  >
+                    {home.ctaPrimary}
+                  </a>
+                  <a
+                    href="/sign-in"
+                    className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)]"
+                  >
+                    {home.ctaSecondary}
+                  </a>
+                </div>
+              )}
             </div>
           }
           user={
@@ -283,6 +292,51 @@ export function HomeHero({
 
       <HomePublicFooter />
     </main>
+  );
+}
+
+/** شريط الضيف في الهيدر: Google مباشرة + رابط خفيف لخيارات أخرى. */
+function HomeGuestAuth({
+  compact,
+  googleReady,
+}: {
+  compact?: boolean;
+  googleReady: boolean;
+}) {
+  if (googleReady) {
+    return (
+      <div className={`flex items-center gap-2 ${compact ? "" : ""}`}>
+        <HomeGoogleSignIn
+          nextUrl="/dashboard"
+          label="دخول Google"
+          size="sm"
+          className="min-w-[9.5rem]"
+        />
+        <a
+          href="/sign-in"
+          className="focus-ring hidden min-h-[40px] items-center rounded-[var(--r-md)] px-2 text-xs font-semibold text-[var(--ink-60)] hover:text-[var(--navy)] sm:inline-flex"
+        >
+          خيارات أخرى
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <a
+        href="/sign-in"
+        className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-2.5 text-sm font-semibold text-[var(--navy)]"
+      >
+        تسجيل الدخول
+      </a>
+      <a
+        href="/sign-up"
+        className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
+      >
+        سجّل مجانًا
+      </a>
+    </div>
   );
 }
 

@@ -102,6 +102,7 @@
     "test:auth-providers-visibility": "tsx scripts/test-auth-providers-visibility.ts",
     "test:auth-continue": "tsx scripts/test-auth-continue.ts",
     "test:password-reset": "tsx scripts/test-password-reset.ts",
+    "test:home-google-signin": "tsx scripts/test-home-google-signin.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",
     "db:clerk-id": "tsx scripts/apply-clerk-id.ts",
