@@ -2,30 +2,60 @@ import { prisma } from "@/lib/prisma";
 import type { LegalCoreResult } from "./legal-retrieval";
 import { noLegalArticleMessage } from "./legal-retrieval";
 import { parseArticleNumberCandidates } from "./judgment-citation-extractor";
+import { resolveLaw } from "./resolve-law";
+
+export const CITATION_NOT_VERIFIED = "CITATION_NOT_VERIFIED";
+const REPEALED_STATUS = "ملغاة";
 
 export type CitationGuardResult =
-  | { ok: true; articleId: string; systemName: string; articleNumber: number; citationLabel: string }
-  | { ok: false; message: string };
+  | {
+      ok: true;
+      articleId: string;
+      systemName: string;
+      articleNumber: number;
+      citationLabel: string;
+      status: string;
+      repealed: boolean;
+    }
+  | { ok: false; message: string; code?: string };
 
+/**
+ * حارس الاستشهاد (1.1): يحلّ اسم النظام بثبات عبر resolveLaw ثمّ يتحقق من وجود المادة.
+ * يعيد repealed=true إن كانت المادة ملغاة (لا يُعتدّ بها نافذة). عند تعذّر التحقّق يعيد
+ * code=CITATION_NOT_VERIFIED كي لا يُعرض الاستشهاد حقيقةً.
+ */
 export async function validateLegalCitation(input: { articleId?: string; systemName?: string; articleNumber?: number }): Promise<CitationGuardResult> {
-  const article = input.articleId
-    ? await prisma.legalArticle.findUnique({ where: { id: input.articleId } })
-    : input.systemName && input.articleNumber
-      ? await prisma.legalArticle.findFirst({
-          where: {
-            lawName: input.systemName,
-            articleNumber: input.articleNumber
-          }
-        })
-      : null;
+  let article = input.articleId
+    ? await prisma.legalArticle.findUnique({ where: { id: input.articleId } }).catch(() => null)
+    : null;
 
-  if (!article) return { ok: false, message: noLegalArticleMessage };
+  if (!article && input.systemName && input.articleNumber) {
+    // حلّ اسم النظام بثبات (تطبيع، مطابقة تامّة ثمّ أطول بادئة، استبعاد اللوائح، تفضيل الأصل).
+    const resolved = await resolveLaw(input.systemName);
+    if (!resolved) {
+      return { ok: false, code: CITATION_NOT_VERIFIED, message: `${CITATION_NOT_VERIFIED}: لا نظام يطابق «${input.systemName}».` };
+    }
+    article = await prisma.legalArticle
+      .findFirst({
+        where: {
+          OR: [{ legalSystemId: resolved.system.id }, { lawName: resolved.system.name }],
+          articleNumber: input.articleNumber,
+        },
+      })
+      .catch(() => null);
+  }
+
+  if (!article) return { ok: false, code: CITATION_NOT_VERIFIED, message: noLegalArticleMessage };
+  const status = String(article.status ?? "").trim();
+  const repealed = status === REPEALED_STATUS;
   return {
     ok: true,
     articleId: article.id,
     systemName: article.lawName,
     articleNumber: article.articleNumber,
-    citationLabel: `${article.lawName}، المادة ${article.articleNumber}`
+    citationLabel: `${article.lawName}، المادة ${article.articleNumber}${repealed ? " (ملغاة)" : ""}`,
+    status: status || "سارية",
+    repealed,
   };
 }
 
