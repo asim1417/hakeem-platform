@@ -55,11 +55,6 @@ function resolveServerActionOrigins() {
 const serverActionOrigins = resolveServerActionOrigins();
 
 const nextConfig = {
-  // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل)
-  outputFileTracingIncludes: {
-    "/search": ["./data/legal-bm25-index.json.gz"],
-    "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
-  },
   // أحدث ممارسات Next: ضغط + إزالة X-Powered-By + صور حديثة
   poweredByHeader: false,
   compress: true,
@@ -69,6 +64,12 @@ const nextConfig = {
   experimental: {
     // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
     instrumentationHook: true,
+    // BUILD-001: على Next 14.2 هذا الخيار تحت experimental (كان أعلى الكائن فيُرفض كمفتاح غير معروف).
+    // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل).
+    outputFileTracingIncludes: {
+      "/search": ["./data/legal-bm25-index.json.gz"],
+      "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
+    },
     serverActions: {
       allowedOrigins: serverActionOrigins
     }
