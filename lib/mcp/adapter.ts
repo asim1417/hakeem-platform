@@ -14,6 +14,7 @@
  *   lawRelation    → LegalRelation  (prisma.legalRelation، علاقات polymorphic)
  */
 import { prisma } from "@/lib/prisma";
+import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve-law";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -244,18 +245,22 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   const n = toArticleNumber(articleNumber);
   if (n === null) return { verdict: "رقم المادة غير صالح", law_name: lawName, article_number: articleNumber };
 
-  const system = await prisma.legalSystem.findFirst({
-    where: { name: { contains: lawName, mode: "insensitive" } },
-    select: { id: true, name: true },
-    orderBy: { articleCount: "desc" },
-  });
+  // حلّ اسم النظام بثبات (1.1): مطابقة تامّة/بادئة وحيدة فقط تُعدّ حاسمة (الاحتواء ليس حاسمًا).
+  const resolved = await resolveLaw(lawName);
+  if (!resolved.decisive || !resolved.system) {
+    return { verdict: "النظام غير محسوم بهذا الاسم", law_name: lawName, candidates: resolved.candidates };
+  }
+  if (isNumberingShifted(resolved.system.name)) {
+    return { verdict: "ترقيم النظام قيد التصحيح الرسميّ — لا يُعتدّ برقم المادة", law: resolved.system.name, article_number: articleNumber };
+  }
+  const system = resolved.system;
 
   // نبحث المادة عبر معرّف النظام إن وُجد، وإلا عبر اسم النظام على المادة مباشرة.
   const article = await prisma.legalArticle.findFirst({
     where: system
       ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n }
       : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n },
-    select: { articleNumber: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
+    select: { articleNumber: true, content: true, lawName: true, status: true, legalSystem: { select: { name: true } } },
   });
 
   const resolvedLaw = system?.name ?? article?.legalSystem?.name ?? article?.lawName ?? lawName;
@@ -263,16 +268,30 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
   if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
 
+  // تفضيل النافذ: المادة الملغاة لا يُعتدّ بها نافذة.
+  const repealed = String(article.status ?? "").trim() === "ملغاة";
+
   if (claimedText) {
     // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة.
     const norm = (s: string) => s.replace(/[ً-ٟ\s]+/g, "");
     const match = norm(article.content ?? "").includes(norm(claimedText));
     return {
-      verdict: match ? "الإحالة صحيحة والنص مطابق" : "المادة موجودة لكن النص المنسوب غير مطابق",
+      verdict: match
+        ? (repealed ? "الإحالة صحيحة والنص مطابق — لكن المادة ملغاة" : "الإحالة صحيحة والنص مطابق")
+        : "المادة موجودة لكن النص المنسوب غير مطابق",
       law: resolvedLaw,
       article_number: articleNumber,
+      repealed,
+      status: repealed ? "ملغاة" : (article.status ?? "سارية"),
       actual_text: article.content,
     };
   }
-  return { verdict: "الإحالة صحيحة", law: resolvedLaw, article_number: articleNumber, actual_text: article.content };
+  return {
+    verdict: repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : "الإحالة صحيحة",
+    law: resolvedLaw,
+    article_number: articleNumber,
+    repealed,
+    status: repealed ? "ملغاة" : (article.status ?? "سارية"),
+    actual_text: article.content,
+  };
 }
