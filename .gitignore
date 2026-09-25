@@ -46,3 +46,4 @@ __pycache__/
 
 # Preamble migration backups (rollback artifacts)
 reports/legal-source-integrity/preamble-zero-backup-*.json
+ingest/uqn-2026-09-25/data/regulations_part*.jsonl
