@@ -73,18 +73,28 @@ SELECT "lawName","articleNumber",title FROM legal_articles WHERE "articleNumber"
 - `app/legal/[slug]/page.tsx`: استعلام القائمة يستبعد `articleNumber <= 0`.
 - `app/legal/[slug]/[article]/page.tsx`: رابط «المادة السابقة» يشترط `> 0` (لا رابط إلى /0).
 
-### قرار البيانات (يحتاج موافقة مالك البيانات — لا تُنفَّذ الآن)
-- **لا تُحذف** الديباجات. الخيارات المقترحة للمراجعة:
-  1. إبقاؤها كما هي (0 = ديباجة) مع الحارس العرضي الحالي — **الأدنى خطرًا**.
-  2. نقلها إلى حقل/علاقة «preamble» مخصّص عبر ترحيل مدروس، ثم إضافة `CHECK ("articleNumber" > 0)`:
-     ```sql
-     -- بعد نقل الديباجات وتأكيد عدم وجود مخالفات:
-     -- ALTER TABLE legal_articles ADD CONSTRAINT article_number_positive CHECK ("articleNumber" > 0);
-     ```
-- تحقّق قبل أي قيد:
-  ```sql
-  SELECT count(*) FROM legal_articles WHERE "articleNumber" <= 0;  -- يجب أن يوافق المتوقّع
-  ```
+### القرار المُتَّخذ: الخيار الثاني (نُفِّذ وطُبِّق على Neon)
+اختار مالك المشروع **الخيار الثاني: لا توجد مادة صفر**. نُقلت الديباجات إلى حقل مخصّص
+على مستوى النظام وأُضيف قيد يمنع عودة المادة صفر.
+
+**ما نُفِّذ:**
+1. أعمدة جديدة على `legal_systems`: `preamble`, `preamble_royal_decree`,
+   `preamble_effective_from`, `preamble_updated_at` (هجرة إضافية آمنة).
+2. سكربت الهجرة `scripts/backfill/move-preambles-to-system.ts` (نسخة احتياطية + transaction):
+   نقل المحتوى إلى `LegalSystem.preamble`، حذف صفوف المادة صفر وتبعياتها وembeddings، ثم
+   `ALTER TABLE legal_articles ADD CONSTRAINT legal_articles_article_number_positive CHECK ("articleNumber" > 0)`.
+3. الكتّاب (import-preambles، admin API، hoqoqi) لم يعودوا ينشئون مادة صفر.
+4. العرض العام يُظهر الديباجة كقسم مستقل في صفحة النظام.
+
+**نتيجة التطبيق على Neon (بموافقة صريحة):** نُقل=489 · حُذفت مواد=489 · embeddings=489 ·
+أُضيف CHECK. التحقّق: `articleNumber<=0` = **0**؛ أنظمة بها ديباجة = **489**؛ إدراج مادة صفر
+جديدة **مرفوض** بالقيد. النسخة الاحتياطية للتراجع في `reports/legal-source-integrity/preamble-zero-backup-*.json`.
+
+**التراجع:** استعادة الصفوف من ملف النسخة الاحتياطية، وإسقاط القيد:
+`ALTER TABLE legal_articles DROP CONSTRAINT legal_articles_article_number_positive;`
+
+**متابعة:** الديباجات لم تعد في كوربوس البحث `legal_articles`؛ إن لزم بحثها دلاليًّا
+تُفهرس كنوع كيان مستقل لاحقًا (خارج نطاق هذا الإصلاح).
 
 ---
 
