@@ -223,6 +223,7 @@
     "verify:civil-renumber": "tsx scripts/audit/verify-civil-renumber.ts",
     "audit:numbering": "tsx scripts/audit/audit-all-numbering.ts",
     "audit:live-snapshot": "tsx scripts/audit/live-snapshot.ts",
+    "audit:civil-trial": "tsx scripts/audit/apply-civil-diff-trial.ts",
     "fetch:official": "tsx scripts/backfill/fetch-official.ts",
     "test:official-discovery": "tsx scripts/test-official-discovery.ts",
     "test:official-sources": "tsx scripts/test-official-source-policy.ts",
