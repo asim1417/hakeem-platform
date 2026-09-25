@@ -148,6 +148,19 @@ model LegalArticle {
   royalDecree    String?
   effectiveFrom  DateTime?
   status         String                 @default("سارية")
+  // ── provenance المادة (مصدر الحقيقة القانونية) — كلّها اختيارية وإضافية (آمنة قبل/بعد الهجرة) ──
+  // رابط المصدر الرسمي الذي اشتُقّت منه المادة (هيئة الخبراء/أم القرى/العدل)؛ لا يُملأ من مصدر غير رسمي.
+  sourceUrl         String?   @map("source_url")
+  // الجهة الناشرة (مثل: «هيئة الخبراء بمجلس الوزراء»، «جريدة أم القرى»).
+  sourcePublisher   String?   @map("source_publisher")
+  // تاريخ النشر/آخر تعديل رسمي، وتاريخ الجلب من المصدر.
+  sourcePublishedAt DateTime? @map("source_published_at")
+  sourceFetchedAt   DateTime? @map("source_fetched_at")
+  // بصمة محتوى المادة (SHA-256 فوق النصّ المطبَّع) — لاكتشاف تغيّر النصّ عبر عمليات الجلب.
+  contentSha256     String?   @map("content_sha256")
+  // حالة المراجعة: verified | needs_review | numbering_conflict | missing_official_source | unverified.
+  // الافتراضي unverified حتى تُثبَت المطابقة مع المصدر الرسمي (فشل آمن — لا يدّعي التحقق).
+  reviewStatus      String    @default("unverified") @map("review_status")
   // ── المرحلة ١.ب: تفكيك المعيار (normative tagging) ──
   // الأعمدة الفيزيائية norm_* موجودة عبر الهجرة (20260716120000_add_normative_tagging)،
   // لكنها **مقصودة خارج موديل Prisma**: إبقاؤها هنا يُجبر أي findUnique/findMany بلا select
