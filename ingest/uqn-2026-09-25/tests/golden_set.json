@@ -1,0 +1,325 @@
+{
+ "note": "مجموعة ذهبية: القيم مستخرجة من الحزمة وتُراجع يدويًا مرة واحدة (verified_by) ثم تصبح اختبارات انحدار ثابتة",
+ "issuance_and_structure": [
+  {
+   "title": "نظام التنفيذ",
+   "source_id": "uqn:4000869",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/rules-and-regulations/4000869",
+   "expect": {
+    "royal_decree_no": "م/237",
+    "royal_decree_date_hijri": "1447-11-03",
+    "approval_no": "746",
+    "article_count": 65,
+    "first_article_starts": "يُقصد بالألفاظ والعبارات الآتية -أينما و",
+    "last_article_starts": "1- يحل النظام محل نظام التنفيذ، الصادر ب"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام التعاونيات",
+   "source_id": "uqn:4001869",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001869",
+   "expect": {
+    "royal_decree_no": "م/96",
+    "royal_decree_date_hijri": "1448-03-25",
+    "approval_no": "278",
+    "article_count": 49,
+    "first_article_starts": "يقصد بالألفاظ والعبارات الآتية -أينما ور",
+    "last_article_starts": "يعمل بالنظام بعد مضي (تسعين) يومًا من تا"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام السجل التجاري",
+   "source_id": "uqn:26565",
+   "source_url": "https://www.uqn.gov.sa/details?p=26565",
+   "expect": {
+    "royal_decree_no": "م/83",
+    "royal_decree_date_hijri": "1446-03-19",
+    "approval_no": "237",
+    "article_count": 29,
+    "first_article_starts": "التعريفات\nيُقصد بالكلمات والعبارات الآتي",
+    "last_article_starts": "نفاذ النظام\nيحل النظام محل نظام السجل ال"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام الأسماء التجارية",
+   "source_id": "uqn:26566",
+   "source_url": "https://www.uqn.gov.sa/details?p=26566",
+   "expect": {
+    "royal_decree_no": "م/83",
+    "royal_decree_date_hijri": "1446-03-19",
+    "approval_no": "237",
+    "article_count": 23,
+    "first_article_starts": "التعريفات\nيقصد بالكلمات والعبارات الآتية",
+    "last_article_starts": "نفاذ النظام\nيحل النظام محل نظام الأسماء "
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام الاستثمار",
+   "source_id": "uqn:25337",
+   "source_url": "https://www.uqn.gov.sa/details?p=25337",
+   "expect": {
+    "royal_decree_no": "م/19",
+    "royal_decree_date_hijri": "1446-01-16",
+    "approval_no": "40",
+    "article_count": 16,
+    "first_article_starts": "التعريفات:\nيقصد بالألفاظ والعبارات الآتي",
+    "last_article_starts": "النفاذ:\nيُعمل بالنظام بمضي (مائة وثمانين"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام التعليم العام",
+   "source_id": "uqn:4001465",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001465",
+   "expect": {
+    "royal_decree_no": "م/36",
+    "royal_decree_date_hijri": "1448-01-27",
+    "approval_no": "103",
+    "article_count": 68,
+    "first_article_starts": "لأغراض تطبيق هذا النظام، يقصد بالألفاظ و",
+    "last_article_starts": "يُعمل بالنظام بعد (مائة وثمانين) يومًا م"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام الخطوط الحديدية",
+   "source_id": "uqn:24689",
+   "source_url": "https://www.uqn.gov.sa/details?p=24689",
+   "expect": {
+    "royal_decree_no": "م/159",
+    "royal_decree_date_hijri": "1445-08-22",
+    "approval_no": "692",
+    "article_count": 50,
+    "first_article_starts": "يقصد بالعبارات والألفاظ الآتية -أينما ور",
+    "last_article_starts": "يُعمل بالنظام بعد (تسعين) يوماً من تاريخ"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام هيئة الرقابة ومكافحة الفساد",
+   "source_id": "uqn:25318",
+   "source_url": "https://www.uqn.gov.sa/details?p=25318",
+   "expect": {
+    "royal_decree_no": "م/25",
+    "royal_decree_date_hijri": "1446-01-23",
+    "approval_no": "68",
+    "article_count": 24,
+    "first_article_starts": "يقصد بالكلمات والعبارات الآتية -أينما ور",
+    "last_article_starts": "يُعمل بالنظام بعد (تسعين) يوماً من تاريخ"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام نزع ملكية العقارات للمصلحة العامة ووضع اليد المؤقت على العقارات",
+   "source_id": "uqn:27461",
+   "source_url": "https://www.uqn.gov.sa/details?p=27461",
+   "expect": {
+    "royal_decree_no": "م/56",
+    "royal_decree_date_hijri": "1447-03-12",
+    "approval_no": "177",
+    "article_count": 38,
+    "first_article_starts": "التعريفات\nلأغراض تطبيق أحكام هذا النظام،",
+    "last_article_starts": "تُعد الهيئة -بالتنسيق مع وزارة الاستثمار"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام تملك غير السعوديين للعقار",
+   "source_id": "uqn:27293",
+   "source_url": "https://www.uqn.gov.sa/details?p=27293",
+   "expect": {
+    "royal_decree_no": "م/14",
+    "royal_decree_date_hijri": "1447-01-19",
+    "approval_no": "42",
+    "article_count": 15,
+    "first_article_starts": "يقصد بالكلمات والعبارات الآتية -أينما ور",
+    "last_article_starts": "يعمل بالنظام بعد (مائة وثمانين) يوماً من"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام حماية المؤشرات الجغرافية",
+   "source_id": "uqn:28662",
+   "source_url": "https://www.uqn.gov.sa/details?p=28662",
+   "expect": {
+    "royal_decree_no": "م/102",
+    "royal_decree_date_hijri": "1447-05-26",
+    "approval_no": "360",
+    "article_count": 27,
+    "first_article_starts": "يقصد بالعبارات والمصطلحات الآتية -أينما ",
+    "last_article_starts": "يُعمل بالنظام بعد مضي (مائة وثمانين) يوم"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام النقل البري على الطرق",
+   "source_id": "uqn:27037",
+   "source_url": "https://www.uqn.gov.sa/details?p=27037",
+   "expect": {
+    "royal_decree_no": "م/188",
+    "royal_decree_date_hijri": "1446-08-24",
+    "approval_no": "614",
+    "article_count": 34,
+    "first_article_starts": "لأغراض تطبيق هذا النظام، يقصد بالمصطلحات",
+    "last_article_starts": "يُنشر النظام في الجريدة الرسمية، ويُعمل "
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام ضريبة التصرفات العقارية",
+   "source_id": "uqn:26600",
+   "source_url": "https://www.uqn.gov.sa/details?p=26600",
+   "expect": {
+    "royal_decree_no": "م/84",
+    "royal_decree_date_hijri": "1446-03-19",
+    "approval_no": "239",
+    "article_count": 20,
+    "first_article_starts": "لأغراض تطبيق هذا النظام، يقصد بالألفاظ و",
+    "last_article_starts": "1- يُصدر المجلس اللائحة خلال (مائة وثمان"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام الأنشطة الترفيهية والأنشطة المساندة لها",
+   "source_id": "uqn:4001278",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001278",
+   "expect": {
+    "royal_decree_no": "م/12",
+    "royal_decree_date_hijri": "1448-01-07",
+    "approval_no": "18",
+    "article_count": 16,
+    "first_article_starts": "يقصد بالكلمات والعبارات الآتية -أينما ور",
+    "last_article_starts": "يعمل بالنظام بعد (مائة وثمانين) يومًا من"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "تنظيم الهيئة العامة للطرق",
+   "source_id": "uqn:4001669",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001669",
+   "expect": {
+    "royal_decree_no": null,
+    "royal_decree_date_hijri": null,
+    "approval_no": "219",
+    "article_count": 15,
+    "first_article_starts": "يكون للألفاظ والعبارات الآتية -أينما ورد",
+    "last_article_starts": "يعمل بالتنظيم من تاريخ الموافقة عليه."
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "تنظيم المركز الوطني للصقور",
+   "source_id": "uqn:4000954",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000954",
+   "expect": {
+    "royal_decree_no": null,
+    "royal_decree_date_hijri": null,
+    "approval_no": "834",
+    "article_count": 17,
+    "first_article_starts": "يقصد بالكلمات والعبارات الآتية -أينما ور",
+    "last_article_starts": "يُنشر التنظيم في الجريدة الرسمية، ويُعمل"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام الإحصاء",
+   "source_id": "uqn:27339",
+   "source_url": "https://www.uqn.gov.sa/details?p=27339",
+   "expect": {
+    "royal_decree_no": "م/29",
+    "royal_decree_date_hijri": "1447-02-10",
+    "approval_no": null,
+    "article_count": 22,
+    "first_article_starts": "لأغراض هذا النظام، يقصد بالألفاظ والعبار",
+    "last_article_starts": "يُعمل بالنظام بعد (مائة وثمانين) يوماً م"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام جمع التبرعات",
+   "source_id": "uqn:25376",
+   "source_url": "https://www.uqn.gov.sa/details?p=25376",
+   "expect": {
+    "royal_decree_no": "م/43",
+    "royal_decree_date_hijri": "1446-02-08",
+    "approval_no": "116",
+    "article_count": 23,
+    "first_article_starts": "لأغراض هذا النظام، يُقصد بالألفاظ والعبا",
+    "last_article_starts": "يُعمل بالنظام بعد مضي (مائة وثمانين) يوم"
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "تنظيم هيئة الأزياء",
+   "source_id": "uqn:25125",
+   "source_url": "https://www.uqn.gov.sa/details?p=25125",
+   "expect": {
+    "royal_decree_no": null,
+    "royal_decree_date_hijri": null,
+    "approval_no": "1012",
+    "article_count": 12,
+    "first_article_starts": "يقصد بالكلمات والعبارات الآتية أينما ورد",
+    "last_article_starts": "يُعمل بالتنظيم من تاريخ الموافقة عليه."
+   },
+   "verified_by": "human_pending"
+  },
+  {
+   "title": "نظام حقوق المؤلف",
+   "source_id": "uqn:4000299",
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000299",
+   "expect": {
+    "royal_decree_no": null,
+    "royal_decree_date_hijri": null,
+    "approval_no": "560",
+    "article_count": 61,
+    "first_article_starts": "لأغراض هذا النظام، يُقصد بالكلمات والعبا",
+    "last_article_starts": "يُعمل بالنظام بعد (مائة وثمانين) يوماً م"
+   },
+   "verified_by": "human_pending"
+  }
+ ],
+ "as_of_cases": [
+  {
+   "case": "المرافعات م7 قبل/بعد م/101",
+   "work_hint": "نظام المرافعات الشرعية (حكيم)",
+   "unit": "المادة 7",
+   "before": {
+    "date_hijri": "1442-01-01",
+    "expect": "النص قبل التعديل (كما في حكيم الآن)"
+   },
+   "after": {
+    "date_hijri": "1442-12-01",
+    "expect_contains": "حتى الدرجة الرابعة، وكذا الإنهاءات إذا اشتملت على خصومة"
+   },
+   "source": "مرسوم ملكي م/101 وتاريخ 1442/11/14هـ — https://www.uqn.gov.sa/details?p=17876"
+  },
+  {
+   "case": "التنفيذ: القديم نافذ قبل نفاذ الجديد",
+   "work_hint": "نظام التنفيذ م/53 ← م/237",
+   "unit": "أي مادة",
+   "before": {
+    "date_hijri": "1448-04-14",
+    "expect": "نص م/53 (الجديد منشور 1447-11-14 ويُعمل به بعد 180 يومًا)"
+   },
+   "after": {
+    "date_hijri": "1448-06-01",
+    "expect": "نص م/237، مع بقاء أحكام الحجز التحفظي والإعسار من م/53 مؤقتًا (البندان سادسًا وسابعًا من المرسوم)"
+   },
+   "source": "https://www.uqn.gov.sa/decisions-and-regulations/royal-decrees/4000866"
+  },
+  {
+   "case": "المحاماة: إلغاء المادة 25 بمرسوم المعاملات المدنية",
+   "work_hint": "نظام المحاماة",
+   "unit": "المادة 25",
+   "after": {
+    "date_hijri": "1445-06-01",
+    "expect": "المادة ملغاة"
+   },
+   "source": "مرسوم م/191 وتاريخ 1444/11/29هـ — https://www.uqn.gov.sa/details?p=23124"
+  }
+ ]
+}
