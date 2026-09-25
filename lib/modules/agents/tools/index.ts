@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// أدوات الوكلاء (المرحلة ٢) — ١٦ أداة، كلٌّ يُرجع ToolResult{ok,data,source,confidence,note}.
+// أدوات الوكلاء (المرحلة ٢) — أدوات النواة + أدوات الوثائق النظامية، كلٌّ يُرجع ToolResult{ok,data,source,confidence,note}.
 // أغلفة رفيعة **فوق دوالّ النواة القائمة** (بحث/جلب/زمن/عزو) + استعلامات prisma مباشرة حيث لزم.
 // لا تُسرّب embedding ولا الحالات الداخلية. أي تعذّر → ok:false مع note (لا فشل صامت).
 // المصدر الوحيد للحقيقة: قاعدة البيانات القانونية. لا تلمس الأمن ولا نواة الترتيب.
@@ -20,6 +20,7 @@ import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { queryNormative } from "../substrate/queries";
+import { searchInstrumentProvisions, getSystemInstrumentBundle } from "@/lib/modules/legal-core/instrument-retrieval";
 import type { NormativeModality } from "../substrate/normative";
 
 function ok<T>(data: T, source: string, confidence = 0.9, note?: string): ToolResult<T> {
@@ -27,6 +28,27 @@ function ok<T>(data: T, source: string, confidence = 0.9, note?: string): ToolRe
 }
 function fail<T>(data: T, source: string, note: string): ToolResult<T> {
   return { ok: false, data, source, confidence: 0, note };
+}
+
+async function requireReadySystemName(systemName: string): Promise<boolean> {
+  if (process.env.LEGAL_READY_ONLY !== "1") return true;
+  const system = await prisma.legalSystem.findFirst({
+    where: {
+      name: { contains: systemName.trim(), mode: "insensitive" },
+      launchStatus: "READY"
+    },
+    select: { id: true }
+  });
+  return Boolean(system);
+}
+
+async function requireReadyArticle(articleId: string): Promise<boolean> {
+  if (process.env.LEGAL_READY_ONLY !== "1") return true;
+  const article = await prisma.legalArticle.findFirst({
+    where: { id: articleId, legalSystem: { is: { launchStatus: "READY" } } },
+    select: { id: true }
+  });
+  return Boolean(article);
 }
 
 // ── بحث (٤) ──────────────────────────────────────────────────────────────────
@@ -63,6 +85,27 @@ export async function semantic_search(query: string, limit = 8): Promise<ToolRes
   }
 }
 
+export async function search_instrument_provisions(query: string, limit = 8, systemIds?: string[]): Promise<ToolResult<unknown[]>> {
+  try {
+    const rows = await searchInstrumentProvisions({ query, limit, systemIds, readyOnly: true });
+    return ok(rows, "legal_documents.document_units", rows.length ? 0.95 : 0.4, rows.length ? undefined : "لا نتائج في المراسيم/القرارات الرسمية المتحققة");
+  } catch (e) {
+    return fail<unknown[]>([], "legal_documents.document_units", "تعذّر بحث المراسيم والقرارات: " + (e as Error).message);
+  }
+}
+
+export async function get_system_instruments(systemName: string): Promise<ToolResult<unknown>> {
+  try {
+    const bundle = await getSystemInstrumentBundle(systemName);
+    return bundle
+      ? ok(bundle, "legal_documents.document_units", bundle.launchStatus === "READY" ? 0.98 : 0.7,
+          bundle.launchStatus === "READY" ? undefined : "الحزمة موجودة لكنها ليست READY بعد")
+      : fail(null, "legal_documents.document_units", "لم يُوجد النظام أو حزمة أدواته");
+  } catch (e) {
+    return fail(null, "legal_documents.document_units", "تعذّر جلب حزمة النظام: " + (e as Error).message);
+  }
+}
+
 // ── جلب (٣) ──────────────────────────────────────────────────────────────────
 export async function get_article_by_eli(eliSegments: string[]): Promise<ToolResult<unknown>> {
   const parsed = parseArticleEli(eliSegments);
@@ -78,6 +121,7 @@ export async function get_article_by_eli(eliSegments: string[]): Promise<ToolRes
 
 export async function get_system_toc(systemName: string): Promise<ToolResult<Array<{ articleNumber: number; title: string }>>> {
   try {
+    if (!(await requireReadySystemName(systemName))) return fail([], "legal_core", "النظام غير مجتاز لبوابة الإطلاق READY");
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName, mode: "insensitive" } },
       select: { articleNumber: true, title: true },
@@ -92,6 +136,7 @@ export async function get_system_toc(systemName: string): Promise<ToolResult<Arr
 
 export async function get_articles_range(systemName: string, from: number, to: number): Promise<ToolResult<unknown[]>> {
   try {
+    if (!(await requireReadySystemName(systemName))) return fail([], "legal_core", "النظام غير مجتاز لبوابة الإطلاق READY");
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName, mode: "insensitive" }, articleNumber: { gte: Math.min(from, to), lte: Math.max(from, to) } },
       select: { id: true, articleNumber: true, title: true, content: true, status: true },
@@ -107,6 +152,7 @@ export async function get_articles_range(systemName: string, from: number, to: n
 // ── علاقات (٣) ───────────────────────────────────────────────────────────────
 export async function get_related_articles(articleId: string): Promise<ToolResult<unknown>> {
   try {
+    if (!(await requireReadyArticle(articleId))) return fail(null, "legal_core", "المادة تتبع نظامًا غير READY");
     const ctx = await getArticleFullContext(articleId);
     if (!ctx) return fail(null, "legal_core", "المادة غير موجودة");
     return ok(ctx.related ?? [], "legal_core.related", 0.8);
@@ -141,6 +187,7 @@ export async function get_applying_rulings(articleId: string): Promise<ToolResul
 
 // ── زمن (٣) — تعتمد على التوسيم الزمني الموجود (article_versions / article_amendments) ──
 export async function get_article_at_date(articleId: string, iso: string): Promise<ToolResult<unknown>> {
+  if (!(await requireReadyArticle(articleId))) return fail(null, "article_versions", "المادة تتبع نظامًا غير READY");
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return fail(null, "article_versions", "تاريخ غير صالح");
   try {
@@ -153,6 +200,7 @@ export async function get_article_at_date(articleId: string, iso: string): Promi
 
 export async function get_amendment_history(articleId: string): Promise<ToolResult<unknown[]>> {
   try {
+    if (!(await requireReadyArticle(articleId))) return fail([], "article_amendments", "المادة تتبع نظامًا غير READY");
     const rows = await prisma.articleAmendment.findMany({
       where: { articleId },
       orderBy: { version: "asc" },
@@ -208,6 +256,7 @@ export async function scan_system_articles(
   limit = 1200
 ): Promise<ToolResult<Array<{ articleNumber: number; title: string; content: string }>>> {
   try {
+    if (!(await requireReadySystemName(systemName))) return fail([], "legal_core", "النظام غير مجتاز لبوابة الإطلاق READY");
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName.trim(), mode: "insensitive" } },
       select: { articleNumber: true, title: true, content: true },
@@ -264,6 +313,8 @@ export const TOOLS = {
   search_rulings,
   search_principles,
   semantic_search,
+  search_instrument_provisions,
+  get_system_instruments,
   get_article_by_eli,
   get_system_toc,
   get_articles_range,

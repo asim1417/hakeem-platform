@@ -34,6 +34,28 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Official legal sources policy QA
+        run: npm run test:official-sources
+
+      - name: Official source discovery QA
+        run: npm run test:official-discovery
+
+      - name: System readiness logic QA
+        run: npm run test:system-readiness
+
+      - name: Official bundle splitter QA
+        run: npm run test:official-bundle
+
+      - name: Live Civil Transactions numbering guard
+        if: ${{ env.DATABASE_URL != 'postgresql://user:password@localhost:5432/hakeem?schema=public' }}
+        run: npm run verify:civil-renumber
+
+      - name: Legal parser QA
+        run: npm run test:legal-parser
+
+      - name: Arabic article numbering QA
+        run: npm run test:arabic-ordinal
+
       - name: Build
         run: npm run build
 

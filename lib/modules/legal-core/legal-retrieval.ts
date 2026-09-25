@@ -370,6 +370,7 @@ function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
   const searchType = options.searchType ?? "contains";
+  const readyOnly = readyOnlyEnabled();
   const page = Math.max(Number(options.page ?? 1), 1);
   // سقف الصفحة 200 (كان 80): يتيح سحب دفعات أكبر عند تصدير «كامل النتائج».
   const limit = Math.min(Math.max(Number(options.limit ?? 20), 1), 200);
@@ -413,6 +414,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const where: Record<string, unknown> = {
     AND: [
+      buildReadySystemFilter(readyOnly),
       buildSystemFilter(options.systemIds),
       buildDomainFilter(options.domain),
       buildCategoryFilter(options.categoryIds),
@@ -437,6 +439,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر
   // بنيوي أو تعطيله بـ IN_DB_RECALL=0 نعود للمسار المعجمي (ILIKE) دون تغيير سلوك.
   const noStructuralFilter =
+    !readyOnly &&
     !cleanList(options.systemIds).length &&
     !cleanList(options.categoryIds).length &&
     !options.domain &&
@@ -475,7 +478,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     const missingOccIds = [...graph.articleBoosts.keys()].filter((id) => !lightById.has(id)).slice(0, THESAURUS_OCC_PULL_LIMIT);
     if (missingOccIds.length) {
       const extraOcc = await prisma.legalArticle
-        .findMany({ where: { id: { in: missingOccIds } }, select: LIGHT_ARTICLE_SELECT })
+        .findMany({ where: { AND: [{ id: { in: missingOccIds } }, buildReadySystemFilter(readyOnly)] }, select: LIGHT_ARTICLE_SELECT })
         .catch(() => [] as LightArticle[]);
       for (const r of extraOcc) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
@@ -489,7 +492,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     const extraIds = [...semMap.keys()].filter((id) => !lightById.has(id));
     if (extraIds.length) {
       const extra = await prisma.legalArticle
-        .findMany({ where: { id: { in: extraIds } }, select: LIGHT_ARTICLE_SELECT })
+        .findMany({ where: { AND: [{ id: { in: extraIds } }, buildReadySystemFilter(readyOnly)] }, select: LIGHT_ARTICLE_SELECT })
         .catch(() => [] as LightArticle[]);
       for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
@@ -675,20 +678,27 @@ async function applySemanticRerank(query: string, results: LegalCoreResult[]): P
 // بحث مباشر بالرقم للتحقق من وجود مادة مذكورة في الحكم (دقيق — لا يعتمد المطابقة النصية).
 export async function getArticlesByNumber(articleNumber: number, systemHint?: string): Promise<LegalCoreResult[]> {
   if (!Number.isFinite(articleNumber) || articleNumber <= 0) return [];
-  const where: Record<string, unknown> = { articleNumber };
+  const andFilters: Record<string, unknown>[] = [
+    { articleNumber },
+    buildReadySystemFilter(readyOnlyEnabled())
+  ];
   const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
   if (hint) {
-    where.OR = [
-      { lawName: { contains: hint, mode: "insensitive" } },
-      { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
-    ];
+    andFilters.push({
+      OR: [
+        { lawName: { contains: hint, mode: "insensitive" } },
+        { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
+      ]
+    });
   }
   const articles = await prisma.legalArticle.findMany({
-    where,
+    where: { AND: andFilters },
     include: { legalSystem: { select: { id: true, name: true } } },
     take: 12
   });
-  return articles.map((article) => mapArticleResult(article as LegalArticleWithSystem, "", "contains", [], { includeSnippets: true }));
+  return articles.map((article) =>
+    mapArticleResult(article as LegalArticleWithSystem, "", "contains", [], { includeSnippets: true })
+  );
 }
 
 // قائمة كلمات شائعة لا تميّز موضوع البحث (إجرائية/عامة) — تُستبعد من مطابقة الصلة.
@@ -855,6 +865,14 @@ function buildTextFilter(variants: string[], fields: string[]) {
   }
 
   return orFilters.length ? { OR: orFilters } : {};
+}
+
+function readyOnlyEnabled(explicit?: boolean): boolean {
+  return explicit ?? process.env.LEGAL_READY_ONLY === "1";
+}
+
+function buildReadySystemFilter(readyOnly: boolean) {
+  return readyOnly ? { legalSystem: { is: { launchStatus: "READY" as const } } } : {};
 }
 
 function buildSystemFilter(systemIds?: string[]) {

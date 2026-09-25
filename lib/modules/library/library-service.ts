@@ -5,6 +5,14 @@ import { prisma } from "@/lib/prisma";
 export const LEGAL_CORE_CACHE_TAG = "legal-core";
 const CACHE_TTL = 600; // ثوانٍ (محتوى نظامي شبه ثابت)
 
+function legalReadyOnly(): boolean {
+  return process.env.LEGAL_READY_ONLY === "1";
+}
+
+function readyArticleWhere(): Record<string, unknown> {
+  return legalReadyOnly() ? { legalSystem: { is: { launchStatus: "READY" as const } } } : {};
+}
+
 /** إبطال كاش النواة القانونية (يُستدعى بعد استيراد/تحديث المواد من مسار خادمي). */
 export function revalidateLegalCoreCache() {
   revalidateTag(LEGAL_CORE_CACHE_TAG);
@@ -17,7 +25,7 @@ export async function searchLegalArticles(query: string, limit = 8, lawName?: st
 
   if (!normalized) {
     return prisma.legalArticle.findMany({
-      where: lawWhere,
+      where: { AND: [lawWhere, readyArticleWhere()] },
       orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
       take: limit
     });
@@ -27,6 +35,7 @@ export async function searchLegalArticles(query: string, limit = 8, lawName?: st
     where: {
       AND: [
         lawWhere,
+        readyArticleWhere(),
         {
           OR: [
             { content: { contains: normalized, mode: "insensitive" } },
@@ -96,6 +105,7 @@ export async function getSystemDetail(idOrName: string) {
   const system =
     (await prisma.legalSystem.findUnique({ where: { id: key } }).catch(() => null)) ??
     (await prisma.legalSystem.findFirst({ where: { name: key } }).catch(() => null));
+  if (legalReadyOnly() && system?.launchStatus !== "READY") return null;
 
   const lawName = system?.name ?? key;
   const articles = await prisma.legalArticle.findMany({
@@ -177,6 +187,7 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
 
   if (systemCount > 0) {
     const where: Record<string, unknown> = {};
+    if (legalReadyOnly()) where.launchStatus = "READY";
     if (q) where.name = { contains: q, mode: "insensitive" };
     if (classification) where.classification = classification;
     if (domain) where.domain = domain;
@@ -235,7 +246,11 @@ export async function listSystems(opts: SystemsQuery = {}): Promise<SystemsResul
 export const listAllSystems = unstable_cache(
   () =>
     prisma.legalSystem
-      .findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, classification: true } })
+      .findMany({
+        where: legalReadyOnly() ? { launchStatus: "READY" } : undefined,
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, classification: true }
+      })
       .catch(() => [] as { id: string; name: string; classification: string | null }[]),
   ["library:all-systems"],
   { revalidate: CACHE_TTL, tags: [LEGAL_CORE_CACHE_TAG] }
@@ -288,6 +303,7 @@ export async function listArticlesForSync(opts: ArticleSyncQuery = {}) {
 
   const where: Record<string, unknown> = {};
   if (opts.systemId) where.legalSystemId = opts.systemId;
+  if (legalReadyOnly()) where.legalSystem = { is: { launchStatus: "READY" } };
   if (opts.updatedSince) {
     const since = new Date(opts.updatedSince);
     if (!Number.isNaN(since.getTime())) where.updatedAt = { gt: since };
@@ -343,7 +359,10 @@ export async function listArticlesForSync(opts: ArticleSyncQuery = {}) {
 export function getArticleDetail(id: string) {
   return prisma.legalArticle
     .findUnique({
-      where: { id },
+      where: {
+        id,
+        ...(legalReadyOnly() ? { legalSystem: { is: { launchStatus: "READY" } } } : {})
+      },
       include: {
         legalSystem: { select: { id: true, name: true, code: true, eliSlug: true } },
         caseLinks: {
@@ -374,7 +393,10 @@ export async function resolveArticleIds(
 ): Promise<Map<string, string>> {
   if (!pairs.length) return new Map();
   const rows = await prisma.legalArticle
-    .findMany({ where: { OR: pairs }, select: { id: true, lawName: true, articleNumber: true } })
+    .findMany({
+      where: { AND: [{ OR: pairs }, readyArticleWhere()] },
+      select: { id: true, lawName: true, articleNumber: true }
+    })
     .catch(() => [] as { id: string; lawName: string; articleNumber: number }[]);
   return new Map(rows.map((r) => [`${r.lawName}|${r.articleNumber}`, r.id]));
 }
@@ -384,8 +406,13 @@ export function getRelatedArticles(article: { id: string; lawName: string; class
   return prisma.legalArticle
     .findMany({
       where: {
-        id: { not: article.id },
-        OR: [{ lawName: article.lawName }, article.classification ? { classification: article.classification } : { lawName: article.lawName }]
+        AND: [
+          { id: { not: article.id } },
+          readyArticleWhere(),
+          {
+            OR: [{ lawName: article.lawName }, article.classification ? { classification: article.classification } : { lawName: article.lawName }]
+          }
+        ]
       },
       orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
       take: 6,
