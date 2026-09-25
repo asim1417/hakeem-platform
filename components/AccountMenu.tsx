@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, Download, LogOut, UserRound, Wallet } from "lucide-react";
+import {
+  Building2,
+  ChevronDown,
+  Download,
+  LogOut,
+  ShieldCheck,
+  UserRound,
+  Wallet,
+} from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
@@ -19,6 +27,8 @@ type AccountMenuProps = {
   initials: string;
   billingLabel: string;
   clerkEnabled?: boolean;
+  /** روابط بوابة حسابات Clerk — تظهر فقط عند تفعيل أعلامها. */
+  securityFeatures?: { mfa: boolean; organizations: boolean };
 };
 
 /**
@@ -31,6 +41,7 @@ export function AccountMenu({
   initials,
   billingLabel,
   clerkEnabled = true,
+  securityFeatures,
 }: AccountMenuProps) {
   const router = useRouter();
   const clerkMounted = useClerkMounted();
@@ -133,6 +144,40 @@ export function AccountMenu({
             <Wallet size={18} aria-hidden className="shrink-0" />
             <span>{billingLabel}</span>
           </Link>
+
+          {securityFeatures?.mfa ? (
+            <a
+              href="/api/auth/account-portal?section=security"
+              role="menuitem"
+              className="account-menu__item touch-target"
+              onClick={() => setOpen(false)}
+            >
+              <ShieldCheck size={18} aria-hidden className="shrink-0" />
+              <span className="min-w-0">
+                <span className="block font-semibold">الأمان والتحقق الثنائي</span>
+                <span className="block text-[11px] font-normal text-[rgba(14,52,53,0.55)]">
+                  تطبيق المصادقة، الرموز الاحتياطية، والحسابات المرتبطة
+                </span>
+              </span>
+            </a>
+          ) : null}
+
+          {securityFeatures?.organizations ? (
+            <a
+              href="/api/auth/account-portal?section=organization"
+              role="menuitem"
+              className="account-menu__item touch-target"
+              onClick={() => setOpen(false)}
+            >
+              <Building2 size={18} aria-hidden className="shrink-0" />
+              <span className="min-w-0">
+                <span className="block font-semibold">حساب المكتب</span>
+                <span className="block text-[11px] font-normal text-[rgba(14,52,53,0.55)]">
+                  إنشاء مكتبك ودعوة المحامين وإدارة أدوارهم
+                </span>
+              </span>
+            </a>
+          ) : null}
 
           <a
             href="/api/account/export"

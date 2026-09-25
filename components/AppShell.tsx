@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { getAccountSecurityFeatures } from "@/lib/modules/auth/auth-providers";
 import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config/search-visibility";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 import { isPlatformAdmin } from "@/lib/modules/auth/super-admin";
@@ -209,6 +210,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 initials={initials}
                 billingLabel={billingLabel}
                 clerkEnabled={clerkEnabled}
+                securityFeatures={getAccountSecurityFeatures()}
               />
             ) : (
               <div className="account-menu__trigger account-menu__trigger--skeleton" aria-hidden />

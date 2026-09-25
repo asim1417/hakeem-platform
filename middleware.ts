@@ -47,6 +47,7 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/auth/continue(.*)",
   "/sso-callback(.*)",
   "/api/auth/oauth/start(.*)",
+  "/api/auth/account-portal(.*)",
   "/api/auth/google(.*)",
   "/api/auth/callback/google(.*)",
   "/api/auth/claim-clerk-return(.*)",
@@ -152,5 +153,7 @@ export const config = {
     // Route Handler بلا اعتراض Clerk ولا تحويل.
     "/((?!_next|mcp(?:/|$)|aman/mcp(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
+    // مسار البروكسي التلقائي لـ Clerk (يلزم عند ترقية @clerk/nextjs لإصدار يدعمه).
+    "/__clerk/:path*",
   ],
 };

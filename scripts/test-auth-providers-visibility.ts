@@ -4,6 +4,8 @@
  */
 import assert from "node:assert/strict";
 import {
+  AUTH_FEATURE_FLAGS,
+  getAccountSecurityFeatures,
   hasAnySignInProvider,
   isAppleAuthEnabled,
   isAuthLaunchReady,
@@ -16,6 +18,10 @@ delete process.env.AUTH_APPLE_ENABLED;
 delete process.env.NEXT_PUBLIC_AUTH_APPLE_ENABLED;
 delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 delete process.env.CLERK_SECRET_KEY;
+for (const flag of AUTH_FEATURE_FLAGS) {
+  delete process.env[flag];
+  delete process.env[`NEXT_PUBLIC_${flag}`];
+}
 
 assert.equal(isAppleAuthEnabled(), false);
 assert.equal(listVisibleAuthProviders().includes("apple"), false);
@@ -34,5 +40,26 @@ process.env.GOOGLE_CLIENT_ID = "gid";
 process.env.GOOGLE_CLIENT_SECRET = "gsec";
 assert.equal(isAuthLaunchReady(), true);
 assert.ok(listVisibleAuthProviders().includes("google"));
+
+// الوسائل الجديدة مخفية افتراضيًا حتى مع Clerk
+assert.deepEqual(listVisibleAuthProviders(), ["google", "apple"]);
+assert.deepEqual(getAccountSecurityFeatures(), { mfa: false, organizations: false });
+
+process.env.AUTH_MICROSOFT_ENABLED = "true";
+process.env.NEXT_PUBLIC_AUTH_EMAIL_CODE_ENABLED = "1";
+process.env.AUTH_PHONE_ENABLED = "yes";
+process.env.AUTH_MFA_ENABLED = "1";
+process.env.AUTH_ORGANIZATIONS_ENABLED = "1";
+assert.deepEqual(listVisibleAuthProviders(), ["google", "microsoft", "apple", "email", "phone"]);
+assert.deepEqual(getAccountSecurityFeatures(), { mfa: true, organizations: true });
+
+process.env.AUTH_PHONE_ENABLED = "0";
+assert.equal(listVisibleAuthProviders().includes("phone"), false);
+
+// بدون Clerk لا تظهر أي وسيلة تعتمد عليه، ويبقى Google الأصلي
+delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+delete process.env.CLERK_SECRET_KEY;
+assert.deepEqual(listVisibleAuthProviders(), ["google"]);
+assert.deepEqual(getAccountSecurityFeatures(), { mfa: false, organizations: false });
 
 console.log("test-auth-providers-visibility: OK");

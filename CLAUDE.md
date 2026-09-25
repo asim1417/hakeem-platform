@@ -39,7 +39,7 @@
 
 ```
 Frontend:   Next.js 14 / TypeScript / Tailwind CSS
-Auth:       Microsoft Entra ID (Azure AD)
+Auth:       Clerk (Google · Microsoft · Apple · بريد برمز · جوال OTP · 2FA · Organizations) — docs/AUTH_CLERK_SETUP.md
 Database:   PostgreSQL + Prisma ORM
 Vector:     pgvector (داخل PostgreSQL)
 Graph:      PostgreSQL مع جداول علاقات (مرحلة أولى)

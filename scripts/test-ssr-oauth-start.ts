@@ -7,7 +7,9 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   buildOAuthStartPath,
+  buildClerkPortalPageUrl,
   buildClerkPortalSsoUrl,
+  parseClerkOAuthProvider,
   decodeClerkFrontendApiHost,
   clerkAccountPortalOrigin,
 } from "../lib/modules/auth/clerk-oauth-start";
@@ -22,6 +24,31 @@ assert.equal(
   clerkAccountPortalOrigin("safe-elk-50.clerk.accounts.dev"),
   "https://safe-elk-50.accounts.dev"
 );
+
+// إنتاج: clerk.<النطاق> ← accounts.<النطاق>
+assert.equal(clerkAccountPortalOrigin("clerk.hakeem.sa"), "https://accounts.hakeem.sa");
+process.env.NEXT_PUBLIC_CLERK_ACCOUNT_PORTAL_URL = "https://login.hakeem.sa/";
+assert.equal(clerkAccountPortalOrigin("clerk.hakeem.sa"), "https://login.hakeem.sa");
+delete process.env.NEXT_PUBLIC_CLERK_ACCOUNT_PORTAL_URL;
+
+assert.equal(parseClerkOAuthProvider("Microsoft"), "microsoft");
+assert.equal(parseClerkOAuthProvider("email"), null);
+
+const msPortal = buildClerkPortalSsoUrl({
+  provider: "microsoft",
+  redirectUrlComplete: "https://hakeem.sa/auth/continue?next=%2Fdashboard",
+  publishableKey: "pk_test_c2FmZS1lbGstNTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
+});
+assert.ok(msPortal!.includes("strategy=oauth_microsoft"));
+
+const userPage = buildClerkPortalPageUrl({
+  page: "user",
+  redirectUrl: "https://hakeem.sa/auth/continue?next=%2Fdashboard",
+  publishableKey: "pk_test_c2FmZS1lbGstNTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
+});
+assert.ok(userPage!.startsWith("https://safe-elk-50.accounts.dev/user?"));
+assert.ok(userPage!.includes("redirect_url=https%3A%2F%2Fhakeem.sa%2Fauth%2Fcontinue"));
+assert.equal(buildClerkPortalPageUrl({ page: "sign-in", redirectUrl: "x", publishableKey: "bad" }), null);
 
 const portal = buildClerkPortalSsoUrl({
   provider: "google",
