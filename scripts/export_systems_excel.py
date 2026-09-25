@@ -24,7 +24,10 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 OUT = ROOT / "reports" / "saudi-systems-issuance.xlsx"
 
-PROCEDURAL_DOMAINS = {"procedure", "enforcement", "evidence", "arbitration", "notarization"}
+PROCEDURAL_DOMAINS = {"procedure", "evidence", "arbitration", "notarization"}
+# أنظمة إجرائية/قضائية بالاسم (مصنِّف المجال في القاعدة يضعها في مجالات أخرى)
+PROCEDURAL_NAME = re.compile(r"مرافعات|الإجراءات الجزائية|الإثبات|^نظام التنفيذ|التحكيم|التوثيق|المحاكم|التكاليف القضائية")
+JUDICIAL_NAME = re.compile(r"^نظام القضاء|ديوان المظالم|النيابة العامة|التحقيق والادعاء|تركيز مسؤوليات القضاء|القضاء ونظام")
 
 SRC_CORE = "بوابة وزارة العدل (تحقق رسمي)"
 SRC_MOJ = "بوابة وزارة العدل (لائحة/أداة رسمية)"
@@ -57,12 +60,29 @@ def fmt_hijri(h: str | None) -> str:
 
 
 def instrument_type(name: str) -> str:
+    name = re.sub(r"(?<!ه)ـ", "", name)
     first = name.split()[0].replace("ال", "", 1) if name.startswith("ال") else name.split()[0]
     return {
         "نظام": "نظام", "تنظيم": "تنظيم", "لائحة": "لائحة", "لوائح": "لائحة",
         "ترتيبات": "ترتيبات", "ترتيب": "ترتيبات", "قانون": "قانون",
         "قواعد": "قواعد", "ضوابط": "ضوابط", "أدلة": "دليل", "آلية": "آلية",
     }.get(first, "أخرى")
+
+
+def parent_of(name: str) -> str | None:
+    """اسم النظام الأم للائحة/الأداة (من صيغة «... لنظام X» أو «... في نظام X»)."""
+    if not re.match(r"^(ال)?(لائحة|لوائح|اللائحة|اللوائح|قواعد|ضوابط|أدلة|آلية)", name) and "التنفيذية" not in name:
+        return None
+    m = re.search(r"(?:ل|في |تطبيق )(نظام [^()]+?)(?:\s+ولائحته.*)?$", name)
+    return m[1].strip() if m else None
+
+
+def nature_of(name: str, domain: str) -> str:
+    if domain in PROCEDURAL_DOMAINS or PROCEDURAL_NAME.search(name):
+        return "إجرائي"
+    if JUDICIAL_NAME.search(name):
+        return "قضائي تنظيمي"
+    return "موضوعي/تنظيمي"
 
 
 def load_core() -> dict[str, dict]:
@@ -77,9 +97,20 @@ def main() -> None:
     systems = json.loads((DATA / "legal_systems_classified.json").read_text(encoding="utf-8"))["systems"]
     core = load_core()
 
+    by_norm = {norm(x["name"]): x for x in systems}
     rows = []
     for s in sorted(systems, key=lambda x: x["order"]):
-        name = s["name"]
+        name = s["name"]  # الاسم كما هو في المصدر
+        clean = re.sub(r"\s+", " ", re.sub(r"(?<!ه)ـ", "", name)).strip()
+        parent_name = parent_of(clean)
+        parent = by_norm.get(norm(parent_name)) if parent_name else None
+        domain_title, domain = s["domainTitle"], s["domain"]
+        # المصنِّف الآلي يضع كل «لائحة تنفيذية» في مجال «التنفيذ» بسبب اللفظ — نورّث مجال النظام الأم.
+        if domain == "enforcement" and not clean.startswith("نظام التنفيذ"):
+            if parent:
+                domain_title, domain = parent["domainTitle"], parent["domain"]
+            else:
+                domain_title, domain = "غير مصنف", ""
         c = core.get(norm(name))
         date_h, source, url, year_only = None, "", "", None
         if c and c["date"]:
@@ -91,8 +122,9 @@ def main() -> None:
                 year_only, source = ym[1], SRC_NAME
         rows.append({
             "code": s["code"], "name": name, "type": instrument_type(name),
-            "domain": s["domainTitle"], "nature": "إجرائي" if s["domain"] in PROCEDURAL_DOMAINS else "موضوعي/تنظيمي",
-            "parent": "", "articles": s["articleCount"],
+            "domain": domain_title,
+            "nature": nature_of(parent["name"], parent["domain"]) if parent else nature_of(clean, domain),
+            "parent": parent["name"] if parent else (parent_name or ""), "articles": s["articleCount"],
             "date_h": date_h, "year_h": year_only, "source": source, "url": url,
         })
 
@@ -103,7 +135,8 @@ def main() -> None:
             seq += 1
             rows.append({
                 "code": f"MOJ-{seq:03d}", "name": sy["name"], "type": instrument_type(sy["name"]),
-                "domain": sy.get("classification") or "", "nature": "إجرائي",
+                "domain": by_norm[norm(sy["parentSystem"])]["domainTitle"] if norm(sy.get("parentSystem") or "") in by_norm else "",
+                "nature": nature_of(sy.get("parentSystem") or sy["name"], ""),
                 "parent": sy.get("parentSystem") or "", "articles": sy.get("officialArticleCount"),
                 "date_h": sy.get("issuanceDateH"), "year_h": None, "source": SRC_MOJ,
                 "url": sy.get("sourceUrl") or "",
@@ -184,13 +217,15 @@ def main() -> None:
         ["إجمالي السجلات", len(rows)],
         ["أنظمة القاعدة", len(systems)],
         ["لوائح وأدوات إجرائية (وزارة العدل)", seq],
-        ["الأنظمة الإجرائية", sum(r["nature"] == "إجرائي" for r in rows)],
+        ["إجرائي", sum(r["nature"] == "إجرائي" for r in rows)],
+        ["قضائي تنظيمي", sum(r["nature"] == "قضائي تنظيمي" for r in rows)],
         ["بتاريخ إصدار كامل موثّق — أنظمة أساسية", n_core],
         ["بتاريخ إصدار كامل موثّق — لوائح وأدوات", n_moj],
         ["بسنة إصدار من اسم النظام فقط", n_name],
         ["بلا تاريخ في القاعدة", len(rows) - n_core - n_moj - n_name],
         ["تاريخ التصدير", date.today().isoformat()],
         ["ملاحظة", "لم يُضَف أي تاريخ غير وارد في مصدر موثّق. تحويل الهجري للميلادي وفق تقويم أم القرى."],
+        ["ملاحظة", "عمود «الطبيعة» تصنيف آلي بقواعد الاسم؛ واللوائح ترث مجال وطبيعة نظامها الأم."],
     ]
     sheet(ws3, ["البند", "القيمة"], summary, [42, 80])
 
