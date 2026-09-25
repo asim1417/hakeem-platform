@@ -10,8 +10,27 @@
  *   • تُستبعد اللوائح التنفيذية ما لم يطلبها المُدخَل صراحةً أو تُمرَّر includeBylaws.
  *   • «تفضيل النافذ»: عند التعادل يُقدَّم النظام الأصل (أكبر عدد مواد) لا اللائحة.
  */
+import fs from "node:fs";
+import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
+
+// قائمة الأنظمة المتأثّرة بإزاحة الترقيم (البند 1.4) — تُقرأ مرّة وتُخزَّن.
+let _shiftedSet: Set<string> | null = null;
+function shiftedSystems(): Set<string> {
+  if (_shiftedSet) return _shiftedSet;
+  _shiftedSet = new Set<string>();
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data/shifted-systems.json"), "utf8"));
+    for (const n of raw.pendingOfficialCorrection ?? []) _shiftedSet.add(normalizeSystemName(n));
+  } catch { /* غياب الملف = لا قائمة */ }
+  return _shiftedSet;
+}
+
+/** هل ترقيم هذا النظام مزاح ولم يُصحَّح رسميًّا بعد؟ (استشهاد مواده غير متحقَّق). */
+export function isNumberingShifted(systemName: string | null | undefined): boolean {
+  return shiftedSystems().has(normalizeSystemName(systemName));
+}
 
 export function normalizeSystemName(input: string | null | undefined): string {
   // normalizeArabic يُسقط التشكيل/التطويل ويوحّد الهمزات/التاء/الألف المقصورة ويحوّل الأرقام
@@ -30,16 +49,24 @@ export function isBylawName(normalized: string): boolean {
 }
 
 export interface ResolvedLaw {
-  system: { id: string; name: string; articleCount: number };
-  matchType: "exact" | "prefix" | "contains";
+  system: { id: string; name: string; articleCount: number } | null;
+  matchType: "exact" | "prefix" | "contains" | "none";
+  /** حاسم = مطابقة تامّة وحيدة أو أطول بادئة وحيدة. الاحتواء والتعدّد ليسا حاسمين. */
+  decisive: boolean;
+  /** مرشّحون عند الغموض (للاقتراح لا للاختيار الحاسم). */
+  candidates: string[];
 }
 
+/**
+ * يحلّ اسم النظام. **الاحتواء لم يعد اختيارًا حاسمًا**: عند التعدّد أو الاحتواء يعيد
+ * decisive=false مع candidates ليتعامل معه المُستدعي كـ CITATION_NOT_VERIFIED.
+ */
 export async function resolveLaw(
   input: string,
   opts: { includeBylaws?: boolean } = {},
-): Promise<ResolvedLaw | null> {
+): Promise<ResolvedLaw> {
   const q = normalizeSystemName(input);
-  if (!q) return null;
+  if (!q) return { system: null, matchType: "none", decisive: false, candidates: [] };
   const wantsBylaw = opts.includeBylaws === true || isBylawName(q);
 
   const systems = await prisma.legalSystem
@@ -50,26 +77,27 @@ export async function resolveLaw(
     .map((s) => ({ s, n: normalizeSystemName(s.name) }))
     .filter((x) => x.n.length > 0 && (wantsBylaw || !isBylawName(x.n)));
 
-  // ① مطابقة تامّة.
+  // ① مطابقة تامّة — حاسمة فقط إن كانت وحيدة.
   const exact = cand.filter((x) => x.n === q);
-  if (exact.length) {
-    exact.sort((a, b) => b.s.articleCount - a.s.articleCount);
-    return { system: exact[0].s, matchType: "exact" };
-  }
+  if (exact.length === 1) return { system: exact[0].s, matchType: "exact", decisive: true, candidates: [exact[0].s.name] };
+  if (exact.length > 1) return { system: null, matchType: "exact", decisive: false, candidates: exact.map((x) => x.s.name) };
 
-  // ② أطول بادئة (في الاتجاهين) — الأطول ثمّ الأكبر مادةً (تفضيل النافذ/الأصل).
+  // ② أطول بادئة — حاسمة فقط إن انفرد صاحب أطول تطابق.
   const prefix = cand.filter((x) => x.n.startsWith(q) || q.startsWith(x.n));
   if (prefix.length) {
     prefix.sort((a, b) => b.n.length - a.n.length || b.s.articleCount - a.s.articleCount);
-    return { system: prefix[0].s, matchType: "prefix" };
+    const topLen = prefix[0].n.length;
+    const topTies = prefix.filter((x) => x.n.length === topLen);
+    if (topTies.length === 1) return { system: prefix[0].s, matchType: "prefix", decisive: true, candidates: [prefix[0].s.name] };
+    return { system: null, matchType: "prefix", decisive: false, candidates: topTies.map((x) => x.s.name) };
   }
 
-  // ③ احتواء.
+  // ③ احتواء — **ليس حاسمًا** إطلاقًا؛ اقتراح مرشّحين فقط.
   const contains = cand.filter((x) => x.n.includes(q) || q.includes(x.n));
   if (contains.length) {
     contains.sort((a, b) => b.s.articleCount - a.s.articleCount);
-    return { system: contains[0].s, matchType: "contains" };
+    return { system: null, matchType: "contains", decisive: false, candidates: contains.slice(0, 8).map((x) => x.s.name) };
   }
 
-  return null;
+  return { system: null, matchType: "none", decisive: false, candidates: [] };
 }

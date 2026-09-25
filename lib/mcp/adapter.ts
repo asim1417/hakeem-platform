@@ -14,7 +14,7 @@
  *   lawRelation    → LegalRelation  (prisma.legalRelation، علاقات polymorphic)
  */
 import { prisma } from "@/lib/prisma";
-import { resolveLaw } from "@/lib/modules/legal-core/resolve-law";
+import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve-law";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -245,9 +245,15 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   const n = toArticleNumber(articleNumber);
   if (n === null) return { verdict: "رقم المادة غير صالح", law_name: lawName, article_number: articleNumber };
 
-  // حلّ اسم النظام بثبات (1.1): تطبيع + مطابقة تامّة ثمّ أطول بادئة + استبعاد اللوائح.
+  // حلّ اسم النظام بثبات (1.1): مطابقة تامّة/بادئة وحيدة فقط تُعدّ حاسمة (الاحتواء ليس حاسمًا).
   const resolved = await resolveLaw(lawName);
-  const system = resolved?.system ?? null;
+  if (!resolved.decisive || !resolved.system) {
+    return { verdict: "النظام غير محسوم بهذا الاسم", law_name: lawName, candidates: resolved.candidates };
+  }
+  if (isNumberingShifted(resolved.system.name)) {
+    return { verdict: "ترقيم النظام قيد التصحيح الرسميّ — لا يُعتدّ برقم المادة", law: resolved.system.name, article_number: articleNumber };
+  }
+  const system = resolved.system;
 
   // نبحث المادة عبر معرّف النظام إن وُجد، وإلا عبر اسم النظام على المادة مباشرة.
   const article = await prisma.legalArticle.findFirst({

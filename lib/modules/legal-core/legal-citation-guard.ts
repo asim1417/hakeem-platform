@@ -2,10 +2,11 @@ import { prisma } from "@/lib/prisma";
 import type { LegalCoreResult } from "./legal-retrieval";
 import { noLegalArticleMessage } from "./legal-retrieval";
 import { parseArticleNumberCandidates } from "./judgment-citation-extractor";
-import { resolveLaw } from "./resolve-law";
+import { resolveLaw, isNumberingShifted } from "./resolve-law";
 
 export const CITATION_NOT_VERIFIED = "CITATION_NOT_VERIFIED";
 const REPEALED_STATUS = "ملغاة";
+const IN_FORCE_STATUS = "سارية";
 
 export type CitationGuardResult =
   | {
@@ -16,13 +17,15 @@ export type CitationGuardResult =
       citationLabel: string;
       status: string;
       repealed: boolean;
+      inForce: boolean; // نافذ فقط عندما status = «سارية» صراحةً (UNKNOWN ليس نافذًا)
     }
-  | { ok: false; message: string; code?: string };
+  | { ok: false; message: string; code?: string; candidates?: string[] };
 
 /**
- * حارس الاستشهاد (1.1): يحلّ اسم النظام بثبات عبر resolveLaw ثمّ يتحقق من وجود المادة.
- * يعيد repealed=true إن كانت المادة ملغاة (لا يُعتدّ بها نافذة). عند تعذّر التحقّق يعيد
- * code=CITATION_NOT_VERIFIED كي لا يُعرض الاستشهاد حقيقةً.
+ * حارس الاستشهاد (1.1): يحلّ اسم النظام بثبات عبر resolveLaw.
+ *   • الاحتواء/التعدّد ليس حاسمًا → CITATION_NOT_VERIFIED مع اقتراح مرشّحين.
+ *   • أنظمة إزاحة الترقيم (1.4) → CITATION_NOT_VERIFIED حتى التصحيح الرسميّ.
+ *   • UNKNOWN لا يُعامَل كحالة نافذة (inForce=false)؛ الملغاة repealed=true.
  */
 export async function validateLegalCitation(input: { articleId?: string; systemName?: string; articleNumber?: number }): Promise<CitationGuardResult> {
   let article = input.articleId
@@ -30,10 +33,23 @@ export async function validateLegalCitation(input: { articleId?: string; systemN
     : null;
 
   if (!article && input.systemName && input.articleNumber) {
-    // حلّ اسم النظام بثبات (تطبيع، مطابقة تامّة ثمّ أطول بادئة، استبعاد اللوائح، تفضيل الأصل).
     const resolved = await resolveLaw(input.systemName);
-    if (!resolved) {
-      return { ok: false, code: CITATION_NOT_VERIFIED, message: `${CITATION_NOT_VERIFIED}: لا نظام يطابق «${input.systemName}».` };
+    // لا اختيار حاسم بالاحتواء/التعدّد.
+    if (!resolved.decisive || !resolved.system) {
+      return {
+        ok: false,
+        code: CITATION_NOT_VERIFIED,
+        message: `${CITATION_NOT_VERIFIED}: تعذّر حسم النظام «${input.systemName}» (تطابق غير قاطع).`,
+        candidates: resolved.candidates,
+      };
+    }
+    // نظام مزاح الترقيم: لا يُعتدّ بأرقام مواده حتى التصحيح الرسميّ.
+    if (isNumberingShifted(resolved.system.name)) {
+      return {
+        ok: false,
+        code: CITATION_NOT_VERIFIED,
+        message: `${CITATION_NOT_VERIFIED}: ترقيم «${resolved.system.name}» قيد التصحيح الرسميّ؛ لا يُعتدّ برقم المادة الآن.`,
+      };
     }
     article = await prisma.legalArticle
       .findFirst({
@@ -46,16 +62,28 @@ export async function validateLegalCitation(input: { articleId?: string; systemN
   }
 
   if (!article) return { ok: false, code: CITATION_NOT_VERIFIED, message: noLegalArticleMessage };
+
+  // حتى مع تمرير articleId مباشرةً: احترم إزاحة الترقيم.
+  if (isNumberingShifted(article.lawName)) {
+    return {
+      ok: false,
+      code: CITATION_NOT_VERIFIED,
+      message: `${CITATION_NOT_VERIFIED}: ترقيم «${article.lawName}» قيد التصحيح الرسميّ؛ لا يُعتدّ برقم المادة الآن.`,
+    };
+  }
+
   const status = String(article.status ?? "").trim();
   const repealed = status === REPEALED_STATUS;
+  const inForce = status === IN_FORCE_STATUS; // UNKNOWN/فارغ/غيرها ⇒ ليس نافذًا
   return {
     ok: true,
     articleId: article.id,
     systemName: article.lawName,
     articleNumber: article.articleNumber,
-    citationLabel: `${article.lawName}، المادة ${article.articleNumber}${repealed ? " (ملغاة)" : ""}`,
-    status: status || "سارية",
+    citationLabel: `${article.lawName}، المادة ${article.articleNumber}${repealed ? " (ملغاة)" : inForce ? "" : " (حالة غير مؤكدة)"}`,
+    status: status || "غير معروف",
     repealed,
+    inForce,
   };
 }
 
