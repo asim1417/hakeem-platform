@@ -38,7 +38,7 @@ const handler = createMcpHandler(
           limit: z.number().min(1).max(20).default(10),
         }),
       },
-      async ({ query, law_id, limit }) => json(await hakeem.searchArticles(query, law_id, limit))
+      async ({ query, law_id, limit }) => tool("hakeem_search", () => hakeem.searchArticles(query, law_id, limit))
     );
 
     // ٢) نص المادة كاملًا
@@ -50,7 +50,7 @@ const handler = createMcpHandler(
           article_id: z.string().describe("معرّف المادة كما يرجع من hakeem_search"),
         }),
       },
-      async ({ article_id }) => json(await hakeem.getArticle(article_id))
+      async ({ article_id }) => tool("hakeem_get_article", () => hakeem.getArticle(article_id))
     );
 
     // ٣) بطاقة النظام وفهرسه
@@ -63,7 +63,7 @@ const handler = createMcpHandler(
           name: z.string().optional().describe("أو البحث باسم النظام"),
         }),
       },
-      async ({ law_id, name }) => json(await hakeem.getLaw(law_id, name))
+      async ({ law_id, name }) => tool("hakeem_get_law", () => hakeem.getLaw(law_id, name))
     );
 
     // ٤) روابط النظام بلوائحه
@@ -76,7 +76,7 @@ const handler = createMcpHandler(
           law_id: z.string().describe("معرّف النظام أو اللائحة"),
         }),
       },
-      async ({ law_id }) => json(await hakeem.getBylawLinks(law_id))
+      async ({ law_id }) => tool("hakeem_bylaw_links", () => hakeem.getBylawLinks(law_id))
     );
 
     // ٥) توسيع المصطلح من المكنز
@@ -89,7 +89,7 @@ const handler = createMcpHandler(
           term: z.string().describe("المصطلح القانوني"),
         }),
       },
-      async ({ term }) => json(await hakeem.expandTerms(term))
+      async ({ term }) => tool("hakeem_expand_terms", () => hakeem.expandTerms(term))
     );
 
     // ٦) البحث في الأحكام
@@ -105,7 +105,7 @@ const handler = createMcpHandler(
           limit: z.number().min(1).max(20).default(10),
         }),
       },
-      async ({ query, court, year_h, limit }) => json(await hakeem.searchRulings(query, court, year_h, limit))
+      async ({ query, court, year_h, limit }) => tool("hakeem_search_rulings", () => hakeem.searchRulings(query, court, year_h, limit))
     );
 
     // ٧) حارس الإحالات — التحقق قبل العزو
@@ -121,7 +121,7 @@ const handler = createMcpHandler(
         }),
       },
       async ({ law_name, article_number, claimed_text }) =>
-        json(await hakeem.verifyCitation(law_name, article_number, claimed_text))
+        tool("hakeem_verify_citation", () => hakeem.verifyCitation(law_name, article_number, claimed_text))
     );
 
     // ٨) البحث الموضوعي الشامل (توسيع مكنز + بحث هجين + حصر لفظي، مجمّع حسب النظام)
@@ -142,7 +142,7 @@ const handler = createMcpHandler(
         }),
       },
       async ({ topic, extra_terms, per_term_limit, law_id, strict }) =>
-        json(await handleResearch({ topic, extra_terms, per_term_limit, law_id, strict }))
+        tool("hakeem_research", () => handleResearch({ topic, extra_terms, per_term_limit, law_id, strict }))
     );
 
     // ٩) الحصر الشامل (كل المواد المطابقة لفظيًا، مع عداد إجمالي وترقيم cursor)
@@ -164,7 +164,7 @@ const handler = createMcpHandler(
         }),
       },
       async ({ terms, law_id, page_size, cursor, snippet_len }) =>
-        json(await handleEnumerate({ terms, law_id, page_size, cursor, snippet_len }))
+        tool("hakeem_enumerate", () => handleEnumerate({ terms, law_id, page_size, cursor, snippet_len }))
     );
 
     // ١٠) قراءة نطاق مواد متتابع بالنص الكامل (حتى ٢٠ مادة)
@@ -180,7 +180,7 @@ const handler = createMcpHandler(
         }),
       },
       async ({ law_id, from_article, to_article }) =>
-        json(await handleRange({ law_id, from_article, to_article }))
+        tool("hakeem_get_articles_range", () => handleRange({ law_id, from_article, to_article }))
     );
 
     // ١١) دليل سير العمل للوكيل
@@ -191,7 +191,7 @@ const handler = createMcpHandler(
           "دليل استخدام مختصر: سير العمل الأمثل لأدوات حكيم بحسب نوع المهمة. استدعه أولًا عند المهام المركبة.",
         inputSchema: z.object({}),
       },
-      async () => json(handleGuide())
+      async () => tool("hakeem_guide", () => handleGuide())
     );
 
     // ١٢) جلب نص حكم قضائي كاملًا بمعرّفه مع تقطيع
@@ -206,7 +206,7 @@ const handler = createMcpHandler(
           max_chars: z.number().int().min(1000).max(60000).default(30000).describe("أقصى عدد أحرف تُرجَع في الاستدعاء الواحد"),
         }),
       },
-      async ({ ruling_id, offset, max_chars }) => json(await getRuling(ruling_id, offset, max_chars))
+      async ({ ruling_id, offset, max_chars }) => tool("hakeem_get_ruling", () => getRuling(ruling_id, offset, max_chars))
     );
 
     // ١٣) حصر شامل غير مسقوف للأحكام (عدّ حقيقيّ + توزيع بالمحكمة + ترقيم cursor)
@@ -230,7 +230,7 @@ const handler = createMcpHandler(
         }),
       },
       async ({ terms, court, year_h, count_only, page_size, cursor, snippet_len }) =>
-        json(await enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
+        tool("hakeem_enumerate_rulings", () => enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
     );
   },
   {
@@ -243,20 +243,54 @@ function json(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 1) }] };
 }
 
-/** مصادقة اختيارية بمفتاح: تُفعَّل تلقائيًا إذا عُرّف HAKEEM_MCP_KEY في متغيرات البيئة */
+// MCP-001: سقف زمني لكل أداة + قياس زمني منظّم. أي أداة تتجاوز السقف تُرجع خطأً
+// منظّمًا بسرعة (قبل حدّ Vercel 300s) بدل الانتظار حتى المهلة القصوى.
+const TOOL_TIMEOUT_MS = Number(process.env.MCP_TOOL_TIMEOUT_MS || 20000);
+
+async function tool<T>(name: string, fn: () => Promise<T> | T) {
+  const started = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`MCP_TOOL_TIMEOUT:${name}:${TOOL_TIMEOUT_MS}ms`)), TOOL_TIMEOUT_MS);
+    });
+    const result = await Promise.race([Promise.resolve().then(fn), timeout]);
+    console.log(`[mcp] tool=${name} ms=${Date.now() - started} ok=true`);
+    return json(result);
+  } catch (e) {
+    const ms = Date.now() - started;
+    const timedOut = (e as Error)?.message?.startsWith("MCP_TOOL_TIMEOUT");
+    console.warn(`[mcp] tool=${name} ms=${ms} ok=false ${timedOut ? "timeout" : "error"}=${(e as Error)?.message?.slice(0, 160)}`);
+    // خطأ منظّم داخل بروتوكول MCP (نجاح HTTP، جسم يحمل الخطأ) — لا تعليق 300 ثانية.
+    return json({
+      error: timedOut ? "timeout" : "tool_error",
+      tool: name,
+      ms,
+      message: timedOut
+        ? `تجاوزت الأداة الحدّ الزمني (${TOOL_TIMEOUT_MS}ms). حصر النطاق أو استخدم count_only/الترقيم.`
+        : "تعذّر تنفيذ الأداة.",
+    });
+  }
+}
+
+/**
+ * مصادقة اختيارية بمفتاح (MCP-SEC-001): من الهيدر فقط — x-api-key أو Authorization: Bearer.
+ * لا يُقبل المفتاح من query string (كان يتسرّب إلى history/logs/referrer).
+ */
 function withAuth(h: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
-    // تشذيب قيمة البيئة: يتجاوز سطرًا/فراغًا زائدًا شائعًا عند لصق المتغيّر في Vercel.
+    const started = Date.now();
     const expected = process.env.HAKEEM_MCP_KEY?.trim();
     if (expected) {
-      const url = new URL(req.url);
-      // يُقبل المفتاح من هيدر x-api-key أو من ?key= — مع تشذيب الطرفين قبل المقارنة.
-      const raw = req.headers.get("x-api-key") ?? url.searchParams.get("key");
-      const provided = raw?.trim();
-      // 403 بلا WWW-Authenticate: رفض صريح لا يُفسَّر لدى عميل MCP كدعوة OAuth (401).
+      const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+      const provided = (req.headers.get("x-api-key") ?? bearer)?.trim();
       if (provided !== expected) return new Response("Forbidden", { status: 403 });
     }
-    return h(req);
+    try {
+      return await h(req);
+    } finally {
+      console.log(`[mcp] request ms=${Date.now() - started} method=${req.method}`);
+    }
   };
 }
 
