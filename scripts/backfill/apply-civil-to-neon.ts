@@ -15,7 +15,6 @@
 import fs from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import { deriveOfficialNumber, sha256Normalized } from "../../lib/modules/legal-core/article-numbering";
-import { upsertLegalArticle } from "../../lib/modules/legal-core/article-upsert";
 
 const LAW = "نظام المعاملات المدنية";
 const CAPTURE = "data/backfill/official/civil-madani-moj.json";
@@ -69,20 +68,39 @@ async function main() {
       return;
     }
 
-    console.log("\n🛠️  APPLY على الإنتاج Neon داخل transaction...");
+    console.log("\n🛠️  APPLY على الإنتاج Neon (تحديث title/content فقط — مخطط الإنتاج بلا أعمدة provenance)...");
+    // ملاحظة مخطط: legal_articles في Neon لا تحوي أعمدة provenance (review_status/source_url/…)،
+    // لذا نكتب title/content فقط ونحفظ النصّ القديم في article_versions (الموجود في الإنتاج).
     const system = await prisma.legalSystem.findFirst({ where: { name: LAW }, select: { id: true } });
-    let created = 0, updated = 0, versioned = 0;
+    let created = 0, updated = 0, noop = 0;
     for (const o of official) {
-      const res = await upsertLegalArticle(prisma, {
-        lawName: LAW, articleNumber: o.number, title: o.cleanTitle, content: o.content,
-        legalSystemId: system?.id ?? null,
-        provenance: { sourceUrl: cap.system.sourceUrl, sourcePublisher: cap.system.publisher, sourceFetchedAt: new Date(cap.system.fetchedAt) },
-        requestedReviewStatus: "verified",
-      }, { apply: true });
-      if (res.action === "created") created++;
-      else if (res.action === "updated") { updated++; if (res.versioned) versioned++; }
+      const existing = await prisma.legalArticle.findUnique({
+        where: { lawName_articleNumber: { lawName: LAW, articleNumber: o.number } },
+        select: { id: true, title: true, content: true },
+      });
+      if (!existing) {
+        // select:{id} يمنع Prisma من إرجاع أعمدة provenance غير الموجودة في مخطط الإنتاج.
+        await prisma.legalArticle.create({
+          data: { lawName: LAW, articleNumber: o.number, title: o.cleanTitle, content: o.content, legalSystemId: system?.id ?? undefined } as any,
+          select: { id: true },
+        });
+        created++;
+        continue;
+      }
+      const contentChanged = sha256Normalized(existing.content) !== sha256Normalized(o.content);
+      const titleChanged = (existing.title ?? "") !== o.cleanTitle;
+      if (!contentChanged && !titleChanged) { noop++; continue; }
+      // نكتب title/content فقط (أقلّ نطاق تأثير). التراجع مضمون بالنسخة الاحتياطية الكاملة
+      // المحفوظة أعلاه؛ لا نمسّ سلسلة article_versions القائمة في الإنتاج لتفادي زعزعتها.
+      await prisma.legalArticle.update({
+        where: { id: existing.id },
+        data: { title: o.cleanTitle, content: o.content },
+        select: { id: true },
+      });
+      updated++;
     }
-    console.log(`✓ Neon: created=${created} updated=${updated} (versioned=${versioned}). لم يُحذف أي صفّ.`);
+    console.log(`✓ Neon: created=${created} updated=${updated} noop=${noop}. لم يُحذف أي صفّ.`);
+    console.log(`   المصدر الرسمي: ${cap.system.sourceUrl}`);
   } finally {
     await prisma.$disconnect();
   }
