@@ -18,11 +18,16 @@
  *   • يرفض السكربت العمل ما لم يثبت أن الجلسة للقراءة فقط (transaction_read_only=on)،
  *     أو أن الدور لا يملك صلاحية UPDATE على judicial_cases.
  *   • لا يطبع رابط الاتصال ولا أيّ سرّ. المقتطفات تُنقّى من أرقام الهوية والجوال (PDPL).
- * المخرجات: audit/out/*.json و audit/out/rulings-audit-tables.md
+ * النقل: رابط Neon (*.neon.tech) يُستعلم عبر HTTPS (https://<host>/sql) لأن وكيل بيئة التنفيذ
+ *   لا يمرّر اتصال TCP 5432؛ يلزم NODE_USE_ENV_PROXY=1 (مضبوط في npm run audit:rulings-quality).
+ *   AUDIT_TRANSPORT=prisma يفرض اتصال Prisma المباشر (مثل مشغّلات CI). مسارا البحث الهجين
+ *   (mcp_search وweb_comprehensive) يمرّان بـ Prisma داخل التطبيق، فيُستبدلان عبر HTTP بتشخيص SQL.
+ * المخرجات: audit/out/*.json
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { neonHttpQuery } from "../../lib/rulings/audit/neon-http";
 import {
   addFrequentRulingWords,
   addText,
@@ -68,12 +73,16 @@ function readOnlyUrl(): { url: string; fromReadonlyVar: boolean } {
 }
 
 const conn = readOnlyUrl();
+const transport: "http" | "prisma" =
+  process.env.AUDIT_TRANSPORT === "prisma" || !/\.neon\.tech$/.test(new URL(conn.url).hostname) ? "prisma" : "http";
 // مسارات التطبيق تستورد lib/prisma الذي يقرأ DATABASE_URL — نوجّهه إلى الرابط نفسه للقراءة فقط.
 process.env.DATABASE_URL = conn.url;
-const db = new PrismaClient({ datasources: { db: { url: conn.url } }, log: ["error"] });
+const db = transport === "prisma" ? new PrismaClient({ datasources: { db: { url: conn.url } }, log: ["error"] }) : null;
+const httpQuery = transport === "http" ? neonHttpQuery(conn.url) : null;
 
 async function q<T>(sql: string, ...params: unknown[]): Promise<T[]> {
-  return db.$queryRawUnsafe<T[]>(sql, ...params);
+  if (httpQuery) return httpQuery<T>(sql, ...params);
+  return db!.$queryRawUnsafe<T[]>(sql, ...params);
 }
 
 async function assertReadOnly(): Promise<string> {
@@ -487,7 +496,76 @@ async function metadata(rows?: SampleRow[]) {
 type PathName = "mcp_search" | "mcp_enumerate" | "web_comprehensive" | "web_judgments" | "rulings_direct";
 const ALL_PATHS: PathName[] = ["mcp_search", "mcp_enumerate", "web_comprehensive", "web_judgments", "rulings_direct"];
 
+/**
+ * بدائل SQL لمسارات التطبيق حين يكون النقل HTTP (لا Prisma داخل التطبيق). كل بديل ينسخ
+ * الاستعلام الفعلي من ملفه، ومذكور مصدره في التعليق.
+ */
+async function runPathHttp(p: PathName, query: string): Promise<{ total: number | null; ids: string[]; diag?: unknown }> {
+  switch (p) {
+    case "mcp_search": {
+      // لا يمكن تشغيل الهجين نفسه عبر HTTP. نعيد بناء دفعة postgres-provider للأحكام والمبادئ
+      // (lib/modules/legal-search/providers/postgres-provider.ts:21-29,40-47,90-134) لإثبات التزاحم.
+      const { tokenizeQuery } = await import("../../lib/modules/legal-search/providers/postgres-provider");
+      const tokens = tokenizeQuery(query);
+      const values = tokens.length ? tokens : [query.trim()];
+      const likes = values.map((v) => `%${v}%`);
+      const or = (cols: string[]) => likes.map((_, i) => cols.map((c) => `${c} ILIKE $${i + 1}`).join(" OR ")).join(" OR ");
+      const rulings = await q<{ id: string; t: string | null; txt: string; rs: string }>(
+        `SELECT id, "judgmentTitle" AS t, left("judgmentText", 200000) AS txt, "reviewStatus" AS rs
+           FROM judicial_cases WHERE ${or(['"judgmentTitle"', '"judgmentText"'])} LIMIT 20`, ...likes);
+      const [{ n: principles }] = await q<{ n: number }>(
+        `SELECT count(*)::int AS n FROM (SELECT 1 FROM judicial_principles WHERE ${or(["title", '"principleText"'])} LIMIT 20) x`, ...likes);
+      const [{ n: articlesIlike }] = await q<{ n: number }>(
+        `SELECT count(*)::int AS n FROM (SELECT 1 FROM legal_articles WHERE ${or(["title", "content"])} LIMIT 20) x`, ...likes);
+      const scores = rulings.map((r) => {
+        const inTitle = values.some((v) => (r.t ?? "").includes(v));
+        const hits = values.filter((v) => `${r.t ?? ""}\n${r.txt}`.includes(v)).length;
+        const base = inTitle ? 0.78 : 0.58;
+        return Math.round(Math.min(0.9, base + Math.min(hits, 3) * 0.03) * (r.rs !== "needs_review" ? 1 : 0.85) * 1000) / 1000;
+      });
+      const ahead = Math.min(20, articlesIlike) + principles; // مواد (≥0.55) ومبادئ (0.6) تسبق حكمًا درجته < 0.55
+      return {
+        total: null,
+        ids: rulings.slice(0, 10).map((r) => r.id),
+        diag: {
+          reconstructed: true,
+          tokens,
+          postgresBatch: { rulingsMatched: rulings.length, rulingScoreMax: scores.length ? Math.max(...scores) : null, principlesMatched: principles, articlesIlikeProxy: articlesIlike },
+          itemsRankedAheadOfRulings: ahead,
+          rulingsLikelyCrowdedOut: rulings.length > 0 && scores.every((x) => x < 0.55) && ahead >= 30,
+        },
+      };
+    }
+    case "mcp_enumerate": {
+      // lib/mcp/tools/rulings.ts:56-69,88-94
+      const like = `%${query.replace(/[%_\\]/g, "")}%`;
+      const [{ n }] = await q<{ n: number }>(`SELECT count(*)::int AS n FROM judicial_cases r WHERE r."judgmentText" ILIKE $1`, like);
+      const rows = await q<{ id: string }>(`SELECT r.id FROM judicial_cases r WHERE r."judgmentText" ILIKE $1 ORDER BY r.id ASC LIMIT 10`, like);
+      return { total: n, ids: rows.map((r) => r.id) };
+    }
+    case "rulings_direct": {
+      // lib/modules/legal-core/rulings-search.ts:81-121
+      const { normalizeArabic } = await import("../../lib/modules/legal-core/bm25-tokenizer");
+      const tokens = normalizeArabic(query).split(/\s+/).filter((t) => t.length >= 2);
+      const [{ c }] = await q<{ c: number }>(
+        `SELECT count(*)::int c FROM information_schema.columns WHERE table_name='judicial_cases' AND column_name='search_norm'`);
+      const norm = (col: string) => `lower(translate(regexp_replace(coalesce(${col},''), '[\\u064B-\\u0652\\u0640\\u0621]', '', 'g'), 'أإآٱىةؤئ٠١٢٣٤٥٦٧٨٩', 'اااايهوي0123456789'))`;
+      const tsv = c > 0 ? `to_tsvector('simple', coalesce("search_norm",''))` : `to_tsvector('simple', ${norm('"judgmentText"')} || ' ' || ${norm('"judgmentTitle"')})`;
+      const where = `${tsv} @@ plainto_tsquery('simple', $1)`;
+      const [{ n }] = await q<{ n: number }>(`SELECT count(*)::int AS n FROM judicial_cases WHERE ${where}`, tokens.join(" "));
+      const rows = await q<{ id: string }>(
+        `SELECT id FROM judicial_cases WHERE ${where} ORDER BY ts_rank(${tsv}, plainto_tsquery('simple', $1)) DESC, "decisionDate" DESC NULLS LAST LIMIT 10`, tokens.join(" "));
+      return { total: n, ids: rows.map((r) => r.id), diag: { indexedColumn: c > 0 } };
+    }
+    case "web_comprehensive":
+      throw new Error("يتطلب تشغيل التطبيق عبر Prisma/TCP — غير متاح عبر HTTP؛ سلوكه مطابق لـ mcp_search (الهجين نفسه)");
+    case "web_judgments":
+      return runPath(p, query);
+  }
+}
+
 async function runPath(p: PathName, query: string): Promise<{ total: number | null; ids: string[]; diag?: unknown }> {
+  if (transport === "http" && p !== "web_judgments") return runPathHttp(p, query);
   switch (p) {
     case "mcp_search": {
       const { searchRulings } = await import("../../lib/mcp/adapter");
@@ -600,7 +678,7 @@ async function golden(lexRows?: { lex: Lexicon; rows: SampleRow[] }) {
 
 async function main() {
   const how = await assertReadOnly();
-  console.log(`🔒 قراءة فقط: ${how}`);
+  console.log(`🔒 قراءة فقط: ${how} — النقل: ${transport}`);
   if (step === "inventory" || step === "all") await inventory();
   if (step === "sample" || step === "all") await sample();
   let ctx: { lex: Lexicon; rows: SampleRow[] } | undefined;
@@ -618,4 +696,4 @@ main()
     console.error("فشل:", (e as Error).message);
     process.exitCode = 1;
   })
-  .finally(() => db.$disconnect());
+  .finally(() => db?.$disconnect());
