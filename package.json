@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "db:ensure-schema": "tsx scripts/db-ensure-schema.ts",
     "owner:ensure": "tsx scripts/ensure-owner-cli.ts",
+    "test:rulings-search": "tsx scripts/test-rulings-search.ts",
+    "build:rulings-search-norm": "tsx scripts/backfill/build-rulings-search-norm.ts",
     "test:citation-guard": "tsx scripts/test-citation-guard.ts",
     "audit:duplicate-articles": "tsx scripts/audit/detect-duplicate-articles.ts",
     "tool:docs": "cd tools/arabic-doc-tool && python3 -m uvicorn tool_app:app --host 0.0.0.0 --port 8080",
