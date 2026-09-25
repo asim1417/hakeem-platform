@@ -2,24 +2,31 @@ import { NextResponse } from "next/server";
 import {
   isAppleSignInAvailable,
   isGoogleSignInAvailable,
+  isMagicLinkPublicEnabled,
+  isMicrosoftPublicSignInAvailable,
+  isPhoneSignInAvailable,
   listVisibleAuthProviders,
   isAuthLaunchReady,
 } from "@/lib/modules/auth/auth-providers";
-import { isMicrosoftOAuthConfigured } from "@/lib/modules/auth/microsoft-oauth";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/auth/providers — الوسائل الظاهرة فعليًا (بدون كشف أسرار). */
+/**
+ * GET /api/auth/providers — الوسائل الظاهرة للعامة فقط (بلا أسرار).
+ * Microsoft Entra اليدوي وMagic link والهاتف لا تُعلن إلا بأعلام صريحة.
+ */
 export async function GET() {
   await hydrateEnvFromSettings().catch(() => 0);
 
   return NextResponse.json({
     google: isGoogleSignInAvailable(),
     apple: isAppleSignInAvailable(),
-    microsoft: isMicrosoftOAuthConfigured(),
-    /** كلمة المرور ليست بوابة عامة — تبقى للحقول الداخلية القديمة فقط. */
-    password: false,
+    microsoft: isMicrosoftPublicSignInAvailable(),
+    phone: isPhoneSignInAvailable(),
+    magicLink: isMagicLinkPublicEnabled(),
+    /** كلمة المرور ظاهرة في /sign-in عبر EmailPasswordSignIn (أساسية). */
+    password: true,
     providers: listVisibleAuthProviders(),
     launchReady: isAuthLaunchReady(),
   });

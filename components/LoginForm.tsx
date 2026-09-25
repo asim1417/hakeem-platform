@@ -5,10 +5,20 @@ import { useRouter } from "next/navigation";
 import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 import { openOAuthPopup } from "@/lib/modules/auth/oauth-popup";
 
-type Providers = { google: boolean; microsoft: boolean; password: boolean };
+type Providers = {
+  google: boolean;
+  microsoft: boolean;
+  magicLink: boolean;
+  password: boolean;
+};
 
 const OWNER_EMAIL = "aasemalfarsi@gmail.com";
 
+/**
+ * نموذج دخول قديم (Rollback / داخلي).
+ * Microsoft العام وMagic link لا يُعرضان إلا إن أعلنهما /api/auth/providers (أعلام معطّلة افتراضيًا).
+ * لا تُملأ كلمات مرور ثابتة في الواجهة أبدًا.
+ */
 export function LoginForm({
   nextUrl = "/dashboard",
   googleEnabled,
@@ -22,26 +32,25 @@ export function LoginForm({
   compact?: boolean;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState(OWNER_EMAIL);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [activating, setActivating] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
-  const [magicUrl, setMagicUrl] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [providers, setProviders] = useState<Providers>({
     google: Boolean(googleEnabled),
     microsoft: Boolean(microsoftEnabled),
+    magicLink: false,
     password: true,
   });
   const isOwnerEmail = email.trim().toLowerCase() === OWNER_EMAIL;
 
   useEffect(() => {
     let active = true;
-    // تفعيل حساب المالك من داخل المنصة (بدون Vercel).
     fetch("/api/auth/ensure-owner", { method: "POST" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -49,34 +58,32 @@ export function LoginForm({
         setInfo(
           data.googleEnabled
             ? "حساب المالك جاهز — يمكنك الدخول بالبريد أو عبر Google."
-            : "حساب المالك مُفعّل داخل المنصة. ادخل بالبريد وكلمة المرور الآن. Google يُضبط لاحقًا من إعدادات الموقع بعد الدخول (بدون Vercel)."
+            : "حساب المالك مُفعّل داخل المنصة. ادخل بالبريد وكلمة المرور الآن."
         );
         if (data.email) setEmail(data.email);
       })
       .catch(() => undefined);
 
-    if (googleEnabled !== undefined && microsoftEnabled !== undefined) {
-      return () => {
-        active = false;
-      };
-    }
     fetch("/api/auth/providers")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: Providers | null) => {
+      .then((data: Partial<Providers> | null) => {
         if (!active || !data) return;
         setProviders({
           google: googleEnabled ?? Boolean(data.google),
           microsoft: microsoftEnabled ?? Boolean(data.microsoft),
+          magicLink: Boolean(data.magicLink),
           password: data.password !== false,
         });
       })
       .catch(() => undefined);
+
     return () => {
       active = false;
     };
   }, [googleEnabled, microsoftEnabled]);
 
-  const dest = nextUrl && nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
+  const dest =
+    nextUrl && nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
   const hasSso = providers.google || providers.microsoft;
 
   async function activateOwner() {
@@ -87,8 +94,8 @@ export function LoginForm({
       const data = await res.json();
       if (!res.ok || !data?.ok) throw new Error(data?.message || "تعذّر التفعيل.");
       setEmail(data.email || OWNER_EMAIL);
-      setPassword("Qalam-1703!");
-      setInfo("تم تفعيل حساب المالك. كلمة المرور عُبئت — اضغط دخول.");
+      setPassword("");
+      setInfo("تم تفعيل حساب المالك. أدخل كلمة المرور يدويًا ثم اضغط دخول.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر التفعيل.");
     } finally {
@@ -96,11 +103,10 @@ export function LoginForm({
     }
   }
 
-  /** دخول المالك بقراءة البريد: يُرسل رابطًا أو يعرضه إن لم يُضبط Resend. */
   async function requestMagicLink() {
+    if (!providers.magicLink) return;
     setMagicLoading(true);
     setError("");
-    setMagicUrl("");
     try {
       const res = await fetch("/api/auth/magic", {
         method: "POST",
@@ -109,8 +115,8 @@ export function LoginForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "تعذّر إرسال رابط الدخول.");
-      setInfo(data.message || "تم تجهيز رابط الدخول.");
-      if (data.magicUrl) setMagicUrl(data.magicUrl);
+      // لا تعرض رابطًا خامًا في الواجهة — رسالة عامة فقط.
+      setInfo(data.message || "إن وُجد الحساب، سيصلك رابط الدخول على البريد.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذّر إرسال رابط الدخول.");
     } finally {
@@ -130,7 +136,6 @@ export function LoginForm({
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.message ?? "تعذر تسجيل الدخول.");
-      // إن لم يكن Google مفعّلًا بعد، وجّه المالك لإعداداته داخل الموقع.
       const go =
         email.toLowerCase() === OWNER_EMAIL && !providers.google
           ? "/admin/settings"
@@ -154,7 +159,7 @@ export function LoginForm({
               className="login-sso-btn login-sso-microsoft focus-ring"
             >
               <MicrosoftIcon />
-              <span>الدخول عبر بوابة Microsoft</span>
+              <span>الدخول عبر Microsoft</span>
             </a>
           ) : null}
           {providers.google ? (
@@ -189,7 +194,7 @@ export function LoginForm({
             >
               <GoogleIcon />
               <span>
-                {googleLoading ? "جارٍ تسجيل الدخول عبر Google..." : "الدخول عبر Google كمالك"}
+                {googleLoading ? "جارٍ تسجيل الدخول عبر Google..." : "الدخول عبر Google"}
               </span>
             </a>
           ) : null}
@@ -198,7 +203,7 @@ export function LoginForm({
         <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--navy)]">
           <p className="font-semibold">تفعيل الدخول من داخل المنصة</p>
           <p className="mt-1 text-[var(--ink-70)]">
-            لا حاجة لـ Vercel. اضغط التفعيل ثم دخول ببريد المالك. لتفعيل زر Google لاحقًا: من إعدادات الموقع بعد الدخول.
+            اضغط التفعيل ثم أدخل بريد المالك وكلمة المرور يدويًا.
           </p>
           <NavyButton
             type="button"
@@ -206,7 +211,7 @@ export function LoginForm({
             disabled={activating}
             className="mt-3 w-full px-4 py-2 text-sm"
           >
-            {activating ? "جارٍ التفعيل..." : "تفعيل حساب المالك وملء البيانات"}
+            {activating ? "جارٍ التفعيل..." : "تفعيل حساب المالك"}
           </NavyButton>
         </div>
       )}
@@ -230,7 +235,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="aasemalfarsi@gmail.com"
+            placeholder="name@example.com"
             className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3 text-left text-[var(--ink)] placeholder:text-[var(--ink-20)]"
           />
         </label>
@@ -262,11 +267,11 @@ export function LoginForm({
         </GoldButton>
       </form>
 
-      {isOwnerEmail ? (
+      {providers.magicLink && isOwnerEmail ? (
         <div className="rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] p-3 text-sm leading-7 text-[var(--navy)]">
-          <p className="font-semibold">دخول المالك بالبريد</p>
+          <p className="font-semibold">رابط دخول بالبريد</p>
           <p className="mt-1 text-[var(--ink-70)]">
-            يُرسل رابط دخول إلى <span dir="ltr">{OWNER_EMAIL}</span> — أو يُعرض هنا إن لم يُضبط Resend بعد.
+            يُرسل رابط دخول آمن إلى بريدك إن كان الحساب مؤهّلًا.
           </p>
           <NavyButton
             type="button"
@@ -274,15 +279,8 @@ export function LoginForm({
             disabled={magicLoading}
             className="mt-3 w-full px-4 py-2 text-sm"
           >
-            {magicLoading ? "جارٍ التجهيز..." : "أرسل رابط الدخول إلى بريدي"}
+            {magicLoading ? "جارٍ التجهيز..." : "أرسل رابط الدخول"}
           </NavyButton>
-          {magicUrl ? (
-            <p className="mt-3 break-all text-xs">
-              <a href={magicUrl} className="font-semibold underline underline-offset-4" dir="ltr">
-                افتح رابط الدخول الآن
-              </a>
-            </p>
-          ) : null}
         </div>
       ) : null}
 
@@ -297,6 +295,13 @@ export function LoginForm({
             className="font-semibold text-[var(--navy)] underline underline-offset-4"
           >
             إنشاء حساب وتجربة مجانية
+          </a>
+          {" · "}
+          <a
+            href="/forgot-password"
+            className="font-semibold text-[var(--navy)] underline underline-offset-4"
+          >
+            نسيت كلمة المرور؟
           </a>
         </p>
       ) : null}

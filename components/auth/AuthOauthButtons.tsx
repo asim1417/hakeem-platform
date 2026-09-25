@@ -8,6 +8,7 @@ import {
 } from "@/lib/modules/auth/auth-providers";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 import { openOAuthPopup } from "@/lib/modules/auth/oauth-popup";
+import { EmailPasswordSignIn } from "@/components/auth/EmailPasswordSignIn";
 
 function GoogleIcon() {
   return (
@@ -196,6 +197,8 @@ export function AuthOauthButtons({
         ) : null}
       </div>
 
+      {isSignIn && !embedded ? <EmailPasswordSignIn nextUrl={nextUrl} /> : null}
+
       <p className="mt-5 text-center text-xs leading-6 text-[rgba(14,52,53,0.55)]">
         باستمرارك، فإنك توافق على{" "}
         <a href="/terms" className="underline-offset-2 hover:underline">
@@ -221,6 +224,10 @@ export function AuthOauthButtons({
                 مستخدم جديد؟{" "}
                 <a href="/sign-up" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
                   أنشئ حسابك
+                </a>
+                {" · "}
+                <a href="/forgot-password" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                  نسيت كلمة المرور؟
                 </a>
               </>
             ) : (

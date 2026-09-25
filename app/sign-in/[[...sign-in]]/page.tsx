@@ -16,13 +16,17 @@ export const metadata = {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams?: { next?: string; returnUrl?: string };
+  searchParams?: { next?: string; returnUrl?: string; error?: string };
 }) {
   await hydrateEnvFromSettings().catch(() => 0);
 
   const ready = hasAnySignInProvider();
   const nextUrl = resolvePostAuthNext(searchParams);
   const visibleProviders = listVisibleAuthProviders();
+  const authError =
+    searchParams?.error === "google_keys_required"
+      ? "دخول Google غير جاهز على بيئة الإنتاج. يلزم ضبط مفاتيح Google الأصلية أو ترقية Clerk إلى pk_live_."
+      : null;
 
   return (
     <AuthJourneyShell
@@ -38,6 +42,14 @@ export default async function SignInPage({
         </nav>
       }
     >
+      {authError ? (
+        <p
+          className="mb-4 w-full max-w-[25rem] rounded-[0.5rem] border border-amber-200 bg-amber-50 px-3 py-3 text-center text-xs font-semibold leading-6 text-amber-900"
+          role="alert"
+        >
+          {authError}
+        </p>
+      ) : null}
       {ready ? (
         <AuthOauthButtons
           mode="sign-in"
