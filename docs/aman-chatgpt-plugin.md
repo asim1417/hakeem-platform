@@ -24,14 +24,14 @@ https://hakeem-platform.vercel.app/aman/mcp
 
 ```text
 HAKEEM_MCP_KEY=<اختياري لنقطة /mcp الكاملة فقط؛ لا تشاركه في رابط عام>
-AMAN_CONSULTATION_URL=https://amanlaws.com/اطلب-استشارة/
-AMAN_WHATSAPP_URL=https://wa.me/<business-number>
-AMAN_PHONE=+966...
-AMAN_PRIVACY_URL=https://amanlaws.com/<privacy-page>
-AMAN_TERMS_URL=https://amanlaws.com/<terms-page>
+AMAN_CONSULTATION_URL=https://amanlaws.com/legal-consultation/
+AMAN_WHATSAPP_URL=https://wa.me/966575555420
+AMAN_PHONE=+966575555420
+AMAN_PRIVACY_URL=<اختياري: رابط سياسة أمان المستقلة>
+AMAN_TERMS_URL=<اختياري: رابط شروط أمان المستقلة>
 ```
 
-نقطة `/aman/mcp` لا تستخدم `HAKEEM_MCP_KEY` عمداً، لأنها لا تقدم سوى تصنيفات ثابتة وروابط عامة؛ فلا تضع مفتاحاً في رابط ChatGPT. لا تنشر التطبيق علنًا قبل وجود صفحات خصوصية وشروط خدمة حقيقية ومراجعة نصوصها قانونيًا.
+نقطة `/aman/mcp` لا تستخدم `HAKEEM_MCP_KEY` عمداً، لأنها لا تقدم سوى تصنيفات ثابتة وروابط عامة؛ فلا تضع مفتاحاً في رابط ChatGPT. إن تُرك رابطا الخصوصية والشروط فارغين، تستخدم البطاقة صفحات حكيم العامة التي تشرح هذه الواجهة تحديدًا. ويمكن تجاوزهما بصفحات أمان المستقلة بعد نشرها.
 
 ## اختبار خاص داخل ChatGPT
 

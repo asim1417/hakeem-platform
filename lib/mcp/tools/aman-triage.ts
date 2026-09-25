@@ -64,7 +64,13 @@ export type AmanServiceCard = {
   hakeem_next_step: string;
 };
 
-const DEFAULT_CONSULTATION_URL = "https://amanlaws.com/اطلب-استشارة/";
+// القنوات المنشورة رسمياً لشركة أمان. يمكن تجاوزها بمتغيرات البيئة عند تغيّرها.
+const DEFAULT_CONSULTATION_URL = "https://amanlaws.com/legal-consultation/";
+const DEFAULT_WHATSAPP_URL = "https://wa.me/966575555420";
+const DEFAULT_PHONE = "+966575555420";
+// سياسة وشروط واجهة MCP نفسها مستضافتان مع تطبيق حكيم، لا في رابط خدمة طرف ثالث.
+const DEFAULT_PRIVACY_URL = "https://hakeem-platform.vercel.app/privacy";
+const DEFAULT_TERMS_URL = "https://hakeem-platform.vercel.app/terms";
 
 const SERVICE_BY_AREA: Record<AmanLegalArea, AmanService> = {
   execution: {
@@ -182,6 +188,21 @@ function safeUrl(raw: string | undefined, kind: "website" | "whatsapp") {
   }
 }
 
+/** رابط سياسة/شروط موثوق: نطاق أمان أو أصل تطبيق حكيم فقط. */
+function safePolicyUrl(raw: string | undefined) {
+  if (!raw) return undefined;
+
+  try {
+    const url = new URL(raw.trim());
+    const host = url.hostname.toLowerCase();
+    const isAmanDomain = host === "amanlaws.com" || host.endsWith(".amanlaws.com");
+    const isHakeemDomain = host === "hakeem-platform.vercel.app";
+    return url.protocol === "https:" && (isAmanDomain || isHakeemDomain) ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function safePhone(raw: string | undefined) {
   const normalised = raw?.replace(/[^\d+]/g, "");
   return normalised && /^\+?\d{8,15}$/.test(normalised) ? normalised : undefined;
@@ -190,9 +211,13 @@ function safePhone(raw: string | undefined) {
 function getContactOptions(preference: AmanContactChannel = "website"): AmanContactOption[] {
   const options: AmanContactOption[] = [];
   // يبقى مسار الموقع الرسمي هو البديل الآمن إذا كُتبت قيمة بيئة خاطئة أو نطاق غير تابع لأمان.
-  const website = safeUrl(process.env.AMAN_CONSULTATION_URL, "website") ?? safeUrl(DEFAULT_CONSULTATION_URL, "website");
-  const whatsapp = safeUrl(process.env.AMAN_WHATSAPP_URL, "whatsapp");
-  const phone = safePhone(process.env.AMAN_PHONE);
+  const website =
+    safeUrl(process.env.AMAN_CONSULTATION_URL, "website") ??
+    safeUrl(DEFAULT_CONSULTATION_URL, "website");
+  const whatsapp =
+    safeUrl(process.env.AMAN_WHATSAPP_URL, "whatsapp") ??
+    safeUrl(DEFAULT_WHATSAPP_URL, "whatsapp");
+  const phone = safePhone(process.env.AMAN_PHONE) ?? safePhone(DEFAULT_PHONE);
 
   if (website) {
     options.push({
@@ -225,8 +250,9 @@ function getContactOptions(preference: AmanContactChannel = "website"): AmanCont
 }
 
 function getPolicyLinks(): AmanPolicyLink[] {
-  const privacy = safeUrl(process.env.AMAN_PRIVACY_URL, "website");
-  const terms = safeUrl(process.env.AMAN_TERMS_URL, "website");
+  const privacy =
+    safePolicyUrl(process.env.AMAN_PRIVACY_URL) ?? safePolicyUrl(DEFAULT_PRIVACY_URL);
+  const terms = safePolicyUrl(process.env.AMAN_TERMS_URL) ?? safePolicyUrl(DEFAULT_TERMS_URL);
 
   return [
     ...(privacy ? [{ label: "سياسة الخصوصية", href: privacy }] : []),
