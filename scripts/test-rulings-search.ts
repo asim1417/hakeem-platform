@@ -31,6 +31,7 @@ async function main() {
     ok(!indexed.includes("0501234567"), "PDPL: فهرس البحث لا يُبقي الجوال بعد التطبيع");
     ok(extractHijriYear("في 12/3/1445هـ") === 1445, "استخراج السنة الهجرية");
     ok(extractHijriYear("١٢/٣/١٤٤٠") === 1440, "استخراج السنة من أرقام هندية");
+    ok(buildRulingSearchNorm("عنوان", "عضوفرحان بن يحيى").includes("عضو فرحان") || buildRulingSearchNorm("", "عضوفرحان").includes("عضو"), "فهرس البحث يفكّ التصاق التوقيع");
 
     for (const q of QUERIES) {
       const { hits, total, ms } = await searchRulingsDirect({ query: q, limit: 5 });

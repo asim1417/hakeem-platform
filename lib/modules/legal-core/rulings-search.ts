@@ -11,6 +11,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
+import { sanitizeJudgmentDisplay } from "./display-text";
 
 export interface RulingHit {
   id: string;
@@ -43,11 +44,12 @@ export function redactPII(text: string): string {
 }
 
 /**
- * نص فهرس الأحكام: حجب ثم تطبيع ثم حجب ثانٍ.
+ * نص فهرس الأحكام: تنقية عرض آمنة → حجب PDPL → تطبيع → حجب ثانٍ.
  * التطبيع يحوّل الأرقام الهندية ويزيل الفواصل، فيُظهر أرقاماً لم يطابقها الحجب الأول.
+ * لا يُعدَّل judgmentText الأصلي — هذا للنصّ المُفهرَس فقط.
  */
 export function buildRulingSearchNorm(title: string | null | undefined, text: string | null | undefined): string {
-  const raw = `${title ?? ""} ${text ?? ""}`;
+  const raw = sanitizeJudgmentDisplay(`${title ?? ""} ${text ?? ""}`);
   return redactPII(normalizeArabic(redactPII(raw)));
 }
 

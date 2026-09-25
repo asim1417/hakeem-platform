@@ -3,7 +3,7 @@
  * ومطبَّع** (البند 1.7). يُشغَّل بعد هجرة 20260925060000.
  * على Neon يلزم --apply --i-understand-production و CONFIRM_NEON_WRITE=YES.
  *
- * لا يُخزَّن أي رقم هوية/جوال في الفهرس (حجب، ثم تطبيع، ثم حجب ثانٍ).
+ * يمرّ النص عبر sanitizeJudgmentDisplay قبل الحجب/التطبيع (فهرس فقط — لا يمسّ الحكم الأصلي).
  * dry-run افتراضيًّا؛ على Neon يتطلّب --apply --i-understand-production + CONFIRM_NEON_WRITE=YES.
  */
 import { PrismaClient } from "@prisma/client";
@@ -14,6 +14,7 @@ const APPLY =
   process.argv.includes("--apply") &&
   (!isNeon || (process.argv.includes("--i-understand-production") && process.env.CONFIRM_NEON_WRITE === "YES"));
 const BATCH = 500;
+const REBUILD_ALL = process.argv.includes("--all");
 
 async function main() {
   const prisma = new PrismaClient();
@@ -23,17 +24,23 @@ async function main() {
   }
   try {
     const total = await prisma.judicialCase.count();
-    console.log(`${APPLY ? "🛠️ APPLY" : "🔎 DRY-RUN"} — أحكام: ${total}`);
+    console.log(`${APPLY ? "🛠️ APPLY" : "🔎 DRY-RUN"} — أحكام: ${total}${REBUILD_ALL ? " (إعادة الكل)" : " (الناقص فقط)"}`);
     if (!APPLY) { console.log("ℹ️  DRY-RUN: لن تُكتب بيانات. أضف --apply (على Neon branch)."); return; }
     let done = 0;
     let cursor = "";
     for (;;) {
       const rows = await prisma.$queryRawUnsafe<Array<{ id: string; judgmentText: string; judgmentTitle: string | null }>>(
-        `SELECT id, "judgmentText" AS "judgmentText", "judgmentTitle" AS "judgmentTitle"
-         FROM judicial_cases
-         WHERE id > $1 AND ("search_norm" IS NULL OR "search_norm" = '')
-         ORDER BY id
-         LIMIT ${BATCH}`,
+        REBUILD_ALL
+          ? `SELECT id, "judgmentText" AS "judgmentText", "judgmentTitle" AS "judgmentTitle"
+             FROM judicial_cases
+             WHERE id > $1
+             ORDER BY id
+             LIMIT ${BATCH}`
+          : `SELECT id, "judgmentText" AS "judgmentText", "judgmentTitle" AS "judgmentTitle"
+             FROM judicial_cases
+             WHERE id > $1 AND ("search_norm" IS NULL OR "search_norm" = '')
+             ORDER BY id
+             LIMIT ${BATCH}`,
         cursor,
       );
       if (!rows.length) break;
@@ -47,7 +54,7 @@ async function main() {
       done += rows.length;
       if (done % 5000 === 0) console.log(`  ${done}/${total}`);
     }
-    console.log(`✓ عُبِّئ search_norm لـ ${done} حكمًا (منقّى PDPL).`);
+    console.log(`✓ عُبِّئ search_norm لـ ${done} حكمًا (منقّى عرض + PDPL). لم يُمسّ judgmentText.`);
   } finally {
     await prisma.$disconnect();
   }
