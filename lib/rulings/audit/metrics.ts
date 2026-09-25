@@ -14,6 +14,7 @@ import {
   knownWeight,
   rawForm,
 } from "./lexicon";
+import { SPELLING_KINDS, type SpellingFinding, type SpellingKind, alefFariqa, confusable, spellingVariant } from "./spelling";
 
 const PRESENTATION_RE = /[ﭐ-﷿ﹰ-ﻼ]/g;
 const TATWEEL_RE = /ـ/g;
@@ -108,8 +109,8 @@ export interface RulingMetrics {
   reversedWords: number;
   gluedWords: number;
   brokenPairs: number;
-  ocrYaAlif: number; // خلط ى/ي في آخر الكلمة
-  ocrTaHa: number; // خلط ة/ه في آخر الكلمة
+  /** أخطاء إملائية بحسب النوع (lib/rulings/audit/spelling.ts). */
+  spelling: Record<SpellingKind, number>;
   ocrLatinDigitInWord: number;
   ocrBadSymbols: number;
   knownWords: number;
@@ -121,7 +122,7 @@ export interface RulingMetrics {
     glued: Array<{ word: string; parts: string[]; confidence: number }>;
     broken: Array<{ a: string; b: string; merged: string }>;
     reversed: Array<{ word: string; fixed: string }>;
-    ocr: string[];
+    spelling: SpellingFinding[];
   };
 }
 
@@ -131,12 +132,6 @@ export function normalizedHash(text: string): string {
     .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
     .replace(/[^ء-ي0-9]/g, "");
   return createHash("sha1").update(k).digest("hex");
-}
-
-function swapFinal(w: string, a: string, b: string): string | null {
-  if (w.endsWith(a)) return w.slice(0, -1) + b;
-  if (w.endsWith(b)) return w.slice(0, -1) + a;
-  return null;
 }
 
 export function measureRuling(lex: Lexicon, text: string, maxExamples = 5): RulingMetrics {
@@ -152,8 +147,7 @@ export function measureRuling(lex: Lexicon, text: string, maxExamples = 5): Ruli
     reversedWords: 0,
     gluedWords: 0,
     brokenPairs: 0,
-    ocrYaAlif: 0,
-    ocrTaHa: 0,
+    spelling: Object.fromEntries(SPELLING_KINDS.map((k) => [k, 0])) as Record<SpellingKind, number>,
     ocrLatinDigitInWord: count(norm, LATIN_DIGIT_IN_WORD_RE),
     ocrBadSymbols: count(original, BAD_SYMBOL_RE),
     knownWords: 0,
@@ -161,29 +155,38 @@ export function measureRuling(lex: Lexicon, text: string, maxExamples = 5): Ruli
     isEmpty: original.trim().length === 0,
     isShort: original.trim().length < SHORT_TEXT_CHARS,
     normHash: normalizedHash(original),
-    examples: { glued: [], broken: [], reversed: [], ocr: [] },
+    examples: { glued: [], broken: [], reversed: [], spelling: [] },
   };
 
   const known = spans.map((s) => isKnown(lex, s.word));
+  const addSpelling = (f: SpellingFinding | null): boolean => {
+    if (!f) return false;
+    m.spelling[f.kind]++;
+    if (m.examples.spelling.length < maxExamples * 3) m.examples.spelling.push(f);
+    return true;
+  };
+  // مكسور: جزءان متجاوران (يفصلهما فراغ فقط) مجهولان، ودمجهما كلمة معروفة.
+  const inBroken = new Set<number>();
+  for (let i = 0; i + 1 < spans.length; i++) {
+    if (known[i] || known[i + 1]) continue;
+    const gap = norm.slice(spans[i].end, spans[i + 1].start);
+    if (!/^[ \t]+$/.test(gap)) continue;
+    const merged = spans[i].word + spans[i + 1].word;
+    if (merged.length >= 4 && isKnown(lex, merged)) {
+      m.brokenPairs++;
+      inBroken.add(i).add(i + 1);
+      if (m.examples.broken.length < maxExamples) m.examples.broken.push({ a: spans[i].word, b: spans[i + 1].word, merged });
+    }
+  }
   for (let i = 0; i < spans.length; i++) {
     const w = spans[i].word;
     if (known[i]) {
       m.knownWords++;
-      // خلط ى/ي وة/ه: الكلمة معروفة بصيغة key لكن صيغتها raw غائبة عن المصادر النظيفة
-      // بينما الصيغة المبدَّلة حاضرة فيها.
-      if (w.length >= 3 && !lex.raw.has(w)) {
-        const ya = swapFinal(w, "ى", "ي");
-        const ta = swapFinal(w, "ة", "ه");
-        if (ya && lex.raw.has(ya)) {
-          m.ocrYaAlif++;
-          if (m.examples.ocr.length < maxExamples) m.examples.ocr.push(`${w}→${ya}`);
-        } else if (ta && lex.raw.has(ta)) {
-          m.ocrTaHa++;
-          if (m.examples.ocr.length < maxExamples) m.examples.ocr.push(`${w}→${ta}`);
-        }
-      }
+      // اختلاف رسم (همزة، ى/ي، ة/ه) أو ألف فارقة في كلمة معروفة بمفتاحها.
+      addSpelling(spellingVariant(lex, w)) || addSpelling(alefFariqa(lex, w));
       continue;
     }
+    if (inBroken.has(i)) continue;
     // مقلوب: المجهول يصير معروفًا إذا قُلب.
     const rev = reverse(w);
     if (w.length >= 3 && rev !== w && isKnown(lex, rev)) {
@@ -197,19 +200,11 @@ export function measureRuling(lex: Lexicon, text: string, maxExamples = 5): Ruli
       if (seg) {
         m.gluedWords++;
         if (m.examples.glued.length < maxExamples) m.examples.glued.push({ word: w, ...seg });
+        continue;
       }
     }
-  }
-  // مكسور: جزءان متجاوران (يفصلهما فراغ فقط) مجهولان، ودمجهما كلمة معروفة.
-  for (let i = 0; i + 1 < spans.length; i++) {
-    if (known[i] || known[i + 1]) continue;
-    const gap = norm.slice(spans[i].end, spans[i + 1].start);
-    if (!/^[ \t]+$/.test(gap)) continue;
-    const merged = spans[i].word + spans[i + 1].word;
-    if (merged.length >= 4 && isKnown(lex, merged)) {
-      m.brokenPairs++;
-      if (m.examples.broken.length < maxExamples) m.examples.broken.push({ a: spans[i].word, b: spans[i + 1].word, merged });
-    }
+    // مجهول: اختلاف كرسي الهمزة («مسئولية»)، أو ألف فارقة ناقصة، أو حرف بدل نظيره رسمًا.
+    addSpelling(spellingVariant(lex, w)) || addSpelling(alefFariqa(lex, w)) || addSpelling(confusable(lex, w));
   }
   m.coverage = m.arabicWords ? m.knownWords / m.arabicWords : 1;
   return m;
@@ -231,7 +226,11 @@ export function qualityScore(m: RulingMetrics): number {
   s -= Math.min(25, per1k(m.gluedWords) * 2);
   s -= Math.min(20, per1k(m.brokenPairs) * 2);
   s -= Math.min(40, (m.arabicWords ? m.reversedWords / m.arabicWords : 0) * 400);
-  s -= Math.min(15, per1k(m.ocrYaAlif + m.ocrTaHa + m.ocrLatinDigitInWord));
+  // الإملاء: اختلافات الرسم (همزة، ى/ي، ة/ه، ألف فارقة) نصف نقطة؛ الحرف المتشابه رسمًا نقطة ونصف.
+  const sp = m.spelling;
+  const variants = sp.hamzaInitial + sp.hamzaMedial + sp.yaAlif + sp.taHa + sp.alefFariqaMissing + sp.alefFariqaExtra;
+  s -= Math.min(15, per1k(variants) * 0.5 + per1k(sp.confusable) * 1.5);
+  s -= Math.min(10, per1k(m.ocrLatinDigitInWord));
   s -= Math.min(20, m.ocrBadSymbols * 5);
   s -= Math.min(5, m.presentationForms > 0 ? 2 + per1k(m.presentationForms) / 100 : 0);
   s -= Math.min(3, m.hiddenChars + m.tatweel > 0 ? 1 + per1k(m.hiddenChars + m.tatweel) / 100 : 0);

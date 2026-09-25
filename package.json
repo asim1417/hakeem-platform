@@ -14,7 +14,7 @@
     "db:ensure-schema": "tsx scripts/db-ensure-schema.ts",
     "owner:ensure": "tsx scripts/ensure-owner-cli.ts",
     "test:rulings-search": "tsx scripts/test-rulings-search.ts",
-    "test:rulings-audit": "tsx --test lib/rulings/audit/__tests__/metrics.test.ts",
+    "test:rulings-audit": "tsx --test lib/rulings/audit/__tests__/metrics.test.ts lib/rulings/audit/__tests__/spelling.test.ts",
     "audit:rulings-quality": "tsx scripts/audit/rulings-text-quality.ts",
     "build:rulings-search-norm": "tsx scripts/backfill/build-rulings-search-norm.ts",
     "test:citation-guard": "tsx scripts/test-citation-guard.ts",

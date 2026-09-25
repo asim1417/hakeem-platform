@@ -40,20 +40,20 @@ export const PREFIXES = ["وبال", "وكال", "ولل", "وال", "بال", "
 const SUFFIXES = ["هما", "كما", "تها", "تهم", "ها", "هم", "هن", "كم", "كن", "نا", "ه", "ي", "ك"];
 
 export interface Lexicon {
-  /** صيغ raw من المصادر النظيفة فقط (المواد والمكنز) — مرجع رصد خلط ى/ي وة/ه. */
-  raw: Set<string>;
+  /** صيغ raw من المصادر النظيفة فقط (المواد والمكنز) مع تكرارها — المرجع الإملائي. */
+  raw: Map<string, number>;
   key: Map<string, number>; // الكلمة المطبّعة ← وزن التكرار
 }
 
 export function emptyLexicon(): Lexicon {
-  return { raw: new Set(), key: new Map() };
+  return { raw: new Map(), key: new Map() };
 }
 
 export function addWords(lex: Lexicon, words: Iterable<string>, weight = 1, clean = true): void {
   for (const w of words) {
     if (w.length < 2) continue;
     const r = rawForm(w);
-    if (clean) lex.raw.add(r);
+    if (clean) lex.raw.set(r, (lex.raw.get(r) ?? 0) + weight);
     const k = keyForm(r);
     lex.key.set(k, (lex.key.get(k) ?? 0) + weight);
   }
@@ -106,14 +106,26 @@ export function isKnown(lex: Lexicon, word: string): boolean {
 }
 
 function stripSuffixKnown(lex: Lexicon, k: string): boolean {
+  // «ال» لا تجتمع مع ضمير متصل؛ فلا تُنزع اللاحقة بعدها (يمنع «الخكم» = «الخ» + «كم»).
+  if (k.startsWith("ال")) return false;
   for (const s of SUFFIXES) {
     if (k.endsWith(s) && k.length - s.length >= 3 && lex.key.has(k.slice(0, -s.length))) return true;
   }
   return false;
 }
 
-/** وزن كلمة معروفة (للتقسيم الموزون): تكرار المعجم، أو ١ للمعروفة بالسوابق. */
+/** وزن كلمة معروفة (للتقسيم الموزون): تكرارها، أو تكرار جذعها بعد نزع السابقة، أو ١. */
 export function knownWeight(lex: Lexicon, word: string): number {
   const k = keyForm(word);
-  return lex.key.get(k) ?? (isKnown(lex, k) ? 1 : 0);
+  const direct = lex.key.get(k);
+  if (direct) return direct;
+  if (!isKnown(lex, k)) return 0;
+  for (const p of PREFIXES) {
+    if (k.startsWith(p) && k.length - p.length >= 2) {
+      const rest = k.slice(p.length);
+      const w = lex.key.get(rest) ?? (/(ال|لل)$/.test(p) ? lex.key.get("ال" + rest) : undefined);
+      if (w) return w;
+    }
+  }
+  return 1;
 }
