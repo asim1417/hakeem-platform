@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createLoginSession } from "@/lib/modules/auth/session";
 import { hasUsableLocalPassword } from "@/lib/modules/auth/password-reset";
 import { auditEvent } from "@/lib/modules/audit/audit";
+import { recordAuthTelemetry } from "@/lib/modules/auth/auth-telemetry";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,12 @@ function limited(key: string) {
 export async function POST(request: NextRequest) {
   const ip = (request.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
   if (limited(ip)) {
+    recordAuthTelemetry({
+      provider: "password",
+      outcome: "rate_limited",
+      reason: "rate_limited",
+      surface: "api",
+    });
     return NextResponse.json({ message: "محاولات كثيرة. حاول لاحقًا." }, { status: 429 });
   }
 
@@ -42,6 +49,12 @@ export async function POST(request: NextRequest) {
   try {
     body = schema.parse(await request.json());
   } catch {
+    recordAuthTelemetry({
+      provider: "password",
+      outcome: "failure",
+      reason: "invalid_credentials",
+      surface: "api",
+    });
     return NextResponse.json({ message: "أدخل بريدًا وكلمة مرور صالحين." }, { status: 400 });
   }
 
@@ -52,10 +65,22 @@ export async function POST(request: NextRequest) {
   });
 
   if (!user?.isActive) {
+    recordAuthTelemetry({
+      provider: "password",
+      outcome: "failure",
+      reason: "invalid_credentials",
+      surface: "sign_in",
+    });
     return NextResponse.json({ message: "تعذّر تسجيل الدخول. تحقق من البيانات." }, { status: 401 });
   }
 
   if (!hasUsableLocalPassword(user.passwordHash)) {
+    recordAuthTelemetry({
+      provider: "password",
+      outcome: "blocked",
+      reason: "oauth_only_account",
+      surface: "sign_in",
+    });
     return NextResponse.json(
       {
         message:
@@ -68,6 +93,12 @@ export async function POST(request: NextRequest) {
 
   const ok = await bcrypt.compare(body.password, user.passwordHash);
   if (!ok) {
+    recordAuthTelemetry({
+      provider: "password",
+      outcome: "failure",
+      reason: "invalid_credentials",
+      surface: "sign_in",
+    });
     return NextResponse.json({ message: "تعذّر تسجيل الدخول. تحقق من البيانات." }, { status: 401 });
   }
 
@@ -79,11 +110,17 @@ export async function POST(request: NextRequest) {
     isActive: user.isActive,
   };
   await createLoginSession(safe);
+  recordAuthTelemetry({
+    provider: "password",
+    outcome: "success",
+    reason: "ok",
+    surface: "sign_in",
+  });
   await auditEvent({
     actorId: user.id,
     subject: "AUTH",
     action: "LOGIN_SUCCESS",
-    metadata: { email, provider: "password" },
+    metadata: { provider: "password" },
   }).catch(() => undefined);
 
   return NextResponse.json({ ok: true, user: safe, message: "تم تسجيل الدخول." });

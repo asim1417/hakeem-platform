@@ -1,61 +1,48 @@
 # Clerk Production Cutover — Hakeem (read-only until APPROVED_FOR_CUTOVER)
 
-**Status:** Phase 0 complete · Phase 1 code PR only · **waiting for `APPROVED_FOR_CUTOVER`**  
+**Status:** Phase 0–3 deliverables ready · **Production keys NOT swapped**  
 **Vercel project:** `hakeem-platform` · **Domain:** `hakeemai.net`  
-**Stack:** `@clerk/nextjs` only (no Auth.js / NextAuth / Supabase Auth)
+**Stack:** `@clerk/nextjs` only (no Auth.js / NextAuth / Supabase Auth)  
+**PR:** code-only Preview-safe changes; cutover blocked until literal `APPROVED_FOR_CUTOVER`
 
 ---
 
-## Decision gate (Phase 0)
+## 1) Truth table (Phase 0 + live smoke)
 
-| Environment | Publishable key class | Masked fingerprint | Frontend API host |
-|---|---|---|---|
-| Production site (`hakeemai.net`) | **`pk_test`** | `pk_test_…V2JA` · fp `871921e6` | `safe-elk-50.clerk.accounts.dev` |
-| Preview (Vercel) | Not mutated this run | Keys exist in Preview env (do not swap) | Keep on Development / test |
+| Environment | Publishable class | Masked fingerprint | Frontend API host | Notes |
+|---|---|---|---|---|
+| Production site (`hakeemai.net`) | **`pk_test`** | `pk_test_…V2JA` · fp `871921e6` | `safe-elk-50.clerk.accounts.dev` | CSP allows `*.clerk.accounts.dev` |
+| Preview (Vercel) | Not mutated | Keys present — do not swap | Keep Development / test | Never put `pk_live` in Preview |
 
-**CSP on live site:** allows `*.clerk.accounts.dev` (Development-style host pattern).
+**Gate → Path A** (Production is `pk_test`). Do not create/swap live keys in this run.
 
-**Unauthenticated protected routes (no session):** `/dashboard`, `/admin`, `/onboarding` → `307` to  
-`https://safe-elk-50.clerk.accounts.dev/v1/client/handshake?...&__clerk_hs_reason=dev-browser-missing`  
-(confirms Development Frontend API on the public Production site).
+### Live smoke (2026-09-25, read-only)
 
-### Gate result → **Path A**
-
-Production publishable key is **`pk_test`**. Therefore:
-
-1. **Do not** create a new Production instance yet from this agent.
-2. **Do not** swap Vercel Production Clerk keys.
-3. Prepare an independent cutover (inventory + ID mapping + password journey) and ship **Preview-only** feature flags first.
-4. Cutover only after the literal approval string: `APPROVED_FOR_CUTOVER`.
-
-If a live (`pk_live`) workspace exists elsewhere, treat Path A as the verified public surface and resolve workspace access separately before any key change.
-
----
-
-## Repo inventory (auth surface)
-
-| Area | Finding |
+| Check | Result |
 |---|---|
-| Primary UI | `/sign-in`, `/sign-up` via `AuthOauthButtons` (Google + optional Apple flag) |
-| Email/password | `EmailPasswordSignIn` + `/forgot-password` / `/reset-password` (local bcrypt path) |
-| Google | Native `/api/auth/google` (+ popup) preferred; Clerk fallback when allowed |
-| Apple | Behind `AUTH_APPLE_ENABLED` (default off) |
-| Microsoft public | Behind `AUTH_MICROSOFT_PUBLIC_ENABLED` (default off); Entra manual route redirects to `/sign-in` |
-| Phone / SMS | Behind `AUTH_PHONE_ENABLED` (default off) |
-| Magic link | Behind `AUTH_MAGIC_LINK_PUBLIC_ENABLED` (default off); legacy UI gated |
-| User link | Prisma `User.clerkId` (+ `passwordHash` for first-party password) |
-| Middleware | `clerkMiddleware` + `hakeem_session`; protected: `/dashboard`, `/admin`, `/audit-logs`, `/onboarding` |
+| `GET /api/auth/providers` | `google: true`, `apple: false`, `microsoft: false`, `password: false` (pre-deploy); `launchReady: true` |
+| `/sign-in` | Google visible; Apple / Microsoft / magic not shown |
+| `GET /api/auth/google?next=/dashboard` | `307` → `accounts.google.com` (native Google start) |
+| Unauthenticated `/dashboard`, `/admin`, `/onboarding` | `307` → Clerk handshake `dev-browser-missing` on `safe-elk-50.clerk.accounts.dev` |
+| `/forgot-password` on live | `404` until this PR deploys Preview/Production build |
 
 ---
 
-## Phase 1 code changes (this PR — no Production env edits)
+## 2) Changes by environment (allowed now vs blocked)
 
-- Feature flags for Apple / Microsoft public / phone / magic (off by default).
-- `/api/auth/providers` announces only enabled public strategies.
-- `LoginForm` hardened: no hardcoded password fill; Microsoft & magic only if providers API says so.
-- `AuthOauthButtons` remains Google (+ Apple when flagged); no public Entra / phone / magic buttons.
+| Change | Preview | Production | Status |
+|---|---|---|---|
+| Feature flags Apple / Microsoft public / phone / magic (default off) | ✅ code | ✅ code (flags stay 0) | In PR |
+| `/api/auth/providers` announces enabled strategies only | ✅ | ✅ after deploy | In PR |
+| `LoginForm` harden (no hardcoded password; gated Microsoft/magic) | ✅ | ✅ after deploy | In PR |
+| Abstract auth telemetry (no email/phone/token) | ✅ | ✅ after deploy | In PR |
+| `.env.example` documents flags | ✅ | n/a | In PR |
+| Swap Clerk `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | ❌ keep test | ❌ **blocked** | Needs `APPROVED_FOR_CUTOVER` |
+| Create Clerk Production instance / permanent keys | ❌ | ❌ **blocked** | Needs approval |
+| Enable Apple / phone / Microsoft Social for public | Preview test only | ❌ until ready | Post-approval |
+| Magic link public | ❌ | ❌ | Explicit product decision |
 
-**Preview-only flags (never set on Production until approved):**
+**Preview-only recommended flags (never set live until approved + tested):**
 
 ```text
 AUTH_APPLE_ENABLED=0
@@ -66,12 +53,46 @@ AUTH_MAGIC_LINK_PUBLIC_ENABLED=0
 
 ---
 
-## Enablement order (post-approval)
+## 3) Redirect / origin checklist
+
+| Provider | Allowed origins / redirect URIs |
+|---|---|
+| Clerk | `https://hakeemai.net`, `https://www.hakeemai.net`, Vercel Preview host(s), `/sso-callback`, `/auth/continue` |
+| Google (native) | JS origins + redirect → `https://hakeemai.net/api/auth/callback/google` (+ Preview callback) |
+| Apple | Services ID return URL from Clerk (when enabled) |
+| Microsoft Social | Clerk-managed callback (when enabled) — **not** manual Entra `/api/auth/microsoft` |
+
+---
+
+## 4) User / data link plan (Path A — after approval)
+
+1. Numeric inventory only: users, sign-in methods, rows with `User.clerkId`.
+2. Reversible mapping table: `legacy_clerk_user_id` → `internal_app_user_id` → `new_clerk_user_id`.
+3. Passwords: Clerk-supported reset/activation only — **never** copy password hashes.
+4. Keep Preview on Development/`pk_test`. Never put Production keys in Preview.
+5. Swap **both** Production Clerk keys together → single deploy → monitor.
+6. Do not delete old Clerk instance/users during watch window.
+
+Prisma link field today: `User.clerkId` (+ `passwordHash` for first-party password).
+
+---
+
+## 5) Rollback
+
+| Trigger | Action |
+|---|---|
+| Sign-in failure spike / OAuth loop / session loss | Restore previous Production Clerk key pair; redeploy last known good |
+| Bad feature flag | Set flag to `0`; no key change |
+| Data link mismatch | Stop cutover; keep legacy `clerkId`; repair mapping offline |
+
+---
+
+## 6) Enablement order (post-approval)
 
 | Method | Decision | Show when |
 |---|---|---|
 | Email + password | Core | Verify + reset + error paths pass |
-| Google | Core when green | New + returning + protected return |
+| Google | Core when green | New + returning + protected `next` return |
 | Phone / SMS | Later | Plan, cost, countries, rate limit, OTP, test account |
 | Apple | Later | Apple Developer Team + Services ID + Team/Key IDs + private key + Clerk return URL |
 | Microsoft Social | Later | Clerk Social Connection (not Enterprise Entra SSO) |
@@ -80,59 +101,33 @@ AUTH_MAGIC_LINK_PUBLIC_ENABLED=0
 
 ---
 
-## Path A cutover plan (after approval only)
+## 7) Acceptance tests run (local / static — this agent)
 
-1. Create Clerk **Production** instance for the correct app; verify `hakeemai.net` domains.
-2. Copy **non-secret** settings only (strategies, URLs). Do **not** assume user/OAuth migration.
-3. Keep Preview on Development/`pk_test`. Never put Production keys in Preview.
-4. Numeric inventory only: user counts, sign-in methods, rows with `clerkId`.
-5. Reversible mapping: `legacy_clerk_user_id` → `internal_app_user_id` → `new_clerk_user_id`.
-6. Passwords: Clerk-supported reset/activation journey only — **never** copy hashes.
-7. Swap **both** Production Clerk keys together → single deploy → monitor.
-8. On P0 auth failure: restore previous key pair + redeploy immediately. Do not delete old instance/users during watch window.
+```text
+test-auth-providers-visibility: OK
+test-production-auth: OK
+test-google-popup-auth: OK
+test-password-reset: OK
+test-home-google-signin: OK
+test-oauth-only-signin: OK
+test-owner-emergency: OK
+test-middleware-gate: OK
+test-firstparty-session: OK
+test-clerk-config: OK
+test-clerk-off-home: OK
+test-ssr-oauth-start: OK
+test-unify-home-auth: OK
+test-signin-iphone-isolation: OK
+test-auth-continue: OK
+test-oauth-false-fail: OK
+```
 
----
-
-## Redirect / origin checklist (fill before cutover)
-
-| Provider | Allowed origins / redirect URIs |
-|---|---|
-| Clerk | `https://hakeemai.net`, `https://www.hakeemai.net`, Preview host(s), `/sso-callback`, `/auth/continue` |
-| Google | Authorized JS origins + redirect → `/api/auth/callback/google` |
-| Apple | Services ID return URL from Clerk dashboard (when enabled) |
-| Microsoft Social | Clerk-managed callback (when enabled) |
-
----
-
-## Rollback
-
-| Trigger | Action |
-|---|---|
-| Sign-in failure rate spike / OAuth loop / session loss | Revert Production Clerk key pair to previous values; redeploy last known good |
-| Bad feature flag | Set flag to `0` on Preview/Production; no key change |
-| Data link mismatch | Stop cutover; keep legacy `clerkId` rows; repair mapping offline |
-
-**Do not** delete the old Clerk instance or users during the monitoring window.
+Interactive Preview account tests (create/sign-in/reset/Google round-trip) remain for human QA on a Preview deployment of this PR.
 
 ---
 
-## Acceptance tests (Preview / test accounts only)
+## 8) Explicit stop
 
-1. Email/password: create, verify, sign-in, sign-out, reset.
-2. Google: new + returning + return to requested `next`.
-3. Protected routes + admin roles (server-side).
-4. Phone (when on): valid, bad/expired OTP, rate limit, SMS fail — generic errors only.
-5. Apple / Microsoft (when on): new + returning; Apple Hide My Email.
-6. Mobile + RTL + a11y.
-7. No secrets/tokens in HTML or logs.
-8. Documented rollback drill before Production cutover.
+No Vercel Production/Preview secret edits, no Clerk dashboard / OAuth / billing mutations, no permanent key creation, no Production user mutation were performed.
 
----
-
-## Explicit non-actions (until `APPROVED_FOR_CUTOVER`)
-
-- No Vercel Production/Preview secret edits.
-- No Clerk dashboard / OAuth / billing mutations.
-- No permanent key creation.
-- No Production user or data mutation.
-- No printing of secrets, passwords, or OTP.
+**Next human action:** deploy/test Preview → reply with the literal string `APPROVED_FOR_CUTOVER` to authorize Path A key cutover.

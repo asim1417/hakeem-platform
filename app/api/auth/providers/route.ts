@@ -25,8 +25,8 @@ export async function GET() {
     microsoft: isMicrosoftPublicSignInAvailable(),
     phone: isPhoneSignInAvailable(),
     magicLink: isMagicLinkPublicEnabled(),
-    /** كلمة المرور ليست بوابة عامة — تبقى للحقول الداخلية القديمة فقط. */
-    password: false,
+    /** كلمة المرور ظاهرة في /sign-in عبر EmailPasswordSignIn (أساسية). */
+    password: true,
     providers: listVisibleAuthProviders(),
     launchReady: isAuthLaunchReady(),
   });

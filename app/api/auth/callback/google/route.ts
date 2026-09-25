@@ -15,6 +15,7 @@ import {
   attachLoginSessionCookie,
   mirrorLoginSessionCookie,
 } from "@/lib/modules/auth/session";
+import { recordAuthTelemetry } from "@/lib/modules/auth/auth-telemetry";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,17 @@ export async function GET(request: NextRequest) {
 
   const cfg = getGoogleOAuthConfig();
   const fail = (reason: string) => {
+    recordAuthTelemetry({
+      provider: "google",
+      outcome: reason.includes("not_configured") || reason.includes("misconfigured") ? "blocked" : "failure",
+      reason:
+        reason.includes("not_configured") ? "misconfigured"
+        : reason.includes("state") ? "exchange_failed"
+        : reason.includes("profile") ? "exchange_failed"
+        : reason.includes("session") ? "session_failed"
+        : "unknown",
+      surface: "callback",
+    });
     if (isPopup) {
       const script = `
         (function() {
@@ -124,6 +136,12 @@ export async function GET(request: NextRequest) {
   }
 
   const next = safeNextPath(nextRaw, "/dashboard");
+  recordAuthTelemetry({
+    provider: "google",
+    outcome: "success",
+    reason: "ok",
+    surface: "callback",
+  });
   const secure = request.nextUrl.protocol === "https:";
 
   if (isPopup) {
