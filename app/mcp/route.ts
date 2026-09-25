@@ -16,6 +16,7 @@ import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
+import { registerAmanTools } from "@/lib/mcp/aman-server";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -23,6 +24,8 @@ export const dynamic = "force-dynamic";
 
 const handler = createMcpHandler(
   (server) => {
+    registerAmanTools(server);
+
     // ١) البحث الهجين في المواد
     server.registerTool(
       "hakeem_search",
