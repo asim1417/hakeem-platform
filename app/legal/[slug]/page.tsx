@@ -16,7 +16,7 @@ async function resolveSystem(slug: string) {
   if (byEli) return byEli;
   const byId = await prisma.legalSystem.findUnique({ where: { id: raw } }).catch(() => null);
   if (byId) return byId;
-  const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true, articleCount: true, sortOrder: true, domainTitle: true } }).catch(() => []);
+  const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true, articleCount: true, sortOrder: true, domainTitle: true, preamble: true, preambleRoyalDecree: true, preambleEffectiveFrom: true } }).catch(() => []);
   return all.find((x) => resolveSystemSlug(x.eliSlug, x.name) === norm) ?? null;
 }
 
@@ -67,6 +67,16 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
           {articles.length.toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
         </p>
       </header>
+
+      {system.preamble?.trim() ? (
+        <section className="mt-6 rounded-xl border border-[#C69763]/25 bg-ivory p-5" aria-label="الديباجة">
+          <h2 className="text-lg font-bold text-[var(--navy)]">الديباجة</h2>
+          {system.preambleRoyalDecree ? (
+            <p className="mt-1 text-sm text-muted">{system.preambleRoyalDecree}</p>
+          ) : null}
+          <p className="mt-3 whitespace-pre-line leading-8 text-[var(--navy)]">{system.preamble}</p>
+        </section>
+      ) : null}
 
       {articles.length ? (
         <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C69763]/25 bg-ivory">
