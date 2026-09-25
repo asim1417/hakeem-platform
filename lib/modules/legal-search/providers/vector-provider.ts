@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { embedText, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { rankByCosine } from "@/lib/modules/legal-search/embedding-fallback";
 import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrieval";
+import { latestVectorSource } from "@/lib/modules/legal-search/vector-source";
 import { resolveEntity, type EntityType } from "@/lib/modules/knowledge-graph/relations";
 import type { LegalEntityType, RawResult, SearchProvider, SearchQuery } from "./search-provider";
 
@@ -44,13 +45,17 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
   try {
     const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
     const take = Math.min(limit, 20);
-    const rows = await prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
+    const sqlFor = (from: string) =>
       `SELECT owner_type, owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
-       FROM embeddings
+       FROM ${from}
        WHERE embedding IS NOT NULL
        ORDER BY embedding <=> '${literal}'::vector
-       LIMIT ${take}`
-    );
+       LIMIT ${take}`;
+    const rows = await prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
+      sqlFor(latestVectorSource()),
+    ).catch(() => prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
+      sqlFor("embeddings"),
+    ));
 
     const results: RawResult[] = [];
     for (const row of rows) {

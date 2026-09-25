@@ -36,13 +36,13 @@ async function main() {
 
     // ── الحارس ──
     const g1 = await validateLegalCitation({ systemName: "نظام الشركات", articleNumber: 1 });
-    ok(g1.ok === true && g1.inForce === true, "④ استشهاد صحيح لمادة سارية (inForce)");
+    ok(g1.ok === true && g1.inForce === false && g1.status.includes("قيد التحقق"), "④ بلا سجل تحقق ليست نافذة");
 
     const gAmbiguous = await validateLegalCitation({ systemName: "الشركات", articleNumber: 1 });
     ok(gAmbiguous.ok === false && (gAmbiguous as { code?: string }).code === CITATION_NOT_VERIFIED, "⑤ تطابق غير قاطع → CITATION_NOT_VERIFIED");
 
     const gRepealed = await validateLegalCitation({ systemName: "نظام المرافعات الشرعية", articleNumber: 212 });
-    if (gRepealed.ok) ok(gRepealed.repealed === true && gRepealed.inForce === false, "⑥ المادة 212 ملغاة وليست نافذة");
+    if (gRepealed.ok) ok(gRepealed.repealed === false && gRepealed.inForce === false, "⑥ بلا سجل تحقق لا تُوسَم ملغاة");
     else ok((gRepealed as { code?: string }).code === CITATION_NOT_VERIFIED, "⑥ المادة 212 غير محسومة → CITATION_NOT_VERIFIED");
 
     const g0 = await validateLegalCitation({ systemName: "نظام وهميّ لا وجود له", articleNumber: 1 });

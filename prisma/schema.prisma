@@ -643,6 +643,67 @@ model Embedding {
   @@map("embeddings")
 }
 
+// ── طبقة التحقق (إضافة فقط) ──
+// السجل لا يُحدَّث ولا يُحذف. الحالة المعروضة = آخر سجل للعنصر.
+// أعمدة legal_articles.status و uqn_stage.effect.status تبقى كما هي ولا تُقرأ للعرض.
+model Verification {
+  id                       String   @id @default(cuid())
+  objectType               String   @map("object_type") // work | unit | effect | relation
+  objectId                 String   @map("object_id")
+  verifiedStatus           String   @map("verified_status")
+  evidenceInstrument       String?  @map("evidence_instrument")
+  evidenceUrl              String?  @map("evidence_url")
+  evidenceQuote            String?  @map("evidence_quote")
+  method                   String // rule | manual
+  verifiedBy               String?  @map("verified_by")
+  verifiedAt               DateTime @default(now()) @map("verified_at")
+  supersedesVerificationId String?  @map("supersedes_verification_id")
+
+  @@index([objectType, objectId, verifiedAt])
+  @@map("verification")
+}
+
+// نسخة نص المادة. نهاية السريان تُحسب من valid_from للنسخة التالية، ولا عمود يُحدَّث.
+model UnitVersion {
+  id                 String   @id @default(cuid())
+  unitId             String   @map("unit_id")
+  body               String
+  validFrom          DateTime @map("valid_from")
+  evidenceInstrument String?  @map("evidence_instrument")
+  evidenceUrl        String?  @map("evidence_url")
+  evidenceQuote      String?  @map("evidence_quote")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([unitId, validFrom])
+  @@map("unit_version")
+}
+
+// متجه جديد لا يستبدل صف embeddings. البحث يفضّل أحدث صف تطابق بصمته.
+model EmbeddingVersion {
+  id          String                       @id @default(cuid())
+  ownerType   String                       @map("owner_type")
+  ownerId     String                       @map("owner_id")
+  embedding   Unsupported("vector(1536)")?
+  model       String
+  contentHash String                       @map("content_hash")
+  createdAt   DateTime                     @default(now()) @map("created_at")
+
+  @@index([ownerType, ownerId, createdAt])
+  @@index([ownerType, ownerId, contentHash])
+  @@map("embedding_version")
+}
+
+// تفعيل اشتراك بالإضافة. لا يُحدِّث users.subscriptionStatus.
+model SubscriptionActivation {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  eventId   String   @unique @map("event_id")
+  planId    String?  @map("plan_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("subscription_activation")
+}
+
 // ── التظليلات والملاحظات ──
 model Annotation {
   id              String   @id @default(cuid())

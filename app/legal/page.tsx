@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { resolveSystemSlug } from "@/lib/modules/legal-core/eli";
 import { PublicLegalShell } from "@/components/public/PublicLegalShell";
 import { absoluteUrl } from "@/lib/modules/config/site-url";
+import { storedInstrumentKinds } from "@/lib/modules/legal-core/verification-read";
+import { countsAsStatute, resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 
 export const revalidate = 3600; // ISR: محتوى نظامي شبه ثابت
 
@@ -21,6 +23,8 @@ export default async function LegalIndexPage() {
       orderBy: [{ sortOrder: "asc" }, { articleCount: "desc" }, { name: "asc" }],
     })
     .catch(() => [] as SysRow[]);
+  const storedKinds = await storedInstrumentKinds(systems.map((s) => s.id));
+  const statuteCount = systems.filter((s) => countsAsStatute(resolveWorkKind(s.name, storedKinds.get(s.id)))).length;
 
   // تجميع حسب المجال مع الحفاظ على الترتيب.
   const groups: { title: string; items: typeof systems }[] = [];
@@ -45,7 +49,7 @@ export default async function LegalIndexPage() {
       <header>
         <h1 className="text-3xl font-bold md:text-4xl">الأنظمة القانونية السعودية</h1>
         <p className="mt-3 max-w-3xl leading-8 text-ink">
-          مطالعة عامة لنصوص الأنظمة ومَوادّها مع الإسناد الرسمي. {systems.length.toLocaleString("ar-SA")} نظامًا متاحًا للمطالعة.
+          مطالعة عامة لنصوص الأنظمة ومَوادّها مع الإسناد الرسمي. {statuteCount.toLocaleString("ar-SA")} نظامًا متاحًا للمطالعة. السياسات والاستراتيجيات غير داخلة في هذا العدّ.
           للتكامل البرمجي راجع <Link href="/developers" className="font-semibold text-[var(--navy)] underline">واجهة المطوّرين</Link>.
         </p>
       </header>
@@ -65,7 +69,10 @@ export default async function LegalIndexPage() {
                   className="flex items-center justify-between gap-3 rounded-lg border border-[#C69763]/25 bg-ivory px-4 py-3 transition hover:border-[var(--gold)] hover:shadow-sm"
                 >
                   <span className="font-semibold">{s.name}</span>
-                  <span className="shrink-0 text-xs text-muted">{s.articleCount.toLocaleString("ar-SA")} مادة</span>
+                  <span className="shrink-0 text-xs text-muted">
+                    {resolveWorkKind(s.name, storedKinds.get(s.id)) ?? "غير مصنّف"}
+                    {s.articleCount > 0 ? ` · ${s.articleCount.toLocaleString("ar-SA")} مادة` : " · النص كاملًا"}
+                  </span>
                 </Link>
               </li>
             ))}

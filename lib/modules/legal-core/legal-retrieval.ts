@@ -218,13 +218,16 @@ async function semanticArticleScores(query: string, take: number): Promise<Map<s
   const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
   const limit = Math.min(Math.max(take, 1), 200);
   try {
-    const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string; score: number }>>(
+    const sqlFor = (from: string) =>
       `SELECT owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
-       FROM embeddings
+       FROM ${from}
        WHERE owner_type = 'article' AND embedding IS NOT NULL
        ORDER BY embedding <=> '${literal}'::vector
-       LIMIT ${limit}`
-    );
+       LIMIT ${limit}`;
+    const { latestVectorSource } = await import("@/lib/modules/legal-search/vector-source");
+    const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string; score: number }>>(
+      sqlFor(latestVectorSource()),
+    ).catch(() => prisma.$queryRawUnsafe<Array<{ owner_id: string; score: number }>>(sqlFor("embeddings")));
     for (const r of rows) out.set(r.owner_id, Math.max(0, Math.min(1, Number(r.score))));
   } catch {
     return new Map<string, number>(); // جدول المتجهات غير مُفعّل → بلا استرجاع دلالي

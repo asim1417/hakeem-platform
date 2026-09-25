@@ -3,10 +3,10 @@ import type { LegalCoreResult } from "./legal-retrieval";
 import { noLegalArticleMessage } from "./legal-retrieval";
 import { parseArticleNumberCandidates } from "./judgment-citation-extractor";
 import { resolveLaw, isNumberingShifted } from "./resolve-law";
+import { citationFlagsFromVerification } from "./verified-status";
+import { latestVerification, unitVersions } from "./verification-read";
 
 export const CITATION_NOT_VERIFIED = "CITATION_NOT_VERIFIED";
-const REPEALED_STATUS = "ملغاة";
-const IN_FORCE_STATUS = "سارية";
 
 export type CitationGuardResult =
   | {
@@ -25,7 +25,7 @@ export type CitationGuardResult =
  * حارس الاستشهاد (1.1): يحلّ اسم النظام بثبات عبر resolveLaw.
  *   • الاحتواء/التعدّد ليس حاسمًا → CITATION_NOT_VERIFIED مع اقتراح مرشّحين.
  *   • أنظمة إزاحة الترقيم (1.4) → CITATION_NOT_VERIFIED حتى التصحيح الرسميّ.
- *   • UNKNOWN لا يُعامَل كحالة نافذة (inForce=false)؛ الملغاة repealed=true.
+ *   • النافذ والملغى يُقرأان من آخر سجل تحقق فقط. بلا سجل: ليس نافذًا وليس ملغى.
  */
 export async function validateLegalCitation(input: { articleId?: string; systemName?: string; articleNumber?: number }): Promise<CitationGuardResult> {
   let article = input.articleId
@@ -72,18 +72,23 @@ export async function validateLegalCitation(input: { articleId?: string; systemN
     };
   }
 
-  const status = String(article.status ?? "").trim();
-  const repealed = status === REPEALED_STATUS;
-  const inForce = status === IN_FORCE_STATUS; // UNKNOWN/فارغ/غيرها ⇒ ليس نافذًا
+  const verification = await latestVerification("unit", article.id);
+  const flags = citationFlagsFromVerification(verification);
+  const versions = await unitVersions(article.id);
+  const now = Date.now();
+  const applicable = [...versions].reverse().find((v) => new Date(v.validFrom).getTime() <= now);
+  const versionNote = applicable
+    ? ` — النسخة من ${applicable.validFrom.slice(0, 10)}`
+    : " — النص الأصلي المحفوظ";
   return {
     ok: true,
     articleId: article.id,
     systemName: article.lawName,
     articleNumber: article.articleNumber,
-    citationLabel: `${article.lawName}، المادة ${article.articleNumber}${repealed ? " (ملغاة)" : inForce ? "" : " (حالة غير مؤكدة)"}`,
-    status: status || "غير معروف",
-    repealed,
-    inForce,
+    citationLabel: `${article.lawName}، المادة ${article.articleNumber}${flags.repealed ? " (ملغاة)" : flags.inForce ? "" : " (حالة قيد التحقق)"}${versionNote}`,
+    status: flags.statusLabel,
+    repealed: flags.repealed,
+    inForce: flags.inForce,
   };
 }
 

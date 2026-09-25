@@ -8,6 +8,8 @@
  */
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
+import { redactPII } from "@/lib/modules/legal-core/rulings-search";
 
 /** يشتقّ سنة هجرية (٤ خانات) من نصّ التاريخ إن وُجد. */
 function hijriYear(text?: string | null): number | null {
@@ -38,7 +40,7 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) 
     offset: start,
     returned_chars: chunk.length,
     next_offset: nextOffset, // null = انتهى النص
-    text: chunk,
+    text: redactPII(chunk),
   };
 }
 
@@ -53,9 +55,9 @@ export async function enumerateRulings(
   snippetLen = 500,
 ) {
   // تعقيم أحرف بدل ILIKE (% _ \) ثمّ تغليف بـ %..% — بمعاملات مربوطة (بلا حقن).
-  const likeTerms = terms.map((t) => `%${t.replace(/[%_\\]/g, "")}%`);
+  const likeTerms = terms.map((t) => `%${normalizeArabic(t).replace(/[%_\\]/g, "")}%`);
   const termConds = Prisma.join(
-    likeTerms.map((t) => Prisma.sql`r."judgmentText" ILIKE ${t}`),
+    likeTerms.map((t) => Prisma.sql`r."search_norm" ILIKE ${t}`),
     " OR ",
   );
   const filters: Prisma.Sql[] = [Prisma.sql`(${termConds})`];
@@ -109,7 +111,7 @@ export async function enumerateRulings(
       court: r.court,
       year_h: hijriYear(r.decisionDateText),
       match_offset: idx === -1 ? null : idx,
-      snippet,
+      snippet: redactPII(snippet),
     };
   });
 

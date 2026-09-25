@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
-import { isMoyasarLive } from "@/lib/modules/billing/moyasar";
+import { moyasarHealthLabel } from "@/lib/modules/billing/moyasar";
 import { isConversationSessionSchemaReady } from "@/lib/modules/conversations/ensure-schema";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +51,7 @@ export async function GET() {
         database,
         clerk: isClerkConfigured() ? "configured" : "missing",
         googleOAuth: isGoogleOAuthConfigured() ? "configured" : "missing",
-        moyasar: isMoyasarLive() ? "configured" : "missing",
+        moyasar: moyasarHealthLabel(),
         conversationSession,
         ...(conversationSessionDetail ? { conversationSessionDetail } : {}),
       },

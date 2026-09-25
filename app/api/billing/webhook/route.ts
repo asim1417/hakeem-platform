@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { activateSubscription } from "@/lib/modules/billing/moyasar";
+import { paymentsEnabled } from "@/lib/modules/billing/moyasar";
+import { prisma } from "@/lib/prisma";
 import {
   recordBillingEvent,
   verifyMoyasarWebhookSecret,
 } from "@/lib/modules/billing/billing-events";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
-import { recordReferralFirstPurchase } from "@/lib/modules/referrals/usage-referrals";
-
 export const dynamic = "force-dynamic";
 
 type MoyasarBody = {
@@ -49,6 +48,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "invalid json" }, { status: 400 });
   }
 
+  if (!paymentsEnabled()) {
+    return NextResponse.json({ ok: true, payments: "غير مهيأة" });
+  }
+
   const secretCheck = verifyMoyasarWebhookSecret(body);
   if (!secretCheck.ok) {
     return NextResponse.json(
@@ -79,13 +82,16 @@ export async function POST(request: NextRequest) {
     payload: body as Record<string, unknown>,
   });
 
-  // فعّل الاشتراك فقط عند حدث جديد مدفوع (منع التكرار عند إعادة الإرسال).
+  // التفعيل سجل إضافة فقط. لا يُحدَّث users.subscriptionStatus من هذا المسار.
   if (paid && userId && recorded.inserted) {
-    await activateSubscription(userId);
-    await recordReferralFirstPurchase(userId, eventId).catch(() => false);
-  } else if (paid && userId && !recorded.ok) {
-    // إن تعذّر التسجيل — لا نحجب التفعيل (توافق خلفي).
-    await activateSubscription(userId);
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO subscription_activation (id, user_id, event_id, plan_id)
+       VALUES (gen_random_uuid()::text, $1, $2, $3)
+       ON CONFLICT (event_id) DO NOTHING`,
+      userId,
+      eventId,
+      planId,
+    ).catch(() => 0);
   }
 
   return NextResponse.json({

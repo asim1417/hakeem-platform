@@ -5,6 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { resolveSystemSlug, lawSlug } from "@/lib/modules/legal-core/eli";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
+import { latestVerifications, storedInstrumentKind } from "@/lib/modules/legal-core/verification-read";
+import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
+import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
+import { AsOfForm } from "@/components/legal/ArticlePresentation";
 
 export const revalidate = 3600;
 
@@ -31,20 +35,29 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function LegalSystemPage({ params }: { params: { slug: string } }) {
+export default async function LegalSystemPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams?: { asOf?: string };
+}) {
   const system = await resolveSystem(decodeURIComponent(params.slug));
   if (!system) notFound();
 
   const slug = resolveSystemSlug(system.eliSlug, system.name);
+  const asOfRaw = searchParams?.asOf?.trim() ?? "";
+  const kind = resolveWorkKind(system.name, await storedInstrumentKind(system.id));
   const articles = await prisma.legalArticle
     .findMany({
       // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
       // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
       where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
-      select: { id: true, articleNumber: true, title: true, status: true },
+      select: { id: true, articleNumber: true, title: true },
       orderBy: { articleNumber: "asc" },
     })
     .catch(() => []);
+  const flags = await latestVerifications("unit", articles.map((a) => a.id));
 
   // LIVE-001: تعريف BASE من عنوان الموقع قبل استعماله في JSON-LD (كان غير معرّف فيتعطل).
   const BASE = getSiteUrl();
@@ -63,6 +76,8 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <header>
         <h1 className="text-3xl font-bold leading-snug md:text-4xl">{system.name}</h1>
+        {kind ? <p className="mt-2 text-sm font-semibold text-[#A9793F]">{kind}</p> : null}
+        <AsOfForm asOf={asOfRaw} />
         <p className="mt-3 text-ink">
           {articles.length.toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
         </p>
@@ -82,12 +97,24 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
         <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C69763]/25 bg-ivory">
           {articles.map((a) => (
             <li key={a.id}>
-              <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
+              <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
                 <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
-                <span className={`leading-7 ${String(a.status ?? "").trim() === "ملغاة" ? "text-red-700 line-through decoration-red-400" : "text-[var(--navy)]"}`}>{a.title}</span>
-                {String(a.status ?? "").trim() === "ملغاة" ? (
-                  <span className="mt-0.5 shrink-0 rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>ملغاة</span>
-                ) : null}
+                {(() => {
+                  const flag = citationFlagsFromVerification(flags.get(a.id) ?? null);
+                  const unverified = flag.statusLabel.includes("قيد التحقق");
+                  return (
+                    <>
+                      <span className={`leading-7 ${flag.repealed ? "text-slate-400" : "text-[var(--navy)]"}`}>{a.title}</span>
+                      {flag.repealed ? (
+                        <span className="mt-0.5 shrink-0 rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>{flag.statusLabel}</span>
+                      ) : unverified ? (
+                        <span className="mt-0.5 shrink-0 text-xs text-muted">قيد التحقق</span>
+                      ) : (
+                        <span className="mt-0.5 shrink-0 text-xs text-muted">{flag.statusLabel}</span>
+                      )}
+                    </>
+                  );
+                })()}
               </Link>
             </li>
           ))}
