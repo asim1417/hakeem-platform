@@ -117,6 +117,12 @@ model LegalSystem {
   sortOrder      Int            @default(0) @map("sort_order")
   eliSlug        String?        @unique @map("eli_slug") // slug تشريعي ثابت (يُجمّد عند الإنشاء) — أساس معرّف ELI الدائم
   articleCount   Int            @default(0)
+  // ── الديباجة (مقدّمة النظام) — حقل مخصّص بدل «المادة صفر» (DATA-001، الخيار الثاني) ──
+  // لا توجد «مادة صفر»؛ تُخزَّن الديباجة على مستوى النظام لا كمادّة مرقّمة.
+  preamble             String?   @map("preamble")
+  preambleRoyalDecree  String?   @map("preamble_royal_decree")
+  preambleEffectiveFrom DateTime? @map("preamble_effective_from")
+  preambleUpdatedAt    DateTime? @map("preamble_updated_at")
   articles       LegalArticle[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
