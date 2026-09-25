@@ -63,8 +63,10 @@ async function main() {
       [475, "ينتهي عقد المقاولة", "انتهاء المقاولة بإنجاز العمل"],
       [721, "يُعمل بهذا النظام", "مادة النفاذ"],
     ];
+    // بعض المواد الرسمية تبدأ ببندٍ مرقّم («١- …»)؛ نُسقط بادئة الترقيم قبل فحص المرساة.
+    const stripLead = (s: string) => s.trim().replace(/^[\u0660-\u0669\d]+\s*[-.)ـ]\s*/, "").trim();
     for (const [n, head, label] of anchors) {
-      if (!at(n).trim().startsWith(head)) fail.push(`المرساة م(${n}) [${label}] لا تبدأ بـ«${head}»`);
+      if (!stripLead(at(n)).startsWith(head)) fail.push(`المرساة م(${n}) [${label}] لا تبدأ بـ«${head}»`);
     }
 
     // ⑤ مراجع مخزَّنة بأرقام مُفكَّكة

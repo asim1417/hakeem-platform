@@ -47,3 +47,6 @@ __pycache__/
 # خام المصادر الرسمية — حجمه كبير ومحلي/تشغيلي
 data/backfill/official-raw/
 data/backfill/text/
+
+# Neon production data dumps (rollback artifacts — regenerated at apply time)
+reports/legal-source-integrity/neon-civil-backup-*.json
