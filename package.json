@@ -15,6 +15,7 @@
     "test:doc-tool-audit": "tsx scripts/test-doc-tool-audit.ts",
     "test:attachments-regression": "tsx scripts/test-attachments-regression.ts",
     "test:direct-url": "tsx scripts/test-direct-url.ts",
+    "test:aman-chatgpt": "tsx scripts/test-aman-chatgpt-plugin.ts",
     "migrate:attachment-metadata": "tsx scripts/migrate-attachment-metadata.ts",
     "accuracy": "tsx scripts/measure-accuracy.ts",
     "doc-node": "tsx services/doc-node/server.ts",
