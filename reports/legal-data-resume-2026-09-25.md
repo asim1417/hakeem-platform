@@ -1,7 +1,8 @@
 # سجل استئناف تدقيق قاعدة الأنظمة — 25 سبتمبر 2026
 
 فرع العمل: `cursor/legal-db-audit-resume-2351` (من `aman/legal-db-update` @ `cd495b9f`).
-طلب التغيير: [#631](https://github.com/asim1417/hakeem-platform/pull/631) — مفتوح، غير مدمج.
+طلب التغيير الأصلي: [#631](https://github.com/asim1417/hakeem-platform/pull/631) — مفتوح، غير مدمج.
+طلب هذه الدفعة: [#650](https://github.com/asim1417/hakeem-platform/pull/650) → base `aman/legal-db-update`.
 
 ## 1) استعادة نقطة التوقف
 
