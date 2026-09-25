@@ -1,0 +1,17 @@
+{
+  "decision": "USE_M59",
+  "cabinetDecision": "820",
+  "hijriDate": "24/11/1444",
+  "correctReference": "م/59",
+  "incorrectElectronicReference": "م/95",
+  "sourcePdf": "handoff/archives/official/madani-original.pdf",
+  "sourcePdfSha256": "c6f9df3633a68f79a8a769d9dedf7728144842251fe8cf14abbcf8b9feacb25e",
+  "evidencePages": [
+    3,
+    4
+  ],
+  "round7": "handoff/archives/round7/round7/introduction-source-resolution.json",
+  "visuallyReconfirmedHere": true,
+  "productionApplied": false,
+  "note": "Correct preamble storage when applying; keep raw electronic text archived; does not certify all 721 articles."
+}
