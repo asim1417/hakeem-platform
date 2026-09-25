@@ -40,6 +40,41 @@ function AppleIcon() {
   );
 }
 
+function MicrosoftIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 23 23" aria-hidden>
+      <path fill="#F25022" d="M1 1h10v10H1z" />
+      <path fill="#7FBA00" d="M12 1h10v10H12z" />
+      <path fill="#00A4EF" d="M1 12h10v10H1z" />
+      <path fill="#FFB900" d="M12 12h10v10H12z" />
+    </svg>
+  );
+}
+
+function IdentifierIcon({ phoneOnly }: { phoneOnly: boolean }) {
+  return phoneOnly ? (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+      <path d="M11 18.5h2" />
+    </svg>
+  ) : (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <path d="m4 7 8 6 8-6" />
+    </svg>
+  );
+}
+
+/** نص زر البريد/الجوال — بوابة Clerk تعرض الحقول المفعّلة فعليًا. */
+function identifierLabel(email: boolean, phone: boolean): string {
+  if (email && phone) return "المتابعة بالبريد الإلكتروني أو رقم الجوال";
+  if (phone) return "المتابعة برقم الجوال";
+  return "المتابعة بالبريد الإلكتروني";
+}
+
+const providerButtonClass =
+  "flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E3435]/35";
+
 function ButtonSpinner() {
   return (
     <span
@@ -52,7 +87,8 @@ function ButtonSpinner() {
 /**
  * أزرار دخول SSR مع دعم التوثيق عبر نافذة منبثقة تفاعلية (Popup Window).
  * Google يفضّل المسار الأصلي (/api/auth/google → hakeem_session) عند توفّر المفاتيح.
- * Apple مخفي افتراضيًا حتى AUTH_APPLE_ENABLED=1.
+ * Microsoft وApple والبريد والجوال مخفية حتى تُفعَّل أعلامها (راجع auth-providers.ts).
+ * البريد والجوال يفتحان صفحة بوابة Clerk: رمز تحقق ثم التحقق الثنائي إن فعّله المستخدم.
  */
 export function AuthOauthButtons({
   mode,
@@ -74,10 +110,21 @@ export function AuthOauthButtons({
   const providers = visibleProviders ?? listVisibleAuthProviders();
   const showGoogle = providers.includes("google");
   const showApple = providers.includes("apple");
+  const showMicrosoft = providers.includes("microsoft");
+  const showEmail = providers.includes("email");
+  const showPhone = providers.includes("phone");
+  const showIdentifier = showEmail || showPhone;
+  const hasSocial = showGoogle || showApple || showMicrosoft;
   // دائمًا /api/auth/google: يُحمّل المفاتيح من الإعدادات وقت الطلب،
   // ثم يحوّل لـ Clerk فقط إن لم تتوفر مفاتيح Google الأصلية.
   const googleHref = `/api/auth/google?next=${encodeURIComponent(nextUrl)}`;
   const appleHref = buildOAuthStartPath({ provider: "apple", nextUrl, mode });
+  const microsoftHref = buildOAuthStartPath({ provider: "microsoft", nextUrl, mode });
+  const identifierHref = buildOAuthStartPath({
+    provider: showEmail ? "email" : "phone",
+    nextUrl,
+    mode,
+  });
   const googleNativePreferred = isGoogleOAuthConfigured();
 
   const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
@@ -113,7 +160,7 @@ export function AuthOauthButtons({
     }
   }
 
-  if (!showGoogle && !showApple) {
+  if (!hasSocial && !showIdentifier) {
     return (
       <div
         id={id}
@@ -184,14 +231,36 @@ export function AuthOauthButtons({
           </a>
         ) : null}
 
+        {showMicrosoft ? (
+          <a href={microsoftHref} aria-label="المتابعة باستخدام Microsoft" className={providerButtonClass}>
+            <MicrosoftIcon />
+            <span>المتابعة باستخدام Microsoft</span>
+          </a>
+        ) : null}
+
         {showApple ? (
-          <a
-            href={appleHref}
-            aria-label="المتابعة باستخدام Apple"
-            className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E3435]/35"
-          >
+          <a href={appleHref} aria-label="المتابعة باستخدام Apple" className={providerButtonClass}>
             <AppleIcon />
             <span>المتابعة باستخدام Apple</span>
+          </a>
+        ) : null}
+
+        {showIdentifier && hasSocial ? (
+          <div className="flex items-center gap-3 text-xs text-[rgba(14,52,53,0.5)]" aria-hidden>
+            <span className="h-px flex-1 bg-[rgba(14,52,53,0.12)]" />
+            <span>أو</span>
+            <span className="h-px flex-1 bg-[rgba(14,52,53,0.12)]" />
+          </div>
+        ) : null}
+
+        {showIdentifier ? (
+          <a
+            href={identifierHref}
+            aria-label={identifierLabel(showEmail, showPhone)}
+            className={providerButtonClass}
+          >
+            <IdentifierIcon phoneOnly={showPhone && !showEmail} />
+            <span>{identifierLabel(showEmail, showPhone)}</span>
           </a>
         ) : null}
       </div>

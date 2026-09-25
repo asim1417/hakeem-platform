@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import {
+  isAppleSignInAvailable,
+  isEmailCodeSignInAvailable,
+  isMicrosoftSignInAvailable,
+  isPhoneSignInAvailable,
+} from "@/lib/modules/auth/auth-providers";
 import { getGoogleOAuthConfig } from "@/lib/modules/auth/google-oauth";
 import {
+  buildClerkPortalPageUrl,
   buildClerkPortalSsoUrl,
   clerkAccountPortalOrigin,
   decodeClerkFrontendApiHost,
   fetchClerkOAuthAuthorizeUrl,
-  type ClerkOAuthProvider,
+  parseClerkOAuthProvider,
 } from "@/lib/modules/auth/clerk-oauth-start";
 import { continueUrl, resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
@@ -28,16 +35,20 @@ function withDevBrowserCookie(response: NextResponse, jwt?: string) {
 }
 
 /**
- * GET /api/auth/oauth/start?provider=google|apple&next=/dashboard
+ * GET /api/auth/oauth/start?provider=google|microsoft|apple|email|phone&next=/dashboard
  *
  * Google: إن وُجدت مفاتيح Google → OAuth أصلي (/api/auth/google) + hakeem_session.
- * وإلا / لـ Apple: Clerk Portal SSO ثم claim عند العودة.
+ * وإلا / لـ Microsoft وApple: Clerk Portal SSO ثم claim عند العودة.
+ * email / phone: صفحة الدخول أو التسجيل في بوابة Clerk (رمز تحقق + التحقق الثنائي إن فُعّل).
+ * أي وسيلة غير مفعّلة بعلمها تعود إلى /sign-in بدل بدء استراتيجية معطّلة في Clerk.
  */
 export async function GET(request: NextRequest) {
   await hydrateEnvFromSettings().catch(() => 0);
 
   const providerRaw = (request.nextUrl.searchParams.get("provider") || "google").toLowerCase();
-  const provider: ClerkOAuthProvider = providerRaw === "apple" ? "apple" : "google";
+  const identifier = providerRaw === "email" || providerRaw === "phone" ? providerRaw : null;
+  // قيمة غير معروفة تُعامل كـ Google كما كان سابقًا.
+  const provider = identifier ? null : parseClerkOAuthProvider(providerRaw) ?? "google";
   const mode = request.nextUrl.searchParams.get("mode") === "sign-up" ? "sign-up" : "sign-in";
   const nextUrl = resolvePostAuthNext({
     next: request.nextUrl.searchParams.get("next") || undefined,
@@ -56,6 +67,24 @@ export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
   const redirectUrl = `${origin}/sso-callback`;
   const redirectUrlComplete = `${origin}${continueUrl(nextUrl)}`;
+  const backToSignIn = NextResponse.redirect(
+    new URL(mode === "sign-up" ? "/sign-up" : "/sign-in", request.url)
+  );
+
+  // ── البريد برمز تحقق / الجوال برمز OTP: صفحة البوابة المستضافة ──
+  if (!provider) {
+    const enabled =
+      identifier === "email" ? isEmailCodeSignInAvailable() : isPhoneSignInAvailable();
+    if (!enabled) return backToSignIn;
+    const portalPage = buildClerkPortalPageUrl({
+      page: mode === "sign-up" ? "sign-up" : "sign-in",
+      redirectUrl: redirectUrlComplete,
+    });
+    return portalPage ? NextResponse.redirect(portalPage) : backToSignIn;
+  }
+
+  if (provider === "apple" && !isAppleSignInAvailable()) return backToSignIn;
+  if (provider === "microsoft" && !isMicrosoftSignInAvailable()) return backToSignIn;
 
   const portalSso = buildClerkPortalSsoUrl({
     provider,

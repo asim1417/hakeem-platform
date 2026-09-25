@@ -52,6 +52,13 @@ export const MANAGED_KEYS: ManagedKey[] = [
     placeholder: "pk_live_...",
   },
   { key: "CLERK_WEBHOOK_SECRET", label: "Clerk Webhook Secret (Svix)", secret: true, group: "المصادقة (Clerk)", placeholder: "whsec_..." },
+  // ── وسائل الدخول — فعّل الوسيلة في لوحة Clerk أولًا ثم اضبط علمها هنا (1 = ظاهر) ──
+  { key: "AUTH_MICROSOFT_ENABLED", label: "إظهار الدخول عبر Microsoft", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_APPLE_ENABLED", label: "إظهار الدخول عبر Apple", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_EMAIL_CODE_ENABLED", label: "إظهار الدخول بالبريد برمز تحقق", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_PHONE_ENABLED", label: "إظهار الدخول برقم الجوال (OTP)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_MFA_ENABLED", label: "إظهار إعداد التحقق الثنائي", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_ORGANIZATIONS_ENABLED", label: "إظهار حسابات المكاتب (Organizations)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
   { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
   { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },
