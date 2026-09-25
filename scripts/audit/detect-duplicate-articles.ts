@@ -47,9 +47,14 @@ async function main() {
     const totalDupRows = groups.reduce((s, g) => s + (g.articles.length - 1), 0);
     const report = {
       generatedAt: new Date().toISOString(),
+      status: "كشف مكتمل، معالجة معلقة", // detection complete, processing pending
       systemsAffected: new Set(groups.map((g) => g.law)).size,
       duplicateGroups: groups.length,
       redundantRows: totalDupRows,
+      countReconciliation:
+        "الخطة (التقرير 12) ذكرت 12 مجموعة؛ هذا الكشف الحيّ على Neon الحاليّ يجد " +
+        `${groups.length}. الفرق سببه: (أ) عتبة تجاهل النصوص القصيرة (<25 حرفًا) هنا لتقليل الضجيج قد تستبعد مجموعة قصيرة، ` +
+        "و(ب) بعض التكرارات السابقة عولجت (مثل تكرار مادة النفاذ في المعاملات المدنية الذي أُصلح سابقًا).",
       note: "قراءة فقط — لا أرشفة تلقائية. راجِع كل مجموعة مقابل المصدر الرسمي قبل أرشفة الصفّ الزائد (يُوسم archived_at لا يُحذف).",
       groups: groups.slice(0, 500),
     };
