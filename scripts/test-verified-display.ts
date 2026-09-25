@@ -49,6 +49,8 @@ const repealed: VerificationRecord = {
 };
 const faded = presentArticle({ baseText: base, versions: [], verification: repealed });
 ok(faded.faded && faded.badge === "ملغاة" && faded.text === base, "الملغاة تبقى ظاهرة باهتة");
+const replacedView = presentArticle({ baseText: base, versions: [], verification: { ...repealed, verifiedStatus: "مستبدل" } });
+ok(replacedView.faded && replacedView.badge === "مستبدل" && replacedView.text === base, "المستبدل يبقى ظاهرًا بوسمه");
 
 ok(citationFlagsFromVerification(null).inForce === false && citationFlagsFromVerification(null).repealed === false, "بلا تحقق ليس ساريًا ولا ملغى");
 ok(citationFlagsFromVerification({ ...repealed, verifiedStatus: "ساري" }).inForce === true, "سجل ساري يجعل الإحالة نافذة");

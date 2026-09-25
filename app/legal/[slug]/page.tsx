@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveSystemSlug, lawSlug } from "@/lib/modules/legal-core/eli";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
-import { latestVerifications, storedInstrumentKind } from "@/lib/modules/legal-core/verification-read";
+import { issuanceInstrument, latestVerification, latestVerifications, storedInstrumentKind } from "@/lib/modules/legal-core/verification-read";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
@@ -57,7 +57,12 @@ export default async function LegalSystemPage({
       orderBy: { articleNumber: "asc" },
     })
     .catch(() => []);
-  const flags = await latestVerifications("unit", articles.map((a) => a.id));
+  const [flags, workVerification, issuance] = await Promise.all([
+    latestVerifications("unit", articles.map((a) => a.id)),
+    latestVerification("work", system.id),
+    issuanceInstrument(system.name),
+  ]);
+  const workFlags = citationFlagsFromVerification(workVerification);
 
   // LIVE-001: تعريف BASE من عنوان الموقع قبل استعماله في JSON-LD (كان غير معرّف فيتعطل).
   const BASE = getSiteUrl();
@@ -81,6 +86,16 @@ export default async function LegalSystemPage({
         <p className="mt-3 text-ink">
           {articles.length.toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
         </p>
+        {workVerification && workFlags.statusLabel !== "الحالة قيد التحقق من المصدر" ? (
+          <div role="note" className={`mt-4 rounded-xl border-2 p-4 ${workFlags.repealed || workFlags.statusLabel === "مستبدل" ? "border-red-600 bg-red-50 text-red-900" : workFlags.statusLabel === "صادر لم يسرِ بعد" ? "border-amber-500 bg-amber-50 text-amber-950" : "border-[#C69763]/40 bg-ivory text-[var(--navy)]"}`}>
+            <p className="text-base font-extrabold">{workFlags.statusLabel}</p>
+            {workVerification.evidenceInstrument ? <p className="mt-1 text-sm leading-7">{workVerification.evidenceInstrument}</p> : null}
+            {workVerification.evidenceQuote ? <p className="mt-2 text-sm leading-7">{workVerification.evidenceQuote}</p> : null}
+            {workVerification.evidenceUrl ? (
+              <a className="mt-2 inline-block text-sm underline" href={workVerification.evidenceUrl}>مصدر الأداة</a>
+            ) : null}
+          </div>
+        ) : null}
       </header>
 
       {system.preamble?.trim() ? (
@@ -93,6 +108,15 @@ export default async function LegalSystemPage({
         </section>
       ) : null}
 
+      {issuance ? (
+        <section className="mt-6 rounded-xl border border-[#C69763]/25 bg-ivory p-5" aria-label="أداة الإصدار">
+          <h2 className="text-lg font-bold text-[var(--navy)]">أداة الإصدار</h2>
+          <p className="mt-1 text-sm text-muted">{issuance.instrumentKind} {issuance.instrumentNo} · {issuance.instrumentDateHijri}</p>
+          <p className="mt-3 whitespace-pre-line leading-8 text-[var(--navy)]">{issuance.approvingClause}</p>
+          <a className="mt-2 inline-block text-sm underline" href={issuance.sourceUrl}>نص الأداة في أم القرى</a>
+        </section>
+      ) : null}
+
       {articles.length ? (
         <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C69763]/25 bg-ivory">
           {articles.map((a) => (
@@ -102,10 +126,11 @@ export default async function LegalSystemPage({
                 {(() => {
                   const flag = citationFlagsFromVerification(flags.get(a.id) ?? null);
                   const unverified = flag.statusLabel.includes("قيد التحقق");
+                  const retired = flag.repealed || flag.statusLabel === "مستبدل";
                   return (
                     <>
-                      <span className={`leading-7 ${flag.repealed ? "text-slate-400" : "text-[var(--navy)]"}`}>{a.title}</span>
-                      {flag.repealed ? (
+                      <span className={`leading-7 ${retired ? "text-slate-400" : "text-[var(--navy)]"}`}>{a.title}</span>
+                      {retired ? (
                         <span className="mt-0.5 shrink-0 rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>{flag.statusLabel}</span>
                       ) : unverified ? (
                         <span className="mt-0.5 shrink-0 text-xs text-muted">قيد التحقق</span>

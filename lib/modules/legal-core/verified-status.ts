@@ -127,8 +127,10 @@ export function presentArticle(input: {
     .sort((a, b) => a.validFrom.localeCompare(b.validFrom))[0];
 
   const unverified = !input.verification || !isAllowedStatus(input.verification.verifiedStatus);
-  const faded = flags.repealed;
-  const badge = unverified ? null : flags.repealed ? flags.statusLabel : NOT_YET.has(flags.statusLabel) ? flags.statusLabel : null;
+  const replaced = flags.statusLabel === "مستبدل";
+  const conditional = flags.statusLabel.startsWith("ملغى مع") || flags.statusLabel.startsWith("إلغاء جزئي");
+  const faded = flags.repealed || replaced;
+  const badge = unverified ? null : faded || conditional || NOT_YET.has(flags.statusLabel) ? flags.statusLabel : null;
   const instrument = input.verification?.evidenceInstrument?.trim() || null;
 
   let citationSuffix = "النص الأصلي المحفوظ (بلا نسخة مؤرخة بعد)";

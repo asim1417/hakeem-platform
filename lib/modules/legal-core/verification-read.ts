@@ -98,6 +98,45 @@ export async function storedInstrumentKinds(ids: string[]): Promise<Map<string, 
   return out;
 }
 
+export interface IssuanceInstrument {
+  instrumentKind: string;
+  instrumentNo: string;
+  instrumentDateHijri: string;
+  approvingClause: string;
+  sourceUrl: string;
+}
+
+/** بند اعتماد العمل من منطقة الاستقبال. غياب الجدول = لا شيء. */
+export async function issuanceInstrument(lawTitle: string): Promise<IssuanceInstrument | null> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{
+      instrument_kind: string;
+      instrument_no: string;
+      instrument_date_hijri: string;
+      approving_clause: string;
+      source_url: string;
+    }>>(
+      `SELECT instrument_kind, instrument_no, instrument_date_hijri, approving_clause, source_url
+       FROM uqn_fix.issuance_instrument
+       WHERE law_title = $1
+       ORDER BY id DESC
+       LIMIT 1`,
+      lawTitle,
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      instrumentKind: row.instrument_kind,
+      instrumentNo: row.instrument_no,
+      instrumentDateHijri: row.instrument_date_hijri,
+      approvingClause: row.approving_clause,
+      sourceUrl: row.source_url,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** عمود النوع إن وُجد. لا يُنشئ قيمة. */
 export async function storedInstrumentKind(systemId: string): Promise<string | null> {
   try {
