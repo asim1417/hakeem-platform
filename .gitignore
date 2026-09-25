@@ -47,3 +47,6 @@ __pycache__/
 # خام المصادر الرسمية — حجمه كبير ومحلي/تشغيلي
 data/backfill/official-raw/
 data/backfill/text/
+
+# Local handoff extraction (GitHub release assets; do not commit binaries)
+handoff/
