@@ -1,13 +1,13 @@
 /**
  * build-rulings-search-norm — يملأ judicial_cases.search_norm بنصٍّ **منقّى من PDPL
- * ومطبَّع** (البند 1.7). يُشغَّل بعد هجرة 20260925060000 على **Neon branch** لا الإنتاج.
+ * ومطبَّع** (البند 1.7). يُشغَّل بعد هجرة 20260925060000.
+ * على Neon يلزم --apply --i-understand-production و CONFIRM_NEON_WRITE=YES.
  *
- * لا يُخزَّن أي رقم هوية/جوال في الفهرس (يُنقّى قبل التطبيع).
+ * لا يُخزَّن أي رقم هوية/جوال في الفهرس (حجب، ثم تطبيع، ثم حجب ثانٍ).
  * dry-run افتراضيًّا؛ على Neon يتطلّب --apply --i-understand-production + CONFIRM_NEON_WRITE=YES.
  */
 import { PrismaClient } from "@prisma/client";
-import { normalizeArabic } from "../../lib/modules/legal-core/bm25-tokenizer";
-import { redactPII } from "../../lib/modules/legal-core/rulings-search";
+import { buildRulingSearchNorm } from "../../lib/modules/legal-core/rulings-search";
 
 const isNeon = /neon\.tech/i.test(process.env.DATABASE_URL || "");
 const APPLY =
@@ -26,20 +26,26 @@ async function main() {
     console.log(`${APPLY ? "🛠️ APPLY" : "🔎 DRY-RUN"} — أحكام: ${total}`);
     if (!APPLY) { console.log("ℹ️  DRY-RUN: لن تُكتب بيانات. أضف --apply (على Neon branch)."); return; }
     let done = 0;
-    for (let skip = 0; skip < total; skip += BATCH) {
-      const rows = await prisma.judicialCase.findMany({
-        select: { id: true, judgmentText: true, judgmentTitle: true },
-        orderBy: { id: "asc" }, skip, take: BATCH,
-      });
+    let cursor = "";
+    for (;;) {
+      const rows = await prisma.$queryRawUnsafe<Array<{ id: string; judgmentText: string; judgmentTitle: string | null }>>(
+        `SELECT id, "judgmentText" AS "judgmentText", "judgmentTitle" AS "judgmentTitle"
+         FROM judicial_cases
+         WHERE id > $1 AND ("search_norm" IS NULL OR "search_norm" = '')
+         ORDER BY id
+         LIMIT ${BATCH}`,
+        cursor,
+      );
       if (!rows.length) break;
+      cursor = rows[rows.length - 1].id;
       await prisma.$transaction(
         rows.map((r) => {
-          const norm = normalizeArabic(redactPII(`${r.judgmentTitle ?? ""} ${r.judgmentText ?? ""}`));
+          const norm = buildRulingSearchNorm(r.judgmentTitle, r.judgmentText);
           return prisma.$executeRawUnsafe(`UPDATE "judicial_cases" SET "search_norm" = $1 WHERE "id" = $2`, norm, r.id);
         }),
       );
       done += rows.length;
-      if (done % 5000 === 0 || done === total) console.log(`  ${done}/${total}`);
+      if (done % 5000 === 0) console.log(`  ${done}/${total}`);
     }
     console.log(`✓ عُبِّئ search_norm لـ ${done} حكمًا (منقّى PDPL).`);
   } finally {

@@ -154,19 +154,19 @@ def assert_apply_allowed(target_url: str, allow_local: bool) -> None:
     sys.exit(f"الكتابة مرفوضة على المضيف {host}. الإنتاج = Neon، والتجربة المحلية بـ --allow-local")
 
 
-def load_works(con) -> list[dict]:
+def load_works(con, statuses: tuple[str, ...] = ("complete",)) -> list[dict]:
     with con.cursor() as cur:
         cur.execute(
             """
             SELECT source_id, dataset, title, work_type, numbering, article_count,
                    source_url, royal_decree_no, royal_decree_date_hijri, approval_kind,
                    approval_no, approval_date_hijri, effective_clause, published_gregorian,
-                   published_hijri, raw_sha
+                   published_hijri, raw_sha, parse_status
             FROM uqn_stage.work
-            WHERE batch_id=%s AND parse_status='complete' AND article_count>0
+            WHERE batch_id=%s AND parse_status = ANY(%s)
             ORDER BY dataset, source_id
             """,
-            (BATCH,),
+            (BATCH, list(statuses)),
         )
         cols = [d[0] for d in cur.description]
         works = [dict(zip(cols, row)) for row in cur.fetchall()]
@@ -308,29 +308,36 @@ def load_systems(con) -> dict[str, dict]:
         return out
 
 
-def numbered_units(work: dict) -> list[dict]:
+def numbered_units(work: dict, strict: bool = True) -> list[dict]:
     rows = []
     for u in work["units"]:
         if u["unit_type"] not in ("article", "clause"):
             continue
         if not isinstance(u["number"], int) or u["number"] <= 0:
-            raise ValueError(f"{work['source_id']} رقم وحدة غير صالح")
+            if strict:
+                raise ValueError(f"{work['source_id']} رقم وحدة غير صالح")
+            continue
         if sha16(u["body"]) != u["text_sha"]:
             raise ValueError(f"{work['source_id']} بصمة لا تطابق النص seq={u['seq']}")
+        if not (u["body"] or "").strip():
+            continue
         rows.append(u)
-    rows.sort(key=lambda r: r["number"])
+    rows.sort(key=lambda r: (r["number"], r["seq"]))
     nums = [r["number"] for r in rows]
-    if nums != list(range(1, len(nums) + 1)):
-        raise ValueError(f"{work['source_id']} تسلسل غير متصل")
-    if len(rows) != work["article_count"]:
-        raise ValueError(f"{work['source_id']} العدد {len(rows)} != {work['article_count']}")
+    if len(nums) != len(set(nums)):
+        raise ValueError(f"{work['source_id']} رقم مادة مكرر")
+    if strict:
+        if nums != list(range(1, len(nums) + 1)):
+            raise ValueError(f"{work['source_id']} تسلسل غير متصل")
+        if len(rows) != work["article_count"]:
+            raise ValueError(f"{work['source_id']} العدد {len(rows)} != {work['article_count']}")
     return rows
 
 
 def preamble_text(work: dict) -> str:
     parts = []
     for u in work["units"]:
-        if u["unit_type"] in ("enacting_instrument", "approval_instrument", "preamble"):
+        if u["unit_type"] in ("enacting_instrument", "approval_instrument", "preamble", "unstructured_body"):
             parts.append(u["body"].strip())
     clause = (work.get("effective_clause") or "").strip()
     if clause:
@@ -686,7 +693,7 @@ def repeal_old_system(cur, name: str, spec: dict, new_work: dict | None, stats: 
     stats["articles_marked_repealed"] += marked
 
 
-def promote(con, works: list[dict], apply: bool) -> Counter:
+def promote(con, works: list[dict], apply: bool, strict: bool = True, do_repeal: bool = True) -> Counter:
     stats: Counter = Counter()
     systems = load_systems(con)
     with_norm = has_search_norm(con)
@@ -695,7 +702,7 @@ def promote(con, works: list[dict], apply: bool) -> Counter:
     ordered = sorted(works, key=lambda w: (0 if w["dataset"] == "laws" else 1, w["source_id"]))
     for i, work in enumerate(ordered, 1):
         try:
-            units = numbered_units(work)
+            units = numbered_units(work, strict=strict)
         except ValueError as e:
             stats["skipped_invalid"] += 1
             print("تخطي", e)
@@ -721,6 +728,8 @@ def promote(con, works: list[dict], apply: bool) -> Counter:
         elif existing:
             stats["skipped_existing_name"] += 1
             print(f"اسم موجود مسبقًا، بلا استبدال: «{work['title']}» ({work['source_id']})")
+        elif not units and not preamble_text(work):
+            stats["skipped_no_text"] += 1
         else:
             stats["systems_to_insert"] += 1
             stats["articles_to_insert"] += len(units)
@@ -731,6 +740,11 @@ def promote(con, works: list[dict], apply: bool) -> Counter:
                     with con.cursor() as cur:
                         sid = insert_system(cur, work, preamble_text(work), decree, systems)
                         n = insert_articles(cur, work, sid, units, decree, with_norm)
+                        if len(units) != (work.get("article_count") or 0):
+                            cur.execute(
+                                'UPDATE legal_systems SET "articleCount"=%s, "updatedAt"=%s WHERE id=%s',
+                                (len(units), datetime.now(timezone.utc), sid),
+                            )
                         stats["articles_inserted"] += n
                         stats["systems_inserted"] += 1
                     con.commit()
@@ -742,6 +756,8 @@ def promote(con, works: list[dict], apply: bool) -> Counter:
         if apply and i % 40 == 0:
             print(f"… {i}/{len(ordered)}")
     con.commit()
+    if not do_repeal:
+        return stats
     for old_name, spec in REPEAL_OLD.items():
         new_work = by_id.get(spec["by"])
         if not new_work or norm_name(new_work["title"]) not in systems:
@@ -765,6 +781,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--allow-local", action="store_true")
+    ap.add_argument("--remainder", action="store_true", help="يرحّل غير المكتمل الذي له نص، دون اختلاق")
     args = ap.parse_args()
     staging_url = os.environ.get("STAGING_DATABASE_URL", "postgresql://hakeem:hakeem_password@127.0.0.1:5432/uqn_staging")
     target_url = os.environ.get("TARGET_DATABASE_URL")
@@ -776,14 +793,16 @@ def main() -> None:
     with psycopg.connect(staging_url) as stage, psycopg.connect(target_url) as target:
         if not args.apply:
             target.execute("SET default_transaction_read_only = on")
-            works = load_works(stage)
-            stats = promote(target, works, apply=False)
+            statuses = ("irregular_sequence", "needs_triage", "unstructured") if args.remainder else ("complete",)
+            works = load_works(stage, statuses)
+            stats = promote(target, works, apply=False, strict=not args.remainder, do_repeal=not args.remainder)
         else:
             print("نسخ الوسيط إلى الهدف…")
             copy_stage(stage, target)
             ensure_provenance(target)
-            works = load_works(target)
-            stats = promote(target, works, apply=True)
+            statuses = ("irregular_sequence", "needs_triage", "unstructured") if args.remainder else ("complete",)
+            works = load_works(target, statuses)
+            stats = promote(target, works, apply=True, strict=not args.remainder, do_repeal=not args.remainder)
     print("— النتيجة —")
     for k in sorted(stats):
         print(f"{k}={stats[k]}")

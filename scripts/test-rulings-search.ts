@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
-import { searchRulingsDirect, redactPII, extractHijriYear } from "../lib/modules/legal-core/rulings-search";
+import { searchRulingsDirect, redactPII, extractHijriYear, buildRulingSearchNorm } from "../lib/modules/legal-core/rulings-search";
 
 const OUT = process.argv[2] || "reports/legal-source-integrity";
 const QUERIES = ["عقد الإيجار", "فسخ العقد", "الغبن", "الشيك", "التعويض", "الحضانة", "النفقة", "التحكيم", "الشفعة", "نجش"];
@@ -23,6 +23,12 @@ async function main() {
     // وحدات (بلا قاعدة)
     ok(redactPII("رقم الهوية 1012345678 والجوال 0501234567").indexOf("1012345678") === -1, "PDPL: حجب رقم الهوية");
     ok(redactPII("جواله 0501234567").includes("[جوال محجوب]"), "PDPL: حجب الجوال");
+    ok(!/[0-9\u0660-\u0669]/.test(redactPII("الهوية ١١٠٢٣٤٥٦٧٨")), "PDPL: حجب هوية بأرقام هندية");
+    ok(redactPII("1ـ012345678").indexOf("1012345678") === -1, "PDPL: حجب هوية مفصولة بتطويل");
+    ok(redactPII("جوال ٠٥٠١٢٣٤٥٦٧").includes("[جوال محجوب]"), "PDPL: حجب جوال بأرقام هندية");
+    const indexed = buildRulingSearchNorm("عنوان", "رقم الهوية ١١٠٢٣٤٥٦٧٨ والجوال ٠٥٠١٢٣٤٥٦٧");
+    ok(!/(^|[^0-9])[12][0-9]{9}([^0-9]|$)/.test(indexed), "PDPL: فهرس البحث لا يُبقي هوية بعد التطبيع");
+    ok(!indexed.includes("0501234567"), "PDPL: فهرس البحث لا يُبقي الجوال بعد التطبيع");
     ok(extractHijriYear("في 12/3/1445هـ") === 1445, "استخراج السنة الهجرية");
     ok(extractHijriYear("١٢/٣/١٤٤٠") === 1440, "استخراج السنة من أرقام هندية");
 
@@ -54,7 +60,7 @@ async function main() {
       note: "بحث مستقلّ مباشر على الأحكام بلا دمج مواد/أنظمة. مطابقة كلمة كاملة (FTS simple) + تطبيع + حجب PDPL.",
       queries: rows,
       unresolved: [
-        "لا يوجد عمود search_norm/فهرس GIN على الإنتاج — الأداء اعتمد على مسح تسلسليّ (الفهرس النهائي عبر هجرة على Neon branch لا الإنتاج).",
+        "عمود search_norm وفهرس GIN موجودان على الإنتاج بعد تعبئة منقّاة. إن غاب العمود يسقط البحث إلى مسح تسلسلي.",
         "التاريخ الهجريّ يُستخرج من النصّ (لا عمود مبنيَن) — تغطية الاستخراج أقلّ من 100%.",
         "حجب PDPL تقريبيّ (هوية/جوال/آيبان)؛ أسماء الأفراد تحتاج سياسة منفصلة.",
       ],
