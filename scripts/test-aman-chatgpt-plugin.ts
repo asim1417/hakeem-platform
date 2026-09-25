@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { AMAN_TRIAGE_WIDGET_HTML } from "@/lib/mcp/aman-widget";
 import { buildAmanServiceCard, getAmanConsultationLink } from "@/lib/mcp/tools/aman-triage";
 
@@ -32,5 +33,12 @@ assert.match(safeFallback.href, /^https:\/\/amanlaws\.com\//);
 assert.match(AMAN_TRIAGE_WIDGET_HTML, /ui\/initialize/);
 assert.match(AMAN_TRIAGE_WIDGET_HTML, /ui\/notifications\/tool-result/);
 assert.match(AMAN_TRIAGE_WIDGET_HTML, /privacy_notice/);
+
+// نقطة ChatGPT العامة مستقلة عن /mcp المحمي ولا تطلب من العميل مفتاح حكيم الداخلي.
+const publicMcpRoute = readFileSync(new URL("../app/aman/mcp/route.ts", import.meta.url), "utf8");
+const middleware = readFileSync(new URL("../middleware.ts", import.meta.url), "utf8");
+assert.match(publicMcpRoute, /createMcpHandler\(registerAmanTools/);
+assert.doesNotMatch(publicMcpRoute, /HAKEEM_MCP_KEY/);
+assert.match(middleware, /"\/aman\/mcp\(\.\*\)"/);
 
 console.log("Aman ChatGPT plugin checks passed.");

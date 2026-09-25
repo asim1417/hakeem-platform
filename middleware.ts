@@ -33,6 +33,8 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   // خادم MCP: مسار عام تمامًا — لا يمسّه Clerk إطلاقًا (مستثنى أيضًا من matcher أدناه).
   // يمنع اعتراض clerkMiddleware الذي يردّ 401 فيُفسَّر لدى عميل MCP كدعوة OAuth.
   "/mcp(.*)",
+  // واجهة ChatGPT العامة لأمان: أدوات ثابتة للفرز والتواصل فقط، بلا جلسة أو Clerk.
+  "/aman/mcp(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/login",
@@ -146,9 +148,9 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
 
 export const config = {
   matcher: [
-    // استثناء /mcp (وكل ما تحته) من الـ middleware نهائيًا — يمرّ الطلب مباشرةً إلى
-    // app/mcp/route.ts بلا اعتراض Clerk ولا تحويل.
-    "/((?!_next|mcp(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // استثناء نقاط MCP (وكل ما تحتها) من الـ middleware نهائيًا — تمرّ مباشرةً إلى
+    // Route Handler بلا اعتراض Clerk ولا تحويل.
+    "/((?!_next|mcp(?:/|$)|aman/mcp(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
   ],
 };
