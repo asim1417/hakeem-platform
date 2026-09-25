@@ -9,6 +9,7 @@ import {
   OAUTH_NEXT_COOKIE,
 } from "@/lib/modules/auth/google-oauth";
 import { OAUTH_REF_COOKIE, safeNextPath } from "@/lib/modules/auth/oauth-shared";
+import { allowClerkGoogleFallback } from "@/lib/modules/auth/production-auth";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 
@@ -24,8 +25,14 @@ export async function GET(request: NextRequest) {
   const isPopup = request.nextUrl.searchParams.get("popup") === "1";
   const cfg = getGoogleOAuthConfig();
   if (!cfg) {
-    // لا مفاتيح Google — أعد التوجيه لمسار Clerk العام
     const next = resolvePostAuthNext({ next: request.nextUrl.searchParams.get("next") });
+    // على الإنتاج: لا نسقط إلى Clerk Development (pk_test_) — يطلب إعداد Google الأصلي أو Clerk live.
+    if (!allowClerkGoogleFallback()) {
+      const fail = new URL("/sign-in", request.url);
+      fail.searchParams.set("error", "google_keys_required");
+      fail.searchParams.set("next", next);
+      return NextResponse.redirect(fail);
+    }
     const q = new URLSearchParams({ provider: "google", mode: "sign-in", next });
     if (isPopup) q.set("popup", "1");
     return NextResponse.redirect(new URL(`/api/auth/oauth/start?${q}`, request.url));

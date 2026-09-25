@@ -30,12 +30,14 @@ export function isAppleSignInAvailable(): boolean {
   return isAppleAuthEnabled() && isClerkConfigured();
 }
 
-/** جاهزية إطلاق فعلية: Google أصلي أو مفاتيح Clerk إنتاج. */
+/** جاهزية إطلاق فعلية: Google أصلي أو مفاتيح Clerk إنتاج (pk_live_). */
 export function isAuthLaunchReady(): boolean {
   if (isGoogleOAuthConfigured()) return true;
   if (isClerkConfigured() && isClerkProductionPublishableKey()) return true;
   return false;
 }
+
+export { isAuthProductionReady, getAuthProductionStatus } from "@/lib/modules/auth/production-auth";
 
 export type VisibleAuthProvider = "google" | "apple";
 

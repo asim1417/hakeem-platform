@@ -9,6 +9,7 @@ import { sharePointConfigured, storageBackend } from "@/lib/modules/attachments/
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
 import { isMicrosoftOAuthConfigured } from "@/lib/modules/auth/microsoft-oauth";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { getAuthProductionStatus } from "@/lib/modules/auth/production-auth";
 import { listJobStats, listRecentJobs } from "@/lib/modules/jobs/job-store";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { listFeatureToggles } from "@/lib/modules/admin/feature-toggles";
@@ -88,6 +89,7 @@ export async function getPlatformOverview() {
       clerk: isClerkConfigured(),
       google: isGoogleOAuthConfigured(),
       microsoft: isMicrosoftOAuthConfigured(),
+      production: getAuthProductionStatus(),
     },
     ai: {
       live: Boolean(ai && ai.provider !== "offline" && ai.configured),

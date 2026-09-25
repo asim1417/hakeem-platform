@@ -8,6 +8,7 @@ import {
   fetchClerkOAuthAuthorizeUrl,
   type ClerkOAuthProvider,
 } from "@/lib/modules/auth/clerk-oauth-start";
+import { allowClerkGoogleFallback } from "@/lib/modules/auth/production-auth";
 import { continueUrl, resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
@@ -47,6 +48,14 @@ export async function GET(request: NextRequest) {
   if (provider === "google" && getGoogleOAuthConfig()) {
     const q = new URLSearchParams({ next: nextUrl });
     return NextResponse.redirect(new URL(`/api/auth/google?${q}`, request.url));
+  }
+
+  // على الإنتاج: منع السقوط إلى Clerk pk_test_ لدخول Google
+  if (provider === "google" && !allowClerkGoogleFallback()) {
+    const fail = new URL("/sign-in", request.url);
+    fail.searchParams.set("error", "google_keys_required");
+    fail.searchParams.set("next", nextUrl);
+    return NextResponse.redirect(fail);
   }
 
   if (!isClerkConfigured()) {

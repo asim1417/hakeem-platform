@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
+import { getAuthProductionStatus } from "@/lib/modules/auth/production-auth";
 import { isMoyasarLive } from "@/lib/modules/billing/moyasar";
 import { isConversationSessionSchemaReady } from "@/lib/modules/conversations/ensure-schema";
 
@@ -40,6 +41,7 @@ export async function GET() {
     }
   }
 
+  const auth = getAuthProductionStatus();
   const ok = database === "up";
   return NextResponse.json(
     {
@@ -51,6 +53,13 @@ export async function GET() {
         database,
         clerk: isClerkConfigured() ? "configured" : "missing",
         googleOAuth: isGoogleOAuthConfigured() ? "configured" : "missing",
+        authProduction: {
+          ready: auth.ready,
+          googleMode: auth.googleMode,
+          clerkInstance: auth.clerkInstance,
+          clerkFrontendHost: auth.clerkFrontendHost,
+          recommendation: auth.recommendation,
+        },
         moyasar: isMoyasarLive() ? "configured" : "missing",
         conversationSession,
         ...(conversationSessionDetail ? { conversationSessionDetail } : {}),
