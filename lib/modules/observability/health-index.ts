@@ -6,7 +6,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
-import { PASSED_GUARD_RESULTS } from "@/lib/modules/observability/guard-result";
+import { BLOCKED_GUARD_RESULTS, PASSED_GUARD_RESULTS } from "@/lib/modules/observability/guard-result";
 
 export type HealthLevel = "healthy" | "degraded" | "unknown";
 
@@ -40,7 +40,7 @@ function pct(part: number, whole: number): number {
 
 /** يبني مؤشّر الصحّة. now يُمرَّر من المستدعي (المسار) لتفادي Date.now في النواة. */
 export async function buildHealthIndex(now: string): Promise<HealthIndex> {
-  const [systems, articles, relationsTotal, relationsVerified, guardTotal, guardPass, auditCount, rulings, rulingLinks] =
+  const [systems, articles, relationsTotal, relationsVerified, guardTotal, guardPass, guardBlocked, auditCount, rulings, rulingLinks] =
     await Promise.all([
       prisma.legalSystem.count().catch(() => 0),
       prisma.legalArticle.count().catch(() => 0),
@@ -48,6 +48,7 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
       prisma.legalRelation.count({ where: { status: "VERIFIED" } }).catch(() => 0),
       prisma.guardrailDecision.count().catch(() => 0),
       prisma.guardrailDecision.count({ where: { result: { in: [...PASSED_GUARD_RESULTS] } } }).catch(() => 0),
+      prisma.guardrailDecision.count({ where: { result: { in: [...BLOCKED_GUARD_RESULTS] } } }).catch(() => 0),
       prisma.auditEvent.count().catch(() => 0),
       // OBS-001: عدّ الأحكام القضائية وروابطها بالمواد ضمن مؤشّر الصحّة الإداري.
       prisma.judicialCase.count().catch(() => -1),
@@ -92,7 +93,7 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
       labelAr: "الدليل",
       score: evidenceScore,
       detail:
-        (guardTotal > 0 ? `حراس ناجحة ${guardPass}/${guardTotal}` : "لا قرارات حُرّاس بعد") +
+        (guardTotal > 0 ? `حراس ناجحة ${guardPass}/${guardTotal} · رفض ${guardBlocked}` : "لا قرارات حُرّاس بعد") +
         ` · أحكام ${rulings < 0 ? "؟" : rulings} (روابط ${rulingLinks < 0 ? "؟" : rulingLinks})`,
     },
     {

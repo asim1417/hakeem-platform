@@ -1,13 +1,13 @@
 /**
  * build-rulings-search-norm — يملأ judicial_cases.search_norm بنصٍّ **منقّى من PDPL
- * ومطبَّع** (البند 1.7). يُشغَّل بعد هجرة 20260925060000 على **Neon branch** لا الإنتاج.
+ * ومطبَّع** (البند 1.7). يُشغَّل بعد هجرة 20260925060000.
+ * على Neon يلزم --apply --i-understand-production و CONFIRM_NEON_WRITE=YES.
  *
- * لا يُخزَّن أي رقم هوية/جوال في الفهرس (يُنقّى قبل التطبيع).
+ * لا يُخزَّن أي رقم هوية/جوال في الفهرس (حجب، ثم تطبيع، ثم حجب ثانٍ).
  * dry-run افتراضيًّا؛ على Neon يتطلّب --apply --i-understand-production + CONFIRM_NEON_WRITE=YES.
  */
 import { PrismaClient } from "@prisma/client";
-import { normalizeArabic } from "../../lib/modules/legal-core/bm25-tokenizer";
-import { redactPII } from "../../lib/modules/legal-core/rulings-search";
+import { buildRulingSearchNorm } from "../../lib/modules/legal-core/rulings-search";
 
 const isNeon = /neon\.tech/i.test(process.env.DATABASE_URL || "");
 const APPLY =
@@ -40,7 +40,7 @@ async function main() {
       cursor = rows[rows.length - 1].id;
       await prisma.$transaction(
         rows.map((r) => {
-          const norm = normalizeArabic(redactPII(`${r.judgmentTitle ?? ""} ${r.judgmentText ?? ""}`));
+          const norm = buildRulingSearchNorm(r.judgmentTitle, r.judgmentText);
           return prisma.$executeRawUnsafe(`UPDATE "judicial_cases" SET "search_norm" = $1 WHERE "id" = $2`, norm, r.id);
         }),
       );
