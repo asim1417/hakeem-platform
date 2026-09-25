@@ -6,6 +6,7 @@ import { absoluteUrl, getSiteUrl } from "@/lib/modules/config/site-url";
 import { resolveSystemSlug, buildArticleEli, lawSlug } from "@/lib/modules/legal-core/eli";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
+import { ArticleStatusBanner } from "@/components/legal/ArticleStatusBanner";
 
 export const revalidate = 3600;
 
@@ -51,6 +52,15 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
   const { system, article, n } = data;
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const content = sanitizeDisplayText(article.content);
+  // تعديلات/إلغاءات المادة (تُعرض المعتمَدة verified فقط في الشارة).
+  const amendments = await prisma.articleAmendment
+    .findMany({
+      where: { articleId: article.id },
+      select: { changeType: true, decreeRef: true, hijriDate: true, summary: true, previousText: true, newText: true, reviewStatus: true },
+      orderBy: { version: "asc" },
+    })
+    .catch(() => []);
+  const isRepealed = String(article.status ?? "").trim() === "ملغاة";
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
   const citation = `${system.name}، المادة (${n})${article.royalDecree ? ` — ${article.royalDecree}` : ""}`;
 
@@ -79,7 +89,16 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
         <h1 className="mt-2 text-3xl font-bold">المادة {n.toLocaleString("ar-SA")}</h1>
         {article.title && article.title !== String(n) ? <p className="mt-2 text-lg text-ink">{article.title}</p> : null}
 
-        <div className="mt-6 whitespace-pre-wrap rounded-xl border border-[#C69763]/25 bg-ivory p-6 text-lg leading-9 text-[var(--navy)]">
+        <div className="mt-6">
+          <ArticleStatusBanner status={article.status} amendments={amendments} />
+        </div>
+
+        <div
+          className="whitespace-pre-wrap rounded-xl border p-6 text-lg leading-9"
+          style={isRepealed
+            ? { borderColor: "#dc2626", background: "#fef2f2", color: "#7f1d1d", textDecoration: "line-through", textDecorationColor: "rgba(220,38,38,0.5)" }
+            : { borderColor: "rgba(198,151,99,0.25)", background: "var(--ivory)", color: "var(--navy)" }}
+        >
           {content}
         </div>
 

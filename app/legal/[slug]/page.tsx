@@ -41,7 +41,7 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
       // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
       // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
       where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
-      select: { id: true, articleNumber: true, title: true },
+      select: { id: true, articleNumber: true, title: true, status: true },
       orderBy: { articleNumber: "asc" },
     })
     .catch(() => []);
@@ -84,7 +84,10 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
             <li key={a.id}>
               <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
                 <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
-                <span className="leading-7 text-[var(--navy)]">{a.title}</span>
+                <span className={`leading-7 ${String(a.status ?? "").trim() === "ملغاة" ? "text-red-700 line-through decoration-red-400" : "text-[var(--navy)]"}`}>{a.title}</span>
+                {String(a.status ?? "").trim() === "ملغاة" ? (
+                  <span className="mt-0.5 shrink-0 rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>ملغاة</span>
+                ) : null}
               </Link>
             </li>
           ))}
