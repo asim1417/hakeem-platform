@@ -38,12 +38,16 @@ export default async function LegalSystemPage({ params }: { params: { slug: stri
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const articles = await prisma.legalArticle
     .findMany({
-      where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }] },
+      // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
+      // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
+      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
       select: { id: true, articleNumber: true, title: true },
       orderBy: { articleNumber: "asc" },
     })
     .catch(() => []);
 
+  // LIVE-001: تعريف BASE من عنوان الموقع قبل استعماله في JSON-LD (كان غير معرّف فيتعطل).
+  const BASE = getSiteUrl();
   const ld = {
     "@context": "https://schema.org",
     "@type": "Legislation",

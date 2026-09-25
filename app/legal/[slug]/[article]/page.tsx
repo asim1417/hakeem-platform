@@ -55,7 +55,7 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
   const citation = `${system.name}، المادة (${n})${article.royalDecree ? ` — ${article.royalDecree}` : ""}`;
 
   const [prev, next] = await Promise.all([
-    prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
+    prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n, gt: 0 } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
     prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { gt: n } }, orderBy: { articleNumber: "asc" }, select: { articleNumber: true } }).catch(() => null),
   ]);
 
