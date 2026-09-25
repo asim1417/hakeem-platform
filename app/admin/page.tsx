@@ -81,6 +81,54 @@ export default async function AdminPage() {
           <AdminLink href="/admin/settings" label="إعدادات التشغيل" />
         </section>
 
+        <section className="mt-6 rounded-[0.75rem] border border-[rgba(14,52,53,0.1)] bg-[#FFFcf7] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-[#0E3435]">جاهزية دخول الإنتاج</h2>
+              <p className="mt-1 text-sm leading-7 text-[rgba(14,52,53,0.65)]">
+                {overview.auth.production.recommendation}
+              </p>
+            </div>
+            <span
+              className={`rounded-md px-3 py-1.5 text-sm font-bold ${
+                overview.auth.production.ready
+                  ? "bg-emerald-50 text-emerald-800"
+                  : "bg-amber-50 text-amber-900"
+              }`}
+            >
+              {overview.auth.production.ready ? "جاهز" : "يحتاج ضبطًا"}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-4 text-sm text-[#0E3435]">
+            <span>
+              Google:{" "}
+              <strong>
+                {overview.auth.production.googleMode === "native"
+                  ? "أصلي"
+                  : overview.auth.production.googleMode === "clerk_fallback"
+                    ? "عبر Clerk"
+                    : "غير متاح"}
+              </strong>
+            </span>
+            <span>
+              Clerk:{" "}
+              <strong>
+                {overview.auth.production.clerkInstance === "live"
+                  ? "Production"
+                  : overview.auth.production.clerkInstance === "test"
+                    ? "Development"
+                    : "غير مضبوط"}
+              </strong>
+            </span>
+            <Link href="/admin/services" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+              تفاصيل الخدمات ←
+            </Link>
+            <Link href="/admin/settings" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+              الإعدادات ←
+            </Link>
+          </div>
+        </section>
+
         <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Stat label="قاعدة البيانات" value={overview.database} />
           <Stat label="المستخدمون النشطون" value={`${overview.counts.usersActive} / ${overview.counts.usersTotal}`} />

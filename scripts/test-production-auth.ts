@@ -59,6 +59,15 @@ async function main() {
   const signIn = readFileSync(resolve(root, "app/sign-in/[[...sign-in]]/page.tsx"), "utf8");
   assert.ok(signIn.includes("google_keys_required"));
 
+  const services = readFileSync(resolve(root, "app/admin/services/page.tsx"), "utf8");
+  assert.ok(services.includes("getAuthProductionStatus"));
+  assert.ok(services.includes("جاهزية دخول الإنتاج"));
+  assert.ok(services.includes("/admin/settings"));
+
+  const adminHome = readFileSync(resolve(root, "app/admin/page.tsx"), "utf8");
+  assert.ok(adminHome.includes("جاهزية دخول الإنتاج"));
+  assert.ok(adminHome.includes("auth.production"));
+
   console.log("test-production-auth: OK");
 }
 
