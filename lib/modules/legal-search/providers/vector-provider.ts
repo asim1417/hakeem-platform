@@ -38,16 +38,29 @@ async function articleEmbeddingsExist(): Promise<boolean> {
   }
 }
 
-/** المسار الأساسي: استعلام pgvector على جدول `embeddings`. يعيد null إن تعذّر فيُجرَّب الاحتياطي. */
+/**
+ * المسار الأساسي: استعلام pgvector على جدول `embeddings`. يعيد null إن تعذّر فيُجرَّب الاحتياطي.
+ *
+ * لا يُعاد حساب content_hash ومقارنته بالنص في مسار البحث (تكلفة عالية لكل استعلام).
+ * السلوك الحالي: يُعاد أقرب متجه دون التحقق من حداثة البصمة.
+ * للتشغيل الصارم بعد إعادة البناء الموثوقة: VECTOR_REQUIRE_CONTENT_HASH=1
+ * يستبعد الصفوف بلا content_hash (نسخ قديم بلا إثبات نص).
+ */
 async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<RawResult[] | null> {
   if (!(await embeddingsTableHasRows())) return null;
   try {
     const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
     const take = Math.min(limit, 20);
+    const requireHash =
+      process.env.VECTOR_REQUIRE_CONTENT_HASH === "1" ||
+      process.env.VECTOR_REQUIRE_CONTENT_HASH === "true";
+    const hashClause = requireHash
+      ? " AND content_hash IS NOT NULL AND content_hash <> ''"
+      : "";
     const rows = await prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
       `SELECT owner_type, owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
        FROM embeddings
-       WHERE embedding IS NOT NULL
+       WHERE embedding IS NOT NULL${hashClause}
        ORDER BY embedding <=> '${literal}'::vector
        LIMIT ${take}`
     );
