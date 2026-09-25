@@ -16,7 +16,7 @@ export default async function LegalIndexPage() {
   type SysRow = { id: string; name: string; eliSlug: string | null; domainTitle: string | null; articleCount: number };
   const systems = await prisma.legalSystem
     .findMany({
-      where: { articleCount: { gt: 0 } },
+      where: { OR: [{ articleCount: { gt: 0 } }, { preamble: { not: null } }] },
       select: { id: true, name: true, eliSlug: true, domainTitle: true, articleCount: true },
       orderBy: [{ sortOrder: "asc" }, { articleCount: "desc" }, { name: "asc" }],
     })

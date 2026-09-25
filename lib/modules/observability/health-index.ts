@@ -6,6 +6,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { PASSED_GUARD_RESULTS } from "@/lib/modules/observability/guard-result";
 
 export type HealthLevel = "healthy" | "degraded" | "unknown";
 
@@ -46,7 +47,7 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
       prisma.legalRelation.count().catch(() => 0),
       prisma.legalRelation.count({ where: { status: "VERIFIED" } }).catch(() => 0),
       prisma.guardrailDecision.count().catch(() => 0),
-      prisma.guardrailDecision.count({ where: { result: "pass" } }).catch(() => 0),
+      prisma.guardrailDecision.count({ where: { result: { in: [...PASSED_GUARD_RESULTS] } } }).catch(() => 0),
       prisma.auditEvent.count().catch(() => 0),
       // OBS-001: عدّ الأحكام القضائية وروابطها بالمواد ضمن مؤشّر الصحّة الإداري.
       prisma.judicialCase.count().catch(() => -1),
@@ -60,10 +61,11 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
     database = false;
   }
 
-  // 1) البنية — اكتمال المكتبة النظامية مقابل المتوقّع.
-  const structureScore = Math.round(
-    (pct(systems, EXPECTED_SYSTEMS) + pct(articles, EXPECTED_ARTICLES)) / 2
-  );
+  // 1) البنية — المكتبة فوق حد البذرة التاريخي (9 أنظمة / 1981 مادة) تُعد مكتملة البنية.
+  const structureScore =
+    systems >= EXPECTED_SYSTEMS && articles >= EXPECTED_ARTICLES
+      ? 100
+      : Math.round((pct(systems, EXPECTED_SYSTEMS) + pct(articles, EXPECTED_ARTICLES)) / 2);
 
   // 2) الدليل — نسبة نجاح حراس التأصيل (Evidence-First). لا قرارات = محايد.
   const evidenceScore = guardTotal > 0 ? pct(guardPass, guardTotal) : 60;
@@ -83,7 +85,7 @@ export async function buildHealthIndex(now: string): Promise<HealthIndex> {
       key: "structure",
       labelAr: "البنية",
       score: structureScore,
-      detail: `الأنظمة ${systems}/${EXPECTED_SYSTEMS} · المواد ${articles}/${EXPECTED_ARTICLES}`,
+      detail: `الأنظمة ${systems} · المواد ${articles}`,
     },
     {
       key: "evidence",
