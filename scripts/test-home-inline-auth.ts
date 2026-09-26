@@ -2,6 +2,7 @@
  * الدخول من الصفحة الرئيسية دون مغادرتها (HOME_INLINE_AUTH_ENABLED).
  * npx tsx scripts/test-home-inline-auth.ts
  */
+import "./helpers/ignore-css";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";

@@ -2,6 +2,7 @@
  * فصل الواجهة التعريفية عن مساحة العمل، ووجهات الدخول، والعرض الحي.
  * npx tsx scripts/test-workspace-handoff.ts
  */
+import "./helpers/ignore-css";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
