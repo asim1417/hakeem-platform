@@ -54,6 +54,32 @@ function resolveServerActionOrigins() {
 
 const serverActionOrigins = resolveServerActionOrigins();
 
+/**
+ * نطاقات Clerk الإنتاج (نطاق مخصّص مثل clerk.hakeemai.net) تُستنتج من المفتاح العلني وقت البناء.
+ * بدونها تمنع CSP تحميل clerk-js في الإنتاج فتتعطّل كل واجهات Clerk على العميل.
+ */
+function resolveClerkProductionHosts() {
+  const pk = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
+  const m = pk.match(/^pk_(?:test|live)_(.+)$/);
+  const hosts = new Set();
+  if (m) {
+    try {
+      const fapi = Buffer.from(m[1], "base64").toString("utf8").replace(/\$$/, "").trim();
+      if (/^[a-z0-9.-]+$/i.test(fapi) && !fapi.endsWith(".clerk.accounts.dev")) {
+        hosts.add(`https://${fapi}`);
+        hosts.add(`https://${fapi.replace(/^clerk\./, "accounts.")}`);
+      }
+    } catch {
+      /* مفتاح غير صالح — نكتفي بالنطاقات الثابتة */
+    }
+  }
+  const portal = (process.env.NEXT_PUBLIC_CLERK_ACCOUNT_PORTAL_URL || "").trim().replace(/\/+$/, "");
+  if (/^https:\/\/[^/]+$/.test(portal)) hosts.add(portal);
+  return Array.from(hosts).join(" ");
+}
+
+const clerkProductionHosts = resolveClerkProductionHosts();
+
 const nextConfig = {
   // أحدث ممارسات Next: ضغط + إزالة X-Powered-By + صور حديثة
   poweredByHeader: false,
@@ -80,8 +106,12 @@ const nextConfig = {
   // بـ nonces عند الحاجة لتصلّب أعلى ضد XSS.
   async headers() {
     // Clerk: لا تُحذف هذه النطاقات — نسخة التطوير الحالية تعتمد عليها في الإنتاج المؤقت
-    const clerkHosts =
-      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com https://*.accounts.dev https://clerk.shared.lcl.dev";
+    const clerkHosts = [
+      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com https://*.accounts.dev https://clerk.shared.lcl.dev",
+      clerkProductionHosts,
+    ]
+      .filter(Boolean)
+      .join(" ");
     const turnstile = "https://challenges.cloudflare.com";
     const googleFonts = "https://fonts.googleapis.com";
     const googleFontsStatic = "https://fonts.gstatic.com";
