@@ -15,7 +15,7 @@ export function AuthGatewayFailCard({
       <p className="text-sm font-semibold text-[#0E3435]">
         تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية.
       </p>
-      <p className="mt-2 text-xs leading-6 text-[rgba(14,52,53,0.55)]">
+      <p className="mt-2 text-xs leading-6 text-[var(--auth-muted)]">
         لم تكتمل خدمة تسجيل الدخول. يمكنك إعادة المحاولة دون مسح بيانات الجهاز.
       </p>
       <button
@@ -29,11 +29,11 @@ export function AuthGatewayFailCard({
         إعادة تحميل بوابة الدخول
       </button>
       <p className="mt-3">
-        <a href="/" className="text-sm font-semibold text-[rgba(14,52,53,0.65)]">
+        <a href="/" className="inline-flex min-h-[44px] items-center text-sm font-semibold text-[var(--auth-muted)]">
           العودة إلى الصفحة الرئيسية
         </a>
       </p>
-      <p className="mt-2 text-xs text-[rgba(14,52,53,0.45)]">
+      <p className="mt-2 text-xs text-[var(--auth-muted)]">
         {isSignIn ? "بوابة الدخول الموحّدة: /sign-in" : "بوابة التسجيل الموحّدة: /sign-up"}
       </p>
     </div>
@@ -54,7 +54,7 @@ export function AuthGatewaySkeleton({ label }: { label: string }) {
         <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
         <div className="h-12 animate-pulse rounded-xl bg-[#0E3435]/8" />
       </div>
-      <p className="pt-1 text-center text-sm text-[#0E3435]/55">{label}</p>
+      <p className="pt-1 text-center text-sm text-[var(--auth-muted)]">{label}</p>
     </div>
   );
 }

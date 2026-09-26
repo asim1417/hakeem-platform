@@ -1,0 +1,222 @@
+/* ── واجهات الدخول: رموز الوصول (WCAG 2.1 AA) ──
+   تقرير فحص واجهات الدخول: نص ثانوي 4.9:1، وحلقة تركيز 12:1، وحدود حقول 3.4:1. */
+:root {
+  --auth-muted: #5B7473;        /* نص ثانوي — بدل rgba(14,52,53,0.55–0.68) */
+  --auth-focus: #0E3435;        /* حلقة التركيز — بدل النحاسي 2.56:1 */
+  --auth-input-border: #7B8F8E; /* حدود الحقول — بدل 1.41:1 */
+  --auth-target: 44px;          /* أدنى هدف لمس */
+}
+
+.hk-auth a:focus-visible,
+.hk-auth button:focus-visible,
+.hk-auth input:focus-visible,
+.hk-auth select:focus-visible,
+.hk-auth textarea:focus-visible,
+.hk-auth [tabindex]:focus-visible {
+  outline: 2px solid var(--auth-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.hk-auth-required-note {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--auth-muted);
+}
+.hk-auth-required-mark {
+  color: #8C2233;
+  margin-inline-start: 0.2rem;
+}
+
+/* عنوان الصفحة على الجوال — لوحة الهوية (وفيها h1) مخفية دون 960px. */
+.login-mobile-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-align: center;
+}
+@media (min-width: 960px) {
+  .login-mobile-title { display: none; }
+}
+
+/* ── خانات رمز التحقق ── */
+.hk-code-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  direction: ltr;
+}
+.hk-code-box {
+  width: 2.75rem;
+  height: 3.25rem;
+  min-width: var(--auth-target);
+  border-radius: 0.65rem;
+  border: 1px solid var(--auth-input-border);
+  background: #fff;
+  color: var(--navy);
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease;
+}
+.hk-code-box:focus { border-color: var(--auth-focus); }
+.hk-code-box[aria-invalid="true"] { border-color: #8C2233; }
+@media (max-width: 360px) {
+  .hk-code-boxes { gap: 0.35rem; }
+  .hk-code-box { width: 2.6rem; min-width: 2.6rem; height: 3rem; }
+}
+
+/* ── حوار الدخول من الصفحة الرئيسية ── */
+.hk-home-auth__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(14, 52, 53, 0.45);
+  animation: hkAuthFade 0.18s ease-out both;
+}
+.hk-home-auth__panel {
+  position: relative;
+  width: 100%;
+  max-width: 27rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 1rem;
+  border: 1px solid rgba(14, 52, 53, 0.08);
+  background: #FFFcf7;
+  padding: 1.5rem 1.5rem 1.25rem;
+  box-shadow: var(--sh-lg);
+  color: var(--navy);
+  animation: hkAuthRise 0.22s ease-out both;
+}
+.hk-home-auth__close {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  top: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: var(--auth-target);
+  height: var(--auth-target);
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--navy);
+  cursor: pointer;
+}
+.hk-home-auth__close:hover { background: #F7F2EA; }
+.hk-home-auth__title {
+  margin: 0;
+  padding-inline: 2.75rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 2rem;
+}
+.hk-home-auth__lede {
+  margin: 0.35rem 0 0;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--auth-muted);
+}
+.hk-home-auth__provider {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--auth-input-border);
+  background: #fff;
+  padding: 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.hk-home-auth__provider:hover { background: #F7F2EA; }
+.hk-home-auth__provider[aria-busy="true"] { opacity: 0.75; cursor: wait; }
+.hk-home-auth__last {
+  border-radius: 999px;
+  background: #EAF1EF;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+.hk-home-auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--auth-muted);
+}
+.hk-home-auth__divider::before,
+.hk-home-auth__divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: rgba(14, 52, 53, 0.14);
+}
+.hk-home-auth__terms {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--auth-muted);
+}
+.hk-home-auth__terms a {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* الجوال: لوح سفلي مع هامش الأمان */
+@media (max-width: 639px) {
+  .hk-home-auth__backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .hk-home-auth__panel {
+    max-width: none;
+    max-height: calc(100dvh - 1.5rem);
+    border-radius: 1.25rem 1.25rem 0 0;
+    padding: 1.25rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    animation-name: hkAuthSheet;
+  }
+  .hk-home-auth__panel::before {
+    content: "";
+    display: block;
+    width: 2.5rem;
+    height: 0.25rem;
+    margin: -0.35rem auto 0.75rem;
+    border-radius: 999px;
+    background: rgba(14, 52, 53, 0.18);
+  }
+}
+
+body.hk-scroll-locked { overflow: hidden; }
+
+@keyframes hkAuthFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hkAuthRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes hkAuthSheet { from { transform: translateY(100%); } to { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-home-auth__backdrop,
+  .hk-home-auth__panel { animation: none !important; }
+}
