@@ -27,6 +27,24 @@ export {
 
 export { ATTACHMENTS_VERSION_HEADER } from "./attachments-version";
 
+export {
+  COMPOSER_CAPABILITIES,
+  resolveComposerCapabilities,
+  getCapability,
+  capabilityRegistryStats,
+} from "./capability-registry";
+
+export {
+  buildUnifiedCitationSet,
+  formatAttachmentPageCitation,
+  fromRetrievedSource,
+  renderUnifiedCitationsMarkdown,
+} from "./unified-citations";
+
+export { suggestJdsHandoff, isComposerJdsHandoffEnabled } from "./jds-handoff";
+
+export { resolveComposerCaseContext, isComposerCaseContextEnabled } from "./case-context-bridge";
+
 export function mapExtractKindToTextSource(kind: string | null | undefined): TextSource {
   const k = (kind || "").toLowerCase();
   if (k.includes("cloud") || k.includes("gemini") || k.includes("vision")) return "cloud";
