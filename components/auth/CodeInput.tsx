@@ -75,7 +75,7 @@ export function CodeInput({
   }
 
   const active = focused ? Math.min(digits.length, CODE_LENGTH - 1) : -1;
-  const describedBy = [invalid && errorId ? errorId : "", hintId].filter(Boolean).join(" ");
+  const describedBy = (invalid && errorId ? errorId : hintId) || "";
 
   return (
     <fieldset className="hk-otp" disabled={disabled}>
@@ -120,7 +120,8 @@ export function CodeInput({
         />
       </div>
       {children}
-      <p id={hintId} className="hk-otp__hint">
+      {/* الشاشة ٦: عند الخطأ تحلّ رسالته محلّ سطر التوضيح */}
+      <p id={hintId} className="hk-otp__hint" hidden={invalid}>
         {hint}
       </p>
     </fieldset>

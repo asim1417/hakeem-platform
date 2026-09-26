@@ -520,3 +520,7 @@ body.hk-scroll-locked { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .hk-demo .hk-spinner { animation: none; }
 }
+
+/* عناوين تستقبل التركيز برمجيًا عند فتح الحوار (tabIndex=-1) — ليست عناصر تفاعلية فلا إطار حولها */
+.hk-auth h2[tabindex="-1"]:focus,
+.hk-auth h2[tabindex="-1"]:focus-visible { outline: none; }
