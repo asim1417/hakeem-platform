@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
-import { CodeBoxes } from "@/components/auth/CodeBoxes";
+import { CodeInput } from "@/components/auth/CodeInput";
+import { ErrorNote, IdentifierField, identifierSubmitLabel } from "@/components/auth/IdentifierField";
 import {
   arabicErrorMessage,
   clerkErrorCode,
   maskIdentifier,
+  maskIdentifierLocal,
   parseIdentifier,
   pickSecondFactor,
   PROFILE_LABELS,
@@ -40,7 +42,6 @@ type ErrorTarget = "identifier" | "code" | ProfileField;
 const RESEND_COOLDOWN_S = 30;
 const ERROR_ID = "hakeem-auth-error";
 const REQUIRED_NOTE_ID = "hakeem-auth-required";
-const CODE_LABEL_ID = "hakeem-code-label";
 
 const cardClass =
   "w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 shadow-[0_8px_30px_rgba(14,52,53,0.06)]";
@@ -85,6 +86,8 @@ export function AuthIdentifierFlowInner({
   onStepChange,
   initialIdentifier = "",
   submitOnReady = false,
+  headingId,
+  identifierBadge,
 }: {
   mode: "sign-in" | "sign-up";
   nextUrl: string;
@@ -99,6 +102,10 @@ export function AuthIdentifierFlowInner({
   initialIdentifier?: string;
   /** ضغط «متابعة» قبل جاهزية Clerk ← يُرسل مرة واحدة عند الجاهزية. */
   submitOnReady?: boolean;
+  /** المضمّن: معرّف عنوان الحوار — عنوان الخطوة (الرمز/البيانات) يصبح عنوانه */
+  headingId?: string;
+  /** المضمّن: وسم «آخر دخول» فوق حقل البريد/الجوال */
+  identifierBadge?: ReactNode;
 }) {
   const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
   const { isLoaded: signUpLoaded, signUp } = useSignUp();
@@ -349,12 +356,8 @@ export function AuthIdentifierFlowInner({
         await claimAndNavigate();
         return;
       }
+      // الشاشة ٦: الأرقام تبقى كما هي ليصحّحها المستخدم
       fail(err);
-      if (showsCodeBoxes(step)) {
-        // رمز خاطئ في الخانات: نفرّغها ليكتب المستخدم الرمز من جديد
-        setCode("");
-        autoSubmittedRef.current = "";
-      }
     } finally {
       setBusy(false);
     }
@@ -573,15 +576,274 @@ export function AuthIdentifierFlowInner({
     subtitle = "جارٍ فتح حسابك…";
   }
 
-  const Heading = embedded ? "h3" : "h2";
-  const showHeader = !embedded || step.name !== "identifier";
-  const isBackup = step.name === "second-factor" && step.strategy === "backup_code";
   const editLabel =
     step.name === "code"
       ? step.target.kind === "phone"
         ? "تعديل الرقم"
         : "تعديل البريد"
       : "تعديل البريد أو الرقم";
+
+  // ── العرض المضمّن (صندوق الرئيسية) — الشاشات ٢ و٣ و٦ وفق التصميم المعتمد ──
+  if (embedded) {
+    const isCodeStep = step.name === "code" || step.name === "second-factor";
+    const resendable =
+      step.name === "code" ||
+      (step.name === "second-factor" && (step.strategy === "phone_code" || step.strategy === "email_code"));
+    const portalLink = needsPortal ? (
+      <a href={portalFallbackHref} className="hk-link44">
+        المتابعة عبر صفحة الدخول البديلة
+      </a>
+    ) : null;
+    const countdown = `${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}`;
+    return (
+      <div className="hk-emb" aria-busy={busy || step.name === "finishing"}>
+        {step.name === "identifier" ? (
+          <form className="hk-emb__form" onSubmit={onSubmitIdentifier} noValidate>
+            <IdentifierField
+              ref={identifierRef}
+              value={identifierInput}
+              onChange={(v) => {
+                setIdentifierInput(v);
+                if (errorTarget === "identifier") clearError();
+              }}
+              disabled={busy}
+              invalid={invalid("identifier")}
+              errorId={ERROR_ID}
+              badge={identifierBadge}
+              error={
+                error ? (
+                  <ErrorNote id={ERROR_ID}>
+                    {error} {portalLink}
+                  </ErrorNote>
+                ) : null
+              }
+            />
+            {!ready && loadTimedOut ? (
+              <ErrorNote id="hakeem-auth-load">
+                تأخّر تجهيز الدخول الآمن. {<a href={portalFallbackHref} className="hk-link44">المتابعة عبر صفحة الدخول البديلة</a>}
+              </ErrorNote>
+            ) : null}
+            <SubmitButton embedded busy={busy || (queuedSubmit && !ready)}>{identifierSubmitLabel(identifierInput)}</SubmitButton>
+          </form>
+        ) : null}
+
+        {isCodeStep ? (
+          <form className="hk-emb__form" onSubmit={onSubmitCode} noValidate>
+            <div className="hk-emb__nav">
+              <button type="button" className="hk-icon-btn" aria-label="رجوع" onClick={onEditTarget} disabled={busy}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+            </div>
+            <div className="hk-emb__head">
+              <h2 id={headingId} className="hk-emb__title">
+                {title}
+              </h2>
+              {step.name === "code" ? (
+                <div className="hk-emb__sent">
+                  <span>{step.target.kind === "phone" ? "أرسلناه برسالة نصية إلى" : "أرسلناه إلى بريدك"}</span>
+                  <bdi dir="ltr" className="hk-emb__masked">
+                    {maskIdentifierLocal(step.target)}
+                  </bdi>
+                  <button type="button" className="hk-link44" onClick={onEditTarget} disabled={busy}>
+                    {editLabel}
+                  </button>
+                </div>
+              ) : (
+                <p className="hk-emb__sub">{subtitle}</p>
+              )}
+            </div>
+
+            {notice && !error ? (
+              <p className="hk-emb__notice" role="status">
+                {notice}
+              </p>
+            ) : null}
+
+            {showsCodeBoxes(step) ? (
+              <CodeInput
+                value={code}
+                onChange={(v) => {
+                  setCode(v);
+                  if (v.length < 6) autoSubmittedRef.current = "";
+                  if (errorTarget === "code") clearError();
+                }}
+                onFilled={onCodeFilled}
+                invalid={invalid("code")}
+                errorId={ERROR_ID}
+                disabled={busy}
+                autoFocus
+                focusSignal={errorSeq}
+              >
+                {error ? (
+                  <ErrorNote id={ERROR_ID}>
+                    {error} {portalLink}
+                  </ErrorNote>
+                ) : null}
+              </CodeInput>
+            ) : (
+              <>
+                <label htmlFor="hakeem-code" className="hk-idf__label">
+                  الرمز الاحتياطي
+                </label>
+                <input
+                  ref={codeInputRef}
+                  id="hakeem-code"
+                  className="hk-idf__box hk-idf__input--solo"
+                  dir="ltr"
+                  type="text"
+                  autoComplete="one-time-code"
+                  maxLength={16}
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.trim());
+                    if (errorTarget === "code") clearError();
+                  }}
+                  disabled={busy}
+                  required
+                  aria-required="true"
+                  aria-invalid={invalid("code") || undefined}
+                  aria-describedby={invalid("code") ? ERROR_ID : undefined}
+                />
+                {error ? <ErrorNote id={ERROR_ID}>{error}</ErrorNote> : null}
+                <SubmitButton embedded busy={busy}>تحقق</SubmitButton>
+              </>
+            )}
+
+            <p className="hk-emb__busy" role="status" aria-live="polite">
+              {busy ? "جارٍ التحقق من الرمز…" : ""}
+            </p>
+
+            {resendable ? (
+              error && errorTarget === "code" ? (
+                <button type="button" className="hk-btn-outline" onClick={onResend} disabled={busy || cooldown > 0}>
+                  {cooldown > 0 ? (
+                    <>
+                      أرسل رمزًا جديدًا بعد <bdi dir="ltr">{countdown}</bdi>
+                    </>
+                  ) : (
+                    "أرسل رمزًا جديدًا"
+                  )}
+                </button>
+              ) : (
+                <div className="hk-resend">
+                  <span>لم يصلك الرمز؟</span>
+                  {cooldown > 0 ? (
+                    <span className="hk-resend__wait" aria-hidden>
+                      إعادة الإرسال بعد <bdi dir="ltr">{countdown}</bdi>
+                    </span>
+                  ) : (
+                    <button type="button" className="hk-link44" onClick={onResend} disabled={busy}>
+                      أعد الإرسال
+                    </button>
+                  )}
+                </div>
+              )
+            ) : null}
+            {/* إعلان مقتصد للعدّاد: عند بدئه وعند انتهائه فقط (لا كل ثانية) */}
+            {resendable ? (
+              <p className="sr-only" aria-live="polite">
+                {cooldown === RESEND_COOLDOWN_S
+                  ? "يمكنك طلب رمز جديد بعد 30 ثانية."
+                  : cooldown === 0
+                    ? "يمكنك الآن إعادة إرسال الرمز."
+                    : ""}
+              </p>
+            ) : null}
+            {step.name === "second-factor" && step.canUseBackup ? (
+              <button type="button" className="hk-link44 self-center" onClick={onUseBackupCode} disabled={busy}>
+                استخدام رمز احتياطي
+              </button>
+            ) : null}
+          </form>
+        ) : null}
+
+        {step.name === "profile" ? (
+          <form className="hk-emb__form" onSubmit={onSubmitProfile} noValidate>
+            <div className="hk-emb__head">
+              <h2 id={headingId} className="hk-emb__title">
+                {title}
+              </h2>
+              <p className="hk-emb__sub">{subtitle}</p>
+            </div>
+            {step.fields.map((f) =>
+              f === "legal_accepted" ? (
+                <label key={f} className="flex min-h-[44px] items-center gap-3 text-sm leading-6 text-[#0E3435]">
+                  <input
+                    id="hakeem-legal_accepted"
+                    type="checkbox"
+                    className="h-5 w-5 shrink-0 accent-[#0E3435]"
+                    checked={profile.legal_accepted === "1"}
+                    onChange={(e) => setProfile((p) => ({ ...p, legal_accepted: e.target.checked ? "1" : "" }))}
+                    aria-required="true"
+                    aria-invalid={invalid(f) || undefined}
+                    aria-describedby={invalid(f) ? ERROR_ID : undefined}
+                  />
+                  <span>
+                    أوافق على{" "}
+                    <a href="/terms" className={`${inlineLinkClass} font-semibold`}>
+                      شروط الاستخدام
+                    </a>{" "}
+                    و
+                    <a href="/privacy" className={`${inlineLinkClass} font-semibold`}>
+                      سياسة الخصوصية
+                    </a>
+                  </span>
+                </label>
+              ) : (
+                <div key={f} className="hk-idf">
+                  <label htmlFor={`hakeem-${f}`} className="hk-idf__label">
+                    {PROFILE_LABELS[f]}
+                  </label>
+                  <input
+                    id={`hakeem-${f}`}
+                    className="hk-idf__box hk-idf__input--solo"
+                    dir={f === "first_name" || f === "last_name" ? "rtl" : "ltr"}
+                    type={f === "password" ? "password" : f === "email_address" ? "email" : "text"}
+                    autoComplete={
+                      f === "first_name"
+                        ? "given-name"
+                        : f === "last_name"
+                          ? "family-name"
+                          : f === "email_address"
+                            ? "email"
+                            : f === "password"
+                              ? "new-password"
+                              : "username"
+                    }
+                    value={profile[f]}
+                    onChange={(e) => {
+                      setProfile((p) => ({ ...p, [f]: e.target.value }));
+                      if (errorTarget === f) clearError();
+                    }}
+                    disabled={busy}
+                    required
+                    aria-required="true"
+                    aria-invalid={invalid(f) || undefined}
+                    aria-describedby={invalid(f) ? ERROR_ID : undefined}
+                  />
+                </div>
+              )
+            )}
+            {error ? (
+              <ErrorNote id={ERROR_ID}>
+                {error} {portalLink}
+              </ErrorNote>
+            ) : null}
+            <SubmitButton embedded busy={busy}>متابعة</SubmitButton>
+          </form>
+        ) : null}
+
+        {/* نقطة تركيب حماية الروبوتات في Clerk — مطلوبة لنماذج التسجيل المخصّصة. */}
+        <div id="clerk-captcha" />
+      </div>
+    );
+  }
+
+  const Heading = embedded ? "h3" : "h2";
+  const showHeader = !embedded || step.name !== "identifier";
+  const isBackup = step.name === "second-factor" && step.strategy === "backup_code";
 
   return (
     <div className={embedded ? "w-full" : cardClass} aria-busy={busy || step.name === "finishing"}>
@@ -662,32 +924,7 @@ export function AuthIdentifierFlowInner({
       {step.name === "code" || step.name === "second-factor" ? (
         <form className="mt-6 flex flex-col gap-3" onSubmit={onSubmitCode} noValidate>
           <RequiredNote />
-          {showsCodeBoxes(step) ? (
-            <>
-              <p id={CODE_LABEL_ID} className="text-center text-sm font-semibold text-[#0E3435]">
-                رمز التحقق
-                <RequiredMark />
-              </p>
-              <CodeBoxes
-                value={code}
-                onChange={(v) => {
-                  setCode(v);
-                  if (errorTarget === "code" && v.trim()) clearError();
-                }}
-                onFilled={onCodeFilled}
-                labelId={CODE_LABEL_ID}
-                describedBy={describedBy("code", REQUIRED_NOTE_ID)}
-                invalid={invalid("code")}
-                disabled={busy}
-                autoFocus
-                focusSignal={errorSeq}
-              />
-              <p className="min-h-[1.5rem] text-center text-sm text-[var(--auth-muted)]" role="status" aria-live="polite">
-                {busy ? "جارٍ التحقق من الرمز…" : ""}
-              </p>
-            </>
-          ) : (
-            <>
+          <>
               <label htmlFor="hakeem-code" className="text-sm font-semibold text-[#0E3435]">
                 {isBackup ? "الرمز الاحتياطي" : "رمز التحقق"}
                 <RequiredMark />
@@ -716,7 +953,6 @@ export function AuthIdentifierFlowInner({
               />
               <SubmitButton busy={busy}>تحقق</SubmitButton>
             </>
-          )}
 
           <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
             {step.name === "code" || step.strategy === "phone_code" || step.strategy === "email_code" ? (
@@ -842,9 +1078,9 @@ export function AuthIdentifierFlowInner({
   );
 }
 
-function SubmitButton({ busy, children }: { busy: boolean; children: ReactNode }) {
+function SubmitButton({ busy, children, embedded = false }: { busy: boolean; children: ReactNode; embedded?: boolean }) {
   return (
-    <button type="submit" className={primaryButtonClass} disabled={busy} aria-busy={busy}>
+    <button type="submit" className={embedded ? "hk-btn-primary" : primaryButtonClass} disabled={busy} aria-busy={busy}>
       {busy ? (
         <span
           className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#FFFcf7]/30 border-t-[#FFFcf7]"
