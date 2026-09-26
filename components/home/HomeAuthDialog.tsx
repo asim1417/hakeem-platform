@@ -169,6 +169,10 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
       onClose: () => {
         setBusyProvider(null);
         setLive("");
+        // أُغلقت النافذة دون رسالة: ربما اكتمل الدخول فعلًا — نتحقق من الجلسة قبل اعتباره إلغاءً
+        void fetchHomeAuthUser().then((user) => {
+          if (user) void onAuthenticated(provider);
+        });
       },
     });
     if (!opened) {

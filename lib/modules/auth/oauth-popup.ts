@@ -120,20 +120,26 @@ export function openOAuthPopup({
 
   window.addEventListener("message", onMessage);
 
+  // النافذة ترسل postMessage ثم تُغلق نفسها فورًا — قد يرى الاستطلاع الإغلاق قبل معالجة الرسالة،
+  // فنمهل الرسالة قليلًا قبل اعتبار الإغلاق إلغاءً من المستخدم.
+  function onClosedDetected() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    window.setTimeout(() => {
+      if (isCompleted) return;
+      cleanup();
+      onClose?.();
+    }, 400);
+  }
+
   // استطلاع دوري لاكتشاف قيام المستخدم بإغلاق النافذة يدويًا
   pollTimer = setInterval(() => {
     try {
-      if (!popup || popup.closed) {
-        cleanup();
-        if (!isCompleted) {
-          onClose?.();
-        }
-      }
+      if (!popup || popup.closed) onClosedDetected();
     } catch {
-      cleanup();
-      if (!isCompleted) {
-        onClose?.();
-      }
+      onClosedDetected();
     }
   }, 500);
 
