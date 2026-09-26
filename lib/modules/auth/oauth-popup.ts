@@ -5,13 +5,14 @@
  */
 export type OAuthPopupSuccessMessage = {
   type: "hakeem_oauth_success";
-  provider: "google" | "apple" | "microsoft";
+  /** clerk: عودة Microsoft/Apple من بوابة Clerk عبر /api/auth/claim-clerk-return */
+  provider: "google" | "apple" | "microsoft" | "clerk";
   next: string;
 };
 
 export type OAuthPopupErrorMessage = {
   type: "hakeem_oauth_error";
-  provider?: "google" | "apple" | "microsoft";
+  provider?: "google" | "apple" | "microsoft" | "clerk";
   error: string;
 };
 
@@ -89,8 +90,9 @@ export function openOAuthPopup({
   }
 
   function onMessage(event: MessageEvent) {
-    // التأكد من تطابق مصدر الرسالة للأمان
+    // التأكد من تطابق مصدر الرسالة للأمان: الأصل نفسه، ومن النافذة التي فتحناها تحديدًا
     if (event.origin !== window.location.origin) return;
+    if (event.source !== popup) return;
 
     const data = event.data as OAuthPopupMessage | undefined;
     if (!data || typeof data !== "object") return;

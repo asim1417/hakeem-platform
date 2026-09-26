@@ -22,9 +22,11 @@ export default async function AuthContinuePage({
     __clerk_handshake?: string;
     __clerk_handshake_nonce?: string;
     __clerk_db_jwt?: string;
+    popup?: string;
   };
 }) {
   const nextSafe = safeDashboardNext(searchParams?.next, "/dashboard");
+  const isPopup = searchParams?.popup === "1";
   const hasHandshake = Boolean(
     searchParams?.__clerk_handshake_nonce ||
       searchParams?.__clerk_handshake ||
@@ -43,11 +45,17 @@ export default async function AuthContinuePage({
     if (searchParams?.__clerk_db_jwt) {
       q.set("__clerk_db_jwt", searchParams.__clerk_db_jwt);
     }
+    if (isPopup) q.set("popup", "1");
     redirect(`/api/auth/claim-clerk-return?${q.toString()}`);
   }
 
   const user = await getCurrentUser().catch(() => null);
   const next = resolvePostLoginNext(user, nextSafe);
+
+  // نافذة منبثقة بجلسة قائمة: صفحة الختام (postMessage) بدل فتح المنصة داخل النافذة
+  if (user && isPopup) {
+    redirect(`/api/auth/claim-clerk-return?${new URLSearchParams({ next: nextSafe, popup: "1" })}`);
+  }
 
   if (user) {
     redirect(next);
