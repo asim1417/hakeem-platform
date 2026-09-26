@@ -171,11 +171,20 @@ function maskSecret(v: string): string {
 }
 
 /** يُحمّل إعدادات القاعدة إلى process.env (تجاوز متغيّرات البيئة للمفاتيح المُدارة). يُستدعى عند الإقلاع. */
+/** قيم Vercel الأصلية قبل أول استبدال من الإعدادات المُدارة (لكل نسخة خادم). */
+const ORIGINAL_ENV = new Map<string, string>();
+
+/** القيمة كما ضُبطت في Vercel قبل أي استبدال من الإعدادات — أو الحالية إن لم تُستبدل. */
+export function originalEnvValue(key: string): string {
+  return (ORIGINAL_ENV.has(key) ? ORIGINAL_ENV.get(key) : process.env[key]) ?? "";
+}
+
 export async function hydrateEnvFromSettings(): Promise<number> {
   const db = await getAllSettings();
   let n = 0;
   for (const [key, value] of db) {
     if (MANAGED_SET.has(key) && value) {
+      if (!ORIGINAL_ENV.has(key)) ORIGINAL_ENV.set(key, process.env[key] ?? "");
       process.env[key] = value;
       n += 1;
     }
