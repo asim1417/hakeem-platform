@@ -389,3 +389,55 @@
   color: #12211F;
 }
 .hk-idf__icon { display: flex; color: #0E3435; }
+
+/* صفحة الدخول الوحيدة ‎/sign-in‎ — الصندوق نفسه بطاقةً في الصفحة (لا خلفية معتمة ولا لوح سفلي) */
+.hk-signin {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: #FBFAF6;
+  color: #12211F;
+}
+.hk-signin__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: #0E3435;
+  text-decoration: none;
+}
+.hk-signin__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #0E3435;
+  color: #E8D6BC;
+  font-size: 24px;
+}
+.hk-signin__links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; font-size: 14px; color: #5B7473; }
+.hk-signin__links a { display: inline-flex; align-items: center; min-height: 44px; color: #5B7473; }
+.hk-signin__links a:hover { color: #0E3435; }
+.hk-home-auth__panel.hk-home-auth__panel--page {
+  max-width: 440px;
+  max-height: none;
+  overflow: visible;
+  border-radius: 20px;
+  border: 1px solid #E3E8E7;
+  padding: 24px 28px 28px;
+  box-shadow: 0 8px 30px rgba(14, 52, 53, 0.08);
+  animation: none;
+}
+@media (max-width: 639px) {
+  .hk-signin { padding-top: 24px; gap: 16px; }
+  .hk-home-auth__panel.hk-home-auth__panel--page { padding: 20px 20px 24px; }
+  .hk-home-auth__panel.hk-home-auth__panel--page::before { display: none; }
+}

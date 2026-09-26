@@ -29,6 +29,8 @@ export type HomeAuthDialogProps = {
   config: HomeAuthConfig;
   request: HomeAuthOpenRequest | null;
   onClose: () => void;
+  /** dialog (افتراضي): نافذة فوق الرئيسية. page: الصندوق نفسه بطاقةً في صفحة ‎/sign-in‎. */
+  variant?: "dialog" | "page";
 };
 
 let dialogModule: Promise<ComponentType<HomeAuthDialogProps>> | null = null;
