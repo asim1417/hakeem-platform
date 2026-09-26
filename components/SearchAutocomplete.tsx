@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Search, BookText, TrendingUp, Clock } from "lucide-react";
+import { Search, BookText, TrendingUp, Clock, Scale } from "lucide-react";
 
-type Suggestion = { value: string; kind: "system" | "popular" | "recent"; hint?: string };
+type Suggestion = { value: string; kind: "system" | "popular" | "recent" | "ruling"; hint?: string };
 
 /**
  * صندوق بحث مع إكمال تلقائي حيّ من /api/legal-search/suggest.
@@ -128,7 +128,7 @@ export function SearchAutocomplete({
           className="absolute z-30 mt-1 w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory shadow-[var(--sh-md)]"
         >
           {items.map((s, i) => {
-            const Icon = s.kind === "system" ? BookText : s.kind === "recent" ? Clock : TrendingUp;
+            const Icon = s.kind === "system" ? BookText : s.kind === "recent" ? Clock : s.kind === "ruling" ? Scale : TrendingUp;
             return (
               <li
                 key={`${s.kind}:${s.value}`}

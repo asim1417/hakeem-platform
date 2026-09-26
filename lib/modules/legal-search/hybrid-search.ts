@@ -211,5 +211,57 @@ function mergeResultsRRF(batches: RawResult[][], limit: number): MergedResult[] 
       matchedBy: deriveMatchedBy(m.sources),
     };
   }
-  return arr.sort((a, b) => b.rrf - a.rrf).slice(0, limit);
+  // تنوّع الأنواع: لا تُزاح الأحكام/المبادئ بالكامل لصالح المواد عند اتفاق المزوّدات عليها.
+  return pickDiverseByType(
+    arr.sort((a, b) => b.rrf - a.rrf),
+    limit,
+  );
+}
+
+/**
+ * يضمن حصصًا دنيا للأحكام والمبادئ في أعلى النتائج عند وجودها في مجموعة الدمج.
+ * يملأ المتبقي بترتيب RRF العام. يُصدَّر للاختبار.
+ */
+export function pickDiverseByType(sorted: MergedResult[], limit: number): MergedResult[] {
+  const cap = Math.max(1, limit);
+  if (sorted.length <= cap) return sorted;
+
+  const pools: Record<LegalEntityType, MergedResult[]> = { article: [], ruling: [], principle: [] };
+  for (const m of sorted) pools[m.type]?.push(m);
+
+  const rulingQ = pools.ruling.length
+    ? Math.min(pools.ruling.length, Math.max(4, Math.floor(cap * 0.3)))
+    : 0;
+  const principleQ = pools.principle.length
+    ? Math.min(pools.principle.length, Math.max(2, Math.floor(cap * 0.15)))
+    : 0;
+  const articleQ = Math.max(0, cap - rulingQ - principleQ);
+
+  const picked = new Set<string>();
+  const out: MergedResult[] = [];
+  const take = (items: MergedResult[], n: number) => {
+    let left = n;
+    for (const m of items) {
+      if (out.length >= cap || left <= 0) break;
+      const key = `${m.type}:${m.id}`;
+      if (picked.has(key)) continue;
+      picked.add(key);
+      out.push(m);
+      left -= 1;
+    }
+  };
+
+  take(pools.ruling, rulingQ);
+  take(pools.principle, principleQ);
+  take(pools.article, articleQ);
+  // إكمال حتى السقف بترتيب RRF العام (ثقة مُشتقّة منه).
+  for (const m of sorted) {
+    if (out.length >= cap) break;
+    const key = `${m.type}:${m.id}`;
+    if (picked.has(key)) continue;
+    picked.add(key);
+    out.push(m);
+  }
+
+  return out.sort((a, b) => b.confidence - a.confidence);
 }

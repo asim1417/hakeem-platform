@@ -19,6 +19,7 @@ import { buildArticleCitation } from "@/lib/modules/legal-core/intelligence";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { searchRulingsDirect, rulingHitToMerged } from "@/lib/modules/legal-core/rulings-search";
 import { queryNormative } from "../substrate/queries";
 import type { NormativeModality } from "../substrate/normative";
 
@@ -44,11 +45,17 @@ export async function search_articles(query: string, limit = 8, systemIds?: stri
 
 async function hybridByType(query: string, type: "ruling" | "principle", limit: number): Promise<ToolResult<MergedResult[]>> {
   try {
+    // الأحكام: مسار مفهرس مباشر — لا يعتمد على دمج RRF الذي قد يُقصيها لصالح المواد.
+    if (type === "ruling") {
+      const direct = await searchRulingsDirect({ query, limit });
+      const items = direct.hits.map(rulingHitToMerged);
+      return ok(items, "judicial_cases.search_norm", items.length ? 0.85 : 0.4, items.length ? undefined : "لا نتائج أحكام");
+    }
     const r = await hybridSearch({ q: query, limit: Math.max(limit * 3, 20) });
     const items = r.results.filter((x) => x.type === type).slice(0, limit);
     return ok(items, `hybrid.${type}`, items.length ? 0.8 : 0.4, items.length ? undefined : "لا نتائج من هذا النوع");
   } catch (e) {
-    return fail<MergedResult[]>([], `hybrid.${type}`, `تعذّر البحث: ${(e as Error).message}`);
+    return fail<MergedResult[]>([], type === "ruling" ? "judicial_cases.search_norm" : `hybrid.${type}`, `تعذّر البحث: ${(e as Error).message}`);
   }
 }
 export const search_rulings = (query: string, limit = 6) => hybridByType(query, "ruling", limit);

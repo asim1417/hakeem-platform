@@ -111,6 +111,7 @@
     "backfill:embeddings": "tsx scripts/backfill-embeddings.ts",
     "backfill:embeddings:all": "tsx scripts/backfill-embeddings.ts --target all",
     "test:hybrid": "tsx scripts/test-hybrid-search.ts",
+    "test:hybrid-diversity": "tsx scripts/test-hybrid-diversity.ts",
     "test:rag": "tsx scripts/test-legal-rag.ts",
     "test:composer": "tsx scripts/test-legal-answer-composer.ts",
     "test:case": "tsx scripts/test-case-analysis.ts",
