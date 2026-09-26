@@ -7,6 +7,7 @@ import {
   AUTH_FEATURE_FLAGS,
   getAccountSecurityFeatures,
   hasAnySignInProvider,
+  isIdentifierFormEnabled,
   isAppleAuthEnabled,
   isAuthLaunchReady,
   listVisibleAuthProviders,
@@ -53,6 +54,11 @@ process.env.AUTH_ORGANIZATIONS_ENABLED = "1";
 assert.deepEqual(listVisibleAuthProviders(), ["google", "microsoft", "apple", "email", "phone"]);
 assert.deepEqual(getAccountSecurityFeatures(), { mfa: true, organizations: true });
 
+// نموذج حكيم العربي: يحتاج علمه + بريد أو جوال مفعّل
+assert.equal(isIdentifierFormEnabled(), false);
+process.env.AUTH_IDENTIFIER_FORM_ENABLED = "1";
+assert.equal(isIdentifierFormEnabled(), true);
+
 process.env.AUTH_PHONE_ENABLED = "0";
 assert.equal(listVisibleAuthProviders().includes("phone"), false);
 
@@ -61,5 +67,6 @@ delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 delete process.env.CLERK_SECRET_KEY;
 assert.deepEqual(listVisibleAuthProviders(), ["google"]);
 assert.deepEqual(getAccountSecurityFeatures(), { mfa: false, organizations: false });
+assert.equal(isIdentifierFormEnabled(), false);
 
 console.log("test-auth-providers-visibility: OK");

@@ -9,6 +9,7 @@
  *   AUTH_PHONE_ENABLED        ← رقم الجوال برمز OTP (SMS)
  *   AUTH_MFA_ENABLED          ← إظهار إعداد التحقق الثنائي في قائمة الحساب
  *   AUTH_ORGANIZATIONS_ENABLED ← إظهار حسابات المكاتب (Organizations) في قائمة الحساب
+ *   AUTH_IDENTIFIER_FORM_ENABLED ← نموذج حكيم العربي للبريد/الجوال بدل بوابة Clerk المستضافة
  * كل علم يقبل أيضًا نظيره NEXT_PUBLIC_*.
  */
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
@@ -22,6 +23,7 @@ export const AUTH_FEATURE_FLAGS = [
   "AUTH_PHONE_ENABLED",
   "AUTH_MFA_ENABLED",
   "AUTH_ORGANIZATIONS_ENABLED",
+  "AUTH_IDENTIFIER_FORM_ENABLED",
 ] as const;
 
 export type AuthFeatureFlag = (typeof AUTH_FEATURE_FLAGS)[number];
@@ -63,6 +65,17 @@ export function isEmailCodeSignInAvailable(): boolean {
 
 export function isPhoneSignInAvailable(): boolean {
   return isAuthFlagEnabled("AUTH_PHONE_ENABLED") && isClerkConfigured();
+}
+
+/**
+ * نموذج حكيم العربي (/auth/identifier) للبريد/الجوال — Clerk في الخلفية فقط.
+ * يلزم تفعيل البريد أو الجوال، وإلا فلا معنى للنموذج.
+ */
+export function isIdentifierFormEnabled(): boolean {
+  return (
+    isAuthFlagEnabled("AUTH_IDENTIFIER_FORM_ENABLED") &&
+    (isEmailCodeSignInAvailable() || isPhoneSignInAvailable())
+  );
 }
 
 /** جاهزية إطلاق فعلية: Google أصلي أو مفاتيح Clerk إنتاج. */

@@ -3,6 +3,7 @@ import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import {
   isAppleSignInAvailable,
   isEmailCodeSignInAvailable,
+  isIdentifierFormEnabled,
   isMicrosoftSignInAvailable,
   isPhoneSignInAvailable,
 } from "@/lib/modules/auth/auth-providers";
@@ -39,7 +40,8 @@ function withDevBrowserCookie(response: NextResponse, jwt?: string) {
  *
  * Google: إن وُجدت مفاتيح Google → OAuth أصلي (/api/auth/google) + hakeem_session.
  * وإلا / لـ Microsoft وApple: Clerk Portal SSO ثم claim عند العودة.
- * email / phone: صفحة الدخول أو التسجيل في بوابة Clerk (رمز تحقق + التحقق الثنائي إن فُعّل).
+ * email / phone: نموذج حكيم العربي (/auth/identifier) إن فُعّل AUTH_IDENTIFIER_FORM_ENABLED،
+ * وإلا صفحة الدخول أو التسجيل في بوابة Clerk (رمز تحقق + التحقق الثنائي إن فُعّل).
  * أي وسيلة غير مفعّلة بعلمها تعود إلى /sign-in بدل بدء استراتيجية معطّلة في Clerk.
  */
 export async function GET(request: NextRequest) {
@@ -76,6 +78,11 @@ export async function GET(request: NextRequest) {
     const enabled =
       identifier === "email" ? isEmailCodeSignInAvailable() : isPhoneSignInAvailable();
     if (!enabled) return backToSignIn;
+    // portal=1: احتياط صريح من نموذج حكيم إلى البوابة المستضافة (يمنع الحلقة).
+    if (isIdentifierFormEnabled() && request.nextUrl.searchParams.get("portal") !== "1") {
+      const q = new URLSearchParams({ mode, next: nextUrl });
+      return NextResponse.redirect(new URL(`/auth/identifier?${q}`, request.url));
+    }
     const portalPage = buildClerkPortalPageUrl({
       page: mode === "sign-up" ? "sign-up" : "sign-in",
       redirectUrl: redirectUrlComplete,
