@@ -9,6 +9,7 @@ import { establishFirstPartySession } from "@/lib/modules/auth/establish-session
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import type { SafeUser } from "@/lib/modules/auth/session";
 import { isPhoneOnlyLocalEmail, localEmailForClerkUser } from "@/lib/modules/auth/clerk-local-email";
+import { hydrateEnvFromSettings, originalEnvValue } from "@/lib/modules/settings/settings-service";
 
 type ClerkUser = Awaited<ReturnType<ReturnType<typeof createClerkClient>["users"]["getUser"]>>;
 
@@ -32,6 +33,8 @@ export async function claimSessionFromClerkReturn(input: {
   handshakeToken?: string | null;
   sessionJwt?: string | null;
 }): Promise<SafeUser | null> {
+  // الإعدادات المُدارة أولًا (كما تفعل بقية الصفحات)، فتتضح حالة المفتاح في كل طلب لا حسب النسخة
+  await hydrateEnvFromSettings().catch(() => 0);
   if (!isClerkConfigured()) return null;
   const secretKey = (process.env.CLERK_SECRET_KEY || "").trim();
   const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
@@ -68,9 +71,10 @@ export async function claimSessionFromClerkReturn(input: {
 
   if (!sessionJwt) return null;
 
-  // المفتاح من Vercel قد يستبدله hydrateEnvFromSettings بمفتاح محفوظ في الإعدادات — نجرّب الاثنين
+  // مفتاح Vercel قد يستبدله hydrateEnvFromSettings بمفتاح محفوظ في الإعدادات — نجرّب الاثنين
   // (التحقق بأيّهما يثبت أن الرمز صادر عن نسخة Clerk نفسها)، ونجلب المستخدم بالمفتاح الذي نجح.
-  const keys = Array.from(new Set([secretKey, ENV_SECRET_AT_LOAD].filter(Boolean)));
+  const vercelKey = originalEnvValue("CLERK_SECRET_KEY").trim();
+  const keys = Array.from(new Set([secretKey, vercelKey].filter(Boolean)));
   let userId = "";
   let verifiedKey = "";
   let verifyError: unknown = null;
@@ -100,9 +104,6 @@ export async function claimSessionFromClerkReturn(input: {
   }
 }
 
-/** مفتاح Vercel عند تحميل الوحدة — قبل أي استبدال من الإعدادات المُدارة. */
-const ENV_SECRET_AT_LOAD = (process.env.CLERK_SECRET_KEY || "").trim();
-
 /**
  * سبب الرفض في سجلات Vercel — المرحلة ورمز الخطأ فقط: لا رمز جلسة ولا بريد ولا جوال ولا معرّف.
  */
@@ -119,7 +120,7 @@ function logClaimFailure(stage: string, err: unknown, keysTried: number): null {
       code: typeof e.code === "string" ? e.code : typeof clerkCode === "string" ? clerkCode : undefined,
       status: typeof e.status === "number" ? e.status : undefined,
       keysTried,
-      secretOverridden: Boolean(ENV_SECRET_AT_LOAD) && ENV_SECRET_AT_LOAD !== (process.env.CLERK_SECRET_KEY || "").trim(),
+      secretOverridden: originalEnvValue("CLERK_SECRET_KEY").trim() !== (process.env.CLERK_SECRET_KEY || "").trim(),
       secretKind: kind(process.env.CLERK_SECRET_KEY),
       publishableKind: kind(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY),
     })
