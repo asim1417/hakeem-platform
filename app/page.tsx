@@ -7,6 +7,9 @@ import {
   LOGGED_OUT_MARK_COOKIE,
   shouldRedirectSignedInHome,
 } from "@/lib/modules/config/home-signed-in-redirect";
+import { homeDemoVideoUrl, isHomeLiveDemoEnabled } from "@/lib/modules/config/home-live-demo";
+import { buildLiveDemoPayload } from "@/lib/modules/home/live-demo-content";
+import { loadLiveDemoArticle } from "@/lib/modules/home/live-demo-source";
 import { assertBuiltinPageEnabled } from "@/lib/modules/site/page-gate";
 import { getSiteConfig } from "@/lib/modules/site/site-store";
 import { hydrateEnvFromSettingsThrottled } from "@/lib/modules/settings/settings-service";
@@ -36,5 +39,13 @@ export default async function HomePage({
 
   await assertBuiltinPageEnabled("home");
   const config = await getSiteConfig();
-  return <HomeHero content={config.home} />;
+  // العرض الحي: نص المادة من مدونة حكيم؛ إن غاب النص لا يظهر العرض
+  const demoArticle = isHomeLiveDemoEnabled() ? await loadLiveDemoArticle() : null;
+  return (
+    <HomeHero
+      content={config.home}
+      liveDemo={demoArticle ? buildLiveDemoPayload(demoArticle) : null}
+      demoVideoUrl={demoArticle ? homeDemoVideoUrl() : null}
+    />
+  );
 }
