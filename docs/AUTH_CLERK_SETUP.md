@@ -56,3 +56,10 @@
 3. تفعيل التحقق الثنائي من قائمة الحساب ثم تسجيل الخروج والدخول بالرمز.
 4. إنشاء مكتب ودعوة عضو ثانٍ وقبول الدعوة.
 5. `npm run test:auth-providers-visibility` و`npx tsx scripts/test-ssr-oauth-start.ts`.
+
+## الدخول من الصفحة الرئيسية (HOME_INLINE_AUTH_ENABLED)
+
+روابط الدخول في `/` تفتح حوارًا داخل الصفحة بالوسائل المفعّلة نفسها (Google بنافذة منبثقة، والبريد/الجوال
+برمز في نموذج حكيم المضمّن). Clerk لا يُحمَّل إلا عند التركيز في حقل البريد/الجوال.
+مفتاح الطوارئ: `HOME_INLINE_AUTH_ENABLED=0` من الإعدادات المُدارة أو Vercel يعيد الروابط السابقة.
+التفاصيل: [`inline-auth-audit.md`](./inline-auth-audit.md) و[`inline-auth-report.md`](./inline-auth-report.md).
