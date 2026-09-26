@@ -12,10 +12,13 @@ import {
   Wallet,
 } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
+import { markLoggedOut } from "@/lib/modules/config/home-signed-in-redirect";
 import { useRouter } from "next/navigation";
 import { useClerkMounted } from "@/components/providers/ClerkAppProvider";
 
 async function clearOwnerSession() {
+  // قبل أي await: العلامة تسبق التحويل إلى «/» فلا تعيد الإحالةُ المستخدمَ إلى مساحة العمل
+  markLoggedOut();
   await fetch("/api/auth/owner-logout", { method: "POST" }).catch(() => undefined);
 }
 

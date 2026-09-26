@@ -8,9 +8,9 @@ import path from "node:path";
 import {
   arabicErrorMessage,
   CODE_LENGTH,
-  fillCodeBoxes,
   GENERIC_ERROR,
   maskIdentifier,
+  maskIdentifierLocal,
   normalizePhone,
   parseIdentifier,
   pickSecondFactor,
@@ -60,7 +60,7 @@ assert.equal(sanitizeCode("12-34-56-78-90"), "12345678");
 
 // الأخطاء
 const clerkErr = (code: string) => ({ errors: [{ code, message: "english" }] });
-assert.equal(arabicErrorMessage(clerkErr("form_code_incorrect")), "الرمز غير صحيح. تحقّق منه وأعد المحاولة.");
+assert.equal(arabicErrorMessage(clerkErr("form_code_incorrect")), "الرمز غير صحيح. راجع الأرقام وصحّح ما يلزم.");
 // لا تكشف الرسائل إن كان الحساب مسجّلًا (منع تعداد الحسابات)
 for (const code of ["form_identifier_not_found", "form_identifier_exists", "not_allowed_access"]) {
   const msg = arabicErrorMessage(clerkErr(code));
@@ -73,15 +73,12 @@ assert.equal(arabicErrorMessage(new Error("boom")), GENERIC_ERROR);
 // الرسائل عربية دائمًا — لا نمرّر نص Clerk الإنجليزي
 assert.ok(!/[A-Za-z]{4,}/.test(arabicErrorMessage(clerkErr("form_param_format_invalid"))));
 
-// خانات الرمز: كتابة، لصق كامل في أي خانة، أرقام عربية، مسح
 assert.equal(CODE_LENGTH, 6);
-const empty = ["", "", "", "", "", ""];
-assert.deepEqual(fillCodeBoxes(empty, 0, "4"), { digits: ["4", "", "", "", "", ""], focus: 1 });
-assert.deepEqual(fillCodeBoxes(empty, 3, "123456"), { digits: ["1", "2", "3", "4", "5", "6"], focus: 5 });
-assert.deepEqual(fillCodeBoxes(empty, 0, "١٢٣ ٤٥٦"), { digits: ["1", "2", "3", "4", "5", "6"], focus: 5 });
-assert.deepEqual(fillCodeBoxes(["1", "2", "", "", "", ""], 2, "34"), { digits: ["1", "2", "3", "4", "", ""], focus: 4 });
-assert.deepEqual(fillCodeBoxes(["1", "2", "3", "", "", ""], 1, ""), { digits: ["1", "", "3", "", "", ""], focus: 1 });
-assert.deepEqual(fillCodeBoxes(empty, 5, "98"), { digits: ["", "", "", "", "", "9"], focus: 5 });
+
+// إخفاء محلي في صندوق الدخول (الشاشة ٣): 05•• ••• 4567
+assert.equal(maskIdentifierLocal({ kind: "phone", value: "+966551234567" }), "05•• ••• 4567");
+assert.equal(maskIdentifierLocal({ kind: "phone", value: "+12025550123" }), maskIdentifier({ kind: "phone", value: "+12025550123" }));
+assert.equal(maskIdentifierLocal({ kind: "email", value: "aasem@example.com" }), "aa•••@example.com");
 
 // التحقق الثنائي: تطبيق المصادقة أولًا
 assert.equal(pickSecondFactor([{ strategy: "backup_code" }, { strategy: "totp" }]), "totp");
@@ -129,12 +126,23 @@ assert.ok(
   /if \(onComplete\) \{\s*onComplete\(\{ ok: Boolean\(next\), next: next \?\? nextUrl \}\);\s*return;\s*\}\s*[\s\S]{0,160}window\.location\.assign\(next \?\? nextUrl\)/.test(inner),
   "without onComplete the flow still navigates; with it, no navigation"
 );
-assert.ok(inner.includes("<CodeBoxes") && /embedded &&\s*\(s\.name === "code"/.test(inner), "code boxes only in embedded mode");
-const boxes = fs.readFileSync(path.join(root, "components/auth/CodeBoxes.tsx"), "utf8");
-assert.ok(boxes.includes('autoComplete={i === 0 ? "one-time-code" : "off"}'));
-assert.ok(boxes.includes('inputMode="numeric"'));
-assert.ok(boxes.includes("onFilled(next.join(\"\"))"), "auto-verify when all boxes are filled");
-assert.equal(boxes.includes("@clerk"), false);
+assert.ok(inner.includes("<CodeInput") && /embedded &&\s*\(s\.name === "code"/.test(inner), "segmented code input only in embedded mode");
+// الشاشة ٣: حقل واحد خلف ست خانات، fieldset/legend، إرسال تلقائي 200–300ms
+const codeInput = fs.readFileSync(path.join(root, "components/auth/CodeInput.tsx"), "utf8");
+for (const attr of ['type="text"', 'inputMode="numeric"', 'autoComplete="one-time-code"', "maxLength={CODE_LENGTH}"]) {
+  assert.ok(codeInput.includes(attr), `code input: ${attr}`);
+}
+assert.equal((codeInput.match(/<input\b/g) || []).length, 1, "one real input behind the six boxes");
+assert.ok(codeInput.includes("<fieldset") && codeInput.includes("<legend") && codeInput.includes("رمز التحقق (٦ أرقام)"));
+assert.ok(codeInput.includes("aria-invalid") && codeInput.includes("aria-describedby"));
+assert.ok(/CODE_AUTOSUBMIT_DELAY_MS = (2\d\d|300);/.test(codeInput), "auto-submit within 200–300ms");
+assert.ok(codeInput.includes("onPaste") && codeInput.includes("sanitizeCode(text)"), "paste fills all boxes");
+assert.equal(codeInput.includes("@clerk"), false);
+// الشاشة ٦: الخطأ يحفظ الأرقام، ورسالة تحت الخانات، و«أرسل رمزًا جديدًا»
+assert.ok(inner.includes("الشاشة ٦: الأرقام تبقى كما هي"));
+assert.equal(/fail\(err\);\s*if \(showsCodeBoxes\(step\)\)/.test(inner), false, "digits are not cleared on error");
+assert.ok(inner.includes("أرسل رمزًا جديدًا") && inner.includes("لم يصلك الرمز؟") && inner.includes("تعديل الرقم"));
+assert.ok(inner.includes("أرسلناه برسالة نصية إلى"));
 // صفحة /auth/identifier لا تمرّر embedded ولا onComplete
 const idPage = fs.readFileSync(path.join(root, "app/auth/identifier/page.tsx"), "utf8");
 assert.equal(/embedded|onComplete/.test(idPage), false);

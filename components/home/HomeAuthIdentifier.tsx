@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ComponentProps, type ComponentType, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type ComponentProps, type ComponentType, type FormEvent, type ReactNode } from "react";
 import { ClerkAppProvider, useClerkMounted } from "@/components/providers/ClerkAppProvider";
 import type { HomeAuthConfig } from "@/components/home/HomeAuthLauncher";
 import type {
@@ -9,6 +9,7 @@ import type {
   IdentifierFlowStep,
 } from "@/components/auth/AuthIdentifierFlowInner";
 import type { HomeAuthMode } from "@/lib/modules/config/home-inline-auth";
+import { IdentifierField, identifierSubmitLabel } from "@/components/auth/IdentifierField";
 
 type InnerComponent = ComponentType<ComponentProps<typeof AuthIdentifierFlowInner>>;
 
@@ -19,12 +20,12 @@ type Props = {
   portalFallbackHref: string;
   onStepChange: (step: IdentifierFlowStep) => void;
   onComplete: (result: IdentifierFlowResult) => void;
+  /** معرّف عنوان الحوار — يرثه عنوان خطوة الرمز */
+  headingId: string;
+  /** وسم «آخر دخول» فوق الحقل */
+  badge?: ReactNode;
 };
 
-const inputClass =
-  "block min-h-[48px] w-full rounded-[0.75rem] border border-[var(--auth-input-border)] bg-white px-4 text-[1rem] text-[#0E3435] transition focus:border-[#0E3435]";
-const primaryButtonClass =
-  "flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[0.75rem] bg-[#0E3435] px-4 text-[0.95rem] font-semibold text-[#FFFcf7] transition hover:bg-[#0E3435]/90 disabled:cursor-wait disabled:opacity-70";
 
 /**
  * حقل «البريد أو رقم الجوال» في الحوار. أول رسم بلا Clerk:
@@ -47,6 +48,7 @@ export function HomeAuthIdentifier(props: Props) {
       {!innerReady ? (
         <PlaceholderForm
           value={value}
+          badge={props.badge}
           busy={queued}
           onValue={(v) => {
             setValue(v);
@@ -91,6 +93,8 @@ function EmbeddedFlow({
   portalFallbackHref,
   onStepChange,
   onComplete,
+  headingId,
+  badge,
   value,
   queued,
   onReady,
@@ -140,19 +144,23 @@ function EmbeddedFlow({
       onStepChange={onStepChange}
       initialIdentifier={initial.value}
       submitOnReady={initial.queued}
+      headingId={headingId}
+      identifierBadge={badge}
     />
   );
 }
 
-/** نسخة خفيفة مطابقة لخطوة المعرّف في النموذج — بلا Clerk. */
+/** نسخة خفيفة مطابقة لخطوة المعرّف (الشاشتان ١ و٢) — المكوّن نفسه، بلا Clerk. */
 function PlaceholderForm({
   value,
+  badge,
   busy,
   onValue,
   onFocus,
   onSubmit,
 }: {
   value: string;
+  badge?: ReactNode;
   busy: boolean;
   onValue: (v: string) => void;
   onFocus: () => void;
@@ -160,45 +168,17 @@ function PlaceholderForm({
 }) {
   return (
     <form
-      className="mt-4 flex flex-col gap-3"
+      className="hk-emb__form"
       noValidate
       onSubmit={(e: FormEvent) => {
         e.preventDefault();
         onSubmit();
       }}
     >
-      <p id="hakeem-auth-required" className="hk-auth-required-note">
-        الحقول المعلّمة بـ <span aria-hidden>*</span>
-        <span className="sr-only">نجمة</span> مطلوبة.
-      </p>
-      <label htmlFor="hakeem-identifier" className="text-sm font-semibold text-[#0E3435]">
-        البريد أو رقم الجوال
-        <span className="hk-auth-required-mark" aria-hidden>
-          *
-        </span>
-      </label>
-      <input
-        id="hakeem-identifier"
-        className={inputClass}
-        dir="ltr"
-        type="text"
-        inputMode="email"
-        autoComplete="username"
-        autoCapitalize="none"
-        spellCheck={false}
-        placeholder="05XXXXXXXX أو name@example.com"
-        value={value}
-        onChange={(e) => onValue(e.target.value)}
-        onFocus={onFocus}
-        required
-        aria-required="true"
-        aria-describedby="hakeem-auth-required"
-      />
-      <button type="submit" className={primaryButtonClass} disabled={busy} aria-busy={busy}>
-        {busy ? (
-          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#FFFcf7]/30 border-t-[#FFFcf7]" aria-hidden />
-        ) : null}
-        <span>{busy ? "لحظة…" : "متابعة"}</span>
+      <IdentifierField value={value} onChange={onValue} onFocus={onFocus} badge={badge} />
+      <button type="submit" className="hk-btn-primary" disabled={busy} aria-busy={busy}>
+        {busy ? <span className="hk-spinner hk-spinner--light" aria-hidden /> : null}
+        <span>{busy ? "لحظة…" : identifierSubmitLabel(value)}</span>
       </button>
     </form>
   );

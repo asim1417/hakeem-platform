@@ -78,6 +78,17 @@ export function maskIdentifier(id: { kind: "email" | "phone"; value: string }): 
   return `${head}•••@${domain}`;
 }
 
+/**
+ * إخفاء بصيغة محلية للعرض في صندوق الدخول (الشاشة ٣): «05•• ••• 4567».
+ * الأرقام غير السعودية والبريد كما في maskIdentifier.
+ */
+export function maskIdentifierLocal(id: { kind: "email" | "phone"; value: string }): string {
+  if (id.kind === "phone" && /^\+9665\d{8}$/.test(id.value)) {
+    return `05•• ••• ${id.value.slice(-4)}`;
+  }
+  return maskIdentifier(id);
+}
+
 /** رمز التحقق: أرقام فقط (مع تحويل العربية)، حتى 8 خانات. */
 export function sanitizeCode(raw: string): string {
   return toLatinDigits(raw).replace(/\D/g, "").slice(0, 8);
@@ -86,29 +97,6 @@ export function sanitizeCode(raw: string): string {
 /** طول رموز Clerk (بريد/جوال/تطبيق مصادقة). */
 export const CODE_LENGTH = 6;
 
-/**
- * خانات الرمز المنفصلة: يوزّع ما كُتب أو لُصق على الخانات.
- * لصق رمز كامل في أي خانة يملأ من الأولى؛ وحرف واحد يملأ الخانة الحالية وينقل التركيز للتالية.
- */
-export function fillCodeBoxes(
-  current: ReadonlyArray<string>,
-  index: number,
-  raw: string,
-  length: number = CODE_LENGTH
-): { digits: string[]; focus: number } {
-  const digits = Array.from({ length }, (_, i) => current[i] ?? "");
-  const incoming = sanitizeCode(raw).slice(0, length);
-  if (!incoming) {
-    digits[index] = "";
-    return { digits, focus: index };
-  }
-  let i = incoming.length >= length ? 0 : index;
-  for (const ch of incoming) {
-    if (i >= length) break;
-    digits[i++] = ch;
-  }
-  return { digits, focus: Math.min(i, length - 1) };
-}
 
 // ── أخطاء Clerk ← رسائل عربية ──
 // لا تكشف الرسائل إن كان البريد أو الرقم مسجّلًا (منع تعداد الحسابات).
@@ -130,8 +118,8 @@ export function clerkErrorCode(err: unknown): string {
 const ERROR_MESSAGES: Record<string, string> = {
   form_identifier_not_found: "تعذّرت المتابعة بهذا البريد أو الرقم. تحقّق منه وأعد المحاولة.",
   form_identifier_exists: "تعذّر استخدام هذا البريد أو الرقم هنا. تحقّق منه أو جرّب غيره.",
-  form_code_incorrect: "الرمز غير صحيح. تحقّق منه وأعد المحاولة.",
-  verification_failed: "الرمز غير صحيح. تحقّق منه وأعد المحاولة.",
+  form_code_incorrect: "الرمز غير صحيح. راجع الأرقام وصحّح ما يلزم.",
+  verification_failed: "الرمز غير صحيح. راجع الأرقام وصحّح ما يلزم.",
   verification_expired: "انتهت صلاحية الرمز. اطلب رمزًا جديدًا.",
   form_param_format_invalid: "الصيغة غير صحيحة. راجع ما أدخلته.",
   form_param_nil: "هذا الحقل مطلوب.",

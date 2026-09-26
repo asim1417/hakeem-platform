@@ -7,6 +7,7 @@ import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { isHomeInlineAskEnabled } from "@/lib/modules/config/home-inline-ask";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
+import { CREDIT_REWARDS } from "@/config/credits";
 
 const AskWorkspaceWithSessions = dynamic(
   () =>
@@ -94,6 +95,15 @@ export function DashboardWorkbench({
           <OnboardingBanner />
           {!isNewUser ? <CreditsWidget /> : null}
         </div>
+        {isNewUser ? (
+          // الشاشة ٨: إشعار رصيد التجربة للمستخدم الجديد (رصيد الترحيب والتسجيل القائم في bootstrap)
+          <p className="wb-trial" role="status">
+            <span aria-hidden>✦</span>
+            <span>
+              رصيد تجربتك جاهز: {(CREDIT_REWARDS.welcome + CREDIT_REWARDS.signup).toLocaleString("ar-SA")} نقطة
+            </span>
+          </p>
+        ) : null}
 
         <section className="wb-ask-full" aria-label="اسأل حكيم">
           <AskWorkspaceWithSessions userName={firstName} variant="home" conversationId={null} />

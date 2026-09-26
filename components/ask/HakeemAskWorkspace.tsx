@@ -1222,7 +1222,7 @@ export function HakeemAskWorkspace({
     window.location.assign("/dashboard/judicial-assistant");
   }
 
-  const greeting = userName ? `مرحبًا ${userName}` : "مرحبًا بك";
+  const greeting = userName ? `مرحبًا، ${userName}` : "مرحبًا بك";
   const followUpMode = turns.length > 0 && Boolean(turns[turns.length - 1]?.answer) && !busy;
   const emptyTitle = isHome ? "كيف يساعدك حكيم اليوم؟" : greeting;
   const emptyLede = isHome

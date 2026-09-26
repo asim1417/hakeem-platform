@@ -104,6 +104,7 @@
     "test:auth-providers-visibility": "tsx scripts/test-auth-providers-visibility.ts",
     "test:identifier-flow": "tsx scripts/test-identifier-flow.ts",
     "test:home-inline-auth": "tsx scripts/test-home-inline-auth.ts",
+    "test:workspace-handoff": "tsx scripts/test-workspace-handoff.ts",
     "test:auth-continue": "tsx scripts/test-auth-continue.ts",
     "db:username-column": "tsx scripts/apply-username-column.ts",
     "db:onboarding-credits": "tsx scripts/apply-onboarding-credits.ts",

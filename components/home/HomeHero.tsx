@@ -1,7 +1,8 @@
 import { HomeAuthActions, HomeAuthUserName } from "@/components/home/HomeAuthActions";
 import { GuestAskComposer } from "@/components/home/GuestAskComposer";
 import { HomeAuthLauncher, type HomeAuthConfig } from "@/components/home/HomeAuthLauncher";
-import { HomeInlineAskLazy } from "@/components/home/HomeInlineAskLazy";
+import { HomeLiveDemoLazy } from "@/components/home/HomeLiveDemoLazy";
+import type { LiveDemoPayload } from "@/lib/modules/home/live-demo-content";
 import {
   hasAnySignInProvider,
   isIdentifierFormEnabled,
@@ -30,8 +31,14 @@ type HomeAuthLinkAttrs = {
  */
 export function HomeHero({
   content = DEFAULT_HOME,
+  liveDemo = null,
+  demoVideoUrl = null,
 }: {
   content?: SiteHomeContent;
+  /** «العرض الحي» (HOME_LIVE_DEMO_ENABLED) — null = الصفحة كما هي */
+  liveDemo?: LiveDemoPayload | null;
+  /** HOME_DEMO_VIDEO_URL — زر «شاهد التجربة كاملة» */
+  demoVideoUrl?: string | null;
 }) {
   const authReady = hasAnySignInProvider();
   const home = content;
@@ -161,47 +168,92 @@ export function HomeHero({
           )}
         </header>
 
-        <section
-          id="ask"
-          className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[5vh] pb-10 text-center"
-        >
-          <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
-            {home.brandName}
-          </p>
-          {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
-          <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
-            ابدأ بسؤالك القانوني
-          </h1>
-          <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
-            اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
-            عليها.
-          </p>
+        {liveDemo ? (
+          // الرئيسية مع العرض الحي: بجوار صندوق السؤال على سطح المكتب، وتحته على الجوال
+          <section id="ask" className="relative mx-auto max-w-6xl px-6 pt-[5vh] pb-10">
+            <div className="hk-home-hero--demo">
+              <div className="hk-home-hero__main flex flex-col items-center text-center">
+              <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
+                {home.brandName}
+              </p>
+              {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
+              <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
+                ابدأ بسؤالك القانوني
+              </h1>
+              <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
+                اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
+                عليها.
+              </p>
 
-          <HomeAuthActions
-            guest={
-              <div className="mt-8 w-full max-w-2xl text-right">
-                <GuestAskComposer />
-              </div>
-            }
-            user={
-              inlineAuth ? (
-                // بعد الدخول من الحوار: السؤال يُكمل هنا مرة واحدة دون مغادرة الصفحة
-                <div className="mt-8 w-full max-w-2xl text-right">
-                  <HomeInlineAskLazy />
-                </div>
-              ) : (
-              <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
-                <a
-                  href="/dashboard"
-                  className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
-                >
-                  اسأل حكيم الآن
+              <HomeAuthActions
+                guest={
+                  <div className="mt-8 w-full max-w-2xl text-right">
+                    <GuestAskComposer />
+                  </div>
+                }
+                user={
+                  <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+                    <a
+                      href="/dashboard"
+                      className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
+                    >
+                      اسأل حكيم الآن
+                    </a>
+                  </div>
+                }
+              />
+              {demoVideoUrl ? (
+                <a href={demoVideoUrl} target="_blank" rel="noopener" className="hk-demo-video mt-4">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M10 8.5v7l6-3.5-6-3.5z" fill="currentColor" stroke="none" />
+                  </svg>
+                  شاهد التجربة كاملة
                 </a>
+              ) : null}
               </div>
-              )
-            }
-          />
-        </section>
+              <div className="hk-demo-sep" aria-hidden>
+                <span>كيف يجيب حكيم؟</span>
+              </div>
+              <HomeLiveDemoLazy payload={liveDemo} />
+            </div>
+          </section>
+        ) : (
+          <section
+            id="ask"
+            className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[5vh] pb-10 text-center"
+          >
+            <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
+              {home.brandName}
+            </p>
+            {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
+            <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
+              ابدأ بسؤالك القانوني
+            </h1>
+            <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
+              اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
+              عليها.
+            </p>
+
+            <HomeAuthActions
+              guest={
+                <div className="mt-8 w-full max-w-2xl text-right">
+                  <GuestAskComposer />
+                </div>
+              }
+              user={
+                <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+                  <a
+                    href="/dashboard"
+                    className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
+                  >
+                    اسأل حكيم الآن
+                  </a>
+                </div>
+              }
+            />
+          </section>
+        )}
 
         <section
           id="services"

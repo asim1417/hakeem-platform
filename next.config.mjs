@@ -94,6 +94,8 @@ const nextConfig = {
     // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل).
     outputFileTracingIncludes: {
       "/search": ["./data/legal-bm25-index.json.gz"],
+      // العرض الحي في الرئيسية: نص المادة يُقرأ بلفظه من مدونة حكيم (HOME_LIVE_DEMO_ENABLED)
+      "/": ["./data/legal_articles_export.json"],
       "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
     },
     serverActions: {

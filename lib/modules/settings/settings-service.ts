@@ -61,6 +61,8 @@ export const MANAGED_KEYS: ManagedKey[] = [
   { key: "AUTH_ORGANIZATIONS_ENABLED", label: "إظهار حسابات المكاتب (Organizations)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "AUTH_IDENTIFIER_FORM_ENABLED", label: "نموذج الدخول العربي للبريد والجوال (بدل صفحة Clerk)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "HOME_INLINE_AUTH_ENABLED", label: "الدخول من الصفحة الرئيسية دون مغادرتها (0 = مفتاح طوارئ يعيد الروابط السابقة)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "HOME_LIVE_DEMO_ENABLED", label: "العرض الحي في الرئيسية (1 = تفعيل بعد مراجعة نصه)", secret: false, group: "الصفحة الرئيسية", placeholder: "0" },
+  { key: "HOME_DEMO_VIDEO_URL", label: "رابط فيديو «شاهد التجربة كاملة» (https) — فارغ يُخفي الزر", secret: false, group: "الصفحة الرئيسية", placeholder: "https://…" },
   // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
   { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
   { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },
