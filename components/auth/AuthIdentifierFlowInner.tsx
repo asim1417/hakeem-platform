@@ -26,6 +26,12 @@ type SignInRes = NonNullable<ReturnType<typeof useSignIn>["signIn"]>;
 type SignUpRes = NonNullable<ReturnType<typeof useSignUp>["signUp"]>;
 type Identifier = { kind: "email" | "phone"; value: string };
 
+/** خطّافا @clerk/nextjs على window حول setActive (غير موثّقين؛ نعطّلهما مؤقتًا فقط). */
+type NextClerkHooks = {
+  __unstable__onBeforeSetActive?: (intent?: unknown) => Promise<unknown> | void;
+  __unstable__onAfterSetActive?: () => unknown;
+};
+
 type Step =
   | { name: "identifier" }
   | { name: "code"; purpose: "sign-in" | "sign-up-primary" | "sign-up-email"; target: Identifier }
@@ -239,8 +245,28 @@ export function AuthIdentifierFlowInner({
       return;
     }
     setStep({ name: "finishing" });
-    await setActive({ session: sessionId });
+    await activateWithoutNextRefresh(() => setActive({ session: sessionId }));
     await claimAndNavigate();
+  }
+
+  /**
+   * @clerk/nextjs يستدعي قبل setActive إجراء خادم (invalidateCacheAction) على الصفحة الحالية
+   * ثم router.refresh. على صفحاتنا يفشل الإجراء («failed to forward action response») فتُعاد
+   * تحميل الصفحة وسط الدخول، فيضيع الحوار وقد ينقطع تثبيت الجلسة. لا نحتاجهما: نثبّت
+   * hakeem_session بأنفسنا ثم ننتقل انتقالًا واحدًا. نعطّلهما أثناء التفعيل فقط ثم نعيدهما.
+   */
+  async function activateWithoutNextRefresh(activate: () => Promise<unknown>) {
+    const w = window as unknown as NextClerkHooks;
+    const before = w.__unstable__onBeforeSetActive;
+    const after = w.__unstable__onAfterSetActive;
+    w.__unstable__onBeforeSetActive = () => Promise.resolve();
+    w.__unstable__onAfterSetActive = () => undefined;
+    try {
+      await activate();
+    } finally {
+      w.__unstable__onBeforeSetActive = before;
+      w.__unstable__onAfterSetActive = after;
+    }
   }
 
   /** يثبّت hakeem_session من رمز جلسة Clerk — يعيد الوجهة، أو null إن تعذّر. */
@@ -279,8 +305,13 @@ export function AuthIdentifierFlowInner({
       onComplete({ ok: true, next });
       return;
     }
-    // بلا تثبيت نكمل إلى المسار المحمي مباشرة — clerkMiddleware يقرأ جلسة Clerk هناك
-    window.location.assign(next ?? nextUrl);
+    // بلا تثبيت لا ننتقل لمسار محمي بلا جلسة — ذلك يعيد الزائر للرئيسية/الدخول بلا ربط.
+    if (!next) {
+      setStep({ name: "identifier" });
+      showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier");
+      return;
+    }
+    window.location.assign(next);
   }
 
   /**
@@ -290,7 +321,9 @@ export function AuthIdentifierFlowInner({
    */
   async function endStaleClerkSessions() {
     const sessions = clerk.client?.signedInSessions ?? [];
-    await Promise.all(sessions.map((s) => s.end().catch(() => undefined)));
+    if (!sessions.length) return;
+    // إنهاء الجلسة قد يمرّ بخطّافي @clerk/nextjs نفسيهما — بلا إعادة تحميل هنا أيضًا
+    await activateWithoutNextRefresh(() => Promise.all(sessions.map((s) => s.end().catch(() => undefined))));
   }
 
   // ── الدخول ──

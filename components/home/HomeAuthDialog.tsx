@@ -158,25 +158,28 @@ export function HomeAuthDialog({ config, request, onClose, variant = "dialog" }:
     });
   }, [onClose]);
 
-  /** الجلسة ثبتت (hakeem_session): «تم التحقق» ~600ms ثم انتقال واحد إلى الوجهة. */
+  /**
+   * الجلسة ثبتت (hakeem_session): «تم التحقق» ~600ms ثم انتقال كامل واحد إلى الداخلية.
+   * لا نستخدم soft navigation (router.push): كوكي الجلسة يُثبَّت عبر fetch؛ الانتقال الكامل
+   * يضمن أن /dashboard يقرأ hakeem_session ولا يُعاد الزائر للرئيسية.
+   * preferredNext من claim-clerk-session إن وُجد (سوبر → /admin، أو next محفوظ).
+   */
   const onAuthenticated = useCallback(
-    (method: HomeAuthMethod) => {
+    (method: HomeAuthMethod, preferredNext?: string) => {
       document.cookie = lastAuthMethodCookie(method, window.location.protocol === "https:");
       // الصفحة: الوجهة من ‎?next=‎ فقط — لا نية محفوظة قديمة من الرئيسية
       const current = page ? intent : readHomeAuthIntent() ?? intent;
-      const dest = completeHomeAuth(current);
-      const from = window.location.pathname;
+      const fromIntent = completeHomeAuth(current);
+      const dest =
+        preferredNext && preferredNext.startsWith("/") && !preferredNext.startsWith("//")
+          ? preferredNext
+          : fromIntent;
       setView({ name: "verified" });
-      prefetchDestination();
       window.setTimeout(() => {
-        router.push(dest);
-        // احتياط: إن لم يتم الانتقال عبر الموجّه (فشل تحميل الحزمة) ننتقل انتقالًا كاملًا
-        window.setTimeout(() => {
-          if (window.location.pathname === from) window.location.assign(dest);
-        }, 6000);
+        window.location.assign(dest);
       }, VERIFIED_HOLD_MS);
     },
-    [intent, page, prefetchDestination, router]
+    [intent, page]
   );
 
   const openPopup = useCallback(
@@ -403,7 +406,8 @@ export function HomeAuthDialog({ config, request, onClose, variant = "dialog" }:
               onStepChange={setStep}
               onComplete={(result) => {
                 // المضمّن يستدعي onComplete بعد التثبيت فقط؛ الفشل يبقى داخل النموذج برسالة واضحة
-                if (result.ok) onAuthenticated("identifier");
+                // result.next من الخادم يربط الرئيسية بالداخلية (/dashboard أو /admin)
+                if (result.ok) onAuthenticated("identifier", result.next);
               }}
             />
           ) : (

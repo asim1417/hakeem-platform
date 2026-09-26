@@ -68,3 +68,28 @@ console.log("clerk phone-only (welcome): OK");
   assert.ok(!run.includes("claimAndNavigate"), "session_exists لا يُدخل المستخدم بلا رمز");
   console.log("clerk phone-only (always a code): OK");
 }
+
+// ── سبب رفض claim يظهر في السجلات (المرحلة والرمز فقط)، والتحقق يجرّب مفتاح Vercel إن استُبدل ──
+{
+  const src = read("lib/modules/auth/claim-clerk-return.ts");
+  for (const stage of ['"verify"', '"no_sub"', '"get_user"', '"establish"']) assert.ok(src.includes(`logClaimFailure(${stage}`), stage);
+  const log = src.slice(src.indexOf("function logClaimFailure"));
+  assert.ok(!/sessionJwt|email|phone|userId|\.id\b/.test(log), "لا بيانات حساسة في السجل");
+  assert.ok(log.includes(".slice(0, 8)"), "نوع المفتاح (البادئة) فقط، لا المفتاح");
+  assert.ok(src.includes('originalEnvValue("CLERK_SECRET_KEY")') && src.includes("new Set([secretKey, vercelKey]"), "تجربة مفتاح Vercel الأصلي");
+  assert.ok(src.indexOf("await hydrateEnvFromSettings()") < src.indexOf("const secretKey"), "الإعدادات قبل قراءة المفتاح");
+  const settings = read("lib/modules/settings/settings-service.ts");
+  assert.ok(settings.includes("if (!ORIGINAL_ENV.has(key)) ORIGINAL_ENV.set(key, process.env[key]"), "حفظ قيمة Vercel قبل أول استبدال");
+  assert.ok(src.includes("return await establishFirstPartySession("), "خطأ التثبيت يُلتقط ويُسجَّل");
+  console.log("clerk phone-only (claim diagnostics): OK");
+}
+
+// ── لا إعادة تحميل وسط الدخول: خطّافا @clerk/nextjs معطّلان أثناء setActive وإنهاء الجلسة فقط ──
+{
+  const src = read("components/auth/AuthIdentifierFlowInner.tsx");
+  assert.ok(src.includes("await activateWithoutNextRefresh(() => setActive({ session: sessionId }));"));
+  assert.ok(/activateWithoutNextRefresh\(\(\) => Promise\.all\(sessions\.map/.test(src));
+  const fn = src.slice(src.indexOf("async function activateWithoutNextRefresh"), src.indexOf("/** يثبّت hakeem_session"));
+  assert.ok(/finally \{\s*w\.__unstable__onBeforeSetActive = before;\s*w\.__unstable__onAfterSetActive = after;/.test(fn), "تُعاد الخطّافات دائمًا");
+  console.log("clerk phone-only (no mid-flow reload): OK");
+}

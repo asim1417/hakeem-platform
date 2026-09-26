@@ -92,7 +92,8 @@ const dialog = read("components/home/HomeAuthDialog.tsx");
 assert.ok(dialog.includes("أكمل الدخول في نافذة") && dialog.includes("لم تظهر النافذة؟ افتحها مجددًا") && dialog.includes("اختيار وسيلة أخرى"));
 assert.ok(dialog.includes("تم التحقق") && dialog.includes("جارٍ فتح مساحة عملك…") && dialog.includes('role="status"'));
 assert.ok(/VERIFIED_HOLD_MS = 600;/.test(dialog));
-assert.ok(dialog.includes("router.prefetch(destination)") && dialog.includes("router.push(dest)"));
+assert.ok(dialog.includes("router.prefetch(destination)") && dialog.includes("window.location.assign(dest)"));
+assert.equal(dialog.includes("router.push(dest)"), false, "انتقال كامل بعد التثبيت — لا soft nav يضيع الجلسة");
 assert.ok(dialog.includes("آخر دخول"));
 assert.ok(dialog.includes('hidden={!optionsVisible}'), "the flow stays mounted under overlays (session claim is not cut)");
 

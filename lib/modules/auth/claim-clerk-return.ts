@@ -9,6 +9,7 @@ import { establishFirstPartySession } from "@/lib/modules/auth/establish-session
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import type { SafeUser } from "@/lib/modules/auth/session";
 import { isPhoneOnlyLocalEmail, localEmailForClerkUser } from "@/lib/modules/auth/clerk-local-email";
+import { hydrateEnvFromSettings, originalEnvValue } from "@/lib/modules/settings/settings-service";
 
 type ClerkUser = Awaited<ReturnType<ReturnType<typeof createClerkClient>["users"]["getUser"]>>;
 
@@ -32,6 +33,8 @@ export async function claimSessionFromClerkReturn(input: {
   handshakeToken?: string | null;
   sessionJwt?: string | null;
 }): Promise<SafeUser | null> {
+  // الإعدادات المُدارة أولًا (كما تفعل بقية الصفحات)، فتتضح حالة المفتاح في كل طلب لا حسب النسخة
+  await hydrateEnvFromSettings().catch(() => 0);
   if (!isClerkConfigured()) return null;
   const secretKey = (process.env.CLERK_SECRET_KEY || "").trim();
   const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
@@ -68,16 +71,59 @@ export async function claimSessionFromClerkReturn(input: {
 
   if (!sessionJwt) return null;
 
-  try {
-    const payload = await verifyToken(sessionJwt, {
-      secretKey,
-      // publishableKey helps in some setups
-    });
-    const userId = typeof payload.sub === "string" ? payload.sub : "";
-    if (!userId) return null;
-    const u = await client.users.getUser(userId);
-    return establishFirstPartySession(localIdentity(u));
-  } catch {
-    return null;
+  // مفتاح Vercel قد يستبدله hydrateEnvFromSettings بمفتاح محفوظ في الإعدادات — نجرّب الاثنين
+  // (التحقق بأيّهما يثبت أن الرمز صادر عن نسخة Clerk نفسها)، ونجلب المستخدم بالمفتاح الذي نجح.
+  const vercelKey = originalEnvValue("CLERK_SECRET_KEY").trim();
+  const keys = Array.from(new Set([secretKey, vercelKey].filter(Boolean)));
+  let userId = "";
+  let verifiedKey = "";
+  let verifyError: unknown = null;
+  for (const key of keys) {
+    try {
+      const payload = await verifyToken(sessionJwt, { secretKey: key });
+      userId = typeof payload.sub === "string" ? payload.sub : "";
+      verifiedKey = key;
+      break;
+    } catch (err) {
+      verifyError = err;
+    }
   }
+  if (!verifiedKey) return logClaimFailure("verify", verifyError, keys.length);
+  if (!userId) return logClaimFailure("no_sub", null, keys.length);
+
+  let u: ClerkUser;
+  try {
+    u = await createClerkClient({ secretKey: verifiedKey }).users.getUser(userId);
+  } catch (err) {
+    return logClaimFailure("get_user", err, keys.length);
+  }
+  try {
+    return await establishFirstPartySession(localIdentity(u));
+  } catch (err) {
+    return logClaimFailure("establish", err, keys.length);
+  }
+}
+
+/**
+ * سبب الرفض في سجلات Vercel — المرحلة ورمز الخطأ فقط: لا رمز جلسة ولا بريد ولا جوال ولا معرّف.
+ */
+function logClaimFailure(stage: string, err: unknown, keysTried: number): null {
+  const e = (err ?? {}) as { name?: unknown; reason?: unknown; code?: unknown; status?: unknown; errors?: unknown };
+  const clerkCode = Array.isArray(e.errors) ? (e.errors[0] as { code?: unknown } | undefined)?.code : undefined;
+  const kind = (k: string | undefined) => (k || "").trim().slice(0, 8).replace(/[^a-z_]/g, "") || "none";
+  console.warn(
+    JSON.stringify({
+      event: "claim_clerk_session_failed",
+      stage,
+      error: typeof e.name === "string" ? e.name : undefined,
+      reason: typeof e.reason === "string" ? e.reason : undefined,
+      code: typeof e.code === "string" ? e.code : typeof clerkCode === "string" ? clerkCode : undefined,
+      status: typeof e.status === "number" ? e.status : undefined,
+      keysTried,
+      secretOverridden: originalEnvValue("CLERK_SECRET_KEY").trim() !== (process.env.CLERK_SECRET_KEY || "").trim(),
+      secretKind: kind(process.env.CLERK_SECRET_KEY),
+      publishableKind: kind(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY),
+    })
+  );
+  return null;
 }
