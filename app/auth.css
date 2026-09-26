@@ -221,3 +221,17 @@ body.hk-scroll-locked { overflow: hidden; }
   .hk-home-auth__backdrop,
   .hk-home-auth__panel { animation: none !important; }
 }
+
+/* روابط التذييل تحت بطاقة الدخول ورابط «سجّل مجانًا» تحت صندوق السؤال: تباين وهدف لمس 44px */
+.login-panel__links { color: var(--auth-muted); }
+.login-panel__links a {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+  padding-inline: 0.25rem;
+}
+.guest-ask__auth-link {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+}
