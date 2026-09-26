@@ -68,3 +68,15 @@ console.log("clerk phone-only (welcome): OK");
   assert.ok(!run.includes("claimAndNavigate"), "session_exists لا يُدخل المستخدم بلا رمز");
   console.log("clerk phone-only (always a code): OK");
 }
+
+// ── سبب رفض claim يظهر في السجلات (المرحلة والرمز فقط)، والتحقق يجرّب مفتاح Vercel إن استُبدل ──
+{
+  const src = read("lib/modules/auth/claim-clerk-return.ts");
+  for (const stage of ['"verify"', '"no_sub"', '"get_user"', '"establish"']) assert.ok(src.includes(`logClaimFailure(${stage}`), stage);
+  const log = src.slice(src.indexOf("function logClaimFailure"));
+  assert.ok(!/sessionJwt|email|phone|userId|\.id\b/.test(log), "لا بيانات حساسة في السجل");
+  assert.ok(log.includes(".slice(0, 8)"), "نوع المفتاح (البادئة) فقط، لا المفتاح");
+  assert.ok(src.includes("new Set([secretKey, ENV_SECRET_AT_LOAD]"), "تجربة مفتاح Vercel الأصلي");
+  assert.ok(src.includes("return await establishFirstPartySession("), "خطأ التثبيت يُلتقط ويُسجَّل");
+  console.log("clerk phone-only (claim diagnostics): OK");
+}
