@@ -11,6 +11,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { HomeHero } from "../components/home/HomeHero";
 import { HomeAuthLauncher, type HomeAuthConfig } from "../components/home/HomeAuthLauncher";
 import { HomeAuthDialog } from "../components/home/HomeAuthDialog";
+import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { DEFAULT_HOME } from "../lib/modules/site/defaults";
 import { HOME_AUTH_RETURN_PATH, safeDashboardNext, signUpWithNext } from "../lib/modules/auth/safe-next";
 import {
@@ -168,8 +169,14 @@ withEnv({ HOME_INLINE_AUTH_ENABLED: "1" }, () => {
 
 // ── عرض الحوار: الوسائل الممرّرة فقط، وسمات الحوار ──
 function renderDialog(config: HomeAuthConfig, mode: "sign-in" | "sign-up" = "sign-in") {
+  // الحوار يستخدم useRouter (تحميل مسبق وانتقال واحد) — موجّه وهمي للعرض الخادمي
+  const router = { push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} };
   return renderToStaticMarkup(
-    createElement(HomeAuthDialog, { config, request: { intent: { kind: "login" }, mode }, onClose: () => {} })
+    createElement(
+      AppRouterContext.Provider,
+      { value: router as never },
+      createElement(HomeAuthDialog, { config, request: { intent: { kind: "login" }, mode }, onClose: () => {} })
+    )
   );
 }
 const baseConfig: HomeAuthConfig = { providers: ["google", "email", "phone"], identifierForm: true, publishableKey: "pk_test_x", hideDevelopmentMode: true };
@@ -180,12 +187,16 @@ const baseConfig: HomeAuthConfig = { providers: ["google", "email", "phone"], id
   assert.ok(html.includes("المتابعة باستخدام Google"));
   assert.equal(html.includes("Microsoft"), false);
   assert.equal(html.includes("Apple"), false);
-  assert.ok(html.includes("البريد أو رقم الجوال"), "single identifier field");
+  assert.ok(html.includes("البريد الإلكتروني أو رقم الجوال"), "single identifier field");
   assert.ok(html.includes('id="hakeem-identifier"'));
   assert.ok(html.includes("شروط الاستخدام") && html.includes("سياسة الخصوصية"), "terms notice");
-  assert.ok(html.includes('aria-label="إغلاق نافذة الدخول"'));
-  // رابط Google الحقيقي يعود إلى الرئيسية عند حجب النافذة
-  assert.ok(decode(html).includes(`/api/auth/google?next=${encodeURIComponent(HOME_AUTH_RETURN_PATH)}`));
+  assert.ok(html.includes('aria-label="إغلاق"'));
+  // الشاشة ١: النصوص المعتمدة
+  assert.ok(html.includes("حساب واحد لكل خدماتك القانونية، ويُنشأ تلقائيًا إن كنت جديدًا."));
+  assert.ok(html.includes("باستمرارك توافق على"));
+  assert.ok(html.includes(">متابعة<"), "submit label");
+  // رابط Google الحقيقي (احتياط النافذة المحجوبة) يذهب إلى الوجهة نفسها: مساحة العمل
+  assert.ok(decode(html).includes(`/api/auth/google?next=${encodeURIComponent("/dashboard")}`));
   // أول رسم للحوار بلا Clerk: الحقل الخفيف فقط
   assert.equal(html.includes("clerk-captcha"), false);
 }
