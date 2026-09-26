@@ -11,6 +11,7 @@ import {
 } from "@/lib/modules/config/home-inline-ask";
 import { signInWithNext, signUpWithNext } from "@/lib/modules/auth/safe-next";
 import { suggestionsForSurface } from "@/lib/modules/hakeem-composer/constants";
+import { openHomeAuth } from "@/components/home/home-auth-bus";
 
 /**
  * صندوق سؤال للزائر على الصفحة العامة — يحفظ المسودة بأمان ويفتح بوابة الدخول
@@ -55,12 +56,26 @@ export function GuestAskComposer() {
     }
     try {
       sessionStorage.setItem(HOME_ASK_DRAFT_KEY, q.slice(0, HAKEEM_ASK_MAX_CHARS));
+    } catch {
+      setError("تعذّر حفظ السؤال مؤقتًا. حاول مرة أخرى.");
+      return;
+    }
+    // الدخول داخل الصفحة (HOME_INLINE_AUTH_ENABLED): السؤال يُنفَّذ هنا بعد الدخول دون مغادرة.
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (openHomeAuth({ intent: { kind: "ask" }, mode: mode === "up" ? "sign-up" : "sign-in", trigger })) return;
+    try {
       sessionStorage.setItem(HOME_ASK_PENDING_RUN_KEY, "1");
     } catch {
       setError("تعذّر حفظ السؤال مؤقتًا. حاول مرة أخرى.");
       return;
     }
     window.location.assign(mode === "up" ? signUpWithNext("/dashboard") : signInWithNext("/dashboard"));
+  }
+
+  /** «سجّل مجانًا»: الحوار إن كان متاحًا، وإلا الرابط كما هو. */
+  function onSignUpLink(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (openHomeAuth({ intent: { kind: "ask" }, mode: "sign-up", trigger: e.currentTarget })) e.preventDefault();
   }
 
   return (
@@ -119,7 +134,7 @@ export function GuestAskComposer() {
 
       <p className="guest-ask__auth">
         سجّل الدخول لبدء التحليل داخل الصفحة.{" "}
-        <a href={signUpWithNext("/dashboard")} className="guest-ask__auth-link">
+        <a href={signUpWithNext("/dashboard")} className="guest-ask__auth-link" onClick={onSignUpLink}>
           سجّل مجانًا
         </a>
       </p>

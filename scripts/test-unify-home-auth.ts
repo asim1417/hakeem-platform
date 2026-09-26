@@ -28,6 +28,11 @@ assert.equal(home.includes('from "next/link"'), false);
 assert.ok(home.includes('href="/sign-in"'));
 assert.ok(home.includes('href="/sign-up"'));
 assert.ok(home.includes("تسجيل الدخول"));
+// الدخول من الرئيسية: الروابط نفسها تبقى، ويعترضها HomeAuthLauncher عند تفعيل الراية
+assert.ok(home.includes("HomeAuthLauncher") && home.includes("isHomeInlineAuthEnabled"));
+assert.ok(home.includes('"data-home-auth"'));
+const guestComposer = fs.readFileSync(path.join(root, "components/home/GuestAskComposer.tsx"), "utf8");
+assert.ok(guestComposer.includes('signInWithNext("/dashboard")'), "fallback navigation kept when the dialog is off");
 
 const login = fs.readFileSync(path.join(root, "app/login/page.tsx"), "utf8");
 assert.ok(login.includes("redirect(`/sign-in"));

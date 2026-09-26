@@ -60,6 +60,7 @@ export const MANAGED_KEYS: ManagedKey[] = [
   { key: "AUTH_MFA_ENABLED", label: "إظهار إعداد التحقق الثنائي", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "AUTH_ORGANIZATIONS_ENABLED", label: "إظهار حسابات المكاتب (Organizations)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "AUTH_IDENTIFIER_FORM_ENABLED", label: "نموذج الدخول العربي للبريد والجوال (بدل صفحة Clerk)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "HOME_INLINE_AUTH_ENABLED", label: "الدخول من الصفحة الرئيسية دون مغادرتها (0 = مفتاح طوارئ يعيد الروابط السابقة)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
   { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
   { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },
@@ -178,4 +179,17 @@ export async function hydrateEnvFromSettings(): Promise<number> {
     }
   }
   return n;
+}
+
+let lastHydratedAt = 0;
+
+/**
+ * نسخة مخفّفة للصفحات العامة كثيرة الزيارة: استعلام واحد كل ttlMs على الأكثر لكل نسخة خادم.
+ * تكفي لمفاتيح الطوارئ (مثل HOME_INLINE_AUTH_ENABLED) دون استعلام في كل طلب.
+ */
+export async function hydrateEnvFromSettingsThrottled(ttlMs = 60_000): Promise<void> {
+  const now = Date.now();
+  if (now - lastHydratedAt < ttlMs) return;
+  lastHydratedAt = now;
+  await hydrateEnvFromSettings().catch(() => 0);
 }

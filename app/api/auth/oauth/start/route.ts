@@ -68,7 +68,9 @@ export async function GET(request: NextRequest) {
 
   const origin = request.nextUrl.origin;
   const redirectUrl = `${origin}/sso-callback`;
-  const redirectUrlComplete = `${origin}${continueUrl(nextUrl)}`;
+  // popup=1 (حوار الصفحة الرئيسية): العودة تنتهي بصفحة postMessage + window.close
+  const isPopup = request.nextUrl.searchParams.get("popup") === "1";
+  const redirectUrlComplete = `${origin}${continueUrl(nextUrl)}${isPopup ? "&popup=1" : ""}`;
   const backToSignIn = NextResponse.redirect(
     new URL(mode === "sign-up" ? "/sign-up" : "/sign-in", request.url)
   );

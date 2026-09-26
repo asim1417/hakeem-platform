@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Amiri, IBM_Plex_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./identity.css";
 import "./globals.css";
+import "./auth.css";
 import "./browser-compat.css";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";

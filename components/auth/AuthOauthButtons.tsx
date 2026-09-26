@@ -73,7 +73,10 @@ function identifierLabel(email: boolean, phone: boolean): string {
 }
 
 const providerButtonClass =
-  "flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E3435]/35";
+  "flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[var(--auth-input-border)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA]";
+
+/** رابط داخل النص بهدف لمس لا يقل عن 44px (WCAG 2.5.5). */
+const inlineLinkClass = "inline-flex min-h-[44px] items-center underline-offset-2 hover:underline";
 
 function ButtonSpinner() {
   return (
@@ -171,7 +174,7 @@ export function AuthOauthButtons({
           تعذّر تحميل بوابة الدخول. أعد المحاولة أو عد إلى الصفحة الرئيسية.
         </p>
         <p className="mt-4">
-          <a href="/" className="text-sm font-semibold text-[rgba(14,52,53,0.65)] hover:text-[#0E3435]">
+          <a href="/" className={`${inlineLinkClass} text-sm font-semibold text-[var(--auth-muted)] hover:text-[#0E3435]`}>
             العودة إلى الصفحة الرئيسية
           </a>
         </p>
@@ -193,7 +196,7 @@ export function AuthOauthButtons({
               ? "مرحبًا بعودتك إلى حكيم"
               : "إنشاء حساب في حكيم"}
         </h2>
-        <p className="mt-2 text-[0.95rem] leading-7 text-[rgba(14,52,53,0.68)]">
+        <p className="mt-2 text-[0.95rem] leading-7 text-[var(--auth-muted)]">
           {embedded
             ? "المتابعة عبر وسيلة الدخول المفعّلة — للحساب الجديد والقائم"
             : isSignIn
@@ -218,7 +221,7 @@ export function AuthOauthButtons({
             onClick={handleGoogleClick}
             aria-label="المتابعة باستخدام Google"
             aria-busy={loadingProvider === "google"}
-            className={`flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[rgba(14,52,53,0.12)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E3435]/35 ${
+            className={`flex min-h-[48px] w-full items-center justify-center gap-3 rounded-[0.75rem] border border-[var(--auth-input-border)] bg-white px-4 text-[0.95rem] font-semibold text-[#0E3435] transition hover:bg-[#F7F2EA] ${
               loadingProvider === "google" ? "opacity-75 cursor-wait" : ""
             }`}
           >
@@ -246,7 +249,7 @@ export function AuthOauthButtons({
         ) : null}
 
         {showIdentifier && hasSocial ? (
-          <div className="flex items-center gap-3 text-xs text-[rgba(14,52,53,0.5)]" aria-hidden>
+          <div className="flex items-center gap-3 text-xs text-[var(--auth-muted)]" aria-hidden>
             <span className="h-px flex-1 bg-[rgba(14,52,53,0.12)]" />
             <span>أو</span>
             <span className="h-px flex-1 bg-[rgba(14,52,53,0.12)]" />
@@ -265,13 +268,13 @@ export function AuthOauthButtons({
         ) : null}
       </div>
 
-      <p className="mt-5 text-center text-xs leading-6 text-[rgba(14,52,53,0.55)]">
+      <p className="mt-5 text-center text-xs leading-6 text-[var(--auth-muted)]">
         باستمرارك، فإنك توافق على{" "}
-        <a href="/terms" className="underline-offset-2 hover:underline">
+        <a href="/terms" className={inlineLinkClass}>
           شروط الاستخدام
         </a>{" "}
         و
-        <a href="/privacy" className="underline-offset-2 hover:underline">
+        <a href="/privacy" className={inlineLinkClass}>
           سياسة الخصوصية
         </a>
         .
@@ -280,22 +283,22 @@ export function AuthOauthButtons({
       {!embedded ? (
         <>
           <p className="mt-3 text-center text-sm">
-            <a href="/" className="font-semibold text-[rgba(14,52,53,0.65)] hover:text-[#0E3435]">
+            <a href="/" className={`${inlineLinkClass} font-semibold text-[var(--auth-muted)] hover:text-[#0E3435]`}>
               العودة إلى الصفحة الرئيسية
             </a>
           </p>
-          <p className="mt-4 text-center text-sm text-[rgba(14,52,53,0.6)]">
+          <p className="mt-2 text-center text-sm text-[var(--auth-muted)]">
             {isSignIn ? (
               <>
                 مستخدم جديد؟{" "}
-                <a href="/sign-up" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                <a href="/sign-up" className={`${inlineLinkClass} font-semibold text-[#8B6914] hover:text-[#0E3435]`}>
                   أنشئ حسابك
                 </a>
               </>
             ) : (
               <>
                 لديك حساب؟{" "}
-                <a href="/sign-in" className="font-semibold text-[#8B6914] hover:text-[#0E3435]">
+                <a href="/sign-in" className={`${inlineLinkClass} font-semibold text-[#8B6914] hover:text-[#0E3435]`}>
                   تسجيل الدخول
                 </a>
               </>

@@ -83,7 +83,35 @@ export function sanitizeCode(raw: string): string {
   return toLatinDigits(raw).replace(/\D/g, "").slice(0, 8);
 }
 
+/** طول رموز Clerk (بريد/جوال/تطبيق مصادقة). */
+export const CODE_LENGTH = 6;
+
+/**
+ * خانات الرمز المنفصلة: يوزّع ما كُتب أو لُصق على الخانات.
+ * لصق رمز كامل في أي خانة يملأ من الأولى؛ وحرف واحد يملأ الخانة الحالية وينقل التركيز للتالية.
+ */
+export function fillCodeBoxes(
+  current: ReadonlyArray<string>,
+  index: number,
+  raw: string,
+  length: number = CODE_LENGTH
+): { digits: string[]; focus: number } {
+  const digits = Array.from({ length }, (_, i) => current[i] ?? "");
+  const incoming = sanitizeCode(raw).slice(0, length);
+  if (!incoming) {
+    digits[index] = "";
+    return { digits, focus: index };
+  }
+  let i = incoming.length >= length ? 0 : index;
+  for (const ch of incoming) {
+    if (i >= length) break;
+    digits[i++] = ch;
+  }
+  return { digits, focus: Math.min(i, length - 1) };
+}
+
 // ── أخطاء Clerk ← رسائل عربية ──
+// لا تكشف الرسائل إن كان البريد أو الرقم مسجّلًا (منع تعداد الحسابات).
 
 type ClerkApiError = { code?: string; message?: string; longMessage?: string; meta?: { paramName?: string } };
 
@@ -100,8 +128,8 @@ export function clerkErrorCode(err: unknown): string {
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
-  form_identifier_not_found: "لا يوجد حساب بهذا البريد أو الرقم.",
-  form_identifier_exists: "يوجد حساب بهذا البريد أو الرقم. سجّل الدخول بدلًا من إنشاء حساب.",
+  form_identifier_not_found: "تعذّرت المتابعة بهذا البريد أو الرقم. تحقّق منه وأعد المحاولة.",
+  form_identifier_exists: "تعذّر استخدام هذا البريد أو الرقم هنا. تحقّق منه أو جرّب غيره.",
   form_code_incorrect: "الرمز غير صحيح. تحقّق منه وأعد المحاولة.",
   verification_failed: "الرمز غير صحيح. تحقّق منه وأعد المحاولة.",
   verification_expired: "انتهت صلاحية الرمز. اطلب رمزًا جديدًا.",
@@ -118,9 +146,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   captcha_missing_token: "لم يكتمل التحقق من أنك لست روبوتًا. حدّث الصفحة وأعد المحاولة.",
   too_many_requests: "محاولات كثيرة. انتظر دقيقة ثم أعد المحاولة.",
   user_locked: "أُقفل الحساب مؤقتًا بسبب محاولات كثيرة. حاول لاحقًا.",
-  not_allowed_access: "هذا البريد أو الرقم غير مسموح له بالتسجيل.",
+  not_allowed_access: "تعذّر استخدام هذا البريد أو الرقم هنا. تحقّق منه أو جرّب غيره.",
   session_exists: "أنت مسجّل الدخول بالفعل.",
-  strategy_for_user_invalid: "وسيلة الدخول هذه غير مفعّلة لحسابك.",
+  strategy_for_user_invalid: "تعذّرت المتابعة بهذه الوسيلة. جرّب وسيلة دخول أخرى.",
 };
 
 export const GENERIC_ERROR = "تعذّر إكمال الطلب. حاول مرة أخرى.";

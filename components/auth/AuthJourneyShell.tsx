@@ -25,7 +25,7 @@ export function AuthJourneyShell({
   compact?: boolean;
 }) {
   return (
-    <main className={`login-page${compact ? " login-page--compact" : ""}`} lang="ar" dir="rtl">
+    <main className={`login-page hk-auth${compact ? " login-page--compact" : ""}`} lang="ar" dir="rtl">
       <div aria-hidden className="login-page__glow" />
       <div aria-hidden className="login-page__pattern" />
       <div className="login-page__grid">
@@ -45,6 +45,8 @@ export function AuthJourneyShell({
         </aside>
         <section className="login-panel">
           <div className="login-panel__card flex w-full flex-col items-center gap-4">
+            {/* لوحة الهوية (وفيها h1) مخفية على الجوال — عنوان رئيس ظاهر بدلها. */}
+            <h1 className="login-mobile-title">حكيم</h1>
             {children}
             {footer ?? (
               <nav className="login-panel__links" aria-label="روابط نظامية">

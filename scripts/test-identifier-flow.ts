@@ -7,6 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   arabicErrorMessage,
+  CODE_LENGTH,
+  fillCodeBoxes,
   GENERIC_ERROR,
   maskIdentifier,
   normalizePhone,
@@ -59,12 +61,27 @@ assert.equal(sanitizeCode("12-34-56-78-90"), "12345678");
 // الأخطاء
 const clerkErr = (code: string) => ({ errors: [{ code, message: "english" }] });
 assert.equal(arabicErrorMessage(clerkErr("form_code_incorrect")), "الرمز غير صحيح. تحقّق منه وأعد المحاولة.");
-assert.equal(arabicErrorMessage(clerkErr("form_identifier_not_found")), "لا يوجد حساب بهذا البريد أو الرقم.");
+// لا تكشف الرسائل إن كان الحساب مسجّلًا (منع تعداد الحسابات)
+for (const code of ["form_identifier_not_found", "form_identifier_exists", "not_allowed_access"]) {
+  const msg = arabicErrorMessage(clerkErr(code));
+  assert.notEqual(msg, GENERIC_ERROR, code);
+  assert.ok(!/لا يوجد حساب|يوجد حساب|غير مسجّل|مسجّل/.test(msg), `${code} reveals account existence: ${msg}`);
+}
 assert.equal(arabicErrorMessage({ status: 429 }), "محاولات كثيرة. انتظر دقيقة ثم أعد المحاولة.");
 assert.equal(arabicErrorMessage(clerkErr("something_new")), GENERIC_ERROR);
 assert.equal(arabicErrorMessage(new Error("boom")), GENERIC_ERROR);
 // الرسائل عربية دائمًا — لا نمرّر نص Clerk الإنجليزي
 assert.ok(!/[A-Za-z]{4,}/.test(arabicErrorMessage(clerkErr("form_param_format_invalid"))));
+
+// خانات الرمز: كتابة، لصق كامل في أي خانة، أرقام عربية، مسح
+assert.equal(CODE_LENGTH, 6);
+const empty = ["", "", "", "", "", ""];
+assert.deepEqual(fillCodeBoxes(empty, 0, "4"), { digits: ["4", "", "", "", "", ""], focus: 1 });
+assert.deepEqual(fillCodeBoxes(empty, 3, "123456"), { digits: ["1", "2", "3", "4", "5", "6"], focus: 5 });
+assert.deepEqual(fillCodeBoxes(empty, 0, "١٢٣ ٤٥٦"), { digits: ["1", "2", "3", "4", "5", "6"], focus: 5 });
+assert.deepEqual(fillCodeBoxes(["1", "2", "", "", "", ""], 2, "34"), { digits: ["1", "2", "3", "4", "", ""], focus: 4 });
+assert.deepEqual(fillCodeBoxes(["1", "2", "3", "", "", ""], 1, ""), { digits: ["1", "", "3", "", "", ""], focus: 1 });
+assert.deepEqual(fillCodeBoxes(empty, 5, "98"), { digits: ["", "", "", "", "", "9"], focus: 5 });
 
 // التحقق الثنائي: تطبيق المصادقة أولًا
 assert.equal(pickSecondFactor([{ strategy: "backup_code" }, { strategy: "totp" }]), "totp");
@@ -96,5 +113,30 @@ assert.ok(claimRoute.includes("claimSessionFromClerkReturn") && claimRoute.inclu
 assert.ok(claimRoute.includes('request.headers.get("origin")'), "claim route must be same-origin only");
 const mw = fs.readFileSync(path.join(root, "middleware.ts"), "utf8");
 assert.ok(mw.includes("/api/auth/claim-clerk-session"));
+
+// الوصول: خطأ مربوط بالحقل، وعلامات الإلزام، وتسمية ظاهرة للرمز
+assert.ok(inner.includes("aria-invalid"), "fields expose aria-invalid on error");
+assert.ok(inner.includes('ERROR_ID = "hakeem-auth-error"') && inner.includes("aria-describedby"));
+assert.ok(inner.includes('aria-required="true"'));
+assert.ok(inner.includes("الحقول المعلّمة بـ"), "required-fields note");
+assert.equal(/htmlFor="hakeem-code" className="sr-only"/.test(inner), false, "code label must be visible");
+assert.equal(inner.includes("rgba(14,52,53,0.18)"), false, "input border uses --auth-input-border");
+
+// embedded / onComplete: اختياريان، وغيابهما = السلوك السابق (انتقال كامل بعد التثبيت)
+assert.ok(/embedded = false/.test(inner), "embedded defaults to false");
+assert.ok(/onComplete\?: \(result: IdentifierFlowResult\) => void/.test(inner));
+assert.ok(
+  /if \(onComplete\) \{\s*onComplete\(\{ ok: Boolean\(next\), next: next \?\? nextUrl \}\);\s*return;\s*\}\s*[\s\S]{0,160}window\.location\.assign\(next \?\? nextUrl\)/.test(inner),
+  "without onComplete the flow still navigates; with it, no navigation"
+);
+assert.ok(inner.includes("<CodeBoxes") && /embedded &&\s*\(s\.name === "code"/.test(inner), "code boxes only in embedded mode");
+const boxes = fs.readFileSync(path.join(root, "components/auth/CodeBoxes.tsx"), "utf8");
+assert.ok(boxes.includes('autoComplete={i === 0 ? "one-time-code" : "off"}'));
+assert.ok(boxes.includes('inputMode="numeric"'));
+assert.ok(boxes.includes("onFilled(next.join(\"\"))"), "auto-verify when all boxes are filled");
+assert.equal(boxes.includes("@clerk"), false);
+// صفحة /auth/identifier لا تمرّر embedded ولا onComplete
+const idPage = fs.readFileSync(path.join(root, "app/auth/identifier/page.tsx"), "utf8");
+assert.equal(/embedded|onComplete/.test(idPage), false);
 
 console.log("test-identifier-flow: OK");
