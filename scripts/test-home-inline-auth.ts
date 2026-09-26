@@ -19,7 +19,9 @@ import {
   HOME_AUTH_INTENT_TTL_MS,
   isHomeInlineAuthEnabled,
   lastAuthMethodCookie,
+  lastIdMethodCookie,
   parseHomeAuthIntent,
+  parseLastIdMethod,
   parseLastAuthMethod,
   serializeHomeAuthIntent,
 } from "../lib/modules/config/home-inline-auth";
@@ -188,14 +190,20 @@ const baseConfig: HomeAuthConfig = { providers: ["google", "email", "phone"], id
   assert.ok(html.includes("المتابعة باستخدام Google"));
   assert.equal(html.includes("Microsoft"), false);
   assert.equal(html.includes("Apple"), false);
-  assert.ok(html.includes("البريد الإلكتروني أو رقم الجوال"), "single identifier field");
+  // المقترح (أ): تبويبا «رقم الجوال | البريد الإلكتروني»، والجوال افتراضي بمقدمة +966
+  assert.ok(html.includes('class="hk-idf__tabs"'), "method tabs");
+  assert.ok(/aria-pressed="true"[^>]*>[\s\S]*?رقم الجوال/.test(html), "phone tab selected by default");
+  assert.ok(/aria-pressed="false"[^>]*>[\s\S]*?البريد الإلكتروني/.test(html));
+  assert.ok(html.includes(">+966<") && /inputmode="numeric"/i.test(html), "phone field: +966 prefix and numeric keyboard");
+  assert.ok(/autocomplete="tel-national"/i.test(html));
+  assert.ok(html.includes("سنرسل رمزًا من ستة أرقام برسالة نصية."));
   assert.ok(html.includes('id="hakeem-identifier"'));
   assert.ok(html.includes("شروط الاستخدام") && html.includes("سياسة الخصوصية"), "terms notice");
   assert.ok(html.includes('aria-label="إغلاق"'));
   // الشاشة ١: النصوص المعتمدة
   assert.ok(html.includes("حساب واحد لكل خدماتك القانونية، ويُنشأ تلقائيًا إن كنت جديدًا."));
   assert.ok(html.includes("باستمرارك توافق على"));
-  assert.ok(html.includes(">متابعة<"), "submit label");
+  assert.ok(html.includes(">أرسل الرمز<"), "submit label");
   // رابط Google الحقيقي (احتياط النافذة المحجوبة) يذهب إلى الوجهة نفسها: مساحة العمل
   assert.ok(decode(html).includes(`/api/auth/google?next=${encodeURIComponent("/dashboard")}`));
   // أول رسم للحوار بلا Clerk: الحقل الخفيف فقط
@@ -206,6 +214,9 @@ assert.ok(renderDialog(baseConfig, "sign-up").includes("ابدأ مع حكيم")
   const html = renderDialog({ ...baseConfig, providers: ["email"] });
   assert.equal(html.includes("Google"), false);
   assert.ok(html.includes('id="hakeem-identifier"'));
+  // وسيلة واحدة مفعّلة ← الحقل وحده بلا تبويبين
+  assert.equal(html.includes('class="hk-idf__tabs"'), false);
+  assert.ok(/type="email"/.test(html) && html.includes("سنرسل رمزًا من ستة أرقام إلى بريدك."));
 }
 {
   // نموذج البريد/الجوال مطفأ ← رابط البوابة بدل الحقل
@@ -235,6 +246,11 @@ assert.equal(serializeHomeAuthIntent({ kind: "ask" }).includes("question"), fals
 assert.equal(safeDashboardNext(HOME_AUTH_RETURN_PATH), HOME_AUTH_RETURN_PATH);
 assert.equal(safeDashboardNext("/"), "/dashboard");
 assert.equal(safeDashboardNext("/?home_auth=1&x=//evil"), "/dashboard");
+
+// ── آخر تبويب (جوال/بريد): كوكي غير حسّاس ──
+assert.equal(parseLastIdMethod("x=1; hakeem_last_id_method=email"), "email");
+assert.equal(parseLastIdMethod("hakeem_last_id_method=0551234567"), null);
+assert.ok(/^hakeem_last_id_method=phone; Path=\/; Max-Age=\d+; SameSite=Lax$/.test(lastIdMethodCookie("phone", false)));
 
 // ── آخر وسيلة: كوكي غير حسّاس ──
 assert.equal(parseLastAuthMethod("a=1; hakeem_last_auth=google; b=2"), "google");

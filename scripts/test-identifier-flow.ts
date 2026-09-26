@@ -13,6 +13,7 @@ import {
   maskIdentifierLocal,
   normalizePhone,
   parseIdentifier,
+  parseIdentifierFor,
   pickSecondFactor,
   profileFieldsToCollect,
   sanitizeCode,
@@ -49,6 +50,16 @@ assert.deepEqual(parseIdentifier("٠٥٦٨٩٤٩٢٨٢"), { kind: "phone", value
 assert.equal(parseIdentifier("").kind, "invalid");
 assert.equal(parseIdentifier("user@bad").kind, "invalid");
 assert.equal(parseIdentifier("hello").kind, "invalid");
+
+// التبويبان (المقترح أ): الجوال يقبل الصيغ السعودية والدولية فقط، والبريد بريدًا فقط
+assert.deepEqual(parseIdentifierFor("phone", "55 123 4567"), { kind: "phone", value: "+966551234567" });
+assert.deepEqual(parseIdentifierFor("phone", "0551234567"), { kind: "phone", value: "+966551234567" });
+assert.deepEqual(parseIdentifierFor("phone", "+966551234567"), { kind: "phone", value: "+966551234567" });
+assert.deepEqual(parseIdentifierFor("phone", "٥٥١٢٣٤٥٦٧"), { kind: "phone", value: "+966551234567" });
+assert.equal(parseIdentifierFor("phone", "a@b.com").kind, "invalid", "email in the phone tab");
+assert.equal(parseIdentifierFor("phone", "").kind, "invalid");
+assert.deepEqual(parseIdentifierFor("email", " A@Example.com "), { kind: "email", value: "a@example.com" });
+assert.equal(parseIdentifierFor("email", "0551234567").kind, "invalid", "phone in the email tab");
 
 // الإخفاء
 assert.equal(maskIdentifier({ kind: "phone", value: "+966568949282" }), "+966 ••• 282");
