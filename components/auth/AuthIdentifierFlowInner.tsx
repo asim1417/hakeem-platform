@@ -382,12 +382,26 @@ export function AuthIdentifierFlowInner({
   function onSubmitIdentifier(e: FormEvent) {
     e.preventDefault();
     if (!ready) {
-      // المضمّن: الحقل متاح قبل جاهزية Clerk — نرسل عند الجاهزية
-      if (embedded) setQueuedSubmit(true);
+      // المضمّن: الحقل متاح قبل جاهزية Clerk — التحقق من الصيغة فورًا، والإرسال عند الجاهزية
+      if (!embedded) return;
+      const parsed = parseIdentifier(identifierInput);
+      if (parsed.kind === "invalid") showError(parsed.message, "identifier");
+      else setQueuedSubmit(true);
       return;
     }
     submitIdentifier();
   }
+
+  // «متابعة» في الحقل الخفيف قبل التحميل: صيغة خاطئة تظهر فورًا بدل انتظار Clerk
+  useEffect(() => {
+    if (!queuedSubmit || ready) return;
+    const parsed = parseIdentifier(identifierInput);
+    if (parsed.kind === "invalid") {
+      setQueuedSubmit(false);
+      showError(parsed.message, "identifier");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- عند التركيب فقط
+  }, []);
 
   useEffect(() => {
     if (!ready || !queuedSubmit) return;
