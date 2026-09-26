@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { useSignIn, useSignUp } from "@clerk/nextjs";
-import { continueUrl } from "@/lib/modules/auth/safe-next";
+import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import {
   arabicErrorMessage,
   clerkErrorCode,
@@ -57,6 +56,7 @@ export function AuthIdentifierFlowInner({
 }) {
   const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
   const { isLoaded: signUpLoaded, signUp } = useSignUp();
+  const clerk = useClerk();
   const ready = signInLoaded && signUpLoaded && Boolean(signIn && signUp);
 
   const [step, setStep] = useState<Step>({ name: "identifier" });
@@ -113,7 +113,33 @@ export function AuthIdentifierFlowInner({
     }
     setStep({ name: "finishing" });
     await setActive({ session: sessionId });
-    window.location.assign(continueUrl(nextUrl));
+    await claimAndNavigate();
+  }
+
+  /**
+   * /auth/continue و/api/auth/me لا يقرآن جلسة Clerk (عزل iPhone)، فنثبّت hakeem_session
+   * من رمز الجلسة قبل الانتقال — كما يفعل مسار العودة من بوابة Clerk.
+   */
+  async function claimAndNavigate() {
+    try {
+      const token = await clerk.session?.getToken();
+      if (token) {
+        const res = await fetch("/api/auth/claim-clerk-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ token, next: nextUrl }),
+        });
+        const data = (await res.json().catch(() => null)) as { ok?: boolean; next?: string } | null;
+        if (res.ok && data?.ok && data.next) {
+          window.location.assign(data.next);
+          return;
+        }
+      }
+    } catch {
+      /* نكمل إلى المسار المحمي مباشرة — clerkMiddleware يقرأ جلسة Clerk هناك */
+    }
+    window.location.assign(nextUrl);
   }
 
   // ── الدخول ──
@@ -180,6 +206,7 @@ export function AuthIdentifierFlowInner({
     }
     const fields = profileFieldsToCollect(su.missingFields);
     if (fields.length > 0) {
+      setNotice("");
       setStep({ name: "profile", fields });
       return;
     }
@@ -216,7 +243,8 @@ export function AuthIdentifierFlowInner({
       await action();
     } catch (err) {
       if (clerkErrorCode(err) === "session_exists") {
-        window.location.assign(continueUrl(nextUrl));
+        setStep({ name: "finishing" });
+        await claimAndNavigate();
         return;
       }
       fail(err);
