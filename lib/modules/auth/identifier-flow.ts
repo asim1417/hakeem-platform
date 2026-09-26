@@ -67,6 +67,27 @@ export function parseIdentifier(raw: string): ParsedIdentifier {
   };
 }
 
+/** وسيلة الدخول برمز في صندوق الرئيسية (تبويبا «رقم الجوال | البريد الإلكتروني»). */
+export type IdentifierMethod = "phone" | "email";
+
+/**
+ * يحلّل المُدخل وفق التبويب المختار: الجوال يقبل الصيغ السعودية (5XXXXXXXX، 05…، ‎+966…)
+ * والدولية بـ + أو 00؛ والبريد بريدًا فقط. بريد في تبويب الجوال (أو العكس) خطأ واضح.
+ */
+export function parseIdentifierFor(method: IdentifierMethod, raw: string): ParsedIdentifier {
+  const value = toLatinDigits(raw).trim();
+  if (method === "phone") {
+    if (!value) return { kind: "invalid", message: "أدخل رقم جوالك." };
+    const phone = normalizePhone(value);
+    return phone
+      ? { kind: "phone", value: phone }
+      : { kind: "invalid", message: "أدخل رقم جوال صحيحًا، مثل 5XXXXXXXX." };
+  }
+  if (!value) return { kind: "invalid", message: "أدخل بريدك الإلكتروني." };
+  const parsed = parseIdentifier(value);
+  return parsed.kind === "email" ? parsed : { kind: "invalid", message: "صيغة البريد الإلكتروني غير صحيحة." };
+}
+
 /** يخفي أغلب الرقم/البريد عند عرض «أرسلنا الرمز إلى…». */
 export function maskIdentifier(id: { kind: "email" | "phone"; value: string }): string {
   if (id.kind === "phone") {

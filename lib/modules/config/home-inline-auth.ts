@@ -77,3 +77,21 @@ export function lastAuthMethodCookie(method: HomeAuthMethod, secure: boolean): s
 /** حدث فتح الحوار ونوافذ التحديث بين المكوّنات (بلا مكتبة حالة). */
 export const HOME_AUTH_OPEN_EVENT = "hakeem:home-auth-open";
 export const HOME_AUTH_CHANGED_EVENT = "hakeem:auth-changed";
+
+/** آخر تبويب مستعمل في حقل الدخول برمز — كوكي غير حساس (اسم الوسيلة فقط). */
+export const HOME_AUTH_LAST_ID_METHOD_COOKIE = "hakeem_last_id_method";
+
+export function parseLastIdMethod(cookieHeader: string | null | undefined): "phone" | "email" | null {
+  if (!cookieHeader) return null;
+  for (const part of cookieHeader.split(";")) {
+    const [k, v] = part.trim().split("=");
+    if (k === HOME_AUTH_LAST_ID_METHOD_COOKIE) return v === "phone" || v === "email" ? v : null;
+  }
+  return null;
+}
+
+export function lastIdMethodCookie(method: "phone" | "email", secure: boolean): string {
+  return `${HOME_AUTH_LAST_ID_METHOD_COOKIE}=${method}; Path=/; Max-Age=${180 * 24 * 3600}; SameSite=Lax${
+    secure ? "; Secure" : ""
+  }`;
+}
