@@ -269,7 +269,14 @@ export function AuthIdentifierFlowInner({
   async function claimAndNavigate() {
     const next = await claimSession();
     if (onComplete) {
-      onComplete({ ok: Boolean(next), next: next ?? nextUrl });
+      if (!next) {
+        // لا نعلن «تم التحقق» ولا ننتقل إلى مسار محمي سيعيد إلى صفحة الدخول: نعود إلى الحقل برسالة.
+        // إعادة المحاولة تعيد التثبيت من جلسة Clerk القائمة (session_exists) دون رمز جديد.
+        setStep({ name: "identifier" });
+        showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier");
+        return;
+      }
+      onComplete({ ok: true, next });
       return;
     }
     // بلا تثبيت نكمل إلى المسار المحمي مباشرة — clerkMiddleware يقرأ جلسة Clerk هناك
