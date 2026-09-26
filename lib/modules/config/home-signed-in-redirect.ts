@@ -1,7 +1,8 @@
 /**
  * فصل الواجهة التعريفية عن مساحة العمل: «/» للزائر، و«/dashboard» لصاحب الجلسة.
  *
- * مفتاح الطوارئ: HOME_SIGNED_IN_REDIRECT_ENABLED=0 (Vercel أو الإعدادات المُدارة) يوقف الإحالة.
+ * الإحالة في middleware.ts (قبل رسم الصفحة، بلا Clerk ولا قاعدة بيانات)، لذا مفتاح الطوارئ
+ * HOME_SIGNED_IN_REDIRECT_ENABLED=0 متغيّر بيئة في Vercel (لا تصل الإعدادات المُدارة إلى الـ middleware).
  * الافتراضي: مفعّل.
  */
 export function isHomeSignedInRedirectEnabled(): boolean {

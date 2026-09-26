@@ -3,11 +3,8 @@
  * npx tsx scripts/test-workspace-handoff.ts
  */
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-
-process.env.AUTH_SECRET = "test-secret-for-handoff";
 
 import {
   HOME_ABOUT_HREF,
@@ -24,12 +21,6 @@ import {
   LIVE_DEMO_SIMILAR_RULINGS,
 } from "../lib/modules/home/live-demo-content";
 import { LIVE_DEMO_TICK_MS, liveDemoFrame, liveDemoTimeline } from "../components/home/HomeLiveDemo";
-
-// شِمّ server-only: session.ts وحدة خادمية؛ نحمّلها هنا لدالة نقية (توقيع الكوكي وصلاحيته)
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-require.cache[require.resolve("server-only")] = { exports: {} } as NodeJS.Module;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { hasValidSessionCookie } = require("../lib/modules/auth/session") as typeof import("../lib/modules/auth/session");
 
 const root = process.cwd();
 const read = (rel: string) => fs.readFileSync(path.join(root, rel), "utf8");
@@ -52,30 +43,23 @@ for (const off of ["0", "false", "off"]) {
 }
 delete process.env.HOME_SIGNED_IN_REDIRECT_ENABLED;
 
-// ── الكوكي: التوقيع والصلاحية بلا قاعدة بيانات ──
-function mint(payload: Record<string, unknown>, secret = process.env.AUTH_SECRET as string) {
-  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  return `${body}.${createHmac("sha256", secret).update(body).digest("base64url")}`;
-}
-assert.equal(hasValidSessionCookie(mint({ userId: "u1", exp: Date.now() + 60_000 })), true);
-assert.equal(hasValidSessionCookie(mint({ userId: "u1", exp: Date.now() - 1 })), false, "expired");
-assert.equal(hasValidSessionCookie(mint({ userId: "u1", exp: Date.now() + 60_000 }, "other-secret")), false, "forged");
-assert.equal(hasValidSessionCookie("garbage"), false);
-assert.equal(hasValidSessionCookie(undefined), false);
-
-// الإحالة في الخادم قبل الرسم، بلا Clerk
+// الإحالة في middleware قبل رسم الصفحة (307): وجود الكوكي فقط، بلا Clerk — قبل أي فرع لـ Clerk
+const mw = read("middleware.ts");
+const mwMain = mw.slice(mw.indexOf("export default function middleware"));
+const homeRedirect = mwMain.indexOf('request.nextUrl.pathname === "/"');
+assert.ok(homeRedirect > 0, "home redirect in middleware");
+assert.ok(homeRedirect < mwMain.indexOf("isClerkConfigured()"), "before any Clerk branch");
+assert.ok(/shouldRedirectSignedInHome\(\{[\s\S]*hasSession: hasOwnerSession\(request\)[\s\S]*\}\)\s*\)\s*\{\s*return NextResponse\.redirect\(new URL\("\/dashboard", request\.url\), 307\);/.test(mwMain));
+assert.ok(mw.includes("LOGGED_OUT_MARK_COOKIE") && mw.includes("HOME_VIEW_PARAM"));
 const page = read("app/page.tsx");
-assert.ok(page.indexOf('redirect("/dashboard")') > 0 && page.indexOf('redirect("/dashboard")') < page.indexOf("<HomeHero"));
-assert.ok(page.indexOf('redirect("/dashboard")') < page.indexOf("getSiteConfig()"), "redirect before any page work");
 assert.equal(/@clerk/.test(page), false);
-assert.ok(page.includes("LOGGED_OUT_MARK_COOKIE"));
 for (const rel of ["components/LogoutButton.tsx", "components/AccountMenu.tsx"]) {
   const src = read(rel);
   assert.ok(/async function clearOwnerSession\(\) \{\s*\/\/[^\n]*\n\s*markLoggedOut\(\);/.test(src), `${rel} marks logout before any await`);
 }
 assert.equal(LOGGED_OUT_MARK_COOKIE, "hakeem_logged_out");
 const settings = read("lib/modules/settings/settings-service.ts");
-for (const key of ["HOME_SIGNED_IN_REDIRECT_ENABLED", "HOME_INLINE_AUTH_ENABLED", "HOME_LIVE_DEMO_ENABLED", "HOME_DEMO_VIDEO_URL"]) {
+for (const key of ["HOME_INLINE_AUTH_ENABLED", "HOME_LIVE_DEMO_ENABLED", "HOME_DEMO_VIDEO_URL"]) {
   assert.ok(settings.includes(`key: "${key}"`), `managed setting ${key}`);
 }
 

@@ -3,6 +3,12 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import {
+  HOME_VIEW_PARAM,
+  isHomeSignedInRedirectEnabled,
+  LOGGED_OUT_MARK_COOKIE,
+  shouldRedirectSignedInHome,
+} from "@/lib/modules/config/home-signed-in-redirect";
+import {
   plainAuthGate,
   resolveUnauthenticatedGate,
 } from "@/lib/modules/auth/middleware-gate";
@@ -125,6 +131,20 @@ function getClerkHandler(): ClerkMw {
  * صفحات الدخول العامة تتجاوز clerkMiddleware حتى مع وجود المفاتيح.
  */
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  // «/» للزائر و«/dashboard» لصاحب الجلسة: إحالة 307 قبل رسم الصفحة — وجود الكوكي فقط، بلا Clerk
+  // (حماية iPhone). ‎/?view=home‎ يعرض الواجهة التعريفية بطلبه. مفتاح الطوارئ: HOME_SIGNED_IN_REDIRECT_ENABLED=0
+  if (
+    request.nextUrl.pathname === "/" &&
+    shouldRedirectSignedInHome({
+      enabled: isHomeSignedInRedirectEnabled(),
+      hasSession: hasOwnerSession(request),
+      view: request.nextUrl.searchParams.get(HOME_VIEW_PARAM),
+      justLoggedOut: request.cookies.get(LOGGED_OUT_MARK_COOKIE)?.value === "1",
+    })
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", request.url), 307);
+  }
+
   if (!isClerkConfigured()) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
