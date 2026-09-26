@@ -90,6 +90,11 @@ const inner = fs.readFileSync(path.join(root, "components/auth/AuthIdentifierFlo
 assert.ok(inner.includes('id="clerk-captcha"'));
 assert.ok(inner.includes('autoComplete="one-time-code"'));
 assert.ok(inner.includes("setActive"));
-assert.ok(inner.includes("continueUrl"));
+assert.ok(inner.includes("/api/auth/claim-clerk-session"), "must claim hakeem_session after Clerk sign-in");
+const claimRoute = fs.readFileSync(path.join(root, "app/api/auth/claim-clerk-session/route.ts"), "utf8");
+assert.ok(claimRoute.includes("claimSessionFromClerkReturn") && claimRoute.includes("attachLoginSessionCookie"));
+assert.ok(claimRoute.includes('request.headers.get("origin")'), "claim route must be same-origin only");
+const mw = fs.readFileSync(path.join(root, "middleware.ts"), "utf8");
+assert.ok(mw.includes("/api/auth/claim-clerk-session"));
 
 console.log("test-identifier-flow: OK");
