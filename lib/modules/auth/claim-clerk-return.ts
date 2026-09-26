@@ -8,6 +8,16 @@ import { createClerkClient, verifyToken } from "@clerk/backend";
 import { establishFirstPartySession } from "@/lib/modules/auth/establish-session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import type { SafeUser } from "@/lib/modules/auth/session";
+import { isPhoneOnlyLocalEmail, localEmailForClerkUser } from "@/lib/modules/auth/clerk-local-email";
+
+type ClerkUser = Awaited<ReturnType<ReturnType<typeof createClerkClient>["users"]["getUser"]>>;
+
+/** هوية الصف المحلي — حساب الجوال وحده (بلا بريد) يأخذ معرّفًا داخليًا ثابتًا بدل الرفض. */
+function localIdentity(u: ClerkUser): { email: string; name: string; clerkId: string } {
+  const email = localEmailForClerkUser(u);
+  const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || (isPhoneOnlyLocalEmail(email) ? "مستخدم حكيم" : "");
+  return { email, name, clerkId: u.id };
+}
 
 function parseSessionFromCookieDirectives(directives: string[]): string | null {
   for (const d of directives) {
@@ -49,14 +59,7 @@ export async function claimSessionFromClerkReturn(input: {
       const sub = typeof payload.sub === "string" ? payload.sub : "";
       if (sub.startsWith("user_")) {
         const u = await client.users.getUser(sub);
-        const email =
-          u.primaryEmailAddress?.emailAddress || u.emailAddresses?.[0]?.emailAddress || "";
-        if (!email) return null;
-        return establishFirstPartySession({
-          email,
-          name: [u.firstName, u.lastName].filter(Boolean).join(" "),
-          clerkId: u.id,
-        });
+        return establishFirstPartySession(localIdentity(u));
       }
     } catch {
       /* */
@@ -73,14 +76,7 @@ export async function claimSessionFromClerkReturn(input: {
     const userId = typeof payload.sub === "string" ? payload.sub : "";
     if (!userId) return null;
     const u = await client.users.getUser(userId);
-    const email =
-      u.primaryEmailAddress?.emailAddress || u.emailAddresses?.[0]?.emailAddress || "";
-    if (!email) return null;
-    return establishFirstPartySession({
-      email,
-      name: [u.firstName, u.lastName].filter(Boolean).join(" "),
-      clerkId: u.id,
-    });
+    return establishFirstPartySession(localIdentity(u));
   } catch {
     return null;
   }
