@@ -3,12 +3,8 @@ import { GuestAskComposer } from "@/components/home/GuestAskComposer";
 import { HomeAuthLauncher, type HomeAuthConfig } from "@/components/home/HomeAuthLauncher";
 import { HomeLiveDemoLazy } from "@/components/home/HomeLiveDemoLazy";
 import type { LiveDemoPayload } from "@/lib/modules/home/live-demo-content";
-import {
-  hasAnySignInProvider,
-  isIdentifierFormEnabled,
-  listVisibleAuthProviders,
-} from "@/lib/modules/auth/auth-providers";
-import { shouldHideClerkDevelopmentModeUi } from "@/lib/modules/auth/owner-emergency";
+import { hasAnySignInProvider } from "@/lib/modules/auth/auth-providers";
+import { buildHomeAuthConfig } from "@/lib/modules/auth/home-auth-config";
 import { signUpWithNext } from "@/lib/modules/auth/safe-next";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
 import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
@@ -46,14 +42,7 @@ export function HomeHero({
     home.features?.length > 0 ? home.features : DEFAULT_HOME.features;
   const askFirst = isAskFirstHomeEnabled();
   const inlineAuth = authReady && isHomeInlineAuthEnabled();
-  const authConfig: HomeAuthConfig | null = inlineAuth
-    ? {
-        providers: listVisibleAuthProviders(),
-        identifierForm: isIdentifierFormEnabled(),
-        publishableKey: (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim(),
-        hideDevelopmentMode: shouldHideClerkDevelopmentModeUi(),
-      }
-    : null;
+  const authConfig: HomeAuthConfig | null = inlineAuth ? buildHomeAuthConfig() : null;
   /** سمات الاعتراض — فارغة تمامًا عند إطفاء الراية (الروابط كما كانت). */
   const authLink = (
     kind: "login" | "navigate",
