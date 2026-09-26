@@ -266,4 +266,16 @@ export function clearLoginSession() {
 
 export const OWNER_SESSION_COOKIE = cookieName;
 
+/**
+ * هل الكوكي جلسة حكيم صالحة التوقيع وغير منتهية؟ بلا قاعدة بيانات ولا Clerk —
+ * يكفي لقرار إحالة الرئيسية؛ المسار المحمي يتحقق من المستخدم كاملًا بعدها.
+ */
+export function hasValidSessionCookie(value?: string | null): boolean {
+  try {
+    return decodeSession(value ?? undefined) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export type { UserRole };
