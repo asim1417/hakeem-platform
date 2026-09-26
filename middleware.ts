@@ -45,6 +45,8 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/legal(.*)",
   // إكمال OAuth — عزل عن clerkMiddleware يمنع وميض الفشل مع dev-browser-missing
   "/auth/continue(.*)",
+  // نموذج الدخول العربي — Clerk يعمل فيه على العميل فقط، كما في /sign-in.
+  "/auth/identifier(.*)",
   "/sso-callback(.*)",
   "/api/auth/oauth/start(.*)",
   "/api/auth/account-portal(.*)",
