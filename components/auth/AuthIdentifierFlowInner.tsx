@@ -305,8 +305,13 @@ export function AuthIdentifierFlowInner({
       onComplete({ ok: true, next });
       return;
     }
-    // بلا تثبيت نكمل إلى المسار المحمي مباشرة — clerkMiddleware يقرأ جلسة Clerk هناك
-    window.location.assign(next ?? nextUrl);
+    // بلا تثبيت لا ننتقل لمسار محمي بلا جلسة — ذلك يعيد الزائر للرئيسية/الدخول بلا ربط.
+    if (!next) {
+      setStep({ name: "identifier" });
+      showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier");
+      return;
+    }
+    window.location.assign(next);
   }
 
   /**
