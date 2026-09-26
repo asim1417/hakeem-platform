@@ -134,8 +134,8 @@ assert.equal(inner.includes("rgba(14,52,53,0.18)"), false, "input border uses --
 assert.ok(/embedded = false/.test(inner), "embedded defaults to false");
 assert.ok(/onComplete\?: \(result: IdentifierFlowResult\) => void/.test(inner));
 assert.ok(
-  /if \(onComplete\) \{\s*onComplete\(\{ ok: Boolean\(next\), next: next \?\? nextUrl \}\);\s*return;\s*\}\s*[\s\S]{0,160}window\.location\.assign\(next \?\? nextUrl\)/.test(inner),
-  "without onComplete the flow still navigates; with it, no navigation"
+  /if \(onComplete\) \{[\s\S]{0,500}?onComplete\(\{ ok: true, next \}\);\s*return;\s*\}\s*[\s\S]{0,160}window\.location\.assign\(next \?\? nextUrl\)/.test(inner),
+  "without onComplete the flow still navigates; with it, no navigation (failure stays in the form)"
 );
 assert.ok(inner.includes("<CodeInput") && /embedded &&\s*\(s\.name === "code"/.test(inner), "segmented code input only in embedded mode");
 // الشاشة ٣: حقل واحد خلف ست خانات، fieldset/legend، إرسال تلقائي 200–300ms

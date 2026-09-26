@@ -260,7 +260,9 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
   })}`;
   // الخطوة داخل النموذج (الرمز/البيانات) تملك عنوان الحوار وزر «رجوع»
   const flowOwnsHeader = view.name === "options" && step !== "identifier" && step !== "finishing";
-  const showVerified = view.name === "verified" || step === "finishing";
+  // «تم التحقق» فقط بعد تثبيت hakeem_session فعلًا؛ قبله (خطوة finishing) حالة انتظار محايدة
+  const confirmed = view.name === "verified";
+  const showVerified = confirmed || step === "finishing";
 
   const closeButton = (
     <button type="button" className="hk-icon-btn hk-home-auth__close" onClick={close} aria-label="إغلاق">
@@ -272,7 +274,21 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
 
   const optionsVisible = view.name === "options" && !showVerified;
   let overlay: ReactNode = null;
-  if (showVerified) {
+  if (showVerified && !confirmed) {
+    // التحقق من الرمز تمّ عند Clerk، والجلسة تُثبَّت الآن — لا نعلن النجاح قبل تأكيد الخادم
+    overlay = (
+      <div className="hk-verified">
+        <div className="hk-verified__mark" aria-hidden>
+          <span className="hk-spinner hk-spinner--light" />
+        </div>
+        <div role="status" aria-live="polite" className="hk-verified__text">
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-verified__title">
+            جارٍ إكمال الدخول…
+          </h2>
+        </div>
+      </div>
+    );
+  } else if (showVerified) {
     // الشاشة ٧: تم التحقق ← جارٍ فتح الوجهة
     overlay = (
       <div className="hk-verified">
@@ -379,13 +395,8 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
               badge={lastMethod === "identifier" ? <LastBadge /> : null}
               onStepChange={setStep}
               onComplete={(result) => {
-                if (result.ok) {
-                  onAuthenticated("identifier");
-                  return;
-                }
-                // تعذّر تثبيت hakeem_session: المسار المحمي يقرأ جلسة Clerk مباشرة (السلوك السابق)
-                armPendingAsk(intent);
-                window.location.assign(result.next);
+                // المضمّن يستدعي onComplete بعد التثبيت فقط؛ الفشل يبقى داخل النموذج برسالة واضحة
+                if (result.ok) onAuthenticated("identifier");
               }}
             />
           ) : (
