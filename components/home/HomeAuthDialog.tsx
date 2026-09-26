@@ -1,17 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
-import { HomeAuthIdentifier } from "@/components/home/HomeAuthIdentifier";
 import {
-  armPendingAsk,
-  completeHomeAuth,
-  fetchHomeAuthUser,
-  readHomeAuthIntent,
-} from "@/components/home/home-auth-bus";
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
+import { useRouter } from "next/navigation";
+import { HomeAuthIdentifier } from "@/components/home/HomeAuthIdentifier";
+import { armPendingAsk, completeHomeAuth, destinationFor, readHomeAuthIntent } from "@/components/home/home-auth-bus";
 import type { HomeAuthDialogProps } from "@/components/home/HomeAuthLauncher";
 import { buildOAuthStartPath } from "@/lib/modules/auth/clerk-oauth-start";
 import { openOAuthPopup } from "@/lib/modules/auth/oauth-popup";
-import { continueUrl, HOME_AUTH_RETURN_PATH } from "@/lib/modules/auth/safe-next";
 import {
   lastAuthMethodCookie,
   parseLastAuthMethod,
@@ -25,68 +30,84 @@ const FOCUSABLE =
 /** خطوات إدخال الرمز والبيانات: النقر خارج الحوار لا يغلقه (يمنع فقد ما كُتب). */
 const STICKY_STEPS = new Set(["code", "second-factor", "profile", "finishing"]);
 
-function GoogleIcon() {
+/** مدة شاشة «تم التحقق» قبل الانتقال (الشاشة ٧). */
+export const VERIFIED_HOLD_MS = 600;
+
+type SocialProvider = "google" | "microsoft" | "apple";
+type View = { name: "options" } | { name: "waiting"; provider: SocialProvider } | { name: "verified" };
+
+const PROVIDER_NAME: Record<SocialProvider, string> = { google: "Google", microsoft: "Microsoft", apple: "Apple" };
+
+function GoogleIcon({ size = 20 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden>
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z" />
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z" />
-      <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.2 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l.1.1 6.3 5.2C39.1 37.3 44 33 44 24c0-1.3-.1-2.5-.4-3.5z" />
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden>
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
     </svg>
   );
 }
 
-function MicrosoftIcon() {
+function MicrosoftIcon({ size = 20 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 23 23" aria-hidden>
-      <path fill="#F25022" d="M1 1h10v10H1z" />
-      <path fill="#7FBA00" d="M12 1h10v10H12z" />
-      <path fill="#00A4EF" d="M1 12h10v10H1z" />
-      <path fill="#FFB900" d="M12 12h10v10H12z" />
+    <svg width={size} height={size} viewBox="0 0 21 21" aria-hidden>
+      <rect x="0" y="0" width="10" height="10" fill="#F25022" />
+      <rect x="11" y="0" width="10" height="10" fill="#7FBA00" />
+      <rect x="0" y="11" width="10" height="10" fill="#00A4EF" />
+      <rect x="11" y="11" width="10" height="10" fill="#FFB900" />
     </svg>
   );
 }
 
-function AppleIcon() {
+function AppleIcon({ size = 20 }: { size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="currentColor">
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden fill="currentColor">
       <path d="M16.4 12.6c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8s-1.6-.7-2.7-.7c-1.4 0-2.7.8-3.4 2.1-1.5 2.5-.4 6.3 1 8.4.7 1 1.5 2.2 2.6 2.1 1-.1 1.4-.7 2.7-.7s1.6.7 2.7.6c1.1-.1 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3-.1 0-2.1-.8-2.2-3.2zM14.5 6.2c.6-.7 1-1.7.9-2.7-1 .1-2.1.6-2.7 1.4-.6.6-1.1 1.7-.9 2.6 1 .1 2-.5 2.7-1.3z" />
     </svg>
   );
 }
 
-type SocialProvider = "google" | "microsoft" | "apple";
-const SOCIAL_LABEL: Record<SocialProvider, string> = {
-  google: "المتابعة باستخدام Google",
-  microsoft: "المتابعة باستخدام Microsoft",
-  apple: "المتابعة باستخدام Apple",
-};
+function ProviderIcon({ provider, size }: { provider: SocialProvider; size?: number }) {
+  if (provider === "google") return <GoogleIcon size={size} />;
+  if (provider === "microsoft") return <MicrosoftIcon size={size} />;
+  return <AppleIcon size={size} />;
+}
+
+function Spinner() {
+  return <span className="hk-spinner" aria-hidden />;
+}
+
+/** وسم «آخر دخول» فوق زر الوسيلة المستعملة آخر مرة (الشاشة ١) — من كوكي غير حساس. */
+function LastBadge() {
+  return <span className="hk-last">آخر دخول</span>;
+}
 
 /**
- * حوار الدخول في الصفحة الرئيسية — نافذة وسطى على الحاسب ولوح سفلي على الجوال.
- * WAI-ARIA APG (Dialog Modal): role=dialog + aria-modal + aria-labelledby، حبس التركيز
- * وإعادته، Esc وزر إغلاق، والنقر خارجًا (إلا أثناء إدخال الرمز)، وقفل تمرير الخلفية.
- * يبقى مركّبًا بعد أول فتح (مخفيًّا) كي لا يُعاد تحميل Clerk بين الفتحات.
+ * صندوق الدخول فوق الرئيسية — الشاشات المعتمدة ١–٧:
+ * الخيارات ← (نافذة Google/Microsoft | الجوال/البريد برمز) ← تم التحقق ← انتقال واحد إلى الوجهة.
+ * لوح سفلي على الجوال، وصندوق 440px على سطح المكتب.
+ * WAI-ARIA APG (Dialog Modal): role=dialog + aria-modal + aria-labelledby، حبس التركيز وإعادته،
+ * Esc وزر إغلاق، والنقر خارجًا (إلا أثناء إدخال الرمز)، وقفل تمرير الخلفية.
  */
 export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps) {
+  const router = useRouter();
   const open = Boolean(request);
   const titleId = useId();
   const ledeId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const prefetchedRef = useRef("");
+  const [view, setView] = useState<View>({ name: "options" });
   const [step, setStep] = useState("identifier");
-  const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null);
   const [error, setError] = useState("");
-  const [live, setLive] = useState("");
-  const [finishing, setFinishing] = useState(false);
   const [lastMethod, setLastMethod] = useState<HomeAuthMethod | null>(null);
   const [flowKey, setFlowKey] = useState(0);
 
   const intent = useMemo<HomeAuthIntent>(() => request?.intent ?? { kind: "login" }, [request]);
   const mode = request?.mode ?? "sign-in";
-  // الوجهة التي يقترحها الخادم عند التحويل الكامل — العودة إلى الرئيسية مع النيّة، أو الخدمة مباشرة
-  const returnPath = intent.kind === "navigate" ? intent.next : HOME_AUTH_RETURN_PATH;
+  const destination = destinationFor(intent);
   const providers = config.providers;
   const social = (["google", "microsoft", "apple"] as const).filter((p) => providers.includes(p));
   const hasIdentifier = providers.includes("email") || providers.includes("phone");
@@ -97,9 +118,7 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
     returnFocusRef.current =
       request.trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
     setError("");
-    setLive("");
-    setBusyProvider(null);
-    setFinishing(false);
+    setView({ name: "options" });
     setStep("identifier");
     setFlowKey((k) => k + 1);
     setLastMethod(parseLastAuthMethod(document.cookie));
@@ -111,82 +130,101 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
     };
   }, [request]);
 
+  /** تحميل مسبق للوجهة أثناء كتابة الرمز أو انتظار النافذة — فالانتقال بلا شاشة بيضاء. */
+  const prefetchDestination = useCallback(() => {
+    if (prefetchedRef.current === destination) return;
+    prefetchedRef.current = destination;
+    try {
+      router.prefetch(destination);
+    } catch {
+      /* التحميل المسبق تحسين فقط */
+    }
+  }, [destination, router]);
+
+  useEffect(() => {
+    if (view.name === "waiting" || step === "code" || step === "second-factor") prefetchDestination();
+  }, [view, step, prefetchDestination]);
+
   const close = useCallback(() => {
     onClose();
     const back = returnFocusRef.current;
     window.requestAnimationFrame(() => {
       if (back && back.isConnected) back.focus();
-      else document.getElementById("home-account-link")?.focus();
     });
   }, [onClose]);
 
-  /** الجلسة ثبتت (hakeem_session): نحدّث الحالة وننفّذ النيّة دون إعادة تحميل. */
+  /** الجلسة ثبتت (hakeem_session): «تم التحقق» ~600ms ثم انتقال واحد إلى الوجهة. */
   const onAuthenticated = useCallback(
-    async (method: HomeAuthMethod) => {
+    (method: HomeAuthMethod) => {
       document.cookie = lastAuthMethodCookie(method, window.location.protocol === "https:");
-      setFinishing(true);
-      setLive("تم تسجيل الدخول. جارٍ تحديث الصفحة…");
-      const user = await fetchHomeAuthUser();
       const current = readHomeAuthIntent() ?? intent;
-      if (!user) {
-        // الجلسة لم تظهر لـ /api/auth/me — نكمل بالمسار الكامل المعتاد
-        armPendingAsk(current);
-        window.location.assign(continueUrl(current.kind === "navigate" ? current.next : HOME_AUTH_RETURN_PATH));
-        return;
-      }
-      const navigating = completeHomeAuth(current, user);
-      if (!navigating) {
-        setLive("تم تسجيل الدخول.");
-        close();
-      }
+      const dest = completeHomeAuth(current);
+      setView({ name: "verified" });
+      prefetchDestination();
+      window.setTimeout(() => {
+        router.push(dest);
+        // احتياط: إن لم يتم الانتقال عبر الموجّه (فشل تحميل الحزمة) ننتقل انتقالًا كاملًا
+        window.setTimeout(() => {
+          if (window.location.pathname === "/") window.location.assign(dest);
+        }, 6000);
+      }, VERIFIED_HOLD_MS);
     },
-    [close, intent]
+    [intent, prefetchDestination, router]
   );
 
-  function startSocial(provider: SocialProvider, e: MouseEvent<HTMLAnchorElement>) {
+  const openPopup = useCallback(
+    (provider: SocialProvider, fullHref: string) => {
+      setError("");
+      const popupUrl =
+        provider === "google"
+          ? `/api/auth/google?popup=1&next=${encodeURIComponent(destination)}`
+          : `${buildOAuthStartPath({ provider, nextUrl: destination, mode })}&popup=1`;
+      const opened = openOAuthPopup({
+        url: popupUrl,
+        title: `hakeem_${provider}_popup`,
+        onSuccess: () => onAuthenticated(provider),
+        onError: () => {
+          setView({ name: "options" });
+          setError("تعذّر إكمال الدخول. أعد المحاولة أو اختر وسيلة أخرى.");
+        },
+        onClose: () => {
+          // أُغلقت النافذة دون رسالة: ربما اكتمل الدخول فعلًا — نتحقق من الجلسة قبل اعتباره إلغاءً
+          void fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data: { user?: { id?: string } | null; isGuest?: boolean } | null) => {
+              if (data?.user?.id && !data.isGuest) onAuthenticated(provider);
+            })
+            .catch(() => undefined);
+        },
+      });
+      if (!opened) {
+        // النافذة محجوبة: انتقال احتياطي كامل إلى الوجهة نفسها، والنية محفوظة
+        armPendingAsk(intent);
+        document.cookie = lastAuthMethodCookie(provider, window.location.protocol === "https:");
+        window.location.assign(fullHref);
+        return;
+      }
+      setView({ name: "waiting", provider });
+    },
+    [destination, intent, mode, onAuthenticated]
+  );
+
+  function onSocialClick(provider: SocialProvider, e: MouseEvent<HTMLAnchorElement>) {
     e.preventDefault();
-    if (busyProvider || finishing) return;
-    setError("");
-    setBusyProvider(provider);
-    setLive(`جارٍ فتح نافذة ${provider === "google" ? "Google" : provider === "microsoft" ? "Microsoft" : "Apple"}…`);
-    const fullHref = e.currentTarget.href;
-    const popupUrl =
-      provider === "google"
-        ? `/api/auth/google?popup=1&next=${encodeURIComponent(returnPath)}`
-        : `${buildOAuthStartPath({ provider, nextUrl: returnPath, mode })}&popup=1`;
-    const opened = openOAuthPopup({
-      url: popupUrl,
-      title: `hakeem_${provider}_popup`,
-      onSuccess: () => {
-        setBusyProvider(null);
-        void onAuthenticated(provider);
-      },
-      onError: () => {
-        setBusyProvider(null);
-        setLive("");
-        setError("تعذّر إكمال الدخول. أعد المحاولة أو اختر وسيلة أخرى.");
-      },
-      onClose: () => {
-        setBusyProvider(null);
-        setLive("");
-        // أُغلقت النافذة دون رسالة: ربما اكتمل الدخول فعلًا — نتحقق من الجلسة قبل اعتباره إلغاءً
-        void fetchHomeAuthUser().then((user) => {
-          if (user) void onAuthenticated(provider);
-        });
-      },
-    });
-    if (!opened) {
-      // النافذة محجوبة: تحويل كامل يعود إلى الرئيسية والنيّة محفوظة في sessionStorage
-      armPendingAsk(intent);
-      document.cookie = lastAuthMethodCookie(provider, window.location.protocol === "https:");
-      window.location.assign(fullHref);
-    }
+    if (view.name !== "options") return;
+    openPopup(provider, e.currentTarget.href);
+  }
+
+  function socialHref(p: SocialProvider) {
+    return p === "google"
+      ? `/api/auth/google?next=${encodeURIComponent(destination)}`
+      : buildOAuthStartPath({ provider: p, nextUrl: destination, mode });
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Escape") {
       e.stopPropagation();
-      close();
+      if (view.name !== "verified") close();
       return;
     }
     if (e.key !== "Tab" || !panelRef.current) return;
@@ -208,126 +246,155 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
 
   function onBackdropMouseDown(e: MouseEvent<HTMLDivElement>) {
     if (e.target !== e.currentTarget) return;
-    if (STICKY_STEPS.has(step) || finishing) return;
+    if (STICKY_STEPS.has(step) || view.name !== "options") return;
     close();
   }
 
   const title = mode === "sign-up" ? "ابدأ مع حكيم" : "أهلًا بعودتك";
-  const lede =
-    intent.kind === "ask"
-      ? "ادخل لنُكمل سؤالك هنا مباشرة — حسابك يُنشأ تلقائيًا إن كنت جديدًا."
-      : "ادخل أو أنشئ حسابك دون مغادرة الصفحة.";
   const portalFallbackHref = `/api/auth/oauth/start?${new URLSearchParams({
     provider: providers.includes("email") ? "email" : "phone",
     mode,
-    next: returnPath,
+    next: destination,
     portal: "1",
   })}`;
+  // الخطوة داخل النموذج (الرمز/البيانات) تملك عنوان الحوار وزر «رجوع»
+  const flowOwnsHeader = view.name === "options" && step !== "identifier" && step !== "finishing";
+  const showVerified = view.name === "verified" || step === "finishing";
 
-  return (
-    <div
-      className="hk-home-auth__backdrop hk-auth"
-      hidden={!open}
-      onMouseDown={onBackdropMouseDown}
-      lang="ar"
-      dir="rtl"
-    >
-      <div
-        ref={panelRef}
-        className="hk-home-auth__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={ledeId}
-        onKeyDown={onKeyDown}
-      >
-        <button type="button" className="hk-home-auth__close" onClick={close} aria-label="إغلاق نافذة الدخول">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M6 6l12 12M18 6L6 18" />
+  const closeButton = (
+    <button type="button" className="hk-icon-btn hk-home-auth__close" onClick={close} aria-label="إغلاق">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M6 6l12 12M18 6L6 18" />
+      </svg>
+    </button>
+  );
+
+  const optionsVisible = view.name === "options" && !showVerified;
+  let overlay: ReactNode = null;
+  if (showVerified) {
+    // الشاشة ٧: تم التحقق ← جارٍ فتح الوجهة
+    overlay = (
+      <div className="hk-verified">
+        <div className="hk-verified__mark" aria-hidden>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
           </svg>
+        </div>
+        <div role="status" aria-live="polite" className="hk-verified__text">
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-verified__title">
+            تم التحقق
+          </h2>
+          <p className="hk-verified__sub">
+            {intent.kind === "navigate" ? "جارٍ فتح الخدمة…" : "جارٍ فتح مساحة عملك…"}
+          </p>
+        </div>
+        <div className="hk-verified__bar" aria-hidden>
+          <span />
+        </div>
+      </div>
+    );
+  } else if (view.name === "waiting") {
+    // الشاشة ٥: أكمل الدخول في نافذة Google/Microsoft
+    const name = PROVIDER_NAME[view.provider];
+    overlay = (
+      <>
+        <div className="hk-home-auth__top hk-home-auth__top--end">{closeButton}</div>
+        <div className="hk-center-icon hk-center-icon--provider">
+          <ProviderIcon provider={view.provider} size={32} />
+        </div>
+        <div className="hk-center-text">
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
+            أكمل الدخول في نافذة {name}
+          </h2>
+          <p className="hk-home-auth__lede">اختر حسابك في النافذة الصغيرة، وستُغلق وحدها وتعود إلى هنا.</p>
+        </div>
+        <div className="hk-wait" aria-live="polite">
+          <Spinner />
+          <span>بانتظار اختيار الحساب…</span>
+        </div>
+        <button type="button" className="hk-btn-outline" onClick={() => openPopup(view.provider, socialHref(view.provider))}>
+          لم تظهر النافذة؟ افتحها مجددًا
         </button>
-
-        <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
-          {title}
-        </h2>
-        <p id={ledeId} className="hk-home-auth__lede">
-          {lede}
-        </p>
-
-        <p className="sr-only" role="status" aria-live="polite">
-          {live}
-        </p>
+        <button type="button" className="hk-link44 self-center" onClick={() => setView({ name: "options" })}>
+          اختيار وسيلة أخرى
+        </button>
+      </>
+    );
+  }
+  // الشاشة ١ (وخطوات النموذج ٢ و٣ و٦ داخله) — مركّبة دائمًا كي لا يضيع ما كُتب ولا يُقطع تثبيت الجلسة
+  const optionsBody = (
+      <>
+        {!optionsVisible ? null : flowOwnsHeader ? (
+          <div className="hk-home-auth__top hk-home-auth__top--end">{closeButton}</div>
+        ) : (
+          <>
+            <div className="hk-home-auth__top">
+              <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
+                {title}
+              </h2>
+              {closeButton}
+            </div>
+            <p id={ledeId} className="hk-home-auth__lede hk-home-auth__lede--tight">
+              حساب واحد لكل خدماتك القانونية، ويُنشأ تلقائيًا إن كنت جديدًا.
+            </p>
+          </>
+        )}
 
         {error ? (
-          <div className="mt-4 rounded-[0.5rem] border border-red-200 bg-red-50 p-3 text-center text-xs font-semibold leading-5 text-red-700" role="alert">
-            {error}
+          <div className="hk-err" role="alert">
+            <span>{error}</span>
           </div>
         ) : null}
 
-        {step === "identifier" && social.length > 0 ? (
-          <div className="mt-5 flex flex-col gap-3">
-            {social.map((p) => {
-              const href =
-                p === "google"
-                  ? `/api/auth/google?next=${encodeURIComponent(returnPath)}`
-                  : buildOAuthStartPath({ provider: p, nextUrl: returnPath, mode });
-              return (
-                <a
-                  key={p}
-                  href={href}
-                  className="hk-home-auth__provider"
-                  onClick={(e) => startSocial(p, e)}
-                  aria-busy={busyProvider === p || undefined}
-                >
-                  {p === "google" ? <GoogleIcon /> : p === "microsoft" ? <MicrosoftIcon /> : <AppleIcon />}
-                  <span>{busyProvider === p ? "جارٍ الانتظار في النافذة المفتوحة…" : SOCIAL_LABEL[p]}</span>
-                  {lastMethod === p ? <span className="hk-home-auth__last">آخر ما استخدمته</span> : null}
+        {!flowOwnsHeader && social.length > 0 ? (
+          <div className="hk-home-auth__providers">
+            {social.map((p) => (
+              <div key={p} className="hk-home-auth__provider-wrap">
+                {lastMethod === p ? <LastBadge /> : null}
+                <a href={socialHref(p)} className="hk-provider" onClick={(e) => onSocialClick(p, e)}>
+                  <ProviderIcon provider={p} />
+                  <span>المتابعة باستخدام {PROVIDER_NAME[p]}</span>
                 </a>
-              );
-            })}
+              </div>
+            ))}
           </div>
         ) : null}
 
-        {step === "identifier" && social.length > 0 && hasIdentifier ? (
-          <div className="hk-home-auth__divider mt-4" aria-hidden>
-            أو
+        {!flowOwnsHeader && social.length > 0 && hasIdentifier ? (
+          <div className="hk-divider" aria-hidden>
+            <span>أو</span>
           </div>
         ) : null}
 
         {hasIdentifier ? (
           config.identifierForm ? (
-            <div className={step === "identifier" ? "mt-3" : "mt-5"}>
-              {lastMethod === "identifier" && step === "identifier" ? (
-                <p className="mb-1 text-center">
-                  <span className="hk-home-auth__last">آخر ما استخدمته: البريد أو الجوال</span>
-                </p>
-              ) : null}
-              <HomeAuthIdentifier
-                key={flowKey}
-                config={config}
-                mode={mode}
-                nextUrl={intent.kind === "navigate" ? intent.next : "/dashboard"}
-                portalFallbackHref={portalFallbackHref}
-                onStepChange={setStep}
-                onComplete={(result) => {
-                  if (result.ok) {
-                    void onAuthenticated("identifier");
-                    return;
-                  }
-                  // تعذّر تثبيت hakeem_session: المسار المحمي يقرأ جلسة Clerk مباشرة (السلوك السابق)
-                  armPendingAsk(intent);
-                  window.location.assign(result.next);
-                }}
-              />
-            </div>
+            <HomeAuthIdentifier
+              key={flowKey}
+              config={config}
+              mode={mode}
+              nextUrl={destination}
+              portalFallbackHref={portalFallbackHref}
+              headingId={titleId}
+              badge={lastMethod === "identifier" ? <LastBadge /> : null}
+              onStepChange={setStep}
+              onComplete={(result) => {
+                if (result.ok) {
+                  onAuthenticated("identifier");
+                  return;
+                }
+                // تعذّر تثبيت hakeem_session: المسار المحمي يقرأ جلسة Clerk مباشرة (السلوك السابق)
+                armPendingAsk(intent);
+                window.location.assign(result.next);
+              }}
+            />
           ) : (
             <a
               href={buildOAuthStartPath({
                 provider: providers.includes("email") ? "email" : "phone",
-                nextUrl: returnPath,
+                nextUrl: destination,
                 mode,
               })}
-              className="hk-home-auth__provider mt-3"
+              className="hk-provider"
               onClick={() => armPendingAsk(intent)}
             >
               <span>المتابعة بالبريد الإلكتروني أو رقم الجوال</span>
@@ -335,9 +402,9 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
           )
         ) : null}
 
-        {step === "identifier" ? (
+        {!flowOwnsHeader ? (
           <p className="hk-home-auth__terms">
-            باستمرارك، فإنك توافق على{" "}
+            باستمرارك توافق على{" "}
             <a href="/terms" target="_blank" rel="noopener">
               شروط الاستخدام
             </a>{" "}
@@ -348,6 +415,26 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
             .
           </p>
         ) : null}
+      </>
+  );
+
+  return (
+    <div className="hk-home-auth__backdrop hk-auth" hidden={!open} onMouseDown={onBackdropMouseDown} lang="ar" dir="rtl">
+      <div
+        ref={panelRef}
+        className="hk-home-auth__panel"
+        data-view={showVerified ? "verified" : view.name}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={optionsVisible && !flowOwnsHeader ? ledeId : undefined}
+        onKeyDown={onKeyDown}
+      >
+        {overlay}
+        {/* النموذج يبقى مركّبًا (مخفيًّا) أثناء انتظار النافذة و«تم التحقق» ليُكمل تثبيت الجلسة */}
+        <div className="hk-home-auth__stack" hidden={!optionsVisible}>
+          {optionsBody}
+        </div>
       </div>
     </div>
   );
