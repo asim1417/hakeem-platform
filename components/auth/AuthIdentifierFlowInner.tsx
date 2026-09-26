@@ -10,12 +10,14 @@ import {
   maskIdentifier,
   maskIdentifierLocal,
   parseIdentifier,
+  parseIdentifierFor,
   pickSecondFactor,
   PROFILE_LABELS,
   profileFieldsToCollect,
   sanitizeCode,
   secondFactorPrompt,
   unsupportedMissingFields,
+  type IdentifierMethod,
   type ProfileField,
   type SecondFactorStrategy,
 } from "@/lib/modules/auth/identifier-flow";
@@ -88,6 +90,9 @@ export function AuthIdentifierFlowInner({
   submitOnReady = false,
   headingId,
   identifierBadge,
+  identifierMethods = ["phone", "email"],
+  initialMethod,
+  onMethodChange,
 }: {
   mode: "sign-in" | "sign-up";
   nextUrl: string;
@@ -106,6 +111,11 @@ export function AuthIdentifierFlowInner({
   headingId?: string;
   /** المضمّن: وسم «آخر دخول» فوق حقل البريد/الجوال */
   identifierBadge?: ReactNode;
+  /** المضمّن: الوسائل المفعّلة في تبويبي «رقم الجوال | البريد الإلكتروني» (الجوال أولًا) */
+  identifierMethods?: readonly IdentifierMethod[];
+  /** المضمّن: التبويب المختار عند التحميل (initialIdentifier قيمته) */
+  initialMethod?: IdentifierMethod;
+  onMethodChange?: (m: IdentifierMethod) => void;
 }) {
   const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
   const { isLoaded: signUpLoaded, signUp } = useSignUp();
@@ -114,6 +124,18 @@ export function AuthIdentifierFlowInner({
 
   const [step, setStep] = useState<Step>({ name: "identifier" });
   const [identifierInput, setIdentifierInput] = useState(initialIdentifier);
+  // المضمّن (المقترح أ): تبويبان، ولكل تبويب قيمته فلا يضيع ما كُتب عند التبديل
+  const firstMethod: IdentifierMethod =
+    initialMethod && identifierMethods.includes(initialMethod) ? initialMethod : identifierMethods[0] ?? "phone";
+  const [idMethod, setIdMethod] = useState<IdentifierMethod>(firstMethod);
+  const [idValues, setIdValues] = useState<Record<IdentifierMethod, string>>({
+    phone: firstMethod === "phone" ? initialIdentifier : "",
+    email: firstMethod === "email" ? initialIdentifier : "",
+  });
+  /** المُدخل الحالي محلَّلًا: المضمّن وفق التبويب، والصفحة المستقلة كما كانت (حقل واحد). */
+  const parseCurrent = () =>
+    embedded ? parseIdentifierFor(idMethod, idValues[idMethod]) : parseIdentifier(identifierInput);
+  const currentRaw = () => (embedded ? idValues[idMethod] : identifierInput);
   const [code, setCode] = useState("");
   const [profile, setProfile] = useState<Record<ProfileField, string>>({
     first_name: "",
@@ -364,7 +386,7 @@ export function AuthIdentifierFlowInner({
   }
 
   function submitIdentifier() {
-    const parsed = parseIdentifier(identifierInput);
+    const parsed = parseCurrent();
     if (parsed.kind === "invalid") {
       showError(parsed.message, "identifier");
       return;
@@ -387,7 +409,7 @@ export function AuthIdentifierFlowInner({
     if (!ready) {
       // المضمّن: الحقل متاح قبل جاهزية Clerk — التحقق من الصيغة فورًا، والإرسال عند الجاهزية
       if (!embedded) return;
-      const parsed = parseIdentifier(identifierInput);
+      const parsed = parseCurrent();
       if (parsed.kind === "invalid") showError(parsed.message, "identifier");
       else setQueuedSubmit(true);
       return;
@@ -398,7 +420,7 @@ export function AuthIdentifierFlowInner({
   // «متابعة» في الحقل الخفيف قبل التحميل: صيغة خاطئة تظهر فورًا بدل انتظار Clerk
   useEffect(() => {
     if (!queuedSubmit || ready) return;
-    const parsed = parseIdentifier(identifierInput);
+    const parsed = parseCurrent();
     if (parsed.kind === "invalid") {
       setQueuedSubmit(false);
       showError(parsed.message, "identifier");
@@ -409,7 +431,7 @@ export function AuthIdentifierFlowInner({
   useEffect(() => {
     if (!ready || !queuedSubmit) return;
     setQueuedSubmit(false);
-    if (identifierInput.trim()) submitIdentifier();
+    if (currentRaw().trim()) submitIdentifier();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- إرسال واحد عند الجاهزية
   }, [ready, queuedSubmit]);
 
@@ -601,9 +623,17 @@ export function AuthIdentifierFlowInner({
           <form className="hk-emb__form" onSubmit={onSubmitIdentifier} noValidate>
             <IdentifierField
               ref={identifierRef}
-              value={identifierInput}
+              method={idMethod}
+              methods={identifierMethods}
+              onMethodChange={(m) => {
+                setIdMethod(m);
+                onMethodChange?.(m);
+                clearError();
+                window.requestAnimationFrame(() => identifierRef.current?.focus());
+              }}
+              value={idValues[idMethod]}
               onChange={(v) => {
-                setIdentifierInput(v);
+                setIdValues((prev) => ({ ...prev, [idMethod]: v }));
                 if (errorTarget === "identifier") clearError();
               }}
               disabled={busy}
@@ -623,7 +653,7 @@ export function AuthIdentifierFlowInner({
                 تأخّر تجهيز الدخول الآمن. {<a href={portalFallbackHref} className="hk-link44">المتابعة عبر صفحة الدخول البديلة</a>}
               </ErrorNote>
             ) : null}
-            <SubmitButton embedded busy={busy || (queuedSubmit && !ready)}>{identifierSubmitLabel(identifierInput)}</SubmitButton>
+            <SubmitButton embedded busy={busy || (queuedSubmit && !ready)}>{identifierSubmitLabel()}</SubmitButton>
           </form>
         ) : null}
 

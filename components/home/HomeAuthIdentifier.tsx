@@ -8,7 +8,12 @@ import type {
   IdentifierFlowResult,
   IdentifierFlowStep,
 } from "@/components/auth/AuthIdentifierFlowInner";
-import type { HomeAuthMode } from "@/lib/modules/config/home-inline-auth";
+import {
+  lastIdMethodCookie,
+  parseLastIdMethod,
+  type HomeAuthMode,
+} from "@/lib/modules/config/home-inline-auth";
+import type { IdentifierMethod } from "@/lib/modules/auth/identifier-flow";
 import { IdentifierField, identifierSubmitLabel } from "@/components/auth/IdentifierField";
 
 type InnerComponent = ComponentType<ComponentProps<typeof AuthIdentifierFlowInner>>;
@@ -28,13 +33,36 @@ type Props = {
 
 
 /**
- * حقل «البريد أو رقم الجوال» في الحوار. أول رسم بلا Clerk:
+ * حقل الدخول برمز في الحوار (تبويبا «رقم الجوال | البريد الإلكتروني»). أول رسم بلا Clerk:
  * عند أول تركيز أو كتابة يُركَّب ClerkAppProvider (تحميل ديناميكي) ثم النموذج العربي المضمّن،
  * مع الحفاظ على ما كُتب وعلى ضغطة «متابعة» إن سبقت الجاهزية.
  */
+/** تبويبا «رقم الجوال | البريد الإلكتروني» بالوسائل المفعّلة فقط — الجوال أولًا. */
+function enabledMethods(config: HomeAuthConfig): IdentifierMethod[] {
+  const out: IdentifierMethod[] = [];
+  if (config.providers.includes("phone")) out.push("phone");
+  if (config.providers.includes("email")) out.push("email");
+  return out.length ? out : ["phone"];
+}
+
 export function HomeAuthIdentifier(props: Props) {
+  const methods = enabledMethods(props.config);
   const [activated, setActivated] = useState(false);
-  const [value, setValue] = useState("");
+  const [method, setMethodState] = useState<IdentifierMethod>(methods[0]);
+  const [values, setValues] = useState<Record<IdentifierMethod, string>>({ phone: "", email: "" });
+  const value = values[method];
+
+  // آخر تبويب مستعمل (كوكي غير حساس) — الجوال افتراضيًا
+  useEffect(() => {
+    const last = parseLastIdMethod(document.cookie);
+    if (last && methods.includes(last)) setMethodState(last);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- عند التركيب فقط
+  }, []);
+
+  const setMethod = useCallback((m: IdentifierMethod) => {
+    setMethodState(m);
+    document.cookie = lastIdMethodCookie(m, window.location.protocol === "https:");
+  }, []);
   const [queued, setQueued] = useState(false);
   const [innerReady, setInnerReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -47,11 +75,14 @@ export function HomeAuthIdentifier(props: Props) {
     <>
       {!innerReady ? (
         <PlaceholderForm
+          method={method}
+          methods={methods}
+          onMethodChange={setMethod}
           value={value}
           badge={props.badge}
           busy={queued}
           onValue={(v) => {
-            setValue(v);
+            setValues((prev) => ({ ...prev, [method]: v }));
             setActivated(true);
           }}
           onFocus={() => setActivated(true)}
@@ -76,6 +107,9 @@ export function HomeAuthIdentifier(props: Props) {
         >
           <EmbeddedFlow
             {...props}
+            method={method}
+            methods={methods}
+            onMethodChange={setMethod}
             value={value}
             queued={queued}
             onReady={onReady}
@@ -95,15 +129,26 @@ function EmbeddedFlow({
   onComplete,
   headingId,
   badge,
+  method,
+  methods,
+  onMethodChange,
   value,
   queued,
   onReady,
   onFailed,
-}: Props & { value: string; queued: boolean; onReady: () => void; onFailed: () => void }) {
+}: Props & {
+  method: IdentifierMethod;
+  methods: IdentifierMethod[];
+  onMethodChange: (m: IdentifierMethod) => void;
+  value: string;
+  queued: boolean;
+  onReady: () => void;
+  onFailed: () => void;
+}) {
   const mounted = useClerkMounted();
   const [Inner, setInner] = useState<InnerComponent | null>(null);
   // قيمة الحقل لحظة الجاهزية — لا نعيد ضبط النموذج بعدها مع كل حرف
-  const [initial, setInitial] = useState<{ value: string; queued: boolean } | null>(null);
+  const [initial, setInitial] = useState<{ value: string; queued: boolean; method: IdentifierMethod } | null>(null);
 
   useEffect(() => {
     if (mounted) return;
@@ -129,9 +174,9 @@ function EmbeddedFlow({
 
   useEffect(() => {
     if (!Inner || initial) return;
-    setInitial({ value, queued });
+    setInitial({ value, queued, method });
     onReady();
-  }, [Inner, initial, value, queued, onReady]);
+  }, [Inner, initial, value, queued, method, onReady]);
 
   if (!Inner || !initial) return null;
   return (
@@ -143,6 +188,9 @@ function EmbeddedFlow({
       onComplete={onComplete}
       onStepChange={onStepChange}
       initialIdentifier={initial.value}
+      initialMethod={initial.method}
+      identifierMethods={methods}
+      onMethodChange={onMethodChange}
       submitOnReady={initial.queued}
       headingId={headingId}
       identifierBadge={badge}
@@ -152,6 +200,9 @@ function EmbeddedFlow({
 
 /** نسخة خفيفة مطابقة لخطوة المعرّف (الشاشتان ١ و٢) — المكوّن نفسه، بلا Clerk. */
 function PlaceholderForm({
+  method,
+  methods,
+  onMethodChange,
   value,
   badge,
   busy,
@@ -159,6 +210,9 @@ function PlaceholderForm({
   onFocus,
   onSubmit,
 }: {
+  method: IdentifierMethod;
+  methods: IdentifierMethod[];
+  onMethodChange: (m: IdentifierMethod) => void;
   value: string;
   badge?: ReactNode;
   busy: boolean;
@@ -175,10 +229,21 @@ function PlaceholderForm({
         onSubmit();
       }}
     >
-      <IdentifierField value={value} onChange={onValue} onFocus={onFocus} badge={badge} />
+      <IdentifierField
+        method={method}
+        methods={methods}
+        onMethodChange={(m) => {
+          onMethodChange(m);
+          onFocus();
+        }}
+        value={value}
+        onChange={onValue}
+        onFocus={onFocus}
+        badge={badge}
+      />
       <button type="submit" className="hk-btn-primary" disabled={busy} aria-busy={busy}>
         {busy ? <span className="hk-spinner hk-spinner--light" aria-hidden /> : null}
-        <span>{busy ? "لحظة…" : identifierSubmitLabel(value)}</span>
+        <span>{busy ? "لحظة…" : identifierSubmitLabel()}</span>
       </button>
     </form>
   );

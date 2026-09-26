@@ -340,3 +340,52 @@
   .hk-spinner { animation-duration: 2.4s; }
 }
 
+
+/* المقترح (أ): تبويبا «رقم الجوال | البريد الإلكتروني» */
+.hk-idf__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: #EFF3F2;
+}
+.hk-idf__tab {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #3E5655;
+  cursor: pointer;
+}
+.hk-idf__tab[aria-pressed="true"] {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(14, 52, 53, 0.16);
+  font-weight: 700;
+  color: #0E3435;
+}
+.hk-idf__tab:disabled { cursor: default; opacity: 0.6; }
+.hk-idf__box[data-method="phone"] { padding-left: 0; overflow: hidden; }
+.hk-idf__box[data-method="phone"]:focus-within,
+.hk-idf__box[data-method="phone"][data-invalid="true"] { padding-left: 0; }
+.hk-idf__prefix {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  padding: 0 12px;
+  margin-right: 4px;
+  border-right: 1px solid #D5DDDB;
+  background: #F4F6F5;
+  font-size: 16px;
+  font-weight: 600;
+  color: #12211F;
+}
+.hk-idf__icon { display: flex; color: #0E3435; }
