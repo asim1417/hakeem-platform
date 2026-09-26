@@ -1,5 +1,6 @@
 "use client";
 
+import "./home-live-demo.css";
 import { useEffect, useRef, useState } from "react";
 import type { LiveDemoPayload } from "@/lib/modules/home/live-demo-content";
 

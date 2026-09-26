@@ -1,5 +1,6 @@
 "use client";
 
+import "./home-auth.css";
 import {
   useCallback,
   useEffect,
