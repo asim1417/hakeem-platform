@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrieval";
+import { buildRulingMorphQuery } from "@/lib/modules/legal-core/rulings-search";
 import type { RawResult, SearchProvider, SearchQuery } from "./search-provider";
 
 // مزوّد البحث النصّي على PostgreSQL — متاح دائماً (قاعدة المنصّة الأساسية).
 //
 // المواد: يعتمد على بحث النواة العربي (findRelevantLegalArticles) الذي يفكّك السؤال
 //   إلى كلمات/مشتقّات ويرتّب بالصلة — فيعمل مع الأسئلة الطبيعية لا العبارة الكاملة فقط.
-// الأحكام/المبادئ: تفكيك خفيف للسؤال إلى كلمات دالّة + مطابقة OR، بدل مطابقة
-//   العبارة الكاملة التي كانت لا تجد شيئاً لسؤال طبيعي مثل «هل يجوز فسخ العقد بسبب الغبن».
+// الأحكام/المبادئ: تفكيك + توسيع صرفي خفيف (اشتقاقات) ثم مطابقة OR على الحقول.
 
 // كلمات وقف خفيفة شائعة في صياغة الأسئلة — تُستبعد كي لا تُفسد المطابقة.
 const QUESTION_STOPWORDS = new Set<string>([
@@ -27,6 +27,17 @@ export function tokenizeQuery(q: string): string[] {
         .filter((w) => w.length >= 3 && !QUESTION_STOPWORDS.has(w))
     )
   ).slice(0, 8);
+}
+
+/**
+ * كلمات الأحكام للمسار المعجمي: توسيع صرفي (اشتقاقات) لكل لفظ دالّ،
+ * مع سقف للمتحوّرات حتى لا تتضخّم جملة OR.
+ */
+export function tokenizeRulingQuery(q: string): string[] {
+  const morph = buildRulingMorphQuery(q, "derivatives");
+  const base = morph.allVariants.filter((v) => v.length >= 3);
+  if (base.length) return Array.from(new Set(base)).slice(0, 24);
+  return tokenizeQuery(q);
 }
 
 /** يحوّل درجة الصلة المفتوحة (من بحث النواة) إلى درجة 0..1 ضمن نطاق متّسق مع المزوّدات. */
@@ -58,6 +69,7 @@ export const postgresProvider: SearchProvider = {
     if (term.length < 2) return [];
     const take = Math.min(limit, 20);
     const tokens = tokenizeQuery(term);
+    const rulingTokens = tokenizeRulingQuery(term);
     const results: RawResult[] = [];
     // [إصلاح SEARCH-002] فلتر المحكمة يُطبَّق فعليًّا على الأحكام إن مُرّر (كان يُتجاهَل).
     const courtFilter = context?.court?.trim()
@@ -86,18 +98,18 @@ export const postgresProvider: SearchProvider = {
     }
 
     try {
-      // الأحكام القضائية — مطابقة كلمات السؤال الدالّة.
+      // الأحكام القضائية — مطابقة كلمات السؤال + متحوّراتها الصرفية.
       const rulings = await prisma.judicialCase.findMany({
         where: courtFilter
-          ? { AND: [tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]), courtFilter] }
-          : tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
+          ? { AND: [tokenOrFilter(rulingTokens, term, ["judgmentTitle", "judgmentText"]), courtFilter] }
+          : tokenOrFilter(rulingTokens, term, ["judgmentTitle", "judgmentText"]),
         select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true, decisionDate: true, decisionDateText: true, reviewStatus: true },
         take,
       });
       for (const r of rulings) {
         const hay = `${r.judgmentTitle ?? ""}\n${r.judgmentText ?? ""}`;
-        const inTitle = tokens.some((t) => (r.judgmentTitle ?? "").includes(t)) || (r.judgmentTitle ?? "").includes(term);
-        const hits = tokens.filter((t) => hay.includes(t)).length;
+        const inTitle = rulingTokens.some((t) => (r.judgmentTitle ?? "").includes(t)) || (r.judgmentTitle ?? "").includes(term);
+        const hits = rulingTokens.filter((t) => hay.includes(t)).length;
         const base = inTitle ? 0.78 : 0.58;
         // السنة الميلادية للحكم (للفلترة الزمنية) — من التاريخ المهيكل إن وُجد.
         const year = r.decisionDate ? String(r.decisionDate.getFullYear()) : undefined;
@@ -112,7 +124,7 @@ export const postgresProvider: SearchProvider = {
           snippet: (r.judgmentText ?? "").slice(0, 200),
           score,
           source: "postgres",
-          reason: `تطابق نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}${reviewed ? "" : " (غير مُراجَع)"}`,
+          reason: `تطابق صرفي/نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}${reviewed ? "" : " (غير مُراجَع)"}`,
           meta: { matchedBy: "lexical", sourceType: "ruling", caseNo: r.caseNo, decisionNo: r.decisionNo, court: r.court, year, decisionDateText: r.decisionDateText ?? undefined, reviewed },
         });
       }

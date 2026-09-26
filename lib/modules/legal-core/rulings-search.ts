@@ -3,6 +3,7 @@
  *
  * يستعلم من judicial_cases مباشرةً، ولا يمرّ بدمج المواد/الأنظمة إطلاقًا.
  *   • تطبيع عربيّ + أرقام هندية (على الاستعلام وعلى العمود وقت البحث).
+ *   • توسيع صرفيّ للاستعلام (اشتقاقات/جذر/ساق…) على search_norm — بلا تعديل judgmentText.
  *   • فلاتر المحكمة والسنة الهجرية (تُستخرج من نصّ التاريخ الهجريّ).
  *   • حجب PDPL: تُنقّى أرقام الهوية/الإقامة والجوال من المقتطف قبل الإرجاع، ولا تُسجَّل.
  *
@@ -12,6 +13,13 @@
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
 import { sanitizeJudgmentDisplay } from "./display-text";
+import {
+  buildArabicSearchVariants,
+  findRootCandidates,
+  getArabicStem,
+  stripArabicAffixes,
+  type ArabicSearchType,
+} from "./arabic-morphology";
 
 export interface RulingHit {
   id: string;
@@ -25,6 +33,13 @@ export interface RulingHit {
   snippet: string; // منقّى من PDPL
   score: number; // 0..1 نسبة الألفاظ المتطابقة (+ حافز العنوان)
 }
+
+/** كلمات وقف لا تُوسَّع صرفيًا ولا تُفرَض في AND. */
+const RULING_STOPWORDS = new Set([
+  "في", "من", "علي", "الي", "عن", "مع", "هذا", "هذه", "ذلك", "التي", "الذي",
+  "او", "ام", "ان", "كل", "بين", "عند", "لكن", "قد", "ما", "لا", "الا",
+  "هو", "هي", "كان", "يكون", "ثم", "اي", "كما", "حتي", "اذا", "هل", "بسبب",
+]);
 
 /** حجب البيانات الشخصية الحساسة (PDPL): أرقام الهوية/الإقامة (10 خانات) والجوال. */
 export function redactPII(text: string): string {
@@ -65,9 +80,71 @@ export function extractHijriYear(dateText: string | null | undefined): number | 
 
 /** تعبير SQL يطبّع نصّ عمود عربيّ (يوافق normalizeArabic في JS تقريبًا). */
 function sqlNormalize(col: string): string {
-  // إزالة التشكيل والتطويل والهمزة المفردة، ثم توحيد الحروف والأرقام الهندية.
   return `lower(translate(regexp_replace(coalesce(${col},''), '[\\u064B-\\u0652\\u0640\\u0621]', '', 'g'),
     'أإآٱىةؤئ٠١٢٣٤٥٦٧٨٩', 'اااايهوي0123456789'))`;
+}
+
+/** ينظّف لفظًا ليصلح لـ to_tsquery('simple') — حروف عربية/لاتينية وأرقام فقط. */
+function tsTerm(raw: string): string {
+  return normalizeArabic(raw).replace(/[^ء-ي0-9a-z]/gi, "");
+}
+
+/**
+ * يوسّع كل كلمة دالّة في الاستعلام بمتحوّرات صرفية، ويبني tsquery:
+ * (فسخ|الفسخ|بفسخ) & (عقد|العقد)
+ */
+export function buildRulingMorphQuery(
+  query: string,
+  searchType: ArabicSearchType = "derivatives",
+): { tokens: string[]; variantGroups: string[][]; allVariants: string[]; tsQuery: string } {
+  const rawTokens = normalizeArabic(query)
+    .split(/\s+/)
+    .map((t) => tsTerm(t))
+    .filter((t) => t.length >= 2 && !RULING_STOPWORDS.has(t));
+
+  const tokens = Array.from(new Set(rawTokens));
+  const variantGroups: string[][] = [];
+  const allVariants: string[] = [];
+
+  for (const token of tokens) {
+    let expanded: string[] = [token];
+    if (searchType === "exact") {
+      expanded = [token];
+    } else if (searchType === "contains") {
+      expanded = [token, `ال${token}`, `ب${token}`, `و${token}`, `ل${token}`, `${token}ات`, `${token}ين`];
+    } else if (searchType === "stem" || searchType === "affixes") {
+      expanded = [
+        token,
+        tsTerm(stripArabicAffixes(token)),
+        tsTerm(getArabicStem(token)),
+        ...buildArabicSearchVariants(token, searchType).map(tsTerm),
+      ];
+    } else if (searchType === "root") {
+      expanded = [token, ...findRootCandidates(token).map(tsTerm), ...buildArabicSearchVariants(token, "root").map(tsTerm)];
+    } else {
+      // derivatives (الافتراضي لبحث الأحكام)
+      expanded = [token, ...buildArabicSearchVariants(token, "derivatives").map(tsTerm)];
+    }
+
+    const cleaned = Array.from(
+      new Set(expanded.map(tsTerm).filter((v) => v.length >= 2 && (v === token || v.length >= 3))),
+    ).slice(0, 14);
+
+    if (!cleaned.length) continue;
+    variantGroups.push(cleaned);
+    allVariants.push(...cleaned);
+  }
+
+  const tsQuery = variantGroups
+    .map((group) => (group.length === 1 ? group[0] : `(${group.join("|")})`))
+    .join("&");
+
+  return {
+    tokens,
+    variantGroups,
+    allVariants: Array.from(new Set(allVariants)),
+    tsQuery,
+  };
 }
 
 export interface RulingSearchOptions {
@@ -76,10 +153,10 @@ export interface RulingSearchOptions {
   yearH?: number;
   limit?: number;
   offset?: number;
+  /** نوع التوسيع الصرفي — افتراضيًا اشتقاقات. */
+  searchType?: ArabicSearchType;
 }
 
-// كشف وجود عمود search_norm المفهرس (يُخزَّن مرّة). عند وجوده نستخدم المسار المفهرس السريع؛
-// وإلّا نطبّع فوريًّا (صالح للقراءة بلا فهرس، أبطأ) — الفهرس يُطبَّق عبر هجرة على Neon branch.
 let _hasSearchNorm: boolean | null = null;
 async function hasSearchNormColumn(): Promise<boolean> {
   if (_hasSearchNorm !== null) return _hasSearchNorm;
@@ -94,22 +171,20 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const started = Date.now();
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
   const offset = Math.max(opts.offset ?? 0, 0);
-  const tokens = normalizeArabic(opts.query).split(/\s+/).filter((t) => t.length >= 2);
-  if (!tokens.length) return { hits: [], total: 0, ms: Date.now() - started };
+  const searchType = opts.searchType ?? "derivatives";
+  const morph = buildRulingMorphQuery(opts.query, searchType);
+  if (!morph.tsQuery || !morph.tokens.length) return { hits: [], total: 0, ms: Date.now() - started };
 
-  // مطابقة على مستوى الكلمة الكاملة (لا احتواء جزئيّ) عبر البحث النصيّ الكامل بإعداد 'simple'
-  // الذي يقسم على الفراغات/الترقيم فقط بلا جذوع إنجليزية — يتفادى إيجابيات مثل «نجش» داخل «سونجشانج».
-  const normQuery = tokens.join(" ");
   const indexed = await hasSearchNormColumn();
-  // المسار المفهرس: عمود search_norm (منقّى PDPL ومطبَّع) مع فهرس GIN. وإلّا تطبيع فوريّ.
   const tsv = indexed
     ? `to_tsvector('simple', coalesce("search_norm",''))`
     : `to_tsvector('simple', ${sqlNormalize(`"judgmentText"`)} || ' ' || ${sqlNormalize(`"judgmentTitle"`)})`;
   const params: unknown[] = [];
   const conds: string[] = [];
-  params.push(normQuery);
+  params.push(morph.tsQuery);
   const tsqIdx = params.length;
-  conds.push(`${tsv} @@ plainto_tsquery('simple', $${tsqIdx})`);
+  // to_tsquery: OR داخل المجموعة الصرفية وAND بين كلمات السؤال.
+  conds.push(`${tsv} @@ to_tsquery('simple', $${tsqIdx})`);
   if (opts.court && opts.court.trim()) {
     params.push(`%${normalizeArabic(opts.court)}%`);
     conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
@@ -131,7 +206,7 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
     judgmentTitle: string | null; judgmentText: string | null;
   }>>(
     `SELECT "id","decisionNo","caseNo","court","cityName","decisionDateText","caseDateText","judgmentTitle","judgmentText",
-            ts_rank(${tsv}, plainto_tsquery('simple', $${tsqIdx})) AS rank
+            ts_rank(${tsv}, to_tsquery('simple', $${tsqIdx})) AS rank
      FROM "judicial_cases" WHERE ${where}
      ORDER BY rank DESC, "decisionDate" DESC NULLS LAST
      LIMIT ${limit} OFFSET ${offset}`, ...params,
@@ -140,13 +215,17 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const hits: RulingHit[] = rows.map((r) => {
     const bodyWords = new Set(normalizeArabic(r.judgmentText ?? "").split(/\s+/));
     const titleWords = new Set(normalizeArabic(r.judgmentTitle ?? "").split(/\s+/));
-    const present = tokens.filter((t) => bodyWords.has(t) || titleWords.has(t)).length;
-    const titleBoost = tokens.some((t) => titleWords.has(t)) ? 0.1 : 0;
-    // مقتطف حول أوّل لفظ مطابق (مطابقة كلمة كاملة)، منقّى من PDPL.
+    const present = morph.variantGroups.filter((group) =>
+      group.some((v) => bodyWords.has(v) || titleWords.has(v)),
+    ).length;
+    const titleBoost = morph.variantGroups.some((group) => group.some((v) => titleWords.has(v))) ? 0.1 : 0;
     const raw = r.judgmentText ?? "";
     const normRaw = normalizeArabic(raw);
     let idx = -1;
-    for (const t of tokens) { const i = normRaw.search(new RegExp(`(^|\\s)${t}(\\s|$)`)); if (i >= 0) { idx = i; break; } }
+    for (const v of morph.allVariants) {
+      const i = normRaw.search(new RegExp(`(^|\\s)${v}(\\s|$)`));
+      if (i >= 0) { idx = i; break; }
+    }
     const start = idx > 60 ? idx - 60 : 0;
     const snippet = redactPII(raw.slice(start, start + 240)).replace(/\s+/g, " ").trim();
     return {
@@ -159,7 +238,7 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
       hijriYear: extractHijriYear(r.decisionDateText ?? r.caseDateText),
       title: r.judgmentTitle,
       snippet,
-      score: Math.min(1, present / tokens.length + titleBoost),
+      score: Math.min(1, (morph.variantGroups.length ? present / morph.variantGroups.length : 0) + titleBoost),
     };
   });
   hits.sort((a, b) => b.score - a.score);
@@ -185,7 +264,7 @@ export function rulingHitToMerged(h: RulingHit): {
     snippet: h.snippet || undefined,
     confidence: Math.max(0.4, Math.min(1, h.score || 0.7)),
     sources: ["postgres"],
-    reasons: ["تطابق مفهرس في الأحكام القضائية (search_norm)"],
+    reasons: ["تطابق مفهرس صرفي في الأحكام القضائية (search_norm)"],
     meta: {
       matchedBy: "lexical",
       sourceType: "ruling",

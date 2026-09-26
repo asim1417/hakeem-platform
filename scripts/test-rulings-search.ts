@@ -8,7 +8,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
-import { searchRulingsDirect, redactPII, extractHijriYear, buildRulingSearchNorm } from "../lib/modules/legal-core/rulings-search";
+import {
+  searchRulingsDirect,
+  redactPII,
+  extractHijriYear,
+  buildRulingSearchNorm,
+  buildRulingMorphQuery,
+} from "../lib/modules/legal-core/rulings-search";
+import { tokenizeRulingQuery } from "../lib/modules/legal-search/providers/postgres-provider";
 
 const OUT = process.argv[2] || "reports/legal-source-integrity";
 const QUERIES = ["عقد الإيجار", "فسخ العقد", "الغبن", "الشيك", "التعويض", "الحضانة", "النفقة", "التحكيم", "الشفعة", "نجش"];
@@ -19,6 +26,7 @@ async function main() {
   let failed = 0;
   const ok = (c: boolean, m: string) => { if (!c) { failed++; console.error("✗ " + m); } else console.log("✓ " + m); };
   const rows: Array<Record<string, unknown>> = [];
+  const morphLive: Array<Record<string, unknown>> = [];
   try {
     // وحدات (بلا قاعدة)
     ok(redactPII("رقم الهوية 1012345678 والجوال 0501234567").indexOf("1012345678") === -1, "PDPL: حجب رقم الهوية");
@@ -32,6 +40,19 @@ async function main() {
     ok(extractHijriYear("في 12/3/1445هـ") === 1445, "استخراج السنة الهجرية");
     ok(extractHijriYear("١٢/٣/١٤٤٠") === 1440, "استخراج السنة من أرقام هندية");
     ok(buildRulingSearchNorm("عنوان", "عضوفرحان بن يحيى").includes("عضو فرحان") || buildRulingSearchNorm("", "عضوفرحان").includes("عضو"), "فهرس البحث يفكّ التصاق التوقيع");
+
+    // وحدات صرفية: توسيع الاشتقاقات على الاستعلام فقط (بلا لمس judgmentText).
+    const faskh = buildRulingMorphQuery("فسخ", "derivatives");
+    ok(faskh.tokens.includes("فسخ"), "صرف: رمز فسخ في tokens");
+    ok(faskh.allVariants.length > 1, "صرف: اشتقاقات فسخ توسّع المتحوّرات");
+    ok(faskh.tsQuery.includes("|") || faskh.allVariants.length === 1, "صرف: tsquery OR داخل المجموعة");
+    const exactFaskh = buildRulingMorphQuery("فسخ", "exact");
+    ok(exactFaskh.allVariants.length === 1 && exactFaskh.allVariants[0] === "فسخ", "صرف: exact لا يوسّع");
+    const multi = buildRulingMorphQuery("فسخ العقد", "derivatives");
+    ok(multi.tsQuery.includes("&"), "صرف: AND بين كلمات السؤال");
+    ok(multi.variantGroups.length === 2, "صرف: مجموعتان لكلمتي فسخ والعقد");
+    const rulingToks = tokenizeRulingQuery("فسخ");
+    ok(rulingToks.length > 1 && rulingToks.includes("فسخ"), "صرف: tokenizeRulingQuery يوسّع الاشتقاقات");
 
     for (const q of QUERIES) {
       const { hits, total, ms } = await searchRulingsDirect({ query: q, limit: 5 });
@@ -55,11 +76,26 @@ async function main() {
     const filtered = await searchRulingsDirect({ query: "التعويض", yearH: 1440, limit: 1 });
     ok(filtered.total <= base.total, "فلتر السنة الهجرية يُضيّق النتائج");
 
+    // صرف حيّ: الاشتقاقات ≥ exact، وصيغة مشتقّة تجد نتائجًا.
+    for (const q of ["فسخ", "تعويض", "غبن"]) {
+      const exact = await searchRulingsDirect({ query: q, limit: 3, searchType: "exact" });
+      const deriv = await searchRulingsDirect({ query: q, limit: 3, searchType: "derivatives" });
+      morphLive.push({ query: q, exactTotal: exact.total, derivTotal: deriv.total, exactMs: exact.ms, derivMs: deriv.ms });
+      console.log(`  صرف «${q}» exact=${exact.total} derivatives=${deriv.total}`);
+      ok(deriv.total >= exact.total, `صرف حيّ: اشتقاقات «${q}» ≥ exact`);
+      ok(deriv.total > 0, `صرف حيّ: اشتقاقات «${q}» تُرجع نتائج`);
+    }
+    const faskhat = await searchRulingsDirect({ query: "فسخت", limit: 3, searchType: "derivatives" });
+    morphLive.push({ query: "فسخت", derivTotal: faskhat.total, derivMs: faskhat.ms });
+    console.log(`  صرف «فسخت» derivatives=${faskhat.total}`);
+    ok(faskhat.total > 0, "صرف حيّ: صيغة مشتقّة «فسخت» تجد أحكامًا عبر search_norm");
+
     const report = {
       generatedAt: new Date().toISOString(),
       source: "judicial_cases (Neon, read-only)",
-      note: "بحث مستقلّ مباشر على الأحكام بلا دمج مواد/أنظمة. مطابقة كلمة كاملة (FTS simple) + تطبيع + حجب PDPL.",
+      note: "بحث مستقلّ مباشر على الأحكام بلا دمج مواد/أنظمة. FTS + توسيع صرفي على search_norm + تطبيع + حجب PDPL. judgmentText دون تعديل.",
       queries: rows,
+      morphology: morphLive,
       unresolved: [
         "عمود search_norm وفهرس GIN موجودان على الإنتاج بعد تعبئة منقّاة. إن غاب العمود يسقط البحث إلى مسح تسلسلي.",
         "التاريخ الهجريّ يُستخرج من النصّ (لا عمود مبنيَن) — تغطية الاستخراج أقلّ من 100%.",
