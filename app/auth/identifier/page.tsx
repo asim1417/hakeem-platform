@@ -5,6 +5,7 @@ import { ClerkRoot } from "@/components/providers/ClerkRoot";
 import { isIdentifierFormEnabled } from "@/lib/modules/auth/auth-providers";
 import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
+import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,13 @@ export default async function IdentifierAuthPage({
 
   const mode = searchParams?.mode === "sign-up" ? "sign-up" : "sign-in";
   const nextUrl = resolvePostAuthNext(searchParams);
+
+  // صفحة دخول واحدة: التبويبان والرمز في ‎/sign-in‎ مباشرة (الإحالة في الـ middleware، وهذه احتياطها)
+  if (isHomeInlineAuthEnabled()) {
+    const q = new URLSearchParams({ next: nextUrl });
+    if (mode === "sign-up") q.set("mode", "sign-up");
+    redirect(`/sign-in?${q}`);
+  }
 
   if (!isIdentifierFormEnabled()) {
     redirect(`/api/auth/oauth/start?provider=email&mode=${mode}&next=${encodeURIComponent(nextUrl)}`);

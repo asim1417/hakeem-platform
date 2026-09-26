@@ -8,6 +8,8 @@ import {
   LOGGED_OUT_MARK_COOKIE,
   shouldRedirectSignedInHome,
 } from "@/lib/modules/config/home-signed-in-redirect";
+import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
+import { singleSignInTarget } from "@/lib/modules/auth/single-sign-in";
 import {
   plainAuthGate,
   resolveUnauthenticatedGate,
@@ -143,6 +145,12 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
     })
   ) {
     return NextResponse.redirect(new URL("/dashboard", request.url), 307);
+  }
+
+  // صفحة دخول واحدة: ‎/sign-up‎ و‎/register‎ و‎/login‎ و‎/auth/identifier‎ ← ‎/sign-in‎ (307، والوجهة محفوظة)
+  if (isHomeInlineAuthEnabled()) {
+    const target = singleSignInTarget(request.nextUrl.pathname, request.nextUrl.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, request.url), 307);
   }
 
   if (!isClerkConfigured()) {
