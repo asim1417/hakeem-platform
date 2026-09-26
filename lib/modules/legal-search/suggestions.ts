@@ -3,22 +3,22 @@ import { prisma } from "@/lib/prisma";
 
 export interface SearchSuggestion {
   value: string;
-  kind: "system" | "popular";
+  kind: "system" | "popular" | "ruling";
   hint?: string;
 }
 
 /**
- * اقتراحات بحث فورية من مصدرين حقيقيين في القاعدة:
- *   1) أسماء الأنظمة المطابقة للمدخل (LegalSystem).
- *   2) عبارات البحث الشائعة سابقًا (SearchLog) — مجهّلة، تجميعية فقط.
- * آمنة: أي خطأ أو غياب جدول يُعيد قائمة فارغة دون كسر الواجهة.
+ * اقتراحات بحث فورية من مصادر حقيقية في القاعدة:
+ *   1) أسماء الأنظمة المطابقة (LegalSystem).
+ *   2) أحكام قضائية (عنوان/رقم قضية/قرار) — لاكتشاف الأحكام من صندوق الإكمال.
+ *   3) عبارات البحث الشائعة سابقًا (SearchLog) — مجهّلة، تجميعية فقط.
  */
 export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<SearchSuggestion[]> {
   const q = qRaw.trim();
   if (q.length < 2) return [];
-  const half = Math.max(2, Math.ceil(limit / 2));
+  const third = Math.max(2, Math.ceil(limit / 3));
 
-  const [systems, popular] = await Promise.all([
+  const [systems, rulings, popular] = await Promise.all([
     prisma.legalSystem
       .findMany({
         where: { name: { contains: q, mode: "insensitive" } },
@@ -27,6 +27,19 @@ export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<Sea
         take: limit,
       })
       .catch(() => [] as Array<{ name: string; articleCount: number }>),
+    prisma.judicialCase
+      .findMany({
+        where: {
+          OR: [
+            { judgmentTitle: { contains: q, mode: "insensitive" } },
+            { decisionNo: { contains: q, mode: "insensitive" } },
+            { caseNo: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: { judgmentTitle: true, decisionNo: true, caseNo: true, court: true },
+        take: third,
+      })
+      .catch(() => [] as Array<{ judgmentTitle: string | null; decisionNo: string | null; caseNo: string | null; court: string | null }>),
     prisma.searchLog
       .groupBy({
         by: ["query"],
@@ -41,12 +54,24 @@ export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<Sea
   const seen = new Set<string>();
   const out: SearchSuggestion[] = [];
 
-  for (const s of systems.slice(0, limit)) {
+  for (const s of systems) {
     const key = s.name.trim();
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push({ value: key, kind: "system", hint: s.articleCount ? `${s.articleCount} مادة` : "نظام" });
-    if (out.length >= half) break;
+    if (out.length >= third) break;
+  }
+
+  for (const r of rulings) {
+    const key = (r.judgmentTitle || r.decisionNo || r.caseNo || "").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      value: key,
+      kind: "ruling",
+      hint: r.court ? `حكم — ${r.court.replace(/^محكمة:\s*/, "")}` : "حكم قضائي",
+    });
+    if (out.length >= third * 2) break;
   }
 
   for (const p of popular) {
@@ -57,7 +82,6 @@ export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<Sea
     if (out.length >= limit) break;
   }
 
-  // أكمل من الأنظمة المتبقّية إن بقي متّسع.
   for (const s of systems) {
     if (out.length >= limit) break;
     const key = s.name.trim();

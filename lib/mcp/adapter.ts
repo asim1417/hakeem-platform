@@ -19,6 +19,7 @@ import { redactPII } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
+import { searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
@@ -193,52 +194,22 @@ export async function expandTerms(term: string) {
   };
 }
 
-// ٦) البحث في الأحكام — يعيد استخدام محرّك البحث الهجين (نوع «ruling»).
+// ٦) البحث في الأحكام — مسار مفهرس مباشر (search_norm) مع فلاتر المحكمة/السنة.
 export async function searchRulings(query: string, court?: string, yearH?: number, limit = 10) {
-  const res = await hybridSearch({
-    q: query,
-    limit: Math.min(limit * 4, 30),
-    context: court ? { court } : undefined,
-  }).catch(() => null);
-  const ranked = (res?.results ?? []).filter((r) => r.type === "ruling");
+  const direct = await searchRulingsDirect({
+    query,
+    court,
+    yearH,
+    limit: Math.min(Math.max(limit, 1), 50),
+  }).catch(() => ({ hits: [], total: 0, ms: 0 }));
 
-  const ids = ranked.map((r) => r.id);
-  const rows = ids.length
-    ? await prisma.judicialCase.findMany({
-        where: { id: { in: ids } },
-        select: {
-          id: true,
-          caseNo: true,
-          decisionNo: true,
-          court: true,
-          decisionDate: true,
-          decisionDateText: true,
-          judgmentText: true,
-        },
-      })
-    : [];
-  const byId = new Map(rows.map((r) => [r.id, r]));
-
-  /** استخراج سنة هجرية (٤ خانات) من نصّ التاريخ إن وُجد. */
-  const hijriYear = (text?: string | null): number | undefined => {
-    if (!text) return undefined;
-    const m = text.match(/1[0-4]\d{2}/); // نطاق هجري معقول (1000–1499)
-    return m ? Number.parseInt(m[0], 10) : undefined;
-  };
-
-  const results = ranked
-    .map((r) => byId.get(r.id))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .filter((r) => (court ? (r.court ?? "").includes(court) : true))
-    .filter((r) => (yearH ? hijriYear(r.decisionDateText) === yearH : true))
-    .slice(0, limit)
-    .map((r) => ({
-      ruling_id: r.id,
-      case_number: r.decisionNo ?? r.caseNo ?? null,
-      court: r.court ?? null,
-      year_h: hijriYear(r.decisionDateText) ?? null,
-      snippet: snippet(r.judgmentText),
-    }));
+  const results = direct.hits.map((r) => ({
+    ruling_id: r.id,
+    case_number: r.decisionNo ?? r.caseNo ?? null,
+    court: r.court ?? null,
+    year_h: r.hijriYear ?? null,
+    snippet: snippet(r.snippet),
+  }));
 
   return { query, count: results.length, results };
 }

@@ -18,6 +18,10 @@
 import { searchLegalCore, type LegalCoreResult } from "./legal-retrieval";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { deriveMatchedBy } from "@/lib/modules/legal-search/hybrid-search";
+import { searchRulingsDirect, rulingHitToMerged, type RulingHit } from "./rulings-search";
+
+// إعادة تصدير لتحويل نتائج الأحكام إلى الشكل الموحّد في بقية المسارات.
+export { rulingHitToMerged } from "./rulings-search";
 
 /** سقوف تمثيل كل نوع في النتيجة الموحّدة — تضمن ظهور الأحكام/المبادئ في تبويباتها. */
 const ARTICLE_CAP = 25;
@@ -113,8 +117,8 @@ function normalizeArticleConfidence(results: LegalCoreResult[]): Map<string, num
 }
 
 /**
- * البحث الشامل عبر النواة: مواد (searchLegalCore) + أحكام/مبادئ (hybridSearch).
- * يعيد شكل HybridSearchResponse نفسه ليتوافق مع الصفحة الشاملة دون تغيير في العرض.
+ * البحث الشامل عبر النواة: مواد (searchLegalCore) + أحكام مفهرسة (searchRulingsDirect)
+ * + مبادئ من الهجين. يعيد شكل HybridSearchResponse نفسه.
  */
 export async function searchLegalCoreComprehensive(q: string, limit = 30): Promise<ComprehensiveResponse> {
   const query = (q ?? "").trim();
@@ -122,21 +126,21 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
     return { query: "", mode: "legal-core-comprehensive", results: [], providers: [], total: 0, facets: EMPTY_FACETS };
   }
 
-  // المواد من النواة (٥ إشارات، دلالي مُفعّل)؛ والأحكام/المبادئ من الهجين (يحمل court/year + RRF).
-  // نجلب حتى FACET_FETCH (لا سقف العرض) كي تُحسب الأوجه على المجموعة الكاملة لا صفحة العرض.
-  const [core, hybrid] = await Promise.all([
+  // المواد من النواة؛ الأحكام من الفهرس المباشر (search_norm)؛ المبادئ/احتياط الأحكام من الهجين.
+  const rulingFetch = Math.max(RULING_CAP, Math.min(FACET_FETCH, 60));
+  const [core, hybrid, directRulings] = await Promise.all([
     searchLegalCore({
       query,
-      limit: Math.max(limit, ARTICLE_MATERIALIZE), // تجسيد صفحة صغيرة فقط (لا ٢٠٠)
+      limit: Math.max(limit, ARTICLE_MATERIALIZE),
       includeSnippets: true,
       semantic: true,
-      includeFacets: true, // النواة تحسب الأوجه على العمق الكامل (خفيفة) وتعيدها
+      includeFacets: true,
       facetDepth: FACET_FETCH,
     }).catch(() => null),
     hybridSearch({ q: query, limit: Math.max(limit, FACET_FETCH) }).catch(() => null),
+    searchRulingsDirect({ query, limit: rulingFetch }).catch(() => ({ hits: [] as RulingHit[], total: 0, ms: 0 })),
   ]);
 
-  // مواد النواة → موحّدة، بثقة مُطبَّعة، بسقف التمثيل.
   const coreResults = core?.results ?? [];
   const confMap = normalizeArticleConfidence(coreResults);
   const coreArticleIds = new Set(coreResults.map((a) => a.articleId));
@@ -144,33 +148,28 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
     .slice(0, ARTICLE_CAP)
     .map((a) => articleToMerged(a, confMap.get(a.articleId) ?? 0));
 
-  // استنقاذ مطابقة «المادة {رقم} {نظام}» المباشرة من الهجين إن لم تجدها النواة — تتصدّر.
   const hybridResults = hybrid?.results ?? [];
   const exact = hybridResults.find((r) => r.type === "article" && r.meta?.exactMatch === true);
   if (exact && !coreArticleIds.has(exact.id)) {
     articles = [{ ...exact, confidence: 1 }, ...articles].slice(0, ARTICLE_CAP);
   }
 
-  // الأحكام والمبادئ من الهجين (غير-المواد)، بسقف لكل نوع.
-  const rulings = hybridResults.filter((r) => r.type === "ruling").slice(0, RULING_CAP);
+  // أحكام: الفهرس المباشر أولًا (أدق على 51 ألف حكم)، ثم إكمال من الهجين دون تكرار.
+  const rulingById = new Map<string, MergedResult>();
+  for (const h of directRulings.hits) rulingById.set(h.id, rulingHitToMerged(h));
+  for (const r of hybridResults.filter((x) => x.type === "ruling")) {
+    if (!rulingById.has(r.id)) rulingById.set(r.id, r);
+  }
+  const allRulings = [...rulingById.values()];
+  const rulings = allRulings.slice(0, RULING_CAP);
   const principles = hybridResults.filter((r) => r.type === "principle").slice(0, PRINCIPLE_CAP);
 
-  // الدمج الموحّد (الدفعة ١.٤): كل نوع يأتي بترتيبه الداخلي من محرّكه المُوالَف
-  //   • المواد   → ترتيب النواة (٥ إشارات) — لا نمسّه.
-  //   • الأحكام/المبادئ → ترتيب RRF من الهجين — لا نمسّه.
-  // المشكلة المُصحَّحة: الفرز السابق كان يقارن ثقة المواد (مُطبَّعة على النواة) بثقة
-  // الأحكام (مُطبَّعة على RRF) — مقياسان غير متجانسين. نوحّدهما بـ RRF على **الرتبة داخل
-  // النوع** (المعيار العالمي لدمج مصادر غير متجانسة الدرجات): درجة موحّدة = 1/(K+رتبة).
-  // فيتشابك أعلى كل نوع بإنصاف، مع حفظ الترتيب الداخلي، وكسر التعادل بأولوية المواد.
   const results = interleaveByRRF([
     { items: articles, priority: 3 },
     { items: rulings, priority: 2 },
     { items: principles, priority: 1 },
   ]);
 
-  // الأوجه (facets): المواد من النواة (مُحسوبة على العمق الكامل خفيفةً داخلها)، والأحكام من
-  // الهجين. سقوط آمن إلى العدّ على المُجسَّد إن غابت أوجه النواة. الأعداد مطابقة للسابق.
-  const allRulings = hybridResults.filter((r) => r.type === "ruling");
   const cf = core?.facetCounts;
   const facets: ComprehensiveFacets = {
     system: cf?.system ?? countBy(coreResults, (a) => a.systemName),

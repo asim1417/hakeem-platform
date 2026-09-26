@@ -4,7 +4,7 @@ import { requirePagePermission } from "@/lib/modules/auth/session";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
-import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
+import { sanitizeJudgmentDisplay } from "@/lib/modules/legal-core/display-text";
 import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
@@ -113,7 +113,7 @@ export default async function LegalCoreJudgmentsPage({
           await prisma.judicialCase
             .findMany({ where: { id: { in: judgments.map((j) => j.id) } }, select: { id: true, judgmentText: true } })
             .catch(() => [] as Array<{ id: string; judgmentText: string }>)
-        ).map((r) => [r.id, sanitizeDisplayText(r.judgmentText)])
+        ).map((r) => [r.id, sanitizeJudgmentDisplay(r.judgmentText)])
       )
     : new Map<string, string>();
 

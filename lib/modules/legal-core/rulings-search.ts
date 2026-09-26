@@ -11,6 +11,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
+import { sanitizeJudgmentDisplay } from "./display-text";
 
 export interface RulingHit {
   id: string;
@@ -63,11 +64,12 @@ export function redactPII(text: string): string {
 }
 
 /**
- * نص فهرس الأحكام: حجب ثم تطبيع ثم حجب ثانٍ.
+ * نص فهرس الأحكام: تنقية عرض آمنة → حجب PDPL → تطبيع → حجب ثانٍ.
  * التطبيع يحوّل الأرقام الهندية ويزيل الفواصل، فيُظهر أرقاماً لم يطابقها الحجب الأول.
+ * لا يُعدَّل judgmentText الأصلي — هذا للنصّ المُفهرَس فقط.
  */
 export function buildRulingSearchNorm(title: string | null | undefined, text: string | null | undefined): string {
-  const raw = `${title ?? ""} ${text ?? ""}`;
+  const raw = sanitizeJudgmentDisplay(`${title ?? ""} ${text ?? ""}`);
   return redactPII(normalizeArabic(redactPII(raw)));
 }
 
@@ -183,4 +185,36 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   hits.sort((a, b) => b.score - a.score);
 
   return { hits, total, ms: Date.now() - started };
+}
+
+/** يحوّل نتيجة بحث الأحكام المفهرس إلى شكل نتائج البحث الموحّد (مواد/أحكام/مبادئ). */
+export function rulingHitToMerged(h: RulingHit): {
+  type: "ruling";
+  id: string;
+  title: string;
+  snippet?: string;
+  confidence: number;
+  sources: ["postgres"];
+  reasons: string[];
+  meta: Record<string, unknown>;
+} {
+  return {
+    type: "ruling",
+    id: h.id,
+    title: `حكم ${h.decisionNo ?? h.caseNo ?? h.id}${h.court ? ` — ${h.court}` : ""}`,
+    snippet: h.snippet || undefined,
+    confidence: Math.max(0.4, Math.min(1, h.score || 0.7)),
+    sources: ["postgres"],
+    reasons: ["تطابق مفهرس في الأحكام القضائية (search_norm)"],
+    meta: {
+      matchedBy: "lexical",
+      sourceType: "ruling",
+      caseNo: h.caseNo ?? undefined,
+      decisionNo: h.decisionNo ?? undefined,
+      court: h.court ?? undefined,
+      year: h.hijriYear != null ? String(h.hijriYear) : undefined,
+      decisionDateText: h.dateText ?? undefined,
+      citationKey: `حكم ${h.decisionNo ?? h.caseNo ?? h.id}`,
+    },
+  };
 }
