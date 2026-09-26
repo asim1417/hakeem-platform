@@ -27,6 +27,7 @@ import { AccountMenu } from "@/components/AccountMenu";
 import { MobileNav } from "@/components/MobileNav";
 import { SidebarNav } from "@/components/SidebarNav";
 import { TopbarBreadcrumb } from "@/components/TopbarBreadcrumb";
+import { HOME_ABOUT_HREF } from "@/lib/modules/config/home-signed-in-redirect";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { DashboardHomeLink, SafeBackButton } from "@/components/nav/SafeBackButton";
 import { ScrollRestorer } from "@/components/nav/ScrollRestorer";
@@ -199,6 +200,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 autoComplete="off"
               />
             </form>
+            {/* الواجهة التعريفية بطلب المستخدم — «/» وحدها تُحيل صاحب الجلسة إلى مساحة العمل */}
+            <a href={HOME_ABOUT_HREF} className="topbar-about focus-ring">
+              عن حكيم
+            </a>
             <LanguageToggle
               current={locale}
               switchLabel={LOCALE_LABEL[locale === "ar" ? "en" : "ar"]}

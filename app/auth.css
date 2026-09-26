@@ -235,3 +235,17 @@ body.hk-scroll-locked { overflow: hidden; }
   min-height: var(--auth-target);
   align-items: center;
 }
+
+/* رابط «عن حكيم» في رأس مساحة العمل */
+.topbar-about {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+  padding-inline: 0.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.topbar-about:hover { color: var(--gold-dark); text-decoration: underline; }
