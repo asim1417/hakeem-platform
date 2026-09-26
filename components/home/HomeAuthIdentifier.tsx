@@ -31,12 +31,6 @@ type Props = {
   badge?: ReactNode;
 };
 
-
-/**
- * حقل الدخول برمز في الحوار (تبويبا «رقم الجوال | البريد الإلكتروني»). أول رسم بلا Clerk:
- * عند أول تركيز أو كتابة يُركَّب ClerkAppProvider (تحميل ديناميكي) ثم النموذج العربي المضمّن،
- * مع الحفاظ على ما كُتب وعلى ضغطة «متابعة» إن سبقت الجاهزية.
- */
 /** تبويبا «رقم الجوال | البريد الإلكتروني» بالوسائل المفعّلة فقط — الجوال أولًا. */
 function enabledMethods(config: HomeAuthConfig): IdentifierMethod[] {
   const out: IdentifierMethod[] = [];
@@ -45,6 +39,11 @@ function enabledMethods(config: HomeAuthConfig): IdentifierMethod[] {
   return out.length ? out : ["phone"];
 }
 
+/**
+ * حقل الدخول برمز في الحوار (تبويبا «رقم الجوال | البريد الإلكتروني»). أول رسم بلا Clerk:
+ * عند أول تركيز أو كتابة يُركَّب ClerkAppProvider (تحميل ديناميكي) ثم النموذج العربي المضمّن،
+ * مع الحفاظ على ما كُتب في كل تبويب وعلى ضغطة «أرسل الرمز» إن سبقت الجاهزية.
+ */
 export function HomeAuthIdentifier(props: Props) {
   const methods = enabledMethods(props.config);
   const [activated, setActivated] = useState(false);
@@ -110,7 +109,7 @@ export function HomeAuthIdentifier(props: Props) {
             method={method}
             methods={methods}
             onMethodChange={setMethod}
-            value={value}
+            values={values}
             queued={queued}
             onReady={onReady}
             onFailed={onFailed}
@@ -132,7 +131,7 @@ function EmbeddedFlow({
   method,
   methods,
   onMethodChange,
-  value,
+  values,
   queued,
   onReady,
   onFailed,
@@ -140,15 +139,19 @@ function EmbeddedFlow({
   method: IdentifierMethod;
   methods: IdentifierMethod[];
   onMethodChange: (m: IdentifierMethod) => void;
-  value: string;
+  values: Record<IdentifierMethod, string>;
   queued: boolean;
   onReady: () => void;
   onFailed: () => void;
 }) {
   const mounted = useClerkMounted();
   const [Inner, setInner] = useState<InnerComponent | null>(null);
-  // قيمة الحقل لحظة الجاهزية — لا نعيد ضبط النموذج بعدها مع كل حرف
-  const [initial, setInitial] = useState<{ value: string; queued: boolean; method: IdentifierMethod } | null>(null);
+  // قيم التبويبين لحظة الجاهزية — لا نعيد ضبط النموذج بعدها مع كل حرف
+  const [initial, setInitial] = useState<{
+    values: Record<IdentifierMethod, string>;
+    queued: boolean;
+    method: IdentifierMethod;
+  } | null>(null);
 
   useEffect(() => {
     if (mounted) return;
@@ -174,9 +177,9 @@ function EmbeddedFlow({
 
   useEffect(() => {
     if (!Inner || initial) return;
-    setInitial({ value, queued, method });
+    setInitial({ values, queued, method });
     onReady();
-  }, [Inner, initial, value, queued, method, onReady]);
+  }, [Inner, initial, values, queued, method, onReady]);
 
   if (!Inner || !initial) return null;
   return (
@@ -187,7 +190,8 @@ function EmbeddedFlow({
       embedded
       onComplete={onComplete}
       onStepChange={onStepChange}
-      initialIdentifier={initial.value}
+      initialIdentifier={initial.values[initial.method]}
+      initialValues={initial.values}
       initialMethod={initial.method}
       identifierMethods={methods}
       onMethodChange={onMethodChange}

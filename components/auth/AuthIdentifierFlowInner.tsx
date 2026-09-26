@@ -92,6 +92,7 @@ export function AuthIdentifierFlowInner({
   identifierBadge,
   identifierMethods = ["phone", "email"],
   initialMethod,
+  initialValues,
   onMethodChange,
 }: {
   mode: "sign-in" | "sign-up";
@@ -115,6 +116,8 @@ export function AuthIdentifierFlowInner({
   identifierMethods?: readonly IdentifierMethod[];
   /** المضمّن: التبويب المختار عند التحميل (initialIdentifier قيمته) */
   initialMethod?: IdentifierMethod;
+  /** المضمّن: ما كُتب في كل تبويب قبل الجاهزية — يغلب initialIdentifier */
+  initialValues?: Partial<Record<IdentifierMethod, string>>;
   onMethodChange?: (m: IdentifierMethod) => void;
 }) {
   const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
@@ -129,8 +132,8 @@ export function AuthIdentifierFlowInner({
     initialMethod && identifierMethods.includes(initialMethod) ? initialMethod : identifierMethods[0] ?? "phone";
   const [idMethod, setIdMethod] = useState<IdentifierMethod>(firstMethod);
   const [idValues, setIdValues] = useState<Record<IdentifierMethod, string>>({
-    phone: firstMethod === "phone" ? initialIdentifier : "",
-    email: firstMethod === "email" ? initialIdentifier : "",
+    phone: initialValues?.phone ?? (firstMethod === "phone" ? initialIdentifier : ""),
+    email: initialValues?.email ?? (firstMethod === "email" ? initialIdentifier : ""),
   });
   /** المُدخل الحالي محلَّلًا: المضمّن وفق التبويب، والصفحة المستقلة كما كانت (حقل واحد). */
   const parseCurrent = () =>
