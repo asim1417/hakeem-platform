@@ -7,6 +7,8 @@ import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { issuanceInstrument, latestVerification, latestVerifications, storedInstrumentKind } from "@/lib/modules/legal-core/verification-read";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
+import { parseAsOfDate } from "@/lib/modules/legal-core/work-edition";
+import { displayedSystem } from "@/lib/modules/legal-core/work-edition-read";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
 
@@ -45,14 +47,19 @@ export default async function LegalSystemPage({
   const system = await resolveSystem(decodeURIComponent(params.slug));
   if (!system) notFound();
 
-  const slug = resolveSystemSlug(system.eliSlug, system.name);
   const asOfRaw = searchParams?.asOf?.trim() ?? "";
-  const kind = resolveWorkKind(system.name, await storedInstrumentKind(system.id));
+  const asOfDate = parseAsOfDate(asOfRaw);
+  const route = await displayedSystem(system.id, asOfDate);
+  const shown = route.redirected
+    ? (await prisma.legalSystem.findUnique({ where: { id: route.id } }).catch(() => null)) ?? system
+    : system;
+  const slug = resolveSystemSlug(system.eliSlug, system.name);
+  const kind = resolveWorkKind(shown.name, await storedInstrumentKind(shown.id));
   const articles = await prisma.legalArticle
     .findMany({
       // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
       // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
-      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
+      where: { AND: [{ OR: [{ legalSystemId: shown.id }, { lawName: shown.name }] }, { articleNumber: { gt: 0 } }] },
       select: { id: true, articleNumber: true, title: true },
       orderBy: { articleNumber: "asc" },
     })
@@ -69,7 +76,7 @@ export default async function LegalSystemPage({
   const ld = {
     "@context": "https://schema.org",
     "@type": "Legislation",
-    name: system.name,
+    name: shown.name,
     legislationJurisdiction: "SA",
     inLanguage: "ar",
     url: `${BASE}/legal/${encodeURIComponent(slug)}`,
@@ -80,13 +87,21 @@ export default async function LegalSystemPage({
     <PublicLegalShell breadcrumb={<Crumb label={system.name} />}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <header>
-        <h1 className="text-3xl font-bold leading-snug md:text-4xl">{system.name}</h1>
+        <h1 className="text-3xl font-bold leading-snug md:text-4xl">{shown.name}</h1>
+        {route.redirected ? (
+          <p className="mt-2 text-sm text-muted">السجل المخزّن بهذا الاسم لا يُعرض. النص الظاهر عمل مستقل{route.instrument ? ` — ${route.instrument}` : ""}.</p>
+        ) : null}
         {kind ? <p className="mt-2 text-sm font-semibold text-[#A9793F]">{kind}</p> : null}
         <AsOfForm asOf={asOfRaw} />
         <p className="mt-3 text-ink">
           {articles.length.toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
         </p>
-        {workVerification && workFlags.statusLabel !== "الحالة قيد التحقق من المصدر" ? (
+        {route.status ? (
+          <div role="note" className={`mt-4 rounded-xl border-2 p-4 ${route.status === "مستبدل" ? "border-red-600 bg-red-50 text-red-900" : route.status === "صادر لم يسرِ بعد" ? "border-amber-500 bg-amber-50 text-amber-950" : "border-[#C69763]/40 bg-ivory text-[var(--navy)]"}`}>
+            <p className="text-base font-extrabold">{route.status}</p>
+            {route.instrument ? <p className="mt-1 text-sm leading-7">{route.instrument}</p> : null}
+          </div>
+        ) : workVerification && workFlags.statusLabel !== "الحالة قيد التحقق من المصدر" ? (
           <div role="note" className={`mt-4 rounded-xl border-2 p-4 ${workFlags.repealed || workFlags.statusLabel === "مستبدل" ? "border-red-600 bg-red-50 text-red-900" : workFlags.statusLabel === "صادر لم يسرِ بعد" ? "border-amber-500 bg-amber-50 text-amber-950" : "border-[#C69763]/40 bg-ivory text-[var(--navy)]"}`}>
             <p className="text-base font-extrabold">{workFlags.statusLabel}</p>
             {workVerification.evidenceInstrument ? <p className="mt-1 text-sm leading-7">{workVerification.evidenceInstrument}</p> : null}
@@ -98,13 +113,13 @@ export default async function LegalSystemPage({
         ) : null}
       </header>
 
-      {system.preamble?.trim() ? (
+      {shown.preamble?.trim() ? (
         <section className="mt-6 rounded-xl border border-[#C69763]/25 bg-ivory p-5" aria-label="الديباجة">
           <h2 className="text-lg font-bold text-[var(--navy)]">الديباجة</h2>
-          {system.preambleRoyalDecree ? (
-            <p className="mt-1 text-sm text-muted">{system.preambleRoyalDecree}</p>
+          {shown.preambleRoyalDecree ? (
+            <p className="mt-1 text-sm text-muted">{shown.preambleRoyalDecree}</p>
           ) : null}
-          <p className="mt-3 whitespace-pre-line leading-8 text-[var(--navy)]">{system.preamble}</p>
+          <p className="mt-3 whitespace-pre-line leading-8 text-[var(--navy)]">{shown.preamble}</p>
         </section>
       ) : null}
 
@@ -124,7 +139,9 @@ export default async function LegalSystemPage({
               <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
                 <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
                 {(() => {
-                  const flag = citationFlagsFromVerification(flags.get(a.id) ?? null);
+                  const flag = route.status
+                    ? { inForce: route.status === "ساري", repealed: false, statusLabel: route.status }
+                    : citationFlagsFromVerification(flags.get(a.id) ?? null);
                   const unverified = flag.statusLabel.includes("قيد التحقق");
                   const retired = flag.repealed || flag.statusLabel === "مستبدل";
                   return (

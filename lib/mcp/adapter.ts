@@ -18,6 +18,7 @@ import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve
 import { redactPII } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
+import { displayedSystem, hiddenArticleIds } from "@/lib/modules/legal-core/work-edition-read";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -59,10 +60,14 @@ export async function searchArticles(query: string, lawId?: string, limit = 10) 
     : [];
   const byId = new Map(rows.map((r) => [r.id, r]));
 
+  const hidden = await hiddenArticleIds(rows.map((r) => r.id));
+  const scoped = lawId ? await displayedSystem(lawId, new Date()) : null;
+  const scopedLawId = scoped?.redirected ? scoped.id : lawId;
   const results = ranked
     .map((r) => byId.get(r.id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true))
+    .filter((r) => !hidden.has(r.id))
+    .filter((r) => (scopedLawId ? r.legalSystemId === scopedLawId || r.legalSystem?.id === scopedLawId : true))
     .slice(0, limit)
     .map((r) => ({
       article_id: r.id,
@@ -82,6 +87,25 @@ export async function getArticle(articleId: string) {
     include: { legalSystem: { select: { id: true, name: true } } },
   });
   if (!a) return { error: "المادة غير موجودة" };
+  const route = a.legalSystemId ? await displayedSystem(a.legalSystemId, new Date()) : null;
+  if (route?.redirected) {
+    const alt = await prisma.legalArticle.findFirst({
+      where: { legalSystemId: route.id, articleNumber: a.articleNumber },
+      include: { legalSystem: { select: { id: true, name: true } } },
+    });
+    if (alt) {
+      return {
+        article_id: alt.id,
+        law: alt.legalSystem?.name ?? alt.lawName,
+        law_id: alt.legalSystem?.id ?? alt.legalSystemId,
+        issued_by: route.instrument,
+        issued_date_h: null,
+        article_number: alt.articleNumber,
+        status: route.status,
+        text: alt.content,
+      };
+    }
+  }
   return {
     article_id: a.id,
     law: a.legalSystem?.name ?? a.lawName,
@@ -110,6 +134,22 @@ export async function getLaw(lawId?: string, name?: string) {
         orderBy: { articleCount: "desc" },
       });
   if (!law) return { error: "النظام غير موجود" };
+  const route = await displayedSystem(law.id, new Date());
+  if (route.redirected) {
+    const edition = await prisma.legalSystem.findUnique({ where: { id: route.id }, include });
+    if (edition) {
+      return {
+        law_id: edition.id,
+        name: edition.name,
+        classification: edition.classification ?? edition.domainTitle ?? edition.domain ?? null,
+        issue_instrument: route.instrument,
+        issue_date_h: null,
+        status: route.status,
+        articles_count: edition.articleCount || edition.articles.length,
+        toc: edition.articles.map((x) => ({ article_id: x.id, number: x.articleNumber, title: x.title })),
+      };
+    }
+  }
   return {
     law_id: law.id,
     name: law.name,
@@ -256,22 +296,29 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   if (isNumberingShifted(resolved.system.name)) {
     return { verdict: "ترقيم النظام قيد التصحيح الرسميّ — لا يُعتدّ برقم المادة", law: resolved.system.name, article_number: articleNumber };
   }
-  const system = resolved.system;
+  const route = await displayedSystem(resolved.system.id, new Date());
+  const system = route.redirected
+    ? { id: route.id, name: resolved.system.name, articleCount: resolved.system.articleCount }
+    : resolved.system;
 
   // نبحث المادة عبر معرّف النظام إن وُجد، وإلا عبر اسم النظام على المادة مباشرة.
   const article = await prisma.legalArticle.findFirst({
-    where: system
-      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n }
-      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n },
+    where: route.redirected
+      ? { legalSystemId: route.id, articleNumber: n }
+      : system
+        ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n }
+        : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n },
     select: { id: true, articleNumber: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
   });
 
-  const resolvedLaw = system?.name ?? article?.legalSystem?.name ?? article?.lawName ?? lawName;
+  const resolvedLaw = article?.legalSystem?.name ?? article?.lawName ?? system?.name ?? lawName;
 
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
   if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
 
-  const flags = citationFlagsFromVerification(await latestVerification("unit", article.id));
+  const flags = route.status
+    ? { inForce: route.status === "ساري", repealed: route.status === "مستبدل", statusLabel: route.status }
+    : citationFlagsFromVerification(await latestVerification("unit", article.id));
 
   if (claimedText) {
     // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة.
