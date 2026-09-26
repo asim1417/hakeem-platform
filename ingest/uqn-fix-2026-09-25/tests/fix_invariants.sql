@@ -32,3 +32,8 @@ END $$;
 \echo 'F9 مؤشرات'
 SELECT confidence, count(*) FROM uqn_fix.amendment_op GROUP BY 1;
 SELECT status, relation, count(*) FROM uqn_fix.supersession_evidence GROUP BY 1,2;
+\echo 'F10 نظام مضاف بلا مواد، أو مواده غير متسلسلة'
+SELECT n.title, count(u.*) FILTER (WHERE u.unit_type='article') arts, max(u.number) mx FROM uqn_fix.new_law n LEFT JOIN uqn_fix.new_law_unit u USING (title)
+GROUP BY 1 HAVING count(u.*) FILTER (WHERE u.unit_type='article') = 0 OR count(DISTINCT u.number) FILTER (WHERE u.unit_type='article') <> max(u.number);
+\echo 'F11 عملية تعديل معلّقة على نظام مضاف غير موجودة'
+SELECT n.title, x FROM uqn_fix.new_law n, unnest(n.pending_amendment_op_ids) x WHERE NOT EXISTS (SELECT 1 FROM uqn_fix.amendment_op o WHERE o.op_id=x);

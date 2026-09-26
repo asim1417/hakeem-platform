@@ -9,6 +9,7 @@ import { issuanceInstrument, latestVerification, latestVerifications, storedInst
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
+import { bisArticles, ownerLawNotice, systemIdByAliasSlug } from "@/lib/modules/legal-core/owner-law-notice";
 
 export const revalidate = 3600;
 
@@ -20,6 +21,8 @@ async function resolveSystem(slug: string) {
   if (byEli) return byEli;
   const byId = await prisma.legalSystem.findUnique({ where: { id: raw } }).catch(() => null);
   if (byId) return byId;
+  const aliasId = await systemIdByAliasSlug(norm);
+  if (aliasId) return prisma.legalSystem.findUnique({ where: { id: aliasId } }).catch(() => null);
   const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true, articleCount: true, sortOrder: true, domainTitle: true, preamble: true, preambleRoyalDecree: true, preambleEffectiveFrom: true } }).catch(() => []);
   return all.find((x) => resolveSystemSlug(x.eliSlug, x.name) === norm) ?? null;
 }
@@ -57,10 +60,12 @@ export default async function LegalSystemPage({
       orderBy: { articleNumber: "asc" },
     })
     .catch(() => []);
-  const [flags, workVerification, issuance] = await Promise.all([
-    latestVerifications("unit", articles.map((a) => a.id)),
+  const extra = await bisArticles(system.id);
+  const [flags, workVerification, issuance, notice] = await Promise.all([
+    latestVerifications("unit", [...articles.map((a) => a.id), ...extra.map((a) => a.id)]),
     latestVerification("work", system.id),
     issuanceInstrument(system.name),
+    ownerLawNotice(system.name),
   ]);
   const workFlags = citationFlagsFromVerification(workVerification);
 
@@ -81,11 +86,20 @@ export default async function LegalSystemPage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <header>
         <h1 className="text-3xl font-bold leading-snug md:text-4xl">{system.name}</h1>
+        {notice?.badge ? <p className="mt-2 text-sm font-bold text-amber-800">{notice.badge}</p> : null}
+        {notice?.formerName ? <p className="mt-1 text-sm text-muted">الاسم السابق: {notice.formerName}</p> : null}
         {kind ? <p className="mt-2 text-sm font-semibold text-[#A9793F]">{kind}</p> : null}
         <AsOfForm asOf={asOfRaw} />
         <p className="mt-3 text-ink">
-          {articles.length.toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
+          {(articles.length + extra.length).toLocaleString("ar-SA")} مادة{system.domainTitle ? ` · ${system.domainTitle}` : ""}.
         </p>
+        {notice?.amendmentNote ? (
+          <div role="note" className="mt-4 rounded-xl border-2 border-amber-500 bg-amber-50 p-4 text-amber-950">
+            <p className="text-base font-extrabold">تنبيه تعديلات لاحقة</p>
+            <p className="mt-1 text-sm leading-7">{notice.amendmentNote}</p>
+            <p className="mt-2 text-sm leading-7">معلّقة على المراجعة ولم تُطبَّق على النص: {notice.pendingInstruments.join("؛ ")}</p>
+          </div>
+        ) : null}
         {workVerification && workFlags.statusLabel !== "الحالة قيد التحقق من المصدر" ? (
           <div role="note" className={`mt-4 rounded-xl border-2 p-4 ${workFlags.repealed || workFlags.statusLabel === "مستبدل" ? "border-red-600 bg-red-50 text-red-900" : workFlags.statusLabel === "صادر لم يسرِ بعد" ? "border-amber-500 bg-amber-50 text-amber-950" : "border-[#C69763]/40 bg-ivory text-[var(--navy)]"}`}>
             <p className="text-base font-extrabold">{workFlags.statusLabel}</p>
@@ -117,12 +131,17 @@ export default async function LegalSystemPage({
         </section>
       ) : null}
 
-      {articles.length ? (
+      {articles.length || extra.length ? (
         <ul className="mt-6 divide-y divide-black/5 rounded-xl border border-[#C69763]/25 bg-ivory">
-          {articles.map((a) => (
+          {[
+            ...articles.map((a) => ({ id: a.id, href: `${a.articleNumber}`, marker: `م ${a.articleNumber.toLocaleString("ar-SA")}`, title: a.title, after: a.articleNumber })),
+            ...extra.map((a) => ({ id: a.id, href: `${a.baseNumber}-bis`, marker: a.label, title: a.title, after: a.baseNumber + 0.5 })),
+          ]
+            .sort((a, b) => a.after - b.after)
+            .map((a) => (
             <li key={a.id}>
-              <Link href={`/legal/${encodeURIComponent(slug)}/${a.articleNumber}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
-                <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">م {a.articleNumber.toLocaleString("ar-SA")}</span>
+              <Link href={`/legal/${encodeURIComponent(slug)}/${a.href}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`} className="flex items-start gap-3 px-4 py-3 transition hover:bg-[var(--parchment)]">
+                <span className="mt-0.5 shrink-0 rounded bg-[var(--navy)] px-2 py-1 font-mono text-xs font-bold text-[#E8D6BC]">{a.marker}</span>
                 {(() => {
                   const flag = citationFlagsFromVerification(flags.get(a.id) ?? null);
                   const unverified = flag.statusLabel.includes("قيد التحقق");
