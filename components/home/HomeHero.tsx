@@ -1,7 +1,6 @@
 import { HomeAuthActions, HomeAuthUserName } from "@/components/home/HomeAuthActions";
 import { GuestAskComposer } from "@/components/home/GuestAskComposer";
 import { HomeAuthLauncher, type HomeAuthConfig } from "@/components/home/HomeAuthLauncher";
-import { HomeInlineAskLazy } from "@/components/home/HomeInlineAskLazy";
 import {
   hasAnySignInProvider,
   isIdentifierFormEnabled,
@@ -184,12 +183,6 @@ export function HomeHero({
               </div>
             }
             user={
-              inlineAuth ? (
-                // بعد الدخول من الحوار: السؤال يُكمل هنا مرة واحدة دون مغادرة الصفحة
-                <div className="mt-8 w-full max-w-2xl text-right">
-                  <HomeInlineAskLazy />
-                </div>
-              ) : (
               <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
                 <a
                   href="/dashboard"
@@ -198,7 +191,6 @@ export function HomeHero({
                   اسأل حكيم الآن
                 </a>
               </div>
-              )
             }
           />
         </section>

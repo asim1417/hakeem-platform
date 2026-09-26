@@ -109,7 +109,7 @@ export function HomeAuthLauncher({ config }: { config: HomeAuthConfig }) {
         // قبل أي await: HomeInlineAsk قد يظهر مع أول ردّ /api/auth/me فيجد السؤال معلّمًا
         armPendingAsk(intent);
         void fetchHomeAuthUser().then((user) => {
-          if (user) completeHomeAuth(intent, user);
+          if (user) window.location.assign(completeHomeAuth(intent));
         });
       }
     }

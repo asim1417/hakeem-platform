@@ -2,7 +2,6 @@
 
 import { HOME_ASK_PENDING_RUN_KEY } from "@/lib/modules/config/ask-first-home";
 import {
-  HOME_AUTH_CHANGED_EVENT,
   HOME_AUTH_INTENT_KEY,
   HOME_AUTH_OPEN_EVENT,
   parseHomeAuthIntent,
@@ -101,20 +100,18 @@ export async function fetchHomeAuthUser(): Promise<HomeAuthUser | null> {
   }
 }
 
+/** وجهة كل نية بعد الدخول: الخدمة مباشرة، وإلا مساحة العمل. */
+export function destinationFor(intent: HomeAuthIntent): string {
+  return intent.kind === "navigate" ? intent.next : "/dashboard";
+}
+
 /**
- * بعد ثبوت الجلسة: ينفّذ النيّة مرة واحدة دون إعادة تحميل.
- * ask ← يُعلَّم السؤال للتنفيذ ثم يُعلن الدخول فيظهر HomeInlineAsk وينفّذه.
- * navigate ← انتقال مباشر للخدمة. login ← نبقى في الرئيسية ويتحدّث الشريط.
- * يعيد true إن كان سيحدث انتقال للصفحة.
+ * بعد ثبوت الجلسة: تُستهلك النية ويُعاد مسار الوجهة لانتقال واحد.
+ * ask ← يُعلَّم السؤال للتنفيذ مرة واحدة في صندوق مساحة العمل (النص في sessionStorage فقط).
  */
-export function completeHomeAuth(intent: HomeAuthIntent, user: HomeAuthUser): boolean {
+export function completeHomeAuth(intent: HomeAuthIntent): string {
   knownUser = true;
   clearHomeAuthIntent();
   armPendingAsk(intent);
-  window.dispatchEvent(new CustomEvent<HomeAuthUser>(HOME_AUTH_CHANGED_EVENT, { detail: user }));
-  if (intent.kind === "navigate") {
-    window.location.assign(intent.next);
-    return true;
-  }
-  return false;
+  return destinationFor(intent);
 }
