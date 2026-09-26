@@ -283,6 +283,16 @@ export function AuthIdentifierFlowInner({
     window.location.assign(next ?? nextUrl);
   }
 
+  /**
+   * جلسة Clerk متبقية من محاولة سابقة (دون hakeem_session) كانت تُدخل المستخدم دون رمز
+   * (session_exists). المطلوب: رقم أو بريد ← رمز ← الصفحة الداخلية، دائمًا. فننهيها قبل البدء
+   * بـ end() — لا انتقال ولا إعادة تحميل كما في signOut.
+   */
+  async function endStaleClerkSessions() {
+    const sessions = clerk.client?.signedInSessions ?? [];
+    await Promise.all(sessions.map((s) => s.end().catch(() => undefined)));
+  }
+
   // ── الدخول ──
 
   async function startSignIn(si: SignInRes, id: Identifier) {
@@ -384,8 +394,9 @@ export function AuthIdentifierFlowInner({
       await action();
     } catch (err) {
       if (clerkErrorCode(err) === "session_exists") {
-        setStep({ name: "finishing" });
-        await claimAndNavigate();
+        // احتياط: جلسة قائمة رغم الإنهاء المسبق — ننهيها ونطلب إعادة الإرسال، ولا دخول بلا رمز
+        await endStaleClerkSessions();
+        showError("انتهت جلسة سابقة. اضغط «أرسل الرمز» مرة أخرى.", "identifier");
         return;
       }
       // الشاشة ٦: الأرقام تبقى كما هي ليصحّحها المستخدم
@@ -405,6 +416,7 @@ export function AuthIdentifierFlowInner({
     void run(async () => {
       if (!signIn || !signUp) return;
       setNotice("");
+      await endStaleClerkSessions();
       try {
         await startSignIn(signIn, id);
       } catch (err) {

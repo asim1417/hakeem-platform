@@ -57,3 +57,14 @@ console.log("clerk phone-only: OK");
 // ── لا رسالة ترحيب إلى المعرّف الداخلي ──
 assert.ok(read("lib/modules/onboarding/bootstrap.ts").includes("!isPhoneOnlyLocalEmail(user.email)"));
 console.log("clerk phone-only (welcome): OK");
+
+// ── كل دخول: رقم أو بريد ← رمز ← الصفحة الداخلية (لا دخول بلا رمز من جلسة Clerk متبقية) ──
+{
+  const src = read("components/auth/AuthIdentifierFlowInner.tsx");
+  const submit = src.slice(src.indexOf("function submitIdentifier"));
+  assert.ok(/await endStaleClerkSessions\(\);\s*try \{\s*await startSignIn/.test(submit), "إنهاء الجلسة المتبقية قبل إرسال الرمز");
+  assert.ok(src.includes("s.end()"), "end() بلا انتقال — لا signOut");
+  const run = src.slice(src.indexOf("async function run("), src.indexOf("function submitIdentifier"));
+  assert.ok(!run.includes("claimAndNavigate"), "session_exists لا يُدخل المستخدم بلا رمز");
+  console.log("clerk phone-only (always a code): OK");
+}
