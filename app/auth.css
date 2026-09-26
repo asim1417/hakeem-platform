@@ -81,6 +81,7 @@
   background: rgba(14, 52, 53, 0.45);
   animation: hkAuthFade 0.18s ease-out both;
 }
+.hk-home-auth__backdrop[hidden] { display: none; }
 .hk-home-auth__panel {
   position: relative;
   width: 100%;
