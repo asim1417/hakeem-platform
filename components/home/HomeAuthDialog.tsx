@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { HomeAuthIdentifier } from "@/components/home/HomeAuthIdentifier";
 import {
   armPendingAsk,
@@ -83,7 +83,7 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
   const [lastMethod, setLastMethod] = useState<HomeAuthMethod | null>(null);
   const [flowKey, setFlowKey] = useState(0);
 
-  const intent: HomeAuthIntent = request?.intent ?? { kind: "login" };
+  const intent = useMemo<HomeAuthIntent>(() => request?.intent ?? { kind: "login" }, [request]);
   const mode = request?.mode ?? "sign-in";
   // الوجهة التي يقترحها الخادم عند التحويل الكامل — العودة إلى الرئيسية مع النيّة، أو الخدمة مباشرة
   const returnPath = intent.kind === "navigate" ? intent.next : HOME_AUTH_RETURN_PATH;

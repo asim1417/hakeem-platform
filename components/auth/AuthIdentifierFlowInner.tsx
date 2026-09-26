@@ -130,7 +130,7 @@ export function AuthIdentifierFlowInner({
   const identifierRef = useRef<HTMLInputElement>(null);
   const autoSubmittedRef = useRef("");
 
-  const useBoxes = (s: Step) =>
+  const showsCodeBoxes = (s: Step) =>
     embedded && (s.name === "code" || (s.name === "second-factor" && s.strategy !== "backup_code"));
 
   useEffect(() => {
@@ -147,7 +147,7 @@ export function AuthIdentifierFlowInner({
 
   useEffect(() => {
     onStepChange?.(step.name);
-    if ((step.name === "code" || step.name === "second-factor") && !useBoxes(step)) {
+    if ((step.name === "code" || step.name === "second-factor") && !showsCodeBoxes(step)) {
       codeInputRef.current?.focus();
     } else if (step.name === "profile") {
       const first = step.fields.find((f) => f !== "legal_accepted") ?? step.fields[0];
@@ -166,7 +166,7 @@ export function AuthIdentifierFlowInner({
   }, [error, errorTarget, errorSeq]);
 
   useEffect(() => {
-    if (!error || errorTarget !== "code" || useBoxes(step)) return;
+    if (!error || errorTarget !== "code" || showsCodeBoxes(step)) return;
     codeInputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error, errorTarget, errorSeq]);
@@ -350,7 +350,7 @@ export function AuthIdentifierFlowInner({
         return;
       }
       fail(err);
-      if (useBoxes(step)) {
+      if (showsCodeBoxes(step)) {
         // رمز خاطئ في الخانات: نفرّغها ليكتب المستخدم الرمز من جديد
         setCode("");
         autoSubmittedRef.current = "";
@@ -648,7 +648,7 @@ export function AuthIdentifierFlowInner({
       {step.name === "code" || step.name === "second-factor" ? (
         <form className="mt-6 flex flex-col gap-3" onSubmit={onSubmitCode} noValidate>
           <RequiredNote />
-          {useBoxes(step) ? (
+          {showsCodeBoxes(step) ? (
             <>
               <p id={CODE_LABEL_ID} className="text-center text-sm font-semibold text-[#0E3435]">
                 رمز التحقق
