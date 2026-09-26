@@ -5,24 +5,54 @@ import {
 } from "@/lib/modules/auth/auth-providers";
 import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
+import { SignInPagePanel } from "@/components/auth/SignInPagePanel";
+import { buildHomeAuthConfig } from "@/lib/modules/auth/home-auth-config";
 import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
+import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
 export const metadata = {
   title: "تسجيل الدخول — حكيم",
 };
 
-/** بوابة الدخول الموحّدة — /sign-in فقط (بلا Clerk JS على الصفحة). */
+/**
+ * صفحة الدخول الوحيدة — ‎/sign-in‎ (و‎/sign-up‎ و‎/auth/identifier‎ و‎/login‎ و‎/register‎ تُحال إليها).
+ * صندوق الرئيسية نفسه: Google، وتبويبا «رقم الجوال | البريد الإلكتروني»، والرمز، ثم «تم التحقق»
+ * ← الصفحة الداخلية (‎next‎، وافتراضيًا ‎/dashboard‎). Clerk يُحمَّل عند أول تفاعل فقط.
+ * مفتاح الطوارئ HOME_INLINE_AUTH_ENABLED=0 يعيد البوابة السابقة كما هي.
+ */
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams?: { next?: string; returnUrl?: string };
+  searchParams?: { next?: string; returnUrl?: string; mode?: string };
 }) {
   await hydrateEnvFromSettings().catch(() => 0);
 
   const ready = hasAnySignInProvider();
   const nextUrl = resolvePostAuthNext(searchParams);
   const visibleProviders = listVisibleAuthProviders();
+  const mode = searchParams?.mode === "sign-up" ? "sign-up" : "sign-in";
+
+  if (ready && isHomeInlineAuthEnabled()) {
+    return (
+      <main className="hk-signin" lang="ar" dir="rtl">
+        <Link href="/" className="hk-signin__brand" aria-label="حكيم — الصفحة الرئيسية">
+          <span className="hk-signin__mark" aria-hidden>
+            ح
+          </span>
+          <span>حكيم</span>
+        </Link>
+        <SignInPagePanel config={buildHomeAuthConfig()} mode={mode} nextUrl={nextUrl} />
+        <nav className="hk-signin__links" aria-label="روابط نظامية">
+          <Link href="/">الرئيسية</Link>
+          <span aria-hidden>·</span>
+          <Link href="/privacy">سياسة الخصوصية</Link>
+          <span aria-hidden>·</span>
+          <Link href="/terms">شروط الاستخدام</Link>
+        </nav>
+      </main>
+    );
+  }
 
   return (
     <AuthJourneyShell
@@ -40,7 +70,7 @@ export default async function SignInPage({
     >
       {ready ? (
         <AuthOauthButtons
-          mode="sign-in"
+          mode={mode}
           nextUrl={nextUrl}
           visibleProviders={visibleProviders}
         />

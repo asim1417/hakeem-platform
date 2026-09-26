@@ -91,7 +91,10 @@ function LastBadge() {
  * WAI-ARIA APG (Dialog Modal): role=dialog + aria-modal + aria-labelledby، حبس التركيز وإعادته،
  * Esc وزر إغلاق، والنقر خارجًا (إلا أثناء إدخال الرمز)، وقفل تمرير الخلفية.
  */
-export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps) {
+export function HomeAuthDialog({ config, request, onClose, variant = "dialog" }: HomeAuthDialogProps) {
+  // page: صفحة ‎/sign-in‎ — الصندوق نفسه بلا خلفية معتمة ولا إغلاق ولا حبس تركيز
+  const page = variant === "page";
+  const TitleTag = page ? "h1" : "h2";
   const router = useRouter();
   const open = Boolean(request);
   const titleId = useId();
@@ -123,13 +126,14 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
     setStep("identifier");
     setFlowKey((k) => k + 1);
     setLastMethod(parseLastAuthMethod(document.cookie));
+    if (page) return;
     document.body.classList.add("hk-scroll-locked");
     const id = window.requestAnimationFrame(() => titleRef.current?.focus());
     return () => {
       window.cancelAnimationFrame(id);
       document.body.classList.remove("hk-scroll-locked");
     };
-  }, [request]);
+  }, [request, page]);
 
   /** تحميل مسبق للوجهة أثناء كتابة الرمز أو انتظار النافذة — فالانتقال بلا شاشة بيضاء. */
   const prefetchDestination = useCallback(() => {
@@ -158,19 +162,21 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
   const onAuthenticated = useCallback(
     (method: HomeAuthMethod) => {
       document.cookie = lastAuthMethodCookie(method, window.location.protocol === "https:");
-      const current = readHomeAuthIntent() ?? intent;
+      // الصفحة: الوجهة من ‎?next=‎ فقط — لا نية محفوظة قديمة من الرئيسية
+      const current = page ? intent : readHomeAuthIntent() ?? intent;
       const dest = completeHomeAuth(current);
+      const from = window.location.pathname;
       setView({ name: "verified" });
       prefetchDestination();
       window.setTimeout(() => {
         router.push(dest);
         // احتياط: إن لم يتم الانتقال عبر الموجّه (فشل تحميل الحزمة) ننتقل انتقالًا كاملًا
         window.setTimeout(() => {
-          if (window.location.pathname === "/") window.location.assign(dest);
+          if (window.location.pathname === from) window.location.assign(dest);
         }, 6000);
       }, VERIFIED_HOLD_MS);
     },
-    [intent, prefetchDestination, router]
+    [intent, page, prefetchDestination, router]
   );
 
   const openPopup = useCallback(
@@ -223,6 +229,7 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (page) return;
     if (e.key === "Escape") {
       e.stopPropagation();
       if (view.name !== "verified") close();
@@ -264,7 +271,7 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
   const confirmed = view.name === "verified";
   const showVerified = confirmed || step === "finishing";
 
-  const closeButton = (
+  const closeButton = page ? null : (
     <button type="button" className="hk-icon-btn hk-home-auth__close" onClick={close} aria-label="إغلاق">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M6 6l12 12M18 6L6 18" />
@@ -282,9 +289,9 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
           <span className="hk-spinner hk-spinner--light" />
         </div>
         <div role="status" aria-live="polite" className="hk-verified__text">
-          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-verified__title">
+          <TitleTag id={titleId} ref={titleRef} tabIndex={-1} className="hk-verified__title">
             جارٍ إكمال الدخول…
-          </h2>
+          </TitleTag>
         </div>
       </div>
     );
@@ -298,11 +305,11 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
           </svg>
         </div>
         <div role="status" aria-live="polite" className="hk-verified__text">
-          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-verified__title">
+          <TitleTag id={titleId} ref={titleRef} tabIndex={-1} className="hk-verified__title">
             تم التحقق
-          </h2>
+          </TitleTag>
           <p className="hk-verified__sub">
-            {intent.kind === "navigate" ? "جارٍ فتح الخدمة…" : "جارٍ فتح مساحة عملك…"}
+            {destination === "/dashboard" ? "جارٍ فتح مساحة عملك…" : "جارٍ فتح الخدمة…"}
           </p>
         </div>
         <div className="hk-verified__bar" aria-hidden>
@@ -320,9 +327,9 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
           <ProviderIcon provider={view.provider} size={32} />
         </div>
         <div className="hk-center-text">
-          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
+          <TitleTag id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
             أكمل الدخول في نافذة {name}
-          </h2>
+          </TitleTag>
           <p className="hk-home-auth__lede">اختر حسابك في النافذة الصغيرة، وستُغلق وحدها وتعود إلى هنا.</p>
         </div>
         <div className="hk-wait" aria-live="polite">
@@ -346,9 +353,9 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
         ) : (
           <>
             <div className="hk-home-auth__top">
-              <h2 id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
+              <TitleTag id={titleId} ref={titleRef} tabIndex={-1} className="hk-home-auth__title">
                 {title}
-              </h2>
+              </TitleTag>
               {closeButton}
             </div>
             <p id={ledeId} className="hk-home-auth__lede hk-home-auth__lede--tight">
@@ -429,6 +436,24 @@ export function HomeAuthDialog({ config, request, onClose }: HomeAuthDialogProps
         ) : null}
       </>
   );
+
+  if (page) {
+    return (
+      <section
+        ref={panelRef}
+        className="hk-auth hk-home-auth__panel hk-home-auth__panel--page"
+        data-view={showVerified ? "verified" : view.name}
+        aria-labelledby={titleId}
+        lang="ar"
+        dir="rtl"
+      >
+        {overlay}
+        <div className="hk-home-auth__stack" hidden={!optionsVisible}>
+          {optionsBody}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="hk-home-auth__backdrop hk-auth" hidden={!open} onMouseDown={onBackdropMouseDown} lang="ar" dir="rtl">
