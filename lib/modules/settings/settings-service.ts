@@ -179,12 +179,55 @@ export function originalEnvValue(key: string): string {
   return (ORIGINAL_ENV.has(key) ? ORIGINAL_ENV.get(key) : process.env[key]) ?? "";
 }
 
+/**
+ * لا نستبدل مفتاح Clerk السري/العام من الإعدادات إن كان من نسخة مختلفة عن
+ * المفتاح العام الفعّال (غالبًا المضمّن في البناء: pk_live_). كان sk_test_ في
+ * /admin/settings يُسقِط كل تثبيت جلسة بعد رمز صحيح (401) رغم أن الواجهة live.
+ */
+function clerkEnvEdition(value: string): "live" | "test" | "other" {
+  const t = value.trim();
+  if (t.startsWith("pk_live_") || t.startsWith("sk_live_")) return "live";
+  if (t.startsWith("pk_test_") || t.startsWith("sk_test_")) return "test";
+  return "other";
+}
+
+function shouldSkipClerkKeyOverride(key: string, nextValue: string): boolean {
+  if (key !== "CLERK_SECRET_KEY" && key !== "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") return false;
+  // مرجع المطابقة: المفتاح العام كما جاء من Vercel قبل أي استبدال (أو الحالي).
+  const pubRef = (
+    (ORIGINAL_ENV.has("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY")
+      ? ORIGINAL_ENV.get("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY")
+      : process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) || ""
+  ).trim();
+  const refKind = clerkEnvEdition(pubRef);
+  const nextKind = clerkEnvEdition(nextValue);
+  if (refKind === "other" || nextKind === "other") return false;
+  if (refKind !== nextKind) {
+    console.warn(
+      JSON.stringify({
+        event: "settings_clerk_key_skip_mismatch",
+        key,
+        refKind,
+        nextKind,
+      })
+    );
+    return true;
+  }
+  return false;
+}
+
 export async function hydrateEnvFromSettings(): Promise<number> {
   const db = await getAllSettings();
+  // التقط أصول Vercel أولًا لكل المفاتيح قبل أي استبدال — حتى يصح مرجع pk_* عند تصفية sk_*.
+  for (const [key, value] of db) {
+    if (MANAGED_SET.has(key) && value && !ORIGINAL_ENV.has(key)) {
+      ORIGINAL_ENV.set(key, process.env[key] ?? "");
+    }
+  }
   let n = 0;
   for (const [key, value] of db) {
     if (MANAGED_SET.has(key) && value) {
-      if (!ORIGINAL_ENV.has(key)) ORIGINAL_ENV.set(key, process.env[key] ?? "");
+      if (shouldSkipClerkKeyOverride(key, value)) continue;
       process.env[key] = value;
       n += 1;
     }

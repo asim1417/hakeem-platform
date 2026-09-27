@@ -10,6 +10,38 @@ export function isClerkConfigured(): boolean {
   );
 }
 
+/** بادئة آمنة فقط: pk_live_ | pk_test_ | sk_live_ | sk_test_ | none — بلا كشف للمفتاح. */
+export function clerkKeyKind(value: string | null | undefined): "pk_live" | "pk_test" | "sk_live" | "sk_test" | "none" {
+  const v = (value || "").trim();
+  if (v.startsWith("pk_live_")) return "pk_live";
+  if (v.startsWith("pk_test_")) return "pk_test";
+  if (v.startsWith("sk_live_")) return "sk_live";
+  if (v.startsWith("sk_test_")) return "sk_test";
+  return "none";
+}
+
+/** هل المفتاح العام والسري من نفس نسخة Clerk (live↔live أو test↔test)؟ */
+export function clerkKeysAligned(
+  publishable = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  secret = process.env.CLERK_SECRET_KEY
+): boolean {
+  const pk = clerkKeyKind(publishable);
+  const sk = clerkKeyKind(secret);
+  if (pk === "none" || sk === "none") return false;
+  return (pk === "pk_live" && sk === "sk_live") || (pk === "pk_test" && sk === "sk_test");
+}
+
+/** هل السرّ يطابق نسخة المفتاح العام؟ (لتصفية مفاتيح الإعدادات الخاطئة قبل verify). */
+export function secretMatchesPublishable(
+  secret: string | null | undefined,
+  publishable = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+): boolean {
+  const pk = clerkKeyKind(publishable);
+  const sk = clerkKeyKind(secret);
+  if (pk === "none" || sk === "none") return false;
+  return (pk === "pk_live" && sk === "sk_live") || (pk === "pk_test" && sk === "sk_test");
+}
+
 /** واجهة Clerk بالعربية + نصوص حكيم المعتمدة. */
 export const clerkLocalization: LocalizationResource = {
   ...arSA,

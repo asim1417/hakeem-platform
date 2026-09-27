@@ -40,6 +40,14 @@ export async function GET() {
     }
   }
 
+  // بادئات المفاتيح فقط — بلا كشف للأسرار. يبيّن إن كان sk_test_ يُستخدم مع pk_live_.
+  const { clerkKeyKind, clerkKeysAligned } = await import("@/lib/modules/auth/clerk-config");
+  const { hydrateEnvFromSettings } = await import("@/lib/modules/settings/settings-service");
+  await hydrateEnvFromSettings().catch(() => 0);
+  const secretKind = clerkKeyKind(process.env.CLERK_SECRET_KEY);
+  const publishableKind = clerkKeyKind(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  const clerkKeysOk = clerkKeysAligned();
+
   const ok = database === "up";
   return NextResponse.json(
     {
@@ -50,6 +58,9 @@ export async function GET() {
       checks: {
         database,
         clerk: isClerkConfigured() ? "configured" : "missing",
+        clerkSecretKind: secretKind,
+        clerkPublishableKind: publishableKind,
+        clerkKeysAligned: clerkKeysOk,
         googleOAuth: isGoogleOAuthConfigured() ? "configured" : "missing",
         moyasar: moyasarHealthLabel(),
         conversationSession,

@@ -315,15 +315,29 @@ export function AuthIdentifierFlowInner({
    * يثبّت hakeem_session من رمز جلسة Clerk — يعيد الوجهة، أو null إن تعذّر.
    * نعيد محاولة getToken لأن setActive على الجوال قد لا يكشف JWT فورًا — مع مهلة صارمة.
    */
-  async function claimSession(sessionId?: string | null): Promise<string | null> {
+  type ClaimFailHint = {
+    stage?: string;
+    keysAligned?: boolean;
+    secretKind?: string;
+    publishableKind?: string;
+  };
+
+  async function claimSession(
+    sessionId?: string | null
+  ): Promise<{ next: string } | { next: null; hint: ClaimFailHint | null }> {
     try {
       let token: string | null = null;
       for (let i = 0; i < 4; i++) {
         const session = resolveClerkSession(sessionId);
         if (session) {
           try {
+            // skipCache: على الجوال قد تُعاد قيمة فارغة/قديمة فور setActive
+            const getToken = session.getToken.bind(session) as (opts?: {
+              skipCache?: boolean;
+            }) => Promise<string | null>;
             token =
-              (await withTimeout(Promise.resolve(session.getToken()), 4_000, "getToken")) ?? null;
+              (await withTimeout(Promise.resolve(getToken({ skipCache: true })), 4_000, "getToken")) ??
+              null;
           } catch {
             token = null;
           }
@@ -331,7 +345,7 @@ export function AuthIdentifierFlowInner({
         if (token) break;
         await new Promise((r) => setTimeout(r, 50 * (i + 1)));
       }
-      if (!token) return null;
+      if (!token) return { next: null, hint: { stage: "get_token" } };
       const ac = new AbortController();
       const timer = window.setTimeout(() => ac.abort(), 10_000);
       try {
@@ -342,14 +356,42 @@ export function AuthIdentifierFlowInner({
           body: JSON.stringify({ token, next: nextUrl }),
           signal: ac.signal,
         });
-        const data = (await res.json().catch(() => null)) as { ok?: boolean; next?: string } | null;
-        return res.ok && data?.ok && data.next ? data.next : null;
+        const data = (await res.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              next?: string;
+              stage?: string;
+              keysAligned?: boolean;
+              secretKind?: string;
+              publishableKind?: string;
+            }
+          | null;
+        if (res.ok && data?.ok && data.next) return { next: data.next };
+        return {
+          next: null,
+          hint: {
+            stage: data?.stage,
+            keysAligned: data?.keysAligned,
+            secretKind: data?.secretKind,
+            publishableKind: data?.publishableKind,
+          },
+        };
       } finally {
         window.clearTimeout(timer);
       }
     } catch {
-      return null;
+      return { next: null, hint: null };
     }
+  }
+
+  function claimFailMessage(hint: ClaimFailHint | null): string {
+    if (hint && hint.keysAligned === false) {
+      return "تم التحقق من الرمز، لكن مفاتيح Clerk غير متطابقة على الخادم (live/test). راجع /admin/settings أو Vercel ثم أعد المحاولة.";
+    }
+    if (hint?.stage === "establish") {
+      return "تم التحقق من الرمز، لكن تعذّر إنشاء مساحة العمل. اضغط «أعد المحاولة».";
+    }
+    return "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».";
   }
 
   /**
@@ -360,19 +402,21 @@ export function AuthIdentifierFlowInner({
    */
   async function claimAndNavigate(sessionId?: string | null) {
     let next: string | null = null;
+    let lastHint: ClaimFailHint | null = null;
     // محاولتان سريعتان فقط — لا نترك المستخدم على السпинر عشرات الثواني
     for (let attempt = 0; attempt < 2; attempt++) {
-      next = await claimSession(sessionId);
-      if (next) break;
+      const result = await claimSession(sessionId);
+      if (result.next) {
+        next = result.next;
+        break;
+      }
+      lastHint = result.hint;
       await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
     }
     if (onComplete) {
       if (!next) {
         setStep({ name: "claim-failed" });
-        showError(
-          "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».",
-          null
-        );
+        showError(claimFailMessage(lastHint), null);
         return;
       }
       onComplete({ ok: true, next });
@@ -380,10 +424,7 @@ export function AuthIdentifierFlowInner({
     }
     if (!next) {
       setStep({ name: "claim-failed" });
-      showError(
-        "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».",
-        null
-      );
+      showError(claimFailMessage(lastHint), null);
       return;
     }
     window.location.assign(next);

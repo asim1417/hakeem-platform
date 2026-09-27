@@ -7,6 +7,9 @@ import {
   isClerkConfigured,
   clerkAppearance,
   clerkLocalization,
+  clerkKeyKind,
+  clerkKeysAligned,
+  secretMatchesPublishable,
 } from "../lib/modules/auth/clerk-config";
 
 assert.equal(typeof isClerkConfigured(), "boolean");
@@ -32,5 +35,12 @@ assert.match(
 );
 assert.equal(clerkAppearance.layout.privacyPageUrl, "/privacy");
 assert.equal(clerkAppearance.layout.termsPageUrl, "/terms");
+
+assert.equal(clerkKeyKind("pk_live_abc"), "pk_live");
+assert.equal(clerkKeyKind("sk_test_xyz"), "sk_test");
+assert.equal(clerkKeysAligned("pk_live_x", "sk_live_y"), true);
+assert.equal(clerkKeysAligned("pk_live_x", "sk_test_y"), false);
+assert.equal(secretMatchesPublishable("sk_live_y", "pk_live_x"), true);
+assert.equal(secretMatchesPublishable("sk_test_y", "pk_live_x"), false);
 
 console.log("test-clerk-config: OK");
