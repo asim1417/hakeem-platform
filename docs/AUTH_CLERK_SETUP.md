@@ -12,7 +12,8 @@
 ## الربط بتطبيق Clerk
 
 - التطبيق: `app_3JpE1GKAefz0gGh5JdzwPM6HP1F`.
-- المفاتيح في بيئة النشر: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` و`CLERK_SECRET_KEY`، من **API Keys** في لوحة التطبيق.
+- المفاتيح في بيئة النشر: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` و`CLERK_SECRET_KEY`.
+  مصدرهما قائمة **API Keys** في لوحة التطبيق.
 - لا تضع `CLERK_SECRET_KEY` في أي كود يعمل في المتصفح.
 
 ### قاعدة المفاتيح (إلزامية)
