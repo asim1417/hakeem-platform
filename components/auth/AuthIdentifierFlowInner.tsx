@@ -406,7 +406,7 @@ export function AuthIdentifierFlowInner({
     // محاولتان سريعتان فقط — لا نترك المستخدم على السпинر عشرات الثواني
     for (let attempt = 0; attempt < 2; attempt++) {
       const result = await claimSession(sessionId);
-      if (result.next) {
+      if (result.next != null) {
         next = result.next;
         break;
       }
