@@ -96,3 +96,17 @@ console.log("clerk phone-only (welcome): OK");
   assert.ok(/finally \{\s*w\.__unstable__onBeforeSetActive = before;\s*w\.__unstable__onAfterSetActive = after;/.test(fn), "تُعاد الخطّافات دائمًا");
   console.log("clerk phone-only (no mid-flow reload): OK");
 }
+
+// ── تعذّر التثبيت بعد رمز صحيح: الحوار يُظهر الخطأ وزر «أعد المحاولة» لا غطاء الانتظار ──
+{
+  const inner = read("components/auth/AuthIdentifierFlowInner.tsx");
+  assert.ok(inner.includes('export type IdentifierFlowStep = Step["name"] | "finishing-failed";'));
+  assert.ok(inner.includes('step.name === "finishing" && error ? "finishing-failed" : step.name'), "الخطوة تُبلَّغ مع حالة الخطأ");
+  const block = inner.slice(inner.indexOf('{step.name === "finishing" ? ('));
+  assert.ok(/<h2 id=\{headingId\} className="hk-emb__title">\s*\{title\}/.test(block.slice(0, 900)), "عنوان للحوار في حالة الخطأ");
+  assert.ok(block.slice(0, 1600).includes("أعد المحاولة"));
+  const dialog = read("components/home/HomeAuthDialog.tsx");
+  assert.ok(dialog.includes('"finishing", "finishing-failed"'), "لا يُغلق بالنقر خارجه أثناء الخطأ");
+  assert.ok(dialog.includes('const showVerified = confirmed || step === "finishing";'), "الغطاء لـ finishing فقط، فيظهر النموذج في finishing-failed");
+  console.log("clerk phone-only (claim failure visible in dialog): OK");
+}
