@@ -76,15 +76,20 @@ console.log("clerk phone-only (welcome): OK");
 // ── سبب رفض claim يظهر في السجلات (المرحلة والرمز فقط)، والتحقق يجرّب مفتاح Vercel إن استُبدل ──
 {
   const src = read("lib/modules/auth/claim-clerk-return.ts");
-  for (const stage of ['"verify"', '"no_sub"', '"get_user"', '"establish"']) assert.ok(src.includes(`logClaimFailure(${stage}`), stage);
+  for (const stage of ['"verify"', '"no_sub"', '"get_user"', '"establish"']) assert.ok(src.includes(stage), stage);
+  assert.ok(src.includes("claimClerkSessionDetailed") && src.includes("verificationSecretKeys"), "تفصيل الرفض + ترتيب المفاتيح");
   const log = src.slice(src.indexOf("function logClaimFailure"));
   assert.ok(!/sessionJwt|email|phone|userId|\.id\b/.test(log), "لا بيانات حساسة في السجل");
-  assert.ok(log.includes(".slice(0, 8)"), "نوع المفتاح (البادئة) فقط، لا المفتاح");
-  assert.ok(src.includes('originalEnvValue("CLERK_SECRET_KEY")') && src.includes("new Set([secretKey, vercelKey]"), "تجربة مفتاح Vercel الأصلي");
+  assert.ok(log.includes("secretKind") && log.includes("publishableKind"), "نوع المفتاح فقط، لا المفتاح");
+  assert.ok(src.includes('originalEnvValue("CLERK_SECRET_KEY")') && src.includes("verificationSecretKeys"), "تجربة مفتاح Vercel الأصلي مع تفضيل المطابق");
+  assert.ok(src.includes("secretMatchesPublishable"), "تفضيل sk_* المطابق لـ pk_*");
   assert.ok(src.indexOf("await hydrateEnvFromSettings()") < src.indexOf("const secretKey"), "الإعدادات قبل قراءة المفتاح");
   const settings = read("lib/modules/settings/settings-service.ts");
-  assert.ok(settings.includes("if (!ORIGINAL_ENV.has(key)) ORIGINAL_ENV.set(key, process.env[key]"), "حفظ قيمة Vercel قبل أول استبدال");
-  assert.ok(src.includes("return await establishFirstPartySession("), "خطأ التثبيت يُلتقط ويُسجَّل");
+  assert.ok(settings.includes("ORIGINAL_ENV.set(key, process.env[key]"), "حفظ قيمة Vercel قبل أول استبدال");
+  assert.ok(settings.includes("settings_clerk_key_skip_mismatch"), "رفض استبدال sk_test مع pk_live");
+  assert.ok(src.includes("establishFirstPartySession(localIdentity(u))"), "خطأ التثبيت يُلتقط ويُسجَّل");
+  const route = read("app/api/auth/claim-clerk-session/route.ts");
+  assert.ok(route.includes("keysAligned") && route.includes("claimClerkSessionDetailed"), "واجهة الـ API تعرض التشخيص الآمن");
   console.log("clerk phone-only (claim diagnostics): OK");
 }
 

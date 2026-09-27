@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { claimSessionFromClerkReturn } from "@/lib/modules/auth/claim-clerk-return";
+import { claimClerkSessionDetailed } from "@/lib/modules/auth/claim-clerk-return";
 import { resolvePostLoginNext } from "@/lib/modules/auth/home-destination";
 import { safeDashboardNext } from "@/lib/modules/auth/safe-next";
 import { attachLoginSessionCookie } from "@/lib/modules/auth/session";
@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
  * بعد دخول نموذج حكيم العربي (Clerk على العميل فقط) يرسل العميل رمز جلسة Clerk القصير،
  * فيتحقق منه الخادم ويثبّت hakeem_session — كما يفعل مسار العودة من بوابة Clerk.
  * الرمز في جسم الطلب لا في الرابط، والطلب مقصور على الأصل نفسه.
+ *
+ * عند الفشل: { ok:false, stage, secretKind, publishableKind, keysAligned } — بلا أسرار.
  */
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
@@ -29,10 +31,22 @@ export async function POST(request: NextRequest) {
   if (!token) return NextResponse.json({ ok: false }, { status: 400 });
   const nextSafe = safeDashboardNext(typeof body.next === "string" ? body.next : null, "/dashboard");
 
-  const user = await claimSessionFromClerkReturn({ sessionJwt: token }).catch(() => null);
-  if (!user) return NextResponse.json({ ok: false }, { status: 401 });
+  const result = await claimClerkSessionDetailed({ sessionJwt: token }).catch(() => null);
+  if (!result || !result.ok) {
+    const failure = result && !result.ok ? result.failure : null;
+    return NextResponse.json(
+      {
+        ok: false,
+        stage: failure?.stage ?? "verify",
+        secretKind: failure?.secretKind,
+        publishableKind: failure?.publishableKind,
+        keysAligned: failure?.keysAligned ?? false,
+      },
+      { status: 401 }
+    );
+  }
 
-  const res = NextResponse.json({ ok: true, next: resolvePostLoginNext(user, nextSafe) });
-  attachLoginSessionCookie(res, user, { secure: request.nextUrl.protocol === "https:" });
+  const res = NextResponse.json({ ok: true, next: resolvePostLoginNext(result.user, nextSafe) });
+  attachLoginSessionCookie(res, result.user, { secure: request.nextUrl.protocol === "https:" });
   return res;
 }
