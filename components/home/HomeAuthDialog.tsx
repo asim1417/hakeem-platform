@@ -29,7 +29,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** خطوات إدخال الرمز والبيانات: النقر خارج الحوار لا يغلقه (يمنع فقد ما كُتب). */
-const STICKY_STEPS = new Set(["code", "second-factor", "profile", "finishing"]);
+const STICKY_STEPS = new Set(["code", "second-factor", "profile", "finishing", "finishing-failed"]);
 
 /** مدة شاشة «تم التحقق» قبل الانتقال (الشاشة ٧). */
 export const VERIFIED_HOLD_MS = 600;

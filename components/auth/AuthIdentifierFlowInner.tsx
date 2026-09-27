@@ -40,7 +40,11 @@ type Step =
   | { name: "profile"; fields: ProfileField[] }
   | { name: "finishing" };
 
-export type IdentifierFlowStep = Step["name"];
+/**
+ * الخطوة كما يراها المستدعي. «finishing-failed»: الرمز صحيح لكن تثبيت الجلسة تعذّر، فيجب أن يظهر
+ * الخطأ وزر «أعد المحاولة» — لا غطاء «جارٍ إكمال الدخول…» الذي يخفي النموذج.
+ */
+export type IdentifierFlowStep = Step["name"] | "finishing-failed";
 
 /** نتيجة الدخول المضمّن: ok = ثُبّتت hakeem_session، وnext = الوجهة التي يقترحها الخادم. */
 export type IdentifierFlowResult = { ok: boolean; next: string };
@@ -184,8 +188,12 @@ export function AuthIdentifierFlowInner({
     return () => window.clearTimeout(id);
   }, [cooldown]);
 
+  const reportedStep: IdentifierFlowStep = step.name === "finishing" && error ? "finishing-failed" : step.name;
   useEffect(() => {
-    onStepChange?.(step.name);
+    onStepChange?.(reportedStep);
+  }, [reportedStep, onStepChange]);
+
+  useEffect(() => {
     if ((step.name === "code" || step.name === "second-factor") && !showsCodeBoxes(step)) {
       codeInputRef.current?.focus();
     } else if (step.name === "profile") {
@@ -968,6 +976,12 @@ export function AuthIdentifierFlowInner({
           <div className="hk-emb__form" role="status" aria-live="polite">
             {error ? (
               <>
+                <div className="hk-emb__head">
+                  <h2 id={headingId} className="hk-emb__title">
+                    {title}
+                  </h2>
+                  <p className="hk-emb__sub">{subtitle}</p>
+                </div>
                 <ErrorNote id={ERROR_ID}>{error}</ErrorNote>
                 <button
                   type="button"
