@@ -29,7 +29,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** خطوات إدخال الرمز والبيانات: النقر خارج الحوار لا يغلقه (يمنع فقد ما كُتب). */
-const STICKY_STEPS = new Set(["code", "second-factor", "profile", "finishing"]);
+const STICKY_STEPS = new Set(["code", "second-factor", "profile", "finishing", "claim-failed"]);
 
 /** مدة شاشة «تم التحقق» قبل الانتقال (الشاشة ٧). */
 export const VERIFIED_HOLD_MS = 600;
@@ -271,6 +271,7 @@ export function HomeAuthDialog({ config, request, onClose, variant = "dialog" }:
   // الخطوة داخل النموذج (الرمز/البيانات) تملك عنوان الحوار وزر «رجوع»
   const flowOwnsHeader = view.name === "options" && step !== "identifier" && step !== "finishing";
   // «تم التحقق» فقط بعد تثبيت hakeem_session فعلًا؛ قبله (خطوة finishing) حالة انتظار محايدة
+  // claim-failed: لا سبنر — يظهر زر إعادة المحاولة داخل النموذج
   const confirmed = view.name === "verified";
   const showVerified = confirmed || step === "finishing";
 
