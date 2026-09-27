@@ -49,7 +49,10 @@ assert.ok(dialog.includes("const confirmed = view.name === \"verified\""));
 assert.ok(dialog.includes("showVerified && !confirmed") && dialog.includes("جارٍ إكمال الدخول…"));
 assert.ok(!dialog.includes("window.location.assign(result.next)"), "لا انتقال عند فشل التثبيت");
 const inner = read("components/auth/AuthIdentifierFlowInner.tsx");
-assert.ok(inner.includes('showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier")'));
+assert.ok(inner.includes("تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل"));
+assert.ok(inner.includes("retryClaimAfterCode"));
+assert.ok(inner.includes("resolveClerkSession") && inner.includes("getToken()"));
+assert.ok(!inner.includes('showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier")'), "لا نُرجع للحقل بعد رمز صحيح");
 assert.ok(inner.includes("onComplete({ ok: true, next })"));
 
 console.log("clerk phone-only: OK");

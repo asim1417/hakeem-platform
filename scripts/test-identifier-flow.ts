@@ -134,9 +134,17 @@ assert.equal(inner.includes("rgba(14,52,53,0.18)"), false, "input border uses --
 assert.ok(/embedded = false/.test(inner), "embedded defaults to false");
 assert.ok(/onComplete\?: \(result: IdentifierFlowResult\) => void/.test(inner));
 assert.ok(
-  /if \(onComplete\) \{[\s\S]{0,500}?onComplete\(\{ ok: true, next \}\);\s*return;\s*\}\s*[\s\S]{0,160}window\.location\.assign\(next \?\? nextUrl\)/.test(inner),
-  "without onComplete the flow still navigates; with it, no navigation (failure stays in the form)"
+  /if \(onComplete\) \{[\s\S]{0,800}?onComplete\(\{ ok: true, next \}\);\s*return;\s*\}\s*[\s\S]{0,500}?window\.location\.assign\(next\)/.test(inner),
+  "with onComplete: report result; without it: hard-assign only after a successful claim"
 );
+assert.ok(
+  inner.includes("تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل") &&
+    inner.includes("retryClaimAfterCode") &&
+    !inner.includes('showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier")'),
+  "failed claim keeps the verified code session and offers retry — does not dump to public home"
+);
+assert.ok(!inner.includes('pattern="[0-9]*"'));
+assert.ok(!fs.readFileSync(path.join(root, "components/auth/CodeInput.tsx"), "utf8").includes('pattern="[0-9]*"'), "Arabic digits must not be blocked by pattern");
 assert.ok(inner.includes("<CodeInput") && /embedded &&\s*\(s\.name === "code"/.test(inner), "segmented code input only in embedded mode");
 // الشاشة ٣: حقل واحد خلف ست خانات، fieldset/legend، إرسال تلقائي 200–300ms
 const codeInput = fs.readFileSync(path.join(root, "components/auth/CodeInput.tsx"), "utf8");

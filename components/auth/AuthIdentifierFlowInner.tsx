@@ -15,6 +15,7 @@ import {
   PROFILE_LABELS,
   profileFieldsToCollect,
   sanitizeCode,
+  CODE_LENGTH,
   secondFactorPrompt,
   unsupportedMissingFields,
   type IdentifierMethod,
@@ -246,7 +247,7 @@ export function AuthIdentifierFlowInner({
     }
     setStep({ name: "finishing" });
     await activateWithoutNextRefresh(() => setActive({ session: sessionId }));
-    await claimAndNavigate();
+    await claimAndNavigate(sessionId);
   }
 
   /**
@@ -269,10 +270,31 @@ export function AuthIdentifierFlowInner({
     }
   }
 
-  /** يثبّت hakeem_session من رمز جلسة Clerk — يعيد الوجهة، أو null إن تعذّر. */
-  async function claimSession(): Promise<string | null> {
+  /** يختار جلسة Clerk بعد setActive — clerk.session قد يتأخر لقطة على الجوال. */
+  function resolveClerkSession(sessionId?: string | null) {
+    if (sessionId && clerk.session?.id === sessionId) return clerk.session;
+    if (sessionId) {
+      const fromClient = clerk.client?.sessions?.find((s) => s.id === sessionId);
+      if (fromClient) return fromClient;
+      const signed = clerk.client?.signedInSessions?.find((s) => s.id === sessionId);
+      if (signed) return signed;
+    }
+    return clerk.session ?? null;
+  }
+
+  /**
+   * يثبّت hakeem_session من رمز جلسة Clerk — يعيد الوجهة، أو null إن تعذّر.
+   * نعيد محاولة getToken لأن setActive على الجوال قد لا يكشف JWT فورًا.
+   */
+  async function claimSession(sessionId?: string | null): Promise<string | null> {
     try {
-      const token = await clerk.session?.getToken();
+      let token: string | null = null;
+      for (let i = 0; i < 6; i++) {
+        const session = resolveClerkSession(sessionId);
+        token = (await session?.getToken()) ?? null;
+        if (token) break;
+        await new Promise((r) => setTimeout(r, 40 * (i + 1)));
+      }
       if (!token) return null;
       const res = await fetch("/api/auth/claim-clerk-session", {
         method: "POST",
@@ -291,22 +313,49 @@ export function AuthIdentifierFlowInner({
    * /auth/continue و/api/auth/me لا يقرآن جلسة Clerk (عزل iPhone)، فنثبّت hakeem_session
    * من رمز الجلسة قبل الانتقال — كما يفعل مسار العودة من بوابة Clerk.
    * مع onComplete: التثبيت في الخلفية بلا انتقال.
+   * عند فشل التثبيت بعد رمز صحيح: نبقى في «finishing» ونعيد المحاولة بلا إبطال جلسة Clerk
+   * (لا نرجع للحقل فينتهي المستخدم بطلب رمز جديد رغم صحة الأرقام).
    */
-  async function claimAndNavigate() {
-    const next = await claimSession();
+  async function claimAndNavigate(sessionId?: string | null) {
+    let next: string | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      next = await claimSession(sessionId);
+      if (next) break;
+      await new Promise((r) => setTimeout(r, 120 * (attempt + 1)));
+    }
     if (onComplete) {
       if (!next) {
-        // لا نعلن «تم التحقق» ولا ننتقل إلى مسار محمي سيعيد إلى صفحة الدخول: نعود إلى الحقل برسالة.
-        // إعادة المحاولة تعيد التثبيت من جلسة Clerk القائمة (session_exists) دون رمز جديد.
-        setStep({ name: "identifier" });
-        showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier");
+        setStep({ name: "finishing" });
+        showError(
+          "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».",
+          null
+        );
         return;
       }
       onComplete({ ok: true, next });
       return;
     }
-    // بلا تثبيت نكمل إلى المسار المحمي مباشرة — clerkMiddleware يقرأ جلسة Clerk هناك
-    window.location.assign(next ?? nextUrl);
+    if (!next) {
+      setStep({ name: "finishing" });
+      showError(
+        "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».",
+        null
+      );
+      return;
+    }
+    window.location.assign(next);
+  }
+
+  async function retryClaimAfterCode() {
+    const sessionId = clerk.session?.id ?? clerk.client?.signedInSessions?.[0]?.id ?? null;
+    if (!sessionId) {
+      setStep({ name: "identifier" });
+      showError("انتهت الجلسة. اطلب رمزًا جديدًا.", "identifier");
+      return;
+    }
+    clearError();
+    setStep({ name: "finishing" });
+    await claimAndNavigate(sessionId);
   }
 
   /**
@@ -487,8 +536,8 @@ export function AuthIdentifierFlowInner({
 
   function submitCode(raw: string) {
     const value = sanitizeCode(raw);
-    if (value.length < 6) {
-      showError("أدخل الرمز كاملًا (6 أرقام).", "code");
+    if (value.length < CODE_LENGTH) {
+      showError(`أدخل الرمز كاملًا (${CODE_LENGTH} أرقام).`, "code");
       return;
     }
     void run(async () => {
@@ -644,8 +693,8 @@ export function AuthIdentifierFlowInner({
     title = "أكمل بياناتك";
     subtitle = "خطوة أخيرة لإنشاء حسابك في حكيم.";
   } else if (step.name === "finishing") {
-    title = "تم التحقق";
-    subtitle = "جارٍ فتح حسابك…";
+    title = error ? "تعذّر إكمال الدخول" : "تم التحقق";
+    subtitle = error ? "الرمز صحيح — نعيد محاولة فتح مساحة العمل." : "جارٍ فتح حسابك…";
   }
 
   const editLabel =
@@ -915,6 +964,38 @@ export function AuthIdentifierFlowInner({
           </form>
         ) : null}
 
+        {step.name === "finishing" ? (
+          <div className="hk-emb__form" role="status" aria-live="polite">
+            {error ? (
+              <>
+                <ErrorNote id={ERROR_ID}>{error}</ErrorNote>
+                <button
+                  type="button"
+                  className="hk-btn-primary"
+                  disabled={busy}
+                  aria-busy={busy}
+                  onClick={() => void run(() => retryClaimAfterCode())}
+                >
+                  {busy ? "لحظة…" : "أعد المحاولة"}
+                </button>
+                <button
+                  type="button"
+                  className="hk-link44"
+                  disabled={busy}
+                  onClick={() => {
+                    clearError();
+                    setStep({ name: "identifier" });
+                  }}
+                >
+                  العودة لتعديل البريد أو الرقم
+                </button>
+              </>
+            ) : (
+              <p className="hk-emb__lede">جارٍ إكمال الدخول…</p>
+            )}
+          </div>
+        ) : null}
+
         {/* نقطة تركيب حماية الروبوتات في Clerk — مطلوبة لنماذج التسجيل المخصّصة. */}
         <div id="clerk-captcha" />
       </div>
@@ -956,6 +1037,31 @@ export function AuthIdentifierFlowInner({
               المتابعة عبر صفحة الدخول البديلة
             </a>
           ) : null}
+        </div>
+      ) : null}
+
+      {step.name === "finishing" && error ? (
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
+            className={primaryButtonClass}
+            disabled={busy}
+            aria-busy={busy}
+            onClick={() => void run(() => retryClaimAfterCode())}
+          >
+            {busy ? "لحظة…" : "أعد المحاولة"}
+          </button>
+          <button
+            type="button"
+            className={linkButtonClass}
+            disabled={busy}
+            onClick={() => {
+              clearError();
+              setStep({ name: "identifier" });
+            }}
+          >
+            العودة لتعديل البريد أو الرقم
+          </button>
         </div>
       ) : null}
 
@@ -1017,8 +1123,7 @@ export function AuthIdentifierFlowInner({
                 type="text"
                 inputMode={isBackup ? "text" : "numeric"}
                 autoComplete="one-time-code"
-                pattern="[0-9]*"
-                maxLength={isBackup ? 16 : 8}
+                maxLength={isBackup ? 16 : CODE_LENGTH}
                 placeholder="••••••"
                 value={code}
                 onChange={(e) => {

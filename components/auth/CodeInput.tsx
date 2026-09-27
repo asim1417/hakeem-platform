@@ -9,7 +9,8 @@ export const CODE_AUTOSUBMIT_DELAY_MS = 250;
 /**
  * حقل رمز التحقق — ست خانات مرئية، وتقنيًا حقل واحد خلفها:
  * type=text · inputmode=numeric · autocomplete=one-time-code · maxlength=6.
- * اللصق والتعبئة التلقائية من الرسالة يملآن الخانات كلها (مع تحويل الأرقام العربية).
+ * اللصق والتعبئة التلقائية من الرسالة يملآن الخانات كلها (مع تحويل الأرقام العربية/الفارسية).
+ * لا نضع pattern=[0-9]* — يمنع لوحات المفاتيح العربية من إدخال ٠١٢… قبل التنظيف.
  * اكتمال الرقم السادس ← onFilled بعد 250ms، مرة واحدة لكل قيمة.
  */
 export function CodeInput({
@@ -67,7 +68,7 @@ export function CodeInput({
   }, [digits]);
 
   function onPaste(e: ClipboardEvent<HTMLInputElement>) {
-    // maxlength يقتطع اللصق قبل التنظيف (مثل «424 242») — ننظّف النص كاملًا أولًا
+    // maxlength يقتطع اللصق قبل التنظيف (مثل «٤٢٤ ٢٤٢») — ننظّف النص كاملًا أولًا
     const text = e.clipboardData.getData("text");
     if (!text) return;
     e.preventDefault();
@@ -106,7 +107,6 @@ export function CodeInput({
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
-          pattern="[0-9]*"
           maxLength={CODE_LENGTH}
           dir="ltr"
           value={digits}

@@ -46,7 +46,9 @@ assert.ok(render("sign-in", "/dashboard/cases").includes("next=%2Fdashboard%2Fca
 // ── بعد التحقق: الوجهة من ‎next‎ فقط، والاحتياط يقارن بمسار البداية لا بـ «/» ──
 const dialog = read("components/home/HomeAuthDialog.tsx");
 assert.ok(dialog.includes("const current = page ? intent : readHomeAuthIntent() ?? intent;"));
-assert.ok(dialog.includes("if (window.location.pathname === from) window.location.assign(dest);"));
+assert.ok(dialog.includes("window.location.assign(dest)"), "انتقال كامل إلى الداخلية بعد التحقق");
+assert.ok(dialog.includes('onAuthenticated("identifier", result.next)'), "وجهة الخادم بعد claim تُحترم");
+assert.equal(dialog.includes("router.push(dest)"), false);
 
 // ── المداخل كلها إلى ‎/sign-in‎: 307 في الـ middleware، والوجهة محفوظة وآمنة ──
 assert.equal(singleSignInTarget("/sign-up", new URLSearchParams("next=/dashboard/cases")), "/sign-in?mode=sign-up&next=%2Fdashboard%2Fcases");
