@@ -38,7 +38,9 @@ type Step =
   | { name: "code"; purpose: "sign-in" | "sign-up-primary" | "sign-up-email"; target: Identifier }
   | { name: "second-factor"; strategy: SecondFactorStrategy; canUseBackup: boolean }
   | { name: "profile"; fields: ProfileField[] }
-  | { name: "finishing" };
+  | { name: "finishing" }
+  /** فشل تثبيت hakeem_session بعد رمز صحيح — يظهر زر إعادة المحاولة (لا يُغطّى بسبنر الرئيسية). */
+  | { name: "claim-failed" };
 
 export type IdentifierFlowStep = Step["name"];
 
@@ -246,8 +248,35 @@ export function AuthIdentifierFlowInner({
       return;
     }
     setStep({ name: "finishing" });
-    await activateWithoutNextRefresh(() => setActive({ session: sessionId }));
+    try {
+      await withTimeout(
+        activateWithoutNextRefresh(() => setActive({ session: sessionId })),
+        8_000,
+        "setActive"
+      );
+    } catch {
+      setStep({ name: "claim-failed" });
+      showError("تم التحقق من الرمز، لكن تعذّر تفعيل الجلسة. اضغط «أعد المحاولة».", null);
+      return;
+    }
     await claimAndNavigate(sessionId);
+  }
+
+  /** مهلة لأي وعد — تمنع تعليق «جارٍ إكمال الدخول…» بلا نهاية على الجوال. */
+  function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const t = window.setTimeout(() => reject(new Error(`${label}_timeout`)), ms);
+      promise.then(
+        (v) => {
+          window.clearTimeout(t);
+          resolve(v);
+        },
+        (err) => {
+          window.clearTimeout(t);
+          reject(err);
+        }
+      );
+    });
   }
 
   /**
@@ -284,26 +313,40 @@ export function AuthIdentifierFlowInner({
 
   /**
    * يثبّت hakeem_session من رمز جلسة Clerk — يعيد الوجهة، أو null إن تعذّر.
-   * نعيد محاولة getToken لأن setActive على الجوال قد لا يكشف JWT فورًا.
+   * نعيد محاولة getToken لأن setActive على الجوال قد لا يكشف JWT فورًا — مع مهلة صارمة.
    */
   async function claimSession(sessionId?: string | null): Promise<string | null> {
     try {
       let token: string | null = null;
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 4; i++) {
         const session = resolveClerkSession(sessionId);
-        token = (await session?.getToken()) ?? null;
+        if (session) {
+          try {
+            token =
+              (await withTimeout(Promise.resolve(session.getToken()), 4_000, "getToken")) ?? null;
+          } catch {
+            token = null;
+          }
+        }
         if (token) break;
-        await new Promise((r) => setTimeout(r, 40 * (i + 1)));
+        await new Promise((r) => setTimeout(r, 50 * (i + 1)));
       }
       if (!token) return null;
-      const res = await fetch("/api/auth/claim-clerk-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ token, next: nextUrl }),
-      });
-      const data = (await res.json().catch(() => null)) as { ok?: boolean; next?: string } | null;
-      return res.ok && data?.ok && data.next ? data.next : null;
+      const ac = new AbortController();
+      const timer = window.setTimeout(() => ac.abort(), 10_000);
+      try {
+        const res = await fetch("/api/auth/claim-clerk-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ token, next: nextUrl }),
+          signal: ac.signal,
+        });
+        const data = (await res.json().catch(() => null)) as { ok?: boolean; next?: string } | null;
+        return res.ok && data?.ok && data.next ? data.next : null;
+      } finally {
+        window.clearTimeout(timer);
+      }
     } catch {
       return null;
     }
@@ -313,19 +356,19 @@ export function AuthIdentifierFlowInner({
    * /auth/continue و/api/auth/me لا يقرآن جلسة Clerk (عزل iPhone)، فنثبّت hakeem_session
    * من رمز الجلسة قبل الانتقال — كما يفعل مسار العودة من بوابة Clerk.
    * مع onComplete: التثبيت في الخلفية بلا انتقال.
-   * عند فشل التثبيت بعد رمز صحيح: نبقى في «finishing» ونعيد المحاولة بلا إبطال جلسة Clerk
-   * (لا نرجع للحقل فينتهي المستخدم بطلب رمز جديد رغم صحة الأرقام).
+   * عند فشل التثبيت بعد رمز صحيح: خطوة claim-failed + زر إعادة المحاولة (لا سبنر يغطي الخطأ).
    */
   async function claimAndNavigate(sessionId?: string | null) {
     let next: string | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // محاولتان سريعتان فقط — لا نترك المستخدم على السпинر عشرات الثواني
+    for (let attempt = 0; attempt < 2; attempt++) {
       next = await claimSession(sessionId);
       if (next) break;
-      await new Promise((r) => setTimeout(r, 120 * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
     }
     if (onComplete) {
       if (!next) {
-        setStep({ name: "finishing" });
+        setStep({ name: "claim-failed" });
         showError(
           "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».",
           null
@@ -336,7 +379,7 @@ export function AuthIdentifierFlowInner({
       return;
     }
     if (!next) {
-      setStep({ name: "finishing" });
+      setStep({ name: "claim-failed" });
       showError(
         "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».",
         null
@@ -693,8 +736,11 @@ export function AuthIdentifierFlowInner({
     title = "أكمل بياناتك";
     subtitle = "خطوة أخيرة لإنشاء حسابك في حكيم.";
   } else if (step.name === "finishing") {
-    title = error ? "تعذّر إكمال الدخول" : "تم التحقق";
-    subtitle = error ? "الرمز صحيح — نعيد محاولة فتح مساحة العمل." : "جارٍ فتح حسابك…";
+    title = "تم التحقق";
+    subtitle = "جارٍ فتح حسابك…";
+  } else if (step.name === "claim-failed") {
+    title = "تعذّر إكمال الدخول";
+    subtitle = "الرمز صحيح — نعيد محاولة فتح مساحة العمل.";
   }
 
   const editLabel =
@@ -966,33 +1012,35 @@ export function AuthIdentifierFlowInner({
 
         {step.name === "finishing" ? (
           <div className="hk-emb__form" role="status" aria-live="polite">
-            {error ? (
-              <>
-                <ErrorNote id={ERROR_ID}>{error}</ErrorNote>
-                <button
-                  type="button"
-                  className="hk-btn-primary"
-                  disabled={busy}
-                  aria-busy={busy}
-                  onClick={() => void run(() => retryClaimAfterCode())}
-                >
-                  {busy ? "لحظة…" : "أعد المحاولة"}
-                </button>
-                <button
-                  type="button"
-                  className="hk-link44"
-                  disabled={busy}
-                  onClick={() => {
-                    clearError();
-                    setStep({ name: "identifier" });
-                  }}
-                >
-                  العودة لتعديل البريد أو الرقم
-                </button>
-              </>
-            ) : (
-              <p className="hk-emb__lede">جارٍ إكمال الدخول…</p>
-            )}
+            <p className="hk-emb__lede">جارٍ إكمال الدخول…</p>
+          </div>
+        ) : null}
+
+        {step.name === "claim-failed" ? (
+          <div className="hk-emb__form" role="alert">
+            <ErrorNote id={ERROR_ID}>
+              {error || "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة»."}
+            </ErrorNote>
+            <button
+              type="button"
+              className="hk-btn-primary"
+              disabled={busy}
+              aria-busy={busy}
+              onClick={() => void run(() => retryClaimAfterCode())}
+            >
+              {busy ? "لحظة…" : "أعد المحاولة"}
+            </button>
+            <button
+              type="button"
+              className="hk-link44"
+              disabled={busy}
+              onClick={() => {
+                clearError();
+                setStep({ name: "identifier" });
+              }}
+            >
+              العودة لتعديل البريد أو الرقم
+            </button>
           </div>
         ) : null}
 
@@ -1040,7 +1088,7 @@ export function AuthIdentifierFlowInner({
         </div>
       ) : null}
 
-      {step.name === "finishing" && error ? (
+      {step.name === "claim-failed" ? (
         <div className="mt-4 flex flex-col gap-2">
           <button
             type="button"

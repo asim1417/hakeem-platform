@@ -51,7 +51,8 @@ assert.ok(!dialog.includes("window.location.assign(result.next)"), "لا انت�
 const inner = read("components/auth/AuthIdentifierFlowInner.tsx");
 assert.ok(inner.includes("تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل"));
 assert.ok(inner.includes("retryClaimAfterCode"));
-assert.ok(inner.includes("resolveClerkSession") && inner.includes("getToken()"));
+assert.ok(inner.includes("resolveClerkSession") && inner.includes("getToken"));
+assert.ok(inner.includes("claim-failed") && inner.includes("withTimeout"), "مهلة + خطوة فشل ظاهرة بلا سبنر أبدي");
 assert.ok(!inner.includes('showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier")'), "لا نُرجع للحقل بعد رمز صحيح");
 assert.ok(inner.includes("onComplete({ ok: true, next })"));
 
@@ -90,9 +91,10 @@ console.log("clerk phone-only (welcome): OK");
 // ── لا إعادة تحميل وسط الدخول: خطّافا @clerk/nextjs معطّلان أثناء setActive وإنهاء الجلسة فقط ──
 {
   const src = read("components/auth/AuthIdentifierFlowInner.tsx");
-  assert.ok(src.includes("await activateWithoutNextRefresh(() => setActive({ session: sessionId }));"));
+  assert.ok(src.includes("activateWithoutNextRefresh(() => setActive({ session: sessionId }))"));
+  assert.ok(src.includes("withTimeout") && src.includes("getToken"), "مهلة getToken/setActive");
   assert.ok(/activateWithoutNextRefresh\(\(\) => Promise\.all\(sessions\.map/.test(src));
-  const fn = src.slice(src.indexOf("async function activateWithoutNextRefresh"), src.indexOf("/** يثبّت hakeem_session"));
+  const fn = src.slice(src.indexOf("async function activateWithoutNextRefresh"), src.indexOf("/** يختار جلسة Clerk"));
   assert.ok(/finally \{\s*w\.__unstable__onBeforeSetActive = before;\s*w\.__unstable__onAfterSetActive = after;/.test(fn), "تُعاد الخطّافات دائمًا");
   console.log("clerk phone-only (no mid-flow reload): OK");
 }

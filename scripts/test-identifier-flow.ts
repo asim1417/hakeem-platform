@@ -140,6 +140,8 @@ assert.ok(
 assert.ok(
   inner.includes("تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل") &&
     inner.includes("retryClaimAfterCode") &&
+    inner.includes('"claim-failed"') &&
+    inner.includes("withTimeout") &&
     !inner.includes('showError("تعذّر إكمال الدخول. حاول مرة أخرى.", "identifier")'),
   "failed claim keeps the verified code session and offers retry — does not dump to public home"
 );
