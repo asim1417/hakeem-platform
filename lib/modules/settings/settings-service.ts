@@ -57,7 +57,7 @@ export const MANAGED_KEYS: ManagedKey[] = [
   { key: "AUTH_APPLE_ENABLED", label: "إظهار الدخول عبر Apple", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "AUTH_EMAIL_CODE_ENABLED", label: "إظهار الدخول بالبريد برمز تحقق", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "AUTH_PHONE_ENABLED", label: "إظهار الدخول برقم الجوال (OTP)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
-  { key: "AUTH_MFA_ENABLED", label: "إظهار إعداد التحقق الثنائي", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_MFA_ENABLED", label: "إظهار إعداد التحقق الثنائي", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "0" },
   { key: "AUTH_ORGANIZATIONS_ENABLED", label: "إظهار حسابات المكاتب (Organizations)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "AUTH_IDENTIFIER_FORM_ENABLED", label: "نموذج الدخول العربي للبريد والجوال (بدل صفحة Clerk)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
   { key: "HOME_INLINE_AUTH_ENABLED", label: "الدخول من الصفحة الرئيسية دون مغادرتها (0 = مفتاح طوارئ يعيد الروابط السابقة)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
