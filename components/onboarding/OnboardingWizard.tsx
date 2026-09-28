@@ -26,17 +26,22 @@ export function OnboardingWizard({
   userName,
   initialStep = 1,
   initialBalance = 0,
+  /** ملف مكتمل مسبقًا — نفتح للتعديل لا شاشة «اكتمل» المسدودة */
+  initiallyCompleted = false,
 }: {
   userName: string;
   initialStep?: number;
   initialBalance?: number;
+  initiallyCompleted?: boolean;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(Math.min(6, Math.max(1, initialStep || 1)));
   const [balance, setBalance] = useState(initialBalance);
   const [earnedThisSession, setEarnedThisSession] = useState(0);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  /** شاشة الاحتفال فقط بعد إنهاء الخطوات في هذه الجلسة — لا عند فتح «ملفي المهني» لاحقًا */
+  const [celebrate, setCelebrate] = useState(false);
+  const [alreadyComplete, setAlreadyComplete] = useState(initiallyCompleted);
   const [pending, startTransition] = useTransition();
 
   const [phone, setPhone] = useState("");
@@ -71,8 +76,14 @@ export function OnboardingWizard({
         if (p.termsAccepted) setTermsAccepted(true);
         if (Array.isArray(p.certificates)) setCertificates(p.certificates.join("\n"));
         if (typeof p.creditsBalance === "number") setBalance(p.creditsBalance);
-        if (p.onboardingCompleted) setDone(true);
-        else if (p.onboardingStep > 0) setStep(Math.min(6, p.onboardingStep + 1));
+        if (p.onboardingCompleted) {
+          // ملفي المهني بعد الاكتمال = وضع تعديل، لا طريق مسدود
+          setAlreadyComplete(true);
+          setCelebrate(false);
+          setStep(1);
+        } else if (p.onboardingStep > 0) {
+          setStep(Math.min(6, p.onboardingStep + 1));
+        }
       })
       .catch(() => undefined);
   }, []);
@@ -123,10 +134,6 @@ export function OnboardingWizard({
   async function submitStep(opts?: { skipAvatar?: boolean }) {
     setError("");
     try {
-      if (step === 3 && !phoneVerified) {
-        // الجوال اختياري — السعودية مقفلة في Clerk SMS افتراضيًا
-      }
-
       let avatarAwarded = 0;
       if (step === 5 && !opts?.skipAvatar) {
         avatarAwarded = await uploadAvatar();
@@ -164,7 +171,8 @@ export function OnboardingWizard({
       if (typeof data.balance === "number") setBalance(data.balance);
 
       if (data.done || step === 6) {
-        setDone(true);
+        setAlreadyComplete(true);
+        setCelebrate(true);
         return;
       }
       setStep((s) => Math.min(6, s + 1));
@@ -173,7 +181,7 @@ export function OnboardingWizard({
     }
   }
 
-  if (done) {
+  if (celebrate) {
     return (
       <div className="space-y-6 text-center">
         <p className="text-sm font-semibold text-[var(--gold)]">اكتمل ملفك</p>
@@ -186,6 +194,16 @@ export function OnboardingWizard({
           <NavyButton type="button" onClick={() => startTransition(() => router.push("/dashboard?welcome=1"))}>
             الذهاب إلى لوحتي
           </NavyButton>
+          <button
+            type="button"
+            className="focus-ring text-sm font-semibold text-[var(--navy)] underline-offset-4 hover:underline"
+            onClick={() => {
+              setCelebrate(false);
+              setStep(1);
+            }}
+          >
+            تعديل الملف المهني
+          </button>
           <Link href="/dashboard/ask" className="text-sm font-semibold text-[var(--navy)] underline-offset-4 hover:underline">
             ابدأ استشارة
           </Link>
@@ -197,8 +215,12 @@ export function OnboardingWizard({
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <p className="text-sm font-semibold text-[var(--gold)]">إكمال الملف · +{CREDIT_REWARDS.welcome} نقطة ترحيبية</p>
-        <h2 className="font-display-ar text-2xl text-[var(--navy)] sm:text-3xl">أكمل ملفك واكسب المزيد</h2>
+        <p className="text-sm font-semibold text-[var(--gold)]">
+          {alreadyComplete ? "ملفي المهني — تعديل البيانات" : `إكمال الملف · +${CREDIT_REWARDS.welcome} نقطة ترحيبية`}
+        </p>
+        <h2 className="font-display-ar text-2xl text-[var(--navy)] sm:text-3xl">
+          {alreadyComplete ? "حدّث ملفك المهني" : "أكمل ملفك واكسب المزيد"}
+        </h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
           الخطوة {step} من 6 — رصيدك الآن {balance.toLocaleString("ar-SA")} نقطة
         </p>
@@ -479,8 +501,12 @@ export function OnboardingWizard({
             {pending
               ? "جارٍ الحفظ…"
               : step === 6
-                ? `إنهاء (+${CREDIT_REWARDS.onboarding_step_6})`
-                : `التالي (+${STEPS[step - 1].reward})`}
+                ? alreadyComplete
+                  ? "حفظ التعديلات"
+                  : `إنهاء (+${CREDIT_REWARDS.onboarding_step_6})`
+                : alreadyComplete
+                  ? "التالي"
+                  : `التالي (+${STEPS[step - 1].reward})`}
           </GoldButton>
         </div>
       </div>
