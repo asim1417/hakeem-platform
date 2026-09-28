@@ -25,8 +25,9 @@ const STEPS = [
   { id: 6, title: "الموافقات", reward: CREDIT_REWARDS.onboarding_step_6 },
 ] as const;
 
-/** بعد إكمال الملف: عرض موجز ثم التحويل للوحة */
+/** بعد إكمال الملف أو حفظ التعديلات: عرض موجز ثم التحويل للوحة */
 const AFTER_COMPLETE_MS = 1400;
+const AFTER_EDIT_SAVE_MS = 900;
 const DASHBOARD_AFTER_COMPLETE = "/dashboard?welcome=1";
 
 type Entity = EntityTypeValue;
@@ -49,6 +50,8 @@ export function OnboardingWizard({
   const [earnedThisSession, setEarnedThisSession] = useState(0);
   const [error, setError] = useState("");
   const [saveOk, setSaveOk] = useState("");
+  /** بعد حفظ التعديلات في ملف مكتمل — نُظهر الرسالة ثم نحوّل للوحة */
+  const [redirectAfterEdit, setRedirectAfterEdit] = useState(false);
   /** شاشة الاحتفال فقط بعد إنهاء الخطوات في هذه الجلسة — لا عند فتح «ملفي المهني» لاحقًا */
   const [celebrate, setCelebrate] = useState(false);
   const [alreadyComplete, setAlreadyComplete] = useState(initiallyCompleted);
@@ -106,6 +109,15 @@ export function OnboardingWizard({
     }, AFTER_COMPLETE_MS);
     return () => window.clearTimeout(id);
   }, [celebrate, router]);
+
+  // بعد حفظ تعديلات ملف مكتمل: رسالة قصيرة ثم التحويل للوحة
+  useEffect(() => {
+    if (!redirectAfterEdit) return;
+    const id = window.setTimeout(() => {
+      startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE));
+    }, AFTER_EDIT_SAVE_MS);
+    return () => window.clearTimeout(id);
+  }, [redirectAfterEdit, router]);
 
   function toggle(list: string[], value: string, setter: (v: string[]) => void) {
     setter(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -192,9 +204,10 @@ export function OnboardingWizard({
 
       if (step === 6) {
         setAlreadyComplete(true);
-        // تعديل ملف مكتمل: تأكيد الحفظ دون إعادة شاشة الاحتفال
+        // تعديل ملف مكتمل: تأكيد الحفظ ثم التحويل للوحة الداخلية
         if (alreadyComplete) {
-          setSaveOk("تم حفظ تعديلات ملفك المهني.");
+          setSaveOk("تم حفظ تعديلات ملفك المهني. جارٍ فتح لوحتك…");
+          setRedirectAfterEdit(true);
           return;
         }
         setCelebrate(true);
@@ -542,9 +555,9 @@ export function OnboardingWizard({
               تخطّي
             </button>
           ) : null}
-          <GoldButton type="button" disabled={pending} onClick={() => void submitStep()}>
-            {pending
-              ? "جارٍ الحفظ…"
+          <GoldButton type="button" disabled={pending || redirectAfterEdit} onClick={() => void submitStep()}>
+            {pending || redirectAfterEdit
+              ? "جارٍ فتح لوحتك…"
               : step === 6
                 ? alreadyComplete
                   ? "حفظ التعديلات"
