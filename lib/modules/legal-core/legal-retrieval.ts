@@ -32,6 +32,7 @@ import { getArticleAuthorityMap } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 import { getOpenSearchConfig, openSearchHeaders } from "@/lib/modules/legal-search/providers/search-provider";
+import { EMPTY_SURFACE, inSurface, loadSearchSurface, mapToSurface } from "./search-surface";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -99,6 +100,13 @@ export type AdvancedLegalSearchOptions = {
   includeFacets?: boolean;
   /** عمق حساب الأوجه ضمن المجموعة المرتّبة (افتراضي: كل المجموعة). */
   facetDepth?: number;
+  /**
+   * وجه البحث (الموجة ١): «current» (الافتراضي) = النسخة السارية لكل عمل في asOf فقط؛
+   * «archive» = كل السجلات بلا وجه (للأرشيف والرابط المباشر).
+   */
+  surface?: "current" | "archive";
+  /** تاريخ الوجه YYYY-MM-DD (افتراضيًا اليوم بتوقيت الرياض). */
+  asOf?: string;
 };
 
 export type CoreFacetValue = { value: string; count: number };
@@ -372,6 +380,26 @@ function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
 
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
+  // وجه البحث: المواد من معرّفات الوجه فقط. النظام المذكور المخفي يُحوَّل إلى وجه عمله
+  // (المخلوط «نظام التنفيذ» → م/53 اليوم → م/237 من 2026-10-28)، والمخفي بلا خلف يسقط.
+  const { surface, hiddenNames } =
+    options.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(options.asOf);
+  const requestedSystemIds = cleanList(options.systemIds);
+  const systemIds = surface.hidden.size ? mapToSurface(requestedSystemIds, surface) : requestedSystemIds;
+  if (requestedSystemIds.length && !systemIds.length) {
+    // كل الأنظمة المطلوبة خارج وجه الساري بلا خلف: لا نوسّع إلى كل المكتبة.
+    return {
+      query,
+      searchType: options.searchType ?? "contains",
+      total: 0,
+      exhaustive: true,
+      page: Math.max(Number(options.page ?? 1), 1),
+      limit: Math.min(Math.max(Number(options.limit ?? 20), 1), 200),
+      relatedTerms: [],
+      message: "النظام المطلوب ليس ساريًا اليوم؛ نصّه في الأرشيف ويُفتح من صفحته مباشرة.",
+      results: [],
+    };
+  }
   const searchType = options.searchType ?? "contains";
   const page = Math.max(Number(options.page ?? 1), 1);
   // سقف الصفحة 200 (كان 80): يتيح سحب دفعات أكبر عند تصدير «كامل النتائج».
@@ -416,7 +444,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const where: Record<string, unknown> = {
     AND: [
-      buildSystemFilter(options.systemIds),
+      buildSystemFilter(systemIds),
+      buildSurfaceFilter([...surface.hidden], [...hiddenNames]),
       buildDomainFilter(options.domain),
       buildCategoryFilter(options.categoryIds),
       buildSourceTypeFilter(options.sourceTypes),
@@ -440,7 +469,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر
   // بنيوي أو تعطيله بـ IN_DB_RECALL=0 نعود للمسار المعجمي (ILIKE) دون تغيير سلوك.
   const noStructuralFilter =
-    !cleanList(options.systemIds).length &&
+    !systemIds.length &&
     !cleanList(options.categoryIds).length &&
     !options.domain &&
     (!cleanList(options.sourceTypes).length ||
@@ -451,7 +480,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   let total = 0;
   let lightRows: LightArticle[] = [];
-  const inDbRows = useInDb ? await inDbLightCandidates(buildTsQueryWords(dbFilterVariants), COMPLETE_CAP) : null;
+  const inDbRowsRaw = useInDb ? await inDbLightCandidates(buildTsQueryWords(dbFilterVariants), COMPLETE_CAP) : null;
+  const inDbRows = inDbRowsRaw && surface.hidden.size ? inDbRowsRaw.filter((r) => inSurface(r, surface, hiddenNames)) : inDbRowsRaw;
   if (inDbRows) {
     // كل المطابقات (< السقف) رُجِّعت مفهرسةً — الإجماليّ الحقيقي = طولها؛ التطبيق يعيد ترتيبها.
     lightRows = inDbRows;
@@ -514,6 +544,11 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
         for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
       }
     }
+  }
+
+  // وجه البحث: ما جلبته المسارات الإضافية (مكنز/دلالي/OpenSearch) يخضع للوجه نفسه.
+  if (surface.hidden.size) {
+    for (const [id, row] of lightById) if (!inSurface(row, surface, hiddenNames)) lightById.delete(id);
   }
 
   // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
@@ -676,18 +711,38 @@ async function applySemanticRerank(query: string, results: LegalCoreResult[]): P
 }
 
 // بحث مباشر بالرقم للتحقق من وجود مادة مذكورة في الحكم (دقيق — لا يعتمد المطابقة النصية).
-export async function getArticlesByNumber(articleNumber: number, systemHint?: string): Promise<LegalCoreResult[]> {
+export async function getArticlesByNumber(
+  articleNumber: number,
+  systemHint?: string,
+  opts: { asOf?: string; surface?: "current" | "archive" } = {}
+): Promise<LegalCoreResult[]> {
   if (!Number.isFinite(articleNumber) || articleNumber <= 0) return [];
   const where: Record<string, unknown> = { articleNumber };
   const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
+  const { surface, hiddenNames } =
+    opts.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(opts.asOf);
   if (hint) {
-    where.OR = [
-      { lawName: { contains: hint, mode: "insensitive" } },
-      { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
-    ];
+    // الموجة ١: الاسم يُطابَق بالمساواة بعد التطبيع أو بأطول جوهر كامل، ثم يُحوَّل إلى وجه العمل.
+    const { loadSystemsRegistry, matchSystemsInText, normalizeSystemName } = await import("@/lib/modules/agents/substrate/systems-registry");
+    const registry = await loadSystemsRegistry().catch(() => []);
+    const core = normalizeSystemName(hint.replace(/-/g, " "));
+    const exact = registry.filter((r) => normalizeSystemName(r.name) === core);
+    const refs = exact.length ? exact : matchSystemsInText(hint.replace(/-/g, " "), registry);
+    const ids = mapToSurface(refs.map((r) => r.id), surface);
+    if (ids.length) {
+      where.legalSystemId = { in: ids };
+    } else if (refs.length) {
+      return []; // النظام المذكور خارج وجه الساري بلا خلف
+    } else {
+      where.OR = [
+        { lawName: { contains: hint, mode: "insensitive" } },
+        { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
+      ];
+    }
   }
+  const surfaceFilter = buildSurfaceFilter([...surface.hidden], [...hiddenNames]);
   const articles = await prisma.legalArticle.findMany({
-    where,
+    where: Object.keys(surfaceFilter).length ? { AND: [where, surfaceFilter] } : where,
     include: { legalSystem: { select: { id: true, name: true } } },
     take: 12
   });
@@ -869,6 +924,15 @@ function buildSystemFilter(systemIds?: string[]) {
       { lawName: { contains: value, mode: "insensitive" as const } }
     ])
   };
+}
+
+// وجه البحث: استبعاد الأنظمة المخفية اليوم (بالمعرّف، وبالاسم للصفوف بلا معرّف).
+function buildSurfaceFilter(hiddenIds: string[], hiddenNames: string[]) {
+  if (!hiddenIds.length && !hiddenNames.length) return {};
+  const or: Array<Record<string, unknown>> = [];
+  if (hiddenIds.length) or.push({ legalSystemId: { in: hiddenIds } });
+  if (hiddenNames.length) or.push({ lawName: { in: hiddenNames } });
+  return { NOT: { OR: or } };
 }
 
 // فلترة اختيارية بمجال النظام المصنّف — عبر علاقة legalSystem.domain.

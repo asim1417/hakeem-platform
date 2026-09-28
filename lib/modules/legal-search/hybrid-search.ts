@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { parseArticleQuery, normalizeArabicQuery } from "./query-parse";
+import { parseArticleQuery } from "./query-parse";
+import { loadSystemsRegistry, matchSystemsInText, normalizeSystemName, type SystemRef } from "@/lib/modules/agents/substrate/systems-registry";
+import { EMPTY_SURFACE, inSurface, loadSearchSurface, mapToSurface } from "@/lib/modules/legal-core/search-surface";
 import { knowledgeGraphProvider } from "./providers/knowledge-graph-provider";
 import { opensearchProvider } from "./providers/opensearch-provider";
 import { postgresProvider } from "./providers/postgres-provider";
@@ -46,51 +48,55 @@ export { parseArticleQuery } from "./query-parse";
 /**
  * مطابقة مباشرة لنمط «المادة {رقم} {اسم النظام}»: يستعلم مقيّدًا بالنظام المطابق —
  * فلا تُعاد مادة بالرقم الصحيح من نظام خاطئ. يعيد null إن لم ينطبق النمط.
+ * الموجة ١: الاسم بالمساواة بعد التطبيع أو بأطول جوهر كامل (لا «contains» ولا ترتيب بالعدّاد)،
+ * ثم التحويل إلى وجه العمل في asOf: «المادة 1 من نظام التنفيذ» = م/53 حتى 2026-10-27، وم/237 من 2026-10-28.
  */
-async function findExactArticleMatch(q: string): Promise<MergedResult | null> {
+export async function findExactArticleMatch(q: string, opts: { asOf?: string; surface?: "current" | "archive" } = {}): Promise<MergedResult | null> {
   const parsed = parseArticleQuery(q);
   if (!parsed) return null;
   const { articleNumber: n, systemHint: hint } = parsed;
 
-  const findSystem = (needle: string) =>
-    prisma.legalSystem.findFirst({ where: { name: { contains: needle, mode: "insensitive" } }, select: { id: true, name: true }, orderBy: { articleCount: "desc" } }).catch(() => null);
+  const registry = await loadSystemsRegistry().catch(() => [] as SystemRef[]);
+  const core = normalizeSystemName(hint);
+  const exact = registry.filter((r) => normalizeSystemName(r.name) === core);
+  const refs = exact.length ? exact : matchSystemsInText(hint, registry);
+  if (!refs.length) return null;
 
-  let sys = await findSystem(hint);
-  if (!sys) {
-    const longest = hint.split(/\s+/).filter((w) => w.length >= 4).sort((a, b) => b.length - a.length)[0];
-    if (longest) sys = await findSystem(longest);
+  const { surface } = opts.surface === "archive" ? { surface: EMPTY_SURFACE } : await loadSearchSurface(opts.asOf);
+  const ids = mapToSurface(refs.map((r) => r.id), surface);
+  if (!ids.length) return null;
+
+  // عند تعدّد الأنظمة بعد الوجه (نادر): الأطول جوهرًا أولًا كما رتّبها المطابِق.
+  for (const id of ids) {
+    const article = await prisma.legalArticle
+      .findFirst({ where: { legalSystemId: id, articleNumber: n }, select: { id: true, lawName: true, articleNumber: true, title: true, legalSystemId: true } })
+      .catch(() => null);
+    if (!article) continue;
+    return {
+      type: "article",
+      id: article.id,
+      title: `${article.lawName} — م/${article.articleNumber}: ${article.title}`,
+      confidence: 1,
+      sources: ["postgres"],
+      reasons: ["مطابقة مباشرة: رقم المادة ضمن النظام المذكور في الاستعلام (النسخة السارية)"],
+      meta: { articleId: article.id, systemName: article.lawName, systemId: article.legalSystemId, articleNumber: article.articleNumber, sourceType: "article", exactMatch: true, surfaceAsOf: surface.asOf },
+    };
   }
-  if (!sys) {
-    // سقوط مُطبَّع (الدفعة ١.٣): يتجاوز اختلاف الهمزة/التاء المربوطة/الألف المقصورة بين
-    // اسم النظام في الاستعلام واسمه في القاعدة — بمطابقة بعد التطبيع العربي الموحّد.
-    const systems = await prisma.legalSystem
-      .findMany({ select: { id: true, name: true }, orderBy: { articleCount: "desc" } })
-      .catch(() => [] as Array<{ id: string; name: string }>);
-    const nHint = normalizeArabicQuery(hint);
-    if (nHint.length >= 3) {
-      sys =
-        systems.find((s) => {
-          const nName = normalizeArabicQuery(s.name);
-          return nName.includes(nHint) || nHint.includes(nName);
-        }) ?? null;
-    }
-  }
-  if (!sys) return null;
+  return null;
+}
 
-  const article = await prisma.legalArticle
-    .findFirst({ where: { OR: [{ legalSystemId: sys.id }, { lawName: sys.name }], articleNumber: n }, select: { id: true, lawName: true, articleNumber: true, title: true } })
-    .catch(() => null);
-  if (!article) return null;
-
-  return {
-    type: "article",
-    id: article.id,
-    title: `${article.lawName} — م/${article.articleNumber}: ${article.title}`,
-    confidence: 1,
-    sources: ["postgres"],
-    reasons: ["مطابقة مباشرة: رقم المادة ضمن النظام المذكور في الاستعلام"],
-    meta: { articleId: article.id, systemName: article.lawName, articleNumber: article.articleNumber, sourceType: "article", exactMatch: true },
-  };
+/** يُسقط المواد التي أنظمتها خارج الوجه (استعلام واحد على المعرّفات المعروضة). */
+async function filterArticlesToSurface(results: MergedResult[], opts: { asOf?: string; surface?: "current" | "archive" }): Promise<MergedResult[]> {
+  if (opts.surface === "archive") return results;
+  const { surface, hiddenNames } = await loadSearchSurface(opts.asOf);
+  if (!surface.hidden.size) return results;
+  const articleIds = results.filter((r) => r.type === "article").map((r) => r.id);
+  if (!articleIds.length) return results;
+  const rows = await prisma.legalArticle
+    .findMany({ where: { id: { in: articleIds } }, select: { id: true, legalSystemId: true, lawName: true } })
+    .catch(() => [] as Array<{ id: string; legalSystemId: string | null; lawName: string }>);
+  const out = new Set(rows.filter((r) => !inSurface(r, surface, hiddenNames)).map((r) => r.id));
+  return out.size ? results.filter((r) => !(r.type === "article" && out.has(r.id))) : results;
 }
 
 /** منسّق البحث الهجين: يشغّل المزوّدات المتاحة، يدمج ويزيل التكرار ويرتّب. */
@@ -121,10 +127,12 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   let results = mergeResultsRRF(rawBatches, limit);
 
   // مطابقة «المادة {رقم} {نظام}» المباشرة تتصدّر النتائج (تصحيح تجاهل اسم النظام كقيد).
-  const exact = await findExactArticleMatch(query.q).catch(() => null);
+  const exact = await findExactArticleMatch(query.q, { asOf: query.asOf, surface: query.surface }).catch(() => null);
   if (exact) {
     results = [exact, ...results.filter((r) => !(r.type === "article" && r.id === exact.id))].slice(0, limit);
   }
+  // وجه البحث: مواد الأنظمة المخفية اليوم لا تظهر في صناديق البحث (الأحكام والمبادئ كما هي).
+  results = await filterArticlesToSurface(results, { asOf: query.asOf, surface: query.surface }).catch(() => results);
 
   return { query: query.q, mode, results, providers: providerStatuses, total: results.length };
 }
