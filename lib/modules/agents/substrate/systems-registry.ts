@@ -29,24 +29,69 @@ export function normalizeSystemName(name: string): string {
   }
   // «التنفيذية لـ…» ⇒ جوهر النظام المُشار إليه.
   n = n.replace(/^التنفيذيه?\s+ل/, "").trim();
+  // «… الصادر بالمرسوم الملكي رقم (م/53) وتاريخ …» وصف إصدار لا جزء من الاسم: الإصدارات المؤرّخة
+  // لعمل واحد تتوحّد على جوهره، ثم يختار وجه البحث النسخة السارية منها.
+  n = n.replace(/\s+الصادر[ةه]?\s+(?:بال|ب)(?:مرسوم|امر|قرار).*$/, "").trim();
   return n;
+}
+
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+// حروف تلتصق بأول الكلمة دون أن تغيّر الاسم: «وبنظام»، «بالعمل»، «لنظام».
+const CLITICS = new Set(["و", "ب", "ل", "ف", "ك"]);
+
+/** مواضع ظهور الجوهر كلماتٍ كاملة (لا جزءًا من كلمة أطول). نقيّ. */
+export function wholeWordSpans(haystack: string, needle: string): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  if (!needle) return out;
+  let from = 0;
+  for (;;) {
+    const i = haystack.indexOf(needle, from);
+    if (i < 0) break;
+    const end = i + needle.length;
+    const prev = i > 0 ? haystack[i - 1] : "";
+    const prev2 = i > 1 ? haystack[i - 2] : "";
+    const startOk = !prev || !WORD_CHAR.test(prev) || (CLITICS.has(prev) && (!prev2 || !WORD_CHAR.test(prev2)));
+    const next = end < haystack.length ? haystack[end] : "";
+    const endOk = !next || !WORD_CHAR.test(next);
+    if (startOk && endOk) out.push([i, end]);
+    from = i + 1;
+  }
+  return out;
 }
 
 /**
  * يطابق الأنظمة المذكورة في نصٍّ (سؤال المستخدم) ضمن سجلّ معطى.
- * يعيد الأنظمة التي يظهر جوهر اسمها المُطبَّع (≥ 3 أحرف) داخل نصّ السؤال المُطبَّع.
+ * القاعدة (الموجة ١): الجوهر يُطابَق كلماتٍ كاملة، والجوهر الأقصر الواقع داخل موضع جوهرٍ أطول
+ * مطابَق يسقط — فـ«الزراعة العضوية» لا تُقصر على «الزراعة»، و«التنفيذ أمام ديوان المظالم» لا
+ * تُقصر على «التنفيذ»، و«اللائحة التنفيذية لنظام العمل» لا يبتلعها «العمل».
+ * عند تساوي الموضع يُقدَّم ما ذُكر اسمه الكامل ببادئته («نظام X» على «لائحة X»).
  * نقيّ — يُغذّى بالسجلّ من القاعدة أو من ثابت الاختبار.
  */
 export function matchSystemsInText(text: string, registry: SystemRef[]): SystemRef[] {
   const h = normalizeArabicText(text || "");
   if (!h) return [];
-  const hits: Array<{ ref: SystemRef; len: number }> = [];
+  type Hit = { ref: SystemRef; len: number; start: number; end: number; full: boolean };
+  const hits: Hit[] = [];
   for (const ref of registry) {
     const core = normalizeSystemName(ref.name);
-    if (core.length >= 3 && h.includes(core)) hits.push({ ref, len: core.length });
+    if (core.length < 3) continue;
+    const spans = wholeWordSpans(h, core);
+    if (!spans.length) continue;
+    const fullName = normalizeArabicText(ref.name).replace(/\s+الصادر[ةه]?\s+(?:بال|ب)(?:مرسوم|امر|قرار).*$/, "").trim();
+    const fullSpans = fullName !== core ? wholeWordSpans(h, fullName) : [];
+    // أوسع موضع لهذا النظام: الاسم الكامل إن ذُكر، وإلا الجوهر.
+    const [s, e] = fullSpans[0] ?? spans[0];
+    hits.push({ ref, len: core.length, start: s, end: e, full: fullSpans.length > 0 });
   }
-  // الأطول أولًا (الأخصّ): «المعاملات المدنية» قبل «المدنية» عند التداخل.
-  return hits.sort((a, b) => b.len - a.len).map((x) => x.ref);
+  // إسقاط المحتوى: موضع أقصر داخل موضع أطول لنظام آخر.
+  const kept = hits.filter(
+    (a) => !hits.some((b) => b !== a && b.start <= a.start && b.end >= a.end && b.end - b.start > a.end - a.start)
+  );
+  // تساوي الموضع: من ذُكر اسمه الكامل يتقدّم ويُسقط من طابق جوهره فقط.
+  const final = kept.filter(
+    (a) => a.full || !kept.some((b) => b !== a && b.full && b.start <= a.start && b.end >= a.end)
+  );
+  return final.sort((a, b) => b.len - a.len).map((x) => x.ref);
 }
 
 /** هل ذُكر أيّ نظام صراحةً في السؤال؟ (بوّابة تفعيل قيد النطاق). */

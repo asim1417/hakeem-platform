@@ -1,0 +1,272 @@
+{
+ "target": "staging",
+ "preview": false,
+ "build_date": "2026-09-28",
+ "guards_before": {
+  "نظام التنفيذ": [
+   "6e79f6559b9dd79b95134811ba8b21e0"
+  ],
+  "نظام المعاملات المدنية": [
+   "9443c3a87e6d1b9838df8e0fcaeceef7"
+  ],
+  "count:نظام التنفيذ": 98,
+  "count:نظام السجل التجاري": 29,
+  "count:نظام الأسماء التجارية": 23
+ },
+ "totals_before": {
+  "systems": 66,
+  "articles": 578,
+  "verification": 21,
+  "search_surface": 18,
+  "search_surface_member": 21,
+  "law_card": 8
+ },
+ "families": [
+  [
+   "we:fx-3477b23a84e0deb016a2880e",
+   [
+    [
+     "ed25-7010964d153608cdcaa68a48",
+     "2000-11-18",
+     "2025-04-02"
+    ],
+    [
+     "ed25-fc1bd01b88ecdf6cbcf1e250",
+     "2025-04-02",
+     null
+    ]
+   ]
+  ],
+  [
+   "we:fx-3bff052baacdcef6bdc2619e",
+   [
+    [
+     "ed25-3c30143d0ec387695e66cce3",
+     "1995-07-19",
+     "2025-04-02"
+    ],
+    [
+     "ed25-71b37d1ec31a497747ed643c",
+     "2025-04-02",
+     null
+    ]
+   ]
+  ],
+  [
+   "we:fx-cf8f79b0eece6686c778b9cc",
+   [
+    [
+     "ed25-d62948bc9ac1a3c3fb813076",
+     "2012-07-03",
+     "2026-10-28"
+    ],
+    [
+     "ed25-c2a4c0ce70ba0e7eee683d32",
+     "2026-10-28",
+     null
+    ]
+   ]
+  ]
+ ],
+ "retired": [
+  [
+   "fx-282dda1fe8bd4837731bc8c9",
+   "already_retired",
+   "verification:مستبدل (vf26-206dfbe97bb1298fd0073ab7)"
+  ],
+  [
+   "fx-3ced41fddb3468591fa1a2b7",
+   "already_retired",
+   "verification:مستبدل (vf26-ff93811dfb5040b0a45b076f)"
+  ],
+  [
+   "fx-4514faa81a0b5017302907bf",
+   "already_retired",
+   "verification:مستبدل (vf26-15d40d22509c01dee372828e)"
+  ],
+  [
+   "fx-78928fac72a481ea4da4ed54",
+   "already_retired",
+   "verification:ملغى (vf26-bdfe530c5f884fe15b9713d7)"
+  ],
+  [
+   "fx-8b765a767f7023627003c5c3",
+   "already_retired",
+   "verification:مستبدل (vf26-884dc7cf85d431c7f6cee241)"
+  ],
+  [
+   "fx-a9c99195c295fbf1d9621e16",
+   "already_retired",
+   "verification:مستبدل (vf26-ad36d15223c6351fca8fdf01)"
+  ],
+  [
+   "fx-abf4328b632128bfdb2bec56",
+   "already_retired",
+   "verification:مستبدل (vf26-4c1bf9a9fa277cd4a5198fdb)"
+  ],
+  [
+   "fx-b0471cc098e2ebc22c3e7c69",
+   "already_retired",
+   "all_articles_repealed:3"
+  ],
+  [
+   "fx-ca5d1561efa5c897116c136d",
+   "already_retired",
+   "verification:ملغى (vf26-460758e9f1de9e16d9818927)"
+  ],
+  [
+   "fx-d36ce18c1865c9eed53d0ec8",
+   "already_retired",
+   "verification:مستبدل (vf26-38185899a1e5d5ded602c334)"
+  ],
+  [
+   "fx-d4c36e5432f284739f00450f",
+   "already_retired",
+   "verification:مستبدل (vf26-8ea0cb0fa773167f462071d6)"
+  ],
+  [
+   "fx-dba97d48a85edd7b2ada8a9c",
+   "already_retired",
+   "verification:مستبدل (vf26-2234c15d5fb03335776ac7be)"
+  ]
+ ],
+ "law_cards": [
+  [
+   "نظام وثائق السفر",
+   "card",
+   0
+  ],
+  [
+   "نظام إدارة المواد الكيميائية",
+   "card",
+   0
+  ],
+  [
+   "نظام الآثار والمتاحف والتراث العمراني",
+   "card",
+   0
+  ],
+  [
+   "تنظيم هيئة الاتصالات والفضاء والتقنية",
+   "card",
+   0
+  ],
+  [
+   "نظام المواصفات والجودة",
+   "card",
+   0
+  ],
+  [
+   "نظام سلامة المنتجات",
+   "card",
+   0
+  ],
+  [
+   "نظام الإفلاس",
+   "card",
+   0
+  ],
+  [
+   "نظام الأوراق التجارية",
+   "card",
+   0
+  ],
+  [
+   "نظام مكافحة التستر 1425",
+   "no_unique_system",
+   0
+  ]
+ ],
+ "inserted": {
+  "member": 0,
+  "surface": 0,
+  "law_card": 0
+ },
+ "guards_after": {
+  "نظام التنفيذ": [
+   "6e79f6559b9dd79b95134811ba8b21e0"
+  ],
+  "نظام المعاملات المدنية": [
+   "9443c3a87e6d1b9838df8e0fcaeceef7"
+  ],
+  "count:نظام التنفيذ": 98,
+  "count:نظام السجل التجاري": 29,
+  "count:نظام الأسماء التجارية": 23
+ },
+ "totals_after": {
+  "systems": 66,
+  "articles": 578,
+  "verification": 21,
+  "search_surface": 18,
+  "search_surface_member": 21,
+  "law_card": 8
+ },
+ "surface_on": {
+  "2026-09-28": {
+   "sys:fx-282dda1fe8bd4837731bc8c9": null,
+   "sys:fx-3ced41fddb3468591fa1a2b7": null,
+   "sys:fx-4514faa81a0b5017302907bf": null,
+   "sys:fx-78928fac72a481ea4da4ed54": null,
+   "sys:fx-8b765a767f7023627003c5c3": null,
+   "sys:fx-a9c99195c295fbf1d9621e16": null,
+   "sys:fx-abf4328b632128bfdb2bec56": null,
+   "sys:fx-b0471cc098e2ebc22c3e7c69": null,
+   "sys:fx-ca5d1561efa5c897116c136d": null,
+   "sys:fx-d36ce18c1865c9eed53d0ec8": null,
+   "sys:fx-d4c36e5432f284739f00450f": null,
+   "sys:fx-dba97d48a85edd7b2ada8a9c": null,
+   "we:fx-3477b23a84e0deb016a2880e": "ed25-fc1bd01b88ecdf6cbcf1e250",
+   "we:fx-3bff052baacdcef6bdc2619e": "ed25-71b37d1ec31a497747ed643c",
+   "we:fx-cf8f79b0eece6686c778b9cc": "ed25-d62948bc9ac1a3c3fb813076"
+  },
+  "2026-10-27": {
+   "sys:fx-282dda1fe8bd4837731bc8c9": null,
+   "sys:fx-3ced41fddb3468591fa1a2b7": null,
+   "sys:fx-4514faa81a0b5017302907bf": null,
+   "sys:fx-78928fac72a481ea4da4ed54": null,
+   "sys:fx-8b765a767f7023627003c5c3": null,
+   "sys:fx-a9c99195c295fbf1d9621e16": null,
+   "sys:fx-abf4328b632128bfdb2bec56": null,
+   "sys:fx-b0471cc098e2ebc22c3e7c69": null,
+   "sys:fx-ca5d1561efa5c897116c136d": null,
+   "sys:fx-d36ce18c1865c9eed53d0ec8": null,
+   "sys:fx-d4c36e5432f284739f00450f": null,
+   "sys:fx-dba97d48a85edd7b2ada8a9c": null,
+   "we:fx-3477b23a84e0deb016a2880e": "ed25-fc1bd01b88ecdf6cbcf1e250",
+   "we:fx-3bff052baacdcef6bdc2619e": "ed25-71b37d1ec31a497747ed643c",
+   "we:fx-cf8f79b0eece6686c778b9cc": "ed25-d62948bc9ac1a3c3fb813076"
+  },
+  "2026-10-28": {
+   "sys:fx-282dda1fe8bd4837731bc8c9": null,
+   "sys:fx-3ced41fddb3468591fa1a2b7": null,
+   "sys:fx-4514faa81a0b5017302907bf": null,
+   "sys:fx-78928fac72a481ea4da4ed54": null,
+   "sys:fx-8b765a767f7023627003c5c3": null,
+   "sys:fx-a9c99195c295fbf1d9621e16": null,
+   "sys:fx-abf4328b632128bfdb2bec56": null,
+   "sys:fx-b0471cc098e2ebc22c3e7c69": null,
+   "sys:fx-ca5d1561efa5c897116c136d": null,
+   "sys:fx-d36ce18c1865c9eed53d0ec8": null,
+   "sys:fx-d4c36e5432f284739f00450f": null,
+   "sys:fx-dba97d48a85edd7b2ada8a9c": null,
+   "we:fx-3477b23a84e0deb016a2880e": "ed25-fc1bd01b88ecdf6cbcf1e250",
+   "we:fx-3bff052baacdcef6bdc2619e": "ed25-71b37d1ec31a497747ed643c",
+   "we:fx-cf8f79b0eece6686c778b9cc": "ed25-c2a4c0ce70ba0e7eee683d32"
+  }
+ },
+ "committed": true,
+ "stat_delta": {
+  "legal_systems": [
+   0,
+   0
+  ],
+  "legal_articles": [
+   0,
+   0
+  ],
+  "verification": [
+   0,
+   0
+  ]
+ }
+}
