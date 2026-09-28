@@ -110,7 +110,7 @@ export const MANAGED_KEYS: ManagedKey[] = [
     placeholder: "اختياري — يفعّل التحقق عند الضبط",
   },
   { key: "RESEND_API_KEY", label: "Resend API Key (بريد الترحيب)", secret: true, group: "البريد", placeholder: "re_..." },
-  { key: "RESEND_FROM", label: "عنوان المُرسِل", secret: false, group: "البريد", placeholder: "حكيم <onboarding@hakeem.sa>" },
+  { key: "RESEND_FROM", label: "عنوان المُرسِل", secret: false, group: "البريد", placeholder: "حكيم <support@hakeemai.net>" },
   { key: "TWILIO_ACCOUNT_SID", label: "Twilio Account SID", secret: true, group: "OTP الجوال (Twilio)", placeholder: "AC..." },
   { key: "TWILIO_AUTH_TOKEN", label: "Twilio Auth Token", secret: true, group: "OTP الجوال (Twilio)" },
   { key: "TWILIO_FROM_NUMBER", label: "رقم الإرسال Twilio", secret: false, group: "OTP الجوال (Twilio)", placeholder: "+9665..." },
