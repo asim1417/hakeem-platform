@@ -27,7 +27,7 @@ assert.ok(api.includes("autoAcked"));
 assert.ok(api.includes("notifyAdminNewSupportMessage"));
 
 const notify = read("lib/modules/support/notify.ts");
-assert.ok(notify.includes("isEmailConfigured"));
+assert.ok(notify.includes("ensureEmailConfigured") || notify.includes("isEmailConfigured"));
 assert.ok(notify.includes("SupportNotifyResult"));
 assert.ok(notify.includes("PLATFORM_OWNER_EMAILS"));
 

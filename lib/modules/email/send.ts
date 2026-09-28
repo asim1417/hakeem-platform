@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { absoluteUrl } from "@/lib/modules/config/site-url";
+import { hydrateEnvFromSettingsThrottled } from "@/lib/modules/settings/settings-service";
 
 export type SendEmailInput = {
   to: string;
@@ -15,14 +16,24 @@ export function isEmailConfigured(): boolean {
   return Boolean((process.env.RESEND_API_KEY || "").trim());
 }
 
-export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; id?: string; skipped?: boolean }> {
+/** يحمّل مفاتيح اللوحة (Resend وغيرها) ثم يتحقق من التهيئة. */
+export async function ensureEmailConfigured(): Promise<boolean> {
+  await hydrateEnvFromSettingsThrottled(15_000).catch(() => undefined);
+  return isEmailConfigured();
+}
+
+export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; id?: string; skipped?: boolean; error?: string }> {
+  // المفاتيح المحفوظة من /admin/settings لا تكون في process.env لكل نسخة serverless
+  // إلا بعد التحميل — بدون هذا تصل رسالة واحدة ثم تُتخطى البقية بصمت.
+  await hydrateEnvFromSettingsThrottled(15_000).catch(() => undefined);
+
   const key = (process.env.RESEND_API_KEY || "").trim();
   const from = (process.env.RESEND_FROM || "حكيم <onboarding@hakeem.sa>").trim();
   if (!key) {
     if (process.env.NODE_ENV !== "production") {
       console.info("[email:dev]", input.to, input.subject);
     }
-    return { ok: true, skipped: true };
+    return { ok: true, skipped: true, error: "email_not_configured" };
   }
 
   try {
@@ -42,14 +53,14 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; i
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      console.warn("[email] Resend failed", res.status, body.slice(0, 200));
-      return { ok: false };
+      console.warn("[email] Resend failed", res.status, body.slice(0, 300), { from, to: input.to });
+      return { ok: false, error: `resend_${res.status}` };
     }
     const data = (await res.json()) as { id?: string };
     return { ok: true, id: data.id };
   } catch (err) {
     console.warn("[email] send error", err instanceof Error ? err.message : err);
-    return { ok: false };
+    return { ok: false, error: "network_error" };
   }
 }
 

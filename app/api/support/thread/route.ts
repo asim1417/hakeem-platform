@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     userName: user.name,
     userEmail: user.email,
     preview: parsed.data.body.slice(0, 280),
+    messageId: message.id,
   });
 
   await markReadByUser(thread.id);
