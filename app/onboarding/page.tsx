@@ -42,6 +42,7 @@ export default async function OnboardingPage() {
       <div className="w-full">
         <OnboardingWizard
           userName={user.name}
+          initiallyCompleted={profile.onboardingCompleted === true}
           initialStep={
             profile.onboardingCompleted ? 1 : Math.min(6, Math.max(1, profile.onboardingStep || 1))
           }
