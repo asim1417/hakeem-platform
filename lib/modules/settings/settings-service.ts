@@ -131,15 +131,27 @@ export async function getAllSettings(): Promise<Map<string, string>> {
   return out;
 }
 
+/**
+ * يضمن وجود جدول app_settings قبل أول حفظ من لوحة الإعدادات.
+ * بدون هذا كان upsert يرمي فيستلم العميل جسم رد فارغ → Unexpected end of JSON input.
+ */
+export async function ensureAppSettingsTable(): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    'CREATE TABLE IF NOT EXISTS "app_settings" ("key" TEXT NOT NULL, "value" JSONB NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "app_settings_pkey" PRIMARY KEY ("key"));'
+  );
+}
+
 /** يحفظ مفتاحًا (يُشفّر إن كان سرًّا). قيمة فارغة = حذف المفتاح (رجوع لمتغيّر البيئة). */
 export async function setSetting(key: string, rawValue: string, _updatedBy?: string): Promise<void> {
   if (!MANAGED_SET.has(key)) throw new Error(`مفتاح غير مُدار: ${key}`);
+  await ensureAppSettingsTable();
   const value = rawValue.trim();
   if (!value) {
     await prisma.appSetting.delete({ where: { key } }).catch(() => undefined);
     delete process.env[key];
     return;
   }
+  // Json في Prisma: نخزّن النص كقيمة JSON نصّية صريحة.
   const stored = SECRET_SET.has(key) ? encryptValue(value) : value;
   await prisma.appSetting.upsert({
     where: { key },
