@@ -152,3 +152,32 @@ CREATE OR REPLACE VIEW boe.current_law AS
   SELECT DISTINCT ON (guid) * FROM boe.law ORDER BY guid, parsed_at DESC, id DESC;
 CREATE OR REPLACE VIEW boe.current_match AS
   SELECT DISTINCT ON (guid) * FROM boe.match ORDER BY guid, decided_at DESC, id DESC;
+
+-- ── المرفقات: «أصل الوثيقة» والأدوات المعدِّلة (صور صفحات ممسوحة) ──
+CREATE TABLE IF NOT EXISTS boe.attachment (
+  id            text PRIMARY KEY,         -- boe26- + تجزئة الرابط
+  href          text NOT NULL UNIQUE,     -- رابط العارض في الهيئة
+  kind          text NOT NULL CHECK (kind IN ('original_document','amending_instrument','issuance_instrument','article_attachment')),
+  law_guid      text NOT NULL,
+  unit_seq      int,                      -- المادة التي ظهر تحتها المرفق (للأدوات المعدِّلة)
+  label         text,
+  page_count    int NOT NULL,
+  retrieved_at  timestamptz NOT NULL
+);
+CREATE TABLE IF NOT EXISTS boe.attachment_page (
+  attachment_id text NOT NULL REFERENCES boe.attachment(id),
+  page_no       int  NOT NULL,
+  image_url     text NOT NULL,
+  image_sha256  text NOT NULL,            -- الصورة نفسها محفوظة خارج القاعدة باسم البصمة
+  image_bytes   int  NOT NULL,
+  ocr_text      text,                     -- نص آلي تقريبي: الأرقام والتواريخ تحتاج مطابقة بالصورة
+  ocr_engine    text,
+  PRIMARY KEY (attachment_id, page_no)
+);
+DO $$ DECLARE t text; BEGIN
+  FOREACH t IN ARRAY ARRAY['attachment','attachment_page'] LOOP
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'no_change' AND tgrelid = ('boe.' || t)::regclass) THEN
+      EXECUTE format('CREATE TRIGGER no_change BEFORE UPDATE OR DELETE ON boe.%I FOR EACH ROW EXECUTE FUNCTION boe.forbid_change()', t);
+    END IF;
+  END LOOP;
+END $$;
