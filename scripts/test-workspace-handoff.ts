@@ -50,7 +50,13 @@ const mwMain = mw.slice(mw.indexOf("export default function middleware"));
 const homeRedirect = mwMain.indexOf('request.nextUrl.pathname === "/"');
 assert.ok(homeRedirect > 0, "home redirect in middleware");
 assert.ok(homeRedirect < mwMain.indexOf("isClerkConfigured()"), "before any Clerk branch");
-assert.ok(/shouldRedirectSignedInHome\(\{[\s\S]*hasSession: hasOwnerSession\(request\)[\s\S]*\}\)\s*\)\s*\{\s*return NextResponse\.redirect\(new URL\("\/dashboard", request\.url\), 307\);/.test(mwMain));
+assert.ok(
+  /shouldRedirectSignedInHome\(\{[\s\S]*hasSession: hasOwnerSession\(request\)[\s\S]*\}\)\s*\)\s*\{\s*return NextResponse\.redirect\(new URL\(workspaceHome\(request\), request\.url\), 307\);/.test(
+    mwMain
+  ),
+  "home redirect uses workspaceHome (super→/admin, else /dashboard)"
+);
+assert.ok(mw.includes("workspaceHomeFromSessionCookie"), "role peek from session cookie");
 assert.ok(mw.includes("LOGGED_OUT_MARK_COOKIE") && mw.includes("HOME_VIEW_PARAM"));
 const page = read("app/page.tsx");
 assert.equal(/@clerk/.test(page), false);
