@@ -9,6 +9,11 @@ import {
   SPECIALTY_OPTIONS,
   YEARS_OPTIONS,
 } from "@/config/credits";
+import {
+  DEFAULT_ENTITY_TYPE,
+  entityOptionsForValue,
+  type EntityTypeValue,
+} from "@/config/entity-types";
 import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 
 const STEPS = [
@@ -20,7 +25,7 @@ const STEPS = [
   { id: 6, title: "الموافقات", reward: CREDIT_REWARDS.onboarding_step_6 },
 ] as const;
 
-type Entity = "INDIVIDUAL" | "LAW_FIRM" | "OTHER";
+type Entity = EntityTypeValue;
 
 export function OnboardingWizard({
   userName,
@@ -46,7 +51,7 @@ export function OnboardingWizard({
 
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
-  const [entityType, setEntityType] = useState<Entity>("INDIVIDUAL");
+  const [entityType, setEntityType] = useState<Entity>(DEFAULT_ENTITY_TYPE);
   const [yearsExperience, setYearsExperience] = useState("");
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
@@ -67,7 +72,7 @@ export function OnboardingWizard({
         if (!p) return;
         if (p.phone) setPhone(p.phone);
         if (p.city) setCity(p.city);
-        if (p.entityType) setEntityType(p.entityType);
+        if (p.entityType) setEntityType(p.entityType as Entity);
         if (p.yearsExperience) setYearsExperience(p.yearsExperience);
         if (Array.isArray(p.specialties)) setSpecialties(p.specialties);
         if (Array.isArray(p.interests)) setInterests(p.interests);
@@ -291,15 +296,17 @@ export function OnboardingWizard({
       {step === 2 && (
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm font-semibold text-[var(--navy)]">نوع الكيان</span>
+            <span className="text-sm font-semibold text-[var(--navy)]">نوع الممارسة / المهنة</span>
             <select
               value={entityType}
               onChange={(e) => setEntityType(e.target.value as Entity)}
               className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3"
             >
-              <option value="INDIVIDUAL">محامٍ فرد / متدرب</option>
-              <option value="LAW_FIRM">مكتب محاماة</option>
-              <option value="OTHER">أخرى</option>
+              {entityOptionsForValue(entityType).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block">

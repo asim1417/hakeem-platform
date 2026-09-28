@@ -5,12 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 import { generateEasyPassword, generateUsername } from "@/lib/modules/auth/credentials";
-
-const ENTITIES = [
-  { value: "INDIVIDUAL", label: "محامٍ فرد / متدرب" },
-  { value: "LAW_FIRM", label: "مكتب محاماة" },
-  { value: "OTHER", label: "أخرى" },
-] as const;
+import {
+  DEFAULT_ENTITY_TYPE,
+  ENTITY_TYPE_OPTIONS,
+  type EntityTypeValue,
+} from "@/config/entity-types";
 
 export function RegisterForm({
   nextUrl = "/onboarding",
@@ -24,7 +23,7 @@ export function RegisterForm({
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [entityType, setEntityType] = useState<(typeof ENTITIES)[number]["value"]>("INDIVIDUAL");
+  const [entityType, setEntityType] = useState<EntityTypeValue>(DEFAULT_ENTITY_TYPE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -97,7 +96,7 @@ export function RegisterForm({
             onChange={(e) => setEntityType(e.target.value as typeof entityType)}
             className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3"
           >
-            {ENTITIES.map((item) => (
+            {ENTITY_TYPE_OPTIONS.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
               </option>
