@@ -5,7 +5,8 @@
   الاسم، تاريخ الإصدار (هـ/م)، تاريخ النشر (هـ/م)، الحالة كما في المصدر، أدوات الإصدار،
   وكتل «نص النظام» مرتّبة كما في المصدر: العنوان، السنة، البسملة، المرسوم، البسملة، قرار المجلس، عنوان النظام.
 النص يُحفظ حرفيًا: الكتل مجتمعة = نص الديباجة الأصلي سطرًا بسطر (يُفحص هنا ويفشل البناء إن اختلف).
-«نبذة عن النظام» ومسار التصنيف لم تُلتقط في القراءة الأولى: تبقى فارغة ولا تُخمَّن.
+«نبذة عن النظام» ومسار التصنيف من القراءة الثانية بتوجيه المالك (2026-09-28):
+data/boe_card_summary_category.json — مطابق بالبصمة لما في الصفحة (SHA-256). الغائب يبقى فارغًا ولا يُخمَّن.
 """
 import json
 import pathlib
@@ -96,6 +97,8 @@ def rebuild(blocks: list[dict]) -> list[str]:
 
 def main() -> None:
     raw = json.loads((ROOT / "data" / "boe_9_laws_raw.json").read_text(encoding="utf-8"))
+    extra_path = ROOT / "data" / "boe_card_summary_category.json"
+    extra = json.loads(extra_path.read_text(encoding="utf-8")) if extra_path.exists() else {}
     out = []
     for title, law in raw.items():
         h = law["header"]
@@ -115,13 +118,14 @@ def main() -> None:
         out.append({
             "hakeem_title": title,
             "official_name": official_name,
-            "summary": None,
+            "summary": (extra.get(law["url"]) or {}).get("summary") or None,
             "issued_hijri": issued_h,
             "issued_gregorian": issued_g,
             "published_hijri": pub_h,
             "published_gregorian": pub_g,
             "status_at_source": h.get("الحالة"),
-            "category_path": [],
+            # مسار التصنيف كما في المصدر بلا اسم النظام الأخير.
+            "category_path": ((extra.get(law["url"]) or {}).get("crumbs") or [])[:-1],
             "instruments": instruments,
             "text_blocks": blocks,
             "source_name": "هيئة الخبراء بمجلس الوزراء",
