@@ -47,6 +47,11 @@ const ALTER_DDL = [
 
 let ready: Promise<boolean> | null = null;
 
+function logSupportError(scope: string, err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(`[support-store:${scope}]`, msg);
+}
+
 async function ensure(): Promise<boolean> {
   if (!ready) {
     ready = (async () => {
@@ -67,13 +72,19 @@ async function ensure(): Promise<boolean> {
           }
         }
         return true;
-      } catch {
+      } catch (err) {
+        logSupportError("ensure", err);
         ready = null;
         return false;
       }
     })();
   }
   return ready;
+}
+
+/** هل جداول الدعم جاهزة؟ للتشخيص في صندوق الإدارة. */
+export async function isSupportStoreReady(): Promise<boolean> {
+  return ensure();
 }
 
 export type SupportThreadStatus = "open" | "closed";
@@ -222,7 +233,8 @@ export async function getOrCreateOpenThread(
       id
     )) as ThreadRow[];
     return rows[0] ? mapThread(rows[0]) : null;
-  } catch {
+  } catch (err) {
+    logSupportError("getOrCreateOpenThread", err);
     return null;
   }
 }
@@ -239,7 +251,8 @@ export async function getThreadForUser(
       userId
     )) as ThreadRow[];
     return rows[0] ? mapThread(rows[0]) : null;
-  } catch {
+  } catch (err) {
+    logSupportError("getThreadForUser", err);
     return null;
   }
 }
@@ -257,7 +270,8 @@ export async function getThreadById(threadId: string): Promise<SupportThread | n
       threadId
     )) as ThreadRow[];
     return rows[0] ? mapThread(rows[0]) : null;
-  } catch {
+  } catch (err) {
+    logSupportError("getThreadById", err);
     return null;
   }
 }
@@ -280,8 +294,25 @@ export async function listMessages(threadId: string, limit = 100): Promise<Suppo
       take
     )) as MessageRow[];
     return rows.map(mapMessage);
-  } catch {
+  } catch (err) {
+    logSupportError("listMessages", err);
     return [];
+  }
+}
+
+/** عدد رسائل العميل في الخيط — لمعرفة إن كانت الرسالة الأولى. */
+export async function countUserMessages(threadId: string): Promise<number> {
+  if (!(await ensure()) || !threadId) return 0;
+  try {
+    const rows = (await prisma.$queryRawUnsafe(
+      `SELECT COUNT(*)::int AS n FROM "support_messages"
+        WHERE "thread_id" = $1 AND "sender_role" = 'user'`,
+      threadId
+    )) as Array<{ n: number }>;
+    return Number(rows[0]?.n) || 0;
+  } catch (err) {
+    logSupportError("countUserMessages", err);
+    return 0;
   }
 }
 
@@ -336,7 +367,8 @@ export async function appendMessage(input: {
       id
     )) as MessageRow[];
     return rows[0] ? mapMessage(rows[0]) : null;
-  } catch {
+  } catch (err) {
+    logSupportError("appendMessage", err);
     return null;
   }
 }
@@ -371,7 +403,8 @@ export async function closeThread(threadId: string): Promise<boolean> {
       threadId
     );
     return true;
-  } catch {
+  } catch (err) {
+    logSupportError("closeThread", err);
     return false;
   }
 }
@@ -384,10 +417,17 @@ export async function listThreadsForAdmin(limit = 50): Promise<SupportThread[]> 
       `SELECT t.*,
               COALESCE(t."user_email", u.email) AS user_email,
               COALESCE(t."user_name", u.name) AS user_name,
-              (
-                SELECT m.body FROM "support_messages" m
-                 WHERE m.thread_id = t.id
-                 ORDER BY m.created_at DESC LIMIT 1
+              COALESCE(
+                (
+                  SELECT m.body FROM "support_messages" m
+                   WHERE m.thread_id = t.id AND m.sender_role = 'user'
+                   ORDER BY m.created_at DESC LIMIT 1
+                ),
+                (
+                  SELECT m.body FROM "support_messages" m
+                   WHERE m.thread_id = t.id
+                   ORDER BY m.created_at DESC LIMIT 1
+                )
               ) AS preview
          FROM "support_threads" t
          LEFT JOIN "users" u ON u.id = t.user_id
@@ -396,7 +436,8 @@ export async function listThreadsForAdmin(limit = 50): Promise<SupportThread[]> 
       take
     )) as ThreadRow[];
     return rows.map(mapThread);
-  } catch {
+  } catch (err) {
+    logSupportError("listThreadsForAdmin", err);
     return [];
   }
 }
@@ -408,7 +449,8 @@ export async function countUnreadForAdmin(): Promise<number> {
       `SELECT COALESCE(SUM("unread_admin"),0)::int AS n FROM "support_threads" WHERE "status" = 'open'`
     )) as Array<{ n: number }>;
     return Number(rows[0]?.n) || 0;
-  } catch {
+  } catch (err) {
+    logSupportError("countUnreadForAdmin", err);
     return 0;
   }
 }
@@ -427,7 +469,8 @@ export async function countUnreadForUser(userId: string): Promise<number> {
       userId
     )) as Array<{ n: number }>;
     return Number(rows[0]?.n) || 0;
-  } catch {
+  } catch (err) {
+    logSupportError("countUnreadForUser", err);
     return 0;
   }
 }
