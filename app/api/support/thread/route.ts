@@ -4,10 +4,12 @@ import { getApiUser } from "@/lib/modules/auth/session";
 import {
   appendMessage,
   countUnreadForUser,
+  countUserMessages,
   getOrCreateOpenThread,
   listMessages,
   markReadByUser,
 } from "@/lib/modules/support/support-store";
+import { maybeAppendFirstMessageAutoAck } from "@/lib/modules/support/auto-ack";
 import { notifyAdminNewSupportMessage } from "@/lib/modules/support/notify";
 import { consumeSupportSendLimit } from "@/lib/modules/support/rate-limit";
 
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-/** POST — إرسال رسالة من العميل. */
+/** POST — إرسال رسالة من العميل + رد تلقائي أول مرة + إشعار الإدارة. */
 export async function POST(request: NextRequest) {
   const user = await getApiUser(request);
   if (!user?.isActive) {
@@ -86,6 +88,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "تعذّر فتح المحادثة." }, { status: 503 });
   }
 
+  const priorUserMessages = await countUserMessages(thread.id);
+
   const message = await appendMessage({
     threadId: thread.id,
     senderRole: "user",
@@ -97,12 +101,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "تعذّر إرسال الرسالة." }, { status: 503 });
   }
 
-  void notifyAdminNewSupportMessage({
+  const autoAcked = await maybeAppendFirstMessageAutoAck({
+    threadId: thread.id,
+    userMessageCountBefore: priorUserMessages,
+    userBody: parsed.data.body,
+  });
+
+  const notify = await notifyAdminNewSupportMessage({
     userName: user.name,
     userEmail: user.email,
     preview: parsed.data.body.slice(0, 280),
   });
 
+  await markReadByUser(thread.id);
   const messages = await listMessages(thread.id);
-  return NextResponse.json({ ok: true, thread, message, messages });
+  return NextResponse.json({
+    ok: true,
+    thread,
+    message,
+    messages,
+    autoAcked,
+    notified: notify.sent,
+    notifySkipped: notify.skipped,
+    notifyReason: notify.reason ?? null,
+  });
 }
