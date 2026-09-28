@@ -25,6 +25,10 @@ const STEPS = [
   { id: 6, title: "الموافقات", reward: CREDIT_REWARDS.onboarding_step_6 },
 ] as const;
 
+/** بعد إكمال الملف: عرض موجز ثم التحويل للوحة */
+const AFTER_COMPLETE_MS = 1400;
+const DASHBOARD_AFTER_COMPLETE = "/dashboard?welcome=1";
+
 type Entity = EntityTypeValue;
 
 export function OnboardingWizard({
@@ -92,6 +96,15 @@ export function OnboardingWizard({
       })
       .catch(() => undefined);
   }, []);
+
+  // بعد إكمال الملف لأول مرة: عرض موجز للرصيد ثم التحويل للوحة الداخلية تلقائيًا
+  useEffect(() => {
+    if (!celebrate) return;
+    const id = window.setTimeout(() => {
+      startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE));
+    }, AFTER_COMPLETE_MS);
+    return () => window.clearTimeout(id);
+  }, [celebrate, router]);
 
   function toggle(list: string[], value: string, setter: (v: string[]) => void) {
     setter(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -177,6 +190,11 @@ export function OnboardingWizard({
 
       if (data.done || step === 6) {
         setAlreadyComplete(true);
+        // تعديل ملف مكتمل: ارجع للوحة دون إعادة شاشة الاحتفال
+        if (alreadyComplete) {
+          startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE));
+          return;
+        }
         setCelebrate(true);
         return;
       }
@@ -188,16 +206,20 @@ export function OnboardingWizard({
 
   if (celebrate) {
     return (
-      <div className="space-y-6 text-center">
+      <div className="space-y-6 text-center" role="status" aria-live="polite">
         <p className="text-sm font-semibold text-[var(--gold)]">اكتمل ملفك</p>
         <h2 className="font-display-ar text-3xl text-[var(--navy)]">مرحبًا {userName} في حكيم</h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
           رصيدك الحالي <strong className="text-[var(--navy)]">{balance.toLocaleString("ar-SA")}</strong> نقطة
           {earnedThisSession > 0 ? ` (+${earnedThisSession.toLocaleString("ar-SA")} في هذه الجلسة)` : ""}.
         </p>
+        <p className="text-sm font-semibold text-[var(--navy)]">جارٍ فتح لوحتك…</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <NavyButton type="button" onClick={() => startTransition(() => router.push("/dashboard?welcome=1"))}>
-            الذهاب إلى لوحتي
+          <NavyButton
+            type="button"
+            onClick={() => startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE))}
+          >
+            الذهاب إلى لوحتي الآن
           </NavyButton>
           <button
             type="button"
@@ -209,9 +231,6 @@ export function OnboardingWizard({
           >
             تعديل الملف المهني
           </button>
-          <Link href="/dashboard/ask" className="text-sm font-semibold text-[var(--navy)] underline-offset-4 hover:underline">
-            ابدأ استشارة
-          </Link>
         </div>
       </div>
     );
