@@ -7,18 +7,54 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@/lib/prisma";
 
-// node:crypto محمّل بكسلٍ ومُخفى عمدًا عن مُحلِّل الحزم (webpack): هذه الوحدة Node-only
-// (تشفير AES-256-GCM) لكن instrumentation.ts يسحبها إلى رسم حزمة Edge أيضًا؛ والإخفاء
-// يمنع دخول node:crypto رسمَ Edge (حيث لا يتوفّر) — دون أي تغيير في منطق التشفير.
-// آمن: حارس NEXT_RUNTIME في instrumentation يمنع Edge من استدعاء أي دالّة هنا أصلاً،
-// وفي وقت Node يعيد require الحقيقيّ وحدةَ التشفير كاملةً.
+// node:crypto يُحمَّل بلا استيراد ثابت حتى لا يدخل رسم Edge عند تحليل instrumentation.
+// في Next/Webpack غالبًا يتوفّر require؛ وفي ESM (tsx/بعض الحزم) نستخدم getBuiltinModule أو createRequire.
 type NodeCrypto = typeof import("node:crypto");
 let _nodeCrypto: NodeCrypto | null = null;
+
 function nodeCrypto(): NodeCrypto {
-  // indirect eval لجلب require الحقيقي بعيدًا عن التحزيم
-  // eslint-disable-next-line no-eval
-  if (!_nodeCrypto) _nodeCrypto = (0, eval)("require")("node:crypto") as NodeCrypto;
-  return _nodeCrypto;
+  if (_nodeCrypto) return _nodeCrypto;
+
+  const gbm = (process as NodeJS.Process & {
+    getBuiltinModule?: (id: string) => unknown;
+  }).getBuiltinModule;
+  if (typeof gbm === "function") {
+    try {
+      _nodeCrypto = gbm("crypto") as NodeCrypto;
+      if (_nodeCrypto) return _nodeCrypto;
+    } catch {
+      /* جرّب مسارًا آخر */
+    }
+  }
+
+  try {
+    // eslint-disable-next-line no-eval
+    const req = (0, eval)("typeof require !== 'undefined' ? require : undefined") as
+      | NodeRequire
+      | undefined;
+    if (req) {
+      _nodeCrypto = req("node:crypto") as NodeCrypto;
+      return _nodeCrypto;
+    }
+  } catch {
+    /* جرّب createRequire */
+  }
+
+  try {
+    // eslint-disable-next-line no-eval
+    const req = (0, eval)("typeof require !== 'undefined' ? require : undefined") as
+      | NodeRequire
+      | undefined;
+    if (req) {
+      const { createRequire } = req("node:module") as typeof import("node:module");
+      _nodeCrypto = createRequire(__filename)("node:crypto") as NodeCrypto;
+      return _nodeCrypto;
+    }
+  } catch {
+    /* */
+  }
+
+  throw new Error("تعذّر تحميل وحدة التشفير على الخادم. تأكد أن مسار الإعدادات يعمل في Node runtime.");
 }
 
 // سجلّ المفاتيح التي تُدار من اللوحة (المجموعة + الوصف + هل هي سرّ).
