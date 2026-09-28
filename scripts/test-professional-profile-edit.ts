@@ -27,5 +27,11 @@ assert.ok(
   /if \(!celebrate\) return;[\s\S]*setTimeout[\s\S]*router\.replace\(DASHBOARD_AFTER_COMPLETE\)/.test(wizard),
   "مؤقّت التحويل عند الاحتفال"
 );
+assert.ok(wizard.includes("redirectAfterEdit") && wizard.includes("AFTER_EDIT_SAVE_MS"), "تحويل بعد حفظ التعديلات");
+assert.ok(
+  /setRedirectAfterEdit\(true\)/.test(wizard) &&
+    /if \(!redirectAfterEdit\) return;[\s\S]*setTimeout[\s\S]*router\.replace\(DASHBOARD_AFTER_COMPLETE\)/.test(wizard),
+  "حفظ التعديلات المهنية يُحيل للوحة"
+);
 
 console.log("test-professional-profile-edit: OK");
