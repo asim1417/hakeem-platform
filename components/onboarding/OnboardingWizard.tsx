@@ -44,6 +44,7 @@ export function OnboardingWizard({
   const [balance, setBalance] = useState(initialBalance);
   const [earnedThisSession, setEarnedThisSession] = useState(0);
   const [error, setError] = useState("");
+  const [saveOk, setSaveOk] = useState("");
   /** شاشة الاحتفال فقط بعد إنهاء الخطوات في هذه الجلسة — لا عند فتح «ملفي المهني» لاحقًا */
   const [celebrate, setCelebrate] = useState(false);
   const [alreadyComplete, setAlreadyComplete] = useState(initiallyCompleted);
@@ -138,6 +139,7 @@ export function OnboardingWizard({
 
   async function submitStep(opts?: { skipAvatar?: boolean }) {
     setError("");
+    setSaveOk("");
     try {
       let avatarAwarded = 0;
       if (step === 5 && !opts?.skipAvatar) {
@@ -175,10 +177,19 @@ export function OnboardingWizard({
       setEarnedThisSession((n) => n + awarded);
       if (typeof data.balance === "number") setBalance(data.balance);
 
-      if (data.done || step === 6) {
+      if (step === 6) {
         setAlreadyComplete(true);
+        // تعديل ملف مكتمل: تأكيد الحفظ دون إعادة شاشة الاحتفال
+        if (alreadyComplete) {
+          setSaveOk("تم حفظ تعديلات ملفك المهني.");
+          return;
+        }
         setCelebrate(true);
         return;
+      }
+      if (alreadyComplete || data.done) {
+        setAlreadyComplete(true);
+        setSaveOk("تم الحفظ.");
       }
       setStep((s) => Math.min(6, s + 1));
     } catch (err) {
@@ -232,20 +243,32 @@ export function OnboardingWizard({
       </header>
 
       <ol className="flex flex-wrap gap-2" aria-label="خطوات الإكمال">
-        {STEPS.map((s) => (
-          <li
-            key={s.id}
-            className={`rounded-[var(--r-md)] px-3 py-1.5 text-xs font-semibold ${
-              s.id === step
-                ? "bg-[var(--navy)] text-white"
-                : s.id < step
-                  ? "bg-[var(--gold-ghost)] text-[var(--navy)]"
-                  : "border border-[var(--gold-border)] text-[var(--ink-40)]"
-            }`}
-          >
-            {s.id}. {s.title}
-          </li>
-        ))}
+        {STEPS.map((s) => {
+          const jumpable = alreadyComplete || s.id <= step;
+          return (
+            <li key={s.id}>
+              <button
+                type="button"
+                disabled={!jumpable || pending}
+                onClick={() => {
+                  if (!jumpable) return;
+                  setError("");
+                  setSaveOk("");
+                  setStep(s.id);
+                }}
+                className={`focus-ring rounded-[var(--r-md)] px-3 py-1.5 text-xs font-semibold disabled:cursor-default ${
+                  s.id === step
+                    ? "bg-[var(--navy)] text-white"
+                    : jumpable
+                      ? "bg-[var(--gold-ghost)] text-[var(--navy)] hover:bg-[var(--gold-border)]"
+                      : "border border-[var(--gold-border)] text-[var(--ink-40)]"
+                }`}
+              >
+                {s.id}. {s.title}
+              </button>
+            </li>
+          );
+        })}
       </ol>
 
       <div
@@ -262,6 +285,7 @@ export function OnboardingWizard({
       </div>
 
       {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}
+      {saveOk ? <LegalAlert tone="success">{saveOk}</LegalAlert> : null}
 
       {step === 1 && (
         <div className="space-y-4">

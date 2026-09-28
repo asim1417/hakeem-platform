@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   BookOpen,
   Bot,
+  Coins,
   FileText,
   FolderClosed,
   Gavel,
@@ -12,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  UserRound,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
@@ -158,15 +160,17 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               <div className="urole truncate">{roleLabel}</div>
               <Link
                 href="/dashboard/billing"
-                className="sidebar-foot-link mt-1 block truncate font-semibold text-[var(--gold-pale)] hover:underline"
+                className="sidebar-foot-link mt-1 inline-flex items-center gap-1.5 truncate font-semibold text-[var(--gold-pale)] hover:underline"
               >
+                <Coins size={14} aria-hidden className="shrink-0 opacity-90" />
                 {billingLabel}
               </Link>
               <Link
                 href="/onboarding"
-                className="sidebar-foot-link mt-0.5 block truncate font-semibold text-white/70 hover:underline"
+                className="sidebar-foot-link mt-0.5 inline-flex items-center gap-1.5 truncate font-semibold text-white/70 hover:underline"
                 title="بياناتك المهنية وتفضيلات تجربتك في حكيم"
               >
+                <UserRound size={14} aria-hidden className="shrink-0 opacity-90" />
                 ملفي المهني
               </Link>
             </div>
