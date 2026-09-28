@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
   await updateProfile(user.id, {
     phone: body.phone,
     entityType: body.profession,
+    // بوابة الأساسيات تُعدّ الملف مكتملًا بما يكفي للوحة — لا تُبقِ المستخدم «غير مكتمل»
+    onboardingCompleted: true,
   });
 
   return NextResponse.json({
