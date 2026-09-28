@@ -11,7 +11,9 @@ const stepSchema = z.object({
   step: z.number().int().min(1).max(6),
   phone: z.string().max(32).optional(),
   city: z.string().max(64).optional(),
-  entityType: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).optional(),
+  entityType: z
+    .enum(["LAWYER", "TRAINEE_LAWYER", "LEGAL_PRACTITIONER", "LAW_FIRM", "OTHER", "INDIVIDUAL"])
+    .optional(),
   yearsExperience: z.string().max(16).optional(),
   specialties: z.array(z.string().max(64)).max(20).optional(),
   interests: z.array(z.string().max(64)).max(20).optional(),

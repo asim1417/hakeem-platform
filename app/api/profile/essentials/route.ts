@@ -9,7 +9,14 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(8).max(32),
-  profession: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]),
+  profession: z.enum([
+    "LAWYER",
+    "TRAINEE_LAWYER",
+    "LEGAL_PRACTITIONER",
+    "LAW_FIRM",
+    "OTHER",
+    "INDIVIDUAL",
+  ]),
 });
 
 /** حفظ إلزامي: الاسم + الجوال + المهنة. */
