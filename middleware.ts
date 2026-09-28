@@ -19,6 +19,7 @@ import {
   HAKEEM_SEARCH_HEADER,
   HAKEEM_CORRELATION_HEADER,
 } from "@/lib/modules/auth/request-path-headers";
+import { workspaceHomeFromSessionCookie } from "@/lib/modules/auth/session-cookie-peek";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -70,6 +71,13 @@ function hasOwnerSession(request: NextRequest) {
   return Boolean(request.cookies.get("hakeem_session")?.value);
 }
 
+/** وجهة مساحة العمل من دور الكوكي — بلا DB؛ السوبر → /admin مباشرة (لا ومضة /dashboard). */
+function workspaceHome(request: NextRequest): "/admin" | "/dashboard" {
+  return workspaceHomeFromSessionCookie(request.cookies.get("hakeem_session")?.value, {
+    superPanelEnabled: process.env.SUPER_ADMIN_PANEL_ENABLED !== "0",
+  });
+}
+
 /** يمرّر المسار للـ layouts عبر headers لتوجيه السوبر قبل رسم لوحة العميل. */
 function nextWithPath(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
@@ -106,7 +114,7 @@ function getClerkHandler(): ClerkMw {
           nextRaw === "/admin" ||
           nextRaw.startsWith("/admin/"))
           ? nextRaw
-          : "/dashboard";
+          : workspaceHome(request);
       return NextResponse.redirect(new URL(next, request.url));
     }
 
@@ -144,7 +152,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
       justLoggedOut: request.cookies.get(LOGGED_OUT_MARK_COOKIE)?.value === "1",
     })
   ) {
-    return NextResponse.redirect(new URL("/dashboard", request.url), 307);
+    return NextResponse.redirect(new URL(workspaceHome(request), request.url), 307);
   }
 
   // صفحة دخول واحدة: ‎/sign-up‎ و‎/register‎ و‎/login‎ و‎/auth/identifier‎ ← ‎/sign-in‎ (307، والوجهة محفوظة)
@@ -155,7 +163,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
 
   if (!isClerkConfigured()) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL(workspaceHome(request), request.url));
     }
     const decision = resolveUnauthenticatedGate(
       request.nextUrl.pathname,
@@ -170,7 +178,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
 
   if (isClerkMiddlewareBypass(request)) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL(workspaceHome(request), request.url));
     }
     return nextWithPath(request);
   }

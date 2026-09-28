@@ -39,5 +39,6 @@ export function signInWithNext(nextPath: string): string {
 
 export function signUpWithNext(nextPath: string): string {
   const next = safeDashboardNext(nextPath);
-  return `/sign-up?next=${encodeURIComponent(next)}`;
+  // مباشرة إلى بوابة الدخول بوضع التسجيل — يتجنّب ومضة /sign-up ثم 307
+  return `/sign-in?mode=sign-up&next=${encodeURIComponent(next)}`;
 }

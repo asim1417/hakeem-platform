@@ -73,7 +73,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const existing = await getProfile(user.id);
   const isComplete = body.complete === true || body.step === 6;
+  // لا نُسقط onboardingCompleted عند حفظ خطوة وسيطة (كان هذا يكسر «ملفي المهني» بعد الاكتمال)
   const patch = {
     phone: body.phone?.trim(),
     city: body.city?.trim(),
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     termsAccepted: body.termsAccepted,
     certificates: body.certificates,
     onboardingStep: body.step,
-    onboardingCompleted: isComplete,
+    ...(isComplete || existing.onboardingCompleted ? { onboardingCompleted: true as const } : {}),
   };
 
   const profile = await updateProfile(user.id, patch);
