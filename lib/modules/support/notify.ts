@@ -18,7 +18,7 @@ export async function notifyAdminNewSupportMessage(opts: {
   preview: string;
   messageId?: string;
 }): Promise<SupportNotifyResult> {
-  const recipients = [...PLATFORM_OWNER_EMAILS].filter(Boolean);
+  const recipients = [...new Set([...PLATFORM_OWNER_EMAILS].map((e) => e.toLowerCase().trim()).filter(Boolean))];
   if (recipients.length === 0) {
     return { attempted: false, sent: false, skipped: true, reason: "no_owner_email" };
   }
