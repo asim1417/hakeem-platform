@@ -52,7 +52,7 @@ export async function notifyAdminNewSupportMessage(opts: {
       subject,
       html,
       text: `${opts.userName}: ${opts.preview}`,
-    }).catch(() => ({ ok: false as const, error: "throw" }));
+    }).catch(() => ({ ok: false as const, skipped: false as const, error: "throw" }));
     if (result.ok && !result.skipped) anySent = true;
     else if (result.error) lastError = result.error;
     else if (result.skipped) lastError = "email_not_configured";
