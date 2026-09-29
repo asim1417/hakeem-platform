@@ -1,0 +1,4039 @@
+[
+ {
+  "doc": "doc026",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc026/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-1428b19e22c6df3856bb6228",
+    "law": "نظام المرور",
+    "unit": "المادة الأولى",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/ab3a0aba-377d-41c1-8b51-aa1d01206e3c?attachmentTitle=المادة الأولى",
+    "hint_page": 3,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-22abe4f903ed0e340b237788",
+    "law": "نظام المرور",
+    "unit": "المادة الثانية",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1853b478-4e4c-421d-8711-aa2300c84694?attachmentTitle=المادة الثانية",
+    "hint_page": 7,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-14bd89bd97df44cd9004de57",
+    "law": "نظام المرور",
+    "unit": "المادة الثامنة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/99471b62-e46e-49dc-bf4d-aa1d0121e1c2?attachmentTitle=المادة الثامنة",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-35cf517421c2bdae8b4a213c",
+    "law": "نظام المرور",
+    "unit": "المادة الرابعة عشرة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/9d1110a5-2c70-4fa1-be35-aa1d01227e8f?attachmentTitle=المادة الرابعة عشرة",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-ed7eaa26ec782b878130a5aa",
+    "law": "نظام المرور",
+    "unit": "المادة السادسة عشرة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/7b780739-6ff3-49ee-acbf-aa1d0123574c?attachmentTitle=المادة السادسة عشرة",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-f2e1529ea12f637602c9b1b1",
+    "law": "نظام المرور",
+    "unit": "المادة السابعة عشرة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/8386743a-5f80-41df-83b0-aa1d012452bf?attachmentTitle=المادة السابعة عشرة",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-b2e90c07c6a4b541ef8dbe79",
+    "law": "نظام المرور",
+    "unit": "المادة العشرون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/9c3dc6f0-2baf-49a1-8c9c-aa1d0124f5fb?attachmentTitle=المادة العشرون",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-1468c767feb0f56b25fc35ad",
+    "law": "نظام المرور",
+    "unit": "المادة الحادية والعشرون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/5087f88e-2f6e-4f70-9f3c-aa1d012644e1?attachmentTitle=المادة الحادية والعشرون",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-a208732a71894f5a764e6182",
+    "law": "نظام المرور",
+    "unit": "المادة السادسة والثلاثون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/2ecf941d-4761-4597-ae9e-aa1d012789a3?attachmentTitle=المادة السادسة والثلاثون",
+    "hint_page": 6,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-75f73527851fc99fec3dad72",
+    "law": "نظام المرور",
+    "unit": "المادة الثامنة والثلاثون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/53d210f6-ae0b-462f-aa7b-aa1d01286755?attachmentTitle=المادة الثامنة والثلاثون",
+    "hint_page": 6,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-16526e8adb20b145bdbc0cc3",
+    "law": "نظام المرور",
+    "unit": "المادة الحادية والأربعون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/23674604-fe7f-4161-b9c0-aa1d0128dd59?attachmentTitle=المادة الحادية والأربعون",
+    "hint_page": 6,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-c97f6599f147f0335d3e2ba6",
+    "law": "نظام المرور",
+    "unit": "المادة السابعة والأربعون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/c1b076ef-9225-4245-a588-aa1d0129db64?attachmentTitle=المادة السابعة والأربعون",
+    "hint_page": 30,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-93c9e9fe8499ede646e01224",
+    "law": "نظام المرور",
+    "unit": "المادة الخمسون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nالمادة الخمسون مكرر عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 5 /12/ 1439هـ.\n\n ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/650b4034-d3ba-4f6d-8b07-aa1d012aff04?attachmentTitle=المادة الخمسون",
+    "hint_page": 7,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-3a68e521cd3a44ad01b4c27b",
+    "law": "نظام المرور",
+    "unit": "المادة الحادية والستون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/c71f491b-953d-404b-a14a-aa1d012cb09d?attachmentTitle=المادة الحادية والستون",
+    "hint_page": 7,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-b432f535d42499fb2bdbe6fc",
+    "law": "نظام المرور",
+    "unit": "المادة الثانية والستون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/53d4f2a7-255c-49f4-b417-aa1d012f75ab?attachmentTitle=المادة الثانية والستون",
+    "hint_page": 7,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-c2770557c31dbfbf1a0a94ad",
+    "law": "نظام المرور",
+    "unit": "المادة الخامسة والستون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/58be6a56-66ad-423a-b3da-aa1d0142f940?attachmentTitle=المادة الخامسة والستون",
+    "hint_page": 8,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-2da470965892f1e5f8f4363a",
+    "law": "نظام المرور",
+    "unit": "المادة الثالثة والسبعون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/ea46eb9d-a21e-46cf-9c5c-aa1d0144e836?attachmentTitle=المادة الثالثة والسبعون",
+    "hint_page": 10,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-db5daa44e5a6efdf51432a57",
+    "law": "نظام المرور",
+    "unit": "المادة السابعة والسبعون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "المادة السابعة والسبعون\nعُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 5/12/1439هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/5953d80a-6708-46df-b611-aa1d01478db3?attachmentTitle=المادة السابعة والسبعون",
+    "hint_page": 10,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-ff6511e555cc38076eae440c",
+    "law": "نظام المرور",
+    "unit": "المادة التاسعة والسبعون",
+    "effect": "تعديل جدول",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم ( 1)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم ( 2)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم (3)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم (4)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم (5)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم (6)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم (7)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.\n\nجدول المخالفات رقم (8)\n\nعُدل هذا الجدول بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/545600d4-ea1f-4c95-9530-aa1d0157e79f?attachmentTitle=المادة التاسعة والسبعون",
+    "hint_page": 12,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a8a7e12c33068baf9ce3fbb47e3b997d526d234334b656fc82c92c59a19ad79.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ac6d777407d5d5e5cd6d05a27099eac6c5a03947274242467363d896fc6abbc.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/57559cd9284f98c0b260ef2f1eebbef52a4e9c7479b37b69c7845f654992001f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/759fa79d9b3ce2f3bfd9d94234b74f5c658d085f90759badd9bb1181d79cbe81.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/447327a00924af222ed4621f821d938f8f9eb0baa1704472669a1567cb555d9c.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/99efbd666ffdbb09c82cb8c1ac047321cfa956fbe4d16adfec1bdddba0826b48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c4f5a4b1e058e0508e1a971b30b37fc263914c0f5104a8b426bcb99ee585020.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/157578e7c36eed2e9352a18cb940ad205b56496fcf1d310d6ef05a67cbe4508b.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90234eee5a1808c72a02eb7dd1a26dbdf91f982e618f83c8feb3bbb97052a89e.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/737658de9d438554babaae3a79fd24c46a3711f7cdcdedd816722464cbeb861f.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/db973fc546a838830777689fc25db145baa48191d2429774e4fc056692e0d991.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c4fa8810443893b403bf84cabe8277cf5352ce04e706f3264f8920a2c317205a.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5c911016f0f8bee3b5ac2bd8c067fdc61ce9268c837721cb4aacdd2ac3547.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b3ae81bed1e9e69c0724838a3523ca1ccc01b6d40bfe2209733e86b629bbed1.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d73fad2d88b105e4db8a9206f9884837a9816919f72ddf782eb72b200419b60.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa37476945cc0abfa56ad8979955f393642ff9528b4f80aaa6bf3806e430ac38.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/514b82744aeeb7265abfcb1145dbbf3e1820440586f3a12ada9d6ad298d2fef0.jpg"
+     },
+     {
+      "page_no": 18,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb38dacb0696370cb6995abd7582c146814f620478ed33b72e6dfd4608bc4201.jpg"
+     },
+     {
+      "page_no": 19,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e38f7f26d517e88b98a6691d1df081879c5888350657ebbf8d514324ee81969c.jpg"
+     },
+     {
+      "page_no": 20,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e7292ed6f9c7826f90425ac180d64d9741f600dac1cee378a845a3b76cd26151.jpg"
+     },
+     {
+      "page_no": 21,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0a9f76897ea2057177d10f41077502c26a943734d5a8b58cd951517a1cac73d7.jpg"
+     },
+     {
+      "page_no": 22,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab2e9a34dfcbf3793584717d6044588916b3b9cb641168dd69f875e3840a3f81.jpg"
+     },
+     {
+      "page_no": 23,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7dfdb5193c450834a9667dc593d01ea5711289db32d3597312e62cd9d565e6b9.jpg"
+     },
+     {
+      "page_no": 24,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7073e7bef0aa20ba08fadcf0cf3ca862b30d98ce73871dd02ec5e01242edfa2.jpg"
+     },
+     {
+      "page_no": 25,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/84b1fb04d4c0e2f000ad2fc577970c20070e0c3a9adb3ab5661566b76301dde0.jpg"
+     },
+     {
+      "page_no": 26,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9900089e43f859f097ba2658a4ad225d7c1f32f838750eac1c45a81f030e71aa.jpg"
+     },
+     {
+      "page_no": 27,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dbb7eafc80fb7def04eca2978b9132b7b18c037403a8732e15aedf18497cb284.jpg"
+     },
+     {
+      "page_no": 28,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f0a0f4829f0a9d2058731c823bc4c7f9e1040ff95900b220020ffd86a8f05f42.jpg"
+     },
+     {
+      "page_no": 29,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7c514e5851624c7ecb977c3598c9ea4b23e3ccf60cfbcd4eb2a7fa54cc310146.jpg"
+     },
+     {
+      "page_no": 30,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2f779d6aed6996ecfb374469c9ce605b7f4326f6e7582386bf64dcd9d1d7388f.jpg"
+     },
+     {
+      "page_no": 31,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ff46655024627b209d1e41bbe1412cd978c30812d79ac12bf7183f726250f289.jpg"
+     },
+     {
+      "page_no": 32,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af0df2545ee6dacfb5676a38e1e4668d41d09a60bf4fd82fe21924aaaf2ddb1b.jpg"
+     },
+     {
+      "page_no": 33,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1d6acb940169b5e5add248409acf08ad8d64d6e6e770f01ddb52188273fd120e.jpg"
+     },
+     {
+      "page_no": 34,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/38cf9557742cdec421be0d793f24d820bde73d95acc6a2fe64e68407de326304.jpg"
+     },
+     {
+      "page_no": 35,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c691e55d0bdfaa1c0553b331431d7869c7432c2c94a3811334597480f46f97e9.jpg"
+     },
+     {
+      "page_no": 36,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af903b167b6487cc2baa1af6e53bcc42885cead4c20e46b49a547266cd9e6a6a.jpg"
+     },
+     {
+      "page_no": 37,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4a07ecd25cc1ee1f0281e7b00f8adab92ee717b83fa4fd1354b1d89e279bbc27.jpg"
+     },
+     {
+      "page_no": 38,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c1c8843e18a97f2b528e0e6bd562b1cae110e7d3381560581a06b746e3d746f.jpg"
+     },
+     {
+      "page_no": 39,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b162be2f2572fa8e0edbe852875a67b886c203f70409f98a12c0c1d4f4cf337a.jpg"
+     },
+     {
+      "page_no": 40,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4467e8ef2b6fb044ac5b3d59a9a922fda38a270afdaea5099b4de4c8d0f5c811.jpg"
+     },
+     {
+      "page_no": 41,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1ce5ff1f0e0ba9050913f9e40f4bab62cfbb4f73d2d556f7001bc5a3cf59e94c.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc058",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc058/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-f3a8258584e556019eb10eda",
+    "law": "نظام هيئة التحقيق والادعاء العام ( نظام النيابة العامة )",
+    "unit": "المادة الثالثة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/125)",
+    "instrument_date": "1441/09/14",
+    "note_text": "-عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/125) وتاريخ 1441/9/14هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/5ef7ccf0-48ab-4ae6-95fe-abbe0157cc29?attachmentTitle=المادة الثالثة:",
+    "hint_page": 4,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e774674e763176ac7aabee82c8eefd53e3389f39e98d4f4a997ad56c621dfdc3.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fd627298d9098b5b52eb95bfccc15705ba1d8230bdc6e2378a369f1e866da9a6.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c6bd1ea853380137018e12c9c4912657b33126988481bb8249f83439afac1a23.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/09fc721a9e03ff9833abf7a799cbb781ef0933ab3bde97c0d75d4d7d1baa6b9f.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa2d1cc4898eeabcea4f40984cbccf2f9762a0176f2d0dbd2d7c2a2b0c61f3a0.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/592e2709adb8fba3d87913082b128b98eb8459499989ce6a9edf501871411037.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/297430add59077a8558ff51c95efccefbd67e03d7f339f2ca2c7710801d33132.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-4e021cb42a95ab7eab91d987",
+    "law": "نظام هيئة التحقيق والادعاء العام ( نظام النيابة العامة )",
+    "unit": "المادة الرابعة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/125)",
+    "instrument_date": "1441/09/14",
+    "note_text": "-عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/125) وتاريخ 1441/9/14هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/22d197c9-c736-49c2-a761-abbe0158216e?attachmentTitle=المادة الرابعة:",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e774674e763176ac7aabee82c8eefd53e3389f39e98d4f4a997ad56c621dfdc3.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fd627298d9098b5b52eb95bfccc15705ba1d8230bdc6e2378a369f1e866da9a6.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c6bd1ea853380137018e12c9c4912657b33126988481bb8249f83439afac1a23.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/09fc721a9e03ff9833abf7a799cbb781ef0933ab3bde97c0d75d4d7d1baa6b9f.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa2d1cc4898eeabcea4f40984cbccf2f9762a0176f2d0dbd2d7c2a2b0c61f3a0.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/592e2709adb8fba3d87913082b128b98eb8459499989ce6a9edf501871411037.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/297430add59077a8558ff51c95efccefbd67e03d7f339f2ca2c7710801d33132.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-06f9b97946370bc495121263",
+    "law": "نظام هيئة التحقيق والادعاء العام ( نظام النيابة العامة )",
+    "unit": "المادة السادسة عشرة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/125)",
+    "instrument_date": "1441/09/14",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/125) وتاريخ 1441/9/14هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/501006f3-dca3-4049-80f1-abbe01596a22?attachmentTitle=المادة السادسة عشرة: \n",
+    "hint_page": 6,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e774674e763176ac7aabee82c8eefd53e3389f39e98d4f4a997ad56c621dfdc3.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fd627298d9098b5b52eb95bfccc15705ba1d8230bdc6e2378a369f1e866da9a6.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c6bd1ea853380137018e12c9c4912657b33126988481bb8249f83439afac1a23.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/09fc721a9e03ff9833abf7a799cbb781ef0933ab3bde97c0d75d4d7d1baa6b9f.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa2d1cc4898eeabcea4f40984cbccf2f9762a0176f2d0dbd2d7c2a2b0c61f3a0.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/592e2709adb8fba3d87913082b128b98eb8459499989ce6a9edf501871411037.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/297430add59077a8558ff51c95efccefbd67e03d7f339f2ca2c7710801d33132.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc045",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc045/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-5571f487a221541c23cb210f",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 122",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/14)",
+    "instrument_date": "1418/04/24",
+    "note_text": "- عُّدلت الفقرة ( 1 ) من هذه المادة وذلك بموجب المرسوم الملكي رقم (م/14) وتاريخ 1418/4/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/0f833007-68bf-468f-b3e6-ac5b00afeb7f?attachmentTitle=المادة 122",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b91c8ac163dd1aac0f2f8e8a40e4b9ef8d9cf9c3b2053c4ab31d447df07c2012.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0c1d787a76bd85f551794e553cc422d2889681dfdd807118ac5ab7b2a727a9a2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/58321e8a1a1293717c6cf25c85f0b77146102fadc189a9c6e7e0a6b26827adf8.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a3970af276ca9570d8abff43e69e29aee7fbddc7d5f88dae074fe3787ff2aab1.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6a950110a538edde32cc2f533deb0dfa11ca7982a50ab6448dde308a32ebb5b2.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/22dcb1879f9e07c676ecb7abe034a280cdfb23e5795ef57c98d0e758f3fcccd8.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-00f023556624f9294357b9f7",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 122",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/37)",
+    "instrument_date": "1428/04/28",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/37) وتاريخ 1428/4/28هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/0f833007-68bf-468f-b3e6-ac5b00afeb7f?attachmentTitle=المادة 122",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b91c8ac163dd1aac0f2f8e8a40e4b9ef8d9cf9c3b2053c4ab31d447df07c2012.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0c1d787a76bd85f551794e553cc422d2889681dfdd807118ac5ab7b2a727a9a2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/58321e8a1a1293717c6cf25c85f0b77146102fadc189a9c6e7e0a6b26827adf8.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a3970af276ca9570d8abff43e69e29aee7fbddc7d5f88dae074fe3787ff2aab1.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6a950110a538edde32cc2f533deb0dfa11ca7982a50ab6448dde308a32ebb5b2.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/22dcb1879f9e07c676ecb7abe034a280cdfb23e5795ef57c98d0e758f3fcccd8.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc010",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc010/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-047ef5da18b0963c6abbcf3e",
+    "law": "نظام الطيران المدني",
+    "unit": "المادة الأولى: تعريف المصطلحات",
+    "effect": "تعديل فقرة",
+    "instrument": "قرار مجلس الوزراء رقم (28)",
+    "instrument_date": "1433/02/15",
+    "note_text": "تم تعديل الفقرة (6) من المادة الأولى بموجب قرار مجلس الوزراء رقم (28) وتاريخ 15 / 2 / 1433 هـ بحيث :\n\nيحل  تعريف  \" الرئيس: رئيس الهيئة العامة للطيران المدني \"\n\nمحل تعريف \" الوزير: الوزير المختص أو من ينوب عنه فيما يتعلق بشؤون الطيران المدني\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/dc728160-8ecc-451b-bfef-3e9b4303b56e?attachmentTitle=المادة الأولى: تعريف المصطلحات",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7ee6b48f64404cf853dbfc297bcf1211814a7df5805ad72bcdf2443161494e69.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/87f4cae2a994f636e273a22f7906f4f3365e66c7d546efcc56f867d2baad0761.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0c1dae36c5f3dbe78c9f6ce16af3c37d266971758fe276d80221b24bafcb96b6.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/76aac47c77c2de3147cacc78eb771772ad87a37d8519556a55c9bd3728df287f.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fb4b46e8a41644c25d824899e088544f2a6a8cc07889c690b71bef181734af34.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-26bebdf260ad062f21a406e7",
+    "law": "نظام الطيران المدني",
+    "unit": "المادة الثانية والثلاثون: اللجنة الوطنية لتسهيلات النقل الجوي",
+    "effect": "تعديل فقرة",
+    "instrument": "قرار مجلس الوزراء رقم (28)",
+    "instrument_date": "1433/02/15",
+    "note_text": "تم تعديل الفقرة (1) من هذه المادة بموجب قرار مجلس الوزراء رقم (28) وتاريخ 15 / 2 / 1433 هـ بحيث\n\nتحل كلمة  \"الرئيس \"\n\nمحل كلمة  \"الوزير\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/dc728160-8ecc-451b-bfef-3e9b4303b56e?attachmentTitle=المادة الثانية والثلاثون: اللجنة الوطنية لتسهيلات النقل الجوي",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7ee6b48f64404cf853dbfc297bcf1211814a7df5805ad72bcdf2443161494e69.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/87f4cae2a994f636e273a22f7906f4f3365e66c7d546efcc56f867d2baad0761.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0c1dae36c5f3dbe78c9f6ce16af3c37d266971758fe276d80221b24bafcb96b6.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/76aac47c77c2de3147cacc78eb771772ad87a37d8519556a55c9bd3728df287f.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fb4b46e8a41644c25d824899e088544f2a6a8cc07889c690b71bef181734af34.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc046",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc046/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-664f221d2abd3a4d830994e8",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 123",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/14)",
+    "instrument_date": "1419/06/06",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/14) وتاريخ 1419/6/6هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/3bd576a2-fb9c-4caf-a053-ac5a00d86ee9?attachmentTitle=المادة 123",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7ff41a3acb8269e090da085c52241cb2e4b0555bb508bbd345ebca44de66c73a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4edf76874286551931fa0297a0c2a31fb3f4f03a71a4b5c1eac5c1da8eba6e85.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0c4e8a630461af3d295d46bdcb86f4a2358373cb0aba7a35130897526392a09d.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8ddc2f830fc9df698268ebeff8905322e0b3d5d54621b7f69db9708f1d0203a7.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e81ff8bfb047eb003ae1803acd440c5c33bd46a64b14ba12edb32b155441fb9f.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc019",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc019/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-6bb424aa9bc19ee09ab39942",
+    "law": "نظام الصندوق السعودي للتنمية",
+    "unit": "المادة الأولى:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (474)",
+    "instrument_date": "1437/11/05",
+    "note_text": "تم تعديل هذه المادة بموجب قرار مجلس الوزراء رقم : (474) وتاريخ : 5/ 11/ 1437هـ ، وذلك :\n\nبإضافة عبارة \" ويرتبط بمجلس الشؤون الاقتصادية والتنمية \"\n\nبعد عبارة \" والذمة المالية المستقلة \" .",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/24051991-772a-46db-99b2-2773eeae6df9?attachmentTitle=المادة الأولى: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a3e04f5d0558f71b770c7557dd5d8f471834a49075e17014c7c1709d25ce615f.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/271551a5c51ec205a212293708730878a3f9a462bf8293d1933cb4b77e797875.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0c161eccf5dcc316fdd999913007d3e9325ae76c90b60029784c5da4d7b81d3a.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f357916004a770204e4a8cc464dacb144aafe371a05e7c711110160b6c946a86.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc049",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc049/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-5a0144136948a7010a645ecf",
+    "law": "نظام المناطق",
+    "unit": "المادة العاشرة",
+    "effect": "تعديل مادة",
+    "instrument": "أمر ملكي رقم (أ/21)",
+    "instrument_date": "1414/03/30",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب الأمر الملكي رقم (أ / 21) وتاريخ 30 / 3 / 1414هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/0b8eaffa-260e-4c1b-b154-ac5100a28c58?attachmentTitle=المادة العاشرة",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/588656114e9121b42a5332cf78b8f1d5d8e4d6ebf2fa761d43541ca9af8bceb3.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9b58edc544cf84d82e9b8f0dd39ed3f45222df9b706ffb5c25abdac62ac74f49.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c7458d5dc96e22f0b6bcefc3a8714052318785ac61198cd52dd875808fc274b4.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2a1f8793d010d45b046836e27b6a7e46e52381c027c4facd448aece311791e41.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc055",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc055/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-700a7e16b54f7df7cf0a8d6f",
+    "law": "نظام خدمة الأفراد",
+    "unit": "المادة 56",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/14)",
+    "instrument_date": "1419/06/06",
+    "note_text": "عُّدلت الفقرة (ح) هذه المادة وذلك بموجب المرسوم الملكي رقم (م/14) وتاريخ 1419/6/6هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/10df07c1-6e10-4332-aa4d-ac77008fbd69?attachmentTitle=المادة 56",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c413fc049750f3f1d75b0faf461813c4e8a1bdcc6badb85531e2e5fcaa8ecb45.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/adcf2a77acb5da2569aa9ab96762f22a20a326201b4ea1fe26ecb631296cef10.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f9bc717ac67c22eb4f9336c28e66bbdbadbc889aafae40ee19b08ddc9f92c189.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8544a3b25a76bf1153c87571d5bfaa265e1edbedf1e0cac0f6b227ca8de73ac1.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc016",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc016/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-23a41424434e23bd9fc6fbe1",
+    "law": "التنظيم الخاص بهيئة المساحة الجيولوجية السعودية",
+    "unit": "المادة الخامسة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (241)",
+    "instrument_date": "1440/05/09",
+    "note_text": "•المادة الخامسة\n\n-عُدلت هذه المادة بموجب قرار مجلس الوزراء رقم (241) وتاريخ 9 /5 /1440هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/70f1f84e-4dab-4f76-9798-aa7600964a8b?attachmentTitle=المادة الخامسة: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/26d27ba746921ed8fa334bfb06a975b59245b36eeb00424310aa79b08fe3e18b.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5c941ceb9125c13a9e3027535cf877d1b65908e929376ff3c4bbdd812efcbb52.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ab82b8fb3459a8e623e83334b7f6bce6801ccc651641b4263d549a4fbe903979.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc040",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc040/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-a380d739c1ac243489d49897",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 62",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/51)",
+    "instrument_date": "1404/12/22",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/51) وتاريخ 1404/12/22هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/74678ba7-546c-43b8-85ef-ac5a00a87c17?attachmentTitle=المادة 62",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8b3ee3c3e80fcda5edf80202f08d3fe28a088e89147b3e85eecee4ba2c97d397.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1dcf96e04ef63c8d3d3cfe0923dffc2f4196adde7889a94171302e87103d8b65.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e2abc8b252c44b1cd9736786f11081f9edcd30702c5c71866b670ef15b07ad7d.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc005",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc005/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-2280e6e7be551016387a5086",
+    "law": "قواعد تنظيم لوحات الدعاية والإعلان",
+    "unit": "المادة الثالثة",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (486)",
+    "instrument_date": "1437/11/05",
+    "note_text": "-عُدلت هذه المادة بموجب قرار مجلس الوزراء رقم (486) وتاريخ1437/11/5هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/582d05ca-2143-454e-841c-af2201242d4c?attachmentTitle=المادة الثالثة\n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b4b65520070feceb66cba91c13c4a6b96b76f3a2a71505cc2fdfe526f0d41d29.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0ad843f923a30d176a66b8c6fb61f9b074f68c8ff2ea5138a71dbe3711ae3afc.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc023",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc023/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-d0a2b7d644e1c5ea285092bf",
+    "law": "نظام تملك غير السعوديين للعقار واستثماره",
+    "unit": "المادة الخامسة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/94)",
+    "instrument_date": "1439/09/15",
+    "note_text": "المادة الخامسة عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/94) وتاريخ 1439/9/15هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/79e86332-c1e0-441f-9d59-ad1e00d1ef4d?attachmentTitle=المادة الخامسة: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c61b5849bae7cfb572c829b73a7eb45bd7e9082d0f3ffc295fefc017f40eb0d1.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1b31713fce5c9dbb66d75781e8152327c0d586690dd8ccd6116674b2d5469a8a.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc042",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc042/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-cafaeff518584675c9b61b75",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 102",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/45)",
+    "instrument_date": "1395/06/12",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/45) وتاريخ 1395/6/12هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1bcbec78-7992-47b8-9537-ac5b00ae523f?attachmentTitle=المادة 102",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a91abb31046fd38e5c76c17a7d422da4d33075a3b5f44f32f005afa238227de7.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/112186e1d04e20d5d36e3f475d6723a577d366be7dc3c5bc1575c04b1abd2fe8.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc056",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc056/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-40560ae59671a48a6eccd285",
+    "law": "نظام خدمة الأفراد",
+    "unit": "المادة 58",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/2)",
+    "instrument_date": "1411/04/09",
+    "note_text": "عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/2) وتاريخ 1411/4/9هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/4174dc48-63ec-457e-a87d-ac7500c8b7cb?attachmentTitle=المادة 58",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/23877af8385509457263188595c1f13fc8ef44e9c4a8c866ce7489578e6266bd.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6f51f50ed002c88e79f3b5793f62b175d38a226ef4e97ee3b821ae71a0ab0a8c.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc064",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc064/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-3fe6faafc59597189ff9ad3b",
+    "law": "تنظيم الهيئة العامة للمنشآت الصغيرة والمتوسطة",
+    "unit": "المادة الرابعة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (312)",
+    "instrument_date": "1442/06/06",
+    "note_text": "- عٌدلت هذه المادة وذلك بإضافة ممثل من وزارة البيئة والمياه والزراعة إلى عضوية مجلس إدارة الهيئة . وذلك بموجب قرار مجلس الوزراء رقم (312) وتاريخ 1442/6/6هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/32b0c5e0-2b08-477e-9c41-5bc524c8a927?attachmentTitle=المادة الرابعة:",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/42673a79d6ac4b2701aef39b6091374f980bd9608b45e024fd6625a5de6a54dd.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c290cfd6efb2a168b09a27c7b93debb66594f3b3cb9fa1dfa51684cd3df85fc9.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc004",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc004/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-6aa4c34300d99f33656df088",
+    "law": "تنظيم الهيئة العامة للإعلام المرئي والمسموع",
+    "unit": "المادة السادسة:",
+    "effect": "تعديل فقرة",
+    "instrument": "قرار مجلس الوزراء رقم (265)",
+    "instrument_date": "1439/05/27",
+    "note_text": "تعديل الفقرة (1) من المادة السادسة عدلت هذه الفقرة بموجب قرار مجلس الوزراء رقم 265 وتاريخ 1439/5/27 هـ.\n\nتعديل الفقرة (2) من المادة السادسة عدلت هذه الفقرة بموجب قرار مجلس الوزراء رقم 265 وتاريخ 1439/5/27 هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/92a97f44-30fb-419f-833f-50d2cdfb451a?attachmentTitle=المادة السادسة:",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/98d5240d13b37f12de517afd1302e3c45bfd35b25a81ea915477ac275376bbdf.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc022",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc022/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-63beed2cb68ccf6849b81144",
+    "law": "تنظيم المؤسسة العامة للتدريب التقني والمهني",
+    "unit": "المادة الرابعة:",
+    "effect": "تعديل فقرة",
+    "instrument": "قرار مجلس الوزراء رقم (745)",
+    "instrument_date": "1442/12/24",
+    "note_text": "- عُدلت الفقرة (1) من هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (745) وتاريخ 1442/12/24هـ، وذلك بإضافة ممثل من الهيئة السعودية للمدن الصناعية ومناطق التقنية إلى عضوية مجلس إدارة المؤسسة.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/4e4e0fe8-8aec-40d6-b209-ad8200c4bbb3?attachmentTitle= المادة الرابعة: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4d764a17c0c5692c2649531a47354cbfd6c5a39e74b9c21606bb8e0b94cc2bbf.jpg"
+     }
+    ]
+   }
+  ]
+ }
+]

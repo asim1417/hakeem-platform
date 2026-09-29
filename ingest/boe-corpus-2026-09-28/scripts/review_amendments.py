@@ -21,7 +21,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 P = ROOT / "data" / "parsed"
 ATT = ROOT / "data" / "attachments"
 BOE = "https://laws.boe.gov.sa"
-OVERRIDES = ROOT / "data" / "review" / "overrides.json"   # قراءة يدوية: {note_id: {effect, confidence, reason}}
+OVERRIDES = ROOT / "data" / "review" / "overrides.json"
+VISION = ROOT / "data" / "review" / "vision" / "final.jsonl"   # قراءة بصرية لصور الأدوات + تحقق مستقل (الفئة 3)
+VERDICT_AR = {"exact": "مطابق", "minor": "فروق شكل حروف صُحّحت", "wrong": "فروق كلمات صُحّحت بعد التحقق", None: "لم يُتحقق منه"}   # قراءة يدوية: {note_id: {effect, confidence, reason}}
 
 TASHKEEL = re.compile("[\u0610-\u061A\u064B-\u065F\u0670\u0640]")
 MAPC = {"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي"}
@@ -321,6 +323,15 @@ def main():
     todo = [n for n in notes if n["needs_review"]]
     overrides = json.loads(OVERRIDES.read_text(encoding="utf-8")) if OVERRIDES.exists() else {}
     by_unit, by_law = load_attachments()
+    vision = {}
+    if VISION.exists():
+        for l in open(VISION, encoding="utf-8"):
+            v = json.loads(l)
+            vision[v["note_id"]] = v
+    sha_url = {}
+    for l in open(ATT / "pages.jsonl", encoding="utf-8"):
+        pg = json.loads(l)
+        sha_url[pg["image_sha256"]] = BOE + pg["image_url"]
     law_instr = collections.defaultdict(set)   # أدوات كل نظام من كل ملاحظاته (للاستدلال على أداة غير مذكورة)
     for n in notes:
         for i in instruments(norm_map(n["note_text"])[0]):
@@ -404,6 +415,35 @@ def main():
                 conf = ov.get("confidence", conf)
                 reason = ov.get("reason", reason)
                 why = "قراءة يدوية"
+            vis = vision.get(n["id"] if len(pieces) == 1 else f"{n['id']}#{k}")
+            vision_cols = {}
+            if vis and nt is None:
+                img = [sha_url.get(x.split(".")[0]) for x in vis["images"]]
+                img = [u for u in img if u]
+                pages_s = "، ".join(str(x) for x in (vis["pages"] or []))
+                vision_cols = {"vision_status": vis["status"], "instrument_seen": vis["instrument_seen"], "vision_verify": VERDICT_AR.get(vis["verify"], vis["verify"]),
+                               "vision_lead_in": vis["lead_in"], "vision_fixes": "؛ ".join(vis["fixes_applied"]), "vision_notes": vis["notes"]}
+                if img:
+                    art_hit = (vis["pages"][0] if vis["pages"] else None, None, img[0], None)
+                if vis["status"] in ("found", "partial") and vis["instrument_match"] and vis["new_text"]:
+                    nt = vis["new_text"]
+                    conf = "مرجّح"
+                    reason = (f"منقول من صورة الأداة (ص {pages_s}) قراءةً بصرية، وتحقق منه قارئ مستقل: {VERDICT_AR.get(vis['verify'], 'لم يُتحقق منه')}"
+                              + ("؛ النص جزء من المادة لا المادة كلها" if vis["status"] == "partial" or "جزء" in (vis["notes"] or "") else "")
+                              + "؛ يطابقه المالك بالصورة قبل الاعتماد")
+                elif vis["status"] == "not_applicable":
+                    eff, conf, reason = "قرار تطبيق لا يعدّل النص", "مرجّح", vis["notes"]
+                elif vis["status"] == "wrong_article":
+                    conf, reason = "يحتاج قرار المالك", vis["notes"]
+                    vision_cols["vision_other_text"] = vis["new_text"]
+                elif vis["instrument_match"] is False:
+                    conf = "يحتاج قرار المالك"
+                    reason = f"مرفق الهيئة لهذه المادة أداة أخرى ({vis['instrument_seen']})، فلا يُنسب نصها لأداة الملاحظة؛ نص الأداة الأخرى في عمود «نص من الصورة»"
+                    vision_cols["vision_other_text"] = vis["new_text"]
+                else:
+                    conf = "يحتاج قرار المالك"
+                    reason = "قُرئت صورة الأداة ولم يوجد فيها نص جديد للمادة: " + (vis["notes"] or "")
+                    vision_cols["vision_other_text"] = vis["new_text"]
             first = ins[0] if ins else {}
             rows.append({
                 "note_id": n["id"] if len(pieces) == 1 else f"{n['id']}#{k}",
@@ -418,7 +458,7 @@ def main():
                 "page_image": att_hit[3] if att_hit else None,
                 "draft_page": art_hit[0] if art_hit else None, "draft_ocr": art_hit[1] if art_hit else None,
                 "draft_image": art_hit[2] if art_hit else None, "draft_sha": art_hit[3] if art_hit else None,
-                "confidence": conf, "reason": reason,
+                "confidence": conf, "reason": reason, **vision_cols,
                 "old_effect": n["effect"],
             })
     out = ROOT / "data" / "review"
