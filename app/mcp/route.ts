@@ -6,7 +6,7 @@
  * التثبيت: npm i mcp-handler @modelcontextprotocol/sdk zod
  * الرابط بعد النشر: https://hakeem-platform.vercel.app/mcp
  */
-import { createMcpHandler } from "mcp-handler";
+import { createMcpHandler, withMcpAuth } from "mcp-handler";
 // خادم MCP (@modelcontextprotocol/server) يبني مخططاته على Zod v4 ويتطلّب
 // «~standard.jsonSchema» (غير الموجود في Zod v3 المعتمد في بقيّة المشروع). لذا
 // نستورد Zod v4 باسم مستعار (zodv4) هنا فقط — دون المساس بـ zod v3 في سائر الكود.
@@ -17,7 +17,7 @@ import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 import { registerAmanTools } from "@/lib/mcp/aman-server";
-import { mcpCredentialAccepted, mcpUnauthorized } from "@/lib/mcp/oauth";
+import { verifyMcpAccessToken } from "@/lib/mcp/oauth";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -274,24 +274,37 @@ async function tool<T>(name: string, fn: () => Promise<T> | T) {
   }
 }
 
-/**
- * مصادقة اختيارية بمفتاح (MCP-SEC-001): من الهيدر فقط — x-api-key أو Authorization: Bearer.
- * لا يُقبل المفتاح من query string (كان يتسرّب إلى history/logs/referrer).
- * عند الرفض نُرجع 401 مع بيانات OAuth حتى يستطيع Claude بدء شاشة الربط بدل «Couldn't start sign-in».
- */
-function withAuth(h: (req: Request) => Promise<Response>) {
+function withEmptyPrompts(inner: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
-    const started = Date.now();
-    const expected = process.env.HAKEEM_MCP_KEY?.trim();
-    if (expected && !mcpCredentialAccepted(req, expected)) return mcpUnauthorized(req);
-    try {
-      return await h(req);
-    } finally {
-      console.log(`[mcp] request ms=${Date.now() - started} method=${req.method}`);
+    if (req.method === "POST" && (req.headers.get("content-type") || "").includes("application/json")) {
+      const body = await req.clone().json().catch(() => null);
+      if (body && typeof body === "object" && (body as { method?: string }).method === "prompts/list") {
+        const id = (body as { id?: unknown }).id ?? null;
+        const payload = JSON.stringify({ jsonrpc: "2.0", id, result: { prompts: [] } });
+        return new Response(`event: message\ndata: ${payload}\n\n`, {
+          status: 200,
+          headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform" },
+        });
+      }
     }
+    return inner(req);
   };
 }
 
-export const GET = withAuth(handler);
-export const POST = withAuth(handler);
-export const DELETE = withAuth(handler);
+const mcpKey = process.env.HAKEEM_MCP_KEY?.trim() ?? "";
+const authed = withMcpAuth(
+  withEmptyPrompts(handler),
+  async (req, bearer) => {
+    if (!mcpKey) return { token: "open", clientId: "public", scopes: ["mcp:read"] };
+    return verifyMcpAccessToken(req, bearer, mcpKey);
+  },
+  {
+    required: mcpKey.length > 0,
+    resourceMetadataPath: "/.well-known/oauth-protected-resource/mcp",
+    requiredScopes: ["mcp:read"],
+  }
+);
+
+export const GET = authed;
+export const POST = authed;
+export const DELETE = authed;
