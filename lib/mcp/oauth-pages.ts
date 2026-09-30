@@ -49,6 +49,7 @@ export function renderAuthorizePage(form: AuthorizeForm): string {
       ${hidden("scope", form.scope)}
       ${hidden("resource", form.resource)}
       <label for="connector_key">مفتاح الموصل</label>
+      <p>الصق القيمة وحدها. لا تكتب اسم HAKEEM_MCP_KEY قبلها.</p>
       <input id="connector_key" name="connector_key" type="password" autocomplete="off" required />
       <button type="submit">متابعة الربط</button>
     </form>
