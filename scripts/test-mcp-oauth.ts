@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   authorizationServerMetadata,
+  keysMatch,
   createAuthorizationCode,
   exchangeAuthorizationCode,
   exchangeRefreshToken,
@@ -28,6 +29,11 @@ assert.equal(isAllowedRedirect(redirect), true);
 assert.equal(isAllowedRedirect("http://127.0.0.1:3118/callback"), true);
 assert.equal(isAllowedRedirect("https://evil.example/steal"), false);
 assert.equal(isAllowedRedirect("http://localhost:9/callback?next=https://evil.example"), false);
+assert.equal(keysMatch(`  ${secret}  `, secret), true);
+assert.equal(keysMatch(`"${secret}"`, secret), true);
+assert.equal(keysMatch(`HAKEEM_MCP_KEY=${secret}`, secret), true);
+assert.equal(keysMatch(`Bearer ${secret}`, secret), true);
+assert.equal(keysMatch("HAKEEM_MCP_KEY", secret), false);
 assert.equal(isAllowedClientId(clientId), true);
 assert.equal(isAllowedClientId("https://evil.example/client"), false);
 

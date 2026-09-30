@@ -183,8 +183,22 @@ export function exchangeRefreshToken(input: {
   return issueTokenPair(input.secret, refresh.cid, refresh.aud, input.now);
 }
 
+export function normalizeConnectorKey(raw: string): string {
+  let value = raw.replace(/^\uFEFF/, "").trim();
+  if (
+    (value.startsWith('"') && value.endsWith('"') && value.length >= 2) ||
+    (value.startsWith("'") && value.endsWith("'") && value.length >= 2)
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+  const labeled = /^HAKEEM_MCP_KEY\s*=\s*(.*)$/.exec(value);
+  if (labeled) value = labeled[1].trim();
+  value = value.replace(/^Bearer\s+/i, "").trim();
+  return value;
+}
+
 export function keysMatch(provided: string, expected: string): boolean {
-  return safeEqual(provided, expected);
+  return safeEqual(normalizeConnectorKey(provided), expected.trim());
 }
 
 export function s256(verifier: string): string {
