@@ -6,7 +6,7 @@ import {
   mcpResourceUrl,
   publicOrigin,
 } from "@/lib/mcp/oauth";
-import { renderAuthorizePage, renderOauthMessage, renderReturnToClaude } from "@/lib/mcp/oauth-pages";
+import { renderAuthorizePage, renderOauthMessage } from "@/lib/mcp/oauth-pages";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,13 +58,13 @@ export async function POST(request: Request) {
   const target = new URL(input.redirectUri);
   target.searchParams.set("code", code);
   if (input.state) target.searchParams.set("state", input.state);
-  return new Response(renderReturnToClaude(target.toString()), {
-    status: 200,
+  target.searchParams.set("iss", origin);
+  return new Response(null, {
+    status: 303,
     headers: {
-      "Content-Type": "text/html; charset=utf-8",
+      Location: target.toString(),
       "Cache-Control": "no-store",
       "Referrer-Policy": "no-referrer",
-      "X-Robots-Tag": "noindex",
     },
   });
 }

@@ -74,6 +74,8 @@ export function authorizationServerMetadata(origin: string) {
     code_challenge_methods_supported: ["S256"],
     token_endpoint_auth_methods_supported: ["none"],
     client_id_metadata_document_supported: true,
+    authorization_response_iss_parameter_supported: true,
+    response_modes_supported: ["query"],
     scopes_supported: ["mcp:read"],
   };
 }
@@ -99,7 +101,33 @@ export function mcpCredentialAccepted(request: Request, expectedKey: string): bo
   if (safeEqual(presented, expectedKey)) return true;
   const access = readToken(expectedKey, presented, "access");
   if (!access) return false;
-  return access.aud === mcpResourceUrl(publicOrigin(request));
+  return audienceAccepted(access.aud, request);
+}
+
+const MCP_HOSTS = new Set(["hakeemai.net", "www.hakeemai.net", "hakeem-platform.vercel.app"]);
+
+function audienceAccepted(aud: string, request: Request): boolean {
+  let audUrl: URL;
+  try {
+    audUrl = new URL(aud);
+  } catch {
+    return false;
+  }
+  if (audUrl.pathname.replace(/\/+$/, "") !== "/mcp") return false;
+  const requestHost = new URL(publicOrigin(request)).hostname;
+  if (audUrl.hostname === requestHost) return true;
+  return MCP_HOSTS.has(audUrl.hostname) && MCP_HOSTS.has(requestHost);
+}
+
+export function verifyMcpAccessToken(request: Request, bearer: string | undefined, expectedKey: string) {
+  const presented = (bearer?.trim() || request.headers.get("x-api-key")?.trim() || "");
+  if (!presented) return undefined;
+  if (keysMatch(presented, expectedKey)) {
+    return { token: presented, clientId: "hakeem-api-key", scopes: ["mcp:read"], expiresAt: nowSec() + ACCESS_TTL_SEC };
+  }
+  const access = readToken(expectedKey, presented, "access");
+  if (!access || !audienceAccepted(access.aud, request)) return undefined;
+  return { token: presented, clientId: access.cid, scopes: ["mcp:read"], expiresAt: access.exp };
 }
 
 export function isAllowedRedirect(uri: string): boolean {

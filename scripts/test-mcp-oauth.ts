@@ -122,6 +122,10 @@ const wrongHost = new Request("https://other.example/mcp", {
   headers: { authorization: `Bearer ${issued.access_token}` },
 });
 assert.equal(mcpCredentialAccepted(wrongHost, secret), false);
+const crossHost = new Request("https://hakeem-platform.vercel.app/mcp", {
+  headers: { authorization: `Bearer ${issued.access_token}` },
+});
+assert.equal(mcpCredentialAccepted(crossHost, secret), true);
 
 assert.equal(isMcpOauthPublicPath("/oauth/authorize"), true);
 assert.equal(isMcpOauthPublicPath("/.well-known/oauth-protected-resource/mcp"), true);
@@ -173,12 +177,11 @@ goodForm.set("code_challenge_method", "S256");
 goodForm.set("state", "state-1");
 goodForm.set("connector_key", secret);
 const approved = await authorize.POST(new Request("https://hakeemai.net/oauth/authorize", { method: "POST", body: goodForm }));
-assert.equal(approved.status, 200);
-const approvedHtml = await approved.text();
-assert.match(approvedHtml, /العودة إلى Claude/);
-const back = new URL((approvedHtml.match(/href="([^"]+)"/)?.[1] ?? "").replace(/&amp;/g, "&"));
+assert.equal(approved.status, 303);
+const back = new URL(approved.headers.get("location") ?? "");
 assert.equal(back.origin + back.pathname, redirect);
 assert.equal(back.searchParams.get("state"), "state-1");
+assert.equal(back.searchParams.get("iss"), "https://hakeemai.net");
 
 const body = new URLSearchParams({
   grant_type: "authorization_code",

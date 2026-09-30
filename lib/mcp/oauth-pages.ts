@@ -58,33 +58,6 @@ export function renderAuthorizePage(form: AuthorizeForm): string {
 </html>`;
 }
 
-export function renderReturnToClaude(target: string): string {
-  const href = escapeHtml(target);
-  const js = JSON.stringify(target).replace(/</g, "\\u003c");
-  return `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex" />
-  <title>العودة إلى Claude</title>
-  <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f1ea; color: #1c1915; font-family: "Segoe UI", Tahoma, sans-serif; }
-    main { width: min(440px, calc(100% - 32px)); background: #fff; border: 1px solid #e4dccb; border-radius: 16px; padding: 28px 24px; text-align: center; }
-    a { display: block; margin-top: 16px; border-radius: 10px; padding: 12px 16px; background: #1f4d3a; color: #fff; font-size: 1rem; font-weight: 700; text-decoration: none; }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>تم قبول المفتاح</h1>
-    <p>إذا لم يعد التطبيق وحده، اضغط الزر.</p>
-    <a href="${href}">العودة إلى Claude</a>
-  </main>
-  <script>location.replace(${js})</script>
-</body>
-</html>`;
-}
-
 export function renderOauthMessage(title: string, message: string, status = 400): Response {
   const html = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
