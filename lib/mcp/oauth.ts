@@ -144,9 +144,9 @@ export function createAuthorizationCode(input: {
   return signToken(input.secret, {
     typ: "code",
     exp: now + CODE_TTL_SEC,
-    cid: input.clientId,
+    cid: s256(input.clientId),
     aud: input.resource,
-    ru: input.redirectUri,
+    ru: s256(input.redirectUri),
     cc: input.codeChallenge,
   });
 }
@@ -164,11 +164,11 @@ export function exchangeAuthorizationCode(input: {
   }
   if (!isPkceVerifier(input.codeVerifier)) return { error: "invalid_grant" };
   const code = readToken(input.secret, input.code, "code");
-  if (!code || code.cid !== input.clientId || code.ru !== input.redirectUri || !code.cc) {
+  if (!code || code.cid !== s256(input.clientId) || code.ru !== s256(input.redirectUri) || !code.cc) {
     return { error: "invalid_grant" };
   }
   if (s256(input.codeVerifier) !== code.cc) return { error: "invalid_grant" };
-  return issueTokenPair(input.secret, code.cid, code.aud, input.now);
+  return issueTokenPair(input.secret, input.clientId, code.aud, input.now);
 }
 
 export function exchangeRefreshToken(input: {
