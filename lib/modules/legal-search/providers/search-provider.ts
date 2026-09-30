@@ -9,6 +9,10 @@ export interface SearchQuery {
   q: string;
   limit?: number;
   context?: { caseType?: string; court?: string; stage?: string };
+  /** تاريخ وجه البحث YYYY-MM-DD (افتراضيًا اليوم بتوقيت الرياض). */
+  asOf?: string;
+  /** «archive» يعطّل وجه البحث (الأرشيف الكامل). الافتراضي: الوجه الساري. */
+  surface?: "current" | "archive";
 }
 
 // نتيجة خام من مزوّد واحد.
