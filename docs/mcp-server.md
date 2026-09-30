@@ -64,9 +64,26 @@ https://<host>/mcp
 
 ## المصادقة (اختيارية)
 
-عرّف `HAKEEM_MCP_KEY` في متغيرات البيئة لتفعيل الحماية بمفتاح. عندئذٍ يجب أن يمرّر
-العميل المفتاح إمّا في ترويسة `x-api-key` أو كمعامل `?key=` في الرابط. تركه فارغًا
-يُبقي الخادم مفتوحًا.
+عرّف `HAKEEM_MCP_KEY` في متغيرات البيئة لتفعيل الحماية بمفتاح. تركه فارغًا يُبقي
+الخادم مفتوحًا. المفتاح لا يُمرَّر في الرابط (`?key=` مرفوض حتى لا يتسرّب إلى
+السجلات). عند غياب المفتاح أو رمز الوصول يردّ المسار `401` مع
+`WWW-Authenticate` حتى يستطيع Claude بدء الربط.
+
+طريقتان مقبولتان:
+
+1. ترويسة ثابتة (بدون شاشة دخول): `x-api-key: <المفتاح>` أو
+   `Authorization: Bearer <المفتاح>`. في Claude اختر **No sign-in** ثم أضف
+   الترويسة من Request headers إن ظهرت لك.
+2. زر **Connect** في Claude: يفتح صفحة `https://<host>/oauth/authorize`. أدخل
+   مفتاح الموصل هناك. الخادم يصدر رمز وصول موقّعًا، ولا يحفظ المفتاح في الرابط.
+
+بيانات الاكتشاف:
+
+```
+GET /.well-known/oauth-protected-resource
+GET /.well-known/oauth-protected-resource/mcp
+GET /.well-known/oauth-authorization-server
+```
 
 ## ملاحظة تقنية: إصدار Zod
 
@@ -86,6 +103,6 @@ npx @modelcontextprotocol/inspector   # على http://localhost:3000/mcp
 
 ## الربط بعميل (Claude)
 
-Settings → Connectors → Add custom connector → الرابط `https://<host>/mcp`
-(أضف `?key=<المفتاح>` إن فعّلت المصادقة). ثم اسأل مثلًا:
+Settings → Connectors → Add custom connector → الرابط `https://<host>/mcp`.
+ثم اضغط Connect وأدخل مفتاح الموصل في صفحة حكيم. بعدها اسأل مثلًا:
 «ابحث في حكيم عن مدد الاعتراض في نظام المرافعات الشرعية».

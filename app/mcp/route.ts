@@ -17,6 +17,7 @@ import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 import { registerAmanTools } from "@/lib/mcp/aman-server";
+import { mcpCredentialAccepted, mcpUnauthorized } from "@/lib/mcp/oauth";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -276,16 +277,13 @@ async function tool<T>(name: string, fn: () => Promise<T> | T) {
 /**
  * مصادقة اختيارية بمفتاح (MCP-SEC-001): من الهيدر فقط — x-api-key أو Authorization: Bearer.
  * لا يُقبل المفتاح من query string (كان يتسرّب إلى history/logs/referrer).
+ * عند الرفض نُرجع 401 مع بيانات OAuth حتى يستطيع Claude بدء شاشة الربط بدل «Couldn't start sign-in».
  */
 function withAuth(h: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
     const started = Date.now();
     const expected = process.env.HAKEEM_MCP_KEY?.trim();
-    if (expected) {
-      const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-      const provided = (req.headers.get("x-api-key") ?? bearer)?.trim();
-      if (provided !== expected) return new Response("Forbidden", { status: 403 });
-    }
+    if (expected && !mcpCredentialAccepted(req, expected)) return mcpUnauthorized(req);
     try {
       return await h(req);
     } finally {

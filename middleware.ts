@@ -20,6 +20,7 @@ import {
   HAKEEM_CORRELATION_HEADER,
 } from "@/lib/modules/auth/request-path-headers";
 import { workspaceHomeFromSessionCookie } from "@/lib/modules/auth/session-cookie-peek";
+import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -40,8 +41,14 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/demo(.*)",
   "/api/due-diligence/demo(.*)",
   // خادم MCP: مسار عام تمامًا — لا يمسّه Clerk إطلاقًا (مستثنى أيضًا من matcher أدناه).
-  // يمنع اعتراض clerkMiddleware الذي يردّ 401 فيُفسَّر لدى عميل MCP كدعوة OAuth.
+  // مصادقة الموصل تتم داخل المسار نفسه (مفتاح أو OAuth الخاص بـ MCP)، لا عبر Clerk.
   "/mcp(.*)",
+  // اكتشاف OAuth وصفحة ربط الموصل يجب أن تبقيا خارج Clerk وإلا يفشل «بدء تسجيل الدخول» في Claude.
+  "/.well-known/oauth-protected-resource(.*)",
+  "/.well-known/oauth-authorization-server(.*)",
+  "/oauth/authorize(.*)",
+  "/oauth/token(.*)",
+  "/oauth/register(.*)",
   // واجهة ChatGPT العامة لأمان: أدوات ثابتة للفرز والتواصل فقط، بلا جلسة أو Clerk.
   "/aman/mcp(.*)",
   "/sign-in(.*)",
@@ -176,7 +183,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
     return nextWithPath(request);
   }
 
-  if (isClerkMiddlewareBypass(request)) {
+  if (isClerkMiddlewareBypass(request) || isMcpOauthPublicPath(request.nextUrl.pathname)) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
       return NextResponse.redirect(new URL(workspaceHome(request), request.url));
     }
@@ -190,7 +197,7 @@ export const config = {
   matcher: [
     // استثناء نقاط MCP (وكل ما تحتها) من الـ middleware نهائيًا — تمرّ مباشرةً إلى
     // Route Handler بلا اعتراض Clerk ولا تحويل.
-    "/((?!_next|mcp(?:/|$)|aman/mcp(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|mcp(?:/|$)|aman/mcp(?:/|$)|\\.well-known/oauth-(?:protected-resource|authorization-server)(?:/|$)|oauth/(?:authorize|token|register)(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
     // مسار البروكسي التلقائي لـ Clerk (يلزم عند ترقية @clerk/nextjs لإصدار يدعمه).
     "/__clerk/:path*",
