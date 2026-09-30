@@ -556,6 +556,19 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
           });
         }
         ctx.invokedTools.push(name);
+        const { buildUnifiedCitationSet } = await import(
+          "@/lib/modules/hakeem-composer/unified-citations"
+        );
+        const attachmentReads = items
+          .filter((i) => i.chars > 0)
+          .map((i) => ({
+            attachmentId: i.attachmentId,
+            fileName: i.fileName,
+            pageNumbers: i.usedPageNumbers ?? [],
+            textFallback: Boolean(i.textFallback),
+            snippets: i.pages?.map((p) => p.text.slice(0, 120)).filter(Boolean),
+          }));
+        const unifiedCitations = buildUnifiedCitationSet({ attachmentReads });
         return {
           ok: true,
           data: {
@@ -563,6 +576,7 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
             items,
             usedAttachmentIds: items.filter((i) => i.chars > 0).map((i) => i.attachmentId),
             auditedPages: ctx.auditedPageReads.slice(-ids.length),
+            unifiedCitations,
           },
           label: `قراءة ${items.filter((i) => i.chars > 0).length} مرفقًا`,
         };
