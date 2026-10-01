@@ -1,0 +1,102 @@
+{
+  "generated_on": "2026-09-25",
+  "mode": "read_only_production_plus_local_lab",
+  "production_host_prefix": "ep-icy-r",
+  "production_untouched_by_this_branch": {
+    "legal_systems": 1136,
+    "work_edition": null,
+    "mixed_gate_rows": 0
+  },
+  "decree_census": {
+    "works_with_articles": 1053,
+    "uniform_single_instrument": 62,
+    "no_instrument": 844,
+    "partial_one_instrument_plus_empty": 132,
+    "mixed_two_or_more_nonempty_instruments": 15
+  },
+  "in_place_replacement": {
+    "operation": "replace_in_place",
+    "script": "scripts/backfill/promote_uqn_2026_09.py",
+    "commit": "217626dd1d7d87bb2d3f25ea54b5cd8351ee1397",
+    "pull_request": 658,
+    "merge_commit": "f19670c1",
+    "database_write_utc": "2026-09-25T10:00:30Z",
+    "note": "النص السابق حُفظ في article_amendments.previousText ونسخ article_versions المغلقة المصدر derived. لم تُحذف الصفوف."
+  },
+  "named_works": [
+    {
+      "name": "نظام التنفيذ",
+      "stored_groups": [
+        {"instrument": "مرسوم ملكي رقم م/237 بتاريخ 1447-11-03", "articles": "1-65", "count": 65},
+        {"instrument": null, "articles": "66-98", "count": 32},
+        {"instrument": "مرسوم ملكي رقم م/21 وتاريخ 20/5/1421هـ", "articles": "96", "count": 1}
+      ],
+      "classification": "سجل مخلوط",
+      "old_recovered": {"count": 98, "instrument": "م/53", "article1_md5": "a083c2b87510b51bc19d12060898130c", "source": "previousText للمواد 1-65، والمحتوى الحالي للمواد 66-98"},
+      "new_text": {"count": 65, "instrument": "م/237", "article1_md5": "0c1443e1dcdf68c655856daa5d4188b5"},
+      "amendments": {"amended": 65, "repealed_status_only": 33},
+      "versions": {"derived_closed": 98, "uqn_open": 65}
+    },
+    {
+      "name": "نظام السجل التجاري",
+      "stored_groups": [
+        {"instrument": "مرسوم ملكي رقم م/83 بتاريخ 1446-03-19", "articles": "1-29", "count": 29}
+      ],
+      "classification": "نص مستبدل في المكان: سند واحد هو سند النظام الجديد، والنص القديم لم يعد على المواد",
+      "old_recovered": {"count": 20, "instrument": "م/1", "article1_md5": "6dfb110856a027f70978a9a230fea519", "source": "previousText"},
+      "new_text": {"count": 29, "instrument": "م/83", "effective": "2025-04-02", "article1_md5": "50f683e29d212c4f63db631e9683d658"},
+      "amendments": {"amended": 20},
+      "versions": {"derived_closed": 20, "uqn_open": 20}
+    },
+    {
+      "name": "نظام الأسماء التجارية",
+      "stored_groups": [
+        {"instrument": "مرسوم ملكي رقم م/83 بتاريخ 1446-03-19", "articles": "1-23", "count": 23}
+      ],
+      "classification": "نص مستبدل في المكان: سند واحد هو سند النظام الجديد، والنص القديم لم يعد على المواد",
+      "old_recovered": {"count": 20, "instrument": "م/15", "article1_md5": "ac42db9feeed4e30b748fccfb8aea985", "source": "previousText"},
+      "new_text": {"count": 23, "instrument": "م/83", "effective": "2025-04-02", "article1_md5": "de2af5b120fd820dbcf9fdfbcd965d38"},
+      "amendments": {"amended": 20},
+      "versions": {"derived_closed": 20, "uqn_open": 20}
+    }
+  ],
+  "umm_alqura_remainder": {
+    "batch": "uqn-2026-09-25",
+    "stage_irregular_needs_triage_unstructured": 217,
+    "not_published": [
+      {"title": "اللائحة المنظمة لسجل الخدمة البحرية", "source_id": "uqn:20006", "reason": "تكرار رقم مادة"},
+      {"title": "تخصيص المواقع الشاغرة في مجمع غونان لطرحها للمنافسة", "source_id": "uqn:22998", "reason": "الاسم نُشر من uqn:22997"}
+    ],
+    "published": 215,
+    "articles": 2105,
+    "mixed": 0,
+    "partial": 0
+  },
+  "other_mixed_not_split": [
+    {"name": "الترتيب التنظيمي لمصانع المياه", "nonempty_articles": 3, "versioned_replace": 0},
+    {"name": "تنظيم الهيئة العامة للموانئ", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "تنظيم مشاركة الوفود الرسمية في الاجتماعات", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "تنظيم هيئة تنظيم الكهرباء والإنتاج المزدوج", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "ضوابط استخدام تقنيات المعلومات والاتصالات في الجهات الحكومية", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "نظام التأمينات الاجتماعية", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "نظام الخدمة المدنية", "nonempty_articles": 5, "versioned_replace": 0},
+    {"name": "نظام العمل", "nonempty_articles": 6, "versioned_replace": 0},
+    {"name": "نظام المحاماة", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "نظام خدمة الأفراد", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "نظام ضريبة الدخل", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "نظام مدينة الملك عبد العزيز للعلوم والتقنية", "nonempty_articles": 3, "versioned_replace": 0},
+    {"name": "نظام مراقبة شركات التأمين التعاوني", "nonempty_articles": 2, "versioned_replace": 0},
+    {"name": "نــظام الاستــثمار التعديني.", "nonempty_articles": 2, "versioned_replace": 0}
+  ],
+  "other_mixed_reason": "السند المختلف يظهر في مادة إلى ست مواد، وبقية المواد بلا سند. لا يوجد نص ثانٍ كامل ولا عملية versioned_replace. فصلها إلى عملين يختلق نصًا. أُوقفت وأُدرجت هنا.",
+  "old_text_recovery": "اكتمل من article_amendments وarticle_versions. لم تُنشأ نقطة استعادة لحظية على Neon.",
+  "lab": {
+    "write_host": "127.0.0.1:5432",
+    "edition_works": 6,
+    "articles_added": 255,
+    "work_edition_windows": 6,
+    "mixed_gate_verifications": 3,
+    "existing_rows_updated": 0,
+    "existing_rows_deleted": 0
+  }
+}

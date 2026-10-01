@@ -9,6 +9,9 @@ import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 import { ArticlePresentation, AsOfForm } from "@/components/legal/ArticlePresentation";
 import { presentArticle } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
+import { parseAsOfDate, type EditionStatus } from "@/lib/modules/legal-core/work-edition";
+import { displayedSystem } from "@/lib/modules/legal-core/work-edition-read";
+import type { VerificationRecord } from "@/lib/modules/legal-core/verified-status";
 
 export const revalidate = 3600;
 
@@ -57,15 +60,39 @@ export default async function LegalArticlePage({
 }) {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) notFound();
-  const { system, article, n } = data;
-  const slug = resolveSystemSlug(system.eliSlug, system.name);
-  const content = sanitizeDisplayText(article.content);
   const asOfRaw = searchParams?.asOf?.trim() ?? "";
-  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
-  const [verification, versions] = await Promise.all([
+  const asOfDate = parseAsOfDate(asOfRaw);
+  const route = await displayedSystem(data.system.id, asOfDate);
+  let system = data.system;
+  let article = data.article;
+  const n = data.n;
+  if (route.redirected) {
+    const alt = await prisma.legalArticle.findFirst({
+      where: { legalSystemId: route.id, articleNumber: n },
+    }).catch(() => null);
+    const altSystem = await prisma.legalSystem.findUnique({ where: { id: route.id } }).catch(() => null);
+    if (!alt || !altSystem) notFound();
+    article = alt;
+    system = altSystem;
+  }
+  const slug = resolveSystemSlug(data.system.eliSlug, data.system.name);
+  const content = sanitizeDisplayText(article.content);
+  const asOf = /^(19|20)\d{2}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfDate : undefined;
+  const overlay: VerificationRecord | null = route.status
+    ? {
+        id: "edition",
+        verifiedStatus: route.status satisfies EditionStatus,
+        evidenceInstrument: route.instrument,
+        evidenceUrl: null,
+        evidenceQuote: null,
+        verifiedAt: asOfDate.toISOString(),
+      }
+    : null;
+  const [storedVerification, versions] = await Promise.all([
     latestVerification("unit", article.id),
     unitVersions(article.id),
   ]);
+  const verification = overlay ?? storedVerification;
   const view = presentArticle({ baseText: content, versions, verification, asOf });
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
   const citation = `${system.name}، المادة (${n}) — ${view.citationSuffix}`;
@@ -106,11 +133,11 @@ export default async function LegalArticlePage({
 
         <nav className="mt-6 flex items-center justify-between text-sm">
           {prev ? (
-            <Link href={`/legal/${encodeURIComponent(slug)}/${prev.articleNumber}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">← المادة {prev.articleNumber.toLocaleString("ar-SA")}</Link>
+            <Link href={`/legal/${encodeURIComponent(slug)}/${prev.articleNumber}${asOfRaw ? `?asOf=${encodeURIComponent(asOfRaw)}` : ""}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">← المادة {prev.articleNumber.toLocaleString("ar-SA")}</Link>
           ) : <span />}
-          <Link href={`/legal/${encodeURIComponent(slug)}`} className="rounded-md px-4 py-2 text-[var(--navy)] hover:underline">كل مواد النظام</Link>
+          <Link href={`/legal/${encodeURIComponent(slug)}${asOfRaw ? `?asOf=${encodeURIComponent(asOfRaw)}` : ""}`} className="rounded-md px-4 py-2 text-[var(--navy)] hover:underline">كل مواد النظام</Link>
           {next ? (
-            <Link href={`/legal/${encodeURIComponent(slug)}/${next.articleNumber}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">المادة {next.articleNumber.toLocaleString("ar-SA")} →</Link>
+            <Link href={`/legal/${encodeURIComponent(slug)}/${next.articleNumber}${asOfRaw ? `?asOf=${encodeURIComponent(asOfRaw)}` : ""}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">المادة {next.articleNumber.toLocaleString("ar-SA")} →</Link>
           ) : <span />}
         </nav>
       </article>

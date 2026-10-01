@@ -13,6 +13,7 @@ import {
   type SearchQuery,
   type SearchSource,
 } from "./providers/search-provider";
+import { displayedSystem, hiddenArticleIds } from "@/lib/modules/legal-core/work-edition-read";
 
 const ALL_PROVIDERS: SearchProvider[] = [
   postgresProvider,
@@ -76,6 +77,11 @@ async function findExactArticleMatch(q: string): Promise<MergedResult | null> {
     }
   }
   if (!sys) return null;
+  const route = await displayedSystem(sys.id, new Date());
+  if (route.redirected) {
+    const edition = await prisma.legalSystem.findUnique({ where: { id: route.id }, select: { id: true, name: true } }).catch(() => null);
+    if (edition) sys = edition;
+  }
 
   const article = await prisma.legalArticle
     .findFirst({ where: { OR: [{ legalSystemId: sys.id }, { lawName: sys.name }], articleNumber: n }, select: { id: true, lawName: true, articleNumber: true, title: true } })
@@ -125,6 +131,8 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   if (exact) {
     results = [exact, ...results.filter((r) => !(r.type === "article" && r.id === exact.id))].slice(0, limit);
   }
+  const hidden = await hiddenArticleIds(results.filter((r) => r.type === "article").map((r) => r.id));
+  if (hidden.size) results = results.filter((r) => r.type !== "article" || !hidden.has(r.id));
 
   return { query: query.q, mode, results, providers: providerStatuses, total: results.length };
 }

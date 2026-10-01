@@ -6,6 +6,7 @@
  * (مع سقوط إلى lawName للمواد التي لم يُملأ فيها legalSystemId).
  */
 import { prisma } from "@/lib/prisma";
+import { displayedSystem } from "@/lib/modules/legal-core/work-edition-read";
 
 export const rangeToolDef = {
   name: "hakeem_get_articles_range",
@@ -17,13 +18,19 @@ export async function handleRange(args: { law_id: string; from_article: number; 
   const from = Math.min(args.from_article, args.to_article);
   const to = Math.min(Math.max(args.from_article, args.to_article), from + 19); // سقف ٢٠
 
-  const law = await prisma.legalSystem.findUnique({ where: { id: args.law_id }, select: { name: true } });
+  const requested = await prisma.legalSystem.findUnique({ where: { id: args.law_id }, select: { id: true, name: true } });
+  if (!requested) return { error: "law_id غير موجود" };
+  const route = await displayedSystem(requested.id, new Date());
+  const lawId = route.redirected ? route.id : requested.id;
+  const law = route.redirected
+    ? await prisma.legalSystem.findUnique({ where: { id: lawId }, select: { name: true } })
+    : requested;
   if (!law) return { error: "law_id غير موجود" };
 
   const articles = await prisma.legalArticle.findMany({
     // يُطابق عبر المعرّف أو اسم النظام (سقوط آمن للمواد بلا legalSystemId).
     where: {
-      OR: [{ legalSystemId: args.law_id }, { lawName: law.name }],
+      OR: [{ legalSystemId: lawId }, { lawName: law.name }],
       articleNumber: { gte: from, lte: to },
     },
     orderBy: { articleNumber: "asc" },
@@ -32,7 +39,7 @@ export async function handleRange(args: { law_id: string; from_article: number; 
 
   return {
     law: law.name,
-    law_id: args.law_id,
+    law_id: lawId,
     range: { from, to, returned: articles.length },
     articles: articles.map((a) => ({
       article_id: a.id,
