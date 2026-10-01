@@ -94,3 +94,33 @@ HAKEEM_INJECT=yes HAKEEM_APPROVED_ROWS=<العدد> python3 scripts/load_boe.py 
 - `--load --target staging|branch|production [--preview]` يحمّل boe.attachment وboe.attachment_page بالحراس نفسها.
 - الصور نفسها لا تُحفظ في القاعدة ولا في المستودع؛ تبقى في ملفات الأجزاء باسم بصمتها.
 - النص الآلي تقريبي: الأرقام والتواريخ لا يُعتمد عليها قبل مطابقتها بالصورة.
+
+## القاعدة المتكاملة (1 أكتوبر 2026)
+
+ملفان يُبنيان من القاعدة نفسها:
+
+| الملف | الاستعمال |
+|---|---|
+| dump/boe_full.sql.gz | ملف الحقن: المخطط والبيانات كاملة (ومعها لقطات HTML). يُحمَّل في قاعدة فارغة بـ psql، ويرفض التحميل فوق بيانات قائمة |
+| dump/boe_browse.zip | نسخة تصفح SQLite (DB Browser for SQLite) مع بحث نصي في المواد وفي نص صفحات المرفقات |
+
+الجداول (كلها إضافة فقط، والتعديل والحذف مرفوضان بمشغّل):
+
+| الجدول | المحتوى |
+|---|---|
+| crawl_run، catalog، page_snapshot | جولة القراءة، والفهرس، ولقطة كل صفحة كما وردت |
+| law، text_block، unit، related_doc | بطاقة النظام، وكتل «نص النظام»، والمواد حرفيًا، والروابط |
+| amendment_note | ملاحظات التعديل مفككة (الأثر، الأداة، النص الجديد، needs_review) |
+| attachment، attachment_page | المرفقات المقروءة وصفحاتها (بصمة الصورة، ورابطها، ونص آلي) |
+| review_proposal | اقتراح لكل ملاحظة غير محسومة: الفئة، الأثر، النص الجديد، الثقة، السبب |
+| vision_reading | قراءة صور الأدوات للفئة 3، وتطابق الأداة، ونتيجة التحقق المستقل والتصحيحات |
+| owner_decision | قرارات المالك (فارغ حتى الاعتماد؛ الأحدث لكل اقتراح هو المعتمد) |
+| attachment_target | روابط المرفقات التي لم تُقرأ بعد (قائمة الجولة الثانية) |
+
+الواجهات: v_amendment (كل ملاحظة مع المادة والاقتراح والقراءة والقرار)، v_coverage (الأعداد)، attachment_pending (ما لم يُقرأ)، current_law، current_owner_decision.
+
+```
+python3 scripts/load_boe.py --target staging
+python3 scripts/load_review.py --target staging
+DATABASE_URL=… python3 scripts/export_sqlite.py dump/boe_browse.sqlite
+```
