@@ -6,7 +6,8 @@ jl = lambda p: [json.loads(l) for l in open(p, encoding='utf-8') if l.strip()]
 snap = json.load(open(D / 'source_snapshots.json', encoding='utf-8'))
 sup = jl(D / 'supersessions_verified.jsonl'); iss = jl(D / 'issuance_instruments_16.jsonl')
 ops = jl(D / 'amendment_operations.jsonl'); man = jl(D / 'amendment_manual_queue.jsonl')
-print(f'snapshots={len(snap)} supersessions={len(sup)} issuance={len(iss)} ops={len(ops)} manual={len(man)}')
+newl = jl(D / 'new_laws_owner_approved.jsonl') if (D / 'new_laws_owner_approved.jsonl').exists() else []
+print(f'snapshots={len(snap)} supersessions={len(sup)} issuance={len(iss)} ops={len(ops)} manual={len(man)} new_laws={len(newl)} new_law_units={sum(len(x["units"]) for x in newl)}')
 if '--dry-run' in sys.argv: sys.exit(0)
 import psycopg
 from psycopg.types.json import Jsonb
@@ -36,5 +37,10 @@ with psycopg.connect(os.environ['DATABASE_URL']) as con, con.cursor() as cur:
     cur.executemany("""INSERT INTO uqn_fix.amendment_manual VALUES (%(effect_id)s,%(effect_type)s,%(instrument_kind)s,%(instrument_no)s,%(instrument_date_hijri)s,
         %(source_url)s,%(target_title_as_cited)s,%(unparsed)s,%(ops_extracted)s) ON CONFLICT DO NOTHING""",
         [dict(m, unparsed=Jsonb(m['unparsed_items'])) for m in man])
+    cur.executemany("""INSERT INTO uqn_fix.new_law VALUES (%(title)s,%(title_as_published)s,%(work_type)s,%(royal_decree_no)s,%(royal_decree_date_hijri)s,
+        %(cabinet_decision_no)s,%(cabinet_decision_date_hijri)s,%(published_hijri)s,%(status)s,%(status_basis)s,%(text_source)s,%(text_source_url)s,%(official_url)s,
+        %(text_verification)s,%(text_currency_note)s,%(pending_amendment_op_ids)s) ON CONFLICT DO NOTHING""", newl)
+    cur.executemany("INSERT INTO uqn_fix.new_law_unit VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+        [(x['title'], u['seq'], u['unit_type'], u.get('number'), u.get('label'), u['text']) for x in newl for u in x['units']])
     con.commit()
 print('تم التحميل (إضافة فقط)')

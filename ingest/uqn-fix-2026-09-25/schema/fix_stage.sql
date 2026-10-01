@@ -119,3 +119,39 @@ DO $$ DECLARE t text; BEGIN
     EXECUTE format('DROP TRIGGER IF EXISTS no_change ON uqn_fix.%I', t);
     EXECUTE format('CREATE TRIGGER no_change BEFORE UPDATE OR DELETE ON uqn_fix.%I FOR EACH ROW EXECUTE FUNCTION uqn_fix.forbid_change()', t);
   END LOOP; END $$;
+
+-- =====================================================================
+-- أنظمة أُضيفت بقرار المالك (2026-09-25): الحالة «ساري»، والنص من مصدر ثانوي قيد المطابقة
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS uqn_fix.new_law (
+  title                   text PRIMARY KEY,
+  title_as_published      text,
+  work_type               text,
+  royal_decree_no         text,
+  royal_decree_date_hijri text,
+  cabinet_decision_no     text,
+  cabinet_decision_date_hijri text,
+  published_hijri         text,
+  status                  text NOT NULL CHECK (status = 'ساري'),
+  status_basis            text NOT NULL,
+  text_source             text NOT NULL,
+  text_source_url         text NOT NULL REFERENCES uqn_fix.source_snapshot(url),
+  official_url            text NOT NULL,
+  text_verification       text NOT NULL CHECK (text_verification IN ('pending_official_match','matched_official')),
+  text_currency_note      text,
+  pending_amendment_op_ids text[] NOT NULL DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS uqn_fix.new_law_unit (
+  title     text NOT NULL REFERENCES uqn_fix.new_law(title),
+  seq       int  NOT NULL,
+  unit_type text NOT NULL CHECK (unit_type IN ('preamble','article')),
+  number    int,
+  label     text,
+  body      text NOT NULL,
+  PRIMARY KEY (title, seq)
+);
+DO $$ DECLARE t text; BEGIN
+  FOREACH t IN ARRAY ARRAY['new_law','new_law_unit'] LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS no_change ON uqn_fix.%I', t);
+    EXECUTE format('CREATE TRIGGER no_change BEFORE UPDATE OR DELETE ON uqn_fix.%I FOR EACH ROW EXECUTE FUNCTION uqn_fix.forbid_change()', t);
+  END LOOP; END $$;

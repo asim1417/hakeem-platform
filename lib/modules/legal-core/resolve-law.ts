@@ -61,6 +61,19 @@ export interface ResolvedLaw {
  * يحلّ اسم النظام. **الاحتواء لم يعد اختيارًا حاسمًا**: عند التعدّد أو الاحتواء يعيد
  * decisive=false مع candidates ليتعامل معه المُستدعي كـ CITATION_NOT_VERIFIED.
  */
+async function aliasHit(normalized: string): Promise<{ id: string; name: string; articleCount: number } | null> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ id: string; name: string; articleCount: number; alias: string }>>(
+      `SELECT s.id, s.name, s."articleCount" AS "articleCount", a.alias
+       FROM legal_system_alias a JOIN legal_systems s ON s.id = a.system_id`,
+    );
+    const hits = rows.filter((row) => normalizeSystemName(row.alias) === normalized);
+    return hits.length === 1 ? { id: hits[0].id, name: hits[0].name, articleCount: hits[0].articleCount } : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function resolveLaw(
   input: string,
   opts: { includeBylaws?: boolean } = {},
@@ -81,6 +94,8 @@ export async function resolveLaw(
   const exact = cand.filter((x) => x.n === q);
   if (exact.length === 1) return { system: exact[0].s, matchType: "exact", decisive: true, candidates: [exact[0].s.name] };
   if (exact.length > 1) return { system: null, matchType: "exact", decisive: false, candidates: exact.map((x) => x.s.name) };
+  const byAlias = await aliasHit(q);
+  if (byAlias) return { system: byAlias, matchType: "exact", decisive: true, candidates: [byAlias.name] };
 
   // ② أطول بادئة — حاسمة فقط إن انفرد صاحب أطول تطابق.
   const prefix = cand.filter((x) => x.n.startsWith(q) || q.startsWith(x.n));

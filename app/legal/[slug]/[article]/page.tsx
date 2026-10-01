@@ -9,6 +9,7 @@ import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 import { ArticlePresentation, AsOfForm } from "@/components/legal/ArticlePresentation";
 import { presentArticle } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
+import { bisArticle, ownerLawNotice, systemIdByAliasSlug } from "@/lib/modules/legal-core/owner-law-notice";
 
 export const revalidate = 3600;
 
@@ -19,21 +20,34 @@ async function resolveSystem(slug: string) {
   if (byEli) return byEli;
   const byId = await prisma.legalSystem.findUnique({ where: { id: raw } }).catch(() => null);
   if (byId) return byId;
+  const aliasId = await systemIdByAliasSlug(norm);
+  if (aliasId) return prisma.legalSystem.findUnique({ where: { id: aliasId } }).catch(() => null);
   const all = await prisma.legalSystem.findMany({ select: { id: true, name: true, eliSlug: true } }).catch(() => []);
   const m = all.find((x) => resolveSystemSlug(x.eliSlug, x.name) === norm);
   return m ? prisma.legalSystem.findUnique({ where: { id: m.id } }).catch(() => null) : null;
 }
 
 async function loadArticle(slug: string, articleParam: string) {
-  const n = Number(articleParam);
+  const bis = /^(\d+)-bis$/.exec(articleParam);
+  const n = bis ? Number(bis[1]) : Number(articleParam);
   if (!Number.isInteger(n) || n <= 0) return null;
   const system = await resolveSystem(slug);
   if (!system) return null;
+  if (bis) {
+    const extra = await bisArticle(system.id, n);
+    if (!extra) return null;
+    return {
+      system,
+      article: { id: extra.id, content: extra.content, title: extra.title, articleNumber: n },
+      n,
+      label: extra.label,
+    };
+  }
   const article = await prisma.legalArticle
     .findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: n }] } })
     .catch(() => null);
   if (!article) return null;
-  return { system, article, n };
+  return { system, article, n, label: null as string | null };
 }
 
 export async function generateMetadata({ params }: { params: { slug: string; article: string } }): Promise<Metadata> {
@@ -57,9 +71,10 @@ export default async function LegalArticlePage({
 }) {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) notFound();
-  const { system, article, n } = data;
+  const { system, article, n, label } = data;
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const content = sanitizeDisplayText(article.content);
+  const notice = await ownerLawNotice(system.name);
   const asOfRaw = searchParams?.asOf?.trim() ?? "";
   const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
   const [verification, versions] = await Promise.all([
@@ -68,7 +83,7 @@ export default async function LegalArticlePage({
   ]);
   const view = presentArticle({ baseText: content, versions, verification, asOf });
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
-  const citation = `${system.name}، المادة (${n}) — ${view.citationSuffix}`;
+  const citation = `${system.name}، ${label ?? `المادة (${n})`} — ${view.citationSuffix}`;
 
   const [prev, next] = await Promise.all([
     prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n, gt: 0 } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
@@ -92,7 +107,8 @@ export default async function LegalArticlePage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <article>
         <p className="text-sm font-semibold text-[#A9793F]">{system.name}</p>
-        <h1 className="mt-2 text-3xl font-bold">المادة {n.toLocaleString("ar-SA")}</h1>
+        {notice?.badge ? <p className="mt-1 text-sm font-bold text-amber-800">{notice.badge}</p> : null}
+        <h1 className="mt-2 text-3xl font-bold">{label ?? `المادة ${n.toLocaleString("ar-SA")}`}</h1>
         {article.title && article.title !== String(n) ? <p className="mt-2 text-lg text-ink">{article.title}</p> : null}
 
         <AsOfForm asOf={asOfRaw} />
