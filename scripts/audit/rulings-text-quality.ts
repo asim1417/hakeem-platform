@@ -26,8 +26,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { PrismaClient } from "@prisma/client";
-import { neonHttpQuery } from "../../lib/rulings/audit/neon-http";
+import { assertReadOnly, openReadOnlyDb } from "../../lib/rulings/audit/readonly-db";
 import {
   addFrequentRulingWords,
   addText,
@@ -57,44 +56,13 @@ const args = process.argv.slice(2);
 const step = args.find((a) => !a.startsWith("--")) ?? "all";
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
 
-// ── الاتصال للقراءة فقط ──
+// ── الاتصال للقراءة فقط (lib/rulings/audit/readonly-db.ts) ──
 
-function readOnlyUrl(): { url: string; fromReadonlyVar: boolean } {
-  const base = process.env.DATABASE_URL_READONLY || process.env.DATABASE_URL;
-  if (!base) {
-    console.error("لا يوجد DATABASE_URL_READONLY ولا DATABASE_URL — أوقفتُ التشغيل.");
-    process.exit(2);
-  }
-  const u = new URL(base);
-  if (!u.searchParams.has("options") && process.env.AUDIT_NO_OPTIONS !== "1") {
-    u.searchParams.set("options", "-c default_transaction_read_only=on -c statement_timeout=120000");
-  }
-  return { url: u.toString(), fromReadonlyVar: Boolean(process.env.DATABASE_URL_READONLY) };
-}
-
-const conn = readOnlyUrl();
-const transport: "http" | "prisma" =
-  process.env.AUDIT_TRANSPORT === "prisma" || !/\.neon\.tech$/.test(new URL(conn.url).hostname) ? "prisma" : "http";
+const conn = openReadOnlyDb();
+const transport = conn.transport;
 // مسارات التطبيق تستورد lib/prisma الذي يقرأ DATABASE_URL — نوجّهه إلى الرابط نفسه للقراءة فقط.
 process.env.DATABASE_URL = conn.url;
-const db = transport === "prisma" ? new PrismaClient({ datasources: { db: { url: conn.url } }, log: ["error"] }) : null;
-const httpQuery = transport === "http" ? neonHttpQuery(conn.url) : null;
-
-async function q<T>(sql: string, ...params: unknown[]): Promise<T[]> {
-  if (httpQuery) return httpQuery<T>(sql, ...params);
-  return db!.$queryRawUnsafe<T[]>(sql, ...params);
-}
-
-async function assertReadOnly(): Promise<string> {
-  const [ro] = await q<{ transaction_read_only: string }>("SHOW transaction_read_only");
-  if (ro?.transaction_read_only === "on") return "transaction_read_only=on";
-  const [p] = await q<{ can: boolean }>(
-    `SELECT has_table_privilege(current_user, 'judicial_cases', 'UPDATE') AS can`,
-  );
-  if (conn.fromReadonlyVar && p && p.can === false) return "role without UPDATE on judicial_cases";
-  console.error("تعذّر إثبات أن الجلسة للقراءة فقط — أوقفتُ التشغيل. استخدم دورًا للقراءة فقط أو اتصالًا مباشرًا (غير pooler) يقبل options.");
-  process.exit(3);
-}
+const q = conn.q;
 
 function save(name: string, data: unknown) {
   mkdirSync(OUT, { recursive: true });
@@ -537,10 +505,14 @@ async function runPathHttp(p: PathName, query: string): Promise<{ total: number 
       };
     }
     case "mcp_enumerate": {
-      // lib/mcp/tools/rulings.ts:56-69,88-94
-      const like = `%${query.replace(/[%_\\]/g, "")}%`;
-      const [{ n }] = await q<{ n: number }>(`SELECT count(*)::int AS n FROM judicial_cases r WHERE r."judgmentText" ILIKE $1`, like);
-      const rows = await q<{ id: string }>(`SELECT r.id FROM judicial_cases r WHERE r."judgmentText" ILIKE $1 ORDER BY r.id ASC LIMIT 10`, like);
+      // lib/mcp/tools/rulings.ts:56-61 (main الحالي): normalizeArabic للّفظ ثم ILIKE على search_norm.
+      const { normalizeArabic } = await import("../../lib/modules/legal-core/bm25-tokenizer");
+      const like = `%${normalizeArabic(query).replace(/[%_\\]/g, "")}%`;
+      const [{ c }] = await q<{ c: number }>(
+        `SELECT count(*)::int c FROM information_schema.columns WHERE table_name='judicial_cases' AND column_name='search_norm'`);
+      if (!c) throw new Error("عمود search_norm غير موجود — الأداة الحالية تفشل بخطأ SQL");
+      const [{ n }] = await q<{ n: number }>(`SELECT count(*)::int AS n FROM judicial_cases r WHERE r."search_norm" ILIKE $1`, like);
+      const rows = await q<{ id: string }>(`SELECT r.id FROM judicial_cases r WHERE r."search_norm" ILIKE $1 ORDER BY r.id ASC LIMIT 10`, like);
       return { total: n, ids: rows.map((r) => r.id) };
     }
     case "rulings_direct": {
@@ -677,7 +649,7 @@ async function golden(lexRows?: { lex: Lexicon; rows: SampleRow[] }) {
 // ── التشغيل ──
 
 async function main() {
-  const how = await assertReadOnly();
+  const how = await assertReadOnly(conn);
   console.log(`🔒 قراءة فقط: ${how} — النقل: ${transport}`);
   if (step === "inventory" || step === "all") await inventory();
   if (step === "sample" || step === "all") await sample();
@@ -696,4 +668,4 @@ main()
     console.error("فشل:", (e as Error).message);
     process.exitCode = 1;
   })
-  .finally(() => db?.$disconnect());
+  .finally(() => conn.close());
