@@ -206,6 +206,7 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
     year_h: h.hijriYear ?? null,
     snippet: h.snippet,
     matched_in: h.matchedIn, // reasons | disposition | defense | claims | header …
+    matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
     disposition: h.disposition, // بداية المنطوق
     parts: h.parts.map((p) => ({ type: p.type, start: p.start, end: p.end })), // لجلب جزء بعينه عبر hakeem_get_ruling
   }));

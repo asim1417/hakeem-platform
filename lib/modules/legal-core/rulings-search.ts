@@ -11,7 +11,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
-import { buildRulingExcerpts, buildRulingTsQuery, findMatches, queryTokens, type RulingPart } from "./ruling-excerpts";
+import { buildRulingExcerpts, buildRulingTsQuery, excerptFrom, findMatches, queryTokens, type RulingPart } from "./ruling-excerpts";
 import type { SegmentType } from "@/lib/rulings/research/segment";
 import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 
@@ -28,7 +28,8 @@ export interface RulingHit {
   matchedIn: SegmentType | null; // الجزء الذي أُخذ منه المقتطف
   disposition: string | null; // بداية المنطوق (منقّاة)
   parts: RulingPart[]; // خريطة أجزاء الحكم بإزاحاتها
-  score: number; // 0..1 نسبة الألفاظ المتطابقة (+ حافز موضع المطابقة)
+  score: number; // 0..1 نسبة الألفاظ المتطابقة (+ حافز موضع المطابقة)، أو التشابه الدلالي
+  matchedBy?: "lexical" | "semantic" | "both"; // لفظًا، أو بالمعنى من متجه الأسباب/المنطوق، أو كلاهما
 }
 
 const PII_DIGIT = "[0-9\\u0660-\\u0669]";
@@ -114,6 +115,115 @@ async function hasSearchNormColumn(): Promise<boolean> {
   return _hasSearchNorm;
 }
 
+/** شروط المحكمة والسنة الهجرية (تُضاف معاملاتها إلى params). */
+function rulingFilters(opts: RulingSearchOptions, params: unknown[]): string[] {
+  const conds: string[] = [];
+  if (opts.court && opts.court.trim()) {
+    params.push(`%${normalizeArabic(opts.court)}%`);
+    conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
+  }
+  if (opts.yearH && Number.isInteger(opts.yearH)) {
+    params.push(`%${opts.yearH}%`);
+    conds.push(`(regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})`);
+  }
+  return conds;
+}
+
+// ── المسار الدلالي: متجهات الأسباب والمنطوق (ruling_segment_embeddings) ──
+// المتجه القديم لكل حكم بُني من أول ٨٬٠٠٠ حرف (الديباجة غالبًا) فلا يُستعمل هنا.
+// يعمل فقط إذا وُجد الجدول وفيه متجهات ومفتاح المزوّد؛ وإلّا يبقى البحث لفظيًّا كما هو.
+// يُعطَّل صراحةً بـ RULINGS_SEMANTIC=off.
+const SEMANTIC_MIN = Number(process.env.RULINGS_SEMANTIC_MIN || 0.5);
+const SEMANTIC_POOL = 60;
+let _segReady: { at: number; ok: boolean } | null = null;
+async function segmentVectorsReady(): Promise<boolean> {
+  if (_segReady && Date.now() - _segReady.at < 10 * 60_000) return _segReady.ok;
+  const r = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
+    `SELECT EXISTS (SELECT 1 FROM "ruling_segment_embeddings" LIMIT 1) AS ok`,
+  ).catch(() => [{ ok: false }]);
+  _segReady = { at: Date.now(), ok: Boolean(r?.[0]?.ok) };
+  return _segReady.ok;
+}
+
+interface SemanticCandidate { id: string; part: SegmentType; start: number; sim: number }
+
+async function semanticRulingCandidates(query: string): Promise<SemanticCandidate[]> {
+  if ((process.env.RULINGS_SEMANTIC ?? "").toLowerCase() === "off") return [];
+  // استيراد متأخر: وحدة المتجهات تستورد redactPII من هنا.
+  const { embedText, semanticSearchEnabled } = await import("@/lib/modules/ai/embeddings");
+  if (!semanticSearchEnabled() || !(await segmentVectorsReady())) return [];
+  const vec = await embedText(query);
+  if (!vec) return [];
+  const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
+  const rows = await prisma.$queryRawUnsafe<Array<{ ruling_id: string; part: string; start_char: number; sim: number }>>(
+    `SELECT ruling_id, part, start_char, 1 - (embedding <=> $1::vector) AS sim
+     FROM "ruling_segment_embeddings" ORDER BY embedding <=> $1::vector LIMIT ${SEMANTIC_POOL}`, literal,
+  );
+  const best = new Map<string, SemanticCandidate>();
+  for (const r of rows) {
+    const sim = Number(r.sim);
+    if (!(sim >= SEMANTIC_MIN)) continue;
+    const prev = best.get(r.ruling_id);
+    if (!prev || sim > prev.sim) best.set(r.ruling_id, { id: r.ruling_id, part: r.part as SegmentType, start: Number(r.start_char), sim });
+  }
+  return [...best.values()];
+}
+
+/** الأعلى درجة أولًا؛ وعند التساوي ما طابق لفظًا ومعنًى معًا. */
+const byScore = (a: RulingHit, b: RulingHit) =>
+  b.score - a.score || Number(b.matchedBy === "both") - Number(a.matchedBy === "both");
+
+/** يدمج نتائج المعنى مع اللفظ: المشترك يُرفع، والدلالي وحده يُضاف بمقتطف من جزئه المطابق. */
+async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: RulingSearchOptions, limit: number): Promise<RulingHit[]> {
+  for (const h of hits) h.matchedBy = "lexical";
+  if (!sem.length) return hits.sort(byScore);
+  const bySem = new Map(sem.map((c) => [c.id, c]));
+  for (const h of hits) {
+    const c = bySem.get(h.id);
+    if (!c) continue;
+    h.matchedBy = "both";
+    h.score = Math.min(1, h.score + 0.15 * c.sim);
+    bySem.delete(h.id);
+  }
+  const extra = [...bySem.values()].sort((a, b) => b.sim - a.sim).slice(0, limit);
+  if (extra.length) {
+    const params: unknown[] = [extra.map((c) => c.id)];
+    const conds = [`"id" = ANY($1::text[])`, ...rulingFilters(opts, params)];
+    const rows = await prisma.$queryRawUnsafe<Array<{
+      id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
+      cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
+      judgmentTitle: string | null; judgmentText: string | null;
+    }>>(
+      `SELECT "id","decisionNo","caseNo","court","cityName","decisionDateText","caseDateText","judgmentTitle","judgmentText"
+       FROM "judicial_cases" WHERE ${conds.join(" AND ")}`, ...params,
+    ).catch(() => []);
+    for (const r of rows) {
+      const c = extra.find((x) => x.id === r.id)!;
+      const raw = r.judgmentText ?? "";
+      const ex = buildRulingExcerpts(raw, "");
+      hits.push({
+        id: r.id,
+        decisionNo: r.decisionNo,
+        caseNo: r.caseNo,
+        court: r.court,
+        cityName: r.cityName,
+        dateText: r.decisionDateText ?? r.caseDateText,
+        hijriYear: extractHijriYear(r.decisionDateText ?? r.caseDateText),
+        title: r.judgmentTitle,
+        // المقتطف من بداية الجزء الذي طابق بالمعنى (الأسباب أو المنطوق)، لا من الديباجة.
+        snippet: redactPII(excerptFrom(raw, c.start)),
+        matchedIn: c.part,
+        disposition: ex.disposition ? redactPII(ex.disposition) : null,
+        parts: ex.parts,
+        // تحت التطابق اللفظي الكامل: المعنى يكمّل ولا يزاحم ما ورد لفظه.
+        score: Math.min(0.95, c.sim),
+        matchedBy: "semantic",
+      });
+    }
+  }
+  return hits.sort(byScore).slice(0, limit);
+}
+
 // الألفاظ الشائعة («مدعي»، «عقد») تطابق عشرات الآلاف: العدّ الدقيق وحساب الترتيب عليها كلها
 // تجاوزا مهلة MCP (٣٢ ثانية لـ«مدعي»). فالعدّ مسقوف، والترتيب على مرشحين محدودين، والاستعلامان متوازيان.
 const COUNT_CAP = 5000;
@@ -143,15 +253,10 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const tsqIdx = params.length;
   const tsq = tsQuery ? `to_tsquery('simple', $${tsqIdx})` : `plainto_tsquery('simple', $${tsqIdx})`;
   conds.push(`${tsv} @@ ${tsq}`);
-  if (opts.court && opts.court.trim()) {
-    params.push(`%${normalizeArabic(opts.court)}%`);
-    conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
-  }
-  if (opts.yearH && Number.isInteger(opts.yearH)) {
-    params.push(`%${opts.yearH}%`);
-    conds.push(`(regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})`);
-  }
+  conds.push(...rulingFilters(opts, params));
   const where = conds.join(" AND ");
+  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
+  const semanticQ = offset === 0 ? semanticRulingCandidates(opts.query).catch(() => []) : Promise.resolve([]);
 
   const totalQ = prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
     `SELECT count(*)::bigint AS c FROM (SELECT 1 FROM "judicial_cases" WHERE ${where} LIMIT ${COUNT_CAP + 1}) s`, ...params,
@@ -198,9 +303,9 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
       score: Math.min(1, present / rawTokens.length + placeBoost),
     };
   });
-  hits.sort((a, b) => b.score - a.score);
+  const merged = await mergeSemantic(hits, await semanticQ, opts, limit);
 
-  return { hits, total, totalCapped, ms: Date.now() - started };
+  return { hits: merged, total: Math.max(total, merged.length), totalCapped, ms: Date.now() - started };
 }
 
 /** يحوّل نتيجة الأحكام المباشرة إلى الشكل الموحّد للبحث الشامل وأدوات الوكيل. */

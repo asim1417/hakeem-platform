@@ -103,6 +103,11 @@ function windowFrom(raw: string, at: number, size: number): string {
   return raw.slice(at, e).replace(/\s+/g, " ").trim() + (e < raw.length ? "…" : "");
 }
 
+/** مقتطف يبدأ من موضع بعينه في النص الأصلي (مثل بداية جزء طابق بالمعنى). */
+export function excerptFrom(raw: string, at: number, size = 320): string {
+  return windowFrom(raw ?? "", Math.max(0, Math.min(at, (raw ?? "").length)), size);
+}
+
 export interface RulingPart {
   type: SegmentType;
   start: number;
