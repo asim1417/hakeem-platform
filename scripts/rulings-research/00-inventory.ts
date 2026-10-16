@@ -51,11 +51,14 @@ async function searchNormState() {
   // أيّ البانيين ملأ العمود؟ عيّنة ١٠٪ (TABLESAMPLE SYSTEM): الهمزة المفردة «ء» تبقى مع normalizeArabicText
   // (الباني غير الحاجب) وتُحذف مع normalizeArabic (الباني الحاجب)؛ ونعدّ أنماط هوية/جوال غير محجوبة.
   const builder = column
-    ? (await q<{ n: number; hamza: number; id10: number; mobile: number; masked: number }>(`
+    ? (await q<{ n: number; hamza: number; id10: number; mobile: number; id10_indic: number; mobile_indic: number; id10_source: number; masked: number }>(`
         SELECT count(*)::int AS n,
           count(*) FILTER (WHERE search_norm LIKE '%ء%')::int AS hamza,
           count(*) FILTER (WHERE search_norm ~ '(^|[^0-9])[12][0-9]{9}([^0-9]|$)')::int AS id10,
           count(*) FILTER (WHERE search_norm ~ '(^|[^0-9])05[0-9]{8}([^0-9]|$)')::int AS mobile,
+          count(*) FILTER (WHERE search_norm ~ '(^|[^٠-٩])[١٢][٠-٩]{9}([^٠-٩]|$)')::int AS id10_indic,
+          count(*) FILTER (WHERE search_norm ~ '(^|[^٠-٩])٠٥[٠-٩]{8}([^٠-٩]|$)')::int AS mobile_indic,
+          count(*) FILTER (WHERE "judgmentText" ~ '(^|[^0-9٠-٩])([12][0-9]{9}|[١٢][٠-٩]{9})([^0-9٠-٩]|$)')::int AS id10_source,
           count(*) FILTER (WHERE search_norm LIKE '%محجوب%')::int AS masked
         FROM judicial_cases TABLESAMPLE SYSTEM (10) REPEATABLE (7)`))[0]
     : null;
