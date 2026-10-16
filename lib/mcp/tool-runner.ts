@@ -40,13 +40,17 @@ const defaultDeps: ToolRunnerDeps = {
     return getGrantStore().hitWindow(key, windowStart);
   },
   async planAllowsPaid(userId) {
-    const { usageCreditsEnabled } = await import("@/lib/modules/credits/usage-ledger");
-    // نظام الوحدات مفعّل ← الرصيد هو الحاكم، لا الاشتراك.
-    if (await usageCreditsEnabled()) return true;
+    // الأدوات المدفوعة: للمشترك، أو لمن له رصيد وحدات متاح حين يعمل نظام الوحدات.
+    // فشلٌ مغلق: حالة غير معروفة (قبل هجرة الفوترة أو خطأ) لا تفتح أداة مدفوعة.
     const { canConsume } = await import("@/lib/modules/billing/quota");
     const q = await canConsume(userId);
-    // remaining = -1 بلا اشتراك = حالة غير معروفة (قبل هجرة الفوترة) → سقوط مفتوح كبقية الفوترة.
-    return q.isSubscribed || q.remaining === -1;
+    if (q.isSubscribed) return true;
+    const { usageCreditsEnabled, getUsageCreditStatus } = await import("@/lib/modules/credits/usage-ledger");
+    if (await usageCreditsEnabled()) {
+      const status = await getUsageCreditStatus(userId, 1);
+      return status.availableMilliUnits > 0;
+    }
+    return false;
   },
   async gate(userId, service, referenceId) {
     const { gateAdvancedUse } = await import("@/lib/modules/billing/access-gate");
@@ -158,7 +162,7 @@ export async function runMcpTool<T>(name: string, ctx: unknown, fn: () => Promis
 
     // ٢) الباقة.
     const policy = mcpToolPolicy(name);
-    if (policy.tier === "paid" && !(await deps.planAllowsPaid(principal.userId).catch(() => true))) {
+    if (policy.tier === "paid" && !(await deps.planAllowsPaid(principal.userId).catch(() => false))) {
       audit({ ok: false, ms: Date.now() - started, outcome: "plan_required" });
       return json({
         error: "plan_required",

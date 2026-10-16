@@ -113,7 +113,7 @@ SELECT "lawName","articleNumber",title FROM legal_articles WHERE "articleNumber"
 ## MCP-001 — جداول ربط موصل حكيم بالحسابات
 
 **الغرض:** تفعيل ربط Claude/ChatGPT بحساب كل مستخدم (المواصفات: docs/mcp-server.md).
-**النوع:** إضافة فقط — ثلاثة جداول جديدة وعمود اختياري `user_id` في `api_keys`. لا يعدّل بيانات قائمة.
+**النوع:** إضافة فقط — أربعة جداول جديدة وعمود اختياري `user_id` في `api_keys`. لا يعدّل بيانات قائمة.
 **الملف:** `prisma/migrations/20261016180000_mcp_account_linking/migration.sql` (متساوي القوة، آمن لإعادة التشغيل).
 
 ### الخطوات (بموافقة المالك)
@@ -121,7 +121,7 @@ SELECT "lawName","articleNumber",title FROM legal_articles WHERE "articleNumber"
 2. طبّق ملف الهجرة كما هو على Neon (محرر SQL أو `psql -f`).
 3. تحقّق:
    ```sql
-   SELECT to_regclass('mcp_grants'), to_regclass('mcp_auth_codes'), to_regclass('mcp_request_windows');
+   SELECT to_regclass('mcp_grants'), to_regclass('mcp_auth_codes'), to_regclass('mcp_used_refresh_tokens'), to_regclass('mcp_request_windows');
    SELECT column_name FROM information_schema.columns WHERE table_name = 'api_keys' AND column_name = 'user_id';
    ```
 4. في Vercel (Production): `MCP_TOKEN_SECRET` (عشوائي ≥ 32 حرفًا) ثم `MCP_ACCOUNT_LINKING=1`، ثم Redeploy.
@@ -130,11 +130,11 @@ SELECT "lawName","articleNumber",title FROM legal_articles WHERE "articleNumber"
    ثم ألغِ الربط من `/dashboard/connections` وتأكد أن الاستدعاء التالي يُرفض.
 
 ### قبل التطبيق
-الكود آمن بلا الهجرة: ما دام `MCP_ACCOUNT_LINKING` غير مضبوط يبقى الربط بالمفتاح المشترك كما هو تمامًا.
+الكود آمن بلا الهجرة: ما دام `MCP_ACCOUNT_LINKING` غير مضبوط يبقى الربط بالمفتاح المشترك كما هو تمامًا، ومفاتيح `/api/v1` القائمة تعمل (استعلاماتها بأعمدة صريحة لا تطلب `user_id`).
 **لا تضبط `MCP_ACCOUNT_LINKING=1` قبل الخطوة 3.**
 
 ### التراجع (Rollback)
-- فوري بلا قاعدة: احذف `MCP_ACCOUNT_LINKING` من Vercel وأعد النشر ← يعود الربط بالمفتاح المشترك.
+- فوري بلا قاعدة: احذف `MCP_ACCOUNT_LINKING` من Vercel وأعد النشر ← يعود الربط بالمفتاح المشترك، وتتوقف كل روابط الحسابات والمفاتيح الشخصية فورًا (لا تبقى روابط حيّة مخفية).
 - الجداول: أوامر `DROP` معلّقة في آخر ملف الهجرة (لا تمسّ جداول أخرى).
 
 ---

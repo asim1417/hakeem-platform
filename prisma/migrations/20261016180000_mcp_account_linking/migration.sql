@@ -41,6 +41,14 @@ CREATE TABLE IF NOT EXISTS "mcp_auth_codes" (
 );
 CREATE INDEX IF NOT EXISTS "mcp_auth_codes_user_id_idx" ON "mcp_auth_codes"("user_id");
 
+CREATE TABLE IF NOT EXISTS "mcp_used_refresh_tokens" (
+  "token_hash" TEXT         NOT NULL,
+  "grant_id"   TEXT         NOT NULL,
+  "rotated_at" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "mcp_used_refresh_tokens_pkey" PRIMARY KEY ("token_hash")
+);
+CREATE INDEX IF NOT EXISTS "mcp_used_refresh_tokens_grant_id_idx" ON "mcp_used_refresh_tokens"("grant_id");
+
 CREATE TABLE IF NOT EXISTS "mcp_request_windows" (
   "key"          TEXT    NOT NULL,
   "window_start" INTEGER NOT NULL,
@@ -53,6 +61,7 @@ CREATE INDEX IF NOT EXISTS "api_keys_user_id_idx" ON "api_keys"("user_id");
 
 -- التراجع (Rollback) — لا يمسّ بيانات أخرى:
 -- DROP TABLE IF EXISTS "mcp_request_windows";
+-- DROP TABLE IF EXISTS "mcp_used_refresh_tokens";
 -- DROP TABLE IF EXISTS "mcp_auth_codes";
 -- DROP TABLE IF EXISTS "mcp_grants";
 -- DROP INDEX IF EXISTS "api_keys_user_id_idx";

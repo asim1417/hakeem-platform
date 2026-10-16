@@ -6,9 +6,15 @@ export class MemoryGrantStore implements GrantStore {
   codes = new Map<string, AuthCodeRecord>();
   grants = new Map<string, GrantRecord>();
   windows = new Map<string, number>();
+  usedRefresh = new Map<string, string>();
 
   async createAuthCode(code: Omit<AuthCodeRecord, "usedAt" | "grantId">): Promise<void> {
     this.codes.set(code.codeHash, { ...code, usedAt: null, grantId: null });
+  }
+
+  async getAuthCode(codeHash: string): Promise<AuthCodeRecord | null> {
+    const code = this.codes.get(codeHash);
+    return code ? { ...code } : null;
   }
 
   async consumeAuthCode(codeHash: string, now: Date): Promise<ConsumeCodeResult> {
@@ -56,14 +62,14 @@ export class MemoryGrantStore implements GrantStore {
     return null;
   }
 
-  async findByPreviousRefreshHash(hash: string): Promise<GrantRecord | null> {
-    for (const g of this.grants.values()) if (g.previousRefreshHash === hash) return { ...g };
-    return null;
+  async findGrantIdByUsedRefresh(hash: string): Promise<string | null> {
+    return this.usedRefresh.get(hash) ?? null;
   }
 
   async rotateRefresh(grantId: string, expectedHash: string, newHash: string, now: Date): Promise<boolean> {
     const g = this.grants.get(grantId);
     if (!g || g.revokedAt || g.refreshTokenHash !== expectedHash) return false;
+    this.usedRefresh.set(expectedHash, grantId);
     g.previousRefreshHash = expectedHash;
     g.refreshTokenHash = newHash;
     g.refreshRotatedAt = now;
@@ -84,17 +90,6 @@ export class MemoryGrantStore implements GrantStore {
       g.refreshTokenHash = null;
       g.previousRefreshHash = null;
     }
-  }
-
-  async revokeActiveFor(userId: string, clientId: string, reason: RevokeReason, now: Date): Promise<number> {
-    let n = 0;
-    for (const g of this.grants.values()) {
-      if (g.userId === userId && g.clientId === clientId && !g.revokedAt) {
-        await this.revoke(g.id, reason, now);
-        n += 1;
-      }
-    }
-    return n;
   }
 
   async listForUser(userId: string): Promise<GrantRecord[]> {

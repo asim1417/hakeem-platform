@@ -1,4 +1,5 @@
 import {
+  isSameOriginPost,
   createAuthorizationCode,
   isAllowedClientId,
   isAllowedRedirect,
@@ -19,13 +20,6 @@ const FIELD_LIMIT = 512;
 
 // 5 محاولات مفتاح فاشلة لكل عنوان خلال 15 دقيقة (أفضل جهد، بالذاكرة).
 const keyFailures = createFailureLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
-
-/** نموذج الربط يُرسَل من الأصل نفسه؛ أي Origin مخالف يُرفض (حماية CSRF). */
-function sameOriginPost(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) return true; // عملاء بلا Origin (curl/اختبارات)؛ المفتاح هو الحارس الفعلي.
-  return origin === publicOrigin(request);
-}
 
 type AuthorizeInput = {
   clientId: string;
@@ -77,7 +71,7 @@ export async function POST(request: Request) {
   if (accountLinkingEnabled()) {
     return renderOauthMessage("الربط تغيّر", "صار الربط بحساب حكيم. أعد المحاولة من شاشة الموصلات في Claude.", 410);
   }
-  if (!sameOriginPost(request)) {
+  if (!isSameOriginPost(request)) {
     return renderOauthMessage("تعذّر بدء الربط", "مصدر الطلب غير مسموح.", 403);
   }
   const who = clientKey(request);
@@ -141,7 +135,7 @@ function authorizeResponse(request: Request, input: AuthorizeInput | null, error
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Robots-Tag": "noindex",
-      "Referrer-Policy": "no-referrer",
+      "Referrer-Policy": "same-origin",
     },
   });
 }

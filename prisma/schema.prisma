@@ -1383,6 +1383,17 @@ model McpAuthCode {
   @@map("mcp_auth_codes")
 }
 
+// سلسلة رموز التجديد المستعمَلة لكل ربط: عودة أي رمز قديم = سرقة محتملة → إلغاء الربط.
+// تُحذف صفوف الربط عند إلغائه.
+model McpUsedRefreshToken {
+  tokenHash String   @id @map("token_hash")
+  grantId   String   @map("grant_id")
+  rotatedAt DateTime @map("rotated_at")
+
+  @@index([grantId])
+  @@map("mcp_used_refresh_tokens")
+}
+
 // عدّاد حدّ المعدّل لكل مستخدم/مفتاح في الدقيقة (UPSERT ذرّي، يصمد عبر النسخ).
 model McpRequestWindow {
   key         String

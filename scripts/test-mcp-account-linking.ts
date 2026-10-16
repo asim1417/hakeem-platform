@@ -75,6 +75,13 @@ async function main() {
 
   const wrongVerifierCode = await service.issueAuthorizationCode({ store, userId: "user-1", pending: pendingFor(), now });
   assert.deepEqual(await exchange(wrongVerifierCode, { codeVerifier: "w".repeat(60) }), { error: "invalid_grant" });
+  const notBurned = await exchange(wrongVerifierCode);
+  assert.ok(!("error" in notBurned), "رمز مسروق بلا verifier لا يُحرق: صاحبه يستبدله بعدها");
+  // من لا يملك الـ verifier لا يستطيع إلغاء الربط بإعادة الرمز.
+  assert.deepEqual(await exchange(wrongVerifierCode, { codeVerifier: "w".repeat(60) }), { error: "invalid_grant" });
+  if ("error" in notBurned) throw new Error("unreachable");
+  const notBurnedGid = tokens.readAccessToken(SECRET, notBurned.access_token)!.gid;
+  assert.equal((await store.getGrant(notBurnedGid))?.revokedAt, null, "إعادة بلا verifier لا تلغي الربط");
   const wrongClientCode = await service.issueAuthorizationCode({ store, userId: "user-1", pending: pendingFor(), now });
   assert.deepEqual(await exchange(wrongClientCode, { clientId: "https://claude.ai/other" }), { error: "invalid_grant" });
   const expiredCode = await service.issueAuthorizationCode({ store, userId: "user-1", pending: pendingFor(), now });
@@ -140,6 +147,23 @@ async function main() {
     "الإلغاء يسري على تصريح الوصول فورًا"
   );
 
+  // ── سلسلة الرموز: سارق يدوّر مرتين، ثم يعود الرمز الأول ← إلغاء الربط ──
+  {
+    const c = await service.issueAuthorizationCode({ store, userId: "user-1", pending: pendingFor(), now });
+    const p1 = await exchange(c);
+    if ("error" in p1) throw new Error("family exchange failed");
+    const gid = tokens.readAccessToken(SECRET, p1.access_token)!.gid;
+    const r2 = await service.refreshAccessToken({ store, secret: SECRET, refreshToken: p1.refresh_token, now: new Date(now.getTime() + 1_000) });
+    if ("error" in r2) throw new Error("r2 failed");
+    const r3 = await service.refreshAccessToken({ store, secret: SECRET, refreshToken: r2.refresh_token, now: new Date(now.getTime() + 2_000) });
+    if ("error" in r3) throw new Error("r3 failed");
+    assert.deepEqual(
+      await service.refreshAccessToken({ store, secret: SECRET, refreshToken: p1.refresh_token, now: new Date(now.getTime() + 3_000) }),
+      { error: "invalid_grant" }
+    );
+    assert.equal((await store.getGrant(gid))?.revokedReason, "refresh_reuse", "رمز أقدم من الأخير يُلغي السلسلة ولو داخل الدقيقة");
+  }
+
   // ── الخمول وإعادة الربط والإلغاء من المستخدم ──
   const code3 = await service.issueAuthorizationCode({ store, userId: "user-1", pending: pendingFor(), now });
   const pair3 = await exchange(code3);
@@ -156,7 +180,7 @@ async function main() {
   const code5 = await service.issueAuthorizationCode({ store, userId: "user-1", pending: pendingFor(), now });
   const pair5 = await exchange(code5);
   if ("error" in pair5) throw new Error("exchange 5 failed");
-  assert.equal((await store.getGrant(gid4))?.revokedReason, "relinked", "ربط جديد للعميل نفسه يلغي السابق");
+  assert.equal((await store.getGrant(gid4))?.revokedAt, null, "ربط ثانٍ من Claude (جهاز/حساب آخر) لا يلغي الأول");
   const gid5 = tokens.readAccessToken(SECRET, pair5.access_token)!.gid;
   assert.equal(await service.revokeGrant({ store, grantId: gid5, actor: { userId: "someone-else", isAdmin: false } }), false, "لا يلغي ربط غيره");
   assert.equal(await service.revokeGrant({ store, grantId: gid5, actor: { userId: "user-1", isAdmin: false } }), true);
@@ -208,6 +232,21 @@ async function main() {
   keys.set(personal.keyHash, { ...keys.get(personal.keyHash)!, userId: "user-1" });
   assert.equal(await principal.verifyMcpRequest(mcpReq(), "hk2.garbage.sig"), undefined);
   assert.equal(await principal.verifyMcpRequest(mcpReq(), ""), undefined);
+
+  // العلم مطفأ ← لا روابط حسابات ولا مفاتيح شخصية (تراجع نظيف بلا روابط حيّة مخفية).
+  process.env.MCP_ACCOUNT_LINKING = "";
+  assert.equal(await principal.verifyMcpRequest(mcpReq(), pair6.access_token), undefined);
+  assert.equal(await principal.verifyMcpRequest(mcpReq(), personal.fullKey), undefined);
+  assert.equal((await principal.verifyMcpRequest(mcpReq(), SHARED))?.extra.principal.kind, "internal", "المفتاح المشترك يبقى");
+  process.env.MCP_ACCOUNT_LINKING = "1";
+
+  // الأصل نفسه: Origin: null (سياسة no-referrer) مقبول فقط مع Sec-Fetch-Site من الموقع نفسه.
+  const post = (h: Record<string, string>) => new Request(`${origin}/oauth/authorize`, { method: "POST", headers: h });
+  assert.equal(oauth.isSameOriginPost(post({ origin })), true);
+  assert.equal(oauth.isSameOriginPost(post({ origin: "https://evil.example" })), false);
+  assert.equal(oauth.isSameOriginPost(post({ origin: "null", "sec-fetch-site": "same-origin" })), true);
+  assert.equal(oauth.isSameOriginPost(post({ origin: "null", "sec-fetch-site": "cross-site" })), false);
+  assert.equal(oauth.isSameOriginPost(post({ "sec-fetch-site": "cross-site" })), false);
 
   process.env.HAKEEM_MCP_SHARED_KEY_DISABLED = "1";
   assert.equal(await principal.verifyMcpRequest(mcpReq(), SHARED), undefined, "إيقاف المفتاح المشترك يسري");
@@ -323,6 +362,14 @@ async function main() {
   assert.equal(refRes.status, 200);
   const replay = await tokenPOST(form({ grant_type: "authorization_code", code: code7, client_id: clientId, redirect_uri: redirect, code_verifier: verifier }));
   assert.equal(replay.status, 400);
+  process.env.MCP_ACCOUNT_LINKING = "";
+  const refreshedTok = (await refRes.clone().json()) as { refresh_token: string };
+  assert.equal(
+    (await tokenPOST(form({ grant_type: "refresh_token", refresh_token: refreshedTok.refresh_token, client_id: clientId }))).status,
+    400,
+    "العلم مطفأ ← لا تجديد لروابط الحسابات"
+  );
+  process.env.MCP_ACCOUNT_LINKING = "1";
 
   // /mcp ← استدعاء أداة حقيقي يصل فيه صاحب الطلب إلى الغلاف.
   const fresh = await tokenPOST(

@@ -22,6 +22,10 @@ export const prismaGrantStore: GrantStore = {
     await (await db()).mcpAuthCode.create({ data: { ...code } });
   },
 
+  async getAuthCode(codeHash) {
+    return (await (await db()).mcpAuthCode.findUnique({ where: { codeHash } })) as AuthCodeRecord | null;
+  },
+
   async consumeAuthCode(codeHash, now): Promise<ConsumeCodeResult> {
     const prisma = await db();
     const updated = await prisma.mcpAuthCode.updateMany({
@@ -63,16 +67,23 @@ export const prismaGrantStore: GrantStore = {
     return (await db()).mcpGrant.findUnique({ where: { refreshTokenHash: hash } });
   },
 
-  async findByPreviousRefreshHash(hash) {
-    return (await db()).mcpGrant.findUnique({ where: { previousRefreshHash: hash } });
+  async findGrantIdByUsedRefresh(hash) {
+    const row = await (await db()).mcpUsedRefreshToken.findUnique({ where: { tokenHash: hash }, select: { grantId: true } });
+    return row?.grantId ?? null;
   },
 
   async rotateRefresh(grantId, expectedHash, newHash, now) {
-    const res = await (await db()).mcpGrant.updateMany({
+    const prisma = await db();
+    const res = await prisma.mcpGrant.updateMany({
       where: { id: grantId, refreshTokenHash: expectedHash, revokedAt: null },
       data: { previousRefreshHash: expectedHash, refreshTokenHash: newHash, refreshRotatedAt: now, lastUsedAt: now },
     });
-    return res.count === 1;
+    if (res.count !== 1) return false;
+    // سلسلة الرموز المستعمَلة: أي رمز قديم يعود لاحقًا يكشف السرقة ولو تجاوز السارق التدوير مرات.
+    await prisma.mcpUsedRefreshToken
+      .create({ data: { tokenHash: expectedHash, grantId, rotatedAt: now } })
+      .catch(() => undefined);
+    return true;
   },
 
   async touch(grantId, now) {
@@ -80,18 +91,12 @@ export const prismaGrantStore: GrantStore = {
   },
 
   async revoke(grantId, reason: RevokeReason, now) {
-    await (await db()).mcpGrant.updateMany({
+    const prisma = await db();
+    await prisma.mcpGrant.updateMany({
       where: { id: grantId, revokedAt: null },
       data: { revokedAt: now, revokedReason: reason, refreshTokenHash: null, previousRefreshHash: null },
     });
-  },
-
-  async revokeActiveFor(userId, clientId, reason, now) {
-    const res = await (await db()).mcpGrant.updateMany({
-      where: { userId, clientId, revokedAt: null },
-      data: { revokedAt: now, revokedReason: reason, refreshTokenHash: null, previousRefreshHash: null },
-    });
-    return res.count;
+    await prisma.mcpUsedRefreshToken.deleteMany({ where: { grantId } }).catch(() => undefined);
   },
 
   async listForUser(userId) {

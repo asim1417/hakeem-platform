@@ -86,6 +86,18 @@ export function publicOrigin(request: Request): string {
   return `${proto}://${host}`;
 }
 
+/**
+ * طلب POST من الأصل نفسه؟ المتصفح يرسل Origin: null حين تكون سياسة المُحيل no-referrer،
+ * فنقبل null/الغياب فقط إن لم تقل Sec-Fetch-Site إنه عابر للمواقع. الحارس الأساسي يبقى
+ * المفتاح أو nonce الموافقة؛ هذا دفاع إضافي.
+ */
+export function isSameOriginPost(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  const site = request.headers.get("sec-fetch-site");
+  if (origin && origin !== "null") return origin === publicOrigin(request);
+  return !site || site === "same-origin" || site === "none";
+}
+
 export function mcpResourceUrl(origin: string): string {
   return `${origin.replace(/\/+$/, "")}/mcp`;
 }

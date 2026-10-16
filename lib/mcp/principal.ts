@@ -4,7 +4,7 @@
  *  - user     : مستخدم حكيم عبر ربط (تصريح hk2) أو مفتاح شخصي (hk_live_… بنطاق mcp:read).
  *  - open     : خادم مفتوح صراحةً (HAKEEM_MCP_ALLOW_OPEN=1) بلا مصادقة.
  */
-import { mcpSharedKey, mcpTokenSecret } from "@/lib/mcp/config";
+import { accountLinkingEnabled, mcpSharedKey, mcpTokenSecret } from "@/lib/mcp/config";
 import { audienceAccepted, verifyMcpAccessToken } from "@/lib/mcp/oauth";
 import { getGrantStore } from "@/lib/mcp/grants/prisma-store";
 import { MCP_SCOPE, verifyGrantAccessToken } from "@/lib/mcp/grants/service";
@@ -56,7 +56,7 @@ const prismaDeps: PrincipalDeps = {
   },
   async touchApiKey(id) {
     const { prisma } = await import("@/lib/prisma");
-    await prisma.apiKey.update({ where: { id }, data: { lastUsedAt: new Date() } });
+    await prisma.apiKey.update({ where: { id }, data: { lastUsedAt: new Date() }, select: { id: true } });
   },
 };
 
@@ -93,6 +93,9 @@ export async function verifyMcpRequest(request: Request, bearer?: string): Promi
       };
     }
   }
+
+  // الربط بالحساب والمفاتيح الشخصية يعملان فقط والعلم مفعّل: إطفاؤه يوقفهما كليًا (تراجع نظيف).
+  if (!accountLinkingEnabled()) return undefined;
 
   // ٢) تصريح الربط بالحساب.
   const secret = mcpTokenSecret();

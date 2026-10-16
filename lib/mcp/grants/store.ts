@@ -42,6 +42,8 @@ export type RevokeReason = "user" | "admin" | "relinked" | "refresh_reuse" | "co
 
 export interface GrantStore {
   createAuthCode(code: Omit<AuthCodeRecord, "usedAt" | "grantId">): Promise<void>;
+  /** قراءة الرمز دون استهلاكه — للتحقق من العميل وPKCE قبل الاستهلاك (فلا يُحرق برمز مسروق). */
+  getAuthCode(codeHash: string): Promise<AuthCodeRecord | null>;
   /** يعلّم الرمز مستعملًا إن كان صالحًا وغير مستعمل (ذرّيًا). */
   consumeAuthCode(codeHash: string, now: Date): Promise<ConsumeCodeResult>;
   attachGrantToCode(codeHash: string, grantId: string): Promise<void>;
@@ -58,13 +60,12 @@ export interface GrantStore {
   }): Promise<GrantRecord>;
   getGrant(id: string): Promise<GrantRecord | null>;
   findByRefreshHash(hash: string): Promise<GrantRecord | null>;
-  findByPreviousRefreshHash(hash: string): Promise<GrantRecord | null>;
-  /** يستبدل رمز التجديد إن كان الحالي ما زال expectedHash (ذرّيًا). */
+  /** الربط الذي استُعمل فيه هذا الرمز سابقًا (أي رمز قديم في سلسلته، لا الأخير وحده). */
+  findGrantIdByUsedRefresh(hash: string): Promise<string | null>;
+  /** يستبدل رمز التجديد إن كان الحالي ما زال expectedHash (ذرّيًا)، ويحفظ القديم في سلسلة المستعمَل. */
   rotateRefresh(grantId: string, expectedHash: string, newHash: string, now: Date): Promise<boolean>;
   touch(grantId: string, now: Date): Promise<void>;
   revoke(grantId: string, reason: RevokeReason, now: Date): Promise<void>;
-  /** يلغي الروابط النشطة السابقة للمستخدم مع العميل نفسه (إعادة الربط). */
-  revokeActiveFor(userId: string, clientId: string, reason: RevokeReason, now: Date): Promise<number>;
   listForUser(userId: string): Promise<GrantRecord[]>;
 
   /** عدّاد نافذة الدقيقة: يزيد ويعيد العدد بعد الزيادة. */

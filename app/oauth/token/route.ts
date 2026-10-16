@@ -1,5 +1,5 @@
 import { exchangeAuthorizationCode, exchangeRefreshToken, oauthJson, oauthPreflight } from "@/lib/mcp/oauth";
-import { mcpSharedKey, mcpTokenSecret } from "@/lib/mcp/config";
+import { accountLinkingEnabled, mcpSharedKey, mcpTokenSecret } from "@/lib/mcp/config";
 import { getGrantStore } from "@/lib/mcp/grants/prisma-store";
 import {
   exchangeAuthorizationCode as exchangeGrantCode,
@@ -15,7 +15,8 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   const shared = mcpSharedKey();
-  const secret = mcpTokenSecret();
+  // رموز الربط بالحساب تُخدم فقط والعلم مفعّل.
+  const secret = accountLinkingEnabled() ? mcpTokenSecret() : null;
   if (!shared && !secret) return oauthJson({ error: "invalid_client" }, 401);
 
   const fields = await readFields(request);

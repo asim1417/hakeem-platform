@@ -107,19 +107,22 @@ export async function exchangeAuthorizationCode(input: {
   if (!input.code.startsWith("hka_") || !isPkceVerifier(input.codeVerifier)) return { error: "invalid_grant" };
 
   const codeHash = hashToken(input.code);
+  // التحقق قبل الاستهلاك: من يحمل رمزًا مسروقًا بلا verifier لا يستطيع إحراقه ولا إلغاء ربط بإعادته.
+  const code = await input.store.getAuthCode(codeHash);
+  if (!code) return { error: "invalid_grant" };
+  if (code.clientId !== input.clientId || code.redirectUri !== input.redirectUri) return { error: "invalid_grant" };
+  if (s256(input.codeVerifier) !== code.codeChallenge) return { error: "invalid_grant" };
+
   const consumed = await input.store.consumeAuthCode(codeHash, now);
   if (consumed.status === "reused") {
-    // رمز استُعمل من قبل: علامة اعتراض — نلغي الربط الذي صدر منه.
+    // صاحب الـ verifier نفسه أعاد رمزًا مستعملًا: علامة اعتراض — نلغي الربط الذي صدر منه.
     if (consumed.code.grantId) await input.store.revoke(consumed.code.grantId, "code_reuse", now);
     return { error: "invalid_grant" };
   }
   if (consumed.status !== "ok") return { error: "invalid_grant" };
 
-  const code = consumed.code;
-  if (code.clientId !== input.clientId || code.redirectUri !== input.redirectUri) return { error: "invalid_grant" };
-  if (s256(input.codeVerifier) !== code.codeChallenge) return { error: "invalid_grant" };
-
-  await input.store.revokeActiveFor(code.userId, code.clientId, "relinked", now);
+  // لا إلغاء تلقائي لروابط سابقة: معرّف عميل Claude مشترك بين أجهزته وحساباته، فربط ثانٍ
+  // لا يعني التخلي عن الأول. الروابط الخاملة تنتهي بعد ثلاثين يومًا، والمستخدم يلغي ما شاء.
   const refresh = newRefreshToken();
   const grant = await input.store.createGrant({
     userId: code.userId,
@@ -149,12 +152,14 @@ export async function refreshAccessToken(input: {
 
   const grant = await input.store.findByRefreshHash(hash);
   if (!grant) {
-    const previous = await input.store.findByPreviousRefreshHash(hash);
-    if (previous && !previous.revokedAt) {
-      const rotatedAt = previous.refreshRotatedAt?.getTime() ?? 0;
-      const withinGrace = now.getTime() - rotatedAt <= REFRESH_REUSE_GRACE_SEC * 1000;
-      // تجديدان متزامنان من العميل نفسه مقبولان كسباق؛ بعد نافذة السماح = سرقة محتملة.
-      if (!withinGrace) await input.store.revoke(previous.id, "refresh_reuse", now);
+    const usedBy = await input.store.findGrantIdByUsedRefresh(hash);
+    const owner = usedBy ? await input.store.getGrant(usedBy) : null;
+    if (owner && !owner.revokedAt) {
+      // سباق مشروع: العميل نفسه جدّد مرتين بالرمز الأخير خلال نافذة السماح.
+      const lastRotated = owner.previousRefreshHash === hash ? owner.refreshRotatedAt?.getTime() ?? 0 : 0;
+      const withinGrace = now.getTime() - lastRotated <= REFRESH_REUSE_GRACE_SEC * 1000;
+      // أي رمز أقدم من ذلك = سرقة محتملة → إلغاء السلسلة كلها.
+      if (!withinGrace) await input.store.revoke(owner.id, "refresh_reuse", now);
     }
     return { error: "invalid_grant" };
   }

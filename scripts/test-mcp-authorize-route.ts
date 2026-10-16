@@ -31,6 +31,10 @@ async function main() {
     );
   };
 
+  // صفحة المفتاح بسياسة مُحيل تجعل المتصفح يرسل Origin: null — مقبول من الموقع نفسه.
+  assert.equal((await post(KEY, { origin: "null", "sec-fetch-site": "same-origin", "x-forwarded-for": "7.7.7.7" })).status, 303);
+  assert.equal((await post(KEY, { origin: "null", "sec-fetch-site": "cross-site", "x-forwarded-for": "7.7.7.7" })).status, 403);
+
   // أصل مخالف → 403 ولا يُحتسب كمحاولة مفتاح.
   assert.equal((await post(KEY, { origin: "https://evil.example" })).status, 403);
 

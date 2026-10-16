@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 import { getApiUser } from "@/lib/modules/auth/session";
 import { auditEvent } from "@/lib/modules/audit/audit";
 import { accountLinkingEnabled, mcpTokenSecret } from "@/lib/mcp/config";
-import { publicOrigin } from "@/lib/mcp/oauth";
+import { isSameOriginPost, publicOrigin } from "@/lib/mcp/oauth";
 import { renderOauthMessage } from "@/lib/mcp/oauth-pages";
 import { getGrantStore } from "@/lib/mcp/grants/prisma-store";
 import { clearPendingCookieHeader, readPendingCookie } from "@/lib/mcp/grants/pending-cookie";
@@ -36,8 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   const origin = publicOrigin(request);
-  const sentOrigin = request.headers.get("origin");
-  if (!sentOrigin || sentOrigin !== origin) {
+  if (!isSameOriginPost(request)) {
     return renderOauthMessage("تعذّر الربط", "مصدر الطلب غير مسموح.", 403);
   }
 
