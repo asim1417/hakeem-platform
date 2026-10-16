@@ -2,7 +2,7 @@ name: Diag rulings common terms plan (read-only)
 # تشخيص قراءة فقط لبطء البحث اللفظي للألفاظ الشائعة. المخرج خطط وأزمنة بلا نصوص ولا معرّفات.
 on:
   push:
-    branches: [claude/rulings-latency-common-terms]
+    branches: [claude/rulings-latency-common-terms, claude/rulings-review-fixes]
     paths: [.github/workflows/diag-rulings-common-terms.yml, scripts/rulings-research/diag-common-terms-plan.ts, lib/modules/legal-core/rulings-search.ts]
 permissions:
   contents: read
