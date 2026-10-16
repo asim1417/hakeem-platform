@@ -308,6 +308,23 @@ async function openSearchArticleScores(query: string, take: number): Promise<Map
   return out;
 }
 
+/** مؤقّت مراحل خفيف: mark(name) يسجّل زمن المرحلة منذ السابقة؛ summary() نصّ السجل. */
+export function stageTimer(now: () => number = Date.now) {
+  const t0 = now();
+  let last = t0;
+  const parts: string[] = [];
+  return {
+    mark(name: string) {
+      const t = now();
+      parts.push(`${name}=${t - last}`);
+      last = t;
+    },
+    summary() {
+      return `ms=${now() - t0} ${parts.join(" ")}`;
+    },
+  };
+}
+
 /** يبني كلمات استعلام tsquery مفردة مُطبَّعة (نفس تطبيع search_norm) من متغيّرات البحث. */
 function buildTsQueryWords(variants: string[]): string[] {
   const words = new Set<string>();
@@ -381,6 +398,8 @@ function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
 
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
+  // أزمنة المراحل في السجل: لتحديد المرحلة البطيئة في الإنتاج (قراءة فقط، لا أثر على النتائج).
+  const timing = stageTimer();
   // وجه البحث: المواد من معرّفات الوجه فقط. النظام المذكور المخفي يُحوَّل إلى وجه عمله
   // (المخلوط «نظام التنفيذ» → م/53 اليوم → م/237 من 2026-10-28)، والمخفي بلا خلف يسقط.
   const { surface, hiddenNames } =
@@ -412,11 +431,14 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ونرجّح الأنظمة المعنيّة — يحلّ حالة المفهوم الذي لا يحوي اسمُ نظامه مصطلحَ الاستعلام.
   const concept = matchConcepts(query);
   // مكنز حكيم (2,967 مفهوماً): توسيع معجمي مُسنَد لمعرّفات حقيقية — يكمّل الخريطة المنسّقة.
+  timing.mark("surface");
   const thesaurus = await matchThesaurusConcepts(query);
+  timing.mark("thesaurus");
   // توسيع رسومي: مفاهيم مرتبطة (للمصطلحات) + ترجيح المواد عبر المواضع (معتمدة، موزونة).
   const graph = thesaurus.conceptIds.length
     ? await thesaurusGraphExpansion(thesaurus.conceptIds)
     : { relatedLabels: [] as string[], articleBoosts: new Map<string, number>() };
+  timing.mark("graph");
   const preferSystems = concept.preferSystems;
   // توسيع صرفيّ من المعجم الرسميّ (hoqoqi): صيغ شقيقة بنفس الجذر. خلف علمٍ افتراضيّه OFF
   // حتى يُقاس أثره بـ eval:search قبل الاعتماد (انضباط القياس-قبل-الاعتماد).
@@ -481,7 +503,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   let total = 0;
   let lightRows: LightArticle[] = [];
-  const inDbRowsRaw = useInDb ? await inDbLightCandidates(buildTsQueryWords(dbFilterVariants), COMPLETE_CAP) : null;
+  const tsWords = useInDb ? buildTsQueryWords(dbFilterVariants) : [];
+  const inDbRowsRaw = useInDb ? await inDbLightCandidates(tsWords, COMPLETE_CAP) : null;
   const inDbRows = inDbRowsRaw && surface.hidden.size ? inDbRowsRaw.filter((r) => inSurface(r, surface, hiddenNames)) : inDbRowsRaw;
   if (inDbRows) {
     // كل المطابقات (< السقف) رُجِّعت مفهرسةً — الإجماليّ الحقيقي = طولها؛ التطبيق يعيد ترتيبها.
@@ -498,6 +521,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     total = t;
     lightRows = rows;
   }
+  timing.mark(inDbRows ? "recall_tsv" : "recall_ilike");
   // exhaustive=false فقط إن تجاوزت المطابقات السقف (مستحيل بالكوربوس الحالي) — ترقيم غير مكتمل عندئذٍ.
   const exhaustive = total <= COMPLETE_CAP;
 
@@ -517,6 +541,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): معرّفات + تشابه (بلا نصّ)،
   // فيجلب مواد قريبة بالمعنى حتى بلا تطابق لفظي. سقوط آمن إلى Map فارغة إن غاب الجدول.
+  timing.mark("occurrences");
   let semMap = new Map<string, number>();
   if (query && options.semantic && semanticSearchEnabled()) {
     semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
@@ -532,6 +557,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // إشارة OpenSearch (الخامسة): BM25 بمحلّل عربي + ترجيح التغطية الكاملة (إصلاح «فسخ»).
   // مُفعّلة افتراضياً حين يُضبَط العنقود (كِلّ-سويتش CORE_OPENSEARCH=0 أو options.openSearch=false).
   // تجلب أيضاً مواداً قوية لم يجدها المسار المعجمي داخل القاعدة (استرجاع مُسنَد). سقوط آمن تام.
+  timing.mark("semantic");
   let osMap = new Map<string, number>();
   const osEnabled = query && options.openSearch !== false && process.env.CORE_OPENSEARCH !== "0";
   if (osEnabled) {
@@ -547,6 +573,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     }
   }
 
+  timing.mark("opensearch");
   // وجه البحث: ما جلبته المسارات الإضافية (مكنز/دلالي/OpenSearch) يخضع للوجه نفسه.
   if (surface.hidden.size) {
     for (const [id, row] of lightById) if (!inSurface(row, surface, hiddenNames)) lightById.delete(id);
@@ -620,7 +647,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const pageSlice = relevant.slice(start, start + limit);
   // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
   //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
+  timing.mark("score");
   const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+  timing.mark("page");
 
   // شفافية السلطة (عرض فقط، لا ترتيب): نُرفق عدد الأحكام المستشهِدة بكل مادة في الصفحة —
   // «مُستشهَد بها في N حكماً». عدّ حقيقي من روابط المادة↔الحكم؛ يحكم المحامي على المرجعية.
@@ -629,6 +658,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     results.length && process.env.CITING_REFERENCES !== "0"
       ? await getArticleAuthorityMap().catch(() => new Map<string, number>())
       : null;
+  timing.mark("authority");
+  console.info(
+    `[search] core ${timing.summary()} rows=${lightById.size} words=${tsWords.length} variants=${dbFilterVariants.length}`
+  );
   const displayResults = citationMap
     ? results.map((r) => {
         const count = citationMap.get(r.articleId);

@@ -1,5 +1,6 @@
 /** ميزانية مزوّد البحث: البطيء يُسقَط والسريع يُرجَع. التشغيل: npx tsx scripts/test-search-budget.ts */
 import { withBudget } from "../lib/modules/legal-search/hybrid-search";
+import { stageTimer } from "../lib/modules/legal-core/legal-retrieval";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -15,6 +16,11 @@ async function main() {
   const late = await withBudget(new Promise<number>((_, j) => setTimeout(() => j(new Error("x")), 300)), 50);
   ok(typeof late === "symbol", "فشل متأخر بعد المهلة لا يرمي");
   await new Promise((r) => setTimeout(r, 400));
+  let clock = 100;
+  const timer = stageTimer(() => clock);
+  clock = 130; timer.mark("a");
+  clock = 180; timer.mark("b");
+  ok(timer.summary() === "ms=80 a=30 b=50", "مؤقّت المراحل يسجّل زمن كل مرحلة منذ السابقة");
   if (failed) process.exit(1);
   console.log("\nكل الاختبارات نجحت");
 }
