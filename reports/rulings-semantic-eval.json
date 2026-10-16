@@ -1,0 +1,762 @@
+{
+  "measuredAt": "2026-10-16T03:31:55.367Z",
+  "summary": {
+    "vectors": {
+      "chunks": 93440,
+      "rulings": 50981
+    },
+    "terms": {
+      "queries": 8,
+      "lexical": {
+        "withResults": 8,
+        "returned": 80
+      },
+      "withSemantic": {
+        "withResults": 8,
+        "returned": 80,
+        "semanticOnly": 0,
+        "both": 0,
+        "preambleSnippets": 0,
+        "maxMs": 1058
+      }
+    },
+    "questions": {
+      "queries": 10,
+      "lexical": {
+        "withResults": 7,
+        "returned": 60
+      },
+      "withSemantic": {
+        "withResults": 10,
+        "returned": 94,
+        "semanticOnly": 62,
+        "both": 1,
+        "preambleSnippets": 0,
+        "maxMs": 1428
+      }
+    }
+  },
+  "rows": [
+    {
+      "q": "فسخ",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 1641,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 3,
+          "reasons": 6,
+          "appeal": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1058,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 3,
+          "reasons": 6,
+          "appeal": 1
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.393,
+        "top10": 0.291,
+        "median": 0.274,
+        "atLeast": {
+          "0.3": 7,
+          "0.35": 2,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "الغبن الفاحش",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 702,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 798,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.444,
+        "top10": 0.272,
+        "median": 0.224,
+        "atLeast": {
+          "0.3": 4,
+          "0.35": 3,
+          "0.4": 1,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "الشرط الجزائي",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 987,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 1,
+          "reasons": 8,
+          "claims": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 841,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 1,
+          "reasons": 8,
+          "claims": 1
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.422,
+        "top10": 0.385,
+        "median": 0.371,
+        "atLeast": {
+          "0.3": 44,
+          "0.35": 41,
+          "0.4": 6,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "القوة القاهرة",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 569,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "defense": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 519,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "defense": 1
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.348,
+        "top10": 0.303,
+        "median": 0.286,
+        "atLeast": {
+          "0.3": 10,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "التقادم",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 887,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 8,
+          "disposition": 1,
+          "defense": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 917,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 8,
+          "disposition": 1,
+          "defense": 1
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.339,
+        "top10": 0.263,
+        "median": 0.251,
+        "atLeast": {
+          "0.3": 3,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "الشفعة",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 457,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 5,
+          "disposition": 2,
+          "claims": 3
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 322,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 5,
+          "disposition": 2,
+          "claims": 3
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.3,
+        "top10": 0.27,
+        "median": 0.258,
+        "atLeast": {
+          "0.3": 1,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "اليمين الحاسمة",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 594,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "defense": 1,
+          "disposition": 5,
+          "reasons": 4
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 581,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "defense": 1,
+          "disposition": 5,
+          "reasons": 4
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.345,
+        "top10": 0.243,
+        "median": 0.232,
+        "atLeast": {
+          "0.3": 2,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "أجرة المثل",
+      "kind": "term",
+      "lexical": {
+        "returned": 10,
+        "ms": 1010,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 4,
+          "reasons": 6
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1018,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 4,
+          "reasons": 6
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.299,
+        "top10": 0.26,
+        "median": 0.241,
+        "atLeast": {
+          "0.3": 0,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "سؤال 1",
+      "kind": "question",
+      "lexical": {
+        "returned": 9,
+        "ms": 503,
+        "matchedBy": {
+          "lexical": 9
+        },
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 2
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 675,
+        "matchedBy": {
+          "lexical": 5,
+          "semantic": 5
+        },
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 3
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.514,
+        "top10": 0.463,
+        "median": 0.438,
+        "atLeast": {
+          "0.3": 43,
+          "0.35": 43,
+          "0.4": 43,
+          "0.45": 12,
+          "0.5": 1
+        }
+      }
+    },
+    {
+      "q": "سؤال 2",
+      "kind": "question",
+      "lexical": {
+        "returned": 10,
+        "ms": 1046,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 3
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1254,
+        "matchedBy": {
+          "lexical": 5,
+          "semantic": 5
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.604,
+        "top10": 0.536,
+        "median": 0.53,
+        "atLeast": {
+          "0.3": 39,
+          "0.35": 39,
+          "0.4": 39,
+          "0.45": 39,
+          "0.5": 39
+        }
+      }
+    },
+    {
+      "q": "سؤال 3",
+      "kind": "question",
+      "lexical": {
+        "returned": 0,
+        "ms": 69,
+        "matchedBy": {},
+        "matchedIn": {},
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 732,
+        "matchedBy": {
+          "semantic": 10
+        },
+        "matchedIn": {
+          "reasons": 6,
+          "disposition": 4
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.519,
+        "top10": 0.467,
+        "median": 0.452,
+        "atLeast": {
+          "0.3": 37,
+          "0.35": 37,
+          "0.4": 37,
+          "0.45": 20,
+          "0.5": 3
+        }
+      }
+    },
+    {
+      "q": "سؤال 4",
+      "kind": "question",
+      "lexical": {
+        "returned": 1,
+        "ms": 133,
+        "matchedBy": {
+          "lexical": 1
+        },
+        "matchedIn": {
+          "reasons": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 5,
+        "ms": 399,
+        "matchedBy": {
+          "semantic": 4,
+          "lexical": 1
+        },
+        "matchedIn": {
+          "reasons": 3,
+          "disposition": 2
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.476,
+        "top10": 0.412,
+        "median": 0.4,
+        "atLeast": {
+          "0.3": 40,
+          "0.35": 40,
+          "0.4": 20,
+          "0.45": 1,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "سؤال 5",
+      "kind": "question",
+      "lexical": {
+        "returned": 0,
+        "ms": 68,
+        "matchedBy": {},
+        "matchedIn": {},
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 9,
+        "ms": 525,
+        "matchedBy": {
+          "semantic": 9
+        },
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 2
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.473,
+        "top10": 0.413,
+        "median": 0.381,
+        "atLeast": {
+          "0.3": 39,
+          "0.35": 39,
+          "0.4": 11,
+          "0.45": 2,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "سؤال 6",
+      "kind": "question",
+      "lexical": {
+        "returned": 10,
+        "ms": 1278,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1322,
+        "matchedBy": {
+          "lexical": 5,
+          "semantic": 5
+        },
+        "matchedIn": {
+          "reasons": 5,
+          "disposition": 5
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.699,
+        "top10": 0.649,
+        "median": 0.629,
+        "atLeast": {
+          "0.3": 60,
+          "0.35": 60,
+          "0.4": 60,
+          "0.45": 60,
+          "0.5": 60
+        }
+      }
+    },
+    {
+      "q": "سؤال 7",
+      "kind": "question",
+      "lexical": {
+        "returned": 10,
+        "ms": 898,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1011,
+        "matchedBy": {
+          "both": 1,
+          "lexical": 5,
+          "semantic": 4
+        },
+        "matchedIn": {
+          "reasons": 5,
+          "disposition": 5
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.547,
+        "top10": 0.515,
+        "median": 0.494,
+        "atLeast": {
+          "0.3": 42,
+          "0.35": 42,
+          "0.4": 42,
+          "0.45": 42,
+          "0.5": 16
+        }
+      }
+    },
+    {
+      "q": "سؤال 8",
+      "kind": "question",
+      "lexical": {
+        "returned": 10,
+        "ms": 601,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 596,
+        "matchedBy": {
+          "lexical": 5,
+          "semantic": 5
+        },
+        "matchedIn": {
+          "reasons": 4,
+          "disposition": 6
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.487,
+        "top10": 0.469,
+        "median": 0.463,
+        "atLeast": {
+          "0.3": 41,
+          "0.35": 41,
+          "0.4": 41,
+          "0.45": 41,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "سؤال 9",
+      "kind": "question",
+      "lexical": {
+        "returned": 10,
+        "ms": 1355,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "disposition": 2,
+          "reasons": 8
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1428,
+        "matchedBy": {
+          "lexical": 5,
+          "semantic": 5
+        },
+        "matchedIn": {
+          "disposition": 3,
+          "reasons": 7
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.472,
+        "top10": 0.433,
+        "median": 0.423,
+        "atLeast": {
+          "0.3": 38,
+          "0.35": 38,
+          "0.4": 38,
+          "0.45": 3,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "سؤال 10",
+      "kind": "question",
+      "lexical": {
+        "returned": 0,
+        "ms": 131,
+        "matchedBy": {},
+        "matchedIn": {},
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 680,
+        "matchedBy": {
+          "semantic": 10
+        },
+        "matchedIn": {
+          "disposition": 10
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.49,
+        "top10": 0.458,
+        "median": 0.449,
+        "atLeast": {
+          "0.3": 40,
+          "0.35": 40,
+          "0.4": 40,
+          "0.45": 20,
+          "0.5": 0
+        }
+      }
+    }
+  ]
+}
