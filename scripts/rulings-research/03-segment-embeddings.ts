@@ -172,6 +172,9 @@ async function apply() {
         const batch = pending.splice(0, EMBED_BATCH);
         calls++;
         const vecs = await embedBatch(batch.map((b) => b.c.input));
+        // إدراج واحد متعدد الصفوف لكل دفعة (لا نداء قاعدة لكل جزء).
+        const params: unknown[] = [];
+        const values: string[] = [];
         for (let i = 0; i < batch.length; i++) {
           const v = vecs[i];
           if (!v || v.length !== EMBEDDING_DIMS) {
@@ -179,18 +182,23 @@ async function apply() {
             continue;
           }
           const b = batch[i];
+          const base = params.length;
+          params.push(b.id, b.c.part, b.c.chunk, b.c.start, b.c.end, b.hash, `[${v.join(",")}]`,
+            EMBEDDING_MODEL, SEGMENT_EMBED_VERSION, SEGMENT_EXTRACTOR_VERSION);
+          values.push(`(${Array.from({ length: 10 }, (_, k) => `$${base + k + 1}${k === 6 ? "::vector" : ""}`).join(",")})`);
+        }
+        if (values.length) {
           await db.$executeRawUnsafe(
             `INSERT INTO ruling_segment_embeddings
                (ruling_id, part, chunk, start_char, end_char, content_hash, embedding, model, extractor_version, segment_version)
-             VALUES ($1,$2,$3,$4,$5,$6,$7::vector,$8,$9,$10)
+             VALUES ${values.join(",")}
              ON CONFLICT (ruling_id, part, chunk) DO UPDATE SET
                start_char=EXCLUDED.start_char, end_char=EXCLUDED.end_char, content_hash=EXCLUDED.content_hash,
                embedding=EXCLUDED.embedding, model=EXCLUDED.model, extractor_version=EXCLUDED.extractor_version,
                segment_version=EXCLUDED.segment_version, review_status='needs_review', created_at=now()`,
-            b.id, b.c.part, b.c.chunk, b.c.start, b.c.end, b.hash, `[${v.join(",")}]`,
-            EMBEDDING_MODEL, SEGMENT_EMBED_VERSION, SEGMENT_EXTRACTOR_VERSION,
+            ...params,
           );
-          written++;
+          written += values.length;
         }
       }
     };

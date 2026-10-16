@@ -42,7 +42,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 300
     env:
       NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
