@@ -266,13 +266,17 @@ const RANK_CANDIDATES = 400;
 // مع ruling_segments: احتياط محدود ممن ورد اللفظ في غير أسبابه ومنطوقه (حساب الترتيب على النص الكامل مكلف).
 const FALLBACK_CANDIDATES = 100;
 
-export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
-  const started = Date.now();
+export interface RulingSearchSql { countSql: string; rowsSql: string; params: unknown[] }
+
+/**
+ * يبني استعلامَي البحث اللفظي (العدّ المسقوف والترتيب) كما ينفّذهما searchRulingsDirect حرفيًّا.
+ * مُصدَّر لأدوات التشخيص (EXPLAIN) حتى تقيس الاستعلام نفسه لا نسخةً منه. null إن خلا الاستعلام من ألفاظ.
+ */
+export async function buildRulingSearchSql(opts: RulingSearchOptions): Promise<RulingSearchSql | null> {
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
   const offset = Math.max(opts.offset ?? 0, 0);
   const tokens = normalizeArabic(opts.query).split(/\s+/).filter((t) => t.length >= 2);
-  const rawTokens = queryTokens(opts.query);
-  if (!tokens.length || !rawTokens.length) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
+  if (!tokens.length || !queryTokens(opts.query).length) return null;
 
   // مطابقة على مستوى الكلمة الكاملة (لا احتواء جزئيّ) عبر البحث النصيّ الكامل بإعداد 'simple'
   // الذي يقسم على الفراغات/الترقيم فقط بلا جذوع إنجليزية — يتفادى إيجابيات مثل «نجش» داخل «سونجشانج».
@@ -304,21 +308,9 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
        ${filters.length ? `WHERE s."id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}
        UNION ALL `
     : "";
-  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
-  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
-    ? semanticRulingCandidates(opts.query).catch(() => [])
-    : Promise.resolve([]);
+  const countSql = `SELECT count(*)::bigint AS c FROM (SELECT 1 FROM "judicial_cases" WHERE ${where} LIMIT ${COUNT_CAP + 1}) s`;
 
-  const totalQ = prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
-    `SELECT count(*)::bigint AS c FROM (SELECT 1 FROM "judicial_cases" WHERE ${where} LIMIT ${COUNT_CAP + 1}) s`, ...params,
-  ).catch(() => [{ c: BigInt(0) }]);
-
-  // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
-  const rowsQ = prisma.$queryRawUnsafe<Array<{
-    id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
-    cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
-    judgmentTitle: string | null; judgmentText: string | null;
-  }>>(
+  const rowsSql =
     `${segsReady ? `WITH segm AS MATERIALIZED (
        SELECT "ruling_id" FROM "ruling_segments"
        WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq} AND "part" IN ('reasons','disposition')),
@@ -328,8 +320,31 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
             ts_rank_cd(${tsv.replace(/"search_norm"|"judgmentText"|"judgmentTitle"/g, (m) => `j.${m}`)}, ${tsq}) AS rank
      FROM c JOIN "judicial_cases" j ON j."id" = c."id"
      ORDER BY c.prio DESC, rank DESC, j."decisionDate" DESC NULLS LAST
-     LIMIT ${limit} OFFSET ${offset}`, ...params,
-  ).catch(() => []);
+     LIMIT ${limit} OFFSET ${offset}`;
+  return { countSql, rowsSql, params };
+}
+
+export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
+  const started = Date.now();
+  const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
+  const offset = Math.max(opts.offset ?? 0, 0);
+  const rawTokens = queryTokens(opts.query);
+  const sql = await buildRulingSearchSql(opts);
+  if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
+  const { countSql, rowsSql, params } = sql;
+  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
+  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
+    ? semanticRulingCandidates(opts.query).catch(() => [])
+    : Promise.resolve([]);
+
+  const totalQ = prisma.$queryRawUnsafe<Array<{ c: bigint }>>(countSql, ...params).catch(() => [{ c: BigInt(0) }]);
+
+  // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
+  const rowsQ = prisma.$queryRawUnsafe<Array<{
+    id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
+    cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
+    judgmentTitle: string | null; judgmentText: string | null;
+  }>>(rowsSql, ...params).catch(() => []);
   const [totalRow, rows] = await Promise.all([totalQ, rowsQ]);
   const counted = Number(totalRow?.[0]?.c ?? 0);
   const totalCapped = counted > COUNT_CAP;
