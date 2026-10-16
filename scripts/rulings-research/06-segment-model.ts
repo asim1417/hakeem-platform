@@ -49,7 +49,9 @@ async function post<T>(p: string, body: unknown): Promise<T> {
       await new Promise((res) => setTimeout(res, 2000 * 2 ** attempt));
       continue;
     }
-    throw new Error(`HTTP ${r.status}`); // لا يُطبع جسم الرد (قد يتضمن مقتطفًا)
+    // نوع الخطأ ورسالته من واجهة Anthropic (لا تتضمن نص الطلب)، مقصوصة احتياطًا.
+    const err = (await r.json().catch(() => null)) as { error?: { type?: string; message?: string } } | null;
+    throw new Error(`HTTP ${r.status} ${err?.error?.type ?? ""}: ${(err?.error?.message ?? "").slice(0, 160)}`);
   }
 }
 
