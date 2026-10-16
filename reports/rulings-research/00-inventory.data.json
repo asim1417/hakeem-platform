@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T00:32:58.408Z",
+  "measuredAt": "2026-10-16T00:34:19.188Z",
   "transport": "prisma",
   "public": true,
   "searchNorm": {
@@ -10,6 +10,9 @@
       "hamza": 5130,
       "id10": 0,
       "mobile": 0,
+      "id10_indic": 112,
+      "mobile_indic": 27,
+      "id10_source": 108,
       "masked": 2
     },
     "expectedIndexes": [
