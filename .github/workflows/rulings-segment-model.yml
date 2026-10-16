@@ -7,7 +7,7 @@ name: Rulings — segment boundaries by model (count / sample, no DB writes)
 # المستودع عام: المخرج أعداد فقط، ويُودَع في الفرع reports/rulings-research/06-segment-model.data.json.
 
 on:
-  # push على الفرع: count فقط (لا توليد). sample يُطلق يدويًّا بعد الدمج بسقف صريح.
+  # push على الفرع: عيّنة ٥٠ بسقف ٥٠ نداءً (بموافقة المالك). العدّ سبق (count).
   push:
     branches: [claude/rulings-segment-model]
     paths:
@@ -42,9 +42,9 @@ jobs:
     env:
       NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      MODE: ${{ github.event.inputs.mode || 'count' }}
-      N: ${{ github.event.inputs.n || '200' }}
-      MAX_MODEL_CALLS: ${{ github.event.inputs.max_calls || '0' }}
+      MODE: ${{ github.event.inputs.mode || 'sample' }}
+      N: ${{ github.event.inputs.n || '50' }}
+      MAX_MODEL_CALLS: ${{ github.event.inputs.max_calls || '50' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
