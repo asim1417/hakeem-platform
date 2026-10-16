@@ -7,11 +7,22 @@ import {
   publicOrigin,
 } from "@/lib/mcp/oauth";
 import { renderAuthorizePage, renderOauthMessage } from "@/lib/mcp/oauth-pages";
+import { clientKey, createFailureLimiter } from "@/lib/mcp/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const FIELD_LIMIT = 512;
+
+// 5 محاولات مفتاح فاشلة لكل عنوان خلال 15 دقيقة (أفضل جهد، بالذاكرة).
+const keyFailures = createFailureLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
+
+/** نموذج الربط يُرسَل من الأصل نفسه؛ أي Origin مخالف يُرفض (حماية CSRF). */
+function sameOriginPost(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return true; // عملاء بلا Origin (curl/اختبارات)؛ المفتاح هو الحارس الفعلي.
+  return origin === publicOrigin(request);
+}
 
 type AuthorizeInput = {
   clientId: string;
@@ -32,6 +43,17 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!sameOriginPost(request)) {
+    return renderOauthMessage("تعذّر بدء الربط", "مصدر الطلب غير مسموح.", 403);
+  }
+  const who = clientKey(request);
+  const waitSec = keyFailures.blockedFor(who);
+  if (waitSec > 0) {
+    console.warn("[mcp-oauth] authorize throttled");
+    const res = renderOauthMessage("محاولات كثيرة", `تجاوزت عدد المحاولات المسموح. أعد المحاولة بعد ${Math.ceil(waitSec / 60)} دقيقة.`, 429);
+    res.headers.set("Retry-After", String(waitSec));
+    return res;
+  }
   const form = await request.formData();
   const input = readInput(form);
   if (!input) {
@@ -41,6 +63,7 @@ export async function POST(request: Request) {
   const provided = String(form.get("connector_key") ?? "");
   if (!secret || !keysMatch(provided, secret)) {
     console.warn("[mcp-oauth] authorize rejected");
+    keyFailures.recordFailure(who);
     return authorizeResponse(request, input, "المفتاح غير مطابق. تحقّق من مفتاح موصل حكيم لدى مسؤول المنصة.");
   }
   const origin = publicOrigin(request);
@@ -48,6 +71,7 @@ export async function POST(request: Request) {
   if (!resource) {
     return renderOauthMessage("تعذّر بدء الربط", "مورد الربط لا يطابق خادم حكيم.");
   }
+  keyFailures.reset(who);
   const code = createAuthorizationCode({
     secret,
     clientId: input.clientId,
