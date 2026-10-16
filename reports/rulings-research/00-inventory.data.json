@@ -1,10 +1,17 @@
 {
-  "measuredAt": "2026-10-16T00:31:33.024Z",
+  "measuredAt": "2026-10-16T00:32:58.408Z",
   "transport": "prisma",
   "public": true,
   "searchNorm": {
     "columnExists": true,
     "filled": 51105,
+    "builderProbe": {
+      "n": 5207,
+      "hamza": 5130,
+      "id10": 0,
+      "mobile": 0,
+      "masked": 2
+    },
     "expectedIndexes": [
       {
         "name": "idx_judicial_cases_search_norm_tsv",
