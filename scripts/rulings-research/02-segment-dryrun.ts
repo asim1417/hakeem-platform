@@ -28,8 +28,8 @@ interface Bucket {
 }
 const bucket = (): Bucket => ({ rows: 0, ruleOnly: 0, contiguous: 0, ordered: 0, found: {}, share: {}, dispositionAt: [] });
 
-function add(b: Bucket, text: string) {
-  const seg = segmentRuling(text);
+function add(b: Bucket, text: string, permanentPanel: boolean) {
+  const seg = segmentRuling(text, { permanentPanel });
   const st = checkStructure(seg, text.length);
   b.rows++;
   if (!seg.needsModel) b.ruleOnly++;
@@ -66,10 +66,10 @@ async function main() {
         `SELECT id, court, "judgmentText" AS text FROM judicial_cases WHERE id > $1 ORDER BY id LIMIT ${BATCH}`, last);
       if (!rows.length) break;
       for (const r of rows) {
-        add(all, r.text);
         const k = classifyCourt(r.court) ?? "∅";
+        add(all, r.text, k === "أخرى");
         if (!byCourt.has(k)) byCourt.set(k, bucket());
-        add(byCourt.get(k)!, r.text);
+        add(byCourt.get(k)!, r.text, k === "أخرى");
       }
       last = rows[rows.length - 1].id;
       process.stdout.write(`\r… ${all.rows}`);

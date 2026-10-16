@@ -55,3 +55,19 @@ test("بلا مرسى أسباب يُوسم للنموذج", () => {
 test("نص فارغ", () => {
   assert.equal(segmentRuling("").segments.length, 0);
 });
+
+test("صيغة «تتحصل وقائع» تبدأ الدعوى", () => {
+  const t = "الحمد لله أما بعد فلدى الدائرة التجارية تتحصل وقائع هذه الدعوى بالقدر اللازم لإصدار هذا الحكم في أن المدعي يطلب كذا وحيث إن الثابت كذا لذلك حكمت الدائرة بإلزامه";
+  const s = segmentRuling(t);
+  const c = s.segments.find((x) => x.type === "claims")!;
+  assert.ok(t.slice(c.start).startsWith("تتحصل وقائع"));
+  assert.equal(s.needsModel, false);
+});
+
+test("قالب الهيئة الدائمة: الطلب ثم الأسباب ثم القرار", () => {
+  const t = "الحمد لله وحده والصلاة والسلام على نبينا محمد وبعد ففي يوم كذا انعقدت الدائرة الخامسة بالمحكمة العليا المشكلة من [اسم] رئيسًا وذلك للنظر في طلب النقض المقدم من [اسم] على الحكم الصادر وبعد الاطلاع على الأوراق ودراستها وبعد المداولة وحيث إن محل الاعتراض لم يقم على أي من الحالات لذلك قررت الدائرة عدم قبول طلب النقض وصلى الله وسلم على نبينا محمد";
+  const s = segmentRuling(t, { permanentPanel: true });
+  assert.deepEqual(s.segments.map((x) => x.type), ["header", "claims", "reasons", "disposition", "other"]);
+  assert.equal(s.needsModel, false);
+  assert.deepEqual(checkStructure(s, t.length), { contiguous: true, ordered: true });
+});

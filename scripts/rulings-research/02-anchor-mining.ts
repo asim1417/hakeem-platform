@@ -52,6 +52,7 @@ async function main() {
   try {
     console.log(`🔒 قراءة فقط: ${await assertReadOnly(db)} — النقل: ${db.transport}`);
     const defense = new Map<string, number>();
+    const replyVerbs = new Map<string, number>();
     const claims = new Map<string, number>();
     const supremeStart = new Map<string, number>();
     const supremeMid = new Map<string, number>();
@@ -63,7 +64,7 @@ async function main() {
       if (!rows.length) break;
       for (const r of rows) {
         n++;
-        const seg = segmentRuling(r.text);
+        const seg = segmentRuling(r.text, { permanentPanel: classifyCourt(r.court) === "أخرى" });
         const span = (t: string) => seg.segments.find((s) => s.type === t);
         if (classifyCourt(r.court) === "أخرى") {
           supreme++;
@@ -78,6 +79,8 @@ async function main() {
           const end = span("reasons")?.start ?? span("disposition")?.start ?? r.text.length;
           const win = tokens(r.text.slice(c?.start ?? 0, end));
           // عبارات تذكر الطرف المدعى عليه أو وكيله (مرشحات بداية الإجابة).
+          // عبارات فيها فعل إجابة أو دفع (مرشحات صريحة لبداية الإجابة).
+          countGrams(replyVerbs, win, (g) => g.some((w) => /^(?:و|ف)?(?:اجاب|اجابت|جواب|جوابيه|مذكره|رد|ردا|دفع|دفعت|افاد|افادت|انكر|انكرت|اقر|اقرت|بعرض)/.test(w)));
           countGrams(defense, win, (g) => g.some((w) => /مدعي|مدعا|عليه|عليها|وكيل/.test(w)) && g.some((w) => DEF_RE.test(w) || /عليه|عليها/.test(w)));
         }
         if (!seg.found.claims) {
@@ -96,6 +99,7 @@ async function main() {
       windows: { noDefense, noClaims, supreme },
       minRulings: { default: MIN_RULINGS, supreme: MIN_RULINGS_SUPREME },
       defenseCandidates: top(defense, MIN_RULINGS),
+      replyVerbCandidates: top(replyVerbs, MIN_RULINGS, 120),
       claimsCandidates: top(claims, MIN_RULINGS),
       supremeOpeningPhrases: top(supremeStart, MIN_RULINGS_SUPREME),
       supremeBodyPhrases: top(supremeMid, MIN_RULINGS_SUPREME),

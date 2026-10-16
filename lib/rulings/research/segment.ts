@@ -13,7 +13,7 @@
  */
 import { stripTatweel } from "./anchors";
 
-export const SEGMENT_EXTRACTOR_VERSION = "segment-rules-v1";
+export const SEGMENT_EXTRACTOR_VERSION = "segment-rules-v2";
 
 export type SegmentType = "header" | "claims" | "defense" | "evidence" | "reasons" | "disposition" | "appeal" | "other";
 
@@ -39,6 +39,11 @@ const W = "(?:^|[^\\u0621-\\u064A])";
 
 /** بداية الدعوى (الوقائع). */
 const CLAIMS_START = [
+  // «تتحصل وقائع هذه الدعوى بالقدر اللازم لإصدار هذا الحكم في أن…» (٦٬٨١٨ حكمًا في الإحصاء المجمّع)
+  `تتحصل\\s+(?:وقائع|الوقائع)`,
+  `(?:ال)?وقائع\\s+تتحصل`,
+  `وقائع\\s+هذه\\s+(?:الدعو${Y}|القضي${H})`,
+  `بصحيف${H}\\s+دعو${Y}`,
   `تت?لخص\\s+(?:وقائع|الوقائع)`,
   `وتتلخص\\s+(?:وقائع|الوقائع)`,
   `${W}(?:تقدم|${A}قام|تقدمت|${A}قامت)\\s+(?:المدع${Y}|وكيل\\s+المدع${Y})`,
@@ -77,6 +82,13 @@ const APPEAL_AFTER = [
   `(?:محكم${H}|(?:ال)?دائر${H})\\s+(?:ال)?${A}ستئناف`,
   `(?:ت${A}ييد|نقض|تعديل)\\s+(?:ال)?حكم`,
 ];
+/**
+ * قالب أحكام الهيئة الدائمة (المحكمة العليا ومجلس القضاء الأعلى): «انعقدت الدائرة…»
+ * ثم «للنظر في طلب النقض…» ثم «وبعد الاطلاع على الأوراق ودراستها وبعد المداولة…» ثم «لذلك قررت الدائرة».
+ */
+const PANEL_CLAIMS = [`(?:وذلك\\s+)?للنظر\\s+ف${Y}\\s+طلب`, `ف${Y}\\s+طلب\\s+النقض`];
+const PANEL_REASONS = [`وبعد\\s+(?:ال)?اطلاع\\s+عل${Y}\\s+(?:ال${A}وراق|القضي${H}|ما\\s+تقدم)`, `وبعد\\s+المداول${H}`, `ودراستها\\s+وبعد`];
+
 /** الختام. */
 const CLOSING = [`وصل${Y}\\s+الله\\s+(?:وسلم\\s+)?عل${Y}\\s+نبينا`, `وبالله\\s+التوفيق`];
 
@@ -84,7 +96,13 @@ const rxs = (list: string[]) => list.map((s) => new RegExp(s, "gu"));
 const R = {
   claims: rxs(CLAIMS_START), defense: rxs(DEFENSE_START), reasons: rxs(REASONS_START),
   disposition: rxs(DISPOSITION), appeal: rxs(APPEAL_AFTER), closing: rxs(CLOSING),
+  panelClaims: rxs(PANEL_CLAIMS), panelReasons: rxs(PANEL_REASONS),
 };
+
+export interface SegmentOptions {
+  /** حكم من الهيئة الدائمة (court_type «أخرى»): قالب الطلب ← الأسباب ← القرار، بلا «إجابة». */
+  permanentPanel?: boolean;
+}
 
 /** مواضع (في النص المنقّى من الكشيدة) لكل تطابق، بعد تجاوز الفاصل البادئ. */
 function positions(text: string, res: RegExp[]): number[] {
@@ -101,7 +119,7 @@ function positions(text: string, res: RegExp[]): number[] {
 
 const firstAfter = (ps: number[], from: number, before = Infinity) => ps.find((p) => p >= from && p < before) ?? null;
 
-export function segmentRuling(original: string): Segmentation {
+export function segmentRuling(original: string, opts: SegmentOptions = {}): Segmentation {
   const { text, map } = stripTatweel(original ?? "");
   const n = text.length;
   const at = (p: number) => (p >= n ? original.length : map[p]);
@@ -112,9 +130,11 @@ export function segmentRuling(original: string): Segmentation {
   const disp = positions(text, R.disposition);
   const lateDisp = disp.filter((p) => p >= n * 0.5);
   const dispStart = lateDisp.length ? lateDisp[0] : disp.length ? disp[disp.length - 1] : null;
-  const claimsStart = firstAfter(positions(text, R.claims), 0, dispStart ?? n);
-  const defenseStart = firstAfter(positions(text, R.defense), claimsStart ?? 0, dispStart ?? n);
-  const reasonsStart = firstAfter(positions(text, R.reasons), defenseStart ?? claimsStart ?? 0, dispStart ?? n);
+  const panel = Boolean(opts.permanentPanel);
+  const claimsStart = firstAfter(positions(text, panel ? [...R.panelClaims, ...R.claims] : R.claims), 0, dispStart ?? n);
+  const defenseStart = panel ? null : firstAfter(positions(text, R.defense), claimsStart ?? 0, dispStart ?? n);
+  const reasonsStart = firstAfter(
+    positions(text, panel ? [...R.panelReasons, ...R.reasons] : R.reasons), defenseStart ?? claimsStart ?? 0, dispStart ?? n);
   const appealStart = dispStart !== null ? firstAfter(positions(text, R.appeal), dispStart + 20) : null;
   const closingStart = firstAfter(positions(text, R.closing), Math.max(dispStart ?? 0, appealStart ?? 0) + 1);
 
