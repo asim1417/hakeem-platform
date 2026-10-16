@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T07:27:35.221Z",
+  "measuredAt": "2026-10-16T07:31:32.352Z",
   "mode": "read-only (transaction_read_only=on)",
   "versions": {
     "before": "segment-rules-v3",
@@ -32,36 +32,38 @@
   },
   "v4": {
     "foundPct": {
-      "claims": 93.78,
-      "defense": 51.97,
-      "reasons": 96.37,
+      "claims": 96.47,
+      "defense": 52.04,
+      "reasons": 96.4,
       "disposition": 99.61,
       "appeal": 1.22,
       "other": 45.88
     },
-    "ruleOnlyPct": 91.31,
+    "ruleOnlyPct": 93.86,
     "structurePct": 100,
     "dispositionProcedural": 0,
     "headerShare": {
-      "median": 0.0584,
-      "p90": 0.1769,
-      "p99": 0.7933
+      "median": 0.0577,
+      "p90": 0.1584,
+      "p99": 0.7876
     },
-    "headerOver25": 3506,
-    "reasonsUnder100": 487,
+    "headerOver25": 2493,
+    "reasonsUnder100": 486,
     "dispositionOver5k": 34,
-    "headerOver5k": 122,
+    "headerOver5k": 30,
     "otherOver5k": 0
   },
   "changes": {
-    "anySegmentChanged": 31885,
+    "anySegmentChanged": 32602,
     "dispositionChanged": 25838,
     "dispositionLost": 39,
     "dispositionGained": 1415,
-    "reasonsStartChanged": 19217,
-    "claimsStartChanged": 2610,
-    "headerShrunk": 2644,
-    "headerGrew": 219,
+    "reasonsStartChanged": 19301,
+    "reasonsStartEarlier": 446,
+    "claimsFromFallback": 1687,
+    "claimsStartChanged": 4250,
+    "headerShrunk": 4086,
+    "headerGrew": 265,
     "v4StructureBroken": 0
   },
   "liveQaExamples": {
@@ -78,7 +80,8 @@
           "other": 59
         },
         "v4": {
-          "header": 2829,
+          "header": 203,
+          "claims": 2626,
           "defense": 1023,
           "reasons": 3050,
           "disposition": 57,
@@ -227,73 +230,73 @@
   },
   "bigHeaderDiagnostics": {
     "threshold": 0.25,
-    "rulings": 3506,
-    "withoutClaims": 2764,
+    "rulings": 2493,
+    "withoutClaims": 1737,
     "candidates": {
       "وفي الجلسة المنعقدة": {
-        "inBigHeader": 37,
-        "medianFirstShare": 0.2841,
-        "earlierThanClaimsElsewhere": 5
+        "inBigHeader": 1,
+        "medianFirstShare": 0.6633,
+        "earlierThanClaimsElsewhere": 1
       },
       "حيث تقدم": {
-        "inBigHeader": 3,
-        "medianFirstShare": 0.2432,
+        "inBigHeader": 2,
+        "medianFirstShare": 0.1677,
         "earlierThanClaimsElsewhere": 1
       },
       "تقدم/أقام … المدعي (≤٣ كلمات)": {
-        "inBigHeader": 116,
-        "medianFirstShare": 0.1789,
-        "earlierThanClaimsElsewhere": 102
+        "inBigHeader": 7,
+        "medianFirstShare": 0.0513,
+        "earlierThanClaimsElsewhere": 97
       },
       "فعل … دعواه": {
-        "inBigHeader": 46,
-        "medianFirstShare": 0.2932,
-        "earlierThanClaimsElsewhere": 10
+        "inBigHeader": 12,
+        "medianFirstShare": 0.139,
+        "earlierThanClaimsElsewhere": 8
       },
       "ادعى/ادعت": {
-        "inBigHeader": 150,
-        "medianFirstShare": 0.1369,
-        "earlierThanClaimsElsewhere": 36
+        "inBigHeader": 3,
+        "medianFirstShare": 0.1425,
+        "earlierThanClaimsElsewhere": 18
       },
       "صحيفة/لائحة دعوى": {
-        "inBigHeader": 747,
-        "medianFirstShare": 0.1781,
-        "earlierThanClaimsElsewhere": 134
+        "inBigHeader": 1,
+        "medianFirstShare": 0.2112,
+        "earlierThanClaimsElsewhere": 49
       },
       "وقائع الدعوى/القضية": {
-        "inBigHeader": 70,
-        "medianFirstShare": 0.0764,
-        "earlierThanClaimsElsewhere": 319
+        "inBigHeader": 44,
+        "medianFirstShare": 0.0782,
+        "earlierThanClaimsElsewhere": 336
       },
       "وقائع (أي سياق)": {
-        "inBigHeader": 1954,
-        "medianFirstShare": 0.0831,
-        "earlierThanClaimsElsewhere": 45323
+        "inBigHeader": 1000,
+        "medianFirstShare": 0.1188,
+        "earlierThanClaimsElsewhere": 46196
       },
       "ملخص الدعوى/الوقائع": {
         "inBigHeader": 3,
         "medianFirstShare": 0.1859,
-        "earlierThanClaimsElsewhere": 6
+        "earlierThanClaimsElsewhere": 4
       },
       "افتتحت/عقدت الجلسة": {
-        "inBigHeader": 356,
-        "medianFirstShare": 0.059,
-        "earlierThanClaimsElsewhere": 333
+        "inBigHeader": 7,
+        "medianFirstShare": 0.3612,
+        "earlierThanClaimsElsewhere": 265
       },
       "حضر … المدعي (≤٤ كلمات)": {
-        "inBigHeader": 1013,
-        "medianFirstShare": 0.1473,
-        "earlierThanClaimsElsewhere": 459
+        "inBigHeader": 112,
+        "medianFirstShare": 0.2397,
+        "earlierThanClaimsElsewhere": 342
       },
       "المدعي … يطلب": {
-        "inBigHeader": 136,
-        "medianFirstShare": 0.32,
-        "earlierThanClaimsElsewhere": 46
+        "inBigHeader": 47,
+        "medianFirstShare": 0.3148,
+        "earlierThanClaimsElsewhere": 44
       },
       "طلب(ات) المدعي": {
-        "inBigHeader": 139,
-        "medianFirstShare": 0.3282,
-        "earlierThanClaimsElsewhere": 20
+        "inBigHeader": 41,
+        "medianFirstShare": 0.3063,
+        "earlierThanClaimsElsewhere": 17
       }
     }
   }
