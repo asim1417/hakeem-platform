@@ -129,5 +129,25 @@ check("مناطق الحدود: لا شيء للحكم المكتمل، ومنط
   assert.ok(noReasons.slice(r.end).startsWith("لذلك حكمت"));
 });
 
+check("الترقيم يفصل الألفاظ ولا يلصقها", () => {
+  assert.deepEqual(queryTokens("عقد/إيجار التعويض،الضرر فسخ-العقد"), ["عقد", "إيجار", "التعويض", "الضرر", "فسخ", "العقد"]);
+});
+
+check("سابقة المستخدم تُحذف: «بالغبن» و«للغبن» تطابقان «الغبن»", () => {
+  assert.ok(tokenVariants("بالغبن").includes("الغبن"));
+  assert.ok(tokenVariants("للغبن").includes("غبن"));
+  assert.equal(findMatches("ثبوت الغبن", "للغبن").length, 1);
+});
+
+check("المطابقة توافق SQL في الأرقام الهندية والحروف اللاتينية", () => {
+  assert.equal(findMatches("المادة ٧٧ من النظام", "77").length, 1);
+  assert.equal(findMatches("شركة ABC المحدودة", "abc").length, 1);
+});
+
+check("الاستعلام الطويل جدًّا لا يُنتج tsquery ضخمًا", () => {
+  assert.equal(buildRulingTsQuery("ك".repeat(100000)), null);
+  assert.ok((buildRulingTsQuery("فسخ ".repeat(5000)) ?? "").length < 2000);
+});
+
 console.log(failed === 0 ? "✓ استعلام الأحكام ومقتطفاتها" : `✗ فشل ${failed}`);
 process.exit(failed === 0 ? 0 : 1);

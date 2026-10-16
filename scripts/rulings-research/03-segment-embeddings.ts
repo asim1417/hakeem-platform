@@ -20,6 +20,7 @@ import { buildSegmentChunks, segmentContentHash, SEGMENT_EMBED_VERSION, type Seg
 import { SEGMENT_EXTRACTOR_VERSION } from "../../lib/rulings/research/segment";
 import { redactPII } from "../../lib/modules/legal-core/rulings-search";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL, embedBatch } from "../../lib/modules/ai/embeddings";
+import { resolveWriteTarget } from "../../lib/rulings/research/write-target";
 
 const APPLY = process.argv.includes("--apply");
 const OUT = path.join(process.cwd(), "reports/rulings-research/03-segment-embeddings.data.json");
@@ -29,13 +30,6 @@ const EMBED_BATCH = 64; // مدخلات لكل نداء (≤ ٦٠٠٠ حرف ل�
 const CHARS_PER_TOKEN = Number(process.env.CHARS_PER_TOKEN || 2.5);
 const PRICE_PER_MTOK = Number(process.env.EMBED_PRICE_PER_MTOK || 0.02);
 
-const host = (u?: string) => {
-  try {
-    return u ? new URL(u).hostname.replace("-pooler", "") : "";
-  } catch {
-    return "";
-  }
-};
 
 interface Tally {
   rulings: number; withReasons: number; withDisposition: number; withNeither: number;
@@ -129,22 +123,8 @@ function resolveTarget(): { url: string; kind: "research" | "production"; approv
     console.error("🛑 MAX_EMBED_CALLS إلزامي (عدد موجب).");
     process.exit(1);
   }
-  const research = process.env.NEON_RESEARCH_DATABASE_URL;
-  if (research && process.env.CONFIRM_RESEARCH_WRITE === "YES") {
-    const prodHost = host(process.env.NEON_DATABASE_URL);
-    if (!/neon\.tech$/.test(host(research)) || (prodHost && host(research) === prodHost)) {
-      console.error("🛑 الهدف البحثي ليس فرع Neon مستقلًّا عن الإنتاج — رفضتُ الكتابة.");
-      process.exit(1);
-    }
-    return { url: research, kind: "research", approval: null };
-  }
-  const approval = (process.env.OWNER_APPROVAL_REF ?? "").trim();
-  if (process.env.CONFIRM_RUNTIME_DB_ALIGNMENT === "NEON_RUNTIME_CONFIRMED" && approval && process.env.DATABASE_URL) {
-    return { url: process.env.DATABASE_URL, kind: "production", approval };
-  }
-  console.error("🛑 الكتابة مقفولة: يلزم هدف بحثي (NEON_RESEARCH_DATABASE_URL + CONFIRM_RESEARCH_WRITE=YES) " +
-    "أو الإنتاج (CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED + OWNER_APPROVAL_REF).");
-  process.exit(1);
+  // الأقفال المشتركة (تفشل مغلقة إن لم يُعرف مضيف الإنتاج).
+  return resolveWriteTarget();
 }
 
 async function apply() {

@@ -139,8 +139,12 @@ function rulingFilters(opts: RulingSearchOptions, params: unknown[], metaReady =
     conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
   }
   if (opts.yearH && Number.isInteger(opts.yearH) && metaReady) {
+    // الحكم الذي لا صف له في ruling_meta (استُورد بعد آخر تشغيل) يُطابَق بنص التاريخ، فلا يختفي.
     params.push(opts.yearH);
-    conds.push(`"id" IN (SELECT "case_id" FROM "ruling_meta" WHERE "year_h" = $${params.length}::int)`);
+    const yi = params.length;
+    params.push(`%${opts.yearH}%`);
+    conds.push(`("id" IN (SELECT "case_id" FROM "ruling_meta" WHERE "year_h" = $${yi}::int)
+      OR (NOT EXISTS (SELECT 1 FROM "ruling_meta" m WHERE m."case_id" = "id") AND (regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})))`);
   } else if (opts.yearH && Number.isInteger(opts.yearH)) {
     params.push(`%${opts.yearH}%`);
     conds.push(`(regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})`);
@@ -301,7 +305,6 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const segCandidates = segsReady
     ? `SELECT s."id", 1 AS prio FROM (
          SELECT DISTINCT "ruling_id" AS "id" FROM segm LIMIT ${RANK_CANDIDATES}) s
-       ${filters.length ? `WHERE s."id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}
        UNION ALL `
     : "";
   // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
@@ -321,7 +324,8 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   }>>(
     `${segsReady ? `WITH segm AS MATERIALIZED (
        SELECT "ruling_id" FROM "ruling_segments"
-       WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq} AND "part" IN ('reasons','disposition')),
+       WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq} AND "part" IN ('reasons','disposition')
+       ${filters.length ? `AND "ruling_id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}),
      ` : "WITH "}u AS (${segCandidates}(SELECT "id", 0 AS prio FROM "judicial_cases" WHERE ${where} LIMIT ${segsReady ? FALLBACK_CANDIDATES : RANK_CANDIDATES})),
           c AS (SELECT "id", max(prio) AS prio FROM u GROUP BY "id")
      SELECT j."id",j."decisionNo",j."caseNo",j."court",j."cityName",j."decisionDateText",j."caseDateText",j."judgmentTitle",j."judgmentText",
@@ -372,9 +376,9 @@ export function rulingHitToMerged(h: RulingHit): MergedResult {
     snippet: h.snippet,
     confidence: h.score,
     sources: ["postgres"],
-    reasons: [`مطابقة كلمات كاملة في ${h.matchedIn === "reasons" ? "الأسباب" : h.matchedIn === "disposition" ? "المنطوق" : "نص الحكم"}`],
+    reasons: [`${h.matchedBy === "semantic" ? "تشابه بالمعنى" : "مطابقة كلمات كاملة"} في ${h.matchedIn === "reasons" ? "الأسباب" : h.matchedIn === "disposition" ? "المنطوق" : "نص الحكم"}`],
     meta: {
-      matchedBy: "lexical",
+      matchedBy: h.matchedBy === "semantic" ? "semantic" : "lexical",
       sourceType: "ruling",
       caseNo: h.caseNo,
       decisionNo: h.decisionNo,
