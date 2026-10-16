@@ -6,7 +6,7 @@
 المخرج: data/phase1-2026-10-16/{unit_versions,unit_status,work_status,excluded}.jsonl و sql/*.sql و summary.json
 
 القواعد:
-- نظام العمل مستبعد كله حتى تدقيق ترقيمه (المرحلة 2).
+- نظام العمل: مواده حتى 228 تُحقن بمطابقة النص (ثبت تطابق الترقيم فيها)، وباب العقوبات (229+) ينتظر المالك.
 - المادة تُحقن فقط إن طابق نصها في حكيم نص الهيئة الأصلي (بعد حذف عنوان المادة والمسافات والترقيم)،
   وإلا تُستبعد بسببها. الحارس نفسه داخل SQL: لا يُدرج الصف إلا إن بقي md5(content) كما في اللقطة.
 - نسخة لكل خطوة تركيب بتاريخ أداتها؛ والخطوة التي في ملاحظتها عبارة نفاذ صريحة تسري من تاريخ النفاذ.
@@ -56,9 +56,37 @@ def core(t):
     return re.sub(r"[^ء-ي0-9]", "", norm(t))
 
 
+INSTR_IN_NOTE = re.compile(r"(?:ال)?(مرسوم الملكي|المرسوم الملكي|مرسوم ملكي|الأمر الملكي|أمر ملكي|قرار مجلس الوزراء)\s*(?:رقم\s*)?\(?\s*((?:م\s*/\s*)?\d+)\s*\)?\s*(?:و|ب)تاريخ\s*([\d/ ]+)\s*هـ")
+
+
+def instr_from_note(text):
+    m = INSTR_IN_NOTE.search(text or "")
+    if not m:
+        return None
+    kind = "مرسوم ملكي" if "مرسوم" in m[1] else "أمر ملكي" if "أمر" in m[1] else "قرار مجلس الوزراء"
+    no, date = re.sub(r"\s", "", m[2]), re.sub(r"\s", "", m[3])
+    return f"{kind} رقم {no} وتاريخ {date}هـ"
+
+
 def instr(step):
+    if not step.get("instrument_no") or not step.get("instrument_hijri"):
+        found = instr_from_note(step.get("note_text"))
+        if found:
+            return found
     k = KIND.get(step.get("instrument") or "", step.get("instrument") or "")
     return f"{k} رقم {step.get('instrument_no') or '?'} وتاريخ {step.get('instrument_hijri')}هـ".strip()
+
+
+def fmt_boe(ins):
+    """أول أداة إصدار من بطاقة الهيئة: [نوع، رقم، تاريخ YYYY-MM-DD]."""
+    if not ins:
+        return None
+    kind, no, date = ins[0]
+    k = "مرسوم ملكي" if kind == "royal" else "قرار مجلس الوزراء"
+    if date:
+        y, m, d = date.split("-")
+        return f"{k} رقم {no} وتاريخ {int(y)}/{int(m)}/{int(d)}هـ"
+    return f"{k} رقم {no}"
 
 
 def q(v):
@@ -85,8 +113,10 @@ def main():
             continue
         why = None
         a = prod.get(key)
-        if r["system_id"] == LABOR:
-            why = "نظام العمل: ينتظر تدقيق الترقيم (المرحلة 2)"
+        # نظام العمل: ترقيمه مزاح في باب العقوبات (229 فما بعد)؛ مطابقة النص أدناه تحرس هوية كل مادة،
+        # وتُستبعد ما بعد 228 صراحةً حتى قرار المالك في جدول الإزاحة.
+        if r["system_id"] == LABOR and r["article"] > 228:
+            why = "نظام العمل: باب العقوبات مزاح الترقيم — ينتظر قرار المالك"
         elif not a:
             why = "المادة غير موجودة في لقطة حكيم"
         elif core(a["content"]) != core(r["base_body"]):
@@ -99,7 +129,7 @@ def main():
         if r["compose_status"] == "repeal":
             n = r["notes"][-1]
             status.append({"id": sid("unit", a["id"], "ملغاة", n["id"]), "object_type": "unit", "object_id": a["id"],
-                           "verified_status": "ملغاة", "evidence_instrument": f"{n['instrument_hijri']}هـ",
+                           "verified_status": "ملغاة", "evidence_instrument": instr_from_note(n["text"]),
                            "evidence_url": r["boe_url"], "evidence_quote": (n["text"] or "")[:500], "method": "rule",
                            "verified_by": RUN, "_guard_md5": guard, "_law": r["law"], "_article": r["article"]})
             continue
@@ -126,7 +156,7 @@ def main():
             excluded.append({"law": o["boe_name"], "article": None, "status": "work", "reason": f"حالة الهيئة «{o['boe_status']}» لا تقابل حالة"})
             continue
         work.append({"id": sid("work", o["suggested_id"], target, RUN), "object_type": "work", "object_id": o["suggested_id"],
-                     "verified_status": target, "evidence_instrument": None, "evidence_url": o["boe_url"],
+                     "verified_status": target, "evidence_instrument": fmt_boe(o["boe_instruments"]), "evidence_url": o["boe_url"],
                      "evidence_quote": f"حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: {o['boe_status']} (رُصدت 28/9/2026)",
                      "method": "rule", "verified_by": RUN, "_law": o["boe_name"]})
 
@@ -146,19 +176,27 @@ def main():
         body.append("COMMIT;")
         (OUT / "sql" / f"{name}.sql").write_text("\n".join(body) + "\n", encoding="utf-8")
 
+    # بصمة الصف: md5 لقيمه كما كُتبت في SQL؛ أي تحريف في النقل يُسقط الصف فيفشل تأكيد العدد وتُلغى الدفعة.
+    def row_md5(*vals):
+        return md5("\x1f".join("" if v is None else str(v) for v in vals))
+
     sql_file("unit_versions", versions, lambda r: (
         "INSERT INTO unit_version (id,unit_id,body,valid_from,evidence_instrument,evidence_url,evidence_quote)\n"
-        f"SELECT {q(r['id'])},{q(r['unit_id'])},{q(r['body'])},{q(r['valid_from'])}::timestamptz,{q(r['evidence_instrument'])},"
-        f"{q(r['evidence_url'])},{q(r['evidence_quote'])}\n"
-        f"WHERE (SELECT md5(content) FROM legal_articles WHERE id={q(r['unit_id'])}) = {q(r['_guard_md5'])}\n"
+        f"SELECT * FROM (SELECT {q(r['id'])} id,{q(r['unit_id'])} unit_id,{q(r['body'])} body,{q(r['valid_from'])}::timestamptz valid_from,"
+        f"{q(r['evidence_instrument'])} ei,{q(r['evidence_url'])} eu,{q(r['evidence_quote'])} eq) v\n"
+        f"WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME ZONE 'UTC','YYYY-MM-DD'),coalesce(v.ei,''),coalesce(v.eu,''),coalesce(v.eq,''))) = "
+        f"{q(row_md5(r['id'], r['unit_id'], r['body'], r['valid_from'], r['evidence_instrument'] or '', r['evidence_url'] or '', r['evidence_quote'] or ''))}\n"
+        f"  AND (SELECT md5(content) FROM legal_articles WHERE id={q(r['unit_id'])}) = {q(r['_guard_md5'])}\n"
         f"  AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id={q(r['unit_id'])} AND valid_from={q(r['valid_from'])}::timestamptz);"))
     ver_insert = lambda r: (  # noqa: E731
         "INSERT INTO verification (id,object_type,object_id,verified_status,evidence_instrument,evidence_url,evidence_quote,method,verified_by)\n"
-        f"SELECT {q(r['id'])},{q(r['object_type'])},{q(r['object_id'])},{q(r['verified_status'])},{q(r['evidence_instrument'])},"
-        f"{q(r['evidence_url'])},{q(r['evidence_quote'])},{q(r['method'])},{q(r['verified_by'])}\n"
-        + (f"WHERE (SELECT md5(content) FROM legal_articles WHERE id={q(r['object_id'])}) = {q(r['_guard_md5'])};"
+        f"SELECT * FROM (SELECT {q(r['id'])} id,{q(r['object_type'])} ot,{q(r['object_id'])} oi,{q(r['verified_status'])} vs,{q(r['evidence_instrument'])} ei,"
+        f"{q(r['evidence_url'])} eu,{q(r['evidence_quote'])} eq,{q(r['method'])} me,{q(r['verified_by'])} vb) v\n"
+        f"WHERE md5(concat_ws(chr(31),v.id,v.ot,v.oi,v.vs,coalesce(v.ei,''),coalesce(v.eu,''),coalesce(v.eq,''),v.me,v.vb)) = "
+        f"{q(row_md5(r['id'], r['object_type'], r['object_id'], r['verified_status'], r['evidence_instrument'] or '', r['evidence_url'] or '', r['evidence_quote'] or '', r['method'], r['verified_by']))}\n"
+        + (f"  AND (SELECT md5(content) FROM legal_articles WHERE id={q(r['object_id'])}) = {q(r['_guard_md5'])};"
            if r["object_type"] == "unit" else
-           f"WHERE NOT EXISTS (SELECT 1 FROM verification WHERE object_type='work' AND object_id={q(r['object_id'])});"))
+           f"  AND NOT EXISTS (SELECT 1 FROM verification WHERE object_type='work' AND object_id={q(r['object_id'])});"))
     sql_file("unit_status", status, ver_insert)
     sql_file("work_status", work, ver_insert)
 
