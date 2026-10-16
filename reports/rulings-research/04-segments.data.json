@@ -1,19 +1,20 @@
 {
-  "measuredAt": "2026-10-16T06:44:26.539Z",
-  "mode": "dry-run",
-  "segmentVersion": "segment-rules-v3",
+  "measuredAt": "2026-10-16T10:03:55.386Z",
+  "mode": "apply",
+  "segmentVersion": "segment-rules-v4",
   "rulings": 51105,
-  "rows": 239206,
+  "rows": 251238,
   "byPart": {
     "header": 51105,
-    "claims": 47387,
-    "reasons": 39206,
-    "disposition": 49528,
-    "other": 23531,
-    "defense": 26523,
-    "appeal": 1926
+    "claims": 49302,
+    "reasons": 49263,
+    "disposition": 50904,
+    "other": 23447,
+    "defense": 26594,
+    "appeal": 623
   },
-  "indexedChars": 141969929,
-  "written": 0,
-  "skipped": 0
+  "indexedChars": 106235690,
+  "written": 251238,
+  "skipped": 0,
+  "target": "production"
 }
