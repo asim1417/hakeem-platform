@@ -19,6 +19,7 @@ import { buildArticleCitation } from "@/lib/modules/legal-core/intelligence";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { rulingHitToMerged, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
 import { queryNormative } from "../substrate/queries";
 import type { NormativeModality } from "../substrate/normative";
 
@@ -51,7 +52,16 @@ async function hybridByType(query: string, type: "ruling" | "principle", limit: 
     return fail<MergedResult[]>([], `hybrid.${type}`, `تعذّر البحث: ${(e as Error).message}`);
   }
 }
-export const search_rulings = (query: string, limit = 6) => hybridByType(query, "ruling", limit);
+// الأحكام من مسارها المستقل (لا الهجين): لا تزاحمها المواد، والمقتطف من الأسباب أو المنطوق.
+export async function search_rulings(query: string, limit = 6): Promise<ToolResult<MergedResult[]>> {
+  try {
+    const r = await searchRulingsDirect({ query, limit });
+    const items = r.hits.map(rulingHitToMerged);
+    return ok(items, "judicial_cases.search_norm", items.length ? 0.85 : 0.4, items.length ? undefined : "لا نتائج من هذا النوع");
+  } catch (e) {
+    return fail<MergedResult[]>([], "judicial_cases.search_norm", `تعذّر بحث الأحكام: ${(e as Error).message}`);
+  }
+}
 export const search_principles = (query: string, limit = 6) => hybridByType(query, "principle", limit);
 
 export async function semantic_search(query: string, limit = 8): Promise<ToolResult<LegalCoreResult[]>> {

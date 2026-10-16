@@ -9,17 +9,18 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
-import { redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { extractHijriYear, redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
-/** يشتقّ سنة هجرية (٤ خانات) من نصّ التاريخ إن وُجد. */
-function hijriYear(text?: string | null): number | null {
-  if (!text) return null;
-  const m = text.match(/1[0-4]\d{2}/); // نطاق هجري معقول
-  return m ? Number.parseInt(m[0], 10) : null;
-}
+/** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
+const hijriYear = (text?: string | null): number | null => extractHijriYear(text);
 
-// ١) جلب نص حكم كاملًا بمعرّفه مع تقطيع (offset/next_offset).
-export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) {
+export const RULING_PARTS = ["header", "claims", "defense", "reasons", "disposition", "appeal", "other"] as const;
+export type RulingPartName = (typeof RULING_PARTS)[number];
+
+// ١) جلب نص حكم بمعرّفه مع تقطيع (offset/next_offset)، وخريطة أجزائه، وجلب جزء بعينه
+//    (part = reasons للأسباب، disposition للمنطوق…) كي لا يقرأ النموذج الديباجة أولًا.
+export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, part?: RulingPartName) {
   const r = await prisma.judicialCase.findUnique({
     where: { id: rulingId },
     select: { id: true, caseNo: true, decisionNo: true, court: true, decisionDateText: true, judgmentText: true },
@@ -27,9 +28,18 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) 
   if (!r) return { error: "الحكم غير موجود بهذا المعرّف", ruling_id: rulingId };
 
   const full = r.judgmentText ?? "";
-  const start = Math.max(0, Math.min(offset, full.length));
-  const chunk = full.slice(start, start + maxChars);
-  const nextOffset = start + chunk.length < full.length ? start + chunk.length : null;
+  const seg = segmentRuling(full);
+  const parts = seg.segments.map((s) => ({ type: s.type as SegmentType, start: s.start, end: s.end }));
+  // نطاق القراءة: الجزء المطلوب إن وُجد، وإلا النص كله.
+  const target = part ? parts.find((p) => p.type === part) : undefined;
+  if (part && !target) {
+    return { ruling_id: r.id, error: `لم يُعثر على جزء «${part}» في هذا الحكم بالقواعد`, parts };
+  }
+  const lo = target?.start ?? 0;
+  const hi = target?.end ?? full.length;
+  const start = Math.max(lo, Math.min(lo + offset, hi));
+  const chunk = full.slice(start, Math.min(hi, start + maxChars));
+  const nextOffset = start + chunk.length < hi ? start - lo + chunk.length : null;
 
   return {
     ruling_id: r.id,
@@ -37,9 +47,11 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) 
     court: r.court ?? null,
     year_h: hijriYear(r.decisionDateText),
     total_chars: full.length,
-    offset: start,
+    part: target?.type ?? null,
+    parts, // خريطة الأجزاء بإزاحاتها في النص الكامل
+    offset: start - lo, // داخل الجزء المطلوب (أو النص كله)
     returned_chars: chunk.length,
-    next_offset: nextOffset, // null = انتهى النص
+    next_offset: nextOffset, // null = انتهى الجزء/النص
     text: redactPII(chunk),
   };
 }
