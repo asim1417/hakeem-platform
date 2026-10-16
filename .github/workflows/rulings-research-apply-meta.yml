@@ -1,0 +1,97 @@
+name: Rulings Research — Phase 1 Apply (research Neon branch only)
+
+# يكتب research_snapshot_meta وruling_meta على **فرع Neon البحثي فقط** (لا الإنتاج). بموافقة المالك.
+#   ١) الهدف: السرّ NEON_RESEARCH_DATABASE_URL إن وُجد؛ وإلا يُنشأ/يُستعاد فرع research-<التاريخ>
+#      في مشروع Neon عبر واجهة Neon (يلزم السرّ NEON_API_KEY). لا يُطبع أي رابط (::add-mask::).
+#   ٢) حارس: يرفض إن طابق مضيفُ الهدف مضيفَ الإنتاج (NEON_DATABASE_URL).
+#   ٣) الهجرة الإضافية 20261016120000_rulings_research_meta على الفرع، ثم 01-meta.ts --apply.
+#   ٤) المخرج أعداد فقط (المستودع عام) يُودَع في الفرع.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [aman/rulings-research-layer]
+    paths:
+      - .github/workflows/rulings-research-apply-meta.yml
+
+concurrency:
+  group: rulings-research-apply
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  NEON_PROJECT_ID: misty-base-66693229
+  RESEARCH_BRANCH: research-2026-10-16
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      NEON_RESEARCH_DATABASE_URL: ${{ secrets.NEON_RESEARCH_DATABASE_URL }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="$NEON_DATABASE_URL" npm run db:generate
+      - name: "الهدف: فرع Neon البحثي"
+        run: |
+          set -euo pipefail
+          target="${NEON_RESEARCH_DATABASE_URL:-}"
+          if [ -z "$target" ]; then
+            if [ -z "${NEON_API_KEY:-}" ]; then
+              echo "::error title=لا هدف بحثي::لا السرّ NEON_RESEARCH_DATABASE_URL ولا NEON_API_KEY مضبوطان. أنشئ فرع ${RESEARCH_BRANCH} من لوحة Neon وأضف رابطه سرًّا، أو أضف مفتاح Neon API."
+              exit 1
+            fi
+            api="https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}"
+            auth=(-H "Authorization: Bearer ${NEON_API_KEY}" -H "Accept: application/json")
+            bid=$(curl -sf "${auth[@]}" "$api/branches" | jq -r --arg n "$RESEARCH_BRANCH" '.branches[] | select(.name==$n) | .id' | head -1)
+            if [ -z "$bid" ]; then
+              bid=$(curl -sf "${auth[@]}" -H "Content-Type: application/json" -X POST "$api/branches" \
+                -d "{\"branch\":{\"name\":\"${RESEARCH_BRANCH}\"},\"endpoints\":[{\"type\":\"read_write\"}]}" | jq -r '.branch.id')
+              echo "::notice title=فرع Neon::أُنشئ الفرع ${RESEARCH_BRANCH} (${bid}) من الفرع الافتراضي."
+            else
+              echo "::notice title=فرع Neon::الفرع ${RESEARCH_BRANCH} موجود (${bid})."
+            fi
+            for i in $(seq 1 30); do
+              target=$(curl -sf "${auth[@]}" "$api/connection_uri?branch_id=${bid}&database_name=neondb&role_name=neondb_owner&pooled=false" | jq -r '.uri // empty') && [ -n "$target" ] && break
+              sleep 10
+            done
+            [ -z "$target" ] && { echo "::error::تعذّر الحصول على رابط الفرع."; exit 1; }
+          fi
+          echo "::add-mask::$target"
+          th=$(printf '%s' "$target" | sed -E 's#.*@([^/:?]+).*#\1#; s#-pooler##')
+          ph=$(printf '%s' "$NEON_DATABASE_URL" | sed -E 's#.*@([^/:?]+).*#\1#; s#-pooler##')
+          echo "$th" | grep -qiE 'neon\.tech$' || { echo "::error::الهدف ليس Neon."; exit 1; }
+          [ "$th" = "$ph" ] && { echo "::error::الهدف هو مضيف الإنتاج — أوقفتُ الكتابة."; exit 1; }
+          echo "TARGET_URL=$target" >> "$GITHUB_ENV"
+          echo "الهدف: فرع بحثي مستقل (مضيف مختلف عن الإنتاج)."
+      - name: "تثبيت psql"
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends postgresql-client
+      - name: "الهجرة الإضافية على الفرع البحثي"
+        run: psql "$TARGET_URL" -v ON_ERROR_STOP=1 --no-psqlrc -q -f prisma/migrations/20261016120000_rulings_research_meta/migration.sql
+      - name: "كتابة ruling_meta على الفرع البحثي"
+        run: |
+          out=$(NEON_RESEARCH_DATABASE_URL="$TARGET_URL" CONFIRM_RESEARCH_WRITE=YES RESEARCH_SNAPSHOT_ID="$RESEARCH_BRANCH" \
+            npx tsx scripts/rulings-research/01-meta.ts --apply)
+          echo "$out" | tail -2
+          echo "::notice title=ruling_meta::$(printf '%s' "$out" | tail -1)"
+      - name: "تحقق"
+        run: |
+          r=$(psql "$TARGET_URL" -At --no-psqlrc -c "SELECT (SELECT count(*) FROM ruling_meta)||' rows · year_h '||(SELECT count(*) FROM ruling_meta WHERE year_h IS NOT NULL)||' · snapshot '||(SELECT id||' '||rulings_count FROM research_snapshot_meta ORDER BY taken_at DESC LIMIT 1)")
+          echo "::notice title=تحقق الفرع البحثي::$r"
+      - name: "إيداع الأعداد"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/rulings-research/01-meta.data.json
+          git diff --cached --quiet && exit 0
+          git commit -m "data(rulings-research): phase 1 ruling_meta applied on research branch (run ${GITHUB_RUN_ID})"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
