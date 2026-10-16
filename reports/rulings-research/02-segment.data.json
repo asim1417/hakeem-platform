@@ -1,0 +1,272 @@
+{
+  "measuredAt": "2026-10-16T01:18:47.721Z",
+  "extractorVersion": "segment-rules-v1",
+  "mode": "dry-run",
+  "all": {
+    "rows": 51105,
+    "ruleOnly": {
+      "n": 27705,
+      "pct": 54.21
+    },
+    "needsModel": {
+      "n": 23400,
+      "pct": 45.79
+    },
+    "structure": {
+      "contiguousPct": 100,
+      "orderedPct": 100
+    },
+    "foundPct": {
+      "claims": 73.32,
+      "defense": 35.36,
+      "reasons": 76.33,
+      "disposition": 96.91,
+      "appeal": 3.77,
+      "other": 46.04
+    },
+    "medianShareOfText": {
+      "header": 0.08,
+      "claims": 0.371,
+      "defense": 0.156,
+      "reasons": 0.382,
+      "disposition": 0.079,
+      "appeal": 0.133,
+      "other": 0.014
+    },
+    "dispositionStartDeciles": [
+      4,
+      33,
+      45,
+      92,
+      145,
+      6123,
+      5202,
+      4668,
+      7299,
+      25917
+    ]
+  },
+  "byCourtType": {
+    "تجارية": {
+      "rows": 47144,
+      "ruleOnly": {
+        "n": 26377,
+        "pct": 55.95
+      },
+      "needsModel": {
+        "n": 20767,
+        "pct": 44.05
+      },
+      "structure": {
+        "contiguousPct": 100,
+        "orderedPct": 100
+      },
+      "foundPct": {
+        "claims": 75.4,
+        "defense": 35.79,
+        "reasons": 77.03,
+        "disposition": 96.98,
+        "appeal": 3.71,
+        "other": 44.5
+      },
+      "medianShareOfText": {
+        "header": 0.076,
+        "claims": 0.374,
+        "defense": 0.153,
+        "reasons": 0.386,
+        "disposition": 0.081,
+        "appeal": 0.138,
+        "other": 0.012
+      },
+      "dispositionStartDeciles": [
+        3,
+        32,
+        44,
+        81,
+        130,
+        5741,
+        4916,
+        3746,
+        6255,
+        24771
+      ]
+    },
+    "عامة": {
+      "rows": 2377,
+      "ruleOnly": {
+        "n": 1281,
+        "pct": 53.89
+      },
+      "needsModel": {
+        "n": 1096,
+        "pct": 46.11
+      },
+      "structure": {
+        "contiguousPct": 100,
+        "orderedPct": 100
+      },
+      "foundPct": {
+        "claims": 77.37,
+        "defense": 50.02,
+        "reasons": 73.29,
+        "disposition": 95.41,
+        "appeal": 4.67,
+        "other": 40.93
+      },
+      "medianShareOfText": {
+        "header": 0.094,
+        "claims": 0.295,
+        "defense": 0.19,
+        "reasons": 0.374,
+        "disposition": 0.099,
+        "appeal": 0.076,
+        "other": 0.017
+      },
+      "dispositionStartDeciles": [
+        1,
+        1,
+        1,
+        11,
+        15,
+        373,
+        271,
+        177,
+        389,
+        1029
+      ]
+    },
+    "عمالية": {
+      "rows": 3,
+      "ruleOnly": {
+        "n": 1,
+        "pct": 33.33
+      },
+      "needsModel": {
+        "n": 2,
+        "pct": 66.67
+      },
+      "structure": {
+        "contiguousPct": 100,
+        "orderedPct": 100
+      },
+      "foundPct": {
+        "claims": 100,
+        "defense": 66.67,
+        "reasons": 66.67,
+        "disposition": 66.67,
+        "appeal": 0,
+        "other": 33.33
+      },
+      "medianShareOfText": {
+        "header": 0.131,
+        "claims": 0.269,
+        "defense": 0.119,
+        "reasons": 0.608,
+        "disposition": 0.469,
+        "appeal": null,
+        "other": 0.008
+      },
+      "dispositionStartDeciles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "أخرى": {
+      "rows": 1579,
+      "ruleOnly": {
+        "n": 46,
+        "pct": 2.91
+      },
+      "needsModel": {
+        "n": 1533,
+        "pct": 97.09
+      },
+      "structure": {
+        "contiguousPct": 100,
+        "orderedPct": 100
+      },
+      "foundPct": {
+        "claims": 5.07,
+        "defense": 0.38,
+        "reasons": 60.04,
+        "disposition": 97.34,
+        "appeal": 4.18,
+        "other": 100
+      },
+      "medianShareOfText": {
+        "header": 0.703,
+        "claims": 0.392,
+        "defense": 0.195,
+        "reasons": 0.117,
+        "disposition": 0.037,
+        "appeal": 0.074,
+        "other": 0.161
+      },
+      "dispositionStartDeciles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        14,
+        745,
+        654,
+        117
+      ]
+    },
+    "جزائية": {
+      "rows": 2,
+      "ruleOnly": {
+        "n": 0,
+        "pct": 0
+      },
+      "needsModel": {
+        "n": 2,
+        "pct": 100
+      },
+      "structure": {
+        "contiguousPct": 100,
+        "orderedPct": 100
+      },
+      "foundPct": {
+        "claims": 100,
+        "defense": 100,
+        "reasons": 0,
+        "disposition": 100,
+        "appeal": 0,
+        "other": 0
+      },
+      "medianShareOfText": {
+        "header": 0.101,
+        "claims": 0.399,
+        "defense": 0.462,
+        "reasons": null,
+        "disposition": 0.488,
+        "appeal": null,
+        "other": null
+      },
+      "dispositionStartDeciles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "note": "دقة الحدود تُقاس على العيّنة الذهبية (المرحلة السادسة)؛ هذه أعداد تغطية وبنية فقط."
+}
