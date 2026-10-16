@@ -1,0 +1,79 @@
+{
+  "measuredAt": "2026-10-16T06:44:21.379Z",
+  "mode": "dry-run (no model calls)",
+  "segmentVersion": "segment-rules-v3",
+  "rulings": 51105,
+  "needsModel": 15677,
+  "needsModelPct": 30.68,
+  "regions": {
+    "claims": 3714,
+    "reasons": 11899,
+    "disposition": 1577
+  },
+  "calls": 15677,
+  "regionChars": 30030654,
+  "regionsCappedAt": {
+    "cap": 12000,
+    "count": 59
+  },
+  "estimate": [
+    {
+      "charsPerToken": 1.5,
+      "inputTokens": 29426636,
+      "outputTokens": 1375200,
+      "usd": {
+        "claude-haiku-4-5": {
+          "standard": 36.3,
+          "batch": 18.15
+        },
+        "claude-haiku-5-5": {
+          "standard": 3.63,
+          "batch": 1.82
+        },
+        "claude-sonnet-5-5": {
+          "standard": 72.61,
+          "batch": 36.3
+        }
+      }
+    },
+    {
+      "charsPerToken": 2,
+      "inputTokens": 24421527,
+      "outputTokens": 1375200,
+      "usd": {
+        "claude-haiku-4-5": {
+          "standard": 31.3,
+          "batch": 15.65
+        },
+        "claude-haiku-5-5": {
+          "standard": 3.13,
+          "batch": 1.56
+        },
+        "claude-sonnet-5-5": {
+          "standard": 62.6,
+          "batch": 31.3
+        }
+      }
+    },
+    {
+      "charsPerToken": 3,
+      "inputTokens": 19416418,
+      "outputTokens": 1375200,
+      "usd": {
+        "claude-haiku-4-5": {
+          "standard": 26.29,
+          "batch": 13.15
+        },
+        "claude-haiku-5-5": {
+          "standard": 2.63,
+          "batch": 1.31
+        },
+        "claude-sonnet-5-5": {
+          "standard": 52.58,
+          "batch": 26.29
+        }
+      }
+    }
+  ],
+  "note": "التكلفة بلا تخبئة التعليمات الثابتة؛ التخبئة تخفّضها قليلًا. عدد الرموز يُقاس بـ count_tokens قبل أي تنفيذ."
+}

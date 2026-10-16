@@ -115,14 +115,33 @@ async function hasSearchNormColumn(): Promise<boolean> {
   return _hasSearchNorm;
 }
 
-/** شروط المحكمة والسنة الهجرية (تُضاف معاملاتها إلى params). */
-function rulingFilters(opts: RulingSearchOptions, params: unknown[]): string[] {
+// جداول طبقة الأحكام البحثية (إضافية): تُستعمل متى وُجدت وفيها صفوف، وإلّا يبقى المسار القديم.
+const _ready = new Map<string, { at: number; ok: boolean }>();
+async function tableReady(table: "ruling_meta" | "ruling_segments" | "ruling_segment_embeddings"): Promise<boolean> {
+  const hit = _ready.get(table);
+  if (hit && Date.now() - hit.at < 10 * 60_000) return hit.ok;
+  const r = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
+    `SELECT EXISTS (SELECT 1 FROM "${table}" LIMIT 1) AS ok`,
+  ).catch(() => [{ ok: false }]);
+  const ok = Boolean(r?.[0]?.ok);
+  _ready.set(table, { at: Date.now(), ok });
+  return ok;
+}
+
+/**
+ * شروط المحكمة والسنة الهجرية (تُضاف معاملاتها إلى params).
+ * السنة من ruling_meta.year_h (مستخرجة لـ٩٩٫٩٤٪ ومفهرسة) إن وُجد الجدول؛ وإلّا مطابقة نص التاريخ.
+ */
+function rulingFilters(opts: RulingSearchOptions, params: unknown[], metaReady = false): string[] {
   const conds: string[] = [];
   if (opts.court && opts.court.trim()) {
     params.push(`%${normalizeArabic(opts.court)}%`);
     conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
   }
-  if (opts.yearH && Number.isInteger(opts.yearH)) {
+  if (opts.yearH && Number.isInteger(opts.yearH) && metaReady) {
+    params.push(opts.yearH);
+    conds.push(`"id" IN (SELECT "case_id" FROM "ruling_meta" WHERE "year_h" = $${params.length}::int)`);
+  } else if (opts.yearH && Number.isInteger(opts.yearH)) {
     params.push(`%${opts.yearH}%`);
     conds.push(`(regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})`);
   }
@@ -139,15 +158,7 @@ const SEMANTIC_MIN = Number(process.env.RULINGS_SEMANTIC_MIN || 0.42);
 const SEMANTIC_MIN_TOKENS = Number(process.env.RULINGS_SEMANTIC_MIN_TOKENS || 3);
 const RRF_K = 60;
 const SEMANTIC_POOL = 60;
-let _segReady: { at: number; ok: boolean } | null = null;
-async function segmentVectorsReady(): Promise<boolean> {
-  if (_segReady && Date.now() - _segReady.at < 10 * 60_000) return _segReady.ok;
-  const r = await prisma.$queryRawUnsafe<Array<{ ok: boolean }>>(
-    `SELECT EXISTS (SELECT 1 FROM "ruling_segment_embeddings" LIMIT 1) AS ok`,
-  ).catch(() => [{ ok: false }]);
-  _segReady = { at: Date.now(), ok: Boolean(r?.[0]?.ok) };
-  return _segReady.ok;
-}
+const segmentVectorsReady = () => tableReady("ruling_segment_embeddings");
 
 export interface SemanticCandidate { id: string; part: SegmentType; start: number; sim: number }
 
@@ -158,10 +169,19 @@ export async function semanticRulingCandidates(query: string, min = SEMANTIC_MIN
   if (!semanticSearchEnabled() || !(await segmentVectorsReady())) return [];
   const vec = await embedText(query);
   if (!vec) return [];
+  return nearestRulingSegments(vec, min);
+}
+
+/**
+ * أقرب الأحكام إلى متجه بأسبابها أو منطوقها (أفضل جزء لكل حكم). يعيد [] إن لم توجد متجهات الأجزاء.
+ * يستعمله المسار المستقل للأحكام والبحث الهجين المشترك (بدل المتجه القديم المبني من الديباجة).
+ */
+export async function nearestRulingSegments(vec: number[], min = SEMANTIC_MIN, pool = SEMANTIC_POOL): Promise<SemanticCandidate[]> {
+  if (!(await segmentVectorsReady())) return [];
   const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
   const rows = await prisma.$queryRawUnsafe<Array<{ ruling_id: string; part: string; start_char: number; sim: number }>>(
     `SELECT ruling_id, part, start_char, 1 - (embedding <=> $1::vector) AS sim
-     FROM "ruling_segment_embeddings" ORDER BY embedding <=> $1::vector LIMIT ${SEMANTIC_POOL}`, literal,
+     FROM "ruling_segment_embeddings" ORDER BY embedding <=> $1::vector LIMIT ${pool}`, literal,
   );
   const best = new Map<string, SemanticCandidate>();
   for (const r of rows) {
@@ -170,8 +190,11 @@ export async function semanticRulingCandidates(query: string, min = SEMANTIC_MIN
     const prev = best.get(r.ruling_id);
     if (!prev || sim > prev.sim) best.set(r.ruling_id, { id: r.ruling_id, part: r.part as SegmentType, start: Number(r.start_char), sim });
   }
-  return [...best.values()];
+  return [...best.values()].sort((a, b) => b.sim - a.sim);
 }
+
+/** هل متجهات الأسباب والمنطوق متاحة؟ (للبحث الهجين ليستبعد متجه الحكم القديم.) */
+export const rulingSegmentVectorsReady = () => segmentVectorsReady();
 
 /** الأعلى درجة أولًا؛ وعند التساوي ما طابق لفظًا ومعنًى معًا. */
 const byScore = (a: RulingHit, b: RulingHit) =>
@@ -197,7 +220,7 @@ async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: 
   const extra = [...bySem.values()].sort((a, b) => b.sim - a.sim).slice(0, limit);
   if (extra.length) {
     const params: unknown[] = [extra.map((c) => c.id)];
-    const conds = [`"id" = ANY($1::text[])`, ...rulingFilters(opts, params)];
+    const conds = [`"id" = ANY($1::text[])`, ...rulingFilters(opts, params, await tableReady("ruling_meta"))];
     const rows = await prisma.$queryRawUnsafe<Array<{
       id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
       cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
@@ -265,8 +288,20 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const tsqIdx = params.length;
   const tsq = tsQuery ? `to_tsquery('simple', $${tsqIdx})` : `plainto_tsquery('simple', $${tsqIdx})`;
   conds.push(`${tsv} @@ ${tsq}`);
-  conds.push(...rulingFilters(opts, params));
+  const [metaReady, segsReady] = await Promise.all([tableReady("ruling_meta"), tableReady("ruling_segments")]);
+  const filters = rulingFilters(opts, params, metaReady);
+  conds.push(...filters);
   const where = conds.join(" AND ");
+  // المرشحون: من ورد اللفظ في أسبابه أو منطوقه أولًا (ruling_segments.part_norm مفهرس)، ثم الباقي.
+  // كان الترتيب يُحسب على أول ٤٠٠ حكم يعيدها الفهرس كيفما اتفق؛ الآن تتقدّم الأحكام التي علّتها أو نتيجتها هي المسألة.
+  const segCandidates = segsReady
+    ? `SELECT s."id", 1 AS prio FROM (
+         SELECT DISTINCT "ruling_id" AS "id" FROM "ruling_segments"
+         WHERE "part" IN ('reasons','disposition') AND to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq}
+         LIMIT ${RANK_CANDIDATES}) s
+       ${filters.length ? `WHERE s."id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}
+       UNION ALL `
+    : "";
   // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
   const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
     ? semanticRulingCandidates(opts.query).catch(() => [])
@@ -282,11 +317,12 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
     cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
     judgmentTitle: string | null; judgmentText: string | null;
   }>>(
-    `WITH c AS (SELECT "id" FROM "judicial_cases" WHERE ${where} LIMIT ${RANK_CANDIDATES})
+    `WITH u AS (${segCandidates}(SELECT "id", 0 AS prio FROM "judicial_cases" WHERE ${where} LIMIT ${RANK_CANDIDATES})),
+          c AS (SELECT "id", max(prio) AS prio FROM u GROUP BY "id")
      SELECT j."id",j."decisionNo",j."caseNo",j."court",j."cityName",j."decisionDateText",j."caseDateText",j."judgmentTitle",j."judgmentText",
             ts_rank_cd(${tsv.replace(/"search_norm"|"judgmentText"|"judgmentTitle"/g, (m) => `j.${m}`)}, ${tsq}) AS rank
      FROM c JOIN "judicial_cases" j ON j."id" = c."id"
-     ORDER BY rank DESC, j."decisionDate" DESC NULLS LAST
+     ORDER BY c.prio DESC, rank DESC, j."decisionDate" DESC NULLS LAST
      LIMIT ${limit} OFFSET ${offset}`, ...params,
   ).catch(() => []);
   const [totalRow, rows] = await Promise.all([totalQ, rowsQ]);

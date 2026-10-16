@@ -4,6 +4,7 @@ import { embedText, semanticSearchEnabled } from "@/lib/modules/ai/embeddings";
 import { rankByCosine } from "@/lib/modules/legal-search/embedding-fallback";
 import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrieval";
 import { latestVectorSource } from "@/lib/modules/legal-search/vector-source";
+import { nearestRulingSegments, rulingSegmentVectorsReady } from "@/lib/modules/legal-core/rulings-search";
 import { resolveEntity, type EntityType } from "@/lib/modules/knowledge-graph/relations";
 import type { LegalEntityType, RawResult, SearchProvider, SearchQuery } from "./search-provider";
 
@@ -45,17 +46,29 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
   try {
     const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
     const take = Math.min(limit, 20);
+    // الأحكام: متجهات الأسباب والمنطوق (ruling_segment_embeddings) متى وُجدت، بدل متجه الحكم القديم
+    // المبني من أول ٨٬٠٠٠ حرف (الديباجة غالبًا) — فيُستبعد ذاك من هذا الاستعلام.
+    const segReady = await rulingSegmentVectorsReady().catch(() => false);
     const sqlFor = (from: string) =>
       `SELECT owner_type, owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
        FROM ${from}
-       WHERE embedding IS NOT NULL
+       WHERE embedding IS NOT NULL${segReady ? ` AND owner_type <> 'ruling'` : ""}
        ORDER BY embedding <=> '${literal}'::vector
        LIMIT ${take}`;
-    const rows = await prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
-      sqlFor(latestVectorSource()),
-    ).catch(() => prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
-      sqlFor("embeddings"),
-    ));
+    const [baseRows, segHits] = await Promise.all([
+      prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
+        sqlFor(latestVectorSource()),
+      ).catch(() => prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
+        sqlFor("embeddings"),
+      )),
+      segReady ? nearestRulingSegments(vec).catch(() => []) : Promise.resolve([]),
+    ]);
+    // عتبة الأحكام من قياس متجهات الأجزاء (RULINGS_SEMANTIC_MIN، 0.42)؛ وعتبة البقية كما هي.
+    const segIds = new Set(segHits.map((h) => h.id));
+    const rows = [
+      ...baseRows.filter((r) => !(r.owner_type === "ruling" && segIds.has(r.owner_id))),
+      ...segHits.slice(0, take).map((h) => ({ owner_type: "ruling", owner_id: h.id, score: h.sim, segment: true })),
+    ].sort((x, y) => Number(y.score) - Number(x.score)).slice(0, take);
 
     const results: RawResult[] = [];
     for (const row of rows) {
@@ -63,7 +76,8 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
       if (type !== "article" && type !== "ruling" && type !== "principle") continue;
       const score = Math.max(0, Math.min(1, Number(row.score)));
       // عتبة دنيا للتشابه الدلالي: تمنع ظهور نتائج بعيدة (٣٠٪–٤٠٪) كضجيج.
-      if (score < MIN_SEMANTIC_SCORE) continue;
+      // أحكام متجهات الأجزاء صُفّيت بعتبتها المقيسة في nearestRulingSegments.
+      if (score < MIN_SEMANTIC_SCORE && !("segment" in row)) continue;
       const entity = await resolveEntity(type, row.owner_id);
       if (!entity.exists) continue;
       results.push({
@@ -74,7 +88,7 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
         source: "vector",
         reason: `تشابه دلالي (${(score * 100).toFixed(0)}%)`,
         // نمرّر التشابه الخام (cosine) صراحةً كي تُشتقّ الثقة من التشابه الفعلي لا من رتبة RRF (الدفعة ١.٤).
-        meta: { matchedBy: "semantic", semanticSource: "embeddings_table", sourceType: type, similarity: score },
+        meta: { matchedBy: "semantic", semanticSource: "segment" in row ? "ruling_segment_embeddings" : "embeddings_table", sourceType: type, similarity: score },
       });
     }
     return results;

@@ -1,0 +1,19 @@
+{
+  "measuredAt": "2026-10-16T06:44:26.539Z",
+  "mode": "dry-run",
+  "segmentVersion": "segment-rules-v3",
+  "rulings": 51105,
+  "rows": 239206,
+  "byPart": {
+    "header": 51105,
+    "claims": 47387,
+    "reasons": 39206,
+    "disposition": 49528,
+    "other": 23531,
+    "defense": 26523,
+    "appeal": 1926
+  },
+  "indexedChars": 141969929,
+  "written": 0,
+  "skipped": 0
+}

@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { buildRulingExcerpts, buildRulingTsQuery, findMatches, matchKey, queryTokens, tokenVariants } from "../lib/modules/legal-core/ruling-excerpts";
 import { buildSegmentChunks, keepEnds, segmentContentHash, windows } from "../lib/rulings/research/segment-embeddings";
+import { boundaryRegions, segmentRows } from "../lib/rulings/research/segment-store";
 
 let failed = 0;
 const check = (name: string, fn: () => void) => {
@@ -108,6 +109,24 @@ check("نوافذ الأسباب الطويلة متجاورة على حدود �
 check("بصمة المتجه تتغير بالنموذج والنص", () => {
   assert.notEqual(segmentContentHash("أ", "m1"), segmentContentHash("أ", "m2"));
   assert.equal(segmentContentHash("أ", "m1"), segmentContentHash("أ", "m1"));
+});
+
+check("صفوف الأجزاء: متجاورة، وفهرسة لفظية للأسباب والمنطوق فقط", () => {
+  const rows = segmentRows("r1", ruling);
+  assert.deepEqual(rows.map((r) => r.part), ["header", "claims", "defense", "reasons", "disposition", "other"]);
+  for (const r of rows) assert.equal(Boolean(r.part_norm), r.part === "reasons" || r.part === "disposition", r.part);
+  assert.ok(rows.find((r) => r.part === "reasons")!.part_norm!.includes("الغبن"));
+  assert.equal(new Set(rows.map((r) => r.content_hash)).size, 1);
+});
+
+check("مناطق الحدود: لا شيء للحكم المكتمل، ومنطقة الأسباب وحدها عند فقدها", () => {
+  assert.deepEqual(boundaryRegions(ruling), []);
+  const noReasons = ruling.replace("وحيث إن", "إذ إن").replace("ولما كان", "وإذ كان");
+  const regions = boundaryRegions(noReasons);
+  assert.deepEqual(regions.map((r) => r.missing), ["reasons"]);
+  const r = regions[0];
+  assert.ok(noReasons.slice(r.start, r.end).startsWith("فأجاب قائلا"), noReasons.slice(r.start, r.start + 30));
+  assert.ok(noReasons.slice(r.end).startsWith("لذلك حكمت"));
 });
 
 console.log(failed === 0 ? "✓ استعلام الأحكام ومقتطفاتها" : `✗ فشل ${failed}`);
