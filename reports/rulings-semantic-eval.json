@@ -1,9 +1,9 @@
 {
-  "measuredAt": "2026-10-16T03:31:55.367Z",
+  "measuredAt": "2026-10-16T10:36:04.748Z",
   "summary": {
     "vectors": {
-      "chunks": 93440,
-      "rulings": 50981
+      "chunks": 102686,
+      "rulings": 51093
     },
     "terms": {
       "queries": 8,
@@ -17,22 +17,22 @@
         "semanticOnly": 0,
         "both": 0,
         "preambleSnippets": 0,
-        "maxMs": 1058
+        "maxMs": 2314
       }
     },
     "questions": {
       "queries": 10,
       "lexical": {
-        "withResults": 7,
-        "returned": 60
+        "withResults": 8,
+        "returned": 62
       },
       "withSemantic": {
         "withResults": 10,
-        "returned": 94,
-        "semanticOnly": 62,
-        "both": 1,
+        "returned": 100,
+        "semanticOnly": 66,
+        "both": 2,
         "preambleSnippets": 0,
-        "maxMs": 1428
+        "maxMs": 1800
       }
     }
   },
@@ -42,37 +42,33 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 1641,
+        "ms": 4418,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 3,
-          "reasons": 6,
-          "appeal": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 1058,
+        "ms": 2314,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 3,
-          "reasons": 6,
-          "appeal": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.393,
-        "top10": 0.291,
-        "median": 0.274,
+        "top1": 0.281,
+        "top10": 0.27,
+        "median": 0.269,
         "atLeast": {
-          "0.3": 7,
-          "0.35": 2,
+          "0.3": 0,
+          "0.35": 0,
           "0.4": 0,
           "0.45": 0,
           "0.5": 0
@@ -84,36 +80,34 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 702,
+        "ms": 981,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "disposition": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 798,
+        "ms": 715,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "disposition": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.444,
-        "top10": 0.272,
-        "median": 0.224,
+        "top1": 0.23,
+        "top10": 0.224,
+        "median": 0.222,
         "atLeast": {
-          "0.3": 4,
-          "0.35": 3,
-          "0.4": 1,
+          "0.3": 0,
+          "0.35": 0,
+          "0.4": 0,
           "0.45": 0,
           "0.5": 0
         }
@@ -124,38 +118,34 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 987,
+        "ms": 2318,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 1,
-          "reasons": 8,
-          "claims": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 841,
+        "ms": 1589,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 1,
-          "reasons": 8,
-          "claims": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.422,
-        "top10": 0.385,
-        "median": 0.371,
+        "top1": 0.344,
+        "top10": 0.312,
+        "median": 0.304,
         "atLeast": {
-          "0.3": 44,
-          "0.35": 41,
-          "0.4": 6,
+          "0.3": 26,
+          "0.35": 0,
+          "0.4": 0,
           "0.45": 0,
           "0.5": 0
         }
@@ -166,34 +156,32 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 569,
+        "ms": 1139,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "defense": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 519,
+        "ms": 807,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "defense": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.348,
-        "top10": 0.303,
-        "median": 0.286,
+        "top1": 0.338,
+        "top10": 0.306,
+        "median": 0.288,
         "atLeast": {
-          "0.3": 10,
+          "0.3": 11,
           "0.35": 0,
           "0.4": 0,
           "0.45": 0,
@@ -206,36 +194,32 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 887,
+        "ms": 1155,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 8,
-          "disposition": 1,
-          "defense": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 917,
+        "ms": 1096,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 8,
-          "disposition": 1,
-          "defense": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.339,
-        "top10": 0.263,
-        "median": 0.251,
+        "top1": 0.3,
+        "top10": 0.265,
+        "median": 0.255,
         "atLeast": {
-          "0.3": 3,
+          "0.3": 0,
           "0.35": 0,
           "0.4": 0,
           "0.45": 0,
@@ -248,36 +232,32 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 457,
+        "ms": 590,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 5,
-          "disposition": 2,
-          "claims": 3
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 322,
+        "ms": 615,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 5,
-          "disposition": 2,
-          "claims": 3
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.3,
-        "top10": 0.27,
-        "median": 0.258,
+        "top1": 0.29,
+        "top10": 0.271,
+        "median": 0.264,
         "atLeast": {
-          "0.3": 1,
+          "0.3": 0,
           "0.35": 0,
           "0.4": 0,
           "0.45": 0,
@@ -290,36 +270,32 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 594,
+        "ms": 1113,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "defense": 1,
-          "disposition": 5,
-          "reasons": 4
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 581,
+        "ms": 691,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "defense": 1,
-          "disposition": 5,
-          "reasons": 4
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.345,
-        "top10": 0.243,
-        "median": 0.232,
+        "top1": 0.338,
+        "top10": 0.252,
+        "median": 0.242,
         "atLeast": {
-          "0.3": 2,
+          "0.3": 3,
           "0.35": 0,
           "0.4": 0,
           "0.45": 0,
@@ -332,32 +308,30 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 1010,
+        "ms": 1879,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 4,
-          "reasons": 6
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 1018,
+        "ms": 1046,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 4,
-          "reasons": 6
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.299,
-        "top10": 0.26,
-        "median": 0.241,
+        "top1": 0.277,
+        "top10": 0.242,
+        "median": 0.237,
         "atLeast": {
           "0.3": 0,
           "0.35": 0,
@@ -372,98 +346,21 @@
       "kind": "question",
       "lexical": {
         "returned": 9,
-        "ms": 503,
+        "ms": 534,
         "matchedBy": {
           "lexical": 9
         },
         "matchedIn": {
-          "reasons": 7,
-          "disposition": 2
+          "reasons": 9
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 675,
+        "ms": 384,
         "matchedBy": {
           "lexical": 5,
           "semantic": 5
-        },
-        "matchedIn": {
-          "reasons": 7,
-          "disposition": 3
-        },
-        "preambleSnippets": 0
-      },
-      "simStats": {
-        "top1": 0.514,
-        "top10": 0.463,
-        "median": 0.438,
-        "atLeast": {
-          "0.3": 43,
-          "0.35": 43,
-          "0.4": 43,
-          "0.45": 12,
-          "0.5": 1
-        }
-      }
-    },
-    {
-      "q": "سؤال 2",
-      "kind": "question",
-      "lexical": {
-        "returned": 10,
-        "ms": 1046,
-        "matchedBy": {
-          "lexical": 10
-        },
-        "matchedIn": {
-          "reasons": 7,
-          "disposition": 3
-        },
-        "preambleSnippets": 0
-      },
-      "semantic": {
-        "returned": 10,
-        "ms": 1254,
-        "matchedBy": {
-          "lexical": 5,
-          "semantic": 5
-        },
-        "matchedIn": {
-          "reasons": 9,
-          "disposition": 1
-        },
-        "preambleSnippets": 0
-      },
-      "simStats": {
-        "top1": 0.604,
-        "top10": 0.536,
-        "median": 0.53,
-        "atLeast": {
-          "0.3": 39,
-          "0.35": 39,
-          "0.4": 39,
-          "0.45": 39,
-          "0.5": 39
-        }
-      }
-    },
-    {
-      "q": "سؤال 3",
-      "kind": "question",
-      "lexical": {
-        "returned": 0,
-        "ms": 69,
-        "matchedBy": {},
-        "matchedIn": {},
-        "preambleSnippets": 0
-      },
-      "semantic": {
-        "returned": 10,
-        "ms": 732,
-        "matchedBy": {
-          "semantic": 10
         },
         "matchedIn": {
           "reasons": 6,
@@ -472,15 +369,89 @@
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.519,
-        "top10": 0.467,
-        "median": 0.452,
+        "top1": 0.497,
+        "top10": 0.46,
+        "median": 0.446,
         "atLeast": {
-          "0.3": 37,
-          "0.35": 37,
-          "0.4": 37,
-          "0.45": 20,
-          "0.5": 3
+          "0.3": 38,
+          "0.35": 38,
+          "0.4": 38,
+          "0.45": 12,
+          "0.5": 0
+        }
+      }
+    },
+    {
+      "q": "سؤال 2",
+      "kind": "question",
+      "lexical": {
+        "returned": 10,
+        "ms": 1599,
+        "matchedBy": {
+          "lexical": 10
+        },
+        "matchedIn": {
+          "reasons": 10
+        },
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 1241,
+        "matchedBy": {
+          "both": 2,
+          "semantic": 4,
+          "lexical": 4
+        },
+        "matchedIn": {
+          "reasons": 10
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.557,
+        "top10": 0.523,
+        "median": 0.52,
+        "atLeast": {
+          "0.3": 29,
+          "0.35": 29,
+          "0.4": 29,
+          "0.45": 29,
+          "0.5": 29
+        }
+      }
+    },
+    {
+      "q": "سؤال 3",
+      "kind": "question",
+      "lexical": {
+        "returned": 0,
+        "ms": 249,
+        "matchedBy": {},
+        "matchedIn": {},
+        "preambleSnippets": 0
+      },
+      "semantic": {
+        "returned": 10,
+        "ms": 286,
+        "matchedBy": {
+          "semantic": 10
+        },
+        "matchedIn": {
+          "reasons": 10
+        },
+        "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.526,
+        "top10": 0.455,
+        "median": 0.454,
+        "atLeast": {
+          "0.3": 21,
+          "0.35": 21,
+          "0.4": 21,
+          "0.45": 12,
+          "0.5": 1
         }
       }
     },
@@ -489,7 +460,7 @@
       "kind": "question",
       "lexical": {
         "returned": 1,
-        "ms": 133,
+        "ms": 217,
         "matchedBy": {
           "lexical": 1
         },
@@ -499,27 +470,26 @@
         "preambleSnippets": 0
       },
       "semantic": {
-        "returned": 5,
-        "ms": 399,
+        "returned": 10,
+        "ms": 367,
         "matchedBy": {
-          "semantic": 4,
+          "semantic": 9,
           "lexical": 1
         },
         "matchedIn": {
-          "reasons": 3,
-          "disposition": 2
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.476,
-        "top10": 0.412,
-        "median": 0.4,
+        "top1": 0.483,
+        "top10": 0.441,
+        "median": 0.419,
         "atLeast": {
-          "0.3": 40,
-          "0.35": 40,
-          "0.4": 20,
-          "0.45": 1,
+          "0.3": 29,
+          "0.35": 29,
+          "0.4": 29,
+          "0.45": 8,
           "0.5": 0
         }
       }
@@ -529,32 +499,31 @@
       "kind": "question",
       "lexical": {
         "returned": 0,
-        "ms": 68,
+        "ms": 231,
         "matchedBy": {},
         "matchedIn": {},
         "preambleSnippets": 0
       },
       "semantic": {
-        "returned": 9,
-        "ms": 525,
+        "returned": 10,
+        "ms": 295,
         "matchedBy": {
-          "semantic": 9
+          "semantic": 10
         },
         "matchedIn": {
-          "reasons": 7,
-          "disposition": 2
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.473,
-        "top10": 0.413,
-        "median": 0.381,
+        "top1": 0.498,
+        "top10": 0.433,
+        "median": 0.415,
         "atLeast": {
-          "0.3": 39,
-          "0.35": 39,
-          "0.4": 11,
-          "0.45": 2,
+          "0.3": 27,
+          "0.35": 27,
+          "0.4": 20,
+          "0.45": 5,
           "0.5": 0
         }
       }
@@ -564,19 +533,18 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 1278,
+        "ms": 4484,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "disposition": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 1322,
+        "ms": 1459,
         "matchedBy": {
           "lexical": 5,
           "semantic": 5
@@ -589,14 +557,14 @@
       },
       "simStats": {
         "top1": 0.699,
-        "top10": 0.649,
-        "median": 0.629,
+        "top10": 0.658,
+        "median": 0.636,
         "atLeast": {
-          "0.3": 60,
-          "0.35": 60,
-          "0.4": 60,
-          "0.45": 60,
-          "0.5": 60
+          "0.3": 52,
+          "0.35": 52,
+          "0.4": 52,
+          "0.45": 52,
+          "0.5": 52
         }
       }
     },
@@ -605,23 +573,21 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 898,
+        "ms": 1425,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "disposition": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 1011,
+        "ms": 719,
         "matchedBy": {
-          "both": 1,
           "lexical": 5,
-          "semantic": 4
+          "semantic": 5
         },
         "matchedIn": {
           "reasons": 5,
@@ -631,14 +597,14 @@
       },
       "simStats": {
         "top1": 0.547,
-        "top10": 0.515,
-        "median": 0.494,
+        "top10": 0.526,
+        "median": 0.512,
         "atLeast": {
-          "0.3": 42,
-          "0.35": 42,
-          "0.4": 42,
-          "0.45": 42,
-          "0.5": 16
+          "0.3": 38,
+          "0.35": 38,
+          "0.4": 38,
+          "0.45": 38,
+          "0.5": 22
         }
       }
     },
@@ -647,33 +613,32 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 601,
+        "ms": 1008,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "reasons": 9,
-          "disposition": 1
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 596,
+        "ms": 724,
         "matchedBy": {
           "lexical": 5,
           "semantic": 5
         },
         "matchedIn": {
-          "reasons": 4,
-          "disposition": 6
+          "reasons": 5,
+          "disposition": 5
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.487,
-        "top10": 0.469,
-        "median": 0.463,
+        "top1": 0.491,
+        "top10": 0.473,
+        "median": 0.466,
         "atLeast": {
           "0.3": 41,
           "0.35": 41,
@@ -688,38 +653,36 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 1355,
+        "ms": 2227,
         "matchedBy": {
           "lexical": 10
         },
         "matchedIn": {
-          "disposition": 2,
-          "reasons": 8
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 1428,
+        "ms": 1800,
         "matchedBy": {
           "lexical": 5,
           "semantic": 5
         },
         "matchedIn": {
-          "disposition": 3,
-          "reasons": 7
+          "reasons": 10
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.472,
-        "top10": 0.433,
-        "median": 0.423,
+        "top1": 0.461,
+        "top10": 0.427,
+        "median": 0.426,
         "atLeast": {
-          "0.3": 38,
-          "0.35": 38,
-          "0.4": 38,
-          "0.45": 3,
+          "0.3": 22,
+          "0.35": 22,
+          "0.4": 22,
+          "0.45": 2,
           "0.5": 0
         }
       }
@@ -728,32 +691,38 @@
       "q": "سؤال 10",
       "kind": "question",
       "lexical": {
-        "returned": 0,
-        "ms": 131,
-        "matchedBy": {},
-        "matchedIn": {},
+        "returned": 2,
+        "ms": 421,
+        "matchedBy": {
+          "lexical": 2
+        },
+        "matchedIn": {
+          "reasons": 2
+        },
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 10,
-        "ms": 680,
+        "ms": 305,
         "matchedBy": {
-          "semantic": 10
+          "lexical": 2,
+          "semantic": 8
         },
         "matchedIn": {
-          "disposition": 10
+          "reasons": 2,
+          "disposition": 8
         },
         "preambleSnippets": 0
       },
       "simStats": {
-        "top1": 0.49,
-        "top10": 0.458,
-        "median": 0.449,
+        "top1": 0.491,
+        "top10": 0.463,
+        "median": 0.451,
         "atLeast": {
           "0.3": 40,
           "0.35": 40,
           "0.4": 40,
-          "0.45": 20,
+          "0.45": 23,
           "0.5": 0
         }
       }
