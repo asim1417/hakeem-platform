@@ -40,8 +40,10 @@ const defaultDeps: ToolRunnerDeps = {
     return getGrantStore().hitWindow(key, windowStart);
   },
   async planAllowsPaid(userId) {
-    // الأدوات المدفوعة: للمشترك، أو لمن له رصيد وحدات متاح حين يعمل نظام الوحدات.
-    // فشلٌ مغلق: حالة غير معروفة (قبل هجرة الفوترة أو خطأ) لا تفتح أداة مدفوعة.
+    // الأدوات المدفوعة: للمشرفين، وللمشترك، أو لمن له رصيد وحدات حين يعمل نظام الوحدات.
+    const { prisma } = await import("@/lib/prisma");
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (user?.role === "SUPER_ADMIN" || user?.role === "SYSTEM_ADMIN") return true;
     const { canConsume } = await import("@/lib/modules/billing/quota");
     const q = await canConsume(userId);
     if (q.isSubscribed) return true;
@@ -50,7 +52,9 @@ const defaultDeps: ToolRunnerDeps = {
       const status = await getUsageCreditStatus(userId, 1);
       return status.availableMilliUnits > 0;
     }
-    return false;
+    // الفوترة لم تُفعَّل في القاعدة بعد (canConsume يسقط مفتوحًا: remaining = -1 بلا اشتراك):
+    // نتبع بقية المنصة المفتوحة حتى إطلاق الباقات. خطأ غير متوقع هنا ← رفض (catch في المستدعي).
+    return q.remaining === -1;
   },
   async gate(userId, service, referenceId) {
     const { gateAdvancedUse } = await import("@/lib/modules/billing/access-gate");
