@@ -4,6 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { buildRulingExcerpts, buildRulingTsQuery, findMatches, matchKey, queryTokens, tokenVariants } from "../lib/modules/legal-core/ruling-excerpts";
+import { buildSegmentChunks, keepEnds, segmentContentHash, windows } from "../lib/rulings/research/segment-embeddings";
 
 let failed = 0;
 const check = (name: string, fn: () => void) => {
@@ -78,6 +79,35 @@ check("خريطة الأجزاء متجاورة تغطي النص", () => {
   assert.equal(ex.parts[0].start, 0);
   assert.equal(ex.parts[ex.parts.length - 1].end, ruling.length);
   assert.deepEqual(ex.parts.map((p) => p.type), ["header", "claims", "defense", "reasons", "disposition", "other"]);
+});
+
+check("متجهات الأجزاء: الأسباب والمنطوق فقط، بلا ديباجة", () => {
+  const cs = buildSegmentChunks(ruling);
+  assert.deepEqual(cs.map((c) => c.part), ["reasons", "disposition"]);
+  for (const c of cs) assert.ok(!c.input.includes("الحمد لله"), c.input);
+  assert.ok(cs[0].input.startsWith("وحيث إن الغبن"), cs[0].input);
+  assert.ok(cs[1].input.startsWith("لذلك حكمت الدائرة"), cs[1].input);
+  assert.equal(ruling.slice(cs[0].start, cs[0].end).replace(/\s+/g, " ").trim(), cs[0].input, "الإزاحات على النص الأصلي");
+});
+
+check("متجهات الأجزاء: الحجب يطبَّق على المرسَل لا على الإزاحات", () => {
+  const cs = buildSegmentChunks(ruling, (s) => s.replace(/المدعي/g, "[محجوب]"));
+  assert.ok(cs[0].input.includes("[محجوب]"));
+  assert.ok(ruling.slice(cs[0].start, cs[0].end).includes("المدعي"));
+});
+
+check("نوافذ الأسباب الطويلة متجاورة على حدود الكلمات، ويُبقى أولها وآخرها", () => {
+  const long = Array.from({ length: 3000 }, (_, i) => `كلمة${i}`).join(" ");
+  const ws = windows(long, 0, long.length, 6000);
+  assert.ok(ws.length > 4);
+  for (const [s, e] of ws) assert.ok(e - s <= 6000 && (e === long.length || long[e] === " "));
+  assert.deepEqual(keepEnds([1, 2, 3, 4, 5, 6], 4), [1, 2, 5, 6]);
+  assert.deepEqual(keepEnds([1, 2], 4), [1, 2]);
+});
+
+check("بصمة المتجه تتغير بالنموذج والنص", () => {
+  assert.notEqual(segmentContentHash("أ", "m1"), segmentContentHash("أ", "m2"));
+  assert.equal(segmentContentHash("أ", "m1"), segmentContentHash("أ", "m1"));
 });
 
 console.log(failed === 0 ? "✓ استعلام الأحكام ومقتطفاتها" : `✗ فشل ${failed}`);
