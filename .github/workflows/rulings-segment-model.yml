@@ -38,13 +38,14 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 240
     env:
       NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       MODE: ${{ github.event.inputs.mode || 'sample' }}
       N: ${{ github.event.inputs.n || '50' }}
       MAX_MODEL_CALLS: ${{ github.event.inputs.max_calls || '50' }}
+      APPROVAL_REF: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -60,9 +61,19 @@ jobs:
           echo "::add-mask::$direct"
           echo "DIRECT_DB_URL=$direct" >> "$GITHUB_ENV"
       - name: "القياس"
+        if: env.MODE != 'apply'
         run: |
           case "$MODE" in count|sample) ;; *) echo "::error::mode غير معروف"; exit 1;; esac
           DATABASE_URL="$DIRECT_DB_URL" AUDIT_TRANSPORT=prisma npx tsx scripts/rulings-research/06-segment-model.ts "--$MODE" "$N"
+      - name: "التطبيق على الإنتاج (مقفول)"
+        if: env.MODE == 'apply'
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          [ -z "$APPROVAL_REF" ] && { echo "::error::يلزم مرجع موافقة المالك."; exit 1; }
+          DATABASE_URL="$DIRECT_DB_URL" CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED OWNER_APPROVAL_REF="$APPROVAL_REF" \
+            npx tsx scripts/rulings-research/06-segment-model.ts --apply
       - name: "إيداع الأعداد في الفرع"
         if: always()
         run: |

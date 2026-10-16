@@ -9,6 +9,7 @@
 import { matchKey } from "@/lib/modules/legal-core/ruling-excerpts";
 import { maskPersonalData } from "./mask";
 import type { Missing } from "./segment-store";
+import type { SegmentType } from "./segment";
 
 export const SEGMENT_MODEL_VERSION = "segment-model-v1";
 export const SEGMENT_MODEL = process.env.RESEARCH_EXTRACT_MODEL || "claude-haiku-5-5";
@@ -53,6 +54,22 @@ export function parseAnswer(text: string): { found: boolean; quote: string | nul
   }
 }
 
+export interface PlainSegment { type: SegmentType; start: number; end: number }
+
+/**
+ * يُدخل حدًّا متحقَّقًا منه (من النموذج) في تقطيع القواعد: يقسم الجزء الذي يقع فيه الموضع، ويُوسم
+ * الشطر الثاني بالجزء المفقود. يعيد null إن كسر الإدخال الترتيب المنطقي أو وقع على بداية جزء قائم.
+ */
+export function applyModelBoundary(segments: PlainSegment[], missing: Missing, at: number): PlainSegment[] | null {
+  const i = segments.findIndex((s) => at > s.start && at < s.end);
+  if (i < 0) return null;
+  const s = segments[i];
+  const next: PlainSegment[] = [...segments.slice(0, i), { ...s, end: at }, { type: missing, start: at, end: s.end }, ...segments.slice(i + 1)];
+  const order: SegmentType[] = ["header", "claims", "defense", "evidence", "reasons", "disposition", "appeal", "other"];
+  const ok = next.every((x, k) => k === 0 || order.indexOf(x.type) > order.indexOf(next[k - 1].type));
+  return ok ? next : null;
+}
+
 /** يطوي الفراغات المتتالية (والأسطر) إلى فراغ واحد مع إبقاء خريطة المواضع. */
 function collapsed(k: { key: string; map: number[] }): { key: string; map: number[] } {
   let key = "";
@@ -72,9 +89,14 @@ function collapsed(k: { key: string; map: number[] }): { key: string; map: numbe
  */
 export function verifyQuote(text: string, start: number, end: number, quote: string):
   { ok: true; at: number } | { ok: false; reason: "too_short" | "masked" | "not_found" } {
-  const words = quote.split(/\s+/).filter(Boolean);
+  let words = quote.split(/\s+/).filter(Boolean);
+  // اقتباس فيه موضع محجوب («[اسم]»): يُكتفى بالكلمات التي قبله إن بلغت الحد الأدنى؛ فالنص الأصلي فيه الاسم لا القناع.
+  const masked = words.findIndex((w) => /^[(\[]*\[(?:اسم|هوية|جوال|آيبان|بريد)/.test(w) || /\[(?:اسم|هوية|جوال|آيبان|بريد)/.test(w));
+  if (masked >= 0) {
+    if (masked < MIN_QUOTE_WORDS) return { ok: false, reason: "masked" };
+    words = words.slice(0, masked);
+  }
   if (words.length < MIN_QUOTE_WORDS) return { ok: false, reason: "too_short" };
-  if (quote.includes("[") && /\[(?:اسم|هوية|جوال|آيبان|بريد)/.test(quote)) return { ok: false, reason: "masked" };
   const region = collapsed(matchKey(text.slice(start, end)));
   const q = collapsed(matchKey(words.join(" "))).key;
   const idx = region.key.indexOf(q);

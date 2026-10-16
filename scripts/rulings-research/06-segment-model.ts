@@ -4,6 +4,9 @@
  *   --count N   يعدّ رموز N منطقة حدّ بنقطة count_tokens (لا توليد)، ويُسقط الكلفة على الكل بالعدد الحقيقي.
  *   --sample N  يرسل N منطقة إلى النموذج (Messages API)، ويتحقق من كل اقتباس في النص الأصلي، ويقيس:
  *               نسبة الحدود الموجودة والمتحقَّقة وأسباب الرفض والرموز والكلفة. MAX_MODEL_CALLS إلزامي.
+ *   --apply     للإنتاج أو الفرع البحثي (أقفال write-target + MAX_MODEL_CALLS): يسأل النموذج عن كل منطقة،
+ *               ويُدخل الحدّ المتحقَّق منه حرفيًّا في الأجزاء، فيكتب ruling_segments لذلك الحكم (method='model'
+ *               للجزء المضاف، needs_review) ومتجهات أسبابه ومنطوقه. judicial_cases لا يُمسّ.
  * ما يُرسل: منطقة الحدّ وحدها (05-segment-model-dryrun)، محجوبة (maskPersonalData). القراءة للقراءة فقط.
  * المخرج أعداد فقط (المستودع عام): reports/rulings-research/06-segment-model.data.json
  */
@@ -12,8 +15,16 @@ import path from "node:path";
 import { assertReadOnly, openReadOnlyDb } from "../../lib/rulings/audit/readonly-db";
 import { boundaryRegions, type Missing } from "../../lib/rulings/research/segment-store";
 import {
-  parseAnswer, regionInput, SEGMENT_MODEL, SEGMENT_MODEL_VERSION, SYSTEM_PROMPT, userPrompt, verifyQuote,
+  applyModelBoundary, parseAnswer, regionInput, SEGMENT_MODEL, SEGMENT_MODEL_VERSION, SYSTEM_PROMPT, userPrompt, verifyQuote,
+  type PlainSegment,
 } from "../../lib/rulings/research/segment-model";
+import { PrismaClient } from "@prisma/client";
+import { segmentRuling, SEGMENT_EXTRACTOR_VERSION } from "../../lib/rulings/research/segment";
+import { contentHash } from "../../lib/rulings/research/meta";
+import { applyMigration, META_SEGMENTS_MIGRATION, resolveWriteTarget } from "../../lib/rulings/research/write-target";
+import { buildRulingSearchNorm, redactPII } from "../../lib/modules/legal-core/rulings-search";
+import { buildSegmentChunks, segmentContentHash, SEGMENT_EMBED_VERSION } from "../../lib/rulings/research/segment-embeddings";
+import { EMBEDDING_DIMS, EMBEDDING_MODEL, embedBatch } from "../../lib/modules/ai/embeddings";
 
 const OUT = path.join(process.cwd(), "reports/rulings-research/06-segment-model.data.json");
 const arg = (flag: string) => {
@@ -22,6 +33,29 @@ const arg = (flag: string) => {
 };
 const COUNT = arg("--count");
 const SAMPLE = arg("--sample");
+const APPLY = process.argv.includes("--apply");
+type Verdict = { ok: true; at: number } | { ok: false; reason: "not_found" | "too_short" | "masked" | "unparsed" | "not_present" | "error" };
+type Usage = { in: number; out: number };
+
+/** يسأل النموذج عن بداية الجزء المفقود في منطقته، ويتحقق من الاقتباس حرفيًّا في النص الأصلي. */
+async function askModel(text: string, g: { missing: Missing; start: number; end: number }, usage: Usage): Promise<Verdict> {
+  const { input } = regionInput(text, g.start, g.end);
+  let res: { content: Array<{ type: string; text?: string }>; usage: { input_tokens: number; output_tokens: number } };
+  try {
+    res = await post("/messages", {
+      model: SEGMENT_MODEL, max_tokens: 1024, output_config: { effort: "low" },
+      system: SYSTEM_PROMPT, messages: [{ role: "user", content: userPrompt(g.missing, input) }],
+    });
+  } catch {
+    return { ok: false, reason: "error" };
+  }
+  usage.in += res.usage.input_tokens;
+  usage.out += res.usage.output_tokens;
+  const ans = parseAnswer(res.content.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n"));
+  if (!ans) return { ok: false, reason: "unparsed" };
+  if (!ans.found || !ans.quote) return { ok: false, reason: "not_present" };
+  return verifyQuote(text, g.start, g.end, ans.quote);
+}
 // $/مليون رمز من مرجع Claude API (2026-10-06)؛ Batch بنصف السعر.
 const PRICE: Record<string, { in: number; out: number }> = {
   "claude-haiku-5-5": { in: 0.1, out: 0.5 }, "claude-haiku-4-5": { in: 1.0, out: 5.0 }, "claude-sonnet-5-5": { in: 2.0, out: 10.0 },
@@ -188,7 +222,122 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+const MODEL_SEGMENT_VERSION = `${SEGMENT_EXTRACTOR_VERSION}+${SEGMENT_MODEL_VERSION}`;
+const SEG_COLS = ["ruling_id", "part", "start_char", "end_char", "method", "confidence", "part_norm", "content_hash", "segment_version"] as const;
+
+async function apply() {
+  const target = resolveWriteTarget();
+  const cap = Number(process.env.MAX_MODEL_CALLS);
+  if (!Number.isFinite(cap) || cap <= 0) {
+    console.error("🛑 MAX_MODEL_CALLS إلزامي.");
+    process.exit(2);
+  }
+  console.log(`✍️ الهدف: ${target.kind}${target.approval ? ` — موافقة المالك: ${target.approval}` : ""} — سقف النداءات: ${cap}`);
+  const db = new PrismaClient({ datasources: { db: { url: target.url } }, log: ["error"] });
+  const usage: Usage = { in: 0, out: 0 };
+  const t = { rulings: 0, regions: 0, calls: 0, verified: 0, applied: 0, orderRejected: 0, segmentRows: 0, embedded: 0, embedFailed: 0,
+    rejected: { not_found: 0, too_short: 0, masked: 0, unparsed: 0, not_present: 0, error: 0 } as Record<string, number>,
+    byPart: {} as Record<string, { n: number; applied: number }>, stoppedAtCap: false };
+  try {
+    await applyMigration(db, META_SEGMENTS_MIGRATION);
+    let last = "";
+    outer: for (;;) {
+      const rows = await db.$queryRawUnsafe<Array<{ id: string; text: string | null }>>(
+        `SELECT id, "judgmentText" AS text FROM judicial_cases WHERE id > $1 ORDER BY id LIMIT 200`, last);
+      if (!rows.length) break;
+      last = rows[rows.length - 1].id;
+      for (const r of rows) {
+        const text = r.text ?? "";
+        const regions = boundaryRegions(text);
+        if (!regions.length) continue;
+        t.rulings++;
+        let segs: PlainSegment[] = segmentRuling(text).segments.map((x) => ({ type: x.type, start: x.start, end: x.end }));
+        const added = new Set<string>();
+        for (const g of regions) {
+          if (t.calls >= cap) {
+            t.stoppedAtCap = true;
+            break outer;
+          }
+          t.regions++;
+          t.calls++;
+          const bp = (t.byPart[g.missing] ??= { n: 0, applied: 0 });
+          bp.n++;
+          const v = await askModel(text, g, usage);
+          if (!v.ok) {
+            t.rejected[v.reason]++;
+            continue;
+          }
+          t.verified++;
+          const next = applyModelBoundary(segs, g.missing, v.at);
+          if (!next) {
+            t.orderRejected++;
+            continue;
+          }
+          segs = next;
+          added.add(g.missing);
+          bp.applied++;
+        }
+        if (!added.size) continue;
+        t.applied++;
+        // أجزاء الحكم كاملة: القواعد + حدّ النموذج (method='model'، ثقة 0.7، needs_review).
+        const hash = contentHash(text);
+        const params: unknown[] = [];
+        const tuples = segs.map((x) => {
+          const vals = [r.id, x.type, x.start, x.end, added.has(x.type) ? "model" : "rule", added.has(x.type) ? 0.7 : 0.8,
+            x.type === "reasons" || x.type === "disposition" ? buildRulingSearchNorm(null, text.slice(x.start, x.end)) : null,
+            hash, MODEL_SEGMENT_VERSION];
+          return `(${vals.map((v) => { params.push(v); return `$${params.length}`; }).join(",")})`;
+        });
+        await db.$executeRawUnsafe(`DELETE FROM ruling_segments WHERE ruling_id = $1`, r.id);
+        await db.$executeRawUnsafe(
+          `INSERT INTO ruling_segments (${SEG_COLS.map((c) => `"${c}"`).join(",")}) VALUES ${tuples.join(",")}`, ...params);
+        t.segmentRows += segs.length;
+        // متجهات الأسباب والمنطوق من الأجزاء الجديدة (البصمة تمنع إعادة غير المتغير).
+        const chunks = buildSegmentChunks(text, redactPII, segs);
+        const have = new Map((await db.$queryRawUnsafe<Array<{ part: string; chunk: number; content_hash: string }>>(
+          `SELECT part, chunk, content_hash FROM ruling_segment_embeddings WHERE ruling_id = $1`, r.id)).map((e) => [`${e.part}|${e.chunk}`, e.content_hash]));
+        const todo = chunks.filter((c) => have.get(`${c.part}|${c.chunk}`) !== segmentContentHash(c.input, EMBEDDING_MODEL));
+        const keep = new Set(chunks.map((c) => `${c.part}|${c.chunk}`));
+        for (const k of have.keys()) if (!keep.has(k)) {
+          const [part, chunk] = k.split("|");
+          await db.$executeRawUnsafe(`DELETE FROM ruling_segment_embeddings WHERE ruling_id=$1 AND part=$2 AND chunk=$3`, r.id, part, Number(chunk));
+        }
+        if (todo.length) {
+          const vecs = await embedBatch(todo.map((c) => c.input));
+          for (let i = 0; i < todo.length; i++) {
+            const v = vecs[i];
+            const c = todo[i];
+            if (!v || v.length !== EMBEDDING_DIMS) {
+              t.embedFailed++;
+              continue;
+            }
+            await db.$executeRawUnsafe(
+              `INSERT INTO ruling_segment_embeddings
+                 (ruling_id, part, chunk, start_char, end_char, content_hash, embedding, model, extractor_version, segment_version)
+               VALUES ($1,$2,$3,$4,$5,$6,$7::vector,$8,$9,$10)
+               ON CONFLICT (ruling_id, part, chunk) DO UPDATE SET start_char=EXCLUDED.start_char, end_char=EXCLUDED.end_char,
+                 content_hash=EXCLUDED.content_hash, embedding=EXCLUDED.embedding, model=EXCLUDED.model,
+                 extractor_version=EXCLUDED.extractor_version, segment_version=EXCLUDED.segment_version,
+                 review_status='needs_review', created_at=now()`,
+              r.id, c.part, c.chunk, c.start, c.end, segmentContentHash(c.input, EMBEDDING_MODEL), `[${v.join(",")}]`,
+              EMBEDDING_MODEL, SEGMENT_EMBED_VERSION, MODEL_SEGMENT_VERSION);
+            t.embedded++;
+          }
+        }
+      }
+      process.stdout.write(`\r… أحكام ${t.rulings} — نداءات ${t.calls} — طُبّق ${t.applied}`);
+    }
+    process.stdout.write("\n");
+    const p = PRICE[SEGMENT_MODEL] ?? PRICE["claude-haiku-5-5"];
+    const usd = (usage.in / 1e6) * p.in + (usage.out / 1e6) * p.out;
+    write({ mode: "apply", target: target.kind, segmentVersion: MODEL_SEGMENT_VERSION, ...t, inTokens: usage.in, outTokens: usage.out,
+      usd: Math.round(usd * 1000) / 1000 });
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+(APPLY ? apply() : main()).catch((e) => {
   console.error("فشل:", (e as Error).message);
   process.exitCode = 1;
 });
