@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T07:24:19.748Z",
+  "measuredAt": "2026-10-16T07:27:35.221Z",
   "mode": "read-only (transaction_read_only=on)",
   "versions": {
     "before": "segment-rules-v3",
@@ -228,22 +228,73 @@
   "bigHeaderDiagnostics": {
     "threshold": 0.25,
     "rulings": 3506,
-    "candidateInHeader": {
-      "وفي الجلسة المنعقدة": 37,
-      "حيث تقدم": 3,
-      "تقدم/أقام … المدعي (≤٣ كلمات)": 116,
-      "ادعى (بأي سابقة)": 127,
-      "صحيفة/لائحة دعوى": 747,
-      "دعواه/دعواها": 815,
-      "وقائع": 1954,
-      "ملخص": 64,
-      "افتتحت/عقدت الجلسة": 356,
-      "حضر": 1310,
-      "المدعي": 1622
-    },
-    "jalsaFallbackHeaderShare": {
-      "median": 0.5965,
-      "p90": 0.8157
+    "withoutClaims": 2764,
+    "candidates": {
+      "وفي الجلسة المنعقدة": {
+        "inBigHeader": 37,
+        "medianFirstShare": 0.2841,
+        "earlierThanClaimsElsewhere": 5
+      },
+      "حيث تقدم": {
+        "inBigHeader": 3,
+        "medianFirstShare": 0.2432,
+        "earlierThanClaimsElsewhere": 1
+      },
+      "تقدم/أقام … المدعي (≤٣ كلمات)": {
+        "inBigHeader": 116,
+        "medianFirstShare": 0.1789,
+        "earlierThanClaimsElsewhere": 102
+      },
+      "فعل … دعواه": {
+        "inBigHeader": 46,
+        "medianFirstShare": 0.2932,
+        "earlierThanClaimsElsewhere": 10
+      },
+      "ادعى/ادعت": {
+        "inBigHeader": 150,
+        "medianFirstShare": 0.1369,
+        "earlierThanClaimsElsewhere": 36
+      },
+      "صحيفة/لائحة دعوى": {
+        "inBigHeader": 747,
+        "medianFirstShare": 0.1781,
+        "earlierThanClaimsElsewhere": 134
+      },
+      "وقائع الدعوى/القضية": {
+        "inBigHeader": 70,
+        "medianFirstShare": 0.0764,
+        "earlierThanClaimsElsewhere": 319
+      },
+      "وقائع (أي سياق)": {
+        "inBigHeader": 1954,
+        "medianFirstShare": 0.0831,
+        "earlierThanClaimsElsewhere": 45323
+      },
+      "ملخص الدعوى/الوقائع": {
+        "inBigHeader": 3,
+        "medianFirstShare": 0.1859,
+        "earlierThanClaimsElsewhere": 6
+      },
+      "افتتحت/عقدت الجلسة": {
+        "inBigHeader": 356,
+        "medianFirstShare": 0.059,
+        "earlierThanClaimsElsewhere": 333
+      },
+      "حضر … المدعي (≤٤ كلمات)": {
+        "inBigHeader": 1013,
+        "medianFirstShare": 0.1473,
+        "earlierThanClaimsElsewhere": 459
+      },
+      "المدعي … يطلب": {
+        "inBigHeader": 136,
+        "medianFirstShare": 0.32,
+        "earlierThanClaimsElsewhere": 46
+      },
+      "طلب(ات) المدعي": {
+        "inBigHeader": 139,
+        "medianFirstShare": 0.3282,
+        "earlierThanClaimsElsewhere": 20
+      }
     }
   }
 }
