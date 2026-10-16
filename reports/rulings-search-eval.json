@@ -1,0 +1,638 @@
+{
+  "measuredAt": "2026-10-16T01:50:30.265Z",
+  "summary": {
+    "queries": 30,
+    "old": {
+      "queriesWithRulings": 20,
+      "preambleSnippets": 204
+    },
+    "new": {
+      "queriesWithRulings": 30,
+      "preambleSnippets": 0,
+      "snippetsFromReasonsOrDisposition": 263,
+      "returned": 297,
+      "p95ms": 6073
+    }
+  },
+  "rows": [
+    {
+      "query": "فسخ",
+      "old": {
+        "rulingsInTop30": 2,
+        "ms": 10181,
+        "preambleSnippets": 2
+      },
+      "new": {
+        "total": 4683,
+        "returned": 10,
+        "ms": 6681,
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 3
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الغبن",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 2892,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 389,
+        "returned": 10,
+        "ms": 1552,
+        "matchedIn": {
+          "reasons": 9,
+          "appeal": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الغبن الفاحش",
+      "old": {
+        "rulingsInTop30": 10,
+        "ms": 1666,
+        "preambleSnippets": 10
+      },
+      "new": {
+        "total": 88,
+        "returned": 10,
+        "ms": 463,
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "نجش",
+      "old": {
+        "rulingsInTop30": 20,
+        "ms": 699,
+        "preambleSnippets": 18
+      },
+      "new": {
+        "total": 10,
+        "returned": 10,
+        "ms": 245,
+        "matchedIn": {
+          "reasons": 6,
+          "defense": 2,
+          "appeal": 1,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "تعويض",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 11514,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 14229,
+        "returned": 10,
+        "ms": 6073,
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "إفلاس",
+      "old": {
+        "rulingsInTop30": 5,
+        "ms": 2422,
+        "preambleSnippets": 5
+      },
+      "new": {
+        "total": 2865,
+        "returned": 10,
+        "ms": 3578,
+        "matchedIn": {
+          "reasons": 9,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 9,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "مدعي",
+      "old": {
+        "rulingsInTop30": 5,
+        "ms": 13090,
+        "preambleSnippets": 5
+      },
+      "new": {
+        "total": 48758,
+        "returned": 10,
+        "ms": 31994,
+        "matchedIn": {
+          "disposition": 2,
+          "reasons": 8
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "عقد",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 7423,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 35971,
+        "returned": 10,
+        "ms": 4965,
+        "matchedIn": {
+          "reasons": 10
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 8,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "شيك",
+      "old": {
+        "rulingsInTop30": 16,
+        "ms": 1645,
+        "preambleSnippets": 16
+      },
+      "new": {
+        "total": 4165,
+        "returned": 10,
+        "ms": 3385,
+        "matchedIn": {
+          "reasons": 8,
+          "disposition": 2
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "كمبيالة",
+      "old": {
+        "rulingsInTop30": 20,
+        "ms": 797,
+        "preambleSnippets": 20
+      },
+      "new": {
+        "total": 154,
+        "returned": 10,
+        "ms": 685,
+        "matchedIn": {
+          "reasons": 9,
+          "header": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الشرط الجزائي",
+      "old": {
+        "rulingsInTop30": 9,
+        "ms": 4963,
+        "preambleSnippets": 9
+      },
+      "new": {
+        "total": 720,
+        "returned": 10,
+        "ms": 1640,
+        "matchedIn": {
+          "disposition": 1,
+          "reasons": 9
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "القوة القاهرة",
+      "old": {
+        "rulingsInTop30": 20,
+        "ms": 2490,
+        "preambleSnippets": 20
+      },
+      "new": {
+        "total": 99,
+        "returned": 10,
+        "ms": 681,
+        "matchedIn": {
+          "reasons": 9,
+          "defense": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "حجية الأمر المقضي",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 11286,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 310,
+        "returned": 10,
+        "ms": 963,
+        "matchedIn": {
+          "claims": 1,
+          "reasons": 8,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "عدم الاختصاص",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 8682,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 19130,
+        "returned": 10,
+        "ms": 2612,
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 2,
+          "defense": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 9,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "التقادم",
+      "old": {
+        "rulingsInTop30": 17,
+        "ms": 2153,
+        "preambleSnippets": 17
+      },
+      "new": {
+        "total": 324,
+        "returned": 10,
+        "ms": 832,
+        "matchedIn": {
+          "reasons": 8,
+          "disposition": 1,
+          "defense": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الإيجار",
+      "old": {
+        "rulingsInTop30": 5,
+        "ms": 2189,
+        "preambleSnippets": 5
+      },
+      "new": {
+        "total": 2895,
+        "returned": 10,
+        "ms": 3163,
+        "matchedIn": {
+          "reasons": 8,
+          "claims": 2
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "المقاولة",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 3504,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 5545,
+        "returned": 10,
+        "ms": 2705,
+        "matchedIn": {
+          "claims": 2,
+          "reasons": 6,
+          "disposition": 1,
+          "defense": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الشراكة",
+      "old": {
+        "rulingsInTop30": 5,
+        "ms": 2277,
+        "preambleSnippets": 5
+      },
+      "new": {
+        "total": 7464,
+        "returned": 10,
+        "ms": 2715,
+        "matchedIn": {
+          "reasons": 8,
+          "disposition": 2
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 9,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الوكالة",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 5846,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 37177,
+        "returned": 10,
+        "ms": 2301,
+        "matchedIn": {
+          "reasons": 8,
+          "defense": 1,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الرهن",
+      "old": {
+        "rulingsInTop30": 4,
+        "ms": 1374,
+        "preambleSnippets": 4
+      },
+      "new": {
+        "total": 162,
+        "returned": 10,
+        "ms": 488,
+        "matchedIn": {
+          "reasons": 6,
+          "defense": 2,
+          "disposition": 2
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الشفعة",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 2111,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 46,
+        "returned": 10,
+        "ms": 287,
+        "matchedIn": {
+          "reasons": 5,
+          "disposition": 2,
+          "claims": 3
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 9,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الوقف",
+      "old": {
+        "rulingsInTop30": 5,
+        "ms": 4211,
+        "preambleSnippets": 5
+      },
+      "new": {
+        "total": 1907,
+        "returned": 10,
+        "ms": 3056,
+        "matchedIn": {
+          "reasons": 7,
+          "defense": 1,
+          "disposition": 2
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "النفقة",
+      "old": {
+        "rulingsInTop30": 9,
+        "ms": 2200,
+        "preambleSnippets": 9
+      },
+      "new": {
+        "total": 147,
+        "returned": 10,
+        "ms": 493,
+        "matchedIn": {
+          "disposition": 2,
+          "reasons": 6,
+          "claims": 1,
+          "defense": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الحضانة",
+      "old": {
+        "rulingsInTop30": 1,
+        "ms": 1337,
+        "preambleSnippets": 1
+      },
+      "new": {
+        "total": 7,
+        "returned": 7,
+        "ms": 171,
+        "matchedIn": {
+          "claims": 3,
+          "defense": 2,
+          "reasons": 1,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 7,
+        "withYearH": 7
+      }
+    },
+    {
+      "query": "أجرة المثل",
+      "old": {
+        "rulingsInTop30": 9,
+        "ms": 5951,
+        "preambleSnippets": 9
+      },
+      "new": {
+        "total": 1100,
+        "returned": 10,
+        "ms": 2204,
+        "matchedIn": {
+          "reasons": 6,
+          "defense": 1,
+          "disposition": 3
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "التعسف في استعمال الحق",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 22781,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 91,
+        "returned": 10,
+        "ms": 390,
+        "matchedIn": {
+          "reasons": 9,
+          "appeal": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "خيار العيب",
+      "old": {
+        "rulingsInTop30": 20,
+        "ms": 1486,
+        "preambleSnippets": 20
+      },
+      "new": {
+        "total": 152,
+        "returned": 10,
+        "ms": 592,
+        "matchedIn": {
+          "reasons": 8,
+          "disposition": 2
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الإقالة",
+      "old": {
+        "rulingsInTop30": 20,
+        "ms": 1259,
+        "preambleSnippets": 20
+      },
+      "new": {
+        "total": 70,
+        "returned": 10,
+        "ms": 299,
+        "matchedIn": {
+          "reasons": 7,
+          "disposition": 2,
+          "defense": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 9,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "الصلح",
+      "old": {
+        "rulingsInTop30": 4,
+        "ms": 4088,
+        "preambleSnippets": 4
+      },
+      "new": {
+        "total": 10282,
+        "returned": 10,
+        "ms": 2340,
+        "matchedIn": {
+          "reasons": 7,
+          "claims": 1,
+          "defense": 1,
+          "disposition": 1
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 9,
+        "withYearH": 10
+      }
+    },
+    {
+      "query": "اليمين الحاسمة",
+      "old": {
+        "rulingsInTop30": 0,
+        "ms": 4175,
+        "preambleSnippets": 0
+      },
+      "new": {
+        "total": 285,
+        "returned": 10,
+        "ms": 735,
+        "matchedIn": {
+          "defense": 1,
+          "disposition": 5,
+          "reasons": 4
+        },
+        "preambleSnippets": 0,
+        "withDisposition": 10,
+        "withYearH": 10
+      }
+    }
+  ]
+}
