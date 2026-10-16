@@ -80,9 +80,9 @@ const repWithVersion = resolveEffectiveText({
 });
 ok(repWithVersion.repealed && repWithVersion.text === repealLine(repVer), "الإلغاء يغلب أي نسخة سابقة");
 
-// صفحة المادة: النص المحفوظ باهتًا تحت شارة «ملغاة» وسندها (قراءة تاريخية)
+// صفحة المادة: سطر الإلغاء وسنده، والنص المحفوظ في «النسخ السابقة»
 const repView = presentArticle({ baseText: stale, versions: [], verification: repVer });
-ok(repView.faded && repView.badge === "ملغاة" && repView.badgeDetail === rep.evidence_instrument, "صفحة المادة: الملغاة باهتة تحت شارة الإلغاء وسنده");
+ok(repView.text === repealLine(repVer) && repView.text !== stale && repView.badge === "ملغاة", "صفحة المادة: الملغاة بسطر إلغائها وسنده كالوصف وJSON-LD");
 
 // نسخة مستقبلية فقط: لا «قيد التحقق» (للمادة نسخة موثقة)، مع تنبيه السريان
 const futureOnly = presentArticle({

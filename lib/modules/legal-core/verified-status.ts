@@ -146,10 +146,12 @@ export function presentArticle(input: {
     if (picked.validTo) citationSuffix += ` حتى ${picked.validTo.slice(0, 10)}`;
   }
 
-  // الملغاة تُعرض باهتة تحت شارة الإلغاء وسنده (قراءة تاريخية، لا نصًّا ساريًا) — قرار عرض قائم.
-  // المسارات الآلية (MCP/الوكيل/API) تُرجع سطر الإلغاء من effective-text.
+  // قرار المالك (16/10/2026): الملغاة نصها الرئيسي سطر الإلغاء وسنده، كبقية المسارات.
+  // النص المحفوظ يبقى مطويًا في «النسخ السابقة» للقراءة التاريخية.
+  const repealText = flags.repealed ? `أُلغيت هذه المادة${instrument ? ` بموجب ${instrument}` : ""}` : null;
+
   return {
-    text: picked.text,
+    text: repealText ?? picked.text,
     versionId: picked.version?.id ?? null,
     validFrom: picked.version?.validFrom ?? null,
     validTo: picked.validTo,
