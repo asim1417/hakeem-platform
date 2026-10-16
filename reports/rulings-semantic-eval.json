@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T03:27:47.453Z",
+  "measuredAt": "2026-10-16T03:29:37.472Z",
   "summary": {
     "vectors": {
       "chunks": 93440,
@@ -17,7 +17,7 @@
         "semanticOnly": 0,
         "both": 0,
         "preambleSnippets": 0,
-        "maxMs": 1148
+        "maxMs": 844
       }
     },
     "questions": {
@@ -32,7 +32,7 @@
         "semanticOnly": 5,
         "both": 0,
         "preambleSnippets": 0,
-        "maxMs": 1423
+        "maxMs": 1232
       }
     }
   },
@@ -42,7 +42,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 2130,
+        "ms": 1036,
         "matchedBy": {
           "lexical": 10
         },
@@ -55,7 +55,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 1148,
+        "ms": 844,
         "matchedBy": {
           "lexical": 10
         },
@@ -65,6 +65,18 @@
           "appeal": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.393,
+        "top10": 0.291,
+        "median": 0.274,
+        "atLeast": {
+          "0.3": 7,
+          "0.35": 2,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -72,7 +84,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 1736,
+        "ms": 422,
         "matchedBy": {
           "lexical": 10
         },
@@ -84,7 +96,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 429,
+        "ms": 384,
         "matchedBy": {
           "lexical": 10
         },
@@ -93,6 +105,18 @@
           "disposition": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.444,
+        "top10": 0.272,
+        "median": 0.224,
+        "atLeast": {
+          "0.3": 4,
+          "0.35": 3,
+          "0.4": 1,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -100,7 +124,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 1378,
+        "ms": 785,
         "matchedBy": {
           "lexical": 10
         },
@@ -113,7 +137,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 880,
+        "ms": 770,
         "matchedBy": {
           "lexical": 10
         },
@@ -123,6 +147,18 @@
           "claims": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.422,
+        "top10": 0.385,
+        "median": 0.371,
+        "atLeast": {
+          "0.3": 44,
+          "0.35": 41,
+          "0.4": 6,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -130,7 +166,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 525,
+        "ms": 419,
         "matchedBy": {
           "lexical": 10
         },
@@ -142,7 +178,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 649,
+        "ms": 319,
         "matchedBy": {
           "lexical": 10
         },
@@ -151,6 +187,18 @@
           "defense": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.348,
+        "top10": 0.303,
+        "median": 0.286,
+        "atLeast": {
+          "0.3": 10,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -158,7 +206,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 1334,
+        "ms": 688,
         "matchedBy": {
           "lexical": 10
         },
@@ -171,7 +219,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 829,
+        "ms": 720,
         "matchedBy": {
           "lexical": 10
         },
@@ -181,6 +229,18 @@
           "defense": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.339,
+        "top10": 0.263,
+        "median": 0.251,
+        "atLeast": {
+          "0.3": 3,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -188,7 +248,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 516,
+        "ms": 313,
         "matchedBy": {
           "lexical": 10
         },
@@ -201,7 +261,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 432,
+        "ms": 245,
         "matchedBy": {
           "lexical": 10
         },
@@ -211,6 +271,18 @@
           "claims": 3
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.3,
+        "top10": 0.27,
+        "median": 0.258,
+        "atLeast": {
+          "0.3": 1,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -218,7 +290,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 931,
+        "ms": 468,
         "matchedBy": {
           "lexical": 10
         },
@@ -231,7 +303,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 825,
+        "ms": 456,
         "matchedBy": {
           "lexical": 10
         },
@@ -241,6 +313,18 @@
           "reasons": 4
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.345,
+        "top10": 0.243,
+        "median": 0.232,
+        "atLeast": {
+          "0.3": 2,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -248,7 +332,7 @@
       "kind": "term",
       "lexical": {
         "returned": 10,
-        "ms": 1466,
+        "ms": 862,
         "matchedBy": {
           "lexical": 10
         },
@@ -260,7 +344,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 1059,
+        "ms": 833,
         "matchedBy": {
           "lexical": 10
         },
@@ -269,6 +353,18 @@
           "reasons": 6
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.299,
+        "top10": 0.26,
+        "median": 0.241,
+        "atLeast": {
+          "0.3": 0,
+          "0.35": 0,
+          "0.4": 0,
+          "0.45": 0,
+          "0.5": 0
+        }
       }
     },
     {
@@ -276,7 +372,7 @@
       "kind": "question",
       "lexical": {
         "returned": 9,
-        "ms": 333,
+        "ms": 279,
         "matchedBy": {
           "lexical": 9
         },
@@ -288,7 +384,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 559,
+        "ms": 336,
         "matchedBy": {
           "lexical": 9,
           "semantic": 1
@@ -298,6 +394,18 @@
           "disposition": 2
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.514,
+        "top10": 0.463,
+        "median": 0.438,
+        "atLeast": {
+          "0.3": 43,
+          "0.35": 43,
+          "0.4": 43,
+          "0.45": 12,
+          "0.5": 1
+        }
       }
     },
     {
@@ -305,7 +413,7 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 1245,
+        "ms": 847,
         "matchedBy": {
           "lexical": 10
         },
@@ -317,7 +425,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 1365,
+        "ms": 945,
         "matchedBy": {
           "lexical": 10
         },
@@ -326,6 +434,18 @@
           "disposition": 3
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.604,
+        "top10": 0.536,
+        "median": 0.53,
+        "atLeast": {
+          "0.3": 39,
+          "0.35": 39,
+          "0.4": 39,
+          "0.45": 39,
+          "0.5": 39
+        }
       }
     },
     {
@@ -333,14 +453,14 @@
       "kind": "question",
       "lexical": {
         "returned": 0,
-        "ms": 129,
+        "ms": 36,
         "matchedBy": {},
         "matchedIn": {},
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 3,
-        "ms": 562,
+        "ms": 238,
         "matchedBy": {
           "semantic": 3
         },
@@ -348,6 +468,18 @@
           "reasons": 3
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.519,
+        "top10": 0.467,
+        "median": 0.452,
+        "atLeast": {
+          "0.3": 37,
+          "0.35": 37,
+          "0.4": 37,
+          "0.45": 20,
+          "0.5": 3
+        }
       }
     },
     {
@@ -355,7 +487,7 @@
       "kind": "question",
       "lexical": {
         "returned": 1,
-        "ms": 258,
+        "ms": 117,
         "matchedBy": {
           "lexical": 1
         },
@@ -366,7 +498,7 @@
       },
       "semantic": {
         "returned": 1,
-        "ms": 343,
+        "ms": 216,
         "matchedBy": {
           "lexical": 1
         },
@@ -374,6 +506,18 @@
           "reasons": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.476,
+        "top10": 0.412,
+        "median": 0.4,
+        "atLeast": {
+          "0.3": 40,
+          "0.35": 40,
+          "0.4": 20,
+          "0.45": 1,
+          "0.5": 0
+        }
       }
     },
     {
@@ -381,17 +525,29 @@
       "kind": "question",
       "lexical": {
         "returned": 0,
-        "ms": 107,
+        "ms": 37,
         "matchedBy": {},
         "matchedIn": {},
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 0,
-        "ms": 323,
+        "ms": 227,
         "matchedBy": {},
         "matchedIn": {},
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.473,
+        "top10": 0.413,
+        "median": 0.381,
+        "atLeast": {
+          "0.3": 39,
+          "0.35": 39,
+          "0.4": 11,
+          "0.45": 2,
+          "0.5": 0
+        }
       }
     },
     {
@@ -399,7 +555,7 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 1738,
+        "ms": 1125,
         "matchedBy": {
           "lexical": 10
         },
@@ -411,7 +567,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 1423,
+        "ms": 1232,
         "matchedBy": {
           "lexical": 10
         },
@@ -420,6 +576,18 @@
           "disposition": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.699,
+        "top10": 0.649,
+        "median": 0.629,
+        "atLeast": {
+          "0.3": 60,
+          "0.35": 60,
+          "0.4": 60,
+          "0.45": 60,
+          "0.5": 60
+        }
       }
     },
     {
@@ -427,7 +595,7 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 1479,
+        "ms": 768,
         "matchedBy": {
           "lexical": 10
         },
@@ -439,7 +607,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 1023,
+        "ms": 778,
         "matchedBy": {
           "lexical": 9,
           "semantic": 1
@@ -449,6 +617,18 @@
           "disposition": 2
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.547,
+        "top10": 0.515,
+        "median": 0.494,
+        "atLeast": {
+          "0.3": 42,
+          "0.35": 42,
+          "0.4": 42,
+          "0.45": 42,
+          "0.5": 16
+        }
       }
     },
     {
@@ -456,7 +636,7 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 696,
+        "ms": 444,
         "matchedBy": {
           "lexical": 10
         },
@@ -468,7 +648,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 462,
+        "ms": 385,
         "matchedBy": {
           "lexical": 10
         },
@@ -477,6 +657,18 @@
           "disposition": 1
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.487,
+        "top10": 0.469,
+        "median": 0.463,
+        "atLeast": {
+          "0.3": 41,
+          "0.35": 41,
+          "0.4": 41,
+          "0.45": 41,
+          "0.5": 0
+        }
       }
     },
     {
@@ -484,7 +676,7 @@
       "kind": "question",
       "lexical": {
         "returned": 10,
-        "ms": 1671,
+        "ms": 1152,
         "matchedBy": {
           "lexical": 10
         },
@@ -496,7 +688,7 @@
       },
       "semantic": {
         "returned": 10,
-        "ms": 1350,
+        "ms": 1210,
         "matchedBy": {
           "lexical": 10
         },
@@ -505,6 +697,18 @@
           "reasons": 8
         },
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.472,
+        "top10": 0.433,
+        "median": 0.423,
+        "atLeast": {
+          "0.3": 38,
+          "0.35": 38,
+          "0.4": 38,
+          "0.45": 3,
+          "0.5": 0
+        }
       }
     },
     {
@@ -512,17 +716,29 @@
       "kind": "question",
       "lexical": {
         "returned": 0,
-        "ms": 131,
+        "ms": 37,
         "matchedBy": {},
         "matchedIn": {},
         "preambleSnippets": 0
       },
       "semantic": {
         "returned": 0,
-        "ms": 395,
+        "ms": 332,
         "matchedBy": {},
         "matchedIn": {},
         "preambleSnippets": 0
+      },
+      "simStats": {
+        "top1": 0.49,
+        "top10": 0.458,
+        "median": 0.449,
+        "atLeast": {
+          "0.3": 40,
+          "0.35": 40,
+          "0.4": 40,
+          "0.45": 20,
+          "0.5": 0
+        }
       }
     }
   ]
