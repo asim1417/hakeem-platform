@@ -107,20 +107,38 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   const limit = Math.min(query.limit ?? 10, 30);
 
   const providerStatuses: { name: SearchSource; status: ProviderStatus }[] = [];
+  const started = Date.now();
+  const budget = providerBudgetMs();
   const rawBatches = await Promise.all(
     selected.map(async (p): Promise<RawResult[]> => {
+      const t0 = Date.now();
+      const state: { outcome: "ok" | "unavailable" | "error" | "budget" } = { outcome: "ok" };
       try {
-        const available = await p.isAvailable();
-        if (!available) {
-          providerStatuses.push({ name: p.name, status: "unavailable" });
+        // ميزانية لكل مزوّد: البطيء يُسقَط وتُرجَع نتائج البقية، بدل أن يُسقط البحث كله مهلةَ الأداة.
+        const r = await withBudget(
+          (async () => {
+            const available = await p.isAvailable();
+            if (!available) {
+              state.outcome = "unavailable";
+              return [] as RawResult[];
+            }
+            return p.search({ ...query, limit });
+          })(),
+          budget,
+        );
+        if (r === BUDGET_EXCEEDED) {
+          state.outcome = "budget";
+          providerStatuses.push({ name: p.name, status: "timeout" });
           return [];
         }
-        const r = await p.search({ ...query, limit });
-        providerStatuses.push({ name: p.name, status: "active" });
+        providerStatuses.push({ name: p.name, status: state.outcome === "unavailable" ? "unavailable" : "active" });
         return r;
       } catch {
+        state.outcome = "error";
         providerStatuses.push({ name: p.name, status: "unavailable" });
         return [];
+      } finally {
+        console.info(`[search] provider=${p.name} ms=${Date.now() - t0} outcome=${state.outcome}`);
       }
     })
   );
@@ -135,7 +153,30 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   // وجه البحث: مواد الأنظمة المخفية اليوم لا تظهر في صناديق البحث (الأحكام والمبادئ كما هي).
   results = await filterArticlesToSurface(results, { asOf: query.asOf, surface: query.surface }).catch(() => results);
 
+  console.info(`[search] total ms=${Date.now() - started} results=${results.length}`);
   return { query: query.q, mode, results, providers: providerStatuses, total: results.length };
+}
+
+const BUDGET_EXCEEDED = Symbol("budget-exceeded");
+
+/** ميزانية المزوّد الواحد (ms). أقل من مهلة أداة MCP (20 ثانية) بهامش للدمج والمطابقة التامة. */
+export function providerBudgetMs(): number {
+  const n = Number(process.env.SEARCH_PROVIDER_BUDGET_MS);
+  return Number.isFinite(n) && n > 0 ? n : 9000;
+}
+
+/** يسابق الوعد بمهلة؛ لا يُلغي العمل الجاري لكنه لا ينتظره. */
+export async function withBudget<T>(work: Promise<T>, ms: number): Promise<T | typeof BUDGET_EXCEEDED> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<typeof BUDGET_EXCEEDED>((resolve) => {
+    timer = setTimeout(() => resolve(BUDGET_EXCEEDED), ms);
+  });
+  try {
+    return await Promise.race([work, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+    work.catch(() => undefined); // عمل متأخر فشل بعد المهلة: لا رفض غير معالَج
+  }
 }
 
 /** نوع المطابقة المُجمَّع من المصادر المساهِمة. */
