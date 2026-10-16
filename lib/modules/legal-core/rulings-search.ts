@@ -11,6 +11,9 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
+import { buildRulingExcerpts, buildRulingTsQuery, findMatches, queryTokens, type RulingPart } from "./ruling-excerpts";
+import type { SegmentType } from "@/lib/rulings/research/segment";
+import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 
 export interface RulingHit {
   id: string;
@@ -21,8 +24,11 @@ export interface RulingHit {
   dateText: string | null;
   hijriYear: number | null;
   title: string | null;
-  snippet: string; // منقّى من PDPL
-  score: number; // 0..1 نسبة الألفاظ المتطابقة (+ حافز العنوان)
+  snippet: string; // منقّى من PDPL — من موضع المطابقة في الأسباب أولًا، لا من الديباجة
+  matchedIn: SegmentType | null; // الجزء الذي أُخذ منه المقتطف
+  disposition: string | null; // بداية المنطوق (منقّاة)
+  parts: RulingPart[]; // خريطة أجزاء الحكم بإزاحاتها
+  score: number; // 0..1 نسبة الألفاظ المتطابقة (+ حافز موضع المطابقة)
 }
 
 const PII_DIGIT = "[0-9\\u0660-\\u0669]";
@@ -113,21 +119,25 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
   const offset = Math.max(opts.offset ?? 0, 0);
   const tokens = normalizeArabic(opts.query).split(/\s+/).filter((t) => t.length >= 2);
-  if (!tokens.length) return { hits: [], total: 0, ms: Date.now() - started };
+  const rawTokens = queryTokens(opts.query);
+  if (!tokens.length || !rawTokens.length) return { hits: [], total: 0, ms: Date.now() - started };
 
   // مطابقة على مستوى الكلمة الكاملة (لا احتواء جزئيّ) عبر البحث النصيّ الكامل بإعداد 'simple'
   // الذي يقسم على الفراغات/الترقيم فقط بلا جذوع إنجليزية — يتفادى إيجابيات مثل «نجش» داخل «سونجشانج».
+  // مع العمود المفهرس: tsquery بصيغ كل لفظ (السوابق + التطبيعان اللذان قد يُبنى بهما العمود).
   const normQuery = tokens.join(" ");
   const indexed = await hasSearchNormColumn();
+  const tsQuery = indexed ? buildRulingTsQuery(opts.query) : null;
   // المسار المفهرس: عمود search_norm (منقّى PDPL ومطبَّع) مع فهرس GIN. وإلّا تطبيع فوريّ.
   const tsv = indexed
     ? `to_tsvector('simple', coalesce("search_norm",''))`
     : `to_tsvector('simple', ${sqlNormalize(`"judgmentText"`)} || ' ' || ${sqlNormalize(`"judgmentTitle"`)})`;
   const params: unknown[] = [];
   const conds: string[] = [];
-  params.push(normQuery);
+  params.push(tsQuery ?? normQuery);
   const tsqIdx = params.length;
-  conds.push(`${tsv} @@ plainto_tsquery('simple', $${tsqIdx})`);
+  const tsq = tsQuery ? `to_tsquery('simple', $${tsqIdx})` : `plainto_tsquery('simple', $${tsqIdx})`;
+  conds.push(`${tsv} @@ ${tsq}`);
   if (opts.court && opts.court.trim()) {
     params.push(`%${normalizeArabic(opts.court)}%`);
     conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
@@ -143,30 +153,27 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   ).catch(() => [{ c: BigInt(0) }]);
   const total = Number(totalRow?.[0]?.c ?? 0);
 
+  // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
   const rows = await prisma.$queryRawUnsafe<Array<{
     id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
     cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
     judgmentTitle: string | null; judgmentText: string | null;
   }>>(
-    `SELECT "id","decisionNo","caseNo","court","cityName","decisionDateText","caseDateText","judgmentTitle","judgmentText",
-            ts_rank(${tsv}, plainto_tsquery('simple', $${tsqIdx})) AS rank
-     FROM "judicial_cases" WHERE ${where}
-     ORDER BY rank DESC, "decisionDate" DESC NULLS LAST
+    `WITH c AS (SELECT "id" FROM "judicial_cases" WHERE ${where} LIMIT 2000)
+     SELECT j."id",j."decisionNo",j."caseNo",j."court",j."cityName",j."decisionDateText",j."caseDateText",j."judgmentTitle",j."judgmentText",
+            ts_rank_cd(${tsv.replace(/"search_norm"|"judgmentText"|"judgmentTitle"/g, (m) => `j.${m}`)}, ${tsq}) AS rank
+     FROM c JOIN "judicial_cases" j ON j."id" = c."id"
+     ORDER BY rank DESC, j."decisionDate" DESC NULLS LAST
      LIMIT ${limit} OFFSET ${offset}`, ...params,
   ).catch(() => []);
 
   const hits: RulingHit[] = rows.map((r) => {
-    const bodyWords = new Set(normalizeArabic(r.judgmentText ?? "").split(/\s+/));
-    const titleWords = new Set(normalizeArabic(r.judgmentTitle ?? "").split(/\s+/));
-    const present = tokens.filter((t) => bodyWords.has(t) || titleWords.has(t)).length;
-    const titleBoost = tokens.some((t) => titleWords.has(t)) ? 0.1 : 0;
-    // مقتطف حول أوّل لفظ مطابق (مطابقة كلمة كاملة)، منقّى من PDPL.
     const raw = r.judgmentText ?? "";
-    const normRaw = normalizeArabic(raw);
-    let idx = -1;
-    for (const t of tokens) { const i = normRaw.search(new RegExp(`(^|\\s)${t}(\\s|$)`)); if (i >= 0) { idx = i; break; } }
-    const start = idx > 60 ? idx - 60 : 0;
-    const snippet = redactPII(raw.slice(start, start + 240)).replace(/\s+/g, " ").trim();
+    // كم لفظًا من الاستعلام ورد كلمةً كاملة (مع السوابق) في النص أو العنوان.
+    const present = rawTokens.filter((t) => findMatches(`${r.judgmentTitle ?? ""} ${raw}`, t).length > 0).length;
+    // ما يقرؤه حكيم: مقتطف من الأسباب أو المنطوق، والمنطوق مرفق، وخريطة الأجزاء — منقّاة من PDPL.
+    const ex = buildRulingExcerpts(raw, opts.query);
+    const placeBoost = ex.matchedIn === "reasons" || ex.matchedIn === "disposition" ? 0.1 : 0;
     return {
       id: r.id,
       decisionNo: r.decisionNo,
@@ -176,11 +183,38 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
       dateText: r.decisionDateText ?? r.caseDateText,
       hijriYear: extractHijriYear(r.decisionDateText ?? r.caseDateText),
       title: r.judgmentTitle,
-      snippet,
-      score: Math.min(1, present / tokens.length + titleBoost),
+      snippet: redactPII(ex.snippet),
+      matchedIn: ex.matchedIn,
+      disposition: ex.disposition ? redactPII(ex.disposition) : null,
+      parts: ex.parts,
+      score: Math.min(1, present / rawTokens.length + placeBoost),
     };
   });
   hits.sort((a, b) => b.score - a.score);
 
   return { hits, total, ms: Date.now() - started };
+}
+
+/** يحوّل نتيجة الأحكام المباشرة إلى الشكل الموحّد للبحث الشامل وأدوات الوكيل. */
+export function rulingHitToMerged(h: RulingHit): MergedResult {
+  return {
+    type: "ruling",
+    id: h.id,
+    title: `حكم ${h.decisionNo ?? h.caseNo ?? h.id}${h.court ? ` — ${h.court}` : ""}`,
+    snippet: h.snippet,
+    confidence: h.score,
+    sources: ["postgres"],
+    reasons: [`مطابقة كلمات كاملة في ${h.matchedIn === "reasons" ? "الأسباب" : h.matchedIn === "disposition" ? "المنطوق" : "نص الحكم"}`],
+    meta: {
+      matchedBy: "lexical",
+      sourceType: "ruling",
+      caseNo: h.caseNo,
+      decisionNo: h.decisionNo,
+      court: h.court ?? undefined,
+      year: h.hijriYear ? String(h.hijriYear) : undefined,
+      decisionDateText: h.dateText ?? undefined,
+      matchedIn: h.matchedIn ?? undefined,
+      disposition: h.disposition ?? undefined,
+    },
+  };
 }

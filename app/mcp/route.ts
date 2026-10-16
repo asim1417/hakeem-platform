@@ -98,7 +98,7 @@ const handler = createMcpHandler(
       "hakeem_search_rulings",
       {
         description:
-          "البحث في قاعدة الأحكام القضائية السعودية: رقم القضية، المحكمة، السنة، ومقتطف من الحكم.",
+          "البحث في قاعدة الأحكام القضائية السعودية وحدها (كلمات كاملة مع السوابق، لا منافسة مع المواد): رقم القضية، المحكمة، السنة الهجرية، ومقتطف من موضع المطابقة في الأسباب أو المنطوق، وبداية المنطوق، وخريطة أجزاء الحكم.",
         inputSchema: z.object({
           query: z.string().describe("نص البحث"),
           court: z.string().optional().describe("حصر بمحكمة/دائرة (اختياري)"),
@@ -200,14 +200,18 @@ const handler = createMcpHandler(
       "hakeem_get_ruling",
       {
         description:
-          "جلب نص الحكم القضائي كاملًا بمعرّفه (ruling_id كما يرجع من hakeem_search_rulings أو hakeem_enumerate_rulings). الأحكام الطويلة تُرجَع مقطّعة: استخدم offset مع next_offset للمتابعة.",
+          "جلب نص الحكم القضائي بمعرّفه (ruling_id كما يرجع من hakeem_search_rulings أو hakeem_enumerate_rulings). يرجع خريطة أجزاء الحكم (parts). لقراءة علّة الحكم مباشرة مرّر part=reasons، وللنتيجة part=disposition، بدل قراءة الديباجة. الأحكام الطويلة تُرجَع مقطّعة: استخدم offset مع next_offset للمتابعة.",
         inputSchema: z.object({
           ruling_id: z.string().describe("معرّف الحكم"),
-          offset: z.number().int().min(0).default(0).describe("موضع البداية بالحرف داخل النص (للمتابعة في الأحكام الطويلة)"),
+          part: z
+            .enum(["header", "claims", "defense", "reasons", "disposition", "appeal", "other"])
+            .optional()
+            .describe("جزء بعينه: reasons الأسباب، disposition المنطوق، claims الدعوى، defense الإجابة والدفوع، appeal الاعتراض (اختياري؛ بدونه النص كله)"),
+          offset: z.number().int().min(0).default(0).describe("موضع البداية بالحرف داخل الجزء أو النص (للمتابعة)"),
           max_chars: z.number().int().min(1000).max(60000).default(30000).describe("أقصى عدد أحرف تُرجَع في الاستدعاء الواحد"),
         }),
       },
-      async ({ ruling_id, offset, max_chars }) => tool("hakeem_get_ruling", () => getRuling(ruling_id, offset, max_chars))
+      async ({ ruling_id, part, offset, max_chars }) => tool("hakeem_get_ruling", () => getRuling(ruling_id, offset, max_chars, part))
     );
 
     // ١٣) حصر شامل غير مسقوف للأحكام (عدّ حقيقيّ + توزيع بالمحكمة + ترقيم cursor)
