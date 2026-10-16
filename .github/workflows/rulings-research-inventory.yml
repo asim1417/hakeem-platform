@@ -1,0 +1,58 @@
+name: Rulings Research — Phase 0 Inventory (read-only)
+
+# جرد المرحلة صفر لطبقة الأحكام البحثية: قراءة فقط، بلا نموذج ولا كتابة.
+# يشغّل scripts/rulings-research/00-inventory.ts على Neon عبر اتصال مباشر (غير pooler)
+# مع default_transaction_read_only=on، والسكربت يرفض العمل ما لم يثبت أن الجلسة للقراءة فقط.
+# المخرج ملف JSON محجوب البيانات الشخصية يُرفع أثرًا (artifact) للتشغيل.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [aman/rulings-research-layer]
+    paths:
+      - .github/workflows/rulings-research-inventory.yml
+      - scripts/rulings-research/00-inventory.ts
+
+concurrency:
+  group: rulings-research-inventory
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ اتصال مباشر للقراءة فقط (Neon)"
+        run: |
+          url="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$url" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          host=$(printf '%s' "$url" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
+          # الاتصال المباشر يقبل options (المجمّع لا يقبلها)؛ ونحذف معاملات المجمّع.
+          direct=$(printf '%s' "$url" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          echo "::add-mask::$direct"
+          echo "AUDIT_DB_URL=$direct" >> "$GITHUB_ENV"
+          echo "المضيف (مباشر): $(printf '%s' "$host" | sed -E 's#-pooler##')"
+      - name: "جرد المرحلة صفر (قراءة فقط)"
+        run: |
+          DATABASE_URL="$AUDIT_DB_URL" AUDIT_TRANSPORT=prisma npx tsx scripts/rulings-research/00-inventory.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rulings-research-00-inventory
+          path: reports/rulings-research/00-inventory.data.json
+          if-no-files-found: warn
+          retention-days: 30
