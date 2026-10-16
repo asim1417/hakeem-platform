@@ -1,0 +1,90 @@
+{
+  "measuredAt": "2026-10-16T01:05:44.470Z",
+  "extractorVersion": "meta-v1",
+  "mode": "dry-run",
+  "rows": 51105,
+  "snapshotContentHash": "b374737f75973f3aee5fc847b9a7c5a097c38d03829f3e9627c84b007040462c",
+  "gate": {
+    "yearH": {
+      "value": 99.94,
+      "threshold": 98,
+      "pass": true,
+      "numerator": 51074,
+      "denominator": 51105
+    },
+    "courtType": {
+      "value": 100,
+      "threshold": 99,
+      "pass": true,
+      "numerator": 51105,
+      "denominator": 51105
+    }
+  },
+  "coverage": {
+    "monthAndDay": {
+      "n": 51044,
+      "pct": 99.88
+    },
+    "decisionDateG": {
+      "n": 51044,
+      "pct": 99.88
+    },
+    "dateFromCaseText": 0,
+    "appealText": {
+      "n": 15622,
+      "pct": 30.57
+    },
+    "empty": 0
+  },
+  "courtType": {
+    "تجارية": 47144,
+    "عامة": 2377,
+    "أخرى": 1579,
+    "عمالية": 3,
+    "جزائية": 2
+  },
+  "degree": {
+    "ابتدائي": 49526,
+    "عليا": 1579
+  },
+  "yearH": {
+    "1422": 3,
+    "1424": 1,
+    "1425": 1,
+    "1426": 1,
+    "1427": 3,
+    "1428": 3,
+    "1429": 1,
+    "1431": 2,
+    "1432": 3,
+    "1433": 3,
+    "1434": 8,
+    "1435": 17,
+    "1436": 49,
+    "1437": 103,
+    "1438": 469,
+    "1439": 1700,
+    "1440": 2833,
+    "1441": 2389,
+    "1442": 11635,
+    "1443": 4252,
+    "1444": 19033,
+    "1445": 7672,
+    "1446": 893
+  },
+  "unclassifiedCourts": {},
+  "unparsedDateShapes": {
+    "d/d/d": 23,
+    "dd/d/d": 2,
+    "dd/d/ddd": 2,
+    "d/d/dddd": 1,
+    "dd/dd/d": 1,
+    "//": 1,
+    "d / d / d": 1
+  },
+  "appealLinkProbe": {
+    "caseNoSharedGroups": 4340,
+    "rowsInSharedCaseNo": 12366,
+    "decisionNoSharedGroups": 2431
+  }
+}
