@@ -48,9 +48,21 @@ async function searchNormState() {
         `SELECT migration_name, finished_at FROM _prisma_migrations WHERE migration_name LIKE '%judicial_cases_search_norm%' ORDER BY 1`)
     : [];
   const filled = column ? await count(`SELECT count(*)::int AS n FROM judicial_cases WHERE coalesce(search_norm,'') <> ''`) : 0;
+  // أيّ البانيين ملأ العمود؟ عيّنة ١٠٪ (TABLESAMPLE SYSTEM): الهمزة المفردة «ء» تبقى مع normalizeArabicText
+  // (الباني غير الحاجب) وتُحذف مع normalizeArabic (الباني الحاجب)؛ ونعدّ أنماط هوية/جوال غير محجوبة.
+  const builder = column
+    ? (await q<{ n: number; hamza: number; id10: number; mobile: number; masked: number }>(`
+        SELECT count(*)::int AS n,
+          count(*) FILTER (WHERE search_norm LIKE '%ء%')::int AS hamza,
+          count(*) FILTER (WHERE search_norm ~ '(^|[^0-9])[12][0-9]{9}([^0-9]|$)')::int AS id10,
+          count(*) FILTER (WHERE search_norm ~ '(^|[^0-9])05[0-9]{8}([^0-9]|$)')::int AS mobile,
+          count(*) FILTER (WHERE search_norm LIKE '%محجوب%')::int AS masked
+        FROM judicial_cases TABLESAMPLE SYSTEM (10) REPEATABLE (7)`))[0]
+    : null;
   return {
     columnExists: column > 0,
     filled,
+    builderProbe: builder,
     expectedIndexes: ["idx_judicial_cases_search_norm_tsv", "idx_judicial_cases_search_norm_trgm", "judicial_cases_search_norm_gin"]
       .map((name) => ({ name, present: indexes.some((i) => i.indexname === name) })),
     prismaMigrationsRows: migrations,
