@@ -209,7 +209,8 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
     disposition: h.disposition, // بداية المنطوق
     parts: h.parts.map((p) => ({ type: p.type, start: p.start, end: p.end })), // لجلب جزء بعينه عبر hakeem_get_ruling
   }));
-  return { query, count: results.length, total: r?.total ?? 0, results };
+  // total مسقوف بـ٥٠٠٠ للألفاظ الشائعة؛ total_is_lower_bound يعني «أكثر من ذلك».
+  return { query, count: results.length, total: r?.total ?? 0, total_is_lower_bound: r?.totalCapped ?? false, results };
 }
 
 // ٧) حارس الإحالات — التحقق قبل العزو (يمنع اختلاق المواد).

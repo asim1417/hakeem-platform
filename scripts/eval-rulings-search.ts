@@ -35,7 +35,7 @@ async function main() {
     const oldMs = Date.now() - t0;
     const oldRulings = (old?.results ?? []).filter((r) => r.type === "ruling");
     const t1 = Date.now();
-    const nu = await searchRulingsDirect({ query: q, limit: 10 }).catch((e) => ({ hits: [], total: -1, ms: 0, err: (e as Error).message }));
+    const nu = await searchRulingsDirect({ query: q, limit: 10 }).catch((e) => ({ hits: [], total: -1, totalCapped: false, ms: 0, err: (e as Error).message }));
     const newMs = Date.now() - t1;
     const where: Record<string, number> = {};
     for (const h of nu.hits) where[h.matchedIn ?? "none"] = (where[h.matchedIn ?? "none"] ?? 0) + 1;
