@@ -1,7 +1,7 @@
 {
-  "measuredAt": "2026-10-16T06:43:38.668Z",
+  "measuredAt": "2026-10-16T06:50:58.540Z",
   "extractorVersion": "meta-v1",
-  "mode": "dry-run",
+  "mode": "apply",
   "rows": 51105,
   "snapshotContentHash": "b374737f75973f3aee5fc847b9a7c5a097c38d03829f3e9627c84b007040462c",
   "gate": {
@@ -82,6 +82,7 @@
     "//": 1,
     "d / d / d": 1
   },
+  "snapshotId": "production-2026-10-16",
   "appealLinkProbe": {
     "caseNoSharedGroups": 4340,
     "rowsInSharedCaseNo": 12366,
