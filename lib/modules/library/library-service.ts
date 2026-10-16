@@ -1,5 +1,6 @@
 import { unstable_cache, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { applyEffectiveText, effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 
 /** وسم تخزين النواة القانونية — لإبطال الكاش عند تحديث البيانات. */
 export const LEGAL_CORE_CACHE_TAG = "legal-core";
@@ -15,15 +16,18 @@ export async function searchLegalArticles(query: string, limit = 8, lawName?: st
   const lawFilter = lawName?.trim();
   const lawWhere = lawFilter ? { lawName: lawFilter } : {};
 
+  // النص المعروض = النص الساري (المصدر الواحد).
   if (!normalized) {
-    return prisma.legalArticle.findMany({
-      where: lawWhere,
-      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
-      take: limit
-    });
+    return applyEffectiveText(
+      await prisma.legalArticle.findMany({
+        where: lawWhere,
+        orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
+        take: limit
+      })
+    );
   }
 
-  return prisma.legalArticle.findMany({
+  const rows = await prisma.legalArticle.findMany({
     where: {
       AND: [
         lawWhere,
@@ -40,6 +44,7 @@ export async function searchLegalArticles(query: string, limit = 8, lawName?: st
     take: limit,
     orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }]
   });
+  return applyEffectiveText(rows);
 }
 
 export const getLibraryStats = unstable_cache(_getLibraryStats, ["library:stats"], {
@@ -312,12 +317,17 @@ export async function listArticlesForSync(opts: ArticleSyncQuery = {}) {
     prisma.legalArticle.count({ where }),
   ]);
 
+  // content = النص الساري؛ storedContent = النص المحفوظ كما ورد (للأرشفة).
+  const effective = await effectiveArticleTexts(rows);
   const items = rows.map((a) => ({
     id: a.id,
     lawName: a.lawName,
     articleNumber: a.articleNumber,
     title: a.title,
-    content: a.content,
+    content: effective.get(a.id)?.text ?? a.content,
+    storedContent: a.content,
+    repealed: effective.get(a.id)?.repealed ?? false,
+    textBasis: effective.get(a.id)?.basis ?? null,
     classification: a.classification,
     status: a.status,
     chapter: a.chapter,
@@ -365,7 +375,9 @@ export function getArticleDetail(id: string) {
         }
       }
     })
-    .catch(() => null);
+    .catch(() => null)
+    // النص المعروض = النص الساري (المصدر الواحد)، والملغاة سطر الإلغاء.
+    .then(async (row) => (row ? (await applyEffectiveText([row]))[0] : null));
 }
 
 /** يحلّ معرّفات المواد (cuid) من أزواج (lawName, articleNumber) — لربط الواجهة بصفحة المادة. */

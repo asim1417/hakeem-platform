@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
     limit,
     includeSnippets: searchParams.get("includeSnippets") !== "false",
     includeMatchedParagraphs: searchParams.get("includeMatchedParagraphs") !== "false",
-    includeRelatedTerms: searchParams.get("includeRelatedTerms") === "true"
+    includeRelatedTerms: searchParams.get("includeRelatedTerms") === "true",
+    // الأنظمة الملغاة مستبعدة افتراضيًا؛ showRepealed=1 يُظهرها.
+    surface: searchParams.get("showRepealed") === "1" ? "archive" : "current"
   });
 
   const judgmentResults = sourceTypes.includes("judgment") || sourceTypes.includes("case_link")

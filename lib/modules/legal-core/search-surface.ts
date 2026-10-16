@@ -95,9 +95,56 @@ const TTL_MS = 5 * 60 * 1000;
  * يحمّل الوجه من القاعدة لتاريخ (افتراضيًا اليوم بتوقيت الرياض). مذكَّر ٥ دقائق لكل تاريخ.
  * سقوط آمن إلى وجه فارغ (= السلوك القديم) عند غياب الجداول أو أي خطأ.
  */
+/**
+ * الأنظمة الملغاة في سجل التحقق (آخر سجل work: «ملغى» أو «مستبدل»). لا يحمل السجل تاريخ الإلغاء،
+ * فيُطبَّق على البحث بتاريخ اليوم أو بعده فقط. غياب الجدول = لا شيء.
+ */
+async function repealedWorkIds(): Promise<string[]> {
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const rows = await prisma.$queryRawUnsafe<Array<{ object_id: string; verified_status: string }>>(
+      `SELECT DISTINCT ON (object_id) object_id, verified_status
+       FROM verification WHERE object_type = 'work'
+       ORDER BY object_id, verified_at DESC, id DESC`,
+    );
+    return rows.filter((r) => r.verified_status === "ملغى" || r.verified_status === "مستبدل").map((r) => r.object_id);
+  } catch {
+    return [];
+  }
+}
+
+/** يضيف الملغى بسجل التحقق إلى المخفي (مع إبقاء الإحالة إلى البديل إن عرفها الوجه). نقيّ. */
+export function hideRepealed(surface: SearchSurface, repealedIds: string[]): SearchSurface {
+  if (!repealedIds.length) return surface;
+  const hidden = new Set(surface.hidden);
+  for (const id of repealedIds) hidden.add(id);
+  return { ...surface, hidden };
+}
+
 export async function loadSearchSurface(asOf: string = todayRiyadh()): Promise<{ surface: SearchSurface; hiddenNames: Set<string> }> {
   const now = Date.now();
   if (_cache && _cache.asOf === asOf && now - _cache.at < TTL_MS) return { surface: _cache.surface, hiddenNames: _cache.hiddenNames };
+  const base = await loadSurfaceTables(asOf);
+  // البحث يستبعد الأنظمة الملغاة افتراضيًا؛ «إظهار الملغى» = surface: "archive" عند المستدعي.
+  const repealed = asOf >= todayRiyadh() ? await repealedWorkIds() : [];
+  if (!repealed.length) {
+    _cache = { asOf, at: now, ...base };
+    return base;
+  }
+  const surface = hideRepealed(base.surface, repealed);
+  let hiddenNames = base.hiddenNames;
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const names = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`SELECT name FROM legal_systems WHERE id = ANY($1::text[])`, repealed);
+    hiddenNames = new Set([...base.hiddenNames, ...names.map((n) => n.name)]);
+  } catch {
+    /* بلا أسماء: المطابقة بالمعرّف تكفي */
+  }
+  _cache = { asOf, at: now, surface, hiddenNames };
+  return { surface, hiddenNames };
+}
+
+async function loadSurfaceTables(asOf: string): Promise<{ surface: SearchSurface; hiddenNames: Set<string> }> {
   try {
     const { prisma } = await import("@/lib/prisma");
     const rows = await prisma.$queryRawUnsafe<Array<{ id: string; work_key: string; surface_system_id: string | null; valid_on: Date | string; created_at: Date | string }>>(
@@ -123,7 +170,6 @@ export async function loadSearchSurface(asOf: string = todayRiyadh()): Promise<{
       ? await prisma.$queryRawUnsafe<Array<{ name: string }>>(`SELECT name FROM legal_systems WHERE id = ANY($1::text[])`, hiddenIds)
       : [];
     const hiddenNames = new Set(names.map((n) => n.name));
-    _cache = { asOf, at: now, surface, hiddenNames };
     return { surface, hiddenNames };
   } catch {
     return { surface: { ...EMPTY_SURFACE, asOf }, hiddenNames: new Set() };

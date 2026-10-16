@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { applyEffectiveText as withEffectiveText } from "./effective-text";
 import { prisma } from "@/lib/prisma";
 import {
   type ArabicSearchType,
@@ -667,9 +668,11 @@ async function materializePage(
 ): Promise<LegalCoreResult[]> {
   if (!pageSlice.length) return [];
   const ids = pageSlice.map((r) => r.articleId);
-  const fullRows = await prisma.legalArticle
-    .findMany({ where: { id: { in: ids } }, include: { legalSystem: { select: { id: true, name: true } } } })
-    .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>);
+  const fullRows = await withEffectiveText(
+    await prisma.legalArticle
+      .findMany({ where: { id: { in: ids } }, include: { legalSystem: { select: { id: true, name: true } } } })
+      .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
+  );
   const fullById = new Map(fullRows.map((a) => [a.id, a]));
   return pageSlice.map((light) => {
     const full = fullById.get(light.articleId);
@@ -741,11 +744,13 @@ export async function getArticlesByNumber(
     }
   }
   const surfaceFilter = buildSurfaceFilter([...surface.hidden], [...hiddenNames]);
-  const articles = await prisma.legalArticle.findMany({
-    where: Object.keys(surfaceFilter).length ? { AND: [where, surfaceFilter] } : where,
-    include: { legalSystem: { select: { id: true, name: true } } },
-    take: 12
-  });
+  const articles = await withEffectiveText(
+    await prisma.legalArticle.findMany({
+      where: Object.keys(surfaceFilter).length ? { AND: [where, surfaceFilter] } : where,
+      include: { legalSystem: { select: { id: true, name: true } } },
+      take: 12
+    })
+  );
   return articles.map((article) => mapArticleResult(article as LegalArticleWithSystem, "", "contains", [], { includeSnippets: true }));
 }
 
@@ -814,12 +819,13 @@ export async function findRelevantLegalArticles(query: string, options: { system
 }
 
 export async function getArticleFullContext(articleId: string) {
-  const article = await prisma.legalArticle.findUnique({
+  const stored = await prisma.legalArticle.findUnique({
     where: { id: articleId },
     include: { legalSystem: true }
   });
 
-  if (!article) return null;
+  if (!stored) return null;
+  const [article] = await withEffectiveText([stored]);
 
   const related = await findRelevantLegalArticles(article.content.slice(0, 120), {
     systemId: article.legalSystemId ?? article.lawName,

@@ -94,6 +94,13 @@ export default async function LegalSystemPage({
     };
   }
 
+  // النظام الملغى في سجل التحقق: شريط إلغاء أعلى الصفحة مع سنده، والبديل إن عرفه وجه البحث.
+  if (workFlags.repealed) {
+    const by = workVerification?.evidenceInstrument?.trim();
+    const repealLabel = `هذا النظام ملغى${by ? ` — السند: ${by}` : ""}. نصّه محفوظ للقراءة التاريخية ولا يُعتدّ به نصًّا ساريًا.`;
+    archiveNotice = archiveNotice ? { label: `${repealLabel} ${archiveNotice.label}`, href: archiveNotice.href } : { label: repealLabel, href: null };
+  }
+
   // كتل «نص النظام» قبل المواد: من بطاقة المصدر إن وُجدت، وإلا مما في القاعدة (العنوان، الديباجة، أداة الإصدار).
   const fallbackInstruments = [system.preambleRoyalDecree, issuance ? `${issuance.instrumentNo} · ${issuance.instrumentDateHijri}` : null].filter(
     (x): x is string => Boolean(x && x.trim())
@@ -167,6 +174,7 @@ export default async function LegalSystemPage({
               const flag = citationFlagsFromVerification(verification);
               const unverified = flag.statusLabel === UNVERIFIED_NOTICE;
               const retired = flag.repealed || flag.statusLabel === "مستبدل";
+              const faded = view.faded || workFlags.repealed;
               const href = `/legal/${encodeURIComponent(slug)}/${a.articleNumber}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`;
               return (
                 <li key={a.id} id={`m${a.articleNumber}`} className="scroll-mt-24">
@@ -177,7 +185,7 @@ export default async function LegalSystemPage({
                     {retired ? (
                       <span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>{flag.statusLabel}</span>
                     ) : unverified ? (
-                      <span className="text-xs text-muted">قيد التحقق</span>
+                      <span className="text-xs text-muted">{view.versionId ? "معدّلة" : "قيد التحقق"}</span>
                     ) : (
                       <span className="text-xs text-muted">{flag.statusLabel}</span>
                     )}
@@ -185,7 +193,7 @@ export default async function LegalSystemPage({
                   {view.pendingNotice ? (
                     <p role="note" className="mt-2 rounded-lg border border-amber-400 bg-amber-50 p-2 text-sm text-amber-950">{view.pendingNotice}</p>
                   ) : null}
-                  <p className={`mt-2 whitespace-pre-wrap leading-9 ${view.faded ? "text-slate-400" : "text-[var(--navy)]"}`}>{view.text}</p>
+                  <p className={`mt-2 whitespace-pre-wrap leading-9 ${faded ? "text-slate-400" : "text-[var(--navy)]"}`}>{view.text}</p>
                   {view.amendmentLine ? <p className="mt-1 text-xs text-muted">{view.amendmentLine}</p> : null}
                 </li>
               );

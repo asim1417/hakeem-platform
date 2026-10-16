@@ -3,6 +3,7 @@
 // كلّها للقراءة فقط، مقيّدةٌ بالنطاق حيث ينطبق، وبسقوطٍ آمن (نتيجة فارغة + note عند أي خطأ).
 // ─────────────────────────────────────────────────────────────────────────────
 import { resolveEnforcement } from "@/lib/modules/agents/substrate/enforcement";
+import { applyEffectiveText } from "@/lib/modules/legal-core/effective-text";
 
 const normalizeSystem = (s: string): string => s.replace(/-/g, " ").trim();
 const scopeWhere = (scope: string[]) => {
@@ -44,10 +45,10 @@ export async function readArticleInContext(scope: string[], articleNumber: numbe
     const { prisma } = await import("@/lib/prisma");
     const rows = await prisma.legalArticle.findMany({
       where: { OR, articleNumber: { in: [articleNumber - 1, articleNumber, articleNumber + 1] } },
-      select: { lawName: true, articleNumber: true, title: true, content: true, status: true, royalDecree: true },
+      select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true, royalDecree: true },
       orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
       take: 12,
-    });
+    }).then((r) => applyEffectiveText(r));
     return {
       articles: rows.map((r) => ({ system: r.lawName, article: r.articleNumber, title: r.title, content: r.content, enforcement: enf(r.status), royalDecree: r.royalDecree })),
     };
@@ -64,10 +65,10 @@ export async function readChapter(scope: string[], chapter: string): Promise<{ a
     const { prisma } = await import("@/lib/prisma");
     const rows = await prisma.legalArticle.findMany({
       where: { AND: [{ OR }, { chapter: { contains: chapter.trim(), mode: "insensitive" } }] },
-      select: { lawName: true, articleNumber: true, title: true, content: true, status: true, royalDecree: true },
+      select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true, royalDecree: true },
       orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
       take: 200,
-    });
+    }).then((r) => applyEffectiveText(r));
     return {
       articles: rows.map((r) => ({ system: r.lawName, article: r.articleNumber, title: r.title, content: r.content, enforcement: enf(r.status), royalDecree: r.royalDecree })),
     };

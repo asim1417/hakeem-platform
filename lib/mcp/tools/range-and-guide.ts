@@ -6,6 +6,7 @@
  * (مع سقوط إلى lawName للمواد التي لم يُملأ فيها legalSystemId).
  */
 import { prisma } from "@/lib/prisma";
+import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 
 export const rangeToolDef = {
   name: "hakeem_get_articles_range",
@@ -30,15 +31,22 @@ export async function handleRange(args: { law_id: string; from_article: number; 
     select: { id: true, articleNumber: true, content: true },
   });
 
+  // النص الساري لكل مادة (المصدر الواحد)، والملغاة تُرجع سطر الإلغاء.
+  const effective = await effectiveArticleTexts(articles);
   return {
     law: law.name,
     law_id: args.law_id,
     range: { from, to, returned: articles.length },
-    articles: articles.map((a) => ({
-      article_id: a.id,
-      article_number: a.articleNumber,
-      text: a.content,
-    })),
+    articles: articles.map((a) => {
+      const e = effective.get(a.id);
+      return {
+        article_id: a.id,
+        article_number: a.articleNumber,
+        text: e?.text ?? a.content,
+        repealed: e?.repealed ?? false,
+        text_basis: e?.basis ?? null,
+      };
+    }),
     note:
       to < Math.max(args.from_article, args.to_article)
         ? "قُصّ النطاق إلى ٢٠ مادة — أعد الاستدعاء من المادة التالية للاستكمال."
