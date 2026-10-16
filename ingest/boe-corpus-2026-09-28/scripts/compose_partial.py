@@ -327,7 +327,9 @@ def main() -> None:
                 status = "manual"
                 detail.append(why)
                 break
-            steps.append({"note_id": n["id"], "date_g": n["date_g"], "how": why})
+            steps.append({"note_id": n["id"], "date_g": n["date_g"], "how": why, "body": new,
+                          "instrument": n.get("instrument_kind"), "instrument_no": n.get("instrument_no"),
+                          "instrument_hijri": n["instrument_date_hijri"], "note_text": n["note_text"]})
             detail.append(why)
             text = new
         if status == "auto" and text and LEAK.search(text) and not LEAK.search(unit["body"]):
