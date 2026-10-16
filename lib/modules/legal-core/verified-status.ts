@@ -133,7 +133,7 @@ export function presentArticle(input: {
     .sort((a, b) => a.validFrom.localeCompare(b.validFrom))[0];
 
   // نسخة موثّقة في unit_version سند كافٍ: لا تُعرض «قيد التحقق» على مادة معدّلة بأداة معروفة.
-  const unverified = !picked.version && (!input.verification || !isAllowedStatus(input.verification.verifiedStatus));
+  const unverified = input.versions.length === 0 && (!input.verification || !isAllowedStatus(input.verification.verifiedStatus));
   const replaced = flags.statusLabel === "مستبدل";
   const conditional = flags.statusLabel.startsWith("ملغى مع") || flags.statusLabel.startsWith("إلغاء جزئي");
   const faded = flags.repealed || replaced;
@@ -146,6 +146,8 @@ export function presentArticle(input: {
     if (picked.validTo) citationSuffix += ` حتى ${picked.validTo.slice(0, 10)}`;
   }
 
+  // الملغاة تُعرض باهتة تحت شارة الإلغاء وسنده (قراءة تاريخية، لا نصًّا ساريًا) — قرار عرض قائم.
+  // المسارات الآلية (MCP/الوكيل/API) تُرجع سطر الإلغاء من effective-text.
   return {
     text: picked.text,
     versionId: picked.version?.id ?? null,

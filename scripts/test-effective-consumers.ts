@@ -148,7 +148,7 @@ async function main() {
   ok(lib.find((a) => a.id === "a5")?.content === AMENDED_5, "searchLegalArticles: نص ساري");
   const sync = await library.listArticlesForSync();
   const s5 = sync.items.find((a) => a.id === "a5");
-  ok(s5?.content === AMENDED_5 && s5?.storedContent === ORIGINAL_5, "listArticlesForSync: content ساري و storedContent أصلي");
+  ok(s5?.effectiveContent === AMENDED_5 && s5?.content === ORIGINAL_5, "listArticlesForSync: effectiveContent ساري و content المحفوظ");
   const det = await library.getArticleDetail("a6");
   ok(Boolean(det?.content.includes(REPEAL_BY)), "getArticleDetail: الملغاة");
 
@@ -176,6 +176,9 @@ async function main() {
   const loaded = await surface.loadSearchSurface();
   ok(loaded.surface.hidden.has("sys-old"), "البحث يستبعد النظام الملغى بسجل التحقق");
   ok(!loaded.surface.hidden.has(SYS), "النظام الساري يبقى ظاهرًا");
+  const direct = await surface.loadSearchSurface(undefined, { includeRepealed: true });
+  ok(!direct.surface.hidden.has("sys-old"), "الوصول المباشر يرى النظام الملغى (يُجاب «ملغى» لا «غير موجود»)");
+  ok(!loaded.hiddenNames.has("نظام قديم ملغى"), "الإخفاء بالمعرّف لا بالاسم");
   surface.__resetSurfaceCache();
   const past = await surface.loadSearchSurface("2000-01-01");
   ok(!past.surface.hidden.has("sys-old"), "بحث بتاريخ ماضٍ لا يُخفي (تاريخ الإلغاء غير مسجل)");

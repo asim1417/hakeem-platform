@@ -62,7 +62,8 @@ export async function findExactArticleMatch(q: string, opts: { asOf?: string; su
   const refs = exact.length ? exact : matchSystemsInText(hint, registry);
   if (!refs.length) return null;
 
-  const { surface } = opts.surface === "archive" ? { surface: EMPTY_SURFACE } : await loadSearchSurface(opts.asOf);
+  // مطابقة تامة لمادة بعينها: تُرجع المادة ولو كان نظامها ملغى (يُجاب «موجودة وملغاة»).
+  const { surface } = opts.surface === "archive" ? { surface: EMPTY_SURFACE } : await loadSearchSurface(opts.asOf, { includeRepealed: true });
   const ids = mapToSurface(refs.map((r) => r.id), surface);
   if (!ids.length) return null;
 

@@ -723,7 +723,7 @@ export async function getArticlesByNumber(
   const where: Record<string, unknown> = { articleNumber };
   const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
   const { surface, hiddenNames } =
-    opts.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(opts.asOf);
+    opts.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(opts.asOf, { includeRepealed: true });
   if (hint) {
     // الموجة ١: الاسم يُطابَق بالمساواة بعد التطبيع أو بأطول جوهر كامل، ثم يُحوَّل إلى وجه العمل.
     const { loadSystemsRegistry, matchSystemsInText, normalizeSystemName } = await import("@/lib/modules/agents/substrate/systems-registry");
@@ -827,7 +827,7 @@ export async function getArticleFullContext(articleId: string) {
   if (!stored) return null;
   const [article] = await withEffectiveText([stored]);
 
-  const related = await findRelevantLegalArticles(article.content.slice(0, 120), {
+  const related = await findRelevantLegalArticles(stored.content.slice(0, 120), {
     systemId: article.legalSystemId ?? article.lawName,
     category: article.classification ?? undefined,
     limit: 6

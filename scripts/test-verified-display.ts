@@ -37,7 +37,8 @@ const pending: UnitVersionRecord = {
   evidenceUrl: "https://example.test/m237",
 };
 const shown = presentArticle({ baseText: base, versions: [pending], verification: null, asOf: new Date("2026-09-01T00:00:00Z") });
-ok(shown.text === base && Boolean(shown.pendingNotice) && shown.unverifiedNotice !== null, "تعديل لم يسرِ يبقى النص الحالي مع تنبيه");
+// الأمر 05 (3.4): مادة لها نسخة موثقة في unit_version لا تُوسم «قيد التحقق».
+ok(shown.text === base && Boolean(shown.pendingNotice) && shown.unverifiedNotice === null, "تعديل لم يسرِ يبقى النص الحالي مع تنبيه");
 
 const repealed: VerificationRecord = {
   id: "r",

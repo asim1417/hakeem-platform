@@ -97,8 +97,9 @@ export async function getArticle(articleId: string) {
     issued_by: a.royalDecree ?? null, // أداة الإصدار على مستوى المادة (المرسوم الملكي)
     issued_date_h: null, // لا يوجد تاريخ هجري منظّم في المخطط الحالي
     article_number: a.articleNumber,
-    // الحالة من سجل التحقق، لا من الحقل القديم.
-    status: e?.status ?? null,
+    // status بقيمه المعهودة (سارية/معدّلة/ملغاة)؛ verified_status = حالة سجل التحقق.
+    status: e?.repealed ? "ملغاة" : e?.source === "unit_version" ? "معدّلة" : a.status ?? null,
+    verified_status: e?.status ?? null,
     repealed: e?.repealed ?? false,
     // النص الساري اليوم (unit_version)، أو سطر الإلغاء لمادة ملغاة.
     text: e?.text ?? a.content,
@@ -286,8 +287,12 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
   if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
 
-  const flags = citationFlagsFromVerification(await latestVerification("unit", article.id));
-  const e = (await effectiveArticleTexts([{ id: article.id, content: article.content }])).get(article.id);
+  const [verification, effective] = await Promise.all([
+    latestVerification("unit", article.id),
+    effectiveArticleTexts([{ id: article.id, content: article.content }]),
+  ]);
+  const flags = citationFlagsFromVerification(verification);
+  const e = effective.get(article.id);
   const actualText = e?.text ?? article.content;
   const amended = e?.source === "unit_version";
   const inForce = flags.inForce || amended;

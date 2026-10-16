@@ -317,15 +317,16 @@ export async function listArticlesForSync(opts: ArticleSyncQuery = {}) {
     prisma.legalArticle.count({ where }),
   ]);
 
-  // content = النص الساري؛ storedContent = النص المحفوظ كما ورد (للأرشفة).
+  // content = النص المحفوظ كما ورد (عقد المزامنة)؛ effectiveContent = النص الساري للعرض.
+  // تنبيه: updatedAt لا يتغير بنسخة جديدة في unit_version، فالمزامنة التزايدية لا تلتقطها.
   const effective = await effectiveArticleTexts(rows);
   const items = rows.map((a) => ({
     id: a.id,
     lawName: a.lawName,
     articleNumber: a.articleNumber,
     title: a.title,
-    content: effective.get(a.id)?.text ?? a.content,
-    storedContent: a.content,
+    content: a.content,
+    effectiveContent: effective.get(a.id)?.text ?? a.content,
     repealed: effective.get(a.id)?.repealed ?? false,
     textBasis: effective.get(a.id)?.basis ?? null,
     classification: a.classification,

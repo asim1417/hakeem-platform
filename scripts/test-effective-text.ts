@@ -80,6 +80,18 @@ const repWithVersion = resolveEffectiveText({
 });
 ok(repWithVersion.repealed && repWithVersion.text === repealLine(repVer), "الإلغاء يغلب أي نسخة سابقة");
 
+// صفحة المادة: النص المحفوظ باهتًا تحت شارة «ملغاة» وسندها (قراءة تاريخية)
+const repView = presentArticle({ baseText: stale, versions: [], verification: repVer });
+ok(repView.faded && repView.badge === "ملغاة" && repView.badgeDetail === rep.evidence_instrument, "صفحة المادة: الملغاة باهتة تحت شارة الإلغاء وسنده");
+
+// نسخة مستقبلية فقط: لا «قيد التحقق» (للمادة نسخة موثقة)، مع تنبيه السريان
+const futureOnly = presentArticle({
+  baseText: "أصل",
+  versions: [{ id: "f", body: "لاحق", validFrom: "2099-01-01T00:00:00.000Z", evidenceInstrument: "م/9", evidenceUrl: null }],
+  verification: null,
+});
+ok(futureOnly.unverifiedNotice === null && Boolean(futureOnly.pendingNotice), "نسخة لم تسرِ: تنبيه السريان بلا «قيد التحقق»");
+
 // ── بلا نسخ ولا تحقق: النص الأصلي كما هو ──
 const plain = resolveEffectiveText({ articleId: "a", baseText: "نص", versions: [], verification: null });
 ok(plain.text === "نص" && plain.source === "original" && plain.status === "الحالة قيد التحقق من المصدر", "بلا سجلات: الأصل مع «قيد التحقق»");

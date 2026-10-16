@@ -67,7 +67,8 @@ export default async function LegalSystemPage({
     latestVerification("work", system.id),
     issuanceInstrument(system.name),
     lawCard(system.id),
-    loadSearchSurface(asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined),
+    // الإلغاء يُعرض بشريطه الخاص أدناه؛ الوجه هنا للإحالة إلى النسخة السارية فقط.
+    loadSearchSurface(asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined, { includeRepealed: true }),
   ]);
   const workFlags = citationFlagsFromVerification(workVerification);
   const statusTone =
@@ -98,7 +99,7 @@ export default async function LegalSystemPage({
   if (workFlags.repealed) {
     const by = workVerification?.evidenceInstrument?.trim();
     const repealLabel = `هذا النظام ملغى${by ? ` — السند: ${by}` : ""}. نصّه محفوظ للقراءة التاريخية ولا يُعتدّ به نصًّا ساريًا.`;
-    archiveNotice = archiveNotice ? { label: `${repealLabel} ${archiveNotice.label}`, href: archiveNotice.href } : { label: repealLabel, href: null };
+    archiveNotice = { label: repealLabel, href: archiveNotice?.href ?? null };
   }
 
   // كتل «نص النظام» قبل المواد: من بطاقة المصدر إن وُجدت، وإلا مما في القاعدة (العنوان، الديباجة، أداة الإصدار).

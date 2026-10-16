@@ -4,6 +4,10 @@
  * النص المعروض في أي مكان = textAsOf(content, unit_version, asOf ?? الآن).
  * المادة الملغاة (آخر سجل تحقق «ملغاة») لا تُعرض نصًّا ساريًا: يُعاد سطر الإلغاء وسنده.
  * article_versions لا تُستعمل هنا: هي للقراءة التاريخية فقط.
+ *
+ * حدود معروفة:
+ * - سجل الإلغاء بلا تاريخ إلغاء، فيُطبَّق الإلغاء على أي asOf (حتى الماضي)، ويغلب أي نسخة.
+ * - تعذّر قراءة الجدولين = النص المحفوظ (سقوط آمن كما في verification-read).
  */
 import { prisma } from "@/lib/prisma";
 import {
@@ -81,7 +85,8 @@ export function resolveEffectiveText(input: {
     text: picked.text,
     originalText: base,
     repealed: false,
-    status: v && !input.verification ? "ساري" : flags.statusLabel,
+    // نسخة سارية سند كافٍ: لا «قيد التحقق» على مادة معدّلة بأداة معروفة.
+    status: v && !flags.inForce ? "ساري" : flags.statusLabel,
     source: v ? "unit_version" : "original",
     versionId: v?.id ?? null,
     validFrom: v?.validFrom ?? null,
@@ -128,10 +133,6 @@ export async function effectiveArticleText(articleIds: string[], asOf?: Date): P
   return effectiveArticleTexts(rows, asOf);
 }
 
-/** نص واحد بعد التطبيق، أو الأصل إن لم يُحسب (سقوط آمن). */
-export function effectiveOr(map: Map<string, EffectiveArticleText>, id: string, fallback: string | null | undefined): string {
-  return map.get(id)?.text ?? fallback ?? "";
-}
 
 /**
  * يطبّق المصدر الواحد على صفوف مواد: النص الساري مكان content، والحالة من سجل التحقق
