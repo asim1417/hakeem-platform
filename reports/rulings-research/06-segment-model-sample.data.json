@@ -1,37 +1,37 @@
 {
-  "measuredAt": "2026-10-16T11:14:06.435Z",
+  "measuredAt": "2026-10-16T11:41:52.009Z",
   "model": "claude-haiku-5-5",
   "version": "segment-model-v1",
   "mode": "sample",
   "regions": 3846,
   "calls": 50,
-  "found": 26,
-  "verified": 20,
+  "found": 27,
+  "verified": 24,
   "rejected": {
     "not_found": 0,
     "too_short": 0,
-    "masked": 6,
-    "unparsed": 2,
+    "masked": 3,
+    "unparsed": 1,
     "not_present": 22
   },
   "byPart": {
     "claims": {
       "n": 21,
-      "verified": 2
+      "verified": 6
     },
     "reasons": {
       "n": 25,
-      "verified": 15
+      "verified": 16
     },
     "disposition": {
       "n": 4,
-      "verified": 3
+      "verified": 2
     }
   },
   "inTokens": 61133,
-  "outTokens": 20595,
+  "outTokens": 21169,
   "errors": 0,
-  "verifiedPct": 40,
-  "sampleUsd": 0.0164,
-  "projectedBatchUsdAll": 0.63
+  "verifiedPct": 48,
+  "sampleUsd": 0.0167,
+  "projectedBatchUsdAll": 0.64
 }
