@@ -1,6 +1,6 @@
 name: Rulings — segment boundaries by model (count / sample, no DB writes)
 
-# إكمال حدود التقطيع بالنموذج — مرحلة القياس فقط (scripts/rulings-research/06-segment-model.ts):
+# إكمال حدود التقطيع بالنموذج (على تقطيع v4) — مرحلة القياس فقط (scripts/rulings-research/06-segment-model.ts):
 #   count  → count_tokens على N منطقة (لا توليد) وإسقاط الكلفة على الكل.
 #   sample → N نداء للنموذج مع تحقق آلي من كل اقتباس في النص الأصلي، بسقف MAX_MODEL_CALLS.
 # لا كتابة في أي قاعدة. القراءة للقراءة فقط. ما يُرسل منطقة الحدّ وحدها محجوبة.
