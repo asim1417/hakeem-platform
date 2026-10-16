@@ -1,8 +1,9 @@
 /**
- * تسجيل دخول موصل حكيم لعملاء MCP (Claude).
- * الخادم لا يملك حسابات مستخدمين هنا: المفتاح المشترك HAKEEM_MCP_KEY هو سرّ الربط.
- * كلود يرفض «Couldn't start sign-in» إن لم يجد بيانات OAuth بعد رفض الطلب.
- * الرموز موقّعة (HMAC) بلا تخزين، لأن بيئة التشغيل بلا حالة بين الطلبات.
+ * OAuth موصل حكيم لعملاء MCP (Claude وChatGPT).
+ * مساران:
+ *  - القديم: المفتاح المشترك HAKEEM_MCP_KEY سرّ الربط، ورموز hk1 موقّعة بلا تخزين (فريق أمان/انتقالي).
+ *  - الجديد: الربط بحساب حكيم (lib/mcp/grants) — يُفعَّل بـ MCP_ACCOUNT_LINKING=1 بعد الهجرة.
+ * هذا الملف يحمل البيانات الوصفية وقوائم العملاء المسموحة والمسار القديم.
  */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
@@ -21,7 +22,11 @@ const CLAUDE_REDIRECTS = new Set([
   "https://www.claude.com/api/mcp/auth_callback",
 ]);
 
-const URL_CLIENT_HOSTS = new Set(["claude.ai", "www.claude.ai", "claude.com", "www.claude.com"]);
+// ChatGPT: العنوان الثابت عند دعم RFC 9207 (نرسل iss)، والعنوان الخاص بمعرّف الرجوع.
+const CHATGPT_STABLE_REDIRECT = "https://chatgpt.com/connector_platform_oauth_redirect";
+const CHATGPT_CALLBACK_REDIRECT = /^https:\/\/chatgpt\.com\/connector\/oauth\/[A-Za-z0-9_-]{1,128}$/;
+
+const URL_CLIENT_HOSTS = new Set(["claude.ai", "www.claude.ai", "claude.com", "www.claude.com", "chatgpt.com"]);
 
 type TokenTyp = "access" | "refresh" | "code";
 
@@ -135,7 +140,7 @@ export function mcpCredentialAccepted(request: Request, expectedKey: string): bo
   return audienceAccepted(access.aud, request);
 }
 
-function audienceAccepted(aud: string, request: Request): boolean {
+export function audienceAccepted(aud: string, request: Request): boolean {
   let audUrl: URL;
   try {
     audUrl = new URL(aud);
@@ -162,6 +167,7 @@ export function verifyMcpAccessToken(request: Request, bearer: string | undefine
 
 export function isAllowedRedirect(uri: string): boolean {
   if (CLAUDE_REDIRECTS.has(uri)) return true;
+  if (uri === CHATGPT_STABLE_REDIRECT || CHATGPT_CALLBACK_REDIRECT.test(uri)) return true;
   let url: URL;
   try {
     url = new URL(uri);

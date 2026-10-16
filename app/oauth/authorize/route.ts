@@ -8,6 +8,9 @@ import {
 } from "@/lib/mcp/oauth";
 import { renderAuthorizePage, renderOauthMessage } from "@/lib/mcp/oauth-pages";
 import { clientKey, createFailureLimiter } from "@/lib/mcp/rate-limit";
+import { accountLinkingEnabled, mcpSharedKey, mcpTokenSecret } from "@/lib/mcp/config";
+import { CONSENT_PATH, pendingCookieHeader } from "@/lib/mcp/grants/pending-cookie";
+import { PENDING_TTL_SEC, newNonce, nowSec, signPending } from "@/lib/mcp/grants/tokens";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,13 +39,44 @@ type AuthorizeInput = {
 
 export async function GET(request: Request) {
   const input = readInput(new URL(request.url).searchParams);
-  if (input && !resolveResource(publicOrigin(request), input.resource)) {
+  const origin = publicOrigin(request);
+  const resource = input ? resolveResource(origin, input.resource) : null;
+  if (input && !resource) {
     return renderOauthMessage("تعذّر بدء الربط", "مورد الربط لا يطابق خادم حكيم.");
   }
+
+  // الربط بحساب حكيم: نحفظ الطلب موقّعًا في كوكي ثم نحوّل لشاشة الموافقة (تمرّ بالدخول إن لزم).
+  const secret = mcpTokenSecret();
+  if (input && resource && secret && accountLinkingEnabled()) {
+    const pending = signPending(secret, {
+      cid: input.clientId,
+      ru: input.redirectUri,
+      st: input.state,
+      cc: input.codeChallenge,
+      res: resource,
+      sc: input.scope,
+      n: newNonce(),
+      exp: nowSec() + PENDING_TTL_SEC,
+    });
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: `${origin}${CONSENT_PATH}`,
+        "Set-Cookie": pendingCookieHeader(pending, origin.startsWith("https://")),
+        "Cache-Control": "no-store",
+        "Referrer-Policy": "no-referrer",
+      },
+    });
+  }
+
   return authorizeResponse(request, input, "");
 }
 
 export async function POST(request: Request) {
+  // نموذج المفتاح المشترك يُعطَّل حين يُفعَّل الربط بالحساب.
+  if (accountLinkingEnabled()) {
+    return renderOauthMessage("الربط تغيّر", "صار الربط بحساب حكيم. أعد المحاولة من شاشة الموصلات في Claude.", 410);
+  }
   if (!sameOriginPost(request)) {
     return renderOauthMessage("تعذّر بدء الربط", "مصدر الطلب غير مسموح.", 403);
   }
@@ -59,7 +93,7 @@ export async function POST(request: Request) {
   if (!input) {
     return renderOauthMessage("تعذّر بدء الربط", "طلب الربط ناقص أو وجهته غير مسموحة. أعد المحاولة من شاشة الموصلات في Claude.");
   }
-  const secret = process.env.HAKEEM_MCP_KEY?.trim() ?? "";
+  const secret = mcpSharedKey() ?? "";
   const provided = String(form.get("connector_key") ?? "");
   if (!secret || !keysMatch(provided, secret)) {
     console.warn("[mcp-oauth] authorize rejected");
@@ -97,7 +131,7 @@ function authorizeResponse(request: Request, input: AuthorizeInput | null, error
   if (!input) {
     return renderOauthMessage("تعذّر بدء الربط", "طلب الربط ناقص أو وجهته غير مسموحة. أعد المحاولة من شاشة الموصلات في Claude.");
   }
-  if (!process.env.HAKEEM_MCP_KEY?.trim()) {
+  if (!mcpSharedKey()) {
     return renderOauthMessage("الربط غير متاح", "مفتاح موصل حكيم غير مضبوط على الخادم.", 503);
   }
   const html = renderAuthorizePage({ ...input, error: error || undefined });

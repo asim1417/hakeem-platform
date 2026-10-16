@@ -17,8 +17,9 @@ import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 import { registerAmanTools } from "@/lib/mcp/aman-server";
-import { verifyMcpAccessToken } from "@/lib/mcp/oauth";
 import { mcpAccessMode, mcpClosedResponse } from "@/lib/mcp/policy";
+import { verifyMcpRequest } from "@/lib/mcp/principal";
+import { runMcpTool } from "@/lib/mcp/tool-runner";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -40,7 +41,7 @@ const handler = createMcpHandler(
           limit: z.number().min(1).max(20).default(10),
         }),
       },
-      async ({ query, law_id, limit }) => tool("hakeem_search", () => hakeem.searchArticles(query, law_id, limit))
+      async ({ query, law_id, limit }, ctx) => runMcpTool("hakeem_search", ctx, () => hakeem.searchArticles(query, law_id, limit))
     );
 
     // ٢) نص المادة كاملًا
@@ -52,7 +53,7 @@ const handler = createMcpHandler(
           article_id: z.string().describe("معرّف المادة كما يرجع من hakeem_search"),
         }),
       },
-      async ({ article_id }) => tool("hakeem_get_article", () => hakeem.getArticle(article_id))
+      async ({ article_id }, ctx) => runMcpTool("hakeem_get_article", ctx, () => hakeem.getArticle(article_id))
     );
 
     // ٣) بطاقة النظام وفهرسه
@@ -65,7 +66,7 @@ const handler = createMcpHandler(
           name: z.string().optional().describe("أو البحث باسم النظام"),
         }),
       },
-      async ({ law_id, name }) => tool("hakeem_get_law", () => hakeem.getLaw(law_id, name))
+      async ({ law_id, name }, ctx) => runMcpTool("hakeem_get_law", ctx, () => hakeem.getLaw(law_id, name))
     );
 
     // ٤) روابط النظام بلوائحه
@@ -78,7 +79,7 @@ const handler = createMcpHandler(
           law_id: z.string().describe("معرّف النظام أو اللائحة"),
         }),
       },
-      async ({ law_id }) => tool("hakeem_bylaw_links", () => hakeem.getBylawLinks(law_id))
+      async ({ law_id }, ctx) => runMcpTool("hakeem_bylaw_links", ctx, () => hakeem.getBylawLinks(law_id))
     );
 
     // ٥) توسيع المصطلح من المكنز
@@ -91,7 +92,7 @@ const handler = createMcpHandler(
           term: z.string().describe("المصطلح القانوني"),
         }),
       },
-      async ({ term }) => tool("hakeem_expand_terms", () => hakeem.expandTerms(term))
+      async ({ term }, ctx) => runMcpTool("hakeem_expand_terms", ctx, () => hakeem.expandTerms(term))
     );
 
     // ٦) البحث في الأحكام
@@ -107,7 +108,7 @@ const handler = createMcpHandler(
           limit: z.number().min(1).max(20).default(10),
         }),
       },
-      async ({ query, court, year_h, limit }) => tool("hakeem_search_rulings", () => hakeem.searchRulings(query, court, year_h, limit))
+      async ({ query, court, year_h, limit }, ctx) => runMcpTool("hakeem_search_rulings", ctx, () => hakeem.searchRulings(query, court, year_h, limit))
     );
 
     // ٧) حارس الإحالات — التحقق قبل العزو
@@ -122,8 +123,8 @@ const handler = createMcpHandler(
           claimed_text: z.string().optional().describe("النص المنسوب للمادة (اختياري — للمطابقة الحرفية)"),
         }),
       },
-      async ({ law_name, article_number, claimed_text }) =>
-        tool("hakeem_verify_citation", () => hakeem.verifyCitation(law_name, article_number, claimed_text))
+      async ({ law_name, article_number, claimed_text }, ctx) =>
+        runMcpTool("hakeem_verify_citation", ctx, () => hakeem.verifyCitation(law_name, article_number, claimed_text))
     );
 
     // ٨) البحث الموضوعي الشامل (توسيع مكنز + بحث هجين + حصر لفظي، مجمّع حسب النظام)
@@ -143,8 +144,8 @@ const handler = createMcpHandler(
             .describe("افتراضي true: يُقصر التجميع على المواد التي تحتوي رأس الموضوع لفظًا؛ false يعرض نتائج الدلالي موسومة lexical_match=false"),
         }),
       },
-      async ({ topic, extra_terms, per_term_limit, law_id, strict }) =>
-        tool("hakeem_research", () => handleResearch({ topic, extra_terms, per_term_limit, law_id, strict }))
+      async ({ topic, extra_terms, per_term_limit, law_id, strict }, ctx) =>
+        runMcpTool("hakeem_research", ctx, () => handleResearch({ topic, extra_terms, per_term_limit, law_id, strict }))
     );
 
     // ٩) الحصر الشامل (كل المواد المطابقة لفظيًا، مع عداد إجمالي وترقيم cursor)
@@ -165,8 +166,8 @@ const handler = createMcpHandler(
           snippet_len: z.number().int().min(120).max(2000).default(700),
         }),
       },
-      async ({ terms, law_id, page_size, cursor, snippet_len }) =>
-        tool("hakeem_enumerate", () => handleEnumerate({ terms, law_id, page_size, cursor, snippet_len }))
+      async ({ terms, law_id, page_size, cursor, snippet_len }, ctx) =>
+        runMcpTool("hakeem_enumerate", ctx, () => handleEnumerate({ terms, law_id, page_size, cursor, snippet_len }))
     );
 
     // ١٠) قراءة نطاق مواد متتابع بالنص الكامل (حتى ٢٠ مادة)
@@ -181,8 +182,8 @@ const handler = createMcpHandler(
           to_article: z.number().int().min(1),
         }),
       },
-      async ({ law_id, from_article, to_article }) =>
-        tool("hakeem_get_articles_range", () => handleRange({ law_id, from_article, to_article }))
+      async ({ law_id, from_article, to_article }, ctx) =>
+        runMcpTool("hakeem_get_articles_range", ctx, () => handleRange({ law_id, from_article, to_article }))
     );
 
     // ١١) دليل سير العمل للوكيل
@@ -193,7 +194,7 @@ const handler = createMcpHandler(
           "دليل استخدام مختصر: سير العمل الأمثل لأدوات حكيم بحسب نوع المهمة. استدعه أولًا عند المهام المركبة.",
         inputSchema: z.object({}),
       },
-      async () => tool("hakeem_guide", () => handleGuide())
+      async (_args, ctx) => runMcpTool("hakeem_guide", ctx, () => handleGuide())
     );
 
     // ١٢) جلب نص حكم قضائي كاملًا بمعرّفه مع تقطيع
@@ -212,7 +213,7 @@ const handler = createMcpHandler(
           max_chars: z.number().int().min(1000).max(60000).default(30000).describe("أقصى عدد أحرف تُرجَع في الاستدعاء الواحد"),
         }),
       },
-      async ({ ruling_id, part, offset, max_chars }) => tool("hakeem_get_ruling", () => getRuling(ruling_id, offset, max_chars, part))
+      async ({ ruling_id, part, offset, max_chars }, ctx) => runMcpTool("hakeem_get_ruling", ctx, () => getRuling(ruling_id, offset, max_chars, part))
     );
 
     // ١٣) حصر شامل غير مسقوف للأحكام (عدّ حقيقيّ + توزيع بالمحكمة + ترقيم cursor)
@@ -235,49 +236,14 @@ const handler = createMcpHandler(
           snippet_len: z.number().int().min(120).max(2000).default(500),
         }),
       },
-      async ({ terms, court, year_h, count_only, page_size, cursor, snippet_len }) =>
-        tool("hakeem_enumerate_rulings", () => enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
+      async ({ terms, court, year_h, count_only, page_size, cursor, snippet_len }, ctx) =>
+        runMcpTool("hakeem_enumerate_rulings", ctx, () => enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
     );
   },
   {
     serverInfo: { name: "hakeem-legal-mcp", version: "1.0.0" },
   }
 );
-
-/** تنسيق موحّد للمخرجات */
-function json(data: unknown) {
-  return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 1) }] };
-}
-
-// MCP-001: سقف زمني لكل أداة + قياس زمني منظّم. أي أداة تتجاوز السقف تُرجع خطأً
-// منظّمًا بسرعة (قبل حدّ Vercel 300s) بدل الانتظار حتى المهلة القصوى.
-const TOOL_TIMEOUT_MS = Number(process.env.MCP_TOOL_TIMEOUT_MS || 20000);
-
-async function tool<T>(name: string, fn: () => Promise<T> | T) {
-  const started = Date.now();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`MCP_TOOL_TIMEOUT:${name}:${TOOL_TIMEOUT_MS}ms`)), TOOL_TIMEOUT_MS);
-    });
-    const result = await Promise.race([Promise.resolve().then(fn), timeout]);
-    console.log(`[mcp] tool=${name} ms=${Date.now() - started} ok=true`);
-    return json(result);
-  } catch (e) {
-    const ms = Date.now() - started;
-    const timedOut = (e as Error)?.message?.startsWith("MCP_TOOL_TIMEOUT");
-    console.warn(`[mcp] tool=${name} ms=${ms} ok=false ${timedOut ? "timeout" : "error"}=${(e as Error)?.message?.slice(0, 160)}`);
-    // خطأ منظّم داخل بروتوكول MCP (نجاح HTTP، جسم يحمل الخطأ) — لا تعليق 300 ثانية.
-    return json({
-      error: timedOut ? "timeout" : "tool_error",
-      tool: name,
-      ms,
-      message: timedOut
-        ? `تجاوزت الأداة الحدّ الزمني (${TOOL_TIMEOUT_MS}ms). حصر النطاق أو استخدم count_only/الترقيم.`
-        : "تعذّر تنفيذ الأداة.",
-    });
-  }
-}
 
 function withEmptyPrompts(inner: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
@@ -296,32 +262,28 @@ function withEmptyPrompts(inner: (req: Request) => Promise<Response>) {
   };
 }
 
-// السياسة تُقرأ لكل طلب: مغلق افتراضيًا (503) إن غاب المفتاح ولم يُفتح صراحةً بـ HAKEEM_MCP_ALLOW_OPEN=1.
-const authAuthOptions = {
+// السياسة تُقرأ لكل طلب: مغلق افتراضيًا (503) إن لم يُضبط مفتاح مشترك ولا سرّ تصاريح، ما لم يُفتح
+// صراحةً بـ HAKEEM_MCP_ALLOW_OPEN=1. صاحب الطلب (فريق أمان / مستخدم / مفتوح) يُمرَّر للأدوات عبر AuthInfo.
+const authOptions = {
   resourceMetadataPath: "/.well-known/oauth-protected-resource/mcp",
   requiredScopes: ["mcp:read"],
 };
 
-const authedWithKey = withMcpAuth(
-  withEmptyPrompts(handler),
-  async (req, bearer) => {
-    const key = process.env.HAKEEM_MCP_KEY?.trim() ?? "";
-    if (!key) return undefined;
-    return verifyMcpAccessToken(req, bearer, key);
-  },
-  { required: true, ...authAuthOptions }
-);
+const authedHandler = withMcpAuth(withEmptyPrompts(handler), (req, bearer) => verifyMcpRequest(req, bearer), {
+  required: true,
+  ...authOptions,
+});
 
 const openHandler = withMcpAuth(
   withEmptyPrompts(handler),
-  async () => ({ token: "open", clientId: "public", scopes: ["mcp:read"] }),
-  { required: false, ...authAuthOptions }
+  async () => ({ token: "open", clientId: "public", scopes: ["mcp:read"], extra: { principal: { kind: "open" } } }),
+  { required: false, ...authOptions }
 );
 
 async function gate(req: Request): Promise<Response> {
   const mode = mcpAccessMode();
   if (mode === "closed") return mcpClosedResponse();
-  return mode === "key" ? authedWithKey(req) : openHandler(req);
+  return mode === "auth" ? authedHandler(req) : openHandler(req);
 }
 
 export const GET = gate;

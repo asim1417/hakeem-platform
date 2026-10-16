@@ -110,6 +110,35 @@ SELECT "lawName","articleNumber",title FROM legal_articles WHERE "articleNumber"
 
 ---
 
+## MCP-001 — جداول ربط موصل حكيم بالحسابات
+
+**الغرض:** تفعيل ربط Claude/ChatGPT بحساب كل مستخدم (المواصفات: docs/mcp-server.md).
+**النوع:** إضافة فقط — ثلاثة جداول جديدة وعمود اختياري `user_id` في `api_keys`. لا يعدّل بيانات قائمة.
+**الملف:** `prisma/migrations/20261016180000_mcp_account_linking/migration.sql` (متساوي القوة، آمن لإعادة التشغيل).
+
+### الخطوات (بموافقة المالك)
+1. خذ **Snapshot** أو أنشئ **Neon branch** للتراجع.
+2. طبّق ملف الهجرة كما هو على Neon (محرر SQL أو `psql -f`).
+3. تحقّق:
+   ```sql
+   SELECT to_regclass('mcp_grants'), to_regclass('mcp_auth_codes'), to_regclass('mcp_request_windows');
+   SELECT column_name FROM information_schema.columns WHERE table_name = 'api_keys' AND column_name = 'user_id';
+   ```
+4. في Vercel (Production): `MCP_TOKEN_SECRET` (عشوائي ≥ 32 حرفًا) ثم `MCP_ACCOUNT_LINKING=1`، ثم Redeploy.
+   لنسخ المعاينة سرّ **مختلف** إن أُريد تجربتها (قاعدتها هي نفسها قاعدة الإنتاج).
+5. تحقّق حيًّا: من Claude أضف `https://<host>/mcp` ← Connect ← دخول حكيم ← موافق ← استدعاء أداة،
+   ثم ألغِ الربط من `/dashboard/connections` وتأكد أن الاستدعاء التالي يُرفض.
+
+### قبل التطبيق
+الكود آمن بلا الهجرة: ما دام `MCP_ACCOUNT_LINKING` غير مضبوط يبقى الربط بالمفتاح المشترك كما هو تمامًا.
+**لا تضبط `MCP_ACCOUNT_LINKING=1` قبل الخطوة 3.**
+
+### التراجع (Rollback)
+- فوري بلا قاعدة: احذف `MCP_ACCOUNT_LINKING` من Vercel وأعد النشر ← يعود الربط بالمفتاح المشترك.
+- الجداول: أوامر `DROP` معلّقة في آخر ملف الهجرة (لا تمسّ جداول أخرى).
+
+---
+
 ## ملاحظات أمان دائمة
 - لا `prisma db push` على الإنتاج إطلاقًا.
 - أي كتابة على Neon تتطلّب: Snapshot/Branch + موافقة صريحة + نافذة صيانة + تحقّق بعدها.

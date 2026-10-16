@@ -17,11 +17,18 @@ import {
 // ── سياسة الوصول ──
 assert.equal(mcpAccessMode({}), "closed");
 assert.equal(mcpAccessMode({ HAKEEM_MCP_KEY: "   " }), "closed");
-assert.equal(mcpAccessMode({ HAKEEM_MCP_KEY: "k".repeat(32) }), "key");
+assert.equal(mcpAccessMode({ HAKEEM_MCP_KEY: "k".repeat(32) }), "auth");
+assert.equal(mcpAccessMode({ MCP_TOKEN_SECRET: "s".repeat(32) }), "auth", "سرّ التصاريح وحده يكفي للمصادقة");
+assert.equal(mcpAccessMode({ MCP_TOKEN_SECRET: "short" }), "closed", "سرّ قصير لا يُعتد به");
+assert.equal(
+  mcpAccessMode({ HAKEEM_MCP_KEY: "k".repeat(32), HAKEEM_MCP_SHARED_KEY_DISABLED: "1" }),
+  "closed",
+  "المفتاح المشترك الموقوف لا يفتح المصادقة"
+);
 assert.equal(mcpAccessMode({ HAKEEM_MCP_ALLOW_OPEN: "1" }), "open");
 assert.equal(mcpAccessMode({ HAKEEM_MCP_ALLOW_OPEN: "true" }), "open");
 assert.equal(mcpAccessMode({ HAKEEM_MCP_ALLOW_OPEN: "0" }), "closed");
-assert.equal(mcpAccessMode({ HAKEEM_MCP_KEY: "k".repeat(32), HAKEEM_MCP_ALLOW_OPEN: "1" }), "key", "المفتاح يغلب علم الفتح");
+assert.equal(mcpAccessMode({ HAKEEM_MCP_KEY: "k".repeat(32), HAKEEM_MCP_ALLOW_OPEN: "1" }), "auth", "المفتاح يغلب علم الفتح");
 
 // ── محدّد المعدّل ──
 let t = 1_000_000;

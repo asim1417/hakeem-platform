@@ -72,6 +72,7 @@ model User {
   folders           Folder[]
   chatConversations ChatConversation[]
   simulationCases   SimulationCase[]
+  mcpGrants         McpGrant[]
 
   @@map("users")
 }
@@ -1164,12 +1165,15 @@ model ApiKey {
   lastUsedAt  DateTime? @map("last_used_at")
   expiresAt   DateTime? @map("expires_at")
   createdById String?   @map("created_by_id")
+  /// صاحب المفتاح الشخصي (موصل MCP). فارغ لمفاتيح الإدارة القديمة.
+  userId      String?   @map("user_id")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   windows ApiRequestWindow[]
 
   @@index([keyPrefix])
+  @@index([userId])
   @@map("api_keys")
 }
 
@@ -1333,4 +1337,58 @@ model ReviewReport {
   createdAt DateTime      @default(now()) @map("created_at")
 
   @@map("review_reports")
+}
+
+// ── ربط موصل حكيم (MCP) بحسابات المستخدمين ──
+// كل ربط = تطبيق (Claude/ChatGPT/أداة) وافق المستخدم على وصوله باسم حسابه.
+// رموز التجديد تُخزَّن بصمتها فقط، وتُستبدل في كل تجديد (كشف إعادة الاستعمال).
+model McpGrant {
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId            String    @map("client_id")
+  clientName          String    @map("client_name")
+  redirectUri         String    @map("redirect_uri")
+  resource            String
+  scopes              String[]  @default([])
+  refreshTokenHash    String?   @unique @map("refresh_token_hash")
+  previousRefreshHash String?   @unique @map("previous_refresh_hash")
+  refreshRotatedAt    DateTime? @map("refresh_rotated_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  lastUsedAt          DateTime? @map("last_used_at")
+  revokedAt           DateTime? @map("revoked_at")
+  revokedReason       String?   @map("revoked_reason")
+
+  @@index([userId])
+  @@index([clientId])
+  @@map("mcp_grants")
+}
+
+// رمز تفويض لمرة واحدة (بصمته فقط). grantId يُملأ عند الاستبدال لكشف إعادة الاستعمال.
+model McpAuthCode {
+  codeHash      String    @id @map("code_hash")
+  userId        String    @map("user_id")
+  clientId      String    @map("client_id")
+  clientName    String    @map("client_name")
+  redirectUri   String    @map("redirect_uri")
+  codeChallenge String    @map("code_challenge")
+  resource      String
+  scopes        String[]  @default([])
+  expiresAt     DateTime  @map("expires_at")
+  usedAt        DateTime? @map("used_at")
+  grantId       String?   @map("grant_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("mcp_auth_codes")
+}
+
+// عدّاد حدّ المعدّل لكل مستخدم/مفتاح في الدقيقة (UPSERT ذرّي، يصمد عبر النسخ).
+model McpRequestWindow {
+  key         String
+  windowStart Int    @map("window_start")
+  count       Int    @default(0)
+
+  @@id([key, windowStart])
+  @@map("mcp_request_windows")
 }
