@@ -23,19 +23,25 @@ const PARTS = ["claims", "defense", "reasons", "disposition", "appeal", "other"]
 const A = "[اأإآ]";
 const H = "[ةه]";
 const Y = "[يى]";
-/** صيغ مرشحة لبداية الدعوى تُعدّ داخل الديباجة الكبيرة فقط (تشخيص، لا تدخل التقطيع). */
+/**
+ * صيغ مرشحة لبداية الدعوى (تشخيص فقط، لا تدخل التقطيع): لكل صيغة عدد الأحكام ذات الديباجة الكبيرة
+ * التي ترد فيها داخل الديباجة ووسيط موضع أول ظهور (نسبة من طول النص)، وعدد الأحكام الأخرى التي
+ * يسبق فيها ظهورُها بدايةَ الدعوى في v4 (أي ستتحرك لو اعتُمدت).
+ */
 const CANDIDATES: Record<string, RegExp> = {
   "وفي الجلسة المنعقدة": new RegExp(`وف${Y}\\s+(?:ال)?جلس${H}\\s+(?:ال)?منعقد${H}`, "u"),
   "حيث تقدم": /حيث\s+تقدم/u,
   "تقدم/أقام … المدعي (≤٣ كلمات)": new RegExp(`(?:تقدم|تقدمت|${A}قام|${A}قامت)\\s+(?:\\S+\\s+){1,3}?(?:ال)?مدع${Y}`, "u"),
-  "ادعى (بأي سابقة)": new RegExp(`ادع${Y}\\s`, "u"),
+  "فعل … دعواه": new RegExp(`(?:${A}قام|${A}قامت|رفع|رفعت|قيد|قيدت|تقدم|تقدمت|قدم|قدمت)\\s+(?:\\S+\\s+){0,3}?(?:ب)?دعوا(?:ه|ها|هم)`, "u"),
+  "ادعى/ادعت": new RegExp(`ادع(?:${Y}|ت)\\s`, "u"),
   "صحيفة/لائحة دعوى": new RegExp(`(?:صحيف${H}|لائح${H})\\s+(?:ال)?دعو${Y}`, "u"),
-  "دعواه/دعواها": new RegExp(`دعوا(?:ه|ها|هم)`, "u"),
-  "وقائع": /وقائع/u,
-  "ملخص": /ملخص/u,
+  "وقائع الدعوى/القضية": new RegExp(`وقائع\\s+(?:هذه\\s+)?(?:ال)?(?:دعو${Y}|قضي${H})`, "u"),
+  "وقائع (أي سياق)": /وقائع/u,
+  "ملخص الدعوى/الوقائع": new RegExp(`ملخص\\s+(?:ال)?(?:دعو${Y}|وقائع|قضي${H})`, "u"),
   "افتتحت/عقدت الجلسة": new RegExp(`(?:افتتحت|عقدت|انعقدت)\\s+(?:ال)?جلس${H}`, "u"),
-  "حضر": /حضر/u,
-  "المدعي": new RegExp(`المدع${Y}`, "u"),
+  "حضر … المدعي (≤٤ كلمات)": new RegExp(`حضر\\s+(?:\\S+\\s+){0,4}?(?:ال)?مدع${Y}`, "u"),
+  "المدعي … يطلب": new RegExp(`(?:ال)?مدع${Y}\\S*\\s+(?:\\S+\\s+){0,3}?(?:يطلب|تطلب|طالب|يطالب|تطالب)`, "u"),
+  "طلب(ات) المدعي": new RegExp(`طلب(?:ات)?\\s+(?:ال)?مدع${Y}`, "u"),
 };
 const BIG_HEADER = 0.25;
 /**
@@ -137,9 +143,10 @@ async function main() {
     let headerShrunk = 0;
     let headerGrew = 0;
     let v4StructureBroken = 0;
-    const cand = Object.fromEntries(Object.keys(CANDIDATES).map((k) => [k, 0])) as Record<string, number>;
+    const candPos = Object.fromEntries(Object.keys(CANDIDATES).map((k) => [k, [] as number[]])) as Record<string, number[]>;
+    const candMoves = Object.fromEntries(Object.keys(CANDIDATES).map((k) => [k, 0])) as Record<string, number>;
     let bigHeaderV4 = 0;
-    const jalsaFallbackShares: number[] = [];
+    let bigHeaderNoClaims = 0;
     const examples: Record<string, { length: number; v3: Record<string, number>; v4: Record<string, number> }> = {};
     let last = "";
     for (;;) {
@@ -170,13 +177,20 @@ async function main() {
         const hb = b.segments[0]?.end ?? 0;
         if (hb < ha) headerShrunk++;
         if (hb > ha) headerGrew++;
-        // تشخيص الديباجة الكبيرة في v4: أي الصيغ المرشحة ترد داخلها.
-        if (text.length && b.segments[0] && hb / text.length > BIG_HEADER) {
-          bigHeaderV4++;
+        // تشخيص الديباجة الكبيرة في v4: أي الصيغ المرشحة ترد داخلها وأين.
+        if (text.length && b.segments[0]) {
+          const big = hb / text.length > BIG_HEADER;
+          if (big) {
+            bigHeaderV4++;
+            if (!b.found.claims) bigHeaderNoClaims++;
+          }
           const head = stripTatweel(text.slice(0, hb)).text;
-          for (const [k, re] of Object.entries(CANDIDATES)) if (re.test(head)) cand[k]++;
-          const m = CANDIDATES["وفي الجلسة المنعقدة"].exec(head);
-          jalsaFallbackShares.push(m ? m.index / text.length : hb / text.length);
+          for (const [k, re] of Object.entries(CANDIDATES)) {
+            const m = re.exec(head);
+            if (!m) continue;
+            if (big) candPos[k].push(m.index / text.length);
+            else candMoves[k]++;
+          }
         }
       }
       process.stdout.write(`\r… ${n}`);
@@ -206,8 +220,10 @@ async function main() {
       bigHeaderDiagnostics: {
         threshold: BIG_HEADER,
         rulings: bigHeaderV4,
-        candidateInHeader: cand,
-        jalsaFallbackHeaderShare: { median: quantile(jalsaFallbackShares, 0.5), p90: quantile(jalsaFallbackShares, 0.9) },
+        withoutClaims: bigHeaderNoClaims,
+        candidates: Object.fromEntries(Object.keys(CANDIDATES).map((k) => [k, {
+          inBigHeader: candPos[k].length, medianFirstShare: quantile(candPos[k], 0.5), earlierThanClaimsElsewhere: candMoves[k],
+        }])),
       },
     };
     mkdirSync(path.dirname(OUT), { recursive: true });
