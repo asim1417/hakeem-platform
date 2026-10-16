@@ -37,8 +37,14 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   }
   const lo = target?.start ?? 0;
   const hi = target?.end ?? full.length;
-  const start = Math.max(lo, Math.min(lo + offset, hi));
-  const chunk = full.slice(start, Math.min(hi, start + maxChars));
+  let start = Math.max(lo, Math.min(lo + offset, hi));
+  let end = Math.min(hi, start + maxChars);
+  // لا تُقطع الشريحة داخل رقم: redactPII يحتاج الرقم كاملًا، وإلا تسرّبت هوية أو جوال على نصفين
+  // عبر نداءين بإزاحتين متقاربتين. نمدّ الحدّين خارج أي سلسلة أرقام وفواصل.
+  const numeric = /[0-9\u0660-\u0669\s\u00a0+\-]/;
+  while (start > lo && numeric.test(full[start - 1]) && numeric.test(full[start])) start--;
+  while (end < hi && numeric.test(full[end]) && numeric.test(full[end - 1])) end++;
+  const chunk = full.slice(start, end);
   const nextOffset = start + chunk.length < hi ? start - lo + chunk.length : null;
 
   return {

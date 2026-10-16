@@ -21,7 +21,11 @@ const PREFIXES = ["وال", "بال", "فال", "كال", "لل", "و", "ف", "�
 /** صيغ اللفظ الواحد بالتطبيعين (العمود قد يُبنى بأيٍّ منهما) مع السوابق الشائعة. */
 export function tokenVariants(token: string): string[] {
   const out = new Set<string>();
-  for (const base of [normalizeArabic(token), normalizeArabicText(token)]) {
+  // سابقة كتبها المستخدم نفسه («بالغبن»، «للغبن»): يُضاف الجذر بلا سابقة ليطابق «الغبن» و«غبن».
+  const bare = stripUserPrefix(token);
+  const bases = new Set([normalizeArabic(token), normalizeArabicText(token)]);
+  if (bare !== token) for (const b of [normalizeArabic(bare), normalizeArabicText(bare)]) bases.add(b);
+  for (const base of bases) {
     const t = base.replace(/[^\p{L}\p{N}]/gu, "");
     if (t.length < 2) continue;
     const stem = t.startsWith("ال") && t.length > 4 ? t.slice(2) : t;
@@ -33,12 +37,23 @@ export function tokenVariants(token: string): string[] {
   return [...out].filter((v) => v.length >= 2);
 }
 
-/** ألفاظ الاستعلام الدالّة (بلا كلمات وقف)، كما كُتبت. */
+/** يحذف سابقة واحدة من لفظ المستخدم مع إبقاء ٣ أحرف على الأقل («بالغبن» ← «الغبن»، «للغبن» ← «الغبن»). */
+function stripUserPrefix(w: string): string {
+  for (const p of ["وال", "بال", "فال", "كال"]) if (w.startsWith(p) && w.length - p.length >= 3) return `ال${w.slice(p.length)}`;
+  if (w.startsWith("لل") && w.length - 2 >= 3) return `ال${w.slice(2)}`;
+  return w;
+}
+
+const MAX_QUERY_CHARS = 2000;
+const MAX_TOKEN_CHARS = 64;
+
+/** ألفاظ الاستعلام الدالّة (بلا كلمات وقف)، كما كُتبت. الترقيم يفصل الألفاظ ولا يلصقها. */
 export function queryTokens(query: string): string[] {
   return (query ?? "")
+    .slice(0, MAX_QUERY_CHARS)
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .split(/\s+/)
-    .map((w) => w.replace(/[^\p{L}\p{N}]/gu, ""))
-    .filter((w) => w.length >= 2 && !STOP.has(normalizeArabicText(w)));
+    .filter((w) => w.length >= 2 && w.length <= MAX_TOKEN_CHARS && !STOP.has(normalizeArabicText(w)));
 }
 
 /**
@@ -60,7 +75,10 @@ export function matchKey(raw: string): { key: string; map: number[] } {
   for (let i = 0; i < raw.length; i++) {
     const c = raw[i];
     if (/[ً-ٰٟـ]/.test(c)) continue;
-    const k = /[أإآٱ]/.test(c) ? "ا" : c === "ى" ? "ي" : c === "ة" ? "ه" : c === "ؤ" ? "و" : c === "ئ" ? "ي" : c;
+    // يوافق تطبيع SQL: الأرقام الهندية لاتينية، والحروف اللاتينية صغيرة (حرفًا بحرف فتبقى الخريطة صحيحة).
+    const d = c.charCodeAt(0);
+    const k = /[أإآٱ]/.test(c) ? "ا" : c === "ى" ? "ي" : c === "ة" ? "ه" : c === "ؤ" ? "و" : c === "ئ" ? "ي"
+      : d >= 0x0660 && d <= 0x0669 ? String(d - 0x0660) : c.toLowerCase().length === 1 ? c.toLowerCase() : c;
     out.push(k);
     map.push(i);
   }
