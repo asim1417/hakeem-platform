@@ -2,6 +2,7 @@
 // ربط تشغيلي فوق الجداول والخدمات القائمة فقط — لا منطق محرّكات جديد، لا تعديل schema.
 // كل استعلام مغلّف بأمان: تعذّر القاعدة/غياب الجداول لا يكسر الصفحة، يؤول لحالة واضحة.
 import { prisma } from "@/lib/prisma";
+import { applyEffectiveText } from "./effective-text";
 
 export interface IntelligenceSummary {
   systemsCount: number;
@@ -154,10 +155,12 @@ export interface ArticleIntelligence {
 export async function getArticleIntelligence(articleId: string): Promise<ArticleIntelligence> {
   let article: ArticleIntelligence["article"] = null;
   try {
-    const row = await prisma.legalArticle.findUnique({
+    const stored = await prisma.legalArticle.findUnique({
       where: { id: articleId },
       select: { id: true, lawName: true, articleNumber: true, title: true, content: true, classification: true },
     });
+    // النص الساري (المصدر الواحد) — هو ما يُعرض ويُرسل في إجراءات الذكاء.
+    const row = stored ? (await applyEffectiveText([stored]))[0] : null;
     if (row) {
       article = {
         id: row.id,

@@ -10,6 +10,7 @@
  * التطبيع العربي يتمّ داخل SQL ليطابق normalizeAr حرفًا بحرف — فلا حاجة لعمود مُطبَّع.
  */
 import { prisma } from "@/lib/prisma";
+import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 
 export const enumerateToolDef = {
   name: "hakeem_enumerate",
@@ -123,18 +124,27 @@ export async function handleEnumerate(args: {
   const hasMore = rows.length > pageSize;
   const page = rows.slice(0, pageSize);
   const total = byLaw.reduce((s, r) => s + Number(r.n), 0);
+  // الحصر يطابق النص المحفوظ؛ المعروض هو النص الساري (المصدر الواحد).
+  const effective = await effectiveArticleTexts(page);
 
   return {
     total,
     by_law: byLaw.map((r) => ({ law_id: r.law_id, law: r.law, count: Number(r.n) })),
-    page: page.map((r) => ({
-      article_id: r.id,
-      law: r.law,
-      law_id: r.law_id,
-      article_number: r.article_number,
-      snippet: r.content.length > snip ? r.content.slice(0, snip) + " (...)" : r.content,
-      truncated: r.content.length > snip,
-    })),
+    page: page.map((r) => {
+      const e = effective.get(r.id);
+      const text = e?.text ?? r.content;
+      return {
+        article_id: r.id,
+        law: r.law,
+        law_id: r.law_id,
+        article_number: r.article_number,
+        snippet: text.length > snip ? text.slice(0, snip) + " (...)" : text,
+        truncated: text.length > snip,
+        repealed: e?.repealed ?? false,
+        // طابق الحصر النص الأصلي والنص الساري معدّل: قد لا يحوي اللفظ.
+        amended: e?.source === "unit_version",
+      };
+    }),
     next_cursor: hasMore ? page[page.length - 1].id : null,
     note: hasMore
       ? "توجد نتائج إضافية — أعد الاستدعاء بـ cursor للمتابعة حتى يرجع next_cursor فارغًا."

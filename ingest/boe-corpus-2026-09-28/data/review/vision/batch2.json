@@ -1,0 +1,3101 @@
+[
+ {
+  "doc": "doc014",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc014/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-d61ec5dad408f2fa9bea80a2",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الأولى:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1f7acd45-dacc-4627-86d6-aae100b02c78?attachmentTitle=المادة الأولى: \n",
+    "hint_page": 4,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-a9be5f7764be471e3b649830",
+    "law": "نظام السوق المالية",
+    "unit": "المادة السادسة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/50657ffc-8808-44dd-8fc9-aae100b0c787?attachmentTitle=المادة السادسة: \n",
+    "hint_page": 4,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-da54febd01d98f84fff2df38",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثالثة عشرة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/a2513818-e8b8-48c5-9a09-aae100b1d6a3?attachmentTitle=المادة الثالثة عشرة: \n",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-129ee9ca937a9198543f54e7",
+    "law": "نظام السوق المالية",
+    "unit": "المادة العشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/d796cbeb-a471-49bd-97bf-aae100b2467a?attachmentTitle=المادة العشرون: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-08d34c3375ba595aa9798c28",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الحادية والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/ab0002e7-43bd-4758-aef4-aae100b2f94c?attachmentTitle=المادة الحادية والعشرون: ",
+    "hint_page": 6,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-3c8d639f639568e870fe299e",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثالثة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/31a263fb-26dc-477b-ac71-aae100b36934?attachmentTitle=المادة الثالثة والعشرون: \n",
+    "hint_page": 6,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-ddf50ff548ac180e12dd0911",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الخامسة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/bed4ea82-69a3-4431-8197-aae100b3d91a?attachmentTitle=المادة الخامسة والعشرون: \n",
+    "hint_page": 8,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-f157b03efeda8b450782d0d0",
+    "law": "نظام السوق المالية",
+    "unit": "المادة السادسة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/16) وتاريخ 1441/1/19هـ، ونصت على الآتي: \" مع مراعاة أحكام المادة (الحادية والثلاثين) من هذا النظام، لا تخضع الأوراق المالية المدرجة أو المتداولة في سوق مالية منظمة خارج المملكة لأحكام هذا النظام حتى لو نشأ هذا التداول بموجب أوامر مرسلة هاتفياً أو آلياً(إلكترونياً) من داخل المملكة، ويستثنى من ذك ما تتفق عليه الهيئة مع جهات أخرى خارجية.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/5b218deb-5c13-4b2d-bf2f-add900cb32b5?attachmentTitle=المادة السادسة والعشرون: \n",
+    "hint_page": 8,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-c036aa66f9919767da87d3bd",
+    "law": "نظام السوق المالية",
+    "unit": "المادة السابعة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/647e33f6-89a2-4be1-85e1-aae100b420d3?attachmentTitle=المادة السابعة والعشرون: \n",
+    "hint_page": 8,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-9811b3780625a18301b06c45",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثامنة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/643b103f-676a-40a7-a330-aae100b46a8b?attachmentTitle=المادة الثامنة والعشرون: \n",
+    "hint_page": 9,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-37cbab789d23bbbf92479023",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثامنة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب المرسوم ملكي رقم (م/16) وتاريخ 1441/1/19هـ، والتي نصت على الآتي: \"يحظر على موظفي السوق ومركز الإيداع ومركز المقاصة، ومدققي الحسابات المستقلين، والمستشارين والخبراء فيها، إفشاء أي معلومة عن مالكي الأوراق المالية، أو مالكي المراكز المالية المسجلين في السجلات، إلا في الحالات التي تحددها القواعد الصادرة عن السوق أو مركز الإيداع أو مركز المقاصة في هذا الشأن.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/643b103f-676a-40a7-a330-aae100b46a8b?attachmentTitle=المادة الثامنة والعشرون: \n",
+    "hint_page": 9,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-cd7f593a64f10e6a56705957",
+    "law": "نظام السوق المالية",
+    "unit": "المادة التاسعة والعشرون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/67eba2ce-2a84-4183-b653-aae100b4b2c7?attachmentTitle=المادة التاسعة والعشرون: \n",
+    "hint_page": 10,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-7e2611c0659cb09945e6fc2f",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثلاثون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/27c4c2fd-d3c1-49d5-b253-aae100b4ee93?attachmentTitle=المادة الثلاثون: \n",
+    "hint_page": 10,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-c1afca1f018b88e5e79b50c4",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الحادية والثلاثون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/bdc92959-ba4f-40b2-9069-aae100b52ce1?attachmentTitle=المادة الحادية والثلاثون: \n",
+    "hint_page": 8,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-22610f9d8c7fb31ac5a0aba8",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثالثة والثلاثون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/a2adfe96-9117-49a3-9c74-aae100b5705e?attachmentTitle=المادة الثالثة والثلاثون: \n",
+    "hint_page": 12,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-d9f74c84063814b2aa86b823",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الرابعة والثلاثون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/55a276cc-862f-49e2-abab-aae100b5c362?attachmentTitle=المادة الرابعة والثلاثون: \n",
+    "hint_page": 12,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-2a860ce51c891720dbe6003a",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الخامسة والثلاثون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/228acd51-c86d-4bfa-91bb-aae100b60de3?attachmentTitle=المادة الخامسة والثلاثون: \n",
+    "hint_page": 12,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-3e811fcde4b5843b31d684e7",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الخامسة والخمسون:",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "- عُدلت الفقرة (هـ) من هذه المادة وذلك بموجب المرسوم ملكي رقم (م/16) وتاريخ 1441/1/19هـ، ونصت على الآتي: \n\n\" هـ - مع مراعاة ما ورد في الفقرة (د) من (المادة التاسعة والخمسين) من هذا النظام، يجوز عن طريق الدعوى المرفوعة تأسيساً على الفقرة (أ) من هذه المادة الحصول على تعويض يمثل الفرق بين السعر الذي دفع بالفعل لشراء الورقة المالية ( على ألا يتجاوز السعر الذي عرضت به على الجمهور) وبين قيمة الورقة المالية في تاريخ إقامة الدعوى، أو السعر الذي كان من الممكن التصرف في الورقة المالية به في السوق قبل رفع الدعوى أمام اللجنة، وإذا أثبت المدعى عليه أن أي جزء من الانخفاض في قيمة الورقة يرجع لأسباب أخرى لا علاقة لها بالحذف أو البيانات غير الصحيحة موضع الدعوى، فإنه يتعين استبعاد هذا الجزء من التعويض الذي يسأل عنه. ويكون المدعى عليهم مسؤولين -بصفة فردية وبالتضامن- عن تعويض الضرر الذي تكون مسؤوليتهم عنه وفقاً لهذه المادة. ويكون مبلغ التعويض خاضعاً لأحكام العقد أو الاتفاق المبرم بين الأشخاص المشار إليهم في الفقرة (ب) من هذه المادة، أو وفقاً لما تراه اللجنة محققاً للعدالة، ولا يضر بمصالح المستثمرين أو يتعارض مع أهداف هذا النظام.\"",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/01b8460e-d39a-487b-8459-add900d03d9e?attachmentTitle=المادة الخامسة والخمسون: \n",
+    "hint_page": 13,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-71b00c7d271739865667ee23",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثامنة والخمسون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/2ac76116-eb74-4321-aa36-aae100b6d258?attachmentTitle=المادة الثامنة والخمسون: \n",
+    "hint_page": 13,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-ff4ceba197a9155bcf0f3485",
+    "law": "نظام السوق المالية",
+    "unit": "المادة التاسعة والخمسون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/71c3a084-6fe6-40b9-9bf6-aae100b727a3?attachmentTitle=المادة التاسعة والخمسون: \n",
+    "hint_page": 15,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-3abc82a8a73ae01cef47504b",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الستون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/7e9a62d7-b496-45b1-96cd-aae100b76423?attachmentTitle=المادة الستون: \n",
+    "hint_page": 15,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-7abb22ec72c3fae3e5d399e2",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الحادية والستون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/af8286a5-20ff-4252-b280-aae100b79e3c?attachmentTitle=المادة الحادية والستون: \n",
+    "hint_page": 15,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-d6d2e2ede9f93694e47e73f6",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثانية والستون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/14474890-b9f3-41cc-9327-aae100b7e67c?attachmentTitle=المادة الثانية والستون: \n",
+    "hint_page": 16,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-da6721edf8813563133cae43",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الثالثة والستون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/2853e8e9-8996-47ec-a44b-aae100b8298d?attachmentTitle=المادة الثالثة والستون: ",
+    "hint_page": 17,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-582e03fcab8c8f190021c484",
+    "law": "نظام السوق المالية",
+    "unit": "المادة الرابعة والستون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/16)",
+    "instrument_date": "1441/01/19",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م / 16) وتاريخ 19 / 1 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/096cca4b-af7c-49ea-809a-aae100b86ce3?attachmentTitle=المادة الرابعة والستون: \n",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f06b3e375ec708014f954d7894679e1570b584c178142f75a9d15e63109edfe.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa04ca5b4131d1e77a25e3f39de0f37bc59a6dfc769e047ea56b569e5d452c3.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/027e3abda8c6699f952878e3ba6fb51c09b18bf1960cc93d2ac7851c3c270824.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea75ba9e83ac50db73e74d4378d3046745dc1440347f8af063d0cbf1700a3058.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/df2601d37aca87e722caa1f677adac139e5623f3bbdcb27c99d982269584f847.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ae55b7dd768d51c5fc3f197ccb381b7086206418e876dabb7986d44bd2bf8681.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/545b0460c5a599a9de0f6b61ba18e4302894209412b92cda9868c8a0d897c23b.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d30420466cb495f1bc9add19ea618ce12970e0581c31edea16b1f9903703d045.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c25bc7683b7ce7abad137fe0fa4c5a223634f9cfa0e9adc007ec7a7c8a2ffa4.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4ed158cde93282b357351780bd1ffabd653a6e2c07d8ed5a35ac42deb1b3f3d3.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/beee0508da0f748e43774a8fa1b1fb22978dc69f66d81962e14a5d4aa78f082f.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ed2413dc72990ee8f7f0ea6fd2fedc9aec9db1e961efe5c9595717c5a1e9ba79.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfd8224080b86be6833682297acb8131001c892aabf5339ee236e30bd02cbf72.jpg"
+     },
+     {
+      "page_no": 14,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/047d301476a1c17cba51dc2a839b2f33f78c732de6353025bb957285c0af617e.jpg"
+     },
+     {
+      "page_no": 15,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad9f94e8090cd68392c01827761a2833997dd955d32cdd768f1274cc6822a20f.jpg"
+     },
+     {
+      "page_no": 16,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cf668203051981dca8128f11d0e9eb2ff80475e76a7670cc363daf37b90af899.jpg"
+     },
+     {
+      "page_no": 17,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b82ccd62bf9a2993c5b0f6e3825b2cbd0a43260ad7ec9ae5e70191e0eb9e30d5.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc036",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc036/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-363d1335be542e374a5dd29d",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 54",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-  عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/31924037-ea55-4cf3-80d2-ac5a00a41e32?attachmentTitle=المادة 54",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-118ad1757be94e083eb0166c",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 54",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/22)",
+    "instrument_date": "1435/04/11",
+    "note_text": "-  عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/22) وتاريخ 1435/4/11هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/31924037-ea55-4cf3-80d2-ac5a00a41e32?attachmentTitle=المادة 54",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-c6942a40380f9e7cf64eb49c",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 55",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-  عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/512aaaea-c914-41e1-8163-ac5a00a4961e?attachmentTitle=المادة 55",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-7ccac2c5ccae011bd677464d",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 56",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/91c3a923-c28d-49ca-9253-ac5a00a5a2a6?attachmentTitle=المادة 56",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-ff7059b3e2e934101c7eeff2",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 57",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/430ca05e-1f39-4d84-9d78-ac5a00a60f86?attachmentTitle=المادة 57",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-bf44cba90d9e4ce83c4d64e5",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 61",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/2ec0d2ff-7c43-47a8-b40a-ac5a00a80a96?attachmentTitle=المادة 61",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-715125548f0179cc0d33303c",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 68",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-  عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/769abba4-c5a7-4aea-babc-ac5a00aa2b68?attachmentTitle=المادة 68",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-5d96b10e479698009738a2c5",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 69",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/b98ed3da-36db-4657-a3f9-ac5a00aa8934?attachmentTitle=المادة 69",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-11a84e6efe20f982cdae21e7",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 70",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/f244ee96-a7f9-4f00-8353-ac5a00ab0adf?attachmentTitle=المادة 70",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-599ff5a3b4c953e1a8cde044",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 71",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/d9f7920a-b255-4504-b97d-ac5a00ad05c0?attachmentTitle=المادة 71",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-84cd62c8b294113f546ff348",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 72",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/177a8ce7-6e1e-4327-8b87-ac5a00ad596c?attachmentTitle=المادة 72",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-8a62cee663f7b2fda910c8f5",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 73",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/e69cfa64-3f35-41bc-a9ce-ac5a00ada227?attachmentTitle=المادة 73",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-b2ba4cd18d626e168b9f943d",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 74",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/bed90fed-64cd-4e21-8aad-ac5a00adddd8?attachmentTitle=المادة 74",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-1aa4c2e965ab3750a6cf158c",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 77",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/6a61d095-a6f7-4964-aa2a-ac5a00aefeac?attachmentTitle=المادة 77",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-e08a5506d74dc80696e8690f",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 107",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/a0b0aa87-d360-4f68-8900-ac5a00d5d6ff?attachmentTitle=المادة 107",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d379b456bf51803a636b1053eb32ef65dfed262e678815be27d8c1112b287fef.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/60b6b35af92da261a745ddcd40abb0c1e8f6029cdbc2894e6dea4451b8d43ca2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e54087585d4a1bd489a640a07d6afe17842e85cf1a8334d775641ef842b59026.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bb3bc9118285abc846303a0289628a7af1b8d58ee9801acadc01039d4dd328.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8d12e5ec70f21043c6e927e294dd9cee1ee314a4d78848b4762d70b9247748ab.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6c897510f33cd4c9d5d5386699ba9889aeaf434e8124e4d864c670fde168d652.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07a958aaa3e6eb1439a56a638c74bd081649514a47ecbe1f6f9367016a309205.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc020",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc020/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-f106419d03dc238ca4f2617d",
+    "law": "نظام الصندوق السعودي للتنمية",
+    "unit": "المادة الخامسة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (182)",
+    "instrument_date": "1441/03/01",
+    "note_text": "المادة الخامسة\n\n- عٌدلت هذه المادة بموجب قرار مجلس الوزراء رقم (182) وتاريخ 1 / 3 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/078de219-9c46-48ee-b190-ab0c00bdd9bc?attachmentTitle=المادة الخامسة: \n",
+    "hint_page": 4,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d511a9bbdbe1ba13b3c50ad45553642a78d287607c3fdfcb6b8a899fcb9a1b31.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9d90c6eb0a9a4df525c5c4a8d9d684afe6927e98158fca32e143164031bf72dd.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/10e722ec426d943f6a2bf64c9c8226a174a1e7fc5ec01e32dfb5f71949ea109d.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/dad028994319c37588d07d47f73a872a4eabeb171dd28b95fdf6abb663466f26.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3eb388f39ac21f4e363b3625cf9ccd3c1fdf588d4ed08973a1c90f405d243581.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc048",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc048/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-48d46fd0bedaf29c40321d9f",
+    "law": "نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية )",
+    "unit": "المادة الثانية:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (440)",
+    "instrument_date": "1437/10/20",
+    "note_text": "تم تعديل هذه المادة بموجب قرار مجلس الوزراء رقم: (440) وتاريخ: 20/ 10/ 1437هـ ، وذلك :\n\nبإضافة  عبارة  \" ويرتبط بالوزير \" إلى عجز المادة .",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/37089388-c254-4d9d-88c6-dc0f29b469ff?attachmentTitle=المادة الثانية:",
+    "hint_page": 4,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/87076121603a92ac8104bca96b89624fa6f4c14d81437044d244996f85f82a4c.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/de6dc5d97c80d9cd73336e3525b9f0bc0cdaf4ed873bad8153335e062739ee15.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5a96d050cd0f26f904b90874a35c93fe2d375558298159a75690c1deb001a529.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5b1709665e54fc5618057e08c4c0ece52263d5d3082c082330e0658f0cfdf2d4.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/147000bc633d7e4c0792772bb78ea125a7310a8bd8f0e2d1a876be4d468e56cf.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc029",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc029/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-0247f2921961d8c5ec67527d",
+    "law": "نظام المرور",
+    "unit": "المادة الرابعة والسبعون",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1646667e-435f-4638-a04c-b36300cff26a?attachmentTitle=المادة الرابعة والسبعون",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aeb621e8a71e4f622050d4d9fb5107117ccfa8109fd8bd69635628e4e10605a0.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d9262ee8959ac47edb787b8d8700bf73a51f4eeb8a2de1f9b6feec88f4df7dd7.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e04824e6fc94653cd8d775735f1201eb4fb67094d9f47b8e99ca48478f66295f.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/08325f462c93330d519b28541874fa2b427a0d2fbcb8da08fed6c9608015b3b2.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc051",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc051/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-24abe228c60287b633d4681d",
+    "law": "نظام خدمة الأفراد",
+    "unit": "المادة 6",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/91)",
+    "instrument_date": "1428/11/03",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/91) وتاريخ 1428/11/3هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/b4cb561d-6150-4711-9845-ac7600921972?attachmentTitle=المادة 6",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c79e46f26d6738ab98ce5e70cdad738fb0939807f08fa981d23f89b03426cc09.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3c56a285bcddf4f2fabe31e6a645bc201e87ed3205a473ed18b978e31fb2f60e.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ad6fccdf2ae58e3b658a26a53a921b46d8b8a4879a2d90ee9ae03423737de92c.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa2b76dc7ec1411d172a037ba628902239c59ad910564d369187f7b2b1b2d751.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc002",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc002/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-8988c79f6ee5afc897f3be5e",
+    "law": "تنظيم الهيئة السعودية للمقاولين",
+    "unit": "المادة التاسعة: تكوين المجلس",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (300)",
+    "instrument_date": "1442/05/28",
+    "note_text": "- تعديل نص هذه المادة المتعلقة في مجلس إدارة الهيئة ، وذلك بموجب قرار مجلس الوزراء رقم (300) وتاريخ 1442/5/28هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/177eedf6-f4c2-4b92-8c01-acb300e2fe20?attachmentTitle=المادة التاسعة: تكوين المجلس",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b3d7739205d7e1f92f46dffb0e7103ac0feaf20ead7f291513d93d02ba226b9f.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5258d922a58dec710fb4ec669f20072204b35c74e4a5f94485df8bdd34e6205f.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/95e599126d4ce59d4427efa60de89d3a787d0dcea4f3ffa8b36114e82bb008c1.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc015",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc015/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-92411f85efac2d93e5c86bd1",
+    "law": "التنظيم الخاص بهيئة المساحة الجيولوجية السعودية",
+    "unit": "المادة الرابعة::",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (241)",
+    "instrument_date": "1440/05/09",
+    "note_text": "•المادة الرابعة\n\n-عُدلت هذه المادة بموجب قرار مجلس الوزراء رقم (241) وتاريخ 9 /5 /1440هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/86a39534-c49d-4719-a146-adb900cb7582?attachmentTitle=المادة الرابعة:: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3f9efa64c601ba53764bcb5c10f05c3d330d3385acf119052dd448f4f99b4d4b.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2ec44f345ddea646e211dda10ef801a327144fa03ee0d4cb6655134ba12a5ae1.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fcd26436dc871943fa7adc7ee25bb1d849c10750c0ac2772745c64e31858936a.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-b94e114f21af0e9845010a41",
+    "law": "التنظيم الخاص بهيئة المساحة الجيولوجية السعودية",
+    "unit": "المادة الرابعة::",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (123)",
+    "instrument_date": "1443/02/21",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (123) وتاريخ 1443/2/21هـ، وذلك بإضافة ممثل من الهيئة العامة لعقارات الدولة إلى عضوية مجلس إدارة هيئة المساحة الجيولوجية السعودية.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/86a39534-c49d-4719-a146-adb900cb7582?attachmentTitle=المادة الرابعة:: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3f9efa64c601ba53764bcb5c10f05c3d330d3385acf119052dd448f4f99b4d4b.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2ec44f345ddea646e211dda10ef801a327144fa03ee0d4cb6655134ba12a5ae1.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fcd26436dc871943fa7adc7ee25bb1d849c10750c0ac2772745c64e31858936a.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc043",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc043/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-d1365c2efa9bb8b64df584e1",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 103",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/6)",
+    "instrument_date": "1417/07/09",
+    "note_text": "-    عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/6) وتاريخ 1417/7/9هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/5ad2a069-ed66-43bf-8760-ac5a00d568f2?attachmentTitle=المادة 103",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/95de931c53e6a698db2bee10eea2dd02695f62531b4e771613a6b34b1d6e6c03.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0fa96a822d7117ac05a2152a1cd45298b0e5018d14288f0663900271fbfadf0a.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/68b11ff57cf311d43c3fb76132f091c90e47c07f0240e3540126a970ed91d2a9.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc007",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc007/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-c9016a113a701f3ab455981f",
+    "law": "تنظيم الهيئة العامة للمنافسة",
+    "unit": "المادة الرابعة",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (653)",
+    "instrument_date": "1442/11/05",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (653) وتاريخ 1442/11/5هـ، وذلك بإضافة ممثل من وزارة الطاقة إلى عضوية مجلس إدارة الهيئة.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/011d0f5f-cee5-4396-8984-adfd00bbb3a5?attachmentTitle=المادة الرابعة",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c5c6ccb5d4d4c494f01ff886fe4b936ee91e88ca346897c63c09bf52126d640d.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/de687228fc6d5dbbfa1ccbb3f84171543eb09bb37234cb6f76c406356f403771.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc031",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc031/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-f7999d8af10acff8ac4efac5",
+    "law": "نظام الضمان الصحي التعاوني",
+    "unit": "المادة الرابعة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (472)",
+    "instrument_date": "1440/08/18",
+    "note_text": "•المادة الرابعة\n\n-عُدلت هذه المادة بموجب قرار مجلس الوزراء رقم (472) وتاريخ 18 /8 /1440 هـ،",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/3193ef30-670f-4f72-ae12-aa9200ef33ce?attachmentTitle=المادة الرابعة:",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8b1c9b006fa669c33561e8bbd4e45067d0dc1aa10497ee398203e299a056ad6c.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/733f8193034403794af1482feb7b5c08b958d63ae2122bcda47c89e67e525bcc.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc044",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc044/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-57e1dab16e4b585832637541",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 121",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/45)",
+    "instrument_date": "1407/08/13",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/45) وتاريخ 1407/8/13هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/073e8c90-6196-4a07-94b7-ac5a00d7bdbc?attachmentTitle=المادة 121",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d821c5c349142356ba93e4a1238d395447b6ee7739a240224bb80acd67c884cc.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3a4c3bd75dc421e70311dbf0ba73cb3e9d36c1804d05fff7dc677c5a10504c75.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc057",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc057/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-7cd6c1cc82906a7c4fc08851",
+    "law": "تنظيم الهيئة العامة للإحصاء",
+    "unit": "المادة السابعة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (745)",
+    "instrument_date": "1441/11/23",
+    "note_text": "- عُدلت هذه المادة الخاصة بتشكيل مجلس إدارة الهيئة. وذلك بموجب قرار مجلس الوزراء رقم (745) وتاريخ 23 / 11 / 1441هـ ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/c95ec6fc-7ed8-4935-a809-abff00dcc27a?attachmentTitle= المادة السابعة: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3b142da18c3fdc95b31133b44f1c76915478e01cd2e874e5ef9612227fdacda0.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b795bcd56e51532ea3f2ce8c2a9969f0a0f3997851a9c9448582ea150ddb9c55.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc066",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc066/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-b45b487e4a2ad24ed784840c",
+    "law": "نظام المحاماة",
+    "unit": "المادة السابعة والثلاثون:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/61)",
+    "instrument_date": "1437/10/14",
+    "note_text": "تم تعديل هذه المادة بموجب المرسوم الملكي رقم (م/ 61) وتاريخ 14/ 10 / 1437هـ، وذلك بإضافة النص الآتي إلى عجزها :\n\n\"ويجوز تضمين الحكم الصادر بتحديد العقوبة النص على نشر ملخصه على نفقة المحكوم عليه في صحيفة أو أكثر من الصحف المحلية أو في أي وسيلة أخرى مناسبة، وذلك بحسب نوع الجريمة أو المخالفة المرتكبة وجسامتها وتأثيرها، على أن يكون النشر بعد اكتساب الحكم الصفة القطعية\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/6aa092ce-f444-48b4-b26e-816025c8137b?attachmentTitle=المادة السابعة والثلاثون:",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8a36e8f49a1803b39e92789567ba798e6a1d0d3cce6d4a0b409f3bcb9eb6f960.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a3cef790c951221183da47a48a3edbf1a16dfebc66e2bdf4332dec1646d8adf8.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc017",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc017/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-24246e1dab13988690949d54",
+    "law": "تنظيم صندوق تنمية الموارد البشرية",
+    "unit": "المادة السادسة: مجلِس إدارة الصندوق :",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (790)",
+    "instrument_date": "1441/12/28",
+    "note_text": "- عُدلت هذه المادة بموجب قرار مجلس الوزراء رقم (790) وتاريخ 1441/12/28هـ، وذلك بإضافة عبارة \" وصندوق التنمية الوطني\" إلى عجز الفقرة (2) من البند (أولاً).",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/2e8ce9d4-b33b-4f65-8af0-a49b31a65baa?attachmentTitle=المادة السادسة: مجلِس إدارة الصندوق :",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8f5161ded08f969dca57075c7aff81442066d50ea43b014191a8076964cdb619.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc041",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc041/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-9bd91ec8b82695bc93be8c9b",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 83",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-  عُّدلت الفقرة (أ) من هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1103e85e-2461-4151-ada1-ac5b00adbded?attachmentTitle=المادة 83",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/0f38327fb27396a218621abb6772897a38a0f2ae061d8f86a8d5473f130b50a3.jpg"
+     }
+    ]
+   }
+  ]
+ }
+]

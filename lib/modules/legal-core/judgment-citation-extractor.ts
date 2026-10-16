@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { applyEffectiveText } from "./effective-text";
 
 export type CourtPosition = "basis" | "dispute" | "procedural" | "general_reference" | "unresolved";
 
@@ -143,7 +144,8 @@ async function resolveCitation(
       where: { articleNumber: cand, ...(systemFilter ? { OR: systemFilter } : {}) },
       select: { id: true, content: true, lawName: true, articleNumber: true }
     });
-    if (found) { article = found; break; }
+    // النص الساري (المصدر الواحد)؛ الملغاة تُرجع سطر الإلغاء.
+    if (found) { article = (await applyEffectiveText([found]))[0]; break; }
   }
 
   const systemName = article?.lawName ?? mention.systemName;

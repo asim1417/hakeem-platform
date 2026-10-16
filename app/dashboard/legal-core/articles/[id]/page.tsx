@@ -4,6 +4,7 @@ import { BookOpen, FileText, Link2, Pencil, Scale, ChevronRight, ChevronLeft, Sh
 import { getCurrentUser, requirePagePermission } from "@/lib/modules/auth/session";
 import { awardReadArticle } from "@/lib/modules/credits/engagement";
 import { prisma } from "@/lib/prisma";
+import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { HighlightedSearchText, countSearchMatches, joinSearchTerms } from "@/components/SearchHighlight";
 import { ArticleReadingTools } from "@/components/ArticleReadingTools";
@@ -120,7 +121,10 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
   const query = (searchParams?.q ?? "").trim();
   const highlightTerms = joinSearchTerms(query);
   // نصّ العرض المنقّى (غير مُتلِف للكلمات): يُزيل المحارف الفاسدة ويحفظ بنية الأسطر.
-  const content = sanitizeDisplayText(article.content);
+  // النص الساري (المصدر الواحد: unit_version + سجل التحقق)، والملغاة تُعرض بسطر إلغائها.
+  const effective = (await effectiveArticleTexts([{ id: article.id, content: article.content }])).get(article.id);
+  const content = sanitizeDisplayText(effective?.text ?? article.content);
+  const statusLabel = effective?.repealed ? "ملغاة" : effective?.source === "unit_version" ? "معدّلة" : article.status || "سارية";
   const matches = countSearchMatches(content, highlightTerms);
   const fiqhIssues = getFiqhIssuesForArticle(article.lawName, article.articleNumber, 8);
   const officialCitation = buildOfficialCitation({ lawName: article.lawName, articleNumber: article.articleNumber, royalDecree: article.royalDecree, effectiveFrom: article.effectiveFrom });
@@ -233,7 +237,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                   <h2 className="mt-2 font-judicial text-4xl font-bold text-[var(--navy)]">المادة {article.articleNumber.toLocaleString("ar-SA")}</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <LegalTopicBadge tone={statusTone(article.status)}>{article.status || "سارية"}</LegalTopicBadge>
+                  <LegalTopicBadge tone={statusTone(statusLabel)}>{statusLabel}</LegalTopicBadge>
                   {article.classification ? <LegalTopicBadge>{article.classification}</LegalTopicBadge> : null}
                 </div>
               </div>
@@ -276,7 +280,7 @@ export default async function LegalCoreArticlePage({ params, searchParams }: { p
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">التصنيف</dt><dd>{article.classification ?? "غير محدد"}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">المرسوم الملكي</dt><dd className="text-left font-mono-legal text-[var(--gold)]">{article.royalDecree?.trim() || "غير مُدخَل"}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">تاريخ النفاذ</dt><dd>{article.effectiveFrom ? article.effectiveFrom.toLocaleDateString("ar-SA") : "غير مدخل"}</dd></div>
-                <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">الحالة</dt><dd><LegalTopicBadge tone={statusTone(article.status)}>{article.status || "سارية"}</LegalTopicBadge></dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-[var(--ink-60)]">الحالة</dt><dd><LegalTopicBadge tone={statusTone(statusLabel)}>{statusLabel}</LegalTopicBadge></dd></div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button className="btn btn-outline opacity-50 cursor-not-allowed" type="button" disabled title="قريبًا — قيد التطوير"><Link2 size={16} /> ربط بمسألة</button>

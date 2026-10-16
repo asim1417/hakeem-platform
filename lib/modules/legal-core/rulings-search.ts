@@ -139,8 +139,12 @@ function rulingFilters(opts: RulingSearchOptions, params: unknown[], metaReady =
     conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
   }
   if (opts.yearH && Number.isInteger(opts.yearH) && metaReady) {
+    // الحكم الذي لا صف له في ruling_meta (استُورد بعد آخر تشغيل) يُطابَق بنص التاريخ، فلا يختفي.
     params.push(opts.yearH);
-    conds.push(`"id" IN (SELECT "case_id" FROM "ruling_meta" WHERE "year_h" = $${params.length}::int)`);
+    const yi = params.length;
+    params.push(`%${opts.yearH}%`);
+    conds.push(`("id" IN (SELECT "case_id" FROM "ruling_meta" WHERE "year_h" = $${yi}::int)
+      OR (NOT EXISTS (SELECT 1 FROM "ruling_meta" m WHERE m."case_id" = "id") AND (regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})))`);
   } else if (opts.yearH && Number.isInteger(opts.yearH)) {
     params.push(`%${opts.yearH}%`);
     conds.push(`(regexp_replace(translate(coalesce("decisionDateText",'')||' '||coalesce("caseDateText",''), '٠١٢٣٤٥٦٧٨٩','0123456789'), '[^0-9 ]','','g') LIKE $${params.length})`);
@@ -263,14 +267,36 @@ async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: 
 // تجاوزا مهلة MCP (٣٢ ثانية لـ«مدعي»). فالعدّ مسقوف، والترتيب على مرشحين محدودين، والاستعلامان متوازيان.
 const COUNT_CAP = 5000;
 const RANK_CANDIDATES = 400;
+// مع ruling_segments: احتياط محدود ممن ورد اللفظ في غير أسبابه ومنطوقه (حساب الترتيب على النص الكامل مكلف).
+const FALLBACK_CANDIDATES = 100;
 
-export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
-  const started = Date.now();
+export interface RulingSearchSql { countSql: string; rowsSql: string; params: unknown[]; indexPlan: boolean }
+
+/**
+ * ينفّذ استعلام بحث الأحكام. مع العمود المفهرس (indexPlan) يجري في معاملة قصيرة بـ
+ * SET LOCAL enable_seqscan = off: قياس الإنتاج (EXPLAIN ANALYZE) أثبت أن المخطِّط يختار للعدّ المسقوف
+ * (LIMIT 5001) مسحًا تسلسليًّا على judicial_cases يعيد حساب to_tsvector لنصّ ~١٠ ك.ب لكل حكم
+ * (٤٫٥–٧٫٦ ثانية لـ«عقد» و«الوكالة» و«مدعي») لأنه يبخس كلفة to_tsvector ويظن التوقف المبكر رخيصًا،
+ * بينما فهرس GIN يجيب دون حساب النص. الإعداد محليّ للمعاملة فلا يمسّ غيرها، وليس كتابة.
+ */
+export async function runRulingSearchSql<T>(sql: string, params: unknown[], indexPlan: boolean): Promise<T> {
+  if (!indexPlan) return prisma.$queryRawUnsafe<T>(sql, ...params);
+  const [, rows] = await prisma.$transaction([
+    prisma.$executeRawUnsafe(`SET LOCAL enable_seqscan = off`),
+    prisma.$queryRawUnsafe<T>(sql, ...params),
+  ]);
+  return rows;
+}
+
+/**
+ * يبني استعلامَي البحث اللفظي (العدّ المسقوف والترتيب) كما ينفّذهما searchRulingsDirect حرفيًّا.
+ * مُصدَّر لأدوات التشخيص (EXPLAIN) حتى تقيس الاستعلام نفسه لا نسخةً منه. null إن خلا الاستعلام من ألفاظ.
+ */
+export async function buildRulingSearchSql(opts: RulingSearchOptions): Promise<RulingSearchSql | null> {
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
   const offset = Math.max(opts.offset ?? 0, 0);
   const tokens = normalizeArabic(opts.query).split(/\s+/).filter((t) => t.length >= 2);
-  const rawTokens = queryTokens(opts.query);
-  if (!tokens.length || !rawTokens.length) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
+  if (!tokens.length || !queryTokens(opts.query).length) return null;
 
   // مطابقة على مستوى الكلمة الكاملة (لا احتواء جزئيّ) عبر البحث النصيّ الكامل بإعداد 'simple'
   // الذي يقسم على الفراغات/الترقيم فقط بلا جذوع إنجليزية — يتفادى إيجابيات مثل «نجش» داخل «سونجشانج».
@@ -293,38 +319,52 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   conds.push(...filters);
   const where = conds.join(" AND ");
   // المرشحون: من ورد اللفظ في أسبابه أو منطوقه أولًا (ruling_segments.part_norm مفهرس)، ثم الباقي.
+  // MATERIALIZED يُلزم المخطِّط بفهرس GIN: مع DISTINCT ... LIMIT مباشرةً كان يمشي على المفتاح الأساسي
+  // ويحسب to_tsvector لكل صف (٨–١٤ ثانية للفظ النادر، بخطة التنفيذ على الإنتاج).
   // كان الترتيب يُحسب على أول ٤٠٠ حكم يعيدها الفهرس كيفما اتفق؛ الآن تتقدّم الأحكام التي علّتها أو نتيجتها هي المسألة.
   const segCandidates = segsReady
     ? `SELECT s."id", 1 AS prio FROM (
-         SELECT DISTINCT "ruling_id" AS "id" FROM "ruling_segments"
-         WHERE "part" IN ('reasons','disposition') AND to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq}
-         LIMIT ${RANK_CANDIDATES}) s
-       ${filters.length ? `WHERE s."id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}
+         SELECT DISTINCT "ruling_id" AS "id" FROM segm LIMIT ${RANK_CANDIDATES}) s
        UNION ALL `
     : "";
-  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
-  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
-    ? semanticRulingCandidates(opts.query).catch(() => [])
-    : Promise.resolve([]);
+  const countSql = `SELECT count(*)::bigint AS c FROM (SELECT 1 FROM "judicial_cases" WHERE ${where} LIMIT ${COUNT_CAP + 1}) s`;
 
-  const totalQ = prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
-    `SELECT count(*)::bigint AS c FROM (SELECT 1 FROM "judicial_cases" WHERE ${where} LIMIT ${COUNT_CAP + 1}) s`, ...params,
-  ).catch(() => [{ c: BigInt(0) }]);
-
-  // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
-  const rowsQ = prisma.$queryRawUnsafe<Array<{
-    id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
-    cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
-    judgmentTitle: string | null; judgmentText: string | null;
-  }>>(
-    `WITH u AS (${segCandidates}(SELECT "id", 0 AS prio FROM "judicial_cases" WHERE ${where} LIMIT ${RANK_CANDIDATES})),
+  const rowsSql =
+    `${segsReady ? `WITH segm AS MATERIALIZED (
+       SELECT "ruling_id" FROM "ruling_segments"
+       WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq} AND "part" IN ('reasons','disposition')
+       ${filters.length ? `AND "ruling_id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}),
+     ` : "WITH "}u AS (${segCandidates}(SELECT "id", 0 AS prio FROM "judicial_cases" WHERE ${where} LIMIT ${segsReady ? FALLBACK_CANDIDATES : RANK_CANDIDATES})),
           c AS (SELECT "id", max(prio) AS prio FROM u GROUP BY "id")
      SELECT j."id",j."decisionNo",j."caseNo",j."court",j."cityName",j."decisionDateText",j."caseDateText",j."judgmentTitle",j."judgmentText",
             ts_rank_cd(${tsv.replace(/"search_norm"|"judgmentText"|"judgmentTitle"/g, (m) => `j.${m}`)}, ${tsq}) AS rank
      FROM c JOIN "judicial_cases" j ON j."id" = c."id"
      ORDER BY c.prio DESC, rank DESC, j."decisionDate" DESC NULLS LAST
-     LIMIT ${limit} OFFSET ${offset}`, ...params,
-  ).catch(() => []);
+     LIMIT ${limit} OFFSET ${offset}`;
+  return { countSql, rowsSql, params, indexPlan: indexed };
+}
+
+export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
+  const started = Date.now();
+  const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
+  const offset = Math.max(opts.offset ?? 0, 0);
+  const rawTokens = queryTokens(opts.query);
+  const sql = await buildRulingSearchSql(opts);
+  if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
+  const { countSql, rowsSql, params, indexPlan } = sql;
+  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
+  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
+    ? semanticRulingCandidates(opts.query).catch(() => [])
+    : Promise.resolve([]);
+
+  const totalQ = runRulingSearchSql<Array<{ c: bigint }>>(countSql, params, indexPlan).catch(() => [{ c: BigInt(0) }]);
+
+  // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
+  const rowsQ = runRulingSearchSql<Array<{
+    id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
+    cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
+    judgmentTitle: string | null; judgmentText: string | null;
+  }>>(rowsSql, params, indexPlan).catch(() => []);
   const [totalRow, rows] = await Promise.all([totalQ, rowsQ]);
   const counted = Number(totalRow?.[0]?.c ?? 0);
   const totalCapped = counted > COUNT_CAP;
@@ -367,9 +407,9 @@ export function rulingHitToMerged(h: RulingHit): MergedResult {
     snippet: h.snippet,
     confidence: h.score,
     sources: ["postgres"],
-    reasons: [`مطابقة كلمات كاملة في ${h.matchedIn === "reasons" ? "الأسباب" : h.matchedIn === "disposition" ? "المنطوق" : "نص الحكم"}`],
+    reasons: [`${h.matchedBy === "semantic" ? "تشابه بالمعنى" : "مطابقة كلمات كاملة"} في ${h.matchedIn === "reasons" ? "الأسباب" : h.matchedIn === "disposition" ? "المنطوق" : "نص الحكم"}`],
     meta: {
-      matchedBy: "lexical",
+      matchedBy: h.matchedBy === "semantic" ? "semantic" : "lexical",
       sourceType: "ruling",
       caseNo: h.caseNo,
       decisionNo: h.decisionNo,
