@@ -81,6 +81,12 @@ function amendmentLine(record: VerificationRecord): string | null {
   return `معدّلة بالمرسوم ${instrument}${when ? `، سارية من ${when}` : ""}`;
 }
 
+/** سطر التعديل من النسخة نفسها: الأداة وتاريخ السريان. */
+export function versionLine(version: UnitVersionRecord): string {
+  const instrument = version.evidenceInstrument?.trim() || "أداة تعديل";
+  return `معدّلة بموجب ${instrument} من تاريخ ${version.validFrom.slice(0, 10)}`;
+}
+
 /**
  * يختار نصًا واحدًا لتاريخ. النسخ فترات نصف مفتوحة [from, nextFrom).
  * النص الأصلي هو الأصل عند غياب نسخة يبدأ سريانها في التاريخ أو قبله.
@@ -126,7 +132,8 @@ export function presentArticle(input: {
     .filter((v) => new Date(v.validFrom).getTime() > asOf.getTime())
     .sort((a, b) => a.validFrom.localeCompare(b.validFrom))[0];
 
-  const unverified = !input.verification || !isAllowedStatus(input.verification.verifiedStatus);
+  // نسخة موثّقة في unit_version سند كافٍ: لا تُعرض «قيد التحقق» على مادة معدّلة بأداة معروفة.
+  const unverified = input.versions.length === 0 && (!input.verification || !isAllowedStatus(input.verification.verifiedStatus));
   const replaced = flags.statusLabel === "مستبدل";
   const conditional = flags.statusLabel.startsWith("ملغى مع") || flags.statusLabel.startsWith("إلغاء جزئي");
   const faded = flags.repealed || replaced;
@@ -139,15 +146,23 @@ export function presentArticle(input: {
     if (picked.validTo) citationSuffix += ` حتى ${picked.validTo.slice(0, 10)}`;
   }
 
+  // قرار المالك (16/10/2026): الملغاة نصها الرئيسي سطر الإلغاء وسنده، كبقية المسارات.
+  // النص المحفوظ يبقى مطويًا في «النسخ السابقة» للقراءة التاريخية.
+  const repealText = flags.repealed ? `أُلغيت هذه المادة${instrument ? ` بموجب ${instrument}` : ""}` : null;
+
   return {
-    text: picked.text,
+    text: repealText ?? picked.text,
     versionId: picked.version?.id ?? null,
     validFrom: picked.version?.validFrom ?? null,
     validTo: picked.validTo,
     faded,
     badge,
     badgeDetail: instrument,
-    amendmentLine: input.verification && flags.inForce ? amendmentLine(input.verification) : null,
+    amendmentLine: picked.version
+      ? versionLine(picked.version)
+      : input.verification && flags.inForce
+        ? amendmentLine(input.verification)
+        : null,
     pendingNotice: future
       ? `تعديل صدر ولم يسرِ بعد. يسري في ${future.validFrom.slice(0, 10)}${future.evidenceUrl ? ` — ${future.evidenceUrl}` : ""}`
       : null,

@@ -18,6 +18,7 @@ import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve
 import { redactPII, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
+import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -59,18 +60,24 @@ export async function searchArticles(query: string, lawId?: string, limit = 10) 
     : [];
   const byId = new Map(rows.map((r) => [r.id, r]));
 
-  const results = ranked
+  const picked = ranked
     .map((r) => byId.get(r.id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
     .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true))
-    .slice(0, limit)
-    .map((r) => ({
+    .slice(0, limit);
+  // المقتطف من النص الساري (المصدر الواحد)، والملغاة تُرجع سطر الإلغاء.
+  const effective = await effectiveArticleTexts(picked);
+  const results = picked.map((r) => {
+    const e = effective.get(r.id);
+    return {
       article_id: r.id,
       law: r.legalSystem?.name ?? r.lawName,
       law_id: r.legalSystem?.id ?? r.legalSystemId,
       article_number: r.articleNumber,
-      snippet: snippet(r.content),
-    }));
+      snippet: snippet(e?.text ?? r.content),
+      repealed: e?.repealed ?? false,
+    };
+  });
 
   return { query, count: results.length, results };
 }
@@ -82,6 +89,7 @@ export async function getArticle(articleId: string) {
     include: { legalSystem: { select: { id: true, name: true } } },
   });
   if (!a) return { error: "المادة غير موجودة" };
+  const e = (await effectiveArticleTexts([{ id: a.id, content: a.content }])).get(a.id);
   return {
     article_id: a.id,
     law: a.legalSystem?.name ?? a.lawName,
@@ -89,8 +97,16 @@ export async function getArticle(articleId: string) {
     issued_by: a.royalDecree ?? null, // أداة الإصدار على مستوى المادة (المرسوم الملكي)
     issued_date_h: null, // لا يوجد تاريخ هجري منظّم في المخطط الحالي
     article_number: a.articleNumber,
-    status: a.status ?? null,
-    text: a.content,
+    // status بقيمه المعهودة (سارية/معدّلة/ملغاة)؛ verified_status = حالة سجل التحقق.
+    status: e?.repealed ? "ملغاة" : e?.source === "unit_version" ? "معدّلة" : a.status ?? null,
+    verified_status: e?.status ?? null,
+    repealed: e?.repealed ?? false,
+    // النص الساري اليوم (unit_version)، أو سطر الإلغاء لمادة ملغاة.
+    text: e?.text ?? a.content,
+    text_basis: e?.basis ?? null,
+    valid_from: e?.validFrom ? e.validFrom.slice(0, 10) : null,
+    evidence_instrument: e?.evidenceInstrument ?? null,
+    evidence_url: e?.evidenceUrl ?? null,
   };
 }
 
@@ -242,29 +258,44 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
   if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
 
-  const flags = citationFlagsFromVerification(await latestVerification("unit", article.id));
+  const [verification, effective] = await Promise.all([
+    latestVerification("unit", article.id),
+    effectiveArticleTexts([{ id: article.id, content: article.content }]),
+  ]);
+  const flags = citationFlagsFromVerification(verification);
+  const e = effective.get(article.id);
+  const actualText = e?.text ?? article.content;
+  const amended = e?.source === "unit_version";
+  const inForce = flags.inForce || amended;
 
   if (claimedText) {
-    // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة.
+    // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة. المرجع هو النص الساري.
     const norm = (s: string) => s.replace(/[ً-ٟ\s]+/g, "");
-    const match = norm(article.content ?? "").includes(norm(claimedText));
+    const match = !flags.repealed && norm(actualText ?? "").includes(norm(claimedText));
+    const matchesOld = !match && amended && norm(article.content ?? "").includes(norm(claimedText));
     return {
-      verdict: match
-        ? (flags.repealed ? "الإحالة صحيحة والنص مطابق — لكن المادة ملغاة" : flags.inForce ? "الإحالة صحيحة والنص مطابق" : "الإحالة صحيحة والنص مطابق — الحالة قيد التحقق")
-        : "المادة موجودة لكن النص المنسوب غير مطابق",
+      verdict: flags.repealed
+        ? (norm(article.content ?? "").includes(norm(claimedText)) ? "النص مطابق للنص المحفوظ — لكن المادة ملغاة" : "المادة ملغاة والنص المنسوب غير مطابق")
+        : match
+          ? (inForce ? "الإحالة صحيحة والنص مطابق" : "الإحالة صحيحة والنص مطابق — الحالة قيد التحقق")
+          : matchesOld
+            ? "النص المنسوب هو نص المادة قبل تعديلها — النص الساري مختلف"
+            : "المادة موجودة لكن النص المنسوب غير مطابق",
       law: resolvedLaw,
       article_number: articleNumber,
       repealed: flags.repealed,
-      status: flags.statusLabel,
-      actual_text: article.content,
+      status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
+      actual_text: actualText,
+      text_basis: e?.basis ?? null,
     };
   }
   return {
-    verdict: flags.repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : flags.inForce ? "الإحالة صحيحة" : "الإحالة صحيحة — الحالة قيد التحقق",
+    verdict: flags.repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : inForce ? "الإحالة صحيحة" : "الإحالة صحيحة — الحالة قيد التحقق",
     law: resolvedLaw,
     article_number: articleNumber,
     repealed: flags.repealed,
-    status: flags.statusLabel,
-    actual_text: article.content,
+    status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
+    actual_text: actualText,
+    text_basis: e?.basis ?? null,
   };
 }

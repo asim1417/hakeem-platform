@@ -37,7 +37,8 @@ const pending: UnitVersionRecord = {
   evidenceUrl: "https://example.test/m237",
 };
 const shown = presentArticle({ baseText: base, versions: [pending], verification: null, asOf: new Date("2026-09-01T00:00:00Z") });
-ok(shown.text === base && Boolean(shown.pendingNotice) && shown.unverifiedNotice !== null, "تعديل لم يسرِ يبقى النص الحالي مع تنبيه");
+// الأمر 05 (3.4): مادة لها نسخة موثقة في unit_version لا تُوسم «قيد التحقق».
+ok(shown.text === base && Boolean(shown.pendingNotice) && shown.unverifiedNotice === null, "تعديل لم يسرِ يبقى النص الحالي مع تنبيه");
 
 const repealed: VerificationRecord = {
   id: "r",
@@ -48,7 +49,8 @@ const repealed: VerificationRecord = {
   verifiedAt: "2024-01-01T00:00:00.000Z",
 };
 const faded = presentArticle({ baseText: base, versions: [], verification: repealed });
-ok(faded.faded && faded.badge === "ملغاة" && faded.text === base, "الملغاة تبقى ظاهرة باهتة");
+// قرار المالك (16/10/2026): نص الملغاة الرئيسي سطر الإلغاء وسنده؛ الأصل في «النسخ السابقة».
+ok(faded.faded && faded.badge === "ملغاة" && faded.text !== base && faded.text.includes("م/51 لعام 1445"), "الملغاة تُعرض بسطر إلغائها وسنده");
 const replacedView = presentArticle({ baseText: base, versions: [], verification: { ...repealed, verifiedStatus: "مستبدل" } });
 ok(replacedView.faded && replacedView.badge === "مستبدل" && replacedView.text === base, "المستبدل يبقى ظاهرًا بوسمه");
 

@@ -149,3 +149,99 @@ export async function storedInstrumentKind(systemId: string): Promise<string | n
     return null;
   }
 }
+
+/** نسخ مؤرخة لعدة مواد دفعة واحدة (لصفحة النظام الكاملة). غياب الجدول = لا نسخ. */
+export async function unitVersionsFor(unitIds: string[]): Promise<Map<string, UnitVersionRecord[]>> {
+  const out = new Map<string, UnitVersionRecord[]>();
+  if (!unitIds.length) return out;
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{
+      id: string;
+      unit_id: string;
+      body: string;
+      valid_from: Date;
+      evidence_instrument: string | null;
+      evidence_url: string | null;
+    }>>(
+      `SELECT id, unit_id, body, valid_from, evidence_instrument, evidence_url
+       FROM unit_version WHERE unit_id = ANY($1::text[]) ORDER BY unit_id, valid_from ASC`,
+      unitIds,
+    );
+    for (const r of rows) {
+      const list = out.get(r.unit_id) ?? [];
+      list.push({ id: r.id, body: r.body, validFrom: new Date(r.valid_from).toISOString(), evidenceInstrument: r.evidence_instrument, evidenceUrl: r.evidence_url });
+      out.set(r.unit_id, list);
+    }
+  } catch {
+    /* الجدول غير مطبَّق بعد */
+  }
+  return out;
+}
+
+export interface LawCardBlock {
+  kind: "title" | "year" | "basmala" | "royal_decree" | "cabinet_decision" | "royal_order" | "preamble_other" | "law_title";
+  heading?: string | null;
+  text: string;
+}
+
+export interface LawCardRecord {
+  officialName: string;
+  summary: string | null;
+  issuedHijri: string | null;
+  issuedGregorian: string | null;
+  publishedHijri: string | null;
+  publishedGregorian: string | null;
+  statusAtSource: string | null;
+  categoryPath: string[];
+  instruments: Array<{ kind: string; text: string }>;
+  textBlocks: LawCardBlock[];
+  sourceName: string;
+  sourceUrl: string;
+  retrievedOn: string;
+}
+
+/** بطاقة النظام: آخر صف في law_card (إضافة فقط). غياب الجدول أو الصف = لا بطاقة. */
+export async function lawCard(systemId: string): Promise<LawCardRecord | null> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{
+      official_name: string;
+      summary: string | null;
+      issued_hijri: string | null;
+      issued_gregorian: Date | null;
+      published_hijri: string | null;
+      published_gregorian: Date | null;
+      status_at_source: string | null;
+      category_path: string[] | null;
+      instruments: unknown;
+      text_blocks: unknown;
+      source_name: string;
+      source_url: string;
+      retrieved_on: Date;
+    }>>(
+      `SELECT official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian,
+              status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on
+       FROM law_card WHERE system_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1`,
+      systemId,
+    );
+    const r = rows[0];
+    if (!r) return null;
+    const day = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : null);
+    return {
+      officialName: r.official_name,
+      summary: r.summary,
+      issuedHijri: r.issued_hijri,
+      issuedGregorian: day(r.issued_gregorian),
+      publishedHijri: r.published_hijri,
+      publishedGregorian: day(r.published_gregorian),
+      statusAtSource: r.status_at_source,
+      categoryPath: r.category_path ?? [],
+      instruments: Array.isArray(r.instruments) ? (r.instruments as Array<{ kind: string; text: string }>) : [],
+      textBlocks: Array.isArray(r.text_blocks) ? (r.text_blocks as LawCardBlock[]) : [],
+      sourceName: r.source_name,
+      sourceUrl: r.source_url,
+      retrievedOn: day(r.retrieved_on) ?? "",
+    };
+  } catch {
+    return null;
+  }
+}
