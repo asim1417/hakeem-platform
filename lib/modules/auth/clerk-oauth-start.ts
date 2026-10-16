@@ -2,7 +2,15 @@
  * بدء OAuth عبر Clerk — يفضّل Account Portal SSO (موثوق مع pk_test_/Safari)،
  * مع احتياطي FAPI + كوكي __clerk_db_jwt لربط العميل بالمتصفح.
  */
-export type ClerkOAuthProvider = "google" | "apple";
+export type ClerkOAuthProvider = "google" | "apple" | "microsoft";
+
+type ClerkOAuthStrategy = "oauth_google" | "oauth_apple" | "oauth_microsoft";
+
+export function parseClerkOAuthProvider(raw?: string | null): ClerkOAuthProvider | null {
+  const v = (raw || "").trim().toLowerCase();
+  if (v === "google" || v === "apple" || v === "microsoft") return v;
+  return null;
+}
 
 export function decodeClerkFrontendApiHost(publishableKey: string): string | null {
   const pk = publishableKey.trim();
@@ -16,13 +24,50 @@ export function decodeClerkFrontendApiHost(publishableKey: string): string | nul
   }
 }
 
+/**
+ * نطاق بوابة الحسابات (Account Portal):
+ * - تطوير: xxx.clerk.accounts.dev ← xxx.accounts.dev
+ * - إنتاج: clerk.example.com ← accounts.example.com
+ * NEXT_PUBLIC_CLERK_ACCOUNT_PORTAL_URL يتقدّم على الاستنتاج عند ضبطه.
+ */
 export function clerkAccountPortalOrigin(fapiHost: string): string {
-  const portalHost = fapiHost.replace(/\.clerk\.accounts\.dev$/, ".accounts.dev");
+  const override = (process.env.NEXT_PUBLIC_CLERK_ACCOUNT_PORTAL_URL || "").trim().replace(/\/+$/, "");
+  if (/^https:\/\/[^/]+$/.test(override)) return override;
+  const portalHost = fapiHost.endsWith(".clerk.accounts.dev")
+    ? fapiHost.replace(/\.clerk\.accounts\.dev$/, ".accounts.dev")
+    : fapiHost.replace(/^clerk\./, "accounts.");
   return `https://${portalHost}`;
 }
 
-function strategyFor(provider: ClerkOAuthProvider): "oauth_google" | "oauth_apple" {
-  return provider === "apple" ? "oauth_apple" : "oauth_google";
+function strategyFor(provider: ClerkOAuthProvider): ClerkOAuthStrategy {
+  if (provider === "apple") return "oauth_apple";
+  if (provider === "microsoft") return "oauth_microsoft";
+  return "oauth_google";
+}
+
+/** صفحات بوابة الحسابات المستخدمة في حكيم. */
+export type ClerkPortalPage =
+  | "sign-in"
+  | "sign-up"
+  | "user"
+  | "organization"
+  | "create-organization";
+
+/**
+ * رابط صفحة في بوابة حسابات Clerk مع العودة إلى المنصة.
+ * البوابة تعرض وسائل الدخول المفعّلة في اللوحة (بريد/جوال/رمز) وتفرض التحقق الثنائي.
+ */
+export function buildClerkPortalPageUrl(opts: {
+  page: ClerkPortalPage;
+  redirectUrl: string;
+  publishableKey?: string;
+}): string | null {
+  const pk = (opts.publishableKey ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "").trim();
+  const fapi = decodeClerkFrontendApiHost(pk);
+  if (!fapi) return null;
+  const url = new URL(`${clerkAccountPortalOrigin(fapi)}/${opts.page}`);
+  url.searchParams.set("redirect_url", opts.redirectUrl);
+  return url.toString();
 }
 
 type FapiSignInResponse = {
@@ -110,8 +155,11 @@ export async function fetchClerkOAuthAuthorizeUrl(opts: {
   return { redirectTo: url, devBrowserJwt };
 }
 
+/** provider=email|phone يفتح صفحة الدخول/التسجيل في البوابة بدل OAuth مباشر. */
+export type AuthStartProvider = ClerkOAuthProvider | "email" | "phone";
+
 export function buildOAuthStartPath(opts: {
-  provider: ClerkOAuthProvider;
+  provider: AuthStartProvider;
   nextUrl?: string;
   mode?: "sign-in" | "sign-up";
 }): string {

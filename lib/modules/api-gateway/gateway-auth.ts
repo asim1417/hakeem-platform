@@ -69,7 +69,13 @@ export async function requireApiKey(request: NextRequest, scope: ApiScope): Prom
   if (!presented) return { principal: null, response: json("مفتاح API مطلوب (Authorization: Bearer أو x-api-key).", 401) };
   if (!looksLikeApiKey(presented)) return { principal: null, response: json("صيغة مفتاح API غير صحيحة.", 401) };
 
-  const key = await prisma.apiKey.findUnique({ where: { keyHash: hashApiKey(presented) } }).catch(() => null);
+  // أعمدة صريحة: لا نطلب أعمدة أُضيفت بهجرات لاحقة (مثل user_id) فلا يتعطّل التحقق قبل تطبيقها.
+  const key = await prisma.apiKey
+    .findUnique({
+      where: { keyHash: hashApiKey(presented) },
+      select: { id: true, active: true, expiresAt: true, scopes: true, rateLimit: true },
+    })
+    .catch(() => null);
   if (!key || !key.active) return { principal: null, response: json("مفتاح API غير صالح أو موقوف.", 401) };
   if (key.expiresAt && key.expiresAt.getTime() < Date.now()) return { principal: null, response: json("انتهت صلاحية مفتاح API.", 401) };
   if (!keyHasScope(key.scopes, scope)) return { principal: null, response: json(`المفتاح لا يملك النطاق المطلوب: ${scope}.`, 403) };
@@ -78,7 +84,7 @@ export async function requireApiKey(request: NextRequest, scope: ApiScope): Prom
   if (!rl.allowed) return { principal: null, response: json(`تجاوزت حدّ المعدّل (${rl.limit}/دقيقة).`, 429, { "Retry-After": "60" }) };
 
   // تحديث آخر استخدام (best-effort، لا يعطّل الطلب).
-  prisma.apiKey.update({ where: { id: key.id }, data: { lastUsedAt: new Date() } }).catch(() => undefined);
+  prisma.apiKey.update({ where: { id: key.id }, data: { lastUsedAt: new Date() }, select: { id: true } }).catch(() => undefined);
   return { principal: { kind: "api_key", id: key.id, scopes: key.scopes }, response: null };
 }
 

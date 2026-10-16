@@ -5,20 +5,37 @@
 import "server-only";
 
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { PLATFORM_OWNER_EMAILS } from "@/lib/modules/auth/oauth-shared";
 
-/** كلمة مرور المالك الافتراضية — يمكن تجاوزها بـ OWNER_BOOTSTRAP_PASSWORD في البيئة. */
-export const OWNER_DEFAULT_PASSWORD = "Qalam-1703!";
+// AUTH-001: لا كلمة مرور افتراضية مضمّنة في المصدر. المصادقة الرسمية عبر Clerk.
+// كلمة مرور اختيارية للتزويد الأولي تُقرأ من البيئة فقط (OWNER_BOOTSTRAP_PASSWORD)،
+// وتُستخدم **لإنشاء** حساب المالك أول مرة فقط — ولا تُعيد كتابة كلمة مرور حساب قائم أبدًا.
 export const OWNER_DEFAULT_EMAIL = PLATFORM_OWNER_EMAILS[0];
 export const OWNER_DEFAULT_USERNAME = "aasem.alfarsi";
 export const OWNER_DEFAULT_NAME = "عاصم الفارسي";
 
 /**
- * يضمن وجود حساب المالك في القاعدة بصلاحية SUPER_ADMIN.
- * لا يطبع كلمة المرور. آمن عند التكرار (upsert).
+ * كلمة مرور التزويد الأولي: من البيئة إن وُجدت (≥ 8)، وإلا قيمة عشوائية غير معروفة
+ * (لا يمكن الدخول بها) — لأن الدخول الرسمي عبر Clerk، لا كلمة مرور مضمّنة.
  */
-export async function ensurePlatformOwner(): Promise<{
+function resolveBootstrapHash(): Promise<string> {
+  const fromEnv = (process.env.OWNER_BOOTSTRAP_PASSWORD || "").trim();
+  const secret = fromEnv.length >= 8 ? fromEnv : crypto.randomBytes(48).toString("base64url");
+  return bcrypt.hash(secret, 12);
+}
+
+/**
+ * يضمن **وجود** حساب المالك، بلا أي سلوك تدميري:
+ *   • لا يُعيد كتابة passwordHash لحساب قائم (إصلاح AUTH-001).
+ *   • لا يغيّر دور حساب قائم (يتفادى خطأ enum SUPER_ADMIN — DB-001 — قبل الترحيل المعتمد).
+ *   • عند الإنشاء الأول فقط: يستخدم كلمة مرور من البيئة أو قيمة عشوائية غير معروفة.
+ *
+ * التزويد الفعّال (دور/كلمة مرور) عملية إدارية صريحة عبر scripts/ensure-owner-cli.ts،
+ * لا تُنفَّذ تلقائيًّا عند كل إقلاع.
+ */
+export async function ensurePlatformOwner(opts: { allowRoleWrite?: boolean } = {}): Promise<{
   email: string;
   username: string;
   created: boolean;
@@ -26,33 +43,23 @@ export async function ensurePlatformOwner(): Promise<{
 }> {
   const email = OWNER_DEFAULT_EMAIL;
   const username = OWNER_DEFAULT_USERNAME;
-  const password = (process.env.OWNER_BOOTSTRAP_PASSWORD || OWNER_DEFAULT_PASSWORD).trim();
-  if (password.length < 8) {
-    throw new Error("OWNER_BOOTSTRAP_PASSWORD قصيرة جدًا.");
-  }
 
   const existing = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, role: true, isActive: true, username: true, passwordHash: true },
+    select: { id: true, role: true, isActive: true, username: true },
   });
-
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  // تجنّب تصادم اسم المستخدم.
-  let finalUsername = username;
-  const taken = await prisma.user.findFirst({
-    where: { username: finalUsername, NOT: { email } },
-    select: { id: true },
-  });
-  if (taken) finalUsername = `${username}.owner`;
 
   if (!existing) {
+    // تجنّب تصادم اسم المستخدم.
+    let finalUsername = username;
+    const taken = await prisma.user.findFirst({ where: { username: finalUsername, NOT: { email } }, select: { id: true } });
+    if (taken) finalUsername = `${username}.owner`;
     await prisma.user.create({
       data: {
         name: OWNER_DEFAULT_NAME,
         email,
         username: finalUsername,
-        passwordHash,
+        passwordHash: await resolveBootstrapHash(),
         role: "SUPER_ADMIN",
         isActive: true,
       },
@@ -60,17 +67,14 @@ export async function ensurePlatformOwner(): Promise<{
     return { email, username: finalUsername, created: true, updated: false };
   }
 
-  // إعادة فتح قفل المالك: دور سوبر أدمن + كلمة مرور معروفة (تفعيل من داخل المنصة بلا Vercel).
-  await prisma.user.update({
-    where: { email },
-    data: {
-      name: OWNER_DEFAULT_NAME,
-      role: "SUPER_ADMIN",
-      isActive: true,
-      username: existing.username || finalUsername,
-      passwordHash,
-    },
-  });
-
-  return { email, username: existing.username || finalUsername, created: false, updated: true };
+  // حساب قائم: لا نمسّ passwordHash إطلاقًا. نضمن التفعيل فقط، والدور فقط عند طلب صريح.
+  const data: { isActive?: boolean; role?: "SUPER_ADMIN" } = {};
+  if (!existing.isActive) data.isActive = true;
+  if (opts.allowRoleWrite && existing.role !== "SUPER_ADMIN") data.role = "SUPER_ADMIN";
+  let updated = false;
+  if (Object.keys(data).length) {
+    await prisma.user.update({ where: { email }, data });
+    updated = true;
+  }
+  return { email, username: existing.username || username, created: false, updated };
 }

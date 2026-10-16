@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AccountMenu } from "@/components/AccountMenu";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
+import { getAccountSecurityFeatures } from "@/lib/modules/auth/auth-providers";
 import { PLATFORM_WINDOW_HREF } from "@/lib/modules/auth/home-destination";
 import { isPaidCheckoutUiEnabled } from "@/lib/modules/billing/checkout-visibility";
 import type { SafeUser } from "@/lib/modules/auth/session";
@@ -72,6 +73,7 @@ export async function SuperAdminShell({
                   initials={initials}
                   billingLabel={billingLabel}
                   clerkEnabled={clerkEnabled}
+                  securityFeatures={getAccountSecurityFeatures()}
                 />
               </div>
             ) : null}

@@ -9,6 +9,11 @@ import {
   SPECIALTY_OPTIONS,
   YEARS_OPTIONS,
 } from "@/config/credits";
+import {
+  DEFAULT_ENTITY_TYPE,
+  entityOptionsForValue,
+  type EntityTypeValue,
+} from "@/config/entity-types";
 import { GoldButton, LegalAlert, NavyButton } from "@/components/ui/legal";
 
 const STEPS = [
@@ -20,28 +25,41 @@ const STEPS = [
   { id: 6, title: "الموافقات", reward: CREDIT_REWARDS.onboarding_step_6 },
 ] as const;
 
-type Entity = "INDIVIDUAL" | "LAW_FIRM" | "OTHER";
+/** بعد إكمال الملف أو حفظ التعديلات: عرض موجز ثم التحويل للوحة */
+const AFTER_COMPLETE_MS = 1400;
+const AFTER_EDIT_SAVE_MS = 900;
+const DASHBOARD_AFTER_COMPLETE = "/dashboard?welcome=1";
+
+type Entity = EntityTypeValue;
 
 export function OnboardingWizard({
   userName,
   initialStep = 1,
   initialBalance = 0,
+  /** ملف مكتمل مسبقًا — نفتح للتعديل لا شاشة «اكتمل» المسدودة */
+  initiallyCompleted = false,
 }: {
   userName: string;
   initialStep?: number;
   initialBalance?: number;
+  initiallyCompleted?: boolean;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(Math.min(6, Math.max(1, initialStep || 1)));
   const [balance, setBalance] = useState(initialBalance);
   const [earnedThisSession, setEarnedThisSession] = useState(0);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [saveOk, setSaveOk] = useState("");
+  /** بعد حفظ التعديلات في ملف مكتمل — نُظهر الرسالة ثم نحوّل للوحة */
+  const [redirectAfterEdit, setRedirectAfterEdit] = useState(false);
+  /** شاشة الاحتفال فقط بعد إنهاء الخطوات في هذه الجلسة — لا عند فتح «ملفي المهني» لاحقًا */
+  const [celebrate, setCelebrate] = useState(false);
+  const [alreadyComplete, setAlreadyComplete] = useState(initiallyCompleted);
   const [pending, startTransition] = useTransition();
 
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
-  const [entityType, setEntityType] = useState<Entity>("INDIVIDUAL");
+  const [entityType, setEntityType] = useState<Entity>(DEFAULT_ENTITY_TYPE);
   const [yearsExperience, setYearsExperience] = useState("");
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
@@ -62,7 +80,7 @@ export function OnboardingWizard({
         if (!p) return;
         if (p.phone) setPhone(p.phone);
         if (p.city) setCity(p.city);
-        if (p.entityType) setEntityType(p.entityType);
+        if (p.entityType) setEntityType(p.entityType as Entity);
         if (p.yearsExperience) setYearsExperience(p.yearsExperience);
         if (Array.isArray(p.specialties)) setSpecialties(p.specialties);
         if (Array.isArray(p.interests)) setInterests(p.interests);
@@ -71,11 +89,35 @@ export function OnboardingWizard({
         if (p.termsAccepted) setTermsAccepted(true);
         if (Array.isArray(p.certificates)) setCertificates(p.certificates.join("\n"));
         if (typeof p.creditsBalance === "number") setBalance(p.creditsBalance);
-        if (p.onboardingCompleted) setDone(true);
-        else if (p.onboardingStep > 0) setStep(Math.min(6, p.onboardingStep + 1));
+        if (p.onboardingCompleted) {
+          // ملفي المهني بعد الاكتمال = وضع تعديل، لا طريق مسدود
+          setAlreadyComplete(true);
+          setCelebrate(false);
+          setStep(1);
+        } else if (p.onboardingStep > 0) {
+          setStep(Math.min(6, p.onboardingStep + 1));
+        }
       })
       .catch(() => undefined);
   }, []);
+
+  // بعد إكمال الملف لأول مرة: عرض موجز للرصيد ثم التحويل للوحة الداخلية تلقائيًا
+  useEffect(() => {
+    if (!celebrate) return;
+    const id = window.setTimeout(() => {
+      startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE));
+    }, AFTER_COMPLETE_MS);
+    return () => window.clearTimeout(id);
+  }, [celebrate, router]);
+
+  // بعد حفظ تعديلات ملف مكتمل: رسالة قصيرة ثم التحويل للوحة
+  useEffect(() => {
+    if (!redirectAfterEdit) return;
+    const id = window.setTimeout(() => {
+      startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE));
+    }, AFTER_EDIT_SAVE_MS);
+    return () => window.clearTimeout(id);
+  }, [redirectAfterEdit, router]);
 
   function toggle(list: string[], value: string, setter: (v: string[]) => void) {
     setter(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -122,11 +164,8 @@ export function OnboardingWizard({
 
   async function submitStep(opts?: { skipAvatar?: boolean }) {
     setError("");
+    setSaveOk("");
     try {
-      if (step === 3 && !phoneVerified) {
-        // الجوال اختياري — السعودية مقفلة في Clerk SMS افتراضيًا
-      }
-
       let avatarAwarded = 0;
       if (step === 5 && !opts?.skipAvatar) {
         avatarAwarded = await uploadAvatar();
@@ -163,9 +202,20 @@ export function OnboardingWizard({
       setEarnedThisSession((n) => n + awarded);
       if (typeof data.balance === "number") setBalance(data.balance);
 
-      if (data.done || step === 6) {
-        setDone(true);
+      if (step === 6) {
+        setAlreadyComplete(true);
+        // تعديل ملف مكتمل: تأكيد الحفظ ثم التحويل للوحة الداخلية
+        if (alreadyComplete) {
+          setSaveOk("تم حفظ تعديلات ملفك المهني. جارٍ فتح لوحتك…");
+          setRedirectAfterEdit(true);
+          return;
+        }
+        setCelebrate(true);
         return;
+      }
+      if (alreadyComplete || data.done) {
+        setAlreadyComplete(true);
+        setSaveOk("تم الحفظ.");
       }
       setStep((s) => Math.min(6, s + 1));
     } catch (err) {
@@ -173,22 +223,33 @@ export function OnboardingWizard({
     }
   }
 
-  if (done) {
+  if (celebrate) {
     return (
-      <div className="space-y-6 text-center">
+      <div className="space-y-6 text-center" role="status" aria-live="polite">
         <p className="text-sm font-semibold text-[var(--gold)]">اكتمل ملفك</p>
         <h2 className="font-display-ar text-3xl text-[var(--navy)]">مرحبًا {userName} في حكيم</h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
           رصيدك الحالي <strong className="text-[var(--navy)]">{balance.toLocaleString("ar-SA")}</strong> نقطة
           {earnedThisSession > 0 ? ` (+${earnedThisSession.toLocaleString("ar-SA")} في هذه الجلسة)` : ""}.
         </p>
+        <p className="text-sm font-semibold text-[var(--navy)]">جارٍ فتح لوحتك…</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <NavyButton type="button" onClick={() => startTransition(() => router.push("/dashboard?welcome=1"))}>
-            الذهاب إلى لوحتي
+          <NavyButton
+            type="button"
+            onClick={() => startTransition(() => router.replace(DASHBOARD_AFTER_COMPLETE))}
+          >
+            الذهاب إلى لوحتي الآن
           </NavyButton>
-          <Link href="/dashboard/ask" className="text-sm font-semibold text-[var(--navy)] underline-offset-4 hover:underline">
-            ابدأ استشارة
-          </Link>
+          <button
+            type="button"
+            className="focus-ring text-sm font-semibold text-[var(--navy)] underline-offset-4 hover:underline"
+            onClick={() => {
+              setCelebrate(false);
+              setStep(1);
+            }}
+          >
+            تعديل الملف المهني
+          </button>
         </div>
       </div>
     );
@@ -197,28 +258,44 @@ export function OnboardingWizard({
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <p className="text-sm font-semibold text-[var(--gold)]">إكمال الملف · +{CREDIT_REWARDS.welcome} نقطة ترحيبية</p>
-        <h2 className="font-display-ar text-2xl text-[var(--navy)] sm:text-3xl">أكمل ملفك واكسب المزيد</h2>
+        <p className="text-sm font-semibold text-[var(--gold)]">
+          {alreadyComplete ? "ملفي المهني — تعديل البيانات" : `إكمال الملف · +${CREDIT_REWARDS.welcome} نقطة ترحيبية`}
+        </p>
+        <h2 className="font-display-ar text-2xl text-[var(--navy)] sm:text-3xl">
+          {alreadyComplete ? "حدّث ملفك المهني" : "أكمل ملفك واكسب المزيد"}
+        </h2>
         <p className="text-sm leading-7 text-[var(--ink-60)]">
           الخطوة {step} من 6 — رصيدك الآن {balance.toLocaleString("ar-SA")} نقطة
         </p>
       </header>
 
       <ol className="flex flex-wrap gap-2" aria-label="خطوات الإكمال">
-        {STEPS.map((s) => (
-          <li
-            key={s.id}
-            className={`rounded-[var(--r-md)] px-3 py-1.5 text-xs font-semibold ${
-              s.id === step
-                ? "bg-[var(--navy)] text-white"
-                : s.id < step
-                  ? "bg-[var(--gold-ghost)] text-[var(--navy)]"
-                  : "border border-[var(--gold-border)] text-[var(--ink-40)]"
-            }`}
-          >
-            {s.id}. {s.title}
-          </li>
-        ))}
+        {STEPS.map((s) => {
+          const jumpable = alreadyComplete || s.id <= step;
+          return (
+            <li key={s.id}>
+              <button
+                type="button"
+                disabled={!jumpable || pending}
+                onClick={() => {
+                  if (!jumpable) return;
+                  setError("");
+                  setSaveOk("");
+                  setStep(s.id);
+                }}
+                className={`focus-ring rounded-[var(--r-md)] px-3 py-1.5 text-xs font-semibold disabled:cursor-default ${
+                  s.id === step
+                    ? "bg-[var(--navy)] text-white"
+                    : jumpable
+                      ? "bg-[var(--gold-ghost)] text-[var(--navy)] hover:bg-[var(--gold-border)]"
+                      : "border border-[var(--gold-border)] text-[var(--ink-40)]"
+                }`}
+              >
+                {s.id}. {s.title}
+              </button>
+            </li>
+          );
+        })}
       </ol>
 
       <div
@@ -235,6 +312,7 @@ export function OnboardingWizard({
       </div>
 
       {error ? <LegalAlert tone="danger">{error}</LegalAlert> : null}
+      {saveOk ? <LegalAlert tone="success">{saveOk}</LegalAlert> : null}
 
       {step === 1 && (
         <div className="space-y-4">
@@ -269,15 +347,17 @@ export function OnboardingWizard({
       {step === 2 && (
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm font-semibold text-[var(--navy)]">نوع الكيان</span>
+            <span className="text-sm font-semibold text-[var(--navy)]">نوع الممارسة / المهنة</span>
             <select
               value={entityType}
               onChange={(e) => setEntityType(e.target.value as Entity)}
               className="focus-ring mt-2 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-4 py-3"
             >
-              <option value="INDIVIDUAL">محامٍ فرد / متدرب</option>
-              <option value="LAW_FIRM">مكتب محاماة</option>
-              <option value="OTHER">أخرى</option>
+              {entityOptionsForValue(entityType).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block">
@@ -475,12 +555,16 @@ export function OnboardingWizard({
               تخطّي
             </button>
           ) : null}
-          <GoldButton type="button" disabled={pending} onClick={() => void submitStep()}>
-            {pending
-              ? "جارٍ الحفظ…"
+          <GoldButton type="button" disabled={pending || redirectAfterEdit} onClick={() => void submitStep()}>
+            {pending || redirectAfterEdit
+              ? "جارٍ فتح لوحتك…"
               : step === 6
-                ? `إنهاء (+${CREDIT_REWARDS.onboarding_step_6})`
-                : `التالي (+${STEPS[step - 1].reward})`}
+                ? alreadyComplete
+                  ? "حفظ التعديلات"
+                  : `إنهاء (+${CREDIT_REWARDS.onboarding_step_6})`
+                : alreadyComplete
+                  ? "التالي"
+                  : `التالي (+${STEPS[step - 1].reward})`}
           </GoldButton>
         </div>
       </div>

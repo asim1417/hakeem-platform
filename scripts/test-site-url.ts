@@ -49,6 +49,7 @@ const nextCfg = read("next.config.mjs");
 assert.ok(nextCfg.includes("NEXT_PUBLIC_SITE_URL"));
 assert.ok(nextCfg.includes("*.clerk.accounts.dev"), "Clerk CSP hosts must remain");
 assert.ok(nextCfg.includes("clerk.shared.lcl.dev"), "Clerk lcl.dev must remain");
+assert.ok(nextCfg.includes("resolveClerkProductionHosts"), "Clerk production (custom domain) hosts must be in CSP");
 // allowedOrigins تراكمية — لا قيمة واحدة من SITE_URL
 assert.ok(nextCfg.includes("hakeem-platform.vercel.app"), "current host must stay in Server Actions list");
 assert.ok(nextCfg.includes("hakeemsa.com"), "new host must be alongside current");

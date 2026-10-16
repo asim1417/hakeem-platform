@@ -1,0 +1,15 @@
+{"note_id": "boe26-56370cc73b3436887c94943a", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 107}
+{"note_id": "boe26-1aa4c2e965ab3750a6cf158c", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 58}
+{"note_id": "boe26-84cd62c8b294113f546ff348", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 21}
+{"note_id": "boe26-93c9e9fe8499ede646e01224", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 13}
+{"note_id": "boe26-352dcbc216718b19af28356e", "verdict": "wrong", "right_article": true, "discrepancies": ["definition 'شبكة توزيع الغاز الجاف': claimed 'والصمّامات' but image shows 'والصفّايات' (page 2, line 5)", "definition 'شبكة توزيع الغاز المستقلة': claimed 'والصمّامات' but image shows 'والصفّايات' (page 2)"], "words_checked": 459}
+{"note_id": "boe26-1cce8034921f7093f65038cb", "verdict": "wrong", "right_article": false, "discrepancies": ["text matches the image exactly, but the image is Council of Ministers decision 46 of 1420/2/30 applying the whole law to KACST facilities; it neither amends nor mentions Article 1 (المادة الأولى), and the lead-in 'يقرر' is just the operative verb. The unit assignment is not supported by the image"], "words_checked": 21}
+{"note_id": "boe26-f028c1e97a7c5c53f1c9fb67", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 41}
+{"note_id": "boe26-da6721edf8813563133cae43", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 39}
+{"note_id": "boe26-24abe228c60287b633d4681d", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 165}
+{"note_id": "boe26-0e46d7c10fe333ebd1dd92e7", "verdict": "wrong", "right_article": true, "discrepancies": ["over-inclusion: the Article 3 wording ends at item '١٩- ... الغرض من إنشائها\".' (page 4). The claimed text then adds the lead-in of item 4 '[٤- إضافة مادة يكون ترتيبها المادة (الثالثة مكرر)...]' and the full text of new Article 3 bis (8 items, pages 4-5). That is a separate new article, not part of the new wording of Article 3", "the Article 3 portion itself (preamble + items 1-19) matched word for word"], "words_checked": 736}
+{"note_id": "boe26-8988c79f6ee5afc897f3be5e", "verdict": "minor", "right_article": true, "discrepancies": ["possible hamza differences only, not fully resolvable at the 700px scan: claimed 'الأعضاء الأساسيين' (para 1-a); the image seems to show 'الاعضاء الاساسيين' without hamza. Likewise claimed 'الدرجة الأولى' (para 5); the image seems to show 'الاولى'. No word-level differences"], "words_checked": 217}
+{"note_id": "boe26-1468c767feb0f56b25fc35ad", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 109}
+{"note_id": "boe26-f157b03efeda8b450782d0d0", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 54}
+{"note_id": "boe26-cd7f593a64f10e6a56705957", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 25}
+{"note_id": "boe26-5b7fc381c6a35e0637c5d9b7", "verdict": "exact", "right_article": true, "discrepancies": [], "words_checked": 19}

@@ -54,12 +54,33 @@ function resolveServerActionOrigins() {
 
 const serverActionOrigins = resolveServerActionOrigins();
 
+/**
+ * نطاقات Clerk الإنتاج (نطاق مخصّص مثل clerk.hakeemai.net) تُستنتج من المفتاح العلني وقت البناء.
+ * بدونها تمنع CSP تحميل clerk-js في الإنتاج فتتعطّل كل واجهات Clerk على العميل.
+ */
+function resolveClerkProductionHosts() {
+  const pk = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "").trim();
+  const m = pk.match(/^pk_(?:test|live)_(.+)$/);
+  const hosts = new Set();
+  if (m) {
+    try {
+      const fapi = Buffer.from(m[1], "base64").toString("utf8").replace(/\$$/, "").trim();
+      if (/^[a-z0-9.-]+$/i.test(fapi) && !fapi.endsWith(".clerk.accounts.dev")) {
+        hosts.add(`https://${fapi}`);
+        hosts.add(`https://${fapi.replace(/^clerk\./, "accounts.")}`);
+      }
+    } catch {
+      /* مفتاح غير صالح — نكتفي بالنطاقات الثابتة */
+    }
+  }
+  const portal = (process.env.NEXT_PUBLIC_CLERK_ACCOUNT_PORTAL_URL || "").trim().replace(/\/+$/, "");
+  if (/^https:\/\/[^/]+$/.test(portal)) hosts.add(portal);
+  return Array.from(hosts).join(" ");
+}
+
+const clerkProductionHosts = resolveClerkProductionHosts();
+
 const nextConfig = {
-  // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل)
-  outputFileTracingIncludes: {
-    "/search": ["./data/legal-bm25-index.json.gz"],
-    "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
-  },
   // أحدث ممارسات Next: ضغط + إزالة X-Powered-By + صور حديثة
   poweredByHeader: false,
   compress: true,
@@ -69,6 +90,14 @@ const nextConfig = {
   experimental: {
     // يُفعّل instrumentation.ts (تحميل إعدادات اللوحة إلى البيئة عند الإقلاع).
     instrumentationHook: true,
+    // BUILD-001: على Next 14.2 هذا الخيار تحت experimental (كان أعلى الكائن فيُرفض كمفتاح غير معروف).
+    // تضمين فهرس البحث المضغوط مع دوال الخادم على Vercel (يُقرأ عبر fs وقت التشغيل).
+    outputFileTracingIncludes: {
+      "/search": ["./data/legal-bm25-index.json.gz"],
+      // العرض الحي في الرئيسية: نص المادة يُقرأ بلفظه من مدونة حكيم (HOME_LIVE_DEMO_ENABLED)
+      "/": ["./data/legal_articles_export.json"],
+      "/api/legal-core/bm25-search": ["./data/legal-bm25-index.json.gz"]
+    },
     serverActions: {
       allowedOrigins: serverActionOrigins
     }
@@ -79,13 +108,21 @@ const nextConfig = {
   // بـ nonces عند الحاجة لتصلّب أعلى ضد XSS.
   async headers() {
     // Clerk: لا تُحذف هذه النطاقات — نسخة التطوير الحالية تعتمد عليها في الإنتاج المؤقت
-    const clerkHosts =
-      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com https://*.accounts.dev https://clerk.shared.lcl.dev";
+    const clerkHosts = [
+      "https://*.clerk.accounts.dev https://*.clerk.com https://*.protect.clerk.com https://*.accounts.dev https://clerk.shared.lcl.dev",
+      clerkProductionHosts,
+    ]
+      .filter(Boolean)
+      .join(" ");
     const turnstile = "https://challenges.cloudflare.com";
     const googleFonts = "https://fonts.googleapis.com";
     const googleFontsStatic = "https://fonts.gstatic.com";
     const oauthFormTargets =
       "https://accounts.google.com https://appleid.apple.com";
+    // موصل حكيم (MCP): نموذج الربط/الموافقة يُحوِّل (303) إلى عنوان رجوع Claude أو ChatGPT أو أداة محلية،
+    // وChrome يطبّق form-action على التحويل بعد إرسال النموذج.
+    const mcpClientTargets =
+      "https://claude.ai https://www.claude.ai https://claude.com https://www.claude.com https://chatgpt.com http://localhost:* http://127.0.0.1:*";
     // أصل الموقع من المتغير (وقت البناء) — 'self' يغطي المضيف الحالي؛ الإضافة صريحة للتوثيق والتعدد لاحقًا
     const siteOrigin = siteUrl;
     const csp = [
@@ -99,7 +136,7 @@ const nextConfig = {
       "worker-src 'self' blob:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      `form-action 'self' ${siteOrigin} ${clerkHosts} ${oauthFormTargets}`,
+      `form-action 'self' ${siteOrigin} ${clerkHosts} ${oauthFormTargets} ${mcpClientTargets}`,
       "object-src 'none'"
     ].join("; ");
     return [

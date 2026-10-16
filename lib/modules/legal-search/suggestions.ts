@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { loadSearchSurface } from "@/lib/modules/legal-core/search-surface";
 
 export interface SearchSuggestion {
   value: string;
@@ -18,7 +19,9 @@ export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<Sea
   if (q.length < 2) return [];
   const half = Math.max(2, Math.ceil(limit / 2));
 
-  const [systems, popular] = await Promise.all([
+  // وجه البحث: لا يُقترح اسم نظام خارج وجه الساري اليوم (مخلوط/إصدار غير نافذ/ملغى بلا خلف).
+  const { hiddenNames } = await loadSearchSurface();
+  const [systemsAll, popular] = await Promise.all([
     prisma.legalSystem
       .findMany({
         where: { name: { contains: q, mode: "insensitive" } },
@@ -38,6 +41,7 @@ export async function getSearchSuggestions(qRaw: string, limit = 8): Promise<Sea
       .catch(() => [] as Array<{ query: string; _count: { query: number } }>),
   ]);
 
+  const systems = systemsAll.filter((s) => !hiddenNames.has(s.name));
   const seen = new Set<string>();
   const out: SearchSuggestion[] = [];
 
@@ -91,7 +95,10 @@ export async function getDidYouMeanSuggestions(qRaw: string, limit = 4): Promise
        LIMIT ${take}`,
       q
     );
-    return rows.map((r) => r.candidate).filter((v) => typeof v === "string" && v.trim().length > 0);
+    const { hiddenNames } = await loadSearchSurface();
+    return rows
+      .map((r) => r.candidate)
+      .filter((v) => typeof v === "string" && v.trim().length > 0 && !hiddenNames.has(v));
   } catch {
     return []; // pg_trgm غير مفعّل أو جدول مفقود — سقوط آمن
   }

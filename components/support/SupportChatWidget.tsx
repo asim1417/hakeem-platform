@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Msg = {
   id: string;
@@ -23,7 +23,7 @@ export function SupportChatWidget() {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
 
@@ -102,43 +102,50 @@ export function SupportChatWidget() {
     }
   }
 
-  function send() {
+  async function send() {
     const body = text.trim();
     if (!body || pending) return;
     setError(null);
     setStatus("جارٍ إرسال رسالتك…");
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/support/thread", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body }),
-        });
-        const data = (await res.json()) as {
-          ok?: boolean;
-          messages?: Msg[];
-          message?: string;
-        };
-        if (res.status === 429) {
-          setError(data.message || "انتظر دقيقة ثم أعد المحاولة.");
-          setStatus(null);
-          return;
-        }
-        if (!res.ok || !data.ok) {
-          setError(data.message || "تعذّر إرسال الطلب. بقيت رسالتك محفوظة، أعد المحاولة.");
-          setStatus(null);
-          return;
-        }
-        setDraft("");
-        if (data.messages) setMessages(data.messages);
-        setUnread(0);
-        setStatus("تم استلام رسالتك. سيظهر رد الدعم هنا عند وصوله.");
-      } catch {
-        setError("انقطع الاتصال. تحقق من الشبكة ثم أعد المحاولة.");
+    setPending(true);
+    try {
+      const res = await fetch("/api/support/thread", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        messages?: Msg[];
+        message?: string;
+        autoAcked?: boolean;
+        notified?: boolean;
+      };
+      if (res.status === 429) {
+        setError(data.message || "انتظر دقيقة ثم أعد المحاولة.");
         setStatus(null);
+        return;
       }
-    });
+      if (!res.ok || !data.ok) {
+        setError(data.message || "تعذّر إرسال الطلب. بقيت رسالتك محفوظة، أعد المحاولة.");
+        setStatus(null);
+        return;
+      }
+      setDraft("");
+      if (data.messages) setMessages(data.messages);
+      setUnread(0);
+      setStatus(
+        data.autoAcked
+          ? "وصلت رسالتك لصندوق الإدارة — وردّ تلقائي ظاهر أعلاه. الرد البشري يظهر هنا أيضًا."
+          : "تم استلام رسالتك. سيظهر رد الدعم هنا عند وصوله."
+      );
+    } catch {
+      setError("انقطع الاتصال. تحقق من الشبكة ثم أعد المحاولة.");
+      setStatus(null);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -226,17 +233,18 @@ export function SupportChatWidget() {
                 placeholder="اكتب رسالتك…"
                 className="min-h-[44px] flex-1 resize-none rounded-md border border-[rgba(14,52,53,0.12)] bg-white px-3 py-2 text-sm text-[#0E3435] outline-none focus:border-[#C9A84C]"
                 style={{ fontSize: 16 }}
+                disabled={pending}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    send();
+                    void send();
                   }
                 }}
               />
               <button
                 type="button"
                 disabled={pending || !text.trim()}
-                onClick={send}
+                onClick={() => void send()}
                 className="touch-target self-end rounded-md bg-[#8B6914] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 aria-busy={pending}
               >

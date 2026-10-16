@@ -1,0 +1,110 @@
+name: Rulings — meta, segments, model-segmentation cost
+
+# طبقة الأحكام البحثية — ثلاث مهام على judicial_cases (قراءة) وجداول إضافية (كتابة مقفولة):
+#   meta     → scripts/rulings-research/01-meta.ts      (ruling_meta: السنة الهجرية، نوع المحكمة، الدرجة…)
+#   segments → scripts/rulings-research/04-segments.ts  (ruling_segments: أجزاء الحكم + فهرسة الأسباب والمنطوق)
+#   model    → scripts/rulings-research/05-segment-model-dryrun.ts (تقدير كلفة إكمال التقطيع بالنموذج؛ بلا أي نداء)
+# push على الفرع: التشغيل الجافّ للثلاث (قراءة فقط). workflow_dispatch بـ mode=apply: كتابة meta/segments
+# على الإنتاج بالقفل NEON_RUNTIME_CONFIRMED ومرجع موافقة المالك، أو على فرع بحثي. judicial_cases لا يُمسّ.
+# المستودع عام: المخرج أعداد فقط، ويُودَع في الفرع reports/rulings-research/.
+
+on:
+  push:
+    branches: [claude/rulings-meta-segments]
+    paths:
+      - .github/workflows/rulings-meta-segments.yml
+      - scripts/rulings-research/01-meta.ts
+      - scripts/rulings-research/04-segments.ts
+      - scripts/rulings-research/05-segment-model-dryrun.ts
+      - lib/rulings/research/**
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "meta | segments | model"
+        required: true
+        default: meta
+      mode:
+        description: "dry-run | apply (apply لـ meta وsegments فقط)"
+        required: true
+        default: dry-run
+      target:
+        description: "production | research"
+        default: production
+      approval_ref:
+        description: "مرجع موافقة المالك للكتابة على الإنتاج"
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        job: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', github.event.inputs.job) || '["meta","segments","model"]') }}
+    concurrency:
+      group: rulings-meta-segments-${{ matrix.job }}
+      cancel-in-progress: false
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MODE: ${{ github.event.inputs.mode || 'dry-run' }}
+      JOB: ${{ matrix.job }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ اتصال مباشر (Neon)"
+        run: |
+          url="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$url" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          host=$(printf '%s' "$url" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
+          direct=$(printf '%s' "$url" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          echo "::add-mask::$direct"
+          echo "DIRECT_DB_URL=$direct" >> "$GITHUB_ENV"
+          case "$JOB" in
+            meta) echo "SCRIPT=scripts/rulings-research/01-meta.ts" >> "$GITHUB_ENV"; echo "OUT=reports/rulings-research/01-meta.data.json" >> "$GITHUB_ENV";;
+            segments) echo "SCRIPT=scripts/rulings-research/04-segments.ts" >> "$GITHUB_ENV"; echo "OUT=reports/rulings-research/04-segments.data.json" >> "$GITHUB_ENV";;
+            model) echo "SCRIPT=scripts/rulings-research/05-segment-model-dryrun.ts" >> "$GITHUB_ENV"; echo "OUT=reports/rulings-research/05-segment-model.data.json" >> "$GITHUB_ENV";;
+            *) echo "::error::job غير معروف"; exit 1;;
+          esac
+      - name: "تشغيل جافّ (قراءة فقط)"
+        if: env.MODE != 'apply'
+        run: DATABASE_URL="$DIRECT_DB_URL" AUDIT_TRANSPORT=prisma npx tsx "$SCRIPT"
+      - name: "كتابة (مقفولة)"
+        if: env.MODE == 'apply'
+        env:
+          NEON_RESEARCH_DATABASE_URL: ${{ secrets.NEON_RESEARCH_DATABASE_URL }}
+          TARGET: ${{ github.event.inputs.target }}
+          APPROVAL_REF: ${{ github.event.inputs.approval_ref }}
+        run: |
+          [ "$JOB" = "model" ] && { echo "::error::model تشغيل جافّ فقط — لا كتابة ولا نداء نموذج."; exit 1; }
+          if [ "$TARGET" = "production" ]; then
+            [ -z "$APPROVAL_REF" ] && { echo "::error::الكتابة على الإنتاج تتطلب approval_ref."; exit 1; }
+            DATABASE_URL="$DIRECT_DB_URL" CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED OWNER_APPROVAL_REF="$APPROVAL_REF" npx tsx "$SCRIPT" --apply
+          else
+            [ -z "$NEON_RESEARCH_DATABASE_URL" ] && { echo "::error::لا يوجد NEON_RESEARCH_DATABASE_URL."; exit 1; }
+            CONFIRM_RESEARCH_WRITE=YES npx tsx "$SCRIPT" --apply
+          fi
+      - name: "إيداع الأعداد في الفرع"
+        if: always()
+        run: |
+          [ -f "$OUT" ] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"
+          git diff --cached --quiet && { echo "لا تغيير"; exit 0; }
+          git commit -m "data(rulings-research): ${JOB} ${MODE} (aggregate, run ${GITHUB_RUN_ID})"
+          for i in 1 2 3 4 5 6; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 7))
+          done
+          exit 1

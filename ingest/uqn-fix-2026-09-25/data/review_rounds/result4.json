@@ -1,0 +1,220 @@
+[
+ {
+  "op_id": "OP-4f30e2eb52",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-bc37ace240",
+  "verdict": "error",
+  "fields_wrong": [
+   "new_text"
+  ],
+  "explanation": "M/72 (1444) adds paragraph (2) to article 21 but quotes the whole resulting article: «المادة الحادية والعشرون:1- … 2- …». The op inserts that whole block, including the article heading and the existing paragraph 1, as the new paragraph 2, so heading and paragraph 1 would appear twice.",
+  "correct_value": "new_text = «يستثنى الوقف الخيري، والحصة الخيرية في الوقف المشترك، المسجلان لدى الهيئة، من أحكام نظام التكاليف القضائية» (or replace_article_text with «1- تعامل الهيئة … 2- …» without the heading)"
+ },
+ {
+  "op_id": "OP-e540a82f42",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-79bfec4620",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-0aad15b4e2",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-496537cc4f",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Target is نظام حماية الطفل (item ثانياً(2) of M/72 1443), not نظام الحماية من الإيذاء.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-0492a4b277",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-ffe74d0f11",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-53ecc614d7",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-b00596e078",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-8ceeddb2bc",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-e0ccc05ae6",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-e5864d38df",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-7e38c01036",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-a59a7bcb68",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-3e9dae16df",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Decision 1012 item ثاني عشر(أ) substitutes الوزارة -> الجهة المختصة wherever it appears in the law, with no exceptions.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-f5853037ed",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-fb93478464",
+  "verdict": "error",
+  "fields_wrong": [
+   "missed_scope"
+  ],
+  "explanation": "Decision 586 item حادي عشر substitutes the phrase in paragraphs (1) AND (2) of article 5 of the Expropriation Implementing Regulation. Only paragraph 1 is captured, and the paragraph-2 counterpart is an unscoped needs_review op (OP-6886b1f3ed). The round-4 rule should have forced this op to needs_review.",
+  "correct_value": "add the art 5 para 2 substitution, or mark needs_review"
+ },
+ {
+  "op_id": "OP-63de60b0d2",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-51318e5255",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Metadata is still off: instrument_no is empty (should be م/272), and also_in has 'cabinet_decision::EFF-00275' with no number.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-35022dcff5",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-dc2e69fb22",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Correct. Same metadata issue: instrument_no is empty, and also_in has 'cabinet_decision::' with no number.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-12c9b3bc3d",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type"
+  ],
+  "explanation": "Decision 388 item 4 gives only the lead-in of paragraph (1) of article 9, ending in '...': «تكون للمركز ميزانية سنوية مستقلة، وتتكون إيراداته مما يأتي ...». Replacing the whole paragraph with it would drop sub-paragraphs (أ), (ب) and the rest. The sibling op for sub-paragraph (أ), from item 5, is needs_review.",
+  "correct_value": "paragraph lead-in replacement (keep sub-paragraphs); confidence = needs_review"
+ },
+ {
+  "op_id": "OP-e2cf238696",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-dcc00190f9",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-afe4616bac",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-36c6bb2763",
+  "verdict": "error",
+  "fields_wrong": [
+   "op_type"
+  ],
+  "explanation": "Decision 412 item ثالثاً deletes only the phrase «(أو نائبه)» in paragraph (1) of article 11. As delete_paragraph, it would remove the whole of paragraph 1.",
+  "correct_value": "substitute_phrase art 11 para 1: old_phrase «أو نائبه» -> '' (deletion); needs_review"
+ },
+ {
+  "op_id": "OP-d2217c5064",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-8113b76fe9",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ },
+ {
+  "op_id": "OP-d018f7c58f",
+  "verdict": "correct",
+  "fields_wrong": [],
+  "explanation": "Target, type, article/paragraph and text match the source verbatim; the text runs exactly between the quote marks. The instrument has no effective-date clause, so the publication date is right.",
+  "correct_value": null
+ }
+]

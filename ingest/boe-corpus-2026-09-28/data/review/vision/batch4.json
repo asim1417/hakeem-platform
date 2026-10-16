@@ -1,0 +1,1364 @@
+[
+ {
+  "doc": "doc001",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc001/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-0d13f7fcb4040939967fb259",
+    "law": "نظام العمل",
+    "unit": "المادة الحادية والثلاثون :",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/44)",
+    "instrument_date": "1446/02/08",
+    "note_text": "- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)\n\nوعدلت هذه المادة وذلك بإضافة عبارة \"أو الشركات\" بعد كلمة \"المكاتب\"",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/41e6c04c-b7b0-4334-b04f-b1e700cde6f5?attachmentTitle=المادة الحادية والثلاثون : \n",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1bacb76f4d251624dbb6f52e0bdfffce42de348c324c0094347f032cbb7aa528.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/63dd5a4bd2771196bff68acf9c9a067461f525999f29d12bcca51879176e2c4f.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e163b4aab93ae476f254c443a636f7df029cbecc0e2443ebd36f750bd5be29a5.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e341ed5e6b3076b237c10388d59189412135da641dce6a4ef48153e13d8ecbda.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e386cc8b13d656c31acc05585770c0e029232262602cfd4029a502aadbc3920b.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d13b063afcab0748e6cfbf88f936b5e726710a9464811f472032bc6ad8c575fb.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d523734bd8605731b2a75a3fc408a3ce36652b2b59a1672be8e70548a26f43a4.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/96483c02e06e162f4a32866d5e2299022d718795619bf2eb834888cb875477c0.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/835d34cfbcce4e18f27208026fd64a4ab3185c0373bafe6b83a6e4b221d744f5.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c830b8032661ead577c2ab96ab3998e6a56b14829162c9325c8e3591b283ba15.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/005faf25b70387ef7897ed612a8365b50ea543d4cfbd9796ba22006fdf90a4a8.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/32b11c4f0590c30acd8c5347658270f939532b2813cdabef5a0aa0759f296572.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5b65d3f169aa12f5aeff0a7609fbfae1015f7fd6d914e58ae72743b792b189a.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-56370cc73b3436887c94943a",
+    "law": "نظام العمل",
+    "unit": "المادة الحادية والستون :",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/44)",
+    "instrument_date": "1446/02/08",
+    "note_text": "- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)\n\nوعدلت هذه المادة وذلك بإضافة الفقرات الآتية:\n\n\"4- أن يمتنع عن القيام بكل ما من شأنه إبطال أو إضعاف تطبيق تكافؤ الفرص أو المعاملة في الاستخدام والمهنة، سواء من خلال الاستبعاد أو التفريق أو التفضيل بين المتقدمين للعمل أو العاملين لديه على أساس العرق أو اللون أو الجنس أو السن أو الإعاقة أو الحالة الاجتماعية أو أي شكل من أشكال التمييز الأخرى.\n\n5- أن يوفر السكن اللائق لعماله. وله أن يستعيض عن ذلك ببدل نقدي مناسب يدفعه لهم مع الأجر.\n\n6- أن يوفر وسيلة مواصلات مناسبة لعماله من مقر سكنهم إلى مقر العمل. وله أن يستعيض عن ذلك ببدل نقدي مناسب يدفعه لهم مع الأجر\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/9a2f33e4-2708-4c04-94ee-b1e900965792?attachmentTitle=المادة الحادية والستون : \n",
+    "hint_page": 9,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1bacb76f4d251624dbb6f52e0bdfffce42de348c324c0094347f032cbb7aa528.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/63dd5a4bd2771196bff68acf9c9a067461f525999f29d12bcca51879176e2c4f.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e163b4aab93ae476f254c443a636f7df029cbecc0e2443ebd36f750bd5be29a5.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e341ed5e6b3076b237c10388d59189412135da641dce6a4ef48153e13d8ecbda.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e386cc8b13d656c31acc05585770c0e029232262602cfd4029a502aadbc3920b.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d13b063afcab0748e6cfbf88f936b5e726710a9464811f472032bc6ad8c575fb.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d523734bd8605731b2a75a3fc408a3ce36652b2b59a1672be8e70548a26f43a4.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/96483c02e06e162f4a32866d5e2299022d718795619bf2eb834888cb875477c0.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/835d34cfbcce4e18f27208026fd64a4ab3185c0373bafe6b83a6e4b221d744f5.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c830b8032661ead577c2ab96ab3998e6a56b14829162c9325c8e3591b283ba15.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/005faf25b70387ef7897ed612a8365b50ea543d4cfbd9796ba22006fdf90a4a8.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/32b11c4f0590c30acd8c5347658270f939532b2813cdabef5a0aa0759f296572.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5b65d3f169aa12f5aeff0a7609fbfae1015f7fd6d914e58ae72743b792b189a.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-c2b2bfc0551634d45b80b014",
+    "law": "نظام العمل",
+    "unit": "المادة التاسعة والتسعون بعد المائة :",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/44)",
+    "instrument_date": "1446/02/08",
+    "note_text": "- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)\n\nوعدلت هذه المادة وذلك بإضافة عبارة \"ومسؤوليهم في مكان العمل\" بعد كلمة \"وكلائهم\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/dd59c88a-c81c-4a6b-8b9f-b1e900c290d5?attachmentTitle=المادة التاسعة والتسعون بعد المائة : \n",
+    "hint_page": 13,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1bacb76f4d251624dbb6f52e0bdfffce42de348c324c0094347f032cbb7aa528.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/63dd5a4bd2771196bff68acf9c9a067461f525999f29d12bcca51879176e2c4f.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e163b4aab93ae476f254c443a636f7df029cbecc0e2443ebd36f750bd5be29a5.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e341ed5e6b3076b237c10388d59189412135da641dce6a4ef48153e13d8ecbda.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e386cc8b13d656c31acc05585770c0e029232262602cfd4029a502aadbc3920b.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d13b063afcab0748e6cfbf88f936b5e726710a9464811f472032bc6ad8c575fb.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d523734bd8605731b2a75a3fc408a3ce36652b2b59a1672be8e70548a26f43a4.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/96483c02e06e162f4a32866d5e2299022d718795619bf2eb834888cb875477c0.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/835d34cfbcce4e18f27208026fd64a4ab3185c0373bafe6b83a6e4b221d744f5.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c830b8032661ead577c2ab96ab3998e6a56b14829162c9325c8e3591b283ba15.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/005faf25b70387ef7897ed612a8365b50ea543d4cfbd9796ba22006fdf90a4a8.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/32b11c4f0590c30acd8c5347658270f939532b2813cdabef5a0aa0759f296572.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5b65d3f169aa12f5aeff0a7609fbfae1015f7fd6d914e58ae72743b792b189a.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-92fcea8f87ba83038b728cc7",
+    "law": "نظام العمل",
+    "unit": "المادة الثلاثون بعد المائتين :",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/44)",
+    "instrument_date": "1446/02/08",
+    "note_text": "- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)\n\nوعدلت الفقرة (5) من هذه المادة وذلك بإضافة عبارة \"أو من ينيبه\" بعد كلمة \"الوزير\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/3698471a-7b08-4eba-a719-b1e900c3f244?attachmentTitle=المادة الثلاثون بعد المائتين : \n",
+    "hint_page": 16,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1bacb76f4d251624dbb6f52e0bdfffce42de348c324c0094347f032cbb7aa528.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/63dd5a4bd2771196bff68acf9c9a067461f525999f29d12bcca51879176e2c4f.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e163b4aab93ae476f254c443a636f7df029cbecc0e2443ebd36f750bd5be29a5.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e341ed5e6b3076b237c10388d59189412135da641dce6a4ef48153e13d8ecbda.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e386cc8b13d656c31acc05585770c0e029232262602cfd4029a502aadbc3920b.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d13b063afcab0748e6cfbf88f936b5e726710a9464811f472032bc6ad8c575fb.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d523734bd8605731b2a75a3fc408a3ce36652b2b59a1672be8e70548a26f43a4.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/96483c02e06e162f4a32866d5e2299022d718795619bf2eb834888cb875477c0.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/835d34cfbcce4e18f27208026fd64a4ab3185c0373bafe6b83a6e4b221d744f5.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c830b8032661ead577c2ab96ab3998e6a56b14829162c9325c8e3591b283ba15.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/005faf25b70387ef7897ed612a8365b50ea543d4cfbd9796ba22006fdf90a4a8.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/32b11c4f0590c30acd8c5347658270f939532b2813cdabef5a0aa0759f296572.jpg"
+     },
+     {
+      "page_no": 13,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5b65d3f169aa12f5aeff0a7609fbfae1015f7fd6d914e58ae72743b792b189a.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc012",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc012/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-b3d283ca988ac34b45d4bc75",
+    "law": "نظام  المشاركة بالوقت فى الوحدات العقارية السياحية",
+    "unit": "المادة الرابعة: عقد المشاركة بالوقت وشروطه:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/17)",
+    "instrument_date": "1439/01/21",
+    "note_text": "المادة التاسعة عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/17) وتاريخ 1439/1/21هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/0de6b486-b04d-4182-b61e-aa1d011030a6?attachmentTitle=المادة التاسعة:  ضبط المخالفات :",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/965898b7fff6cd2adc33f9a4d7b0dd5fae73a5e1aa8a64210128ccbfa4c1fbe7.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/29c5e367df984b91b533ec5d9c79650449425e4c9f243f770f6c75b74cc209ad.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d41667e6c5f63b9bf19e0b7690465a8b5a5821e28b003110f62587788a7af55e.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d9cd3e0834797a1268a84704632e5d16c263a827a7bc8bb65a376343dc1e0f74.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7d5c31deae85e7932880d41d3b82e61d9a6ef3eff982688dc3325e66938ec58e.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fd59f04542a9fedbb596cfde2e63bb9d40746d17207e05aaa9f73f526b1e37eb.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/09aad6349cc5015a22bb05d228149a9ed43851ddf008adaf2129fe2a260119eb.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/76556933f32fdf9b0287e1770c41fc66738c2d10db1d327eb5099adf1a92d0c7.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c8881504f7c1a9985b35b16f23a6c7da50f49c10bff7d6b182722dad0cf63b55.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d09ede43e962ddd3d0fb5cb3c2ec93b787f2303e80de5cdc16a9755ff087ff9c.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8a375390ac6ccda2fc116377a52a2daf9bcf543089bcc692a6d896acbcd5e5fc.jpg"
+     },
+     {
+      "page_no": 12,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cedc60d954944d852e005aa1e25c0bff1ba256c33ac7b5f8285503d559d3a34d.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc063",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc063/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-352dcbc216718b19af28356e",
+    "law": "نظام توزيع الغاز الجاف وغاز البترول السائل للأغراض السكنية والتجارية",
+    "unit": "المادة الأولى:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/112)",
+    "instrument_date": "1443/11/09",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/112) وتاريخ 1443/11/9هـ، كما هو موضح في الملف المرفق.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/fe99e990-631a-4de7-bf3e-aee500ce1559?attachmentTitle=المادة الأولى:  \n",
+    "hint_page": 4,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/43eeeb4233d3069a95e0eb8f66490808d9e25b7390e758d9175f3f85035fb24d.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/adf882e27135984c19e3489a2350d693f53c33d5c5fc6a6a468a159026b2c5aa.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ea1ffbc8dee67fdd052707cc6bbd03c4af1336f6da3bda72405f34fd5a2e9de5.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a27cad10df7ec84fefbf9d695e6a63906566149d61ddbab1d6bbea150ffb3335.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c96b2a5d4d1a89c2b66911e0765ed46c9d9e2cffd146b1f34f8215a7c571bb06.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/59f182db9a01213ae8e14f5d746494eab178d4da08f8fc9a94a05723c7030ded.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f80ce4b9866066b6a7ac162281b8f3bcbf41ac1b8dc7b5dbeb6d210f712ad244.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1447343e1566b0c00ef0905320a337b039bbcf2946b2fe71ce214dc02cf8c661.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/67cd198a6a9278e759db6a2c65c2ba4e6705bc6fb6b02aba0afae62ce68a4d70.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/49960c975df83a00cf3d072223ea87307363fe907aaf4917e1d96a96cd56c957.jpg"
+     },
+     {
+      "page_no": 11,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/93146e860517ca69f7c9e0efd251d04e45394a3bb110cf53f8be2d8e6d19a33a.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc013",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc013/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-09713d23a3c3bcff3ceaf908",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "unit": "المادة الأولى:",
+    "effect": "تعديل مادة",
+    "instrument": "أمر ملكي رقم (أ/240)",
+    "instrument_date": "1441/04/01",
+    "note_text": "عُدلت هذه المادة بموجب الأمر الملكي رقم (أ / 240) وتاريخ 1 / 4 / 1441هـ.\n\n ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/24e4ad57-466d-433e-a2f2-ab1d00a9ae62?attachmentTitle=المادة الأولى:",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d1872b200cacadb8c834087da83bf4d55586578515ce0eb423d532573f49ca8e.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1406d727cc508857650940483cc9b986fa0ea0228486142fe6bd1c48ab28200c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e31c03746207cbd57a852603e4660e2bd4e3374f558a643e47ec076315513fa8.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b983c6b8e29168404ab63fc9f50bcb0d5a60fa3b70fcbdec9db9943488c23edf.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a89afbb2704068e69ceafd0ecb6b6fbb4ead3cb86c7d4d28049d9a9121d95f7f.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6f09874dcad81e7c3815e457f59021f24744c91c67226b02e9478b9ac958edf9.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ca2aeb0190aa6247321023a932e11a8c68ada9318fd1fd44c2c6c6f5c6f01e8d.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d9803b8d612fdbf85fbeab3d02fc4c094666f5511eed86a2329fc8ead44e5b81.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c79a2ea8c6fc2731cc0046e30051d70b893b88d810f8bb9f696d29980438870.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/957aace11e0dc2c02c454e966d91c123a0d0a83001e631adfd3698edb3adf0ef.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-0e46d7c10fe333ebd1dd92e7",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "unit": "المادة الثالثة:",
+    "effect": "إضافة فقرة أو مادة",
+    "instrument": "أمر ملكي رقم (أ/240)",
+    "instrument_date": "1441/04/01",
+    "note_text": "عُدلت هذه المادة بموجب الأمر الملكي رقم (أ / 240) وتاريخ 1 / 4 / 1441هـ.\n\nأُضيفت مادة يكون ترتيبها المادة (الثالثة مكرر) وذلك بموجب الأمر الملكي رقم (أ / 240) وتاريخ 1 / 4 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/3fea38b1-dd09-4a35-964c-ab1d00b7df0f?attachmentTitle=المادة الثالثة:",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d1872b200cacadb8c834087da83bf4d55586578515ce0eb423d532573f49ca8e.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1406d727cc508857650940483cc9b986fa0ea0228486142fe6bd1c48ab28200c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e31c03746207cbd57a852603e4660e2bd4e3374f558a643e47ec076315513fa8.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b983c6b8e29168404ab63fc9f50bcb0d5a60fa3b70fcbdec9db9943488c23edf.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a89afbb2704068e69ceafd0ecb6b6fbb4ead3cb86c7d4d28049d9a9121d95f7f.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6f09874dcad81e7c3815e457f59021f24744c91c67226b02e9478b9ac958edf9.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ca2aeb0190aa6247321023a932e11a8c68ada9318fd1fd44c2c6c6f5c6f01e8d.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d9803b8d612fdbf85fbeab3d02fc4c094666f5511eed86a2329fc8ead44e5b81.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c79a2ea8c6fc2731cc0046e30051d70b893b88d810f8bb9f696d29980438870.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/957aace11e0dc2c02c454e966d91c123a0d0a83001e631adfd3698edb3adf0ef.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-736b504b47efa8faac10ed80",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "unit": "المادة الخامسة:",
+    "effect": "تعديل مادة",
+    "instrument": "أمر ملكي رقم (أ/240)",
+    "instrument_date": "1441/04/01",
+    "note_text": "عُدلت هذه المادة بموجب الأمر الملكي رقم (أ / 240) وتاريخ 1 / 4 / 1441هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/83aca01b-bcee-4c2e-bae5-ab1d00b81d22?attachmentTitle=المادة الخامسة:",
+    "hint_page": 5,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d1872b200cacadb8c834087da83bf4d55586578515ce0eb423d532573f49ca8e.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/1406d727cc508857650940483cc9b986fa0ea0228486142fe6bd1c48ab28200c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e31c03746207cbd57a852603e4660e2bd4e3374f558a643e47ec076315513fa8.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b983c6b8e29168404ab63fc9f50bcb0d5a60fa3b70fcbdec9db9943488c23edf.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a89afbb2704068e69ceafd0ecb6b6fbb4ead3cb86c7d4d28049d9a9121d95f7f.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/6f09874dcad81e7c3815e457f59021f24744c91c67226b02e9478b9ac958edf9.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ca2aeb0190aa6247321023a932e11a8c68ada9318fd1fd44c2c6c6f5c6f01e8d.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d9803b8d612fdbf85fbeab3d02fc4c094666f5511eed86a2329fc8ead44e5b81.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2c79a2ea8c6fc2731cc0046e30051d70b893b88d810f8bb9f696d29980438870.jpg"
+     },
+     {
+      "page_no": 10,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/957aace11e0dc2c02c454e966d91c123a0d0a83001e631adfd3698edb3adf0ef.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc065",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc065/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-fc23b06a593ebcea7950e24e",
+    "law": "نظام المرافعات الشرعية",
+    "unit": "المادة الحادية عشرة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/18)",
+    "instrument_date": "1442/01/15",
+    "note_text": "- عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/18) وتاريخ 1442/1/15هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/547fc1b5-e55e-4174-a200-ac3200e7e743?attachmentTitle=المادة الحادية عشرة: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/832be70826618288a64c725e68cb3fa7db666c4152a9600edaed75ee55527e8a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/45740fa3756b277a0b0167dd5e466f4189b671285957cc3b833daba05623f85c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/acdfb0153760f646049459e5f5a75736b42eea6d2a377da8827ad0ca6dd12b42.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e98a6eb5bc03e7d348589cc0180b2f93a0ed75f3197f4b62096e108530637693.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8eaf02f0619591d969732598431e054b278b34f10f8da9d9c6d5472c66b353a1.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7a971852349b56f22dd585a603829bc6a2b62e0e6e3d679a053c5939e4f0de48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/15b3d733322f572403c955870946f95a5319c6c26a2f2e3bfe2b447e6f0e4f66.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5f96407a40f853ecedebf8504da4bbac1a34e441f4f50f35823f89f88afeb15.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ec6f929dcdd1651da38c03119d518fc2f27731d3ff2faaba4ec6292e31ed67b.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-a348e1b571970eb155e8a48c",
+    "law": "نظام المرافعات الشرعية",
+    "unit": "المادة الثانية عشرة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/18)",
+    "instrument_date": "1442/01/15",
+    "note_text": "- عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/18) وتاريخ 1442/1/15هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/8f45e963-c63d-4a91-a40b-ac3200e844cb?attachmentTitle=المادة الثانية عشرة: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/832be70826618288a64c725e68cb3fa7db666c4152a9600edaed75ee55527e8a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/45740fa3756b277a0b0167dd5e466f4189b671285957cc3b833daba05623f85c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/acdfb0153760f646049459e5f5a75736b42eea6d2a377da8827ad0ca6dd12b42.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e98a6eb5bc03e7d348589cc0180b2f93a0ed75f3197f4b62096e108530637693.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8eaf02f0619591d969732598431e054b278b34f10f8da9d9c6d5472c66b353a1.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7a971852349b56f22dd585a603829bc6a2b62e0e6e3d679a053c5939e4f0de48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/15b3d733322f572403c955870946f95a5319c6c26a2f2e3bfe2b447e6f0e4f66.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5f96407a40f853ecedebf8504da4bbac1a34e441f4f50f35823f89f88afeb15.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ec6f929dcdd1651da38c03119d518fc2f27731d3ff2faaba4ec6292e31ed67b.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-5ebc6ed024a769ef348c1702",
+    "law": "نظام المرافعات الشرعية",
+    "unit": "المادة الثالثة عشرة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/18)",
+    "instrument_date": "1442/01/15",
+    "note_text": "- عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/18) وتاريخ 1442/1/15هـ",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/b335537b-26f4-453e-b0bf-ac3200e894f6?attachmentTitle=المادة الثالثة عشرة: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/832be70826618288a64c725e68cb3fa7db666c4152a9600edaed75ee55527e8a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/45740fa3756b277a0b0167dd5e466f4189b671285957cc3b833daba05623f85c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/acdfb0153760f646049459e5f5a75736b42eea6d2a377da8827ad0ca6dd12b42.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e98a6eb5bc03e7d348589cc0180b2f93a0ed75f3197f4b62096e108530637693.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8eaf02f0619591d969732598431e054b278b34f10f8da9d9c6d5472c66b353a1.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7a971852349b56f22dd585a603829bc6a2b62e0e6e3d679a053c5939e4f0de48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/15b3d733322f572403c955870946f95a5319c6c26a2f2e3bfe2b447e6f0e4f66.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5f96407a40f853ecedebf8504da4bbac1a34e441f4f50f35823f89f88afeb15.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ec6f929dcdd1651da38c03119d518fc2f27731d3ff2faaba4ec6292e31ed67b.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-865526cb1741ee6f7fb8dde0",
+    "law": "نظام المرافعات الشرعية",
+    "unit": "المادة السادسة عشرة:",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/18)",
+    "instrument_date": "1442/01/15",
+    "note_text": "- عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/18) وتاريخ 1442/1/15هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1682dcc8-c8e0-4f15-9789-ac3200e8d005?attachmentTitle=المادة السادسة عشرة: \n",
+    "hint_page": 3,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/832be70826618288a64c725e68cb3fa7db666c4152a9600edaed75ee55527e8a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/45740fa3756b277a0b0167dd5e466f4189b671285957cc3b833daba05623f85c.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/acdfb0153760f646049459e5f5a75736b42eea6d2a377da8827ad0ca6dd12b42.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e98a6eb5bc03e7d348589cc0180b2f93a0ed75f3197f4b62096e108530637693.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8eaf02f0619591d969732598431e054b278b34f10f8da9d9c6d5472c66b353a1.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7a971852349b56f22dd585a603829bc6a2b62e0e6e3d679a053c5939e4f0de48.jpg"
+     },
+     {
+      "page_no": 7,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/15b3d733322f572403c955870946f95a5319c6c26a2f2e3bfe2b447e6f0e4f66.jpg"
+     },
+     {
+      "page_no": 8,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b5f96407a40f853ecedebf8504da4bbac1a34e441f4f50f35823f89f88afeb15.jpg"
+     },
+     {
+      "page_no": 9,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9ec6f929dcdd1651da38c03119d518fc2f27731d3ff2faaba4ec6292e31ed67b.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc027",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc027/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-a52ffb68dc42996ef3f26cca",
+    "law": "نظام المرور",
+    "unit": "المادة السابعة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/115)",
+    "instrument_date": "1439/12/05",
+    "note_text": "عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/115) وتاريخ 1439/12/5 هــ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/341624ca-3ac8-42b6-a77e-b15200d7da3a?attachmentTitle=المادة السابعة",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f094627f69181b3047d4a617d40cd303040dc6985ec8593d4f45a2fc637fb04e.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/401a9e0b53872bf027ad438018f8ae011d51bf39222657e0f3a65c6d1eedaa13.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/cfeb4eb44c7871b4e1f415974271ccafac794fe4f238f6fbb2f7e2ae47262518.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/9a3893cccaf9c8ea8b7cb5bf304c1b33712dbb14d9e5b83e970fdbc3fffe8cf3.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d9768efd5062ff1c7dc3d01c0b37591b0491c65cd7acbb73699c0bd809f57d23.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b08ee20d61aa840782520443bd45407d1c3e855e0a173463a22c2eadfa77dee3.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc039",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc039/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-cbe36e097e882093540256da",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 60",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/9)",
+    "instrument_date": "1397/03/24",
+    "note_text": "-  عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/9) وتاريخ 1397/3/24هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1269e0b1-4798-40ca-9335-ac5b00a67a33?attachmentTitle=المادة 60",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/800507883188bd1f135c056d2baab2476575638cb8d4ec20bff8aaf80a221f2d.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fdd1c0544e4addf3502b3671b786e038fc099ecbe805e98c220e5b5fa4f8482a.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/14f7204c0d5a8b7c8c06b1090c2a8f029b53b5d103bd35973c3b8fffe90c2414.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/48caafe7fc991ce4d0e699796279f3f059940da20f325b2cf0f4a31118db7bd6.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ec05a620ac41af381765434040c33f3a36f0d5a13f9566fc43c36fee216c0aae.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5c6f9bb2ec8258dea6a1099bc6166a01c8902e335f828291d6f4a4e8d69128ad.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-bb9a97f5e19a2252e093b438",
+    "law": "نظام خدمة الأفراد",
+    "unit": "المادة 22",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/56)",
+    "instrument_date": "1397/09/20",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/56) وتاريخ 1397/9/20هـ، و ضم بدل السكن والمحدد في اللائحة التنفيذية لهذا النظام الى الراتب الأساسي ففرد ويعدل سلم الرواتب والعلاوات للأفراد تبعاً لذلك و يستبدل نص هذه المادة إلى النص الآتي: \"يصرف للفرد بدل انتقال شهري وفقا لما تحدده اللائحة التنفيذية\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/354022a9-792e-46b6-b9c5-ac7600965930?attachmentTitle=المادة 22",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/800507883188bd1f135c056d2baab2476575638cb8d4ec20bff8aaf80a221f2d.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fdd1c0544e4addf3502b3671b786e038fc099ecbe805e98c220e5b5fa4f8482a.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/14f7204c0d5a8b7c8c06b1090c2a8f029b53b5d103bd35973c3b8fffe90c2414.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/48caafe7fc991ce4d0e699796279f3f059940da20f325b2cf0f4a31118db7bd6.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/ec05a620ac41af381765434040c33f3a36f0d5a13f9566fc43c36fee216c0aae.jpg"
+     },
+     {
+      "page_no": 6,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5c6f9bb2ec8258dea6a1099bc6166a01c8902e335f828291d6f4a4e8d69128ad.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc003",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc003/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-c28264fbded7b6c46ceb56a3",
+    "law": "النظام الصحي",
+    "unit": "المادة السادسة عشرة:",
+    "effect": "تعديل فقرة",
+    "instrument": "قرار مجلس الوزراء رقم (151)",
+    "instrument_date": "1444/02/24",
+    "note_text": "- عُدلت الفقرة (أ) من هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (151) وتاريخ 1444/2/24هـ، وذلك بإضافة (مدير الإدارة العامة للخدمات الطبية) في رئاسة أمن الدولة إلى عضوية المجلس الصحي السعودي.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/020a354d-52ad-4512-a815-3d5adbb331f3?attachmentTitle=المادة السادسة عشرة:",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e33dcbc2df1fd2da635b62e1079a414d5dc314fad840653281caae4a96964443.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2b376be60a7d5184253d8424b7d87a16c325715de866ec71146ee3742ea17c53.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d85ec679319c75349f75485771cd0aa8a55508058f9ecb0e17b6cd65874ac0f2.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/5bcd976f71e3d3da1d5c8a755497c8fe406481b2bcf947f419b06fff2218d3a7.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/862a65979de3a805ebdd7de770b6cdb8c34590c2b5c9139314c92409026d6069.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc024",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc024/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-3c0f77f79d1101aa00a345b5",
+    "law": "نظام معهد الإدارة العامة",
+    "unit": "المادة السادسة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (543)",
+    "instrument_date": "1439/10/19",
+    "note_text": "المادة السادسة عُدلت هذه المادة بموجب قرار مجلس الوزراء رقم (543) وتاريخ 1439/10/19هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/1272d66f-26df-4575-a039-aa1c0172b922?attachmentTitle=المادة السادسة:",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b4819598f1594c66628c5d3725c698d8244a3335b078cea0c2983085218b002f.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b1b614f14276ebbe28bee811f944d06404f63ff4085e5ce4247dccb5c3e386cb.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/fd4ee59bc90a1d25c6634fec835a913348b88fc1b1386ed960b32d12d6612254.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e86f52eec61dbc8c8142190087da3553a96eef15b0fb94158369fb5b5716bfc5.jpg"
+     },
+     {
+      "page_no": 5,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/90d9ada686390a838f38127673a8bbff7be4c543415981f11e3e0eb4b665eb48.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc006",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc006/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-9f2b2efbeb6ebe83a22d36e0",
+    "law": "تنظيم مجلس شؤون الأسرة",
+    "unit": "المادة الثالثة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (443)",
+    "instrument_date": "1443/08/12",
+    "note_text": "- عدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (443) وتاريخ 1443/8/12هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/29df6ad6-fc2c-4b2b-b8ca-aea00098a12e?attachmentTitle=  المادة الثالثة: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2e52782a27263de2e5a9dadf7cc13aac56bf0ec1aca39711381bf18a38014481.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/05c44c58b583ba15bf0f04fbe8c304806841854364219ee1932567788a15764e.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/c6a85e87da75786701752a9e6b22f7028c35cbd8f1147a295743b21641212c85.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/00254bbe8aa9d38c36d1d7e183a00a661e4945676d2b418643457f0e3056366f.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc035",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc035/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-29cca01364910aaa935357be",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 49",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/13)",
+    "instrument_date": "1421/04/16",
+    "note_text": "- عُّدلت الفقرة (ب) هذه المادة وذلك بموجب المرسوم الملكي رقم (م/13) وتاريخ 1421/4/16هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/c9b3c77b-00c9-4f03-a114-ac5a00a394c3?attachmentTitle=المادة 49",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/8dac4067cfe60d25251b02e9dd2afb95d3ad4fc7e519fc5c8bce630e903cc9b8.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/efa12c0702047aca9d54e427495f42c474ff79b6a205484959f4abfe6b094cf7.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/633e86fb2bd544a32b8939ec124d3aecd40a6f0b9dcbd8ea975c98e406e66700.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/af37334c7f4cf152a49aca3e70b361490a81f32961034e9158a8397278ba8d40.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc054",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc054/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-a3436686cfda9812fe3713ca",
+    "law": "نظام خدمة الأفراد",
+    "unit": "المادة 53",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/31)",
+    "instrument_date": "1423/09/14",
+    "note_text": "-    عُّدلت الفقرة ( ب ) من هذه المادة وذلك بموجب المرسوم الملكي رقم (م/31) وتاريخ 1423/9/14هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/8304d98b-3295-4d18-b3e5-ac7500c5c67d?attachmentTitle=المادة 53",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4c3e09e503eaf602c30bb76423326f80f78fe8bd6b3a8ff8af686e0754c20f97.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/d94aef84ca986fe04c31d509323966c82e907dcbb0f9a076465c1dfb928cd437.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/eb0c10c98a657c5af2d2b6576aacb0d17a5020a0dbbc8ad6a817f0c1e06985e5.jpg"
+     },
+     {
+      "page_no": 4,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a78cc2f6fb94a4ef651acadec745841f4dd8d153cb25903dc160c32c50ce9a53.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc011",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc011/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-f028c1e97a7c5c53f1c9fb67",
+    "law": "نظام  المشاركة بالوقت فى الوحدات العقارية السياحية",
+    "unit": "المادة الأولى: التعريفات:",
+    "effect": "تعديل تعريف",
+    "instrument": "قرار مجلس الوزراء رقم (96)",
+    "instrument_date": "1442/02/05",
+    "note_text": "-  عُّدل تعريف (الهيئة) ليكون (الوزارة: وزارة السياحة)، وذلك بموجب قرار مجلس الوزراء رقم (96) وتاريخ 1442/2/5هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/3876fd03-5776-4b05-8758-ac4500c5cf2b?attachmentTitle=المادة الأولى: التعريفات:",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/23d9b67d30b595d0ab9ae75ebac2d72ebeaef9693de2e8c37677f41e8673a10a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/62b4d7c97d92fa89e46a3c5d0fa0613792216c9e4663193c9697b1337cc83cb2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f47cc53b89711e75d56156d5024683a78e6d03431ef593447eb9ea22bc280b94.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-af1f8b6ae49678afc08d115e",
+    "law": "تنظيم الجمعية السعودية لمرافق الإيواء السياحي",
+    "unit": "المادة الأولى:",
+    "effect": "تعديل تعريف",
+    "instrument": "قرار مجلس الوزراء رقم (96)",
+    "instrument_date": "1442/02/05",
+    "note_text": "- عُّدل تعريف (الهيئة) ليكون (الوزارة: وزارة السياحة)، وذلك بموجب قرار مجلس الوزراء رقم (96) وتاريخ 5 / 2 / 1442هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/cf44b72c-9a9a-4ba3-aff3-ac4500c85cb0?attachmentTitle=المادة الأولى: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/23d9b67d30b595d0ab9ae75ebac2d72ebeaef9693de2e8c37677f41e8673a10a.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/62b4d7c97d92fa89e46a3c5d0fa0613792216c9e4663193c9697b1337cc83cb2.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/f47cc53b89711e75d56156d5024683a78e6d03431ef593447eb9ea22bc280b94.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc025",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc025/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-8e81dd185dbdc5b109225566",
+    "law": "تنظيم الهيئة العامة للمساحة والمعلومات الجيومكانية",
+    "unit": "المادة الخامسة",
+    "effect": "تعديل فقرة",
+    "instrument": "قرار مجلس الوزراء رقم (123)",
+    "instrument_date": "1443/02/21",
+    "note_text": "- تعديل البند (أولاً) وذلك بموجب قرار مجلس الوزراء رقم (123) وتاريخ 1443/2/21هـ، وذلك بإضافة ممثل من الهيئة العامة لعقارات الدولة إلى عضوية مجلس إدارة الهيئة العامة للمساحة والمعلومات الجيومكانية.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/d2923d49-3deb-4637-a956-aee400dc3e71?attachmentTitle=المادة الخامسة",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/e1dd4852e763e91ab503f7e6213cde6b60581d28d41568335120b576cb770051.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/767ed149402fa3a41f3275b9f8c224bc08bfcc697bcb5ff746a7c7227884b915.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/07bd9917476390deb3d696c1af83d910ada2d387737b9c93af1ded5b535c4d41.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc047",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc047/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-c6cd7ea394414b61c84ef2c7",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 124",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/25)",
+    "instrument_date": "1406/11/09",
+    "note_text": "- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/25) وتاريخ 1406/11/9هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/accb05bd-6820-4773-b7b1-ac5b00b04154?attachmentTitle=المادة 124",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7982d4186783d5d62078080a4bcfe29f04bc7f7c418dfe69a4a935135fe9790.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2af9ebdabec29d9586ab98b2890139f7251cb669b0af1373831d72d276c227ad.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4bde40ed1cd5045e9b57c8c29853e9af7ef26bfc1467ca6076fbacb8146eada1.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-ad3660d8d963a7a5b2291620",
+    "law": "نظام خدمة الضباط",
+    "unit": "المادة 124",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/81)",
+    "instrument_date": "1438/07/28",
+    "note_text": "-عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/81) وتاريخ 1438/7/28هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/accb05bd-6820-4773-b7b1-ac5b00b04154?attachmentTitle=المادة 124",
+    "hint_page": null,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a7982d4186783d5d62078080a4bcfe29f04bc7f7c418dfe69a4a935135fe9790.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/2af9ebdabec29d9586ab98b2890139f7251cb669b0af1373831d72d276c227ad.jpg"
+     },
+     {
+      "page_no": 3,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/4bde40ed1cd5045e9b57c8c29853e9af7ef26bfc1467ca6076fbacb8146eada1.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc030",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc030/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-19335c19a20eed6267a250b2",
+    "law": "نظام مكافحة الغش التجاري",
+    "unit": "المادة الخامسة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/101)",
+    "instrument_date": "1440/09/03",
+    "note_text": "- عُدلت هذه المادة وذلك بإضافة عبارة \"ووزارة الطاقة والصناعة والثروة المعدنية\" بعد عبارة \"ووزارة الشؤون البلدية والقروية\". وذلك بموجب المرسوم الملكي رقم (م/101) وتاريخ 1440/9/3هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/84597ccf-f97c-4cda-9375-ad1000eee7ab?attachmentTitle=المادة الخامسة",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b4c18a644a524cea730b3af51ceb78d4f7c403555c76dd151b372c0c464f1ece.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa0665cd90c57a33cf06fab7e9150ad9cfcd98f6cdf0e921a710dfb94a5b012a.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-d5a9c37aa102f441d1d943d9",
+    "law": "نظام مكافحة الغش التجاري",
+    "unit": "المادة الخامسة",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/76)",
+    "instrument_date": "1442/09/03",
+    "note_text": "- صدر المرسوم الملكي رقم (م/76) وتاريخ 1442/9/3هـ بتعديل هذه المادة ، وذلك بإضافة وزارة الصحة إلى الجهات المشار إليها.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/84597ccf-f97c-4cda-9375-ad1000eee7ab?attachmentTitle=المادة الخامسة",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/b4c18a644a524cea730b3af51ceb78d4f7c403555c76dd151b372c0c464f1ece.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/aa0665cd90c57a33cf06fab7e9150ad9cfcd98f6cdf0e921a710dfb94a5b012a.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc050",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc050/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-d127312ee63faaa39c8b90b8",
+    "law": "نظام خدمة الأفراد",
+    "unit": "المادة 4",
+    "effect": "تعديل فقرة",
+    "instrument": "مرسوم ملكي رقم (م/52)",
+    "instrument_date": "1405/09/03",
+    "note_text": "- عُّدلت الفقرة (د) من هذه المادة وذلك بموجب المرسوم الملكي رقم (م/52) وتاريخ 1405/9/3هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/05a7d9c5-a05e-4a22-a37d-ad9e00cf6a5a?attachmentTitle=المادة 4",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/7bf56e59912c264f121afa5b3ebb1fd35068f689213796d7391ea488d9202db1.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/275036d6e6f0cfff75c2446c062f58f09bace3c0bde57a0b5433a8bd6a936090.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc060",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc060/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-9dc88bd06c671548fd41ffd8",
+    "law": "نظام التنفيذ 1433هـ",
+    "unit": "المادة السادسة والأربعون :",
+    "effect": "تعديل مادة",
+    "instrument": "مرسوم ملكي رقم (م/52)",
+    "instrument_date": "1444/04/22",
+    "note_text": "- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/52) وتاريخ 1444/4/22هـ، وذلك بإضافة العبارة الآتية إلى عجزها: \"... ولايخل صدور أمر المنع من السفر - وفقاً للفقرة (1) من هذه المادة - بتنفيذ قرار الإبعاد الصادر من الجهة المختصة\".",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/04c0d118-f101-455e-adb2-af5a00ec0a9a?attachmentTitle=المادة السادسة والأربعون :",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/3ec43f767a0b3aa275095a3db91264f9e64b05369d9a8b027d320915b35cdd3f.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/a21459d70d4c593c07e5be999e8b6daeedf045123354f113b0ed2610b2f00ee6.jpg"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "doc": "doc068",
+  "ocr_file": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/review/vision/doc068/ocr.txt",
+  "rows": [
+   {
+    "note_id": "boe26-ea458642a15fd0e1b1ffa457",
+    "law": "إنشاء الهيئة العليا لأندية الفروسية",
+    "unit": "المادة الرابعة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (135)",
+    "instrument_date": "1442/02/26",
+    "note_text": "- عُّدلت هذه المادة الخاصة بتكشيل مجلس إدارة الهيئة، وذلك بموجب قرار مجلس الوزراء رقم (135) وتاريخ 1442/2/26هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/e96536df-fd23-4db1-bd0e-ac6000aca053?attachmentTitle=المادة الرابعة: \n",
+    "hint_page": 1,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/613608250f00d4396ab2ba512ee6531d882b9346f7b78e5de32089a762a9b7b9.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/480c8eba84f41a8021252e8928626aece34bc458a1574b92b32d1f5c8db5fcad.jpg"
+     }
+    ]
+   },
+   {
+    "note_id": "boe26-5b7fc381c6a35e0637c5d9b7",
+    "law": "إنشاء الهيئة العليا لأندية الفروسية",
+    "unit": "المادة الخامسة:",
+    "effect": "تعديل مادة",
+    "instrument": "قرار مجلس الوزراء رقم (135)",
+    "instrument_date": "1442/02/26",
+    "note_text": "- عُّدل عجز هذه المادة، وذلك بإضافة عبارة (أو نائبه) بعد عبارة (وللمجلس تفويض رئيسه)، وذلك بموجب قرار مجلس الوزراء رقم (135) وتاريخ 1442/2/26هـ.",
+    "attachment_url": "https://laws.boe.gov.sa/BoeLaws/Laws/Viewer/4dfa9563-100f-488a-bc25-ac6000addc7b?attachmentTitle=المادة الخامسة: \n",
+    "hint_page": 2,
+    "pages": [
+     {
+      "page_no": 1,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/613608250f00d4396ab2ba512ee6531d882b9346f7b78e5de32089a762a9b7b9.jpg"
+     },
+     {
+      "page_no": 2,
+      "image": "/home/claude/hp/ingest/boe-corpus-2026-09-28/data/attachments/images/480c8eba84f41a8021252e8928626aece34bc458a1574b92b32d1f5c8db5fcad.jpg"
+     }
+    ]
+   }
+  ]
+ }
+]

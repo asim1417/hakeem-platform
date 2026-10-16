@@ -1,0 +1,102 @@
+name: Rulings — Segment Embeddings (reasons + disposition)
+
+# متجهات الأسباب والمنطوق لكل حكم (scripts/rulings-research/03-segment-embeddings.ts).
+#   • push على الفرع: تشغيل جافّ للقراءة فقط — أعداد وتكلفة تقديرية، بلا نداء مزوّد ولا كتابة.
+#   • workflow_dispatch بـ mode=apply: توليد وكتابة في ruling_segment_embeddings وحده، بأقفال:
+#       target=research  ⇒ NEON_RESEARCH_DATABASE_URL + CONFIRM_RESEARCH_WRITE=YES
+#       target=production ⇒ CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED + approval_ref (مرجع موافقة المالك)
+#     و max_calls سقف نداءات المزوّد. judicial_cases لا يُمسّ.
+# المستودع عام: المخرج أعداد فقط ويُودَع في الفرع reports/rulings-research/03-segment-embeddings.data.json.
+
+on:
+  push:
+    branches: [claude/rulings-segment-embeddings]
+    paths:
+      - .github/workflows/rulings-segment-embeddings.yml
+      - scripts/rulings-research/03-segment-embeddings.ts
+      - lib/rulings/research/segment-embeddings.ts
+      - lib/rulings/research/segment.ts
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run | apply"
+        default: dry-run
+        required: true
+      target:
+        description: "research | production (apply فقط)"
+        default: research
+      max_calls:
+        description: "سقف نداءات مزوّد المتجهات (apply فقط)"
+        default: "0"
+      approval_ref:
+        description: "مرجع موافقة المالك للكتابة على الإنتاج (رابط تعليق/محادثة)"
+        default: ""
+
+concurrency:
+  group: rulings-segment-embeddings
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MODE: ${{ github.event.inputs.mode || 'dry-run' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ اتصال مباشر (Neon)"
+        run: |
+          url="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$url" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          host=$(printf '%s' "$url" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
+          direct=$(printf '%s' "$url" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          echo "::add-mask::$direct"
+          echo "DIRECT_DB_URL=$direct" >> "$GITHUB_ENV"
+      - name: "تشغيل جافّ (قراءة فقط)"
+        if: env.MODE != 'apply'
+        run: |
+          DATABASE_URL="$DIRECT_DB_URL" AUDIT_TRANSPORT=prisma npx tsx scripts/rulings-research/03-segment-embeddings.ts
+      - name: "توليد وكتابة (مقفول)"
+        if: env.MODE == 'apply'
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEON_RESEARCH_DATABASE_URL: ${{ secrets.NEON_RESEARCH_DATABASE_URL }}
+          TARGET: ${{ github.event.inputs.target }}
+          MAX_EMBED_CALLS: ${{ github.event.inputs.max_calls }}
+          APPROVAL_REF: ${{ github.event.inputs.approval_ref }}
+        run: |
+          if [ "$TARGET" = "production" ]; then
+            [ -z "$APPROVAL_REF" ] && { echo "::error::الكتابة على الإنتاج تتطلب approval_ref."; exit 1; }
+            DATABASE_URL="$DIRECT_DB_URL" CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED OWNER_APPROVAL_REF="$APPROVAL_REF" \
+              npx tsx scripts/rulings-research/03-segment-embeddings.ts --apply
+          else
+            [ -z "$NEON_RESEARCH_DATABASE_URL" ] && { echo "::error::لا يوجد NEON_RESEARCH_DATABASE_URL."; exit 1; }
+            CONFIRM_RESEARCH_WRITE=YES npx tsx scripts/rulings-research/03-segment-embeddings.ts --apply
+          fi
+      - name: "إيداع النتائج المجمّعة في الفرع"
+        if: always()
+        run: |
+          [ -f reports/rulings-research/03-segment-embeddings.data.json ] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/rulings-research/03-segment-embeddings.data.json
+          git diff --cached --quiet && { echo "لا تغيير"; exit 0; }
+          git commit -m "data(rulings): segment embeddings ${MODE} (aggregate, run ${GITHUB_RUN_ID})"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

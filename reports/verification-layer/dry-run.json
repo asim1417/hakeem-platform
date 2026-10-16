@@ -1,0 +1,535 @@
+{
+  "writes": {
+    "update": 0,
+    "delete": 0,
+    "insert": 0
+  },
+  "population": {
+    "articles": 28253,
+    "marked_in_force": 27989,
+    "marked_repealed": 264,
+    "effects": 762
+  },
+  "repealed": {
+    "repealed": 264,
+    "with_amendment_instrument": 235,
+    "repealed_without_instrument": 29
+  },
+  "repealed_without_instrument": [
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 1
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 2
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 3
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 4
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 5
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 6
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 7
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 8
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 9
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 10
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 11
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 12
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 13
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 14
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 15
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 16
+    },
+    {
+      "law": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+      "article": 17
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 1
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 2
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 3
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 4
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 5
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 6
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 7
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 8
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 9
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 10
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 11
+    },
+    {
+      "law": "نظام مكتبة الملك فهد الوطنية",
+      "article": 12
+    }
+  ],
+  "sample": {
+    "sample_n": 200,
+    "compared_to_uqn": 72,
+    "same_text": 72,
+    "different_text": 0
+  },
+  "sample_error_rate": 0,
+  "effect_formulas": {
+    "إحلال": 45,
+    "غير مصنّف": 625,
+    "إضافة مادة أو فقرة": 59,
+    "تعديل المادة لتكون بالنص الآتي": 13,
+    "إلغاء": 6,
+    "حذف": 14
+  },
+  "blanket_conflict_not_counted_as_repeal": 0,
+  "unlinked_amendments": [
+    {
+      "title": "الترتيبات التنظيمية للجنة الوطنية للاستثمار بمجلس الشؤون الاقتصادية والتنمية",
+      "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001247",
+      "instrument_no": "",
+      "instrument_date_hijri": null,
+      "effect_type": "amend"
+    },
+    {
+      "title": "اللائحة التنفيذية",
+      "source_url": "https://www.uqn.gov.sa/details?p=18229",
+      "instrument_no": "50",
+      "instrument_date_hijri": "1443-01-16",
+      "effect_type": "amend"
+    },
+    {
+      "title": "اللائحة المالية للنشاطات الثقافية لوزارة الثقافة والإعلام (سابقاً)",
+      "source_url": "https://www.uqn.gov.sa/details?p=25114",
+      "instrument_no": "1012",
+      "instrument_date_hijri": "1445-11-27",
+      "effect_type": "amend"
+    },
+    {
+      "title": "النظام الأخير",
+      "source_url": "https://www.uqn.gov.sa/details?p=19638",
+      "instrument_no": "م/118",
+      "instrument_date_hijri": "1443-11-16",
+      "effect_type": "amend"
+    },
+    {
+      "title": "النظام الأساس لشركة المياه الوطنية -",
+      "source_url": "https://www.uqn.gov.sa/details?p=21247",
+      "instrument_no": "395",
+      "instrument_date_hijri": "1444-06-10",
+      "effect_type": "amend"
+    },
+    {
+      "title": "النظام الأساس لشركة جدة للتنمية والتطوير العمراني",
+      "source_url": "https://www.uqn.gov.sa/details?p=24928",
+      "instrument_no": "890",
+      "instrument_date_hijri": "1445-10-21",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم استخدامها في المجالات الزراعية في جميع المدن والقرى والهجر في المملكة –",
+      "source_url": "https://www.uqn.gov.sa/details?p=17730",
+      "instrument_no": "589",
+      "instrument_date_hijri": "1442-10-13",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم الجمعية -",
+      "source_url": "https://www.uqn.gov.sa/details?p=27151",
+      "instrument_no": "763",
+      "instrument_date_hijri": "1446-11-01",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم الكهرباء) وتعديل تنظيمها",
+      "source_url": "https://www.uqn.gov.sa/details?p=24962",
+      "instrument_no": "918",
+      "instrument_date_hijri": "1445-10-28",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم صندوق التعليم العالي الجامعي",
+      "source_url": "https://www.uqn.gov.sa/details?p=28772",
+      "instrument_no": "474",
+      "instrument_date_hijri": "1447-07-10",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم مجلس شؤون الأسرة.وبعد الاطلاع على تنظيم مجلس شؤون الأسرة",
+      "source_url": "https://www.uqn.gov.sa/details?p=19202",
+      "instrument_no": "443",
+      "instrument_date_hijri": "1443-08-12",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم مركز الأمير سلطان للدراسات والبحوث الدفاعية",
+      "source_url": "https://www.uqn.gov.sa/details?p=19691",
+      "instrument_no": "650",
+      "instrument_date_hijri": "1443-11-22",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم هيئات تطوير المناطق والمدن",
+      "source_url": "https://www.uqn.gov.sa/details?p=18984",
+      "instrument_no": "375",
+      "instrument_date_hijri": "1443-07-07",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم هيئات تطوير المناطق والمدن",
+      "source_url": "https://www.uqn.gov.sa/details?p=17956",
+      "instrument_no": "700",
+      "instrument_date_hijri": "1442-11-26",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم هيئة الاتصالات والفضاء والتقنية",
+      "source_url": "https://www.uqn.gov.sa/details?p=26925",
+      "instrument_no": "430",
+      "instrument_date_hijri": "1446-06-23",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم هيئة الاتصالات والفضاء والتقنية الصادر بقرار مجلس الوزراء رقم (74) وتاريخ 5/3/1422هـ",
+      "source_url": "https://www.uqn.gov.sa/details?p=26925",
+      "instrument_no": "430",
+      "instrument_date_hijri": "1446-06-23",
+      "effect_type": "amend"
+    },
+    {
+      "title": "تنظيم هيئة المدن والمناطق الاقتصادية الخاصة",
+      "source_url": "https://www.uqn.gov.sa/details?p=18591",
+      "instrument_no": "أ/186",
+      "instrument_date_hijri": "1443-04-05",
+      "effect_type": "amend"
+    },
+    {
+      "title": "لائحة تنظيم المدارس الأهلية",
+      "source_url": "https://www.uqn.gov.sa/details?p=18731",
+      "instrument_no": "269",
+      "instrument_date_hijri": "1443-05-03",
+      "effect_type": "amend"
+    },
+    {
+      "title": "لائحة جمع التبرعات للوجوه الخيرية -",
+      "source_url": "https://www.uqn.gov.sa/details?p=17764",
+      "instrument_no": "618",
+      "instrument_date_hijri": "1442-10-20",
+      "effect_type": "amend"
+    },
+    {
+      "title": "لائحة رسوم تقديم منتجات التبغ",
+      "source_url": "https://www.uqn.gov.sa/details?p=23466",
+      "instrument_no": "",
+      "instrument_date_hijri": null,
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام إدارة المواد الكيميائية",
+      "source_url": "https://www.uqn.gov.sa/details?p=21422",
+      "instrument_no": "476",
+      "instrument_date_hijri": "1444-07-09",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام إلى نظام آخر",
+      "source_url": "https://www.uqn.gov.sa/details?p=19639",
+      "instrument_no": "631",
+      "instrument_date_hijri": "1443-11-15",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام إلى نظام آخر",
+      "source_url": "https://www.uqn.gov.sa/details?p=19638",
+      "instrument_no": "م/118",
+      "instrument_date_hijri": "1443-11-16",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام الآثار والمتاحف والتراث العمراني -الصادر بالمرسوم الملكي رقم (م/3) وتاريخ 9 /1/ 1436هـ- وذلك على النحو الآتي:",
+      "source_url": "https://www.uqn.gov.sa/details?p=17315",
+      "instrument_no": "453",
+      "instrument_date_hijri": "1442-08-10",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام الآثار والمتاحف والتراث العمراني -الصادر بالمرسوم الملكي رقم (م/3) بتاريخ 9 /1/ 1436هـ- وذلك على النحو الآتي:",
+      "source_url": "https://www.uqn.gov.sa/details?p=17316",
+      "instrument_no": "م/67",
+      "instrument_date_hijri": "1442-08-12",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام الإقامة",
+      "source_url": "https://www.uqn.gov.sa/details?p=21153",
+      "instrument_no": "م/71",
+      "instrument_date_hijri": "1444-06-01",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام المرور وفقاً لما أشير إليه في البند (أولاً) من هذا القرار- بمراجعة اللائحة التنفيذية لنظام المرور -",
+      "source_url": "https://www.uqn.gov.sa/details?p=26919",
+      "instrument_no": "474",
+      "instrument_date_hijri": "1446-07-07",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام وثائق السفر –الصادر بالمرسوم الملكي رقم (م/24) بتاريخ 28 /5 /1421هـ- على النحو الآتي:",
+      "source_url": "https://www.uqn.gov.sa/details?p=18213",
+      "instrument_no": "م/11",
+      "instrument_date_hijri": "1443-01-18",
+      "effect_type": "amend"
+    },
+    {
+      "title": "نظام وثائق السفر –الصادر بالمرسوم الملكي رقم (م/24) وتاريخ 28 /5 /1421هـ- على النحو الآتي:",
+      "source_url": "https://www.uqn.gov.sa/details?p=18232",
+      "instrument_no": "53",
+      "instrument_date_hijri": "1443-01-16",
+      "effect_type": "amend"
+    }
+  ],
+  "excluded_works": [
+    {
+      "title": "اللائحة المنظمة لسجل الخدمة البحرية",
+      "source_url": "https://www.uqn.gov.sa/details?p=20006",
+      "parse_status": "irregular_sequence"
+    },
+    {
+      "title": "الآلية المنظمة لإصدار رخص حفر الآبار الجديدة في المزارع الواقعة على الدرع العربي",
+      "source_url": "https://www.uqn.gov.sa/details?p=26931",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لإدارة نفايات الرعاية الصحية",
+      "source_url": "https://www.uqn.gov.sa/details?p=26932",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لتصميم مرافق استرداد المواد وإنشائها وتشغيلها",
+      "source_url": "https://www.uqn.gov.sa/details?p=26933",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لتصميم مرافق حرق النفايات وإنشائها وتشغيلها",
+      "source_url": "https://www.uqn.gov.sa/details?p=26934",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لتصميم وإنشاء وتشغيل المرادم",
+      "source_url": "https://www.uqn.gov.sa/details?p=26941",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لتصميم وانشاء وتشغيل منشآت المعالجة الفيزيائية الكيميائية",
+      "source_url": "https://www.uqn.gov.sa/details?p=26935",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لتصنيف النفايات",
+      "source_url": "https://www.uqn.gov.sa/details?p=26936",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لخطط إدارة النفايات",
+      "source_url": "https://www.uqn.gov.sa/details?p=26937",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية للتخزين المؤقت للنفايات",
+      "source_url": "https://www.uqn.gov.sa/details?p=26944",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية للتراخيص",
+      "source_url": "https://www.uqn.gov.sa/details?p=26938",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية للتفتيش والتدقيق",
+      "source_url": "https://www.uqn.gov.sa/details?p=26939",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية للمعالجة الميكانيكية البيولجية للنفايات",
+      "source_url": "https://www.uqn.gov.sa/details?p=26943",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لمعايير قبول النفايات في المرادم",
+      "source_url": "https://www.uqn.gov.sa/details?p=26942",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "الضوابط والأدلة الفنية لنقل النفايات",
+      "source_url": "https://www.uqn.gov.sa/details?p=26940",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "القواعد المنظمة للوسطاء العقاريين المؤهلين للتسويق للمشاريع الصغيرة والمتوسطة على الخارطة",
+      "source_url": "https://www.uqn.gov.sa/details?p=18106",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "اللائحة التنفيذية لمقدمي الخدمات البيئية لنظام البيئة",
+      "source_url": "https://www.uqn.gov.sa/details?p=26880",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "اللائحة الفنية للمراكب المائية",
+      "source_url": "https://www.uqn.gov.sa/details?p=22839",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "اللائحة الفنية لمتطلبات وضع الاستعداد والسكون في الأجهزة الكهربائية والإلكترونية",
+      "source_url": "https://www.uqn.gov.sa/details?p=22838",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "جدول المخالفات والعقوبات الخاصة باللائحة التنظيمية لمركز الملك عبدالعزيز للخيل العربية الأصيلة",
+      "source_url": "https://www.uqn.gov.sa/details?p=26894",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "جدول المخالفات والعقوبات لنشاط مرفق الضيافة السياحي",
+      "source_url": "https://www.uqn.gov.sa/details?p=21140",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "جدول المخالفات والعقوبات لنظام الخطوط الحديدية",
+      "source_url": "https://www.uqn.gov.sa/details?p=26677",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "جدول تصنيف مخالفات أحكام نظام منتجات التجميل والعقوبات المقررة لها",
+      "source_url": "https://www.uqn.gov.sa/details?p=21560",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "دليل الأمن الحيوي لاستزراع الأسماك في المملكة العربية السعودية (1444هـ - 2022م)",
+      "source_url": "https://www.uqn.gov.sa/details?p=24740",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "دليل الأمن الحيوي للروبيان المستزرع في المملكة العربية السعودية (1444هـ-2022م)",
+      "source_url": "https://www.uqn.gov.sa/details?p=24493",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "ضوابط إجراءات تراخيص وتصاريح أعمال مشاريع البنية التحتية بمنطقة الرياض",
+      "source_url": "https://www.uqn.gov.sa/details?p=27325",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "ضوابط الأمن السيبراني لجهات القطاع الخاص من غير ذات البنى التحتية الحساسة",
+      "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000536",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "قواعد طرح الأوراق المالية والالتزامات المستمرة المعدلة",
+      "source_url": "https://www.uqn.gov.sa/details?p=19520",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "لائحة الشهادات التأهيلية البحرية",
+      "source_url": "https://www.uqn.gov.sa/details?p=19188",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "لائحة المتطلبات العامة لتعيين جهات التفتيش والمفتشين لأعمال كود البناء السعودي",
+      "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000966",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "لائحة صناديق الاستثمار العقاري المعدلة",
+      "source_url": "https://www.uqn.gov.sa/details?p=18217",
+      "parse_status": "no_text_image_or_pdf"
+    },
+    {
+      "title": "لائحة صناديق الاستثمار المعدلة",
+      "source_url": "https://www.uqn.gov.sa/details?p=18215",
+      "parse_status": "no_text_image_or_pdf"
+    }
+  ],
+  "vectors": {
+    "articles_missing": 10928,
+    "article_chars": 8319155,
+    "rulings_missing": 832,
+    "ruling_chars": 8265627,
+    "principles_null_hash": 3566,
+    "principle_chars": 1900221,
+    "model": "text-embedding-3-small",
+    "dims": 1536,
+    "fingerprint": "sha256(text + newline + model)",
+    "token_estimate_low": 4621251,
+    "token_estimate_high": 9242502,
+    "usd_low": 0.09,
+    "usd_high": 0.18,
+    "price_note": "تقدير على سعر text-embedding-3-small المنشور 0.02 دولار لكل مليون رمز. لم يُشغَّل التضمين."
+  }
+}

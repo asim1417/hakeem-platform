@@ -6,6 +6,10 @@ import { absoluteUrl, getSiteUrl } from "@/lib/modules/config/site-url";
 import { resolveSystemSlug, buildArticleEli, lawSlug } from "@/lib/modules/legal-core/eli";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
+import { ArticlePresentation, AsOfForm } from "@/components/legal/ArticlePresentation";
+import { presentArticle } from "@/lib/modules/legal-core/verified-status";
+import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
+import { effectiveArticleTexts, resolveEffectiveText } from "@/lib/modules/legal-core/effective-text";
 
 export const revalidate = 3600;
 
@@ -33,11 +37,21 @@ async function loadArticle(slug: string, articleParam: string) {
   return { system, article, n };
 }
 
-export async function generateMetadata({ params }: { params: { slug: string; article: string } }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: { slug: string; article: string };
+  searchParams?: { asOf?: string };
+}): Promise<Metadata> {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) return { title: "مادة غير موجودة — حكيم" };
   const slug = resolveSystemSlug(data.system.eliSlug, data.system.name);
-  const text = sanitizeDisplayText(data.article.content).slice(0, 155);
+  // الوصف من النص الساري (المصدر الواحد)، لا من legal_articles.content مباشرة.
+  const asOfRaw = searchParams?.asOf?.trim() ?? "";
+  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
+  const effective = (await effectiveArticleTexts([{ id: data.article.id, content: sanitizeDisplayText(data.article.content) }], asOf)).get(data.article.id);
+  const text = sanitizeDisplayText(effective?.text ?? data.article.content).slice(0, 155);
   return {
     title: `${data.system.name} — المادة ${data.n} | حكيم`,
     description: text,
@@ -45,20 +59,34 @@ export async function generateMetadata({ params }: { params: { slug: string; art
   };
 }
 
-export default async function LegalArticlePage({ params }: { params: { slug: string; article: string } }) {
+export default async function LegalArticlePage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string; article: string };
+  searchParams?: { asOf?: string };
+}) {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) notFound();
   const { system, article, n } = data;
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const content = sanitizeDisplayText(article.content);
+  const asOfRaw = searchParams?.asOf?.trim() ?? "";
+  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
+  const [verification, versions] = await Promise.all([
+    latestVerification("unit", article.id),
+    unitVersions(article.id),
+  ]);
+  const view = presentArticle({ baseText: content, versions, verification, asOf });
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
-  const citation = `${system.name}، المادة (${n})${article.royalDecree ? ` — ${article.royalDecree}` : ""}`;
+  const citation = `${system.name}، المادة (${n}) — ${view.citationSuffix}`;
 
   const [prev, next] = await Promise.all([
-    prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
+    prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n, gt: 0 } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
     prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { gt: n } }, orderBy: { articleNumber: "asc" }, select: { articleNumber: true } }).catch(() => null),
   ]);
 
+  const effective = resolveEffectiveText({ articleId: article.id, baseText: content, versions, verification, asOf });
   const BASE = getSiteUrl();
   const ld = {
     "@context": "https://schema.org",
@@ -67,7 +95,8 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
     legislationJurisdiction: "SA",
     inLanguage: "ar",
     isPartOf: { "@type": "Legislation", name: system.name, url: `${BASE}/legal/${encodeURIComponent(slug)}` },
-    text: content,
+    // JSON-LD يحمل النص المعروض نفسه (الساري في التاريخ المطلوب، أو سطر الإلغاء).
+    text: effective.text,
     url: `${BASE}/legal/${encodeURIComponent(slug)}/${n}`,
   };
 
@@ -79,9 +108,8 @@ export default async function LegalArticlePage({ params }: { params: { slug: str
         <h1 className="mt-2 text-3xl font-bold">المادة {n.toLocaleString("ar-SA")}</h1>
         {article.title && article.title !== String(n) ? <p className="mt-2 text-lg text-ink">{article.title}</p> : null}
 
-        <div className="mt-6 whitespace-pre-wrap rounded-xl border border-[#C69763]/25 bg-ivory p-6 text-lg leading-9 text-[var(--navy)]">
-          {content}
-        </div>
+        <AsOfForm asOf={asOfRaw} />
+        <ArticlePresentation view={view} versions={versions} baseText={content} />
 
         <div className="mt-4 rounded-lg border border-[#C69763]/40 bg-[#FBFAF6] p-4 text-sm leading-7 text-[var(--navy)]">
           <p><b>الاستناد الرسمي:</b> {citation}</p>

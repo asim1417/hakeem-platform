@@ -1222,7 +1222,7 @@ export function HakeemAskWorkspace({
     window.location.assign("/dashboard/judicial-assistant");
   }
 
-  const greeting = userName ? `مرحبًا ${userName}` : "مرحبًا بك";
+  const greeting = userName ? `مرحبًا، ${userName}` : "مرحبًا بك";
   const followUpMode = turns.length > 0 && Boolean(turns[turns.length - 1]?.answer) && !busy;
   const emptyTitle = isHome ? "كيف يساعدك حكيم اليوم؟" : greeting;
   const emptyLede = isHome
@@ -1255,7 +1255,10 @@ export function HakeemAskWorkspace({
 
   const isEmpty = turns.length === 0;
   return (
-    <div className={`flex min-h-[calc(100vh-9rem)] flex-col ${isEmpty ? "justify-center" : ""}`}>
+    // الرئيسية: فوق المساحة شريط الرصيد/الإشعارات (~5rem)، فلا تتجاوز الشاشة ويُقصّ المؤلّف
+    <div
+      className={`flex ${isHome ? "min-h-[calc(100dvh-14rem)]" : "min-h-[calc(100vh-9rem)]"} flex-col ${isEmpty ? "justify-center" : ""}`}
+    >
       {sessionError ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {sessionError}{" "}

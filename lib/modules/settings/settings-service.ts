@@ -7,18 +7,54 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@/lib/prisma";
 
-// node:crypto محمّل بكسلٍ ومُخفى عمدًا عن مُحلِّل الحزم (webpack): هذه الوحدة Node-only
-// (تشفير AES-256-GCM) لكن instrumentation.ts يسحبها إلى رسم حزمة Edge أيضًا؛ والإخفاء
-// يمنع دخول node:crypto رسمَ Edge (حيث لا يتوفّر) — دون أي تغيير في منطق التشفير.
-// آمن: حارس NEXT_RUNTIME في instrumentation يمنع Edge من استدعاء أي دالّة هنا أصلاً،
-// وفي وقت Node يعيد require الحقيقيّ وحدةَ التشفير كاملةً.
+// node:crypto يُحمَّل بلا استيراد ثابت حتى لا يدخل رسم Edge عند تحليل instrumentation.
+// في Next/Webpack غالبًا يتوفّر require؛ وفي ESM (tsx/بعض الحزم) نستخدم getBuiltinModule أو createRequire.
 type NodeCrypto = typeof import("node:crypto");
 let _nodeCrypto: NodeCrypto | null = null;
+
 function nodeCrypto(): NodeCrypto {
-  // indirect eval لجلب require الحقيقي بعيدًا عن التحزيم
-  // eslint-disable-next-line no-eval
-  if (!_nodeCrypto) _nodeCrypto = (0, eval)("require")("node:crypto") as NodeCrypto;
-  return _nodeCrypto;
+  if (_nodeCrypto) return _nodeCrypto;
+
+  const gbm = (process as NodeJS.Process & {
+    getBuiltinModule?: (id: string) => unknown;
+  }).getBuiltinModule;
+  if (typeof gbm === "function") {
+    try {
+      _nodeCrypto = gbm("crypto") as NodeCrypto;
+      if (_nodeCrypto) return _nodeCrypto;
+    } catch {
+      /* جرّب مسارًا آخر */
+    }
+  }
+
+  try {
+    // eslint-disable-next-line no-eval
+    const req = (0, eval)("typeof require !== 'undefined' ? require : undefined") as
+      | NodeRequire
+      | undefined;
+    if (req) {
+      _nodeCrypto = req("node:crypto") as NodeCrypto;
+      return _nodeCrypto;
+    }
+  } catch {
+    /* جرّب createRequire */
+  }
+
+  try {
+    // eslint-disable-next-line no-eval
+    const req = (0, eval)("typeof require !== 'undefined' ? require : undefined") as
+      | NodeRequire
+      | undefined;
+    if (req) {
+      const { createRequire } = req("node:module") as typeof import("node:module");
+      _nodeCrypto = createRequire(__filename)("node:crypto") as NodeCrypto;
+      return _nodeCrypto;
+    }
+  } catch {
+    /* */
+  }
+
+  throw new Error("تعذّر تحميل وحدة التشفير على الخادم. تأكد أن مسار الإعدادات يعمل في Node runtime.");
 }
 
 // سجلّ المفاتيح التي تُدار من اللوحة (المجموعة + الوصف + هل هي سرّ).
@@ -52,6 +88,17 @@ export const MANAGED_KEYS: ManagedKey[] = [
     placeholder: "pk_live_...",
   },
   { key: "CLERK_WEBHOOK_SECRET", label: "Clerk Webhook Secret (Svix)", secret: true, group: "المصادقة (Clerk)", placeholder: "whsec_..." },
+  // ── وسائل الدخول — فعّل الوسيلة في لوحة Clerk أولًا ثم اضبط علمها هنا (1 = ظاهر) ──
+  { key: "AUTH_MICROSOFT_ENABLED", label: "إظهار الدخول عبر Microsoft", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_APPLE_ENABLED", label: "إظهار الدخول عبر Apple", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_EMAIL_CODE_ENABLED", label: "إظهار الدخول بالبريد برمز تحقق", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_PHONE_ENABLED", label: "إظهار الدخول برقم الجوال (OTP)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_MFA_ENABLED", label: "إظهار إعداد التحقق الثنائي", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "0" },
+  { key: "AUTH_ORGANIZATIONS_ENABLED", label: "إظهار حسابات المكاتب (Organizations)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "AUTH_IDENTIFIER_FORM_ENABLED", label: "نموذج الدخول العربي للبريد والجوال (بدل صفحة Clerk)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "HOME_INLINE_AUTH_ENABLED", label: "الدخول من الصفحة الرئيسية دون مغادرتها (0 = مفتاح طوارئ يعيد الروابط السابقة)", secret: false, group: "وسائل الدخول (Clerk)", placeholder: "1" },
+  { key: "HOME_LIVE_DEMO_ENABLED", label: "العرض الحي في الرئيسية (1 = تفعيل بعد مراجعة نصه)", secret: false, group: "الصفحة الرئيسية", placeholder: "0" },
+  { key: "HOME_DEMO_VIDEO_URL", label: "رابط فيديو «شاهد التجربة كاملة» (https) — فارغ يُخفي الزر", secret: false, group: "الصفحة الرئيسية", placeholder: "https://…" },
   // ── الدفع والبريد والـ OTP — تُلصق هنا بدل Vercel ──
   { key: "MOYASAR_SECRET_KEY", label: "Moyasar Secret Key", secret: true, group: "الدفع (Moyasar)", placeholder: "sk_live_..." },
   { key: "MOYASAR_PUBLISHABLE_KEY", label: "Moyasar Publishable Key", secret: false, group: "الدفع (Moyasar)", placeholder: "pk_live_..." },
@@ -63,7 +110,7 @@ export const MANAGED_KEYS: ManagedKey[] = [
     placeholder: "اختياري — يفعّل التحقق عند الضبط",
   },
   { key: "RESEND_API_KEY", label: "Resend API Key (بريد الترحيب)", secret: true, group: "البريد", placeholder: "re_..." },
-  { key: "RESEND_FROM", label: "عنوان المُرسِل", secret: false, group: "البريد", placeholder: "حكيم <onboarding@hakeem.sa>" },
+  { key: "RESEND_FROM", label: "عنوان المُرسِل", secret: false, group: "البريد", placeholder: "حكيم <support@hakeemai.net>" },
   { key: "TWILIO_ACCOUNT_SID", label: "Twilio Account SID", secret: true, group: "OTP الجوال (Twilio)", placeholder: "AC..." },
   { key: "TWILIO_AUTH_TOKEN", label: "Twilio Auth Token", secret: true, group: "OTP الجوال (Twilio)" },
   { key: "TWILIO_FROM_NUMBER", label: "رقم الإرسال Twilio", secret: false, group: "OTP الجوال (Twilio)", placeholder: "+9665..." },
@@ -120,15 +167,27 @@ export async function getAllSettings(): Promise<Map<string, string>> {
   return out;
 }
 
+/**
+ * يضمن وجود جدول app_settings قبل أول حفظ من لوحة الإعدادات.
+ * بدون هذا كان upsert يرمي فيستلم العميل جسم رد فارغ → Unexpected end of JSON input.
+ */
+export async function ensureAppSettingsTable(): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    'CREATE TABLE IF NOT EXISTS "app_settings" ("key" TEXT NOT NULL, "value" JSONB NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "app_settings_pkey" PRIMARY KEY ("key"));'
+  );
+}
+
 /** يحفظ مفتاحًا (يُشفّر إن كان سرًّا). قيمة فارغة = حذف المفتاح (رجوع لمتغيّر البيئة). */
 export async function setSetting(key: string, rawValue: string, _updatedBy?: string): Promise<void> {
   if (!MANAGED_SET.has(key)) throw new Error(`مفتاح غير مُدار: ${key}`);
+  await ensureAppSettingsTable();
   const value = rawValue.trim();
   if (!value) {
     await prisma.appSetting.delete({ where: { key } }).catch(() => undefined);
     delete process.env[key];
     return;
   }
+  // Json في Prisma: نخزّن النص كقيمة JSON نصّية صريحة.
   const stored = SECRET_SET.has(key) ? encryptValue(value) : value;
   await prisma.appSetting.upsert({
     where: { key },
@@ -160,14 +219,79 @@ function maskSecret(v: string): string {
 }
 
 /** يُحمّل إعدادات القاعدة إلى process.env (تجاوز متغيّرات البيئة للمفاتيح المُدارة). يُستدعى عند الإقلاع. */
+/** قيم Vercel الأصلية قبل أول استبدال من الإعدادات المُدارة (لكل نسخة خادم). */
+const ORIGINAL_ENV = new Map<string, string>();
+
+/** القيمة كما ضُبطت في Vercel قبل أي استبدال من الإعدادات — أو الحالية إن لم تُستبدل. */
+export function originalEnvValue(key: string): string {
+  return (ORIGINAL_ENV.has(key) ? ORIGINAL_ENV.get(key) : process.env[key]) ?? "";
+}
+
+/**
+ * لا نستبدل مفتاح Clerk السري/العام من الإعدادات إن كان من نسخة مختلفة عن
+ * المفتاح العام الفعّال (غالبًا المضمّن في البناء: pk_live_). كان sk_test_ في
+ * /admin/settings يُسقِط كل تثبيت جلسة بعد رمز صحيح (401) رغم أن الواجهة live.
+ */
+function clerkEnvEdition(value: string): "live" | "test" | "other" {
+  const t = value.trim();
+  if (t.startsWith("pk_live_") || t.startsWith("sk_live_")) return "live";
+  if (t.startsWith("pk_test_") || t.startsWith("sk_test_")) return "test";
+  return "other";
+}
+
+function shouldSkipClerkKeyOverride(key: string, nextValue: string): boolean {
+  if (key !== "CLERK_SECRET_KEY" && key !== "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") return false;
+  // مرجع المطابقة: المفتاح العام كما جاء من Vercel قبل أي استبدال (أو الحالي).
+  const pubRef = (
+    (ORIGINAL_ENV.has("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY")
+      ? ORIGINAL_ENV.get("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY")
+      : process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) || ""
+  ).trim();
+  const refKind = clerkEnvEdition(pubRef);
+  const nextKind = clerkEnvEdition(nextValue);
+  if (refKind === "other" || nextKind === "other") return false;
+  if (refKind !== nextKind) {
+    console.warn(
+      JSON.stringify({
+        event: "settings_clerk_key_skip_mismatch",
+        key,
+        refKind,
+        nextKind,
+      })
+    );
+    return true;
+  }
+  return false;
+}
+
 export async function hydrateEnvFromSettings(): Promise<number> {
   const db = await getAllSettings();
+  // التقط أصول Vercel أولًا لكل المفاتيح قبل أي استبدال — حتى يصح مرجع pk_* عند تصفية sk_*.
+  for (const [key, value] of db) {
+    if (MANAGED_SET.has(key) && value && !ORIGINAL_ENV.has(key)) {
+      ORIGINAL_ENV.set(key, process.env[key] ?? "");
+    }
+  }
   let n = 0;
   for (const [key, value] of db) {
     if (MANAGED_SET.has(key) && value) {
+      if (shouldSkipClerkKeyOverride(key, value)) continue;
       process.env[key] = value;
       n += 1;
     }
   }
   return n;
+}
+
+let lastHydratedAt = 0;
+
+/**
+ * نسخة مخفّفة للصفحات العامة كثيرة الزيارة: استعلام واحد كل ttlMs على الأكثر لكل نسخة خادم.
+ * تكفي لمفاتيح الطوارئ (مثل HOME_INLINE_AUTH_ENABLED) دون استعلام في كل طلب.
+ */
+export async function hydrateEnvFromSettingsThrottled(ttlMs = 60_000): Promise<void> {
+  const now = Date.now();
+  if (now - lastHydratedAt < ttlMs) return;
+  lastHydratedAt = now;
+  await hydrateEnvFromSettings().catch(() => 0);
 }

@@ -14,6 +14,7 @@ import {
 import { GROUNDING_FALLBACK, NO_EXPLICIT_TEXT, hasSufficientGrounding } from "./grounding-guard";
 import { fetchLinkedJudgments } from "./judgment-links";
 import { resolveAiProvider } from "@/lib/modules/ai/ai-provider";
+import { applyEffectiveText } from "@/lib/modules/legal-core/effective-text";
 
 export interface RagResult {
   answer: string;
@@ -88,10 +89,12 @@ export async function legalRag(question: string): Promise<RagResult> {
   let relations: RagRelation[] = [];
   try {
     [aRows, rRows, pRows] = await Promise.all([
-      prisma.legalArticle.findMany({
-        where: { id: { in: articleIds } },
-        select: { id: true, title: true, content: true, lawName: true, articleNumber: true },
-      }),
+      prisma.legalArticle
+        .findMany({
+          where: { id: { in: articleIds } },
+          select: { id: true, title: true, content: true, lawName: true, articleNumber: true },
+        })
+        .then((rows) => applyEffectiveText(rows)),
       prisma.judicialCase.findMany({
         where: { id: { in: rulingIds } },
         select: { id: true, judgmentTitle: true, judgmentText: true, caseNo: true, decisionNo: true, court: true },

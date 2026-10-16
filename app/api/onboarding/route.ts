@@ -11,7 +11,9 @@ const stepSchema = z.object({
   step: z.number().int().min(1).max(6),
   phone: z.string().max(32).optional(),
   city: z.string().max(64).optional(),
-  entityType: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).optional(),
+  entityType: z
+    .enum(["LAWYER", "TRAINEE_LAWYER", "LEGAL_PRACTITIONER", "LAW_FIRM", "OTHER", "INDIVIDUAL"])
+    .optional(),
   yearsExperience: z.string().max(16).optional(),
   specialties: z.array(z.string().max(64)).max(20).optional(),
   interests: z.array(z.string().max(64)).max(20).optional(),
@@ -71,7 +73,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const existing = await getProfile(user.id);
   const isComplete = body.complete === true || body.step === 6;
+  // لا نُسقط onboardingCompleted عند حفظ خطوة وسيطة (كان هذا يكسر «ملفي المهني» بعد الاكتمال)
   const patch = {
     phone: body.phone?.trim(),
     city: body.city?.trim(),
@@ -84,7 +88,7 @@ export async function POST(request: NextRequest) {
     termsAccepted: body.termsAccepted,
     certificates: body.certificates,
     onboardingStep: body.step,
-    onboardingCompleted: isComplete,
+    ...(isComplete || existing.onboardingCompleted ? { onboardingCompleted: true as const } : {}),
   };
 
   const profile = await updateProfile(user.id, patch);

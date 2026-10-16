@@ -44,17 +44,18 @@ function parseSystems(content: string): { systems: string[]; reasoning: string }
 }
 
 /**
- * يطابق اسمًا (من النموذج أو المكنز) بسجلّ القاعدة — تطبيع + احتواء ثنائيّ الاتجاه (≥ ٣ أحرف).
- * فيُقبَل «الأحوال الشخصية» ⇄ «نظام الأحوال الشخصية»، ويُرفَض ما لا وجود له (هلوسة).
+ * يطابق اسمًا (من النموذج أو المكنز) بسجلّ القاعدة (الموجة ١):
+ *   ① المساواة بعد التطبيع: «الأحوال الشخصية» ⇄ «نظام الأحوال الشخصية».
+ *   ② وإلا أطول جوهرٍ كاملٍ مذكورٍ داخل الاسم كلماتٍ كاملة (matchSystemsInText).
+ * لا احتواء بالاتجاه المعاكس: اسم قصير لا يجرّ نظامًا أطول، ولا جوهر قصير يبتلع أطول.
+ * ما لا وجود له يُرفض (منع الهلوسة).
  */
 export function matchNameToRegistry(name: string, registry: SystemRef[]): SystemRef[] {
   const core = normalizeSystemName(name);
   if (core.length < 3) return [];
-  const hits = registry.filter((r) => {
-    const rn = normalizeSystemName(r.name);
-    return rn.length >= 3 && (rn === core || rn.includes(core) || core.includes(rn));
-  });
-  return hits;
+  const exact = registry.filter((r) => normalizeSystemName(r.name) === core);
+  if (exact.length) return exact;
+  return matchSystemsInText(name, registry);
 }
 
 /** يجمع أنظمةً فريدة (بالمعرّف) من قائمة أسماء عبر التحقّق بالسجلّ. */

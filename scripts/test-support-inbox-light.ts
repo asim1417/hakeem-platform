@@ -34,6 +34,7 @@ const userApi = read("app/api/support/thread/route.ts");
 assert.ok(userApi.includes("userName: user.name"));
 assert.ok(userApi.includes("userEmail: user.email"));
 assert.ok(userApi.includes("senderName: user.name"));
+assert.ok(userApi.includes("maybeAppendFirstMessageAutoAck") || userApi.includes("autoAcked"));
 
 const adminApi = read("app/api/admin/support/[threadId]/route.ts");
 assert.ok(adminApi.includes("senderName: gate.user.name"));
@@ -42,6 +43,7 @@ const inbox = read("app/admin/inbox/page.tsx");
 assert.ok(inbox.includes("صندوق المراسلات"));
 assert.ok(inbox.includes("listThreadsForAdmin"));
 assert.ok(inbox.includes("initialThreads"));
+assert.ok(inbox.includes("isSupportStoreReady") || inbox.includes("حالة تفعيل الدعم"));
 
 const ui = read("components/admin/AdminSupportInbox.tsx");
 assert.ok(ui.includes("المرسل:"));

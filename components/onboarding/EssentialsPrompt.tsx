@@ -3,12 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoldButton, LegalAlert } from "@/components/ui/legal";
-
-const PROFESSIONS = [
-  { value: "INDIVIDUAL", label: "محامٍ / متدرب" },
-  { value: "LAW_FIRM", label: "مكتب محاماة" },
-  { value: "OTHER", label: "أخرى (قاضٍ، طالب، مستشار…)" },
-] as const;
+import { entityOptionsForValue } from "@/config/entity-types";
 
 /**
  * بوابة إلزامية داخل لوحة حكيم (ليست شاشة دخول منفصلة):
@@ -29,6 +24,7 @@ export function EssentialsPrompt({
   const [profession, setProfession] = useState(initialProfession || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const professions = entityOptionsForValue(profession || initialProfession);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -122,7 +118,7 @@ export function EssentialsPrompt({
               className="focus-ring mt-1 w-full rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[#FFFaf3] px-3 py-2.5 text-sm"
             >
               <option value="">اختر المهنة</option>
-              {PROFESSIONS.map((p) => (
+              {professions.map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
                 </option>

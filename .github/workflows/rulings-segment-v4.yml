@@ -1,0 +1,59 @@
+name: Rulings segment v3 vs v4 (read-only)
+
+# مقارنة التقطيع segment-rules-v3 بـ v4 على كل judicial_cases — قراءة فقط، أعداد ونسب فقط.
+# المستودع عام: لا نص حكم ولا معرّف ولا رابط اتصال. المخرج يُودَع في الفرع
+# reports/rulings-research/02-segment-v4.data.json. لا يمسّ ruling_segments ولا ruling_segment_embeddings.
+
+on:
+  push:
+    branches: [claude/rulings-segment-v4]
+    paths:
+      - .github/workflows/rulings-segment-v4.yml
+      - scripts/rulings-research/02-segment-v4.ts
+      - scripts/rulings-research/segment-v3-baseline.ts
+      - lib/rulings/research/segment.ts
+
+concurrency:
+  group: rulings-segment-v4
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="$NEON_DATABASE_URL" npm run db:generate
+      - name: "اتصال مباشر للقراءة فقط"
+        run: |
+          base=$(printf '%s' "$NEON_DATABASE_URL" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          sep='?'; case "$base" in *\?*) sep='&';; esac
+          url="${base}${sep}options=-c%20default_transaction_read_only%3Don%20-c%20statement_timeout%3D60000"
+          echo "::add-mask::$url"
+          echo "EVAL_DB_URL=$url" >> "$GITHUB_ENV"
+      - name: "القياس (قراءة فقط)"
+        run: |
+          out=$(DATABASE_URL="$EVAL_DB_URL" npx tsx scripts/rulings-research/02-segment-v4.ts reports/rulings-research/02-segment-v4.data.json)
+          echo "::notice title=segment v4::$(printf '%s' "$out" | tail -1)"
+      - name: "إيداع الأعداد"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/rulings-research/02-segment-v4.data.json
+          git diff --cached --quiet && exit 0
+          git commit -m "data(rulings): segment v3 vs v4 (aggregate, read-only run ${GITHUB_RUN_ID})"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

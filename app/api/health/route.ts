@@ -2,19 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { isGoogleOAuthConfigured } from "@/lib/modules/auth/google-oauth";
-import { isMoyasarLive } from "@/lib/modules/billing/moyasar";
-import {
-  ensureConversationSessionSchemaDetailed,
-  getLastConversationSchemaEnsureResult,
-  isConversationSessionSchemaReady,
-} from "@/lib/modules/conversations/ensure-schema";
+import { moyasarHealthLabel } from "@/lib/modules/billing/moyasar";
+import { isConversationSessionSchemaReady } from "@/lib/modules/conversations/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/health — فحص صحة المنصة للمراقبة الخارجية (بلا أسرار).
  * عام عمدًا — لا يعيد مفاتيح ولا بيانات مستخدمين.
- * يضمن مخطط محرك الجلسات (idempotent) ثم يبلّغ جاهزيته.
+ * RUN-001: يقرأ جاهزية المخطط فقط، ولا ينفّذ أي DDL/تجهيز (استخدم npm run db:ensure-schema).
  */
 export async function GET() {
   const started = Date.now();
@@ -30,15 +26,11 @@ export async function GET() {
   let conversationSessionDetail: { step?: number; error?: string } | undefined;
   if (database === "up") {
     try {
-      const applied = await ensureConversationSessionSchemaDetailed();
-      const ready = applied.ok && (await isConversationSessionSchemaReady());
+      // قراءة فقط: هل المخطط جاهز؟ التجهيز يتم عبر أمر إداري لا عبر فحص الصحة.
+      const ready = await isConversationSessionSchemaReady();
       conversationSession = ready ? "ready" : "error";
       if (!ready) {
-        const last = getLastConversationSchemaEnsureResult();
-        conversationSessionDetail = {
-          step: last.step ?? applied.step,
-          error: last.error ?? applied.error ?? "unknown",
-        };
+        conversationSessionDetail = { error: "schema not ready — run: npm run db:ensure-schema -- --apply" };
       }
     } catch (e) {
       conversationSession = "error";
@@ -47,6 +39,14 @@ export async function GET() {
       };
     }
   }
+
+  // بادئات المفاتيح فقط — بلا كشف للأسرار. يبيّن إن كان sk_test_ يُستخدم مع pk_live_.
+  const { clerkKeyKind, clerkKeysAligned } = await import("@/lib/modules/auth/clerk-config");
+  const { hydrateEnvFromSettings } = await import("@/lib/modules/settings/settings-service");
+  await hydrateEnvFromSettings().catch(() => 0);
+  const secretKind = clerkKeyKind(process.env.CLERK_SECRET_KEY);
+  const publishableKind = clerkKeyKind(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  const clerkKeysOk = clerkKeysAligned();
 
   const ok = database === "up";
   return NextResponse.json(
@@ -58,8 +58,11 @@ export async function GET() {
       checks: {
         database,
         clerk: isClerkConfigured() ? "configured" : "missing",
+        clerkSecretKind: secretKind,
+        clerkPublishableKind: publishableKind,
+        clerkKeysAligned: clerkKeysOk,
         googleOAuth: isGoogleOAuthConfigured() ? "configured" : "missing",
-        moyasar: isMoyasarLive() ? "configured" : "missing",
+        moyasar: moyasarHealthLabel(),
         conversationSession,
         ...(conversationSessionDetail ? { conversationSessionDetail } : {}),
       },

@@ -11,8 +11,18 @@ export function moyasarPublishable(): string {
   return (process.env.MOYASAR_PUBLISHABLE_KEY || "").trim();
 }
 
+/** الدفع معطّل حتى يُضبط PAYMENTS_ENABLED=true. الغياب ليس فشلًا. */
+export function paymentsEnabled(): boolean {
+  const flag = (process.env.PAYMENTS_ENABLED || "").trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "on";
+}
+
 export function isMoyasarLive(): boolean {
-  return Boolean(moyasarSecret());
+  return paymentsEnabled() && Boolean(moyasarSecret());
+}
+
+export function moyasarHealthLabel(): "مهيأة" | "غير مهيأة" {
+  return isMoyasarLive() ? "مهيأة" : "غير مهيأة";
 }
 
 function amountHalalas(plan: PlanDefinition, interval: PlanInterval): number | null {
@@ -37,8 +47,9 @@ export async function createMoyasarInvoice(input: {
   userName: string;
   origin: string;
 }): Promise<{ ok: true; invoice: MoyasarInvoice } | { ok: false; message: string }> {
+  if (!paymentsEnabled()) return { ok: false, message: "الدفع غير مهيأ." };
   const secret = moyasarSecret();
-  if (!secret) return { ok: false, message: "مفتاح Moyasar غير مضبوط." };
+  if (!secret) return { ok: false, message: "الدفع غير مهيأ." };
 
   const amount = amountHalalas(input.plan, input.interval);
   if (amount == null) return { ok: false, message: "الخطة غير قابلة للدفع." };

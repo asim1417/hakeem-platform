@@ -1,0 +1,31 @@
+{
+  "step": "production additions 2026-09-25",
+  "database": "neondb",
+  "update_count": 0,
+  "delete_count": 0,
+  "uqn_fix_rows": {
+    "source_snapshot": 370,
+    "supersession_evidence": 17,
+    "issuance_instrument": 16,
+    "amendment_op": 395,
+    "amendment_manual": 176,
+    "amendment_review": 0
+  },
+  "invariants_F1_to_F7": 0,
+  "F8_update_rejected": true,
+  "verification_inserted": 347,
+  "relations_inserted": 13,
+  "systems_inserted": 1,
+  "articles_unchanged": 28253,
+  "systems_after": 1136,
+  "not_applied": [
+    "395 amendment operations: review workbook has 0 decisions",
+    "176 manual queue items",
+    "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة: not_proven, zero verification rows"
+  ],
+  "new_text_not_marked_replaced": {
+    "نظام التنفيذ": "صادر لم يسرِ بعد on the stored م/237 text (65 articles); effective 2026-10-28",
+    "نظام السجل التجاري": "ساري on stored م/83 text",
+    "نظام الأسماء التجارية": "ساري on stored م/83 text"
+  }
+}

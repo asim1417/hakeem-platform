@@ -1,0 +1,145 @@
+/* ── واجهات الدخول: رموز الوصول (WCAG 2.1 AA) ──
+   تقرير فحص واجهات الدخول: نص ثانوي 4.9:1، وحلقة تركيز 12:1، وحدود حقول 3.4:1. */
+:root {
+  --auth-muted: #5B7473;        /* نص ثانوي — بدل rgba(14,52,53,0.55–0.68) */
+  --auth-focus: #0E3435;        /* حلقة التركيز — بدل النحاسي 2.56:1 */
+  --auth-input-border: #7B8F8E; /* حدود الحقول — بدل 1.41:1 */
+  --auth-target: 44px;          /* أدنى هدف لمس */
+}
+
+.hk-auth a:focus-visible,
+.hk-auth button:focus-visible,
+.hk-auth input:focus-visible,
+.hk-auth select:focus-visible,
+.hk-auth textarea:focus-visible,
+.hk-auth [tabindex]:focus-visible {
+  outline: 2px solid var(--auth-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.hk-auth-required-note {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--auth-muted);
+}
+.hk-auth-required-mark {
+  color: #8C2233;
+  margin-inline-start: 0.2rem;
+}
+
+/* عنوان الصفحة على الجوال — لوحة الهوية (وفيها h1) مخفية دون 960px. */
+.login-mobile-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-align: center;
+}
+@media (min-width: 960px) {
+  .login-mobile-title { display: none; }
+}
+
+body.hk-scroll-locked { overflow: hidden; }
+
+/* روابط التذييل تحت بطاقة الدخول ورابط «سجّل مجانًا» تحت صندوق السؤال: تباين وهدف لمس 44px */
+.login-panel__links { color: var(--auth-muted); }
+.login-panel__links a {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+  padding-inline: 0.25rem;
+}
+.guest-ask__auth-link {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+}
+
+/* رابط «عن حكيم» في رأس مساحة العمل */
+.topbar-about {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+  padding-inline: 0.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.topbar-about:hover { color: var(--gold-dark); text-decoration: underline; }
+
+/* مساحة العمل: إشعار رصيد التجربة (الشاشة ٨) */
+.wb-trial {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid #E8D6BC;
+  border-radius: 12px;
+  background: #F5EFE1;
+  font-size: 14px;
+  color: #12211F;
+}
+.wb-trial > span:first-child { color: #A9793F; }
+
+/* ── العرض الحي في الرئيسية (لوحتا «العرض الحي» و«العرض الحي على الجوال») ── */
+.hk-home-hero--demo {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+@media (min-width: 1100px) {
+  .hk-home-hero--demo { flex-direction: row; align-items: center; gap: 48px; }
+  .hk-home-hero--demo > .hk-home-hero__main { flex: 1 1 0; min-width: 0; }
+}
+.hk-demo-sep { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5B7473; }
+.hk-demo-sep::before, .hk-demo-sep::after { content: ""; flex-grow: 1; height: 1px; background: #D5DDDB; }
+@media (min-width: 1100px) { .hk-demo-sep { display: none; } }
+.hk-demo {
+  box-sizing: border-box;
+  width: 100%;
+  height: 680px;
+  flex-shrink: 0;
+  padding: 16px 16px 10px;
+  background: #FFFFFF;
+  border: 1px solid #D5DDDB;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(14, 52, 53, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #12211F;
+  overflow: hidden;
+  text-align: right;
+}
+@media (min-width: 640px) {
+  .hk-demo {
+    width: 640px;
+    max-width: 100%;
+    height: 600px;
+    padding: 20px 22px 16px;
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(14, 52, 53, 0.12);
+    gap: 12px;
+  }
+}
+.hk-demo--placeholder { background: #FBFAF6; }
+
+.hk-demo-video {
+  display: inline-flex;
+  min-height: var(--auth-target);
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0E3435;
+}
+
+/* عناوين تستقبل التركيز برمجيًا عند فتح الحوار (tabIndex=-1) — ليست عناصر تفاعلية فلا إطار حولها */
+.hk-auth h2[tabindex="-1"]:focus,
+.hk-auth h2[tabindex="-1"]:focus-visible { outline: none; }
+

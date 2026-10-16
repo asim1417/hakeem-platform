@@ -1,20 +1,27 @@
 import Link from "next/link";
+import { CreditCard } from "lucide-react";
 import type { QuotaStatus } from "@/lib/modules/billing/quota";
 import { PRICING } from "@/config/pricing";
 
 export function BillingStatusCard({
   status,
   userName,
+  showPlansLink = true,
 }: {
   status: QuotaStatus;
   userName?: string;
+  /** إخفاء رابط الخطط عندما تكون الواجهة المدفوعة مغلقة */
+  showPlansLink?: boolean;
 }) {
   const ar = (n: number) => n.toLocaleString("ar-SA");
 
   if (status.unknown) {
     return (
       <section className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory p-5">
-        <h2 className="font-display-ar text-lg font-bold text-[var(--navy)]">حالة الاشتراك</h2>
+        <div className="flex items-center gap-2">
+          <CreditCard size={18} className="text-[var(--navy)]" aria-hidden />
+          <h2 className="font-display-ar text-lg font-bold text-[var(--navy)]">حالة الاشتراك</h2>
+        </div>
         <p className="mt-2 text-sm leading-7 text-[var(--ink-60)]">
           عدّاد الحصّة غير مفعّل بعد على قاعدة البيانات — الاستخدام مفتوح حاليًا. عند تفعيل أعمدة الحصّة يظهر الرصيد هنا.
         </p>
@@ -29,18 +36,23 @@ export function BillingStatusCard({
     <section className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-ivory p-5 shadow-[var(--sh-xs)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold text-[var(--gold-dark)]">حسابك</p>
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-[var(--gold-dark)]">
+            <CreditCard size={14} aria-hidden />
+            حسابك
+          </p>
           <h2 className="mt-1 font-display-ar text-xl font-bold text-[var(--navy)]">
             {userName ? `${userName} · ` : ""}
             {planLabel}
           </h2>
         </div>
-        <Link
-          href="/dashboard/subscribe"
-          className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-xs font-semibold text-[var(--navy)]"
-        >
-          عرض الخطط
-        </Link>
+        {showPlansLink ? (
+          <Link
+            href="/dashboard/subscribe"
+            className="focus-ring rounded-[var(--r-md)] border border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-2 text-xs font-semibold text-[var(--navy)]"
+          >
+            عرض الخطط
+          </Link>
+        ) : null}
       </div>
 
       {status.isSubscribed ? (

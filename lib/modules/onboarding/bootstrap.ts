@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { CREDIT_REWARDS } from "@/config/credits";
 import { awardSignupBundle } from "@/lib/modules/credits/ledger";
+import { isPhoneOnlyLocalEmail } from "@/lib/modules/auth/clerk-local-email";
 import { sendWelcomeEmail } from "@/lib/modules/email/send";
 import { markOnboardingPending } from "@/lib/modules/onboarding/profile";
 import { ensureReferralCode, redeemReferral } from "@/lib/modules/referrals/codes";
@@ -26,7 +27,8 @@ export async function bootstrapNewUser(
   const user = await prisma.user
     .findUnique({ where: { id: userId }, select: { email: true, name: true } })
     .catch(() => null);
-  if (user?.email) {
+  // حساب الجوال وحده: بريده معرّف داخلي لا يُسلَّم إليه — لا رسالة ترحيب
+  if (user?.email && !isPhoneOnlyLocalEmail(user.email)) {
     await sendWelcomeEmail({
       to: user.email,
       name: user.name,

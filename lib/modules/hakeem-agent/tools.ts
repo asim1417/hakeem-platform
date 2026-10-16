@@ -11,6 +11,7 @@ import {
   type SourcePolicy,
 } from "@/lib/modules/hakeem-composer/source-policy";
 import { loadSkillGuide, skillsIndex } from "./skills";
+import { applyEffectiveText } from "@/lib/modules/legal-core/effective-text";
 
 /** مصدرٌ استُرجِع خلال الجلسة — يُجمَّع للأساس (basis) ولحارس الإسناد. */
 export interface RetrievedSource {
@@ -365,10 +366,12 @@ export async function executeTool(name: string, rawInput: unknown, ctx: AgentCon
     if (name === "fetch_legal_source") {
       const sourceId = String(input.sourceId ?? "").trim();
       if (!sourceId) return { ok: false, data: { error: "sourceId مطلوب" }, label: "قراءة مصدر" };
-      const a = await prisma.legalArticle.findUnique({
+      const stored = await prisma.legalArticle.findUnique({
         where: { id: sourceId },
         select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true },
       });
+      // النص الساري (المصدر الواحد)؛ الملغاة تُرجع سطر الإلغاء وسنده.
+      const a = stored ? (await applyEffectiveText([stored]))[0] : null;
       if (!a) return { ok: false, data: { error: "لم يُعثر على المادة بهذا المعرّف" }, label: "قراءة مصدر" };
       const src = addSource(ctx, {
         sourceId: a.id,

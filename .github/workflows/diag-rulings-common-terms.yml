@@ -1,0 +1,27 @@
+name: Diag rulings common terms plan (read-only)
+# تشخيص قراءة فقط لبطء البحث اللفظي للألفاظ الشائعة. المخرج خطط وأزمنة بلا نصوص ولا معرّفات.
+on:
+  push:
+    branches: [claude/rulings-latency-common-terms, claude/rulings-review-fixes]
+    paths: [.github/workflows/diag-rulings-common-terms.yml, scripts/rulings-research/diag-common-terms-plan.ts, lib/modules/legal-core/rulings-search.ts]
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: DATABASE_URL="$NEON_DATABASE_URL" npm run db:generate
+      - name: "قراءة فقط"
+        run: |
+          base=$(printf '%s' "$NEON_DATABASE_URL" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          sep='?'; case "$base" in *\?*) sep='&';; esac
+          url="${base}${sep}options=-c%20default_transaction_read_only%3Don%20-c%20statement_timeout%3D60000"
+          echo "::add-mask::$url"
+          DATABASE_URL="$url" npx tsx scripts/rulings-research/diag-common-terms-plan.ts

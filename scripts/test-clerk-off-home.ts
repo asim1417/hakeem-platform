@@ -51,6 +51,24 @@ assert.equal(
   "HomeHero must not use next/link — prefetch loads Clerk via auth layouts"
 );
 
+// القاعدة: لا Clerk في الحزمة الأولى للصفحة العامة — يُحمَّل ديناميكيًا داخل حوار الدخول فقط.
+for (const f of fs.readdirSync(path.join(root, "components/home"))) {
+  const src = fs.readFileSync(path.join(root, "components/home", f), "utf8");
+  assert.equal(/(from|import)\s+["']@clerk\//.test(src), false, `static Clerk import in components/home/${f}`);
+}
+assert.equal(
+  /from\s+["']@\/components\/(home\/HomeAuth(Dialog|Identifier)|providers\/Clerk(AppProvider|Root))["']/.test(home),
+  false,
+  "HomeHero must not statically pull the dialog or a Clerk provider"
+);
+const homeLauncher = fs.readFileSync(path.join(root, "components/home/HomeAuthLauncher.tsx"), "utf8");
+assert.ok(homeLauncher.includes('import("@/components/home/HomeAuthDialog")'), "dialog is a lazy chunk");
+const homeIdentifier = fs.readFileSync(path.join(root, "components/home/HomeAuthIdentifier.tsx"), "utf8");
+assert.ok(homeIdentifier.includes("ClerkAppProvider"), "Clerk only inside the dialog");
+const lazyProvider = fs.readFileSync(path.join(root, "components/providers/ClerkAppProvider.tsx"), "utf8");
+assert.ok(lazyProvider.includes('import("@clerk/nextjs")'), "ClerkAppProvider loads Clerk dynamically");
+assert.equal(/from\s+["']@clerk\/nextjs["']/.test(lazyProvider), false);
+
 const mw = fs.readFileSync(path.join(root, "middleware.ts"), "utf8");
 assert.ok(mw.includes("isClerkMiddlewareBypass"));
 assert.ok(mw.includes("/sign-in(.*)"));

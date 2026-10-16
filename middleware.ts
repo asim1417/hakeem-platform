@@ -3,6 +3,14 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import {
+  HOME_VIEW_PARAM,
+  isHomeSignedInRedirectEnabled,
+  LOGGED_OUT_MARK_COOKIE,
+  shouldRedirectSignedInHome,
+} from "@/lib/modules/config/home-signed-in-redirect";
+import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
+import { singleSignInTarget } from "@/lib/modules/auth/single-sign-in";
+import {
   plainAuthGate,
   resolveUnauthenticatedGate,
 } from "@/lib/modules/auth/middleware-gate";
@@ -11,6 +19,8 @@ import {
   HAKEEM_SEARCH_HEADER,
   HAKEEM_CORRELATION_HEADER,
 } from "@/lib/modules/auth/request-path-headers";
+import { workspaceHomeFromSessionCookie } from "@/lib/modules/auth/session-cookie-peek";
+import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -31,8 +41,14 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/demo(.*)",
   "/api/due-diligence/demo(.*)",
   // خادم MCP: مسار عام تمامًا — لا يمسّه Clerk إطلاقًا (مستثنى أيضًا من matcher أدناه).
-  // يمنع اعتراض clerkMiddleware الذي يردّ 401 فيُفسَّر لدى عميل MCP كدعوة OAuth.
+  // مصادقة الموصل تتم داخل المسار نفسه (مفتاح أو OAuth الخاص بـ MCP)، لا عبر Clerk.
   "/mcp(.*)",
+  // اكتشاف OAuth وصفحة ربط الموصل يجب أن تبقيا خارج Clerk وإلا يفشل «بدء تسجيل الدخول» في Claude.
+  "/.well-known/oauth-protected-resource(.*)",
+  "/.well-known/oauth-authorization-server(.*)",
+  "/oauth/authorize(.*)",
+  "/oauth/token(.*)",
+  "/oauth/register(.*)",
   // واجهة ChatGPT العامة لأمان: أدوات ثابتة للفرز والتواصل فقط، بلا جلسة أو Clerk.
   "/aman/mcp(.*)",
   "/sign-in(.*)",
@@ -45,17 +61,28 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/legal(.*)",
   // إكمال OAuth — عزل عن clerkMiddleware يمنع وميض الفشل مع dev-browser-missing
   "/auth/continue(.*)",
+  // نموذج الدخول العربي — Clerk يعمل فيه على العميل فقط، كما في /sign-in.
+  "/auth/identifier(.*)",
   "/sso-callback(.*)",
   "/api/auth/oauth/start(.*)",
+  "/api/auth/account-portal(.*)",
   "/api/auth/google(.*)",
   "/api/auth/callback/google(.*)",
   "/api/auth/claim-clerk-return(.*)",
+  "/api/auth/claim-clerk-session(.*)",
   "/api/auth/me(.*)",
   "/api/auth/providers(.*)",
 ]);
 
 function hasOwnerSession(request: NextRequest) {
   return Boolean(request.cookies.get("hakeem_session")?.value);
+}
+
+/** وجهة مساحة العمل من دور الكوكي — بلا DB؛ السوبر → /admin مباشرة (لا ومضة /dashboard). */
+function workspaceHome(request: NextRequest): "/admin" | "/dashboard" {
+  return workspaceHomeFromSessionCookie(request.cookies.get("hakeem_session")?.value, {
+    superPanelEnabled: process.env.SUPER_ADMIN_PANEL_ENABLED !== "0",
+  });
 }
 
 /** يمرّر المسار للـ layouts عبر headers لتوجيه السوبر قبل رسم لوحة العميل. */
@@ -94,7 +121,7 @@ function getClerkHandler(): ClerkMw {
           nextRaw === "/admin" ||
           nextRaw.startsWith("/admin/"))
           ? nextRaw
-          : "/dashboard";
+          : workspaceHome(request);
       return NextResponse.redirect(new URL(next, request.url));
     }
 
@@ -121,9 +148,29 @@ function getClerkHandler(): ClerkMw {
  * صفحات الدخول العامة تتجاوز clerkMiddleware حتى مع وجود المفاتيح.
  */
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  // «/» للزائر و«/dashboard» لصاحب الجلسة: إحالة 307 قبل رسم الصفحة — وجود الكوكي فقط، بلا Clerk
+  // (حماية iPhone). ‎/?view=home‎ يعرض الواجهة التعريفية بطلبه. مفتاح الطوارئ: HOME_SIGNED_IN_REDIRECT_ENABLED=0
+  if (
+    request.nextUrl.pathname === "/" &&
+    shouldRedirectSignedInHome({
+      enabled: isHomeSignedInRedirectEnabled(),
+      hasSession: hasOwnerSession(request),
+      view: request.nextUrl.searchParams.get(HOME_VIEW_PARAM),
+      justLoggedOut: request.cookies.get(LOGGED_OUT_MARK_COOKIE)?.value === "1",
+    })
+  ) {
+    return NextResponse.redirect(new URL(workspaceHome(request), request.url), 307);
+  }
+
+  // صفحة دخول واحدة: ‎/sign-up‎ و‎/register‎ و‎/login‎ و‎/auth/identifier‎ ← ‎/sign-in‎ (307، والوجهة محفوظة)
+  if (isHomeInlineAuthEnabled()) {
+    const target = singleSignInTarget(request.nextUrl.pathname, request.nextUrl.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, request.url), 307);
+  }
+
   if (!isClerkConfigured()) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL(workspaceHome(request), request.url));
     }
     const decision = resolveUnauthenticatedGate(
       request.nextUrl.pathname,
@@ -136,9 +183,9 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
     return nextWithPath(request);
   }
 
-  if (isClerkMiddlewareBypass(request)) {
+  if (isClerkMiddlewareBypass(request) || isMcpOauthPublicPath(request.nextUrl.pathname)) {
     if (hasOwnerSession(request) && isAuthEntryRoute(request)) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL(workspaceHome(request), request.url));
     }
     return nextWithPath(request);
   }
@@ -150,7 +197,9 @@ export const config = {
   matcher: [
     // استثناء نقاط MCP (وكل ما تحتها) من الـ middleware نهائيًا — تمرّ مباشرةً إلى
     // Route Handler بلا اعتراض Clerk ولا تحويل.
-    "/((?!_next|mcp(?:/|$)|aman/mcp(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|mcp(?:/|$)|aman/mcp(?:/|$)|\\.well-known/oauth-(?:protected-resource|authorization-server)(?:/|$)|oauth/(?:authorize|token|register)(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
+    // مسار البروكسي التلقائي لـ Clerk (يلزم عند ترقية @clerk/nextjs لإصدار يدعمه).
+    "/__clerk/:path*",
   ],
 };

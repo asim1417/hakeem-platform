@@ -59,6 +59,8 @@ export const postgresProvider: SearchProvider = {
     const take = Math.min(limit, 20);
     const tokens = tokenizeQuery(term);
     const results: RawResult[] = [];
+    const t0 = Date.now();
+    const ms: Record<string, number> = {};
     // [إصلاح SEARCH-002] فلتر المحكمة يُطبَّق فعليًّا على الأحكام إن مُرّر (كان يُتجاهَل).
     const courtFilter = context?.court?.trim()
       ? { court: { contains: context.court.trim(), mode: "insensitive" as const } }
@@ -84,6 +86,7 @@ export const postgresProvider: SearchProvider = {
     } catch {
       /* تجاهل وأكمل بقية الأنواع */
     }
+    ms.articles = Date.now() - t0;
 
     try {
       // الأحكام القضائية — مطابقة كلمات السؤال الدالّة.
@@ -117,6 +120,7 @@ export const postgresProvider: SearchProvider = {
         });
       }
 
+      ms.rulings = Date.now() - t0 - ms.articles;
       // المبادئ القضائية — مطابقة كلمات السؤال الدالّة.
       const principles = await prisma.judicialPrinciple.findMany({
         where: tokenOrFilter(tokens, term, ["title", "principleText"]),
@@ -141,6 +145,7 @@ export const postgresProvider: SearchProvider = {
       return results; // أعد ما جُمع قبل الخطأ دون كسر
     }
 
+    console.info(`[search] postgres articles=${ms.articles} rulings=${ms.rulings ?? 0} principles=${Date.now() - t0 - ms.articles - (ms.rulings ?? 0)}`);
     return results;
   },
 };

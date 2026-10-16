@@ -18,6 +18,7 @@
 import { searchLegalCore, type LegalCoreResult } from "./legal-retrieval";
 import { hybridSearch, type HybridSearchResponse, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { deriveMatchedBy } from "@/lib/modules/legal-search/hybrid-search";
+import { rulingHitToMerged, searchRulingsDirect } from "./rulings-search";
 
 /** سقوف تمثيل كل نوع في النتيجة الموحّدة — تضمن ظهور الأحكام/المبادئ في تبويباتها. */
 const ARTICLE_CAP = 25;
@@ -124,7 +125,8 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
 
   // المواد من النواة (٥ إشارات، دلالي مُفعّل)؛ والأحكام/المبادئ من الهجين (يحمل court/year + RRF).
   // نجلب حتى FACET_FETCH (لا سقف العرض) كي تُحسب الأوجه على المجموعة الكاملة لا صفحة العرض.
-  const [core, hybrid] = await Promise.all([
+  // الأحكام من مسارها المستقل (لا الهجين، حيث تزاحمها المواد والمبادئ فتخرج).
+  const [core, hybrid, rulingsDirect] = await Promise.all([
     searchLegalCore({
       query,
       limit: Math.max(limit, ARTICLE_MATERIALIZE), // تجسيد صفحة صغيرة فقط (لا ٢٠٠)
@@ -134,6 +136,7 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
       facetDepth: FACET_FETCH,
     }).catch(() => null),
     hybridSearch({ q: query, limit: Math.max(limit, FACET_FETCH) }).catch(() => null),
+    searchRulingsDirect({ query, limit: 50 }).catch(() => null),
   ]);
 
   // مواد النواة → موحّدة، بثقة مُطبَّعة، بسقف التمثيل.
@@ -152,7 +155,8 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
   }
 
   // الأحكام والمبادئ من الهجين (غير-المواد)، بسقف لكل نوع.
-  const rulings = hybridResults.filter((r) => r.type === "ruling").slice(0, RULING_CAP);
+  const directRulings = (rulingsDirect?.hits ?? []).map(rulingHitToMerged);
+  const rulings = directRulings.slice(0, RULING_CAP);
   const principles = hybridResults.filter((r) => r.type === "principle").slice(0, PRINCIPLE_CAP);
 
   // الدمج الموحّد (الدفعة ١.٤): كل نوع يأتي بترتيبه الداخلي من محرّكه المُوالَف
@@ -170,7 +174,7 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
 
   // الأوجه (facets): المواد من النواة (مُحسوبة على العمق الكامل خفيفةً داخلها)، والأحكام من
   // الهجين. سقوط آمن إلى العدّ على المُجسَّد إن غابت أوجه النواة. الأعداد مطابقة للسابق.
-  const allRulings = hybridResults.filter((r) => r.type === "ruling");
+  const allRulings = directRulings;
   const cf = core?.facetCounts;
   const facets: ComprehensiveFacets = {
     system: cf?.system ?? countBy(coreResults, (a) => a.systemName),

@@ -46,14 +46,39 @@ export function AdminSettingsForm({ initial }: { initial: SettingStatus[] }) {
     try {
       const res = await fetch("/api/admin/settings", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ updates }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message ?? "تعذّر الحفظ.");
-      setSettings(data.settings);
+      const raw = await res.text();
+      let data: {
+        ok?: boolean;
+        message?: string;
+        updated?: number;
+        settings?: SettingStatus[];
+      } = {};
+      if (raw.trim()) {
+        try {
+          data = JSON.parse(raw) as typeof data;
+        } catch {
+          throw new Error(
+            res.ok
+              ? "رد الخادم غير مفهوم. أعد المحاولة."
+              : `تعذّر الحفظ (رمز ${res.status}). أعد تحميل الصفحة ثم حاول مرة أخرى.`
+          );
+        }
+      } else if (!res.ok) {
+        throw new Error(`تعذّر الحفظ (رمز ${res.status}). أعد تحميل الصفحة ثم حاول مرة أخرى.`);
+      }
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.message || "تعذّر الحفظ.");
+      }
+      if (data.settings) setSettings(data.settings);
       setEdits({});
-      setMessage({ tone: "ok", text: `تم حفظ ${data.updated} مفتاحًا. يعمل فورًا؛ للتعميم الكامل أعد النشر أو انتظر دقائق.` });
+      setMessage({
+        tone: "ok",
+        text: `تم حفظ ${data.updated ?? Object.keys(updates).length} مفتاحًا. يعمل فورًا؛ للتعميم الكامل أعد النشر أو انتظر دقائق.`,
+      });
     } catch (err) {
       setMessage({ tone: "err", text: err instanceof Error ? err.message : "تعذّر الحفظ." });
     } finally {

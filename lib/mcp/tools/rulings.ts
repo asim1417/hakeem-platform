@@ -8,16 +8,19 @@
  */
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
+import { extractHijriYear, redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
-/** يشتقّ سنة هجرية (٤ خانات) من نصّ التاريخ إن وُجد. */
-function hijriYear(text?: string | null): number | null {
-  if (!text) return null;
-  const m = text.match(/1[0-4]\d{2}/); // نطاق هجري معقول
-  return m ? Number.parseInt(m[0], 10) : null;
-}
+/** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
+const hijriYear = (text?: string | null): number | null => extractHijriYear(text);
 
-// ١) جلب نص حكم كاملًا بمعرّفه مع تقطيع (offset/next_offset).
-export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) {
+export const RULING_PARTS = ["header", "claims", "defense", "reasons", "disposition", "appeal", "other"] as const;
+export type RulingPartName = (typeof RULING_PARTS)[number];
+
+// ١) جلب نص حكم بمعرّفه مع تقطيع (offset/next_offset)، وخريطة أجزائه، وجلب جزء بعينه
+//    (part = reasons للأسباب، disposition للمنطوق…) كي لا يقرأ النموذج الديباجة أولًا.
+export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, part?: RulingPartName) {
   const r = await prisma.judicialCase.findUnique({
     where: { id: rulingId },
     select: { id: true, caseNo: true, decisionNo: true, court: true, decisionDateText: true, judgmentText: true },
@@ -25,9 +28,24 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) 
   if (!r) return { error: "الحكم غير موجود بهذا المعرّف", ruling_id: rulingId };
 
   const full = r.judgmentText ?? "";
-  const start = Math.max(0, Math.min(offset, full.length));
-  const chunk = full.slice(start, start + maxChars);
-  const nextOffset = start + chunk.length < full.length ? start + chunk.length : null;
+  const seg = segmentRuling(full);
+  const parts = seg.segments.map((s) => ({ type: s.type as SegmentType, start: s.start, end: s.end }));
+  // نطاق القراءة: الجزء المطلوب إن وُجد، وإلا النص كله.
+  const target = part ? parts.find((p) => p.type === part) : undefined;
+  if (part && !target) {
+    return { ruling_id: r.id, error: `لم يُعثر على جزء «${part}» في هذا الحكم بالقواعد`, parts };
+  }
+  const lo = target?.start ?? 0;
+  const hi = target?.end ?? full.length;
+  let start = Math.max(lo, Math.min(lo + offset, hi));
+  let end = Math.min(hi, start + maxChars);
+  // لا تُقطع الشريحة داخل رقم: redactPII يحتاج الرقم كاملًا، وإلا تسرّبت هوية أو جوال على نصفين
+  // عبر نداءين بإزاحتين متقاربتين. نمدّ الحدّين خارج أي سلسلة أرقام وفواصل.
+  const numeric = /[0-9\u0660-\u0669\s\u00a0+\-]/;
+  while (start > lo && numeric.test(full[start - 1]) && numeric.test(full[start])) start--;
+  while (end < hi && numeric.test(full[end]) && numeric.test(full[end - 1])) end++;
+  const chunk = full.slice(start, end);
+  const nextOffset = start + chunk.length < hi ? start - lo + chunk.length : null;
 
   return {
     ruling_id: r.id,
@@ -35,10 +53,12 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000) 
     court: r.court ?? null,
     year_h: hijriYear(r.decisionDateText),
     total_chars: full.length,
-    offset: start,
+    part: target?.type ?? null,
+    parts, // خريطة الأجزاء بإزاحاتها في النص الكامل
+    offset: start - lo, // داخل الجزء المطلوب (أو النص كله)
     returned_chars: chunk.length,
-    next_offset: nextOffset, // null = انتهى النص
-    text: chunk,
+    next_offset: nextOffset, // null = انتهى الجزء/النص
+    text: redactPII(chunk),
   };
 }
 
@@ -53,9 +73,9 @@ export async function enumerateRulings(
   snippetLen = 500,
 ) {
   // تعقيم أحرف بدل ILIKE (% _ \) ثمّ تغليف بـ %..% — بمعاملات مربوطة (بلا حقن).
-  const likeTerms = terms.map((t) => `%${t.replace(/[%_\\]/g, "")}%`);
+  const likeTerms = terms.map((t) => `%${normalizeArabic(t).replace(/[%_\\]/g, "")}%`);
   const termConds = Prisma.join(
-    likeTerms.map((t) => Prisma.sql`r."judgmentText" ILIKE ${t}`),
+    likeTerms.map((t) => Prisma.sql`r."search_norm" ILIKE ${t}`),
     " OR ",
   );
   const filters: Prisma.Sql[] = [Prisma.sql`(${termConds})`];
@@ -109,7 +129,7 @@ export async function enumerateRulings(
       court: r.court,
       year_h: hijriYear(r.decisionDateText),
       match_offset: idx === -1 ? null : idx,
-      snippet,
+      snippet: redactPII(snippet),
     };
   });
 

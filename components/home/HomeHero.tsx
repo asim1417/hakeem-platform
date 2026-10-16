@@ -1,27 +1,91 @@
-import { HomeAuthActions } from "@/components/home/HomeAuthActions";
+import { HomeAuthActions, HomeAuthUserName } from "@/components/home/HomeAuthActions";
 import { GuestAskComposer } from "@/components/home/GuestAskComposer";
+import { HomeAuthLauncher, type HomeAuthConfig } from "@/components/home/HomeAuthLauncher";
+import { HomeLiveDemoLazy } from "@/components/home/HomeLiveDemoLazy";
+import type { LiveDemoPayload } from "@/lib/modules/home/live-demo-content";
 import { hasAnySignInProvider } from "@/lib/modules/auth/auth-providers";
+import { buildHomeAuthConfig } from "@/lib/modules/auth/home-auth-config";
 import { signUpWithNext } from "@/lib/modules/auth/safe-next";
 import { isAskFirstHomeEnabled } from "@/lib/modules/config/ask-first-home";
+import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
 import {
   DEFAULT_HOME,
   type SiteHomeContent,
 } from "@/lib/modules/site/defaults";
 
+type HomeAuthLinkAttrs = {
+  "data-home-auth"?: "login" | "ask" | "navigate";
+  "data-home-auth-mode"?: "sign-in" | "sign-up";
+  "data-home-auth-next"?: string;
+};
+
 /**
- * الصفحة الرئيسية العامة — بلا Clerk وبلا OAuth.
+ * الصفحة الرئيسية العامة — بلا Clerk وبلا OAuth في الحزمة الأولى.
  * عند ASK_FIRST_HOME: جوهر الصفحة صندوق «اسأل حكيم» للزائر.
+ * عند HOME_INLINE_AUTH_ENABLED (افتراضيًا): روابط الدخول تفتح حوارًا داخل الصفحة
+ * عبر HomeAuthLauncher، وتبقى <a href> حقيقية لمن لا يعمل عنده JavaScript.
  */
 export function HomeHero({
   content = DEFAULT_HOME,
+  liveDemo = null,
+  demoVideoUrl = null,
 }: {
   content?: SiteHomeContent;
+  /** «العرض الحي» (HOME_LIVE_DEMO_ENABLED) — null = الصفحة كما هي */
+  liveDemo?: LiveDemoPayload | null;
+  /** HOME_DEMO_VIDEO_URL — زر «شاهد التجربة كاملة» */
+  demoVideoUrl?: string | null;
 }) {
   const authReady = hasAnySignInProvider();
   const home = content;
   const features =
     home.features?.length > 0 ? home.features : DEFAULT_HOME.features;
   const askFirst = isAskFirstHomeEnabled();
+  const inlineAuth = authReady && isHomeInlineAuthEnabled();
+  const authConfig: HomeAuthConfig | null = inlineAuth ? buildHomeAuthConfig() : null;
+  /** سمات الاعتراض — فارغة تمامًا عند إطفاء الراية (الروابط كما كانت). */
+  const authLink = (
+    kind: "login" | "navigate",
+    mode: "sign-in" | "sign-up",
+    next?: string
+  ): HomeAuthLinkAttrs =>
+    inlineAuth
+      ? {
+          "data-home-auth": kind,
+          "data-home-auth-mode": mode,
+          ...(next ? { "data-home-auth-next": next } : {}),
+        }
+      : {};
+  const launcher = authConfig ? <HomeAuthLauncher config={authConfig} /> : null;
+  // الشريط عند تفعيل الحوار: «ابدأ مجانًا» أساسي + «دخول» نصّي (زر واحد على الجوال)
+  const inlineGuestBar = (
+    <div className="flex items-center gap-1 sm:gap-2">
+      <a
+        href="/sign-in"
+        {...authLink("login", "sign-in")}
+        aria-label="تسجيل الدخول"
+        className="focus-ring hidden min-h-[44px] items-center px-3 text-sm font-semibold text-[var(--navy)] underline-offset-4 hover:underline sm:inline-flex"
+      >
+        دخول
+      </a>
+      <a
+        href="/sign-up"
+        {...authLink("login", "sign-up")}
+        className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white"
+      >
+        ابدأ مجانًا
+      </a>
+    </div>
+  );
+  const inlineUserBar = (
+    <a
+      id="home-account-link"
+      href="/dashboard"
+      className="focus-ring inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] bg-[var(--navy)] px-5 py-2.5 text-sm font-semibold text-white"
+    >
+      <HomeAuthUserName fallback="المتابعة إلى المنصة" />
+    </a>
+  );
 
   if (askFirst) {
     return (
@@ -61,6 +125,9 @@ export function HomeHero({
             </a>
           </nav>
 
+          {inlineAuth ? (
+            <HomeAuthActions guest={inlineGuestBar} user={inlineUserBar} />
+          ) : (
           <HomeAuthActions
             guest={
               <div className="flex items-center gap-2">
@@ -87,42 +154,95 @@ export function HomeHero({
               </a>
             }
           />
+          )}
         </header>
 
-        <section
-          id="ask"
-          className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[5vh] pb-10 text-center"
-        >
-          <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
-            {home.brandName}
-          </p>
-          {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
-          <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
-            ابدأ بسؤالك القانوني
-          </h1>
-          <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
-            اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
-            عليها.
-          </p>
+        {liveDemo ? (
+          // الرئيسية مع العرض الحي: بجوار صندوق السؤال على سطح المكتب، وتحته على الجوال
+          <section id="ask" className="relative mx-auto max-w-6xl px-6 pt-[5vh] pb-10">
+            <div className="hk-home-hero--demo">
+              <div className="hk-home-hero__main flex flex-col items-center text-center">
+              <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
+                {home.brandName}
+              </p>
+              {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
+              <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
+                ابدأ بسؤالك القانوني
+              </h1>
+              <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
+                اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
+                عليها.
+              </p>
 
-          <HomeAuthActions
-            guest={
-              <div className="mt-8 w-full max-w-2xl text-right">
-                <GuestAskComposer />
-              </div>
-            }
-            user={
-              <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
-                <a
-                  href="/dashboard"
-                  className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
-                >
-                  اسأل حكيم الآن
+              <HomeAuthActions
+                guest={
+                  <div className="mt-8 w-full max-w-2xl text-right">
+                    <GuestAskComposer />
+                  </div>
+                }
+                user={
+                  <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+                    <a
+                      href="/dashboard"
+                      className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
+                    >
+                      اسأل حكيم الآن
+                    </a>
+                  </div>
+                }
+              />
+              {demoVideoUrl ? (
+                <a href={demoVideoUrl} target="_blank" rel="noopener" className="hk-demo-video mt-4">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M10 8.5v7l6-3.5-6-3.5z" fill="currentColor" stroke="none" />
+                  </svg>
+                  شاهد التجربة كاملة
                 </a>
+              ) : null}
               </div>
-            }
-          />
-        </section>
+              <div className="hk-demo-sep" aria-hidden>
+                <span>كيف يجيب حكيم؟</span>
+              </div>
+              <HomeLiveDemoLazy payload={liveDemo} />
+            </div>
+          </section>
+        ) : (
+          <section
+            id="ask"
+            className="relative mx-auto flex max-w-3xl flex-col items-center px-6 pt-[5vh] pb-10 text-center"
+          >
+            <p className="mb-3 font-display text-sm font-semibold text-[var(--gold-dark)]">
+              {home.brandName}
+            </p>
+            {/* font-display (مُحمَّل مسبقًا) بدل Amiri — يحسّن LCP على الجوال */}
+            <h1 className="font-display text-3xl font-bold leading-tight text-[var(--navy)] md:text-5xl">
+              ابدأ بسؤالك القانوني
+            </h1>
+            <p className="mt-3 max-w-xl text-base leading-8 text-[var(--ink-70)] md:text-lg">
+              اطرح الواقعة أو المسألة، ودع حكيم يساعدك على فهمها والبحث في مصادرها وتنظيم مسار العمل
+              عليها.
+            </p>
+
+            <HomeAuthActions
+              guest={
+                <div className="mt-8 w-full max-w-2xl text-right">
+                  <GuestAskComposer />
+                </div>
+              }
+              user={
+                <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+                  <a
+                    href="/dashboard"
+                    className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white"
+                  >
+                    اسأل حكيم الآن
+                  </a>
+                </div>
+              }
+            />
+          </section>
+        )}
 
         <section
           id="services"
@@ -140,6 +260,7 @@ export function HomeHero({
               <li key={f.title}>
                 <a
                   href={signUpWithNext(f.next)}
+                  {...authLink("navigate", "sign-up", f.next)}
                   className="focus-ring block w-full rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/90 px-4 py-4 text-start transition hover:border-[var(--gold-border)]"
                 >
                   <p className="font-semibold text-[var(--navy)]">{f.title}</p>
@@ -169,6 +290,7 @@ export function HomeHero({
             <p className="mt-4 text-xs text-[var(--ink-40)]">{home.footnote}</p>
           ) : null}
         </section>
+        {launcher}
       </main>
     );
   }
@@ -197,6 +319,9 @@ export function HomeHero({
 
         <HomeAuthActions
           guest={
+            inlineAuth ? (
+              inlineGuestBar
+            ) : (
             <div className="flex items-center gap-2">
               <a
                 href="/sign-in"
@@ -211,6 +336,7 @@ export function HomeHero({
                 سجّل مجانًا
               </a>
             </div>
+            )
           }
           user={
             <a
@@ -239,12 +365,14 @@ export function HomeHero({
             <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
               <a
                 href={authReady ? "/sign-up" : "/sign-in"}
+                {...authLink("login", "sign-up")}
                 className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] bg-[var(--navy)] px-6 py-3.5 text-base font-semibold text-white shadow-[var(--sh-sm)] transition hover:bg-[var(--navy-mid)]"
               >
                 {home.ctaPrimary}
               </a>
               <a
                 href="/sign-in"
+                {...authLink("login", "sign-in")}
                 className="focus-ring inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[var(--r-md)] border border-[var(--gold-border)] bg-ivory px-6 py-3.5 text-base font-semibold text-[var(--navy)] transition hover:border-[var(--gold)]"
               >
                 {home.ctaSecondary}
@@ -276,6 +404,7 @@ export function HomeHero({
             <li key={f.title}>
               <a
                 href={signUpWithNext(f.next)}
+                {...authLink("navigate", "sign-up", f.next)}
                 className="focus-ring block w-full rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/90 px-4 py-4 text-start transition hover:border-[var(--gold-border)] hover:shadow-[var(--sh-xs)]"
               >
                 <p className="font-semibold text-[var(--navy)]">{f.title}</p>
@@ -292,6 +421,7 @@ export function HomeHero({
           {home.disclaimer}
         </p>
       </section>
+      {launcher}
     </main>
   );
 }

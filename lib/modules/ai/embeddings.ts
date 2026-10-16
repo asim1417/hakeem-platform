@@ -9,6 +9,8 @@
  * التفعيل يتطلب: مفتاح مزوّد + تشغيل scripts/backfill-embeddings.ts لملء المتجهات.
  */
 
+import { redactPII } from "@/lib/modules/legal-core/rulings-search";
+
 export const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
 export const EMBEDDING_DIMS = Number(process.env.EMBEDDING_DIMS || 1536);
 
@@ -171,7 +173,7 @@ export function parseStoredEmbedding(value: unknown): number[] | null {
   return null;
 }
 
-/** نصّ التضمين القياسي لمادة (اسم النظام + العنوان + النص). */
+/** نصّ التضمين القياسي. يُحجب الشخصي قبل الإرسال، دون كتابة على النص الأصلي. */
 export function buildEmbeddingText(parts: { systemName?: string | null; title?: string | null; content?: string | null }): string {
-  return [parts.systemName, parts.title, parts.content].filter(Boolean).join("\n").slice(0, 8000);
+  return redactPII([parts.systemName, parts.title, parts.content].filter(Boolean).join("\n")).slice(0, 8000);
 }

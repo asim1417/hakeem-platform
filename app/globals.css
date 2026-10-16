@@ -2187,9 +2187,10 @@ body {
 /* Ask-first home */
 .wb--ask-first { gap: 1.35rem; }
 .wb-meta--top { margin-bottom: 0.25rem; }
+/* مساحة اسأل كاملة (قائمة الجلسات + المحادثة) كما في /dashboard/ask — لا سقف 48rem يضغطها */
 .wb-ask-full {
   width: 100%;
-  max-width: 48rem;
+  max-width: 100%;
   margin: 0 auto;
   min-width: 0;
 }

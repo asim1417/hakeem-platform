@@ -2,13 +2,22 @@
  * وجهة آمنة بعد المصادقة — مسارات المنصة الداخلية فقط.
  * يقبل `next` أو `returnUrl` كمرادفين.
  */
+/**
+ * العودة إلى الصفحة الرئيسية بعد دخول بدأ من حوارها (احتياط حجب النافذة المنبثقة).
+ * قيمة واحدة ثابتة — «/» وحدها ما زالت تعود إلى fallback كما كانت.
+ */
+export const HOME_AUTH_RETURN_PATH = "/?home_auth=1";
+
 export function safeDashboardNext(raw?: string | null, fallback = "/dashboard"): string {
   if (!raw) return fallback;
+  if (raw === HOME_AUTH_RETURN_PATH) return raw;
   if (!raw.startsWith("/") || raw.startsWith("//")) return fallback;
   if (raw === "/dashboard" || raw.startsWith("/dashboard/")) return raw;
   if (raw === "/documents" || raw.startsWith("/documents/")) return raw;
   if (raw === "/admin" || raw.startsWith("/admin/")) return raw;
   if (raw === "/onboarding" || raw.startsWith("/onboarding/")) return raw;
+  // شاشة موافقة ربط موصل حكيم (MCP) — مسار ثابت بلا معاملات؛ الطلب نفسه في كوكي موقّع.
+  if (raw === "/connect/authorize") return raw;
   return fallback;
 }
 
@@ -32,5 +41,6 @@ export function signInWithNext(nextPath: string): string {
 
 export function signUpWithNext(nextPath: string): string {
   const next = safeDashboardNext(nextPath);
-  return `/sign-up?next=${encodeURIComponent(next)}`;
+  // مباشرة إلى بوابة الدخول بوضع التسجيل — يتجنّب ومضة /sign-up ثم 307
+  return `/sign-in?mode=sign-up&next=${encodeURIComponent(next)}`;
 }

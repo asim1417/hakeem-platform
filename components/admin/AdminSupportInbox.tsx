@@ -225,20 +225,25 @@ export function AdminSupportInbox({
                 const who = fromClient
                   ? m.senderName || senderLabel(active)
                   : m.senderName || "دعم حكيم";
+                const isAuto = !fromClient && (m.senderName || "").includes("تلقائي");
                 return (
                   <div
                     key={m.id}
                     className={
                       fromClient
                         ? "ml-6 rounded-lg bg-white px-3 py-2 text-sm text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.1)]"
-                        : "mr-6 rounded-lg bg-[#0E3435] px-3 py-2 text-sm text-[#FFFcf7]"
+                        : isAuto
+                          ? "mr-6 rounded-lg bg-[#F7F2EA] px-3 py-2 text-sm text-[#0E3435] ring-1 ring-[rgba(14,52,53,0.08)]"
+                          : "mr-6 rounded-lg bg-[#0E3435] px-3 py-2 text-sm text-[#FFFcf7]"
                     }
                   >
                     <p
                       className={
                         fromClient
                           ? "text-[11px] font-bold text-[#8B6914]"
-                          : "text-[11px] font-bold text-[#C9A84C]"
+                          : isAuto
+                            ? "text-[11px] font-bold text-[rgba(14,52,53,0.55)]"
+                            : "text-[11px] font-bold text-[#C9A84C]"
                       }
                     >
                       {who}

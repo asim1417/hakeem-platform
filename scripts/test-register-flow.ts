@@ -11,15 +11,17 @@ const schema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   username: z.string().min(3).max(32).optional().or(z.literal("")),
   password: z.string().min(8).max(72),
-  entityType: z.enum(["INDIVIDUAL", "LAW_FIRM", "OTHER"]).default("INDIVIDUAL"),
+  entityType: z
+    .enum(["LAWYER", "TRAINEE_LAWYER", "LEGAL_PRACTITIONER", "LAW_FIRM", "OTHER", "INDIVIDUAL"])
+    .default("LAWYER"),
 });
 
 const ok = schema.parse({
   name: "محامٍ تجريبي",
   password: generateEasyPassword(),
-  entityType: "INDIVIDUAL",
+  entityType: "LAWYER",
 });
-assert.equal(ok.entityType, "INDIVIDUAL");
+assert.equal(ok.entityType, "LAWYER");
 
 const u = generateUsername(ok.name);
 assert.ok(isValidUsername(u));

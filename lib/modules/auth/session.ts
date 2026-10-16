@@ -11,6 +11,7 @@ import type { Permission } from "@/lib/modules/auth/rbac";
 import { canUser } from "@/lib/modules/auth/rbac";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { ensureLocalUserFromClerk } from "@/lib/modules/auth/clerk-sync";
+import { isPhoneOnlyLocalEmail, localEmailForClerkUser } from "@/lib/modules/auth/clerk-local-email";
 
 const cookieName = "hakeem_session";
 const maxAgeSeconds = 60 * 60 * 8;
@@ -116,16 +117,17 @@ async function resolveClerkUser(): Promise<SafeUser | null> {
   if (!userId) return null;
 
   const cu = await currentUser();
-  const email =
-    cu?.primaryEmailAddress?.emailAddress ||
-    cu?.emailAddresses?.[0]?.emailAddress ||
-    "";
-  if (!email) return null;
+  if (!cu) return null;
+  // حساب الجوال وحده بلا بريد ← معرّف داخلي ثابت (clerk-local-email) بدل الرفض
+  const email = localEmailForClerkUser(cu);
 
   return ensureLocalUserFromClerk({
     clerkId: userId,
     email,
-    name: [cu?.firstName, cu?.lastName].filter(Boolean).join(" ") || cu?.username,
+    name:
+      [cu.firstName, cu.lastName].filter(Boolean).join(" ") ||
+      cu.username ||
+      (isPhoneOnlyLocalEmail(email) ? "مستخدم حكيم" : undefined),
   });
 }
 

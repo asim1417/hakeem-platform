@@ -91,6 +91,7 @@ export function SearchAutocomplete({
             role="combobox"
             aria-expanded={showList}
             aria-haspopup="listbox"
+            aria-controls={listId}
             aria-owns={listId}
           >
             <Search size={18} className="text-[var(--ink-40)]" aria-hidden />

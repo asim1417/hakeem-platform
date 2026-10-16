@@ -1,0 +1,1367 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
+import { CodeInput } from "@/components/auth/CodeInput";
+import { ErrorNote, IdentifierField, identifierSubmitLabel } from "@/components/auth/IdentifierField";
+import {
+  arabicErrorMessage,
+  clerkErrorCode,
+  maskIdentifier,
+  maskIdentifierLocal,
+  parseIdentifier,
+  parseIdentifierFor,
+  pickSecondFactor,
+  PROFILE_LABELS,
+  profileFieldsToCollect,
+  sanitizeCode,
+  CODE_LENGTH,
+  secondFactorPrompt,
+  unsupportedMissingFields,
+  type IdentifierMethod,
+  type ProfileField,
+  type SecondFactorStrategy,
+} from "@/lib/modules/auth/identifier-flow";
+
+type SignInRes = NonNullable<ReturnType<typeof useSignIn>["signIn"]>;
+type SignUpRes = NonNullable<ReturnType<typeof useSignUp>["signUp"]>;
+type Identifier = { kind: "email" | "phone"; value: string };
+
+/** خطّافا @clerk/nextjs على window حول setActive (غير موثّقين؛ نعطّلهما مؤقتًا فقط). */
+type NextClerkHooks = {
+  __unstable__onBeforeSetActive?: (intent?: unknown) => Promise<unknown> | void;
+  __unstable__onAfterSetActive?: () => unknown;
+};
+
+type Step =
+  | { name: "identifier" }
+  | { name: "code"; purpose: "sign-in" | "sign-up-primary" | "sign-up-email"; target: Identifier }
+  | { name: "second-factor"; strategy: SecondFactorStrategy; canUseBackup: boolean }
+  | { name: "profile"; fields: ProfileField[] }
+  | { name: "finishing" }
+  /** فشل تثبيت hakeem_session بعد رمز صحيح — يظهر زر إعادة المحاولة (لا يُغطّى بسبنر الرئيسية). */
+  | { name: "claim-failed" };
+
+export type IdentifierFlowStep = Step["name"];
+
+/** نتيجة الدخول المضمّن: ok = ثُبّتت hakeem_session، وnext = الوجهة التي يقترحها الخادم. */
+export type IdentifierFlowResult = { ok: boolean; next: string };
+
+/** الحقل الذي يُنسب إليه الخطأ — يُعلَّم aria-invalid ويُنقل إليه التركيز. */
+type ErrorTarget = "identifier" | "code" | ProfileField;
+
+const RESEND_COOLDOWN_S = 30;
+const ERROR_ID = "hakeem-auth-error";
+const REQUIRED_NOTE_ID = "hakeem-auth-required";
+
+const cardClass =
+  "w-full max-w-[25rem] rounded-[0.75rem] border border-[rgba(14,52,53,0.08)] bg-[#FFFcf7] p-6 shadow-[0_8px_30px_rgba(14,52,53,0.06)]";
+const inputClass =
+  "block min-h-[48px] w-full rounded-[0.75rem] border border-[var(--auth-input-border)] bg-white px-4 text-[1rem] text-[#0E3435] transition focus:border-[#0E3435] aria-[invalid=true]:border-[#8C2233]";
+const primaryButtonClass =
+  "flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[0.75rem] bg-[#0E3435] px-4 text-[0.95rem] font-semibold text-[#FFFcf7] transition hover:bg-[#0E3435]/90 disabled:cursor-wait disabled:opacity-70";
+const linkButtonClass =
+  "inline-flex min-h-[44px] items-center px-1 text-sm font-semibold text-[#8B6914] underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50";
+const inlineLinkClass = "inline-flex min-h-[44px] items-center underline-offset-2 hover:underline";
+
+function RequiredMark() {
+  return (
+    <span className="hk-auth-required-mark" aria-hidden>
+      *
+    </span>
+  );
+}
+
+function RequiredNote() {
+  return (
+    <p id={REQUIRED_NOTE_ID} className="hk-auth-required-note">
+      الحقول المعلّمة بـ <span aria-hidden>*</span>
+      <span className="sr-only">نجمة</span> مطلوبة.
+    </p>
+  );
+}
+
+/**
+ * نموذج الدخول العربي بالبريد أو الجوال — Clerk في الخلفية فقط (رموز، تحقق ثنائي، جلسة).
+ * رحلة موحّدة: إن لم يوجد حساب يُنشأ تلقائيًا بعد التحقق من الرمز.
+ * يُحمَّل ديناميكيًا بعد تركيب ClerkProvider (راجع AuthIdentifierFlow).
+ *
+ * embedded / onComplete اختياريان (حوار الصفحة الرئيسية). غيابهما = سلوك /auth/identifier كما هو.
+ */
+export function AuthIdentifierFlowInner({
+  mode,
+  nextUrl,
+  portalFallbackHref,
+  embedded = false,
+  onComplete,
+  onStepChange,
+  initialIdentifier = "",
+  submitOnReady = false,
+  headingId,
+  identifierBadge,
+  identifierMethods = ["phone", "email"],
+  initialMethod,
+  initialValues,
+  onMethodChange,
+}: {
+  mode: "sign-in" | "sign-up";
+  nextUrl: string;
+  /** بوابة Clerk المستضافة — احتياط لحالات لا يغطيها النموذج. */
+  portalFallbackHref: string;
+  /** عرض مضمّن داخل حوار: بلا بطاقة ولا روابط تنقّل، وخانات رمز منفصلة بتحقق تلقائي. */
+  embedded?: boolean;
+  /** عند وجوده: تُثبَّت الجلسة في الخلفية ولا يحدث أي انتقال — المستدعي يقرّر. */
+  onComplete?: (result: IdentifierFlowResult) => void;
+  onStepChange?: (step: IdentifierFlowStep) => void;
+  /** قيمة كتبها المستخدم قبل اكتمال التحميل. */
+  initialIdentifier?: string;
+  /** ضغط «متابعة» قبل جاهزية Clerk ← يُرسل مرة واحدة عند الجاهزية. */
+  submitOnReady?: boolean;
+  /** المضمّن: معرّف عنوان الحوار — عنوان الخطوة (الرمز/البيانات) يصبح عنوانه */
+  headingId?: string;
+  /** المضمّن: وسم «آخر دخول» فوق حقل البريد/الجوال */
+  identifierBadge?: ReactNode;
+  /** المضمّن: الوسائل المفعّلة في تبويبي «رقم الجوال | البريد الإلكتروني» (الجوال أولًا) */
+  identifierMethods?: readonly IdentifierMethod[];
+  /** المضمّن: التبويب المختار عند التحميل (initialIdentifier قيمته) */
+  initialMethod?: IdentifierMethod;
+  /** المضمّن: ما كُتب في كل تبويب قبل الجاهزية — يغلب initialIdentifier */
+  initialValues?: Partial<Record<IdentifierMethod, string>>;
+  onMethodChange?: (m: IdentifierMethod) => void;
+}) {
+  const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
+  const { isLoaded: signUpLoaded, signUp } = useSignUp();
+  const clerk = useClerk();
+  const ready = signInLoaded && signUpLoaded && Boolean(signIn && signUp);
+
+  const [step, setStep] = useState<Step>({ name: "identifier" });
+  const [identifierInput, setIdentifierInput] = useState(initialIdentifier);
+  // المضمّن (المقترح أ): تبويبان، ولكل تبويب قيمته فلا يضيع ما كُتب عند التبديل
+  const firstMethod: IdentifierMethod =
+    initialMethod && identifierMethods.includes(initialMethod) ? initialMethod : identifierMethods[0] ?? "phone";
+  const [idMethod, setIdMethod] = useState<IdentifierMethod>(firstMethod);
+  const [idValues, setIdValues] = useState<Record<IdentifierMethod, string>>({
+    phone: initialValues?.phone ?? (firstMethod === "phone" ? initialIdentifier : ""),
+    email: initialValues?.email ?? (firstMethod === "email" ? initialIdentifier : ""),
+  });
+  /** المُدخل الحالي محلَّلًا: المضمّن وفق التبويب، والصفحة المستقلة كما كانت (حقل واحد). */
+  const parseCurrent = () =>
+    embedded ? parseIdentifierFor(idMethod, idValues[idMethod]) : parseIdentifier(identifierInput);
+  const currentRaw = () => (embedded ? idValues[idMethod] : identifierInput);
+  const [code, setCode] = useState("");
+  const [profile, setProfile] = useState<Record<ProfileField, string>>({
+    first_name: "",
+    last_name: "",
+    email_address: "",
+    username: "",
+    password: "",
+    legal_accepted: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [errorTarget, setErrorTarget] = useState<ErrorTarget | null>(null);
+  const [errorSeq, setErrorSeq] = useState(0);
+  const [notice, setNotice] = useState("");
+  const [needsPortal, setNeedsPortal] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const [queuedSubmit, setQueuedSubmit] = useState(submitOnReady);
+  const resendRef = useRef<(() => Promise<unknown>) | null>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  const identifierRef = useRef<HTMLInputElement>(null);
+  const autoSubmittedRef = useRef("");
+
+  const showsCodeBoxes = (s: Step) =>
+    embedded && (s.name === "code" || (s.name === "second-factor" && s.strategy !== "backup_code"));
+
+  useEffect(() => {
+    if (ready) return;
+    const id = window.setTimeout(() => setLoadTimedOut(true), 10000);
+    return () => window.clearTimeout(id);
+  }, [ready]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [cooldown]);
+
+  useEffect(() => {
+    onStepChange?.(step.name);
+    if ((step.name === "code" || step.name === "second-factor") && !showsCodeBoxes(step)) {
+      codeInputRef.current?.focus();
+    } else if (step.name === "profile") {
+      const first = step.fields.find((f) => f !== "legal_accepted") ?? step.fields[0];
+      if (first) document.getElementById(`hakeem-${first}`)?.focus();
+    } else if (step.name === "identifier" && embedded) {
+      identifierRef.current?.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- عند تغيّر الخطوة فقط
+  }, [step]);
+
+  // الخطأ: التركيز على الحقل المعني (WCAG 3.3.1) — المعرّف aria-describedby يقرأ الرسالة.
+  useEffect(() => {
+    if (!error || !errorTarget || errorTarget === "code") return;
+    if (errorTarget === "identifier") identifierRef.current?.focus();
+    else document.getElementById(`hakeem-${errorTarget}`)?.focus();
+  }, [error, errorTarget, errorSeq]);
+
+  useEffect(() => {
+    if (!error || errorTarget !== "code" || showsCodeBoxes(step)) return;
+    codeInputRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error, errorTarget, errorSeq]);
+
+  function targetForStep(s: Step): ErrorTarget | null {
+    if (s.name === "identifier") return "identifier";
+    if (s.name === "code" || s.name === "second-factor") return "code";
+    if (s.name === "profile") return s.fields[0] ?? null;
+    return null;
+  }
+
+  function showError(message: string, target: ErrorTarget | null) {
+    setError(message);
+    setErrorTarget(target);
+    setErrorSeq((n) => n + 1);
+  }
+
+  function clearError() {
+    setError("");
+    setErrorTarget(null);
+  }
+
+  function fail(err: unknown) {
+    showError(arabicErrorMessage(err), targetForStep(step));
+  }
+
+  function goToCode(next: Step, resend: () => Promise<unknown>) {
+    resendRef.current = resend;
+    setCode("");
+    autoSubmittedRef.current = "";
+    setCooldown(RESEND_COOLDOWN_S);
+    setStep(next);
+  }
+
+  async function finish(sessionId: string | null) {
+    if (!sessionId || !setActive) {
+      showError("تعذّر إكمال الدخول. حاول مرة أخرى.", null);
+      return;
+    }
+    setStep({ name: "finishing" });
+    try {
+      await withTimeout(
+        activateWithoutNextRefresh(() => setActive({ session: sessionId })),
+        8_000,
+        "setActive"
+      );
+    } catch {
+      setStep({ name: "claim-failed" });
+      showError("تم التحقق من الرمز، لكن تعذّر تفعيل الجلسة. اضغط «أعد المحاولة».", null);
+      return;
+    }
+    await claimAndNavigate(sessionId);
+  }
+
+  /** مهلة لأي وعد — تمنع تعليق «جارٍ إكمال الدخول…» بلا نهاية على الجوال. */
+  function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const t = window.setTimeout(() => reject(new Error(`${label}_timeout`)), ms);
+      promise.then(
+        (v) => {
+          window.clearTimeout(t);
+          resolve(v);
+        },
+        (err) => {
+          window.clearTimeout(t);
+          reject(err);
+        }
+      );
+    });
+  }
+
+  /**
+   * @clerk/nextjs يستدعي قبل setActive إجراء خادم (invalidateCacheAction) على الصفحة الحالية
+   * ثم router.refresh. على صفحاتنا يفشل الإجراء («failed to forward action response») فتُعاد
+   * تحميل الصفحة وسط الدخول، فيضيع الحوار وقد ينقطع تثبيت الجلسة. لا نحتاجهما: نثبّت
+   * hakeem_session بأنفسنا ثم ننتقل انتقالًا واحدًا. نعطّلهما أثناء التفعيل فقط ثم نعيدهما.
+   */
+  async function activateWithoutNextRefresh(activate: () => Promise<unknown>) {
+    const w = window as unknown as NextClerkHooks;
+    const before = w.__unstable__onBeforeSetActive;
+    const after = w.__unstable__onAfterSetActive;
+    w.__unstable__onBeforeSetActive = () => Promise.resolve();
+    w.__unstable__onAfterSetActive = () => undefined;
+    try {
+      await activate();
+    } finally {
+      w.__unstable__onBeforeSetActive = before;
+      w.__unstable__onAfterSetActive = after;
+    }
+  }
+
+  /** يختار جلسة Clerk بعد setActive — clerk.session قد يتأخر لقطة على الجوال. */
+  function resolveClerkSession(sessionId?: string | null) {
+    if (sessionId && clerk.session?.id === sessionId) return clerk.session;
+    if (sessionId) {
+      const fromClient = clerk.client?.sessions?.find((s) => s.id === sessionId);
+      if (fromClient) return fromClient;
+      const signed = clerk.client?.signedInSessions?.find((s) => s.id === sessionId);
+      if (signed) return signed;
+    }
+    return clerk.session ?? null;
+  }
+
+  /**
+   * يثبّت hakeem_session من رمز جلسة Clerk — يعيد الوجهة، أو null إن تعذّر.
+   * نعيد محاولة getToken لأن setActive على الجوال قد لا يكشف JWT فورًا — مع مهلة صارمة.
+   */
+  type ClaimFailHint = {
+    stage?: string;
+    keysAligned?: boolean;
+    secretKind?: string;
+    publishableKind?: string;
+  };
+
+  async function claimSession(
+    sessionId?: string | null
+  ): Promise<{ next: string } | { next: null; hint: ClaimFailHint | null }> {
+    try {
+      let token: string | null = null;
+      for (let i = 0; i < 4; i++) {
+        const session = resolveClerkSession(sessionId);
+        if (session) {
+          try {
+            // skipCache: على الجوال قد تُعاد قيمة فارغة/قديمة فور setActive
+            const getToken = session.getToken.bind(session) as (opts?: {
+              skipCache?: boolean;
+            }) => Promise<string | null>;
+            token =
+              (await withTimeout(Promise.resolve(getToken({ skipCache: true })), 4_000, "getToken")) ??
+              null;
+          } catch {
+            token = null;
+          }
+        }
+        if (token) break;
+        await new Promise((r) => setTimeout(r, 50 * (i + 1)));
+      }
+      if (!token) return { next: null, hint: { stage: "get_token" } };
+      const ac = new AbortController();
+      const timer = window.setTimeout(() => ac.abort(), 10_000);
+      try {
+        const res = await fetch("/api/auth/claim-clerk-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ token, next: nextUrl }),
+          signal: ac.signal,
+        });
+        const data = (await res.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              next?: string;
+              stage?: string;
+              keysAligned?: boolean;
+              secretKind?: string;
+              publishableKind?: string;
+            }
+          | null;
+        if (res.ok && data?.ok && data.next) return { next: data.next };
+        return {
+          next: null,
+          hint: {
+            stage: data?.stage,
+            keysAligned: data?.keysAligned,
+            secretKind: data?.secretKind,
+            publishableKind: data?.publishableKind,
+          },
+        };
+      } finally {
+        window.clearTimeout(timer);
+      }
+    } catch {
+      return { next: null, hint: null };
+    }
+  }
+
+  function claimFailMessage(hint: ClaimFailHint | null): string {
+    if (hint && hint.keysAligned === false) {
+      return "تم التحقق من الرمز، لكن مفاتيح Clerk غير متطابقة على الخادم (live/test). راجع /admin/settings أو Vercel ثم أعد المحاولة.";
+    }
+    if (hint?.stage === "establish") {
+      return "تم التحقق من الرمز، لكن تعذّر إنشاء مساحة العمل. اضغط «أعد المحاولة».";
+    }
+    return "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة».";
+  }
+
+  /**
+   * /auth/continue و/api/auth/me لا يقرآن جلسة Clerk (عزل iPhone)، فنثبّت hakeem_session
+   * من رمز الجلسة قبل الانتقال — كما يفعل مسار العودة من بوابة Clerk.
+   * مع onComplete: التثبيت في الخلفية بلا انتقال.
+   * عند فشل التثبيت بعد رمز صحيح: خطوة claim-failed + زر إعادة المحاولة (لا سبنر يغطي الخطأ).
+   */
+  async function claimAndNavigate(sessionId?: string | null) {
+    let next: string | null = null;
+    let lastHint: ClaimFailHint | null = null;
+    // محاولتان سريعتان فقط — لا نترك المستخدم على السпинر عشرات الثواني
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result = await claimSession(sessionId);
+      if (result.next != null) {
+        next = result.next;
+        break;
+      }
+      lastHint = result.hint;
+      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+    }
+    if (onComplete) {
+      if (!next) {
+        setStep({ name: "claim-failed" });
+        showError(claimFailMessage(lastHint), null);
+        return;
+      }
+      onComplete({ ok: true, next });
+      return;
+    }
+    if (!next) {
+      setStep({ name: "claim-failed" });
+      showError(claimFailMessage(lastHint), null);
+      return;
+    }
+    window.location.assign(next);
+  }
+
+  async function retryClaimAfterCode() {
+    const sessionId = clerk.session?.id ?? clerk.client?.signedInSessions?.[0]?.id ?? null;
+    if (!sessionId) {
+      setStep({ name: "identifier" });
+      showError("انتهت الجلسة. اطلب رمزًا جديدًا.", "identifier");
+      return;
+    }
+    clearError();
+    setStep({ name: "finishing" });
+    await claimAndNavigate(sessionId);
+  }
+
+  /**
+   * جلسة Clerk متبقية من محاولة سابقة (دون hakeem_session) كانت تُدخل المستخدم دون رمز
+   * (session_exists). المطلوب: رقم أو بريد ← رمز ← الصفحة الداخلية، دائمًا. فننهيها قبل البدء
+   * بـ end() — لا انتقال ولا إعادة تحميل كما في signOut.
+   */
+  async function endStaleClerkSessions() {
+    const sessions = clerk.client?.signedInSessions ?? [];
+    if (!sessions.length) return;
+    // إنهاء الجلسة قد يمرّ بخطّافي @clerk/nextjs نفسيهما — بلا إعادة تحميل هنا أيضًا
+    await activateWithoutNextRefresh(() => Promise.all(sessions.map((s) => s.end().catch(() => undefined))));
+  }
+
+  // ── الدخول ──
+
+  async function startSignIn(si: SignInRes, id: Identifier) {
+    const res = await si.create({ identifier: id.value });
+    const wanted = id.kind === "phone" ? "phone_code" : "email_code";
+    const factor = res.supportedFirstFactors?.find((f) => f.strategy === wanted);
+    if (!factor) {
+      showError(arabicErrorMessage({ errors: [{ code: "strategy_for_user_invalid" }] }), "identifier");
+      return;
+    }
+    const prepare = () =>
+      "phoneNumberId" in factor
+        ? si.prepareFirstFactor({ strategy: "phone_code", phoneNumberId: factor.phoneNumberId })
+        : "emailAddressId" in factor
+          ? si.prepareFirstFactor({ strategy: "email_code", emailAddressId: factor.emailAddressId })
+          : Promise.reject(new Error("unsupported_factor"));
+    await prepare();
+    goToCode({ name: "code", purpose: "sign-in", target: id }, prepare);
+  }
+
+  async function handleSignInResult(si: SignInRes) {
+    if (si.status === "complete") return finish(si.createdSessionId);
+    if (si.status === "needs_second_factor") {
+      const strategy = pickSecondFactor(si.supportedSecondFactors);
+      if (!strategy) {
+        setNeedsPortal(true);
+        showError("يتطلب حسابك وسيلة تحقق إضافية غير متاحة هنا.", null);
+        return;
+      }
+      const canUseBackup = Boolean(si.supportedSecondFactors?.some((f) => f.strategy === "backup_code"));
+      const prepare = () =>
+        strategy === "phone_code" || strategy === "email_code"
+          ? si.prepareSecondFactor({ strategy })
+          : Promise.resolve(si);
+      await prepare();
+      goToCode({ name: "second-factor", strategy, canUseBackup }, prepare);
+      return;
+    }
+    setNeedsPortal(true);
+    showError("تعذّر إكمال الدخول بهذه الطريقة.", null);
+  }
+
+  // ── إنشاء الحساب ──
+
+  async function startSignUp(su: SignUpRes, id: Identifier) {
+    await su.create(id.kind === "phone" ? { phoneNumber: id.value } : { emailAddress: id.value });
+    const prepare = () =>
+      id.kind === "phone"
+        ? su.preparePhoneNumberVerification({ strategy: "phone_code" })
+        : su.prepareEmailAddressVerification({ strategy: "email_code" });
+    await prepare();
+    setNotice("مرحبًا بك في حكيم — سننشئ حسابك بعد تأكيد الرمز.");
+    goToCode({ name: "code", purpose: "sign-up-primary", target: id }, prepare);
+  }
+
+  async function handleSignUpResult(su: SignUpRes) {
+    if (su.status === "complete") return finish(su.createdSessionId);
+    if (unsupportedMissingFields(su.missingFields).length > 0) {
+      setNeedsPortal(true);
+      showError("يتطلب إنشاء الحساب بيانات إضافية غير متاحة هنا.", null);
+      return;
+    }
+    const fields = profileFieldsToCollect(su.missingFields);
+    if (fields.length > 0) {
+      setNotice("");
+      setStep({ name: "profile", fields });
+      return;
+    }
+    if (su.unverifiedFields.includes("email_address") && su.emailAddress) {
+      const prepare = () => su.prepareEmailAddressVerification({ strategy: "email_code" });
+      await prepare();
+      setNotice("");
+      goToCode(
+        { name: "code", purpose: "sign-up-email", target: { kind: "email", value: su.emailAddress } },
+        prepare
+      );
+      return;
+    }
+    if (su.unverifiedFields.includes("phone_number") && su.phoneNumber) {
+      const prepare = () => su.preparePhoneNumberVerification({ strategy: "phone_code" });
+      await prepare();
+      goToCode(
+        { name: "code", purpose: "sign-up-primary", target: { kind: "phone", value: su.phoneNumber } },
+        prepare
+      );
+      return;
+    }
+    setNeedsPortal(true);
+    showError("تعذّر إكمال إنشاء الحساب بهذه الطريقة.", null);
+  }
+
+  // ── الأحداث ──
+
+  async function run(action: () => Promise<void>) {
+    if (busy) return;
+    setBusy(true);
+    clearError();
+    try {
+      await action();
+    } catch (err) {
+      if (clerkErrorCode(err) === "session_exists") {
+        // احتياط: جلسة قائمة رغم الإنهاء المسبق — ننهيها ونطلب إعادة الإرسال، ولا دخول بلا رمز
+        await endStaleClerkSessions();
+        showError("انتهت جلسة سابقة. اضغط «أرسل الرمز» مرة أخرى.", "identifier");
+        return;
+      }
+      // الشاشة ٦: الأرقام تبقى كما هي ليصحّحها المستخدم
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function submitIdentifier() {
+    const parsed = parseCurrent();
+    if (parsed.kind === "invalid") {
+      showError(parsed.message, "identifier");
+      return;
+    }
+    const id: Identifier = parsed;
+    void run(async () => {
+      if (!signIn || !signUp) return;
+      setNotice("");
+      await endStaleClerkSessions();
+      try {
+        await startSignIn(signIn, id);
+      } catch (err) {
+        if (clerkErrorCode(err) !== "form_identifier_not_found") throw err;
+        await startSignUp(signUp, id);
+      }
+    });
+  }
+
+  function onSubmitIdentifier(e: FormEvent) {
+    e.preventDefault();
+    if (!ready) {
+      // المضمّن: الحقل متاح قبل جاهزية Clerk — التحقق من الصيغة فورًا، والإرسال عند الجاهزية
+      if (!embedded) return;
+      const parsed = parseCurrent();
+      if (parsed.kind === "invalid") showError(parsed.message, "identifier");
+      else setQueuedSubmit(true);
+      return;
+    }
+    submitIdentifier();
+  }
+
+  // «متابعة» في الحقل الخفيف قبل التحميل: صيغة خاطئة تظهر فورًا بدل انتظار Clerk
+  useEffect(() => {
+    if (!queuedSubmit || ready) return;
+    const parsed = parseCurrent();
+    if (parsed.kind === "invalid") {
+      setQueuedSubmit(false);
+      showError(parsed.message, "identifier");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- عند التركيب فقط
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !queuedSubmit) return;
+    setQueuedSubmit(false);
+    if (currentRaw().trim()) submitIdentifier();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- إرسال واحد عند الجاهزية
+  }, [ready, queuedSubmit]);
+
+  function submitCode(raw: string) {
+    const value = sanitizeCode(raw);
+    if (value.length < CODE_LENGTH) {
+      showError(`أدخل الرمز كاملًا (${CODE_LENGTH} أرقام).`, "code");
+      return;
+    }
+    void run(async () => {
+      if (!signIn || !signUp) return;
+      if (step.name === "second-factor") {
+        const res = await signIn.attemptSecondFactor({ strategy: step.strategy, code: value });
+        await handleSignInResult(res);
+        return;
+      }
+      if (step.name !== "code") return;
+      if (step.purpose === "sign-in") {
+        const strategy = step.target.kind === "phone" ? "phone_code" : "email_code";
+        const res = await signIn.attemptFirstFactor({ strategy, code: value });
+        await handleSignInResult(res);
+        return;
+      }
+      const res =
+        step.target.kind === "phone"
+          ? await signUp.attemptPhoneNumberVerification({ code: value })
+          : await signUp.attemptEmailAddressVerification({ code: value });
+      await handleSignUpResult(res);
+    });
+  }
+
+  function onSubmitCode(e: FormEvent) {
+    e.preventDefault();
+    submitCode(code);
+  }
+
+  /** الخانات اكتملت: تحقق تلقائي مرة واحدة لكل رمز. */
+  function onCodeFilled(value: string) {
+    if (busy || autoSubmittedRef.current === value) return;
+    autoSubmittedRef.current = value;
+    submitCode(value);
+  }
+
+  function onResend() {
+    if (cooldown > 0 || !resendRef.current) return;
+    const resend = resendRef.current;
+    void run(async () => {
+      await resend();
+      setCooldown(RESEND_COOLDOWN_S);
+      setCode("");
+      autoSubmittedRef.current = "";
+      setNotice("أرسلنا رمزًا جديدًا.");
+    });
+  }
+
+  function onUseBackupCode() {
+    setCode("");
+    clearError();
+    setStep({ name: "second-factor", strategy: "backup_code", canUseBackup: false });
+  }
+
+  function onSubmitProfile(e: FormEvent) {
+    e.preventDefault();
+    if (step.name !== "profile") return;
+    for (const f of step.fields) {
+      if (f === "legal_accepted" ? profile[f] !== "1" : !profile[f].trim()) {
+        showError(
+          f === "legal_accepted" ? "يلزم الموافقة على الشروط للمتابعة." : `أكمل حقل «${PROFILE_LABELS[f]}».`,
+          f
+        );
+        return;
+      }
+    }
+    let email = "";
+    if (step.fields.includes("email_address")) {
+      const parsed = parseIdentifier(profile.email_address);
+      if (parsed.kind !== "email") {
+        showError("صيغة البريد الإلكتروني غير صحيحة.", "email_address");
+        return;
+      }
+      email = parsed.value;
+    }
+    const fields = step.fields;
+    void run(async () => {
+      if (!signUp) return;
+      const res = await signUp.update({
+        ...(fields.includes("first_name") ? { firstName: profile.first_name.trim() } : {}),
+        ...(fields.includes("last_name") ? { lastName: profile.last_name.trim() } : {}),
+        ...(email ? { emailAddress: email } : {}),
+        ...(fields.includes("username") ? { username: profile.username.trim() } : {}),
+        ...(fields.includes("password") ? { password: profile.password } : {}),
+        ...(fields.includes("legal_accepted") ? { legalAccepted: true } : {}),
+      });
+      await handleSignUpResult(res);
+    });
+  }
+
+  function backToIdentifier() {
+    setStep({ name: "identifier" });
+    setCode("");
+    clearError();
+    setNotice("");
+    setNeedsPortal(false);
+  }
+
+  /** المضمّن: «تعديل الرقم/البريد» — نعود بما كُتب دون فقده. */
+  function onEditTarget() {
+    if (step.name === "code" && step.purpose === "sign-up-email") {
+      setCode("");
+      clearError();
+      setNotice("");
+      setStep({ name: "profile", fields: ["email_address"] });
+      return;
+    }
+    backToIdentifier();
+  }
+
+  const invalid = (t: ErrorTarget) => Boolean(error) && errorTarget === t;
+  const describedBy = (t: ErrorTarget, extra?: string) =>
+    [invalid(t) ? ERROR_ID : "", extra ?? ""].filter(Boolean).join(" ") || undefined;
+
+  // ── العرض ──
+
+  if (!ready && !embedded) {
+    return (
+      <div className={cardClass} role="status" aria-live="polite">
+        <p className="text-center text-sm text-[var(--auth-muted)]">
+          {loadTimedOut ? "تأخّر تجهيز الدخول الآمن." : "جارٍ تجهيز الدخول الآمن…"}
+        </p>
+        {loadTimedOut ? (
+          <div className="mt-4 flex flex-col gap-2">
+            <button type="button" className={primaryButtonClass} onClick={() => window.location.reload()}>
+              إعادة المحاولة
+            </button>
+            <a href={portalFallbackHref} className={`${linkButtonClass} justify-center text-center`}>
+              المتابعة عبر صفحة الدخول البديلة
+            </a>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const isSignUp = mode === "sign-up";
+  let title = isSignUp ? "إنشاء حساب في حكيم" : "الدخول إلى حكيم";
+  let subtitle: ReactNode = "أدخل بريدك الإلكتروني أو رقم جوالك، وسنرسل لك رمز تحقق.";
+  if (step.name === "code") {
+    title = step.purpose === "sign-up-email" ? "تأكيد البريد الإلكتروني" : "أدخل رمز التحقق";
+    // bdi: يمنع انقلاب الرقم/البريد داخل النص العربي (RTL).
+    subtitle = (
+      <>
+        أرسلنا رمزًا مكوّنًا من 6 أرقام إلى <bdi dir="ltr">{maskIdentifier(step.target)}</bdi>
+      </>
+    );
+  } else if (step.name === "second-factor") {
+    const prompt = secondFactorPrompt(step.strategy);
+    title = prompt.title;
+    subtitle = prompt.hint;
+  } else if (step.name === "profile") {
+    title = "أكمل بياناتك";
+    subtitle = "خطوة أخيرة لإنشاء حسابك في حكيم.";
+  } else if (step.name === "finishing") {
+    title = "تم التحقق";
+    subtitle = "جارٍ فتح حسابك…";
+  } else if (step.name === "claim-failed") {
+    title = "تعذّر إكمال الدخول";
+    subtitle = "الرمز صحيح — نعيد محاولة فتح مساحة العمل.";
+  }
+
+  const editLabel =
+    step.name === "code"
+      ? step.target.kind === "phone"
+        ? "تعديل الرقم"
+        : "تعديل البريد"
+      : "تعديل البريد أو الرقم";
+
+  // ── العرض المضمّن (صندوق الرئيسية) — الشاشات ٢ و٣ و٦ وفق التصميم المعتمد ──
+  if (embedded) {
+    const isCodeStep = step.name === "code" || step.name === "second-factor";
+    const resendable =
+      step.name === "code" ||
+      (step.name === "second-factor" && (step.strategy === "phone_code" || step.strategy === "email_code"));
+    const portalLink = needsPortal ? (
+      <a href={portalFallbackHref} className="hk-link44">
+        المتابعة عبر صفحة الدخول البديلة
+      </a>
+    ) : null;
+    const countdown = `${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}`;
+    return (
+      <div className="hk-emb" aria-busy={busy || step.name === "finishing"}>
+        {step.name === "identifier" ? (
+          <form className="hk-emb__form" onSubmit={onSubmitIdentifier} noValidate>
+            <IdentifierField
+              ref={identifierRef}
+              method={idMethod}
+              methods={identifierMethods}
+              onMethodChange={(m) => {
+                setIdMethod(m);
+                onMethodChange?.(m);
+                clearError();
+                window.requestAnimationFrame(() => identifierRef.current?.focus());
+              }}
+              value={idValues[idMethod]}
+              onChange={(v) => {
+                setIdValues((prev) => ({ ...prev, [idMethod]: v }));
+                if (errorTarget === "identifier") clearError();
+              }}
+              disabled={busy}
+              invalid={invalid("identifier")}
+              errorId={ERROR_ID}
+              badge={identifierBadge}
+              error={
+                error ? (
+                  <ErrorNote id={ERROR_ID}>
+                    {error} {portalLink}
+                  </ErrorNote>
+                ) : null
+              }
+            />
+            {!ready && loadTimedOut ? (
+              <ErrorNote id="hakeem-auth-load">
+                تأخّر تجهيز الدخول الآمن. {<a href={portalFallbackHref} className="hk-link44">المتابعة عبر صفحة الدخول البديلة</a>}
+              </ErrorNote>
+            ) : null}
+            <SubmitButton embedded busy={busy || (queuedSubmit && !ready)}>{identifierSubmitLabel()}</SubmitButton>
+          </form>
+        ) : null}
+
+        {isCodeStep ? (
+          <form className="hk-emb__form" onSubmit={onSubmitCode} noValidate>
+            <div className="hk-emb__nav">
+              <button type="button" className="hk-icon-btn" aria-label="رجوع" onClick={onEditTarget} disabled={busy}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+            </div>
+            <div className="hk-emb__head">
+              <h2 id={headingId} className="hk-emb__title">
+                {title}
+              </h2>
+              {step.name === "code" ? (
+                <div className="hk-emb__sent">
+                  <span>{step.target.kind === "phone" ? "أرسلناه برسالة نصية إلى" : "أرسلناه إلى بريدك"}</span>
+                  <bdi dir="ltr" className="hk-emb__masked">
+                    {maskIdentifierLocal(step.target)}
+                  </bdi>
+                  <button type="button" className="hk-link44" onClick={onEditTarget} disabled={busy}>
+                    {editLabel}
+                  </button>
+                </div>
+              ) : (
+                <p className="hk-emb__sub">{subtitle}</p>
+              )}
+            </div>
+
+            {notice && !error ? (
+              <p className="hk-emb__notice" role="status">
+                {notice}
+              </p>
+            ) : null}
+
+            {showsCodeBoxes(step) ? (
+              <CodeInput
+                value={code}
+                onChange={(v) => {
+                  setCode(v);
+                  if (v.length < 6) autoSubmittedRef.current = "";
+                  if (errorTarget === "code") clearError();
+                }}
+                onFilled={onCodeFilled}
+                invalid={invalid("code")}
+                errorId={ERROR_ID}
+                disabled={busy}
+                autoFocus
+                focusSignal={errorSeq}
+              >
+                {error ? (
+                  <ErrorNote id={ERROR_ID}>
+                    {error} {portalLink}
+                  </ErrorNote>
+                ) : null}
+              </CodeInput>
+            ) : (
+              <>
+                <label htmlFor="hakeem-code" className="hk-idf__label">
+                  الرمز الاحتياطي
+                </label>
+                <input
+                  ref={codeInputRef}
+                  id="hakeem-code"
+                  className="hk-idf__box hk-idf__input--solo"
+                  dir="ltr"
+                  type="text"
+                  autoComplete="one-time-code"
+                  maxLength={16}
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.trim());
+                    if (errorTarget === "code") clearError();
+                  }}
+                  disabled={busy}
+                  required
+                  aria-required="true"
+                  aria-invalid={invalid("code") || undefined}
+                  aria-describedby={invalid("code") ? ERROR_ID : undefined}
+                />
+                {error ? <ErrorNote id={ERROR_ID}>{error}</ErrorNote> : null}
+                <SubmitButton embedded busy={busy}>تحقق</SubmitButton>
+              </>
+            )}
+
+            <p className="hk-emb__busy" role="status" aria-live="polite">
+              {busy ? "جارٍ التحقق من الرمز…" : ""}
+            </p>
+
+            {resendable ? (
+              error && errorTarget === "code" ? (
+                <button type="button" className="hk-btn-outline" onClick={onResend} disabled={busy || cooldown > 0}>
+                  {cooldown > 0 ? (
+                    <>
+                      أرسل رمزًا جديدًا بعد <bdi dir="ltr">{countdown}</bdi>
+                    </>
+                  ) : (
+                    "أرسل رمزًا جديدًا"
+                  )}
+                </button>
+              ) : (
+                <div className="hk-resend">
+                  <span>لم يصلك الرمز؟</span>
+                  {cooldown > 0 ? (
+                    <span className="hk-resend__wait" aria-hidden>
+                      إعادة الإرسال بعد <bdi dir="ltr">{countdown}</bdi>
+                    </span>
+                  ) : (
+                    <button type="button" className="hk-link44" onClick={onResend} disabled={busy}>
+                      أعد الإرسال
+                    </button>
+                  )}
+                </div>
+              )
+            ) : null}
+            {/* إعلان مقتصد للعدّاد: عند بدئه وعند انتهائه فقط (لا كل ثانية) */}
+            {resendable ? (
+              <p className="sr-only" aria-live="polite">
+                {cooldown === RESEND_COOLDOWN_S
+                  ? "يمكنك طلب رمز جديد بعد 30 ثانية."
+                  : cooldown === 0
+                    ? "يمكنك الآن إعادة إرسال الرمز."
+                    : ""}
+              </p>
+            ) : null}
+            {step.name === "second-factor" && step.canUseBackup ? (
+              <button type="button" className="hk-link44 self-center" onClick={onUseBackupCode} disabled={busy}>
+                استخدام رمز احتياطي
+              </button>
+            ) : null}
+          </form>
+        ) : null}
+
+        {step.name === "profile" ? (
+          <form className="hk-emb__form" onSubmit={onSubmitProfile} noValidate>
+            <div className="hk-emb__head">
+              <h2 id={headingId} className="hk-emb__title">
+                {title}
+              </h2>
+              <p className="hk-emb__sub">{subtitle}</p>
+            </div>
+            {step.fields.map((f) =>
+              f === "legal_accepted" ? (
+                <label key={f} className="flex min-h-[44px] items-center gap-3 text-sm leading-6 text-[#0E3435]">
+                  <input
+                    id="hakeem-legal_accepted"
+                    type="checkbox"
+                    className="h-5 w-5 shrink-0 accent-[#0E3435]"
+                    checked={profile.legal_accepted === "1"}
+                    onChange={(e) => setProfile((p) => ({ ...p, legal_accepted: e.target.checked ? "1" : "" }))}
+                    aria-required="true"
+                    aria-invalid={invalid(f) || undefined}
+                    aria-describedby={invalid(f) ? ERROR_ID : undefined}
+                  />
+                  <span>
+                    أوافق على{" "}
+                    <a href="/terms" className={`${inlineLinkClass} font-semibold`}>
+                      شروط الاستخدام
+                    </a>{" "}
+                    و
+                    <a href="/privacy" className={`${inlineLinkClass} font-semibold`}>
+                      سياسة الخصوصية
+                    </a>
+                  </span>
+                </label>
+              ) : (
+                <div key={f} className="hk-idf">
+                  <label htmlFor={`hakeem-${f}`} className="hk-idf__label">
+                    {PROFILE_LABELS[f]}
+                  </label>
+                  <input
+                    id={`hakeem-${f}`}
+                    className="hk-idf__box hk-idf__input--solo"
+                    dir={f === "first_name" || f === "last_name" ? "rtl" : "ltr"}
+                    type={f === "password" ? "password" : f === "email_address" ? "email" : "text"}
+                    autoComplete={
+                      f === "first_name"
+                        ? "given-name"
+                        : f === "last_name"
+                          ? "family-name"
+                          : f === "email_address"
+                            ? "email"
+                            : f === "password"
+                              ? "new-password"
+                              : "username"
+                    }
+                    value={profile[f]}
+                    onChange={(e) => {
+                      setProfile((p) => ({ ...p, [f]: e.target.value }));
+                      if (errorTarget === f) clearError();
+                    }}
+                    disabled={busy}
+                    required
+                    aria-required="true"
+                    aria-invalid={invalid(f) || undefined}
+                    aria-describedby={invalid(f) ? ERROR_ID : undefined}
+                  />
+                </div>
+              )
+            )}
+            {error ? (
+              <ErrorNote id={ERROR_ID}>
+                {error} {portalLink}
+              </ErrorNote>
+            ) : null}
+            <SubmitButton embedded busy={busy}>متابعة</SubmitButton>
+          </form>
+        ) : null}
+
+        {step.name === "finishing" ? (
+          <div className="hk-emb__form" role="status" aria-live="polite">
+            <p className="hk-emb__lede">جارٍ إكمال الدخول…</p>
+          </div>
+        ) : null}
+
+        {step.name === "claim-failed" ? (
+          <div className="hk-emb__form" role="alert">
+            <ErrorNote id={ERROR_ID}>
+              {error || "تم التحقق من الرمز، لكن تعذّر فتح مساحة العمل. اضغط «أعد المحاولة»."}
+            </ErrorNote>
+            <button
+              type="button"
+              className="hk-btn-primary"
+              disabled={busy}
+              aria-busy={busy}
+              onClick={() => void run(() => retryClaimAfterCode())}
+            >
+              {busy ? "لحظة…" : "أعد المحاولة"}
+            </button>
+            <button
+              type="button"
+              className="hk-link44"
+              disabled={busy}
+              onClick={() => {
+                clearError();
+                setStep({ name: "identifier" });
+              }}
+            >
+              العودة لتعديل البريد أو الرقم
+            </button>
+          </div>
+        ) : null}
+
+        {/* نقطة تركيب حماية الروبوتات في Clerk — مطلوبة لنماذج التسجيل المخصّصة. */}
+        <div id="clerk-captcha" />
+      </div>
+    );
+  }
+
+  const Heading = embedded ? "h3" : "h2";
+  const showHeader = !embedded || step.name !== "identifier";
+  const isBackup = step.name === "second-factor" && step.strategy === "backup_code";
+
+  return (
+    <div className={embedded ? "w-full" : cardClass} aria-busy={busy || step.name === "finishing"}>
+      {showHeader ? (
+        <header className="text-center">
+          <Heading
+            className={`${embedded ? "text-[1.1rem] leading-7" : "text-[1.35rem] leading-8"} font-semibold text-[#0E3435]`}
+          >
+            {title}
+          </Heading>
+          <p className="mt-2 text-[0.95rem] leading-7 text-[var(--auth-muted)]">{subtitle}</p>
+        </header>
+      ) : null}
+
+      {notice && !error ? (
+        <p className="mt-4 rounded-[0.5rem] bg-[#F7F2EA] p-3 text-center text-xs font-semibold leading-5 text-[#0E3435]" role="status">
+          {notice}
+        </p>
+      ) : null}
+
+      {error ? (
+        <div
+          id={ERROR_ID}
+          className="mt-4 rounded-[0.5rem] border border-red-200 bg-red-50 p-3 text-center text-xs font-semibold leading-5 text-red-700"
+          role="alert"
+        >
+          {error}
+          {needsPortal ? (
+            <a href={portalFallbackHref} className={`${inlineLinkClass} mt-1 justify-center underline`}>
+              المتابعة عبر صفحة الدخول البديلة
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+
+      {step.name === "claim-failed" ? (
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
+            className={primaryButtonClass}
+            disabled={busy}
+            aria-busy={busy}
+            onClick={() => void run(() => retryClaimAfterCode())}
+          >
+            {busy ? "لحظة…" : "أعد المحاولة"}
+          </button>
+          <button
+            type="button"
+            className={linkButtonClass}
+            disabled={busy}
+            onClick={() => {
+              clearError();
+              setStep({ name: "identifier" });
+            }}
+          >
+            العودة لتعديل البريد أو الرقم
+          </button>
+        </div>
+      ) : null}
+
+      {embedded && !ready && loadTimedOut ? (
+        <div className="mt-4 rounded-[0.5rem] border border-red-200 bg-red-50 p-3 text-center text-xs font-semibold leading-5 text-red-700" role="alert">
+          تأخّر تجهيز الدخول الآمن.
+          <a href={portalFallbackHref} className={`${inlineLinkClass} justify-center underline`}>
+            المتابعة عبر صفحة الدخول البديلة
+          </a>
+        </div>
+      ) : null}
+
+      {step.name === "identifier" ? (
+        <form className={`${embedded ? "mt-4" : "mt-6"} flex flex-col gap-3`} onSubmit={onSubmitIdentifier} noValidate>
+          <RequiredNote />
+          <label htmlFor="hakeem-identifier" className="text-sm font-semibold text-[#0E3435]">
+            {embedded ? "البريد أو رقم الجوال" : "البريد الإلكتروني أو رقم الجوال"}
+            <RequiredMark />
+          </label>
+          <input
+            ref={identifierRef}
+            id="hakeem-identifier"
+            className={inputClass}
+            dir="ltr"
+            type="text"
+            inputMode="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="05XXXXXXXX أو name@example.com"
+            value={identifierInput}
+            onChange={(e) => {
+              setIdentifierInput(e.target.value);
+              if (errorTarget === "identifier") clearError();
+            }}
+            disabled={busy}
+            required
+            aria-required="true"
+            aria-invalid={invalid("identifier") || undefined}
+            aria-describedby={describedBy("identifier", REQUIRED_NOTE_ID)}
+          />
+          <SubmitButton busy={busy || (queuedSubmit && !ready)}>متابعة</SubmitButton>
+        </form>
+      ) : null}
+
+      {step.name === "code" || step.name === "second-factor" ? (
+        <form className="mt-6 flex flex-col gap-3" onSubmit={onSubmitCode} noValidate>
+          <RequiredNote />
+          <>
+              <label htmlFor="hakeem-code" className="text-sm font-semibold text-[#0E3435]">
+                {isBackup ? "الرمز الاحتياطي" : "رمز التحقق"}
+                <RequiredMark />
+              </label>
+              <input
+                ref={codeInputRef}
+                id="hakeem-code"
+                className={`${inputClass} text-center text-[1.4rem] tracking-[0.5em]`}
+                dir="ltr"
+                type="text"
+                inputMode={isBackup ? "text" : "numeric"}
+                autoComplete="one-time-code"
+                maxLength={isBackup ? 16 : CODE_LENGTH}
+                placeholder="••••••"
+                value={code}
+                onChange={(e) => {
+                  setCode(isBackup ? e.target.value.trim() : sanitizeCode(e.target.value));
+                  if (errorTarget === "code") clearError();
+                }}
+                disabled={busy}
+                required
+                aria-required="true"
+                aria-invalid={invalid("code") || undefined}
+                aria-describedby={describedBy("code", REQUIRED_NOTE_ID)}
+              />
+              <SubmitButton busy={busy}>تحقق</SubmitButton>
+            </>
+
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+            {step.name === "code" || step.strategy === "phone_code" || step.strategy === "email_code" ? (
+              <button type="button" className={linkButtonClass} onClick={onResend} disabled={busy || cooldown > 0}>
+                {cooldown > 0 ? `إعادة الإرسال بعد ${cooldown} ث` : "إعادة إرسال الرمز"}
+              </button>
+            ) : (
+              <span />
+            )}
+            {step.name === "second-factor" && step.canUseBackup ? (
+              <button type="button" className={linkButtonClass} onClick={onUseBackupCode} disabled={busy}>
+                استخدام رمز احتياطي
+              </button>
+            ) : embedded ? (
+              <button type="button" className={linkButtonClass} onClick={onEditTarget} disabled={busy}>
+                {editLabel}
+              </button>
+            ) : (
+              <button type="button" className={linkButtonClass} onClick={backToIdentifier} disabled={busy}>
+                تغيير البريد أو الرقم
+              </button>
+            )}
+          </div>
+        </form>
+      ) : null}
+
+      {step.name === "profile" ? (
+        <form className="mt-6 flex flex-col gap-3" onSubmit={onSubmitProfile} noValidate>
+          <RequiredNote />
+          {step.fields.map((f) =>
+            f === "legal_accepted" ? (
+              <label key={f} className="flex min-h-[44px] items-center gap-3 text-sm leading-6 text-[#0E3435]">
+                <input
+                  id="hakeem-legal_accepted"
+                  type="checkbox"
+                  className="h-5 w-5 shrink-0 accent-[#0E3435]"
+                  checked={profile.legal_accepted === "1"}
+                  onChange={(e) => setProfile((p) => ({ ...p, legal_accepted: e.target.checked ? "1" : "" }))}
+                  aria-required="true"
+                  aria-invalid={invalid(f) || undefined}
+                  aria-describedby={describedBy(f)}
+                />
+                <span>
+                  أوافق على{" "}
+                  <a href="/terms" className={`${inlineLinkClass} font-semibold`}>
+                    شروط الاستخدام
+                  </a>{" "}
+                  و
+                  <a href="/privacy" className={`${inlineLinkClass} font-semibold`}>
+                    سياسة الخصوصية
+                  </a>
+                  <RequiredMark />
+                </span>
+              </label>
+            ) : (
+              <div key={f} className="flex flex-col gap-1.5">
+                <label htmlFor={`hakeem-${f}`} className="text-sm font-semibold text-[#0E3435]">
+                  {PROFILE_LABELS[f]}
+                  <RequiredMark />
+                </label>
+                <input
+                  id={`hakeem-${f}`}
+                  className={inputClass}
+                  dir={f === "first_name" || f === "last_name" ? "rtl" : "ltr"}
+                  type={f === "password" ? "password" : f === "email_address" ? "email" : "text"}
+                  autoComplete={
+                    f === "first_name"
+                      ? "given-name"
+                      : f === "last_name"
+                        ? "family-name"
+                        : f === "email_address"
+                          ? "email"
+                          : f === "password"
+                            ? "new-password"
+                            : "username"
+                  }
+                  value={profile[f]}
+                  onChange={(e) => {
+                    setProfile((p) => ({ ...p, [f]: e.target.value }));
+                    if (errorTarget === f) clearError();
+                  }}
+                  disabled={busy}
+                  required
+                  aria-required="true"
+                  aria-invalid={invalid(f) || undefined}
+                  aria-describedby={describedBy(f, REQUIRED_NOTE_ID)}
+                />
+              </div>
+            )
+          )}
+          <SubmitButton busy={busy}>إنشاء الحساب</SubmitButton>
+        </form>
+      ) : null}
+
+      {/* نقطة تركيب حماية الروبوتات في Clerk — مطلوبة لنماذج التسجيل المخصّصة. */}
+      <div id="clerk-captcha" className="mt-3" />
+
+      {step.name === "identifier" && !embedded ? (
+        <p className="mt-5 text-center text-xs leading-6 text-[var(--auth-muted)]">
+          باستمرارك، فإنك توافق على{" "}
+          <a href="/terms" className={inlineLinkClass}>
+            شروط الاستخدام
+          </a>{" "}
+          و
+          <a href="/privacy" className={inlineLinkClass}>
+            سياسة الخصوصية
+          </a>
+          .
+        </p>
+      ) : null}
+
+      {step.name !== "finishing" && !embedded ? (
+        <p className="mt-4 text-center text-sm">
+          <a
+            href={`${isSignUp ? "/sign-up" : "/sign-in"}?next=${encodeURIComponent(nextUrl)}`}
+            className={`${inlineLinkClass} font-semibold text-[var(--auth-muted)] hover:text-[#0E3435]`}
+          >
+            العودة إلى خيارات الدخول
+          </a>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function SubmitButton({ busy, children, embedded = false }: { busy: boolean; children: ReactNode; embedded?: boolean }) {
+  return (
+    <button type="submit" className={embedded ? "hk-btn-primary" : primaryButtonClass} disabled={busy} aria-busy={busy}>
+      {busy ? (
+        <span
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#FFFcf7]/30 border-t-[#FFFcf7]"
+          aria-hidden
+        />
+      ) : null}
+      <span>{busy ? "لحظة…" : children}</span>
+    </button>
+  );
+}

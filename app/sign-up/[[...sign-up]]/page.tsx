@@ -5,19 +5,27 @@ import {
 } from "@/lib/modules/auth/auth-providers";
 import { AuthOauthButtons } from "@/components/auth/AuthOauthButtons";
 import { AuthJourneyShell } from "@/components/auth/AuthJourneyShell";
+import { redirect } from "next/navigation";
 import { resolvePostAuthNext } from "@/lib/modules/auth/safe-next";
+import { isHomeInlineAuthEnabled } from "@/lib/modules/config/home-inline-auth";
 import { hydrateEnvFromSettings } from "@/lib/modules/settings/settings-service";
 
 export const metadata = {
   title: "إنشاء حساب — حكيم",
 };
 
-/** بوابة التسجيل الموحّدة — /sign-up. */
+/**
+ * ‎/sign-up‎ ← صفحة الدخول الوحيدة ‎/sign-in?mode=sign-up‎ (الإحالة في الـ middleware، وهذه احتياطها).
+ * مع مفتاح الطوارئ HOME_INLINE_AUTH_ENABLED=0 تعود بوابة التسجيل السابقة كما هي.
+ */
 export default async function SignUpPage({
   searchParams,
 }: {
   searchParams?: { next?: string; returnUrl?: string; ref?: string };
 }) {
+  if (isHomeInlineAuthEnabled()) {
+    redirect(`/sign-in?${new URLSearchParams({ mode: "sign-up", next: resolvePostAuthNext(searchParams) })}`);
+  }
   await hydrateEnvFromSettings().catch(() => 0);
 
   const ready = hasAnySignInProvider();
