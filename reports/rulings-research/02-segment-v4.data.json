@@ -1,0 +1,249 @@
+{
+  "measuredAt": "2026-10-16T07:24:19.748Z",
+  "mode": "read-only (transaction_read_only=on)",
+  "versions": {
+    "before": "segment-rules-v3",
+    "after": "segment-rules-v4"
+  },
+  "rulings": 51105,
+  "emptyText": 0,
+  "v3": {
+    "foundPct": {
+      "claims": 92.73,
+      "defense": 51.9,
+      "reasons": 76.72,
+      "disposition": 96.91,
+      "appeal": 3.77,
+      "other": 46.04
+    },
+    "ruleOnlyPct": 69.32,
+    "structurePct": 100,
+    "dispositionProcedural": 11885,
+    "headerShare": {
+      "median": 0.0589,
+      "p90": 0.1918,
+      "p99": 0.7925
+    },
+    "headerOver25": 3965,
+    "reasonsUnder100": 579,
+    "dispositionOver5k": 997,
+    "headerOver5k": 143,
+    "otherOver5k": 47
+  },
+  "v4": {
+    "foundPct": {
+      "claims": 93.78,
+      "defense": 51.97,
+      "reasons": 96.37,
+      "disposition": 99.61,
+      "appeal": 1.22,
+      "other": 45.88
+    },
+    "ruleOnlyPct": 91.31,
+    "structurePct": 100,
+    "dispositionProcedural": 0,
+    "headerShare": {
+      "median": 0.0584,
+      "p90": 0.1769,
+      "p99": 0.7933
+    },
+    "headerOver25": 3506,
+    "reasonsUnder100": 487,
+    "dispositionOver5k": 34,
+    "headerOver5k": 122,
+    "otherOver5k": 0
+  },
+  "changes": {
+    "anySegmentChanged": 31885,
+    "dispositionChanged": 25838,
+    "dispositionLost": 39,
+    "dispositionGained": 1415,
+    "reasonsStartChanged": 19217,
+    "claimsStartChanged": 2610,
+    "headerShrunk": 2644,
+    "headerGrew": 219,
+    "v4StructureBroken": 0
+  },
+  "liveQaExamples": {
+    "found": 9,
+    "of": 9,
+    "partLengths": {
+      "#8": {
+        "length": 7018,
+        "v3": {
+          "header": 2829,
+          "defense": 1023,
+          "reasons": 1767,
+          "disposition": 1340,
+          "other": 59
+        },
+        "v4": {
+          "header": 2829,
+          "defense": 1023,
+          "reasons": 3050,
+          "disposition": 57,
+          "other": 59
+        }
+      },
+      "#1": {
+        "length": 8514,
+        "v3": {
+          "header": 223,
+          "claims": 4534,
+          "defense": 588,
+          "reasons": 18,
+          "disposition": 3136,
+          "other": 15
+        },
+        "v4": {
+          "header": 223,
+          "claims": 4534,
+          "defense": 653,
+          "reasons": 2987,
+          "disposition": 102,
+          "other": 15
+        }
+      },
+      "#9": {
+        "length": 35465,
+        "v3": {
+          "header": 193,
+          "claims": 2989,
+          "defense": 88,
+          "reasons": 14881,
+          "disposition": 285,
+          "other": 17029
+        },
+        "v4": {
+          "header": 193,
+          "claims": 2989,
+          "defense": 25094,
+          "reasons": 6672,
+          "disposition": 465,
+          "other": 52
+        }
+      },
+      "#3": {
+        "length": 60896,
+        "v3": {
+          "header": 205,
+          "claims": 23514,
+          "defense": 380,
+          "reasons": 27109,
+          "disposition": 9673,
+          "other": 15
+        },
+        "v4": {
+          "header": 205,
+          "claims": 23514,
+          "defense": 33353,
+          "reasons": 3770,
+          "disposition": 39,
+          "other": 15
+        }
+      },
+      "#6": {
+        "length": 20358,
+        "v3": {
+          "header": 448,
+          "claims": 1031,
+          "defense": 6375,
+          "reasons": 12504
+        },
+        "v4": {
+          "header": 448,
+          "claims": 1031,
+          "defense": 6375,
+          "reasons": 12135,
+          "disposition": 369
+        }
+      },
+      "#7": {
+        "length": 41051,
+        "v3": {
+          "header": 14433,
+          "claims": 2170,
+          "reasons": 5241,
+          "disposition": 19207
+        },
+        "v4": {
+          "header": 652,
+          "claims": 26062,
+          "defense": 6033,
+          "reasons": 6240,
+          "disposition": 2064
+        }
+      },
+      "#5": {
+        "length": 1440,
+        "v3": {
+          "header": 227,
+          "claims": 936,
+          "reasons": 277
+        },
+        "v4": {
+          "header": 227,
+          "claims": 936,
+          "reasons": 217,
+          "disposition": 60
+        }
+      },
+      "#2": {
+        "length": 23308,
+        "v3": {
+          "header": 257,
+          "claims": 2430,
+          "defense": 1192,
+          "disposition": 19429
+        },
+        "v4": {
+          "header": 257,
+          "claims": 2430,
+          "defense": 17743,
+          "reasons": 2253,
+          "disposition": 625
+        }
+      },
+      "#4": {
+        "length": 54006,
+        "v3": {
+          "header": 376,
+          "claims": 1165,
+          "defense": 768,
+          "reasons": 26235,
+          "disposition": 25355,
+          "other": 107
+        },
+        "v4": {
+          "header": 376,
+          "claims": 1165,
+          "defense": 768,
+          "reasons": 51051,
+          "disposition": 539,
+          "other": 107
+        }
+      }
+    }
+  },
+  "bigHeaderDiagnostics": {
+    "threshold": 0.25,
+    "rulings": 3506,
+    "candidateInHeader": {
+      "وفي الجلسة المنعقدة": 37,
+      "حيث تقدم": 3,
+      "تقدم/أقام … المدعي (≤٣ كلمات)": 116,
+      "ادعى (بأي سابقة)": 127,
+      "صحيفة/لائحة دعوى": 747,
+      "دعواه/دعواها": 815,
+      "وقائع": 1954,
+      "ملخص": 64,
+      "افتتحت/عقدت الجلسة": 356,
+      "حضر": 1310,
+      "المدعي": 1622
+    },
+    "jalsaFallbackHeaderShare": {
+      "median": 0.5965,
+      "p90": 0.8157
+    }
+  }
+}
