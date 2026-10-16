@@ -139,6 +139,8 @@ async function main() {
     let dispLost = 0;
     let dispGained = 0;
     let reasonsChanged = 0;
+    let reasonsEarlier = 0;
+    let fallbackClaims = 0;
     let claimsChanged = 0;
     let headerShrunk = 0;
     let headerGrew = 0;
@@ -172,6 +174,10 @@ async function main() {
         if (a.found.disposition && !b.found.disposition) dispLost++;
         if (!a.found.disposition && b.found.disposition) dispGained++;
         if (startOf(a, "reasons") !== startOf(b, "reasons")) reasonsChanged++;
+        const ra = startOf(a, "reasons");
+        const rb = startOf(b, "reasons");
+        if (ra !== null && rb !== null && rb < ra) reasonsEarlier++;
+        if (b.segments.some((x) => x.type === "claims" && x.confidence < 0.8)) fallbackClaims++;
         if (startOf(a, "claims") !== startOf(b, "claims")) claimsChanged++;
         const ha = a.segments[0]?.end ?? 0;
         const hb = b.segments[0]?.end ?? 0;
@@ -211,6 +217,8 @@ async function main() {
         dispositionLost: dispLost,
         dispositionGained: dispGained,
         reasonsStartChanged: reasonsChanged,
+        reasonsStartEarlier: reasonsEarlier,
+        claimsFromFallback: fallbackClaims,
         claimsStartChanged: claimsChanged,
         headerShrunk,
         headerGrew,

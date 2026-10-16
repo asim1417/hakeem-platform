@@ -139,6 +139,21 @@ const APPEAL_AFTER = [
  * قالب أحكام الهيئة الدائمة (المحكمة العليا ومجلس القضاء الأعلى): «انعقدت الدائرة…»
  * ثم «للنظر في طلب النقض…» ثم «وبعد الاطلاع على الأوراق ودراستها وبعد المداولة…» ثم «لذلك قررت الدائرة».
  */
+/**
+ * v4: بدايات احتياطية لجسم الحكم (عرض الدعوى ومحضر الجلسات) حين لا يوجد مرسى دعوى أصلًا أو يأتي
+ * متأخرًا (بعد ربع النص) فتتضخم الديباجة. مستخلصة من تشخيص مجمّع للديباجات الكبيرة في v3:
+ * «حضر … المدعي»، «صحيفة/لائحة الدعوى»، «افتتحت/عقدت الجلسة»، «وفي الجلسة المنعقدة»، «ادعى/ادعت»،
+ * «تقدم/أقام … المدعي». لا تُستعمل حين يوجد مرسى دعوى مبكر، فلا تغيّر الأحكام المقطّعة سليمًا.
+ */
+const CLAIMS_FALLBACK = [
+  `${W}حضر\\s+(?:[^\\s]+\\s+){0,4}?(?:ال)?مدع${Y}`,
+  `(?:صحيف${H}|لائح${H})\\s+(?:ال)?دعو${Y}`,
+  `${W}(?:افتتحت|عقدت|انعقدت)\\s+(?:ال)?جلس${H}`,
+  `${W}وف${Y}\\s+(?:ال)?جلس${H}\\s+(?:ال)?منعقد${H}`,
+  `${W}[وف]?ادع(?:${Y}|ت)\\s`,
+  `${W}[وف]?(?:تقدم|تقدمت|${A}قام|${A}قامت)\\s+(?:[^\\s]+\\s+){1,3}?(?:ال)?مدع${Y}`,
+];
+const LATE_CLAIMS = 0.25;
 const PANEL_CLAIMS = [`(?:وذلك\\s+)?للنظر\\s+ف${Y}\\s+طلب`, `ف${Y}\\s+طلب\\s+النقض`];
 const PANEL_REASONS = [`وبعد\\s+(?:ال)?اطلاع\\s+عل${Y}\\s+(?:ال${A}وراق|القضي${H}|ما\\s+تقدم)`, `وبعد\\s+المداول${H}`, `ودراستها\\s+وبعد`];
 
@@ -149,7 +164,7 @@ const rxs = (list: string[]) => list.map((s) => new RegExp(s, "gu"));
 const R = {
   claims: rxs(CLAIMS_START), defense: rxs(DEFENSE_START), reasons: rxs(REASONS_START),
   disposition: rxs(DISPOSITION), appeal: rxs(APPEAL_AFTER), closing: rxs(CLOSING),
-  panelClaims: rxs(PANEL_CLAIMS), panelReasons: rxs(PANEL_REASONS),
+  panelClaims: rxs(PANEL_CLAIMS), claimsFallback: rxs(CLAIMS_FALLBACK), panelReasons: rxs(PANEL_REASONS),
 };
 
 export interface SegmentOptions {
@@ -195,7 +210,12 @@ export function segmentRuling(original: string, opts: SegmentOptions = {}): Segm
     ? (lateDisp.find((p) => p >= lastExplicit - 80 && p < lastExplicit) ?? lastExplicit)
     : lateDisp.length ? lateDisp[0] : disp.length ? disp[disp.length - 1] : null;
   const panel = Boolean(opts.permanentPanel);
-  const claimsStart = firstAfter(positions(text, panel ? [...R.panelClaims, ...R.claims] : R.claims), 0, heading ?? dispStart ?? n);
+  const primaryClaims = firstAfter(positions(text, panel ? [...R.panelClaims, ...R.claims] : R.claims), 0, heading ?? dispStart ?? n);
+  // مرسى الدعوى غائب أو متأخر: أبكر بداية احتياطية قبله (وقبل الأسباب/المنطوق).
+  const fallbackClaims = primaryClaims === null || primaryClaims > n * LATE_CLAIMS
+    ? firstAfter(positions(text, R.claimsFallback), 1, primaryClaims ?? heading ?? dispStart ?? n)
+    : null;
+  const claimsStart = fallbackClaims ?? primaryClaims;
   const defenseStart = panel ? null : firstAfter(positions(text, R.defense), claimsStart ?? 0, heading ?? dispStart ?? n);
   const reasonsStart = heading !== null && heading >= (defenseStart ?? claimsStart ?? 0)
     ? heading
@@ -220,7 +240,7 @@ export function segmentRuling(original: string, opts: SegmentOptions = {}): Segm
     start: at(s),
     end: i + 1 < uniq.length ? at(uniq[i + 1][1]) : original.length,
     method: "rule",
-    confidence: type === "header" ? 0.9 : 0.8,
+    confidence: type === "header" ? 0.9 : type === "claims" && fallbackClaims !== null ? 0.6 : 0.8,
   }));
   if (segments.length) segments[0].start = 0;
   for (const [t, s] of cuts) if (t !== "header") found[t] = s !== null;

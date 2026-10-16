@@ -152,6 +152,24 @@ test("v4: تمييز القرار الإجرائي من المنطوق", () => {
   for (const t of decisive) assert.equal(isProceduralDecision(t, 0), false, t);
 });
 
+test("v4: مرسى الدعوى المتأخر لا يضخم الديباجة — بداية احتياطية من محضر الجلسة", () => {
+  const minutes = "وطلب الحاضر مهلة لإحضار المستندات المؤيدة لما يذكره عن المعاملة ".repeat(8);
+  for (const cue of ["افتتحت الجلسة", "حضر وكيل المدعي", "وردت صحيفة الدعوى"]) {
+    const t = `الحمد لله وحده وبعد فلدى الدائرة الثالثة ${cue} بتاريخ كذا ${minutes}وتتلخص وقائع الدعوى في أن المدعي يطلب المبلغ ` +
+      "وحيث إن الثابت كذا لذلك حكمت الدائرة بإلزام المدعى عليه بالمبلغ";
+    const s = segmentRuling(t);
+    const c = s.segments.find((x) => x.type === "claims")!;
+    assert.ok(t.slice(c.start).startsWith(cue.replace(/^وردت /, "")), cue);
+    assert.equal(c.confidence, 0.6);
+    assert.deepEqual(checkStructure(s, t.length), { contiguous: true, ordered: true }, cue);
+  }
+  // مرسى دعوى مبكر: لا تُستعمل البداية الاحتياطية.
+  const early = "الحمد لله تتلخص وقائع الدعوى في أن المدعي حضر المدعي وطلب كذا وحيث إن الثابت كذا لذلك حكمت الدائرة برفض الدعوى";
+  const c = segmentRuling(early).segments.find((x) => x.type === "claims")!;
+  assert.ok(early.slice(c.start).startsWith("تتلخص وقائع"));
+  assert.equal(c.confidence, 0.8);
+});
+
 test("v4: صيغ بداية الدعوى التي فاتت v3 فتضخمت الديباجة", () => {
   const pad = "وبناء على المعاملة المحالة إلى هذه الدائرة برقم كذا وتاريخ كذا ".repeat(6);
   for (const cue of ["فادعى المدعي قائلا", "وتقدمت المدعية بطلب", "أقامت الشركة المدعية دعواها", "بموجب صحيفة دعوى", "الوقائع: يطلب المدعي"]) {
