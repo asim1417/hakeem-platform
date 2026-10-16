@@ -1,0 +1,2142 @@
+{
+  "measuredAt": "2026-10-16T00:29:45.503Z",
+  "transport": "prisma",
+  "public": true,
+  "searchNorm": {
+    "columnExists": true,
+    "filled": 51105,
+    "expectedIndexes": [
+      {
+        "name": "idx_judicial_cases_search_norm_tsv",
+        "present": false
+      },
+      {
+        "name": "idx_judicial_cases_search_norm_trgm",
+        "present": false
+      },
+      {
+        "name": "judicial_cases_search_norm_gin",
+        "present": true
+      }
+    ],
+    "prismaMigrationsRows": [],
+    "allIndexes": [
+      {
+        "indexname": "idx_judicial_cases_text_trgm",
+        "indexdef": "CREATE INDEX idx_judicial_cases_text_trgm ON public.judicial_cases USING gin (\"judgmentText\" gin_trgm_ops)"
+      },
+      {
+        "indexname": "idx_judicial_cases_title_trgm",
+        "indexdef": "CREATE INDEX idx_judicial_cases_title_trgm ON public.judicial_cases USING gin (\"judgmentTitle\" gin_trgm_ops)"
+      },
+      {
+        "indexname": "judicial_cases_caseNo_idx",
+        "indexdef": "CREATE INDEX \"judicial_cases_caseNo_idx\" ON public.judicial_cases USING btree (\"caseNo\")"
+      },
+      {
+        "indexname": "judicial_cases_cityName_idx",
+        "indexdef": "CREATE INDEX \"judicial_cases_cityName_idx\" ON public.judicial_cases USING btree (\"cityName\")"
+      },
+      {
+        "indexname": "judicial_cases_court_idx",
+        "indexdef": "CREATE INDEX judicial_cases_court_idx ON public.judicial_cases USING btree (court)"
+      },
+      {
+        "indexname": "judicial_cases_decisionDate_idx",
+        "indexdef": "CREATE INDEX \"judicial_cases_decisionDate_idx\" ON public.judicial_cases USING btree (\"decisionDate\")"
+      },
+      {
+        "indexname": "judicial_cases_decisionNo_idx",
+        "indexdef": "CREATE INDEX \"judicial_cases_decisionNo_idx\" ON public.judicial_cases USING btree (\"decisionNo\")"
+      },
+      {
+        "indexname": "judicial_cases_pkey",
+        "indexdef": "CREATE UNIQUE INDEX judicial_cases_pkey ON public.judicial_cases USING btree (id)"
+      },
+      {
+        "indexname": "judicial_cases_search_norm_gin",
+        "indexdef": "CREATE INDEX judicial_cases_search_norm_gin ON public.judicial_cases USING gin (to_tsvector('simple'::regconfig, COALESCE(search_norm, ''::text)))"
+      },
+      {
+        "indexname": "judicial_cases_sourceId_key",
+        "indexdef": "CREATE UNIQUE INDEX \"judicial_cases_sourceId_key\" ON public.judicial_cases USING btree (\"sourceId\")"
+      }
+    ]
+  },
+  "stats": {
+    "rows": 51105,
+    "meanChars": 5983,
+    "medianChars": 4418,
+    "p05Chars": 1805,
+    "p95Chars": 15507,
+    "empty": {
+      "n": 0,
+      "pct": 0
+    },
+    "under300": {
+      "n": 0,
+      "pct": 0
+    },
+    "under1000": {
+      "n": 994,
+      "pct": 1.95
+    },
+    "coverage": {
+      "decisionDate": {
+        "n": 0,
+        "pct": 0
+      },
+      "decisionDateText": {
+        "n": 51105,
+        "pct": 100
+      },
+      "caseDateText": {
+        "n": 51105,
+        "pct": 100
+      },
+      "appealText": {
+        "n": 15622,
+        "pct": 30.57
+      },
+      "classificationObject": {
+        "n": 51105,
+        "pct": 100
+      }
+    },
+    "distinct": {
+      "court": 6,
+      "cityName": 25,
+      "courtOfAppeal": 8
+    },
+    "topCourts": [
+      {
+        "value": "محكمة: المحكمة التجارية",
+        "n": 47144
+      },
+      {
+        "value": "محكمة: المحكمة العامة",
+        "n": 2377
+      },
+      {
+        "value": "محكمة: المحكمة العليا -  الهيئة الدائمة",
+        "n": 1566
+      },
+      {
+        "value": "محكمة: مجلس القضاء الأعلى - الهيئة الدائمة",
+        "n": 13
+      },
+      {
+        "value": "محكمة: المحكمة العمالية",
+        "n": 3
+      },
+      {
+        "value": "محكمة: المحكمة الجزائية",
+        "n": 2
+      }
+    ],
+    "topCities": [
+      {
+        "value": "المدينه: الرياض",
+        "n": 22766
+      },
+      {
+        "value": "المدينه: جدة",
+        "n": 10939
+      },
+      {
+        "value": "المدينه: الدمام",
+        "n": 9143
+      },
+      {
+        "value": "المدينه: مكة المكرمة",
+        "n": 2478
+      },
+      {
+        "value": "المدينه: المدينة المنورة",
+        "n": 2094
+      },
+      {
+        "value": "المدينه: أبها",
+        "n": 999
+      },
+      {
+        "value": "المدينه: بريدة",
+        "n": 956
+      },
+      {
+        "value": "المدينه: جازان",
+        "n": 409
+      },
+      {
+        "value": "المدينه: حائل",
+        "n": 374
+      },
+      {
+        "value": "المدينه: تبوك",
+        "n": 327
+      },
+      {
+        "value": "المدينه: سكاكا",
+        "n": 182
+      },
+      {
+        "value": "المدينه: نجران",
+        "n": 162
+      },
+      {
+        "value": "المدينه: عرعر",
+        "n": 132
+      },
+      {
+        "value": "المدينه: الباحة",
+        "n": 117
+      },
+      {
+        "value": "المدينه: الربوعه",
+        "n": 8
+      },
+      {
+        "value": "المدينه: --",
+        "n": 7
+      },
+      {
+        "value": "المدينه: الخبر",
+        "n": 3
+      },
+      {
+        "value": "المدينه: خميس مشيط",
+        "n": 2
+      },
+      {
+        "value": "المدينه: الأحمر",
+        "n": 1
+      },
+      {
+        "value": "المدينه: شرورة",
+        "n": 1
+      },
+      {
+        "value": "المدينه: عنيزة",
+        "n": 1
+      },
+      {
+        "value": "المدينه: البكيرية",
+        "n": 1
+      },
+      {
+        "value": "المدينه: بيشة",
+        "n": 1
+      },
+      {
+        "value": "المدينه: منطقة مكة المكرمة",
+        "n": 1
+      },
+      {
+        "value": "المدينه: المنطقة الشرقية",
+        "n": 1
+      }
+    ],
+    "topCourtsOfAppeal": [
+      {
+        "value": "∅",
+        "n": 35394
+      },
+      {
+        "value": "محكمة الاستئناف: محكمة الاستئناف",
+        "n": 8479
+      },
+      {
+        "value": "محكمة الاستئناف: المحكمة التجارية",
+        "n": 7212
+      },
+      {
+        "value": "محكمة الاستئناف: المحكمة العامة",
+        "n": 9
+      },
+      {
+        "value": "محكمة الاستئناف: المحكمة الجزائية",
+        "n": 4
+      },
+      {
+        "value": "محكمة الاستئناف: المحكمة العمالية",
+        "n": 4
+      },
+      {
+        "value": "محكمة الاستئناف: المحكمة الجزائية المتخصصة",
+        "n": 2
+      },
+      {
+        "value": "محكمة الاستئناف: محكمة الاستئناف الجزائية المتخصصة",
+        "n": 1
+      }
+    ],
+    "classificationKeys": [
+      {
+        "value": "classification",
+        "n": 51105
+      }
+    ],
+    "classificationKeyValues": {
+      "classification": [
+        {
+          "value": "[\"التجاري\"]",
+          "n": 9987
+        },
+        {
+          "value": "[\"الدعوى - الأحكام - النقض - الدعوى - الأحكام - النقض - عدم قبول طلب النقض\"]",
+          "n": 986
+        },
+        {
+          "value": "[\"التجاري - الإفلاس\"]",
+          "n": 736
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الدعوى - طرق الإثبات - الكتابة - حجية الكتابة - التجاري - التوريد - تسليم ثمن التوريد\"]",
+          "n": 275
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - التجاري - التوريد - تسليم ثمن التوريد - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 261
+        },
+        {
+          "value": "[\"الدعوى - أضرار الدعوى - مطالبة بمصروفات الدعوى - الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - التجاري - التوريد - تسليم ثمن التوريد - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 236
+        },
+        {
+          "value": "[\"الحقوقي - البيع - عقد التوريد - التجاري - التوريد - تسليم ثمن التوريد - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 221
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الدعوى - طرق الإثبات - الكتابة - حجية الكتابة - التجاري - التوريد - تسليم ثمن التوريد - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 180
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - التجاري - التوريد - تسليم ثمن التوريد - الدعوى - طرق الإثبات - القرائن - عدم حضور المدعى عليه - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 171
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الحقوقي - الإجارة - إجارة الأشخاص - أتعاب المحاماة - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 169
+        },
+        {
+          "value": "[\"الدعوى - نظر الدعوى - صرف النظر ورد الدعوى - عدم الاختصاص\"]",
+          "n": 146
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الحقوقي - البيع - الثمن - تسليم ثمن - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 144
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الحقوقي - الإجارة - إجارة الأشخاص - أتعاب المحاماة\"]",
+          "n": 143
+        },
+        {
+          "value": "[\"الدعوى - أضرار الدعوى - مطالبة بمصروفات الدعوى - الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الدعوى - طرق الإثبات - الكتابة - حجية الكتابة - التجاري - التوريد - تسليم ثمن التوريد\"]",
+          "n": 140
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الدعوى - نظر الدعوى - صرف النظر ورد الدعوى - الحقوقي - الإجارة - إجارة الأشخاص - أتعاب المحاماة\"]",
+          "n": 136
+        },
+        {
+          "value": "[\"الحقوقي - البيع - الثمن - تسليم ثمن - الحقوقي - البيع - عقد التوريد - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 131
+        },
+        {
+          "value": "[\"الدعوى - أضرار الدعوى - مطالبة بمصروفات الدعوى - الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الحقوقي - البيع - الثمن - تسليم ثمن - الدعوى - طرق الإثبات - الكتابة - تقديم المستندات\"]",
+          "n": 124
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة العامة - الدعوى - نظر الدعوى - صرف النظر ورد الدعوى - عدم الاختصاص\"]",
+          "n": 124
+        },
+        {
+          "value": "[\"الدعوى - شروط الدعوى - الاختصاص - الاختصاص النوعي - المحكمة التجارية - الدعوى - طرق الإثبات - الكتابة - حجية الكتابة - الحقوقي - البيع - الثمن - تسليم ثمن\"]",
+          "n": 120
+        },
+        {
+          "value": "[\"الدعوى - الأحكام - النقض - عدم قبول طلب النقض\"]",
+          "n": 108
+        }
+      ]
+    }
+  },
+  "related": {
+    "legal_article_case_links": {
+      "exists": true,
+      "rows": 29705
+    },
+    "judicial_principles": {
+      "exists": true,
+      "rows": 4066
+    },
+    "judgment_cards": {
+      "exists": true,
+      "rows": 0
+    },
+    "judgment_article_links": {
+      "exists": true,
+      "rows": 0
+    },
+    "extraction_runs": {
+      "exists": true,
+      "rows": 0
+    },
+    "ruling_meta": {
+      "exists": false
+    },
+    "ruling_segments": {
+      "exists": false
+    },
+    "reasoning_units": {
+      "exists": false
+    },
+    "research_snapshot_meta": {
+      "exists": false
+    },
+    "legal_article_case_links_cases": 11469,
+    "legal_article_case_links_by_relation": [
+      {
+        "relationType": "applied",
+        "n": 18346
+      },
+      {
+        "relationType": "procedural_reference",
+        "n": 7424
+      },
+      {
+        "relationType": "cited",
+        "n": 2582
+      },
+      {
+        "relationType": "supporting_authority",
+        "n": 1353
+      }
+    ],
+    "embeddings": {
+      "byOwnerType": [
+        {
+          "owner_type": "ruling",
+          "n": 50273
+        },
+        {
+          "owner_type": "article",
+          "n": 17325
+        },
+        {
+          "owner_type": "principle",
+          "n": 4066
+        }
+      ],
+      "distinctRulings": 50273,
+      "rulingCoveragePct": 98.37
+    }
+  },
+  "study": {
+    "sampleSize": 48,
+    "seed": "research-00",
+    "strata": "court × year_h (one ruling per stratum, md5-ordered)",
+    "anchorFamilies": {
+      "section": [
+        {
+          "label": "الوقائع",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:ال)?وقائع(?:[ \\t]+الدعو[يى])?[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "الدعوى",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:ملخص[ \\t]+)?(?:ال)?دعو[يى][ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "الطلبات",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:ال)?طلبات[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "الإجابة",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:[اأإآ]ل)?(?:[اأإآ]جاب[ةه]|جواب)(?:[ \\t]+المدع[يى][ \\t]+عل[يى]ه(?:ا)?)?[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "الدفوع",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:ال)?دفوع[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "البينات",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:ال)?(?:بينات|[اأإآ]دل[ةه]|بين[ةه])[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "الأسباب",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:[اأإآ]سباب(?:[ \\t]+(?:ال)?حكم)?|ال[اأإآ]سباب|(?:ال)?حيثيات|(?:ال)?تسبيب)[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "المنطوق",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:منطوق(?:[ \\t]+(?:ال)?حكم)?|(?:ال)?منطوق|نص[ \\t]+(?:ال)?حكم)[ \\t]*(?:[:：]|(?=\\n)|$)"
+        },
+        {
+          "label": "الاستئناف",
+          "regex": "(?:^|\\n)[ \\t]*(?:[-–•*\\d١-٩)(.]+[ \\t]*)?(?:ال)?(?:[اأإآ]ستئناف|اعتراض)[ \\t]*(?:[:：]|(?=\\n)|$)"
+        }
+      ],
+      "reasoning": [
+        {
+          "label": "وحيث إن",
+          "regex": "(?:^|[^\\u0621-\\u064A])و?حيث[ \\t]+[اأإآ]ن"
+        },
+        {
+          "label": "ولما كان",
+          "regex": "(?:^|[^\\u0621-\\u064A])و?لما[ \\t]+كان"
+        },
+        {
+          "label": "وبما أن",
+          "regex": "(?:^|[^\\u0621-\\u064A])و?بما[ \\t]+[اأإآ]ن"
+        },
+        {
+          "label": "ولأن",
+          "regex": "(?:^|[^\\u0621-\\u064A])ول[اأإآ]ن[ \\t]"
+        },
+        {
+          "label": "وتأسيسًا/وبناءً على ما تقدم",
+          "regex": "(?:وت[اأإآ]سيسا|وبناء|وبناء)[ًٌٍ]?[ \\t]+عل[يى][ \\t]+ما[ \\t]+تقدم"
+        },
+        {
+          "label": "وعليه",
+          "regex": "(?:^|[^\\u0621-\\u064A])وعليه[ \\t]"
+        }
+      ],
+      "disposition": [
+        {
+          "label": "لذلك حكمت الدائرة/المحكمة",
+          "regex": "(?:فل|ل)ذلك[ \\t]+(?:فقد[ \\t]+)?(?:حكمت|قررت)[ \\t]+(?:ال)?(?:دائر[ةه]|محكم[ةه])"
+        },
+        {
+          "label": "حكمت الدائرة/المحكمة",
+          "regex": "(?:^|[^\\u0621-\\u064A])(?:وبه[ \\t]+|فقد[ \\t]+)?حكمت[ \\t]+(?:ال)?(?:دائر[ةه]|محكم[ةه])"
+        },
+        {
+          "label": "قررت الدائرة",
+          "regex": "قررت[ \\t]+(?:ال)?(?:دائر[ةه]|محكم[ةه])"
+        },
+        {
+          "label": "منطوق/نص الحكم",
+          "regex": "(?:منطوق|نص)[ \\t]+(?:ال)?حكم"
+        },
+        {
+          "label": "رفض الدعوى",
+          "regex": "رفض[ \\t]+(?:ال)?دعو[يى]"
+        },
+        {
+          "label": "عدم قبول",
+          "regex": "عدم[ \\t]+قبول"
+        },
+        {
+          "label": "عدم اختصاص",
+          "regex": "عدم[ \\t]+(?:ال)?اختصاص"
+        },
+        {
+          "label": "صرف النظر",
+          "regex": "صرف[ \\t]+(?:ال)?نظر"
+        },
+        {
+          "label": "شطب",
+          "regex": "(?:^|[^\\u0621-\\u064A])شطب[ \\t]"
+        },
+        {
+          "label": "إلزام",
+          "regex": "(?:^|[^\\u0621-\\u064A])ب?[اأإآ]لزام[ \\t]"
+        },
+        {
+          "label": "إثبات الصلح",
+          "regex": "[اأإآ]ثبات[ \\t]+(?:ال)?صلح"
+        }
+      ],
+      "appeal": [
+        {
+          "label": "تأييد",
+          "regex": "(?:ت[اأإآ]ييد|نؤيد|[اأإآ]يدت)[ \\t]+(?:ال)?حكم"
+        },
+        {
+          "label": "نقض",
+          "regex": "نقض[ \\t]+(?:ال)?حكم"
+        },
+        {
+          "label": "تعديل",
+          "regex": "تعديل[ \\t]+(?:ال)?حكم"
+        },
+        {
+          "label": "محكمة/دائرة الاستئناف",
+          "regex": "(?:محكم[ةه]|(?:ال)?دائر[ةه])[ \\t]+(?:ال)?[اأإآ]ستئناف(?:ي[ةه])?"
+        },
+        {
+          "label": "القناعة/الاعتراض",
+          "regex": "(?:قنع|(?:ال)?قناع[ةه]|اعترض|(?:ال)?اعتراض)"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "إقرار",
+          "regex": "(?:[اأإآ]قر|(?:ال|ب|وب)?[اأإآ]قرار)"
+        },
+        {
+          "label": "شهادة/شهود",
+          "regex": "(?:(?:ال)?شهود|(?:ال|ب)?شهاد[ةه]|شهد[ \\t])"
+        },
+        {
+          "label": "بينة",
+          "regex": "(?:ال|ب)?بين[ةه]"
+        },
+        {
+          "label": "يمين",
+          "regex": "(?:ال|ب)?يمين"
+        },
+        {
+          "label": "نكول",
+          "regex": "(?:نكل|(?:ال)?نكول)"
+        },
+        {
+          "label": "خبرة",
+          "regex": "(?:(?:ال)?خبير|(?:ال)?خبر[ةه][ \\t]+(?:ال)?فني[ةه])"
+        },
+        {
+          "label": "قرائن",
+          "regex": "(?:ال)?قرائن|(?:ال)?قرين[ةه]"
+        },
+        {
+          "label": "كتابة/مستند",
+          "regex": "(?:ال)?(?:مستند|مستندات|سند[ \\t]+لأمر|عقد[ \\t]+مكتوب)"
+        }
+      ]
+    },
+    "familyHits": {
+      "disposition": {
+        "إلزام": {
+          "rulings": 35,
+          "occurrences": 153,
+          "examples": []
+        },
+        "قررت الدائرة": {
+          "rulings": 29,
+          "occurrences": 46,
+          "examples": []
+        },
+        "منطوق/نص الحكم": {
+          "rulings": 29,
+          "occurrences": 38,
+          "examples": []
+        },
+        "عدم قبول": {
+          "rulings": 22,
+          "occurrences": 39,
+          "examples": []
+        },
+        "حكمت الدائرة/المحكمة": {
+          "rulings": 34,
+          "occurrences": 57,
+          "examples": []
+        },
+        "صرف النظر": {
+          "rulings": 3,
+          "occurrences": 7,
+          "examples": []
+        },
+        "رفض الدعوى": {
+          "rulings": 6,
+          "occurrences": 20,
+          "examples": []
+        },
+        "شطب": {
+          "rulings": 5,
+          "occurrences": 8,
+          "examples": []
+        },
+        "لذلك حكمت الدائرة/المحكمة": {
+          "rulings": 3,
+          "occurrences": 3,
+          "examples": []
+        },
+        "عدم اختصاص": {
+          "rulings": 5,
+          "occurrences": 10,
+          "examples": []
+        }
+      },
+      "reasoning": {
+        "ولما كان": {
+          "rulings": 31,
+          "occurrences": 79,
+          "examples": []
+        },
+        "وحيث إن": {
+          "rulings": 35,
+          "occurrences": 145,
+          "examples": []
+        },
+        "وعليه": {
+          "rulings": 21,
+          "occurrences": 65,
+          "examples": []
+        },
+        "ولأن": {
+          "rulings": 2,
+          "occurrences": 3,
+          "examples": []
+        },
+        "وبما أن": {
+          "rulings": 29,
+          "occurrences": 80,
+          "examples": []
+        },
+        "وتأسيسًا/وبناءً على ما تقدم": {
+          "rulings": 1,
+          "occurrences": 1,
+          "examples": []
+        }
+      },
+      "evidence": {
+        "خبرة": {
+          "rulings": 7,
+          "occurrences": 57,
+          "examples": []
+        },
+        "بينة": {
+          "rulings": 28,
+          "occurrences": 116,
+          "examples": []
+        },
+        "شهادة/شهود": {
+          "rulings": 14,
+          "occurrences": 85,
+          "examples": []
+        },
+        "كتابة/مستند": {
+          "rulings": 28,
+          "occurrences": 132,
+          "examples": []
+        },
+        "يمين": {
+          "rulings": 11,
+          "occurrences": 54,
+          "examples": []
+        },
+        "إقرار": {
+          "rulings": 19,
+          "occurrences": 125,
+          "examples": []
+        },
+        "نكول": {
+          "rulings": 17,
+          "occurrences": 24,
+          "examples": []
+        },
+        "قرائن": {
+          "rulings": 5,
+          "occurrences": 15,
+          "examples": []
+        }
+      },
+      "appeal": {
+        "محكمة/دائرة الاستئناف": {
+          "rulings": 33,
+          "occurrences": 93,
+          "examples": []
+        },
+        "القناعة/الاعتراض": {
+          "rulings": 34,
+          "occurrences": 133,
+          "examples": []
+        },
+        "تأييد": {
+          "rulings": 13,
+          "occurrences": 15,
+          "examples": []
+        },
+        "نقض": {
+          "rulings": 5,
+          "occurrences": 7,
+          "examples": []
+        }
+      }
+    },
+    "headerCandidates": [],
+    "perRuling": [
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1444",
+        "chars": 6696,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition"
+        ],
+        "reasoningUnits": 2,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
+        "yearH": "1443",
+        "chars": 1036,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "appeal",
+          "disposition",
+          "appeal",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 0,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1442",
+        "chars": 3816,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition"
+        ],
+        "reasoningUnits": 4,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1445",
+        "chars": 2196,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition"
+        ],
+        "reasoningUnits": 3,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1439",
+        "chars": 4297,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1440",
+        "chars": 2653,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 6,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1443",
+        "chars": 4188,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 7,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
+        "yearH": "1442",
+        "chars": 903,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 1,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1446",
+        "chars": 4972,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 7,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1441",
+        "chars": 2751,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition"
+        ],
+        "reasoningUnits": 1,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1444",
+        "chars": 45412,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition"
+        ],
+        "reasoningUnits": 24,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1437",
+        "chars": 2268,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 4,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1441",
+        "chars": 4478,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 3,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1438",
+        "chars": 3622,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 8,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1443",
+        "chars": 4033,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 4,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": null,
+        "chars": 2145,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 4,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1445",
+        "chars": 5149,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 10,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1439",
+        "chars": 11079,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1440",
+        "chars": 5478,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 5,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1442",
+        "chars": 14473,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "appeal",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 12,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
+        "yearH": "1441",
+        "chars": 2299,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 2,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1428",
+        "chars": 5202,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1433",
+        "chars": 13936,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "evidence",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 21,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1446",
+        "chars": 13009,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence"
+        ],
+        "reasoningUnits": 8,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1437",
+        "chars": 5659,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 10,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1436",
+        "chars": 3102,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 6,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1434",
+        "chars": 3129,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 4,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1438",
+        "chars": 25484,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 19,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1435",
+        "chars": 16286,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 20,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1422",
+        "chars": 4493,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 4,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1436",
+        "chars": 4215,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 6,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": null,
+        "chars": 3530,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 2,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1431",
+        "chars": 5885,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: مجلس القضاء الأعلى - الهيئة الدائمة",
+        "yearH": "1441",
+        "chars": 982,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "appeal",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 1,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1426",
+        "chars": 7315,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 10,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1424",
+        "chars": 4733,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition"
+        ],
+        "reasoningUnits": 2,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1432",
+        "chars": 4581,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 6,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العامة",
+        "yearH": "1435",
+        "chars": 28543,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 13,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1427",
+        "chars": 5912,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة الجزائية",
+        "yearH": "1442",
+        "chars": 13798,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 13,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1425",
+        "chars": 33067,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "disposition",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "evidence",
+          "disposition",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 23,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1431",
+        "chars": 7538,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 8,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العمالية",
+        "yearH": "1445",
+        "chars": 8034,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: مجلس القضاء الأعلى - الهيئة الدائمة",
+        "yearH": "1442",
+        "chars": 1019,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "appeal",
+          "reasoning",
+          "appeal",
+          "evidence",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 1,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العمالية",
+        "yearH": "1441",
+        "chars": 15792,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "evidence",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "appeal",
+          "disposition",
+          "appeal",
+          "disposition"
+        ],
+        "reasoningUnits": 19,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
+        "yearH": "1439",
+        "chars": 990,
+        "hasAppealText": false,
+        "familiesInOrder": [
+          "appeal",
+          "reasoning",
+          "appeal",
+          "reasoning",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 2,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة العمالية",
+        "yearH": "1440",
+        "chars": 3112,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "disposition",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "disposition"
+        ],
+        "reasoningUnits": 5,
+        "hasDisposition": true
+      },
+      {
+        "court": "محكمة: المحكمة التجارية",
+        "yearH": "1429",
+        "chars": 22198,
+        "hasAppealText": true,
+        "familiesInOrder": [
+          "evidence",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "evidence",
+          "appeal",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "evidence",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal",
+          "reasoning",
+          "evidence",
+          "disposition",
+          "reasoning",
+          "disposition",
+          "appeal",
+          "disposition",
+          "appeal"
+        ],
+        "reasoningUnits": 9,
+        "hasDisposition": true
+      }
+    ],
+    "coverage": {
+      "withReasoningAnchor": 47,
+      "withDispositionAnchor": 48
+    }
+  }
+}
