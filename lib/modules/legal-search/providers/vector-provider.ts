@@ -18,13 +18,106 @@ const FALLBACK_CANDIDATE_POOL = 100; // سقف المرشّحين المعجمي
 // عتبة التشابه الدلالي الدنيا (cosine): أقل منها = بعيد الصلة يُستبعَد كضجيج.
 const MIN_SEMANTIC_SCORE = 0.6;
 
-/** هل جدول pgvector `embeddings` متاح وفيه متجهات؟ */
+/** هل جدول pgvector `embeddings` متاح وفيه متجهات؟ (وجود صفّ واحد يكفي — لا عدّ لكل الجدول.) */
 async function embeddingsTableHasRows(): Promise<boolean> {
   try {
-    return (await prisma.embedding.count()) > 0;
+    return (await prisma.embedding.findFirst({ select: { id: true } })) !== null;
   } catch {
     return false; // الجدول/الامتداد غير مُفعّل في قاعدة التشغيل
   }
+}
+
+// الفهرس العام على embeddings يخلط الأحكام (70٪) بالمواد والمبادئ، فالترشيح بنوع المالك بعده يُسقط
+// أغلب المرشّحين، والاستعلام المجمَّع (latestVectorSource) لا يستعمل الفهرس أصلًا فيمسح كل المتجهات
+// (~9 ث باردة). الفهارس الجزئية (migration 20261016200000) تجعل كل نوع بحثًا مفهرسًا مستقلًّا.
+export const PARTIAL_HNSW_INDEXES = ["idx_embeddings_hnsw_article", "idx_embeddings_hnsw_principle"] as const;
+const PARTIAL_CHECK_TTL_MS = 5 * 60_000;
+let partialCheck: { at: number; ready: boolean } | null = null;
+
+/** هل الفهرسان الجزئيان موجودان؟ يُخزَّن الجواب 5 دقائق؛ قبل تطبيق الترحيل يبقى المسار القديم. */
+async function partialIndexesReady(): Promise<boolean> {
+  if (partialCheck && Date.now() - partialCheck.at < PARTIAL_CHECK_TTL_MS) return partialCheck.ready;
+  let ready = false;
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ n: number }>>(
+      `SELECT count(*)::int AS n FROM pg_indexes WHERE tablename = 'embeddings' AND indexname = ANY($1::text[])`,
+      [...PARTIAL_HNSW_INDEXES],
+    );
+    ready = Number(rows[0]?.n ?? 0) === PARTIAL_HNSW_INDEXES.length;
+  } catch {
+    ready = false;
+  }
+  partialCheck = { at: Date.now(), ready };
+  return ready;
+}
+
+/** للاختبارات: يُسقط جواب فحص الفهرسين المخزَّن. */
+export function resetPartialIndexCheck(): void {
+  partialCheck = null;
+}
+
+type VectorRow = { owner_type: string; owner_id: string; score: number; segment?: true };
+
+/** أقرب متجهات نوعٍ واحد عبر فهرسه الجزئي. الشرط حرفيّ ليطابق شرط الفهرس. */
+export function partialTypeSql(type: "article" | "principle", take: number): string {
+  return `SELECT e.owner_type, e.owner_id, (1 - (e.embedding <=> $1::vector)) AS score
+     FROM embeddings e
+     WHERE e.owner_type = '${type}' AND e.embedding IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM embedding_version ev WHERE ev.owner_type = e.owner_type AND ev.owner_id = e.owner_id)
+     ORDER BY e.embedding <=> $1::vector
+     LIMIT ${take}`;
+}
+
+/**
+ * الأحكام في الجدول العام. مع متجهات الأجزاء لا يبقى إلا الأحكام التي لا أجزاء لها (12 اليوم):
+ * تُعيَّن معرّفاتها أولًا (بلا قراءة متجه) ثم يُحسب البعد لها فقط — «+ 0» يمنع المخطِّط من الفهرس
+ * العام الذي يُسقطها. بلا أجزاء: الأحكام أغلب الفهرس العام فالترشيح بعده آمن.
+ */
+export function rulingsSql(segReady: boolean, take: number): string {
+  if (!segReady) {
+    return `SELECT e.owner_type, e.owner_id, (1 - (e.embedding <=> $1::vector)) AS score
+       FROM embeddings e
+       WHERE e.owner_type = 'ruling' AND e.embedding IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM embedding_version ev WHERE ev.owner_type = e.owner_type AND ev.owner_id = e.owner_id)
+       ORDER BY e.embedding <=> $1::vector
+       LIMIT ${take}`;
+  }
+  return `WITH orphans AS MATERIALIZED (
+       SELECT id FROM embeddings
+       WHERE owner_type = 'ruling' AND owner_id NOT IN (SELECT ruling_id FROM ruling_segment_embeddings)
+     )
+     SELECT e.owner_type, e.owner_id, (1 - (e.embedding <=> $1::vector)) AS score
+     FROM embeddings e
+     WHERE e.id IN (SELECT id FROM orphans) AND e.embedding IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM embedding_version ev WHERE ev.owner_type = e.owner_type AND ev.owner_id = e.owner_id)
+     ORDER BY (e.embedding <=> $1::vector) + 0
+     LIMIT ${take}`;
+}
+
+/** أحدث نسخة متجه لكل مالك (جدول النسخ صغير — مسح مباشر). */
+export function versionsSql(segReady: boolean, take: number): string {
+  return `SELECT owner_type, owner_id, (1 - (embedding <=> $1::vector)) AS score
+     FROM (
+       SELECT owner_type, owner_id, embedding,
+              row_number() OVER (PARTITION BY owner_type, owner_id ORDER BY created_at DESC) AS rn
+       FROM embedding_version
+       WHERE embedding IS NOT NULL
+     ) v
+     WHERE rn = 1${segReady ? ` AND NOT (owner_type = 'ruling' AND owner_id IN (SELECT ruling_id FROM ruling_segment_embeddings))` : ""}
+     ORDER BY embedding <=> $1::vector
+     LIMIT ${take}`;
+}
+
+/** المسار المفهرس: أعلى take لكل مصدر ثم الدمج — اتحادها يحوي أعلى take الكلّي. */
+async function nearestViaPartialIndexes(literal: string, take: number, segReady: boolean): Promise<VectorRow[]> {
+  const q = (sql: string) => prisma.$queryRawUnsafe<VectorRow[]>(sql, literal);
+  const batches = await Promise.all([
+    q(partialTypeSql("article", take)),
+    q(partialTypeSql("principle", take)),
+    q(rulingsSql(segReady, take)),
+    q(versionsSql(segReady, take)),
+  ]);
+  return batches.flat();
 }
 
 /** هل يوجد متجهات على `legal_articles.embedding` (مصدر الاحتياطي)؟ */
@@ -46,6 +139,7 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
   try {
     const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
     const take = Math.min(limit, 20);
+    const t0 = Date.now();
     // الأحكام: متجهات الأسباب والمنطوق (ruling_segment_embeddings) متى وُجدت، بدل متجه الحكم القديم
     // المبني من أول ٨٬٠٠٠ حرف (الديباجة غالبًا) — فيُستبعد ذاك من هذا الاستعلام.
     const segReady = await rulingSegmentVectorsReady().catch(() => false);
@@ -57,14 +151,16 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
          : ""}
        ORDER BY embedding <=> '${literal}'::vector
        LIMIT ${take}`;
+    const partial = await partialIndexesReady();
     const [baseRows, segHits] = await Promise.all([
-      prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
-        sqlFor(latestVectorSource()),
-      ).catch(() => prisma.$queryRawUnsafe<Array<{ owner_type: string; owner_id: string; score: number }>>(
-        sqlFor("embeddings"),
-      )),
+      partial
+        ? nearestViaPartialIndexes(literal, take, segReady)
+        : prisma.$queryRawUnsafe<VectorRow[]>(sqlFor(latestVectorSource())).catch(() =>
+            prisma.$queryRawUnsafe<VectorRow[]>(sqlFor("embeddings")),
+          ),
       segReady ? nearestRulingSegments(vec).catch(() => []) : Promise.resolve([]),
     ]);
+    console.info(`[search] vector sql ms=${Date.now() - t0} path=${partial ? "partial_hnsw" : "scan"}`);
     // عتبة الأحكام من قياس متجهات الأجزاء (RULINGS_SEMANTIC_MIN، 0.42)؛ وعتبة البقية كما هي.
     const segIds = new Set(segHits.map((h) => h.id));
     const rows = [
@@ -72,15 +168,20 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
       ...segHits.slice(0, take).map((h) => ({ owner_type: "ruling", owner_id: h.id, score: h.sim, segment: true })),
     ].sort((x, y) => Number(y.score) - Number(x.score)).slice(0, take);
 
+    // عتبة دنيا للتشابه الدلالي: تمنع ظهور نتائج بعيدة (٣٠٪–٤٠٪) كضجيج.
+    // أحكام متجهات الأجزاء صُفّيت بعتبتها المقيسة في nearestRulingSegments.
+    const kept = rows.filter((row) => {
+      const type = row.owner_type;
+      if (type !== "article" && type !== "ruling" && type !== "principle") return false;
+      return Math.max(0, Math.min(1, Number(row.score))) >= MIN_SEMANTIC_SCORE || "segment" in row;
+    });
+    // حلّ الكيانات بالتوازي (كان تسلسليًّا: حتى 20 رحلة قاعدة متتالية).
+    const entities = await Promise.all(kept.map((row) => resolveEntity(row.owner_type as EntityType, row.owner_id)));
     const results: RawResult[] = [];
-    for (const row of rows) {
+    for (const [i, row] of kept.entries()) {
       const type = row.owner_type as EntityType;
-      if (type !== "article" && type !== "ruling" && type !== "principle") continue;
       const score = Math.max(0, Math.min(1, Number(row.score)));
-      // عتبة دنيا للتشابه الدلالي: تمنع ظهور نتائج بعيدة (٣٠٪–٤٠٪) كضجيج.
-      // أحكام متجهات الأجزاء صُفّيت بعتبتها المقيسة في nearestRulingSegments.
-      if (score < MIN_SEMANTIC_SCORE && !("segment" in row)) continue;
-      const entity = await resolveEntity(type, row.owner_id);
+      const entity = entities[i];
       if (!entity.exists) continue;
       results.push({
         type: type as LegalEntityType,
@@ -160,7 +261,9 @@ export const vectorProvider: SearchProvider = {
     const query = q.trim();
     if (!query) return [];
     try {
+      const t0 = Date.now();
       const vec = await embedText(query);
+      console.info(`[search] vector embed ms=${Date.now() - t0} ok=${Boolean(vec?.length)}`);
       if (!vec || vec.length === 0) return [];
 
       // 1) جدول pgvector إن كان متاحاً.
