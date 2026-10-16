@@ -3,7 +3,7 @@ name: Diag rulings segments plan (read-only)
 on:
   push:
     branches: [claude/rulings-search-latency]
-    paths: [.github/workflows/diag-rulings-segments.yml, scripts/rulings-research/diag-segments-plan.ts]
+    paths: [.github/workflows/diag-rulings-segments.yml, scripts/rulings-research/diag-segments-plan.ts, lib/modules/legal-core/rulings-search.ts]
 permissions:
   contents: read
 jobs:
