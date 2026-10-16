@@ -145,9 +145,9 @@ async function segmentVectorsReady(): Promise<boolean> {
   return _segReady.ok;
 }
 
-interface SemanticCandidate { id: string; part: SegmentType; start: number; sim: number }
+export interface SemanticCandidate { id: string; part: SegmentType; start: number; sim: number }
 
-async function semanticRulingCandidates(query: string): Promise<SemanticCandidate[]> {
+export async function semanticRulingCandidates(query: string, min = SEMANTIC_MIN): Promise<SemanticCandidate[]> {
   if ((process.env.RULINGS_SEMANTIC ?? "").toLowerCase() === "off") return [];
   // استيراد متأخر: وحدة المتجهات تستورد redactPII من هنا.
   const { embedText, semanticSearchEnabled } = await import("@/lib/modules/ai/embeddings");
@@ -162,7 +162,7 @@ async function semanticRulingCandidates(query: string): Promise<SemanticCandidat
   const best = new Map<string, SemanticCandidate>();
   for (const r of rows) {
     const sim = Number(r.sim);
-    if (!(sim >= SEMANTIC_MIN)) continue;
+    if (!(sim >= min)) continue;
     const prev = best.get(r.ruling_id);
     if (!prev || sim > prev.sim) best.set(r.ruling_id, { id: r.ruling_id, part: r.part as SegmentType, start: Number(r.start_char), sim });
   }

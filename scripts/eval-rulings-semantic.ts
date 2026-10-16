@@ -6,7 +6,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { prisma } from "../lib/prisma";
-import { searchRulingsDirect } from "../lib/modules/legal-core/rulings-search";
+import { searchRulingsDirect, semanticRulingCandidates } from "../lib/modules/legal-core/rulings-search";
 
 // ألفاظ قصيرة، ثم أسئلة بلغة المحامي (حيث يُنتظر أن يضيف المعنى ما لا يجده اللفظ).
 const QUERIES = [
@@ -48,11 +48,19 @@ async function main() {
   }
   const [cov] = await prisma.$queryRawUnsafe<Array<{ chunks: bigint; rulings: bigint }>>(
     `SELECT count(*)::bigint AS chunks, count(DISTINCT ruling_id)::bigint AS rulings FROM ruling_segment_embeddings`);
-  const rows: Array<{ q: string; kind: string; lexical: Awaited<ReturnType<typeof run>>; semantic: Awaited<ReturnType<typeof run>> }> = [];
+  const rows: Array<{ q: string; kind: string; lexical: Awaited<ReturnType<typeof run>>; semantic: Awaited<ReturnType<typeof run>>; simStats: Record<string, unknown> }> = [];
   for (const [i, q] of QUERIES.entries()) {
     const lexical = await run(q, false);
     const both = await run(q, true);
-    rows.push({ q: i < 8 ? q : `سؤال ${i - 7}`, kind: i < 8 ? "term" : "question", lexical, semantic: both });
+    // توزيع التشابه لأقرب ٦٠ جزءًا (أفضل جزء لكل حكم) — لضبط العتبة بالأرقام.
+    process.env.RULINGS_SEMANTIC = "on";
+    const sims = (await semanticRulingCandidates(q, 0).catch(() => [])).map((c) => c.sim).sort((a, b) => b - a);
+    const r2 = (x: number | undefined) => (x === undefined ? null : Math.round(x * 1000) / 1000);
+    const simStats = {
+      top1: r2(sims[0]), top10: r2(sims[9]), median: r2(sims[Math.floor(sims.length / 2)]),
+      atLeast: Object.fromEntries([0.3, 0.35, 0.4, 0.45, 0.5].map((t) => [t, sims.filter((x) => x >= t).length])),
+    };
+    rows.push({ q: i < 8 ? q : `سؤال ${i - 7}`, kind: i < 8 ? "term" : "question", lexical, semantic: both, simStats });
     console.log(`• ${i + 1}/${QUERIES.length}`);
   }
   const agg = (kind: string) => {
