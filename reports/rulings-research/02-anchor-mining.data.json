@@ -1,9 +1,9 @@
 {
-  "measuredAt": "2026-10-16T01:23:46.987Z",
+  "measuredAt": "2026-10-16T01:29:29.401Z",
   "rows": 51105,
   "windows": {
-    "noDefense": 31460,
-    "noClaims": 12136,
+    "noDefense": 30968,
+    "noClaims": 2381,
     "supreme": 1579
   },
   "minRulings": {
@@ -13,645 +13,1127 @@
   "defenseCandidates": [
     {
       "phrase": "المدعي عليها",
-      "rulings": 21491
+      "rulings": 21484
     },
     {
       "phrase": "المدعي عليه",
-      "rulings": 20281
+      "rulings": 19983
     },
     {
       "phrase": "عليها اسم",
-      "rulings": 19327
+      "rulings": 19397
     },
     {
       "phrase": "المدعي عليها اسم",
-      "rulings": 19275
+      "rulings": 19344
     },
     {
       "phrase": "عليه اسم",
-      "rulings": 17902
+      "rulings": 17947
     },
     {
       "phrase": "المدعي عليه اسم",
-      "rulings": 17795
+      "rulings": 17861
     },
     {
       "phrase": "المدعي اسم",
-      "rulings": 17258
+      "rulings": 16988
     },
     {
       "phrase": "الزام المدعي",
-      "rulings": 14075
+      "rulings": 14492
     },
     {
       "phrase": "المدعي وكاله",
-      "rulings": 9676
+      "rulings": 9546
     },
     {
       "phrase": "وكيل المدعي",
-      "rulings": 9268
+      "rulings": 9365
     },
     {
       "phrase": "ان المدعي",
-      "rulings": 8799
+      "rulings": 8749
     },
     {
       "phrase": "من المدعي",
-      "rulings": 8453
+      "rulings": 8370
     },
     {
       "phrase": "مع المدعي",
-      "rulings": 7965
+      "rulings": 8180
     },
     {
       "phrase": "الزام المدعي عليها",
-      "rulings": 7620
+      "rulings": 7876
     },
     {
       "phrase": "بالزام المدعي",
-      "rulings": 7192
+      "rulings": 7282
     },
     {
       "phrase": "الزام المدعي عليه",
-      "rulings": 6829
+      "rulings": 7060
     },
     {
       "phrase": "الزام المدعي عليها اسم",
-      "rulings": 6402
+      "rulings": 6629
     },
     {
       "phrase": "يمثل المدعي",
-      "rulings": 6380
+      "rulings": 6499
     },
     {
       "phrase": "من يمثل المدعي",
-      "rulings": 6365
+      "rulings": 6484
     },
     {
       "phrase": "الزام المدعي عليه اسم",
-      "rulings": 6172
+      "rulings": 6389
     },
     {
       "phrase": "للمدعي عليها",
-      "rulings": 5561
+      "rulings": 5669
     },
     {
       "phrase": "يمثل المدعي عليها",
-      "rulings": 5530
+      "rulings": 5633
     },
     {
       "phrase": "من يمثل المدعي عليها",
-      "rulings": 5521
+      "rulings": 5624
     },
     {
       "phrase": "وكيل المدعي اسم",
-      "rulings": 5465
+      "rulings": 5482
     },
     {
       "phrase": "المدعي عن",
-      "rulings": 5281
+      "rulings": 5396
     },
     {
       "phrase": "حضور المدعي",
-      "rulings": 4900
-    },
-    {
-      "phrase": "بالزام المدعي عليها",
-      "rulings": 4816
+      "rulings": 4981
     },
     {
       "phrase": "حضر المدعي",
-      "rulings": 4806
+      "rulings": 4890
+    },
+    {
+      "phrase": "بالزام المدعي عليها",
+      "rulings": 4874
     },
     {
       "phrase": "فيها المدعي",
-      "rulings": 4628
+      "rulings": 4874
     },
     {
       "phrase": "وبسوال المدعي",
-      "rulings": 4509
+      "rulings": 4596
     },
     {
       "phrase": "مع المدعي عليها",
-      "rulings": 4442
-    },
-    {
-      "phrase": "اسم المدعي",
-      "rulings": 4218
-    },
-    {
-      "phrase": "بالزام المدعي عليها اسم",
-      "rulings": 4133
+      "rulings": 4567
     },
     {
       "phrase": "يمثل المدعي عليها اسم",
-      "rulings": 4115
+      "rulings": 4199
     },
     {
-      "phrase": "تقدم المدعي",
-      "rulings": 4085
+      "phrase": "بالزام المدعي عليها اسم",
+      "rulings": 4181
+    },
+    {
+      "phrase": "اسم المدعي",
+      "rulings": 4103
     },
     {
       "phrase": "عليها اسم من",
-      "rulings": 3978
+      "rulings": 4031
     },
     {
       "phrase": "المدعي عليها اسم من",
-      "rulings": 3947
+      "rulings": 4001
     },
     {
-      "phrase": "ضد المدعي",
-      "rulings": 3830
-    },
-    {
-      "phrase": "من المدعي عليها",
-      "rulings": 3693
-    },
-    {
-      "phrase": "علي المدعي",
-      "rulings": 3628
+      "phrase": "تقدم المدعي",
+      "rulings": 3863
     },
     {
       "phrase": "المدعي وكاله عن",
-      "rulings": 3621
+      "rulings": 3742
+    },
+    {
+      "phrase": "من المدعي عليها",
+      "rulings": 3722
+    },
+    {
+      "phrase": "ضد المدعي",
+      "rulings": 3654
+    },
+    {
+      "phrase": "علي المدعي",
+      "rulings": 3651
     },
     {
       "phrase": "يحضر من يمثل المدعي",
-      "rulings": 3568
+      "rulings": 3617
     },
     {
       "phrase": "عدم حضور المدعي",
-      "rulings": 3557
-    },
-    {
-      "phrase": "وطالب بالزام المدعي",
-      "rulings": 3536
+      "rulings": 3607
     },
     {
       "phrase": "ان المدعي عليها",
-      "rulings": 3516
+      "rulings": 3600
     },
     {
       "phrase": "استلم المدعي",
-      "rulings": 3473
+      "rulings": 3589
+    },
+    {
+      "phrase": "وطالب بالزام المدعي",
+      "rulings": 3539
     },
     {
       "phrase": "وقد استلم المدعي",
-      "rulings": 3366
+      "rulings": 3478
     },
     {
       "phrase": "حضر وكيل المدعي",
-      "rulings": 3326
+      "rulings": 3382
     },
     {
       "phrase": "استلم المدعي عليه",
-      "rulings": 3267
-    },
-    {
-      "phrase": "استلم المدعي عليه اسم",
-      "rulings": 3231
+      "rulings": 3378
     },
     {
       "phrase": "مع المدعي عليه",
-      "rulings": 3223
+      "rulings": 3354
+    },
+    {
+      "phrase": "استلم المدعي عليه اسم",
+      "rulings": 3338
     },
     {
       "phrase": "وقد استلم المدعي عليه",
-      "rulings": 3191
+      "rulings": 3298
     },
     {
       "phrase": "اطلب الزام المدعي",
-      "rulings": 3141
+      "rulings": 3273
     },
     {
       "phrase": "عليها علي",
-      "rulings": 3109
-    },
-    {
-      "phrase": "في ان المدعي",
-      "rulings": 3020
-    },
-    {
-      "phrase": "وبناء عليه",
-      "rulings": 3011
+      "rulings": 3183
     },
     {
       "phrase": "من المدعي عليه",
-      "rulings": 2992
+      "rulings": 3039
+    },
+    {
+      "phrase": "وبناء عليه",
+      "rulings": 3001
     },
     {
       "phrase": "عليها اسم في",
-      "rulings": 2910
+      "rulings": 2962
     },
     {
       "phrase": "المدعي عليها اسم في",
-      "rulings": 2871
+      "rulings": 2922
     },
     {
       "phrase": "للمدعي عليه",
-      "rulings": 2857
+      "rulings": 2918
     },
     {
       "phrase": "المدعي عليها علي",
-      "rulings": 2831
+      "rulings": 2896
     },
     {
       "phrase": "من المدعي عليها اسم",
-      "rulings": 2818
-    },
-    {
-      "phrase": "عن المدعي",
-      "rulings": 2714
-    },
-    {
-      "phrase": "عليها في",
-      "rulings": 2687
-    },
-    {
-      "phrase": "بان المدعي",
-      "rulings": 2668
-    },
-    {
-      "phrase": "وبسوال المدعي وكاله",
-      "rulings": 2645
-    },
-    {
-      "phrase": "عليه اسم من",
-      "rulings": 2631
-    },
-    {
-      "phrase": "المدعي عليه اسم من",
-      "rulings": 2615
+      "rulings": 2845
     },
     {
       "phrase": "يختصم فيها المدعي",
-      "rulings": 2615
+      "rulings": 2839
+    },
+    {
+      "phrase": "بان المدعي",
+      "rulings": 2751
+    },
+    {
+      "phrase": "عن المدعي",
+      "rulings": 2747
+    },
+    {
+      "phrase": "وبسوال المدعي وكاله",
+      "rulings": 2714
+    },
+    {
+      "phrase": "عليه اسم من",
+      "rulings": 2682
+    },
+    {
+      "phrase": "عليها في",
+      "rulings": 2678
+    },
+    {
+      "phrase": "المدعي عليه اسم من",
+      "rulings": 2665
+    },
+    {
+      "phrase": "في ان المدعي",
+      "rulings": 2643
     },
     {
       "phrase": "لذا اطلب الزام المدعي",
-      "rulings": 2518
-    },
-    {
-      "phrase": "وبسوال المدعي وكاله عن",
-      "rulings": 2486
+      "rulings": 2617
     },
     {
       "phrase": "وكيل المدعي عن",
-      "rulings": 2481
+      "rulings": 2571
     },
     {
-      "phrase": "تبين عدم حضور المدعي",
-      "rulings": 2476
+      "phrase": "وبسوال المدعي وكاله عن",
+      "rulings": 2558
     },
     {
       "phrase": "اطلب الزام المدعي عليه",
-      "rulings": 2443
+      "rulings": 2543
+    },
+    {
+      "phrase": "تبين عدم حضور المدعي",
+      "rulings": 2510
+    },
+    {
+      "phrase": "طلب الزام المدعي",
+      "rulings": 2462
     },
     {
       "phrase": "حضور المدعي عليها",
-      "rulings": 2412
-    },
-    {
-      "phrase": "وطالب بالزام المدعي عليها",
-      "rulings": 2411
-    },
-    {
-      "phrase": "حضور من يمثل المدعي",
-      "rulings": 2391
+      "rulings": 2450
     },
     {
       "phrase": "عليه علي",
-      "rulings": 2388
+      "rulings": 2441
+    },
+    {
+      "phrase": "الا ان المدعي",
+      "rulings": 2439
     },
     {
       "phrase": "عليها لم",
-      "rulings": 2384
+      "rulings": 2437
     },
     {
-      "phrase": "بالزام المدعي عليه",
-      "rulings": 2367
+      "phrase": "حضور من يمثل المدعي",
+      "rulings": 2431
+    }
+  ],
+  "replyVerbCandidates": [
+    {
+      "phrase": "ورد في",
+      "rulings": 5384
+    },
+    {
+      "phrase": "ما ورد",
+      "rulings": 5371
+    },
+    {
+      "phrase": "ما ورد في",
+      "rulings": 3732
+    },
+    {
+      "phrase": "علي ما ورد",
+      "rulings": 2445
+    },
+    {
+      "phrase": "ورد في الماده",
+      "rulings": 2084
+    },
+    {
+      "phrase": "ورد في صحيفه",
+      "rulings": 1857
+    },
+    {
+      "phrase": "علي ما ورد في",
+      "rulings": 1826
+    },
+    {
+      "phrase": "الي ما ورد",
+      "rulings": 1800
+    },
+    {
+      "phrase": "ورد في صحيفه الدعوي",
+      "rulings": 1788
+    },
+    {
+      "phrase": "ما ورد في صحيفه",
+      "rulings": 1725
+    },
+    {
+      "phrase": "دفعه واحده",
+      "rulings": 1556
+    },
+    {
+      "phrase": "انه وردت",
+      "rulings": 1342
+    },
+    {
+      "phrase": "لما ورد",
+      "rulings": 1310
+    },
+    {
+      "phrase": "احال الي ما ورد",
+      "rulings": 1235
+    },
+    {
+      "phrase": "الي ما ورد في",
+      "rulings": 1143
+    },
+    {
+      "phrase": "وردت الي",
+      "rulings": 1082
+    },
+    {
+      "phrase": "في انه وردت",
+      "rulings": 1072
+    },
+    {
+      "phrase": "اجاب قايلا",
+      "rulings": 1048
+    },
+    {
+      "phrase": "وردت الي المحكمه",
+      "rulings": 1023
+    },
+    {
+      "phrase": "ما ورد في الماده",
+      "rulings": 1005
+    },
+    {
+      "phrase": "بما ورد",
+      "rulings": 992
+    },
+    {
+      "phrase": "دفعه واحده بتاريخ",
+      "rulings": 978
+    },
+    {
+      "phrase": "انه وردت الي",
+      "rulings": 975
+    },
+    {
+      "phrase": "هكذا اجاب",
+      "rulings": 960
+    },
+    {
+      "phrase": "احال علي ما ورد",
+      "rulings": 952
+    },
+    {
+      "phrase": "وبعرضها علي",
+      "rulings": 949
+    },
+    {
+      "phrase": "في انه وردت الي",
+      "rulings": 944
+    },
+    {
+      "phrase": "انه وردت الي المحكمه",
+      "rulings": 922
+    },
+    {
+      "phrase": "علي دفعه",
+      "rulings": 918
+    },
+    {
+      "phrase": "وردت الي المحكمه التجاريه",
+      "rulings": 917
+    },
+    {
+      "phrase": "علي دفعه واحده",
+      "rulings": 903
+    },
+    {
+      "phrase": "المبلغ علي دفعه",
+      "rulings": 872
+    },
+    {
+      "phrase": "المبلغ علي دفعه واحده",
+      "rulings": 872
+    },
+    {
+      "phrase": "تسليم المبلغ علي دفعه",
+      "rulings": 865
+    },
+    {
+      "phrase": "علي دفعات",
+      "rulings": 860
+    },
+    {
+      "phrase": "علي دفعه واحده بتاريخ",
+      "rulings": 850
+    },
+    {
+      "phrase": "فاجاب بانه",
+      "rulings": 838
+    },
+    {
+      "phrase": "فاجاب قايلا",
+      "rulings": 808
+    },
+    {
+      "phrase": "بما ورد في",
+      "rulings": 763
+    },
+    {
+      "phrase": "وبعرض ذلك",
+      "rulings": 743
+    },
+    {
+      "phrase": "وبعرض ذلك علي",
+      "rulings": 717
+    },
+    {
+      "phrase": "قدم مذكره",
+      "rulings": 715
+    },
+    {
+      "phrase": "مذكره من",
+      "rulings": 702
+    },
+    {
+      "phrase": "ورد فيها",
+      "rulings": 696
+    },
+    {
+      "phrase": "وفقا لما ورد",
+      "rulings": 678
+    },
+    {
+      "phrase": "الدعوي فاجاب",
+      "rulings": 675
+    },
+    {
+      "phrase": "لما ورد في",
+      "rulings": 658
+    },
+    {
+      "phrase": "الدايره بما ورد",
+      "rulings": 616
+    },
+    {
+      "phrase": "بما ورد في الماده",
+      "rulings": 597
+    },
+    {
+      "phrase": "فاجاب بان",
+      "rulings": 582
+    },
+    {
+      "phrase": "الحكم في انه وردت",
+      "rulings": 577
+    },
+    {
+      "phrase": "اجاب بانه",
+      "rulings": 548
+    },
+    {
+      "phrase": "ورد في لايحه",
+      "rulings": 532
+    },
+    {
+      "phrase": "السداد دفعه",
+      "rulings": 529
+    },
+    {
+      "phrase": "يكون السداد دفعه",
+      "rulings": 528
+    },
+    {
+      "phrase": "ان يكون السداد دفعه",
+      "rulings": 528
+    },
+    {
+      "phrase": "ورد بلايحه",
+      "rulings": 525
+    },
+    {
+      "phrase": "السداد دفعه واحده",
+      "rulings": 524
+    },
+    {
+      "phrase": "اجاب بان",
+      "rulings": 524
+    },
+    {
+      "phrase": "يكون السداد دفعه واحده",
+      "rulings": 523
+    },
+    {
+      "phrase": "ورد بلايحه الدعوي",
+      "rulings": 508
+    },
+    {
+      "phrase": "نظرها وفقا لما ورد",
+      "rulings": 502
+    },
+    {
+      "phrase": "الدايره بما ورد في",
+      "rulings": 501
+    },
+    {
+      "phrase": "ما ورد بلايحه",
+      "rulings": 487
+    },
+    {
+      "phrase": "ولتحقق الدايره بما ورد",
+      "rulings": 486
+    },
+    {
+      "phrase": "الدعوي في انه وردت",
+      "rulings": 485
+    },
+    {
+      "phrase": "ما ورد بلايحه الدعوي",
+      "rulings": 474
+    },
+    {
+      "phrase": "ورد مفصلا",
+      "rulings": 470
+    },
+    {
+      "phrase": "ورد مفصلا في",
+      "rulings": 469
+    },
+    {
+      "phrase": "ما ورد مفصلا",
+      "rulings": 462
+    },
+    {
+      "phrase": "ما ورد مفصلا في",
+      "rulings": 461
+    },
+    {
+      "phrase": "دفع مبلغ",
+      "rulings": 457
+    },
+    {
+      "phrase": "ورد في لايحه الدعوي",
+      "rulings": 456
+    },
+    {
+      "phrase": "الي ما ورد مفصلا",
+      "rulings": 444
+    },
+    {
+      "phrase": "دعواه اجاب",
+      "rulings": 441
+    },
+    {
+      "phrase": "مذكره المدعي",
+      "rulings": 438
+    },
+    {
+      "phrase": "الدعوي اجاب",
+      "rulings": 438
+    },
+    {
+      "phrase": "ما ورد في لايحه",
+      "rulings": 433
+    },
+    {
+      "phrase": "ورد مفصلا في صحيفتها",
+      "rulings": 429
+    },
+    {
+      "phrase": "ورد في الماده رقم",
+      "rulings": 421
+    },
+    {
+      "phrase": "انه ورد",
+      "rulings": 418
+    },
+    {
+      "phrase": "وبعرضها علي المدعي",
+      "rulings": 405
+    },
+    {
+      "phrase": "وبناء علي ما ورد",
+      "rulings": 404
+    },
+    {
+      "phrase": "وبعرضها علي وكيل",
+      "rulings": 400
+    },
+    {
+      "phrase": "علي مذكره",
+      "rulings": 399
+    },
+    {
+      "phrase": "فيما ورد",
+      "rulings": 393
+    },
+    {
+      "phrase": "رد الدعوي",
+      "rulings": 389
+    },
+    {
+      "phrase": "علي ما ورد بلايحه",
+      "rulings": 384
+    },
+    {
+      "phrase": "هذه الدعوي فاجاب",
+      "rulings": 381
+    },
+    {
+      "phrase": "دفعه واحده قدرها",
+      "rulings": 381
+    },
+    {
+      "phrase": "في انه ورد",
+      "rulings": 378
+    },
+    {
+      "phrase": "السداد دفعه واحده قدرها",
+      "rulings": 375
+    },
+    {
+      "phrase": "ورد الي",
+      "rulings": 372
+    },
+    {
+      "phrase": "ورد بمحاضر",
+      "rulings": 371
+    },
+    {
+      "phrase": "لما ورد بمحاضر",
+      "rulings": 366
+    },
+    {
+      "phrase": "وفقا لما ورد بمحاضر",
+      "rulings": 366
+    },
+    {
+      "phrase": "ورد بمحاضر الضبط",
+      "rulings": 364
+    },
+    {
+      "phrase": "في مذكره",
+      "rulings": 363
+    },
+    {
+      "phrase": "في هذه الدعوي فاجاب",
+      "rulings": 362
+    },
+    {
+      "phrase": "لما ورد بمحاضر الضبط",
+      "rulings": 361
+    },
+    {
+      "phrase": "وفق ما ورد",
+      "rulings": 361
+    },
+    {
+      "phrase": "فيما ورد فيها",
+      "rulings": 358
+    },
+    {
+      "phrase": "الحكم في انه ورد",
+      "rulings": 357
+    },
+    {
+      "phrase": "المبلغ علي دفعات",
+      "rulings": 357
+    },
+    {
+      "phrase": "جوابه علي",
+      "rulings": 356
+    },
+    {
+      "phrase": "ورد الي المحكمه",
+      "rulings": 356
+    },
+    {
+      "phrase": "انه ورد الي",
+      "rulings": 354
+    },
+    {
+      "phrase": "في انه ورد الي",
+      "rulings": 354
+    },
+    {
+      "phrase": "انه ورد الي المحكمه",
+      "rulings": 354
+    },
+    {
+      "phrase": "مذكره جوابيه",
+      "rulings": 352
+    },
+    {
+      "phrase": "وبعرضه علي",
+      "rulings": 350
+    },
+    {
+      "phrase": "ورد الي المحكمه التجاريه",
+      "rulings": 347
+    },
+    {
+      "phrase": "وبعرضها علي وكيل اسم",
+      "rulings": 340
+    },
+    {
+      "phrase": "وبعرض ذلك علي المدعي",
+      "rulings": 335
+    },
+    {
+      "phrase": "دفعات كالتالي",
+      "rulings": 330
+    },
+    {
+      "phrase": "الدعوي فاجاب قايلا",
+      "rulings": 328
+    },
+    {
+      "phrase": "فاحال علي ما ورد",
+      "rulings": 324
+    },
+    {
+      "phrase": "دفعات كالتالي الدفعه",
+      "rulings": 310
+    },
+    {
+      "phrase": "وبعرضها علي المدعي عليه",
+      "rulings": 309
+    },
+    {
+      "phrase": "السداد دفعات",
+      "rulings": 309
     }
   ],
   "claimsCandidates": [
     {
       "phrase": "والسلام علي",
-      "rulings": 12115
+      "rulings": 2376
     },
     {
       "phrase": "والصلاه والسلام",
-      "rulings": 12046
+      "rulings": 2364
     },
     {
       "phrase": "والصلاه والسلام علي",
-      "rulings": 12042
+      "rulings": 2364
     },
     {
       "phrase": "القضيه رقم",
-      "rulings": 11691
-    },
-    {
-      "phrase": "والسلام علي رسول",
-      "rulings": 10662
-    },
-    {
-      "phrase": "والصلاه والسلام علي رسول",
-      "rulings": 10589
-    },
-    {
-      "phrase": "وبناء علي",
-      "rulings": 10563
-    },
-    {
-      "phrase": "وبناء علي القضيه",
-      "rulings": 10538
-    },
-    {
-      "phrase": "والسلام علي رسول الله",
-      "rulings": 10383
-    },
-    {
-      "phrase": "الله اما",
-      "rulings": 10276
-    },
-    {
-      "phrase": "وبناء علي القضيه رقم",
-      "rulings": 10261
-    },
-    {
-      "phrase": "بعد فلدي",
-      "rulings": 10222
-    },
-    {
-      "phrase": "اما بعد",
-      "rulings": 10163
-    },
-    {
-      "phrase": "فلدي الدايره",
-      "rulings": 10148
-    },
-    {
-      "phrase": "بعد فلدي الدايره",
-      "rulings": 10145
-    },
-    {
-      "phrase": "اما بعد فلدي",
-      "rulings": 10058
+      "rulings": 2259
     },
     {
       "phrase": "الدايره التجاريه",
-      "rulings": 10024
+      "rulings": 1898
+    },
+    {
+      "phrase": "والسلام علي رسول",
+      "rulings": 1883
+    },
+    {
+      "phrase": "والصلاه والسلام علي رسول",
+      "rulings": 1871
+    },
+    {
+      "phrase": "وبناء علي",
+      "rulings": 1831
+    },
+    {
+      "phrase": "والسلام علي رسول الله",
+      "rulings": 1825
+    },
+    {
+      "phrase": "وبناء علي القضيه",
+      "rulings": 1818
+    },
+    {
+      "phrase": "بعد فلدي",
+      "rulings": 1794
+    },
+    {
+      "phrase": "اما بعد",
+      "rulings": 1787
+    },
+    {
+      "phrase": "فلدي الدايره",
+      "rulings": 1773
+    },
+    {
+      "phrase": "بعد فلدي الدايره",
+      "rulings": 1770
+    },
+    {
+      "phrase": "وبناء علي القضيه رقم",
+      "rulings": 1768
+    },
+    {
+      "phrase": "اما بعد فلدي",
+      "rulings": 1765
+    },
+    {
+      "phrase": "الله اما",
+      "rulings": 1761
     },
     {
       "phrase": "اما بعد فلدي الدايره",
-      "rulings": 9983
+      "rulings": 1741
     },
     {
       "phrase": "الله اما بعد",
-      "rulings": 9918
+      "rulings": 1707
     },
     {
       "phrase": "الله اما بعد فلدي",
-      "rulings": 9915
-    },
-    {
-      "phrase": "فلدي الدايره التجاريه",
-      "rulings": 8364
-    },
-    {
-      "phrase": "بعد فلدي الدايره التجاريه",
-      "rulings": 8363
-    },
-    {
-      "phrase": "المدعي عليه",
-      "rulings": 7740
-    },
-    {
-      "phrase": "المدعي عليها",
-      "rulings": 7372
-    },
-    {
-      "phrase": "وقايع هذه",
-      "rulings": 7215
-    },
-    {
-      "phrase": "تتحصل وقايع",
-      "rulings": 6818
-    },
-    {
-      "phrase": "اللازم لاصدار",
-      "rulings": 6749
-    },
-    {
-      "phrase": "لاصدار هذا",
-      "rulings": 6668
-    },
-    {
-      "phrase": "تتحصل وقايع هذه",
-      "rulings": 6577
-    },
-    {
-      "phrase": "لاصدار هذا الحكم",
-      "rulings": 6571
-    },
-    {
-      "phrase": "اللازم لاصدار هذا",
-      "rulings": 6525
-    },
-    {
-      "phrase": "اللازم لاصدار هذا الحكم",
-      "rulings": 6437
-    },
-    {
-      "phrase": "المدعي اسم",
-      "rulings": 6335
-    },
-    {
-      "phrase": "المدعي عليه اسم",
-      "rulings": 6326
+      "rulings": 1707
     },
     {
       "phrase": "الحمد لله",
-      "rulings": 6263
+      "rulings": 1428
     },
     {
-      "phrase": "المدعي عليها اسم",
-      "rulings": 6198
+      "phrase": "المدعي عليه",
+      "rulings": 1383
     },
     {
-      "phrase": "بالقدر اللازم",
-      "rulings": 6170
+      "phrase": "فلدي الدايره التجاريه",
+      "rulings": 1370
     },
     {
-      "phrase": "الحمدلله والصلاه",
-      "rulings": 5583
+      "phrase": "بعد فلدي الدايره التجاريه",
+      "rulings": 1369
     },
     {
-      "phrase": "الحمدلله والصلاه والسلام",
-      "rulings": 5578
+      "phrase": "المدعي عليها",
+      "rulings": 1158
     },
     {
-      "phrase": "الحمدلله والصلاه والسلام علي",
-      "rulings": 5578
+      "phrase": "المدعي اسم",
+      "rulings": 1134
     },
     {
-      "phrase": "بالقدر اللازم لاصدار",
-      "rulings": 5413
-    },
-    {
-      "phrase": "بالقدر اللازم لاصدار هذا",
-      "rulings": 5263
-    },
-    {
-      "phrase": "الزام المدعي",
-      "rulings": 5189
-    },
-    {
-      "phrase": "لله والصلاه",
-      "rulings": 4981
-    },
-    {
-      "phrase": "لله والصلاه والسلام",
-      "rulings": 4981
-    },
-    {
-      "phrase": "لله والصلاه والسلام علي",
-      "rulings": 4979
-    },
-    {
-      "phrase": "الحمد لله والصلاه",
-      "rulings": 4952
-    },
-    {
-      "phrase": "الحمد لله والصلاه والسلام",
-      "rulings": 4952
-    },
-    {
-      "phrase": "وكيل المدعيه",
-      "rulings": 4373
+      "phrase": "المدعي عليه اسم",
+      "rulings": 1117
     },
     {
       "phrase": "القاضي اسم",
-      "rulings": 4357
+      "rulings": 1109
     },
     {
-      "phrase": "المدعيه اسم",
-      "rulings": 4311
+      "phrase": "لله والصلاه",
+      "rulings": 960
     },
     {
-      "phrase": "بصحيفه دعوي",
-      "rulings": 3931
+      "phrase": "لله والصلاه والسلام",
+      "rulings": 960
     },
     {
-      "phrase": "الوقايع تتحصل",
-      "rulings": 3706
+      "phrase": "لله والصلاه والسلام علي",
+      "rulings": 960
     },
     {
-      "phrase": "وقايع هذه الدعوي",
-      "rulings": 3692
+      "phrase": "الحمد لله والصلاه",
+      "rulings": 956
     },
     {
-      "phrase": "وقايع هذه القضيه",
-      "rulings": 3510
+      "phrase": "الحمد لله والصلاه والسلام",
+      "rulings": 956
     },
     {
-      "phrase": "تتحصل وقايع هذه القضيه",
-      "rulings": 3437
+      "phrase": "المدعي عليها اسم",
+      "rulings": 931
     },
     {
-      "phrase": "وكيل المدعي",
-      "rulings": 3417
+      "phrase": "الحمدلله والصلاه",
+      "rulings": 903
     },
     {
-      "phrase": "الي هذه",
-      "rulings": 3413
+      "phrase": "الحمدلله والصلاه والسلام",
+      "rulings": 902
     },
     {
-      "phrase": "وكيل اسم",
-      "rulings": 3365
-    },
-    {
-      "phrase": "ان المدعي",
-      "rulings": 3267
-    },
-    {
-      "phrase": "الوقايع تتحصل وقايع",
-      "rulings": 3222
-    },
-    {
-      "phrase": "تتحصل وقايع هذه الدعوي",
-      "rulings": 3129
-    },
-    {
-      "phrase": "الدعوي بالقدر",
-      "rulings": 3114
-    },
-    {
-      "phrase": "المدعي وكاله",
-      "rulings": 3100
-    },
-    {
-      "phrase": "الوقايع تتحصل وقايع هذه",
-      "rulings": 3090
-    },
-    {
-      "phrase": "بموجب الوكاله",
-      "rulings": 3087
-    },
-    {
-      "phrase": "الدعوي بالقدر اللازم",
-      "rulings": 3064
-    },
-    {
-      "phrase": "المشار اليه",
-      "rulings": 2916
-    },
-    {
-      "phrase": "وفي سبيل",
-      "rulings": 2849
-    },
-    {
-      "phrase": "بلايحه دعوي",
-      "rulings": 2818
-    },
-    {
-      "phrase": "الزام المدعي عليها",
-      "rulings": 2760
+      "phrase": "الحمدلله والصلاه والسلام علي",
+      "rulings": 902
     },
     {
       "phrase": "اسم عضواالقاضي",
-      "rulings": 2698
+      "rulings": 778
     },
     {
-      "phrase": "اسم من",
-      "rulings": 2691
+      "phrase": "وكيل اسم",
+      "rulings": 714
+    },
+    {
+      "phrase": "المدعيه اسم",
+      "rulings": 686
+    },
+    {
+      "phrase": "اسم عضواالقاضي اسم",
+      "rulings": 686
+    },
+    {
+      "phrase": "في القضيه",
+      "rulings": 637
+    },
+    {
+      "phrase": "اسم رييساالقاضي",
+      "rulings": 615
+    },
+    {
+      "phrase": "ان المدعي",
+      "rulings": 597
+    },
+    {
+      "phrase": "الحكم في",
+      "rulings": 576
+    },
+    {
+      "phrase": "الزام المدعي",
+      "rulings": 571
+    },
+    {
+      "phrase": "القاضي اسم رييساالقاضي",
+      "rulings": 569
+    },
+    {
+      "phrase": "وكيل المدعيه",
+      "rulings": 559
+    },
+    {
+      "phrase": "للنظر في",
+      "rulings": 545
+    },
+    {
+      "phrase": "الوقايع تتلخص",
+      "rulings": 533
+    },
+    {
+      "phrase": "اسم رييساالقاضي اسم",
+      "rulings": 526
+    },
+    {
+      "phrase": "في القضيه رقم",
+      "rulings": 525
     },
     {
       "phrase": "المحكمه التجاريه",
-      "rulings": 2686
+      "rulings": 524
     },
     {
-      "phrase": "الدعوي بالقدر اللازم لاصدار",
-      "rulings": 2666
+      "phrase": "التجاريه الثالثه",
+      "rulings": 517
     },
     {
-      "phrase": "الحكم بتقدم",
-      "rulings": 2661
+      "phrase": "الدايره التجاريه الثالثه",
+      "rulings": 516
     },
     {
-      "phrase": "لاصدار هذا الحكم بتقدم",
-      "rulings": 2622
+      "phrase": "اسم عضوا",
+      "rulings": 499
     },
     {
-      "phrase": "وقايع هذه الدعوي بالقدر",
-      "rulings": 2618
+      "phrase": "وكيل المدعي",
+      "rulings": 495
     },
     {
-      "phrase": "التجاريه بالرياض",
-      "rulings": 2579
+      "phrase": "القاضي اسم رييساالقاضي اسم",
+      "rulings": 486
     },
     {
-      "phrase": "الف ريال",
-      "rulings": 2544
+      "phrase": "لدي هذه",
+      "rulings": 481
+    },
+    {
+      "phrase": "لدي هذه المحكمه",
+      "rulings": 472
+    },
+    {
+      "phrase": "لله وحده",
+      "rulings": 468
+    },
+    {
+      "phrase": "المدعي وكاله",
+      "rulings": 467
+    },
+    {
+      "phrase": "اسم رييساالقاضي اسم عضواالقاضي",
+      "rulings": 464
+    },
+    {
+      "phrase": "وحده والصلاه",
+      "rulings": 461
+    },
+    {
+      "phrase": "وحده والصلاه والسلام",
+      "rulings": 461
+    },
+    {
+      "phrase": "وحده والصلاه والسلام علي",
+      "rulings": 461
+    },
+    {
+      "phrase": "اسم من",
+      "rulings": 460
+    },
+    {
+      "phrase": "اصدرت الدايره",
+      "rulings": 455
+    },
+    {
+      "phrase": "اسم في",
+      "rulings": 454
+    },
+    {
+      "phrase": "لله وحده والصلاه",
+      "rulings": 448
+    },
+    {
+      "phrase": "لله وحده والصلاه والسلام",
+      "rulings": 448
+    },
+    {
+      "phrase": "الحمد لله وحده",
+      "rulings": 446
+    },
+    {
+      "phrase": "وذلك للنظر",
+      "rulings": 437
+    },
+    {
+      "phrase": "وذلك للنظر في",
+      "rulings": 436
+    },
+    {
+      "phrase": "امينا للسر",
+      "rulings": 436
+    },
+    {
+      "phrase": "الحكم في القضيه",
+      "rulings": 432
+    },
+    {
+      "phrase": "في ان",
+      "rulings": 428
+    },
+    {
+      "phrase": "الحمد لله وحده والصلاه",
+      "rulings": 426
+    },
+    {
+      "phrase": "والسلام علي من",
+      "rulings": 425
+    },
+    {
+      "phrase": "والصلاه والسلام علي من",
+      "rulings": 425
     }
   ],
   "supremeOpeningPhrases": [
