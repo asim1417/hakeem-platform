@@ -1,0 +1,74 @@
+name: Rulings — segment boundaries by model (count / sample, no DB writes)
+
+# إكمال حدود التقطيع بالنموذج — مرحلة القياس فقط (scripts/rulings-research/06-segment-model.ts):
+#   count  → count_tokens على N منطقة (لا توليد) وإسقاط الكلفة على الكل.
+#   sample → N نداء للنموذج مع تحقق آلي من كل اقتباس في النص الأصلي، بسقف MAX_MODEL_CALLS.
+# لا كتابة في أي قاعدة. القراءة للقراءة فقط. ما يُرسل منطقة الحدّ وحدها محجوبة.
+# المستودع عام: المخرج أعداد فقط، ويُودَع في الفرع reports/rulings-research/06-segment-model.data.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "count | sample"
+        required: true
+        default: count
+      n:
+        description: "حجم العيّنة"
+        required: true
+        default: "200"
+      max_calls:
+        description: "سقف نداءات النموذج (sample فقط)"
+        default: "0"
+
+concurrency:
+  group: rulings-segment-model
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MODE: ${{ github.event.inputs.mode }}
+      N: ${{ github.event.inputs.n }}
+      MAX_MODEL_CALLS: ${{ github.event.inputs.max_calls }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="$NEON_DATABASE_URL" npm run db:generate
+      - name: "🛡️ اتصال مباشر للقراءة فقط (Neon)"
+        run: |
+          [ -z "$NEON_DATABASE_URL" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          direct=$(printf '%s' "$NEON_DATABASE_URL" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          echo "::add-mask::$direct"
+          echo "DIRECT_DB_URL=$direct" >> "$GITHUB_ENV"
+      - name: "القياس"
+        run: |
+          case "$MODE" in count|sample) ;; *) echo "::error::mode غير معروف"; exit 1;; esac
+          DATABASE_URL="$DIRECT_DB_URL" AUDIT_TRANSPORT=prisma npx tsx scripts/rulings-research/06-segment-model.ts "--$MODE" "$N"
+      - name: "إيداع الأعداد في الفرع"
+        if: always()
+        run: |
+          f=reports/rulings-research/06-segment-model.data.json
+          [ -f "$f" ] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp "$f" "reports/rulings-research/06-segment-model-${MODE}.data.json"
+          git add "reports/rulings-research/06-segment-model-${MODE}.data.json"
+          git diff --cached --quiet && exit 0
+          git commit -m "data(rulings-research): segment model ${MODE} n=${N} (aggregate, run ${GITHUB_RUN_ID})"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
