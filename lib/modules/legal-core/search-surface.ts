@@ -170,8 +170,10 @@ async function loadSurfaceTables(asOf: string): Promise<{ surface: SearchSurface
       : [];
     const hiddenNames = new Set(names.map((n) => n.name));
     return { surface, hiddenNames, ok: true };
-  } catch {
-    return { surface: { ...EMPTY_SURFACE, asOf }, hiddenNames: new Set(), ok: false };
+  } catch (e) {
+    // جدول غير موجود (42P01) حالة دائمة لا عابرة: تُذكَّر كوجه فارغ، فلا يتكرر الاستعلام الفاشل مع كل بحث.
+    const missing = /42P01|does not exist/.test(String((e as Error)?.message ?? e));
+    return { surface: { ...EMPTY_SURFACE, asOf }, hiddenNames: new Set(), ok: missing };
   }
 }
 

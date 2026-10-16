@@ -3,7 +3,7 @@
 
 export type LegalEntityType = "article" | "ruling" | "principle";
 export type SearchSource = "postgres" | "vector" | "knowledge_graph" | "opensearch";
-export type ProviderStatus = "active" | "unavailable";
+export type ProviderStatus = "active" | "unavailable" | "timeout";
 
 export interface SearchQuery {
   q: string;
