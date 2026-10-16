@@ -94,4 +94,8 @@ jobs:
           git add reports/rulings-research/01-meta.data.json
           git diff --cached --quiet && exit 0
           git commit -m "data(rulings-research): phase 1 ruling_meta applied on research branch (run ${GITHUB_RUN_ID})"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
