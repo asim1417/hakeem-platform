@@ -55,7 +55,10 @@ jobs:
           echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
       - name: "تشغيل جافّ (عدّ فقط)"
         if: github.event_name == 'push'
-        run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npx tsx scripts/backfill/redact-search-norm-residual.ts
+        run: |
+          out=$(DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npx tsx scripts/backfill/redact-search-norm-residual.ts)
+          echo "$out"
+          echo "::notice title=search_norm dry-run::$(printf '%s' "$out" | tail -1)"
       - name: "🔒 بوّابة التطبيق"
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -64,5 +67,7 @@ jobs:
       - name: "التطبيق"
         if: github.event_name == 'workflow_dispatch'
         run: |
-          DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" CONFIRM_NEON_WRITE=YES \
-            npx tsx scripts/backfill/redact-search-norm-residual.ts --apply --i-understand-production
+          out=$(DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" CONFIRM_NEON_WRITE=YES \
+            npx tsx scripts/backfill/redact-search-norm-residual.ts --apply --i-understand-production)
+          echo "$out"
+          echo "::notice title=search_norm apply::$(printf '%s' "$out" | tail -1)"

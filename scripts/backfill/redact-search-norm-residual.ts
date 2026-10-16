@@ -54,8 +54,8 @@ async function main() {
       if (!rows.length) break;
       cursor = rows[rows.length - 1].id;
       const updates = rows
-        .map((r) => ({ id: r.id, next: normalizeArabicText(redactPII(r.search_norm)) }))
-        .filter((r) => r.next.length > 0 && r.next !== r.search_norm);
+        .map((r) => ({ id: r.id, prev: r.search_norm, next: normalizeArabicText(redactPII(r.search_norm)) }))
+        .filter((r) => r.next.length > 0 && r.next !== r.prev);
       if (updates.length) {
         await prisma.$transaction(
           updates.map((r) =>
