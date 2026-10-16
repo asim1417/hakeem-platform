@@ -5,7 +5,7 @@
 import { createHash, randomBytes } from "crypto";
 
 /** نطاقات الوصول المتاحة للبوابة الخارجية. */
-export const API_SCOPES = ["legal:read"] as const;
+export const API_SCOPES = ["legal:read", "mcp:read"] as const;
 export type ApiScope = (typeof API_SCOPES)[number];
 
 export function isApiScope(value: string): value is ApiScope {

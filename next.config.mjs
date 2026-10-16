@@ -119,6 +119,10 @@ const nextConfig = {
     const googleFontsStatic = "https://fonts.gstatic.com";
     const oauthFormTargets =
       "https://accounts.google.com https://appleid.apple.com";
+    // موصل حكيم (MCP): نموذج الربط/الموافقة يُحوِّل (303) إلى عنوان رجوع Claude أو ChatGPT أو أداة محلية،
+    // وChrome يطبّق form-action على التحويل بعد إرسال النموذج.
+    const mcpClientTargets =
+      "https://claude.ai https://www.claude.ai https://claude.com https://www.claude.com https://chatgpt.com http://localhost:* http://127.0.0.1:*";
     // أصل الموقع من المتغير (وقت البناء) — 'self' يغطي المضيف الحالي؛ الإضافة صريحة للتوثيق والتعدد لاحقًا
     const siteOrigin = siteUrl;
     const csp = [
@@ -132,7 +136,7 @@ const nextConfig = {
       "worker-src 'self' blob:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      `form-action 'self' ${siteOrigin} ${clerkHosts} ${oauthFormTargets}`,
+      `form-action 'self' ${siteOrigin} ${clerkHosts} ${oauthFormTargets} ${mcpClientTargets}`,
       "object-src 'none'"
     ].join("; ");
     return [

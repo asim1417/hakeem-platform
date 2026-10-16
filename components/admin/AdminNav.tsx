@@ -17,6 +17,7 @@ const SUPER_LINKS = [
   { href: "/admin/owner", label: "المدراء" },
   { href: "/admin/ai", label: "الذكاء" },
   { href: "/admin/api-keys", label: "مفاتيح API" },
+  { href: "/admin/mcp-connections", label: "روابط الموصل" },
   { href: "/admin/settings", label: "الإعدادات" },
   { href: "/dashboard/legal-core/admin", label: "المحتوى القانوني" },
 ] as const;
@@ -31,6 +32,7 @@ const SYSTEM_LINKS = [
   { href: "/admin/roles", label: "الأدوار" },
   { href: "/admin/owner", label: "المدراء" },
   { href: "/admin/api-keys", label: "مفاتيح API" },
+  { href: "/admin/mcp-connections", label: "روابط الموصل" },
   { href: "/dashboard/legal-core/admin", label: "المحتوى القانوني" },
 ] as const;
 

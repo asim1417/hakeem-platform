@@ -1,15 +1,17 @@
 /**
- * تسجيل دخول موصل حكيم لعملاء MCP (Claude).
- * الخادم لا يملك حسابات مستخدمين هنا: المفتاح المشترك HAKEEM_MCP_KEY هو سرّ الربط.
- * كلود يرفض «Couldn't start sign-in» إن لم يجد بيانات OAuth بعد رفض الطلب.
- * الرموز موقّعة (HMAC) بلا تخزين، لأن بيئة التشغيل بلا حالة بين الطلبات.
+ * OAuth موصل حكيم لعملاء MCP (Claude وChatGPT).
+ * مساران:
+ *  - القديم: المفتاح المشترك HAKEEM_MCP_KEY سرّ الربط، ورموز hk1 موقّعة بلا تخزين (فريق أمان/انتقالي).
+ *  - الجديد: الربط بحساب حكيم (lib/mcp/grants) — يُفعَّل بـ MCP_ACCOUNT_LINKING=1 بعد الهجرة.
+ * هذا الملف يحمل البيانات الوصفية وقوائم العملاء المسموحة والمسار القديم.
  */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
 
 export { isMcpOauthPublicPath };
 
-const CODE_TTL_SEC = 10 * 60;
+// رمز التفويض بلا حالة فلا يمكن جعله لمرة واحدة؛ نقصّر مدته بدل ذلك (كلود يستبدله فورًا).
+const CODE_TTL_SEC = 2 * 60;
 const ACCESS_TTL_SEC = 7 * 24 * 60 * 60;
 const REFRESH_TTL_SEC = 30 * 24 * 60 * 60;
 
@@ -20,7 +22,11 @@ const CLAUDE_REDIRECTS = new Set([
   "https://www.claude.com/api/mcp/auth_callback",
 ]);
 
-const URL_CLIENT_HOSTS = new Set(["claude.ai", "www.claude.ai", "claude.com", "www.claude.com"]);
+// ChatGPT: العنوان الثابت عند دعم RFC 9207 (نرسل iss)، والعنوان الخاص بمعرّف الرجوع.
+const CHATGPT_STABLE_REDIRECT = "https://chatgpt.com/connector_platform_oauth_redirect";
+const CHATGPT_CALLBACK_REDIRECT = /^https:\/\/chatgpt\.com\/connector\/oauth\/[A-Za-z0-9_-]{1,128}$/;
+
+const URL_CLIENT_HOSTS = new Set(["claude.ai", "www.claude.ai", "claude.com", "www.claude.com", "chatgpt.com"]);
 
 type TokenTyp = "access" | "refresh" | "code";
 
@@ -41,13 +47,55 @@ export type TokenSuccess = {
   scope: "mcp:read";
 };
 
+/** مضيفات خادم حكيم المعروفة؛ ما سواها لا يُقبل من ترويسات x-forwarded-*. */
+const BASE_MCP_HOSTS = ["hakeemai.net", "www.hakeemai.net", "hakeem-platform.vercel.app"];
+
+/** المضيفات المسموحة: الأساسية + مضيف NEXT_PUBLIC_SITE_URL + MCP_ALLOWED_HOSTS (مفصولة بفواصل). */
+export function allowedMcpHosts(env: Record<string, string | undefined> = process.env): Set<string> {
+  const hosts = new Set(BASE_MCP_HOSTS);
+  const site = env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) {
+    try {
+      hosts.add(new URL(site).hostname.toLowerCase());
+    } catch {
+      /* تجاهل قيمة غير صالحة */
+    }
+  }
+  for (const item of (env.MCP_ALLOWED_HOSTS ?? "").split(",")) {
+    const name = item.trim().toLowerCase();
+    if (name) hosts.add(name);
+  }
+  return hosts;
+}
+
+function isLocalHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
 export function publicOrigin(request: Request): string {
   const url = new URL(request.url);
-  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const host = forwardedHost || url.host;
-  const proto = (forwardedProto || url.protocol.replace(":", "")).replace(/:$/, "");
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim().toLowerCase();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  // الترويسة تُقبل فقط إن طابقت مضيفًا معروفًا؛ وإلا نعتمد مضيف الطلب نفسه.
+  const forwardedName = forwardedHost?.replace(/:\d+$/, "");
+  const host = forwardedHost && forwardedName && allowedMcpHosts().has(forwardedName) ? forwardedHost : url.host;
+  const protoRaw = forwardedProto === "https" || forwardedProto === "http" ? forwardedProto : url.protocol.replace(":", "");
+  const hostName = host.replace(/:\d+$/, "");
+  // خارج التطوير المحلي لا نصدر إلا https.
+  const proto = isLocalHost(hostName) ? protoRaw : "https";
   return `${proto}://${host}`;
+}
+
+/**
+ * طلب POST من الأصل نفسه؟ المتصفح يرسل Origin: null حين تكون سياسة المُحيل no-referrer،
+ * فنقبل null/الغياب فقط إن لم تقل Sec-Fetch-Site إنه عابر للمواقع. الحارس الأساسي يبقى
+ * المفتاح أو nonce الموافقة؛ هذا دفاع إضافي.
+ */
+export function isSameOriginPost(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  const site = request.headers.get("sec-fetch-site");
+  if (origin && origin !== "null") return origin === publicOrigin(request);
+  return !site || site === "same-origin" || site === "none";
 }
 
 export function mcpResourceUrl(origin: string): string {
@@ -104,9 +152,7 @@ export function mcpCredentialAccepted(request: Request, expectedKey: string): bo
   return audienceAccepted(access.aud, request);
 }
 
-const MCP_HOSTS = new Set(["hakeemai.net", "www.hakeemai.net", "hakeem-platform.vercel.app"]);
-
-function audienceAccepted(aud: string, request: Request): boolean {
+export function audienceAccepted(aud: string, request: Request): boolean {
   let audUrl: URL;
   try {
     audUrl = new URL(aud);
@@ -116,7 +162,8 @@ function audienceAccepted(aud: string, request: Request): boolean {
   if (audUrl.pathname.replace(/\/+$/, "") !== "/mcp") return false;
   const requestHost = new URL(publicOrigin(request)).hostname;
   if (audUrl.hostname === requestHost) return true;
-  return MCP_HOSTS.has(audUrl.hostname) && MCP_HOSTS.has(requestHost);
+  const hosts = allowedMcpHosts();
+  return hosts.has(audUrl.hostname) && hosts.has(requestHost);
 }
 
 export function verifyMcpAccessToken(request: Request, bearer: string | undefined, expectedKey: string) {
@@ -132,6 +179,7 @@ export function verifyMcpAccessToken(request: Request, bearer: string | undefine
 
 export function isAllowedRedirect(uri: string): boolean {
   if (CLAUDE_REDIRECTS.has(uri)) return true;
+  if (uri === CHATGPT_STABLE_REDIRECT || CHATGPT_CALLBACK_REDIRECT.test(uri)) return true;
   let url: URL;
   try {
     url = new URL(uri);

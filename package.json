@@ -21,6 +21,8 @@
     "test:guard-result": "tsx scripts/test-guard-result.ts",
     "test:verified-display": "tsx scripts/test-verified-display.ts",
     "test:redact-pii": "tsx scripts/test-redact-pii.ts",
+    "test:mcp-hardening": "tsx scripts/test-mcp-hardening.ts && tsx scripts/test-mcp-authorize-route.ts",
+    "test:mcp-account-linking": "tsx scripts/test-mcp-account-linking.ts",
     "audit:duplicate-articles": "tsx scripts/audit/detect-duplicate-articles.ts",
     "tool:docs": "cd tools/arabic-doc-tool && python3 -m uvicorn tool_app:app --host 0.0.0.0 --port 8080",
     "tool:docs:install": "python3 -m pip install -r tools/arabic-doc-tool/requirements_tool.txt",

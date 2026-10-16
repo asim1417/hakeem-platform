@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   UserRound,
   Wallet,
+  Plug,
 } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { markLoggedOut } from "@/lib/modules/config/home-signed-in-redirect";
@@ -146,6 +147,16 @@ export function AccountMenu({
           >
             <Wallet size={18} aria-hidden className="shrink-0" />
             <span>{billingLabel}</span>
+          </Link>
+
+          <Link
+            href="/dashboard/connections"
+            role="menuitem"
+            className="account-menu__item touch-target"
+            onClick={() => setOpen(false)}
+          >
+            <Plug size={18} aria-hidden className="shrink-0" />
+            <span>التطبيقات المرتبطة</span>
           </Link>
 
           {securityFeatures?.mfa ? (
