@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T00:29:45.503Z",
+  "measuredAt": "2026-10-16T00:31:33.024Z",
   "transport": "prisma",
   "public": true,
   "searchNorm": {
@@ -770,7 +770,16 @@
           "disposition"
         ],
         "reasoningUnits": 2,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.08,
+          "reasoning": 0.47,
+          "evidence": 0.93
+        },
+        "lastDispositionAt": 0.98,
+        "judgmentChars": 6696,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
@@ -786,7 +795,16 @@
           "appeal"
         ],
         "reasoningUnits": 0,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "appeal": 0.35,
+          "disposition": 0.75,
+          "evidence": 0.8
+        },
+        "lastDispositionAt": 0.83,
+        "judgmentChars": 1036,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -801,7 +819,16 @@
           "disposition"
         ],
         "reasoningUnits": 4,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.12,
+          "reasoning": 0.2,
+          "disposition": 0.88
+        },
+        "lastDispositionAt": 0.95,
+        "judgmentChars": 3816,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -818,7 +845,16 @@
           "disposition"
         ],
         "reasoningUnits": 3,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.2,
+          "evidence": 0.48,
+          "reasoning": 0.52
+        },
+        "lastDispositionAt": 0.85,
+        "judgmentChars": 2196,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -853,7 +889,17 @@
           "appeal"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.12,
+          "evidence": 0.21,
+          "reasoning": 0.27,
+          "appeal": 0.74
+        },
+        "lastDispositionAt": 0.89,
+        "judgmentChars": 4297,
+        "appealChars": 1873
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -865,7 +911,15 @@
           "disposition"
         ],
         "reasoningUnits": 6,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.37,
+          "disposition": 0.93
+        },
+        "lastDispositionAt": 0.94,
+        "judgmentChars": 2653,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -884,7 +938,16 @@
           "disposition"
         ],
         "reasoningUnits": 7,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.1,
+          "disposition": 0.17,
+          "reasoning": 0.28
+        },
+        "lastDispositionAt": 0.93,
+        "judgmentChars": 4188,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
@@ -899,7 +962,16 @@
           "appeal"
         ],
         "reasoningUnits": 1,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "appeal": 0.41,
+          "reasoning": 0.65,
+          "disposition": 0.79
+        },
+        "lastDispositionAt": 0.8,
+        "judgmentChars": 903,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -932,7 +1004,17 @@
           "disposition"
         ],
         "reasoningUnits": 7,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.25,
+          "evidence": 0.35,
+          "reasoning": 0.42,
+          "appeal": 0.57
+        },
+        "lastDispositionAt": 0.97,
+        "judgmentChars": 4972,
+        "appealChars": 3898
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -946,7 +1028,16 @@
           "disposition"
         ],
         "reasoningUnits": 1,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.42,
+          "disposition": 0.43,
+          "evidence": 0.86
+        },
+        "lastDispositionAt": 0.92,
+        "judgmentChars": 2751,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1000,7 +1091,16 @@
           "disposition"
         ],
         "reasoningUnits": 24,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.02,
+          "disposition": 0.04,
+          "reasoning": 0.17
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 45412,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1022,7 +1122,17 @@
           "disposition"
         ],
         "reasoningUnits": 4,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.13,
+          "reasoning": 0.32,
+          "evidence": 0.47,
+          "appeal": 0.48
+        },
+        "lastDispositionAt": 0.9,
+        "judgmentChars": 2268,
+        "appealChars": 1550
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1041,7 +1151,16 @@
           "disposition"
         ],
         "reasoningUnits": 3,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 24,
+        "firstAt": {
+          "evidence": 0.19,
+          "disposition": 0.23,
+          "reasoning": 0.6
+        },
+        "lastDispositionAt": 0.94,
+        "judgmentChars": 4478,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1061,7 +1180,17 @@
           "appeal"
         ],
         "reasoningUnits": 8,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.28,
+          "evidence": 0.31,
+          "disposition": 0.58,
+          "appeal": 0.71
+        },
+        "lastDispositionAt": 0.9,
+        "judgmentChars": 3622,
+        "appealChars": 1931
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1080,7 +1209,17 @@
           "appeal"
         ],
         "reasoningUnits": 4,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.29,
+          "evidence": 0.33,
+          "reasoning": 0.39,
+          "appeal": 0.96
+        },
+        "lastDispositionAt": 0.86,
+        "judgmentChars": 4033,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1093,7 +1232,15 @@
           "disposition"
         ],
         "reasoningUnits": 4,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.36,
+          "reasoning": 0.47
+        },
+        "lastDispositionAt": 0.95,
+        "judgmentChars": 2145,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1115,7 +1262,16 @@
           "disposition"
         ],
         "reasoningUnits": 10,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.21,
+          "evidence": 0.29,
+          "reasoning": 0.34
+        },
+        "lastDispositionAt": 0.93,
+        "judgmentChars": 5149,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1158,7 +1314,17 @@
           "disposition"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.14,
+          "evidence": 0.16,
+          "appeal": 0.24,
+          "reasoning": 0.53
+        },
+        "lastDispositionAt": 0.98,
+        "judgmentChars": 11079,
+        "appealChars": 1573
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1183,7 +1349,17 @@
           "disposition"
         ],
         "reasoningUnits": 5,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.15,
+          "evidence": 0.24,
+          "reasoning": 0.33,
+          "appeal": 0.73
+        },
+        "lastDispositionAt": 0.96,
+        "judgmentChars": 5478,
+        "appealChars": 2266
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1236,7 +1412,17 @@
           "disposition"
         ],
         "reasoningUnits": 12,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "appeal": 0.03,
+          "evidence": 0.04,
+          "disposition": 0.11,
+          "reasoning": 0.22
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 14473,
+        "appealChars": 1453
       },
       {
         "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
@@ -1253,7 +1439,16 @@
           "appeal"
         ],
         "reasoningUnits": 2,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "appeal": 0.01,
+          "reasoning": 0.53,
+          "disposition": 0.8
+        },
+        "lastDispositionAt": 0.84,
+        "judgmentChars": 2299,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1286,7 +1481,17 @@
           "disposition"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.11,
+          "evidence": 0.23,
+          "disposition": 0.29,
+          "appeal": 0.63
+        },
+        "lastDispositionAt": 0.95,
+        "judgmentChars": 5202,
+        "appealChars": 1769
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1323,7 +1528,17 @@
           "disposition"
         ],
         "reasoningUnits": 21,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.08,
+          "evidence": 0.13,
+          "disposition": 0.4,
+          "appeal": 0.84
+        },
+        "lastDispositionAt": 0.98,
+        "judgmentChars": 13936,
+        "appealChars": 2330
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1356,7 +1571,17 @@
           "evidence"
         ],
         "reasoningUnits": 8,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.07,
+          "evidence": 0.14,
+          "disposition": 0.16,
+          "appeal": 0.31
+        },
+        "lastDispositionAt": 0.97,
+        "judgmentChars": 13009,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1392,7 +1617,17 @@
           "appeal"
         ],
         "reasoningUnits": 10,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.12,
+          "evidence": 0.17,
+          "reasoning": 0.25,
+          "appeal": 0.55
+        },
+        "lastDispositionAt": 0.93,
+        "judgmentChars": 5659,
+        "appealChars": 2027
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1420,7 +1655,17 @@
           "disposition"
         ],
         "reasoningUnits": 6,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.11,
+          "evidence": 0.2,
+          "reasoning": 0.2,
+          "appeal": 0.53
+        },
+        "lastDispositionAt": 0.94,
+        "judgmentChars": 3102,
+        "appealChars": 1907
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1453,7 +1698,17 @@
           "disposition"
         ],
         "reasoningUnits": 4,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.13,
+          "evidence": 0.19,
+          "reasoning": 0.26,
+          "appeal": 0.33
+        },
+        "lastDispositionAt": 0.95,
+        "judgmentChars": 3129,
+        "appealChars": 4175
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1499,7 +1754,17 @@
           "disposition"
         ],
         "reasoningUnits": 19,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.05,
+          "evidence": 0.09,
+          "disposition": 0.1,
+          "appeal": 0.22
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 25484,
+        "appealChars": 1633
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1560,7 +1825,17 @@
           "disposition"
         ],
         "reasoningUnits": 20,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.06,
+          "disposition": 0.06,
+          "evidence": 0.08,
+          "appeal": 0.11
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 16286,
+        "appealChars": 1706
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1574,7 +1849,15 @@
           "disposition"
         ],
         "reasoningUnits": 4,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.64,
+          "disposition": 0.76
+        },
+        "lastDispositionAt": 0.97,
+        "judgmentChars": 4493,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1605,7 +1888,17 @@
           "appeal"
         ],
         "reasoningUnits": 6,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.14,
+          "reasoning": 0.22,
+          "evidence": 0.24,
+          "appeal": 0.52
+        },
+        "lastDispositionAt": 0.96,
+        "judgmentChars": 4215,
+        "appealChars": 1763
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1622,7 +1915,16 @@
           "disposition"
         ],
         "reasoningUnits": 2,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.24,
+          "evidence": 0.4,
+          "reasoning": 0.73
+        },
+        "lastDispositionAt": 0.9,
+        "judgmentChars": 3530,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1651,7 +1953,17 @@
           "appeal"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.15,
+          "reasoning": 0.16,
+          "evidence": 0.22,
+          "appeal": 0.68
+        },
+        "lastDispositionAt": 0.97,
+        "judgmentChars": 5885,
+        "appealChars": 1447
       },
       {
         "court": "محكمة: مجلس القضاء الأعلى - الهيئة الدائمة",
@@ -1667,7 +1979,17 @@
           "appeal"
         ],
         "reasoningUnits": 1,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 14,
+        "firstAt": {
+          "appeal": 0.43,
+          "reasoning": 0.74,
+          "evidence": 0.78,
+          "disposition": 0.8
+        },
+        "lastDispositionAt": 0.82,
+        "judgmentChars": 982,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1696,7 +2018,17 @@
           "disposition"
         ],
         "reasoningUnits": 10,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.07,
+          "disposition": 0.14,
+          "evidence": 0.33,
+          "appeal": 0.38
+        },
+        "lastDispositionAt": 0.95,
+        "judgmentChars": 7315,
+        "appealChars": 1602
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1713,7 +2045,16 @@
           "disposition"
         ],
         "reasoningUnits": 2,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.14,
+          "reasoning": 0.19,
+          "evidence": 0.47
+        },
+        "lastDispositionAt": 0.9,
+        "judgmentChars": 4733,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1740,7 +2081,17 @@
           "disposition"
         ],
         "reasoningUnits": 6,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.42,
+          "evidence": 0.45,
+          "reasoning": 0.49,
+          "appeal": 0.58
+        },
+        "lastDispositionAt": 0.94,
+        "judgmentChars": 4581,
+        "appealChars": 1579
       },
       {
         "court": "محكمة: المحكمة العامة",
@@ -1782,7 +2133,17 @@
           "appeal"
         ],
         "reasoningUnits": 13,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.04,
+          "disposition": 0.08,
+          "appeal": 0.15,
+          "reasoning": 0.27
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 28543,
+        "appealChars": 1962
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1813,7 +2174,17 @@
           "appeal"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.1,
+          "evidence": 0.25,
+          "reasoning": 0.27,
+          "appeal": 0.64
+        },
+        "lastDispositionAt": 0.97,
+        "judgmentChars": 5912,
+        "appealChars": 1901
       },
       {
         "court": "محكمة: المحكمة الجزائية",
@@ -1860,7 +2231,17 @@
           "disposition"
         ],
         "reasoningUnits": 13,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.05,
+          "appeal": 0.09,
+          "disposition": 0.1,
+          "evidence": 0.12
+        },
+        "lastDispositionAt": 0.98,
+        "judgmentChars": 13798,
+        "appealChars": 1459
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1922,7 +2303,17 @@
           "appeal"
         ],
         "reasoningUnits": 23,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.02,
+          "evidence": 0.06,
+          "appeal": 0.11,
+          "disposition": 0.22
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 33067,
+        "appealChars": 2859
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -1953,7 +2344,17 @@
           "disposition"
         ],
         "reasoningUnits": 8,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.11,
+          "reasoning": 0.14,
+          "disposition": 0.15,
+          "appeal": 0.64
+        },
+        "lastDispositionAt": 0.96,
+        "judgmentChars": 7538,
+        "appealChars": 2461
       },
       {
         "court": "محكمة: المحكمة العمالية",
@@ -1988,7 +2389,17 @@
           "disposition"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "reasoning": 0.17,
+          "disposition": 0.2,
+          "evidence": 0.32,
+          "appeal": 0.69
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 8034,
+        "appealChars": 3703
       },
       {
         "court": "محكمة: مجلس القضاء الأعلى - الهيئة الدائمة",
@@ -2004,7 +2415,17 @@
           "appeal"
         ],
         "reasoningUnits": 1,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 15,
+        "firstAt": {
+          "appeal": 0.37,
+          "reasoning": 0.66,
+          "evidence": 0.7,
+          "disposition": 0.79
+        },
+        "lastDispositionAt": 0.8,
+        "judgmentChars": 1019,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العمالية",
@@ -2063,7 +2484,17 @@
           "disposition"
         ],
         "reasoningUnits": 19,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.02,
+          "disposition": 0.04,
+          "reasoning": 0.1,
+          "appeal": 0.91
+        },
+        "lastDispositionAt": 0.99,
+        "judgmentChars": 15792,
+        "appealChars": 1686
       },
       {
         "court": "محكمة: المحكمة العليا -  الهيئة الدائمة",
@@ -2079,7 +2510,16 @@
           "appeal"
         ],
         "reasoningUnits": 2,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "appeal": 0.23,
+          "reasoning": 0.37,
+          "disposition": 0.91
+        },
+        "lastDispositionAt": 0.92,
+        "judgmentChars": 990,
+        "appealChars": 0
       },
       {
         "court": "محكمة: المحكمة العمالية",
@@ -2095,7 +2535,16 @@
           "disposition"
         ],
         "reasoningUnits": 5,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "disposition": 0.2,
+          "reasoning": 0.38,
+          "appeal": 0.61
+        },
+        "lastDispositionAt": 0.98,
+        "judgmentChars": 3112,
+        "appealChars": 2113
       },
       {
         "court": "محكمة: المحكمة التجارية",
@@ -2131,9 +2580,31 @@
           "appeal"
         ],
         "reasoningUnits": 9,
-        "hasDisposition": true
+        "hasDisposition": true,
+        "newlines": 0,
+        "firstAt": {
+          "evidence": 0.03,
+          "reasoning": 0.39,
+          "disposition": 0.47,
+          "appeal": 0.59
+        },
+        "lastDispositionAt": 0.98,
+        "judgmentChars": 22198,
+        "appealChars": 2444
       }
     ],
+    "layout": {
+      "rulingsWithNewlines": 3,
+      "medianNewlines": 0,
+      "medianFirstAt": {
+        "disposition": 0.2,
+        "reasoning": 0.28,
+        "evidence": 0.22,
+        "appeal": 0.52,
+        "section": null
+      },
+      "medianLastDispositionAt": 0.95
+    },
     "coverage": {
       "withReasoningAnchor": 47,
       "withDispositionAnchor": 48
