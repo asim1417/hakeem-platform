@@ -9,7 +9,8 @@ import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
 
 export { isMcpOauthPublicPath };
 
-const CODE_TTL_SEC = 10 * 60;
+// رمز التفويض بلا حالة فلا يمكن جعله لمرة واحدة؛ نقصّر مدته بدل ذلك (كلود يستبدله فورًا).
+const CODE_TTL_SEC = 2 * 60;
 const ACCESS_TTL_SEC = 7 * 24 * 60 * 60;
 const REFRESH_TTL_SEC = 30 * 24 * 60 * 60;
 
@@ -41,12 +42,42 @@ export type TokenSuccess = {
   scope: "mcp:read";
 };
 
+/** مضيفات خادم حكيم المعروفة؛ ما سواها لا يُقبل من ترويسات x-forwarded-*. */
+const BASE_MCP_HOSTS = ["hakeemai.net", "www.hakeemai.net", "hakeem-platform.vercel.app"];
+
+/** المضيفات المسموحة: الأساسية + مضيف NEXT_PUBLIC_SITE_URL + MCP_ALLOWED_HOSTS (مفصولة بفواصل). */
+export function allowedMcpHosts(env: Record<string, string | undefined> = process.env): Set<string> {
+  const hosts = new Set(BASE_MCP_HOSTS);
+  const site = env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) {
+    try {
+      hosts.add(new URL(site).hostname.toLowerCase());
+    } catch {
+      /* تجاهل قيمة غير صالحة */
+    }
+  }
+  for (const item of (env.MCP_ALLOWED_HOSTS ?? "").split(",")) {
+    const name = item.trim().toLowerCase();
+    if (name) hosts.add(name);
+  }
+  return hosts;
+}
+
+function isLocalHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
 export function publicOrigin(request: Request): string {
   const url = new URL(request.url);
-  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const host = forwardedHost || url.host;
-  const proto = (forwardedProto || url.protocol.replace(":", "")).replace(/:$/, "");
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim().toLowerCase();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  // الترويسة تُقبل فقط إن طابقت مضيفًا معروفًا؛ وإلا نعتمد مضيف الطلب نفسه.
+  const forwardedName = forwardedHost?.replace(/:\d+$/, "");
+  const host = forwardedHost && forwardedName && allowedMcpHosts().has(forwardedName) ? forwardedHost : url.host;
+  const protoRaw = forwardedProto === "https" || forwardedProto === "http" ? forwardedProto : url.protocol.replace(":", "");
+  const hostName = host.replace(/:\d+$/, "");
+  // خارج التطوير المحلي لا نصدر إلا https.
+  const proto = isLocalHost(hostName) ? protoRaw : "https";
   return `${proto}://${host}`;
 }
 
@@ -104,8 +135,6 @@ export function mcpCredentialAccepted(request: Request, expectedKey: string): bo
   return audienceAccepted(access.aud, request);
 }
 
-const MCP_HOSTS = new Set(["hakeemai.net", "www.hakeemai.net", "hakeem-platform.vercel.app"]);
-
 function audienceAccepted(aud: string, request: Request): boolean {
   let audUrl: URL;
   try {
@@ -116,7 +145,8 @@ function audienceAccepted(aud: string, request: Request): boolean {
   if (audUrl.pathname.replace(/\/+$/, "") !== "/mcp") return false;
   const requestHost = new URL(publicOrigin(request)).hostname;
   if (audUrl.hostname === requestHost) return true;
-  return MCP_HOSTS.has(audUrl.hostname) && MCP_HOSTS.has(requestHost);
+  const hosts = allowedMcpHosts();
+  return hosts.has(audUrl.hostname) && hosts.has(requestHost);
 }
 
 export function verifyMcpAccessToken(request: Request, bearer: string | undefined, expectedKey: string) {

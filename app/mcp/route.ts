@@ -18,6 +18,7 @@ import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 import { registerAmanTools } from "@/lib/mcp/aman-server";
 import { verifyMcpAccessToken } from "@/lib/mcp/oauth";
+import { mcpAccessMode, mcpClosedResponse } from "@/lib/mcp/policy";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -295,20 +296,34 @@ function withEmptyPrompts(inner: (req: Request) => Promise<Response>) {
   };
 }
 
-const mcpKey = process.env.HAKEEM_MCP_KEY?.trim() ?? "";
-const authed = withMcpAuth(
+// السياسة تُقرأ لكل طلب: مغلق افتراضيًا (503) إن غاب المفتاح ولم يُفتح صراحةً بـ HAKEEM_MCP_ALLOW_OPEN=1.
+const authAuthOptions = {
+  resourceMetadataPath: "/.well-known/oauth-protected-resource/mcp",
+  requiredScopes: ["mcp:read"],
+};
+
+const authedWithKey = withMcpAuth(
   withEmptyPrompts(handler),
   async (req, bearer) => {
-    if (!mcpKey) return { token: "open", clientId: "public", scopes: ["mcp:read"] };
-    return verifyMcpAccessToken(req, bearer, mcpKey);
+    const key = process.env.HAKEEM_MCP_KEY?.trim() ?? "";
+    if (!key) return undefined;
+    return verifyMcpAccessToken(req, bearer, key);
   },
-  {
-    required: mcpKey.length > 0,
-    resourceMetadataPath: "/.well-known/oauth-protected-resource/mcp",
-    requiredScopes: ["mcp:read"],
-  }
+  { required: true, ...authAuthOptions }
 );
 
-export const GET = authed;
-export const POST = authed;
-export const DELETE = authed;
+const openHandler = withMcpAuth(
+  withEmptyPrompts(handler),
+  async () => ({ token: "open", clientId: "public", scopes: ["mcp:read"] }),
+  { required: false, ...authAuthOptions }
+);
+
+async function gate(req: Request): Promise<Response> {
+  const mode = mcpAccessMode();
+  if (mode === "closed") return mcpClosedResponse();
+  return mode === "key" ? authedWithKey(req) : openHandler(req);
+}
+
+export const GET = gate;
+export const POST = gate;
+export const DELETE = gate;
