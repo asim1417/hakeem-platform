@@ -196,11 +196,20 @@ async function structureStudy() {
       headers.set(line, e);
     }
     const order = found.map((h) => h.family);
+    // موضع أول ظهور لكل عائلة نسبةً إلى طول النص (٠ أول النص، ١ آخره) — أساس قواعد التقطيع.
+    const firstAt: Record<string, number> = {};
+    for (const h of found) if (!(h.family in firstAt)) firstAt[h.family] = Math.round((h.start / Math.max(1, full.length)) * 100) / 100;
+    const lastDisposition = [...found].reverse().find((h) => h.family === "disposition");
     perRuling.push({
       ...(PUBLIC ? {} : { ref: r.ref }), court: r.court, yearH: r.y, chars: r.text.length, hasAppealText: Boolean(r.appeal),
       familiesInOrder: order.filter((f, i) => i === 0 || order[i - 1] !== f),
       reasoningUnits: found.filter((h) => h.family === "reasoning").length,
       hasDisposition: found.some((h) => h.family === "disposition"),
+      newlines: (r.text.match(/\n/g) ?? []).length,
+      firstAt,
+      lastDispositionAt: lastDisposition ? Math.round((lastDisposition.start / Math.max(1, full.length)) * 100) / 100 : null,
+      judgmentChars: r.text.length,
+      appealChars: r.appeal ? r.appeal.length : 0,
     });
   }
   return {
@@ -215,6 +224,17 @@ async function structureStudy() {
       .sort((a, b) => b.rulings - a.rulings)
       .slice(0, 80),
     perRuling,
+    layout: (() => {
+      const med = (xs: number[]) => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] : null);
+      const nl = perRuling.map((p) => p.newlines as number);
+      const fam = (f: string) => perRuling.map((p) => (p.firstAt as Record<string, number>)[f]).filter((x) => x !== undefined);
+      return {
+        rulingsWithNewlines: nl.filter((x) => x > 0).length,
+        medianNewlines: med(nl),
+        medianFirstAt: Object.fromEntries(["disposition", "reasoning", "evidence", "appeal", "section"].map((f) => [f, med(fam(f))])),
+        medianLastDispositionAt: med(perRuling.map((p) => p.lastDispositionAt as number | null).filter((x): x is number => x !== null)),
+      };
+    })(),
     coverage: {
       withReasoningAnchor: perRuling.filter((p) => (p.reasoningUnits as number) > 0).length,
       withDispositionAnchor: perRuling.filter((p) => p.hasDisposition).length,
