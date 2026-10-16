@@ -1,0 +1,60 @@
+name: Rulings Research — Phase 2 Anchor mining (aggregate, read-only)
+
+# المرحلة الثانية: إحصاء مجمّع للعبارات المتكررة حيث تغيب حدود التقطيع (≥ ٥٠ حكمًا)، بلا كتابة ولا نصوص.
+# يشغّل scripts/rulings-research/02-anchor-mining.ts على Neon عبر اتصال مباشر (غير pooler)
+# مع default_transaction_read_only=on، والسكربت يرفض العمل ما لم يثبت أن الجلسة للقراءة فقط.
+# المستودع عام: المخرج أعداد فقط، ويُودَع في الفرع reports/rulings-research/02-anchor-mining.data.json.
+# الكتابة الفعلية (--apply) على فرع Neon البحثي فقط، ولا تُشغَّل من هنا.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [aman/rulings-research-layer]
+    paths:
+      - .github/workflows/rulings-research-anchor-mining.yml
+      - scripts/rulings-research/02-anchor-mining.ts
+
+concurrency:
+  group: rulings-research-anchor-mining
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ اتصال مباشر للقراءة فقط (Neon)"
+        run: |
+          url="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$url" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          host=$(printf '%s' "$url" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
+          # الاتصال المباشر يقبل options (المجمّع لا يقبلها)؛ ونحذف معاملات المجمّع.
+          direct=$(printf '%s' "$url" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          echo "::add-mask::$direct"
+          echo "AUDIT_DB_URL=$direct" >> "$GITHUB_ENV"
+          echo "المضيف (مباشر): $(printf '%s' "$host" | sed -E 's#-pooler##')"
+      - name: "إحصاء عبارات المرسى (قراءة فقط)"
+        run: |
+          DATABASE_URL="$AUDIT_DB_URL" AUDIT_TRANSPORT=prisma npx tsx scripts/rulings-research/02-anchor-mining.ts
+      - name: "إيداع النتائج المجمّعة في الفرع"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/rulings-research/02-anchor-mining.data.json
+          git diff --cached --quiet && { echo "لا تغيير"; exit 0; }
+          git commit -m "data(rulings-research): phase 2 anchor mining (aggregate, read-only run ${GITHUB_RUN_ID})"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
