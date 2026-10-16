@@ -268,10 +268,14 @@ def main() -> None:
     name_to_law = collections.defaultdict(list)
     for r in laws.values():
         name_to_law[norm(r["name"])].append(r)
-    units = {}
+    units, seen = {}, collections.Counter()
     for u in jl(PARSED / "unit.jsonl"):
         if u["article_number"] is not None and not u["is_bis"]:
+            seen[(u["law_id"], u["article_number"])] += 1
             units[(u["law_id"], u["article_number"])] = u
+    # رقم مكرر في صفحة الهيئة = أكثر من إصدار للنظام في الصفحة نفسها (مثل باب العقوبات في نظام العمل):
+    # لا يُعرف أي النصين أصل المادة الحالية، فلا تركيب آلي.
+    dup_numbers = {k for k, v in seen.items() if v > 1}
     notes_by_unit = collections.defaultdict(list)
     for n in jl(PARSED / "amendment_note.jsonl"):
         notes_by_unit[(n["law_id"], n["unit_seq"])].append(n)
@@ -297,6 +301,11 @@ def main() -> None:
             row.update(compose_status="manual", compose_detail="النظام غير مربوط بصفحة الهيئة")
             cands.append(row)
             stats["manual: النظام غير مربوط"] += 1
+            continue
+        if (law["id"], d["article"]) in dup_numbers:
+            row.update(compose_status="manual", compose_detail="رقم المادة مكرر في صفحة الهيئة (أكثر من إصدار)")
+            cands.append(row)
+            stats["manual: رقم مكرر في الهيئة"] += 1
             continue
         unit = units.get((law["id"], d["article"]))
         if not unit:
