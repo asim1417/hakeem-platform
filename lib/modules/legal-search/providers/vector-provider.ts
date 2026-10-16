@@ -52,7 +52,9 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
     const sqlFor = (from: string) =>
       `SELECT owner_type, owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
        FROM ${from}
-       WHERE embedding IS NOT NULL${segReady ? ` AND owner_type <> 'ruling'` : ""}
+       WHERE embedding IS NOT NULL${segReady
+         ? ` AND NOT (owner_type = 'ruling' AND owner_id IN (SELECT ruling_id FROM ruling_segment_embeddings))`
+         : ""}
        ORDER BY embedding <=> '${literal}'::vector
        LIMIT ${take}`;
     const [baseRows, segHits] = await Promise.all([

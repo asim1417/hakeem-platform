@@ -104,7 +104,7 @@ const handler = createMcpHandler(
         inputSchema: z.object({
           query: z.string().describe("نص البحث"),
           court: z.string().optional().describe("حصر بمحكمة/دائرة (اختياري)"),
-          year_h: z.number().optional().describe("السنة الهجرية (اختياري)"),
+          year_h: z.number().int().optional().describe("السنة الهجرية (اختياري)"),
           limit: z.number().min(1).max(20).default(10),
         }),
       },

@@ -22,8 +22,14 @@ export const hostOf = (u?: string) => {
 export function resolveWriteTarget(): { url: string; kind: "research" | "production"; approval: string | null } {
   const research = process.env.NEON_RESEARCH_DATABASE_URL;
   if (research && process.env.CONFIRM_RESEARCH_WRITE === "YES") {
-    const prodHost = hostOf(process.env.NEON_DATABASE_URL);
-    if (!/neon\.tech$/.test(hostOf(research)) || (prodHost && hostOf(research) === prodHost)) {
+    // يفشل مغلقًا: لا بد من معرفة مضيف الإنتاج، ويُقارن بكل روابطه المعروفة.
+    const prodHosts = [process.env.NEON_DATABASE_URL, process.env.DATABASE_URL, process.env.DIRECT_DB_URL]
+      .map(hostOf).filter(Boolean);
+    if (!prodHosts.length) {
+      console.error("🛑 مضيف الإنتاج غير معروف (NEON_DATABASE_URL/DATABASE_URL) — لا يُتحقق من استقلال الفرع البحثي.");
+      process.exit(2);
+    }
+    if (!/neon\.tech$/.test(hostOf(research)) || prodHosts.includes(hostOf(research))) {
       console.error("🛑 هدف الكتابة ليس فرع Neon بحثيًّا مستقلًّا عن الإنتاج.");
       process.exit(2);
     }
