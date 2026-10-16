@@ -336,9 +336,25 @@ function buildTsQueryWords(variants: string[]): string[] {
   return [...words].slice(0, 40);
 }
 
+/** استعلام الاستدعاء المفهرس ($1 = tsquery). */
+export function inDbRecallSql(cap: number): string {
+  // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
+  // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
+  // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
+  // بلا ts_rank_cd: الترتيب في القاعدة يعيد تحليل نصّ كل مادة مطابقة (to_tsvector لكل صف)،
+  // وسؤال من ثلاث كلمات يتوسّع إلى ~32 كلمة فيطابق ~16 ألف مادة → 1.5–4.5 ث. والتطبيق يعيد
+  // تهديف كل الصفوف وترتيبها على أي حال (السقف أكبر من الكوربوس)؛ ORDER BY id للثبات فقط (20 مللي ث).
+  return `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
+       FROM legal_articles
+       WHERE search_norm IS NOT NULL
+         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
+       ORDER BY id
+       LIMIT ${cap}`;
+}
+
 /**
  * استدعاء مفهرس داخل القاعدة: يطابق النصّ العربي المُطبَّع (search_norm) عبر فهرس GIN
- * (tsvector('simple')) ويرتّب بـ ts_rank_cd — بدل عشرات ILIKE على أعمدة خام. يعالج
+ * (tsvector('simple')) دون ترتيب في القاعدة (التطبيق يرتّب) — بدل عشرات ILIKE على أعمدة خام. يعالج
  * «التطبيع وقت الاستعلام» (صور الهمزة/التاء المربوطة تُطابَق) ويسرّع الاسترجاع.
  * يعيد صفوفاً خفيفة (بلا نصّ، بلا ضمّ legalSystem → systemName يسقط إلى lawName).
  * سقوط آمن إلى null عند غياب العمود/الفهرس أو أي خطأ (فيعود المسار المعجمي).
@@ -347,30 +363,27 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
   if (!words.length) return null;
   const tsq = words.join(" | ");
   try {
-    const rows = await prisma.$queryRawUnsafe<
-      Array<{
-        id: string;
-        lawName: string;
-        legalSystemId: string | null;
-        articleNumber: number;
-        title: string;
-        classification: string | null;
-        chapter: string | null;
-        keywords: string[];
-        status: string;
-      }>
-    >(
-      // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
-      // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
-      // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
-      `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
-       FROM legal_articles
-       WHERE search_norm IS NOT NULL
-         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
-       ORDER BY ts_rank_cd(to_tsvector('simple', coalesce(search_norm, '')), to_tsquery('simple', $1)) DESC
-       LIMIT ${cap}`,
-      tsq
-    );
+    // المخطِّط يختار المسح التسلسلي حين يقدّر مطابقة أغلب المواد، فيعيد تحليل نصّ كل مادة
+    // (2.6 ث مقابل 0.27 ث عبر الفهرس — مُثبَت بـ EXPLAIN). SET LOCAL محصور في هذه المعاملة.
+    const [, rows] = await prisma.$transaction([
+      prisma.$executeRawUnsafe("SET LOCAL enable_seqscan = off"),
+      prisma.$queryRawUnsafe<
+        Array<{
+          id: string;
+          lawName: string;
+          legalSystemId: string | null;
+          articleNumber: number;
+          title: string;
+          classification: string | null;
+          chapter: string | null;
+          keywords: string[];
+          status: string;
+        }>
+      >(
+        inDbRecallSql(cap),
+        tsq
+      ),
+    ]);
     return rows.map((r) => ({ ...r, legalSystem: null })) as unknown as LightArticle[];
   } catch {
     return null; // العمود/الفهرس غير موجود، أو خطأ tsquery → سقوط آمن للمسار المعجمي
@@ -486,7 +499,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   //      فلا يُنقل نصّ أيّ مادة غير معروضة (كان سابقاً يجلب نصّ 2000 مادة لكل استعلام).
   // يزيل اقتطاع المجموعة (2000/80) ويُبلّغ الإجماليّ الحقيقي بصدق.
   // ════════════════════════════════════════════════════════════════════════
-  const COMPLETE_CAP = 20000; // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة)
+  // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة). كان 20000 والكوربوس
+  // بلغ 28,606 مادة (16/10/2026)، فالسؤال الواسع كان يُقتطع.
+  const COMPLETE_CAP = 40000;
 
   // مسار الاستدعاء المفهرس داخل القاعدة (tsvector): للاستعلام النصّي البسيط بلا فلاتر بنيوية
   // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر

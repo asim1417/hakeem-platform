@@ -1,6 +1,6 @@
 /** ميزانية مزوّد البحث: البطيء يُسقَط والسريع يُرجَع. التشغيل: npx tsx scripts/test-search-budget.ts */
 import { withBudget } from "../lib/modules/legal-search/hybrid-search";
-import { stageTimer } from "../lib/modules/legal-core/legal-retrieval";
+import { inDbRecallSql, stageTimer } from "../lib/modules/legal-core/legal-retrieval";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -21,6 +21,10 @@ async function main() {
   clock = 130; timer.mark("a");
   clock = 180; timer.mark("b");
   ok(timer.summary() === "ms=80 a=30 b=50", "مؤقّت المراحل يسجّل زمن كل مرحلة منذ السابقة");
+  const recall = inDbRecallSql(20000);
+  ok(recall.includes("to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)"), "الاستدعاء يطابق تعبير فهرس GIN حرفيًّا");
+  ok(!recall.includes("ts_rank"), "الاستدعاء بلا ts_rank (لا إعادة تحليل نصّ كل مادة مطابقة)");
+  ok(recall.includes("ORDER BY id") && recall.includes("LIMIT 20000"), "ترتيب ثابت بالمعرّف وسقف الصفوف");
   if (failed) process.exit(1);
   console.log("\nكل الاختبارات نجحت");
 }
