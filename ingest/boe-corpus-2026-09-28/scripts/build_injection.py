@@ -62,6 +62,15 @@ def sid(*parts):
     return 'boe26-' + hashlib.sha256('|'.join(map(str, parts)).encode()).hexdigest()[:24]
 
 
+def fmt_instr(ins):
+    if not ins:
+        return None
+    kind, no, date = ins
+    y, m, d = (date or '').split('-') if date else ('', '', '')
+    k = 'مرسوم ملكي' if kind == 'royal' else 'قرار مجلس الوزراء'
+    return f"{k} رقم {no}" + (f" وتاريخ {int(y)}/{int(m)}/{int(d)}هـ" if date else '')
+
+
 def greg(h):
     nums = re.findall(r'\d+', h or '')
     if len(nums) < 3:
@@ -101,7 +110,7 @@ def main():
         work_rows.append({
             'id': sid('work', m['system_id'], target, RUN), 'object_type': 'work', 'object_id': m['system_id'],
             'verified_status': target,
-            'evidence_instrument': ' '.join(x for x in (ins or []) if x) or None,
+            'evidence_instrument': fmt_instr(ins),
             'evidence_url': m['boe_url'],
             'evidence_quote': f"حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: {m['boe_status']} (رُصدت 28/9/2026)",
             'method': 'rule', 'verified_by': RUN, '_law': m['boe_name']})
