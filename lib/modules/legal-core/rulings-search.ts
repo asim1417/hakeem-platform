@@ -133,7 +133,11 @@ function rulingFilters(opts: RulingSearchOptions, params: unknown[]): string[] {
 // المتجه القديم لكل حكم بُني من أول ٨٬٠٠٠ حرف (الديباجة غالبًا) فلا يُستعمل هنا.
 // يعمل فقط إذا وُجد الجدول وفيه متجهات ومفتاح المزوّد؛ وإلّا يبقى البحث لفظيًّا كما هو.
 // يُعطَّل صراحةً بـ RULINGS_SEMANTIC=off.
-const SEMANTIC_MIN = Number(process.env.RULINGS_SEMANTIC_MIN || 0.5);
+// العتبة والحدّ الأدنى للألفاظ من قياس الإنتاج (reports/rulings-semantic-eval.json): اللفظ المفرد يقارب
+// 0.30–0.44 فقط (ضعيف ويكفيه البحث اللفظي)، وأسئلة المحامي 0.47–0.70؛ عتبة 0.5 أسقطت نتائج صالحة.
+const SEMANTIC_MIN = Number(process.env.RULINGS_SEMANTIC_MIN || 0.42);
+const SEMANTIC_MIN_TOKENS = Number(process.env.RULINGS_SEMANTIC_MIN_TOKENS || 3);
+const RRF_K = 60;
 const SEMANTIC_POOL = 60;
 let _segReady: { at: number; ok: boolean } | null = null;
 async function segmentVectorsReady(): Promise<boolean> {
@@ -173,7 +177,11 @@ export async function semanticRulingCandidates(query: string, min = SEMANTIC_MIN
 const byScore = (a: RulingHit, b: RulingHit) =>
   b.score - a.score || Number(b.matchedBy === "both") - Number(a.matchedBy === "both");
 
-/** يدمج نتائج المعنى مع اللفظ: المشترك يُرفع، والدلالي وحده يُضاف بمقتطف من جزئه المطابق. */
+/**
+ * يدمج نتائج المعنى مع اللفظ بدمج الرتب (RRF): لكل حكم 1/(K+رتبته) في كل قائمة.
+ * القياس أثبت أن الترتيب بالدرجة وحدها يجعل اللفظي (درجته 1.0 غالبًا) يأخذ كل الخانات ويُخفي
+ * عشرات النتائج الدلالية فوق العتبة — التزاحم نفسه الذي كان بين الأحكام والمواد. والمشترك يتصدّر.
+ */
 async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: RulingSearchOptions, limit: number): Promise<RulingHit[]> {
   for (const h of hits) h.matchedBy = "lexical";
   if (!sem.length) return hits.sort(byScore);
@@ -183,8 +191,9 @@ async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: 
     if (!c) continue;
     h.matchedBy = "both";
     h.score = Math.min(1, h.score + 0.15 * c.sim);
-    bySem.delete(h.id);
   }
+  const lexIds = new Set(hits.map((h) => h.id));
+  for (const id of lexIds) bySem.delete(id);
   const extra = [...bySem.values()].sort((a, b) => b.sim - a.sim).slice(0, limit);
   if (extra.length) {
     const params: unknown[] = [extra.map((c) => c.id)];
@@ -215,13 +224,16 @@ async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: 
         matchedIn: c.part,
         disposition: ex.disposition ? redactPII(ex.disposition) : null,
         parts: ex.parts,
-        // تحت التطابق اللفظي الكامل: المعنى يكمّل ولا يزاحم ما ورد لفظه.
         score: Math.min(0.95, c.sim),
         matchedBy: "semantic",
       });
     }
   }
-  return hits.sort(byScore).slice(0, limit);
+  const lexRank = new Map([...hits].filter((h) => h.matchedBy !== "semantic").sort(byScore).map((h, i) => [h.id, i]));
+  const semRank = new Map([...sem].sort((a, b) => b.sim - a.sim).map((c, i) => [c.id, i]));
+  const rrf = (id: string) =>
+    (lexRank.has(id) ? 1 / (RRF_K + lexRank.get(id)!) : 0) + (semRank.has(id) ? 1 / (RRF_K + semRank.get(id)!) : 0);
+  return hits.sort((a, b) => rrf(b.id) - rrf(a.id) || byScore(a, b)).slice(0, limit);
 }
 
 // الألفاظ الشائعة («مدعي»، «عقد») تطابق عشرات الآلاف: العدّ الدقيق وحساب الترتيب عليها كلها
@@ -256,7 +268,9 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   conds.push(...rulingFilters(opts, params));
   const where = conds.join(" AND ");
   // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
-  const semanticQ = offset === 0 ? semanticRulingCandidates(opts.query).catch(() => []) : Promise.resolve([]);
+  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
+    ? semanticRulingCandidates(opts.query).catch(() => [])
+    : Promise.resolve([]);
 
   const totalQ = prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
     `SELECT count(*)::bigint AS c FROM (SELECT 1 FROM "judicial_cases" WHERE ${where} LIMIT ${COUNT_CAP + 1}) s`, ...params,
