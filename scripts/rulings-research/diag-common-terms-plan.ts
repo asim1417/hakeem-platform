@@ -5,7 +5,7 @@
  */
 import { prisma } from "../../lib/prisma";
 import { buildRulingTsQuery } from "../../lib/modules/legal-core/ruling-excerpts";
-import { buildRulingSearchSql, searchRulingsDirect } from "../../lib/modules/legal-core/rulings-search";
+import { buildRulingSearchSql, runRulingSearchSql, searchRulingsDirect } from "../../lib/modules/legal-core/rulings-search";
 
 type PlanNode = Record<string, unknown>;
 const notice = (title: string, msg: string) => console.log(`::notice title=${title}::${msg}`);
@@ -31,9 +31,9 @@ function summarize(n: PlanNode, d = 0, out: string[] = []): string[] {
   return out;
 }
 
-async function explain(label: string, sql: string, params: unknown[]) {
+async function explain(label: string, sql: string, params: unknown[], indexPlan = false) {
   const t = Date.now();
-  const r = await prisma.$queryRawUnsafe<Array<{ "QUERY PLAN": unknown }>>(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`, ...params);
+  const r = await runRulingSearchSql<Array<{ "QUERY PLAN": unknown }>>(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`, params, indexPlan);
   const root = (r[0]["QUERY PLAN"] as Array<{ Plan: PlanNode; "Execution Time": number; "Planning Time": number }>)[0];
   const lines = summarize(root.Plan);
   // سطر لكل ١٢ عقدة كي لا تُقتطع التعليقات.
@@ -42,9 +42,9 @@ async function explain(label: string, sql: string, params: unknown[]) {
   }
 }
 
-async function timed(sql: string, params: unknown[]): Promise<number> {
+async function timed(sql: string, params: unknown[], indexPlan = false): Promise<number> {
   const t = Date.now();
-  await prisma.$queryRawUnsafe(sql, ...params);
+  await runRulingSearchSql(sql, params, indexPlan);
   return Date.now() - t;
 }
 
@@ -80,15 +80,22 @@ async function main() {
        FROM s JOIN "judicial_cases" j ON j."id" = s.id`, tsq);
     notice(`sizes ${q}`, `segments=${sz.segs} rulings=${sz.rulings} cand400_search_norm_avg=${cand.avg_bytes}B max=${cand.max_bytes}B`);
 
-    await explain(`count ${q}`, sql.countSql, sql.params);
-    await explain(`rank ${q}`, sql.rowsSql, sql.params);
+    // قبل (الخطة الافتراضية) وبعد (indexPlan كما يشغّله searchRulingsDirect الآن).
+    await explain(`count-before ${q}`, sql.countSql, sql.params, false);
+    await explain(`count-after ${q}`, sql.countSql, sql.params, sql.indexPlan);
+    await explain(`rank-before ${q}`, sql.rowsSql, sql.params, false);
+    await explain(`rank-after ${q}`, sql.rowsSql, sql.params, sql.indexPlan);
 
     // تزمين المراحل منفصلةً (بلا EXPLAIN): العدّ، والترتيب، وكلاهما متوازيين كما في الإنتاج.
-    const countMs = await timed(sql.countSql, sql.params);
-    const rankMs = await timed(sql.rowsSql, sql.params);
-    const t = Date.now();
-    await Promise.all([timed(sql.countSql, sql.params), timed(sql.rowsSql, sql.params)]);
-    const parMs = Date.now() - t;
+    const phase = async (ip: boolean) => {
+      const countMs = await timed(sql.countSql, sql.params, ip);
+      const rankMs = await timed(sql.rowsSql, sql.params, ip);
+      const t = Date.now();
+      await Promise.all([timed(sql.countSql, sql.params, ip), timed(sql.rowsSql, sql.params, ip)]);
+      return `count=${countMs}ms rank=${rankMs}ms parallel=${Date.now() - t}ms`;
+    };
+    const before = await phase(false);
+    const after = await phase(sql.indexPlan);
     // تكلفة ts_rank_cd وحدها على ٥٠٠ مرشح (النص الكامل)، مقابل الترتيب بلا ts_rank_cd.
     const rankOnly = await timed(
       `WITH s AS (SELECT DISTINCT "ruling_id" AS id FROM "ruling_segments"
@@ -98,11 +105,11 @@ async function main() {
       `WITH s AS (SELECT DISTINCT "ruling_id" AS id FROM "ruling_segments"
          WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ to_tsquery('simple', $1) AND "part" IN ('reasons','disposition') LIMIT 400)
        SELECT count(*) FROM s`, [tsq]);
-    notice(`phases ${q}`, `count=${countMs}ms rank=${rankMs}ms parallel=${parMs}ms | seg400_only=${segOnly}ms seg400+ts_rank_cd(full search_norm)=${rankOnly}ms`);
+    notice(`phases ${q}`, `before: ${before} | after: ${after} | seg400_only=${segOnly}ms seg400+ts_rank_cd(full search_norm)=${rankOnly}ms`);
   }
 
   const times: string[] = [];
-  for (const q of latencyTerms) {
+  for (const q of [...latencyTerms, ...latencyTerms]) {
     const t = Date.now();
     const r = await searchRulingsDirect({ query: q, limit: 10 });
     times.push(`${q}=${Date.now() - t}ms/${r.hits.length}/total=${r.total}${r.totalCapped ? "+" : ""}`);

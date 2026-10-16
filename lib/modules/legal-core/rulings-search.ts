@@ -266,7 +266,23 @@ const RANK_CANDIDATES = 400;
 // مع ruling_segments: احتياط محدود ممن ورد اللفظ في غير أسبابه ومنطوقه (حساب الترتيب على النص الكامل مكلف).
 const FALLBACK_CANDIDATES = 100;
 
-export interface RulingSearchSql { countSql: string; rowsSql: string; params: unknown[] }
+export interface RulingSearchSql { countSql: string; rowsSql: string; params: unknown[]; indexPlan: boolean }
+
+/**
+ * ينفّذ استعلام بحث الأحكام. مع العمود المفهرس (indexPlan) يجري في معاملة قصيرة بـ
+ * SET LOCAL enable_seqscan = off: قياس الإنتاج (EXPLAIN ANALYZE) أثبت أن المخطِّط يختار للعدّ المسقوف
+ * (LIMIT 5001) مسحًا تسلسليًّا على judicial_cases يعيد حساب to_tsvector لنصّ ~١٠ ك.ب لكل حكم
+ * (٤٫٥–٧٫٦ ثانية لـ«عقد» و«الوكالة» و«مدعي») لأنه يبخس كلفة to_tsvector ويظن التوقف المبكر رخيصًا،
+ * بينما فهرس GIN يجيب دون حساب النص. الإعداد محليّ للمعاملة فلا يمسّ غيرها، وليس كتابة.
+ */
+export async function runRulingSearchSql<T>(sql: string, params: unknown[], indexPlan: boolean): Promise<T> {
+  if (!indexPlan) return prisma.$queryRawUnsafe<T>(sql, ...params);
+  const [, rows] = await prisma.$transaction([
+    prisma.$executeRawUnsafe(`SET LOCAL enable_seqscan = off`),
+    prisma.$queryRawUnsafe<T>(sql, ...params),
+  ]);
+  return rows;
+}
 
 /**
  * يبني استعلامَي البحث اللفظي (العدّ المسقوف والترتيب) كما ينفّذهما searchRulingsDirect حرفيًّا.
@@ -321,7 +337,7 @@ export async function buildRulingSearchSql(opts: RulingSearchOptions): Promise<R
      FROM c JOIN "judicial_cases" j ON j."id" = c."id"
      ORDER BY c.prio DESC, rank DESC, j."decisionDate" DESC NULLS LAST
      LIMIT ${limit} OFFSET ${offset}`;
-  return { countSql, rowsSql, params };
+  return { countSql, rowsSql, params, indexPlan: indexed };
 }
 
 export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
@@ -331,20 +347,20 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   const rawTokens = queryTokens(opts.query);
   const sql = await buildRulingSearchSql(opts);
   if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
-  const { countSql, rowsSql, params } = sql;
+  const { countSql, rowsSql, params, indexPlan } = sql;
   // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
   const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
     ? semanticRulingCandidates(opts.query).catch(() => [])
     : Promise.resolve([]);
 
-  const totalQ = prisma.$queryRawUnsafe<Array<{ c: bigint }>>(countSql, ...params).catch(() => [{ c: BigInt(0) }]);
+  const totalQ = runRulingSearchSql<Array<{ c: bigint }>>(countSql, params, indexPlan).catch(() => [{ c: BigInt(0) }]);
 
   // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
-  const rowsQ = prisma.$queryRawUnsafe<Array<{
+  const rowsQ = runRulingSearchSql<Array<{
     id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
     cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
     judgmentTitle: string | null; judgmentText: string | null;
-  }>>(rowsSql, ...params).catch(() => []);
+  }>>(rowsSql, params, indexPlan).catch(() => []);
   const [totalRow, rows] = await Promise.all([totalQ, rowsQ]);
   const counted = Number(totalRow?.[0]?.c ?? 0);
   const totalCapped = counted > COUNT_CAP;
