@@ -19,6 +19,8 @@ const OUT_DIR = path.join(process.cwd(), "reports/rulings-research");
 const BATCH = 2000;
 const STUDY_SIZE = 50;
 const STUDY_SEED = "research-00";
+// المستودع عام: في وضع النشر لا تخرج مقتطفات ولا أرقام قضايا، والعناوين المرشحة ما تكرر في ≥ ٥ أحكام فقط.
+const PUBLIC = process.env.INVENTORY_PUBLIC === "1";
 
 const db = openReadOnlyDb();
 const q = db.q;
@@ -182,7 +184,7 @@ async function structureStudy() {
       const fam = (familyHits[h.family] ??= {});
       const e = (fam[h.label] ??= { rulings: 0, occurrences: 0, examples: [] });
       e.occurrences++;
-      if (e.examples.length < 3) e.examples.push(`${r.ref}: …${maskPersonalData(full.slice(Math.max(0, h.start - 40), h.end + 60))}…`);
+      if (!PUBLIC && e.examples.length < 3) e.examples.push(`${r.ref}: …${maskPersonalData(full.slice(Math.max(0, h.start - 40), h.end + 60))}…`);
     }
     for (const fam of Object.values(familyHits)) for (const [label, e] of Object.entries(fam)) {
       if (found.some((h) => h.label === label)) e.rulings++;
@@ -195,7 +197,7 @@ async function structureStudy() {
     }
     const order = found.map((h) => h.family);
     perRuling.push({
-      ref: r.ref, court: r.court, yearH: r.y, chars: r.text.length, hasAppealText: Boolean(r.appeal),
+      ...(PUBLIC ? {} : { ref: r.ref }), court: r.court, yearH: r.y, chars: r.text.length, hasAppealText: Boolean(r.appeal),
       familiesInOrder: order.filter((f, i) => i === 0 || order[i - 1] !== f),
       reasoningUnits: found.filter((h) => h.family === "reasoning").length,
       hasDisposition: found.some((h) => h.family === "disposition"),
@@ -209,7 +211,7 @@ async function structureStudy() {
     familyHits,
     headerCandidates: [...headers.entries()]
       .map(([line, e]) => ({ line: maskPersonalData(line), occurrences: e.n, rulings: e.rulings.size }))
-      .filter((h) => h.rulings >= 2)
+      .filter((h) => h.rulings >= (PUBLIC ? 5 : 2))
       .sort((a, b) => b.rulings - a.rulings)
       .slice(0, 80),
     perRuling,
@@ -233,7 +235,7 @@ async function main() {
   console.log("✓ دراسة البنية");
   mkdirSync(OUT_DIR, { recursive: true });
   const file = path.join(OUT_DIR, "00-inventory.data.json");
-  writeFileSync(file, JSON.stringify({ measuredAt: new Date().toISOString(), transport: db.transport, searchNorm, stats, related, study }, null, 2));
+  writeFileSync(file, JSON.stringify({ measuredAt: new Date().toISOString(), transport: db.transport, public: PUBLIC, searchNorm, stats, related, study }, null, 2));
   console.log(`✓ ${path.relative(process.cwd(), file)}`);
 }
 
