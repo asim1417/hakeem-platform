@@ -183,7 +183,9 @@ export default async function LegalSystemPage({
                     <Link href={href} className="text-lg font-extrabold text-[var(--navy)] hover:underline">
                       {a.title && a.title.trim() && a.title.trim() !== String(a.articleNumber) ? a.title : `المادة ${a.articleNumber.toLocaleString("ar-SA")}`}
                     </Link>
-                    {retired ? (
+                    {workFlags.repealed && !retired ? (
+                      <span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>نظام ملغى</span>
+                    ) : retired ? (
                       <span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>{flag.statusLabel}</span>
                     ) : unverified ? (
                       <span className="text-xs text-muted">{view.versionId ? "معدّلة" : "قيد التحقق"}</span>
