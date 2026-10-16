@@ -263,6 +263,8 @@ async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: 
 // تجاوزا مهلة MCP (٣٢ ثانية لـ«مدعي»). فالعدّ مسقوف، والترتيب على مرشحين محدودين، والاستعلامان متوازيان.
 const COUNT_CAP = 5000;
 const RANK_CANDIDATES = 400;
+// مع ruling_segments: احتياط محدود ممن ورد اللفظ في غير أسبابه ومنطوقه (حساب الترتيب على النص الكامل مكلف).
+const FALLBACK_CANDIDATES = 100;
 
 export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
   const started = Date.now();
@@ -293,12 +295,12 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
   conds.push(...filters);
   const where = conds.join(" AND ");
   // المرشحون: من ورد اللفظ في أسبابه أو منطوقه أولًا (ruling_segments.part_norm مفهرس)، ثم الباقي.
+  // MATERIALIZED يُلزم المخطِّط بفهرس GIN: مع DISTINCT ... LIMIT مباشرةً كان يمشي على المفتاح الأساسي
+  // ويحسب to_tsvector لكل صف (٨–١٤ ثانية للفظ النادر، بخطة التنفيذ على الإنتاج).
   // كان الترتيب يُحسب على أول ٤٠٠ حكم يعيدها الفهرس كيفما اتفق؛ الآن تتقدّم الأحكام التي علّتها أو نتيجتها هي المسألة.
   const segCandidates = segsReady
     ? `SELECT s."id", 1 AS prio FROM (
-         SELECT DISTINCT "ruling_id" AS "id" FROM "ruling_segments"
-         WHERE "part" IN ('reasons','disposition') AND to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq}
-         LIMIT ${RANK_CANDIDATES}) s
+         SELECT DISTINCT "ruling_id" AS "id" FROM segm LIMIT ${RANK_CANDIDATES}) s
        ${filters.length ? `WHERE s."id" IN (SELECT "id" FROM "judicial_cases" WHERE ${filters.join(" AND ")})` : ""}
        UNION ALL `
     : "";
@@ -317,7 +319,10 @@ export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ 
     cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
     judgmentTitle: string | null; judgmentText: string | null;
   }>>(
-    `WITH u AS (${segCandidates}(SELECT "id", 0 AS prio FROM "judicial_cases" WHERE ${where} LIMIT ${RANK_CANDIDATES})),
+    `${segsReady ? `WITH segm AS MATERIALIZED (
+       SELECT "ruling_id" FROM "ruling_segments"
+       WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ ${tsq} AND "part" IN ('reasons','disposition')),
+     ` : "WITH "}u AS (${segCandidates}(SELECT "id", 0 AS prio FROM "judicial_cases" WHERE ${where} LIMIT ${segsReady ? FALLBACK_CANDIDATES : RANK_CANDIDATES})),
           c AS (SELECT "id", max(prio) AS prio FROM u GROUP BY "id")
      SELECT j."id",j."decisionNo",j."caseNo",j."court",j."cityName",j."decisionDateText",j."caseDateText",j."judgmentTitle",j."judgmentText",
             ts_rank_cd(${tsv.replace(/"search_norm"|"judgmentText"|"judgmentTitle"/g, (m) => `j.${m}`)}, ${tsq}) AS rank
