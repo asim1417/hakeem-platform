@@ -1,12 +1,15 @@
 /**
  * تمريرة حجب ثانية على judicial_cases.search_norm.
  * الحجب الأول كان قبل التطبيع، فبقيت أرقام هندية تحوّلت إلى هوية لاتينية من 10 خانات.
+ * والعمود على الإنتاج بُني بـ normalizeArabicText (scripts/backfill-rulings-search-norm.ts) بلا حجب،
+ * فبقيت الأرقام هندية أيضًا (جرد ١٦/١٠/٢٠٢٦: نحو ٢٪ من الأحكام). يرصد الصيغتين ويحجب
+ * مع الإبقاء على تطبيع العمود القائم (normalizeArabicText) كي لا يختلف عن بقية الصفوف وقرّائها.
  * يعدّ الصفوف فقط ولا يطبع نص الحكم.
  *
  * dry-run افتراضيًا. على Neon: --apply --i-understand-production + CONFIRM_NEON_WRITE=YES.
  */
 import { PrismaClient } from "@prisma/client";
-import { normalizeArabic } from "../../lib/modules/legal-core/bm25-tokenizer";
+import { normalizeArabicText } from "../../lib/modules/legal-core/arabic-morphology";
 import { redactPII } from "../../lib/modules/legal-core/rulings-search";
 
 const isNeon = /neon\.tech/i.test(process.env.DATABASE_URL || "");
@@ -14,9 +17,11 @@ const APPLY =
   process.argv.includes("--apply") &&
   (!isNeon || (process.argv.includes("--i-understand-production") && process.env.CONFIRM_NEON_WRITE === "YES"));
 const BATCH = 200;
-const LEAK = `(search_norm ~ '(^|[^0-9])[12][0-9]{9}([^0-9]|$)')
-  OR (search_norm ~ '(^|[^0-9])05[0-9]{8}([^0-9]|$)')
-  OR (search_norm ~ '(^|[^0-9])(009665|9665)[0-9]{8}([^0-9]|$)')`;
+// أرقام لاتينية أو هندية (٠-٩).
+const D = "[0-9٠-٩]";
+const LEAK = `(search_norm ~ '(^|[^0-9٠-٩])[12١٢]${D}{9}([^0-9٠-٩]|$)')
+  OR (search_norm ~ '(^|[^0-9٠-٩])[0٠][5٥]${D}{8}([^0-9٠-٩]|$)')
+  OR (search_norm ~ '(^|[^0-9٠-٩])([0٠][0٠])?[9٩][6٦][6٦][5٥]${D}{8}([^0-9٠-٩]|$)')`;
 
 async function countLeaks(prisma: PrismaClient): Promise<number> {
   const rows = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
@@ -49,8 +54,8 @@ async function main() {
       if (!rows.length) break;
       cursor = rows[rows.length - 1].id;
       const updates = rows
-        .map((r) => ({ id: r.id, next: normalizeArabic(redactPII(r.search_norm)) }))
-        .filter((r) => r.next.length > 0);
+        .map((r) => ({ id: r.id, next: normalizeArabicText(redactPII(r.search_norm)) }))
+        .filter((r) => r.next.length > 0 && r.next !== r.search_norm);
       if (updates.length) {
         await prisma.$transaction(
           updates.map((r) =>
