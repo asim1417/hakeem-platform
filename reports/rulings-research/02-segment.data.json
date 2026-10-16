@@ -1,16 +1,16 @@
 {
-  "measuredAt": "2026-10-16T01:29:15.500Z",
-  "extractorVersion": "segment-rules-v2",
+  "measuredAt": "2026-10-16T01:32:20.851Z",
+  "extractorVersion": "segment-rules-v3",
   "mode": "dry-run",
   "all": {
     "rows": 51105,
     "ruleOnly": {
-      "n": 36895,
-      "pct": 72.19
+      "n": 36730,
+      "pct": 71.87
     },
     "needsModel": {
-      "n": 14210,
-      "pct": 27.81
+      "n": 14375,
+      "pct": 28.13
     },
     "structure": {
       "contiguousPct": 100,
@@ -18,17 +18,17 @@
     },
     "foundPct": {
       "claims": 95.27,
-      "defense": 36.31,
-      "reasons": 78.24,
+      "defense": 51.89,
+      "reasons": 77.92,
       "disposition": 96.91,
       "appeal": 3.77,
       "other": 46.04
     },
     "medianShareOfText": {
       "header": 0.059,
-      "claims": 0.379,
-      "defense": 0.159,
-      "reasons": 0.385,
+      "claims": 0.342,
+      "defense": 0.164,
+      "reasons": 0.381,
       "disposition": 0.079,
       "appeal": 0.133,
       "other": 0.014
@@ -50,12 +50,12 @@
     "تجارية": {
       "rows": 47144,
       "ruleOnly": {
-        "n": 33943,
-        "pct": 72
+        "n": 33821,
+        "pct": 71.74
       },
       "needsModel": {
-        "n": 13201,
-        "pct": 28
+        "n": 13323,
+        "pct": 28.26
       },
       "structure": {
         "contiguousPct": 100,
@@ -63,17 +63,17 @@
       },
       "foundPct": {
         "claims": 95.62,
-        "defense": 36.8,
-        "reasons": 77.79,
+        "defense": 52.91,
+        "reasons": 77.53,
         "disposition": 96.98,
         "appeal": 3.71,
         "other": 44.5
       },
       "medianShareOfText": {
         "header": 0.057,
-        "claims": 0.388,
-        "defense": 0.156,
-        "reasons": 0.392,
+        "claims": 0.35,
+        "defense": 0.162,
+        "reasons": 0.388,
         "disposition": 0.081,
         "appeal": 0.138,
         "other": 0.012
@@ -94,12 +94,12 @@
     "عامة": {
       "rows": 2377,
       "ruleOnly": {
-        "n": 1444,
-        "pct": 60.75
+        "n": 1401,
+        "pct": 58.94
       },
       "needsModel": {
-        "n": 933,
-        "pct": 39.25
+        "n": 976,
+        "pct": 41.06
       },
       "structure": {
         "contiguousPct": 100,
@@ -107,17 +107,17 @@
       },
       "foundPct": {
         "claims": 86.75,
-        "defense": 50.61,
-        "reasons": 73.79,
+        "defense": 65.92,
+        "reasons": 71.98,
         "disposition": 95.41,
         "appeal": 4.67,
         "other": 40.93
       },
       "medianShareOfText": {
         "header": 0.073,
-        "claims": 0.314,
+        "claims": 0.268,
         "defense": 0.191,
-        "reasons": 0.374,
+        "reasons": 0.365,
         "disposition": 0.099,
         "appeal": 0.076,
         "other": 0.017
@@ -247,7 +247,7 @@
       },
       "medianShareOfText": {
         "header": 0.094,
-        "claims": 0.399,
+        "claims": 0.396,
         "defense": 0.462,
         "reasons": null,
         "disposition": 0.488,
