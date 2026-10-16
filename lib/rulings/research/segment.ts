@@ -13,7 +13,7 @@
  */
 import { stripTatweel } from "./anchors";
 
-export const SEGMENT_EXTRACTOR_VERSION = "segment-rules-v2";
+export const SEGMENT_EXTRACTOR_VERSION = "segment-rules-v3";
 
 export type SegmentType = "header" | "claims" | "defense" | "evidence" | "reasons" | "disposition" | "appeal" | "other";
 
@@ -53,6 +53,11 @@ const CLAIMS_START = [
 ];
 /** بداية الإجابة والدفوع. */
 const DEFENSE_START = [
+  // من الإحصاء المجمّع: «فأجاب قائلًا» (١٬٠٤٨ حكمًا)، «فأجاب بأنه/بأن»، «وبعرضها على وكيل…»، «مذكرة جوابية».
+  `وبعرض(?:ها|ه)?\\s+(?:ذلك\\s+|الدعو${Y}\\s+)?عل${Y}\\s+(?:المدع${Y}\\s+عليه|وكيل)`,
+  `(?:ف|و)?${A}جاب\\s+(?:قا[ئي]لا|ب${A}ن)`,
+  `مذكر${H}\\s+جوابي${H}`,
+  `جوابه\\s+عل${Y}`,
   `وبعرض\\s+ذلك\\s+عل${Y}\\s+(?:المدع${Y}\\s+عليه|وكيل)`,
   `وبعرض\\s+الدعو${Y}\\s+عل${Y}`,
   `(?:${A}جاب|وبسؤال)\\s+(?:المدع${Y}\\s+عليه|وكيل\\s+المدع${Y}\\s+عليه)`,

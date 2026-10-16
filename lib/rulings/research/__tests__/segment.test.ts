@@ -71,3 +71,12 @@ test("قالب الهيئة الدائمة: الطلب ثم الأسباب ثم 
   assert.equal(s.needsModel, false);
   assert.deepEqual(checkStructure(s, t.length), { contiguous: true, ordered: true });
 });
+
+test("«فأجاب قائلًا» و«وبعرضها على وكيل» تبدأ الإجابة", () => {
+  for (const cue of ["فأجاب قائلا", "وبعرضها على وكيل المدعى عليها", "وقدم مذكرة جوابية"]) {
+    const t = `تتحصل وقائع هذه الدعوى في أن المدعي يطلب إلزام المدعى عليها بالمبلغ ${cue} إن المبلغ مسدد وحيث إن الثابت كذا لذلك حكمت الدائرة برفض الدعوى`;
+    const d = segmentRuling(t).segments.find((x) => x.type === "defense");
+    assert.ok(d, cue);
+    assert.ok(t.slice(d!.start).startsWith(cue.replace(/^وقدم /, "")) || t.slice(d!.start, d!.start + 30).includes("مذكرة"), cue);
+  }
+});
