@@ -9,6 +9,7 @@ import { SpendCreditsButton } from "@/components/credits/SpendCreditsButton";
 import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 import { relationTypeLabel, reviewStatusLabel } from "@/lib/i18n/enum-labels";
+import { redactPII } from "@/lib/modules/legal-core/rulings-search";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,10 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
     .catch(() => null);
 
   if (!judgment) notFound();
+
+  // حجب الهوية والجوال على الخادم قبل الإرسال؛ النص المخزَّن لا يُمس.
+  const judgmentText = redactPII(judgment.judgmentText);
+  const appealText = judgment.appealText ? redactPII(judgment.appealText) : null;
 
   const citation = [
     judgment.court,
@@ -71,7 +76,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
             <LegalCoreCard title="نص الحكم" subtitle="النص مستورد كما هو، ويحتاج مراجعة قانونية قبل الاعتماد المعرفي">
               <article className="legal-prose rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--parchment)] p-7 font-judicial text-2xl leading-[2.25] text-[var(--ink)] shadow-[var(--sh-xs)]">
                 <JudgmentText
-                  text={judgment.judgmentText}
+                  text={judgmentText}
                   links={judgment.articleLinks.map((l) => ({
                     articleId: l.article.id,
                     lawName: l.article.lawName,
@@ -82,11 +87,11 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
               </article>
             </LegalCoreCard>
 
-            {judgment.appealText ? (
+            {appealText ? (
               <LegalCoreCard title="نص الاستئناف أو الاعتراض" subtitle="يعرض عند توفره داخل مصدر الأحكام">
                 <article className="legal-prose rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-ivory/60 p-6 font-judicial text-xl leading-10 text-[var(--ink)]">
                   <JudgmentText
-                    text={judgment.appealText}
+                    text={appealText}
                     links={judgment.articleLinks.map((l) => ({
                       articleId: l.article.id,
                       lawName: l.article.lawName,
