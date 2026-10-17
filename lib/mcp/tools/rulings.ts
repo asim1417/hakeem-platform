@@ -9,7 +9,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
-import { extractHijriYear, redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { extractHijriYear, redactPII, stripPiiFromQuery } from "@/lib/modules/legal-core/rulings-search";
 import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
@@ -72,6 +72,12 @@ export async function enumerateRulings(
   cursor?: string,
   snippetLen = 500,
 ) {
+  // لا يُعثر على حكم بهوية أو جوال: يُزال النمط من الألفاظ قبل مطابقة search_norm.
+  terms = terms.map((t) => stripPiiFromQuery(t).query).filter(Boolean);
+  if (!terms.length) {
+    const empty = { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total: 0, by_court: [] };
+    return countOnly ? empty : { ...empty, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
+  }
   // تعقيم أحرف بدل ILIKE (% _ \) ثمّ تغليف بـ %..% — بمعاملات مربوطة (بلا حقن).
   const likeTerms = terms.map((t) => `%${normalizeArabic(t).replace(/[%_\\]/g, "")}%`);
   const termConds = Prisma.join(
@@ -115,7 +121,8 @@ export async function enumerateRulings(
 
   // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
   const results = rows.map((r) => {
-    const txt = r.judgmentText ?? "";
+    // الحجب قبل القص، فلا يقطع القصُّ رقمًا يفلت من الحجب.
+    const txt = redactPII(r.judgmentText ?? "");
     let idx = -1;
     for (const t of terms) {
       const i = txt.indexOf(t);
@@ -129,7 +136,7 @@ export async function enumerateRulings(
       court: r.court,
       year_h: hijriYear(r.decisionDateText),
       match_offset: idx === -1 ? null : idx,
-      snippet: redactPII(snippet),
+      snippet,
     };
   });
 

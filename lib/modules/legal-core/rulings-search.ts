@@ -64,9 +64,31 @@ export function redactPII(text: string): string {
   const redacted = shielded.text
     .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[بريد محجوب]")
     .replace(new RegExp(`${notDigit}[12\\u0661\\u0662](?:${gap}${digit}){9}${notDigitAfter}`, "g"), "•••••••••• [هوية محجوبة]")
-    .replace(new RegExp(`(?:\\+?966|00966)?${gap}[0\\u0660]${gap}[5\\u0665](?:${gap}${digit}){8}${notDigitAfter}`, "g"), "[جوال محجوب]")
+    // محلي (05…) أو دولي بمفتاح 966 مع الصفر أو بدونه (+9665… و009665… و9665…)، لاتيني أو هندي.
+    .replace(
+      new RegExp(
+        `(?:${notDigit}(?:\\+|00|\\u0660\\u0660)?${gap}[9\\u0669]${gap}[6\\u0666]${gap}[6\\u0666]${gap}[0\\u0660]?|[0\\u0660])${gap}[5\\u0665](?:${gap}${digit}){8}${notDigitAfter}`,
+        "g",
+      ),
+      "[جوال محجوب]",
+    )
     .replace(new RegExp(`\\bSA(?:${gap}${digit}){22}\\b`, "gi"), "[آيبان محجوب]");
   return shielded.restore(redacted);
+}
+
+const PII_MARKS = /•{10} \[هوية محجوبة\]|\[جوال محجوب\]|\[آيبان محجوب\]|\[بريد محجوب\]/g;
+
+/**
+ * يزيل من استعلام البحث ما يطابق بيانات شخصية (هوية، جوال، آيبان، بريد) بالأنماط نفسها في redactPII،
+ * فلا يُعثر على حكم بما حُجب منه، ولا يُرسل الرقم إلى مزوّد المتجهات. أرقام المواد والصكوك والتواريخ
+ * وأرقام القضايا (لا تبدأ بـ 1 أو 2 بعشر خانات) تبقى. query فارغ = لا بحث.
+ */
+export function stripPiiFromQuery(query: string | null | undefined): { query: string; hadPii: boolean } {
+  const redacted = redactPII(String(query ?? ""));
+  PII_MARKS.lastIndex = 0;
+  const hadPii = PII_MARKS.test(redacted);
+  PII_MARKS.lastIndex = 0;
+  return { query: redacted.replace(PII_MARKS, " ").replace(/\s+/g, " ").trim(), hadPii };
 }
 
 /**
@@ -344,8 +366,10 @@ export async function buildRulingSearchSql(opts: RulingSearchOptions): Promise<R
   return { countSql, rowsSql, params, indexPlan: indexed };
 }
 
-export async function searchRulingsDirect(opts: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
+export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
   const started = Date.now();
+  // لا يُبحث بما يُحجب: الفهرس قد يحمل أرقامًا لم تُحجب بعد، والاستعلام يذهب إلى مزوّد المتجهات.
+  const opts = { ...input, query: stripPiiFromQuery(input.query).query };
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
   const offset = Math.max(opts.offset ?? 0, 0);
   const rawTokens = queryTokens(opts.query);

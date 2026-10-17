@@ -5,6 +5,7 @@ import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibili
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
+import { redactPII, stripPiiFromQuery } from "@/lib/modules/legal-core/rulings-search";
 import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,8 @@ export default async function LegalCoreJudgmentsPage({
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const query = (searchParams?.q ?? "").trim();
+  // ما يطابق هوية أو جوالًا يُزال من الاستعلام قبل البحث في النص الخام، فلا يُعثر على حكم به.
+  const query = stripPiiFromQuery(searchParams?.q).query;
   const court = (searchParams?.court ?? "").trim();
   const city = (searchParams?.city ?? "").trim();
   const classification = (searchParams?.classification ?? "").trim();
@@ -113,7 +115,7 @@ export default async function LegalCoreJudgmentsPage({
           await prisma.judicialCase
             .findMany({ where: { id: { in: judgments.map((j) => j.id) } }, select: { id: true, judgmentText: true } })
             .catch(() => [] as Array<{ id: string; judgmentText: string }>)
-        ).map((r) => [r.id, sanitizeDisplayText(r.judgmentText)])
+        ).map((r) => [r.id, redactPII(sanitizeDisplayText(r.judgmentText))])
       )
     : new Map<string, string>();
 

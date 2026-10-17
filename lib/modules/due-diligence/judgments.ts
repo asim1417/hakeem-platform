@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { stripPiiFromQuery } from "@/lib/modules/legal-core/rulings-search";
 import type {
   DataSourceDefinition,
   DueDiligenceConnector,
@@ -50,7 +51,8 @@ export class HakeemPublishedJudgmentsConnector implements DueDiligenceConnector 
 
   async collect(query: EntityQuery): Promise<SourceRunResult> {
     const startedAt = Date.now();
-    const entityName = query.name.trim();
+    // لا يُبحث في نص الأحكام برقم هوية أو جوال.
+    const entityName = stripPiiFromQuery(query.name).query;
     if (entityName.length < 3) {
       return {
         source: this.source,
