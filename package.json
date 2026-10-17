@@ -29,6 +29,7 @@
     "test:work-status-asof": "tsx scripts/test-work-status-asof.ts",
     "test:effective-text": "tsx scripts/test-effective-text.ts && tsx scripts/test-effective-consumers.ts",
     "test:redact-pii": "tsx scripts/test-redact-pii.ts",
+    "test:ruling-pii-surface": "tsx scripts/test-ruling-pii-surface.ts",
     "test:mcp-hardening": "tsx scripts/test-mcp-hardening.ts && tsx scripts/test-mcp-authorize-route.ts",
     "test:mcp-account-linking": "tsx scripts/test-mcp-account-linking.ts",
     "audit:duplicate-articles": "tsx scripts/audit/detect-duplicate-articles.ts",
