@@ -30,7 +30,25 @@ export type Permission =
   // مركز المراجعة (المخطط السيادي §12): جلسات مراجعة، ملاحظات، واقتراحات بموافقة بشرية.
   | "REVIEW_USE"
   /** حصرية لمالك المنصة — لا تُمنح عبر مصفوفة SYSTEM_ADMIN. */
-  | "SUPER_ADMIN_ACCESS";
+  | "SUPER_ADMIN_ACCESS"
+  // مكتب التحرير التشريعي: لا تُمنح لغير SUPER_ADMIN إلا من صفحة الأدوار،
+  // ولا يتجاوزها SYSTEM_ADMIN (الحارس في lib/modules/editorial/access.ts لا يستعمل canUser).
+  | "LEGAL_EDITOR_LAWS"
+  | "LEGAL_EDITOR_RULINGS"
+  | "LEGAL_REVIEWER"
+  | "LEGAL_QA_VIEW"
+  /** حساب وكيل آلي: يقترح فقط، ويُرفض منه أي اعتماد أو نشر. */
+  | "LEGAL_AGENT_PROPOSE";
+
+export const EDITORIAL_PERMISSIONS = [
+  "LEGAL_EDITOR_LAWS",
+  "LEGAL_EDITOR_RULINGS",
+  "LEGAL_REVIEWER",
+  "LEGAL_QA_VIEW",
+  "LEGAL_AGENT_PROPOSE",
+] as const satisfies readonly Permission[];
+
+export type EditorialPermission = (typeof EDITORIAL_PERMISSIONS)[number];
 
 const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
   "CONSULTATIONS_FULL",
@@ -51,7 +69,7 @@ const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
-  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS"],
+  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS", ...EDITORIAL_PERMISSIONS],
   SYSTEM_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS],
   // القاضي: المعاون القضائي + النواة والاستشارة للاطّلاع.
   JUDGE: [

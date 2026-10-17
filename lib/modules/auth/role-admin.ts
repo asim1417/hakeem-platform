@@ -41,6 +41,11 @@ export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "GOVERNANCE_AUDIT_VIEW", label: "سجل التدقيق والحوكمة" },
   { key: "JUDICIAL_ASSISTANT_USE", label: "المعاون القضائي" },
   { key: "SUPER_ADMIN_ACCESS", label: "لوحة السوبر أدمن (حصرية)" },
+  { key: "LEGAL_EDITOR_LAWS", label: "مكتب التحرير: محرر الأنظمة" },
+  { key: "LEGAL_EDITOR_RULINGS", label: "مكتب التحرير: محرر الأحكام" },
+  { key: "LEGAL_REVIEWER", label: "مكتب التحرير: معتمِد" },
+  { key: "LEGAL_QA_VIEW", label: "مكتب التحرير: عرض الجودة والسجل" },
+  { key: "LEGAL_AGENT_PROPOSE", label: "مكتب التحرير: وكيل آلي (اقتراح فقط)" },
 ];
 
 function labelFor(permission: Permission): string {

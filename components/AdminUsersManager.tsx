@@ -78,6 +78,11 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   JUDICIAL_ASSISTANT_USE: "المعاون القضائي",
   REVIEW_USE: "مركز المراجعة",
   SUPER_ADMIN_ACCESS: "لوحة السوبر أدمن (حصرية)",
+  LEGAL_EDITOR_LAWS: "مكتب التحرير: محرر الأنظمة",
+  LEGAL_EDITOR_RULINGS: "مكتب التحرير: محرر الأحكام",
+  LEGAL_REVIEWER: "مكتب التحرير: معتمِد",
+  LEGAL_QA_VIEW: "مكتب التحرير: عرض الجودة والسجل",
+  LEGAL_AGENT_PROPOSE: "مكتب التحرير: وكيل آلي (اقتراح فقط)",
 };
 
 export function AdminUsersManager({
