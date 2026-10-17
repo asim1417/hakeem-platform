@@ -10,7 +10,8 @@ import { NOT_AVAILABLE, PREAMBLE_INCOMPLETE_LABEL, PREAMBLE_NONE_LABEL } from ".
 // المعرّف الدائم بأداة الإصدار (m-43-1443) لم يُخزَّن بعد؛ المواصفة §١: «يُعرض على /law/<eliSlug> مؤقتًا».
 export const lawPath = (id: string) => `/law/${encodeURIComponent(id)}`;
 export const articlePath = (id: string, n: number) => `${lawPath(id)}/art/${n}`;
-export const articleAnchor = (n: number) => `art-${n}`;
+/** مرساة المادة بمفتاحها (`103` للأصل، `103_bis` للمكرر — HKM-028)، أو برقمها للإحالة إلى الأصل. */
+export const articleAnchor = (key: number | string) => `art-${key}`;
 
 /** «كما في تاريخ»: يُقبل asof (كنسي) وasOf (القائم)، بصيغة YYYY-MM-DD فقط. */
 export function parseAsOfParam(sp: Record<string, string | string[] | undefined> | undefined): string | null {

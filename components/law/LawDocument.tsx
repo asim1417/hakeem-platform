@@ -350,9 +350,9 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
   const partRepealed = a.status === "ملغى" && !a.inheritedFromWork && Boolean(data.body.divisions.find((d) => d.articles.includes(a))?.allRepealed);
   const showRepealFn = tone === "repealed" && a.repeal && !a.inheritedFromWork && !partRepealed;
   return (
-    <article className={`art art--${tone === "plain" ? "plain" : tone}`} id={articleAnchor(a.number)} aria-labelledby={`${articleAnchor(a.number)}-h`} data-tone={tone}>
+    <article className={`art art--${tone === "plain" ? "plain" : tone}`} id={articleAnchor(a.key)} aria-labelledby={`${articleAnchor(a.key)}-h`} data-tone={tone}>
       <div className="art-head">
-        <H className="art-h" id={`${articleAnchor(a.number)}-h`} tabIndex={-1}>
+        <H className="art-h" id={`${articleAnchor(a.key)}-h`} tabIndex={-1}>
           {a.heading}
         </H>
         <span className="art-tags">
@@ -381,7 +381,7 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
         {paras.length > 1 || paras[0]?.num ? (
           paras.map((p, i) =>
             p.num ? (
-              <p className={p.item ? "item" : "para"} key={i} id={p.item ? undefined : `${articleAnchor(a.number)}-p-${i + 1}`}>
+              <p className={p.item ? "item" : "para"} key={i} id={p.item ? undefined : `${articleAnchor(a.key)}-p-${i + 1}`}>
                 <span className="num">{p.num}</span>
                 <span>{p.text}</span>
               </p>
@@ -421,7 +421,7 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
               </div>
             </details>
           ) : null}
-          {showRepealFn && a.repeal ? <RepealFootnote r={a.repeal} id={`${articleAnchor(a.number)}-repeal`} title="بيان الإلغاء" /> : null}
+          {showRepealFn && a.repeal ? <RepealFootnote r={a.repeal} id={`${articleAnchor(a.key)}-repeal`} title="بيان الإلغاء" /> : null}
         </div>
       ) : null}
     </article>
@@ -471,7 +471,7 @@ export function LawDocument({ data, id, base, asofRequested }: { data: LawPageDa
   const mode = asOfMode(asofRequested, history);
   const toc: TocEntry[] = data.body.divisions.some((d) => d.heading)
     ? data.body.divisions.map((d, i) => ({ href: `#part-${i + 1}`, label: d.heading ?? `مواد ${i + 1}`, n: d.articles.length, repealed: d.allRepealed }))
-    : data.body.divisions.flatMap((d) => d.articles.map((a) => ({ href: `#${articleAnchor(a.number)}`, label: a.heading, n: null, repealed: a.status === "ملغى" })));
+    : data.body.divisions.flatMap((d) => d.articles.map((a) => ({ href: `#${articleAnchor(a.key)}`, label: a.heading, n: null, repealed: a.status === "ملغى" })));
   const divisionsCount = data.body.divisions.filter((d) => d.heading).length;
   const lastArticle = data.body.divisions.at(-1)?.articles.at(-1);
   return (
@@ -530,7 +530,7 @@ export function LawDocument({ data, id, base, asofRequested }: { data: LawPageDa
                 ))}
                 {lastArticle ? (
                   <li>
-                    <a href={`#${articleAnchor(lastArticle.number)}`}>
+                    <a href={`#${articleAnchor(lastArticle.key)}`}>
                       <span className="lbl">آخر مادة</span>
                     </a>
                   </li>

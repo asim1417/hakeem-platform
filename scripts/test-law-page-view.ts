@@ -41,7 +41,7 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
   ok(V.preambleAnchor("preamble-i1-clause-2") === "preamble-1-clause-2", "U-4 مرساة البند بصيغة المواصفة #preamble-1-clause-2");
   ok(V.resolvePreambleAlias("#preamble-clause-2") === "preamble-1-clause-2", "U-4.4 الاسم البديل #preamble-clause-2 يعني الأداة الأولى");
 
-  const legacy: PreambleView = { ...basePre, kind: "legacy_text", label: PREAMBLE_INCOMPLETE_LABEL, legacy: { text: "أداة الإصدار: مرسوم ملكي رقم (م/0) اصطناعي", chars: 40, royalDecree: null, completeness: "issuance_line" } };
+  const legacy: PreambleView = { ...basePre, kind: "legacy_text", label: PREAMBLE_INCOMPLETE_LABEL, legacy: { text: "أداة الإصدار: مرسوم ملكي رقم (م/0) اصطناعي", chars: 40, royalDecree: null, completeness: "issuance_line", bodyLeak: false } };
   const l = V.preambleDisplay(legacy);
   ok(l.mode === "legacy" && l.tag === "مقدمة غير مكتملة" && l.sourceUrl === "https://laws.boe.gov.sa/اصطناعي", "U-4 preamble fallback to article zero: وسم «مقدمة غير مكتملة» ورابط المصدر");
 
@@ -118,7 +118,7 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
 
 // ── U-9 كما في تاريخ ──
 {
-  const art = (over: Partial<ArticleView>): ArticleView => ({ id: "a", number: 1, title: null, heading: "المادة ١", chapter: null, text: "اصطناعي", effectiveText: "اصطناعي", status: null, statusLabel: "", statusSource: null, inheritedFromWork: false, amendment: null, repeal: null, repealedLaterOn: null, anchor: "art-1", url: "", ...over });
+  const art = (over: Partial<ArticleView>): ArticleView => ({ id: "a", number: 1, bis: 0, key: "1", label: "1", title: null, heading: "المادة ١", chapter: null, text: "اصطناعي", effectiveText: "اصطناعي", status: null, statusLabel: "", statusSource: null, inheritedFromWork: false, amendment: null, repeal: null, repealedLaterOn: null, anchor: "art-1", url: "", ...over });
   const mk = (a: ArticleView[]) => ({ body: { divisions: [{ heading: null, articles: a, allRepealed: false }], counts: { total: a.length, inForce: 0, amended: 0, repealed: 0, unverified: 0 } } }) as Pick<LawPageData, "body">;
   ok(!V.hasHistory(mk([art({})])), "U-9.2 نظام بلا نسخ ولا إلغاء مؤرّخ: لا تاريخ");
   ok(V.hasHistory(mk([art({ amendment: { versions: 1, currentFrom: "2020-01-01", instrument: null, url: null, pendingFrom: null } })])), "U-9 نظام فيه نسخة: له تاريخ");

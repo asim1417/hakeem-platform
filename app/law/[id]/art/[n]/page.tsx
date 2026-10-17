@@ -189,7 +189,7 @@ function ArticleDoc({ data, a, division, prev, next, id, url, tone, paras }: {
             {a.repealedLaterOn ? <p className="art-note">أُلغيت لاحقًا في <LtrDates text={a.repealedLaterOn} /></p> : null}
           </article>
           <div className="ap-actions">
-            <Link className="lbtn lbtn--primary" href={`${lawPath(id)}#${articleAnchor(a.number)}`}>
+            <Link className="lbtn lbtn--primary" href={`${lawPath(id)}#${articleAnchor(a.key)}`}>
               <BookOpen aria-hidden size={20} /> <span>اقرأها في سياق النظام</span>
             </Link>
             <CopyAction kind="cite" label={`نسخ إحالة ${a.heading}`} value={cite} />
