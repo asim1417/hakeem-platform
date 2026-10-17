@@ -120,6 +120,14 @@ function pureTests() {
     routeSource.indexOf("deskIsLive()") > 0 && routeSource.indexOf("deskIsLive()") < routeSource.indexOf("judicialPrinciple") && routeSource.includes("USE_EDITORIAL_DESK"),
     "SW-10 زر المبدأ القديم يتوقف قبل أي كتابة حين تعمل الكتابة في المكتب، ويحيل إليه",
   );
+  // خ٤ (مراجعة الجودة على f8d7a92): أفعال الكتابة تسأل عن التحقق الثنائي طازجًا، والمخزن لا يُستعمل مع fresh.
+  const guardSrc = readFileSync(join(process.cwd(), "lib/modules/editorial/guard.ts"), "utf8");
+  const mfaSource = readFileSync(join(process.cwd(), "lib/modules/editorial/mfa.ts"), "utf8");
+  ok(
+    /request\.method !== "GET"[\s\S]{0,160}accountMfaStatus\(actor\.id, \{ fresh: true \}\)/.test(guardSrc),
+    "SW-15 أفعال الكتابة (غير GET) تحسب التحقق الثنائي بسؤال طازج لا من المخزن",
+  );
+  ok(/if \(!opts\.fresh && hit && /.test(mfaSource) && /if \(!status\.error\) cache\.set/.test(mfaSource), "SW-15 المخزن يُتجاوز مع fresh، والخطأ لا يُخزَّن");
 
   ok(pgErrorCode({ code: "P2010", meta: { code: "23505" } }) === "23505", "رمز التكرار يُقرأ من خطأ Prisma (meta.code) لا P2010");
   ok(pgErrorCode({ code: "23505" }) === "23505", "رمز التكرار يُقرأ من خطأ pg");
@@ -1631,9 +1639,11 @@ async function switchTests(c: UnifyCtx) {
   await rejects(() => createChangeSet(db, editor, change("SW4", "sw4c")), "WRITE_DISABLED", "SW-13 المعاينة ترفض الكتابة والمفتاح مفتوح");
   const cfgPrev = (await loadEditorialConfig(db)).config;
   await rejects(async () => saveEditorialSettings(db, owner, { baseVersion: await latest(), reason: "حفظ من المعاينة", config: cfgPrev }), "WRITE_DISABLED", "SW-13 المعاينة لا تحفظ الإعدادات");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إيقاف وإسقاط الشرط من المعاينة", writeEnabled: false, requireMfa: false }), "WRITE_DISABLED", "SW-13 الإيقاف مع إسقاط الشرط من المعاينة مرفوض (الإيقاف وحده)");
   await setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إيقاف من المعاينة", writeEnabled: false });
   ok(controlsOf((await loadEditorialConfig(db)).config).writeEnabled === false, "SW-13 الإيقاف من المعاينة مسموح");
   await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "تشغيل من المعاينة", writeEnabled: true }), "WRITE_DISABLED", "SW-13 التشغيل من المعاينة مرفوض");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إسقاط الشرط من المعاينة", writeEnabled: false, requireMfa: false }), "WRITE_DISABLED", "SW-13 تغيير الشرط من المعاينة مرفوض");
   if (savedVercelEnv === undefined) delete process.env.VERCEL_ENV;
   else process.env.VERCEL_ENV = savedVercelEnv;
 

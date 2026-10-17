@@ -196,6 +196,10 @@ export async function setDeskWriteSwitch(db: EditorialDb, actor: EditorialActor,
     if (before.writeEnabled === after.writeEnabled && before.requireMfa === after.requireMfa) {
       throw new EditorialError("INVALID_STATE", "لا تغيير: المفتاح على هذه الحالة أصلًا.");
     }
+    // تحت قفل البيئة (طوارئ أو نسخة معاينة) لا يُسمح إلا بالإيقاف وحده؛ تغيير شرط التحقق الثنائي من هنا مرفوض (مراجعة الجودة خ٢).
+    if (envWriteSwitch() === "kill" && (after.writeEnabled || after.requireMfa !== before.requireMfa)) {
+      throw new EditorialError("WRITE_DISABLED", `${envLockMessage(envWriteLock())} الإيقاف وحده مسموح من هنا.`);
+    }
     const next: EditorialConfig = parseEditorialConfig({ ...JSON.parse(JSON.stringify(base)), controls: after });
     const version = current + 1;
     await tx.query(`INSERT INTO editorial_config (version, config, reason, actor_id) VALUES ($1, $2::jsonb, $3, $4)`, [version, JSON.stringify(next), reason, owner.id]);

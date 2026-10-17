@@ -71,11 +71,12 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
 
       {killed && lock === "preview" ? (
         <Message tone="lock" title="نسخة معاينة.">
-          نسخ المعاينة تشارك قاعدة الإنتاج، فالكتابة فيها مقفلة ولا يُشغَّل المفتاح منها. شغّله من الموقع الأساسي.
+          نسخ المعاينة تشارك قاعدة الإنتاج، فالكتابة فيها مقفلة ولا يُشغَّل المفتاح منها. شغّله من الموقع الأساسي.{writeEnabled ? " الإيقاف وحده مسموح من هنا." : ""}
         </Message>
       ) : killed ? (
         <Message tone="lock" title="مقفلة بمفتاح الطوارئ.">
           إعدادات النشر تضبط EDITORIAL_DESK_WRITE=0، فلا تُشغَّل الكتابة من هنا حتى يُزال.
+          {writeEnabled ? " مفتاح اللوحة ما زال مفتوحًا، فزر اعتماد المبادئ القديم موقوف أيضًا؛ أوقف المفتاح من هنا ليعود إلى عمله." : ""}
         </Message>
       ) : env === "force_on" ? (
         <Message tone="info" title="مفتوحة من إعدادات النشر.">
@@ -109,7 +110,8 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
         </p>
       </div>
 
-      {!killed ? (
+      {/* تحت قفل البيئة يظهر الإيقاف وحده حين يكون مفتاح اللوحة مفتوحًا (خ٣)، ولا يُغيَّر الشرط (خ٢). */}
+      {!killed || writeEnabled ? (
         <div className="grid gap-3">
           <label className="dk-field" htmlFor={`${id}-reason`}>
             <span className="dk-field__label">السبب (إلزامي، ويُحفظ في سجل التدقيق)</span>
@@ -130,9 +132,11 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
                 تشغيل الكتابة
               </button>
             )}
-            <button type="button" className={btnClass("text")} disabled={busy || !reasonOk} onClick={() => setConfirm({ writeEnabled, requireMfa: !requireMfa })}>
-              {requireMfa ? "إلغاء شرط التحقق الثنائي" : "اشتراط التحقق الثنائي"}
-            </button>
+            {!killed ? (
+              <button type="button" className={btnClass("text")} disabled={busy || !reasonOk} onClick={() => setConfirm({ writeEnabled, requireMfa: !requireMfa })}>
+                {requireMfa ? "إلغاء شرط التحقق الثنائي" : "اشتراط التحقق الثنائي"}
+              </button>
+            ) : null}
           </div>
           {!reasonOk ? <p className="m-0 text-[var(--desk-text-secondary)]">اكتب السبب ({MIN_REASON} أحرف على الأقل) لتفعيل الأزرار.</p> : null}
           {!writeEnabled && mfaBlocks ? (
@@ -167,8 +171,10 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
               ? confirm.writeEnabled
                 ? "تُفتح الأفعال كلها لمن له تكليف: الاعتماد والنشر والتراجع، ويتوقف زر اعتماد المبادئ القديم ويُحال إلى المكتب. يُسجَّل باسمك وبسببك."
                 : env === "force_on"
-                  ? "يُحفظ المفتاح مقفلًا ويعود زر اعتماد المبادئ القديم إلى عمله، لكن الكتابة في المكتب تبقى مفتوحة ما دام EDITORIAL_DESK_WRITE=1 في إعدادات النشر. يُسجَّل باسمك وبسببك."
-                  : "تُقفل كل كتابة في المكتب فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. يُسجَّل باسمك وبسببك."
+                  ? "يُحفظ المفتاح مقفلًا، لكن الكتابة في المكتب تبقى مفتوحة وزر اعتماد المبادئ القديم موقوفًا ما دام EDITORIAL_DESK_WRITE=1 في إعدادات النشر. يُسجَّل باسمك وبسببك."
+                  : killed
+                    ? "يُحفظ المفتاح مقفلًا ويعود زر اعتماد المبادئ القديم إلى عمله. الكتابة في المكتب مقفلة أصلًا بقفل البيئة. يُسجَّل باسمك وبسببك."
+                    : "تُقفل كل كتابة في المكتب فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. يُسجَّل باسمك وبسببك."
               : confirm.requireMfa
                 ? "لن يكتب في المكتب إلا حساب فعّل التحقق الثنائي."
                 : "يكتب في المكتب من له تكليف ولو لم يفعّل التحقق الثنائي. هذا يخالف القرار الافتراضي؛ يُسجَّل باسمك وبسببك."
