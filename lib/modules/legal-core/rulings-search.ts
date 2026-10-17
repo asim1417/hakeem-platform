@@ -53,6 +53,16 @@ function shieldLegalNumbers(text: string): { text: string; restore: (s: string) 
   };
 }
 
+/**
+ * البريد بصيغه الواردة في الأحكام: أرقام لاتينية أو هندية، ومسافة حول @ أو النقطة، وجزء مطموس
+ * «(...)» أو «***»، و«>» مكان النقطة خطأً. النطاق ينتهي بحرفين لاتينيين فأكثر.
+ */
+const EMAIL_CHAR = "[A-Za-z0-9\\u0660-\\u0669_%+*-]";
+const EMAIL_RE = new RegExp(
+  `${EMAIL_CHAR}+(?:(?:\\.\\s?|\\(\\.\\.\\.\\))${EMAIL_CHAR}*)*\\s?@\\s?[A-Za-z0-9\\u0660-\\u0669-]+(?:\\s?[.>]\\s?[A-Za-z0-9\\u0660-\\u0669-]+)*\\s?[.>]\\s?[A-Za-z]{2,}`,
+  "g",
+);
+
 /** حجب الهوية والجوال والآيبان والبريد في طبقة العرض. النص الأصلي في القاعدة لا يُمس. */
 export function redactPII(text: string): string {
   if (!text) return "";
@@ -63,7 +73,7 @@ export function redactPII(text: string): string {
   const notDigit = `(?<!${digit})`;
   const notDigitAfter = `(?!${digit})`;
   const redacted = shielded.text
-    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[بريد محجوب]")
+    .replace(EMAIL_RE, "[بريد محجوب]")
     .replace(new RegExp(`${notDigit}[12\\u0661\\u0662](?:${gap}${digit}){9}${notDigitAfter}`, "g"), "•••••••••• [هوية محجوبة]")
     // محلي (05…) أو دولي بمفتاح 966 مع الصفر أو بدونه (+9665… و009665… و9665…)، لاتيني أو هندي.
     .replace(
