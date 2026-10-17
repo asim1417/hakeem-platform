@@ -1,51 +1,182 @@
-// عناصر مشتركة بهوية حكيم: الحبر والبترولي والزمرد والنحاسي والرَّق.
+// عناصر المكتب المشتركة برموز desk.css (لا لون حرفي هنا). صالحة للخادم والعميل.
+import Link from "next/link";
 import type { ReactNode } from "react";
+import { Check, CircleAlert, CircleMinus, ExternalLink, Info, Lock, TriangleAlert, Users, type LucideIcon } from "lucide-react";
+import type { BadgeTone } from "./labels";
 
-export const btn = {
-  base: "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C69763] disabled:cursor-not-allowed disabled:opacity-50",
-  approve: "bg-[#1A5C41] text-white hover:bg-[#154b35]",
-  reject: "border border-[rgba(140,40,30,0.35)] bg-white text-[#8C281E] hover:bg-[rgba(140,40,30,0.06)]",
-  neutral: "border border-[rgba(14,52,53,0.18)] bg-white text-[#0E3435] hover:bg-[rgba(14,52,53,0.05)]",
-  primary: "bg-[#0E3435] text-white hover:bg-[#0a2829]",
-};
+export type BtnVariant = "approve" | "correct" | "reject" | "primary" | "destructive" | "undo" | "text" | "text-danger";
 
-export function Pill({ tone = "neutral", children }: { tone?: "neutral" | "good" | "warn" | "bad" | "gold"; children: ReactNode }) {
-  const tones = {
-    neutral: "bg-[rgba(14,52,53,0.07)] text-[#0E3435]",
-    good: "bg-[rgba(26,92,65,0.10)] text-[#1A5C41]",
-    warn: "bg-[rgba(198,151,99,0.16)] text-[#7A5427]",
-    bad: "bg-[rgba(140,40,30,0.08)] text-[#8C281E]",
-    gold: "bg-[rgba(198,151,99,0.12)] text-[#8B6914]",
-  };
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[tone]}`}>{children}</span>;
+/** صنف الزر: base + النوع، و«lg» لأزرار صف القرار والشرائط والحوارات (48). */
+export function btnClass(variant: BtnVariant, opts: { lg?: boolean; block?: boolean } = {}): string {
+  const v = variant === "text-danger" ? "dk-btn--text dk-btn--text-danger" : `dk-btn--${variant}`;
+  return ["dk-btn", v, opts.lg ? "dk-btn--lg" : "", opts.block ? "dk-btn--block" : ""].filter(Boolean).join(" ");
 }
 
-export function Ltr({ children }: { children: ReactNode }) {
+/** جذر محتوى المكتب: يطبّق رموز desk.css داخل غلاف الإدارة دون مسّه. */
+export function DeskRoot({ children }: { children: ReactNode }) {
   return (
-    <bdi dir="ltr" className="font-mono text-[0.85em]">
+    <div data-desk="" className="pb-10">
+      {children}
+    </div>
+  );
+}
+
+/** رمز لاتيني (معرّف، رابط، بصمة) معزول الاتجاه بلغته (ق١٧-٣). */
+export function Ltr({ children, plain = false }: { children: ReactNode; plain?: boolean }) {
+  return (
+    <bdi dir="ltr" lang="en" className={plain ? undefined : "dk-code"}>
       {children}
     </bdi>
+  );
+}
+
+const CODE_TOKEN = /([A-Za-z0-9][A-Za-z0-9_\-./:]*[A-Za-z0-9]|[A-Za-z])/;
+
+/**
+ * نص عربي من الخادم فيه رموز لاتينية (OP-…، uqn-fix، S03): كل رمز فيه حرف لاتيني يُعزل باتجاهه ولغته (ق١٧-٣)،
+ * والأرقام المجردة تبقى كما هي.
+ */
+export function WithCodes({ text }: { text: string }) {
+  const parts = text.split(CODE_TOKEN);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 && /[A-Za-z]/.test(part) ? (
+          <bdi key={i} dir="ltr" lang="en">
+            {part}
+          </bdi>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
+/** التاريخ الهجري: اللاحقة خارج العزل فتظهر بعد الرقم (ح٢٢). */
+export function HijriDate({ value }: { value: string }) {
+  return (
+    <span className="dk-nowrap">
+      <bdi dir="ltr">{value.replace(/-/g, "/")}</bdi>هـ
+    </span>
+  );
+}
+
+const TONE_ICON: Record<BadgeTone, LucideIcon | null> = {
+  neutral: Check,
+  info: Users,
+  success: Check,
+  danger: CircleAlert,
+  risk: TriangleAlert,
+  destructive: CircleMinus,
+};
+
+export function Badge({ tone = "neutral", icon, children }: { tone?: BadgeTone; icon?: LucideIcon | null; children: ReactNode }) {
+  const Icon = icon === undefined ? TONE_ICON[tone] : icon;
+  return (
+    <span className={`dk-badge dk-badge--${tone}`}>
+      {Icon ? <Icon size={16} aria-hidden /> : null}
+      <span>{children}</span>
+    </span>
   );
 }
 
 export function ReadOnlyBanner({ writeEnabled }: { writeEnabled: boolean }) {
   if (writeEnabled) return null;
   return (
-    <div role="status" className="mt-4 rounded-lg border border-[rgba(198,151,99,0.45)] bg-[rgba(198,151,99,0.10)] px-4 py-3 text-sm leading-7 text-[#5f4320]">
-      <strong>اللوحة للقراءة فقط.</strong> الكتابة مقفلة حتى يفعّلها المالك؛ لأن بيئة المعاينة تتصل بقاعدة الإنتاج نفسها.
+    <p className="dk-banner">
+      <Lock size={18} aria-hidden />
+      <span>
+        <strong>اللوحة للقراءة فقط.</strong> الكتابة مقفلة حتى يفعّلها المالك.
+      </span>
+    </p>
+  );
+}
+
+export type MessageTone = "info" | "error" | "warn" | "lock" | "success";
+const MESSAGE_ICON: Record<MessageTone, LucideIcon> = { info: Info, error: CircleAlert, warn: TriangleAlert, lock: Lock, success: Check };
+
+export function Message({
+  tone = "info",
+  title,
+  children,
+  actions,
+  role,
+  id,
+  className,
+}: {
+  tone?: MessageTone;
+  title?: ReactNode;
+  children?: ReactNode;
+  actions?: ReactNode;
+  role?: "alert" | "status";
+  id?: string;
+  className?: string;
+}) {
+  const Icon = MESSAGE_ICON[tone];
+  return (
+    <div id={id} role={role} className={`dk-msg dk-msg--${tone}${className ? ` ${className}` : ""}`}>
+      <Icon size={20} aria-hidden />
+      <div className="dk-msg__body">
+        {title ? <p className="dk-msg__title">{title}</p> : null}
+        {children ? <div>{children}</div> : null}
+        {actions ? <div className="dk-msg__actions">{actions}</div> : null}
+      </div>
     </div>
   );
 }
 
-export function Notice({ tone = "info", children }: { tone?: "info" | "error" | "success"; children: ReactNode }) {
-  const tones = {
-    info: "border-[rgba(14,52,53,0.15)] bg-white text-[#0E3435]",
-    error: "border-[rgba(140,40,30,0.3)] bg-[rgba(140,40,30,0.05)] text-[#8C281E]",
-    success: "border-[rgba(26,92,65,0.3)] bg-[rgba(26,92,65,0.06)] text-[#1A5C41]",
-  };
+/** رابط المصدر: هدف 44، نصه في span واحد، ويفتح في لسان جديد. */
+export function SourceLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <div role={tone === "error" ? "alert" : "status"} className={`rounded-lg border px-4 py-3 text-sm leading-7 ${tones[tone]}`}>
-      {children}
+    <a href={href} target="_blank" rel="noopener noreferrer" className="dk-source">
+      <ExternalLink size={16} aria-hidden className="rtl:-scale-x-100" />
+      <span>
+        {children}
+        <span className="dk-sr"> (يفتح في لسان جديد)</span>
+      </span>
+    </a>
+  );
+}
+
+/** الصلاحية المرفوضة داخل الصفحة بلا تحويل (ق١٥-٢). */
+export function PageDenied({ title, body = "اطلبها من المالك." }: { title: string; body?: string }) {
+  return (
+    <div className="mt-6">
+      <Message tone="lock" title={title} actions={<Link href="/admin/legal" className={btnClass("correct")}>العودة إلى لوحة الحالة</Link>}>
+        {body}
+      </Message>
     </div>
   );
+}
+
+/** قاعدة بلا ترحيل: منفصلة نصًّا وشكلًا عن «تعذّر الاتصال» (ق١٤-٣). */
+export function NotMigrated({ what = "جداول مكتب التحرير غير موجودة" }: { what?: string }) {
+  return (
+    <Message tone="info" title="الترحيل غير مطبّق.">
+      {what} على هذه القاعدة؛ تُطبَّق بملف الترحيل وباعتماد المالك.
+    </Message>
+  );
+}
+
+export function LoadFailed({ what, retryHref }: { what: string; retryHref: string }) {
+  return (
+    <Message
+      tone="error"
+      role="alert"
+      title={`تعذّر ${what}.`}
+      actions={
+        <a href={retryHref} className={btnClass("text")}>
+          إعادة المحاولة
+        </a>
+      }
+    >
+      تعذّر الاتصال بقاعدة البيانات. لم يتغير شيء.
+    </Message>
+  );
+}
+
+/** رمز خطأ قاعدة البيانات: جدول أو مخطط غير موجود = الترحيل غير مطبّق. */
+export function isMissingRelation(code: string | null | undefined): boolean {
+  return code === "42P01" || code === "3F000";
 }
