@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { tokenize } from "@/lib/modules/legal-core/bm25-tokenizer";
-import { articleLabel } from "@/lib/modules/legal-core/article-key";
+import { NON_ARTICLE_BIS, articleLabel } from "@/lib/modules/legal-core/article-key";
 
 type RawArticle = { article_number: number | string; article_bis?: number; law_name: string; title?: string; content?: string; keywords?: string[] | null };
 
@@ -26,8 +26,8 @@ async function loadArticlesFromDb(): Promise<RawArticle[]> {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const rows = await prisma.legalArticle.findMany({
-      // HKM-028: الأرقام ≤ 0 صفوف ليست مواد (عناوين وجداول ونسخ مكررة).
-      where: { articleNumber: { gt: 0 } },
+      // HKM-028: صفوف ليست مواد (عناوين وجداول ونسخ مكررة) علامتها درجة «مكرر» ≥ 100.
+      where: { articleNumber: { gt: 0 }, articleBis: { lt: NON_ARTICLE_BIS } },
       select: { id: true, articleNumber: true, articleBis: true, lawName: true, title: true, content: true, keywords: true },
       orderBy: { id: "asc" },
       take: BATCH,

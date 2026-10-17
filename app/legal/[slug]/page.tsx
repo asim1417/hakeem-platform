@@ -12,7 +12,7 @@ import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules
 import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
-import { articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
+import { ARTICLE_ROWS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
 
 export const revalidate = 3600;
 
@@ -57,7 +57,7 @@ export default async function LegalSystemPage({
     .findMany({
       // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
       // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
-      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
+      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }, ARTICLE_ROWS] },
       select: { id: true, articleNumber: true, articleBis: true, title: true, content: true },
       orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
     })

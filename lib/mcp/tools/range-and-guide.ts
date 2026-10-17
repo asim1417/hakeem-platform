@@ -6,6 +6,7 @@
  * (مع سقوط إلى lawName للمواد التي لم يُملأ فيها legalSystemId).
  */
 import { prisma } from "@/lib/prisma";
+import { ARTICLE_ROWS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 
 export const rangeToolDef = {
@@ -26,8 +27,9 @@ export async function handleRange(args: { law_id: string; from_article: number; 
     where: {
       OR: [{ legalSystemId: args.law_id }, { lawName: law.name }],
       articleNumber: { gte: from, lte: to },
+      ...ARTICLE_ROWS,
     },
-    orderBy: { articleNumber: "asc" },
+    orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
     select: { id: true, articleNumber: true, content: true },
   });
 

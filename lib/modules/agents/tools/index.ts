@@ -5,6 +5,7 @@
 // المصدر الوحيد للحقيقة: قاعدة البيانات القانونية. لا تلمس الأمن ولا نواة الترتيب.
 // ─────────────────────────────────────────────────────────────────────────────
 import "server-only";
+import { ARTICLE_ROWS } from "@/lib/modules/legal-core/article-key";
 import { prisma } from "@/lib/prisma";
 import type { ToolResult } from "../types";
 import {
@@ -89,9 +90,9 @@ export async function get_article_by_eli(eliSegments: string[]): Promise<ToolRes
 export async function get_system_toc(systemName: string): Promise<ToolResult<Array<{ articleNumber: number; title: string }>>> {
   try {
     const rows = await prisma.legalArticle.findMany({
-      where: { lawName: { contains: systemName, mode: "insensitive" } },
+      where: { lawName: { contains: systemName, mode: "insensitive" }, ...ARTICLE_ROWS },
       select: { articleNumber: true, title: true },
-      orderBy: { articleNumber: "asc" },
+      orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
       take: 500,
     });
     return ok(rows, "legal_core.legal_articles", rows.length ? 0.9 : 0.3, rows.length ? undefined : "لا مواد لهذا النظام");
@@ -103,7 +104,7 @@ export async function get_system_toc(systemName: string): Promise<ToolResult<Arr
 export async function get_articles_range(systemName: string, from: number, to: number): Promise<ToolResult<unknown[]>> {
   try {
     const rows = await prisma.legalArticle.findMany({
-      where: { lawName: { contains: systemName, mode: "insensitive" }, articleNumber: { gte: Math.min(from, to), lte: Math.max(from, to) } },
+      where: { lawName: { contains: systemName, mode: "insensitive" }, articleNumber: { gte: Math.min(from, to), lte: Math.max(from, to) }, ...ARTICLE_ROWS },
       select: { id: true, articleNumber: true, title: true, content: true, status: true },
       orderBy: { articleNumber: "asc" },
       take: 100,
@@ -225,9 +226,9 @@ export async function scan_system_articles(
 ): Promise<ToolResult<Array<{ articleNumber: number; title: string; content: string }>>> {
   try {
     const rows = await prisma.legalArticle.findMany({
-      where: { lawName: { contains: systemName.trim(), mode: "insensitive" } },
+      where: { lawName: { contains: systemName.trim(), mode: "insensitive" }, ...ARTICLE_ROWS },
       select: { id: true, articleNumber: true, title: true, content: true },
-      orderBy: { articleNumber: "asc" },
+      orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
       take: Math.min(Math.max(limit, 1), 2000),
     }).then(async (r) => (await applyEffectiveText(r)).map(({ articleNumber, title, content }) => ({ articleNumber, title, content: content ?? "" })));
     return ok(rows, "legal_core.legal_articles(full-scan)", rows.length ? 0.95 : 0.3, rows.length ? undefined : "لا مواد لهذا النظام");
