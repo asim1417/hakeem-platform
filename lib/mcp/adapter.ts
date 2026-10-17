@@ -21,6 +21,9 @@ import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
+import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
+import { getLawTool } from "@/lib/mcp/tools/get-law";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -110,32 +113,10 @@ export async function getArticle(articleId: string) {
   };
 }
 
-// ٣) بطاقة النظام وفهرسه
+// ٣) بطاقة النظام وفهرسه (HKM-023-B ع-١٣): المطابقة تامة ← يبدأ بـ ← احتواء، والبطاقة والمقدمة وحالة كل مادة
+// من getLawPageData. العقد إضافي: الحقول القديمة باقية بأسمائها (lib/mcp/tools/get-law.ts).
 export async function getLaw(lawId?: string, name?: string) {
-  const include = {
-    articles: {
-      select: { id: true, articleNumber: true, title: true },
-      orderBy: { articleNumber: "asc" as const },
-    },
-  };
-  const law = lawId
-    ? await prisma.legalSystem.findUnique({ where: { id: lawId }, include })
-    : await prisma.legalSystem.findFirst({
-        where: { name: { contains: name ?? "", mode: "insensitive" } },
-        include,
-        orderBy: { articleCount: "desc" },
-      });
-  if (!law) return { error: "النظام غير موجود" };
-  return {
-    law_id: law.id,
-    name: law.name,
-    classification: law.classification ?? law.domainTitle ?? law.domain ?? null,
-    issue_instrument: null, // غير منظّم على مستوى النظام في المخطط الحالي
-    issue_date_h: null,
-    status: null, // حالة النفاذ مُخزّنة على مستوى المادة لا النظام
-    articles_count: law.articleCount || law.articles.length,
-    toc: law.articles.map((x) => ({ article_id: x.id, number: x.articleNumber, title: x.title })),
-  };
+  return getLawTool(prismaSqlClient(prisma), { lawId, name }, { siteUrl: getSiteUrl() });
 }
 
 // ٤) روابط النظام واللوائح (IMPLEMENTS) — LegalRelation متعدّد الأشكال (type+id).
