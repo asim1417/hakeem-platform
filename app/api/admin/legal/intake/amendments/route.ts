@@ -4,7 +4,8 @@ import { deskJson, editorialDb, editorialErrorResponse, requireEditorialApi } fr
 
 export const dynamic = "force-dynamic";
 
-// GET /api/admin/legal/intake/amendments — عمليات التعديل المستخرجة آليًّا بلا قرار.
+// GET /api/admin/legal/intake/amendments?after=&view=mine|waiting_others — عمليات التعديل المستخرجة آليًّا بلا قرار.
+// → { items, total, next_cursor, waiting_others }
 export async function GET(request: NextRequest) {
   const gate = await requireEditorialApi(request, "view");
   if (gate.response) return gate.response;
@@ -17,7 +18,10 @@ export async function GET(request: NextRequest) {
       target: q.get("target") ?? undefined,
       bulkOnly: q.get("bulk") === "1",
       limit: Number(q.get("limit") ?? 25) || 25,
+      // الترقيم بالمفتاح (ق٢٦)؛ offset يبقى للتوافق حين لا يُرسل after.
+      after: q.get("after") || undefined,
       offset: Number(q.get("offset") ?? 0) || 0,
+      view: q.get("view") === "waiting_others" ? "waiting_others" : "mine",
     }, gate.actor);
     return deskJson(result);
   } catch (error) {

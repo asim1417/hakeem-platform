@@ -21,6 +21,7 @@ import {
   type ChangeSetRow,
 } from "./core";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
+import { decodeCursor, encodeCursor } from "./cursor";
 import { deskTransaction, type DeskContext } from "./desk-tx";
 import { hijriToGregorian, parseHijri } from "./hijri";
 import { applyIntakeSet, lockPrinciple, lockUndecidedOp, opSourceRef, principleSourceRef, type OpRow } from "./intake-apply";
@@ -102,13 +103,46 @@ export interface AmendmentQueueItem {
   pending_approvals: number;
   required_approvals: number;
   my_approval: boolean;
-  /** دفعة المقترح المعلّق وقراره (إضافة على العقد لتمكين الرفض/السحب من الواجهة). */
+  /** دفعة المقترح المعلّق (إضافة على العقد لتمكين الرفض/السحب من الواجهة). */
   pending_change_set_id: string | null;
-  pending_decision: Record<string, unknown> | null;
+  /** القرار المعروض للموافقة: { decision: "approved" | "rejected" | "approved_with_edit" }. */
+  pending_decision: PendingAmendmentDecision | null;
+  /** ملحق الجولة الثانية (م١، ق٢٣): حمولة التصحيح، وملاحظة صاحب المقترح، وبصمة القرار، وأصحاب الموافقات. */
+  pending_corrected: Record<string, string | number> | null;
+  pending_note: string | null;
+  pending_decision_hash: string | null;
+  pending_approvers: PendingApprover[];
+}
+
+export interface PendingApprover {
+  id: string;
+  name: string | null;
+  at: string;
+}
+
+export interface PendingAmendmentDecision {
+  decision: AmendmentDecision;
+}
+
+export interface PendingPrincipleDecision {
+  decision: PrincipleDecision;
 }
 
 /** اسم العقد في خطة التوحيد. */
 export type AmendmentItem = AmendmentQueueItem;
+
+/** «mine» (الافتراضي): ما ينتظر قرار المشاهد. «waiting_others»: ما وافق عليه وينتظر موافقات أخرى (ق٣٢). */
+export type QueueView = "mine" | "waiting_others";
+
+export interface QueuePage<T> {
+  items: T[];
+  /** عدد العرض المختار بمرشحاته. */
+  total: number;
+  /** مؤشر الصفحة التالية (بعد آخر مفتاح ترتيب)، أو null إن لم يبقَ شيء. */
+  next_cursor: string | null;
+  /** عدد ما وافق عليه المشاهد وينتظر غيره، بالمرشحات نفسها. */
+  waiting_others: number;
+}
 
 export interface AmendmentQueueFilter {
   confidence?: "rule_exact" | "needs_review";
@@ -116,7 +150,11 @@ export interface AmendmentQueueFilter {
   target?: string;
   bulkOnly?: boolean;
   limit?: number;
+  /** الترقيم بالمفتاح (ق٢٦): مؤشر next_cursor من الصفحة السابقة. يُقدَّم على offset. */
+  after?: string | null;
+  /** @deprecated الترقيم بالإزاحة يتخطى عناصر بعد قرارات محلية؛ يبقى مقبولًا للتوافق حين لا يُرسل after. */
   offset?: number;
+  view?: QueueView;
 }
 
 const BULK_ELIGIBLE_SQL = `(o.confidence = 'rule_exact' AND o.verbatim_in_source IS TRUE AND coalesce(array_length(o.risks, 1), 0) = 0)`;
@@ -147,44 +185,116 @@ function amendmentWhere(filter: AmendmentQueueFilter): { sql: string; params: un
 
 type AmendmentBaseRow = Omit<
   AmendmentQueueItem,
-  "current_text" | "current_text_resolved" | "pending_approvals" | "required_approvals" | "my_approval" | "pending_change_set_id" | "pending_decision"
->;
+  | "current_text"
+  | "current_text_resolved"
+  | "pending_approvals"
+  | "required_approvals"
+  | "my_approval"
+  | "pending_change_set_id"
+  | "pending_decision"
+  | "pending_corrected"
+  | "pending_note"
+  | "pending_decision_hash"
+  | "pending_approvers"
+> & { k_priority: number };
+
+/** موافقة المشاهد قائمة على المقترح المعلّق لهذا المصدر (على بصمة الدفعة الحالية). */
+function myPendingApprovalSql(sourceRefExpr: string, viewerParam: string): string {
+  return `EXISTS (SELECT 1 FROM editorial_change pc
+                    JOIN change_set ps ON ps.id = pc.change_set_id AND ps.status = 'pending'
+                    JOIN review_decision pd ON pd.change_set_id = ps.id AND pd.decision = 'approve' AND pd.payload_hash = ps.payload_hash
+                   WHERE pc.source_ref = ${sourceRefExpr} AND pc.status = 'pending' AND pd.reviewer_id = ${viewerParam})`;
+}
+
+/** يضيف شرط العرض: mine يستبعد ما وافق عليه المشاهد وينتظر غيره، وwaiting_others يقصره عليه. */
+function viewCondition(view: QueueView, sourceRefExpr: string, viewerId: string | null, params: unknown[]): string | null {
+  if (!viewerId) return view === "waiting_others" ? "FALSE" : null;
+  params.push(viewerId);
+  const mine = myPendingApprovalSql(sourceRefExpr, `$${params.length}`);
+  return view === "waiting_others" ? mine : `NOT ${mine}`;
+}
+
+const OP_SOURCE_REF_SQL = `('uqn_fix.amendment_op:' || o.op_id)`;
+// ترتيب الطابور كما كان (rule_exact حرفي محلول أولًا، ثم النظام، ثم المادة NULLS LAST، ثم المعرّف)،
+// مكتوبًا بمفاتيح تصاعدية كلها ليصلح للمقارنة الصفّية في الترقيم بالمفتاح.
+const OP_PRIORITY_SQL = `(CASE WHEN (o.confidence = 'rule_exact' AND o.verbatim_in_source IS TRUE AND o.target_hakeem_code IS NOT NULL) THEN 0 ELSE 1 END)`;
+const OP_ORDER_SQL = `${OP_PRIORITY_SQL}, o.target_law_title, (o.article_number IS NULL), coalesce(o.article_number, 0), o.op_id`;
+const OP_CURSOR_SHAPE = ["number", "string", "boolean", "number", "string"] as const;
+
+function queueView(raw: unknown): QueueView {
+  return raw === "waiting_others" ? "waiting_others" : "mine";
+}
 
 export async function listAmendmentQueue(
   db: SqlClient,
   filter: AmendmentQueueFilter = {},
   viewer?: Pick<EditorialActor, "id"> | null,
-): Promise<{ items: AmendmentQueueItem[]; total: number }> {
+): Promise<QueuePage<AmendmentQueueItem>> {
   const limit = Math.min(Math.max(filter.limit ?? 25, 1), 100);
-  const offset = Math.max(filter.offset ?? 0, 0);
+  const view = queueView(filter.view);
+  const viewerId = viewer?.id ?? null;
   const where = amendmentWhere(filter);
-  const totalRows = await db.query<{ total: number }>(
-    `SELECT count(*)::int AS total FROM uqn_fix.amendment_op o WHERE ${where.sql}`,
-    where.params,
-  );
-  const params = [...where.params, limit, offset];
-  const rows = await db.query<AmendmentBaseRow>(
+  const baseParams = [...where.params];
+  const viewSql = viewCondition(view, OP_SOURCE_REF_SQL, viewerId, baseParams);
+  const baseWhere = viewSql ? `${where.sql} AND ${viewSql}` : where.sql;
+
+  const totalRows = await db.query<{ total: number }>(`SELECT count(*)::int AS total FROM uqn_fix.amendment_op o WHERE ${baseWhere}`, baseParams);
+  let waitingOthers = 0;
+  if (viewerId) {
+    const wParams = [...where.params];
+    const wSql = viewCondition("waiting_others", OP_SOURCE_REF_SQL, viewerId, wParams);
+    waitingOthers = Number(
+      (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM uqn_fix.amendment_op o WHERE ${where.sql} AND ${wSql}`, wParams))[0]?.n ?? 0,
+    );
+  }
+
+  const params = [...baseParams];
+  let pageSql = baseWhere;
+  let offset = 0;
+  if (filter.after) {
+    const key = decodeCursor(filter.after, OP_CURSOR_SHAPE);
+    params.push(key[0], key[1], key[2], key[3], key[4]);
+    const n = params.length;
+    pageSql += ` AND (${OP_PRIORITY_SQL}, o.target_law_title, (o.article_number IS NULL), coalesce(o.article_number, 0), o.op_id)
+                    > ($${n - 4}::int, $${n - 3}::text, $${n - 2}::boolean, $${n - 1}::int, $${n}::text)`;
+  } else {
+    offset = Math.max(filter.offset ?? 0, 0);
+  }
+  params.push(limit + 1, offset);
+  const fetched = await db.query<AmendmentBaseRow>(
     `SELECT o.op_id, o.effect_id, o.instrument_kind, o.instrument_no, o.instrument_date_hijri, o.published_hijri,
             o.source_url, o.target_law_title, o.target_hakeem_code, o.target_resolution, e.target_match_status,
             o.op_type, o.article_number, o.paragraph_label, o.term, o.new_text, o.old_phrase, o.new_phrase,
             o.effective_from_hijri, o.effective_from_gregorian::text AS effective_from_gregorian, o.effective_rule,
             o.risks, o.confidence, o.verbatim_in_source, o.evidence_quote,
-            ${BULK_ELIGIBLE_SQL} AS bulk_eligible
+            ${BULK_ELIGIBLE_SQL} AS bulk_eligible,
+            ${OP_PRIORITY_SQL} AS k_priority
        FROM uqn_fix.amendment_op o
        LEFT JOIN uqn_stage.effect e ON e.effect_id = o.effect_id
-      WHERE ${where.sql}
-      ORDER BY (o.confidence = 'rule_exact' AND o.verbatim_in_source IS TRUE AND o.target_hakeem_code IS NOT NULL) DESC,
-               o.target_law_title, o.article_number NULLS LAST, o.op_id
+      WHERE ${pageSql}
+      ORDER BY ${OP_ORDER_SQL}
       LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
+  const hasMore = fetched.length > limit;
+  const rows = hasMore ? fetched.slice(0, limit) : fetched;
+  const last = rows[rows.length - 1];
+  const nextCursor =
+    hasMore && last
+      ? encodeCursor([Number(last.k_priority), last.target_law_title, last.article_number === null, Number(last.article_number ?? 0), last.op_id])
+      : null;
+
   const [texts, pending] = await Promise.all([
     resolveCurrentTexts(db, rows),
-    pendingInfo(db, rows.map((r) => opSourceRef(r.op_id)), "review_amendment_op", viewer?.id ?? null),
+    pendingInfo(db, rows.map((r) => opSourceRef(r.op_id)), "review_amendment_op", viewerId),
   ]);
-  const items: AmendmentQueueItem[] = rows.map((row) => {
+  const items: AmendmentQueueItem[] = rows.map(({ k_priority: _k, ...row }) => {
+    void _k;
     const text = texts.get(row.op_id) ?? null;
     const p = pending.bySourceRef.get(opSourceRef(row.op_id));
+    const after = p?.after ?? null;
+    const decision = after && typeof after.decision === "string" ? (after.decision as AmendmentDecision) : null;
+    const corrected = after?.corrected && typeof after.corrected === "object" ? (after.corrected as Record<string, string | number>) : null;
     return {
       ...row,
       current_text: text,
@@ -193,10 +303,14 @@ export async function listAmendmentQueue(
       required_approvals: pending.required,
       my_approval: p?.mine ?? false,
       pending_change_set_id: p?.changeSetId ?? null,
-      pending_decision: p?.after ?? null,
+      pending_decision: decision ? { decision } : null,
+      pending_corrected: corrected,
+      pending_note: p?.note ?? null,
+      pending_decision_hash: p?.hash ?? null,
+      pending_approvers: p?.approvers ?? [],
     };
   });
-  return { items, total: totalRows[0]?.total ?? 0 };
+  return { items, total: totalRows[0]?.total ?? 0, next_cursor: nextCursor, waiting_others: waitingOthers };
 }
 
 // ── النص الساري للمادة المستهدفة ──────────────────────────────────────────────
@@ -298,9 +412,14 @@ interface PendingInfo {
   approvals: number;
   mine: boolean;
   after: Record<string, unknown> | null;
+  /** بصمة القرار المعروض = بصمة حمولة دفعة المقترح. */
+  hash: string | null;
+  /** ملاحظة صاحب المقترح (سبب أول موافقة). */
+  note: string | null;
+  approvers: PendingApprover[];
 }
 
-/** الموافقات الصالحة الآن (بصلاحية المعتمِدين الحالية) على المقترحات المعلّقة لهذه المصادر. */
+/** الموافقات الصالحة الآن (بصلاحية المعتمِدين الحالية) على المقترحات المعلّقة لهذه المصادر، ومضمون القرار المعروض. */
 async function pendingInfo(
   db: SqlClient,
   sourceRefs: string[],
@@ -327,11 +446,18 @@ async function pendingInfo(
       const all = await changesOf(db, sets[0].id);
       const decisions = await decisionsOf(db, sets[0].id);
       const state = approvalStateFrom(config, sets[0], all, decisions);
+      const approves = decisions.filter((d) => d.decision === "approve" && d.payload_hash === sets[0].payload_hash);
       bySourceRef.set(change.source_ref as string, {
         changeSetId: sets[0].id,
         approvals: state.approvals,
-        mine: viewerId !== null && decisions.some((d) => d.reviewer_id === viewerId && d.decision === "approve"),
+        mine: viewerId !== null && approves.some((d) => d.reviewer_id === viewerId),
         after: (change.after as unknown as Record<string, unknown>) ?? null,
+        hash: sets[0].payload_hash,
+        note: approves[0]?.reason ?? null,
+        approvers: state.approvers.map((id) => {
+          const d = approves.find((x) => x.reviewer_id === id);
+          return { id, name: d?.name ?? null, at: d ? new Date(d.decided_at).toISOString() : "" };
+        }),
       });
     }
   } catch {
@@ -354,6 +480,13 @@ export interface PrincipleQueueItem {
   required_approvals: number;
   my_approval: boolean;
   pending_change_set_id: string | null;
+  /** القرار المعروض للموافقة: { decision: "approve" | "reject" }. */
+  pending_decision: PendingPrincipleDecision | null;
+  /** لا تصحيح في المبدأ؛ null دائمًا (للتماثل مع عنصر التعديل). */
+  pending_corrected: Record<string, string | number> | null;
+  pending_note: string | null;
+  pending_decision_hash: string | null;
+  pending_approvers: PendingApprover[];
 }
 
 /** اسم العقد في خطة التوحيد. */
@@ -363,32 +496,77 @@ type PrincipleBaseRow = Pick<PrincipleQueueItem, "id" | "title" | "principleText
   round: string;
 };
 
+export interface PrincipleQueueFilter {
+  topic?: string;
+  limit?: number;
+  after?: string | null;
+  /** @deprecated يبقى مقبولًا للتوافق حين لا يُرسل after. */
+  offset?: number;
+  view?: QueueView;
+}
+
+const PRINCIPLE_SOURCE_REF_SQL = `('judicial_principles:' || p.id || ':' || to_char(p."updatedAt", 'YYYYMMDD"T"HH24MISS.US'))`;
+// الترتيب كما كان: الثقة تنازليًّا NULLS LAST ثم المعرّف، بمفاتيح تصاعدية للمقارنة الصفّية.
+const PRINCIPLE_ORDER_SQL = `(p.confidence IS NULL), -coalesce(p.confidence, 0), p.id`;
+const PRINCIPLE_CURSOR_SHAPE = ["boolean", "number", "string"] as const;
+
 export async function listPrincipleQueue(
   db: SqlClient,
-  filter: { limit?: number; offset?: number; topic?: string } = {},
+  filter: PrincipleQueueFilter = {},
   viewer?: Pick<EditorialActor, "id"> | null,
-): Promise<{ items: PrincipleQueueItem[]; total: number }> {
+): Promise<QueuePage<PrincipleQueueItem>> {
   const limit = Math.min(Math.max(filter.limit ?? 25, 1), 100);
-  const offset = Math.max(filter.offset ?? 0, 0);
-  const params: unknown[] = [];
+  const view = queueView(filter.view);
+  const viewerId = viewer?.id ?? null;
+  const filterParams: unknown[] = [];
   let topicSql = "";
   if (filter.topic && filter.topic.trim()) {
-    params.push(`%${filter.topic.trim().slice(0, 100)}%`);
+    filterParams.push(`%${filter.topic.trim().slice(0, 100)}%`);
     topicSql = ` AND (p.topic ILIKE $1 OR p.title ILIKE $1)`;
   }
-  const base = `FROM judicial_principles p WHERE p."reviewStatus" = 'needs_review'${topicSql}`;
-  const totalRows = await db.query<{ total: number }>(`SELECT count(*)::int AS total ${base}`, params);
-  const rows = await db.query<PrincipleBaseRow>(
+  const filterWhere = `p."reviewStatus" = 'needs_review'${topicSql}`;
+  const baseParams = [...filterParams];
+  const viewSql = viewCondition(view, PRINCIPLE_SOURCE_REF_SQL, viewerId, baseParams);
+  const baseWhere = viewSql ? `${filterWhere} AND ${viewSql}` : filterWhere;
+  const totalRows = await db.query<{ total: number }>(`SELECT count(*)::int AS total FROM judicial_principles p WHERE ${baseWhere}`, baseParams);
+  let waitingOthers = 0;
+  if (viewerId) {
+    const wParams = [...filterParams];
+    const wSql = viewCondition("waiting_others", PRINCIPLE_SOURCE_REF_SQL, viewerId, wParams);
+    waitingOthers = Number(
+      (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM judicial_principles p WHERE ${filterWhere} AND ${wSql}`, wParams))[0]?.n ?? 0,
+    );
+  }
+  const params = [...baseParams];
+  let pageSql = baseWhere;
+  let offset = 0;
+  if (filter.after) {
+    const key = decodeCursor(filter.after, PRINCIPLE_CURSOR_SHAPE);
+    params.push(key[0], key[1], key[2]);
+    const n = params.length;
+    pageSql += ` AND (${PRINCIPLE_ORDER_SQL}) > ($${n - 2}::boolean, $${n - 1}::double precision, $${n}::text)`;
+  } else {
+    offset = Math.max(filter.offset ?? 0, 0);
+  }
+  params.push(limit + 1, offset);
+  const fetched = await db.query<PrincipleBaseRow>(
     `SELECT p.id, p.title, p."principleText", p."sourceCaseId", p.court, p.topic, p.confidence,
             to_char(p."updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round
-       ${base}
-      ORDER BY p.confidence DESC NULLS LAST, p.id
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-    [...params, limit, offset],
+       FROM judicial_principles p
+      WHERE ${pageSql}
+      ORDER BY ${PRINCIPLE_ORDER_SQL}
+      LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
   );
-  const pending = await pendingInfo(db, rows.map((r) => principleSourceRef(r.id, r.round)), "review_principle", viewer?.id ?? null);
+  const hasMore = fetched.length > limit;
+  const rows = hasMore ? fetched.slice(0, limit) : fetched;
+  const last = rows[rows.length - 1];
+  const nextCursor =
+    hasMore && last ? encodeCursor([last.confidence === null, last.confidence === null ? 0 : -Number(last.confidence), last.id]) : null;
+  const pending = await pendingInfo(db, rows.map((r) => principleSourceRef(r.id, r.round)), "review_principle", viewerId);
   const items: PrincipleQueueItem[] = rows.map(({ round, ...row }) => {
     const p = pending.bySourceRef.get(principleSourceRef(row.id, round));
+    const status = typeof p?.after?.reviewStatus === "string" ? p.after.reviewStatus : null;
     return {
       ...row,
       source_case_id: row.sourceCaseId,
@@ -396,9 +574,14 @@ export async function listPrincipleQueue(
       required_approvals: pending.required,
       my_approval: p?.mine ?? false,
       pending_change_set_id: p?.changeSetId ?? null,
+      pending_decision: status ? { decision: status === "reviewed" ? "approve" : "reject" } : null,
+      pending_corrected: null,
+      pending_note: p?.note ?? null,
+      pending_decision_hash: p?.hash ?? null,
+      pending_approvers: p?.approvers ?? [],
     };
   });
-  return { items, total: totalRows[0]?.total ?? 0 };
+  return { items, total: totalRows[0]?.total ?? 0, next_cursor: nextCursor, waiting_others: waitingOthers };
 }
 
 /** @deprecated الاسم القديم؛ العقد IntakeCountsView في read.ts (null للمصدر غير المتاح). */
@@ -525,13 +708,22 @@ export function validateCorrection(raw: unknown): Partial<Record<CorrectableFiel
 // موافقة واحدة (الافتراضي): القرار يُطبَّق في المصدر فورًا كما كان.
 // minApprovals > 1: أول موافقة تفتح دفعة «pending» مفتاحها source_ref وبصمتها بصمة القرار،
 // والموافقات اللاحقة تُقبل على القرار نفسه فقط، وأي رفض من معتمِد يرفض المقترح فيعود العنصر إلى الطابور بلا قرار.
+// ملحق الجولة الثانية (ق٢٣-٣): من يقرّر على عنصر عليه مقترح معلّق يرسل بصمة القرار المعروض (expectedDecisionHash)؛
+// غيابها أو اختلافها 409 بلا كتابة، والموافقة الثانية لا تغيّر القرار ولا التصحيح.
 
 export interface IntakeDecisionResult {
   changeSetId: string;
   status: "pending" | "published" | "rejected";
   approvals: number;
   requiredApprovals: number;
+  /** بصمة القرار (بصمة حمولة دفعة المقترح)، لترسلها الموافقة التالية. */
+  decisionHash: string | null;
 }
+
+export const DISPLAYED_DECISION_CHANGED = "تغيّر القرار المعروض؛ راجعه.";
+
+/** حكم قرار المعتمِد على المقترح المعلّق: موافقة عليه، أو رفض له، أو تعارض. */
+type PendingVerdict = "same" | "reject" | "conflict";
 
 /** دفعة الاستقبال تُنشأ مسودة (ق-٨)، ثم تُدرج تغييراتها، ثم تُختم بصمتها وتُقلب. */
 async function openAgentChangeSet(tx: SqlClient, title: string, kind: "agent_review" | "agent_review_bulk", agent: string): Promise<ChangeSetRow> {
@@ -615,7 +807,7 @@ async function approveProposal(
   const state = await approvalState(tx, config, set, changes);
   if (state.complete) {
     await applyIntakeSet(tx, actor, set, changes, state);
-    return { changeSetId: set.id, status: "published", approvals: state.approvals, requiredApprovals: state.required };
+    return { changeSetId: set.id, status: "published", approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash };
   }
   await recordAudit(tx, actor, {
     action: "intake.proposal.approve",
@@ -623,27 +815,53 @@ async function approveProposal(
     objectId: set.id,
     detail: { approvals: state.approvals, required: state.required, reason },
   });
-  return { changeSetId: set.id, status: "pending", approvals: state.approvals, requiredApprovals: state.required };
+  return { changeSetId: set.id, status: "pending", approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash };
 }
 
-/** يقرّر عنصر استقبال: ينضم إلى مقترح معلّق، أو يرفضه، أو يفتح مقترحًا جديدًا. */
+/**
+ * يقرّر عنصر استقبال: ينضم إلى مقترح معلّق، أو يرفضه، أو يفتح مقترحًا جديدًا.
+ * كل رفض هنا (بصمة غائبة أو مختلفة، أو قرار مختلف) يقع قبل أي كتابة، فالمعاملة تُلغى بلا أثر.
+ */
 async function decideIntakeItem(
   ctx: DeskContext,
   item: {
     sourceRef: string;
-    after: Record<string, unknown>;
-    rejecting: boolean;
+    expectedHash: string | null;
     reason: string | null;
-    open: () => Promise<ChangeSetRow>;
+    /** يقارن قرار المعتمِد بقرار المقترح المعلّق. */
+    compare: (pendingAfter: Record<string, unknown>) => PendingVerdict;
+    /** القرار الذي يُفتح به مقترح جديد؛ يرمي إن نقص ما يلزم لفتحه (التصحيح أو سبب الرفض). */
+    openAfter: () => Record<string, unknown>;
+    open: (after: Record<string, unknown>) => Promise<ChangeSetRow>;
   },
 ): Promise<IntakeDecisionResult> {
   const { tx, actor, config } = ctx;
   const pending = await pendingProposal(tx, item.sourceRef);
+  const shown = pending?.set.payload_hash ?? null;
+  if (item.expectedHash !== null) {
+    // القرار المعروض اختفى (سُحب أو رُفض) أو تغيّر: لا موافقة على ما لم يره المعتمِد.
+    if (!pending || shown !== item.expectedHash) {
+      throw new EditorialError("CONFLICT", DISPLAYED_DECISION_CHANGED, {
+        openChangeSetId: pending?.set.id ?? null,
+        currentDecisionHash: shown,
+        expectedDecisionHash: item.expectedHash,
+      });
+    }
+  } else if (pending) {
+    throw new EditorialError("CONFLICT", "على هذا العنصر قرار معلّق بانتظار الموافقة؛ راجعه وأرسل بصمته (expectedDecisionHash).", {
+      openChangeSetId: pending.set.id,
+      currentDecisionHash: shown,
+      pendingDecision: pending.change.after,
+    });
+  }
   if (pending) {
-    if (stableJson(pending.change.after) === stableJson(item.after)) return approveProposal(ctx, pending.set, item.reason);
-    const changes = await changesOf(tx, pending.set.id);
-    if (item.rejecting) {
+    const pendingAfter = (pending.change.after as unknown as Record<string, unknown>) ?? {};
+    const verdict = item.compare(pendingAfter);
+    if (verdict === "same") return approveProposal(ctx, pending.set, item.reason);
+    if (verdict === "reject") {
+      if (!item.reason) throw new EditorialError("REASON_REQUIRED", "رفض القرار المعلّق يحتاج سببًا مكتوبًا؛ يرفض القرار كله.");
       // رفض أي معتمِد يرفض المقترح المعلّق؛ العنصر يعود إلى الطابور بلا قرار في المصدر.
+      const changes = await changesOf(tx, pending.set.id);
       const hash = assertPayloadUnchanged(pending.set, changes);
       await insertDecision(tx, { changeSetId: pending.set.id, reviewerId: actor.id, decision: "reject", reason: item.reason, selfApproval: false, payloadHash: hash });
       await setStatus(tx, pending.set.id, "rejected");
@@ -651,33 +869,41 @@ async function decideIntakeItem(
         action: "intake.proposal.reject",
         objectType: "change_set",
         objectId: pending.set.id,
-        detail: { reason: item.reason, pending: pending.change.after },
+        detail: { reason: item.reason, pending: pendingAfter },
       });
       const state = await approvalState(tx, config, pending.set, changes);
-      return { changeSetId: pending.set.id, status: "rejected", approvals: state.approvals, requiredApprovals: state.required };
+      return { changeSetId: pending.set.id, status: "rejected", approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash };
     }
-    throw new EditorialError("CONFLICT", "على هذا العنصر مقترح قرار معلّق مختلف؛ وافق على القرار نفسه أو ارفض المقترح أولًا.", {
+    throw new EditorialError("CONFLICT", "الموافقة الثانية على القرار المعروض نفسه فقط؛ لا تغيّر القرار ولا التصحيح. للرفض استعمل «رفض».", {
       openChangeSetId: pending.set.id,
-      pendingDecision: pending.change.after,
+      currentDecisionHash: shown,
+      pendingDecision: pendingAfter,
     });
   }
-  const set = await item.open();
+  const after = item.openAfter();
+  const set = await item.open(after);
   const changes = await changesOf(tx, set.id);
   const hash = await sealPayload(tx, set, changes);
   await insertDecision(tx, { changeSetId: set.id, reviewerId: actor.id, decision: "approve", reason: item.reason, selfApproval: false, payloadHash: hash });
   const state = await approvalState(tx, config, set, changes);
   if (state.complete) {
     await applyIntakeSet(tx, actor, set, changes, state);
-    return { changeSetId: set.id, status: "published", approvals: state.approvals, requiredApprovals: state.required };
+    return { changeSetId: set.id, status: "published", approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash };
   }
   await setStatus(tx, set.id, "pending");
   await recordAudit(tx, actor, {
     action: "intake.proposal.open",
     objectType: "change_set",
     objectId: set.id,
-    detail: { sourceRef: item.sourceRef, after: item.after, approvals: state.approvals, required: state.required },
+    detail: { sourceRef: item.sourceRef, after, approvals: state.approvals, required: state.required },
   });
-  return { changeSetId: set.id, status: "pending", approvals: state.approvals, requiredApprovals: state.required };
+  return { changeSetId: set.id, status: "pending", approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash };
+}
+
+function cleanHash(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value)) throw new EditorialError("INVALID_INPUT", "بصمة القرار غير صالحة.");
+  return value;
 }
 
 function opChangeRow(op: OpRow, after: Record<string, unknown>) {
@@ -702,7 +928,7 @@ export async function decideAmendmentOp(
   db: EditorialDb,
   actor: EditorialActor,
   opId: string,
-  input: { decision: AmendmentDecision; corrected?: unknown; note?: unknown },
+  input: { decision: AmendmentDecision; corrected?: unknown; note?: unknown; expectedDecisionHash?: unknown },
 ): Promise<IntakeDecisionResult & { decision: AmendmentDecision }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
@@ -713,8 +939,13 @@ export async function decideAmendmentOp(
       throw new EditorialError("INVALID_INPUT", "القرار: approved أو rejected أو approved_with_edit.");
     }
     const note = cleanNote(input.note);
-    if (decision === "rejected" && !note) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
-    const corrected = decision === "approved_with_edit" ? validateCorrection(input.corrected) : null;
+    const expectedHash = cleanHash(input.expectedDecisionHash);
+    const hasCorrection =
+      input.corrected !== undefined && input.corrected !== null && !(typeof input.corrected === "object" && !Object.keys(input.corrected as object).length);
+    // بلا بصمة = فتح مقترح جديد: يلزم ما يلزم لفتحه. ومع البصمة يُحكم على المقترح المعروض داخل المعاملة.
+    if (!expectedHash && decision === "rejected" && !note) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
+    const corrected = hasCorrection || (decision === "approved_with_edit" && !expectedHash) ? validateCorrection(input.corrected) : null;
+    if (corrected && decision !== "approved_with_edit") throw new EditorialError("INVALID_INPUT", "الحقول المصححة لا تُرسل إلا مع «موافق مع تصحيح».");
     const id = typeof opId === "string" ? opId.trim() : "";
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف العملية مطلوب.");
 
@@ -722,14 +953,25 @@ export async function decideAmendmentOp(
       assertReviewer(ctx.actor, "review_amendment_op");
       policyFor(ctx.config, "review_amendment_op");
       const op = await lockUndecidedOp(ctx.tx, id);
-      // بصمة القرار: القرار والتصحيح وحدهما (الملاحظة سبب المعتمِد في صف قراره).
-      const after = { decision, corrected };
       const result = await decideIntakeItem(ctx, {
         sourceRef: opSourceRef(op.op_id),
-        after,
-        rejecting: decision === "rejected",
+        expectedHash,
         reason: note,
-        open: async () => {
+        compare: (pendingAfter) => {
+          if (pendingAfter.decision === decision) {
+            // الموافقة الثانية لا تغيّر التصحيح: إن أُرسل تصحيح فيجب أن يطابق المعروض.
+            if (corrected && stableJson(corrected) !== stableJson(pendingAfter.corrected ?? null)) return "conflict";
+            return "same";
+          }
+          return decision === "rejected" ? "reject" : "conflict";
+        },
+        // بصمة القرار: القرار والتصحيح وحدهما (الملاحظة سبب المعتمِد في صف قراره).
+        openAfter: () => {
+          if (decision === "rejected" && !note) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
+          if (decision === "approved_with_edit" && !corrected) validateCorrection(input.corrected);
+          return { decision, corrected: decision === "approved_with_edit" ? corrected : null };
+        },
+        open: async (after) => {
           const set = await openAgentChangeSet(ctx.tx, `قرار عملية تعديل ${op.op_id} — ${op.target_law_title}`, "agent_review", AMENDMENT_AGENT);
           await insertIntakeChange(ctx.tx, set, opChangeRow(op, after));
           return set;
@@ -791,7 +1033,7 @@ export async function bulkApproveAmendmentOps(
       const state = await approvalState(tx, ctx.config, set, changes);
       if (state.complete) {
         await applyIntakeSet(tx, ctx.actor, set, changes, state);
-        return { changeSetId: set.id, status: "published" as const, approvals: state.approvals, requiredApprovals: state.required, approved: ops.length };
+        return { changeSetId: set.id, status: "published" as const, approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash, approved: ops.length };
       }
       // تعدد الموافقات: تكمله موافقات المعتمِدين الآخرين على الدفعة نفسها (decide في مسار الدفعات).
       await setStatus(tx, set.id, "pending");
@@ -801,7 +1043,7 @@ export async function bulkApproveAmendmentOps(
         objectId: set.id,
         detail: { bulk: true, ops: ops.length, approvals: state.approvals, required: state.required },
       });
-      return { changeSetId: set.id, status: "pending" as const, approvals: state.approvals, requiredApprovals: state.required, approved: 0 };
+      return { changeSetId: set.id, status: "pending" as const, approvals: state.approvals, requiredApprovals: state.required, decisionHash: hash, approved: 0 };
     });
   } catch (error) {
     await auditDenied(db, actor, error, "amendment_op", "bulk");
@@ -815,7 +1057,7 @@ export async function decidePrinciple(
   db: EditorialDb,
   actor: EditorialActor,
   principleId: string,
-  input: { decision: PrincipleDecision; reason?: unknown },
+  input: { decision: PrincipleDecision; reason?: unknown; expectedDecisionHash?: unknown },
 ): Promise<IntakeDecisionResult & { reviewStatus: string }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
@@ -825,7 +1067,8 @@ export async function decidePrinciple(
       throw new EditorialError("INVALID_INPUT", "القرار: approve أو reject.");
     }
     const reason = cleanNote(input.reason);
-    if (input.decision === "reject" && !reason) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
+    const expectedHash = cleanHash(input.expectedDecisionHash);
+    if (!expectedHash && input.decision === "reject" && !reason) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
     const id = typeof principleId === "string" ? principleId.trim() : "";
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف المبدأ مطلوب.");
 
@@ -842,9 +1085,13 @@ export async function decidePrinciple(
       const sourceRef = principleSourceRef(principle.id, principle.round);
       const result = await decideIntakeItem(ctx, {
         sourceRef,
-        after,
-        rejecting: reviewStatus === "rejected",
+        expectedHash,
         reason,
+        compare: (pendingAfter) => (pendingAfter.reviewStatus === reviewStatus ? "same" : reviewStatus === "rejected" ? "reject" : "conflict"),
+        openAfter: () => {
+          if (reviewStatus === "rejected" && !reason) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
+          return after;
+        },
         open: async () => {
           const set = await openAgentChangeSet(ctx.tx, `مراجعة مبدأ: ${principle.title}`, "agent_review", PRINCIPLES_AGENT);
           await insertIntakeChange(ctx.tx, set, {

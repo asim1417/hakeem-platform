@@ -5,7 +5,12 @@ import { deskJson, editorialDb, editorialErrorResponse, readDeskJson, requireEdi
 
 export const dynamic = "force-dynamic";
 
-const body = z.object({ decision: z.enum(["approve", "reject"]), reason: z.string().max(2000).optional() });
+const body = z.object({
+  decision: z.enum(["approve", "reject"]),
+  reason: z.string().max(2000).optional(),
+  // ق٢٣-٣: بصمة القرار المعروض؛ إلزامية حين يوجد قرار معلّق.
+  expectedDecisionHash: z.string().max(128).optional(),
+});
 
 // POST /api/admin/legal/intake/principles/[id]/decide
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {

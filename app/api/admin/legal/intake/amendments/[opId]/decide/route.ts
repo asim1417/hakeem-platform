@@ -9,6 +9,8 @@ const body = z.object({
   decision: z.enum(["approved", "rejected", "approved_with_edit"]),
   corrected: z.record(z.union([z.string(), z.number()])).optional(),
   note: z.string().max(2000).optional(),
+  // ق٢٣-٣: بصمة القرار المعروض؛ إلزامية حين يوجد قرار معلّق (409 بلا كتابة عند الاختلاف).
+  expectedDecisionHash: z.string().max(128).optional(),
 });
 
 // POST /api/admin/legal/intake/amendments/[opId]/decide — قرار المعتمِد يُضاف صفًّا في uqn_fix.amendment_review.

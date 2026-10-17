@@ -231,7 +231,7 @@ export async function listChangeSetsDetailed(
     db.query<ChangeRowLike>(`SELECT * FROM editorial_change WHERE change_set_id = ANY($1::text[]) ORDER BY created_at, id`, [ids]),
     db.query<DecisionRowLike>(
       `SELECT d.id, d.change_set_id, d.reviewer_id, d.decision, d.reason, d.self_approval, d.payload_hash, d.decided_at,
-              u.role::text AS role, u."isActive"
+              u.role::text AS role, u."isActive", u.name
          FROM review_decision d LEFT JOIN users u ON u.id = d.reviewer_id
         WHERE d.change_set_id = ANY($1::text[]) ORDER BY d.decided_at, d.id`,
       [ids],

@@ -226,12 +226,13 @@ export interface DecisionRow {
   decided_at: Date;
   role: string | null;
   isActive: boolean | null;
+  name: string | null;
 }
 
 export async function decisionsOf(tx: SqlClient, changeSetId: string): Promise<DecisionRow[]> {
   return tx.query<DecisionRow>(
     `SELECT d.id, d.reviewer_id, d.decision, d.reason, d.self_approval, d.payload_hash, d.decided_at,
-            u.role::text AS role, u."isActive"
+            u.role::text AS role, u."isActive", u.name
        FROM review_decision d LEFT JOIN users u ON u.id = d.reviewer_id
       WHERE d.change_set_id = $1
       ORDER BY d.decided_at, d.id`,
