@@ -3,11 +3,12 @@
  * يقرأ نصوص الإنتاج بمعاملة READ ONLY ليزرع نسخة، ثم يكتب على 127.0.0.1.
  * لا يستدعي نقطة reindex العامة.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
 import { computeSurface, inSurface } from "../../lib/modules/legal-core/search-surface.ts";
-import { fillNullSearchNorm, loadLedger, loadManifest, saveLedger } from "./fill-null-search-norm.mjs";
+import { assertLedgerBinding, fillNullSearchNorm, ledgerBatchId, ledgerPathFor, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
 import { rollbackNullSearchNorm } from "./rollback-null-search-norm.mjs";
 
 const LAB_DATABASE = "hakeem_hkm002";
@@ -227,11 +228,46 @@ async function main() {
   const beforeRecall = await recall(local, sql, word);
   ok("قبل الملء لا يرى المسار المفهرس المادة", !beforeRecall.some((row) => row.id === sample.id));
 
-  const filled = await fillNullSearchNorm(local, manifest);
+  const isolatedLedgerPath = fileURLToPath(ledgerPathFor("isolated"));
+  const productionLedgerPath = fileURLToPath(ledgerPathFor("production"));
+  ok("مسار سجل الاختبار منفصل عن سجل الإنتاج", isolatedLedgerPath !== productionLedgerPath);
+  let saveFailed = false;
+  try {
+    await fillNullSearchNorm(local, manifest, {
+      target: "isolated",
+      writeFile() { throw new Error("تعذر حفظ السجل"); },
+    });
+  } catch { saveFailed = true; }
+  ok("فشل حفظ السجل يوقف الدفعة", saveFailed);
+  const nullAfterSaveFail = await local.query(
+    `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NULL`,
+    [ids],
+  );
+  ok("فشل الحفظ لم يثبّت تحديث القاعدة", nullAfterSaveFail.rows[0].n === 353);
+  ok("المتن ثابت بعد فشل الحفظ", (await contentMd5(local, ids)) === digestBefore);
+  ok("فشل الحفظ لم ينشئ سجل الإنتاج", !existsSync(productionLedgerPath));
+
+  const filled = await fillNullSearchNorm(local, manifest, { target: "isolated" });
   ok("حُدّث 353 صفًا", filled.updated === 353);
-  saveLedger(filled.ledger);
-  const ledger = loadLedger();
+  const ledger = loadLedger(ledgerPathFor("isolated"));
   ok("سجل الدفعة يحفظ 353 قيمة", ledger.rows.length === 353 && ledger.expected_count === 353);
+  ok(
+    "سجل الاختبار مرتبط بقاعدة العزل والدفعة",
+    ledger.target === "isolated" && ledger.database === "hakeem_hkm002" && ledger.batch_id === filled.ledger.batch_id,
+  );
+  let crossRejected = false;
+  try { assertLedgerBinding(ledger, { target: "production", database: "neondb" }); } catch { crossRejected = true; }
+  ok("ربط السجل يرفض استخدام سجل الاختبار للإنتاج", crossRejected);
+  const forged = { ...ledger, target: "production", database: "neondb" };
+  forged.batch_id = ledgerBatchId(forged);
+  let forgedRejected = false;
+  try { await rollbackNullSearchNorm(local, manifest, forged); } catch { forgedRejected = true; }
+  ok("التراجع يرفض سجل الاختبار إذا قُدّم لقاعدة الإنتاج", forgedRejected);
+  const stillFilled = await local.query(
+    `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NOT NULL`,
+    [ids],
+  );
+  ok("رفض سجل الإنتاج لم يفرّغ الصفوف", stillFilled.rows[0].n === 353);
   const ledgerById = new Map(ledger.rows.map((row) => [row.id, row.search_norm]));
   const stored = await local.query(`SELECT id, search_norm FROM legal_articles WHERE id = ANY($1::text[])`, [ids]);
   ok("كل قيمة مخزنة تطابق سجل الدفعة", stored.rows.every((row) => row.search_norm === ledgerById.get(row.id)));
@@ -240,7 +276,7 @@ async function main() {
   ok("لا NULL متبقٍ في القائمة", nulls.rows[0].n === 0);
 
   let secondFailed = false;
-  try { await fillNullSearchNorm(local, manifest); } catch { secondFailed = true; }
+  try { await fillNullSearchNorm(local, manifest, { target: "isolated" }); } catch { secondFailed = true; }
   ok("التشغيل الثاني يتوقف لأن القائمة لم تعد NULL", secondFailed);
   ok("المتن ثابت بعد الرفض", (await contentMd5(local, ids)) === digestBefore);
 
@@ -312,7 +348,7 @@ async function main() {
 
   await local.query(`DELETE FROM legal_articles WHERE id = $1`, [ids[0]]);
   let missingRejected = false;
-  try { await fillNullSearchNorm(local, manifest); } catch { missingRejected = true; }
+  try { await fillNullSearchNorm(local, manifest, { target: "isolated" }); } catch { missingRejected = true; }
   ok("نقص معرّف يوقف الدفعة", missingRejected);
   const untouched = await local.query(
     `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NOT NULL`,
@@ -322,6 +358,8 @@ async function main() {
 
   const afterNull = await prod.query(`SELECT count(*)::int AS n FROM legal_articles WHERE search_norm IS NULL`);
   ok("الإنتاج بقي 353 NULL", beforeNull.rows[0].n === 353 && afterNull.rows[0].n === 353);
+  const prodName = await prod.query("SELECT current_database() AS name");
+  ok("قاعدة الإنتاج neondb وسجلها لم يُكتب", prodName.rows[0].name === "neondb" && !existsSync(productionLedgerPath));
   console.log(JSON.stringify({
     pass: checks.length,
     failed: checks.filter((item) => !item.pass).length,

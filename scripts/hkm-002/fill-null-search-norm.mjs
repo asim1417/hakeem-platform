@@ -8,13 +8,21 @@
  * الإنتاج غير مُشغَّل من هذه المراجعة. --target production يرفض الكتابة
  * ما لم تُضبط حراس الإذن صراحةً، ولم تُضبط في الاختبار.
  */
-import { readFileSync, writeFileSync } from "node:fs";
-import { pathToFileURL } from "node:url";
+import { createHash } from "node:crypto";
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync, writeSync } from "node:fs";
+import { dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
 
 export const MANIFEST_PATH = new URL("./expected-null-ids.json", import.meta.url);
-export const LEDGER_PATH = new URL("./written-search-norm.json", import.meta.url);
+export const ISOLATED_DATABASE = "hakeem_hkm002";
+export const PRODUCTION_DATABASE = "neondb";
+
+export function ledgerPathFor(target) {
+  if (target !== "isolated" && target !== "production") throw new Error("هدف السجل غير معروف");
+  return new URL(`./ledgers/${target}.json`, import.meta.url);
+}
 
 export function loadManifest(path = MANIFEST_PATH) {
   const manifest = JSON.parse(readFileSync(path, "utf8"));
@@ -64,10 +72,18 @@ function articleFromRow(row) {
  * يملأ القائمة داخل معاملة واحدة. عند أي اختلاف يُلغي الكل ولا يترك تحديثًا جزئيًا.
  * يعيد عدد الصفوف المحدَّثة. لا يطبع المتون.
  */
-export async function fillNullSearchNorm(client, manifest) {
+export async function fillNullSearchNorm(client, manifest, options = {}) {
+  const target = options.target;
+  if (target !== "isolated" && target !== "production") throw new Error("هدف السجل غير معروف");
+  const live = await client.query("SELECT current_database() AS name");
+  const database = live.rows[0].name;
+  assertDatabaseForTarget(target, database);
   const ids = manifest.rows.map((row) => row.id);
   const expected = new Map(manifest.rows.map((row) => [row.id, row]));
+  const ledgerFile = fileURLToPath(ledgerPathFor(target));
+  const prior = existsSync(ledgerFile) ? readFileSync(ledgerFile) : null;
   await client.query("BEGIN");
+  let persisted = false;
   try {
     const locked = await client.query(
       `SELECT id, "lawName", "articleNumber", title, content, chapter, keywords, classification,
@@ -117,7 +133,14 @@ export async function fillNullSearchNorm(client, manifest) {
       written.push({ id: row.id, search_norm: norm });
     }
     written.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    const ledger = { batch: "HKM-002", expected_count: manifest.expected_count, rows: written };
+    const ledger = {
+      batch: "HKM-002",
+      batch_id: ledgerBatchId({ target, database, rows: written }),
+      target,
+      database,
+      expected_count: manifest.expected_count,
+      rows: written,
+    };
     const stored = await client.query(
       `SELECT id, search_norm FROM legal_articles WHERE id = ANY($1::text[])`,
       [ids],
@@ -141,18 +164,47 @@ export async function fillNullSearchNorm(client, manifest) {
     if (check.n !== manifest.expected_count || check.still_null !== 0 || check.text_ok !== manifest.expected_count) {
       throw new Error("توقف: التحقق الختامي لم يطابق القائمة");
     }
+    persistLedger(ledger, ledgerPathFor(target), options);
+    persisted = true;
     await client.query("COMMIT");
     return { updated: manifest.expected_count, ledger };
   } catch (error) {
+    if (persisted) restoreLedgerFile(ledgerFile, prior);
     await client.query("ROLLBACK");
     throw error;
   }
+}
+
+export function assertDatabaseForTarget(target, database) {
+  if (target === "isolated" && database === ISOLATED_DATABASE) return;
+  if (target === "production" && database === PRODUCTION_DATABASE) return;
+  throw new Error(`مرفوض: الهدف ${target} لا يطابق القاعدة ${database}`);
+}
+
+export function ledgerBatchId(core) {
+  const hash = createHash("sha256");
+  hash.update(core.target);
+  hash.update("\0");
+  hash.update(core.database);
+  hash.update("\0");
+  for (const row of core.rows) {
+    hash.update(row.id);
+    hash.update("\0");
+    hash.update(row.search_norm);
+    hash.update("\n");
+  }
+  return hash.digest("hex");
 }
 
 export function assertLedger(ledger) {
   if (!ledger || ledger.batch !== "HKM-002" || !Array.isArray(ledger.rows) || ledger.rows.length !== ledger.expected_count) {
     throw new Error("سجل الدفعة غير صالح");
   }
+  if (ledger.target !== "isolated" && ledger.target !== "production") throw new Error("سجل بلا هدف");
+  if (typeof ledger.database !== "string" || ledger.database.length === 0) throw new Error("سجل بلا قاعدة");
+  if (typeof ledger.batch_id !== "string" || !/^[a-f0-9]{64}$/.test(ledger.batch_id)) throw new Error("سجل بلا دفعة");
+  if (ledger.batch_id !== ledgerBatchId(ledger)) throw new Error("معرّف الدفعة لا يطابق القيم");
+  assertDatabaseForTarget(ledger.target, ledger.database);
   const ids = new Set(ledger.rows.map((row) => row.id));
   if (ids.size !== ledger.rows.length) throw new Error("سجل الدفعة فيه معرّف مكرر");
   for (const row of ledger.rows) {
@@ -163,12 +215,71 @@ export function assertLedger(ledger) {
   return ledger;
 }
 
-export function saveLedger(ledger, path = LEDGER_PATH) {
+export function assertLedgerBinding(ledger, expected) {
   assertLedger(ledger);
-  writeFileSync(path, `${JSON.stringify(ledger)}\n`);
+  if (ledger.target !== expected.target || ledger.database !== expected.database) {
+    throw new Error("مرفوض: السجل لا يخص قاعدة التشغيل وهذه الدفعة");
+  }
+  return ledger;
 }
 
-export function loadLedger(path = LEDGER_PATH) {
+function restoreLedgerFile(path, prior) {
+  if (prior) writeFileSync(path, prior);
+  else if (existsSync(path)) unlinkSync(path);
+}
+
+function writeLedgerAtomic(path, data) {
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  const fd = openSync(tmp, "w");
+  try {
+    writeSync(fd, data);
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+  if (readFileSync(tmp, "utf8") !== data) {
+    unlinkSync(tmp);
+    throw new Error("قراءة السجل المؤقت لا تطابق المكتوب");
+  }
+  renameSync(tmp, path);
+}
+
+/** يكتب السجل ويثبت قراءته قبل أن يُسمَح بتثبيت تحديث القاعدة. فشل الحفظ يُعيد الملف السابق. */
+export function persistLedger(ledger, path, options = {}) {
+  assertLedger(ledger);
+  const actualPath = path instanceof URL ? fileURLToPath(path) : path;
+  const expectedPath = fileURLToPath(ledgerPathFor(ledger.target));
+  if (actualPath !== expectedPath) throw new Error("مرفوض: مسار السجل لا يطابق الهدف");
+  const prior = existsSync(actualPath) ? readFileSync(actualPath) : null;
+  if (prior) {
+    const existing = JSON.parse(prior.toString("utf8"));
+    if (existing.target !== ledger.target || existing.database !== ledger.database) {
+      throw new Error("مرفوض: استبدال سجل قاعدة أو هدف آخر");
+    }
+  }
+  const payload = `${JSON.stringify(ledger)}\n`;
+  const writeFile = options.writeFile ?? writeLedgerAtomic;
+  try {
+    writeFile(actualPath, payload);
+    const loaded = assertLedger(JSON.parse(readFileSync(actualPath, "utf8")));
+    assertLedgerBinding(loaded, { target: ledger.target, database: ledger.database });
+    if (loaded.batch_id !== ledger.batch_id || loaded.rows.length !== ledger.rows.length) {
+      throw new Error("السجل المكتوب غير قابل للاسترجاع");
+    }
+    for (let i = 0; i < ledger.rows.length; i += 1) {
+      if (loaded.rows[i].id !== ledger.rows[i].id || loaded.rows[i].search_norm !== ledger.rows[i].search_norm) {
+        throw new Error("السجل المسترجع يختلف عن المكتوب");
+      }
+    }
+    return loaded;
+  } catch (error) {
+    restoreLedgerFile(actualPath, prior);
+    throw error;
+  }
+}
+
+export function loadLedger(path) {
   return assertLedger(JSON.parse(readFileSync(path, "utf8")));
 }
 
@@ -183,10 +294,11 @@ async function main() {
   const client = new Client({ connectionString: url });
   await client.connect();
   try {
-    const result = await fillNullSearchNorm(client, manifest);
-    saveLedger(result.ledger);
+    const result = await fillNullSearchNorm(client, manifest, { target });
     console.log(JSON.stringify({
       target,
+      database: result.ledger.database,
+      batch_id: result.ledger.batch_id,
       updated: result.updated,
       expected: manifest.expected_count,
       ledger_rows: result.ledger.rows.length,

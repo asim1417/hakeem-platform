@@ -7,9 +7,11 @@
  */
 import { pathToFileURL } from "node:url";
 import { Client } from "pg";
-import { assertTarget, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
+import { assertLedgerBinding, assertTarget, ledgerPathFor, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
 
 export async function rollbackNullSearchNorm(client, manifest, ledger) {
+  const live = await client.query("SELECT current_database() AS name");
+  assertLedgerBinding(ledger, { target: ledger.target, database: live.rows[0].name });
   const ids = manifest.rows.map((row) => row.id);
   const expected = new Map(manifest.rows.map((row) => [row.id, row]));
   if (ledger?.batch !== "HKM-002" || ledger.expected_count !== manifest.expected_count || ledger.rows?.length !== manifest.expected_count) {
@@ -71,7 +73,7 @@ async function main() {
     ? process.argv[process.argv.indexOf("--target") + 1]
     : "";
   const manifest = loadManifest();
-  const ledger = loadLedger();
+  const ledger = loadLedger(ledgerPathFor(target));
   const url = target === "production" ? process.env.DATABASE_UR ?? "" : process.env.DATABASE_URL ?? "";
   if (!url) throw new Error("سلسلة الاتصال غير مضبوطة للهدف");
   assertTarget(target, url, manifest.expected_count);
