@@ -41,9 +41,13 @@ export interface NumberingAudit {
 const ARTICLE_PARAGRAPH = /^\s*[0-9\u0660-\u0669]+\s*\/\s*[0-9\u0660-\u0669]+/;
 
 /** يقرأ رقم العنوان بعد إزالة علامات الترقيم الملتصقة («عشرة:» و«المائتين،»)، فالمحلل لا يزيلها. */
+/** عنوان المادة المُعاد ترقيمها: «(المادة الحادية والثلاثون بعد المائتين حالياً) (المادة الأربعون بعد المائتين سابقاً)». */
+const CURRENT_NUMBER = /\(([^()]*?)\s*حالي[اًّ]*\s*\)/;
+
 export function titleOrdinal(title: string | null): ReturnType<typeof parseArticleOrdinal> {
   if (!title || ARTICLE_PARAGRAPH.test(title)) return null;
-  return parseArticleOrdinal(title.replace(/[:：؛;،,.\-–—]+/g, " "));
+  const current = CURRENT_NUMBER.exec(title)?.[1] ?? title;
+  return parseArticleOrdinal(current.replace(/[:：؛;،,.\-–—]+/g, " "));
 }
 
 /** نسبة العناوين المقروءة التي يُعدّ دونها النظام بلا عناوين ترتيبية. */
