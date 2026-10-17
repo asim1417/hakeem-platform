@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { SuperAdminShell } from "@/components/admin/SuperAdminShell";
+import { AdminNavDisclosure } from "@/components/editorial/AdminNavDisclosure";
 import { getCurrentUser } from "@/lib/modules/auth/session";
 import {
   isPlatformAdmin,
@@ -12,12 +13,16 @@ import {
  * غلاف صفحات /admin:
  * - السوبر → غلاف إدارة مستقل (ليس واجهة عميل)
  * - مدير النظام → AppShell + تنقّل محدود
+ * mobileNavSection (اختياري، لصفحات مكتب التحرير وحدها): يطوي قائمة الإدارة على الجوال تحت زر
+ * «أقسام الإدارة · القسم». الافتراضي (بلا قيمة) لا يغيّر شيئًا في بقية صفحات الإدارة.
  */
 export async function AdminPageShell({
   currentPath,
+  mobileNavSection,
   children,
 }: {
   currentPath: string;
+  mobileNavSection?: string;
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser().catch(() => null);
@@ -26,7 +31,7 @@ export async function AdminPageShell({
 
   if (showSuper) {
     return (
-      <SuperAdminShell currentPath={currentPath} user={user}>
+      <SuperAdminShell currentPath={currentPath} user={user} mobileNavSection={mobileNavSection}>
         {children}
       </SuperAdminShell>
     );
@@ -34,7 +39,15 @@ export async function AdminPageShell({
 
   return (
     <AppShell>
-      {showSystem ? <AdminNav currentPath={currentPath} variant="system" /> : null}
+      {showSystem ? (
+        mobileNavSection ? (
+          <AdminNavDisclosure section={mobileNavSection}>
+            <AdminNav currentPath={currentPath} variant="system" />
+          </AdminNavDisclosure>
+        ) : (
+          <AdminNav currentPath={currentPath} variant="system" />
+        )
+      ) : null}
       {children}
     </AppShell>
   );

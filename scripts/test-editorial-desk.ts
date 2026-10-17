@@ -50,6 +50,7 @@ import {
 } from "../lib/modules/editorial/policy";
 import { isEditorialWriteEnabled, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
 import { PRINCIPLE_REVIEW_STATUS } from "../lib/modules/legal-core/principle-review";
+import { runDeskUiTests } from "./test-editorial-desk-ui";
 
 let failed = 0;
 let passed = 0;
@@ -1441,6 +1442,7 @@ async function round2Tests(c: UnifyCtx) {
 
 async function main() {
   pureTests();
+  runDeskUiTests(ok);
   await authTests();
   const url = process.env.EDITORIAL_TEST_DATABASE_URL;
   if (!url) {
