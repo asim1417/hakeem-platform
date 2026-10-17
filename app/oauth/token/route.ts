@@ -1,36 +1,62 @@
 import { exchangeAuthorizationCode, exchangeRefreshToken, oauthJson, oauthPreflight } from "@/lib/mcp/oauth";
+import { accountLinkingEnabled, mcpSharedKey, mcpTokenSecret } from "@/lib/mcp/config";
+import { getGrantStore } from "@/lib/mcp/grants/prisma-store";
+import {
+  exchangeAuthorizationCode as exchangeGrantCode,
+  refreshAccessToken as refreshGrantToken,
+} from "@/lib/mcp/grants/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * نقطة التصاريح. رموز hk1 القديمة تُخدم بالمفتاح المشترك (انتقالي)، ورموز الربط بالحساب
+ * (hka_ للتفويض، hkr_ للتجديد) تُخدم من جدول الروابط بسرّ MCP_TOKEN_SECRET.
+ */
 export async function POST(request: Request) {
-  const secret = process.env.HAKEEM_MCP_KEY?.trim();
-  if (!secret) return oauthJson({ error: "invalid_client" }, 401);
+  const shared = mcpSharedKey();
+  // رموز الربط بالحساب تُخدم فقط والعلم مفعّل.
+  const secret = accountLinkingEnabled() ? mcpTokenSecret() : null;
+  if (!shared && !secret) return oauthJson({ error: "invalid_client" }, 401);
 
   const fields = await readFields(request);
   const grant = fields.get("grant_type") ?? "";
   const clientId = fields.get("client_id") ?? "";
 
   if (grant === "authorization_code") {
-    const result = exchangeAuthorizationCode({
-      secret,
-      code: fields.get("code") ?? "",
-      clientId,
-      redirectUri: fields.get("redirect_uri") ?? "",
-      codeVerifier: fields.get("code_verifier") ?? "",
-    });
-    if ("error" in result) return oauthJson({ error: result.error }, 400);
-    return oauthJson(result);
+    const code = fields.get("code") ?? "";
+    const redirectUri = fields.get("redirect_uri") ?? "";
+    const codeVerifier = fields.get("code_verifier") ?? "";
+    if (code.startsWith("hk1.")) {
+      if (!shared) return oauthJson({ error: "invalid_grant" }, 400);
+      const result = exchangeAuthorizationCode({ secret: shared, code, clientId, redirectUri, codeVerifier });
+      return "error" in result ? oauthJson({ error: result.error }, 400) : oauthJson(result);
+    }
+    if (!secret) return oauthJson({ error: "invalid_grant" }, 400);
+    try {
+      const result = await exchangeGrantCode({ store: getGrantStore(), secret, code, clientId, redirectUri, codeVerifier });
+      return "error" in result ? oauthJson({ error: result.error }, 400) : oauthJson(result);
+    } catch (e) {
+      console.error("[mcp-oauth] code exchange failed", (e as Error)?.message?.slice(0, 160));
+      return oauthJson({ error: "server_error" }, 500);
+    }
   }
 
   if (grant === "refresh_token") {
-    const result = exchangeRefreshToken({
-      secret,
-      refreshToken: fields.get("refresh_token") ?? "",
-      clientId: clientId || undefined,
-    });
-    if ("error" in result) return oauthJson({ error: result.error }, 400);
-    return oauthJson(result);
+    const refreshToken = fields.get("refresh_token") ?? "";
+    if (refreshToken.startsWith("hk1.")) {
+      if (!shared) return oauthJson({ error: "invalid_grant" }, 400);
+      const result = exchangeRefreshToken({ secret: shared, refreshToken, clientId: clientId || undefined });
+      return "error" in result ? oauthJson({ error: result.error }, 400) : oauthJson(result);
+    }
+    if (!secret) return oauthJson({ error: "invalid_grant" }, 400);
+    try {
+      const result = await refreshGrantToken({ store: getGrantStore(), secret, refreshToken, clientId: clientId || undefined });
+      return "error" in result ? oauthJson({ error: result.error }, 400) : oauthJson(result);
+    } catch (e) {
+      console.error("[mcp-oauth] refresh failed", (e as Error)?.message?.slice(0, 160));
+      return oauthJson({ error: "server_error" }, 500);
+    }
   }
 
   return oauthJson({ error: "unsupported_grant_type" }, 400);

@@ -16,14 +16,16 @@ export const dynamic = "force-dynamic";
 export default async function PublicSearchPage({
   searchParams
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; showRepealed?: string };
 }) {
   // إخفاء الباحث العامّ التقليديّ عن الزوّار: توجيهٌ آمن إلى الصفحة الرئيسيّة (صندوق اسأل حكيم).
   if (!TRADITIONAL_SEARCH_ENABLED) redirect("/");
   const query = (searchParams.q ?? "").trim().slice(0, 200);
+  // البحث يستبعد الأنظمة الملغاة افتراضيًا؛ «إظهار الملغى» يفتح الأرشيف كاملًا.
+  const showRepealed = searchParams.showRepealed === "1";
   // محرّك البحث: النواة (searchLegalCore) — نفس محرّك الشات والقاضي: خريطة مفاهيم + مكنز + ترتيب صلة.
   const response = query
-    ? await searchLegalCore({ query, limit: 12, includeSnippets: true, includeRelatedTerms: false })
+    ? await searchLegalCore({ query, limit: 12, includeSnippets: true, includeRelatedTerms: false, surface: showRepealed ? "archive" : "current" })
     : null;
   const hits = response?.results ?? null;
 
@@ -69,9 +71,17 @@ export default async function PublicSearchPage({
           </div>
         ) : (
           <section className="mt-5">
-            <p className="mb-3 text-sm text-[var(--ink-60)]">
-              {hits.length ? `أعلى ${hits.length.toLocaleString("ar-SA")} نتيجة صلةً لـ «${query}»` : ""}
-            </p>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-[var(--ink-60)]">
+                {hits.length ? `أعلى ${hits.length.toLocaleString("ar-SA")} نتيجة صلةً لـ «${query}»` : ""}
+              </p>
+              <Link
+                href={`/search?q=${encodeURIComponent(query)}${showRepealed ? "" : "&showRepealed=1"}`}
+                className="text-xs font-semibold text-[var(--navy)] underline"
+              >
+                {showRepealed ? "إخفاء الملغى" : "إظهار الملغى"}
+              </Link>
+            </div>
 
             {hits.length ? (
               <div className="space-y-4">

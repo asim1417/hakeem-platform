@@ -3,12 +3,16 @@
 
 export type LegalEntityType = "article" | "ruling" | "principle";
 export type SearchSource = "postgres" | "vector" | "knowledge_graph" | "opensearch";
-export type ProviderStatus = "active" | "unavailable";
+export type ProviderStatus = "active" | "unavailable" | "timeout";
 
 export interface SearchQuery {
   q: string;
   limit?: number;
   context?: { caseType?: string; court?: string; stage?: string };
+  /** تاريخ وجه البحث YYYY-MM-DD (افتراضيًا اليوم بتوقيت الرياض). */
+  asOf?: string;
+  /** «archive» يعطّل وجه البحث (الأرشيف الكامل). الافتراضي: الوجه الساري. */
+  surface?: "current" | "archive";
 }
 
 // نتيجة خام من مزوّد واحد.

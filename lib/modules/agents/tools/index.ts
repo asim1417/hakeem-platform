@@ -13,12 +13,13 @@ import {
   getArticleFullContext,
   type LegalCoreResult,
 } from "@/lib/modules/legal-core/legal-retrieval";
-import { getArticleVersionAt } from "@/lib/modules/legal-core/article-versions";
+import { applyEffectiveText, effectiveArticleText } from "@/lib/modules/legal-core/effective-text";
 import { validateLegalCitation } from "@/lib/modules/legal-core/legal-citation-guard";
 import { buildArticleCitation } from "@/lib/modules/legal-core/intelligence";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
+import { rulingHitToMerged, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
 import { queryNormative } from "../substrate/queries";
 import type { NormativeModality } from "../substrate/normative";
 
@@ -51,7 +52,16 @@ async function hybridByType(query: string, type: "ruling" | "principle", limit: 
     return fail<MergedResult[]>([], `hybrid.${type}`, `تعذّر البحث: ${(e as Error).message}`);
   }
 }
-export const search_rulings = (query: string, limit = 6) => hybridByType(query, "ruling", limit);
+// الأحكام من مسارها المستقل (لا الهجين): لا تزاحمها المواد، والمقتطف من الأسباب أو المنطوق.
+export async function search_rulings(query: string, limit = 6): Promise<ToolResult<MergedResult[]>> {
+  try {
+    const r = await searchRulingsDirect({ query, limit });
+    const items = r.hits.map(rulingHitToMerged);
+    return ok(items, "judicial_cases.search_norm", items.length ? 0.85 : 0.4, items.length ? undefined : "لا نتائج من هذا النوع");
+  } catch (e) {
+    return fail<MergedResult[]>([], "judicial_cases.search_norm", `تعذّر بحث الأحكام: ${(e as Error).message}`);
+  }
+}
 export const search_principles = (query: string, limit = 6) => hybridByType(query, "principle", limit);
 
 export async function semantic_search(query: string, limit = 8): Promise<ToolResult<LegalCoreResult[]>> {
@@ -97,7 +107,7 @@ export async function get_articles_range(systemName: string, from: number, to: n
       select: { id: true, articleNumber: true, title: true, content: true, status: true },
       orderBy: { articleNumber: "asc" },
       take: 100,
-    });
+    }).then((r) => applyEffectiveText(r));
     return ok(rows, "legal_core.legal_articles", rows.length ? 0.9 : 0.3);
   } catch (e) {
     return fail<unknown[]>([], "legal_core", `تعذّر جلب المدى: ${(e as Error).message}`);
@@ -139,15 +149,21 @@ export async function get_applying_rulings(articleId: string): Promise<ToolResul
   }
 }
 
-// ── زمن (٣) — تعتمد على التوسيم الزمني الموجود (article_versions / article_amendments) ──
+// ── زمن (٣) — النص في تاريخ من unit_version (المصدر الواحد)؛ article_versions للقراءة التاريخية فقط ──
 export async function get_article_at_date(articleId: string, iso: string): Promise<ToolResult<unknown>> {
   const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return fail(null, "article_versions", "تاريخ غير صالح");
+  if (Number.isNaN(at.getTime())) return fail(null, "unit_version", "تاريخ غير صالح");
   try {
-    const v = await getArticleVersionAt(articleId, at);
-    return v ? ok(v, "article_versions", 0.9) : fail(null, "article_versions", "لا نسخة نافذة في هذا التاريخ (قد تكون البيانات الزمنية ناقصة)");
+    const e = (await effectiveArticleText([articleId], at)).get(articleId);
+    if (!e) return fail(null, "unit_version", "المادة غير موجودة");
+    return ok(
+      { articleId, asOf: at.toISOString().slice(0, 10), text: e.text, repealed: e.repealed, status: e.status, basis: e.basis, validFrom: e.validFrom, validTo: e.validTo, evidenceInstrument: e.evidenceInstrument, evidenceUrl: e.evidenceUrl },
+      "unit_version",
+      e.source === "original" ? 0.6 : 0.9,
+      e.source === "original" ? "لا نسخة مؤرخة لهذه المادة: النص الأصلي المحفوظ" : undefined,
+    );
   } catch (e) {
-    return fail(null, "article_versions", `تعذّر الجلب: ${(e as Error).message}`);
+    return fail(null, "unit_version", `تعذّر الجلب: ${(e as Error).message}`);
   }
 }
 
@@ -210,10 +226,10 @@ export async function scan_system_articles(
   try {
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName.trim(), mode: "insensitive" } },
-      select: { articleNumber: true, title: true, content: true },
+      select: { id: true, articleNumber: true, title: true, content: true },
       orderBy: { articleNumber: "asc" },
       take: Math.min(Math.max(limit, 1), 2000),
-    });
+    }).then(async (r) => (await applyEffectiveText(r)).map(({ articleNumber, title, content }) => ({ articleNumber, title, content: content ?? "" })));
     return ok(rows, "legal_core.legal_articles(full-scan)", rows.length ? 0.95 : 0.3, rows.length ? undefined : "لا مواد لهذا النظام");
   } catch (e) {
     return fail<Array<{ articleNumber: number; title: string; content: string }>>([], "legal_core", `تعذّر مسح النظام: ${(e as Error).message}`);
@@ -230,7 +246,7 @@ export async function scan_normative(
   opts: { systemName?: string; modality: NormativeModality; addressee?: string; limit?: number }
 ): Promise<ToolResult<LegalCoreResult[]>> {
   try {
-    const hits = await queryNormative(opts);
+    const hits = await applyEffectiveText(await queryNormative(opts));
     const mapped: LegalCoreResult[] = hits.map((h) => ({
       articleId: h.id,
       systemName: h.lawName,

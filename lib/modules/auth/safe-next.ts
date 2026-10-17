@@ -16,6 +16,8 @@ export function safeDashboardNext(raw?: string | null, fallback = "/dashboard"):
   if (raw === "/documents" || raw.startsWith("/documents/")) return raw;
   if (raw === "/admin" || raw.startsWith("/admin/")) return raw;
   if (raw === "/onboarding" || raw.startsWith("/onboarding/")) return raw;
+  // شاشة موافقة ربط موصل حكيم (MCP) — مسار ثابت بلا معاملات؛ الطلب نفسه في كوكي موقّع.
+  if (raw === "/connect/authorize") return raw;
   return fallback;
 }
 

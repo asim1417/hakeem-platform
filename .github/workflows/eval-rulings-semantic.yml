@@ -1,0 +1,61 @@
+name: Eval rulings semantic search (read-only)
+
+# البحث في الأحكام لفظيًّا وحده مقابل اللفظي + المعنى (متجهات الأسباب والمنطوق)، قراءة فقط.
+# المستودع عام: المخرج أعداد فقط ويُودَع في الفرع reports/rulings-semantic-eval.json.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/rulings-semantic-eval]
+    paths:
+      - .github/workflows/eval-rulings-search.yml
+      - scripts/eval-rulings-semantic.ts
+      - lib/modules/legal-core/rulings-search.ts
+      - lib/modules/legal-core/ruling-excerpts.ts
+
+concurrency:
+  group: eval-rulings-semantic
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="$NEON_DATABASE_URL" npm run db:generate
+      - name: "اتصال مباشر للقراءة فقط"
+        run: |
+          base=$(printf '%s' "$NEON_DATABASE_URL" | sed -E 's#-pooler\.#.#; s#([?&])(pgbouncer|channel_binding|connection_limit)=[^&]*&?#\1#g; s#[?&]$##')
+          sep='?'; case "$base" in *\?*) sep='&';; esac
+          url="${base}${sep}options=-c%20default_transaction_read_only%3Don%20-c%20statement_timeout%3D60000"
+          echo "::add-mask::$url"
+          echo "EVAL_DB_URL=$url" >> "$GITHUB_ENV"
+      - name: "التقييم (قراءة فقط)"
+        run: |
+          out=$(DATABASE_URL="$EVAL_DB_URL" npx tsx scripts/eval-rulings-semantic.ts reports/rulings-semantic-eval.json)
+          echo "::notice title=rulings semantic eval::$(printf '%s' "$out" | tail -1)"
+      - name: "إيداع الأعداد"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/rulings-semantic-eval.json
+          git diff --cached --quiet && exit 0
+          git commit -m "data(rulings): semantic eval lexical vs semantic (aggregate, read-only run ${GITHUB_RUN_ID})"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

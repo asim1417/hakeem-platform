@@ -34,7 +34,8 @@ export function createRunEngine(opts: RunEngineOptions = {}) {
     try {
       const { prisma } = await import("@/lib/prisma");
       const qTokens = tokens(normalizedQuery);
-      const rows = await prisma.legalArticle.findMany({
+      const { applyEffectiveText } = await import("@/lib/modules/legal-core/effective-text");
+      const stored = await prisma.legalArticle.findMany({
         where: {
           AND: [
             { OR: scopeSystems.map((s) => ({ lawName: { contains: s, mode: "insensitive" as const } })) },
@@ -50,6 +51,8 @@ export function createRunEngine(opts: RunEngineOptions = {}) {
         orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
         take,
       });
+      // النص الساري (المصدر الواحد) قبل التهديف والإرسال للنموذج.
+      const rows = await applyEffectiveText(stored);
 
       const scored: Array<{ a: RetrievedArticle; score: number }> = [];
       for (const r of rows) {

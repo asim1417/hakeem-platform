@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { applyEffectiveText as withEffectiveText } from "./effective-text";
 import { prisma } from "@/lib/prisma";
 import {
   type ArabicSearchType,
@@ -32,6 +33,7 @@ import { getArticleAuthorityMap } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 import { getOpenSearchConfig, openSearchHeaders } from "@/lib/modules/legal-search/providers/search-provider";
+import { EMPTY_SURFACE, inSurface, loadSearchSurface, mapToSurface } from "./search-surface";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
 
@@ -99,6 +101,13 @@ export type AdvancedLegalSearchOptions = {
   includeFacets?: boolean;
   /** عمق حساب الأوجه ضمن المجموعة المرتّبة (افتراضي: كل المجموعة). */
   facetDepth?: number;
+  /**
+   * وجه البحث (الموجة ١): «current» (الافتراضي) = النسخة السارية لكل عمل في asOf فقط؛
+   * «archive» = كل السجلات بلا وجه (للأرشيف والرابط المباشر).
+   */
+  surface?: "current" | "archive";
+  /** تاريخ الوجه YYYY-MM-DD (افتراضيًا اليوم بتوقيت الرياض). */
+  asOf?: string;
 };
 
 export type CoreFacetValue = { value: string; count: number };
@@ -299,6 +308,23 @@ async function openSearchArticleScores(query: string, take: number): Promise<Map
   return out;
 }
 
+/** مؤقّت مراحل خفيف: mark(name) يسجّل زمن المرحلة منذ السابقة؛ summary() نصّ السجل. */
+export function stageTimer(now: () => number = Date.now) {
+  const t0 = now();
+  let last = t0;
+  const parts: string[] = [];
+  return {
+    mark(name: string) {
+      const t = now();
+      parts.push(`${name}=${t - last}`);
+      last = t;
+    },
+    summary() {
+      return `ms=${now() - t0} ${parts.join(" ")}`;
+    },
+  };
+}
+
 /** يبني كلمات استعلام tsquery مفردة مُطبَّعة (نفس تطبيع search_norm) من متغيّرات البحث. */
 function buildTsQueryWords(variants: string[]): string[] {
   const words = new Set<string>();
@@ -310,9 +336,25 @@ function buildTsQueryWords(variants: string[]): string[] {
   return [...words].slice(0, 40);
 }
 
+/** استعلام الاستدعاء المفهرس ($1 = tsquery). */
+export function inDbRecallSql(cap: number): string {
+  // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
+  // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
+  // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
+  // بلا ts_rank_cd: الترتيب في القاعدة يعيد تحليل نصّ كل مادة مطابقة (to_tsvector لكل صف)،
+  // وسؤال من ثلاث كلمات يتوسّع إلى ~32 كلمة فيطابق ~16 ألف مادة → 1.5–4.5 ث. والتطبيق يعيد
+  // تهديف كل الصفوف وترتيبها على أي حال (السقف أكبر من الكوربوس)؛ ORDER BY id للثبات فقط (20 مللي ث).
+  return `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
+       FROM legal_articles
+       WHERE search_norm IS NOT NULL
+         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
+       ORDER BY id
+       LIMIT ${cap}`;
+}
+
 /**
  * استدعاء مفهرس داخل القاعدة: يطابق النصّ العربي المُطبَّع (search_norm) عبر فهرس GIN
- * (tsvector('simple')) ويرتّب بـ ts_rank_cd — بدل عشرات ILIKE على أعمدة خام. يعالج
+ * (tsvector('simple')) دون ترتيب في القاعدة (التطبيق يرتّب) — بدل عشرات ILIKE على أعمدة خام. يعالج
  * «التطبيع وقت الاستعلام» (صور الهمزة/التاء المربوطة تُطابَق) ويسرّع الاسترجاع.
  * يعيد صفوفاً خفيفة (بلا نصّ، بلا ضمّ legalSystem → systemName يسقط إلى lawName).
  * سقوط آمن إلى null عند غياب العمود/الفهرس أو أي خطأ (فيعود المسار المعجمي).
@@ -321,30 +363,27 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
   if (!words.length) return null;
   const tsq = words.join(" | ");
   try {
-    const rows = await prisma.$queryRawUnsafe<
-      Array<{
-        id: string;
-        lawName: string;
-        legalSystemId: string | null;
-        articleNumber: number;
-        title: string;
-        classification: string | null;
-        chapter: string | null;
-        keywords: string[];
-        status: string;
-      }>
-    >(
-      // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
-      // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
-      // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
-      `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
-       FROM legal_articles
-       WHERE search_norm IS NOT NULL
-         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
-       ORDER BY ts_rank_cd(to_tsvector('simple', coalesce(search_norm, '')), to_tsquery('simple', $1)) DESC
-       LIMIT ${cap}`,
-      tsq
-    );
+    // المخطِّط يختار المسح التسلسلي حين يقدّر مطابقة أغلب المواد، فيعيد تحليل نصّ كل مادة
+    // (2.6 ث مقابل 0.27 ث عبر الفهرس — مُثبَت بـ EXPLAIN). SET LOCAL محصور في هذه المعاملة.
+    const [, rows] = await prisma.$transaction([
+      prisma.$executeRawUnsafe("SET LOCAL enable_seqscan = off"),
+      prisma.$queryRawUnsafe<
+        Array<{
+          id: string;
+          lawName: string;
+          legalSystemId: string | null;
+          articleNumber: number;
+          title: string;
+          classification: string | null;
+          chapter: string | null;
+          keywords: string[];
+          status: string;
+        }>
+      >(
+        inDbRecallSql(cap),
+        tsq
+      ),
+    ]);
     return rows.map((r) => ({ ...r, legalSystem: null })) as unknown as LightArticle[];
   } catch {
     return null; // العمود/الفهرس غير موجود، أو خطأ tsquery → سقوط آمن للمسار المعجمي
@@ -372,6 +411,28 @@ function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
 
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
+  // أزمنة المراحل في السجل: لتحديد المرحلة البطيئة في الإنتاج (قراءة فقط، لا أثر على النتائج).
+  const timing = stageTimer();
+  // وجه البحث: المواد من معرّفات الوجه فقط. النظام المذكور المخفي يُحوَّل إلى وجه عمله
+  // (المخلوط «نظام التنفيذ» → م/53 اليوم → م/237 من 2026-10-28)، والمخفي بلا خلف يسقط.
+  const { surface, hiddenNames } =
+    options.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(options.asOf);
+  const requestedSystemIds = cleanList(options.systemIds);
+  const systemIds = surface.hidden.size ? mapToSurface(requestedSystemIds, surface) : requestedSystemIds;
+  if (requestedSystemIds.length && !systemIds.length) {
+    // كل الأنظمة المطلوبة خارج وجه الساري بلا خلف: لا نوسّع إلى كل المكتبة.
+    return {
+      query,
+      searchType: options.searchType ?? "contains",
+      total: 0,
+      exhaustive: true,
+      page: Math.max(Number(options.page ?? 1), 1),
+      limit: Math.min(Math.max(Number(options.limit ?? 20), 1), 200),
+      relatedTerms: [],
+      message: "النظام المطلوب ليس ساريًا اليوم؛ نصّه في الأرشيف ويُفتح من صفحته مباشرة.",
+      results: [],
+    };
+  }
   const searchType = options.searchType ?? "contains";
   const page = Math.max(Number(options.page ?? 1), 1);
   // سقف الصفحة 200 (كان 80): يتيح سحب دفعات أكبر عند تصدير «كامل النتائج».
@@ -383,11 +444,14 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ونرجّح الأنظمة المعنيّة — يحلّ حالة المفهوم الذي لا يحوي اسمُ نظامه مصطلحَ الاستعلام.
   const concept = matchConcepts(query);
   // مكنز حكيم (2,967 مفهوماً): توسيع معجمي مُسنَد لمعرّفات حقيقية — يكمّل الخريطة المنسّقة.
+  timing.mark("surface");
   const thesaurus = await matchThesaurusConcepts(query);
+  timing.mark("thesaurus");
   // توسيع رسومي: مفاهيم مرتبطة (للمصطلحات) + ترجيح المواد عبر المواضع (معتمدة، موزونة).
   const graph = thesaurus.conceptIds.length
     ? await thesaurusGraphExpansion(thesaurus.conceptIds)
     : { relatedLabels: [] as string[], articleBoosts: new Map<string, number>() };
+  timing.mark("graph");
   const preferSystems = concept.preferSystems;
   // توسيع صرفيّ من المعجم الرسميّ (hoqoqi): صيغ شقيقة بنفس الجذر. خلف علمٍ افتراضيّه OFF
   // حتى يُقاس أثره بـ eval:search قبل الاعتماد (انضباط القياس-قبل-الاعتماد).
@@ -416,7 +480,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const where: Record<string, unknown> = {
     AND: [
-      buildSystemFilter(options.systemIds),
+      buildSystemFilter(systemIds),
+      buildSurfaceFilter([...surface.hidden], [...hiddenNames]),
       buildDomainFilter(options.domain),
       buildCategoryFilter(options.categoryIds),
       buildSourceTypeFilter(options.sourceTypes),
@@ -434,13 +499,15 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   //      فلا يُنقل نصّ أيّ مادة غير معروضة (كان سابقاً يجلب نصّ 2000 مادة لكل استعلام).
   // يزيل اقتطاع المجموعة (2000/80) ويُبلّغ الإجماليّ الحقيقي بصدق.
   // ════════════════════════════════════════════════════════════════════════
-  const COMPLETE_CAP = 20000; // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة)
+  // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة). كان 20000 والكوربوس
+  // بلغ 28,606 مادة (16/10/2026)، فالسؤال الواسع كان يُقتطع.
+  const COMPLETE_CAP = 40000;
 
   // مسار الاستدعاء المفهرس داخل القاعدة (tsvector): للاستعلام النصّي البسيط بلا فلاتر بنيوية
   // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر
   // بنيوي أو تعطيله بـ IN_DB_RECALL=0 نعود للمسار المعجمي (ILIKE) دون تغيير سلوك.
   const noStructuralFilter =
-    !cleanList(options.systemIds).length &&
+    !systemIds.length &&
     !cleanList(options.categoryIds).length &&
     !options.domain &&
     (!cleanList(options.sourceTypes).length ||
@@ -451,7 +518,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   let total = 0;
   let lightRows: LightArticle[] = [];
-  const inDbRows = useInDb ? await inDbLightCandidates(buildTsQueryWords(dbFilterVariants), COMPLETE_CAP) : null;
+  const tsWords = useInDb ? buildTsQueryWords(dbFilterVariants) : [];
+  const inDbRowsRaw = useInDb ? await inDbLightCandidates(tsWords, COMPLETE_CAP) : null;
+  const inDbRows = inDbRowsRaw && surface.hidden.size ? inDbRowsRaw.filter((r) => inSurface(r, surface, hiddenNames)) : inDbRowsRaw;
   if (inDbRows) {
     // كل المطابقات (< السقف) رُجِّعت مفهرسةً — الإجماليّ الحقيقي = طولها؛ التطبيق يعيد ترتيبها.
     lightRows = inDbRows;
@@ -467,6 +536,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     total = t;
     lightRows = rows;
   }
+  timing.mark(inDbRows ? "recall_tsv" : "recall_ilike");
   // exhaustive=false فقط إن تجاوزت المطابقات السقف (مستحيل بالكوربوس الحالي) — ترقيم غير مكتمل عندئذٍ.
   const exhaustive = total <= COMPLETE_CAP;
 
@@ -486,6 +556,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): معرّفات + تشابه (بلا نصّ)،
   // فيجلب مواد قريبة بالمعنى حتى بلا تطابق لفظي. سقوط آمن إلى Map فارغة إن غاب الجدول.
+  timing.mark("occurrences");
   let semMap = new Map<string, number>();
   if (query && options.semantic && semanticSearchEnabled()) {
     semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
@@ -501,6 +572,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // إشارة OpenSearch (الخامسة): BM25 بمحلّل عربي + ترجيح التغطية الكاملة (إصلاح «فسخ»).
   // مُفعّلة افتراضياً حين يُضبَط العنقود (كِلّ-سويتش CORE_OPENSEARCH=0 أو options.openSearch=false).
   // تجلب أيضاً مواداً قوية لم يجدها المسار المعجمي داخل القاعدة (استرجاع مُسنَد). سقوط آمن تام.
+  timing.mark("semantic");
   let osMap = new Map<string, number>();
   const osEnabled = query && options.openSearch !== false && process.env.CORE_OPENSEARCH !== "0";
   if (osEnabled) {
@@ -514,6 +586,12 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
         for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
       }
     }
+  }
+
+  timing.mark("opensearch");
+  // وجه البحث: ما جلبته المسارات الإضافية (مكنز/دلالي/OpenSearch) يخضع للوجه نفسه.
+  if (surface.hidden.size) {
+    for (const [id, row] of lightById) if (!inSurface(row, surface, hiddenNames)) lightById.delete(id);
   }
 
   // التهديف الخفيف: content="" + إيقاف المقتطف/الفقرات (تُبنى لاحقاً للصفحة فقط).
@@ -584,7 +662,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const pageSlice = relevant.slice(start, start + limit);
   // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
   //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
+  timing.mark("score");
   const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+  timing.mark("page");
 
   // شفافية السلطة (عرض فقط، لا ترتيب): نُرفق عدد الأحكام المستشهِدة بكل مادة في الصفحة —
   // «مُستشهَد بها في N حكماً». عدّ حقيقي من روابط المادة↔الحكم؛ يحكم المحامي على المرجعية.
@@ -593,6 +673,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     results.length && process.env.CITING_REFERENCES !== "0"
       ? await getArticleAuthorityMap().catch(() => new Map<string, number>())
       : null;
+  timing.mark("authority");
+  console.info(
+    `[search] core ${timing.summary()} rows=${lightById.size} words=${tsWords.length} variants=${dbFilterVariants.length}`
+  );
   const displayResults = citationMap
     ? results.map((r) => {
         const count = citationMap.get(r.articleId);
@@ -632,9 +716,11 @@ async function materializePage(
 ): Promise<LegalCoreResult[]> {
   if (!pageSlice.length) return [];
   const ids = pageSlice.map((r) => r.articleId);
-  const fullRows = await prisma.legalArticle
-    .findMany({ where: { id: { in: ids } }, include: { legalSystem: { select: { id: true, name: true } } } })
-    .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>);
+  const fullRows = await withEffectiveText(
+    await prisma.legalArticle
+      .findMany({ where: { id: { in: ids } }, include: { legalSystem: { select: { id: true, name: true } } } })
+      .catch(() => [] as Awaited<ReturnType<typeof prisma.legalArticle.findMany>>)
+  );
   const fullById = new Map(fullRows.map((a) => [a.id, a]));
   return pageSlice.map((light) => {
     const full = fullById.get(light.articleId);
@@ -676,21 +762,43 @@ async function applySemanticRerank(query: string, results: LegalCoreResult[]): P
 }
 
 // بحث مباشر بالرقم للتحقق من وجود مادة مذكورة في الحكم (دقيق — لا يعتمد المطابقة النصية).
-export async function getArticlesByNumber(articleNumber: number, systemHint?: string): Promise<LegalCoreResult[]> {
+export async function getArticlesByNumber(
+  articleNumber: number,
+  systemHint?: string,
+  opts: { asOf?: string; surface?: "current" | "archive" } = {}
+): Promise<LegalCoreResult[]> {
   if (!Number.isFinite(articleNumber) || articleNumber <= 0) return [];
   const where: Record<string, unknown> = { articleNumber };
   const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
+  const { surface, hiddenNames } =
+    opts.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(opts.asOf, { includeRepealed: true });
   if (hint) {
-    where.OR = [
-      { lawName: { contains: hint, mode: "insensitive" } },
-      { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
-    ];
+    // الموجة ١: الاسم يُطابَق بالمساواة بعد التطبيع أو بأطول جوهر كامل، ثم يُحوَّل إلى وجه العمل.
+    const { loadSystemsRegistry, matchSystemsInText, normalizeSystemName } = await import("@/lib/modules/agents/substrate/systems-registry");
+    const registry = await loadSystemsRegistry().catch(() => []);
+    const core = normalizeSystemName(hint.replace(/-/g, " "));
+    const exact = registry.filter((r) => normalizeSystemName(r.name) === core);
+    const refs = exact.length ? exact : matchSystemsInText(hint.replace(/-/g, " "), registry);
+    const ids = mapToSurface(refs.map((r) => r.id), surface);
+    if (ids.length) {
+      where.legalSystemId = { in: ids };
+    } else if (refs.length) {
+      return []; // النظام المذكور خارج وجه الساري بلا خلف
+    } else {
+      where.OR = [
+        { lawName: { contains: hint, mode: "insensitive" } },
+        { legalSystem: { is: { name: { contains: hint, mode: "insensitive" } } } }
+      ];
+    }
   }
-  const articles = await prisma.legalArticle.findMany({
-    where,
-    include: { legalSystem: { select: { id: true, name: true } } },
-    take: 12
-  });
+  const surfaceFilter = buildSurfaceFilter([...surface.hidden], [...hiddenNames]);
+  const articles = await withEffectiveText(
+    await prisma.legalArticle.findMany({
+      where: Object.keys(surfaceFilter).length ? { AND: [where, surfaceFilter] } : where,
+      include: { legalSystem: { select: { id: true, name: true } } },
+      take: 12
+    })
+  );
   return articles.map((article) => mapArticleResult(article as LegalArticleWithSystem, "", "contains", [], { includeSnippets: true }));
 }
 
@@ -759,14 +867,15 @@ export async function findRelevantLegalArticles(query: string, options: { system
 }
 
 export async function getArticleFullContext(articleId: string) {
-  const article = await prisma.legalArticle.findUnique({
+  const stored = await prisma.legalArticle.findUnique({
     where: { id: articleId },
     include: { legalSystem: true }
   });
 
-  if (!article) return null;
+  if (!stored) return null;
+  const [article] = await withEffectiveText([stored]);
 
-  const related = await findRelevantLegalArticles(article.content.slice(0, 120), {
+  const related = await findRelevantLegalArticles(stored.content.slice(0, 120), {
     systemId: article.legalSystemId ?? article.lawName,
     category: article.classification ?? undefined,
     limit: 6
@@ -869,6 +978,15 @@ function buildSystemFilter(systemIds?: string[]) {
       { lawName: { contains: value, mode: "insensitive" as const } }
     ])
   };
+}
+
+// وجه البحث: استبعاد الأنظمة المخفية اليوم (بالمعرّف، وبالاسم للصفوف بلا معرّف).
+function buildSurfaceFilter(hiddenIds: string[], hiddenNames: string[]) {
+  if (!hiddenIds.length && !hiddenNames.length) return {};
+  const or: Array<Record<string, unknown>> = [];
+  if (hiddenIds.length) or.push({ legalSystemId: { in: hiddenIds } });
+  if (hiddenNames.length) or.push({ lawName: { in: hiddenNames } });
+  return { NOT: { OR: or } };
 }
 
 // فلترة اختيارية بمجال النظام المصنّف — عبر علاقة legalSystem.domain.

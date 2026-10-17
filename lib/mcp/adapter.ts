@@ -15,9 +15,10 @@
  */
 import { prisma } from "@/lib/prisma";
 import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve-law";
-import { redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { redactPII, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
+import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 
@@ -59,18 +60,24 @@ export async function searchArticles(query: string, lawId?: string, limit = 10) 
     : [];
   const byId = new Map(rows.map((r) => [r.id, r]));
 
-  const results = ranked
+  const picked = ranked
     .map((r) => byId.get(r.id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
     .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true))
-    .slice(0, limit)
-    .map((r) => ({
+    .slice(0, limit);
+  // المقتطف من النص الساري (المصدر الواحد)، والملغاة تُرجع سطر الإلغاء.
+  const effective = await effectiveArticleTexts(picked);
+  const results = picked.map((r) => {
+    const e = effective.get(r.id);
+    return {
       article_id: r.id,
       law: r.legalSystem?.name ?? r.lawName,
       law_id: r.legalSystem?.id ?? r.legalSystemId,
       article_number: r.articleNumber,
-      snippet: snippet(r.content),
-    }));
+      snippet: snippet(e?.text ?? r.content),
+      repealed: e?.repealed ?? false,
+    };
+  });
 
   return { query, count: results.length, results };
 }
@@ -82,6 +89,7 @@ export async function getArticle(articleId: string) {
     include: { legalSystem: { select: { id: true, name: true } } },
   });
   if (!a) return { error: "المادة غير موجودة" };
+  const e = (await effectiveArticleTexts([{ id: a.id, content: a.content }])).get(a.id);
   return {
     article_id: a.id,
     law: a.legalSystem?.name ?? a.lawName,
@@ -89,8 +97,16 @@ export async function getArticle(articleId: string) {
     issued_by: a.royalDecree ?? null, // أداة الإصدار على مستوى المادة (المرسوم الملكي)
     issued_date_h: null, // لا يوجد تاريخ هجري منظّم في المخطط الحالي
     article_number: a.articleNumber,
-    status: a.status ?? null,
-    text: a.content,
+    // status بقيمه المعهودة (سارية/معدّلة/ملغاة)؛ verified_status = حالة سجل التحقق.
+    status: e?.repealed ? "ملغاة" : e?.source === "unit_version" ? "معدّلة" : a.status ?? null,
+    verified_status: e?.status ?? null,
+    repealed: e?.repealed ?? false,
+    // النص الساري اليوم (unit_version)، أو سطر الإلغاء لمادة ملغاة.
+    text: e?.text ?? a.content,
+    text_basis: e?.basis ?? null,
+    valid_from: e?.validFrom ? e.validFrom.slice(0, 10) : null,
+    evidence_instrument: e?.evidenceInstrument ?? null,
+    evidence_url: e?.evidenceUrl ?? null,
   };
 }
 
@@ -193,54 +209,25 @@ export async function expandTerms(term: string) {
   };
 }
 
-// ٦) البحث في الأحكام — يعيد استخدام محرّك البحث الهجين (نوع «ruling»).
+// ٦) البحث في الأحكام — مسار مستقلّ في judicial_cases (searchRulingsDirect)، لا الهجين المشترك.
+// كان الهجين يضع الأحكام في منافسة مع المواد والمبادئ على ٣٠ خانة، والحكم غير المُراجَع يأخذ
+// درجة أدنى من أي مادة، فتخرج الأحكام كليًّا لألفاظ شائعة مثل «فسخ» و«عقد».
+// والمقتطف صار من موضع المطابقة في الأسباب أو المنطوق، لا أول ٤٠٠ حرف (الديباجة).
 export async function searchRulings(query: string, court?: string, yearH?: number, limit = 10) {
-  const res = await hybridSearch({
-    q: query,
-    limit: Math.min(limit * 4, 30),
-    context: court ? { court } : undefined,
-  }).catch(() => null);
-  const ranked = (res?.results ?? []).filter((r) => r.type === "ruling");
-
-  const ids = ranked.map((r) => r.id);
-  const rows = ids.length
-    ? await prisma.judicialCase.findMany({
-        where: { id: { in: ids } },
-        select: {
-          id: true,
-          caseNo: true,
-          decisionNo: true,
-          court: true,
-          decisionDate: true,
-          decisionDateText: true,
-          judgmentText: true,
-        },
-      })
-    : [];
-  const byId = new Map(rows.map((r) => [r.id, r]));
-
-  /** استخراج سنة هجرية (٤ خانات) من نصّ التاريخ إن وُجد. */
-  const hijriYear = (text?: string | null): number | undefined => {
-    if (!text) return undefined;
-    const m = text.match(/1[0-4]\d{2}/); // نطاق هجري معقول (1000–1499)
-    return m ? Number.parseInt(m[0], 10) : undefined;
-  };
-
-  const results = ranked
-    .map((r) => byId.get(r.id))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .filter((r) => (court ? (r.court ?? "").includes(court) : true))
-    .filter((r) => (yearH ? hijriYear(r.decisionDateText) === yearH : true))
-    .slice(0, limit)
-    .map((r) => ({
-      ruling_id: r.id,
-      case_number: r.decisionNo ?? r.caseNo ?? null,
-      court: r.court ?? null,
-      year_h: hijriYear(r.decisionDateText) ?? null,
-      snippet: snippet(r.judgmentText),
-    }));
-
-  return { query, count: results.length, results };
+  const r = await searchRulingsDirect({ query, court, yearH, limit }).catch(() => null);
+  const results = (r?.hits ?? []).map((h) => ({
+    ruling_id: h.id,
+    case_number: h.decisionNo ?? h.caseNo ?? null,
+    court: h.court ?? null,
+    year_h: h.hijriYear ?? null,
+    snippet: h.snippet,
+    matched_in: h.matchedIn, // reasons | disposition | defense | claims | header …
+    matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
+    disposition: h.disposition, // بداية المنطوق
+    parts: h.parts.map((p) => ({ type: p.type, start: p.start, end: p.end })), // لجلب جزء بعينه عبر hakeem_get_ruling
+  }));
+  // total مسقوف بـ٥٠٠٠ للألفاظ الشائعة؛ total_is_lower_bound يعني «أكثر من ذلك».
+  return { query, count: results.length, total: r?.total ?? 0, total_is_lower_bound: r?.totalCapped ?? false, results };
 }
 
 // ٧) حارس الإحالات — التحقق قبل العزو (يمنع اختلاق المواد).
@@ -271,29 +258,44 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
   if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
 
-  const flags = citationFlagsFromVerification(await latestVerification("unit", article.id));
+  const [verification, effective] = await Promise.all([
+    latestVerification("unit", article.id),
+    effectiveArticleTexts([{ id: article.id, content: article.content }]),
+  ]);
+  const flags = citationFlagsFromVerification(verification);
+  const e = effective.get(article.id);
+  const actualText = e?.text ?? article.content;
+  const amended = e?.source === "unit_version";
+  const inForce = flags.inForce || amended;
 
   if (claimedText) {
-    // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة.
+    // مطابقة متسامحة: تتجاوز التشكيل والمسافات المتغيّرة. المرجع هو النص الساري.
     const norm = (s: string) => s.replace(/[ً-ٟ\s]+/g, "");
-    const match = norm(article.content ?? "").includes(norm(claimedText));
+    const match = !flags.repealed && norm(actualText ?? "").includes(norm(claimedText));
+    const matchesOld = !match && amended && norm(article.content ?? "").includes(norm(claimedText));
     return {
-      verdict: match
-        ? (flags.repealed ? "الإحالة صحيحة والنص مطابق — لكن المادة ملغاة" : flags.inForce ? "الإحالة صحيحة والنص مطابق" : "الإحالة صحيحة والنص مطابق — الحالة قيد التحقق")
-        : "المادة موجودة لكن النص المنسوب غير مطابق",
+      verdict: flags.repealed
+        ? (norm(article.content ?? "").includes(norm(claimedText)) ? "النص مطابق للنص المحفوظ — لكن المادة ملغاة" : "المادة ملغاة والنص المنسوب غير مطابق")
+        : match
+          ? (inForce ? "الإحالة صحيحة والنص مطابق" : "الإحالة صحيحة والنص مطابق — الحالة قيد التحقق")
+          : matchesOld
+            ? "النص المنسوب هو نص المادة قبل تعديلها — النص الساري مختلف"
+            : "المادة موجودة لكن النص المنسوب غير مطابق",
       law: resolvedLaw,
       article_number: articleNumber,
       repealed: flags.repealed,
-      status: flags.statusLabel,
-      actual_text: article.content,
+      status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
+      actual_text: actualText,
+      text_basis: e?.basis ?? null,
     };
   }
   return {
-    verdict: flags.repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : flags.inForce ? "الإحالة صحيحة" : "الإحالة صحيحة — الحالة قيد التحقق",
+    verdict: flags.repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : inForce ? "الإحالة صحيحة" : "الإحالة صحيحة — الحالة قيد التحقق",
     law: resolvedLaw,
     article_number: articleNumber,
     repealed: flags.repealed,
-    status: flags.statusLabel,
-    actual_text: article.content,
+    status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
+    actual_text: actualText,
+    text_basis: e?.basis ?? null,
   };
 }

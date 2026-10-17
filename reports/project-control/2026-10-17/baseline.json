@@ -1,0 +1,628 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-10-17 00:27:06 UTC",
+  "timezone": "Asia/Riyadh",
+  "scope": "Read-only baseline for project coordination. Aggregate counts are not a legal completeness certification or an end-to-end service test.",
+  "github": {
+    "repository": "asim1417/hakeem-platform",
+    "base_branch": "main",
+    "base_sha": "e3cd34be85ace1f84b75c3f9263d5671932e497e",
+    "branch_count_before_this_pr": 368,
+    "open_pr_count_before_this_pr": 31,
+    "open_issue_count": 1,
+    "open_prs": [
+      {
+        "number": 720,
+        "title": "docs(legal): محضر مواءمة حقن الهيئة مع القاعدة القائمة",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/720",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/injection-alignment-record-28d4",
+        "head_sha": "2e3038967daa00e7bb0213fb7bc134c8a8d36257",
+        "base_branch": "cursor/setup-cloud-agent-environment-28d4",
+        "updated_at": "2026-10-16T14:08:59Z"
+      },
+      {
+        "number": 704,
+        "title": "fix(rulings): حجب أرقام الهوية والجوال المتبقية في فهرس search_norm (هندية ولاتينية)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/704",
+        "state": "open",
+        "draft": false,
+        "head_branch": "claude/rulings-search-norm-redact",
+        "head_sha": "616143a589fe5a4282e70bef87a42b28edddff78",
+        "base_branch": "main",
+        "updated_at": "2026-10-16T00:53:05Z"
+      },
+      {
+        "number": 703,
+        "title": "audit(rulings): phase A read-only audit tooling + code-level diagnosis report",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/703",
+        "state": "open",
+        "draft": false,
+        "head_branch": "aman/rulings-research-layer",
+        "head_sha": "71c89b1a9c85ab54ea06d704cd400c1efa3a89d0",
+        "base_branch": "main",
+        "updated_at": "2026-10-16T01:36:42Z"
+      },
+      {
+        "number": 702,
+        "title": "مقارنة قاعدة الموقع بحزمة الهيئة ومشروع المواءمة",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/702",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/boe-hakeem-alignment-28d4",
+        "head_sha": "24f2b7cdbaf6ce2bcb061747498a8841a2e73ed3",
+        "base_branch": "claude/search-surface-wave1-law-card",
+        "updated_at": "2026-10-02T13:19:30Z"
+      },
+      {
+        "number": 685,
+        "title": "الموجة ١: وجه البحث الساري وبطاقة النظام ونص النظام",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/685",
+        "state": "open",
+        "draft": true,
+        "head_branch": "claude/search-surface-wave1-law-card",
+        "head_sha": "ca1e1af87fdf6bd9c510b9a41b36058d1ef54dab",
+        "base_branch": "main",
+        "updated_at": "2026-09-28T12:14:33Z"
+      },
+      {
+        "number": 671,
+        "title": "تقرير تشخيص البحث الصرفي والمتجهي",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/671",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/search-diagnostic-report-f1d4",
+        "head_sha": "7e8d8cdc8dc309def30f71d992e3cd280995f57c",
+        "base_branch": "main",
+        "updated_at": "2026-09-26T19:14:04Z"
+      },
+      {
+        "number": 666,
+        "title": "ستة أنظمة بقرار المالك، وحُقنت الإضافة على الإنتاج",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/666",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/owner-approved-laws-28d4",
+        "head_sha": "794c227c48a6f605fe011b102cb1d4f572572a31",
+        "base_branch": "main",
+        "updated_at": "2026-09-28T11:52:04Z"
+      },
+      {
+        "number": 664,
+        "title": "توجيه السجلات المخلوطة إلى عملين مستقلين حسب التاريخ (فرع تجريبي)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/664",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/split-mixed-records-28d4",
+        "head_sha": "552f6037208201c9742e355c5da374f2d5b2ee45",
+        "base_branch": "main",
+        "updated_at": "2026-09-25T15:37:00Z"
+      },
+      {
+        "number": 662,
+        "title": "Judgment display sanitize + search_norm morph FTS",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/662",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/judgment-text-sanitize-dryrun-9926",
+        "head_sha": "c6f5fe655a317f6edfa01a7fb96d0daabdc3b8a2",
+        "base_branch": "main",
+        "updated_at": "2026-09-26T18:52:29Z"
+      },
+      {
+        "number": 652,
+        "title": "fix(legal-db): إصلاح انزياح ترقيم نظام المعاملات المدنية + تحصين مصدر الأنظمة",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/652",
+        "state": "open",
+        "draft": true,
+        "head_branch": "fix/legal-db-source-integrity",
+        "head_sha": "9396b63db05d6e12bc2795cb8c64ba12533655b5",
+        "base_branch": "aman/legal-db-update",
+        "updated_at": "2026-09-25T05:01:42Z"
+      },
+      {
+        "number": 651,
+        "title": "Add Cloud Agent development environment",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/651",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/setup-cloud-agent-environment-28d4",
+        "head_sha": "56c99a1e8257264e23911b5edfe9fe09fdfed063",
+        "base_branch": "main",
+        "updated_at": "2026-09-25T03:42:14Z"
+      },
+      {
+        "number": 650,
+        "title": "audit(legal-db): استئناف التدقيق — استعادة الحزمة وأمان التضمينات",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/650",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/legal-db-audit-resume-2351",
+        "head_sha": "9a3c239c5ee352a578eebafbe8ad2651d4d35345",
+        "base_branch": "aman/legal-db-update",
+        "updated_at": "2026-09-25T02:42:24Z"
+      },
+      {
+        "number": 631,
+        "title": "feat(legal-db): وكيل تحديث قاعدة الأنظمة — طبقة الوحدات + القارئ + الالتقاط (P1–P4)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/631",
+        "state": "open",
+        "draft": false,
+        "head_branch": "aman/legal-db-update",
+        "head_sha": "cd495b9f8ac5eb6034620c2d7f8a6856449f8c8d",
+        "base_branch": "main",
+        "updated_at": "2026-09-22T12:57:32Z"
+      },
+      {
+        "number": 599,
+        "title": "feat(composer): Capability Registry — ربط الخدمات دون ابتلاعها",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/599",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/composer-capability-registry-da55",
+        "head_sha": "f6a0114e8976ecbea6f19b6f626e91a4de08ef85",
+        "base_branch": "main",
+        "updated_at": "2026-08-01T15:29:50Z"
+      },
+      {
+        "number": 591,
+        "title": "docs: add complete Hakeem project profile",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/591",
+        "state": "open",
+        "draft": true,
+        "head_branch": "agent/complete-project-profile-2026-07-31",
+        "head_sha": "f934d85158fc1acbf7d898e6e62cf03243a03c9e",
+        "base_branch": "main",
+        "updated_at": "2026-07-30T23:19:53Z"
+      },
+      {
+        "number": 590,
+        "title": "feat(home): concise product landing, visual tour, and direct Google entry",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/590",
+        "state": "open",
+        "draft": true,
+        "head_branch": "agent/public-landing-page",
+        "head_sha": "ae06a09e18368a0890c3accd1f0e4ec8499196c5",
+        "base_branch": "main",
+        "updated_at": "2026-07-30T22:45:02Z"
+      },
+      {
+        "number": 577,
+        "title": "تدقيق جاهزية الإطلاق: إصلاحات أمنية P0 + تقارير GO/NO-GO",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/577",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/pre-launch-audit-ff97",
+        "head_sha": "9486df3934946422398ee8c705ff289d8e10b477",
+        "base_branch": "main",
+        "updated_at": "2026-07-29T07:32:45Z"
+      },
+      {
+        "number": 548,
+        "title": "HKM-DOCUMENTS-UPGRADE-004 PR-2.5: التحصين التشغيلي لمنصة الوثائق",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/548",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/documents-pr2-5-hardening-dfcc",
+        "head_sha": "848d55859556f0e18bbd03e28f3d245799236dd9",
+        "base_branch": "main",
+        "updated_at": "2026-07-28T04:47:56Z"
+      },
+      {
+        "number": 537,
+        "title": "Rasd: Local Saudi Execution Bridge",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/537",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/rasd-local-bridge-97b5",
+        "head_sha": "dd011f3e96fc8712fa3a8c5ab9c05d9eeaf40ecd",
+        "base_branch": "cursor/rasd-legislative-monitoring-97b5",
+        "updated_at": "2026-07-28T02:59:35Z"
+      },
+      {
+        "number": 519,
+        "title": "Rasd: Saudi runner playbook + staging harness — PRODUCTION_NOT_READY",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/519",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/rasd-production-integration-97b5",
+        "head_sha": "a713877bb363736be0cfc720f7c0319f3e333401",
+        "base_branch": "main",
+        "updated_at": "2026-07-27T23:07:15Z"
+      },
+      {
+        "number": 513,
+        "title": "Rasd: NCAR Connector Live Verification",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/513",
+        "state": "open",
+        "draft": true,
+        "head_branch": "feat/rasd-ncar-connector-live-verification",
+        "head_sha": "44f5350688a1cf79db538fcc64838b5c293b6039",
+        "base_branch": "cursor/rasd-legislative-monitoring-97b5",
+        "updated_at": "2026-07-27T19:51:15Z"
+      },
+      {
+        "number": 512,
+        "title": "Rasd: BOE Connector Live Verification",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/512",
+        "state": "open",
+        "draft": true,
+        "head_branch": "feat/rasd-boe-connector-live-verification",
+        "head_sha": "9e3780a1021fbf9bb9c0a2ab050d4134d09b8b40",
+        "base_branch": "cursor/rasd-legislative-monitoring-97b5",
+        "updated_at": "2026-07-27T19:49:49Z"
+      },
+      {
+        "number": 511,
+        "title": "Rasd: Legislative Monitoring Engine Core (scope-frozen)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/511",
+        "state": "open",
+        "draft": false,
+        "head_branch": "cursor/rasd-legislative-monitoring-97b5",
+        "head_sha": "0a3e6983fa179904386af9e59e613aa4e0141397",
+        "base_branch": "main",
+        "updated_at": "2026-07-27T19:44:06Z"
+      },
+      {
+        "number": 506,
+        "title": "docs: مراجعة 2 لتصميم تخزين الجلسات (قبل التنفيذ)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/506",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/session-phase1-storage-rev2-e7e2",
+        "head_sha": "b7b3006280d3adcafce20060c2445dfd01ee7d99",
+        "base_branch": "main",
+        "updated_at": "2026-07-25T05:45:37Z"
+      },
+      {
+        "number": 505,
+        "title": "docs: المرحلة الأولى — تصميم تخزين محرك الجلسات (بلا تنفيذ)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/505",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/session-phase1-storage-design-e7e2",
+        "head_sha": "b8cc5bff1e9dc91ec51ff9ee4dab8dba5f0f3a55",
+        "base_branch": "main",
+        "updated_at": "2026-07-25T05:41:47Z"
+      },
+      {
+        "number": 504,
+        "title": "docs: جرد المرحلة صفر المحدود — اسأل حكيم والمعاون",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/504",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/session-phase0-ask-ja-report-e7e2",
+        "head_sha": "14a000df8dbe7829c9a4af03fc16d803f932823f",
+        "base_branch": "main",
+        "updated_at": "2026-07-25T05:32:03Z"
+      },
+      {
+        "number": 503,
+        "title": "docs: تقرير جرد المرحلة صفر لنظام الجلسات",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/503",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/session-phase0-inventory-e7e2",
+        "head_sha": "bfcb52ec185632264be2d5188e87594eb5d42996",
+        "base_branch": "main",
+        "updated_at": "2026-07-25T04:59:14Z"
+      },
+      {
+        "number": 486,
+        "title": "fix(admin): إبراز نافذة المنصة حتى يظهر تصميم العميل للسوبر",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/486",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/fix-platform-window-visible-9b97",
+        "head_sha": "7241fba66a2e54520fa8ce2115c6bd187b2aa03c",
+        "base_branch": "main",
+        "updated_at": "2026-07-24T00:31:37Z"
+      },
+      {
+        "number": 366,
+        "title": "صفحات الخطط والتسعير ولوحة الفوترة — مواءمة بلا كسر",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/366",
+        "state": "open",
+        "draft": true,
+        "head_branch": "cursor/plans-billing-dashboard-9b97",
+        "head_sha": "e29f17f92a7ae136c313300546a3f4ec94ac7a74",
+        "base_branch": "main",
+        "updated_at": "2026-07-18T17:06:38Z"
+      },
+      {
+        "number": 343,
+        "title": "feat(cards): طبقة استخراج بطاقات الأحكام التجارية — عيّنة الألف (داخلية، مُقفلة)",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/343",
+        "state": "open",
+        "draft": false,
+        "head_branch": "data/judgment-cards-sample",
+        "head_sha": "1fac28b1a555018a32a106598f798f3d3afa039b",
+        "base_branch": "main",
+        "updated_at": "2026-07-17T10:03:46Z"
+      },
+      {
+        "number": 62,
+        "title": "feat(thesaurus): دمج المعجم النظامي الرسمي في قاعدة بيانات حكيم والنواة القانونية",
+        "url": "https://github.com/asim1417/hakeem-platform/pull/62",
+        "state": "open",
+        "draft": false,
+        "head_branch": "claude/hakim-database-entry-1f2o0n",
+        "head_sha": "12daabfd9828b6fd9e98ab2549ce698e8cf4e734",
+        "base_branch": "main",
+        "updated_at": "2026-07-03T13:42:44Z"
+      }
+    ],
+    "open_issues": [
+      {
+        "number": 654,
+        "title": "P0/P1: إصلاح أعطال الإنتاج وNeon في حكيم — تدقيق 25-09-2026",
+        "url": "https://github.com/asim1417/hakeem-platform/issues/654",
+        "state": "open",
+        "updated_at": "2026-09-25T05:05:01Z"
+      }
+    ]
+  },
+  "neon": {
+    "project_id": "misty-base-66693229",
+    "branch_id": "br-rapid-salad-aq782ea2",
+    "branch_name": "production",
+    "query_file": "neon-readonly.sql",
+    "inventory": {
+      "cards": 505,
+      "rulings": 51105,
+      "systems": 1146,
+      "articles": 28606,
+      "boe_laws": 530,
+      "database": "neondb",
+      "surfaces": 50,
+      "versions": 309,
+      "observed_at": "2026-10-17T00:26:18.840557+00:00",
+      "diff_verdicts": [
+        {
+          "n": 6532,
+          "verdict": "identical"
+        },
+        {
+          "n": 304,
+          "verdict": "missing_in_boe"
+        },
+        {
+          "n": 33,
+          "verdict": "missing_in_hakeem"
+        },
+        {
+          "n": 264,
+          "verdict": "normalization_only"
+        },
+        {
+          "n": 136,
+          "verdict": "unnumbered_unit"
+        },
+        {
+          "n": 7267,
+          "verdict": "whitespace_only"
+        },
+        {
+          "n": 1878,
+          "verdict": "wording"
+        }
+      ],
+      "empty_articles": 0,
+      "orphan_articles": 0,
+      "owner_decisions": 0,
+      "amendment_review": [
+        {
+          "n": 1143,
+          "needs_review": false
+        },
+        {
+          "n": 676,
+          "needs_review": true
+        }
+      ],
+      "boe_matched_laws": 497,
+      "count_mismatches": [
+        {
+          "name": "النظام التجاري ( نظام المحكمة التجارية)",
+          "actual": 629,
+          "stored": 630
+        },
+        {
+          "name": "نظام التقاعد العسكري",
+          "actual": 35,
+          "stored": 36
+        },
+        {
+          "name": "نظام التقاعد المدني",
+          "actual": 39,
+          "stored": 41
+        },
+        {
+          "name": "نظام التنفيذ",
+          "actual": 98,
+          "stored": 65
+        },
+        {
+          "name": "نظام الخدمة المدنية",
+          "actual": 36,
+          "stored": 44
+        },
+        {
+          "name": "نظام العمل",
+          "actual": 250,
+          "stored": 248
+        },
+        {
+          "name": "نظام خدمة الأفراد",
+          "actual": 73,
+          "stored": 76
+        }
+      ],
+      "boe_unmatched_laws": 33,
+      "diff_computed_range": {
+        "latest": "2026-10-16T13:54:11.971063+00:00",
+        "earliest": "2026-10-16T13:54:11.971063+00:00"
+      },
+      "missing_search_norm": 353,
+      "nonpositive_numbers": 0,
+      "unmatched_boe_names": [
+        "الترتيبات التنظيمية للمركز السعودي لكود البناء",
+        "النظام الأساس لمستشفى الملك خالد التخصصي للعيون ومركز الأبحاث (مؤسسة مستقلة ذات طبيعة خاصة وغير هادفة للربح)",
+        "النظام العام للبيئة",
+        "تنظيم الفحص الفني الدوري للمركبات 1431هـ",
+        "تنظيم المؤسسة العامة للري 1439هـ",
+        "تنظيم المعهد الوطني للتطوير المهني التعليمي",
+        "تنظيم الهيئة السعودية لتسويق الاستثمار",
+        "تنظيم الهيئة العامة للأمن الغذائي",
+        "تنظيم الهيئة العامة للرياضة",
+        "تنظيم الهيئة العامة للطيران المدني 1426هـ",
+        "تنظيم الهيئة العامة للمساحة",
+        "تنظيم الهيئة الوطنية لإدارة الطوارئ",
+        "تنظيم هيئة تنظيم المياه والكهرباء ( الهيئة السعودية لتنظيم الكهرباء )",
+        "قواعد عمل اللجان الإشرافية للقطاعات المستهدفة بالتخصيص ومهماتها1438هـ",
+        "لائحة الغرامات والجزاءات عن المخالفات البلدية",
+        "نظام (قانون) التنظيم الصناعي الموحد لدول مجلس التعاون لدول الخليج العربية",
+        "نظام الاتجار بالكائنات الفطرية المهددة بالانقراض و منتجاتها",
+        "نظام التأمينات الاجتماعية 1421هـ",
+        "نظام التنفيذ 1433هـ",
+        "نظام الرقابة المالية",
+        "نظام الضمان الاجتماعي 1427هـ",
+        "نظام الطوارئ",
+        "نظام الكهرباء1426هـ",
+        "نظام المراعي والغابات",
+        "نظام المناطق المحمية للحياة الفطرية",
+        "نظام المنشآت والمستحضرات الصيدلانية",
+        "نظام المواد البترولية والبتروكيماوية",
+        "نظام الهيئة الوطنية لحماية الحياة الفطرية وإنمائها",
+        "نظام تصنيف المقاولين1427هـ",
+        "نظام رسوم الأراضي البيضاء والعقارات الشاغرة",
+        "نظام صيد الحيوانات والطيور البرية",
+        "نظام مؤسسة النقد العربي السعودي",
+        "نظام مكافحة التستر1425هـ"
+      ],
+      "missing_index_by_law": [
+        {
+          "n": 98,
+          "lawName": "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/53) وتاريخ 1433/8/13هـ"
+        },
+        {
+          "n": 65,
+          "lawName": "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/237) وتاريخ 1447/11/03هـ"
+        },
+        {
+          "n": 37,
+          "lawName": "نظام سلامة المنتجات"
+        },
+        {
+          "n": 29,
+          "lawName": "نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/83) وتاريخ 1446/03/19هـ"
+        },
+        {
+          "n": 24,
+          "lawName": "نظام المواصفات والجودة"
+        },
+        {
+          "n": 23,
+          "lawName": "نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/83) وتاريخ 1446/03/19هـ"
+        },
+        {
+          "n": 20,
+          "lawName": "نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/15) وتاريخ 1420/8/12هـ"
+        },
+        {
+          "n": 20,
+          "lawName": "نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/1) وتاريخ 1416/2/21هـ"
+        },
+        {
+          "n": 19,
+          "lawName": "تنظيم هيئة الاتصالات والفضاء والتقنية"
+        },
+        {
+          "n": 18,
+          "lawName": "نظام إدارة المواد الكيميائية"
+        }
+      ],
+      "verification_summary": [
+        {
+          "n": 300,
+          "object_type": "unit",
+          "verified_status": "ساري"
+        },
+        {
+          "n": 130,
+          "object_type": "unit",
+          "verified_status": "صادر لم يسرِ بعد"
+        },
+        {
+          "n": 219,
+          "object_type": "unit",
+          "verified_status": "مستبدل"
+        },
+        {
+          "n": 306,
+          "object_type": "unit",
+          "verified_status": "ملغاة"
+        },
+        {
+          "n": 443,
+          "object_type": "work",
+          "verified_status": "ساري"
+        },
+        {
+          "n": 3,
+          "object_type": "work",
+          "verified_status": "سجل مخلوط — لا يُعرض"
+        },
+        {
+          "n": 2,
+          "object_type": "work",
+          "verified_status": "صادر لم يسرِ بعد"
+        },
+        {
+          "n": 12,
+          "object_type": "work",
+          "verified_status": "مستبدل"
+        },
+        {
+          "n": 35,
+          "object_type": "work",
+          "verified_status": "ملغى"
+        },
+        {
+          "n": 1,
+          "object_type": "work",
+          "verified_status": "ملغى مع بقاء أحكام محددة مؤقتًا"
+        }
+      ],
+      "systems_with_preamble": 990,
+      "transaction_read_only": "on",
+      "duplicate_text_summary": {
+        "groups": 13,
+        "extra_rows": 13
+      },
+      "duplicate_number_groups": 0,
+      "systems_without_articles": 83
+    }
+  },
+  "vercel": {
+    "project": "hakeem-platform",
+    "deployment_id": "dpl_AzQENuVLaCDPHAhmKcWEBYEdnAoV",
+    "target": "production",
+    "state": "READY",
+    "git_branch": "main",
+    "git_sha": "e3cd34be85ace1f84b75c3f9263d5671932e497e",
+    "created_at": "2026-10-16T13:46:40.907Z",
+    "inspector_url": "https://vercel.com/asim1417s-projects/hakeem-platform/AzQENuVLaCDPHAhmKcWEBYEdnAoV",
+    "end_to_end_tested": false
+  },
+  "limitations": [
+    "Only current GitHub metadata, selected repository documents, aggregate Neon queries and Vercel deployment metadata were checked.",
+    "An open PR does not prove its changes are absent from main or production: cherry-picks, parallel changes and manual data operations require reconciliation.",
+    "boe.diff is a stored comparison computed at diff_computed_range, not a newly computed legal text comparison.",
+    "needs_review=false does not alone prove an owner approval, correct legal interpretation, or publication.",
+    "No plaintext personal case records, credentials or environment variable values were fetched for the baseline.",
+    "Existing agent conversations, local unpushed work, all branch diffs, full migration history and authenticated site journeys are not audited.",
+    "Baseline is an immutable historical snapshot; future agents should add a dated snapshot and update the ledger rather than replace these results."
+  ]
+}
