@@ -2,6 +2,7 @@ name: Verify law fingerprints (read-only) — مطابقة بصمات الأنظ
 
 # HKM-028: يقارن مواد كل نظام في data/law-fingerprints/*.json بقاعدة Neon (قراءة فقط):
 # انزياح الترقيم، مادة ناقصة أو زائدة أو مكررة، وتغيّر العنوان أو النص. المخرجات أعداد وأرقام مواد فقط.
+# ثم تدقيق ترقيم كل الأنظمة: رقم المادة مقابل العدد الترتيبي في عنوانها (أسماء الأنظمة وأعداد فقط).
 # تشغيل يدوي فقط؛ يُشغَّل بعد أي حقن أو إعادة استيراد يمس نظامًا له بصمة.
 
 on:
@@ -43,3 +44,15 @@ jobs:
           set -o pipefail
           DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run -s audit:law-fingerprint | tee out.txt
           echo "::notice title=law fingerprints::$(tail -1 out.txt)"
+      - name: "تدقيق ترقيم كل الأنظمة (قراءة فقط)"
+        if: always()
+        run: |
+          set -o pipefail
+          DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run -s audit:article-numbering -- --json numbering.json | tee numbering.txt
+          echo "::notice title=article numbering::$(tail -1 numbering.txt)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: article-numbering
+          path: numbering.json
+          if-no-files-found: ignore
