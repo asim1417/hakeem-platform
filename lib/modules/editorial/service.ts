@@ -1,11 +1,36 @@
-// دورة حياة التغيير في مكتب التحرير: مسودة ← فحص ← طابور ← اعتماد بمعتمِد غير المُعِدّ ← نشر ذري ← تراجع.
+// دورة حياة التغيير في مكتب التحرير: مسودة ← فحص ← طابور ← اعتماد بمعتمِد (أو أكثر) غير المُعِدّ ← نشر ذري ← تراجع.
 // النشر يكتب صفوفًا جديدة في جداول السند (verification) ولا يغيّر قيمة قائمة.
-import { randomUUID } from "node:crypto";
-import { canProposeIn, canRequestRevertIn, canReviewIn } from "./access";
-import { deskTransaction } from "./desk-tx";
-import { policyFor, policySnapshot, type EditorialConfig } from "./policy";
+// كل فعل يبني الفاعل من تكليفه الحالي داخل معاملته (desk-tx.ts)، فالسحب يسري فورًا.
+import { canProposeIn, canPublishIn, canRequestRevertIn, canReviewIn } from "./access";
 import { fingerprint, recordAudit, sourceRankFromUrl } from "./audit";
+import {
+  approvalState,
+  assertPayloadUnchanged,
+  assertSetScope,
+  auditDenied,
+  changesOf,
+  insertDecision,
+  isAuthorOf,
+  isIntakeSet,
+  itemKindOf,
+  lockChangeSet,
+  newId,
+  openChangeSetFor,
+  sealPayload,
+  setAppliedRef,
+  setPolicies,
+  setStatus,
+  withOpenChangeDetail,
+  type ApprovalState,
+  type ChangeRow,
+  type ChangeSetRow,
+  type WorkStatusSnapshot,
+} from "./core";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
+import { deskTransaction } from "./desk-tx";
+import { applyIntakeSet } from "./intake-apply";
+import { assertDeskIntegrity } from "./integrity";
+import { policyFor } from "./policy";
 import {
   EditorialError,
   WORK_STATUSES,
@@ -14,65 +39,13 @@ import {
   type EditorialActor,
   type EditorialStatus,
   type EvidenceInput,
-  type ItemKind,
 } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
-import { assertDeskIntegrity } from "./integrity";
-import { payloadHash } from "./payload";
 
-// ── أنواع الصفوف ──────────────────────────────────────────────────────────────
-
-export interface ChangeSetRow {
-  id: string;
-  title: string;
-  kind: string;
-  author_id: string | null;
-  author_kind: string;
-  author_agent: string | null;
-  status: EditorialStatus;
-  reverts_change_set_id: string | null;
-  payload_hash: string | null;
-  idempotency_key: string | null;
-  created_at: Date;
-  published_at: Date | null;
-}
-
-export interface ChangeRow {
-  id: string;
-  change_set_id: string;
-  target_type: string;
-  target_id: string;
-  op: string;
-  before: WorkStatusSnapshot | null;
-  after: { status: string; note?: string | null; revert_of?: string | null } | null;
-  evidence_instrument: string | null;
-  evidence_url: string | null;
-  evidence_quote: string | null;
-  source_rank: number | null;
-  source_ref: string | null;
-  domain: string;
-  applied_ref: string | null;
-  author_id: string | null;
-  author_kind: string;
-  author_agent: string | null;
-  status: EditorialStatus;
-  checks: Record<string, unknown>;
-  created_at: Date;
-}
-
-/** لقطة آخر سجل تحقق للنظام وقت القراءة. */
-export interface WorkStatusSnapshot {
-  verification_id: string | null;
-  status: string | null;
-  verified_at: string | null;
-  evidence_instrument?: string | null;
-  evidence_url?: string | null;
-  evidence_quote?: string | null;
-}
+export type { ChangeRow, ChangeSetRow, WorkStatusSnapshot } from "./core";
+export { insertDecision, itemKindOf } from "./core";
 
 // ── أدوات داخلية ──────────────────────────────────────────────────────────────
-
-const ID = () => randomUUID();
 
 function invalid(message: string, detail?: Record<string, unknown>): never {
   throw new EditorialError("INVALID_INPUT", message, detail);
@@ -110,7 +83,7 @@ export function validateEvidence(evidence: EvidenceInput | undefined): EvidenceI
   return { instrument, url, quote };
 }
 
-async function latestWorkVerification(db: SqlClient, workId: string): Promise<WorkStatusSnapshot> {
+export async function latestWorkVerification(db: SqlClient, workId: string): Promise<WorkStatusSnapshot> {
   const rows = await db.query<{
     id: string;
     verified_status: string;
@@ -138,106 +111,13 @@ async function latestWorkVerification(db: SqlClient, workId: string): Promise<Wo
   };
 }
 
-async function lockChangeSet(tx: SqlClient, id: string): Promise<ChangeSetRow> {
-  const rows = await tx.query<ChangeSetRow>(`SELECT * FROM change_set WHERE id = $1 FOR UPDATE`, [id]);
-  if (!rows[0]) throw new EditorialError("NOT_FOUND", "الدفعة غير موجودة.");
-  return rows[0];
-}
-
-async function changesOf(tx: SqlClient, changeSetId: string): Promise<ChangeRow[]> {
-  return tx.query<ChangeRow>(
-    `SELECT * FROM editorial_change WHERE change_set_id = $1 ORDER BY created_at, id`,
-    [changeSetId],
-  );
-}
-
-/** يحسب بصمة الحمولة من الصفوف الحالية. */
-export function hashOf(set: ChangeSetRow, changes: ChangeRow[]): string {
-  return payloadHash(set, changes);
-}
-
-/** يضبط بصمة الدفعة عند الإرسال (القاعدة تجمّدها بعد ضبطها)، ويعيدها. */
-async function sealPayload(tx: SqlClient, set: ChangeSetRow, changes: ChangeRow[]): Promise<string> {
-  const hash = hashOf(set, changes);
-  if (set.payload_hash && set.payload_hash !== hash) {
-    throw new EditorialError("CONFLICT", "تغيّرت حمولة الدفعة عمّا أُرسل؛ لا يُكمل شيء.", { changeSetId: set.id });
-  }
-  if (!set.payload_hash) {
-    await tx.query(`UPDATE change_set SET payload_hash = $2 WHERE id = $1 RETURNING id`, [set.id, hash]);
-    set.payload_hash = hash;
-  }
-  return hash;
-}
-
-/** يعيد حساب البصمة ويطابقها بالمخزّنة (عند القرار والنشر). */
-function assertPayloadUnchanged(set: ChangeSetRow, changes: ChangeRow[]): string {
-  const hash = hashOf(set, changes);
-  if (!set.payload_hash || set.payload_hash !== hash) {
-    throw new EditorialError("CONFLICT", "بصمة حمولة الدفعة لا تطابق ما أُرسل؛ لا يُكمل شيء.", { changeSetId: set.id });
-  }
-  return hash;
-}
-
-async function setStatus(tx: SqlClient, changeSetId: string, status: EditorialStatus, published = false) {
-  await tx.query(
-    `UPDATE change_set SET status = $2, published_at = CASE WHEN $3::boolean THEN NOW() ELSE published_at END
-      WHERE id = $1 RETURNING id`,
-    [changeSetId, status, published],
-  );
-  await tx.query(`UPDATE editorial_change SET status = $2 WHERE change_set_id = $1 RETURNING id`, [changeSetId, status]);
-}
-
-/** يسجّل رفض الوصول خارج المعاملة (المعاملة الملغاة لا تحفظ شيئًا). */
-async function auditDenied(db: EditorialDb, actor: EditorialActor, error: unknown, objectType: string, objectId: string) {
-  if (error instanceof EditorialError && error.status === 403) {
-    await recordAudit(db, actor, {
-      action: "access.denied",
-      objectType,
-      objectId,
-      detail: { code: error.code, message: error.message },
-    }).catch(() => undefined);
-  }
-}
-
-/** مُعِدّ الدفعة: البشري بمعرّفه، والوكيل باسمه (لا يرسل وكيلٌ دفعةَ وكيل آخر). */
-function isAuthorOf(set: ChangeSetRow, actor: EditorialActor): boolean {
-  if (set.author_kind === "human") return actor.kind === "human" && set.author_id === actor.id;
-  return actor.kind === "agent" && set.author_agent === (actor.agentName ?? actor.id);
-}
-
-/** نوع العنصر للسياسة والنطاق: تغييرات دفعة التراجع «revert»، وغيرها بحسب الفعل. */
-export function itemKindOf(set: Pick<ChangeSetRow, "kind">, change: Pick<ChangeRow, "op">): ItemKind {
-  if (set.kind === "revert" || set.kind === "emergency_revert") return "revert";
-  if (change.op === "review_amendment_op") return "review_amendment_op";
-  if (change.op === "review_principle") return "review_principle";
-  return "set_work_status";
-}
-
-/** كل تغييرات الدفعة في نطاق الفاعل لهذا الفعل، وإلا رفض. */
-function assertSetScope(
-  set: ChangeSetRow,
-  changes: ChangeRow[],
-  allowed: (kind: ItemKind, domain: string) => boolean,
-  message: string,
-) {
-  for (const change of changes) {
-    if (!allowed(itemKindOf(set, change), change.domain)) {
-      throw new EditorialError("FORBIDDEN", message, { changeId: change.id, targetId: change.target_id });
-    }
-  }
-}
-
-/** السياسات الحالية لأنواع عناصر الدفعة؛ المسار المعطّل يُرفض. */
-function setPolicies(config: EditorialConfig, set: ChangeSetRow, changes: ChangeRow[]) {
-  const kinds = Array.from(new Set(changes.map((c) => itemKindOf(set, c))));
-  return kinds.map((kind) => ({ kind, policy: policyFor(config, kind) }));
-}
-
 function authorOf(actor: EditorialActor) {
   return actor.kind === "agent"
     ? { authorId: null, authorKind: "agent", authorAgent: actor.agentName ?? actor.id }
     : { authorId: actor.id, authorKind: "human", authorAgent: null };
 }
+
+const OPEN_CHANGE_MESSAGE = "على هذا النظام تغيير مفتوح لم يُحسم؛ أكمله أو اسحبه أولًا.";
 
 async function insertChange(
   tx: SqlClient,
@@ -247,7 +127,10 @@ async function insertChange(
   before: WorkStatusSnapshot,
   extra: { revertOf?: string | null; sourceRef?: string | null; domain?: string | null } = {},
 ): Promise<string> {
-  const id = ID();
+  // قفل الهدف (D-03): يُعاد معرّف الدفعة المفتوحة ليصل إليها المستخدم مباشرة.
+  const open = await openChangeSetFor(tx, "work", input.targetId);
+  if (open) throw new EditorialError("OPEN_CHANGE_EXISTS", OPEN_CHANGE_MESSAGE, { targetType: "work", targetId: input.targetId, openChangeSetId: open });
+  const id = newId();
   const author = authorOf(actor);
   try {
     await tx.query(
@@ -264,6 +147,7 @@ async function insertChange(
         input.evidence.instrument,
         input.evidence.url,
         input.evidence.quote,
+        // رتبة المصدر تُشتق من الرابط في الخادم، لا تُقبل من العميل.
         sourceRankFromUrl(input.evidence.url),
         extra.sourceRef ?? null,
         author.authorId,
@@ -273,10 +157,9 @@ async function insertChange(
       ],
     );
   } catch (error) {
+    // سباق على فهرس القفل: المعاملة أُلغيت، فيُقرأ معرّف المفتوح بعدها (withOpenChangeDetail).
     if (pgErrorCode(error) === "23505") {
-      throw new EditorialError("OPEN_CHANGE_EXISTS", "على هذا النظام تغيير مفتوح لم يُحسم؛ أكمله أو ارفضه أولًا.", {
-        targetId: input.targetId,
-      });
+      throw new EditorialError("OPEN_CHANGE_EXISTS", OPEN_CHANGE_MESSAGE, { targetType: "work", targetId: input.targetId });
     }
     throw error;
   }
@@ -297,8 +180,8 @@ function validateChangeInput(raw: ChangeInput): ChangeInput {
 export async function createChangeSet(
   db: EditorialDb,
   actor: EditorialActor,
-  input: CreateChangeSetInput,
-): Promise<{ changeSetId: string; changeIds: string[] }> {
+  input: CreateChangeSetInput & { idempotencyKey?: string | null },
+): Promise<{ changeSetId: string; changeIds: string[]; replayed?: boolean }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   const title = cleanText(input?.title, "title", { min: 3, max: 200 });
@@ -308,43 +191,68 @@ export async function createChangeSet(
   const changes = input.changes.map(validateChangeInput);
   const targets = new Set(changes.map((c) => c.targetId));
   if (targets.size !== changes.length) invalid("لا يتكرر النظام نفسه في الدفعة الواحدة.");
+  const idempotencyKey =
+    input.idempotencyKey === undefined || input.idempotencyKey === null ? null : cleanText(input.idempotencyKey, "idempotencyKey", { max: 200 });
 
-  return deskTransaction(db, actor, async ({ tx, actor, config }) => {
-    policyFor(config, "set_work_status");
-    const changeSetId = ID();
-    const author = authorOf(actor);
-    await tx.query(
-      `INSERT INTO change_set (id, title, kind, author_id, author_kind, author_agent, status)
-       VALUES ($1, $2, 'manual', $3, $4, $5, 'draft') RETURNING id`,
-      [changeSetId, title, author.authorId, author.authorKind, author.authorAgent],
-    );
-    const changeIds: string[] = [];
-    for (const change of changes) {
-      const exists = await tx.query<{ id: string; domain: string | null }>(`SELECT id, domain FROM legal_systems WHERE id = $1`, [change.targetId]);
-      if (!exists[0]) throw new EditorialError("NOT_FOUND", "النظام غير موجود.", { targetId: change.targetId });
-      if (!canProposeIn(actor.access, "set_work_status", exists[0].domain)) {
-        throw new EditorialError("FORBIDDEN", "لا تملك صلاحية تحرير هذا النظام ضمن نطاق تكليفك.", { targetId: change.targetId });
+  try {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      policyFor(config, "set_work_status");
+      const author = authorOf(actor);
+      if (idempotencyKey) {
+        // إعادة الطلب نفسه بمفتاحه تعيد الدفعة القائمة لمؤلفها، ولا تنشئ ثانية.
+        const existing = await tx.query<ChangeSetRow>(`SELECT * FROM change_set WHERE idempotency_key = $1`, [idempotencyKey]);
+        if (existing[0]) {
+          const same =
+            existing[0].author_kind === author.authorKind &&
+            existing[0].author_id === author.authorId &&
+            existing[0].author_agent === author.authorAgent;
+          if (!same) throw new EditorialError("CONFLICT", "مفتاح التكرار مستعمل لدفعة أخرى.");
+          const ids = await tx.query<{ id: string }>(`SELECT id FROM editorial_change WHERE change_set_id = $1 ORDER BY created_at, id`, [existing[0].id]);
+          return { changeSetId: existing[0].id, changeIds: ids.map((r) => r.id), replayed: true };
+        }
       }
-      const before = await latestWorkVerification(tx, change.targetId);
-      const changeId = await insertChange(tx, actor, changeSetId, change, before, { domain: exists[0].domain ?? "" });
-      changeIds.push(changeId);
+      const changeSetId = newId();
+      try {
+        await tx.query(
+          `INSERT INTO change_set (id, title, kind, author_id, author_kind, author_agent, status, idempotency_key)
+           VALUES ($1, $2, 'manual', $3, $4, $5, 'draft', $6) RETURNING id`,
+          [changeSetId, title, author.authorId, author.authorKind, author.authorAgent, idempotencyKey],
+        );
+      } catch (error) {
+        if (pgErrorCode(error) === "23505") throw new EditorialError("CONFLICT", "طلب مكرر بالمفتاح نفسه قيد التنفيذ؛ أعد المحاولة بعد لحظة.");
+        throw error;
+      }
+      const changeIds: string[] = [];
+      for (const change of changes) {
+        const exists = await tx.query<{ id: string; domain: string | null }>(`SELECT id, domain FROM legal_systems WHERE id = $1`, [change.targetId]);
+        if (!exists[0]) throw new EditorialError("NOT_FOUND", "النظام غير موجود.", { targetId: change.targetId });
+        if (!canProposeIn(actor.access, "set_work_status", exists[0].domain)) {
+          throw new EditorialError("FORBIDDEN", "لا تملك صلاحية تحرير هذا النظام ضمن نطاق تكليفك.", { targetId: change.targetId });
+        }
+        const before = await latestWorkVerification(tx, change.targetId);
+        const changeId = await insertChange(tx, actor, changeSetId, change, before, { domain: exists[0].domain ?? "" });
+        changeIds.push(changeId);
+        await recordAudit(tx, actor, {
+          action: "change.create",
+          objectType: "work",
+          objectId: change.targetId,
+          before,
+          after: { status: change.status },
+          detail: { changeSetId, changeId, op: change.op },
+        });
+      }
       await recordAudit(tx, actor, {
-        action: "change.create",
-        objectType: "work",
-        objectId: change.targetId,
-        before,
-        after: { status: change.status },
-        detail: { changeSetId, changeId, op: change.op },
+        action: "change_set.create",
+        objectType: "change_set",
+        objectId: changeSetId,
+        detail: { title, changes: changeIds.length },
       });
-    }
-    await recordAudit(tx, actor, {
-      action: "change_set.create",
-      objectType: "change_set",
-      objectId: changeSetId,
-      detail: { title, changes: changeIds.length },
+      return { changeSetId, changeIds };
     });
-    return { changeSetId, changeIds };
-  });
+  } catch (error) {
+    await auditDenied(db, actor, error, "change_set", "new");
+    throw await withOpenChangeDetail(db, error);
+  }
 }
 
 // ── الفحوص (W-02) ────────────────────────────────────────────────────────────
@@ -395,55 +303,69 @@ export async function submitChangeSet(
 ): Promise<{ status: EditorialStatus; checks: Record<string, CheckResult> }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
-  return deskTransaction(db, actor, async ({ tx, actor, config }) => {
-    const set = await lockChangeSet(tx, changeSetId);
-    if (!isAuthorOf(set, actor) && !actor.access.superAdmin) throw new EditorialError("FORBIDDEN", "يرسل الدفعة مُعِدّها.");
-    if (set.status !== "draft" && set.status !== "checks_failed") {
-      throw new EditorialError("INVALID_STATE", "لا تُرسل إلا مسودة أو دفعة فشلت فحوصها.");
-    }
-    const changes = await changesOf(tx, changeSetId);
-    if (!changes.length) throw new EditorialError("INVALID_STATE", "دفعة بلا تغييرات لا تُرسل.");
-    setPolicies(config, set, changes);
-    // يعاد فحص الإذن عند الإرسال: سحب التكليف بعد الإنشاء يمنع الإرسال.
-    assertSetScope(
-      set,
-      changes,
-      (kind, domain) => (kind === "revert" ? canRequestRevertIn(actor.access, domain) : canProposeIn(actor.access, kind, domain)),
-      "لم تعد تملك صلاحية إرسال هذه الدفعة ضمن نطاق تكليفك.",
-    );
-    await sealPayload(tx, set, changes);
-    const checks: Record<string, CheckResult> = {};
-    let allOk = true;
-    for (const change of changes) {
-      const result = await checkChange(tx, change);
-      checks[change.id] = result;
-      allOk = allOk && result.ok;
-      await tx.query(`UPDATE editorial_change SET checks = $2::jsonb, status = $3 WHERE id = $1 RETURNING id`, [
-        change.id,
-        JSON.stringify(result),
-        result.ok ? "pending" : "checks_failed",
-      ]);
-    }
-    const status: EditorialStatus = allOk ? "pending" : "checks_failed";
-    await tx.query(`UPDATE change_set SET status = $2 WHERE id = $1 RETURNING id`, [changeSetId, status]);
-    await recordAudit(tx, actor, {
-      action: allOk ? "change_set.submit" : "change_set.checks_failed",
-      objectType: "change_set",
-      objectId: changeSetId,
-      detail: { checks },
+  try {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      const set = await lockChangeSet(tx, changeSetId);
+      if (!isAuthorOf(set, actor) && !actor.access.superAdmin) throw new EditorialError("FORBIDDEN", "يرسل الدفعة مُعِدّها.");
+      if (set.status !== "draft" && set.status !== "checks_failed") {
+        throw new EditorialError("INVALID_STATE", "لا تُرسل إلا مسودة أو دفعة فشلت فحوصها.");
+      }
+      const changes = await changesOf(tx, changeSetId);
+      if (!changes.length) throw new EditorialError("INVALID_STATE", "دفعة بلا تغييرات لا تُرسل.");
+      setPolicies(config, set, changes);
+      // يعاد فحص الإذن عند الإرسال: سحب التكليف بعد الإنشاء يمنع الإرسال.
+      assertSetScope(
+        set,
+        changes,
+        (kind, domain) => (kind === "revert" ? canRequestRevertIn(actor.access, domain) : canProposeIn(actor.access, kind, domain)),
+        "لم تعد تملك صلاحية إرسال هذه الدفعة ضمن نطاق تكليفك.",
+      );
+      // بصمة الحمولة من الصفوف (لا من العميل)، وتُجمَّد في القاعدة.
+      const payloadHash = await sealPayload(tx, set, changes);
+      const checks: Record<string, CheckResult> = {};
+      let allOk = true;
+      for (const change of changes) {
+        const result = await checkChange(tx, change);
+        checks[change.id] = result;
+        allOk = allOk && result.ok;
+        await tx.query(`UPDATE editorial_change SET checks = $2::jsonb, status = $3 WHERE id = $1 RETURNING id`, [
+          change.id,
+          JSON.stringify(result),
+          result.ok ? "pending" : "checks_failed",
+        ]);
+      }
+      const status: EditorialStatus = allOk ? "pending" : "checks_failed";
+      await tx.query(`UPDATE change_set SET status = $2 WHERE id = $1 RETURNING id`, [changeSetId, status]);
+      await recordAudit(tx, actor, {
+        action: allOk ? "change_set.submit" : "change_set.checks_failed",
+        objectType: "change_set",
+        objectId: changeSetId,
+        detail: { checks, payloadHash },
+      });
+      return { status, checks };
     });
-    return { status, checks };
-  });
+  } catch (error) {
+    await auditDenied(db, actor, error, "change_set", changeSetId);
+    throw error;
+  }
 }
 
-// ── القرار (W-02، W-03) ──────────────────────────────────────────────────────
+// ── القرار (W-02، W-03، ق-٦) ─────────────────────────────────────────────────
+
+export interface DecideResult {
+  status: EditorialStatus;
+  selfApproval: boolean;
+  decisionId: string;
+  approvals: number;
+  requiredApprovals: number;
+}
 
 export async function decideChangeSet(
   db: EditorialDb,
   actor: EditorialActor,
   changeSetId: string,
   input: { decision: "approve" | "reject"; reason?: string | null },
-): Promise<{ status: EditorialStatus; selfApproval: boolean; decisionId: string }> {
+): Promise<DecideResult> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
@@ -473,43 +395,42 @@ export async function decideChangeSet(
         if (!reason) throw new EditorialError("REASON_REQUIRED", "الاعتماد الذاتي للمالك يحتاج سببًا مكتوبًا.");
         selfApproval = true;
       }
-      const decisionId = ID();
-      await insertDecision(tx, { id: decisionId, changeSetId, reviewerId: actor.id, decision: input.decision, reason, selfApproval, payloadHash: hash });
-      const status: EditorialStatus = input.decision === "approve" ? "approved" : "rejected";
-      await setStatus(tx, changeSetId, status);
+      const decisionId = await insertDecision(tx, {
+        changeSetId,
+        reviewerId: actor.id,
+        decision: input.decision,
+        reason,
+        selfApproval,
+        payloadHash: hash,
+      });
+      // تعدد الموافقات: أي رفض يرفض الدفعة؛ والموافقة تكمل الدفعة حين يبلغ العدد الصالح الحد الأدنى.
+      const state: ApprovalState = await approvalState(tx, config, set, changes);
+      let status: EditorialStatus;
+      if (input.decision === "reject") {
+        status = "rejected";
+        await setStatus(tx, changeSetId, status);
+      } else if (!state.complete) {
+        status = "pending";
+      } else if (isIntakeSet(set)) {
+        // قرار مقترح الذكاء الاصطناعي يُطبَّق في مصدره عند اكتمال موافقاته (لا خطوة ناشر في الاستقبال).
+        await applyIntakeSet(tx, actor, set, changes, state);
+        status = "published";
+      } else {
+        status = "approved";
+        await setStatus(tx, changeSetId, status);
+      }
       await recordAudit(tx, actor, {
-        action: input.decision === "approve" ? "change_set.approve" : "change_set.reject",
+        action: input.decision === "approve" ? (status === "pending" ? "change_set.approve_partial" : "change_set.approve") : "change_set.reject",
         objectType: "change_set",
         objectId: changeSetId,
-        detail: { decisionId, selfApproval, reason },
+        detail: { decisionId, selfApproval, reason, approvals: state.approvals, required: state.required, payloadHash: hash },
       });
-      return { status, selfApproval, decisionId };
+      return { status, selfApproval, decisionId, approvals: state.approvals, requiredApprovals: state.required };
     });
   } catch (error) {
     await auditDenied(db, actor, error, "change_set", changeSetId);
     throw error;
   }
-}
-
-/** صف قرار واحد لكل معتمِد في الدفعة (UNIQUE): التكرار = قُرّر من قبل. */
-export async function insertDecision(
-  tx: SqlClient,
-  d: { id?: string; changeSetId: string; reviewerId: string; decision: "approve" | "reject"; reason: string | null; selfApproval: boolean; payloadHash: string },
-): Promise<string> {
-  const id = d.id ?? ID();
-  try {
-    await tx.query(
-      `INSERT INTO review_decision (id, change_set_id, reviewer_id, decision, reason, self_approval, payload_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [id, d.changeSetId, d.reviewerId, d.decision, d.reason, d.selfApproval, d.payloadHash],
-    );
-  } catch (error) {
-    if (pgErrorCode(error) === "23505") {
-      throw new EditorialError("ALREADY_DECIDED", "سبق أن قرّرتَ في هذه الدفعة؛ القرار لا يُكرَّر ولا يُعدَّل.", { changeSetId: d.changeSetId });
-    }
-    throw error;
-  }
-  return id;
 }
 
 // ── النشر الذري (W-03) ───────────────────────────────────────────────────────
@@ -522,7 +443,7 @@ async function applyWorkStatus(tx: SqlClient, actor: EditorialActor, change: Cha
       targetId: change.target_id,
     });
   }
-  const verificationId = ID();
+  const verificationId = newId();
   await tx.query(
     `INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote,
         method, verified_by, supersedes_verification_id)
@@ -538,12 +459,16 @@ async function applyWorkStatus(tx: SqlClient, actor: EditorialActor, change: Cha
       current.verification_id,
     ],
   );
+  await setAppliedRef(tx, change.id, verificationId);
   return verificationId;
 }
 
-/** مرجع ما كتبه النشر في المصدر: يُضبط مرة واحدة (القاعدة تمنع تغييره بعدها). */
-async function setAppliedRef(tx: SqlClient, changeId: string, ref: string) {
-  await tx.query(`UPDATE editorial_change SET applied_ref = $2 WHERE id = $1 RETURNING id`, [changeId, ref]);
+async function enqueueIndexSync(tx: SqlClient, changeSetId: string, change: ChangeRow) {
+  await tx.query(
+    `INSERT INTO index_sync (id, change_set_id, target_type, target_id) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (change_set_id, target_type, target_id) DO NOTHING RETURNING id`,
+    [newId(), changeSetId, change.target_type, change.target_id],
+  );
 }
 
 export async function publishChangeSet(
@@ -561,19 +486,24 @@ export async function publishChangeSet(
       const set = await lockChangeSet(tx, changeSetId);
       if (set.status !== "approved") throw new EditorialError("INVALID_STATE", "لا يُنشر إلا المعتمد.");
       const changes = await changesOf(tx, changeSetId);
-      assertSetScope(set, changes, (kind, domain) => canReviewIn(actor.access, kind, domain), "لا تملك صلاحية النشر ضمن نطاق تكليفك.");
+      // النشر منفصل عن الاعتماد (ق-٣): LEGAL_PUBLISHER في نطاق كل تغيير، والسياسة الحالية مفعّلة.
+      assertSetScope(set, changes, (kind, domain) => canPublishIn(actor.access, kind, domain), "لا تملك صلاحية النشر ضمن نطاق تكليفك.");
       setPolicies(config, set, changes);
+      // تُعاد البصمة من الصفوف، ويُعاد عدّ الموافقات بصلاحية المعتمِدين الحالية.
       assertPayloadUnchanged(set, changes);
+      const state = await approvalState(tx, config, set, changes);
+      if (!state.complete) {
+        throw new EditorialError("INVALID_STATE", "الموافقات الصالحة الآن أقل من الحد الأدنى (سُحب تكليف معتمِد أو رُفع الحد)؛ لم يُنشر شيء.", {
+          approvals: state.approvals,
+          required: state.required,
+        });
+      }
       const verificationIds: string[] = [];
       for (const change of changes) {
         if (change.op !== "set_work_status") throw new EditorialError("INVALID_STATE", "فعل غير مدعوم للنشر.");
         const verificationId = await applyWorkStatus(tx, actor, change);
         verificationIds.push(verificationId);
-        await setAppliedRef(tx, change.id, verificationId);
-        await tx.query(
-          `INSERT INTO index_sync (id, change_set_id, target_type, target_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-          [ID(), changeSetId, change.target_type, change.target_id],
-        );
+        await enqueueIndexSync(tx, changeSetId, change);
         await recordAudit(tx, actor, {
           action: "change.publish",
           objectType: "work",
@@ -591,7 +521,7 @@ export async function publishChangeSet(
         action: "change_set.publish",
         objectType: "change_set",
         objectId: changeSetId,
-        detail: { verificationIds, reverts: set.reverts_change_set_id },
+        detail: { verificationIds, reverts: set.reverts_change_set_id, approvals: state.approvals, approvers: state.approvers },
       });
       return { published: changes.length, verificationIds };
     });
@@ -601,7 +531,30 @@ export async function publishChangeSet(
   }
 }
 
-// ── التراجع (W-05) ───────────────────────────────────────────────────────────
+// ── التراجع (W-05، ق-٧) ──────────────────────────────────────────────────────
+
+export const NOT_REVERTIBLE_MESSAGE =
+  "قرارات مقترحات الذكاء الاصطناعي لا يُتراجع عنها من المكتب في المرحلة صفر؛ القرار مسجّل في مصدره صفًّا إلحاقيًّا.";
+
+/** هل ما زالت حالة الهدف هي التي نشرتها الدفعة؟ (ق-٧) */
+export async function assertStillApplied(tx: SqlClient, change: ChangeRow): Promise<WorkStatusSnapshot> {
+  const current = await latestWorkVerification(tx, change.target_id);
+  if (!change.applied_ref) {
+    // لا يُخمَّن ما نشرته الدفعة: بلا مرجع لا تراجع آلي.
+    throw new EditorialError("CONFLICT", "لا مرجع لما نشرته هذه الدفعة على الهدف؛ لا يُتراجع عنها آليًّا. أنشئ تغييرًا جديدًا بسنده.", {
+      targetId: change.target_id,
+      changeId: change.id,
+    });
+  }
+  if ((current.verification_id ?? null) !== change.applied_ref) {
+    throw new EditorialError(
+      "CONFLICT",
+      "تغيّرت حالة الهدف بعد نشر هذه الدفعة؛ التراجع عنها يكتب فوق تغيير أحدث. راجع الحالة الحالية وأنشئ تغييرًا جديدًا بسنده.",
+      { targetId: change.target_id, appliedRef: change.applied_ref, currentVerificationId: current.verification_id },
+    );
+  }
+  return current;
+}
 
 export async function revertChangeSet(
   db: EditorialDb,
@@ -621,6 +574,7 @@ export async function revertChangeSet(
       // التراجع العاجل للمالك متاح دائمًا ولا يُعطَّل بسياسة (ق-٤).
       if (!emergency) policyFor(config, "revert");
       const original = await lockChangeSet(tx, changeSetId);
+      if (isIntakeSet(original)) throw new EditorialError("NOT_REVERTIBLE", NOT_REVERTIBLE_MESSAGE, { kind: original.kind });
       if (original.status !== "published") throw new EditorialError("INVALID_STATE", "لا يُتراجع إلا عن دفعة منشورة.");
       const openRevert = await tx.query<{ id: string }>(
         `SELECT id FROM change_set WHERE reverts_change_set_id = $1 AND status NOT IN ('rejected') LIMIT 1`,
@@ -628,10 +582,17 @@ export async function revertChangeSet(
       );
       if (openRevert[0]) throw new EditorialError("INVALID_STATE", "يوجد تراجع قائم عن هذه الدفعة.", { id: openRevert[0].id });
       const changes = await changesOf(tx, changeSetId);
+      if (changes.some((c) => c.op !== "set_work_status")) {
+        throw new EditorialError("NOT_REVERTIBLE", "في الدفعة فعل لا يُتراجع عنه آليًّا في المرحلة صفر.");
+      }
       if (!emergency) {
         assertSetScope(original, changes, (_kind, domain) => canRequestRevertIn(actor.access, domain), "لا تملك صلاحية التراجع ضمن نطاق تكليفك.");
       }
-      const revertId = ID();
+      // قبل أي كتابة: كل هدف ما زال على الحالة التي نشرتها الدفعة، وإلا رفض الكل.
+      const currentByChange = new Map<string, WorkStatusSnapshot>();
+      for (const change of changes) currentByChange.set(change.id, await assertStillApplied(tx, change));
+
+      const revertId = newId();
       const author = authorOf(actor);
       await tx.query(
         `INSERT INTO change_set (id, title, kind, author_id, author_kind, author_agent, status, reverts_change_set_id)
@@ -659,7 +620,7 @@ export async function revertChangeSet(
           evidence: { instrument: prior.evidence_instrument, url: prior.evidence_url, quote: prior.evidence_quote },
           note: `تراجع: ${reason}`.slice(0, 1000),
         };
-        const before = await latestWorkVerification(tx, change.target_id);
+        const before = currentByChange.get(change.id) ?? (await latestWorkVerification(tx, change.target_id));
         await insertChange(tx, actor, revertId, row, before, { revertOf: change.id, domain: change.domain });
       }
       await recordAudit(tx, actor, {
@@ -672,8 +633,8 @@ export async function revertChangeSet(
       if (!emergency) return { revertChangeSetId: revertId, status: "draft" as EditorialStatus };
 
       // المسار العاجل للمالك: فحص ثم قرار ذاتي مسبَّب ثم نشر، في المعاملة نفسها.
-      const revertChanges = await changesOf(tx, revertId);
       const revertSet = await lockChangeSet(tx, revertId);
+      const revertChanges = await changesOf(tx, revertId);
       const revertHash = await sealPayload(tx, revertSet, revertChanges);
       for (const change of revertChanges) {
         const result = await checkChange(tx, change);
@@ -692,11 +653,7 @@ export async function revertChangeSet(
       });
       for (const change of revertChanges) {
         const verificationId = await applyWorkStatus(tx, actor, change);
-        await setAppliedRef(tx, change.id, verificationId);
-        await tx.query(
-          `INSERT INTO index_sync (id, change_set_id, target_type, target_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-          [ID(), revertId, change.target_type, change.target_id],
-        );
+        await enqueueIndexSync(tx, revertId, change);
         await recordAudit(tx, actor, {
           action: "change.publish",
           objectType: "work",
@@ -718,15 +675,17 @@ export async function revertChangeSet(
     });
   } catch (error) {
     await auditDenied(db, actor, error, "change_set", changeSetId);
-    throw error;
+    throw await withOpenChangeDetail(db, error);
   }
 }
 
 // ── السحب ────────────────────────────────────────────────────────────────────
 
 /**
- * سحب دفعة لم تُنشر حتى لا تقفل أهدافها إلى الأبد: يسحبها مُعِدّها أو المالك،
- * ويسحب المعتمِد ما فشلت فحوصه أو اعتُمد وتعثّر نشره. تصير «مرفوضة» ويُسجَّل السحب؛ لا حذف.
+ * سحب دفعة لم تُنشر حتى لا تقفل أهدافها إلى الأبد («لكل قفل مخرج»):
+ * يسحبها المالك دائمًا، ومُعِدّها ما لم تُعتمد، ويسحب المعتمِد في نطاقها ما فشلت فحوصه أو اعتُمد وتعثّر نشره،
+ * ومقترح القرار المعلّق في الاستقبال (تعدد الموافقات) فيعود المقترح إلى الطابور بلا قرار.
+ * تصير «مرفوضة» ويُسجَّل السحب؛ لا حذف.
  */
 export async function withdrawChangeSet(
   db: EditorialDb,
@@ -743,14 +702,16 @@ export async function withdrawChangeSet(
       if (!["draft", "checks_failed", "pending", "approved"].includes(set.status)) {
         throw new EditorialError("INVALID_STATE", "لا تُسحب إلا دفعة لم تُنشر.");
       }
-      // المعتمَدة التي تعثّر نشرها (تعارض) يسحبها المالك أو المعتمِد، حتى لا يبقى الهدف مقفلًا.
       const changes = await changesOf(tx, changeSetId);
       const reviewerInScope = changes.every((c) => canReviewIn(actor.access, itemKindOf(set, c), c.domain));
       const allowed =
         actor.access.superAdmin ||
-        (set.status !== "approved" && isAuthorOf(set, actor)) ||
-        ((set.status === "checks_failed" || set.status === "approved") && reviewerInScope);
-      if (!allowed) throw new EditorialError("FORBIDDEN", "يسحب الدفعة مُعِدّها أو المالك، ويسحب المعتمِد ما فشلت فحوصه أو تعثّر نشره.");
+        (set.status !== "approved" && !isIntakeSet(set) && isAuthorOf(set, actor)) ||
+        ((set.status === "checks_failed" || set.status === "approved") && reviewerInScope) ||
+        (set.status === "pending" && isIntakeSet(set) && reviewerInScope);
+      if (!allowed) {
+        throw new EditorialError("FORBIDDEN", "يسحب الدفعة مُعِدّها أو المالك، ويسحب المعتمِد ما فشلت فحوصه أو تعثّر نشره أو مقترح استقبال معلّقًا.");
+      }
       await setStatus(tx, changeSetId, "rejected");
       await recordAudit(tx, actor, {
         action: "change_set.withdraw",

@@ -5,7 +5,8 @@ import { deskJson, editorialDb, editorialErrorResponse, type EditorialNeed, read
 
 export const dynamic = "force-dynamic";
 
-const NEED: Record<string, EditorialNeed> = { submit: "propose", decide: "review", publish: "review", revert: "view", withdraw: "view" };
+// الحارس فحص أولي؛ الحكم النهائي (النطاق والسياسة والتكليف الحالي) في الخدمة داخل المعاملة.
+const NEED: Record<string, EditorialNeed> = { submit: "view", decide: "review", publish: "publish", revert: "view", withdraw: "view" };
 
 const decideBody = z.object({ decision: z.enum(["approve", "reject"]), reason: z.string().max(2000).optional() });
 const revertBody = z.object({ reason: z.string().min(3).max(2000), emergency: z.boolean().optional() });

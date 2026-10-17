@@ -36,6 +36,7 @@ const body = z.object({
     )
     .min(1)
     .max(50),
+  idempotencyKey: z.string().min(1).max(200).optional(),
 });
 
 // POST /api/admin/legal/change-sets — مسودة دفعة جديدة (الفعل التجريبي: set_work_status).
