@@ -8,7 +8,7 @@ export type AppRole =
   | "TRAINEE"
   | "JUDGE";
 
-export type Permission =
+export type Permission = import("../editorial/contracts").EditorialPermission
   | "CONSULTATIONS_FULL"
   | "CONSULTATIONS_LIMITED"
   | "SIMULATIONS_USE"
@@ -51,7 +51,7 @@ const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
-  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS"],
+  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS", "LEGAL_EDITOR_LAWS", "LEGAL_EDITOR_RULINGS", "LEGAL_REVIEWER", "LEGAL_PUBLISHER", "LEGAL_QA_VIEW", "LEGAL_AGENT_PROPOSE", "LEGAL_CONFIG_MANAGE", "LEGAL_TASK_MANAGE"],
   SYSTEM_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS],
   // القاضي: المعاون القضائي + النواة والاستشارة للاطّلاع.
   JUDGE: [

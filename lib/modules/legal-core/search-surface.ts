@@ -89,6 +89,7 @@ export function inSurface(row: { legalSystemId?: string | null; lawName?: string
 
 type Loaded = { asOf: string; at: number; surface: SearchSurface; hiddenNames: Set<string>; repealed: string[] };
 let _cache: Loaded | null = null;
+export function invalidateSearchSurface() { _cache = null; }
 const TTL_MS = 5 * 60 * 1000;
 
 /**

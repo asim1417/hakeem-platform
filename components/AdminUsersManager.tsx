@@ -60,6 +60,9 @@ const statuses = [
 ];
 
 const PERMISSION_LABELS: Record<Permission, string> = {
+  LEGAL_EDITOR_LAWS: "تحرير التشريعات", LEGAL_EDITOR_RULINGS: "تحرير القضاء", LEGAL_REVIEWER:"الاعتماد التحريري",
+  LEGAL_PUBLISHER:"النشر", LEGAL_QA_VIEW:"جودة التحرير", LEGAL_AGENT_PROPOSE:"اقتراحات الوكلاء",
+  LEGAL_CONFIG_MANAGE:"سياسات التحرير", LEGAL_TASK_MANAGE:"مهام التحرير",
   CONSULTATIONS_FULL: "الاستشارات (كامل)",
   CONSULTATIONS_LIMITED: "الاستشارات (محدود)",
   SIMULATIONS_USE: "المحاكاة القضائية",

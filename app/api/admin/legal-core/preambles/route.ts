@@ -10,13 +10,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireApiPermission } from "@/lib/modules/auth/session";
-import { auditEvent } from "@/lib/modules/audit/audit";
+import { gate, response, failure } from "@/lib/modules/editorial/access";
+import { propose } from "@/lib/modules/editorial/service";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MAX_PREAMBLE = 200_000;
+
 
 export async function GET(request: NextRequest) {
   const gate = await requireApiPermission("LEGAL_CORE_ADMIN", request);
@@ -51,53 +53,12 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function POST(request: NextRequest) {
-  const gate = await requireApiPermission("LEGAL_CORE_ADMIN", request);
-  if (gate.response) return gate.response;
-
-  let body: { lawName?: string; preamble?: string; royalDecree?: string; effectiveFrom?: string } = {};
-  try { body = await request.json(); } catch { /* فارغ */ }
-
-  const lawName = String(body.lawName ?? "").trim();
-  const preamble = String(body.preamble ?? "").trim().slice(0, MAX_PREAMBLE);
-  if (!lawName || !preamble) {
-    return NextResponse.json({ ok: false, message: "يلزم lawName + preamble." }, { status: 400 });
-  }
-
-  const system = await prisma.legalSystem.findUnique({ where: { name: lawName } });
-  if (!system) {
-    const suggestions = await prisma.legalSystem.findMany({
-      where: { name: { contains: lawName, mode: "insensitive" } },
-      select: { name: true }, take: 10,
-    });
-    return NextResponse.json(
-      { ok: false, message: `لا نظامَ باسم «${lawName}» في النواة.`, suggestions: suggestions.map((s) => s.name) },
-      { status: 404 }
-    );
-  }
-
-  const effective = body.effectiveFrom ? new Date(body.effectiveFrom) : undefined;
-  await prisma.legalSystem.update({
-    where: { id: system.id },
-    data: {
-      preamble,
-      preambleRoyalDecree: body.royalDecree?.trim() || undefined,
-      preambleEffectiveFrom: effective && !Number.isNaN(effective.getTime()) ? effective : undefined,
-      preambleUpdatedAt: new Date(),
-    },
-    select: { id: true },
-  });
-
-  await auditEvent({
-    actorId: gate.user?.id, subject: "ADMIN", action: "LEGAL_CORE_PREAMBLE_IMPORTED",
-    metadata: { lawName, systemId: system.id, chars: preamble.length },
-  }).catch(() => undefined);
-
-  return NextResponse.json({
-    ok: true,
-    system: lawName,
-    systemId: system.id,
-    chars: preamble.length,
-    message: `حُفِظت ديباجة «${lawName}» على مستوى النظام (${preamble.length.toLocaleString("ar-SA")} حرفًا).`,
-  });
+export async function POST(request:NextRequest) {
+  try {
+    const {actor,sessionId}=await gate(request,true);
+    const b=z.object({lawName:z.string().min(1),preamble:z.string().min(1).max(200000),royalDecree:z.string().optional(),effectiveFrom:z.string().date().optional(),evidenceUrl:z.string().url(),evidenceQuote:z.string().min(2),idempotencyKey:z.string().min(1)}).parse(await request.json());
+    const work=await prisma.legalSystem.findUniqueOrThrow({where:{name:b.lawName},select:{id:true}});
+    const result=await propose(actor.id,[{title:"تحديث ديباجة "+b.lawName,targetType:"work",targetId:work.id,op:"set_preamble",after:{preamble:b.preamble,...(b.royalDecree?{preambleRoyalDecree:b.royalDecree}:{}),...(b.effectiveFrom?{preambleEffectiveFrom:b.effectiveFrom}:{})},evidenceInstrument:b.royalDecree??"مصدر الديباجة",evidenceUrl:b.evidenceUrl,evidenceQuote:b.evidenceQuote,sourceRank:1,idempotencyKey:b.idempotencyKey}],sessionId);
+    return response({ok:true,changeSetId:result.id,message:"حُفظت مسودة الديباجة؛ يلزم الاعتماد ثم النشر."},202);
+  }catch(e){return failure(e);}
 }

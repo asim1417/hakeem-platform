@@ -4,6 +4,7 @@
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hasPermission, type Permission } from "./rbac";
+import { PERMISSIONS } from "../editorial/contracts";
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   SUPER_ADMIN: "سوبر أدمن (مالك المنصة)",
@@ -101,6 +102,7 @@ export async function setRolePermission(
   permission: Permission,
   grant: boolean
 ): Promise<{ ok: boolean; message?: string }> {
+  if (PERMISSIONS.some(p=>p===permission)) return {ok:false,message:"صلاحيات التحرير تُدار بنطاق المستخدم من /admin/legal/settings."};
   if (permission === "SUPER_ADMIN_ACCESS" && role !== "SUPER_ADMIN") {
     return { ok: false, message: "صلاحية السوبر أدمن حصرية ولا تُمنح لأدوار أخرى." };
   }

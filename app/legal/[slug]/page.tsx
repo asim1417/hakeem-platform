@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { publishedWorkOverlay } from "@/lib/modules/editorial/overlay";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -13,7 +14,7 @@ import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 // يحسم النظام من slug: eliSlug أولًا، ثم id، ثم مطابقة اشتقاق الاسم (احتياطي نادر).
 async function resolveSystem(slug: string) {
@@ -48,6 +49,13 @@ export default async function LegalSystemPage({
   const system = await resolveSystem(decodeURIComponent(params.slug));
   if (!system) notFound();
 
+  const editorial = await publishedWorkOverlay(system.id);
+  if (editorial) {
+    if (editorial.preamble !== undefined) system.preamble = editorial.preamble;
+    if (editorial.preambleRoyalDecree !== undefined) system.preambleRoyalDecree = editorial.preambleRoyalDecree;
+    if (editorial.preambleEffectiveFrom !== undefined) system.preambleEffectiveFrom = editorial.preambleEffectiveFrom ? new Date(editorial.preambleEffectiveFrom) : null;
+  }
+
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const asOfRaw = searchParams?.asOf?.trim() ?? "";
   const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
@@ -71,6 +79,7 @@ export default async function LegalSystemPage({
     loadSearchSurface(asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined, { includeRepealed: true }),
   ]);
   const workFlags = citationFlagsFromVerification(workVerification);
+  const family=await (await import("@/lib/mcp/adapter")).getBylawLinks(system.id);
   const statusTone =
     workFlags.statusLabel === UNVERIFIED_NOTICE
       ? "unverified"
@@ -131,7 +140,7 @@ export default async function LegalSystemPage({
       </header>
 
       <LawCardPanel
-        name={system.name}
+        name={editorial?.officialName??system.name}
         card={card}
         statusLabel={workFlags.statusLabel}
         statusTone={statusTone}
@@ -140,12 +149,14 @@ export default async function LegalSystemPage({
         archiveNotice={archiveNotice}
       />
 
+      {(family.implements.length>0||family.implemented_by.length>0)&&<section className="mt-6 rounded-xl border p-5" aria-label="عائلة النظام"><h2 className="text-xl font-bold">عائلة النظام</h2><div className="mt-3 flex flex-wrap gap-4">{family.implements.map(x=><Link key={x.id} href={`/legal/${x.id}`}>النظام المرتبط: {x.name}</Link>)}{family.implemented_by.map(x=><Link key={x.id} href={`/legal/${x.id}`}>اللائحة: {x.name}</Link>)}</div></section>}
+      {editorial&&Object.keys(editorial).length>0&&<section className="mt-6 rounded-xl border p-5" aria-label="البيانات المحررة"><h2 className="text-xl font-bold">بيانات الوثيقة المحررة</h2><dl className="mt-3 grid gap-3 sm:grid-cols-2">{[["نوع الوثيقة",editorial.documentKind],["أداة الإصدار",editorial.instrumentKind],["رقم الأداة",editorial.instrumentNumber],["الجهة المصدرة",editorial.issuer],["الإصدار",editorial.issuedOn],["النشر",editorial.publishedOn],["النفاذ",editorial.effectiveOn],["التطبيق",editorial.applicationOn]].filter(([,value])=>value).map(([label,value])=><div key={label}><dt className="text-sm text-slate-600">{label}</dt><dd>{value}</dd></div>)}</dl></section>}
       <section aria-label="نص النظام" className="mt-8">
         <h2 className="border-b-2 border-[#C69763]/50 pb-2 text-2xl font-extrabold text-[var(--navy)]">نص النظام</h2>
         <AsOfForm asOf={asOfRaw} />
 
         <div className="mt-6">
-          {card?.textBlocks.length ? (
+          {card?.textBlocks.length && editorial?.preamble===undefined ? (
             <LawTextBlocks blocks={card.textBlocks} />
           ) : (
             <div className="space-y-4">

@@ -23,8 +23,14 @@ export function assertPermission(role: UserRole, permission: Permission) {
 export async function canUser(userId: string | undefined, permission: Permission) {
   if (!userId) return false;
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
-  if (!user) return false;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id:true, role: true, isActive:true } });
+  if (!user?.isActive) return false;
+  const {PERMISSIONS,allowed}=await import("../editorial/contracts");
+  if(PERMISSIONS.some(p=>p===permission)) {
+    const {readConfig}=await import("../editorial/repository");
+    const config=await readConfig();
+    return allowed(user,config.data,permission as import("../editorial/contracts").EditorialPermission);
+  }
   // مدير النظام ومالك المنصة يتجاوزان مصفوفة المنح الإضافية.
   if (user.role === "SUPER_ADMIN" || user.role === "SYSTEM_ADMIN") return true;
 

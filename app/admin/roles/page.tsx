@@ -1,4 +1,5 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import Link from "next/link";
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { buildPermissionMatrix } from "@/lib/modules/auth/role-admin";
 import { RolePermissionsEditor } from "@/components/admin/RolePermissionsEditor";
@@ -17,6 +18,7 @@ export default async function AdminRolesPage() {
         محرّر فعّال لمصفوفة الأدوار×الصلاحيات. المنح الإضافي يُحفظ في القاعدة ويحترمه التحقق الخادمي مباشرةً عبر <code>canUser</code>.
       </p>
       <div className="mt-6">
+        <Link href="/admin/legal/settings" className="mb-6 block rounded-lg border p-4">إدارة أدوار التحرير والاعتماد والنشر وتكليف المستخدمين</Link>
         <RolePermissionsEditor initialMatrix={matrix} />
       </div>
     </AdminPageShell>

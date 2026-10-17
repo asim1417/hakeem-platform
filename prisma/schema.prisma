@@ -3,6 +3,146 @@ generator client {
   previewFeatures = ["postgresqlExtensions"]
 }
 
+model EditorialChangeSet {
+  id String @id @default(cuid())
+  title String
+  kind String
+  authorId String @map("author_id")
+  authorKind String @map("author_kind")
+  status String @default("draft")
+  payloadHash String @map("payload_hash")
+  idempotencyKey String @unique @map("idempotency_key")
+  publishedAt DateTime? @map("published_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  revertsChangeSetId String? @map("reverts_change_set_id")
+  reverts EditorialChangeSet? @relation("EditorialRevert", fields:[revertsChangeSetId],references:[id])
+  revertedBy EditorialChangeSet[] @relation("EditorialRevert")
+  changes EditorialChange[]
+  decisions EditorialReviewDecision[]
+  events EditorialAuditEvent[]
+  versions EditorialWorkVersion[]
+  sources EditorialSourceSnapshot[]
+  tasks EditorialTask[]
+  syncs EditorialIndexSync[]
+  @@map("change_set")
+}
+model EditorialChange {
+  id String @id @default(cuid())
+  changeSetId String @map("change_set_id")
+  changeSet EditorialChangeSet @relation(fields:[changeSetId],references:[id])
+  targetType String @map("target_type")
+  targetId String @map("target_id")
+  domain String @default("")
+  op String
+  before Json @map("before_json")
+  after Json @map("after_json")
+  evidenceInstrument String @map("evidence_instrument")
+  evidenceUrl String @map("evidence_url")
+  evidenceQuote String @map("evidence_quote")
+  sourceRank Int @map("source_rank")
+  authorId String @map("author_id")
+  authorKind String @map("author_kind")
+  status String @default("draft")
+  checks Json @default("[]")
+  sourceHash String @map("source_hash")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([changeSetId])
+  @@index([status,createdAt])
+  @@map("editorial_change")
+}
+model EditorialReviewDecision {
+  id String @id @default(cuid())
+  changeSetId String @map("change_set_id")
+  changeSet EditorialChangeSet @relation(fields:[changeSetId],references:[id])
+  reviewerId String @map("reviewer_id")
+  decision String
+  reason String
+  selfApproval Boolean @default(false) @map("self_approval")
+  payloadHash String @map("payload_hash")
+  decidedAt DateTime @default(now()) @map("decided_at") @db.Timestamptz
+  @@unique([changeSetId,reviewerId])
+  @@map("review_decision")
+}
+model EditorialAuditEvent {
+  id BigInt @id @default(autoincrement())
+  actorId String @map("actor_id")
+  actorKind String @map("actor_kind")
+  action String
+  changeSetId String? @map("change_set_id")
+  changeSet EditorialChangeSet? @relation(fields:[changeSetId],references:[id])
+  targetId String? @map("target_id")
+  beforeHash String? @map("before_hash")
+  afterHash String? @map("after_hash")
+  metadata Json @default("{}")
+  sessionId String @map("session_id")
+  at DateTime @default(now()) @db.Timestamptz
+  @@index([at,id])
+  @@map("audit_event")
+}
+model EditorialConfig {
+  revision Int @id @default(autoincrement())
+  data Json
+  actorId String @map("actor_id")
+  reason String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("editorial_config")
+}
+model EditorialWorkVersion {
+  id String @id @default(cuid())
+  workId String @map("work_id")
+  changeSetId String @map("change_set_id")
+  changeSet EditorialChangeSet @relation(fields:[changeSetId],references:[id])
+  data Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([workId,createdAt,id])
+  @@map("editorial_work_version")
+}
+model EditorialSourceSnapshot {
+  id String @id @default(cuid())
+  sourceUrl String @map("source_url")
+  textHash String @map("text_hash")
+  quote String
+  changeSetId String @map("change_set_id")
+  changeSet EditorialChangeSet @relation(fields:[changeSetId],references:[id])
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@unique([changeSetId,sourceUrl,textHash])
+  @@map("editorial_source_snapshot")
+}
+model EditorialTask {
+  id String @id @default(cuid())
+  changeSetId String @map("change_set_id")
+  changeSet EditorialChangeSet @relation(fields:[changeSetId],references:[id])
+  templateId String? @map("template_id")
+  title String
+  roleId String? @map("role_id")
+  assigneeId String? @map("assignee_id")
+  status String @default("open")
+  dueAt DateTime? @map("due_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  @@index([status,dueAt])
+  @@map("editorial_task")
+}
+model EditorialIndexSync {
+  id String @id @default(cuid())
+  changeSetId String @map("change_set_id")
+  changeSet EditorialChangeSet @relation(fields:[changeSetId],references:[id])
+  targetType String @map("target_type")
+  targetId String @map("target_id")
+  searchNormAt DateTime? @map("search_norm_at") @db.Timestamptz
+  opensearchAt DateTime? @map("opensearch_at") @db.Timestamptz
+  revalidatedAt DateTime? @map("revalidated_at") @db.Timestamptz
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz
+  lockToken String? @map("lock_token")
+  lastError String? @map("last_error")
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@unique([changeSetId,targetType,targetId])
+  @@map("index_sync")
+}
+
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")

@@ -126,13 +126,19 @@ export async function getLaw(lawId?: string, name?: string) {
         orderBy: { articleCount: "desc" },
       });
   if (!law) return { error: "النظام غير موجود" };
+  const {publishedWorkOverlay}=await import("@/lib/modules/editorial/overlay");
+  const {latestVerification}=await import("@/lib/modules/legal-core/verification-read");
+  const [overlay,verified]=await Promise.all([publishedWorkOverlay(law.id),latestVerification("work",law.id)]);
   return {
     law_id: law.id,
-    name: law.name,
+    name: overlay?.officialName ?? law.name,
     classification: law.classification ?? law.domainTitle ?? law.domain ?? null,
-    issue_instrument: null, // غير منظّم على مستوى النظام في المخطط الحالي
-    issue_date_h: null,
-    status: null, // حالة النفاذ مُخزّنة على مستوى المادة لا النظام
+    issue_instrument: overlay?.instrumentNumber ?? null,
+    issue_date_h: overlay?.issuedHijri ?? null,
+    status: verified?.verifiedStatus ?? "الحالة قيد التحقق من المصدر",
+    document_kind: overlay?.documentKind ?? null,
+    issuer: overlay?.issuer ?? null,
+    evidence_url: verified?.evidenceUrl ?? overlay?.sourceUrl ?? null,
     articles_count: law.articleCount || law.articles.length,
     toc: law.articles.map((x) => ({ article_id: x.id, number: x.articleNumber, title: x.title })),
   };
@@ -143,6 +149,8 @@ export async function getBylawLinks(lawId: string) {
   const rels = await prisma.legalRelation.findMany({
     where: {
       relation: "IMPLEMENTS",
+      status: "VERIFIED",
+      sourceType: {in:["work","system"]}, targetType:{in:["work","system"]},
       OR: [{ sourceId: lawId }, { targetId: lawId }],
     },
     select: { sourceId: true, targetId: true },
@@ -151,8 +159,10 @@ export async function getBylawLinks(lawId: string) {
   // اللائحة (source) «تنفّذ» النظام الأمّ (target)؛ فمن منظور lawId:
   //   implements      = ما يُشير إليه هذا المعرّف بوصفه مصدرًا (ينفّذ نظامًا أعلى)
   //   implemented_by  = ما يُشير إلى هذا المعرّف بوصفه هدفًا (لوائحه التنفيذية)
-  const implementsIds = rels.filter((r) => r.sourceId === lawId).map((r) => r.targetId);
-  const implementedByIds = rels.filter((r) => r.targetId === lawId).map((r) => r.sourceId);
+  const graph=await prisma.legalGraphEdge.findMany({where:{type:"IMPLEMENTS",status:"VERIFIED",OR:[{sourceNode:{article:{legalSystemId:lawId}}},{targetNode:{article:{legalSystemId:lawId}}}]},select:{sourceNode:{select:{article:{select:{legalSystemId:true}}}},targetNode:{select:{article:{select:{legalSystemId:true}}}}}});
+  const pairs=[...rels,...graph.flatMap(e=>{const sourceId=e.sourceNode.article?.legalSystemId;const targetId=e.targetNode.article?.legalSystemId;return sourceId&&targetId&&sourceId!==targetId?[{sourceId,targetId}]:[];})];
+  const implementsIds = [...new Set(pairs.filter((r) => r.sourceId === lawId).map((r) => r.targetId))];
+  const implementedByIds = [...new Set(pairs.filter((r) => r.targetId === lawId).map((r) => r.sourceId))];
 
   const allIds = Array.from(new Set([...implementsIds, ...implementedByIds]));
   const systems = allIds.length
