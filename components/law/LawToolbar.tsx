@@ -84,6 +84,41 @@ function applyFilter(f: LawFilter): number {
   return shown;
 }
 
+/**
+ * الوصول إلى مرساة في نظام طويل (بند الجودة م٢): المواد بـ content-visibility:auto تُقدَّر بارتفاع 240px حتى تُرسم،
+ * فيهبط تمرير واحد على مادة أخرى. نرسم ما قبل الهدف رسمًا فعليًا، ثم نعيد التمرير حتى يستقر الموضع
+ * (وبعد تحميل الخطوط، لأن تبدّل Amiri يغيّر الارتفاعات)، ونتوقف إن مرّر المستخدم بنفسه.
+ */
+async function settleOn(el: HTMLElement) {
+  const target = el.closest<HTMLElement>(".art") ?? el;
+  const arts = Array.from(document.querySelectorAll<HTMLElement>("[data-law] .art"));
+  const idx = arts.indexOf(target);
+  for (let i = 0; i <= idx; i++) arts[i].style.contentVisibility = "visible";
+  let userMoved = false;
+  const stop = () => {
+    userMoved = true;
+  };
+  window.addEventListener("wheel", stop, { once: true, passive: true });
+  window.addEventListener("touchmove", stop, { once: true, passive: true });
+  window.addEventListener("keydown", stop, { once: true });
+  const want = () => parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+  const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+  el.scrollIntoView({ block: "start" });
+  let stable = 0;
+  for (let k = 0; k < 40 && stable < 3 && !userMoved; k++) {
+    if (k === 2 && document.fonts) await document.fonts.ready;
+    await frame();
+    const off = el.getBoundingClientRect().top - want();
+    if (Math.abs(off) > 2) {
+      el.scrollIntoView({ block: "start" });
+      stable = 0;
+    } else stable++;
+  }
+  window.removeEventListener("wheel", stop);
+  window.removeEventListener("touchmove", stop);
+  window.removeEventListener("keydown", stop);
+}
+
 function flash(target: HTMLElement) {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cls = reduce ? "is-flash-static" : "is-flash";
@@ -197,20 +232,24 @@ export function LawToolbar({
   useEffect(() => {
     const initial = parseFilter(new URLSearchParams(window.location.search).get("show"));
     if (initial !== "all") changeFilter(initial, { silent: true });
-    const hash = window.location.hash;
-    if (hash) {
+    const arrive = (hash: string, withFlash: boolean) => {
+      if (!hash || hash === "#") return;
       const id = resolvePreambleAlias(hash);
       if (id.startsWith("preamble")) window.dispatchEvent(new Event("law:expand-preamble"));
       window.setTimeout(() => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.scrollIntoView({ block: "start" });
+        void settleOn(el);
+        if (!withFlash) return;
         const target = el.closest<HTMLElement>(".art, .clause") ?? el;
         flash(target);
-        const h = target.querySelector<HTMLElement>(".art-h");
-        h?.focus({ preventScroll: true });
+        target.querySelector<HTMLElement>(".art-h")?.focus({ preventScroll: true });
       }, 60);
-    }
+    };
+    arrive(window.location.hash, true);
+    // التنقل داخل الصفحة (الفهرس، مراسي البنود): يُعاد التمرير حتى الاستقرار، بلا إبراز (الموضع ظاهر).
+    const onHash = () => arrive(window.location.hash, false);
+    window.addEventListener("hashchange", onHash);
     const opened: HTMLDetailsElement[] = [];
     const before = () => {
       document.querySelectorAll<HTMLDetailsElement>("[data-law] details.fnd:not([open])").forEach((d) => {
@@ -226,6 +265,7 @@ export function LawToolbar({
     return () => {
       window.removeEventListener("beforeprint", before);
       window.removeEventListener("afterprint", after);
+      window.removeEventListener("hashchange", onHash);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

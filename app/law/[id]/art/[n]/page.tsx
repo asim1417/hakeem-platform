@@ -20,6 +20,7 @@ import {
   splitParagraphs,
 } from "@/lib/modules/legal-core/law-page-view";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
+import { sanitizeDisplayText as clean } from "@/lib/modules/legal-core/display-text";
 import { CopyAction } from "@/components/law/CopyAction";
 import { LtrDates } from "@/components/law/LtrDates";
 
@@ -44,12 +45,13 @@ async function load(params: Props["params"], asof: string | null) {
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const asof = parseAsOfParam(searchParams);
   const x = await load(params, asof);
-  // 404/308 هنا لا في الجسم (الجسم يُبث داخل app/loading.tsx فتُثبَّت 200 قبله).
+  // احتياط: الحالة الحقيقية (301/404) يحسمها الوسيط (law-route-gate.ts)، لأن app/loading.tsx الجذري يثبّت 200
+  // قبل وصول notFound/permanentRedirect من هنا أو من الجسم. هنا يبقى التحويل في المتصفح إن تعذّر جدول الوسيط.
   if (!x) notFound();
-  if (x.r.nonCanonical) permanentRedirect(articlePath(x.r.canonicalId, x.n));
+  if (x.r.nonCanonical) permanentRedirect(`${articlePath(x.r.canonicalId, x.n)}${asof ? `?asof=${asof}` : ""}`);
   return {
     title: `${x.data.system.name} — ${x.a.heading} | حكيم`,
-    description: x.a.effectiveText.slice(0, 155),
+    description: clean(x.a.effectiveText).slice(0, 155),
     alternates: { canonical: `${getSiteUrl()}${articlePath(x.r.canonicalId, x.n)}` },
     robots: asof ? { index: false, follow: true } : undefined,
   };
@@ -88,10 +90,10 @@ function StatusBox({ a }: { a: ArticleView }) {
           <dt>سارٍ من</dt>
           <dd><LtrDates text={orNA(a.amendment.currentFrom)} /></dd>
         </dl>
-        {a.text !== a.effectiveText ? (
+        {clean(a.text) !== clean(a.effectiveText) ? (
           <>
             <p className="prev-l">النص السابق</p>
-            <div className="prev">{a.text}</div>
+            <div className="prev">{clean(a.text)}</div>
           </>
         ) : null}
       </section>
@@ -132,12 +134,12 @@ export default async function LawArticlePage({ params, searchParams }: Props) {
   const asof = parseAsOfParam(searchParams);
   const x = await load(params, asof);
   if (!x) notFound();
-  if (x.r.nonCanonical) permanentRedirect(articlePath(x.r.canonicalId, x.n));
+  if (x.r.nonCanonical) permanentRedirect(`${articlePath(x.r.canonicalId, x.n)}${asof ? `?asof=${asof}` : ""}`);
   const { data, a, division, prev, next } = x;
   const id = x.r.canonicalId;
   const tone = articleTone(a.status);
   const url = `${getSiteUrl()}${articlePath(id, a.number)}`;
-  const paras = splitParagraphs(a.effectiveText);
+  const paras = splitParagraphs(clean(a.effectiveText));
   return <ArticleDoc data={data} a={a} division={division} prev={prev} next={next} id={id} url={url} tone={tone} paras={paras} />;
 }
 

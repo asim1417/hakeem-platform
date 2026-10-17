@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Ban, ExternalLink, Info, PencilLine, ArrowLeft, TriangleAlert, FileText, ChevronDown } from "lucide-react";
 import type { ArticleView, DateValue, DivisionView, LawPageData, RepealInfo } from "@/lib/modules/legal-core/law-page-data";
 import { NOT_AVAILABLE } from "@/lib/modules/legal-core/law-page-data";
+import { sanitizeDisplayText as clean } from "@/lib/modules/legal-core/display-text";
 import {
   INSTRUMENT_KIND_LABEL,
   NO_HISTORY_MESSAGE,
@@ -223,7 +224,7 @@ function Preamble({ data }: { data: LawPageData }) {
                 {ins.heading ?? headingUnits.filter((u) => u !== basmala).map((u) => u.text.trim()).join(" ")}
               </h3>
               {ins.units.map((u) => {
-                const t = u.text.trim();
+                const t = clean(u.text).trim();
                 if (u.type === "preamble_heading") return u === basmala ? <p className="basmala" key={u.id}>{t}</p> : null;
                 if (u.type === "opening") return <p className="opening pre-raw" key={u.id}>{t}</p>;
                 if (u.type === "recital") return <p className="recital" key={u.id}>{t}</p>;
@@ -262,14 +263,14 @@ function Preamble({ data }: { data: LawPageData }) {
                 {b.heading}
               </h3>
             ) : null}
-            <p className="pre-raw">{b.text}</p>
+            <p className="pre-raw">{clean(b.text)}</p>
           </div>
         ))}
       </>
     );
   } else if (d.mode === "legacy" && p.legacy) {
     texts = [p.legacy.text];
-    body = <p className="pre-raw">{p.legacy.text}</p>;
+    body = <p className="pre-raw">{clean(p.legacy.text)}</p>;
   }
   return (
     <section id="preamble" aria-labelledby="pre-h">
@@ -343,7 +344,8 @@ function RepealFootnote({ r, id, title }: { r: RepealInfo; id: string; title: st
 function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawPageData; id: string; base: string; level: 3 | 4 }) {
   const tone = articleTone(a.status);
   const H = level === 3 ? "h3" : "h4";
-  const paras = splitParagraphs(a.effectiveText);
+  const shown = clean(a.effectiveText);
+  const paras = splitParagraphs(shown);
   const url = `${base}${articlePath(id, a.number)}`;
   const partRepealed = a.status === "ملغى" && !a.inheritedFromWork && Boolean(data.body.divisions.find((d) => d.articles.includes(a))?.allRepealed);
   const showRepealFn = tone === "repealed" && a.repeal && !a.inheritedFromWork && !partRepealed;
@@ -366,7 +368,7 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
           ) : null}
         </span>
         <span className="art-tools">
-          <CopyAction kind="text" label={`نسخ نص ${a.heading}`} value={`${a.heading}\n${a.effectiveText}`} />
+          <CopyAction kind="text" label={`نسخ نص ${a.heading}`} value={`${a.heading}\n${shown}`} />
           <CopyAction kind="cite" label={`نسخ إحالة ${a.heading}`} value={citationText(data.system.name, a, url)} />
           <CopyAction kind="link" label={`نسخ رابط ${a.heading}`} value={url} />
           <Link className="iconbtn iconbtn--fine" href={articlePath(id, a.number)} aria-label={`فتح صفحة ${a.heading}`}>
@@ -388,7 +390,7 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
             ),
           )
         ) : (
-          <p>{a.effectiveText}</p>
+          <p>{shown}</p>
         )}
       </div>
       {a.repealedLaterOn ? <p className="art-note">أُلغيت لاحقًا في <LtrDates text={a.repealedLaterOn} /></p> : null}
@@ -410,10 +412,10 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
                   <dt>عدد النسخ</dt>
                   <dd>{a.amendment.versions.toLocaleString("ar-SA")}</dd>
                 </dl>
-                {a.text && a.text !== a.effectiveText ? (
+                {a.text && clean(a.text) !== shown ? (
                   <>
                     <p className="prev-l">النص السابق</p>
-                    <div className="prev">{a.text}</div>
+                    <div className="prev">{clean(a.text)}</div>
                   </>
                 ) : null}
               </div>

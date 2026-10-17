@@ -21,6 +21,7 @@ import {
 } from "@/lib/modules/auth/request-path-headers";
 import { workspaceHomeFromSessionCookie } from "@/lib/modules/auth/session-cookie-peek";
 import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
+import { buildLawRouteTable, decideLawRoute, LAW_NOT_FOUND_HTML, type LawRouteRow, type LawRouteTable } from "@/lib/modules/legal-core/law-route-gate";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -59,6 +60,7 @@ const isClerkMiddlewareBypass = createRouteMatcher([
   "/privacy(.*)",
   "/terms(.*)",
   "/legal(.*)",
+  "/law/(.*)",
   // إكمال OAuth — عزل عن clerkMiddleware يمنع وميض الفشل مع dev-browser-missing
   "/auth/continue(.*)",
   // نموذج الدخول العربي — Clerk يعمل فيه على العميل فقط، كما في /sign-in.
@@ -143,11 +145,43 @@ function getClerkHandler(): ClerkMw {
   return clerkHandler;
 }
 
+// HKM-023-B (م١): جدول مسارات /law مخزّن في ذاكرة الوسيط عشر دقائق؛ الفشل يُعاد بعد ثلاثين ثانية ولا يحجب الطلب.
+let lawTable: { at: number; ttl: number; table: LawRouteTable | null } | null = null;
+
+async function getLawTable(request: NextRequest): Promise<LawRouteTable | null> {
+  const now = Date.now();
+  if (lawTable && now - lawTable.at < lawTable.ttl) return lawTable.table;
+  try {
+    const res = await fetch(new URL("/api/law-routes", request.nextUrl.origin), { headers: { accept: "application/json" } });
+    if (!res.ok) throw new Error(String(res.status));
+    const body = (await res.json()) as { rows?: LawRouteRow[] };
+    lawTable = { at: now, ttl: 600_000, table: buildLawRouteTable(body.rows ?? []) };
+  } catch {
+    lawTable = { at: now, ttl: 30_000, table: lawTable?.table ?? null };
+  }
+  return lawTable.table;
+}
+
+/** تحويل دائم و404 حقيقيان لمسارات /law وشجرة النظام القديمة في اللوحة، قبل أي رسم. */
+async function lawRouteGate(request: NextRequest): Promise<Response | null> {
+  const { pathname, search } = request.nextUrl;
+  if (!pathname.startsWith("/law/") && !pathname.startsWith("/dashboard/legal-core/systems/")) return null;
+  const table = await getLawTable(request);
+  if (!table) return null;
+  const d = decideLawRoute(pathname, search, table);
+  if (d.kind === "redirect") return NextResponse.redirect(new URL(d.to, request.url), 301);
+  if (d.kind === "not_found") return new NextResponse(LAW_NOT_FOUND_HTML, { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+  return null;
+}
+
 /**
  * بدون مفاتيح Clerk لا نستدعي clerkMiddleware أصلًا.
  * صفحات الدخول العامة تتجاوز clerkMiddleware حتى مع وجود المفاتيح.
  */
-export default function middleware(request: NextRequest, event: NextFetchEvent) {
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
+  const lawGate = await lawRouteGate(request);
+  if (lawGate) return lawGate;
+
   // «/» للزائر و«/dashboard» لصاحب الجلسة: إحالة 307 قبل رسم الصفحة — وجود الكوكي فقط، بلا Clerk
   // (حماية iPhone). ‎/?view=home‎ يعرض الواجهة التعريفية بطلبه. مفتاح الطوارئ: HOME_SIGNED_IN_REDIRECT_ENABLED=0
   if (

@@ -22,8 +22,8 @@ function canonicalTarget(id: string, asof: string | null, sp: Props["searchParam
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const r = await resolveLawRoute(prismaSqlClient(prisma), params.id);
-  // الحالة الصحيحة (404/308) تُحسم هنا: البيانات الوصفية تُنتظر قبل بث الصفحة، أما جسمها فيُبث داخل
-  // app/loading.tsx فيُثبَّت 200 قبل أن يصل notFound/permanentRedirect.
+  // احتياط: الحالة الحقيقية (301/404) يحسمها الوسيط (law-route-gate.ts)، لأن app/loading.tsx الجذري يثبّت 200
+  // قبل وصول notFound/permanentRedirect من هنا أو من الجسم. هنا يبقى التحويل في المتصفح إن تعذّر جدول الوسيط.
   if (!r) notFound();
   const asof = parseAsOfParam(searchParams);
   if (r.nonCanonical) permanentRedirect(canonicalTarget(r.canonicalId, asof, searchParams));
