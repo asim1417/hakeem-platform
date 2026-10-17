@@ -15,70 +15,70 @@ type Search = { action?: string; objectType?: string; actor?: string };
 
 function AuditFilters({ search }: { search: Search }) {
   return (
-  <form method="get" action="/admin/legal/audit" className="dk-filterform">
-    <label className="dk-field">
-      <span className="dk-field__label">نوع الحدث</span>
-      <select name="action" defaultValue={search.action ?? ""} className="dk-input">
-        <option value="">كل الأحداث</option>
-        <optgroup label="مجموعات">
-          {AUDIT_ACTION_GROUPS.map((g) => (
-            <option key={g.value} value={g.value}>
-              {g.label}
+    <form method="get" action="/admin/legal/audit" className="dk-filterform">
+      <label className="dk-field">
+        <span className="dk-field__label">نوع الحدث</span>
+        <select name="action" defaultValue={search.action ?? ""} className="dk-input">
+          <option value="">كل الأحداث</option>
+          <optgroup label="مجموعات">
+            {AUDIT_ACTION_GROUPS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="حدث بعينه">
+            {AUDIT_ACTIONS.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </label>
+      <label className="dk-field">
+        <span className="dk-field__label">نوع الهدف</span>
+        <select name="objectType" defaultValue={search.objectType ?? ""} className="dk-input">
+          <option value="">كل الأهداف</option>
+          {AUDIT_OBJECT_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
             </option>
           ))}
-        </optgroup>
-        <optgroup label="حدث بعينه">
-          {AUDIT_ACTIONS.map((a) => (
-            <option key={a.value} value={a.value}>
-              {a.label}
-            </option>
-          ))}
-        </optgroup>
-      </select>
-    </label>
-    <label className="dk-field">
-      <span className="dk-field__label">نوع الهدف</span>
-      <select name="objectType" defaultValue={search.objectType ?? ""} className="dk-input">
-        <option value="">كل الأهداف</option>
-        {AUDIT_OBJECT_TYPES.map((t) => (
-          <option key={t.value} value={t.value}>
-            {t.label}
-          </option>
-        ))}
-      </select>
-    </label>
-    <label className="dk-field">
-      <span className="dk-field__label">معرّف المنفّذ</span>
-      <input name="actor" dir="ltr" lang="en" defaultValue={search.actor ?? ""} className="dk-input" />
-    </label>
-    <button type="submit" className={btnClass("primary")}>
-      تطبيق
-    </button>
-  </form>
-);
+        </select>
+      </label>
+      <label className="dk-field">
+        <span className="dk-field__label">معرّف المنفّذ</span>
+        <input name="actor" dir="ltr" lang="en" defaultValue={search.actor ?? ""} className="dk-input" />
+      </label>
+      <button type="submit" className={btnClass("primary")}>
+        تطبيق
+      </button>
+    </form>
+  );
 }
 
 export default async function EditorialAuditPage({ searchParams = {} }: { searchParams?: Search }) {
-const actor = await requireEditorialPage("view");
-const allowed = canReadAudit(actor.access);
-let rows: AuditRow[] | null = null;
-let failure: "missing" | "error" | null = null;
-if (allowed) {
-  try {
-    rows = await listAudit(editorialDb(), actor, { action: searchParams.action, objectType: searchParams.objectType, actor: searchParams.actor, limit: 200 });
-  } catch (error) {
-    failure = isMissingRelation(pgErrorCode(error)) ? "missing" : "error";
+  const actor = await requireEditorialPage("view");
+  const allowed = canReadAudit(actor.access);
+  let rows: AuditRow[] | null = null;
+  let failure: "missing" | "error" | null = null;
+  if (allowed) {
+    try {
+      rows = await listAudit(editorialDb(), actor, { action: searchParams.action, objectType: searchParams.objectType, actor: searchParams.actor, limit: 200 });
+    } catch (error) {
+      failure = isMissingRelation(pgErrorCode(error)) ? "missing" : "error";
+    }
   }
-}
-const filtered = Boolean(searchParams.action || searchParams.objectType || searchParams.actor);
-const chips = [
-  searchParams.action ? AUDIT_ACTION_GROUPS.find((g) => g.value === searchParams.action)?.label ?? auditActionLabel(searchParams.action) : null,
-  searchParams.objectType ? objectTypeLabel(searchParams.objectType) : null,
-  searchParams.actor ? "منفّذ محدد" : null,
-].filter((c): c is string => Boolean(c));
-const retry = `/admin/legal/audit${filtered ? `?${new URLSearchParams(searchParams as Record<string, string>).toString()}` : ""}`;
+  const filtered = Boolean(searchParams.action || searchParams.objectType || searchParams.actor);
+  const chips = [
+    searchParams.action ? AUDIT_ACTION_GROUPS.find((g) => g.value === searchParams.action)?.label ?? auditActionLabel(searchParams.action) : null,
+    searchParams.objectType ? objectTypeLabel(searchParams.objectType) : null,
+    searchParams.actor ? "منفّذ محدد" : null,
+  ].filter((c): c is string => Boolean(c));
+  const retry = `/admin/legal/audit${filtered ? `?${new URLSearchParams(searchParams as Record<string, string>).toString()}` : ""}`;
 
-return (
+  return (
     <DeskRoot>
       <DeskHeader title="سجل التدقيق" lead="كل فعل في المكتب مسجّل هنا، والقاعدة نفسها ترفض تعديل السجل أو حذفه." />
       <DeskNav current="/admin/legal/audit" access={deskNavAccess(actor.access)} />
