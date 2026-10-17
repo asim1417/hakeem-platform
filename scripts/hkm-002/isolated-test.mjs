@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
 import { computeSurface, inSurface } from "../../lib/modules/legal-core/search-surface.ts";
-import { assertLedgerBinding, fillNullSearchNorm, ledgerBatchId, ledgerPathFor, loadLedger, loadManifest, verifyLedgerApplied } from "./fill-null-search-norm.mjs";
+import { assertLedgerBinding, classifyLedgerObservation, effectiveCommitStatus, fillNullSearchNorm, ledgerBatchId, ledgerPathFor, loadLedger, loadManifest, verifyLedgerApplied } from "./fill-null-search-norm.mjs";
 import { rollbackNullSearchNorm } from "./rollback-null-search-norm.mjs";
 
 const LAB_DATABASE = "hakeem_hkm002";
@@ -198,6 +198,14 @@ async function articleOf(client, lawName, articleNumber = 1) {
 }
 
 async function main() {
+  const toy = { expected_count: 2, rows: [{ id: "a", search_norm: "نص" }, { id: "b", search_norm: "آخر" }] };
+  const seen = (rows) => classifyLedgerObservation(toy, rows);
+  ok("تطابق المعرّفات والقيم كلها يؤكد", seen([{ id: "a", present: true, search_norm: "نص" }, { id: "b", present: true, search_norm: "آخر" }]).outcome === "confirmed");
+  ok("كل المعرّفات بقيم NULL تعني لم يُطبَّق", seen([{ id: "a", present: true, search_norm: null }, { id: "b", present: true, search_norm: null }]).outcome === "not_applied");
+  ok("اختلاف قيمة واحدة يبقى غير مؤكد", seen([{ id: "a", present: true, search_norm: "نص" }, { id: "b", present: true, search_norm: "مختلف" }]).outcome === "unconfirmed");
+  ok("معرّف مفقود يبقى غير مؤكد", seen([{ id: "a", present: true, search_norm: null }, { id: "b", present: false, search_norm: null }]).outcome === "unconfirmed");
+  ok("خلط NULL مع قيمة يبقى غير مؤكد", seen([{ id: "a", present: true, search_norm: "نص" }, { id: "b", present: true, search_norm: null }]).outcome === "unconfirmed");
+  ok("الحالة المفقودة تُعد غير مؤكدة", effectiveCommitStatus({}) === "unconfirmed" && effectiveCommitStatus({ commit_status: "" }) === "unconfirmed");
   for (const name of ["hakeem", "hakeem_wave1", "neondb", "postgres", ""]) {
     let refused = false;
     try { assertLabDatabaseName(name); } catch { refused = true; }
@@ -258,8 +266,8 @@ async function main() {
   const keptBefore = loadLedger(ledgerPathFor("isolated"));
   ok("سجل ما قبل التنفيذ فيه 353 قيمة غير مؤكدة", keptBefore.rows.length === 353 && keptBefore.commit_status === "unconfirmed");
   const missed = await verifyLedgerApplied(LOCAL, keptBefore);
-  ok("اتصال قراءة جديد: التثبيت لم يُنفَّذ", missed.applied === false && missed.read_only === true && missed.matched === 0);
-  ok("السجل بقي بعد تحقق عدم التنفيذ", existsSync(isolatedLedgerPath) && loadLedger(ledgerPathFor("isolated")).rows.length === 353);
+  ok("اتصال قراءة جديد: التثبيت لم يُنفَّذ", missed.outcome === "not_applied" && missed.nulls === 353 && missed.missing === 0 && missed.read_only === true);
+  ok("السجل بقي بعد تحقق عدم التنفيذ", existsSync(isolatedLedgerPath) && loadLedger(ledgerPathFor("isolated")).commit_status === "not_applied");
   const nullAfterMiss = await local.query(
     `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NULL`,
     [ids],
@@ -267,18 +275,21 @@ async function main() {
   ok("فشل ما قبل التنفيذ لم يثبّت القيم", nullAfterMiss.rows[0].n === 353);
   ok("المتن ثابت بعد فشل ما قبل التنفيذ", (await contentMd5(local, ids)) === digestBefore);
 
-  writeFileSync(isolatedLedgerPath, `${JSON.stringify({ target: "isolated", database: "hakeem_hkm002", marker: "prior" })}\n`);
+  writeFileSync(isolatedLedgerPath, `${JSON.stringify({ target: "isolated", database: "hakeem_hkm002", marker: "prior", commit_status: "not_applied" })}\n`);
   let uncertain = null;
+  let statusBeforeSend = "";
   try {
     await fillNullSearchNorm(local, manifest, {
       target: "isolated",
       async commit(client, hooks) {
+        statusBeforeSend = loadLedger(ledgerPathFor("isolated")).commit_status ?? "missing";
         hooks.markSent();
         await client.query("COMMIT");
         throw new Error("انقطع الاتصال قبل تأكيد التثبيت");
       },
     });
   } catch (error) { uncertain = error; }
+  ok("السجل unconfirmed قبل إرسال التثبيت", statusBeforeSend === "unconfirmed");
   ok("فقدان رد التثبيت يُبلغ أن النتيجة غير مؤكدة", uncertain?.code === "COMMIT_UNCERTAIN");
   const keptAfter = loadLedger(ledgerPathFor("isolated"));
   ok("فقدان الرد لم يحذف السجل ولم يعد السابق", keptAfter.rows.length === 353 && keptAfter.commit_status === "unconfirmed" && keptAfter.marker === undefined);
@@ -317,6 +328,71 @@ async function main() {
   ok("المتن لم يتغير بعد الملء", (await contentMd5(local, ids)) === digestBefore);
   const nulls = await local.query(`SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NULL`, [ids]);
   ok("لا NULL متبقٍ في القائمة", nulls.rows[0].n === 0);
+
+  await local.query(`UPDATE legal_articles SET search_norm = 'partial' WHERE id = $1`, [sample.id]);
+  const partialObs = await verifyLedgerApplied(LOCAL, ledger);
+  ok("اختلاف قيمة في القاعدة يبقى غير مؤكد", partialObs.outcome === "unconfirmed" && partialObs.present === 353 && partialObs.missing === 0 && partialObs.matched === 352);
+  let partialBlocked = false;
+  try { await rollbackNullSearchNorm(local, manifest, loadLedger(ledgerPathFor("isolated"))); } catch (error) {
+    partialBlocked = String(error.message).includes("غير مؤكدة");
+  }
+  ok("الاختلاف الجزئي يمنع التراجع", partialBlocked && loadLedger(ledgerPathFor("isolated")).commit_status === "unconfirmed");
+  await local.query(`UPDATE legal_articles SET search_norm = $2 WHERE id = $1`, [sample.id, ledgerById.get(sample.id)]);
+  ok("استعادة القيمة الكاملة تؤكد", (await verifyLedgerApplied(LOCAL, ledger)).outcome === "confirmed");
+
+  const victim = (await local.query(
+    `SELECT id, "legalSystemId", "lawName", "articleNumber", title, content, chapter, keywords, classification, search_norm
+     FROM legal_articles WHERE id = $1`,
+    [ids[0]],
+  )).rows[0];
+  await local.query(`DELETE FROM legal_articles WHERE id = $1`, [ids[0]]);
+  const missingObs = await verifyLedgerApplied(LOCAL, ledger);
+  ok("معرّف مفقود من القاعدة يبقى غير مؤكد", missingObs.outcome === "unconfirmed" && missingObs.missing === 1);
+  ok("المعرّف المفقود لا يُعلَّم not_applied", loadLedger(ledgerPathFor("isolated")).commit_status === "unconfirmed");
+  await local.query(
+    `INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content, chapter, keywords, classification, search_norm)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [victim.id, victim.legalSystemId, victim.lawName, victim.articleNumber, victim.title, victim.content, victim.chapter, victim.keywords ?? [], victim.classification, victim.search_norm],
+  );
+  ok("إعادة المعرّف وقيمته تؤكد", (await verifyLedgerApplied(LOCAL, ledger)).outcome === "confirmed");
+
+  await local.query(`UPDATE legal_articles SET search_norm = NULL WHERE id = ANY($1::text[])`, [ids]);
+  const clearedObs = await verifyLedgerApplied(LOCAL, ledger);
+  ok("بقاء كل القيم NULL يعلّم not_applied", clearedObs.outcome === "not_applied" && clearedObs.nulls === 353 && clearedObs.missing === 0);
+  let statusFailed = null;
+  try {
+    await fillNullSearchNorm(local, manifest, {
+      target: "isolated",
+      writeStatus() { throw new Error("تعذر حفظ الحالة"); },
+    });
+  } catch (error) { statusFailed = error; }
+  const statusLedger = loadLedger(ledgerPathFor("isolated"));
+  ok("فشل حفظ الحالة بعد التثبيت يُبقي السجل غير المؤكد", statusFailed?.code === "COMMIT_STATUS_UNSAVED" && statusLedger.commit_status === "unconfirmed" && statusLedger.rows.length === 353);
+  const keptUpdates = await local.query(
+    `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NOT NULL`,
+    [ids],
+  );
+  ok("التحديث بقي رغم فشل حفظ الحالة", keptUpdates.rows[0].n === 353);
+  let statusRollbackBlocked = false;
+  try { await rollbackNullSearchNorm(local, manifest, statusLedger); } catch { statusRollbackBlocked = true; }
+  ok("فشل حفظ الحالة يمنع المتابعة", statusRollbackBlocked);
+  ok("التحقق بعد فشل الحالة يؤكد التطابق الكامل", (await verifyLedgerApplied(LOCAL, ledger)).outcome === "confirmed");
+
+  const confirmedLedger = loadLedger(ledgerPathFor("isolated"));
+  const stripped = { ...confirmedLedger };
+  delete stripped.commit_status;
+  writeFileSync(isolatedLedgerPath, `${JSON.stringify(stripped)}\n`);
+  let missingStatusRollback = false;
+  try { await rollbackNullSearchNorm(local, manifest, stripped); } catch (error) {
+    missingStatusRollback = String(error.message).includes("غير مؤكدة");
+  }
+  let missingStatusFill = false;
+  try { await fillNullSearchNorm(local, manifest, { target: "isolated" }); } catch (error) {
+    missingStatusFill = String(error.message).includes("غير مؤكدة");
+  }
+  ok("الحالة المفقودة تمنع التراجع وإعادة التشغيل", missingStatusRollback && missingStatusFill);
+  ok("التحقق يعيد التأكيد عندما تتطابق القيم", (await verifyLedgerApplied(LOCAL, stripped)).outcome === "confirmed");
+  ok("المتن ثابت بعد حالات التحقق", (await contentMd5(local, ids)) === digestBefore);
 
   let secondFailed = false;
   try { await fillNullSearchNorm(local, manifest, { target: "isolated" }); } catch { secondFailed = true; }

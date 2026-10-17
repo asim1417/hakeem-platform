@@ -84,7 +84,7 @@ export async function fillNullSearchNorm(client, manifest, options = {}) {
   if (existsSync(ledgerFile)) {
     try {
       const pending = JSON.parse(readFileSync(ledgerFile, "utf8"));
-      if (pending?.commit_status === "unconfirmed" && pending.target === target && pending.database === database) {
+      if (pending?.target === target && pending?.database === database && effectiveCommitStatus(pending) === "unconfirmed") {
         throw new Error("توقف: نتيجة تثبيت سابقة غير مؤكدة. تحقق بالقراءة فقط قبل إعادة التشغيل");
       }
     } catch (error) {
@@ -173,6 +173,7 @@ export async function fillNullSearchNorm(client, manifest, options = {}) {
     if (check.n !== manifest.expected_count || check.still_null !== 0 || check.text_ok !== manifest.expected_count) {
       throw new Error("توقف: التحقق الختامي لم يطابق القائمة");
     }
+    ledger.commit_status = "unconfirmed";
     persistLedger(ledger, ledgerPathFor(target), options);
   } catch (error) {
     await client.query("ROLLBACK");
@@ -193,8 +194,6 @@ async function finishCommit(client, ledger, options) {
   try {
     const commit = options.commit ?? defaultCommit;
     await commit(client, hooks);
-    const confirmed = markLedgerStatus(ledgerPathFor(ledger.target), "confirmed");
-    return { updated: ledger.expected_count, ledger: confirmed, status: "committed" };
   } catch (error) {
     if (error?.code === "COMMIT_UNCERTAIN" || error?.code === "COMMIT_NOT_EXECUTED") throw error;
     if (!commitSent) {
@@ -210,6 +209,20 @@ async function finishCommit(client, ledger, options) {
     throw new CommitOutcomeError(
       "COMMIT_UNCERTAIN",
       "نتيجة التثبيت غير مؤكدة: أُرسل الأمر ولم يصل تأكيد. السجل محفوظ. تحقق بالقراءة فقط قبل أي إعادة تشغيل أو تراجع",
+      kept,
+    );
+  }
+  try {
+    const writeStatus = options.writeStatus ?? ((path) => markLedgerStatus(path, "unconfirmed"));
+    const saved = writeStatus(ledgerPathFor(ledger.target), "unconfirmed");
+    return { updated: ledger.expected_count, ledger: saved, status: "committed" };
+  } catch (error) {
+    if (error?.code === "COMMIT_STATUS_UNSAVED") throw error;
+    let kept = ledger;
+    try { kept = loadLedger(ledgerPathFor(ledger.target)); } catch { /* السجل المكتوب قبل الإرسال يبقى */ }
+    throw new CommitOutcomeError(
+      "COMMIT_STATUS_UNSAVED",
+      "ثُبّت التحديث وتعذر حفظ حالة السجل. السجل غير المؤكد محفوظ. تحقق بالقراءة فقط قبل المتابعة",
       kept,
     );
   }
@@ -250,6 +263,36 @@ export function ledgerBatchId(core) {
     hash.update("\n");
   }
   return hash.digest("hex");
+}
+
+export function effectiveCommitStatus(ledger) {
+  if (!ledger || ledger.commit_status === undefined || ledger.commit_status === null || ledger.commit_status === "") {
+    return "unconfirmed";
+  }
+  return ledger.commit_status;
+}
+
+export function classifyLedgerObservation(ledger, observed) {
+  const byId = new Map(observed.map((row) => [row.id, row]));
+  let present = 0;
+  let matched = 0;
+  let nulls = 0;
+  let missing = 0;
+  for (const expected of ledger.rows) {
+    const found = byId.get(expected.id);
+    if (!found || found.present === false) {
+      missing += 1;
+      continue;
+    }
+    present += 1;
+    if (found.search_norm === null) nulls += 1;
+    else if (found.search_norm === expected.search_norm) matched += 1;
+  }
+  const complete = missing === 0 && present === ledger.expected_count && ledger.rows.length === ledger.expected_count;
+  let outcome = "unconfirmed";
+  if (complete && matched === ledger.expected_count) outcome = "confirmed";
+  else if (complete && nulls === ledger.expected_count) outcome = "not_applied";
+  return { outcome, present, matched, nulls, missing };
 }
 
 export function assertLedger(ledger) {
@@ -326,6 +369,9 @@ export function persistLedger(ledger, path, options = {}) {
     if (loaded.batch_id !== ledger.batch_id || loaded.rows.length !== ledger.rows.length) {
       throw new Error("السجل المكتوب غير قابل للاسترجاع");
     }
+    if (loaded.commit_status !== "unconfirmed" && ledger.commit_status === "unconfirmed") {
+      throw new Error("السجل لم يُحفظ بحالة غير مؤكدة");
+    }
     for (let i = 0; i < ledger.rows.length; i += 1) {
       if (loaded.rows[i].id !== ledger.rows[i].id || loaded.rows[i].search_norm !== ledger.rows[i].search_norm) {
         throw new Error("السجل المسترجع يختلف عن المكتوب");
@@ -366,21 +412,19 @@ export async function verifyLedgerApplied(connectionString, ledger) {
     const db = await client.query("SELECT current_database() AS name");
     if (db.rows[0].name !== ledger.database) throw new Error("قاعدة التحقق تختلف عن سجل الدفعة");
     const found = await client.query(
-      `SELECT count(*)::int AS n,
-              count(*) FILTER (WHERE a.search_norm = src.search_norm)::int AS matched
-       FROM legal_articles a
-       JOIN (SELECT * FROM unnest($1::text[], $2::text[]) AS t(id, search_norm)) src ON src.id = a.id`,
-      [ledger.rows.map((row) => row.id), ledger.rows.map((row) => row.search_norm)],
+      `SELECT src.id, (a.id IS NOT NULL) AS present, a.search_norm
+       FROM unnest($1::text[]) AS src(id)
+       LEFT JOIN legal_articles a ON a.id = src.id`,
+      [ledger.rows.map((row) => row.id)],
     );
-    const row = found.rows[0];
-    const applied = row.n === ledger.expected_count && row.matched === ledger.expected_count;
-    markLedgerStatus(ledgerPathFor(ledger.target), applied ? "confirmed" : "not_applied");
+    const classified = classifyLedgerObservation(ledger, found.rows);
+    markLedgerStatus(ledgerPathFor(ledger.target), classified.outcome);
     const mode = await client.query("SHOW transaction_read_only");
     return {
       database: db.rows[0].name,
-      matched: row.matched,
+      ...classified,
       expected: ledger.expected_count,
-      applied,
+      applied: classified.outcome === "confirmed",
       read_only: mode.rows[0].transaction_read_only === "on",
     };
   } finally {
@@ -410,7 +454,7 @@ async function main() {
       ledger_rows: result.ledger.rows.length,
     }));
   } catch (error) {
-    if (error?.code === "COMMIT_UNCERTAIN" || error?.code === "COMMIT_NOT_EXECUTED") {
+    if (error?.code === "COMMIT_UNCERTAIN" || error?.code === "COMMIT_NOT_EXECUTED" || error?.code === "COMMIT_STATUS_UNSAVED") {
       console.error(JSON.stringify({
         status: "unconfirmed",
         code: error.code,

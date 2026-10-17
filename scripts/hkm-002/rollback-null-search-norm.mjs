@@ -7,10 +7,10 @@
  */
 import { pathToFileURL } from "node:url";
 import { Client } from "pg";
-import { assertLedgerBinding, assertTarget, ledgerPathFor, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
+import { assertLedgerBinding, assertTarget, effectiveCommitStatus, ledgerPathFor, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
 
 export async function rollbackNullSearchNorm(client, manifest, ledger) {
-  if (ledger?.commit_status === "unconfirmed") {
+  if (effectiveCommitStatus(ledger) !== "confirmed") {
     throw new Error("توقف: نتيجة التثبيت غير مؤكدة. تحقق بالقراءة فقط قبل التراجع");
   }
   const live = await client.query("SELECT current_database() AS name");
