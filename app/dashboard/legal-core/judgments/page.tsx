@@ -5,6 +5,7 @@ import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibili
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
+import { findRulingIdsRedacted, redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
@@ -37,16 +38,28 @@ export default async function LegalCoreJudgmentsPage({
 }) {
   await requirePagePermission("LEGAL_CORE_VIEW");
 
-  const query = (searchParams?.q ?? "").trim();
+  // HKM-012: الهوية والجوال تُزالان من الاستعلام، والأرقام الطويلة تُطابَق في رقم القضية والقرار فقط.
+  const parts = splitRulingQuery(searchParams?.q);
+  const query = parts.text || parts.numbers.join(" ");
   const court = (searchParams?.court ?? "").trim();
   const city = (searchParams?.city ?? "").trim();
   const classification = (searchParams?.classification ?? "").trim();
   const page = Math.max(Number(searchParams?.page ?? 1), 1);
   const limit = 24;
 
+  // النص العربي الخالص لا يمسّه الحجب، فاحتواؤه على الخام كاحتوائه على المنقّح. وما فيه رقم أو
+  // لاتيني (قد يقع على جزء من محجوب) يُطابَق على المتن والاستئناف منقّحين داخل القاعدة.
+  const REDACTED_CAP = 5000;
+  const redactedIds =
+    query && (parts.sensitive || parts.numbers.length)
+      ? await findRulingIdsRedacted(parts, { limit: REDACTED_CAP }).catch(() => [] as string[])
+      : null;
+
   const where = {
     AND: [
-      query
+      redactedIds
+        ? { id: { in: redactedIds } }
+        : query
         ? {
             OR: [
               { judgmentTitle: { contains: query, mode: "insensitive" as const } },
@@ -99,7 +112,7 @@ export default async function LegalCoreJudgmentsPage({
   // الترتيب بالصلة عند وجود استعلام: تطابق العنوان/رقم القضية أولاً، ثم إشارة السلطة (عدد
   // روابط المواد = مركزية الحكم)، ثم الأحدث. تطابق النصّ وحده يبقى أدنى من تطابق العنوان.
   // مع استعلام: نرتّب البركة بالصلة ثم نقتطع الصفحة. بلا استعلام: البركة هي الصفحة أصلاً.
-  const approximate = query.length > 0 && total > POOL;
+  const approximate = query.length > 0 && (total > POOL || (redactedIds?.length ?? 0) >= REDACTED_CAP);
   const judgments = query
     ? [...pool]
         .sort((a, b) => scoreJudgment(b, query) - scoreJudgment(a, query) || dateDesc(a, b))
@@ -113,7 +126,7 @@ export default async function LegalCoreJudgmentsPage({
           await prisma.judicialCase
             .findMany({ where: { id: { in: judgments.map((j) => j.id) } }, select: { id: true, judgmentText: true } })
             .catch(() => [] as Array<{ id: string; judgmentText: string }>)
-        ).map((r) => [r.id, sanitizeDisplayText(r.judgmentText)])
+        ).map((r) => [r.id, redactPII(sanitizeDisplayText(r.judgmentText))])
       )
     : new Map<string, string>();
 
