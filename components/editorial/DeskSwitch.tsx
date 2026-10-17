@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { Lock, LockOpen, ShieldCheck, ShieldAlert } from "lucide-react";
 import { postEditorial } from "./api";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { deskSwitchConfirmCopy } from "./logic";
 import { Badge, btnClass, Message, MFA_SETUP_HREF } from "./ui";
 
 const MIN_REASON = 5;
@@ -37,6 +38,7 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
   const effective = killed ? false : env === "force_on" ? true : writeEnabled;
   const mfaBlocks = requireMfa && !ownerMfa.enabled;
   const reasonOk = reason.trim().length >= MIN_REASON;
+  const copy = confirm ? deskSwitchConfirmCopy({ next: confirm, writeEnabled, env, lock }) : null;
 
   async function send(next: { writeEnabled: boolean; requireMfa: boolean }) {
     setBusy(true);
@@ -71,7 +73,8 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
 
       {killed && lock === "preview" ? (
         <Message tone="lock" title="نسخة معاينة.">
-          نسخ المعاينة تشارك قاعدة الإنتاج، فالكتابة فيها مقفلة ولا يُشغَّل المفتاح منها. شغّله من الموقع الأساسي.{writeEnabled ? " الإيقاف وحده مسموح من هنا." : ""}
+          نسخ المعاينة تشارك قاعدة الإنتاج، فالكتابة فيها مقفلة ولا يُشغَّل المفتاح منها. شغّله من الموقع الأساسي.
+          {writeEnabled ? " الإيقاف وحده مسموح من هنا، ويُقفل الموقع الأساسي أيضًا." : ""}
         </Message>
       ) : killed ? (
         <Message tone="lock" title="مقفلة بمفتاح الطوارئ.">
@@ -153,35 +156,11 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null
 
       <ConfirmDialog
         open={confirm !== null}
-        title={
-          !confirm
-            ? ""
-            : confirm.writeEnabled !== writeEnabled
-              ? confirm.writeEnabled
-                ? "تشغيل الكتابة في المكتب؟"
-                : "إيقاف الكتابة في المكتب؟"
-              : confirm.requireMfa
-                ? "اشتراط التحقق الثنائي للكتابة؟"
-                : "إلغاء شرط التحقق الثنائي؟"
-        }
-        consequence={
-          !confirm
-            ? null
-            : confirm.writeEnabled !== writeEnabled
-              ? confirm.writeEnabled
-                ? "تُفتح الأفعال كلها لمن له تكليف: الاعتماد والنشر والتراجع، ويتوقف زر اعتماد المبادئ القديم ويُحال إلى المكتب. يُسجَّل باسمك وبسببك."
-                : env === "force_on"
-                  ? "يُحفظ المفتاح مقفلًا، لكن الكتابة في المكتب تبقى مفتوحة وزر اعتماد المبادئ القديم موقوفًا ما دام EDITORIAL_DESK_WRITE=1 في إعدادات النشر. يُسجَّل باسمك وبسببك."
-                  : killed
-                    ? "يُحفظ المفتاح مقفلًا ويعود زر اعتماد المبادئ القديم إلى عمله. الكتابة في المكتب مقفلة أصلًا بقفل البيئة. يُسجَّل باسمك وبسببك."
-                    : "تُقفل كل كتابة في المكتب فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. يُسجَّل باسمك وبسببك."
-              : confirm.requireMfa
-                ? "لن يكتب في المكتب إلا حساب فعّل التحقق الثنائي."
-                : "يكتب في المكتب من له تكليف ولو لم يفعّل التحقق الثنائي. هذا يخالف القرار الافتراضي؛ يُسجَّل باسمك وبسببك."
-        }
+        title={copy?.title ?? ""}
+        consequence={copy?.consequence ?? null}
         confirmLabel="تأكيد"
         busyLabel="جارٍ الحفظ…"
-        confirmVariant={confirm && confirm.writeEnabled && !writeEnabled ? "approve" : "destructive"}
+        confirmVariant={copy?.variant ?? "destructive"}
         busy={busy}
         onConfirm={() => (confirm ? void send(confirm) : undefined)}
         onClose={() => (busy ? undefined : setConfirm(null))}

@@ -17,10 +17,14 @@ const cache = new Map<string, { at: number; status: MfaStatus }>();
  * مفاتيح Clerk بترتيب الثقة، كما في claim-clerk-return (مراجعة الجودة م٣ على 7681ec8):
  * المفتاح المُدار في الإعدادات ثم مفتاح Vercel الأصلي، ويُقدَّم ما يطابق المفتاح العام.
  */
+export function orderClerkSecretKeys(candidates: ReadonlyArray<string | null | undefined>, publishable?: string): string[] {
+  const unique = Array.from(new Set(candidates.map((k) => (k ?? "").trim()).filter(Boolean)));
+  const matches = (k: string) => secretMatchesPublishable(k, publishable ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  return [...unique.filter(matches), ...unique.filter((k) => !matches(k))];
+}
+
 function clerkSecretKeys(): string[] {
-  const raw = [process.env.CLERK_SECRET_KEY, originalEnvValue("CLERK_SECRET_KEY")].map((k) => (k ?? "").trim()).filter(Boolean);
-  const unique = Array.from(new Set(raw));
-  return [...unique.filter((k) => secretMatchesPublishable(k)), ...unique.filter((k) => !secretMatchesPublishable(k))];
+  return orderClerkSecretKeys([process.env.CLERK_SECRET_KEY, originalEnvValue("CLERK_SECRET_KEY")]);
 }
 
 async function lookup(userId: string): Promise<MfaStatus> {

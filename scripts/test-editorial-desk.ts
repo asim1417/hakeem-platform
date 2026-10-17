@@ -10,6 +10,7 @@
  * الحارس يرفض أي مضيف غير محلي، وأي قاعدة لا ينتهي اسمها بـ _test، لأنه يحذفها ويعيد إنشاءها.
  * لا يقرأ DATABASE_URL أبدًا.
  */
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolveEditorialAccess } from "../lib/modules/editorial/access";
@@ -30,6 +31,7 @@ import {
 } from "../lib/modules/editorial/intake";
 import { payloadHash } from "../lib/modules/editorial/payload";
 import { getSystemSummary, listAudit, listChangeSetsDetailed, summarizeChange } from "../lib/modules/editorial/read";
+import { deskSwitchConfirmCopy } from "../components/editorial/logic";
 import { previewEditorialSettings, readEditorialSettings, saveEditorialSettings, setDeskWriteSwitch } from "../lib/modules/editorial/settings";
 import {
   createChangeSet,
@@ -1633,6 +1635,15 @@ async function switchTests(c: UnifyCtx) {
   ok(tightened.controls.writeEnabled && tightened.controls.requireMfa, "SW-12 إعادة الشرط والكتابة مفتوحة مسموحة بلا تحقق ثنائي للمالك");
   await rejects(() => createChangeSet(db, { ...editor, mfa: false }, change("SW4", "sw4b")), "MFA_REQUIRED", "SW-12 بعد إعادة الشرط يُرفض المحرر بلا تحقق ثنائي");
 
+  // SW-16 (خ٦-أ): تحت مفتاح الطوارئ (=0) الإيقاف وحده كذلك: تغيير الشرط مرفوض، والإيقاف الصافي مقبول ولو بلا تحقق ثنائي.
+  process.env.EDITORIAL_DESK_WRITE = "0";
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إيقاف وإسقاط الشرط تحت الطوارئ", writeEnabled: false, requireMfa: false }), "WRITE_DISABLED", "SW-16 تحت الطوارئ: الإيقاف مع إسقاط الشرط مرفوض");
+  await setDeskWriteSwitch(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "إيقاف تحت الطوارئ", writeEnabled: false });
+  ok(controlsOf((await loadEditorialConfig(db)).config).writeEnabled === false && controlsOf((await loadEditorialConfig(db)).config).requireMfa === true, "SW-16 تحت الطوارئ: الإيقاف الصافي مقبول والشرط باقٍ");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إسقاط الشرط تحت الطوارئ", writeEnabled: false, requireMfa: false }), "WRITE_DISABLED", "SW-16 تحت الطوارئ: تغيير الشرط والكتابة مقفلة مرفوض");
+  delete process.env.EDITORIAL_DESK_WRITE;
+  await setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إعادة التشغيل بعد تجربة الطوارئ", writeEnabled: true });
+
   // SW-13 (م١): نسخة المعاينة لا تشغّل المفتاح ولا تحفظ الإعدادات (تشارك قاعدة الإنتاج)، والإيقاف منها مسموح.
   const savedVercelEnv = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "preview";
@@ -1666,8 +1677,62 @@ async function switchTests(c: UnifyCtx) {
   else process.env.EDITORIAL_DESK_WRITE = savedEnv;
 }
 
+/** SW-17 عرض المفتاح (خ٦-ب)، وSW-18 نصوص التأكيد (خ١ وخ٥)، وSW-19 الاختبار السلوكي للتحقق الثنائي (خ٦-ج). */
+function deskSwitchViewTests() {
+  console.log("\n— عرض مفتاح الكتابة ونصوص تأكيده —");
+  /* eslint-disable @typescript-eslint/no-var-requires */
+  const React = require("react") as typeof import("react");
+  const { renderToStaticMarkup } = require("react-dom/server") as typeof import("react-dom/server");
+  // tsx يحوّل JSX إلى React.createElement (tsconfig: jsx=preserve)، فيلزم React عامًا لعرض المكوّن خارج Next.
+  (globalThis as unknown as { React: unknown }).React = React;
+  const { DeskSwitch } = require("../components/editorial/DeskSwitch") as typeof import("../components/editorial/DeskSwitch");
+  /* eslint-enable @typescript-eslint/no-var-requires */
+  const STOP = "إيقاف الكتابة";
+  const START = "تشغيل الكتابة";
+  const DROP = "إلغاء شرط التحقق الثنائي";
+  const ADD = "اشتراط التحقق الثنائي";
+  const states: Array<{ name: string; env: "panel" | "force_on" | "kill"; lock: "env_zero" | "preview" | null }> = [
+    { name: "اللوحة", env: "panel", lock: null },
+    { name: "التشغيل القسري", env: "force_on", lock: null },
+    { name: "الطوارئ", env: "kill", lock: "env_zero" },
+    { name: "المعاينة", env: "kill", lock: "preview" },
+  ];
+  for (const st of states) {
+    for (const writeEnabled of [true, false]) {
+      for (const requireMfa of [true, false]) {
+        const html = renderToStaticMarkup(
+          React.createElement(DeskSwitch, { version: 7, writeEnabled, requireMfa, env: st.env, lock: st.lock, ownerMfa: { enabled: true, linked: true }, mfaSetupAvailable: true }),
+        );
+        const labels = Array.from(html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)).map((m) => m[1].replace(/<[^>]+>/g, "").trim());
+        const killed = st.env === "kill";
+        const want = [writeEnabled ? STOP : killed ? null : START, killed ? null : requireMfa ? DROP : ADD].filter(Boolean) as string[];
+        const tag = `${st.name}، المفتاح ${writeEnabled ? "مفتوح" : "مقفل"}، الشرط ${requireMfa ? "قائم" : "ساقط"}`;
+        ok(JSON.stringify(labels) === JSON.stringify(want), `SW-17 ${tag}: الأزرار [${want.join("، ") || "لا شيء"}]`);
+        ok(html.includes("<textarea") === (!killed || writeEnabled), `SW-17 ${tag}: حقل السبب ${!killed || writeEnabled ? "ظاهر" : "مخفي"}`);
+      }
+    }
+  }
+  const stopPreview = deskSwitchConfirmCopy({ next: { writeEnabled: false, requireMfa: true }, writeEnabled: true, env: "kill", lock: "preview" });
+  ok(stopPreview.consequence.includes("للموقع الأساسي") && stopPreview.variant === "destructive", "SW-18 الإيقاف من المعاينة يقول إنه يقفل الموقع الأساسي أيضًا (خ٥)");
+  const stopForce = deskSwitchConfirmCopy({ next: { writeEnabled: false, requireMfa: true }, writeEnabled: true, env: "force_on", lock: null });
+  ok(stopForce.consequence.includes("موقوفًا") && !stopForce.consequence.includes("يعود زر"), "SW-18 الإيقاف مع التشغيل القسري: الزر القديم يبقى موقوفًا (خ١)");
+  const startForce = deskSwitchConfirmCopy({ next: { writeEnabled: true, requireMfa: true }, writeEnabled: false, env: "force_on", lock: null });
+  ok(startForce.consequence.includes("مفتوحة أصلًا") && startForce.variant === "approve", "SW-18 التشغيل مع التشغيل القسري لا يوحي بتغيير (الملاحظة ٣)");
+  const stopPanel = deskSwitchConfirmCopy({ next: { writeEnabled: false, requireMfa: true }, writeEnabled: true, env: "panel", lock: null });
+  ok(stopPanel.consequence.includes("يعود زر اعتماد المبادئ القديم") && stopPanel.title === "إيقاف الكتابة في المكتب؟", "SW-18 الإيقاف في اللوحة: تُقفل الكتابة ويعود الزر القديم");
+  const stopKill = deskSwitchConfirmCopy({ next: { writeEnabled: false, requireMfa: true }, writeEnabled: true, env: "kill", lock: "env_zero" });
+  ok(stopKill.consequence.includes("مفتاح الطوارئ") && !stopKill.consequence.includes("للموقع الأساسي"), "SW-18 الإيقاف تحت الطوارئ بنصه");
+  const drop = deskSwitchConfirmCopy({ next: { writeEnabled: true, requireMfa: false }, writeEnabled: true, env: "panel", lock: null });
+  ok(drop.title === "إلغاء شرط التحقق الثنائي؟" && drop.variant === "destructive", "SW-18 إلغاء الشرط بعنوانه");
+
+  const mfaRun = spawnSync(process.execPath, [require.resolve("tsx/cli"), join(process.cwd(), "scripts/test-editorial-mfa.ts")], { encoding: "utf8" });
+  const mfaLine = (mfaRun.stdout || "").trim().split("\n").pop() ?? "";
+  ok(mfaRun.status === 0 && / 0 فشل$/.test(mfaLine), `SW-19 الاختبار السلوكي للتحقق الثنائي (${mfaLine || mfaRun.stderr?.slice(0, 120)})`);
+}
+
 async function main() {
   pureTests();
+  deskSwitchViewTests();
   runDeskUiTests(ok);
   await authTests();
   const url = process.env.EDITORIAL_TEST_DATABASE_URL;
