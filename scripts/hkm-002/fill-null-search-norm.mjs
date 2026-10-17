@@ -81,9 +81,18 @@ export async function fillNullSearchNorm(client, manifest, options = {}) {
   const ids = manifest.rows.map((row) => row.id);
   const expected = new Map(manifest.rows.map((row) => [row.id, row]));
   const ledgerFile = fileURLToPath(ledgerPathFor(target));
-  const prior = existsSync(ledgerFile) ? readFileSync(ledgerFile) : null;
+  if (existsSync(ledgerFile)) {
+    try {
+      const pending = JSON.parse(readFileSync(ledgerFile, "utf8"));
+      if (pending?.commit_status === "unconfirmed" && pending.target === target && pending.database === database) {
+        throw new Error("توقف: نتيجة تثبيت سابقة غير مؤكدة. تحقق بالقراءة فقط قبل إعادة التشغيل");
+      }
+    } catch (error) {
+      if (String(error?.message || "").includes("غير مؤكدة")) throw error;
+    }
+  }
   await client.query("BEGIN");
-  let persisted = false;
+  let ledger;
   try {
     const locked = await client.query(
       `SELECT id, "lawName", "articleNumber", title, content, chapter, keywords, classification,
@@ -133,7 +142,7 @@ export async function fillNullSearchNorm(client, manifest, options = {}) {
       written.push({ id: row.id, search_norm: norm });
     }
     written.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    const ledger = {
+    ledger = {
       batch: "HKM-002",
       batch_id: ledgerBatchId({ target, database, rows: written }),
       target,
@@ -165,13 +174,60 @@ export async function fillNullSearchNorm(client, manifest, options = {}) {
       throw new Error("توقف: التحقق الختامي لم يطابق القائمة");
     }
     persistLedger(ledger, ledgerPathFor(target), options);
-    persisted = true;
-    await client.query("COMMIT");
-    return { updated: manifest.expected_count, ledger };
   } catch (error) {
-    if (persisted) restoreLedgerFile(ledgerFile, prior);
     await client.query("ROLLBACK");
     throw error;
+  }
+  return finishCommit(client, ledger, options);
+}
+
+async function defaultCommit(client, hooks) {
+  hooks.markSent();
+  await client.query("COMMIT");
+}
+
+/** بعد حفظ السجل: إرسال التثبيت منفصل عن ما قبله. خطأ بعد الإرسال لا يحذف السجل. */
+async function finishCommit(client, ledger, options) {
+  let commitSent = false;
+  const hooks = { markSent() { commitSent = true; } };
+  try {
+    const commit = options.commit ?? defaultCommit;
+    await commit(client, hooks);
+    const confirmed = markLedgerStatus(ledgerPathFor(ledger.target), "confirmed");
+    return { updated: ledger.expected_count, ledger: confirmed, status: "committed" };
+  } catch (error) {
+    if (error?.code === "COMMIT_UNCERTAIN" || error?.code === "COMMIT_NOT_EXECUTED") throw error;
+    if (!commitSent) {
+      try { await client.query("ROLLBACK"); } catch { /* المعاملة قد تكون أُغلقت */ }
+      const kept = keepLedger(ledger, "unconfirmed");
+      throw new CommitOutcomeError(
+        "COMMIT_NOT_EXECUTED",
+        "فشل التثبيت قبل التنفيذ. السجل محفوظ. تحقق بالقراءة فقط قبل أي إعادة تشغيل أو تراجع",
+        kept,
+      );
+    }
+    const kept = keepLedger(ledger, "unconfirmed");
+    throw new CommitOutcomeError(
+      "COMMIT_UNCERTAIN",
+      "نتيجة التثبيت غير مؤكدة: أُرسل الأمر ولم يصل تأكيد. السجل محفوظ. تحقق بالقراءة فقط قبل أي إعادة تشغيل أو تراجع",
+      kept,
+    );
+  }
+}
+
+export class CommitOutcomeError extends Error {
+  constructor(code, message, ledger) {
+    super(message);
+    this.code = code;
+    this.ledger = ledger;
+  }
+}
+
+function keepLedger(ledger, status) {
+  try {
+    return markLedgerStatus(ledgerPathFor(ledger.target), status);
+  } catch {
+    return ledger;
   }
 }
 
@@ -203,6 +259,9 @@ export function assertLedger(ledger) {
   if (ledger.target !== "isolated" && ledger.target !== "production") throw new Error("سجل بلا هدف");
   if (typeof ledger.database !== "string" || ledger.database.length === 0) throw new Error("سجل بلا قاعدة");
   if (typeof ledger.batch_id !== "string" || !/^[a-f0-9]{64}$/.test(ledger.batch_id)) throw new Error("سجل بلا دفعة");
+  if (ledger.commit_status !== undefined && !["confirmed", "unconfirmed", "not_applied"].includes(ledger.commit_status)) {
+    throw new Error("حالة السجل غير معروفة");
+  }
   if (ledger.batch_id !== ledgerBatchId(ledger)) throw new Error("معرّف الدفعة لا يطابق القيم");
   assertDatabaseForTarget(ledger.target, ledger.database);
   const ids = new Set(ledger.rows.map((row) => row.id));
@@ -283,6 +342,52 @@ export function loadLedger(path) {
   return assertLedger(JSON.parse(readFileSync(path, "utf8")));
 }
 
+/** يغيّر حالة السجل دون المساس بقيم الدفعة أو استبداله بسجل أقدم. */
+export function markLedgerStatus(path, status) {
+  const actual = path instanceof URL ? fileURLToPath(path) : path;
+  const ledger = loadLedger(actual);
+  if (!["confirmed", "unconfirmed", "not_applied"].includes(status)) throw new Error("حالة غير معروفة");
+  const next = { ...ledger, commit_status: status };
+  writeLedgerAtomic(actual, `${JSON.stringify(next)}\n`);
+  const loaded = loadLedger(actual);
+  if (loaded.commit_status !== status || loaded.batch_id !== ledger.batch_id || loaded.rows.length !== ledger.rows.length) {
+    throw new Error("تعذر تثبيت حالة السجل");
+  }
+  return loaded;
+}
+
+/** اتصال جديد للقراءة فقط. يقارن القيم المستهدفة بالسجل ولا يكتب في القاعدة. */
+export async function verifyLedgerApplied(connectionString, ledger) {
+  assertLedger(ledger);
+  const client = new Client({ connectionString });
+  await client.connect();
+  try {
+    await client.query("SET default_transaction_read_only = on");
+    const db = await client.query("SELECT current_database() AS name");
+    if (db.rows[0].name !== ledger.database) throw new Error("قاعدة التحقق تختلف عن سجل الدفعة");
+    const found = await client.query(
+      `SELECT count(*)::int AS n,
+              count(*) FILTER (WHERE a.search_norm = src.search_norm)::int AS matched
+       FROM legal_articles a
+       JOIN (SELECT * FROM unnest($1::text[], $2::text[]) AS t(id, search_norm)) src ON src.id = a.id`,
+      [ledger.rows.map((row) => row.id), ledger.rows.map((row) => row.search_norm)],
+    );
+    const row = found.rows[0];
+    const applied = row.n === ledger.expected_count && row.matched === ledger.expected_count;
+    markLedgerStatus(ledgerPathFor(ledger.target), applied ? "confirmed" : "not_applied");
+    const mode = await client.query("SHOW transaction_read_only");
+    return {
+      database: db.rows[0].name,
+      matched: row.matched,
+      expected: ledger.expected_count,
+      applied,
+      read_only: mode.rows[0].transaction_read_only === "on",
+    };
+  } finally {
+    await client.end();
+  }
+}
+
 async function main() {
   const target = process.argv.includes("--target")
     ? process.argv[process.argv.indexOf("--target") + 1]
@@ -296,6 +401,7 @@ async function main() {
   try {
     const result = await fillNullSearchNorm(client, manifest, { target });
     console.log(JSON.stringify({
+      status: result.status,
       target,
       database: result.ledger.database,
       batch_id: result.ledger.batch_id,
@@ -303,6 +409,19 @@ async function main() {
       expected: manifest.expected_count,
       ledger_rows: result.ledger.rows.length,
     }));
+  } catch (error) {
+    if (error?.code === "COMMIT_UNCERTAIN" || error?.code === "COMMIT_NOT_EXECUTED") {
+      console.error(JSON.stringify({
+        status: "unconfirmed",
+        code: error.code,
+        database: error.ledger?.database,
+        batch_id: error.ledger?.batch_id,
+        ledger_rows: error.ledger?.rows?.length ?? 0,
+      }));
+      process.exitCode = 2;
+      return;
+    }
+    throw error;
   } finally {
     await client.end();
   }

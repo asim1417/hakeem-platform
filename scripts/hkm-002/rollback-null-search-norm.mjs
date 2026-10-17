@@ -10,6 +10,9 @@ import { Client } from "pg";
 import { assertLedgerBinding, assertTarget, ledgerPathFor, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
 
 export async function rollbackNullSearchNorm(client, manifest, ledger) {
+  if (ledger?.commit_status === "unconfirmed") {
+    throw new Error("توقف: نتيجة التثبيت غير مؤكدة. تحقق بالقراءة فقط قبل التراجع");
+  }
   const live = await client.query("SELECT current_database() AS name");
   assertLedgerBinding(ledger, { target: ledger.target, database: live.rows[0].name });
   const ids = manifest.rows.map((row) => row.id);

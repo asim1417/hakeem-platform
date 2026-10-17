@@ -3,12 +3,12 @@
  * يقرأ نصوص الإنتاج بمعاملة READ ONLY ليزرع نسخة، ثم يكتب على 127.0.0.1.
  * لا يستدعي نقطة reindex العامة.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
 import { computeSurface, inSurface } from "../../lib/modules/legal-core/search-surface.ts";
-import { assertLedgerBinding, fillNullSearchNorm, ledgerBatchId, ledgerPathFor, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
+import { assertLedgerBinding, fillNullSearchNorm, ledgerBatchId, ledgerPathFor, loadLedger, loadManifest, verifyLedgerApplied } from "./fill-null-search-norm.mjs";
 import { rollbackNullSearchNorm } from "./rollback-null-search-norm.mjs";
 
 const LAB_DATABASE = "hakeem_hkm002";
@@ -247,9 +247,52 @@ async function main() {
   ok("المتن ثابت بعد فشل الحفظ", (await contentMd5(local, ids)) === digestBefore);
   ok("فشل الحفظ لم ينشئ سجل الإنتاج", !existsSync(productionLedgerPath));
 
-  const filled = await fillNullSearchNorm(local, manifest, { target: "isolated" });
+  let notExecuted = null;
+  try {
+    await fillNullSearchNorm(local, manifest, {
+      target: "isolated",
+      commit() { throw new Error("فشل قبل التنفيذ"); },
+    });
+  } catch (error) { notExecuted = error; }
+  ok("فشل التثبيت قبل التنفيذ يُبقي السجل", notExecuted?.code === "COMMIT_NOT_EXECUTED" && existsSync(isolatedLedgerPath));
+  const keptBefore = loadLedger(ledgerPathFor("isolated"));
+  ok("سجل ما قبل التنفيذ فيه 353 قيمة غير مؤكدة", keptBefore.rows.length === 353 && keptBefore.commit_status === "unconfirmed");
+  const missed = await verifyLedgerApplied(LOCAL, keptBefore);
+  ok("اتصال قراءة جديد: التثبيت لم يُنفَّذ", missed.applied === false && missed.read_only === true && missed.matched === 0);
+  ok("السجل بقي بعد تحقق عدم التنفيذ", existsSync(isolatedLedgerPath) && loadLedger(ledgerPathFor("isolated")).rows.length === 353);
+  const nullAfterMiss = await local.query(
+    `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NULL`,
+    [ids],
+  );
+  ok("فشل ما قبل التنفيذ لم يثبّت القيم", nullAfterMiss.rows[0].n === 353);
+  ok("المتن ثابت بعد فشل ما قبل التنفيذ", (await contentMd5(local, ids)) === digestBefore);
+
+  writeFileSync(isolatedLedgerPath, `${JSON.stringify({ target: "isolated", database: "hakeem_hkm002", marker: "prior" })}\n`);
+  let uncertain = null;
+  try {
+    await fillNullSearchNorm(local, manifest, {
+      target: "isolated",
+      async commit(client, hooks) {
+        hooks.markSent();
+        await client.query("COMMIT");
+        throw new Error("انقطع الاتصال قبل تأكيد التثبيت");
+      },
+    });
+  } catch (error) { uncertain = error; }
+  ok("فقدان رد التثبيت يُبلغ أن النتيجة غير مؤكدة", uncertain?.code === "COMMIT_UNCERTAIN");
+  const keptAfter = loadLedger(ledgerPathFor("isolated"));
+  ok("فقدان الرد لم يحذف السجل ولم يعد السابق", keptAfter.rows.length === 353 && keptAfter.commit_status === "unconfirmed" && keptAfter.marker === undefined);
+  let rollbackBlocked = false;
+  try { await rollbackNullSearchNorm(local, manifest, keptAfter); } catch { rollbackBlocked = true; }
+  ok("التراجع ممنوع قبل تحقق القراءة فقط", rollbackBlocked);
+  const verifyApplied = await verifyLedgerApplied(LOCAL, keptAfter);
+  ok("اتصال قراءة جديد: التثبيت نجح رغم فقدان الرد", verifyApplied.applied === true && verifyApplied.matched === 353 && verifyApplied.read_only === true);
+  ok("السجل بقي بعد تأكيد النجاح", existsSync(isolatedLedgerPath) && loadLedger(ledgerPathFor("isolated")).commit_status === "confirmed");
+  ok("المتن ثابت بعد فقدان الرد", (await contentMd5(local, ids)) === digestBefore);
+
+  const filled = { updated: 353, ledger: loadLedger(ledgerPathFor("isolated")) };
   ok("حُدّث 353 صفًا", filled.updated === 353);
-  const ledger = loadLedger(ledgerPathFor("isolated"));
+  const ledger = filled.ledger;
   ok("سجل الدفعة يحفظ 353 قيمة", ledger.rows.length === 353 && ledger.expected_count === 353);
   ok(
     "سجل الاختبار مرتبط بقاعدة العزل والدفعة",
