@@ -1,4 +1,5 @@
 import { DeskCounters } from "@/components/editorial/DeskCounters";
+import { LegalMetricsPanel } from "@/components/legal-core/LegalMetricsPanel";
 import { DeskHeader, DeskNav, deskNavAccess } from "@/components/editorial/DeskNav";
 import { ACTOR_KIND_LABEL, auditActionLabel, objectTypeLabel } from "@/components/editorial/labels";
 import { fmtDateTime } from "@/components/editorial/logic";
@@ -41,7 +42,10 @@ export default async function EditorialDeskPage() {
 
       <DeskCounters desk={desk} intake={intake} auditAllowed={auditAllowed} />
 
-      {/* HKM-023-A: لوحة العدّادات الموحدة للأنظمة والأحكام تُركَّب هنا مكوّنًا مستقلًا تحت عدّادات المكتب. */}
+      {/* HKM-023-A (ل٠-١): عدّادات المحتوى القانوني من خدمة العدّ الموحدة، تحت عدّادات المكتب. */}
+      <div className="mt-8">
+        <LegalMetricsPanel />
+      </div>
 
       {auditAllowed ? (
         <>
