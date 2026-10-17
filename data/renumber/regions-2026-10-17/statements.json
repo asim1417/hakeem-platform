@@ -1,0 +1,12 @@
+[
+ "CREATE TEMP TABLE renumber_plan ON COMMIT DROP AS SELECT id, \"articleNumber\" AS current_number, CASE WHEN id = 'cmpz5tqif00n5cwg2lyvbl7by' THEN 25 ELSE \"articleNumber\" - 1 END AS new_number, CASE WHEN id = 'cmpz5tqif00n5cwg2lyvbl7by' THEN 100 ELSE 0 END AS new_bis FROM legal_articles WHERE \"lawName\" = 'نظام المناطق' AND \"articleBis\" = 0 AND \"articleNumber\" BETWEEN 25 AND 42",
+ "SELECT 1 / (CASE WHEN (SELECT count(*) FROM renumber_plan) = 18 THEN 1 ELSE 0 END) AS guard_plan",
+ "SELECT 1 / (CASE WHEN (SELECT count(*) FROM legal_articles WHERE \"lawName\" = 'نظام المناطق') = 42 THEN 1 ELSE 0 END) AS guard_count",
+ "SELECT 1 / (CASE WHEN EXISTS (SELECT 1 FROM legal_articles WHERE id = 'cmpz5tqif00n5cwg2lyvbl7by' AND \"articleNumber\" = 25 AND md5(content) = '675daba779a48783ab9655c5463af4c1') THEN 1 ELSE 0 END) AS guard_dup_row",
+ "SELECT 1 / (CASE WHEN EXISTS (SELECT 1 FROM legal_articles WHERE id = 'cmpz5tt8d00o3cwg207u3f5xm' AND \"articleNumber\" = 42 AND md5(content) = '5aa0aef0995bb4b04a41f7016f06b8c6') THEN 1 ELSE 0 END) AS guard_last_row",
+ "SELECT 1 / (CASE WHEN EXISTS (SELECT 1 FROM legal_articles WHERE id = 'cmpz5tqo600n7cwg21i3y12ye' AND \"articleNumber\" = 26 AND md5(content) = '3ac88197228f7d5eb8257ef9b0b4999f') THEN 1 ELSE 0 END) AS guard_first_shift",
+ "UPDATE legal_articles a SET \"articleNumber\" = a.\"articleNumber\" + 100000 FROM renumber_plan p WHERE a.id = p.id",
+ "UPDATE legal_articles a SET \"articleNumber\" = p.new_number, \"articleBis\" = p.new_bis FROM renumber_plan p WHERE a.id = p.id AND a.\"articleNumber\" >= 100000",
+ "SELECT 1 / (CASE WHEN NOT EXISTS (SELECT 1 FROM renumber_plan p JOIN legal_articles a ON a.id = p.id WHERE a.\"articleNumber\" <> p.new_number OR a.\"articleBis\" <> p.new_bis) THEN 1 ELSE 0 END) AS guard_after",
+ "SELECT 1 / (CASE WHEN (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"lawName\" = 'نظام المناطق' AND \"articleBis\" = 0 AND \"articleNumber\" BETWEEN 1 AND 41) = 41 THEN 1 ELSE 0 END) AS guard_contiguous"
+]
