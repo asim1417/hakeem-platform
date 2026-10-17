@@ -6,6 +6,7 @@
 import { writeFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import { auditLawNumbering, type NumberingAudit, type NumberingRow } from "../../lib/modules/legal-core/numbering-audit";
+import { NON_ARTICLE_BIS } from "../../lib/modules/legal-core/article-key";
 
 const jsonOut = process.argv.includes("--json") ? process.argv[process.argv.indexOf("--json") + 1] : null;
 const short = (xs: number[], k = 8) => (xs.length ? `${xs.slice(0, k).join("،")}${xs.length > k ? "…" : ""}` : "—");
@@ -17,7 +18,8 @@ async function main() {
     rows = await prisma.$transaction(async (tx) => {
       await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
       return tx.$queryRawUnsafe<Array<NumberingRow & { lawName: string }>>(
-        `SELECT "lawName", "articleNumber", title FROM legal_articles`,
+        // الصفوف غير المادية (درجة «مكرر» ≥ NON_ARTICLE_BIS) ليست مواد، فلا تدخل في التدقيق.
+        `SELECT "lawName", "articleNumber", title FROM legal_articles WHERE "articleBis" < ${NON_ARTICLE_BIS}`,
       );
     });
   } finally {

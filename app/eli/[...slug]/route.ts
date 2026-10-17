@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
   // نُفضّل eliSlug المُجمّد (ثابت)، ونسقط لاشتقاقه من lawName للتوافق الخلفي.
   const candidates = await prisma.legalArticle
     .findMany({
-      where: { articleNumber: parsed.articleNumber },
+      where: { articleNumber: parsed.articleNumber, articleBis: 0 },
       select: { id: true, lawName: true, legalSystem: { select: { eliSlug: true, name: true } } }
     })
     .catch(() => [] as Array<{ id: string; lawName: string; legalSystem: { eliSlug: string | null; name: string } | null }>);

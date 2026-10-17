@@ -70,7 +70,7 @@ export async function findExactArticleMatch(q: string, opts: { asOf?: string; su
   // عند تعدّد الأنظمة بعد الوجه (نادر): الأطول جوهرًا أولًا كما رتّبها المطابِق.
   for (const id of ids) {
     const article = await prisma.legalArticle
-      .findFirst({ where: { legalSystemId: id, articleNumber: n }, select: { id: true, lawName: true, articleNumber: true, title: true, legalSystemId: true } })
+      .findFirst({ where: { legalSystemId: id, articleNumber: n, articleBis: 0 }, select: { id: true, lawName: true, articleNumber: true, title: true, legalSystemId: true } })
       .catch(() => null);
     if (!article) continue;
     return {
