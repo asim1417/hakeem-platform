@@ -9,12 +9,12 @@ import { SpendCreditsButton } from "@/components/credits/SpendCreditsButton";
 import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 import { relationTypeLabel, reviewStatusLabel } from "@/lib/i18n/enum-labels";
-import { redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { rulingDisplayText } from "@/lib/modules/legal-core/ruling-display";
 
 export const dynamic = "force-dynamic";
 
 export default async function LegalCoreJudgmentPage({ params }: { params: { id: string } }) {
-  await requirePagePermission("LEGAL_CORE_VIEW");
+  const user = await requirePagePermission("LEGAL_CORE_VIEW");
 
   const judgment = await prisma.judicialCase
     .findUnique({
@@ -30,9 +30,9 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
 
   if (!judgment) notFound();
 
-  // حجب الهوية والجوال على الخادم قبل الإرسال؛ النص المخزَّن لا يُمس.
-  const judgmentText = redactPII(judgment.judgmentText);
-  const appealText = judgment.appealText ? redactPII(judgment.appealText) : null;
+  // حجب الهوية والجوال على الخادم قبل الإرسال (وأسماء الأفراد للمتدرّب)؛ النص المخزَّن لا يُمس.
+  const judgmentText = rulingDisplayText(judgment.judgmentText, user.role);
+  const appealText = judgment.appealText ? rulingDisplayText(judgment.appealText, user.role) : null;
 
   const citation = [
     judgment.court,

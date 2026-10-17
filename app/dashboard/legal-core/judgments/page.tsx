@@ -5,7 +5,8 @@ import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibili
 import { prisma } from "@/lib/prisma";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
-import { findRulingIdsRedacted, redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
+import { findRulingIdsRedacted, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
+import { rulingDisplayText } from "@/lib/modules/legal-core/ruling-display";
 import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export default async function LegalCoreJudgmentsPage({
 }: {
   searchParams?: { q?: string; court?: string; city?: string; classification?: string; page?: string };
 }) {
-  await requirePagePermission("LEGAL_CORE_VIEW");
+  const user = await requirePagePermission("LEGAL_CORE_VIEW");
 
   // HKM-012: الهوية والجوال تُزالان من الاستعلام، والأرقام الطويلة تُطابَق في رقم القضية والقرار فقط.
   const parts = splitRulingQuery(searchParams?.q);
@@ -126,7 +127,7 @@ export default async function LegalCoreJudgmentsPage({
           await prisma.judicialCase
             .findMany({ where: { id: { in: judgments.map((j) => j.id) } }, select: { id: true, judgmentText: true } })
             .catch(() => [] as Array<{ id: string; judgmentText: string }>)
-        ).map((r) => [r.id, redactPII(sanitizeDisplayText(r.judgmentText))])
+        ).map((r) => [r.id, rulingDisplayText(sanitizeDisplayText(r.judgmentText), user.role)])
       )
     : new Map<string, string>();
 

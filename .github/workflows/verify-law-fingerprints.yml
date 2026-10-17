@@ -1,0 +1,45 @@
+name: Verify law fingerprints (read-only) — مطابقة بصمات الأنظمة
+
+# HKM-028: يقارن مواد كل نظام في data/law-fingerprints/*.json بقاعدة Neon (قراءة فقط):
+# انزياح الترقيم، مادة ناقصة أو زائدة أو مكررة، وتغيّر العنوان أو النص. المخرجات أعداد وأرقام مواد فقط.
+# تشغيل يدوي فقط؛ يُشغَّل بعد أي حقن أو إعادة استيراد يمس نظامًا له بصمة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "اكتب READ لتأكيد التشغيل (قراءة فقط)"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: verify-law-fingerprints
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: "تحقّق"
+        run: |
+          if [ "${{ inputs.confirm }}" != "READ" ]; then echo "::error::اكتب READ للتأكيد."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "المطابقة (قراءة فقط)"
+        run: |
+          set -o pipefail
+          DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run -s audit:law-fingerprint | tee out.txt
+          echo "::notice title=law fingerprints::$(tail -1 out.txt)"

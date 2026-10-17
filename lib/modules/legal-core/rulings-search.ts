@@ -35,8 +35,9 @@ export interface RulingHit {
 
 const PII_DIGIT = "[0-9\\u0660-\\u0669]";
 const PII_GAP = "[\\s\\u00a0\\u200c]*";
+const ID_SHAPED = /^[12\u0661\u0662][0-9\u0660-\u0669]{9}$/;
 
-/** يحمي أرقام المواد والصكوك والتواريخ من الحجب ثم يعيدها. */
+/** يحمي أرقام المواد والصكوك (عدا ما بشكل هوية) والتواريخ من الحجب ثم يعيدها. */
 function shieldLegalNumbers(text: string): { text: string; restore: (s: string) => string } {
   const held: string[] = [];
   const keep = (chunk: string) => {
@@ -46,12 +47,26 @@ function shieldLegalNumbers(text: string): { text: string; restore: (s: string) 
   };
   let src = text;
   src = src.replace(new RegExp(`${PII_DIGIT}{1,2}${PII_GAP}[\\/\\-]${PII_GAP}${PII_DIGIT}{1,2}${PII_GAP}[\\/\\-]${PII_GAP}${PII_DIGIT}{3,4}`, "g"), keep);
-  src = src.replace(new RegExp(`(?:المادة|مادة|صك|صكوك)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), keep);
+  src = src.replace(new RegExp(`(?:المادة|مادة)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), keep);
+  // قرار المالك (17/10/2026): رقم بعد «صك» بشكل هوية (عشر خانات تبدأ بـ 1 أو 2) يُحجب؛ غيره من أرقام الصكوك يبقى.
+  src = src.replace(new RegExp(`(?:صك|صكوك)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), (chunk) =>
+    ID_SHAPED.test(chunk.replace(/[^0-9\u0660-\u0669]/g, "")) ? chunk : keep(chunk),
+  );
   return {
     text: src,
     restore: (s) => s.replace(/\u0000H(\d+)\u0000/g, (_, i) => held[Number(i)] ?? ""),
   };
 }
+
+/**
+ * البريد بصيغه الواردة في الأحكام: أرقام لاتينية أو هندية، ومسافة حول @ أو النقطة، وجزء مطموس
+ * «(...)» أو «***»، و«>» مكان النقطة خطأً. النطاق ينتهي بحرفين لاتينيين فأكثر.
+ */
+const EMAIL_CHAR = "[A-Za-z0-9\\u0660-\\u0669_%+*-]";
+const EMAIL_RE = new RegExp(
+  `${EMAIL_CHAR}+(?:(?:\\.\\s?|\\(\\.\\.\\.\\))${EMAIL_CHAR}*)*\\s?@\\s?[A-Za-z0-9\\u0660-\\u0669-]+(?:\\s?[.>]\\s?[A-Za-z0-9\\u0660-\\u0669-]+)*\\s?[.>]\\s?[A-Za-z]{2,}`,
+  "g",
+);
 
 /** حجب الهوية والجوال والآيبان والبريد في طبقة العرض. النص الأصلي في القاعدة لا يُمس. */
 export function redactPII(text: string): string {
@@ -63,7 +78,7 @@ export function redactPII(text: string): string {
   const notDigit = `(?<!${digit})`;
   const notDigitAfter = `(?!${digit})`;
   const redacted = shielded.text
-    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[بريد محجوب]")
+    .replace(EMAIL_RE, "[بريد محجوب]")
     .replace(new RegExp(`${notDigit}[12\\u0661\\u0662](?:${gap}${digit}){9}${notDigitAfter}`, "g"), "•••••••••• [هوية محجوبة]")
     // محلي (05…) أو دولي بمفتاح 966 مع الصفر أو بدونه (+9665… و009665… و9665…)، لاتيني أو هندي.
     .replace(

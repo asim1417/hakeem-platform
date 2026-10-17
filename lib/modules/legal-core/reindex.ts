@@ -4,7 +4,7 @@
 // موادَّ المكتبة. آمنٌ للاستئناف: يملأ الفارغ فقط ما لم يُطلب إعادة بناء الكلّ. نفس منطق backfill CLI.
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@/lib/prisma";
-import { normalizeArabicText } from "@/lib/modules/legal-core/arabic-morphology";
+import { buildSearchNorm } from "@/lib/modules/legal-core/search-norm";
 
 const BATCH = 200;
 
@@ -18,13 +18,6 @@ type Row = {
   chapter: string | null;
   has: boolean;
 };
-
-function buildSearchNorm(a: Row): string {
-  const raw = [a.lawName, a.title, a.content, (a.keywords ?? []).join(" "), a.classification ?? "", a.chapter ?? ""]
-    .filter(Boolean)
-    .join("\n");
-  return normalizeArabicText(raw);
-}
 
 export interface ReindexResult { scanned: number; updated: number; total: number; }
 
