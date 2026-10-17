@@ -21,6 +21,7 @@ import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from build_decisions_conflicts_dates import AFTER_PUB, EXPLICIT, QUOTED, to_g  # noqa: E402
 from compose_partial import RESOLVED, norm  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -138,6 +139,15 @@ def main():
             d, basis = st["date_g"], "issue"
             if e and e["basis"] == "explicit" and st["note_id"] == e["note_id"]:
                 d, basis = e["valid_from"], "explicit"
+            else:
+                # عبارة نفاذ صريحة في ملاحظة الخطوة نفسها (خارج النص المقتبس)، ولو لم يرصدها المركِّب:
+                # «ويعمل بها من تاريخ 1446/8/20هـ» ← تسري النسخة من تاريخ النفاذ لا تاريخ الأداة.
+                outside = QUOTED.sub(" ", st.get("note_text") or "")
+                m = EXPLICIT.search(outside)
+                if m:
+                    d, basis = to_g(m[1], m[2], m[3]), "explicit"
+                elif AFTER_PUB.search(outside):
+                    d = None  # النفاذ بعد مدة من النشر: يحتاج تاريخ النشر ← يُستبعد أدناه
             if not d or d in dates:
                 excluded.append({"law": r["law"], "article": r["article"], "status": "auto", "reason": "تاريخ خطوة مكرر أو ناقص"})
                 break
