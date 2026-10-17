@@ -80,7 +80,7 @@ export function MetricRow({ metric: m }: { metric: Metric }) {
     <>
       <span className="font-display-ar text-sm font-semibold text-[var(--navy)]">{m.label}</span>
       <span className="flex items-center gap-2">
-        <span className={`font-mono-legal text-sm ${TONE_TEXT[tone]}`}>{formatMetricValue(m.value)}</span>
+        <span className={`${m.value.kind === "count" ? "font-mono-legal" : "font-display-ar"} text-sm ${TONE_TEXT[tone]}`}>{formatMetricValue(m.value)}</span>
         {m.queue && m.value.kind === "count" ? <ArrowUpLeft size={14} aria-hidden className="text-[var(--gold)]" /> : null}
       </span>
     </>
