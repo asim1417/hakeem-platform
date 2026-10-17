@@ -7,7 +7,7 @@ name: Rulings — segment boundaries by model (count / sample, no DB writes)
 # المستودع عام: المخرج أعداد فقط، ويُودَع في الفرع reports/rulings-research/06-segment-model.data.json.
 
 on:
-  # push على الفرع: التطبيق الكامل على الإنتاج بسقف ٤٠٠٠ نداء (بموافقة المالك المسجّلة في APPROVAL_REF).
+  # push على الفرع: عدّ الرموز فقط (لا توليد). التطبيق (apply) يدويًّا بمرجع موافقة المالك وسقف نداءات.
   push:
     branches: [claude/rulings-segment-model]
     paths:
@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "count | sample"
+        description: "count | sample | apply"
         required: true
         default: count
       n:
@@ -25,8 +25,11 @@ on:
         required: true
         default: "200"
       max_calls:
-        description: "سقف نداءات النموذج (sample فقط)"
+        description: "سقف نداءات النموذج (sample/apply)"
         default: "0"
+      approval_ref:
+        description: "مرجع موافقة المالك (apply فقط)"
+        default: ""
 
 concurrency:
   group: rulings-segment-model
@@ -42,10 +45,10 @@ jobs:
     env:
       NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      MODE: ${{ github.event.inputs.mode || 'apply' }}
-      N: ${{ github.event.inputs.n || '0' }}
-      MAX_MODEL_CALLS: ${{ github.event.inputs.max_calls || '4000' }}
-      APPROVAL_REF: "owner approval in Claude session session_01ScbBZBNArG8gJRuzsmohDa on 2026-10-17 («١»: إكمال التقطيع بالنموذج على الإنتاج، ~1.3$)"
+      MODE: ${{ github.event.inputs.mode || 'count' }}
+      N: ${{ github.event.inputs.n || '200' }}
+      MAX_MODEL_CALLS: ${{ github.event.inputs.max_calls || '0' }}
+      APPROVAL_REF: ${{ github.event.inputs.approval_ref }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
