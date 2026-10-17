@@ -21,7 +21,7 @@ import {
 } from "@/lib/modules/auth/request-path-headers";
 import { workspaceHomeFromSessionCookie } from "@/lib/modules/auth/session-cookie-peek";
 import { isMcpOauthPublicPath } from "@/lib/mcp/oauth-paths";
-import { buildLawRouteTable, decideLawRoute, LAW_NOT_FOUND_HTML, type LawRouteRow, type LawRouteTable } from "@/lib/modules/legal-core/law-route-gate";
+import { createLawTableLoader, decideLawRoute, LAW_NOT_FOUND_HTML, type LawRouteTable } from "@/lib/modules/legal-core/law-route-gate";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -146,20 +146,11 @@ function getClerkHandler(): ClerkMw {
 }
 
 // HKM-023-B (م١): جدول مسارات /law مخزّن في ذاكرة الوسيط عشر دقائق؛ الفشل يُعاد بعد ثلاثين ثانية ولا يحجب الطلب.
-let lawTable: { at: number; ttl: number; table: LawRouteTable | null } | null = null;
+// جلب واحد جارٍ تتشاركه الطلبات المتزامنة، بمهلة 1.5 ثانية؛ الفشل أو المهلة = يمر الطلب بالسلوك السابق (مراجعة الجودة م٢).
+const loadLawTable = createLawTableLoader({ fetch: (url, init) => fetch(url, init) });
 
-async function getLawTable(request: NextRequest): Promise<LawRouteTable | null> {
-  const now = Date.now();
-  if (lawTable && now - lawTable.at < lawTable.ttl) return lawTable.table;
-  try {
-    const res = await fetch(new URL("/api/law-routes", request.nextUrl.origin), { headers: { accept: "application/json" } });
-    if (!res.ok) throw new Error(String(res.status));
-    const body = (await res.json()) as { rows?: LawRouteRow[] };
-    lawTable = { at: now, ttl: 600_000, table: buildLawRouteTable(body.rows ?? []) };
-  } catch {
-    lawTable = { at: now, ttl: 30_000, table: lawTable?.table ?? null };
-  }
-  return lawTable.table;
+function getLawTable(request: NextRequest): Promise<LawRouteTable | null> {
+  return loadLawTable(request.nextUrl.origin);
 }
 
 /** تحويل دائم و404 حقيقيان لمسارات /law وشجرة النظام القديمة في اللوحة، قبل أي رسم. */

@@ -9,7 +9,20 @@ import { NOT_AVAILABLE, PREAMBLE_INCOMPLETE_LABEL, PREAMBLE_NONE_LABEL } from ".
 // ── الروابط الدائمة (ع-١٥) ─────────────────────────────────────────────────────
 // المعرّف الدائم بأداة الإصدار (m-43-1443) لم يُخزَّن بعد؛ المواصفة §١: «يُعرض على /law/<eliSlug> مؤقتًا».
 export const lawPath = (id: string) => `/law/${encodeURIComponent(id)}`;
-export const articlePath = (id: string, n: number) => `${lawPath(id)}/art/${n}`;
+/** رابط صفحة المادة بمفتاحها: «103» للأصل و«103_bis» للمكرر (HKM-028)، فلا تُحال المكررة إلى أصلها. */
+export const articlePath = (id: string, key: number | string) => `${lawPath(id)}/art/${key}`;
+
+/** مفتاح المادة من مقطع الرابط: «103» أو «103_bis» أو «103_bis2»؛ غيره null. */
+/** الصيغة الكنسية وحدها: «103» أو «103_bis» أو «103_bis2»…«103_bis99»؛ بلا أصفار بادئة ولا «_bis1». يشاركها الوسيط (law-route-gate). */
+export const ARTICLE_KEY_RE = /^([1-9]\d{0,4})(_bis([2-9]|[1-9]\d)?)?$/;
+
+export function parseArticleKeyParam(raw: string): { key: string; number: number; bis: number } | null {
+  const key = String(raw ?? "").trim();
+  const m = ARTICLE_KEY_RE.exec(key);
+  if (!m) return null;
+  const bis = m[2] === undefined ? 0 : m[3] === undefined ? 1 : Number(m[3]);
+  return { key, number: Number(m[1]), bis };
+}
 /** مرساة المادة بمفتاحها (`103` للأصل، `103_bis` للمكرر — HKM-028)، أو برقمها للإحالة إلى الأصل. */
 export const articleAnchor = (key: number | string) => `art-${key}`;
 
@@ -190,9 +203,10 @@ export function repealSentence(r: RepealInfo): string {
 export const REPEAL_NON_RETRO = "يبقى النص حاكمًا للوقائع السابقة على نفاذ الإلغاء، لأن الإلغاء لا يسري بأثر رجعي.";
 
 /** الاستناد المنسوخ يحمل الرابط المستقل للمادة (ع-١٥). */
-export function citationText(systemName: string, a: Pick<ArticleView, "number" | "status" | "statusLabel" | "repeal">, absoluteArticleUrl: string): string {
+/** الإحالة بوسم المادة («103 مكرر») لا برقمها وحده، فلا تُنسب المكررة إلى أصلها. */
+export function citationText(systemName: string, a: Pick<ArticleView, "number" | "label" | "status" | "statusLabel" | "repeal">, absoluteArticleUrl: string): string {
   const suffix = a.status === "ملغى" ? `ملغاة${a.repeal?.effectiveDate ? ` منذ ${a.repeal.effectiveDate}` : ""}` : a.status === "معدّل" ? "معدّلة" : a.statusLabel;
-  return `${systemName}، المادة (${a.number}) — ${suffix} — ${absoluteArticleUrl}`;
+  return `${systemName}، المادة (${a.label || a.number}) — ${suffix} — ${absoluteArticleUrl}`;
 }
 
 // ── «كما في تاريخ» (ع-٩) ──────────────────────────────────────────────────────

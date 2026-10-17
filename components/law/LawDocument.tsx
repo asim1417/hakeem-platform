@@ -209,14 +209,23 @@ function Preamble({ data }: { data: LawPageData }) {
   let texts: string[] = [];
   if (d.mode === "units" && p.units) {
     texts = [...p.units.outside.map((u) => u.text), ...p.units.instruments.flatMap((i) => i.units.map((u) => u.text))];
+    // الوحدات خارج الأدوات (عنوان النظام وسنته قبلها، وسطر العنوان بعدها) تُرسم في موضعها كما في المصدر؛
+    // ونسخة بلا أداة تُرسم كلها من هنا (مراجعة الجودة م١).
+    const instrOrdinals = p.units.instruments.flatMap((i) => i.units.map((u) => u.ordinal));
+    const firstInstr = instrOrdinals.length ? Math.min(...instrOrdinals) : Number.POSITIVE_INFINITY;
+    const leading = p.units.outside.filter((u) => u.ordinal < firstInstr).sort((x, y) => x.ordinal - y.ordinal);
+    const trailing = p.units.outside.filter((u) => u.ordinal >= firstInstr).sort((x, y) => x.ordinal - y.ordinal);
+    const plain = (units: typeof leading) => units.map((u) => clean(u.text).trim()).filter(Boolean).join("\n");
     body = (
       <>
+        {leading.length ? <p className="pre-raw">{plain(leading)}</p> : null}
         {p.units.instruments.map((ins) => {
           // ترتيب المصدر: البسملة، ثم سطر عنوان الأداة، ثم نصها.
           const hIdx = ins.units.findIndex((u) => u.type === "preamble_heading" && !/بسم الله/.test(u.text));
           const before = hIdx > 0 ? ins.units.slice(0, hIdx) : hIdx < 0 ? ins.units.filter((u) => u.type === "preamble_heading") : [];
           const after = hIdx >= 0 ? ins.units.slice(hIdx + 1) : ins.units.filter((u) => u.type !== "preamble_heading");
-          const heading = ins.heading ?? (hIdx >= 0 ? clean(ins.units[hIdx].text).trim() : null);
+          // العنوان يُنقّى كالمتن (مراجعة الجودة ن٤).
+          const heading = ins.heading ? clean(ins.heading).trim() : hIdx >= 0 ? clean(ins.units[hIdx].text).trim() : null;
           const line = (units: typeof ins.units) =>
             units.map((u, i) => {
               const id = u.type === "operative_clause" ? preambleAnchor(u.anchor) ?? undefined : undefined;
@@ -235,6 +244,7 @@ function Preamble({ data }: { data: LawPageData }) {
             </div>
           );
         })}
+        {trailing.length ? <p className="pre-raw">{plain(trailing)}</p> : null}
       </>
     );
   } else if (d.mode === "blocks" && p.sourceBlocks) {
@@ -243,7 +253,7 @@ function Preamble({ data }: { data: LawPageData }) {
       <>
         {p.sourceBlocks.blocks.map((b, i) => (
           <div className="instr" id={`preamble-${i + 1}`} key={i}>
-            {b.heading ? <h3 className="instr-h">{b.heading}</h3> : null}
+            {b.heading ? <h3 className="instr-h">{clean(b.heading).trim()}</h3> : null}
             <p className="pre-raw">{clean(b.text)}</p>
           </div>
         ))}
@@ -326,7 +336,7 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
   const H = level === 3 ? "h3" : "h4";
   const shown = clean(a.effectiveText);
   const paras = splitParagraphs(shown);
-  const url = `${base}${articlePath(id, a.number)}`;
+  const url = `${base}${articlePath(id, a.key)}`;
   const partRepealed = a.status === "ملغى" && !a.inheritedFromWork && Boolean(data.body.divisions.find((d) => d.articles.includes(a))?.allRepealed);
   const showRepealFn = tone === "repealed" && a.repeal && !a.inheritedFromWork && !partRepealed;
   return (
@@ -351,7 +361,7 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
           <CopyAction kind="text" label={`نسخ نص ${a.heading}`} value={`${a.heading}\n${shown}`} />
           <CopyAction kind="cite" label={`نسخ إحالة ${a.heading}`} value={citationText(data.system.name, a, url)} />
           <CopyAction kind="link" label={`نسخ رابط ${a.heading}`} value={url} />
-          <Link className="iconbtn iconbtn--fine" href={articlePath(id, a.number)} aria-label={`فتح صفحة ${a.heading}`}>
+          <Link className="iconbtn iconbtn--fine" href={articlePath(id, a.key)} aria-label={`فتح صفحة ${a.heading}`}>
             <FileText aria-hidden size={20} />
             <span className="tip" aria-hidden>صفحة المادة</span>
           </Link>

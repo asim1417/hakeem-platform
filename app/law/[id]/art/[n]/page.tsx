@@ -15,6 +15,7 @@ import {
   citationText,
   lawPath,
   orNA,
+  parseArticleKeyParam,
   parseAsOfParam,
   repealSentence,
   splitParagraphs,
@@ -29,15 +30,16 @@ export const revalidate = 3600;
 type Props = { params: { id: string; n: string }; searchParams?: Record<string, string | string[] | undefined> };
 
 async function load(params: Props["params"], asof: string | null) {
-  const n = Number(params.n);
-  if (!Number.isInteger(n) || n <= 0) return null;
+  const parsed = parseArticleKeyParam(params.n);
+  if (!parsed) return null;
+  const n = parsed.key;
   const db = prismaSqlClient(prisma);
   const r = await resolveLawRoute(db, params.id);
   if (!r) return null;
   const data = await getLawPageData(db, r.systemId, { asOf: asof ?? undefined });
   if (!data) return null;
   const all = data.body.divisions.flatMap((d) => d.articles.map((a) => ({ a, division: d.heading })));
-  const i = all.findIndex((x) => x.a.number === n);
+  const i = all.findIndex((x) => x.a.key === n);
   if (i < 0) return null;
   return { r, data, n, a: all[i].a, division: all[i].division, prev: all[i - 1]?.a ?? null, next: all[i + 1]?.a ?? null };
 }
@@ -106,7 +108,7 @@ function Pager({ id, prev, next }: { id: string; prev: ArticleView | null; next:
   return (
     <nav className="pager" aria-label="التنقل بين المواد">
       {prev ? (
-        <Link href={articlePath(id, prev.number)} rel="prev">
+        <Link href={articlePath(id, prev.key)} rel="prev">
           <small>
             <ChevronRight aria-hidden size={16} /> المادة السابقة
           </small>
@@ -116,7 +118,7 @@ function Pager({ id, prev, next }: { id: string; prev: ArticleView | null; next:
         <span />
       )}
       {next ? (
-        <Link href={articlePath(id, next.number)} rel="next" className="next">
+        <Link href={articlePath(id, next.key)} rel="next" className="next">
           <small>
             المادة التالية <ChevronLeft aria-hidden size={16} />
           </small>
@@ -138,7 +140,7 @@ export default async function LawArticlePage({ params, searchParams }: Props) {
   const { data, a, division, prev, next } = x;
   const id = x.r.canonicalId;
   const tone = articleTone(a.status);
-  const url = `${getSiteUrl()}${articlePath(id, a.number)}`;
+  const url = `${getSiteUrl()}${articlePath(id, a.key)}`;
   const paras = splitParagraphs(clean(a.effectiveText));
   return <ArticleDoc data={data} a={a} division={division} prev={prev} next={next} id={id} url={url} tone={tone} paras={paras} />;
 }

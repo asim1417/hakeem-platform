@@ -24,6 +24,65 @@ export function buildLawRouteTable(rows: LawRouteRow[]): LawRouteTable {
   return { byCanonical, canonicalById };
 }
 
+export interface LawTableLoaderOptions {
+  fetch: (url: URL, init: { headers: Record<string, string>; signal: AbortSignal }) => Promise<Response>;
+  /** مهلة الجلب؛ بعدها يُلغى ويمر الطلب بالسلوك السابق. */
+  timeoutMs?: number;
+  okTtlMs?: number;
+  failTtlMs?: number;
+  now?: () => number;
+}
+
+/**
+ * محمّل جدول البوابة للوسيط (مراجعة الجودة م٢): مهلة للجلب، وجلب واحد جارٍ تتشاركه الطلبات المتزامنة،
+ * وتخزين 10 دقائق عند النجاح و30 ثانية عند الفشل مع إبقاء آخر جدول صالح. لا يرمي أبدًا.
+ */
+export function createLawTableLoader(opts: LawTableLoaderOptions): (origin: string) => Promise<LawRouteTable | null> {
+  const timeoutMs = opts.timeoutMs ?? 1500;
+  const okTtl = opts.okTtlMs ?? 600_000;
+  const failTtl = opts.failTtlMs ?? 30_000;
+  const now = opts.now ?? Date.now;
+  let cache: { at: number; ttl: number; table: LawRouteTable | null } | null = null;
+  let inFlight: Promise<LawRouteTable | null> | null = null;
+
+  async function fetchTable(origin: string): Promise<LawRouteTable | null> {
+    const at = now();
+    const ctrl = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        ctrl.abort();
+        reject(new Error("timeout"));
+      }, timeoutMs);
+    });
+    try {
+      const table = await Promise.race([
+        (async () => {
+          const res = await opts.fetch(new URL("/api/law-routes", origin), { headers: { accept: "application/json" }, signal: ctrl.signal });
+          if (!res.ok) throw new Error(String(res.status));
+          const body = (await res.json()) as { rows?: LawRouteRow[] };
+          return buildLawRouteTable(body.rows ?? []);
+        })(),
+        timeout,
+      ]);
+      cache = { at, ttl: okTtl, table };
+    } catch {
+      cache = { at, ttl: failTtl, table: cache?.table ?? null };
+    } finally {
+      clearTimeout(timer);
+    }
+    return cache.table;
+  }
+
+  return (origin: string) => {
+    if (cache && now() - cache.at < cache.ttl) return Promise.resolve(cache.table);
+    inFlight ??= fetchTable(origin).finally(() => {
+      inFlight = null;
+    });
+    return inFlight;
+  };
+}
+
 /** يضغط أرقام المواد إلى نطاقات: [1,2,3,5] → «1-3,5». */
 export function encodeRanges(nums: number[]): string {
   const s = [...new Set(nums.filter((n) => Number.isInteger(n) && n > 0))].sort((a, b) => a - b);
@@ -48,6 +107,8 @@ export function inRanges(ranges: string, n: number): boolean {
 
 export type LawGateDecision = { kind: "pass" } | { kind: "redirect"; to: string } | { kind: "not_found" };
 
+// الصيغة الكنسية لمفتاح المادة؛ نسخة مطابقة لـ ARTICLE_KEY_RE في law-page-view (الوسيط لا يستورد وحدات الصفحة).
+const ARTICLE_KEY_RE = /^([1-9]\d{0,4})(_bis([2-9]|[1-9]\d)?)?$/;
 const LAW_RE = /^\/law\/([^/]+)(?:\/art\/([^/]+))?\/?$/;
 const DASH_RE = /^\/dashboard\/legal-core\/systems\/([^/]+)\/?$/;
 
@@ -71,15 +132,18 @@ export function decideLawRoute(pathname: string, search: string, t: LawRouteTabl
   if (!m) return { kind: "pass" };
   const seg = safeDecode(m[1]).trim();
   const artRaw = m[2] ? safeDecode(m[2]) : null;
-  const art = artRaw === null ? null : Number(artRaw);
-  if (artRaw !== null && (!Number.isInteger(art) || (art as number) <= 0)) return { kind: "not_found" };
+  // «103» أو «103_bis» أو «103_bis2» (HKM-028) بالصيغة الكنسية وحدها (نفس ARTICLE_KEY_RE في law-page-view)؛ النطاق يُفحص برقم الأصل.
+  const artKey = artRaw === null ? null : ARTICLE_KEY_RE.exec(artRaw.trim());
+  if (artRaw !== null && !artKey) return { kind: "not_found" };
+  const art = artKey ? Number(artKey[1]) : null;
+  const artSeg = artKey ? artKey[0] : null;
   let canonical: string | null = t.byCanonical.has(seg) ? seg : null;
   const exact = canonical !== null;
   if (!canonical) canonical = t.canonicalById.get(seg) ?? (t.byCanonical.has(lawSlug(seg)) ? lawSlug(seg) : null);
   if (!canonical) return { kind: "not_found" };
   if (art !== null && !inRanges(t.byCanonical.get(canonical) ?? "", art)) return { kind: "not_found" };
   if (exact) return { kind: "pass" };
-  return { kind: "redirect", to: `/law/${encodeURIComponent(canonical)}${art !== null ? `/art/${art}` : ""}${search}` };
+  return { kind: "redirect", to: `/law/${encodeURIComponent(canonical)}${artSeg !== null ? `/art/${artSeg}` : ""}${search}` };
 }
 
 export const LAW_NOT_FOUND_HTML =
