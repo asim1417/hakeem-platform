@@ -85,20 +85,46 @@ export function Badge({ tone = "neutral", icon, children }: { tone?: BadgeTone; 
 /** صفحة إعداد التحقق الثنائي في بوابة الحساب (قائمة الحساب ← الأمان والتحقق الثنائي). */
 export const MFA_SETUP_HREF = "/api/auth/account-portal?section=security";
 
+/** إرشاد حين لا يظهر رابط إعداد التحقق الثنائي (الراية AUTH_MFA_ENABLED مطفأة في إعدادات النظام). */
+export function MfaSetupHint({ available, isOwner }: { available: boolean; isOwner: boolean }) {
+  if (available) {
+    return (
+      <>
+        فعّله لحسابك من <a href={MFA_SETUP_HREF}>الأمان والتحقق الثنائي</a> ثم أعد تحميل الصفحة.
+      </>
+    );
+  }
+  return isOwner ? (
+    <>
+      إعداده غير ظاهر بعد: شغّل «إظهار إعداد التحقق الثنائي» من <Link href="/admin/settings">إعدادات النظام</Link>، ثم فعّله لحسابك.
+    </>
+  ) : (
+    <>إعداده غير متاح في حسابك بعد؛ اطلب من المالك إظهاره.</>
+  );
+}
+
 /**
- * لافتة حالة الكتابة: مقفلة (بمفتاح اللوحة أو بمفتاح الطوارئ)، أو مفتوحة وحساب المستخدم بلا تحقق ثنائي مشروط.
- * المالك يرى رابط المفتاح في الإعدادات.
+ * لافتة حالة الكتابة: مقفلة (بمفتاح اللوحة، أو بمفتاح الطوارئ، أو لأنها نسخة معاينة، أو لتعذّر قراءة الإعدادات)،
+ * أو مفتوحة وحساب المستخدم بلا تحقق ثنائي مشروط. المالك يرى رابط المفتاح في الإعدادات.
  */
 export function ReadOnlyBanner({
   writeEnabled,
   killed = false,
+  lock = null,
+  loadFailed = false,
   isOwner = false,
   mfaMissing = false,
+  mfaError = false,
+  mfaSetupAvailable = true,
 }: {
   writeEnabled: boolean;
   killed?: boolean;
+  lock?: "env_zero" | "preview" | null;
+  loadFailed?: boolean;
   isOwner?: boolean;
   mfaMissing?: boolean;
+  mfaError?: boolean;
+  mfaSetupAvailable?: boolean;
 }) {
   if (writeEnabled && !mfaMissing) return null;
   if (writeEnabled) {
@@ -106,7 +132,15 @@ export function ReadOnlyBanner({
       <p className="dk-banner">
         <Lock size={18} aria-hidden />
         <span>
-          <strong>التحقق الثنائي مطلوب للكتابة.</strong> فعّله لحسابك من <a href={MFA_SETUP_HREF}>الأمان والتحقق الثنائي</a> ثم أعد تحميل الصفحة.
+          {mfaError ? (
+            <>
+              <strong>تعذّر التحقق من التحقق الثنائي لحسابك الآن.</strong> الكتابة موقوفة لحسابك احتياطًا؛ أعد تحميل الصفحة بعد قليل.
+            </>
+          ) : (
+            <>
+              <strong>التحقق الثنائي مطلوب للكتابة.</strong> <MfaSetupHint available={mfaSetupAvailable} isOwner={isOwner} />
+            </>
+          )}
         </span>
       </p>
     );
@@ -116,7 +150,11 @@ export function ReadOnlyBanner({
       <Lock size={18} aria-hidden />
       <span>
         <strong>اللوحة للقراءة فقط.</strong>{" "}
-        {killed ? (
+        {loadFailed ? (
+          "تعذّرت قراءة إعدادات المكتب، فالكتابة مقفلة احتياطًا. أعد تحميل الصفحة بعد قليل."
+        ) : killed && lock === "preview" ? (
+          "هذه نسخة معاينة تشارك قاعدة الإنتاج، فالكتابة فيها مقفلة. اكتب من الموقع الأساسي."
+        ) : killed ? (
           "الكتابة مقفلة بمفتاح الطوارئ في إعدادات النشر."
         ) : isOwner ? (
           <>

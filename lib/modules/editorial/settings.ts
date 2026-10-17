@@ -17,7 +17,7 @@ import {
   type EditorialConfig,
 } from "./policy";
 import { EditorialError, type EditorialActor } from "./types";
-import { assertEditorialWriteEnabled, envWriteSwitch, KILL_SWITCH_MESSAGE, MFA_REQUIRED_MESSAGE } from "./write-gate";
+import { assertEditorialWriteEnabled, envLockMessage, envWriteLock, envWriteSwitch, MFA_REQUIRED_MESSAGE } from "./write-gate";
 
 export interface SettingsUser {
   id: string;
@@ -169,13 +169,15 @@ export async function setDeskWriteSwitch(db: EditorialDb, actor: EditorialActor,
     throw new EditorialError("INVALID_INPUT", "قيمة المفتاح غير صالحة.");
   }
   if (!Number.isInteger(input.baseVersion) || input.baseVersion < 0) throw new EditorialError("INVALID_INPUT", "رقم النسخة الأساس غير صالح.");
-  if (input.writeEnabled && envWriteSwitch() === "kill") throw new EditorialError("WRITE_DISABLED", KILL_SWITCH_MESSAGE);
+  // قفل البيئة (طوارئ أو نسخة معاينة) يمنع التشغيل من هذه النسخة؛ الإيقاف مسموح دائمًا.
+  if (input.writeEnabled && envWriteSwitch() === "kill") throw new EditorialError("WRITE_DISABLED", envLockMessage(envWriteLock()));
   if (input.writeEnabled) await assertDeskIntegrity(db);
 
   return db.transaction(async (tx) => {
     await lockConfigExclusive(tx);
-    const loaded = await loadEditorialConfig(tx).catch(() => null);
-    const previous = loaded?.config ?? null;
+    // نسخة مخزّنة تالفة = INVALID_STATE يُرمى كما هو (مراجعة الجودة ن١): لا يُكتب الافتراض فوق التكليفات بصمت.
+    const loaded = await loadEditorialConfig(tx);
+    const previous = loaded.version > 0 ? loaded.config : null;
     const base = previous ?? DEFAULT_EDITORIAL_CONFIG;
     const owner = await freshActor(tx, actor, base);
     assertOwner(owner);
@@ -189,7 +191,8 @@ export async function setDeskWriteSwitch(db: EditorialDb, actor: EditorialActor,
     }
     const before = controlsOf(previous);
     const after: DeskControls = { writeEnabled: input.writeEnabled, requireMfa: input.requireMfa ?? before.requireMfa };
-    if (after.writeEnabled && after.requireMfa && owner.mfa !== true) throw new EditorialError("MFA_REQUIRED", MFA_REQUIRED_MESSAGE);
+    // التحقق الثنائي للمالك شرط لما يفتح فقط: تشغيل الكتابة والشرط قائم. التشديد (إعادة الشرط) والإيقاف مسموحان دائمًا (ن٤).
+    if (after.writeEnabled && !before.writeEnabled && after.requireMfa && owner.mfa !== true) throw new EditorialError("MFA_REQUIRED", MFA_REQUIRED_MESSAGE);
     if (before.writeEnabled === after.writeEnabled && before.requireMfa === after.requireMfa) {
       throw new EditorialError("INVALID_STATE", "لا تغيير: المفتاح على هذه الحالة أصلًا.");
     }

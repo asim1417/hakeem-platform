@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useId, useState } from "react";
 import { Lock, LockOpen, ShieldCheck, ShieldAlert } from "lucide-react";
 import { postEditorial } from "./api";
@@ -14,14 +15,18 @@ export interface DeskSwitchProps {
   requireMfa: boolean;
   /** kill = مفتاح الطوارئ في إعدادات النشر؛ force_on = مفتوح من إعدادات النشر؛ panel = يتبع هذا المفتاح. */
   env: "kill" | "force_on" | "panel";
-  ownerMfa: { enabled: boolean; linked: boolean };
+  /** سبب القفل من البيئة حين env = kill: مفتاح الطوارئ أو نسخة معاينة. */
+  lock?: "env_zero" | "preview" | null;
+  ownerMfa: { enabled: boolean; linked: boolean; error?: boolean };
+  /** رابط إعداد التحقق الثنائي ظاهر (AUTH_MFA_ENABLED). */
+  mfaSetupAvailable?: boolean;
 }
 
 /**
  * مفتاح الكتابة في المكتب وشرط التحقق الثنائي (قرار المالك 17/10/2026 22:13): بضغطة وبسبب مكتوب، بلا إعادة نشر.
  * كل تغيير نسخة إعدادات جديدة ويُسجَّل في سجل التدقيق.
  */
-export function DeskSwitch({ version, writeEnabled, requireMfa, env, ownerMfa }: DeskSwitchProps) {
+export function DeskSwitch({ version, writeEnabled, requireMfa, env, lock = null, ownerMfa, mfaSetupAvailable = true }: DeskSwitchProps) {
   const id = useId();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -64,7 +69,11 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, ownerMfa }:
         )}
       </div>
 
-      {killed ? (
+      {killed && lock === "preview" ? (
+        <Message tone="lock" title="نسخة معاينة.">
+          نسخ المعاينة تشارك قاعدة الإنتاج، فالكتابة فيها مقفلة ولا يُشغَّل المفتاح منها. شغّله من الموقع الأساسي.
+        </Message>
+      ) : killed ? (
         <Message tone="lock" title="مقفلة بمفتاح الطوارئ.">
           إعدادات النشر تضبط EDITORIAL_DESK_WRITE=0، فلا تُشغَّل الكتابة من هنا حتى يُزال.
         </Message>
@@ -78,19 +87,25 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, ownerMfa }:
         <p className="m-0 flex items-center gap-2">
           {ownerMfa.enabled ? <ShieldCheck size={18} aria-hidden /> : <ShieldAlert size={18} aria-hidden />}
           <span>
-            التحقق الثنائي لحسابك: <strong>{ownerMfa.enabled ? "مفعّل" : "غير مفعّل"}</strong>
-            {!ownerMfa.linked ? " (حسابك غير مرتبط بخدمة الدخول التي تدير التحقق الثنائي)" : ""}
+            التحقق الثنائي لحسابك: <strong>{ownerMfa.error ? "تعذّر التحقق الآن" : ownerMfa.enabled ? "مفعّل" : "غير مفعّل"}</strong>
+            {ownerMfa.error ? " (أعد تحميل الصفحة بعد قليل)" : !ownerMfa.linked ? " (حسابك غير مرتبط بخدمة الدخول التي تدير التحقق الثنائي)" : ""}
           </span>
         </p>
-        {!ownerMfa.enabled ? (
-          <p className="m-0">
-            <a href={MFA_SETUP_HREF} className={btnClass("correct")}>
-              فعّل التحقق الثنائي لحسابك
-            </a>
-          </p>
+        {!ownerMfa.enabled && !ownerMfa.error ? (
+          mfaSetupAvailable ? (
+            <p className="m-0">
+              <a href={MFA_SETUP_HREF} className={btnClass("correct")}>
+                فعّل التحقق الثنائي لحسابك
+              </a>
+            </p>
+          ) : (
+            <p className="m-0">
+              إعداد التحقق الثنائي غير ظاهر بعد: شغّل «إظهار إعداد التحقق الثنائي» من <Link href="/admin/settings">إعدادات النظام</Link>، ثم ارجع إلى هنا.
+            </p>
+          )
         ) : null}
         <p className="m-0 text-[var(--desk-text-secondary)]">
-          شرط التحقق الثنائي للكتابة: <strong>{requireMfa ? "مشروط" : "غير مشروط"}</strong>. حين يُشترط، لا يكتب في المكتب إلا حساب بشري فعّل التحقق الثنائي، والوكيل يقترح فقط.
+          شرط التحقق الثنائي للكتابة: <strong>{requireMfa ? "مشروط" : "غير مشروط"}</strong>. حين يُشترط، لا يكتب في المكتب إلا حساب بشري سجّل التحقق الثنائي في خدمة الدخول، والوكيل يقترح فقط. الشرط على الحساب لا على الجلسة: الدخول بـ Google وغيره لا يطلب الرمز الثاني.
         </p>
       </div>
 
@@ -151,7 +166,9 @@ export function DeskSwitch({ version, writeEnabled, requireMfa, env, ownerMfa }:
             : confirm.writeEnabled !== writeEnabled
               ? confirm.writeEnabled
                 ? "تُفتح الأفعال كلها لمن له تكليف: الاعتماد والنشر والتراجع، ويتوقف زر اعتماد المبادئ القديم ويُحال إلى المكتب. يُسجَّل باسمك وبسببك."
-                : "تُقفل كل كتابة في المكتب فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. يُسجَّل باسمك وبسببك."
+                : env === "force_on"
+                  ? "يُحفظ المفتاح مقفلًا ويعود زر اعتماد المبادئ القديم إلى عمله، لكن الكتابة في المكتب تبقى مفتوحة ما دام EDITORIAL_DESK_WRITE=1 في إعدادات النشر. يُسجَّل باسمك وبسببك."
+                  : "تُقفل كل كتابة في المكتب فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. يُسجَّل باسمك وبسببك."
               : confirm.requireMfa
                 ? "لن يكتب في المكتب إلا حساب فعّل التحقق الثنائي."
                 : "يكتب في المكتب من له تكليف ولو لم يفعّل التحقق الثنائي. هذا يخالف القرار الافتراضي؛ يُسجَّل باسمك وبسببك."

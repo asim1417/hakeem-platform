@@ -50,7 +50,7 @@ import {
   type EditorialBinding,
   type EditorialConfig,
 } from "../lib/modules/editorial/policy";
-import { deskWriteDenial, envWriteSwitch, isEditorialWriteEnabled, KILL_SWITCH_MESSAGE, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
+import { deskWriteDenial, envWriteLock, envWriteSwitch, isDeskLive, isEditorialWriteEnabled, KILL_SWITCH_MESSAGE, PREVIEW_LOCK_MESSAGE, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
 import { PRINCIPLE_REVIEW_STATUS } from "../lib/modules/legal-core/principle-review";
 import { runDeskUiTests } from "./test-editorial-desk-ui";
 
@@ -117,7 +117,7 @@ function pureTests() {
   const routeSource = readFileSync(join(process.cwd(), "app/api/legal-core/principles/[id]/route.ts"), "utf8");
   ok(routeSource.includes("PRINCIPLE_REVIEW_STATUS") && routeSource.includes("recordAudit"), "زر المبدأ القائم يستعمل الخريطة نفسها ويكتب audit_event");
   ok(
-    routeSource.indexOf("currentDeskWriteState()") > 0 && routeSource.indexOf("currentDeskWriteState()") < routeSource.indexOf("judicialPrinciple") && routeSource.includes("USE_EDITORIAL_DESK"),
+    routeSource.indexOf("deskIsLive()") > 0 && routeSource.indexOf("deskIsLive()") < routeSource.indexOf("judicialPrinciple") && routeSource.includes("USE_EDITORIAL_DESK"),
     "SW-10 زر المبدأ القديم يتوقف قبل أي كتابة حين تعمل الكتابة في المكتب، ويحيل إليه",
   );
 
@@ -141,6 +141,14 @@ function pureTests() {
   ok(deskWriteDenial({ env: "panel", controls: { writeEnabled: true, requireMfa: false }, actorKind: "human", mfa: false }) === null, "SW-0 بلا شرط: يكتب بلا تحقق ثنائي");
   ok(deskWriteDenial({ env: "force_on", controls: { writeEnabled: false, requireMfa: true }, actorKind: "human", mfa: false })?.code === "MFA_REQUIRED", "SW-0 التشغيل القسري لا يُسقط شرط التحقق الثنائي");
   ok(deskWriteDenial({ env: "kill", controls: on, actorKind: "human", mfa: true })?.message === KILL_SWITCH_MESSAGE, "SW-0 مفتاح الطوارئ برسالته");
+  // مراجعة الجودة م١ على 7681ec8: نسخ المعاينة تشارك قاعدة الإنتاج فتُقفل افتراضيًا.
+  ok(envWriteSwitch({ VERCEL_ENV: "preview" }) === "kill" && envWriteLock({ VERCEL_ENV: "preview" }) === "preview", "SW-11 المعاينة بلا متغير = مقفلة");
+  ok(envWriteSwitch({ VERCEL_ENV: "preview", EDITORIAL_DESK_WRITE: "1" }) === "force_on" && envWriteSwitch({ VERCEL_ENV: "production" }) === "panel" && envWriteSwitch({}) === "panel", "SW-11 المعاينة تُفتح بـ 1 صراحةً، والإنتاج والمحلي يتبعان اللوحة");
+  ok(envWriteLock({ VERCEL_ENV: "preview", EDITORIAL_DESK_WRITE: "0" }) === "env_zero", "SW-11 مفتاح الطوارئ في المعاينة برسالته");
+  ok(!isEditorialWriteEnabled({ controls: on }, { VERCEL_ENV: "preview" }), "SW-11 مفتاح اللوحة المفتوح لا يفتح المعاينة");
+  ok(deskWriteDenial({ env: "kill", lock: "preview", controls: on, actorKind: "human", mfa: true })?.message === PREVIEW_LOCK_MESSAGE, "SW-11 رفض المعاينة برسالة المعاينة لا الطوارئ");
+  ok(isDeskLive({ controls: on }, { VERCEL_ENV: "preview" }) && isDeskLive({ controls: on }, { EDITORIAL_DESK_WRITE: "0" }), "SW-11 المكتب حيّ في كل البيئات متى شغّل المالك المفتاح (زر المبدأ القديم موقوف)");
+  ok(isDeskLive({ controls: { writeEnabled: false, requireMfa: true } }, { EDITORIAL_DESK_WRITE: "1" }) && !isDeskLive({ controls: { writeEnabled: false, requireMfa: true } }, {}), "SW-11 التشغيل القسري حيّ، والمقفل غير حيّ");
   ok(editorialConfigSchema.safeParse({ ...DEFAULT_EDITORIAL_CONFIG, controls: { writeEnabled: true } }).success === false, "SW-0 controls ناقصة تُرفض");
   ok(READ_ONLY_MESSAGE.includes("للقراءة فقط"), "رسالة القراءة فقط صريحة");
 
@@ -1612,8 +1620,38 @@ async function switchTests(c: UnifyCtx) {
   ok(Boolean(relaxed.changeSetId), "SW-9 بعد إلغاء الشرط بسبب مكتوب يكتب المحرر بلا تحقق ثنائي");
   ok((await c.num(`SELECT count(*) FROM audit_event WHERE action = 'config.switch'`)) === 4, "SW-9 كل تغيير للمفتاح سطر في سجل التدقيق");
 
+  // SW-12 (ن٤): إعادة الشرط تشديد يُسمح للمالك ولو بلا تحقق ثنائي والكتابة مفتوحة، ويسري فورًا.
+  const tightened = await setDeskWriteSwitch(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "إعادة شرط التحقق الثنائي", writeEnabled: true, requireMfa: true });
+  ok(tightened.controls.writeEnabled && tightened.controls.requireMfa, "SW-12 إعادة الشرط والكتابة مفتوحة مسموحة بلا تحقق ثنائي للمالك");
+  await rejects(() => createChangeSet(db, { ...editor, mfa: false }, change("SW4", "sw4b")), "MFA_REQUIRED", "SW-12 بعد إعادة الشرط يُرفض المحرر بلا تحقق ثنائي");
+
+  // SW-13 (م١): نسخة المعاينة لا تشغّل المفتاح ولا تحفظ الإعدادات (تشارك قاعدة الإنتاج)، والإيقاف منها مسموح.
+  const savedVercelEnv = process.env.VERCEL_ENV;
+  process.env.VERCEL_ENV = "preview";
+  await rejects(() => createChangeSet(db, editor, change("SW4", "sw4c")), "WRITE_DISABLED", "SW-13 المعاينة ترفض الكتابة والمفتاح مفتوح");
+  const cfgPrev = (await loadEditorialConfig(db)).config;
+  await rejects(async () => saveEditorialSettings(db, owner, { baseVersion: await latest(), reason: "حفظ من المعاينة", config: cfgPrev }), "WRITE_DISABLED", "SW-13 المعاينة لا تحفظ الإعدادات");
+  await setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إيقاف من المعاينة", writeEnabled: false });
+  ok(controlsOf((await loadEditorialConfig(db)).config).writeEnabled === false, "SW-13 الإيقاف من المعاينة مسموح");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "تشغيل من المعاينة", writeEnabled: true }), "WRITE_DISABLED", "SW-13 التشغيل من المعاينة مرفوض");
+  if (savedVercelEnv === undefined) delete process.env.VERCEL_ENV;
+  else process.env.VERCEL_ENV = savedVercelEnv;
+
+  // SW-14 (ن١): نسخة مخزّنة تالفة لا يُكتب فوقها الافتراض بصمت؛ المفتاح يرفض حتى تُحفظ نسخة صالحة.
+  const goodCfg = (await loadEditorialConfig(db)).config;
+  const vBad = (await latest()) + 1;
+  await pool.query(`INSERT INTO editorial_config (version, config, reason, actor_id) VALUES ($1, '{"bad":true}'::jsonb, 'نسخة تالفة للتجربة', $2)`, [vBad, owner.id]);
+  const switchesBefore = await c.num(`SELECT count(*) FROM audit_event WHERE action = 'config.switch'`);
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: vBad, reason: "تشغيل فوق التالفة", writeEnabled: true }), "INVALID_STATE", "SW-14 المفتاح يرفض فوق نسخة تالفة");
+  ok((await latest()) === vBad && (await c.num(`SELECT count(*) FROM audit_event WHERE action = 'config.switch'`)) === switchesBefore, "SW-14 لا نسخة ولا سطر تدقيق بعد الرفض");
+  await pool.query(`INSERT INTO editorial_config (version, config, reason, actor_id) VALUES ($1, $2::jsonb, 'استعادة نسخة صالحة بعد التجربة', $3)`, [vBad + 1, JSON.stringify(goodCfg), owner.id]);
+
   // يعود الوضع لبقية المجموعة: الشرط مفعّل والكتابة مقفلة بالإعدادات، والمتغير كما كان.
-  await setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إعادة الافتراض", writeEnabled: false, requireMfa: true });
+  const finalControls = controlsOf((await loadEditorialConfig(db)).config);
+  if (finalControls.writeEnabled || !finalControls.requireMfa) {
+    await setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إعادة الافتراض", writeEnabled: false, requireMfa: true });
+  }
+  ok(!controlsOf((await loadEditorialConfig(db)).config).writeEnabled && controlsOf((await loadEditorialConfig(db)).config).requireMfa, "SW الوضع بعد المجموعة: مقفلة والشرط قائم");
   if (savedEnv === undefined) delete process.env.EDITORIAL_DESK_WRITE;
   else process.env.EDITORIAL_DESK_WRITE = savedEnv;
 }

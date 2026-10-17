@@ -7,7 +7,7 @@ import { PRINCIPLE_REVIEW_STATUS } from "@/lib/modules/legal-core/principle-revi
 import { recordAudit } from "@/lib/modules/editorial/audit";
 import { resolveEditorialAccess } from "@/lib/modules/editorial/access";
 import { prismaEditorialDb } from "@/lib/modules/editorial/db";
-import { currentDeskWriteState } from "@/lib/modules/editorial/guard";
+import { deskIsLive } from "@/lib/modules/editorial/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +24,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (gate.response) return gate.response;
   const actor = gate.user!;
 
-  // قرار المالك (17/10/2026): حين تعمل الكتابة في مكتب التحرير يُعتمد المبدأ من المكتب وحده (تكليف، وتعدد موافقات، وسجل).
-  // يعود هذا المسار إلى عمله إذا أُقفلت الكتابة في المكتب.
-  if ((await currentDeskWriteState()).enabled) {
+  // قرار المالك (17/10/2026): حين يشغّل المالك الكتابة في مكتب التحرير يُعتمد المبدأ من المكتب وحده (تكليف، وتعدد موافقات، وسجل).
+  // يعود هذا المسار إلى عمله إذا أوقف المالك المفتاح. قفل البيئة (طوارئ أو معاينة) لا يعيده.
+  if (await deskIsLive()) {
     return NextResponse.json(
       { message: "اعتماد المبادئ صار من مكتب التحرير: لوحة الإدارة ← مكتب التحرير ← طابور الاعتماد.", href: "/admin/legal/queue?tab=principles", code: "USE_EDITORIAL_DESK" },
       { status: 409 },

@@ -15,10 +15,11 @@ export const dynamic = "force-dynamic";
 export default async function EditorialSettingsPage() {
   const actor = await requireEditorialPage("view");
   const allowed = canManageSettings(actor.access);
+  // سؤال طازج لحالة التحقق الثنائي للمالك (يرجع من تفعيله فيراه فورًا)، ويملأ المخزن لسياق الصفحة بعده.
+  const ownerMfa = allowed ? await accountMfaStatus(actor.id, { fresh: true }) : { enabled: false, linked: false };
   const { state: writeState, banner } = await deskPageWriteContext(actor);
-  // حفظ التكليفات والسياسات مسموح والكتابة مقفلة، إلا بمفتاح الطوارئ.
+  // حفظ التكليفات والسياسات مسموح والكتابة مقفلة، إلا بقفل البيئة (مفتاح الطوارئ أو نسخة معاينة).
   const settingsWritable = writeState.env !== "kill";
-  const ownerMfa = allowed ? await accountMfaStatus(actor.id) : { enabled: false, linked: false };
   let view: SettingsView | null = null;
   let state: "ok" | "missing" | "invalid" | "error" = "ok";
   let invalidMessage = "";
@@ -51,7 +52,9 @@ export default async function EditorialSettingsPage() {
               writeEnabled={writeState.controls.writeEnabled}
               requireMfa={writeState.controls.requireMfa}
               env={writeState.env}
+              lock={writeState.lock}
               ownerMfa={ownerMfa}
+              mfaSetupAvailable={banner.mfaSetupAvailable}
             />
           ) : null}
           <div className="mt-4">

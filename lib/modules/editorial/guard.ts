@@ -20,7 +20,9 @@ import { deskPreflight, parseBodyText } from "./http-guard";
 import { accountMfaStatus } from "./mfa";
 import { bindingFor, DEFAULT_EDITORIAL_CONFIG, loadEditorialConfig, type EditorialConfig } from "./policy";
 import { isEditorialError, type EditorialActor } from "./types";
-import { deskWriteState, type DeskWriteState } from "./write-gate";
+import { getAccountSecurityFeatures } from "@/lib/modules/auth/auth-providers";
+import { hydrateEnvFromSettingsThrottled } from "@/lib/modules/settings/settings-service";
+import { deskWriteState, isDeskLive, type DeskWriteState, type EnvLockReason } from "./write-gate";
 
 export type EditorialNeed = "view" | "propose" | "review" | "publish" | "audit" | "settings";
 
@@ -104,32 +106,68 @@ export async function requireEditorialApi(
   }
   // أفعال الكتابة: التحقق الثنائي للفاعل البشري يُحسب هنا (خارج المعاملة)، ويُقرَّر عليه داخلها.
   if (actor.kind === "human" && request.method !== "GET" && request.method !== "HEAD") {
-    actor.mfa = (await accountMfaStatus(actor.id)).enabled;
+    actor.mfa = (await accountMfaStatus(actor.id, { fresh: true })).enabled;
   }
   return { actor, response: null };
+}
+
+export interface DeskBannerProps {
+  writeEnabled: boolean;
+  killed: boolean;
+  lock: EnvLockReason | null;
+  loadFailed: boolean;
+  isOwner: boolean;
+  mfaMissing: boolean;
+  mfaError: boolean;
+  mfaSetupAvailable: boolean;
 }
 
 /** سياق الكتابة لصفحة: حالة المفتاح، وخصائص اللافتة (ومنها نقص التحقق الثنائي المشروط لحساب الزائر). */
 export async function deskPageWriteContext(actor: EditorialActor): Promise<{
   state: DeskWriteState;
   writeEnabled: boolean;
-  banner: { writeEnabled: boolean; killed: boolean; isOwner: boolean; mfaMissing: boolean };
+  banner: DeskBannerProps;
 }> {
   const state = await currentDeskWriteState();
-  const mfaMissing = state.enabled && state.controls.requireMfa && actor.kind === "human" ? !(await accountMfaStatus(actor.id)).enabled : false;
+  const mfa = state.enabled && state.controls.requireMfa && actor.kind === "human" ? await accountMfaStatus(actor.id) : null;
+  await hydrateEnvFromSettingsThrottled();
   return {
     state,
     writeEnabled: state.enabled,
-    banner: { writeEnabled: state.enabled, killed: state.env === "kill", isOwner: actor.access.superAdmin, mfaMissing },
+    banner: {
+      writeEnabled: state.enabled,
+      killed: state.env === "kill",
+      lock: state.lock,
+      loadFailed: state.loadFailed === true,
+      isOwner: actor.access.superAdmin,
+      mfaMissing: mfa ? !mfa.enabled : false,
+      mfaError: mfa?.error === true,
+      mfaSetupAvailable: getAccountSecurityFeatures().mfa,
+    },
   };
 }
 
-/** حالة مفتاح الكتابة للعرض (الصفحات). فشل القراءة = مقفلة (فشل مغلق). */
+/** حالة مفتاح الكتابة للعرض (الصفحات). فشل القراءة = مقفلة (فشل مغلق)، ويُعلَّم loadFailed لتصدق اللافتة. */
 export async function currentDeskWriteState(): Promise<DeskWriteState> {
   try {
     return deskWriteState((await loadEditorialConfig(editorialDb())).config);
   } catch {
-    return deskWriteState(null, { ...process.env, EDITORIAL_DESK_WRITE: process.env.EDITORIAL_DESK_WRITE === "1" ? "1" : "0" });
+    const forced = process.env.EDITORIAL_DESK_WRITE === "1";
+    const s = deskWriteState(null, { ...process.env, EDITORIAL_DESK_WRITE: forced ? "1" : "0" });
+    return { ...s, lock: forced ? null : process.env.VERCEL_ENV === "preview" ? "preview" : s.lock, loadFailed: true };
+  }
+}
+
+/**
+ * هل المكتب حيّ فيُوقف زر اعتماد المبادئ القديم؟ (قرار المالك 20:37، ومراجعة الجودة على 7681ec8)
+ * يتبع مفتاح اللوحة في كل البيئات. نسخة إعدادات تالفة أو تعذّر قراءتها = حيّ (القديم موقوف، فشل مغلق).
+ * المكتب غير المرحَّل (لا جدول) = غير حيّ، فيعمل القديم كما كان.
+ */
+export async function deskIsLive(): Promise<boolean> {
+  try {
+    return isDeskLive((await loadEditorialConfig(editorialDb())).config);
+  } catch {
+    return true;
   }
 }
 
