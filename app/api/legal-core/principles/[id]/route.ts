@@ -7,6 +7,7 @@ import { PRINCIPLE_REVIEW_STATUS } from "@/lib/modules/legal-core/principle-revi
 import { recordAudit } from "@/lib/modules/editorial/audit";
 import { resolveEditorialAccess } from "@/lib/modules/editorial/access";
 import { prismaEditorialDb } from "@/lib/modules/editorial/db";
+import { currentDeskWriteState } from "@/lib/modules/editorial/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const gate = await requireApiPermission("LEGAL_CORE_EDIT", request);
   if (gate.response) return gate.response;
   const actor = gate.user!;
+
+  // قرار المالك (17/10/2026): حين تعمل الكتابة في مكتب التحرير يُعتمد المبدأ من المكتب وحده (تكليف، وتعدد موافقات، وسجل).
+  // يعود هذا المسار إلى عمله إذا أُقفلت الكتابة في المكتب.
+  if ((await currentDeskWriteState()).enabled) {
+    return NextResponse.json(
+      { message: "اعتماد المبادئ صار من مكتب التحرير: لوحة الإدارة ← مكتب التحرير ← طابور الاعتماد.", href: "/admin/legal/queue?tab=principles", code: "USE_EDITORIAL_DESK" },
+      { status: 409 },
+    );
+  }
 
   const { decision } = schema.parse(await request.json());
 

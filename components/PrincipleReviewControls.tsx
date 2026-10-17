@@ -10,7 +10,7 @@ type Decision = "approve" | "reject" | "reset";
 export function PrincipleReviewControls({ id, status }: { id: string; status: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState<Decision | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<false | { message: string; href?: string }>(false);
 
   async function decide(decision: Decision) {
     setBusy(decision);
@@ -21,10 +21,14 @@ export function PrincipleReviewControls({ id, status }: { id: string; status: st
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ decision })
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string; href?: string; code?: string };
+        setError(body.code === "USE_EDITORIAL_DESK" ? { message: body.message ?? "اعتمد من مكتب التحرير.", href: body.href } : { message: "تعذّر الحفظ، حاول مجددًا." });
+        return;
+      }
       router.refresh();
     } catch {
-      setError(true);
+      setError({ message: "تعذّر الحفظ، حاول مجددًا." });
     } finally {
       setBusy(null);
     }
@@ -64,7 +68,19 @@ export function PrincipleReviewControls({ id, status }: { id: string; status: st
           <RotateCcw size={14} aria-hidden /> إعادة
         </button>
       ) : null}
-      {error ? <span className="text-xs text-[var(--ruby)]">تعذّر الحفظ، حاول مجددًا.</span> : null}
+      {error ? (
+        <span className="text-xs text-[var(--ruby)]">
+          {error.message}
+          {error.href ? (
+            <>
+              {" "}
+              <a href={error.href} className="underline">
+                افتح الطابور
+              </a>
+            </>
+          ) : null}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -40,10 +40,14 @@ export interface EditorialActor {
   role: string;
   access: EditorialAccess;
   sessionId?: string | null;
+  /** التحقق الثنائي لحساب الفاعل البشري، يُحسب في حارس الطلب لأفعال الكتابة (null = لم يُحسب). */
+  mfa?: boolean | null;
 }
 
 export type EditorialErrorCode =
   | "WRITE_DISABLED"
+  /** إعدادات المكتب تشترط التحقق الثنائي لحساب الفاعل. */
+  | "MFA_REQUIRED"
   | "FORBIDDEN"
   | "AGENT_CANNOT_DECIDE"
   | "SELF_APPROVAL_FORBIDDEN"
@@ -64,6 +68,7 @@ export type EditorialErrorCode =
 
 const HTTP_STATUS: Record<EditorialErrorCode, number> = {
   WRITE_DISABLED: 423,
+  MFA_REQUIRED: 403,
   FORBIDDEN: 403,
   AGENT_CANNOT_DECIDE: 403,
   SELF_APPROVAL_FORBIDDEN: 403,

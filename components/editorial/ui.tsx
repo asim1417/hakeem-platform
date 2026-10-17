@@ -82,13 +82,49 @@ export function Badge({ tone = "neutral", icon, children }: { tone?: BadgeTone; 
   );
 }
 
-export function ReadOnlyBanner({ writeEnabled }: { writeEnabled: boolean }) {
-  if (writeEnabled) return null;
+/** صفحة إعداد التحقق الثنائي في بوابة الحساب (قائمة الحساب ← الأمان والتحقق الثنائي). */
+export const MFA_SETUP_HREF = "/api/auth/account-portal?section=security";
+
+/**
+ * لافتة حالة الكتابة: مقفلة (بمفتاح اللوحة أو بمفتاح الطوارئ)، أو مفتوحة وحساب المستخدم بلا تحقق ثنائي مشروط.
+ * المالك يرى رابط المفتاح في الإعدادات.
+ */
+export function ReadOnlyBanner({
+  writeEnabled,
+  killed = false,
+  isOwner = false,
+  mfaMissing = false,
+}: {
+  writeEnabled: boolean;
+  killed?: boolean;
+  isOwner?: boolean;
+  mfaMissing?: boolean;
+}) {
+  if (writeEnabled && !mfaMissing) return null;
+  if (writeEnabled) {
+    return (
+      <p className="dk-banner">
+        <Lock size={18} aria-hidden />
+        <span>
+          <strong>التحقق الثنائي مطلوب للكتابة.</strong> فعّله لحسابك من <a href={MFA_SETUP_HREF}>الأمان والتحقق الثنائي</a> ثم أعد تحميل الصفحة.
+        </span>
+      </p>
+    );
+  }
   return (
     <p className="dk-banner">
       <Lock size={18} aria-hidden />
       <span>
-        <strong>اللوحة للقراءة فقط.</strong> الكتابة مقفلة حتى يفعّلها المالك.
+        <strong>اللوحة للقراءة فقط.</strong>{" "}
+        {killed ? (
+          "الكتابة مقفلة بمفتاح الطوارئ في إعدادات النشر."
+        ) : isOwner ? (
+          <>
+            شغّل الكتابة من <Link href="/admin/legal/settings#desk-switch">الإعدادات</Link>.
+          </>
+        ) : (
+          "الكتابة مقفلة حتى يشغّلها المالك."
+        )}
       </span>
     </p>
   );

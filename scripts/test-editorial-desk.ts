@@ -30,7 +30,7 @@ import {
 } from "../lib/modules/editorial/intake";
 import { payloadHash } from "../lib/modules/editorial/payload";
 import { getSystemSummary, listAudit, listChangeSetsDetailed, summarizeChange } from "../lib/modules/editorial/read";
-import { previewEditorialSettings, readEditorialSettings, saveEditorialSettings } from "../lib/modules/editorial/settings";
+import { previewEditorialSettings, readEditorialSettings, saveEditorialSettings, setDeskWriteSwitch } from "../lib/modules/editorial/settings";
 import {
   createChangeSet,
   decideChangeSet,
@@ -42,13 +42,15 @@ import {
 } from "../lib/modules/editorial/service";
 import { EditorialError, type ChangeInput, type EditorialActor } from "../lib/modules/editorial/types";
 import {
+  controlsOf,
+  DEFAULT_CONTROLS,
   DEFAULT_EDITORIAL_CONFIG,
   editorialConfigSchema,
   loadEditorialConfig,
   type EditorialBinding,
   type EditorialConfig,
 } from "../lib/modules/editorial/policy";
-import { isEditorialWriteEnabled, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
+import { deskWriteDenial, envWriteSwitch, isEditorialWriteEnabled, KILL_SWITCH_MESSAGE, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
 import { PRINCIPLE_REVIEW_STATUS } from "../lib/modules/legal-core/principle-review";
 import { runDeskUiTests } from "./test-editorial-desk-ui";
 
@@ -114,13 +116,32 @@ function pureTests() {
   ok(PRINCIPLE_REVIEW_STATUS.approve === "reviewed" && PRINCIPLE_REVIEW_STATUS.reject === "rejected", "خريطة قرار المبدأ واحدة للمسارين");
   const routeSource = readFileSync(join(process.cwd(), "app/api/legal-core/principles/[id]/route.ts"), "utf8");
   ok(routeSource.includes("PRINCIPLE_REVIEW_STATUS") && routeSource.includes("recordAudit"), "زر المبدأ القائم يستعمل الخريطة نفسها ويكتب audit_event");
+  ok(
+    routeSource.indexOf("currentDeskWriteState()") > 0 && routeSource.indexOf("currentDeskWriteState()") < routeSource.indexOf("judicialPrinciple") && routeSource.includes("USE_EDITORIAL_DESK"),
+    "SW-10 زر المبدأ القديم يتوقف قبل أي كتابة حين تعمل الكتابة في المكتب، ويحيل إليه",
+  );
 
   ok(pgErrorCode({ code: "P2010", meta: { code: "23505" } }) === "23505", "رمز التكرار يُقرأ من خطأ Prisma (meta.code) لا P2010");
   ok(pgErrorCode({ code: "23505" }) === "23505", "رمز التكرار يُقرأ من خطأ pg");
   ok(pgErrorCode({ code: "P2010", meta: {}, message: "Raw query failed. Code: `23505`." }) === "23505", "ويُقرأ من نص الرسالة عند غياب meta");
   ok(pgErrorCode({ code: "P2002" }) === null, "رمز Prisma وحده لا يُعدّ رمز قاعدة");
-  ok(!isEditorialWriteEnabled({}), "غياب EDITORIAL_DESK_WRITE = قراءة فقط");
-  ok(isEditorialWriteEnabled({ EDITORIAL_DESK_WRITE: "1" }), "EDITORIAL_DESK_WRITE=1 يفتح الكتابة");
+  ok(!isEditorialWriteEnabled(null, {}), "غياب EDITORIAL_DESK_WRITE والإعدادات = قراءة فقط");
+  ok(isEditorialWriteEnabled(null, { EDITORIAL_DESK_WRITE: "1" }), "EDITORIAL_DESK_WRITE=1 يفتح الكتابة");
+  // مفتاح اللوحة (قرار المالك 22:13)
+  ok(DEFAULT_CONTROLS.writeEnabled === false && DEFAULT_CONTROLS.requireMfa === true, "SW-0 الافتراض: الكتابة مقفلة والتحقق الثنائي مشروط");
+  ok(controlsOf({}).writeEnabled === false && controlsOf(null).requireMfa === true, "SW-0 نسخة بلا controls = الافتراض");
+  ok(isEditorialWriteEnabled({ controls: { writeEnabled: true, requireMfa: true } }, {}), "SW-0 مفتاح اللوحة يفتح بلا متغير البيئة");
+  ok(!isEditorialWriteEnabled({ controls: { writeEnabled: true, requireMfa: true } }, { EDITORIAL_DESK_WRITE: "0" }), "SW-0 مفتاح الطوارئ (0) يقفل فوق اللوحة");
+  ok(envWriteSwitch({ EDITORIAL_DESK_WRITE: " 0 " }) === "kill" && envWriteSwitch({ EDITORIAL_DESK_WRITE: "yes" }) === "panel", "SW-0 قراءة المتغير: 0 طوارئ، 1 قسري، غيرهما اللوحة");
+  const on = { writeEnabled: true, requireMfa: true };
+  ok(deskWriteDenial({ env: "panel", controls: on, actorKind: "human", mfa: true }) === null, "SW-0 بشري بتحقق ثنائي يكتب");
+  ok(deskWriteDenial({ env: "panel", controls: on, actorKind: "human", mfa: false })?.code === "MFA_REQUIRED", "SW-0 بشري بلا تحقق ثنائي يُرفض");
+  ok(deskWriteDenial({ env: "panel", controls: on, actorKind: "human", mfa: null })?.code === "MFA_REQUIRED", "SW-0 التحقق غير المحسوب = غير متحقق (فشل مغلق)");
+  ok(deskWriteDenial({ env: "panel", controls: on, actorKind: "agent", mfa: null }) === null, "SW-0 الوكيل يقترح بلا شرط التحقق الثنائي");
+  ok(deskWriteDenial({ env: "panel", controls: { writeEnabled: true, requireMfa: false }, actorKind: "human", mfa: false }) === null, "SW-0 بلا شرط: يكتب بلا تحقق ثنائي");
+  ok(deskWriteDenial({ env: "force_on", controls: { writeEnabled: false, requireMfa: true }, actorKind: "human", mfa: false })?.code === "MFA_REQUIRED", "SW-0 التشغيل القسري لا يُسقط شرط التحقق الثنائي");
+  ok(deskWriteDenial({ env: "kill", controls: on, actorKind: "human", mfa: true })?.message === KILL_SWITCH_MESSAGE, "SW-0 مفتاح الطوارئ برسالته");
+  ok(editorialConfigSchema.safeParse({ ...DEFAULT_EDITORIAL_CONFIG, controls: { writeEnabled: true } }).success === false, "SW-0 controls ناقصة تُرفض");
   ok(READ_ONLY_MESSAGE.includes("للقراءة فقط"), "رسالة القراءة فقط صريحة");
 
   console.log("\n— نقي: التوحيد —");
@@ -281,6 +302,8 @@ const actor = (id: string, role: string, roles: EditorialBinding["roles"] = [], 
   kind,
   agentName: kind === "agent" ? `user:${id}` : undefined,
   access: resolveEditorialAccess(role, roles.length || kind === "agent" ? binding(id, roles, kind) : null),
+  // شرط التحقق الثنائي مفعّل افتراضيًّا: الفاعل البشري في الاختبارات متحقق، وحالاته الأخرى في اختبارات SW.
+  mfa: kind === "human" ? true : null,
 });
 
 const EVIDENCE = (n: string) => ({
@@ -714,6 +737,7 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await unificationTests(unifyCtx);
   await round2Tests(unifyCtx);
   await qaFixTests(unifyCtx);
+  await switchTests(unifyCtx);
 
   await pool.end();
 }
@@ -1521,6 +1545,77 @@ async function qaFixTests(c: UnifyCtx) {
   const v = await readEditorialSettings(db, owner);
   const ne = await rejects(() => saveEditorialSettings(db, reviewer, { baseVersion: 0, reason: "محاولة بنسخة قديمة", config: v.config }), "FORBIDDEN", "ن٦ فحص المالك قبل النسخة");
   ok(ne?.detail?.currentVersion === undefined, "ن٦ ولا يتسرب رقم النسخة الحالية");
+}
+
+/** مفتاح الكتابة في اللوحة، وشرط التحقق الثنائي، ومفتاح الطوارئ (قرار المالك 17/10/2026 22:13). */
+async function switchTests(c: UnifyCtx) {
+  console.log("\n— مفتاح الكتابة والتحقق الثنائي —");
+  const { pool, db, owner, editor, agent } = c;
+  const savedEnv = process.env.EDITORIAL_DESK_WRITE;
+  for (const id of ["SW1", "SW2", "SW3", "SW4"]) {
+    await pool.query(`INSERT INTO legal_systems (id, name) VALUES ($1, $2)`, [id, `نظام المفتاح ${id}`]);
+    await pool.query(
+      `INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_at)
+       VALUES ($1, 'work', $2, 'ساري', 'المرسوم الملكي رقم م/1', 'https://uqn.gov.sa/details?p=1', 'يعمل بهذا النظام من تاريخ نشره في الجريدة الرسمية.', 'manual', NOW() - interval '30 days')`,
+      [`v-${id}`, id],
+    );
+  }
+  const latest = async () => c.num(`SELECT coalesce(max(version), 0) FROM editorial_config`);
+  const change = (id: string, n: string) => ({ title: `مفتاح ${id}`, changes: [{ op: "set_work_status", targetId: id, status: "ملغى", evidence: EVIDENCE(n) }] as ChangeInput[] });
+
+  delete process.env.EDITORIAL_DESK_WRITE; // اللوحة تقرر
+  ok(controlsOf((await loadEditorialConfig(db)).config).writeEnabled === false, "SW-1 الإعدادات القائمة بلا مفتاح = مقفلة");
+  await rejects(() => createChangeSet(db, editor, change("SW1", "sw1")), "WRITE_DISABLED", "SW-1 بلا متغير البيئة والمفتاح مقفل: الكتابة مرفوضة");
+  await rejects(async () => setDeskWriteSwitch(db, editor, { baseVersion: await latest(), reason: "تشغيل الكتابة", writeEnabled: true }), "FORBIDDEN", "SW-2 المفتاح للمالك وحده");
+  await rejects(async () => setDeskWriteSwitch(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "تشغيل الكتابة", writeEnabled: true }), "MFA_REQUIRED", "SW-3 التشغيل بلا تحقق ثنائي للمالك مرفوض والشرط قائم");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "قصر", writeEnabled: true }), "REASON_REQUIRED", "SW-3 السبب إلزامي");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: (await latest()) - 1, reason: "تشغيل الكتابة", writeEnabled: true }), "CONFLICT", "SW-3 نسخة قديمة = تعارض");
+  process.env.EDITORIAL_DESK_WRITE = "0";
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "تشغيل الكتابة", writeEnabled: true }), "WRITE_DISABLED", "SW-3 مفتاح الطوارئ يمنع التشغيل من اللوحة");
+  delete process.env.EDITORIAL_DESK_WRITE;
+  ok((await c.num(`SELECT count(*) FROM audit_event WHERE action = 'config.switch'`)) === 0, "SW-3 لا أثر للمحاولات المرفوضة");
+
+  const before = (await loadEditorialConfig(db)).config;
+  const v0 = await latest();
+  const r = await setDeskWriteSwitch(db, owner, { baseVersion: v0, reason: "تشغيل الكتابة للتجربة", writeEnabled: true });
+  const after = (await loadEditorialConfig(db)).config;
+  ok(r.version === v0 + 1 && r.controls.writeEnabled && r.controls.requireMfa, "SW-4 المالك المتحقق يشغّل الكتابة بنسخة جديدة والشرط باقٍ");
+  ok(JSON.stringify(after.bindings) === JSON.stringify(before.bindings) && JSON.stringify(after.policies) === JSON.stringify(before.policies), "SW-4 التكليفات والسياسات تُنقل كما هي");
+  const sw = await c.one<{ actor_id: string; detail: { reason: string; controls: { writeEnabled: boolean } } }>(`SELECT actor_id, detail FROM audit_event WHERE action = 'config.switch' ORDER BY id DESC LIMIT 1`);
+  ok(sw.actor_id === owner.id && sw.detail.reason === "تشغيل الكتابة للتجربة" && sw.detail.controls.writeEnabled === true, "SW-4 التغيير في سجل التدقيق باسم المالك وسببه");
+  await rejects(async () => setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "تشغيل مكرر", writeEnabled: true }), "INVALID_STATE", "SW-4 تشغيل المفتوح = لا تغيير");
+
+  const created = await createChangeSet(db, editor, change("SW1", "sw1"));
+  ok(Boolean(created.changeSetId), "SW-5 مع المفتاح المفتوح يكتب المحرر المتحقق");
+  await rejects(() => createChangeSet(db, { ...editor, mfa: false }, change("SW2", "sw2")), "MFA_REQUIRED", "SW-5 المحرر بلا تحقق ثنائي يُرفض");
+  await rejects(() => createChangeSet(db, { ...editor, mfa: undefined }, change("SW2", "sw2b")), "MFA_REQUIRED", "SW-5 التحقق غير المحسوب يُرفض");
+  const byAgent = await createChangeSet(db, agent, change("SW3", "sw3"));
+  ok(Boolean(byAgent.changeSetId), "SW-5 الوكيل يقترح بلا شرط التحقق الثنائي");
+
+  const cfgNow = (await loadEditorialConfig(db)).config;
+  await saveEditorialSettings(db, owner, { baseVersion: await latest(), reason: "حفظ عام للتكليفات", config: { ...cfgNow, controls: { writeEnabled: false, requireMfa: false } } });
+  const kept = controlsOf((await loadEditorialConfig(db)).config);
+  ok(kept.writeEnabled === true && kept.requireMfa === true, "SW-6 الحفظ العام لا يغيّر المفتاح ولا الشرط (يُنقلان من السابقة)");
+  await rejects(async () => saveEditorialSettings(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "حفظ بلا تحقق", config: cfgNow }), "MFA_REQUIRED", "SW-6 حفظ الإعدادات بلا تحقق ثنائي يُرفض والشرط قائم");
+
+  process.env.EDITORIAL_DESK_WRITE = "0";
+  await rejects(() => createChangeSet(db, editor, change("SW2", "sw2c")), "WRITE_DISABLED", "SW-7 مفتاح الطوارئ يقفل والمفتاح مفتوح");
+  delete process.env.EDITORIAL_DESK_WRITE;
+
+  await setDeskWriteSwitch(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "إيقاف الكتابة", writeEnabled: false });
+  ok(controlsOf((await loadEditorialConfig(db)).config).writeEnabled === false, "SW-8 الإيقاف مسموح للمالك ولو بلا تحقق ثنائي");
+  await rejects(() => createChangeSet(db, editor, change("SW2", "sw2d")), "WRITE_DISABLED", "SW-8 بعد الإيقاف تُرفض الكتابة فورًا");
+
+  await setDeskWriteSwitch(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "إلغاء شرط التحقق الثنائي", writeEnabled: false, requireMfa: false });
+  await setDeskWriteSwitch(db, { ...owner, mfa: false }, { baseVersion: await latest(), reason: "تشغيل بلا شرط", writeEnabled: true });
+  const relaxed = await createChangeSet(db, { ...editor, mfa: false }, change("SW4", "sw4"));
+  ok(Boolean(relaxed.changeSetId), "SW-9 بعد إلغاء الشرط بسبب مكتوب يكتب المحرر بلا تحقق ثنائي");
+  ok((await c.num(`SELECT count(*) FROM audit_event WHERE action = 'config.switch'`)) === 4, "SW-9 كل تغيير للمفتاح سطر في سجل التدقيق");
+
+  // يعود الوضع لبقية المجموعة: الشرط مفعّل والكتابة مقفلة بالإعدادات، والمتغير كما كان.
+  await setDeskWriteSwitch(db, owner, { baseVersion: await latest(), reason: "إعادة الافتراض", writeEnabled: false, requireMfa: true });
+  if (savedEnv === undefined) delete process.env.EDITORIAL_DESK_WRITE;
+  else process.env.EDITORIAL_DESK_WRITE = savedEnv;
 }
 
 async function main() {

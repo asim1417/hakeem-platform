@@ -17,8 +17,10 @@ import {
 import { recordAudit } from "./audit";
 import { prismaEditorialDb, type EditorialDb } from "./db";
 import { deskPreflight, parseBodyText } from "./http-guard";
+import { accountMfaStatus } from "./mfa";
 import { bindingFor, DEFAULT_EDITORIAL_CONFIG, loadEditorialConfig, type EditorialConfig } from "./policy";
 import { isEditorialError, type EditorialActor } from "./types";
+import { deskWriteState, type DeskWriteState } from "./write-gate";
 
 export type EditorialNeed = "view" | "propose" | "review" | "publish" | "audit" | "settings";
 
@@ -100,7 +102,35 @@ export async function requireEditorialApi(
     }).catch(() => undefined);
     return { actor: null, response: deskJson({ code: "FORBIDDEN", message: "لا تملك صلاحية هذه العملية في مكتب التحرير." }, 403) };
   }
+  // أفعال الكتابة: التحقق الثنائي للفاعل البشري يُحسب هنا (خارج المعاملة)، ويُقرَّر عليه داخلها.
+  if (actor.kind === "human" && request.method !== "GET" && request.method !== "HEAD") {
+    actor.mfa = (await accountMfaStatus(actor.id)).enabled;
+  }
   return { actor, response: null };
+}
+
+/** سياق الكتابة لصفحة: حالة المفتاح، وخصائص اللافتة (ومنها نقص التحقق الثنائي المشروط لحساب الزائر). */
+export async function deskPageWriteContext(actor: EditorialActor): Promise<{
+  state: DeskWriteState;
+  writeEnabled: boolean;
+  banner: { writeEnabled: boolean; killed: boolean; isOwner: boolean; mfaMissing: boolean };
+}> {
+  const state = await currentDeskWriteState();
+  const mfaMissing = state.enabled && state.controls.requireMfa && actor.kind === "human" ? !(await accountMfaStatus(actor.id)).enabled : false;
+  return {
+    state,
+    writeEnabled: state.enabled,
+    banner: { writeEnabled: state.enabled, killed: state.env === "kill", isOwner: actor.access.superAdmin, mfaMissing },
+  };
+}
+
+/** حالة مفتاح الكتابة للعرض (الصفحات). فشل القراءة = مقفلة (فشل مغلق). */
+export async function currentDeskWriteState(): Promise<DeskWriteState> {
+  try {
+    return deskWriteState((await loadEditorialConfig(editorialDb())).config);
+  } catch {
+    return deskWriteState(null, { ...process.env, EDITORIAL_DESK_WRITE: process.env.EDITORIAL_DESK_WRITE === "1" ? "1" : "0" });
+  }
 }
 
 /** يقرأ جسم الطلب بحد 64 ك.ب فعلي (لا بالترويسة وحدها). الجسم الفارغ = null. */
