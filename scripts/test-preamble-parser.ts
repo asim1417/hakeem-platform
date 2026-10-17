@@ -191,5 +191,24 @@ const bidiText = "\u202bبعون الله تعالى\u202c\nنحن فلان (ا�
 const bp = parsePreamble(bidiText);
 ok(bp.ok && bp.reconstructionOk && reconstructPreamble(bp.units) === bidiText && bp.completeness === "complete", "B-2 نص بمحارف الاتجاه: تصنيف كامل وإعادة تركيب حرفية");
 
+// عيّنة نواة التقاضي (اعتماد المالك 20:37): منطوق مرقّم بالأرقام بينه جملة، وفقرات مرقّمة داخل «أولاً»، وتاريخ بعد نقطتين.
+const numText = "إن مجلس الوزراء\n\nبعد الاطلاع على كذا (اصطناعي).\n\nيقرر ما يلي:\n\n١ – الموافقة على كذا (اصطناعي).\n\nوقد أعد مشروع مرسوم ملكي بذلك، صيغته مرافقة لهذا.\n\n٢ – قيام الجهة بكذا (اصطناعي).\nرئيس مجلس الوزراء";
+const np = parsePreamble(numText);
+const nc = np.units.filter((u) => u.type === "operative_clause");
+ok(np.ok && reconstructPreamble(np.units) === numText && np.warnings.length === 0, "عيّنة التقاضي: منطوق مرقّم بالأرقام يُعاد تركيبه حرفيًا بلا تحذير");
+ok(nc.length === 2 && nc[0].number === "1" && nc[1].number === "2" && nc[0].label === "١" && nc[1].label === "٢", "عيّنة التقاضي: «١ –» و«٢ –» بندان مستقلان برقميهما");
+ok(nc[0].text.includes("وقد أعد مشروع مرسوم") && nc[1].text.startsWith("٢ –"), "عيّنة التقاضي: الجملة بين البندين تبقى في الأول");
+ok(nc[1].anchor === "preamble-i1-clause-2", "عيّنة التقاضي: مرساة البند الثاني بالرقم");
+const nestedText = "بعون الله تعالى\nنحن فلان (اصطناعي)\nوبعد الاطلاع على كذا.\nرسمنا بما هو آت:\nأولاً: الموافقة مع مراعاة ما يأتي:\n\n١ - كذا (اصطناعي).\n\n٢ - كذا (اصطناعي).\n\nثانياً: على الوزراء تنفيذ مرسومنا هذا.\nفلان بن عبد العزيز آل سعود";
+const ns = parsePreamble(nestedText);
+const nsc = ns.units.filter((u) => u.type === "operative_clause");
+ok(ns.ok && nsc.length === 2 && nsc[0].label === "أولاً" && nsc[0].text.includes("٢ - كذا") && nsc[1].label === "ثانياً", "عيّنة التقاضي: الأرقام داخل «أولاً» فقرات من بنده لا بنود عليا");
+const recText = "إن مجلس الوزراء\nبعد الاطلاع على ما يأتي:\n١ - كذا (اصطناعي).\n٢ - كذا (اصطناعي).\nيقرر ما يلي:\nالموافقة على كذا (اصطناعي).\nرئيس مجلس الوزراء";
+const rp = parsePreamble(recText);
+ok(rp.ok && rp.units.filter((u) => u.type === "operative_clause").length === 1 && rp.units.filter((u) => u.type === "recital").length === 1, "عيّنة التقاضي: الأرقام قبل صيغة الإصدار تبقى في الاستناد، والمنطوق غير المرقّم بند واحد");
+const h6 = parseInstrumentHeading("قرار رقم (١١) وتاريخ : ٨ / ١ / ١٤٣٥هـ");
+ok(h6.kind === "cabinet_decision" && h6.number === "11" && h6.dateHijri === "1435/1/8", "عيّنة التقاضي: تاريخ العنوان بعد نقطتين (قرار المرافعات 11)");
+ok(np.parserVersion === "preamble-parser/2", "إصدار القارئ preamble-parser/2");
+
 console.log(`\n${passed} نجح، ${failed} فشل`);
 process.exitCode = failed ? 1 : 0;

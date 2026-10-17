@@ -20,7 +20,7 @@
  * فالنص المخزّن يبقى كما ورد. نقي: بلا قاعدة ولا شبكة ولا Prisma.
  */
 
-export const PREAMBLE_PARSER_VERSION = "preamble-parser/1";
+export const PREAMBLE_PARSER_VERSION = "preamble-parser/2";
 
 export const PREAMBLE_UNIT_TYPES = [
   "issuing_instrument",
@@ -146,6 +146,9 @@ const RE_ENACTING = /((?:رسمنا|امرنا)[ \t]+بما[ \t]+هو[ \t]+ات|
 // «يقرر:» وحدها في أول السطر (قرارات المجلس بمنطوق واحد).
 const RE_ENACTING_SHORT = /(^|[\n.])[ \t]*(ي?قرر[ \t]*[:：])/g;
 const RE_CLAUSE = new RegExp(`(^|[\\n.:؛])[ \\t]*([*#]*[ \\t]*(${ORDINAL_ALT})[ \\t*]*[:\\-–—])`, "g");
+// بند منطوق مرقّم بالأرقام في أول السطر («١ – …»، «2- …»، «٣) …»). يُقبل بندًا أعلى فقط إذا بدأ به منطوق الأداة
+// بعد صيغة الإصدار؛ وداخل منطوق بالألفاظ («أولاً») يبقى فقرة من بنده (عيّنة نواة التقاضي، قرار التحكيم 156).
+const RE_CLAUSE_NUM = /(^|\n)[ \t]*([*#]*[ \t]*([0-9٠-٩۰-۹]{1,2})[ \t]*[\-–—)][ \t])/g;
 const RE_SIGNATURE = /(^|\n)([ \t]*(?:رئيس[ \t]+مجلس[ \t]+الوزراء|نائب[ \t]+رئيس[ \t]+مجلس[ \t]+الوزراء|[^\n.:،؛]{2,40}?[ \t]ال[ \t]+سعود|[^\n.:،؛]{2,30}?[ \t]بن[ \t]+عبد[ \t]?العزيز|[^\n.:،؛]{2,60}?[ \t]ال[ \t]+سعود[ \t]*رئيس[ \t]+مجلس[ \t]+الوزراء)[ \t]*)(?=\n|$)/g;
 
 type CandKind =
@@ -156,6 +159,7 @@ type CandKind =
   | "recital"
   | "enacting"
   | "clause"
+  | "clause_num"
   | "clause_unnumbered"
   | "signature"
   | "trailer";
@@ -180,6 +184,7 @@ const PRIORITY: Record<CandKind, number> = {
   enacting: 3,
   recital: 4,
   clause: 5,
+  clause_num: 5,
   signature: 6,
   clause_unnumbered: 7,
   trailer: 8,
@@ -235,7 +240,7 @@ export function parseInstrumentHeading(line: string): { kind: InstrumentKind | n
   // الرقم من السطر بهمزاته (لتبقى «أ/90»)، بعد حذف التشكيل والتطويل وNBSP داخله؛ والتاريخ والنوع من الصورة العارية.
   const num = cleanKeepHamza(line).match(/رقم[ \t]*[(]?[ \t]*((?:[مأاإ][ \t]*\/[ \t]*)?[0-9٠-٩۰-۹]+(?:[ \t]*\/[ \t]*[0-9٠-٩۰-۹]+)?)/);
   const number = num ? toLatin(num[1].replace(/[ \t]+/g, "")) : null;
-  const date = b.match(/(?:وتاريخ|بتاريخ|في)[ \t]*([0-9٠-٩۰-۹]{1,4})[ \t]*\/[ \t]*([0-9٠-٩۰-۹]{1,2})[ \t]*\/[ \t]*([0-9٠-٩۰-۹]{1,4})/);
+  const date = b.match(/(?:وتاريخ|بتاريخ|في)[ \t]*[:：]?[ \t]*([0-9٠-٩۰-۹]{1,4})[ \t]*\/[ \t]*([0-9٠-٩۰-۹]{1,2})[ \t]*\/[ \t]*([0-9٠-٩۰-۹]{1,4})/);
   let dateHijri: string | null = null;
   if (date) {
     const [a, m, c] = [toLatin(date[1]), toLatin(date[2]), toLatin(date[3])];
@@ -280,6 +285,7 @@ export function parsePreamble(raw: string): PreambleParse {
     const word = m[3].replace(/[ \t]+/g, " ");
     return { number: String(ORDINAL_VALUE.get(word) ?? ""), label: word };
   });
+  collect(RE_CLAUSE_NUM, bare, "clause_num", 2, cands, (m) => ({ number: toLatin(m[3]), label: m[3] }));
   collect(RE_SIGNATURE, bare, "signature", 2, cands);
 
   const sortCands = () =>
@@ -291,11 +297,14 @@ export function parsePreamble(raw: string): PreambleParse {
   let phase: Phase = "none";
   let current = 0; // ترتيب الأداة الجارية
   let cursor = 0; // لا تقبل مرساة داخل مطابقة سبقتها
+  // نمط ترقيم منطوق الأداة الجارية: يحدده أول بند بعد صيغة الإصدار.
+  let clauseMode: "ordinal" | "numeric" | null = null;
 
   // تبدأ أداة جديدة وتعيد طورها (يُسند إلى phase عند النداء ليتبعه تحليل الأنواع).
   const startInstrument = (from: Phase, nextPhase: Phase): Phase => {
     if (from === "operative" || from === "enacting") warnings.push(`أداة ${current} بلا سطر توقيع`);
     current += 1;
+    clauseMode = null;
     instruments.push({ index: current, kind: null, number: null, dateHijri: null, heading: null });
     return nextPhase;
   };
@@ -372,8 +381,16 @@ export function parsePreamble(raw: string): PreambleParse {
         break;
       }
       case "clause":
+      case "clause_num":
       case "clause_unnumbered": {
         if (c.kind === "clause_unnumbered" && phase !== "enacting") break;
+        if (c.kind === "clause_num") {
+          // الأرقام بنود عليا فقط إذا بدأ بها المنطوق؛ لا تبدأ أداة ولا تقطع بندًا بالألفاظ.
+          if (phase === "enacting") clauseMode = "numeric";
+          else if (phase !== "operative" || clauseMode !== "numeric") break;
+        } else if (phase === "enacting") {
+          clauseMode = c.kind === "clause" ? "ordinal" : null;
+        }
         if (phase === "none" || phase === "signed") {
           phase = startInstrument(phase, "operative");
           warnings.push(`أداة ${current} تبدأ ببند منطوق بلا افتتاحية`);
@@ -454,6 +471,7 @@ export function parsePreamble(raw: string): PreambleParse {
         type = "enacting_formula";
         break;
       case "clause":
+      case "clause_num":
       case "clause_unnumbered":
         type = "operative_clause";
         break;
@@ -466,6 +484,7 @@ export function parsePreamble(raw: string): PreambleParse {
     }
     let label: string | null = null;
     if (a.kind === "clause") label = text.slice(rawPos(a.pos), end).replace(/^[*#\s]+/, "").split(/[ \t*]*[:\-–—]/)[0].trim() || null;
+    if (a.kind === "clause_num") label = a.label ?? null;
     if (a.kind === "heading") label = instruments[(a.instrument ?? 1) - 1]?.heading ?? null;
     leaves.push({
       kind: a.kind,
@@ -475,7 +494,7 @@ export function parsePreamble(raw: string): PreambleParse {
       charEnd: end,
       instrumentIndex: a.kind === "trailer" ? null : a.instrument,
       label,
-      number: a.kind === "clause" ? a.number || null : null,
+      number: a.kind === "clause" || a.kind === "clause_num" ? a.number || null : null,
     });
   }
 
