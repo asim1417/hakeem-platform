@@ -57,3 +57,34 @@ export function parseBodyText(text: string): unknown {
     throw new EditorialError("INVALID_INPUT", "جسم الطلب ليس JSON صالحًا.");
   }
 }
+
+export interface DeskPreflightInput {
+  authDisabled: boolean;
+  method: string;
+  origin: string | null;
+  requestOrigin: string;
+  host: string | null;
+  forwardedHost: string | null;
+  contentLength: string | null;
+}
+
+/**
+ * الفحص الأول لكل طلب إلى /api/admin/legal قبل قراءة المستخدم (ق-١٠):
+ * المصادقة المعطّلة ترفض المكتب كله (الضيف هناك SYSTEM_ADMIN بلا هوية)، وطلب الكتابة يلزمه أصل التطبيق
+ * نفسه وحجم لا يتجاوز الحد. يعيد سبب الرفض أو null.
+ */
+export function deskPreflight(input: DeskPreflightInput): { status: number; code: string; message: string } | null {
+  if (input.authDisabled) {
+    return { status: 401, code: "UNAUTHENTICATED", message: "مكتب التحرير يتطلب تسجيل دخول حقيقيًّا؛ المصادقة معطّلة في هذه البيئة." };
+  }
+  if (WRITE_METHODS.has(input.method.toUpperCase())) {
+    if (!isSameOriginWrite(input)) return { status: 403, code: "FORBIDDEN", message: "مصدر الطلب غير مسموح." };
+    try {
+      assertContentLength(input.contentLength);
+    } catch (error) {
+      if (error instanceof EditorialError) return { status: error.status, code: error.code, message: error.message };
+      throw error;
+    }
+  }
+  return null;
+}

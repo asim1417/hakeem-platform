@@ -1,5 +1,7 @@
 /**
- * اختبارات مكتب التحرير التشريعي — المرحلة صفر (T0-1 … T0-9).
+ * اختبارات مكتب التحرير التشريعي — المرحلة صفر (T0-1 … T0-9)، والتوحيد مع #723 (HKM-023):
+ * السياسات والتكليف والنطاق، وتعدد الموافقات، والناشر، والتراجع المحروس، والاستقبال المعلّق، وأم القرى،
+ * وعقد الواجهة، والحماية (TRUNCATE والمشغّل المعطّل)، وأخطاء بشكل Prisma (P2010 + meta.code).
  *
  * الجزء الأول نقي بلا قاعدة (يعمل في أي مكان).
  * الجزء الثاني يحتاج قاعدة Postgres محلية فارغة للاختبار فقط:
@@ -13,6 +15,9 @@ import { join } from "node:path";
 import { resolveEditorialAccess } from "../lib/modules/editorial/access";
 import { sourceRankFromUrl, stableJson } from "../lib/modules/editorial/audit";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "../lib/modules/editorial/db";
+import { canManageSettings, canReadAudit, inScope } from "../lib/modules/editorial/access";
+import { hijriToGregorian } from "../lib/modules/editorial/hijri";
+import { deskPreflight, MAX_BODY_BYTES, parseBodyText } from "../lib/modules/editorial/http-guard";
 import { checkDeskIntegrity } from "../lib/modules/editorial/integrity";
 import {
   bulkApproveAmendmentOps,
@@ -23,6 +28,9 @@ import {
   listPrincipleQueue,
   validateCorrection,
 } from "../lib/modules/editorial/intake";
+import { payloadHash } from "../lib/modules/editorial/payload";
+import { getSystemSummary, listAudit, listChangeSetsDetailed, summarizeChange } from "../lib/modules/editorial/read";
+import { readEditorialSettings, saveEditorialSettings } from "../lib/modules/editorial/settings";
 import {
   createChangeSet,
   decideChangeSet,
@@ -32,8 +40,14 @@ import {
   validateEvidence,
   withdrawChangeSet,
 } from "../lib/modules/editorial/service";
-import { EditorialError, type EditorialActor } from "../lib/modules/editorial/types";
-import { DEFAULT_EDITORIAL_CONFIG, type EditorialBinding, type EditorialConfig } from "../lib/modules/editorial/policy";
+import { EditorialError, type ChangeInput, type EditorialActor } from "../lib/modules/editorial/types";
+import {
+  DEFAULT_EDITORIAL_CONFIG,
+  editorialConfigSchema,
+  loadEditorialConfig,
+  type EditorialBinding,
+  type EditorialConfig,
+} from "../lib/modules/editorial/policy";
 import { isEditorialWriteEnabled, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
 import { PRINCIPLE_REVIEW_STATUS } from "../lib/modules/legal-core/principle-review";
 
@@ -107,6 +121,94 @@ function pureTests() {
   ok(!isEditorialWriteEnabled({}), "غياب EDITORIAL_DESK_WRITE = قراءة فقط");
   ok(isEditorialWriteEnabled({ EDITORIAL_DESK_WRITE: "1" }), "EDITORIAL_DESK_WRITE=1 يفتح الكتابة");
   ok(READ_ONLY_MESSAGE.includes("للقراءة فقط"), "رسالة القراءة فقط صريحة");
+
+  console.log("\n— نقي: التوحيد —");
+  // ق-١٠ حراسة الطلب
+  const pre = { authDisabled: false, method: "POST", origin: "https://hakeem.example", requestOrigin: "https://hakeem.example", host: "hakeem.example", forwardedHost: null, contentLength: "100" };
+  ok(deskPreflight({ ...pre, authDisabled: true, method: "GET" })?.status === 401, "ق-١٠ المصادقة المعطّلة ترفض المكتب (401) حتى للقراءة");
+  ok(deskPreflight(pre) === null, "طلب كتابة من أصل التطبيق يُقبل");
+  ok(deskPreflight({ ...pre, origin: null })?.status === 403, "طلب كتابة بلا Origin يُرفض");
+  ok(deskPreflight({ ...pre, origin: "https://evil.example" })?.status === 403, "طلب كتابة من أصل آخر يُرفض");
+  ok(deskPreflight({ ...pre, requestOrigin: "https://deploy-x.vercel.app", host: "hakeem.example" }) === null, "Origin يطابق مضيف الطلب نفسه (النطاق المخصص) فيُقبل");
+  ok(deskPreflight({ ...pre, requestOrigin: "https://deploy-x.vercel.app", host: "deploy-x.vercel.app", forwardedHost: "hakeem.example" }) === null, "ويطابق X-Forwarded-Host");
+  ok(deskPreflight({ ...pre, method: "GET", origin: null }) === null, "القراءة لا تشترط Origin");
+  ok(deskPreflight({ ...pre, contentLength: String(MAX_BODY_BYTES + 1) })?.status === 413, "حد الجسم 64 ك.ب بالترويسة (413)");
+  throwsSync(() => parseBodyText("x".repeat(MAX_BODY_BYTES + 1)), "PAYLOAD_TOO_LARGE", "وحد الجسم بالطول الفعلي بالبايت");
+  throwsSync(() => parseBodyText("{bad"), "INVALID_INPUT", "JSON غير صالح = 400 لا 500");
+  ok(parseBodyText("") === null, "الجسم الفارغ = null");
+  // الحارس نفسه (server-only لا يُستورد هنا): يمرّر isAuthDisabled() إلى الفحص الأول، وصفحات المكتب تُحوَّل.
+  const guardSource = readFileSync(join(process.cwd(), "lib/modules/editorial/guard.ts"), "utf8");
+  ok(
+    guardSource.includes("authDisabled: isAuthDisabled()") && /requireEditorialPage[\s\S]*if \(isAuthDisabled\(\)\) redirect/.test(guardSource) && guardSource.includes('"Cache-Control": "no-store"'),
+    "الحارس يرفض المكتب بالمصادقة المعطّلة في المسارات والصفحات، ويضع no-store",
+  );
+  const routeFiles = ["audit", "change-sets", "settings", "intake/amendments", "intake/principles", "systems/[id]"].map((r) =>
+    readFileSync(join(process.cwd(), `app/api/admin/legal/${r}/route.ts`), "utf8"),
+  );
+  ok(routeFiles.every((src) => !src.includes("NextResponse.json(") && src.includes("deskJson")), "مسارات المكتب كلها تمر بـ deskJson (no-store)");
+
+  // ق-١١ أم القرى
+  ok(hijriToGregorian("1446-09-01") === "2025-03-01", "أم القرى: 1446-09-01 يقابل 2025-03-01");
+  ok(hijriToGregorian("1446-15-35") === null, "أم القرى: 1446-15-35 غير موجود");
+  ok(validateCorrection({ effective_from_hijri: "1446-09-01", effective_from_gregorian: "2025-03-01" }).effective_from_gregorian === "2025-03-01", "تصحيح بتاريخين متسقين يُقبل");
+  throwsSync(() => validateCorrection({ effective_from_hijri: "1446-09-01", effective_from_gregorian: "2025-03-02" }), "INVALID_INPUT", "تصحيح بتاريخين غير متسقين يُرفض");
+  throwsSync(() => validateCorrection({ effective_from_hijri: "1446-15-35" }), "INVALID_INPUT", "تصحيح بتاريخ هجري غير موجود يُرفض");
+  ok(validateCorrection({ effective_from_hijri: "1446-9-1" }).effective_from_gregorian === undefined, "لا يُشتق الميلادي بصمت حين لا يُصحَّح");
+
+  // ق-٤ مخطط الإعدادات
+  const okCfg = editorialConfigSchema.safeParse(DEFAULT_EDITORIAL_CONFIG).success;
+  ok(okCfg && DEFAULT_EDITORIAL_CONFIG.policies.set_work_status.minApprovals === 1 && DEFAULT_EDITORIAL_CONFIG.policies.set_work_status.ownerSelfApproval === true, "القيم الافتراضية تحفظ الأمر (1، واعتماد المالك الذاتي مسموح)");
+  const withPolicy = (minApprovals: number) => ({ ...DEFAULT_EDITORIAL_CONFIG, policies: { ...DEFAULT_EDITORIAL_CONFIG.policies, revert: { minApprovals, ownerSelfApproval: true, enabled: true } } });
+  ok(!editorialConfigSchema.safeParse(withPolicy(0)).success && !editorialConfigSchema.safeParse(withPolicy(6)).success && editorialConfigSchema.safeParse(withPolicy(5)).success, "minApprovals من 1 إلى 5 فقط");
+  ok(!editorialConfigSchema.safeParse({ ...DEFAULT_EDITORIAL_CONFIG, bindings: [binding("x", ["reviewer"], "agent")] }).success, "الوكيل لا يُكلَّف بالاعتماد");
+  ok(!editorialConfigSchema.safeParse({ ...DEFAULT_EDITORIAL_CONFIG, bindings: [binding("x", ["reviewer"]), binding("x", ["publisher"])] }).success, "تكليف واحد لكل مستخدم");
+
+  // ق-٥ النطاق، وقراءة السجل والإعدادات
+  const civilAccess = resolveEditorialAccess("LAWYER", binding("c", ["editor_laws", "reviewer"], "human", { domains: ["CIVIL"], itemKinds: ["set_work_status", "review_principle"] }));
+  ok(inScope(civilAccess, "set_work_status", "CIVIL") && !inScope(civilAccess, "set_work_status", "LABOR"), "المجال يُطبَّق على ما له مجال");
+  ok(inScope(civilAccess, "review_principle", ""), "وعناصر الاستقبال بلا مجال تُحكم بنوع العنصر وحده");
+  ok(!inScope(civilAccess, "review_amendment_op", ""), "ونوع العنصر خارج التكليف يُرفض");
+  ok(!resolveEditorialAccess("LAWYER", binding("d", ["reviewer"], "human", { enabled: false })).reviewer, "التكليف المعطّل لا يمنح شيئًا");
+  ok(canManageSettings(owner) && !canManageSettings(reviewer), "الإعدادات للمالك وحده");
+  ok(!canReadAudit(agent) && canReadAudit(reviewer) && canReadAudit(resolveEditorialAccess("TRAINEE", binding("q", ["qa_view"]))) && !canReadAudit(resolveEditorialAccess("LAWYER", binding("e", ["editor_laws"]))), "السجل لعرض الجودة أو المعتمِد، لا للوكيل ولا للمحرر وحده");
+
+  // البصمة والسطر العربي
+  const ch = { id: "b", target_type: "work", target_id: "S1", op: "set_work_status", before: { status: "ساري", x: 1 }, after: { status: "ملغى" }, evidence_instrument: "م/1", evidence_url: "https://uqn.gov.sa/x", evidence_quote: "نص", source_rank: 1, source_ref: null, domain: "" };
+  const ch2 = { ...ch, id: "a", target_id: "S2" };
+  ok(payloadHash({ id: "s", kind: "manual", reverts_change_set_id: null }, [ch, ch2]) === payloadHash({ id: "s", kind: "manual", reverts_change_set_id: null }, [ch2, { ...ch, before: { x: 1, status: "ساري" } }]), "بصمة الحمولة لا تتأثر بترتيب التغييرات ولا المفاتيح");
+  ok(payloadHash({ id: "s", kind: "manual", reverts_change_set_id: null }, [ch]) !== payloadHash({ id: "s", kind: "manual", reverts_change_set_id: null }, [{ ...ch, after: { status: "مستبدل" } }]), "وتتغير بتغير الحمولة");
+  const line = summarizeChange("manual", ch, "نظام المرافعات");
+  ok(line === "حالة «نظام المرافعات»: ساري ← ملغى", "summary سطر عربي مقروء");
+  ok(!summarizeChange("agent_review", { op: "review_amendment_op", target_id: "OP-1", before: {}, after: { decision: "approved_with_edit", corrected: { article_number: 2 } } }, "نظام").includes("{"), "summary قرار التعديل بلا JSON");
+}
+
+/** ق-٢: صفحة الأدوار وcanUser لا يمنحان LEGAL_* لغير المالك (بلا قاعدة: Prisma مستبدل بمحاكٍ). */
+async function authTests() {
+  console.log("\n— الصلاحيات العامة —");
+  const roles: Record<string, string> = { own: "SUPER_ADMIN", sys: "SYSTEM_ADMIN", law: "LAWYER" };
+  const fake = {
+    user: { findUnique: async ({ where }: { where: { id: string } }) => (roles[where.id] ? { role: roles[where.id] } : null) },
+    // منح قديم في RolePermission لصلاحية مكتب وأخرى عامة: الأولى يجب ألا تُحترم.
+    roleRecord: {
+      findUnique: async ({ where }: { where: { key: string } }) => ({
+        key: where.key,
+        permissions: [{ permission: { key: "LEGAL_REVIEWER" } }, { permission: { key: "LEGAL_CORE_EDIT" } }],
+      }),
+    },
+  };
+  (globalThis as unknown as { prisma?: unknown }).prisma = fake;
+  const { canUser } = await import("../lib/modules/auth/rbac");
+  const { setRolePermission, buildBaselineMatrix, PERMISSION_CATALOG } = await import("../lib/modules/auth/role-admin");
+  ok((await canUser("sys", "LEGAL_REVIEWER")) === false, "canUser(SYSTEM_ADMIN, LEGAL_REVIEWER) = false");
+  ok((await canUser("law", "LEGAL_REVIEWER")) === false, "منح LEGAL_* القديم في RolePermission لا يُحترم");
+  ok((await canUser("own", "LEGAL_PUBLISHER")) === true, "المالك يملك LEGAL_* ضمنًا");
+  ok((await canUser("sys", "USERS_MANAGE")) === true && (await canUser("law", "LEGAL_CORE_EDIT")) === true && (await canUser("law", "USERS_MANAGE")) === false, "لا تغيير في غير LEGAL_* (التجاوز والمنح الإضافي كما كانا)");
+  const refused = await setRolePermission("SYSTEM_ADMIN", "LEGAL_REVIEWER", true);
+  ok(!refused.ok && Boolean(refused.message?.includes("/admin/legal/settings")), "صفحة الأدوار ترفض منح LEGAL_* (حتى لدور SYSTEM_ADMIN)");
+  ok(!(await setRolePermission("LAWYER", "LEGAL_PUBLISHER", true)).ok && !(await setRolePermission("LAWYER", "LEGAL_REVIEWER", false)).ok, "ولا منح ولا سحب لأي LEGAL_*");
+  ok(buildBaselineMatrix().every((r) => r.cells.every((cell) => !cell.permission.startsWith("LEGAL_EDITOR") && !["LEGAL_REVIEWER", "LEGAL_PUBLISHER", "LEGAL_QA_VIEW", "LEGAL_AGENT_PROPOSE"].includes(cell.permission))), "مصفوفة الأدوار بلا صلاحيات المكتب");
+  ok(PERMISSION_CATALOG.some((p) => p.key === "LEGAL_PUBLISHER" && p.label.includes("ناشر")), "LEGAL_PUBLISHER بتسميته العربية");
+  delete (globalThis as unknown as { prisma?: unknown }).prisma;
 }
 
 // ── الجزء الثاني: قاعدة محلية ────────────────────────────────────────────────
@@ -219,14 +321,16 @@ async function dbTests(pg: PgModule, rawUrl: string) {
     ('agent-test','وكيل اختبار','agent@test.local','TRAINEE'),
     ('agent-other','وكيل آخر','agent2@test.local','TRAINEE')`);
   // التكليفات في إعدادات المكتب (المصدر الوحيد لصلاحيات المكتب)؛ كل تعديل نسخة جديدة.
-  let configVersion = 0;
-  const current: EditorialConfig = JSON.parse(JSON.stringify(DEFAULT_EDITORIAL_CONFIG));
+  // يبني على آخر نسخة في القاعدة (قد تكون حُفظت بمسار الإعدادات الرسمي).
   const writeConfig = async (patch: (c: EditorialConfig) => void) => {
-    patch(current);
-    configVersion += 1;
+    const latest = (await pool.query(`SELECT version, config FROM editorial_config ORDER BY version DESC LIMIT 1`)).rows[0] as
+      | { version: number; config: EditorialConfig }
+      | undefined;
+    const next: EditorialConfig = latest ? latest.config : JSON.parse(JSON.stringify(DEFAULT_EDITORIAL_CONFIG));
+    patch(next);
     await pool.query(`INSERT INTO editorial_config (version, config, reason, actor_id) VALUES ($1, $2::jsonb, 'تكليف اختباري', 'u-owner')`, [
-      configVersion,
-      JSON.stringify(current),
+      (latest ? Number(latest.version) : 0) + 1,
+      JSON.stringify(next),
     ]);
   };
   const setBinding = (b: EditorialBinding) =>
@@ -333,11 +437,12 @@ async function dbTests(pg: PgModule, rawUrl: string) {
     title: "إلغاء نظام اختبار S1",
     changes: [{ op: "set_work_status", targetId: "S1", status: "ملغى", evidence: EVIDENCE("11") }],
   });
-  await rejects(
+  const d03 = await rejects(
     () => createChangeSet(db, owner, { title: "ثان على S1", changes: [{ op: "set_work_status", targetId: "S1", status: "مستبدل", evidence: EVIDENCE("12") }] }),
     "OPEN_CHANGE_EXISTS",
     "D-03 تغيير ثانٍ على هدف مفتوح يُرفض",
   );
+  ok(d03?.detail?.openChangeSetId === set1.changeSetId, "D-03 ويعيد معرّف الدفعة المفتوحة");
   const sub1 = await submitChangeSet(db, editor, set1.changeSetId);
   ok(sub1.status === "pending", "الفحوص تنجح فتنتقل الدفعة إلى الطابور");
 
@@ -598,11 +703,546 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await pool.query(readFileSync(join(root, "prisma/migrations/20261017090000_editorial_desk_phase0/migration.sql"), "utf8"));
   ok((await checkDeskIntegrity(freshDb)).ok, "إعادة تطبيق الترحيل تستعيد الحماية");
 
+  await unificationTests({ pool, db, one, num, setBinding, writeConfig, owner, editor, reviewer, agent, root });
+
   await pool.end();
+}
+
+// ── التوحيد مع #723 (HKM-023): اختبارات القسم ٦ من compare-architecture.md ───
+
+interface UnifyCtx {
+  pool: PgPoolLike;
+  db: EditorialDb;
+  one: <T = Record<string, unknown>>(sql: string, params?: unknown[]) => Promise<T>;
+  num: (sql: string, params?: unknown[]) => Promise<number>;
+  setBinding: (b: EditorialBinding) => Promise<void>;
+  writeConfig: (patch: (c: EditorialConfig) => void) => Promise<void>;
+  owner: EditorialActor;
+  editor: EditorialActor;
+  reviewer: EditorialActor;
+  agent: EditorialActor;
+  root: string;
+}
+
+/** خطأ بشكل محرك الإنتاج: Prisma يلفّ رمز Postgres في meta.code تحت P2010 (لا في code). */
+function prismaShapedError(code: string, message: string) {
+  return Object.assign(new Error(`Raw query failed. Code: \`${code}\`. Message: \`${message}\``), {
+    name: "PrismaClientKnownRequestError",
+    code: "P2010",
+    meta: { code, message },
+    clientVersion: "5.22.0",
+  });
+}
+
+/**
+ * منفذ SQL يحاكي Prisma في الأخطاء: كل خطأ من pg يصل بشكل P2010 + meta.code،
+ * ويمكن حقن خطأ داخل المعاملة لاستعلام بعينه، وإخفاء فحص القفل المسبق لمحاكاة السباق.
+ */
+function prismaShapedDb(pool: PgPoolLike, inject?: { match: RegExp; code: string; hideOpenCheck?: boolean }): EditorialDb {
+  const convert = (error: unknown) => {
+    const e = error as { code?: string; message?: string };
+    return typeof e?.code === "string" && /^[0-9A-Z]{5}$/.test(e.code) ? prismaShapedError(e.code, e.message ?? "") : error;
+  };
+  const run = async (q: (sql: string, params?: readonly unknown[]) => Promise<PgResult>, sql: string, params: readonly unknown[], inTx: boolean) => {
+    if (inTx && inject?.hideOpenCheck && sql.includes("SELECT change_set_id FROM editorial_change")) return [];
+    if (inTx && inject && inject.match.test(sql)) throw prismaShapedError(inject.code, "injected");
+    try {
+      return (await q(sql, params as unknown[])).rows;
+    } catch (error) {
+      throw convert(error);
+    }
+  };
+  return {
+    query: async <T>(sql: string, params: readonly unknown[] = []) => (await run((s, p) => pool.query(s, p), sql, params, false)) as T[],
+    transaction: async (fn) => {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const result = await fn({ query: async <T>(sql: string, params: readonly unknown[] = []) => (await run((s, p) => client.query(s, p), sql, params, true)) as T[] });
+        await client.query("COMMIT");
+        return result;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+  };
+}
+
+async function unificationTests(c: UnifyCtx) {
+  const { pool, db, one, num, setBinding, writeConfig, owner, editor, reviewer, agent } = c;
+  const latestVersion = async () => num(`SELECT coalesce(max(version), 0) FROM editorial_config`);
+  const latestStatus = async (id: string) =>
+    (await one<{ verified_status: string }>(`SELECT verified_status FROM verification WHERE object_type = 'work' AND object_id = $1 ORDER BY verified_at DESC, id DESC LIMIT 1`, [id])).verified_status;
+  const publishable = async (title: string, targetId: string, status: "ملغى" | "مستبدل" | "ساري", n: string, by = editor) => {
+    const s = await createChangeSet(db, by, { title, changes: [{ op: "set_work_status", targetId, status, evidence: EVIDENCE(n) }] });
+    await submitChangeSet(db, by, s.changeSetId);
+    return s.changeSetId;
+  };
+
+  await pool.query(`INSERT INTO users (id, name, email, role) VALUES
+    ('u-reviewer2','معتمد ثان','reviewer2@test.local','JUDGE'),
+    ('u-qa','جودة','qa@test.local','TRAINEE'),
+    ('u-civil','محرر مدني','civil@test.local','LAWYER'),
+    ('u-kind','معتمد مبادئ','kind@test.local','LAWYER'),
+    ('u-outsider','بلا تكليف','outsider@test.local','LAWYER')`);
+  for (const [id, domain] of [["U1", null], ["U2", null], ["U3", null], ["U4", null], ["U5", null], ["U6", null], ["U7", null], ["U9", "CIVIL"], ["U10", "LABOR"]] as const) {
+    await pool.query(`INSERT INTO legal_systems (id, name, domain) VALUES ($1, $2, $3)`, [id, `نظام التوحيد ${id}`, domain]);
+    await pool.query(
+      `INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_at)
+       VALUES ($1, 'work', $2, 'ساري', 'المرسوم الملكي رقم م/1', 'https://uqn.gov.sa/details?p=1', 'يعمل بهذا النظام من تاريخ نشره في الجريدة الرسمية.', 'manual', NOW() - interval '30 days')`,
+      [`v-${id}`, id],
+    );
+  }
+  await setBinding(binding("u-reviewer2", ["reviewer", "publisher"]));
+  await setBinding(binding("u-qa", ["qa_view"]));
+  await setBinding(binding("u-civil", ["editor_laws"], "human", { domains: ["CIVIL"] }));
+  await setBinding(binding("u-kind", ["reviewer"], "human", { itemKinds: ["review_principle"] }));
+  const reviewer2 = actor("u-reviewer2", "JUDGE", ["reviewer", "publisher"]);
+  const qa = actor("u-qa", "TRAINEE", ["qa_view"]);
+  // access هنا يطابق تكليفه في القاعدة (القراءات تستعمل access الممرَّر كما يبنيه الحارس).
+  const civil: EditorialActor = { ...actor("u-civil", "LAWYER"), access: resolveEditorialAccess("LAWYER", binding("u-civil", ["editor_laws"], "human", { domains: ["CIVIL"] })) };
+  const kindOnly = actor("u-kind", "LAWYER", ["reviewer"]);
+  const outsider = actor("u-outsider", "LAWYER");
+
+  // ── أمن الصلاحيات (ق-٢، ق-١٢) ──
+  console.log("\n— التوحيد: الصلاحيات والسجل —");
+  await rejects(() => listAudit(db, agent, {}), "FORBIDDEN", "ق-١٢ الوكيل لا يقرأ سجل التدقيق");
+  await rejects(() => listAudit(db, civil, {}), "FORBIDDEN", "ق-١٢ المحرر بلا عرض الجودة لا يقرأ السجل");
+  ok((await listAudit(db, qa, { limit: 5 })).length > 0, "ق-١٢ صاحب عرض الجودة يقرأ السجل");
+  ok((await listAudit(db, reviewer, { limit: 5 })).length > 0, "ق-١٢ المعتمِد يقرأ السجل");
+
+  // ── النطاق (ق-٥) ──
+  console.log("\n— التوحيد: النطاق —");
+  await rejects(
+    () => createChangeSet(db, civil, { title: "خارج المجال", changes: [{ op: "set_work_status", targetId: "U10", status: "ملغى", evidence: EVIDENCE("901") }] }),
+    "FORBIDDEN",
+    "ق-٥ المحرر المقيّد بمجال «مدني» لا يحرر نظامًا من مجال آخر",
+  );
+  const civilSet = await createChangeSet(db, civil, { title: "داخل المجال", changes: [{ op: "set_work_status", targetId: "U9", status: "ملغى", evidence: EVIDENCE("902") }] });
+  ok(Boolean(civilSet.changeSetId), "ق-٥ ويحرر نظامًا من مجاله");
+  ok((await one<{ domain: string }>(`SELECT domain FROM editorial_change WHERE change_set_id = $1`, [civilSet.changeSetId])).domain === "CIVIL", "مجال الهدف محفوظ في التغيير");
+  await submitChangeSet(db, civil, civilSet.changeSetId);
+  await rejects(() => decideChangeSet(db, kindOnly, civilSet.changeSetId, { decision: "approve" }), "FORBIDDEN", "ق-٥ المعتمِد المقيّد بالمبادئ لا يعتمد حالة نظام");
+  const laborSet = await createChangeSet(db, editor, { title: "مجال العمل", changes: [{ op: "set_work_status", targetId: "U10", status: "ملغى", evidence: EVIDENCE("9021") }] });
+  const civilViews = await listChangeSetsDetailed(db, civil, { status: "open" });
+  ok(civilViews.some((v) => v.id === civilSet.changeSetId) && !civilViews.some((v) => v.id === laborSet.changeSetId), "يرى المقيّد بمجال دفعاته وما في نطاقه، لا دفعات مجال آخر");
+  ok((await listChangeSetsDetailed(db, owner, { status: "open" })).some((v) => v.id === laborSet.changeSetId), "والمالك يرى الكل");
+  await withdrawChangeSet(db, civil, civilSet.changeSetId, { reason: "تنظيف" });
+  await withdrawChangeSet(db, editor, laborSet.changeSetId, { reason: "تنظيف" });
+
+  // ── الناشر منفصل عن المعتمِد (ق-٣) ──
+  console.log("\n— التوحيد: النشر والموافقات —");
+  const pubSet = await publishable("فصل النشر", "U1", "ملغى", "903");
+  await decideChangeSet(db, reviewer2, pubSet, { decision: "approve" });
+  await rejects(() => publishChangeSet(db, editor, pubSet), "FORBIDDEN", "ق-٣ المعتمِد بلا دور الناشر لا ينشر");
+  await publishChangeSet(db, reviewer2, pubSet);
+  ok((await latestStatus("U1")) === "ملغى", "الناشر في نطاقه ينشر");
+
+  // ── اعتمادان مطلوبان (من #723) ──
+  await writeConfig((cfg) => {
+    cfg.policies.set_work_status.minApprovals = 2;
+  });
+  const two = await publishable("موافقتان", "U2", "ملغى", "904");
+  const d1 = await decideChangeSet(db, reviewer, two, { decision: "approve" });
+  ok(d1.status === "pending" && d1.approvals === 1 && d1.requiredApprovals === 2, "اعتمادان مطلوبان: الأول يُبقي الدفعة في الطابور (1 من 2)");
+  await rejects(() => publishChangeSet(db, reviewer2, two), "INVALID_STATE", "والنشر يُرفض قبل اكتمال الموافقات");
+  await rejects(() => decideChangeSet(db, reviewer, two, { decision: "approve" }), "ALREADY_DECIDED", "المعتمِد نفسه لا يُعدّ مرتين (UNIQUE)");
+  const d2 = await decideChangeSet(db, reviewer2, two, { decision: "approve" });
+  ok(d2.status === "approved" && d2.approvals === 2, "والثاني يكمل الاعتماد");
+  await publishChangeSet(db, reviewer2, two);
+  ok((await latestStatus("U2")) === "ملغى", "ثم يُنشر");
+
+  // ── سحب التكليف فوري: يُعاد عدّ الموافقات عند النشر بالصلاحية الحالية ──
+  const revoked = await publishable("سحب قبل النشر", "U3", "ملغى", "905");
+  await decideChangeSet(db, reviewer, revoked, { decision: "approve" });
+  await decideChangeSet(db, reviewer2, revoked, { decision: "approve" });
+  await setBinding(binding("u-reviewer", ["publisher"]));
+  const e8 = await rejects(() => publishChangeSet(db, reviewer2, revoked), "INVALID_STATE", "سحب تكليف معتمِد يُسقط موافقته فورًا عند النشر");
+  ok(e8?.detail?.approvals === 1 && e8?.detail?.required === 2, "التفصيل: موافقة صالحة واحدة من اثنتين");
+  const pend2 = await publishable("سحب ثم قرار", "U6", "ملغى", "9051");
+  await rejects(() => decideChangeSet(db, reviewer, pend2, { decision: "approve" }), "FORBIDDEN", "ومن سُحب تكليفه لا يقرّر");
+  await withdrawChangeSet(db, editor, pend2, { reason: "تنظيف" });
+  await setBinding(binding("u-reviewer", ["reviewer", "publisher"]));
+  await withdrawChangeSet(db, reviewer2, revoked, { reason: "تعثّر النشر بعد سحب تكليف" });
+
+  // ── ownerSelfApproval=false ──
+  await writeConfig((cfg) => {
+    cfg.policies.set_work_status = { minApprovals: 1, ownerSelfApproval: false, enabled: true };
+  });
+  const ownSet = await publishable("المالك بلا اعتماد ذاتي", "U4", "ملغى", "906", owner);
+  await rejects(() => decideChangeSet(db, owner, ownSet, { decision: "approve", reason: "سبب مكتوب" }), "SELF_APPROVAL_FORBIDDEN", "سياسة ownerSelfApproval=false تمنع اعتماد المالك الذاتي");
+  await decideChangeSet(db, reviewer, ownSet, { decision: "approve" });
+  await publishChangeSet(db, reviewer, ownSet);
+
+  // ── مسار معطّل، والتراجع العاجل لا يُعطَّل ──
+  await writeConfig((cfg) => {
+    cfg.policies.set_work_status = { minApprovals: 1, ownerSelfApproval: true, enabled: false };
+    cfg.policies.revert = { minApprovals: 1, ownerSelfApproval: true, enabled: false };
+  });
+  await rejects(
+    () => createChangeSet(db, editor, { title: "مسار معطّل", changes: [{ op: "set_work_status", targetId: "U5", status: "ملغى", evidence: EVIDENCE("907") }] }),
+    "FORBIDDEN",
+    "ق-٤ المسار المعطّل في السياسات يرفض الإنشاء",
+  );
+  await rejects(() => revertChangeSet(db, reviewer, ownSet, { reason: "مسار التراجع معطّل" }), "FORBIDDEN", "والتراجع العادي يُرفض حين يُعطَّل مساره");
+  const urgent = await revertChangeSet(db, owner, ownSet, { reason: "عاجل رغم السياسة", emergency: true });
+  ok(urgent.status === "published", "ق-٤ التراجع العاجل للمالك متاح دائمًا ولا يُعطَّل بسياسة");
+  await writeConfig((cfg) => {
+    cfg.policies.set_work_status = { minApprovals: 1, ownerSelfApproval: true, enabled: true };
+    cfg.policies.revert = { minApprovals: 1, ownerSelfApproval: true, enabled: true };
+  });
+
+  // ── التراجع عن A بعد نشر B يعطي CONFLICT (P1) ──
+  console.log("\n— التوحيد: التراجع —");
+  const A = await publishable("A إلغاء", "U5", "ملغى", "908");
+  await decideChangeSet(db, reviewer, A, { decision: "approve" });
+  await publishChangeSet(db, reviewer, A);
+  const B = await publishable("B استبدال", "U5", "مستبدل", "909");
+  await decideChangeSet(db, reviewer, B, { decision: "approve" });
+  await publishChangeSet(db, reviewer, B);
+  const verBeforeP1 = await num(`SELECT count(*) FROM verification WHERE object_id = 'U5'`);
+  const p1 = await rejects(() => revertChangeSet(db, reviewer, A, { reason: "تراجع عن القديمة" }), "CONFLICT", "P1 التراجع عن A بعد نشر B يُرفض");
+  ok(Boolean(p1?.message.includes("تغيّرت حالة الهدف بعد نشر هذه الدفعة")), "P1 برسالة «تغيّرت حالة الهدف بعد نشر هذه الدفعة…»");
+  await rejects(() => revertChangeSet(db, owner, A, { reason: "عاجل", emergency: true }), "CONFLICT", "P1 والتراجع العاجل كذلك");
+  ok((await num(`SELECT count(*) FROM verification WHERE object_id = 'U5'`)) === verBeforeP1 && (await latestStatus("U5")) === "مستبدل", "P1 لم يُكتب فوق B شيء");
+  const revB = await revertChangeSet(db, reviewer, B, { reason: "التراجع عن الأحدث" });
+  ok(revB.status === "draft", "التراجع عن B (الحالية) مسموح");
+  await withdrawChangeSet(db, reviewer, revB.revertChangeSetId, { reason: "تنظيف" });
+
+  // ── NOT_REVERTIBLE لقرارات المقترحات ──
+  const intakeSet = (await one<{ id: string }>(`SELECT id FROM change_set WHERE kind = 'agent_review' AND status = 'published' ORDER BY created_at LIMIT 1`)).id;
+  const nr = await rejects(() => revertChangeSet(db, owner, intakeSet, { reason: "تراجع عن قرار مقترح", emergency: true }), "NOT_REVERTIBLE", "ق-٧ دفعة قرار مقترح لا يُتراجع عنها");
+  ok(nr?.status === 409, "NOT_REVERTIBLE برمز 409");
+
+  // ── OPEN_CHANGE_EXISTS يعيد معرّف المفتوح ──
+  const openSet = await createChangeSet(db, editor, { title: "مفتوح", changes: [{ op: "set_work_status", targetId: "U6", status: "ملغى", evidence: EVIDENCE("910") }] });
+  const oe = await rejects(
+    () => createChangeSet(db, owner, { title: "ثان", changes: [{ op: "set_work_status", targetId: "U6", status: "مستبدل", evidence: EVIDENCE("911") }] }),
+    "OPEN_CHANGE_EXISTS",
+    "D-03 القفل على U6",
+  );
+  ok(oe?.detail?.openChangeSetId === openSet.changeSetId, "OPEN_CHANGE_EXISTS يعيد detail.openChangeSetId");
+
+  // ── ثبات الدفعة (P4) والبصمة ──
+  console.log("\n— التوحيد: ثبات الحمولة —");
+  const sealed = await publishable("P4 دفعة", "U7", "ملغى", "912");
+  await decideChangeSet(db, reviewer, sealed, { decision: "approve" });
+  const tryQ = async (sql: string, params: unknown[] = []) => {
+    try {
+      await pool.query(sql, params);
+      return false;
+    } catch {
+      return true;
+    }
+  };
+  ok(
+    await tryQ(
+      `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after, evidence_instrument, evidence_url, evidence_quote, author_id, author_kind, status)
+       VALUES ('inj', $1, 'work', 'U1', 'set_work_status', '{}'::jsonb, '{"status":"ملغى"}'::jsonb, 'x', 'https://uqn.gov.sa/y', 'سند محقون طويل بما يكفي', 'u-editor', 'human', 'approved')`,
+      [sealed],
+    ),
+    "P4 الإدراج في دفعة معتمدة يُرفض من القاعدة",
+  );
+  ok(await tryQ(`UPDATE change_set SET payload_hash = 'x' WHERE id = $1`, [sealed]), "بصمة الدفعة مجمّدة بعد ضبطها");
+  ok(await tryQ(`UPDATE editorial_change SET applied_ref = 'x' WHERE id = (SELECT id FROM editorial_change WHERE applied_ref IS NOT NULL LIMIT 1)`), "applied_ref لا يتغير بعد ضبطه");
+  // تجاوز الحماية بصلاحية مالك القاعدة: النشر يعيد حساب البصمة من الصفوف فيكشفه.
+  await pool.query(`ALTER TABLE editorial_change DISABLE TRIGGER editorial_change_guard`);
+  await pool.query(`UPDATE editorial_change SET after = '{"status":"مستبدل"}'::jsonb WHERE change_set_id = $1`, [sealed]);
+  await pool.query(`ALTER TABLE editorial_change ENABLE TRIGGER editorial_change_guard`);
+  await rejects(() => publishChangeSet(db, reviewer, sealed), "CONFLICT", "النشر يعيد حساب البصمة ويرفض حمولة غُيّرت بعد الاعتماد");
+  ok((await latestStatus("U7")) === "ساري", "ولم يُنشر شيء");
+  await withdrawChangeSet(db, reviewer, sealed, { reason: "حمولة مغيّرة" });
+
+  // ── فشل مصطنع على الصف الثالث وقت النشر (T0-3b، من #723) ──
+  const t3 = await createChangeSet(db, editor, {
+    title: "ثلاثة بفشل مصطنع",
+    changes: [
+      { op: "set_work_status", targetId: "U3", status: "ملغى", evidence: EVIDENCE("913") },
+      { op: "set_work_status", targetId: "U4", status: "مستبدل", evidence: EVIDENCE("914") },
+      { op: "set_work_status", targetId: "U6", status: "ملغى", evidence: EVIDENCE("915") },
+    ],
+  }).catch((error) => error);
+  // U6 مقفل بدفعة مفتوحة؛ نسحبها ثم نعيد.
+  ok(t3 instanceof EditorialError && t3.code === "OPEN_CHANGE_EXISTS", "قفل الهدف يشمل الدفعة متعددة الأهداف");
+  await withdrawChangeSet(db, editor, openSet.changeSetId, { reason: "فك القفل" });
+  const t3b = await createChangeSet(db, editor, {
+    title: "ثلاثة بفشل مصطنع",
+    changes: [
+      { op: "set_work_status", targetId: "U3", status: "ملغى", evidence: EVIDENCE("913") },
+      { op: "set_work_status", targetId: "U4", status: "مستبدل", evidence: EVIDENCE("914") },
+      { op: "set_work_status", targetId: "U6", status: "ملغى", evidence: EVIDENCE("915") },
+    ],
+  });
+  await submitChangeSet(db, editor, t3b.changeSetId);
+  await decideChangeSet(db, reviewer, t3b.changeSetId, { decision: "approve" });
+  const order = await pool.query(`SELECT target_id FROM editorial_change WHERE change_set_id = $1 ORDER BY created_at, id`, [t3b.changeSetId]);
+  const third = String(order.rows[2].target_id);
+  await pool.query(`CREATE OR REPLACE FUNCTION test_fail_third() RETURNS trigger LANGUAGE plpgsql AS $f$
+    BEGIN IF NEW.object_id = '${third}' THEN RAISE EXCEPTION 'فشل مصطنع'; END IF; RETURN NEW; END; $f$`);
+  await pool.query(`CREATE TRIGGER test_fail_third BEFORE INSERT ON verification FOR EACH ROW EXECUTE FUNCTION test_fail_third()`);
+  const verBefore3b = await num(`SELECT count(*) FROM verification`);
+  let failed3b = false;
+  try {
+    await publishChangeSet(db, reviewer, t3b.changeSetId);
+  } catch {
+    failed3b = true;
+  }
+  ok(failed3b, "T0-3b فشل القاعدة في الصف الثالث يوقف النشر");
+  ok((await num(`SELECT count(*) FROM verification`)) === verBefore3b, "T0-3b ولم يُكتب صف سند للصفين الأولين");
+  ok((await num(`SELECT count(*) FROM editorial_change WHERE change_set_id = $1 AND applied_ref IS NOT NULL`, [t3b.changeSetId])) === 0, "T0-3b ولا مرجع نشر");
+  await pool.query(`DROP TRIGGER test_fail_third ON verification`);
+  await publishChangeSet(db, reviewer, t3b.changeSetId);
+  ok((await num(`SELECT count(*) FROM editorial_change WHERE change_set_id = $1 AND applied_ref IS NOT NULL`, [t3b.changeSetId])) === 3, "بعد زوال الفشل يُنشر الكل ويُسجَّل مرجع كل تغيير");
+
+  // ── أداة واحدة لنظامين (G5) ورتبة المصدر من الرابط (G6) ──
+  console.log("\n— التوحيد: السند —");
+  const sameEvidence = { instrument: "المرسوم الملكي رقم م/77", url: "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/77", quote: "يُلغى النظامان المذكوران ويحل محلهما هذا النظام." };
+  // رتبة يرسلها العميل تُتجاهل: الخادم يشتقها من الرابط.
+  const withClientRank = (targetId: string) => ({ op: "set_work_status", targetId, status: "مستبدل", evidence: sameEvidence, sourceRank: 1 }) as unknown as ChangeInput;
+  const g5 = await createChangeSet(db, editor, { title: "أداة واحدة تلغي نظامين", changes: [withClientRank("U1"), withClientRank("U2")] });
+  ok(g5.changeIds.length === 2, "G5 دفعة أداة واحدة لنظامين تُقبل");
+  const ranks = await pool.query(`SELECT DISTINCT source_rank FROM editorial_change WHERE change_set_id = $1`, [g5.changeSetId]);
+  ok(ranks.rows.length === 1 && Number(ranks.rows[0].source_rank) === 2, "G6 رتبة المصدر مشتقة من الرابط (هيئة الخبراء = 2) لا من العميل");
+  await submitChangeSet(db, editor, g5.changeSetId);
+  await decideChangeSet(db, reviewer, g5.changeSetId, { decision: "approve" });
+  ok((await publishChangeSet(db, reviewer, g5.changeSetId)).published === 2, "G5 وتُنشر");
+
+  // ── مفتاح التكرار ──
+  const idem1 = await createChangeSet(db, editor, { title: "بمفتاح", idempotencyKey: "k-1", changes: [{ op: "set_work_status", targetId: "U9", status: "ملغى", evidence: EVIDENCE("916") }] });
+  const idem2 = await createChangeSet(db, editor, { title: "بمفتاح", idempotencyKey: "k-1", changes: [{ op: "set_work_status", targetId: "U9", status: "ملغى", evidence: EVIDENCE("916") }] });
+  ok(idem2.changeSetId === idem1.changeSetId && idem2.replayed === true, "تكرار الطلب بمفتاحه يعيد الدفعة نفسها");
+  await rejects(
+    () => createChangeSet(db, owner, { title: "مفتاح غيره", idempotencyKey: "k-1", changes: [{ op: "set_work_status", targetId: "U10", status: "ملغى", evidence: EVIDENCE("917") }] }),
+    "CONFLICT",
+    "ومفتاح دفعة مؤلف آخر يُرفض",
+  );
+  await withdrawChangeSet(db, editor, idem1.changeSetId, { reason: "تنظيف" });
+
+  // ── الإعدادات (ق-٢) ──
+  console.log("\n— التوحيد: الإعدادات —");
+  await rejects(() => readEditorialSettings(db, editor), "FORBIDDEN", "قراءة الإعدادات من غير المالك 403");
+  const view = await readEditorialSettings(db, owner);
+  ok(view.version === (await latestVersion()) && view.users.some((u) => u.id === "u-reviewer"), "المالك يقرأ آخر نسخة والمستخدمين");
+  const base = view.version;
+  const cfg = JSON.parse(JSON.stringify(view.config)) as EditorialConfig;
+  await rejects(() => saveEditorialSettings(db, editor, { baseVersion: base, reason: "محاولة تعديل", config: cfg }), "FORBIDDEN", "حفظ الإعدادات من غير المالك 403");
+  await rejects(() => saveEditorialSettings(db, owner, { baseVersion: base, reason: "قصر", config: cfg }), "REASON_REQUIRED", "السبب إلزامي (خمسة أحرف على الأقل)");
+  const bad = (patch: (x: EditorialConfig) => void) => {
+    const x = JSON.parse(JSON.stringify(cfg)) as EditorialConfig;
+    patch(x);
+    return x;
+  };
+  await rejects(() => saveEditorialSettings(db, owner, { baseVersion: base, reason: "حد مرتفع", config: bad((x) => (x.policies.revert.minApprovals = 6)) }), "INVALID_INPUT", "minApprovals = 6 يُرفض");
+  await rejects(() => saveEditorialSettings(db, owner, { baseVersion: base, reason: "حد صفري", config: bad((x) => (x.policies.revert.minApprovals = 0)) }), "INVALID_INPUT", "minApprovals = 0 يُرفض");
+  await rejects(
+    () => saveEditorialSettings(db, owner, { baseVersion: base, reason: "المالك وكيلًا", config: bad((x) => x.bindings.push(binding("u-owner", ["editor_laws"], "agent"))) }),
+    "INVALID_INPUT",
+    "تكليف المالك وكيلًا يُرفض",
+  );
+  await rejects(
+    () =>
+      saveEditorialSettings(db, owner, {
+        baseVersion: base,
+        reason: "وكيل معتمد",
+        config: bad((x) => {
+          x.bindings = x.bindings.map((b) => (b.userId === "agent-test" ? { ...b, roles: ["editor_laws", "reviewer"] } : b));
+        }),
+      }),
+    "INVALID_INPUT",
+    "تكليف الوكيل بالاعتماد يُرفض",
+  );
+  await rejects(
+    () => saveEditorialSettings(db, owner, { baseVersion: base, reason: "مستخدم مجهول", config: bad((x) => x.bindings.push(binding("u-ghost", ["reviewer"]))) }),
+    "INVALID_INPUT",
+    "تكليف مستخدم غير موجود يُرفض",
+  );
+  const flip = bad((x) => {
+    x.bindings = x.bindings.map((b) => (b.userId === "agent-other" ? { ...b, kind: "human" as const, roles: ["editor_laws"] } : b));
+  });
+  await rejects(() => saveEditorialSettings(db, reviewer, { baseVersion: base, reason: "قلب وكيل إلى بشري", config: flip }), "FORBIDDEN", "قلب الوكيل إلى بشري من غير المالك يُرفض");
+  const saved = await saveEditorialSettings(db, owner, { baseVersion: base, reason: "قلب وكيل إلى بشري بقرار المالك", config: flip });
+  ok(saved.version === base + 1, "المالك يحفظ نسخة جديدة برقم يلي الأساس");
+  ok(
+    (await num(`SELECT count(*) FROM audit_event WHERE action = 'config.save' AND object_id = $1 AND detail->'agentToHuman' ? 'agent-other'`, [String(saved.version)])) === 1,
+    "الحفظ مسجّل في audit_event مع قلب الوكيل",
+  );
+  const stale = await rejects(() => saveEditorialSettings(db, owner, { baseVersion: base, reason: "نسخة قديمة", config: cfg }), "CONFLICT", "تعارض رقم النسخة يُرفض");
+  ok(stale?.status === 409 && stale?.detail?.currentVersion === saved.version, "برمز 409 ومعه النسخة الحالية");
+  ok(await tryQ(`UPDATE editorial_config SET reason = 'x'`), "نسخ الإعدادات لا تُعدَّل");
+  // سحب فوري عبر الحفظ الرسمي: المعتمِد الثاني يفقد الاعتماد في الفعل التالي.
+  const cur = await readEditorialSettings(db, owner);
+  const revokeCfg = JSON.parse(JSON.stringify(cur.config)) as EditorialConfig;
+  revokeCfg.bindings = revokeCfg.bindings.map((b) => (b.userId === "u-reviewer2" ? { ...b, enabled: false } : b));
+  const pend = await publishable("بعد السحب", "U10", "ملغى", "918", owner);
+  await saveEditorialSettings(db, owner, { baseVersion: cur.version, reason: "سحب تكليف المعتمد الثاني", config: revokeCfg });
+  await rejects(() => decideChangeSet(db, reviewer2, pend, { decision: "approve" }), "FORBIDDEN", "سحب التكليف بالحفظ يسري فورًا على الفعل التالي");
+  await withdrawChangeSet(db, owner, pend, { reason: "تنظيف" });
+  const restore = await readEditorialSettings(db, owner);
+  restore.config.bindings = restore.config.bindings.map((b) => (b.userId === "u-reviewer2" ? { ...b, enabled: true } : b));
+  await saveEditorialSettings(db, owner, { baseVersion: restore.version, reason: "إعادة تكليف المعتمد الثاني", config: restore.config });
+
+  // ── الاستقبال بتعدد الموافقات (ق-٦) ──
+  console.log("\n— التوحيد: الاستقبال —");
+  const addOp = (id: string, extra: { article?: number | null; code?: string; confidence?: string } = {}) =>
+    pool.query(
+      `INSERT INTO uqn_fix.amendment_op (op_id, effect_id, instrument_kind, instrument_no, source_url, target_law_title, target_hakeem_code,
+          target_resolution, op_type, article_number, new_text, risks, confidence, verbatim_in_source, evidence_quote, raw)
+       VALUES ($1, 'E1', 'royal_decree', 'م/9', 'https://uqn.gov.sa/details?p=9', 'نظام اختبار S1', $2, 'hakeem_reference_code',
+               'replace_article_text', $3, 'نص جديد', '{}'::text[], $4, TRUE, 'تعدل المادة الأولى لتكون بالنص الآتي', '{}'::jsonb)`,
+      [id, extra.code ?? "S1", extra.article === undefined ? 1 : extra.article, extra.confidence ?? "rule_exact"],
+    );
+  for (const id of ["OP-E", "OP-F", "OP-G"]) await addOp(id);
+  await addOp("OP-H", { article: 99, confidence: "needs_review" });
+  await addOp("OP-I", { code: "NO-SUCH", confidence: "needs_review" });
+  await pool.query(`INSERT INTO judicial_principles (id, title, "principleText", "sourceCaseId", "reviewStatus") VALUES ('P4','مبدأ رابع','نص المبدأ الرابع','c1','needs_review')`);
+
+  // النص الساري للمادة المستهدفة
+  await pool.query(`INSERT INTO unit_version (id, unit_id, body, valid_from) VALUES ('uv2','a1','نص المادة الأولى بعد تعديل سابق', NOW() - interval '1 day')`);
+  await pool.query(`INSERT INTO unit_version (id, unit_id, body, valid_from) VALUES ('uv3','a1','نص لم يسرِ بعد', NOW() + interval '30 days')`);
+  const q = await listAmendmentQueue(db, { limit: 100 }, reviewer);
+  const itemE = q.items.find((i) => i.op_id === "OP-E");
+  ok(itemE?.current_text === "نص المادة الأولى بعد تعديل سابق" && itemE.current_text_resolved === true, "current_text = النسخة السارية اليوم من unit_version");
+  const itemH = q.items.find((i) => i.op_id === "OP-H");
+  const itemI = q.items.find((i) => i.op_id === "OP-I");
+  ok(itemH?.current_text === null && itemH.current_text_resolved === false, "مادة غير موجودة = null وcurrent_text_resolved=false (لا تخمين)");
+  ok(itemI?.current_text === null && itemI.current_text_resolved === false, "نظام غير محلول = null");
+  ok(itemE?.pending_approvals === 0 && itemE.required_approvals === 1 && itemE.my_approval === false, "حقول الموافقات المعلّقة بلا مقترح");
+
+  await writeConfig((cfg2) => {
+    cfg2.policies.review_amendment_op.minApprovals = 2;
+    cfg2.policies.review_principle.minApprovals = 2;
+  });
+  const reviewsBefore = await num(`SELECT count(*) FROM uqn_fix.amendment_review`);
+  const e1 = await decideAmendmentOp(db, reviewer, "OP-E", { decision: "approved", note: "مطابق" });
+  ok(e1.status === "pending" && e1.approvals === 1 && e1.requiredApprovals === 2, "ق-٦ أول موافقة تفتح مقترحًا معلّقًا (1 من 2)");
+  ok((await num(`SELECT count(*) FROM uqn_fix.amendment_review`)) === reviewsBefore, "ولا يُكتب شيء في المصدر قبل الاكتمال");
+  const qPending = await listAmendmentQueue(db, { limit: 100 }, reviewer);
+  const pendingE = qPending.items.find((i) => i.op_id === "OP-E");
+  ok(pendingE?.pending_approvals === 1 && pendingE.required_approvals === 2 && pendingE.my_approval === true && pendingE.pending_change_set_id === e1.changeSetId, "العنصر يبقى في الطابور بحقول المقترح المعلّق");
+  ok((await listAmendmentQueue(db, { limit: 100 }, reviewer2)).items.find((i) => i.op_id === "OP-E")?.my_approval === false, "my_approval لكل مشاهد");
+  await rejects(() => decideAmendmentOp(db, reviewer, "OP-E", { decision: "approved" }), "ALREADY_DECIDED", "المعتمِد نفسه لا يوافق مرتين");
+  const ce = await rejects(
+    () => decideAmendmentOp(db, reviewer2, "OP-E", { decision: "approved_with_edit", corrected: { article_number: 2 }, note: "تصحيح" }),
+    "CONFLICT",
+    "الموافقات اللاحقة على القرار نفسه فقط",
+  );
+  ok(ce?.detail?.openChangeSetId === e1.changeSetId, "والتعارض يعيد معرّف المقترح المعلّق");
+  await rejects(() => decideAmendmentOp(db, agent, "OP-E", { decision: "approved" }), "AGENT_CANNOT_DECIDE", "الوكيل لا يصوّت");
+  const e2 = await decideAmendmentOp(db, reviewer2, "OP-E", { decision: "approved", note: "موافق أيضًا" });
+  ok(e2.status === "published" && e2.approvals === 2, "الموافقة الثانية على القرار نفسه تكمله");
+  const rowE = await one<{ decision: string; reviewer: string }>(`SELECT decision, reviewer FROM uqn_fix.amendment_review WHERE op_id = 'OP-E'`);
+  ok(rowE.decision === "approved" && rowE.reviewer === "u-reviewer+u-reviewer2", "ويُكتب القرار في المصدر صفًّا واحدًا باسم المعتمِدَين");
+
+  await decideAmendmentOp(db, reviewer, "OP-F", { decision: "approved" });
+  const fr = await decideAmendmentOp(db, reviewer2, "OP-F", { decision: "rejected", note: "النص لا يطابق الأداة" });
+  ok(fr.status === "rejected", "رفض أي معتمِد يرفض المقترح المعلّق");
+  ok((await num(`SELECT count(*) FROM uqn_fix.amendment_review WHERE op_id = 'OP-F'`)) === 0, "ولا يُكتب قرار في المصدر");
+  ok((await listAmendmentQueue(db, { limit: 100 })).items.find((i) => i.op_id === "OP-F")?.pending_approvals === 0, "ويعود العنصر إلى الطابور بلا مقترح");
+  const fr2 = await decideAmendmentOp(db, reviewer2, "OP-F", { decision: "rejected", note: "النص لا يطابق الأداة" });
+  ok(fr2.status === "pending", "الرفض قرار يحتاج الحد نفسه (مقترح رفض معلّق)");
+  const fr3 = await decideAmendmentOp(db, reviewer, "OP-F", { decision: "rejected", note: "أوافق على الرفض" });
+  ok(fr3.status === "published" && (await one<{ decision: string }>(`SELECT decision FROM uqn_fix.amendment_review WHERE op_id = 'OP-F'`)).decision === "rejected", "واكتمال مقترح الرفض يكتب الرفض في المصدر");
+
+  const g1 = await decideAmendmentOp(db, reviewer, "OP-G", { decision: "approved" });
+  await rejects(() => bulkApproveAmendmentOps(db, reviewer2, ["OP-G"]), "CONFLICT", "الاعتماد الجماعي يرفض عملية عليها مقترح معلّق");
+  await rejects(() => withdrawChangeSet(db, outsider, g1.changeSetId, { reason: "ليس معتمدًا" }), "FORBIDDEN", "من لا تكليف له لا يسحب المقترح");
+  await withdrawChangeSet(db, reviewer2, g1.changeSetId, { reason: "مقترح متروك" });
+  ok((await listAmendmentQueue(db, { limit: 100 })).items.find((i) => i.op_id === "OP-G")?.pending_approvals === 0, "لكل قفل مخرج: سحب المقترح يفك source_ref ويعيد العملية");
+  const bulk2 = await bulkApproveAmendmentOps(db, reviewer, ["OP-G"], "جماعي بموافقتين");
+  ok(bulk2.status === "pending" && bulk2.approved === 0, "الاعتماد الجماعي بحد 2 يفتح دفعة معلّقة");
+  const bulkDone = await decideChangeSet(db, reviewer2, bulk2.changeSetId, { decision: "approve" });
+  ok(bulkDone.status === "published" && (await num(`SELECT count(*) FROM uqn_fix.amendment_review WHERE op_id = 'OP-G'`)) === 1, "وتكمله موافقة معتمِد آخر من مسار الدفعات فيُطبَّق");
+
+  const p4a = await decidePrinciple(db, reviewer, "P4", { decision: "approve" });
+  ok(p4a.status === "pending" && p4a.reviewStatus === "needs_review", "المبدأ: أول موافقة معلّقة والحالة لم تتغير");
+  ok((await listPrincipleQueue(db, {}, reviewer)).items.find((i) => i.id === "P4")?.pending_approvals === 1, "طابور المبادئ يعرض المقترح المعلّق");
+  ok((await listPrincipleQueue(db, {})).items.find((i) => i.id === "P4")?.source_case_id === "c1", "source_case_id للمبدأ");
+  const p4b = await decidePrinciple(db, kindOnly, "P4", { decision: "approve" });
+  ok(p4b.status === "published" && p4b.reviewStatus === "reviewed", "وموافقة معتمِد مكلَّف بالمبادئ وحدها تكمله");
+  ok((await one<{ reviewStatus: string }>(`SELECT "reviewStatus" FROM judicial_principles WHERE id = 'P4'`)).reviewStatus === "reviewed", "والحالة محفوظة في المصدر");
+  await writeConfig((cfg3) => {
+    cfg3.policies.review_amendment_op.minApprovals = 1;
+    cfg3.policies.review_principle.minApprovals = 1;
+  });
+
+  // ── عقد الواجهة ──
+  console.log("\n— التوحيد: عقد الواجهة —");
+  const counts = await intakeCounts(db);
+  ok(counts.autoRelations === null && counts.unavailable.includes("legal_relations"), "intakeCounts: المصدر غير المتاح null لا صفر");
+  ok(typeof counts.amendmentOpsUndecided === "number", "والمتاح رقم");
+  const views = await listChangeSetsDetailed(db, owner, { status: "published", limit: 200 });
+  const g5View = views.find((v) => v.id === g5.changeSetId);
+  ok(Boolean(g5View) && g5View!.changes.every((ch) => ch.target_name?.startsWith("نظام التوحيد") && !ch.summary.includes("{") && ch.summary.includes("←")), "ChangeView: target_name من legal_systems وsummary سطر عربي لا JSON");
+  ok(g5View?.approvals === 1 && g5View.required_approvals === 1 && g5View.my_decision === null, "approvals وrequired_approvals وmy_decision");
+  ok(g5View?.revertible === true, "revertible لدفعة ما زالت أهدافها على ما نشرته");
+  ok(views.find((v) => v.id === A)?.revertible === false, "وغير قابلة للتراجع بعد نشر أحدث على الهدف");
+  ok(views.find((v) => v.id === bulk2.changeSetId)?.revertible === false, "ولا لقرارات المقترحات");
+  const reviewerView = (await listChangeSetsDetailed(db, reviewer, { status: "published", limit: 200 })).find((v) => v.id === g5.changeSetId);
+  ok(reviewerView?.my_decision === "approve", "my_decision للمعتمِد");
+  const opView = views.find((v) => v.id === e2.changeSetId);
+  ok(Boolean(opView?.changes[0].summary.includes("OP-E")) && opView!.changes[0].target_name === "نظام اختبار S1", "summary لقرار عملية التعديل بالعربية");
+  ok((await getSystemSummary(db, "U9"))?.domain === "CIVIL" && (await getSystemSummary(db, "nope")) === null, "ملخص النظام لـ GET /systems/:id");
+
+  // ── أخطاء بشكل محرك الإنتاج (Prisma P2010 + meta.code) ──
+  console.log("\n— التوحيد: أخطاء Prisma —");
+  const prismaDb = prismaShapedDb(pool);
+  const dup2 = await publishable("قرار مكرر 2", "U3", "مستبدل", "920");
+  await writeConfig((cfg4) => {
+    cfg4.policies.set_work_status.minApprovals = 2;
+  });
+  await decideChangeSet(prismaDb, reviewer, dup2, { decision: "approve" });
+  await rejects(() => decideChangeSet(prismaDb, reviewer, dup2, { decision: "approve" }), "ALREADY_DECIDED", "23505 على UNIQUE القرار يصل ALREADY_DECIDED عبر شكل Prisma");
+  await writeConfig((cfg5) => {
+    cfg5.policies.set_work_status.minApprovals = 1;
+  });
+  await withdrawChangeSet(db, owner, dup2, { reason: "تنظيف" });
+  const raceDb = prismaShapedDb(pool, { match: /^\s*INSERT INTO editorial_change/, code: "23505", hideOpenCheck: true });
+  const holder = await createChangeSet(db, editor, { title: "حامل القفل", changes: [{ op: "set_work_status", targetId: "U4", status: "ساري", evidence: EVIDENCE("921") }] });
+  const race = await rejects(
+    () => createChangeSet(raceDb, owner, { title: "سباق", changes: [{ op: "set_work_status", targetId: "U4", status: "ملغى", evidence: EVIDENCE("922") }] }),
+    "OPEN_CHANGE_EXISTS",
+    "سباق على فهرس القفل بشكل Prisma يصل OPEN_CHANGE_EXISTS (لا 500)",
+  );
+  ok(race?.detail?.openChangeSetId === holder.changeSetId, "ويُقرأ معرّف المفتوح بعد إلغاء المعاملة");
+  await withdrawChangeSet(db, editor, holder.changeSetId, { reason: "تنظيف" });
+  const missingDb: SqlClient = {
+    query: async () => {
+      throw prismaShapedError("42P01", 'relation "editorial_config" does not exist');
+    },
+  };
+  const missing = await loadEditorialConfig(missingDb);
+  ok(missing.installed === false && missing.version === 0 && missing.config.bindings.length === 0, "جدول الإعدادات الغائب (42P01 في meta.code) = لا تكليف لأحد");
+
+  // ── الحماية: TRUNCATE والمشغّل المعطّل ──
+  console.log("\n— التوحيد: الحماية —");
+  for (const table of ["change_set", "editorial_change", "review_decision", "audit_event", "index_sync", "editorial_config"]) {
+    ok(await tryQ(`TRUNCATE ${table} CASCADE`), `P2 TRUNCATE ${table} مرفوض`);
+  }
+  await pool.query(`ALTER TABLE audit_event DISABLE TRIGGER audit_event_append_only`);
+  const disabled = await checkDeskIntegrity(db);
+  ok(!disabled.ok && disabled.missing.includes("audit_event_append_only:disabled"), "P3 المشغّل المعطّل يُكتشف");
+  await rejects(
+    () => createChangeSet(db, editor, { title: "مشغّل معطّل", changes: [{ op: "set_work_status", targetId: "U6", status: "ملغى", evidence: EVIDENCE("923") }] }),
+    "INVALID_STATE",
+    "P3 والكتابة تُقفل",
+  );
+  await pool.query(`ALTER TABLE audit_event ENABLE REPLICA TRIGGER audit_event_append_only`);
+  ok((await checkDeskIntegrity(db)).missing.includes("audit_event_append_only:disabled"), "ومشغّل وضع النسخ فقط (R) يُعدّ معطّلًا");
+  await pool.query(`ALTER TABLE audit_event ENABLE TRIGGER audit_event_append_only`);
+  await pool.query(`DROP TRIGGER editorial_config_no_truncate ON editorial_config`);
+  await pool.query(`CREATE TRIGGER editorial_config_no_truncate BEFORE TRUNCATE ON index_sync FOR EACH STATEMENT EXECUTE FUNCTION editorial_append_only()`);
+  ok((await checkDeskIntegrity(db)).missing.includes("editorial_config_no_truncate:wrong_table"), "المشغّل المربوط بجدول آخر يُكتشف");
+  await pool.query(`DROP TRIGGER editorial_config_no_truncate ON index_sync`);
+  await pool.query(readFileSync(join(c.root, "prisma/migrations/20261017090000_editorial_desk_phase0/migration.sql"), "utf8"));
+  ok((await checkDeskIntegrity(db)).ok, "إعادة تطبيق الترحيل تستعيد الحماية كلها");
 }
 
 async function main() {
   pureTests();
+  await authTests();
   const url = process.env.EDITORIAL_TEST_DATABASE_URL;
   if (!url) {
     console.log("\n(تخطّي اختبارات القاعدة: EDITORIAL_TEST_DATABASE_URL غير مضبوط — قاعدة محلية للاختبار فقط)");

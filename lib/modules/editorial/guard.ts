@@ -16,7 +16,7 @@ import {
 } from "./access";
 import { recordAudit } from "./audit";
 import { prismaEditorialDb, type EditorialDb } from "./db";
-import { assertContentLength, isSameOriginWrite, parseBodyText, WRITE_METHODS } from "./http-guard";
+import { deskPreflight, parseBodyText } from "./http-guard";
 import { bindingFor, DEFAULT_EDITORIAL_CONFIG, loadEditorialConfig, type EditorialConfig } from "./policy";
 import { isEditorialError, type EditorialActor } from "./types";
 
@@ -76,23 +76,16 @@ export async function requireEditorialApi(
   request: NextRequest,
   need: EditorialNeed,
 ): Promise<{ actor: EditorialActor; response: null } | { actor: null; response: NextResponse }> {
-  if (isAuthDisabled()) {
-    return { actor: null, response: deskJson({ code: "UNAUTHENTICATED", message: "مكتب التحرير يتطلب تسجيل دخول حقيقيًّا؛ المصادقة معطّلة في هذه البيئة." }, 401) };
-  }
-  if (WRITE_METHODS.has(request.method.toUpperCase())) {
-    const sameOrigin = isSameOriginWrite({
-      origin: request.headers.get("origin"),
-      requestOrigin: request.nextUrl.origin,
-      host: request.headers.get("host"),
-      forwardedHost: request.headers.get("x-forwarded-host"),
-    });
-    if (!sameOrigin) return { actor: null, response: deskJson({ code: "FORBIDDEN", message: "مصدر الطلب غير مسموح." }, 403) };
-    try {
-      assertContentLength(request.headers.get("content-length"));
-    } catch (error) {
-      return { actor: null, response: editorialErrorResponse(error) };
-    }
-  }
+  const rejection = deskPreflight({
+    authDisabled: isAuthDisabled(),
+    method: request.method,
+    origin: request.headers.get("origin"),
+    requestOrigin: request.nextUrl.origin,
+    host: request.headers.get("host"),
+    forwardedHost: request.headers.get("x-forwarded-host"),
+    contentLength: request.headers.get("content-length"),
+  });
+  if (rejection) return { actor: null, response: deskJson({ code: rejection.code, message: rejection.message }, rejection.status) };
   const user = await getApiUser(request);
   if (!user?.isActive) {
     return { actor: null, response: deskJson({ code: "UNAUTHENTICATED", message: "يلزم تسجيل الدخول." }, 401) };
