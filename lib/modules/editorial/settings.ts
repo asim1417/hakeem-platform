@@ -2,6 +2,7 @@
 // الحفظ نسخة جديدة إلحاقية برقم يلي النسخة الأساس، بسبب إلزامي، وتحت قفل حصري يسلسله مع كل أفعال المكتب.
 import { canManageSettings } from "./access";
 import { fingerprint, recordAudit } from "./audit";
+import { approvalStateFrom, type ChangeRow, type ChangeSetRow, type DecisionRow } from "./core";
 import type { EditorialDb, SqlClient } from "./db";
 import { freshActor } from "./desk-tx";
 import { assertDeskIntegrity } from "./integrity";
@@ -132,4 +133,48 @@ export async function saveEditorialSettings(
     });
     return { version };
   });
+}
+
+// ── معاينة أثر الحفظ (م٩، ق٣١) ───────────────────────────────────────────────
+
+export interface SettingsPreview {
+  /** دفعات أو عناصر معلّقة (pending، أو معتمدة تنتظر النشر) تسقط منها موافقة قائمة بالإعدادات المقترحة. */
+  approvalsDropped: number;
+  /** دفعات أو عناصر معلّقة يرتفع حدها المطلوب من الموافقات. */
+  pendingRaised: number;
+}
+
+/**
+ * أثر الإعدادات المقترحة على القائم، قبل الحفظ وبلا أي كتابة: تُعدّ موافقات كل دفعة معلّقة
+ * بالإعدادات الحالية ثم بالمقترحة (بالقاعدة نفسها التي يُعدّ بها عند القرار والنشر).
+ * «المعلّقة» تشمل المعتمدة التي لم تُنشر، لأن النشر يعيد العدّ بالصلاحية الحالية.
+ */
+export async function previewEditorialSettings(db: SqlClient, actor: EditorialActor, rawConfig: unknown): Promise<SettingsPreview> {
+  assertOwner(actor);
+  const next = parseEditorialConfig(rawConfig);
+  const current = (await loadEditorialConfig(db)).config;
+  const sets = await db.query<ChangeSetRow>(`SELECT * FROM change_set WHERE status IN ('pending', 'approved') ORDER BY created_at LIMIT 5000`);
+  if (!sets.length) return { approvalsDropped: 0, pendingRaised: 0 };
+  const ids = sets.map((s) => s.id);
+  const [changes, decisions] = await Promise.all([
+    db.query<ChangeRow>(`SELECT * FROM editorial_change WHERE change_set_id = ANY($1::text[]) ORDER BY created_at, id`, [ids]),
+    db.query<DecisionRow & { change_set_id: string }>(
+      `SELECT d.id, d.change_set_id, d.reviewer_id, d.decision, d.reason, d.self_approval, d.payload_hash, d.decided_at,
+              u.role::text AS role, u."isActive", u.name
+         FROM review_decision d LEFT JOIN users u ON u.id = d.reviewer_id
+        WHERE d.change_set_id = ANY($1::text[]) ORDER BY d.decided_at, d.id`,
+      [ids],
+    ),
+  ]);
+  let approvalsDropped = 0;
+  let pendingRaised = 0;
+  for (const set of sets) {
+    const own = changes.filter((c) => c.change_set_id === set.id);
+    const setDecisions = decisions.filter((d) => d.change_set_id === set.id);
+    const before = approvalStateFrom(current, set, own, setDecisions);
+    const after = approvalStateFrom(next, set, own, setDecisions);
+    if (after.approvals < before.approvals) approvalsDropped += 1;
+    if (after.required > before.required) pendingRaised += 1;
+  }
+  return { approvalsDropped, pendingRaised };
 }
