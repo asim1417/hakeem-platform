@@ -28,7 +28,8 @@ export const PREAMBLE_SIGNAL_PATTERNS = {
   enacting: `(رسمنا|امرنا)${S}+بما${S}+هو${S}+ات|ي?قرر${S}+(ما${S}+يلي|ما${S}+ياتي|الاتي)|(^|[\\n.])${S}*ي?قرر${S}*:|نخبركم${S}+بموافقتنا`,
   clause: `(^|[\\n.:؛])${S}*[*#]*${S}*(${ORD})[ \\t*]*[:\\-–—]`,
   issuance: `اداة${S}+الاصدار|صدر|الصادر|بموجب|مرسوم${S}+ملكي|قرار${S}+مجلس${S}+الوزراء|قرار${S}+رقم|امر${S}+ملكي|المعتمد|بقرار`,
-  body: `(^|\\n)[ \\t#*(]*(المادة|الباب|الفصل|القسم)${S}*(الاولى|الاول)|(المادة|الباب|الفصل)${S}*(الاولى|الاول)${S}*:`,
+  // «المادة الأولى» و«المادة (الأولى):» (المتون المستوردة من المنصة الوطنية تقوس الترتيب؛ مراجعة الجودة ن٨).
+  body: `(^|\\n)[ \\t#*(]*(المادة|الباب|الفصل|القسم)${S}*[(]?${S}*(الاولى|الاول)|(المادة|الباب|الفصل)${S}*[(]?${S}*(الاولى|الاول)${S}*[)]?${S}*:`,
   narrative: `مقدمة|تمهيد`,
 } as const;
 
@@ -65,17 +66,27 @@ export interface PreambleClassification {
   bodyLeak: boolean;
 }
 
+/**
+ * نص بلا أي جزء من أجزاء المقدمة (لا افتتاحية ولا استناد ولا منطوق) وأطول من هذا = متن أو ملحق في حقل المقدمة،
+ * لا «سطر إصدار». (مراجعة الجودة ن٨: أدلة السكك الحديدية 41٬959 و65٬007 و140٬414 حرفًا صُنفت «عبارة صدر بالمرسوم»
+ * لأن متنها بجداول لا يبدأ بـ«المادة الأولى».) فحص الإنتاج بقراءة فقط (17/10/2026): صفوف «عبارة صدر» بين
+ * 1٬000 و3٬000 حرف (19 صفًا) كلها متون أو أدلة أو سياسات، منها 9 مقطوعة عند 3٬000 حرف بالضبط؛ وأطول سطر إصدار فعلي دون 1٬000.
+ */
+export const LONG_UNSTRUCTURED_CHARS = 1000;
+
 /** القرار من الإشارات. المنطوق = بند مرقّم أو صيغة إصدار. length يفرّق «عنوان وتاريخ» (≤300 حرف) عن نص طويل بلا بنية. */
 export function classifyPreambleSignals(s: PreambleSignals, length?: number): PreambleClassification {
   const operative = s.clause > 0 || s.enacting > 0 ? 1 : 0;
   const completeness = completenessFromParts(s.opening, s.recital, operative);
-  const bodyLeak = s.body > 0;
+  const longUnstructured = completeness === "issuance_line" && (length ?? 0) > LONG_UNSTRUCTURED_CHARS;
+  const bodyLeak = s.body > 0 || longUnstructured;
   let reason = "";
   if (completeness === "partial") {
     const missing = [s.opening ? null : "opening", s.recital ? null : "recital", operative ? null : "operative"].filter(Boolean);
     reason = `missing:${missing.join("+")}`;
   } else if (completeness === "issuance_line") {
-    const r: IssuanceReason = s.issuance > 0 ? "issuance_phrase" : bodyLeak ? "body_leak" : s.narrative > 0 ? "narrative_intro" : (length ?? 0) > 300 ? "unstructured_text" : "title_date_only";
+    // المتن المتسرّب يتقدم على «عبارة صدر»: عبارة الإصدار في رأس متن طويل لا تجعله سطر إصدار.
+    const r: IssuanceReason = bodyLeak ? "body_leak" : s.issuance > 0 ? "issuance_phrase" : s.narrative > 0 ? "narrative_intro" : (length ?? 0) > 300 ? "unstructured_text" : "title_date_only";
     reason = r;
   } else {
     reason = "all_parts";
@@ -93,6 +104,7 @@ function translateArgs(): { from: string; to: string } {
   const stripped: number[] = [];
   for (let c = 0x064b; c <= 0x065f; c++) stripped.push(c);
   stripped.push(0x0670, 0x0640, 0x200b, 0x200c, 0x200d, 0x200e, 0x200f, 0xfeff);
+  stripped.push(0x061c, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069);
   // chr() بدل المحارف نفسها كي لا يعبث أي ناقل بترتيب علامات التشكيل.
   const from = [...mapped.map(([c]) => c), ...stripped].map((c) => `chr(${c})`).join("||");
   const to = `'${mapped.map(([, t]) => t).join("")}'`;

@@ -93,6 +93,8 @@ for (let c = 0x064b; c <= 0x065f; c++) STRIP.add(String.fromCharCode(c));
 STRIP.add("ٰ"); // ألف خنجرية
 STRIP.add("ـ"); // تطويل
 for (const z of ["​", "‌", "‍", "‎", "‏", "﻿"]) STRIP.add(z); // محارف صفرية العرض
+// محارف التحكم بالاتجاه (تضمين وتجاوز وعزل، وعلامة الحرف العربي): لا أثر لها في المعنى (مراجعة الجودة ن٢).
+for (const c of [0x061c, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069]) STRIP.add(String.fromCharCode(c));
 // الهمزات ألفًا، والمسافة غير المنقسمة (موجودة في نصوص الهيئة) مسافةً؛ الطول لا يتغير.
 const ALEF: Record<string, string> = { "أ": "ا", "إ": "ا", "آ": "ا", " ": " ", " ": " " };
 
@@ -135,7 +137,7 @@ const RECITAL_PHRASE = "(?:و?(?:بعد[ \\t]+الاطلاع|بناء[ \\t]*عل
 
 const RE_BASMALA = /بسم[ \t]+الله[ \t]+الرحمن[ \t]+الرحيم/g;
 // عنوان أداة في أول السطر يتبعه رقم: «مرسوم ملكي رقم (م/43) وتاريخ …»، «قرار رقم (116) …»، «تعميم رقم …».
-const RE_HEADING = /(^|\n)[ \t]*([#*]*[ \t]*(?:مرسوم[ \t]+ملكي|امر[ \t]+ملكي|امر[ \t]+سامي|قرار[ \t]+مجلس[ \t]+الوزراء|قرار|تعميم|برقية[ \t]+تعميمية|برقية)[ \t]+رقم[ \t]*[(]?[ \t]*(?:[ما][ \t]*\/[ \t]*)?[0-9٠-٩])/g;
+const RE_HEADING = /(^|\n)[ \t]*([#*]*[ \t]*(?:مرسوم[ \t]+ملكي|امر[ \t]+ملكي|امر[ \t]+سامي|قرار[ \t]+مجلس[ \t]+الوزراء|قرار|تعميم|برقية[ \t]+تعميمية|برقية)[ \t]+رقم[ \t]*[(]?[ \t]*(?:[ما][ \t]*\/[ \t]*)?[0-9٠-٩۰-۹])/g;
 const RE_OPENING_ROYAL = /بعون[ \t]+الله[ \t]+تعالى/g;
 const RE_OPENING_CABINET = /(^|\n)[ \t]*([#*]*[ \t]*ان[ \t]*مجلس[ \t]+الوزراء)/g;
 const RE_RECITAL_LINE = new RegExp(`(^|[\\n.])[ \\t]*([*]*${RECITAL_PHRASE})`, "g");
@@ -209,7 +211,18 @@ function lineEnd(bare: string, from: number): number {
   return i < 0 ? bare.length : i;
 }
 
-const toLatin = (s: string) => s.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+// الأرقام الهندية (٠-٩) والفارسية (۰-۹) لاتينية.
+const toLatin = (s: string) => s.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+
+/** السطر بلا تشكيل ولا تطويل ولا محارف صفرية أو اتجاه، والمسافة غير المنقسمة مسافة؛ الهمزات باقية (لرقم «أ/90»). */
+function cleanKeepHamza(line: string): string {
+  let out = "";
+  for (const ch of line) {
+    if (STRIP.has(ch)) continue;
+    out += ch === "\u00a0" || ch === "\u202f" ? " " : ch;
+  }
+  return out;
+}
 
 /** نوع الأداة ورقمها وتاريخها من سطر عنوانها. */
 export function parseInstrumentHeading(line: string): { kind: InstrumentKind | null; number: string | null; dateHijri: string | null } {
@@ -219,10 +232,10 @@ export function parseInstrumentHeading(line: string): { kind: InstrumentKind | n
   else if (/امر[ \t]+(?:ملكي|سامي)/.test(b)) kind = "royal_order";
   else if (/قرار[ \t]+مجلس[ \t]+الوزراء|^[ \t#*]*قرار[ \t]+رقم/.test(b)) kind = "cabinet_decision";
   else if (/تعميم|برقية/.test(b)) kind = "other";
-  // الرقم من السطر الخام (لتبقى «أ/90» بهمزتها)، والتاريخ والنوع من الصورة العارية.
-  const num = line.match(/رقم[ \t]*[(]?[ \t]*((?:[مأاإ][ \t]*\/[ \t]*)?[0-9٠-٩]+(?:[ \t]*\/[ \t]*[0-9٠-٩]+)?)/);
+  // الرقم من السطر بهمزاته (لتبقى «أ/90»)، بعد حذف التشكيل والتطويل وNBSP داخله؛ والتاريخ والنوع من الصورة العارية.
+  const num = cleanKeepHamza(line).match(/رقم[ \t]*[(]?[ \t]*((?:[مأاإ][ \t]*\/[ \t]*)?[0-9٠-٩۰-۹]+(?:[ \t]*\/[ \t]*[0-9٠-٩۰-۹]+)?)/);
   const number = num ? toLatin(num[1].replace(/[ \t]+/g, "")) : null;
-  const date = b.match(/(?:وتاريخ|بتاريخ|في)[ \t]*([0-9٠-٩]{1,4})[ \t]*\/[ \t]*([0-9٠-٩]{1,2})[ \t]*\/[ \t]*([0-9٠-٩]{1,4})/);
+  const date = b.match(/(?:وتاريخ|بتاريخ|في)[ \t]*([0-9٠-٩۰-۹]{1,4})[ \t]*\/[ \t]*([0-9٠-٩۰-۹]{1,2})[ \t]*\/[ \t]*([0-9٠-٩۰-۹]{1,4})/);
   let dateHijri: string | null = null;
   if (date) {
     const [a, m, c] = [toLatin(date[1]), toLatin(date[2]), toLatin(date[3])];
