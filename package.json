@@ -33,6 +33,7 @@
     "test:ruling-display": "tsx scripts/test-ruling-display.ts",
     "test:law-fingerprint": "tsx scripts/test-law-fingerprint.ts",
     "test:numbering-audit": "tsx scripts/test-numbering-audit.ts",
+    "test:article-key": "tsx scripts/test-article-key.ts",
     "test:mcp-hardening": "tsx scripts/test-mcp-hardening.ts && tsx scripts/test-mcp-authorize-route.ts",
     "test:mcp-account-linking": "tsx scripts/test-mcp-account-linking.ts",
     "audit:duplicate-articles": "tsx scripts/audit/detect-duplicate-articles.ts",

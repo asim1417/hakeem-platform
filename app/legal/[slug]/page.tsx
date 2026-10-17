@@ -12,6 +12,7 @@ import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules
 import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
+import { articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
 
 export const revalidate = 3600;
 
@@ -57,8 +58,8 @@ export default async function LegalSystemPage({
       // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
       // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
       where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
-      select: { id: true, articleNumber: true, title: true, content: true },
-      orderBy: { articleNumber: "asc" },
+      select: { id: true, articleNumber: true, articleBis: true, title: true, content: true },
+      orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
     })
     .catch(() => []);
   const [flags, versionsById, workVerification, issuance, card, surfaceState] = await Promise.all([
@@ -121,7 +122,7 @@ export default async function LegalSystemPage({
     legislationJurisdiction: "SA",
     inLanguage: "ar",
     url: `${BASE}/legal/${encodeURIComponent(slug)}`,
-    hasPart: articles.slice(0, 200).map((a) => ({ "@type": "Legislation", name: `المادة ${a.articleNumber}`, url: `${BASE}/legal/${encodeURIComponent(slug)}/${a.articleNumber}` })),
+    hasPart: articles.slice(0, 200).map((a) => ({ "@type": "Legislation", name: `المادة ${articleLabel(a.articleNumber, a.articleBis)}`, url: `${BASE}/legal/${encodeURIComponent(slug)}/${articleKey(a.articleNumber, a.articleBis)}` })),
   };
 
   return (
@@ -183,12 +184,12 @@ export default async function LegalSystemPage({
               const unverified = flag.statusLabel === UNVERIFIED_NOTICE;
               const retired = flag.repealed || flag.statusLabel === "مستبدل";
               const faded = view.faded || workFlags.repealed;
-              const href = `/legal/${encodeURIComponent(slug)}/${a.articleNumber}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`;
+              const href = `/legal/${encodeURIComponent(slug)}/${articleKey(a.articleNumber, a.articleBis)}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`;
               return (
-                <li key={a.id} id={`m${a.articleNumber}`} className="scroll-mt-24">
+                <li key={a.id} id={`m${articleKey(a.articleNumber, a.articleBis)}`} className="scroll-mt-24">
                   <div className="flex flex-wrap items-center gap-3">
                     <Link href={href} className="text-lg font-extrabold text-[var(--navy)] hover:underline">
-                      {a.title && a.title.trim() && a.title.trim() !== String(a.articleNumber) ? a.title : `المادة ${a.articleNumber.toLocaleString("ar-SA")}`}
+                      {a.title && a.title.trim() && a.title.trim() !== String(a.articleNumber) ? a.title : `المادة ${articleLabel(a.articleNumber, a.articleBis, true)}`}
                     </Link>
                     {workFlags.repealed && !retired ? (
                       <span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>نظام ملغى</span>
