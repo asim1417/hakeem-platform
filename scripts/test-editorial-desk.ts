@@ -516,6 +516,16 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await rejects(() => submitChangeSet(db, otherAgent, agentDraft.changeSetId), "FORBIDDEN", "وكيل لا يرسل دفعة وكيل آخر");
   await withdrawChangeSet(db, agent, agentDraft.changeSetId, { reason: "اختبار" });
 
+  const editorOnly = actor("u-editor", "SYSTEM_ADMIN", ["LEGAL_EDITOR_LAWS"]);
+  await rejects(() => withdrawChangeSet(db, editorOnly, set3.changeSetId, { reason: "تعثّر النشر" }), "FORBIDDEN", "المُعِدّ غير المعتمِد لا يسحب دفعة اعتُمدت");
+  const w3 = await withdrawChangeSet(db, reviewer, set3.changeSetId, { reason: "تعثّر النشر بتعارض" });
+  ok(w3.status === "rejected", "المعتمِد يسحب الدفعة المعتمدة التي تعثّر نشرها");
+  const afterW3 = await createChangeSet(db, editor, {
+    title: "S3 بعد السحب",
+    changes: [{ op: "set_work_status", targetId: "S3", status: "ملغى", evidence: EVIDENCE("34") }],
+  });
+  ok(Boolean(afterW3.changeSetId), "فكّ السحبُ قفل أهداف الدفعة المتعثرة");
+
   // ── التراجع لا يخترع سندًا ──
   console.log("\n— سند التراجع —");
   await pool.query(

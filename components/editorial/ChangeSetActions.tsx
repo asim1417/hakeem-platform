@@ -50,7 +50,8 @@ export function ChangeSetActions({
   const showRevert = status === "published" && (canPropose || canReview);
   const showWithdraw =
     ((status === "draft" || status === "checks_failed" || status === "pending") && (isAuthor || isOwner)) ||
-    (status === "checks_failed" && canReview);
+    ((status === "checks_failed" || status === "approved") && canReview) ||
+    (status === "approved" && isOwner);
   if (!showSubmit && !showDecide && !showPublish && !showRevert && !showWithdraw) return null;
 
   return (

@@ -610,7 +610,7 @@ export async function revertChangeSet(
 
 /**
  * سحب دفعة لم تُنشر حتى لا تقفل أهدافها إلى الأبد: يسحبها مُعِدّها أو المالك،
- * ويسحب المعتمِد ما فشلت فحوصه. تصير «مرفوضة» ويُسجَّل السحب؛ لا حذف.
+ * ويسحب المعتمِد ما فشلت فحوصه أو اعتُمد وتعثّر نشره. تصير «مرفوضة» ويُسجَّل السحب؛ لا حذف.
  */
 export async function withdrawChangeSet(
   db: EditorialDb,
@@ -624,12 +624,15 @@ export async function withdrawChangeSet(
   try {
     return await db.transaction(async (tx) => {
       const set = await lockChangeSet(tx, changeSetId);
-      if (!["draft", "checks_failed", "pending"].includes(set.status)) {
-        throw new EditorialError("INVALID_STATE", "لا تُسحب إلا مسودة أو دفعة فشلت فحوصها أو في الطابور.");
+      if (!["draft", "checks_failed", "pending", "approved"].includes(set.status)) {
+        throw new EditorialError("INVALID_STATE", "لا تُسحب إلا دفعة لم تُنشر.");
       }
+      // المعتمَدة التي تعثّر نشرها (تعارض) يسحبها المالك أو المعتمِد، حتى لا يبقى الهدف مقفلًا.
       const allowed =
-        isAuthorOf(set, actor) || actor.access.superAdmin || (set.status === "checks_failed" && canReview(actor.access));
-      if (!allowed) throw new EditorialError("FORBIDDEN", "يسحب الدفعة مُعِدّها أو المالك، ويسحب المعتمِد ما فشلت فحوصه.");
+        actor.access.superAdmin ||
+        (set.status !== "approved" && isAuthorOf(set, actor)) ||
+        ((set.status === "checks_failed" || set.status === "approved") && canReview(actor.access));
+      if (!allowed) throw new EditorialError("FORBIDDEN", "يسحب الدفعة مُعِدّها أو المالك، ويسحب المعتمِد ما فشلت فحوصه أو تعثّر نشره.");
       await setStatus(tx, changeSetId, "rejected");
       await recordAudit(tx, actor, {
         action: "change_set.withdraw",
