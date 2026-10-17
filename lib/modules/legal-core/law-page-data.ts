@@ -2,9 +2,11 @@
  * HKM-023-B — بيانات صفحة النظام الكاملة (دوال قراءة للعرض). يستعملها مطوّر القسم أ، وأداة MCP (hakeem_get_law).
  *
  * ── العقد ─────────────────────────────────────────────────────────────────────
- *   getLawPageData(db, systemId, { asOf? }) → LawPageData | null
+ *   getLawPageData(db, systemId, { asOf?, withText?, withOutgoingRepeals?, resolveRepealingSystems? }) → LawPageData | null
  *     db: SqlClient (prismaSqlClient(prisma) في الإنتاج، pg في الاختبار). قراءة فقط.
  *     asOf: YYYY-MM-DD (افتراضيًا اليوم بتوقيت الرياض) لاشتقاق الحالة بالتاريخ والنص الساري.
+ *     withText=false: لا يُقرأ نص أي مادة ولا نص نسخها (text/effectiveText = "")، والحالات كما هي. لمسار MCP والفهرس.
+ *     withOutgoingRepeals=false وresolveRepealingSystems=false: لا مسح لجداول التحقق والبطاقات كلها (مسار MCP).
  *
  *   LawPageData
  *     system      المعرّف والاسم والـ slug وعدد المواد.
@@ -24,18 +26,21 @@
  *   ثم تُحوَّل إلى قائمة الهيئة الست (BOE_LAW_STATUSES) بلا اختراع؛ ما لا يقابله شيء منها = null.
  *   law_card.status_at_source يُعاد كما هو (atSource) ولا يُعتمد للعرض (قاعدة طبقة التحقق).
  *   حالة المادة: آخر سجل verification (object_type=unit)، ثم unit_version (معدّلة)، ثم حالة النظام (ملغى بالتبعية).
+ *   «مكرر» (HKM-028، العمود articleBis): المادة المكررة صف مستقل بمفتاح articleKey (12 ← «12»، 12 مكرر ← «12_bis»)،
+ *   ومرساتها art-<key> ورابطها /legal/<slug>/<key>، وترتيبها بعد أصلها. الصفوف غير المادية (articleBis ≥ 100) لا تُقرأ.
  *   لا جدول legal_effect في الإنتاج (تحقق 17/10/2026): repeal_type مشتق من الحالة (typeDerived=true)، وتاريخ نفاذ
  *   الإلغاء من وجه البحث أو من نص الأداة («— من YYYY-MM-DD») أو null.
  *
  * نقي عدا الاستعلامات عبر db. لا Prisma ولا كتابة. غياب جدول = سقوط آمن إلى «لا شيء».
  */
-import { isMissingRelation, type SqlClient } from "./sql-port";
+import { isMissingRelation, relationExists, type SqlClient } from "./sql-port";
 import { parseInstrumentHeading, type InstrumentKind, type PreambleCompleteness, type PreambleUnitType } from "./preamble-parser";
 import { classifyPreambleSignals, extractPreambleSignals } from "./preamble-signals";
 import { computeSurface, todayRiyadh, unitStatusAsOf, workStatusAsOf, type SearchSurface } from "./search-surface";
 import { citationFlagsFromVerification, textAsOf, UNVERIFIED_NOTICE, type UnitVersionRecord, type VerificationRecord } from "./verified-status";
 import { resolveWorkKind, type WorkKind } from "./work-kind";
 import { resolveSystemSlug } from "./eli";
+import { NON_ARTICLE_BIS, articleKey, articleLabel } from "./article-key";
 
 export const NOT_AVAILABLE = "غير متوفر";
 export const PREAMBLE_INCOMPLETE_LABEL = "مقدمة غير مكتملة";
@@ -160,13 +165,20 @@ export interface PreambleView {
   } | null;
   sourceBlocks: { blocks: LawCardBlockView[]; sourceUrl: string; retrievedOn: string | null } | null;
   /** legal_systems.preamble كما هو (لا يُعدَّل)، مع تصنيفه. */
-  legacy: { text: string; chars: number; royalDecree: string | null; completeness: PreambleCompleteness } | null;
+  /** bodyLeak: الحقل يحوي متن نظام أو ملحقًا لا مقدمة (إشارة متن، أو نص طويل بلا أي بنية مقدمة). */
+  legacy: { text: string; chars: number; royalDecree: string | null; completeness: PreambleCompleteness; bodyLeak: boolean } | null;
   officialSourceUrl: string | null;
 }
 
 export interface ArticleView {
   id: string;
   number: number;
+  /** درجة «مكرر» (0 للأصل). */
+  bis: number;
+  /** مفتاح المادة الفريد في النظام: «12» أو «12_bis» أو «12_bis2» (articleKey من HKM-028). */
+  key: string;
+  /** وسمها: «12» أو «12 مكرر». */
+  label: string;
   title: string | null;
   /** عنوان العرض: العنوان المخزّن إن كان نصًا، وإلا «المادة N». */
   heading: string;
@@ -200,6 +212,7 @@ export interface OutgoingRepeal {
   systemId: string | null;
   systemName: string;
   articleNumber: number;
+  articleBis: number;
   instrument: string | null;
   matchedOn: "instrument_number";
   derived: true;
@@ -292,9 +305,9 @@ export function splitRoyalDecreeField(raw: string | null): string[] {
     .filter(Boolean);
 }
 
-function articleHeading(n: number, title: string | null): string {
+function articleHeading(n: number, title: string | null, bis = 0): string {
   const t = (title ?? "").trim();
-  return t && t !== String(n) ? t : `المادة ${n.toLocaleString("ar-SA")}`;
+  return t && t !== String(n) ? t : `المادة ${articleLabel(n, bis, true)}`;
 }
 
 // ── القراءة ─────────────────────────────────────────────────────────────────
@@ -413,6 +426,7 @@ type PreambleUnitRow = {
 type LoadedPreambleUnits = NonNullable<PreambleView["units"]> & { completeness: PreambleCompleteness };
 
 async function loadPreambleUnits(db: SqlClient, systemId: string): Promise<LoadedPreambleUnits | null> {
+  if (!(await relationExists(db, "preamble_edition"))) return null;
   const editions = await safe(
     () => db.query<{ id: string; source_name: string; source_url: string; source_retrieved_on: Date | string; raw_sha256: string; completeness: PreambleCompleteness }>(
       `SELECT id, source_name, source_url, source_retrieved_on::text AS source_retrieved_on, raw_sha256, completeness
@@ -452,7 +466,18 @@ async function loadPreambleUnits(db: SqlClient, systemId: string): Promise<Loade
 }
 
 /** بيانات صفحة النظام كاملة. null إن لم يوجد النظام. */
-export async function getLawPageData(db: SqlClient, systemId: string, opts: { asOf?: string; resolveRepealingSystems?: boolean } = {}): Promise<LawPageData | null> {
+export interface LawPageDataOptions {
+  asOf?: string;
+  /** false: بلا نص المواد ونسخها (الحالات كما هي). الافتراض true. */
+  withText?: boolean;
+  /** false: بلا outgoingRepeals (يمسح كل سجلات التحقق). الافتراض true. */
+  withOutgoingRepeals?: boolean;
+  /** false: بلا فهرس أدوات الإصدار (يمسح law_card وlegal_systems)، فلا repealingSystem للمادة. الافتراض true. */
+  resolveRepealingSystems?: boolean;
+}
+
+export async function getLawPageData(db: SqlClient, systemId: string, opts: LawPageDataOptions = {}): Promise<LawPageData | null> {
+  const withText = opts.withText !== false;
   const asOf = opts.asOf && /^\d{4}-\d{2}-\d{2}$/.test(opts.asOf) ? opts.asOf : todayRiyadh();
   const asOfDate = new Date(`${asOf}T12:00:00Z`);
   const sys = (
@@ -497,11 +522,11 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: { as
       ),
       [],
     ).then((r) => r[0] ?? null),
-    db.query<{ id: string; articleNumber: number; title: string | null; content: string; chapter: string | null }>(
-      `SELECT id, "articleNumber", title, content, chapter FROM legal_articles
-        WHERE ("legalSystemId" = $1 OR ("legalSystemId" IS NULL AND "lawName" = $2)) AND "articleNumber" > 0
-        ORDER BY "articleNumber", id`,
-      [systemId, sys.name],
+    db.query<{ id: string; articleNumber: number; articleBis: number; title: string | null; content: string; chapter: string | null }>(
+      `SELECT id, "articleNumber", "articleBis", title, ${withText ? "content" : "''::text AS content"}, chapter FROM legal_articles
+        WHERE ("legalSystemId" = $1 OR ("legalSystemId" IS NULL AND "lawName" = $2)) AND "articleNumber" > 0 AND "articleBis" < $3
+        ORDER BY "articleNumber", "articleBis", id`,
+      [systemId, sys.name, NON_ARTICLE_BIS],
     ),
     loadSurface(db, asOf),
     latestVerifications(db, "work", [systemId]).then((m) => m.get(systemId) ?? null),
@@ -599,7 +624,7 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: { as
     ids.length
       ? safe(
           () => db.query<{ id: string; unit_id: string; body: string; valid_from: Date | string; evidence_instrument: string | null; evidence_url: string | null }>(
-            `SELECT id, unit_id, body, to_char(valid_from AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS valid_from, evidence_instrument, evidence_url
+            `SELECT id, unit_id, ${withText ? "body" : "''::text AS body"}, to_char(valid_from AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS valid_from, evidence_instrument, evidence_url
                FROM unit_version WHERE unit_id = ANY($1::text[]) ORDER BY unit_id, valid_from`,
             [ids],
           ),
@@ -681,11 +706,16 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: { as
     else if (status === "ملغى") counts.repealed++;
     else counts.unverified++;
 
+    const bis = Number(a.articleBis) || 0;
+    const key = articleKey(a.articleNumber, bis);
     return {
       id: a.id,
       number: a.articleNumber,
+      bis,
+      key,
+      label: articleLabel(a.articleNumber, bis),
       title: a.title,
-      heading: articleHeading(a.articleNumber, a.title),
+      heading: articleHeading(a.articleNumber, a.title, bis),
       chapter: a.chapter,
       text: a.content,
       effectiveText: picked.text,
@@ -704,8 +734,8 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: { as
         : null,
       repeal,
       repealedLaterOn,
-      anchor: `art-${a.articleNumber}`,
-      url: `/legal/${encodeURIComponent(slug)}/${a.articleNumber}`,
+      anchor: `art-${key}`,
+      url: `/legal/${encodeURIComponent(slug)}/${key}`,
     };
   });
 
@@ -721,28 +751,30 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: { as
   // ── ما ألغته أداة هذا النظام (الاتجاه الآخر، مشتق) ──
   const myKeys = new Set(instruments.map((i) => instrumentKey(i.text)).filter((k): k is string => Boolean(k)));
   let outgoingRepeals: OutgoingRepeal[] = [];
-  if (myKeys.size) {
+  if (myKeys.size && opts.withOutgoingRepeals !== false) {
     const rows = await safe(
-      () => db.query<{ object_id: string; evidence_instrument: string | null; articleNumber: number; legalSystemId: string | null; lawName: string; system_name: string | null }>(
+      () => db.query<{ object_id: string; evidence_instrument: string | null; articleNumber: number; articleBis: number; legalSystemId: string | null; lawName: string; system_name: string | null }>(
         `WITH v AS (
            SELECT DISTINCT ON (object_id) object_id, verified_status, evidence_instrument
              FROM verification WHERE object_type = 'unit' ORDER BY object_id, verified_at DESC, id DESC)
-         SELECT v.object_id, v.evidence_instrument, a."articleNumber", a."legalSystemId", a."lawName", s.name AS system_name
+         SELECT v.object_id, v.evidence_instrument, a."articleNumber", a."articleBis", a."legalSystemId", a."lawName", s.name AS system_name
            FROM v JOIN legal_articles a ON a.id = v.object_id LEFT JOIN legal_systems s ON s.id = a."legalSystemId"
-          WHERE v.verified_status IN ('ملغاة', 'ملغى') AND v.evidence_instrument IS NOT NULL`,
+          WHERE v.verified_status IN ('ملغاة', 'ملغى') AND v.evidence_instrument IS NOT NULL AND a."articleBis" < $1`,
+        [NON_ARTICLE_BIS],
       ),
       [],
     );
     outgoingRepeals = rows
       .filter((r) => r.legalSystemId !== systemId && myKeys.has(instrumentKey(r.evidence_instrument) ?? ""))
-      .map((r) => ({ articleId: r.object_id, systemId: r.legalSystemId, systemName: r.system_name ?? r.lawName, articleNumber: r.articleNumber, instrument: r.evidence_instrument, matchedOn: "instrument_number" as const, derived: true as const }))
-      .sort((a, b) => a.systemName.localeCompare(b.systemName, "ar") || a.articleNumber - b.articleNumber);
+      .map((r) => ({ articleId: r.object_id, systemId: r.legalSystemId, systemName: r.system_name ?? r.lawName, articleNumber: r.articleNumber, articleBis: Number(r.articleBis) || 0, instrument: r.evidence_instrument, matchedOn: "instrument_number" as const, derived: true as const }))
+      .sort((a, b) => a.systemName.localeCompare(b.systemName, "ar") || a.articleNumber - b.articleNumber || a.articleBis - b.articleBis);
   }
 
   // ── المقدمة ──
   const legacyText = sys.preamble && sys.preamble.trim() ? sys.preamble : null;
-  const legacy = legacyText
-    ? { text: legacyText, chars: legacyText.length, royalDecree: sys.preamble_royal_decree, completeness: classifyPreambleSignals(extractPreambleSignals(legacyText), legacyText.length).completeness }
+  const legacyClass = legacyText ? classifyPreambleSignals(extractPreambleSignals(legacyText), legacyText.length) : null;
+  const legacy = legacyText && legacyClass
+    ? { text: legacyText, chars: legacyText.length, royalDecree: sys.preamble_royal_decree, completeness: legacyClass.completeness, bodyLeak: legacyClass.bodyLeak }
     : null;
   const blocks = (Array.isArray(cardRow?.text_blocks) ? (cardRow?.text_blocks as Array<{ kind?: string; heading?: string | null; text?: string }>) : [])
     .filter((b) => typeof b.text === "string" && b.kind !== "law_title")
