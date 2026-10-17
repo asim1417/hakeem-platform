@@ -1,0 +1,432 @@
+/* HKM-023-B — صفحة النظام الكاملة (app/law/**): الطبقة الدلالية وطبقة المكوّن من مواصفة المصمم §٣-٢ ونموذجها
+ * (design-review/mock/law-page.src.html) منسوخة، وكل محدِّد مقيَّد بـ [data-law] حتى لا يتسرّب إلى بقية التطبيق عند
+ * التنقل في العميل. لا لون ولا خط جديد: كل رمز طبقة فوق رمز قائم في identity.css/globals.css/browser-compat.css.
+ * .btn و.badge أُعيدت تسميتهما .lbtn و.lbadge لتعارضهما مع صنفين عامّين في globals.css. */
+[data-law] *, [data-law] *::before, [data-law] *::after { box-sizing: border-box; }
+[data-law] { font-family: var(--font-body-ar); background: linear-gradient(180deg, var(--parchment), #F3EEE2); min-height: 100vh; overflow-x: clip; }
+/* السمة الليلية القائمة (identity.css:63-87) — للنموذج فقط عند ?theme=dark */
+[data-law] .dark { --surface: #0D1B1B; --ivory: #14403F; --line: #1F4F4C; --ink: #EAF1EF; --muted: #9DB3AF; --chip: #16403F; --copper: #D4AF6E; --copper-soft: #6B4F2A; --mark: #6B4F2A; --markink: #FFFFFF; }
+
+/* ══ الطبقة الدلالية وطبقة المكوّن: app/law/law.css — تُنسخ كما هي ══ */
+[data-law] {
+  color: var(--law-text);
+  /* الأسطح */
+  --law-bg-sheet: var(--ivory);
+  --law-bg-raised: #FFFFFF;
+  --law-bg-sunken: var(--chip);
+  --law-bg-amended: var(--gold-ghost);
+  --law-bg-repealed: var(--ruby-soft);
+  --law-bg-banner: var(--ruby-soft);
+  --law-bg-mark: var(--mark);
+  --law-bg-mark-current: var(--mark-current);
+  --law-bg-current: var(--ink-04);
+  /* النص */
+  --law-text: var(--ink);
+  --law-text-heading: var(--petrol);
+  --law-text-article-title: var(--petrol-600);
+  --law-text-eyebrow: var(--petrol-600);
+  --law-text-secondary: var(--muted);
+  --law-text-recital: var(--muted);
+  --law-text-on-fill: #FFFFFF;
+  --law-text-mark: var(--markink);
+  --law-text-mark-current: var(--markink);
+  --law-text-banner-title: var(--ruby);
+  /* الحدود */
+  --law-border: var(--line);
+  --law-border-control: var(--muted);
+  --law-rule: var(--gold-border);
+  --law-edge-amended: var(--copper-deep);
+  --law-edge-repealed: var(--ruby);
+  --law-edge-banner: var(--ruby);
+  /* الوسوم */
+  --law-tag-amended-fg: var(--on-copper);   --law-tag-amended-bg: var(--copper-soft);  --law-tag-amended-edge: var(--copper-deep);
+  --law-tag-repealed-fg: #FFFFFF;           --law-tag-repealed-bg: var(--ruby);
+  --law-tag-incomplete-fg: var(--on-copper); --law-tag-incomplete-bg: var(--amber-soft); --law-tag-incomplete-edge: var(--amber);
+  /* الحالات الست (ع-٢) */
+  --law-status-inforce-fg: var(--emerald);  --law-status-inforce-bg: var(--emerald-soft);
+  --law-status-repealed-fg: var(--ruby);    --law-status-repealed-bg: var(--ruby-soft);
+  --law-status-pending-fg: var(--on-copper); --law-status-pending-bg: var(--amber-soft);
+  --law-status-draft-fg: var(--petrol);     --law-status-draft-bg: var(--chip);
+  /* التركيز */
+  --law-focus: var(--petrol);
+  --law-focus-on-fill: var(--on-petrol);
+  --law-focus-width: 3px;
+  --law-focus-offset: 2px;
+  /* الخطوط والطباعة */
+  --law-font-ui: var(--font-body-ar);
+  --law-font-text: var(--font-judicial);
+  --law-font-code: var(--font-mono-legal);
+  --law-text-size: 18px;      --law-text-leading: 36px;
+  --law-recital-size: 16px;   --law-recital-leading: 32px;
+  --law-article-title-size: 20px; --law-article-title-leading: 32px;
+  --law-part-size: 22px;      --law-part-leading: 36px;
+  --law-chapter-size: 20px;   --law-chapter-leading: 32px;
+  --law-h1-size: 26px;        --law-h1-leading: 40px;
+  --law-measure: 36rem;
+  --law-collapse-lines: 12;
+  /* المقاسات */
+  --law-toc-w: 272px;
+  --law-toolbar-h: 64px;
+  --law-locator-h: 56px;
+  --law-target: 44px;
+  --law-target-fine: 36px;
+  --law-tag-h: 28px;
+  --law-edge-w: 3px;
+  --law-anchor-offset: calc(var(--law-toolbar-h) + 16px);
+  /* الحركة */
+  --law-motion-fast: 140ms;
+  --law-motion-base: 220ms;
+  --law-flash: 1600ms;
+  --law-flash-static: 3000ms;
+  --law-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --law-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+@media (min-width: 1024px) {
+  [data-law] {
+    --law-text-size: 20px; --law-text-leading: 40px;
+    --law-recital-size: 18px; --law-recital-leading: 36px;
+    --law-article-title-size: 22px; --law-article-title-leading: 36px;
+    --law-part-size: 26px; --law-part-leading: 40px;
+    --law-chapter-size: 22px; --law-chapter-leading: 36px;
+    --law-h1-size: 34px; --law-h1-leading: 48px;
+  }
+}
+@media (max-width: 1023px) { [data-law] { --law-anchor-offset: calc(var(--law-locator-h) + 16px); } }
+/* الداكن: يُبدَّل ما يخفق فقط، وبرموز .dark القائمة (لا لون جديد) */
+.dark [data-law] {
+  --law-bg-raised: var(--surface);
+  --law-text-heading: var(--ink);
+  --law-text-article-title: var(--copper);
+  --law-text-eyebrow: var(--copper);
+  --law-text-banner-title: var(--ink);
+  --law-edge-amended: var(--copper);
+  --law-edge-repealed: var(--muted);
+  --law-edge-banner: var(--muted);
+  --law-tag-amended-fg: var(--ink);
+  --law-tag-amended-edge: var(--copper);
+  --law-tag-repealed-fg: var(--on-petrol);
+  --law-tag-incomplete-fg: var(--ink);
+  --law-status-inforce-fg: var(--ink); --law-status-repealed-fg: var(--ink); --law-status-pending-fg: var(--ink); --law-status-draft-fg: var(--ink);
+  --law-focus: var(--on-petrol);
+  --law-text-mark: var(--markink);
+  --law-text-mark-current: var(--on-copper);
+}
+
+/* ══ القواعد ══ */
+[data-law] [hidden] { display: none !important; }
+[data-law] .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+[data-law] svg { width: 20px; height: 20px; flex: none; }
+[data-law] svg.mirror { transform: scaleX(-1); }
+[data-law] :is(a, button, input, select, summary, [tabindex]):focus-visible { outline: var(--law-focus-width) solid var(--law-focus); outline-offset: var(--law-focus-offset); }
+[data-law] a:not(.lbtn) { color: var(--law-text-heading); text-underline-offset: 3px; }
+[data-law] [id] { scroll-margin-top: var(--law-anchor-offset); }
+[data-law] .hnum { white-space: nowrap; }
+[data-law] .code { font: 400 13px/20px var(--law-font-code); overflow-wrap: anywhere; }
+
+[data-law] .skip { position: absolute; inset-inline-start: 16px; top: -100px; z-index: 60; background: var(--petrol); color: #fff; padding: 12px 16px; border-radius: var(--r-sm); font: 600 14px/20px var(--font-body-ar); }
+[data-law] .skip:focus { top: 8px; outline: 3px solid var(--copper); }
+
+/* غلاف PublicLegalShell (القائم) بعرض واسع لصفحات /law */
+[data-law] .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .crumbs a { color: var(--law-text-heading); font-weight: 600; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+[data-law] .crumbs a:hover { text-decoration: underline; }
+[data-law] .crumbs .sep { color: var(--line); }
+
+[data-law] .law-wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 16px 64px; }
+@media (min-width: 640px) { [data-law] .law-wrap { padding: 0 24px 64px; } }
+
+/* رأس الصفحة */
+[data-law] .law-head { margin-top: 8px; }
+[data-law] .eyebrow { margin: 0; font: 600 14px/20px var(--law-font-ui); color: var(--law-text-eyebrow); }
+[data-law] .law-head h1 { margin: 4px 0 0; font: 700 var(--law-h1-size)/var(--law-h1-leading) var(--law-font-ui); color: var(--law-text-heading); }
+[data-law] .law-head .meta { margin: 4px 0 0; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+
+/* شريط الإلغاء (ع-٧ب) */
+[data-law] .banner { margin-top: 16px; background: linear-gradient(var(--law-bg-banner), var(--law-bg-banner)), var(--law-bg-raised); border: 1px solid var(--law-edge-banner); border-inline-start-width: 6px; border-radius: var(--r-md); padding: 16px; }
+[data-law] .banner h2 { margin: 0; display: flex; align-items: center; gap: 8px; font: 700 18px/28px var(--law-font-ui); color: var(--law-text-banner-title); }
+[data-law] .banner p { margin: 8px 0 0; font: 400 16px/28px var(--law-font-ui); color: var(--law-text); }
+[data-law] .banner .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* الأزرار */
+[data-law] .lbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--law-target); padding: 0 16px; border-radius: var(--r-sm); font: 600 14px/20px var(--law-font-ui); text-decoration: none; cursor: pointer; border: 1px solid transparent; }
+[data-law] .lbtn span { display: inline; }
+[data-law] .lbtn--primary { background: var(--law-text-heading); color: var(--law-text-on-fill); }
+[data-law] .lbtn--primary:focus-visible { outline-color: var(--law-focus); }
+[data-law] .lbtn--outline { background: var(--law-bg-raised); color: var(--law-text-heading); border-color: var(--law-border-control); }
+[data-law] .lbtn--ghost { background: transparent; color: var(--law-text-heading); }
+[data-law] .lbtn--outline:hover, [data-law] .lbtn--ghost:hover { background-image: linear-gradient(var(--ink-04), var(--ink-04)); }
+[data-law] .lbtn--primary:hover { background-image: linear-gradient(rgba(18,33,31,.15), rgba(18,33,31,.15)); }
+[data-law] .lbtn:disabled, [data-law] .lbtn[aria-disabled="true"] { cursor: not-allowed; color: var(--law-text-secondary); border-style: dashed; background: transparent; }
+@media (min-width: 1024px) and (pointer: fine) { [data-law] .lbtn--fine { min-height: var(--law-target-fine); padding: 0 12px; } }
+[data-law] .iconbtn { width: var(--law-target); height: var(--law-target); display: inline-grid; place-items: center; border: 0; background: transparent; color: var(--law-text-heading); border-radius: var(--r-sm); cursor: pointer; position: relative; }
+[data-law] .iconbtn:hover { background: var(--ink-04); }
+[data-law] .iconbtn[aria-disabled="true"] { color: var(--law-text-secondary); cursor: not-allowed; }
+[data-law] .iconbtn[aria-disabled="true"] svg { opacity: 1; }
+@media (min-width: 1024px) and (pointer: fine) { [data-law] .iconbtn--fine { width: var(--law-target-fine); height: var(--law-target-fine); } }
+[data-law] .iconbtn .lbadge { position: absolute; inset-block-start: -4px; inset-inline-end: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-pill); background: var(--law-text-heading); color: #fff; font: 600 12px/18px var(--law-font-ui); }
+[data-law] .tip { position: absolute; bottom: calc(100% + 6px); inset-inline-end: 0; background: var(--petrol); color: #fff; font: 400 13px/20px var(--law-font-ui); padding: 4px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; opacity: 0; z-index: 5; }
+[data-law] .iconbtn:hover .tip, [data-law] .iconbtn:focus-visible .tip { opacity: 1; }
+
+/* البطاقة (ع-٢) */
+[data-law] .law-card { margin-top: 16px; background: var(--law-bg-sheet); border: 1px solid var(--law-border); border-radius: var(--r-lg); padding: 16px; }
+@media (min-width: 1024px) { [data-law] .law-card { padding: 24px; } }
+[data-law] .law-card > h2 { margin: 0; font: 700 18px/28px var(--law-font-ui); color: var(--law-text-heading); }
+[data-law] .law-card .summary { margin: 8px 0 0; font: 400 16px/28px var(--law-font-ui); color: var(--law-text); max-width: 48rem; }
+[data-law] .law-card .cols { margin-top: 12px; display: grid; }
+@media (min-width: 1024px) { [data-law] .law-card .cols { grid-template-columns: 1fr 1fr; column-gap: 32px; } }
+[data-law] .law-card dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-content: start; }
+[data-law] .law-card .row { grid-column: 1 / -1; display: grid; align-content: start; gap: 2px; padding: 10px 0; border-top: 1px solid var(--law-border); }
+[data-law] .law-card .row--half { grid-column: auto; }
+@media (min-width: 640px) { [data-law] .law-card .row:not(.row--half) { grid-template-columns: 9rem minmax(0, 1fr); gap: 16px; align-items: baseline; } }
+[data-law] .law-card dt { font: 600 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .law-card dd { margin: 0; font: 400 16px/28px var(--law-font-ui); color: var(--law-text); }
+[data-law] .law-card dd ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+[data-law] .law-card .na { color: var(--law-text-secondary); }
+[data-law] .law-card .date2 { display: block; font-size: 14px; line-height: 20px; color: var(--law-text-secondary); }
+[data-law] .law-card .src { margin: 12px 0 0; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .law-card .src a { font-weight: 600; }
+[data-law] .status { display: inline-flex; align-items: center; gap: 6px; min-height: var(--law-tag-h); padding: 0 12px; border-radius: var(--radius-pill); font: 600 14px/20px var(--law-font-ui); border: 1px solid currentColor; }
+[data-law] .status--inforce { color: var(--law-status-inforce-fg); background: var(--law-status-inforce-bg); }
+[data-law] .status--repealed { color: var(--law-status-repealed-fg); background: var(--law-status-repealed-bg); }
+[data-law] .status--pending { color: var(--law-status-pending-fg); background: var(--law-status-pending-bg); }
+[data-law] .status--draft { color: var(--law-status-draft-fg); background: var(--law-status-draft-bg); }
+[data-law] .status-range { display: block; margin-top: 4px; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .note { margin-top: 12px; display: flex; gap: 12px; align-items: flex-start; background: var(--law-bg-sunken); border-radius: var(--r-md); padding: 12px 16px; font: 400 15px/26px var(--law-font-ui); color: var(--law-text); }
+[data-law] .note svg { margin-top: 3px; color: var(--law-text-heading); }
+[data-law] .note p { margin: 0; }
+[data-law] .note .sub { color: var(--law-text-secondary); font-size: 14px; line-height: 20px; margin-top: 4px; }
+
+/* شريط الأدوات (ع-٣) */
+[data-law] .law-toolbar { margin-top: 16px; background: var(--law-bg-raised); border: 1px solid var(--law-border); border-radius: var(--r-lg); padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; box-shadow: var(--sh-xs); }
+@media (min-width: 1024px) { [data-law] .law-toolbar { position: sticky; top: 0; z-index: 30; min-height: var(--law-toolbar-h); } }
+[data-law] .search { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; gap: 2px; min-height: var(--law-target); padding-inline: 12px 4px; border: 1px solid var(--law-border-control); border-radius: var(--r-sm); background: var(--law-bg-raised); }
+@media (min-width: 1024px) { [data-law] .search { flex: 1 1 240px; max-width: 340px; } }
+[data-law] .search:focus-within { outline: var(--law-focus-width) solid var(--law-focus); outline-offset: var(--law-focus-offset); }
+[data-law] .search > svg { color: var(--law-text-secondary); }
+[data-law] .search input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; font: 400 16px/24px var(--law-font-ui); color: var(--law-text); padding: 8px; outline: none; }
+[data-law] .search input::placeholder { color: var(--law-text-secondary); opacity: 1; }
+[data-law] .search .count { font: 600 14px/20px var(--law-font-ui); color: var(--law-text-secondary); white-space: nowrap; padding-inline: 4px; font-variant-numeric: tabular-nums; }
+[data-law] .search .iconbtn { width: 44px; height: 44px; }
+@media (max-width: 1023px) { [data-law] .search { min-height: 48px; } }
+@media (min-width: 1024px) and (pointer: fine) { [data-law] .search .iconbtn { width: 36px; height: 36px; } }
+[data-law] .search-hidden { flex-basis: 100%; margin: 0; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .search-hidden button { font: inherit; font-weight: 600; color: var(--law-text-heading); background: none; border: 0; text-decoration: underline; cursor: pointer; min-height: 44px; }
+[data-law] .filters { border: 0; margin: 0; padding: 0; display: none; gap: 4px; flex-wrap: wrap; }
+@media (min-width: 1024px) { [data-law] .filters--bar { display: flex; } }
+[data-law] .filters legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+[data-law] .seg { position: relative; display: inline-flex; }
+[data-law] .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+[data-law] .seg > span { display: inline-flex; align-items: center; gap: 6px; min-height: var(--law-target); padding: 0 12px; border: 1px solid var(--law-border-control); border-radius: var(--r-sm); background: var(--law-bg-raised); font: 600 14px/20px var(--law-font-ui); color: var(--law-text-heading); white-space: nowrap; }
+@media (min-width: 1024px) and (pointer: fine) { [data-law] .seg > span { min-height: 40px; } }
+[data-law] .seg .n { font-weight: 400; font-variant-numeric: tabular-nums; }
+[data-law] .seg input:checked + span, [data-law] .seg input:checked + span .n { background: var(--law-text-heading); border-color: var(--law-text-heading); color: var(--law-text-on-fill); }
+[data-law] .seg input:focus-visible + span { outline: var(--law-focus-width) solid var(--law-focus); outline-offset: var(--law-focus-offset); }
+[data-law] .seg input:disabled { cursor: not-allowed; }
+[data-law] .seg input:disabled + span { color: var(--law-text-secondary); border-style: dashed; background: transparent; }
+[data-law] .tools-end { display: flex; align-items: center; gap: 4px; margin-inline-start: auto; }
+[data-law] .mobile-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; flex-basis: 100%; }
+[data-law] .mobile-row .lbtn { min-width: 0; padding: 0 4px; gap: 4px; font-size: 13px; white-space: nowrap; }
+[data-law] .mobile-row .lbtn svg { width: 18px; height: 18px; }
+@media (min-width: 1024px) { [data-law] .mobile-row { display: none; } }
+[data-law] .desk-only { display: none !important; }
+@media (min-width: 1024px) { [data-law] .desk-only { display: inline-flex !important; } }
+[data-law] .asof-panel { flex-basis: 100%; border-top: 1px solid var(--law-border); margin-top: 4px; padding: 12px 4px 4px; display: grid; gap: 8px; font: 400 14px/20px var(--law-font-ui); }
+[data-law] .asof-panel label { display: grid; gap: 4px; font-weight: 600; color: var(--law-text); }
+[data-law] .asof-panel input { min-height: 44px; border: 1px solid var(--law-border-control); border-radius: var(--r-sm); padding: 0 12px; font: 400 16px/24px var(--law-font-ui); background: var(--law-bg-raised); color: var(--law-text); max-width: 240px; }
+[data-law] .asof-panel .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+[data-law] .asof-panel .hint { color: var(--law-text-secondary); margin: 0; }
+
+/* شريط الموضع المثبّت على الجوال */
+[data-law] .locator { position: fixed; inset-inline: 0; top: 0; z-index: 40; min-height: var(--law-locator-h); background: var(--law-bg-raised); border-bottom: 1px solid var(--law-border); box-shadow: var(--sh-xs); display: flex; align-items: center; gap: 4px; padding: 6px 8px; transform: translateY(-110%); transition: transform var(--law-motion-base) var(--law-ease-standard); }
+[data-law] .locator[data-shown] { transform: none; }
+[data-law] .locator .iconbtn { flex: none; }
+[data-law] .locator .where { flex: 1; min-width: 0; font: 600 14px/20px var(--law-font-ui); color: var(--law-text-heading); }
+[data-law] .locator .where small { display: block; font-weight: 400; color: var(--law-text-secondary); }
+@media (min-width: 1024px) { [data-law] .locator { display: none; } }
+
+/* الشبكة والفهرس (ع-٣) */
+[data-law] .law-grid { margin-top: 16px; display: grid; gap: 24px; }
+@media (min-width: 1024px) { [data-law] .law-grid { grid-template-columns: var(--law-toc-w) minmax(0, 1fr); gap: 32px; } }
+[data-law] .toc { display: none; }
+@media (min-width: 1024px) { [data-law] .toc { display: block; position: sticky; top: calc(var(--law-toolbar-h) + 16px); align-self: start; max-height: calc(100vh - var(--law-toolbar-h) - 32px); overflow: auto; background: var(--law-bg-sheet); border: 1px solid var(--law-border); border-radius: var(--r-lg); padding: 12px; } }
+[data-law] .toc h2 { margin: 4px 8px 8px; font: 700 14px/20px var(--law-font-ui); color: var(--law-text-heading); }
+[data-law] .toc ol { list-style: none; margin: 0; padding: 0; }
+[data-law] .toc ol ol { padding-inline-start: 12px; }
+[data-law] .toc a, [data-law] .toc button.grp { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 6px 8px; border-radius: var(--r-sm); border: 0; border-inline-start: var(--law-edge-w) solid transparent; background: none; font: 400 14px/20px var(--law-font-ui); color: var(--law-text); text-decoration: none; text-align: start; cursor: pointer; }
+[data-law] .toc a:hover, [data-law] .toc button.grp:hover { background: var(--law-bg-current); }
+[data-law] .toc a[aria-current="location"] { font-weight: 700; color: var(--law-text-heading); border-inline-start-color: var(--law-focus); background: var(--law-bg-current); }
+[data-law] .toc .n { flex: none; color: var(--law-text-secondary); font-variant-numeric: tabular-nums; }
+[data-law] .toc .tag { min-height: 22px; padding: 0 8px; font-size: 12px; line-height: 20px; }
+[data-law] .toc .lbl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+[data-law] .toc .arts a { min-height: 32px; font-size: 14px; }
+
+/* الورقة */
+[data-law] .sheet { background: var(--law-bg-sheet); border: 1px solid var(--law-border); border-radius: var(--r-lg); padding: 16px 0 24px; min-width: 0; }
+@media (max-width: 639px) { [data-law] .sheet { margin-inline: -16px; border-radius: 0; border-inline: 0; } }
+@media (min-width: 1024px) { [data-law] .sheet { padding: 24px 8px 32px; } }
+[data-law] .sec-h { margin: 0 16px 16px; padding-bottom: 8px; border-bottom: 2px solid var(--law-rule); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+[data-law] .sec-h h2 { margin: 0; font: 700 20px/28px var(--law-font-ui); color: var(--law-text-heading); }
+[data-law] .sec-h .meta { font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+@media (min-width: 1024px) { [data-law] .sec-h { margin-inline: 24px; } }
+[data-law] .sheet-notice { margin: 0 16px 16px; display: flex; gap: 12px; align-items: flex-start; background: var(--law-bg-sunken); border-radius: var(--r-md); padding: 12px 16px; font: 400 15px/26px var(--law-font-ui); color: var(--law-text); }
+[data-law] .sheet-notice p { margin: 0; }
+[data-law] .sheet-notice .lbtn { margin-top: 8px; }
+@media (min-width: 1024px) { [data-law] .sheet-notice { margin-inline: 24px; } }
+
+/* المقدمة (ع-٤) */
+[data-law] .pre { font-family: var(--law-font-text); font-size: var(--law-text-size); line-height: var(--law-text-leading); color: var(--law-text); }
+[data-law] .pre-body { position: relative; padding: 0 16px; }
+@media (min-width: 1024px) { [data-law] .pre-body { padding: 0 24px; } }
+[data-law] .pre-body[data-collapsed] { max-height: calc(var(--law-collapse-lines) * var(--law-text-leading)); overflow: hidden; }
+[data-law] .pre-body[data-collapsed]::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 96px; background: linear-gradient(to bottom, rgba(251,250,246,0), var(--law-bg-sheet)); pointer-events: none; }
+.dark [data-law] .pre-body[data-collapsed]::after { background: linear-gradient(to bottom, rgba(20,64,63,0), var(--law-bg-sheet)); }
+[data-law] .instr + .instr { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--law-rule); }
+[data-law] .instr-h { margin: 0 0 8px; text-align: center; font: 700 var(--law-chapter-size)/var(--law-chapter-leading) var(--law-font-text); color: var(--law-text-heading); }
+[data-law] .instr-h .kind { display: block; font: 600 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .pre p { margin: 0; }
+[data-law] .basmala, [data-law] .opening, [data-law] .signature { text-align: center; }
+[data-law] .basmala, [data-law] .signature { font-weight: 700; }
+[data-law] .basmala { margin-bottom: 8px !important; }
+[data-law] .recital { color: var(--law-text-recital); font-size: var(--law-recital-size); line-height: var(--law-recital-leading); padding-inline-start: 24px; }
+@media (max-width: 639px) { [data-law] .recital { padding-inline-start: 16px; } }
+[data-law] .enact { font-weight: 700; margin: 16px 0 8px !important; }
+[data-law] .clause { margin-bottom: 8px !important; border-radius: var(--r-sm); }
+@media (min-width: 640px) { [data-law] .clause { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 0 8px; } }
+[data-law] .clause .ord { font-weight: 700; color: var(--law-text-heading); text-decoration: none; }
+[data-law] .clause .ord:hover { text-decoration: underline; }
+[data-law] .signature { margin-top: 16px !important; }
+[data-law] .pre-toggle { display: flex; justify-content: center; padding: 16px 16px 0; }
+[data-law] .pre-raw { white-space: pre-line; }
+[data-law] .tag { display: inline-flex; align-items: center; gap: 4px; min-height: var(--law-tag-h); padding: 0 10px; border-radius: var(--radius-pill); font: 600 14px/20px var(--law-font-ui); white-space: nowrap; vertical-align: middle; }
+[data-law] .tag svg { width: 16px; height: 16px; }
+[data-law] .tag--amended { color: var(--law-tag-amended-fg); background: var(--law-tag-amended-bg); box-shadow: inset 0 0 0 1px var(--law-tag-amended-edge); }
+[data-law] .tag--repealed { color: var(--law-tag-repealed-fg); background: var(--law-tag-repealed-bg); }
+[data-law] .tag--incomplete { color: var(--law-tag-incomplete-fg); background: var(--law-tag-incomplete-bg); box-shadow: inset 0 0 0 1px var(--law-tag-incomplete-edge); }
+[data-law] .pre-none { margin: 0 16px; padding: 16px; border: 1px dashed var(--law-border-control); border-radius: var(--r-md); font: 400 16px/28px var(--law-font-ui); color: var(--law-text); }
+@media (min-width: 1024px) { [data-law] .pre-none { margin-inline: 24px; } }
+[data-law] .pre-src { margin: 12px 16px 0; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+@media (min-width: 1024px) { [data-law] .pre-src { margin-inline: 24px; } }
+
+/* المتن (ع-٥) */
+[data-law] #law-text { margin-top: 40px; }
+[data-law] .part { margin-top: 32px; }
+[data-law] .part-h { margin: 0 16px; display: flex; align-items: center; gap: 16px; text-align: center; font: 700 var(--law-part-size)/var(--law-part-leading) var(--law-font-text); color: var(--law-text-heading); }
+[data-law] .part-h::before, [data-law] .part-h::after { content: ""; flex: 1 1 24px; min-width: 16px; height: 1px; background: var(--law-rule); }
+[data-law] .part-h span { flex: 0 1 auto; }
+[data-law] .part-meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 8px 16px 0; }
+[data-law] .part--repealed .part-h { color: var(--law-text-heading); }
+[data-law] .chap-h { margin: 24px 16px 8px; text-align: center; font: 700 var(--law-chapter-size)/var(--law-chapter-leading) var(--law-font-text); color: var(--law-text-heading); }
+[data-law] .fn--part { margin: 12px 16px 0; }
+@media (min-width: 1024px) { [data-law] .part-h, [data-law] .chap-h, [data-law] .part-meta, [data-law] .fn--part { margin-inline: 24px; } }
+[data-law] .art { margin: 8px 0 0; padding: 16px 16px; border-inline-start: var(--law-edge-w) solid transparent; }
+@media (min-width: 1024px) { [data-law] .art { margin: 8px 8px 0; padding: 20px 24px; border-radius: var(--r-md); } }
+[data-law] .art--amended { background: var(--law-bg-amended); border-inline-start-color: var(--law-edge-amended); }
+[data-law] .art--repealed { background: var(--law-bg-repealed); border-inline-start-color: var(--law-edge-repealed); }
+[data-law] .art-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+[data-law] .art-h { margin: 0; font: 700 var(--law-article-title-size)/var(--law-article-title-leading) var(--law-font-text); color: var(--law-text-article-title); }
+[data-law] .art-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+[data-law] .art-tools { margin-inline-start: auto; display: flex; gap: 2px; margin-block: -6px; }
+[data-law] .art-tools .desk { display: none; }
+@media (min-width: 1024px) { [data-law] .art-tools .desk { display: inline-grid; } [data-law] .art-tools .mob { display: none; } }
+[data-law] .art-text { margin-top: 8px; max-width: var(--law-measure); font-family: var(--law-font-text); font-size: var(--law-text-size); line-height: var(--law-text-leading); color: var(--law-text); }
+[data-law] .art-text p { margin: 0; }
+[data-law] .art-text p + p, [data-law] .art-text .para + .para { margin-top: 4px; }
+[data-law] .para, [data-law] .item { display: grid; grid-template-columns: 1.75em minmax(0, 1fr); }
+[data-law] .item { padding-inline-start: 1.75em; }
+[data-law] .para .num, [data-law] .item .num { font-weight: 700; }
+[data-law] .art-note { margin: 8px 0 0; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .art-foot { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+[data-law] .fnbtn[aria-expanded="true"] svg.chev { transform: rotate(180deg); }
+[data-law] .fn { margin-top: 12px; background: var(--law-bg-raised); border: 1px solid var(--law-border); border-radius: var(--r-md); padding: 16px; font: 400 16px/28px var(--law-font-ui); color: var(--law-text); max-width: 46rem; }
+[data-law] .fn .fn-title { margin: 0 0 8px; font: 700 15px/24px var(--law-font-ui); color: var(--law-text-heading); display: flex; gap: 8px; align-items: center; }
+[data-law] .fn dl { margin: 0; display: grid; gap: 4px 16px; }
+@media (min-width: 640px) { [data-law] .fn dl { grid-template-columns: 9rem minmax(0, 1fr); } }
+[data-law] .fn dt { font: 600 14px/28px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .fn dd { margin: 0 0 4px; }
+[data-law] .fn .prev { margin-top: 8px; background: var(--law-bg-sunken); border-radius: var(--r-sm); padding: 12px 16px; font: 400 18px/36px var(--law-font-text); color: var(--law-text); }
+[data-law] .fn .prev-l { margin: 12px 0 0; font: 600 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+[data-law] .fn .keep { margin: 12px 0 0; font-size: 14px; line-height: 24px; color: var(--law-text-secondary); }
+[data-law] .fn ul { margin: 0; padding-inline-start: 20px; }
+[data-law] .fn .links { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+[data-law] mark.hit { background: var(--law-bg-mark); color: var(--law-text-mark); box-shadow: inset 0 -2px 0 var(--law-edge-amended); border-radius: 2px; }
+[data-law] mark.hit--current { background: var(--law-bg-mark-current); color: var(--law-text-mark-current); outline: 2px solid var(--law-focus); outline-offset: 1px; }
+[data-law] .art.is-flash { animation: law-flash var(--law-flash) var(--law-ease-standard) 1 both; }
+[data-law] .art.is-flash-static { box-shadow: inset 0 0 0 9999px var(--law-bg-mark), 0 0 0 3px var(--law-focus); }
+@keyframes law-flash { 0%, 35% { box-shadow: inset 0 0 0 9999px var(--law-bg-mark), 0 0 0 3px var(--law-focus); } 100% { box-shadow: inset 0 0 0 9999px transparent, 0 0 0 3px transparent; } }
+[data-law] .loadrow { margin: 16px; padding: 16px; border: 1px dashed var(--law-border-control); border-radius: var(--r-md); font: 400 15px/24px var(--law-font-ui); color: var(--law-text); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+[data-law] .endrow { margin: 32px 16px 0; text-align: center; font: 600 14px/20px var(--law-font-ui); color: var(--law-text-secondary); display: flex; align-items: center; gap: 12px; }
+[data-law] .endrow::before, [data-law] .endrow::after { content: ""; flex: 1; height: 1px; background: var(--law-rule); }
+[data-law] .empty { margin: 0 16px; padding: 24px 16px; border: 1px dashed var(--law-border-control); border-radius: var(--r-md); text-align: center; font: 400 16px/28px var(--law-font-ui); color: var(--law-text); }
+[data-law] .empty p { margin: 0 0 12px; }
+[data-law] .skel { background: linear-gradient(90deg, var(--chip), #f3f6f5, var(--chip)); border-radius: 6px; height: 14px; margin: 10px 0; }
+@media (prefers-reduced-motion: no-preference) { [data-law] .skel { background-size: 200% 100%; animation: shimmer 1.4s linear infinite; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* لوح الجوال (dialog أصلي) */
+[data-law] dialog.sheet-dlg { border: 0; padding: 0; margin: auto auto 0; width: 100%; max-width: 640px; max-height: 85vh; border-radius: var(--r-lg) var(--r-lg) 0 0; background: var(--law-bg-raised); color: var(--law-text); box-shadow: var(--sh-md); }
+[data-law] dialog.sheet-dlg::backdrop { background: rgba(18,33,31,.42); }
+[data-law] .dlg-head { position: sticky; top: 0; background: var(--law-bg-raised); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 8px 8px 16px; padding-inline: 16px 8px; border-bottom: 1px solid var(--law-border); }
+[data-law] .dlg-head h2 { margin: 0; font: 700 16px/24px var(--font-body-ar); color: var(--law-text-heading); }
+[data-law] .dlg-body { padding: 12px 16px 24px; }
+[data-law] .dlg-body .filters { display: grid; gap: 8px; }
+[data-law] .dlg-body .seg { display: flex; } [data-law] .dlg-body .seg > span { width: 100%; justify-content: space-between; min-height: 48px; }
+[data-law] .dlg-body .toc a { min-height: 44px; }
+[data-law] .dlg-body .toc { display: block; position: static; max-height: none; border: 0; padding: 0; background: none; }
+[data-law] .menu { list-style: none; margin: 0; padding: 0; display: grid; }
+[data-law] .menu a, [data-law] .menu button { display: flex; align-items: center; gap: 12px; min-height: 48px; width: 100%; padding: 0 8px; border: 0; background: none; border-radius: var(--r-sm); font: 400 16px/24px var(--font-body-ar); color: var(--law-text); text-decoration: none; text-align: start; cursor: pointer; }
+[data-law] .menu svg { color: var(--law-text-heading); }
+[data-law] .menu .n { margin-inline-start: auto; color: var(--law-text-secondary); font-size: 14px; }
+[data-law] .menu [aria-disabled="true"] { color: var(--law-text-secondary); }
+
+/* صفحة المادة المستقلة (ع-١٥) */
+[data-law] .ap { max-width: 52rem; }
+[data-law] .ap .art { margin-inline: 0; border-radius: var(--r-md); }
+[data-law] .ap-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+[data-law] .cite { margin-top: 16px; background: var(--law-bg-sheet); border: 1px solid var(--law-border); border-radius: var(--r-md); padding: 16px; font: 400 15px/26px var(--law-font-ui); color: var(--law-text); }
+[data-law] .cite p { margin: 0; }
+[data-law] .cite .url { margin-top: 8px; display: block; direction: ltr; text-align: left; }
+[data-law] .ap-links { margin-top: 16px; display: grid; gap: 8px; }
+@media (min-width: 640px) { [data-law] .ap-links { grid-template-columns: 1fr 1fr; } }
+[data-law] .ap-links section { background: var(--law-bg-sheet); border: 1px solid var(--law-border); border-radius: var(--r-md); padding: 12px 16px; font: 400 15px/26px var(--law-font-ui); }
+[data-law] .ap-links h2 { margin: 0 0 4px; font: 700 15px/24px var(--law-font-ui); color: var(--law-text-heading); }
+[data-law] .ap-links p { margin: 0; color: var(--law-text-secondary); }
+[data-law] .pager { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+[data-law] .pager a { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 64px; padding: 8px 12px; border: 1px solid var(--law-border-control); border-radius: var(--r-md); background: var(--law-bg-raised); text-decoration: none; color: var(--law-text-heading); font: 700 16px/24px var(--law-font-ui); }
+[data-law] .pager a small { font: 400 13px/20px var(--law-font-ui); color: var(--law-text-secondary); display: flex; align-items: center; gap: 4px; }
+[data-law] .pager .next { text-align: end; align-items: flex-end; }
+[data-law] .pager .next small { flex-direction: row; }
+
+
+
+@media (prefers-reduced-motion: reduce) {
+  [data-law] .art.is-flash-static { box-shadow: inset 0 0 0 9999px var(--law-bg-mark), 0 0 0 3px var(--law-focus); }
+  [data-law] .locator { transition: none; }
+  [data-law] .art.is-flash { animation: none; box-shadow: inset 0 0 0 9999px var(--law-bg-mark), 0 0 0 3px var(--law-focus); }
+}
+
+/* الطباعة (ع-٣) */
+@media print {
+  [data-law] { background: #fff; }
+  [data-law] .crumbs, [data-law] .law-toolbar, [data-law] .locator, [data-law] .toc, [data-law] .art-tools, [data-law] .art-foot, [data-law] .fnbtn, [data-law] .fn .links, [data-law] .pre-toggle, [data-law] .skip, [data-law] .banner .actions, [data-law] .search-hidden, [data-law] .site-foot { display: none !important; }
+  [data-law] .law-wrap { max-width: none; padding: 0; }
+  [data-law] .law-grid { display: block; }
+  [data-law] .sheet { border: 0; padding: 0; margin: 0; }
+  [data-law] .pre-body[data-collapsed] { max-height: none; overflow: visible; }
+  [data-law] .pre-body::after { display: none !important; }
+  [data-law] .fn[hidden] { display: block !important; }
+  [data-law] .art { background: none !important; border-inline-start-width: 2pt; break-inside: avoid; }
+  [data-law] .tag, [data-law] .status { background: none !important; color: #000 !important; box-shadow: none !important; border: 1pt solid #000; }
+  [data-law] .print-only { display: block !important; }
+  @page { margin: 18mm 16mm; }
+}
+[data-law] .print-only { display: none; }
+
+/* زيادات التنفيذ (لا رمز جديد) */
+[data-law] .site-foot { max-width: var(--maxw); margin: 0 auto; padding: 24px 16px 32px; display: flex; flex-wrap: wrap; gap: 8px 16px; font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); border-top: 1px solid var(--law-border); }
+[data-law] .site-foot a { min-height: 44px; display: inline-flex; align-items: center; }
+[data-law] .art[data-filtered], [data-law] .part[data-filtered] { display: none; }
+[data-law] .art { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+[data-law] .art.is-flash, [data-law] .art.is-flash-static, [data-law] .art:target { content-visibility: visible; }
+[data-law] .crumb-cur { color: var(--law-text); }
+[data-law] .pre-label { font: 400 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
+@media print { [data-law] .art { content-visibility: visible; } [data-law] .art[data-filtered], [data-law] .part[data-filtered] { display: block !important; } }
