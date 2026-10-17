@@ -1,6 +1,6 @@
 // اختبار حالة العمل بتاريخ السريان: «نظام التنفيذ» م/53 ساري حتى 27/10/2026، ثم م/237 ساري وم/53 مستبدل.
 // الصفوف مطابقة لوجه البحث في الإنتاج (16/10/2026). التشغيل: npx tsx scripts/test-work-status-asof.ts
-import { computeSurface, workStatusAsOf, type SurfaceRow, type SurfaceMember } from "@/lib/modules/legal-core/search-surface";
+import { computeSurface, unitStatusAsOf, workStatusAsOf, type SurfaceRow, type SurfaceMember } from "@/lib/modules/legal-core/search-surface";
 
 const WORK = "we:cmpwi0c2p001znxffggwph0fg";
 const MIXED = "cmpwi0c2p001znxffggwph0fg";
@@ -45,6 +45,20 @@ expect("2026-10-28", OTHER, "ساري");
 const none = workStatusAsOf("x", "ملغى", computeSurface(rows, members, "2026-10-28"));
 if (none.status !== "ملغى" || none.derived) failed += 1;
 console.log(`${none.status === "ملغى" && !none.derived ? "✓" : "✗"} نظام خارج الوجه يبقى «ملغى»`);
+
+// حالة المادة تتبع عملها: مواد م/237 «صادر لم يسرِ بعد» تصير «ساري» يوم 28/10، ومواد م/53 «ساري» تصير «مستبدل».
+function unit(asOf: string, id: string, recordedUnit: string, want: string) {
+  const got = unitStatusAsOf(recordedUnit, workStatusAsOf(id, recorded[id], computeSurface(rows, members, asOf)));
+  if (got !== want) failed += 1;
+  console.log(`${got === want ? "✓" : "✗"} ${asOf} مادة في ${id} «${recordedUnit}» → ${got}`);
+}
+unit("2026-10-27", NEW, "صادر لم يسرِ بعد", "صادر لم يسرِ بعد");
+unit("2026-10-28", NEW, "صادر لم يسرِ بعد", "ساري");
+unit("2026-10-27", OLD, "ساري", "ساري");
+unit("2026-10-28", OLD, "ساري", "مستبدل");
+unit("2026-10-28", OLD, "ملغاة", "ملغاة"); // مادة ملغاة تبقى ملغاة
+unit("2026-10-28", OTHER, "ساري", "ساري");
+unit("2026-10-28", MIXED, "ساري", "ساري"); // السجل المخلوط لا يُشتق
 
 if (failed) {
   console.error(`\n${failed} فشل`);

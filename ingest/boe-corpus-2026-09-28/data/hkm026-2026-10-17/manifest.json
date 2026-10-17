@@ -1,0 +1,116 @@
+{
+  "law_id": "boe26-d757638789cfefd3fe9c817f",
+  "guid": "831af69c-9bad-4f06-9843-b33100926b3c",
+  "name": "تنظيم المؤسسة العامة للري الصادر بقرار مجلس الوزراء رقم (43) وتاريخ 1447/1/13هـ",
+  "slug": "تنظيم-المؤسسه-العامه-للري-الصادر-بقرار-مجلس-الوزراء-رقم-43-وتاريخ-1447-1-13ه",
+  "effective": "2025-07-18",
+  "instrument": "قرار مجلس الوزراء رقم (43) وتاريخ 1447/1/13هـ",
+  "replace_clause": "ثانياً: يحل التنظيم -المشار إليه في البند (أولاً)- محل تنظيم المؤسسة العامة للري الصادر بقرار مجلس الوزراء رقم (187) وتاريخ 15 / 4 / 1439هـ.",
+  "articles": [
+    {
+      "id": "boe26-fe887de541ffa1fc7f2154cd",
+      "n": 1,
+      "heading": "المادة الأولى",
+      "body_sha256": "69e6f4e3240ad1a920f85e34c777639b95592cb68ee954fc3f3b1560822efc5f"
+    },
+    {
+      "id": "boe26-ee8b2f89eab39d6954038b50",
+      "n": 2,
+      "heading": "المادة الثانية",
+      "body_sha256": "1c35a547cd392453cb5f8bf5185ca1994d4c365e5044914edb41341ad32ae472"
+    },
+    {
+      "id": "boe26-f1d52c3b8b216367b9598017",
+      "n": 3,
+      "heading": "المادة الثالثة",
+      "body_sha256": "48ca9043af70c1baed7ba8cb48f2c9ad3a4a543af663116adf0453dbe0d639c6"
+    },
+    {
+      "id": "boe26-87a91a54e61eed77618ff441",
+      "n": 4,
+      "heading": "المادة الرابعة",
+      "body_sha256": "5d5e707208e227ac3a32d42e25e53d995861684a06fabb22dd4cb529ef284694"
+    },
+    {
+      "id": "boe26-16291e9ac09f4b4b2aa1ac7e",
+      "n": 5,
+      "heading": "المادة الخامسة",
+      "body_sha256": "0de20cc07580e39a7e785f304f17d44512c07eb1db7efdc654042801139176a0"
+    },
+    {
+      "id": "boe26-2ca60297b64210c90cd63878",
+      "n": 6,
+      "heading": "المادة السادسة",
+      "body_sha256": "96912ac28ca126b4eba2e7bfdf355287d8befe352ef1b5ab50c0b648337e4ede"
+    },
+    {
+      "id": "boe26-da645b66d58f43883d12462f",
+      "n": 7,
+      "heading": "المادة السابعة",
+      "body_sha256": "14f4a8f8aeef0959be193915cdf352c66c799451e115c2623252c6b9dd58380e"
+    },
+    {
+      "id": "boe26-7c46e5690767b0c5bfc80785",
+      "n": 8,
+      "heading": "المادة الثامنة",
+      "body_sha256": "62290bff6bae55a7561bc832bd439ee348efbc442ad9f922596d155415dc9dd9"
+    },
+    {
+      "id": "boe26-17aa39d2673daf3d77742e6e",
+      "n": 9,
+      "heading": "المادة التاسعة",
+      "body_sha256": "31c938f1280211eb1b82df31af5ea3b060b37896dfdf31f6e6c92bf0855e8234"
+    },
+    {
+      "id": "boe26-cc60ca9fd602110fdf8340c8",
+      "n": 10,
+      "heading": "المادة العاشرة",
+      "body_sha256": "c5e1e537689507eb3199e42a4a5472e3d8dae0242ff85dca1aa301a72b495ae9"
+    },
+    {
+      "id": "boe26-ac8beedbb4c23066c0aabe92",
+      "n": 11,
+      "heading": "المادة الحادية عشرة",
+      "body_sha256": "1e42a1d82f7f34d498cfd1244c6110887619cbaa0ee9a55e0120dd72e26fb657"
+    },
+    {
+      "id": "boe26-fba641d6d68ae26676b02ee9",
+      "n": 12,
+      "heading": "المادة الثانية عشرة",
+      "body_sha256": "bbad5385ea5d82de8620546a9e61ed2f20447f5f2e968a542b1837b6a34b1570"
+    },
+    {
+      "id": "boe26-ffc73bc20478832c611a6816",
+      "n": 13,
+      "heading": "المادة الثالثة عشرة",
+      "body_sha256": "8bc55307e5073443bcad43d64edb3db6b63ca952c89c5c30c369210026d774d1"
+    },
+    {
+      "id": "boe26-0d5ec47da4d2394686d0a68b",
+      "n": 14,
+      "heading": "المادة الرابعة عشرة",
+      "body_sha256": "89551bd83bb5aa6b5de4deaf7568ff6769cc13330690857aaa4095976d4b01ef"
+    },
+    {
+      "id": "boe26-1ea7c5884e6a645ceb8c2a85",
+      "n": 15,
+      "heading": "المادة الخامسة عشرة",
+      "body_sha256": "24f47e1e66c5335327bf89355b41a3a1388d2078a8ac58b1d8cce8d7ee615470"
+    },
+    {
+      "id": "boe26-71da20f3b86cbd96c5d174f3",
+      "n": 16,
+      "heading": "المادة السادسة عشرة",
+      "body_sha256": "9482d0a3692d5faaf2e60c464c09a6dbbbf213e45670171c50ebd2f5461e7a69"
+    }
+  ],
+  "expected": {
+    "legal_systems": 1,
+    "legal_articles": 16,
+    "verification": 18,
+    "search_surface": 2,
+    "search_surface_member": 2,
+    "law_card": 1
+  },
+  "content_md5": "40e0758b7263883ce0f64f21ce47891f"
+}
