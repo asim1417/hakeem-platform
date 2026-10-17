@@ -35,8 +35,9 @@ export interface RulingHit {
 
 const PII_DIGIT = "[0-9\\u0660-\\u0669]";
 const PII_GAP = "[\\s\\u00a0\\u200c]*";
+const ID_SHAPED = /^[12\u0661\u0662][0-9\u0660-\u0669]{9}$/;
 
-/** يحمي أرقام المواد والصكوك والتواريخ من الحجب ثم يعيدها. */
+/** يحمي أرقام المواد والصكوك (عدا ما بشكل هوية) والتواريخ من الحجب ثم يعيدها. */
 function shieldLegalNumbers(text: string): { text: string; restore: (s: string) => string } {
   const held: string[] = [];
   const keep = (chunk: string) => {
@@ -46,7 +47,11 @@ function shieldLegalNumbers(text: string): { text: string; restore: (s: string) 
   };
   let src = text;
   src = src.replace(new RegExp(`${PII_DIGIT}{1,2}${PII_GAP}[\\/\\-]${PII_GAP}${PII_DIGIT}{1,2}${PII_GAP}[\\/\\-]${PII_GAP}${PII_DIGIT}{3,4}`, "g"), keep);
-  src = src.replace(new RegExp(`(?:المادة|مادة|صك|صكوك)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), keep);
+  src = src.replace(new RegExp(`(?:المادة|مادة)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), keep);
+  // قرار المالك (17/10/2026): رقم بعد «صك» بشكل هوية (عشر خانات تبدأ بـ 1 أو 2) يُحجب؛ غيره من أرقام الصكوك يبقى.
+  src = src.replace(new RegExp(`(?:صك|صكوك)\\s*\\(?\\s*${PII_DIGIT}(?:${PII_GAP}${PII_DIGIT}){0,12}\\s*\\)?`, "g"), (chunk) =>
+    ID_SHAPED.test(chunk.replace(/[^0-9\u0660-\u0669]/g, "")) ? chunk : keep(chunk),
+  );
   return {
     text: src,
     restore: (s) => s.replace(/\u0000H(\d+)\u0000/g, (_, i) => held[Number(i)] ?? ""),

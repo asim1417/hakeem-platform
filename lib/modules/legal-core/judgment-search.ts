@@ -12,6 +12,7 @@ import {
 } from "@/lib/modules/legal-core/rulings-search";
 import { queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
 import { rulingNumbersSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
+import { maskPersonalData } from "@/lib/rulings/research/mask";
 
 /** كلمات tsquery مُطبَّعة (نفس تطبيع search_norm) بصيغة OR — نظير بحث المواد. */
 function judgmentTsQuery(query: string): string {
@@ -29,7 +30,7 @@ function judgmentTsQuery(query: string): string {
  * والقرار فقط، والمتن والاستئناف يُطابَقان منقّحين؛ فلا يُعثر على حكم بجزء من رقم محجوب ولا
  * بإضافة «المادة» أو «صك» قبله.
  */
-export async function searchJudgments(rawQuery: string, page: number, limit: number) {
+export async function searchJudgments(rawQuery: string, page: number, limit: number, opts: { maskNames?: boolean } = {}) {
   const parts = splitRulingQuery(rawQuery);
   if (!parts.text && !parts.numbers.length) return [];
   // المفهرس للألفاظ العربية فقط: لفظ حساس وحده قد يطابق في search_norm بقايا محجوب لا ينظّفها #704.
@@ -60,17 +61,17 @@ export async function searchJudgments(rawQuery: string, page: number, limit: num
         const visible = parts.sensitiveTokens.length
           ? rows.filter((r) => tokensInRedacted(`${r.judgmentTitle ?? ""} ${r.judgmentText ?? ""} ${r.appealText ?? ""}`, queryTokens(parts.text), "any"))
           : rows;
-        if (visible.length) return visible.map((judgment) => mapJudgment(judgment, queryLabel(parts)));
+        if (visible.length) return visible.map((judgment) => mapJudgment(judgment, queryLabel(parts), opts.maskNames));
       }
     } catch {
       /* العمود/الفهرس غير مطبَّق بعد → سقوط للمعجميّ */
     }
   }
-  return searchJudgmentsLexical(parts, page, limit);
+  return searchJudgmentsLexical(parts, page, limit, opts.maskNames);
 }
 
 /** المسار المعجميّ الاحتياطيّ: احتواء على المحتوى المنقّح داخل القاعدة (العنوان والمتن والاستئناف). */
-async function searchJudgmentsLexical(parts: RulingQueryParts, page: number, limit: number) {
+async function searchJudgmentsLexical(parts: RulingQueryParts, page: number, limit: number, maskNames = false) {
   const ids = await findRulingIdsRedacted(parts, { limit, offset: (page - 1) * limit });
   if (!ids.length) return [];
   const judgments = await prisma.judicialCase.findMany({
@@ -79,7 +80,7 @@ async function searchJudgmentsLexical(parts: RulingQueryParts, page: number, lim
   });
   const order = new Map(ids.map((id, i) => [id, i]));
   judgments.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-  return judgments.map((judgment) => mapJudgment(judgment, queryLabel(parts)));
+  return judgments.map((judgment) => mapJudgment(judgment, queryLabel(parts), maskNames));
 }
 
 const queryLabel = (parts: RulingQueryParts) => parts.text || parts.numbers.join(" ");
@@ -88,7 +89,7 @@ type JudgmentWithLinks = Prisma.JudicialCaseGetPayload<{
   include: { articleLinks: { include: { article: true } } };
 }>;
 
-function mapJudgment(judgment: JudgmentWithLinks, query: string) {
+function mapJudgment(judgment: JudgmentWithLinks, query: string, maskNames = false) {
   return ({
     id: judgment.id,
     type: "judgment",
@@ -98,7 +99,7 @@ function mapJudgment(judgment: JudgmentWithLinks, query: string) {
     articleNumber: null,
     title: judgment.judgmentTitle ?? "حكم قضائي مستورد",
     articleTitle: judgment.judgmentTitle ?? "حكم قضائي مستورد",
-    snippet: buildJudgmentSnippet(judgment.judgmentText ?? "", query),
+    snippet: buildJudgmentSnippet(judgment.judgmentText ?? "", query, maskNames),
     matchedParagraphs: [],
     matchedTerms: [query],
     category: judgment.classification,
@@ -114,9 +115,9 @@ function mapJudgment(judgment: JudgmentWithLinks, query: string) {
   });
 }
 
-/** مقتطف من النص بعد حجبه كاملًا، فلا يقطع القصُّ رقمًا يفلت من الحجب. */
-export function buildJudgmentSnippet(raw: string, query: string) {
-  const text = redactPII(raw);
+/** مقتطف من النص بعد حجبه كاملًا، فلا يقطع القصُّ رقمًا يفلت من الحجب. maskNames: أسماء الأفراد أيضًا (المتدرّب). */
+export function buildJudgmentSnippet(raw: string, query: string, maskNames = false) {
+  const text = maskNames ? maskPersonalData(raw) : redactPII(raw);
   const index = query ? text.indexOf(query) : -1;
   if (index < 0) return text.slice(0, 420);
   const start = Math.max(index - 140, 0);
