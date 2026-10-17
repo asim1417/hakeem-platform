@@ -30,7 +30,7 @@ import {
 } from "../lib/modules/editorial/intake";
 import { payloadHash } from "../lib/modules/editorial/payload";
 import { getSystemSummary, listAudit, listChangeSetsDetailed, summarizeChange } from "../lib/modules/editorial/read";
-import { readEditorialSettings, saveEditorialSettings } from "../lib/modules/editorial/settings";
+import { previewEditorialSettings, readEditorialSettings, saveEditorialSettings } from "../lib/modules/editorial/settings";
 import {
   createChangeSet,
   decideChangeSet,
@@ -703,7 +703,9 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await pool.query(readFileSync(join(root, "prisma/migrations/20261017090000_editorial_desk_phase0/migration.sql"), "utf8"));
   ok((await checkDeskIntegrity(freshDb)).ok, "إعادة تطبيق الترحيل تستعيد الحماية");
 
-  await unificationTests({ pool, db, one, num, setBinding, writeConfig, owner, editor, reviewer, agent, root });
+  const unifyCtx = { pool, db, one, num, setBinding, writeConfig, owner, editor, reviewer, agent, root };
+  await unificationTests(unifyCtx);
+  await round2Tests(unifyCtx);
 
   await pool.end();
 }
@@ -1119,31 +1121,33 @@ async function unificationTests(c: UnifyCtx) {
   const e1 = await decideAmendmentOp(db, reviewer, "OP-E", { decision: "approved", note: "مطابق" });
   ok(e1.status === "pending" && e1.approvals === 1 && e1.requiredApprovals === 2, "ق-٦ أول موافقة تفتح مقترحًا معلّقًا (1 من 2)");
   ok((await num(`SELECT count(*) FROM uqn_fix.amendment_review`)) === reviewsBefore, "ولا يُكتب شيء في المصدر قبل الاكتمال");
-  const qPending = await listAmendmentQueue(db, { limit: 100 }, reviewer);
+  // ملحق الجولة الثانية: ما وافق عليه المشاهد وينتظر غيره في عرض waiting_others لا في mine.
+  const qPending = await listAmendmentQueue(db, { limit: 100, view: "waiting_others" }, reviewer);
   const pendingE = qPending.items.find((i) => i.op_id === "OP-E");
   ok(pendingE?.pending_approvals === 1 && pendingE.required_approvals === 2 && pendingE.my_approval === true && pendingE.pending_change_set_id === e1.changeSetId, "العنصر يبقى في الطابور بحقول المقترح المعلّق");
   ok((await listAmendmentQueue(db, { limit: 100 }, reviewer2)).items.find((i) => i.op_id === "OP-E")?.my_approval === false, "my_approval لكل مشاهد");
-  await rejects(() => decideAmendmentOp(db, reviewer, "OP-E", { decision: "approved" }), "ALREADY_DECIDED", "المعتمِد نفسه لا يوافق مرتين");
+  const hE = e1.decisionHash;
+  await rejects(() => decideAmendmentOp(db, reviewer, "OP-E", { decision: "approved", expectedDecisionHash: hE }), "ALREADY_DECIDED", "المعتمِد نفسه لا يوافق مرتين");
   const ce = await rejects(
-    () => decideAmendmentOp(db, reviewer2, "OP-E", { decision: "approved_with_edit", corrected: { article_number: 2 }, note: "تصحيح" }),
+    () => decideAmendmentOp(db, reviewer2, "OP-E", { decision: "approved_with_edit", corrected: { article_number: 2 }, note: "تصحيح", expectedDecisionHash: hE }),
     "CONFLICT",
     "الموافقات اللاحقة على القرار نفسه فقط",
   );
   ok(ce?.detail?.openChangeSetId === e1.changeSetId, "والتعارض يعيد معرّف المقترح المعلّق");
   await rejects(() => decideAmendmentOp(db, agent, "OP-E", { decision: "approved" }), "AGENT_CANNOT_DECIDE", "الوكيل لا يصوّت");
-  const e2 = await decideAmendmentOp(db, reviewer2, "OP-E", { decision: "approved", note: "موافق أيضًا" });
+  const e2 = await decideAmendmentOp(db, reviewer2, "OP-E", { decision: "approved", note: "موافق أيضًا", expectedDecisionHash: hE });
   ok(e2.status === "published" && e2.approvals === 2, "الموافقة الثانية على القرار نفسه تكمله");
   const rowE = await one<{ decision: string; reviewer: string }>(`SELECT decision, reviewer FROM uqn_fix.amendment_review WHERE op_id = 'OP-E'`);
   ok(rowE.decision === "approved" && rowE.reviewer === "u-reviewer+u-reviewer2", "ويُكتب القرار في المصدر صفًّا واحدًا باسم المعتمِدَين");
 
-  await decideAmendmentOp(db, reviewer, "OP-F", { decision: "approved" });
-  const fr = await decideAmendmentOp(db, reviewer2, "OP-F", { decision: "rejected", note: "النص لا يطابق الأداة" });
+  const f1 = await decideAmendmentOp(db, reviewer, "OP-F", { decision: "approved" });
+  const fr = await decideAmendmentOp(db, reviewer2, "OP-F", { decision: "rejected", note: "النص لا يطابق الأداة", expectedDecisionHash: f1.decisionHash });
   ok(fr.status === "rejected", "رفض أي معتمِد يرفض المقترح المعلّق");
   ok((await num(`SELECT count(*) FROM uqn_fix.amendment_review WHERE op_id = 'OP-F'`)) === 0, "ولا يُكتب قرار في المصدر");
   ok((await listAmendmentQueue(db, { limit: 100 })).items.find((i) => i.op_id === "OP-F")?.pending_approvals === 0, "ويعود العنصر إلى الطابور بلا مقترح");
   const fr2 = await decideAmendmentOp(db, reviewer2, "OP-F", { decision: "rejected", note: "النص لا يطابق الأداة" });
   ok(fr2.status === "pending", "الرفض قرار يحتاج الحد نفسه (مقترح رفض معلّق)");
-  const fr3 = await decideAmendmentOp(db, reviewer, "OP-F", { decision: "rejected", note: "أوافق على الرفض" });
+  const fr3 = await decideAmendmentOp(db, reviewer, "OP-F", { decision: "rejected", note: "أوافق على الرفض", expectedDecisionHash: fr2.decisionHash });
   ok(fr3.status === "published" && (await one<{ decision: string }>(`SELECT decision FROM uqn_fix.amendment_review WHERE op_id = 'OP-F'`)).decision === "rejected", "واكتمال مقترح الرفض يكتب الرفض في المصدر");
 
   const g1 = await decideAmendmentOp(db, reviewer, "OP-G", { decision: "approved" });
@@ -1158,9 +1162,9 @@ async function unificationTests(c: UnifyCtx) {
 
   const p4a = await decidePrinciple(db, reviewer, "P4", { decision: "approve" });
   ok(p4a.status === "pending" && p4a.reviewStatus === "needs_review", "المبدأ: أول موافقة معلّقة والحالة لم تتغير");
-  ok((await listPrincipleQueue(db, {}, reviewer)).items.find((i) => i.id === "P4")?.pending_approvals === 1, "طابور المبادئ يعرض المقترح المعلّق");
+  ok((await listPrincipleQueue(db, { view: "waiting_others" }, reviewer)).items.find((i) => i.id === "P4")?.pending_approvals === 1, "طابور المبادئ يعرض المقترح المعلّق");
   ok((await listPrincipleQueue(db, {})).items.find((i) => i.id === "P4")?.source_case_id === "c1", "source_case_id للمبدأ");
-  const p4b = await decidePrinciple(db, kindOnly, "P4", { decision: "approve" });
+  const p4b = await decidePrinciple(db, kindOnly, "P4", { decision: "approve", expectedDecisionHash: p4a.decisionHash });
   ok(p4b.status === "published" && p4b.reviewStatus === "reviewed", "وموافقة معتمِد مكلَّف بالمبادئ وحدها تكمله");
   ok((await one<{ reviewStatus: string }>(`SELECT "reviewStatus" FROM judicial_principles WHERE id = 'P4'`)).reviewStatus === "reviewed", "والحالة محفوظة في المصدر");
   await writeConfig((cfg3) => {
@@ -1238,6 +1242,201 @@ async function unificationTests(c: UnifyCtx) {
   await pool.query(`DROP TRIGGER editorial_config_no_truncate ON index_sync`);
   await pool.query(readFileSync(join(c.root, "prisma/migrations/20261017090000_editorial_desk_phase0/migration.sql"), "utf8"));
   ok((await checkDeskIntegrity(db)).ok, "إعادة تطبيق الترحيل تستعيد الحماية كلها");
+}
+
+// ── ملحق العقد — الجولة الثانية (م١، م٤، م٩؛ ق٢٣، ق٢٦، ق٣١، ق٣٢) ─────────────
+
+async function round2Tests(c: UnifyCtx) {
+  const { pool, db, one, num, writeConfig, owner, reviewer } = c;
+  const reviewer2 = actor("u-reviewer2", "JUDGE", ["reviewer", "publisher"]);
+  const kindOnly = actor("u-kind", "LAWYER", ["reviewer"]);
+  const writes = async () =>
+    num(`SELECT (SELECT count(*) FROM change_set) + (SELECT count(*) FROM editorial_change) + (SELECT count(*) FROM review_decision)
+               + (SELECT count(*) FROM uqn_fix.amendment_review) + (SELECT count(*) FROM editorial_config)`);
+  const addOp = (id: string, title: string, article: number | null, confidence = "rule_exact") =>
+    pool.query(
+      `INSERT INTO uqn_fix.amendment_op (op_id, effect_id, instrument_kind, instrument_no, source_url, target_law_title, target_hakeem_code,
+          target_resolution, op_type, article_number, new_text, risks, confidence, verbatim_in_source, evidence_quote, raw)
+       VALUES ($1, 'E1', 'royal_decree', 'م/9', 'https://uqn.gov.sa/details?p=9', $2, 'S1', 'hakeem_reference_code',
+               'replace_article_text', $3, 'نص جديد', '{}'::text[], $4, TRUE, 'تعدل المادة لتكون بالنص الآتي', '{}'::jsonb)`,
+      [id, title, article, confidence],
+    );
+  // الترتيب المتوقع: rule_exact حرفي محلول أولًا، ثم النظام، ثم المادة NULLS LAST، ثم المعرّف.
+  await addOp("K3", "نظام ترقيم أ", null);
+  await addOp("K1", "نظام ترقيم أ", 1);
+  await addOp("K2", "نظام ترقيم أ", 2);
+  await addOp("K6", "نظام ترقيم ب", null);
+  await addOp("K4", "نظام ترقيم ب", 5);
+  await addOp("K5", "نظام ترقيم ب", 7);
+  await addOp("K7", "نظام ترقيم أ", 3, "needs_review");
+  const expected = ["K1", "K2", "K3", "K4", "K5", "K6", "K7"];
+  const filter = { target: "ترقيم" };
+
+  console.log("\n— الجولة الثانية: الترقيم بالمفتاح —");
+  const full = await listAmendmentQueue(db, { ...filter, limit: 100 });
+  ok(full.items.map((i) => i.op_id).join(",") === expected.join(",") && full.next_cursor === null, "ترتيب الطابور الحالي محفوظ (الأولوية، النظام، المادة NULLS LAST، المعرّف)");
+  const walked: string[] = [];
+  let cursor: string | null = null;
+  let pages = 0;
+  do {
+    const page: Awaited<ReturnType<typeof listAmendmentQueue>> = await listAmendmentQueue(db, { ...filter, limit: 2, after: cursor });
+    walked.push(...page.items.map((i) => i.op_id));
+    cursor = page.next_cursor;
+    pages += 1;
+  } while (cursor && pages < 10);
+  ok(walked.join(",") === expected.join(",") && pages === 4, "المرور بالمؤشر صفحةً صفحة يعطي الترتيب نفسه بلا تكرار ولا تخطٍّ (عبر حد الأولوية والمادة الفارغة)");
+  await rejects(() => listAmendmentQueue(db, { ...filter, after: "not-a-cursor" }), "INVALID_INPUT", "المؤشر غير الصالح يُرفض");
+  // التكافؤ مع عبارة الترتيب الأصلية على كل العمليات غير المقررة في القاعدة.
+  const original = await pool.query(
+    `SELECT o.op_id FROM uqn_fix.amendment_op o
+      WHERE NOT EXISTS (SELECT 1 FROM uqn_fix.amendment_review r WHERE r.op_id = o.op_id)
+      ORDER BY (o.confidence = 'rule_exact' AND o.verbatim_in_source IS TRUE AND o.target_hakeem_code IS NOT NULL) DESC,
+               o.target_law_title, o.article_number NULLS LAST, o.op_id`,
+  );
+  ok(
+    (await listAmendmentQueue(db, { limit: 100 })).items.map((i) => i.op_id).join(",") === original.rows.map((r) => r.op_id).join(","),
+    "مفاتيح الترتيب الجديدة تكافئ عبارة ORDER BY الأصلية على كل الطابور",
+  );
+
+  await writeConfig((cfg) => {
+    cfg.policies.review_amendment_op.minApprovals = 2;
+    cfg.policies.review_principle.minApprovals = 2;
+  });
+  const page1 = await listAmendmentQueue(db, { ...filter, limit: 3 }, reviewer);
+  ok(page1.items.map((i) => i.op_id).join(",") === "K1,K2,K3" && page1.next_cursor !== null, "الصفحة الأولى ثلاثة عناصر ومعها next_cursor");
+  const k1 = await decideAmendmentOp(db, reviewer, "K1", { decision: "approved", note: "مطابق للأداة" });
+  const k2 = await decideAmendmentOp(db, reviewer, "K2", { decision: "approved" });
+  const k3 = await decideAmendmentOp(db, reviewer, "K3", { decision: "approved_with_edit", corrected: { article_number: 4 }, note: "رقم المادة 4" });
+  const page2 = await listAmendmentQueue(db, { ...filter, limit: 3, after: page1.next_cursor }, reviewer);
+  ok(page2.items[0]?.op_id === "K4", "ق٢٦-١ بعد قرارات محلية في الصفحة الأولى، أول عنصر في التالية هو الرابع في الترتيب الأصلي (صفر تخطٍّ)");
+  const byOffset = await listAmendmentQueue(db, { ...filter, limit: 3, offset: 3 }, reviewer);
+  ok(byOffset.items[0]?.op_id !== "K4", "والإزاحة القديمة (ما زالت مقبولة للتوافق) كانت ستتخطاه");
+
+  console.log("\n— الجولة الثانية: العرضان mine وwaiting_others —");
+  const mine = await listAmendmentQueue(db, { ...filter, limit: 100 }, reviewer);
+  ok(mine.items.map((i) => i.op_id).join(",") === "K4,K5,K6,K7" && mine.total === 4, "ق٣٢ العرض الافتراضي mine يستبعد ما وافقتُ عليه وينتظر غيري، وtotal له");
+  ok(mine.waiting_others === 3, "waiting_others = 3");
+  const waiting = await listAmendmentQueue(db, { ...filter, limit: 100, view: "waiting_others" }, reviewer);
+  ok(waiting.items.map((i) => i.op_id).join(",") === "K1,K2,K3" && waiting.total === 3 && waiting.items.every((i) => i.my_approval), "waiting_others يعرض ما وافقتُ عليه وينتظر غيري");
+  const other = await listAmendmentQueue(db, { ...filter, limit: 100 }, reviewer2);
+  ok(other.total === 7 && other.waiting_others === 0, "والمعتمِد الآخر يراها كلها في mine (تنتظر قراره)");
+
+  console.log("\n— الجولة الثانية: حمولة القرار المعلّق —");
+  const i1 = other.items.find((i) => i.op_id === "K1");
+  ok(
+    i1?.pending_decision?.decision === "approved" && i1.pending_corrected === null && i1.pending_note === "مطابق للأداة" && i1.pending_decision_hash === k1.decisionHash && /^[0-9a-f]{64}$/.test(i1.pending_decision_hash ?? ""),
+    "ق٢٣-١ القرار المعروض وملاحظته وبصمته",
+  );
+  ok(i1?.pending_approvers.length === 1 && i1.pending_approvers[0].id === "u-reviewer" && i1.pending_approvers[0].name === "معتمد" && !Number.isNaN(Date.parse(i1.pending_approvers[0].at)), "أصحاب الموافقات باسمهم ووقتهم");
+  const i3 = other.items.find((i) => i.op_id === "K3");
+  ok(i3?.pending_decision?.decision === "approved_with_edit" && i3.pending_corrected?.article_number === 4, "حمولة التصحيح في القرار المعلّق");
+  ok(other.items.find((i) => i.op_id === "K4")?.pending_decision === null && other.items.find((i) => i.op_id === "K4")?.pending_approvers.length === 0, "العنصر بلا مقترح: الحقول فارغة");
+
+  console.log("\n— الجولة الثانية: expectedDecisionHash —");
+  let before = await writes();
+  await rejects(() => decideAmendmentOp(db, reviewer2, "K1", { decision: "approved" }), "CONFLICT", "البصمة إلزامية حين يوجد قرار معلّق (409)");
+  const wrong = await rejects(() => decideAmendmentOp(db, reviewer2, "K1", { decision: "approved", expectedDecisionHash: "0".repeat(64) }), "CONFLICT", "بصمة مخالفة = 409");
+  ok(wrong?.message === "تغيّر القرار المعروض؛ راجعه." && wrong.detail?.currentDecisionHash === k1.decisionHash, "برسالة «تغيّر القرار المعروض؛ راجعه» ومعها البصمة الحالية");
+  await rejects(() => decideAmendmentOp(db, reviewer2, "K1", { decision: "approved", expectedDecisionHash: "abc" }), "INVALID_INPUT", "بصمة بصيغة غير صالحة تُرفض");
+  await rejects(
+    () => decideAmendmentOp(db, reviewer2, "K3", { decision: "approved_with_edit", corrected: { article_number: 9 }, expectedDecisionHash: k3.decisionHash ?? "" }),
+    "CONFLICT",
+    "الموافقة الثانية لا تغيّر التصحيح",
+  );
+  await rejects(() => decideAmendmentOp(db, reviewer2, "K1", { decision: "approved_with_edit", corrected: { article_number: 2 }, expectedDecisionHash: k1.decisionHash ?? "" }), "CONFLICT", "ولا القرار");
+  ok((await writes()) === before, "صفر كتابة في كل ما سبق");
+  const k3done = await decideAmendmentOp(db, reviewer2, "K3", { decision: "approved_with_edit", expectedDecisionHash: k3.decisionHash ?? "" });
+  ok(k3done.status === "published", "الموافقة الثانية بالبصمة بلا إعادة إرسال التصحيح تكمل القرار");
+  ok((await one<{ corrected: { article_number: number } }>(`SELECT corrected FROM uqn_fix.amendment_review WHERE op_id = 'K3'`)).corrected.article_number === 4, "ويُطبَّق التصحيح المعروض نفسه");
+  ok((await decideAmendmentOp(db, reviewer2, "K1", { decision: "approved", expectedDecisionHash: k1.decisionHash ?? "" })).status === "published", "وموافقة K1 بالبصمة تكملها");
+  await withdrawChangeSet(db, reviewer2, k2.changeSetId, { reason: "مقترح متروك" });
+  before = await writes();
+  await rejects(() => decideAmendmentOp(db, reviewer2, "K2", { decision: "approved", expectedDecisionHash: k2.decisionHash ?? "" }), "CONFLICT", "بصمة مقترح سُحب = 409، ولا يُفتح مقترح جديد باسم الموافقة الثانية");
+  ok((await writes()) === before, "صفر كتابة");
+  const k4 = await decideAmendmentOp(db, reviewer, "K4", { decision: "rejected", note: "لا يطابق الأداة" });
+  const k4done = await decideAmendmentOp(db, reviewer2, "K4", { decision: "rejected", expectedDecisionHash: k4.decisionHash ?? "" });
+  ok(k4done.status === "published" && (await one<{ decision: string }>(`SELECT decision FROM uqn_fix.amendment_review WHERE op_id = 'K4'`)).decision === "rejected", "الموافقة على مقترح رفض لا تشترط سببًا جديدًا");
+  const k5 = await decideAmendmentOp(db, reviewer, "K5", { decision: "approved" });
+  before = await writes();
+  await rejects(() => decideAmendmentOp(db, reviewer2, "K5", { decision: "rejected", expectedDecisionHash: k5.decisionHash ?? "" }), "REASON_REQUIRED", "رفض القرار المعلّق يحتاج سببًا (يرفض القرار كله)");
+  ok((await writes()) === before, "صفر كتابة");
+  ok((await decideAmendmentOp(db, reviewer2, "K5", { decision: "rejected", note: "خطأ في المادة", expectedDecisionHash: k5.decisionHash ?? "" })).status === "rejected", "وبسبب مكتوب يرفضه");
+
+  await pool.query(`INSERT INTO judicial_principles (id, title, "principleText", "sourceCaseId", "reviewStatus", confidence) VALUES ('P5','مبدأ خامس','نص المبدأ الخامس','c1','needs_review', 0.5)`);
+  const p5 = await decidePrinciple(db, reviewer, "P5", { decision: "approve", reason: "سليم" });
+  const p5item = (await listPrincipleQueue(db, {}, kindOnly)).items.find((i) => i.id === "P5");
+  ok(
+    p5item?.pending_decision?.decision === "approve" && p5item.pending_decision_hash === p5.decisionHash && p5item.pending_note === "سليم" && p5item.pending_approvers[0]?.id === "u-reviewer" && p5item.pending_corrected === null,
+    "المبدأ: القرار المعروض وبصمته وصاحبه",
+  );
+  before = await writes();
+  await rejects(() => decidePrinciple(db, kindOnly, "P5", { decision: "approve" }), "CONFLICT", "المبدأ: البصمة إلزامية حين يوجد قرار معلّق");
+  ok((await writes()) === before, "صفر كتابة");
+  ok((await decidePrinciple(db, kindOnly, "P5", { decision: "approve", expectedDecisionHash: p5.decisionHash ?? "" })).status === "published", "والموافقة بالبصمة تكمله");
+
+  console.log("\n— الجولة الثانية: ترقيم المبادئ —");
+  for (const [id, conf] of [["Q1", 0.9], ["Q2", null], ["Q3", 0.9], ["Q4", 0.2]] as const) {
+    await pool.query(`INSERT INTO judicial_principles (id, title, "principleText", "sourceCaseId", "reviewStatus", confidence, topic) VALUES ($1, $2, 'نص', 'c1', 'needs_review', $3, 'ترقيم')`, [id, `مبدأ ${id}`, conf]);
+  }
+  const pAll = await listPrincipleQueue(db, { topic: "ترقيم", limit: 100 });
+  ok(pAll.items.map((i) => i.id).join(",") === "Q1,Q3,Q4,Q2", "ترتيب المبادئ محفوظ (الثقة تنازليًّا NULLS LAST ثم المعرّف)");
+  const pOriginal = await pool.query(`SELECT id FROM judicial_principles WHERE "reviewStatus" = 'needs_review' ORDER BY confidence DESC NULLS LAST, id`);
+  ok((await listPrincipleQueue(db, { limit: 100 })).items.map((i) => i.id).join(",") === pOriginal.rows.map((r) => r.id).join(","), "وتكافئ عبارة الترتيب الأصلية");
+  const pWalk: string[] = [];
+  let pc: string | null = null;
+  do {
+    const page: Awaited<ReturnType<typeof listPrincipleQueue>> = await listPrincipleQueue(db, { topic: "ترقيم", limit: 1, after: pc });
+    pWalk.push(...page.items.map((i) => i.id));
+    pc = page.next_cursor;
+  } while (pc && pWalk.length < 10);
+  ok(pWalk.join(",") === "Q1,Q3,Q4,Q2", "والمرور بالمؤشر يعطي الترتيب نفسه");
+  const q1 = await decidePrinciple(db, reviewer, "Q1", { decision: "approve" });
+  const pMine = await listPrincipleQueue(db, { topic: "ترقيم", limit: 100 }, reviewer);
+  ok(!pMine.items.some((i) => i.id === "Q1") && pMine.waiting_others === 1 && pMine.total === 3, "المبادئ: mine يستبعد ما وافقتُ عليه، وwaiting_others = 1");
+  ok((await listPrincipleQueue(db, { topic: "ترقيم", view: "waiting_others" }, reviewer)).items.map((i) => i.id).join(",") === "Q1", "وwaiting_others يعرضه");
+
+  console.log("\n— الجولة الثانية: معاينة أثر الإعدادات —");
+  // دفعة تحرير معلّقة بموافقة واحدة من اثنتين، ومقترحات استقبال معلّقة (K6، Q1).
+  await writeConfig((cfg) => {
+    cfg.policies.set_work_status.minApprovals = 2;
+  });
+  const manual = await createChangeSet(db, owner, { title: "معاينة", changes: [{ op: "set_work_status", targetId: "U7", status: "مستبدل", evidence: EVIDENCE("931") }] });
+  await submitChangeSet(db, owner, manual.changeSetId);
+  await decideChangeSet(db, reviewer, manual.changeSetId, { decision: "approve" });
+  await decideAmendmentOp(db, reviewer, "K6", { decision: "approved" });
+  const view = await readEditorialSettings(db, owner);
+  const cfg = JSON.parse(JSON.stringify(view.config)) as EditorialConfig;
+  before = await writes();
+  const auditBefore = await num(`SELECT count(*) FROM audit_event`);
+  const same = await previewEditorialSettings(db, owner, cfg);
+  ok(same.approvalsDropped === 0 && same.pendingRaised === 0, "ق٣١ الإعدادات نفسها: لا أثر (صفر = لا سطر)");
+  const reviewerApprovals = await num(
+    `SELECT count(DISTINCT s.id) FROM change_set s JOIN review_decision d ON d.change_set_id = s.id
+      WHERE s.status IN ('pending','approved') AND d.reviewer_id = 'u-reviewer' AND d.decision = 'approve' AND d.payload_hash = s.payload_hash`,
+  );
+  const revoked = JSON.parse(JSON.stringify(cfg)) as EditorialConfig;
+  revoked.bindings = revoked.bindings.map((b) => (b.userId === "u-reviewer" ? { ...b, enabled: false } : b));
+  const dropped = await previewEditorialSettings(db, owner, revoked);
+  ok(reviewerApprovals >= 3 && dropped.approvalsDropped === reviewerApprovals && dropped.pendingRaised === 0, `سحب تكليف معتمِد: تسقط موافقته من ${reviewerApprovals} دفعة معلّقة`);
+  const pendingAmendmentSets = await num(
+    `SELECT count(DISTINCT s.id) FROM change_set s JOIN editorial_change ch ON ch.change_set_id = s.id
+      WHERE s.status IN ('pending','approved') AND ch.op = 'review_amendment_op'`,
+  );
+  const raised = JSON.parse(JSON.stringify(cfg)) as EditorialConfig;
+  raised.policies.review_amendment_op.minApprovals = 3;
+  const r = await previewEditorialSettings(db, owner, raised);
+  ok(pendingAmendmentSets >= 1 && r.pendingRaised === pendingAmendmentSets && r.approvalsDropped === 0, `رفع حد التعديلات إلى 3: يرتفع المطلوب لـ ${pendingAmendmentSets} مقترحًا معلّقًا`);
+  ok((await writes()) === before && (await num(`SELECT count(*) FROM audit_event`)) === auditBefore, "المعاينة بلا أي كتابة (ولا في السجل)");
+  await rejects(() => previewEditorialSettings(db, reviewer, cfg), "FORBIDDEN", "المعاينة للمالك وحده");
+  await rejects(() => previewEditorialSettings(db, owner, { ...cfg, policies: { ...cfg.policies, revert: { minApprovals: 9, ownerSelfApproval: true, enabled: true } } }), "INVALID_INPUT", "والإعدادات غير الصالحة تُرفض");
+
+  await withdrawChangeSet(db, owner, manual.changeSetId, { reason: "تنظيف" });
+  await writeConfig((cfgx) => {
+    cfgx.policies.set_work_status.minApprovals = 1;
+    cfgx.policies.review_amendment_op.minApprovals = 1;
+    cfgx.policies.review_principle.minApprovals = 1;
+  });
+  void q1;
 }
 
 async function main() {
