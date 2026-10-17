@@ -8,7 +8,7 @@ import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { issuanceInstrument, latestVerification, latestVerifications, lawCard, storedInstrumentKind, unitVersionsFor } from "@/lib/modules/legal-core/verification-read";
 import { citationFlagsFromVerification, presentArticle, UNVERIFIED_NOTICE } from "@/lib/modules/legal-core/verified-status";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
-import { loadSearchSurface } from "@/lib/modules/legal-core/search-surface";
+import { loadSearchSurface, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
 import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
@@ -70,7 +70,12 @@ export default async function LegalSystemPage({
     // الإلغاء يُعرض بشريطه الخاص أدناه؛ الوجه هنا للإحالة إلى النسخة السارية فقط.
     loadSearchSurface(asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined, { includeRepealed: true }),
   ]);
-  const workFlags = citationFlagsFromVerification(workVerification);
+  const recordedFlags = citationFlagsFromVerification(workVerification);
+  // الانتقال بتاريخ السريان من وجه البحث: الصادر يصير ساريًا يوم نفاذه، والسابق يصير مستبدلًا.
+  const byDate = workStatusAsOf(system.id, recordedFlags.statusLabel, surfaceState.surface);
+  const workFlags = byDate.derived
+    ? { inForce: byDate.status === "ساري", repealed: false, statusLabel: byDate.status }
+    : recordedFlags;
   const statusTone =
     workFlags.statusLabel === UNVERIFIED_NOTICE
       ? "unverified"
