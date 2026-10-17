@@ -1,0 +1,452 @@
+# HKM-023-B — صفحة النظام الكاملة ومقدمات الأنظمة: تقرير القسم ب (البيانات) وع-١٣ وجانب البيانات من ع-١٤
+
+- **المُنفِّذ:** aman-database (المخطط والقارئ والتصنيف) مع aman-ai-engineer (أداة MCP والبحث)، القسم التقني لأمان.
+- **التاريخ:** 2026-10-17، 10:30 بتوقيت الرياض.
+- **الفرع:** `hkm-023-b-data` (محلي)، من `aman/hkm-023-b-law-page` (main + التزام الحجز 2a66d5c، مسودة #746). **لم يُدفع.**
+- **الإنتاج:** لم يُكتب. كل ما قُرئ منه كان بـ `SELECT` عبر أداة Neon `run_sql` (مشروع misty-base-66693229، قاعدة neondb). لم يُنشأ فرع Neon. لم تُولَّد تضمينات. لم يُطبَّق الترحيل إلا على Postgres 17 محلي (`hakeem_hkm023b_test`).
+- **القسم أ (العرض):** لم يُنفَّذ هنا، فهو لمطوّر آخر. تُرك له عقد قراءة جاهز ومختبر (انظر الملحق أ).
+- **قراءة رجّحتُها لغياب المالك:** «المادة صفر» في الأمر هي الحقل `legal_systems.preamble`، إذ لا صف مادة رقمه صفر في الإنتاج (انظر الواقعة ٢).
+
+---
+
+## ١. ما أخذته من #685 و#631، وما أضفته
+
+| المصدر | حاله | ما أخذته | ما أضفته فوقه |
+|---|---|---|---|
+| #685 (الموجة ١: وجه البحث وبطاقة النظام ونص النظام) | الطلب ما زال مفتوحًا، لكن التزامه 5501d44 داخل main (`git merge-base --is-ancestor 5501d44 HEAD`). جداوله `search_surface` و`search_surface_member` و`law_card` موجودة في الإنتاج (52 و55 و506 صفًا). | البناء مباشرة على `law_card` (أدوات الإصدار والتواريخ وكتل النص `text_blocks`)، وعلى `computeSurface` و`workStatusAsOf` و`unitStatusAsOf` من `lib/modules/legal-core/search-surface.ts`، وعلى `verification` و`unit_version`. لم أكرر شيئًا منها. | دالة قراءة واحدة للصفحة كلها: البطاقة بالتواريخ الأربعة ومصدر كل تاريخ، والحالة على قائمة الهيئة الست، وبيان الإلغاء، والمقدمة بأربع حالات، والمتن بحالة كل مادة. وأضفت قاعدة `composeLawCardText`، وهي تطابق تركيب كتل البطاقة في SQL (md5 مطابق للإنتاج). |
+| #631 (طبقة الوحدات `document_units` والقارئ) | **مغلق دون دمج**. هجرته 20260809120000 ليست في main، ولا جدول `document_units` في الإنتاج (استعلام `information_schema.tables` ⇒ 0). وقرار HKM-028 ألّا يُعاد بناؤه. | نقلت أسماء الأعمدة ومنطقها: `unit_type` و`ordinal` و`parent_id` و`label_ar` و`number` و`text_raw` و`text_normalized` و`path` و`char_start` و`char_end`. ونقلت مبدأ «آلة حالات تبلّط النص وتُلزم إعادة التركيب الحرفي». لم أنقل كوده، ولا الكرون، ولا `vercel.json`. | جدولان جديدان مقصوران على المقدمة (ب-١) وقارئ مستقل لها (ب-٢). الأسماء نفسها تُبقي الضم ممكنًا إن أُحيي نموذج #631. |
+| #724 (مدموج) | داخل main | `verified-status.ts` (`textAsOf` و`citationFlagsFromVerification`)، وحالة المادة بالتاريخ. | — |
+
+---
+
+## ٢. وقائع §١ في الكود والقاعدة
+
+القاعدة هنا هي الإنتاج، وكل استعلاماتها قراءة فقط بتاريخ 2026-10-17. أما الكود فمن رأس الفرع 2a66d5c.
+
+| # | واقعة الأمر | الحكم | الدليل |
+|---|---|---|---|
+| 1 | صفحة `/dashboard/legal-core/systems/[id]` فهرس فقط بلا نص، وتبدأ من المادة الأولى | **ثبتت** | `app/dashboard/legal-core/systems/[id]/page.tsx:79-90`: كل صف رابط فيه «م {رقم}» والعنوان فقط. `lib/modules/library/library-service.ts:107-109`: الاستعلام يختار `id, articleNumber, title, chapter` بلا `content`. |
+| 1أ | (ملاحظة) الحالة في الصفحة نفسها | — | `page.tsx:46`: شارة «ساري» ثابتة للنظام كله، لا تُقرأ من التحقق. |
+| 2 | المقدمات مخزّنة «مادةً رقمها صفر» | **لم تثبت بنصها** | القاعدة: `count(*) FROM legal_articles WHERE "articleNumber"=0` ⇒ **0**. المقدمة حقل `legal_systems.preamble`: الهجرة `20260925050000_system_preamble_field`، وتعليق `app/api/admin/legal-core/preambles/route.ts:3-4` («لا مادة صفر»). نُقلت إلى الحقل في 2026-09-25 (`preamble_updated_at` بين 06:02 و10:43 من ذلك اليوم، بـ `scripts/backfill/move-preambles-to-system.ts`). بقي `scripts/import-preambles.ts` يصف «المادة صفر» في رأسه، وهذا وصف تاريخي. |
+| 3 | `GET /api/admin/legal-core/preambles?system=` يعيد كل الوثائق | **ثبتت** | `route.ts:27-34`: بلا `system` يُرجع `findMany` بلا شرط، وبه يبحث بالاحتواء (`take: 20`). |
+| 4 | 1٬147 وثيقة، منها 991 لها مقدمة و156 بلا مقدمة، وما يبدأ بـ«نظام» (290) كله له مقدمة | **ثبتت** | `systems=1147`، `with_preamble_field=991`، `nizam_with=290`، `nizam_all=290`. |
+| 5 | المُضمَّن للبحث الدلالي: صفر | **ثبتت** | `embeddings` بحسب `owner_type`: article 17٬325، ruling 50٬273، principle 4٬066، ولا شيء غيرها. `lib/modules/legal-search/providers/search-provider.ts:4`: `LegalEntityType = "article" \| "ruling" \| "principle"`. |
+| 6 | الأطوال: أقل من 200 ⇒ 710، و200–1000 ⇒ 54، و1000–3000 ⇒ 63، وأكثر من 3000 ⇒ 164، والوسيط 169 | **ثبت جزئيًا** | 710 و54 والوسيط 169: مطابقة. الفئتان الأخيرتان **80 و147** (المجموع 227 مطابق: 63+164 = 80+147). جرّبت الحساب بالبايت، وبعد `btrim`، وبحد 2500، ولم يتطابق أي منها مع 63/164. أرجّح أن الأمر قسّم الفئتين بحد آخر. |
+| 7 | مقدمة «نظام الإثبات» 171 حرفًا، وفي الهيئة أكثر من 4٬000 (مرسوم + قرار) | **ثبتت** | `legal_systems.preamble` للنظام `cmpz5pbv80021cwg2br8calht` طوله 171. بطاقة `law_card` (`lc26-be18c7df20bb28974df24785`، من الهيئة بتاريخ 2026-09-28) تركيب كتلها **4٬081 حرفًا**. فكّكه القارئ إلى أداتين و14 استنادًا و11 بندًا وتوقيعين، والتركيب حرفي (اختبار B-2). |
+| 8 | المقدمة لا تظهر في صفحة النظام، ولا في البحث، ولا في فهرس `hakeem_get_law` | **ثبتت للوحة والبحث وMCP، ولم تثبت للصفحة العامة** | اللوحة: الواقعة 1. البحث: مزوّد Postgres يقرأ `legal_articles` فقط (`providers/postgres-provider.ts:76` `type: "article"`). MCP: `lib/mcp/adapter.ts@HEAD:137` (الفهرس من المواد فقط). أما **الصفحة العامة `/legal/[slug]`** فتعرضها: `app/legal/[slug]/page.tsx:153-161` تعرض كتل `law_card` إن وُجدت، وإلا `system.preamble`. |
+| 9 | `issue_instrument` و`issue_date_h` و`status` كلها `null` في `hakeem_get_law` | **ثبتت** | `lib/mcp/adapter.ts@HEAD:133-135`: القيم `null` مكتوبة صراحة في الكود. |
+| 10 | مطابقة الاسم تفضّل الوثيقة الخطأ («نظام المرافعات الشرعية» ⇒ اللوائح، و«نظام الإثبات» ⇒ الأدلة الإجرائية) | **ثبتت** | `adapter.ts@HEAD:123-124`: `findFirst({ where: { name: { contains } } })` بلا ترتيب ولا تفضيل للمطابقة التامة. في القاعدة يحوي الاسمَ أكثرُ من وثيقة: «الأدلة الإجرائية لنظام الإثبات» (135 مادة) و«نظام الإثبات»، و«اللوائح التنفيذية لنظام المرافعات الشرعية» (639) و«نظام المرافعات الشرعية». أعاد اختبار `M-13 إعادة إنتاج العلة` إنتاج الخطأ بالمنطق القديم في الحالتين. |
+| 11 | لا تمييز للمعدّلة أو الملغاة في صفحة النظام | **ثبتت (اللوحة)** | الواقعة 1 و1أ. |
+| 12 | (مرجع الهيئة) المرافعات 242 مادة، والملغاة 101–158 ألغتها م128 من نظام الإثبات | **في حكيم: 242 ثبتت، والإلغاء غير مسجّل** | `articleCount=242`. للمواد 101–158 (58 مادة): `status <> 'سارية'` ⇒ 0، وسجلات `verification` للوحدة ⇒ 0. أعداد الهيئة (32 معدّلة و58 ملغاة) لم أتحقق منها، لأن السحب من البوابة ممنوع. |
+
+---
+
+## ٣. المتطلبات المغلقة برموزها، وما بقي
+
+### أُغلق بالكود (محليًا ومختبرًا)
+
+- **ب-١ مخطط الوحدات** — `prisma/migrations/20261017130000_hkm023b_preamble_units/migration.sql`
+  - إضافي فقط، ولا يمس جدولًا قائمًا.
+  - `preamble_edition`: النص الحرفي، و`raw_sha256`، والمصدر (أم القرى أو هيئة الخبراء، ورابط https)، وتاريخ الاسترجاع، والاكتمال، و`legacy_preamble_sha256` الذي يربط بـ«المادة صفر» ببصمتها فقط، و`change_ref`، والمُعِدّ والمعتمِد مع القيد `approved_by <> prepared_by`.
+  - `preamble_unit`: ثمانية أنواع، هي أنواع §٢ الستة والأب `issuing_instrument` و`unclassified`.
+  - إعادة التركيب الحرفي والتبليط المتصل وعدد الوحدات مفروضة في القاعدة بقيود مؤجلة عند الالتزام (`hkm023b_verify_preamble_edition`).
+  - الجدولان للإضافة فقط (`hakeem_append_only`).
+  - العرض `preamble_unit_current` يعطي أحدث نسخة لكل نظام بلا وحدات الأب.
+  - فهارس `tsvector('simple')` و`pg_trgm` على `text_normalized`.
+  - الترحيل يحمل التراجع في رأسه، وطُبِّق محليًا فقط.
+- **ب-٢ قارئ المقدمة** — `lib/modules/legal-core/preamble-parser.ts` (`parsePreamble`)
+  - يعمل بمراسٍ لفظية على نص «عارٍ» بلا تشكيل ولا تطويل ولا محارف صفرية العرض، وبهمزات موحّدة، مع خريطة مواضع تعود إلى النص الخام.
+  - الوحدات تبلّط النص الخام، و`reconstructionOk` شرط القبول، فالتفكيك الذي لا يعيد الأصل يُرفض ولا يُحفظ.
+  - صفوف النسخة تُبنى في `preamble-edition.ts` (`checkPreambleImport` و`buildPreambleEditionRows` و`insertPreambleEdition`).
+- **ب-٣ التصنيف** — `lib/modules/legal-core/preamble-signals.ts` و`scripts/hkm-023-b/classify-preambles.ts`
+  - شُغِّل فعليًا على الإنتاج بقراءة فقط، والنتائج في §٤.
+- **ب-٤ مسار الاستكمال** — وثيقة تصميم في الملحق ب، دون تنفيذ، كما طلب الأمر. فرعي من main ولا يحوي المكتب.
+- **ع-١٣ أداة MCP** — `lib/mcp/tools/get-law.ts` و`lib/modules/legal-core/law-name-match.ts`، مع تعديل `lib/mcp/adapter.ts` و`app/mcp/route.ts`.
+  - **المطابقة:** تامة، ثم «يبدأ بـ»، ثم احتواء. داخل الطبقة الواحدة يُقدَّم الأصل على اللائحة (إلا إن طُلبت اللائحة صراحة)، ثم الأقصر، ثم الأكثر مواد. مع المطابقة تُعاد `match` و`alternatives` (حتى 8).
+  - **المخرجات الجديدة:**
+    - `issue_instruments[]`
+    - `dates` الأربعة (issued و published و effective و applied)
+    - `status_detail` على قائمة الهيئة الست
+    - `preamble` (وحدات، أو نص بـ `completeness` و`complete` و`truncated` بسقف 12٬000 حرف)
+    - `counts`
+    - `toc[]` بحالة كل مادة ومصدرها، وبيان إلغائها، ورابطها
+  - **العقد القديم باقٍ:** لم يُحذف حقل ولم يُغيَّر نوعه. الحقول الثلاثة التي كانت `null` صارت تُملأ متى وُجد مصدرها.
+  - **`/mcp` ليس مسارًا مراقبًا:** لا workflow فيه مرشّح `paths` يشمل `app/mcp` أو `lib/mcp` أو `lib/**`. `deploy-readiness-check.yml` يعمل على كل push إلى main أو `codex/**` وكل pull_request، ولا يطبّق ترحيلًا ولا يكتب على قاعدة.
+- **ع-١٤ جانب البيانات** — `lib/modules/legal-core/preamble-search.ts` و`scripts/hkm-023-b/embed-preamble-units.ts`
+  - وحدات المقدمة في الفهرس النصي موسومة بـ `type: "preamble_unit"` و`unitType` والمرساة.
+  - `mergeArticleAndPreambleHits` يُبقي المواد بترتيبها، ويعيد المقدمة منفصلة (`separate`) أو ملحقة بعد المواد (`append`)، ولا يخلط بينهما أبدًا.
+  - غياب الجدول يعني «لا نتائج» بلا خطأ.
+  - أمر التضمين تجريبي: يعدّ ويقدّر بمعاملة `READ ONLY`، ويرفض `--apply` بخروج 2.
+- **دوال القراءة للعرض** — `lib/modules/legal-core/law-page-data.ts`، والعقد في الملحق أ.
+
+### ما بقي
+
+- **القسم أ كله (ع-١ إلى ع-١٢، وع-١٥):** لمطوّر العرض فوق `getLawPageData`، ومعه لقطات 390 و1440.
+- **ربط ع-١٤:** ربط `searchPreambleUnits` بـ `hybrid-search` و`hakeem_search`، وربط `vector-provider` بالنوع `preamble_unit`. يأتي بعد وجود البيانات، فلا معنى لربطه اليوم والجدول فارغ.
+- **قبول ع-١٤ الحي:** «عبارة من منطوق نظام الإثبات تعيد البند». ينتظر إدخال المقدمة (ف١١). اختُبر محليًا على بيانات اصطناعية (S-14).
+- **تنفيذ ب-٤:** على فرع المكتب `aman/legal-editorial-desk-phase0`، وفق الملحق ب.
+- **ما لم يُشغَّل:** `next build`، و`prisma generate --no-engine`، و`qa:security`. السبب: محرك Prisma غير متاح هنا. والجدولان الجديدان يُقرآن بـ SQL خام عبر `SqlClient`، مثل `law_card` و`search_surface` القائمين، فلا تغيير في `schema.prisma`.
+- **الدفعات الخمس:** لم تُدخل (انظر §٤).
+
+---
+
+## ٤. تصنيف المقدمات (ب-٣) وحال الدفعات الخمس
+
+**الطريقة**
+1. لا رابط اتصال بالإنتاج في البيئة، فولّدت SQL من `buildPreambleSignalsSql` وشغّلته بـ `SELECT` على الإنتاج في أربع دفعات، تحققت من md5 كل منها.
+2. الأنماط مكتوبة لتعمل في Postgres ARE وJS معًا، وتكافؤهما مثبت على Postgres 17 محلي (37/37).
+3. القرار دالة TS واحدة هي `classifyPreambleSignals`.
+4. المُدخل: `reports/hkm-023-b-preamble-signals.txt` (md5 `d3cb1fc9dbfb44943c47fd8694c1fad0`).
+5. الناتج: `reports/hkm-023-b-preamble-classification.csv` (md5 `9997ae40aeb8763cbe289bd2fe9c71bf`) و`.summary.json`.
+6. أعمدة CSV: المعرّف، والاسم، والقطاع، والتصنيف، والسبب، والطول، والإشارات، و`law_card_full`. الترتيب بالقطاع، ثم «نظام» قبل غيره، ثم الاسم.
+
+**المجموع: 991 = 878 سطر إصدار فقط + 68 كاملة + 45 جزئية.** يطابق عدد المقدمات (الواقعة 4).
+
+| السبب | العدد |
+|---|---|
+| كاملة: افتتاحية + استنادات + صيغة إصدار + بنود | 68 |
+| جزئية: تنقصها الافتتاحية والبنود | 33 |
+| جزئية: تنقصها الافتتاحية والاستنادات | 9 |
+| جزئية: تنقصها الافتتاحية | 3 |
+| سطر إصدار: عبارة «صدر بالمرسوم…» | 663 |
+| سطر إصدار: عنوان وتاريخ فقط (300 حرف فأقل) | 123 |
+| سطر إصدار: الحقل يحوي متن النظام لا مقدمته (`body_leak`) | 75 |
+| سطر إصدار: تمهيد سردي | 10 |
+| سطر إصدار: نص طويل بلا بنية مقدمة | 7 |
+
+| القطاع (بأولوية الأمر) | كاملة | جزئية | سطر إصدار | المجموع | منها كتل بطاقة كاملة في `law_card` |
+|---|---|---|---|---|---|
+| التقاضي | 3 | 0 | 37 | 40 | 28 |
+| التجاري والمالي | 7 | 3 | 93 | 103 | 54 |
+| العمل والاجتماعي والجزائي | 1 | 1 | 55 | 57 | 33 |
+| العقاري والملكية الفكرية | 4 | 3 | 45 | 52 | 24 |
+| الإداري والقضائي | 13 | 0 | 87 | 100 | 66 |
+| أخرى (قطاعي، صحي، غير مصنف) | 40 | 38 | 561 | 639 | 262 |
+
+- **مصدر القطاع:** `legal_systems.domain` في 459، والاسم في 162، وبلا قطاع ⇒ «أخرى» في 370. التصنيف القطاعي تقريبي في مجمله.
+- **متن داخل حقل المقدمة (`body_leak`):** 153 نصًا فيها متن، 75 منها صُنفت «سطر إصدار». هذه **ليست مقدمات** في الحقيقة، ويجب ألا يُعرض حقلها بعنوان «المقدمة».
+- **أهم رقم للاستكمال:** 467 نظامًا لها في `law_card` كتل مقدمة كاملة من لقطة الهيئة (2026-09-28)، **446** منها مقدمتها في حكيم غير كاملة. هذه مصدر جاهز داخل القاعدة لا يحتاج سحبًا، وفي التقاضي وحده 26 من 40.
+- **من نواة التقاضي:** الإثبات، والإجراءات الجزائية، والأحوال الشخصية، والتحكيم، والمحاماة، والمرافعات الشرعية، والمرافعات أمام ديوان المظالم كلها «سطر إصدار» (127–174 حرفًا) ولها كتل بطاقة كاملة. «التنفيذ» (م/237) و«المعاملات المدنية» كاملتان.
+
+**عيّنة الـ20** (مع النصوص كاملة: `reports/hkm-023-b-preamble-sample.md`، ومعها `reports/hkm-023-b-preamble-sample.json`)
+- العيّنة طبقية: 8 كاملة، و4 جزئية، و8 سطر إصدار، ومنها «نظام الإثبات» و«نظام المرافعات الشرعية».
+- كل نص فيها مطابق لبصمة md5 في الإنتاج.
+- القارئ والإشارات متفقان على العشرين كلها، وإعادة التركيب حرفية في العشرين.
+
+| # | الاسم | الطول | التصنيف | السبب |
+|---|---|---|---|---|
+| 1 | النظام الأساس للمركز العالمي لمكافحة الفكر المتطرف | 845 | كاملة | all_parts |
+| 2 | تنظيم المجلس الوطني للسلامة والصحة المهنية | 945 | كاملة | all_parts |
+| 3 | تنظيم مجالس التنمية السياحية في المناطق | 1043 | كاملة | all_parts |
+| 4 | نظام الحرف والصناعات اليدوية | 1083 | كاملة | all_parts |
+| 5 | الترتيبات التنظيمية لمجلس الاستثمار | 1135 | كاملة | all_parts |
+| 6 | تنظيم حوكمة إجراءات منع التصدير وتقييده | 1141 | كاملة | all_parts |
+| 7 | تنظيم مركز الإحالات الطبية | 1241 | كاملة | all_parts |
+| 8 | تنظيم هيئة الاتصالات والفضاء والتقنية | 1243 | كاملة | all_parts |
+| 9 | القواعد المنظمة لإعادة التأهيل ودفع التعويضات… وفقاً لنظام السياحة | 167 | جزئية | missing:opening+recital |
+| 10 | تعليمات الحسابات الاستثمارية | 368 | جزئية | missing:opening+operative (+متن) |
+| 11 | القواعد المنظمة للاستثمار الأجنبي في الأوراق المالية | 394 | جزئية | missing:opening+operative (+متن) |
+| 12 | تنظيم مركز سارة السديري لدراسات المرأة | 1074 | جزئية | missing:opening |
+| 13 | نظام تأديب الموظفين | 11 | سطر إصدار | title_date_only |
+| 14 | لائحة التقارير الطبية المنصوص عليها في نظام الأحوال الشخصية | 92 | سطر إصدار | title_date_only |
+| 15 | ضوابط تعاقد الجهات الحكومية مع الشركات التي ليس لها مقر إقليمي… | 126 | سطر إصدار | title_date_only |
+| 16 | النظام الجزائي الخاص بتزييف وتقليد النقود | 126 | سطر إصدار | issuance_phrase |
+| 17 | نظام المرافعات الشرعية | 127 | سطر إصدار | issuance_phrase |
+| 18 | اللائحة التنفيذية لمنع التلوث البحري من السفن (ماربول)… | 148 | سطر إصدار | narrative_intro |
+| 19 | نظام الإثبات | 171 | سطر إصدار | issuance_phrase |
+| 20 | اللائحة المنظمة لنشاط النقل الدولي للركاب بالحافلات | 266 | سطر إصدار | body_leak (+متن) |
+
+**الدفعات الخمس (نحو 78 نظامًا): لم تُدخل.** الأدلة:
+1. آخر `preamble_updated_at` في الإنتاج هو 2026-09-25 10:43، أي يوم النقل من «المادة صفر»، ولم يُحدَّث بعده أي حقل مقدمة.
+2. لا جدول مقدمات مهيكلة في الإنتاج (`preamble_edition` و`preamble_unit` و`document_units` و`legal_effect` ⇒ 0).
+3. ملف الاستيراد `data/preambles.json` فيه مدخل واحد فقط (المعاملات المدنية)، وworkflow `import-preambles.yml` يُشغَّل يدويًا وحده.
+4. 37 من 40 في التقاضي «سطر إصدار»، ومقدمة «نظام الإثبات» 171 حرفًا.
+5. لم أجد ملفات الدفعات في المستودع (بحث بالأسماء ونصوص «نواة التقاضي»/«الدفعات الخمس»). `legal_system_issuance` فيه 15 صفًا فقط من بوابة العدل (`moj-portal-2026-10-16`)، وهي أدوات لا مقدمات.
+
+**وصول عيّنة المالك:** لم تصل عيّنة الهيئة التي يلصقها المالك (ب-٢). عوّضتها:
+- نصوص حقيقية من الإنتاج فوق 3٬000 حرف: جمع التبرعات 3٬286، والبراءات 3٬290، وحقوق المؤلف 3٬335، وتعميم مستشفى الملك خالد 3٬710، والمعاملات المدنية 8٬623.
+- كتل بطاقة «نظام الإثبات» من لقطة الهيئة في `law_card` (4٬081 حرفًا).
+- كلها في `data/preamble-fixtures/hkm-023-b/production.json` مع مصدرها وبصمتها. لم يُختلق نص.
+
+---
+
+## ٥. الملفات المتغيّرة، ونتائج الاختبارات، وما لم يُختبر
+
+**جديد**
+- **الترحيل:** `prisma/migrations/20261017130000_hkm023b_preamble_units/migration.sql`
+- **الوحدات في `lib/modules/legal-core/`:**
+  - `preamble-parser.ts` و`preamble-signals.ts` و`preamble-edition.ts`
+  - `law-page-data.ts` و`law-name-match.ts` و`preamble-search.ts` و`sql-port.ts`
+- **أداة MCP:** `lib/mcp/tools/get-law.ts`
+- **السكربتات في `scripts/hkm-023-b/`:**
+  - `local-db.ts`، وفيه حارس يرفض أي قاعدة غير محلية أو لا ينتهي اسمها بـ `_test`
+  - `classify-preambles.ts` و`render-preamble-sample.ts` و`embed-preamble-units.ts`
+  - `fixtures/base-schema.sql`
+- **الاختبارات:** `scripts/test-preamble-parser.ts` و`scripts/test-preamble-signals.ts` و`scripts/test-law-page-data.ts`
+- **العيّنات:** `data/preamble-fixtures/hkm-023-b/synthetic.json`، وفيه ثلاث عيّنات موسومة «اصطناعي» في اسمها ونصها (مرسوم فقط، ومرسوم + قرار مجلس، وأمر ملكي)، و`production.json`
+- **التقارير في `reports/`:** `hkm-023-b.md` و`hkm-023-b-preamble-*.{txt,csv,json,md}`
+
+**معدّل**
+- `lib/mcp/adapter.ts`: `getLaw` يفوّض إلى `getLawTool`.
+- `app/mcp/route.ts`: وصف الأداة فقط.
+- `package.json`: ثلاثة أوامر `test:*`، وأمر البناء لم يتغير.
+- `docs/PROJECT_STATUS.md`: مدخل HKM-023-B وسطر السجل.
+
+**نتائج الاختبارات**
+
+| الأمر | النتيجة | ما يغطيه |
+|---|---|---|
+| `npm run test:preamble-parser` | **176 نجح، 0 فشل** | B-2: المراسي، وإعادة التركيب الحرفي لكل عيّنة، والعيّنات الاصطناعية الثلاث، والنصوص الحقيقية الخمسة، وكتل بطاقة الإثبات، وعنوان الأداة بأرقام هندية. |
+| `npm run test:preamble-signals` | **31 نجح، 0 فشل** | B-3: القرار والقطاع والترتيب وCSV. تكافؤ SQL/TS على Postgres 17 محلي 37/37، وعيّنة الإنتاج 20/20. |
+| `npm run test:law-page-data` | **88 نجح، 0 فشل** | B-1 ‏(14): الترحيل والقيود والإضافة فقط. U-1 إلى U-7d ‏(38): بيانات الصفحة. M-13 ‏(29): المطابقة والعقد القديم والجديد. S-14 ‏(7): البحث. كلها على قاعدة محلية ببيانات اصطناعية. |
+| اختبارات قائمة تمس الأداة | نجحت | `scripts/test-effective-consumers.ts` («كل الاختبارات نجحت») و`test:mcp-hardening`. |
+| `npm run typecheck` | نظيف | |
+| `npm run lint` و`npx next lint --file` على كل ملف مُسّ | نظيف | |
+
+**ما لم يُختبر ولماذا**
+- `next build` و`prisma generate --no-engine`: لا محرك Prisma في البيئة.
+- لقطات 390 و1440: من القسم أ.
+- قبول ع-١٤ الحي: لا بيانات بعد.
+- مقارنة أعداد الهيئة للمرافعات: السحب ممنوع.
+- `prismaSqlClient` نفسه لم يُشغَّل على Prisma حقيقي. هو غلاف من سطرين حول `$queryRawUnsafe`، والمنطق كله مختبر عبر `pg`.
+
+**`git diff --name-only aman/hkm-023-b-law-page...HEAD`** (بعد الالتزامات):
+
+```
+app/mcp/route.ts
+data/preamble-fixtures/hkm-023-b/production.json
+data/preamble-fixtures/hkm-023-b/synthetic.json
+docs/PROJECT_STATUS.md
+lib/mcp/adapter.ts
+lib/mcp/tools/get-law.ts
+lib/modules/legal-core/law-name-match.ts
+lib/modules/legal-core/law-page-data.ts
+lib/modules/legal-core/preamble-edition.ts
+lib/modules/legal-core/preamble-parser.ts
+lib/modules/legal-core/preamble-search.ts
+lib/modules/legal-core/preamble-signals.ts
+lib/modules/legal-core/sql-port.ts
+package.json
+prisma/migrations/20261017130000_hkm023b_preamble_units/migration.sql
+reports/hkm-023-b-preamble-classification.csv
+reports/hkm-023-b-preamble-classification.summary.json
+reports/hkm-023-b-preamble-names-extra.json
+reports/hkm-023-b-preamble-sample.json
+reports/hkm-023-b-preamble-sample.md
+reports/hkm-023-b-preamble-signals.txt
+reports/hkm-023-b.md
+scripts/hkm-023-b/classify-preambles.ts
+scripts/hkm-023-b/embed-preamble-units.ts
+scripts/hkm-023-b/fixtures/base-schema.sql
+scripts/hkm-023-b/local-db.ts
+scripts/hkm-023-b/render-preamble-sample.ts
+scripts/test-law-page-data.ts
+scripts/test-preamble-parser.ts
+scripts/test-preamble-signals.ts
+```
+
+لا شيء تحت `.github/`، ولا `vercel.json`، ولا `db/migrate-request.json`. أمر البناء `prisma generate && next build` لم يتغير.
+
+---
+
+## ٦. أفعال تنتظر المالك
+
+1. **الدفع** (أسرار Preview مشتركة مع الإنتاج): دفع `hkm-023-b-data` إلى `aman/hkm-023-b-law-page`، أو فتح طلب مسودة منه. لم يُدفع شيء.
+2. **تطبيق الترحيل (ف١٠):** على فرع Neon أولًا، ثم الإنتاج باعتماد فردي. لا مسار آلي يطبّقه.
+3. **إدخال المقدمات (ف١١) بعيّنة:**
+   - الاقتراح: البدء بنواة التقاضي من كتل `law_card` القائمة (26 نظامًا)، عبر `import_preamble` في المكتب بعد تنفيذه (الملحق ب).
+   - لكل نظام: معاينة الوحدات وبصمتها قبل الاعتماد، ومعتمِد غير المُعِدّ.
+   - عيّنة أولى مقترحة: الإثبات، والمرافعات الشرعية، والتحكيم.
+4. **التضمينات (ف١٠ + ف١٤):** بعد الإدخال يُشغَّل `scripts/hkm-023-b/embed-preamble-units.ts` تجريبيًا لتقدير العدد والرموز. التطبيق يحتاج كلمة صريحة ومسارًا مأذونًا (`--apply` مرفوض اليوم).
+5. **تصحيح بيانات الإلغاء (ف١١):** وسم مواد المرافعات 101–158 بـ «ملغاة» ودليلها م128 من نظام الإثبات. اليوم لا يملك المكتب فعلًا للوحدة (`set_work_status` فقط).
+
+---
+
+## ٧. قرارات مطلوبة من المالك
+
+**من §٨ في الأمر، مع رأي البيانات:**
+1. **طيّ المقدمة:** للعرض. البيانات تعيد الوحدات كاملة، والطيّ قرار القسم أ.
+2. **ألوان المعدّل والملغى:** للعرض. البيانات تعيد `status` و`statusLabel` نصًا، فلا اعتماد على اللون وحده.
+3. **استبعاد الملغى من البحث العام:** أؤيد التوصية. `searchPreambleUnits` لا يرشّح بالحالة بعد، ويُضاف ذلك عند الربط.
+   - **3أ. صيغة المعرّف الدائم:** أؤيد معرّف الأداة. `instrumentKey()` يعطي اليوم «م/43|1443»، ويُشتق منه `m-43-1443` بلا بيانات جديدة.
+   - **3ب. من يعتمد الإلغاء الضمني:** لا مصدر بيانات له اليوم. `RepealType = "implicit"` معرّف، لكنه لا يُملأ إلا بسجل `verification` طريقته `owner_decision`. أقترح أن يكون المالك وحده.
+4. **أولوية الاستكمال بعد الـ78:** أقترح البدء بالأنظمة الـ446 التي لها كتل كاملة في `law_card` (لا تحتاج مصدرًا جديدًا ولا سحبًا) بالترتيب القطاعي، ثم البقية بالأكثر بحثًا.
+5. **من يعتمد المقدمات المستوردة:** صاحب صلاحية النشر في المكتب، على ألا يكون هو المُعِدّ (مفروض في القاعدة وفي المكتب). أقترح المالك لنواة التقاضي، ثم التفويض.
+
+**قرارات إضافية ظهرت في التنفيذ:**
+6. **أسبقية مصادر المقدمة في العرض:** وحدات معتمدة، ثم كتل `law_card` من لقطة الهيئة بوسم «لم تُفكَّك»، ثم الحقل القديم بوسم «مقدمة غير مكتملة»، ثم «غير متوفرة». الصفحة العامة اليوم تعرض الكتل قبل الحقل، فأبقيتُ هذا الترتيب. هل يُقرّ؟
+7. **تعارض في عرض المادة الملغاة:** قرار المالك في 16/10 أن تعرض سطر الإلغاء، والأمر ع-٧أ يقول ببقاء النص كاملًا. البيانات تعيد الأمرين (`text` و`effectiveText` و`repeal`)، والحسم للعرض.
+8. **حالة النظام على قائمة الهيئة:** الحالات «صادر لم يسرِ بعد» و«سجل مخلوط» وغياب السجل لا تقابلها حالة من الست. تُعاد `null`، أي «غير متوفر»، ولا تُخترع «تحت الإجراء». و«ساري خلال مدة» و«لاغي خلال مدة» لا بيانات مدة لهما في حكيم. هل يُقرّ ذلك؟
+9. **الحقل القديم الذي يحوي متنًا (153 نصًا):** هل يُخفى من العرض بعنوان «المقدمة» حتى يُستبدل؟ البيانات تعيده مع `completeness`، و`bodyLeak` متاح في الإشارات.
+
+---
+
+## الملحق أ — عقد دوال القراءة للعرض (للقسم أ)
+
+```ts
+// lib/modules/legal-core/sql-port.ts
+interface SqlClient { query<T>(sql: string, params?: readonly unknown[]): Promise<T[]> }
+prismaSqlClient(prisma): SqlClient                // في الخادم
+
+// lib/modules/legal-core/law-page-data.ts
+getLawPageData(db: SqlClient, systemId: string,
+  opts?: { asOf?: string /* YYYY-MM-DD، افتراضيًا اليوم بالرياض */; resolveRepealingSystems?: boolean })
+  : Promise<LawPageData | null>                   // null = لا نظام بهذا المعرّف
+
+LawPageData {
+  system: { id, name, slug, articleCount, articleCountStored, classification, domainTitle, domain }
+  asOf: string
+  card: LawCardView {
+    name, officialName, kind: WorkKind|null, domain,
+    status: LawStatusView { boe: BoeLawStatus|null; label; hakeem; atSource; derivedByDate; evidence; period },
+    instruments: IssueInstrument[] { kind, text, number, dateHijri, source, url },
+    dates: { issued, published, effective, applied }: DateValue { hijri, gregorian, source },
+    summary, officialSource: { name, url, retrievedOn } | null,
+    replaces: SystemRef[], replacedBy: SystemRef|null, repeal: RepealInfo|null }
+  preamble: PreambleView {
+    kind: "units" | "source_blocks" | "legacy_text" | "none"; label: string|null;
+    completeness: "complete" | "partial" | "issuance_line" | null;
+    units: { editionId; source; rawSha256; outside: PreambleUnitView[]; instruments: PreambleInstrumentView[] } | null;
+    sourceBlocks: { blocks: { kind; heading; text }[]; sourceUrl; retrievedOn } | null;
+    legacy: { text; chars; royalDecree; completeness } | null;   // يُعاد دائمًا إن وُجد
+    officialSourceUrl: string | null }
+  body: { divisions: DivisionView[] { heading; articles: ArticleView[]; allRepealed },
+          counts: { total, inForce, amended, repealed, unverified } }
+  outgoingRepeals: OutgoingRepeal[]               // derived: true
+}
+ArticleView { id, number, title, heading, chapter, text, effectiveText,
+  status: "ساري" | "معدّل" | "ملغى" | null, statusLabel, statusSource, inheritedFromWork,
+  amendment: { versions, currentFrom, instrument, url, pendingFrom } | null,
+  repeal: RepealInfo | null, repealedLaterOn, anchor: `art-${n}`, url: `/legal/<slug>/<n>` }
+RepealInfo { type: RepealType|null; typeDerived; instrument; url; quote; effectiveDate; effectiveDateSource;
+  repealingSystem: SystemRef|null; repealingSystemBasis; repealingArticle }
+PreambleUnitView { id, type: PreambleUnitType, ordinal, label, number, text, anchor, path }
+
+// ثوابت الوسوم
+NOT_AVAILABLE = "غير متوفر"; PREAMBLE_INCOMPLETE_LABEL = "مقدمة غير مكتملة";
+PREAMBLE_NONE_LABEL = "المقدمة غير متوفرة"; PREAMBLE_SOURCE_BLOCKS_LABEL; BOE_LAW_STATUSES
+
+// lib/modules/legal-core/law-name-match.ts
+findLawByName(db, name): Promise<{ match; matchType: "exact"|"prefix"|"contains"|"none"; alternatives }>
+
+// lib/modules/legal-core/preamble-search.ts
+searchPreambleUnits(db, query, { limit?, systemIds?, unitTypes? }): Promise<PreambleSearchHit[]>
+mergeArticleAndPreambleHits(articles, preamble, "separate" | "append")
+```
+
+**قواعد العقد**
+- قراءة فقط.
+- الحقل الفارغ يعني `null`، ويعرضه العرض «غير متوفر» دون أن يُخفيه أو يخترعه.
+- التواريخ نصوص `YYYY-MM-DD` لا تتأثر بمنطقة الخادم.
+- غياب أي جدول، كالجدولين الجديدين قبل الترحيل، يسقط بأمان إلى `none` أو قائمة فارغة.
+- `law_card.status_at_source` يُعاد للاطلاع فقط ولا يُعتمد للحالة.
+
+---
+
+## الملحق ب — تصميم نوع التغيير `import_preamble` في مكتب التحرير (ب-٤) — وثيقة تصميم، لم يُنفَّذ
+
+هذا التصميم مقروء من فرع المكتب `aman/legal-editorial-desk-phase0`، المجلد `lib/modules/editorial/`، وهجرته `20261017090000_editorial_desk_phase0`. جداول المكتب **غير مطبّقة على الإنتاج** (`change_set` و`editorial_change` و`index_sync` ⇒ 0 في `information_schema`).
+
+### ١. الهدف والجدول
+
+- `target_type = 'preamble'`، و`target_id = legal_systems.id`.
+- قيد `editorial_change.target_type` اليوم: `('work','unit','ruling','relation','principle','amendment_op')`.
+- **التوصية:** إضافة `'preamble'` في هجرة المكتب نفسها قبل تطبيقها أول مرة. الهجرة لم تُطبَّق، فهذا ليس تعديل جدول قائم.
+- **البديل إن طُبّقت أولًا:** `target_type='work'` مع `op='import_preamble'`. عيبه أن الفهرس الجزئي `editorial_change_open_target_uq` (على `(target_type, target_id)` للحالات المفتوحة) يمنع أن يكون لنظام واحد تغيير حالة مفتوح واستيراد مقدمة مفتوح معًا.
+- `op = 'import_preamble'`، ويُضاف إلى `ITEM_KINDS` في `types.ts`.
+
+### ٢. الحمولة
+
+- **`before`**:
+  - `{ legacy_preamble_sha256, current_edition_id | null, current_raw_sha256 | null }`
+  - يُقرأ وقت الإعداد ويُحفظ معه `read_at`. أي نسخة أحدث للهدف تعني تعارضًا (W-02).
+- **`after`**:
+  - `raw_text`: النص الحرفي كما لُصق، بلا تطبيع ولا `trim`.
+  - `raw_sha256`.
+  - `source_name`: «أم القرى» أو «هيئة الخبراء بمجلس الوزراء».
+  - `source_url`: https على `uqn.gov.sa` أو `boe.gov.sa`.
+  - `source_retrieved_on`: `YYYY-MM-DD`.
+  - `source_record`: معرّف `law_card` عند الاستيراد من اللقطة، وإلا `null`.
+  - `parser_version`: `PREAMBLE_PARSER_VERSION`.
+  - `units`: قائمة `[{ ordinal, type, char_start, char_end, sha256(text) }]` للمعاينة والمقارنة، دون نسخ النص مرة ثانية.
+  - `completeness` و`instruments` (النوع والرقم والتاريخ).
+- **حقول الدليل:**
+  - `evidence_url = source_url`، و`evidence_instrument` = عنوان الأداة الأولى، و`evidence_quote` = أول 300 حرف من النص.
+  - `source_rank = sourceRankFromUrl(source_url)` في الخادم (`audit.ts:55`): 1 لأم القرى، 2 للهيئة. الرتبة 3 (الجهة المصدرة) **مرفوضة** لهذا الفعل، لأن الأمر يشترط أم القرى أو الهيئة.
+  - `source_ref` مفتاح عدم التكرار: `preamble:<system_id>:<raw_sha256>`.
+- `payloadHash` (`payload.ts:27`) يغطي `before` و`after` والدليل كما هو اليوم، فيتجمّد النص ووحداته من لحظة الإرسال.
+
+### ٣. الفحوص
+
+**عند الإنشاء** (`createChangeSet`):
+1. `checkPreambleImport(raw, meta, parsePreamble(raw))` يتحقق من:
+   - المصدر من القائمة، والرابط على النطاقين، والتاريخ بصيغته.
+   - إعادة التركيب حرفية، وفي النص وحدات.
+   - أي سبب يعني `checks_failed` ولا يدخل الطابور.
+2. لا تغيير مفتوح للهدف، ويفرضه الفهرس الجزئي القائم.
+3. إن كان `raw_sha256` يساوي بصمة أحدث نسخة، يُرفض بـ «لا تغيير».
+4. تحذير غير مانع إن كان `completeness ≠ complete`، أو كان النص أقصر من الحقل القديم.
+
+**عند الاعتماد:** القواعد القائمة نفسها. الوكيل لا يقرّر (`AGENT_CANNOT_DECIDE`)، والمعتمِد غير المُعِدّ، وحد الموافقات الأدنى.
+
+**عند النشر:**
+1. `assertPayloadUnchanged`.
+2. يُعاد `parsePreamble(raw_text)` على الخادم، وتُقارن بصمات الوحدات بـ `after.units`. أي فرق، كتغيّر إصدار القارئ مثلًا، يرفض النشر ويطلب إعادة الإعداد.
+
+### ٤. النشر
+
+- **أين:** فرع جديد في حلقة `publishChangeSet` (`service.ts:503`). اليوم كل `op` غير `set_work_status` يرمي «فعل غير مدعوم للنشر».
+
+```ts
+if (change.op === "import_preamble") {
+  const rows = buildPreambleEditionRows(after.raw_text, {
+    systemId: change.target_id, sourceName, sourceUrl, sourceRetrievedOn, sourceRecord,
+    legacyPreamble: <legal_systems.preamble الحالي>, supersedesEditionId: before.current_edition_id,
+    changeRef: change.id, preparedBy: set.author_id, approvedBy: <المعتمِد الأخير>,
+  });
+  await insertPreambleEdition(tx, rows);            // داخل deskTransaction نفسها
+  await setAppliedRef(tx, change.id, rows.edition.id);
+  await enqueueIndexSync(tx, changeSetId, change);  // target_type='preamble' ← الفهرس النصي والتضمين لاحقًا
+  await recordAudit(tx, actor, { action: "change.publish", objectType: "preamble", objectId: change.target_id,
+    before: change.before, after: { edition_id: rows.edition.id, raw_sha256, units: rows.units.length } });
+}
+```
+
+- **قيود القاعدة** تعمل عند الالتزام: إعادة التركيب، والتبليط، والعدد، و`approved_by <> prepared_by`. أي خلل يُلغي المعاملة كلها، فلا تُنشر مقدمة ناقصة.
+- **`legal_systems.preamble` لا يُمس.** يُحفظ فقط `legacy_preamble_sha256`.
+
+### ٥. التراجع
+
+- `revert` ينشئ نسخة جديدة `preamble_edition`، وقيمة `supersedes_edition_id` فيها هي النسخة المنشورة.
+- النسخة الجديدة تحمل نص النسخة السابقة إن وُجدت. إن لم توجد، فلا نسخة تُكتب ويُستعمل وسم «مسحوبة».
+- **قرار تصميم:** يحتاج هذا الوسم عمودًا أو جدول سحب صغيرًا للإضافة فقط. أقترح جدول `preamble_withdrawal (edition_id, change_ref, reason)`، ويقرأه `preamble_unit_current`.
+- يرفض التراجع إن لم تعد النسخة المنشورة هي الأحدث، أي `applied_ref ≠ current_edition_id`، على نمط ق-٧ القائم (`service.ts:542-553`).
+- لا `DELETE` أبدًا، والجدولان للإضافة فقط.
+
+### ٦. الاستيراد الجماعي
+
+**نقطة الإدخال:** `POST /api/editorial/preambles/bulk` بصلاحية المُعِدّ.
+
+**الملف:** JSON على بنية الدفعات الخمس:
+
+```json
+{ "batch": "litigation-core-1", "source_name": "هيئة الخبراء بمجلس الوزراء",
+  "items": [ { "system_id": "…" | null, "law_name": "…", "source_url": "https://laws.boe.gov.sa/…",
+               "source_retrieved_on": "2026-10-20", "raw_text": "…" } ] }
+```
+
+**المعالجة:**
+1. يُحلّ كل عنصر إلى نظام بـ `system_id` أو `findLawByName` بالمطابقة التامة فقط. أي غموض يعني رفض العنصر، ولا تخمين.
+2. يُفكَّك كل عنصر ويُفحص.
+3. يُنشأ **change_set واحد لكل دفعة**، وفيه تغيير `import_preamble` لكل نظام.
+4. العنصر الفاشل لا يُسقط الدفعة، ويُعاد في تقرير `{ accepted, rejected: [{ law_name, reasons }] }`.
+5. المعاينة صفحة واحدة لكل تغيير، فيها الوحدات بنوعها وبصمة النص ومقارنة بالحقل القديم.
+
+**الاستيراد من اللقطة** (للأنظمة الـ446): سكربت يقرأ `law_card` ويبني العناصر بـ `raw_text = composeLawCardText(text_blocks)` و`source_record = law_card.id`. النص من القاعدة نفسها، فلا سحب ولا لصق. التصميم وحده هنا، والسكربت يُكتب مع التنفيذ.
+
+### ٧. ما يحتاجه التنفيذ على فرع المكتب
+
+1. نقل `preamble-parser.ts` و`preamble-edition.ts` و`sql-port.ts` من هذا الفرع، أو دمجه أولًا.
+2. إضافة `'preamble'` لقيد `target_type` في هجرة المكتب قبل تطبيقها.
+3. فرع النشر والتراجع واختباراتهما على قاعدة محلية، على نمط `test:editorial-desk` القائم.
+4. شاشة اللصق والمعاينة: للقسم أ، أو aman-frontend.
