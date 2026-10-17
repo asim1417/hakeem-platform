@@ -1,8 +1,8 @@
 {
   "task": "HKM-023-B ب-٣",
-  "generated_at": "2026-10-17T07:08:58.289Z",
+  "generated_at": "2026-10-17T09:28:53.476Z",
   "source": "إشارات استخرجها SQL المولَّد (buildPreambleSignalsSql) على الإنتاج بقراءة فقط: reports/hkm-023-b-preamble-signals.txt",
-  "input_md5": "d3cb1fc9dbfb44943c47fd8694c1fad0",
+  "input_md5": "3d84663859cc54823f732d7e12c5c19e",
   "names_from": "ingest/boe-corpus-2026-09-28/data/hakeem_systems_2026-10-16.json",
   "unresolved_names": [],
   "total": 991,
@@ -12,14 +12,14 @@
     "جزئية": 45
   },
   "by_reason": {
-    "issuance_line:issuance_phrase": 663,
+    "issuance_line:issuance_phrase": 530,
     "complete:all_parts": 68,
+    "issuance_line:body_leak": 220,
     "issuance_line:title_date_only": 123,
-    "issuance_line:body_leak": 75,
     "partial:missing:opening+operative": 33,
-    "issuance_line:narrative_intro": 10,
-    "issuance_line:unstructured_text": 7,
+    "issuance_line:narrative_intro": 4,
     "partial:missing:opening+recital": 9,
+    "issuance_line:unstructured_text": 1,
     "partial:missing:opening": 3
   },
   "by_sector": {
@@ -67,7 +67,7 @@
     "name": 162,
     "none": 370
   },
-  "body_leak": 153,
+  "body_leak": 227,
   "law_card_full": 467,
   "law_card_full_and_not_complete": 446,
   "length_buckets": {
@@ -77,5 +77,5 @@
     "gt3000": 147
   },
   "csv": "reports/hkm-023-b-preamble-classification.csv",
-  "csv_md5": "9997ae40aeb8763cbe289bd2fe9c71bf"
+  "csv_md5": "67fcab59218e5c58b96c413696734d8d"
 }

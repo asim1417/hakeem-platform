@@ -6,8 +6,16 @@
  *   issue_instrument = نص أول أداة إصدار؛ issue_date_h = تاريخ الإصدار الهجري؛ status = حالة النظام من قائمة الهيئة
  *   الست (أو null إن لم تقابلها حالة موثّقة).
  * المضاف: match (طريقة المطابقة والبدائل)، official_name، kind، status_detail، issue_instruments[]، dates (الأربعة)،
- *   replaced_by/replaces/repeal، preamble (وحدات أو نص مع وسم الاكتمال)، counts، url، ولكل مادة في toc:
- *   status، status_label، status_source، repealed_by، repeal_type، repeal_effective_date، url.
+ *   replaced_by/replaces/repeal، preamble (وحدات أو نص مع وسم الاكتمال)، counts، url، article_url_template، as_of.
+ *
+ * الفهرس مضغوط (مراجعة الجودة ع٢: النسخة الأولى كبّرت المخرج 3.6 مرات). كل عنصر يبقى بحقوله القديمة الثلاثة، ولا
+ * يُضاف إليه إلا ما له قيمة:
+ *   bis وkey      للمادة المكررة فقط (HKM-028: «12 مكرر» ← bis=1، key="12_bis")؛ وللأصل key = number.
+ *   status        «ساري» أو «معدّل» أو «ملغى» إن كانت موثّقة؛ غيابه = غير مؤكد (عدّاده counts.unverified).
+ *   repealed_by وrepeal_effective_date   للمادة الملغاة بأداة خاصة بها (لا للملغاة تبعًا لإلغاء النظام كله، فبيانها في repeal).
+ *   repealed_from  إن كان إلغاؤها مؤجلًا إلى تاريخ بعد as_of.
+ * رابط المادة لا يتكرر: article_url_template + key.
+ * لا يُقرأ نص أي مادة (withText=false)، ولا تُمسح جداول التحقق والبطاقات كلها.
  * لا Prisma هنا (SqlClient)، ليُختبر على قاعدة محلية.
  */
 import { getLawPageData, type LawPageData, type RepealInfo } from "../../modules/legal-core/law-page-data";
@@ -16,6 +24,38 @@ import type { SqlClient } from "../../modules/legal-core/sql-port";
 
 /** سقف نص المقدمة في مخرج الأداة (المقدمات المتسرّب إليها متن قد تبلغ 178 ألف حرف). */
 export const MCP_PREAMBLE_MAX_CHARS = 12_000;
+/** حقل مقدمة قديم يحوي متنًا لا مقدمة: يُعاد منه هذا القدر فقط مع body_leak=true. */
+export const MCP_BODY_LEAK_MAX_CHARS = 1_000;
+
+export interface McpTocEntry {
+  article_id: string;
+  number: number;
+  title: string | null;
+  bis?: number;
+  key?: string;
+  status?: string;
+  repealed_by?: string;
+  repeal_effective_date?: string;
+  repealed_from?: string;
+}
+
+type ArticleLike = LawPageData["body"]["divisions"][number]["articles"][number];
+
+/** عنصر فهرس مضغوط: الحقول القديمة، وما له قيمة فقط. */
+export function tocEntry(a: ArticleLike): McpTocEntry {
+  const e: McpTocEntry = { article_id: a.id, number: a.number, title: a.title };
+  if (a.bis > 0) {
+    e.bis = a.bis;
+    e.key = a.key;
+  }
+  if (a.status) e.status = a.status;
+  if (a.repeal && !a.inheritedFromWork) {
+    if (a.repeal.instrument) e.repealed_by = a.repeal.instrument;
+    if (a.repeal.effectiveDate) e.repeal_effective_date = a.repeal.effectiveDate;
+  }
+  if (a.repealedLaterOn) e.repealed_from = a.repealedLaterOn;
+  return e;
+}
 
 export interface GetLawInput {
   lawId?: string;
@@ -70,10 +110,13 @@ function preambleOut(data: LawPageData) {
       : p.kind === "legacy_text" && p.legacy
         ? p.legacy.text
         : "";
+  const bodyLeak = p.kind === "legacy_text" && Boolean(p.legacy?.bodyLeak);
+  const cap = bodyLeak ? MCP_BODY_LEAK_MAX_CHARS : MCP_PREAMBLE_MAX_CHARS;
   return {
     ...base,
-    text: full ? full.slice(0, MCP_PREAMBLE_MAX_CHARS) : null,
-    truncated: full.length > MCP_PREAMBLE_MAX_CHARS,
+    ...(bodyLeak ? { body_leak: true } : {}),
+    text: full ? full.slice(0, cap) : null,
+    truncated: full.length > cap,
     chars: full.length,
   };
 }
@@ -83,6 +126,7 @@ export function toMcpLaw(data: LawPageData, match: { by: LawMatchType; query: st
   const card = data.card;
   const first = card.instruments[0] ?? null;
   const articles = data.body.divisions.flatMap((d) => d.articles);
+  const lawUrl = `${siteUrl}/legal/${encodeURIComponent(data.system.slug)}`;
   return {
     law_id: data.system.id,
     name: data.system.name,
@@ -91,18 +135,7 @@ export function toMcpLaw(data: LawPageData, match: { by: LawMatchType; query: st
     issue_date_h: card.dates.issued.hijri ?? first?.dateHijri ?? null,
     status: card.status.boe,
     articles_count: data.system.articleCountStored || articles.length,
-    toc: articles.map((a) => ({
-      article_id: a.id,
-      number: a.number,
-      title: a.title,
-      status: a.status,
-      status_label: a.statusLabel,
-      status_source: a.statusSource,
-      repealed_by: a.repeal?.instrument ?? null,
-      repeal_type: a.repeal?.type ?? null,
-      repeal_effective_date: a.repeal?.effectiveDate ?? null,
-      url: `${siteUrl}${a.url}`,
-    })),
+    toc: articles.map(tocEntry),
     match: { by: match.by, query: match.query, alternatives: match.alternatives.map((x) => ({ law_id: x.id, name: x.name })) },
     official_name: card.officialName,
     kind: card.kind,
@@ -122,7 +155,9 @@ export function toMcpLaw(data: LawPageData, match: { by: LawMatchType; query: st
     repeal: repealOut(card.repeal),
     preamble: preambleOut(data),
     counts: data.body.counts,
-    url: `${siteUrl}/legal/${encodeURIComponent(data.system.slug)}`,
+    url: lawUrl,
+    /** رابط المادة: استبدل {key} بـ key العنصر (أو number إن غاب key). */
+    article_url_template: `${lawUrl}/{key}`,
     as_of: data.asOf,
   };
 }
@@ -145,7 +180,8 @@ export async function getLawTool(db: SqlClient, input: GetLawInput, opts: { asOf
     return { error: "يلزم law_id أو name" };
   }
   if (!id) return { error: "النظام غير موجود", match: { by: match.by, query: match.query, alternatives: match.alternatives.map((x) => ({ law_id: x.id, name: x.name })) } };
-  const data = await getLawPageData(db, id, { asOf: opts.asOf });
+  // الفهرس لا يحتاج نص المواد، ولا فهرس أدوات الإصدار ولا ما ألغاه النظام في غيره (مسح جداول كاملة).
+  const data = await getLawPageData(db, id, { asOf: opts.asOf, withText: false, withOutgoingRepeals: false, resolveRepealingSystems: false });
   if (!data) return { error: "النظام غير موجود" };
   return toMcpLaw(data, match, opts.siteUrl ?? "");
 }

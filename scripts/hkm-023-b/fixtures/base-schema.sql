@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS legal_articles (
   "lawName" text NOT NULL,
   classification text,
   "articleNumber" integer NOT NULL,
+  -- HKM-028 (20261017120000_article_bis، مطبَّق على الإنتاج): درجة «مكرر»؛ 100 فأعلى صف ليس مادة.
+  "articleBis" integer NOT NULL DEFAULT 0,
   title text NOT NULL,
   content text NOT NULL,
   chapter text,
@@ -45,7 +47,7 @@ CREATE TABLE IF NOT EXISTS legal_articles (
   "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   search_norm text,
-  UNIQUE ("lawName", "articleNumber")
+  UNIQUE ("lawName", "articleNumber", "articleBis")
 );
 
 CREATE TABLE IF NOT EXISTS verification (

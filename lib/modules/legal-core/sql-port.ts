@@ -35,3 +35,17 @@ export function isMissingRelation(error: unknown): boolean {
   if (code === "42P01" || code === "42703") return true;
   return /does not exist/.test(String((error as { message?: unknown })?.message ?? ""));
 }
+
+/**
+ * هل الجدول أو العرض موجود؟ يُسأل قبل قراءة جدول لم يُطبَّق ترحيله بعد، فلا يُرسل استعلام يفشل
+ * (Prisma يسجّل كل خطأ استعلام خام في الإنتاج: prisma:error relation … does not exist).
+ */
+export async function relationExists(db: SqlClient, name: string): Promise<boolean> {
+  try {
+    const r = await db.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [name]);
+    return Boolean(r[0]?.ok);
+  } catch (e) {
+    if (isMissingRelation(e)) return false;
+    throw e;
+  }
+}

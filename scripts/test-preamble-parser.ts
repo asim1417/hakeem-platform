@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import {
+  bareText,
   composeLawCardText,
   parseInstrumentHeading,
   parsePreamble,
@@ -177,6 +178,18 @@ const h = parseInstrumentHeading("مرسوم ملكي رقم ( م/128 ) وتار
 ok(h.kind === "royal_decree" && h.number === "م/128" && h.dateHijri === "1440/11/13", "B-2 عنوان الأداة: النوع والرقم والتاريخ");
 const h2 = parseInstrumentHeading("قرار مجلس الوزراء رقم (٢٨٣) وتاريخ ٢٤ / ٥ / ١٤٤٣هـ");
 ok(h2.kind === "cabinet_decision" && h2.number === "283" && h2.dateHijri === "1443/5/24", "B-2 عنوان الأداة بأرقام هندية وترتيب يوم/شهر/سنة");
+
+// مراجعة الجودة ن٢: بيانات العنوان مع التشكيل والتطويل وNBSP داخل الرقم، والأرقام الفارسية، ومحارف الاتجاه.
+const h3 = parseInstrumentHeading("مرسومٌ ملكيٌّ رقمُ (مـ/\u00a0٤٣) وتاريخُ ١٤٤٣/٥/٢٦هـ");
+ok(h3.kind === "royal_decree" && h3.number === "م/43" && h3.dateHijri === "1443/5/26", "B-2 عنوان الأداة مع التشكيل والتطويل وNBSP داخل الرقم");
+const h4 = parseInstrumentHeading("مرسوم ملكي رقم (م/۴۳) وتاريخ ۱۴۴۳/۵/۲۶هـ");
+ok(h4.number === "م/43" && h4.dateHijri === "1443/5/26", "B-2 عنوان الأداة بأرقام فارسية");
+const h5 = parseInstrumentHeading("\u202bقرار مجلس الوزراء رقم (\u2066283\u2069) وتاريخ 1443/5/24هـ\u202c");
+ok(h5.kind === "cabinet_decision" && h5.number === "283" && h5.dateHijri === "1443/5/24", "B-2 عنوان الأداة مع محارف التحكم بالاتجاه");
+ok(bareText("\u202bبعون\u2067 الله\u2069\u202c\u061c") === "بعون الله", "B-2 الصورة العارية بلا محارف التحكم بالاتجاه");
+const bidiText = "\u202bبعون الله تعالى\u202c\nنحن فلان (اصطناعي)\n\u2067وبعد الاطلاع على كذا.\u2069\nرسمنا بما هو آت:\nأولاً: كذا (اصطناعي).";
+const bp = parsePreamble(bidiText);
+ok(bp.ok && bp.reconstructionOk && reconstructPreamble(bp.units) === bidiText && bp.completeness === "complete", "B-2 نص بمحارف الاتجاه: تصنيف كامل وإعادة تركيب حرفية");
 
 console.log(`\n${passed} نجح، ${failed} فشل`);
 process.exitCode = failed ? 1 : 0;

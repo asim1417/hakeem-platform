@@ -13,7 +13,7 @@
 import { normalizeArabicText } from "./arabic-morphology";
 import { resolveSystemSlug } from "./eli";
 import type { PreambleUnitType } from "./preamble-parser";
-import { isMissingRelation, type SqlClient } from "./sql-port";
+import { isMissingRelation, relationExists, type SqlClient } from "./sql-port";
 
 export interface PreambleSearchHit {
   type: "preamble_unit";
@@ -51,6 +51,7 @@ export async function searchPreambleUnits(
   const q = normalizeArabicText(String(query ?? ""));
   if (!q) return [];
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
+  if (!(await relationExists(db, "preamble_unit_current"))) return [];
   try {
     const rows = await db.query<{
       id: string;
