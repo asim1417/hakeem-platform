@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { stripPiiFromQuery } from "@/lib/modules/legal-core/rulings-search";
+import { findRulingIdsRedacted, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import type {
   DataSourceDefinition,
   DueDiligenceConnector,
@@ -51,8 +51,9 @@ export class HakeemPublishedJudgmentsConnector implements DueDiligenceConnector 
 
   async collect(query: EntityQuery): Promise<SourceRunResult> {
     const startedAt = Date.now();
-    // لا يُبحث في نص الأحكام برقم هوية أو جوال.
-    const entityName = stripPiiFromQuery(query.name).query;
+    // لا يُبحث في نص الأحكام برقم هوية أو جوال، ولا بجزء منه (HKM-012).
+    const parts = splitRulingQuery(query.name);
+    const entityName = parts.text;
     if (entityName.length < 3) {
       return {
         source: this.source,
@@ -62,15 +63,22 @@ export class HakeemPublishedJudgmentsConnector implements DueDiligenceConnector 
       };
     }
 
+    const sources = ["ahkam_moj", "moj", "ministry_of_justice"];
+    // اسم عربي خالص لا يمسّه الحجب فيُطابَق على الخام؛ وما فيه رقم أو لاتيني يُطابَق منقّحًا داخل القاعدة،
+    // والرقم الطويل في رقم القضية أو القرار فقط.
+    const redactedIds =
+      parts.sensitive || parts.numbers.length ? await findRulingIdsRedacted(parts, { limit: 25, sources }) : null;
     const rows = await prisma.judicialCase.findMany({
-      where: {
-        source: { in: ["ahkam_moj", "moj", "ministry_of_justice"] },
-        OR: [
-          { judgmentTitle: { contains: entityName, mode: "insensitive" } },
-          { judgmentText: { contains: entityName, mode: "insensitive" } },
-          { appealText: { contains: entityName, mode: "insensitive" } },
-        ],
-      },
+      where: redactedIds
+        ? { id: { in: redactedIds } }
+        : {
+            source: { in: sources },
+            OR: [
+              { judgmentTitle: { contains: entityName, mode: "insensitive" } },
+              { judgmentText: { contains: entityName, mode: "insensitive" } },
+              { appealText: { contains: entityName, mode: "insensitive" } },
+            ],
+          },
       orderBy: [{ decisionDate: "desc" }, { createdAt: "desc" }],
       take: 25,
       select: {

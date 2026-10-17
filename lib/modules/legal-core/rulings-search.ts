@@ -12,6 +12,7 @@
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "./bm25-tokenizer";
 import { buildRulingExcerpts, buildRulingTsQuery, excerptFrom, findMatches, queryTokens, type RulingPart } from "./ruling-excerpts";
+import { REDACTION_MARK, digitVariants, rulingNumbersSql, rulingRedactedTextSql, toLatinDigits } from "./ruling-redacted-sql";
 import type { SegmentType } from "@/lib/rulings/research/segment";
 import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 
@@ -91,6 +92,71 @@ export function stripPiiFromQuery(query: string | null | undefined): { query: st
   return { query: redacted.replace(PII_MARKS, " ").replace(/\s+/g, " ").trim(), hadPii };
 }
 
+const LONG_NUMBER = /[0-9\u0660-\u0669]{5,}/g;
+const SENSITIVE = /[0-9\u0660-\u0669A-Za-z@]/;
+
+export interface RulingQueryParts {
+  /** ما يُطابَق في العنوان والمتن والاستئناف، على محتواها المنقّح. */
+  text: string;
+  /** أرقام من ٥ خانات فأكثر (لاتينية): تُطابَق في رقم القضية أو القرار فقط، لا في المتن. */
+  numbers: string[];
+  hadPii: boolean;
+  /** في النص رقم أو حرف لاتيني أو @، فقد يقع على ما يحجبه redactPII. */
+  sensitive: boolean;
+  /** ألفاظ النص التي قد تقع على المحجوب. */
+  sensitiveTokens: string[];
+  /** في النص لفظ عربي خالص: الحجب لا يمسّه، فمطابقته على الخام كمطابقته على المنقّح. */
+  hasPlainToken: boolean;
+}
+
+/**
+ * يقسم استعلام الأحكام بعد إزالة البيانات الشخصية منه. تنقية الاستعلام وحدها لا تكفي: جزء الهوية
+ * («19876») أو الهوية بعد «المادة/صك» لا يُعدّ بيانات شخصية في الاستعلام، فيُمنع وصوله إلى المتن الخام:
+ * الأرقام الطويلة إلى حقلي القضية والقرار، والنص الحساس إلى المتن المنقّح.
+ */
+export function splitRulingQuery(raw: string | null | undefined): RulingQueryParts {
+  const { query, hadPii } = stripPiiFromQuery(raw);
+  const clean = query.split(REDACTION_MARK).join(" ");
+  const numbers = [...new Set((clean.match(LONG_NUMBER) ?? []).map(toLatinDigits))];
+  const text = clean.replace(LONG_NUMBER, " ").replace(/\s+/g, " ").trim();
+  const tokens = queryTokens(text);
+  const sensitiveTokens = tokens.filter((t) => SENSITIVE.test(t));
+  return { text, numbers, hadPii, sensitive: SENSITIVE.test(text), sensitiveTokens, hasPlainToken: tokens.some((t) => !SENSITIVE.test(t)) };
+}
+
+/** هل ترد الألفاظ (كلها أو أحدها) كلمةً كاملة في النص بعد حجبه؟ */
+export function tokensInRedacted(raw: string, tokens: string[], mode: "all" | "any"): boolean {
+  const red = redactPII(raw);
+  const has = (t: string) => digitVariants(t).some((v) => findMatches(red, v).length > 0);
+  return mode === "all" ? tokens.every(has) : tokens.some(has);
+}
+
+/**
+ * معرّفات الأحكام المطابقة على المحتوى المنقّح (الأحدث أولًا): الأرقام الطويلة في حقلي القضية والقرار،
+ * والنص في العنوان والمتن والاستئناف بعد الحجب داخل القاعدة. لا يعتمد على تنظيف search_norm.
+ */
+export async function findRulingIdsRedacted(
+  parts: RulingQueryParts,
+  opts: { limit: number; offset?: number; sources?: string[]; court?: string; yearH?: number; appeal?: boolean },
+): Promise<string[]> {
+  if (!parts.text && !parts.numbers.length) return [];
+  const params: unknown[] = [];
+  const conds = rulingFilters({ query: "", numbers: parts.numbers, court: opts.court, yearH: opts.yearH }, params);
+  if (parts.text) conds.push(rulingRedactedTextSql(parts.text, params, "", { appeal: opts.appeal }));
+  if (opts.sources?.length) {
+    params.push(opts.sources);
+    conds.push(`"source" = ANY($${params.length}::text[])`);
+  }
+  const limit = Math.max(1, Math.floor(opts.limit));
+  const offset = Math.max(0, Math.floor(opts.offset ?? 0));
+  const rows = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
+    `SELECT id FROM judicial_cases WHERE ${conds.join(" AND ")}
+     ORDER BY "decisionDate" DESC NULLS LAST, "createdAt" DESC LIMIT ${limit} OFFSET ${offset}`,
+    ...params,
+  );
+  return rows.map((r) => r.id);
+}
+
 /**
  * نص فهرس الأحكام: حجب ثم تطبيع ثم حجب ثانٍ.
  * التطبيع يحوّل الأرقام الهندية ويزيل الفواصل، فيُظهر أرقاماً لم يطابقها الحجب الأول.
@@ -121,6 +187,8 @@ export interface RulingSearchOptions {
   query: string;
   court?: string;
   yearH?: number;
+  /** أرقام طويلة تُطابَق في رقم القضية أو القرار فقط (من splitRulingQuery). */
+  numbers?: string[];
   limit?: number;
   offset?: number;
 }
@@ -155,7 +223,7 @@ async function tableReady(table: "ruling_meta" | "ruling_segments" | "ruling_seg
  * السنة من ruling_meta.year_h (مستخرجة لـ٩٩٫٩٤٪ ومفهرسة) إن وُجد الجدول؛ وإلّا مطابقة نص التاريخ.
  */
 function rulingFilters(opts: RulingSearchOptions, params: unknown[], metaReady = false): string[] {
-  const conds: string[] = [];
+  const conds: string[] = rulingNumbersSql(opts.numbers ?? [], params);
   if (opts.court && opts.court.trim()) {
     params.push(`%${normalizeArabic(opts.court)}%`);
     conds.push(`(${sqlNormalize(`"court"`)} LIKE $${params.length} OR ${sqlNormalize(`"courtOfAppeal"`)} LIKE $${params.length})`);
@@ -366,12 +434,70 @@ export async function buildRulingSearchSql(opts: RulingSearchOptions): Promise<R
   return { countSql, rowsSql, params, indexPlan: indexed };
 }
 
+type RulingRow = {
+  id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
+  cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
+  judgmentTitle: string | null; judgmentText: string | null;
+};
+
+function rowToHit(r: RulingRow, query: string, rawTokens: string[]): RulingHit {
+  const raw = r.judgmentText ?? "";
+  // كم لفظًا من الاستعلام ورد كلمةً كاملة (مع السوابق) في النص أو العنوان.
+  const present = rawTokens.filter((t) => findMatches(`${r.judgmentTitle ?? ""} ${raw}`, t).length > 0).length;
+  // ما يقرؤه حكيم: مقتطف من الأسباب أو المنطوق، والمنطوق مرفق، وخريطة الأجزاء — منقّاة من PDPL.
+  const ex = buildRulingExcerpts(raw, query);
+  const placeBoost = ex.matchedIn === "reasons" || ex.matchedIn === "disposition" ? 0.1 : 0;
+  return {
+    id: r.id,
+    decisionNo: r.decisionNo,
+    caseNo: r.caseNo,
+    court: r.court,
+    cityName: r.cityName,
+    dateText: r.decisionDateText ?? r.caseDateText,
+    hijriYear: extractHijriYear(r.decisionDateText ?? r.caseDateText),
+    title: r.judgmentTitle,
+    snippet: redactPII(ex.snippet),
+    matchedIn: ex.matchedIn,
+    disposition: ex.disposition ? redactPII(ex.disposition) : null,
+    parts: ex.parts,
+    score: rawTokens.length ? Math.min(1, present / rawTokens.length + placeBoost) : 1,
+  };
+}
+
+const RULING_ROW_COLS = `"id","decisionNo","caseNo","court","cityName","decisionDateText","caseDateText","judgmentTitle","judgmentText"`;
+
+/**
+ * استعلام بلا لفظ عربي (أرقام قصيرة أو لاتينية أو رقم قضية وحده): يُطابَق على المحتوى المنقّح
+ * داخل القاعدة لا على search_norm، لأن العمود قد يحمل أجزاءً من محجوب لا ينظّفها #704
+ * (بريد وآيبان وأرقام مفصولة بمسافات). العدّ من المسار نفسه، فلا يكشف وجود الرقم.
+ */
+async function searchRulingsRedacted(parts: RulingQueryParts, opts: RulingSearchOptions, limit: number, offset: number) {
+  const [counted, ids] = await Promise.all([
+    // العنوان والمتن كما يبحث هذا المسار دائمًا (لا الاستئناف).
+    findRulingIdsRedacted(parts, { limit: COUNT_CAP + 1, court: opts.court, yearH: opts.yearH, appeal: false }).catch(() => []),
+    findRulingIdsRedacted(parts, { limit, offset, court: opts.court, yearH: opts.yearH, appeal: false }).catch(() => []),
+  ]);
+  const rows = ids.length
+    ? await prisma.$queryRawUnsafe<RulingRow[]>(`SELECT ${RULING_ROW_COLS} FROM "judicial_cases" WHERE "id" = ANY($1::text[])`, ids).catch(() => [])
+    : [];
+  const order = new Map(ids.map((id, i) => [id, i]));
+  rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  const tokens = queryTokens(parts.text);
+  return { hits: rows.map((r) => rowToHit(r, parts.text, tokens)), total: Math.min(counted.length, COUNT_CAP), totalCapped: counted.length > COUNT_CAP };
+}
+
 export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
   const started = Date.now();
-  // لا يُبحث بما يُحجب: الفهرس قد يحمل أرقامًا لم تُحجب بعد، والاستعلام يذهب إلى مزوّد المتجهات.
-  const opts = { ...input, query: stripPiiFromQuery(input.query).query };
+  // لا يُبحث بما يُحجب: الهوية والجوال تُزالان، والأرقام الطويلة تُطابَق في رقم القضية والقرار فقط.
+  const parts = splitRulingQuery(input.query);
+  const opts: RulingSearchOptions = { ...input, query: parts.text, numbers: parts.numbers };
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 50);
   const offset = Math.max(opts.offset ?? 0, 0);
+  if (!parts.text && !parts.numbers.length) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
+  if (!parts.hasPlainToken) {
+    const r = await searchRulingsRedacted(parts, opts, limit, offset);
+    return { ...r, ms: Date.now() - started };
+  }
   const rawTokens = queryTokens(opts.query);
   const sql = await buildRulingSearchSql(opts);
   if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
@@ -384,39 +510,17 @@ export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{
   const totalQ = runRulingSearchSql<Array<{ c: bigint }>>(countSql, params, indexPlan).catch(() => [{ c: BigInt(0) }]);
 
   // الترتيب على مرشحين محدودين من الفهرس (لا حساب rank لآلاف الأحكام في الألفاظ الشائعة).
-  const rowsQ = runRulingSearchSql<Array<{
-    id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
-    cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
-    judgmentTitle: string | null; judgmentText: string | null;
-  }>>(rowsSql, params, indexPlan).catch(() => []);
+  const rowsQ = runRulingSearchSql<RulingRow[]>(rowsSql, params, indexPlan).catch(() => []);
   const [totalRow, rows] = await Promise.all([totalQ, rowsQ]);
   const counted = Number(totalRow?.[0]?.c ?? 0);
   const totalCapped = counted > COUNT_CAP;
   const total = Math.min(counted, COUNT_CAP);
 
-  const hits: RulingHit[] = rows.map((r) => {
-    const raw = r.judgmentText ?? "";
-    // كم لفظًا من الاستعلام ورد كلمةً كاملة (مع السوابق) في النص أو العنوان.
-    const present = rawTokens.filter((t) => findMatches(`${r.judgmentTitle ?? ""} ${raw}`, t).length > 0).length;
-    // ما يقرؤه حكيم: مقتطف من الأسباب أو المنطوق، والمنطوق مرفق، وخريطة الأجزاء — منقّاة من PDPL.
-    const ex = buildRulingExcerpts(raw, opts.query);
-    const placeBoost = ex.matchedIn === "reasons" || ex.matchedIn === "disposition" ? 0.1 : 0;
-    return {
-      id: r.id,
-      decisionNo: r.decisionNo,
-      caseNo: r.caseNo,
-      court: r.court,
-      cityName: r.cityName,
-      dateText: r.decisionDateText ?? r.caseDateText,
-      hijriYear: extractHijriYear(r.decisionDateText ?? r.caseDateText),
-      title: r.judgmentTitle,
-      snippet: redactPII(ex.snippet),
-      matchedIn: ex.matchedIn,
-      disposition: ex.disposition ? redactPII(ex.disposition) : null,
-      parts: ex.parts,
-      score: Math.min(1, present / rawTokens.length + placeBoost),
-    };
-  });
+  // لفظ حساس (رقم أو لاتيني) يجب أن يرد في النص بعد حجبه، وإلا كان الحكم مطابقًا بالمحجوب وحده.
+  const visible = parts.sensitiveTokens.length
+    ? rows.filter((r) => tokensInRedacted(`${r.judgmentTitle ?? ""} ${r.judgmentText ?? ""}`, parts.sensitiveTokens, "all"))
+    : rows;
+  const hits = visible.map((r) => rowToHit(r, opts.query, rawTokens));
   const merged = await mergeSemantic(hits, await semanticQ, opts, limit);
 
   return { hits: merged, total: Math.max(total, merged.length), totalCapped, ms: Date.now() - started };

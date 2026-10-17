@@ -6,10 +6,10 @@
  * (تُشتقّ من decisionDateText). فهرس pg_trgm على judgmentText قائمٌ سلفًا
  * (idx_trgm_jc_text عبر scripts/apply-search-indexes.ts) — يسرّع ILIKE على ٥١ ألف حكم.
  */
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
-import { extractHijriYear, redactPII, stripPiiFromQuery } from "@/lib/modules/legal-core/rulings-search";
+import { extractHijriYear, redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
+import { rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
 import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
@@ -72,33 +72,50 @@ export async function enumerateRulings(
   cursor?: string,
   snippetLen = 500,
 ) {
-  // لا يُعثر على حكم بهوية أو جوال: يُزال النمط من الألفاظ قبل مطابقة search_norm.
-  terms = terms.map((t) => stripPiiFromQuery(t).query).filter(Boolean);
-  if (!terms.length) {
+  // HKM-012: لا يُعثر على حكم بهوية أو جوال ولا بجزء منهما. الأرقام الطويلة تُطابَق في رقم القضية
+  // والقرار فقط؛ اللفظ العربي الخالص في search_norm (الحجب لا يمسّه)؛ وما فيه رقم أو لاتيني على
+  // المتن المنقّح داخل القاعدة، لأن search_norm قد يحمل بقايا محجوب لا ينظّفها #704.
+  const parts = terms.map((t) => splitRulingQuery(t)).filter((p) => p.text || p.numbers.length);
+  terms = parts.map((p) => [p.text, ...p.numbers].filter(Boolean).join(" "));
+  if (!parts.length) {
     const empty = { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total: 0, by_court: [] };
     return countOnly ? empty : { ...empty, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
   }
-  // تعقيم أحرف بدل ILIKE (% _ \) ثمّ تغليف بـ %..% — بمعاملات مربوطة (بلا حقن).
-  const likeTerms = terms.map((t) => `%${normalizeArabic(t).replace(/[%_\\]/g, "")}%`);
-  const termConds = Prisma.join(
-    likeTerms.map((t) => Prisma.sql`r."search_norm" ILIKE ${t}`),
-    " OR ",
-  );
-  const filters: Prisma.Sql[] = [Prisma.sql`(${termConds})`];
-  if (court) filters.push(Prisma.sql`r."court" ILIKE ${"%" + court + "%"}`);
+  const params: unknown[] = [];
+  const termConds = parts.map((p) => {
+    const conds = rulingNumbersSql(p.numbers, params, "r.");
+    // العنوان والمتن كما في search_norm (لا الاستئناف).
+    if (p.text && p.sensitive) conds.push(rulingRedactedTextSql(p.text, params, "r.", { appeal: false }));
+    else if (p.text) {
+      // تعقيم أحرف بدل ILIKE (% _ \) ثمّ تغليف بـ %..% — بمعاملات مربوطة (بلا حقن).
+      params.push(`%${normalizeArabic(p.text).replace(/[%_\\]/g, "")}%`);
+      conds.push(`r."search_norm" ILIKE $${params.length}`);
+    }
+    return `(${conds.join(" AND ")})`;
+  });
+  const filters: string[] = [`(${termConds.join(" OR ")})`];
+  if (court) {
+    params.push(`%${court}%`);
+    filters.push(`r."court" ILIKE $${params.length}`);
+  }
   // لا عمود سنة هجرية — تقريبٌ بمطابقة نصّ التاريخ (تُشتقّ السنة في المخرجات).
-  if (yearH) filters.push(Prisma.sql`r."decisionDateText" ILIKE ${"%" + yearH + "%"}`);
-  const whereSql = Prisma.join(filters, " AND ");
+  if (yearH) {
+    params.push(`%${yearH}%`);
+    filters.push(`r."decisionDateText" ILIKE $${params.length}`);
+  }
+  const whereSql = filters.join(" AND ");
 
-  const totalRows = await prisma.$queryRaw<{ n: bigint }[]>(
-    Prisma.sql`SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`,
+  const totalRows = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
+    `SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`,
+    ...params,
   );
   const total = Number(totalRows[0]?.n ?? 0);
 
-  const byCourt = await prisma.$queryRaw<{ court: string | null; n: bigint }[]>(
-    Prisma.sql`SELECT r."court" AS court, COUNT(*)::bigint AS n
-               FROM "judicial_cases" r WHERE ${whereSql}
-               GROUP BY r."court" ORDER BY n DESC LIMIT 30`,
+  const byCourt = await prisma.$queryRawUnsafe<{ court: string | null; n: bigint }[]>(
+    `SELECT r."court" AS court, COUNT(*)::bigint AS n
+     FROM "judicial_cases" r WHERE ${whereSql}
+     GROUP BY r."court" ORDER BY n DESC LIMIT 30`,
+    ...params,
   );
 
   const base = {
@@ -110,13 +127,15 @@ export async function enumerateRulings(
 
   if (countOnly) return base;
 
-  const pageFilters = cursor ? Prisma.sql`${whereSql} AND r."id" > ${cursor}` : whereSql;
-  const rows = await prisma.$queryRaw<
+  const pageParams = cursor ? [...params, cursor] : params;
+  const pageFilters = cursor ? `${whereSql} AND r."id" > $${pageParams.length}` : whereSql;
+  const rows = await prisma.$queryRawUnsafe<
     Array<{ id: string; caseNo: string | null; decisionNo: string | null; court: string | null; decisionDateText: string | null; judgmentText: string }>
   >(
-    Prisma.sql`SELECT r."id", r."caseNo", r."decisionNo", r."court", r."decisionDateText", r."judgmentText"
-               FROM "judicial_cases" r WHERE ${pageFilters}
-               ORDER BY r."id" ASC LIMIT ${pageSize}`,
+    `SELECT r."id", r."caseNo", r."decisionNo", r."court", r."decisionDateText", r."judgmentText"
+     FROM "judicial_cases" r WHERE ${pageFilters}
+     ORDER BY r."id" ASC LIMIT ${Math.max(1, Math.floor(pageSize))}`,
+    ...pageParams,
   );
 
   // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
@@ -124,7 +143,7 @@ export async function enumerateRulings(
     // الحجب قبل القص، فلا يقطع القصُّ رقمًا يفلت من الحجب.
     const txt = redactPII(r.judgmentText ?? "");
     let idx = -1;
-    for (const t of terms) {
+    for (const t of parts.map((p) => p.text).filter(Boolean)) {
       const i = txt.indexOf(t);
       if (i !== -1 && (idx === -1 || i < idx)) idx = i;
     }
