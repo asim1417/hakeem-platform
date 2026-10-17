@@ -161,3 +161,20 @@ node --experimental-strip-types --import ./scripts/hkm-002/ts-resolve.mjs script
 - فشل قبل التنفيذ: السجل بقي وفيه 353 قيمة، والقيم في القاعدة بقيت `NULL`، واتصال القراءة الجديد أعاد `applied: false`.
 - نجاح التثبيت مع فقدان الرد: التحديثات الـ353 بقيت، والسجل السابق (علامة `prior`) لم يُعد، والتراجع رُفض قبل التحقق، ثم اتصال القراءة الجديد أعاد `matched: 353` و`applied: true`.
 - المتن ثابت في الحالتين. سجل الإنتاج لم يُنشأ. عدّ `neondb` بقي 353. السجل المؤكد بعد التحقق: `commit_status = confirmed` و`batch_id` أوله `597ada522ef6` وبصمة `sha256` `e65d18165d62fc0b7d9c5b76b9a4ef0e6e9692328606d7559cb487127399c083`.
+
+## التطبيق على الإنتاج (17 أكتوبر 2026)
+
+بعد نجاح 100/100 على `hakeem_hkm002` وخضار فحوص GitHub، دُمج [#728](https://github.com/asim1417/hakeem-platform/pull/728) في `70d79ff7`. قراءة الإنتاج قبل الكتابة: المضيف بادئته `ep-icy-ric`، والقاعدة `neondb`، والمعاملة قراءة فقط، و353 معرّفًا حاضرًا، و353 `NULL`، و0 خارج القائمة، و0 اختلاف في المتن أو الهوية.
+
+التثبيت أعاد `status: committed` و`updated: 353` على `neondb`. السجل كان `unconfirmed` قبل التحقق. اتصال قراءة جديد أعاد `confirmed` مع `matched: 353` و`missing: 0` و`nulls: 0`.
+
+- `batch_id`: `cd95622eb45a4375b925f487e2af580ac13bae2b46b17d6068ecfb6f95fe796d`
+- ملف السجل: `scripts/hkm-002/ledgers/production.json`، `sha256` `4dbba9a9959f290af97ad97b85cf30331a3a283e4d0bfca5d4c6fbe132e830a2`
+- المواد: 28,622، وصفر `search_norm` فارغ. اختلاف المتون: 0. اختلاف القيم عن السجل: 0.
+- `judicial_cases`: 51,105، وبصمة الفهرس قبل التطبيق وبعده `78b72848a0d30058910f78bae36c7a65`.
+- الاستدعاء المفهرس وتصفية الإصدارات على الإنتاج: 31/31، ومنها وجه التنفيذ في 2026-10-17 و2026-10-28. الدليل: [hkm-002-production-verify.json](hkm-002-production-verify.json).
+- لم تُستدعَ نقطة `reindex` العامة. رحلة المتصفح لم تُنفَّذ.
+
+التراجع، إن لزم وبعد بقاء السجل `confirmed`:
+
+`node --experimental-strip-types --import ./scripts/hkm-002/ts-resolve.mjs scripts/hkm-002/rollback-null-search-norm.mjs --target production`
