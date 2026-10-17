@@ -30,7 +30,50 @@ export type Permission =
   // مركز المراجعة (المخطط السيادي §12): جلسات مراجعة، ملاحظات، واقتراحات بموافقة بشرية.
   | "REVIEW_USE"
   /** حصرية لمالك المنصة — لا تُمنح عبر مصفوفة SYSTEM_ADMIN. */
-  | "SUPER_ADMIN_ACCESS";
+  | "SUPER_ADMIN_ACCESS"
+  // مكتب التحرير التشريعي: مصدرها الوحيد تكليفات إعدادات المكتب (editorial_config) التي يحررها المالك.
+  // لا تُمنح من صفحة الأدوار (setRolePermission يرفضها)، ولا يمنحها canUser لغير SUPER_ADMIN،
+  // فلا يتجاوزها SYSTEM_ADMIN ولا ضيف المعاينة.
+  | "LEGAL_EDITOR_LAWS"
+  | "LEGAL_EDITOR_RULINGS"
+  | "LEGAL_REVIEWER"
+  /** النشر منفصل عن الاعتماد (ق-٣). */
+  | "LEGAL_PUBLISHER"
+  | "LEGAL_QA_VIEW"
+  /** حساب وكيل آلي: يقترح فقط، ويُرفض منه أي اعتماد أو نشر. */
+  | "LEGAL_AGENT_PROPOSE";
+
+export const EDITORIAL_PERMISSIONS = [
+  "LEGAL_EDITOR_LAWS",
+  "LEGAL_EDITOR_RULINGS",
+  "LEGAL_REVIEWER",
+  "LEGAL_PUBLISHER",
+  "LEGAL_QA_VIEW",
+  "LEGAL_AGENT_PROPOSE",
+] as const satisfies readonly Permission[];
+
+export type EditorialPermission = (typeof EDITORIAL_PERMISSIONS)[number];
+
+export const EDITORIAL_PERMISSION_LABELS: Record<EditorialPermission, string> = {
+  LEGAL_EDITOR_LAWS: "مكتب التحرير: محرر الأنظمة",
+  LEGAL_EDITOR_RULINGS: "مكتب التحرير: محرر الأحكام",
+  LEGAL_REVIEWER: "مكتب التحرير: معتمِد",
+  LEGAL_PUBLISHER: "مكتب التحرير: ناشر",
+  LEGAL_QA_VIEW: "مكتب التحرير: عرض الجودة والسجل",
+  LEGAL_AGENT_PROPOSE: "مكتب التحرير: وكيل آلي (اقتراح فقط)",
+};
+
+export function isEditorialPermission(permission: string): permission is EditorialPermission {
+  return (EDITORIAL_PERMISSIONS as readonly string[]).includes(permission);
+}
+
+/**
+ * حكم canUser في صلاحيات المكتب: للمالك وحده. غيره يُحكم في المكتب بتكليفه (lib/modules/editorial/policy.ts)
+ * لا بـ canUser، حتى لا يرث SYSTEM_ADMIN صلاحيات المكتب من سطر التجاوز العام.
+ */
+export function editorialPermissionViaCanUser(role: string): boolean {
+  return role === "SUPER_ADMIN";
+}
 
 const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
   "CONSULTATIONS_FULL",
@@ -51,7 +94,7 @@ const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
-  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS"],
+  SUPER_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS, "SUPER_ADMIN_ACCESS", ...EDITORIAL_PERMISSIONS],
   SYSTEM_ADMIN: [...PLATFORM_ADMIN_PERMISSIONS],
   // القاضي: المعاون القضائي + النواة والاستشارة للاطّلاع.
   JUDGE: [
