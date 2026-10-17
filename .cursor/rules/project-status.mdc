@@ -1,0 +1,9 @@
+---
+description: "Read Hakeem's shared project ledger before work and update it with evidence."
+alwaysApply: true
+---
+
+Read the repository-root AGENTS.md and docs/PROJECT_STATUS.md before changing this project. Check the latest main and open pull requests for active work, record the task and scope, and update the ledger with actual evidence at handoff. If access is unavailable, state what could not be verified. Follow the shared protocol; this adapter introduces no separate project policy or production permission.
+
+@AGENTS.md
+@docs/PROJECT_STATUS.md
