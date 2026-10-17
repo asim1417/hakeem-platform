@@ -1406,3 +1406,133 @@ model McpRequestWindow {
   @@id([key, windowStart])
   @@map("mcp_request_windows")
 }
+
+// ── مكتب التحرير التشريعي (المرحلة صفر) ──
+// الجداول تُنشأ بملف الترحيل 20261017090000_editorial_desk_phase0 وحده (لا db push).
+// المفاتيح الأجنبية إلى users موجودة في القاعدة، ولا تُنمذج هنا عمدًا حتى لا يتغير نموذج User.
+// طبقة الخدمة (lib/modules/editorial) تقرأ وتكتب بالـSQL المعلَّم؛ هذه النماذج للأنواع والقراءة.
+// تحذير: `prisma db push` لا يمثّل الفهارس الجزئية الفريدة (قفل الهدف D-03، وعدم التكرار D-02، ومفتاح التكرار)
+// ولا المشغّلات، وقد يحذفها. لذلك تُقفل كتابة المكتب تلقائيًا إن غاب شيء منها أو عُطّل (lib/modules/editorial/integrity.ts).
+model ChangeSet {
+  id                  String            @id
+  title               String
+  kind                String
+  authorId            String?           @map("author_id")
+  authorKind          String            @map("author_kind")
+  authorAgent         String?           @map("author_agent")
+  status              String            @default("draft")
+  revertsChangeSetId  String?           @map("reverts_change_set_id")
+  payloadHash         String?           @map("payload_hash")
+  // فريد جزئي (WHERE idempotency_key IS NOT NULL) في الترحيل؛ لا يُنمذج @unique حتى لا يستبدله db push بفهرس كامل.
+  idempotencyKey      String?           @map("idempotency_key")
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  publishedAt         DateTime?         @map("published_at") @db.Timestamptz(6)
+  changes             EditorialChange[]
+  decisions           ReviewDecision[]
+  indexSyncs          IndexSync[]
+  revertsChangeSet    ChangeSet?        @relation("ChangeSetRevert", fields: [revertsChangeSetId], references: [id])
+  revertedBy          ChangeSet[]       @relation("ChangeSetRevert")
+
+  @@index([status, createdAt(sort: Desc)])
+  @@map("change_set")
+}
+
+model EditorialChange {
+  id                 String    @id
+  changeSetId        String    @map("change_set_id")
+  targetType         String    @map("target_type")
+  targetId           String    @map("target_id")
+  op                 String
+  before             Json?
+  after              Json?
+  evidenceInstrument String?   @map("evidence_instrument")
+  evidenceUrl        String?   @map("evidence_url")
+  evidenceQuote      String?   @map("evidence_quote")
+  sourceRank         Int?      @map("source_rank") @db.SmallInt
+  sourceRef          String?   @map("source_ref")
+  domain             String    @default("")
+  appliedRef         String?   @map("applied_ref")
+  readAt             DateTime  @default(now()) @map("read_at") @db.Timestamptz(6)
+  authorId           String?   @map("author_id")
+  authorKind         String    @map("author_kind")
+  authorAgent        String?   @map("author_agent")
+  status             String    @default("draft")
+  checks             Json      @default("{}")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  changeSet          ChangeSet @relation(fields: [changeSetId], references: [id])
+
+  @@index([changeSetId])
+  @@index([targetType, targetId, createdAt(sort: Desc)])
+  @@map("editorial_change")
+}
+
+model ReviewDecision {
+  id           String    @id
+  changeSetId  String    @map("change_set_id")
+  reviewerId   String    @map("reviewer_id")
+  decision     String
+  reason       String?
+  selfApproval Boolean   @default(false) @map("self_approval")
+  payloadHash  String    @map("payload_hash")
+  decidedAt    DateTime  @default(now()) @map("decided_at") @db.Timestamptz(6)
+  changeSet    ChangeSet @relation(fields: [changeSetId], references: [id])
+
+  @@unique([changeSetId, reviewerId], map: "review_decision_set_reviewer_uq")
+  @@index([changeSetId, decidedAt(sort: Desc)])
+  @@map("review_decision")
+}
+
+// سجل التدقيق التحريري (إضافة فقط بمشغّل). يختلف عن AuditEvent (audit_logs) العام.
+model EditorialAuditEvent {
+  id         BigInt   @id @default(autoincrement())
+  actorId    String?  @map("actor_id")
+  actorKind  String   @map("actor_kind")
+  action     String
+  objectType String   @map("object_type")
+  objectId   String   @map("object_id")
+  beforeHash String?  @map("before_hash")
+  afterHash  String?  @map("after_hash")
+  sessionId  String?  @map("session_id")
+  detail     Json?
+  at         DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([at(sort: Desc)])
+  @@index([objectType, objectId, at(sort: Desc)])
+  @@index([actorId, at(sort: Desc)])
+  @@map("audit_event")
+}
+
+model IndexSync {
+  id                String    @id
+  changeSetId       String    @map("change_set_id")
+  targetType        String    @map("target_type")
+  targetId          String    @map("target_id")
+  searchNormAt      DateTime? @map("search_norm_at") @db.Timestamptz(6)
+  opensearchAt      DateTime? @map("opensearch_at") @db.Timestamptz(6)
+  vectorsAt         DateTime? @map("vectors_at") @db.Timestamptz(6)
+  pageRevalidatedAt DateTime? @map("page_revalidated_at") @db.Timestamptz(6)
+  error             String?
+  // أعمدة الطابور (outbox) للمرحلة الأولى؛ لا منفّذ لها في المرحلة صفر.
+  attempts          Int       @default(0)
+  nextAttemptAt     DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lockedUntil       DateTime? @map("locked_until") @db.Timestamptz(6)
+  lockToken         String?   @map("lock_token")
+  completedAt       DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  changeSet         ChangeSet @relation(fields: [changeSetId], references: [id])
+
+  @@unique([changeSetId, targetType, targetId], map: "index_sync_target_uq")
+  @@map("index_sync")
+}
+
+// إعدادات المكتب: نسخ إلحاقية (مشغّلات تمنع التعديل والحذف والتفريغ). آخر نسخة سارية.
+// المفتاح الأجنبي actor_id → users في القاعدة، ولا يُنمذج حتى لا يتغير نموذج User.
+model EditorialConfig {
+  version   Int      @id
+  config    Json
+  reason    String
+  actorId   String   @map("actor_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("editorial_config")
+}
