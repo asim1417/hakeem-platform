@@ -33,6 +33,7 @@ import {
   withdrawChangeSet,
 } from "../lib/modules/editorial/service";
 import { EditorialError, type EditorialActor } from "../lib/modules/editorial/types";
+import { DEFAULT_EDITORIAL_CONFIG, type EditorialBinding, type EditorialConfig } from "../lib/modules/editorial/policy";
 import { isEditorialWriteEnabled, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
 import { PRINCIPLE_REVIEW_STATUS } from "../lib/modules/legal-core/principle-review";
 
@@ -73,14 +74,14 @@ const throwsSync = (fn: () => unknown, code: string, message: string) => {
 
 function pureTests() {
   console.log("\n— نقي —");
-  const owner = resolveEditorialAccess("SUPER_ADMIN", []);
-  ok(owner.superAdmin && owner.laws && owner.reviewer && owner.qaView && !owner.agent, "SUPER_ADMIN يملك صلاحيات المكتب كلها ولا يُعامل وكيلًا");
-  const sysAdmin = resolveEditorialAccess("SYSTEM_ADMIN", []);
-  ok(!sysAdmin.laws && !sysAdmin.reviewer && !sysAdmin.qaView, "SYSTEM_ADMIN بلا منح لا يملك شيئًا من المكتب (لا تجاوز كما في canUser)");
-  const reviewer = resolveEditorialAccess("LAWYER", ["LEGAL_REVIEWER"]);
-  ok(reviewer.reviewer && !reviewer.laws, "المنح الصريح لدور يعطي الصلاحية الممنوحة وحدها");
-  const agent = resolveEditorialAccess("TRAINEE", ["LEGAL_AGENT_PROPOSE", "LEGAL_REVIEWER"]);
-  ok(agent.agent && !agent.reviewer, "حساب الوكيل لا يعتمد ولو مُنح المعتمِد خطأً");
+  const owner = resolveEditorialAccess("SUPER_ADMIN", null);
+  ok(owner.superAdmin && owner.editorLaws && owner.reviewer && owner.publisher && owner.qaView && !owner.agent, "SUPER_ADMIN يملك صلاحيات المكتب كلها ولا يُعامل وكيلًا");
+  const sysAdmin = resolveEditorialAccess("SYSTEM_ADMIN", null);
+  ok(!sysAdmin.editorLaws && !sysAdmin.reviewer && !sysAdmin.qaView, "SYSTEM_ADMIN بلا تكليف لا يملك شيئًا من المكتب (لا تجاوز كما في canUser)");
+  const reviewer = resolveEditorialAccess("LAWYER", binding("u", ["reviewer"]));
+  ok(reviewer.reviewer && !reviewer.editorLaws, "التكليف الصريح يعطي الدور المكلَّف به وحده");
+  const agent = resolveEditorialAccess("TRAINEE", binding("a", ["editor_laws", "reviewer"], "agent"));
+  ok(agent.agent && !agent.reviewer, "حساب الوكيل لا يعتمد ولو كُلّف بالمعتمِد خطأً");
 
   ok(sourceRankFromUrl("https://uqn.gov.sa/details?p=1") === 1, "رابط أم القرى رتبة 1");
   ok(sourceRankFromUrl("https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/x") === 2, "رابط هيئة الخبراء رتبة 2");
@@ -165,12 +166,17 @@ function guardTestUrl(raw: string): URL {
   return url;
 }
 
-const actor = (id: string, role: string, grants: string[] = [], kind: "human" | "agent" = "human"): EditorialActor => ({
+function binding(userId: string, roles: EditorialBinding["roles"], kind: "human" | "agent" = "human", extra: Partial<EditorialBinding> = {}): EditorialBinding {
+  return { userId, kind, roles, itemKinds: "all", domains: "all", enabled: true, ...extra };
+}
+
+/** الخدمة تعيد بناء الفاعل من تكليفه في القاعدة داخل المعاملة؛ access هنا للاختبارات النقية وحدها. */
+const actor = (id: string, role: string, roles: EditorialBinding["roles"] = [], kind: "human" | "agent" = "human"): EditorialActor => ({
   id,
   role,
   kind,
-  agentName: kind === "agent" ? id : undefined,
-  access: resolveEditorialAccess(role, grants),
+  agentName: kind === "agent" ? `user:${id}` : undefined,
+  access: resolveEditorialAccess(role, roles.length || kind === "agent" ? binding(id, roles, kind) : null),
 });
 
 const EVIDENCE = (n: string) => ({
@@ -209,7 +215,32 @@ async function dbTests(pg: PgModule, rawUrl: string) {
     ('u-owner','المالك','owner@test.local','SUPER_ADMIN'),
     ('u-editor','محرر','editor@test.local','SYSTEM_ADMIN'),
     ('u-reviewer','معتمد','reviewer@test.local','LAWYER'),
-    ('u-plain-admin','مدير نظام','admin@test.local','SYSTEM_ADMIN')`);
+    ('u-plain-admin','مدير نظام','admin@test.local','SYSTEM_ADMIN'),
+    ('agent-test','وكيل اختبار','agent@test.local','TRAINEE'),
+    ('agent-other','وكيل آخر','agent2@test.local','TRAINEE')`);
+  // التكليفات في إعدادات المكتب (المصدر الوحيد لصلاحيات المكتب)؛ كل تعديل نسخة جديدة.
+  let configVersion = 0;
+  const current: EditorialConfig = JSON.parse(JSON.stringify(DEFAULT_EDITORIAL_CONFIG));
+  const writeConfig = async (patch: (c: EditorialConfig) => void) => {
+    patch(current);
+    configVersion += 1;
+    await pool.query(`INSERT INTO editorial_config (version, config, reason, actor_id) VALUES ($1, $2::jsonb, 'تكليف اختباري', 'u-owner')`, [
+      configVersion,
+      JSON.stringify(current),
+    ]);
+  };
+  const setBinding = (b: EditorialBinding) =>
+    writeConfig((c) => {
+      c.bindings = [...c.bindings.filter((x) => x.userId !== b.userId), b];
+    });
+  await writeConfig((c) => {
+    c.bindings = [
+      binding("u-editor", ["editor_laws", "reviewer"]),
+      binding("u-reviewer", ["reviewer", "publisher"]),
+      binding("agent-test", ["editor_laws"], "agent"),
+      binding("agent-other", ["editor_laws"], "agent"),
+    ];
+  });
   for (const id of ["S1", "S2", "S3", "S4", "S5", "S6"]) {
     await pool.query(`INSERT INTO legal_systems (id, name) VALUES ($1, $2)`, [id, `نظام اختبار ${id}`]);
   }
@@ -243,10 +274,10 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await pool.query(`INSERT INTO legal_article_case_links (id, "articleId", "caseId", "relationType") VALUES ('l1','a1','c1','CITES'),('l2','a1','c1','APPLIES')`);
 
   const owner = actor("u-owner", "SUPER_ADMIN");
-  const editor = actor("u-editor", "SYSTEM_ADMIN", ["LEGAL_EDITOR_LAWS", "LEGAL_REVIEWER"]);
-  const reviewer = actor("u-reviewer", "LAWYER", ["LEGAL_REVIEWER"]);
+  const editor = actor("u-editor", "SYSTEM_ADMIN", ["editor_laws", "reviewer"]);
+  const reviewer = actor("u-reviewer", "LAWYER", ["reviewer", "publisher"]);
   const plainAdmin = actor("u-plain-admin", "SYSTEM_ADMIN");
-  const agent = actor("agent-test", "TRAINEE", ["LEGAL_AGENT_PROPOSE"], "agent");
+  const agent = actor("agent-test", "TRAINEE", ["editor_laws"], "agent");
 
   process.env.EDITORIAL_DESK_WRITE = "1";
 
@@ -508,7 +539,7 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   ok(Boolean(again.changeSetId), "السحب فكّ قفل الهدف");
   ok((await num(`SELECT count(*) FROM audit_event WHERE action = 'change_set.withdraw'`)) === 1, "السحب مسجّل");
   await rejects(() => submitChangeSet(db, agent, agentSet3.changeSetId), "INVALID_STATE", "الدفعة المرسلة لا تُرسل ثانية");
-  const otherAgent = actor("agent-other", "TRAINEE", ["LEGAL_AGENT_PROPOSE"], "agent");
+  const otherAgent = actor("agent-other", "TRAINEE", ["editor_laws"], "agent");
   const agentDraft = await createChangeSet(db, agent, {
     title: "مسودة وكيل",
     changes: [{ op: "set_work_status", targetId: "S7", status: "ملغى", evidence: EVIDENCE("71") }],
@@ -516,8 +547,10 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await rejects(() => submitChangeSet(db, otherAgent, agentDraft.changeSetId), "FORBIDDEN", "وكيل لا يرسل دفعة وكيل آخر");
   await withdrawChangeSet(db, agent, agentDraft.changeSetId, { reason: "اختبار" });
 
-  const editorOnly = actor("u-editor", "SYSTEM_ADMIN", ["LEGAL_EDITOR_LAWS"]);
-  await rejects(() => withdrawChangeSet(db, editorOnly, set3.changeSetId, { reason: "تعثّر النشر" }), "FORBIDDEN", "المُعِدّ غير المعتمِد لا يسحب دفعة اعتُمدت");
+  // سحب دور المعتمِد من المحرر يسري فورًا على الفعل التالي (يُبنى الفاعل من تكليفه داخل المعاملة).
+  await setBinding(binding("u-editor", ["editor_laws"]));
+  await rejects(() => withdrawChangeSet(db, editor, set3.changeSetId, { reason: "تعثّر النشر" }), "FORBIDDEN", "المُعِدّ غير المعتمِد لا يسحب دفعة اعتُمدت");
+  await setBinding(binding("u-editor", ["editor_laws", "reviewer"]));
   const w3 = await withdrawChangeSet(db, reviewer, set3.changeSetId, { reason: "تعثّر النشر بتعارض" });
   ok(w3.status === "rejected", "المعتمِد يسحب الدفعة المعتمدة التي تعثّر نشرها");
   const afterW3 = await createChangeSet(db, editor, {

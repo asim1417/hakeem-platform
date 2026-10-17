@@ -1,7 +1,9 @@
 // دورة حياة التغيير في مكتب التحرير: مسودة ← فحص ← طابور ← اعتماد بمعتمِد غير المُعِدّ ← نشر ذري ← تراجع.
 // النشر يكتب صفوفًا جديدة في جداول السند (verification) ولا يغيّر قيمة قائمة.
 import { randomUUID } from "node:crypto";
-import { canProposeLaws, canReview } from "./access";
+import { canProposeIn, canRequestRevertIn, canReviewIn } from "./access";
+import { deskTransaction } from "./desk-tx";
+import { policyFor, policySnapshot, type EditorialConfig } from "./policy";
 import { fingerprint, recordAudit, sourceRankFromUrl } from "./audit";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
 import {
@@ -12,6 +14,7 @@ import {
   type EditorialActor,
   type EditorialStatus,
   type EvidenceInput,
+  type ItemKind,
 } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
 import { assertDeskIntegrity } from "./integrity";
@@ -202,6 +205,34 @@ function isAuthorOf(set: ChangeSetRow, actor: EditorialActor): boolean {
   return actor.kind === "agent" && set.author_agent === (actor.agentName ?? actor.id);
 }
 
+/** نوع العنصر للسياسة والنطاق: تغييرات دفعة التراجع «revert»، وغيرها بحسب الفعل. */
+export function itemKindOf(set: Pick<ChangeSetRow, "kind">, change: Pick<ChangeRow, "op">): ItemKind {
+  if (set.kind === "revert" || set.kind === "emergency_revert") return "revert";
+  if (change.op === "review_amendment_op") return "review_amendment_op";
+  if (change.op === "review_principle") return "review_principle";
+  return "set_work_status";
+}
+
+/** كل تغييرات الدفعة في نطاق الفاعل لهذا الفعل، وإلا رفض. */
+function assertSetScope(
+  set: ChangeSetRow,
+  changes: ChangeRow[],
+  allowed: (kind: ItemKind, domain: string) => boolean,
+  message: string,
+) {
+  for (const change of changes) {
+    if (!allowed(itemKindOf(set, change), change.domain)) {
+      throw new EditorialError("FORBIDDEN", message, { changeId: change.id, targetId: change.target_id });
+    }
+  }
+}
+
+/** السياسات الحالية لأنواع عناصر الدفعة؛ المسار المعطّل يُرفض. */
+function setPolicies(config: EditorialConfig, set: ChangeSetRow, changes: ChangeRow[]) {
+  const kinds = Array.from(new Set(changes.map((c) => itemKindOf(set, c))));
+  return kinds.map((kind) => ({ kind, policy: policyFor(config, kind) }));
+}
+
 function authorOf(actor: EditorialActor) {
   return actor.kind === "agent"
     ? { authorId: null, authorKind: "agent", authorAgent: actor.agentName ?? actor.id }
@@ -270,7 +301,6 @@ export async function createChangeSet(
 ): Promise<{ changeSetId: string; changeIds: string[] }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
-  if (!canProposeLaws(actor.access)) throw new EditorialError("FORBIDDEN", "لا تملك صلاحية تحرير الأنظمة.");
   const title = cleanText(input?.title, "title", { min: 3, max: 200 });
   if (!Array.isArray(input.changes) || input.changes.length < 1 || input.changes.length > 50) {
     invalid("الدفعة تحوي من تغيير واحد إلى 50 تغييرًا.");
@@ -279,7 +309,8 @@ export async function createChangeSet(
   const targets = new Set(changes.map((c) => c.targetId));
   if (targets.size !== changes.length) invalid("لا يتكرر النظام نفسه في الدفعة الواحدة.");
 
-  return db.transaction(async (tx) => {
+  return deskTransaction(db, actor, async ({ tx, actor, config }) => {
+    policyFor(config, "set_work_status");
     const changeSetId = ID();
     const author = authorOf(actor);
     await tx.query(
@@ -291,6 +322,9 @@ export async function createChangeSet(
     for (const change of changes) {
       const exists = await tx.query<{ id: string; domain: string | null }>(`SELECT id, domain FROM legal_systems WHERE id = $1`, [change.targetId]);
       if (!exists[0]) throw new EditorialError("NOT_FOUND", "النظام غير موجود.", { targetId: change.targetId });
+      if (!canProposeIn(actor.access, "set_work_status", exists[0].domain)) {
+        throw new EditorialError("FORBIDDEN", "لا تملك صلاحية تحرير هذا النظام ضمن نطاق تكليفك.", { targetId: change.targetId });
+      }
       const before = await latestWorkVerification(tx, change.targetId);
       const changeId = await insertChange(tx, actor, changeSetId, change, before, { domain: exists[0].domain ?? "" });
       changeIds.push(changeId);
@@ -361,7 +395,7 @@ export async function submitChangeSet(
 ): Promise<{ status: EditorialStatus; checks: Record<string, CheckResult> }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
-  return db.transaction(async (tx) => {
+  return deskTransaction(db, actor, async ({ tx, actor, config }) => {
     const set = await lockChangeSet(tx, changeSetId);
     if (!isAuthorOf(set, actor) && !actor.access.superAdmin) throw new EditorialError("FORBIDDEN", "يرسل الدفعة مُعِدّها.");
     if (set.status !== "draft" && set.status !== "checks_failed") {
@@ -369,6 +403,14 @@ export async function submitChangeSet(
     }
     const changes = await changesOf(tx, changeSetId);
     if (!changes.length) throw new EditorialError("INVALID_STATE", "دفعة بلا تغييرات لا تُرسل.");
+    setPolicies(config, set, changes);
+    // يعاد فحص الإذن عند الإرسال: سحب التكليف بعد الإنشاء يمنع الإرسال.
+    assertSetScope(
+      set,
+      changes,
+      (kind, domain) => (kind === "revert" ? canRequestRevertIn(actor.access, domain) : canProposeIn(actor.access, kind, domain)),
+      "لم تعد تملك صلاحية إرسال هذه الدفعة ضمن نطاق تكليفك.",
+    );
     await sealPayload(tx, set, changes);
     const checks: Record<string, CheckResult> = {};
     let allOk = true;
@@ -405,23 +447,28 @@ export async function decideChangeSet(
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
-    if (actor.access.agent || actor.kind === "agent") {
-      throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي يقترح فقط، ولا يعتمد ولا يرفض.");
-    }
-    if (!canReview(actor.access)) throw new EditorialError("FORBIDDEN", "لا تملك صلاحية الاعتماد.");
     if (input?.decision !== "approve" && input?.decision !== "reject") invalid("القرار: approve أو reject.");
     const reason = typeof input.reason === "string" && input.reason.trim() ? input.reason.trim().slice(0, 2000) : null;
     if (input.decision === "reject" && !reason) throw new EditorialError("REASON_REQUIRED", "الرفض يحتاج سببًا مكتوبًا.");
 
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      if (actor.access.agent || actor.kind === "agent") {
+        throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي يقترح فقط، ولا يعتمد ولا يرفض.");
+      }
       const set = await lockChangeSet(tx, changeSetId);
       if (set.status !== "pending") throw new EditorialError("INVALID_STATE", "لا يُقرَّر إلا ما في الطابور.");
-      const hash = assertPayloadUnchanged(set, await changesOf(tx, changeSetId));
+      const changes = await changesOf(tx, changeSetId);
+      assertSetScope(set, changes, (kind, domain) => canReviewIn(actor.access, kind, domain), "لا تملك صلاحية الاعتماد ضمن نطاق تكليفك.");
+      const policies = setPolicies(config, set, changes);
+      const hash = assertPayloadUnchanged(set, changes);
       const isOwnChange = set.author_kind === "human" && set.author_id === actor.id;
       let selfApproval = false;
       if (isOwnChange && input.decision === "approve") {
         if (!actor.access.superAdmin) {
           throw new EditorialError("SELF_APPROVAL_FORBIDDEN", "لا يعتمد المُعِدّ تغييره؛ يعتمده معتمِد آخر.");
+        }
+        if (!policies.every((p) => p.policy.ownerSelfApproval)) {
+          throw new EditorialError("SELF_APPROVAL_FORBIDDEN", "سياسة المكتب لا تسمح باعتماد المالك الذاتي لهذا النوع؛ يعتمده معتمِد آخر.");
         }
         if (!reason) throw new EditorialError("REASON_REQUIRED", "الاعتماد الذاتي للمالك يحتاج سببًا مكتوبًا.");
         selfApproval = true;
@@ -507,14 +554,15 @@ export async function publishChangeSet(
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
-    if (actor.access.agent || actor.kind === "agent") {
-      throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي لا ينشر.");
-    }
-    if (!canReview(actor.access)) throw new EditorialError("FORBIDDEN", "لا تملك صلاحية النشر.");
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      if (actor.access.agent || actor.kind === "agent") {
+        throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي لا ينشر.");
+      }
       const set = await lockChangeSet(tx, changeSetId);
       if (set.status !== "approved") throw new EditorialError("INVALID_STATE", "لا يُنشر إلا المعتمد.");
       const changes = await changesOf(tx, changeSetId);
+      assertSetScope(set, changes, (kind, domain) => canReviewIn(actor.access, kind, domain), "لا تملك صلاحية النشر ضمن نطاق تكليفك.");
+      setPolicies(config, set, changes);
       assertPayloadUnchanged(set, changes);
       const verificationIds: string[] = [];
       for (const change of changes) {
@@ -566,13 +614,12 @@ export async function revertChangeSet(
   const reason = cleanText(input?.reason, "reason", { min: 3, max: 2000 });
   const emergency = input.emergency === true;
   try {
-    if (emergency && !actor.access.superAdmin) {
-      throw new EditorialError("FORBIDDEN", "التراجع العاجل بخطوة واحدة للمالك وحده.");
-    }
-    if (!emergency && !canProposeLaws(actor.access) && !canReview(actor.access)) {
-      throw new EditorialError("FORBIDDEN", "لا تملك صلاحية التراجع.");
-    }
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      if (emergency && !actor.access.superAdmin) {
+        throw new EditorialError("FORBIDDEN", "التراجع العاجل بخطوة واحدة للمالك وحده.");
+      }
+      // التراجع العاجل للمالك متاح دائمًا ولا يُعطَّل بسياسة (ق-٤).
+      if (!emergency) policyFor(config, "revert");
       const original = await lockChangeSet(tx, changeSetId);
       if (original.status !== "published") throw new EditorialError("INVALID_STATE", "لا يُتراجع إلا عن دفعة منشورة.");
       const openRevert = await tx.query<{ id: string }>(
@@ -581,6 +628,9 @@ export async function revertChangeSet(
       );
       if (openRevert[0]) throw new EditorialError("INVALID_STATE", "يوجد تراجع قائم عن هذه الدفعة.", { id: openRevert[0].id });
       const changes = await changesOf(tx, changeSetId);
+      if (!emergency) {
+        assertSetScope(original, changes, (_kind, domain) => canRequestRevertIn(actor.access, domain), "لا تملك صلاحية التراجع ضمن نطاق تكليفك.");
+      }
       const revertId = ID();
       const author = authorOf(actor);
       await tx.query(
@@ -688,16 +738,18 @@ export async function withdrawChangeSet(
   await assertDeskIntegrity(db);
   const reason = cleanText(input?.reason, "reason", { min: 3, max: 2000 });
   try {
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor }) => {
       const set = await lockChangeSet(tx, changeSetId);
       if (!["draft", "checks_failed", "pending", "approved"].includes(set.status)) {
         throw new EditorialError("INVALID_STATE", "لا تُسحب إلا دفعة لم تُنشر.");
       }
       // المعتمَدة التي تعثّر نشرها (تعارض) يسحبها المالك أو المعتمِد، حتى لا يبقى الهدف مقفلًا.
+      const changes = await changesOf(tx, changeSetId);
+      const reviewerInScope = changes.every((c) => canReviewIn(actor.access, itemKindOf(set, c), c.domain));
       const allowed =
         actor.access.superAdmin ||
         (set.status !== "approved" && isAuthorOf(set, actor)) ||
-        ((set.status === "checks_failed" || set.status === "approved") && canReview(actor.access));
+        ((set.status === "checks_failed" || set.status === "approved") && reviewerInScope);
       if (!allowed) throw new EditorialError("FORBIDDEN", "يسحب الدفعة مُعِدّها أو المالك، ويسحب المعتمِد ما فشلت فحوصه أو تعثّر نشره.");
       await setStatus(tx, changeSetId, "rejected");
       await recordAudit(tx, actor, {

@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   // سجل التدقيق التحريري (audit_event) — أفضل جهد: الجدول قد لا يكون مطبَّقًا بعد.
   await recordAudit(
     prismaEditorialDb(prisma),
-    { id: actor.id, kind: "human", role: actor.role, access: resolveEditorialAccess(actor.role, []) },
+    { id: actor.id, kind: "human", role: actor.role, access: resolveEditorialAccess(actor.role, null) },
     {
       action: "intake.principle.decide",
       objectType: "principle",

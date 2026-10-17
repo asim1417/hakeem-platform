@@ -11,14 +11,25 @@ export type EditorialStatus =
 
 export type ActorKind = "human" | "agent";
 
+/** أنواع العناصر التي تُكلَّف بها الأدوار وتُضبط لها السياسات (ق-٤). */
+export const ITEM_KINDS = ["set_work_status", "review_amendment_op", "review_principle", "revert"] as const;
+export type ItemKind = (typeof ITEM_KINDS)[number];
+
+/**
+ * صلاحيات المستخدم في المكتب محلولةً من تكليفه في إعدادات المكتب (ق-٢) ونطاقه (ق-٥).
+ * المالك (SUPER_ADMIN) يملك كل شيء ضمنًا ولا يكون وكيلًا.
+ */
 export interface EditorialAccess {
   superAdmin: boolean;
-  /** حساب وكيل آلي (LEGAL_AGENT_PROPOSE لغير SUPER_ADMIN): يقترح ولا يعتمد ولا ينشر مهما مُنح. */
+  /** حساب وكيل آلي (تكليف بنوع agent): يقترح فقط، ولا يعتمد ولا ينشر مهما كُلّف. */
   agent: boolean;
-  laws: boolean;
-  rulings: boolean;
+  editorLaws: boolean;
+  editorRulings: boolean;
   reviewer: boolean;
+  publisher: boolean;
   qaView: boolean;
+  itemKinds: ItemKind[] | "all";
+  domains: string[] | "all";
 }
 
 export interface EditorialActor {

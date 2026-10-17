@@ -3,17 +3,24 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { NextResponse, type NextRequest } from "next/server";
-import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getApiUser, isAuthDisabled, requireUser } from "@/lib/modules/auth/session";
-import { EDITORIAL_PERMISSIONS } from "@/lib/modules/auth/role-permissions";
-import { canProposeLaws, canReadAudit, canReview, canViewDesk, resolveEditorialAccess } from "./access";
+import {
+  canManageSettings,
+  canProposeLaws,
+  canPublish,
+  canReadAudit,
+  canReview,
+  canViewDesk,
+  resolveEditorialAccess,
+} from "./access";
 import { recordAudit } from "./audit";
 import { prismaEditorialDb, type EditorialDb } from "./db";
 import { assertContentLength, isSameOriginWrite, parseBodyText, WRITE_METHODS } from "./http-guard";
+import { bindingFor, DEFAULT_EDITORIAL_CONFIG, loadEditorialConfig, type EditorialConfig } from "./policy";
 import { isEditorialError, type EditorialActor } from "./types";
 
-export type EditorialNeed = "view" | "propose" | "review" | "audit";
+export type EditorialNeed = "view" | "propose" | "review" | "publish" | "audit" | "settings";
 
 let cachedDb: EditorialDb | null = null;
 export function editorialDb(): EditorialDb {
@@ -26,24 +33,22 @@ export function deskJson(body: unknown, status = 200): NextResponse {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
 
-/** منح صلاحيات المكتب للدور من صفحة الأدوار (RolePermission). سقوط آمن إلى لا شيء. */
-async function editorialGrantsForRole(role: string): Promise<string[]> {
+/**
+ * الإعدادات للعرض والحراسة الأولية خارج المعاملة. فشل القراءة = لا تكليف لأحد (فشل مغلق؛ المالك لا يتأثر).
+ * أفعال الكتابة تعيد بناء الفاعل داخل معاملتها (desk-tx.ts)، فلا يُعتمد على هذه القراءة في القرار.
+ */
+async function currentConfig(): Promise<EditorialConfig> {
   try {
-    const record = await prisma.roleRecord.findUnique({
-      where: { key: role as UserRole },
-      include: { permissions: { include: { permission: true } } },
-    });
-    const editorial = new Set<string>(EDITORIAL_PERMISSIONS);
-    const keys: string[] = (record?.permissions ?? []).map((p: { permission: { key: string } }) => p.permission.key);
-    return keys.filter((key) => editorial.has(key));
+    return (await loadEditorialConfig(editorialDb())).config;
   } catch {
-    return [];
+    return DEFAULT_EDITORIAL_CONFIG;
   }
 }
 
+/** الفاعل من تكليفه في إعدادات المكتب (ق-٢)، لا من الدور ولا من RolePermission. */
 export async function editorialActorFor(user: { id: string; role: string }): Promise<EditorialActor> {
-  const grants = user.role === "SUPER_ADMIN" ? [] : await editorialGrantsForRole(user.role);
-  const access = resolveEditorialAccess(user.role, grants);
+  const config = user.role === "SUPER_ADMIN" ? DEFAULT_EDITORIAL_CONFIG : await currentConfig();
+  const access = resolveEditorialAccess(user.role, bindingFor(config, user.id));
   // حساب الوكيل الآلي يُسجَّل مؤلفًا آليًّا باسم حسابه، ولا يعتمد ولا ينشر.
   if (access.agent) return { id: user.id, kind: "agent", agentName: `user:${user.id}`, role: user.role, access };
   return { id: user.id, kind: "human", role: user.role, access };
@@ -53,6 +58,8 @@ function allowed(actor: EditorialActor, need: EditorialNeed): boolean {
   if (need === "review") return canReview(actor.access);
   if (need === "propose") return canProposeLaws(actor.access);
   if (need === "audit") return canReadAudit(actor.access);
+  if (need === "publish") return canPublish(actor.access);
+  if (need === "settings") return canManageSettings(actor.access);
   return canViewDesk(actor.access);
 }
 

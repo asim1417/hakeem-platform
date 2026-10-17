@@ -3,10 +3,12 @@
 // change_set + editorial_change (مؤلفه الوكيل) + review_decision (المعتمِد البشري) + audit_event + صف قرار المصدر.
 // عملية التعديل: صف جديد في uqn_fix.amendment_review (للإضافة فقط بمشغّل no_change)، ولا يُمس نص أي مادة.
 import { randomUUID } from "node:crypto";
-import { canReview } from "./access";
+import { canReviewIn } from "./access";
+import { deskTransaction } from "./desk-tx";
+import { policyFor } from "./policy";
 import { recordAudit, sourceRankFromUrl } from "./audit";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
-import { EditorialError, type AmendmentDecision, type EditorialActor, type PrincipleDecision } from "./types";
+import { EditorialError, type AmendmentDecision, type EditorialActor, type ItemKind, type PrincipleDecision } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
 import { assertDeskIntegrity } from "./integrity";
 import { payloadHash } from "./payload";
@@ -224,11 +226,19 @@ export async function intakeCounts(db: SqlClient): Promise<IntakeCounts & { unav
 
 // ── التحقق من المدخلات ───────────────────────────────────────────────────────
 
-function assertReviewer(actor: EditorialActor) {
+/** الفاعل هنا محسوب داخل المعاملة من تكليفه الحالي (desk-tx). */
+function assertReviewer(actor: EditorialActor, kind: ItemKind) {
   if (actor.access.agent || actor.kind === "agent") {
     throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي يقترح فقط، ولا يعتمد ولا يرفض.");
   }
-  if (!canReview(actor.access)) throw new EditorialError("FORBIDDEN", "لا تملك صلاحية الاعتماد.");
+  if (!canReviewIn(actor.access, kind, "")) throw new EditorialError("FORBIDDEN", "لا تملك صلاحية الاعتماد لهذا النوع ضمن تكليفك.");
+}
+
+/** رفض مبكر قبل المعاملة لما لا يحتاج القاعدة (الوكيل)، حتى لا يُفتح قفل بلا داع. */
+function assertNotAgent(actor: EditorialActor) {
+  if (actor.access.agent || actor.kind === "agent") {
+    throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي يقترح فقط، ولا يعتمد ولا يرفض.");
+  }
 }
 
 function cleanNote(note: unknown): string | null {
@@ -427,7 +437,7 @@ export async function decideAmendmentOp(
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
-    assertReviewer(actor);
+    assertNotAgent(actor);
     const decision = input?.decision;
     if (decision !== "approved" && decision !== "rejected" && decision !== "approved_with_edit") {
       throw new EditorialError("INVALID_INPUT", "القرار: approved أو rejected أو approved_with_edit.");
@@ -438,7 +448,9 @@ export async function decideAmendmentOp(
     const id = typeof opId === "string" ? opId.trim() : "";
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف العملية مطلوب.");
 
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      assertReviewer(actor, "review_amendment_op");
+      policyFor(config, "review_amendment_op");
       const op = await lockUndecidedOp(tx, id);
       const changeSetId = await openAgentChangeSet(tx, `قرار عملية تعديل ${op.op_id} — ${op.target_law_title}`, "agent_review", AMENDMENT_AGENT);
       const changeId = await insertOpChange(tx, changeSetId, op, { decision, corrected });
@@ -466,13 +478,15 @@ export async function bulkApproveAmendmentOps(
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
-    assertReviewer(actor);
+    assertNotAgent(actor);
     if (!Array.isArray(opIds) || !opIds.length) throw new EditorialError("INVALID_INPUT", "اختر عملية واحدة على الأقل.");
     const ids = Array.from(new Set(opIds.map((x) => String(x).trim()).filter(Boolean)));
     if (ids.length > BULK_LIMIT) throw new EditorialError("INVALID_INPUT", `الاعتماد الجماعي حتى ${BULK_LIMIT} عملية في المرة.`);
     const note = cleanNote(noteRaw);
 
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      assertReviewer(actor, "review_amendment_op");
+      policyFor(config, "review_amendment_op");
       const ops: OpRow[] = [];
       for (const id of ids) {
         const op = await lockUndecidedOp(tx, id);
@@ -512,7 +526,7 @@ export async function decidePrinciple(
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
-    assertReviewer(actor);
+    assertNotAgent(actor);
     if (input?.decision !== "approve" && input?.decision !== "reject") {
       throw new EditorialError("INVALID_INPUT", "القرار: approve أو reject.");
     }
@@ -521,7 +535,9 @@ export async function decidePrinciple(
     const id = typeof principleId === "string" ? principleId.trim() : "";
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف المبدأ مطلوب.");
 
-    return await db.transaction(async (tx) => {
+    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
+      assertReviewer(actor, "review_principle");
+      policyFor(config, "review_principle");
       const rows = await tx.query<{ id: string; title: string; reviewStatus: string; round: string }>(
         `SELECT id, title, "reviewStatus", to_char("updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round
            FROM judicial_principles WHERE id = $1 FOR UPDATE`,
