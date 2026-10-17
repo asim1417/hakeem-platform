@@ -60,7 +60,8 @@ const handler = createMcpHandler(
     server.registerTool(
       "hakeem_get_law",
       {
-        description: "بطاقة نظام سعودي: الاسم الرسمي، التصنيف (المجال)، وقائمة مواده (فهرس).",
+        description:
+          "بطاقة نظام سعودي: الاسم الرسمي، التصنيف، أدوات الإصدار (issue_instruments)، التواريخ الأربعة، الحالة، المقدمة (وحدات أو نص مع وسم الاكتمال)، وفهرس مواده (toc). في كل مادة status (ساري/معدّل/ملغى) إن كانت موثّقة، وغيابه = غير مؤكد، وrepealed_by للملغاة بأداة خاصة بها، وbis/key للمادة المكررة («12 مكرر» = key 12_bis). رابط المادة: article_url_template مع key (أو number). بالاسم: المطابقة التامة أولًا ثم «يبدأ بـ» ثم الاحتواء، مع البدائل في match.",
         inputSchema: z.object({
           law_id: z.string().optional().describe("معرّف النظام"),
           name: z.string().optional().describe("أو البحث باسم النظام"),
