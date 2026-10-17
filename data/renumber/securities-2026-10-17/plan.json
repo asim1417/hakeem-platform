@@ -1,0 +1,483 @@
+{
+  "lawName": "نظام السوق المالية",
+  "articles": 68,
+  "changes": 48,
+  "plan": [
+    {
+      "id": "cmpz645ei043pcwg2wy1ia1mp",
+      "current": 1,
+      "title": "المادة الأولى:",
+      "number": 1,
+      "bis": 0
+    },
+    {
+      "id": "cmpz645ke043rcwg22i09z960",
+      "current": 2,
+      "title": "المادة الثانية:",
+      "number": 2,
+      "bis": 0
+    },
+    {
+      "id": "cmpz645q9043tcwg2uw1keouh",
+      "current": 3,
+      "title": "المادة الثالثة:",
+      "number": 3,
+      "bis": 0
+    },
+    {
+      "id": "cmpz645w4043vcwg27ydfp5u9",
+      "current": 4,
+      "title": "المادة الرابعة:",
+      "number": 4,
+      "bis": 0
+    },
+    {
+      "id": "cmpz6461z043xcwg24y2um7jh",
+      "current": 5,
+      "title": "المادة الخامسة:",
+      "number": 5,
+      "bis": 0
+    },
+    {
+      "id": "cmpz6467v043zcwg2yjkibsxm",
+      "current": 6,
+      "title": "المادة السادسة:",
+      "number": 6,
+      "bis": 0
+    },
+    {
+      "id": "cmpz646dr0441cwg2jbywpycd",
+      "current": 7,
+      "title": "المادة السابعة:",
+      "number": 7,
+      "bis": 0
+    },
+    {
+      "id": "cmpz646pe0443cwg2k8lzunjo",
+      "current": 8,
+      "title": "المادة الثامنة:",
+      "number": 8,
+      "bis": 0
+    },
+    {
+      "id": "cmpz646v90445cwg2110i0qkf",
+      "current": 9,
+      "title": "المادة التاسعة:",
+      "number": 9,
+      "bis": 0
+    },
+    {
+      "id": "cmpz647130447cwg249mkwkdd",
+      "current": 10,
+      "title": "المادة العاشرة:",
+      "number": 10,
+      "bis": 0
+    },
+    {
+      "id": "cmpz6476y0449cwg24v0vk28e",
+      "current": 11,
+      "title": "المادة الحادية عشرة:",
+      "number": 11,
+      "bis": 0
+    },
+    {
+      "id": "cmpz647cx044bcwg2w7trt6fc",
+      "current": 12,
+      "title": "المادة الثانية عشرة:",
+      "number": 12,
+      "bis": 0
+    },
+    {
+      "id": "cmpz647it044dcwg2fytkvuup",
+      "current": 13,
+      "title": "المادة الثالثة عشرة:",
+      "number": 13,
+      "bis": 0
+    },
+    {
+      "id": "cmpz647oo044fcwg2ma38ds4l",
+      "current": 14,
+      "title": "المادة الرابعة عشرة:",
+      "number": 14,
+      "bis": 0
+    },
+    {
+      "id": "cmpz647ui044hcwg2x357t23z",
+      "current": 15,
+      "title": "المادة الخامسة عشرة:",
+      "number": 15,
+      "bis": 0
+    },
+    {
+      "id": "cmpz6480d044jcwg2kze196ib",
+      "current": 16,
+      "title": "المادة السادسة عشرة:",
+      "number": 16,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64867044lcwg2jbz1homn",
+      "current": 17,
+      "title": "المادة السابعة عشرة:",
+      "number": 17,
+      "bis": 0
+    },
+    {
+      "id": "cmpz648c2044ncwg2d9r2xpdl",
+      "current": 18,
+      "title": "المادة الثامنة عشرة:",
+      "number": 18,
+      "bis": 0
+    },
+    {
+      "id": "cmpz648hx044pcwg260ihzmon",
+      "current": 19,
+      "title": "المادة التاسعة عشرة:",
+      "number": 19,
+      "bis": 0
+    },
+    {
+      "id": "cmpz648nr044rcwg214f1jry6",
+      "current": 20,
+      "title": "المادة العشرون:",
+      "number": 20,
+      "bis": 0
+    },
+    {
+      "id": "cmpz648tn044tcwg2i2uhird3",
+      "current": 21,
+      "title": "المادة العشرون مكرر",
+      "number": 20,
+      "bis": 1
+    },
+    {
+      "id": "cmpz648zh044vcwg2masyytoa",
+      "current": 22,
+      "title": "المادة الحادية والعشرون:",
+      "number": 21,
+      "bis": 0
+    },
+    {
+      "id": "cmpz6495d044xcwg211bzbgy0",
+      "current": 23,
+      "title": "المادة الثانية والعشرون:",
+      "number": 22,
+      "bis": 0
+    },
+    {
+      "id": "cmpz649b7044zcwg2l7o61rx5",
+      "current": 24,
+      "title": "المادة الثالثة والعشرون:",
+      "number": 23,
+      "bis": 0
+    },
+    {
+      "id": "cmpz649h30451cwg28bhay3y9",
+      "current": 25,
+      "title": "المادة الرابعة والعشرون:",
+      "number": 24,
+      "bis": 0
+    },
+    {
+      "id": "cmpz649my0453cwg27qohk75l",
+      "current": 26,
+      "title": "المادة الخامسة والعشرون:",
+      "number": 25,
+      "bis": 0
+    },
+    {
+      "id": "cmpz649st0455cwg256zkvad6",
+      "current": 27,
+      "title": "المادة السادسة والعشرون:",
+      "number": 26,
+      "bis": 0
+    },
+    {
+      "id": "cmpz649yp0457cwg2rhdlhhgt",
+      "current": 28,
+      "title": "المادة السابعة والعشرون:",
+      "number": 27,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64a4k0459cwg2q15mmje6",
+      "current": 29,
+      "title": "المادة الثامنة والعشرون:",
+      "number": 28,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64aaf045bcwg26om7wp5k",
+      "current": 30,
+      "title": "المادة التاسعة والعشرون:",
+      "number": 29,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64aga045dcwg25i7sw76v",
+      "current": 31,
+      "title": "المادة الثلاثون:",
+      "number": 30,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64am5045fcwg2cdc5362z",
+      "current": 32,
+      "title": "المادة الحادية والثلاثون:",
+      "number": 31,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64as0045hcwg2hg49qll3",
+      "current": 33,
+      "title": "المادة الثانية والثلاثون:",
+      "number": 32,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64axv045jcwg2fte5qzze",
+      "current": 34,
+      "title": "المادة الثالثة والثلاثون:",
+      "number": 33,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64b3p045lcwg2fye4vd3z",
+      "current": 35,
+      "title": "المادة الرابعة والثلاثون:",
+      "number": 34,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64b9k045ncwg24ett8xxm",
+      "current": 36,
+      "title": "المادة الخامسة والثلاثون:",
+      "number": 35,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64bff045pcwg2trkwt0v8",
+      "current": 37,
+      "title": "المادة السادسة والثلاثون:",
+      "number": 36,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64bla045rcwg2nb70bcwx",
+      "current": 38,
+      "title": "المادة السابعة والثلاثون:",
+      "number": 37,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64br4045tcwg21w5w7z1y",
+      "current": 39,
+      "title": "المادة الثامنة والثلاثون:",
+      "number": 38,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64bwz045vcwg26l1cwsnt",
+      "current": 40,
+      "title": "المادة التاسعة والثلاثون:",
+      "number": 39,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64c2t045xcwg2monmminm",
+      "current": 41,
+      "title": "المادة الأربعون:",
+      "number": 40,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64c8o045zcwg23elu98ji",
+      "current": 42,
+      "title": "المادة الحادية والأربعون:",
+      "number": 41,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64cej0461cwg2s0vm1k5f",
+      "current": 43,
+      "title": "المادة الثانية والأربعون:",
+      "number": 42,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64cke0463cwg2jfa5mvrt",
+      "current": 44,
+      "title": "المادة الثالثة والأربعون:",
+      "number": 43,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64cq80465cwg29mgc2j1i",
+      "current": 45,
+      "title": "المادة الرابعة والأربعون:",
+      "number": 44,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64cw30467cwg2f4g91fg7",
+      "current": 46,
+      "title": "المادة الخامسة والأربعون:",
+      "number": 45,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64d1z0469cwg2o33mj4zf",
+      "current": 47,
+      "title": "المادة السادسة والأربعون:",
+      "number": 46,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64d7t046bcwg2ny39i3ek",
+      "current": 48,
+      "title": "المادة السابعة والأربعون:",
+      "number": 47,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64ddz046dcwg2zoeydm5t",
+      "current": 49,
+      "title": "المادة الثامنة والأربعون:",
+      "number": 48,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64dju046fcwg2g9ysg3ym",
+      "current": 50,
+      "title": "المادة التاسعة والأربعون:",
+      "number": 49,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64dpr046hcwg2wcnk5wm2",
+      "current": 51,
+      "title": "المادة الخمسون:",
+      "number": 50,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64dvr046jcwg2kz4suoza",
+      "current": 52,
+      "title": "المادة الحادية والخمسون:",
+      "number": 51,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64e1l046lcwg2m6fatn82",
+      "current": 53,
+      "title": "المادة الثانية والخمسون:",
+      "number": 52,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64e7g046ncwg27playt1n",
+      "current": 54,
+      "title": "المادة الثالثة والخمسون:",
+      "number": 53,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64edb046pcwg2p6teqxbt",
+      "current": 55,
+      "title": "المادة الرابعة والخمسون:",
+      "number": 54,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64ej6046rcwg2csiamqgz",
+      "current": 56,
+      "title": "المادة الخامسة والخمسون:",
+      "number": 55,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64ep2046tcwg2vlgjhdn7",
+      "current": 57,
+      "title": "المادة السادسة والخمسون:",
+      "number": 56,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64eux046vcwg22posjooz",
+      "current": 58,
+      "title": "المادة السابعة والخمسون:",
+      "number": 57,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64f0s046xcwg2ypqvbzen",
+      "current": 59,
+      "title": "المادة الثامنة والخمسون:",
+      "number": 58,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64f6m046zcwg223kprp69",
+      "current": 60,
+      "title": "المادة التاسعة والخمسون:",
+      "number": 59,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64fch0471cwg2n2dd078o",
+      "current": 61,
+      "title": "المادة الستون:",
+      "number": 60,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64fic0473cwg2ioy5ral6",
+      "current": 62,
+      "title": "المادة الحادية والستون:",
+      "number": 61,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64fo70475cwg2rmhs7iti",
+      "current": 63,
+      "title": "المادة الثانية والستون:",
+      "number": 62,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64fu20477cwg2cu1xdl9f",
+      "current": 64,
+      "title": "المادة الثالثة والستون:",
+      "number": 63,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64fzw0479cwg204iwkphi",
+      "current": 65,
+      "title": "المادة الرابعة والستون:",
+      "number": 64,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64g5r047bcwg2iv97m2hi",
+      "current": 66,
+      "title": "المادة الخامسة والستون:",
+      "number": 65,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64gbl047dcwg2jsz822ju",
+      "current": 67,
+      "title": "المادة السادسة والستون:",
+      "number": 66,
+      "bis": 0
+    },
+    {
+      "id": "cmpz64ghg047fcwg2fsl85x2v",
+      "current": 68,
+      "title": "المادة السابعة والستون:",
+      "number": 67,
+      "bis": 0
+    }
+  ]
+}
