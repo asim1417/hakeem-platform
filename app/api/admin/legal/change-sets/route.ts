@@ -1,21 +1,22 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { createChangeSet, listChangeSets } from "@/lib/modules/editorial/service";
+import { listChangeSetsDetailed } from "@/lib/modules/editorial/read";
+import { createChangeSet } from "@/lib/modules/editorial/service";
 import { deskJson, editorialDb, editorialErrorResponse, readDeskJson, requireEditorialApi } from "@/lib/modules/editorial/guard";
-import { WORK_STATUSES, type EditorialStatus } from "@/lib/modules/editorial/types";
+import { WORK_STATUSES } from "@/lib/modules/editorial/types";
 
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["draft", "checks_failed", "pending", "approved", "rejected", "published", "reverted", "open"] as const;
 
-// GET /api/admin/legal/change-sets?status=open — دفعات المحررين.
+// GET /api/admin/legal/change-sets?status=open — الدفعات بتفاصيلها (ChangeSetView[]) في نطاق المشاهد.
 export async function GET(request: NextRequest) {
   const gate = await requireEditorialApi(request, "view");
   if (gate.response) return gate.response;
   const raw = request.nextUrl.searchParams.get("status") ?? "open";
-  const status = (STATUSES as readonly string[]).includes(raw) ? (raw as EditorialStatus | "open") : "open";
+  const status = (STATUSES as readonly string[]).includes(raw) ? raw : "open";
   try {
-    return deskJson({ items: await listChangeSets(editorialDb(), { status }) });
+    return deskJson({ items: await listChangeSetsDetailed(editorialDb(), gate.actor, { status }) });
   } catch (error) {
     return editorialErrorResponse(error);
   }

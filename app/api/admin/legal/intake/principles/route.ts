@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         topic: q.get("topic") ?? undefined,
         limit: Number(q.get("limit") ?? 25) || 25,
         offset: Number(q.get("offset") ?? 0) || 0,
-      }),
+      }, gate.actor),
     );
   } catch (error) {
     return editorialErrorResponse(error);

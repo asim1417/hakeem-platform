@@ -7,9 +7,11 @@ import { canReviewIn } from "./access";
 import { recordAudit, sourceRankFromUrl, stableJson } from "./audit";
 import {
   approvalState,
+  approvalStateFrom,
   assertPayloadUnchanged,
   auditDenied,
   changesOf,
+  decisionsOf,
   insertDecision,
   lockChangeSet,
   newId,
@@ -23,10 +25,12 @@ import { deskTransaction, type DeskContext } from "./desk-tx";
 import { hijriToGregorian, parseHijri } from "./hijri";
 import { applyIntakeSet, lockPrinciple, lockUndecidedOp, opSourceRef, principleSourceRef, type OpRow } from "./intake-apply";
 import { assertDeskIntegrity } from "./integrity";
-import { policyFor } from "./policy";
+import { loadEditorialConfig, policyFor, policySnapshot, type EditorialConfig } from "./policy";
+import type { IntakeCountsView } from "./read";
 import { EditorialError, type AmendmentDecision, type EditorialActor, type ItemKind, type PrincipleDecision } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
 import { principleStatusFor } from "@/lib/modules/legal-core/principle-review";
+import { citationFlagsFromVerification, textAsOf, type UnitVersionRecord } from "@/lib/modules/legal-core/verified-status";
 
 export const AMENDMENT_AGENT = "uqn-fix";
 export const PRINCIPLES_AGENT = "principles";
@@ -91,7 +95,20 @@ export interface AmendmentQueueItem {
   verbatim_in_source: boolean | null;
   evidence_quote: string;
   bulk_eligible: boolean;
+  /** النص الساري الآن للمادة المستهدفة إن أمكن حلّه من legal_articles/unit_version؛ وإلا null. */
+  current_text: string | null;
+  current_text_resolved: boolean;
+  /** تعدد الموافقات: الموافقات الصالحة على المقترح المعلّق (0 إن لم يكن)، والحد الأدنى، وهل وافق المشاهد. */
+  pending_approvals: number;
+  required_approvals: number;
+  my_approval: boolean;
+  /** دفعة المقترح المعلّق وقراره (إضافة على العقد لتمكين الرفض/السحب من الواجهة). */
+  pending_change_set_id: string | null;
+  pending_decision: Record<string, unknown> | null;
 }
+
+/** اسم العقد في خطة التوحيد. */
+export type AmendmentItem = AmendmentQueueItem;
 
 export interface AmendmentQueueFilter {
   confidence?: "rule_exact" | "needs_review";
@@ -128,9 +145,15 @@ function amendmentWhere(filter: AmendmentQueueFilter): { sql: string; params: un
   return { sql: parts.join(" AND "), params };
 }
 
+type AmendmentBaseRow = Omit<
+  AmendmentQueueItem,
+  "current_text" | "current_text_resolved" | "pending_approvals" | "required_approvals" | "my_approval" | "pending_change_set_id" | "pending_decision"
+>;
+
 export async function listAmendmentQueue(
   db: SqlClient,
   filter: AmendmentQueueFilter = {},
+  viewer?: Pick<EditorialActor, "id"> | null,
 ): Promise<{ items: AmendmentQueueItem[]; total: number }> {
   const limit = Math.min(Math.max(filter.limit ?? 25, 1), 100);
   const offset = Math.max(filter.offset ?? 0, 0);
@@ -140,7 +163,7 @@ export async function listAmendmentQueue(
     where.params,
   );
   const params = [...where.params, limit, offset];
-  const items = await db.query<AmendmentQueueItem>(
+  const rows = await db.query<AmendmentBaseRow>(
     `SELECT o.op_id, o.effect_id, o.instrument_kind, o.instrument_no, o.instrument_date_hijri, o.published_hijri,
             o.source_url, o.target_law_title, o.target_hakeem_code, o.target_resolution, e.target_match_status,
             o.op_type, o.article_number, o.paragraph_label, o.term, o.new_text, o.old_phrase, o.new_phrase,
@@ -155,7 +178,166 @@ export async function listAmendmentQueue(
       LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
+  const [texts, pending] = await Promise.all([
+    resolveCurrentTexts(db, rows),
+    pendingInfo(db, rows.map((r) => opSourceRef(r.op_id)), "review_amendment_op", viewer?.id ?? null),
+  ]);
+  const items: AmendmentQueueItem[] = rows.map((row) => {
+    const text = texts.get(row.op_id) ?? null;
+    const p = pending.bySourceRef.get(opSourceRef(row.op_id));
+    return {
+      ...row,
+      current_text: text,
+      current_text_resolved: text !== null,
+      pending_approvals: p?.approvals ?? 0,
+      required_approvals: pending.required,
+      my_approval: p?.mine ?? false,
+      pending_change_set_id: p?.changeSetId ?? null,
+      pending_decision: p?.after ?? null,
+    };
+  });
   return { items, total: totalRows[0]?.total ?? 0 };
+}
+
+// ── النص الساري للمادة المستهدفة ──────────────────────────────────────────────
+
+/** عمليات لا هدف لها مادة قائمة: نص ساري لا معنى له هنا. */
+const NON_ARTICLE_OPS = new Set(["insert_article", "replace_law", "repeal_law", "rename_law"]);
+
+/**
+ * النص الساري الآن للمادة المستهدفة: آخر نسخة في unit_version سارية اليوم وإلا legal_articles.content،
+ * والمادة الملغاة (آخر سجل تحقق للوحدة) سطر إلغائها. لا يُخمَّن: نظام غير محلول، أو مادة غير موجودة،
+ * أو أكثر من مادة بالرقم نفسه = null (current_text_resolved=false). تعذّر القراءة = null.
+ */
+export async function resolveCurrentTexts(
+  db: SqlClient,
+  rows: Array<Pick<AmendmentQueueItem, "op_id" | "op_type" | "article_number" | "target_hakeem_code">>,
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const wanted = rows.filter((r) => r.article_number !== null && r.target_hakeem_code && !NON_ARTICLE_OPS.has(r.op_type));
+  if (!wanted.length) return out;
+  try {
+    const codes = Array.from(new Set(wanted.map((r) => String(r.target_hakeem_code))));
+    const systems = await db.query<{ id: string; code: string | null }>(
+      `SELECT id, code FROM legal_systems WHERE code = ANY($1::text[]) OR id = ANY($1::text[])`,
+      [codes],
+    );
+    const systemOf = new Map<string, string>();
+    for (const code of codes) {
+      const byCode = systems.filter((s) => s.code === code);
+      const byId = systems.filter((s) => s.id === code);
+      const pick = byCode.length === 1 ? byCode[0] : byCode.length === 0 && byId.length === 1 ? byId[0] : null;
+      if (pick) systemOf.set(code, pick.id);
+    }
+    const systemIds = Array.from(new Set(systemOf.values()));
+    if (!systemIds.length) return out;
+    const numbers = Array.from(new Set(wanted.map((r) => String(r.article_number))));
+    const articles = await db.query<{ id: string; system_id: string; number: string; content: string }>(
+      `SELECT id, "legalSystemId" AS system_id, "articleNumber"::text AS number, content
+         FROM legal_articles WHERE "legalSystemId" = ANY($1::text[]) AND "articleNumber"::text = ANY($2::text[])`,
+      [systemIds, numbers],
+    );
+    const articleOf = new Map<string, { id: string; content: string } | null>();
+    for (const a of articles) {
+      const key = `${a.system_id}#${a.number}`;
+      articleOf.set(key, articleOf.has(key) ? null : { id: a.id, content: a.content });
+    }
+    const unitIds = Array.from(articleOf.values()).filter((a): a is { id: string; content: string } => a !== null).map((a) => a.id);
+    const versions = new Map<string, UnitVersionRecord[]>();
+    const repealLine = new Map<string, string>();
+    if (unitIds.length) {
+      const vrows = await db.query<{ id: string; unit_id: string; body: string; valid_from: Date; evidence_instrument: string | null; evidence_url: string | null }>(
+        `SELECT id, unit_id, body, valid_from, evidence_instrument, evidence_url FROM unit_version WHERE unit_id = ANY($1::text[]) ORDER BY unit_id, valid_from`,
+        [unitIds],
+      );
+      for (const v of vrows) {
+        const list = versions.get(v.unit_id) ?? [];
+        list.push({ id: v.id, body: v.body, validFrom: new Date(v.valid_from).toISOString(), evidenceInstrument: v.evidence_instrument, evidenceUrl: v.evidence_url });
+        versions.set(v.unit_id, list);
+      }
+      const ver = await db.query<{ object_id: string; id: string; verified_status: string; evidence_instrument: string | null; evidence_url: string | null; evidence_quote: string | null; verified_at: Date }>(
+        `SELECT DISTINCT ON (object_id) object_id, id, verified_status, evidence_instrument, evidence_url, evidence_quote, verified_at
+           FROM verification WHERE object_type = 'unit' AND object_id = ANY($1::text[])
+          ORDER BY object_id, verified_at DESC, id DESC`,
+        [unitIds],
+      );
+      for (const v of ver) {
+        const flags = citationFlagsFromVerification({
+          id: v.id,
+          verifiedStatus: v.verified_status,
+          evidenceInstrument: v.evidence_instrument,
+          evidenceUrl: v.evidence_url,
+          evidenceQuote: v.evidence_quote,
+          verifiedAt: new Date(v.verified_at).toISOString(),
+        });
+        if (flags.repealed) {
+          const instrument = v.evidence_instrument?.trim();
+          repealLine.set(v.object_id, instrument ? `أُلغيت هذه المادة بموجب ${instrument}` : "أُلغيت هذه المادة");
+        }
+      }
+    }
+    const now = new Date();
+    for (const row of wanted) {
+      const systemId = systemOf.get(String(row.target_hakeem_code));
+      if (!systemId) continue;
+      const article = articleOf.get(`${systemId}#${row.article_number}`);
+      if (!article) continue;
+      out.set(row.op_id, repealLine.get(article.id) ?? textAsOf(article.content, versions.get(article.id) ?? [], now).text);
+    }
+  } catch {
+    // جداول النصوص غير مطبّقة على هذه القاعدة: لا نص، لا خطأ.
+    return new Map();
+  }
+  return out;
+}
+
+// ── معلومات المقترحات المعلّقة ───────────────────────────────────────────────
+
+interface PendingInfo {
+  changeSetId: string;
+  approvals: number;
+  mine: boolean;
+  after: Record<string, unknown> | null;
+}
+
+/** الموافقات الصالحة الآن (بصلاحية المعتمِدين الحالية) على المقترحات المعلّقة لهذه المصادر. */
+async function pendingInfo(
+  db: SqlClient,
+  sourceRefs: string[],
+  kind: ItemKind,
+  viewerId: string | null,
+): Promise<{ required: number; bySourceRef: Map<string, PendingInfo> }> {
+  const bySourceRef = new Map<string, PendingInfo>();
+  let config: EditorialConfig;
+  try {
+    config = (await loadEditorialConfig(db)).config;
+  } catch {
+    return { required: 1, bySourceRef };
+  }
+  const required = policySnapshot(config, kind).minApprovals;
+  if (!sourceRefs.length) return { required, bySourceRef };
+  try {
+    const changes = await db.query<ChangeRow>(
+      `SELECT * FROM editorial_change WHERE source_ref = ANY($1::text[]) AND status = 'pending'`,
+      [sourceRefs],
+    );
+    for (const change of changes) {
+      const sets = await db.query<ChangeSetRow>(`SELECT * FROM change_set WHERE id = $1`, [change.change_set_id]);
+      if (!sets[0] || sets[0].status !== "pending") continue;
+      const all = await changesOf(db, sets[0].id);
+      const decisions = await decisionsOf(db, sets[0].id);
+      const state = approvalStateFrom(config, sets[0], all, decisions);
+      bySourceRef.set(change.source_ref as string, {
+        changeSetId: sets[0].id,
+        approvals: state.approvals,
+        mine: viewerId !== null && decisions.some((d) => d.reviewer_id === viewerId && d.decision === "approve"),
+        after: (change.after as unknown as Record<string, unknown>) ?? null,
+      });
+    }
+  } catch {
+    // جداول المكتب غير مطبّقة: لا مقترحات معلّقة.
+  }
+  return { required, bySourceRef };
 }
 
 export interface PrincipleQueueItem {
@@ -163,14 +345,28 @@ export interface PrincipleQueueItem {
   title: string;
   principleText: string;
   sourceCaseId: string;
+  /** معرّف الحكم مصدر المبدأ (اسم العقد). */
+  source_case_id: string;
   court: string | null;
   topic: string | null;
   confidence: number | null;
+  pending_approvals: number;
+  required_approvals: number;
+  my_approval: boolean;
+  pending_change_set_id: string | null;
 }
+
+/** اسم العقد في خطة التوحيد. */
+export type PrincipleItem = PrincipleQueueItem;
+
+type PrincipleBaseRow = Pick<PrincipleQueueItem, "id" | "title" | "principleText" | "sourceCaseId" | "court" | "topic" | "confidence"> & {
+  round: string;
+};
 
 export async function listPrincipleQueue(
   db: SqlClient,
   filter: { limit?: number; offset?: number; topic?: string } = {},
+  viewer?: Pick<EditorialActor, "id"> | null,
 ): Promise<{ items: PrincipleQueueItem[]; total: number }> {
   const limit = Math.min(Math.max(filter.limit ?? 25, 1), 100);
   const offset = Math.max(filter.offset ?? 0, 0);
@@ -182,35 +378,42 @@ export async function listPrincipleQueue(
   }
   const base = `FROM judicial_principles p WHERE p."reviewStatus" = 'needs_review'${topicSql}`;
   const totalRows = await db.query<{ total: number }>(`SELECT count(*)::int AS total ${base}`, params);
-  const items = await db.query<PrincipleQueueItem>(
-    `SELECT p.id, p.title, p."principleText", p."sourceCaseId", p.court, p.topic, p.confidence
+  const rows = await db.query<PrincipleBaseRow>(
+    `SELECT p.id, p.title, p."principleText", p."sourceCaseId", p.court, p.topic, p.confidence,
+            to_char(p."updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round
        ${base}
       ORDER BY p.confidence DESC NULLS LAST, p.id
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
     [...params, limit, offset],
   );
+  const pending = await pendingInfo(db, rows.map((r) => principleSourceRef(r.id, r.round)), "review_principle", viewer?.id ?? null);
+  const items: PrincipleQueueItem[] = rows.map(({ round, ...row }) => {
+    const p = pending.bySourceRef.get(principleSourceRef(row.id, round));
+    return {
+      ...row,
+      source_case_id: row.sourceCaseId,
+      pending_approvals: p?.approvals ?? 0,
+      required_approvals: pending.required,
+      my_approval: p?.mine ?? false,
+      pending_change_set_id: p?.changeSetId ?? null,
+    };
+  });
   return { items, total: totalRows[0]?.total ?? 0 };
 }
 
-export interface IntakeCounts {
-  amendmentOpsUndecided: number;
-  amendmentOpsBulkEligible: number;
-  manualEffects: number;
-  principlesNeedsReview: number;
-  caseLinksNeedsReview: number;
-  autoRelations: number;
-}
+/** @deprecated الاسم القديم؛ العقد IntakeCountsView في read.ts (null للمصدر غير المتاح). */
+export type IntakeCounts = IntakeCountsView;
 
-/** عدّادات المصادر للوحة. غياب جدول = صفر مع علامة، لا خطأ. */
-export async function intakeCounts(db: SqlClient): Promise<IntakeCounts & { unavailable: string[] }> {
+/** عدّادات المصادر للوحة. المصدر غير المتاح على هذه القاعدة = null (لا صفر) ويُسمّى في unavailable. */
+export async function intakeCounts(db: SqlClient): Promise<IntakeCountsView & { unavailable: string[] }> {
   const unavailable: string[] = [];
-  const count = async (label: string, sql: string): Promise<number> => {
+  const count = async (label: string, sql: string): Promise<number | null> => {
     try {
       const rows = await db.query<{ n: number }>(sql);
-      return rows[0]?.n ?? 0;
+      return Number(rows[0]?.n ?? 0);
     } catch {
       unavailable.push(label);
-      return 0;
+      return null;
     }
   };
   return {

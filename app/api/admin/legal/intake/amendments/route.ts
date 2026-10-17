@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       bulkOnly: q.get("bulk") === "1",
       limit: Number(q.get("limit") ?? 25) || 25,
       offset: Number(q.get("offset") ?? 0) || 0,
-    });
+    }, gate.actor);
     return deskJson(result);
   } catch (error) {
     return editorialErrorResponse(error);
