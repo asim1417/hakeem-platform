@@ -11,6 +11,7 @@ import { citationFlagsFromVerification, presentArticle } from "@/lib/modules/leg
 import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
 import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts, resolveEffectiveText } from "@/lib/modules/legal-core/effective-text";
+import { ARTICLE_ROWS, NON_ARTICLE_BIS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
 
 export const revalidate = 3600;
 
@@ -27,15 +28,18 @@ async function resolveSystem(slug: string) {
 }
 
 async function loadArticle(slug: string, articleParam: string) {
-  const n = Number(articleParam);
-  if (!Number.isInteger(n) || n <= 0) return null;
+  // «20» للأصل و«20_bis» لـ«20 مكرر» (HKM-028، كمعرّف art_N_bis في hkn-uri).
+  const m = /^(\d+)(?:_bis(\d*))?$/.exec(decodeURIComponent(articleParam));
+  const n = m ? Number(m[1]) : NaN;
+  const bis = m?.[2] !== undefined ? Number(m[2] || 1) : 0;
+  if (!Number.isInteger(n) || n <= 0 || bis >= NON_ARTICLE_BIS) return null;
   const system = await resolveSystem(slug);
   if (!system) return null;
   const article = await prisma.legalArticle
-    .findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: n }] } })
+    .findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: n, articleBis: bis }] } })
     .catch(() => null);
   if (!article) return null;
-  return { system, article, n };
+  return { system, article, n, bis, key: articleKey(n, bis) };
 }
 
 export async function generateMetadata({
@@ -54,9 +58,9 @@ export async function generateMetadata({
   const effective = (await effectiveArticleTexts([{ id: data.article.id, content: sanitizeDisplayText(data.article.content) }], asOf)).get(data.article.id);
   const text = sanitizeDisplayText(effective?.text ?? data.article.content).slice(0, 155);
   return {
-    title: `${data.system.name} — المادة ${data.n} | حكيم`,
+    title: `${data.system.name} — المادة ${articleLabel(data.n, data.bis)} | حكيم`,
     description: text,
-    alternates: { canonical: absoluteUrl(`/legal/${encodeURIComponent(slug)}/${data.n}`) },
+    alternates: { canonical: absoluteUrl(`/legal/${encodeURIComponent(slug)}/${data.key}`) },
   };
 }
 
@@ -69,7 +73,8 @@ export default async function LegalArticlePage({
 }) {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) notFound();
-  const { system, article, n } = data;
+  const { system, article, n, bis, key } = data;
+  const label = articleLabel(n, bis);
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const content = sanitizeDisplayText(article.content);
   const asOfRaw = searchParams?.asOf?.trim() ?? "";
@@ -85,11 +90,12 @@ export default async function LegalArticlePage({
   const verification = recorded ? { ...recorded, verifiedStatus: unitStatusAsOf(recorded.verifiedStatus, byDate) } : null;
   const view = presentArticle({ baseText: content, versions, verification, asOf });
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
-  const citation = `${system.name}، المادة (${n}) — ${view.citationSuffix}`;
+  const citation = `${system.name}، المادة (${label}) — ${view.citationSuffix}`;
 
   const [prev, next] = await Promise.all([
-    prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { lt: n, gt: 0 } }, orderBy: { articleNumber: "desc" }, select: { articleNumber: true } }).catch(() => null),
-    prisma.legalArticle.findFirst({ where: { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: { gt: n } }, orderBy: { articleNumber: "asc" }, select: { articleNumber: true } }).catch(() => null),
+    // السابقة والتالية بترتيب (الرقم، درجة «مكرر»)؛ الأرقام ≤ 0 ليست مواد.
+    prisma.legalArticle.findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }, ARTICLE_ROWS, { OR: [{ articleNumber: { lt: n } }, { articleNumber: n, articleBis: { lt: bis } }] }] }, orderBy: [{ articleNumber: "desc" }, { articleBis: "desc" }], select: { articleNumber: true, articleBis: true } }).catch(() => null),
+    prisma.legalArticle.findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, ARTICLE_ROWS, { OR: [{ articleNumber: { gt: n } }, { articleNumber: n, articleBis: { gt: bis } }] }] }, orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }], select: { articleNumber: true, articleBis: true } }).catch(() => null),
   ]);
 
   const effective = resolveEffectiveText({ articleId: article.id, baseText: content, versions, verification, asOf });
@@ -97,22 +103,22 @@ export default async function LegalArticlePage({
   const ld = {
     "@context": "https://schema.org",
     "@type": "Legislation",
-    name: `${system.name} — المادة ${n}`,
+    name: `${system.name} — المادة ${label}`,
     legislationJurisdiction: "SA",
     inLanguage: "ar",
     isPartOf: { "@type": "Legislation", name: system.name, url: `${BASE}/legal/${encodeURIComponent(slug)}` },
     // JSON-LD يحمل النص المعروض نفسه (الساري في التاريخ المطلوب، أو سطر الإلغاء).
     text: effective.text,
-    url: `${BASE}/legal/${encodeURIComponent(slug)}/${n}`,
+    url: `${BASE}/legal/${encodeURIComponent(slug)}/${key}`,
   };
 
   return (
-    <PublicLegalShell breadcrumb={<><Crumb href={`/legal/${encodeURIComponent(slug)}`} label={system.name} /><Crumb label={`المادة ${n}`} /></>}>
+    <PublicLegalShell breadcrumb={<><Crumb href={`/legal/${encodeURIComponent(slug)}`} label={system.name} /><Crumb label={`المادة ${label}`} /></>}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <article>
         <p className="text-sm font-semibold text-[#A9793F]">{system.name}</p>
-        <h1 className="mt-2 text-3xl font-bold">المادة {n.toLocaleString("ar-SA")}</h1>
-        {article.title && article.title !== String(n) ? <p className="mt-2 text-lg text-ink">{article.title}</p> : null}
+        <h1 className="mt-2 text-3xl font-bold">المادة {articleLabel(n, bis, true)}</h1>
+        {article.title && article.title !== String(n) && article.title !== label ? <p className="mt-2 text-lg text-ink">{article.title}</p> : null}
 
         <AsOfForm asOf={asOfRaw} />
         <ArticlePresentation view={view} versions={versions} baseText={content} />
@@ -125,11 +131,11 @@ export default async function LegalArticlePage({
 
         <nav className="mt-6 flex items-center justify-between text-sm">
           {prev ? (
-            <Link href={`/legal/${encodeURIComponent(slug)}/${prev.articleNumber}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">← المادة {prev.articleNumber.toLocaleString("ar-SA")}</Link>
+            <Link href={`/legal/${encodeURIComponent(slug)}/${articleKey(prev.articleNumber, prev.articleBis)}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">← المادة {articleLabel(prev.articleNumber, prev.articleBis, true)}</Link>
           ) : <span />}
           <Link href={`/legal/${encodeURIComponent(slug)}`} className="rounded-md px-4 py-2 text-[var(--navy)] hover:underline">كل مواد النظام</Link>
           {next ? (
-            <Link href={`/legal/${encodeURIComponent(slug)}/${next.articleNumber}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">المادة {next.articleNumber.toLocaleString("ar-SA")} →</Link>
+            <Link href={`/legal/${encodeURIComponent(slug)}/${articleKey(next.articleNumber, next.articleBis)}`} className="rounded-md border border-[#C69763]/40 px-4 py-2 font-semibold hover:bg-[#C69763]/10">المادة {articleLabel(next.articleNumber, next.articleBis, true)} →</Link>
           ) : <span />}
         </nav>
       </article>

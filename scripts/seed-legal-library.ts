@@ -151,9 +151,10 @@ async function main() {
     const legalSystem = await prisma.legalSystem.findUniqueOrThrow({ where: { name: article.law_name } });
     await prisma.legalArticle.upsert({
       where: {
-        lawName_articleNumber: {
+        lawName_articleNumber_articleBis: {
           lawName: article.law_name,
-          articleNumber: article.article_number
+          articleNumber: article.article_number,
+          articleBis: 0
         }
       },
       update: {

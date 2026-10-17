@@ -229,8 +229,8 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   // نبحث المادة عبر معرّف النظام إن وُجد، وإلا عبر اسم النظام على المادة مباشرة.
   const article = await prisma.legalArticle.findFirst({
     where: system
-      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n }
-      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n },
+      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n, articleBis: 0 }
+      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n, articleBis: 0 },
     select: { id: true, articleNumber: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
   });
 

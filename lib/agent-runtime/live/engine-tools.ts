@@ -44,9 +44,9 @@ export async function readArticleInContext(scope: string[], articleNumber: numbe
   try {
     const { prisma } = await import("@/lib/prisma");
     const rows = await prisma.legalArticle.findMany({
-      where: { OR, articleNumber: { in: [articleNumber - 1, articleNumber, articleNumber + 1] } },
+      where: { OR, articleNumber: { in: [articleNumber - 1, articleNumber, articleNumber + 1] }, articleBis: { lt: 100 } },
       select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true, royalDecree: true },
-      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
+      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }, { articleBis: "asc" }],
       take: 12,
     }).then((r) => applyEffectiveText(r));
     return {
