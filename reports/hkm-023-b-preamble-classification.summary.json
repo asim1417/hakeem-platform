@@ -1,0 +1,81 @@
+{
+  "task": "HKM-023-B ب-٣",
+  "generated_at": "2026-10-17T07:08:58.289Z",
+  "source": "إشارات استخرجها SQL المولَّد (buildPreambleSignalsSql) على الإنتاج بقراءة فقط: reports/hkm-023-b-preamble-signals.txt",
+  "input_md5": "d3cb1fc9dbfb44943c47fd8694c1fad0",
+  "names_from": "ingest/boe-corpus-2026-09-28/data/hakeem_systems_2026-10-16.json",
+  "unresolved_names": [],
+  "total": 991,
+  "by_class": {
+    "سطر إصدار فقط": 878,
+    "كاملة": 68,
+    "جزئية": 45
+  },
+  "by_reason": {
+    "issuance_line:issuance_phrase": 663,
+    "complete:all_parts": 68,
+    "issuance_line:title_date_only": 123,
+    "issuance_line:body_leak": 75,
+    "partial:missing:opening+operative": 33,
+    "issuance_line:narrative_intro": 10,
+    "issuance_line:unstructured_text": 7,
+    "partial:missing:opening+recital": 9,
+    "partial:missing:opening": 3
+  },
+  "by_sector": {
+    "التقاضي": 40,
+    "التجاري والمالي": 103,
+    "العمل والاجتماعي والجزائي": 57,
+    "العقاري والملكية الفكرية": 52,
+    "الإداري والقضائي": 100,
+    "أخرى (قطاعي/صحي/غير مصنف)": 639
+  },
+  "by_sector_class": {
+    "التقاضي": {
+      "كاملة": 3,
+      "جزئية": 0,
+      "سطر إصدار فقط": 37
+    },
+    "التجاري والمالي": {
+      "كاملة": 7,
+      "جزئية": 3,
+      "سطر إصدار فقط": 93
+    },
+    "العمل والاجتماعي والجزائي": {
+      "كاملة": 1,
+      "جزئية": 1,
+      "سطر إصدار فقط": 55
+    },
+    "العقاري والملكية الفكرية": {
+      "كاملة": 4,
+      "جزئية": 3,
+      "سطر إصدار فقط": 45
+    },
+    "الإداري والقضائي": {
+      "كاملة": 13,
+      "جزئية": 0,
+      "سطر إصدار فقط": 87
+    },
+    "أخرى (قطاعي/صحي/غير مصنف)": {
+      "كاملة": 40,
+      "جزئية": 38,
+      "سطر إصدار فقط": 561
+    }
+  },
+  "sector_source": {
+    "domain": 459,
+    "name": 162,
+    "none": 370
+  },
+  "body_leak": 153,
+  "law_card_full": 467,
+  "law_card_full_and_not_complete": 446,
+  "length_buckets": {
+    "lt200": 710,
+    "200-999": 54,
+    "1000-3000": 80,
+    "gt3000": 147
+  },
+  "csv": "reports/hkm-023-b-preamble-classification.csv",
+  "csv_md5": "9997ae40aeb8763cbe289bd2fe9c71bf"
+}
