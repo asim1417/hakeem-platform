@@ -39,10 +39,15 @@ const edge: Array<{ id: string; text: string; expect: "complete" | "partial" | "
   { id: "edge-title-date", text: "# لائحة التقارير الطبية المنصوص عليها في نظام الأحوال الشخصية\n\n1444-12-05\nالموافق\n23-06-2023", expect: "issuance_line", reason: "title_date_only" },
   { id: "edge-narrative", text: "المقدمة:\n\nتهدف اللائحة إلى تنظيم نشاط نقل الركاب.\n\nالفصل الأول:\n\nالأحكام التمهيدية", expect: "issuance_line", reason: "body_leak" },
   { id: "edge-narrative-only", text: "**تمهيد**\n\nتهدف اللائحة إلى تنظيم عمليات نقل البضائع على الطرق.", expect: "issuance_line", reason: "narrative_intro" },
-  { id: "edge-body", text: "الصادر بالمرسوم الملكي رقم (م/64) وتاريخ 10/ 08/ 1442هـالباب الأول:التعريفاتالمادة الأولى:لأغراض", expect: "issuance_line", reason: "issuance_phrase" },
+  { id: "edge-body", text: "الصادر بالمرسوم الملكي رقم (م/64) وتاريخ 10/ 08/ 1442هـالباب الأول:التعريفاتالمادة الأولى:لأغراض", expect: "issuance_line", reason: "body_leak" },
   { id: "edge-recital-only", text: "الصادرة عن مجلس هيئة السوق المالية بموجب القرار رقم 1-50-2007.\nبناءً على نظام السوق المالية.", expect: "partial", reason: "missing:opening+operative" },
   { id: "edge-nbsp", text: "بعون الله تعالى\nنحن فلان\nوبعد الاطلاع على كذا.\nرسمنا بما هو آت:\nأولاً: كذا (اصطناعي).", expect: "complete" },
   { id: "edge-paren-ordinal", text: "إن مجلس الوزراء\nبعد الاطلاع على كذا (اصطناعي).\nالمشار إليه في البند (أولاً) من هذا القرار.", expect: "partial", reason: "missing:operative" },
+  // مراجعة الجودة ن٨: متن طويل بجداول في حقل المقدمة، برأسه عبارة إصدار ولا «المادة الأولى» فيه.
+  { id: "edge-long-unstructured", text: "صدر بقرار رقم (1) وتاريخ 1440/1/1هـ (اصطناعي)\n" + "جدول اصطناعي | قيمة | ملاحظة\n".repeat(150), expect: "issuance_line", reason: "body_leak" },
+  { id: "edge-short-issuance-long-enough", text: "صدر بقرار رقم (1) وتاريخ 1440/1/1هـ (اصطناعي)\n" + "سطر اصطناعي.\n".repeat(60), expect: "issuance_line", reason: "issuance_phrase" },
+  // مراجعة الجودة ن٢: محارف التحكم بالاتجاه داخل المراسي لا تكسرها (وتُحذف في SQL كذلك).
+  { id: "edge-bidi", text: "بعون\u202b الله تعالى\nنحن فلان (اصطناعي)\n\u2067وبعد الاطلاع\u2069 على كذا.\nرسمنا\u200f بما هو آت:\nأولاً: كذا (اصطناعي).", expect: "complete" },
 ];
 
 // ── التصنيف من الإشارات = تصنيف القارئ على العيّنات ──
@@ -53,7 +58,7 @@ for (const s of [...syn, ...prodTexts]) {
   ok(fromSignals === fromParser, `B-3 ${s.id}: تصنيف الإشارات (${fromSignals}) = تصنيف القارئ (${fromParser})`);
 }
 for (const e of edge) {
-  const c = classifyPreambleSignals(extractPreambleSignals(e.text));
+  const c = classifyPreambleSignals(extractPreambleSignals(e.text), e.text.length);
   ok(c.completeness === e.expect && (!e.reason || c.reason === e.reason), `B-3 ${e.id}: ${c.completeness}/${c.reason} (المتوقع ${e.expect}${e.reason ? "/" + e.reason : ""})`);
 }
 ok(classifyPreambleSignals(extractPreambleSignals(edge[4].text)).bodyLeak, "B-3 تسرّب المتن إلى حقل المقدمة يُوسم body_leak");

@@ -4,6 +4,7 @@
  *   U-*   دوال القراءة getLawPageData (البطاقة والمقدمة بحالاتها والمتن وحالات المواد والإلغاء في الاتجاهين).
  *   M-13  أداة MCP hakeem_get_law: مطابقة الاسم بالحالتين في الأمر، والعقد الإضافي.
  *   S-14  البحث النصي في وحدات المقدمة ووسمها وعدم اختلاطها بالمواد.
+ *   BIS   المادة المكررة (HKM-028، articleBis): مفتاح ومرساة ورابط وترتيب لكل مكررة، واستبعاد الصفوف غير المادية (≥ 100).
  * الحارس: قاعدة محلية اسمها ينتهي بـ _test فقط (يحذف مخططها public ويعيد إنشاءه).
  * نصوص المواد والأنظمة الاصطناعية موسومة «اصطناعي». نصوص المقدمات الحقيقية من data/preamble-fixtures (عامة).
  */
@@ -12,8 +13,9 @@ import { createHash } from "node:crypto";
 import { composeLawCardText } from "../lib/modules/legal-core/preamble-parser";
 import { buildPreambleEditionRows, insertPreambleEdition, PreambleRejected, sha256 } from "../lib/modules/legal-core/preamble-edition";
 import { getLawPageData, NOT_AVAILABLE, PREAMBLE_INCOMPLETE_LABEL, PREAMBLE_NONE_LABEL, toBoeStatus, BOE_LAW_STATUSES } from "../lib/modules/legal-core/law-page-data";
-import { rankLawNameMatches, normalizeLawName } from "../lib/modules/legal-core/law-name-match";
-import { getLawTool, MCP_PREAMBLE_MAX_CHARS } from "../lib/mcp/tools/get-law";
+import { rankLawNameMatches, normalizeLawName, queryYears } from "../lib/modules/legal-core/law-name-match";
+import { getLawTool, MCP_BODY_LEAK_MAX_CHARS, MCP_PREAMBLE_MAX_CHARS } from "../lib/mcp/tools/get-law";
+import { articleLabel } from "../lib/modules/legal-core/article-key";
 import { mergeArticleAndPreambleHits, searchPreambleUnits } from "../lib/modules/legal-core/preamble-search";
 import { connectLocalTest } from "./hkm-023-b/local-db";
 import type { SqlClient } from "../lib/modules/legal-core/sql-port";
@@ -26,6 +28,13 @@ const ok = (c: boolean, m: string) => {
   else failed++;
 };
 const md5 = (s: string) => createHash("md5").update(s, "utf8").digest("hex");
+
+/** عميل يسجّل نص كل استعلام (لاختبار ما يُقرأ وما لا يُقرأ). */
+function capturing(db: SqlClient): { db: SqlClient; log: string[] } {
+  const log: string[] = [];
+  return { log, db: { query: <T>(sql: string, params?: readonly unknown[]) => (log.push(sql), db.query<T>(sql, params)) } };
+}
+const CIVIL_PREAMBLE = fs.readFileSync("data/preambles/civil-transactions-law.txt", "utf8").trim();
 
 async function rejects(fn: () => Promise<unknown>, re: RegExp, m: string) {
   try {
@@ -65,6 +74,10 @@ async function seed(db: SqlClient) {
   await sys("sys-blocks", "نظام اصطناعي بكتل المصدر", 1, {});
   await sys("sys-ss-old", "نظام الضمان الاجتماعي اصطناعي 1427هـ", 2, { domain: "labor" });
   await sys("sys-ss-new", "نظام الضمان الاجتماعي اصطناعي", 1, { domain: "labor" });
+  await sys("sys-ray-old", "تنظيم اصطناعي للري", 0, {});
+  await sys("sys-ray-new", "تنظيم اصطناعي للري 1447هـ", 0, {});
+  // حقل مقدمة قديم يحوي متنًا طويلًا بلا بنية مقدمة (على نمط أدلة السكك الحديدية في الإنتاج).
+  await sys("sys-leak", "دليل اصطناعي بمتن في حقل المقدمة", 0, { preamble: "صدر بقرار رقم (1) (اصطناعي)\n" + "جدول اصطناعي | قيمة | ملاحظة\n".repeat(200) });
 
   const art = (id: string, systemId: string, lawName: string, n: number, title: string, chapter: string | null) =>
     db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content, chapter) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [
@@ -76,6 +89,14 @@ async function seed(db: SqlClient) {
   await art("a-mur-101", "sys-murafaat", "نظام المرافعات الشرعية", 101, "المادة الأولى بعد المائة", "الباب التاسع: إجراءات الإثبات");
   await art("a-mur-102", "sys-murafaat", "نظام المرافعات الشرعية", 102, "المادة الثانية بعد المائة", "الباب التاسع: إجراءات الإثبات");
   await art("a-mur-103", "sys-murafaat", "نظام المرافعات الشرعية", 103, "المادة الثالثة بعد المائة", "الباب العاشر: اصطناعي");
+  // «مكرر» (HKM-028): 103 مكرر و103 مكرر 2 مادتان، و103 بدرجة 100 صف غير مادي (جدول ملحق) لا يُعرض.
+  const bisArt = (id: string, n: number, bis: number, title: string) =>
+    db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", "articleBis", title, content, chapter) VALUES ($1, 'sys-murafaat', 'نظام المرافعات الشرعية', $2, $3, $4, $5, 'الباب العاشر: اصطناعي')`, [
+      id, n, bis, title, `نص اصطناعي للمادة ${n} درجة ${bis}.`,
+    ]);
+  await bisArt("a-mur-103b", 103, 1, "المادة الثالثة بعد المائة مكرر (اصطناعي)");
+  await bisArt("a-mur-103b2", 103, 2, "103");
+  await bisArt("a-mur-103x", 103, 100, "جدول ملحق اصطناعي");
   await art("a-mur-212", "sys-murafaat", "نظام المرافعات الشرعية", 212, "المادة الثانية عشرة بعد المائتين", "الباب العاشر: اصطناعي");
   await art("a-mur-220", "sys-murafaat", "نظام المرافعات الشرعية", 220, "المادة العشرون بعد المائتين", "الباب العاشر: اصطناعي");
   await art("a-civ-1", "sys-civil", "نظام المعاملات المدنية", 1, "المادة الأولى", null);
@@ -98,6 +119,9 @@ async function seed(db: SqlClient) {
   await ver("unit", "a-mur-220", "ملغاة", "م/99 وتاريخ 1445/1/1هـ — من 2024-06-13", "أُلغيت (اصطناعي)");
   await ver("work", "sys-ss-old", "مستبدل", "م/32 وتاريخ 1442/4/4هـ");
   await ver("work", "sys-ss-new", "ساري", "م/32 وتاريخ 1442/4/4هـ");
+  await ver("unit", "a-mur-103b", "ساري", null);
+  await ver("work", "sys-ray-old", "مستبدل", null);
+  await ver("work", "sys-ray-new", "ساري", null);
 
   await db.query(`INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument, evidence_url) VALUES ('uv-1', 'a-mur-103', 'نص معدّل اصطناعي للمادة 103.', '2020-01-01', 'مرسوم ملكي رقم م/0 وتاريخ 1441/1/1هـ (اصطناعي)', 'https://laws.boe.gov.sa/اصطناعي')`);
   await db.query(`INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument) VALUES ('uv-2', 'a-mur-100', 'نص مستقبلي اصطناعي للمادة 100.', '2099-01-01', 'اصطناعي')`);
@@ -217,7 +241,15 @@ async function pageTests(db: SqlClient) {
   ok(mur.card.dates.issued.source === null && mur.card.dates.published.hijri === null, "U-2 تواريخ بلا مصدر = null");
   ok(mur.preamble.kind === "legacy_text" && mur.preamble.label === PREAMBLE_INCOMPLETE_LABEL && mur.preamble.legacy?.text === MURAFAAT_LEGACY, "U-4 preamble fallback to article zero: النص كما هو بوسم «مقدمة غير مكتملة»");
   const arts = mur.body.divisions.flatMap((d) => d.articles);
-  ok(arts.map((a) => a.number).join() === "100,101,102,103,212,220", "U-5 المتن مرتب بأرقام المواد");
+  ok(arts.map((a) => a.number).join() === "100,101,102,103,103,103,212,220", "U-5 المتن مرتب بأرقام المواد");
+  ok(arts.map((a) => a.key).join() === "100,101,102,103,103_bis,103_bis2,212,220", "BIS المكررة بعد أصلها بمفتاح articleKey (103 ← 103_bis ← 103_bis2)");
+  ok(new Set(arts.map((a) => a.anchor)).size === arts.length && arts.find((a) => a.key === "103_bis")?.anchor === "art-103_bis", "BIS مرساة فريدة لكل مادة (art-103 وart-103_bis وart-103_bis2)");
+  const b1 = arts.find((a) => a.key === "103_bis")!;
+  const b2 = arts.find((a) => a.key === "103_bis2")!;
+  ok(b1.bis === 1 && b1.label === "103 مكرر" && b1.url.endsWith("/103_bis") && b1.text.includes("درجة 1") && b1.status === "ساري", "BIS المكررة: درجتها ووسمها ورابطها المستقل ونصها وحالتها هي لا حالة الأصل");
+  ok(b2.heading === `المادة ${articleLabel(103, 2, true)}` && b2.status === null, "BIS عنوان رقمي للمكررة يُعرض «المادة ١٠٣ مكرر 2»، وبلا سجل = null");
+  ok(arts.find((a) => a.key === "103")?.id === "a-mur-103" && arts.find((a) => a.key === "103")?.status === "معدّل", "BIS المفتاح 103 هو الأصل لا المكرر (صفحة المادة لا تفتح المكررة بدل الأصل)");
+  ok(!arts.some((a) => a.bis >= 100) && !arts.some((a) => a.id === "a-mur-103x"), "BIS الصف غير المادي (articleBis ≥ 100) لا يُقرأ");
   ok(mur.body.divisions.map((d) => d.heading).join("|") === "الباب الثامن: اصطناعي|الباب التاسع: إجراءات الإثبات|الباب العاشر: اصطناعي", "U-5 الأقسام بعناوين الأبواب وبترتيبها");
   ok(mur.body.divisions[1].allRepealed && !mur.body.divisions[0].allRepealed, "U-7a الباب الذي أُلغيت كل مواده موسوم allRepealed");
   const a101 = arts.find((a) => a.number === 101)!;
@@ -235,7 +267,14 @@ async function pageTests(db: SqlClient) {
   const murOld = await getLawPageData(db, "sys-murafaat", { asOf: "2024-01-01" });
   const a220Old = murOld?.body.divisions.flatMap((d) => d.articles).find((a) => a.number === 220);
   ok(a220Old?.status === "ساري" && a220Old.repealedLaterOn === "2024-06-13", "U-7d «كما في تاريخ» قبل نفاذ الإلغاء: ساري مع «أُلغي لاحقًا في …»");
-  ok(mur.body.counts.total === 6 && mur.body.counts.repealed === 4 && mur.body.counts.amended === 1 && mur.body.counts.inForce === 1, "U-3 العدّادات تطابق المرشحات (6 = 1 ساري + 1 معدّل + 4 ملغاة)");
+  ok(mur.body.counts.total === 8 && mur.body.counts.repealed === 4 && mur.body.counts.amended === 1 && mur.body.counts.inForce === 2 && mur.body.counts.unverified === 1, "U-3 العدّادات تطابق المرشحات (8 = 2 ساري + 1 معدّل + 4 ملغاة + 1 غير مؤكد)");
+  const lite = await getLawPageData(db, "sys-murafaat", { asOf: "2026-10-17", withText: false, withOutgoingRepeals: false, resolveRepealingSystems: false });
+  const liteArts = lite?.body.divisions.flatMap((d) => d.articles) ?? [];
+  ok(liteArts.length === arts.length && liteArts.every((a, i) => a.text === "" && a.effectiveText === "" && a.status === arts[i].status && a.key === arts[i].key) && lite?.body.counts.amended === 1, "U-5 withText=false: بلا نص، والحالات والمفاتيح والعدّادات كما هي");
+
+  const leak = await getLawPageData(db, "sys-leak");
+  ok(leak?.preamble.kind === "legacy_text" && leak.preamble.legacy?.bodyLeak === true && leak.preamble.legacy.completeness === "issuance_line", "U-4 حقل مقدمة فيه متن طويل بلا بنية: bodyLeak=true");
+  ok(ith.preamble.legacy?.bodyLeak === false, "U-4 سطر إصدار قصير: bodyLeak=false");
 
   const civ = await getLawPageData(db, "sys-civil");
   ok(civ?.outgoingRepeals.length === 1 && civ.outgoingRepeals[0].articleNumber === 212, "U-7a الاتجاه الآخر: م/191 ألغت المادة 212 من المرافعات");
@@ -291,15 +330,63 @@ async function mcpTests(db: SqlClient) {
   ok(r1.preamble.kind === "units" && r1.preamble.complete === true && "units" in r1.preamble && (r1.preamble.units?.length ?? 0) > 20, "M-13 preamble وحدات بوسم الاكتمال");
   ok(r2.preamble.kind === "legacy_text" && r2.preamble.complete === false && "text" in r2.preamble && r2.preamble.text === MURAFAAT_LEGACY && r2.preamble.label === PREAMBLE_INCOMPLETE_LABEL, "M-13 preamble نص قديم بوسم «مقدمة غير مكتملة»");
   const t101 = r2.toc.find((t) => t.number === 101)!;
-  ok(t101.status === "ملغى" && t101.repealed_by?.includes("م/43") === true && t101.repeal_type === "express_partial" && t101.url.endsWith("/101"), "M-13 حالة كل مادة في الفهرس وبيان إلغائها ورابطها");
-  ok(r2.toc.find((t) => t.number === 103)?.status === "معدّل", "M-13 المعدّلة في الفهرس");
-  ok(r1.url === "https://hakeemai.net/legal/" + encodeURIComponent("نظام-الاثبات") || r1.url.startsWith("https://hakeemai.net/legal/"), "M-13 رابط النظام");
+  const urlOf = (t: (typeof r2.toc)[number]) => r2.article_url_template.replace("{key}", t.key ?? String(t.number));
+  ok(t101.status === "ملغى" && t101.repealed_by?.includes("م/43") === true && urlOf(t101).endsWith("/101"), "M-13 حالة كل مادة في الفهرس وبيان إلغائها، ورابطها من article_url_template");
+  ok(r2.toc.find((t) => t.number === 103 && !t.bis)?.status === "معدّل", "M-13 المعدّلة في الفهرس");
+  ok(r2.toc.every((t) => Object.values(t).every((v) => v !== null && v !== undefined)), "M-13 لا حقل فارغًا (null) في عناصر الفهرس");
+  ok(r2.toc.every((t) => !("url" in t) && !("status_label" in t) && !("status_source" in t)), "M-13 لا رابط ولا وسم ثابت مكرر لكل مادة");
+  const tb = r2.toc.filter((t) => t.number === 103);
+  ok(tb.length === 3 && tb[1].bis === 1 && tb[1].key === "103_bis" && tb[2].key === "103_bis2" && !("bis" in tb[0]) && urlOf(tb[1]).endsWith("/103_bis"), "BIS في MCP: المكررة بـ bis وkey ورابطها، والأصل بلا bis");
+  ok(!("status" in tb[2]) && r2.counts.unverified === 1, "M-13 غير المؤكدة بلا status، وعدّادها في counts");
+  ok(!r2.toc.some((t) => t.article_id === "a-mur-103x"), "BIS في MCP: الصف غير المادي غائب عن الفهرس");
+  const ss = await getLawTool(db, { lawId: "sys-ss-old" }, { asOf: "2026-10-17" });
+  ok("law_id" in ss && ss.toc.every((t) => t.status === "ملغى" && !("repealed_by" in t)) && ss.repeal?.type === "replacement", "M-13 الملغاة تبعًا لإلغاء النظام: الحالة فقط، وبيان الإلغاء مرة واحدة في repeal");
+  const lk = await getLawTool(db, { lawId: "sys-leak" });
+  ok("law_id" in lk && "body_leak" in lk.preamble && lk.preamble.body_leak === true && "text" in lk.preamble && (lk.preamble.text?.length ?? 0) === MCP_BODY_LEAK_MAX_CHARS && lk.preamble.truncated === true, "M-13 حقل مقدمة فيه متن: body_leak ونص مقتطع إلى 1000 حرف");
+
+  // لا يُقرأ نص المواد، ولا تُمسح جداول البطاقات والتحقق كلها.
+  const cap = capturing(db);
+  await getLawTool(cap.db, { lawId: "sys-murafaat" }, { asOf: "2026-10-17" });
+  const artSql = cap.log.find((q) => q.includes("FROM legal_articles")) ?? "";
+  ok(artSql.includes("''::text AS content") && !/\bcontent,/.test(artSql.replace("''::text AS content", "")), "M-13 مسار MCP لا يقرأ نص أي مادة");
+  ok(!cap.log.some((q) => q.includes("WITH v AS")) && !cap.log.some((q) => /SELECT DISTINCT ON \(system_id\) system_id, instruments FROM law_card/.test(q)), "M-13 مسار MCP لا يمسح كل التحقق ولا كل البطاقات");
+  ok(r1.url.startsWith("https://hakeemai.net/legal/") && r1.article_url_template === `${r1.url}/{key}`, "M-13 رابط النظام وقالب رابط المادة");
   ok(MCP_PREAMBLE_MAX_CHARS === 12000, "M-13 سقف نص المقدمة في المخرج");
 
   // نقي: الترتيب داخل الدرجة والتطبيع.
   const m = rankLawNameMatches([{ id: "1", name: "نظام التنفيذ", articleCount: 98 }, { id: "2", name: "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/237)", articleCount: 65 }, { id: "3", name: "اللائحة التنفيذية لنظام التنفيذ", articleCount: 200 }], "نظام التنفيذ");
   ok(m.match?.id === "1" && m.matchType === "exact" && m.alternatives[0].id === "2", "M-13 التامة أولًا ثم «يبدأ بـ» في البدائل");
   ok(normalizeLawName("نظامُ الإثباتِ 1443هـ") === "نظام الاثبات", "M-13 التطبيع: التشكيل والهمزة والسنة");
+
+  // حواف المطابقة (مراجعة الجودة ن٣).
+  const tanfidh = [
+    { id: "t-1447", name: "نظام التنفيذ", articleCount: 65 },
+    { id: "t-1433", name: "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/53) وتاريخ 1433/8/13هـ", articleCount: 98 },
+    { id: "t-237", name: "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/237) وتاريخ 1447/11/03هـ", articleCount: 65 },
+  ];
+  ok(JSON.stringify(queryYears("نظام التنفيذ ١٤٣٣هـ")) === '["1433"]' && queryYears("نظام التنفيذ").length === 0, "M-13 السنة من المُدخل (هندية أو لاتينية)");
+  const y = rankLawNameMatches(tanfidh, "نظام التنفيذ 1433");
+  ok(y.match?.id === "t-1433" && y.matchType === "prefix" && y.alternatives[0].id === "t-1447", "M-13 «نظام التنفيذ 1433» يعيد طبعة 1433 لا الساري، والتامة في البدائل");
+  ok(rankLawNameMatches(tanfidh, "نظام التنفيذ").match?.id === "t-1447", "M-13 بلا سنة: المطابقة التامة كما هي");
+  const ray = [{ id: "r-old", name: "تنظيم المؤسسة العامة للري", articleCount: 12 }, { id: "r-new", name: "تنظيم المؤسسة العامة للري 1447هـ", articleCount: 10 }];
+  ok(rankLawNameMatches(ray, "تنظيم المؤسسة العامة للري").match?.id === "r-old" && rankLawNameMatches(ray, "تنظيم المؤسسة العامة للري", { retired: new Set(["r-old"]) }).match?.id === "r-new", "M-13 داخل الدرجة يتأخر المستبدل عن الساري");
+  const rr = await getLawTool(db, { name: "تنظيم اصطناعي للري" });
+  ok("law_id" in rr && rr.law_id === "sys-ray-new" && rr.match.alternatives[0]?.law_id === "sys-ray-old", "M-13 من القاعدة: الاسم المشترك يعيد الساري (طبعة 1447) والمستبدل بديلًا");
+
+  // الحجم (مراجعة الجودة ع٢): نظام اصطناعي بـ721 مادة، وعناوين بطول 33 ومعرّفات بطول 25 والمقدمة القديمة 8623 حرفًا (المعاملات المدنية).
+  await db.query(`INSERT INTO legal_systems (id, name, "articleCount", preamble) VALUES ('sys-size', 'نظام اصطناعي بحجم المعاملات المدنية', 721, $1)`, [CIVIL_PREAMBLE]);
+  await db.query(
+    `INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content)
+     SELECT 'cmsize' || lpad(n::text, 19, '0'), 'sys-size', 'نظام اصطناعي بحجم المعاملات المدنية', n, rpad('المادة ' || n || ' اصطناعي', 33, 'ـ'), repeat('نص اصطناعي ', 20)
+       FROM generate_series(1, 721) n`,
+  );
+  const oldRows = await db.query<{ id: string; articleNumber: number; title: string }>(`SELECT id, "articleNumber", title FROM legal_articles WHERE "legalSystemId" = 'sys-size' ORDER BY "articleNumber"`);
+  const oldOut = { law_id: "sys-size", name: "نظام اصطناعي بحجم المعاملات المدنية", classification: null, issue_instrument: null, issue_date_h: null, status: null, articles_count: 721, toc: oldRows.map((x) => ({ article_id: x.id, number: x.articleNumber, title: x.title })) };
+  const newOut = await getLawTool(db, { lawId: "sys-size" }, { asOf: "2026-10-17", siteUrl: "https://hakeem-platform.vercel.app" });
+  const bytes = (o: unknown) => Buffer.byteLength(JSON.stringify(o, null, 1));
+  const ratio = bytes(newOut) / bytes(oldOut);
+  console.log(`  الحجم: القديم ${bytes(oldOut)} بايت، الجديد ${bytes(newOut)} بايت (×${ratio.toFixed(2)})، منها الفهرس ${"toc" in newOut ? bytes(newOut.toc) : 0} والمقدمة ${"preamble" in newOut ? bytes(newOut.preamble) : 0}`);
+  ok(ratio <= 1.2, `M-13 مخرج 721 مادة لا يزيد على القديم بأكثر من 20% (×${ratio.toFixed(2)})`);
 }
 
 async function searchTests(db: SqlClient) {
@@ -325,6 +412,10 @@ async function main() {
     try {
       await reset(db);
       await seed(db);
+      // قبل الترحيل: لا يُرسل استعلام إلى preamble_edition (فلا prisma:error في سجل الإنتاج).
+      const pre = capturing(db);
+      const before = await getLawPageData(pre.db, "sys-murafaat", { asOf: "2026-10-17" });
+      ok(before?.preamble.kind === "legacy_text" && !pre.log.some((q) => /FROM preamble_(edition|unit)/.test(q)), "U-4 قبل تطبيق الترحيل: لا استعلام على جداول المقدمة، والسقوط إلى النص القديم");
       await migrationTests(db);
       await pageTests(db);
       await mcpTests(db);
