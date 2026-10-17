@@ -10,6 +10,7 @@ import {
   auditDenied,
   changesOf,
   insertDecision,
+  authoredBy,
   isAuthorOf,
   isIntakeSet,
   itemKindOf,
@@ -383,7 +384,8 @@ export async function decideChangeSet(
       assertSetScope(set, changes, (kind, domain) => canReviewIn(actor.access, kind, domain), "لا تملك صلاحية الاعتماد ضمن نطاق تكليفك.");
       const policies = setPolicies(config, set, changes);
       const hash = assertPayloadUnchanged(set, changes);
-      const isOwnChange = set.author_kind === "human" && set.author_id === actor.id;
+      // هوية المُعِدّ بالمستخدم: الحساب المقلوب من وكيل إلى بشري لا يعتمد ما أعدّه وكيلًا.
+      const isOwnChange = authoredBy(set, actor.id);
       let selfApproval = false;
       if (isOwnChange && input.decision === "approve") {
         if (!actor.access.superAdmin) {

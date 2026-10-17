@@ -131,10 +131,24 @@ export async function auditDenied(db: EditorialDb, actor: EditorialActor, error:
 
 // ── الهوية والنطاق ────────────────────────────────────────────────────────────
 
-/** مُعِدّ الدفعة: البشري بمعرّفه، والوكيل باسمه (لا يرسل وكيلٌ دفعةَ وكيل آخر). */
+/** اسم مؤلف الوكيل المرتبط بحساب: «user:<معرّف الحساب>» (يبنيه الحارس وdesk-tx). وكلاء الاستقبال (uqn-fix، principles) ليسوا حسابات. */
+export function agentNameFor(userId: string): string {
+  return `user:${userId}`;
+}
+
+/**
+ * هوية المُعِدّ بالمستخدم لا بنوع الحساب: ما أعدّه الحساب وهو وكيل يبقى من إعداده بعد قلبه بشريًّا،
+ * فلا يعتمده (منع الاعتماد الذاتي)، ويبقى له إرساله وسحبه.
+ */
+export function authoredBy(set: Pick<ChangeSetRow, "author_kind" | "author_id" | "author_agent">, userId: string): boolean {
+  if (set.author_kind === "human") return set.author_id === userId;
+  return set.author_agent === agentNameFor(userId);
+}
+
+/** مُعِدّ الدفعة: الحساب نفسه بأي نوع كان حين أعدّها، أو الوكيل باسمه (لا يرسل وكيلٌ دفعةَ وكيل آخر). */
 export function isAuthorOf(set: ChangeSetRow, actor: EditorialActor): boolean {
-  if (set.author_kind === "human") return actor.kind === "human" && set.author_id === actor.id;
-  return actor.kind === "agent" && set.author_agent === (actor.agentName ?? actor.id);
+  if (authoredBy(set, actor.id)) return true;
+  return set.author_kind === "agent" && actor.kind === "agent" && set.author_agent === (actor.agentName ?? actor.id);
 }
 
 /** نوع العنصر للسياسة والنطاق: تغييرات دفعة التراجع «revert»، وغيرها بحسب الفعل. */
@@ -274,7 +288,7 @@ export function approvalStateFrom(
     const access = resolveEditorialAccess(d.role, bindingFor(config, d.reviewer_id));
     if (access.agent) continue;
     if (!kinds.every((k) => canReviewIn(access, k.kind, k.domain))) continue;
-    const isAuthor = set.author_kind === "human" && set.author_id === d.reviewer_id;
+    const isAuthor = authoredBy(set, d.reviewer_id);
     if (d.self_approval || isAuthor) {
       if (!(access.superAdmin && ownerSelfAllowed && d.self_approval)) continue;
     }

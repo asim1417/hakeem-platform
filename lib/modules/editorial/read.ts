@@ -1,6 +1,6 @@
 // قراءات اللوحة: سجل التدقيق، وعدّادات الطوابير، وعقد الواجهة (الدفعات بتفاصيلها).
 import { canReadAudit, canRequestRevertIn, inScope } from "./access";
-import { approvalStateFrom, isIntakeSet, itemKindOf, type ChangeRow, type ChangeSetRow, type DecisionRow } from "./core";
+import { approvalStateFrom, authoredBy, isIntakeSet, itemKindOf, type ChangeRow, type ChangeSetRow, type DecisionRow } from "./core";
 import type { SqlClient } from "./db";
 import { DEFAULT_EDITORIAL_CONFIG, loadEditorialConfig } from "./policy";
 import { EditorialError, type EditorialActor } from "./types";
@@ -266,7 +266,7 @@ export async function listChangeSetsDetailed(
   for (const set of sets) {
     const own = changes.filter((c) => c.change_set_id === set.id);
     const isAuthor =
-      (set.author_kind === "human" && set.author_id === actor.id) ||
+      authoredBy(set, actor.id) ||
       (set.author_kind === "agent" && actor.kind === "agent" && set.author_agent === (actor.agentName ?? actor.id));
     const visible = actor.access.superAdmin || isAuthor || own.some((c) => inScope(actor.access, itemKindOf(set, c), c.domain));
     if (!visible) continue;
