@@ -144,6 +144,8 @@
   unicode-bidi: isolate;
 }
 [data-desk] .dk-nowrap { white-space: nowrap; }
+/* رقم العملية والرموز القصيرة لا تنكسر عند الشرطة في الأسطر المركّبة (المهلة، النتيجة، الشريط). */
+[data-desk] :is(.dk-undo__line, .dk-result, .dk-msg__title) bdi[lang="en"] { white-space: nowrap; }
 @media (max-width: 639.98px) {
   [data-desk] .dk-lead--queue { display: none; }
 }
@@ -364,6 +366,7 @@
   border: 1px solid var(--desk-border-card);
   border-radius: var(--desk-radius-card);
   min-width: 0;
+  scroll-margin-top: 16px;
 }
 @media (min-width: 640px) {
   [data-desk] .dk-card { --pad: var(--desk-card-pad-lg); }

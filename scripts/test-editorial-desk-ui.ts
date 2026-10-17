@@ -15,6 +15,7 @@ import {
   eligibleApprovers,
   eligibleVisible,
   fmtDateTime,
+  impactLines,
   initialCorrection,
   leavesMyQueue,
   nextUndecided,
@@ -163,6 +164,9 @@ export function runDeskUiTests(ok: Ok) {
   ok(lines.some((l) => l.startsWith("إضافة تكليف لـ هند") && l.includes("(معطّل)")), "جملة إضافة تكليف معطّل");
   ok(lines.includes("رفع موافقات «تغيير حالة نظام» من ١ إلى ٢"), "جملة رفع الموافقات");
   ok(settingsChanges(before, baseConfig(), USERS).length === 0, "لا تغيير = لا جملة");
+  ok(impactLines(0, 0).length === 0, "ق٣١: أثر صفر = لا جملة");
+  ok(JSON.stringify(impactLines(1, 2)) === JSON.stringify(["تسقط موافقات قائمة على دفعة معلّقة واحدة.", "ترتفع الموافقات المطلوبة على دفعتين معلّقتين."]), "ق٣١: جمل الأثر تطابق العدد");
+  ok(impactLines(5, 0)[0] === "تسقط موافقات قائمة على ٥ دفعات معلّقة." && impactLines(0, 12)[0] === "ترتفع الموافقات المطلوبة على ١٢ دفعةً معلّقة.", "ق٣١: الجمع والتمييز");
   ok(eligibleApprovers(before, "review_amendment_op") === 2, "المعتمِدون المؤهلون: المالك ومراجع مفعّل");
   const disabled = baseConfig();
   disabled.bindings[0].enabled = false;

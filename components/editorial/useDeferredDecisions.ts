@@ -142,7 +142,8 @@ export function useDeferredDecisions<S>(options: Options<S>) {
     if (!el) return;
     // لا تمرير متحرك برمجيًّا (٩): التركيز بلا تمرير، ثم تقريب فوري عند الحاجة.
     el.focus({ preventScroll: true });
-    if (!focusRequest.preventScroll) el.scrollIntoView({ block: "nearest", behavior: "instant" });
+    // البطاقة التالية تظهر من عنوانها (البطاقة قد تكون أطول من الشاشة)، وغيرها بأقرب تمرير.
+    if (!focusRequest.preventScroll) el.scrollIntoView({ block: el.matches("article") ? "start" : "nearest", behavior: "instant" });
   }, [focusRequest]);
 
   const clearTimer = useCallback((id: string) => {

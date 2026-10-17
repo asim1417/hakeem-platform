@@ -9,7 +9,7 @@ import { callEditorial } from "./api";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Dock } from "./DecisionParts";
 import { AGENT_FORBIDDEN, DESK_ROLE_OPTIONS, DOMAIN_OPTIONS, ITEM_KIND_OPTIONS, type DeskRoleValue, type ItemKindValue } from "./labels";
-import { bindingSummary, CHANGES_NOUN_GEN, countNoun, eligibleApprovers, fmt, reapplyChanges, settingsChanges, unsavedChanges, type UserRef } from "./logic";
+import { bindingSummary, CHANGES_NOUN_GEN, countNoun, eligibleApprovers, fmt, reapplyChanges, impactLines, settingsChanges, unsavedChanges, type UserRef } from "./logic";
 import { Badge, btnClass, Message } from "./ui";
 
 const MIN_REASON = 5;
@@ -616,7 +616,7 @@ export function SettingsEditor({ initial, writeEnabled }: { initial: SettingsVie
           )
         }
         confirmDisabled={reason.trim().length < MIN_REASON || conflict !== null}
-        confirmHelp={conflict ? "حمّل النسخة الأحدث أولًا ثم احفظ." : `اكتب سبب الحفظ (${fmt(MIN_REASON)} أحرف على الأقل) لتفعيل الحفظ.`}
+        confirmHelp={conflict ? "حمّل النسخة الأحدث أولًا ثم احفظ." : "اكتب سبب الحفظ (خمسة أحرف على الأقل) لتفعيل الحفظ."}
         onConfirm={() => void save()}
         onClose={() => setReviewOpen(false)}
         extraActions={
@@ -648,8 +648,9 @@ export function SettingsEditor({ initial, writeEnabled }: { initial: SettingsVie
         {impact?.state === "done" && (impact.dropped > 0 || impact.raised > 0) ? (
           <Message tone="warn" title="أثر الحفظ على القائم">
             <ul className="list-disc ps-5">
-              {impact.dropped > 0 ? <li>تسقط موافقات قائمة على {fmt(impact.dropped)} دفعة أو عنصر معلّق.</li> : null}
-              {impact.raised > 0 ? <li>ترتفع الموافقات المطلوبة لـ {fmt(impact.raised)} عنصر معلّق.</li> : null}
+              {impactLines(impact.dropped, impact.raised).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
             </ul>
           </Message>
         ) : null}

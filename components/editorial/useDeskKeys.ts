@@ -74,9 +74,9 @@ export function useDeskKeys(container: RefObject<HTMLElement>, handlers: DeskKey
         else next = index;
         const target = cards[next];
         target.setAttribute(USER_FOCUS, "");
-        // تمرير فوري لا متحرك (globals.css يجعل التمرير ناعمًا): البطاقة ظاهرة فور الضغط، فيعمل الفعل التالي عليها.
+        // تمرير فوري لا متحرك (globals.css يجعل التمرير ناعمًا) إلى عنوان البطاقة: ظاهرة فور الضغط، فيعمل الفعل التالي عليها.
         target.focus({ preventScroll: true });
-        target.scrollIntoView({ block: "nearest", behavior: "instant" });
+        target.scrollIntoView({ block: "start", behavior: "instant" });
         return;
       }
       // الأفعال على البطاقة المركّزة نفسها فقط، وقد اختارها المستخدم، وهي ظاهرة.

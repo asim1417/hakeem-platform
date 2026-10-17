@@ -40,6 +40,21 @@ export function unsavedChanges(n: number): string {
   return `${fmt(n)} تغييرًا غير محفوظ`;
 }
 
+/** أثر حفظ الإعدادات على القائم (ق٣١) بجمل تطابق العدد؛ الصفر لا جملة له. */
+export function impactLines(dropped: number, raised: number): string[] {
+  const sets = (n: number) => {
+    const mod = n % 100;
+    if (n === 1) return "دفعة معلّقة واحدة";
+    if (n === 2) return "دفعتين معلّقتين";
+    if (mod >= 3 && mod <= 10) return `${fmt(n)} دفعات معلّقة`;
+    return `${fmt(n)} دفعةً معلّقة`;
+  };
+  const out: string[] = [];
+  if (dropped > 0) out.push(`تسقط موافقات قائمة على ${sets(dropped)}.`);
+  if (raised > 0) out.push(`ترتفع الموافقات المطلوبة على ${sets(raised)}.`);
+  return out;
+}
+
 /** العدد مع المعدود: ١ «عملية واحدة»، ٢ «عمليتان»، ٣–١٠ «٣ عمليات»، ١١ فأكثر «١١ عملية». */
 export function countNoun(n: number, forms: NounForms): string {
   if (n === 1) return forms.one;

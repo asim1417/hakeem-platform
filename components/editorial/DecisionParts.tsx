@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Check, CheckCheck, LoaderCircle, RefreshCw, Undo2, Users, X } from "lucide-react";
 import { fmt, remainingMs, type ResultTone } from "./logic";
 import { domIds, type DeferredDecisions, type ItemState } from "./useDeferredDecisions";
-import { btnClass, Message } from "./ui";
+import { btnClass, Message, WithCodes } from "./ui";
 
 type Ids = ReturnType<typeof domIds>;
 
@@ -84,7 +84,9 @@ export function UndoLine<S>({ ids, state, now, onUndo }: { ids: Ids; state: Item
       <div id={ids.sending} tabIndex={-1} className="dk-undo dk-undo--busy dk-bleed" data-surface="dark" role="group" aria-label={`جارٍ حفظ القرار على ${pending.label}`}>
         <p className="dk-undo__line">
           <LoaderCircle size={20} aria-hidden className="dk-spin" />
-          <span>جارٍ حفظ القرار: {pending.line}…</span>
+          <span>
+            جارٍ حفظ القرار: <WithCodes text={pending.line} />…
+          </span>
         </p>
       </div>
     );
@@ -106,7 +108,9 @@ export function UndoLine<S>({ ids, state, now, onUndo }: { ids: Ids; state: Item
         <div>
           <p className="dk-undo__line">
             <Icon size={20} aria-hidden />
-            <span>{pending.line}</span>
+            <span>
+              <WithCodes text={pending.line} />
+            </span>
           </p>
           <p className="dk-undo__count" aria-hidden>
             {paused ? "العدّاد متوقف حتى تعود إلى الصفحة" : `يُرسل خلال ${fmt(Math.max(seconds, 0))} ث`}
@@ -127,7 +131,9 @@ export function ResultLine({ id, text, tone }: { id: string; text: string; tone:
   return (
     <div id={id} tabIndex={-1} className={`dk-result${tone === "reject" ? " dk-result--reject" : tone === "wait" ? " dk-result--wait" : ""}`}>
       <Icon size={20} aria-hidden />
-      <span>{text}</span>
+      <span>
+        <WithCodes text={text} />
+      </span>
     </div>
   );
 }
@@ -224,7 +230,7 @@ export function ErrorDock<S>({
             tone="error"
             role="alert"
             className="dk-errbar"
-            title={`تعذّر حفظ قرار ${labelOf(id)}؛ لم يُسجَّل.`}
+            title={<WithCodes text={`تعذّر حفظ قرار ${labelOf(id)}؛ لم يُسجَّل.`} />}
             actions={
               <>
                 <button
