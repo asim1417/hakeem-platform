@@ -1,23 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState, type RefObject } from "react";
+import { kbdPrefCookie, kbdPrefFromCookie } from "./logic";
 
-const KBD_KEY = "hkm.desk.kbd";
-
-/** تفضيل اختصارات لوحة المفاتيح محفوظ للمستخدم (ق١٣-٤)؛ التخزين قد يُمنع فيبقى الافتراضي مفعّلًا. */
+/** تفضيل اختصارات لوحة المفاتيح محفوظ للمستخدم (ق١٣-٤) في ملف تعريف ارتباط غير حساس؛ إن مُنع يبقى الافتراضي مفعّلًا. */
 export function useKbdPreference(): [boolean, (on: boolean) => void] {
   const [on, setOn] = useState(true);
   useEffect(() => {
     try {
-      if (window.localStorage.getItem(KBD_KEY) === "0") setOn(false);
+      if (!kbdPrefFromCookie(document.cookie)) setOn(false);
     } catch {
-      // التخزين غير متاح: يبقى الافتراضي.
+      // ملفات الارتباط غير متاحة: يبقى الافتراضي.
     }
   }, []);
   const update = useCallback((next: boolean) => {
     setOn(next);
     try {
-      window.localStorage.setItem(KBD_KEY, next ? "1" : "0");
+      document.cookie = kbdPrefCookie(next, window.location.protocol === "https:");
     } catch {
       // لا شيء.
     }

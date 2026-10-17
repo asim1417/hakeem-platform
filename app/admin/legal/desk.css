@@ -44,7 +44,7 @@
   --desk-overlay-hover: var(--ink-15);
   --desk-overlay-pressed: var(--ink-20);
   --desk-overlay-subtle: var(--ink-04);
-  --desk-overlay-subtle-pressed: var(--ink-08);
+  --desk-subtle-pressed: var(--ink-08);
   /* التركيز */
   --desk-focus-color: var(--petrol);
   --desk-focus-color-on-dark: var(--on-petrol);
@@ -281,7 +281,7 @@
   background-image: linear-gradient(var(--desk-overlay-subtle), var(--desk-overlay-subtle));
 }
 [data-desk] :is(.dk-btn--correct, .dk-btn--undo):active:not(:disabled) {
-  background-image: linear-gradient(var(--desk-overlay-subtle-pressed), var(--desk-overlay-subtle-pressed));
+  background-image: linear-gradient(var(--desk-subtle-pressed), var(--desk-subtle-pressed));
 }
 [data-desk] .dk-btn--correct[aria-expanded="true"] { border-color: var(--desk-border-strong); box-shadow: inset 0 0 0 1px var(--desk-border-strong); }
 [data-desk] .dk-btn--reject:hover:not(:disabled) { background-color: var(--desk-btn-reject-hover-bg); }

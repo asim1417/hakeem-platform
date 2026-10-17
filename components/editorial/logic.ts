@@ -497,3 +497,20 @@ export function safeSourceHref(href: string | null | undefined): string | null {
     return null;
   }
 }
+
+/** تفضيل اختصارات لوحة المفاتيح (ق١٣-٤): ملف تعريف ارتباط غير حساس على مسار المكتب، بنمط تفضيل اللغة، لا تخزين المتصفح المحلي. */
+export const KBD_COOKIE = "hkm_desk_kbd";
+
+/** الاختصارات مفعّلة ما لم يحمل الملف القيمة 0 صراحةً. */
+export function kbdPrefFromCookie(cookie: string | null | undefined): boolean {
+  if (!cookie) return true;
+  for (const part of cookie.split(";")) {
+    const [name, value] = part.trim().split("=");
+    if (name === KBD_COOKIE) return value !== "0";
+  }
+  return true;
+}
+
+export function kbdPrefCookie(on: boolean, secure: boolean): string {
+  return `${KBD_COOKIE}=${on ? "1" : "0"}; path=/admin/legal; max-age=${60 * 60 * 24 * 365}; samesite=lax${secure ? "; secure" : ""}`;
+}

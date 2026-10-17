@@ -21,6 +21,8 @@ import {
   nextUndecided,
   normalizeDateInput,
   safeSourceHref,
+  kbdPrefCookie,
+  kbdPrefFromCookie,
   OPS_NOUN,
   pauseCountdown,
   pendingLine,
@@ -68,6 +70,14 @@ export function runDeskUiTests(ok: Ok) {
   ok(safeSourceHref("data:text/html,<b>x</b>") === null, "ن٩ رابط data: يُرفض");
   ok(safeSourceHref("http://uqn.gov.sa/") === null, "ن٩ رابط http بلا تشفير يُرفض");
   ok(safeSourceHref("/relative") === null && safeSourceHref("") === null && safeSourceHref(null) === null, "ن٩ النسبي والفارغ لا يُعرضان رابطًا");
+
+  // ── تفضيل الاختصارات في ملف ارتباط لا التخزين المحلي (فحص الأمن) ──
+  ok(kbdPrefFromCookie("") && kbdPrefFromCookie(null), "ق١٣-٤ الاختصارات مفعّلة افتراضيًّا");
+  ok(!kbdPrefFromCookie("hakeem_locale=ar; hkm_desk_kbd=0"), "ق١٣-٤ القيمة 0 تعطّلها");
+  ok(kbdPrefFromCookie("hkm_desk_kbd=1; hakeem_locale=ar"), "ق١٣-٤ القيمة 1 تفعّلها");
+  ok(kbdPrefFromCookie("x_hkm_desk_kbd=0"), "ق١٣-٤ اسم مشابه لا يُقرأ");
+  ok(kbdPrefCookie(false, true) === "hkm_desk_kbd=0; path=/admin/legal; max-age=31536000; samesite=lax; secure", "ق١٣-٤ الملف مقيّد بمسار المكتب وآمن على https");
+  ok(!kbdPrefCookie(true, false).includes("secure"), "ق١٣-٤ بلا secure على http المحلي");
 
   // ── مهلة التراجع: ست ثوانٍ، وتتوقف حين تُخفى الصفحة وتستأنف بما بقي (ق٢، ق٢٧) ──
   ok(UNDO_WINDOW_MS === 6000, "نافذة التراجع ست ثوانٍ");
