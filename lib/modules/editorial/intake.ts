@@ -2,20 +2,31 @@
 // المصادر تُقرأ مباشرة (لا نسخ مسبق). القرار يُسجَّل في معاملة واحدة:
 // change_set + editorial_change (مؤلفه الوكيل) + review_decision (المعتمِد البشري) + audit_event + صف قرار المصدر.
 // عملية التعديل: صف جديد في uqn_fix.amendment_review (للإضافة فقط بمشغّل no_change)، ولا يُمس نص أي مادة.
-import { randomUUID } from "node:crypto";
+// تعدد الموافقات (ق-٦): حين minApprovals > 1 يبقى المقترح «pending» حتى تكتمل موافقات القرار نفسه.
 import { canReviewIn } from "./access";
-import { deskTransaction } from "./desk-tx";
-import { policyFor } from "./policy";
-import { recordAudit, sourceRankFromUrl } from "./audit";
+import { recordAudit, sourceRankFromUrl, stableJson } from "./audit";
+import {
+  approvalState,
+  assertPayloadUnchanged,
+  auditDenied,
+  changesOf,
+  insertDecision,
+  lockChangeSet,
+  newId,
+  sealPayload,
+  setStatus,
+  type ChangeRow,
+  type ChangeSetRow,
+} from "./core";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
+import { deskTransaction, type DeskContext } from "./desk-tx";
+import { hijriToGregorian, parseHijri } from "./hijri";
+import { applyIntakeSet, lockPrinciple, lockUndecidedOp, opSourceRef, principleSourceRef, type OpRow } from "./intake-apply";
+import { assertDeskIntegrity } from "./integrity";
+import { policyFor } from "./policy";
 import { EditorialError, type AmendmentDecision, type EditorialActor, type ItemKind, type PrincipleDecision } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
-import { assertDeskIntegrity } from "./integrity";
-import { payloadHash } from "./payload";
-import { insertDecision } from "./service";
 import { principleStatusFor } from "@/lib/modules/legal-core/principle-review";
-
-const ID = () => randomUUID();
 
 export const AMENDMENT_AGENT = "uqn-fix";
 export const PRINCIPLES_AGENT = "principles";
@@ -93,9 +104,10 @@ export interface AmendmentQueueFilter {
 
 const BULK_ELIGIBLE_SQL = `(o.confidence = 'rule_exact' AND o.verbatim_in_source IS TRUE AND coalesce(array_length(o.risks, 1), 0) = 0)`;
 
+// بلا قرار في المصدر ولا قرار منشور في المكتب؛ المقترح المعلّق (pending) يبقى في الطابور لتكمله موافقات أخرى.
 const UNDECIDED_SQL = `NOT EXISTS (SELECT 1 FROM uqn_fix.amendment_review r WHERE r.op_id = o.op_id)
   AND NOT EXISTS (SELECT 1 FROM editorial_change c
-                   WHERE c.source_ref = 'uqn_fix.amendment_op:' || o.op_id AND c.status NOT IN ('rejected', 'reverted'))`;
+                   WHERE c.source_ref = 'uqn_fix.amendment_op:' || o.op_id AND c.status IN ('approved', 'published'))`;
 
 function amendmentWhere(filter: AmendmentQueueFilter): { sql: string; params: unknown[] } {
   const parts = [UNDECIDED_SQL];
@@ -247,6 +259,13 @@ function cleanNote(note: unknown): string | null {
   return text ? text.slice(0, 2000) : null;
 }
 
+function isRealGregorian(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split("-").map(Number);
+  const ms = Date.UTC(y, m - 1, d);
+  return new Date(ms).toISOString().slice(0, 10) === v;
+}
+
 export function validateCorrection(raw: unknown): Partial<Record<CorrectableField, string | number>> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new EditorialError("INVALID_INPUT", "«موافق مع تصحيح» يحتاج حقلًا مصحَّحًا واحدًا على الأقل.");
@@ -268,12 +287,15 @@ export function validateCorrection(raw: unknown): Partial<Record<CorrectableFiel
     } else if (field === "effective_from_hijri") {
       const v = String(value).trim();
       if (!/^1[3-5]\d{2}-\d{1,2}-\d{1,2}$/.test(v)) throw new EditorialError("INVALID_INPUT", "التاريخ الهجري بصيغة 1447-05-17.");
-      out.effective_from_hijri = v;
+      // ق-١١: اليوم يجب أن يكون موجودًا في تقويم أم القرى (لا شهر 13 ولا يوم 30 في شهر من 29).
+      if (!hijriToGregorian(v)) {
+        throw new EditorialError("INVALID_INPUT", "التاريخ الهجري غير موجود في تقويم أم القرى.", { field, value: v });
+      }
+      const h = parseHijri(v);
+      out.effective_from_hijri = h ? `${h.y}-${String(h.m).padStart(2, "0")}-${String(h.d).padStart(2, "0")}` : v;
     } else if (field === "effective_from_gregorian") {
       const v = String(value).trim();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v))) {
-        throw new EditorialError("INVALID_INPUT", "التاريخ الميلادي بصيغة 2026-10-17.");
-      }
+      if (!isRealGregorian(v)) throw new EditorialError("INVALID_INPUT", "التاريخ الميلادي بصيغة 2026-10-17.");
       out.effective_from_gregorian = v;
     } else {
       out[field] = String(value).trim().slice(0, 20000);
@@ -282,158 +304,203 @@ export function validateCorrection(raw: unknown): Partial<Record<CorrectableFiel
   if (!Object.keys(out).length) {
     throw new EditorialError("INVALID_INPUT", "«موافق مع تصحيح» يحتاج حقلًا مصحَّحًا واحدًا على الأقل.");
   }
+  // اتساق التاريخين إن صُحّحا معًا؛ ولا يُشتق أحدهما من الآخر بصمت (لا قيمة مخترعة في المصدر).
+  if (typeof out.effective_from_hijri === "string" && typeof out.effective_from_gregorian === "string") {
+    const expected = hijriToGregorian(out.effective_from_hijri);
+    if (expected !== out.effective_from_gregorian) {
+      throw new EditorialError("INVALID_INPUT", `التاريخ الميلادي لا يطابق الهجري بتقويم أم القرى (يقابله ${expected}).`, {
+        hijri: out.effective_from_hijri,
+        gregorian: out.effective_from_gregorian,
+        expectedGregorian: expected,
+      });
+    }
+  }
   return out;
 }
 
-// ── قرار عملية التعديل ───────────────────────────────────────────────────────
+// ── مقترح القرار وتعدد الموافقات (ق-٦) ───────────────────────────────────────
+// موافقة واحدة (الافتراضي): القرار يُطبَّق في المصدر فورًا كما كان.
+// minApprovals > 1: أول موافقة تفتح دفعة «pending» مفتاحها source_ref وبصمتها بصمة القرار،
+// والموافقات اللاحقة تُقبل على القرار نفسه فقط، وأي رفض من معتمِد يرفض المقترح فيعود العنصر إلى الطابور بلا قرار.
 
-interface OpRow {
-  op_id: string;
-  instrument_kind: string;
-  instrument_no: string | null;
-  source_url: string;
-  evidence_quote: string;
-  confidence: string;
-  verbatim_in_source: boolean | null;
-  risks: string[] | null;
-  target_law_title: string;
-}
-
-async function lockUndecidedOp(tx: SqlClient, opId: string): Promise<OpRow> {
-  const rows = await tx.query<OpRow>(
-    `SELECT op_id, instrument_kind, instrument_no, source_url, evidence_quote, confidence, verbatim_in_source, risks, target_law_title
-       FROM uqn_fix.amendment_op WHERE op_id = $1 FOR UPDATE`,
-    [opId],
-  );
-  const op = rows[0];
-  if (!op) throw new EditorialError("NOT_FOUND", "عملية التعديل غير موجودة.", { opId });
-  const decided = await tx.query<{ decision: string }>(
-    `SELECT decision FROM uqn_fix.amendment_decision WHERE op_id = $1`,
-    [opId],
-  );
-  if (decided[0]) throw new EditorialError("ALREADY_DECIDED", "قُرّرت هذه العملية من قبل.", { opId, decision: decided[0].decision });
-  return op;
-}
-
-function opSourceRef(opId: string): string {
-  return `uqn_fix.amendment_op:${opId}`;
-}
-
-/** تغيير القرار في دفعة مسودة (القاعدة لا تقبل الإدراج في غيرها)؛ لا يكتب في المصدر. */
-async function insertOpChange(
-  tx: SqlClient,
-  changeSetId: string,
-  op: OpRow,
-  after: { decision: AmendmentDecision; corrected: Record<string, unknown> | null },
-): Promise<string> {
-  const id = ID();
-  try {
-    await tx.query(
-      `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after,
-          evidence_instrument, evidence_url, evidence_quote, source_rank, source_ref, author_kind, author_agent, status, checks)
-       VALUES ($1, $2, 'amendment_op', $3, 'review_amendment_op', $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, 'agent', $11, 'draft', $12::jsonb)
-       RETURNING id`,
-      [
-        id,
-        changeSetId,
-        op.op_id,
-        JSON.stringify({ decision: null }),
-        JSON.stringify(after),
-        [op.instrument_kind, op.instrument_no].filter(Boolean).join(" "),
-        op.source_url,
-        op.evidence_quote,
-        sourceRankFromUrl(op.source_url),
-        opSourceRef(op.op_id),
-        AMENDMENT_AGENT,
-        JSON.stringify({ source: AMENDMENT_AGENT, confidence: op.confidence, verbatim_in_source: op.verbatim_in_source }),
-      ],
-    );
-  } catch (error) {
-    if (pgErrorCode(error) === "23505") {
-      throw new EditorialError("ALREADY_DECIDED", "قُرّرت هذه العملية من قبل.", { opId: op.op_id });
-    }
-    throw error;
-  }
-  return id;
-}
-
-/** يكتب القرار في المصدر: صف جديد في uqn_fix.amendment_review (للإضافة فقط بمشغّل no_change). */
-async function applyOpDecision(
-  tx: SqlClient,
-  actor: EditorialActor,
-  changeSetId: string,
-  changeId: string,
-  op: OpRow,
-  input: { decision: AmendmentDecision; corrected: Record<string, unknown> | null; note: string | null; reviewer: string },
-): Promise<void> {
-  const rows = await tx.query<{ id: string }>(
-    `INSERT INTO uqn_fix.amendment_review (op_id, decision, corrected, reviewer, note)
-     VALUES ($1, $2, $3::jsonb, $4, $5) RETURNING id::text AS id`,
-    [op.op_id, input.decision, input.corrected ? JSON.stringify(input.corrected) : null, input.reviewer, input.note],
-  );
-  await tx.query(`UPDATE editorial_change SET applied_ref = $2 WHERE id = $1 RETURNING id`, [
-    changeId,
-    `uqn_fix.amendment_review:${rows[0].id}`,
-  ]);
-  await recordAudit(tx, actor, {
-    action: "intake.amendment.decide",
-    objectType: "amendment_op",
-    objectId: op.op_id,
-    before: { decision: null },
-    after: { decision: input.decision, corrected: input.corrected },
-    detail: { changeSetId, note: input.note, target: op.target_law_title, reviewer: input.reviewer },
-  });
-}
-
-interface IntakeChangeRow {
-  id: string;
-  target_type: string;
-  target_id: string;
-  op: string;
-  before: unknown;
-  after: unknown;
-  evidence_instrument: string | null;
-  evidence_url: string | null;
-  evidence_quote: string | null;
-  source_rank: number | null;
-  source_ref: string | null;
-  domain: string;
-  status: string;
-}
-
-async function intakeChanges(tx: SqlClient, changeSetId: string): Promise<IntakeChangeRow[]> {
-  return tx.query<IntakeChangeRow>(`SELECT * FROM editorial_change WHERE change_set_id = $1 ORDER BY created_at, id`, [changeSetId]);
-}
-
-/** يضبط بصمة الدفعة من صفوفها ويعيدها. */
-async function sealIntakeSet(tx: SqlClient, changeSetId: string, kind: string): Promise<string> {
-  const hash = payloadHash({ id: changeSetId, kind, reverts_change_set_id: null }, await intakeChanges(tx, changeSetId));
-  await tx.query(`UPDATE change_set SET payload_hash = $2 WHERE id = $1 RETURNING id`, [changeSetId, hash]);
-  return hash;
-}
-
-async function markIntakePublished(tx: SqlClient, changeSetId: string) {
-  await tx.query(`UPDATE change_set SET status = 'published', published_at = NOW() WHERE id = $1 RETURNING id`, [changeSetId]);
-  await tx.query(`UPDATE editorial_change SET status = 'published' WHERE change_set_id = $1 RETURNING id`, [changeSetId]);
+export interface IntakeDecisionResult {
+  changeSetId: string;
+  status: "pending" | "published" | "rejected";
+  approvals: number;
+  requiredApprovals: number;
 }
 
 /** دفعة الاستقبال تُنشأ مسودة (ق-٨)، ثم تُدرج تغييراتها، ثم تُختم بصمتها وتُقلب. */
-async function openAgentChangeSet(tx: SqlClient, title: string, kind: "agent_review" | "agent_review_bulk", agent: string) {
-  const id = ID();
+async function openAgentChangeSet(tx: SqlClient, title: string, kind: "agent_review" | "agent_review_bulk", agent: string): Promise<ChangeSetRow> {
+  const id = newId();
   await tx.query(
     `INSERT INTO change_set (id, title, kind, author_kind, author_agent, status)
      VALUES ($1, $2, $3, 'agent', $4, 'draft') RETURNING id`,
     [id, title.slice(0, 200), kind, agent],
   );
-  return id;
+  return lockChangeSet(tx, id);
 }
+
+async function insertIntakeChange(
+  tx: SqlClient,
+  set: ChangeSetRow,
+  row: {
+    targetType: "amendment_op" | "principle";
+    targetId: string;
+    op: "review_amendment_op" | "review_principle";
+    before: unknown;
+    after: unknown;
+    evidenceInstrument?: string | null;
+    evidenceUrl?: string | null;
+    evidenceQuote?: string | null;
+    sourceRef: string;
+    agent: string;
+    checks: Record<string, unknown>;
+  },
+): Promise<void> {
+  try {
+    await tx.query(
+      `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after,
+          evidence_instrument, evidence_url, evidence_quote, source_rank, source_ref, author_kind, author_agent, status, checks)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, 'agent', $13, 'draft', $14::jsonb)
+       RETURNING id`,
+      [
+        newId(),
+        set.id,
+        row.targetType,
+        row.targetId,
+        row.op,
+        JSON.stringify(row.before),
+        JSON.stringify(row.after),
+        row.evidenceInstrument ?? null,
+        row.evidenceUrl ?? null,
+        row.evidenceQuote ?? null,
+        row.evidenceUrl ? sourceRankFromUrl(row.evidenceUrl) : null,
+        row.sourceRef,
+        row.agent,
+        JSON.stringify(row.checks),
+      ],
+    );
+  } catch (error) {
+    if (pgErrorCode(error) === "23505") throw new EditorialError("ALREADY_DECIDED", "قُرّر هذا العنصر من قبل.", { sourceRef: row.sourceRef });
+    throw error;
+  }
+}
+
+/** المقترح المعلّق على المصدر (إن وُجد) مقفولًا. */
+async function pendingProposal(tx: SqlClient, sourceRef: string): Promise<{ set: ChangeSetRow; change: ChangeRow } | null> {
+  const rows = await tx.query<ChangeRow>(
+    `SELECT * FROM editorial_change WHERE source_ref = $1 AND status = 'pending' ORDER BY created_at LIMIT 1`,
+    [sourceRef],
+  );
+  if (!rows[0]) return null;
+  const set = await lockChangeSet(tx, rows[0].change_set_id);
+  if (set.status !== "pending") return null;
+  return { set, change: rows[0] };
+}
+
+/** موافقة على مقترح معلّق: تُعدّ ثم يُطبَّق القرار إن اكتمل الحد. */
+async function approveProposal(
+  ctx: DeskContext,
+  set: ChangeSetRow,
+  reason: string | null,
+): Promise<IntakeDecisionResult> {
+  const { tx, actor, config } = ctx;
+  const changes = await changesOf(tx, set.id);
+  const hash = assertPayloadUnchanged(set, changes);
+  await insertDecision(tx, { changeSetId: set.id, reviewerId: actor.id, decision: "approve", reason, selfApproval: false, payloadHash: hash });
+  const state = await approvalState(tx, config, set, changes);
+  if (state.complete) {
+    await applyIntakeSet(tx, actor, set, changes, state);
+    return { changeSetId: set.id, status: "published", approvals: state.approvals, requiredApprovals: state.required };
+  }
+  await recordAudit(tx, actor, {
+    action: "intake.proposal.approve",
+    objectType: "change_set",
+    objectId: set.id,
+    detail: { approvals: state.approvals, required: state.required, reason },
+  });
+  return { changeSetId: set.id, status: "pending", approvals: state.approvals, requiredApprovals: state.required };
+}
+
+/** يقرّر عنصر استقبال: ينضم إلى مقترح معلّق، أو يرفضه، أو يفتح مقترحًا جديدًا. */
+async function decideIntakeItem(
+  ctx: DeskContext,
+  item: {
+    sourceRef: string;
+    after: Record<string, unknown>;
+    rejecting: boolean;
+    reason: string | null;
+    open: () => Promise<ChangeSetRow>;
+  },
+): Promise<IntakeDecisionResult> {
+  const { tx, actor, config } = ctx;
+  const pending = await pendingProposal(tx, item.sourceRef);
+  if (pending) {
+    if (stableJson(pending.change.after) === stableJson(item.after)) return approveProposal(ctx, pending.set, item.reason);
+    const changes = await changesOf(tx, pending.set.id);
+    if (item.rejecting) {
+      // رفض أي معتمِد يرفض المقترح المعلّق؛ العنصر يعود إلى الطابور بلا قرار في المصدر.
+      const hash = assertPayloadUnchanged(pending.set, changes);
+      await insertDecision(tx, { changeSetId: pending.set.id, reviewerId: actor.id, decision: "reject", reason: item.reason, selfApproval: false, payloadHash: hash });
+      await setStatus(tx, pending.set.id, "rejected");
+      await recordAudit(tx, actor, {
+        action: "intake.proposal.reject",
+        objectType: "change_set",
+        objectId: pending.set.id,
+        detail: { reason: item.reason, pending: pending.change.after },
+      });
+      const state = await approvalState(tx, config, pending.set, changes);
+      return { changeSetId: pending.set.id, status: "rejected", approvals: state.approvals, requiredApprovals: state.required };
+    }
+    throw new EditorialError("CONFLICT", "على هذا العنصر مقترح قرار معلّق مختلف؛ وافق على القرار نفسه أو ارفض المقترح أولًا.", {
+      openChangeSetId: pending.set.id,
+      pendingDecision: pending.change.after,
+    });
+  }
+  const set = await item.open();
+  const changes = await changesOf(tx, set.id);
+  const hash = await sealPayload(tx, set, changes);
+  await insertDecision(tx, { changeSetId: set.id, reviewerId: actor.id, decision: "approve", reason: item.reason, selfApproval: false, payloadHash: hash });
+  const state = await approvalState(tx, config, set, changes);
+  if (state.complete) {
+    await applyIntakeSet(tx, actor, set, changes, state);
+    return { changeSetId: set.id, status: "published", approvals: state.approvals, requiredApprovals: state.required };
+  }
+  await setStatus(tx, set.id, "pending");
+  await recordAudit(tx, actor, {
+    action: "intake.proposal.open",
+    objectType: "change_set",
+    objectId: set.id,
+    detail: { sourceRef: item.sourceRef, after: item.after, approvals: state.approvals, required: state.required },
+  });
+  return { changeSetId: set.id, status: "pending", approvals: state.approvals, requiredApprovals: state.required };
+}
+
+function opChangeRow(op: OpRow, after: Record<string, unknown>) {
+  return {
+    targetType: "amendment_op" as const,
+    targetId: op.op_id,
+    op: "review_amendment_op" as const,
+    before: { decision: null },
+    after,
+    evidenceInstrument: [op.instrument_kind, op.instrument_no].filter(Boolean).join(" "),
+    evidenceUrl: op.source_url,
+    evidenceQuote: op.evidence_quote,
+    sourceRef: opSourceRef(op.op_id),
+    agent: AMENDMENT_AGENT,
+    checks: { source: AMENDMENT_AGENT, confidence: op.confidence, verbatim_in_source: op.verbatim_in_source },
+  };
+}
+
+// ── قرار عملية التعديل ───────────────────────────────────────────────────────
 
 export async function decideAmendmentOp(
   db: EditorialDb,
   actor: EditorialActor,
   opId: string,
   input: { decision: AmendmentDecision; corrected?: unknown; note?: unknown },
-): Promise<{ changeSetId: string; decision: AmendmentDecision }> {
+): Promise<IntakeDecisionResult & { decision: AmendmentDecision }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
@@ -448,21 +515,27 @@ export async function decideAmendmentOp(
     const id = typeof opId === "string" ? opId.trim() : "";
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف العملية مطلوب.");
 
-    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
-      assertReviewer(actor, "review_amendment_op");
-      policyFor(config, "review_amendment_op");
-      const op = await lockUndecidedOp(tx, id);
-      const changeSetId = await openAgentChangeSet(tx, `قرار عملية تعديل ${op.op_id} — ${op.target_law_title}`, "agent_review", AMENDMENT_AGENT);
-      const changeId = await insertOpChange(tx, changeSetId, op, { decision, corrected });
-      const hash = await sealIntakeSet(tx, changeSetId, "agent_review");
-      // الموافقة على مقترح القرار (أيًّا كان القرار نفسه: موافقة أو رفض أو تصحيح).
-      await insertDecision(tx, { changeSetId, reviewerId: actor.id, decision: "approve", reason: note, selfApproval: false, payloadHash: hash });
-      await applyOpDecision(tx, actor, changeSetId, changeId, op, { decision, corrected, note, reviewer: actor.id });
-      await markIntakePublished(tx, changeSetId);
-      return { changeSetId, decision };
+    return await deskTransaction(db, actor, async (ctx) => {
+      assertReviewer(ctx.actor, "review_amendment_op");
+      policyFor(ctx.config, "review_amendment_op");
+      const op = await lockUndecidedOp(ctx.tx, id);
+      // بصمة القرار: القرار والتصحيح وحدهما (الملاحظة سبب المعتمِد في صف قراره).
+      const after = { decision, corrected };
+      const result = await decideIntakeItem(ctx, {
+        sourceRef: opSourceRef(op.op_id),
+        after,
+        rejecting: decision === "rejected",
+        reason: note,
+        open: async () => {
+          const set = await openAgentChangeSet(ctx.tx, `قرار عملية تعديل ${op.op_id} — ${op.target_law_title}`, "agent_review", AMENDMENT_AGENT);
+          await insertIntakeChange(ctx.tx, set, opChangeRow(op, after));
+          return set;
+        },
+      });
+      return { ...result, decision };
     });
   } catch (error) {
-    await auditDeniedIntake(db, actor, error, "amendment_op", String(opId));
+    await auditDenied(db, actor, error, "amendment_op", String(opId));
     throw error;
   }
 }
@@ -474,7 +547,7 @@ export async function bulkApproveAmendmentOps(
   actor: EditorialActor,
   opIds: unknown,
   noteRaw?: unknown,
-): Promise<{ changeSetId: string; approved: number }> {
+): Promise<IntakeDecisionResult & { approved: number }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
@@ -484,33 +557,51 @@ export async function bulkApproveAmendmentOps(
     if (ids.length > BULK_LIMIT) throw new EditorialError("INVALID_INPUT", `الاعتماد الجماعي حتى ${BULK_LIMIT} عملية في المرة.`);
     const note = cleanNote(noteRaw);
 
-    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
-      assertReviewer(actor, "review_amendment_op");
-      policyFor(config, "review_amendment_op");
+    return await deskTransaction(db, actor, async (ctx) => {
+      const { tx } = ctx;
+      assertReviewer(ctx.actor, "review_amendment_op");
+      policyFor(ctx.config, "review_amendment_op");
       const ops: OpRow[] = [];
       for (const id of ids) {
         const op = await lockUndecidedOp(tx, id);
+        // الأهلية كما في الأمر: rule_exact، ومطابقة حرفية لمصدرها، وبلا مخاطر.
         const eligible = op.confidence === "rule_exact" && op.verbatim_in_source === true && !(op.risks ?? []).length;
         if (!eligible) {
           throw new EditorialError("NOT_ELIGIBLE", "الاعتماد الجماعي لعمليات rule_exact المطابقة حرفيًّا لمصدرها وبلا مخاطر فقط.", {
             opId: op.op_id,
           });
         }
+        const pending = await pendingProposal(tx, opSourceRef(op.op_id));
+        if (pending) {
+          throw new EditorialError("CONFLICT", "على إحدى العمليات مقترح قرار معلّق؛ أكمله من دفعته أو أخرجها من الاختيار.", {
+            opId: op.op_id,
+            openChangeSetId: pending.set.id,
+          });
+        }
         ops.push(op);
       }
-      const changeSetId = await openAgentChangeSet(tx, `اعتماد جماعي لـ ${ops.length} عملية تعديل`, "agent_review_bulk", AMENDMENT_AGENT);
-      const changeIds: string[] = [];
-      for (const op of ops) changeIds.push(await insertOpChange(tx, changeSetId, op, { decision: "approved", corrected: null }));
-      const hash = await sealIntakeSet(tx, changeSetId, "agent_review_bulk");
-      await insertDecision(tx, { changeSetId, reviewerId: actor.id, decision: "approve", reason: note, selfApproval: false, payloadHash: hash });
-      for (let i = 0; i < ops.length; i += 1) {
-        await applyOpDecision(tx, actor, changeSetId, changeIds[i], ops[i], { decision: "approved", corrected: null, note, reviewer: actor.id });
+      const set = await openAgentChangeSet(tx, `اعتماد جماعي لـ ${ops.length} عملية تعديل`, "agent_review_bulk", AMENDMENT_AGENT);
+      for (const op of ops) await insertIntakeChange(tx, set, opChangeRow(op, { decision: "approved", corrected: null }));
+      const changes = await changesOf(tx, set.id);
+      const hash = await sealPayload(tx, set, changes);
+      await insertDecision(tx, { changeSetId: set.id, reviewerId: ctx.actor.id, decision: "approve", reason: note, selfApproval: false, payloadHash: hash });
+      const state = await approvalState(tx, ctx.config, set, changes);
+      if (state.complete) {
+        await applyIntakeSet(tx, ctx.actor, set, changes, state);
+        return { changeSetId: set.id, status: "published" as const, approvals: state.approvals, requiredApprovals: state.required, approved: ops.length };
       }
-      await markIntakePublished(tx, changeSetId);
-      return { changeSetId, approved: ops.length };
+      // تعدد الموافقات: تكمله موافقات المعتمِدين الآخرين على الدفعة نفسها (decide في مسار الدفعات).
+      await setStatus(tx, set.id, "pending");
+      await recordAudit(tx, ctx.actor, {
+        action: "intake.proposal.open",
+        objectType: "change_set",
+        objectId: set.id,
+        detail: { bulk: true, ops: ops.length, approvals: state.approvals, required: state.required },
+      });
+      return { changeSetId: set.id, status: "pending" as const, approvals: state.approvals, requiredApprovals: state.required, approved: 0 };
     });
   } catch (error) {
-    await auditDeniedIntake(db, actor, error, "amendment_op", "bulk");
+    await auditDenied(db, actor, error, "amendment_op", "bulk");
     throw error;
   }
 }
@@ -522,7 +613,7 @@ export async function decidePrinciple(
   actor: EditorialActor,
   principleId: string,
   input: { decision: PrincipleDecision; reason?: unknown },
-): Promise<{ changeSetId: string; reviewStatus: string }> {
+): Promise<IntakeDecisionResult & { reviewStatus: string }> {
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   try {
@@ -535,80 +626,41 @@ export async function decidePrinciple(
     const id = typeof principleId === "string" ? principleId.trim() : "";
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف المبدأ مطلوب.");
 
-    return await deskTransaction(db, actor, async ({ tx, actor, config }) => {
-      assertReviewer(actor, "review_principle");
-      policyFor(config, "review_principle");
-      const rows = await tx.query<{ id: string; title: string; reviewStatus: string; round: string }>(
-        `SELECT id, title, "reviewStatus", to_char("updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round
-           FROM judicial_principles WHERE id = $1 FOR UPDATE`,
-        [id],
-      );
-      const principle = rows[0];
-      if (!principle) throw new EditorialError("NOT_FOUND", "المبدأ غير موجود.");
+    return await deskTransaction(db, actor, async (ctx) => {
+      assertReviewer(ctx.actor, "review_principle");
+      policyFor(ctx.config, "review_principle");
+      const principle = await lockPrinciple(ctx.tx, id);
       if (principle.reviewStatus !== "needs_review") {
         throw new EditorialError("ALREADY_DECIDED", "روجع هذا المبدأ من قبل.", { reviewStatus: principle.reviewStatus });
       }
       const reviewStatus = principleStatusFor(input.decision);
-      const changeSetId = await openAgentChangeSet(tx, `مراجعة مبدأ: ${principle.title}`, "agent_review", PRINCIPLES_AGENT);
-      const changeId = ID();
-      try {
-        await tx.query(
-          `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after,
-              source_ref, author_kind, author_agent, status, checks)
-           VALUES ($1, $2, 'principle', $3, 'review_principle', $4::jsonb, $5::jsonb, $6, 'agent', $7, 'draft', $8::jsonb)
-           RETURNING id`,
-          [
-            changeId,
-            changeSetId,
-            principle.id,
-            JSON.stringify({ reviewStatus: principle.reviewStatus }),
-            JSON.stringify({ reviewStatus }),
-            // مفتاح عدم التكرار لكل جولة مراجعة: إعادة المبدأ إلى «يحتاج مراجعة» تفتح جولة جديدة.
-            `judicial_principles:${principle.id}:${principle.round}`,
-            PRINCIPLES_AGENT,
-            JSON.stringify({ source: PRINCIPLES_AGENT }),
-          ],
-        );
-      } catch (error) {
-        if (pgErrorCode(error) === "23505") throw new EditorialError("ALREADY_DECIDED", "روجع هذا المبدأ من قبل.");
-        throw error;
-      }
-      const hash = await sealIntakeSet(tx, changeSetId, "agent_review");
-      await insertDecision(tx, { changeSetId, reviewerId: actor.id, decision: "approve", reason, selfApproval: false, payloadHash: hash });
-      // حقل سير عمل لا نص؛ تغييره مسموح في هذا الفعل وحده، والقيمة السابقة في editorial_change.before.
-      const updated = await tx.query<{ round: string }>(
-        `UPDATE judicial_principles SET "reviewStatus" = $2, "updatedAt" = NOW() WHERE id = $1
-         RETURNING to_char("updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round`,
-        [principle.id, reviewStatus],
-      );
-      await tx.query(`UPDATE editorial_change SET applied_ref = $2 WHERE id = $1 RETURNING id`, [
-        changeId,
-        `judicial_principles:${principle.id}:${updated[0].round}`,
-      ]);
-      await markIntakePublished(tx, changeSetId);
-      await recordAudit(tx, actor, {
-        action: "intake.principle.decide",
-        objectType: "principle",
-        objectId: principle.id,
-        before: { reviewStatus: principle.reviewStatus },
-        after: { reviewStatus },
-        detail: { changeSetId, reason, via: "editorial-queue" },
+      const after = { reviewStatus };
+      // مفتاح عدم التكرار لكل جولة مراجعة: إعادة المبدأ إلى «يحتاج مراجعة» تفتح جولة جديدة.
+      const sourceRef = principleSourceRef(principle.id, principle.round);
+      const result = await decideIntakeItem(ctx, {
+        sourceRef,
+        after,
+        rejecting: reviewStatus === "rejected",
+        reason,
+        open: async () => {
+          const set = await openAgentChangeSet(ctx.tx, `مراجعة مبدأ: ${principle.title}`, "agent_review", PRINCIPLES_AGENT);
+          await insertIntakeChange(ctx.tx, set, {
+            targetType: "principle",
+            targetId: principle.id,
+            op: "review_principle",
+            before: { reviewStatus: principle.reviewStatus },
+            after,
+            sourceRef,
+            agent: PRINCIPLES_AGENT,
+            checks: { source: PRINCIPLES_AGENT },
+          });
+          return set;
+        },
       });
-      return { changeSetId, reviewStatus };
+      return { ...result, reviewStatus: result.status === "published" ? reviewStatus : principle.reviewStatus };
     });
   } catch (error) {
-    await auditDeniedIntake(db, actor, error, "principle", String(principleId));
+    await auditDenied(db, actor, error, "principle", String(principleId));
     throw error;
-  }
-}
-
-async function auditDeniedIntake(db: EditorialDb, actor: EditorialActor, error: unknown, objectType: string, objectId: string) {
-  if (error instanceof EditorialError && error.status === 403) {
-    await recordAudit(db, actor, {
-      action: "access.denied",
-      objectType,
-      objectId,
-      detail: { code: error.code, message: error.message },
-    }).catch(() => undefined);
   }
 }
