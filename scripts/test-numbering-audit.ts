@@ -55,5 +55,13 @@ const bisSeq = auditLawNumbering([
 ]);
 ok(bisSeq.status === "shift" && bisSeq.runs[0]?.from === 7 && bisSeq.runs[0]?.offset === -1, "«مكرر» مخزَّن برقم تسلسلي يُزيح ما بعده");
 
+// نظام العمل بعد م/46: عنوان المادة المُعاد ترقيمها يحمل الرقمين، والمعتبر «حالياً».
+const renamed = auditLawNumbering([
+  { articleNumber: 230, title: "المادة الثلاثون بعد المائتين :" },
+  { articleNumber: 231, title: "(المادة الحادية والثلاثون بعد المائتين حالياً) (المادة الأربعون بعد المائتين سابقاً) :" },
+  { articleNumber: 232, title: "(المادة الثانية والثلاثون بعد المائتين حالياً) (المادة الثانية والأربعون بعد المائتين سابقاً)" },
+]);
+ok(renamed.matched === 3 && renamed.mismatched === 0, "الرقم «حالياً» يُقرأ لا «سابقاً»");
+
 console.log(failed === 0 ? "✓ تدقيق الترقيم" : `✗ فشل ${failed}`);
 process.exit(failed === 0 ? 0 : 1);
