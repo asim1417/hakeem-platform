@@ -1,0 +1,73 @@
+name: Redact PII in rulings search_norm (Neon)
+
+# حجب أرقام الهوية/الإقامة والجوال المتبقية في judicial_cases.search_norm (لاتينية أو هندية)
+# عبر scripts/backfill/redact-search-norm-residual.ts. النص الأصلي judgmentText لا يُمسّ.
+#   • push على الفرع: تشغيل جافّ يعدّ الصفوف المتسرّبة فقط (لا كتابة).
+#   • workflow_dispatch: التطبيق، مقفول بـ APPLY + NEON_RUNTIME_CONFIRMED + حارس مضيف Neon.
+# المخرجات أعداد فقط (لا نصوص)، فالمستودع عام.
+
+on:
+  push:
+    branches: [claude/rulings-search-norm-redact]
+    paths:
+      - .github/workflows/redact-search-norm.yml
+      - scripts/backfill/redact-search-norm-residual.ts
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "اكتب APPLY للتطبيق على Neon"
+        type: string
+        required: true
+        default: ""
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED"
+        type: string
+        required: true
+        default: ""
+
+concurrency:
+  group: redact-search-norm
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  redact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      FALLBACK_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npm run db:generate
+      - name: "🛡️ حارس مضيف Neon"
+        run: |
+          url="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
+          [ -z "$url" ] && { echo "::error::لا اتصال قاعدة."; exit 1; }
+          host=$(printf '%s' "$url" | sed -E 's#.*@([^/:?]+).*#\1#')
+          echo "$host" | grep -qiE 'neon|ep-' || { echo "::error::ليس مضيف Neon."; exit 1; }
+      - name: "تشغيل جافّ (عدّ فقط)"
+        if: github.event_name == 'push'
+        run: |
+          out=$(DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" npx tsx scripts/backfill/redact-search-norm-residual.ts)
+          echo "$out"
+          echo "::notice title=search_norm dry-run::$(printf '%s' "$out" | tail -1)"
+      - name: "🔒 بوّابة التطبيق"
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "${{ inputs.confirm }}" != "APPLY" ]; then echo "::error::اكتب APPLY."; exit 1; fi
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then echo "::error::اكتب NEON_RUNTIME_CONFIRMED."; exit 1; fi
+      - name: "التطبيق"
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          out=$(DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}" CONFIRM_NEON_WRITE=YES \
+            npx tsx scripts/backfill/redact-search-norm-residual.ts --apply --i-understand-production)
+          echo "$out"
+          echo "::notice title=search_norm apply::$(printf '%s' "$out" | tail -1)"

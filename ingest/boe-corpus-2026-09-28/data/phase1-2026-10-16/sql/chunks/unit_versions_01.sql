@@ -75,15 +75,15 @@ WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME Z
   AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89r0anjvtrk0iugub3r' AND valid_from='2025-02-19'::timestamptz);
 
 INSERT INTO unit_version (id,unit_id,body,valid_from,evidence_instrument,evidence_url,evidence_quote)
-SELECT * FROM (SELECT 'boe26-75f6db2b2c0cebb4aa7acecf' id,'cmpzcv89r0anmvtrkbiu0xkex' unit_id,'1 - يتحمل صاحب العمل رسوم استقدام العامل غير السعودي، ورسوم الإقامة ورخصة العمل وتجديدهما، وما يترتب على تأخير ذلك من غرامات يتسبب بها صاحب العمل، ورسوم تغيير المهنة، والخروج والعودة، وتذكرة عودة العامل إلى موطنه بعد انتهاء العلاقة بين الطرفين
+SELECT * FROM (SELECT 'boe26-47e80d2b0733e7c71c912a83' id,'cmpzcv89r0anmvtrkbiu0xkex' unit_id,'1 - يتحمل صاحب العمل رسوم استقدام العامل غير السعودي، ورسوم الإقامة ورخصة العمل وتجديدهما، وما يترتب على تأخير ذلك من غرامات يتسبب بها صاحب العمل، ورسوم تغيير المهنة، والخروج والعودة، وتذكرة عودة العامل إلى موطنه بعد انتهاء العلاقة بين الطرفين
 2 - يتحمل العامل تكاليف عودته إلى بلده في حالة عدم صلاحيته للعمل أو إذا رغب في العودة دون سبب مشروع.
 3 - يتحمل   صاحب العمل    رسوم نقل خدمات العامل الذي يرغب في نقل خدماته إليه.
-4 - يلزم   صاحب العمل    بنفقات تجهيز جثمان العامل ونقله إلى الجهة التي أبرم فيها العقد أو استقدم العامل منها، ما لم يدفن بموافقة ذويه داخل المملكة، ويعفى   صاحب العمل    في حالة التزام المؤسسة العامة للتأمينات الاجتماعية بذلك.' body,'2024-08-12'::timestamptz valid_from,'مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ' ei,'https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1' eu,'- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)
+4 - يلزم   صاحب العمل    بنفقات تجهيز جثمان العامل ونقله إلى الجهة التي أبرم فيها العقد أو استقدم العامل منها، ما لم يدفن بموافقة ذويه داخل المملكة، ويعفى   صاحب العمل    في حالة التزام المؤسسة العامة للتأمينات الاجتماعية بذلك.' body,'2025-02-19'::timestamptz valid_from,'مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ' ei,'https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1' eu,'- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)
 
 وعدلت الفقرة (1) من هذه المادة لتكون بالنص الآتي: "يتحمل صاحب العمل رسوم استقدام العامل غير السعودي، ورسوم الإقامة ورخصة العمل وتجديدهما، وما يترتب على تأخير ذلك من غرامات يتسبب بها صاحب العمل، ورسوم تغيير المهنة، والخروج والعودة، وتذكرة عودة العامل إلى موطنه بعد انتهاء العلاقة بين الطرفين".' eq) v
-WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME ZONE 'UTC','YYYY-MM-DD'),coalesce(v.ei,''),coalesce(v.eu,''),coalesce(v.eq,''))) = 'b8beb4e1c5292d0a2e9ed4b5966cd011'
+WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME ZONE 'UTC','YYYY-MM-DD'),coalesce(v.ei,''),coalesce(v.eu,''),coalesce(v.eq,''))) = '71cdcf5b472bc422f3bd80384e534097'
   AND (SELECT md5(content) FROM legal_articles WHERE id='cmpzcv89r0anmvtrkbiu0xkex') = '3d684c23a9d039e17fba514302766e47'
-  AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89r0anmvtrkbiu0xkex' AND valid_from='2024-08-12'::timestamptz);
+  AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89r0anmvtrkbiu0xkex' AND valid_from='2025-02-19'::timestamptz);
 
 INSERT INTO unit_version (id,unit_id,body,valid_from,evidence_instrument,evidence_url,evidence_quote)
 SELECT * FROM (SELECT 'boe26-9b02dbce2a3ad12600d5349c' id,'cmpzcv89r0anovtrk8pvm1pmb' unit_id,'على كل صاحب عمل وضع سياسة لتدريب عماله السعوديين وتأهيلهم، من أجل رفع مهاراتهم وتحسين مستواهم في الأعمال الفنية والإدارية والمهنية وغيرها. وتحدد اللائحة الأحكام المتصلة بذلك.' body,'2025-02-19'::timestamptz valid_from,'مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ' ei,'https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1' eu,'- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)
@@ -110,18 +110,18 @@ WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME Z
   AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89r0anpvtrkw4xyj69v' AND valid_from='2025-02-19'::timestamptz);
 
 INSERT INTO unit_version (id,unit_id,body,valid_from,evidence_instrument,evidence_url,evidence_quote)
-SELECT * FROM (SELECT 'boe26-ee9c1bcefe877315e60c0e21' id,'cmpzcv89t0as0vtrkp3lo8o26' unit_id,'يحق  لمفتشي  العمل   :
+SELECT * FROM (SELECT 'boe26-25b880e29cc09264e029d0ee' id,'cmpzcv89t0as0vtrkp3lo8o26' unit_id,'يحق  لمفتشي  العمل   :
 1- دخول أي منشأة خاضعة لأحكام نظام العمل في أي وقت من أوقات عمل المنشأة دون إشعار سابق
 2 - القيام بأي فحص أو تحقيق لازم للتحقق من سلامة تنفيذ النظام، ولهم على الأخص ما يأتي :
 
 أ - سؤال   صاحب العمل    أو من يمثله، أو العمال، على انفراد أو في حضور شهود، عن أي أمر من الأمور المتعلقة بتنفيذ أحكام النظام.
 ب - الاطلاع على جميع الدفاتر والسجلات والوثائق الأخرى اللازم الاحتفاظ بها طبقًا لأحكام هذا النظام والقرارات الصادرة بمقتضاه، والحصول على صور ومستخرجات منها.
-ج - أخذ عينة أو عينات من المواد المستعملة أو المتداولة في العمليات الصناعية وغيرها الخاضعة للتفتيش، مما يظن أن لها أثرًا ضارًّا على صحة العمال أو سلامتهم، وذلك لغرض تحليلها في المختبرات الحكومية، ولمعرفة مدى هذا الأثر، مع إبلاغ   صاحب العمل  أو ممثله بذلك.' body,'2024-08-12'::timestamptz valid_from,'مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ' ei,'https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1' eu,'- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)
+ج - أخذ عينة أو عينات من المواد المستعملة أو المتداولة في العمليات الصناعية وغيرها الخاضعة للتفتيش، مما يظن أن لها أثرًا ضارًّا على صحة العمال أو سلامتهم، وذلك لغرض تحليلها في المختبرات الحكومية، ولمعرفة مدى هذا الأثر، مع إبلاغ   صاحب العمل  أو ممثله بذلك.' body,'2025-02-19'::timestamptz valid_from,'مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ' ei,'https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1' eu,'- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)
 
 وعدلت الفقرة (1) من هذه المادة لتكون بالنص الآتي: "دخول أي منشأة خاضعة لأحكام نظام العمل في أي وقت من أوقات عمل المنشأة دون إشعار سابق".' eq) v
-WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME ZONE 'UTC','YYYY-MM-DD'),coalesce(v.ei,''),coalesce(v.eu,''),coalesce(v.eq,''))) = 'f47ff702d5cd976458a277d4cc9e9ff1'
+WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME ZONE 'UTC','YYYY-MM-DD'),coalesce(v.ei,''),coalesce(v.eu,''),coalesce(v.eq,''))) = '7f06fba4a4215bc05457dc9a47f43121'
   AND (SELECT md5(content) FROM legal_articles WHERE id='cmpzcv89t0as0vtrkp3lo8o26') = '8c6e2d96a059491261b247cb5f4d2621'
-  AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89t0as0vtrkp3lo8o26' AND valid_from='2024-08-12'::timestamptz);
+  AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89t0as0vtrkp3lo8o26' AND valid_from='2025-02-19'::timestamptz);
 
 INSERT INTO unit_version (id,unit_id,body,valid_from,evidence_instrument,evidence_url,evidence_quote)
 SELECT * FROM (SELECT 'boe26-a638f3928c75025024ad5cce' id,'cmpzcv89r0anqvtrk0hdyhedf' unit_id,'يجب أن يشتمل برنامج التدريب على المهارة التي يتدرب العامل عليها والقواعد والشروط التي تتبع في التدريب، وعلى مدته وعدد ساعاته والبرامج التدريبية النظرية والعملية، وطريقة الاختبار والشهادات التي تمنح في هذا الشأن. وتحدد اللائحة المعايير والقواعد العامة التي ينبغي اتباعها بهذا الخصوص لرفع مستوى أداء العامل من حيث المهارة والإنتاجية.' body,'2025-02-19'::timestamptz valid_from,'مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ' ei,'https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1' eu,'- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ)
@@ -139,4 +139,4 @@ WHERE md5(concat_ws(chr(31),v.id,v.unit_id,v.body,to_char(v.valid_from AT TIME Z
   AND (SELECT md5(content) FROM legal_articles WHERE id='cmpzcv89r0ansvtrkz39k354v') = '4da4c9a042fe8598d4a79c8c00971a49'
   AND NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id='cmpzcv89r0ansvtrkz39k354v' AND valid_from='2025-02-19'::timestamptz);
 
-DO $c$ DECLARE k int; BEGIN SELECT count(*) INTO k FROM unit_version WHERE id = ANY(ARRAY['boe26-5478f9f99e9ed36516206336','boe26-e609ddbb78ed73718bf6d931','boe26-8ecdd8b80232e0ba8cdd0d78','boe26-064882aa6f8045019eb2b245','boe26-747ad045ce2475ee1f012aa2','boe26-a9c475e660a5eb28fe48b1fb','boe26-75f6db2b2c0cebb4aa7acecf','boe26-9b02dbce2a3ad12600d5349c','boe26-f68a76088b3711c8bbef7b0a','boe26-eb4646a559be12b6c5482bd3','boe26-ee9c1bcefe877315e60c0e21','boe26-a638f3928c75025024ad5cce','boe26-69309af58125c3edfc3402b9']); IF k <> 13 THEN RAISE EXCEPTION 'unit_versions chunk 1: % of 13', k; END IF; END $c$;
+DO $c$ DECLARE k int; BEGIN SELECT count(*) INTO k FROM unit_version WHERE id = ANY(ARRAY['boe26-5478f9f99e9ed36516206336','boe26-e609ddbb78ed73718bf6d931','boe26-8ecdd8b80232e0ba8cdd0d78','boe26-064882aa6f8045019eb2b245','boe26-747ad045ce2475ee1f012aa2','boe26-a9c475e660a5eb28fe48b1fb','boe26-47e80d2b0733e7c71c912a83','boe26-9b02dbce2a3ad12600d5349c','boe26-f68a76088b3711c8bbef7b0a','boe26-eb4646a559be12b6c5482bd3','boe26-25b880e29cc09264e029d0ee','boe26-a638f3928c75025024ad5cce','boe26-69309af58125c3edfc3402b9']); IF k <> 13 THEN RAISE EXCEPTION 'unit_versions chunk 1: % of 13', k; END IF; END $c$;

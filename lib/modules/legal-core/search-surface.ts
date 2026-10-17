@@ -66,6 +66,17 @@ export function computeSurface(rows: SurfaceRow[], members: SurfaceMember[], asO
   return { asOf, hidden, redirect, current };
 }
 
+/**
+ * حالة المادة بتاريخ السريان تتبع انتقال عملها (workStatusAsOf): يوم يصير العمل وجهه تصير مادته
+ * «صادر لم يسرِ بعد» ساريةً، ويوم يُستبدل تصير مادته «ساري» مستبدلةً. غير ذلك كما سُجّل.
+ */
+export function unitStatusAsOf(recordedStatus: string, work: { status: string; derived: boolean }): string {
+  if (!work.derived) return recordedStatus;
+  if (work.status === "ساري" && recordedStatus === "صادر لم يسرِ بعد") return "ساري";
+  if (work.status === "مستبدل" && recordedStatus === "ساري") return "مستبدل";
+  return recordedStatus;
+}
+
 /** يحوّل قائمة معرّفات أنظمة إلى معرّفات الوجه: المخفي بخلف يُستبدل، والمخفي بلا خلف يسقط. */
 export function mapToSurface(ids: string[], surface: SearchSurface): string[] {
   const out: string[] = [];
@@ -78,6 +89,25 @@ export function mapToSurface(ids: string[], surface: SearchSurface): string[] {
     }
   }
   return out;
+}
+
+/**
+ * حالة العمل المعروضة بتاريخ الوجه. سجل التحقق ثابت بلا تاريخ، والوجه يتبدّل بتاريخ السريان،
+ * فيُشتق منه الانتقال تلقائيًا دون كتابة في القاعدة:
+ * - «صادر لم يسرِ بعد» وصار وجه عمله اليوم ← «ساري».
+ * - «ساري» وخرج من الوجه إلى نسخة أخرى ← «مستبدل» (مع البديل).
+ * غير ذلك (مخلوط، ملغى، بلا وجه) يبقى كما سُجّل. نقيّ.
+ */
+export function workStatusAsOf(
+  systemId: string,
+  recordedStatus: string,
+  surface: SearchSurface,
+): { status: string; replacedBy: string | null; derived: boolean } {
+  const isFace = [...surface.current.values()].includes(systemId);
+  if (isFace && recordedStatus === "صادر لم يسرِ بعد") return { status: "ساري", replacedBy: null, derived: true };
+  const target = surface.hidden.has(systemId) ? surface.redirect.get(systemId) ?? null : null;
+  if (target && recordedStatus === "ساري") return { status: "مستبدل", replacedBy: target, derived: true };
+  return { status: recordedStatus, replacedBy: null, derived: false };
 }
 
 /** هل المادة داخل الوجه؟ (بالمعرّف الثابت أولًا، ثم بالاسم للصفوف القديمة بلا معرّف). */
