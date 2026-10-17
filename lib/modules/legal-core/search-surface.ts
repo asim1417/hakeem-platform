@@ -80,6 +80,25 @@ export function mapToSurface(ids: string[], surface: SearchSurface): string[] {
   return out;
 }
 
+/**
+ * حالة العمل المعروضة بتاريخ الوجه. سجل التحقق ثابت بلا تاريخ، والوجه يتبدّل بتاريخ السريان،
+ * فيُشتق منه الانتقال تلقائيًا دون كتابة في القاعدة:
+ * - «صادر لم يسرِ بعد» وصار وجه عمله اليوم ← «ساري».
+ * - «ساري» وخرج من الوجه إلى نسخة أخرى ← «مستبدل» (مع البديل).
+ * غير ذلك (مخلوط، ملغى، بلا وجه) يبقى كما سُجّل. نقيّ.
+ */
+export function workStatusAsOf(
+  systemId: string,
+  recordedStatus: string,
+  surface: SearchSurface,
+): { status: string; replacedBy: string | null; derived: boolean } {
+  const isFace = [...surface.current.values()].includes(systemId);
+  if (isFace && recordedStatus === "صادر لم يسرِ بعد") return { status: "ساري", replacedBy: null, derived: true };
+  const target = surface.hidden.has(systemId) ? surface.redirect.get(systemId) ?? null : null;
+  if (target && recordedStatus === "ساري") return { status: "مستبدل", replacedBy: target, derived: true };
+  return { status: recordedStatus, replacedBy: null, derived: false };
+}
+
 /** هل المادة داخل الوجه؟ (بالمعرّف الثابت أولًا، ثم بالاسم للصفوف القديمة بلا معرّف). */
 export function inSurface(row: { legalSystemId?: string | null; lawName?: string | null }, surface: SearchSurface, hiddenNames?: Set<string>): boolean {
   if (row.legalSystemId && surface.hidden.has(row.legalSystemId)) return false;
