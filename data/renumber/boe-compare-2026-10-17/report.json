@@ -1,0 +1,4200 @@
+{
+ "الأدلة الإجرائية لنظام الإثبات": {
+  "boe": null,
+  "db": 135,
+  "missing": [],
+  "rows": []
+ },
+ "اللائحة التنفيذية لنظام الإجراءات الجزائية": {
+  "boe": "اللائحة التنفيذية لنظام الإجراءات الجزائية",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/9a0249b7-f835-48fa-8d1e-a9a700f1981a/1",
+  "boe_status": "ساري",
+  "boe_issued": "1436/03/21",
+  "candidates": 1,
+  "db": 181,
+  "boe_units": 181,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz608py02u9cwg2t6dz8dpk",
+    "cur": 115,
+    "title": "المادة السادسة عشرة بعد المائة:",
+    "boe_n": 116,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz608vu02ubcwg2uf8ndacq",
+    "cur": 116,
+    "title": "المادة السابعة عشرة بعد المائة:",
+    "boe_n": 117,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6091r02udcwg29qr68lo6",
+    "cur": 117,
+    "title": "المادة الثامنة عشرة بعد المائة:",
+    "boe_n": 118,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6097o02ufcwg230qma7lp",
+    "cur": 118,
+    "title": "المادة التاسعة عشرة بعد المائة:",
+    "boe_n": 119,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz609dk02uhcwg229fyd7rn",
+    "cur": 119,
+    "title": "المادة العشرون بعد المائة:",
+    "boe_n": 120,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz609jh02ujcwg22me0cio9",
+    "cur": 120,
+    "title": "المادة الحادية والعشرون بعد المائة:",
+    "boe_n": 121,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz609pe02ulcwg21y2i6dsq",
+    "cur": 121,
+    "title": "المادة الثانية والعشرون بعد المائة:",
+    "boe_n": 122,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz609va02uncwg2nsa1zdud",
+    "cur": 122,
+    "title": "المادة الثالثة والعشرون بعد المائة:",
+    "boe_n": 123,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz60a1802upcwg2u5gbzviv",
+    "cur": 123,
+    "title": "المادة الرابعة والعشرون بعد المائة:",
+    "boe_n": 124,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz60a7402urcwg2qttnv8sc",
+    "cur": 124,
+    "title": "المادة الخامسة عشرة بعد المائة:",
+    "boe_n": 115,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   }
+  ]
+ },
+ "النظام الموحد بشأن المواد المستنفدة لطبقة الأوزون لدول مجلس التعاون لدول الخليج العربية (المعدل)": {
+  "boe": "النظام الموحد بشأن المواد المستنفدة لطبقة الأوزون لدول مجلس التعاون لدول الخليج العربية (المعدل)",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/c1a67dbf-6959-437d-bb86-a9a700f2a126/1",
+  "boe_status": "ساري",
+  "boe_issued": "1435/11/24",
+  "candidates": 1,
+  "db": 20,
+  "boe_units": 20,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcv6wn0aa3vtrkxa0bmnmr",
+    "cur": 1,
+    "title": "المرفقات",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv6wn0aa4vtrkngj75ijo",
+    "cur": 2,
+    "title": "المادة الأولى: تعاريف",
+    "boe_n": 1,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcv6wn0aa5vtrksusbctis",
+    "cur": 3,
+    "title": "المادة الثانية: الأهداف",
+    "boe_n": 2,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv6wn0aa6vtrku8ygoa17",
+    "cur": 4,
+    "title": "المادة الثالثة",
+    "boe_n": 3,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcv6wn0aa7vtrkfq539ir5",
+    "cur": 5,
+    "title": "المادة الرابعة",
+    "boe_n": 4,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv6wn0aa8vtrkb490za3c",
+    "cur": 6,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpzcv6wn0aa9vtrkhdr4ddpa",
+    "cur": 7,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcv6wn0aaavtrkp6xnww93",
+    "cur": 8,
+    "title": "المادة السابعة",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv6wn0aabvtrkmerocwkh",
+    "cur": 9,
+    "title": "المادة الثامنة",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcv6wn0aacvtrk23aiqokx",
+    "cur": 10,
+    "title": "المادة التاسعة",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv6wn0aadvtrkiz1llzl5",
+    "cur": 11,
+    "title": "المادة العاشرة",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcv6wn0aaevtrk7yulmko0",
+    "cur": 12,
+    "title": "المادة الحادية عشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcv6wn0aafvtrkzjocdd8k",
+    "cur": 13,
+    "title": "المادة الثانية عشرة",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcv6wn0aagvtrkpj1v9g6i",
+    "cur": 14,
+    "title": "المادة الثالثة عشرة",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv6wn0aahvtrk4bgqhv6a",
+    "cur": 15,
+    "title": "المادة الرابعة عشرة",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcv6wn0aaivtrkoahmx1yc",
+    "cur": 16,
+    "title": "المادة الخامسة عشرة",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv6wn0aajvtrk9nfl1uco",
+    "cur": 17,
+    "title": "المادة السادسة عشرة",
+    "boe_n": 16,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcv6wn0aakvtrk1p93flno",
+    "cur": 18,
+    "title": "المادة السابعة عشرة",
+    "boe_n": 17,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcv6wn0aalvtrkf4y6gmwz",
+    "cur": 19,
+    "title": "المادة الثامنة عشرة",
+    "boe_n": 18,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpzcv6wn0aamvtrkv9yaoff9",
+    "cur": 20,
+    "title": "المادة التاسعة عشرة",
+    "boe_n": 19,
+    "boe_bis": 0,
+    "how": "prefix"
+   }
+  ]
+ },
+ "تنظيم الهيئة العامة للإحصاء": {
+  "boe": "تنظيم الهيئة العامة للإحصاء",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/a7119cfe-7668-488f-853f-a9a700f1ea6c/1",
+  "boe_status": "ساري",
+  "boe_issued": "1437/01/13",
+  "candidates": 1,
+  "db": 18,
+  "boe_units": 18,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz6b8yn06hfcwg2avarpems",
+    "cur": 14,
+    "title": "الثالثة عشرة مكرر",
+    "boe_n": 13,
+    "boe_bis": 1,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6b94d06hhcwg2ixxjhkrj",
+    "cur": 15,
+    "title": "المادة الرابعة عشرة:",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6b9a206hjcwg2lwncdoeg",
+    "cur": 16,
+    "title": "المادة الخامسة عشرة:",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6b9fs06hlcwg27npo8n3h",
+    "cur": 17,
+    "title": "المادة السادسة عشرة:",
+    "boe_n": 16,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6b9li06hncwg25q4ktl5k",
+    "cur": 18,
+    "title": "المادة السابعة عشرة:",
+    "boe_n": 17,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   }
+  ]
+ },
+ "تنظيم الهيئة العامة للعقار": {
+  "boe": "تنظيم الهيئة العامة للعقار",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/a98158eb-927b-4f8c-a9ff-a9a700f21e78/1",
+  "boe_status": "ساري",
+  "boe_issued": "1438/04/25",
+  "candidates": 1,
+  "db": 16,
+  "boe_units": 16,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz6oit30b51cwg2g5qjmlf1",
+    "cur": 14,
+    "title": "( المادة الثالثة عشرة مكرر )",
+    "boe_n": 13,
+    "boe_bis": 1,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6oiyr0b53cwg2fos1vr06",
+    "cur": 15,
+    "title": "المادة الرابعة عشرة:",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6oj4g0b55cwg2bzkrmu71",
+    "cur": 16,
+    "title": "المادة الخامسة عشرة:",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   }
+  ]
+ },
+ "تنظيم بنك التصدير والاستيراد السعودي": {
+  "boe": "تنظيم بنك التصدير والاستيراد السعودي",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/017d722d-4f95-4acd-be8c-ab6c00eb3f90/1",
+  "boe_status": "ساري",
+  "boe_issued": "1441/06/24",
+  "candidates": 1,
+  "db": 15,
+  "boe_units": 15,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcvci40buvvtrkpeimn53t",
+    "cur": 5,
+    "title": "(المادة الرابعة مكرر)",
+    "boe_n": 4,
+    "boe_bis": 1,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvci40buwvtrkwmynflb4",
+    "cur": 6,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcvci40buxvtrkj7ud8y85",
+    "cur": 7,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcvci40buyvtrkos5hqi90",
+    "cur": 8,
+    "title": "المادة السابعة",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvci40buzvtrk045w1yz1",
+    "cur": 9,
+    "title": "المادة الثامنة",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcvci40bv0vtrky066z31k",
+    "cur": 10,
+    "title": "المادة التاسعة",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcvci40bv1vtrkg9tod7vt",
+    "cur": 11,
+    "title": "المادة العاشرة",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvci40bv2vtrkv0048vhh",
+    "cur": 12,
+    "title": "المادة الحادية عشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpzcvci50bv3vtrk0vm27r1g",
+    "cur": 13,
+    "title": "المادة الثانية عشرة",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcvci50bv4vtrk24ihiine",
+    "cur": 14,
+    "title": "المادة الثالثة عشرة",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpzcvci50bv5vtrk779ormzr",
+    "cur": 15,
+    "title": "المادة الرابعة عشرة",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   }
+  ]
+ },
+ "تنظيم هيئات تطوير المناطق والمدن واللائحة المالية لهيئات تطوير المناطق والمدن واللائحة الإدارية لهيئات تطوير المناطق والمدن": {
+  "boe": "تنظيم هيئات تطوير المناطق والمدن واللائحة المالية لهيئات تطوير المناطق والمدن واللائحة الإدارية لهيئات تطوير المناطق والمدن",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/2ae2b616-e5c9-4b81-b55e-ae3d00acbf1a/1",
+  "boe_status": "ساري",
+  "boe_issued": "1439/09/07",
+  "candidates": 1,
+  "db": 139,
+  "boe_units": 139,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz6p5mc0bcxcwg23t022040",
+    "cur": 19,
+    "title": "المادة الأولى",
+    "boe_n": 1,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6p5s10bczcwg2qzw92m7z",
+    "cur": 20,
+    "title": "المادة الثانية ( السنة المالية )",
+    "boe_n": 2,
+    "boe_bis": 0,
+    "how": "fuzzy0.84"
+   },
+   {
+    "id": "cmpz6p5xp0bd1cwg2t62r1q6l",
+    "cur": 21,
+    "title": "المادة الثالثة ( الميزانية التقديرية )",
+    "boe_n": 3,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6p63e0bd3cwg2h5ew58jg",
+    "cur": 22,
+    "title": "المادة الرابعة ( إعداد الميزانية التقديرية )",
+    "boe_n": 4,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6p6930bd5cwg2kxtaz1um",
+    "cur": 23,
+    "title": "المادة الخامسة ( إحالة الميزانية )",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6p6ev0bd7cwg29dugjnaf",
+    "cur": 24,
+    "title": "المادة السادسة ( استمرار العمل بالميزانية السابقة )",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6p6kj0bd9cwg2mtnabrip",
+    "cur": 25,
+    "title": "المادة السابعة ( تنفيذ الميزانية )",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6p6q80bdbcwg21bro6cke",
+    "cur": 26,
+    "title": "المادة الثامنة ( التعديل على مخصصات الميزانية )",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6p6vx0bddcwg2rn3l66k0",
+    "cur": 27,
+    "title": "المادة التاسعة ( الارتباطات المالية )",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6p71l0bdfcwg2x01g94uk",
+    "cur": 28,
+    "title": "المادة العاشرة ( طرق نشوء الارتباطات المالية على الهيئة )",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6p77a0bdhcwg2degs2t8e",
+    "cur": 29,
+    "title": "المادة الحادية عشرة ( المناقلات في الميزانية )",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6p7cz0bdjcwg2r4lwzhsb",
+    "cur": 30,
+    "title": "المادة الثانية عشرة ( المناقلة بين الوفورات )",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6p7in0bdlcwg23m3xk3qs",
+    "cur": 31,
+    "title": "المادة الثالثة عشرة (ترحيل وتدوير الأرصدة الباقية)",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6p7oc0bdncwg2dj3lohrp",
+    "cur": 32,
+    "title": "المادة الرابعة عشرة (اعتمادات المشروعات الجديدة والطارئة)",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz6p7u10bdpcwg26z1yza31",
+    "cur": 33,
+    "title": "المادة الخامسة عشرة (نظام القيد والتسجيل والمتابعة)",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6p7zq0bdrcwg2c70nn9h3",
+    "cur": 34,
+    "title": "المادة السادسة عشرة (نظام الارتباط المالي)",
+    "boe_n": 16,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6p85f0bdtcwg21uz64lvo",
+    "cur": 35,
+    "title": "المادة السابعة عشرة (التقارير الدورية)",
+    "boe_n": 17,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6p8b40bdvcwg23l30ahm7",
+    "cur": 36,
+    "title": "المادة الثامنة عشرة (قوائم الهيئة المالية)",
+    "boe_n": 18,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6p8mf0bdxcwg27e19hmgv",
+    "cur": 37,
+    "title": "المادة التاسعة عشرة (مدة القوائم المالية)",
+    "boe_n": 19,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6p8s30bdzcwg2b32v93cg",
+    "cur": 38,
+    "title": "المادة العشرون (ذمم مدينة ودائنة)",
+    "boe_n": 20,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6p8xs0be1cwg2u955l7rs",
+    "cur": 39,
+    "title": "المادة الحادية والعشرون (الاستهلاك)",
+    "boe_n": 21,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6p93j0be3cwg2ikci6x40",
+    "cur": 40,
+    "title": "المادة الثانية والعشرون (الحسابات الختامية)",
+    "boe_n": 22,
+    "boe_bis": 0,
+    "how": "fuzzy0.91"
+   },
+   {
+    "id": "cmpz6p9980be5cwg29brqpdtn",
+    "cur": 41,
+    "title": "المادة الثالثة والعشرون (موارد الهيئة)",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6p9ew0be7cwg2bp5lvvss",
+    "cur": 42,
+    "title": "المادة الرابعة والعشرون (إيداع إيرادات الهيئة)",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6p9kq0be9cwg2kl9bvgwg",
+    "cur": 43,
+    "title": "المادة الخامسة والعشرون (استخدام الإيرادات)",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6p9qe0bebcwg26i35xztd",
+    "cur": 44,
+    "title": "المادة السادسة والعشرون (أساليب صرف المستحقات المالية)",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6p9w30bedcwg2zd0i8385",
+    "cur": 45,
+    "title": "المادة السابعة والعشرون (ضوابط الصرف)",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz6pa1s0befcwg2w48scm3p",
+    "cur": 46,
+    "title": "المادة الثامنة والعشرون (ضوابط الصرف من العهد النقدية)",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pa7h0behcwg2njvi3jyk",
+    "cur": 47,
+    "title": "المادة التاسعة والعشرون (إجراءات الصرف وحفظ المستندات)",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pad60bejcwg213vmlpaw",
+    "cur": 48,
+    "title": "المادة الثلاثون (تحصيل الأموال من الغير)",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6paiu0belcwg2ougzy6jy",
+    "cur": 49,
+    "title": "المادة الحادية والثلاثون (متابعة الأرصدة البنكية)",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6paoj0bencwg2yiorisuj",
+    "cur": 50,
+    "title": "المادة الثانية والثلاثون (متابعة تحصيل حقوق الهيئة)",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pau80bepcwg2w8eopxew",
+    "cur": 51,
+    "title": "المادة الثالثة والثلاثون (الختم بخاتم صرف)",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pazw0bercwg2p4j0j60t",
+    "cur": 52,
+    "title": "المادة الرابعة والثلاثون (السلف المستديمة والمؤقتة)",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pb5m0betcwg2i2qiw4la",
+    "cur": 53,
+    "title": "المادة الخامسة والثلاثون (نظام الهيئة المحاسبي)",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pbba0bevcwg21biz1dn9",
+    "cur": 54,
+    "title": "المادة السادسة والثلاثون ( أساليب عمل نظام الهيئة المحاسبي )",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pbgz0bexcwg2ge44nepf",
+    "cur": 55,
+    "title": "المادة السابعة والثلاثون (إجراءات عمل نظام الهيئة المحاسبي)",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pbmp0bezcwg20vhwzxuu",
+    "cur": 56,
+    "title": "المادة الثامنة والثلاثون ( حسابات الهيئة البنكية )",
+    "boe_n": 38,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pbsd0bf1cwg2ismrh0pu",
+    "cur": 57,
+    "title": "المادة التاسعة والثلاثون (الرقابة المالية)",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.85"
+   },
+   {
+    "id": "cmpz6pby20bf3cwg2wjpodkvk",
+    "cur": 58,
+    "title": "المادة الأربعون (مهمات وحدة المراجعة الداخلية)",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz6pc3r0bf5cwg2eyupfoz3",
+    "cur": 59,
+    "title": "المادة الحادية والأربعون (صلاحية وحدة المراجعة الداخلية)",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pc9g0bf7cwg21hm8ja5f",
+    "cur": 60,
+    "title": "المادة الثانية والأربعون (مسؤولية مدير الإدارة المالية)",
+    "boe_n": 42,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pcf40bf9cwg283mitfci",
+    "cur": 61,
+    "title": "المادة الثالثة والأربعون (الرقابة والفحص)",
+    "boe_n": 43,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pckt0bfbcwg2bn778ttg",
+    "cur": 62,
+    "title": "المادة الرابعة والأربعون (الفصل بين المسؤوليات والاختصاصات)",
+    "boe_n": 44,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pcqh0bfdcwg2fcb2nby5",
+    "cur": 63,
+    "title": "المادة الخامسة والأربعون (إعداد التقارير والبيانات المالية)",
+    "boe_n": 45,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pcw60bffcwg2bn0z1e2c",
+    "cur": 64,
+    "title": "المادة السادسة والأربعون (مراقبة الموجودات)",
+    "boe_n": 46,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pd1u0bfhcwg2spjapjyg",
+    "cur": 65,
+    "title": "المادة السابعة والأربعون (الاستغناء عن الموجودات)",
+    "boe_n": 47,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pd7j0bfjcwg2bmv1nkpb",
+    "cur": 66,
+    "title": "المادة الثامنة والأربعون (بيع الموجودات)",
+    "boe_n": 48,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pdd70bflcwg2x1ibo9rn",
+    "cur": 67,
+    "title": "المادة التاسعة والأربعون (قواعد أعمال المستودعات)",
+    "boe_n": 49,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pdiw0bfncwg2p728l68q",
+    "cur": 68,
+    "title": "المادة الخمسون (طرق تنفيذ المشروعات وتأمين المشتريات والخدمات)",
+    "boe_n": 50,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pdol0bfpcwg2awv4yslm",
+    "cur": 69,
+    "title": "المادة الحادية والخمسون (لجنة فحص العروض)",
+    "boe_n": 51,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pduh0bfrcwg25c788fc7",
+    "cur": 70,
+    "title": "المادة الثانية والخمسون (اللجنة الفنية)",
+    "boe_n": 52,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pe050bftcwg2y9rnlohx",
+    "cur": 71,
+    "title": "المادة الثالثة والخمسون (التقدم للمنافسة)",
+    "boe_n": 53,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz6pe5w0bfvcwg2aqo23887",
+    "cur": 72,
+    "title": "المادة الرابعة والخمسون (الاستعباد من المنافسة)",
+    "boe_n": 54,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pebm0bfxcwg2ubzrlkfn",
+    "cur": 73,
+    "title": "المادة الخامسة والخمسون (العرض الوحيد)",
+    "boe_n": 55,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6peha0bfzcwg2hp5n5oxh",
+    "cur": 74,
+    "title": "المادة السادسة والخمسون (الضمانات البنكية)",
+    "boe_n": 56,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pemz0bg1cwg209t7m8tw",
+    "cur": 75,
+    "title": "المادة السابعة والخمسون (أشكال الضمانات المقبولة)",
+    "boe_n": 57,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6peso0bg3cwg2rx9f9hug",
+    "cur": 76,
+    "title": "المادة الثامنة والخمسون (عقود التأجير والاستثمار)",
+    "boe_n": 58,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6peyf0bg5cwg2niazgu73",
+    "cur": 77,
+    "title": "المادة التاسعة والخمسون (استئجار العقار)",
+    "boe_n": 59,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pf430bg7cwg2xmfvpb6p",
+    "cur": 78,
+    "title": "المادة الستون (إعداد العقود)",
+    "boe_n": 60,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pf9s0bg9cwg2csy3qbum",
+    "cur": 79,
+    "title": "المادة الحادية والستون (زيادة الالتزامات في العقود وتخفيضها)",
+    "boe_n": 61,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pffg0bgbcwg2wsgvxcjh",
+    "cur": 80,
+    "title": "المادة الثانية والستون (صرف المقابل المالي)",
+    "boe_n": 62,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pfl50bgdcwg2w9f1ytab",
+    "cur": 81,
+    "title": "المادة الثالثة والستون (صرف الدفعة المقدمة)",
+    "boe_n": 63,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pfqu0bgfcwg27jhjtyev",
+    "cur": 82,
+    "title": "المادة الرابعة والستون (تمديد عقود التشغيل والصيانة)",
+    "boe_n": 64,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pfwi0bghcwg29pg62uf7",
+    "cur": 83,
+    "title": "المادة الخامسة والستون (ما لم يرد فيه نص)",
+    "boe_n": 65,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pg270bgjcwg2yvvoxo9k",
+    "cur": 84,
+    "title": "المادة السادسة والستون (قبول التبرعات)",
+    "boe_n": 66,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pg7w0bglcwg2k4mhiw5q",
+    "cur": 85,
+    "title": "المادة السابعة والستون (الرعاية)",
+    "boe_n": 67,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pgdl0bgncwg2wni4b888",
+    "cur": 86,
+    "title": "المادة الثامنة والستون (إعداد الدليل)",
+    "boe_n": 68,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pgja0bgpcwg2qu4712h4",
+    "cur": 87,
+    "title": "المادة التاسعة والستون (الالتزام بالصلاحيات المالية)",
+    "boe_n": 69,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pgp00bgrcwg2jm51jsmw",
+    "cur": 88,
+    "title": "المادة السبعون (مراجع الحسابات الخارجي)",
+    "boe_n": 70,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pgup0bgtcwg259p8nmnt",
+    "cur": 89,
+    "title": "المادة الحادية والسبعون (مراجعة الحسابات الختامية)",
+    "boe_n": 71,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6ph0e0bgvcwg2344me5jg",
+    "cur": 90,
+    "title": "المادة الثانية والسبعون (الحسابات الختامية)",
+    "boe_n": 72,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6ph620bgxcwg2v5zbnvnz",
+    "cur": 91,
+    "title": "المادة الثالثة والسبعون (التعامل مع المخالفات)",
+    "boe_n": 73,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6phbr0bgzcwg2w3vlxvtm",
+    "cur": 92,
+    "title": "المادة الرابعة والسبعون (سريان اللائحة)",
+    "boe_n": 74,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6phhg0bh1cwg2z7hlurs4",
+    "cur": 93,
+    "title": "المادة الأولى",
+    "boe_n": 1,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6phn50bh3cwg271ji2vhc",
+    "cur": 94,
+    "title": "المادة الثانية (إجراءات التوظيف وشروطه)",
+    "boe_n": 2,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6phsu0bh5cwg2cchxqqlt",
+    "cur": 95,
+    "title": "المادة الثالثة (متطلبات التوظيف)",
+    "boe_n": 3,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz6phyj0bh7cwg2z84jn149",
+    "cur": 96,
+    "title": "المادة الرابعة (المباشرة وعقود العمل ومدة التجربة)",
+    "boe_n": 4,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pi480bh9cwg2floyrwhd",
+    "cur": 97,
+    "title": "المادة الخامسة (التكليف)",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pi9w0bhbcwg2n7xdgusl",
+    "cur": 98,
+    "title": "المادة السادسة (النقل)",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pifl0bhdcwg26bvojder",
+    "cur": 99,
+    "title": "المادة السابعة (التدريب والابتعاث)",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pila0bhfcwg20nq7xhk2",
+    "cur": 100,
+    "title": "المادة الثامنة (إعارة عاملي الهيئة)",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6piqz0bhhcwg2i368079x",
+    "cur": 101,
+    "title": "المادة التاسعة (الأجر)",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6piwo0bhjcwg2odjj52yp",
+    "cur": 102,
+    "title": "المادة العاشرة (بدل السكن)",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6pj2c0bhlcwg245wyyent",
+    "cur": 103,
+    "title": "المادة الحادية عشرة (بدل نقل)",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pj830bhncwg26arzdb2c",
+    "cur": 104,
+    "title": "المادة الثانية عشرة (بدل ترحيل)",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pjdr0bhpcwg2dbuivuq8",
+    "cur": 105,
+    "title": "المادة الثالثة عشرة (بدل خطر)",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pjjg0bhrcwg2lph4krfy",
+    "cur": 106,
+    "title": "المادة الرابعة عشرة (بدل تجهيز)",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pjp40bhtcwg271oukvqs",
+    "cur": 107,
+    "title": "المادة الخامسة عشرة (حالة وفاة العامل)",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pjut0bhvcwg22ejfw2q1",
+    "cur": 108,
+    "title": "المادة السادسة عشرة (صرف مزايا أخرى)",
+    "boe_n": 16,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6pk0h0bhxcwg2fs024npq",
+    "cur": 109,
+    "title": "المادة السابعة عشرة (تقويم الأداء الوظيفي)",
+    "boe_n": 17,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pk660bhzcwg2xk35mx2j",
+    "cur": 110,
+    "title": "المادة الثامنة عشرة (إجراء التقويم)",
+    "boe_n": 18,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pkhh0bi1cwg29tvq2vuc",
+    "cur": 111,
+    "title": "المادة التاسعة عشرة (العلاوات)",
+    "boe_n": 19,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pkn60bi3cwg2qtuhf1fl",
+    "cur": 112,
+    "title": "المادة العشرون (الترقيات)",
+    "boe_n": 20,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pksx0bi5cwg2ssic2ul1",
+    "cur": 113,
+    "title": "المادة الحادية والعشرون (مكافأة الأداء)",
+    "boe_n": 21,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pkym0bi7cwg20uefrixe",
+    "cur": 114,
+    "title": "المادة الثانية والعشرون (الإركاب)",
+    "boe_n": 22,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pl4b0bi9cwg2mdx140fx",
+    "cur": 115,
+    "title": "المادة الثالثة والعشرون ( الانتداب )",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6pla10bibcwg2ftbw18jk",
+    "cur": 116,
+    "title": "المادة الرابعة والعشرون (أيام العمل وساعاته والراحة)",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6plfq0bidcwg2z8ashy8j",
+    "cur": 117,
+    "title": "المادة الخامسة والعشرون (التكليف بالعمل الإضافي)",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6pllf0bifcwg21o70x0tz",
+    "cur": 118,
+    "title": "المادة السادسة والعشرون (الإجازات السنوية)",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6plr30bihcwg2ei1xvx1u",
+    "cur": 119,
+    "title": "المادة السابعة والعشرون (الإجازات الرسمية)",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6plwt0bijcwg21vxiimdz",
+    "cur": 120,
+    "title": "المادة الثامنة والعشرون (الإجازات الخاصة)",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pm2i0bilcwg29imel4kk",
+    "cur": 121,
+    "title": "المادة التاسعة والعشرون (إجازة المشاركات في الأنشطة )",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz6pm860bincwg2lhl8ixy5",
+    "cur": 122,
+    "title": "المادة الثلاثون (الإجازة المرضية )",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6pmdv0bipcwg2rxzd0eb7",
+    "cur": 123,
+    "title": "المادة الحادية والثلاثون (إجازة مرض الفشل الكلوي)",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pmjk0bircwg20otzi6rb",
+    "cur": 124,
+    "title": "المادة الثانية والثلاثون (إجازة مرافقة مريض)",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pmp90bitcwg28j9ypmws",
+    "cur": 125,
+    "title": "المادة الثالثة والثلاثون (إجازة أداء الحج)",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pmuy0bivcwg2gwhveolk",
+    "cur": 126,
+    "title": "المادة الرابعة والثلاثون (الإجازة الدراسية)",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6pn0n0bixcwg2l45of643",
+    "cur": 127,
+    "title": "المادة الخامسة والثلاثون (إجازة الامتحانات الدراسية)",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pn6b0bizcwg2vfblrgas",
+    "cur": 128,
+    "title": "المادة السادسة والثلاثون (الإجازة الاستثنائية)",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pnc00bj1cwg2vqxs3eai",
+    "cur": 129,
+    "title": "المادة السابعة والثلاثون (العمل لدى الغير)",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6pnhp0bj3cwg2gaokdrun",
+    "cur": 130,
+    "title": "المادة الثامنة والثلاثون (الوقاية والسلامة)",
+    "boe_n": 38,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pnnh0bj5cwg2mra0xopv",
+    "cur": 131,
+    "title": "المادة التاسعة والثلاثون (الرعاية الطبية)",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6pnt50bj7cwg2arltd1vf",
+    "cur": 132,
+    "title": "المادة الأربعون (العجز والوفاة وإصابات العمل والأمراض المهنية)",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pnyu0bj9cwg2bilksiha",
+    "cur": 133,
+    "title": "المادة الحادية والأربعون (حقوق العامل)",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6po4j0bjbcwg2t00n0j65",
+    "cur": 134,
+    "title": "المادة الثانية والأربعون (التزامات العامل)",
+    "boe_n": 42,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6poa80bjdcwg22fwwa73h",
+    "cur": 135,
+    "title": "المادة الثالثة والأربعون",
+    "boe_n": 43,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pofz0bjfcwg2t1ehuvn0",
+    "cur": 136,
+    "title": "المادة الرابعة والأربعون (انتهاء الخدمة)",
+    "boe_n": 44,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6polo0bjhcwg2ikf34h85",
+    "cur": 137,
+    "title": "المادة الخامسة والأربعون (مكافأة نهاية الخدمة)",
+    "boe_n": 45,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6pord0bjjcwg267p3kgjx",
+    "cur": 138,
+    "title": "المادة السادسة والأربعون (أحكام تشغيل النساء)",
+    "boe_n": 46,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6pox20bjlcwg2fi4f5y0v",
+    "cur": 139,
+    "title": "المادة السابعة والأربعون",
+    "boe_n": 47,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   }
+  ]
+ },
+ "قواعد تحديد أتعاب الخبراء والأمناء في نظام الإفلاس": {
+  "boe": null,
+  "db": 20,
+  "missing": [],
+  "rows": []
+ },
+ "نظام إيرادات الدولة": {
+  "boe": "نظام إيرادات الدولة",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/8b100aee-54a5-48c1-9866-a9a700f2d539/1",
+  "boe_status": "ساري",
+  "boe_issued": "1431/11/18",
+  "candidates": 1,
+  "db": 32,
+  "boe_units": 32,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcvbtt0bppvtrkw8v3zn9s",
+    "cur": 29,
+    "title": "المادة الثامنة والعشرون مكرر",
+    "boe_n": 28,
+    "boe_bis": 1,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvbtt0bpqvtrk81g5ayky",
+    "cur": 30,
+    "title": "المادة التاسعة والعشرون:",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcvbtt0bprvtrk7ufnj8t3",
+    "cur": 31,
+    "title": "المادة الثلاثون:",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvbtt0bpsvtrkh8yraifj",
+    "cur": 32,
+    "title": "المادة الحادية والثلاثون:",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   }
+  ]
+ },
+ "نظام البلديات والقرى": {
+  "boe": "نظام البلديات والقرى",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/e5f63d07-7de5-4a4d-a02f-a9a700f21187/1",
+  "boe_status": "ساري",
+  "boe_issued": "1397/01/01",
+  "candidates": 1,
+  "db": 49,
+  "boe_units": 49,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz6mt4p0ajncwg2x9fapaa9",
+    "cur": 44,
+    "title": "المادة الأربعة والأربعون:",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   }
+  ]
+ },
+ "نظام التأمينات الاجتماعية": {
+  "boe": "نظام التأمينات الاجتماعية 1421هـ",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/8ff3cd90-e466-4bf9-a071-a9a700f2a70d/1",
+  "boe_status": "ساري",
+  "boe_issued": "1421/09/03",
+  "candidates": 2,
+  "db": 71,
+  "boe_units": 71,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcv7ll0alpvtrko7lk2728",
+    "cur": 58,
+    "title": "المادة الثامنة والخمسون مكرر :",
+    "boe_n": 58,
+    "boe_bis": 1,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcv7ll0alqvtrkp664guq9",
+    "cur": 59,
+    "title": "المادة الثامنة والخمسون :",
+    "boe_n": 58,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv7ll0alrvtrkng4kqdaw",
+    "cur": 60,
+    "title": "المادة التاسعة والخمسون :",
+    "boe_n": 59,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv89q0alsvtrkedhzwh6u",
+    "cur": 61,
+    "title": "المادة الستون :",
+    "boe_n": 60,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcv89q0altvtrk0zwx4ajx",
+    "cur": 62,
+    "title": "المادة الحادية والستون :",
+    "boe_n": 61,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv89q0aluvtrkjeg75cnu",
+    "cur": 63,
+    "title": "المادة الثانية والستون :",
+    "boe_n": 62,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv89q0alvvtrk7dse2fw6",
+    "cur": 64,
+    "title": "المادة الثالثة والستون :",
+    "boe_n": 63,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcv89q0alwvtrkxhx1vpql",
+    "cur": 65,
+    "title": "المادة الرابعة والستون :",
+    "boe_n": 64,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcv89q0alxvtrkysuvw11p",
+    "cur": 66,
+    "title": "المادة الخامسة والستون :",
+    "boe_n": 65,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcv89q0alyvtrkuz4ncg17",
+    "cur": 67,
+    "title": "المادة السادسة والستون :",
+    "boe_n": 66,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcv89q0alzvtrkg6pvv4uy",
+    "cur": 68,
+    "title": "المادة السابعة والستون :",
+    "boe_n": 67,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv89q0am0vtrkfo098lh9",
+    "cur": 69,
+    "title": "المادة الثامنة والستون :",
+    "boe_n": 68,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv89q0am1vtrkczmxca5x",
+    "cur": 70,
+    "title": "المادة التاسعة والستون :",
+    "boe_n": 69,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpzcv89q0am2vtrk1gvosils",
+    "cur": 71,
+    "title": "المادة السبعون :",
+    "boe_n": 70,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   }
+  ]
+ },
+ "نظام الحراسة الأمنية المدنية الخاصة": {
+  "boe": "نظام الحراسة الأمنية المدنية الخاصة",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/51c9a546-fc5e-4607-ba34-a9a700f19012/1",
+  "boe_status": "ساري",
+  "boe_issued": "1426/07/08",
+  "candidates": 1,
+  "db": 15,
+  "boe_units": 15,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz5yf59028jcwg2ag9pmzpo",
+    "cur": 5,
+    "title": "المادة الرابعة مكرر",
+    "boe_n": 4,
+    "boe_bis": 1,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz5yfav028lcwg2e49c0rrw",
+    "cur": 6,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5yfgf028ncwg27xeo7kjh",
+    "cur": 7,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz5yfm0028pcwg224pzxxb9",
+    "cur": 8,
+    "title": "المادة السابعة",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz5yfrk028rcwg2ebkts7os",
+    "cur": 9,
+    "title": "المادة الثامنة",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5yfx4028tcwg2rxsskcby",
+    "cur": 10,
+    "title": "المادة التاسعة",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5yg87028vcwg2m7jdo9b9",
+    "cur": 11,
+    "title": "المادة العاشرة",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz5ygdr028xcwg2vor8flxs",
+    "cur": 12,
+    "title": "المادة الحادية عشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5ygjd028zcwg2qx0891te",
+    "cur": 13,
+    "title": "المادة الثانية عشرة",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5ygoy0291cwg2zsev5nmp",
+    "cur": 14,
+    "title": "المادة الثالثة عشرة",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5ygui0293cwg294ltpskm",
+    "cur": 15,
+    "title": "المادة الرابعة عشرة",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   }
+  ]
+ },
+ "نظام الرهن التجاري": {
+  "boe": "نظام  الرهن التجاري",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/e7bd6fcc-c29c-4696-8032-aae9009b113a/1",
+  "boe_status": "ساري",
+  "boe_issued": "1439/08/08",
+  "candidates": 2,
+  "db": 47,
+  "boe_units": 47,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz64lji0493cwg2au249rbu",
+    "cur": 5,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz64lpd0495cwg2w0pkmu3c",
+    "cur": 6,
+    "title": "المادة السابعة",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64lv70497cwg2x0m9nn1v",
+    "cur": 7,
+    "title": "المادة التاسعة",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64m110499cwg2x751in9q",
+    "cur": 8,
+    "title": "المادة العاشرة",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64m6w049bcwg2pr9cb50d",
+    "cur": 9,
+    "title": "المادة الحادية عشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64mct049dcwg2brmoghco",
+    "cur": 10,
+    "title": "المادة الثانية عشرة",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "exact"
+   },
+   {
+    "id": "cmpz64min049fcwg2sh3xh26g",
+    "cur": 11,
+    "title": "المادة الرابعة عشرة",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64moi049hcwg270zuto9u",
+    "cur": 12,
+    "title": "المادة الخامسة عشرة",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64muc049jcwg2bb4dvh2a",
+    "cur": 13,
+    "title": "المادة السابعة عشرة",
+    "boe_n": 17,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz64n07049lcwg2yi8vbht7",
+    "cur": 14,
+    "title": "المادة الثالثة والعشرون",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64n62049ncwg2n1vwu1hs",
+    "cur": 15,
+    "title": "المادة السابعة والعشرون",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64nbx049pcwg2xntrwg6t",
+    "cur": 16,
+    "title": "المادة الرابعة والثلاثون",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz64nhs049rcwg22d7mwzds",
+    "cur": 17,
+    "title": "المادة الحادية والأربعون",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "exact"
+   },
+   {
+    "id": "cmpz64nnm049tcwg2rsnsw4ug",
+    "cur": 18,
+    "title": "المادة الثالثة والأربعون",
+    "boe_n": 43,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64nth049vcwg2epn5iws8",
+    "cur": 19,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64nzb049xcwg2uqdoz7fr",
+    "cur": 20,
+    "title": "المادة الثامنة",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64o58049zcwg2s4v8u4eb",
+    "cur": 21,
+    "title": "المادة الثالثة عشرة",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64ob304a1cwg28pg9qw1y",
+    "cur": 22,
+    "title": "المادة السادسة عشرة",
+    "boe_n": 16,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64ogy04a3cwg2xos47bkf",
+    "cur": 23,
+    "title": "المادة الثامنة عشرة",
+    "boe_n": 18,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz64omu04a5cwg24w8bfsh6",
+    "cur": 24,
+    "title": "المادة التاسعة عشرة",
+    "boe_n": 19,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64ost04a7cwg2uwjurlyi",
+    "cur": 25,
+    "title": "المادة العشرون",
+    "boe_n": 20,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64p4l04a9cwg28gly9z6g",
+    "cur": 26,
+    "title": "المادة الحادية والعشرون",
+    "boe_n": 21,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz64paj04abcwg2f0336m0r",
+    "cur": 27,
+    "title": "المادة الثانية والعشرون",
+    "boe_n": 22,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6f89s07tfcwg2mwbeqtrp",
+    "cur": 28,
+    "title": "المادة الرابعة والعشرون",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6f8f707thcwg21k2ru6mw",
+    "cur": 29,
+    "title": "المادة الخامسة والعشرون",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6f8kl07tjcwg2zfrb9pqb",
+    "cur": 30,
+    "title": "المادة السادسة والعشرون",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6f8q007tlcwg212vfxcvl",
+    "cur": 31,
+    "title": "المادة الثامنة والعشرون",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6f8vf07tncwg2xsp7eqy1",
+    "cur": 32,
+    "title": "المادة التاسعة والعشرون",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6f90t07tpcwg2avue8mfc",
+    "cur": 33,
+    "title": "المادة الثلاثون",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6f96707trcwg29ajcinvw",
+    "cur": 34,
+    "title": "المادة الحادية والثلاثون",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6f9bm07ttcwg20afjzqum",
+    "cur": 35,
+    "title": "المادة الثانية والثلاثون",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6f9h007tvcwg2j937u1mu",
+    "cur": 36,
+    "title": "المادة الثالثة والثلاثون",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6f9mf07txcwg2e5y1073v",
+    "cur": 37,
+    "title": "المادة الخامسة والثلاثون",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6f9ru07tzcwg217bif4xs",
+    "cur": 38,
+    "title": "المادة السادسة والثلاثون",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6f9x807u1cwg2s68oitw2",
+    "cur": 39,
+    "title": "المادة السابعة والثلاثون",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6fa2n07u3cwg20l6xw97i",
+    "cur": 40,
+    "title": "المادة الثامنة والثلاثون",
+    "boe_n": 38,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6fa8207u5cwg26497yk76",
+    "cur": 41,
+    "title": "المادة التاسعة والثلاثون",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6fadg07u7cwg22ed5jgi5",
+    "cur": 42,
+    "title": "المادة الأربعون",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz6faiu07u9cwg21b1t8mkl",
+    "cur": 43,
+    "title": "المادة الثانية والأربعون",
+    "boe_n": 42,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   }
+  ]
+ },
+ "نظام السوق المالية": {
+  "boe": "نظام السوق المالية",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/50924f95-f74e-430e-820c-a9a700f1abfa/1",
+  "boe_status": "ساري",
+  "boe_issued": "1424/06/02",
+  "candidates": 1,
+  "db": 68,
+  "boe_units": 68,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz648tn044tcwg2i2uhird3",
+    "cur": 21,
+    "title": "المادة العشرون مكرر",
+    "boe_n": 20,
+    "boe_bis": 1,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz648zh044vcwg2masyytoa",
+    "cur": 22,
+    "title": "المادة الحادية والعشرون:",
+    "boe_n": 21,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6495d044xcwg211bzbgy0",
+    "cur": 23,
+    "title": "المادة الثانية والعشرون:",
+    "boe_n": 22,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz649b7044zcwg2l7o61rx5",
+    "cur": 24,
+    "title": "المادة الثالثة والعشرون:",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz649h30451cwg28bhay3y9",
+    "cur": 25,
+    "title": "المادة الرابعة والعشرون:",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz649my0453cwg27qohk75l",
+    "cur": 26,
+    "title": "المادة الخامسة والعشرون:",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz649st0455cwg256zkvad6",
+    "cur": 27,
+    "title": "المادة السادسة والعشرون:",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz649yp0457cwg2rhdlhhgt",
+    "cur": 28,
+    "title": "المادة السابعة والعشرون:",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64a4k0459cwg2q15mmje6",
+    "cur": 29,
+    "title": "المادة الثامنة والعشرون:",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64aaf045bcwg26om7wp5k",
+    "cur": 30,
+    "title": "المادة التاسعة والعشرون:",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz64aga045dcwg25i7sw76v",
+    "cur": 31,
+    "title": "المادة الثلاثون:",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64am5045fcwg2cdc5362z",
+    "cur": 32,
+    "title": "المادة الحادية والثلاثون:",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz64as0045hcwg2hg49qll3",
+    "cur": 33,
+    "title": "المادة الثانية والثلاثون:",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz64axv045jcwg2fte5qzze",
+    "cur": 34,
+    "title": "المادة الثالثة والثلاثون:",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64b3p045lcwg2fye4vd3z",
+    "cur": 35,
+    "title": "المادة الرابعة والثلاثون:",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz64b9k045ncwg24ett8xxm",
+    "cur": 36,
+    "title": "المادة الخامسة والثلاثون:",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64bff045pcwg2trkwt0v8",
+    "cur": 37,
+    "title": "المادة السادسة والثلاثون:",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64bla045rcwg2nb70bcwx",
+    "cur": 38,
+    "title": "المادة السابعة والثلاثون:",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64br4045tcwg21w5w7z1y",
+    "cur": 39,
+    "title": "المادة الثامنة والثلاثون:",
+    "boe_n": 38,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz64bwz045vcwg26l1cwsnt",
+    "cur": 40,
+    "title": "المادة التاسعة والثلاثون:",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64c2t045xcwg2monmminm",
+    "cur": 41,
+    "title": "المادة الأربعون:",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64c8o045zcwg23elu98ji",
+    "cur": 42,
+    "title": "المادة الحادية والأربعون:",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz64cej0461cwg2s0vm1k5f",
+    "cur": 43,
+    "title": "المادة الثانية والأربعون:",
+    "boe_n": 42,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64cke0463cwg2jfa5mvrt",
+    "cur": 44,
+    "title": "المادة الثالثة والأربعون:",
+    "boe_n": 43,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz64cq80465cwg29mgc2j1i",
+    "cur": 45,
+    "title": "المادة الرابعة والأربعون:",
+    "boe_n": 44,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz64cw30467cwg2f4g91fg7",
+    "cur": 46,
+    "title": "المادة الخامسة والأربعون:",
+    "boe_n": 45,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64d1z0469cwg2o33mj4zf",
+    "cur": 47,
+    "title": "المادة السادسة والأربعون:",
+    "boe_n": 46,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz64d7t046bcwg2ny39i3ek",
+    "cur": 48,
+    "title": "المادة السابعة والأربعون:",
+    "boe_n": 47,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64ddz046dcwg2zoeydm5t",
+    "cur": 49,
+    "title": "المادة الثامنة والأربعون:",
+    "boe_n": 48,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64dju046fcwg2g9ysg3ym",
+    "cur": 50,
+    "title": "المادة التاسعة والأربعون:",
+    "boe_n": 49,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64dpr046hcwg2wcnk5wm2",
+    "cur": 51,
+    "title": "المادة الخمسون:",
+    "boe_n": 50,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64dvr046jcwg2kz4suoza",
+    "cur": 52,
+    "title": "المادة الحادية والخمسون:",
+    "boe_n": 51,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz64e1l046lcwg2m6fatn82",
+    "cur": 53,
+    "title": "المادة الثانية والخمسون:",
+    "boe_n": 52,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpz64e7g046ncwg27playt1n",
+    "cur": 54,
+    "title": "المادة الثالثة والخمسون:",
+    "boe_n": 53,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64edb046pcwg2p6teqxbt",
+    "cur": 55,
+    "title": "المادة الرابعة والخمسون:",
+    "boe_n": 54,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz64ej6046rcwg2csiamqgz",
+    "cur": 56,
+    "title": "المادة الخامسة والخمسون:",
+    "boe_n": 55,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64ep2046tcwg2vlgjhdn7",
+    "cur": 57,
+    "title": "المادة السادسة والخمسون:",
+    "boe_n": 56,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64eux046vcwg22posjooz",
+    "cur": 58,
+    "title": "المادة السابعة والخمسون:",
+    "boe_n": 57,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64f0s046xcwg2ypqvbzen",
+    "cur": 59,
+    "title": "المادة الثامنة والخمسون:",
+    "boe_n": 58,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz64f6m046zcwg223kprp69",
+    "cur": 60,
+    "title": "المادة التاسعة والخمسون:",
+    "boe_n": 59,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64fch0471cwg2n2dd078o",
+    "cur": 61,
+    "title": "المادة الستون:",
+    "boe_n": 60,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64fic0473cwg2ioy5ral6",
+    "cur": 62,
+    "title": "المادة الحادية والستون:",
+    "boe_n": 61,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64fo70475cwg2rmhs7iti",
+    "cur": 63,
+    "title": "المادة الثانية والستون:",
+    "boe_n": 62,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz64fu20477cwg2cu1xdl9f",
+    "cur": 64,
+    "title": "المادة الثالثة والستون:",
+    "boe_n": 63,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64fzw0479cwg204iwkphi",
+    "cur": 65,
+    "title": "المادة الرابعة والستون:",
+    "boe_n": 64,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz64g5r047bcwg2iv97m2hi",
+    "cur": 66,
+    "title": "المادة الخامسة والستون:",
+    "boe_n": 65,
+    "boe_bis": 0,
+    "how": "exact"
+   },
+   {
+    "id": "cmpz64gbl047dcwg2jsz822ju",
+    "cur": 67,
+    "title": "المادة السادسة والستون:",
+    "boe_n": 66,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64ghg047fcwg2fsl85x2v",
+    "cur": 68,
+    "title": "المادة السابعة والستون:",
+    "boe_n": 67,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   }
+  ]
+ },
+ "نظام الطيران المدني": {
+  "boe": "نظام الطيران المدني",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/33ef05e2-f53e-4340-b5cb-a9a700f2ead1/1",
+  "boe_status": "ساري",
+  "boe_issued": "1426/07/18",
+  "candidates": 1,
+  "db": 180,
+  "boe_units": 180,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcvdue0c5nvtrkzyq6kunp",
+    "cur": 149,
+    "title": "المادة الخمسون بعد المائة: دعاوى التعويض",
+    "boe_n": 150,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcvdue0c5ovtrk9qlh63oa",
+    "cur": 150,
+    "title": "المادة الحادية والخمسون بعد المائة: الجهة المختصة بنظر دعاوى التعويض",
+    "boe_n": 151,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcvdue0c5pvtrk93euvrmr",
+    "cur": 151,
+    "title": "المادة الثانية والخمسون بعد المائة: تغطية المسؤولية عن الأضرار:",
+    "boe_n": 152,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcvdue0c5qvtrktqf2oxh9",
+    "cur": 152,
+    "title": "المادة الثالثة والخمسون بعد المائة: تطبيق المعاهدات الدولية",
+    "boe_n": 153,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcvdue0c5rvtrka72ev6iy",
+    "cur": 153,
+    "title": "المادة الرابعة والخمسون بعد المائة: تحديد الجرائم",
+    "boe_n": 154,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcvdue0c5svtrklzc3ll5q",
+    "cur": 154,
+    "title": "المادة الخامسة والخمسون بعد المائة: المخالفات التي ترتكب على متن الطائرة المدنية",
+    "boe_n": 155,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvdue0c5tvtrk6s1r88co",
+    "cur": 155,
+    "title": "المادة السادسة والخمسون بعد المائة: اعتبار الطائرة في حالة طيران أو في الخدمة",
+    "boe_n": 156,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcvdue0c5uvtrkqwk7gyxf",
+    "cur": 156,
+    "title": "المادة السابعة والخمسون بعد المائة: سلطات قائد الطائرة وطاقمها",
+    "boe_n": 157,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcvdue0c5vvtrkzlaefz6d",
+    "cur": 157,
+    "title": "المادة التاسعة والأربعون بعد المائة: تجاوز التعويضات المستحقة لحدود المسؤولية",
+    "boe_n": 149,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   }
+  ]
+ },
+ "نظام العمل": {
+  "boe": "نظام العمل",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1",
+  "boe_status": "ساري",
+  "boe_issued": "1426/08/23",
+  "candidates": 1,
+  "db": 250,
+  "boe_units": 250,
+  "missing": [
+   {
+    "n": 79,
+    "bis": 1,
+    "heading": "( التاسعة والسبعين مكرر )"
+   },
+   {
+    "n": 229,
+    "bis": 1,
+    "heading": "( التاسعة والعشرين بعد المائتين مكرر )"
+   }
+  ],
+  "rows": [
+   {
+    "id": "cmpzcv89q0amjvtrkjetynlj3",
+    "cur": 1,
+    "title": "الفصل الأول : التعريفات",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "exact"
+   },
+   {
+    "id": "cmpzcv8yy0at6vtrkwl4tgt4z",
+    "cur": 240,
+    "title": "(المادة الحادية والثلاثون بعد المائتين حالياً) (المادة الأربعون بعد المائتين سابقاً) :",
+    "boe_n": 231,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcv8yy0at8vtrk92tot6ex",
+    "cur": 242,
+    "title": "(المادة الثانية والثلاثون بعد المائتين حالياً) (المادة الثانية والأربعون بعد المائتين سابقاً)",
+    "boe_n": 232,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcv8yy0at9vtrkqvn5ovne",
+    "cur": 243,
+    "title": "المادة الثالثة والثلاثون بعد المائتين:",
+    "boe_n": 233,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv8yy0atavtrk0lm31p31",
+    "cur": 244,
+    "title": "المادة الرابعة والثلاثون بعد المائتين",
+    "boe_n": 234,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcv8yy0atbvtrks4qgn6zw",
+    "cur": 245,
+    "title": "المادة الخامسة والثلاثون بعد المائتين",
+    "boe_n": 235,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv8yy0atcvtrk3n3hkmxy",
+    "cur": 246,
+    "title": "المادة الثالثة والأربعون بعد المائتين :",
+    "boe_n": 243,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv8yy0atdvtrk28hp5hej",
+    "cur": 247,
+    "title": "المادة الرابعة والأربعون بعد المائتين :",
+    "boe_n": 244,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv8yy0atevtrkf41bdue6",
+    "cur": 248,
+    "title": "المادة الخامسة والأربعون بعد المائتين :",
+    "boe_n": 245,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cms68t1i20b6xh17ty4s10lp9",
+    "cur": 471,
+    "title": "(المادة الحادية والثلاثون بعد المائتين حالياً) (المادة الأربعون بعد المائتين سابقاً) :",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cms68t1i20b6zh17t6imw0d76",
+    "cur": 474,
+    "title": "(المادة الثانية والثلاثون بعد المائتين حالياً) (المادة الثانية والأربعون بعد المائتين سابقاً)",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   }
+  ]
+ },
+ "نظام المحاماة": {
+  "boe": "نظام المحاماة",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/f42655be-79b0-4fd4-bb90-a9a700f26a3e/1",
+  "boe_status": "ساري",
+  "boe_issued": "1422/07/28",
+  "candidates": 1,
+  "db": 56,
+  "boe_units": 56,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcuxfd07kdvtrk4o55djm1",
+    "cur": 1,
+    "title": "الباب الأول: تعريف مهنة المحاماة وشروط مزاولتها",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfd07knvtrky5fnenjs",
+    "cur": 11,
+    "title": "الباب الثاني: واجبات المحامين وحقوقهم",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcuxfd07kyvtrk73uudfgb",
+    "cur": 22,
+    "title": "( الحادية والعشرون مكرر )",
+    "boe_n": 21,
+    "boe_bis": 1,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfd07kzvtrkpf6nf8qb",
+    "cur": 23,
+    "title": "المادة الثانية والعشرون:",
+    "boe_n": 22,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcuxfd07l0vtrkz4c0x66m",
+    "cur": 24,
+    "title": "المادة الثالثة والعشرون:",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "exact"
+   },
+   {
+    "id": "cmpzcuxfd07l1vtrks2pni2ym",
+    "cur": 25,
+    "title": "المادة الرابعة والعشرون:",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcuxfd07l2vtrkarl3462j",
+    "cur": 26,
+    "title": "المادة الخامسة والعشرون:",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "exact"
+   },
+   {
+    "id": "cmpzcuxfd07l3vtrkqgle2g7y",
+    "cur": 27,
+    "title": "المادة السادسة والعشرون:",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfd07l4vtrkpdew4799",
+    "cur": 28,
+    "title": "المادة السابعة والعشرون:",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcuxfd07l5vtrk6qi1wwxl",
+    "cur": 29,
+    "title": "المادة الثامنة والعشرون:",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcuxfd07l6vtrk7b6kp3dm",
+    "cur": 30,
+    "title": "الباب الثالث: تأديب المحامي",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfd07l7vtrksnuyipgk",
+    "cur": 31,
+    "title": "المادة الثلاثون:",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcuxfd07l8vtrkcqkzcmpa",
+    "cur": 32,
+    "title": "المادة الحادية والثلاثون:",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfd07l9vtrkgijqqbme",
+    "cur": 33,
+    "title": "المادة الثانية والثلاثون:",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfe07lavtrkoath8vhb",
+    "cur": 34,
+    "title": "المادة الثالثة والثلاثون:",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcuxfe07lbvtrky5yb3ss0",
+    "cur": 35,
+    "title": "المادة الرابعة والثلاثون:",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcuxfe07lcvtrk601kk916",
+    "cur": 36,
+    "title": "المادة الخامسة والثلاثون:",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfe07ldvtrkbdf8ty29",
+    "cur": 37,
+    "title": "المادة السادسة والثلاثون:",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcuxfe07levtrk5ocerucg",
+    "cur": 38,
+    "title": "المادة السابعة والثلاثون:",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfe07lfvtrklm45sjxj",
+    "cur": 39,
+    "title": "الباب الرابع: أحكام عامة وانتقالية",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcuxfe07lgvtrkrqj7zsin",
+    "cur": 40,
+    "title": "المادة التاسعة والثلاثون:",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcuxfe07lhvtrkmn08fmoc",
+    "cur": 41,
+    "title": "المادة الأربعون:",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcuxfe07livtrk80uqxn0o",
+    "cur": 42,
+    "title": "المادة الحادية والأربعون:",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfe07ljvtrk9wa70718",
+    "cur": 43,
+    "title": "المادة الثانية والأربعون:",
+    "boe_n": 42,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcuxfe07lkvtrkg8u7l8i8",
+    "cur": 44,
+    "title": "المادة الثالثة والأربعون:",
+    "boe_n": 43,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcuxfe07llvtrkb84hrg6v",
+    "cur": 45,
+    "title": "الباب الخامس: (تنظيم الترخيص لمكتب المحاماة الأجنبي لمزاولة مهنة المحاماة في المملكة)",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcuxfe07lmvtrkw8lc7afz",
+    "cur": 46,
+    "title": "المادة الخامسة والأربعون",
+    "boe_n": 45,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfe07lnvtrkuix823or",
+    "cur": 47,
+    "title": "المادة السادسة والأربعون",
+    "boe_n": 46,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfe07lovtrk9qxi2skm",
+    "cur": 48,
+    "title": "المادة السابعة والأربعون",
+    "boe_n": 47,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfe07lpvtrkld9wgoz6",
+    "cur": 49,
+    "title": "المادة الثامنة والأربعون",
+    "boe_n": 48,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpzcuxfe07lqvtrkn5qfe1rq",
+    "cur": 50,
+    "title": "المادة التاسعة والأربعون",
+    "boe_n": 49,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcuxfe07lrvtrk1ovqmsz5",
+    "cur": 51,
+    "title": "المادة الخمسون",
+    "boe_n": 50,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfe07lsvtrkmdburuzw",
+    "cur": 52,
+    "title": "المادة الحادية والخمسون",
+    "boe_n": 51,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpzcuxfe07ltvtrkb73abm76",
+    "cur": 53,
+    "title": "المادة الثانية والخمسون",
+    "boe_n": 52,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpzcuxfe07luvtrkkbstt12y",
+    "cur": 54,
+    "title": "المادة الثالثة والخمسون",
+    "boe_n": 53,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcuxfe07lvvtrkq7kkpf3c",
+    "cur": 55,
+    "title": "المادة الرابعة والخمسون",
+    "boe_n": 54,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcuxfe07lwvtrkitosod4c",
+    "cur": 56,
+    "title": "المادة الخامسة والخمسون",
+    "boe_n": 55,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   }
+  ]
+ },
+ "نظام المرافعات أمام ديوان المظالم": {
+  "boe": "نظام المرافعات أمام ديوان المظالم",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/f2f7b465-b576-4f47-a8e7-a9a700f27202/1",
+  "boe_status": "ساري",
+  "boe_issued": "1435/01/22",
+  "candidates": 1,
+  "db": 63,
+  "boe_units": 63,
+  "missing": [
+   {
+    "n": 10,
+    "bis": 0,
+    "heading": "المادة العاشرة :"
+   },
+   {
+    "n": 12,
+    "bis": 0,
+    "heading": "المادة الثانية عشرة:"
+   },
+   {
+    "n": 13,
+    "bis": 0,
+    "heading": "المادة الثالثة عشرة:"
+   },
+   {
+    "n": 14,
+    "bis": 0,
+    "heading": "المادة الرابعة عشرة:"
+   },
+   {
+    "n": 15,
+    "bis": 0,
+    "heading": "المادة الخامسة عشرة:"
+   },
+   {
+    "n": 20,
+    "bis": 0,
+    "heading": "المادة العشرون:"
+   }
+  ],
+  "rows": [
+   {
+    "id": "cmpwi9p9w01mhnxff8gwnm0a4",
+    "cur": 10,
+    "title": "المادة العاشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcuysd080bvtrkrrvqshv0",
+    "cur": 11,
+    "title": "المادة الحادية عشرة:",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpwi9plr01mjnxffbksuhf53",
+    "cur": 12,
+    "title": "المادة الثلاثون",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpwi9pxm01mlnxff0uhiqup9",
+    "cur": 13,
+    "title": "المادة الأربعون",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpwi9q9s01mnnxffuwuv3doa",
+    "cur": 14,
+    "title": "المادة الخمسون",
+    "boe_n": 50,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpwi9qlo01mpnxffbriwmt8z",
+    "cur": 15,
+    "title": "المادة الستون",
+    "boe_n": 60,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpwi9qxi01mrnxffp8omgpsu",
+    "cur": 20,
+    "title": "المادة العشرون",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpzcuyse080uvtrk2ya8fvwq",
+    "cur": 30,
+    "title": "المادة الثلاثون:",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpzcuyse0815vtrk9oovyrir",
+    "cur": 41,
+    "title": "المادة الحادية والأربعون:",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpzcuyse081evtrko6pgd10p",
+    "cur": 50,
+    "title": "المادة الخمسون:",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpzcuyse081ovtrkytb2kvfu",
+    "cur": 60,
+    "title": "المادة الستون:",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   }
+  ]
+ },
+ "نظام المناطق": {
+  "boe": "نظام المناطق",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/93f81644-fbbc-49ca-b33c-a9a700f16701/1",
+  "boe_status": "ساري",
+  "boe_issued": "1412/08/27",
+  "candidates": 1,
+  "db": 42,
+  "boe_units": 41,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz5tqif00n5cwg2lyvbl7by",
+    "cur": 25,
+    "title": "المادة الحادية والأربعون",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpz5tqo600n7cwg21i3y12ye",
+    "cur": 26,
+    "title": "المادة الخامسة والعشرون",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5tqty00n9cwg2rvum6pu8",
+    "cur": 27,
+    "title": "المادة السادسة والعشرون",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz5tqzp00nbcwg2fbwmqdq3",
+    "cur": 28,
+    "title": "المادة السابعة والعشرون",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5tr5g00ndcwg2ohcddzd2",
+    "cur": 29,
+    "title": "المادة الثامنة والعشرون",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5trba00nfcwg2e1uyso7a",
+    "cur": 30,
+    "title": "المادة التاسعة والعشرون",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5trh200nhcwg25p9ypw8n",
+    "cur": 31,
+    "title": "المادة الثلاثون",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5trmt00njcwg2ggfl0dhd",
+    "cur": 32,
+    "title": "المادة الحادية والثلاثون",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5trsl00nlcwg208tlg44q",
+    "cur": 33,
+    "title": "المادة الثانية والثلاثون",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5tryd00nncwg2xwq0iigx",
+    "cur": 34,
+    "title": "المادة الثالثة والثلاثون",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5ts4300npcwg2ixesxnjp",
+    "cur": 35,
+    "title": "المادة الرابعة والثلاثون",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5ts9u00nrcwg2cvrymbf4",
+    "cur": 36,
+    "title": "المادة الخامسة والثلاثون",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz5tsfn00ntcwg2t0dqafvi",
+    "cur": 37,
+    "title": "المادة السادسة والثلاثون",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5tsle00nvcwg2zx2jjjtz",
+    "cur": 38,
+    "title": "المادة السابعة والثلاثون",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5tsr500nxcwg2yrw46skk",
+    "cur": 39,
+    "title": "المادة الثامنة والثلاثون",
+    "boe_n": 38,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5tsww00nzcwg2al820nws",
+    "cur": 40,
+    "title": "المادة التاسعة والثلاثون",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5tt2n00o1cwg20xcn6fob",
+    "cur": 41,
+    "title": "المادة الأربعون",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5tt8d00o3cwg207u3f5xm",
+    "cur": 42,
+    "title": "المادة الحادية والأربعون",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "fuzzy0.84"
+   }
+  ]
+ },
+ "نظام الميداليات المدنية والعسكرية": {
+  "boe": "نظام الميداليات المدنية والعسكرية",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/e1fd0b90-ced3-4402-ad60-a9a700f1f755/1",
+  "boe_status": "ساري",
+  "boe_issued": "1391/01/01",
+  "candidates": 1,
+  "db": 25,
+  "boe_units": 25,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz6iyr1096jcwg2vkgnw5px",
+    "cur": 8,
+    "title": "المادة الأولى",
+    "boe_n": 1,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6iywf096lcwg25cmfywla",
+    "cur": 9,
+    "title": "المادة الثانية",
+    "boe_n": 2,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6iz1u096ncwg2hx9b5shx",
+    "cur": 10,
+    "title": "المادة الثالثة",
+    "boe_n": 3,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6iz78096pcwg22gnrxqzr",
+    "cur": 11,
+    "title": "المادة الرابعة",
+    "boe_n": 4,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6izcm096rcwg2sb5hjubp",
+    "cur": 12,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6izi1096tcwg29pk30rwk",
+    "cur": 13,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6iznf096vcwg29r8epi1o",
+    "cur": 14,
+    "title": "المادة الأولى",
+    "boe_n": 1,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6izst096xcwg27rl2gkls",
+    "cur": 15,
+    "title": "المادة الثانية",
+    "boe_n": 2,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6izy8096zcwg2wylj2xoi",
+    "cur": 16,
+    "title": "المادة الثالثة",
+    "boe_n": 3,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6j03m0971cwg2epmzgjko",
+    "cur": 17,
+    "title": "المادة الرابعة",
+    "boe_n": 4,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6j0900973cwg2feqoana3",
+    "cur": 18,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6j0ee0975cwg2mo67ho47",
+    "cur": 19,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6j0jt0977cwg2du02bgkq",
+    "cur": 20,
+    "title": "المادة الأولى",
+    "boe_n": 1,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz6j0pa0979cwg2u5wjj340",
+    "cur": 21,
+    "title": "المادة الثانية",
+    "boe_n": 2,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6j0uo097bcwg2thvtgrko",
+    "cur": 22,
+    "title": "المادة الثالثة",
+    "boe_n": 3,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6j103097dcwg23rp8juh0",
+    "cur": 23,
+    "title": "المادة الرابعة",
+    "boe_n": 4,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6j15h097fcwg2li3t06fc",
+    "cur": 24,
+    "title": "المادة الخامسة",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6j1aw097hcwg25x3xi4lu",
+    "cur": 25,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   }
+  ]
+ },
+ "نظام النقل بالخطوط الحديدية": {
+  "boe": null,
+  "db": 39,
+  "missing": [],
+  "rows": []
+ },
+ "نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية": {
+  "boe": "نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/6cfde53b-e803-49be-b2c6-a9a700f1c434/1",
+  "boe_status": "ساري",
+  "boe_issued": "1425/05/29",
+  "candidates": 1,
+  "db": 65,
+  "boe_units": 65,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz66rpk04yzcwg2wgk9vlog",
+    "cur": 5,
+    "title": "المادة السادسة:",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz66rvi04z1cwg2h1k33y55",
+    "cur": 6,
+    "title": "المادة الخامسة:",
+    "boe_n": 5,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   }
+  ]
+ },
+ "نظام حماية الطفل": {
+  "boe": "نظام حماية الطفل",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/2d3cb83a-0379-4cde-8e0b-a9a700f272bd/1",
+  "boe_status": "ساري",
+  "boe_issued": "1436/02/03",
+  "candidates": 1,
+  "db": 26,
+  "boe_units": 26,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcuyse082fvtrk91oxhkly",
+    "cur": 24,
+    "title": "(الثالثة والعشرون مكرر)",
+    "boe_n": 23,
+    "boe_bis": 1,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcuyse082gvtrknh9ez3mv",
+    "cur": 25,
+    "title": "المادة الرابعة والعشرون:",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpzcuyse082hvtrkigog5aq5",
+    "cur": 26,
+    "title": "المادة الخامسة والعشرون:",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   }
+  ]
+ },
+ "نظام ضريبة القيمة المضافة": {
+  "boe": "نظام ضريبة القيمة المضافة",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/f98f4238-0289-4891-8a22-a9a700f1f538/1",
+  "boe_status": "ساري",
+  "boe_issued": "1438/11/02",
+  "candidates": 1,
+  "db": 53,
+  "boe_units": 53,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz6c6e806svcwg2lx044dpy",
+    "cur": 1,
+    "title": "الفصل الأول: أحكام تمهيدية",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6c6q606szcwg2pba2bcpl",
+    "cur": 3,
+    "title": "الفصل الثاني: التسجيل لأغراض الضريبة",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6c77z06t5cwg29pmwmr2l",
+    "cur": 6,
+    "title": "الفصل الثالث: توريدات السلع والخدمات",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6c8dj06tjcwg2zlv7lnn8",
+    "cur": 13,
+    "title": "الفصل الرابع: مكان التوريد",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6c8pe06tncwg23i7q016c",
+    "cur": 15,
+    "title": "الفصل الخامس: القيمة الخاضعة للضريبة",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6c8vb06tpcwg2cidhoezw",
+    "cur": 16,
+    "title": "الفصل السادس: الاستيراد",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6c97706ttcwg2sn82igqg",
+    "cur": 18,
+    "title": "الفصل السابع: احتساب الضريبة",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz6ca0t06u1cwg2alw4ap7b",
+    "cur": 22,
+    "title": "الفصل الثامن: خصم الضريبة",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6ca6r06u3cwg2eua9erpb",
+    "cur": 23,
+    "title": "الفصل التاسع: الفواتير الضريبية",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz6caco06u5cwg286d1j7z5",
+    "cur": 24,
+    "title": "الفصل العاشر: الإقرار الضريبي",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6caui06ubcwg2v0g6xxzp",
+    "cur": 27,
+    "title": "الفصل الحادي عشر: سداد الضريبة",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6cbia06ujcwg25keqbu1w",
+    "cur": 31,
+    "title": "الفصل الثاني عشر: استرداد الضريبة",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz6cc6106urcwg2p53p6qgd",
+    "cur": 35,
+    "title": "الفصل الثالث عشر: سرية المعلومات وتبادلها",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6ccbz06utcwg2k1lucqfs",
+    "cur": 36,
+    "title": "الفصل الرابع عشر: حفظ المستندات والمسؤولية التضامنية",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz6ccnu06uxcwg2pq1jskjp",
+    "cur": 38,
+    "title": "الفصل الخامس عشر: التفتيش والضبط",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz6cctt06uzcwg2kpa98h9y",
+    "cur": 39,
+    "title": "الفصل السادس عشر: التهرب الضريبي والعقوبات",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz6ceb806vhcwg25ik3d638",
+    "cur": 48,
+    "title": "الفصل السابع عشر: إيقاع العقوبات والنظر في المخالفات",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz6cen306vlcwg22uloddjj",
+    "cur": 50,
+    "title": "الفصل الثامن عشر: أحكام ختامية",
+    "boe_n": null,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   }
+  ]
+ },
+ "نظام مراقبة شركات التأمين التعاوني": {
+  "boe": "نظام مراقبة شركات التأمين التعاوني",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/3e3c6fc3-9a45-4a0e-b28e-a9a700f1ad14/1",
+  "boe_status": "ساري",
+  "boe_issued": "1424/06/02",
+  "candidates": 1,
+  "db": 25,
+  "boe_units": 25,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz64keg048pcwg2w5vjmqoq",
+    "cur": 23,
+    "title": "المادة الرابعة والعشرون:",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz64kkb048rcwg23rppvorj",
+    "cur": 24,
+    "title": "المادة الثالثة والعشرون :",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   }
+  ]
+ },
+ "نظام مكافحة غسل الأموال": {
+  "boe": "نظام مكافحة غسل  الأموال",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/0657dfce-95f8-463a-9d87-aa3900ec7b51/1",
+  "boe_status": "ساري",
+  "boe_issued": "1439/02/05",
+  "candidates": 1,
+  "db": 54,
+  "boe_units": 52,
+  "missing": [
+   {
+    "n": 49,
+    "bis": 1,
+    "heading": "\" المادة التاسعة والأربعون - مكرر\""
+   }
+  ],
+  "rows": [
+   {
+    "id": "cmpz5wlud01lvcwg2a6nl4pqv",
+    "cur": 6,
+    "title": "المادة الخامسة",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpz5wm0501lxcwg2vtfcvxon",
+    "cur": 7,
+    "title": "المادة السادسة",
+    "boe_n": 6,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wm5y01lzcwg20rdyzoq6",
+    "cur": 8,
+    "title": "المادة السادسة:",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpz5wmbt01m1cwg2kspcjkdl",
+    "cur": 9,
+    "title": "المادة السابعة:",
+    "boe_n": 7,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5wmho01m3cwg2tdx2iggq",
+    "cur": 10,
+    "title": "المادة السابعة",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmpz5wmng01m5cwg2iugqgmik",
+    "cur": 11,
+    "title": "المادة الثامنة:",
+    "boe_n": 8,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wmt801m7cwg2xzwl451g",
+    "cur": 12,
+    "title": "المادة التاسعة:",
+    "boe_n": 9,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5wmz101m9cwg2487n6k4w",
+    "cur": 13,
+    "title": "المادة العاشرة:",
+    "boe_n": 10,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wn4t01mbcwg2gaafmx5x",
+    "cur": 14,
+    "title": "المادة الحادية عشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz5wnal01mdcwg2dtifr30z",
+    "cur": 15,
+    "title": "المادة الثانية عشر",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wnge01mfcwg2u72q9h3p",
+    "cur": 16,
+    "title": "المادة الثالثة عشرة",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wnm601mhcwg2lj1k3ev5",
+    "cur": 17,
+    "title": "المادة الرابعة عشرة",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wnrz01mjcwg245kph4gv",
+    "cur": 18,
+    "title": "المادة الخامسة عشرة",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wnxr01mlcwg2yyg18b6y",
+    "cur": 19,
+    "title": "المادة السادسة عشرة",
+    "boe_n": 16,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wo3m01mncwg2i6nfgxzj",
+    "cur": 20,
+    "title": "المادة السابعة عشرة:",
+    "boe_n": 17,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz5wo9e01mpcwg2smclxqwa",
+    "cur": 21,
+    "title": "المادة الثامنة عشرة:",
+    "boe_n": 18,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5wof701mrcwg25slb93vp",
+    "cur": 22,
+    "title": "المادة التاسعة عشرة:",
+    "boe_n": 19,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5wol101mtcwg2s8qx6pwk",
+    "cur": 23,
+    "title": "المادة العشرون",
+    "boe_n": 20,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5woqu01mvcwg2g6fkhyic",
+    "cur": 24,
+    "title": "المادة الحادية والعشرون:",
+    "boe_n": 21,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wown01mxcwg2ntad2guf",
+    "cur": 25,
+    "title": "المادة الثانية والعشرون:",
+    "boe_n": 22,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz5wp2g01mzcwg23l3qkzx3",
+    "cur": 26,
+    "title": "المادة الثالثة والعشرون:",
+    "boe_n": 23,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wp8901n1cwg2aw88qbh7",
+    "cur": 27,
+    "title": "المادة الرابعة والعشرون:",
+    "boe_n": 24,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wpe201n3cwg2vx7149zs",
+    "cur": 28,
+    "title": "المادة الخامسة والعشرون:",
+    "boe_n": 25,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wpju01n5cwg2r73ixv48",
+    "cur": 29,
+    "title": "المادة السادسة والعشرون:",
+    "boe_n": 26,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wppm01n7cwg2rtcp0udg",
+    "cur": 30,
+    "title": "المادة السابعة والعشرون:",
+    "boe_n": 27,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz5wpvf01n9cwg2skydgkfy",
+    "cur": 31,
+    "title": "المادة الثامنة والعشرون:",
+    "boe_n": 28,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz5wq1801nbcwg2ad0deeq6",
+    "cur": 32,
+    "title": "المادة التاسعة والعشرون:",
+    "boe_n": 29,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz61kpo039rcwg28e3dvddz",
+    "cur": 33,
+    "title": "المادة الثلاثون:",
+    "boe_n": 30,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz61kvs039tcwg2t3of37w7",
+    "cur": 34,
+    "title": "المادة الحادية والثلاثون:",
+    "boe_n": 31,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz61l1v039vcwg24z6j0ypy",
+    "cur": 35,
+    "title": "المادة الثانية والثلاثون:",
+    "boe_n": 32,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz61l7y039xcwg2mzr3ww2q",
+    "cur": 36,
+    "title": "المادة الثالثة والثلاثون:",
+    "boe_n": 33,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz61le2039zcwg2chx1cr26",
+    "cur": 37,
+    "title": "المادة الرابعة والثلاثون:",
+    "boe_n": 34,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz61lk503a1cwg2vz33aiy4",
+    "cur": 38,
+    "title": "المادة الخامسة والثلاثون:",
+    "boe_n": 35,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz61lqa03a3cwg2vjkx937b",
+    "cur": 39,
+    "title": "المادة السادسة والثلاثون:",
+    "boe_n": 36,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz61lwf03a5cwg2i0zuelmb",
+    "cur": 40,
+    "title": "المادة السابعة والثلاثون",
+    "boe_n": 37,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz61m2i03a7cwg2ld7h2v5e",
+    "cur": 41,
+    "title": "المادة الثامنة والثلاثون:",
+    "boe_n": 38,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz61m8l03a9cwg2tg213wht",
+    "cur": 42,
+    "title": "المادة التاسعة والثلاثون:",
+    "boe_n": 39,
+    "boe_bis": 0,
+    "how": "fuzzy0.92"
+   },
+   {
+    "id": "cmpz61meo03abcwg2zelhzk7x",
+    "cur": 43,
+    "title": "المادة الأربعون:",
+    "boe_n": 40,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz61mks03adcwg2f122kkha",
+    "cur": 44,
+    "title": "المادة الحادية والأربعون:",
+    "boe_n": 41,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz61mqv03afcwg2hps0ysxh",
+    "cur": 45,
+    "title": "المادة الثانية والأربعون:",
+    "boe_n": 42,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz61mwy03ahcwg2ufxd6qjf",
+    "cur": 46,
+    "title": "المادة الثالثة والأربعون:",
+    "boe_n": 43,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz61n3203ajcwg27xtiqbqx",
+    "cur": 47,
+    "title": "المادة الرابعة والأربعون:",
+    "boe_n": 44,
+    "boe_bis": 0,
+    "how": "fuzzy0.93"
+   },
+   {
+    "id": "cmpz61n9603alcwg21fxmhcrm",
+    "cur": 48,
+    "title": "المادة الخامسة والأربعون:",
+    "boe_n": 45,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz61nf903ancwg2npov4qiq",
+    "cur": 49,
+    "title": "المادة السادسة والأربعون:",
+    "boe_n": 46,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz61nle03apcwg23za317ls",
+    "cur": 50,
+    "title": "المادة السابعة والأربعون:",
+    "boe_n": 47,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz61nrh03arcwg2ohgw0nwo",
+    "cur": 51,
+    "title": "المادة الثامنة والأربعون:",
+    "boe_n": 48,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   },
+   {
+    "id": "cmpz61nxl03atcwg22mm9l5ha",
+    "cur": 52,
+    "title": "المادة التاسعة والأربعون:",
+    "boe_n": 49,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpz61o3o03avcwg2asbq6e97",
+    "cur": 53,
+    "title": "المادة الخمسون:",
+    "boe_n": 50,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz61o9s03axcwg2ra12tau2",
+    "cur": 54,
+    "title": "المادة الحادية والخمسون:",
+    "boe_n": 51,
+    "boe_bis": 0,
+    "how": "fuzzy0.99"
+   }
+  ]
+ },
+ "نظام وثائق السفر": {
+  "boe": "نظام وثائق السفر",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/e29f08fa-d53e-4944-b22b-a9a700f17fd9/1",
+  "boe_status": "ساري",
+  "boe_issued": "1421/05/28",
+  "candidates": 1,
+  "db": 16,
+  "boe_units": 16,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpz5wk2h01l9cwg215s9o1gl",
+    "cur": 11,
+    "title": "( المادة العاشرة مكرر )",
+    "boe_n": 10,
+    "boe_bis": 1,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpz5wk8a01lbcwg2egna2ahr",
+    "cur": 12,
+    "title": "المادة الحادية عشرة",
+    "boe_n": 11,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wke201ldcwg2tnvw71jk",
+    "cur": 13,
+    "title": "المادة الثانية عشرة",
+    "boe_n": 12,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpz5wkjz01lfcwg2bad7a76v",
+    "cur": 14,
+    "title": "المادة الثالثة عشرة",
+    "boe_n": 13,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpz5wkpr01lhcwg214u6q750",
+    "cur": 15,
+    "title": "المادة الرابعة عشرة",
+    "boe_n": 14,
+    "boe_bis": 0,
+    "how": "fuzzy0.94"
+   },
+   {
+    "id": "cmpz5wkvk01ljcwg2lscz9zt8",
+    "cur": 16,
+    "title": "المادة الخامسة عشرة",
+    "boe_n": 15,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   }
+  ]
+ },
+ "نــظام الاستــثمار التعديني.": {
+  "boe": "نظام الاستــثمار التعديني.",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/9560f620-e77e-476c-b9ea-abdd00b87480/1",
+  "boe_status": "ساري",
+  "boe_issued": "1441/10/19",
+  "candidates": 1,
+  "db": 64,
+  "boe_units": 64,
+  "missing": [],
+  "rows": [
+   {
+    "id": "cmpzcv7li0agpvtrksli5b5fs",
+    "cur": 57,
+    "title": "( المادة السادسة والخمسون مكرر )",
+    "boe_n": 56,
+    "boe_bis": 1,
+    "how": "fuzzy0.99"
+   },
+   {
+    "id": "cmpzcv7li0agqvtrkic2yl9w1",
+    "cur": 58,
+    "title": "المادة السابعة والخمسون:",
+    "boe_n": 57,
+    "boe_bis": 0,
+    "how": "fuzzy0.96"
+   },
+   {
+    "id": "cmpzcv7li0agrvtrkhd4ts889",
+    "cur": 59,
+    "title": "المادة الثامنة والخمسون:",
+    "boe_n": 58,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv7li0agsvtrktkchv0ve",
+    "cur": 60,
+    "title": "المادة التاسعة والخمسون:",
+    "boe_n": 59,
+    "boe_bis": 0,
+    "how": "fuzzy0.98"
+   },
+   {
+    "id": "cmpzcv7li0agtvtrktvnxf81j",
+    "cur": 61,
+    "title": "المادة الستون:",
+    "boe_n": 60,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv7li0aguvtrke4qrm29r",
+    "cur": 62,
+    "title": "المادة الحادية والستون:",
+    "boe_n": 61,
+    "boe_bis": 0,
+    "how": "prefix"
+   },
+   {
+    "id": "cmpzcv7li0agvvtrk5soc2vye",
+    "cur": 63,
+    "title": "المادة الثانية والستون:",
+    "boe_n": 62,
+    "boe_bis": 0,
+    "how": "fuzzy0.97"
+   },
+   {
+    "id": "cmpzcv7li0agwvtrkpcii4tmx",
+    "cur": 64,
+    "title": "المادة الثالثة والستون:",
+    "boe_n": 63,
+    "boe_bis": 0,
+    "how": "fuzzy0.95"
+   }
+  ]
+ }
+}
