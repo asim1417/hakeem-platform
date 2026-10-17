@@ -76,6 +76,12 @@ export async function saveEditorialSettings(
   return db.transaction(async (tx) => {
     // حصري: ينتظر أفعال المكتب الجارية، ويُبقي الأفعال الجديدة حتى يُحفظ.
     await lockConfigExclusive(tx);
+    // المالك يحرر الإعدادات بحسابه الحالي (لا بصلاحيات حُسبت قبل الطلب)، ويُفحص قبل النسخة (ن٦)
+    // حتى لا يتلقى غير المالك رقم النسخة الحالية.
+    const loaded = await loadEditorialConfig(tx).catch(() => null);
+    const previous = loaded?.config ?? null;
+    const owner = await freshActor(tx, actor, previous ?? next);
+    assertOwner(owner);
     const latest = await tx.query<{ version: number }>(`SELECT version FROM editorial_config ORDER BY version DESC LIMIT 1`);
     const current = latest[0] ? Number(latest[0].version) : 0;
     if (current !== input.baseVersion) {
@@ -84,11 +90,6 @@ export async function saveEditorialSettings(
         currentVersion: current,
       });
     }
-    // المالك يحرر الإعدادات بحسابه الحالي (لا بصلاحيات حُسبت قبل الطلب).
-    const loaded = await loadEditorialConfig(tx).catch(() => null);
-    const previous = loaded?.config ?? null;
-    const owner = await freshActor(tx, actor, previous ?? next);
-    assertOwner(owner);
 
     const ids = next.bindings.map((b) => b.userId);
     const users = await tx.query<{ id: string; role: string }>(`SELECT id, role::text AS role FROM users WHERE id = ANY($1::text[])`, [ids]);

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import { decodePathParam } from "@/lib/modules/editorial/http-guard";
 import { decideAmendmentOp } from "@/lib/modules/editorial/intake";
 import { deskJson, editorialDb, editorialErrorResponse, readDeskJson, requireEditorialApi } from "@/lib/modules/editorial/guard";
 
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: { opId: s
   try {
     const parsed = body.safeParse(await readDeskJson(request));
     if (!parsed.success) return deskJson({ code: "INVALID_INPUT", message: "القرار غير صالح." }, 400);
-    return deskJson(await decideAmendmentOp(editorialDb(), gate.actor, decodeURIComponent(params.opId), parsed.data));
+    return deskJson(await decideAmendmentOp(editorialDb(), gate.actor, decodePathParam(params.opId, "معرّف العملية"), parsed.data));
   } catch (error) {
     return editorialErrorResponse(error);
   }

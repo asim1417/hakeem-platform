@@ -17,23 +17,22 @@ function hostOf(value: string | null | undefined): string | null {
 
 /**
  * طلب الكتابة يُقبل إن جاء من أصل التطبيق نفسه: ترويسة Origin تساوي أصل الطلب،
- * أو مضيفها هو مضيف الطلب نفسه (Host أو X-Forwarded-Host خلف نطاق Vercel المخصص).
+ * أو مضيفها هو ترويسة Host نفسها (النطاق المخصص خلف Vercel).
  * غياب Origin رفض: المتصفحات ترسلها في كل POST، وغيابها يعني عميلًا غير المتصفح أو طلبًا مزوّرًا.
+ * X-Forwarded-Host لا يُعتمد (ن٧): يستطيع العميل إرساله، والمتصفح لا يزوّر Host.
+ * الحقل forwardedHost باقٍ في التوقيع للتوافق ولا يُقرأ.
  */
 export function isSameOriginWrite(input: {
   origin: string | null;
   requestOrigin: string;
   host: string | null;
-  forwardedHost: string | null;
+  forwardedHost?: string | null;
 }): boolean {
   const originHost = hostOf(input.origin);
   if (!originHost) return false;
   if (originHost === hostOf(input.requestOrigin)) return true;
-  const hosts = [input.forwardedHost, input.host]
-    .flatMap((h) => (h ? h.split(",") : []))
-    .map((h) => h.trim().toLowerCase())
-    .filter(Boolean);
-  return hosts.includes(originHost);
+  const host = (input.host ?? "").trim().toLowerCase();
+  return host !== "" && host === originHost;
 }
 
 /** رفض مبكر بترويسة الطول قبل قراءة الجسم. */
@@ -87,4 +86,13 @@ export function deskPreflight(input: DeskPreflightInput): { status: number; code
     }
   }
   return null;
+}
+
+/** فك ترميز معامل المسار؛ الترميز المكسور = INVALID_INPUT (400) لا 500. */
+export function decodePathParam(value: string | undefined, field: string): string {
+  try {
+    return decodeURIComponent(value ?? "");
+  } catch {
+    throw new EditorialError("INVALID_INPUT", `ترميز ${field} في الرابط غير صالح.`);
+  }
 }

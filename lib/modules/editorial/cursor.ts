@@ -9,14 +9,19 @@ export function encodeCursor(key: CursorKey): string {
 }
 
 /** يفك المؤشر ويتحقق من شكله (الأنواع بالترتيب)؛ غير الصالح = INVALID_INPUT. */
-export function decodeCursor(raw: string, shape: ReadonlyArray<"string" | "number" | "boolean">): CursorKey {
+export type CursorSlot = "string" | "number" | "integer" | "boolean";
+
+export function decodeCursor(raw: string, shape: ReadonlyArray<CursorSlot>): CursorKey {
   let parsed: unknown;
   try {
     parsed = JSON.parse(Buffer.from(raw, "base64url").toString("utf8"));
   } catch {
     throw new EditorialError("INVALID_INPUT", "مؤشر الصفحة غير صالح.");
   }
-  if (!Array.isArray(parsed) || parsed.length !== shape.length || parsed.some((v, i) => typeof v !== shape[i])) {
+  // «integer» يُمرَّر إلى ::int في SQL؛ الكسر أو الرقم الكبير يُرفض هنا (400) لا هناك (500).
+  const fits = (v: unknown, slot: CursorSlot) =>
+    slot === "integer" ? Number.isSafeInteger(v) && Math.abs(v as number) <= 2_147_483_647 : typeof v === slot;
+  if (!Array.isArray(parsed) || parsed.length !== shape.length || parsed.some((v, i) => !fits(v, shape[i]))) {
     throw new EditorialError("INVALID_INPUT", "مؤشر الصفحة غير صالح.");
   }
   if (parsed.some((v) => typeof v === "number" && !Number.isFinite(v))) throw new EditorialError("INVALID_INPUT", "مؤشر الصفحة غير صالح.");

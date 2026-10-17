@@ -17,7 +17,7 @@ import { sourceRankFromUrl, stableJson } from "../lib/modules/editorial/audit";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "../lib/modules/editorial/db";
 import { canManageSettings, canReadAudit, inScope } from "../lib/modules/editorial/access";
 import { hijriToGregorian } from "../lib/modules/editorial/hijri";
-import { deskPreflight, MAX_BODY_BYTES, parseBodyText } from "../lib/modules/editorial/http-guard";
+import { decodePathParam, deskPreflight, MAX_BODY_BYTES, parseBodyText } from "../lib/modules/editorial/http-guard";
 import { checkDeskIntegrity } from "../lib/modules/editorial/integrity";
 import {
   bulkApproveAmendmentOps,
@@ -131,7 +131,8 @@ function pureTests() {
   ok(deskPreflight({ ...pre, origin: null })?.status === 403, "طلب كتابة بلا Origin يُرفض");
   ok(deskPreflight({ ...pre, origin: "https://evil.example" })?.status === 403, "طلب كتابة من أصل آخر يُرفض");
   ok(deskPreflight({ ...pre, requestOrigin: "https://deploy-x.vercel.app", host: "hakeem.example" }) === null, "Origin يطابق مضيف الطلب نفسه (النطاق المخصص) فيُقبل");
-  ok(deskPreflight({ ...pre, requestOrigin: "https://deploy-x.vercel.app", host: "deploy-x.vercel.app", forwardedHost: "hakeem.example" }) === null, "ويطابق X-Forwarded-Host");
+  ok(deskPreflight({ ...pre, requestOrigin: "https://deploy-x.vercel.app", host: "deploy-x.vercel.app", forwardedHost: "hakeem.example" })?.status === 403, "ن٧ X-Forwarded-Host من العميل لا يُعتمد في فحص Origin");
+  ok(deskPreflight({ ...pre, origin: "http://evil.example", requestOrigin: "https://deploy-x.vercel.app", host: "deploy-x.vercel.app", forwardedHost: "evil.example" })?.status === 403, "ن٧ ولا يمرّر أصلًا غريبًا يطابقه");
   ok(deskPreflight({ ...pre, method: "GET", origin: null }) === null, "القراءة لا تشترط Origin");
   ok(deskPreflight({ ...pre, contentLength: String(MAX_BODY_BYTES + 1) })?.status === 413, "حد الجسم 64 ك.ب بالترويسة (413)");
   throwsSync(() => parseBodyText("x".repeat(MAX_BODY_BYTES + 1)), "PAYLOAD_TOO_LARGE", "وحد الجسم بالطول الفعلي بالبايت");
@@ -707,6 +708,7 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   const unifyCtx = { pool, db, one, num, setBinding, writeConfig, owner, editor, reviewer, agent, root };
   await unificationTests(unifyCtx);
   await round2Tests(unifyCtx);
+  await qaFixTests(unifyCtx);
 
   await pool.end();
 }
@@ -1229,10 +1231,14 @@ async function unificationTests(c: UnifyCtx) {
   await pool.query(`ALTER TABLE audit_event DISABLE TRIGGER audit_event_append_only`);
   const disabled = await checkDeskIntegrity(db);
   ok(!disabled.ok && disabled.missing.includes("audit_event_append_only:disabled"), "P3 المشغّل المعطّل يُكتشف");
-  await rejects(
+  const p3err = await rejects(
     () => createChangeSet(db, editor, { title: "مشغّل معطّل", changes: [{ op: "set_work_status", targetId: "U6", status: "ملغى", evidence: EVIDENCE("923") }] }),
     "INVALID_STATE",
     "P3 والكتابة تُقفل",
+  );
+  ok(
+    Boolean(p3err) && !JSON.stringify({ m: p3err?.message, d: p3err?.detail }).includes("audit_event") && p3err?.detail?.missingCount === 1,
+    "ن٤ أسماء المشغّلات لا تصل العميل (تبقى في سجل الخادم)",
   );
   await pool.query(`ALTER TABLE audit_event ENABLE REPLICA TRIGGER audit_event_append_only`);
   ok((await checkDeskIntegrity(db)).missing.includes("audit_event_append_only:disabled"), "ومشغّل وضع النسخ فقط (R) يُعدّ معطّلًا");
@@ -1438,6 +1444,77 @@ async function round2Tests(c: UnifyCtx) {
     cfgx.policies.review_principle.minApprovals = 1;
   });
   void q1;
+}
+
+// ── إصلاحات مراجعة الجودة المستقلة على 655ed39 (م١، ن١، ن٣، ن٤، ن٦، ن٧) ─────
+
+async function qaFixTests(c: UnifyCtx) {
+  const { pool, db, num, setBinding, writeConfig, owner, reviewer } = c;
+  console.log("\n— إصلاحات مراجعة الجودة —");
+
+  // م١: هوية المُعِدّ بالمستخدم؛ الحساب المقلوب من وكيل إلى بشري لا يعتمد ما أعدّه وكيلًا.
+  await pool.query(`INSERT INTO users (id, name, email, role) VALUES ('u-flip','وكيل يُقلب','flip@test.local','TRAINEE')`);
+  await pool.query(`INSERT INTO legal_systems (id, name) VALUES ('F1', 'نظام القلب')`);
+  await pool.query(
+    `INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_at)
+     VALUES ('v-F1', 'work', 'F1', 'ساري', 'المرسوم الملكي رقم م/1', 'https://uqn.gov.sa/details?p=1', 'يعمل بهذا النظام من تاريخ نشره في الجريدة الرسمية.', 'manual', NOW() - interval '30 days')`,
+  );
+  await setBinding(binding("u-flip", ["editor_laws"], "agent"));
+  const asAgent = actor("u-flip", "TRAINEE", ["editor_laws"], "agent");
+  const agentSet = await createChangeSet(db, asAgent, { title: "أعدّه وكيلًا", changes: [{ op: "set_work_status", targetId: "F1", status: "ملغى", evidence: EVIDENCE("941") }] });
+  await submitChangeSet(db, asAgent, agentSet.changeSetId);
+  const view = await readEditorialSettings(db, owner);
+  const flipCfg = JSON.parse(JSON.stringify(view.config)) as EditorialConfig;
+  flipCfg.bindings = flipCfg.bindings.map((b) => (b.userId === "u-flip" ? { ...b, kind: "human" as const, roles: ["reviewer", "publisher"] } : b));
+  await saveEditorialSettings(db, owner, { baseVersion: view.version, reason: "قلب الوكيل إلى معتمد بشري", config: flipCfg });
+  const asHuman = actor("u-flip", "TRAINEE", ["reviewer", "publisher"]);
+  await rejects(() => decideChangeSet(db, asHuman, agentSet.changeSetId, { decision: "approve" }), "SELF_APPROVAL_FORBIDDEN", "م١ الحساب المقلوب بشريًّا لا يعتمد ما أعدّه وكيلًا");
+  ok((await num(`SELECT count(*) FROM review_decision WHERE change_set_id = $1`, [agentSet.changeSetId])) === 0, "م١ ولم يُكتب قرار");
+  // ولو وُجد صف قرار منه (إدراج مباشر) فلا يُعدّ موافقة.
+  const hash = (await pool.query(`SELECT payload_hash FROM change_set WHERE id = $1`, [agentSet.changeSetId])).rows[0].payload_hash as string;
+  await pool.query(
+    `INSERT INTO review_decision (id, change_set_id, reviewer_id, decision, reason, self_approval, payload_hash) VALUES ('rd-flip', $1, 'u-flip', 'approve', NULL, FALSE, $2)`,
+    [agentSet.changeSetId, hash],
+  );
+  const flipView = (await listChangeSetsDetailed(db, owner, { id: agentSet.changeSetId }))[0];
+  ok(flipView?.approvals === 0, "م١ وموافقة المُعِدّ (بأي نوع حساب) لا تُعدّ في approvalState");
+  ok((await decideChangeSet(db, reviewer, agentSet.changeSetId, { decision: "approve" })).status === "approved", "م١ ومعتمِد آخر يعتمدها");
+  await withdrawChangeSet(db, owner, agentSet.changeSetId, { reason: "تنظيف" });
+
+  // ن١: رسالة 409 مفهومة بلا اسم الحقل الداخلي.
+  await writeConfig((cfg) => {
+    cfg.policies.review_amendment_op.minApprovals = 2;
+  });
+  await pool.query(
+    `INSERT INTO uqn_fix.amendment_op (op_id, effect_id, instrument_kind, instrument_no, source_url, target_law_title, target_hakeem_code,
+        target_resolution, op_type, article_number, new_text, risks, confidence, verbatim_in_source, evidence_quote, raw)
+     VALUES ('FX1', 'E1', 'royal_decree', 'م/9', 'https://uqn.gov.sa/details?p=9', 'نظام اختبار S1', 'S1', 'hakeem_reference_code',
+             'replace_article_text', 1, 'نص جديد', '{}'::text[], 'rule_exact', TRUE, 'تعدل المادة لتكون بالنص الآتي', '{}'::jsonb)`,
+  );
+  const fx = await decideAmendmentOp(db, reviewer, "FX1", { decision: "approved" });
+  const stale = await rejects(() => decideAmendmentOp(db, owner, "FX1", { decision: "approved" }), "CONFLICT", "ن١ قرار على عنصر عليه مقترح معلّق بلا بصمة = 409");
+  ok(Boolean(stale) && !stale!.message.includes("expectedDecisionHash") && /[\u0600-\u06FF]/.test(stale!.message) && stale!.message.includes("حدّث الطابور"), "ن١ والرسالة عربية بلا اسم حقل داخلي");
+  await withdrawChangeSet(db, owner, fx.changeSetId, { reason: "تنظيف" });
+  await writeConfig((cfg) => {
+    cfg.policies.review_amendment_op.minApprovals = 1;
+  });
+
+  // ن٣: مؤشر برقم غير صحيح، وترميز رابط مكسور = 400 لا 500.
+  const badCursor = Buffer.from(JSON.stringify([0, "x", false, 1.5, "y"]), "utf8").toString("base64url");
+  await rejects(() => listAmendmentQueue(db, { after: badCursor }), "INVALID_INPUT", "ن٣ مؤشر برقم كسري يُرفض (400) قبل SQL");
+  const bigCursor = Buffer.from(JSON.stringify([0, "x", false, 1e12, "y"]), "utf8").toString("base64url");
+  await rejects(() => listAmendmentQueue(db, { after: bigCursor }), "INVALID_INPUT", "ن٣ ورقم خارج int يُرفض");
+  try {
+    decodePathParam("%E0%A4", "المعرّف");
+    ok(false, "ن٣ الترميز المكسور يُرفض (لم يُرفض)");
+  } catch (error) {
+    ok(error instanceof EditorialError && error.code === "INVALID_INPUT", "ن٣ ترميز الرابط المكسور = INVALID_INPUT");
+  }
+
+  // ن٦: غير المالك بنسخة خاطئة يتلقى FORBIDDEN لا رقم النسخة.
+  const v = await readEditorialSettings(db, owner);
+  const ne = await rejects(() => saveEditorialSettings(db, reviewer, { baseVersion: 0, reason: "محاولة بنسخة قديمة", config: v.config }), "FORBIDDEN", "ن٦ فحص المالك قبل النسخة");
+  ok(ne?.detail?.currentVersion === undefined, "ن٦ ولا يتسرب رقم النسخة الحالية");
 }
 
 async function main() {

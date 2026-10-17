@@ -219,7 +219,7 @@ const OP_SOURCE_REF_SQL = `('uqn_fix.amendment_op:' || o.op_id)`;
 // مكتوبًا بمفاتيح تصاعدية كلها ليصلح للمقارنة الصفّية في الترقيم بالمفتاح.
 const OP_PRIORITY_SQL = `(CASE WHEN (o.confidence = 'rule_exact' AND o.verbatim_in_source IS TRUE AND o.target_hakeem_code IS NOT NULL) THEN 0 ELSE 1 END)`;
 const OP_ORDER_SQL = `${OP_PRIORITY_SQL}, o.target_law_title, (o.article_number IS NULL), coalesce(o.article_number, 0), o.op_id`;
-const OP_CURSOR_SHAPE = ["number", "string", "boolean", "number", "string"] as const;
+const OP_CURSOR_SHAPE = ["integer", "string", "boolean", "integer", "string"] as const;
 
 function queueView(raw: unknown): QueueView {
   return raw === "waiting_others" ? "waiting_others" : "mine";
@@ -848,7 +848,8 @@ async function decideIntakeItem(
       });
     }
   } else if (pending) {
-    throw new EditorialError("CONFLICT", "على هذا العنصر قرار معلّق بانتظار الموافقة؛ راجعه وأرسل بصمته (expectedDecisionHash).", {
+    // رسالة للمستخدم بلا أسماء حقول داخلية (ن١): الطلب لم يحمل بصمة قرار معروض، أي أن الطابور قديم.
+    throw new EditorialError("CONFLICT", "سجّل معتمِد آخر قرارًا على هذا العنصر قبل قليل؛ حدّث الطابور لترى القرار المعروض ثم قرّر.", {
       openChangeSetId: pending.set.id,
       currentDecisionHash: shown,
       pendingDecision: pending.change.after,

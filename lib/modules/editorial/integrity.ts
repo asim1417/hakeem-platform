@@ -97,8 +97,10 @@ export async function assertDeskIntegrity(db: SqlClient): Promise<void> {
     throw new EditorialError("INVALID_STATE", "تعذّر التحقق من سلامة جداول المكتب؛ الكتابة مقفلة.");
   }
   if (!result.ok) {
-    throw new EditorialError("INVALID_STATE", "حمايات جداول المكتب ناقصة أو معطّلة (فهارس القفل أو المشغّلات)؛ الكتابة مقفلة حتى تُستعاد.", {
-      missing: result.missing,
+    // أسماء الفهارس والمشغّلات للسجل الخادمي وحده (ن٤)؛ العميل يتلقى رسالة عامة وعددًا.
+    console.error("[editorial] desk integrity check failed", result.missing.join(", "));
+    throw new EditorialError("INVALID_STATE", "حمايات جداول المكتب ناقصة أو معطّلة؛ الكتابة مقفلة حتى يستعيدها مهندس القاعدة.", {
+      missingCount: result.missing.length,
     });
   }
 }
