@@ -37,5 +37,23 @@ const big = auditLawNumbering([
 ]);
 ok(big.matched === 3, "الأعداد المركبة بعد المائة");
 
+const colon = auditLawNumbering([
+  { articleNumber: 11, title: "المادة الحادية عشرة:" },
+  { articleNumber: 21, title: "المادة الحادية والعشرون :" },
+  { articleNumber: 62, title: "المادة الثانية والستون:" },
+  { articleNumber: 212, title: "المادة الثانية عشرة بعد المائتين:" },
+  { articleNumber: 70, title: "المادة السبعون، " },
+]);
+ok(colon.matched === 5 && colon.status === "clean", "النقطتان والفاصلة الملتصقتان بالعنوان لا تُسقطان الكلمة الأخيرة");
+const reg = auditLawNumbering([{ articleNumber: 1, title: "١/١" }, { articleNumber: 2, title: "١/٣" }, { articleNumber: 3, title: "2/3" }]);
+ok(reg.parsed === 0 && reg.status === "no_ordinal_titles", "ترقيم اللوائح «مادة/فقرة» لا يُقرأ عددًا ترتيبيًّا");
+// «مكرر» مُدرَج بالتسلسل: ما بعده يحمل رقمًا يزيد واحدًا على عنوانه (حالة التأمينات الاجتماعية).
+const bisSeq = auditLawNumbering([
+  ...T.slice(0, 5).map((title, i) => ({ articleNumber: i + 1, title })),
+  { articleNumber: 6, title: "المادة الخامسة مكرر" },
+  ...T.slice(5).map((title, i) => ({ articleNumber: i + 7, title })),
+]);
+ok(bisSeq.status === "shift" && bisSeq.runs[0]?.from === 7 && bisSeq.runs[0]?.offset === -1, "«مكرر» مخزَّن برقم تسلسلي يُزيح ما بعده");
+
 console.log(failed === 0 ? "✓ تدقيق الترقيم" : `✗ فشل ${failed}`);
 process.exit(failed === 0 ? 0 : 1);
