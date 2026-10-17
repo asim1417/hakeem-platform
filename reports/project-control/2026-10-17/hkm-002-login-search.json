@@ -1,0 +1,41 @@
+{
+  "task": "HKM-002",
+  "check": "logged-in-search",
+  "status": "بانتظار الوصول",
+  "counted_as_success": false,
+  "checked_at": "2026-10-17T06:15:00Z",
+  "host": "hakeemai.net",
+  "fill_rerun": false,
+  "vectors_touched": false,
+  "session": {
+    "clerk_auth_status": "signed-out",
+    "clerk_auth_reason": "session-token-and-uat-missing",
+    "browser_cookie_rows_for_hakeem_or_clerk": 0,
+    "auth_env_names": 0
+  },
+  "routes": [
+    {
+      "path": "/dashboard/ask",
+      "status": 307,
+      "location": "/sign-in?next=%2Fdashboard%2Fask"
+    },
+    {
+      "path": "/dashboard/legal-search?q=سلامة",
+      "status": 307,
+      "location": "/sign-in?next=%2Fdashboard%2Flegal-search",
+      "query_kept_in_next": false
+    },
+    {
+      "path": "/dashboard/legal-core/search?q=سلامة",
+      "status": 307,
+      "location": "/sign-in?next=%2Fdashboard%2Flegal-core%2Fsearch"
+    }
+  ],
+  "not_verified": [
+    "query_entry_after_login",
+    "result_list",
+    "open_article_from_result",
+    "non_current_editions_absent_from_full_retrieved_set"
+  ],
+  "image": "hkm-002-login-required.png"
+}
