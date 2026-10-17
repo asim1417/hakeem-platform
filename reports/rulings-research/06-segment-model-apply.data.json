@@ -1,0 +1,43 @@
+{
+  "measuredAt": "2026-10-17T05:28:29.689Z",
+  "model": "claude-haiku-5-5",
+  "version": "segment-model-v1",
+  "mode": "apply",
+  "target": "production",
+  "segmentVersion": "segment-rules-v4+segment-model-v1",
+  "rulings": 3136,
+  "regions": 3846,
+  "calls": 3846,
+  "verified": 1955,
+  "applied": 1870,
+  "orderRejected": 28,
+  "segmentRows": 8310,
+  "embedded": 1713,
+  "embedFailed": 0,
+  "rejected": {
+    "not_found": 10,
+    "too_short": 2,
+    "masked": 84,
+    "unparsed": 56,
+    "not_present": 1739,
+    "error": 0
+  },
+  "byPart": {
+    "claims": {
+      "n": 1803,
+      "applied": 384
+    },
+    "reasons": {
+      "n": 1842,
+      "applied": 1365
+    },
+    "disposition": {
+      "n": 201,
+      "applied": 178
+    }
+  },
+  "stoppedAtCap": false,
+  "inTokens": 4729321,
+  "outTokens": 1508715,
+  "usd": 1.227
+}
