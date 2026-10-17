@@ -7,12 +7,30 @@ import { readFileSync } from "node:fs";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
 import { computeSurface, inSurface } from "../../lib/modules/legal-core/search-surface.ts";
-import { fillNullSearchNorm, loadManifest } from "./fill-null-search-norm.mjs";
+import { fillNullSearchNorm, loadLedger, loadManifest, saveLedger } from "./fill-null-search-norm.mjs";
 import { rollbackNullSearchNorm } from "./rollback-null-search-norm.mjs";
 
+const LAB_DATABASE = "hakeem_hkm002";
 const LOCAL = process.env.HKM002_LOCAL_URL;
 if (!LOCAL || !LOCAL.includes("@127.0.0.1:") && !LOCAL.includes("@localhost:")) {
   throw new Error("HKM002_LOCAL_URL يجب أن يشير إلى 127.0.0.1");
+}
+
+export function databaseNameOf(url) {
+  return decodeURIComponent(url.split("?")[0].split("/").pop() ?? "");
+}
+
+/** يرفض أي اسم غير قاعدة الاختبار المعزولة. يُستدعى قبل المسح على الاسم الفعلي. */
+export function assertLabDatabaseName(name) {
+  if (name !== LAB_DATABASE) {
+    throw new Error(`مرفوض: اسم القاعدة «${name}» ليس قاعدة الاختبار ${LAB_DATABASE}`);
+  }
+}
+
+async function assertLiveLabDatabase(client) {
+  const res = await client.query("SELECT current_database() AS name");
+  assertLabDatabaseName(res.rows[0].name);
+  return res.rows[0].name;
 }
 
 const checks = [];
@@ -31,6 +49,7 @@ function recallSql() {
 }
 
 async function seed(prod, local, ids) {
+  await assertLiveLabDatabase(local);
   await local.query("BEGIN");
   await local.query(`
     CREATE TABLE IF NOT EXISTS legal_systems (
@@ -178,12 +197,24 @@ async function articleOf(client, lawName, articleNumber = 1) {
 }
 
 async function main() {
+  for (const name of ["hakeem", "hakeem_wave1", "neondb", "postgres", ""]) {
+    let refused = false;
+    try { assertLabDatabaseName(name); } catch { refused = true; }
+    ok(`رفض مسح قاعدة باسم «${name || "فارغ"}»`, refused);
+  }
+  assertLabDatabaseName(LAB_DATABASE);
+  ok("اسم قاعدة الاختبار المسموح هو hakeem_hkm002", true);
+  if (databaseNameOf(LOCAL) !== LAB_DATABASE) {
+    throw new Error("مرفوض: مسار الاتصال لا يسمي قاعدة الاختبار");
+  }
   const manifest = loadManifest();
   const ids = manifest.rows.map((row) => row.id);
   const prod = new Client({ connectionString: process.env.DATABASE_UR });
   const local = new Client({ connectionString: LOCAL });
   await prod.connect();
   await local.connect();
+  const liveDb = await assertLiveLabDatabase(local);
+  ok("الاسم الفعلي للقاعدة قبل أي مسح هو hakeem_hkm002", liveDb === LAB_DATABASE);
   await prod.query("SET default_transaction_read_only = on");
   const beforeNull = await prod.query(`SELECT count(*)::int AS n FROM legal_articles WHERE search_norm IS NULL`);
   const seeded = await seed(prod, local, ids);
@@ -198,6 +229,12 @@ async function main() {
 
   const filled = await fillNullSearchNorm(local, manifest);
   ok("حُدّث 353 صفًا", filled.updated === 353);
+  saveLedger(filled.ledger);
+  const ledger = loadLedger();
+  ok("سجل الدفعة يحفظ 353 قيمة", ledger.rows.length === 353 && ledger.expected_count === 353);
+  const ledgerById = new Map(ledger.rows.map((row) => [row.id, row.search_norm]));
+  const stored = await local.query(`SELECT id, search_norm FROM legal_articles WHERE id = ANY($1::text[])`, [ids]);
+  ok("كل قيمة مخزنة تطابق سجل الدفعة", stored.rows.every((row) => row.search_norm === ledgerById.get(row.id)));
   ok("المتن لم يتغير بعد الملء", (await contentMd5(local, ids)) === digestBefore);
   const nulls = await local.query(`SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NULL`, [ids]);
   ok("لا NULL متبقٍ في القائمة", nulls.rows[0].n === 0);
@@ -231,25 +268,47 @@ async function main() {
     ok(`الاستدعاء الخام يجد ${lawName}`, raw.some((row) => row.id === article.id));
   }
 
+  const originalTitle = sample.title;
+  await local.query(`UPDATE legal_articles SET title = $2 WHERE id = $1`, [sample.id, `${originalTitle} تعديل اختباري`]);
+  const retitled = await articleOf(local, "نظام سلامة المنتجات");
+  const reindexed = buildSearchNorm(retitled);
+  ok("إعادة الفهرسة بعد تغيير العنوان تنتج قيمة مختلفة", reindexed !== ledgerById.get(sample.id) && reindexed.length > 0);
+  await local.query(`UPDATE legal_articles SET search_norm = $2 WHERE id = $1`, [sample.id, reindexed]);
+  let retitleRejected = false;
+  try { await rollbackNullSearchNorm(local, manifest, ledger); } catch { retitleRejected = true; }
+  ok("التراجع يرفض القيمة المعاد فهرستها بعد تغيير العنوان", retitleRejected);
+  const afterRetitle = await local.query(`SELECT title, search_norm FROM legal_articles WHERE id = $1`, [sample.id]);
+  ok("القيمة المعاد فهرستها بقيت", afterRetitle.rows[0].search_norm === reindexed);
+  ok("العنوان المعدّل بقي", afterRetitle.rows[0].title === `${originalTitle} تعديل اختباري`);
+  const others = await local.query(
+    `SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND id <> $2 AND search_norm IS NOT NULL`,
+    [ids, sample.id],
+  );
+  ok("رفض التراجع لم يفرّغ بقية الصفوف", others.rows[0].n === 352);
+  ok("المتن ثابت بعد تغيير العنوان وإعادة الفهرسة", (await contentMd5(local, ids)) === digestBefore);
+  await local.query(`UPDATE legal_articles SET search_norm = $2 WHERE id = $1`, [sample.id, ledgerById.get(sample.id)]);
+
   const tampered = await local.query(
     `UPDATE legal_articles SET search_norm = 'tamper' WHERE id = $1 RETURNING id`,
     [sample.id],
   );
   ok("عُدّل صف واحد للاختبار", tampered.rowCount === 1);
   let rollbackRejected = false;
-  try { await rollbackNullSearchNorm(local, manifest); } catch { rollbackRejected = true; }
+  try { await rollbackNullSearchNorm(local, manifest, ledger); } catch { rollbackRejected = true; }
   ok("التراجع يتوقف إذا تغيرت قيمة كتبها غيره", rollbackRejected);
   const tamperLeft = await local.query(`SELECT search_norm FROM legal_articles WHERE id = $1`, [sample.id]);
   ok("الصف المعدّل لم يُمس عند رفض التراجع", tamperLeft.rows[0].search_norm === "tamper");
   await local.query(
     `UPDATE legal_articles SET search_norm = $2 WHERE id = $1`,
-    [sample.id, buildSearchNorm(sample)],
+    [sample.id, ledgerById.get(sample.id)],
   );
-  const cleared = await rollbackNullSearchNorm(local, manifest);
+  const cleared = await rollbackNullSearchNorm(local, manifest, ledger);
   ok("التراجع أفرغ 353", cleared.cleared === 353);
   ok("المتن ثابت بعد التراجع", (await contentMd5(local, ids)) === digestBefore);
   const allNull = await local.query(`SELECT count(*)::int AS n FROM legal_articles WHERE id = ANY($1::text[]) AND search_norm IS NULL`, [ids]);
   ok("القائمة عادت NULL", allNull.rows[0].n === 353);
+  const titleLeft = await local.query(`SELECT title FROM legal_articles WHERE id = $1`, [sample.id]);
+  ok("التراجع أفرغ القيمة المحفوظة رغم تغيّر العنوان", titleLeft.rows[0].title === `${originalTitle} تعديل اختباري`);
 
   await local.query(`DELETE FROM legal_articles WHERE id = $1`, [ids[0]]);
   let missingRejected = false;
@@ -263,7 +322,13 @@ async function main() {
 
   const afterNull = await prod.query(`SELECT count(*)::int AS n FROM legal_articles WHERE search_norm IS NULL`);
   ok("الإنتاج بقي 353 NULL", beforeNull.rows[0].n === 353 && afterNull.rows[0].n === 353);
-  console.log(JSON.stringify({ pass: checks.length, failed: checks.filter((item) => !item.pass).length, seeded, checks }, null, 1));
+  console.log(JSON.stringify({
+    pass: checks.length,
+    failed: checks.filter((item) => !item.pass).length,
+    database: liveDb,
+    seeded,
+    checks,
+  }, null, 1));
   await prod.end();
   await local.end();
 }

@@ -8,12 +8,13 @@
  * الإنتاج غير مُشغَّل من هذه المراجعة. --target production يرفض الكتابة
  * ما لم تُضبط حراس الإذن صراحةً، ولم تُضبط في الاختبار.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
 
 export const MANIFEST_PATH = new URL("./expected-null-ids.json", import.meta.url);
+export const LEDGER_PATH = new URL("./written-search-norm.json", import.meta.url);
 
 export function loadManifest(path = MANIFEST_PATH) {
   const manifest = JSON.parse(readFileSync(path, "utf8"));
@@ -97,19 +98,34 @@ export async function fillNullSearchNorm(client, manifest) {
       if (row.content_md5 !== exp.content_md5) throw new Error("توقف: نص مادة مستهدفة تغيّر");
       if (row.search_norm !== null) throw new Error("توقف: search_norm لم يعد NULL في القائمة المتوقعة");
     }
+    const written = [];
     for (const row of locked.rows) {
       const norm = buildSearchNorm(articleFromRow(row));
+      if (!norm) throw new Error("توقف: ناتج التطبيع فارغ");
       const updated = await client.query(
         `UPDATE legal_articles
          SET search_norm = $2
          WHERE id = $1 AND search_norm IS NULL
-         RETURNING md5(content) AS content_md5`,
+         RETURNING md5(content) AS content_md5, search_norm`,
         [row.id, norm],
       );
       if (updated.rowCount !== 1) throw new Error("توقف: شرط NULL لم يطابق الصف");
       if (updated.rows[0].content_md5 !== expected.get(row.id).content_md5) {
         throw new Error("توقف: المتن تغيّر أثناء التحديث");
       }
+      if (updated.rows[0].search_norm !== norm) throw new Error("توقف: القيمة العائدة تختلف عن المكتوب");
+      written.push({ id: row.id, search_norm: norm });
+    }
+    written.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const ledger = { batch: "HKM-002", expected_count: manifest.expected_count, rows: written };
+    const stored = await client.query(
+      `SELECT id, search_norm FROM legal_articles WHERE id = ANY($1::text[])`,
+      [ids],
+    );
+    const storedById = new Map(stored.rows.map((row) => [row.id, row.search_norm]));
+    if (storedById.size !== written.length) throw new Error("توقف: سجل القيم لا يطابق الصفوف المخزنة");
+    for (const row of written) {
+      if (storedById.get(row.id) !== row.search_norm) throw new Error("توقف: سجل الدفعة يختلف عما استقر في الصف");
     }
     const after = await client.query(
       `SELECT count(*)::int AS n,
@@ -126,11 +142,34 @@ export async function fillNullSearchNorm(client, manifest) {
       throw new Error("توقف: التحقق الختامي لم يطابق القائمة");
     }
     await client.query("COMMIT");
-    return { updated: manifest.expected_count };
+    return { updated: manifest.expected_count, ledger };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   }
+}
+
+export function assertLedger(ledger) {
+  if (!ledger || ledger.batch !== "HKM-002" || !Array.isArray(ledger.rows) || ledger.rows.length !== ledger.expected_count) {
+    throw new Error("سجل الدفعة غير صالح");
+  }
+  const ids = new Set(ledger.rows.map((row) => row.id));
+  if (ids.size !== ledger.rows.length) throw new Error("سجل الدفعة فيه معرّف مكرر");
+  for (const row of ledger.rows) {
+    if (!row.id || typeof row.search_norm !== "string" || row.search_norm.length === 0) {
+      throw new Error("سجل الدفعة فيه قيمة فهرس فارغة");
+    }
+  }
+  return ledger;
+}
+
+export function saveLedger(ledger, path = LEDGER_PATH) {
+  assertLedger(ledger);
+  writeFileSync(path, `${JSON.stringify(ledger)}\n`);
+}
+
+export function loadLedger(path = LEDGER_PATH) {
+  return assertLedger(JSON.parse(readFileSync(path, "utf8")));
 }
 
 async function main() {
@@ -145,7 +184,13 @@ async function main() {
   await client.connect();
   try {
     const result = await fillNullSearchNorm(client, manifest);
-    console.log(JSON.stringify({ target, updated: result.updated, expected: manifest.expected_count }));
+    saveLedger(result.ledger);
+    console.log(JSON.stringify({
+      target,
+      updated: result.updated,
+      expected: manifest.expected_count,
+      ledger_rows: result.ledger.rows.length,
+    }));
   } finally {
     await client.end();
   }

@@ -1,34 +1,31 @@
 /**
  * HKM-002 — تراجع ملء search_norm للقائمة المجمّدة.
- * يعيد العمود إلى NULL فقط إذا كانت قيمته هي ناتج التطبيع الحالي للصف
- * (أي القيمة التي يكتبها fill). إذا تغيّر المتن أو قيمة الفهرس، تُلغى المعاملة كلها.
+ * يفرّغ العمود فقط إذا كانت قيمته مطابقة حرفيًا لما حفظته الدفعة في سجلها.
+ * لا يعيد حساب التطبيع من الحقول الحالية. أي قيمة تغيّرت بعد الكتابة تُلغي المعاملة كلها.
  *
- *   node --experimental-strip-types scripts/hkm-002/rollback-null-search-norm.mjs --target isolated
+ *   node --experimental-strip-types --import ./scripts/hkm-002/ts-resolve.mjs scripts/hkm-002/rollback-null-search-norm.mjs --target isolated
  */
 import { pathToFileURL } from "node:url";
 import { Client } from "pg";
-import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
-import { assertTarget, loadManifest } from "./fill-null-search-norm.mjs";
+import { assertTarget, loadLedger, loadManifest } from "./fill-null-search-norm.mjs";
 
-function articleFromRow(row) {
-  return {
-    lawName: row.lawName,
-    title: row.title,
-    content: row.content,
-    keywords: row.keywords ?? [],
-    classification: row.classification,
-    chapter: row.chapter,
-  };
-}
-
-export async function rollbackNullSearchNorm(client, manifest) {
+export async function rollbackNullSearchNorm(client, manifest, ledger) {
   const ids = manifest.rows.map((row) => row.id);
   const expected = new Map(manifest.rows.map((row) => [row.id, row]));
+  if (ledger?.batch !== "HKM-002" || ledger.expected_count !== manifest.expected_count || ledger.rows?.length !== manifest.expected_count) {
+    throw new Error("توقف: سجل الدفعة لا يطابق القائمة المتوقعة");
+  }
+  const saved = new Map(ledger.rows.map((row) => [row.id, row.search_norm]));
+  if (saved.size !== manifest.expected_count) throw new Error("توقف: سجل الدفعة فيه معرّف مكرر");
+  for (const id of ids) {
+    if (typeof saved.get(id) !== "string" || saved.get(id).length === 0) {
+      throw new Error("توقف: سجل الدفعة ينقصه معرّف أو قيمة");
+    }
+  }
   await client.query("BEGIN");
   try {
     const locked = await client.query(
-      `SELECT id, "lawName", "articleNumber", title, content, chapter, keywords, classification,
-              search_norm, md5(content) AS content_md5
+      `SELECT id, "lawName", "articleNumber", search_norm, md5(content) AS content_md5
        FROM legal_articles
        WHERE id = ANY($1::text[])
        FOR UPDATE`,
@@ -44,15 +41,15 @@ export async function rollbackNullSearchNorm(client, manifest) {
         throw new Error("توقف: اسم النظام أو رقم المادة تغيّر");
       }
       if (row.content_md5 !== exp.content_md5) throw new Error("توقف: نص مادة مستهدفة تغيّر");
-      const written = buildSearchNorm(articleFromRow(row));
+      if (row.search_norm !== saved.get(id)) throw new Error("توقف: قيمة search_norm تغيّرت بعد الدفعة");
       const updated = await client.query(
         `UPDATE legal_articles
          SET search_norm = NULL
          WHERE id = $1 AND search_norm = $2
          RETURNING md5(content) AS content_md5`,
-        [row.id, written],
+        [row.id, saved.get(id)],
       );
-      if (updated.rowCount !== 1) throw new Error("توقف: قيمة search_norm ليست ناتج هذه الدفعة");
+      if (updated.rowCount !== 1) throw new Error("توقف: قيمة search_norm لم تعد قيمة الدفعة");
       if (updated.rows[0].content_md5 !== exp.content_md5) throw new Error("توقف: المتن تغيّر أثناء التراجع");
     }
     const after = await client.query(
@@ -74,13 +71,14 @@ async function main() {
     ? process.argv[process.argv.indexOf("--target") + 1]
     : "";
   const manifest = loadManifest();
+  const ledger = loadLedger();
   const url = target === "production" ? process.env.DATABASE_UR ?? "" : process.env.DATABASE_URL ?? "";
   if (!url) throw new Error("سلسلة الاتصال غير مضبوطة للهدف");
   assertTarget(target, url, manifest.expected_count);
   const client = new Client({ connectionString: url });
   await client.connect();
   try {
-    const result = await rollbackNullSearchNorm(client, manifest);
+    const result = await rollbackNullSearchNorm(client, manifest, ledger);
     console.log(JSON.stringify({ target, cleared: result.cleared, expected: manifest.expected_count }));
   } finally {
     await client.end();
