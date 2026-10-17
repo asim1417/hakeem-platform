@@ -37,6 +37,15 @@ export interface NumberingAudit {
   status: NumberingStatus;
 }
 
+/** ترقيم اللوائح «رقم المادة/رقم الفقرة» (مثل «١/٣») ليس عددًا ترتيبيًّا للمادة. */
+const ARTICLE_PARAGRAPH = /^\s*[0-9\u0660-\u0669]+\s*\/\s*[0-9\u0660-\u0669]+/;
+
+/** يقرأ رقم العنوان بعد إزالة علامات الترقيم الملتصقة («عشرة:» و«المائتين،»)، فالمحلل لا يزيلها. */
+export function titleOrdinal(title: string | null): ReturnType<typeof parseArticleOrdinal> {
+  if (!title || ARTICLE_PARAGRAPH.test(title)) return null;
+  return parseArticleOrdinal(title.replace(/[:：؛;،,.\-–—]+/g, " "));
+}
+
 /** نسبة العناوين المقروءة التي يُعدّ دونها النظام بلا عناوين ترتيبية. */
 const MIN_PARSED_SHARE = 0.5;
 
@@ -47,7 +56,7 @@ export function auditLawNumbering(rows: NumberingRow[]): NumberingAudit {
   let parsed = 0;
   let bis = 0;
   for (const r of sorted) {
-    const o = r.title ? parseArticleOrdinal(r.title) : null;
+    const o = titleOrdinal(r.title);
     if (!o) continue;
     parsed++;
     if (o.bis > 0) {
