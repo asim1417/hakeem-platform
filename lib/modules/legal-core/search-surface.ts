@@ -66,6 +66,17 @@ export function computeSurface(rows: SurfaceRow[], members: SurfaceMember[], asO
   return { asOf, hidden, redirect, current };
 }
 
+/**
+ * حالة المادة بتاريخ السريان تتبع انتقال عملها (workStatusAsOf): يوم يصير العمل وجهه تصير مادته
+ * «صادر لم يسرِ بعد» ساريةً، ويوم يُستبدل تصير مادته «ساري» مستبدلةً. غير ذلك كما سُجّل.
+ */
+export function unitStatusAsOf(recordedStatus: string, work: { status: string; derived: boolean }): string {
+  if (!work.derived) return recordedStatus;
+  if (work.status === "ساري" && recordedStatus === "صادر لم يسرِ بعد") return "ساري";
+  if (work.status === "مستبدل" && recordedStatus === "ساري") return "مستبدل";
+  return recordedStatus;
+}
+
 /** يحوّل قائمة معرّفات أنظمة إلى معرّفات الوجه: المخفي بخلف يُستبدل، والمخفي بلا خلف يسقط. */
 export function mapToSurface(ids: string[], surface: SearchSurface): string[] {
   const out: string[] = [];

@@ -7,7 +7,8 @@ import { resolveSystemSlug, buildArticleEli, lawSlug } from "@/lib/modules/legal
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { PublicLegalShell, Crumb } from "@/components/public/PublicLegalShell";
 import { ArticlePresentation, AsOfForm } from "@/components/legal/ArticlePresentation";
-import { presentArticle } from "@/lib/modules/legal-core/verified-status";
+import { citationFlagsFromVerification, presentArticle } from "@/lib/modules/legal-core/verified-status";
+import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
 import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts, resolveEffectiveText } from "@/lib/modules/legal-core/effective-text";
 
@@ -73,10 +74,15 @@ export default async function LegalArticlePage({
   const content = sanitizeDisplayText(article.content);
   const asOfRaw = searchParams?.asOf?.trim() ?? "";
   const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
-  const [verification, versions] = await Promise.all([
+  const [recorded, versions, workVerification, surfaceState] = await Promise.all([
     latestVerification("unit", article.id),
     unitVersions(article.id),
+    latestVerification("work", system.id),
+    loadSearchSurface(asOf ? asOfRaw : undefined, { includeRepealed: true }),
   ]);
+  // حالة المادة تتبع انتقال عملها بتاريخ السريان، كصفحة النظام.
+  const byDate = workStatusAsOf(system.id, citationFlagsFromVerification(workVerification).statusLabel, surfaceState.surface);
+  const verification = recorded ? { ...recorded, verifiedStatus: unitStatusAsOf(recorded.verifiedStatus, byDate) } : null;
   const view = presentArticle({ baseText: content, versions, verification, asOf });
   const eli = buildArticleEli(system.name, n, system.eliSlug).id;
   const citation = `${system.name}، المادة (${n}) — ${view.citationSuffix}`;
