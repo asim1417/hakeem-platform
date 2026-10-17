@@ -15,6 +15,7 @@ import {
 } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
 import { assertDeskIntegrity } from "./integrity";
+import { payloadHash } from "./payload";
 
 // ── أنواع الصفوف ──────────────────────────────────────────────────────────────
 
@@ -27,6 +28,8 @@ export interface ChangeSetRow {
   author_agent: string | null;
   status: EditorialStatus;
   reverts_change_set_id: string | null;
+  payload_hash: string | null;
+  idempotency_key: string | null;
   created_at: Date;
   published_at: Date | null;
 }
@@ -44,6 +47,8 @@ export interface ChangeRow {
   evidence_quote: string | null;
   source_rank: number | null;
   source_ref: string | null;
+  domain: string;
+  applied_ref: string | null;
   author_id: string | null;
   author_kind: string;
   author_agent: string | null;
@@ -143,6 +148,33 @@ async function changesOf(tx: SqlClient, changeSetId: string): Promise<ChangeRow[
   );
 }
 
+/** يحسب بصمة الحمولة من الصفوف الحالية. */
+export function hashOf(set: ChangeSetRow, changes: ChangeRow[]): string {
+  return payloadHash(set, changes);
+}
+
+/** يضبط بصمة الدفعة عند الإرسال (القاعدة تجمّدها بعد ضبطها)، ويعيدها. */
+async function sealPayload(tx: SqlClient, set: ChangeSetRow, changes: ChangeRow[]): Promise<string> {
+  const hash = hashOf(set, changes);
+  if (set.payload_hash && set.payload_hash !== hash) {
+    throw new EditorialError("CONFLICT", "تغيّرت حمولة الدفعة عمّا أُرسل؛ لا يُكمل شيء.", { changeSetId: set.id });
+  }
+  if (!set.payload_hash) {
+    await tx.query(`UPDATE change_set SET payload_hash = $2 WHERE id = $1 RETURNING id`, [set.id, hash]);
+    set.payload_hash = hash;
+  }
+  return hash;
+}
+
+/** يعيد حساب البصمة ويطابقها بالمخزّنة (عند القرار والنشر). */
+function assertPayloadUnchanged(set: ChangeSetRow, changes: ChangeRow[]): string {
+  const hash = hashOf(set, changes);
+  if (!set.payload_hash || set.payload_hash !== hash) {
+    throw new EditorialError("CONFLICT", "بصمة حمولة الدفعة لا تطابق ما أُرسل؛ لا يُكمل شيء.", { changeSetId: set.id });
+  }
+  return hash;
+}
+
 async function setStatus(tx: SqlClient, changeSetId: string, status: EditorialStatus, published = false) {
   await tx.query(
     `UPDATE change_set SET status = $2, published_at = CASE WHEN $3::boolean THEN NOW() ELSE published_at END
@@ -182,15 +214,15 @@ async function insertChange(
   changeSetId: string,
   input: ChangeInput,
   before: WorkStatusSnapshot,
-  extra: { revertOf?: string | null; sourceRef?: string | null } = {},
+  extra: { revertOf?: string | null; sourceRef?: string | null; domain?: string | null } = {},
 ): Promise<string> {
   const id = ID();
   const author = authorOf(actor);
   try {
     await tx.query(
       `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after,
-          evidence_instrument, evidence_url, evidence_quote, source_rank, source_ref, author_id, author_kind, author_agent, status)
-       VALUES ($1, $2, 'work', $3, 'set_work_status', $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13, 'draft')
+          evidence_instrument, evidence_url, evidence_quote, source_rank, source_ref, author_id, author_kind, author_agent, status, domain)
+       VALUES ($1, $2, 'work', $3, 'set_work_status', $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13, 'draft', $14)
        RETURNING id`,
       [
         id,
@@ -206,6 +238,7 @@ async function insertChange(
         author.authorId,
         author.authorKind,
         author.authorAgent,
+        extra.domain ?? "",
       ],
     );
   } catch (error) {
@@ -256,10 +289,10 @@ export async function createChangeSet(
     );
     const changeIds: string[] = [];
     for (const change of changes) {
-      const exists = await tx.query<{ id: string }>(`SELECT id FROM legal_systems WHERE id = $1`, [change.targetId]);
+      const exists = await tx.query<{ id: string; domain: string | null }>(`SELECT id, domain FROM legal_systems WHERE id = $1`, [change.targetId]);
       if (!exists[0]) throw new EditorialError("NOT_FOUND", "النظام غير موجود.", { targetId: change.targetId });
       const before = await latestWorkVerification(tx, change.targetId);
-      const changeId = await insertChange(tx, actor, changeSetId, change, before);
+      const changeId = await insertChange(tx, actor, changeSetId, change, before, { domain: exists[0].domain ?? "" });
       changeIds.push(changeId);
       await recordAudit(tx, actor, {
         action: "change.create",
@@ -335,6 +368,8 @@ export async function submitChangeSet(
       throw new EditorialError("INVALID_STATE", "لا تُرسل إلا مسودة أو دفعة فشلت فحوصها.");
     }
     const changes = await changesOf(tx, changeSetId);
+    if (!changes.length) throw new EditorialError("INVALID_STATE", "دفعة بلا تغييرات لا تُرسل.");
+    await sealPayload(tx, set, changes);
     const checks: Record<string, CheckResult> = {};
     let allOk = true;
     for (const change of changes) {
@@ -381,6 +416,7 @@ export async function decideChangeSet(
     return await db.transaction(async (tx) => {
       const set = await lockChangeSet(tx, changeSetId);
       if (set.status !== "pending") throw new EditorialError("INVALID_STATE", "لا يُقرَّر إلا ما في الطابور.");
+      const hash = assertPayloadUnchanged(set, await changesOf(tx, changeSetId));
       const isOwnChange = set.author_kind === "human" && set.author_id === actor.id;
       let selfApproval = false;
       if (isOwnChange && input.decision === "approve") {
@@ -391,11 +427,7 @@ export async function decideChangeSet(
         selfApproval = true;
       }
       const decisionId = ID();
-      await tx.query(
-        `INSERT INTO review_decision (id, change_set_id, reviewer_id, decision, reason, self_approval)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [decisionId, changeSetId, actor.id, input.decision, reason, selfApproval],
-      );
+      await insertDecision(tx, { id: decisionId, changeSetId, reviewerId: actor.id, decision: input.decision, reason, selfApproval, payloadHash: hash });
       const status: EditorialStatus = input.decision === "approve" ? "approved" : "rejected";
       await setStatus(tx, changeSetId, status);
       await recordAudit(tx, actor, {
@@ -410,6 +442,27 @@ export async function decideChangeSet(
     await auditDenied(db, actor, error, "change_set", changeSetId);
     throw error;
   }
+}
+
+/** صف قرار واحد لكل معتمِد في الدفعة (UNIQUE): التكرار = قُرّر من قبل. */
+export async function insertDecision(
+  tx: SqlClient,
+  d: { id?: string; changeSetId: string; reviewerId: string; decision: "approve" | "reject"; reason: string | null; selfApproval: boolean; payloadHash: string },
+): Promise<string> {
+  const id = d.id ?? ID();
+  try {
+    await tx.query(
+      `INSERT INTO review_decision (id, change_set_id, reviewer_id, decision, reason, self_approval, payload_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [id, d.changeSetId, d.reviewerId, d.decision, d.reason, d.selfApproval, d.payloadHash],
+    );
+  } catch (error) {
+    if (pgErrorCode(error) === "23505") {
+      throw new EditorialError("ALREADY_DECIDED", "سبق أن قرّرتَ في هذه الدفعة؛ القرار لا يُكرَّر ولا يُعدَّل.", { changeSetId: d.changeSetId });
+    }
+    throw error;
+  }
+  return id;
 }
 
 // ── النشر الذري (W-03) ───────────────────────────────────────────────────────
@@ -441,6 +494,11 @@ async function applyWorkStatus(tx: SqlClient, actor: EditorialActor, change: Cha
   return verificationId;
 }
 
+/** مرجع ما كتبه النشر في المصدر: يُضبط مرة واحدة (القاعدة تمنع تغييره بعدها). */
+async function setAppliedRef(tx: SqlClient, changeId: string, ref: string) {
+  await tx.query(`UPDATE editorial_change SET applied_ref = $2 WHERE id = $1 RETURNING id`, [changeId, ref]);
+}
+
 export async function publishChangeSet(
   db: EditorialDb,
   actor: EditorialActor,
@@ -457,11 +515,13 @@ export async function publishChangeSet(
       const set = await lockChangeSet(tx, changeSetId);
       if (set.status !== "approved") throw new EditorialError("INVALID_STATE", "لا يُنشر إلا المعتمد.");
       const changes = await changesOf(tx, changeSetId);
+      assertPayloadUnchanged(set, changes);
       const verificationIds: string[] = [];
       for (const change of changes) {
         if (change.op !== "set_work_status") throw new EditorialError("INVALID_STATE", "فعل غير مدعوم للنشر.");
         const verificationId = await applyWorkStatus(tx, actor, change);
         verificationIds.push(verificationId);
+        await setAppliedRef(tx, change.id, verificationId);
         await tx.query(
           `INSERT INTO index_sync (id, change_set_id, target_type, target_id) VALUES ($1, $2, $3, $4) RETURNING id`,
           [ID(), changeSetId, change.target_type, change.target_id],
@@ -550,7 +610,7 @@ export async function revertChangeSet(
           note: `تراجع: ${reason}`.slice(0, 1000),
         };
         const before = await latestWorkVerification(tx, change.target_id);
-        await insertChange(tx, actor, revertId, row, before, { revertOf: change.id });
+        await insertChange(tx, actor, revertId, row, before, { revertOf: change.id, domain: change.domain });
       }
       await recordAudit(tx, actor, {
         action: emergency ? "change_set.emergency_revert" : "change_set.revert_requested",
@@ -563,6 +623,8 @@ export async function revertChangeSet(
 
       // المسار العاجل للمالك: فحص ثم قرار ذاتي مسبَّب ثم نشر، في المعاملة نفسها.
       const revertChanges = await changesOf(tx, revertId);
+      const revertSet = await lockChangeSet(tx, revertId);
+      const revertHash = await sealPayload(tx, revertSet, revertChanges);
       for (const change of revertChanges) {
         const result = await checkChange(tx, change);
         if (!result.ok) {
@@ -570,13 +632,17 @@ export async function revertChangeSet(
         }
         await tx.query(`UPDATE editorial_change SET checks = $2::jsonb WHERE id = $1 RETURNING id`, [change.id, JSON.stringify(result)]);
       }
-      await tx.query(
-        `INSERT INTO review_decision (id, change_set_id, reviewer_id, decision, reason, self_approval)
-         VALUES ($1, $2, $3, 'approve', $4, TRUE) RETURNING id`,
-        [ID(), revertId, actor.id, `تراجع عاجل: ${reason}`],
-      );
+      await insertDecision(tx, {
+        changeSetId: revertId,
+        reviewerId: actor.id,
+        decision: "approve",
+        reason: `تراجع عاجل: ${reason}`,
+        selfApproval: true,
+        payloadHash: revertHash,
+      });
       for (const change of revertChanges) {
         const verificationId = await applyWorkStatus(tx, actor, change);
+        await setAppliedRef(tx, change.id, verificationId);
         await tx.query(
           `INSERT INTO index_sync (id, change_set_id, target_type, target_id) VALUES ($1, $2, $3, $4) RETURNING id`,
           [ID(), revertId, change.target_type, change.target_id],

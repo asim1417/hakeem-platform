@@ -9,6 +9,8 @@ import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
 import { EditorialError, type AmendmentDecision, type EditorialActor, type PrincipleDecision } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
 import { assertDeskIntegrity } from "./integrity";
+import { payloadHash } from "./payload";
+import { insertDecision } from "./service";
 import { principleStatusFor } from "@/lib/modules/legal-core/principle-review";
 
 const ID = () => randomUUID();
@@ -303,31 +305,35 @@ async function lockUndecidedOp(tx: SqlClient, opId: string): Promise<OpRow> {
   return op;
 }
 
-async function recordOpDecision(
+function opSourceRef(opId: string): string {
+  return `uqn_fix.amendment_op:${opId}`;
+}
+
+/** تغيير القرار في دفعة مسودة (القاعدة لا تقبل الإدراج في غيرها)؛ لا يكتب في المصدر. */
+async function insertOpChange(
   tx: SqlClient,
-  actor: EditorialActor,
   changeSetId: string,
   op: OpRow,
-  input: { decision: AmendmentDecision; corrected: Record<string, unknown> | null; note: string | null },
-): Promise<void> {
-  const sourceRef = `uqn_fix.amendment_op:${op.op_id}`;
+  after: { decision: AmendmentDecision; corrected: Record<string, unknown> | null },
+): Promise<string> {
+  const id = ID();
   try {
     await tx.query(
       `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after,
           evidence_instrument, evidence_url, evidence_quote, source_rank, source_ref, author_kind, author_agent, status, checks)
-       VALUES ($1, $2, 'amendment_op', $3, 'review_amendment_op', $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, 'agent', $11, 'published', $12::jsonb)
+       VALUES ($1, $2, 'amendment_op', $3, 'review_amendment_op', $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10, 'agent', $11, 'draft', $12::jsonb)
        RETURNING id`,
       [
-        ID(),
+        id,
         changeSetId,
         op.op_id,
         JSON.stringify({ decision: null }),
-        JSON.stringify({ decision: input.decision, corrected: input.corrected, note: input.note }),
+        JSON.stringify(after),
         [op.instrument_kind, op.instrument_no].filter(Boolean).join(" "),
         op.source_url,
         op.evidence_quote,
         sourceRankFromUrl(op.source_url),
-        sourceRef,
+        opSourceRef(op.op_id),
         AMENDMENT_AGENT,
         JSON.stringify({ source: AMENDMENT_AGENT, confidence: op.confidence, verbatim_in_source: op.verbatim_in_source }),
       ],
@@ -338,37 +344,78 @@ async function recordOpDecision(
     }
     throw error;
   }
-  await tx.query(
+  return id;
+}
+
+/** يكتب القرار في المصدر: صف جديد في uqn_fix.amendment_review (للإضافة فقط بمشغّل no_change). */
+async function applyOpDecision(
+  tx: SqlClient,
+  actor: EditorialActor,
+  changeSetId: string,
+  changeId: string,
+  op: OpRow,
+  input: { decision: AmendmentDecision; corrected: Record<string, unknown> | null; note: string | null; reviewer: string },
+): Promise<void> {
+  const rows = await tx.query<{ id: string }>(
     `INSERT INTO uqn_fix.amendment_review (op_id, decision, corrected, reviewer, note)
-     VALUES ($1, $2, $3::jsonb, $4, $5) RETURNING id::text`,
-    [op.op_id, input.decision, input.corrected ? JSON.stringify(input.corrected) : null, actor.id, input.note],
+     VALUES ($1, $2, $3::jsonb, $4, $5) RETURNING id::text AS id`,
+    [op.op_id, input.decision, input.corrected ? JSON.stringify(input.corrected) : null, input.reviewer, input.note],
   );
+  await tx.query(`UPDATE editorial_change SET applied_ref = $2 WHERE id = $1 RETURNING id`, [
+    changeId,
+    `uqn_fix.amendment_review:${rows[0].id}`,
+  ]);
   await recordAudit(tx, actor, {
     action: "intake.amendment.decide",
     objectType: "amendment_op",
     objectId: op.op_id,
     before: { decision: null },
     after: { decision: input.decision, corrected: input.corrected },
-    detail: { changeSetId, note: input.note, target: op.target_law_title },
+    detail: { changeSetId, note: input.note, target: op.target_law_title, reviewer: input.reviewer },
   });
 }
 
+interface IntakeChangeRow {
+  id: string;
+  target_type: string;
+  target_id: string;
+  op: string;
+  before: unknown;
+  after: unknown;
+  evidence_instrument: string | null;
+  evidence_url: string | null;
+  evidence_quote: string | null;
+  source_rank: number | null;
+  source_ref: string | null;
+  domain: string;
+  status: string;
+}
+
+async function intakeChanges(tx: SqlClient, changeSetId: string): Promise<IntakeChangeRow[]> {
+  return tx.query<IntakeChangeRow>(`SELECT * FROM editorial_change WHERE change_set_id = $1 ORDER BY created_at, id`, [changeSetId]);
+}
+
+/** يضبط بصمة الدفعة من صفوفها ويعيدها. */
+async function sealIntakeSet(tx: SqlClient, changeSetId: string, kind: string): Promise<string> {
+  const hash = payloadHash({ id: changeSetId, kind, reverts_change_set_id: null }, await intakeChanges(tx, changeSetId));
+  await tx.query(`UPDATE change_set SET payload_hash = $2 WHERE id = $1 RETURNING id`, [changeSetId, hash]);
+  return hash;
+}
+
+async function markIntakePublished(tx: SqlClient, changeSetId: string) {
+  await tx.query(`UPDATE change_set SET status = 'published', published_at = NOW() WHERE id = $1 RETURNING id`, [changeSetId]);
+  await tx.query(`UPDATE editorial_change SET status = 'published' WHERE change_set_id = $1 RETURNING id`, [changeSetId]);
+}
+
+/** دفعة الاستقبال تُنشأ مسودة (ق-٨)، ثم تُدرج تغييراتها، ثم تُختم بصمتها وتُقلب. */
 async function openAgentChangeSet(tx: SqlClient, title: string, kind: "agent_review" | "agent_review_bulk", agent: string) {
   const id = ID();
   await tx.query(
-    `INSERT INTO change_set (id, title, kind, author_kind, author_agent, status, published_at)
-     VALUES ($1, $2, $3, 'agent', $4, 'published', NOW()) RETURNING id`,
+    `INSERT INTO change_set (id, title, kind, author_kind, author_agent, status)
+     VALUES ($1, $2, $3, 'agent', $4, 'draft') RETURNING id`,
     [id, title.slice(0, 200), kind, agent],
   );
   return id;
-}
-
-async function recordReviewDecision(tx: SqlClient, actor: EditorialActor, changeSetId: string, approve: boolean, reason: string | null) {
-  await tx.query(
-    `INSERT INTO review_decision (id, change_set_id, reviewer_id, decision, reason, self_approval)
-     VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id`,
-    [ID(), changeSetId, actor.id, approve ? "approve" : "reject", reason],
-  );
 }
 
 export async function decideAmendmentOp(
@@ -394,8 +441,12 @@ export async function decideAmendmentOp(
     return await db.transaction(async (tx) => {
       const op = await lockUndecidedOp(tx, id);
       const changeSetId = await openAgentChangeSet(tx, `قرار عملية تعديل ${op.op_id} — ${op.target_law_title}`, "agent_review", AMENDMENT_AGENT);
-      await recordReviewDecision(tx, actor, changeSetId, decision !== "rejected", note);
-      await recordOpDecision(tx, actor, changeSetId, op, { decision, corrected, note });
+      const changeId = await insertOpChange(tx, changeSetId, op, { decision, corrected });
+      const hash = await sealIntakeSet(tx, changeSetId, "agent_review");
+      // الموافقة على مقترح القرار (أيًّا كان القرار نفسه: موافقة أو رفض أو تصحيح).
+      await insertDecision(tx, { changeSetId, reviewerId: actor.id, decision: "approve", reason: note, selfApproval: false, payloadHash: hash });
+      await applyOpDecision(tx, actor, changeSetId, changeId, op, { decision, corrected, note, reviewer: actor.id });
+      await markIntakePublished(tx, changeSetId);
       return { changeSetId, decision };
     });
   } catch (error) {
@@ -434,10 +485,14 @@ export async function bulkApproveAmendmentOps(
         ops.push(op);
       }
       const changeSetId = await openAgentChangeSet(tx, `اعتماد جماعي لـ ${ops.length} عملية تعديل`, "agent_review_bulk", AMENDMENT_AGENT);
-      await recordReviewDecision(tx, actor, changeSetId, true, note);
-      for (const op of ops) {
-        await recordOpDecision(tx, actor, changeSetId, op, { decision: "approved", corrected: null, note });
+      const changeIds: string[] = [];
+      for (const op of ops) changeIds.push(await insertOpChange(tx, changeSetId, op, { decision: "approved", corrected: null }));
+      const hash = await sealIntakeSet(tx, changeSetId, "agent_review_bulk");
+      await insertDecision(tx, { changeSetId, reviewerId: actor.id, decision: "approve", reason: note, selfApproval: false, payloadHash: hash });
+      for (let i = 0; i < ops.length; i += 1) {
+        await applyOpDecision(tx, actor, changeSetId, changeIds[i], ops[i], { decision: "approved", corrected: null, note, reviewer: actor.id });
       }
+      await markIntakePublished(tx, changeSetId);
       return { changeSetId, approved: ops.length };
     });
   } catch (error) {
@@ -479,19 +534,19 @@ export async function decidePrinciple(
       }
       const reviewStatus = principleStatusFor(input.decision);
       const changeSetId = await openAgentChangeSet(tx, `مراجعة مبدأ: ${principle.title}`, "agent_review", PRINCIPLES_AGENT);
-      await recordReviewDecision(tx, actor, changeSetId, input.decision === "approve", reason);
+      const changeId = ID();
       try {
         await tx.query(
           `INSERT INTO editorial_change (id, change_set_id, target_type, target_id, op, before, after,
               source_ref, author_kind, author_agent, status, checks)
-           VALUES ($1, $2, 'principle', $3, 'review_principle', $4::jsonb, $5::jsonb, $6, 'agent', $7, 'published', $8::jsonb)
+           VALUES ($1, $2, 'principle', $3, 'review_principle', $4::jsonb, $5::jsonb, $6, 'agent', $7, 'draft', $8::jsonb)
            RETURNING id`,
           [
-            ID(),
+            changeId,
             changeSetId,
             principle.id,
             JSON.stringify({ reviewStatus: principle.reviewStatus }),
-            JSON.stringify({ reviewStatus, reason }),
+            JSON.stringify({ reviewStatus }),
             // مفتاح عدم التكرار لكل جولة مراجعة: إعادة المبدأ إلى «يحتاج مراجعة» تفتح جولة جديدة.
             `judicial_principles:${principle.id}:${principle.round}`,
             PRINCIPLES_AGENT,
@@ -502,11 +557,19 @@ export async function decidePrinciple(
         if (pgErrorCode(error) === "23505") throw new EditorialError("ALREADY_DECIDED", "روجع هذا المبدأ من قبل.");
         throw error;
       }
+      const hash = await sealIntakeSet(tx, changeSetId, "agent_review");
+      await insertDecision(tx, { changeSetId, reviewerId: actor.id, decision: "approve", reason, selfApproval: false, payloadHash: hash });
       // حقل سير عمل لا نص؛ تغييره مسموح في هذا الفعل وحده، والقيمة السابقة في editorial_change.before.
-      await tx.query(
-        `UPDATE judicial_principles SET "reviewStatus" = $2, "updatedAt" = NOW() WHERE id = $1 RETURNING id`,
+      const updated = await tx.query<{ round: string }>(
+        `UPDATE judicial_principles SET "reviewStatus" = $2, "updatedAt" = NOW() WHERE id = $1
+         RETURNING to_char("updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round`,
         [principle.id, reviewStatus],
       );
+      await tx.query(`UPDATE editorial_change SET applied_ref = $2 WHERE id = $1 RETURNING id`, [
+        changeId,
+        `judicial_principles:${principle.id}:${updated[0].round}`,
+      ]);
+      await markIntakePublished(tx, changeSetId);
       await recordAudit(tx, actor, {
         action: "intake.principle.decide",
         objectType: "principle",
