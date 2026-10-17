@@ -140,6 +140,9 @@ model LegalArticle {
   lawName        String
   classification String?
   articleNumber  Int
+  // HKM-028: درجة «مكرر» (0 للأصل). المُدرَجة بين مادتين تأخذ رقم سابقتها مع bis، كما في hkn-uri (art_N_bis).
+  // الرقم السالب لصف ليس مادة (عنوان أو جدول ملحق أو نسخة مكررة)، يبقى ولا يُعرض في المواد.
+  articleBis     Int                    @default(0)
   title          String
   content        String
   chapter        String?
@@ -163,7 +166,7 @@ model LegalArticle {
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
-  @@unique([lawName, articleNumber])
+  @@unique([lawName, articleNumber, articleBis])
   @@index([lawName])
   @@index([legalSystemId]) // فلتر systemIds (مساواة) — يُنشأ فعليًّا على Neon عبر legal-articles-extra-indexes.sql
   // ملاحظة: فهرس norm_modality/norm_addressee يُنشأ عبر الهجرة (خارج الموديل عمدًا — انظر أعلاه).

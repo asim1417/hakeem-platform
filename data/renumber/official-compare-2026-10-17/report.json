@@ -1,0 +1,74 @@
+{
+ "الأدلة الإجرائية لنظام الإثبات": {
+  "boe": "الأدلة الإجرائية لنظام الإثبات",
+  "boe_url": "https://www.uqn.gov.sa/details?p=20767",
+  "boe_status": null,
+  "boe_issued": "1444/4/3هـ الموافق 28/10/2022م",
+  "candidates": 1,
+  "db": 135,
+  "boe_units": 135,
+  "missing": [],
+  "rows": []
+ },
+ "قواعد تحديد أتعاب الخبراء والأمناء في نظام الإفلاس": {
+  "boe": "قواعد تحديد أتعاب الخبراء والأمناء في نظام الإفلاس",
+  "boe_url": "https://www.uqn.gov.sa/details?p=17438",
+  "boe_status": null,
+  "boe_issued": "1442/8/27هـ الموافق 09/04/2021م",
+  "candidates": 1,
+  "db": 20,
+  "boe_units": 17,
+  "missing": [
+   {
+    "n": 17,
+    "bis": 0,
+    "heading": "المادة السابعة عشرة:"
+   }
+  ],
+  "rows": [
+   {
+    "id": "cmr4rvo2v00bg1j0uicajm9ms",
+    "cur": 17,
+    "title": "المادة السابعة عشرة",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmr4rvo2v00bh1j0uuysgwvyj",
+    "cur": 18,
+    "title": "الجدول رقم(١): شرائح الدائنين",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmr4rvo2v00bi1j0uz42h4akg",
+    "cur": 19,
+    "title": "الجدول رقم (٢): شرائح الديون",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   },
+   {
+    "id": "cmr4rvo2v00bj1j0uqofxdo40",
+    "cur": 20,
+    "title": "جدول رقم (٣): شرائح الأصول",
+    "boe_n": null,
+    "boe_bis": null,
+    "how": "unmatched"
+   }
+  ]
+ },
+ "نظام الخطوط الحديدية": {
+  "boe": "نظام الخطوط الحديدية",
+  "boe_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/302fe435-6f39-4170-b12b-b13700bf55bd/1",
+  "boe_status": "ساري",
+  "boe_issued": "1445/08/22هـ الموافق 03/03/2024م",
+  "candidates": 1,
+  "db": 50,
+  "boe_units": 50,
+  "missing": [],
+  "rows": []
+ }
+}

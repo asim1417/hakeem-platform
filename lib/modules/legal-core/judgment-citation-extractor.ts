@@ -141,7 +141,7 @@ async function resolveCitation(
   let article: { id: string; content: string; lawName: string; articleNumber: number } | null = null;
   for (const cand of candidates) {
     const found = await prisma.legalArticle.findFirst({
-      where: { articleNumber: cand, ...(systemFilter ? { OR: systemFilter } : {}) },
+      where: { articleNumber: cand, articleBis: 0, ...(systemFilter ? { OR: systemFilter } : {}) },
       select: { id: true, content: true, lawName: true, articleNumber: true }
     });
     // النص الساري (المصدر الواحد)؛ الملغاة تُرجع سطر الإلغاء.
