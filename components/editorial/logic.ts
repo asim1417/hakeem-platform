@@ -486,3 +486,14 @@ export function bindingSummary(b: EditorialBinding): string {
   const domains = scopeText(b.domains, "كل المجالات", domainLabel);
   return `${roles} · ${kinds} · ${domains}`;
 }
+
+/** يقبل رابط https وحده؛ ما سواه (javascript: وdata: وhttp: والنسبي والمكسور) لا يُعرض رابطًا (ن٩). */
+export function safeSourceHref(href: string | null | undefined): string | null {
+  if (!href) return null;
+  try {
+    const url = new URL(href);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}

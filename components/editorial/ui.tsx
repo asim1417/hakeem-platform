@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Check, CircleAlert, CircleMinus, ExternalLink, Info, Lock, TriangleAlert, Users, type LucideIcon } from "lucide-react";
 import type { BadgeTone } from "./labels";
+import { safeSourceHref } from "./logic";
 
 export type BtnVariant = "approve" | "correct" | "reject" | "primary" | "destructive" | "undo" | "text" | "text-danger";
 
@@ -126,8 +127,16 @@ export function Message({
   );
 }
 
-/** رابط المصدر: هدف 44، نصه في span واحد، ويفتح في لسان جديد. */
-export function SourceLink({ href, children }: { href: string; children: ReactNode }) {
+/** رابط المصدر: هدف 44، نصه في span واحد، ويفتح في لسان جديد. رابط غير https يُعرض نصًّا بلا رابط. */
+export function SourceLink({ href: rawHref, children }: { href: string; children: ReactNode }) {
+  const href = safeSourceHref(rawHref);
+  if (!href) {
+    return (
+      <span className="dk-source" title="رابط المصدر غير آمن أو غير صالح، فلا يُفتح.">
+        <span>{children}</span>
+      </span>
+    );
+  }
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="dk-source">
       <ExternalLink size={16} aria-hidden className="rtl:-scale-x-100" />

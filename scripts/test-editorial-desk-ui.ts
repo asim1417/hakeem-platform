@@ -20,6 +20,7 @@ import {
   leavesMyQueue,
   nextUndecided,
   normalizeDateInput,
+  safeSourceHref,
   OPS_NOUN,
   pauseCountdown,
   pendingLine,
@@ -59,6 +60,14 @@ const USERS = [
 
 export function runDeskUiTests(ok: Ok) {
   console.log("\n— منطق واجهة المكتب (نقي) —");
+
+  // ── رابط المصدر: https وحده (ن٩) ──
+  ok(safeSourceHref("https://uqn.gov.sa/details?p=1") === "https://uqn.gov.sa/details?p=1", "ن٩ رابط https يُقبل");
+  ok(safeSourceHref("javascript:alert(1)") === null, "ن٩ رابط javascript: يُرفض");
+  ok(safeSourceHref("JaVaScRiPt:alert(1)") === null, "ن٩ رابط javascript: بحروف مختلطة يُرفض");
+  ok(safeSourceHref("data:text/html,<b>x</b>") === null, "ن٩ رابط data: يُرفض");
+  ok(safeSourceHref("http://uqn.gov.sa/") === null, "ن٩ رابط http بلا تشفير يُرفض");
+  ok(safeSourceHref("/relative") === null && safeSourceHref("") === null && safeSourceHref(null) === null, "ن٩ النسبي والفارغ لا يُعرضان رابطًا");
 
   // ── مهلة التراجع: ست ثوانٍ، وتتوقف حين تُخفى الصفحة وتستأنف بما بقي (ق٢، ق٢٧) ──
   ok(UNDO_WINDOW_MS === 6000, "نافذة التراجع ست ثوانٍ");
