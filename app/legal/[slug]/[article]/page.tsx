@@ -11,7 +11,7 @@ import { citationFlagsFromVerification, presentArticle } from "@/lib/modules/leg
 import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
 import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts, resolveEffectiveText } from "@/lib/modules/legal-core/effective-text";
-import { articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
+import { ARTICLE_ROWS, NON_ARTICLE_BIS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
 
 export const revalidate = 3600;
 
@@ -32,7 +32,7 @@ async function loadArticle(slug: string, articleParam: string) {
   const m = /^(\d+)(?:_bis(\d*))?$/.exec(decodeURIComponent(articleParam));
   const n = m ? Number(m[1]) : NaN;
   const bis = m?.[2] !== undefined ? Number(m[2] || 1) : 0;
-  if (!Number.isInteger(n) || n <= 0) return null;
+  if (!Number.isInteger(n) || n <= 0 || bis >= NON_ARTICLE_BIS) return null;
   const system = await resolveSystem(slug);
   if (!system) return null;
   const article = await prisma.legalArticle
@@ -94,8 +94,8 @@ export default async function LegalArticlePage({
 
   const [prev, next] = await Promise.all([
     // السابقة والتالية بترتيب (الرقم، درجة «مكرر»)؛ الأرقام ≤ 0 ليست مواد.
-    prisma.legalArticle.findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }, { OR: [{ articleNumber: { lt: n } }, { articleNumber: n, articleBis: { lt: bis } }] }] }, orderBy: [{ articleNumber: "desc" }, { articleBis: "desc" }], select: { articleNumber: true, articleBis: true } }).catch(() => null),
-    prisma.legalArticle.findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { OR: [{ articleNumber: { gt: n } }, { articleNumber: n, articleBis: { gt: bis } }] }] }, orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }], select: { articleNumber: true, articleBis: true } }).catch(() => null),
+    prisma.legalArticle.findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }, ARTICLE_ROWS, { OR: [{ articleNumber: { lt: n } }, { articleNumber: n, articleBis: { lt: bis } }] }] }, orderBy: [{ articleNumber: "desc" }, { articleBis: "desc" }], select: { articleNumber: true, articleBis: true } }).catch(() => null),
+    prisma.legalArticle.findFirst({ where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, ARTICLE_ROWS, { OR: [{ articleNumber: { gt: n } }, { articleNumber: n, articleBis: { gt: bis } }] }] }, orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }], select: { articleNumber: true, articleBis: true } }).catch(() => null),
   ]);
 
   const effective = resolveEffectiveText({ articleId: article.id, baseText: content, versions, verification, asOf });
