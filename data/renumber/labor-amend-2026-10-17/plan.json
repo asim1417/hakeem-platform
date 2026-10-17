@@ -1,0 +1,369 @@
+{
+ "versions": [
+  {
+   "id": "hkm28u-44b38d4b6c19117f737a773a",
+   "article": 7,
+   "unit": "cmpzcv89q0ampvtrkfth7ppti",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 617,
+   "bodyStart": "1 - يستثنى من تطبيق أحكام هذا النظام كل من : أ - أفراد أسرة صاحب العمل، وهم زوجه",
+   "md5Nfc": "071b3f1042bbe5d780e128b1f9b76e76"
+  },
+  {
+   "id": "hkm28u-b8a69e14bdfaf53ec318dab1",
+   "article": 11,
+   "unit": "cmpzcv89r0amtvtrkomthy1wm",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 172,
+   "bodyStart": "إذا عهد صاحب العمل لأي شخص طبيعي أو معنوي القيام بعمل من أعماله الأصلية، أو جزء ",
+   "md5Nfc": "3f43ef0bb0aa8c9e26c414713f30a450"
+  },
+  {
+   "id": "hkm28u-2c31cba0d785e7f34643952d",
+   "article": 77,
+   "unit": "cmpzcv89s0aonvtrkog9eg9du",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 375,
+   "bodyStart": "ما لم يتضمن العقد تعويضاً محدداً مقابل إنهائه من أحد الطرفين لسبب غير مشروع، يست",
+   "md5Nfc": "84d4506e8637e74750597fe381f7c9cd"
+  },
+  {
+   "id": "hkm28u-cedaa9ca32bd6c93b8bdc7a9",
+   "article": 78,
+   "unit": "cmpzcv89s0aoovtrkpntp4t5a",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 494,
+   "bodyStart": "إذا كان الإشعار من جانب صاحب العمل، فيحق للعامل أن يتغيب خلال مهلة الإشعار يوماً",
+   "md5Nfc": "5b4f48b4d6cd24f58b1fbbb53b6dee74"
+  },
+  {
+   "id": "hkm28u-e3e79266198164fa2388d949",
+   "article": 149,
+   "unit": "cmpzcv89t0aqnvtrkveqpv8ci",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 212,
+   "bodyStart": "يُحظر تشغيل المرأة في المهن والأعمال الخطرة أو الضارة، ويحدد الوزير – بقرار منه ",
+   "md5Nfc": "df46c89c2af059d91b317f3cc754cbee"
+  },
+  {
+   "id": "hkm28u-bc05eab4c707500f5d13f0d3",
+   "article": 12,
+   "unit": "cmpzcv89r0amuvtrky2j6ms9i",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 261,
+   "bodyStart": "1 - تضع الوزارة نموذجاً موحداً - أو أكثر - للائحة تنظيم العمل، على أن يكون شاملا",
+   "md5Nfc": "4ffb9bf16c7962b1fa345e813c1191a0"
+  },
+  {
+   "id": "hkm28u-8797e346a734e02340fcbe48",
+   "article": 13,
+   "unit": "cmpzcv89r0amvvtrkv64l2kco",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 391,
+   "bodyStart": "1 - يلتزم كل صاحب عمل بإعداد لائحة لتنظيم العمل في منشأته وفق النموذج المعد من ا",
+   "md5Nfc": "13de224ebf11425200fcbd75d86d45e4"
+  },
+  {
+   "id": "hkm28u-df0513a432acef3af3e96eb5",
+   "article": 151,
+   "unit": "cmpzcv89t0aqpvtrkltjps1uc",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 548,
+   "bodyStart": "1 - للمرأة العاملة الحق في إجازة وضع بأجر كامل لمدة عشرة أسابيع توزعها كيف تشاء؛",
+   "md5Nfc": "53e782f6551ce6a9e3c507b255ac3b7f"
+  },
+  {
+   "id": "hkm28u-d96ef47039dae9e73bbfb2bf",
+   "article": 52,
+   "unit": "cmpzcv89r0anyvtrkj8qh04x4",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 514,
+   "bodyStart": "1 - مع مراعاة ما ورد في المادة (السابعة والثلاثين) من هذا النظام، تضع الوزارة نم",
+   "md5Nfc": "9ae9e6ea739fa230d24f97ee9ada3c72"
+  },
+  {
+   "id": "hkm28u-7eaf68b06c8217d21ae25533",
+   "article": 74,
+   "unit": "cmpzcv89r0aokvtrk7yascpa4",
+   "from": "2015-10-18",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ",
+   "kind": "full",
+   "bodyLength": 812,
+   "bodyStart": "ينتهي عقد العمل في أي من الأحوال الآتية : 1 - إذا اتفق الطرفان على إنهائه، بشرط ",
+   "md5Nfc": "9f92784e65657f0f4e3117739463a9fa"
+  },
+  {
+   "id": "hkm28u-fc9b5d332034dae5bf5858a3",
+   "article": 7,
+   "unit": "cmpzcv89q0ampvtrkfth7ppti",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 1025,
+   "bodyStart": "1- يستثنى من تطبيق أحكام هذا النظام كل من: أ- أفراد أسرة صاحب العمل، وهم زوجه وأ",
+   "md5Nfc": "3d6dc417e41c3d3977824317c8f79685"
+  },
+  {
+   "id": "hkm28u-f2d12f11188ea8ec27cc58fd",
+   "article": 30,
+   "unit": "cmpzcv89r0ancvtrk4ghy47w0",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 523,
+   "bodyStart": "1- لا يجوز لأي شخص طبيعي أو اعتباري أن يمارس نشاط توظيف السعوديين أو نشاط استقدا",
+   "md5Nfc": "c7e86b09f2b979196934b269f56d021c"
+  },
+  {
+   "id": "hkm28u-8438182eb8ec80ffb4c9fb7c",
+   "article": 39,
+   "unit": "cmpzcv89r0anlvtrkpn5mzjfl",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 626,
+   "bodyStart": "لايجوز -بغير اتباع القواعد والإجراءات النظامية المقررة- أن يترك صاحب العمل عامله",
+   "md5Nfc": "05c432fd01ffc6dc98f5444d6b229f02"
+  },
+  {
+   "id": "hkm28u-228f19aa7699c67a8f473942",
+   "article": 151,
+   "unit": "cmpzcv89t0aqpvtrkltjps1uc",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 685,
+   "bodyStart": "1- للمرأة العاملة الحق في إجازة وضع بأجر كامل لمدة (اثني عشر) أسبوعاً، منها وجوب",
+   "md5Nfc": "43402af37e2045f7ac3475d09e771c5a"
+  },
+  {
+   "id": "hkm28u-850e31333ecd34e161fb1597",
+   "article": 182,
+   "unit": "cmpzcv89t0arkvtrk0i858gew",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 182,
+   "bodyStart": "يجوز لصاحب العمل إنهاء العقد دون سبق إعلان وبغير تعويض إذا ألغيت الرحلة قبل بدئه",
+   "md5Nfc": "fbe88d88d50f0062db7f5d2295d6fa92"
+  },
+  {
+   "id": "hkm28u-509c7277991f11da47c80ecd",
+   "article": 52,
+   "unit": "cmpzcv89r0anyvtrkj8qh04x4",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 568,
+   "bodyStart": "1 - مع مراعاة ما ورد في المادة (السابعة والثلاثين) من هذا النظام، تضع الوزارة نم",
+   "md5Nfc": "bd24038f321c69771d628a5dcd0fa498"
+  },
+  {
+   "id": "hkm28u-6c8cabf810cb74b9b4a972a4",
+   "article": 74,
+   "unit": "cmpzcv89r0aokvtrk7yascpa4",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "full",
+   "bodyLength": 756,
+   "bodyStart": "ينتهي عقد العمل في أي من الأحوال الآتية : 1 - إذا اتفق الطرفان على إنهائه، بشرط ",
+   "md5Nfc": "9166232281a3025df66531da4a96c7e8"
+  },
+  {
+   "id": "hkm28u-3a8cf4aac24cbec4f3481c40",
+   "article": 22,
+   "unit": "cmpzcv89r0an4vtrkqhl83nm7",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "توفر الوزارة وحدات للتوظيف دون مقابل في الأماكن المناسبة لأصحاب العمل والعمال، تقوم بما يأتي:",
+     "توفر الوزارة قنوات للتوظيف دون مقابل، تقوم بما يأتي:"
+    ],
+    [
+     "إحالة طلبات العمال للأعمال الشاغرة الملائمة",
+     "مواءمة طلبات طالبي العمل مع الأعمال الشاغرة وفق مؤهلاتهم"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-a8c6d8f1eebf39fbd14c6556",
+   "article": 23,
+   "unit": "cmpzcv89r0an5vtrkkcgfb0rh",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "وحدة",
+     "قنوات"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-9b3d5ee78f80f4b64f183f2f",
+   "article": 24,
+   "unit": "cmpzcv89r0an6vtrkh0i7fihy",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "وحدات",
+     "قنوات"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-c15b8cb7fafd3cf2fea33a16",
+   "article": 25,
+   "unit": "cmpzcv89r0an7vtrkmd7h9xjr",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "وحدة",
+     "قنوات"
+    ],
+    [
+     "مكتب العمل المختص",
+     "الوزارة"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-84117849d6a2e66e8396acdc",
+   "article": 27,
+   "unit": "cmpzcv89r0an9vtrks75qxlyq",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "وحدات",
+     "قنوات"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-84be9adf5741381dd66486db",
+   "article": 28,
+   "unit": "cmpzcv89r0anavtrkjrb1rse0",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "وحدات",
+     "قنوات"
+    ],
+    [
+     "مكتب العمل المختص",
+     "الوزارة"
+    ],
+    [
+     "التي يشغلها المعوقون",
+     "التي يشغلها ذوو الإعاقة"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-0126258ce03c89f3d9f37080",
+   "article": 31,
+   "unit": "cmpzcv89r0andvtrkq60ajno6",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "المكاتب",
+     "المكاتب أو الشركات"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-06154d7cd47f1e71a66a96e1",
+   "article": 199,
+   "unit": "cmpzcv89t0as1vtrkmxubzfmc",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [
+    [
+     "ووكلائهم",
+     "ووكلائهم ومسؤوليهم في مكان العمل"
+    ]
+   ],
+   "append": null
+  },
+  {
+   "id": "hkm28u-36136d062f5689f6830a0079",
+   "article": 61,
+   "unit": "cmpzcv89r0ao7vtrk2injzfmx",
+   "from": "2025-02-19",
+   "instrument": "مرسوم ملكي رقم م/44 وتاريخ 1446/2/8هـ",
+   "kind": "sql",
+   "ops": [],
+   "append": "4- أن يمتنع عن القيام بكل ما من شأنه إبطال أو إضعاف تطبيق تكافؤ الفرص أو المعاملة في الاستخدام والمهنة، سواء من خلال الاستبعاد أو التفريق أو التفضيل بين المتقدمين للعمل أو العاملين لديه على أساس العرق أو اللون أو الجنس أو السن أو الإعاقة أو الحالة الاجتماعية أو أي شكل من أشكال التمييز الأخرى. 5- أن يوفر السكن اللائق لعماله. وله أن يستعيض عن ذلك ببدل نقدي مناسب يدفعه لهم مع الأجر. 6- أن يوفر وسيلة مواصلات مناسبة لعماله من مقر سكنهم إلى مقر العمل. وله أن يستعيض عن ذلك ببدل نقدي مناسب يدفعه لهم مع الأجر"
+  }
+ ],
+ "repeals": [
+  {
+   "article": 14,
+   "unit": "cmpzcv89r0amwvtrke4m0z1a1",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ"
+  },
+  {
+   "article": 152,
+   "unit": "cmpzcv89t0aqqvtrk0bjskxvq",
+   "instrument": "مرسوم ملكي رقم م/46 وتاريخ 1436/6/5هـ"
+  },
+  {
+   "article": 149,
+   "unit": "cmpzcv89t0aqnvtrkveqpv8ci",
+   "instrument": "مرسوم ملكي رقم م/5 وتاريخ 1442/1/7هـ"
+  },
+  {
+   "article": 150,
+   "unit": "cmpzcv89t0aqovtrkhdtzxoga",
+   "instrument": "مرسوم ملكي رقم م/5 وتاريخ 1442/1/7هـ"
+  }
+ ],
+ "insert11bis": {
+  "id": "hkm28-5b7948660d948b13d312c25b",
+  "lawName": "نظام العمل",
+  "title": "المادة الحادية عشرة مكرر",
+  "content": "مع عدم الإخلال بأحكام هذا النظام والأنظمة ذات العلاقة؛ للوزير أن يتخذ الإجراءات التي من شأنها أن تكفل تحسين أداء سوق العمل، وتنظيم حركة انتقال الأيدي العاملة",
+  "keywords": [],
+  "classification": "أنظمة العمل والرعاية الاجتماعية",
+  "chapter": "",
+  "md5Nfc": "26ea62a6c626b4c191035add04d9cca8"
+ }
+}
