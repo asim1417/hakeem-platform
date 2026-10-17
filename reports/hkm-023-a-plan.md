@@ -4,6 +4,22 @@
 > وعلى خدمة العدّ `lib/modules/legal-core/metrics.ts` من م١. الأعداد من قراءة الإنتاج للقراءة فقط في 17/10/2026.
 > كل مرحلة: أنواع التغيير (الاسم، الحمولة، الفحوص، النشر، التراجع)، والجداول وسبب عدم كفاية الموجود، والشاشات، والاختبارات المسمّاة، والتقدير، والتبعيات.
 
+## تحديث بعد مراجعة الجودة المستقلة (17/10/2026) — يتقدم على ما يخالفه أدناه
+
+1. **#631 أُغلق بلا دمج** (17/10/2026 06:29 UTC، `merged=false`)، وسجل `main` يقرر ألا تُعاد طبقته؛ حلّ محلها `unit_version` و`verification` و`search_surface`، ورصد أم القرى من نطاق HKM-013. فكل «قرار #631» أدناه يُقرأ **بناءً على ما في `main`**:
+   - **م٣ (المراسي):** لا شجرة وحدات قادمة؛ `article_paragraph_anchor` إلحاقي على نص `unit_version` هو المسار، أو تأجيل ل٢-٣.
+   - **م٤ (الاستيراد والآثار):** القارئ يُبنى داخل `lib/modules/editorial/` محدودًا (لصق نص ← شجرة: افتتاحية، استنادات، بنود، أبواب، مواد) باختبارات على نصوص اصطناعية، مع الاستفادة من لقطة الهيئة القائمة (`boe.unit`، `ingest/boe-corpus-2026-09-28/`) للأنظمة الموجودة فيها؛ والآثار جدول `legal_effect` إلحاقي جديد (لا `uqn_stage.effect` المرحلي). **يضاف لم٤ يومان إلى ثلاثة.**
+   - **م٧ (الرصد):** الطابور يعرض مخرجات HKM-013 (رصد أم القرى) حين توجد؛ ولا تشغيل مجدول من اللوحة (ف٢٧). سجل مهام الاستيراد يُقرأ من جداول HKM-013، أو يُؤجَّل ل٨-٣.
+2. **المسارات القديمة للكتابة المباشرة:** `PATCH /api/legal-core/principles/[id]` و`PrincipleReviewControls` في `/dashboard/legal-core/principles` يكتبان `judicialPrinciple.update` بمعتمِد واحد، فيتجاوزان شرط المعتمِدين. **م٥ تبدأ بإيقافهما أو توجيههما عبر المكتب** (اختبار: `L5-0 legacy principle PATCH is refused or routed through the desk`). م١ حوّلت عدّاد المبادئ المنتظرة في `/admin/legal` إلى طابور المكتب.
+3. **الخطة كلها معلّقة على تطبيق ترحيل المكتب على الإنتاج (ف١٠ لـ #727):** `change_set` و`index_sync` غير موجودين على الإنتاج اليوم. **توسيع قوائم CHECK (§٠-٢) يُربط بموعد ذلك الاعتماد نفسه:** إن طُبّق الترحيل الأول قبل م٢ فالتوسيع ترحيل استبدال لاحق؛ وإن تأخر فيُعدَّل الترحيل الأول قبل تطبيقه.
+4. **`main` تقدّم:** `articleBis` («مكرر») في `legal_articles` بفريد `(lawName, articleNumber, articleBis)` مطبّق على الإنتاج، و`data/shifted-systems.json` يحدد الأنظمة ذات الترقيم المزاح. **م٣ وم٤:** فحص الهوية والإثراء والمراسي بالمفتاح الثلاثي لا برقم المادة وحده؛ والأنظمة في `pendingOfficialCorrection` لا تقبل تعديل نص مادة ولا اعتماد استشهاد بها حتى التصحيح الرسمي (فحص صريح يرفض بسبب مكتوب). ودمج `main` في الفرع قبل م٢ (تعارض بسيط في `schema.prisma` و`PROJECT_STATUS.md`).
+5. **كشف التكرار في م٦ بلا `pg_trgm` على 51 ألف نص في طلب واحد:** الطابور يبدأ بالمطابقات الرخيصة (رقم القضية + التاريخ، و`ruling_meta.content_hash` المطابق)؛ والتشابه النصي يحتاج جدول بصمات (مثل MinHash على مقاطع) تملؤه **مهمة دفعية مأذونة** (ف٢٧ لـ `aman-devops`، وسقف كلفة وزمن يحدده المالك)، لا استعلامًا حيًّا.
+6. **الاقتباس الحرفي في م٢ مع الحجب:** نص الحكم المعروض منقّح (`rulingDisplayText`، HKM-012). المطابقة تُجرى على **النص المنقّح** والاقتباس المخزّن في `citation_review` منقّح، فلا يُحفظ اسم أو هوية أو جوال في جدول المراجعة (اختبار: `L4-2 stored quote is the redacted text`).
+7. **الأرقام:** اختبارات المكتب على القاعدة الآن **392** (لا 328).
+8. **التقدير الواقعي:** الأرقام أدناه للتنفيذ وحده. بإضافة رحلة `aman-ux` ومواصفة `aman-ui-designer` قبل كل شاشة (يومان لكل مرحلة ذات شاشات)، ومراجعة الجودة وإصلاحاتها (يوم إلى يومين لكل مرحلة)، وانتظار قرارات المالك، **التقدير الكلي نحو 45–55 يوم عمل** (لا 28–31)، موزعة: م٢ 8–9، م٣ 7–8، م٤ 9–11، م٥ 7–9 (مع المسائل)، م٦ 5–6، م٧ 6–7، م٨ 7–8.
+9. **حارس شامل ضد العدّ المكرر:** أُضيف في م١ (`scripts/test-legal-metrics.ts`) ويُعاد تشغيله في كل مرحلة؛ كل مقياس جديد في م٢–م٨ يُعرَّف في `metrics.ts` وحده، وأي استثناء يُكتب سببه في قائمة الحارس.
+10. **إبطال التخزين المؤقت:** الصفحات العامة تقرأ لقطة مخزنة بوسم `LEGAL_CORE_CACHE_TAG` منذ م١؛ **م٢-أ يضيف `revalidateTag` بعد كل نشر من المكتب** (اختبار في المعاينة)، وإلا تأخرت الأعداد العامة حتى 10 دقائق.
+
 ## ٠. ما في الأساس وما ينقصه (يحكم كل المراحل)
 
 **القائم في #727:**
@@ -16,7 +32,7 @@
 
 **الأساس المشترك الذي يُبنى أولًا (م٢-أ، قبل أي فعل جديد):**
 
-1. **سجل الأفعال (op registry)** في `lib/modules/editorial/ops/`: لكل فعل معالج واحد `{ op, itemKind, targetType, parse(after), check(tx, change), apply(tx, actor, change) → appliedRef, stillApplied(tx, change), revert(tx, change) }`. ينقل `set_work_status` إليه كما هو، ويستبدل الشروط الثابتة في `checkChange` و`publishChangeSet` و`revertChangeSet` بالإحالة إلى المعالج. **القبول:** اختبارات المكتب الحالية (328 على القاعدة) تبقى ناجحة دون تعديل.
+1. **سجل الأفعال (op registry)** في `lib/modules/editorial/ops/`: لكل فعل معالج واحد `{ op, itemKind, targetType, parse(after), check(tx, change), apply(tx, actor, change) → appliedRef, stillApplied(tx, change), revert(tx, change) }`. ينقل `set_work_status` إليه كما هو، ويستبدل الشروط الثابتة في `checkChange` و`publishChangeSet` و`revertChangeSet` بالإحالة إلى المعالج. **القبول:** اختبارات المكتب الحالية (392 على القاعدة) تبقى ناجحة دون تعديل.
 2. **توسيع القيود:** `editorial_change.target_type` يضاف إليه `citation | judgment | article | system | issue | fiqh_source | fiqh_text | fiqh_alignment | bulk_rule`، و`change_set.kind` يضاف إليه `bulk_rule`. **القرار (لـ `aman-database` والمالك):** الترحيل الأول لم يُطبَّق على الإنتاج بعد، فالأنظف تعديل قائمتي CHECK فيه قبل أول تطبيق؛ والبديل ترحيل لاحق يستبدل القيد (`DROP CONSTRAINT` ثم `ADD CONSTRAINT … NOT VALID` ثم `VALIDATE`) على جداول المكتب وحدها، لا على جدول قانوني.
 3. **أنواع العناصر والسياسات:** تُضاف أنواع عناصر **بالعائلة لا بالفعل**، لئلا تنفجر الإعدادات: `citation`، `judgment`، `article`، `system`، `principle_edit`، `issue`، `fiqh`، `bulk_rule`. `policySchema` يُوسَّع، و`loadEditorialConfig` يملأ المفتاح الغائب من نسخة محفوظة قديمة بسياسة **معطّلة** (`enabled: false`) حتى يفعّلها المالك — لا تفعيل ضمني.
 4. **حارس السلامة:** `checkDeskIntegrity` يضيف مشغّلات الجداول الجديدة وفهارسها إلى ما يفحصه؛ غياب أحدها يقفل الكتابة كما اليوم.
@@ -39,8 +55,8 @@
 
 | الفعل (`op`) | العائلة | الهدف | الحمولة (`after`) | `before` | الفحوص | النشر | التراجع |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `review_citation` | `citation` | `citation` = معرّف الرابط | `{ decision: approve \| reject \| retype \| reassign, reason_code?, reason_note?, relation_type?, article_id?, quote }` | آخر قرار للرابط (أو لا قرار) وحالته ونوعه ومادته | الرابط موجود؛ الرفض بسبب من القائمة (ليس استشهادًا، مادة خاطئة، نوع خاطئ، تكرار، أخرى + نص)؛ `retype` بنوع من القائمة المعروفة ومختلف؛ `reassign` بمادة موجودة مختلفة؛ **الاعتماد يشترط اقتباسًا موجودًا حرفيًا في نص الحكم** (المبدأ ٢)؛ لا قرار أحدث بعد `read_at` | صف `citation_review` | صف `citation_review` بقرار `withdrawn` يعيد آخر قرار سابق؛ بلا سابق = `NO_PRIOR_STATUS` |
-| `add_citation` | `citation` | `judgment` | `{ article_id, relation_type, quote }` | لا رابط بالمادة والاقتباس نفسيهما | المادة موجودة؛ الاقتباس جزء حرفي من نص الحكم؛ لا تكرار لـ `(articleId, caseId, citedText)` | `INSERT` صف جديد في `legal_article_case_links` (إضافة لا تعديل) + `citation_review` اعتماد | `citation_review` بقرار `withdrawn` (الرابط لا يُحذف ولا يظهر) |
+| `review_citation` | `citation` | `citation` = معرّف الرابط | `{ decision: approve \| reject \| retype \| reassign, reason_code?, reason_note?, relation_type?, article_id?, quote }` | آخر قرار للرابط (أو لا قرار) وحالته ونوعه ومادته | الرابط موجود؛ الرفض بسبب من القائمة (ليس استشهادًا، مادة خاطئة، نوع خاطئ، تكرار، أخرى + نص)؛ `retype` بنوع من القائمة المعروفة ومختلف؛ `reassign` بمادة موجودة مختلفة؛ **الاعتماد يشترط اقتباسًا موجودًا حرفيًا في نص الحكم المنقّح** (المبدأ ٢؛ يُخزَّن منقّحًا)؛ لا قرار أحدث بعد `read_at` | صف `citation_review` | صف `citation_review` بقرار `withdrawn` يعيد آخر قرار سابق؛ بلا سابق = `NO_PRIOR_STATUS` |
+| `add_citation` | `citation` | `judgment` | `{ article_id, relation_type, quote }` | لا رابط بالمادة والاقتباس نفسيهما | المادة موجودة؛ الاقتباس جزء حرفي من نص الحكم المنقّح؛ لا تكرار لـ `(articleId, caseId, citedText)` | `INSERT` صف جديد في `legal_article_case_links` (إضافة لا تعديل) + `citation_review` اعتماد | `citation_review` بقرار `withdrawn` (الرابط لا يُحذف ولا يظهر) |
 | `edit_judgment_meta` | `judgment` | `judgment` | أي من: المحكمة، المدينة، رقم القضية، رقم القرار، التاريخ الهجري، الدرجة، النهائية | قيم آخر نسخة (أو أعمدة `judicial_cases`/`ruling_meta`) | حقول من القائمة فقط؛ التاريخ الهجري صحيح؛ لا نسخة أحدث بعد `read_at` | صف `metadata_version` | نسخة جديدة بالقيم السابقة |
 | `set_judgment_visibility` | `judgment` | `judgment` | `{ visible: boolean, reason }` | آخر علَم | السبب إلزامي (5 أحرف فأكثر) | صف `judgment_visibility` | صف بالعلَم السابق |
 
