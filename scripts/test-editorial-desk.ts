@@ -358,6 +358,11 @@ async function dbTests(pg: PgModule, rawUrl: string) {
     );
   }
   await pool.query(`INSERT INTO legal_articles (id, "legalSystemId", "articleNumber", content, status) VALUES ('a1','S1','1','نص المادة الأولى','ساري')`);
+  // HKM-028 (مراجعة الجودة م٤): «1 مكرر» وصف غير مادي بالرقم نفسه لا يحجبان النص الساري للأصل.
+  await pool.query(
+    `INSERT INTO legal_articles (id, "legalSystemId", "articleNumber", "articleBis", content, status)
+     VALUES ('a1-bis','S1','1',1,'نص المادة الأولى مكرر','ساري'), ('a1-head','S1','1',100,'الباب الأول','ساري')`,
+  );
   await pool.query(`INSERT INTO unit_version (id, unit_id, body, valid_from) VALUES ('uv1','a1','نص المادة الأولى', NOW() - interval '1 year')`);
   await pool.query(`INSERT INTO uqn_fix.source_snapshot (url, body, body_sha, retrieved_on) VALUES ('https://uqn.gov.sa/details?p=9', 'نص الأداة', 'sha', CURRENT_DATE)`);
   const op = (id: string, confidence: string, verbatim: boolean | null, risks: string) =>
@@ -1110,6 +1115,7 @@ async function unificationTests(c: UnifyCtx) {
   const q = await listAmendmentQueue(db, { limit: 100 }, reviewer);
   const itemE = q.items.find((i) => i.op_id === "OP-E");
   ok(itemE?.current_text === "نص المادة الأولى بعد تعديل سابق" && itemE.current_text_resolved === true, "current_text = النسخة السارية اليوم من unit_version");
+  ok(itemE?.current_text === "نص المادة الأولى بعد تعديل سابق", "current_text للأصل رغم وجود «مكرر» وصف غير مادي بالرقم نفسه (articleBis)");
   const itemH = q.items.find((i) => i.op_id === "OP-H");
   const itemI = q.items.find((i) => i.op_id === "OP-I");
   ok(itemH?.current_text === null && itemH.current_text_resolved === false, "مادة غير موجودة = null وcurrent_text_resolved=false (لا تخمين)");

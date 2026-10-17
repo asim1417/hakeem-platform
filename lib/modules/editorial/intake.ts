@@ -348,7 +348,7 @@ export async function resolveCurrentTexts(
     const numbers = Array.from(new Set(wanted.map((r) => String(r.article_number))));
     const articles = await db.query<{ id: string; system_id: string; number: string; content: string }>(
       `SELECT id, "legalSystemId" AS system_id, "articleNumber"::text AS number, content
-         FROM legal_articles WHERE "legalSystemId" = ANY($1::text[]) AND "articleNumber"::text = ANY($2::text[])`,
+         FROM legal_articles WHERE "legalSystemId" = ANY($1::text[]) AND "articleNumber"::text = ANY($2::text[]) AND "articleBis" = 0`,
       [systemIds, numbers],
     );
     const articleOf = new Map<string, { id: string; content: string } | null>();

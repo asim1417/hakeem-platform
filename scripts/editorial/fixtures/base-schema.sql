@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS legal_articles (
   id text PRIMARY KEY,
   "legalSystemId" text NOT NULL REFERENCES legal_systems(id),
   "articleNumber" text NOT NULL,
+  "articleBis" integer NOT NULL DEFAULT 0,
   content text NOT NULL,
   status text
 );
