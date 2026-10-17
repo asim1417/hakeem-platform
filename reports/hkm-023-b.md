@@ -9,6 +9,29 @@
 
 ---
 
+## ٠. جولة الإصلاح بعد حكم الجودة (على dcb7678، تقرير `qa-b.md`)
+
+- **الوقت:** 2026-10-17، نحو 12:30 بتوقيت الرياض. الفرع نفسه `hkm-023-b-data`، ولم يُدفع.
+- **الإنتاج:** لم يُكتب. أُعيد التحقق بقراءة فقط (SELECT) من ثلاثة أمور:
+  - عدد المقدمات (991)، وآخر تحديث لحقلها (2026-09-25، لم يتغير).
+  - صفوف «مكرر» (11 مادة مكررة، و7 صفوف غير مادية بدرجة 100 فأعلى).
+  - بصمة إشارات التصنيف كاملة بالأنماط الجديدة.
+
+| بند الجودة | ما تغيّر | الدليل |
+|---|---|---|
+| **ع١** الفرع متأخر عن main ولا يعرف `articleBis` | دُمج main ‏(604bd56، HKM-028) بالتزام دمج، وتعارضه الوحيد في `package.json` حُلّ بإبقاء الطرفين. `getLawPageData` يقرأ `"articleBis"`، ويستبعد ما درجته 100 فأعلى (`NON_ARTICLE_BIS` من `article-key.ts` في main)، ويرتب بـ `"articleNumber", "articleBis", id`. لكل مادة الآن `bis` و`key` (`articleKey`: «103» أو «103_bis» أو «103_bis2»، كما في main وhkn-uri) و`label` («103 مكرر»). المرساة `art-<key>` والرابط `/legal/<slug>/<key>`، وصفحة المادة في main تقرأ هذا المفتاح. المفتاح «103» هو الأصل دائمًا. في MCP: المكررة تحمل `bis` و`key`، والصفوف غير المادية غائبة. | اختبارات BIS (8) في `test-law-page-data`، ومنها: ترتيب المكررات بعد أصلها، وفرادة المراسي، ورابط المكررة المستقل، والمفتاح «103» للأصل، واستبعاد الدرجة 100. |
+| **ع٢** مخرج `hakeem_get_law` كبر نحو 3.6 مرات | عنصر الفهرس صار حقوله القديمة الثلاثة، ولا يُضاف إليه إلا ما له قيمة: `bis`/`key` للمكررة، و`status` للموثّقة فقط (غيابه = غير مؤكد)، و`repealed_by`/`repeal_effective_date` للملغاة بأداة خاصة بها، و`repealed_from`. حُذفت `status_label` و`status_source` و`repeal_type` و`url` من كل مادة. الرابط قالب واحد `article_url_template` (`…/legal/<slug>/{key}`). الملغاة تبعًا لإلغاء النظام كله تحمل الحالة فقط، وبيان الإلغاء مرة واحدة في `repeal`. مسار MCP يستدعي `getLawPageData` بـ `withText: false` (لا يُقرأ نص أي مادة ولا نص نسخها)، و`withOutgoingRepeals: false` و`resolveRepealingSystems: false` (لا مسح لكل التحقق ولا لكل البطاقات). المقدمة القديمة التي تحوي متنًا تُعاد منها 1٬000 حرف مع `body_leak: true`. | **الحجم** لنظام اصطناعي بـ721 مادة (عناوين بطول 33، ومعرّفات بطول 25، ومقدمة قديمة بطول 8٬623 حرفًا هي نص المعاملات المدنية)، وكلها `JSON.stringify(x, null, 1)` كما في `tool-runner`: **القديم (main) 107٬662 بايت، والنسخة الأولى من الفرع (f575c0a) 447٬578 بايت (×4.16)، والآن 124٬223 بايت (×1.15)**. منها الفهرس 103٬826 والمقدمة 15٬179. اختبارات M-13 تتحقق من: لا `null` في الفهرس، ولا قراءة لعمود `content`، ولا مسح للجداول، و×1.2 حدًا أعلى. |
+| **ن٨** سبب التصنيف يخفي المتون (دليل السكك الحديدية 41٬959 حرفًا «سطر إصدار / عبارة صدر») | الخلل عام، وله ثلاثة إصلاحات: (١) المتن المتسرّب صار يتقدم على «عبارة صدر» في السبب. (٢) نص بلا أي جزء من أجزاء المقدمة وطوله 1٬000 حرف فأكثر صار `body_leak`، والسبب في الإنتاج أن صفوف «عبارة صدر» الـ19 بين 1٬000 و3٬000 حرف كلها متون أو أدلة أو سياسات، منها 9 مقطوعة عند 3٬000 حرف بالضبط. (٣) إشارة المتن صارت تقبل «المادة (الأولى):» المقوّسة. **الأصناف الثلاثة ومجموعها لم تتغير**؛ تغيّر السبب ووسم `body_leak`. | استعلام فروق (قراءة فقط): تغيّرت إشارة المتن في 7 صفوف. بصمة الإشارات كاملة في الإنتاج بالأنماط الجديدة `3d84663859cc54823f732d7e12c5c19e` تطابق الملف. الأرقام الجديدة في §٤. |
+| **ن٢** بيانات القارئ الوصفية | أُضيفت إلى الحذف من الصورة العارية محارف الاتجاه U+202A–202E وU+2066–2069 وU+061C، في TS وفي `translate` SQL معًا (التكافؤ 40/40). رقم الأداة يُقرأ بعد حذف التشكيل والتطويل وNBSP، والأرقام الفارسية تُحوَّل. التركيب الحرفي لم يتغير. صفّ الإنتاج الوحيد الذي فيه محارف اتجاه (`db86a88b…`) أُعيد حساب إشاراته بقراءة فقط، فلم تتغير. | 5 اختبارات B-2 جديدة، وحالة `edge-bidi` في التكافؤ. |
+| **ن٣** حواف مطابقة الاسم | السنة في المُدخل («نظام التنفيذ 1433») تُقدِّم الاسم الذي يحملها. داخل الدرجة يتأخر الملغى والمستبدل (آخر سجل تحقق للعمل) عن الساري، وتُقرأ حالات المرشحين فقط حين يتعددون. ما زال `findLawByName` يقرأ أسماء الأنظمة الـ1٬147، وهي قراءة صغيرة. | 5 اختبارات M-13، ومنها حالة من القاعدة («تنظيم اصطناعي للري» ← طبعة 1447). |
+| **ن٥** ضجيج `prisma:error` قبل الترحيل | `relationExists` (`to_regclass`) قبل قراءة `preamble_edition` و`preamble_unit_current`، فلا يُرسل استعلام يفشل. | U-4: قبل الترحيل لا استعلام على جداول المقدمة. |
+| **ن٤** روابط MCP و`ArticleView.url` إلى `/legal/...` | **لم يُغيَّر.** مسارات `/law` في فرع العرض، ولم يُحسم معرّفها الكنسي بعد. `/legal/<slug>/<key>` يعمل اليوم في main بمفتاح «مكرر». التحويل إلى `/law` سطر واحد في `law-page-data.ts` (الحقل `url`) وسطر في `get-law.ts` (القالب)، بعد دمج العرض. | — |
+| **م٥** تكرار التحميل في صفحة المادة | من العرض. البيانات توفّر الآن `withText: false` و`withOutgoingRepeals: false`. التوصية للعرض: `React.cache` حول `getLawPageData` في المسار. | — |
+
+**لاحظتُ في main (ليس من هذا الفرع):** `scripts/test-effective-consumers.ts` يفشل في 10 حالات على main نفسه (604bd56، في نسخة عمل نظيفة). السبب أن قاعدته الوهمية لا تعرف `articleBis` ولا المعامل `lt`، وفلاتر #751 (`articleBis: 0` و`ARTICLE_ROWS`) لا تطابق صفوفها. الإصلاح لمالك HKM-028.
+
+---
+
 ## ١. ما أخذته من #685 و#631، وما أضفته
 
 | المصدر | حاله | ما أخذته | ما أضفته فوقه |
@@ -35,7 +58,7 @@
 | 7 | مقدمة «نظام الإثبات» 171 حرفًا، وفي الهيئة أكثر من 4٬000 (مرسوم + قرار) | **ثبتت** | `legal_systems.preamble` للنظام `cmpz5pbv80021cwg2br8calht` طوله 171. بطاقة `law_card` (`lc26-be18c7df20bb28974df24785`، من الهيئة بتاريخ 2026-09-28) تركيب كتلها **4٬081 حرفًا**. فكّكه القارئ إلى أداتين و14 استنادًا و11 بندًا وتوقيعين، والتركيب حرفي (اختبار B-2). |
 | 8 | المقدمة لا تظهر في صفحة النظام، ولا في البحث، ولا في فهرس `hakeem_get_law` | **ثبتت للوحة والبحث وMCP، ولم تثبت للصفحة العامة** | اللوحة: الواقعة 1. البحث: مزوّد Postgres يقرأ `legal_articles` فقط (`providers/postgres-provider.ts:76` `type: "article"`). MCP: `lib/mcp/adapter.ts@HEAD:137` (الفهرس من المواد فقط). أما **الصفحة العامة `/legal/[slug]`** فتعرضها: `app/legal/[slug]/page.tsx:153-161` تعرض كتل `law_card` إن وُجدت، وإلا `system.preamble`. |
 | 9 | `issue_instrument` و`issue_date_h` و`status` كلها `null` في `hakeem_get_law` | **ثبتت** | `lib/mcp/adapter.ts@HEAD:133-135`: القيم `null` مكتوبة صراحة في الكود. |
-| 10 | مطابقة الاسم تفضّل الوثيقة الخطأ («نظام المرافعات الشرعية» ⇒ اللوائح، و«نظام الإثبات» ⇒ الأدلة الإجرائية) | **ثبتت** | `adapter.ts@HEAD:123-124`: `findFirst({ where: { name: { contains } } })` بلا ترتيب ولا تفضيل للمطابقة التامة. في القاعدة يحوي الاسمَ أكثرُ من وثيقة: «الأدلة الإجرائية لنظام الإثبات» (135 مادة) و«نظام الإثبات»، و«اللوائح التنفيذية لنظام المرافعات الشرعية» (639) و«نظام المرافعات الشرعية». أعاد اختبار `M-13 إعادة إنتاج العلة` إنتاج الخطأ بالمنطق القديم في الحالتين. |
+| 10 | مطابقة الاسم تفضّل الوثيقة الخطأ («نظام المرافعات الشرعية» ⇒ اللوائح، و«نظام الإثبات» ⇒ الأدلة الإجرائية) | **ثبتت** | `adapter.ts@HEAD:123-126`: `findFirst({ where: { name: { contains } }, orderBy: { articleCount: "desc" } })`، فيفوز الأكثر مواد بلا تفضيل للمطابقة التامة. في القاعدة يحوي الاسمَ أكثرُ من وثيقة: «الأدلة الإجرائية لنظام الإثبات» (135 مادة) و«نظام الإثبات»، و«اللوائح التنفيذية لنظام المرافعات الشرعية» (639) و«نظام المرافعات الشرعية». أعاد اختبار `M-13 إعادة إنتاج العلة` إنتاج الخطأ بالمنطق القديم في الحالتين. |
 | 11 | لا تمييز للمعدّلة أو الملغاة في صفحة النظام | **ثبتت (اللوحة)** | الواقعة 1 و1أ. |
 | 12 | (مرجع الهيئة) المرافعات 242 مادة، والملغاة 101–158 ألغتها م128 من نظام الإثبات | **في حكيم: 242 ثبتت، والإلغاء غير مسجّل** | `articleCount=242`. للمواد 101–158 (58 مادة): `status <> 'سارية'` ⇒ 0، وسجلات `verification` للوحدة ⇒ 0. أعداد الهيئة (32 معدّلة و58 ملغاة) لم أتحقق منها، لأن السحب من البوابة ممنوع. |
 
@@ -62,14 +85,14 @@
   - شُغِّل فعليًا على الإنتاج بقراءة فقط، والنتائج في §٤.
 - **ب-٤ مسار الاستكمال** — وثيقة تصميم في الملحق ب، دون تنفيذ، كما طلب الأمر. فرعي من main ولا يحوي المكتب.
 - **ع-١٣ أداة MCP** — `lib/mcp/tools/get-law.ts` و`lib/modules/legal-core/law-name-match.ts`، مع تعديل `lib/mcp/adapter.ts` و`app/mcp/route.ts`.
-  - **المطابقة:** تامة، ثم «يبدأ بـ»، ثم احتواء. داخل الطبقة الواحدة يُقدَّم الأصل على اللائحة (إلا إن طُلبت اللائحة صراحة)، ثم الأقصر، ثم الأكثر مواد. مع المطابقة تُعاد `match` و`alternatives` (حتى 8).
+  - **المطابقة:** تامة، ثم «يبدأ بـ»، ثم احتواء. داخل الطبقة الواحدة يُقدَّم الأصل على اللائحة (إلا إن طُلبت اللائحة صراحة)، ثم الساري على الملغى، ثم الأقصر، ثم الأكثر مواد. والسنة في المُدخل تُقدِّم من يحملها. مع المطابقة تُعاد `match` و`alternatives` (حتى 8).
   - **المخرجات الجديدة:**
     - `issue_instruments[]`
     - `dates` الأربعة (issued و published و effective و applied)
     - `status_detail` على قائمة الهيئة الست
     - `preamble` (وحدات، أو نص بـ `completeness` و`complete` و`truncated` بسقف 12٬000 حرف)
     - `counts`
-    - `toc[]` بحالة كل مادة ومصدرها، وبيان إلغائها، ورابطها
+    - `toc[]` مضغوط: الحقول القديمة، ثم ما له قيمة فقط (`bis`/`key` للمكررة، و`status` للموثّقة، و`repealed_by` و`repeal_effective_date` و`repealed_from`)، والرابط من `article_url_template` (انظر §٠)
   - **العقد القديم باقٍ:** لم يُحذف حقل ولم يُغيَّر نوعه. الحقول الثلاثة التي كانت `null` صارت تُملأ متى وُجد مصدرها.
   - **`/mcp` ليس مسارًا مراقبًا:** لا workflow فيه مرشّح `paths` يشمل `app/mcp` أو `lib/mcp` أو `lib/**`. `deploy-readiness-check.yml` يعمل على كل push إلى main أو `codex/**` وكل pull_request، ولا يطبّق ترحيلًا ولا يكتب على قاعدة.
 - **ع-١٤ جانب البيانات** — `lib/modules/legal-core/preamble-search.ts` و`scripts/hkm-023-b/embed-preamble-units.ts`
@@ -85,7 +108,11 @@
 - **ربط ع-١٤:** ربط `searchPreambleUnits` بـ `hybrid-search` و`hakeem_search`، وربط `vector-provider` بالنوع `preamble_unit`. يأتي بعد وجود البيانات، فلا معنى لربطه اليوم والجدول فارغ.
 - **قبول ع-١٤ الحي:** «عبارة من منطوق نظام الإثبات تعيد البند». ينتظر إدخال المقدمة (ف١١). اختُبر محليًا على بيانات اصطناعية (S-14).
 - **تنفيذ ب-٤:** على فرع المكتب `aman/legal-editorial-desk-phase0`، وفق الملحق ب.
-- **ما لم يُشغَّل:** `next build`، و`prisma generate --no-engine`، و`qa:security`. السبب: محرك Prisma غير متاح هنا. والجدولان الجديدان يُقرآن بـ SQL خام عبر `SqlClient`، مثل `law_card` و`search_surface` القائمين، فلا تغيير في `schema.prisma`.
+- **ما لم يُشغَّل:** `next build` و`qa:security` (شغّلتهما الجودة على dcb7678 ونجحا). والجدولان الجديدان يُقرآن بـ SQL خام عبر `SqlClient`، مثل `law_card` و`search_surface` القائمين، فلا تغيير في `schema.prisma`.
+- **فحص الأنواع بعد دمج main:**
+  - `node_modules` المشترك فيه عميل Prisma مولَّد من مخطط قديم بلا `articleBis`، فيفشل `npm run typecheck` فيه على ملفات main نفسها (`app/legal/...`، و`app/eli/...`).
+  - ولّدتُ عميلًا خاصًا بـ `prisma generate --no-engine` من مخطط الفرع إلى مجلد مؤقت خارج المستودع، وشغّلت `tsc` بربط `@prisma/client` به، فخرج **نظيفًا**.
+  - لم أُعِد توليد العميل المشترك، لأنه تستعمله نسخ عمل أخرى.
 - **الدفعات الخمس:** لم تُدخل (انظر §٤).
 
 ---
@@ -94,10 +121,12 @@
 
 **الطريقة**
 1. لا رابط اتصال بالإنتاج في البيئة، فولّدت SQL من `buildPreambleSignalsSql` وشغّلته بـ `SELECT` على الإنتاج في أربع دفعات، تحققت من md5 كل منها.
-2. الأنماط مكتوبة لتعمل في Postgres ARE وJS معًا، وتكافؤهما مثبت على Postgres 17 محلي (37/37).
+2. الأنماط مكتوبة لتعمل في Postgres ARE وJS معًا، وتكافؤهما مثبت على Postgres 17 محلي (40/40 بعد جولة الجودة).
 3. القرار دالة TS واحدة هي `classifyPreambleSignals`.
-4. المُدخل: `reports/hkm-023-b-preamble-signals.txt` (md5 `d3cb1fc9dbfb44943c47fd8694c1fad0`).
-5. الناتج: `reports/hkm-023-b-preamble-classification.csv` (md5 `9997ae40aeb8763cbe289bd2fe9c71bf`) و`.summary.json`.
+4. المُدخل: `reports/hkm-023-b-preamble-signals.txt`.
+   - md5 الحالي `3d84663859cc54823f732d7e12c5c19e`، وهو ما حسبته القاعدة نفسها بالأنماط الجديدة.
+   - السابق `d3cb1fc9…`. الفرق 7 صفوف في إشارة المتن.
+5. الناتج: `reports/hkm-023-b-preamble-classification.csv` (md5 `67fcab59218e5c58b96c413696734d8d`؛ والسابق `9997ae40…`) و`.summary.json`.
 6. أعمدة CSV: المعرّف، والاسم، والقطاع، والتصنيف، والسبب، والطول، والإشارات، و`law_card_full`. الترتيب بالقطاع، ثم «نظام» قبل غيره، ثم الاسم.
 
 **المجموع: 991 = 878 سطر إصدار فقط + 68 كاملة + 45 جزئية.** يطابق عدد المقدمات (الواقعة 4).
@@ -108,11 +137,13 @@
 | جزئية: تنقصها الافتتاحية والبنود | 33 |
 | جزئية: تنقصها الافتتاحية والاستنادات | 9 |
 | جزئية: تنقصها الافتتاحية | 3 |
-| سطر إصدار: عبارة «صدر بالمرسوم…» | 663 |
+| سطر إصدار: عبارة «صدر بالمرسوم…» | 530 (كانت 663) |
 | سطر إصدار: عنوان وتاريخ فقط (300 حرف فأقل) | 123 |
-| سطر إصدار: الحقل يحوي متن النظام لا مقدمته (`body_leak`) | 75 |
-| سطر إصدار: تمهيد سردي | 10 |
-| سطر إصدار: نص طويل بلا بنية مقدمة | 7 |
+| سطر إصدار: الحقل يحوي متن النظام أو ملحقًا لا مقدمة (`body_leak`) | 220 (كانت 75) |
+| سطر إصدار: تمهيد سردي | 4 (كانت 10) |
+| سطر إصدار: نص بين 300 و1٬000 حرف بلا بنية مقدمة | 1 (كانت 7) |
+
+**ما تغيّر في جولة الجودة:** الأسباب وحدها. الأصناف الثلاثة ومجموعها كما هي، وكذلك جدول القطاعات أدناه. لا صف «عبارة صدر» بقي طوله 1٬000 حرف فأكثر (كانت 78 صفًا فوق 3٬000).
 
 | القطاع (بأولوية الأمر) | كاملة | جزئية | سطر إصدار | المجموع | منها كتل بطاقة كاملة في `law_card` |
 |---|---|---|---|---|---|
@@ -124,7 +155,7 @@
 | أخرى (قطاعي، صحي، غير مصنف) | 40 | 38 | 561 | 639 | 262 |
 
 - **مصدر القطاع:** `legal_systems.domain` في 459، والاسم في 162، وبلا قطاع ⇒ «أخرى» في 370. التصنيف القطاعي تقريبي في مجمله.
-- **متن داخل حقل المقدمة (`body_leak`):** 153 نصًا فيها متن، 75 منها صُنفت «سطر إصدار». هذه **ليست مقدمات** في الحقيقة، ويجب ألا يُعرض حقلها بعنوان «المقدمة».
+- **متن داخل حقل المقدمة (`body_leak`):** 227 نصًا (كانت 153)، منها 220 صُنفت «سطر إصدار» بسبب المتن. هذه **ليست مقدمات** في الحقيقة، ويجب ألا يُعرض حقلها بعنوان «المقدمة». `PreambleView.legacy.bodyLeak` يحمل الوسم للعرض.
 - **أهم رقم للاستكمال:** 467 نظامًا لها في `law_card` كتل مقدمة كاملة من لقطة الهيئة (2026-09-28)، **446** منها مقدمتها في حكيم غير كاملة. هذه مصدر جاهز داخل القاعدة لا يحتاج سحبًا، وفي التقاضي وحده 26 من 40.
 - **من نواة التقاضي:** الإثبات، والإجراءات الجزائية، والأحوال الشخصية، والتحكيم، والمحاماة، والمرافعات الشرعية، والمرافعات أمام ديوان المظالم كلها «سطر إصدار» (127–174 حرفًا) ولها كتل بطاقة كاملة. «التنفيذ» (م/237) و«المعاملات المدنية» كاملتان.
 
@@ -196,21 +227,23 @@
 
 | الأمر | النتيجة | ما يغطيه |
 |---|---|---|
-| `npm run test:preamble-parser` | **176 نجح، 0 فشل** | B-2: المراسي، وإعادة التركيب الحرفي لكل عيّنة، والعيّنات الاصطناعية الثلاث، والنصوص الحقيقية الخمسة، وكتل بطاقة الإثبات، وعنوان الأداة بأرقام هندية. |
-| `npm run test:preamble-signals` | **31 نجح، 0 فشل** | B-3: القرار والقطاع والترتيب وCSV. تكافؤ SQL/TS على Postgres 17 محلي 37/37، وعيّنة الإنتاج 20/20. |
-| `npm run test:law-page-data` | **88 نجح، 0 فشل** | B-1 ‏(14): الترحيل والقيود والإضافة فقط. U-1 إلى U-7d ‏(38): بيانات الصفحة. M-13 ‏(29): المطابقة والعقد القديم والجديد. S-14 ‏(7): البحث. كلها على قاعدة محلية ببيانات اصطناعية. |
-| اختبارات قائمة تمس الأداة | نجحت | `scripts/test-effective-consumers.ts` («كل الاختبارات نجحت») و`test:mcp-hardening`. |
-| `npm run typecheck` | نظيف | |
-| `npm run lint` و`npx next lint --file` على كل ملف مُسّ | نظيف | |
+| `npm run test:preamble-parser` | **181 نجح، 0 فشل** (كانت 176) | B-2: المراسي، وإعادة التركيب الحرفي لكل عيّنة، والعيّنات الاصطناعية الثلاث، والنصوص الحقيقية الخمسة، وكتل بطاقة الإثبات، وعنوان الأداة بأرقام هندية وفارسية ومع التشكيل وNBSP ومحارف الاتجاه. |
+| `npm run test:preamble-signals` | **34 نجح، 0 فشل** (كانت 31) | B-3: القرار والسبب والقطاع والترتيب وCSV، ومنها المتن الطويل بلا بنية. تكافؤ SQL/TS على Postgres 17 محلي 40/40، وعيّنة الإنتاج 20/20. |
+| `npm run test:law-page-data` | **113 نجح، 0 فشل** (كانت 88) | B-1 ‏(14): الترحيل والقيود والإضافة فقط. U-* ‏(42): بيانات الصفحة، ومنها `withText=false` و`bodyLeak` وعدم الاستعلام قبل الترحيل. BIS ‏(8): المادة المكررة. M-13 ‏(42): المطابقة وحوافها، والعقد القديم والجديد، والفهرس المضغوط، والحجم. S-14 ‏(7): البحث. كلها على قاعدة محلية ببيانات اصطناعية. |
+| `test:article-key` (من main) | نجح | |
+| `test:mcp-hardening` | نجح | |
+| `scripts/test-effective-consumers.ts` | **10 فشل، على main نفسه أيضًا** | قاعدته الوهمية لا تعرف `articleBis` (انظر §٠). ليس من هذا الفرع. |
+| فحص الأنواع | نظيف بعميل Prisma مولَّد من مخطط الفرع | العميل المشترك قديم (انظر §٣ «ما بقي»). |
+| `npx next lint --file` على كل ملف مُسّ | نظيف | |
 
 **ما لم يُختبر ولماذا**
-- `next build` و`prisma generate --no-engine`: لا محرك Prisma في البيئة.
+- `next build`: لم يُشغَّل بعد الدمج. شغّلته الجودة على dcb7678 فنجح.
 - لقطات 390 و1440: من القسم أ.
 - قبول ع-١٤ الحي: لا بيانات بعد.
 - مقارنة أعداد الهيئة للمرافعات: السحب ممنوع.
 - `prismaSqlClient` نفسه لم يُشغَّل على Prisma حقيقي. هو غلاف من سطرين حول `$queryRawUnsafe`، والمنطق كله مختبر عبر `pg`.
 
-**`git diff --name-only aman/hkm-023-b-law-page...HEAD`** (بعد الالتزامات):
+**`git diff --name-only origin/main...HEAD`** (بعد دمج main ‏604bd56 والتزامات جولة الجودة؛ القائمة نفسها قبلها):
 
 ```
 app/mcp/route.ts
@@ -289,9 +322,14 @@ interface SqlClient { query<T>(sql: string, params?: readonly unknown[]): Promis
 prismaSqlClient(prisma): SqlClient                // في الخادم
 
 // lib/modules/legal-core/law-page-data.ts
-getLawPageData(db: SqlClient, systemId: string,
-  opts?: { asOf?: string /* YYYY-MM-DD، افتراضيًا اليوم بالرياض */; resolveRepealingSystems?: boolean })
+getLawPageData(db: SqlClient, systemId: string, opts?: LawPageDataOptions)
   : Promise<LawPageData | null>                   // null = لا نظام بهذا المعرّف
+LawPageDataOptions {
+  asOf?: string                    // YYYY-MM-DD، افتراضيًا اليوم بالرياض
+  withText?: boolean               // false: text/effectiveText = "" (لا يُقرأ نص المواد ولا نسخها)؛ الحالات كما هي
+  withOutgoingRepeals?: boolean    // false: outgoingRepeals = [] (لا مسح لكل سجلات التحقق)
+  resolveRepealingSystems?: boolean // false: repeal.repealingSystem = null (لا مسح لكل البطاقات)
+}
 
 LawPageData {
   system: { id, name, slug, articleCount, articleCountStored, classification, domainTitle, domain }
@@ -308,16 +346,22 @@ LawPageData {
     completeness: "complete" | "partial" | "issuance_line" | null;
     units: { editionId; source; rawSha256; outside: PreambleUnitView[]; instruments: PreambleInstrumentView[] } | null;
     sourceBlocks: { blocks: { kind; heading; text }[]; sourceUrl; retrievedOn } | null;
-    legacy: { text; chars; royalDecree; completeness } | null;   // يُعاد دائمًا إن وُجد
+    legacy: { text; chars; royalDecree; completeness; bodyLeak } | null;   // يُعاد دائمًا إن وُجد؛ bodyLeak = متن لا مقدمة
     officialSourceUrl: string | null }
   body: { divisions: DivisionView[] { heading; articles: ArticleView[]; allRepealed },
           counts: { total, inForce, amended, repealed, unverified } }
-  outgoingRepeals: OutgoingRepeal[]               // derived: true
+  outgoingRepeals: OutgoingRepeal[]               // { …, articleNumber, articleBis, derived: true }
 }
-ArticleView { id, number, title, heading, chapter, text, effectiveText,
+ArticleView { id, number,
+  bis: number,                     // درجة «مكرر» (0 للأصل)؛ الصفوف بدرجة ≥ 100 لا تُقرأ أصلًا
+  key: string,                     // articleKey من HKM-028: "103" أو "103_bis" أو "103_bis2" — فريد في النظام
+  label: string,                   // "103" أو "103 مكرر"
+  title, heading /* «المادة ١٠٣ مكرر» إن لم يكن عنوان */, chapter, text, effectiveText,
   status: "ساري" | "معدّل" | "ملغى" | null, statusLabel, statusSource, inheritedFromWork,
   amendment: { versions, currentFrom, instrument, url, pendingFrom } | null,
-  repeal: RepealInfo | null, repealedLaterOn, anchor: `art-${n}`, url: `/legal/<slug>/<n>` }
+  repeal: RepealInfo | null, repealedLaterOn, anchor: `art-${key}`, url: `/legal/<slug>/<key>` }
+// الترتيب: articleNumber ثم bis ثم id. صفحة المادة تحسم المفتاح بـ articleKey/المطابقة نفسها في main
+// (app/legal/[slug]/[article]: /^(\d+)(?:_bis(\d*))?$/)، فلا تفتح المكررة بدل الأصل.
 RepealInfo { type: RepealType|null; typeDerived; instrument; url; quote; effectiveDate; effectiveDateSource;
   repealingSystem: SystemRef|null; repealingSystemBasis; repealingArticle }
 PreambleUnitView { id, type: PreambleUnitType, ordinal, label, number, text, anchor, path }
@@ -328,6 +372,10 @@ PREAMBLE_NONE_LABEL = "المقدمة غير متوفرة"; PREAMBLE_SOURCE_BLOC
 
 // lib/modules/legal-core/law-name-match.ts
 findLawByName(db, name): Promise<{ match; matchType: "exact"|"prefix"|"contains"|"none"; alternatives }>
+rankLawNameMatches(candidates, name, { retired? }); queryYears(name)
+
+// lib/modules/legal-core/sql-port.ts
+relationExists(db, name): Promise<boolean>         // to_regclass قبل قراءة جدول لم يُطبَّق ترحيله
 
 // lib/modules/legal-core/preamble-search.ts
 searchPreambleUnits(db, query, { limit?, systemIds?, unitTypes? }): Promise<PreambleSearchHit[]>
