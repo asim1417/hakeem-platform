@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { listAmendmentQueue } from "@/lib/modules/editorial/intake";
-import { editorialDb, editorialErrorResponse, requireEditorialApi } from "@/lib/modules/editorial/guard";
+import { deskJson, editorialDb, editorialErrorResponse, requireEditorialApi } from "@/lib/modules/editorial/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       limit: Number(q.get("limit") ?? 25) || 25,
       offset: Number(q.get("offset") ?? 0) || 0,
     });
-    return NextResponse.json(result);
+    return deskJson(result);
   } catch (error) {
     return editorialErrorResponse(error);
   }

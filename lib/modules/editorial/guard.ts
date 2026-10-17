@@ -5,19 +5,25 @@ import { redirect } from "next/navigation";
 import { NextResponse, type NextRequest } from "next/server";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getApiUser, requireUser } from "@/lib/modules/auth/session";
+import { getApiUser, isAuthDisabled, requireUser } from "@/lib/modules/auth/session";
 import { EDITORIAL_PERMISSIONS } from "@/lib/modules/auth/role-permissions";
-import { canProposeLaws, canReview, canViewDesk, resolveEditorialAccess } from "./access";
+import { canProposeLaws, canReadAudit, canReview, canViewDesk, resolveEditorialAccess } from "./access";
 import { recordAudit } from "./audit";
 import { prismaEditorialDb, type EditorialDb } from "./db";
+import { assertContentLength, isSameOriginWrite, parseBodyText, WRITE_METHODS } from "./http-guard";
 import { isEditorialError, type EditorialActor } from "./types";
 
-export type EditorialNeed = "view" | "propose" | "review";
+export type EditorialNeed = "view" | "propose" | "review" | "audit";
 
 let cachedDb: EditorialDb | null = null;
 export function editorialDb(): EditorialDb {
   cachedDb ??= prismaEditorialDb(prisma);
   return cachedDb;
+}
+
+/** كل استجابات /api/admin/legal بلا تخزين مؤقت (ق-١٠). */
+export function deskJson(body: unknown, status = 200): NextResponse {
+  return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
 
 /** منح صلاحيات المكتب للدور من صفحة الأدوار (RolePermission). سقوط آمن إلى لا شيء. */
@@ -46,10 +52,13 @@ export async function editorialActorFor(user: { id: string; role: string }): Pro
 function allowed(actor: EditorialActor, need: EditorialNeed): boolean {
   if (need === "review") return canReview(actor.access);
   if (need === "propose") return canProposeLaws(actor.access);
+  if (need === "audit") return canReadAudit(actor.access);
   return canViewDesk(actor.access);
 }
 
 export async function requireEditorialPage(need: EditorialNeed = "view"): Promise<EditorialActor> {
+  // المكتب لا يعمل بالمصادقة المعطّلة: الضيف هناك SYSTEM_ADMIN بلا هوية حقيقية.
+  if (isAuthDisabled()) redirect("/admin");
   const user = await requireUser();
   const actor = await editorialActorFor(user);
   if (!allowed(actor, need)) redirect("/admin");
@@ -60,9 +69,26 @@ export async function requireEditorialApi(
   request: NextRequest,
   need: EditorialNeed,
 ): Promise<{ actor: EditorialActor; response: null } | { actor: null; response: NextResponse }> {
+  if (isAuthDisabled()) {
+    return { actor: null, response: deskJson({ code: "UNAUTHENTICATED", message: "مكتب التحرير يتطلب تسجيل دخول حقيقيًّا؛ المصادقة معطّلة في هذه البيئة." }, 401) };
+  }
+  if (WRITE_METHODS.has(request.method.toUpperCase())) {
+    const sameOrigin = isSameOriginWrite({
+      origin: request.headers.get("origin"),
+      requestOrigin: request.nextUrl.origin,
+      host: request.headers.get("host"),
+      forwardedHost: request.headers.get("x-forwarded-host"),
+    });
+    if (!sameOrigin) return { actor: null, response: deskJson({ code: "FORBIDDEN", message: "مصدر الطلب غير مسموح." }, 403) };
+    try {
+      assertContentLength(request.headers.get("content-length"));
+    } catch (error) {
+      return { actor: null, response: editorialErrorResponse(error) };
+    }
+  }
   const user = await getApiUser(request);
   if (!user?.isActive) {
-    return { actor: null, response: NextResponse.json({ message: "يلزم تسجيل الدخول." }, { status: 401 }) };
+    return { actor: null, response: deskJson({ code: "UNAUTHENTICATED", message: "يلزم تسجيل الدخول." }, 401) };
   }
   const actor = await editorialActorFor(user);
   if (!allowed(actor, need)) {
@@ -72,16 +98,22 @@ export async function requireEditorialApi(
       objectId: request.nextUrl.pathname,
       detail: { need },
     }).catch(() => undefined);
-    return { actor: null, response: NextResponse.json({ message: "لا تملك صلاحية هذه العملية في مكتب التحرير." }, { status: 403 }) };
+    return { actor: null, response: deskJson({ code: "FORBIDDEN", message: "لا تملك صلاحية هذه العملية في مكتب التحرير." }, 403) };
   }
   return { actor, response: null };
+}
+
+/** يقرأ جسم الطلب بحد 64 ك.ب فعلي (لا بالترويسة وحدها). الجسم الفارغ = null. */
+export async function readDeskJson(request: NextRequest): Promise<unknown> {
+  return parseBodyText(await request.text());
 }
 
 /** يحوّل أخطاء الخدمة إلى استجابة؛ ما سواها 500 بلا تفاصيل داخلية. */
 export function editorialErrorResponse(error: unknown): NextResponse {
   if (isEditorialError(error)) {
-    return NextResponse.json({ code: error.code, message: error.message, detail: error.detail ?? null }, { status: error.status });
+    return deskJson({ code: error.code, message: error.message, detail: error.detail ?? null }, error.status);
   }
   console.error("[editorial] unexpected error", error instanceof Error ? error.message : error);
-  return NextResponse.json({ code: "INTERNAL", message: "تعذّر تنفيذ العملية." }, { status: 500 });
+  return deskJson({ code: "INTERNAL", message: "تعذّر تنفيذ العملية." }, 500);
 }
+

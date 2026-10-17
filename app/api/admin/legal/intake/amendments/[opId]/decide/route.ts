@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { decideAmendmentOp } from "@/lib/modules/editorial/intake";
-import { editorialDb, editorialErrorResponse, requireEditorialApi } from "@/lib/modules/editorial/guard";
+import { deskJson, editorialDb, editorialErrorResponse, readDeskJson, requireEditorialApi } from "@/lib/modules/editorial/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +15,10 @@ const body = z.object({
 export async function POST(request: NextRequest, { params }: { params: { opId: string } }) {
   const gate = await requireEditorialApi(request, "review");
   if (gate.response) return gate.response;
-  const parsed = body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ code: "INVALID_INPUT", message: "القرار غير صالح." }, { status: 400 });
   try {
-    return NextResponse.json(await decideAmendmentOp(editorialDb(), gate.actor, decodeURIComponent(params.opId), parsed.data));
+    const parsed = body.safeParse(await readDeskJson(request));
+    if (!parsed.success) return deskJson({ code: "INVALID_INPUT", message: "القرار غير صالح." }, 400);
+    return deskJson(await decideAmendmentOp(editorialDb(), gate.actor, decodeURIComponent(params.opId), parsed.data));
   } catch (error) {
     return editorialErrorResponse(error);
   }

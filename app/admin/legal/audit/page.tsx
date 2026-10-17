@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 const OBJECT_TYPES = ["", "change_set", "work", "amendment_op", "principle", "route"];
 
 export default async function EditorialAuditPage({ searchParams = {} }: { searchParams?: { action?: string; objectType?: string; actor?: string } }) {
-  await requireEditorialPage("view");
-  const rows = await listAudit(editorialDb(), {
+  const actor = await requireEditorialPage("audit");
+  const rows = await listAudit(editorialDb(), actor, {
     action: searchParams.action,
     objectType: searchParams.objectType,
     actor: searchParams.actor,

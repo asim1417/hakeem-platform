@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { listPrincipleQueue } from "@/lib/modules/editorial/intake";
-import { editorialDb, editorialErrorResponse, requireEditorialApi } from "@/lib/modules/editorial/guard";
+import { deskJson, editorialDb, editorialErrorResponse, requireEditorialApi } from "@/lib/modules/editorial/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (gate.response) return gate.response;
   const q = request.nextUrl.searchParams;
   try {
-    return NextResponse.json(
+    return deskJson(
       await listPrincipleQueue(editorialDb(), {
         topic: q.get("topic") ?? undefined,
         limit: Number(q.get("limit") ?? 25) || 25,

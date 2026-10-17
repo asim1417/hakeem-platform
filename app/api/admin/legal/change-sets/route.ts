@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { createChangeSet, listChangeSets } from "@/lib/modules/editorial/service";
-import { editorialDb, editorialErrorResponse, requireEditorialApi } from "@/lib/modules/editorial/guard";
+import { deskJson, editorialDb, editorialErrorResponse, readDeskJson, requireEditorialApi } from "@/lib/modules/editorial/guard";
 import { WORK_STATUSES, type EditorialStatus } from "@/lib/modules/editorial/types";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const raw = request.nextUrl.searchParams.get("status") ?? "open";
   const status = (STATUSES as readonly string[]).includes(raw) ? (raw as EditorialStatus | "open") : "open";
   try {
-    return NextResponse.json({ items: await listChangeSets(editorialDb(), { status }) });
+    return deskJson({ items: await listChangeSets(editorialDb(), { status }) });
   } catch (error) {
     return editorialErrorResponse(error);
   }
@@ -42,11 +42,11 @@ const body = z.object({
 export async function POST(request: NextRequest) {
   const gate = await requireEditorialApi(request, "propose");
   if (gate.response) return gate.response;
-  const parsed = body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ code: "INVALID_INPUT", message: "مدخلات الدفعة غير صالحة." }, { status: 400 });
   try {
+    const parsed = body.safeParse(await readDeskJson(request));
+    if (!parsed.success) return deskJson({ code: "INVALID_INPUT", message: "مدخلات الدفعة غير صالحة." }, 400);
     const result = await createChangeSet(editorialDb(), gate.actor, parsed.data);
-    return NextResponse.json(result, { status: 201 });
+    return deskJson(result, 201);
   } catch (error) {
     return editorialErrorResponse(error);
   }

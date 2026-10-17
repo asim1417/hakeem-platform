@@ -31,11 +31,14 @@ export type Permission =
   | "REVIEW_USE"
   /** حصرية لمالك المنصة — لا تُمنح عبر مصفوفة SYSTEM_ADMIN. */
   | "SUPER_ADMIN_ACCESS"
-  // مكتب التحرير التشريعي: لا تُمنح لغير SUPER_ADMIN إلا من صفحة الأدوار،
-  // ولا يتجاوزها SYSTEM_ADMIN (الحارس في lib/modules/editorial/access.ts لا يستعمل canUser).
+  // مكتب التحرير التشريعي: مصدرها الوحيد تكليفات إعدادات المكتب (editorial_config) التي يحررها المالك.
+  // لا تُمنح من صفحة الأدوار (setRolePermission يرفضها)، ولا يمنحها canUser لغير SUPER_ADMIN،
+  // فلا يتجاوزها SYSTEM_ADMIN ولا ضيف المعاينة.
   | "LEGAL_EDITOR_LAWS"
   | "LEGAL_EDITOR_RULINGS"
   | "LEGAL_REVIEWER"
+  /** النشر منفصل عن الاعتماد (ق-٣). */
+  | "LEGAL_PUBLISHER"
   | "LEGAL_QA_VIEW"
   /** حساب وكيل آلي: يقترح فقط، ويُرفض منه أي اعتماد أو نشر. */
   | "LEGAL_AGENT_PROPOSE";
@@ -44,11 +47,33 @@ export const EDITORIAL_PERMISSIONS = [
   "LEGAL_EDITOR_LAWS",
   "LEGAL_EDITOR_RULINGS",
   "LEGAL_REVIEWER",
+  "LEGAL_PUBLISHER",
   "LEGAL_QA_VIEW",
   "LEGAL_AGENT_PROPOSE",
 ] as const satisfies readonly Permission[];
 
 export type EditorialPermission = (typeof EDITORIAL_PERMISSIONS)[number];
+
+export const EDITORIAL_PERMISSION_LABELS: Record<EditorialPermission, string> = {
+  LEGAL_EDITOR_LAWS: "مكتب التحرير: محرر الأنظمة",
+  LEGAL_EDITOR_RULINGS: "مكتب التحرير: محرر الأحكام",
+  LEGAL_REVIEWER: "مكتب التحرير: معتمِد",
+  LEGAL_PUBLISHER: "مكتب التحرير: ناشر",
+  LEGAL_QA_VIEW: "مكتب التحرير: عرض الجودة والسجل",
+  LEGAL_AGENT_PROPOSE: "مكتب التحرير: وكيل آلي (اقتراح فقط)",
+};
+
+export function isEditorialPermission(permission: string): permission is EditorialPermission {
+  return (EDITORIAL_PERMISSIONS as readonly string[]).includes(permission);
+}
+
+/**
+ * حكم canUser في صلاحيات المكتب: للمالك وحده. غيره يُحكم في المكتب بتكليفه (lib/modules/editorial/policy.ts)
+ * لا بـ canUser، حتى لا يرث SYSTEM_ADMIN صلاحيات المكتب من سطر التجاوز العام.
+ */
+export function editorialPermissionViaCanUser(role: string): boolean {
+  return role === "SUPER_ADMIN";
+}
 
 const PLATFORM_ADMIN_PERMISSIONS: Permission[] = [
   "CONSULTATIONS_FULL",

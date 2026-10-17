@@ -29,13 +29,13 @@ function Stat({ label, value, href, tone = "neutral" }: { label: string; value: 
 }
 
 export default async function EditorialDeskPage() {
-  await requireEditorialPage("view");
+  const actor = await requireEditorialPage("view");
   const db = editorialDb();
   const writeEnabled = isEditorialWriteEnabled();
   const [desk, intake, audit] = await Promise.all([
     deskCounts(db),
     intakeCounts(db).catch(() => null),
-    listAudit(db, { limit: 8 }).catch(() => null),
+    listAudit(db, actor, { limit: 8 }).catch(() => null),
   ]);
 
   return (

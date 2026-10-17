@@ -1,5 +1,7 @@
 // قراءات اللوحة: سجل التدقيق وعدّادات الطوابير.
+import { canReadAudit } from "./access";
 import type { SqlClient } from "./db";
+import { EditorialError, type EditorialActor } from "./types";
 
 export interface AuditRow {
   id: string;
@@ -14,10 +16,13 @@ export interface AuditRow {
   at: Date;
 }
 
+/** يقرؤه صاحب عرض الجودة أو المعتمِد فقط (ق-١٢)؛ الحكم هنا في طبقة البيانات لا في الصفحة وحدها. */
 export async function listAudit(
   db: SqlClient,
+  viewer: EditorialActor,
   filter: { action?: string; objectType?: string; actor?: string; limit?: number } = {},
 ): Promise<AuditRow[]> {
+  if (!canReadAudit(viewer.access)) throw new EditorialError("FORBIDDEN", "سجل التدقيق لصاحب عرض الجودة أو المعتمِد.");
   const params: unknown[] = [];
   const parts: string[] = [];
   if (filter.action?.trim()) {

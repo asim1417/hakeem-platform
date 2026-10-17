@@ -81,6 +81,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   LEGAL_EDITOR_LAWS: "مكتب التحرير: محرر الأنظمة",
   LEGAL_EDITOR_RULINGS: "مكتب التحرير: محرر الأحكام",
   LEGAL_REVIEWER: "مكتب التحرير: معتمِد",
+  LEGAL_PUBLISHER: "مكتب التحرير: ناشر",
   LEGAL_QA_VIEW: "مكتب التحرير: عرض الجودة والسجل",
   LEGAL_AGENT_PROPOSE: "مكتب التحرير: وكيل آلي (اقتراح فقط)",
 };

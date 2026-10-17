@@ -45,7 +45,11 @@ export type EditorialErrorCode =
   | "ALREADY_DECIDED"
   | "CONFLICT"
   | "NOT_ELIGIBLE"
-  | "NO_PRIOR_STATUS";
+  | "NO_PRIOR_STATUS"
+  /** دفعة لا يُتراجع عنها في المرحلة صفر (قرارات مقترحات الذكاء الاصطناعي). */
+  | "NOT_REVERTIBLE"
+  | "UNAUTHENTICATED"
+  | "PAYLOAD_TOO_LARGE";
 
 const HTTP_STATUS: Record<EditorialErrorCode, number> = {
   WRITE_DISABLED: 423,
@@ -62,6 +66,9 @@ const HTTP_STATUS: Record<EditorialErrorCode, number> = {
   CONFLICT: 409,
   NOT_ELIGIBLE: 422,
   NO_PRIOR_STATUS: 422,
+  NOT_REVERTIBLE: 409,
+  UNAUTHENTICATED: 401,
+  PAYLOAD_TOO_LARGE: 413,
 };
 
 export class EditorialError extends Error {

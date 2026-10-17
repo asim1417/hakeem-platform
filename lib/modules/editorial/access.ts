@@ -30,3 +30,10 @@ export function canProposeLaws(access: EditorialAccess): boolean {
 export function canReview(access: EditorialAccess): boolean {
   return access.reviewer && !access.agent;
 }
+
+/** سجل التدقيق (ق-١٢): لصاحب عرض الجودة أو المعتمِد، لا للوكيل. */
+export function canReadAudit(access: EditorialAccess): boolean {
+  if (access.superAdmin) return true;
+  if (access.agent) return false;
+  return access.qaView || access.reviewer;
+}
