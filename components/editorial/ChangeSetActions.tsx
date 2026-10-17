@@ -48,15 +48,18 @@ export function ChangeSetActions({
   const showDecide = status === "pending" && canReview;
   const showPublish = status === "approved" && canReview;
   const showRevert = status === "published" && (canPropose || canReview);
-  if (!showSubmit && !showDecide && !showPublish && !showRevert) return null;
+  const showWithdraw =
+    ((status === "draft" || status === "checks_failed" || status === "pending") && (isAuthor || isOwner)) ||
+    (status === "checks_failed" && canReview);
+  if (!showSubmit && !showDecide && !showPublish && !showRevert && !showWithdraw) return null;
 
   return (
     <div className="mt-3 space-y-2">
       {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
-      {showDecide || showRevert ? (
+      {showDecide || showRevert || showWithdraw ? (
         <label className="block text-sm">
           <span className="mb-1 block text-[rgba(18,33,31,0.7)]">
-            {showRevert ? "سبب التراجع (إلزامي)" : isAuthor ? "سبب الاعتماد الذاتي (إلزامي للمالك)" : "السبب (إلزامي للرفض)"}
+            {showRevert ? "سبب التراجع (إلزامي)" : showDecide ? (isAuthor ? "سبب الاعتماد الذاتي (إلزامي للمالك)" : "السبب (إلزامي للرفض)") : "سبب السحب (إلزامي)"}
           </span>
           <textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} className="w-full rounded-md border border-[rgba(14,52,53,0.18)] bg-white p-2" />
         </label>
@@ -80,6 +83,11 @@ export function ChangeSetActions({
         {showPublish ? (
           <button type="button" className={`${btn.base} ${btn.approve}`} disabled={busy} onClick={() => run("publish", undefined, "نُشرت الدفعة كاملة.")}>
             نشر الدفعة
+          </button>
+        ) : null}
+        {showWithdraw ? (
+          <button type="button" className={`${btn.base} ${btn.neutral}`} disabled={busy || reason.trim().length < 3} onClick={() => run("withdraw", { reason }, "سُحبت الدفعة وفُكّ قفل أهدافها.")}>
+            سحب الدفعة
           </button>
         ) : null}
         {showRevert ? (

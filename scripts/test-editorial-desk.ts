@@ -12,7 +12,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolveEditorialAccess } from "../lib/modules/editorial/access";
 import { sourceRankFromUrl, stableJson } from "../lib/modules/editorial/audit";
-import type { EditorialDb, SqlClient } from "../lib/modules/editorial/db";
+import { pgErrorCode, type EditorialDb, type SqlClient } from "../lib/modules/editorial/db";
+import { checkDeskIntegrity } from "../lib/modules/editorial/integrity";
 import {
   bulkApproveAmendmentOps,
   decideAmendmentOp,
@@ -29,6 +30,7 @@ import {
   revertChangeSet,
   submitChangeSet,
   validateEvidence,
+  withdrawChangeSet,
 } from "../lib/modules/editorial/service";
 import { EditorialError, type EditorialActor } from "../lib/modules/editorial/types";
 import { isEditorialWriteEnabled, READ_ONLY_MESSAGE } from "../lib/modules/editorial/write-gate";
@@ -97,6 +99,10 @@ function pureTests() {
   const routeSource = readFileSync(join(process.cwd(), "app/api/legal-core/principles/[id]/route.ts"), "utf8");
   ok(routeSource.includes("PRINCIPLE_REVIEW_STATUS") && routeSource.includes("recordAudit"), "زر المبدأ القائم يستعمل الخريطة نفسها ويكتب audit_event");
 
+  ok(pgErrorCode({ code: "P2010", meta: { code: "23505" } }) === "23505", "رمز التكرار يُقرأ من خطأ Prisma (meta.code) لا P2010");
+  ok(pgErrorCode({ code: "23505" }) === "23505", "رمز التكرار يُقرأ من خطأ pg");
+  ok(pgErrorCode({ code: "P2010", meta: {}, message: "Raw query failed. Code: `23505`." }) === "23505", "ويُقرأ من نص الرسالة عند غياب meta");
+  ok(pgErrorCode({ code: "P2002" }) === null, "رمز Prisma وحده لا يُعدّ رمز قاعدة");
   ok(!isEditorialWriteEnabled({}), "غياب EDITORIAL_DESK_WRITE = قراءة فقط");
   ok(isEditorialWriteEnabled({ EDITORIAL_DESK_WRITE: "1" }), "EDITORIAL_DESK_WRITE=1 يفتح الكتابة");
   ok(READ_ONLY_MESSAGE.includes("للقراءة فقط"), "رسالة القراءة فقط صريحة");
@@ -256,6 +262,12 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   ok(Boolean(e5?.message.includes("للقراءة فقط")), "T0-5 الرسالة تقول «اللوحة للقراءة فقط»");
   await rejects(() => decideAmendmentOp(db, reviewer, "OP-A", { decision: "approved" }), "WRITE_DISABLED", "T0-5 قرار عملية تعديل بلا البوابة يُرفض");
   await rejects(() => decidePrinciple(db, reviewer, "P1", { decision: "approve" }), "WRITE_DISABLED", "T0-5 قرار مبدأ بلا البوابة يُرفض");
+  await rejects(() => submitChangeSet(db, editor, "any"), "WRITE_DISABLED", "T0-5 إرسال دفعة بلا البوابة يُرفض");
+  await rejects(() => decideChangeSet(db, reviewer, "any", { decision: "approve" }), "WRITE_DISABLED", "T0-5 قرار دفعة بلا البوابة يُرفض");
+  await rejects(() => publishChangeSet(db, reviewer, "any"), "WRITE_DISABLED", "T0-5 نشر بلا البوابة يُرفض");
+  await rejects(() => revertChangeSet(db, owner, "any", { reason: "اختبار" }), "WRITE_DISABLED", "T0-5 تراجع بلا البوابة يُرفض");
+  await rejects(() => withdrawChangeSet(db, editor, "any", { reason: "اختبار" }), "WRITE_DISABLED", "T0-5 سحب بلا البوابة يُرفض");
+  await rejects(() => bulkApproveAmendmentOps(db, reviewer, ["OP-A"]), "WRITE_DISABLED", "T0-5 اعتماد جماعي بلا البوابة يُرفض");
   ok((await num(`SELECT count(*) FROM change_set`)) === 0 && (await num(`SELECT count(*) FROM audit_event`)) === auditBefore5, "T0-5 لم يُكتب شيء");
   process.env.EDITORIAL_DESK_WRITE = "1";
 
@@ -478,6 +490,70 @@ async function dbTests(pg: PgModule, rawUrl: string) {
   await submitChangeSet(db, agent, agentSet3.changeSetId);
   await rejects(() => decideChangeSet(db, agent, agentSet3.changeSetId, { decision: "approve" }), "AGENT_CANNOT_DECIDE", "T1-9 الوكيل لا يعتمد دفعة");
   await rejects(() => publishChangeSet(db, agent, agentSet3.changeSetId), "AGENT_CANNOT_DECIDE", "الوكيل لا ينشر");
+
+  // ── السحب وفك القفل ──
+  console.log("\n— السحب —");
+  await pool.query(`INSERT INTO legal_systems (id, name) VALUES ('S7', 'نظام اختبار S7'), ('S8', 'نظام اختبار S8')`);
+  const draft7 = await createChangeSet(db, editor, {
+    title: "مسودة مهملة",
+    changes: [{ op: "set_work_status", targetId: "S8", status: "ملغى", evidence: EVIDENCE("81") }],
+  });
+  await rejects(() => withdrawChangeSet(db, reviewer, draft7.changeSetId, { reason: "ليس مُعِدّها" }), "FORBIDDEN", "لا يسحب المسودة غير مُعِدّها");
+  const w = await withdrawChangeSet(db, editor, draft7.changeSetId, { reason: "مسودة مهملة" });
+  ok(w.status === "rejected", "المُعِدّ يسحب مسودته فتصير مرفوضة");
+  const again = await createChangeSet(db, editor, {
+    title: "بعد السحب",
+    changes: [{ op: "set_work_status", targetId: "S8", status: "ملغى", evidence: EVIDENCE("82") }],
+  });
+  ok(Boolean(again.changeSetId), "السحب فكّ قفل الهدف");
+  ok((await num(`SELECT count(*) FROM audit_event WHERE action = 'change_set.withdraw'`)) === 1, "السحب مسجّل");
+  await rejects(() => submitChangeSet(db, agent, agentSet3.changeSetId), "INVALID_STATE", "الدفعة المرسلة لا تُرسل ثانية");
+  const otherAgent = actor("agent-other", "TRAINEE", ["LEGAL_AGENT_PROPOSE"], "agent");
+  const agentDraft = await createChangeSet(db, agent, {
+    title: "مسودة وكيل",
+    changes: [{ op: "set_work_status", targetId: "S7", status: "ملغى", evidence: EVIDENCE("71") }],
+  });
+  await rejects(() => submitChangeSet(db, otherAgent, agentDraft.changeSetId), "FORBIDDEN", "وكيل لا يرسل دفعة وكيل آخر");
+  await withdrawChangeSet(db, agent, agentDraft.changeSetId, { reason: "اختبار" });
+
+  // ── التراجع لا يخترع سندًا ──
+  console.log("\n— سند التراجع —");
+  await pool.query(
+    `INSERT INTO verification (id, object_type, object_id, verified_status, method, verified_at) VALUES ('v-S7-rule', 'work', 'S7', 'ساري', 'rule', NOW() - interval '10 days')`,
+  );
+  const set7 = await createChangeSet(db, editor, {
+    title: "S7 بلا سند سابق كامل",
+    changes: [{ op: "set_work_status", targetId: "S7", status: "ملغى", evidence: EVIDENCE("72") }],
+  });
+  await submitChangeSet(db, editor, set7.changeSetId);
+  await decideChangeSet(db, reviewer, set7.changeSetId, { decision: "approve" });
+  await publishChangeSet(db, reviewer, set7.changeSetId);
+  const verBeforeRevert7 = await num(`SELECT count(*) FROM verification WHERE object_id = 'S7'`);
+  await rejects(() => revertChangeSet(db, owner, set7.changeSetId, { reason: "اختبار", emergency: true }), "NO_PRIOR_STATUS", "التراجع يرفض إن كان السند السابق ناقصًا");
+  ok((await num(`SELECT count(*) FROM verification WHERE object_id = 'S7'`)) === verBeforeRevert7, "ولم يُكتب صف بسند مخترع");
+
+  // ── جولة مراجعة جديدة للمبدأ بعد إعادته ──
+  console.log("\n— جولات المبدأ —");
+  await decidePrinciple(db, reviewer, "P2", { decision: "reject", reason: "صياغة غير دقيقة" });
+  await pool.query(`UPDATE judicial_principles SET "reviewStatus" = 'needs_review', "updatedAt" = NOW() + interval '1 second' WHERE id = 'P2'`);
+  ok((await listPrincipleQueue(db)).items.some((i) => i.id === "P2"), "المبدأ المعاد إلى «يحتاج مراجعة» يظهر في الطابور");
+  const round2 = await decidePrinciple(db, reviewer, "P2", { decision: "approve" });
+  ok(round2.reviewStatus === "reviewed", "ويُقبل قرار الجولة الجديدة عليه");
+
+  // ── حارس سلامة المخطط ──
+  console.log("\n— سلامة المخطط —");
+  ok((await checkDeskIntegrity(db)).ok, "الفهارس والمشغّلات كلها موجودة بعد الترحيل");
+  await pool.query(`DROP INDEX editorial_change_open_target_uq`);
+  const freshDb = pgEditorialDb(pool);
+  const integrity = await checkDeskIntegrity(freshDb);
+  ok(!integrity.ok && integrity.missing.includes("editorial_change_open_target_uq"), "غياب فهرس القفل يُكتشف");
+  await rejects(
+    () => createChangeSet(freshDb, editor, { title: "بلا قفل", changes: [{ op: "set_work_status", targetId: "S7", status: "ساري", evidence: EVIDENCE("73") }] }),
+    "INVALID_STATE",
+    "والكتابة تُقفل حتى يُستعاد",
+  );
+  await pool.query(readFileSync(join(root, "prisma/migrations/20261017090000_editorial_desk_phase0/migration.sql"), "utf8"));
+  ok((await checkDeskIntegrity(freshDb)).ok, "إعادة تطبيق الترحيل تستعيد الحماية");
 
   await pool.end();
 }

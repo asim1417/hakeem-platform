@@ -78,7 +78,8 @@ export function AmendmentQueue({
   writeEnabled: boolean;
 }) {
   const router = useRouter();
-  const [focus, setFocus] = useState(0);
+  // لا تركيز افتراضي: الاعتماد بالمفتاح لا يعمل إلا على بطاقة ركّز عليها المراجع بنفسه.
+  const [focus, setFocus] = useState(-1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [panel, setPanel] = useState<Panel>(null);
   const [note, setNote] = useState("");
@@ -91,7 +92,7 @@ export function AmendmentQueue({
   const move = useCallback(
     (delta: number) => {
       setFocus((current) => {
-        const next = Math.min(Math.max(current + delta, 0), Math.max(items.length - 1, 0));
+        const next = current < 0 ? 0 : Math.min(Math.max(current + delta, 0), Math.max(items.length - 1, 0));
         cardRefs.current[next]?.focus();
         return next;
       });
@@ -150,16 +151,21 @@ export function AmendmentQueue({
     router.refresh();
   };
 
-  const current = items[focus];
+  const current = focus >= 0 ? items[focus] : undefined;
+  // البطاقة المقصودة يجب أن تكون هي العنصر المركَّز فعلًا (مرئية أمام المراجع).
+  const cardInFocus = () => focus >= 0 && typeof document !== "undefined" && cardRefs.current[focus] === document.activeElement;
   const handlers = useMemo(
     () => ({
       next: () => move(1),
       prev: () => move(-1),
-      approve: () => current && panel === null && decide(current.op_id, "approved"),
-      reject: () => current && setPanel({ opId: current.op_id, mode: "reject" }),
-      edit: () => current && setPanel({ opId: current.op_id, mode: "edit" }),
+      approve: () => {
+        if (!current || panel !== null || busy !== null || !cardInFocus()) return;
+        void decide(current.op_id, "approved");
+      },
+      reject: () => current && cardInFocus() && setPanel({ opId: current.op_id, mode: "reject" }),
+      edit: () => current && cardInFocus() && setPanel({ opId: current.op_id, mode: "edit" }),
       toggle: () => {
-        if (!current?.bulk_eligible) return;
+        if (!current?.bulk_eligible || !cardInFocus()) return;
         setSelected((prev) => {
           const next = new Set(prev);
           if (next.has(current.op_id)) next.delete(current.op_id);
@@ -168,7 +174,8 @@ export function AmendmentQueue({
         });
       },
     }),
-    [current, decide, move, panel],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [current, decide, move, panel, busy, focus],
   );
   useQueueKeys(handlers, active);
 

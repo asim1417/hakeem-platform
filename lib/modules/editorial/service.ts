@@ -14,6 +14,7 @@ import {
   type EvidenceInput,
 } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
+import { assertDeskIntegrity } from "./integrity";
 
 // ── أنواع الصفوف ──────────────────────────────────────────────────────────────
 
@@ -163,6 +164,12 @@ async function auditDenied(db: EditorialDb, actor: EditorialActor, error: unknow
   }
 }
 
+/** مُعِدّ الدفعة: البشري بمعرّفه، والوكيل باسمه (لا يرسل وكيلٌ دفعةَ وكيل آخر). */
+function isAuthorOf(set: ChangeSetRow, actor: EditorialActor): boolean {
+  if (set.author_kind === "human") return actor.kind === "human" && set.author_id === actor.id;
+  return actor.kind === "agent" && set.author_agent === (actor.agentName ?? actor.id);
+}
+
 function authorOf(actor: EditorialActor) {
   return actor.kind === "agent"
     ? { authorId: null, authorKind: "agent", authorAgent: actor.agentName ?? actor.id }
@@ -229,6 +236,7 @@ export async function createChangeSet(
   input: CreateChangeSetInput,
 ): Promise<{ changeSetId: string; changeIds: string[] }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   if (!canProposeLaws(actor.access)) throw new EditorialError("FORBIDDEN", "لا تملك صلاحية تحرير الأنظمة.");
   const title = cleanText(input?.title, "title", { min: 3, max: 200 });
   if (!Array.isArray(input.changes) || input.changes.length < 1 || input.changes.length > 50) {
@@ -319,10 +327,10 @@ export async function submitChangeSet(
   changeSetId: string,
 ): Promise<{ status: EditorialStatus; checks: Record<string, CheckResult> }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   return db.transaction(async (tx) => {
     const set = await lockChangeSet(tx, changeSetId);
-    const isAuthor = set.author_kind === "human" ? set.author_id === actor.id : actor.kind === "agent";
-    if (!isAuthor && !actor.access.superAdmin) throw new EditorialError("FORBIDDEN", "يرسل الدفعة مُعِدّها.");
+    if (!isAuthorOf(set, actor) && !actor.access.superAdmin) throw new EditorialError("FORBIDDEN", "يرسل الدفعة مُعِدّها.");
     if (set.status !== "draft" && set.status !== "checks_failed") {
       throw new EditorialError("INVALID_STATE", "لا تُرسل إلا مسودة أو دفعة فشلت فحوصها.");
     }
@@ -360,6 +368,7 @@ export async function decideChangeSet(
   input: { decision: "approve" | "reject"; reason?: string | null },
 ): Promise<{ status: EditorialStatus; selfApproval: boolean; decisionId: string }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   try {
     if (actor.access.agent || actor.kind === "agent") {
       throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي يقترح فقط، ولا يعتمد ولا يرفض.");
@@ -438,6 +447,7 @@ export async function publishChangeSet(
   changeSetId: string,
 ): Promise<{ published: number; verificationIds: string[] }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   try {
     if (actor.access.agent || actor.kind === "agent") {
       throw new EditorialError("AGENT_CANNOT_DECIDE", "حساب الوكيل الآلي لا ينشر.");
@@ -492,6 +502,7 @@ export async function revertChangeSet(
   input: { reason: string; emergency?: boolean },
 ): Promise<{ revertChangeSetId: string; status: EditorialStatus }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   const reason = cleanText(input?.reason, "reason", { min: 3, max: 2000 });
   const emergency = input.emergency === true;
   try {
@@ -524,15 +535,18 @@ export async function revertChangeSet(
             targetId: change.target_id,
           });
         }
+        // لا يُخترع سند: التراجع يعيد الحالة السابقة بسندها كما كان، فإن نقص فلا تراجع آلي.
+        if (!prior.evidence_instrument || !prior.evidence_url || !prior.evidence_quote) {
+          throw new EditorialError("NO_PRIOR_STATUS", "الحالة السابقة بلا سند كامل؛ لا يُخترع سند للتراجع. أنشئ تغييرًا جديدًا بسنده.", {
+            targetId: change.target_id,
+            priorVerificationId: prior.verification_id,
+          });
+        }
         const row: ChangeInput = {
           op: "set_work_status",
           targetId: change.target_id,
           status: prior.status as ChangeInput["status"],
-          evidence: {
-            instrument: prior.evidence_instrument || `تراجع عن الدفعة ${changeSetId}`,
-            url: prior.evidence_url || change.evidence_url || "",
-            quote: prior.evidence_quote || `استعادة الحالة الموثّقة السابقة: ${reason}`,
-          },
+          evidence: { instrument: prior.evidence_instrument, url: prior.evidence_url, quote: prior.evidence_quote },
           note: `تراجع: ${reason}`.slice(0, 1000),
         };
         const before = await latestWorkVerification(tx, change.target_id);
@@ -585,6 +599,45 @@ export async function revertChangeSet(
         detail: { emergency: true, reverts: changeSetId, notifyOwner: true },
       });
       return { revertChangeSetId: revertId, status: "published" as EditorialStatus };
+    });
+  } catch (error) {
+    await auditDenied(db, actor, error, "change_set", changeSetId);
+    throw error;
+  }
+}
+
+// ── السحب ────────────────────────────────────────────────────────────────────
+
+/**
+ * سحب دفعة لم تُنشر حتى لا تقفل أهدافها إلى الأبد: يسحبها مُعِدّها أو المالك،
+ * ويسحب المعتمِد ما فشلت فحوصه. تصير «مرفوضة» ويُسجَّل السحب؛ لا حذف.
+ */
+export async function withdrawChangeSet(
+  db: EditorialDb,
+  actor: EditorialActor,
+  changeSetId: string,
+  input: { reason: string },
+): Promise<{ status: EditorialStatus }> {
+  assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
+  const reason = cleanText(input?.reason, "reason", { min: 3, max: 2000 });
+  try {
+    return await db.transaction(async (tx) => {
+      const set = await lockChangeSet(tx, changeSetId);
+      if (!["draft", "checks_failed", "pending"].includes(set.status)) {
+        throw new EditorialError("INVALID_STATE", "لا تُسحب إلا مسودة أو دفعة فشلت فحوصها أو في الطابور.");
+      }
+      const allowed =
+        isAuthorOf(set, actor) || actor.access.superAdmin || (set.status === "checks_failed" && canReview(actor.access));
+      if (!allowed) throw new EditorialError("FORBIDDEN", "يسحب الدفعة مُعِدّها أو المالك، ويسحب المعتمِد ما فشلت فحوصه.");
+      await setStatus(tx, changeSetId, "rejected");
+      await recordAudit(tx, actor, {
+        action: "change_set.withdraw",
+        objectType: "change_set",
+        objectId: changeSetId,
+        detail: { reason, from: set.status },
+      });
+      return { status: "rejected" as EditorialStatus };
     });
   } catch (error) {
     await auditDenied(db, actor, error, "change_set", changeSetId);

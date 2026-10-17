@@ -18,7 +18,7 @@ export interface PrincipleItem {
 
 export function PrincipleQueue({ items, canDecide, writeEnabled }: { items: PrincipleItem[]; canDecide: boolean; writeEnabled: boolean }) {
   const router = useRouter();
-  const [focus, setFocus] = useState(0);
+  const [focus, setFocus] = useState(-1);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,11 +52,12 @@ export function PrincipleQueue({ items, canDecide, writeEnabled }: { items: Prin
     [active, reason, router],
   );
 
-  const current = items[focus];
+  const current = focus >= 0 ? items[focus] : undefined;
+  const cardInFocus = () => focus >= 0 && typeof document !== "undefined" && refs.current[focus] === document.activeElement;
   const move = useCallback(
     (delta: number) =>
       setFocus((i) => {
-        const next = Math.min(Math.max(i + delta, 0), Math.max(items.length - 1, 0));
+        const next = i < 0 ? 0 : Math.min(Math.max(i + delta, 0), Math.max(items.length - 1, 0));
         refs.current[next]?.focus();
         return next;
       }),
@@ -66,10 +67,14 @@ export function PrincipleQueue({ items, canDecide, writeEnabled }: { items: Prin
     () => ({
       next: () => move(1),
       prev: () => move(-1),
-      approve: () => current && rejecting === null && decide(current.id, "approve"),
-      reject: () => current && setRejecting(current.id),
+      approve: () => {
+        if (!current || rejecting !== null || busy || !cardInFocus()) return;
+        void decide(current.id, "approve");
+      },
+      reject: () => current && cardInFocus() && setRejecting(current.id),
     }),
-    [current, decide, move, rejecting],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [current, decide, move, rejecting, busy, focus],
   );
   useQueueKeys(handlers, active);
 

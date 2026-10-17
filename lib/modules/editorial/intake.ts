@@ -8,6 +8,7 @@ import { recordAudit, sourceRankFromUrl } from "./audit";
 import { pgErrorCode, type EditorialDb, type SqlClient } from "./db";
 import { EditorialError, type AmendmentDecision, type EditorialActor, type PrincipleDecision } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
+import { assertDeskIntegrity } from "./integrity";
 import { principleStatusFor } from "@/lib/modules/legal-core/principle-review";
 
 const ID = () => randomUUID();
@@ -377,6 +378,7 @@ export async function decideAmendmentOp(
   input: { decision: AmendmentDecision; corrected?: unknown; note?: unknown },
 ): Promise<{ changeSetId: string; decision: AmendmentDecision }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   try {
     assertReviewer(actor);
     const decision = input?.decision;
@@ -411,6 +413,7 @@ export async function bulkApproveAmendmentOps(
   noteRaw?: unknown,
 ): Promise<{ changeSetId: string; approved: number }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   try {
     assertReviewer(actor);
     if (!Array.isArray(opIds) || !opIds.length) throw new EditorialError("INVALID_INPUT", "اختر عملية واحدة على الأقل.");
@@ -452,6 +455,7 @@ export async function decidePrinciple(
   input: { decision: PrincipleDecision; reason?: unknown },
 ): Promise<{ changeSetId: string; reviewStatus: string }> {
   assertEditorialWriteEnabled();
+  await assertDeskIntegrity(db);
   try {
     assertReviewer(actor);
     if (input?.decision !== "approve" && input?.decision !== "reject") {
@@ -463,8 +467,9 @@ export async function decidePrinciple(
     if (!id) throw new EditorialError("INVALID_INPUT", "معرّف المبدأ مطلوب.");
 
     return await db.transaction(async (tx) => {
-      const rows = await tx.query<{ id: string; title: string; reviewStatus: string }>(
-        `SELECT id, title, "reviewStatus" FROM judicial_principles WHERE id = $1 FOR UPDATE`,
+      const rows = await tx.query<{ id: string; title: string; reviewStatus: string; round: string }>(
+        `SELECT id, title, "reviewStatus", to_char("updatedAt", 'YYYYMMDD"T"HH24MISS.US') AS round
+           FROM judicial_principles WHERE id = $1 FOR UPDATE`,
         [id],
       );
       const principle = rows[0];
@@ -487,7 +492,8 @@ export async function decidePrinciple(
             principle.id,
             JSON.stringify({ reviewStatus: principle.reviewStatus }),
             JSON.stringify({ reviewStatus, reason }),
-            `judicial_principles:${principle.id}`,
+            // مفتاح عدم التكرار لكل جولة مراجعة: إعادة المبدأ إلى «يحتاج مراجعة» تفتح جولة جديدة.
+            `judicial_principles:${principle.id}:${principle.round}`,
             PRINCIPLES_AGENT,
             JSON.stringify({ source: PRINCIPLES_AGENT }),
           ],

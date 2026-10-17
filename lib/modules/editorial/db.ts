@@ -34,8 +34,10 @@ export function prismaEditorialDb(prisma: PrismaLike): EditorialDb {
 export function pgErrorCode(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
   const e = error as { code?: unknown; meta?: { code?: unknown } };
-  if (typeof e.code === "string" && /^[0-9A-Z]{5}$/.test(e.code)) return e.code;
-  if (e.meta && typeof e.meta.code === "string") return e.meta.code;
+  const isSqlState = (v: unknown): v is string => typeof v === "string" && /^[0-9A-Z]{5}$/.test(v) && !/^P\d{4}$/.test(v);
+  // Prisma يضع رمز القاعدة في meta.code ويضع رمزه هو (P2010) في code؛ فيُقدَّم meta.
+  if (e.meta && isSqlState(e.meta.code)) return e.meta.code;
+  if (isSqlState(e.code)) return e.code;
   const message = String((error as { message?: unknown }).message ?? "");
   const match = message.match(/\b(23505|23514|42501|40001|42P01)\b/);
   return match ? match[1] : null;

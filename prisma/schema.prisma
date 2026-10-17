@@ -1408,6 +1408,8 @@ model McpRequestWindow {
 // الجداول تُنشأ بملف الترحيل 20261017090000_editorial_desk_phase0 وحده (لا db push).
 // المفاتيح الأجنبية إلى users موجودة في القاعدة، ولا تُنمذج هنا عمدًا حتى لا يتغير نموذج User.
 // طبقة الخدمة (lib/modules/editorial) تقرأ وتكتب بالـSQL المعلَّم؛ هذه النماذج للأنواع والقراءة.
+// تحذير: `prisma db push` لا يمثّل الفهرسين الجزئيين الفريدين (قفل الهدف D-03 وعدم التكرار D-02) ولا المشغّلات،
+// وقد يحذفها. لذلك تُقفل كتابة المكتب تلقائيًا إن غاب شيء منها (lib/modules/editorial/integrity.ts).
 model ChangeSet {
   id                  String            @id
   title               String
