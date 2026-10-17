@@ -11,7 +11,7 @@ import {
 } from "@/components/legal-core";
 import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
-import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { getLegalMetricsCached } from "@/lib/modules/legal-core/metrics-server";
 import { metric } from "@/lib/modules/legal-core/metrics";
 import {
   getLegalIssuesOverview,
@@ -52,7 +52,7 @@ export default async function LegalIssuesPage({
 
   const overview = getLegalIssuesOverview();
   // العدّادات من legalMetricsService (HKM-023-A ل٠-١)، بالتعريف نفسه في لوحة الإدارة.
-  const snapshot = await getLegalMetrics(["issues"]);
+  const snapshot = await getLegalMetricsCached(["issues"]);
   const activeSection = searchParams?.section ?? overview.sections[0]?.slug;
   const activeBook = searchParams?.book;
   const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);

@@ -6,12 +6,14 @@ import { ArrowUpLeft } from "lucide-react";
 import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
 import {
   formatMetricValue,
+  inContext,
   METRIC_DEFINITIONS,
   metric as readMetric,
   type LegalMetricsSnapshot,
   type Metric,
   type MetricGroup,
   type MetricId,
+  type MetricsContext,
 } from "@/lib/modules/legal-core/metrics";
 
 type Tone = "navy" | "emerald" | "amber" | "muted";
@@ -112,7 +114,7 @@ export function MetricDefinitions({ ids, snapshot }: { ids: readonly MetricId[];
               <dd className="leading-7 text-[var(--ink-70)]">
                 {def.definition}
                 {m && m.value.kind !== "count" ? <span className="block text-[var(--ink-60)]">الحالة: {formatMetricValue(m.value)} — {m.value.reason}</span> : null}
-                {!def.queue && "queueNote" in def && def.queueNote ? <span className="block text-[var(--ink-60)]">{def.queueNote}</span> : null}
+                {!m?.queue && "queueNote" in def && def.queueNote ? <span className="block text-[var(--ink-60)]">{def.queueNote}</span> : null}
               </dd>
             </div>
           );
@@ -142,19 +144,21 @@ const PANEL_SECTIONS: Array<{ group: MetricGroup; title: string; ids: MetricId[]
 
 /**
  * لوحة العدّادات كاملة أو لمجموعات بعينها. تقرأ اللقطة بنفسها إن لم تُمرَّر.
- * الاستعمال المقترح في /admin/legal بعد الدمج: `<LegalMetricsPanel />`.
+ * في /admin/legal: `<LegalMetricsPanel context="desk" />` فتفتح طوابير المراجعة طابور المكتب.
  */
 export async function LegalMetricsPanel({
   snapshot,
   groups,
   title = "عدّادات المحتوى القانوني",
+  context = "core",
 }: {
   snapshot?: LegalMetricsSnapshot;
   groups?: readonly MetricGroup[];
   title?: string;
+  context?: MetricsContext;
 }) {
   const sections = PANEL_SECTIONS.filter((s) => !groups || groups.includes(s.group));
-  const data = snapshot ?? (await getLegalMetrics(sections.map((s) => s.group)));
+  const data = inContext(snapshot ?? (await getLegalMetrics(sections.map((s) => s.group))), context);
   const shown = sections.filter((s) => data.groups.includes(s.group));
   return (
     <section aria-labelledby="legal-metrics-title" className="space-y-5">

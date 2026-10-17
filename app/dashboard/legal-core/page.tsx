@@ -9,7 +9,7 @@ import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
 import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 import { ReindexButton } from "@/components/legal-core/ReindexButton";
 import { CoreIntelligenceDashboard } from "@/components/CoreIntelligenceDashboard";
-import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { getLegalMetricsCached } from "@/lib/modules/legal-core/metrics-server";
 import { metric, type MetricId } from "@/lib/modules/legal-core/metrics";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function LegalCoreDashboardPage() {
   const [stats, recentArticles, snapshot] = await Promise.all([
     getLibraryStats().catch(() => ({ total: 0, systemCount: 0, laws: [] })),
     searchLegalArticles("", 4).catch(() => []),
-    getLegalMetrics(["systems", "articles", "explanations", "issues", "judgments", "principles"])
+    getLegalMetricsCached(["systems", "articles", "explanations", "issues", "judgments", "principles"])
   ]);
 
   return (

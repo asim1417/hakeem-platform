@@ -5,20 +5,23 @@ import { useCallback, useEffect, useState } from "react";
 // مركز التشغيل الذكي للنواة القانونية — ربط واجهي فوق الخدمات القائمة فقط.
 // لا منطق محرّكات هنا؛ كل تشغيل عبر استدعاء API قائم. غياب البيانات يُظهر حالة واضحة لا كسرًا.
 
+// الأعداد من legalMetricsService عبر /api/legal-core/intelligence-summary (HKM-023-A)؛ null = غير متاح.
 type Summary = {
-  systemsCount: number;
-  articlesCount: number;
-  rulingsCount: number;
-  classificationsCount: number;
-  linkedArticlesCount: number;
-  unlinkedArticlesCount: number;
-  unlinkedRulingsCount: number;
-  reviewNeededCount: number;
-  relationsCount: number;
-  linkCoveragePercent: number;
-  dataQualityScore: number;
+  systemsCount: number | null;
+  articlesCount: number | null;
+  rulingsCount: number | null;
+  classificationsCount: number | null;
+  linkedArticlesCount: number | null;
+  unlinkedArticlesCount: number | null;
+  unlinkedRulingsCount: number | null;
+  reviewNeededCount: number | null;
+  relationsCount: number | null;
+  linkCoveragePercent: number | null;
+  dataQualityScore: number | null;
   rulingsImportedButUnlinked: boolean;
 };
+
+const na = (v: number | null, suffix = "") => (v === null ? "غير متاح" : `${v.toLocaleString("ar-SA")}${suffix}`);
 
 type ArticleResult = {
   id: string;
@@ -199,17 +202,17 @@ export function CoreIntelligenceDashboard() {
             <Stat label="الأحكام" value={summary.rulingsCount} tone={summary.rulingsCount ? "emerald" : "amber"} />
             <Stat label="التصنيفات" value={summary.classificationsCount} />
             <Stat label="تحتاج مراجعة" value={summary.reviewNeededCount} tone={summary.reviewNeededCount ? "amber" : "emerald"} />
-            <Stat label="جودة البيانات" value={`${summary.dataQualityScore}%`} tone={summary.dataQualityScore >= 60 ? "emerald" : "amber"} />
+            <Stat label="جودة البيانات" value={summary.dataQualityScore === null ? null : `${summary.dataQualityScore}%`} tone={(summary.dataQualityScore ?? 0) >= 60 ? "emerald" : "amber"} />
           </div>
 
           <div className="mt-3 rounded-md border border-gray-200 bg-surface p-3">
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span className="font-semibold text-olive">جودة الربط</span>
-              <span className="text-ink">مواد مرتبطة بأحكام: <b>{summary.linkedArticlesCount}</b></span>
-              <span className="text-ink">مواد بلا أحكام: <b>{summary.unlinkedArticlesCount}</b></span>
-              <span className="text-ink">أحكام بلا مواد: <b>{summary.unlinkedRulingsCount}</b></span>
-              <span className="text-ink">علاقات معرفية: <b>{summary.relationsCount}</b></span>
-              <span className="ms-auto rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700 tabular-nums">تغطية الربط {summary.linkCoveragePercent}%</span>
+              <span className="text-ink">مواد مرتبطة بأحكام: <b>{na(summary.linkedArticlesCount)}</b></span>
+              <span className="text-ink">مواد بلا أحكام: <b>{na(summary.unlinkedArticlesCount)}</b></span>
+              <span className="text-ink">أحكام بلا مواد: <b>{na(summary.unlinkedRulingsCount)}</b></span>
+              <span className="text-ink">علاقات معرفية: <b>{na(summary.relationsCount)}</b></span>
+              <span className="ms-auto rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700 tabular-nums">تغطية الربط {na(summary.linkCoveragePercent, "%")}</span>
             </div>
             {summary.rulingsImportedButUnlinked && (
               <p className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800">⚠ توجد أحكام مستوردة لكنها غير مرتبطة بمواد بعد — شغّل ربط الأحكام لإثراء العلاقات.</p>
@@ -348,12 +351,12 @@ export function CoreIntelligenceDashboard() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number | string; tone?: "emerald" | "amber" }) {
-  const cls = tone === "emerald" ? "text-emerald-700" : tone === "amber" ? "text-amber-700" : "text-olive";
+function Stat({ label, value, tone }: { label: string; value: number | string | null; tone?: "emerald" | "amber" }) {
+  const cls = value === null ? "text-muted" : tone === "emerald" ? "text-emerald-700" : tone === "amber" ? "text-amber-700" : "text-olive";
   return (
     <div className="rounded-md border border-gray-200 bg-ivory p-3">
       <p className="text-xs text-muted">{label}</p>
-      <p className={`mt-1 text-xl font-bold tabular-nums ${cls}`}>{typeof value === "number" ? value.toLocaleString("ar-SA") : value}</p>
+      <p className={`mt-1 text-xl font-bold tabular-nums ${cls}`}>{value === null ? "غير متاح" : typeof value === "number" ? value.toLocaleString("ar-SA") : value}</p>
     </div>
   );
 }

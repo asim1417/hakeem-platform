@@ -7,6 +7,8 @@
 //   (metrics-server.ts)، والاختبارات المحلية عبر pg؛ فلا تعتمد الخدمة على محرك Prisma.
 // - قراءة فقط: كل عبارة هنا SELECT أو WITH. لا كتابة إطلاقًا.
 // - العدّاد الذي لا ينطبق يُعاد «لا ينطبق» (ل٠-٤)، والمصدر المتعذّر يُعاد «غير متاح» لا صفرًا.
+import { CORE_SYSTEMS } from "./core-systems";
+import { VERIFIED_STATUSES } from "./verified-status";
 
 export interface MetricsSql {
   query<T = Record<string, unknown>>(sql: string, params?: readonly unknown[]): Promise<T[]>;
@@ -91,7 +93,7 @@ export const METRIC_DEFINITIONS = {
   "systems.noIssuanceDate": {
     group: "systems",
     label: "أنظمة بلا تاريخ إصدار من المصدر",
-    definition: "نظام لا يحمل آخر صف له في law_card تاريخ إصدار (هجريًا أو ميلاديًا)، أو لا بطاقة له. تاريخ النفاذ نفسه لا عمود له في legal_systems.",
+    definition: "نظام لا تاريخ إصدار هجريًا له تعرضه بطاقته: لا تاريخ في الركائز المكتوبة (core-systems)، ولا issued_hijri في آخر صف له في law_card. تاريخ النفاذ نفسه لا عمود له في legal_systems.",
     tone: "attention",
     queue: null,
     queueNote: NO_SYSTEM_FILTER,
@@ -99,7 +101,7 @@ export const METRIC_DEFINITIONS = {
   "systems.unverifiedStatus": {
     group: "systems",
     label: "أنظمة بلا حالة موثّقة",
-    definition: "نظام لا سجل تحقق له في verification بنوع work؛ فتُعرض حالته «قيد التحقق» لا «ساري».",
+    definition: "نظام آخر سجل تحقق له (verification بنوع work) غائب أو بحالة خارج الحالات الموثّقة (مثل «سجل مخلوط — لا يُعرض»)؛ فتُعرض حالته «قيد التحقق» كما في البطاقة.",
     tone: "attention",
     queue: null,
     queueNote: NO_SYSTEM_FILTER,
@@ -133,7 +135,7 @@ export const METRIC_DEFINITIONS = {
   "articles.noChapter": {
     group: "articles",
     label: "مواد بلا باب أو فصل",
-    definition: "مادة chapter فيها NULL أو نص فارغ بعد حذف المسافات (النص الفارغ '' كان يُعدّ «له باب» قبل HKM-023-A).",
+    definition: "مادة chapter فيها NULL (التعريف القائم). البديل المعروض على المالك: عدّ النص الفارغ '' أيضًا (14,164 مادة في 475 نظامًا لا باب لأي مادة فيها) فيصير 25,152؛ ولا يُعتمد قبل قراره.",
     tone: "attention",
     queue: null,
     queueNote: NO_ARTICLE_QUEUE,
@@ -141,7 +143,7 @@ export const METRIC_DEFINITIONS = {
   "articles.needsReview": {
     group: "articles",
     label: "مواد تحتاج مراجعة",
-    definition: "مادة ينقصها واحد على الأقل من: التصنيف، الكلمات المفتاحية، الباب (بالتعريفات الثلاثة أعلاه)، تُعدّ مرة واحدة.",
+    definition: "مادة ينقصها واحد على الأقل من: التصنيف، الكلمات المفتاحية، الباب (بالتعريفات الثلاثة أعلاه)، تُعدّ مرة واحدة. هو نفسه في الصفحة الرئيسية ومركز التشغيل الذكي.",
     tone: "attention",
     queue: null,
     queueNote: NO_ARTICLE_QUEUE,
@@ -151,6 +153,14 @@ export const METRIC_DEFINITIONS = {
     label: "مواد بلا علاقات",
     definition: "مادة لا تظهر مصدرًا (source_type='article') لأي صف في legal_relations.",
     tone: "attention",
+    queue: null,
+    queueNote: NO_ARTICLE_QUEUE,
+  },
+  "articles.relationsTotal": {
+    group: "articles",
+    label: "علاقات معرفية",
+    definition: "عدد صفوف legal_relations.",
+    tone: "neutral",
     queue: null,
     queueNote: NO_ARTICLE_QUEUE,
   },
@@ -183,7 +193,7 @@ export const METRIC_DEFINITIONS = {
   "explanations.total": {
     group: "explanations",
     label: "الشروح",
-    definition: "صف في annotations بنوع document_type='article' وملاحظة note غير فارغة (التعريف القائم في /quality). لا جدول شروح بمصدر بعد (ل٢-٦).",
+    definition: "لا جدول شروح بمصدر بعد (ل٢-٦ في م٣)، فلا ينطبق. جدول annotations ملاحظات خاصة لكل مستخدم وليس شروحًا، فلا يُعدّ.",
     tone: "neutral",
     queue: null,
     queueNote: "إضافة الشرح بمصدر إلزامي في م٣ (ل٢-٦).",
@@ -191,7 +201,7 @@ export const METRIC_DEFINITIONS = {
   "explanations.withoutSource": {
     group: "explanations",
     label: "شروح بلا مصدر",
-    definition: "شرح بلا مصدر. لا ينطبق ما دامت الشروح صفرًا؛ وغير متاح بعدها لأن annotations لا عمود مصدر فيه.",
+    definition: "شرح بلا مصدر. لا ينطبق ما دام لا جدول شروح بمصدر (ل٢-٦).",
     tone: "attention",
     queue: null,
     queueNote: "إضافة الشرح بمصدر إلزامي في م٣ (ل٢-٦).",
@@ -199,7 +209,7 @@ export const METRIC_DEFINITIONS = {
   "articles.noExplanation": {
     group: "explanations",
     label: "مواد بلا شرح",
-    definition: "مادة لا يقابلها أي شرح بالتعريف أعلاه.",
+    definition: "مادة بلا شرح. لا ينطبق ما دام لا جدول شروح بمصدر (ل٢-٦).",
     tone: "attention",
     queue: null,
     queueNote: NO_ARTICLE_QUEUE,
@@ -216,7 +226,7 @@ export const METRIC_DEFINITIONS = {
   "judgments.linked": {
     group: "judgments",
     label: "أحكام مرتبطة بمواد",
-    definition: "حكم يظهر caseId له في صف واحد على الأقل من legal_article_case_links، بأي حالة مراجعة.",
+    definition: "حكم يظهر caseId له في صف واحد على الأقل من legal_article_case_links، بأي حالة مراجعة (عدد caseId المميز؛ القيد الأجنبي caseId → judicial_cases يضمن أنه حكم قائم).",
     tone: "good",
     queue: { href: `${JUDGMENTS_QUEUE}?${JUDGMENT_LINKS_PARAM}=any`, label: "الأحكام المرتبطة" },
   },
@@ -304,7 +314,8 @@ export const METRIC_DEFINITIONS = {
     label: "مبادئ بحالة أخرى",
     definition: "مبدأ reviewStatus فيه قيمة غير الثلاث المعروفة؛ تُعرض كل قيمة منها بنفسها في مرشح القائمة.",
     tone: "attention",
-    queue: { href: principleQueueHref(PRINCIPLE_STATUS_ALL), label: "كل المبادئ" },
+    queue: null,
+    queueNote: "كل حالة أخرى لها طابورها في مرشح المبادئ (?status=<الحالة>)؛ لا طابور واحد يجمعها.",
   },
 
   // ── المسائل القانونية (ملف الفهرس في المستودع) ──
@@ -406,6 +417,8 @@ export interface LoadOptions {
   groups?: readonly MetricGroup[];
   legalIssues?: () => LegalIssuesCounts | null;
   now?: () => Date;
+  /** للاختبار: أسماء الركائز ذات التاريخ المكتوب (الافتراضي من core-systems.ts). */
+  coreIssuedNames?: readonly string[];
 }
 
 // ── التعريفات بلغة SQL (المرجع الوحيد) ───────────────────────────────────────
@@ -413,11 +426,9 @@ export interface LoadOptions {
 export const SQL_PREDICATES = {
   articleNoClassification: `(a.classification IS NULL OR btrim(a.classification) = '')`,
   articleNoKeywords: `(NOT EXISTS (SELECT 1 FROM unnest(a.keywords) AS k(v) WHERE btrim(k.v) <> ''))`,
-  articleNoChapter: `(a.chapter IS NULL OR btrim(a.chapter) = '')`,
+  articleNoChapter: `(a.chapter IS NULL)`,
   articleDecreeFilled: `(a."royalDecree" IS NOT NULL AND btrim(a."royalDecree") <> '')`,
   systemUnclassified: `(s.domain IS NULL OR btrim(s.domain) = '')`,
-  judgmentHasLink: `EXISTS (SELECT 1 FROM legal_article_case_links l WHERE l."caseId" = j.id)`,
-  explanationRow: `(an.document_type = 'article' AND an.note IS NOT NULL AND btrim(an.note) <> '')`,
 } as const;
 
 const P = SQL_PREDICATES;
@@ -426,15 +437,22 @@ const SQL = {
   systemsBase: `SELECT count(*)::int AS total,
       count(*) FILTER (WHERE ${P.systemUnclassified})::int AS unclassified
     FROM legal_systems s`,
+  // $1 = أسماء الركائز التي لها تاريخ إصدار مكتوب (تعرضه البطاقة قبل law_card).
   systemsIssuance: `WITH latest AS (
-      SELECT DISTINCT ON (c.system_id) c.system_id, c.issued_hijri, c.issued_gregorian
+      SELECT DISTINCT ON (c.system_id) c.system_id, c.issued_hijri
       FROM law_card c ORDER BY c.system_id, c.created_at DESC, c.id DESC
     )
     SELECT count(*)::int AS no_issuance FROM legal_systems s
     LEFT JOIN latest ON latest.system_id = s.id
-    WHERE latest.system_id IS NULL OR (latest.issued_hijri IS NULL AND latest.issued_gregorian IS NULL)`,
-  systemsVerification: `SELECT count(*)::int AS unverified FROM legal_systems s
-    WHERE NOT EXISTS (SELECT 1 FROM verification v WHERE v.object_type = 'work' AND v.object_id = s.id)`,
+    WHERE (latest.issued_hijri IS NULL OR btrim(latest.issued_hijri) = '') AND NOT (s.name = ANY($1::text[]))`,
+  // $1 = الحالات الموثّقة (VERIFIED_STATUSES)؛ كالبطاقة: آخر سجل خارجها = «قيد التحقق».
+  systemsVerification: `WITH latest AS (
+      SELECT DISTINCT ON (v.object_id) v.object_id, v.verified_status
+      FROM verification v WHERE v.object_type = 'work' ORDER BY v.object_id, v.verified_at DESC, v.id DESC
+    )
+    SELECT count(*)::int AS unverified FROM legal_systems s
+    LEFT JOIN latest ON latest.object_id = s.id
+    WHERE latest.object_id IS NULL OR NOT (latest.verified_status = ANY($1::text[]))`,
   articlesBase: `SELECT count(*)::int AS total,
       count(*) FILTER (WHERE ${P.articleNoClassification})::int AS no_classification,
       count(*) FILTER (WHERE ${P.articleNoKeywords})::int AS no_keywords,
@@ -443,16 +461,13 @@ const SQL = {
       count(*) FILTER (WHERE ${P.articleDecreeFilled})::int AS decree_filled,
       count(DISTINCT a.classification) FILTER (WHERE NOT ${P.articleNoClassification})::int AS classifications
     FROM legal_articles a`,
-  articlesRelations: `SELECT count(*)::int AS no_relations FROM legal_articles a
-    WHERE NOT EXISTS (SELECT 1 FROM legal_relations r WHERE r.source_type = 'article' AND r.source_id = a.id)`,
-  explanations: `SELECT
-      (SELECT count(*) FROM annotations an WHERE ${P.explanationRow})::int AS total,
-      (SELECT count(*) FROM legal_articles a WHERE NOT EXISTS (
-        SELECT 1 FROM annotations an WHERE ${P.explanationRow} AND an.document_id = a.id))::int AS no_explanation`,
+  articlesRelations: `SELECT
+      (SELECT count(*) FROM legal_relations)::int AS relations,
+      (SELECT count(*) FROM legal_articles a
+        WHERE NOT EXISTS (SELECT 1 FROM legal_relations r WHERE r.source_type = 'article' AND r.source_id = a.id))::int AS no_relations`,
   judgmentsBase: `SELECT count(*)::int AS total FROM judicial_cases j`,
-  judgmentsLinks: `SELECT count(*) FILTER (WHERE ${P.judgmentHasLink})::int AS linked,
-      count(*) FILTER (WHERE NOT ${P.judgmentHasLink})::int AS unlinked
-    FROM judicial_cases j`,
+  // أسرع من NOT EXISTS على كل حكم (5ms مقابل 140ms في قياس الجودة)، والقيد الأجنبي يضمن التطابق.
+  judgmentsLinks: `SELECT count(DISTINCT l."caseId")::int AS linked FROM legal_article_case_links l`,
   citationsGroups: `SELECT "reviewStatus" AS status, "relationType" AS relation, count(*)::int AS c
     FROM legal_article_case_links GROUP BY 1, 2`,
   citationsArticles: `SELECT count(DISTINCT "articleId")::int AS articles FROM legal_article_case_links`,
@@ -482,9 +497,13 @@ function reasonOf(error: unknown): string {
   return "تعذّرت قراءة المصدر.";
 }
 
-async function probe<T extends Record<string, unknown>>(sql: MetricsSql, text: string): Promise<{ ok: true; row: T; rows: T[] } | { ok: false; reason: string }> {
+async function probe<T extends Record<string, unknown>>(
+  sql: MetricsSql,
+  text: string,
+  params?: readonly unknown[],
+): Promise<{ ok: true; row: T; rows: T[] } | { ok: false; reason: string }> {
   try {
-    const rows = await sql.query<T>(text);
+    const rows = await sql.query<T>(text, params);
     return { ok: true, row: (rows[0] ?? {}) as T, rows };
   } catch (error) {
     return { ok: false, reason: reasonOf(error) };
@@ -511,11 +530,14 @@ export function formatMetricValue(value: MetricValue): string {
 
 type Values = Partial<Record<MetricId, MetricValue>>;
 
-async function loadSystems(sql: MetricsSql, v: Values) {
+/** الركائز التي تعرض البطاقة تاريخ إصدارها من الكود (core-systems.ts). */
+export const CORE_ISSUED_NAMES: readonly string[] = CORE_SYSTEMS.filter((c) => !!c.issuanceDateH).map((c) => c.lawName);
+
+async function loadSystems(sql: MetricsSql, v: Values, coreIssuedNames: readonly string[]) {
   const [base, issuance, verification] = await Promise.all([
     probe<{ total: number; unclassified: number }>(sql, SQL.systemsBase),
-    probe<{ no_issuance: number }>(sql, SQL.systemsIssuance),
-    probe<{ unverified: number }>(sql, SQL.systemsVerification),
+    probe<{ no_issuance: number }>(sql, SQL.systemsIssuance, [[...coreIssuedNames]]),
+    probe<{ unverified: number }>(sql, SQL.systemsVerification, [[...VERIFIED_STATUSES]]),
   ]);
   v["systems.total"] = base.ok ? count(toInt(base.row.total)) : unavailable(base.reason);
   v["systems.unclassified"] = base.ok ? count(toInt(base.row.unclassified)) : unavailable(base.reason);
@@ -536,7 +558,7 @@ type ArticlesRow = {
 async function loadArticles(sql: MetricsSql, v: Values) {
   const [base, relations] = await Promise.all([
     probe<ArticlesRow>(sql, SQL.articlesBase),
-    probe<{ no_relations: number }>(sql, SQL.articlesRelations),
+    probe<{ relations: number; no_relations: number }>(sql, SQL.articlesRelations),
   ]);
   const fromBase = (key: keyof ArticlesRow): MetricValue => (base.ok ? count(toInt(base.row[key])) : unavailable(base.reason));
   v["articles.total"] = fromBase("total");
@@ -547,33 +569,30 @@ async function loadArticles(sql: MetricsSql, v: Values) {
   v["articles.decreeFilled"] = fromBase("decree_filled");
   v["articles.classifications"] = fromBase("classifications");
   v["articles.noRelations"] = relations.ok ? count(toInt(relations.row.no_relations)) : unavailable(relations.reason);
+  v["articles.relationsTotal"] = relations.ok ? count(toInt(relations.row.relations)) : unavailable(relations.reason);
   v["articles.duplicates"] = unavailable("لا تعريف معتمد للتكرار بعد.");
 }
 
-async function loadExplanations(sql: MetricsSql, v: Values) {
-  const r = await probe<{ total: number; no_explanation: number }>(sql, SQL.explanations);
-  if (!r.ok) {
-    v["explanations.total"] = unavailable(r.reason);
-    v["articles.noExplanation"] = unavailable(r.reason);
-    v["explanations.withoutSource"] = unavailable(r.reason);
-    return;
-  }
-  const total = toInt(r.row.total);
-  v["explanations.total"] = count(total);
-  v["articles.noExplanation"] = count(toInt(r.row.no_explanation));
-  // ع-٢ / ل٠-٤: لا شروح = لا معنى لعدّ «شروح بلا مصدر».
-  v["explanations.withoutSource"] =
-    total === 0 ? notApplicable("لا توجد شروح بعد.") : unavailable("جدول الشروح الحالي (annotations) لا عمود مصدر فيه.");
+/**
+ * الشروح (ع-٢ ومراجعة الجودة م-١): لا جدول شروح بمصدر بعد، فالثلاثة «لا ينطبق».
+ * لا تُقرأ annotations: هي ملاحظات خاصة لكل مستخدم، وعدّها «شروحًا» يكشف نشاط المستخدمين في عدّاد عام.
+ */
+function loadExplanations(v: Values) {
+  const reason = "لا جدول شروح بمصدر بعد (ل٢-٦ في م٣).";
+  v["explanations.total"] = notApplicable(reason);
+  v["explanations.withoutSource"] = notApplicable(reason);
+  v["articles.noExplanation"] = notApplicable(reason);
 }
 
 async function loadJudgments(sql: MetricsSql, v: Values) {
   const [base, links] = await Promise.all([
     probe<{ total: number }>(sql, SQL.judgmentsBase),
-    probe<{ linked: number; unlinked: number }>(sql, SQL.judgmentsLinks),
+    probe<{ linked: number }>(sql, SQL.judgmentsLinks),
   ]);
   v["judgments.total"] = base.ok ? count(toInt(base.row.total)) : unavailable(base.reason);
   v["judgments.linked"] = links.ok ? count(toInt(links.row.linked)) : unavailable(links.reason);
-  v["judgments.unlinked"] = links.ok ? count(toInt(links.row.unlinked)) : unavailable(links.reason);
+  v["judgments.unlinked"] =
+    base.ok && links.ok ? count(Math.max(0, toInt(base.row.total) - toInt(links.row.linked))) : unavailable(base.ok ? (links as { reason: string }).reason : base.reason);
 }
 
 function citationStatusLabel(status: string): string {
@@ -706,9 +725,9 @@ export async function loadLegalMetrics(
   const relationLabel = options.relationLabel ?? ((k: string) => k);
   const tasks: Promise<void>[] = [];
   for (const group of groups) {
-    if (group === "systems") tasks.push(loadSystems(sql, values));
+    if (group === "systems") tasks.push(loadSystems(sql, values, options.coreIssuedNames ?? CORE_ISSUED_NAMES));
     else if (group === "articles") tasks.push(loadArticles(sql, values));
-    else if (group === "explanations") tasks.push(loadExplanations(sql, values));
+    else if (group === "explanations") loadExplanations(values);
     else if (group === "judgments") tasks.push(loadJudgments(sql, values));
     else if (group === "citations") tasks.push(loadCitations(sql, values, breakdowns, relationLabel));
     else if (group === "principles") tasks.push(loadPrinciples(sql, values, breakdowns));
@@ -722,6 +741,26 @@ export async function loadLegalMetrics(
     if (value) metrics[id] = { id, ...METRIC_DEFINITIONS[id], value };
   }
   return { generatedAt: (options.now?.() ?? new Date()).toISOString(), groups, metrics, breakdowns };
+}
+
+/**
+ * سياق العرض: داخل مكتب التحرير (/admin/legal) يفتح عدّاد «مبادئ بانتظار المراجعة» طابور المكتب الذي
+ * يفرض «معتمِد غير المُعِدّ»، لا القائمة القديمة ذات زر الاعتماد المباشر (مراجعة الجودة ع٢ وم-٤).
+ * طابور المكتب يعرض «طابوري» و«ينتظر غيري»، ومجموعهما = العدّاد.
+ */
+export type MetricsContext = "core" | "desk";
+export const DESK_QUEUE_OVERRIDES: Partial<Record<MetricId, MetricQueue>> = {
+  "principles.pending": { href: "/admin/legal/queue?tab=principles", label: "طابور المكتب" },
+};
+
+export function inContext(snapshot: LegalMetricsSnapshot, context: MetricsContext): LegalMetricsSnapshot {
+  if (context === "core") return snapshot;
+  const metrics: Partial<Record<MetricId, Metric>> = { ...snapshot.metrics };
+  for (const [id, queue] of Object.entries(DESK_QUEUE_OVERRIDES) as Array<[MetricId, MetricQueue]>) {
+    const m = metrics[id];
+    if (m) metrics[id] = { ...m, queue };
+  }
+  return { ...snapshot, metrics };
 }
 
 /** يقرأ مقياسًا محمّلًا. طلب مقياس من مجموعة لم تُحمَّل خطأ برمجي لا صفر. */

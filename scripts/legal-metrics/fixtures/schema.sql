@@ -74,7 +74,8 @@ CREATE TABLE judicial_cases (
 CREATE TABLE legal_article_case_links (
   id text PRIMARY KEY,
   "articleId" text NOT NULL,
-  "caseId" text NOT NULL,
+  -- القيد كما في الإنتاج (legal_article_case_links_caseId_fkey)؛ يضمن أن caseId المميز حكم قائم.
+  "caseId" text NOT NULL REFERENCES judicial_cases(id),
   "relationType" text NOT NULL,
   "citedText" text,
   excerpt text,

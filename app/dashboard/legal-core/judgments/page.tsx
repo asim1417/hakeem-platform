@@ -9,7 +9,7 @@ import { findRulingIdsRedacted, splitRulingQuery } from "@/lib/modules/legal-cor
 import { rulingDisplayText } from "@/lib/modules/legal-core/ruling-display";
 import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
 import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
-import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { getLegalMetricsCached } from "@/lib/modules/legal-core/metrics-server";
 import { JUDGMENT_LINKS_PARAM, metric, type JudgmentLinksFilter } from "@/lib/modules/legal-core/metrics";
 
 export const dynamic = "force-dynamic";
@@ -112,7 +112,7 @@ export default async function LegalCoreJudgmentsPage({
         }
       })
       .catch(() => []),
-    getLegalMetrics(["citations"]),
+    getLegalMetricsCached(["citations"]),
     prisma.judicialCase.findMany({ distinct: ["court"], select: { court: true }, where: { court: { not: null } }, take: 60 }).catch(() => []),
     prisma.judicialCase.findMany({ distinct: ["cityName"], select: { cityName: true }, where: { cityName: { not: null } }, take: 60 }).catch(() => [])
   ]);

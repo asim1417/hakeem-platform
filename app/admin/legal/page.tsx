@@ -42,9 +42,10 @@ export default async function EditorialDeskPage() {
 
       <DeskCounters desk={desk} intake={intake} auditAllowed={auditAllowed} />
 
-      {/* HKM-023-A (ل٠-١): عدّادات المحتوى القانوني من خدمة العدّ الموحدة، تحت عدّادات المكتب. */}
+      {/* HKM-023-A (ل٠-١): عدّادات المحتوى القانوني من خدمة العدّ الموحدة، تحت عدّادات المكتب، بسياق المكتب:
+          «مبادئ بانتظار المراجعة» يفتح طابور المكتب لا القائمة القديمة ذات الاعتماد المباشر. */}
       <div className="mt-8">
-        <LegalMetricsPanel />
+        <LegalMetricsPanel context="desk" />
       </div>
 
       {auditAllowed ? (

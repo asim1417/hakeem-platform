@@ -55,8 +55,8 @@ export function DeskCounters({
       <div className="dk-stats">
         <Stat label="عمليات تعديل بلا قرار" value={intake?.amendmentOpsUndecided ?? null} href="/admin/legal/queue?tab=amendments" />
         <Stat label="منها تقبل الاعتماد الجماعي" value={intake?.amendmentOpsBulkEligible ?? null} href="/admin/legal/queue?tab=amendments&bulk=1" />
-        <Stat label="مبادئ تنتظر المراجعة" value={intake?.principlesNeedsReview ?? null} href="/admin/legal/queue?tab=principles" />
-        <Stat label="روابط أحكام بالمواد (طابورها لاحقًا)" value={intake?.caseLinksNeedsReview ?? null} />
+        {/* «مبادئ بانتظار المراجعة» و«استشهادات بانتظار الاعتماد» تُعرض مرة واحدة في لوحة خدمة العدّ تحت هذا القسم
+            (HKM-023-A، مراجعة الجودة ع٢)، وعدّاد المبادئ هناك يفتح طابور المكتب نفسه. */}
         <Stat label="آثار لم تُستخرج آليًّا (يدوي)" value={intake?.manualEffects ?? null} />
         <Stat label="علاقات آلية «مرتبطة»" value={intake?.autoRelations ?? null} />
       </div>

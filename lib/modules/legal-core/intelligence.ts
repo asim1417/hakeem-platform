@@ -3,19 +3,24 @@
 // كل استعلام مغلّف بأمان: تعذّر القاعدة/غياب الجداول لا يكسر الصفحة، يؤول لحالة واضحة.
 import { prisma } from "@/lib/prisma";
 import { applyEffectiveText } from "./effective-text";
+import { metric, metricNumber, type LegalMetricsSnapshot, type MetricGroup, type MetricId } from "./metrics";
 
+/**
+ * أعداد مركز التشغيل الذكي. كل رقم من legalMetricsService (HKM-023-A ل٠-١)، فلا يظهر في الصفحة الرئيسية
+ * رقمان لـ«تحتاج مراجعة» (مراجعة الجودة ع١). null = المصدر غير متاح (لا صفر).
+ */
 export interface IntelligenceSummary {
-  systemsCount: number;
-  articlesCount: number;
-  rulingsCount: number;
-  classificationsCount: number;
-  linkedArticlesCount: number;
-  unlinkedArticlesCount: number;
-  unlinkedRulingsCount: number;
-  reviewNeededCount: number;
-  relationsCount: number;
-  linkCoveragePercent: number;
-  dataQualityScore: number;
+  systemsCount: number | null;
+  articlesCount: number | null;
+  rulingsCount: number | null;
+  classificationsCount: number | null;
+  linkedArticlesCount: number | null;
+  unlinkedArticlesCount: number | null;
+  unlinkedRulingsCount: number | null;
+  reviewNeededCount: number | null;
+  relationsCount: number | null;
+  linkCoveragePercent: number | null;
+  dataQualityScore: number | null;
   rulingsImportedButUnlinked: boolean; // تحذير: أحكام مستوردة لكنها غير مرتبطة
 }
 
@@ -31,41 +36,39 @@ export function computeDataQualityScore(parts: {
   return Math.round((coverage * 0.5 + reviewOk * 0.5) * 1000) / 10;
 }
 
-export async function getIntelligenceSummary(): Promise<IntelligenceSummary> {
-  const [articlesCount, rulingsCount, systemsCount, classifications, reviewNeededCount, linkedGroups, unlinkedRulingsCount, relationsCount] =
-    await Promise.all([
-      prisma.legalArticle.count().catch(() => 0),
-      prisma.judicialCase.count().catch(() => 0),
-      prisma.legalSystem.count().catch(() => 0),
-      prisma.legalArticle.groupBy({ by: ["classification"], _count: { _all: true } }).catch(() => [] as { classification: string | null }[]),
-      prisma.legalArticle
-        .count({ where: { OR: [{ classification: null }, { chapter: null }, { keywords: { isEmpty: true } }] } })
-        .catch(() => 0),
-      prisma.legalArticleCaseLink.groupBy({ by: ["articleId"], _count: { _all: true } }).catch(() => [] as { articleId: string }[]),
-      prisma.judicialCase.count({ where: { articleLinks: { none: {} } } }).catch(() => 0),
-      prisma.legalRelation.count().catch(() => 0),
-    ]);
+export const INTELLIGENCE_METRIC_GROUPS: readonly MetricGroup[] = ["systems", "articles", "judgments", "citations"];
 
-  const classificationsCount = classifications.filter((c) => c.classification).length;
-  const linkedArticlesCount = linkedGroups.length;
-  const unlinkedArticlesCount = Math.max(0, articlesCount - linkedArticlesCount);
-  const linkCoveragePercent = articlesCount > 0 ? Math.round((linkedArticlesCount / articlesCount) * 1000) / 10 : 0;
-  const dataQualityScore = computeDataQualityScore({ articlesCount, linkedArticlesCount, reviewNeededCount });
-
+/** نقيّة: تحويل لقطة الخدمة إلى أعداد الويدجت. */
+export function summaryFromMetrics(snapshot: LegalMetricsSnapshot): IntelligenceSummary {
+  const n = (id: MetricId) => metricNumber(metric(snapshot, id).value);
+  const articlesCount = n("articles.total");
+  const linkedArticlesCount = n("citations.articlesLinked");
+  const reviewNeededCount = n("articles.needsReview");
+  const rulingsCount = n("judgments.total");
+  const both = articlesCount !== null && linkedArticlesCount !== null;
   return {
-    systemsCount,
+    systemsCount: n("systems.total"),
     articlesCount,
     rulingsCount,
-    classificationsCount,
+    classificationsCount: n("articles.classifications"),
     linkedArticlesCount,
-    unlinkedArticlesCount,
-    unlinkedRulingsCount,
+    unlinkedArticlesCount: both ? Math.max(0, (articlesCount as number) - (linkedArticlesCount as number)) : null,
+    unlinkedRulingsCount: n("judgments.unlinked"),
     reviewNeededCount,
-    relationsCount,
-    linkCoveragePercent,
-    dataQualityScore,
-    rulingsImportedButUnlinked: rulingsCount > 0 && linkedArticlesCount === 0,
+    relationsCount: n("articles.relationsTotal"),
+    linkCoveragePercent: both && (articlesCount as number) > 0 ? Math.round(((linkedArticlesCount as number) / (articlesCount as number)) * 1000) / 10 : null,
+    dataQualityScore:
+      both && reviewNeededCount !== null
+        ? computeDataQualityScore({ articlesCount: articlesCount as number, linkedArticlesCount: linkedArticlesCount as number, reviewNeededCount })
+        : null,
+    rulingsImportedButUnlinked: (rulingsCount ?? 0) > 0 && linkedArticlesCount === 0,
   };
+}
+
+export async function getIntelligenceSummary(): Promise<IntelligenceSummary> {
+  // استيراد متأخر: مدخل الخادم يجلب next/cache وPrisma، والدالة النقية أعلاه تُختبر بدونهما.
+  const { getLegalMetricsCached } = await import("./metrics-server");
+  return summaryFromMetrics(await getLegalMetricsCached(INTELLIGENCE_METRIC_GROUPS));
 }
 
 // ───────────────────────── أزرار التشغيل الذكي (دالّة نقيّة قابلة للاختبار) ─────────────────────────

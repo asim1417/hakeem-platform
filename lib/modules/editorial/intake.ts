@@ -27,6 +27,7 @@ import { hijriToGregorian, parseHijri } from "./hijri";
 import { applyIntakeSet, lockPrinciple, lockUndecidedOp, opSourceRef, principleSourceRef, type OpRow } from "./intake-apply";
 import { assertDeskIntegrity } from "./integrity";
 import { loadEditorialConfig, policyFor, policySnapshot, type EditorialConfig } from "./policy";
+import { loadLegalMetrics, metric, metricNumber } from "../legal-core/metrics";
 import type { IntakeCountsView } from "./read";
 import { EditorialError, type AmendmentDecision, type EditorialActor, type ItemKind, type PrincipleDecision } from "./types";
 import { assertEditorialWriteEnabled } from "./write-gate";
@@ -599,6 +600,13 @@ export async function intakeCounts(db: SqlClient): Promise<IntakeCountsView & { 
       return null;
     }
   };
+  // HKM-023-A (مراجعة الجودة ع٢): المبادئ والروابط المنتظرة رقم واحد من legalMetricsService، لا عدّ ثانٍ هنا.
+  const shared = await loadLegalMetrics(db, { groups: ["principles", "citations"] });
+  const fromService = (label: string, id: "principles.pending" | "citations.pending"): number | null => {
+    const value = metricNumber(metric(shared, id).value);
+    if (value === null) unavailable.push(label);
+    return value;
+  };
   return {
     amendmentOpsUndecided: await count("amendment_op", `SELECT count(*)::int AS n FROM uqn_fix.amendment_op o WHERE ${UNDECIDED_SQL}`),
     amendmentOpsBulkEligible: await count(
@@ -606,14 +614,8 @@ export async function intakeCounts(db: SqlClient): Promise<IntakeCountsView & { 
       `SELECT count(*)::int AS n FROM uqn_fix.amendment_op o WHERE ${UNDECIDED_SQL} AND ${BULK_ELIGIBLE_SQL}`,
     ),
     manualEffects: await count("amendment_manual", `SELECT count(*)::int AS n FROM uqn_fix.amendment_manual`),
-    principlesNeedsReview: await count(
-      "judicial_principles",
-      `SELECT count(*)::int AS n FROM judicial_principles WHERE "reviewStatus" = 'needs_review'`,
-    ),
-    caseLinksNeedsReview: await count(
-      "legal_article_case_links",
-      `SELECT count(*)::int AS n FROM legal_article_case_links WHERE "reviewStatus" = 'needs_review'`,
-    ),
+    principlesNeedsReview: fromService("judicial_principles", "principles.pending"),
+    caseLinksNeedsReview: fromService("legal_article_case_links", "citations.pending"),
     autoRelations: await count(
       "legal_relations",
       `SELECT count(*)::int AS n FROM legal_relations WHERE relation::text = 'RELATED_TO'`,
