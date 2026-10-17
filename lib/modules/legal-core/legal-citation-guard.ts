@@ -56,6 +56,7 @@ export async function validateLegalCitation(input: { articleId?: string; systemN
         where: {
           OR: [{ legalSystemId: resolved.system.id }, { lawName: resolved.system.name }],
           articleNumber: input.articleNumber,
+          articleBis: 0,
         },
       })
       .catch(() => null);
