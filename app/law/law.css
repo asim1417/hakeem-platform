@@ -282,19 +282,7 @@
 .dark [data-law] .pre-body[data-collapsed]::after { background: linear-gradient(to bottom, rgba(20,64,63,0), var(--law-bg-sheet)); }
 [data-law] .instr + .instr { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--law-rule); }
 [data-law] .instr-h { margin: 0 0 8px; text-align: center; font: 700 var(--law-chapter-size)/var(--law-chapter-leading) var(--law-font-text); color: var(--law-text-heading); }
-[data-law] .instr-h .kind { display: block; font: 600 14px/20px var(--law-font-ui); color: var(--law-text-secondary); }
 [data-law] .pre p { margin: 0; }
-[data-law] .basmala, [data-law] .opening, [data-law] .signature { text-align: center; }
-[data-law] .basmala, [data-law] .signature { font-weight: 700; }
-[data-law] .basmala { margin-bottom: 8px !important; }
-[data-law] .recital { color: var(--law-text-recital); font-size: var(--law-recital-size); line-height: var(--law-recital-leading); padding-inline-start: 24px; }
-@media (max-width: 639px) { [data-law] .recital { padding-inline-start: 16px; } }
-[data-law] .enact { font-weight: 700; margin: 16px 0 8px !important; }
-[data-law] .clause { margin-bottom: 8px !important; border-radius: var(--r-sm); }
-@media (min-width: 640px) { [data-law] .clause { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 0 8px; } }
-[data-law] .clause .ord { font-weight: 700; color: var(--law-text-heading); text-decoration: none; }
-[data-law] .clause .ord:hover { text-decoration: underline; }
-[data-law] .signature { margin-top: 16px !important; }
 [data-law] .pre-toggle { display: flex; justify-content: center; padding: 16px 16px 0; }
 [data-law] .pre-raw { white-space: pre-line; }
 [data-law] .tag { display: inline-flex; align-items: center; gap: 4px; min-height: var(--law-tag-h); padding: 0 10px; border-radius: var(--radius-pill); font: 600 14px/20px var(--law-font-ui); white-space: nowrap; vertical-align: middle; }

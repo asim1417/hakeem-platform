@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { Ban, ExternalLink, Info, PencilLine, ArrowLeft, TriangleAlert, FileText, ChevronDown } from "lucide-react";
 import type { ArticleView, DateValue, DivisionView, LawPageData, RepealInfo } from "@/lib/modules/legal-core/law-page-data";
 import { NOT_AVAILABLE } from "@/lib/modules/legal-core/law-page-data";
 import { sanitizeDisplayText as clean } from "@/lib/modules/legal-core/display-text";
 import {
-  INSTRUMENT_KIND_LABEL,
   NO_HISTORY_MESSAGE,
   REPEAL_NON_RETRO,
   REPEAL_TYPE_LABEL,
@@ -203,10 +203,8 @@ function LawCardSection({ data }: { data: LawPageData }) {
 function Preamble({ data }: { data: LawPageData }) {
   const p = data.preamble;
   const d = preambleDisplay(p);
-  const meta =
-    d.mode === "units"
-      ? `${d.instrumentCount === 1 ? "أداة إصدار واحدة" : d.instrumentCount === 2 ? "أداتا إصدار" : `${d.instrumentCount} أدوات إصدار`} · ${d.clauseCount} بندًا`
-      : null;
+  // قرار المالك (17/10/2026): المقدمة تُعرض نصًّا متصلًا كما في المصدر، والتفكيك إلى وحدات داخلي لا يظهر.
+  // يبقى منه مرساة خفية لكل بند منطوق (#preamble-i1-clause-2) للإحالة والبحث، بلا وسوم ولا ترقيم معلّق.
   let body: JSX.Element | null = null;
   let texts: string[] = [];
   if (d.mode === "units" && p.units) {
@@ -214,38 +212,26 @@ function Preamble({ data }: { data: LawPageData }) {
     body = (
       <>
         {p.units.instruments.map((ins) => {
-          const kind = ins.kind ? INSTRUMENT_KIND_LABEL[ins.kind] : null;
-          const headingUnits = ins.units.filter((u) => u.type === "preamble_heading");
-          const basmala = headingUnits.find((u) => /بسم الله/.test(u.text));
+          // ترتيب المصدر: البسملة، ثم سطر عنوان الأداة، ثم نصها.
+          const hIdx = ins.units.findIndex((u) => u.type === "preamble_heading" && !/بسم الله/.test(u.text));
+          const before = hIdx > 0 ? ins.units.slice(0, hIdx) : hIdx < 0 ? ins.units.filter((u) => u.type === "preamble_heading") : [];
+          const after = hIdx >= 0 ? ins.units.slice(hIdx + 1) : ins.units.filter((u) => u.type !== "preamble_heading");
+          const heading = ins.heading ?? (hIdx >= 0 ? clean(ins.units[hIdx].text).trim() : null);
+          const line = (units: typeof ins.units) =>
+            units.map((u, i) => {
+              const id = u.type === "operative_clause" ? preambleAnchor(u.anchor) ?? undefined : undefined;
+              return (
+                <Fragment key={u.id}>
+                  {i ? "\n" : null}
+                  <span id={id}>{clean(u.text).trim()}</span>
+                </Fragment>
+              );
+            });
           return (
             <div className="instr" id={`preamble-${ins.index}`} key={ins.index}>
-              <h3 className="instr-h">
-                {kind ? <span className="kind">{kind}</span> : null}
-                {ins.heading ?? headingUnits.filter((u) => u !== basmala).map((u) => u.text.trim()).join(" ")}
-              </h3>
-              {ins.units.map((u) => {
-                const t = clean(u.text).trim();
-                if (u.type === "preamble_heading") return u === basmala ? <p className="basmala" key={u.id}>{t}</p> : null;
-                if (u.type === "opening") return <p className="opening pre-raw" key={u.id}>{t}</p>;
-                if (u.type === "recital") return <p className="recital" key={u.id}>{t}</p>;
-                if (u.type === "enacting_formula") return <p className="enact" key={u.id}>{t}</p>;
-                if (u.type === "signature") return <p className="signature" key={u.id}>{t}</p>;
-                if (u.type === "operative_clause") {
-                  const id = preambleAnchor(u.anchor) ?? undefined;
-                  const m = t.match(/^([^:：]{1,24}[:：])\s*/);
-                  const ord = m ? m[1] : u.label ?? "";
-                  const rest = m ? t.slice(m[0].length) : t;
-                  return (
-                    <p className="clause" id={id} key={u.id}>
-                      <a className="ord" href={id ? `#${id}` : undefined} aria-label={`رابط البند ${ord.replace(/[:：]$/, "")} من ${kind ?? "الأداة"}`}>
-                        {ord}
-                      </a>
-                      <span>{rest}</span>
-                    </p>
-                  );
-                }
-                return <p className="pre-raw" key={u.id}>{t}</p>;
-              })}
+              {before.length ? <p className="pre-raw">{line(before)}</p> : null}
+              {heading ? <h3 className="instr-h">{heading}</h3> : null}
+              {after.length ? <p className="pre-raw">{line(after)}</p> : null}
             </div>
           );
         })}
@@ -257,12 +243,7 @@ function Preamble({ data }: { data: LawPageData }) {
       <>
         {p.sourceBlocks.blocks.map((b, i) => (
           <div className="instr" id={`preamble-${i + 1}`} key={i}>
-            {b.heading ? (
-              <h3 className="instr-h">
-                {INSTRUMENT_KIND_LABEL[b.kind] ? <span className="kind">{INSTRUMENT_KIND_LABEL[b.kind]}</span> : null}
-                {b.heading}
-              </h3>
-            ) : null}
+            {b.heading ? <h3 className="instr-h">{b.heading}</h3> : null}
             <p className="pre-raw">{clean(b.text)}</p>
           </div>
         ))}
@@ -276,7 +257,6 @@ function Preamble({ data }: { data: LawPageData }) {
     <section id="preamble" aria-labelledby="pre-h">
       <div className="sec-h">
         <h2 id="pre-h">المقدمة</h2>
-        {meta ? <span className="meta">{meta}</span> : null}
         {d.tag ? (
           <span className="tag tag--incomplete">
             <TriangleAlert aria-hidden size={16} /> {d.tag}
