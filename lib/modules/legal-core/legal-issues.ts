@@ -62,6 +62,12 @@ export function getLegalIssuesOverview(): LegalIssuesOverview {
   return { total: idx.meta.total, byStatus: idx.meta.byStatus, sections: idx.meta.sections };
 }
 
+/** عدّادات الفهرس لخدمة العدّ (metrics.ts). غياب الملف = null («غير متاح») لا أصفار. */
+export function legalIssuesCounts(): { total: number; byStatus: Record<string, number> } | null {
+  const idx = load();
+  return idx ? { total: idx.meta.total, byStatus: idx.meta.byStatus } : null;
+}
+
 /** إجمالي عدد المسائل القانونية (للإحصاء). */
 export function getLegalIssuesCount(): number {
   return load()?.meta.total ?? 0;

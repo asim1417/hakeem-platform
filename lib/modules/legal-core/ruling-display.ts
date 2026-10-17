@@ -6,6 +6,12 @@ import { redactPII } from "./rulings-search";
 /** هل تُحجب أسماء الأطراف لهذا الدور؟ */
 export const masksRulingNames = (role: string | null | undefined): boolean => role === "TRAINEE";
 
+/**
+ * زر «تحميل بالنقاط» للمشترك وحده (HKM-023-A ل٣-٤ / ع-٤): الأدمن والسوبر أدمن لا يشترون بالنقاط
+ * ما يديرونه، فلا يظهر لهما. كان الزر يُعرض لكل دور بلا شرط.
+ */
+export const showsPointsDownload = (role: string | null | undefined): boolean => role !== "SUPER_ADMIN" && role !== "SYSTEM_ADMIN";
+
 /** نص الحكم كما يُعرض لهذا الدور. */
 export function rulingDisplayText(text: string | null | undefined, role: string | null | undefined): string {
   return masksRulingNames(role) ? maskPersonalData(text) : redactPII(text ?? "");

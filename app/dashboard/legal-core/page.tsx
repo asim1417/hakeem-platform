@@ -3,37 +3,39 @@ import { BookOpen, Database, FileSearch, Gavel, Quote, Scale } from "lucide-reac
 import { requirePagePermission } from "@/lib/modules/auth/session";
 import { TRADITIONAL_SEARCH_ENABLED } from "@/lib/modules/config/search-visibility";
 import { canUser } from "@/lib/modules/auth/rbac";
-import {
-  countArticlesNeedingReview,
-  countJudicialCases,
-  getClassificationCount,
-  getLibraryStats,
-  searchLegalArticles
-} from "@/lib/modules/library/library-service";
+import { getLibraryStats, searchLegalArticles } from "@/lib/modules/library/library-service";
 import { LegalArticleCard, LegalCoreCard, LegalCorePageHeader, LegalCoreSearchBar, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
 import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
 import { ReindexButton } from "@/components/legal-core/ReindexButton";
 import { CoreIntelligenceDashboard } from "@/components/CoreIntelligenceDashboard";
-import { getLegalIssuesCount } from "@/lib/modules/legal-core/legal-issues";
-import { prisma } from "@/lib/prisma";
+import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { metric, type MetricId } from "@/lib/modules/legal-core/metrics";
 
 export const dynamic = "force-dynamic";
+
+// العدّادات من legalMetricsService (HKM-023-A ل٠-١)، بالتعريفات نفسها في /quality و/admin.
+const TILES: MetricId[] = [
+  "systems.total",
+  "articles.total",
+  "articles.classifications",
+  "explanations.total",
+  "articles.needsReview",
+  "issues.total",
+  "judgments.total",
+  "principles.total",
+  "articles.decreeFilled"
+];
 
 export default async function LegalCoreDashboardPage() {
   const currentUser = await requirePagePermission("LEGAL_CORE_VIEW");
   const canManage = await canUser(currentUser.id, "LEGAL_CORE_ADMIN");
 
-  const [stats, recentArticles, classificationCount, needsReview, judgmentsCount, principlesCount, decreesCount] = await Promise.all([
+  const [stats, recentArticles, snapshot] = await Promise.all([
     getLibraryStats().catch(() => ({ total: 0, systemCount: 0, laws: [] })),
     searchLegalArticles("", 4).catch(() => []),
-    getClassificationCount(),
-    countArticlesNeedingReview(),
-    countJudicialCases(),
-    prisma.judicialPrinciple.count().catch(() => 0),
-    prisma.legalArticle.count({ where: { NOT: [{ royalDecree: null }, { royalDecree: "" }] } }).catch(() => 0)
+    getLegalMetrics(["systems", "articles", "explanations", "issues", "judgments", "principles"])
   ]);
-
-  const legalIssuesCount = getLegalIssuesCount();
 
   return (
     <LegalCoreShell>
@@ -58,16 +60,10 @@ export default async function LegalCoreDashboardPage() {
           }
         />
 
-        <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-          <LegalCoreStatCard label="عدد الأنظمة" value={stats.systemCount} hint="مصادر نظامية معتمدة (من قاعدة الإنتاج)" />
-          <LegalCoreStatCard label="عدد المواد" value={stats.total} hint="مصدر الحقيقة للاستشهادات (من قاعدة الإنتاج)" />
-          <LegalCoreStatCard label="عدد التصنيفات" value={classificationCount} hint="تصنيف معرفي أولي" />
-          <LegalCoreStatCard label="عدد الشروح" value={0} hint="جاهزة للإثراء لاحقًا" tone="amber" />
-          <LegalCoreStatCard label="مواد تحتاج مراجعة" value={needsReview} hint="مؤشر جودة البيانات" tone={needsReview ? "amber" : "emerald"} />
-          <LegalCoreStatCard label="عدد المسائل القانونية" value={legalIssuesCount} hint="مربوطة بمواد الأنظمة" tone={legalIssuesCount ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="عدد الأحكام" value={judgmentsCount} hint="أحكام مستوردة من مصدر وزارة العدل" tone={judgmentsCount ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="عدد المبادئ" value={principlesCount} hint="مستخرجة من الأحكام (تخضع للمراجعة)" tone={principlesCount ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="مواد موثّقة المرسوم" value={decreesCount} hint="رقم المرسوم الملكي مُستخرَج من النصّ" tone={decreesCount ? "emerald" : "amber"} />
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+          {TILES.map((id) => (
+            <MetricTile key={id} metric={metric(snapshot, id)} />
+          ))}
           <LegalCoreStatCard label="حالة المصدر" value="موحد" hint="legal_articles فقط" tone="emerald" />
         </section>
 

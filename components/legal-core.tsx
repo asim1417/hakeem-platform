@@ -122,7 +122,17 @@ export function LegalCoreFilterPanel({ children }: { children: ReactNode }) {
   );
 }
 
-export function LegalSystemCard({ system }: { system: { id?: string | null; lawName: string; classification: string | null; count: number; code?: string | null; domainTitle?: string | null } }) {
+export function LegalSystemCard({
+  system,
+  status,
+  dateLine
+}: {
+  system: { id?: string | null; lawName: string; classification: string | null; count: number; code?: string | null; domainTitle?: string | null };
+  /** الحالة من سجل التحقق (systemCardStatus). بلا تمرير لا تُعرض شارة: لا «ساري» ثابت (HKM-023-A ع-٥). */
+  status?: { label: string; tone: "emerald" | "amber" | "ruby" | "gold" };
+  /** سطر التاريخ (systemCardDateLine). بلا تمرير: تاريخ الركيزة أو «غير متوفر». */
+  dateLine?: string;
+}) {
   // الربط بالمعرّف الثابت (id) لا بالاسم النصّي الهشّ.
   const viewHref = system.id
     ? `/dashboard/legal-core/systems/${encodeURIComponent(system.id)}`
@@ -146,14 +156,14 @@ export function LegalSystemCard({ system }: { system: { id?: string | null; lawN
         <div className="flex flex-wrap items-center justify-end gap-1.5">
           {system.code ? <span className="font-mono-legal text-[11px] font-bold text-[var(--gold-dark)]" dir="ltr">{system.code}</span> : null}
           {core ? <LegalTopicBadge tone="gold">ركيزة أساسية</LegalTopicBadge> : null}
-          <LegalTopicBadge tone="emerald">ساري</LegalTopicBadge>
+          {status ? <LegalTopicBadge tone={status.tone}>{status.label}</LegalTopicBadge> : null}
         </div>
       </div>
       <h2 className="mt-4 font-display-ar text-lg font-bold leading-8 text-[var(--navy)]">{system.lawName}</h2>
       <p className="mt-2 text-sm text-[var(--ink-60)]">{core?.classification ?? system.domainTitle ?? system.classification ?? "تصنيف نظامي عام"}</p>
       <div className="mt-4 flex items-center justify-between border-t border-[var(--ink-08)] pt-4">
         <span className="font-mono-legal text-sm text-[var(--gold)]">{system.count.toLocaleString("ar-SA")} مادة</span>
-        <span className="text-xs text-[var(--ink-40)]">{issuance ? `صدر: ${issuance}` : core?.sourceNote ?? "تاريخ النفاذ: عند التوفر"}</span>
+        <span className="text-xs text-[var(--ink-60)]">{issuance ? `صدر: ${issuance}` : dateLine ?? core?.sourceNote ?? "تاريخ الإصدار: غير متوفر"}</span>
       </div>
       {core && (core.regulationLawName || core.sourceUrl) ? (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-[var(--gold-border)] pt-3 text-xs">

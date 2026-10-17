@@ -7,10 +7,12 @@ import {
   LegalCoreCard,
   LegalCorePageHeader,
   LegalCoreShell,
-  LegalCoreStatCard,
   LegalTopicBadge
 } from "@/components/legal-core";
 import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
+import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
+import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { metric } from "@/lib/modules/legal-core/metrics";
 import {
   getLegalIssuesOverview,
   getLegalIssuesBySection,
@@ -49,6 +51,8 @@ export default async function LegalIssuesPage({
   const canManage = await canUser(currentUser.id, "LEGAL_CORE_ADMIN");
 
   const overview = getLegalIssuesOverview();
+  // العدّادات من legalMetricsService (HKM-023-A ل٠-١)، بالتعريف نفسه في لوحة الإدارة.
+  const snapshot = await getLegalMetrics(["issues"]);
   const activeSection = searchParams?.section ?? overview.sections[0]?.slug;
   const activeBook = searchParams?.book;
   const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);
@@ -67,11 +71,10 @@ export default async function LegalIssuesPage({
           }
         />
 
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <LegalCoreStatCard label="إجمالي المسائل" value={overview.total} hint="مربوطة بالأنظمة" />
-          <LegalCoreStatCard label="مطابقة عالية" value={overview.byStatus.linked ?? 0} hint="النظام يحوي أفضل مطابقة" tone="emerald" />
-          <LegalCoreStatCard label="تحتاج مراجعة" value={(overview.byStatus.needs_review ?? 0) + (overview.byStatus.review_nizam ?? 0)} hint="قيد المراجعة" tone="amber" />
-          <LegalCoreStatCard label="غير مقنّنة" value={overview.byStatus.uncodified_sharia ?? 0} hint="بلا مادة نظامية" tone="amber" />
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {(["issues.total", "issues.linked", "issues.needsReview", "issues.uncodified"] as const).map((id) => (
+            <MetricTile key={id} metric={metric(snapshot, id)} />
+          ))}
         </section>
 
         {/* تخطيط الفهرس: عمود فهرس (يمين) + عمود المحتوى */}

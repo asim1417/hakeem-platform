@@ -2,17 +2,21 @@ import Link from "next/link";
 import { Scale, Quote, ShieldCheck } from "lucide-react";
 import { requirePagePermission, getCurrentUser } from "@/lib/modules/auth/session";
 import { canUser } from "@/lib/modules/auth/rbac";
-import { prisma } from "@/lib/prisma";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
 import { PrincipleReviewControls } from "@/components/PrincipleReviewControls";
-import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalCoreStatCard, LegalTopicBadge } from "@/components/legal-core";
+import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 import { LegalCoreTabs } from "@/components/legal-core/LegalCoreTabs";
+import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
+import { getLegalMetrics, getPrincipleCourts, getPrincipleQueue } from "@/lib/modules/legal-core/metrics-server";
+import { formatMetricValue, metric, PRINCIPLE_STATUS_ALL, principleStatusLabel, type MetricId, type PrincipleRow } from "@/lib/modules/legal-core/metrics";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
+const TILES: MetricId[] = ["principles.total", "principles.reviewed", "principles.pending", "principles.rejected"];
 
 // المبادئ القضائية المستخرجة من الأحكام — تخضع للمراجعة قبل الاعتماد.
+// العدّادات والمرشح والقائمة كلها من legalMetricsService (HKM-023-A ل٠-٢، ل٥-٦): مجموع الحالات = الإجمالي.
 export default async function JudicialPrinciplesPage({
   searchParams
 }: {
@@ -28,32 +32,19 @@ export default async function JudicialPrinciplesPage({
   const status = (searchParams?.status ?? "").trim();
   const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);
 
-  const where = {
-    ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" as const } }, { principleText: { contains: q, mode: "insensitive" as const } }] } : {}),
-    ...(court ? { court } : {}),
-    // افتراضيًا نُخفي المرفوضة ما لم تُطلب صراحةً.
-    ...(status ? { reviewStatus: status } : { reviewStatus: { not: "rejected" } })
-  };
-
-  const [total, reviewed, pendingCount, courtsRaw, principles] = await Promise.all([
-    prisma.judicialPrinciple.count().catch(() => 0),
-    prisma.judicialPrinciple.count({ where: { reviewStatus: "reviewed" } }).catch(() => 0),
-    prisma.judicialPrinciple.count({ where: { reviewStatus: "needs_review" } }).catch(() => 0),
-    prisma.judicialPrinciple.groupBy({ by: ["court"], _count: { _all: true }, orderBy: { _count: { court: "desc" } }, take: 12 }).catch(() => [] as Array<{ court: string | null; _count: { _all: number } }>),
-    prisma.judicialPrinciple
-      .findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-        select: { id: true, title: true, principleText: true, court: true, topic: true, confidence: true, reviewStatus: true, sourceCaseId: true }
-      })
-      .catch(() => [])
+  const [snapshot, courts, queue] = await Promise.all([
+    getLegalMetrics(["principles"]),
+    getPrincipleCourts().catch(() => [] as Array<{ court: string; count: number }>),
+    getPrincipleQueue({ q, court, status, page, pageSize: PAGE_SIZE }).catch(() => null)
   ]);
 
-  const filteredCount = await prisma.judicialPrinciple.count({ where }).catch(() => 0);
+  const byStatus = snapshot.breakdowns.principlesByStatus;
+  const totalMetric = metric(snapshot, "principles.total");
+  const nonRejected = byStatus?.ok ? byStatus.total - (byStatus.rows.find((r) => r.key === "rejected")?.count ?? 0) : null;
+  const principles: PrincipleRow[] = queue?.items ?? [];
+  const filteredCount = queue?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
-  const courts = courtsRaw.filter((c) => c.court);
+  const ar = (n: number) => n.toLocaleString("ar-SA");
 
   const qs = (patch: Record<string, string | number>) => {
     const sp = new URLSearchParams();
@@ -83,10 +74,10 @@ export default async function JudicialPrinciplesPage({
           }
         />
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <LegalCoreStatCard label="إجمالي المبادئ" value={total} hint="مستخرجة من الأحكام" tone={total ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="مبادئ معتمدة" value={reviewed} hint="بعد المراجعة البشرية" tone={reviewed ? "emerald" : "amber"} />
-          <LegalCoreStatCard label="بانتظار المراجعة" value={pendingCount} hint="اقتراحات آلية تنتظر الاعتماد" tone={pendingCount ? "amber" : "emerald"} />
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {TILES.map((id) => (
+            <MetricTile key={id} metric={metric(snapshot, id)} />
+          ))}
         </section>
 
         {/* المرشّحات */}
@@ -100,24 +91,39 @@ export default async function JudicialPrinciplesPage({
             <select id="court" name="court" defaultValue={court} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory px-3 text-sm">
               <option value="">كل المحاكم</option>
               {courts.map((c) => (
-                <option key={c.court} value={c.court ?? ""}>{c.court} ({c._count._all})</option>
+                <option key={c.court} value={c.court}>{c.court} ({ar(c.count)})</option>
               ))}
             </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--ink-60)]" htmlFor="status">الحالة</label>
             <select id="status" name="status" defaultValue={status} className="h-10 rounded-[var(--r-md)] border border-[var(--ink-08)] bg-ivory px-3 text-sm">
-              <option value="">الكل (عدا المرفوض)</option>
-              <option value="reviewed">معتمد</option>
-              <option value="needs_review">بانتظار المراجعة</option>
-              <option value="rejected">مرفوض</option>
+              <option value="">الكل عدا المرفوض{nonRejected === null ? "" : ` (${ar(nonRejected)})`}</option>
+              <option value={PRINCIPLE_STATUS_ALL}>كل الحالات ({formatMetricValue(totalMetric.value)})</option>
+              {byStatus?.ok
+                ? byStatus.rows.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.label} ({ar(r.count)})
+                    </option>
+                  ))
+                : null}
             </select>
           </div>
           <button type="submit" className="btn btn-gold h-10">تطبيق</button>
         </form>
 
-        <LegalCoreCard title={`النتائج (${filteredCount.toLocaleString("ar-SA")})`} icon={<Quote size={18} />}>
-          {principles.length ? (
+        {byStatus?.ok ? (
+          <p className="text-sm leading-7 text-[var(--ink-60)]" data-testid="principle-status-sum">
+            مجموع الحالات: {byStatus.rows.map((r) => `${r.label} ${ar(r.count)}`).join(" + ")} = {ar(byStatus.total)}، وهو إجمالي المبادئ.
+          </p>
+        ) : null}
+
+        <LegalCoreCard title={queue ? `النتائج (${ar(filteredCount)})` : "النتائج — غير متاح"} icon={<Quote size={18} />}>
+          {!queue ? (
+            <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--ink-15)] p-6 text-center text-sm leading-7 text-[var(--ink-60)]">
+              تعذّرت قراءة المبادئ من القاعدة. لم يُعرض صفر بدل الخطأ.
+            </div>
+          ) : principles.length ? (
             <div className="space-y-3">
               {principles.map((p) => (
                 <article key={p.id} className="rounded-[var(--r-lg)] border border-[var(--ink-08)] bg-ivory/60 p-4">
@@ -126,7 +132,7 @@ export default async function JudicialPrinciplesPage({
                     <div className="flex flex-wrap gap-2">
                       {p.court ? <LegalTopicBadge>{p.court}</LegalTopicBadge> : null}
                       <LegalTopicBadge tone={p.reviewStatus === "reviewed" ? "emerald" : p.reviewStatus === "rejected" ? "ruby" : "amber"}>
-                        {p.reviewStatus === "reviewed" ? "معتمد" : p.reviewStatus === "rejected" ? "مرفوض" : "بانتظار المراجعة"}
+                        {principleStatusLabel(p.reviewStatus)}
                       </LegalTopicBadge>
                     </div>
                   </div>
@@ -144,7 +150,9 @@ export default async function JudicialPrinciplesPage({
           ) : (
             <div className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] p-6 text-center text-sm leading-7 text-[var(--navy)]">
               <ShieldCheck className="mx-auto mb-2 text-[var(--gold)]" size={22} />
-              لا توجد مبادئ قضائية بعد. تُستخرَج المبادئ من الأحكام القضائية وتُراجَع قبل اعتمادها، وستظهر هنا فور إضافتها.
+              {q || court || status
+                ? "لا توجد مبادئ مطابقة لهذه المرشحات."
+                : "لا توجد مبادئ قضائية بعد. تُستخرَج المبادئ من الأحكام القضائية وتُراجَع قبل اعتمادها، وستظهر هنا فور إضافتها."}
             </div>
           )}
 

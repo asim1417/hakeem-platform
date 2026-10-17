@@ -9,7 +9,7 @@ import { SpendCreditsButton } from "@/components/credits/SpendCreditsButton";
 import { JudgmentText } from "@/components/JudgmentText";
 import { LegalCoreCard, LegalCorePageHeader, LegalCoreShell, LegalTopicBadge } from "@/components/legal-core";
 import { relationTypeLabel, reviewStatusLabel } from "@/lib/i18n/enum-labels";
-import { rulingDisplayText } from "@/lib/modules/legal-core/ruling-display";
+import { rulingDisplayText, showsPointsDownload } from "@/lib/modules/legal-core/ruling-display";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +52,7 @@ export default async function LegalCoreJudgmentPage({ params }: { params: { id: 
             <>
               <LegalCopyButton text={citation || judgment.judgmentTitle || judgment.id} label="نسخ الاستشهاد" />
               <LegalFavoriteButton documentType="ruling" documentId={judgment.id} label="حفظ للمفضلة" />
-              <SpendCreditsButton use="download_ruling" targetId={judgment.id} label="تحميل بالنقاط (50)" />
+              {showsPointsDownload(user.role) ? <SpendCreditsButton use="download_ruling" targetId={judgment.id} label="تحميل بالنقاط (50)" /> : null}
               {judgment.sourceLink ? (
                 <a className="btn ho-hero-outline" href={judgment.sourceLink} target="_blank" rel="noreferrer">
                   <ExternalLink size={16} />

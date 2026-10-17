@@ -8,6 +8,9 @@ import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { findRulingIdsRedacted, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { rulingDisplayText } from "@/lib/modules/legal-core/ruling-display";
 import { reviewStatusLabel } from "@/lib/i18n/enum-labels";
+import { MetricTile } from "@/components/legal-core/LegalMetricsPanel";
+import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { JUDGMENT_LINKS_PARAM, metric, type JudgmentLinksFilter } from "@/lib/modules/legal-core/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +38,7 @@ function dateDesc(a: { decisionDate: Date | null }, b: { decisionDate: Date | nu
 export default async function LegalCoreJudgmentsPage({
   searchParams
 }: {
-  searchParams?: { q?: string; court?: string; city?: string; classification?: string; page?: string };
+  searchParams?: { q?: string; court?: string; city?: string; classification?: string; page?: string; links?: string };
 }) {
   const user = await requirePagePermission("LEGAL_CORE_VIEW");
 
@@ -45,6 +48,9 @@ export default async function LegalCoreJudgmentsPage({
   const court = (searchParams?.court ?? "").trim();
   const city = (searchParams?.city ?? "").trim();
   const classification = (searchParams?.classification ?? "").trim();
+  // HKM-023-A ل٠-٢: طابور «أحكام بلا رابط» / «مرتبطة» بالتعريف نفسه في legalMetricsService (أي رابط بأي حالة).
+  const linksRaw = (searchParams?.[JUDGMENT_LINKS_PARAM] ?? "").trim();
+  const links: JudgmentLinksFilter | "" = linksRaw === "none" || linksRaw === "any" ? linksRaw : "";
   const page = Math.max(Number(searchParams?.page ?? 1), 1);
   const limit = 24;
 
@@ -73,7 +79,8 @@ export default async function LegalCoreJudgmentsPage({
         : {},
       court ? { court: { contains: court, mode: "insensitive" as const } } : {},
       city ? { cityName: { contains: city, mode: "insensitive" as const } } : {},
-      classification ? { classification: { path: ["classification"], string_contains: classification } } : {}
+      classification ? { classification: { path: ["classification"], string_contains: classification } } : {},
+      links === "none" ? { articleLinks: { none: {} } } : links === "any" ? { articleLinks: { some: {} } } : {}
     ].filter((item) => Object.keys(item).length > 0)
   };
 
@@ -83,7 +90,7 @@ export default async function LegalCoreJudgmentsPage({
   const POOL = 480;
   const poolTake = query ? POOL : limit;
   const poolSkip = query ? 0 : (page - 1) * limit;
-  const [total, pool, totalLinks, courts, cities] = await Promise.all([
+  const [total, pool, linkMetrics, courts, cities] = await Promise.all([
     prisma.judicialCase.count({ where }).catch(() => 0),
     prisma.judicialCase
       .findMany({
@@ -105,7 +112,7 @@ export default async function LegalCoreJudgmentsPage({
         }
       })
       .catch(() => []),
-    prisma.legalArticleCaseLink.count().catch(() => 0),
+    getLegalMetrics(["citations"]),
     prisma.judicialCase.findMany({ distinct: ["court"], select: { court: true }, where: { court: { not: null } }, take: 60 }).catch(() => []),
     prisma.judicialCase.findMany({ distinct: ["cityName"], select: { cityName: true }, where: { cityName: { not: null } }, take: 60 }).catch(() => [])
   ]);
@@ -159,12 +166,12 @@ export default async function LegalCoreJudgmentsPage({
 
         <section className="grid gap-4 md:grid-cols-3">
           <LegalCoreStatCard label="الأحكام المطابقة" value={total} hint="وفق المرشحات الحالية" />
-          <LegalCoreStatCard label="روابط المواد" value={totalLinks} hint="استشهادات مرتبطة بمواد نظامية" tone="emerald" />
+          <MetricTile metric={metric(linkMetrics, "citations.total")} />
           <LegalCoreStatCard label="حالة المراجعة" value={reviewStatusLabel("needs_review")} hint="روابط الأحكام تحتاج تدقيقًا قانونيًا" tone="amber" />
         </section>
 
         <form action="/dashboard/legal-core/judgments" className="rounded-[var(--r-xl)] border border-[var(--gold-border)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
-          <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px_auto]">
+          <div className="grid gap-3 lg:grid-cols-[1fr_200px_200px_170px_auto]">
             <label className="relative">
               <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--gold)]" />
               <input
@@ -182,6 +189,11 @@ export default async function LegalCoreJudgmentsPage({
               <option value="">كل المدن</option>
               {cities.map((item) => (item.cityName ? <option key={item.cityName} value={item.cityName}>{item.cityName}</option> : null))}
             </select>
+            <select name={JUDGMENT_LINKS_PARAM} aria-label="الربط بالمواد" defaultValue={links} className="rounded-[var(--r-md)] border border-[var(--ink-15)] bg-[var(--parchment)] px-4 py-3 outline-none focus:border-[var(--gold)]">
+              <option value="">كل الأحكام</option>
+              <option value="any">مرتبطة بمواد</option>
+              <option value="none">بلا رابط</option>
+            </select>
             <button className="btn btn-gold min-w-[140px]" type="submit">
               <Search size={16} />
               بحث
@@ -189,7 +201,7 @@ export default async function LegalCoreJudgmentsPage({
           </div>
         </form>
 
-        <LegalCoreCard title="قائمة الأحكام" subtitle={`${total.toLocaleString("ar-SA")} حكمًا مطابقًا${query ? " — مرتّبة بالصلة (العنوان ثم الاستشهادات ثم الأحدث)" : " — الأحدث أولاً"}`}>
+        <LegalCoreCard title="قائمة الأحكام" subtitle={`${total.toLocaleString("ar-SA")} حكمًا مطابقًا${links === "none" ? " — بلا رابط بمادة" : links === "any" ? " — مرتبطة بمواد" : ""}${query ? " — مرتّبة بالصلة (العنوان ثم الاستشهادات ثم الأحدث)" : " — الأحدث أولاً"}`}>
           {approximate ? (
             <div className="mb-4">
               <LegalTopicBadge tone="amber">استعلام واسع — رُتِّب أحدث {POOL.toLocaleString("ar-SA")} حكمًا بالصلة</LegalTopicBadge>

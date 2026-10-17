@@ -245,3 +245,24 @@ export async function lawCard(systemId: string): Promise<LawCardRecord | null> {
     return null;
   }
 }
+
+/**
+ * تاريخ الإصدار من آخر بطاقة لكل نظام دفعةً واحدة (لقائمة الأنظمة، HKM-023-A ع-٥).
+ * غياب الجدول أو البطاقة = لا مدخل في الخريطة («غير متوفر» في العرض، لا قيمة مخترعة).
+ */
+export async function lawCardIssuances(systemIds: string[]): Promise<Map<string, { issuedHijri: string | null; sourceUrl: string }>> {
+  const out = new Map<string, { issuedHijri: string | null; sourceUrl: string }>();
+  if (!systemIds.length) return out;
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ system_id: string; issued_hijri: string | null; source_url: string }>>(
+      `SELECT DISTINCT ON (system_id) system_id, issued_hijri, source_url
+       FROM law_card WHERE system_id = ANY($1::text[])
+       ORDER BY system_id, created_at DESC, id DESC`,
+      systemIds,
+    );
+    for (const r of rows) out.set(r.system_id, { issuedHijri: r.issued_hijri, sourceUrl: r.source_url });
+  } catch {
+    /* الجدول غير مطبَّق بعد */
+  }
+  return out;
+}

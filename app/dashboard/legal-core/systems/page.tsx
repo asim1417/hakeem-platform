@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { requirePagePermission } from "@/lib/modules/auth/session";
+import { canUser } from "@/lib/modules/auth/rbac";
 import { listSystems } from "@/lib/modules/library/library-service";
 import { LegalCorePageHeader, LegalCoreShell, LegalSystemCard, LegalTopicBadge } from "@/components/legal-core";
+import { getLegalMetrics } from "@/lib/modules/legal-core/metrics-server";
+import { formatMetricValue, metric } from "@/lib/modules/legal-core/metrics";
+import { loadSearchSurface, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
+import { ISSUANCE_UNAVAILABLE, systemCardDateLine, systemCardStatus } from "@/lib/modules/legal-core/system-card";
+import { lawCardIssuances, latestVerifications } from "@/lib/modules/legal-core/verification-read";
+import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +18,8 @@ export default async function LegalCoreSystemsPage({
 }: {
   searchParams?: { q?: string; classification?: string; domain?: string; page?: string };
 }) {
-  await requirePagePermission("LEGAL_CORE_VIEW");
+  const user = await requirePagePermission("LEGAL_CORE_VIEW");
+  const canManage = await canUser(user.id, "LEGAL_CORE_ADMIN").catch(() => false);
 
   const q = (searchParams?.q ?? "").trim();
   const classification = (searchParams?.classification ?? "").trim();
@@ -19,6 +27,28 @@ export default async function LegalCoreSystemsPage({
   const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);
 
   const { items, total, pageSize, domains } = await listSystems({ q, classification, domain, page });
+  // ع-٥ (HKM-023-A): الحالة من سجل التحقق بتاريخ اليوم (كصفحة النظام العامة)، والتاريخ من مصدر مؤكد أو «غير متوفر».
+  const ids = items.map((s) => s.id).filter((id): id is string => !!id);
+  const [verifications, issuances, surfaceState, snapshot] = await Promise.all([
+    latestVerifications("work", ids),
+    lawCardIssuances(ids),
+    loadSearchSurface(undefined, { includeRepealed: true }).catch(() => null),
+    canManage ? getLegalMetrics(["systems"]) : Promise.resolve(null)
+  ]);
+  const cardFacts = (id: string | null | undefined) => {
+    if (!id) return { status: systemCardStatus(""), dateLine: undefined };
+    const recorded = citationFlagsFromVerification(verifications.get(id) ?? null).statusLabel;
+    const label = surfaceState ? workStatusAsOf(id, recorded, surfaceState.surface).status : recorded;
+    const line = systemCardDateLine({ lawCardIssuedHijri: issuances.get(id)?.issuedHijri ?? null });
+    return { status: systemCardStatus(label), dateLine: line === ISSUANCE_UNAVAILABLE ? undefined : line };
+  };
+  const systemMetrics = snapshot
+    ? {
+        unclassified: metric(snapshot, "systems.unclassified"),
+        noIssuance: metric(snapshot, "systems.noIssuanceDate"),
+        unverified: metric(snapshot, "systems.unverifiedStatus")
+      }
+    : null;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const qp = (extra: Record<string, string | number>) => {
     const sp = new URLSearchParams();
@@ -87,6 +117,13 @@ export default async function LegalCoreSystemsPage({
           {total.toLocaleString("ar-SA")} نظاماً · صفحة {page.toLocaleString("ar-SA")} من {pages.toLocaleString("ar-SA")}
         </p>
 
+        {systemMetrics ? (
+          <p className="rounded-[var(--r-lg)] border border-dashed border-[var(--gold-border)] bg-[var(--gold-ghost)] px-4 py-3 text-xs leading-6 text-[var(--navy)]">
+            للإدارة: {formatMetricValue(systemMetrics.unclassified.value)} نظامًا بلا مجال («غير مصنّف»)، و{formatMetricValue(systemMetrics.noIssuance.value)} بلا تاريخ
+            إصدار من المصدر، و{formatMetricValue(systemMetrics.unverified.value)} بلا حالة موثّقة («قيد التحقق»). تاريخ النفاذ لا يُخزَّن للأنظمة بعد، والتصنيف الجماعي في مرحلة لاحقة.
+          </p>
+        ) : null}
+
         {items.length ? (
           <div className="space-y-7">
             {groups.map((g) => (
@@ -97,7 +134,10 @@ export default async function LegalCoreSystemsPage({
                   <span className="font-mono-legal text-xs text-[var(--ink-40)]">({g.systems.length.toLocaleString("ar-SA")})</span>
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {g.systems.map((system) => <LegalSystemCard key={system.id ?? system.lawName} system={system} />)}
+                  {g.systems.map((system) => {
+                    const facts = cardFacts(system.id);
+                    return <LegalSystemCard key={system.id ?? system.lawName} system={system} status={facts.status} dateLine={facts.dateLine} />;
+                  })}
                 </div>
               </section>
             ))}
