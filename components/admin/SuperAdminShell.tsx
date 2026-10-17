@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AccountMenu } from "@/components/AccountMenu";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminNavDisclosure } from "@/components/editorial/AdminNavDisclosure";
 import { isClerkConfigured } from "@/lib/modules/auth/clerk-config";
 import { getAccountSecurityFeatures } from "@/lib/modules/auth/auth-providers";
 import { PLATFORM_WINDOW_HREF } from "@/lib/modules/auth/home-destination";
@@ -15,10 +16,13 @@ import { countUnreadForAdmin } from "@/lib/modules/support/support-store";
 export async function SuperAdminShell({
   currentPath,
   user,
+  mobileNavSection,
   children,
 }: {
   currentPath: string;
   user: SafeUser | null;
+  /** اختياري: طيّ القائمة على الجوال (صفحات المكتب وحدها)؛ الافتراضي دون تغيير. */
+  mobileNavSection?: string;
   children: React.ReactNode;
 }) {
   const clerkEnabled = isClerkConfigured();
@@ -82,7 +86,13 @@ export async function SuperAdminShell({
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
-        <AdminNav currentPath={currentPath} variant="super" />
+        {mobileNavSection ? (
+          <AdminNavDisclosure section={mobileNavSection}>
+            <AdminNav currentPath={currentPath} variant="super" />
+          </AdminNavDisclosure>
+        ) : (
+          <AdminNav currentPath={currentPath} variant="super" />
+        )}
         <main id="main-content">{children}</main>
       </div>
     </div>
