@@ -3,6 +3,7 @@ import { requireApiPermission } from "@/lib/modules/auth/session";
 import type { ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { searchJudgments } from "@/lib/modules/legal-core/judgment-search";
+import { masksRulingNames } from "@/lib/modules/legal-core/ruling-display";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
   });
 
   const judgmentResults = sourceTypes.includes("judgment") || sourceTypes.includes("case_link")
-    ? await searchJudgments(query, page, limit)
+    ? await searchJudgments(query, page, limit, { maskNames: masksRulingNames(gate.user?.role) })
     : [];
 
   return NextResponse.json({
