@@ -260,11 +260,13 @@ const principles = [
 const frozenPrinciples = JSON.stringify(principles);
 // تعذّر جلب نص الأحكام في البحث، أو استعلام العيّنة (لاختبار السقوط مغلقًا).
 let failTextFetch = false;
+// استعلامات الاحتواء على الأحكام والمبادئ (بحث المزوّد المعجمي في البحث الهجين).
+let containsQueries = 0;
 let failTaint = false;
 const fakePrisma = {
   judicialPrinciple: {
     findMany: async ({ where, take }: { where: { OR: Array<Record<string, { contains: string }>> }; take?: number }) =>
-      principles
+      (containsQueries++, principles)
         .filter((p) => where.OR.some((c) => { const [f, op] = Object.entries(c)[0]; return String((p as Record<string, unknown>)[f] ?? "").toLowerCase().includes(op.contains.toLowerCase()); }))
         .slice(0, take ?? 50),
     update: noWrite, create: noWrite, delete: noWrite,
@@ -272,6 +274,7 @@ const fakePrisma = {
   judicialCase: {
     findMany: async ({ where }: { where: Where }) => {
       if (failTextFetch && where.id?.in) throw new Error("تعذّر الجلب (اختبار)");
+      if (!where.id?.in) containsQueries++;
       return rows.filter((r) => matches(r, where));
     },
     findUnique: async ({ where }: { where: { id: string } }) => rows.find((r) => r.id === where.id) ?? null,
@@ -882,6 +885,18 @@ INSERT INTO ruling_segments VALUES (${lit("s002")}, 'reasons', ${lit(normalizeAr
       clearRulingTablesCache();
       clearTaintCache();
     }
+  }
+  // أداتا المواد في الموصل (hakeem_search، ومعها hakeem_research): البحث الهجين بالمواد وحدها، فلا تُسأل الأحكام
+  // ولا المبادئ ولا تأخذ مقاعد في الدمج ثم تُحذف (كانت تكشف بعدد المواد المعادة وجود الاسم في الأحكام).
+  {
+    const { searchArticles } = await import("../lib/mcp/adapter");
+    const { hybridSearch } = await import("../lib/modules/legal-search/hybrid-search");
+    const c0 = containsQueries;
+    await searchArticles("غانم الموسوي", undefined, 10);
+    const c1 = containsQueries;
+    await hybridSearch({ q: "غانم الموسوي", limit: 10 });
+    const c2 = containsQueries;
+    ok(c1 === c0 && c2 > c1, `أداتا المواد: البحث الهجين لا يسأل الأحكام ولا المبادئ (${c1 - c0})، والبحث العام يسألها (${c2 - c1})`);
   }
   // تخريج الحكم (takhrij_hukm): العنوان ونص المبدأ محجوبان، والمطابقة داخل اسم وحدها لا تُعاد.
   const { takhrijHukm } = await import("../lib/agent-runtime/live/engine-tools");

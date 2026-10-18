@@ -54,7 +54,8 @@ function toArticleNumber(raw: string): number | null {
 export async function searchArticles(query: string, lawId?: string, limit = 10) {
   // حين يُطلب حصرٌ بنظام معيّن نوسّع سقف الجلب ثم نُصفّي (المحرّك لا يقيّد بالنظام).
   const fetchLimit = lawId ? Math.min(limit * 4, 30) : limit;
-  const res = await hybridSearch({ q: query, limit: fetchLimit }).catch(() => null);
+  // المواد وحدها: الأحكام لا تأخذ مقاعد في الدمج ثم تُحذف (كانت تكشف بعدد المواد المعادة وجود اسم فرد في الأحكام).
+  const res = await hybridSearch({ q: query, limit: fetchLimit, types: ["article"] }).catch(() => null);
   const ranked = (res?.results ?? []).filter((r) => r.type === "article");
 
   // ترطيب من القاعدة لضمان حقول العقد الدقيقة (خاصّة law_id = معرّف النظام).

@@ -6,7 +6,7 @@ import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrie
 import { latestVectorSource } from "@/lib/modules/legal-search/vector-source";
 import { nearestRulingSegments, rulingSegmentVectorsReady } from "@/lib/modules/legal-core/rulings-search";
 import { resolveEntity, type EntityType } from "@/lib/modules/knowledge-graph/relations";
-import type { LegalEntityType, RawResult, SearchProvider, SearchQuery } from "./search-provider";
+import { wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
 
 // مزوّد البحث الدلالي (Semantic). مساران بسقوط آمن:
 //   1) جدول pgvector `embeddings` إن كان موجوداً وفيه متجهات (الأسرع، يشمل كل الأنواع).
@@ -109,12 +109,13 @@ export function versionsSql(segReady: boolean, take: number): string {
 }
 
 /** المسار المفهرس: أعلى take لكل مصدر ثم الدمج — اتحادها يحوي أعلى take الكلّي. */
-async function nearestViaPartialIndexes(literal: string, take: number, segReady: boolean): Promise<VectorRow[]> {
+async function nearestViaPartialIndexes(literal: string, take: number, segReady: boolean, want: (t: LegalEntityType) => boolean): Promise<VectorRow[]> {
   const q = (sql: string) => prisma.$queryRawUnsafe<VectorRow[]>(sql, literal);
+  const none = Promise.resolve([] as VectorRow[]);
   const batches = await Promise.all([
-    q(partialTypeSql("article", take)),
-    q(partialTypeSql("principle", take)),
-    q(rulingsSql(segReady, take)),
+    want("article") ? q(partialTypeSql("article", take)) : none,
+    want("principle") ? q(partialTypeSql("principle", take)) : none,
+    want("ruling") ? q(rulingsSql(segReady, take)) : none,
     q(versionsSql(segReady, take)),
   ]);
   return batches.flat();
@@ -134,7 +135,8 @@ async function articleEmbeddingsExist(): Promise<boolean> {
 }
 
 /** المسار الأساسي: استعلام pgvector على جدول `embeddings`. يعيد null إن تعذّر فيُجرَّب الاحتياطي. */
-async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<RawResult[] | null> {
+async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: LegalEntityType[]): Promise<RawResult[] | null> {
+  const want = (t: LegalEntityType) => wantsType({ types }, t);
   if (!(await embeddingsTableHasRows())) return null;
   try {
     const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
@@ -146,7 +148,7 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
     const sqlFor = (from: string) =>
       `SELECT owner_type, owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
        FROM ${from}
-       WHERE embedding IS NOT NULL${segReady
+       WHERE embedding IS NOT NULL${types ? ` AND owner_type IN (${types.map((t) => `'${t}'`).join(",")})` : ""}${segReady
          ? ` AND NOT (owner_type = 'ruling' AND owner_id IN (SELECT ruling_id FROM ruling_segment_embeddings))`
          : ""}
        ORDER BY embedding <=> '${literal}'::vector
@@ -154,17 +156,17 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number): Promise<R
     const partial = await partialIndexesReady();
     const [baseRows, segHits] = await Promise.all([
       partial
-        ? nearestViaPartialIndexes(literal, take, segReady)
+        ? nearestViaPartialIndexes(literal, take, segReady, want)
         : prisma.$queryRawUnsafe<VectorRow[]>(sqlFor(latestVectorSource())).catch(() =>
             prisma.$queryRawUnsafe<VectorRow[]>(sqlFor("embeddings")),
           ),
-      segReady ? nearestRulingSegments(vec).catch(() => []) : Promise.resolve([]),
+      segReady && want("ruling") ? nearestRulingSegments(vec).catch(() => []) : Promise.resolve([]),
     ]);
     console.info(`[search] vector sql ms=${Date.now() - t0} path=${partial ? "partial_hnsw" : "scan"}`);
     // عتبة الأحكام من قياس متجهات الأجزاء (RULINGS_SEMANTIC_MIN، 0.42)؛ وعتبة البقية كما هي.
     const segIds = new Set(segHits.map((h) => h.id));
     const rows = [
-      ...baseRows.filter((r) => !(r.owner_type === "ruling" && segIds.has(r.owner_id))),
+      ...baseRows.filter((r) => !(r.owner_type === "ruling" && segIds.has(r.owner_id)) && want(r.owner_type as LegalEntityType)),
       ...segHits.slice(0, take).map((h) => ({ owner_type: "ruling", owner_id: h.id, score: h.sim, segment: true })),
     ].sort((x, y) => Number(y.score) - Number(x.score)).slice(0, take);
 
@@ -256,7 +258,7 @@ export const vectorProvider: SearchProvider = {
     return articleEmbeddingsExist();
   },
 
-  async search({ q, limit = 10 }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types }: SearchQuery): Promise<RawResult[]> {
     if (!semanticSearchEnabled()) return [];
     const query = q.trim();
     if (!query) return [];
@@ -267,7 +269,7 @@ export const vectorProvider: SearchProvider = {
       if (!vec || vec.length === 0) return [];
 
       // 1) جدول pgvector إن كان متاحاً.
-      const fromTable = await searchViaEmbeddingsTable(vec, limit);
+      const fromTable = await searchViaEmbeddingsTable(vec, limit, types);
       if (fromTable !== null) return fromTable;
 
       // 2) احتياطي: تضمين المواد المخزَّن (Json) — إعادة ترتيب داخل التطبيق.

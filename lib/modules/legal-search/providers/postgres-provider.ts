@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrieval";
-import type { RawResult, SearchProvider, SearchQuery } from "./search-provider";
+import { wantsType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
 
 // مزوّد البحث النصّي على PostgreSQL — متاح دائماً (قاعدة المنصّة الأساسية).
 //
@@ -53,7 +53,8 @@ export const postgresProvider: SearchProvider = {
     return true;
   },
 
-  async search({ q, limit = 10, context }: SearchQuery): Promise<RawResult[]> {
+  async search(query: SearchQuery): Promise<RawResult[]> {
+    const { q, limit = 10, context } = query;
     const term = q.trim();
     if (term.length < 2) return [];
     const take = Math.min(limit, 20);
@@ -89,8 +90,8 @@ export const postgresProvider: SearchProvider = {
     ms.articles = Date.now() - t0;
 
     try {
-      // الأحكام القضائية — مطابقة كلمات السؤال الدالّة.
-      const rulings = await prisma.judicialCase.findMany({
+      // الأحكام القضائية — مطابقة كلمات السؤال الدالّة (إن طُلبت).
+      const rulings = !wantsType(query, "ruling") ? [] : await prisma.judicialCase.findMany({
         where: courtFilter
           ? { AND: [tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]), courtFilter] }
           : tokenOrFilter(tokens, term, ["judgmentTitle", "judgmentText"]),
@@ -121,8 +122,8 @@ export const postgresProvider: SearchProvider = {
       }
 
       ms.rulings = Date.now() - t0 - ms.articles;
-      // المبادئ القضائية — مطابقة كلمات السؤال الدالّة.
-      const principles = await prisma.judicialPrinciple.findMany({
+      // المبادئ القضائية — مطابقة كلمات السؤال الدالّة (إن طُلبت).
+      const principles = !wantsType(query, "principle") ? [] : await prisma.judicialPrinciple.findMany({
         where: tokenOrFilter(tokens, term, ["title", "principleText"]),
         select: { id: true, title: true, principleText: true, reviewStatus: true },
         take,
