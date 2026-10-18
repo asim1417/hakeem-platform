@@ -31,6 +31,8 @@ def apply_eff(op_id, dec, fix, note):
     if not e: return dec, fix, note, None
     sanad = f"سند السريان: {e['sanad']}"
     note2 = f"{note} | {sanad}" if note else sanad
+    if e.get('handled_by') and dec in ('approved', 'approved_with_edit'):
+        return dec, fix, note2, f"عولجت في الإنتاج بمهمة {e['handled_by']}: اعتمادها يكرر السجل — سجّلها «مرفوض» بملاحظة"
     if e['requires_effective_in_note'] and not (fix or {}).get('effective_from_hijri'):
         return dec, fix, note2, 'السريان تعذّر/مشروط: أضف «يسري من=…» بسنده في الملاحظة مع «موافق مع تصحيح»'
     if e['changed'] and dec in ('approved', 'approved_with_edit'):

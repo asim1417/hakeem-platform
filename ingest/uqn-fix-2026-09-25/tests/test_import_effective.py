@@ -6,8 +6,9 @@ EFF = {e['op_id']: e for e in (json.loads(l) for l in open(os.path.join(ROOT, 'd
 changed = next(k for k, e in EFF.items() if e['changed'])
 failed = [k for k, e in EFF.items() if e['requires_effective_in_note']][:2]
 silent = next(k for k, e in EFF.items() if e['basis'] == 'silent_art71')
+handled = next(k for k, e in EFF.items() if e.get('handled_by'))
 wb = openpyxl.load_workbook(os.path.join(ROOT, 'مراجعة_التعديلات_والإحلالات.xlsx'))
-plan = {changed: ('موافق', None), failed[0]: ('موافق', None), failed[1]: ('موافق مع تصحيح', 'يسري من=1448-01-01'), silent: ('مرفوض', None)}
+plan = {changed: ('موافق', None), failed[0]: ('موافق', None), failed[1]: ('موافق مع تصحيح', 'يسري من=1448-01-01'), silent: ('مرفوض', None), handled: ('موافق', None)}
 for sh in ('مراجعة سريعة', 'مراجعة دقيقة'):
     for r in range(2, wb[sh].max_row + 1):
         op = wb[sh].cell(r, 4).value
@@ -23,4 +24,5 @@ assert rows[changed][1] == 'approved_with_edit' and json.loads(rows[changed][2])
 assert failed[0] in errs and failed[0] not in rows
 assert json.loads(rows[failed[1]][2])['effective_from_hijri'] == '1448-01-01'
 assert rows[silent][1] == 'rejected' and 'سند السريان' in rows[silent][4]
-print('4/4 ناجحة')
+assert handled in errs and handled not in rows
+print('5/5 ناجحة')
