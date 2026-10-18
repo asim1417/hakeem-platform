@@ -19,7 +19,9 @@ async function main() {
       await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
       return tx.$queryRawUnsafe<Array<NumberingRow & { lawName: string }>>(
         // الصفوف غير المادية (درجة «مكرر» ≥ NON_ARTICLE_BIS) ليست مواد، فلا تدخل في التدقيق.
-        `SELECT "lawName", "articleNumber", title FROM legal_articles WHERE "articleBis" < ${NON_ARTICLE_BIS}`,
+        // أول سطر من المتن مقطوعًا إلى 80 حرفًا فقط (لا النص): مصدر العدد الترتيبي حين يكون العنوان رقميًّا (الأمر ٠٨).
+        `SELECT "lawName", "articleNumber", title, left(btrim(split_part(btrim(content), E'\\n', 1)), 80) AS "firstLine"
+           FROM legal_articles WHERE "articleBis" < ${NON_ARTICLE_BIS}`,
       );
     });
   } finally {
@@ -29,7 +31,7 @@ async function main() {
   const byLaw = new Map<string, NumberingRow[]>();
   for (const r of rows) {
     const list = byLaw.get(r.lawName) ?? [];
-    list.push({ articleNumber: r.articleNumber, title: r.title });
+    list.push({ articleNumber: r.articleNumber, title: r.title, firstLine: r.firstLine });
     byLaw.set(r.lawName, list);
   }
   const results: Array<{ lawName: string } & NumberingAudit> = [...byLaw]
@@ -40,6 +42,8 @@ async function main() {
   console.log(`الأنظمة ${results.length} | المواد ${rows.length}`);
   console.log(`نظيف ${count("clean")} | انزياح ${count("shift")} | غير منتظم ${count("irregular")} | بلا عناوين ترتيبية ${count("no_ordinal_titles")}`);
   console.log(`أنظمة فيها أرقام ناقصة بين 1 وأكبر رقم: ${results.filter((r) => r.gaps.length).length}`);
+  console.log(`أنظمة قُرئ عددها الترتيبي من أول سطر في المتن: ${results.filter((r) => r.fromContent > 0).length} (${results.reduce((n, r) => n + r.fromContent, 0)} مادة)`);
+  console.log(`أنظمة عناوينها رقمية بلا عدد مكتوب في المتن (فحصها دائري): ${results.filter((r) => r.numericTitles > 0).length} (${results.reduce((n, r) => n + r.numericTitles, 0)} مادة)`);
   console.log("");
   console.log("الحالة | النظام | المواد | مقروءة | مختلفة | مكرر العنوان | ناقصة | مقاطع الإزاحة (من–إلى: إزاحة×عدد)");
   for (const r of results.filter((x) => x.status === "shift" || x.status === "irregular")) {

@@ -7,6 +7,12 @@ import { parseArticleOrdinal } from "../../legal-work/arabic-ordinals";
 export interface NumberingRow {
   articleNumber: number;
   title: string | null;
+  /**
+   * أول سطر من نص المادة (مقطوعًا، لا النص كله). في أنظمة استيراد قديم يكون العنوان رقميًّا
+   * مشتقًّا من رقم المادة («المادة 77») والعدد الترتيبي الرسمي مكتوب في أول سطر من المتن
+   * («المادة التاسعة والسبعون»)، فيُقرأ منه (الأمر ٠٨، نظام المحاكم التجارية).
+   */
+  firstLine?: string | null;
 }
 
 export interface OffsetRun {
@@ -28,6 +34,10 @@ export interface NumberingAudit {
   mismatched: number;
   /** عناوين «مكرر» (لا يمثّلها رقم صحيح) */
   bis: number;
+  /** مواد قُرئ عددها الترتيبي من أول سطر في المتن لأن عنوانها خالٍ منه أو رقمي */
+  fromContent: number;
+  /** مواد عنوانها رقمي («المادة 77») بلا عدد ترتيبي مكتوب في المتن: فحصها دائري إن كان العنوان مشتقًّا من الرقم */
+  numericTitles: number;
   /** رقم عنوان واحد لأكثر من مادة */
   duplicateTitleNumbers: number[];
   /** أرقام ناقصة بين 1 وأكبر رقم مخزَّن */
@@ -50,6 +60,37 @@ export function titleOrdinal(title: string | null): ReturnType<typeof parseArtic
   return parseArticleOrdinal(current.replace(/[:：؛;،,.\-–—]+/g, " "));
 }
 
+/** عنوان رقمي: «المادة 77» أو «المادة (٧٧)» أو «77» — العدد بالأرقام لا بالكلمات. */
+const NUMERIC_TITLE = /^\s*(?:ال)?(?:ماد[ةه])?\s*[(\[]?\s*[0-9\u0660-\u0669\u06F0-\u06F9]+\s*[)\]]?\s*(?:مكرر[اًّ]*(?:\s*(?:مرتين|ثلاث مرات))?)?\s*[:：؛;،,.\-–—]*\s*$/;
+
+export function isNumericTitle(title: string | null | undefined): boolean {
+  return !!title && NUMERIC_TITLE.test(title);
+}
+
+/** أول سطر في المتن يبدأ بـ«المادة» ثم عدد ترتيبي مكتوب بالكلمات («المادة التاسعة والسبعون:»). */
+const CONTENT_ORDINAL_LINE = /^\s*(?:ال)?ماد[ةه]\s+[\u0621-\u064A]/;
+
+export function contentOrdinal(firstLine: string | null | undefined): ReturnType<typeof parseArticleOrdinal> {
+  if (!firstLine) return null;
+  const line = firstLine.trim();
+  if (line.length > 80 || !CONTENT_ORDINAL_LINE.test(line) || /[0-9\u0660-\u0669\u06F0-\u06F9]/.test(line)) return null;
+  return titleOrdinal(line);
+}
+
+/**
+ * مصدر العدد الترتيبي للمادة: العنوان المكتوب بالكلمات أولًا، ثم أول سطر في المتن إن خلا العنوان
+ * منه أو كان رقميًّا، ثم العنوان الرقمي (وقد يكون مشتقًّا من الرقم المخزَّن فلا يكشف شيئًا).
+ */
+export function rowOrdinal(row: NumberingRow): { ordinal: NonNullable<ReturnType<typeof parseArticleOrdinal>>; source: "title" | "content" | "title_numeric" } | null {
+  const t = titleOrdinal(row.title);
+  const numeric = isNumericTitle(row.title);
+  if (t && !numeric) return { ordinal: t, source: "title" };
+  const c = contentOrdinal(row.firstLine);
+  if (c) return { ordinal: c, source: "content" };
+  if (t) return { ordinal: t, source: "title_numeric" };
+  return null;
+}
+
 /** نسبة العناوين المقروءة التي يُعدّ دونها النظام بلا عناوين ترتيبية. */
 const MIN_PARSED_SHARE = 0.5;
 
@@ -59,10 +100,15 @@ export function auditLawNumbering(rows: NumberingRow[]): NumberingAudit {
   const byTitle = new Map<number, number>();
   let parsed = 0;
   let bis = 0;
+  let fromContent = 0;
+  let numericTitles = 0;
   for (const r of sorted) {
-    const o = titleOrdinal(r.title);
-    if (!o) continue;
+    const ro = rowOrdinal(r);
+    if (!ro) continue;
+    const o = ro.ordinal;
     parsed++;
+    if (ro.source === "content") fromContent++;
+    else if (ro.source === "title_numeric") numericTitles++;
     if (o.bis > 0) {
       bis++;
       continue;
@@ -103,6 +149,8 @@ export function auditLawNumbering(rows: NumberingRow[]): NumberingAudit {
     matched: pairs.length - mismatched,
     mismatched,
     bis,
+    fromContent,
+    numericTitles,
     duplicateTitleNumbers,
     gaps,
     runs,
