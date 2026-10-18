@@ -206,6 +206,8 @@ export interface RulingSearchOptions {
   numbers?: string[];
   limit?: number;
   offset?: number;
+  /** نص المسار الدلالي إن خالف نص المسار اللفظي (طُعم لفظي لاستعلام اسم في الموصل، والدلالي بالنص نفسه). */
+  semanticQuery?: string;
 }
 
 // كشف وجود عمود search_norm المفهرس (يُخزَّن مرّة). عند وجوده نستخدم المسار المفهرس السريع؛
@@ -231,6 +233,11 @@ async function tableReady(table: "ruling_meta" | "ruling_segments" | "ruling_seg
   const ok = Boolean(r?.[0]?.ok);
   _ready.set(table, { at: Date.now(), ok });
   return ok;
+}
+
+/** جدول أجزاء الأحكام جاهز (موجود وفيه صفوف)، كما يستعمله البحث. */
+export function rulingSegmentsReady(): Promise<boolean> {
+  return tableReady("ruling_segments");
 }
 
 /**
@@ -518,8 +525,9 @@ export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{
   if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
   const { countSql, rowsSql, params, indexPlan } = sql;
   // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
-  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
-    ? semanticRulingCandidates(opts.query).catch(() => [])
+  const semText = input.semanticQuery !== undefined ? splitRulingQuery(input.semanticQuery).text : opts.query;
+  const semanticQ = offset === 0 && queryTokens(semText).length >= SEMANTIC_MIN_TOKENS
+    ? semanticRulingCandidates(semText).catch(() => [])
     : Promise.resolve([]);
 
   const totalQ = runRulingSearchSql<Array<{ c: bigint }>>(countSql, params, indexPlan).catch(() => [{ c: BigInt(0) }]);

@@ -228,23 +228,22 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   // NFKC: الأشكال المعروضة و«ﷲ» في الاستعلام حروف عادية، فتُفحص كما تُفحص النسخة المحجوبة (maskPersonalData يطبّعها).
   const q = (query ?? "").normalize("NFKC");
   const pageCap = Math.min(Math.max(limit, 1), 50);
-  // مخرج لفظ الاسم كمخرج لفظ غائب حرفًا بحرف (ومعه التنبيه الثابت للصفحة الناقصة).
-  const empty = { query, count: 0, total: 0, total_is_lower_bound: false, results: [] as Hit[], note: SHORT_PAGE_NOTE };
   // HKM-012: لا يُعثر على حكم باسم فرد. الاستعلام الذي تطابق ألفاظه (بـ AND) داخل الأسماء غالبًا، ولا تظهر عبارته
-  // المتجاورة خارجها، لا يطابق شيئًا (كلفظ غائب عن القاعدة). تعذّر الفحص يُعدّ اسمًا (السقوط مغلقًا). والبحث يجري
-  // مع الفحص بالتوازي دائمًا، فلا يكشف الزمنُ أن اللفظ اسم.
+  // المتجاورة خارجها، لا يطابق شيئًا (كلفظ غائب عن القاعدة). تعذّر الفحص يُعدّ اسمًا (السقوط مغلقًا). ويبقى زمن
+  // النداء تابعًا لعدد المطابقات الظاهرة وطولها (كأي لفظ)، لا لكون اللفظ اسمًا.
   const parts = splitRulingQuery(q);
   const text = parts.text;
   const groups = checkedLexicalGroups(text);
   // نافذة مرشحين ثابتة (دفعتان من SEARCH_BATCH) لا تتبع limit، فلا يكشف الفرق بين limit=1 وlimit=20 عدد ما أُسقط.
   const batch = SEARCH_BATCH;
-  // الفحص أولًا: لفظ الاسم يُبحث عنه بطُعم لا يطابق شيئًا (بعدد ألفاظه وصنفها وأرقامه ومرشحاته)، فلا يعالج البحث نصوص
-  // أحكام الاسم ثم يرميها: كان زمنها يكشف وجود الاسم ولو كان المخرج فارغًا كمخرج اللفظ الغائب.
+  // الفحص أولًا: لفظ الاسم يُبحث عنه لفظيًا بطُعم لا يطابق شيئًا (بعدد ألفاظه وصنفها وأرقامه ومرشحاته)، فلا يعالج
+  // البحث نصوص أحكام الاسم ثم يرميها (كان زمنها يكشف وجوده)؛ ودلاليًا بنصه نفسه كاللفظ الغائب (تضمين النص ونتائجه)،
+  // وتمر نتائجه الدلالية بالفحص نفسه. فمخرج لفظ الاسم وزمنه كلفظ غائب.
   const tainted = await lexicalQueryTainted(groups, enumeratePhrase(text)).catch(() => true);
   const sensitive = new Set(parts.sensitiveTokens);
   const decoy = [...queryTokens(text).map((t) => (sensitive.has(t) ? DECOY_SENSITIVE : DECOY_PLAIN)), ...parts.numbers].join(" ");
-  const first = await searchRulingsDirect({ query: tainted ? decoy : q, court, yearH, limit: batch }).catch(() => null);
-  if (tainted) return empty;
+  const lexQuery = tainted ? decoy : q;
+  const first = await searchRulingsDirect({ query: lexQuery, semanticQuery: q, court, yearH, limit: batch }).catch(() => null);
 
   // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
   // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts في النص المحجوب كما في hakeem_get_ruling.
@@ -301,7 +300,7 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
     }
     // الصفحة لم تمتلئ والدفعة كانت كاملة: دفعة ثانية (لفظية) بعدها.
     if (results.length >= pageCap || hits.length < batch) break;
-    r = await searchRulingsDirect({ query: q, court, yearH, limit: batch, offset: batch }).catch(() => null);
+    r = await searchRulingsDirect({ query: lexQuery, semanticQuery: q, court, yearH, limit: batch, offset: batch }).catch(() => null);
   }
   // عدد القاعدة يشمل أحكامًا لا تطابق إلا داخل اسم، فلا يُعاد لاستعلام فيه لفظ: الإجمالي عدد ما أُعيد،
   // وtotal_is_lower_bound امتلاء الصفحة وحده (لا امتلاء نافذة المرشحين: كان يميّز الخلية التي تكثر فيها المطابقات

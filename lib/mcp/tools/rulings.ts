@@ -112,7 +112,7 @@ export async function enumerateRulings(
 
   // HKM-012: اللفظ الذي فيه حرف ويطابق نصُّه داخل أسماء الأفراد غالبًا (عيّنة من أحكام نصه وحده، بلا أرقامه ولا مرشحات
   // ولا مؤشر، فلا يوجّهها رقم إلى قضية بعينها) شرطه FALSE. ولا عودة مبكرة: الاستعلامات نفسها تجري كما للفظ غائب،
-  // فلا يكشف عددها ولا زمنها أنه اسم.
+  // فلا يكشف عددها أنه اسم. (وزمن المسح يتبع عدد المطابقات في القاعدة لكل لفظ؛ يزول بالحل الجذري.)
   const tainted = await Promise.all(
     prepared.map((t) => {
       if (!termHasLetters(t)) return Promise.resolve(false);
@@ -141,9 +141,9 @@ export async function enumerateRulings(
   const whereSql = filters.join(" AND ");
 
   /** يُعاد الحكم ويُعدّ إن طابقه لفظ باقٍ على نسخته المحجوبة بباني الإنتاج؛ وما سواه لا يُعاد ولا يُعدّ. */
-  const visible = (r: EnumRow): boolean => {
-    let words: string[] | null = null;
-    let titleText: string | null = null;
+  const visible = (r: EnumRow, pre?: { words: string[]; titleText: string }): boolean => {
+    let words: string[] | null = pre?.words ?? null;
+    let titleText: string | null = pre?.titleText ?? null;
     return kept.some((t) =>
       enumerateTermVisible(t, {
         maskedWords: () => (words ??= normWordList(maskedSearchNorm(r))),
@@ -238,12 +238,25 @@ export async function enumerateRulings(
   // غير فارغة، فيُختم كل حصر بصفحة فارغة بلا مؤشر: لا يكشف وجود المؤشر ولا خلو الصفحة التالية أن بعد آخر صف معروض
   // أحكامًا مسقطة، ولا أن المسح بلغ حده. ولا يُكشف معرّف صف لم يُعَد.
   // المؤشر يُقبل إن كان حكمًا يطابقه الاستعلام نفسه ويظهر فيه (كما يُعاد)، وإلا فالصفحة فارغة كنهاية الحصر: مؤشر
-  // حر كان يُستخرج به بالتنصيف معرّف حكم مسقط. والفحص واحد لكل مؤشر (يُقرأ ويُحجب ولو لم يطابق) فلا يكشف زمنه شيئًا.
+  // حر كان يُستخرج به بالتنصيف معرّف حكم مسقط. والعمل واحد لكل مؤشر أيًّا كانت الألفاظ: شروطها الأصلية كلها (قبل
+  // إبدال لفظ الاسم) تُحسب على صفه، ويُحجب بالصيغتين ولو لم يطابق؛ فلا يكشف زمنه أن اللفظ اسم.
   if (cursor) {
-    const at = await run<Array<EnumRow & { m: boolean }>>(`SELECT ${ROW_FIELDS}, (${whereSql}) AS m FROM "judicial_cases" r WHERE r."id" = $${params.length + 1}`, [...params, cursor]);
+    const cp: unknown[] = [...params];
+    const flags = prepared.map((t, i) => `${termCond(t, cp)} AS "t${i}"`).join(", ");
+    const filterSql = filters.slice(1).length ? filters.slice(1).join(" AND ") : "TRUE";
+    cp.push(cursor);
+    const at = await run<Array<EnumRow & Record<string, unknown>>>(
+      `SELECT ${ROW_FIELDS}, ${flags}, (${filterSql}) AS "f" FROM "judicial_cases" r WHERE r."id" = $${cp.length}`,
+      cp,
+    );
     const row = at[0];
-    const shown = row ? visible(row) : false;
-    if (!row || !row.m || !shown) return { ...base, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
+    let shown = false;
+    if (row) {
+      const pre = { words: normWordList(maskedSearchNorm(row)), titleText: `${maskRulingText(row.judgmentTitle)}\n${maskRulingText(row.judgmentText)}` };
+      shown = visible(row, pre);
+    }
+    const matched = Boolean(row) && row.f === true && prepared.some((_, i) => !tainted[i] && row[`t${i}`] === true);
+    if (!matched || !shown) return { ...base, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
   }
   const scan = !cursor && head ? head : await scanVisible(cursor || null, size);
   const pageRows = scan.rows.slice(0, size);

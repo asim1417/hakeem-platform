@@ -181,8 +181,8 @@ for (let i = 101; i <= 120; i++) bulk(`u${pad3(i)}`, "المحكمة العام�
 // «الوديعة» ظاهرة في 200 حكم بالضبط وبعدها 3 أحكام اسم: العدد 200 بلا حد أدنى (حافة السقف).
 for (let i = 1; i <= 200; i++) bulk(`t${pad3(i)}`, "المحكمة العامة", "وحيث إن الوديعة أمانة.");
 for (let i = 201; i <= 203; i++) bulk(`t${pad3(i)}`, "المحكمة العامة", "أقام المدعي/ فهد الوديعة دعواه.");
-// حكم طويل (نحو 150 ألف حرف): اسم في صدره (فيه search_norm)، و«المادة 313» بعد الحرف 20000.
-bulk("s001", "المحكمة العامة", `حضر المدعي/ مسفر الجعيد وقرر ما جاء في الصحيفة.\n${filler(30_000)}\nواستند إلى المادة 313 من النظام.`);
+// حكم طويل (نحو 40 ألف حرف): اسم في صدره (فيه search_norm)، و«المادة 313» بعد الحرف 20000 (ودون سقف عيّنة المتن 60 ألفًا).
+bulk("s001", "المحكمة العامة", `حضر المدعي/ مسفر الجعيد وقرر ما جاء في الصحيفة.\n${filler(8_000)}\nواستند إلى المادة 313 من النظام.`);
 // لفظ حساس (لاتيني) بعد الحرف 20000 في 12 حكمًا طويلًا (أصغر المعرّفات) وفي صدر حكم قصير (من الجودة، الجولة الخامسة).
 for (let i = 1; i <= 12; i++) bulk(`f${pad3(i)}`, "المحكمة التجارية", `الوقائع: نزاع مقاولات. ${filler(5000)}\nالأسباب: وحيث إن العقد على نموذج QXFIDIC.`);
 bulk("f101", "المحكمة التجارية", "وحيث إن العقد على نموذج QXFIDIC.");
@@ -688,7 +688,7 @@ async function main() {
     for (let i = 0; i < 3; i++) await mcpSearchRulings(q, undefined, undefined, 20);
     tms.push((performance.now() - t0) / 3);
   }
-  console.log(`ℹ زمن البحث المتكرر: اسم في حكم 150 ألف حرف ${tms[0].toFixed(0)}ms، وغائب ${tms[1].toFixed(0)}ms`);
+  console.log(`ℹ زمن البحث المتكرر: اسم في حكم 40 ألف حرف ${tms[0].toFixed(0)}ms، وغائب ${tms[1].toFixed(0)}ms`);
   // اللفظ الحساس بعد الحرف 20000: عيّنته بالمتن كاملًا (لا سقف search_norm).
   const e313 = (await enumerateRulings(["المادة 313"])) as Enum;
   ok((e313.results ?? []).some((x) => x.ruling_id === "s001") && e313.total === 1, `الحصر: لفظ حساس بعد الحرف 20000 يجد حكمه (${e313.total})`);
@@ -701,6 +701,36 @@ async function main() {
     curRes.push({ n: x.n, out: JSON.stringify(x.out) });
   }
   ok(curRes.every((x) => x.out === curRes[0].out) && JSON.parse(curRes[0].out).returned === 0 && JSON.parse(curRes[0].out).next_cursor === null && curRes.every((x) => x.n === curRes[0].n), `المؤشر غير الظاهر: صفحة فارغة واحدة لحكم الاسم وغيره والمعرّف الحر (${curRes.map((x) => x.n).join("/")} استعلامًا)`);
+  // فحص المؤشر بعمل واحد للفظ الاسم والغائب (الجولة السادسة): الشروط الأصلية كلها على صف المؤشر، والحجب بالصيغتين.
+  for (const [terms, name] of [[["غانم الموسوي"], "الموسوي"], [["غانم القرشي"], "القرشي"]] as const) {
+    const n0 = sqlLog.length;
+    const pg = (await enumerateRulings([...terms], undefined, undefined, false, 5, "s001")) as Enum;
+    const curSql = sqlLog.slice(n0).filter((x) => x.includes('AS "t0"'));
+    ok((pg.results ?? []).length === 0 && pg.next_cursor === null && curSql.length === 1 && curSql[0].includes(name), `فحص المؤشر: شرط «${terms[0]}» الأصلي على صف المؤشر (لا FALSE)`);
+  }
+  // المؤشر مع مرشح: حكم ظاهر في محكمة المرشح يُقبل، وحكم ظاهر في غيرها يُرفض.
+  const cIn = (await enumerateRulings(["الحوالة"], "العامة", undefined, false, 3, "z003")) as Enum;
+  const cOut = (await enumerateRulings(["الحوالة"], "العامة", undefined, false, 3, "z001")) as Enum;
+  ok((cIn.results ?? []).map((x) => x.ruling_id).join() === "z006,z009,z012" && (cOut.results ?? []).length === 0 && cOut.next_cursor === null, `المؤشر مع مرشح المحكمة: داخلها يكمل (${(cIn.results ?? []).map((x) => x.ruling_id).join("،")})، وخارجها يُرفض`);
+  // شكل الطُّعم: بعدد ألفاظ الاستعلام، ومعه أرقامه ومرشحاته.
+  {
+    const n0 = sqlLog.length;
+    await mcpSearchRulings("غانم الموسوي 4470000005", "التجارية", undefined, 20);
+    const rk = sqlLog.slice(n0).filter((x) => x.includes("ts_rank_cd"));
+    const decoyCount = (rk[0]?.match(/ققققققققققققق/g) ?? []).length;
+    const n1 = sqlLog.length;
+    await mcpSearchRulings("الموسوي", undefined, undefined, 20);
+    const one = (sqlLog.slice(n1).find((x) => x.includes("ts_rank_cd"))?.match(/ققققققققققققق/g) ?? []).length;
+    ok(rk.length > 0 && rk.every((x) => !x.includes("الموسوي") && !x.includes("غانم")) && one > 0 && decoyCount === 2 * one && rk[0].includes("4470000005") && rk[0].includes("التجاري"), `شكل الطُّعم: لفظان (ضعف لفظ واحد) ورقم ومحكمة بلا الاسم (${decoyCount}/${one})`);
+  }
+  const ctm: number[] = [];
+  for (const terms of [["غانم الموسوي"], ["غانم القرشي"]]) {
+    await enumerateRulings(terms, undefined, undefined, false, 5, "s001");
+    const t0 = performance.now();
+    for (let i = 0; i < 5; i++) await enumerateRulings(terms, undefined, undefined, false, 5, "s001");
+    ctm.push((performance.now() - t0) / 5);
+  }
+  console.log(`ℹ زمن فحص المؤشر (حكم 40 ألف حرف): اسم ${ctm[0].toFixed(0)}ms، وغائب ${ctm[1].toFixed(0)}ms`);
   // حافة السقف: 200 ظاهرًا بالضبط وبعدها أحكام أسماء — العدد 200 بلا حد أدنى.
   const nW = await cnt(["الوديعة"]);
   ok(nW.total === 200 && nW.total_is_lower_bound === false, `حافة السقف: «الوديعة» 200 بالضبط (${nW.total}، ${String(nW.total_is_lower_bound)})`);

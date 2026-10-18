@@ -13,7 +13,7 @@
  * الحل الجذري بناء search_norm وأجزاء الأحكام والمتجهات من النص المحجوب (كتابة على الإنتاج باعتماد المالك).
  */
 import { maskPersonalData } from "@/lib/rulings/research/mask";
-import { runRulingSearchSql } from "@/lib/modules/legal-core/rulings-search";
+import { rulingSegmentsReady, runRulingSearchSql } from "@/lib/modules/legal-core/rulings-search";
 import {
   SEARCH_NORM_TEXT_CAP,
   enumerateTermVisible,
@@ -36,9 +36,10 @@ export const TAINT_RATIO = 0.5;
 // العيّنة فيبقى دون أدنى الزمن، ويقلّل المنقول.
 export const INDEX_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", left(r."judgmentText", ${SEARCH_NORM_TEXT_CAP}) AS "judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
 // عيّنة استعلام البحث (يطابقه البحث في المتن كاملًا عبر أجزاء الأحكام، ويُفحص كل حكم على المتن المحجوب كاملًا)
-// واللفظ الحساس في الحصر (يطابق المتن المنقّح كاملًا) بالمتن كاملًا: أطول حكم في الإنتاج نحو 95 ألف حرف، فتبقى
-// كلفة العيّنة دون أدنى الزمن.
-const FULL_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", r."judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
+// واللفظ الحساس في الحصر (يطابق المتن المنقّح كاملًا) بالمتن حتى FULL_TEXT_CAP: أطول حكم في الإنتاج نحو 95 ألف حرف
+// وp99 نحو 29 ألفًا، والسقف يحدّ أسوأ عيّنة دون أدنى الزمن (وما بعده يُعدّ غير ظاهر، فيميل الحكم إلى الحجب).
+const FULL_TEXT_CAP = 60_000;
+const FULL_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", left(r."judgmentText", ${FULL_TEXT_CAP}) AS "judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
 export type IndexRow = RulingIndexFields & { id: string };
 
 /** لفظ اسم إن لم يطابق النسخةَ المحجوبة في نصف العيّنة فأكثر. العيّنة الفارغة: اللفظ غائب، فلا يُحكم بشيء. */
@@ -136,9 +137,11 @@ export const taintLimiterForTest = {
 const TSV = `to_tsvector('simple', coalesce(r."search_norm",''))`;
 
 /** عيّنة حتمية: أصغر TAINT_SAMPLE معرّفًا يطابقها الشرط (المعرّفات كلها من الفهرس أولًا، ثم الترتيب). */
-function sampleRows(cond: string, params: unknown[], fullText = false): Promise<IndexRow[]> {
+function sampleRows(cond: string, params: unknown[], fullText = false, extraIdsSql = ""): Promise<IndexRow[]> {
+  // extraIdsSql: مصدر معرّفات آخر بـ UNION (لا OR: الجمع بـ OR مع استعلام فرعي يُلزم المخطِّط بمسح كامل، 71 ثانية
+  // للفظ شائع بخطة التنفيذ على الإنتاج؛ وبـ UNION فهرسان، 0.27 ثانية).
   return runRulingSearchSql<IndexRow[]>(
-    `WITH m AS MATERIALIZED (SELECT r."id" FROM "judicial_cases" r WHERE ${cond})
+    `WITH m AS MATERIALIZED (SELECT r."id" FROM "judicial_cases" r WHERE ${cond}${extraIdsSql ? ` UNION ${extraIdsSql}` : ""})
      SELECT ${fullText ? FULL_FIELDS_SQL : INDEX_FIELDS_SQL} FROM "judicial_cases" r
      JOIN (SELECT "id" FROM m ORDER BY "id" LIMIT ${TAINT_SAMPLE}) s ON s."id" = r."id"
      ORDER BY r."id"`,
@@ -164,14 +167,20 @@ export async function lexicalQueryTainted(groups: string[][], phrase: PhraseQuer
     if (n === undefined) memo.set(r.id, (n = maskedSearchNorm(r)));
     return n;
   };
+  // البحث يطابق أيضًا أسباب الأحكام ومنطوقها (ruling_segments، بلا سقف search_norm)، فعيّنة الاستعلام منهما كذلك:
+  // اسم يرد بعد الحرف 20000 وحده (في التوقيع مثلًا) يُرى في العيّنة.
+  const segs = await rulingSegmentsReady().catch(() => false);
+  const segIds = segs
+    ? `SELECT "ruling_id" FROM "ruling_segments" WHERE to_tsvector('simple', coalesce("part_norm",'')) @@ to_tsquery('simple', $1) AND "part" IN ('reasons','disposition')`
+    : "";
   const [andTainted, phraseTainted] = await Promise.all([
-    cached(`sa:${andQ}`, async () => {
-      const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ], true);
+    cached(`sa:${segs ? "s" : ""}:${andQ}`, async () => {
+      const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ], true, segIds);
       return taintedBySample(rows, (r) => lexicalVisible(maskedMatchWords(r, normOf(r)), groups));
     }),
     phQ && phrase
       ? cached(`sp:${phQ}`, async () => {
-          const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ], true);
+          const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ]);
           // عيّنة العبارة الفارغة لا تشهد بشيء، فيبقى الحكم للعيّنة الأولى.
           if (!rows.length) return true;
           return taintedBySample(rows, (r) => phraseInWords(normWordList(normOf(r)), phrase));
