@@ -84,7 +84,7 @@ export function ArticlePresentation({
             const diff = wordDiff(prev, v.body);
             return (
               <li key={v.id} className="border-t border-black/5 pt-3">
-                <p className="font-semibold">من {v.validFrom.slice(0, 10)}{v.evidenceInstrument ? ` — ${v.evidenceInstrument}` : ""}</p>
+                <p className="font-semibold">معدّلة بموجب {v.evidenceInstrument?.trim() || "أداة تعديل"}</p>
                 <p className="whitespace-pre-wrap leading-7">{v.body}</p>
                 {diff ? (
                   <details className="mt-2">

@@ -79,7 +79,7 @@ export async function validateLegalCitation(input: { articleId?: string; systemN
   const now = Date.now();
   const applicable = [...versions].reverse().find((v) => new Date(v.validFrom).getTime() <= now);
   const versionNote = applicable
-    ? ` — النسخة من ${applicable.validFrom.slice(0, 10)}`
+    ? ` — معدّلة بموجب ${applicable.evidenceInstrument?.trim() || "أداة تعديل"}`
     : " — النص الأصلي المحفوظ";
   return {
     ok: true,

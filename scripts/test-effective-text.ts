@@ -42,7 +42,7 @@ if (labor5) {
   ok(today.text === labor5.body, "نظام العمل م5 يُرجع نص النسخة المعدلة اليوم");
   ok(today.source === "unit_version" && !today.repealed, "المصدر unit_version وليست ملغاة");
   ok(/م\/46/.test(today.evidenceInstrument ?? "") && /1436/.test(today.evidenceInstrument ?? ""), "السند م/46 لسنة 1436هـ");
-  ok(today.basis.startsWith("معدّلة بموجب") && today.basis.includes(labor5.valid_from), "سطر الاستناد يذكر الأداة وتاريخ السريان");
+  ok(today.basis.startsWith("معدّلة بموجب") && !today.basis.includes(labor5.valid_from.slice(0, 10)), "سطر الاستناد يذكر الأداة بلا تاريخ");
   ok(today.status === "ساري", "الحالة ساري لا «قيد التحقق»");
   const before = resolveEffectiveText({ articleId: labor5.unit_id, baseText: original, versions: [toVersion(labor5)], verification: null, asOf: new Date("2010-01-01T00:00:00Z") });
   ok(before.text === original && before.source === "original", "قبل تاريخ السريان يبقى النص الأصلي");
@@ -50,7 +50,7 @@ if (labor5) {
   const view = presentArticle({ baseText: original, versions: [toVersion(labor5)], verification: null });
   ok(view.text === labor5.body, "presentArticle يعرض النص نفسه");
   ok(view.unverifiedNotice === null, "لا «الحالة قيد التحقق» على مادة لها نسخة موثقة");
-  ok(Boolean(view.amendmentLine?.startsWith("معدّلة بموجب")) && Boolean(view.amendmentLine?.includes("من تاريخ")), "سطر «معدّلة بموجب … من تاريخ …»");
+  ok(Boolean(view.amendmentLine?.startsWith("معدّلة بموجب")) && !view.amendmentLine?.includes("من تاريخ"), "سطر «معدّلة بموجب …» بلا تاريخ");
 }
 
 // ── مادة ملغاة: لا نص ساري، تُرجع الإلغاء وسنده ──
