@@ -99,7 +99,25 @@ const rows: Row[] = [
     appealText: `قدّم المستأنف صاحب الإقامة ${IQAMA_LAT} لائحة استئناف.`,
     caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٢", decisionNo: null, court: "المحكمة العمالية", decisionDateText: null,
   },
+  {
+    // HKM-012 (الأمر ٠٨): أسماء أفراد مصطنعة بعد صفات الأطراف، بلا أرقام شخصية.
+    ...base, id: "r5", sourceId: 5, createdAt: new Date("2024-01-01"),
+    judgmentTitle: "حكم توريد",
+    judgmentText: `الوقائع: أقام المدعي/ غانم الموسوي دعواه ضد المدعى عليه/ زيدان الفلاني بطلب ثمن توريد بضاعة.\nوحضر وكيل المدعي المحامي قيصر الطاهري وقرر ما جاء في الصحيفة.\nوفي الجلسة حضر المدعي/ غانم الموسوي والمدعى عليه/ زيدان الفلاني والشاهدة/ رجاء السندي.\nالأسباب: وحيث إن المدعي/ غانم الموسوي أثبت توريد البضاعة، وحيث شهدت الشاهدة/ رجاء السندي بالتسليم.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه زيدان الفلاني بأن يدفع للمدعي/ غانم الموسوي ثمن التوريد.`,
+    appealText: null,
+    caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٥", decisionNo: null, court: "المحكمة التجارية", decisionDateText: null,
+  },
 ];
+rows.push({
+  // HKM-012: اسم بلا ترقيم يليه رابط جملة؛ الحجب يجب ألا يمحو مرسى «الأسباب» فيضيع الجزء في الجلب.
+  ...base, id: "r6", sourceId: 6, createdAt: new Date("2023-12-31"),
+  judgmentTitle: "حكم مقاولة باطن",
+  judgmentText: `الدعوى: أقام المدعي/ غانم الموسوي وحيث إن المدعى عليه/ زيدان الفلاني لم يسدد مستحقات مقاولة الباطن.\nالأسباب: وحيث إن الدائرة اطلعت على العقد، ولما كان المدعى عليه/ زيدان الفلاني فأجاب بالإنكار.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه بأن يدفع للمدعي مستحقات الباطن.`,
+  appealText: null,
+  caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٦", decisionNo: null, court: "المحكمة التجارية", decisionDateText: null,
+});
+const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي"];
+const nameLeak = (t: string) => NAME_WORDS.filter((w) => t.includes(w));
 const frozen = JSON.stringify(rows);
 
 function setupDb() {
@@ -136,6 +154,7 @@ function matches(r: Row, where: Where): boolean {
 const fakePrisma = {
   judicialCase: {
     findMany: async ({ where }: { where: Where }) => rows.filter((r) => matches(r, where)),
+    findUnique: async ({ where }: { where: { id: string } }) => rows.find((r) => r.id === where.id) ?? null,
     update: noWrite, updateMany: noWrite, create: noWrite, delete: noWrite, deleteMany: noWrite,
   },
   async $queryRawUnsafe(sql: string, ...params: unknown[]) {
@@ -158,13 +177,15 @@ async function main() {
   const before = dbFingerprint();
   const { redactPII, stripPiiFromQuery, splitRulingQuery, searchRulingsDirect, findRulingIdsRedacted } = await import("../lib/modules/legal-core/rulings-search");
   const { searchJudgments, buildJudgmentSnippet } = await import("../lib/modules/legal-core/judgment-search");
-  const { enumerateRulings } = await import("../lib/mcp/tools/rulings");
+  const { enumerateRulings, getRuling } = await import("../lib/mcp/tools/rulings");
+  const { searchRulings: mcpSearchRulings } = await import("../lib/mcp/adapter");
   const { HakeemPublishedJudgmentsConnector } = await import("../lib/modules/due-diligence/judgments");
 
   type Path = { name: string; run: (q: string) => Promise<{ ids: string[]; texts: string[]; total?: number }> };
   const paths: Path[] = [
     { name: "/api/legal-core/search", run: async (q) => { const r = await searchJudgments(q, 1, 20); return { ids: r.map((x) => x.id), texts: r.map((x) => x.snippet) }; } },
     { name: "searchRulingsDirect", run: async (q) => { const r = await searchRulingsDirect({ query: q, limit: 20 }); return { ids: r.hits.map((h) => h.id), texts: r.hits.map((h) => `${h.snippet} ${h.disposition ?? ""}`), total: r.total }; } },
+    { name: "MCP search", run: async (q) => { const r = await mcpSearchRulings(q, undefined, undefined, 20); return { ids: r.results.map((x) => x.ruling_id), texts: r.results.map((x) => `${x.snippet} ${x.disposition ?? ""}`), total: r.total }; } },
     { name: "MCP enumerate", run: async (q) => { const r = (await enumerateRulings([q])) as { total: number; results?: Array<{ ruling_id: string; snippet: string }> }; return { ids: (r.results ?? []).map((x) => x.ruling_id), texts: (r.results ?? []).map((x) => x.snippet), total: r.total }; } },
     { name: "صفحة الأحكام (المعرّفات المنقّحة)", run: async (q) => { const p = splitRulingQuery(q); const ids = p.sensitive || p.numbers.length ? await findRulingIdsRedacted(p, { limit: 5000 }) : []; return { ids, texts: [], total: ids.length }; } },
   ];
@@ -212,7 +233,7 @@ async function main() {
     for (const [q, id] of keep) {
       if (p.name.startsWith("صفحة") && !splitRulingQuery(q).sensitive && !splitRulingQuery(q).numbers.length) continue; // الصفحة: النص العربي الخالص على الخام كما كان
       // MCP وsearchRulingsDirect يبحثان في العنوان والمتن (search_norm) لا الاستئناف، كما كانا.
-      if ((p.name === "MCP enumerate" || p.name === "searchRulingsDirect") && q === "لائحة استئناف") continue;
+      if ((p.name === "MCP enumerate" || p.name === "MCP search" || p.name === "searchRulingsDirect") && q === "لائحة استئناف") continue;
       const r = await p.run(q);
       ok(r.ids.includes(id), `${p.name}: «${q}» يجد ${id}`);
       ok(r.texts.every((t) => !PII_LEAK.test(t)), `${p.name}: مقتطفات «${q}» بلا بيانات محجوبة`);
@@ -226,6 +247,50 @@ async function main() {
   ok(!PII_LEAK.test(buildJudgmentSnippet(rows[1].judgmentText, "مقاولات")), "buildJudgmentSnippet يحجب قبل القص");
   const mcp = (await enumerateRulings(["مقاولات", "مقاولة"], undefined, undefined, false, 50, undefined, 520)) as { results: Array<{ snippet: string }> };
   ok(mcp.results.length > 0 && mcp.results.every((r) => !PII_LEAK.test(r.snippet)), "MCP: المقتطفات بلا رقم ولا جزء منه");
+  // HKM-012 (الأمر ٠٨، المسار ٣): أدوات الأحكام في الموصل لا تُخرج اسم فرد (البحث والحصر والجلب بكل شرائحه وأجزائه).
+  const s5 = await mcpSearchRulings("توريد", undefined, undefined, 20);
+  const s5hit = s5.results.find((x) => x.ruling_id === "r5");
+  ok(Boolean(s5hit) && nameLeak(`${s5hit?.snippet ?? ""} ${s5hit?.disposition ?? ""}`).length === 0, `MCP search: مقتطف r5 ومنطوقه بلا اسم فرد (${nameLeak(`${s5hit?.snippet ?? ""} ${s5hit?.disposition ?? ""}`).join("،") || "لا تسرّب"})`);
+  const e5 = (await enumerateRulings(["توريد"])) as { results: Array<{ ruling_id: string; snippet: string }> };
+  const e5hit = e5.results.find((x) => x.ruling_id === "r5");
+  ok(Boolean(e5hit) && nameLeak(e5hit?.snippet ?? "").length === 0, "MCP enumerate: مقتطف r5 بلا اسم فرد");
+  for (const part of [undefined, "reasons", "disposition"] as const) {
+    for (const size of [9, 23, 61, 400]) {
+      let offset: number | null = 0;
+      let joined = "";
+      for (let g = 0; offset !== null && g < 400; g++) {
+        const r = (await getRuling("r5", offset, size, part)) as { text?: string; next_offset?: number | null };
+        joined += r.text ?? "";
+        offset = r.next_offset ?? null;
+      }
+      ok(joined.length > 0 && nameLeak(joined).length === 0, `MCP get_ruling: r5${part ? ` (${part})` : ""} بشرائح ${size} بلا اسم فرد`);
+    }
+  }
+  // r6: الأجزاء بعد الحجب كما يكشفها المقطِّع في الخام، والأسباب تُجلب.
+  const { segmentRuling } = await import("../lib/rulings/research/segment");
+  const g6 = (await getRuling("r6", 0, 5000)) as { parts?: Array<{ type: string }> };
+  const raw6 = segmentRuling(rows.find((r) => r.id === "r6")!.judgmentText).segments.map((x) => x.type).join(",");
+  ok((g6.parts ?? []).map((x) => x.type).join(",") === raw6, `MCP get_ruling: أجزاء r6 بعد الحجب كما في الخام (${raw6})`);
+  const r6reasons = (await getRuling("r6", 0, 5000, "reasons")) as { text?: string; error?: string };
+  ok(!r6reasons.error && (r6reasons.text ?? "").includes("الأسباب") && nameLeak(r6reasons.text ?? "").length === 0, "MCP get_ruling: جزء الأسباب في r6 يُجلب محجوبًا");
+  const s6 = await mcpSearchRulings("مقاولة الباطن", undefined, undefined, 20);
+  const s6hit = s6.results.find((x) => x.ruling_id === "r6");
+  ok(Boolean(s6hit) && JSON.stringify(s6hit?.parts) === JSON.stringify((g6 as { parts?: unknown }).parts), "MCP search: أجزاء r6 بإزاحات النص المحجوب نفسها في الجلب");
+  const g5 = (await getRuling("r5", 0, 50)) as { total_chars?: number; parts?: Array<{ start: number; end: number }> };
+  ok((g5.parts ?? []).length > 0 && (g5.parts ?? []).every((p) => p.end <= (g5.total_chars ?? 0)), "MCP get_ruling: إزاحات الأجزاء في النص المحجوب (لا تتجاوز طوله)");
+  // HKM-012 (الأمر ٠٨): hakeem_get_ruling بشرائح قصيرة متتالية لا يسرّب رقمًا ولا جزءًا منه على حد شريحة.
+  for (const row of rows) {
+    for (const size of [17, 41, 97]) {
+      let offset: number | null = 0;
+      let leak = false;
+      for (let g = 0; offset !== null && g < 400; g++) {
+        const r = (await getRuling(row.id, offset, size)) as { text?: string; next_offset?: number | null };
+        if (PII_LEAK.test(r.text ?? "")) leak = true;
+        offset = r.next_offset ?? null;
+      }
+      ok(!leak, `MCP get_ruling: ${row.id} بشرائح ${size} حرفًا بلا رقم محجوب`);
+    }
+  }
   ok(JSON.stringify(rows) === frozen, "النص الأصلي في الذاكرة كما هو");
   ok(dbFingerprint() === before, "النص الأصلي في القاعدة كما هو (بصمة الجدول قبل الاختبار وبعده)");
   ok(sqlLog.every((s) => !/\b(UPDATE|DELETE|INSERT|TRUNCATE|DROP|ALTER)\b/i.test(s)), "كل الاستعلامات قراءة فقط");

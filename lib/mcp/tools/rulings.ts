@@ -8,9 +8,10 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
-import { extractHijriYear, redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
+import { extractHijriYear, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
-import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
+import { maskBySegments, maskRulingText, sliceMasked } from "@/lib/mcp/ruling-privacy";
+import type { SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
 const hijriYear = (text?: string | null): number | null => extractHijriYear(text);
@@ -28,37 +29,31 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   if (!r) return { error: "الحكم غير موجود بهذا المعرّف", ruling_id: rulingId };
 
   const full = r.judgmentText ?? "";
-  const seg = segmentRuling(full);
-  const parts = seg.segments.map((s) => ({ type: s.type as SegmentType, start: s.start, end: s.end }));
+  // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم جزءًا جزءًا بحدود أجزائه في الخام (فلا يمحو الحجب
+  // مراسي الأجزاء)، ثم تُقتطع الشريحة من المحجوب، فلا يفلت نصف اسم أو رقم على حد شريحة. كل الإزاحات في المحجوب.
+  const { masked: maskedFull, parts: maskedParts } = maskBySegments(full);
+  const parts = maskedParts.map((p) => ({ type: p.type as SegmentType, start: p.start, end: p.end }));
   // نطاق القراءة: الجزء المطلوب إن وُجد، وإلا النص كله.
   const target = part ? parts.find((p) => p.type === part) : undefined;
   if (part && !target) {
     return { ruling_id: r.id, error: `لم يُعثر على جزء «${part}» في هذا الحكم بالقواعد`, parts };
   }
   const lo = target?.start ?? 0;
-  const hi = target?.end ?? full.length;
-  let start = Math.max(lo, Math.min(lo + offset, hi));
-  let end = Math.min(hi, start + maxChars);
-  // لا تُقطع الشريحة داخل رقم: redactPII يحتاج الرقم كاملًا، وإلا تسرّبت هوية أو جوال على نصفين
-  // عبر نداءين بإزاحتين متقاربتين. نمدّ الحدّين خارج أي سلسلة أرقام وفواصل.
-  const numeric = /[0-9\u0660-\u0669\s\u00a0+\-]/;
-  while (start > lo && numeric.test(full[start - 1]) && numeric.test(full[start])) start--;
-  while (end < hi && numeric.test(full[end]) && numeric.test(full[end - 1])) end++;
-  const chunk = full.slice(start, end);
-  const nextOffset = start + chunk.length < hi ? start - lo + chunk.length : null;
+  const hi = target?.end ?? maskedFull.length;
+  const slice = sliceMasked(maskedFull.slice(lo, hi), offset, maxChars);
 
   return {
     ruling_id: r.id,
     case_number: r.decisionNo ?? r.caseNo ?? null,
     court: r.court ?? null,
     year_h: hijriYear(r.decisionDateText),
-    total_chars: full.length,
+    total_chars: maskedFull.length,
     part: target?.type ?? null,
-    parts, // خريطة الأجزاء بإزاحاتها في النص الكامل
-    offset: start - lo, // داخل الجزء المطلوب (أو النص كله)
-    returned_chars: chunk.length,
-    next_offset: nextOffset, // null = انتهى الجزء/النص
-    text: redactPII(chunk),
+    parts, // خريطة الأجزاء بإزاحاتها في النص المحجوب
+    offset: slice.offset, // داخل الجزء المطلوب (أو النص كله) بعد الحجب
+    returned_chars: slice.text.length,
+    next_offset: slice.nextOffset, // null = انتهى الجزء/النص
+    text: slice.text, // HKM-012: الأرقام الشخصية وأسماء الأفراد محجوبة
   };
 }
 
@@ -140,8 +135,8 @@ export async function enumerateRulings(
 
   // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
   const results = rows.map((r) => {
-    // الحجب قبل القص، فلا يقطع القصُّ رقمًا يفلت من الحجب.
-    const txt = redactPII(r.judgmentText ?? "");
+    // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
+    const txt = maskRulingText(r.judgmentText);
     let idx = -1;
     for (const t of parts.map((p) => p.text).filter(Boolean)) {
       const i = txt.indexOf(t);
