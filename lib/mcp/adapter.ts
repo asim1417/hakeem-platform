@@ -200,6 +200,9 @@ export async function expandTerms(term: string) {
   };
 }
 
+/** دفعة مرشحي بحث الأحكام (وتُجلب دفعتان على الأكثر لإكمال الصفحة). */
+const SEARCH_BATCH = 50;
+
 // ٦) البحث في الأحكام — مسار مستقلّ في judicial_cases (searchRulingsDirect)، لا الهجين المشترك.
 // كان الهجين يضع الأحكام في منافسة مع المواد والمبادئ على ٣٠ خانة، والحكم غير المُراجَع يأخذ
 // درجة أدنى من أي مادة، فتخرج الأحكام كليًّا لألفاظ شائعة مثل «فسخ» و«عقد».
@@ -225,8 +228,8 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   // مع الفحص بالتوازي دائمًا، فلا يكشف الزمنُ أن اللفظ اسم.
   const text = splitRulingQuery(q).text;
   const groups = checkedLexicalGroups(text);
-  // مرشحون أكثر من الصفحة، فيُكمَل ما أُسقط منها.
-  const batch = Math.min(pageCap * 2, 50);
+  // نافذة مرشحين ثابتة (دفعتان من SEARCH_BATCH) لا تتبع limit، فلا يكشف الفرق بين limit=1 وlimit=20 عدد ما أُسقط.
+  const batch = SEARCH_BATCH;
   const [tainted, first] = await Promise.all([
     lexicalQueryTainted(groups, enumeratePhrase(text)).catch(() => true),
     searchRulingsDirect({ query: q, court, yearH, limit: batch }).catch(() => null),
@@ -240,9 +243,12 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   // وما تعذّر جلب نصه لا يُعاد.
   const results: Hit[] = [];
   let withheld = 0;
+  // آخر دفعة مرشحين كانت ممتلئة (أو تعذّر جلب التالية): قد يكون بعدها مرشحون لم يُفحصوا.
+  let moreCandidates = false;
   let r = first;
   for (let round = 0; r && round < 2 && results.length < pageCap; round++) {
     const hits = r.hits;
+    moreCandidates = hits.length >= batch;
     const rows = hits.length
       ? await prisma.judicialCase
           .findMany({
@@ -291,10 +297,11 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
     r = await searchRulingsDirect({ query: q, court, yearH, limit: batch, offset: batch }).catch(() => null);
   }
   // عدد القاعدة يشمل أحكامًا لا تطابق إلا داخل اسم، فلا يُعاد لاستعلام فيه لفظ: الإجمالي عدد ما أُعيد،
-  // وtotal_is_lower_bound أن الصفحة امتلأت فقد يكون بعدها غيرها (من المرئي وحده، لا من القاعدة).
+  // وtotal_is_lower_bound أن الصفحة امتلأت، أو أن النافذة انتهت ومرشحوها لم ينفدوا (فقد يكون بعدها ما يظهر).
   // ولاستعلام الأرقام وحدها (رقم القضية أو القرار) عدد القاعدة كما كان (مسقوف بـ٥٠٠٠).
   if (groups.length || withheld > 0) {
-    return { query, count: results.length, total: results.length, total_is_lower_bound: results.length >= pageCap, results };
+    const lowerBound = results.length >= pageCap || (withheld > 0 && moreCandidates);
+    return { query, count: results.length, total: results.length, total_is_lower_bound: lowerBound, results };
   }
   return { query, count: results.length, total: first?.total ?? 0, total_is_lower_bound: first?.totalCapped ?? false, results };
 }

@@ -133,8 +133,9 @@ export async function takhrijHukm(query: string, limit = 20): Promise<{ principl
         { topic: { contains: t, mode: "insensitive" as const } },
       ]) },
       select: { title: true, principleText: true, court: true, topic: true },
-      // ضعف المطلوب: بعض المطابقات قد تُسقط لأنها داخل اسم محجوب.
-      take: Math.min(want * 2, 100),
+      // نافذة ثابتة بترتيب ثابت (لا تتبع limit): بعض المطابقات قد تُسقط لأنها داخل اسم محجوب.
+      orderBy: { id: "asc" },
+      take: 100,
     });
     const principles: PrincipleRow[] = [];
     for (const r of rows) {

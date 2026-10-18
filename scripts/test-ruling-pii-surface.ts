@@ -157,6 +157,30 @@ for (const [id, court, text] of [
   rows.push({ ...base, id, sourceId: Number(id.slice(1)), createdAt: new Date("2023-12-01"), judgmentTitle: "حكم", judgmentText: text, appealText: null,
     caseNo: `رقم القضية - القرار: ٤٤٧٠٠٠٠٠${id.slice(1).padStart(2, "٠")}`, decisionNo: null, court, decisionDateText: null });
 }
+// جولة المراجعة الثالثة: أحكام كثيرة بمعرّفات بعد أحكام المرجع (فلا تدخل عيّنات ألفاظها).
+// «الحوالة» ظاهرة في 230 حكمًا واسم في 5 (سقف العدّ)؛ «البناء» و«النجار» ظاهرتان في 12 حكمًا، واسمٌ مكرر في 60 و110
+// حكمًا تتقدّم في الترتيب (نافذة البحث الثابتة وعلم الحد الأدنى).
+const bulk = (id: string, court: string, text: string) =>
+  rows.push({ ...base, id, sourceId: 1000 + rows.length, createdAt: new Date("2023-11-01"), judgmentTitle: "حكم", judgmentText: text, appealText: null,
+    caseNo: `رقم القضية - القرار: ${id}`, decisionNo: null, court, decisionDateText: null });
+const COURTS3 = ["المحكمة العامة", "المحكمة التجارية", "المحكمة العمالية"];
+const pad3 = (n: number) => String(n).padStart(3, "0");
+for (let i = 1; i <= 230; i++) bulk(`z${pad3(i)}`, COURTS3[i % 3], "وحيث إن الحوالة نافذة.");
+for (let i = 231; i <= 235; i++) bulk(`z${pad3(i)}`, "المحكمة العامة", "أقام المدعي/ نايف الحوالة دعواه.");
+const repeatedName = (w: string) => `حضر المدعي/ سعد ${w} ثم حضر المدعى عليه/ فهد ${w} ثم حضر الشاهد/ خالد ${w}.`;
+for (let i = 1; i <= 12; i++) bulk(`y${pad3(i)}`, "المحكمة العامة", "وحيث إن البناء مخالف للترخيص.");
+for (let i = 101; i <= 160; i++) bulk(`y${pad3(i)}`, "المحكمة العامة", repeatedName("البناء"));
+for (let i = 1; i <= 12; i++) bulk(`x${pad3(i)}`, "المحكمة العامة", "وحيث إن النجار أنجز العمل.");
+for (let i = 101; i <= 210; i++) bulk(`x${pad3(i)}`, "المحكمة العامة", repeatedName("النجار"));
+// «القصار» مهنة في حكمين واسم في ثالث (لفظ غير ملوّث)، ورقم «77331» يطابق قضية المهنة وقضية الاسم وحدهما.
+for (const [id, text, caseNo] of [
+  ["w001", "وحيث إن القصار سلّم الثياب متأخرًا.", "٧٧٣٣١٠٠١"],
+  ["w002", "أقام المدعي/ فهد القصار دعواه.", "٧٧٣٣١٠٠٢"],
+  ["w003", "وحيث إن القصار ضامن لما تلف.", "٨٨٤٤٠٠٠١"],
+] as const) {
+  bulk(id, "المحكمة العامة", text);
+  rows[rows.length - 1].caseNo = `رقم القضية - القرار: ${caseNo}`;
+}
 const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي", "مروان", "هلال"];
 const nameLeak = (t: string) => NAME_WORDS.filter((w) => t.includes(w));
 const frozen = JSON.stringify(rows);
@@ -201,8 +225,9 @@ const principles = [
   { id: "p3", title: "مبدأ في الكفالة", principleText: `${"ـ".repeat(574)} قيصر مروان الطاهري سجل مدني رقم (...) كفيل غارم.`, court: "المحكمة العامة", topic: "كفالة" },
 ];
 const frozenPrinciples = JSON.stringify(principles);
-// تعذّر جلب نص الأحكام في البحث (لاختبار السقوط مغلقًا).
+// تعذّر جلب نص الأحكام في البحث، أو استعلام العيّنة (لاختبار السقوط مغلقًا).
 let failTextFetch = false;
+let failTaint = false;
 const fakePrisma = {
   judicialPrinciple: {
     findMany: async ({ where, take }: { where: { OR: Array<Record<string, { contains: string }>> }; take?: number }) =>
@@ -220,6 +245,7 @@ const fakePrisma = {
     update: noWrite, updateMany: noWrite, create: noWrite, delete: noWrite, deleteMany: noWrite,
   },
   async $queryRawUnsafe(sql: string, ...params: unknown[]) {
+    if (failTaint && /ORDER BY "id" LIMIT 12\) s ON/.test(sql)) throw new Error("تعذّر استعلام العيّنة (اختبار)");
     return runSelect(sql, params);
   },
   async $executeRawUnsafe(sql: string) {
@@ -237,10 +263,12 @@ const PII_LEAK = new RegExp(`${ID_LAT}|${ID_IND}|${IQAMA_LAT}|${MOB_IND}|0551234
 async function main() {
   setupDb();
   (await import("../lib/mcp/name-taint")).clearTaintCache();
+  // أدنى زمن العيّنة يُختبر وحده أدناه، وصفر في بقية الاختبارات.
+  (await import("../lib/mcp/name-taint")).setTaintSampleFloorMs(0);
   const before = dbFingerprint();
   const { redactPII, stripPiiFromQuery, splitRulingQuery, searchRulingsDirect, findRulingIdsRedacted } = await import("../lib/modules/legal-core/rulings-search");
   const { searchJudgments, buildJudgmentSnippet } = await import("../lib/modules/legal-core/judgment-search");
-  const { enumerateRulings, getRuling } = await import("../lib/mcp/tools/rulings");
+  const { enumerateRulings, getRuling, clearEnumerateCountCache } = await import("../lib/mcp/tools/rulings");
   const { searchRulings: mcpSearchRulings } = await import("../lib/mcp/adapter");
   const { HakeemPublishedJudgmentsConnector } = await import("../lib/modules/due-diligence/judgments");
 
@@ -360,7 +388,10 @@ async function main() {
     const s = await mcpSearchRulings(q, undefined, undefined, 20);
     ok(s.results.length === 0 && s.total === 0, `MCP search: «${q}» (اسم) لا يعيد حكمًا ولا عددًا (${s.results.length}/${s.total})`);
   }
-  type Enum = { terms: string[]; total: number; by_court: Array<{ court: string | null; count: number }>; results?: Array<{ ruling_id: string; snippet: string }>; counts_page_only?: boolean };
+  type Enum = {
+    terms: string[]; total: number; total_is_lower_bound: boolean; by_court: Array<{ court: string | null; count: number }>;
+    results?: Array<{ ruling_id: string; snippet: string }>; next_cursor?: string | null; counts_page_only?: boolean;
+  };
   for (const q of ["غانم", "الموسوي", "رجاء السندي", "الطاهري"]) {
     const e = (await enumerateRulings([q])) as Enum;
     ok((e.results ?? []).length === 0 && e.total === 0 && e.by_court.length === 0, `MCP enumerate: «${q}» (اسم) لا يعيد حكمًا ولا عددًا ولا توزيعًا`);
@@ -426,6 +457,7 @@ async function main() {
   ok(k20.total === 2 && k20.total_is_lower_bound === false && !k20.results.some((x) => x.ruling_id === "r12"), `MCP search: limit=20 — المرئي وحده (${k20.results.map((x) => x.ruling_id).join("،")})`);
   const ek = (await enumerateRulings(["الخياط"])) as Enum;
   ok(ek.total === 2 && !ek.by_court.some((c) => c.court === "المحكمة العمالية"), `MCP enumerate: العدد الصغير من المرئي (${ek.total}، ${ek.by_court.map((c) => c.court).join("،")})`);
+  ok((ek.results ?? []).length === 2 && !(ek.results ?? []).some((x) => x.ruling_id === "r12"), "MCP enumerate: صفحة «الخياط» بلا حكم الاسم (فحص كل صف)");
   const ekc = (await enumerateRulings(["الخياط"], "العمالية", undefined, true)) as Enum;
   ok(ekc.total === 0 && ekc.by_court.length === 0, "MCP enumerate: خلية المحكمة التي فيها الاسم وحده = 0");
   const em = (await enumerateRulings(["موس"])) as Enum;
@@ -450,6 +482,20 @@ async function main() {
   const s8 = await mcpSearchRulings("تصفية الشراكة", undefined, undefined, 20);
   const s8hit = s8.results.find((x) => x.ruling_id === "r8");
   ok(Boolean(s8hit) && nameLeak(`${s8hit?.snippet ?? ""} ${s8hit?.disposition ?? ""}`).length === 0, "MCP search: توقيع الدائرة بـ«ﷲ» محجوب في المقتطف والمنطوق");
+  const { clearTaintCache, taintedBySample } = await import("../lib/mcp/name-taint");
+  ok(taintedBySample([1, 2], (x) => x === 1) && !taintedBySample([1, 2, 3], (x) => x !== 3) && !taintedBySample([], () => false), "عتبة العيّنة: النصف فأكثر لفظ اسم، والثلث لا، والفارغة لا");
+  clearTaintCache();
+  failTaint = true;
+  const sft = await mcpSearchRulings("توريد", undefined, undefined, 20);
+  let eft = false;
+  try {
+    await enumerateRulings(["توريد"]);
+  } catch {
+    eft = true;
+  }
+  failTaint = false;
+  clearTaintCache();
+  ok(sft.results.length === 0 && sft.total === 0 && eft, "تعذّر استعلام العيّنة: البحث بلا نتيجة، والحصر خطأ (السقوط مغلقًا)");
   failTextFetch = true;
   const sf = await mcpSearchRulings("توريد", undefined, undefined, 20);
   failTextFetch = false;
@@ -468,6 +514,103 @@ async function main() {
   ok((y45.results ?? []).some((x) => x.ruling_id === "r1"), "MCP enumerate: year_h=1445 يجد حكمًا تاريخه «١٤٤٥/…»");
   const y44 = (await enumerateRulings(["إيجار"], undefined, 1444, true)) as Enum;
   ok(y44.total === 0, "MCP enumerate: year_h=1444 لا يجده");
+  // ── جولة المراجعة الثالثة على #785 ──
+  // ع١: العدد والتوزيع للفظ فيه حرف من الأحكام الظاهرة وحدها (مسقوفًا)، فلا فرق بينه وبين ما تعيده الصفحات،
+  // ولا يكشف الحشو بـ OR ولا الشمول والاستبعاد عدد ما لا يطابق إلا داخل اسم.
+  const gather = async (terms: string[], size = 2) => {
+    const ids: string[] = [];
+    let cur: string | undefined;
+    for (let g = 0; g < 400; g++) {
+      const pg = (await enumerateRulings(terms, undefined, undefined, false, size, cur)) as Enum;
+      ids.push(...(pg.results ?? []).map((x) => x.ruling_id));
+      if (!pg.next_cursor) break;
+      cur = pg.next_cursor;
+    }
+    return ids;
+  };
+  const cnt = async (terms: string[], court?: string) => (await enumerateRulings(terms, court, undefined, true)) as Enum;
+  const nA = await cnt(["النجار"]);
+  const gA = await gather(["النجار"]);
+  ok(nA.total === 12 && !nA.total_is_lower_bound && gA.length === 12 && gA.every((id) => id < "x100"), `ع١: «النجار» (12 ظاهرًا و110 اسمًا) — العدد = الصفحات (${nA.total}/${gA.length})`);
+  const nP = await cnt(["الحوالة"]);
+  const nAP = await cnt(["النجار", "الحوالة"]);
+  ok(nP.total === 200 && nP.total_is_lower_bound && nAP.total === 200 && nAP.total_is_lower_bound, `ع١: الحشو فوق السقف — ${nAP.total}/${nP.total}، حد أدنى (لا فرق يكشف المسقط)`);
+  ok(nP.by_court.reduce((a, c) => a + c.count, 0) === 200, "ع١: التوزيع من الظاهر نفسه (مجموعه = العدد)");
+  const gP = await gather(["الحوالة"], 100);
+  ok(gP.length === 230 && new Set(gP).size === 230 && !gP.some((id) => id > "z230"), `ع١: الصفحات بلا سقف — 230 ظاهرًا، ولا حكم اسم (${gP.length})`);
+  const nK = await cnt(["الخياط"]);
+  const nM = await cnt(["منطوق"]);
+  const nKM = await cnt(["الخياط", "منطوق"]);
+  const gK = await gather(["الخياط"]);
+  const gM = await gather(["منطوق"]);
+  const inter = gK.filter((id) => gM.includes(id)).length;
+  ok(nK.total + nM.total - nKM.total === inter && nM.total === gM.length && nKM.total === new Set([...gK, ...gM]).size, `ع١: الشمول والاستبعاد = تقاطع الظاهر (${nK.total}+${nM.total}−${nKM.total}=${inter})`);
+  ok((await cnt(["النجار"], "العامة")).total === 12, "ع١: مرشح المحكمة لا يكشف المسقط");
+  // ع٢: لا عودة مبكرة — عدد الاستعلامات والمخرج واحد للفظ الاسم والغائب، في أول نداء وبعد الحفظ.
+  const qn = async <T>(fn: () => Promise<T>) => {
+    const n = sqlLog.length;
+    const out = await fn();
+    return { n: sqlLog.length - n, out };
+  };
+  for (const countOnly of [true, false]) {
+    const res: Array<{ first: number; second: number; out: string }> = [];
+    for (const v of [["الموسوي 4470000005"], ["الموسوي 4470000099"], ["القرشي 4470000005"], ["غانم الموسوي"], ["غانم القرشي"]]) {
+      clearTaintCache();
+      clearEnumerateCountCache();
+      const a = await qn(() => enumerateRulings(v, undefined, undefined, countOnly));
+      const b = await qn(() => enumerateRulings(v, undefined, undefined, countOnly));
+      res.push({ first: a.n, second: b.n, out: JSON.stringify({ ...a.out, terms: null }) });
+    }
+    ok(res.every((r) => r.first === res[0].first && r.second === res[0].second && r.out === res[0].out), `ع٢: الحصر${countOnly ? " (count_only)" : ""} — الاسم والغائب بعدد استعلامات واحد (${res.map((r) => `${r.first}/${r.second}`).join(" ")})`);
+  }
+  for (const group of [["غانم الموسوي", "زيدان الفلاني", "غانم القرشي"], ["الموسوي", "القرشي"]]) {
+    const res: Array<{ first: number; second: number; out: string }> = [];
+    for (const q of group) {
+      clearTaintCache();
+      const a = await qn(() => mcpSearchRulings(q, undefined, undefined, 20));
+      const b = await qn(() => mcpSearchRulings(q, undefined, undefined, 20));
+      res.push({ first: a.n, second: b.n, out: JSON.stringify({ ...a.out, query: null }) });
+    }
+    ok(res.every((r) => r.first === res[0].first && r.second === res[0].second && r.out === res[0].out), `ع٢: البحث «${group.join("» و«")}» بعدد استعلامات واحد (${res.map((r) => `${r.first}/${r.second}`).join(" ")})`);
+  }
+  // أدنى زمن العيّنة: لفظ الاسم (عيّنته تُحجب) والغائب (عيّنته فارغة) في أول نداء.
+  const { setTaintSampleFloorMs } = await import("../lib/mcp/name-taint");
+  setTaintSampleFloorMs(250);
+  const timed: number[] = [];
+  for (const v of ["غانم الموسوي", "غانم القرشي"]) {
+    clearTaintCache();
+    clearEnumerateCountCache();
+    const t0 = performance.now();
+    await enumerateRulings([v], undefined, undefined, true);
+    timed.push(performance.now() - t0);
+  }
+  setTaintSampleFloorMs(0);
+  ok(timed.every((t) => t >= 245), `أدنى زمن العيّنة: الاسم والغائب ≥ 250ms (${timed.map((t) => t.toFixed(0)).join("/")})`);
+  // التوازي: النداءان المتزامنان على اللفظ نفسه يحسبان عيّنة واحدة.
+  clearTaintCache();
+  const dd2 = await qn(() => Promise.all([LQ("توريد"), LQ("توريد")]));
+  ok(dd2.n === 1 && dd2.out.every((x) => !x), `التوازي: عيّنة واحدة لنداءين متزامنين (${dd2.n})`);
+  // م١: نافذة البحث ثابتة لا تتبع limit؛ و«حد أدنى» إن انتهت النافذة ومرشحوها باقون.
+  const b1 = await mcpSearchRulings("البناء", undefined, undefined, 1);
+  const b20 = await mcpSearchRulings("البناء", undefined, undefined, 20);
+  ok(b1.results.length === 1 && b20.results.length === 12 && !b20.total_is_lower_bound && [...b1.results, ...b20.results].every((x) => x.ruling_id < "y100"), `م١: «البناء» (60 اسمًا تتقدّم الترتيب) — limit=1 يعيد ${b1.results.length}، وlimit=20 يعيد ${b20.results.length}`);
+  for (const lim of [1, 20]) {
+    const n = await mcpSearchRulings("النجار", undefined, undefined, lim);
+    ok(n.results.length === 0 && n.total === 0 && n.total_is_lower_bound === true, `م١: «النجار» limit=${lim} — النافذة (100) أسماء كلها: لا نتيجة، والعلم true (${n.total_is_lower_bound})`);
+  }
+  // ن١: لا صفحة أخيرة فارغة — المتابعة إن وُجد بعد آخر صف معروض صف ظاهر.
+  const k2 = (await enumerateRulings(["الخياط"], undefined, undefined, false, 2)) as Enum;
+  ok((k2.results ?? []).length === 2 && k2.next_cursor === null, `ن١: «الخياط» بصفحة 2 — بعد الصفين حكم اسم فقط، فلا مؤشر (${k2.next_cursor})`);
+  const k1p = (await enumerateRulings(["الخياط"], undefined, undefined, false, 1)) as Enum;
+  ok((k1p.results ?? []).length === 1 && k1p.next_cursor === (k1p.results ?? [])[0]?.ruling_id, "ن١: صفحة 1 وبعدها ظاهر — المؤشر آخر صف معروض");
+  // عيّنة لفظ الحصر من نصه وحده: رقمٌ في اللفظ لا يوجّهها إلى قضية بعينها (كانت «القصار 77331» تُعدّ اسمًا بعيّنة الرقم).
+  const qs1 = (await enumerateRulings(["القصار 77331"])) as Enum;
+  ok(qs1.total === 1 && (qs1.results ?? []).map((x) => x.ruling_id).join() === "w001", `عيّنة الحصر من النص وحده: «القصار 77331» يجد حكم المهنة لا حكم الاسم (${(qs1.results ?? []).map((x) => x.ruling_id).join("،")})`);
+  // بوابة التلوث في الحصر: لفظ اسم غالبًا لا يُحصر ولو ظهر كلمةً عامة في حكم آخر (r9 «سالم من العيوب»، وr14/r15 «حسن النية»).
+  for (const q of ["سالم", "حسن"]) {
+    const e = (await enumerateRulings([q])) as Enum;
+    ok(e.total === 0 && (e.results ?? []).length === 0, `بوابة التلوث: الحصر بـ«${q}» لا يعيد حكمًا ولا عددًا (${e.total})`);
+  }
   // تخريج الحكم (takhrij_hukm): العنوان ونص المبدأ محجوبان، والمطابقة داخل اسم وحدها لا تُعاد.
   const { takhrijHukm } = await import("../lib/agent-runtime/live/engine-tools");
   const pNames = ["غانم", "الموسوي", "زيدان", "الفلاني", "رجاء", "السندي"];

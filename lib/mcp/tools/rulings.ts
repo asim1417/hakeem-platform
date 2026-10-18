@@ -1,5 +1,5 @@
 /**
- * rulings.ts — أدوات الأحكام القضائية (v3): جلب حكم كامل مقطّعًا، وحصر شامل غير مسقوف.
+ * rulings.ts — أدوات الأحكام القضائية (v3): جلب حكم كامل مقطّعًا، وحصر شامل بترقيم غير مسقوف.
  *
  * مُكيَّف على المخطط الفعلي: النموذج JudicialCase (جدول "judicial_cases")، ونصّ الحكم
  * في "judgmentText"، ورقم القضية decisionNo/caseNo، والمحكمة court، ولا عمود سنة هجرية
@@ -68,7 +68,7 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   };
 }
 
-// ٢) حصر شامل غير مسقوف للأحكام (عدّ حقيقيّ + توزيع بالمحكمة + ترقيم keyset على id).
+// ٢) حصر شامل للأحكام (عدّ + توزيع بالمحكمة + ترقيم keyset على id بلا سقف).
 export async function enumerateRulings(
   terms: string[],
   court?: string,
@@ -81,7 +81,7 @@ export async function enumerateRulings(
   // HKM-012: لا يُعثر على حكم بهوية أو جوال ولا بجزء منهما. الأرقام الطويلة تُطابَق في رقم القضية والقرار فقط؛
   // وما فيه رقم أو لاتيني على المتن المنقّح داخل القاعدة؛ والنص العربي الخالص عبارةً بكلمات كاملة (مع السوابق)
   // في فهرس search_norm — لا جزء كلمة («موس» لا تطابق «الموسوي»، و«نجش» لا تطابق «سونجشانج»).
-  // NFKC أولًا: الأشكال المعروضة و«ﷲ» حروف عادية كما في النسخة المحجوبة.
+  // NFKC للاستعلام: الأشكال المعروضة حروف عادية.
   const split = terms.map((t) => splitRulingQuery(String(t ?? "").normalize("NFKC")));
   const prepared: EnumerateTerm[] = [];
   for (const p of split) {
@@ -93,11 +93,10 @@ export async function enumerateRulings(
   terms = prepared.map((t) => [t.text, ...t.numbers].filter(Boolean).join(" "));
   const filtersOut = { court: court ?? null, year_h: yearH ?? null };
   const size = Math.max(1, Math.floor(pageSize));
-  const empty = (): EnumBase | EnumPage => {
-    const base: EnumBase = { terms, filters: filtersOut, total: 0, by_court: [] };
+  if (!prepared.length) {
+    const base: EnumBase = { terms, filters: filtersOut, total: 0, total_is_lower_bound: false, by_court: [] };
     return countOnly ? base : { ...base, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
-  };
-  if (!prepared.length) return empty();
+  }
 
   // شرط كل لفظ (بمعاملاته): الأرقام في رقم القضية والقرار، والحساس في العنوان والمتن المنقّحين، والعبارة في فهرس
   // search_norm (GIN على to_tsvector('simple')).
@@ -111,20 +110,21 @@ export async function enumerateRulings(
     return `(${conds.join(" AND ")})`;
   };
 
-  // HKM-012: اللفظ الذي فيه حرف ويطابق داخل أسماء الأفراد غالبًا (عيّنة من أحكامه وحده، بلا مرشحات ولا مؤشر)
-  // لا يطابق شيئًا: يخرج من العدد والتوزيع والصفحة، فلا يختلف المخرج عن لفظ غائب عن القاعدة.
+  // HKM-012: اللفظ الذي فيه حرف ويطابق نصُّه داخل أسماء الأفراد غالبًا (عيّنة من أحكام نصه وحده، بلا أرقامه ولا مرشحات
+  // ولا مؤشر، فلا يوجّهها رقم إلى قضية بعينها) شرطه FALSE. ولا عودة مبكرة: الاستعلامات نفسها تجري كما للفظ غائب،
+  // فلا يكشف عددها ولا زمنها أنه اسم.
   const tainted = await Promise.all(
     prepared.map((t) => {
       if (!termHasLetters(t)) return Promise.resolve(false);
+      const textOnly: EnumerateTerm = { ...t, numbers: [] };
       const tp: unknown[] = [];
-      return enumerateTermTainted(t, termCond(t, tp), tp);
+      return enumerateTermTainted(textOnly, termCond(textOnly, tp), tp);
     }),
   );
   const kept = prepared.filter((_, i) => !tainted[i]);
-  if (!kept.length) return empty();
 
   const params: unknown[] = [];
-  const filters: string[] = [`(${kept.map((t) => termCond(t, params)).join(" OR ")})`];
+  const filters: string[] = [`(${prepared.map((t, i) => (tainted[i] ? "FALSE" : termCond(t, params))).join(" OR ")})`];
   if (court) {
     params.push(`%${court}%`);
     filters.push(`r."court" ILIKE $${params.length}`);
@@ -140,7 +140,7 @@ export async function enumerateRulings(
   }
   const whereSql = filters.join(" AND ");
 
-  /** يُعاد الحكم إن طابقه لفظ باقٍ على نسخته المحجوبة بباني الإنتاج؛ وما سواه لا يُعاد ولا يُعدّ في العدد الصغير. */
+  /** يُعاد الحكم ويُعدّ إن طابقه لفظ باقٍ على نسخته المحجوبة بباني الإنتاج؛ وما سواه لا يُعاد ولا يُعدّ. */
   const visible = (r: EnumRow): boolean => {
     let words: string[] | null = null;
     let titleText: string | null = null;
@@ -162,49 +162,80 @@ export async function enumerateRulings(
   // المعرّفات المطابقة من الفهرس أولًا (MATERIALIZED) فلا يمشي المخطِّط على المفتاح الأساسي حاسبًا tsvector لكل صف.
   const run = <T>(sql: string, p: unknown[]) => runRulingSearchSql<T>(sql, p, true);
   const matched = `WITH m AS MATERIALIZED (SELECT r."id" FROM "judicial_cases" r WHERE ${whereSql})`;
-  const [totalRows, byCourtRows, idRows] = await Promise.all([
-    run<{ n: bigint }[]>(`SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`, params),
-    run<{ court: string | null; n: bigint }[]>(
-      `SELECT r."court" AS court, COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql} GROUP BY r."court" ORDER BY n DESC`,
-      params,
-    ),
-    countOnly
-      ? Promise.resolve([] as Array<{ id: string }>)
-      : run<Array<{ id: string }>>(
-          `${matched} SELECT "id" FROM m${cursor ? ` WHERE "id" > $${params.length + 1}` : ""} ORDER BY "id" ASC LIMIT ${SCAN_CAP}`,
-          cursor ? [...params, cursor] : params,
-        ),
-  ]);
-  const dbTotal = Number(totalRows[0]?.n ?? 0);
 
-  // العدد الصغير يُحسب من المرئي نفسه: خلية صغيرة (محكمة/سنة) فيها حكم لا يطابق إلا داخل اسم لا تكشفه.
-  // وفوق ذلك عدد القاعدة، وتُضم المحاكم التي عددها دون SMALL_BUCKET إلى «أخرى».
-  let total = dbTotal;
-  let byCourt: Array<{ court: string | null; count: number }>;
-  let smallVisible: EnumRow[] | null = null;
-  if (dbTotal > 0 && dbTotal < SMALL_TOTAL) {
-    const all = await run<EnumRow[]>(
-      `${matched} SELECT ${ROW_FIELDS} FROM "judicial_cases" r JOIN (SELECT "id" FROM m ORDER BY "id" LIMIT ${SMALL_TOTAL}) s ON s."id" = r."id" ORDER BY r."id" ASC`,
-      params,
+  /**
+   * الأحكام الظاهرة بعد المؤشر بترتيب المعرّف: تُقرأ المطابقات دفعات حتى want صفًّا ظاهرًا أو SCAN_CAP معرّفًا.
+   * exhausted: قُرئت كل المطابقات بعد المؤشر.
+   */
+  const scanVisible = async (after: string | null, want: number): Promise<{ rows: EnumRow[]; exhausted: boolean }> => {
+    const idRows = await run<Array<{ id: string }>>(
+      `${matched} SELECT "id" FROM m${after ? ` WHERE "id" > $${params.length + 1}` : ""} ORDER BY "id" ASC LIMIT ${SCAN_CAP + 1}`,
+      after ? [...params, after] : params,
     );
-    smallVisible = all.filter(visible);
-    total = smallVisible.length;
-    const m = new Map<string | null, number>();
-    for (const r of smallVisible) m.set(r.court, (m.get(r.court) ?? 0) + 1);
-    byCourt = [...m.entries()].sort((a, b) => b[1] - a[1]).map(([c, count]) => ({ court: c, count }));
+    const ids = idRows.map((x) => x.id);
+    const budget = Math.min(ids.length, SCAN_CAP);
+    const rows: EnumRow[] = [];
+    let scanned = 0;
+    while (scanned < budget && rows.length < want) {
+      const batch = ids.slice(scanned, Math.min(scanned + READ_BATCH, budget));
+      scanned += batch.length;
+      for (const r of await readRows(batch)) if (visible(r)) rows.push(r);
+    }
+    return { rows, exhausted: scanned >= ids.length };
+  };
+
+  // العدد والتوزيع.
+  // - ألفاظ بلا حرف (رقم القضية أو القرار، أو نص أرقام): لا يمسّها حجب الأسماء، فمن القاعدة كاملًا.
+  // - لفظ فيه حرف: من الأحكام الظاهرة وحدها، على مسح مسقوف بترتيب المعرّف. عدد القاعدة يشمل أحكامًا لا تطابق إلا
+  //   داخل اسم، فيُستخرج منه بالفرق أو بالشمول والاستبعاد عدد أحكام الاسم. يُعدّ حتى COUNT_CAP حكمًا ظاهرًا، وما
+  //   فوقه total_is_lower_bound (ولا يزيد الرقم على السقف، فلا يكشف موضع الدفعة عدد المسقط فيها). والصفحات بلا سقف.
+  //   الوضع يُحدَّد بالألفاظ قبل الفحص، فلا يختلف مسار لفظ اسم عن لفظ غائب.
+  const lettersMode = prepared.some(termHasLetters);
+  let base: EnumBase;
+  let head: { rows: EnumRow[]; exhausted: boolean } | null = null;
+  if (!lettersMode) {
+    const [totalRows, byCourtRows] = await Promise.all([
+      run<{ n: bigint }[]>(`SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`, params),
+      run<{ court: string | null; n: bigint }[]>(
+        `SELECT r."court" AS court, COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql} GROUP BY r."court" ORDER BY n DESC LIMIT 30`,
+        params,
+      ),
+    ]);
+    base = {
+      terms,
+      filters: filtersOut,
+      total: Number(totalRows[0]?.n ?? 0),
+      total_is_lower_bound: false,
+      by_court: byCourtRows.map((c) => ({ court: c.court, count: Number(c.n) })),
+    };
   } else {
-    const big = byCourtRows.map((c) => ({ court: c.court, count: Number(c.n) })).filter((c) => c.count >= SMALL_BUCKET);
-    const rest = byCourtRows.reduce((acc, c) => acc + (Number(c.n) < SMALL_BUCKET ? Number(c.n) : 0), 0);
-    byCourt = [...big.slice(0, 30), ...(rest > 0 ? [{ court: OTHER_COURTS, count: rest }] : [])];
+    const key = `${whereSql}\u0000${JSON.stringify(params)}`;
+    let counted = countCacheGet(key);
+    if (!counted) {
+      head = await scanVisible(null, COUNT_CAP);
+      const capped = head.rows.length > COUNT_CAP || (head.rows.length === COUNT_CAP && !head.exhausted);
+      const rows = head.rows.slice(0, COUNT_CAP);
+      const m = new Map<string | null, number>();
+      for (const r of rows) m.set(r.court, (m.get(r.court) ?? 0) + 1);
+      counted = {
+        total: rows.length,
+        lowerBound: capped || !head.exhausted,
+        byCourt: [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([c, count]) => ({ court: c, count })),
+      };
+      countCacheSet(key, counted);
+    }
+    base = { terms, filters: filtersOut, total: counted.total, total_is_lower_bound: counted.lowerBound, by_court: counted.byCourt };
   }
-  const base: EnumBase = { terms, filters: filtersOut, total, by_court: byCourt };
   if (countOnly) return base;
 
-  // الصفحة: من المعرّفات المطابقة بعد المؤشر (حتى SCAN_CAP) تُقرأ دفعات ويُعاد المرئي منها؛ والمؤشر آخر صف معروض
-  // فقط، فلا يُكشف معرّف صف لم يُعَد، ولا تنقلب صفحة عند صف مسقط قبل SCAN_CAP صفًّا مسقطًا متتاليًا.
-  const results: EnumResult[] = [];
-  let lastReturned: string | null = null;
-  const toResult = (r: EnumRow): EnumResult => {
+  // الصفحة: من المعرّفات المطابقة بعد المؤشر تُقرأ دفعات ويُعاد الظاهر منها؛ والمتابعة إن وُجد بعد آخر صف معروض صف
+  // ظاهر (لا صفحة أخيرة فارغة تكشف مسقطًا بعده)، أو بلغ المسح سقفه. والمؤشر آخر صف معروض فقط، فلا يُكشف معرّف صف
+  // لم يُعَد.
+  const scan = !cursor && head ? head : await scanVisible(cursor || null, size + 1);
+  const pageRows = scan.rows.slice(0, size);
+  const more = scan.rows.length > size || !scan.exhausted;
+  const nextCursor = more && pageRows.length ? pageRows[pageRows.length - 1].id : null;
+  const results = pageRows.map((r): EnumResult => {
     // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
     const txt = maskRulingText(r.judgmentText);
     // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
@@ -222,31 +253,35 @@ export async function enumerateRulings(
       match_offset: idx === -1 ? null : idx,
       snippet: idx === -1 ? txt.slice(0, snippetLen) : txt.slice(start, start + snippetLen),
     };
-  };
-  const ids = idRows.map((x) => x.id);
-  for (let i = 0; i < ids.length && results.length < size; i += READ_BATCH) {
-    for (const r of await readRows(ids.slice(i, i + READ_BATCH))) {
-      if (results.length >= size) break;
-      if (!visible(r)) continue;
-      results.push(toResult(r));
-      lastReturned = r.id;
-    }
-  }
-  // امتلأت الصفحة، أو بلغ المسح سقفه وبعده غيره: يُتابع من آخر صف معروض. وإلا انتهت المطابقات.
-  const more = results.length >= size ? lastReturned !== ids[ids.length - 1] || ids.length === SCAN_CAP : ids.length === SCAN_CAP;
-  const nextCursor = lastReturned !== null && more ? lastReturned : null;
+  });
 
   return { ...base, page_size: pageSize, returned: results.length, next_cursor: nextCursor, results };
 }
 
 /** سقف المعرّفات المقروءة بعد المؤشر في النداء الواحد، ودفعة قراءة النصوص. */
-const SCAN_CAP = 1000;
+const SCAN_CAP = 600;
 const READ_BATCH = 50;
-/** العدد دون هذا يُحسب من المرئي؛ والمحكمة دون هذا تُضم إلى «أخرى». */
-const SMALL_TOTAL = 50;
-const SMALL_BUCKET = 5;
-const OTHER_COURTS = "أخرى (أقل من ٥ لكل محكمة)";
+/** سقف عدّ الأحكام الظاهرة للفظ فيه حرف (وما فوقه total_is_lower_bound). */
+const COUNT_CAP = 200;
 const ROW_FIELDS = `r."id", r."court", r."judgmentTitle", r."judgmentText", r."appealText", r."caseNo", r."decisionNo", r."cityName", r."decisionDateText"`;
+
+/** عدّ الظاهر محفوظ عشر دقائق بالشرط نفسه، فلا يُعاد المسح مع كل صفحة. */
+type Counted = { total: number; lowerBound: boolean; byCourt: Array<{ court: string | null; count: number }> };
+const COUNT_TTL_MS = 10 * 60_000;
+const COUNT_MAX = 500;
+const countCache = new Map<string, { v: Counted; at: number }>();
+function countCacheGet(key: string): Counted | null {
+  const hit = countCache.get(key);
+  return hit && Date.now() - hit.at < COUNT_TTL_MS ? hit.v : null;
+}
+function countCacheSet(key: string, v: Counted): void {
+  if (countCache.size >= COUNT_MAX) countCache.delete(countCache.keys().next().value as string);
+  countCache.set(key, { v, at: Date.now() });
+}
+/** للاختبار: يفرغ حفظ العدّ. */
+export function clearEnumerateCountCache(): void {
+  countCache.clear();
+}
 
 type EnumRow = {
   id: string;
@@ -263,6 +298,7 @@ type EnumBase = {
   terms: string[];
   filters: { court: string | null; year_h: number | null };
   total: number;
+  total_is_lower_bound: boolean;
   by_court: Array<{ court: string | null; count: number }>;
 };
 type EnumPage = EnumBase & { page_size: number; returned: number; next_cursor: string | null; results: EnumResult[] };

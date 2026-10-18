@@ -233,13 +233,15 @@ export function semanticNameHit(raw: Set<string>, masked: Set<string>, groups: s
 
 /** عبارة الحصر: صيغ كل كلمة دالّة، والمسافة بين كل كلمتين في العبارة (tsquery «<N>»). */
 export type PhraseQuery = { groups: string[][]; gaps: number[] };
+const PHRASE_WORDS = 64;
 
 /**
  * يبني عبارة الحصر من نص اللفظ (بعد NFKC): الكلمات الدالّة بصيغها (السوابق والتطبيعان)، والمسافة بينها كما في
  * النص (كلمة الوقف المحذوفة تبقى مسافة). null إن لم يبق فيه كلمة دالّة («؟؟»).
  */
 export function enumeratePhrase(text: string): PhraseQuery | null {
-  const words = text.normalize("NFKC").replace(/[^\p{L}\p{N}]+/gu, " ").trim().split(/\s+/).filter(Boolean);
+  // أول PHRASE_WORDS كلمة فقط: المسافة «<N>» في tsquery لا تتجاوز 16384، ولا عبارة حقيقية بهذا الطول.
+  const words = text.normalize("NFKC").replace(/[^\p{L}\p{N}]+/gu, " ").trim().split(/\s+/).filter(Boolean).slice(0, PHRASE_WORDS);
   const kept: Array<{ i: number; g: string[] }> = [];
   words.forEach((w, i) => {
     if (kept.length >= 8 || !queryTokens(w).length) return;

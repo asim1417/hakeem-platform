@@ -81,6 +81,8 @@ const STOP = new Set([
   "مذكرة", "بمذكرة", "الآتي", "بالآتي", "التالي", "يلي", "ما",
   // أفعال تسبق الاسم في الوقائع: «ادعى فلان…»، «أقام فلان…».
   "ادعى", "ادعت", "وادعى", "وادعت", "أقام", "أقامت", "وأقام", "وأقامت", "اقام", "واقام",
+  // أفعال تلي الاسم في الوقائع: «… فلان استحق الصرف».
+  "استحق", "استحقت", "واستحق", "واستحقت", "يستحق", "تستحق",
 ]);
 // «علي» المكتوبة بدل «على»: إذا تلتها إحدى هذه فهي حرف لا اسم («حضر المدعي علي الموعد…»).
 const ALI_AS_ALA = new Set([
@@ -115,6 +117,10 @@ const NASAB_RE = new RegExp(`(?<![${LETTERS}${HARAKAT}])${NASAB_TOKEN}(?:\\s+${B
 // سابقة اسم العائلة: «آل فلان»، «ال فلان» (مفصولة)، «أبو فلان».
 const FAMILY_PREFIX = new Set(["آل", "ال", "أبو", "ابو", "بو"]);
 const STARTS_CHAIN = new RegExp(`^\\s+${BIN}\\s`);
+// «ابن السبيل» مصطلح (مصارف الزكاة) لا رابط نسب: لا يبدأ سلسلة، ولا يُحجب، ويقطع ما قبله من اسم.
+const SABIL = new RegExp(`^\\s*${withHarakat("ابن")}\\s+السبيل(?![${LETTERS}])`);
+const SABIL_IN = new RegExp(`\\s+${withHarakat("ابن")}\\s+السبيل(?![${LETTERS}])`);
+const CHAIN_HEAD = new RegExp(`^${NASAB_TOKEN}(?:\\s+${BIN}\\s+${NASAB_TOKEN})+`);
 // كلمة قبل الصفة تجعل ما بعدها اسمًا بلا فاصل: «حضر المدعي فلان»، «بإلزام المدعى عليه فلان».
 const TRIGGER_BEFORE = /(?:^|[^ء-ي])[وف]?(?:حضر|حضرت|بحضور|حضور|إلزام|بإلزام|الزام|بالزام|ألزم|ألزمت)\s+$/;
 // الكلمة بحركاتها: «عقدًا» كلمة واحدة لا «عقد» ثم «ًا».
@@ -278,8 +284,17 @@ function maskNasab(text: string): string {
   const glued = gluedStarts(text);
   NASAB_RE.lastIndex = 0;
   for (let m = NASAB_RE.exec(text); m; m = NASAB_RE.exec(text)) {
-    // «ابن السبيل» مصطلح لا نسب.
-    if (/ابن\s+السبيل/.test(m[0])) continue;
+    // «ابن السبيل» في السلسلة: يُحجب ما قبله إن كان سلسلة وحده («لسالم بن علي ابن السبيل»)، ويبقى المصطلح.
+    const sabil = SABIL_IN.exec(m[0]);
+    if (sabil) {
+      const head = CHAIN_HEAD.exec(m[0].slice(0, sabil.index));
+      if (head) {
+        out += text.slice(last, m.index) + NAME_MASK;
+        last = m.index + head[0].length;
+      }
+      NASAB_RE.lastIndex = m.index + sabil.index + sabil[0].length;
+      continue;
+    }
     let end = m.index + m[0].length;
     for (let extra = 0; extra < 2; ) {
       TOKEN_RE.lastIndex = end;
@@ -288,6 +303,7 @@ function maskNasab(text: string): string {
       if (!t || /[\n\t]/.test(text.slice(end, TOKEN_RE.lastIndex - t[1].length))) break;
       const w = t[1];
       const tokenStart = TOKEN_RE.lastIndex - w.length;
+      if (SABIL.test(text.slice(tokenStart, tokenStart + 24))) break;
       if (FAMILY_PREFIX.has(bare(w))) {
         // السابقة لا تُعدّ، ويلزم بعدها اسم؛ وما بعدها اسم ولو وافق كلمة قاطعة («آل طالب»).
         const after = TOKEN_RE.exec(text);
@@ -306,7 +322,8 @@ function maskNasab(text: string): string {
         break;
       }
       // كلمة يليها «بن» أولُ سلسلة أخرى («… الجليفي عضو عمر بن …»): تُترك لها.
-      if (STARTS_CHAIN.test(text.slice(TOKEN_RE.lastIndex, TOKEN_RE.lastIndex + 16))) break;
+      const ahead = text.slice(TOKEN_RE.lastIndex, TOKEN_RE.lastIndex + 24);
+      if (STARTS_CHAIN.test(ahead) && !SABIL.test(ahead)) break;
       end = TOKEN_RE.lastIndex;
       extra++;
     }
@@ -396,13 +413,16 @@ function maskBeforeAnchors(text: string): string {
   return out + text.slice(last);
 }
 
+// أشكال العرض العربية (نص مستخرج من PDF) والحروف والأرقام كاملة العرض تُطبَّع وحدها (NFKC)، فتنطبق القواعد عليها.
+// وما سواها من نص الحكم لا يُغيَّر: «ﷺ» و«ﷲ» (U+FDF0–U+FDFF) و«½» و«…» كما في المصدر، و«ﷲ» كما في search_norm.
+const COMPAT_FORMS = /[\uFB50-\uFDEF\uFE70-\uFEFF\uFF00-\uFFEF]+/g;
+export const normalizeCompatForms = (text: string): string => text.replace(COMPAT_FORMS, (s) => s.normalize("NFKC"));
+
 /** الحجب الكامل: أرقام شخصية (redactPII) ثم الأسماء. */
 export function maskPersonalData(text: string | null | undefined): string {
   if (!text) return "";
-  // NFKC أولًا: الأشكال المعروضة (نص مستخرج من PDF) و«ﷲ» تصير حروفًا عادية («عبدالله»)، فتنطبق القواعد عليها
-  // ويُطابق فحصُ الموصل النسخةَ المحجوبة بالحروف نفسها التي يصل بها الاستعلام بعد NFKC.
   // تمريرات متتالية: الصفة الثانية في «المدعي/ فلان ضد المدعى عليه/ فلان» تقع داخل كلمات التقاط الأولى.
-  let out = maskNasab(redactPII(text.normalize("NFKC")));
+  let out = maskNasab(redactPII(normalizeCompatForms(text)));
   for (let i = 0; i < 4; i++) {
     const next = maskAfterRoles(out);
     if (next === out) break;

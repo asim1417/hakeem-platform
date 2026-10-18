@@ -45,33 +45,79 @@ export function taintedBySample<T>(rows: T[], visible: (r: T) => boolean): boole
 const CACHE_TTL_MS = 10 * 60_000;
 const CACHE_MAX = 1000;
 const cache = new Map<string, { tainted: boolean; at: number }>();
+/** حساب قيد التنفيذ لكل مفتاح: النداءات المتزامنة على اللفظ نفسه تنتظر حسابًا واحدًا. */
+const inflight = new Map<string, Promise<boolean>>();
 const MAX_CONCURRENT = 4;
+/** طابور الانتظار مسقوف وانتظاره محدود؛ الامتلاء والمهلة خطأ، والخطأ عند المستدعي اسم (السقوط مغلقًا). */
+const MAX_WAITING = 32;
+const WAIT_MS = 5_000;
 let running = 0;
 const waiting: Array<() => void> = [];
 
 async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
-  if (running >= MAX_CONCURRENT) await new Promise<void>((resolve) => waiting.push(resolve));
-  running++;
+  if (running < MAX_CONCURRENT) running++;
+  else {
+    if (waiting.length >= MAX_WAITING) throw new Error("name-taint: queue full");
+    // الفتحة تُسلَّم للمنتظر عند تحريرها (لا ينقص العدّاد بينهما)، فلا يسبقه نداء جديد ولا يتجاوز الحد.
+    await new Promise<void>((resolve, reject) => {
+      const wake = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        const i = waiting.indexOf(wake);
+        if (i !== -1) waiting.splice(i, 1);
+        reject(new Error("name-taint: wait timeout"));
+      }, WAIT_MS);
+      waiting.push(wake);
+    });
+  }
   try {
     return await fn();
   } finally {
-    running--;
-    waiting.shift()?.();
+    const next = waiting.shift();
+    if (next) next();
+    else running--;
   }
+}
+
+/**
+ * أدنى زمن لحساب عيّنة غير محفوظة: عيّنة لفظ الاسم فيها أحكام تُحجب، وعيّنة اللفظ الغائب فارغة، فيختلف زمنهما.
+ * الحد الأدنى يسوّيهما (الحجب في العيّنة دونه عادةً)، والانتظار خارج فتحة التوازي.
+ */
+let sampleFloorMs = 500;
+/** للاختبار: يغيّر أدنى زمن العيّنة. */
+export function setTaintSampleFloorMs(ms: number): void {
+  sampleFloorMs = ms;
 }
 
 async function cached(key: string, compute: () => Promise<boolean>): Promise<boolean> {
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.tainted;
-  const tainted = await withSlot(compute);
-  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
-  cache.set(key, { tainted, at: Date.now() });
-  return tainted;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+  const t0 = Date.now();
+  const p = withSlot(compute)
+    .then(async (tainted) => {
+      const rest = sampleFloorMs - (Date.now() - t0);
+      if (rest > 0) await new Promise((r) => setTimeout(r, rest));
+      if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
+      cache.set(key, { tainted, at: Date.now() });
+      return tainted;
+    })
+    .finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
 }
 
 /** للاختبار: يفرغ الحفظ المؤقت. */
 export function clearTaintCache(): void {
   cache.clear();
+}
+
+/** للاختبار: حالة حد التوازي. */
+export function taintSlotState(): { running: number; waiting: number } {
+  return { running, waiting: waiting.length };
 }
 
 const TSV = `to_tsvector('simple', coalesce(r."search_norm",''))`;
@@ -90,28 +136,36 @@ function sampleRows(cond: string, params: unknown[]): Promise<IndexRow[]> {
 
 /**
  * استعلام البحث كله: ألفاظه بـ AND كما يبحث searchRulingsDirect. لفظ اسم إن غلبت الأسماء على عيّنته، إلا أن
- * تكون عبارته المتجاورة كما كُتبت («حسن النية») ظاهرة خارج الأسماء في أغلب عيّنتها.
+ * تكون عبارته المتجاورة كما كُتبت («حسن النية») ظاهرة خارج الأسماء في أغلب عيّنتها. العيّنتان تجريان معًا دائمًا
+ * (لا عيّنة العبارة بعد حكم الأولى)، فلا يختلف عدد الاستعلامات بين لفظ اسم ولفظ غائب. والمفاتيح بالصيغ المطبّعة.
  */
 export async function lexicalQueryTainted(groups: string[][], phrase: PhraseQuery | null): Promise<boolean> {
   if (!groups.length) return false;
   const andQ = groups.map((g) => `(${g.join(" | ")})`).join(" & ");
-  const andTainted = await cached(`sa:${andQ}`, async () => {
-    const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ]);
-    return taintedBySample(rows, (r) => lexicalVisible(maskedMatchWords(r), groups));
-  });
-  if (!andTainted || !phrase || phrase.groups.length < 2) return andTainted;
-  const phQ = phraseTsQuery(phrase);
-  return cached(`sp:${phQ}`, async () => {
-    const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ]);
-    // عيّنة العبارة الفارغة لا تشهد بشيء، فيبقى الحكم للعيّنة الأولى.
-    if (!rows.length) return true;
-    return taintedBySample(rows, (r) => phraseInWords(normWordList(maskedSearchNorm(r)), phrase));
-  });
+  const phQ = phrase && phrase.groups.length >= 2 ? phraseTsQuery(phrase) : null;
+  const [andTainted, phraseTainted] = await Promise.all([
+    cached(`sa:${andQ}`, async () => {
+      const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ]);
+      return taintedBySample(rows, (r) => lexicalVisible(maskedMatchWords(r), groups));
+    }),
+    phQ && phrase
+      ? cached(`sp:${phQ}`, async () => {
+          const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ]);
+          // عيّنة العبارة الفارغة لا تشهد بشيء، فيبقى الحكم للعيّنة الأولى.
+          if (!rows.length) return true;
+          return taintedBySample(rows, (r) => phraseInWords(normWordList(maskedSearchNorm(r)), phrase));
+        })
+      : Promise.resolve(true),
+  ]);
+  return andTainted && phraseTainted;
 }
 
-/** لفظ الحصر: عيّنة من الأحكام التي يطابقها شرطه وحده (cond بمعاملاته)، بلا مرشحات ولا مؤشر. */
+/**
+ * لفظ الحصر: عيّنة من الأحكام التي يطابقها نصه وحده (cond بمعاملاته، بلا أرقامه ولا مرشحات ولا مؤشر)، فلا يوجّه
+ * رقمٌ في اللفظ العيّنةَ إلى قضية بعينها. term بلا أرقام، والمفتاح الشرط المطبّع نفسه.
+ */
 export async function enumerateTermTainted(term: EnumerateTerm, cond: string, params: unknown[]): Promise<boolean> {
-  return cached(`e:${JSON.stringify(term)}`, async () => {
+  return cached(`e:${cond}\u0000${JSON.stringify(params)}`, async () => {
     const rows = await sampleRows(cond, params);
     return taintedBySample(rows, (r) =>
       enumerateTermVisible(term, {
