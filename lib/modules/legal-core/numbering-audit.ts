@@ -67,13 +67,19 @@ export function isNumericTitle(title: string | null | undefined): boolean {
   return !!title && NUMERIC_TITLE.test(title);
 }
 
+/** أطول أول سطر يُقرأ منه العدد: أطول منه فهو متن لا عنوان، فلا يُقرأ (يجمع المحلل ألفاظ العدد في السطر كله). */
+export const CONTENT_ORDINAL_MAX_LINE = 80;
+/** ما يجلبه التدقيق من أول سطر في المتن. يجب أن يزيد على CONTENT_ORDINAL_MAX_LINE، وإلا لم يُرفض السطر الطويل
+ * المقطوع، فقُرئت ألفاظ أعداد من النص («خلال ثلاثين يومًا») عددًا للمادة (الأمر ٠٨، الجودة م٣ ون١١). */
+export const FIRST_LINE_FETCH_LIMIT = 200;
+
 /** أول سطر في المتن يبدأ بـ«المادة» ثم عدد ترتيبي مكتوب بالكلمات («المادة التاسعة والسبعون:»). */
 const CONTENT_ORDINAL_LINE = /^\s*(?:ال)?ماد[ةه]\s+[\u0621-\u064A]/;
 
 export function contentOrdinal(firstLine: string | null | undefined): ReturnType<typeof parseArticleOrdinal> {
   if (!firstLine) return null;
   const line = firstLine.trim();
-  if (line.length > 80 || !CONTENT_ORDINAL_LINE.test(line) || /[0-9\u0660-\u0669\u06F0-\u06F9]/.test(line)) return null;
+  if (line.length > CONTENT_ORDINAL_MAX_LINE || !CONTENT_ORDINAL_LINE.test(line) || /[0-9\u0660-\u0669\u06F0-\u06F9]/.test(line)) return null;
   return titleOrdinal(line);
 }
 

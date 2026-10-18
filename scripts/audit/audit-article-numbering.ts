@@ -5,7 +5,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
-import { auditLawNumbering, type NumberingAudit, type NumberingRow } from "../../lib/modules/legal-core/numbering-audit";
+import { FIRST_LINE_FETCH_LIMIT, auditLawNumbering, type NumberingAudit, type NumberingRow } from "../../lib/modules/legal-core/numbering-audit";
 import { NON_ARTICLE_BIS } from "../../lib/modules/legal-core/article-key";
 
 const jsonOut = process.argv.includes("--json") ? process.argv[process.argv.indexOf("--json") + 1] : null;
@@ -19,8 +19,9 @@ async function main() {
       await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
       return tx.$queryRawUnsafe<Array<NumberingRow & { lawName: string }>>(
         // الصفوف غير المادية (درجة «مكرر» ≥ NON_ARTICLE_BIS) ليست مواد، فلا تدخل في التدقيق.
-        // أول سطر من المتن مقطوعًا إلى 80 حرفًا فقط (لا النص): مصدر العدد الترتيبي حين يكون العنوان رقميًّا (الأمر ٠٨).
-        `SELECT "lawName", "articleNumber", title, left(btrim(split_part(btrim(content), E'\\n', 1)), 200) AS "firstLine"
+        // أول سطر من المتن مقطوعًا إلى FIRST_LINE_FETCH_LIMIT حرفًا (لا يُطبع): مصدر العدد الترتيبي حين يكون العنوان رقميًّا (الأمر ٠٨)؛
+        // أطول من حارس السطر (80) حتى يُرفض السطر الطويل لا أن يُقطع فيُقرأ.
+        `SELECT "lawName", "articleNumber", title, left(btrim(split_part(btrim(content), E'\\n', 1)), ${FIRST_LINE_FETCH_LIMIT}) AS "firstLine"
            FROM legal_articles WHERE "articleBis" < ${NON_ARTICLE_BIS}`,
       );
     });

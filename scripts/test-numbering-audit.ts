@@ -1,5 +1,5 @@
 /** HKM-028: اختبار تدقيق الترقيم ببيانات مصطنعة (بلا قاعدة). */
-import { auditLawNumbering } from "../lib/modules/legal-core/numbering-audit";
+import { CONTENT_ORDINAL_MAX_LINE, FIRST_LINE_FETCH_LIMIT, auditLawNumbering } from "../lib/modules/legal-core/numbering-audit";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -82,6 +82,13 @@ const digitsLine = auditLawNumbering([{ articleNumber: 1, title: null, firstLine
 ok(digitsLine.parsed === 0 && digitsLine.status === "no_ordinal_titles", "أول سطر بالأرقام لا يُعدّ عددًا مكتوبًا");
 const longLine = auditLawNumbering([{ articleNumber: 1, title: null, firstLine: "المادة الأولى من هذا النظام تسري على كل من يمارس النشاط التجاري في المملكة العربية السعودية بلا استثناء" }]);
 ok(longLine.parsed === 0, "السطر الطويل (متن لا عنوان) لا يُقرأ منه عدد");
+ok(FIRST_LINE_FETCH_LIMIT > CONTENT_ORDINAL_MAX_LINE, "ما يجلبه التدقيق من أول سطر أطول من حارس السطر الطويل");
+// كما تقطعه القاعدة: left(..., FIRST_LINE_FETCH_LIMIT). لو قُطع إلى 80 لقُرئ «الخامسة… ثلاثين» 35.
+const dbCut = (line: string) => line.slice(0, FIRST_LINE_FETCH_LIMIT);
+const fifth = "المادة الخامسة: يجب على المدعى عليه تقديم مذكرة الرد خلال ثلاثين يوما من تاريخ إبلاغه بصحيفة الدعوى وإلا عُدّ ذلك تنازلًا";
+const cutLine = auditLawNumbering([{ articleNumber: 5, title: "المادة 5", firstLine: dbCut(fifth) }]);
+ok(cutLine.fromContent === 0 && cutLine.mismatched === 0, "السطر الطويل مقطوعًا كما تقطعه القاعدة لا يُقرأ منه عدد (لا 35)");
+ok(auditLawNumbering([{ articleNumber: 5, title: "المادة 5", firstLine: fifth.slice(0, CONTENT_ORDINAL_MAX_LINE) }]).mismatched === 1, "الاختبار حساس: القطع إلى 80 يقرأ 35 فيُعلَّم مخالفًا");
 const wordFirst = auditLawNumbering([{ articleNumber: 3, title: "المادة الثالثة", firstLine: "المادة الرابعة" }]);
 ok(wordFirst.matched === 1 && wordFirst.fromContent === 0, "العنوان المكتوب بالكلمات مقدَّم على أول سطر في المتن");
 
