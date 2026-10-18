@@ -21,3 +21,4 @@ E19,reports/hakim-360/2026-10-18/SEARCH_EVALUATION.md,eval,2026-10-18T12:50:00Z,
 E20,reports/hakim-360/2026-10-18/CI_CD_LINEAGE.md,actions aggregate,2026-10-18T12:46:00Z,no,2658 runs summarized; logs not stored
 E21,reports/hakim-360/2026-10-18/SCHEMA_SEMANTIC_DIFF.csv,prisma migrate diff classification,2026-10-18T13:02:00Z,no,diff SQL not committed
 E22,reports/hakim-360/2026-10-18/DEPLOYMENT_SOURCE_RECONCILIATION.md,deployment,2026-10-18T13:00:00Z,no,no secrets; deployment URL is a vercel.app host
+E23,reports/hakim-360/2026-10-18/evidence/unification-2026-10-18T1326Z.json,narrow re-read,2026-10-18T13:26:00Z,no,unit_version buckets and editorial controls and deploy ids; no article text and no connection strings

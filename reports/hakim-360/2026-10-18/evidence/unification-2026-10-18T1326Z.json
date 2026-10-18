@@ -1,0 +1,48 @@
+{
+  "measured_at": "2026-10-18T13:26:00Z",
+  "mode": "SELECT only; default_transaction_read_only=on",
+  "database": "neondb",
+  "role": "neondb_owner",
+  "project_id": "misty-base-66693229",
+  "branch_id": "br-rapid-salad-aq782ea2",
+  "compute_mode": "primary",
+  "unit_version": {
+    "rows": 431,
+    "distinct_units": 393,
+    "min_created_at": "2026-10-16T07:40:33.647Z",
+    "max_created_at": "2026-10-18T13:07:40.716Z",
+    "created_before_2026-10-18T11:41:39Z": 346,
+    "created_from_11:41:39Z_through_12:47:46Z": 51,
+    "created_after_12:47:46Z": 34
+  },
+  "editorial_config": {
+    "version": 1,
+    "created_at": "2026-10-18T00:28:26.633Z",
+    "writeEnabled": true,
+    "requireMfa": true
+  },
+  "pitr": {
+    "history_retention_guc": false,
+    "protected_flag_in_pg_settings": false,
+    "note": "databricks.max_wal_retention_mb=12288 is not a Neon PITR window"
+  },
+  "not_recounted": ["legal_systems", "legal_articles", "judicial_cases", "embeddings", "idx_scan"],
+  "env_absent": ["VERCEL_TOKEN", "NEON_API_KEY", "EDITORIAL_DESK_WRITE"],
+  "http": {
+    "url": "https://hakeemai.net/api/health",
+    "at": "2026-10-18T13:25:53Z",
+    "status": 200,
+    "server": "cloudflare",
+    "x-vercel-cache": "MISS",
+    "x-vercel-id_region": "iad1",
+    "x-matched-path": "/api/health",
+    "www": "NXDOMAIN"
+  },
+  "github_production_latest_success": {
+    "deployment_id": 7151519406,
+    "sha": "a1733679f917333839ad2ed6c959d8e2b22049a4",
+    "created_at": "2026-10-18T07:32:53Z",
+    "target_host": "hakeem-platform-3f0epzx97-asim1417s-projects.vercel.app",
+    "origin_main": "d4ee69a33d5a55015933feca5b65481161743fda"
+  }
+}

@@ -1,10 +1,10 @@
 area,identified,inspected,evidence_linked,tested,reviewed,blocked_reason
 git history and open PRs,yes,yes,EXECUTION_LOG.md,read-only gh and git,self,secret names and branch protection HTTP 403
 Neon primary catalog,yes,yes,DATABASE_CATALOG.csv,SELECT read only,self,none
-Prisma drift,yes,yes,SCHEMA_DIFF_MATRIX.csv,parser plus catalog,self,full semantic type mapping beyond nullability is partial
+Prisma drift,yes,yes,SCHEMA_DIFF_MATRIX.csv; SCHEMA_SEMANTIC_DIFF.csv,parser at 11:41Z plus migrate diff inspect at 13:02Z,self,diff SQL not executed; keywords nullability was silent in the tool and confirmed by attnotnull
 migrations and SQL lineage,yes,yes,MIGRATION_CHRONOLOGY.md; SQL_DDL_LINEAGE.md,counts and applied row; reindex DDL read,self,which historical SQL file applied on which day is incomplete
 RLS roles grants,yes,yes,SECURITY_ACCESS_MATRIX.csv,catalog,self,which Vercel secret uses which role
-PITR and protected flag,yes,no,DR_READINESS.md,not run,self,Neon API not available
+PITR and protected flag,yes,partial,evidence/unification-2026-10-18T1326Z.json,pg_settings re-read 13:26Z,self,no history_retention and no protected flag in SQL; Neon API still absent; not a restore test
 restore drill,yes,no,SCHEMA_REBUILD_PLAN.md,not run,self,needs owner authorization
 legal systems and articles,yes,yes,LEGAL_DATA_QUALITY.md; LEGISLATIVE_VERSION_AUDIT.md; DATA_QUALITY_REPORT.md,aggregate SQL and md5 counts,self,official page text not re-fetched; duplicate hashes not adjudicated
 judicial corpus,yes,yes,JUDICIAL_CORPUS.md,aggregate SQL,self,no judgment text exported
@@ -13,20 +13,24 @@ search indexes,yes,partial,SEARCH_INDEX_AUDIT.md,SQL counts; OpenSearch not conn
 search benchmark,yes,yes,SEARCH_EVALUATION.md,eval:search lexical 54 queries exit 0,self,semantic and OpenSearch legs not executed; no paid embedder
 RAG citation guards,yes,yes,AI_GROUNDING_AUDIT.md; CITATION_RELATIONS_AUDIT.md,local tests plus citation-guard on primary,self,no live model call; two citation expectations diverged from current data
 MCP runtime,yes,partial,API_MCP_RUNTIME.md,unauthenticated 401 only,self,no traces for historical 300s timeouts
-editorial desk,yes,yes,EDITORIAL_DESK_AUDIT.md,SQL config plus code,self,authenticated write test forbidden
+editorial desk,yes,yes,EDITORIAL_DESK_AUDIT.md; evidence/unification-2026-10-18T1326Z.json,SQL config re-read 13:26Z plus code,self,EDITORIAL_DESK_WRITE on Vercel unread; authenticated write cycle not run
 storage backend,yes,yes,STORAGE_AUDIT.md,attachment aggregate without bytes,self,Vercel Azure or SharePoint env unread
 public UI and SEO,yes,partial,PUBLIC_UI_AUDIT.md,curl robots sitemap legal health,self,no login and no browser session
 billing,yes,yes,COST_CAPACITY.md,17 billing tables count 0; Moyasar unset,self,no invoices and no payment call
 Rasd Hostinger Supabase,yes,docs only,HISTORICAL_TIMELINE.md,not connected,self,no credentials
 CI lineage,yes,yes,CI_CD_LINEAGE.md,2658 runs aggregated,self,job logs not downloaded; protection and secret names HTTP 403
 DR plan,yes,yes,DR_READINESS.md,plan only,self,execution gated
-independent QA,yes,self only,README.md,spot-checked admin auth false positive,self,aman-tech skill absent
+independent QA,yes,self only,QUALITY_REVIEW.md,self review only,self,independent Codex or Claude Code review not performed; aman-tech skill absent
 legislative versions and provenance,yes,yes,LEGISLATIVE_VERSION_AUDIT.md; SOURCE_PROVENANCE_ATLAS.md,aggregate SQL 12:47Z,self,decree text not copied; BOE pages not refetched
 PDPL and observability and cost,yes,yes,SECURITY_PDPL_FLOW.md; OPERATIONS_OBSERVABILITY.md; COST_CAPACITY.md,local redaction tests; repo search; billing counts,self,no PDPL certification; hosted dashboards outside the repo unread
 schema rebuild and restore drill,yes,plan only,DISASTER_RECOVERY_EXECUTION_PLAN.md; RECOVERY_APPROVAL_GATES.md,not run,self,owner authorization still required; Neon PITR API unread
-deployment SHA,yes,partial,DEPLOYMENT_SOURCE_RECONCILIATION.md,HTML fingerprint and GitHub deployments,self,Vercel domain alias API unread
+deployment SHA,yes,partial,DEPLOYMENT_SOURCE_RECONCILIATION.md; evidence/unification-2026-10-18T1326Z.json,HTML fingerprint at 13:00Z; GitHub Production list re-read 13:26Z; health headers 13:25Z,self,Vercel domain alias API unread; HTML fingerprint not repeated at 13:26Z
 prisma semantic diff,yes,yes,SCHEMA_SEMANTIC_DIFF.csv; PRISMA_COMPATIBILITY_AUDIT.md,migrate diff inspect only,self,diff SQL not executed
 migration provenance,yes,yes,MIGRATION_APPLICATION_MATRIX.csv,39 files versus live tables,self,exact apply timestamp unknown except the one ledger row
 write surface,yes,yes,BACKEND_WRITE_SURFACE_AUDIT.csv,code read,self,EDITORIAL_DESK_WRITE value on Vercel unread
-MCP timeout cause,yes,partial,MCP_TIMEOUT_ROOT_CAUSE.md,code trace,self,no Vercel traces
+MCP timeout cause,yes,partial,MCP_TIMEOUT_ROOT_CAUSE.md,code trace,self,no Vercel traces at the 13:26Z recheck either
 search sync worker,yes,yes,INDEX_SYNC_WORKER_VERIFICATION.md,repo search and live count 0,self,OpenSearch document count unread
+unit_version growth,yes,yes,evidence/key_counts.csv; evidence/gap-closure-aggregates.json; evidence/unification-2026-10-18T1326Z.json,created_at buckets at 13:26Z explain 346 then 397 then 431,self,writer of the new rows not identified; article and ruling totals not re-counted
+hybrid semantic search,yes,no,SEARCH_EVALUATION.md,not run,self,lexical P@1 94 percent at 12:50Z is not this test
+editorial write cycle,yes,no,EDITORIAL_DESK_AUDIT.md,not run,self,needs owner authorization off production
+authenticated permission tests,yes,no,API_CATALOG.csv,not run,self,scanner false positive H360-020; no login session
