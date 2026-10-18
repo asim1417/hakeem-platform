@@ -1,13 +1,14 @@
 -- HKM-030 المرحلة 5: دالة تركيب نص النسخة داخل القاعدة (مخطط العمل uqn_fix، لا تمس جداول المنتج).
 -- spec: مصفوفة JSON من عمليات التحرير بالترتيب؛ كل «جزء» نص حرفي أو مصفوفة أجزاء، والجزء المقتطع من لقطة الأداة
 -- يكتب ["@", url, موضع يبدأ من 0, طول, md5] ويُتحقق من بصمته. أي عدم تطابق يرفع استثناءً يلغي المعاملة.
---   ["whole", P] | ["sub", OLD, NEW] (OLD موجود مرة واحدة بالضبط) | ["append", P]
+-- في النص الحرفي تُكتب المسافة غير المنقسمة ⍽ (الهروب \u00a0 قد يُفك مرتين في النقل فتختل البصمة).
+--   ["whole", P] | ["sub", OLD, NEW] (OLD موجود مرة واحدة بالضبط) | ["suball", OLD, NEW] («أينما ورد»: مرة على الأقل) | ["append", P]
 --   ["span", A, Z, NEW] (يستبدل من A حتى ما قبل Z) | ["from", A, NEW] (من A حتى آخر النص)
 --   ["re", PATTERN, REPLACEMENT] (مطابقة واحدة بالضبط)
 CREATE OR REPLACE FUNCTION uqn_fix.hkm30_part(p jsonb) RETURNS text LANGUAGE plpgsql STABLE AS $$
 DECLARE x jsonb; r text := ''; t text;
 BEGIN
-  IF jsonb_typeof(p) = 'string' THEN RETURN p #>> '{}'; END IF;
+  IF jsonb_typeof(p) = 'string' THEN RETURN replace(p #>> '{}', '⍽', chr(160)); END IF;  -- ⍽ = مسافة غير منقسمة
   IF jsonb_typeof(p) = 'array' AND p ->> 0 = '@' THEN
     SELECT substr(body, (p ->> 2)::int + 1, (p ->> 3)::int) INTO t FROM uqn_fix.source_snapshot WHERE url = p ->> 1;
     IF t IS NULL OR md5(t) <> p ->> 4 THEN RAISE EXCEPTION 'hkm30: snapshot fragment mismatch %', p; END IF;
@@ -31,6 +32,11 @@ BEGIN
         a := uqn_fix.hkm30_part(e -> 1);
         n := (length(b) - length(replace(b, a, ''))) / length(a);
         IF n <> 1 THEN RAISE EXCEPTION 'hkm30: edit % sub found % times: %', k, n, left(a, 80); END IF;
+        b := replace(b, a, uqn_fix.hkm30_part(e -> 2));
+      WHEN 'suball' THEN
+        a := uqn_fix.hkm30_part(e -> 1);
+        n := (length(b) - length(replace(b, a, ''))) / length(a);
+        IF n < 1 THEN RAISE EXCEPTION 'hkm30: edit % suball found none: %', k, left(a, 80); END IF;
         b := replace(b, a, uqn_fix.hkm30_part(e -> 2));
       WHEN 'span' THEN
         a := uqn_fix.hkm30_part(e -> 1); z := uqn_fix.hkm30_part(e -> 2);
