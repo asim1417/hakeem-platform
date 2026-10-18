@@ -24,7 +24,6 @@ function resolveErrors(root) {
     }
   });
 }
-const resolvable = (root) => resolveErrors(root).length === 0;
 
 /** وصف حالة الروابط بلا أسرار (للتعليق التوضيحي عند الفشل). */
 function describe(root, prefix) {
@@ -41,7 +40,9 @@ function describe(root, prefix) {
 
 /** يعيد "present" إن كان pg قابلًا للحل من root، وإلا يثبّته ويربطه ويعيد "installed". */
 export function ensurePg(root = process.cwd(), prefix = path.join(tmpdir(), "hkm029-pg")) {
-  if (resolvable(root)) return "present";
+  // فحص بالملفات لا بـ require.resolve: Node 24 يخزّن «package.json غائب» من محاولة حل فاشلة، فيبقى pg
+  // غير قابل للحل في العملية نفسها بعد ربطه (التشغيل 39096590395).
+  if (NAMES.every((n) => existsSync(path.join(root, "node_modules", n, "package.json")))) return "present";
   mkdirSync(prefix, { recursive: true });
   execFileSync("npm", ["install", "--prefix", prefix, "--no-package-lock", "--ignore-scripts", "--no-audit", "--no-fund", `pg@${PG_VERSION}`], {
     stdio: ["ignore", "ignore", "inherit"],
@@ -52,6 +53,12 @@ export function ensurePg(root = process.cwd(), prefix = path.join(tmpdir(), "hkm
     const link = path.join(root, "node_modules", n);
     if (!existsSync(target)) throw new Error(`لم يُثبَّت ${n}`);
     if (!existsSync(link)) symlinkSync(target, link, "dir");
+  }
+  // التحقق في عملية جديدة (لا ذاكرة حل فيها)، ثم في هذه العملية لأول مرة.
+  try {
+    execFileSync(process.execPath, ["-e", NAMES.map((n) => `require.resolve(${JSON.stringify(n)})`).join(";")], { cwd: root, stdio: "ignore" });
+  } catch {
+    throw new Error(`pg غير قابل للحل بعد التثبيت (عملية جديدة) — ${describe(root, prefix)}`);
   }
   const errs = resolveErrors(root);
   if (errs.length) throw new Error(`pg غير قابل للحل بعد التثبيت: ${errs.join(" | ")} — ${describe(root, prefix)}`);
