@@ -139,6 +139,17 @@ SELECT "lawName","articleNumber",title FROM legal_articles WHERE "articleNumber"
 
 ---
 
+## IDX-001 — فهارس المواد تتبع نصها (HKM-029)
+
+**القاعدة:** أي كتابة على `title` أو `content` أو `lawName` أو `keywords` أو `classification` أو `chapter` في `legal_articles` تعيد بناء `search_norm` للصفوف نفسها **في المعاملة نفسها** (بـ `buildSearchNorm` أو مكافئه المختبَر)، وتُسجَّل المواد للمتجهات وOpenSearch.
+- **لماذا:** فحص 16/10/2026 وجد 598 مادة في المعاملات المدنية فهرسها مبني من نص قديم أو من نص المادة المجاورة، فكانت كلمات المادة 476 تعيد 475. أُصلح على الإنتاج قبل 17/10 بكاتب غير مسجّل، وبقيت 919 متجهًا قديمًا (جرد 18/10).
+- **بعد أي حقن أو تعديل نصوص أو ترقيم:** `npm run audit:index-drift` (قراءة فقط، معاملة READ ONLY)، ويُرفق تقريره (`reports/project-control/<التاريخ>/hkm-029-index-drift.*`) بالبطاقة.
+- **الإصلاح إن ظهر انحراف:** `--freeze` لتجميد القائمة، ثم `scripts/hkm-029/rebuild-search-norm.mjs` بحراسه ونص المالك «أعتمد إعادة بناء فهرس <العدد> مادة — HKM-029»، ثم `verify-search-norm.mjs` حتى `confirmed`. التراجع `rollback-search-norm.mjs` بسجل الدفعة.
+- **ممنوع:** `reindexSearchNorm` العامة، و`POST /api/admin/legal-core/reindex`، و`scripts/backfill-search-norm.ts --all` على الإنتاج.
+- **المتجهات وOpenSearch:** الجرد يعدّ القديم منها؛ إعادة البناء قرار المالك (تكلفة)، وتُبنى للمعرّفات المعدودة فقط.
+
+---
+
 ## ملاحظات أمان دائمة
 - لا `prisma db push` على الإنتاج إطلاقًا.
 - أي كتابة على Neon تتطلّب: Snapshot/Branch + موافقة صريحة + نافذة صيانة + تحقّق بعدها.
