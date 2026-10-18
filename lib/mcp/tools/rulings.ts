@@ -10,7 +10,16 @@ import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
 import { extractHijriYear, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { digitVariants, rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
-import { enumerateMatchOnlyInNames, maskBySegments, maskRulingText, sliceMasked, type EnumerateTerm } from "@/lib/mcp/ruling-privacy";
+import {
+  enumerateTermVisible,
+  maskBySegments,
+  maskRulingText,
+  maskedSearchNorm,
+  sliceMasked,
+  termIsArabic,
+  type EnumerateTerm,
+} from "@/lib/mcp/ruling-privacy";
+import { enumerateTermTainted } from "@/lib/mcp/name-taint";
 import type { SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
@@ -66,20 +75,24 @@ export async function enumerateRulings(
   pageSize = 50,
   cursor?: string,
   snippetLen = 500,
-) {
+): Promise<EnumBase | EnumPage> {
   // HKM-012: لا يُعثر على حكم بهوية أو جوال ولا بجزء منهما. الأرقام الطويلة تُطابَق في رقم القضية
-  // والقرار فقط؛ اللفظ العربي الخالص في search_norm (الحجب لا يمسّه)؛ وما فيه رقم أو لاتيني على
-  // المتن المنقّح داخل القاعدة، لأن search_norm قد يحمل بقايا محجوب لا ينظّفها #704.
+  // والقرار فقط؛ اللفظ العربي الخالص في search_norm؛ وما فيه رقم أو لاتيني على المتن المنقّح داخل القاعدة،
+  // لأن search_norm قد يحمل بقايا محجوب لا ينظّفها #704.
   const parts = terms.map((t) => splitRulingQuery(t)).filter((p) => p.text || p.numbers.length);
   terms = parts.map((p) => [p.text, ...p.numbers].filter(Boolean).join(" "));
-  if (!parts.length) {
-    const empty = { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total: 0, by_court: [] };
-    return countOnly ? empty : { ...empty, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
-  }
-  const params: unknown[] = [];
-  const termConds = parts.map((p) => {
+  const filtersOut = { court: court ?? null, year_h: yearH ?? null };
+  const size = Math.max(1, Math.floor(pageSize));
+  const empty = (): EnumBase | EnumPage => {
+    const base: EnumBase = { terms, filters: filtersOut, total: 0, by_court: [] };
+    return countOnly ? base : { ...base, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
+  };
+  if (!parts.length) return empty();
+
+  // شرط كل لفظ (بمعاملاته). search_norm (المحكمة والعنوان والمتن والاستئناف والرقمان والمدينة) للعربي الخالص،
+  // والعنوان والمتن المنقّحان للحساس.
+  const termCond = (p: (typeof parts)[number], params: unknown[]): string => {
     const conds = rulingNumbersSql(p.numbers, params, "r.");
-    // العنوان والمتن كما في search_norm (لا الاستئناف).
     if (p.text && p.sensitive) conds.push(rulingRedactedTextSql(p.text, params, "r.", { appeal: false }));
     else if (p.text) {
       // تعقيم أحرف بدل ILIKE (% _ \) ثمّ تغليف بـ %..% — بمعاملات مربوطة (بلا حقن).
@@ -87,14 +100,30 @@ export async function enumerateRulings(
       conds.push(`r."search_norm" ILIKE $${params.length}`);
     }
     return `(${conds.join(" AND ")})`;
-  });
+  };
+  const enumTerms: EnumerateTerm[] = parts.map((p) => ({ text: p.text, numbers: p.numbers, sensitive: p.sensitive }));
+
+  // HKM-012: اللفظ العربي الذي يطابق داخل أسماء الأفراد غالبًا (عيّنة من أحكامه وحده، بلا مرشحات ولا مؤشر)
+  // لا يطابق شيئًا: يخرج من العدد والتوزيع والصفحة، فلا يختلف المخرج عن لفظ غائب عن القاعدة.
+  const taintQ = Promise.all(
+    parts.map((p, i) => {
+      if (!termIsArabic(enumTerms[i])) return Promise.resolve(false);
+      const tp: unknown[] = [];
+      return enumerateTermTainted(enumTerms[i], termCond(p, tp), tp);
+    }),
+  );
+
+  const params: unknown[] = [];
+  const termConds = parts.map((p) => termCond(p, params));
+  // بت لكل لفظ يطابق الحكم، فيُحسب العدد والتوزيع لأي مجموعة من الألفاظ من مسح واحد.
+  const maskExpr = termConds.map((c, i) => `(CASE WHEN ${c} THEN ${2 ** i} ELSE 0 END)`).join(" + ");
   const filters: string[] = [`(${termConds.join(" OR ")})`];
   if (court) {
     params.push(`%${court}%`);
     filters.push(`r."court" ILIKE $${params.length}`);
   }
   // لا عمود سنة هجرية — تقريبٌ بمطابقة نصّ التاريخ (تُشتقّ السنة في المخرجات). التاريخ مخزَّن بالأرقام
-  // الهندية غالبًا، فتُطابَق الصيغتان (كانت اللاتينية وحدها لا تجد شيئًا).
+  // الهندية، فتُطابَق الصيغتان (كانت اللاتينية وحدها لا تجد شيئًا).
   if (yearH) {
     const conds = digitVariants(String(yearH)).map((v) => {
       params.push(`%${v}%`);
@@ -104,74 +133,130 @@ export async function enumerateRulings(
   }
   const whereSql = filters.join(" AND ");
 
-  // الصفحة تُجلب دائمًا (ولو count_only): بها يُتحقق ألا تكون المطابقة داخل اسم محجوب. الاستعلامات الثلاثة
-  // متوازية (كل منها مسح لـ search_norm بلا فهرس احتواء، فتسلسلها كان يتجاوز مهلة الأداة).
-  const pageParams = cursor && !countOnly ? [...params, cursor] : params;
-  const pageFilters = cursor && !countOnly ? `${whereSql} AND r."id" > $${pageParams.length}` : whereSql;
-  const size = Math.max(1, Math.floor(pageSize));
-  const [totalRows, byCourt, rows] = await Promise.all([
-    prisma.$queryRawUnsafe<{ n: bigint }[]>(`SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`, ...params),
-    prisma.$queryRawUnsafe<{ court: string | null; n: bigint }[]>(
-      `SELECT r."court" AS court, COUNT(*)::bigint AS n
+  const aggQ = prisma.$queryRawUnsafe<Array<{ court: string | null; m: number; n: bigint }>>(
+    `SELECT r."court" AS court, (${maskExpr})::int AS m, COUNT(*)::bigint AS n
      FROM "judicial_cases" r WHERE ${whereSql}
-     GROUP BY r."court" ORDER BY n DESC LIMIT 30`,
-      ...params,
-    ),
-    prisma.$queryRawUnsafe<
-      Array<{ id: string; caseNo: string | null; decisionNo: string | null; court: string | null; decisionDateText: string | null; judgmentTitle: string | null; judgmentText: string }>
-    >(
-      `SELECT r."id", r."caseNo", r."decisionNo", r."court", r."decisionDateText", r."judgmentTitle", r."judgmentText"
-     FROM "judicial_cases" r WHERE ${pageFilters}
-     ORDER BY r."id" ASC LIMIT ${size}`,
-      ...pageParams,
-    ),
-  ]);
-  const total = Number(totalRows[0]?.n ?? 0);
-
-  // HKM-012: الحكم الذي لا يطابقه لفظ إلا داخل اسم محجوب لا يُعاد. وإن أُسقط شيء فالإجمالي والتوزيع من
-  // الصفحة وحدها (counts_page_only)، فلا يكشف عددُ القاعدة عددَ أحكام اسمٍ.
-  const enumTerms: EnumerateTerm[] = parts.map((p) => ({ text: p.text, numbers: p.numbers, sensitive: p.sensitive }));
-  let withheld = 0;
-  const results: Array<{ ruling_id: string; case_number: string | null; court: string | null; year_h: number | null; match_offset: number | null; snippet: string }> = [];
-  for (const r of rows) {
-    // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
-    const txt = maskRulingText(r.judgmentText);
-    const maskedTitle = maskRulingText(r.judgmentTitle);
-    if (enumerateMatchOnlyInNames({ title: r.judgmentTitle, text: r.judgmentText, maskedTitle, maskedText: txt, caseNo: r.caseNo, decisionNo: r.decisionNo }, enumTerms)) {
-      withheld++;
-      continue;
+     GROUP BY 1, 2`,
+    ...params,
+  );
+  // نافذة الصفحة: ضعف حجمها، فيُكمل ما أُسقط منها؛ والمؤشر داخلي (آخر صف مقروء) لا يُعاد إلا إن كان صفًّا معروضًا.
+  const windowSize = Math.min(size * 2, 200);
+  const readWindow = (after: string | undefined, onlyMask: number | null) => {
+    const wp = [...params];
+    let extra = "";
+    if (onlyMask !== null) extra += ` AND ((${maskExpr})::int & ${onlyMask}) <> 0`;
+    if (after) {
+      wp.push(after);
+      extra += ` AND r."id" > $${wp.length}`;
     }
-    // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
-    let idx = -1;
-    for (const t of parts.map((p) => p.text).filter(Boolean)) {
-      const i = txt.indexOf(t);
-      if (i !== -1 && (idx === -1 || i < idx)) idx = i;
-    }
-    const start = Math.max(0, idx - Math.floor(snippetLen / 2));
-    const snippet = idx === -1 ? txt.slice(0, snippetLen) : txt.slice(start, start + snippetLen);
-    results.push({
-      ruling_id: r.id,
-      case_number: r.decisionNo ?? r.caseNo ?? null,
-      court: r.court,
-      year_h: hijriYear(r.decisionDateText),
-      match_offset: idx === -1 ? null : idx,
-      snippet,
-    });
-  }
-
-  const pageCourts = () => {
-    const m = new Map<string | null, number>();
-    for (const x of results) m.set(x.court, (m.get(x.court) ?? 0) + 1);
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([court, count]) => ({ court, count }));
+    return prisma.$queryRawUnsafe<Array<EnumRow & { m: number }>>(
+      `SELECT r."id", r."court", r."judgmentTitle", r."judgmentText", r."appealText", r."caseNo", r."decisionNo", r."cityName",
+              r."decisionDateText", (${maskExpr})::int AS m
+       FROM "judicial_cases" r WHERE ${whereSql}${extra}
+       ORDER BY r."id" ASC LIMIT ${windowSize}`,
+      ...wp,
+    );
   };
-  const base =
-    withheld > 0
-      ? { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total: results.length, by_court: pageCourts(), counts_page_only: true }
-      : { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total, by_court: byCourt.map((c) => ({ court: c.court, count: Number(c.n) })) };
+  const [tainted, agg, firstWindow] = await Promise.all([taintQ, aggQ, countOnly ? Promise.resolve([]) : readWindow(cursor, null)]);
 
+  const keep = tainted.reduce((acc, t, i) => (t ? acc : acc | (2 ** i)), 0);
+  if (keep === 0) return empty();
+
+  let total = 0;
+  const courts = new Map<string | null, number>();
+  for (const a of agg) {
+    if ((Number(a.m) & keep) === 0) continue;
+    const n = Number(a.n);
+    total += n;
+    courts.set(a.court, (courts.get(a.court) ?? 0) + n);
+  }
+  const base: EnumBase = {
+    terms,
+    filters: filtersOut,
+    total,
+    by_court: [...courts.entries()].sort((x, y) => y[1] - x[1]).slice(0, 30).map(([c, count]) => ({ court: c, count })),
+  };
   if (countOnly) return base;
 
-  const nextCursor = rows.length === size ? rows[rows.length - 1].id : null;
+  // الصفحة: صف يطابقه لفظ باقٍ على نسخته المحجوبة بباني الإنتاج؛ وما سواه لا يُعاد ولا يُكشف معرّفه.
+  const results: EnumResult[] = [];
+  let lastReturned: string | null = null;
+  let window = firstWindow;
+  let more = true;
+  for (let w = 0; w < 3 && results.length < size; w++) {
+    if (w > 0) {
+      if (!more || !window.length) break;
+      window = await readWindow(window[window.length - 1].id, keep);
+    }
+    more = window.length === windowSize;
+    for (const r of window) {
+      if (results.length >= size) break;
+      const m = Number(r.m) & keep;
+      if (m === 0) continue;
+      const maskedNorm = maskedSearchNorm(r);
+      let title: string | null = null;
+      const visible = enumTerms.some(
+        (t, i) =>
+          (m & (2 ** i)) !== 0 &&
+          enumerateTermVisible(t, {
+            maskedNorm,
+            maskedTitleText: () => `${(title ??= maskRulingText(r.judgmentTitle))}\n${maskRulingText(r.judgmentText)}`,
+            caseNo: r.caseNo,
+            decisionNo: r.decisionNo,
+          }),
+      );
+      if (!visible) continue;
+      // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
+      const txt = maskRulingText(r.judgmentText);
+      // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
+      let idx = -1;
+      for (const t of parts.map((p) => p.text).filter(Boolean)) {
+        const i = txt.indexOf(t);
+        if (i !== -1 && (idx === -1 || i < idx)) idx = i;
+      }
+      const start = Math.max(0, idx - Math.floor(snippetLen / 2));
+      results.push({
+        ruling_id: r.id,
+        case_number: r.decisionNo ?? r.caseNo ?? null,
+        court: r.court,
+        year_h: hijriYear(r.decisionDateText),
+        match_offset: idx === -1 ? null : idx,
+        snippet: idx === -1 ? txt.slice(0, snippetLen) : txt.slice(start, start + snippetLen),
+      });
+      lastReturned = r.id;
+    }
+    // الصفحة امتلأت قبل آخر النافذة: الباقي يُقرأ في النداء التالي من آخر صف معروض.
+    if (results.length >= size) break;
+  }
+  // المؤشر آخر صف معروض فقط (صف لم يُعَد لا يُكشف معرّفه)؛ ولا مؤشر إن لم يُعَد شيء أو انتهت المطابقات.
+  const nextCursor = lastReturned !== null && (results.length >= size || more) ? lastReturned : null;
 
   return { ...base, page_size: pageSize, returned: results.length, next_cursor: nextCursor, results };
 }
+
+type EnumRow = {
+  id: string;
+  court: string | null;
+  judgmentTitle: string | null;
+  judgmentText: string;
+  appealText: string | null;
+  caseNo: string | null;
+  decisionNo: string | null;
+  cityName: string | null;
+  decisionDateText: string | null;
+};
+type EnumBase = {
+  terms: string[];
+  filters: { court: string | null; year_h: number | null };
+  total: number;
+  by_court: Array<{ court: string | null; count: number }>;
+};
+type EnumPage = EnumBase & { page_size: number; returned: number; next_cursor: string | null; results: EnumResult[] };
+type EnumResult = {
+  ruling_id: string;
+  case_number: string | null;
+  court: string | null;
+  year_h: number | null;
+  match_offset: number | null;
+  snippet: string;
+};

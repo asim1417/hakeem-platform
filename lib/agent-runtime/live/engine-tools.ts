@@ -117,14 +117,14 @@ export interface PrincipleRow { title: string; principle: string; court: string 
 /**
  * تخريج حكم — مبادئ قضائية مطابقة للاستعلام (للقراءة، غير مقيّد بنظام).
  * HKM-012 (الأمر ٠٨): يخرج عبر طبقة MCP، فالعنوان ونص المبدأ محجوبان (أسماء الأفراد والأرقام الشخصية)،
- * والحجب قبل القص؛ والمبدأ الذي لا تطابق ألفاظُه إلا داخل اسم محجوب لا يُعاد.
+ * والحجب قبل القص؛ والمبدأ الذي لا تطابق ألفاظُه نسختَه المحجوبة لا يُعاد (لا يُعثر على مبدأ باسم فرد).
  */
 export async function takhrijHukm(query: string, limit = 20): Promise<{ principles: PrincipleRow[]; note?: string }> {
   const qs = tokens(query);
   if (!qs.length) return { principles: [], note: "استعلامٌ فارغ." };
   try {
     const { prisma } = await import("@/lib/prisma");
-    const { containsMatchOnlyInNames, maskRulingText, sliceMasked } = await import("@/lib/mcp/ruling-privacy");
+    const { containsVisible, maskRulingText, sliceMasked } = await import("@/lib/mcp/ruling-privacy");
     const want = Math.min(Math.max(limit, 1), 50);
     const rows = await prisma.judicialPrinciple.findMany({
       where: { OR: qs.flatMap((t) => [
@@ -140,7 +140,8 @@ export async function takhrijHukm(query: string, limit = 20): Promise<{ principl
     for (const r of rows) {
       const title = maskRulingText(r.title);
       const full = maskRulingText(r.principleText);
-      if (containsMatchOnlyInNames([r.title, r.principleText, r.topic], [title, full, r.topic], qs)) continue;
+      // يُعاد إن طابق لفظٌ النسخةَ المحجوبة (contains كما في الاستعلام)؛ وإلا فقد طابق داخل اسم.
+      if (!containsVisible(qs, [title, full, r.topic])) continue;
       principles.push({ title, principle: sliceMasked(full, 0, 600).text, court: r.court, topic: r.topic });
       if (principles.length >= want) break;
     }

@@ -2,25 +2,33 @@
  * mask — حجب البيانات الشخصية في نصوص الأحكام قبل العرض أو التصدير أو الإرسال إلى نموذج.
  *
  * يعيد استعمال redactPII القائم (الهوية والإقامة والجوال والآيبان والبريد، مع حماية أرقام
- * المواد والصكوك والتواريخ)، ويضيف حجب أسماء الأفراد بقاعدتين محافظتين:
+ * المواد والصكوك والتواريخ)، ويضيف حجب أسماء الأفراد بثلاث قواعد محافظة:
  *   ١. سلاسل النسب: «محمد بن عبدالله بن سعد القحطاني» ← [اسم]، ومعها «عبد ﷲ» و«آل/أبو فلان» بعدها.
  *   ٢. ما يلي صفة الطرف: «المدعي/ سعد الدوسري» ← «المدعي/ [اسم]». صفة الطرف تحتاج فاصلًا بعدها
  *      («/» أو «:» أو «-» أو قوس) أو كلمة محرّكة قبلها («حضر»، «بإلزام»)، واللقب («السيد»، «المحامي»،
  *      «المدعو») لا يحتاج. ويتوقف الاسم عند كلمة قاطعة أو صفة أو كلمة منوّنة، وبحد خمس كلمات.
- *      ولاحقة الجنس في القوالب («المدعي:ة»، «المدعى عليه:ا») من الصفة لا من الاسم.
- *   ٣. ما يسبق مرسى الهوية: «ضد سعد علي الدوسري سجل مدني رقم» ← «ضد [اسم] سجل مدني رقم» (حتى خمس كلمات،
- *      والسجل التجاري لا يُعدّ، فأسماء المنشآت تبقى).
- * «ﷲ» حرف واحد في النصوص المنشورة («عبدﷲ»)، فيُعدّ من حروف الاسم؛ والتطويل لا يمنع مطابقة الكلمة القاطعة.
+ *      ولاحقة الجنس في القوالب («المدعي:ة»، «المدعى عليه:ا») من الصفة لا من الاسم. ومن الصفات «ضد/»
+ *      وصفات أعضاء الدائرة («القاضي:»، «أمين السر:»)، وكلها بفاصل.
+ *   ٣. ما يسبق مرسى الهوية: «ضد سعد علي الدوسري سجل مدني رقم» ← «ضد [اسم] سجل مدني رقم» (حتى خمس كلمات).
+ *      المرسى يلزمه ما يدل على رقم بعده بقليل («رقم»، «(»، رقم، علامة حجب)، فـ«صورة سجل مدني» لا تُحجب؛
+ *      والسجل التجاري ليس مرسى، فأسماء المنشآت تبقى. و«<نسبة> الجنسية» بعد الاسم مرسى أيضًا.
+ * «ﷲ» والأشكال المعروضة والياء والكاف الفارسيتان ووصلا ZWNJ/ZWJ من حروف الاسم، والحركات داخل الاسم لا تقطعه.
  * لا تحجب أسماء الشركات والجهات (ليست بيانات شخصية)، ولا الصفات نفسها، ولا أرقام المواد.
- * الحجب قاعدي وقد يفوته اسم بلا صفة ولا نسب؛ لذا يُقاس على العيّنة الذهبية ويُراجع.
+ * الحجب قاعدي وقد يفوته اسم بلا صفة ولا نسب ولا مرسى؛ لذا يُقاس على العيّنة الذهبية ويُراجع.
+ * الكلفة خطية في طول النص (كل تعبير يُمسح مرة في كل تمريرة).
  */
 import { redactPII } from "../../modules/legal-core/rulings-search";
 
 export const NAME_MASK = "[اسم]";
 
-// الحروف العربية (والتطويل ضمنها) و«ﷲ» (U+FDF2) حرفًا واحدًا كما في نصوص الأحكام المنشورة.
-const LETTERS = "\\u0621-\\u064A\\uFDF2";
-const AR = `[${LETTERS}]+`;
+// حروف الاسم: العربية (والتطويل ضمنها)، والكاف والياء الفارسيتان، ووصلا ZWNJ/ZWJ، والأشكال المعروضة
+// (ومنها «ﷲ» U+FDF2 حرفًا واحدًا كما في نصوص الأحكام المنشورة)، دون القوسين المزخرفين U+FD3E/U+FD3F.
+const LETTERS = "\\u0621-\\u064A\\u06A9\\u06CC\\u200C\\u200D\\uFB50-\\uFD3D\\uFD50-\\uFDFF\\uFE70-\\uFEFC";
+const HARAKAT = "\\u064B-\\u0652\\u0670";
+const WORD = `[${LETTERS}][${LETTERS}${HARAKAT}]*`;
+/** لفظ بحركات اختيارية بين حروفه وبعدها («بْن»، «بِنْت»). */
+const withHarakat = (w: string) => [...w].map((c) => `${c}[${HARAKAT}]*`).join("");
+
 // صفات الأطراف: يُحجب ما بعدها إن تلاها فاصل («/» أو «:» أو «-» أو قوس)، أو سبقها «حضر/بحضور».
 // بلا ذلك يليها غالبًا فعل أو وصف («وحيث إن المدعي طلب…»، «للمدعي بمبلغ…») فلا يُحجب (HKM-012، الأمر ٠٨).
 const PARTY_MARKERS = [
@@ -30,6 +38,10 @@ const PARTY_MARKERS = [
   "الشاهد", "الشاهدة", "الكفيل", "الضامن", "الوكيل الشرعي", "الوكيل", "الوكيلة", "وكيل", "وكيله", "وكيلها", "وكيلهم", "وكيلة",
   "الزوج", "الزوجة",
 ];
+// «ضد/ فلان» في صدر الحكم، وأعضاء الدائرة في التوقيع («القاضي: فلان»، «أمين السر/ فلان») — بفاصل فقط،
+// فلا يُحجب ما بعد «ضد الحكم» ولا «الحكم القاضي بإلزام»؛ ولا تقطع اسمًا إلا إذا تلاها فاصل («القاضي» اسم عائلة أيضًا).
+const BENCH_MARKERS = ["ضد", "القاضي", "رئيس الدائرة", "عضو الدائرة", "عضو", "أمين السر", "أمين سر الدائرة", "كاتب الضبط", "الكاتب"];
+PARTY_MARKERS.push(...BENCH_MARKERS);
 // ألقاب يليها اسم الشخص دائمًا: يُحجب ما بعدها بلا فاصل.
 const TITLE_MARKERS = [
   "السيد", "السيدة", "المواطن", "المواطنة", "المقيم", "المقيمة", "الأستاذ", "الأستاذة", "المحامي", "المحامية", "المدعو", "المدعوة",
@@ -37,7 +49,7 @@ const TITLE_MARKERS = [
 const ROLE_MARKERS = [...PARTY_MARKERS, ...TITLE_MARKERS];
 const TITLES = new Set(TITLE_MARKERS);
 // ما يقطع الاسم بعد الصفة (حروف وأفعال وصفات تابعة).
-// «علي» ليست هنا: اسم شائع («فلان علي أحمد»)، وكتابة «على» بالياء لا تلي الاسم إلا نادرًا.
+// «علي» ليست هنا: اسم شائع («فلان علي أحمد»)؛ وتُعدّ قاطعة إذا تلتها كلمة تدل على أنها «على» (ALI_AS_ALA).
 const STOP = new Set([
   "بأن", "بان", "أن", "ان", "إن", "على", "في", "عن", "من", "إلى", "الى", "ضد", "مع", "الذي", "التي",
   "وقد", "قد", "حيث", "بصفته", "بصفتها", "بموجب", "هوية", "سجل", "رقم", "المذكور", "المذكورة", "المشار",
@@ -57,86 +69,154 @@ const STOP = new Set([
   "السعودية", "المذكورين", "المذكورتين", "المختص", "المختصة",
   // بقية الصفة المركبة («المدعى عليه») لا تكون اسمًا.
   "عليه", "عليها", "عليهما", "عليهم", "ضده", "ضدها",
+  // منطوق الأحكام بعد «القاضي:» ونحوها: ليست أسماء.
+  "بإلزام", "إلزام", "الزام", "بالزام", "برفض", "رفض", "بعدم", "عدم", "بقبول", "قبول", "بصرف", "صرف", "بإثبات", "إثبات",
+  "بفسخ", "فسخ", "بنقض", "نقض", "بتأييد", "تأييد",
+  // الترحّم والدعاء بعد أعلام الفقه، وصلات القرابة: ليست من الاسم («ابن قدامة رحمه الله»، «فلان وأخوه»).
+  "رحمه", "رحمها", "رحمهما", "رحمهم", "رضي", "تعالى", "حفظه", "حفظها", "وفقه", "غفر",
+  "عنه", "عنها", "عنهما", "عنهم", "أخوه", "أخيه", "أخاه", "أخته", "ابنه", "ابنته", "والده", "والدته", "زوجته", "زوجها",
+  // ما يلي اسم الطرف في صحيفة الدعوى ولائحتها: «أقام المدعي/ فلان دعواه بطلب…».
+  "دعواه", "دعواها", "دعواهم", "دعوى", "الدعوى", "بدعوى", "بطلب", "طلبه", "طلبها", "يطالب", "تطالب", "مطالبا", "مطالبة",
+  "المطالبة", "بالمطالبة", "حكم", "الحكم", "بحكم", "قائلا", "قائلة", "مفاده", "مفادها", "صحيفة", "بصحيفة", "لائحة", "بلائحة",
+  "مذكرة", "بمذكرة", "الآتي", "بالآتي", "التالي", "يلي", "ما",
+]);
+// «علي» المكتوبة بدل «على»: إذا تلتها إحدى هذه فهي حرف لا اسم («حضر المدعي علي الموعد…»).
+const ALI_AS_ALA = new Set([
+  "أن", "ان", "ذلك", "هذا", "هذه", "ما", "الحكم", "الدعوى", "العقد", "الموعد", "علم", "سبيل", "نحو", "النحو", "حد", "أساس",
+  "اساس", "الطرفين", "المدعي", "المدعى", "المحكمة", "الدائرة",
 ]);
 
 const alt = (list: string[]) => [...list].sort((a, b) => b.length - a.length).map((m) => m.replace(/ /g, "\\s+")).join("|");
 const markerAlt = alt(ROLE_MARKERS);
 // المعرّفة بعد حرف جر ملتصق: «للمدعي» (ل + المدعي بحذف الألف)، و«بالمدعي» و«كالمدعي» و«وللمدعي».
 const lilAlt = alt(ROLE_MARKERS.filter((m) => m.startsWith("ال")).map((m) => m.slice(2)));
-// الصفة وحدها (والفاصل بعدها)؛ الكلمات بعدها تُقرأ يدويًا، فالصفة المرفوضة لا تبتلع صفة تالية.
+const SEP = `(?:[:/\\-–—(«]\\s*)`;
 // لاحقة الجنس بعد الفاصل في القوالب: «المدعي:ة/»، «المدعى عليه:ا» (حرف مفرد ثم فاصل اختياري).
+const GENDER_SFX = `((?:[ةاه](?![${LETTERS}${HARAKAT}])\\s*${SEP}{0,2})?)`;
+// الصفة وحدها (والفاصل بعدها)؛ الكلمات بعدها تُقرأ يدويًا، فالصفة المرفوضة لا تبتلع صفة تالية.
 const MARKER_RE = new RegExp(
-  `(^|[^${LETTERS}])((?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(?![${LETTERS}\\u064B-\\u0652])` +
-    `(\\s*(?:[:/\\-–—(«]\\s*){0,2})((?:[ةاه](?![${LETTERS}\\u064B-\\u0652])\\s*(?:[:/\\-–—(«]\\s*){0,2})?)`,
+  `(^|[^${LETTERS}])((?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(?![${LETTERS}${HARAKAT}])(\\s*${SEP}{0,2})${GENDER_SFX}`,
   "g",
 );
-// كلمة الاسم في سلسلة النسب: «عبد» المنفصلة جزء منها («عبد ﷲ»، «عبد الإله»).
-const NASAB_TOKEN = `(?:عبد\\s+)?${AR}`;
-const NASAB_RE = new RegExp(`(?<![${LETTERS}])${NASAB_TOKEN}(?:\\s+(?:بن|بنت|ابن|ابنة)\\s+${NASAB_TOKEN})+`, "g");
+// صفة ملتصقة بما قبلها في النصوص المنشورة («…الحازميالمدعى عليه:فلان»): تُعدّ صفةً إن تلاها «:» أو «/».
+const GLUED_RE = new RegExp(
+  `(?<=[${LETTERS}])(${alt(PARTY_MARKERS.filter((m) => m.startsWith("ال")))})(?![${LETTERS}${HARAKAT}])(\\s*[:/]\\s*${SEP}?)${GENDER_SFX}`,
+  "g",
+);
+// عنوان جزء ملتصق بآخر الاسم («…الياميالوقائع:»): حدّ يُقطع عنده الاسم ولا يُحجب العنوان.
+const GLUED_HEADING_RE = new RegExp(`(?<=[${LETTERS}])(?:الوقائع|الأسباب|الاسباب|منطوق\\s+الحكم|نص\\s+الحكم)(?=\\s*[:)])`, "g");
+
+// سلسلة النسب: كلمة الاسم بحركاتها، و«عبد» المنفصلة جزء منها («عبد ﷲ»، «عبد الإله»)، والرابط بحركاته («بْن»).
+const BIN = `(?:${["بنت", "ابنة", "ابن", "بن"].map(withHarakat).join("|")})`;
+const NASAB_TOKEN = `(?:${withHarakat("عبد")}\\s+)?${WORD}`;
+const NASAB_RE = new RegExp(`(?<![${LETTERS}${HARAKAT}])${NASAB_TOKEN}(?:\\s+${BIN}\\s+${NASAB_TOKEN})+`, "g");
 // سابقة اسم العائلة: «آل فلان»، «ال فلان» (مفصولة)، «أبو فلان».
 const FAMILY_PREFIX = new Set(["آل", "ال", "أبو", "ابو", "بو"]);
-const STARTS_CHAIN = /^\s+(?:بن|بنت|ابن|ابنة)\s/;
+const STARTS_CHAIN = new RegExp(`^\\s+${BIN}\\s`);
 // كلمة قبل الصفة تجعل ما بعدها اسمًا بلا فاصل: «حضر المدعي فلان»، «بإلزام المدعى عليه فلان».
 const TRIGGER_BEFORE = /(?:^|[^ء-ي])[وف]?(?:حضر|حضرت|بحضور|حضور|إلزام|بإلزام|الزام|بالزام|ألزم|ألزمت)\s+$/;
 // الكلمة بحركاتها: «عقدًا» كلمة واحدة لا «عقد» ثم «ًا».
-const TOKEN_RE = /\s*([\u0621-\u064A\u064B-\u0652\uFDF2]+)/y;
-const TOKEN_CHAR = /[\u0621-\u064A\u064B-\u0652\uFDF2]/;
-// الكلمة بلا تطويل ولا حركات، للمقارنة بالقوائم: «رقـــم» = «رقم».
-const bare = (w: string): string => w.replace(/[\u0640\u064B-\u0652]/g, "");
-const TANWEEN = /[\u064B-\u064D]/;
-// صفة تبدأ عند الكلمة (بسوابقها وصيغتها المركبة): «والمدعى عليه/» بعد اسم أول تقطعه.
-const MARKER_AT = new RegExp(`^(?:(?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(?![${LETTERS}\\u064B-\\u0652])`);
+const TOKEN_RE = new RegExp(`\\s*([${LETTERS}${HARAKAT}]+)`, "y");
+const TOKEN_CHAR = new RegExp(`[${LETTERS}${HARAKAT}]`);
+const NEXT_WORD = new RegExp(`^\\s+([${LETTERS}${HARAKAT}]+)`);
+// الكلمة بلا تطويل ولا حركات ولا وصل، وبالياء والكاف العربيتين، للمقارنة بالقوائم: «رقـــم» = «رقم».
+const bare = (w: string): string => w.replace(/[ـً-ْٰ‌‍]/g, "").replace(/ی/g, "ي").replace(/ک/g, "ك");
+const TANWEEN = /[ً-ٍ]/;
+// صفة تبدأ عند الكلمة (بسوابقها وصيغتها المركبة): «والمدعى عليه/» بعد اسم أول تقطعه. صفات الدائرة و«ضد» تقطع
+// إذا تلاها فاصل فقط.
+const MARKER_AT = new RegExp(`^(?:(?:[وف]?[بكل]?)(${markerAlt})|[وف]?لل(${lilAlt}))(?![${LETTERS}${HARAKAT}])(\\s*[:/\\-–—(«])?`);
+const BENCH = new Set(BENCH_MARKERS);
+const BENCH_LIL = new Set(BENCH_MARKERS.filter((m) => m.startsWith("ال")).map((m) => m.slice(2)));
+function markerStartsAt(text: string, at: number): boolean {
+  const m = MARKER_AT.exec(text.slice(at, at + 40));
+  if (!m) return false;
+  const role = (m[1] ?? "").replace(/\s+/g, " ");
+  const lil = (m[2] ?? "").replace(/\s+/g, " ");
+  return (BENCH.has(role) || BENCH_LIL.has(lil)) ? Boolean(m[3]) : true;
+}
+// كلمة تبدأ بأداة تعريف مسبوقة بحرف («والتعويض»، «للتجارة»، «بالمبلغ»): ليست من الاسم.
+const PREFIXED_DEFINITE = /^(?:وال|فال|بال|كال|لل)./;
 
-const ROLE_WORDS = new Set(ROLE_MARKERS.filter((m) => !m.includes(" ")));
+const ROLE_WORDS = new Set(ROLE_MARKERS.filter((m) => !m.includes(" ") && !BENCH_MARKERS.includes(m)));
 const markerOf = (role: string): string => {
   const r = role.replace(/\s+/g, " ");
   return ROLE_MARKERS.find((m) => r.endsWith(m)) ?? ROLE_MARKERS.find((m) => m.startsWith("ال") && r.endsWith(m.slice(2))) ?? r;
 };
 
-/** كلمة لا تكون جزءًا من اسم: قاطعة، أو صفة، أو منوّنة، أو صفة مركبة تبدأ عندها. */
-const breaksName = (text: string, tokenStart: number, w: string): boolean =>
-  STOP.has(bare(w)) || ROLE_WORDS.has(bare(w)) || TANWEEN.test(w) || MARKER_AT.test(text.slice(tokenStart, tokenStart + 40));
+/**
+ * كلمة لا تكون جزءًا من اسم: قاطعة (ولو بعد واو أو فاء: «ومبلغ»)، أو صفة، أو منوّنة، أو معرّفة مسبوقة بحرف،
+ * أو صفة مركبة تبدأ عندها، أو «علي» بمعنى «على».
+ */
+function breaksName(text: string, tokenStart: number, w: string): boolean {
+  const b = bare(w);
+  if (STOP.has(b) || ROLE_WORDS.has(b) || TANWEEN.test(w) || PREFIXED_DEFINITE.test(b)) return true;
+  if ((b.startsWith("و") || b.startsWith("ف")) && b.length > 2 && STOP.has(b.slice(1))) return true;
+  if (markerStartsAt(text, tokenStart)) return true;
+  if (b === "علي") {
+    const next = NEXT_WORD.exec(text.slice(tokenStart + w.length, tokenStart + w.length + 40));
+    if (next && ALI_AS_ALA.has(bare(next[1]))) return true;
+  }
+  return false;
+}
 
 const NAME_MAX = 5;
+
+/** مواضع بدء الصفات والعناوين الملتصقة، مرتبة: حدّ كلمة لا يعبره اسم. */
+const gluedStarts = (text: string): number[] =>
+  [...text.matchAll(GLUED_RE), ...text.matchAll(GLUED_HEADING_RE)].map((g) => g.index ?? 0).sort((a, b) => a - b);
+/** أول حدّ ملتصق داخل الكلمة (from, to)، أو -1 (بحث ثنائي). */
+function cutAt(glued: number[], from: number, to: number): number {
+  let lo = 0;
+  let hi = glued.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (glued[mid] <= from) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo < glued.length && glued[lo] < to ? glued[lo] : -1;
+}
+
+type MarkerHit = { index: number; all: string; pre: string; role: string; sep: string; sfx: string };
+/**
+ * ماسح الصفات لنص واحد: الصفة التالية من موضعٍ، المنفصلة (MARKER_RE) أو الملتصقة (GLUED_RE)، أيهما أسبق.
+ * تُحفظ آخر مطابقة لكل تعبير ولا يُعاد المسح إلا إذا تجاوزها الموضع، فالكلفة خطية لا تربيعية.
+ * (أول مطابقة تبدأ عند موضع أو بعده لا تتوقف على موضع بدء المسح، لأن النظرة الخلفية ترى النص كله.)
+ */
+function markerScanner(text: string): (from: number) => MarkerHit | null {
+  let a: MarkerHit | null = null;
+  let aFrom = -1;
+  let g: MarkerHit | null = null;
+  let gFrom = -1;
+  return (from: number) => {
+    if (aFrom < 0 || from < aFrom || (a !== null && a.index < from)) {
+      MARKER_RE.lastIndex = from;
+      const m = MARKER_RE.exec(text);
+      a = m ? { index: m.index, all: m[0], pre: m[1], role: m[2], sep: m[3], sfx: m[4] } : null;
+      aFrom = from;
+    }
+    if (gFrom < 0 || from < gFrom || (g !== null && g.index < from)) {
+      GLUED_RE.lastIndex = from;
+      const m = GLUED_RE.exec(text);
+      g = m ? { index: m.index, all: m[0], pre: "", role: m[1], sep: m[2], sfx: m[3] } : null;
+      gFrom = from;
+    }
+    if (!a) return g;
+    if (!g) return a;
+    return g.index < a.index + a.pre.length ? g : a;
+  };
+}
 
 /**
  * يحجب الاسم الذي يلي صفة الطرف (حتى ٥ كلمات، ويتوقف عند أول كلمة قاطعة أو صفة أخرى).
  * صفة الطرف تحتاج فاصلًا بعدها أو كلمة محرّكة قبلها («حضر»، «إلزام»)، واللقب لا يحتاج.
  */
-// صفة ملتصقة بما قبلها في النصوص المنشورة («…الحازميالمدعى عليه:فلان»): تُعدّ صفةً إن تلاها «:» أو «/».
-const GLUED_RE = new RegExp(
-  `(?<=[${LETTERS}])(${alt(PARTY_MARKERS.filter((m) => m.startsWith("ال")))})(?![${LETTERS}\\u064B-\\u0652])` +
-    `(\\s*[:/]\\s*(?:[:/\\-–—(«]\\s*)?)((?:[ةاه](?![${LETTERS}\\u064B-\\u0652])\\s*(?:[:/\\-–—(«]\\s*){0,2})?)`,
-  "g",
-);
-// عنوان جزء ملتصق بآخر الاسم («…الياميالوقائع:»): حدّ يُقطع عنده الاسم ولا يُحجب العنوان.
-const GLUED_HEADING_RE = new RegExp(`(?<=[${LETTERS}])(?:الوقائع|الأسباب|الاسباب|منطوق\\s+الحكم|نص\\s+الحكم)(?=\\s*[:)])`, "g");
-/** مواضع بدء الصفات والعناوين الملتصقة: حدّ كلمة لا يعبره اسم. */
-const gluedStarts = (text: string): number[] =>
-  [...text.matchAll(GLUED_RE), ...text.matchAll(GLUED_HEADING_RE)].map((g) => g.index ?? 0).sort((a, b) => a - b);
-/** أول حدّ ملتصق داخل الكلمة [from, to)، أو -1. */
-const cutAt = (glued: number[], from: number, to: number): number => glued.find((p) => p > from && p < to) ?? -1;
-
-type MarkerHit = { index: number; all: string; pre: string; role: string; sep: string; sfx: string };
-/** الصفة التالية من موضعٍ: المنفصلة (MARKER_RE) أو الملتصقة (GLUED_RE)، أيهما أسبق. */
-function nextMarker(text: string, from: number): MarkerHit | null {
-  MARKER_RE.lastIndex = from;
-  GLUED_RE.lastIndex = from;
-  const a = MARKER_RE.exec(text);
-  const g = GLUED_RE.exec(text);
-  const ah = a ? { index: a.index, all: a[0], pre: a[1], role: a[2], sep: a[3], sfx: a[4] } : null;
-  const gh = g ? { index: g.index, all: g[0], pre: "", role: g[1], sep: g[2], sfx: g[3] } : null;
-  if (!ah) return gh;
-  if (!gh) return ah;
-  return gh.index < ah.index + ah.pre.length ? gh : ah;
-}
-
 function maskAfterRoles(text: string): string {
   let out = "";
   let last = 0;
   const glued = gluedStarts(text);
+  const next = markerScanner(text);
   let from = 0;
-  for (let m = nextMarker(text, from); m; m = nextMarker(text, from)) {
+  for (let m = next(from); m; m = next(from)) {
     const { all, pre, role, sep, sfx } = m;
     const roleStart = m.index + pre.length;
     if (!all.length) {
@@ -172,13 +252,13 @@ function maskAfterRoles(text: string): string {
       nameEnd = TOKEN_RE.lastIndex;
       count++;
       // اسم لا يمتد عبر فاصل جملة أو سطر.
-      if (/^[^\S\n]*\n/.test(text.slice(nameEnd))) break;
+      if (/^[^\S\n]*\n/.test(text.slice(nameEnd, nameEnd + 64))) break;
     }
     if (count === 0) {
       from = roleStart + role.length;
       continue;
     }
-    const nameStart = end + (text.slice(end).match(/^\s*/)?.[0].length ?? 0);
+    const nameStart = end + (text.slice(end, end + 64).match(/^\s*/)?.[0].length ?? 0);
     out += text.slice(last, nameStart) + NAME_MASK;
     last = nameEnd;
     from = nameEnd;
@@ -188,7 +268,7 @@ function maskAfterRoles(text: string): string {
 
 /**
  * يحجب سلاسل النسب («فلان بن فلان …») ومعها حتى كلمتين بعدها (الجد واسم العائلة بسابقته «آل/أبو»)،
- * ما لم تكن الكلمة قاطعة أو صفة أو منوّنة، ولا يتجاوز سطرًا.
+ * ما لم تكن الكلمة قاطعة أو صفة أو منوّنة أو معرّفة مسبوقة بحرف أو أولَ سلسلة تالية، ولا يتجاوز سطرًا أو جدولة.
  */
 function maskNasab(text: string): string {
   let out = "";
@@ -207,21 +287,22 @@ function maskNasab(text: string): string {
       if (FAMILY_PREFIX.has(bare(w))) {
         // السابقة لا تُعدّ، ويلزم بعدها اسم؛ وما بعدها اسم ولو وافق كلمة قاطعة («آل طالب»).
         const after = TOKEN_RE.exec(text);
-        if (!after || /[\n\t]/.test(text.slice(TOKEN_RE.lastIndex - after[1].length - 2, TOKEN_RE.lastIndex - after[1].length))) break;
+        if (!after || /[\n\t]/.test(text.slice(tokenStart + w.length, TOKEN_RE.lastIndex - after[1].length))) break;
         const a = after[1];
-        if (ROLE_WORDS.has(bare(a)) || TANWEEN.test(a) || MARKER_AT.test(text.slice(TOKEN_RE.lastIndex - a.length, TOKEN_RE.lastIndex - a.length + 40))) break;
+        const aStart = TOKEN_RE.lastIndex - a.length;
+        if (ROLE_WORDS.has(bare(a)) || TANWEEN.test(a) || markerStartsAt(text, aStart)) break;
         end = TOKEN_RE.lastIndex;
         extra++;
         continue;
       }
-      if (breaksName(text, tokenStart, w) || w.length < 2) break;
+      if (breaksName(text, tokenStart, w) || bare(w).length < 2) break;
       const cut = cutAt(glued, tokenStart, TOKEN_RE.lastIndex);
       if (cut !== -1) {
         end = cut;
         break;
       }
       // كلمة يليها «بن» أولُ سلسلة أخرى («… الجليفي عضو عمر بن …»): تُترك لها.
-      if (STARTS_CHAIN.test(text.slice(TOKEN_RE.lastIndex, TOKEN_RE.lastIndex + 8))) break;
+      if (STARTS_CHAIN.test(text.slice(TOKEN_RE.lastIndex, TOKEN_RE.lastIndex + 16))) break;
       end = TOKEN_RE.lastIndex;
       extra++;
     }
@@ -232,26 +313,41 @@ function maskNasab(text: string): string {
   return out + text.slice(last);
 }
 
-// مراسي الهوية الشخصية (والتطويل بين حروفها: «ســـجل مدني»). السجل التجاري ليس منها.
-const tat = (w: string) => [...w].join("\u0640*");
-const ID_ANCHORS = ["سجل مدني", "هوية وطنية", "هوية مقيم", "هوية رقم", "رخصة إقامة", "رخصة اقامة", "إقامة رقم", "اقامة رقم", "بطاقة أحوال", "حفيظة نفوس"];
+// مراسي الهوية الشخصية (والتطويل بين حروفها: «ســـجل مدني»)، بالتنكير والتعريف («بموجب السجل المدني»).
+// السجل التجاري ليس منها. يلزم بعد المرسى بقليل (على السطر نفسه) ما يدل على رقم: «(» أو «[» أو رقم أو «…».
+const tat = (w: string) => [...w].join("ـ*");
+const def = (w: string, lead: boolean) => `${lead ? "(?:بال|ال)?" : "(?:ال)?"}${tat(w)}`;
+const ID_ANCHOR_WORDS: Array<[string, string | null]> = [
+  ["سجل", "مدني"], ["هوية", "وطنية"], ["هوية", "مقيم"], ["هوية", "رقم"], ["رخصة", "إقامة"], ["رخصة", "اقامة"],
+  ["إقامة", "رقم"], ["اقامة", "رقم"], ["بطاقة", "أحوال"], ["حفيظة", "نفوس"],
+];
+const ID_ANCHORS = [
+  ...ID_ANCHOR_WORDS.map(([a, b]) => `${def(a, true)}\\s+${b === "رقم" ? tat(b) : def(b!, false)}`),
+  // «رقم الهوية» و«رقم السجل المدني» و«رقم الإقامة».
+  `${tat("رقم")}\\s+(?:${["هوية", "سجل", "إقامة", "اقامة"].map((w) => `ال${tat(w)}`).join("|")})`,
+];
 const ID_ANCHOR_RE = new RegExp(
-  `(?<![${LETTERS}\\u064B-\\u0652])(?:${ID_ANCHORS.map((a) => a.split(" ").map(tat).join("\\s+")).join("|")})(?![${LETTERS}])`,
+  `(?<![${LETTERS}${HARAKAT}])(?:(?:بموجب|حامل|حاملة|يحمل|تحمل)\\s+)?(?:${ID_ANCHORS.join("|")})(?![${LETTERS}])(?=(?:[^\\n\\u0640]\\u0640*){0,25}?[(\\[0-9٠-٩…])`,
   "g",
 );
-// ما يسبق مرسى الهوية وليس اسمًا: «صاحب هوية رقم»، «المدعى عليه هوية…».
+// «<نسبة> الجنسية» بعد الاسم: «فلان سعودي الجنسية».
+const NATIONALITY_RE = new RegExp(`(?<![${LETTERS}${HARAKAT}])[${LETTERS}]+(?:ي|ية)\\s+${tat("الجنسية")}(?![${LETTERS}])`, "g");
+// ما يسبق المرسى وليس اسمًا: «صاحب هوية رقم»، «صورة سجل مدني»، «رسوم رخصة إقامة»، «من نظام العمل … هوية رقم».
 const ANCHOR_STOP = new Set([
   "صاحب", "صاحبة", "حامل", "حاملة", "يحمل", "تحمل", "ويحمل", "وتحمل", "بطاقة", "برقم", "ورقم", "حسب", "بحسب", "باسم", "اسم",
   "المدعى", "المستأنف", "المسجل", "المسجلة", "لصاحبها", "لمالكها", "ومالكها",
+  "صورة", "وصورة", "أصل", "اصل", "نسخة", "تجديد", "وتجديد", "إصدار", "اصدار", "رسوم", "انتهاء", "نقل", "ونقل", "وتسليمه",
+  "أرفق", "وأرفق", "ارفق", "وارفق", "وقدم", "نظام", "وتعديلاتها", "بشأن", "يثبت", "ما", "العمل", "للعامل", "العامل", "ذات", "ذو",
+  "شركة", "مؤسسة", "أجنبي", "أجنبية", "اجنبي", "اجنبية",
 ]);
-const isSpace = (c: string | undefined) => c === " " || c === "\t" || c === "\u00A0";
+const isSpace = (c: string | undefined) => c === " " || c === "\t" || c === " ";
 
-/** يحجب ما يسبق مرسى الهوية من كلمات الاسم (حتى ٥، ويعبر «[اسم]» السابق وفاصلة قبل المرسى). */
-function maskBeforeIdAnchors(text: string): string {
+/** يحجب ما يسبق المراسي من كلمات الاسم (حتى ٥، ويعبر «[اسم]» السابق وفاصلة قبل المرسى). */
+function maskBeforeAnchors(text: string): string {
   const spans: Array<[number, number]> = [];
-  ID_ANCHOR_RE.lastIndex = 0;
-  for (const m of text.matchAll(ID_ANCHOR_RE)) {
-    let k = m.index ?? 0;
+  const starts = [...text.matchAll(ID_ANCHOR_RE), ...text.matchAll(NATIONALITY_RE)].map((m) => m.index ?? 0).sort((a, b) => a - b);
+  for (const start of starts) {
+    let k = start;
     while (k > 0 && isSpace(text[k - 1])) k--;
     if (k > 0 && (text[k - 1] === "،" || text[k - 1] === ",")) {
       k--;
@@ -269,7 +365,7 @@ function maskBeforeIdAnchors(text: string): string {
         while (s > 0 && TOKEN_CHAR.test(text[s - 1])) s--;
         if (s === k) break;
         const w = text.slice(s, k);
-        if (w.length < 2 || breaksName(text, s, w) || ANCHOR_STOP.has(bare(w))) break;
+        if (bare(w).length < 2 || breaksName(text, s, w) || ANCHOR_STOP.has(bare(w))) break;
         nameStart = s;
         count++;
         k = s;
@@ -281,6 +377,7 @@ function maskBeforeIdAnchors(text: string): string {
     if (count > 0 && nameStart >= 0) spans.push([nameStart, nameEnd]);
   }
   if (!spans.length) return text;
+  spans.sort((x, y) => x[0] - y[0]);
   let out = "";
   let last = 0;
   for (const [s, e] of spans) {
@@ -301,6 +398,6 @@ export function maskPersonalData(text: string | null | undefined): string {
     if (next === out) break;
     out = next;
   }
-  out = maskBeforeIdAnchors(out);
+  out = maskBeforeAnchors(out);
   return out.replace(/(\[اسم\]\s*){2,}/g, `${NAME_MASK} `);
 }

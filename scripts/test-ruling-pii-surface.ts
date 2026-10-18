@@ -112,11 +112,35 @@ rows.push({
   // HKM-012: اسم بلا ترقيم يليه رابط جملة؛ الحجب يجب ألا يمحو مرسى «الأسباب» فيضيع الجزء في الجلب.
   ...base, id: "r6", sourceId: 6, createdAt: new Date("2023-12-31"),
   judgmentTitle: "حكم مقاولة باطن",
-  judgmentText: `الدعوى: أقام المدعي/ غانم الموسوي وحيث إن المدعى عليه/ زيدان الفلاني لم يسدد مستحقات مقاولة الباطن.\nالأسباب: وحيث إن الدائرة اطلعت على العقد، ولما كان المدعى عليه/ زيدان الفلاني فأجاب بالإنكار.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه بأن يدفع للمدعي مستحقات الباطن.`,
+  judgmentText: `الدعوى: أقام المدعي/ غانم الموسوي وحيث إن المدعى عليه/ زيدان بن سالم الفلاني لم يسدد مستحقات مقاولة الباطن.\nالأسباب: وحيث إن الدائرة اطلعت على العقد، ولما كان المدعى عليه/ زيدان الفلاني فأجاب بالإنكار.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه بأن يدفع للمدعي مستحقات الباطن.`,
   appealText: null,
   caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٦", decisionNo: null, court: "المحكمة التجارية", decisionDateText: null,
 });
-const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي"];
+rows.push({
+  // HKM-012: الاسم في الاستئناف وحده (search_norm في الإنتاج يضم الاستئناف، والموصل لا يعرضه).
+  ...base, id: "r7", sourceId: 7, createdAt: new Date("2023-12-30"),
+  judgmentTitle: "حكم أجرة محل تجاري",
+  judgmentText: "الوقائع: نزاع على أجرة محل تجاري متأخرة.\nالأسباب: وحيث ثبت التأخر في السداد.\nمنطوق الحكم: حكمت الدائرة بإلزام المستأجر بالأجرة.",
+  appealText: "اعترض المستأنف/ مروان السندي على الحكم لأسباب إجرائية.",
+  caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٧", decisionNo: null, court: "المحكمة التجارية", decisionDateText: "١٤٤٤/٠٢/٠١هـ",
+});
+rows.push({
+  // HKM-012: أعضاء الدائرة بـ«ﷲ» حرفًا واحدًا في التوقيع.
+  ...base, id: "r8", sourceId: 8, createdAt: new Date("2023-12-29"),
+  judgmentTitle: "حكم شراكة",
+  judgmentText: "الأسباب: وحيث إن الشراكة ثابتة بالعقد.\nمنطوق الحكم: حكمت الدائرة بتصفية الشراكة. عضو قيصر بن عبدﷲ الطاهري\tرئيس الدائرة سالم بن عبدﷲ الفلاني",
+  appealText: null,
+  caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٨", decisionNo: null, court: "المحكمة العامة", decisionDateText: "١٤٤٣/٠١/٠١هـ",
+});
+rows.push({
+  // «سالم» كلمة عامة هنا («سالم من العيوب»)، واسم في r6 وr8: لفظ يطابق داخل الأسماء غالبًا لا يطابق شيئًا.
+  ...base, id: "r9", sourceId: 9, createdAt: new Date("2023-12-28"),
+  judgmentTitle: "حكم توريد إسعاف",
+  judgmentText: "الأسباب: وحيث إن المبيع سالم من العيوب عند توريد سيارات الإسعاف.\nمنطوق الحكم: حكمت الدائرة برفض الدعوى.",
+  appealText: null,
+  caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٩", decisionNo: null, court: "المحكمة العامة", decisionDateText: null,
+});
+const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي", "مروان", "هلال"];
 const nameLeak = (t: string) => NAME_WORDS.filter((w) => t.includes(w));
 const frozen = JSON.stringify(rows);
 
@@ -124,8 +148,9 @@ function setupDb() {
   const values = rows
     .map((r) =>
       `(${[r.id, r.sourceId, r.judgmentTitle, r.judgmentText, r.appealText, r.caseNo, r.decisionNo, r.court, r.cityName, r.decisionDateText, r.source, r.reviewStatus, r.createdAt.toISOString(),
-        // search_norm بلا حجب (أسوأ حالة قبل تنظيف #704).
-        normalizeArabicText(`${r.judgmentTitle} ${r.judgmentText}`)]
+        // search_norm بباني الإنتاج (scripts/backfill-rulings-search-norm.ts) بلا حجب (أسوأ حالة قبل تنظيف #704):
+        // المحكمة والعنوان والمتن والاستئناف والرقمان والمدينة.
+        normalizeArabicText([r.court, r.judgmentTitle, r.judgmentText.slice(0, 20_000), (r.appealText ?? "").slice(0, 20_000), r.caseNo, r.decisionNo ?? "", r.cityName].filter(Boolean).join("\n"))]
         .map((v) => (v === null ? "NULL" : typeof v === "number" ? String(v) : lit(v))).join(",")})`,
     )
     .join(",\n");
@@ -155,8 +180,12 @@ function matches(r: Row, where: Where): boolean {
 const principles = [
   { id: "p1", title: "مبدأ فسخ عقد التوريد في دعوى المدعي/ زيدان الفلاني", principleText: `إذا أخل المورد بالتسليم جاز الفسخ. ${"ـ نص ".repeat(100)}وقرر المدعي/ غانم الموسوي ذلك أمام الدائرة.`, court: "المحكمة التجارية", topic: "توريد" },
   { id: "p2", title: "مبدأ في الإثبات", principleText: "شهدت الشاهدة/ رجاء السندي بالتسليم، والشهادة وحدها لا تكفي.", court: "المحكمة العامة", topic: "إثبات" },
+  // اسم بلا صفة قبل «سجل مدني» يقطعه حد ٦٠٠: القص قبل الحجب يُسقط المرسى فيبقى الاسم.
+  { id: "p3", title: "مبدأ في الكفالة", principleText: `${"ـ".repeat(574)} قيصر مروان الطاهري سجل مدني رقم (...) كفيل غارم.`, court: "المحكمة العامة", topic: "كفالة" },
 ];
 const frozenPrinciples = JSON.stringify(principles);
+// تعذّر جلب نص الأحكام في البحث (لاختبار السقوط مغلقًا).
+let failTextFetch = false;
 const fakePrisma = {
   judicialPrinciple: {
     findMany: async ({ where, take }: { where: { OR: Array<Record<string, { contains: string }>> }; take?: number }) =>
@@ -166,7 +195,10 @@ const fakePrisma = {
     update: noWrite, create: noWrite, delete: noWrite,
   },
   judicialCase: {
-    findMany: async ({ where }: { where: Where }) => rows.filter((r) => matches(r, where)),
+    findMany: async ({ where }: { where: Where }) => {
+      if (failTextFetch && where.id?.in) throw new Error("تعذّر الجلب (اختبار)");
+      return rows.filter((r) => matches(r, where));
+    },
     findUnique: async ({ where }: { where: { id: string } }) => rows.find((r) => r.id === where.id) ?? null,
     update: noWrite, updateMany: noWrite, create: noWrite, delete: noWrite, deleteMany: noWrite,
   },
@@ -317,9 +349,66 @@ async function main() {
     const c = (await enumerateRulings([q], undefined, undefined, true)) as Enum;
     ok(c.total === 0 && c.by_court.length === 0, `MCP enumerate count_only: «${q}» لا يكشف عددًا`);
   }
-  // «غانم» يطابق في القاعدة (search_norm غير محجوب) فيمرّ بمسار الإسقاط نفسه، لا بغياب المطابقة.
-  const cG = (await enumerateRulings(["غانم"], undefined, undefined, true)) as Enum;
-  ok(cG.counts_page_only === true, "MCP enumerate count_only: «غانم» يُسقط بمسار الأسماء (counts_page_only)");
+  // جولة المراجعة الأولى على #785: المؤشر، والعدد بمؤشر بعد الآخر وبالحشو، وأوراكل العضوية، والحشو في البحث.
+  const e1 = (await enumerateRulings(["الموسوي"], undefined, undefined, false, 1)) as Enum & { next_cursor: string | null };
+  ok((e1.results ?? []).length === 0 && e1.next_cursor === null, `MCP enumerate: اسم بصفحة 1 — لا نتيجة ولا مؤشر (المؤشر=${e1.next_cursor})`);
+  let cur: string | undefined;
+  const seen: string[] = [];
+  let leakedCursor = false;
+  for (let g = 0; g < 20; g++) {
+    const pg = (await enumerateRulings(["توريد", "الموسوي", "الباطن"], undefined, undefined, false, 1, cur)) as Enum & { next_cursor: string | null };
+    const ids = (pg.results ?? []).map((x) => x.ruling_id);
+    seen.push(...ids);
+    if (pg.next_cursor !== null && !ids.includes(pg.next_cursor)) leakedCursor = true;
+    if (!pg.next_cursor) break;
+    cur = pg.next_cursor;
+  }
+  ok(!leakedCursor && seen.every((id) => ["r5", "r6", "r9"].includes(id)) && seen.includes("r5") && seen.includes("r9"), `MCP enumerate: المؤشر دائمًا صف معروض، والترقيم يعيد المرئي فقط (${seen.join("،")})`);
+  for (const q of [["الموسوي"], ["غانم", "الفلاني"]]) {
+    const past = (await enumerateRulings(q, undefined, undefined, false, 1, "\uffff")) as Enum;
+    ok(past.total === 0 && past.by_court.length === 0, `MCP enumerate: مؤشر بعد آخر معرّف لا يكشف عدد «${q.join("+")}»`);
+  }
+  for (const pad of ["4470000005", "توريد", "إيجار"]) {
+    const a = (await enumerateRulings([pad, "الموسوي"], undefined, undefined, true)) as Enum;
+    const b = (await enumerateRulings([pad], undefined, undefined, true)) as Enum;
+    ok(a.total === b.total && JSON.stringify(a.by_court) === JSON.stringify(b.by_court), `MCP enumerate: الحشو «${pad}» OR اسم = «${pad}» وحده (${a.total}/${b.total})`);
+  }
+  const o1 = await enumerateRulings(["الموسوي 4470000005"], undefined, undefined, true);
+  const o2 = await enumerateRulings(["الموسوي 4470000099"], undefined, undefined, true);
+  const o3 = await enumerateRulings(["الموسوي"], "التجارية", 1445, true);
+  const o4 = await enumerateRulings(["الموسوي"], "العمالية", 1440, true);
+  ok(JSON.stringify(o1).replace(/4470000005/g, "N") === JSON.stringify(o2).replace(/4470000099/g, "N"), "MCP enumerate: اسم + رقم قضية الهدف = اسم + رقم آخر (لا أوراكل)");
+  ok(JSON.stringify({ ...o3, filters: null }) === JSON.stringify({ ...o4, filters: null }), "MCP enumerate: اسم + محكمة/سنة الهدف = غيرها (لا أوراكل)");
+  const allOut = JSON.stringify([e1, o1, o3, await mcpSearchRulings("الموسوي", undefined, undefined, 20), await mcpSearchRulings("توريد", undefined, undefined, 20)]);
+  ok(!allOut.includes("counts_page_only"), "لا علم counts_page_only في أي مخرج (شكل واحد)");
+  for (const q of ["غانم شي", "غانم القضا", "الموسوي حكم", "عبد الطاهري", "عبدﷲ الطاهري", "الفلاني", "السندي", "مروان السندي"]) {
+    const s = await mcpSearchRulings(q, undefined, undefined, 20);
+    ok(s.results.length === 0 && s.total === 0, `MCP search: «${q}» لا يعيد حكمًا ولا عددًا (${s.results.length}/${s.total})`);
+  }
+  for (const q of ["الموسوي", "السندي", "عبدﷲ الطاهري"]) {
+    const e = (await enumerateRulings([q])) as Enum;
+    ok((e.results ?? []).length === 0 && e.total === 0, `MCP enumerate: «${q}» (في المتن أو الاستئناف أو التوقيع) لا يعيد حكمًا ولا عددًا`);
+  }
+  const { lexicalGroupTainted, enumerateTermTainted } = await import("../lib/mcp/name-taint");
+  const { arabicLexicalGroups } = await import("../lib/mcp/ruling-privacy");
+  ok(await lexicalGroupTainted(arabicLexicalGroups("الموسوي")[0]), "عيّنة اللفظ: «الموسوي» لفظ اسم");
+  ok(!(await lexicalGroupTainted(arabicLexicalGroups("توريد")[0])), "عيّنة اللفظ: «توريد» ليس لفظ اسم");
+  ok(!(await lexicalGroupTainted(arabicLexicalGroups("سونجشانج")[0])), "عيّنة اللفظ: لفظ غائب ليس لفظ اسم (عيّنة فارغة)");
+  ok(await enumerateTermTainted({ text: "السندي", numbers: [], sensitive: false }, `r."search_norm" ILIKE $1`, ["%السندي%"]), "عيّنة الحصر: «السندي» (في الاستئناف وحده) لفظ اسم");
+  const sH = await mcpSearchRulings("سالم", undefined, undefined, 20);
+  ok(sH.results.length === 0 && sH.total === 0, `MCP search: لفظ يطابق داخل الأسماء غالبًا («سالم») لا يطابق شيئًا ولو ورد كلمةً عامة في حكم آخر (${sH.results.length}/${sH.total})`);
+  const s7 = await mcpSearchRulings("أجرة متأخرة", undefined, undefined, 20);
+  ok(s7.results.some((x) => x.ruling_id === "r7"), "MCP search: لفظ عام في حكم اسمه في الاستئناف يجده");
+  const s8 = await mcpSearchRulings("تصفية الشراكة", undefined, undefined, 20);
+  const s8hit = s8.results.find((x) => x.ruling_id === "r8");
+  ok(Boolean(s8hit) && nameLeak(`${s8hit?.snippet ?? ""} ${s8hit?.disposition ?? ""}`).length === 0, "MCP search: توقيع الدائرة بـ«ﷲ» محجوب في المقتطف والمنطوق");
+  failTextFetch = true;
+  const sf = await mcpSearchRulings("توريد", undefined, undefined, 20);
+  failTextFetch = false;
+  ok(sf.results.length === 0, "MCP search: تعذّر جلب النص = لا نتيجة (السقوط مغلقًا)");
+  const cIgn = (await enumerateRulings(["توريد"], undefined, undefined, true, 50, "\uffff")) as Enum;
+  const cNo = (await enumerateRulings(["توريد"], undefined, undefined, true)) as Enum;
+  ok(cIgn.total === cNo.total && cNo.total >= 1, "MCP enumerate count_only: المؤشر لا يغيّر العدد");
   const mixE = (await enumerateRulings(["غانم", "توريد"])) as Enum;
   ok((mixE.results ?? []).some((x) => x.ruling_id === "r5") && (mixE.results ?? []).every((x) => nameLeak(x.snippet).length === 0), "MCP enumerate: اسم مع لفظ عام (OR) — الحكم يبقى بلفظه العام محجوبًا");
   const keepS = await mcpSearchRulings("توريد", undefined, undefined, 20);
@@ -342,6 +431,10 @@ async function main() {
   const tf = await takhrijHukm("الفسخ");
   ok(tf.principles.length === 1 && pLeak(`${tf.principles[0].title} ${tf.principles[0].principle}`).length === 0 && tf.principles[0].title.includes("[اسم]"), `takhrij_hukm: «الفسخ» يعيد المبدأ وعنوانه ونصه بلا اسم (${pLeak(JSON.stringify(tf.principles)).join("،") || "لا تسرّب"})`);
   ok(tf.principles.every((p) => p.principle.length <= 640), "takhrij_hukm: نص المبدأ مقصوص بعد الحجب (≈٦٠٠ حرف)");
+  const tk = await takhrijHukm("الكفالة");
+  ok(tk.principles.length === 1 && pLeak(tk.principles[0].principle).length === 0 && !/قيصر|مروان|الطاهري/.test(tk.principles[0].principle), "takhrij_hukm: اسم قبل مرسى يقطعه حد ٦٠٠ محجوب (الحجب قبل القص)");
+  const t2 = await takhrijHukm("الفلاني الإثبات", 1);
+  ok(t2.principles.length === 1 && t2.principles[0].title === "مبدأ في الإثبات", "takhrij_hukm: جلب ضعف المطلوب — المبدأ الأول المطابق داخل اسم لا يحجب الثاني");
   const tw = await takhrijHukm("الشهادة");
   ok(tw.principles.length === 1 && pLeak(tw.principles[0].principle).length === 0, "takhrij_hukm: «الشهادة» يعيد المبدأ بلا اسم الشاهدة");
   ok(JSON.stringify(principles) === frozenPrinciples, "المبادئ الأصلية في الذاكرة كما هي");

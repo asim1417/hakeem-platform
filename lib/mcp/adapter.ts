@@ -15,7 +15,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve-law";
-import { redactPII, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
+import { redactPII, searchRulingsDirect, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
@@ -24,7 +24,16 @@ import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-in
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
-import { lexicalMatchOnlyInNames, maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
+import {
+  arabicLexicalGroups,
+  lexicalVisible,
+  maskedRulingExcerpts,
+  maskedSearchNorm,
+  normWords,
+  productionSearchNorm,
+  semanticNameHit,
+} from "@/lib/mcp/ruling-privacy";
+import { lexicalGroupTainted } from "@/lib/mcp/name-taint";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -196,54 +205,72 @@ export async function expandTerms(term: string) {
 // درجة أدنى من أي مادة، فتخرج الأحكام كليًّا لألفاظ شائعة مثل «فسخ» و«عقد».
 // والمقتطف صار من موضع المطابقة في الأسباب أو المنطوق، لا أول ٤٠٠ حرف (الديباجة).
 export async function searchRulings(query: string, court?: string, yearH?: number, limit = 10) {
+  type Hit = {
+    ruling_id: string;
+    case_number: string | null;
+    court: string | null;
+    year_h: number | null;
+    snippet: string;
+    matched_in: string | null;
+    matched_by: string;
+    disposition: string | null;
+    parts: Array<{ type: string; start: number; end: number }>;
+  };
+  const empty = { query, count: 0, total: 0, total_is_lower_bound: false, results: [] as Hit[] };
+  // HKM-012: لا يُعثر على حكم باسم فرد. اللفظ الذي يطابق داخل الأسماء غالبًا لا يطابق شيئًا، والبحث بـ AND،
+  // فلا نتيجة ولا عدد (كلفظ غائب عن القاعدة). تعذّر الفحص يُعدّ لفظ اسم (السقوط مغلقًا).
+  const groups = arabicLexicalGroups(splitRulingQuery(query).text);
+  const tainted = await Promise.all(groups.map((g) => lexicalGroupTainted(g).catch(() => true)));
+  if (tainted.some(Boolean)) return empty;
+
   const r = await searchRulingsDirect({ query, court, yearH, limit }).catch(() => null);
   const hits = r?.hits ?? [];
   // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
   // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts في النص المحجوب كما في hakeem_get_ruling.
   const rows = hits.length
     ? await prisma.judicialCase
-        .findMany({ where: { id: { in: hits.map((h) => h.id) } }, select: { id: true, judgmentTitle: true, judgmentText: true } })
+        .findMany({
+          where: { id: { in: hits.map((h) => h.id) } },
+          select: { id: true, court: true, judgmentTitle: true, judgmentText: true, appealText: true, caseNo: true, decisionNo: true, cityName: true },
+        })
         .catch(() => null)
     : [];
-  const texts = new Map((rows ?? []).map((x) => [x.id, { title: x.judgmentTitle ?? "", text: x.judgmentText ?? "" }] as const));
-  // ولا يُعثر على حكم باسم فرد: النتيجة اللفظية التي لا تطابق ألفاظُها إلا داخل اسم محجوب تُسقط،
-  // وكذا اللفظية التي تعذّر جلب نصها (لا يُتحقق منها). الدلالية لا تُسقط (لم تطابق لفظًا).
+  const byId = new Map((rows ?? []).map((x) => [x.id, x] as const));
+  // وكل نتيجة تُعاد حساب مطابقتها على النسخة المحجوبة بباني الإنتاج: اللفظية تُعاد إن طابقت كل ألفاظها
+  // العربية خارج الأسماء، والدلالية تُسقط إن ورد لفظ منها في الحكم داخل اسم. وما تعذّر جلب نصه لا يُعاد.
   let withheld = 0;
-  const results = [];
+  const results: Hit[] = [];
   for (const h of hits) {
-    const raw = texts.get(h.id);
-    const lexical = h.matchedBy !== "semantic";
-    if (raw === undefined && lexical) {
+    const raw = byId.get(h.id);
+    if (raw === undefined) {
       withheld++;
       continue;
     }
-    // تعذّر جلب النص: لا مقتطف ولا منطوق (المقتطف القائم مقصوص من الخام، فقد يحمل نصف اسم)، وخريطة الأجزاء
-    // أنواعًا فقط؛ والحكم يُقرأ بـ hakeem_get_ruling.
-    const masked =
-      raw === undefined
-        ? { snippet: "", disposition: null, parts: h.parts.map((p) => ({ type: p.type, start: 0, end: 0 })), masked: "" }
-        : maskedRulingExcerpts(raw.text, query, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
-    if (raw !== undefined && lexical && lexicalMatchOnlyInNames({ title: raw.title, text: raw.text, maskedText: masked.masked }, query)) {
-      withheld++;
-      continue;
+    if (groups.length) {
+      const masked = normWords(maskedSearchNorm(raw));
+      const nameOnly =
+        h.matchedBy === "semantic" ? semanticNameHit(normWords(productionSearchNorm(raw)), masked, groups) : !lexicalVisible(masked, groups);
+      if (nameOnly) {
+        withheld++;
+        continue;
+      }
     }
+    const ex = maskedRulingExcerpts(raw.judgmentText ?? "", query, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
     results.push({
       ruling_id: h.id,
       case_number: h.decisionNo ?? h.caseNo ?? null,
       court: h.court ?? null,
       year_h: h.hijriYear ?? null,
-      snippet: masked.snippet,
+      snippet: ex.snippet,
       matched_in: h.matchedIn, // reasons | disposition | defense | claims | header …
       matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
-      disposition: masked.disposition, // بداية المنطوق
-      parts: masked.parts, // لجلب جزء بعينه عبر hakeem_get_ruling (الإزاحات في النص المحجوب)
+      disposition: ex.disposition, // بداية المنطوق
+      parts: ex.parts, // لجلب جزء بعينه عبر hakeem_get_ruling (الإزاحات في النص المحجوب)
     });
   }
   // total مسقوف بـ٥٠٠٠ للألفاظ الشائعة؛ total_is_lower_bound يعني «أكثر من ذلك».
-  // إن أُسقط شيء فالإجمالي من الصفحة وحدها (counts_page_only)، فلا يكشف عددُ القاعدة عددَ أحكام اسمٍ.
-  if (withheld > 0) {
-    return { query, count: results.length, total: results.length, total_is_lower_bound: false, counts_page_only: true, results };
-  }
+  // إن أُسقط شيء من الصفحة فالإجمالي عدد ما أُعيد (عدد القاعدة يشمل ما لم يُعَد)، بالشكل نفسه بلا علم.
+  if (withheld > 0) return { query, count: results.length, total: results.length, total_is_lower_bound: false, results };
   return { query, count: results.length, total: r?.total ?? 0, total_is_lower_bound: r?.totalCapped ?? false, results };
 }
 

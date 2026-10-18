@@ -10,14 +10,17 @@
  *   - شرائح الجلب (maskedChunk): إزاحاتها (offset/next_offset/total_chars) في النص المحجوب.
  * الحجب قاعدي وقد يفوته اسم بلا صفة ولا نسب (انظر mask.ts).
  *
- * ولا يُعثر على حكم باسم فرد: النتيجة اللفظية التي لا تطابق ألفاظُها إلا داخل اسم محجوب تُسقط
- * (lexicalMatchOnlyInNames للبحث، وenumerateMatchOnlyInNames للحصر)، والأعداد حينها من الصفحة وحدها.
+ * ولا يُعثر على حكم باسم فرد. القاعدة تطابق على search_norm المبني من النص الخام، فيُعاد حساب المطابقة
+ * على النسخة المحجوبة بباني الإنتاج نفسه (maskedSearchNorm) وبالقواعد نفسها: tsquery للبحث، وILIKE للحصر،
+ * والاحتواء للتخريج. ما لا يطابق إلا داخل اسم محجوب لا يُعاد (السقوط مغلقًا: بلا شرط «قبل الحجب»).
+ * واللفظ الذي يطابق داخل الأسماء غالبًا يُعدّ غير مطابق أصلًا (lib/mcp/name-taint.ts).
  */
 import { maskPersonalData } from "@/lib/rulings/research/mask";
-import { redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
-import { buildRulingExcerpts, excerptFrom, findMatches, queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
+import { redactPII } from "@/lib/modules/legal-core/rulings-search";
+import { buildRulingExcerpts, excerptFrom, queryTokens, tokenVariants } from "@/lib/modules/legal-core/ruling-excerpts";
 import { digitVariants } from "@/lib/modules/legal-core/ruling-redacted-sql";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
+import { normalizeArabicText } from "@/lib/modules/legal-core/arabic-morphology";
 import { segmentRuling } from "@/lib/rulings/research/segment";
 
 export type MaskedPart = { type: string; start: number; end: number };
@@ -126,67 +129,111 @@ export function maskedChunk(target: string, offset: number, maxChars: number) {
   return { ...sliceMasked(masked, offset, maxChars), total: masked.length };
 }
 
-const hasAllTokens = (text: string, tokens: string[]): boolean =>
-  tokens.every((t) => digitVariants(t).some((v) => findMatches(text, v).length > 0));
+// ── المطابقة على النسخة المحجوبة ──
+
+/** حقول judicial_cases التي يبني منها باني الإنتاج search_norm (scripts/backfill-rulings-search-norm.ts). */
+export type RulingIndexFields = {
+  court?: string | null;
+  judgmentTitle?: string | null;
+  judgmentText?: string | null;
+  appealText?: string | null;
+  caseNo?: string | null;
+  decisionNo?: string | null;
+  cityName?: string | null;
+};
+/** سقف المتن والاستئناف في الباني. */
+export const SEARCH_NORM_TEXT_CAP = 20_000;
+
+const joinIndex = (f: RulingIndexFields, title: string, text: string, appeal: string) =>
+  normalizeArabicText([f.court ?? "", title, text, appeal, f.caseNo ?? "", f.decisionNo ?? "", f.cityName ?? ""].filter(Boolean).join("\n"));
+
+/** search_norm كما يبنيه باني الإنتاج من النص الخام (المحكمة والعنوان والمتن والاستئناف والرقمان والمدينة). */
+export function productionSearchNorm(f: RulingIndexFields): string {
+  return joinIndex(
+    f,
+    f.judgmentTitle ?? "",
+    (f.judgmentText ?? "").slice(0, SEARCH_NORM_TEXT_CAP),
+    (f.appealText ?? "").slice(0, SEARCH_NORM_TEXT_CAP),
+  );
+}
+
+/** النسخة المحجوبة: العنوان والمتن والاستئناف بعد maskPersonalData، والمتن والاستئناف بالسقف نفسه قبل الحجب. */
+export function maskedSearchNorm(f: RulingIndexFields): string {
+  return joinIndex(
+    f,
+    maskPersonalData(f.judgmentTitle),
+    maskPersonalData((f.judgmentText ?? "").slice(0, SEARCH_NORM_TEXT_CAP)),
+    maskPersonalData((f.appealText ?? "").slice(0, SEARCH_NORM_TEXT_CAP)),
+  );
+}
+
+/** كلمات search_norm كما يقسمها to_tsvector('simple'): حروف وأرقام، بأحرف صغيرة. */
+export function normWords(norm: string): Set<string> {
+  return new Set(norm.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+}
+
+const ARABIC = /[\u0621-\u064A]/;
 
 /**
- * البحث اللفظي يشترط كل ألفاظ الاستعلام كلماتٍ كاملة في العنوان والمتن. يكون الحكم مطابقًا بأسماء الأفراد
- * وحدها إن وردت ألفاظه كلها في النص قبل حجب الأسماء (بعد redactPII) ولم ترد كلها بعده.
- * إن لم ترد قبل الحجب أصلًا (طابق بصيغة أو حقل آخر) فلا يُحكم بشيء: الإسقاط لما محاه الحجب وحده.
- * maskedText: النص كما يخرج من الموصل (maskBySegments)، فالمقارنة على ما يراه المستخدم.
+ * مجموعات صيغ البحث اللفظي كما يبنيها buildRulingTsQuery (كل لفظ بصيغه، والألفاظ بـ AND)، للألفاظ العربية وحدها
+ * (أسماء الأفراد عربية؛ والأرقام واللاتيني لا يمسّها حجب الأسماء). text: نص الاستعلام بعد splitRulingQuery.
  */
-export function lexicalMatchOnlyInNames(
-  row: { title?: string | null; text?: string | null; maskedText?: string },
-  query: string,
-): boolean {
-  const tokens = queryTokens(splitRulingQuery(query).text);
-  if (!tokens.length) return false;
-  const title = row.title ?? "";
-  const text = row.text ?? "";
-  if (!hasAllTokens(redactPII(`${title}\n${text}`), tokens)) return false;
-  const after = `${maskPersonalData(title)}\n${row.maskedText ?? maskBySegments(text).masked}`;
-  return !hasAllTokens(after, tokens);
+export function arabicLexicalGroups(text: string): string[][] {
+  return queryTokens(text)
+    .slice(0, 8)
+    .filter((t) => ARABIC.test(t))
+    .map((t) => tokenVariants(t).map((v) => v.toLowerCase()))
+    .filter((g) => g.length > 0);
+}
+
+/** يرد اللفظ (بإحدى صيغه) كلمةً في search_norm. */
+export const groupInWords = (words: Set<string>, group: string[]): boolean => group.some((v) => words.has(v));
+
+/**
+ * الحكم اللفظي يُعاد إن طابقت النسخةُ المحجوبة كلَّ الألفاظ العربية كما تطابقها القاعدة (tsquery بـ AND).
+ * وإلا فقد طابق بما في اسم محجوب.
+ */
+export function lexicalVisible(masked: Set<string>, groups: string[][]): boolean {
+  return groups.every((g) => groupInWords(masked, g));
+}
+
+/**
+ * النتيجة الدلالية لا تُطابَق لفظًا، فتُسقط إن ورد أحد ألفاظ الاستعلام في الخام ولم يرد بعد الحجب
+ * (أي أن اللفظ في الحكم داخل اسم).
+ */
+export function semanticNameHit(raw: Set<string>, masked: Set<string>, groups: string[][]): boolean {
+  return groups.some((g) => groupInWords(raw, g) && !groupInWords(masked, g));
 }
 
 export type EnumerateTerm = { text: string; numbers: string[]; sensitive: boolean };
 
-/** يطابق اللفظُ الحكمَ كما يطابقه الحصر: الأرقام في رقم القضية والقرار، والنص في العنوان والمتن (مطبَّعًا، أو كما هو للحساس). */
-function enumerateTermMatches(term: EnumerateTerm, body: string, caseNo: string, decisionNo: string): boolean {
-  const inNumbers = (v: string) => caseNo.includes(v) || decisionNo.includes(v);
-  if (!term.numbers.every((n) => digitVariants(n).some(inNumbers))) return false;
-  if (!term.text) return true;
-  if (term.sensitive) {
-    const low = body.toLowerCase();
-    return digitVariants(term.text).some((v) => low.includes(v.toLowerCase()) || inNumbers(v));
-  }
-  const needle = normalizeArabic(term.text);
-  return needle.length > 0 && normalizeArabic(body).includes(needle);
-}
+/** اللفظ عربي (فقد يكون اسمًا). */
+export const termIsArabic = (t: EnumerateTerm): boolean => ARABIC.test(t.text);
 
 /**
- * الحصر (أي لفظ، احتواءً): الحكم مطابق بالأسماء وحدها إن طابقه لفظ واحد على الأقل قبل حجب الأسماء
- * ولم يطابقه أي لفظ بعده. maskedTitle/maskedText كما تخرج من الموصل.
+ * يطابق لفظُ الحصر الحكمَ كما يطابقه SQL في enumerateRulings، على النسخة المحجوبة:
+ * الأرقام في رقم القضية والقرار (LIKE)، والنص العربي في search_norm (ILIKE على normalizeArabic)،
+ * والحساس في العنوان والمتن المنقّحين أو الرقمين (ILIKE).
  */
-export function enumerateMatchOnlyInNames(
-  row: { title?: string | null; text?: string | null; maskedTitle: string; maskedText: string; caseNo?: string | null; decisionNo?: string | null },
-  terms: EnumerateTerm[],
+export function enumerateTermVisible(
+  term: EnumerateTerm,
+  row: { maskedNorm: string; maskedTitleText: () => string; caseNo?: string | null; decisionNo?: string | null },
 ): boolean {
   const caseNo = row.caseNo ?? "";
   const decisionNo = row.decisionNo ?? "";
-  const before = redactPII(`${row.title ?? ""} ${row.text ?? ""}`);
-  if (!terms.some((t) => enumerateTermMatches(t, before, caseNo, decisionNo))) return false;
-  const after = `${row.maskedTitle} ${row.maskedText}`;
-  return !terms.some((t) => enumerateTermMatches(t, after, caseNo, decisionNo));
+  if (!term.numbers.every((n) => digitVariants(n).some((v) => caseNo.includes(v) || decisionNo.includes(v)))) return false;
+  if (!term.text) return true;
+  if (term.sensitive) {
+    const body = row.maskedTitleText().toLowerCase();
+    const nums = `${caseNo}\n${decisionNo}`.toLowerCase();
+    return digitVariants(term.text).some((v) => body.includes(v.toLowerCase()) || nums.includes(v.toLowerCase()));
+  }
+  const needle = normalizeArabic(term.text).replace(/[%_\\]/g, "").toLowerCase();
+  return needle.length > 0 && row.maskedNorm.toLowerCase().includes(needle);
 }
 
-/**
- * التخريج (أي لفظ، احتواءً في العنوان أو نص المبدأ أو الموضوع): المبدأ مطابق بالأسماء وحدها إن ورد لفظ
- * قبل الحجب ولم يرد أي لفظ بعده.
- */
-export function containsMatchOnlyInNames(before: Array<string | null | undefined>, after: Array<string | null | undefined>, tokens: string[]): boolean {
-  const hit = (fields: Array<string | null | undefined>) => {
-    const low = fields.map((f) => (f ?? "").toLowerCase());
-    return tokens.some((t) => low.some((f) => f.includes(t.toLowerCase())));
-  };
-  return hit(before) && !hit(after);
+/** التخريج (contains بلا حساسية حالة على العنوان أو نص المبدأ أو الموضوع): يطابق لفظٌ النسخةَ المحجوبة. */
+export function containsVisible(tokens: string[], maskedFields: Array<string | null | undefined>): boolean {
+  const low = maskedFields.map((f) => (f ?? "").toLowerCase());
+  return tokens.some((t) => low.some((f) => f.includes(t.toLowerCase())));
 }

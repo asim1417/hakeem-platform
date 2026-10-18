@@ -7,10 +7,15 @@ import { NAME_MASK } from "../lib/rulings/research/mask";
 import { redactPII } from "../lib/modules/legal-core/rulings-search";
 import { excerptFrom } from "../lib/modules/legal-core/ruling-excerpts";
 import {
-  containsMatchOnlyInNames,
-  enumerateMatchOnlyInNames,
-  lexicalMatchOnlyInNames,
+  arabicLexicalGroups,
+  containsVisible,
+  enumerateTermVisible,
+  lexicalVisible,
   maskBySegments,
+  maskedSearchNorm,
+  normWords,
+  productionSearchNorm,
+  semanticNameHit,
   maskRulingText,
   maskedChunk,
   maskedRulingExcerpts,
@@ -179,21 +184,104 @@ ok(mid.text.length >= 20 && mid.text.length <= 60 && (mid.nextOffset === null ||
 const mc = maskedChunk(RULING, 0, 10_000);
 ok(mc.total === full.length && mc.text === full && mc.nextOffset === null, "maskedChunk: الحكم كله في شريحة واحدة محجوبًا");
 
-// ٤) لا يُعثر على حكم باسم فرد: المطابقة داخل اسم محجوب وحده تُسقط، وما سواها يبقى.
-const ROW = { title: "حكم توريد", text: "الوقائع: أقام المدعي/ غانم الموسوي دعواه بطلب ثمن توريد بضاعة.\nالأسباب: وحيث ثبت التوريد." };
-ok(lexicalMatchOnlyInNames(ROW, "غانم الموسوي"), "البحث: الاسم وحده مطابقة بالأسماء");
-ok(lexicalMatchOnlyInNames(ROW, "توريد غانم"), "البحث: لفظ عام + اسم (كل الألفاظ شرط) مطابقة بالأسماء");
-ok(!lexicalMatchOnlyInNames(ROW, "توريد بضاعة"), "البحث: ألفاظ خارج الاسم تبقى");
-ok(!lexicalMatchOnlyInNames(ROW, "مقاولة"), "البحث: لفظ لا يرد قبل الحجب أصلًا لا يُحكم عليه");
-ok(!lexicalMatchOnlyInNames(ROW, ""), "البحث: استعلام فارغ لا يُحكم عليه");
-const E = (text: string) => ({ text, numbers: [] as string[], sensitive: false });
-const erow = { ...ROW, maskedTitle: maskRulingText(ROW.title), maskedText: maskRulingText(ROW.text), caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٥", decisionNo: null };
-ok(enumerateMatchOnlyInNames(erow, [E("غانم")]), "الحصر: الاسم وحده مطابقة بالأسماء");
-ok(!enumerateMatchOnlyInNames(erow, [E("غانم"), E("توريد")]), "الحصر: لفظ آخر (OR) يطابق خارج الاسم فيبقى");
-ok(!enumerateMatchOnlyInNames(erow, [{ text: "", numbers: ["4470000005"], sensitive: false }]), "الحصر: رقم القضية لا يمسّه الحجب");
-ok(enumerateMatchOnlyInNames(erow, [{ text: "غانم", numbers: ["4470000005"], sensitive: false }]), "الحصر: رقم القضية + اسم (AND) مطابقة بالأسماء");
-ok(containsMatchOnlyInNames(["مبدأ", "قرر المدعي/ غانم الموسوي"], ["مبدأ", maskRulingText("قرر المدعي/ غانم الموسوي")], ["غانم"]), "التخريج: الاسم وحده مطابقة بالأسماء");
-ok(!containsMatchOnlyInNames(["مبدأ الفسخ", "x"], ["مبدأ الفسخ", "x"], ["الفسخ", "غانم"]), "التخريج: لفظ خارج الاسم يبقى");
+// ٤) لا يُعثر على حكم باسم فرد: المطابقة تُعاد على النسخة المحجوبة بباني الإنتاج وبقواعد القاعدة نفسها.
+const ROW = {
+  court: "المحكمة التجارية",
+  judgmentTitle: "القضية رقم ٤٤٧ لعام ١٤٤٥",
+  judgmentText: "الوقائع: أقام المدعي/ غانم الموسوي دعواه بطلب ثمن توريد بضاعة.\nالأسباب: وحيث ثبت التوريد. عضو قيصر بن عبدﷲ الطاهري",
+  appealText: "اعترض المستأنف/ زيدان الفلاني على الحكم لأسباب إجرائية.",
+  caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٥",
+  decisionNo: null,
+  cityName: "الرياض",
+};
+const rawN = productionSearchNorm(ROW);
+ok(["المحكمه", "التجاريه", "الرياض", "اعترض", "عبدﷲ"].every((w) => rawN.includes(w)), "باني الإنتاج: المحكمة والعنوان والمتن والاستئناف والمدينة، و«ﷲ» حرف (كما في search_norm)");
+ok(productionSearchNorm({ judgmentText: `${"س".repeat(20_000)} غانم` }).indexOf("غانم") === -1, "باني الإنتاج: المتن مقصوص عند 20 ألفًا");
+const maskedN = maskedSearchNorm(ROW);
+ok(leaks(maskedN).length === 0 && maskedN.includes("توريد") && maskedN.includes("اعترض"), "النسخة المحجوبة: لا اسم في العنوان والمتن والاستئناف، والباقي كما هو");
+const mW = normWords(maskedN);
+const rW = normWords(rawN);
+const G = (q: string) => arabicLexicalGroups(q);
+ok(!lexicalVisible(mW, G("غانم الموسوي")), "البحث: الاسم لا يطابق النسخة المحجوبة");
+ok(!lexicalVisible(mW, G("توريد غانم")), "البحث: لفظ عام + اسم (AND) لا يطابق");
+ok(!lexicalVisible(mW, G("غانم شي")) && !lexicalVisible(mW, G("غانم القضا")), "البحث: حشو لا يطابق في JS لا ينقذ الاسم (لا شرط «قبل الحجب»)");
+ok(!lexicalVisible(mW, G("الفلاني")), "البحث: اسم في الاستئناف وحده لا يطابق");
+ok(!lexicalVisible(mW, G("عبدﷲ الطاهري")) && !lexicalVisible(mW, G("عبد الطاهري")), "البحث: اسم بـ«ﷲ» لا يطابق بصيغتيه");
+ok(lexicalVisible(mW, G("توريد بضاعة")) && lexicalVisible(mW, G("اعترض")), "البحث: ألفاظ خارج الاسم تطابق (والاستئناف من الفهرس)");
+ok(lexicalVisible(mW, G("4470000005")), "البحث: لا مجموعات عربية = لا فحص");
+ok(semanticNameHit(rW, mW, G("دعوى غانم الموسوي")), "الدلالي: لفظ في الحكم داخل اسم يُسقطه");
+ok(!semanticNameHit(rW, mW, G("ثمن البضاعة المسلمة")), "الدلالي: بلا لفظ داخل اسم يبقى");
+const E = (text: string, numbers: string[] = []) => ({ text, numbers, sensitive: /[0-9A-Za-z@]/.test(text) });
+const er = { maskedNorm: maskedN, maskedTitleText: () => `${maskRulingText(ROW.judgmentTitle)}\n${maskRulingText(ROW.judgmentText)}`, caseNo: ROW.caseNo, decisionNo: ROW.decisionNo };
+ok(!enumerateTermVisible(E("غانم"), er) && !enumerateTermVisible(E("زيدان الفلاني"), er), "الحصر: الاسم (في المتن أو الاستئناف) لا يطابق");
+ok(enumerateTermVisible(E("توريد"), er) && enumerateTermVisible(E("التجارية"), er), "الحصر: لفظ عام أو اسم المحكمة يطابق");
+ok(enumerateTermVisible(E("", ["4470000005"]), er), "الحصر: رقم القضية لا يمسّه الحجب");
+ok(!enumerateTermVisible(E("غانم", ["4470000005"]), er), "الحصر: رقم القضية + اسم (AND) لا يطابق");
+ok(!enumerateTermVisible(E("توريد", ["4470000099"]), er), "الحصر: رقم آخر لا يطابق");
+ok(containsVisible(["الفسخ"], ["مبدأ الفسخ", "x"]) && !containsVisible(["غانم"], ["مبدأ", maskRulingText("قرر المدعي/ غانم الموسوي")]), "التخريج: الاحتواء على النسخة المحجوبة");
+
+// ٥) الأداء خطي: نصوص طويلة كثيفة الصفات والسلاسل والمراسي.
+for (const [label, t] of [
+  ["كثيف بالصفات", "المدعي/ غانم مروان ".repeat(10_500)],
+  ["صفات مرفوضة", "وحيث إن المدعي طلب فسخ العقد وأجاب المدعى عليه بأن ذلك لا يصح ".repeat(3_400)],
+  ["سلاسل نسب", "زيدان بن مروان بن هلال ".repeat(8_500)],
+  ["مراسٍ", "غانم مروان سجل مدني رقم (...) ".repeat(6_500)],
+] as const) {
+  const t0 = performance.now();
+  maskRulingText(t);
+  const ms = performance.now() - t0;
+  ok(ms < 1500, `الأداء: ${label} (${t.length} حرف) في ${ms.toFixed(0)}ms`);
+}
+
+// ٦) حجب زائد أُزيل، وصيغ تفلت أُغلقت (جولة المراجعة الأولى على #785).
+const keptR2: Array<[string, string]> = [
+  ["وأرفق صورة هوية وطنية للمدعي", "صورة + مرسى"],
+  ["بسبب عدم تجديد رخصة إقامة العامل", "تجديد + مرسى بلا رقم"],
+  ["إلزام المدعى عليها بدفع رسوم رخصة إقامة المدعي", "رسوم + مرسى"],
+  ["بتسليم صورة سجل مدني", "صورة سجل مدني"],
+  ["المادة ٧٧ من نظام العمل وتعديلاتها هوية رقم (...)", "اسم نظام قبل المرسى"],
+  ["المادة الثامنة من نظام الأحوال المدنية بشأن حفيظة نفوس", "اسم نظام قبل «حفيظة نفوس»"],
+  ["حضر المدعي علي الموعد المحدد للجلسة", "«علي» بمعنى «على»"],
+  ["أصدرت الدائرة حكمها القاضي بإلزام المدعى عليه", "«القاضي» بلا فاصل"],
+  ["ضد الحكم الابتدائي", "«ضد» بلا فاصل"],
+  ["المدعي/ شركة النخيل للتجارة سجل تجاري رقم (...)", "منشأة قبل السجل التجاري"],
+];
+for (const [src, label] of keptR2) {
+  const out = maskRulingText(src);
+  ok(out === src, `لا يُحجب: ${label} → «${out}»`);
+}
+const partly: Array<[string, string[], string]> = [
+  ["زيدان بن مروان ومبلغ التعويض خمسون ألف ريال", ["ومبلغ التعويض"], "ما بعد السلسلة بواو + قاطعة"],
+  ["تم الاتفاق بين غانم بن مروان للتجارة وشركة الأفق", ["للتجارة وشركة الأفق"], "المعرّفة بحرف بعد السلسلة"],
+  ["المدعي/ غانم بن مروان الموسوي وأخوه زيدان بن مروان الفلاني", ["وأخوه"], "صلة القرابة بعد السلسلة"],
+  ["قال زيدان بن مروان رحمه الله في كتابه", ["رحمه الله في كتابه"], "الترحّم بعد السلسلة"],
+  ["المدعي/ غانم الموسوي علي علم بالعقد", ["علي علم بالعقد"], "«علي» بمعنى «على» بعد الاسم"],
+  ["غانم بن مروان\tمعتمد", ["معتمد"], "الجدولة تقطع ما بعد السلسلة"],
+  ["المدعي/ غانم الموسوي بِأنَّ العقد صحيح", ["بِأنَّ العقد صحيح"], "قاطعة بحركات"],
+];
+for (const [src, keep, label] of partly) {
+  const out = maskRulingText(src);
+  ok(leaks(out).length === 0 && out.includes(NAME_MASK) && keep.every((k) => out.includes(k)), `يُحجب الاسم ويبقى ما بعده: ${label} → «${out}»`);
+}
+const closed: Array<[string, string]> = [
+  ["حضر محمّد بن مروان الموسوي", "شدة في سلسلة النسب"],
+  ["حضر مُحَمَّد بْن مروان الموسوي", "حركات في السلسلة والرابط"],
+  ["المدعي/ کامل غانم الموسوي", "الكاف الفارسية"],
+  ["المدعي/ غانم‌الموسوي هلال", "ZWNJ داخل الاسم"],
+  ["ضد/ زيدان علي الفلاني وطلب", "«ضد/» صفة"],
+  ["ادعى غانم مروان الموسوي سعودي الجنسية بموجب السجل المدني رقم (...)", "«سعودي الجنسية» و«بموجب السجل المدني»"],
+  ["حضر غانم مروان الموسوي بموجب الهوية الوطنية رقم (...)", "«بموجب الهوية الوطنية رقم»"],
+  ["حضر غانم مروان الموسوي رقم الهوية (...)", "«رقم الهوية»"],
+  ["القاضي: غانم مروان الموسوي", "«القاضي:»"],
+  ["أمين السر/ زيدان الفلاني", "«أمين السر/»"],
+  ["المدعي/ غانم القاضي", "«القاضي» اسم عائلة بعد الصفة"],
+  ["…الياميالمدعى عليه:غانم مروان", "صفة ملتصقة بلا سلسلة ولا مرسى"],
+  ["المدعي:ة/ غانم مروان الطاهري", "لاحقة الجنس بلا سلسلة ولا مرسى"],
+];
+for (const [src, label] of closed) {
+  const out = maskRulingText(src);
+  ok(leaks(out).length === 0 && !/کامل|القاضي$/.test(out) && out.includes(NAME_MASK), `يُحجب: ${label} → «${out}»`);
+}
 
 console.log(failed === 0 ? "✓ حجب الأسماء في الموصل" : `✗ فشل ${failed}`);
 process.exit(failed === 0 ? 0 : 1);
