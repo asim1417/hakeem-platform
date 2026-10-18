@@ -29,7 +29,10 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   if (!r) return { error: "الحكم غير موجود بهذا المعرّف", ruling_id: rulingId };
 
   const full = r.judgmentText ?? "";
-  const seg = segmentRuling(full);
+  // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم كاملًا مرة واحدة، ثم الأجزاء والشريحة منه، فلا يفلت
+  // نصف اسم أو رقم على حد شريحة، ولا تكشف إزاحات الأجزاء طول ما حُجب. كل الإزاحات في النص المحجوب.
+  const maskedFull = maskRulingText(full);
+  const seg = segmentRuling(maskedFull);
   const parts = seg.segments.map((s) => ({ type: s.type as SegmentType, start: s.start, end: s.end }));
   // نطاق القراءة: الجزء المطلوب إن وُجد، وإلا النص كله.
   const target = part ? parts.find((p) => p.type === part) : undefined;
@@ -37,12 +40,8 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
     return { ruling_id: r.id, error: `لم يُعثر على جزء «${part}» في هذا الحكم بالقواعد`, parts };
   }
   const lo = target?.start ?? 0;
-  const hi = target?.end ?? full.length;
-  // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم (أو الجزء المطلوب) كاملًا ثم تُقتطع الشريحة،
-  // فلا يفلت نصف اسم أو رقم على حد شريحة. الإزاحات وtotal_chars في النص المحجوب.
-  const maskedFull = maskRulingText(full);
-  const maskedTarget = target ? maskRulingText(full.slice(lo, hi)) : maskedFull;
-  const slice = sliceMasked(maskedTarget, offset, maxChars);
+  const hi = target?.end ?? maskedFull.length;
+  const slice = sliceMasked(maskedFull.slice(lo, hi), offset, maxChars);
 
   return {
     ruling_id: r.id,
@@ -51,7 +50,7 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
     year_h: hijriYear(r.decisionDateText),
     total_chars: maskedFull.length,
     part: target?.type ?? null,
-    parts, // خريطة الأجزاء بإزاحاتها في النص الكامل الخام (لاختيار part)
+    parts, // خريطة الأجزاء بإزاحاتها في النص المحجوب
     offset: slice.offset, // داخل الجزء المطلوب (أو النص كله) بعد الحجب
     returned_chars: slice.text.length,
     next_offset: slice.nextOffset, // null = انتهى الجزء/النص

@@ -24,7 +24,7 @@ import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-in
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
-import { maskRulingText, maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
+import { maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -208,10 +208,11 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   const texts = new Map((rows ?? []).map((x) => [x.id, x.judgmentText ?? ""] as const));
   const results = hits.map((h) => {
     const raw = texts.get(h.id);
-    // تعذّر جلب النص: يُحجب المقتطف القائم نفسه (أضعف على الحدود، لكن لا يمر اسم بلا حجب).
+    // تعذّر جلب النص: لا مقتطف ولا منطوق (المقتطف القائم مقصوص من الخام، فقد يحمل نصف اسم)، وخريطة الأجزاء
+    // أنواعًا فقط؛ والحكم يُقرأ بـ hakeem_get_ruling.
     const masked =
       raw === undefined
-        ? { snippet: maskRulingText(h.snippet), disposition: h.disposition ? maskRulingText(h.disposition) : null }
+        ? { snippet: "", disposition: null, parts: h.parts.map((p) => ({ type: p.type, start: 0, end: 0 })) }
         : maskedRulingExcerpts(raw, query, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
     return {
       ruling_id: h.id,
@@ -222,7 +223,7 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
       matched_in: h.matchedIn, // reasons | disposition | defense | claims | header …
       matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
       disposition: masked.disposition, // بداية المنطوق
-      parts: h.parts.map((p) => ({ type: p.type, start: p.start, end: p.end })), // لجلب جزء بعينه عبر hakeem_get_ruling
+      parts: masked.parts, // لجلب جزء بعينه عبر hakeem_get_ruling (الإزاحات في النص المحجوب)
     };
   });
   // total مسقوف بـ٥٠٠٠ للألفاظ الشائعة؛ total_is_lower_bound يعني «أكثر من ذلك».

@@ -21,7 +21,8 @@ const PARTY_MARKERS = [
   "المدعي", "المدعية", "المدعيان", "المدعون", "المدعى عليه", "المدعى عليها", "المدعى عليهما", "المدعى عليهم",
   "المستأنف", "المستأنفة", "المستأنف ضده", "المستأنف ضدها", "المستأنف عليه", "المستأنف عليها",
   "المعترض", "المعترضة", "المعترض ضده", "المتهم", "المتهمة", "طالب التنفيذ", "المنفذ ضده", "المنفذ ضدها",
-  "الشاهد", "الشاهدة", "الكفيل", "الضامن", "الوكيل", "الوكيلة", "وكيل", "وكيله", "وكيلها", "وكيلهم", "وكيلة",
+  "الشاهد", "الشاهدة", "الكفيل", "الضامن", "الوكيل الشرعي", "الوكيل", "الوكيلة", "وكيل", "وكيله", "وكيلها", "وكيلهم", "وكيلة",
+  "الزوج", "الزوجة",
 ];
 // ألقاب يليها اسم الشخص دائمًا: يُحجب ما بعدها بلا فاصل.
 const TITLE_MARKERS = [
@@ -50,7 +51,7 @@ const lilAlt = alt(ROLE_MARKERS.filter((m) => m.startsWith("ال")).map((m) => m
 // الصفة وحدها (والفاصل بعدها)؛ الكلمات بعدها تُقرأ يدويًا، فالصفة المرفوضة لا تبتلع صفة تالية.
 const MARKER_RE = new RegExp(
   `(^|[^\\u0621-\\u064A])((?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(?![\\u0621-\\u064A\\u064B-\\u0652])` +
-    `(\\s*(?:[:/\\-–—(]\\s*){0,2})`,
+    `(\\s*(?:[:/\\-–—(«]\\s*){0,2})`,
   "g",
 );
 const NASAB_RE = new RegExp(`${AR}(?:\\s+(?:بن|بنت|ابن|ابنة)\\s+${AR})+(?:\\s+(?:آل\\s+)?${AR})?`, "g");
@@ -58,6 +59,8 @@ const NASAB_RE = new RegExp(`${AR}(?:\\s+(?:بن|بنت|ابن|ابنة)\\s+${AR
 const TRIGGER_BEFORE = /(?:^|[^ء-ي])[وف]?(?:حضر|حضرت|بحضور|حضور|إلزام|بإلزام|الزام|بالزام|ألزم|ألزمت)\s+$/;
 // الكلمة بحركاتها: «عقدًا» كلمة واحدة لا «عقد» ثم «ًا».
 const TOKEN_RE = /\s*([\u0621-\u064A\u064B-\u0652]+)/y;
+// صفة تبدأ عند الكلمة (بسوابقها وصيغتها المركبة): «والمدعى عليه/» بعد اسم أول تقطعه.
+const MARKER_AT = new RegExp(`^(?:(?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(?![\\u0621-\\u064A\\u064B-\\u0652])`);
 
 const ROLE_WORDS = new Set(ROLE_MARKERS.filter((m) => !m.includes(" ")));
 const markerOf = (role: string): string => {
@@ -81,7 +84,7 @@ function maskAfterRoles(text: string): string {
       MARKER_RE.lastIndex++;
       continue;
     }
-    const hasSep = /[:/\-–—(]/.test(sep);
+    const hasSep = /[:/\-–—(«]/.test(sep);
     const isTitle = TITLES.has(markerOf(role));
     const trigger = TRIGGER_BEFORE.test(text.slice(Math.max(0, roleStart - 16), roleStart));
     // المرفوضة: يُستأنف بعد الصفة نفسها لا بعد الفاصل، فيبقى الفاصل حدًّا قبل الصفة التالية («وكيله المحامي …»).
@@ -95,8 +98,9 @@ function maskAfterRoles(text: string): string {
     let count = 0;
     for (let t = TOKEN_RE.exec(text); t && count < 4; t = TOKEN_RE.exec(text)) {
       const w = t[1];
-      // المنوّن والمشكول ليس اسم علم في نصوص الأحكام («عقدًا»، «مبلغًا»).
-      if (STOP.has(w) || ROLE_WORDS.has(w) || /[\u064B-\u0652]/.test(w)) break;
+      // المنوّن ليس اسم علم في نصوص الأحكام («عقدًا»، «مبلغًا»)؛ والشدة والحركات قد تكون في الاسم («محمّد»).
+      const tokenStart = TOKEN_RE.lastIndex - w.length;
+      if (STOP.has(w) || ROLE_WORDS.has(w) || /[\u064B-\u064D]/.test(w) || MARKER_AT.test(text.slice(tokenStart, tokenStart + 40))) break;
       nameEnd = TOKEN_RE.lastIndex;
       count++;
       // اسم لا يمتد عبر فاصل جملة أو سطر.

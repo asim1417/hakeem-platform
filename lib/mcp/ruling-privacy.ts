@@ -53,7 +53,7 @@ export function maskedRulingExcerpts(
   raw: string | null | undefined,
   query: string,
   semantic?: { part?: string | null; originalSnippet?: string | null } | null,
-): { snippet: string; disposition: string | null } {
+): { snippet: string; disposition: string | null; parts: Array<{ type: string; start: number; end: number }> } {
   const text = raw ?? "";
   const masked = maskPersonalData(text);
   const ex = buildRulingExcerpts(masked, semantic ? "" : query);
@@ -64,7 +64,7 @@ export function maskedRulingExcerpts(
     if (pos !== null) snippet = excerptFrom(masked, pos);
     else if (part) snippet = excerptFrom(masked, part.start);
   }
-  return { snippet, disposition: ex.disposition };
+  return { snippet, disposition: ex.disposition, parts: ex.parts.map((p) => ({ type: p.type, start: p.start, end: p.end })) };
 }
 
 /**
