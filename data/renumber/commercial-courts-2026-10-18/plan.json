@@ -1,0 +1,404 @@
+{
+ "source": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/38334008-3b70-4c6c-b3af-aba3016a8061/1",
+ "snapshot": "2026-09-28",
+ "moved": [
+  {
+   "id": "cmpwi8wtt01hrnxffel5owmet",
+   "from": 19,
+   "to": 20
+  },
+  {
+   "id": "cmpwi8x5n01htnxffmhec162t",
+   "from": 20,
+   "to": 21
+  },
+  {
+   "id": "cmpwi8xnc01hvnxffoja6vblk",
+   "from": 21,
+   "to": 22
+  },
+  {
+   "id": "cmpwi8xz501hxnxffoik7h1ko",
+   "from": 22,
+   "to": 23
+  },
+  {
+   "id": "cmpwi8yaz01hznxff0iuxoyrc",
+   "from": 23,
+   "to": 24
+  },
+  {
+   "id": "cmpwi8ymt01i1nxfflwry8fwb",
+   "from": 24,
+   "to": 25
+  },
+  {
+   "id": "cmpwi8yyn01i3nxffrqjvcafa",
+   "from": 25,
+   "to": 27
+  },
+  {
+   "id": "cmpwi8zam01i5nxffspncnv75",
+   "from": 26,
+   "to": 28
+  },
+  {
+   "id": "cmpwi8zmh01i7nxffd494o33n",
+   "from": 27,
+   "to": 29
+  },
+  {
+   "id": "cmpwi8zyb01i9nxffccy4gbir",
+   "from": 28,
+   "to": 30
+  },
+  {
+   "id": "cmpwi90a401ibnxffe56gxpwn",
+   "from": 29,
+   "to": 31
+  },
+  {
+   "id": "cmpwi90ly01idnxffjolxi50n",
+   "from": 30,
+   "to": 32
+  },
+  {
+   "id": "cmpwi90xv01ifnxffsw66wkkt",
+   "from": 31,
+   "to": 33
+  },
+  {
+   "id": "cmpwi919o01ihnxffijk4vk1c",
+   "from": 32,
+   "to": 34
+  },
+  {
+   "id": "cmpwi91lk01ijnxffisjdynp2",
+   "from": 33,
+   "to": 35
+  },
+  {
+   "id": "cmpwi91xe01ilnxff6845azay",
+   "from": 34,
+   "to": 36
+  },
+  {
+   "id": "cmpwi929701innxffqnup3b9f",
+   "from": 35,
+   "to": 37
+  },
+  {
+   "id": "cmpwi92l101ipnxffq4njay6p",
+   "from": 36,
+   "to": 38
+  },
+  {
+   "id": "cmpwi92wu01irnxffh96x4wqn",
+   "from": 37,
+   "to": 39
+  },
+  {
+   "id": "cmpwi938o01itnxffl8kugeku",
+   "from": 38,
+   "to": 40
+  },
+  {
+   "id": "cmpwi93kh01ivnxffw0higln3",
+   "from": 39,
+   "to": 41
+  },
+  {
+   "id": "cmpwi93wb01ixnxff741895l2",
+   "from": 40,
+   "to": 42
+  },
+  {
+   "id": "cmpwi948401iznxffgqj16yen",
+   "from": 41,
+   "to": 43
+  },
+  {
+   "id": "cmpwi94k101j1nxff8158tuzz",
+   "from": 42,
+   "to": 44
+  },
+  {
+   "id": "cmpwi94vv01j3nxffr2qd2qkh",
+   "from": 43,
+   "to": 45
+  },
+  {
+   "id": "cmpwi957p01j5nxffcktzm2iy",
+   "from": 44,
+   "to": 46
+  },
+  {
+   "id": "cmpwi95jj01j7nxffkgrj5ez7",
+   "from": 45,
+   "to": 47
+  },
+  {
+   "id": "cmpwi95vc01j9nxffxf1fkrha",
+   "from": 46,
+   "to": 48
+  },
+  {
+   "id": "cmpwi967601jbnxffx5dhhn0c",
+   "from": 47,
+   "to": 49
+  },
+  {
+   "id": "cmpwi96j001jdnxffao1tswfe",
+   "from": 48,
+   "to": 50
+  },
+  {
+   "id": "cmpwi96ut01jfnxff2mbdehb0",
+   "from": 49,
+   "to": 51
+  },
+  {
+   "id": "cmpwi976n01jhnxffutebeqcs",
+   "from": 50,
+   "to": 52
+  },
+  {
+   "id": "cmpwi97ii01jjnxffewx1xcm0",
+   "from": 51,
+   "to": 53
+  },
+  {
+   "id": "cmpwi97uc01jlnxff0k54whoy",
+   "from": 52,
+   "to": 54
+  },
+  {
+   "id": "cmpwi986501jnnxffji9z38be",
+   "from": 53,
+   "to": 55
+  },
+  {
+   "id": "cmpwi98hz01jpnxffs9ss0ton",
+   "from": 54,
+   "to": 56
+  },
+  {
+   "id": "cmpwi98ts01jrnxff5hfqbnr0",
+   "from": 55,
+   "to": 57
+  },
+  {
+   "id": "cmpwi99bh01jtnxffymqll1u8",
+   "from": 56,
+   "to": 58
+  },
+  {
+   "id": "cmpwi99nb01jvnxff91q8sne2",
+   "from": 57,
+   "to": 59
+  },
+  {
+   "id": "cmpwi99z401jxnxffnf788t1p",
+   "from": 58,
+   "to": 60
+  },
+  {
+   "id": "cmpwi9aax01jznxff3vy53kzq",
+   "from": 59,
+   "to": 61
+  },
+  {
+   "id": "cmpwi9amr01k1nxffe5pk2jhb",
+   "from": 60,
+   "to": 62
+  },
+  {
+   "id": "cmpwi9ayl01k3nxffjr5d5hfy",
+   "from": 61,
+   "to": 63
+  },
+  {
+   "id": "cmpwi9baf01k5nxffv789nq3r",
+   "from": 62,
+   "to": 64
+  },
+  {
+   "id": "cmpwi9bm801k7nxff32m8i0pq",
+   "from": 63,
+   "to": 65
+  },
+  {
+   "id": "cmpwi9by201k9nxffxb13r6z3",
+   "from": 64,
+   "to": 66
+  },
+  {
+   "id": "cmpwi9ca101kbnxffsq79d7fx",
+   "from": 65,
+   "to": 67
+  },
+  {
+   "id": "cmpwi9clu01kdnxffacetob1o",
+   "from": 66,
+   "to": 68
+  },
+  {
+   "id": "cmpwi9cxo01kfnxffeqrkb4hv",
+   "from": 67,
+   "to": 69
+  },
+  {
+   "id": "cmpwi9d9h01khnxff2mzdg0is",
+   "from": 68,
+   "to": 70
+  },
+  {
+   "id": "cmpwi9dlb01kjnxffcdxl1w1v",
+   "from": 69,
+   "to": 71
+  },
+  {
+   "id": "cmpwi9dx401klnxfffli8bula",
+   "from": 70,
+   "to": 72
+  },
+  {
+   "id": "cmpwi9e8y01knnxffbpjukohs",
+   "from": 71,
+   "to": 73
+  },
+  {
+   "id": "cmpwi9ekr01kpnxffcx2gx298",
+   "from": 72,
+   "to": 74
+  },
+  {
+   "id": "cmpwi9ewl01krnxffuy5jz7mp",
+   "from": 73,
+   "to": 75
+  },
+  {
+   "id": "cmpwi9f8f01ktnxffnabvcfqz",
+   "from": 74,
+   "to": 76
+  },
+  {
+   "id": "cmpwi9fk801kvnxff7cfn91pg",
+   "from": 75,
+   "to": 77
+  },
+  {
+   "id": "cmpwi9fw201kxnxffxk4jydm7",
+   "from": 76,
+   "to": 78
+  },
+  {
+   "id": "cmpwi9g7y01kznxffgzihaezq",
+   "from": 77,
+   "to": 79
+  },
+  {
+   "id": "cmpwi9gjv01l1nxffaxfwr5bp",
+   "from": 78,
+   "to": 80
+  },
+  {
+   "id": "cmpwi9gvq01l3nxffpvz5st9f",
+   "from": 79,
+   "to": 81
+  },
+  {
+   "id": "cmpwi9h7n01l5nxffmb4fnl5h",
+   "from": 80,
+   "to": 82
+  },
+  {
+   "id": "cmpwi9hji01l7nxffg6319klv",
+   "from": 81,
+   "to": 83
+  },
+  {
+   "id": "cmpwi9hvb01l9nxffb98wm806",
+   "from": 82,
+   "to": 84
+  },
+  {
+   "id": "cmpwi9i7501lbnxff4d5rgqyz",
+   "from": 83,
+   "to": 85
+  },
+  {
+   "id": "cmpwi9ij001ldnxff8560dzbh",
+   "from": 84,
+   "to": 86
+  },
+  {
+   "id": "cmpwi9iuu01lfnxfftkdx71xe",
+   "from": 85,
+   "to": 87
+  },
+  {
+   "id": "cmpwi9j6n01lhnxffc4qdyz5k",
+   "from": 86,
+   "to": 88
+  },
+  {
+   "id": "cmpwi9jig01ljnxff3bra4y31",
+   "from": 87,
+   "to": 89
+  },
+  {
+   "id": "cmpwi9jub01llnxffmvhlo5pq",
+   "from": 88,
+   "to": 90
+  },
+  {
+   "id": "cmpwi9k6401lnnxff0mf6kgj3",
+   "from": 89,
+   "to": 91
+  },
+  {
+   "id": "cmpwi9khz01lpnxffpwn6i5e6",
+   "from": 90,
+   "to": 92
+  },
+  {
+   "id": "cmpwi9ktt01lrnxffcfzoywzq",
+   "from": 91,
+   "to": 93
+  },
+  {
+   "id": "cmpwi9lbh01ltnxffl9w8bgal",
+   "from": 92,
+   "to": 94
+  }
+ ],
+ "nonArticle": [
+  {
+   "id": "cmpwi9lnb01lvnxff60wyns5v",
+   "n": 93,
+   "duplicateOf": 95
+  },
+  {
+   "id": "cmpwi9lz501lxnxff9pfn1op1",
+   "n": 94,
+   "duplicateOf": 96
+  }
+ ],
+ "inserted": [
+  {
+   "id": "hkm28-aeeedf9d20993f7ac1c4f6a6",
+   "n": 19,
+   "title": "المادة التاسعة عشرة",
+   "md5Nfc": "1bbc1926c67805f331c7076d00cc7c38",
+   "contentStart": "يجب في الدعاوى التي تحددها اللائحة أن يخطر المدعي المدعى عليه كتابة بأداء الحق ا"
+  },
+  {
+   "id": "hkm28-74c7d020f04743c53288cc4d",
+   "n": 26,
+   "title": "المادة السادسة والعشرون",
+   "md5Nfc": "f3ec6a79a455be5a2045a52f80b287ab",
+   "contentStart": "للمحكمة عند تخلف أي من أطراف الدعوى عن تقديم ما طلب منه في الميعاد المحدد دون عذ"
+  }
+ ]
+}

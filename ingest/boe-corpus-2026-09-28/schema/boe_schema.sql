@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS boe.diff (
   article_number    int NOT NULL,
   is_bis            boolean NOT NULL DEFAULT false,
   hakeem_article_id text,
-  verdict           text NOT NULL CHECK (verdict IN ('identical','whitespace_only','normalization_only','wording','missing_in_hakeem','missing_in_boe','unnumbered_unit')),
+  verdict           text NOT NULL CHECK (verdict IN ('identical','whitespace_only','normalization_only','wording','missing_in_hakeem','missing_in_boe','unnumbered_unit','shifted','version_mismatch')),
   boe_has_notes     boolean NOT NULL,
   detail            text,
   computed_at       timestamptz NOT NULL DEFAULT now()
