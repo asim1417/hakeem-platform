@@ -151,7 +151,20 @@ function matches(r: Row, where: Where): boolean {
     return needle !== "" && v.toLowerCase().includes(needle.toLowerCase());
   });
 }
+// مبادئ مصطنعة لأداة «تخريج الحكم» (takhrij_hukm) في طبقة MCP للوكلاء.
+const principles = [
+  { id: "p1", title: "مبدأ فسخ عقد التوريد في دعوى المدعي/ زيدان الفلاني", principleText: `إذا أخل المورد بالتسليم جاز الفسخ. ${"ـ نص ".repeat(100)}وقرر المدعي/ غانم الموسوي ذلك أمام الدائرة.`, court: "المحكمة التجارية", topic: "توريد" },
+  { id: "p2", title: "مبدأ في الإثبات", principleText: "شهدت الشاهدة/ رجاء السندي بالتسليم، والشهادة وحدها لا تكفي.", court: "المحكمة العامة", topic: "إثبات" },
+];
+const frozenPrinciples = JSON.stringify(principles);
 const fakePrisma = {
+  judicialPrinciple: {
+    findMany: async ({ where, take }: { where: { OR: Array<Record<string, { contains: string }>> }; take?: number }) =>
+      principles
+        .filter((p) => where.OR.some((c) => { const [f, op] = Object.entries(c)[0]; return String((p as Record<string, unknown>)[f] ?? "").toLowerCase().includes(op.contains.toLowerCase()); }))
+        .slice(0, take ?? 50),
+    update: noWrite, create: noWrite, delete: noWrite,
+  },
   judicialCase: {
     findMany: async ({ where }: { where: Where }) => rows.filter((r) => matches(r, where)),
     findUnique: async ({ where }: { where: { id: string } }) => rows.find((r) => r.id === where.id) ?? null,
@@ -291,6 +304,48 @@ async function main() {
       ok(!leak, `MCP get_ruling: ${row.id} بشرائح ${size} حرفًا بلا رقم محجوب`);
     }
   }
+  // HKM-012 (متابعة): لا يُعثر على حكم باسم فرد عبر الموصل، ولا يكشف العدد عدد أحكام الاسم.
+  ok((await searchRulingsDirect({ query: "زيدان", limit: 20 })).hits.length > 0, "المرجع: المسار الداخلي يجد الحكم بالاسم (الإسقاط في الموصل وحده)");
+  for (const q of ["غانم الموسوي", "زيدان", "توريد غانم", "قيصر الطاهري", "رجاء"]) {
+    const s = await mcpSearchRulings(q, undefined, undefined, 20);
+    ok(s.results.length === 0 && s.total === 0, `MCP search: «${q}» (اسم) لا يعيد حكمًا ولا عددًا (${s.results.length}/${s.total})`);
+  }
+  type Enum = { total: number; by_court: Array<{ court: string | null; count: number }>; results?: Array<{ ruling_id: string; snippet: string }>; counts_page_only?: boolean };
+  for (const q of ["غانم", "الموسوي", "رجاء السندي", "الطاهري"]) {
+    const e = (await enumerateRulings([q])) as Enum;
+    ok((e.results ?? []).length === 0 && e.total === 0 && e.by_court.length === 0, `MCP enumerate: «${q}» (اسم) لا يعيد حكمًا ولا عددًا ولا توزيعًا`);
+    const c = (await enumerateRulings([q], undefined, undefined, true)) as Enum;
+    ok(c.total === 0 && c.by_court.length === 0, `MCP enumerate count_only: «${q}» لا يكشف عددًا`);
+  }
+  // «غانم» يطابق في القاعدة (search_norm غير محجوب) فيمرّ بمسار الإسقاط نفسه، لا بغياب المطابقة.
+  const cG = (await enumerateRulings(["غانم"], undefined, undefined, true)) as Enum;
+  ok(cG.counts_page_only === true, "MCP enumerate count_only: «غانم» يُسقط بمسار الأسماء (counts_page_only)");
+  const mixE = (await enumerateRulings(["غانم", "توريد"])) as Enum;
+  ok((mixE.results ?? []).some((x) => x.ruling_id === "r5") && (mixE.results ?? []).every((x) => nameLeak(x.snippet).length === 0), "MCP enumerate: اسم مع لفظ عام (OR) — الحكم يبقى بلفظه العام محجوبًا");
+  const keepS = await mcpSearchRulings("توريد", undefined, undefined, 20);
+  ok(keepS.results.some((x) => x.ruling_id === "r5") && !("counts_page_only" in keepS) && keepS.total >= 1, "MCP search: اللفظ العام يجد الحكم بعدد القاعدة كما كان");
+  const keepE = (await enumerateRulings(["توريد"], undefined, undefined, true)) as Enum;
+  ok(keepE.total >= 1 && keepE.counts_page_only === undefined, "MCP enumerate count_only: اللفظ العام بعدد القاعدة كما كان");
+  // السنة الهجرية: التاريخ مخزَّن بالأرقام الهندية، فالمرشح اللاتيني يطابقه.
+  const y45 = (await enumerateRulings(["إيجار"], undefined, 1445)) as Enum;
+  ok((y45.results ?? []).some((x) => x.ruling_id === "r1"), "MCP enumerate: year_h=1445 يجد حكمًا تاريخه «١٤٤٥/…»");
+  const y44 = (await enumerateRulings(["إيجار"], undefined, 1444, true)) as Enum;
+  ok(y44.total === 0, "MCP enumerate: year_h=1444 لا يجده");
+  // تخريج الحكم (takhrij_hukm): العنوان ونص المبدأ محجوبان، والمطابقة داخل اسم وحدها لا تُعاد.
+  const { takhrijHukm } = await import("../lib/agent-runtime/live/engine-tools");
+  const pNames = ["غانم", "الموسوي", "زيدان", "الفلاني", "رجاء", "السندي"];
+  const pLeak = (t: string) => pNames.filter((w) => t.includes(w));
+  for (const q of ["غانم", "رجاء السندي", "الفلاني"]) {
+    const t = await takhrijHukm(q);
+    ok(t.principles.length === 0, `takhrij_hukm: «${q}» (اسم) لا يعيد مبدأ`);
+  }
+  const tf = await takhrijHukm("الفسخ");
+  ok(tf.principles.length === 1 && pLeak(`${tf.principles[0].title} ${tf.principles[0].principle}`).length === 0 && tf.principles[0].title.includes("[اسم]"), `takhrij_hukm: «الفسخ» يعيد المبدأ وعنوانه ونصه بلا اسم (${pLeak(JSON.stringify(tf.principles)).join("،") || "لا تسرّب"})`);
+  ok(tf.principles.every((p) => p.principle.length <= 640), "takhrij_hukm: نص المبدأ مقصوص بعد الحجب (≈٦٠٠ حرف)");
+  const tw = await takhrijHukm("الشهادة");
+  ok(tw.principles.length === 1 && pLeak(tw.principles[0].principle).length === 0, "takhrij_hukm: «الشهادة» يعيد المبدأ بلا اسم الشاهدة");
+  ok(JSON.stringify(principles) === frozenPrinciples, "المبادئ الأصلية في الذاكرة كما هي");
+
   ok(JSON.stringify(rows) === frozen, "النص الأصلي في الذاكرة كما هو");
   ok(dbFingerprint() === before, "النص الأصلي في القاعدة كما هو (بصمة الجدول قبل الاختبار وبعده)");
   ok(sqlLog.every((s) => !/\b(UPDATE|DELETE|INSERT|TRUNCATE|DROP|ALTER)\b/i.test(s)), "كل الاستعلامات قراءة فقط");

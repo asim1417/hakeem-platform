@@ -114,12 +114,18 @@ export async function buildCitation(scope: string[], articleNumber: number): Pro
 }
 
 export interface PrincipleRow { title: string; principle: string; court: string | null; topic: string | null; }
-/** تخريج حكم — مبادئ قضائية مطابقة للاستعلام (للقراءة، غير مقيّد بنظام). */
+/**
+ * تخريج حكم — مبادئ قضائية مطابقة للاستعلام (للقراءة، غير مقيّد بنظام).
+ * HKM-012 (الأمر ٠٨): يخرج عبر طبقة MCP، فالعنوان ونص المبدأ محجوبان (أسماء الأفراد والأرقام الشخصية)،
+ * والحجب قبل القص؛ والمبدأ الذي لا تطابق ألفاظُه إلا داخل اسم محجوب لا يُعاد.
+ */
 export async function takhrijHukm(query: string, limit = 20): Promise<{ principles: PrincipleRow[]; note?: string }> {
   const qs = tokens(query);
   if (!qs.length) return { principles: [], note: "استعلامٌ فارغ." };
   try {
     const { prisma } = await import("@/lib/prisma");
+    const { containsMatchOnlyInNames, maskRulingText, sliceMasked } = await import("@/lib/mcp/ruling-privacy");
+    const want = Math.min(Math.max(limit, 1), 50);
     const rows = await prisma.judicialPrinciple.findMany({
       where: { OR: qs.flatMap((t) => [
         { title: { contains: t, mode: "insensitive" as const } },
@@ -127,9 +133,18 @@ export async function takhrijHukm(query: string, limit = 20): Promise<{ principl
         { topic: { contains: t, mode: "insensitive" as const } },
       ]) },
       select: { title: true, principleText: true, court: true, topic: true },
-      take: Math.min(Math.max(limit, 1), 50),
+      // ضعف المطلوب: بعض المطابقات قد تُسقط لأنها داخل اسم محجوب.
+      take: Math.min(want * 2, 100),
     });
-    return { principles: rows.map((r) => ({ title: r.title, principle: r.principleText.slice(0, 600), court: r.court, topic: r.topic })) };
+    const principles: PrincipleRow[] = [];
+    for (const r of rows) {
+      const title = maskRulingText(r.title);
+      const full = maskRulingText(r.principleText);
+      if (containsMatchOnlyInNames([r.title, r.principleText, r.topic], [title, full, r.topic], qs)) continue;
+      principles.push({ title, principle: sliceMasked(full, 0, 600).text, court: r.court, topic: r.topic });
+      if (principles.length >= want) break;
+    }
+    return { principles };
   } catch {
     return { principles: [], note: "تعذّر التخريج." };
   }

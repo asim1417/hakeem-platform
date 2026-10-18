@@ -24,7 +24,7 @@ import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-in
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
-import { maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
+import { lexicalMatchOnlyInNames, maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -199,22 +199,35 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   const r = await searchRulingsDirect({ query, court, yearH, limit }).catch(() => null);
   const hits = r?.hits ?? [];
   // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
-  // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts تبقى على النص الخام لـ hakeem_get_ruling.
+  // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts في النص المحجوب كما في hakeem_get_ruling.
   const rows = hits.length
     ? await prisma.judicialCase
-        .findMany({ where: { id: { in: hits.map((h) => h.id) } }, select: { id: true, judgmentText: true } })
+        .findMany({ where: { id: { in: hits.map((h) => h.id) } }, select: { id: true, judgmentTitle: true, judgmentText: true } })
         .catch(() => null)
     : [];
-  const texts = new Map((rows ?? []).map((x) => [x.id, x.judgmentText ?? ""] as const));
-  const results = hits.map((h) => {
+  const texts = new Map((rows ?? []).map((x) => [x.id, { title: x.judgmentTitle ?? "", text: x.judgmentText ?? "" }] as const));
+  // ولا يُعثر على حكم باسم فرد: النتيجة اللفظية التي لا تطابق ألفاظُها إلا داخل اسم محجوب تُسقط،
+  // وكذا اللفظية التي تعذّر جلب نصها (لا يُتحقق منها). الدلالية لا تُسقط (لم تطابق لفظًا).
+  let withheld = 0;
+  const results = [];
+  for (const h of hits) {
     const raw = texts.get(h.id);
+    const lexical = h.matchedBy !== "semantic";
+    if (raw === undefined && lexical) {
+      withheld++;
+      continue;
+    }
     // تعذّر جلب النص: لا مقتطف ولا منطوق (المقتطف القائم مقصوص من الخام، فقد يحمل نصف اسم)، وخريطة الأجزاء
     // أنواعًا فقط؛ والحكم يُقرأ بـ hakeem_get_ruling.
     const masked =
       raw === undefined
-        ? { snippet: "", disposition: null, parts: h.parts.map((p) => ({ type: p.type, start: 0, end: 0 })) }
-        : maskedRulingExcerpts(raw, query, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
-    return {
+        ? { snippet: "", disposition: null, parts: h.parts.map((p) => ({ type: p.type, start: 0, end: 0 })), masked: "" }
+        : maskedRulingExcerpts(raw.text, query, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
+    if (raw !== undefined && lexical && lexicalMatchOnlyInNames({ title: raw.title, text: raw.text, maskedText: masked.masked }, query)) {
+      withheld++;
+      continue;
+    }
+    results.push({
       ruling_id: h.id,
       case_number: h.decisionNo ?? h.caseNo ?? null,
       court: h.court ?? null,
@@ -224,9 +237,13 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
       matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
       disposition: masked.disposition, // بداية المنطوق
       parts: masked.parts, // لجلب جزء بعينه عبر hakeem_get_ruling (الإزاحات في النص المحجوب)
-    };
-  });
+    });
+  }
   // total مسقوف بـ٥٠٠٠ للألفاظ الشائعة؛ total_is_lower_bound يعني «أكثر من ذلك».
+  // إن أُسقط شيء فالإجمالي من الصفحة وحدها (counts_page_only)، فلا يكشف عددُ القاعدة عددَ أحكام اسمٍ.
+  if (withheld > 0) {
+    return { query, count: results.length, total: results.length, total_is_lower_bound: false, counts_page_only: true, results };
+  }
   return { query, count: results.length, total: r?.total ?? 0, total_is_lower_bound: r?.totalCapped ?? false, results };
 }
 

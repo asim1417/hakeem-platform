@@ -9,10 +9,15 @@
  *   - المقتطف والمنطوق في البحث (maskedRulingExcerpts).
  *   - شرائح الجلب (maskedChunk): إزاحاتها (offset/next_offset/total_chars) في النص المحجوب.
  * الحجب قاعدي وقد يفوته اسم بلا صفة ولا نسب (انظر mask.ts).
+ *
+ * ولا يُعثر على حكم باسم فرد: النتيجة اللفظية التي لا تطابق ألفاظُها إلا داخل اسم محجوب تُسقط
+ * (lexicalMatchOnlyInNames للبحث، وenumerateMatchOnlyInNames للحصر)، والأعداد حينها من الصفحة وحدها.
  */
 import { maskPersonalData } from "@/lib/rulings/research/mask";
-import { redactPII } from "@/lib/modules/legal-core/rulings-search";
-import { buildRulingExcerpts, excerptFrom } from "@/lib/modules/legal-core/ruling-excerpts";
+import { redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
+import { buildRulingExcerpts, excerptFrom, findMatches, queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
+import { digitVariants } from "@/lib/modules/legal-core/ruling-redacted-sql";
+import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
 import { segmentRuling } from "@/lib/rulings/research/segment";
 
 export type MaskedPart = { type: string; start: number; end: number };
@@ -86,7 +91,7 @@ export function maskedRulingExcerpts(
   raw: string | null | undefined,
   query: string,
   semantic?: { part?: string | null; originalSnippet?: string | null } | null,
-): { snippet: string; disposition: string | null; parts: Array<{ type: string; start: number; end: number }> } {
+): { snippet: string; disposition: string | null; parts: Array<{ type: string; start: number; end: number }>; masked: string } {
   const text = raw ?? "";
   const { masked, parts } = maskBySegments(text);
   const ex = buildRulingExcerpts(masked, semantic ? "" : query);
@@ -100,7 +105,7 @@ export function maskedRulingExcerpts(
   // المنطوق من جزئه في الحجب جزءًا جزءًا (لا من مقطِّع يعمل على النص المحجوب).
   const disp = parts.find((p) => p.type === "disposition");
   const disposition = disp ? excerptFrom(masked, disp.start, Math.min(320, disp.end - disp.start)) : ex.disposition;
-  return { snippet, disposition, parts };
+  return { snippet, disposition, parts, masked };
 }
 
 /**
@@ -119,4 +124,69 @@ export function sliceMasked(masked: string, offset: number, maxChars: number): {
 export function maskedChunk(target: string, offset: number, maxChars: number) {
   const masked = maskPersonalData(target);
   return { ...sliceMasked(masked, offset, maxChars), total: masked.length };
+}
+
+const hasAllTokens = (text: string, tokens: string[]): boolean =>
+  tokens.every((t) => digitVariants(t).some((v) => findMatches(text, v).length > 0));
+
+/**
+ * البحث اللفظي يشترط كل ألفاظ الاستعلام كلماتٍ كاملة في العنوان والمتن. يكون الحكم مطابقًا بأسماء الأفراد
+ * وحدها إن وردت ألفاظه كلها في النص قبل حجب الأسماء (بعد redactPII) ولم ترد كلها بعده.
+ * إن لم ترد قبل الحجب أصلًا (طابق بصيغة أو حقل آخر) فلا يُحكم بشيء: الإسقاط لما محاه الحجب وحده.
+ * maskedText: النص كما يخرج من الموصل (maskBySegments)، فالمقارنة على ما يراه المستخدم.
+ */
+export function lexicalMatchOnlyInNames(
+  row: { title?: string | null; text?: string | null; maskedText?: string },
+  query: string,
+): boolean {
+  const tokens = queryTokens(splitRulingQuery(query).text);
+  if (!tokens.length) return false;
+  const title = row.title ?? "";
+  const text = row.text ?? "";
+  if (!hasAllTokens(redactPII(`${title}\n${text}`), tokens)) return false;
+  const after = `${maskPersonalData(title)}\n${row.maskedText ?? maskBySegments(text).masked}`;
+  return !hasAllTokens(after, tokens);
+}
+
+export type EnumerateTerm = { text: string; numbers: string[]; sensitive: boolean };
+
+/** يطابق اللفظُ الحكمَ كما يطابقه الحصر: الأرقام في رقم القضية والقرار، والنص في العنوان والمتن (مطبَّعًا، أو كما هو للحساس). */
+function enumerateTermMatches(term: EnumerateTerm, body: string, caseNo: string, decisionNo: string): boolean {
+  const inNumbers = (v: string) => caseNo.includes(v) || decisionNo.includes(v);
+  if (!term.numbers.every((n) => digitVariants(n).some(inNumbers))) return false;
+  if (!term.text) return true;
+  if (term.sensitive) {
+    const low = body.toLowerCase();
+    return digitVariants(term.text).some((v) => low.includes(v.toLowerCase()) || inNumbers(v));
+  }
+  const needle = normalizeArabic(term.text);
+  return needle.length > 0 && normalizeArabic(body).includes(needle);
+}
+
+/**
+ * الحصر (أي لفظ، احتواءً): الحكم مطابق بالأسماء وحدها إن طابقه لفظ واحد على الأقل قبل حجب الأسماء
+ * ولم يطابقه أي لفظ بعده. maskedTitle/maskedText كما تخرج من الموصل.
+ */
+export function enumerateMatchOnlyInNames(
+  row: { title?: string | null; text?: string | null; maskedTitle: string; maskedText: string; caseNo?: string | null; decisionNo?: string | null },
+  terms: EnumerateTerm[],
+): boolean {
+  const caseNo = row.caseNo ?? "";
+  const decisionNo = row.decisionNo ?? "";
+  const before = redactPII(`${row.title ?? ""} ${row.text ?? ""}`);
+  if (!terms.some((t) => enumerateTermMatches(t, before, caseNo, decisionNo))) return false;
+  const after = `${row.maskedTitle} ${row.maskedText}`;
+  return !terms.some((t) => enumerateTermMatches(t, after, caseNo, decisionNo));
+}
+
+/**
+ * التخريج (أي لفظ، احتواءً في العنوان أو نص المبدأ أو الموضوع): المبدأ مطابق بالأسماء وحدها إن ورد لفظ
+ * قبل الحجب ولم يرد أي لفظ بعده.
+ */
+export function containsMatchOnlyInNames(before: Array<string | null | undefined>, after: Array<string | null | undefined>, tokens: string[]): boolean {
+  const hit = (fields: Array<string | null | undefined>) => {
+    const low = fields.map((f) => (f ?? "").toLowerCase());
+    return tokens.some((t) => low.some((f) => f.includes(t.toLowerCase())));
+  };
+  return hit(before) && !hit(after);
 }

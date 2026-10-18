@@ -9,8 +9,8 @@
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
 import { extractHijriYear, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
-import { rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
-import { maskBySegments, maskRulingText, sliceMasked } from "@/lib/mcp/ruling-privacy";
+import { digitVariants, rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
+import { enumerateMatchOnlyInNames, maskBySegments, maskRulingText, sliceMasked, type EnumerateTerm } from "@/lib/mcp/ruling-privacy";
 import type { SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
@@ -93,50 +93,55 @@ export async function enumerateRulings(
     params.push(`%${court}%`);
     filters.push(`r."court" ILIKE $${params.length}`);
   }
-  // لا عمود سنة هجرية — تقريبٌ بمطابقة نصّ التاريخ (تُشتقّ السنة في المخرجات).
+  // لا عمود سنة هجرية — تقريبٌ بمطابقة نصّ التاريخ (تُشتقّ السنة في المخرجات). التاريخ مخزَّن بالأرقام
+  // الهندية غالبًا، فتُطابَق الصيغتان (كانت اللاتينية وحدها لا تجد شيئًا).
   if (yearH) {
-    params.push(`%${yearH}%`);
-    filters.push(`r."decisionDateText" ILIKE $${params.length}`);
+    const conds = digitVariants(String(yearH)).map((v) => {
+      params.push(`%${v}%`);
+      return `r."decisionDateText" ILIKE $${params.length}`;
+    });
+    filters.push(`(${conds.join(" OR ")})`);
   }
   const whereSql = filters.join(" AND ");
 
-  const totalRows = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
-    `SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`,
-    ...params,
-  );
-  const total = Number(totalRows[0]?.n ?? 0);
-
-  const byCourt = await prisma.$queryRawUnsafe<{ court: string | null; n: bigint }[]>(
-    `SELECT r."court" AS court, COUNT(*)::bigint AS n
+  // الصفحة تُجلب دائمًا (ولو count_only): بها يُتحقق ألا تكون المطابقة داخل اسم محجوب. الاستعلامات الثلاثة
+  // متوازية (كل منها مسح لـ search_norm بلا فهرس احتواء، فتسلسلها كان يتجاوز مهلة الأداة).
+  const pageParams = cursor && !countOnly ? [...params, cursor] : params;
+  const pageFilters = cursor && !countOnly ? `${whereSql} AND r."id" > $${pageParams.length}` : whereSql;
+  const size = Math.max(1, Math.floor(pageSize));
+  const [totalRows, byCourt, rows] = await Promise.all([
+    prisma.$queryRawUnsafe<{ n: bigint }[]>(`SELECT COUNT(*)::bigint AS n FROM "judicial_cases" r WHERE ${whereSql}`, ...params),
+    prisma.$queryRawUnsafe<{ court: string | null; n: bigint }[]>(
+      `SELECT r."court" AS court, COUNT(*)::bigint AS n
      FROM "judicial_cases" r WHERE ${whereSql}
      GROUP BY r."court" ORDER BY n DESC LIMIT 30`,
-    ...params,
-  );
-
-  const base = {
-    terms,
-    filters: { court: court ?? null, year_h: yearH ?? null },
-    total,
-    by_court: byCourt.map((c) => ({ court: c.court, count: Number(c.n) })),
-  };
-
-  if (countOnly) return base;
-
-  const pageParams = cursor ? [...params, cursor] : params;
-  const pageFilters = cursor ? `${whereSql} AND r."id" > $${pageParams.length}` : whereSql;
-  const rows = await prisma.$queryRawUnsafe<
-    Array<{ id: string; caseNo: string | null; decisionNo: string | null; court: string | null; decisionDateText: string | null; judgmentText: string }>
-  >(
-    `SELECT r."id", r."caseNo", r."decisionNo", r."court", r."decisionDateText", r."judgmentText"
+      ...params,
+    ),
+    prisma.$queryRawUnsafe<
+      Array<{ id: string; caseNo: string | null; decisionNo: string | null; court: string | null; decisionDateText: string | null; judgmentTitle: string | null; judgmentText: string }>
+    >(
+      `SELECT r."id", r."caseNo", r."decisionNo", r."court", r."decisionDateText", r."judgmentTitle", r."judgmentText"
      FROM "judicial_cases" r WHERE ${pageFilters}
-     ORDER BY r."id" ASC LIMIT ${Math.max(1, Math.floor(pageSize))}`,
-    ...pageParams,
-  );
+     ORDER BY r."id" ASC LIMIT ${size}`,
+      ...pageParams,
+    ),
+  ]);
+  const total = Number(totalRows[0]?.n ?? 0);
 
-  // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
-  const results = rows.map((r) => {
+  // HKM-012: الحكم الذي لا يطابقه لفظ إلا داخل اسم محجوب لا يُعاد. وإن أُسقط شيء فالإجمالي والتوزيع من
+  // الصفحة وحدها (counts_page_only)، فلا يكشف عددُ القاعدة عددَ أحكام اسمٍ.
+  const enumTerms: EnumerateTerm[] = parts.map((p) => ({ text: p.text, numbers: p.numbers, sensitive: p.sensitive }));
+  let withheld = 0;
+  const results: Array<{ ruling_id: string; case_number: string | null; court: string | null; year_h: number | null; match_offset: number | null; snippet: string }> = [];
+  for (const r of rows) {
     // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
     const txt = maskRulingText(r.judgmentText);
+    const maskedTitle = maskRulingText(r.judgmentTitle);
+    if (enumerateMatchOnlyInNames({ title: r.judgmentTitle, text: r.judgmentText, maskedTitle, maskedText: txt, caseNo: r.caseNo, decisionNo: r.decisionNo }, enumTerms)) {
+      withheld++;
+      continue;
+    }
+    // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
     let idx = -1;
     for (const t of parts.map((p) => p.text).filter(Boolean)) {
       const i = txt.indexOf(t);
@@ -144,17 +149,29 @@ export async function enumerateRulings(
     }
     const start = Math.max(0, idx - Math.floor(snippetLen / 2));
     const snippet = idx === -1 ? txt.slice(0, snippetLen) : txt.slice(start, start + snippetLen);
-    return {
+    results.push({
       ruling_id: r.id,
       case_number: r.decisionNo ?? r.caseNo ?? null,
       court: r.court,
       year_h: hijriYear(r.decisionDateText),
       match_offset: idx === -1 ? null : idx,
       snippet,
-    };
-  });
+    });
+  }
 
-  const nextCursor = rows.length === pageSize ? rows[rows.length - 1].id : null;
+  const pageCourts = () => {
+    const m = new Map<string | null, number>();
+    for (const x of results) m.set(x.court, (m.get(x.court) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([court, count]) => ({ court, count }));
+  };
+  const base =
+    withheld > 0
+      ? { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total: results.length, by_court: pageCourts(), counts_page_only: true }
+      : { terms, filters: { court: court ?? null, year_h: yearH ?? null }, total, by_court: byCourt.map((c) => ({ court: c.court, count: Number(c.n) })) };
+
+  if (countOnly) return base;
+
+  const nextCursor = rows.length === size ? rows[rows.length - 1].id : null;
 
   return { ...base, page_size: pageSize, returned: results.length, next_cursor: nextCursor, results };
 }
