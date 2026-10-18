@@ -36,10 +36,12 @@ const sanitize = (s: string) => s.replace(/postgres(?:ql)?:\/\/\S+/gi, "[راب�
 async function main() {
   const libPath = "./hkm-029/embed-lib.mjs";
   const toolPath = "./hkm-029/embed-articles.mjs";
+  const argv = process.argv.slice(2);
+  // قبل استيراد الأداة: embed-lib يستورد drift-lib الذي يستورد pg-connection-string.
+  if (argv[argv.indexOf("--target") + 1] === "articles" && argv.includes("--target")) ensurePg();
   const { workflowArgsToRun } = await import(libPath);
-  const run = workflowArgsToRun(process.argv.slice(2));
+  const run = workflowArgsToRun(argv);
   if (run) {
-    ensurePg();
     const { main: embedArticles } = await import(toolPath);
     const result = await embedArticles([], run);
     console.log(`::notice title=HKM-029 embeddings::${sanitize(JSON.stringify(result))}`);
