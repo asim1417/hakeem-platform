@@ -6,7 +6,8 @@
 import { NAME_MASK } from "../lib/rulings/research/mask";
 import { redactPII } from "../lib/modules/legal-core/rulings-search";
 import { excerptFrom } from "../lib/modules/legal-core/ruling-excerpts";
-import { maskRulingText, maskedChunk, maskedRulingExcerpts, sliceMasked } from "../lib/mcp/ruling-privacy";
+import { maskBySegments, maskRulingText, maskedChunk, maskedRulingExcerpts, sliceMasked } from "../lib/mcp/ruling-privacy";
+import { segmentRuling } from "../lib/rulings/research/segment";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -74,6 +75,17 @@ for (const [src, label] of kept) {
   ok(out === src, `لا يُحجب: ${label} → «${out}»`);
 }
 ok(!maskRulingText("المدعية رجاء").includes("المدعي[اسم]"), "الصفة كاملة: «المدعية» لا تنقسم إلى «المدعي» + اسم");
+
+// ١-ب) الحجب لا يمحو مراسي الأجزاء: اسم بلا ترقيم بعده لا يبتلع «وحيث» ولا «ولما كان».
+for (const [src, keep] of [["حضر المدعي/ غانم الموسوي وحيث إن الدعوى", "وحيث"], ["المدعى عليه/ زيدان الفلاني ولما كان ذلك", "ولما كان"], ["الشاهدة/ رجاء السندي فأجاب المدعى عليه", "فأجاب"]] as const) {
+  const out = maskRulingText(src);
+  ok(out.includes(keep) && leaks(out).length === 0, `الرابط «${keep}» يبقى بعد الاسم المحجوب → «${out}»`);
+}
+const bySeg = maskBySegments(RULING);
+const rawTypes = segmentRuling(RULING).segments.map((x) => x.type).join(",");
+ok(bySeg.parts.map((x) => x.type).join(",") === rawTypes, `maskBySegments: الأجزاء كما في الخام (${rawTypes})`);
+ok(bySeg.parts.every((x, i) => x.start <= x.end && (i === 0 || x.start >= bySeg.parts[i - 1].end)) && (bySeg.parts.at(-1)?.end ?? 0) <= bySeg.masked.length, "maskBySegments: إزاحات الأجزاء مرتبة وداخل النص المحجوب");
+ok(leaks(bySeg.masked).length === 0, "maskBySegments: لا اسم في النص المحجوب");
 
 // ٢) المقتطف والمنطوق من النص المحجوب كاملًا
 for (const q of ["فسخ العقد", "الإخلال", "غانم الموسوي", "شاهدًا", ""]) {

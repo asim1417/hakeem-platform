@@ -10,8 +10,8 @@ import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
 import { extractHijriYear, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
-import { maskRulingText, sliceMasked } from "@/lib/mcp/ruling-privacy";
-import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
+import { maskBySegments, maskRulingText, sliceMasked } from "@/lib/mcp/ruling-privacy";
+import type { SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
 const hijriYear = (text?: string | null): number | null => extractHijriYear(text);
@@ -29,11 +29,10 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   if (!r) return { error: "الحكم غير موجود بهذا المعرّف", ruling_id: rulingId };
 
   const full = r.judgmentText ?? "";
-  // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم كاملًا مرة واحدة، ثم الأجزاء والشريحة منه، فلا يفلت
-  // نصف اسم أو رقم على حد شريحة، ولا تكشف إزاحات الأجزاء طول ما حُجب. كل الإزاحات في النص المحجوب.
-  const maskedFull = maskRulingText(full);
-  const seg = segmentRuling(maskedFull);
-  const parts = seg.segments.map((s) => ({ type: s.type as SegmentType, start: s.start, end: s.end }));
+  // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم جزءًا جزءًا بحدود أجزائه في الخام (فلا يمحو الحجب
+  // مراسي الأجزاء)، ثم تُقتطع الشريحة من المحجوب، فلا يفلت نصف اسم أو رقم على حد شريحة. كل الإزاحات في المحجوب.
+  const { masked: maskedFull, parts: maskedParts } = maskBySegments(full);
+  const parts = maskedParts.map((p) => ({ type: p.type as SegmentType, start: p.start, end: p.end }));
   // نطاق القراءة: الجزء المطلوب إن وُجد، وإلا النص كله.
   const target = part ? parts.find((p) => p.type === part) : undefined;
   if (part && !target) {
