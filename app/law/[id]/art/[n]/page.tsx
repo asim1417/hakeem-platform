@@ -89,8 +89,6 @@ function StatusBox({ a }: { a: ArticleView }) {
         <dl>
           <dt>أداة التعديل</dt>
           <dd>{a.amendment.url && a.amendment.instrument ? <a href={a.amendment.url} rel="noopener noreferrer" target="_blank">{a.amendment.instrument}</a> : orNA(a.amendment.instrument)}</dd>
-          <dt>سارٍ من</dt>
-          <dd><LtrDates text={orNA(a.amendment.currentFrom)} /></dd>
         </dl>
         {clean(a.text) !== clean(a.effectiveText) ? (
           <>

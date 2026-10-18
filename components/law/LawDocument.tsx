@@ -397,8 +397,6 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
                 <dl>
                   <dt>أداة التعديل</dt>
                   <dd>{a.amendment.url && a.amendment.instrument ? <a href={a.amendment.url} rel="noopener noreferrer" target="_blank">{a.amendment.instrument}</a> : orNA(a.amendment.instrument)}</dd>
-                  <dt>سارٍ من</dt>
-                  <dd><LtrDates text={orNA(a.amendment.currentFrom)} /></dd>
                   <dt>عدد النسخ</dt>
                   <dd>{a.amendment.versions.toLocaleString("ar-SA")}</dd>
                 </dl>

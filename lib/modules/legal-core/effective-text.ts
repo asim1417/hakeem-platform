@@ -37,7 +37,6 @@ export interface EffectiveArticleText {
   basis: string;
 }
 
-const day = (iso: string | null) => (iso ? iso.slice(0, 10) : null);
 
 export function repealLine(verification: VerificationRecord | null): string {
   const instrument = verification?.evidenceInstrument?.trim();
@@ -77,8 +76,8 @@ export function resolveEffectiveText(input: {
   const v = picked.version;
   let basis = "النص الأصلي المحفوظ (بلا نسخة مؤرخة بعد)";
   if (v) {
-    basis = `معدّلة بموجب ${v.evidenceInstrument ?? "أداة تعديل"} — سارية من ${day(v.validFrom)}`;
-    if (picked.validTo) basis += ` حتى ${day(picked.validTo)}`;
+    // قرار المالك (18/10/2026): التعديل يُعرض بأداته فقط كما تفعل هيئة الخبراء؛ valid_from للحساب لا للعرض.
+    basis = `معدّلة بموجب ${v.evidenceInstrument ?? "أداة تعديل"}`;
   }
   return {
     articleId: input.articleId,
