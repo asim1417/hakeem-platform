@@ -22,8 +22,9 @@ const pending = file.pendingOfficialCorrection.map(normalizeSystemName);
 const corrected = file.corrected.map(normalizeSystemName);
 const verified = file.verifiedNotShifted.map((v) => normalizeSystemName(v.name));
 
-ok(isNumberingShifted("نظام المحاكم التجارية"), "نظام المحاكم التجارية مزاح بانتظار التصحيح (الأمر ٠٨)");
-ok(isNumberingShifted("نظام المحاكم التجاريّة"), "يُطابَق الاسم بعد التطبيع (التشكيل)");
+// نظام المحاكم التجارية رُقّم على الإنتاج في #773 (18/10/2026)، فلا يبقى في قائمة الانتظار.
+ok(!isNumberingShifted("نظام المحاكم التجارية"), "نظام المحاكم التجارية ليس في قائمة الانتظار بعد ترقيمه على الإنتاج");
+ok(isNumberingShifted("نظام النقل بالخطوط الحديديّة"), "يُطابَق الاسم بعد التطبيع (التشكيل)");
 ok(isNumberingShifted("نظام النقل بالخطوط الحديدية"), "النقل بالخطوط الحديدية مزاح بانتظار التصحيح");
 ok(!isNumberingShifted("نظام المعاملات المدنية"), "المعاملات المدنية مُصحَّح فليس مزاحًا");
 ok(!isNumberingShifted("نظام العمل"), "نظام العمل مُصحَّح فليس مزاحًا");
