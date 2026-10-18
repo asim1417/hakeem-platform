@@ -18,6 +18,7 @@ import {
   SEARCH_NORM_TEXT_CAP,
   enumerateTermVisible,
   lexicalVisible,
+  maskedMatchWords,
   maskedSearchNorm,
   normWordList,
   phraseInWords,
@@ -34,6 +35,10 @@ export const TAINT_RATIO = 0.5;
 // المتن والاستئناف بسقف search_norm (العيّنة تطابق search_norm وحده، وهو مبني منهما مقصوصين): يحدّ كلفة الحجب في
 // العيّنة فيبقى دون أدنى الزمن، ويقلّل المنقول.
 export const INDEX_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", left(r."judgmentText", ${SEARCH_NORM_TEXT_CAP}) AS "judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
+// عيّنة استعلام البحث (يطابقه البحث في المتن كاملًا عبر أجزاء الأحكام، ويُفحص كل حكم على المتن المحجوب كاملًا)
+// واللفظ الحساس في الحصر (يطابق المتن المنقّح كاملًا) بالمتن كاملًا: أطول حكم في الإنتاج نحو 95 ألف حرف، فتبقى
+// كلفة العيّنة دون أدنى الزمن.
+const FULL_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", r."judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
 export type IndexRow = RulingIndexFields & { id: string };
 
 /** لفظ اسم إن لم يطابق النسخةَ المحجوبة في نصف العيّنة فأكثر. العيّنة الفارغة: اللفظ غائب، فلا يُحكم بشيء. */
@@ -131,10 +136,10 @@ export const taintLimiterForTest = {
 const TSV = `to_tsvector('simple', coalesce(r."search_norm",''))`;
 
 /** عيّنة حتمية: أصغر TAINT_SAMPLE معرّفًا يطابقها الشرط (المعرّفات كلها من الفهرس أولًا، ثم الترتيب). */
-function sampleRows(cond: string, params: unknown[]): Promise<IndexRow[]> {
+function sampleRows(cond: string, params: unknown[], fullText = false): Promise<IndexRow[]> {
   return runRulingSearchSql<IndexRow[]>(
     `WITH m AS MATERIALIZED (SELECT r."id" FROM "judicial_cases" r WHERE ${cond})
-     SELECT ${INDEX_FIELDS_SQL} FROM "judicial_cases" r
+     SELECT ${fullText ? FULL_FIELDS_SQL : INDEX_FIELDS_SQL} FROM "judicial_cases" r
      JOIN (SELECT "id" FROM m ORDER BY "id" LIMIT ${TAINT_SAMPLE}) s ON s."id" = r."id"
      ORDER BY r."id"`,
     params,
@@ -151,24 +156,25 @@ export async function lexicalQueryTainted(groups: string[][], phrase: PhraseQuer
   if (!groups.length) return false;
   const andQ = groups.map((g) => `(${g.join(" | ")})`).join(" & ");
   const phQ = phrase && phrase.groups.length >= 2 ? phraseTsQuery(phrase) : null;
-  // كلمات النسخة المحجوبة من search_norm وحده (ما تطابقه العيّنة)، محسوبة مرة لكل حكم في العيّنتين.
-  const memo = new Map<string, string[]>();
-  const wordsOf = (r: IndexRow): string[] => {
-    let w = memo.get(r.id);
-    if (!w) memo.set(r.id, (w = normWordList(maskedSearchNorm(r))));
-    return w;
+  // search_norm المحجوب محسوب مرة لكل حكم في العيّنتين؛ وعيّنة الاستعلام تضيف كلمات المتن المحجوب كاملًا (كفحص
+  // نتائج البحث)، وعيّنة العبارة على search_norm وحده (ما تطابقه).
+  const memo = new Map<string, string>();
+  const normOf = (r: IndexRow): string => {
+    let n = memo.get(r.id);
+    if (n === undefined) memo.set(r.id, (n = maskedSearchNorm(r)));
+    return n;
   };
   const [andTainted, phraseTainted] = await Promise.all([
     cached(`sa:${andQ}`, async () => {
-      const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ]);
-      return taintedBySample(rows, (r) => lexicalVisible(new Set(wordsOf(r)), groups));
+      const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ], true);
+      return taintedBySample(rows, (r) => lexicalVisible(maskedMatchWords(r, normOf(r)), groups));
     }),
     phQ && phrase
       ? cached(`sp:${phQ}`, async () => {
-          const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ]);
+          const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ], true);
           // عيّنة العبارة الفارغة لا تشهد بشيء، فيبقى الحكم للعيّنة الأولى.
           if (!rows.length) return true;
-          return taintedBySample(rows, (r) => phraseInWords(wordsOf(r), phrase));
+          return taintedBySample(rows, (r) => phraseInWords(normWordList(normOf(r)), phrase));
         })
       : Promise.resolve(true),
   ]);
@@ -181,7 +187,7 @@ export async function lexicalQueryTainted(groups: string[][], phrase: PhraseQuer
  */
 export async function enumerateTermTainted(term: EnumerateTerm, cond: string, params: unknown[]): Promise<boolean> {
   return cached(`e:${cond}\u0000${JSON.stringify(params)}`, async () => {
-    const rows = await sampleRows(cond, params);
+    const rows = await sampleRows(cond, params, term.sensitive);
     return taintedBySample(rows, (r) =>
       enumerateTermVisible(term, {
         maskedWords: () => normWordList(maskedSearchNorm(r)),

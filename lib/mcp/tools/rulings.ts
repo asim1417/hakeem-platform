@@ -217,8 +217,9 @@ export async function enumerateRulings(
     const key = JSON.stringify([keyConds, keyParams, tainted, court ?? null, yearH ?? null]);
     let counted = countCacheGet(key);
     if (!counted) {
-      head = await scanVisible(null, COUNT_CAP);
-      const capped = head.rows.length > COUNT_CAP || (head.rows.length === COUNT_CAP && !head.exhausted);
+      // حتى COUNT_CAP+1 ظاهرًا: السقف يُعرف بوجود ظاهر بعده، لا ببقاء معرّفات لم تُقرأ (قد تكون أحكام أسماء).
+      head = await scanVisible(null, COUNT_CAP + 1);
+      const capped = head.rows.length > COUNT_CAP;
       const rows = head.rows.slice(0, COUNT_CAP);
       const m = new Map<string | null, number>();
       for (const r of rows) m.set(r.court, (m.get(r.court) ?? 0) + 1);
@@ -236,6 +237,14 @@ export async function enumerateRulings(
   // الصفحة: من المعرّفات المطابقة بعد المؤشر تُقرأ دفعات ويُعاد الظاهر منها. والمؤشر آخر صف معروض متى كانت الصفحة
   // غير فارغة، فيُختم كل حصر بصفحة فارغة بلا مؤشر: لا يكشف وجود المؤشر ولا خلو الصفحة التالية أن بعد آخر صف معروض
   // أحكامًا مسقطة، ولا أن المسح بلغ حده. ولا يُكشف معرّف صف لم يُعَد.
+  // المؤشر يُقبل إن كان حكمًا يطابقه الاستعلام نفسه ويظهر فيه (كما يُعاد)، وإلا فالصفحة فارغة كنهاية الحصر: مؤشر
+  // حر كان يُستخرج به بالتنصيف معرّف حكم مسقط. والفحص واحد لكل مؤشر (يُقرأ ويُحجب ولو لم يطابق) فلا يكشف زمنه شيئًا.
+  if (cursor) {
+    const at = await run<Array<EnumRow & { m: boolean }>>(`SELECT ${ROW_FIELDS}, (${whereSql}) AS m FROM "judicial_cases" r WHERE r."id" = $${params.length + 1}`, [...params, cursor]);
+    const row = at[0];
+    const shown = row ? visible(row) : false;
+    if (!row || !row.m || !shown) return { ...base, page_size: pageSize, returned: 0, next_cursor: null, results: [] };
+  }
   const scan = !cursor && head ? head : await scanVisible(cursor || null, size);
   const pageRows = scan.rows.slice(0, size);
   const nextCursor = pageRows.length ? pageRows[pageRows.length - 1].id : null;

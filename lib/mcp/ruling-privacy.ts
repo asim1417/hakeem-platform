@@ -182,8 +182,8 @@ export function normWords(norm: string): Set<string> {
  * كلمات النسخة المحجوبة التي يطابقها البحث: search_norm بسقفه، والمتن المحجوب كاملًا إن جاوز السقف
  * (مسار أجزاء الأحكام ruling_segments يجد اللفظ في الأسباب بعد الحرف 20000).
  */
-export function maskedMatchWords(f: RulingIndexFields): Set<string> {
-  const words = normWords(maskedSearchNorm(f));
+export function maskedMatchWords(f: RulingIndexFields, maskedNorm?: string): Set<string> {
+  const words = normWords(maskedNorm ?? maskedSearchNorm(f));
   const text = f.judgmentText ?? "";
   if (text.length > SEARCH_NORM_TEXT_CAP) for (const w of normWordList(normalizeArabicText(maskBySegments(text).masked))) words.add(w);
   return words;

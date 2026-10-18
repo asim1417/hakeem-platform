@@ -24,6 +24,7 @@ import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-in
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
+import { queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
 import {
   checkedLexicalGroups,
   enumeratePhrase,
@@ -202,6 +203,11 @@ export async function expandTerms(term: string) {
 
 /** دفعة مرشحي بحث الأحكام (وتُجلب دفعتان على الأكثر لإكمال الصفحة). */
 const SEARCH_BATCH = 50;
+/** طُعم البحث للفظ الاسم: كلمة لا ترد في نص (وصنو لاتيني للفظ الحساس فيبقى في مساره). */
+const DECOY_PLAIN = "ققققققققققققق";
+const DECOY_SENSITIVE = "qqqqqqqqqqqqqq";
+const SHORT_PAGE_NOTE =
+  "النتائج من أول 100 مرشح بالترتيب، وما لا يطابقه الاستعلام إلا داخل اسم فرد لا يُعاد؛ فإن قلّت النتائج فضيّق الاستعلام (محكمة أو سنة أو لفظ أخص) أو استعمل hakeem_enumerate_rulings.";
 
 // ٦) البحث في الأحكام — مسار مستقلّ في judicial_cases (searchRulingsDirect)، لا الهجين المشترك.
 // كان الهجين يضع الأحكام في منافسة مع المواد والمبادئ على ٣٠ خانة، والحكم غير المُراجَع يأخذ
@@ -222,18 +228,22 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   // NFKC: الأشكال المعروضة و«ﷲ» في الاستعلام حروف عادية، فتُفحص كما تُفحص النسخة المحجوبة (maskPersonalData يطبّعها).
   const q = (query ?? "").normalize("NFKC");
   const pageCap = Math.min(Math.max(limit, 1), 50);
-  const empty = { query, count: 0, total: 0, total_is_lower_bound: false, results: [] as Hit[] };
+  // مخرج لفظ الاسم كمخرج لفظ غائب حرفًا بحرف (ومعه التنبيه الثابت للصفحة الناقصة).
+  const empty = { query, count: 0, total: 0, total_is_lower_bound: false, results: [] as Hit[], note: SHORT_PAGE_NOTE };
   // HKM-012: لا يُعثر على حكم باسم فرد. الاستعلام الذي تطابق ألفاظه (بـ AND) داخل الأسماء غالبًا، ولا تظهر عبارته
   // المتجاورة خارجها، لا يطابق شيئًا (كلفظ غائب عن القاعدة). تعذّر الفحص يُعدّ اسمًا (السقوط مغلقًا). والبحث يجري
   // مع الفحص بالتوازي دائمًا، فلا يكشف الزمنُ أن اللفظ اسم.
-  const text = splitRulingQuery(q).text;
+  const parts = splitRulingQuery(q);
+  const text = parts.text;
   const groups = checkedLexicalGroups(text);
   // نافذة مرشحين ثابتة (دفعتان من SEARCH_BATCH) لا تتبع limit، فلا يكشف الفرق بين limit=1 وlimit=20 عدد ما أُسقط.
   const batch = SEARCH_BATCH;
-  const [tainted, first] = await Promise.all([
-    lexicalQueryTainted(groups, enumeratePhrase(text)).catch(() => true),
-    searchRulingsDirect({ query: q, court, yearH, limit: batch }).catch(() => null),
-  ]);
+  // الفحص أولًا: لفظ الاسم يُبحث عنه بطُعم لا يطابق شيئًا (بعدد ألفاظه وصنفها وأرقامه ومرشحاته)، فلا يعالج البحث نصوص
+  // أحكام الاسم ثم يرميها: كان زمنها يكشف وجود الاسم ولو كان المخرج فارغًا كمخرج اللفظ الغائب.
+  const tainted = await lexicalQueryTainted(groups, enumeratePhrase(text)).catch(() => true);
+  const sensitive = new Set(parts.sensitiveTokens);
+  const decoy = [...queryTokens(text).map((t) => (sensitive.has(t) ? DECOY_SENSITIVE : DECOY_PLAIN)), ...parts.numbers].join(" ");
+  const first = await searchRulingsDirect({ query: tainted ? decoy : q, court, yearH, limit: batch }).catch(() => null);
   if (tainted) return empty;
 
   // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
@@ -297,7 +307,9 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   // وtotal_is_lower_bound امتلاء الصفحة وحده (لا امتلاء نافذة المرشحين: كان يميّز الخلية التي تكثر فيها المطابقات
   // داخل الأسماء). ولاستعلام الأرقام وحدها (رقم القضية أو القرار) عدد القاعدة كما كان (مسقوف بـ٥٠٠٠).
   if (groups.length || withheld > 0) {
-    return { query, count: results.length, total: results.length, total_is_lower_bound: results.length >= pageCap, results };
+    const out = { query, count: results.length, total: results.length, total_is_lower_bound: results.length >= pageCap, results };
+    // تنبيه ثابت متى نقصت الصفحة (لا يتبع ما أُسقط).
+    return results.length < pageCap ? { ...out, note: SHORT_PAGE_NOTE } : out;
   }
   return { query, count: results.length, total: first?.total ?? 0, total_is_lower_bound: first?.totalCapped ?? false, results };
 }
