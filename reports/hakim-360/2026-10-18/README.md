@@ -22,4 +22,4 @@
 
 جولة V4 (نحو 13:05 UTC) أضافت مطابقة النشر [DEPLOYMENT_SOURCE_RECONCILIATION.md](DEPLOYMENT_SOURCE_RECONCILIATION.md) والفرق الدلالي [PRISMA_COMPATIBILITY_AUDIT.md](PRISMA_COMPATIBILITY_AUDIT.md) والمراجعة الذاتية [PR789_INDEPENDENT_REVIEW.md](PR789_INDEPENDENT_REVIEW.md).
 
-التوحيد (13:26Z) لم يعد الفحوص. أضاف [QUALITY_REVIEW.md](QUALITY_REVIEW.md) و[PENDING_OWNER_TESTS.md](PENDING_OWNER_TESTS.md) ودليل `evidence/unification-2026-10-18T1326Z.json`. المراجعة ما زالت ذاتية. بناء المخطط واستعادة النسخة بلا تنفيذ.
+التوحيد (13:26Z) لم يعد الفحوص. التصحيح (20:25Z) أغلق شروط المراجعة المستقلة في PR #790 عند `ccaf7d1` داخل [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md) و[QUALITY_REVIEW.md](QUALITY_REVIEW.md). إعادة البناء المعزولة فشلت في مطابقة الإنتاج. الاستعادة لم تُنفَّذ.

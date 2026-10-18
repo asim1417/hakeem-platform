@@ -14,7 +14,7 @@ migration_name,on_origin_main,in_prisma_migrations_table,statement_kinds,named_t
 "20260712120000_search_performance_indexes","yes","no","CREATE EXTENSION|CREATE INDEX|ALTER TABLE","legal_articles","-","idempotent_markers"
 "20260712130000_embeddings_content_hash","yes","no","ALTER TABLE","embeddings","-","idempotent_markers"
 "20260716120000_add_normative_tagging","yes","no","ALTER TABLE|CREATE INDEX","legal_articles","-","idempotent_markers"
-"20260718120000_add_free_quota","yes","no","ALTER TABLE","users","-","idempotent_markers"
+"20260718120000_add_free_quota","yes","no","ALTER TABLE","users","-","idempotent_markers; ت-08: isolated rebuild adds freeQuotaUsed freeQuotaTotal subscriptionStatus which are absent from production"
 "20260718180000_onboarding_credits_referrals","yes","no","ALTER TABLE|CREATE TABLE|CREATE INDEX","users|credit_transactions|referral_redemptions","-","idempotent_markers"
 "20260718190000_otp_avatar_profile_ext","yes","no","ALTER TABLE","users","-","idempotent_markers"
 "20260719120000_add_clerk_id","yes","no","ALTER TABLE","users","-","idempotent_markers"

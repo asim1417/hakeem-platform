@@ -37,11 +37,11 @@
 | tracked_by_prisma | الصف الوحيد أعلاه | CONFIRMED |
 | tracked_by_sql | ملفات `prisma/migrations/*/migration.sql` غير المسجلة | الكود موجود؛ وقت التطبيق على الإنتاج UNKNOWN لكل ملف على حدة |
 | manual_with_evidence | ترحيل المكتب ومقدمات HKM-023-B كما في `docs/PROJECT_STATUS.md` | HISTORICAL في السجل، والجداول CONFIRMED الآن |
-| untracked | أعمدة `search_norm` و`norm_*` و`instrument_kind` وأعمدة `users` التسعة عشر | الأعمدة CONFIRMED؛ ملف الإنشاء لكل عمود لم يُربط واحدًا واحدًا |
+| tracked_by_sql (absent from Prisma models) | أعمدة `search_norm` و`norm_*` و`instrument_kind` وأعمدة `users` التسعة عشر | ت-03: الصنف كان `untracked` في لقطة 11:41Z قبل الربط. الملفات: `20260712120000` و`20260911120000` و`20260925060000` و`20260716120000` و`20260925140000` و`20260718180000` و`20260718190000` |
 | unknown | أي DDL نُفذ من workflow قديم ثم اختفى من السجل | لا يُنفى |
 
 يُفرَّق بين هجرة مخطط، وملء بيانات، وإعادة فهرسة، وحقن نصوص. نجاح workflow ليس دليلًا أن الملف داخل `prisma/migrations` هو الذي نُفذ.
 
 ## ما لم يُفعل
 
-لم يُشغَّل `migrate diff` ضد قاعدة فارغة. ذلك اختبار البناء المعزول في [SCHEMA_REBUILD_PLAN.md](SCHEMA_REBUILD_PLAN.md)، وهو متوقف على الإذن.
+لم يُشغَّل `migrate diff` ضد قاعدة فارغة في جولة 11:41Z. لاحقًا نفذت المراجعة المستقلة بناءً معزولًا على PostgreSQL 17.11 بلا إنتاج، وفشل في مطابقة الكتالوج. الأرقام في [SCHEMA_REBUILD_PLAN.md](SCHEMA_REBUILD_PLAN.md). الاستعادة لم تُنفَّذ.
