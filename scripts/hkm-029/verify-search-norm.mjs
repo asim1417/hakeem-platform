@@ -11,7 +11,7 @@ async function main() {
   const target = i >= 0 ? process.argv[i + 1] : "";
   const url = process.env.DATABASE_URL ?? "";
   if (!url) throw new Error("DATABASE_URL غير مضبوط");
-  const result = await verifyLedger(url, ledgerPathFor(target));
+  const result = await verifyLedger(url, ledgerPathFor(target), { target });
   console.log(JSON.stringify({ target, ...result }));
   if (result.outcome === "unconfirmed") process.exitCode = 1;
 }

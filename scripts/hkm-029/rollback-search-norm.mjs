@@ -9,8 +9,10 @@ import { Client } from "pg";
 import { assertDatabaseForTarget, assertTarget } from "./drift-lib.mjs";
 import { ledgerPathFor, loadLedger, markLedgerStatus } from "./rebuild-search-norm.mjs";
 
+/** options: { host } المضيف الفعلي للاتصال، ويجب أن يطابق مضيف السجل؛ commit للاختبار فقط. */
 export async function rollbackSearchNorm(client, ledgerFile, options = {}) {
   const ledger = loadLedger(ledgerFile);
+  if (options.host !== ledger.host) throw new Error("مرفوض: مضيف التراجع يختلف عن سجل الدفعة");
   if (ledger.commit_status === "rolled_back") throw new Error("توقف: الدفعة متراجع عنها سابقًا");
   if (ledger.commit_status === "not_applied") throw new Error("توقف: الدفعة لم تُطبَّق أصلًا");
   const live = await client.query("SELECT current_database() AS name");
@@ -54,11 +56,11 @@ async function main() {
   const ledger = loadLedger(ledgerFile);
   const url = process.env.DATABASE_URL ?? "";
   if (!url) throw new Error("DATABASE_URL غير مضبوط");
-  assertTarget(target, url, ledger.expected_count);
+  const { host } = assertTarget(target, url, ledger.expected_count);
   const client = new Client({ connectionString: url });
   await client.connect();
   try {
-    console.log(JSON.stringify({ target, ...(await rollbackSearchNorm(client, ledgerFile)) }));
+    console.log(JSON.stringify({ target, ...(await rollbackSearchNorm(client, ledgerFile, { host })) }));
   } finally {
     await client.end();
   }

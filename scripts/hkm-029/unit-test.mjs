@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import {
   DEFAULT_SCOPE,
   assertLockedRows,
+  assertReadTarget,
   assertManifest,
   assertTarget,
   buildManifest,
@@ -16,6 +17,8 @@ import {
   openSearchStatus,
   summarizeDrift,
   vectorStatus,
+  versionStatus,
+  sha256,
 } from "./drift-lib.mjs";
 
 let failed = 0;
@@ -72,6 +75,7 @@ throws(() => assertLockedRows(manifest, locked.map((r, i) => (i === 0 ? { ...r, 
 
 const ledger = { batch: "HKM-029", target: "isolated", database: "hakeem_hkm029", expected_count: 2, rows: [{ id: "x", old_search_norm: "ق", new_search_norm: "ج" }, { id: "y", old_search_norm: null, new_search_norm: "ج2" }] };
 ok(/^[0-9a-f]{64}$/.test(ledgerBatchId(ledger)) && ledgerBatchId(ledger) !== ledgerBatchId({ ...ledger, target: "production" }), "معرّف الدفعة مرتبط بالهدف والقيم");
+ok(ledgerBatchId({ ...ledger, host: "a" }) !== ledgerBatchId({ ...ledger, host: "b" }), "معرّف الدفعة مرتبط بالمضيف (neondb مشترك بين فروع Neon)");
 ok(classifyObservation(ledger, [{ id: "x", search_norm: "ج" }, { id: "y", search_norm: "ج2" }]).outcome === "confirmed", "verify: confirmed");
 ok(classifyObservation(ledger, [{ id: "x", search_norm: "ق" }, { id: "y", search_norm: null }]).outcome === "not_applied", "verify: not_applied");
 ok(classifyObservation(ledger, [{ id: "x", search_norm: "ج" }, { id: "y", search_norm: null }]).outcome === "unconfirmed", "verify: خليط = unconfirmed");
@@ -84,10 +88,22 @@ throws(() => assertTarget("production", prodUrl, 4, {}), /غير مفتوح/, "�
 throws(() => assertTarget("production", prodUrl, 4, { HAKEEM_INJECT: "yes", HAKEEM_INDEX_APPLY: "yes", HAKEEM_APPROVED_ROWS: "5" }), /غير مفتوح/, "الإنتاج مرفوض بعدد لا يطابق القائمة");
 throws(() => assertTarget("production", "postgresql://u:p@ep-other.neon.tech/neondb", 4, { HAKEEM_INJECT: "yes", HAKEEM_INDEX_APPLY: "yes", HAKEEM_APPROVED_ROWS: "4" }), /غير مفتوح/, "الإنتاج مرفوض على مضيف آخر");
 ok((() => { assertTarget("production", prodUrl, 4, { HAKEEM_INJECT: "yes", HAKEEM_INDEX_APPLY: "yes", HAKEEM_APPROVED_ROWS: "4" }); return true; })(), "الإنتاج يُفتح بالحراس الثلاثة والمضيف");
+const OPEN = { HAKEEM_INJECT: "yes", HAKEEM_INDEX_APPLY: "yes", HAKEEM_APPROVED_ROWS: "4" };
+throws(() => assertTarget("isolated", "postgresql://u:p@127.0.0.1:54329/hakeem_hkm029?host=db.example.com", 4, {}), /المعزول/, "المعزول: ?host= يحوّل المضيف الفعلي فيُرفض");
+throws(() => assertTarget("isolated", "postgresql://u:p@127.0.0.1:54329/neondb", 4, {}), /القاعدة/, "المعزول: قاعدة غير hakeem_hkm029 تُرفض");
+throws(() => assertTarget("production", "postgresql://u:p@ep-icy-rice.evil.com/neondb", 4, OPEN), /غير مفتوح/, "الإنتاج: ep-icy-rice بلا لاحقة .neon.tech يُرفض");
+throws(() => assertTarget("production", `${prodUrl}?host=ep-other.c-2.us-east-1.aws.neon.tech`, 4, OPEN), /غير مفتوح/, "الإنتاج: ?host= إلى فرع آخر يُرفض");
+throws(() => assertTarget("production", prodUrl.replace("/neondb", "/other"), 4, OPEN), /غير مفتوح/, "الإنتاج: قاعدة غير neondb تُرفض");
+ok(assertReadTarget("production", prodUrl).host.startsWith("ep-icy-rice"), "بوابة القراءة تقبل الإنتاج بلا إذن كتابة");
+throws(() => assertReadTarget("production", "postgresql://u:p@ep-eval-branch.c-2.us-east-1.aws.neon.tech/neondb"), /ليسا الإنتاج/, "بوابة القراءة ترفض فرعًا آخر اسم قاعدته neondb");
 
 ok(vectorStatus(null, "a", "b") === "missing" && vectorStatus("a", "a", "b") === "fresh" && vectorStatus("b", "a", "b") === "fresh_legacy" && vectorStatus("c", "a", "b") === "stale", "حالات المتجه الأربع");
+const vparts = { systemName: "نظام", title: "المادة 1", content: "نص ـ قديم" };
+ok(versionStatus(sha256("نظام\nالمادة 1\nنص  قديم\nm1"), "m1", vparts) === "fresh", "embedding_version: بصمة النص والنموذج = سليم");
+ok(versionStatus(sha256("نظام\nالمادة 1\nنص ـ قديم\nm1"), "m1", vparts) === "fresh_legacy" && versionStatus(sha256("x"), "m1", vparts) === "stale" && versionStatus(null, "m1", vparts) === "missing", "embedding_version: قبل الحجب، وقديم، ومفقود");
 const row = { title: "المادة 1", content: "نص", articleNumber: 1 };
-ok(openSearchStatus(null, row) === "missing" && openSearchStatus({ ...row }, row) === "fresh" && openSearchStatus({ ...row, articleNumber: 2 }, row) === "stale" && openSearchStatus({ ...row, content: "نص آخر" }, row) === "stale", "حالات مستند OpenSearch");
+const osRow = { ...row, lawName: "نظام" };
+ok(openSearchStatus(null, osRow) === "missing" && openSearchStatus({ ...osRow }, osRow) === "fresh" && openSearchStatus({ ...osRow, articleNumber: 2 }, osRow) === "stale" && openSearchStatus({ ...osRow, content: "نص آخر" }, osRow) === "stale" && openSearchStatus({ ...osRow, lawName: "نظام آخر" }, osRow) === "stale", "حالات مستند OpenSearch (ومنها اسم النظام)");
 
 const frozen = assertManifest(JSON.parse(readFileSync(new URL("./expected-drift-ids.json", import.meta.url), "utf8")));
 ok(frozen.expected_count === frozen.rows.length, `القائمة المجمّدة المحفوظة متسقة (${frozen.expected_count} صفًّا)`);

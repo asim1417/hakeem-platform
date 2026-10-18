@@ -11,12 +11,12 @@
  * تكتب buildSearchNorm(row) بشرط md5(search_norm) المجمّد في جملة التحديث نفسها.
  * تحفظ السجل (القديم والجديد لكل صف) وتزامنه وتعيد قراءته قبل التثبيت. التشغيل الثاني مرفوض.
  */
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync, writeSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "pg";
 import { buildSearchNorm } from "../../lib/modules/legal-core/search-norm.ts";
-import { assertDatabaseForTarget, assertLockedRows, assertManifest, assertTarget, classifyObservation, ledgerBatchId, md5 } from "./drift-lib.mjs";
+import { assertDatabaseForTarget, assertLockedRows, assertManifest, assertReadTarget, assertTarget, classifyObservation, connectionTarget, ledgerBatchId, md5 } from "./drift-lib.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const MANIFEST_FILE = path.join(HERE, "expected-drift-ids.json");
@@ -35,6 +35,7 @@ export function assertLedger(ledger) {
   if (!ledger || ledger.batch !== "HKM-029" || !Array.isArray(ledger.rows) || ledger.rows.length !== ledger.expected_count) throw new Error("سجل الدفعة غير صالح");
   if (!LEDGER_STATUSES.includes(ledger.commit_status)) throw new Error("حالة السجل غير معروفة");
   assertDatabaseForTarget(ledger.target, ledger.database);
+  if (typeof ledger.host !== "string" || !ledger.host) throw new Error("سجل بلا مضيف");
   if (ledger.batch_id !== ledgerBatchId(ledger)) throw new Error("معرّف الدفعة لا يطابق القيم");
   const ids = new Set(ledger.rows.map((r) => r.id));
   if (ids.size !== ledger.rows.length) throw new Error("سجل الدفعة فيه معرّف مكرر");
@@ -86,10 +87,13 @@ const articleOf = (r) => ({ lawName: r.lawName, title: r.title, content: r.conte
 
 /**
  * يعيد البناء داخل معاملة واحدة. أي اختلاف يلغي الكل. لا يطبع نصوصًا.
- * options: { target, ledgerFile, commit(client) } — commit للاختبار فقط.
+ * options: { target, host, ledgerFile, commit(client), hooks: { beforeUpdate(client, row) } }
+ *   host: المضيف الفعلي للاتصال (connectionTarget) ويُحفظ في السجل فيربط التحقق والتراجع به.
+ *   commit وhooks للاختبار فقط.
  */
 export async function rebuildSearchNorm(client, manifest, options) {
   const target = options.target;
+  if (typeof options.host !== "string" || !options.host) throw new Error("مرفوض: مضيف الاتصال غير محدد");
   const ledgerFile = options.ledgerFile ?? ledgerPathFor(target);
   assertManifest(manifest);
   if (manifest.expected_count === 0) throw new Error("توقف: القائمة المجمّدة فارغة؛ لا شيء يُعاد بناؤه");
@@ -114,6 +118,7 @@ export async function rebuildSearchNorm(client, manifest, options) {
       if (!next) throw new Error("توقف: ناتج التطبيع فارغ");
       if (next === row.search_norm) throw new Error("توقف: صف في القائمة فهرسه صحيح أصلًا");
       const frozen = manifest.rows.find((m) => m.id === row.id);
+      if (options.hooks?.beforeUpdate) await options.hooks.beforeUpdate(client, row);
       const updated = await client.query(
         `UPDATE legal_articles SET search_norm = $2
           WHERE id = $1 AND md5(content) = $3 AND (CASE WHEN search_norm IS NULL THEN '' ELSE md5(search_norm) END) = $4
@@ -125,7 +130,7 @@ export async function rebuildSearchNorm(client, manifest, options) {
       rows.push({ id: row.id, content_md5: frozen.content_md5, old_search_norm: row.search_norm, new_search_norm: next });
     }
     rows.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    ledger = { batch: "HKM-029", target, database, expected_count: manifest.expected_count, rows, commit_status: "unconfirmed" };
+    ledger = { batch: "HKM-029", target, host: options.host, database, expected_count: manifest.expected_count, rows, commit_status: "unconfirmed" };
     ledger.batch_id = ledgerBatchId(ledger);
     const after = await client.query(
       `SELECT count(*)::int AS n,
@@ -151,29 +156,37 @@ export async function rebuildSearchNorm(client, manifest, options) {
   return { status: "committed", updated: ledger.rows.length, batch_id: ledger.batch_id, database, ledgerFile };
 }
 
-/** اتصال جديد قراءة فقط: confirmed أو not_applied أو unconfirmed. يحدّث حالة السجل. */
-export async function verifyLedger(connectionString, ledgerFile) {
+/**
+ * اتصال جديد قراءة فقط (معاملة READ ONLY): confirmed أو not_applied أو unconfirmed. يحدّث حالة السجل.
+ * يرفض أي اتصال لا يطابق هدف السجل ومضيفه وقاعدته: neondb اسم مشترك بين فروع Neon، فالمضيف هو الفاصل.
+ */
+export async function verifyLedger(connectionString, ledgerFile, options = {}) {
   const ledger = loadLedger(ledgerFile);
+  const target = options.target ?? ledger.target;
+  if (target !== ledger.target) throw new Error("مرفوض: هدف التحقق يختلف عن هدف السجل");
+  const live = assertReadTarget(target, connectionString);
+  if (live.host !== ledger.host || live.database !== ledger.database) throw new Error("مرفوض: مضيف التحقق أو قاعدته تختلف عن سجل الدفعة");
   const client = new Client({ connectionString });
   await client.connect();
   try {
-    await client.query("SET default_transaction_read_only = on");
+    await client.query("BEGIN READ ONLY");
     const db = await client.query("SELECT current_database() AS name");
     if (db.rows[0].name !== ledger.database) throw new Error("قاعدة التحقق تختلف عن سجل الدفعة");
     const found = await client.query(
       `SELECT t.id, (a.id IS NOT NULL) AS present, a.search_norm FROM unnest($1::text[]) AS t(id) LEFT JOIN legal_articles a ON a.id = t.id`,
       [ledger.rows.map((r) => r.id)],
     );
+    const ro = await client.query("SHOW transaction_read_only");
+    await client.query("COMMIT");
     const result = classifyObservation(ledger, found.rows);
     if (ledger.commit_status !== "rolled_back") markLedgerStatus(ledgerFile, result.outcome);
-    const ro = await client.query("SHOW transaction_read_only");
     return { database: db.rows[0].name, ...result, expected: ledger.expected_count, read_only: ro.rows[0].transaction_read_only === "on" };
   } finally {
     await client.end();
   }
 }
 
-export { md5 };
+export { md5, connectionTarget };
 
 async function main() {
   const i = process.argv.indexOf("--target");
@@ -181,11 +194,11 @@ async function main() {
   const manifest = loadManifest();
   const url = process.env.DATABASE_URL ?? "";
   if (!url) throw new Error("DATABASE_URL غير مضبوط");
-  assertTarget(target, url, manifest.expected_count);
+  const { host } = assertTarget(target, url, manifest.expected_count);
   const client = new Client({ connectionString: url });
   await client.connect();
   try {
-    const result = await rebuildSearchNorm(client, manifest, { target });
+    const result = await rebuildSearchNorm(client, manifest, { target, host });
     console.log(JSON.stringify({ status: result.status, target, database: result.database, batch_id: result.batch_id, updated: result.updated }));
   } finally {
     await client.end();

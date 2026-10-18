@@ -4,6 +4,7 @@
  * ويصنّف حالة المتجه وحالة مستند OpenSearch. لا يحمل نصوصًا في المخرجات.
  */
 import { createHash } from "node:crypto";
+import { parse as parseConnectionString } from "pg-connection-string";
 
 export const CATEGORIES = ["shifted", "whitespace_only", "content_changed", "empty"];
 /** النطاق الافتراضي للكتابة (الأمر ٠٨ §ب): whitespace_only لا تُكتب إلا بقرار المالك، و«الفارغ» من شأن HKM-002. */
@@ -70,9 +71,28 @@ export function summarizeDrift(drift) {
  *   فتُعاد فقط، بلا ضرر.
  * - legacy: النص نفسه بلا حذف التطويل (متجهات بُنيت قبل الحجب وما زالت تطابق النص).
  */
-export function embeddingTextHashes({ systemName, title, content }) {
+export function embeddingTexts({ systemName, title, content }) {
   const joined = [systemName, title, content].filter(Boolean).join("\n");
-  return { current: sha256(joined.replace(/\u0640/g, "").slice(0, 8000)), legacy: sha256(joined.slice(0, 8000)) };
+  return { current: joined.replace(/\u0640/g, "").slice(0, 8000), legacy: joined.slice(0, 8000) };
+}
+
+export function embeddingTextHashes(parts) {
+  const t = embeddingTexts(parts);
+  return { current: sha256(t.current), legacy: sha256(t.legacy) };
+}
+
+/**
+ * حالة متجه في embedding_version (المسار الذي يقدّمه البحث على embeddings): البصمة فيه
+ * embeddingFingerprint = sha256(النص + سطر + النموذج) (lib/modules/legal-core/embedding-fingerprint.ts)،
+ * ويُقبل أيضًا sha256 للنص وحده احتياطًا لكاتب لم يضف النموذج.
+ */
+export function versionStatus(storedHash, model, parts) {
+  if (!storedHash) return "missing";
+  const t = embeddingTexts(parts);
+  const fp = (text) => sha256(`${text}\n${model}`);
+  if (storedHash === fp(t.current) || storedHash === sha256(t.current)) return "fresh";
+  if (storedHash === fp(t.legacy) || storedHash === sha256(t.legacy)) return "fresh_legacy";
+  return "stale";
 }
 
 /** حالة متجه المادة: fresh (بصمة النص الحالي)، fresh_legacy (بصمة النص قبل الحجب)، stale، missing. */
@@ -87,7 +107,8 @@ export function vectorStatus(storedHash, currentHash, legacyHash) {
 export function openSearchStatus(doc, row) {
   if (!doc) return "missing";
   const same = md5(`${doc.title ?? ""}\n${doc.content ?? ""}`) === md5(`${row.title ?? ""}\n${row.content ?? ""}`)
-    && Number(doc.articleNumber) === Number(row.articleNumber);
+    && Number(doc.articleNumber) === Number(row.articleNumber)
+    && (doc.lawName ?? null) === (row.lawName ?? null);
   return same ? "fresh" : "stale";
 }
 
@@ -163,7 +184,7 @@ export function assertLockedRows(manifest, locked) {
 /** معرّف الدفعة: sha256 للهدف والقاعدة وكل (معرّف، القديم، الجديد). */
 export function ledgerBatchId(core) {
   const hash = createHash("sha256");
-  hash.update(`${core.target}\0${core.database}\0`);
+  hash.update(`${core.target}\0${core.host ?? ""}\0${core.database}\0`);
   for (const row of core.rows) hash.update(`${row.id}\0${row.old_search_norm ?? "\u0001NULL"}\0${row.new_search_norm}\n`);
   return hash.digest("hex");
 }
@@ -192,26 +213,51 @@ export function classifyObservation(ledger, observed) {
   return { outcome, present, isNew, isOld, missing };
 }
 
-export function hostOf(url) {
-  const afterAt = String(url).split("@").pop() ?? "";
-  return afterAt.split("/")[0].split("?")[0].split(":")[0];
+/**
+ * المضيف والقاعدة كما يفهمهما عميل pg فعلًا (pg-connection-string)، لا بتقطيع النص:
+ * معامل ?host= في الرابط يغيّر المضيف الفعلي، فلا تُفحص البوابة إلا على الناتج.
+ */
+export function connectionTarget(url) {
+  const c = parseConnectionString(String(url));
+  return { host: String(c.host ?? ""), database: String(c.database ?? "") };
 }
+
+export function hostOf(url) {
+  return connectionTarget(url).host;
+}
+
+const isLocalHost = (h) => h === "127.0.0.1" || h === "localhost";
+const isProductionHost = (h) => /^ep-icy-rice[a-z0-9-]*\.[a-z0-9.-]+\.neon\.tech$/.test(h);
 
 export const ISOLATED_DATABASE = "hakeem_hkm029";
 export const PRODUCTION_DATABASE = "neondb";
 
 /** يرفض أي هدف غير المعزول ما لم تُفتح بوابة الإنتاج بكل حراسها. لا يطبع سلسلة الاتصال. */
-export function assertTarget(target, url, expectedCount, env = process.env) {
-  const host = hostOf(url);
+/** بوابة القراءة (التحقق): المضيف والقاعدة الفعليان يطابقان الهدف. لا تحتاج إذن الكتابة. */
+export function assertReadTarget(target, url) {
+  const { host, database } = connectionTarget(url);
   if (target === "isolated") {
-    if (host !== "127.0.0.1" && host !== "localhost") throw new Error("مرفوض: الهدف المعزول يقبل 127.0.0.1 أو localhost فقط");
-    return;
+    if (!isLocalHost(host)) throw new Error("مرفوض: الهدف المعزول يقبل 127.0.0.1 أو localhost فقط");
+    if (database !== ISOLATED_DATABASE) throw new Error(`مرفوض: الهدف المعزول يقبل القاعدة ${ISOLATED_DATABASE} فقط`);
+    return { host, database };
   }
   if (target !== "production") throw new Error("مرفوض: الهدف غير معروف");
-  const approved = env.HAKEEM_INJECT === "yes" && env.HAKEEM_INDEX_APPLY === "yes" && env.HAKEEM_APPROVED_ROWS === String(expectedCount);
-  if (!approved || !host.includes("ep-icy-rice") || !host.endsWith(".neon.tech")) {
-    throw new Error("مرفوض: تطبيق الإنتاج غير مفتوح. اعرض المراجعة أولًا، ثم اضبط الإذن والعدد المطابق للقائمة");
+  if (!isProductionHost(host) || database !== PRODUCTION_DATABASE) throw new Error("مرفوض: المضيف أو القاعدة ليسا الإنتاج");
+  return { host, database };
+}
+
+/** بوابة الكتابة: بوابة القراءة، وللإنتاج إذن البيئة الثلاثي بالعدد المطابق للقائمة. */
+export function assertTarget(target, url, expectedCount, env = process.env) {
+  if (target === "production") {
+    const approved = env.HAKEEM_INJECT === "yes" && env.HAKEEM_INDEX_APPLY === "yes" && env.HAKEEM_APPROVED_ROWS === String(expectedCount);
+    if (!approved) throw new Error("مرفوض: تطبيق الإنتاج غير مفتوح. اعرض المراجعة أولًا، ثم اضبط الإذن والعدد المطابق للقائمة");
+    try {
+      return assertReadTarget(target, url);
+    } catch {
+      throw new Error("مرفوض: تطبيق الإنتاج غير مفتوح على هذا المضيف أو القاعدة");
+    }
   }
+  return assertReadTarget(target, url);
 }
 
 export function assertDatabaseForTarget(target, database) {
