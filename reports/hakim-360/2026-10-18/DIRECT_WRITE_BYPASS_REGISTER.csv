@@ -1,0 +1,6 @@
+id,path,effect,relation_to_desk,severity,confidence,status
+DW-1,POST /api/admin/legal-core/reindex,fills search_norm and may ALTER TABLE and CREATE INDEX,outside index_sync,P2,CONFIRMED,open
+DW-2,POST /api/admin/legal-core/preambles,updates system preamble fields not preamble_unit,outside change_set,P2,CONFIRMED,open
+DW-3,POST /api/legal-relations,inserts a relation as LEGAL_CORE_EDIT,outside change_set,P2,CONFIRMED,open
+DW-4,PATCH /api/legal-core/principles/[id],blocked with 409 when deskIsLive,gated,P3,CONFIRMED,open
+DW-5,publishChangeSet enqueueIndexSync,queue row only; no worker updates sync timestamps,inside desk but unconsumed,P2,CONFIRMED,open

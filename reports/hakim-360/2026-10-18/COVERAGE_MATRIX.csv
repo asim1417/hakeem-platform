@@ -2,22 +2,25 @@ area,identified,inspected,evidence_linked,tested,reviewed,blocked_reason
 git history and open PRs,yes,yes,EXECUTION_LOG.md,read-only gh and git,self,secret names and branch protection HTTP 403
 Neon primary catalog,yes,yes,DATABASE_CATALOG.csv,SELECT read only,self,none
 Prisma drift,yes,yes,SCHEMA_DIFF_MATRIX.csv,parser plus catalog,self,full semantic type mapping beyond nullability is partial
-migrations and SQL lineage,yes,yes,MIGRATION_CHRONOLOGY.md,counts and applied row,self,which SQL file applied on which day is incomplete
+migrations and SQL lineage,yes,yes,MIGRATION_CHRONOLOGY.md; SQL_DDL_LINEAGE.md,counts and applied row; reindex DDL read,self,which historical SQL file applied on which day is incomplete
 RLS roles grants,yes,yes,SECURITY_ACCESS_MATRIX.csv,catalog,self,which Vercel secret uses which role
 PITR and protected flag,yes,no,DR_READINESS.md,not run,self,Neon API not available
 restore drill,yes,no,SCHEMA_REBUILD_PLAN.md,not run,self,needs owner authorization
-legal systems and articles,yes,yes,LEGAL_DATA_QUALITY.md,aggregate SQL,self,official text samples not re-compared to BOE pages
+legal systems and articles,yes,yes,LEGAL_DATA_QUALITY.md; LEGISLATIVE_VERSION_AUDIT.md; DATA_QUALITY_REPORT.md,aggregate SQL and md5 counts,self,official page text not re-fetched; duplicate hashes not adjudicated
 judicial corpus,yes,yes,JUDICIAL_CORPUS.md,aggregate SQL,self,no judgment text exported
 BOE provenance,yes,yes,LEGAL_DATA_QUALITY.md,stored diff not recomputed,self,33 unmatched docs not individually decided
 search indexes,yes,partial,SEARCH_INDEX_AUDIT.md,SQL counts; OpenSearch not connected,self,no cluster credential
-search benchmark,yes,no,SEARCH_INDEX_AUDIT.md,not run,self,no approved golden set execution in this session
-RAG citation guards,yes,code,SEARCH_INDEX_AUDIT.md,not executed,self,no model calls
+search benchmark,yes,yes,SEARCH_EVALUATION.md,eval:search lexical 54 queries exit 0,self,semantic and OpenSearch legs not executed; no paid embedder
+RAG citation guards,yes,yes,AI_GROUNDING_AUDIT.md; CITATION_RELATIONS_AUDIT.md,local tests plus citation-guard on primary,self,no live model call; two citation expectations diverged from current data
 MCP runtime,yes,partial,API_MCP_RUNTIME.md,unauthenticated 401 only,self,no traces for historical 300s timeouts
 editorial desk,yes,yes,EDITORIAL_DESK_AUDIT.md,SQL config plus code,self,authenticated write test forbidden
-storage backend,yes,code,STORAGE_AUDIT.md,not probed,self,env values not read
+storage backend,yes,yes,STORAGE_AUDIT.md,attachment aggregate without bytes,self,Vercel Azure or SharePoint env unread
 public UI and SEO,yes,partial,PUBLIC_UI_AUDIT.md,curl robots sitemap legal health,self,no login and no browser session
-billing,yes,partial,INTEGRATION_CATALOG.csv,health says Moyasar unset; enums exist,self,no payment call
+billing,yes,yes,COST_CAPACITY.md,17 billing tables count 0; Moyasar unset,self,no invoices and no payment call
 Rasd Hostinger Supabase,yes,docs only,HISTORICAL_TIMELINE.md,not connected,self,no credentials
-CI lineage,yes,partial,HISTORICAL_TIMELINE.md,last 25 runs,self,full Actions history not exported
+CI lineage,yes,yes,CI_CD_LINEAGE.md,2658 runs aggregated,self,job logs not downloaded; protection and secret names HTTP 403
 DR plan,yes,yes,DR_READINESS.md,plan only,self,execution gated
 independent QA,yes,self only,README.md,spot-checked admin auth false positive,self,aman-tech skill absent
+legislative versions and provenance,yes,yes,LEGISLATIVE_VERSION_AUDIT.md; SOURCE_PROVENANCE_ATLAS.md,aggregate SQL 12:47Z,self,decree text not copied; BOE pages not refetched
+PDPL and observability and cost,yes,yes,SECURITY_PDPL_FLOW.md; OPERATIONS_OBSERVABILITY.md; COST_CAPACITY.md,local redaction tests; repo search; billing counts,self,no PDPL certification; hosted dashboards outside the repo unread
+schema rebuild and restore drill,yes,no,SCHEMA_REBUILD_PLAN.md; RECOVERY_RUNBOOK.md,not run,self,owner authorization still required
