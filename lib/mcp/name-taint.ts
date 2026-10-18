@@ -37,8 +37,9 @@ export const TAINT_RATIO = 0.5;
 export const INDEX_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", left(r."judgmentText", ${SEARCH_NORM_TEXT_CAP}) AS "judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
 // عيّنة استعلام البحث (يطابقه البحث في المتن كاملًا عبر أجزاء الأحكام، ويُفحص كل حكم على المتن المحجوب كاملًا)
 // واللفظ الحساس في الحصر (يطابق المتن المنقّح كاملًا) بالمتن حتى FULL_TEXT_CAP: أطول حكم في الإنتاج نحو 95 ألف حرف
-// وp99 نحو 29 ألفًا، والسقف يحدّ أسوأ عيّنة دون أدنى الزمن (وما بعده يُعدّ غير ظاهر، فيميل الحكم إلى الحجب).
-const FULL_TEXT_CAP = 60_000;
+// وp99 نحو 29 ألفًا، فالسقف يغطي أحكام الإنتاج كلها ويحدّ أسوأ عيّنة دون أدنى الزمن (12 حكمًا × 95 ألفًا نحو 0.7
+// ثانية محليًا)؛ وما بعده يُعدّ غير ظاهر، فيميل الحكم إلى الحجب.
+const FULL_TEXT_CAP = 100_000;
 const FULL_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", left(r."judgmentText", ${FULL_TEXT_CAP}) AS "judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
 export type IndexRow = RulingIndexFields & { id: string };
 

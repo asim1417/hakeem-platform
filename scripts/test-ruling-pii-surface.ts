@@ -9,6 +9,7 @@
  * التشغيل: PII_TEST_DB=hkm012_test npx tsx scripts/test-ruling-pii-surface.ts
  */
 import { execFileSync } from "node:child_process";
+import { createServer } from "node:http";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -29,6 +30,8 @@ if (!/^[a-z0-9_]+$/i.test(DB)) {
   process.exit(2);
 }
 process.env.RULINGS_SEMANTIC = "off";
+// خادم التضمين المصطنع محلي (اختبار تعطيل الدلالي في الموصل)، فلا يمر بوكيل الشبكة.
+process.env.NO_PROXY = [process.env.NO_PROXY, "127.0.0.1", "localhost"].filter(Boolean).join(",");
 const tmp = mkdtempSync(join(tmpdir(), "hkm012-"));
 function psql(sql: string): string {
   const f = join(tmp, "q.sql");
@@ -43,7 +46,10 @@ const lit = (v: unknown): string => {
   return `$pii$${s}$pii$`;
 };
 const sqlLog: string[] = [];
+// المعاملات كما تصل (قبل التضمين): كل معامل يجب أن يُذكر في الاستعلام، فمعامل زائد لا يُعرف نوعه قد يرفضه PostgreSQL.
+const paramLog: Array<{ sql: string; n: number }> = [];
 function runSelect<T>(sql: string, params: unknown[]): T {
+  paramLog.push({ sql, n: params.length });
   const inlined = sql.replace(/\$(\d+)/g, (_, i) => lit(params[Number(i) - 1]));
   sqlLog.push(inlined);
   const out = psql(`SELECT coalesce(json_agg(t), '[]'::json) FROM (${inlined}) t;`).trim();
@@ -193,6 +199,8 @@ for (let i = 1; i <= 3; i++) {
   bulk(`h${pad3(i)}`, "المحكمة العامة", "وحيث إن الحكم صدر حضوريًا.");
   rows[rows.length - 1].appealText = "طعن المستأنف بالتزوير في المستند.";
 }
+// حكم طويل اسمه في أسبابه بعد الحرف 20000 وحده (لا في search_norm)، لاختبار عيّنة الأجزاء.
+bulk("s002", "المحكمة العامة", `الوقائع: نزاع على دين.\n${filler(5_000)}\nالأسباب: وحيث إن الشاهد/ عواد الشمري حضر، وإن الشهادة المعتبرة ثابتة.`);
 // «صالح العمل» عبارة ظاهرة في حكم واسم في حكمين: عيّنة العبارة يغلب فيها الاسم فلا تنقذ الاستعلام.
 bulk("q001", "المحكمة العامة", "وحيث إن صالح العمل يقتضي فسخ العقد.");
 bulk("q002", "المحكمة العامة", "حضر المدعي/ صالح العمل وقرر ما جاء في الصحيفة.");
@@ -812,6 +820,69 @@ async function main() {
     const e = (await enumerateRulings([q])) as Enum;
     ok(e.total === 0 && (e.results ?? []).length === 0, `بوابة التلوث: الحصر بـ«${q}» لا يعيد حكمًا ولا عددًا (${e.total})`);
   }
+  // ── الجولة السابعة: الدلالي معطّل في الموصل، وعيّنة الاستعلام مع أجزاء الأحكام ──
+  const { clearRulingTablesCache } = await import("../lib/modules/legal-core/rulings-search");
+  // (١) الدلالي: متجهات الأحكام من النص الخام وفيه الأسماء، فالموصل لا يستعمله. خادم تضمين مصطنع وجدول متجهات صغير:
+  // البحث الداخلي يستدعي التضمين (دليل أن المسار يعمل)، وبحث الموصل لا يستدعيه لاسم ولا لغائب ولا للفظ عام.
+  {
+    const DIMS = 1536;
+    let calls = 0;
+    const server = createServer((req, res) => {
+      req.on("data", () => undefined);
+      req.on("end", () => {
+        calls++;
+        res.setHeader("content-type", "application/json");
+        res.end(JSON.stringify({ data: [{ embedding: Array.from({ length: DIMS }, (_, k) => (k === 1 ? 1 : 0)) }] }));
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+    const saved = { RULINGS_SEMANTIC: process.env.RULINGS_SEMANTIC, SEMANTIC_SEARCH: process.env.SEMANTIC_SEARCH, EMBEDDING_API_KEY: process.env.EMBEDDING_API_KEY, EMBEDDING_BASE_URL: process.env.EMBEDDING_BASE_URL };
+    delete process.env.RULINGS_SEMANTIC;
+    process.env.SEMANTIC_SEARCH = "on";
+    process.env.EMBEDDING_API_KEY = "local-stub-not-a-secret";
+    process.env.EMBEDDING_BASE_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+    const vec = `[${Array.from({ length: DIMS }, (_, k) => (k === 1 ? 1 : 0)).join(",")}]`;
+    psql(`CREATE EXTENSION IF NOT EXISTS vector;
+DROP TABLE IF EXISTS ruling_segment_embeddings;
+CREATE TABLE ruling_segment_embeddings (ruling_id text, part text, chunk int default 0, start_char int, end_char int, content_hash text, embedding vector(${DIMS}), model text, extractor_version text, segment_version text, review_status text default 'x', created_at timestamptz default now());
+INSERT INTO ruling_segment_embeddings (ruling_id, part, start_char, end_char, content_hash, embedding, model, extractor_version, segment_version) VALUES ('r5','reasons',0,40,'h','${vec}','m','v','v'), ('r6','reasons',0,40,'h','${vec}','m','v','v');`);
+    clearRulingTablesCache();
+    try {
+      await searchRulingsDirect({ query: "ثمن توريد بضاعة متأخرة", limit: 5 });
+      const internal = calls;
+      const before = calls;
+      for (const q of ["غانم الموسوي ثمن توريد بضاعة", "غانم القرشي ثمن توريد بضاعة", "ثمن توريد بضاعة متأخرة"]) await mcpSearchRulings(q, undefined, undefined, 20);
+      ok(internal >= 1 && calls === before, `الدلالي معطّل في الموصل: البحث الداخلي يستدعي التضمين (${internal})، والموصل لا يستدعيه (${calls - before})`);
+    } finally {
+      Object.assign(process.env, Object.fromEntries(Object.entries(saved).filter(([, v]) => v !== undefined)));
+      for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k];
+      psql(`DROP TABLE IF EXISTS ruling_segment_embeddings;`);
+      clearRulingTablesCache();
+      server.close();
+    }
+  }
+  // (٢) أجزاء الأحكام: اسم يرد بعد الحرف 20000 وحده (لا في search_norm) يطابقه البحث في الأسباب، فعيّنة الاستعلام
+  // تضمه بـ UNION ويُبحث عنه بالطُّعم.
+  {
+    psql(`DROP TABLE IF EXISTS ruling_segments;
+CREATE TABLE ruling_segments ("ruling_id" text, "part" text, "part_norm" text, PRIMARY KEY ("ruling_id","part"));
+INSERT INTO ruling_segments VALUES (${lit("s002")}, 'reasons', ${lit(normalizeArabicText(rows.find((r) => r.id === "s002")!.judgmentText.slice(rows.find((r) => r.id === "s002")!.judgmentText.indexOf("الأسباب:"))))});`);
+    clearRulingTablesCache();
+    clearTaintCache();
+    try {
+      const n0 = sqlLog.length;
+      const sr = await mcpSearchRulings("عواد الشمري", undefined, undefined, 20);
+      const ranked = sqlLog.slice(n0).filter((x) => x.includes("ts_rank_cd"));
+      const sample = sqlLog.slice(n0).find((x) => /LIMIT 12\) s ON/.test(x));
+      ok(sr.results.length === 0 && Boolean(sample?.includes("UNION") && sample.includes("ruling_segments")) && ranked.length > 0 && ranked.every((x) => !x.includes("الشمري")), "أجزاء الأحكام: اسم بعد الحرف 20000 وحده — العيّنة تضم الأجزاء، والبحث بالطُّعم");
+      const sv = await mcpSearchRulings("الشهادة المعتبرة", undefined, undefined, 20);
+      ok(sv.results.some((x) => x.ruling_id === "s002"), `أجزاء الأحكام: لفظ عام في أسباب الحكم نفسه يجده (${sv.results.map((x) => x.ruling_id).join("،")})`);
+    } finally {
+      psql(`DROP TABLE IF EXISTS ruling_segments;`);
+      clearRulingTablesCache();
+      clearTaintCache();
+    }
+  }
   // تخريج الحكم (takhrij_hukm): العنوان ونص المبدأ محجوبان، والمطابقة داخل اسم وحدها لا تُعاد.
   const { takhrijHukm } = await import("../lib/agent-runtime/live/engine-tools");
   const pNames = ["غانم", "الموسوي", "زيدان", "الفلاني", "رجاء", "السندي"];
@@ -834,6 +905,11 @@ async function main() {
   ok(JSON.stringify(rows) === frozen, "النص الأصلي في الذاكرة كما هو");
   ok(dbFingerprint() === before, "النص الأصلي في القاعدة كما هو (بصمة الجدول قبل الاختبار وبعده)");
   ok(sqlLog.every((s) => !/\b(UPDATE|DELETE|INSERT|TRUNCATE|DROP|ALTER)\b/i.test(s)), "كل الاستعلامات قراءة فقط");
+  const unusedParams = paramLog.filter(({ sql, n }) => {
+    const used = new Set([...sql.matchAll(/\$(\d+)/g)].map((m) => Number(m[1])));
+    return Array.from({ length: n }, (_, i) => i + 1).some((k) => !used.has(k)) || [...used].some((k) => k > n);
+  });
+  ok(unusedParams.length === 0 && paramLog.some((x) => x.sql.includes('AS "t0"')), `كل معامل مذكور في استعلامه (${unusedParams.length} استعلامًا بمعامل زائد${unusedParams[0] ? `: ${unusedParams[0].sql.slice(0, 80)}` : ""})`);
 
   if (failed) {
     console.error(`\n${failed} فشل`);

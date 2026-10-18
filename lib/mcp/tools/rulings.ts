@@ -123,21 +123,25 @@ export async function enumerateRulings(
   );
   const kept = prepared.filter((_, i) => !tainted[i]);
 
+  // مرشحا المحكمة والسنة (بمعاملاتهما). لا عمود سنة هجرية — تقريبٌ بمطابقة نصّ التاريخ (تُشتقّ السنة في المخرجات).
+  // التاريخ مخزَّن بالأرقام الهندية، فتُطابَق الصيغتان (كانت اللاتينية وحدها لا تجد شيئًا).
+  const filterConds = (p: unknown[]): string[] => {
+    const out: string[] = [];
+    if (court) {
+      p.push(`%${court}%`);
+      out.push(`r."court" ILIKE $${p.length}`);
+    }
+    if (yearH) {
+      const conds = digitVariants(String(yearH)).map((v) => {
+        p.push(`%${v}%`);
+        return `r."decisionDateText" ILIKE $${p.length}`;
+      });
+      out.push(`(${conds.join(" OR ")})`);
+    }
+    return out;
+  };
   const params: unknown[] = [];
-  const filters: string[] = [`(${prepared.map((t, i) => (tainted[i] ? "FALSE" : termCond(t, params))).join(" OR ")})`];
-  if (court) {
-    params.push(`%${court}%`);
-    filters.push(`r."court" ILIKE $${params.length}`);
-  }
-  // لا عمود سنة هجرية — تقريبٌ بمطابقة نصّ التاريخ (تُشتقّ السنة في المخرجات). التاريخ مخزَّن بالأرقام
-  // الهندية، فتُطابَق الصيغتان (كانت اللاتينية وحدها لا تجد شيئًا).
-  if (yearH) {
-    const conds = digitVariants(String(yearH)).map((v) => {
-      params.push(`%${v}%`);
-      return `r."decisionDateText" ILIKE $${params.length}`;
-    });
-    filters.push(`(${conds.join(" OR ")})`);
-  }
+  const filters: string[] = [`(${prepared.map((t, i) => (tainted[i] ? "FALSE" : termCond(t, params))).join(" OR ")})`, ...filterConds(params)];
   const whereSql = filters.join(" AND ");
 
   /** يُعاد الحكم ويُعدّ إن طابقه لفظ باقٍ على نسخته المحجوبة بباني الإنتاج؛ وما سواه لا يُعاد ولا يُعدّ. */
@@ -241,9 +245,11 @@ export async function enumerateRulings(
   // حر كان يُستخرج به بالتنصيف معرّف حكم مسقط. والعمل واحد لكل مؤشر أيًّا كانت الألفاظ: شروطها الأصلية كلها (قبل
   // إبدال لفظ الاسم) تُحسب على صفه، ويُحجب بالصيغتين ولو لم يطابق؛ فلا يكشف زمنه أن اللفظ اسم.
   if (cursor) {
-    const cp: unknown[] = [...params];
+    // معاملات خاصة بهذا الاستعلام: كل معامل مذكور فيه (لا معاملات زائدة لا يُعرف نوعها).
+    const cp: unknown[] = [];
     const flags = prepared.map((t, i) => `${termCond(t, cp)} AS "t${i}"`).join(", ");
-    const filterSql = filters.slice(1).length ? filters.slice(1).join(" AND ") : "TRUE";
+    const fc = filterConds(cp);
+    const filterSql = fc.length ? fc.join(" AND ") : "TRUE";
     cp.push(cursor);
     const at = await run<Array<EnumRow & Record<string, unknown>>>(
       `SELECT ${ROW_FIELDS}, ${flags}, (${filterSql}) AS "f" FROM "judicial_cases" r WHERE r."id" = $${cp.length}`,

@@ -236,14 +236,15 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   const groups = checkedLexicalGroups(text);
   // نافذة مرشحين ثابتة (دفعتان من SEARCH_BATCH) لا تتبع limit، فلا يكشف الفرق بين limit=1 وlimit=20 عدد ما أُسقط.
   const batch = SEARCH_BATCH;
-  // الفحص أولًا: لفظ الاسم يُبحث عنه لفظيًا بطُعم لا يطابق شيئًا (بعدد ألفاظه وصنفها وأرقامه ومرشحاته)، فلا يعالج
-  // البحث نصوص أحكام الاسم ثم يرميها (كان زمنها يكشف وجوده)؛ ودلاليًا بنصه نفسه كاللفظ الغائب (تضمين النص ونتائجه)،
-  // وتمر نتائجه الدلالية بالفحص نفسه. فمخرج لفظ الاسم وزمنه كلفظ غائب.
+  // الفحص أولًا: لفظ الاسم يُبحث عنه بطُعم لا يطابق شيئًا (بعدد ألفاظه وصنفها وأرقامه ومرشحاته)، فلا يعالج البحث
+  // نصوص أحكام الاسم ثم يرميها (كان زمنها يكشف وجوده)؛ فمخرج لفظ الاسم وزمنه كلفظ غائب.
+  // وبلا المسار الدلالي في الموصل: متجهات الأحكام مبنية من النص الخام وفيه الأسماء، فلفظ الاسم يجلب أحكامه إلى مجمع
+  // المرشحين ثم تُسقط، فينقص المخرج عن مخرج اللفظ الغائب بعددها. يعود بعد بناء المتجهات من النص المحجوب.
   const tainted = await lexicalQueryTainted(groups, enumeratePhrase(text)).catch(() => true);
   const sensitive = new Set(parts.sensitiveTokens);
   const decoy = [...queryTokens(text).map((t) => (sensitive.has(t) ? DECOY_SENSITIVE : DECOY_PLAIN)), ...parts.numbers].join(" ");
   const lexQuery = tainted ? decoy : q;
-  const first = await searchRulingsDirect({ query: lexQuery, semanticQuery: q, court, yearH, limit: batch }).catch(() => null);
+  const first = await searchRulingsDirect({ query: lexQuery, semantic: false, court, yearH, limit: batch }).catch(() => null);
 
   // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
   // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts في النص المحجوب كما في hakeem_get_ruling.
@@ -300,7 +301,7 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
     }
     // الصفحة لم تمتلئ والدفعة كانت كاملة: دفعة ثانية (لفظية) بعدها.
     if (results.length >= pageCap || hits.length < batch) break;
-    r = await searchRulingsDirect({ query: lexQuery, semanticQuery: q, court, yearH, limit: batch, offset: batch }).catch(() => null);
+    r = await searchRulingsDirect({ query: lexQuery, semantic: false, court, yearH, limit: batch, offset: batch }).catch(() => null);
   }
   // عدد القاعدة يشمل أحكامًا لا تطابق إلا داخل اسم، فلا يُعاد لاستعلام فيه لفظ: الإجمالي عدد ما أُعيد،
   // وtotal_is_lower_bound امتلاء الصفحة وحده (لا امتلاء نافذة المرشحين: كان يميّز الخلية التي تكثر فيها المطابقات
