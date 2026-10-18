@@ -108,6 +108,14 @@ const rows: Row[] = [
     caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٥", decisionNo: null, court: "المحكمة التجارية", decisionDateText: null,
   },
 ];
+rows.push({
+  // HKM-012: اسم بلا ترقيم يليه رابط جملة؛ الحجب يجب ألا يمحو مرسى «الأسباب» فيضيع الجزء في الجلب.
+  ...base, id: "r6", sourceId: 6, createdAt: new Date("2023-12-31"),
+  judgmentTitle: "حكم مقاولة باطن",
+  judgmentText: `الدعوى: أقام المدعي/ غانم الموسوي وحيث إن المدعى عليه/ زيدان الفلاني لم يسدد مستحقات مقاولة الباطن.\nالأسباب: وحيث إن الدائرة اطلعت على العقد، ولما كان المدعى عليه/ زيدان الفلاني فأجاب بالإنكار.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه بأن يدفع للمدعي مستحقات الباطن.`,
+  appealText: null,
+  caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٦", decisionNo: null, court: "المحكمة التجارية", decisionDateText: null,
+});
 const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي"];
 const nameLeak = (t: string) => NAME_WORDS.filter((w) => t.includes(w));
 const frozen = JSON.stringify(rows);
@@ -258,6 +266,16 @@ async function main() {
       ok(joined.length > 0 && nameLeak(joined).length === 0, `MCP get_ruling: r5${part ? ` (${part})` : ""} بشرائح ${size} بلا اسم فرد`);
     }
   }
+  // r6: الأجزاء بعد الحجب كما يكشفها المقطِّع في الخام، والأسباب تُجلب.
+  const { segmentRuling } = await import("../lib/rulings/research/segment");
+  const g6 = (await getRuling("r6", 0, 5000)) as { parts?: Array<{ type: string }> };
+  const raw6 = segmentRuling(rows.find((r) => r.id === "r6")!.judgmentText).segments.map((x) => x.type).join(",");
+  ok((g6.parts ?? []).map((x) => x.type).join(",") === raw6, `MCP get_ruling: أجزاء r6 بعد الحجب كما في الخام (${raw6})`);
+  const r6reasons = (await getRuling("r6", 0, 5000, "reasons")) as { text?: string; error?: string };
+  ok(!r6reasons.error && (r6reasons.text ?? "").includes("الأسباب") && nameLeak(r6reasons.text ?? "").length === 0, "MCP get_ruling: جزء الأسباب في r6 يُجلب محجوبًا");
+  const s6 = await mcpSearchRulings("مقاولة الباطن", undefined, undefined, 20);
+  const s6hit = s6.results.find((x) => x.ruling_id === "r6");
+  ok(Boolean(s6hit) && JSON.stringify(s6hit?.parts) === JSON.stringify((g6 as { parts?: unknown }).parts), "MCP search: أجزاء r6 بإزاحات النص المحجوب نفسها في الجلب");
   const g5 = (await getRuling("r5", 0, 50)) as { total_chars?: number; parts?: Array<{ start: number; end: number }> };
   ok((g5.parts ?? []).length > 0 && (g5.parts ?? []).every((p) => p.end <= (g5.total_chars ?? 0)), "MCP get_ruling: إزاحات الأجزاء في النص المحجوب (لا تتجاوز طوله)");
   // HKM-012 (الأمر ٠٨): hakeem_get_ruling بشرائح قصيرة متتالية لا يسرّب رقمًا ولا جزءًا منه على حد شريحة.
