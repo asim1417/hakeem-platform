@@ -206,6 +206,8 @@ export interface RulingSearchOptions {
   numbers?: string[];
   limit?: number;
   offset?: number;
+  /** false = بلا المسار الدلالي (موصل MCP: المتجهات مبنية من النص الخام وفيه الأسماء، فتُزيح أحكامُ الاسم غيرَها). */
+  semantic?: boolean;
 }
 
 // كشف وجود عمود search_norm المفهرس (يُخزَّن مرّة). عند وجوده نستخدم المسار المفهرس السريع؛
@@ -231,6 +233,15 @@ async function tableReady(table: "ruling_meta" | "ruling_segments" | "ruling_seg
   const ok = Boolean(r?.[0]?.ok);
   _ready.set(table, { at: Date.now(), ok });
   return ok;
+}
+
+/** جدول أجزاء الأحكام جاهز (موجود وفيه صفوف)، كما يستعمله البحث. */
+export function rulingSegmentsReady(): Promise<boolean> {
+  return tableReady("ruling_segments");
+}
+/** للاختبار: يفرغ حفظ جاهزية الجداول (تُنشأ جداول الأجزاء والمتجهات أثناء الاختبار). */
+export function clearRulingTablesCache(): void {
+  _ready.clear();
 }
 
 /**
@@ -518,7 +529,7 @@ export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{
   if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
   const { countSql, rowsSql, params, indexPlan } = sql;
   // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
-  const semanticQ = offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
+  const semanticQ = input.semantic !== false && offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
     ? semanticRulingCandidates(opts.query).catch(() => [])
     : Promise.resolve([]);
 
